@@ -1,0 +1,323 @@
+{
+  "task": "tariffs-v3-2026-10",
+  "branch": "claude/practical-feynman-6y3ub5",
+  "spec": "spec.md (frozen 2026-10-25)",
+  "acceptance": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS"
+  },
+  "checks": {
+    "typecheck": {
+      "exit": 0,
+      "errors": 0
+    },
+    "test_gate": {
+      "pass": 4835,
+      "fail": 0
+    },
+    "i18n_check": {
+      "exit": 0,
+      "pass": 95,
+      "fail": 0
+    },
+    "eslint_changed_files": {
+      "files": "diff of round-1 fixes + original 140",
+      "errors": 0,
+      "warnings_preexisting": 2
+    },
+    "live_local_build": {
+      "pages_status_200": 15,
+      "browser_page_errors": 0,
+      "api_checks": "raw/api-check.txt",
+      "round1_fixes": "raw/round1-check.txt",
+      "round2_fixes": [
+        "raw/round2-stale-orders.txt",
+        "raw/round2-check.txt"
+      ],
+      "round3_fixes": [
+        "raw/round3-scenarios.txt",
+        "raw/round3-check.txt"
+      ],
+      "round4_fixes": [
+        "raw/round4-scenarios.txt",
+        "raw/round4-check.txt"
+      ],
+      "round5_fixes": [
+        "raw/round5-scenarios.txt",
+        "raw/round5-check.txt"
+      ],
+      "round6_fixes": [
+        "raw/round6-scenarios.txt",
+        "raw/round6-check.txt"
+      ],
+      "round7_polish": [
+        "raw/round7-setup.txt",
+        "raw/round7-check.txt"
+      ],
+      "final_polish": [
+        "raw/round8-setup.txt",
+        "raw/round8-check.txt"
+      ]
+    }
+  },
+  "prices_default_rub_per_month": {
+    "standard_month": 3000,
+    "standard_year": 1990,
+    "premium_month": 5000,
+    "premium_year": 3990
+  },
+  "points_discount": {
+    "from_points": 3,
+    "percent": 5
+  },
+  "trial_days": 14,
+  "free_after_trial": {
+    "employees": 1,
+    "journals": 1,
+    "points": 1,
+    "storage_bytes": 0
+  },
+  "storage": {
+    "standard": "10 MB",
+    "premium": "1 GB",
+    "trial": "1 GB"
+  },
+  "ppk_individual_from_rub": 10000,
+  "schema_changes": [
+    "Account.planCycle String?",
+    "Account.planPoints Int @default(1)",
+    "Account.trialEndsAt DateTime?",
+    "Account.scheduledPlanJson Json?",
+    "PaymentOrder.points Int?",
+    "PaymentOrder.changeKind String?",
+    "PaymentOrder.creditRub Int @default(0)",
+    "PaymentOrder.periodEndsAt DateTime?",
+    "PaymentOrder.basePlanJson Json?",
+    "PaymentOrder.heldAt DateTime?"
+  ],
+  "deploy_side_effects": [
+    "PlatformTariff: seeds standard_month/standard_year/premium_month/premium_year on first read (ROOT edits kept)",
+    "PlatformSetting billing.trial: launch moment written on first read after deploy",
+    "PlatformService ppk-development: 12000 -> 10000 once if not edited by ROOT",
+    "What's new notes changed: modal shown once"
+  ],
+  "screenshots": [
+    "raw/screenshots/landing-pricing-1280.jpg",
+    "raw/screenshots/landing-pricing-390.jpg",
+    "raw/screenshots/landing-en-pricing-1280.jpg",
+    "raw/screenshots/pricing-page-1280.jpg",
+    "raw/screenshots/pricing-page-390.jpg",
+    "raw/screenshots/pricing-month-3points-1280.jpg",
+    "raw/screenshots/pricing-month-3points-390.jpg",
+    "raw/screenshots/subscription-trial-1280.jpg",
+    "raw/screenshots/subscription-trial-390.jpg",
+    "raw/screenshots/subscription-standard-1280.jpg",
+    "raw/screenshots/subscription-premium-1280.jpg",
+    "raw/screenshots/package-trial-1280.jpg",
+    "raw/screenshots/package-standard-1280.jpg",
+    "raw/screenshots/package-premium-1280.jpg",
+    "raw/screenshots/ppk-overview-standard-1280.jpg"
+  ],
+  "verification": {
+    "round1": {
+      "commit": "9d0e931",
+      "verdict": "FAIL",
+      "partial": [
+        "AC3",
+        "AC4",
+        "AC5",
+        "AC6",
+        "AC12"
+      ],
+      "problems": "problems.md",
+      "fixed": [
+        "anonymous/employee payment no longer overwrites a paid term (409 + fulfillment safety net)",
+        "profile completion respects the points limit",
+        "order PDF with requisites only with typicalPackage",
+        "old-model texts in presets, promo mail, /partners, ROOT promotions, landing final CTA",
+        "order page dates with year; autopay period by cycle",
+        "MAX_POINTS 500",
+        "ROOT MRR counted once per account",
+        "cabinet CTA amounts with active promotion",
+        "invoice line wording for upgrade/renew; invoice checks the shown amount",
+        "public PPK button -> /uslugi#ppk-development",
+        "trial length fixed to TRIAL_DAYS (ROOT read-only)"
+      ],
+      "not_changed": {
+        "headcount_at_checkout": "by spec: excess is not removed, only new activations are blocked (402); raised with the owner in the PR"
+      }
+    },
+    "round2": {
+      "commit": "69f72d37",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "partial": [
+        "AC6",
+        "AC11"
+      ],
+      "problems": "problems.md (section 2)",
+      "fixed": [
+        "stale paid plan orders are held for manual review instead of applied (planOrderStillMatches)",
+        "checkout refused while ROOT impersonates",
+        "stale copy: journal SEO pages, photo autofill texts, add-organization hint, /uslugi, Direct drafts",
+        "/uz hydration: prices via formatNumber; PPK table cell preformatted from the service price",
+        "ROOT plan/end edits mirrored to all organizations of the account; free clears the end; points input up to MAX_POINTS; /root shows account plan and points in use",
+        "bulk staff import uses the plan's seat text and limit",
+        "order page: no autopay on upgrades; recalculation message; downgrade wording",
+        "guest refusal does not reveal paid status; pending invoice only for the same plan, older ones cancelled",
+        "cabinet dates with year when not current; 'Перейти на год' label",
+        "held orders get their own receipt email and no closing document until resolved"
+      ],
+      "not_changed": {
+        "headcount_at_checkout": "by spec; for the owner",
+        "mercury_plans": "pre-existing gate (pro/business/demo), outside the three tariffs; for the owner"
+      }
+    },
+    "round3": {
+      "commit": "d28e7f5c",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "partial": [
+        "AC11"
+      ],
+      "problems": "problems.md (section 3)",
+      "fixed": [
+        "stale-order check by stored base snapshot vs subscription as of order creation (renewals after expiry apply; price changes ignored)",
+        "invoice reuse only when kind/amount/due date fit; applied payment cancels pending subscription invoices; cabinet ignores past-due invoices",
+        "ROOT form sends only changed fields (no end truncation)",
+        "held orders: heldAt + audit, no closing document, generic email, no lifetime binding; ROOT shows 'paid — needs review'",
+        "employee checkout respects points in use",
+        "schedule toast with year"
+      ],
+      "not_changed": {
+        "account_lock": "race window between two simultaneous confirmations for one account is milliseconds; a lock over the whole payment path is disproportionate"
+      }
+    },
+    "round4": {
+      "commit": "d5a54413",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "problems": "problems.md (section 4)",
+      "fixed": [
+        "upgrade/switch invoices valid only until the base term ends; a held paid order counts as a pending payment (no blocking gate, auto-transition waits)",
+        "a renewal paid after the account was moved to free applies from the payment date",
+        "employee checkout in the last day quotes and snapshots from the account subscription (appended to the end of the term)",
+        "payment term starts from the latest end across the account and all its organizations; the new end and plan are copied to every organization (paused/cancelled keep their plan)",
+        "ROOT resolves held payments: 'plan applied' clears heldAt, 'money refunded' marks refundedAt (document voided, accruals reversed); audit billing.order-resolved",
+        "ROOT refuses a paid-term date on the free plan (ORG_FREE_WITH_END); end-date hint fixed",
+        "/order return page and status API know held payments",
+        "auto-transition email says the paid subscription ended when it did",
+        "voluntary switch to free during the trial ends the trial",
+        "generic price-changed 409 text; history labels for held payments and past-due invoices"
+      ],
+      "fixed_in": "626b1ffd"
+    },
+    "round5": {
+      "commit": "626b1ffd",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "nits": [
+        "AC7",
+        "AC8"
+      ],
+      "problems": "problems.md (section 5)",
+      "fixed": [
+        "checkout refused from organizations outside the plan (demo, master cabinet, platform): 409 exempt on /order, Robokassa and invoices",
+        "a last-day 'new' order with a base snapshot applies after the account was moved to free",
+        "invoice PDF 'valid until' uses the order's invoiceDueAt",
+        "held payments: referral reward deferred to 'plan applied'; refund returns the order's points; dialog texts fixed",
+        "refunded orders labelled 'возвращён' in cabinet and ROOT",
+        "'plan applied' binds a lifetime discount",
+        "cabinet card shows the year for next-year ends",
+        "staff notice also on the mini app Today screen"
+      ],
+      "fixed_in": "e4362ca1"
+    },
+    "round6": {
+      "commit": "e4362ca1",
+      "verdict": "FAIL",
+      "failed": [
+        "AC5"
+      ],
+      "problems": "problems.md (section 6)",
+      "fixed": [
+        "employee/guest payer branch refuses organizations outside the plan (409 exempt); fulfillment holds a plan order for such an organization instead of touching the account",
+        "paid totals exclude refunded orders; refunded rows hide the points badge; in-app list greys refunded amounts",
+        "switch paid by invoice ends at the quoted end (credit computed at issue)",
+        "upgrade/switch invoices due at the end of the last full Moscow day before the term end; KP comment updated"
+      ],
+      "not_changed": {
+        "held_in_totals": "a held payment is money received; it leaves the total only when refunded"
+      },
+      "fixed_in": "e77bf601"
+    },
+    "round7": {
+      "commit": "e77bf601",
+      "verdict": "PASS",
+      "acceptance": "AC1-AC12 PASS",
+      "problems": "problems.md (section 7)",
+      "polished_after": [
+        "invoice due date in the cabinet card and email formatted in Moscow time (no hydration mismatch east of Moscow)",
+        "switch invoice line states the quoted end date",
+        "upgrade/switch invoice valid at least until the term end when the last full day is less than a day away",
+        "0 ₽ invoice refusal text"
+      ],
+      "not_changed": {
+        "order_page_last_day_label": "under a day in the customer's favour; display only",
+        "mercury_plans": "pre-existing gate, owner decision"
+      },
+      "polished_in": "657a9f98"
+    },
+    "final": {
+      "commit": "657a9f98",
+      "verdict": "PASS",
+      "acceptance": "AC1-AC12 PASS",
+      "problems": "problems.md (section «Финальная проверка»)",
+      "polished_after": [
+        "invoice deadline rule extracted to invoiceDeadline (src/lib/invoices/due.ts) with unit tests; term end used only for evening term ends",
+        "invoice card amounts and due date via shared formatNumber/formatDate (no uz hydration mismatch)",
+        "/order last-day label shows the end after the current term; no autopay consent at 0 ₽",
+        "invoice build header comment"
+      ],
+      "polished_in": "e68032ae"
+    },
+    "pre_merge": {
+      "commit": "27ea2661",
+      "verdict": "PASS",
+      "acceptance": "AC1-AC12 PASS",
+      "merge_with_master": "b2795561, clean",
+      "polished_after": [
+        "0 ₽ order: autopay consent inactive in the points block and the request even with ?recurring=1",
+        "invoices/due.ts comment",
+        "Robokassa ResultURL refuses notifications when Password #2 is not configured (empty-password signatures)"
+      ],
+      "deploy_schema_simulation": "apply-safe-schema on master schema: 2 additive ALTER TABLE ADD COLUMN statements committed; rerun 0"
+    }
+  },
+  "test_accounts_local": [
+    "trial@",
+    "standard@",
+    "premium@",
+    "free@",
+    "decision@ (needs decision after trial)",
+    "root@ (ROOT)"
+  ]
+}

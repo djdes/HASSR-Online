@@ -3,7 +3,8 @@ import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-bounda
 import { requireRoot } from "@/lib/auth-helpers";
 import { dateToMskInput } from "@/lib/promo/promotions";
 import { listPromotionAudit, listPromotionsForRoot } from "@/lib/promo/promotions-admin";
-import { fallbackTariffs, readTariffs, TARIFF_MONTHLY } from "@/lib/tariffs";
+import { planMonthlyRub } from "@/lib/tariff-plans";
+import { readPlanPricing } from "@/lib/tariffs";
 
 import { PromotionsClient } from "./promotions-client";
 
@@ -23,12 +24,13 @@ export async function generateMetadata() {
 export default async function RootPromotionsPage() {
   await requireRoot();
   const now = new Date();
-  const [promotions, history, tariffs] = await Promise.all([
+  const [promotions, history, pricing] = await Promise.all([
     listPromotionsForRoot(),
     listPromotionAudit(20, { includePresentationOrigin: true }),
-    readTariffs().catch(() => fallbackTariffs()),
+    readPlanPricing(),
   ]);
-  const monthly = tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
+  // Пример в превью — «Стандарт» от 1 990 ₽/мес (за год), как на витрине.
+  const baseRub = planMonthlyRub(pricing.rates, "standard", "year");
 
   const t = await getTranslations("rootPromotions");
   return (
@@ -45,7 +47,7 @@ export default async function RootPromotionsPage() {
         history={history}
         nowIso={now.toISOString()}
         nowMsk={dateToMskInput(now)}
-        baseRub={monthly.priceRub}
+        baseRub={baseRub}
       />
     </div>
     </DomainMessagesBoundary>

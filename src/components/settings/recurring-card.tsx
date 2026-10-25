@@ -26,11 +26,14 @@ export function RecurringCard({
   active,
   nextChargeAt,
   monthlyRub,
+  enableHref = "/settings/subscription",
 }: {
   active: boolean;
   /** Дата следующего списания = конец оплаченного периода. */
   nextChargeAt: string | null;
   monthlyRub: number;
+  /** Оплата того же тарифа с галочкой автосписаний (`…&recurring=1`). */
+  enableHref?: string;
 }) {
   const t = useTranslations("settingsUi.recurringCard");
   const locale = useLocale() as Locale;
@@ -122,7 +125,7 @@ export function RecurringCard({
           </button>
         ) : (
           <Link
-            href="/order?plan=monthly&recurring=1"
+            href={enableHref}
             className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
           >
             <CalendarClock className="size-4" />

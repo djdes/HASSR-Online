@@ -23,7 +23,7 @@ test("пустые факты: счётные блоки пустые, спра�
   const statuses = computePpkStatuses(emptyPpkFacts());
   for (const block of PPK_BLOCKS) {
     assert.ok(block.key in statuses, `нет статуса у ${block.key}`);
-    if (["program", "posters", "storage"].includes(block.key)) {
+    if (["program", "posters", "storage", "package"].includes(block.key)) {
       assert.equal(statuses[block.key], "info", block.key);
     } else {
       assert.equal(statuses[block.key], "empty", block.key);

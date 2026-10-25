@@ -4,39 +4,42 @@ import { createTranslator } from "next-intl";
 import ru from "@/i18n/messages/ru.json";
 import en from "@/i18n/messages/en.json";
 import uz from "@/i18n/messages/uz.json";
+import { FREE_MAX_JOURNALS } from "@/lib/tariff-plans";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
-import { billingExplanation, billingPhaseLabel } from "./tariff-presentation";
+import { trialExplanation, trialPhaseLabel } from "./tariff-presentation";
 
-test("billing phases preserve exact start/end boundaries in all locales", () => {
-  const settings = { startsAt: "2026-10-01T21:00:00Z", endsAt: "2026-10-31T21:00:00Z", graceDays: 3, transitionEnabled: true };
+const settings = { trialDays: 14, launchedAt: "2026-10-25T21:00:00Z", graceDays: 7, transitionEnabled: true };
+
+test("trial phases switch exactly at the launch moment in all locales", () => {
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = { ru, en, uz }[locale];
     const t = createTranslator({ locale, messages, namespace: "rootTariffs" });
-    const start = new Date(settings.startsAt).getTime(), end = new Date(settings.endsAt).getTime();
-    assert.equal(billingPhaseLabel(t, settings, start - 1), t("phaseBefore"));
-    for (const instant of [start, end - 1]) assert.equal(billingPhaseLabel(t, settings, instant), t("phaseDuring", { count: SUBSCRIPTION_MAX_USERS }));
-    assert.equal(billingPhaseLabel(t, settings, end), t("phaseAfterEnabled"));
-    assert.equal(billingPhaseLabel(t, { ...settings, transitionEnabled: false }, end), t("phaseAfterDisabled"));
-    assert.equal(billingExplanation(t), t("explanation", { subscriptionCount: SUBSCRIPTION_MAX_USERS, freeCount: FREE_MAX_USERS }));
-    assert.deepEqual(settings, { startsAt: "2026-10-01T21:00:00Z", endsAt: "2026-10-31T21:00:00Z", graceDays: 3, transitionEnabled: true });
+    const launch = new Date(settings.launchedAt).getTime();
+    assert.equal(trialPhaseLabel(t, settings, launch - 1), t("phaseBeforeLaunch", { date: "26.10.2026, 00:00" }));
+    assert.equal(trialPhaseLabel(t, settings, launch), t("phaseActive", { trialDays: 14 }));
+    assert.equal(trialPhaseLabel(t, { ...settings, transitionEnabled: false }, launch), t("phaseTransitionOff", { trialDays: 14 }));
+    assert.equal(
+      trialExplanation(t, settings),
+      t("trialExplanation", { trialDays: 14, freeEmployees: FREE_MAX_USERS, freeJournals: FREE_MAX_JOURNALS })
+    );
+    assert.deepEqual(settings, { trialDays: 14, launchedAt: "2026-10-25T21:00:00Z", graceDays: 7, transitionEnabled: true });
   }
 });
 
-test("Russian ordinary phase copy and seat plurals remain faithful", () => {
+test("Russian trial copy names the free limits and the launch date in Moscow time", () => {
   const t = createTranslator({ locale: "ru", messages: ru, namespace: "rootTariffs" });
-  assert.equal(t("phaseDuring", { count: 10 }), "Идёт бесплатный период — у всех подписка до 10 сотрудников");
-  for (const [count, suffix] of [[1, "сотрудника"], [2, "сотрудников"], [5, "сотрудников"], [21, "сотрудника"]] as const) {
-    assert.equal(t("phaseDuring", { count }), `Идёт бесплатный период — у всех подписка до ${count} ${suffix}`);
-  }
+  assert.equal(trialPhaseLabel(t, settings, Date.parse("2026-10-01T00:00:00Z")), "Тарифы запустятся 26.10.2026, 00:00 (МСК) — до этого всё как раньше");
+  assert.match(trialExplanation(t, settings), /14 дней/);
+  assert.match(trialExplanation(t, settings), /1 сотрудник и 1 журнал/);
 });
 
-test("whole secondary/forecast messages preserve zero counts and optional branch order", () => {
+test("price editor and counters messages keep their arguments", () => {
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = { ru, en, uz }[locale];
     const t = createTranslator({ locale, messages, namespace: "rootTariffs" });
-    for (const mode of ["free", "legacy", "both"]) assert.ok(t("secondary", { mode, freePeriod: 7, legacy: 8 }).endsWith("."));
-    assert.ok(t("forecast", { paid: 0, free: 2, waiting: 3 }).includes("0"));
-    assert.ok(t("tariffSaved", { title: "Подписка {custom}" }).includes("Подписка {custom}"));
+    assert.ok(t("paidHint", { standard: 0, premium: 2, legacy: 3 }).includes("2"));
+    assert.ok(t("trialHint", { count: 4 }).includes("4"));
+    assert.ok(t("tariffSaved", { title: "Стандарт {custom}" }).includes("Стандарт {custom}"));
+    assert.ok(t("yearTotal", { amount: "23 880 ₽" }).includes("23 880 ₽"));
   }
 });

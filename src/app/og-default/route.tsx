@@ -144,7 +144,7 @@ export async function GET() {
               display: "flex",
             }}
           >
-            Бесплатно навсегда
+            14 дней бесплатно
           </div>
           <div
             style={{

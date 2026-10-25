@@ -5,6 +5,7 @@ import {
   setDisabledPaperJournalIds,
 } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
 
 /**
  * PATCH /api/settings/journals
@@ -20,6 +21,9 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
  * клиент шлёт только disabledCodes, и трогать список бумажных бланков
  * в этом случае нельзя (иначе сохранение из старой вкладки молча
  * вернуло бы все скрытые бланки обратно).
+ *
+ * Бесплатный тариф после пробного — один включённый журнал: включить
+ * больше нельзя (402 со ссылкой на тариф), выключать можно всегда.
  */
 export async function PATCH(request: Request) {
   const auth = await requireApiAuth();
@@ -43,6 +47,8 @@ export async function PATCH(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
+  const journals = await checkJournalLimit(organizationId, codes, { source: "settings/journals" });
+  if (!journals.ok) return limitResponse(journals);
   const stored = await setDisabledJournalCodes(organizationId, codes);
 
   let storedPaper: string[] | undefined;

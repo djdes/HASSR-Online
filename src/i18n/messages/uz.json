@@ -118,6 +118,10 @@
       },
       "program": {
         "hint": "Ishlab chiqarish nazorati dasturi va HACCP rejasi"
+      },
+      "package": {
+        "hint": "Chop etish uchun namunaviy buyruqlar va o‘z hujjatlaringiz",
+        "lead": "Namunaviy to‘plam — tashkilotingiz rekvizitlari bilan buyruqlar: chop eting va to‘ldiring. Pastda — o‘z hujjatlaringiz: borlarini yuklang."
       }
     },
     "products": {
@@ -752,6 +756,24 @@
       "done": "Tayyor: qo'shildi {summary}",
       "nothing": "Hammasi allaqachon to'ldirilgan, hech narsa qo'shilmadi",
       "failed": "To'ldirib bo'lmadi"
+    },
+    "package": {
+      "typicalTitle": "Namunaviy hujjatlar to‘plami",
+      "typicalLead": "Tashkilot rekvizitlari bilan {count, plural, other {# ta buyruq}}; to‘ldiriladigan maydonlar — chiziqcha bilan.",
+      "downloadAll": "Butun to‘plamni yuklab olish (ZIP)",
+      "download": "PDF",
+      "lockedTitle": "Namunaviy to‘plam — «Premium» tarifida",
+      "lockedText": "Tashkilotingiz rekvizitlari bilan chop etishga tayyor buyruqlar. «Premium»ni ulang yoki obyektingiz uchun hujjatlarga buyurtma bering.",
+      "upgrade": "«Premium»ga o‘tish",
+      "ownTitle": "O‘z hujjatlaringiz",
+      "ownLead": "O‘z buyruqlaringiz, yo‘riqnomalar va reglamentlarni yuklang — ular shu yerda saqlanadi va tarif hajmiga kiradi.",
+      "storageClosed": "Hujjat yuklash — «Standart» (10 MB) va «Premium» (1 GB) tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin."
+    },
+    "individual": {
+      "title": "Obyektingiz uchun nazorat dasturi — individual",
+      "text": "Mutaxassis ishlab chiqarishingiz uchun nazorat dasturi va hujjatlar to‘plamini ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
+      "price": "{price} dan",
+      "cta": "Individual buyurtma berish"
     }
   },
   "inspectionDay": {
@@ -991,9 +1013,15 @@
     "select": "Tanlang…",
     "error": "Amalni bajarib bo‘lmadi. Qayta urinib ko‘ring.",
     "billing": {
-      "limit": "Bepul tarif {count, plural, one {# xodimni} other {# xodimni}} o‘z ichiga oladi.",
-      "limitAction": "Bepul tarif {count, plural, one {# xodimni} other {# xodimni}} o‘z ichiga oladi. Xodimlarni qo‘shish uchun obunani to‘lang.",
-      "pay": "To‘lash"
+      "limit": "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}.",
+      "limitAction": "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. Xodim qo‘shish uchun tarifni o‘zgartiring yoki nuqta qo‘shing.",
+      "pay": "Tarifni tanlash",
+      "pointLimit": "Tarifning barcha nuqtalari band — {count, plural, other {# ta nuqta}}. Har bir yangi nuqta — yana bitta tarif kabi: uni tarif sahifasida qo‘shing.",
+      "journalLimit": "Bepul tarifda — {count, plural, other {# ta jurnal}}. Barcha jurnallarni yuritish uchun «Standart» yoki «Premium»ni ulang.",
+      "storageFull": "Tarifdagi hujjatlar uchun joy tugadi. Keraksiz fayllarni o‘chiring yoki «Premium»ga o‘ting — barcha hujjatlar uchun 1 GB.",
+      "storageClosed": "Hujjat yuklash — «Standart» va «Premium» tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin.",
+      "featureLocked": "Bu imkoniyat — «Premium» tarifida.",
+      "unavailable": "Joriy tarifda mavjud emas."
     },
     "assistant": {
       "title": "AI yordamchi",
@@ -2474,7 +2502,7 @@
         "homeLabel": "WeSetup — bosh sahifa"
       },
       "marketing": {
-        "foreverFree": "Doim bepul · karta talab qilinmaydi",
+        "foreverFree": "{trialDays, number} {trialDays, plural, other {kun}} bepul · kartasiz",
         "instantAccount": "Hisobingiz darhol yaratiladi",
         "intro": "Hisobingizni ochish uchun elektron pochtangizni kiriting. Parolingiz xat orqali yuboriladi; tashkilot ma’lumotlarini keyinroq to‘ldirishingiz mumkin.",
         "whatsIncluded": "Bepul imkoniyatlar",
@@ -2552,7 +2580,7 @@
       "loginTitle": "Tizimga kirish",
       "loginDescription": "WeSetup tizimiga kiring. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP elektron jurnallari.",
       "registerTitle": "Hisob yaratish",
-      "registerDescription": "WeSetup’da bepul hisob yarating. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP elektron jurnallari; {users, number} nafargacha xodimi bor tashkilotlar uchun bepul."
+      "registerDescription": "WeSetup hisobini yarating. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish korxonalari uchun SanPiN va HACCP elektron jurnallari; {trialDays, number} {trialDays, plural, other {kun}} cheklovsiz bepul, kartasiz."
     },
     "apiErrors": {
       "loginCredentialsRequired": "Email va parolingizni kiriting",
@@ -2796,7 +2824,8 @@
             "pest-control": "Dezinseksiya va deratizatsiya",
             "lab": "Laboratoriya tekshiruvlari",
             "norm-documents": "Meʼyoriy hujjatlar",
-            "program": "IChN dasturi"
+            "program": "IChN dasturi",
+            "package": "Hujjatlar to‘plami"
           },
           "tabs": {
             "overview": "Umumiy",
@@ -3355,7 +3384,7 @@
       "subject": "WeSetup'ga xush kelibsiz!",
       "title": "Xush kelibsiz!",
       "greeting": "Assalomu alaykum, {name}!",
-      "organizationReady": "{organization} tashkiloti muvaffaqiyatli ro'yxatdan o'tdi. {employeeCount, plural, one {# xodim} other {# xodim}} uchun bepul, yozuvlar soni cheklanmagan — barcha funksiyalar darhol mavjud.",
+      "organizationReady": "{organization} tashkiloti ro‘yxatdan o‘tdi. {trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar va imkoniyatlar cheklovsiz, karta kerak emas.",
       "gettingStarted": "Boshlash uchun:",
       "stepAreas": "Sozlamalar → Hududlar bo'limida ishlab chiqarish hududlarini qo'shing",
       "stepEquipment": "Sozlamalar → Uskunalar bo'limida uskunalarni qo'shing",
@@ -3431,7 +3460,8 @@
     "paymentReceipt": {
       "subject": {
         "newClient": "To‘lov qabul qilindi — hisobingizni sozlashni yakunlang",
-        "renewal": "To‘lov qabul qilindi — obuna uzaytirildi"
+        "renewal": "To‘lov qabul qilindi — obuna uzaytirildi",
+        "held": "To‘lov qabul qilindi — uni qo‘lda qo‘llaymiz"
       },
       "greeting": "Assalomu alaykum!",
       "thankYou": "To‘lovingizni oldik. Rahmat!",
@@ -3441,6 +3471,7 @@
       "closingDocumentDisclosure": "Yakunlovchi hujjat: № {documentNumber} universal topshirish hujjati (UPD) faksimile imzosi bilan PDF shaklida ilova qilindi. U kabinetingizdagi “Sozlamalar → Obuna → To‘lovlar tarixi” bo‘limida ham mavjud. Qo‘lda qo‘yilgan imzoli asl nusxa yoki elektron hujjat almashinuvi (EDI) kerak bo‘lsa, ushbu xatga javob bering.",
       "newClientNextStep": "Sozlashni yakunlash uchun parol o‘rnating va tashkilot nomini kiriting — bu taxminan bir daqiqa vaqt oladi.",
       "renewalNextStep": "Tashkilotingiz obunasi uzaytirildi. Boshqa hech narsa qilishingiz shart emas.",
+      "heldNextStep": "Bu to‘lovni avtomatik qo‘llab bo‘lmadi: buyurtma rasmiylashtirilgandan keyin obuna o‘zgardi yoki summa hisoblangan to‘langan muddat tugadi. To‘lovni bir ish kuni ichida qo‘llaymiz yoki pulni qaytaramiz — hech narsa qilish shart emas.",
       "newClientAction": "Sozlashni yakunlash",
       "renewalAction": "Kabinetga kirish",
       "support": "To‘lov yoki pulni qaytarish bo‘yicha savollar: support@wesetup.ru.",
@@ -3542,7 +3573,7 @@
       "paperlessBody": "WeSetup’da xodimlar shablondagi ayni QR-kod orqali telefonda to‘ldiradi. Qog‘oz kerak emas; smena belgilashni unutsa, eslatmalar yordam beradi. {freeTier}.",
       "startUsingAction": "Jurnalni WeSetup’da yuritish",
       "disclaimer": "Bu xat shablonni wesetup.ru saytidan yuklab olayotganda ushbu manzil ko‘rsatilgani uchun yuborildi. Agar uni siz yuklab olmagan bo‘lsangiz, xatga javob bermang.",
-      "freeTier": "{count, number} nafargacha bepul"
+      "freeTier": "{count, number} {count, plural, other {kun}} bepul, kartasiz"
     }
   },
   "journalWidgets": {
@@ -5309,7 +5340,7 @@
   "landing": {
     "metadata": {
       "title": "SanPiN va HACCP elektron jurnallari onlayn — WeSetup",
-      "description": "Umumiy ovqatlanish va ishlab chiqarish uchun {journalCount, number} ta oziq-ovqat xavfsizligi elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. {freeUsers, number} nafar xodim uchun bepul.",
+      "description": "Umumiy ovqatlanish va ishlab chiqarish uchun {journalCount, number} ta oziq-ovqat xavfsizligi elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. {trialDays, number} {trialDays, plural, other {kun}} bepul — kartasiz.",
       "keywords": "elektron jurnallar, SanPiN jurnallari, HACCP jurnallari, onlayn HACCP, xodimlar gigiyenasi jurnali, oziq-ovqat sifati jurnali, harorat jurnali, QR jurnal, QR orqali jurnal to‘ldirish, Rospotrebnadzor, umumiy ovqatlanish",
       "blogFeed": "WeSetup — blog",
       "updatesFeed": "WeSetup — yangiliklar"
@@ -5343,8 +5374,6 @@
     "popularLogsIntro": "Eng ko‘p yuritiladigan jurnallar:",
     "allLogs": "Barcha ",
     "logTemplates": "Jurnal blankalari: PDF va Word",
-    "freeLogsPayAutomation": "Barcha jurnallar bepul. Avtomatlashtirish uchun to‘lang.",
-    "forever": "muddatsiz",
     "inspectionPdfNoCard": "Tekshiruv uchun PDF — karta talab qilinmaydi",
     "currentPlan": "Amaldagi tarif",
     "startFree": "Bepul boshlash",
@@ -5360,7 +5389,7 @@
     "refundTerms": "Shartlar oferta shartnomasida keltirilgan",
     "faqHeading": "Ko‘p beriladigan savollar",
     "finalCtaHeading": "QR-stikerni joylashtiring — jurnallar uskuna yonida yuritiladi",
-    "finalCtaDetails": "Bepul tarif muddatsiz va bank kartasisiz ishlaydi. Stikerlarni kabinetdan chop eting; xodimlarga hech narsa o‘rnatish kerak emas.",
+    "finalCtaDetails": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va bank kartasisiz. Stikerlarni kabinetdan chop eting; xodimlarga hech narsa o‘rnatish kerak emas.",
     "qrCameraInstruction": "Xodim jurnalni qanday ochishini ko‘rish uchun telefon kamerangizni shu yerga qarating.",
     "faq": {
       "refund": {
@@ -5451,20 +5480,16 @@
     },
     "pricing": {
       "journalCountLabel": "{journalCount, number} {journalCount, plural, other {ta jurnal}}",
-      "freeSeatsLabel": "{employeeCount, number} {employeeCount, plural, other {nafar xodim}}",
-      "freePlanTitle": "{employeeCount, number} {employeeCount, plural, other {nafar xodim}} uchun bepul tarif",
-      "freePlanNote": "{employeeCount, number} {employeeCount, plural, other {nafar xodim}} uchun bepul, yozuvlar soni cheklanmagan.",
-      "largeTeamNote": "{employeeLimit, number} nafardan ortiq har bir xodim uchun oyiga {extraUserPrice, number} RUB qo‘shiladi.",
+      "freePlanTitle": "{trialDays, number} {trialDays, plural, other {kun}} bepul: barcha jurnallar cheklovsiz, kartasiz",
       "freePlanAllJournals": "SanPiN va HACCP bo‘yicha barcha {journalCount, number} {journalCount, plural, other {ta jurnal}}",
-      "subscriptionEmployeeLimit": "{employeeLimit, number} nafargacha xodim",
-      "heroPhrase": "{employeeCount, number} {employeeCount, plural, other {nafar xodim}} uchun bepul, undan keyin oyiga <price>{amount}</price> dan"
+      "heroPhrase": "{trialDays, number} {trialDays, plural, other {kun}} bepul, undan keyin oyiga <price>{amount}</price> dan"
     },
     "seo": {
       "softwareDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. Uskunadagi QR-stikerni skanerlab, PIN-kodni kiriting va jurnalga yozuv kiriting. Rospotrebnadzor tekshiruvlari uchun PDF hujjatlar.",
       "productDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang.",
-      "freeOfferDescription": "{employeeCount, number} {employeeCount, plural, other {nafar xodim}} uchun; barcha {journalCount, number} {journalCount, plural, other {ta jurnal}}, foydalanish muddati cheklanmagan",
-      "subscriptionDefaultName": "Obuna",
-      "subscriptionDescription": "Obunaga {employeeLimit, number} nafargacha xodim kiradi, undan ortiq har bir xodim uchun oyiga {extraUserPrice, number} RUB; IoT datchiklari va avtomatik yozuvlar."
+      "freeOfferDescription": "Barcha {journalCount, number} {journalCount, plural, other {ta jurnal}} xodimlar va nuqtalar bo‘yicha cheklovsiz — faollashtirilgandan boshlab {trialDays, number} {trialDays, plural, other {kun}}, karta bog‘lash shart emas",
+      "standardDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha jurnallar, jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB. Narx — yillik to‘lovda oyiga.",
+      "premiumDescription": "«Standart»dagi hammasi, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga."
     },
     "journals": {
       "sectionLead": "Kundalik sanitariya tekshiruvlari va HACCP yozuvlarining to‘liq to‘plami uchun {journalCount, number} ta elektron jurnal. Mos jurnallar, buyruqlar va tekshiruv ro‘yxatlarini ko‘rish uchun faoliyat sohasini tanlang."
@@ -5527,7 +5552,8 @@
           "text": "Lavozimlar, PIN va har bir xodimning jurnallari: xodim faqat o‘zi to‘ldiradiganini ko‘radi."
         }
       }
-    }
+    },
+    "pricingTitle": "Uchta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz"
   },
   "landingComponents": {
     "heroEmail": {
@@ -5545,7 +5571,7 @@
       "startFree": "Bepul boshlash"
     },
     "equipment": {
-      "title": "+ Uskunalar",
+      "title": "«Premium» uchun uskunalar",
       "bundlePrice": "Uskunalar to‘plami narxi {price} ₽ dan boshlanadi.",
       "oneTime": "Bir martalik to‘lov",
       "sensorBenefit": "Muzlatkich datchiklari haroratni avtomatik qayd etadi",
@@ -5554,12 +5580,143 @@
       "collapse": "Tanlovni yopish",
       "choose": "Uskunalarni tanlash",
       "calculatorTitle": "Uskunalarni tanlash",
-      "calculatorDescription": "Kerakli jihozlarni tanlang — narx qayta hisoblanadi. Planshetingiz yoki datchiklaringiz bormi? Belgini olib tashlasangiz, faqat obuna narxi qoladi."
+      "calculatorDescription": "Keraklisini tanlang — narx qayta hisoblanadi. Planshet yoki datchiklar bormi? Belgini olib tashlang, faqat «Premium» tarifi qoladi.",
+      "premiumNote": "Harorat datchiklari va planshet hisobingizga ulangan holda keladi: ko‘rsatkichlar jurnallarga o‘zi yoziladi. Yetkazib berish va ulash — «Premium» tarifida."
     },
     "testimonials": {
       "title": "Mijozlarimiz fikri",
       "originalLanguageNote": "Mijozlar fikrlari asl tilida ko‘rsatiladi.",
       "ratingLabel": "5 balldan {rating, number} ball."
+    },
+    "tariffs": {
+      "toggle": {
+        "label": "To‘lov davri",
+        "month": "Oyma-oy",
+        "year": "Yillik",
+        "save": "−{percent, number} %"
+      },
+      "pointsPicker": {
+        "label": "Nuqtalar",
+        "decrease": "Nuqtani olib tashlash",
+        "increase": "Nuqta qo‘shish",
+        "hint": "Har bir nuqta — yana bitta tarif kabi; {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma"
+      },
+      "tiers": {
+        "free": {
+          "name": "Bepul",
+          "tagline": "Hammasini cheklovsiz sinab ko‘ring — {trialDays, number} kun, kartasiz"
+        },
+        "standard": {
+          "name": "Standart",
+          "tagline": "Har bir nuqtaga 25 kishigacha jamoa va barcha jurnallar"
+        },
+        "premium": {
+          "name": "Premium",
+          "tagline": "Avtomatlashtirish: datchik fotosi, uskunalar va namunaviy hujjatlar"
+        }
+      },
+      "badges": {
+        "popular": "Ommabop",
+        "current": "Joriy",
+        "trial": "Sinov: {days, plural, other {# kun}}"
+      },
+      "price": {
+        "perMonth": "/oy",
+        "freeNote": "{trialDays, number} kun, keyin 1 xodim va 1 jurnal",
+        "yearTotal": "yiliga {amount}",
+        "yearSavings": "tejash {amount}",
+        "monthly": "har oy to‘lanadi",
+        "forPoints": "{count, plural, other {# ta nuqta}} uchun",
+        "pointsDiscount": "nuqtalar uchun −{percent, number} %"
+      },
+      "includes": {
+        "free": "Nimalar kiradi:",
+        "standard": "«Bepul»dagi hammasi, qo‘shimcha:",
+        "premium": "«Standart»dagi hammasi, qo‘shimcha:"
+      },
+      "features": {
+        "trialAll": "{trialDays, number} kun — barcha jurnallar, xodimlar va nuqtalar cheklovsiz",
+        "noCard": "Karta bog‘lash shart emas",
+        "afterTrial": "Keyin bepul: {employees, number} xodim va {journals, number} jurnal — o‘zingiz belgilaysiz",
+        "employees": "Har bir nuqtaga {count, number} tagacha xodim",
+        "allJournals": "SanPiN va HACCP jurnallari, Telegram-bot va tekshiruv uchun PDF",
+        "storageOrders": "Jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB",
+        "ownPackage": "«Hujjatlar to‘plami» bo‘limi — o‘zingiz to‘ldirasiz",
+        "storageAll": "Barcha hujjatlar uchun {gb, number} GB",
+        "photoAutofill": "Harorat datchigi fotosi — ko‘rsatkichlar o‘zi to‘ladi",
+        "equipmentConnect": "Uskunani ulash: mustaqil yoki obuna bo‘yicha",
+        "equipmentDelivery": "Ulangan uskunani yetkazib berish — kabinetda buyurtma",
+        "typicalPackage": "Namunaviy hujjatlar to‘plami: chop etib to‘ldiring"
+      },
+      "cta": {
+        "startFree": "Bepul boshlash",
+        "trialNow": "Sinov davri ketmoqda",
+        "current": "Joriy tarif",
+        "unavailable": "Hozir mavjud emas",
+        "choose": "«{name}»ni tanlash",
+        "renew": "Uzaytirish — {amount}",
+        "upgrade": "Oshirish — {amount} qo‘shimcha to‘lov",
+        "switch": "O‘tish — {amount}",
+        "switchYear": "Yillik to‘lovga o‘tish — {amount}",
+        "newPlan": "Ulash — {amount}",
+        "scheduled": "{date} dan o‘tish",
+        "scheduledDone": "{date} dan o‘tiladi",
+        "cancelSchedule": "O‘tishni bekor qilish"
+      },
+      "explain": {
+        "upgrade": "Darhol, {days, plural, other {qolgan # kun}} uchun qo‘shimcha to‘lov: davr uchun farq {difference}. Tugash sanasi o‘zgarmaydi",
+        "switch": "Darhol: {price} dan foydalanilmagan qoldiq {credit} ayriladi",
+        "scheduled": "To‘langan muddat tugagach — hozir to‘lash shart emas"
+      },
+      "note": {
+        "trial": "{trialDays, number} kun — «Premium»ning barcha imkoniyatlari kartasiz; keyin bepul 1 xodim va 1 jurnal yoki pullik tarif.",
+        "switch": "Tarifni oshirish — darhol, qolgan kunlar uchun qo‘shimcha to‘lov bilan; pasaytirish — to‘langan muddat tugagach."
+      },
+      "ppk": {
+        "title": "Ishlab chiqarish nazorati dasturi — individual",
+        "text": "Mutaxassis obyektingiz uchun dastur ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
+        "price": "{price} dan",
+        "cta": "Individual buyurtma berish"
+      },
+      "table": {
+        "title": "Tariflarni solishtirish",
+        "feature": "Nimalar kiradi",
+        "yes": "Bor",
+        "no": "Yo‘q"
+      },
+      "groups": {
+        "team": "Jamoa va nuqtalar",
+        "journals": "Jurnallar",
+        "documents": "Hujjatlar",
+        "equipment": "Uskunalar va avtomatlashtirish"
+      },
+      "rows": {
+        "employees": "Xodimlar",
+        "points": "Nuqtalar",
+        "journals": "SanPiN va HACCP jurnallari",
+        "telegram": "Telegram-bot va QR-stikerlar",
+        "pdf": "Tekshiruv uchun PDF",
+        "storage": "Hujjat yuklash",
+        "ownDocuments": "«Hujjatlar to‘plami»da o‘z hujjatlaringiz",
+        "typicalPackage": "Namunaviy hujjatlar to‘plami",
+        "ppkIndividual": "Obyektingiz uchun nazorat dasturi",
+        "photoAutofill": "Datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish",
+        "equipmentConnect": "Uskuna va IoT-datchiklarni ulash",
+        "equipmentDelivery": "Ulangan uskunani yetkazib berish"
+      },
+      "cells": {
+        "employeesFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
+        "employeesPaid": "Har bir nuqtaga {count, number}",
+        "pointsFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
+        "pointsPaid": "Tarifda 1 ta; keyingisi yana bitta tarif kabi, {from, number} tadan — har biriga −{percent, number} %",
+        "journalsFree": "{trialDays, number} kun — hammasi, keyin {count, number}",
+        "journalsAll": "Hammasi",
+        "storageFree": "{trialDays, number} kun — 1 GB, keyin yopiq",
+        "storageStandard": "{mb, number} MB: jurnal buyruqlari va o‘z hujjatlaringiz",
+        "storagePremium": "Barcha hujjatlar uchun {gb, number} GB",
+        "trialOnly": "Faqat {trialDays, number} kunlik sinov davrida",
+        "ppkFrom": "Individual, {price} dan"
+      }
     }
   },
   "publicNavigation": {
@@ -5923,7 +6080,7 @@
       "blogBreadcrumb": "Blog",
       "readMinutes": "{minutes, number} daq.",
       "ctaTitle": "Bu jurnalni WeSetup’da bepul yuriting",
-      "ctaDescription": "SanPiN va HACCP bo‘yicha {journalCount, plural, one {barcha # ta jurnal} other {barcha # ta jurnal}} bitta kabinetda. {employeeCount, plural, one {# nafar xodim} other {# nafar xodim}} uchun bepul tarif muddatsiz, karta bog‘lash shart emas.",
+      "ctaDescription": "{journalCount, plural, other {Barcha # ta SanPiN va HACCP jurnali}} bitta kabinetda. {trialDays, number} {trialDays, plural, other {kun}} cheklovsiz bepul, karta bog‘lash shart emas.",
       "ctaButton": "Bepul boshlash",
       "journalsHeading": "Maqolada tilga olingan jurnallar",
       "relatedHeading": "O‘qishni davom ettiring"
@@ -6819,9 +6976,9 @@
     },
     "pricing": {
       "title": "Uskunalar bilan",
-      "intro": "Obuna narxi o‘zgarmaydi — tayyor to‘plamni tanlang",
+      "intro": "«Premium» tarifi va tayyor uskunalar to‘plami",
       "popular": "Ommabop",
-      "subscription": "Obuna",
+      "subscription": "«Premium» tarifi",
       "perMonth": "/oyiga",
       "bundleSummary": "{name} to‘plami",
       "oneTime": "Bir martalik",
@@ -6845,7 +7002,7 @@
           "hook": "Asosiy muzlatkich uchun bitta datchik, ishlab chiqarish xonasi uchun termo-gigrometr va smena uchun NFC kirish."
         },
         "standard": {
-          "name": "Standart",
+          "name": "Oshxona",
           "forWhom": "Faol oshxona va muntazam tekshiruvlar",
           "hook": "Barcha muhim muzlatkichlarga datchiklar, oshxona uchun planshet va butun smena uchun breloklar."
         },
@@ -7473,7 +7630,7 @@
       "restoredOne": "Xodim arxivdan qaytarildi",
       "restoredMany": "Arxivdan qaytarildi: {count, number} nafar {count, plural, other {xodim}}",
       "archivedSince": "arxivga o‘tkazilgan sana: {date}",
-      "paySubscription": "Obunani to‘lash",
+      "paySubscription": "Tarifni o‘zgartirish",
       "restore": "Qaytarish",
       "restoreAll": "Hammasini qaytarish"
     },
@@ -9829,7 +9986,7 @@
           "balanceRetained": "Tashkilotdagi ballar balansi ({amount}) o‘zida qoladi.",
           "accountSeats": "Tashkilot xodimlari ({organizationCount, number}) hisobingizdagi joylarni band qilmaydi: oldin {before, number} ta, keyin {after, number} ta.",
           "organizationSeats": "Tashkilotda {count, plural, one {# nafar xodim} other {# nafar xodim}} bor.",
-          "seatLimit": "Tashkilotning to‘langan muddati yo‘q, bepul tarif esa {limit, number} nafar xodim uchun. Barcha xodimlarni faol saqlash uchun mijoz obunani to‘lashi kerak.",
+          "seatLimit": "Tashkilotning to‘langan muddati yo‘q, bepul tarif esa — {limit, plural, other {# nafar xodim}}. Barcha xodimlar ishda qolishi uchun mijoz «Standart» yoki «Premium»ni ulashi kerak.",
           "rewardIntro": "Amaldagi qoidalar bo‘yicha mukofot:",
           "rewardsByProgram": "Mukofotlar hamkorlik dasturining amaldagi qoidalariga muvofiq beriladi.",
           "subscriptionReward": "O‘tkazilgandan keyingi birinchi to‘lovdan boshlab {months, number} oy davomida har bir obuna to‘lovining {percent, number}% i.",
@@ -14670,7 +14827,7 @@
         "inviteUsed": "Bu taklifdan allaqachon foydalanilgan.",
         "inviteExpired": "Taklif muddati tugagan. Yangi havola so‘rang.",
         "alreadyLinkedInvite": "Bu Telegram boshqa xodim hisobiga ulangan. Boshqa hisobdan foydalaning.",
-        "inviteSeatLimit": "Tashkilotning bepul tarifida {limit, plural, other {# nafar xodim}} uchun joy bor. Rahbaringizdan tarifni yangilashni so‘rang, keyin qayta urinib ko‘ring."
+        "inviteSeatLimit": "Tashkilot tarifining barcha o‘rinlari band ({limit, plural, other {# nafar xodim}}). Rahbardan tarifni o‘zgartirish yoki nuqta qo‘shishni so‘rang va qayta urinib ko‘ring."
       },
       "commands": {
         "start": "🏠 WeSetup’ni ochish",
@@ -14853,7 +15010,7 @@
       "kept": "Suratdan {value} aniqlandi. Siz kiritgan qiymat saqlandi.",
       "useRecognized": "Shu qiymatni qo‘yish",
       "button": "Surat",
-      "paidOnly": "Suratdan avtomatik kiritish pullik tariflarda mavjud",
+      "paidOnly": "Suratdan avtomatik kiritish «Premium» tarifida mavjud",
       "plans": "Tariflar",
       "unreadable": "Raqamlarni aniqlab bo‘lmadi. Qo‘lda kiriting.",
       "checkMark": "suratdan — tekshiring",
@@ -15564,7 +15721,7 @@
     "page": {
       "title": "Platforma ko‘rsatkichlari",
       "summary": "Barcha tashkilotlardagi faollik, mijozlarni saqlab qolish va tushum.",
-      "pricing": "Hisoblangan MRR quoteSubscription(activeUsers) bo‘yicha: {freeSeats, number} nafargacha xodim uchun 0 ₽, {subscriptionSeats, number} nafargacha — bitta obuna, undan keyin har bir xodim uchun +{extraSeatPrice, number} ₽. Bepul tashkilotlar uchun haqiqiy MRR — 0. Trend — oxirgi 7 kunlik faollikning avvalgi haftaga nisbatan foizdagi o‘zgarishi.",
+      "pricing": "Hisoblangan MRR — xodimlar soniga kerak bo‘lgan nuqtalar uchun yillik «Standart»ning oylik narxi (har bir nuqtaga {seatsPerPoint, number} nafargacha xodim); haqiqiysi — hisobning to‘langan tarifi oyiga, to‘lamaganlar uchun 0. Trend — 7 kunlik faollikning oldingi haftaga nisbatan o‘zgarishi, %.",
       "tableHelp": "Email — tashkilotni ro‘yxatdan o‘tkazgan shaxsning manzili. Saralash uchun ustun sarlavhasini bosing yoki manzil va nomning bir qismi bo‘yicha qidiring. Yozuvlar sonini bossangiz, tashkilot yuritayotgan jurnallar va ularni kim to‘ldirayotgani ko‘rsatiladi.",
       "ipHistory": "Kirish IP manzillari {since} sanasidan beri yoziladi. Avvalgi manzillar amallar jurnalidan olingan. Shu vaqtdan beri tizimga kirmagan va ma’muriy amal bajarmagan foydalanuvchilarda bu ustun bo‘sh bo‘ladi."
     },
@@ -15619,8 +15776,10 @@
     "plans": {
       "free": "Bepul",
       "trial": "Bepul (trial)",
-      "paid": "Obuna",
-      "pro": "Pro"
+      "paid": "Obuna (avvalgi tarif)",
+      "pro": "Pro",
+      "standard": "Standart",
+      "premium": "Premium"
     },
     "relative": {
       "justNow": "hozirgina",
@@ -15690,7 +15849,7 @@
       "notFound": "Imkoniyat topilmadi — WeSetup",
       "breadcrumb": "Imkoniyatlar",
       "trialHeading": "Bu imkoniyatni sinab ko‘ring",
-      "trialDescription": "Bepul tarif doimiy va barcha imkoniyatlar hamda integratsiyalarni o‘z ichiga oladi. Karta bog‘lash shart emas.",
+      "trialDescription": "{trialDays, number} {trialDays, plural, other {kun}} bepul — barcha imkoniyatlar va integratsiyalar, karta bog‘lash shart emas.",
       "trialButton": "Sinab ko‘rish",
       "moreFeatures": "Boshqa imkoniyatlar",
       "home": "Bosh sahifa",
@@ -15850,7 +16009,7 @@
       "calc": "Kalkulyator"
     },
     "fallbackTitle": "SanPiN va HACCP elektron jurnallari",
-    "freeForever": "Doimiy bepul"
+    "freeForever": "14 kun bepul"
   },
   "telegramManagerOperations": {
     "capa": {
@@ -15911,13 +16070,19 @@
       "entries": "Yozuvlar"
     },
     "subscription": {
-      "title": "Obuna",
+      "title": "Tarif",
       "plan": "Tarif",
       "until": "Amal qilish muddati",
       "token": "Tashqi API tokeni",
       "tokenIssued": "berilgan",
       "tokenMissing": "berilmagan",
-      "paidTotal": "Jami to‘langan"
+      "paidTotal": "Jami to‘langan",
+      "cycle": "To‘lov davri",
+      "cycleMonth": "oyma-oy",
+      "cycleYear": "yillik",
+      "points": "To‘langan nuqtalar",
+      "pointsValue": "{count, plural, other {# ta nuqta}}",
+      "trialEnds": "Sinov muddati"
     },
     "payments": {
       "title": "To‘lovlar tarixi",
@@ -15946,16 +16111,19 @@
     },
     "settings": {
       "name": "Nomi",
-      "noExpiry": "Muddatsiz bo‘lsa, bo‘sh qoldiring",
+      "noExpiry": "Bo‘sh — to‘langan muddat yo‘q. «Bepul» tarifda muddat belgilanmaydi",
       "save": "Saqlash",
       "saved": "Saqlandi",
-      "failed": "Saqlab bo‘lmadi"
+      "failed": "Saqlab bo‘lmadi",
+      "trialHint": "Sinovning oxirgi kuni (Moskva vaqti). Bo‘sh — hisob yaratilganidan 14 kun"
     },
     "plans": {
       "free": "Bepul",
-      "paid": "Pullik",
+      "paid": "Obuna (avvalgi tarif)",
       "paused": "Vaqtincha to‘xtatilgan",
-      "cancelled": "Bekor qilingan"
+      "cancelled": "Bekor qilingan",
+      "standard": "Standart",
+      "premium": "Premium"
     },
     "impersonate": {
       "enter": "{name} nomidan kirish",
@@ -16017,6 +16185,8 @@
     },
     "orders": {
       "paid": "to‘langan",
+      "held": "to‘langan — ko‘rib chiqish kerak",
+      "refunded": "qaytarilgan",
       "expired": "muddati tugagan",
       "cancelled": "bekor qilingan",
       "pendingInvoice": "hisob bo‘yicha to‘lov kutilmoqda",
@@ -16043,6 +16213,19 @@
       "cancelled": "{orderId}-sonli hisob bekor qilindi",
       "failed": "Hisob bo‘yicha amalni bajarib bo‘lmadi"
     },
+    "held": {
+      "applied": "Tarif qo‘llandi",
+      "refunded": "Pul qaytarildi",
+      "appliedTitle": "№ {orderId} buyurtma to‘lovi qo‘llandimi?",
+      "appliedDescription": "Tarif yuqoridagi obuna shakli orqali qo‘lda o‘rnatilgach belgilang. Buyurtma oddiy to‘lovga aylanadi: u bo‘yicha UPD chiqariladi, umrbod chegirma bog‘lanadi va referal mukofoti, agar tegishli bo‘lsa, hisoblanadi; bepul tarifga avtomatik o‘tish endi bu to‘lovni kutmaydi.",
+      "confirmApplied": "Ha, tarif qo‘llandi",
+      "refundedTitle": "№ {orderId} buyurtma bo‘yicha pul qaytarildimi?",
+      "refundedDescription": "Kassa yoki bank orqali qaytarilgandan keyin belgilang. Buyurtma qaytarilgan deb belgilanadi: UPD chiqarilmaydi, hamkorlik hisoblari bekor qilinadi, to‘lovga sarflangan ballar tashkilot balansiga qaytadi. Belgini bekor qilib bo‘lmaydi.",
+      "confirmRefunded": "Ha, pul qaytarildi",
+      "appliedDone": "№ {orderId} buyurtma: to‘lov ko‘rib chiqildi — tarif qo‘llandi",
+      "refundedDone": "№ {orderId} buyurtma: qaytarish belgilandi",
+      "failed": "To‘lov ko‘rib chiqilganini belgilab bo‘lmadi"
+    },
     "errors": {
       "organizationMissing": "Tashkilot topilmadi",
       "nameShort": "Nom juda qisqa",
@@ -16057,7 +16240,11 @@
       "commentRequired": "Sababini yozing",
       "insufficientBalance": "Balansda faqat {amount, number} ₽ bor; bundan ko‘p yechib bo‘lmaydi",
       "orderMissing": "Topilmadi",
-      "cancelUnpaidOnly": "Faqat to‘lanmagan hisobni bekor qilish mumkin"
+      "cancelUnpaidOnly": "Faqat to‘lanmagan hisobni bekor qilish mumkin",
+      "pointsInvalid": "Nuqtalar soni — 1 dan 50 gacha",
+      "noAccount": "Tashkilotning hisobi yo‘q — davr, nuqtalar va sinovni saqlab bo‘lmaydi",
+      "notHeld": "Faqat ko‘rib chiqishni kutayotgan to‘lovni belgilash mumkin",
+      "freeWithEnd": "«Bepul» tarifda to‘langan muddat yo‘q — sanani belgilash uchun «Standart», «Premium» yoki «Obuna (avvalgi tarif)»ni tanlang"
     }
   },
   "miniHome": {
@@ -16112,7 +16299,7 @@
     },
     "cta": {
       "title": "Barcha jurnallarni bepul sinab ko‘ring",
-      "description": "Barcha jurnallar bepul tarifda doimiy mavjud, karta ulash shart emas. Ko‘proq xodim yoki avtomatlashtirish kerak bo‘lsa, obunani bir daqiqada ulash mumkin.",
+      "description": "14 kun barcha jurnallar cheklovsiz va kartasiz. Keyin — bepul 1 xodim va 1 jurnal yoki «Standart» va «Premium» tariflari.",
       "try": "Sinab ko‘rish"
     },
     "detailCommon": {
@@ -16130,7 +16317,7 @@
       "benefitsHeading": "WeSetup qanday yordam beradi",
       "codeLabel": "Jurnal kodi",
       "tryFree": "Bepul sinab ko‘rish",
-      "freeDescription": "Barcha jurnallar bepul tarifda mavjud — vaqt cheklovisiz va kartasiz.",
+      "freeDescription": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va kartasiz.",
       "relatedHeading": "O‘xshash jurnallar",
       "faqHeading": "Savollar va javoblar",
       "howToTitle": "Qanday to‘ldiriladi: {title}",
@@ -16976,7 +17163,7 @@
   "publicJournalDetailSeo": {
     "hygiene": {
       "title": "Gigiyena jurnali — umumiy ovqatlanish uchun namuna",
-      "description": "SanPiN 2.3/2.4.4282-26 bo‘yicha gigiyena jurnali: avtomatik to‘ldirish, ishga ruxsat, harorat tekshiruvi, Rospotrebnadzor uchun PDF. Doim bepul.",
+      "description": "SanPiN 2.3/2.4.4282-26 bo‘yicha gigiyena jurnali: avtomatik to‘ldirish, ishga ruxsat, harorat tekshiruvi, Rospotrebnadzor uchun PDF. 14 kun bepul.",
       "keywords": {
         "item0": "gigiyena jurnali",
         "item1": "xodimlarni ko‘rikdan o‘tkazish jurnali",
@@ -19670,38 +19857,43 @@
   },
   "rootTariffs": {
     "pageTitle": "Platforma tariflari",
-    "pageDescription": "Narxlar darhol kuchga kiradi: bosh sahifa, tariflar sahifasi va to‘lov tugmalari har bir so‘rovda ushbu qiymatlarni o‘qiydi. Tarif kalitini o‘zgartirish mumkin emas: to‘lov tugmalari va mavjud buyurtmalar unga murojaat qiladi.",
+    "pageDescription": "Narxlar darhol qo‘llanadi: lending, tariflar sahifasi, kabinet va to‘lov bu qiymatlarni har bir so‘rovda o‘qiydi. Narx — oyiga; yillik tarif 12 oy uchun birdaniga yechiladi. Tarif kalitini o‘zgartirib bo‘lmaydi — unga to‘lov tugmalari va yaratilgan buyurtmalar tayanadi.",
     "tariffSaved": "«{title}» tarifi yangilandi",
     "active": "Sotuvda",
     "inactive": "Sotuvdan olingan",
     "name": "Nomi",
     "price": "Narxi, ₽",
     "periodDays": "Muddat, kun",
-    "equipmentNote": "Ushbu tarif narxi faqat obunani qamrab oladi. Uskuna narxi koddagi narxlar ro‘yxati (src/lib/hardware-pricing.ts) bo‘yicha alohida qo‘shiladi.",
     "save": "Saqlash",
     "saving": "Saqlanmoqda…",
     "saved": "Saqlandi",
     "saveFailed": "Saqlab bo‘lmadi",
     "networkError": "Tarmoq mavjud emas",
-    "billingTitle": "Bepul davr va pulli tarifga o‘tish",
-    "phaseBefore": "Davr hali boshlanmadi — avvalgi shartlar amal qiladi, kabinetlarda e’lon ko‘rsatiladi",
-    "phaseDuring": "Bepul davr davom etmoqda — barchada {count, plural, one {#} other {#}} nafargacha xodim uchun obuna mavjud",
-    "phaseAfterEnabled": "Davr tugadi — pulli tarifga o‘tish faol",
-    "phaseAfterDisabled": "Davr tugadi, ammo o‘tish o‘chirilgan — avvalgi shartlar amal qiladi",
-    "billingSaved": "Bepul davr saqlandi",
     "paid": "To‘lov qilmoqda",
     "free": "Bepul",
     "waiting": "Qaror kutilmoqda",
     "auto": "Avtomatik o‘tkazilgan",
     "autoHint": "«Bepul» holatidan",
-    "start": "Boshlanishi (Moskva vaqti)",
-    "end": "Tugashi (Moskva vaqti, kiritilmaydi)",
-    "grace": "Tugagandan keyingi imtiyozli muddat, kun",
+    "grace": "Sinovdan keyingi imtiyoz, kun",
     "transition": "Pulli tarifga o‘tish yoqilgan",
-    "explanation": "Davr davomida barchada {subscriptionCount, plural, one {#} other {#}} nafargacha xodim uchun bepul obuna mavjud. Davr tugagach, to‘lov qilmaganlar {freeCount, plural, one {#} other {#}} nafar xodim uchun bepul tarifga o‘tadi; xodimlari ko‘proq bo‘lsa, rahbar oynada tanlov qiladi. Imtiyozli muddat tugagach, faqat egasi qoladi, qolganlar arxivga o‘tkaziladi (kunlik vazifa /api/cron/billing-transition). O‘tish o‘chirilgan bo‘lsa, avvalgi shartlar amal qiladi.",
     "total": "Holatlar bo‘yicha akkauntlar · jami {count, number, ::group-off}",
-    "secondary": "Hozir yana: {mode, select, both {bepul davrda: {freePeriod, number, ::group-off} · avvalgi shartlarda (sinov rejimi): {legacy, number, ::group-off}} free {bepul davrda: {freePeriod, number, ::group-off}} other {avvalgi shartlarda (sinov rejimi): {legacy, number, ::group-off}}}.",
-    "forecast": "Joriy ma’lumotlar bo‘yicha davr oxiri uchun prognoz: to‘lov qilmoqda {paid, number, ::group-off} · bepul {free, number, ::group-off} · qaror kutilmoqda {waiting, number, ::group-off}."
+    "priceMonthly": "Narx, ₽/oy",
+    "yearTotal": "Yil uchun {amount} yechiladi",
+    "legacyTitle": "Arxiv: avvalgi tariflar ({count, number})",
+    "legacyNote": "Ular endi sotilmaydi — eski kalitli havolalar «Standart» va «Premium»ga olib boradi. «Obuna» (monthly) narxi yangi tarifga o‘tishda foydalanilmagan qoldiqni hisobga olish uchun kerak.",
+    "legacyBadge": "Sotilmaydi",
+    "trialTitle": "Sinov davri va to‘lovga o‘tish",
+    "trialDays": "Sinov davri, kun",
+    "launchedAt": "Tariflar ishga tushishi (Moskva vaqti)",
+    "trialSaved": "Sinov davri sozlamalari saqlandi",
+    "phaseBeforeLaunch": "Tariflar {date} (Moskva vaqti) ishga tushadi — ungacha hammasi avvalgidek",
+    "phaseActive": "Tariflar amalda: {trialDays, number} kunlik sinov, keyin to‘lovga o‘tish",
+    "phaseTransitionOff": "Sinov — {trialDays, number} kun, lekin o‘tish o‘chirilgan: sinovdan keyin hech narsa bloklanmaydi",
+    "trialExplanation": "Yangi hisoblar kartasiz {trialDays, number} kun «Premium»ning barcha imkoniyatlarini oladi; ishga tushishdan oldin yaratilgan hisoblar uchun sinov ishga tushish sanasidan hisoblanadi. Sinovdan keyin to‘lovsiz — bepul tarif: {freeEmployees, plural, other {# nafar xodim}} va {freeJournals, plural, other {# ta jurnal}}; ko‘prog‘i bo‘lsa, rahbar oynada tanlaydi, imtiyoz muddati o‘tgach esa egasi va eng ko‘p to‘ldiriladigan jurnal qoladi (kunlik vazifa /api/cron/billing-transition). O‘tish o‘chirilgan bo‘lsa, sinovdan keyin hech narsa bloklanmaydi.",
+    "paidHint": "Standart {standard, number} · Premium {premium, number} · avvalgi {legacy, number}",
+    "trial": "Sinov",
+    "trialHint": "3 kun ichida tugaydi: {count, number}",
+    "legacyCount": "Yana {count, number, ::group-off} — o‘tish o‘chirilgan, hammasi avvalgidek."
   },
   "rootRequisites": {
     "metadata": {
@@ -20544,7 +20736,7 @@
         "label": "bir martalik bonus",
         "body": "mijozning obuna uchun {bonusAfterPayments}-to‘lovidan keyin"
       },
-      "note1": "Misol: 1 990 ₽ lik obuna → har bir to‘lov uchun hamkorga {subscriptionRewardRub}.",
+      "note1": "Misol: «Standart» oyma-oy {subscriptionRub} → har bir to‘lov uchun hamkorga {subscriptionRewardRub}.",
       "note2": "17 750 ₽ lik uskuna → {hardwareRewardRub}.",
       "note3": "Mijozga pul qaytarilsa, aynan shu summa bekor qilinadi. Oy davomida hisoblangan mukofotlar keyingi oyning 1-kunida “to‘lanishi kerak” holatiga o‘tadi.",
       "note4": "Eng kam to‘lov — {minPayoutRub}; bundan kichik summa keyingi oyga o‘tkaziladi."
@@ -23788,12 +23980,11 @@
       "hideUntilTomorrow": "Ertagacha yashirish"
     },
     "billingTransitionGate": {
-      "payByCard": "Karta bilan to‘lash",
       "cancel": "Bekor qilish",
       "goFree": "Bepul tarifga o‘tish",
       "close": "Yopish",
       "back": "Orqaga",
-      "paySubscription": "Obunani to‘lash",
+      "paySubscription": "Tarifni tanlash",
       "later": "Keyinroq hal qilaman",
       "perMonth": "/oy",
       "loadFailed": "Xodimlarni yuklab bo‘lmadi",
@@ -23805,12 +23996,12 @@
       "keepRemains": "Ishda qoladi: <b>{name}</b>",
       "andMore": "yana {count, number} ta",
       "archiveList": "Arxivga o‘tadi: {employees}{names}. Ular kabinetga va ilovaga kira olmaydi, jurnallardagi yozuvlari saqlanib qoladi.",
-      "restoreHint": "Obuna to‘langandan keyin ularni qaytarish mumkin: «Xodimlar» → «Arxiv».",
-      "paidTerm": "Obuna {date} gacha to‘langan. Bepul tarifga o‘tilsa, to‘langan muddat saqlanmaydi, avtoyangilash o‘chiriladi. Foydalanilmagan kunlar uchun pulni <mail>support@wesetup.ru</mail> manziliga ariza orqali qaytarib olish mumkin — <offer>oferta 6.2-band</offer>.",
+      "restoreHint": "«Standart» yoki «Premium» tarifi to‘langach ularni qaytarish mumkin: «Xodimlar» → «Arxiv».",
+      "paidTerm": "Tarif {date} gacha to‘langan. Bepul tarifga o‘tilsa, to‘langan muddat saqlanmaydi, avtoyangilash o‘chiriladi. Foydalanilmagan kunlar uchun pulni <mail>support@wesetup.ru</mail> manziliga ariza orqali qaytarib olish mumkin — <offer>oferta 6.2-band</offer>.",
       "selfArchived": "Siz ham arxivga o‘tasiz va kabinetdan darhol chiqarilasiz.",
       "noSignIn": "«{name}» da parol ham, Telegram ham yo‘q — kabinetga kiradigan hech kim bo‘lmaydi. O‘zingizni qoldirgan ma’qul.",
       "chooserTitle": "Bepul tarifda kim qoladi",
-      "chooserLead": "Bepul tarif — {employees}. Qolganlar arxivga o‘tadi; ularni obuna to‘langandan keyin qaytarish mumkin.",
+      "chooserLead": "Bepul tarif — {employees}. Kim qolishini belgilang; qolganlar arxivga o‘tadi, ularni tarif to‘langach qaytarish mumkin.",
       "retry": "Qayta urinish",
       "loadingEmployees": "Xodimlar yuklanmoqda…",
       "searchEmployee": "Xodimni topish",
@@ -23820,7 +24011,15 @@
       "employee": "Xodim",
       "cannotSignIn": " · kabinetga kira olmaydi",
       "nobodyFound": "Hech kim topilmadi",
-      "next": "Keyingi"
+      "next": "Keyingi",
+      "journalTitle": "Qaysi jurnal qoladi",
+      "journalLead": "Bepul tarifda — {journals}. Yuritishda davom etadigan jurnalni belgilang; qolganlari o‘chiriladi, ulardagi yozuvlar saqlanadi.",
+      "journalsCount": "{count, plural, other {# ta jurnal}}",
+      "journalEntries": "{count, plural, =0 {30 kunda yozuv yo‘q} other {30 kunda # ta yozuv}}",
+      "searchJournal": "Jurnalni topish",
+      "noJournalFound": "Jurnal topilmadi",
+      "keepJournalRemains": "Ishdagi jurnal: <b>{name}</b>",
+      "journalsOff": "{journals} o‘chiriladi — ulardagi yozuvlar saqlanadi. Tarif to‘langach qayta yoqish mumkin."
     }
   },
   "bonusesUi": {
@@ -26329,7 +26528,7 @@
       "readingPhotoTitle": "Ko‘rsatkichlarni fotofiksatsiya qilish",
       "readingPhotoBody": "Muzlatkich stikeri va ombor plakatida birinchi tugma “Ko‘rsatkichni suratga oling”: termometr yoki displey surati jurnalga qiymat yonida tushadi. {autofill} Suratga olishni xohlamasa — “Qo‘lda kiritish”. O‘chirsangiz — foto tugmalari yo‘qoladi.",
       "readingPhotoAutofillOn": "Fotodagi raqamlar o‘zi yoziladi — xodimga faqat tekshirib, saqlash qoladi.",
-      "readingPhotoAutofillOff": "Fotodagi raqamlar pullik tarifda o‘zi yoziladi; hozir xodim ularni qo‘lda kiritadi.",
+      "readingPhotoAutofillOff": "Fotodagi raqamlar «Premium» tarifida o‘zi yoziladi; hozir xodim ularni qo‘lda kiritadi.",
       "readingPhotoRequiredTitle": "Foto majburiy",
       "readingPhotoRequiredBody": "Rasmsiz QR orqali haroratni saqlab bo‘lmaydi: foto o‘lchov muzlatkichning o‘zida olinganini tasdiqlaydi. “Xizmat ko‘rsatish”, “Ta’mirlash” va namlik — fotosiz.",
       "pinNote": "PIN xodim kartasida (“Xodimlar → karta → tezkor QR-avtorizatsiya uchun PIN”) yoki umumiy planshet sahifasida belgilanadi — kod bir xil. PIN-kodsiz xodim QR orqali yozuv kirita olmaydi. Ochiq rejimda ham PIN belgilanganlardan so‘raladi."
@@ -27732,11 +27931,11 @@
       "issued": "№ {id, number} hisob-faktura chiqarildi — PDF yuklab olinmoqda, nusxasi pochtaga yuborildi",
       "error": "Xatolik",
       "title": "Yuridik shaxslar uchun naqd pulsiz to‘lov",
-      "pendingText": "№ {id, number} hisob-faktura {amount} miqdorida chiqarildi{due}. Pul kelib tushishi bilan obuna avtomatik uzaytiriladi, yopuvchi hujjatlar esa quyidagi to‘lovlar tarixida paydo bo‘ladi.",
+      "pendingText": "№ {id, number} hisob-faktura {amount} miqdorida chiqarildi{due}. Pul kelib tushishi bilan tarif avtomatik ulanadi, yopuvchi hujjatlar esa quyidagi to‘lovlar tarixida paydo bo‘ladi.",
       "dueSuffix": " va {date} gacha amal qiladi",
       "downloadPdf": "Hisob-fakturani yuklab olish (PDF)",
       "awaitingPayment": "To‘lov kutilmoqda",
-      "offerText": "Karta bilan to‘lamaysizmi? <org>{orgName}</org>{inn} nomiga {periodDays, number} kunga <price></price> miqdorida hisob-faktura chiqaramiz. Buxgalteriya rekvizitlar bo‘yicha to‘laydi, obuna pul kelib tushgan sanadan uzaytiriladi, yopuvchi hujjatlar esa avtomatik shakllanadi.",
+      "offerText": "Karta bilan to‘lamaysizmi? <org>{orgName}</org>{inn} nomiga {plan} tarifi uchun <price></price> miqdorida hisob-faktura chiqaramiz. Buxgalteriya rekvizitlar bo‘yicha to‘laydi, tarif pul kelib tushgan sanadan ulanadi, yopuvchi hujjatlar esa avtomatik shakllanadi.",
       "innParen": " (STIR {inn})",
       "innRequired": "Hisob-faktura uchun tashkilot STIRi kerak — <link>uni sozlamalarda kiriting</link>.",
       "issueInvoice": "Hisob-faktura chiqarish",
@@ -27745,9 +27944,10 @@
       "confirmInn": ", STIR {inn}",
       "bulletDiscount": "Chegirma bilan: {label}",
       "bulletPdf": "PDF darhol yuklab olinadi va pochtangizga yuboriladi",
-      "bulletExtend": "Obuna pul kelib tushgan sanadan uzaytiriladi, hisob-fakturaga ballar qo‘llanmaydi",
+      "bulletExtend": "Tarif pul kelib tushgan sanadan ulanadi, hisob-fakturaga ballar qo‘llanmaydi",
       "bulletUpd": "UPD (universal uzatish hujjati) to‘lovlar tarixida avtomatik paydo bo‘ladi",
-      "issuing": "Chiqarilmoqda…"
+      "issuing": "Chiqarilmoqda…",
+      "planLabel": "Hisob-fakturadagi tarif"
     },
     "closingDocumentActions": {
       "refreshFailed": "Yangilab bo‘lmadi",
@@ -27774,7 +27974,7 @@
     },
     "addOrganizationButton": {
       "add": "Tashkilot qo‘shish",
-      "hint": "O‘z jurnallari va xodimlari bilan ikkinchi nuqta. Bepul tarif limiti barcha tashkilotlar uchun umumiy."
+      "hint": "O‘z jurnallari va xodimlari bilan ikkinchi nuqta — tarifda u alohida nuqta hisoblanadi. Xodimlar va xotira limitlari barcha tashkilotlar uchun umumiy."
     },
     "buildingGroupHeader": {
       "withoutPoint": "Nuqtasiz"
@@ -27881,7 +28081,7 @@
     },
     "usersPage": {
       "organizationFallback": "Tashkilot",
-      "seatsNote": "Bepul tarif — {seats}: xodimlarni arxivdan obuna to‘langandan keyin qaytarish mumkin."
+      "seatsNote": "Tarif o‘rinlari band ({limit, number}): xodimlarni arxivdan tarifni o‘zgartirgach yoki nuqta qo‘shgach qaytarish mumkin."
     },
     "auditLogViewer": {
       "durMs": "{ms, number} ms",
@@ -28039,16 +28239,15 @@
       "validUntil": "{until} gacha (shu kun ham) amal qiladi"
     },
     "subscriptionPage": {
-      "planPaidUntil": "Obuna {date} gacha",
-      "planPaid": "Obuna",
-      "planFreePeriod": "Obuna — {date} gacha bepul",
-      "planNeedsDecision": "Bepul davr tugadi",
+      "planPaidUntil": "{plan} — {date} gacha",
+      "planPaid": "{plan}",
+      "planNeedsDecision": "Sinov davri tugadi",
       "planFree": "Bepul",
-      "title": "Tarifni yaxshilash",
+      "title": "Tarif va to‘lov",
       "demoNote": "Bu demo-tashkilot — uning xodimlari tarifda hisobga olinmaydi. Tarif akkaunt uchun umumiy va sizning tashkilotingizdan sozlanadi.",
-      "balanceNote": "Balansda <b>{amount} ₽</b> bor — obuna to‘langanda yechiladi. Yana qanday ishlab topish mumkinligi «Balans va bonuslar» bo‘limida.",
+      "balanceNote": "Balansda <b>{amount} ₽</b> bor — tarif to‘langanda yechiladi. Yana qanday ishlab topish mumkinligi «Balans va bonuslar» bo‘limida.",
       "invoiceCardNote": "Naqd pulsiz hisob-faktura orqali ham to‘lash mumkin — quyidagi «Yuridik shaxslar uchun naqd pulsiz to‘lov» bloki.",
-      "decisionReadOnly": "Obunaning bepul davri tugadi. Obunani to‘lash yoki bepul tarifga o‘tishni tashkilot rahbari o‘z kabinetida amalga oshirishi mumkin.",
+      "decisionReadOnly": "Sinov davri tugadi. Tarifni ulash yoki bepul tarifga o‘tishni tashkilot rahbari o‘z kabinetida amalga oshirishi mumkin.",
       "orgNameFallback": "tashkilotingiz",
       "paymentHistory": "To‘lovlar tarixi",
       "paidTotal": "Butun davr uchun to‘langan: <b>{amount} ₽</b>",
@@ -28063,28 +28262,50 @@
       "pointsSpent": "ballar bilan −{points}",
       "invoicePdf": "Hisob-faktura (PDF)",
       "howCalculated": "Narx qanday hisoblanadi",
-      "calcIntro": "{free} — bepul. {seats} kishilik jamoa — hamma uchun bitta obuna <price></price>, har bir kishi uchun emas. {max, number} dan oshgan har bir xodim — +{extra, number} ₽/oy.",
       "perMonthSuffix": "/oy",
-      "statActive": "Faol",
-      "statOver": "{max, number} dan oshgan",
-      "statOverHint": "Har biri uchun +{extra, number} ₽/oy",
-      "statIncluded": "obunaga kiradi",
-      "statPerMonth": "Oyiga",
-      "statFree": "Bepul",
-      "statYearly": "{amount} ₽/yil chegirmasiz",
-      "scaleTitle": "Tariflar shkalasi:",
-      "scaleExample": "Masalan, {employees, plural, one {# ta xodim} other {# ta xodim}}: {base} + {extraEmployees, number} × {extraPrice, number} = {total} ₽/oy.",
       "promoNow": "Hozir «{title}» aksiyasi:",
-      "promoScope": "obunaning butun summasiga, {max, number} dan oshgan qo‘shimcha to‘lov bilan birga.",
+      "promoScope": "chegirma tarifning butun summasiga, nuqtalar bilan birga.",
       "testModeNote": "Sayt sinov rejimida ekan, yuqoridagi summalar ma’lumot uchun: to‘lov yechilmaydi.",
       "appTitle": "Tarif",
       "companyPlan": "Kompaniya tarifi",
-      "expiredNotice": "Kompaniya obunasi tugadi. Kompaniya egasiga murojaat qiling.",
+      "expiredNotice": "Kompaniyaning to‘langan tarifi tugadi. Kompaniya egasiga murojaat qiling.",
       "expiredLabel": "Tugagan",
       "validUntilLabel": "Amal qilish muddati",
       "noExpiry": "muddatsiz",
       "employeesLabel": "Xodimlar",
-      "pointsBalance": "Ballar balansi"
+      "pointsBalance": "Ballar balansi",
+      "planLegacy": "Obuna (avvalgi tarif)",
+      "planTrial": "Sinov davri — {date} gacha",
+      "statusTitle": "Sizning tarifingiz",
+      "trialNote": "«Premium»dagi hamma narsa ochiq — {days, plural, other {# kun}} qoldi. Keyin bepul {employees, plural, other {# nafar xodim}} va {journals, plural, other {# ta jurnal}} qoladi yoki quyida tarif tanlang.",
+      "freeNote": "Bepul: {employees, plural, other {# nafar xodim}} va {journals, plural, other {# ta jurnal}}. Barcha xodimlar va jurnallarni qaytarish uchun «Standart» yoki «Premium»ni ulang.",
+      "legacyNote": "Avvalgi tarif to‘langan muddat oxirigacha yangi cheklovlarsiz amal qiladi. «Standart» yoki «Premium»ga hozir o‘tish mumkin — foydalanilmagan qoldiq hisobga olinadi.",
+      "cycleYear": "yillik to‘lov",
+      "cycleMonth": "oylik to‘lov",
+      "pointsCount": "{count, plural, other {# ta nuqta}}",
+      "usageEmployees": "Xodimlar",
+      "usagePoints": "Nuqtalar",
+      "usageJournals": "Jurnallar",
+      "usageStorage": "Hujjatlar",
+      "usageOf": "{limit, number} dan {used, number}",
+      "usageNoLimit": "{used, number} · cheklovsiz",
+      "usageOfText": "{limit} dan {used}",
+      "usageNoLimitText": "{used} · cheklovsiz",
+      "storageClosed": "yuklash yopiq",
+      "scheduledNote": "{date} dan — {plan}. Hozir to‘lash shart emas: shu kundan yangi tarif to‘lanadi.",
+      "scheduleCancel": "O‘tishni bekor qilish",
+      "scheduleFailed": "O‘tishni saqlab bo‘lmadi",
+      "scheduleDone": "O‘tish {date} dan rejalashtirildi",
+      "scheduleCancelled": "O‘tish bekor qilindi",
+      "tariffsChoose": "Tarifni tanlang",
+      "tariffsChange": "Tarifni o‘zgartirish",
+      "rulePoints": "Narx — nuqta uchun: har bir nuqta yana bitta tarif kabi, unda {seats, number} nafargacha xodim. {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma.",
+      "ruleUpgrade": "Tarif yoki nuqtalar sonini oshirish — darhol: farqni faqat qolgan kunlar uchun to‘laysiz, tugash sanasi o‘zgarmaydi.",
+      "ruleSwitch": "Oylik to‘lovdan yillikka o‘tish — darhol: yil narxidan oyning foydalanilmagan qoldig‘i ayriladi.",
+      "ruleDowngrade": "Tarifni pasaytirish, kamroq nuqta yoki oylik to‘lovga o‘tish — to‘langan muddat tugagach, hozir to‘lash shart emas.",
+      "ruleTrial": "Sinov davri — kartasiz {trialDays, number} kun. Sinov davrida to‘langan tarif to‘lov kunidan amal qiladi.",
+      "examplesTitle": "Yillik to‘lovda oylik narx",
+      "colPoints": "Nuqtalar"
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Komissiya — brakerajni imzolaydi",
@@ -28467,54 +28688,6 @@
       "configured": "sozlangan: {count, number}",
       "resetPositionTitle": "Guruh standartlariga qaytarish"
     },
-    "planUpgrade": {
-      "employees": "{count, plural, one {# xodim} other {# xodim}}",
-      "employeesGenitive": "{count, plural, one {# xodim} other {# xodim}}",
-      "hardwarePoint1": "Muzlatgichlar uchun datchiklar — harorat o‘zi yoziladi",
-      "hardwarePoint2": "Oshxonada planshet va smena uchun NFC-breloklar",
-      "hardwarePoint3": "Chiqish, o‘rnatish va smenani o‘qitish",
-      "planFreeName": "Bepul",
-      "planFreeJournals": "SanPiN va HACCP bo‘yicha barcha {count, plural, one {# ta jurnal} other {# ta jurnal}}",
-      "planFreeTelegram": "Telegram-bot va Mini App",
-      "planFreePdf": "Tekshiruv uchun PDF hisobotlar",
-      "planFreeNoLimits": "Yozuvlar, datchiklar va AI-xabarlar bo‘yicha cheklovlarsiz",
-      "planPaidName": "Obuna",
-      "planPaidUpTo": "{employees} gacha",
-      "planPaidIot": "O‘z IoT-datchiklaringiz va avto to‘ldirish",
-      "planPaidSupport": "Telegramda ustuvor yordam",
-      "breakdownBase": "{employees} gacha obuna",
-      "breakdownExtra": "{max, number} dan ortiq: {count, number} × {price}",
-      "total": "Jami",
-      "perMonth": "/oy",
-      "yourPlan": "Sizning tarifingiz: {plan}",
-      "overFreeLine": "{users} · bepul tarif — {free}",
-      "seatsLine": "{used, number}/{limit, number} xodim · bo‘sh o‘rinlar: {left, number}",
-      "freeSummary": "{employees} bepul; jamoa uchun — obuna",
-      "fromPrice": "<price></price> dan, {employees} gacha, {max, number} dan ortiq har bir xodim uchun +{extra, number} ₽/oy.",
-      "forYours": ", sizning {employees} uchun:",
-      "testMode": "Test rejimi — to‘lov yechilmaydi",
-      "seatsEndedPaymentRequired": "Bepul o‘rinlar tugadi. Xodimlarni qo‘shish yoki arxivdan qaytarish uchun obunani to‘lang.",
-      "seatsEndedTestMode": "Bepul o‘rinlar tugadi. Keyingi xodim tashkilotni obunaga o‘tkazadi — hozir bu bepul, sayt test rejimida.",
-      "seatsEnded": "Bepul o‘rinlar tugadi. Keyingi xodim tashkilotni obunaga o‘tkazadi.",
-      "inheritsIntro": "“Bepul” tarifdagi hamma narsa, shuningdek:",
-      "popular": "Ommabop",
-      "ctaCurrent": "Joriy",
-      "ctaPay": "Karta orqali to‘lash",
-      "ctaFree": "Bepul tarif",
-      "equipmentTitle": "+ Uskunalar",
-      "hardwareFrom": "{amount} ₽ dan",
-      "oneTime": "bir martalik",
-      "hardwareHint": "Harorat o‘zi yozilishi va smena brelok bilan belgilanishi uchun",
-      "whatIncluded": "Nimalar kiradi",
-      "collapse": "Tanlovni yig‘ish",
-      "pickKit": "To‘plam tanlash",
-      "calculatorTitle": "Uskunalarni tanlash",
-      "calculatorHint": "Kerakli narsani tanlang — narx qayta hisoblanadi. Planshet yoki datchiklar allaqachon bor bo‘lsa: belgisini olib tashlang, faqat obuna qoladi.",
-      "largeTeamNote": "{max, number} dan ortiq har bir xodim — {price, number} ₽/oy.",
-      "contactSupport": "Yordam xizmatiga murojaat qilish",
-      "paymentLater": "To‘lov keyinroq paydo bo‘ladi. Hozir barcha funksiyalar bepul — sayt test rejimida.",
-      "changeAnytime": "Tarifni istalgan vaqtda o‘zgartirish mumkin."
-    },
     "positionStaffVisibilityClient": {
       "noPosition": "Lavozimsiz",
       "savedWithErrors": "Saqlandi: {ok, number}, xatolar: {failed, number}",
@@ -28553,10 +28726,10 @@
       "title": "Avto uzaytirish",
       "on": "Yoqilgan",
       "off": "O‘chirilgan",
-      "activeIntro": "Obuna o‘zi uzayadi.",
+      "activeIntro": "Tarif o‘zi uzayadi.",
       "nextCharge": "Keyingi yechib olish <strong>{date}</strong> kuni, {amount} ₽.",
       "activeOutro": "Summa haqida 3 kun oldin ogohlantiramiz. Istalgan vaqtda o‘chirish mumkin — ruxsat to‘langan davr oxirigacha saqlanadi.",
-      "inactiveBody": "To‘lov bir martalik — davr tugagach, pullik funksiyalarga ruxsat to‘xtatiladi. Avto uzaytirishni yoqish uchun roziligingizni belgilab, bir oy oldindan to‘lang: to‘langan vaqt yo‘qolmaydi, yangi oy joriy muddatga qo‘shiladi.",
+      "inactiveBody": "To‘lov bir martalik — muddat tugagach, hisob bepul tarifga o‘tadi. Avto uzaytirishni yoqish uchun roziligingizni belgilab, keyingi davrni to‘lang: to‘langan vaqt yo‘qolmaydi, yangi davr joriy muddatga qo‘shiladi.",
       "disable": "Avto uzaytirishni o‘chirish",
       "enable": "Avto uzaytirishni yoqish",
       "confirmTitle": "Avto uzaytirish o‘chirilsinmi?",
@@ -28664,18 +28837,18 @@
     },
     "subscriptionDiscountCard": {
       "title": "Promokod va chegirma",
-      "lifetimeUntil": "Obuna har bir to‘lovi uchun {date} gacha o‘zi qo‘llanadi — karta orqali ham, hisob-faktura bo‘yicha ham, keyin o‘zi olib tashlanadi. Hech narsa kiritish shart emas",
-      "lifetimeForever": "Obuna har bir to‘lovi uchun o‘zi qo‘llanadi — karta orqali ham, hisob-faktura bo‘yicha ham. Hech narsa kiritish shart emas",
+      "lifetimeUntil": "Tarifning har bir to‘loviga {date} gacha o‘zi qo‘llanadi — karta orqali ham, hisob-faktura bo‘yicha ham, keyin o‘zi olib tashlanadi. Hech narsa kiritish shart emas",
+      "lifetimeForever": "Tarifning har bir to‘loviga o‘zi qo‘llanadi — karta orqali ham, hisob-faktura bo‘yicha ham. Hech narsa kiritish shart emas",
       "validSince": " ({date} dan amal qiladi)",
       "hint": "Shaxsiy promokod bormi? Uni kiriting — quyidagi narx qayta hisoblanadi, chegirma karta orqali to‘lovga va hisob-fakturaga tushadi.",
       "placeholder": "Masalan, ROMASHKA10",
       "codeLabel": "Promokod",
       "checking": "Tekshirilmoqda…",
       "apply": "Qo‘llash",
-      "codeApplied": "{code} promokodi qo‘llandi: obunadan −{amount} ₽",
+      "codeApplied": "{code} promokodi qo‘llandi: tarifdan −{amount} ₽",
       "fromPromoPrice": " (aksiya narxidan hisoblanadi)",
       "personalPending": "Shaxsiy promokod — to‘lov paytida pochta bo‘yicha tekshiramiz.",
-      "payFor": "{days, number} kun uchun to‘lov",
+      "payFor": "To‘lov: {plan}",
       "payByCard": "Karta orqali to‘lash"
     },
     "tasksflowAuditFeed": {
@@ -28697,6 +28870,25 @@
       "actionRejected": "Qayta ishlashga qaytarildi",
       "actionPhotoUploaded": "Foto yuklandi",
       "actionPhotoDeleted": "Foto o‘chirildi"
+    },
+    "equipmentDelivery": {
+      "title": "Uskunani yetkazib berish",
+      "lead": "Harorat datchiklari, termogigrometrlar va planshet hisobingizga ulangan holda keladi — ko‘rsatkichlar darhol jurnallarga yoziladi. Tarkib va summa — narxlar ro‘yxati bo‘yicha; yetkazib berish va o‘rnatishni menejer kelishadi, to‘lov kelishuvdan keyin.",
+      "lockedText": "Ulangan uskunani yetkazib berish va IoT-datchiklarni ulash — «Premium» tarifida.",
+      "upgrade": "«Premium»ga o‘tish",
+      "bundles": "Tayyor to‘plamlar",
+      "custom": "O‘z tarkibingiz",
+      "total": "Narxlar ro‘yxati bo‘yicha jami: {amount}",
+      "oneTime": "bir martalik",
+      "contactName": "Ism",
+      "contactPhone": "Telefon",
+      "address": "Yetkazib berish manzili",
+      "comment": "Izoh",
+      "submit": "Yetkazib berishga buyurtma berish",
+      "sending": "Yuborilmoqda…",
+      "done": "Ariza yuborildi — menejer siz bilan bog‘lanadi",
+      "failed": "Arizani yuborib bo‘lmadi",
+      "empty": "Kamida bitta pozitsiyani tanlang"
     }
   },
   "teamUi": {

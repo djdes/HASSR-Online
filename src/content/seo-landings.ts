@@ -1,7 +1,7 @@
 import { JOURNALS_TOTAL, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import { pluralRu } from "@/lib/plural-ru";
-import { FREE_SEATS_LABEL, FREE_TIER_SHORT, employeesGenitiveLabel } from "@/lib/plan-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { FREE_AFTER_TRIAL_LABEL, FREE_TIER_SHORT } from "@/lib/plan-catalog";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 /**
  * Конфиг SEO-лендингов под частотные запросы (/zhurnal-haccp и т.д.).
@@ -102,7 +102,7 @@ export const SEO_LANDINGS: Record<string, SeoJournalConfig> = {
       "Журнал жалоб гостей",
     ],
     weSetupBenefit:
-      `Регистрация — 5 минут, и ваша команда сразу видит свои журналы в Telegram-боте. Бесплатный тариф навсегда: ${FREE_SEATS_LABEL}, все ${JOURNALS_TOTAL_LABEL} включены, без привязки карты, без триал-периода.`,
+      `Регистрация — 5 минут, и ваша команда сразу видит свои журналы в Telegram-боте. ${TRIAL_DAYS} дней — все ${JOURNALS_TOTAL_LABEL}, сотрудники и точки без ограничений, без привязки карты. Дальше — «Стандарт» или «Премиум», либо бесплатно: ${FREE_AFTER_TRIAL_LABEL}.`,
   },
   "brakerazhnyy-zhurnal": {
     slug: "brakerazhnyy-zhurnal",
@@ -177,7 +177,7 @@ export const SEO_LANDINGS: Record<string, SeoJournalConfig> = {
     metaTitle:
       "ХАССП для кафе — внедрение и журналы под ключ",
     metaDescription:
-      `ХАССП для кафе и ресторанов: блок-схемы, контрольные точки, обязательные журналы. Внедрение за 1 день, бесплатный тариф на ${employeesGenitiveLabel(FREE_MAX_USERS)}.`,
+      `ХАССП для кафе и ресторанов: блок-схемы, контрольные точки, обязательные журналы. Внедрение за 1 день, ${FREE_TIER_SHORT} без карты.`,
     intro:
       "ХАССП — обязательная система контроля для общепита по ТР ТС 021/2011. WeSetup закрывает весь цикл: блок-схему, идентификацию опасностей, критические контрольные точки (CCP), мониторинг и корректирующие действия.",
     fields: [

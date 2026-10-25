@@ -5,20 +5,21 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Check, Gift, Loader2 } from "lucide-react";
 
-import { billingExplanation, billingPhaseLabel } from "./tariff-presentation";
+import { trialExplanation, trialPhaseLabel } from "./tariff-presentation";
 
 /**
- * ROOT: бесплатный период «подписка до 10 сотрудников для всех» и
- * переход на оплату. Даты — по Москве; сохранение сразу меняет анонс,
- * окно решения и лимиты во всех кабинетах. Ниже — сколько аккаунтов в
- * каком состоянии (аккаунт = организации одного владельца).
+ * ROOT: пробный период тарифов 2026-10 и переход на оплату. Длительность
+ * пробного, дата запуска (аккаунтам старше пробный считается от неё),
+ * грейс на решение и флаг перехода. Сохранение сразу меняет плашку, окно
+ * решения и лимиты во всех кабинетах. Ниже — сколько аккаунтов в каком
+ * состоянии (аккаунт = организации одного владельца).
  */
 
 type Kind = "exempt" | "paid" | "legacy" | "free_period" | "free" | "needs_decision";
 
-export type BillingPeriodSettingsJson = {
-  startsAt: string;
-  endsAt: string;
+export type TrialSettingsJson = {
+  trialDays: number;
+  launchedAt: string;
   graceDays: number;
   transitionEnabled: boolean;
 };
@@ -26,8 +27,9 @@ export type BillingPeriodSettingsJson = {
 export type BillingOverviewJson = {
   total: number;
   counts: Record<Kind, number>;
+  paidByTier: { standard: number; premium: number; legacy: number };
+  trialEndingSoon: number;
   autoTransitioned: number;
-  forecast: Record<Kind, number> | null;
 };
 
 const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
@@ -43,11 +45,11 @@ function fromMskInput(value: string): string {
   return new Date(`${value}:00+03:00`).toISOString();
 }
 
-export function BillingPeriodCard({
+export function TrialSettingsCard({
   initialSettings,
   initialOverview,
 }: {
-  initialSettings: BillingPeriodSettingsJson;
+  initialSettings: TrialSettingsJson;
   initialOverview: BillingOverviewJson;
 }) {
   const t = useTranslations("rootTariffs");
@@ -55,8 +57,7 @@ export function BillingPeriodCard({
   useEffect(() => { currentT.current = t; }, [t]);
   const [settings, setSettings] = useState(initialSettings);
   const [overview, setOverview] = useState(initialOverview);
-  const [startsAt, setStartsAt] = useState(toMskInput(initialSettings.startsAt));
-  const [endsAt, setEndsAt] = useState(toMskInput(initialSettings.endsAt));
+  const [launchedAt, setLaunchedAt] = useState(toMskInput(initialSettings.launchedAt));
   const [graceDays, setGraceDays] = useState(initialSettings.graceDays);
   const [enabled, setEnabled] = useState(initialSettings.transitionEnabled);
   const [saving, setSaving] = useState(false);
@@ -70,21 +71,20 @@ export function BillingPeriodCard({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          startsAt: fromMskInput(startsAt),
-          endsAt: fromMskInput(endsAt),
+          launchedAt: fromMskInput(launchedAt),
           graceDays,
           transitionEnabled: enabled,
         }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.settings) {
-        toast.error(currentT.current("saveFailed"));
+        toast.error(data?.error ?? currentT.current("saveFailed"));
         return;
       }
       setSettings(data.settings);
       setOverview(data.overview);
       setSaved(true);
-      toast.success(currentT.current("billingSaved"));
+      toast.success(currentT.current("trialSaved"));
       window.setTimeout(() => setSaved(false), 2000);
     } catch {
       toast.error(currentT.current("networkError"));
@@ -94,7 +94,22 @@ export function BillingPeriodCard({
   }
 
   const counters: Array<{ label: string; value: number; hint?: string; testId: string }> = [
-    { label: t("paid"), value: overview.counts.paid, testId: "billing-count-paid" },
+    {
+      label: t("paid"),
+      value: overview.counts.paid,
+      hint: t("paidHint", {
+        standard: overview.paidByTier.standard,
+        premium: overview.paidByTier.premium,
+        legacy: overview.paidByTier.legacy,
+      }),
+      testId: "billing-count-paid",
+    },
+    {
+      label: t("trial"),
+      value: overview.counts.free_period,
+      hint: t("trialHint", { count: overview.trialEndingSoon }),
+      testId: "billing-count-trial",
+    },
     { label: t("free"), value: overview.counts.free, testId: "billing-count-free" },
     { label: t("waiting"), value: overview.counts.needs_decision, testId: "billing-count-waiting" },
     {
@@ -104,7 +119,6 @@ export function BillingPeriodCard({
       testId: "billing-count-auto",
     },
   ];
-  const hasSecondary = Boolean(overview.counts.free_period || overview.counts.legacy);
 
   return (
     <section
@@ -117,29 +131,32 @@ export function BillingPeriodCard({
         </span>
         <div>
           <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
-            {t("billingTitle")}
+            {t("trialTitle")}
           </h2>
-          <p className="mt-1 text-[13px] leading-[1.6] text-[#6f7282]">{billingPhaseLabel(t, settings)}</p>
+          <p className="mt-1 text-[13px] leading-[1.6] text-[#6f7282]">{trialPhaseLabel(t, settings)}</p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <Field label={t("start")}>
+        <Field label={t("trialDays")}>
+          {/* Длина пробного задана тарифом (её обещают витрина и письма) —
+              продлить можно отдельному аккаунту на странице организации. */}
           <input
-            type="datetime-local"
-            value={startsAt}
-            onChange={(e) => setStartsAt(e.target.value)}
-            className={inputClass}
-            data-testid="billing-starts-at"
+            type="number"
+            value={settings.trialDays}
+            disabled
+            readOnly
+            className={inputClass + " tabular-nums disabled:cursor-not-allowed disabled:bg-[#fafbff] disabled:text-[#6f7282]"}
+            data-testid="billing-trial-days"
           />
         </Field>
-        <Field label={t("end")}>
+        <Field label={t("launchedAt")}>
           <input
             type="datetime-local"
-            value={endsAt}
-            onChange={(e) => setEndsAt(e.target.value)}
+            value={launchedAt}
+            onChange={(e) => setLaunchedAt(e.target.value)}
             className={inputClass}
-            data-testid="billing-ends-at"
+            data-testid="billing-launched-at"
           />
         </Field>
         <Field label={t("grace")}>
@@ -165,7 +182,7 @@ export function BillingPeriodCard({
         </label>
       </div>
       <p className="mt-2 text-[12px] leading-[1.6] text-[#9b9fb3]">
-        {billingExplanation(t)}
+        {trialExplanation(t, settings)}
       </p>
 
       <div className="mt-4 flex justify-end">
@@ -196,7 +213,7 @@ export function BillingPeriodCard({
         <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
           {t("total", { count: overview.total })}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
           {counters.map((c) => (
             <div key={c.testId} className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
               <div className="text-[12px] font-medium text-[#6f7282]">{c.label}</div>
@@ -210,13 +227,8 @@ export function BillingPeriodCard({
             </div>
           ))}
         </div>
-        {hasSecondary ? (
-          <p className="mt-3 text-[12.5px] text-[#6f7282]">{t("secondary", { mode: overview.counts.free_period ? (overview.counts.legacy ? "both" : "free") : "legacy", freePeriod: overview.counts.free_period, legacy: overview.counts.legacy })}</p>
-        ) : null}
-        {overview.forecast ? (
-          <p className="mt-2 text-[12.5px] text-[#6f7282]" data-testid="billing-forecast">
-            {t("forecast", { paid: overview.forecast.paid, free: overview.forecast.free, waiting: overview.forecast.needs_decision })}
-          </p>
+        {overview.counts.legacy > 0 ? (
+          <p className="mt-3 text-[12.5px] text-[#6f7282]">{t("legacyCount", { count: overview.counts.legacy })}</p>
         ) : null}
       </div>
     </section>

@@ -93,7 +93,7 @@ describe("promoLinkUrl — https://wesetup.ru/promo/<CODE>?s=<sphere>", () => {
 describe("promoLinkRedirect — куда ведёт ссылка", () => {
   it("руководитель — тариф с кодом; сотрудник — оплата с кодом", () => {
     assert.equal(promoLinkRedirect("romashka10", "cafe", "manager"), "/settings/subscription?promo=ROMASHKA10");
-    assert.equal(promoLinkRedirect("ROMASHKA10", null, "member"), "/order?plan=monthly&promo=ROMASHKA10");
+    assert.equal(promoLinkRedirect("ROMASHKA10", null, "member"), "/order?plan=standard&cycle=year&promo=ROMASHKA10");
   });
 
   it("гость — регистрация со сферой, после неё тариф с кодом", () => {

@@ -118,6 +118,10 @@
       },
       "program": {
         "hint": "Production control program and HACCP plan"
+      },
+      "package": {
+        "hint": "Template orders to print and your own documents",
+        "lead": "The template pack contains orders with your organisation’s details: print them and fill them in. Below are your own documents: upload the ones you already have."
       }
     },
     "products": {
@@ -752,6 +756,24 @@
       "done": "Done: added {summary}",
       "nothing": "Everything is already filled in, nothing added",
       "failed": "Could not fill in"
+    },
+    "package": {
+      "typicalTitle": "Template document pack",
+      "typicalLead": "{count, plural, one {# order} other {# orders}} with your organisation’s details; fields to fill in are left as dashes.",
+      "downloadAll": "Download the whole pack (ZIP)",
+      "download": "PDF",
+      "lockedTitle": "The template pack comes with Premium",
+      "lockedText": "Orders with your organisation’s details, ready to print. Switch to Premium or order documents made for your site.",
+      "upgrade": "Switch to Premium",
+      "ownTitle": "Your own documents",
+      "ownLead": "Upload your own orders, instructions and regulations — they are stored here and count towards your plan’s storage.",
+      "storageClosed": "Document uploads come with Standard (10 MB) and Premium (1 GB). Files uploaded earlier can still be opened and deleted."
+    },
+    "individual": {
+      "title": "A production control programme for your site",
+      "text": "A specialist will develop the production control programme and document pack for your site: control points, lab testing, responsible staff. Available with any plan.",
+      "price": "from {price}",
+      "cta": "Order a custom programme"
     }
   },
   "inspectionDay": {
@@ -991,9 +1013,15 @@
     "select": "Select…",
     "error": "Could not complete the action. Please try again.",
     "billing": {
-      "limit": "The free plan includes {count, plural, one {# employee} other {# employees}}.",
-      "limitAction": "The free plan includes {count, plural, one {# employee} other {# employees}}. Pay for a subscription to add employees.",
-      "pay": "Pay"
+      "limit": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}.",
+      "limitAction": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}. Change the plan or add a location to add employees.",
+      "pay": "Choose a plan",
+      "pointLimit": "All locations on the plan are in use — {count, plural, one {# location} other {# locations}}. Each new location costs one more plan: add it on the plan page.",
+      "journalLimit": "The free plan includes {count, plural, one {# log} other {# logs}}. Choose Standard or Premium to keep every log.",
+      "storageFull": "Your plan’s document storage is full. Delete files you no longer need or switch to Premium — 1 GB for all documents.",
+      "storageClosed": "Document uploads come with Standard and Premium. Files uploaded earlier can still be opened and deleted.",
+      "featureLocked": "This feature comes with the Premium plan.",
+      "unavailable": "Not available on the current plan."
     },
     "assistant": {
       "title": "AI assistant",
@@ -2474,7 +2502,7 @@
         "homeLabel": "WeSetup — home page"
       },
       "marketing": {
-        "foreverFree": "Free forever · no card required",
+        "foreverFree": "{trialDays, number} {trialDays, plural, one {day} other {days}} free · no card required",
         "instantAccount": "Your account is ready right away",
         "intro": "Enter your email to open your account. We’ll email your password; you can add your organization details later.",
         "whatsIncluded": "What’s included for free",
@@ -2552,7 +2580,7 @@
       "loginTitle": "Sign in",
       "loginDescription": "Sign in to WeSetup. Digital SanPiN and HACCP logs for food service and food production.",
       "registerTitle": "Create an account",
-      "registerDescription": "Create a free WeSetup account. Digital SanPiN and HACCP logs for food service and production, free for organizations with up to {users, number} employees."
+      "registerDescription": "Create a WeSetup account. Digital SanPiN and HACCP logs for food service and food production; {trialDays, number} {trialDays, plural, one {day} other {days}} free without limits, no card required."
     },
     "apiErrors": {
       "loginCredentialsRequired": "Enter your email and password",
@@ -2796,7 +2824,8 @@
             "pest-control": "Pest control",
             "lab": "Laboratory tests",
             "norm-documents": "Regulatory documents",
-            "program": "PCP"
+            "program": "PCP",
+            "package": "Document pack"
           },
           "tabs": {
             "overview": "Overview",
@@ -3355,7 +3384,7 @@
       "subject": "Welcome to WeSetup!",
       "title": "Welcome!",
       "greeting": "Hello, {name}!",
-      "organizationReady": "Your organization, {organization}, is ready. The plan is free for {employeeCount, plural, one {# team member} other {# team members}}, with unlimited records and all features available right away.",
+      "organizationReady": "The organisation {organization} has been registered. {trialDays, number} {trialDays, plural, one {day} other {days}} — every log and feature without limits, no card needed.",
       "gettingStarted": "Here are a few ways to get started:",
       "stepAreas": "Add production areas under Settings → Areas",
       "stepEquipment": "Add equipment under Settings → Equipment",
@@ -3431,7 +3460,8 @@
     "paymentReceipt": {
       "subject": {
         "newClient": "Payment received — finish setting up your account",
-        "renewal": "Payment received — subscription renewed"
+        "renewal": "Payment received — subscription renewed",
+        "held": "Payment received — we will apply it manually"
       },
       "greeting": "Hello!",
       "thankYou": "We’ve received your payment. Thank you!",
@@ -3441,6 +3471,7 @@
       "closingDocumentDisclosure": "Closing document: universal transfer document (UPD) No. {documentNumber} is attached as a PDF with a facsimile signature. It is also available in your account under “Settings → Subscription → Payment history.” If you need an original with a handwritten signature or exchange through electronic document interchange (EDI), simply reply to this email.",
       "newClientNextStep": "Set a password and enter your organization’s name to finish setup. It takes about a minute.",
       "renewalNextStep": "Your organization’s subscription has been renewed. No further action is needed.",
+      "heldNextStep": "We could not apply this payment automatically: after the order was placed, the subscription changed or the paid period it was priced from ended. We will apply the payment or refund it within one business day — no action is needed.",
       "newClientAction": "Finish setup",
       "renewalAction": "Go to your account",
       "support": "Questions about payments or refunds? Contact support@wesetup.ru.",
@@ -3542,7 +3573,7 @@
       "paperlessBody": "In WeSetup, staff fill it in on a phone using the same QR code shown on the template. No paper, and reminders help when a shift forgets to check in. {freeTier}.",
       "startUsingAction": "Use the journal in WeSetup",
       "disclaimer": "This email was sent because this address was entered when downloading a template from wesetup.ru. If you did not download it, simply ignore this message.",
-      "freeTier": "Free for up to {count, number} employees"
+      "freeTier": "{count, number} {count, plural, one {day} other {days}} free, no card required"
     }
   },
   "journalWidgets": {
@@ -5309,7 +5340,7 @@
   "landing": {
     "metadata": {
       "title": "Digital SanPiN and HACCP logs online — WeSetup",
-      "description": "{journalCount, number} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. Free for {freeUsers, number} employees.",
+      "description": "{journalCount, number} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. {trialDays, number} {trialDays, plural, one {day} other {days}} free — no card required.",
       "keywords": "digital logs, SanPiN logs, HACCP logs, online HACCP, staff hygiene log, food quality log, temperature log, QR log, QR log entries, Rospotrebnadzor, food service",
       "blogFeed": "WeSetup — blog",
       "updatesFeed": "WeSetup — updates"
@@ -5343,8 +5374,6 @@
     "popularLogsIntro": "Popular logs:",
     "allLogs": "All ",
     "logTemplates": "Log templates: PDF and Word",
-    "freeLogsPayAutomation": "Every log is free. Pay for automation.",
-    "forever": "forever",
     "inspectionPdfNoCard": "Inspection PDFs, no card required",
     "currentPlan": "Current plan",
     "startFree": "Get started for free",
@@ -5360,7 +5389,7 @@
     "refundTerms": "See the service agreement",
     "faqHeading": "Frequently asked questions",
     "finalCtaHeading": "Put up a QR sticker. Keep records where the work happens.",
-    "finalCtaDetails": "The free plan has no time limit and needs no payment card. Print stickers from your workspace; employees do not need to install anything.",
+    "finalCtaDetails": "{trialDays, number} {trialDays, plural, one {day} other {days}} with every log unlocked and no payment card. Print stickers from your workspace; employees do not need to install anything.",
     "qrCameraInstruction": "Point your phone camera here to see how an employee opens a log.",
     "faq": {
       "refund": {
@@ -5451,20 +5480,16 @@
     },
     "pricing": {
       "journalCountLabel": "{journalCount, number} {journalCount, plural, one {log} other {logs}}",
-      "freeSeatsLabel": "{employeeCount, number} {employeeCount, plural, one {employee} other {employees}}",
-      "freePlanTitle": "Free plan for {employeeCount, number} {employeeCount, plural, one {employee} other {employees}}",
-      "freePlanNote": "Free for {employeeCount, number} {employeeCount, plural, one {employee} other {employees}}, with unlimited entries.",
-      "largeTeamNote": "Each employee beyond {employeeLimit, number} costs {extraUserPrice, number} RUB per month.",
+      "freePlanTitle": "Free for {trialDays, number} {trialDays, plural, one {day} other {days}}: all logs without limits, no card",
       "freePlanAllJournals": "All {journalCount, number} {journalCount, plural, one {SanPiN and HACCP log} other {SanPiN and HACCP logs}}",
-      "subscriptionEmployeeLimit": "Up to {employeeLimit, number} employees",
-      "heroPhrase": "Free for {employeeCount, number} {employeeCount, plural, one {employee} other {employees}}, then from <price>{amount}</price> per month"
+      "heroPhrase": "{trialDays, number} {trialDays, plural, one {day} other {days}} free, then from <price>{amount}</price> per month"
     },
     "seo": {
       "softwareDescription": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Equipment QR stickers let staff scan, enter a PIN and record entries. PDFs are ready for Rospotrebnadzor inspections.",
       "productDescription": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections.",
-      "freeOfferDescription": "For {employeeCount, number} {employeeCount, plural, one {employee} other {employees}}; all {journalCount, number} {journalCount, plural, one {log} other {logs}}, with no time limit",
-      "subscriptionDefaultName": "Subscription",
-      "subscriptionDescription": "Up to {employeeLimit, number} employees, then {extraUserPrice, number} RUB per month for each additional employee; IoT sensors and automatic entries."
+      "freeOfferDescription": "All {journalCount, number} {journalCount, plural, one {log} other {logs}} with no limits on employees or locations — {trialDays, number} {trialDays, plural, one {day} other {days}} from activation, no card required",
+      "standardDescription": "Up to {employees, number} employees per location, all logs, {mb, number} MB for log orders and your own documents. Price per month when paid yearly.",
+      "premiumDescription": "Everything in Standard, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, a template document pack. Price per month when paid yearly."
     },
     "journals": {
       "sectionLead": "{journalCount, number} electronic logs for daily sanitation checks and complete HACCP records. Choose your business to see the relevant logs, orders and checklists."
@@ -5527,7 +5552,8 @@
           "text": "Roles, PINs and each person’s logs: staff only see what they fill in themselves."
         }
       }
-    }
+    },
+    "pricingTitle": "Three plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card"
   },
   "landingComponents": {
     "heroEmail": {
@@ -5545,7 +5571,7 @@
       "startFree": "Get started for free"
     },
     "equipment": {
-      "title": "+ Equipment",
+      "title": "Equipment for Premium",
       "bundlePrice": "Equipment bundles start at {price} ₽ (one-time).",
       "oneTime": "One-time payment",
       "sensorBenefit": "Refrigerator sensors record temperatures automatically",
@@ -5554,12 +5580,143 @@
       "collapse": "Hide equipment options",
       "choose": "Choose equipment",
       "calculatorTitle": "Choose your equipment",
-      "calculatorDescription": "Select what you need and the price will update. Already have a tablet or sensors? Uncheck them to pay only for the subscription."
+      "calculatorDescription": "Choose what you need — the price is recalculated. Already have a tablet or sensors? Untick them and only the Premium plan remains.",
+      "premiumNote": "Temperature sensors and a tablet arrive already linked to your account: readings go into the logs on their own. Delivery and connection come with the Premium plan."
     },
     "testimonials": {
       "title": "What our customers say",
       "originalLanguageNote": "Customer reviews are shown in their original language.",
       "ratingLabel": "Rated {rating, number} out of 5."
+    },
+    "tariffs": {
+      "toggle": {
+        "label": "Billing period",
+        "month": "Monthly",
+        "year": "Yearly",
+        "save": "−{percent, number}%"
+      },
+      "pointsPicker": {
+        "label": "Locations",
+        "decrease": "Remove a location",
+        "increase": "Add a location",
+        "hint": "Each location costs one more plan; from {from, number} locations — {percent, number}% off each"
+      },
+      "tiers": {
+        "free": {
+          "name": "Free",
+          "tagline": "Try everything without limits — {trialDays, number} days, no card"
+        },
+        "standard": {
+          "name": "Standard",
+          "tagline": "A team of up to 25 per location and all logs"
+        },
+        "premium": {
+          "name": "Premium",
+          "tagline": "Automation: sensor photos, equipment and template documents"
+        }
+      },
+      "badges": {
+        "popular": "Popular",
+        "current": "Current",
+        "trial": "Trial: {days, plural, one {# day} other {# days}}"
+      },
+      "price": {
+        "perMonth": "/mo",
+        "freeNote": "{trialDays, number} days, then 1 employee and 1 log",
+        "yearTotal": "{amount} per year",
+        "yearSavings": "you save {amount}",
+        "monthly": "billed monthly",
+        "forPoints": "for {count, plural, one {# location} other {# locations}}",
+        "pointsDiscount": "−{percent, number}% for locations"
+      },
+      "includes": {
+        "free": "What’s included:",
+        "standard": "Everything in Free, plus:",
+        "premium": "Everything in Standard, plus:"
+      },
+      "features": {
+        "trialAll": "{trialDays, number} days — all logs, employees and locations without limits",
+        "noCard": "No card required",
+        "afterTrial": "Then free: {employees, number} employee and {journals, number} log — you choose which",
+        "employees": "Up to {count, number} employees per location",
+        "allJournals": "All food safety and HACCP logs, Telegram bot and PDF for inspections",
+        "storageOrders": "{mb, number} MB for log orders and your own documents",
+        "ownPackage": "“Document pack” section — you fill it yourself",
+        "storageAll": "{gb, number} GB for all documents",
+        "photoAutofill": "Photo of a temperature sensor — readings fill in automatically",
+        "equipmentConnect": "Equipment connection: on your own or as a subscription",
+        "equipmentDelivery": "Delivery of pre-connected equipment — order in your account",
+        "typicalPackage": "Template document pack: print and fill in"
+      },
+      "cta": {
+        "startFree": "Start for free",
+        "trialNow": "Trial in progress",
+        "current": "Current plan",
+        "unavailable": "Not available now",
+        "choose": "Choose {name}",
+        "renew": "Renew — {amount}",
+        "upgrade": "Upgrade — pay {amount}",
+        "switch": "Switch — {amount}",
+        "switchYear": "Switch to yearly — {amount}",
+        "newPlan": "Subscribe — {amount}",
+        "scheduled": "Switch from {date}",
+        "scheduledDone": "Switching from {date}",
+        "cancelSchedule": "Cancel the switch"
+      },
+      "explain": {
+        "upgrade": "Right away, you pay for {days, plural, one {# remaining day} other {# remaining days}}: a {difference} difference per period. The end date stays the same",
+        "switch": "Right away: {price} minus the unused balance of {credit}",
+        "scheduled": "From the end of the paid period — nothing to pay now"
+      },
+      "note": {
+        "trial": "{trialDays, number} days — all Premium features with no card; then 1 employee and 1 log for free or a paid plan.",
+        "switch": "Upgrades apply right away with a charge for the remaining days; downgrades apply from the end of the paid period."
+      },
+      "ppk": {
+        "title": "Production control programme — made for you",
+        "text": "A specialist will develop a programme for your site: control points, lab testing, responsible staff. Available with any plan.",
+        "price": "from {price}",
+        "cta": "Order a custom programme"
+      },
+      "table": {
+        "title": "Compare plans",
+        "feature": "What’s included",
+        "yes": "Yes",
+        "no": "No"
+      },
+      "groups": {
+        "team": "Team and locations",
+        "journals": "Logs",
+        "documents": "Documents",
+        "equipment": "Equipment and automation"
+      },
+      "rows": {
+        "employees": "Employees",
+        "points": "Locations",
+        "journals": "Food safety and HACCP logs",
+        "telegram": "Telegram bot and QR stickers",
+        "pdf": "PDF for inspections",
+        "storage": "Document uploads",
+        "ownDocuments": "Your own documents in the “Document pack”",
+        "typicalPackage": "Template document pack",
+        "ppkIndividual": "Production control programme for your site",
+        "photoAutofill": "Readings filled in from a sensor photo",
+        "equipmentConnect": "Equipment and IoT sensor connection",
+        "equipmentDelivery": "Delivery of connected equipment"
+      },
+      "cells": {
+        "employeesFree": "{trialDays, number} days — unlimited, then {count, number}",
+        "employeesPaid": "{count, number} per location",
+        "pointsFree": "{trialDays, number} days — unlimited, then {count, number}",
+        "pointsPaid": "1 included; each next one costs one more plan, from {from, number} — −{percent, number}% each",
+        "journalsFree": "{trialDays, number} days — all, then {count, number}",
+        "journalsAll": "All",
+        "storageFree": "{trialDays, number} days — 1 GB, then closed",
+        "storageStandard": "{mb, number} MB: log orders and your own documents",
+        "storagePremium": "{gb, number} GB for all documents",
+        "trialOnly": "Only during the {trialDays, number}-day trial",
+        "ppkFrom": "Custom, from {price}"
+      }
     }
   },
   "publicNavigation": {
@@ -5923,7 +6080,7 @@
       "blogBreadcrumb": "Blog",
       "readMinutes": "{minutes, number} min",
       "ctaTitle": "Keep this journal in WeSetup for free",
-      "ctaDescription": "{journalCount, plural, one {All # SanPiN and HACCP journal is} other {All # SanPiN and HACCP journals are}} in one workspace. The free plan is free forever for up to {employeeCount, plural, one {# employee} other {# employees}}, with no card required.",
+      "ctaDescription": "{journalCount, plural, one {All # SanPiN and HACCP journal is} other {All # SanPiN and HACCP journals are}} in one workspace. {trialDays, number} {trialDays, plural, one {day} other {days}} free without limits, no card required.",
       "ctaButton": "Get started for free",
       "journalsHeading": "Journals mentioned in this article",
       "relatedHeading": "Keep reading"
@@ -6819,9 +6976,9 @@
     },
     "pricing": {
       "title": "With equipment",
-      "intro": "The subscription stays the same — choose a ready-made package",
+      "intro": "The Premium plan and a ready-made equipment set",
       "popular": "Popular",
-      "subscription": "Subscription",
+      "subscription": "Premium plan",
       "perMonth": "/mo",
       "bundleSummary": "{name} package",
       "oneTime": "One-time",
@@ -6845,7 +7002,7 @@
           "hook": "One sensor for the main refrigerator, a thermo-hygrometer in the kitchen, and NFC access for the shift."
         },
         "standard": {
-          "name": "Standard",
+          "name": "Kitchen",
           "forWhom": "A busy kitchen with regular inspections",
           "hook": "Sensors for every key refrigerator, a kitchen tablet, and key fobs for the whole shift."
         },
@@ -7473,7 +7630,7 @@
       "restoredOne": "Employee restored from the archive",
       "restoredMany": "Restored from the archive: {count, number} {count, plural, one {employee} other {employees}}",
       "archivedSince": "archived since {date}",
-      "paySubscription": "Pay for subscription",
+      "paySubscription": "Change plan",
       "restore": "Restore",
       "restoreAll": "Restore all"
     },
@@ -9829,7 +9986,7 @@
           "balanceRetained": "The organization keeps its points balance ({amount}).",
           "accountSeats": "The organization’s employees ({organizationCount, number}) will no longer use seats in your account: {before, number} before, {after, number} after.",
           "organizationSeats": "The organization has {count, plural, one {# employee} other {# employees}}.",
-          "seatLimit": "The organization has no paid term, and the free plan covers {limit, number} employees. The client must pay for a subscription to keep all employees active.",
+          "seatLimit": "The organisation has no paid term, and the free plan covers {limit, plural, one {# employee} other {# employees}}. To keep all employees active, the client needs to choose Standard or Premium.",
           "rewardIntro": "Current partner rewards:",
           "rewardsByProgram": "Rewards follow the current partner program rules.",
           "subscriptionReward": "{percent, number}% of each subscription payment for the {months, number}-month period, starting with the first payment after transfer.",
@@ -14670,7 +14827,7 @@
         "inviteUsed": "This invitation has already been used.",
         "inviteExpired": "This invitation has expired. Ask for a new link.",
         "alreadyLinkedInvite": "This Telegram account is already linked to another employee. Use a different account.",
-        "inviteSeatLimit": "The organization’s free plan allows {limit, plural, one {# employee} other {# employees}}. Ask your manager to upgrade the subscription, then try again."
+        "inviteSeatLimit": "All seats on the organisation’s plan are taken ({limit, plural, one {# employee} other {# employees}}). Ask your manager to change the plan or add a location and try again."
       },
       "commands": {
         "start": "🏠 Open WeSetup",
@@ -14853,7 +15010,7 @@
       "kept": "Recognized {value} from the photo. Your entered value was kept.",
       "useRecognized": "Use this value",
       "button": "Photo",
-      "paidOnly": "Automatic entry from photos is available on paid plans",
+      "paidOnly": "Automatic entry from photos is available on the Premium plan",
       "plans": "Plans",
       "unreadable": "Could not read the numbers. Enter them manually.",
       "checkMark": "from photo — please check",
@@ -15564,7 +15721,7 @@
     "page": {
       "title": "Platform metrics",
       "summary": "Activity, retention and revenue across all organizations.",
-      "pricing": "Potential MRR uses quoteSubscription(activeUsers): up to {freeSeats, number} employees costs ₽0, up to {subscriptionSeats, number} is covered by one subscription, then +₽{extraSeatPrice, number} per employee. Actual MRR is 0 for free organizations. Trend is the percentage change in 7-day activity compared with the previous week.",
+      "pricing": "Potential MRR is Standard billed yearly, per month, for as many locations as the headcount needs (up to {seatsPerPoint, number} employees per location); actual MRR is the account’s paid plan per month, 0 for those who have not paid. Trend is the percentage change in 7-day activity compared with the previous week.",
       "tableHelp": "Email belongs to the person who registered the organization. Click column headings to sort, or search using part of an address or name. Click an entry count to see which journals the organization uses and who fills them in.",
       "ipHistory": "Login IP addresses have been recorded since {since}. Earlier addresses were recovered from the audit log, so the column is empty for people who have neither signed in nor performed administrative actions since then."
     },
@@ -15619,8 +15776,10 @@
     "plans": {
       "free": "Free",
       "trial": "Free (trial)",
-      "paid": "Subscription",
-      "pro": "Pro"
+      "paid": "Subscription (previous plan)",
+      "pro": "Pro",
+      "standard": "Standard",
+      "premium": "Premium"
     },
     "relative": {
       "justNow": "just now",
@@ -15690,7 +15849,7 @@
       "notFound": "Feature not found — WeSetup",
       "breadcrumb": "Features",
       "trialHeading": "Try this feature",
-      "trialDescription": "The free plan is free forever and includes all features and integrations. No card required.",
+      "trialDescription": "{trialDays, number} {trialDays, plural, one {day} other {days}} free — every feature and integration, no card required.",
       "trialButton": "Try it",
       "moreFeatures": "More features",
       "home": "Home",
@@ -15850,7 +16009,7 @@
       "calc": "Calculator"
     },
     "fallbackTitle": "Digital SanPiN and HACCP logs",
-    "freeForever": "Free forever"
+    "freeForever": "14 days free"
   },
   "telegramManagerOperations": {
     "capa": {
@@ -15911,13 +16070,19 @@
       "entries": "Entries"
     },
     "subscription": {
-      "title": "Subscription",
+      "title": "Plan",
       "plan": "Plan",
       "until": "Valid until",
       "token": "External API token",
       "tokenIssued": "issued",
       "tokenMissing": "not issued",
-      "paidTotal": "Total paid"
+      "paidTotal": "Total paid",
+      "cycle": "Billing period",
+      "cycleMonth": "monthly",
+      "cycleYear": "yearly",
+      "points": "Paid locations",
+      "pointsValue": "{count, plural, one {# location} other {# locations}}",
+      "trialEnds": "Trial until"
     },
     "payments": {
       "title": "Payment history",
@@ -15946,16 +16111,19 @@
     },
     "settings": {
       "name": "Name",
-      "noExpiry": "Leave empty for no expiry date",
+      "noExpiry": "Leave empty for no paid term. The Free plan has no end date",
       "save": "Save",
       "saved": "Saved",
-      "failed": "Could not save"
+      "failed": "Could not save",
+      "trialHint": "Last trial day (Moscow time). Empty — 14 days from account creation"
     },
     "plans": {
       "free": "Free",
-      "paid": "Paid",
+      "paid": "Subscription (previous plan)",
       "paused": "Paused",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "standard": "Standard",
+      "premium": "Premium"
     },
     "impersonate": {
       "enter": "Sign in as {name}",
@@ -16017,6 +16185,8 @@
     },
     "orders": {
       "paid": "paid",
+      "held": "paid — needs review",
+      "refunded": "refunded",
       "expired": "expired",
       "cancelled": "cancelled",
       "pendingInvoice": "awaiting invoice payment",
@@ -16043,6 +16213,19 @@
       "cancelled": "Invoice No. {orderId} cancelled",
       "failed": "Could not complete the invoice action"
     },
+    "held": {
+      "applied": "Plan applied",
+      "refunded": "Money refunded",
+      "appliedTitle": "Has the payment for order No. {orderId} been applied?",
+      "appliedDescription": "Mark this once the plan has been set manually with the subscription form above. The order becomes a regular payment: a closing document is issued for it, a lifetime discount is bound and a referral reward is credited if due; the automatic switch to the free plan no longer waits for this payment.",
+      "confirmApplied": "Yes, the plan is applied",
+      "refundedTitle": "Has the money for order No. {orderId} been refunded?",
+      "refundedDescription": "Mark this after the refund through the payment provider or bank. The order will be marked as refunded: no closing document is issued, partner accruals are reversed, and points spent on the payment return to the organisation balance. This cannot be undone.",
+      "confirmRefunded": "Yes, the money is refunded",
+      "appliedDone": "Order No. {orderId}: payment reviewed — plan applied",
+      "refundedDone": "Order No. {orderId}: refund marked",
+      "failed": "Could not mark the payment as reviewed"
+    },
     "errors": {
       "organizationMissing": "Organization not found",
       "nameShort": "The name is too short",
@@ -16057,7 +16240,11 @@
       "commentRequired": "Enter a reason",
       "insufficientBalance": "Only {amount, number} ₽ are available; you cannot deduct more",
       "orderMissing": "Not found",
-      "cancelUnpaidOnly": "Only an unpaid invoice can be cancelled"
+      "cancelUnpaidOnly": "Only an unpaid invoice can be cancelled",
+      "pointsInvalid": "Locations must be from 1 to 50",
+      "noAccount": "The organisation has no account — period, locations and trial cannot be saved",
+      "notHeld": "Only a payment awaiting review can be marked as reviewed",
+      "freeWithEnd": "The Free plan has no paid term — to set a date, choose Standard, Premium or Subscription (previous plan)"
     }
   },
   "miniHome": {
@@ -16112,7 +16299,7 @@
     },
     "cta": {
       "title": "Try all logs for free",
-      "description": "All logs are available on the free plan forever, with no card required. If you need more employees or automation, you can activate a subscription in a minute.",
+      "description": "Every log without limits for 14 days, no card required. After that — 1 employee and 1 log for free, or the Standard or Premium plan.",
       "try": "Try it"
     },
     "detailCommon": {
@@ -16130,7 +16317,7 @@
       "benefitsHeading": "How WeSetup helps",
       "codeLabel": "Log code",
       "tryFree": "Try for free",
-      "freeDescription": "All logs are available on the free plan, with no time limit and no card required.",
+      "freeDescription": "{trialDays, number} {trialDays, plural, one {day} other {days}} with every log unlocked and no card required.",
       "relatedHeading": "Related logs",
       "faqHeading": "Questions and answers",
       "howToTitle": "How to fill in: {title}",
@@ -16976,7 +17163,7 @@
   "publicJournalDetailSeo": {
     "hygiene": {
       "title": "Hygiene log — a sample for food service",
-      "description": "Hygiene log under SanPiN 2.3/2.4.4282-26: automatic filling, work clearance, temperature checks and PDF for Rospotrebnadzor. Free forever.",
+      "description": "Hygiene log under SanPiN 2.3/2.4.4282-26: automatic filling, work clearance, temperature checks and PDF for Rospotrebnadzor. 14 days free.",
       "keywords": {
         "item0": "hygiene log",
         "item1": "employee examination log",
@@ -19670,38 +19857,43 @@
   },
   "rootTariffs": {
     "pageTitle": "Platform pricing",
-    "pageDescription": "Prices take effect immediately: the landing page, pricing page and payment buttons read these values on every request. The plan key cannot be changed: payment buttons and existing orders reference it.",
+    "pageDescription": "Prices apply instantly: the landing page, the pricing page, the account and payments read these values on every request. The price is per month; a yearly plan is charged for 12 months at once. The plan key cannot be changed — payment buttons and existing orders refer to it.",
     "tariffSaved": "Plan “{title}” updated",
     "active": "On sale",
     "inactive": "Not on sale",
     "name": "Name",
     "price": "Price, ₽",
     "periodDays": "Period, days",
-    "equipmentNote": "This plan price covers the subscription only. Equipment is charged separately using the price list in the code (src/lib/hardware-pricing.ts).",
     "save": "Save",
     "saving": "Saving…",
     "saved": "Saved",
     "saveFailed": "Could not save",
     "networkError": "Network unavailable",
-    "billingTitle": "Free period and transition to paid plans",
-    "phaseBefore": "The period has not started yet — existing terms apply, with an announcement in accounts",
-    "phaseDuring": "The free period is active — everyone has a subscription for up to {count, plural, one {# employee} other {# employees}}",
-    "phaseAfterEnabled": "The period has ended — the transition to paid plans is active",
-    "phaseAfterDisabled": "The period has ended, but the transition is disabled — existing terms still apply",
-    "billingSaved": "Free period saved",
     "paid": "Paying",
     "free": "Free",
     "waiting": "Awaiting a decision",
     "auto": "Transitioned automatically",
     "autoHint": "from “Free”",
-    "start": "Start (Moscow time)",
-    "end": "End (Moscow time, exclusive)",
-    "grace": "Grace period after the end, days",
+    "grace": "Grace after the trial, days",
     "transition": "Transition to paid plans enabled",
-    "explanation": "During the period, everyone has a free subscription for up to {subscriptionCount, plural, one {# employee} other {# employees}}. Afterwards, unpaid accounts receive a free plan for {freeCount, plural, one {# employee} other {# employees}}; for larger teams, the manager makes a choice in the dialog. When the grace period ends, only the owner remains and the others are archived (daily task /api/cron/billing-transition). If the transition is disabled, existing terms still apply.",
     "total": "Accounts by status · total {count, number, ::group-off}",
-    "secondary": "Also currently: {mode, select, both {in the free period: {freePeriod, number, ::group-off} · on previous terms (test mode): {legacy, number, ::group-off}} free {in the free period: {freePeriod, number, ::group-off}} other {on previous terms (test mode): {legacy, number, ::group-off}}}.",
-    "forecast": "End-of-period forecast based on current data: paying {paid, number, ::group-off} · free {free, number, ::group-off} · awaiting a decision {waiting, number, ::group-off}."
+    "priceMonthly": "Price, ₽/mo",
+    "yearTotal": "{amount} is charged for the year",
+    "legacyTitle": "Archive: previous plans ({count, number})",
+    "legacyNote": "They are no longer sold — links with the old keys lead to Standard and Premium. The Subscription price (monthly) is used to credit the unused balance when switching to a new plan.",
+    "legacyBadge": "Not for sale",
+    "trialTitle": "Trial and transition to paid plans",
+    "trialDays": "Trial, days",
+    "launchedAt": "Plans launch (Moscow time)",
+    "trialSaved": "Trial settings saved",
+    "phaseBeforeLaunch": "The plans launch on {date} (Moscow time) — until then everything stays as before",
+    "phaseActive": "The plans are live: a {trialDays, number}-day trial, then the transition to paid plans",
+    "phaseTransitionOff": "The trial is {trialDays, number} days, but the transition is off: nothing is blocked after the trial",
+    "trialExplanation": "New accounts get {trialDays, number} days of every Premium feature with no card; for accounts created before the launch the trial runs from the launch date. After the trial without payment — the free plan: {freeEmployees, plural, one {# employee} other {# employees}} and {freeJournals, plural, one {# log} other {# logs}}; if an account has more, the manager chooses in a dialog, and after the grace period the owner and the most-filled log stay (daily job /api/cron/billing-transition). With the transition off, nothing is blocked after the trial.",
+    "paidHint": "Standard {standard, number} · Premium {premium, number} · previous {legacy, number}",
+    "trial": "Trial",
+    "trialHint": "ending within 3 days: {count, number}",
+    "legacyCount": "{count, number, ::group-off} more — the transition is off, everything stays as before."
   },
   "rootRequisites": {
     "metadata": {
@@ -20544,7 +20736,7 @@
         "label": "one-off bonus",
         "body": "after subscription payment number {bonusAfterPayments} by the client"
       },
-      "note1": "Example: a 1 990 ₽ subscription → {subscriptionRewardRub} to the partner for every payment.",
+      "note1": "Example: Standard billed monthly at {subscriptionRub} → {subscriptionRewardRub} to the partner for every payment.",
       "note2": "Equipment worth 17 750 ₽ → {hardwareRewardRub}.",
       "note3": "A client refund reverses the same amount. Monthly accruals become “payable” on the 1st of the following month.",
       "note4": "The minimum payout is {minPayoutRub}; a smaller amount carries over to the following month."
@@ -23788,12 +23980,11 @@
       "hideUntilTomorrow": "Hide until tomorrow"
     },
     "billingTransitionGate": {
-      "payByCard": "Pay by card",
       "cancel": "Cancel",
       "goFree": "Switch to the free plan",
       "close": "Close",
       "back": "Back",
-      "paySubscription": "Pay for subscription",
+      "paySubscription": "Choose a plan",
       "later": "Decide later",
       "perMonth": "/mo",
       "loadFailed": "Could not load employees",
@@ -23805,12 +23996,12 @@
       "keepRemains": "Staying active: <b>{name}</b>",
       "andMore": "and {count, number} more",
       "archiveList": "Moving to the archive: {employees}{names}. They will not be able to sign in to the dashboard or the app; their journal entries will be kept.",
-      "restoreHint": "You can restore them after paying for a subscription: “Staff” → “Archive”.",
-      "paidTerm": "The subscription is paid until {date}. If you switch to the free plan, the paid term will not be kept and auto-renewal will be turned off. You can request a refund for unused days by writing to <mail>support@wesetup.ru</mail> — <offer>clause 6.2 of the offer</offer>.",
+      "restoreHint": "You can restore them after paying for the Standard or Premium plan: “Staff” → “Archive”.",
+      "paidTerm": "The plan is paid until {date}. If you switch to the free plan, the paid term will not be kept and auto-renewal will be turned off. You can request a refund for unused days by writing to <mail>support@wesetup.ru</mail> — <offer>clause 6.2 of the offer</offer>.",
       "selfArchived": "You will also be archived and signed out of the dashboard immediately.",
       "noSignIn": "“{name}” has no password or Telegram — no one will be able to sign in to the dashboard. It is better to keep yourself.",
       "chooserTitle": "Who stays on the free plan",
-      "chooserLead": "The free plan covers {employees}. The others will be archived; you can restore them after paying for a subscription.",
+      "chooserLead": "The free plan covers {employees}. Tick who stays; the others will be archived, and you can restore them after paying for a plan.",
       "retry": "Retry",
       "loadingEmployees": "Loading employees…",
       "searchEmployee": "Find an employee",
@@ -23820,7 +24011,15 @@
       "employee": "Employee",
       "cannotSignIn": " · cannot sign in to the dashboard",
       "nobodyFound": "Nobody found",
-      "next": "Next"
+      "next": "Next",
+      "journalTitle": "Which log stays",
+      "journalLead": "The free plan includes {journals}. Tick the log you will keep filling in; the others will be turned off and their entries kept.",
+      "journalsCount": "{count, plural, one {# log} other {# logs}}",
+      "journalEntries": "{count, plural, =0 {no entries in 30 days} one {# entry in 30 days} other {# entries in 30 days}}",
+      "searchJournal": "Find a log",
+      "noJournalFound": "No log found",
+      "keepJournalRemains": "Log in use: <b>{name}</b>",
+      "journalsOff": "{journals} will be turned off — their entries are kept. You can turn them back on after paying for a plan."
     }
   },
   "bonusesUi": {
@@ -26329,7 +26528,7 @@
       "readingPhotoTitle": "Reading photo capture",
       "readingPhotoBody": "On the fridge sticker and the storeroom poster the first button is “Take a photo of the reading”: the photo of the thermometer or display goes into the journal next to the value. {autofill} If they do not want to take a photo — “Enter manually”. Turn it off and the photo buttons disappear.",
       "readingPhotoAutofillOn": "Digits from the photo are filled in automatically — the employee only has to check and save.",
-      "readingPhotoAutofillOff": "Digits from the photo are filled in automatically on a paid plan; for now the employee types them in.",
+      "readingPhotoAutofillOff": "Digits from the photo are filled in automatically on the Premium plan; for now the employee types them in.",
       "readingPhotoRequiredTitle": "Photo is required",
       "readingPhotoRequiredBody": "A temperature cannot be saved via QR without a photo: the photo confirms the measurement was taken at the fridge itself. “Maintenance”, “Repair” and humidity need no photo.",
       "pinNote": "The PIN is set in the employee card (“Staff → card → PIN for quick QR authorisation”) or on the shared tablet page — it is the same code. An employee without a PIN cannot record via QR. In public mode the PIN is also asked from those who have one."
@@ -27732,11 +27931,11 @@
       "issued": "Invoice No. {id, number} issued — the PDF is downloading, a copy has been sent by email",
       "error": "Error",
       "title": "Bank-transfer payment for legal entities",
-      "pendingText": "Invoice No. {id, number} for {amount} has been issued{due}. As soon as the money arrives, the subscription will be extended automatically and the closing documents will appear in the payment history below.",
+      "pendingText": "Invoice No. {id, number} for {amount} has been issued{due}. As soon as the money arrives, the plan will be activated automatically and the closing documents will appear in the payment history below.",
       "dueSuffix": " and is valid until {date}",
       "downloadPdf": "Download invoice (PDF)",
       "awaitingPayment": "Awaiting payment",
-      "offerText": "Not paying by card? We will issue an invoice for <price></price> for {periodDays, number} days to <org>{orgName}</org>{inn}. Your accounts department pays by bank details, the subscription is extended from the date the money arrives, and the closing documents are produced automatically.",
+      "offerText": "Not paying by card? We will issue an invoice for <price></price> for the {plan} plan to <org>{orgName}</org>{inn}. Your accounts department pays by bank details, the plan starts on the date the money arrives, and the closing documents are produced automatically.",
       "innParen": " (TIN {inn})",
       "innRequired": "An organisation TIN is required for an invoice — <link>enter it in the settings</link>.",
       "issueInvoice": "Issue invoice",
@@ -27745,9 +27944,10 @@
       "confirmInn": ", TIN {inn}",
       "bulletDiscount": "With discount: {label}",
       "bulletPdf": "The PDF will download immediately and be sent to your email",
-      "bulletExtend": "The subscription will be extended from the date the money arrives; points do not apply to an invoice",
+      "bulletExtend": "The plan starts on the date the money arrives; points do not apply to an invoice",
       "bulletUpd": "The UPD (transfer document) will appear in the payment history automatically",
-      "issuing": "Issuing…"
+      "issuing": "Issuing…",
+      "planLabel": "Plan on the invoice"
     },
     "closingDocumentActions": {
       "refreshFailed": "Could not update",
@@ -27774,7 +27974,7 @@
     },
     "addOrganizationButton": {
       "add": "Add organisation",
-      "hint": "A second location with its own journals and staff. The free plan limit is shared across all organisations."
+      "hint": "A second location with its own journals and staff — your plan counts it as a separate location. Staff and storage limits are shared across all organisations."
     },
     "buildingGroupHeader": {
       "withoutPoint": "No location"
@@ -27881,7 +28081,7 @@
     },
     "usersPage": {
       "organizationFallback": "Organisation",
-      "seatsNote": "Free plan — {seats}: employees can be restored from the archive after the subscription is paid."
+      "seatsNote": "All seats on your plan are taken ({limit, number}): employees can be restored from the archive after changing the plan or adding a location."
     },
     "auditLogViewer": {
       "durMs": "{ms, number} ms",
@@ -28039,16 +28239,15 @@
       "validUntil": "Valid until {until} inclusive"
     },
     "subscriptionPage": {
-      "planPaidUntil": "Subscription until {date}",
-      "planPaid": "Subscription",
-      "planFreePeriod": "Subscription — free until {date}",
-      "planNeedsDecision": "The free period has ended",
+      "planPaidUntil": "{plan} until {date}",
+      "planPaid": "{plan}",
+      "planNeedsDecision": "The trial has ended",
       "planFree": "Free",
-      "title": "Upgrade your plan",
+      "title": "Plan and billing",
       "demoNote": "This is a demo organisation — its employees do not count towards the plan. The plan is shared across the account and is managed from your organisation.",
-      "balanceNote": "Your balance is <b>{amount} ₽</b> — it will be applied when you pay for the subscription. How to earn more is in the “Balance and bonuses” section.",
+      "balanceNote": "Your balance is <b>{amount} ₽</b> — it will be applied when you pay for a plan. How to earn more is in the “Balance and bonuses” section.",
       "invoiceCardNote": "You can also pay by bank-transfer invoice — see the “Bank-transfer payment for legal entities” block below.",
-      "decisionReadOnly": "The free subscription period has ended. The head of the organisation can pay for the subscription or switch to the free plan in their account.",
+      "decisionReadOnly": "The trial has ended. The head of the organisation can choose a plan or switch to the free plan in their account.",
       "orgNameFallback": "your organisation",
       "paymentHistory": "Payment history",
       "paidTotal": "Paid in total: <b>{amount} ₽</b>",
@@ -28063,28 +28262,50 @@
       "pointsSpent": "by points −{points}",
       "invoicePdf": "Invoice (PDF)",
       "howCalculated": "How the price is calculated",
-      "calcIntro": "{free} — free. A team of {seats} — one subscription <price></price> for everyone, not per person. Each employee above {max, number} — +{extra, number} ₽/month.",
       "perMonthSuffix": "/month",
-      "statActive": "Active",
-      "statOver": "Above {max, number}",
-      "statOverHint": "+{extra, number} ₽/month for each",
-      "statIncluded": "included in the subscription",
-      "statPerMonth": "Per month",
-      "statFree": "Free",
-      "statYearly": "{amount} ₽/year without discount",
-      "scaleTitle": "Price scale:",
-      "scaleExample": "For example, {employees, plural, one {# employee} other {# employees}}: {base} + {extraEmployees, number} × {extraPrice, number} = {total} ₽/month.",
       "promoNow": "Current promotion “{title}”:",
-      "promoScope": "applies to the whole subscription amount, including the surcharge above {max, number}.",
+      "promoScope": "the discount applies to the whole plan amount, locations included.",
       "testModeNote": "While the site is in test mode, the amounts above are for reference only: nothing is charged.",
       "appTitle": "Plan",
       "companyPlan": "Company plan",
-      "expiredNotice": "The company subscription has ended. Contact the company owner.",
+      "expiredNotice": "The company’s paid plan has ended. Contact the company owner.",
       "expiredLabel": "Ended",
       "validUntilLabel": "Valid until",
       "noExpiry": "no expiry",
       "employeesLabel": "Employees",
-      "pointsBalance": "Points balance"
+      "pointsBalance": "Points balance",
+      "planLegacy": "Subscription (previous plan)",
+      "planTrial": "Trial — until {date}",
+      "statusTitle": "Your plan",
+      "trialNote": "Everything in Premium is open — {days, plural, one {# day} other {# days}} left. After that, {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}} stay free, or choose a plan below.",
+      "freeNote": "Free: {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}}. To bring back all employees and logs, choose Standard or Premium.",
+      "legacyNote": "The previous plan stays in force until the end of the paid term with no new limits. You can switch to Standard or Premium now — the unused balance will be credited.",
+      "cycleYear": "billed yearly",
+      "cycleMonth": "billed monthly",
+      "pointsCount": "{count, plural, one {# location} other {# locations}}",
+      "usageEmployees": "Employees",
+      "usagePoints": "Locations",
+      "usageJournals": "Logs",
+      "usageStorage": "Documents",
+      "usageOf": "{used, number} of {limit, number}",
+      "usageNoLimit": "{used, number} · unlimited",
+      "usageOfText": "{used} of {limit}",
+      "usageNoLimitText": "{used} · unlimited",
+      "storageClosed": "uploads closed",
+      "scheduledNote": "From {date} — {plan}. Nothing to pay now: the new plan is paid from that day.",
+      "scheduleCancel": "Cancel the switch",
+      "scheduleFailed": "Could not save the switch",
+      "scheduleDone": "Switch scheduled from {date}",
+      "scheduleCancelled": "Switch cancelled",
+      "tariffsChoose": "Choose a plan",
+      "tariffsChange": "Change plan",
+      "rulePoints": "The price is per location: each location costs one more plan and includes up to {seats, number} employees. From {from, number} locations — {percent, number}% off each.",
+      "ruleUpgrade": "Upgrading the plan or adding locations applies right away: you pay the difference for the remaining days only, the end date stays the same.",
+      "ruleSwitch": "Switching from monthly to yearly billing applies right away: the yearly price minus the unused balance of the month.",
+      "ruleDowngrade": "Downgrading, fewer locations or switching to monthly billing apply from the end of the paid term — nothing to pay now.",
+      "ruleTrial": "The trial lasts {trialDays, number} days with no card. A plan paid during the trial starts on the payment day.",
+      "examplesTitle": "Monthly price when billed yearly",
+      "colPoints": "Locations"
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Commission — signs off the quality check",
@@ -28467,54 +28688,6 @@
       "configured": "configured: {count, number}",
       "resetPositionTitle": "Return to the group defaults"
     },
-    "planUpgrade": {
-      "employees": "{count, plural, one {# employee} other {# employees}}",
-      "employeesGenitive": "{count, plural, one {# employee} other {# employees}}",
-      "hardwarePoint1": "Sensors for refrigerators — temperature is logged automatically",
-      "hardwarePoint2": "A tablet in the kitchen and NFC key fobs for the shift",
-      "hardwarePoint3": "On-site visit, installation and shift training",
-      "planFreeName": "Free",
-      "planFreeJournals": "All {count, plural, one {# journal} other {# journals}} for SanPiN and HACCP",
-      "planFreeTelegram": "Telegram bot and Mini App",
-      "planFreePdf": "PDF reports for inspections",
-      "planFreeNoLimits": "No limits on entries, sensors or AI messages",
-      "planPaidName": "Subscription",
-      "planPaidUpTo": "Up to {employees}",
-      "planPaidIot": "Your own IoT sensors and auto-fill",
-      "planPaidSupport": "Priority support in Telegram",
-      "breakdownBase": "Subscription for up to {employees}",
-      "breakdownExtra": "Over {max, number}: {count, number} × {price}",
-      "total": "Total",
-      "perMonth": "/mo",
-      "yourPlan": "Your plan: {plan}",
-      "overFreeLine": "{users} · free plan — {free}",
-      "seatsLine": "{used, number}/{limit, number} employees · seats available: {left, number}",
-      "freeSummary": "{employees} free; for a team — a subscription",
-      "fromPrice": "from <price></price> for up to {employees}, +{extra, number} ₽/mo for each one over {max, number}.",
-      "forYours": ", for your {employees}:",
-      "testMode": "Test mode — no payment is charged",
-      "seatsEndedPaymentRequired": "Free seats have run out. To add employees or restore them from the archive, pay for a subscription.",
-      "seatsEndedTestMode": "Free seats have run out. The next employee will move the organisation to a subscription — it is free for now, the site is in test mode.",
-      "seatsEnded": "Free seats have run out. The next employee will move the organisation to a subscription.",
-      "inheritsIntro": "Everything from “Free”, plus:",
-      "popular": "Popular",
-      "ctaCurrent": "Current",
-      "ctaPay": "Pay by card",
-      "ctaFree": "Free plan",
-      "equipmentTitle": "+ Equipment",
-      "hardwareFrom": "from {amount} ₽",
-      "oneTime": "one-time",
-      "hardwareHint": "So that temperature is logged automatically and the shift checks in with a key fob",
-      "whatIncluded": "What’s included",
-      "collapse": "Collapse selection",
-      "pickKit": "Choose a kit",
-      "calculatorTitle": "Equipment selection",
-      "calculatorHint": "Choose what you need — the price will be recalculated. Already have a tablet or sensors: untick them and only the subscription remains.",
-      "largeTeamNote": "Each employee over {max, number} — {price, number} ₽/mo.",
-      "contactSupport": "Contact support",
-      "paymentLater": "Payment will appear later. All features are free for now — the site is in test mode.",
-      "changeAnytime": "You can change your plan at any time."
-    },
     "positionStaffVisibilityClient": {
       "noPosition": "No position",
       "savedWithErrors": "Saved {ok, number}, errors {failed, number}",
@@ -28553,10 +28726,10 @@
       "title": "Auto-renewal",
       "on": "On",
       "off": "Off",
-      "activeIntro": "The subscription renews itself.",
+      "activeIntro": "The plan renews itself.",
       "nextCharge": "Next charge on <strong>{date}</strong> for {amount} ₽.",
       "activeOutro": "We will notify you of the amount 3 days in advance. You can turn it off at any time — access stays until the end of the paid period.",
-      "inactiveBody": "Payment is one-off — when the period ends, access to paid features will be suspended. To enable auto-renewal, pay a month in advance with the consent box ticked: paid time is not lost, the new month is added to the current term.",
+      "inactiveBody": "Payment is one-off — when the term ends, the account moves to the free plan. To enable auto-renewal, pay for the next period with the consent box ticked: paid time is not lost, the new period is added to the current term.",
       "disable": "Disable auto-renewal",
       "enable": "Enable auto-renewal",
       "confirmTitle": "Disable auto-renewal?",
@@ -28664,18 +28837,18 @@
     },
     "subscriptionDiscountCard": {
       "title": "Promo code and discount",
-      "lifetimeUntil": "Applied automatically to every subscription payment until {date} — by card and by invoice, then it is removed automatically. Nothing to enter",
-      "lifetimeForever": "Applied automatically to every subscription payment — by card and by invoice. Nothing to enter",
+      "lifetimeUntil": "Applied automatically to every plan payment until {date} — by card and by invoice, then it is removed automatically. Nothing to enter",
+      "lifetimeForever": "Applied automatically to every plan payment — by card and by invoice. Nothing to enter",
       "validSince": " (valid since {date})",
       "hint": "Have a personal promo code? Enter it — the price below will be recalculated, and the discount will apply to card payment and to the invoice.",
       "placeholder": "For example, ROMASHKA10",
       "codeLabel": "Promo code",
       "checking": "Checking…",
       "apply": "Apply",
-      "codeApplied": "Promo code {code} applied: −{amount} ₽ off the subscription",
+      "codeApplied": "Promo code {code} applied: −{amount} ₽ off the plan",
       "fromPromoPrice": " (calculated from the promotional price)",
       "personalPending": "Personal promo code — we will check it against your email at payment.",
-      "payFor": "To pay for {days, number} days",
+      "payFor": "To pay: {plan}",
       "payByCard": "Pay by card"
     },
     "tasksflowAuditFeed": {
@@ -28697,6 +28870,25 @@
       "actionRejected": "Returned for rework",
       "actionPhotoUploaded": "Photo uploaded",
       "actionPhotoDeleted": "Photo deleted"
+    },
+    "equipmentDelivery": {
+      "title": "Equipment delivery",
+      "lead": "Temperature sensors, thermo-hygrometers and a tablet arrive already linked to your account — readings go into the logs right away. The set and amount follow the price list; a manager agrees delivery and installation, payment after agreement.",
+      "lockedText": "Delivery of pre-connected equipment and IoT sensor connection come with the Premium plan.",
+      "upgrade": "Switch to Premium",
+      "bundles": "Ready-made sets",
+      "custom": "Custom set",
+      "total": "Total by price list: {amount}",
+      "oneTime": "one-off",
+      "contactName": "Name",
+      "contactPhone": "Phone",
+      "address": "Delivery address",
+      "comment": "Comment",
+      "submit": "Order delivery",
+      "sending": "Sending…",
+      "done": "Request sent — a manager will contact you",
+      "failed": "Could not send the request",
+      "empty": "Choose at least one item"
     }
   },
   "teamUi": {

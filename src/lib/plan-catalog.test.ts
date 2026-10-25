@@ -2,56 +2,71 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  CARD_POINTS,
+  COMPARISON_GROUPS,
   FREE_PLAN_NOTE,
   FREE_PLAN_TITLE,
-  FREE_SEATS_LABEL,
   FREE_TIER_SHORT,
-  LARGE_TEAM_NOTE,
-  PLAN_CATALOG,
-  SUBSCRIPTION_MAX_USERS,
-  SUBSCRIPTION_SEATS_LABEL,
+  PAID_SEATS_LABEL,
+  POINTS_NOTE,
   employeesGenitiveLabel,
   employeesLabel,
+  pricesFromLine,
+  tierIdForPlan,
 } from "@/lib/plan-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { DEFAULT_PLAN_RATES, TIER_IDS, entitlementsFor } from "@/lib/tariff-plans";
 import { NICHES } from "@/content/niches";
 import { SEO_LANDINGS } from "@/content/seo-landings";
 import { COMPARISONS } from "@/content/comparisons";
 import { WESETUP_BOT_PROFILE as BOT_PROFILE } from "@/lib/bot/setup";
 
-describe("тариф 2026-10: 1 бесплатно, подписка до 10", () => {
-  it("константы", () => {
-    assert.equal(FREE_MAX_USERS, 1);
-    assert.equal(SUBSCRIPTION_MAX_USERS, 10);
-  });
-
+describe("тарифы 2026-10: Бесплатный 14 дней, Стандарт, Премиум", () => {
   it("склонения: именительный и родительный", () => {
     assert.equal(employeesLabel(1), "1 сотрудник");
     assert.equal(employeesLabel(3), "3 сотрудника");
-    assert.equal(employeesLabel(10), "10 сотрудников");
+    assert.equal(employeesLabel(25), "25 сотрудников");
     assert.equal(employeesLabel(21), "21 сотрудник");
     assert.equal(employeesGenitiveLabel(1), "1 сотрудника");
-    assert.equal(employeesGenitiveLabel(3), "3 сотрудников");
-    assert.equal(employeesGenitiveLabel(10), "10 сотрудников");
+    assert.equal(employeesGenitiveLabel(25), "25 сотрудников");
   });
 
-  it("фразы витрины собраны из констант", () => {
-    assert.equal(FREE_SEATS_LABEL, "1 сотрудник");
-    assert.equal(FREE_TIER_SHORT, "Бесплатно для 1 сотрудника");
-    assert.equal(FREE_PLAN_TITLE, "Бесплатный тариф на 1 сотрудника");
-    assert.equal(FREE_PLAN_NOTE, "Бесплатно для 1 сотрудника, без ограничений по записям.");
-    assert.equal(SUBSCRIPTION_SEATS_LABEL, "до 10 сотрудников");
-    assert.equal(LARGE_TEAM_NOTE, "Каждый сотрудник сверх 10 — 100 ₽/мес.");
-    const free = PLAN_CATALOG.find((p) => p.id === "free");
-    const paid = PLAN_CATALOG.find((p) => p.id === "paid");
-    assert.equal(free?.features[0], "1 сотрудник");
-    assert.equal(paid?.features[0], "До 10 сотрудников");
-    assert.match(paid?.tagline ?? "", /до 10 сотрудников/);
+  it("фразы собраны из констант", () => {
+    assert.equal(FREE_TIER_SHORT, "14 дней бесплатно");
+    assert.equal(FREE_PLAN_TITLE, "Бесплатный тариф — 14 дней без ограничений");
+    assert.match(FREE_PLAN_NOTE, /^14 дней — все журналы, сотрудники и точки без ограничений, без карты\. Дальше бесплатно — 1 сотрудник и 1 журнал\.$/);
+    assert.equal(PAID_SEATS_LABEL, "до 25 сотрудников на точку");
+    assert.match(POINTS_NOTE, /от 3 точек — скидка 5 % на каждую/);
+    assert.match(pricesFromLine(DEFAULT_PLAN_RATES), /«Стандарт» — от 1\s990 ₽\/мес, «Премиум» — от 3\s990 ₽\/мес/);
   });
 
-  it("в текстах сайта и бота не осталось старых лимитов (3 / 30)", () => {
+  it("значение тарифа → карточка витрины", () => {
+    assert.equal(tierIdForPlan("free"), "free");
+    assert.equal(tierIdForPlan("trial"), "free");
+    assert.equal(tierIdForPlan(null), "free");
+    assert.equal(tierIdForPlan("standard"), "standard");
+    assert.equal(tierIdForPlan("premium"), "premium");
+    assert.equal(tierIdForPlan("paid"), "legacy");
+  });
+
+  it("таблица сравнения не расходится с лимитами: строки-возможности есть только у Премиума", () => {
+    const rows = COMPARISON_GROUPS.flatMap((group) => group.rows);
+    const featureRows = rows.filter((row) => row.feature);
+    assert.equal(featureRows.length, 4);
+    for (const row of featureRows) {
+      const feature = row.feature!;
+      assert.equal(entitlementsFor("premium").features[feature], true, row.key);
+      assert.equal(entitlementsFor("standard").features[feature], false, row.key);
+      assert.equal(row.cells.premium.kind, "yes", row.key);
+      assert.equal(row.cells.standard.kind, "no", row.key);
+    }
+    // У каждой строки — клетка для каждого тарифа.
+    for (const row of rows) for (const tier of TIER_IDS) assert.ok(row.cells[tier], `${row.key}.${tier}`);
+    assert.deepEqual(Object.keys(CARD_POINTS), ["free", "standard", "premium"]);
+  });
+
+  it("в текстах сайта и бота нет старой модели (1 сотрудник навсегда, до 10, сверх 10)", () => {
     const texts = JSON.stringify([NICHES, SEO_LANDINGS, COMPARISONS, BOT_PROFILE]);
-    assert.doesNotMatch(texts, /до 3 сотрудник|3 сотрудников|до 30\b|сверх 30/);
-    assert.match(texts, /Бесплатно для 1 сотрудника/);
+    assert.doesNotMatch(texts, /Бесплатно для 1 сотрудника|до 10 сотрудников|сверх 10|бесплатно навсегда|навсегда бесплатно/i);
+    assert.match(texts, /14 дней бесплатно/);
   });
 });

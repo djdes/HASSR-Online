@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { KNOWLEDGE_ACCEPT, KNOWLEDGE_MAX_BYTES, knowledgeInline, type KnowledgeDocumentItem } from "@/lib/knowledge-documents";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 type Preview = { kind: "text"; text: string } | { kind: "spreadsheet"; sheets: Array<{ name: string; rows: string[][] }> } | { kind: "file"; message: string };
 
@@ -27,6 +28,7 @@ export function KnowledgeDocumentsClient({ canManage }: { canManage: boolean }) 
   const tAck = useTranslations("productionControl.ack");
   const t = useTranslations("knowledgeUi.knowledgeDocumentsClient");
   const tc = useTranslations("common");
+  const tariffLimit = useTariffLimitToast();
   const load = useCallback(async () => {
     setError("");
     try {
@@ -65,6 +67,8 @@ export function KnowledgeDocumentsClient({ canManage }: { canManage: boolean }) 
         const form = new FormData(); form.append("file", file);
         const response = await fetch("/api/knowledge-documents", { method: "POST", body: form });
         const body = await response.json();
+        // Хранилище тарифа заполнено — toast с кнопкой «Выбрать тариф», остальные файлы не шлём.
+        if (!response.ok && tariffLimit(body)) break;
         if (!response.ok) throw new Error(body.error || t("uploadFailed"));
         toast.success(t("uploaded", { name: file.name }));
       } catch (err) { toast.error(err instanceof Error ? err.message : t("uploadFailed")); }

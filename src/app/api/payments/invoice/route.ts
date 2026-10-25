@@ -4,17 +4,18 @@ import { getActiveOrgId, isImpersonating, requireAuth } from "@/lib/auth-helpers
 import { createInvoiceOrder, deliverInvoice } from "@/lib/invoices/service";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { TARIFF_MONTHLY } from "@/lib/tariffs";
+import { parseCheckoutTarget } from "@/lib/plan-checkout.server";
 import { refuseMobileAppPayment } from "@/lib/mobile-app-payments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/payments/invoice { tariffKey?, promoCode? } — выставить счёт по
- * безналу на активную организацию. Сумму со скидкой (промокод или скидка
- * навсегда аккаунта) считает сервер. Письмо со счётом и заметка админу —
- * после ответа: клиент не должен ждать SMTP.
+ * POST /api/payments/invoice { plan?, cycle?, points?, tariffKey?, promoCode? } —
+ * выставить счёт по безналу на активную организацию. Сумму по тарифу и виду
+ * перехода, со скидкой (промокод или скидка навсегда аккаунта), считает
+ * сервер (`quoteCheckout`). Без тарифа — «Стандарт» за год. Письмо со счётом
+ * и заметка админу — после ответа: клиент не должен ждать SMTP.
  */
 export async function POST(request: Request) {
   const appRefusal = refuseMobileAppPayment(request);
@@ -23,8 +24,12 @@ export async function POST(request: Request) {
   if (!hasFullWorkspaceAccess(session.user) || isImpersonating(session)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
-  const body = (await request.json().catch(() => ({}))) as { tariffKey?: unknown; promoCode?: unknown };
-  const tariffKey = typeof body.tariffKey === "string" && body.tariffKey ? body.tariffKey : TARIFF_MONTHLY;
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const target = parseCheckoutTarget({ plan: body.plan, cycle: body.cycle, points: body.points, tariffKey: body.tariffKey }) ?? {
+    tier: "standard" as const,
+    cycle: "year" as const,
+    points: 1,
+  };
   const promoCode = typeof body.promoCode === "string" && body.promoCode.trim() ? body.promoCode.slice(0, 64) : null;
   const organizationId = getActiveOrgId(session);
 
@@ -32,10 +37,16 @@ export async function POST(request: Request) {
     organizationId,
     userId: session.user.id,
     email: session.user.email ?? "",
-    tariffKey,
+    target,
     promoCode,
+    expectedGrossRub: typeof body.expectedGrossRub === "number" ? body.expectedGrossRub : null,
   });
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error, ...(result.grossRub !== undefined ? { grossRub: result.grossRub } : {}) },
+      { status: result.status }
+    );
+  }
 
   if (result.created) {
     const org = await db.organization.findUnique({ where: { id: organizationId }, select: { name: true } });

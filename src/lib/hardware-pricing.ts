@@ -87,7 +87,7 @@ export const HARDWARE_BUNDLES: HardwareBundle[] = [
   },
   {
     id: "standard",
-    name: "Стандарт",
+    name: "Кухня",
     forWhom: "Активная кухня, регулярные проверки",
     hook: "Все ключевые холодильники под датчиком, планшет на кухне, брелоки на всю смену.",
     popular: true,

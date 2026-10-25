@@ -24,6 +24,7 @@ import {
   DEFAULT_TWITTER_CARD,
   DEFAULT_TWITTER_IMAGES,
 } from "@/lib/meta-defaults";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ServiceRequestForm } from "./service-request-form";
 
 /**
@@ -393,7 +394,7 @@ export default async function UslugiPage() {
       <section className="mx-auto max-w-[1200px] px-4 pb-16 sm:px-6">
         <div className="rounded-3xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-6 sm:p-9">
           <h2 className="max-w-[620px] text-[24px] font-semibold leading-[1.15] tracking-[-0.02em] md:text-[28px]">
-            Половину вопросов закрывает сам сервис — и он бесплатный
+            {`Половину вопросов закрывает сам сервис — первые ${TRIAL_DAYS} дней бесплатно`}
           </h2>
           <p className="mt-3 max-w-[620px] text-[15px] leading-[1.65] text-[#3c4053]">
             Журналы, напоминания смене и PDF для проверки доступны сразу после

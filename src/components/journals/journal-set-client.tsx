@@ -11,6 +11,7 @@ import type { Locale } from "@/i18n/locales";
 import type { JournalSetId } from "@/lib/journal-sets";
 import type { JournalSetTodayStatus } from "@/lib/journal-set-today";
 import { cn } from "@/lib/utils";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /**
  * Клиентская часть страниц наборов журналов (`journal-set-page.tsx`): кнопка
@@ -44,9 +45,9 @@ function format(locale: Locale, template: string, values: Record<string, string 
   return createTranslator({ locale, messages: { message: template } })("message", values);
 }
 
-async function readError(response: Response, fallback: string): Promise<string> {
-  const body = (await response.json().catch(() => null)) as { error?: unknown } | null;
-  return typeof body?.error === "string" && body.error ? body.error : fallback;
+function errorText(body: unknown, fallback: string): string {
+  const error = body && typeof body === "object" ? (body as { error?: unknown }).error : null;
+  return typeof error === "string" && error ? error : fallback;
 }
 
 const PRIMARY_BUTTON =
@@ -78,6 +79,7 @@ export function JournalSetEnableAll({
   };
 }) {
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [open, setOpen] = useState(false);
   const [refreshing, startRefresh] = useTransition();
 
@@ -88,7 +90,10 @@ export function JournalSetEnableAll({
       body: JSON.stringify({ set: setId }),
     });
     if (!response.ok) {
-      toast.error(await readError(response, copy.failed));
+      const body = await response.json().catch(() => null);
+      // Бесплатный тариф — один журнал: toast с кнопкой «Выбрать тариф».
+      if (tariffLimit(body)) return;
+      toast.error(errorText(body, copy.failed));
       return;
     }
     const body = (await response.json().catch(() => null)) as { changed?: unknown } | null;
@@ -218,6 +223,7 @@ export function JournalSetList({
   copy: ListCopy;
 }) {
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [, startRefresh] = useTransition();
 
@@ -230,7 +236,9 @@ export function JournalSetList({
         body: JSON.stringify({ source: "journal-page" }),
       });
       if (!response.ok) {
-        toast.error(await readError(response, copy.enableFailed));
+        const body = await response.json().catch(() => null);
+        if (tariffLimit(body)) return;
+        toast.error(errorText(body, copy.enableFailed));
         return;
       }
       toast.success(format(locale, copy.enableOneDone, { name: journal.name }));

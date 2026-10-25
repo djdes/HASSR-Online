@@ -194,11 +194,15 @@ export async function accrueReferralReward(orderId: number): Promise<number> {
       pointsSpent: true,
       status: true,
       refundedAt: true,
+      heldAt: true,
     },
   });
   if (!order || !order.organizationId) return 0;
   if (order.status !== "paid" && order.status !== "completed") return 0;
   if (order.refundedAt) return 0;
+  // Оплата на ручном разборе может кончиться возвратом, а награду не
+  // сторнировать — начислит разбор «Тариф применён» (ROOT).
+  if (order.heldAt) return 0;
   // Пополнение баланса — не покупка подписки: награда «30 % первой
   // подписки» одна на организацию, и первое пополнение съело бы её (30 %
   // от суммы до 300 000 ₽). Награда придёт с оплатой подписки — база

@@ -6,7 +6,6 @@ import { FORMAT_LOCALES } from "@/i18n/locales";
 import { localizedHref, siteLanguageAlternates, type SiteLocale } from "@/i18n/site-locale";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { publicMetadataFor } from "@/i18n/public-metadata";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import {
   ArrowRight,
   BellRing,
@@ -20,18 +19,12 @@ import {
   ShieldCheck,
   Wand2,
 } from "lucide-react";
-import { db } from "@/lib/db";
-import { EquipmentPricing } from "@/components/landing/equipment-pricing";
+import { HardwareStrip } from "@/components/landing/hardware-strip";
 import { Testimonials } from "@/components/landing/testimonials";
 import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landing/landing-section";
 import { listPublicReviews } from "@/lib/balance/reviews";
 import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
 import { NICHES } from "@/content/niches";
-import {
-  catalogPlanIdFor,
-  EXTRA_USER_PRICE_RUB,
-  SUBSCRIPTION_MAX_USERS,
-} from "@/lib/plan-catalog";
 import { BrandLogo } from "@/components/brand/logo";
 import {
   HARDWARE_BUNDLES,
@@ -56,15 +49,16 @@ import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { authOptions } from "@/lib/auth";
 import { getWebHomeHref } from "@/lib/role-access";
 import { jsonLdSafeString } from "@/lib/json-ld";
-import {
-  readTariffs,
-  fallbackTariffs,
-  TARIFF_MONTHLY,
-} from "@/lib/tariffs";
-import { PlanCard } from "@/components/pricing/plan-card";
+import { readPlanPricing } from "@/lib/tariffs";
+import { TariffComparison } from "@/components/pricing/tariff-comparison";
 import { PromoPrice, formatPriceRub } from "@/components/pricing/promo-price";
-import { getDisplayOffer } from "@/lib/promo/offer";
+import { readActivePromotion } from "@/lib/promo/offer";
+import { applyPromotion } from "@/lib/promo/promotions";
+import { readPpkIndividualPrice } from "@/lib/services/catalog";
+import { SEATS_PER_POINT, STORAGE_BYTES, TRIAL_DAYS, planMonthlyRub } from "@/lib/tariff-plans";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
+
+const MB = 1024 * 1024;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -74,7 +68,7 @@ export async function generateMetadata() {
   const t = await translatorFor(locale);
   const base = await publicMetadataFor(locale);
   const title = t("landing.metadata.title");
-  const description = t("landing.metadata.description", { journalCount: JOURNALS_TOTAL, freeUsers: FREE_MAX_USERS });
+  const description = t("landing.metadata.description", { journalCount: JOURNALS_TOTAL, trialDays: TRIAL_DAYS });
   const url = `https://wesetup.ru${localizedHref("/", locale)}`;
   const image = `https://wesetup.ru/og/landing/${locale}`;
   return {
@@ -275,10 +269,7 @@ export default async function LandingPage() {
     const key = `publicNavigation.niches.${slug}` as `publicNavigation.niches.${keyof Messages["publicNavigation"]["niches"]}`;
     return copy(key);
   };
-  const freeSeatsLabel = copy("landing.pricing.freeSeatsLabel", { employeeCount: FREE_MAX_USERS });
-  const freePlanTitle = copy("landing.pricing.freePlanTitle", { employeeCount: FREE_MAX_USERS });
-  const freePlanNote = copy("landing.pricing.freePlanNote", { employeeCount: FREE_MAX_USERS });
-  const largeTeamNote = copy("landing.pricing.largeTeamNote", { employeeLimit: SUBSCRIPTION_MAX_USERS, extraUserPrice: EXTRA_USER_PRICE_RUB });
+  const freePlanTitle = copy("landing.pricing.freePlanTitle", { trialDays: TRIAL_DAYS });
   // В приложении лендинг с тарифами и кнопками оплаты не показываем
   // (правила магазинов) — сразу главный экран приложения.
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
@@ -300,21 +291,6 @@ export default async function LandingPage() {
     .toUpperCase()
     .slice(0, 2);
 
-  // Тариф залогиненного: на бесплатном первую карточку показываем как
-  // «Текущий», а не зовём регистрироваться заново.
-  const viewerOrganizationId = session?.user?.organizationId ?? null;
-  const viewerPlan = viewerOrganizationId
-    ? (
-        await db.organization
-          .findUnique({
-            where: { id: viewerOrganizationId },
-            select: { subscriptionPlan: true },
-          })
-          .catch(() => null)
-      )?.subscriptionPlan ?? null
-    : null;
-  const viewerOnFreePlan = isAuthed && catalogPlanIdFor(viewerPlan) === "free";
-
   // Цены тарифов живут в БД и правятся ROOT'ом в /root/tariffs — карточки,
   // калькулятор и JSON-LD читают одно и то же значение, поэтому смена
   // цены не требует деплоя. Страница уже force-dynamic.
@@ -326,18 +302,19 @@ export default async function LandingPage() {
   });
   const rating = buildAggregateRating(publicReviews);
 
-  const tariffs = await readTariffs().catch(() => fallbackTariffs());
-  const monthly =
-    tariffs.find((t) => t.key === TARIFF_MONTHLY) ?? fallbackTariffs()[0];
-  const monthlyTitle = monthly.title === fallbackTariffs().find((tariff) => tariff.key === TARIFF_MONTHLY)?.title
-    ? copy("landing.seo.subscriptionDefaultName") : monthly.title;
-  // Цена с действующей акцией (ROOT → «Акции»): зачёркнутая старая и
-  // новая — в первом экране, карточке и калькуляторе.
-  const offer = await getDisplayOffer(monthly);
+  // Тарифы 2026-10 (ROOT → «Тарифы»): цены месяц/год из `PlatformTariff`,
+  // действующая акция (ROOT → «Акции») — в первом экране, колонках и JSON-LD.
+  const [pricing, promotion, ppkFromRub] = await Promise.all([
+    readPlanPricing(),
+    readActivePromotion().catch(() => null),
+    readPpkIndividualPrice(),
+  ]);
+  const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
+  const premiumFrom = applyPromotion(planMonthlyRub(pricing.rates, "premium", "year"), promotion);
   const heroPricing = copy.rich("landing.pricing.heroPhrase", {
-    employeeCount: FREE_MAX_USERS,
-    amount: formatPriceRub(offer.priceRub, locale),
-    price: () => <PromoPrice locale={locale} price={offer} />,
+    trialDays: TRIAL_DAYS,
+    amount: formatPriceRub(standardFrom.priceRub, locale),
+    price: () => <PromoPrice locale={locale} price={standardFrom} />,
   });
 
   // «от N ₽» в карточке оборудования — самый дешёвый готовый комплект.
@@ -420,28 +397,37 @@ export default async function LandingPage() {
             name: copy("landing.freePlan"),
             price: "0",
             priceCurrency: "RUB",
-            description: copy("landing.seo.freeOfferDescription", { employeeCount: FREE_MAX_USERS, journalCount: JOURNALS_TOTAL }),
+            description: copy("landing.seo.freeOfferDescription", { trialDays: TRIAL_DAYS, journalCount: JOURNALS_TOTAL }),
             availability: "https://schema.org/InStock",
           },
-          {
+          // Цена в разметке = цена на странице («от» — при оплате за год):
+          // в период акции — со скидкой и с датой, до которой она действует.
+          ...([
+            {
+              name: copy("landingComponents.tariffs.tiers.standard.name"),
+              price: standardFrom,
+              description: copy("landing.seo.standardDescription", { employees: SEATS_PER_POINT, mb: STORAGE_BYTES.standard / MB }),
+            },
+            {
+              name: copy("landingComponents.tariffs.tiers.premium.name"),
+              price: premiumFrom,
+              description: copy("landing.seo.premiumDescription", { gb: STORAGE_BYTES.premium / (1024 * MB) }),
+            },
+          ].map((tier) => ({
             "@type": "Offer",
-            name: monthlyTitle,
-            // Цена в разметке = цена на странице: в период акции — со
-            // скидкой и с датой, до которой она действует.
-            price: String(offer.priceRub),
-            ...(offer.promotion
-              ? { priceValidUntil: offer.promotion.endsAt.slice(0, 10) }
-              : {}),
+            name: tier.name,
+            price: String(tier.price.priceRub),
+            ...(tier.price.promotion ? { priceValidUntil: tier.price.promotion.endsAt.slice(0, 10) } : {}),
             priceCurrency: "RUB",
             priceSpecification: {
               "@type": "UnitPriceSpecification",
-              price: String(offer.priceRub),
+              price: String(tier.price.priceRub),
               priceCurrency: "RUB",
               unitText: copy("landing.month"),
             },
-            description: copy("landing.seo.subscriptionDescription", { employeeLimit: SUBSCRIPTION_MAX_USERS, extraUserPrice: EXTRA_USER_PRICE_RUB }),
+            description: tier.description,
             availability: "https://schema.org/InStock",
-          },
+          }))),
         ],
       },
     ],
@@ -827,71 +813,30 @@ export default async function LandingPage() {
         id="pricing"
         className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}
       >
-        {/* Абзаца под заголовком больше нет: что входит в подписку и
-            оборудование, сказано в самих карточках. */}
-        <LandingSectionHeader title={copy("landing.freeLogsPayAutomation")} />
+        {/* Тарифы 2026-10: три колонки, как у подписок на ИИ, — переключатель
+            «Помесячно / За год», точки, таблица сравнения и ППК под ними. */}
+        <LandingSectionHeader title={copy("landing.pricingTitle", { trialDays: TRIAL_DAYS })} />
 
-        {/* Три карточки одной высоты. Подписка перечисляет только то,
-            чего нет в бесплатном, — иначе половина списка дублируется.
-            `touch` — крупнее на телефоне (текст 16 px, кнопка 48 px);
-            на десктопе и в кабинете (там флага нет) — как было. */}
-        <EquipmentPricing
-          subscriptionMonthly={monthly.priceRub}
-          subscriptionPromotion={offer.promotion}
-          hardwareFromRub={hardwareFromRub}
-        >
-          <PlanCard
-            locale={locale}
-            kind="free"
-            name={copy("landing.freePlan")}
-            from="0 ₽"
-            period={copy("landing.forever")}
-            points={[
-              freeSeatsLabel,
-              copy("landing.pricing.freePlanAllJournals", { journalCount: JOURNALS_TOTAL }),
-              copy("landing.inspectionPdfNoCard"),
-            ]}
-            ctaLabel={viewerOnFreePlan ? copy("landing.currentPlan") : copy("landing.startFree")}
-            ctaHref="#start"
-            ctaDisabled={viewerOnFreePlan}
-            note={freePlanNote}
-            touch
+        <TariffComparison
+          mode="public"
+          rates={pricing.rates}
+          available={pricing.available}
+          promotion={promotion}
+          ppkFromRub={ppkFromRub}
+          ppkHref="/uslugi#ppk-development"
+          startHref="#start"
+          showTable
+          className="mt-2"
+        />
+
+        {/* Оборудование — возможность «Премиума»: подбор комплекта под
+            колонками, а не отдельной карточкой рядом с тарифами. */}
+        <div className="mt-5">
+          <HardwareStrip
+            premiumMonthlyRub={planMonthlyRub(pricing.rates, "premium", "year")}
+            promotion={promotion}
+            hardwareFromRub={hardwareFromRub}
           />
-
-          <PlanCard
-            locale={locale}
-            kind="team"
-            name={monthlyTitle}
-            from={formatPriceRub(monthly.priceRub, locale)}
-            price={offer}
-            period={copy("landing.perMonth")}
-            pointsIntro={copy("landing.paidIncludes")}
-            points={[
-              copy("landing.pricing.subscriptionEmployeeLimit", { employeeLimit: SUBSCRIPTION_MAX_USERS }),
-              copy("landing.iotAndAutofill"),
-              copy("landing.priorityTelegramSupport"),
-            ]}
-            ctaLabel={copy("landing.payByCard")}
-            ctaHref="/order?plan=monthly"
-            highlighted
-            badge={copy("landing.popularBadge")}
-            touch
-          />
-        </EquipmentPricing>
-
-        {/* Сверх лимита тарифа — фиксированная доплата за сотрудника;
-            места сверх лимита оформляются через поддержку, поэтому рядом
-            кнопка связи. Промолчать нельзя — человек оплатит и упрётся
-            в лимит. */}
-        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span className="text-[16px] leading-[1.5] text-[#3c4053] sm:text-[15px]">{largeTeamNote}</span>
-          <a
-            href="https://t.me/wesetupbot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${OUTLINE_BUTTON_CLASS} shrink-0 sm:h-10 sm:px-4 sm:text-[14px]`}
-          >
-            {copy("landing.contactSupport")}</a>
         </div>
 
         {/* ГАРАНТИЯ — одной строкой под тарифами. Раньше это был блок в
@@ -967,7 +912,7 @@ export default async function LandingPage() {
               <h2 className="text-[clamp(1.5rem,2vw+1rem,2.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
                 {copy("landing.finalCtaHeading")}</h2>
               <p className="mt-3 max-w-[560px] text-[16px] leading-[1.6] text-[#3c4053]">
-                {copy("landing.finalCtaDetails")}</p>
+                {copy("landing.finalCtaDetails", { trialDays: TRIAL_DAYS })}</p>
               <ol className="mt-6 grid gap-3 sm:grid-cols-3">
                 {QR_START_STEPS.map((step, index) => (
                   <li key={step.title} className="flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4">

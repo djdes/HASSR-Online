@@ -83,6 +83,7 @@ export function computePpkStatuses(facts: PpkFacts): Record<PpkBlockKey, PpkStat
     orders: f.orders.ppkApproval ? "done" : f.orders.total >= 1 ? "started" : "empty",
     posters: "info",
     storage: "info",
+    package: "info",
     "floor-plans": f.floorPlans.complete ? "done" : f.floorPlans.count >= 1 ? "started" : "empty",
     "pest-control": pestLike(f.pest),
     lab: pestLike(f.lab),

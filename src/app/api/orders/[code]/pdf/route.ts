@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { clientIp } from "@/lib/client-ip";
 import { journalSampleRateLimiter } from "@/lib/rate-limit";
+import { hasFeature } from "@/lib/billing-period";
+import { loadAccountBilling } from "@/lib/billing.server";
 import { loadDocumentOrgBlock } from "@/lib/document-org-block.server";
 import { toOrderOrgSnapshot } from "@/lib/document-org-block";
 import { findOrderTemplate } from "@/lib/orders/catalog";
@@ -22,7 +24,9 @@ export const dynamic = "force-dynamic";
  * Работает и без сессии — это витрина /prikazy: человек должен увидеть
  * готовый бланк до регистрации. Разница только в реквизитах: гостю
  * печатаем пустой бланк с прочерками, залогиненному подставляем данные
- * его организации.
+ * его организации, если тариф включает типовой пакет документов
+ * («Премиум», пробный период — тарифы 2026-10); иначе — тот же пустой
+ * бланк. Заполненный приказ с номером и датой издают в разделе «Приказы».
  *
  * Код шаблона проверяется по белому списку каталога, иначе в рендер
  * прилетал бы произвольный сегмент URL.
@@ -61,12 +65,19 @@ export async function GET(
   const url = new URL(request.url);
   const session = await getServerSession(authOptions).catch(() => null);
 
-  // Залогиненному — реквизиты, логотип и фирменный цвет его организации.
+  // Залогиненному с типовым пакетом в тарифе — реквизиты, логотип и
+  // фирменный цвет его организации.
   let org = BLANK_ORG;
   let logo: PdfLogo | null = null;
   let brandColor: string | null = null;
-  if (session) {
-    const organizationId = getActiveOrgId(session);
+  const organizationId = session ? getActiveOrgId(session) : null;
+  const billing = organizationId
+    ? await loadAccountBilling(organizationId).catch((error) => {
+        console.error("[orders] billing load failed — blank order", error);
+        return null;
+      })
+    : null;
+  if (organizationId && hasFeature(billing?.state, "typicalPackage")) {
     const block = await loadDocumentOrgBlock(organizationId);
     if (block) {
       org = toOrderOrgSnapshot(block);

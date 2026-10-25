@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 const STEPS = ["head", "rooms", "equipment", "summary"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -70,6 +71,7 @@ export function PointWizard({
   const tUv = useTranslations("settingsManagement.points.uv");
   const locale = useLocale() as Locale;
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -166,6 +168,11 @@ export function PointWizard({
       });
       const data = (await response.json().catch(() => ({}))) as { building?: { id: string }; error?: string };
       if (!response.ok || !data.building) {
+        // Точки тарифа заняты — toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(data)) {
+          setProgress(null);
+          return;
+        }
         if (response.status === 409) {
           setNameError(t("head.nameTaken"));
           setStep(0);

@@ -6,6 +6,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { clientIp } from "@/lib/client-ip";
 import {
   listTransitionCandidates,
+  listTransitionJournals,
   loadAccountBilling,
   transitionToFree,
 } from "@/lib/billing.server";
@@ -14,13 +15,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Решение руководителя после конца бесплатного периода.
+ * Решение руководителя после конца пробного периода (тарифы 2026-10).
  *
- * GET  — состояние и список активных для шага «кто остаётся».
- * POST — «Перейти на бесплатный»: `{ keepUserId }`, остальные — в архив.
- *        `{ keepUserId, voluntary: true }` — сам переходит с подписки (кнопка
- *        на странице тарифа), без состояния «нужно решение»; оплаченный срок
- *        при этом не сохраняется (окно предупреждает).
+ * GET  — состояние, активные сотрудники и включённые журналы для шагов
+ *        «кто остаётся» и «какой журнал остаётся».
+ * POST — «Остаться на бесплатном»: `{ keepUserId, keepJournalCode }` —
+ *        остальные сотрудники в архив, остальные журналы выключаются.
+ *        `{ …, voluntary: true }` — сам переходит с подписки или из пробного
+ *        (кнопка на странице тарифа), без состояния «нужно решение»;
+ *        оплаченный срок при этом не сохраняется (окно предупреждает).
  *
  * Оплата здесь не принимается: кнопка «Оплатить» ведёт на
  * `/settings/subscription` (карта или счёт по безналу).
@@ -49,7 +52,10 @@ export async function GET() {
   const orgId = getActiveOrgId(auth.session);
   const loaded = await loadAccountBilling(orgId);
   if (!loaded) return NextResponse.json({ error: "Организация не найдена" }, { status: 404 });
-  const candidates = await listTransitionCandidates(loaded.unit);
+  const [candidates, journals] = await Promise.all([
+    listTransitionCandidates(loaded.unit),
+    listTransitionJournals(loaded.unit),
+  ]);
   const orgNames = new Set(candidates.map((c) => c.organizationName));
   return NextResponse.json({
     kind: loaded.state.kind,
@@ -67,11 +73,13 @@ export async function GET() {
       isManagement: c.isManagement,
       canSignIn: c.canSignIn,
     })),
+    journals: journals.map((j) => ({ code: j.code, name: j.name, entries30d: j.entries30d })),
   });
 }
 
 const PostSchema = z.object({
   keepUserId: z.string().trim().min(1, "Выберите, кто останется"),
+  keepJournalCode: z.string().trim().min(1).max(100).optional(),
   voluntary: z.boolean().optional(),
 });
 
@@ -99,11 +107,13 @@ export async function POST(request: Request) {
     organizationId: orgId,
     by: session.user.id,
     keepUserId: parsed.data.keepUserId,
+    keepJournalCode: parsed.data.keepJournalCode ?? null,
   });
   const result = await transitionToFree({
     organizationId: orgId,
     mode: voluntary ? "voluntary" : "manual",
     keepUserId: parsed.data.keepUserId,
+    keepJournalCode: parsed.data.keepJournalCode ?? null,
     actor: {
       userId: session.user.id,
       userName: session.user.name ?? session.user.email ?? null,
@@ -117,7 +127,9 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     keptUserName: result.keptUserName,
+    keptJournalName: result.keptJournalName,
     archivedCount: result.archivedCount,
+    disabledJournalsCount: result.disabledJournalsCount,
     // Руководитель оставил другого — сам ушёл в архив, сессия закончится.
     selfArchived: result.archivedUserIds.includes(session.user.id),
   });

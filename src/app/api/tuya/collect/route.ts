@@ -12,6 +12,7 @@ import {
 } from "@/lib/iot-auto-fill";
 import { detectTemperatureCapas } from "@/lib/capa-auto-detect";
 import { timingSafeEqualStrings } from "@/lib/timing-safe";
+import { hasPlanFeature } from "@/lib/billing.server";
 
 export async function POST(request: Request) {
   try {
@@ -59,8 +60,17 @@ export async function POST(request: Request) {
       alert: boolean;
     }> = [];
     const errors: Array<{ equipmentId: string; error: string }> = [];
+    // IoT-датчики — возможность «Премиума» (и пробного): без неё не опрашиваем.
+    const connectByOrg = new Map<string, boolean>();
+    let lockedByPlan = 0;
 
     for (const equip of equipmentList) {
+      const orgId = equip.area.organizationId;
+      if (!connectByOrg.has(orgId)) connectByOrg.set(orgId, await hasPlanFeature(orgId, "equipmentConnect"));
+      if (!connectByOrg.get(orgId)) {
+        lockedByPlan += 1;
+        continue;
+      }
       try {
         const { temperature, humidity } = await getDeviceTemperature(
           equip.tuyaDeviceId!
@@ -198,9 +208,11 @@ export async function POST(request: Request) {
       }
     }
 
+    if (lockedByPlan > 0) console.info("[tuya/collect] skipped: plan without IoT", { lockedByPlan });
     return NextResponse.json({
       collected: results.length,
       errors: errors.length,
+      lockedByPlan,
       results,
       errorDetails: errors,
       capa: capaSummaries,

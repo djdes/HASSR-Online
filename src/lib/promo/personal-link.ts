@@ -132,7 +132,7 @@ export function promoLinkRedirect(code: string, sphere: string | null, viewer: P
   const promo = encodeURIComponent(normalizePromoCode(code));
   const subscription = `/settings/subscription?promo=${promo}`;
   if (viewer === "manager") return subscription;
-  if (viewer === "member") return `/order?plan=monthly&promo=${promo}`;
+  if (viewer === "member") return `/order?plan=standard&cycle=year&promo=${promo}`;
   const params = new URLSearchParams({ promo: normalizePromoCode(code) });
   const s = linkSphere(sphere);
   if (s) params.set("s", s);

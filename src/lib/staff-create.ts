@@ -47,9 +47,11 @@ export type CreateStaffResult =
       ok: false;
       error: string;
       status: 400 | 402 | 404;
-      /** `billing_free_limit` — лимит бесплатного тарифа, клиент покажет «Оплатить». */
+      /** `billing_free_limit` — места тарифа заняты, клиент покажет «Выбрать тариф». */
       code?: string;
       payUrl?: string;
+      /** Сколько мест у тарифа (402). */
+      limit?: number;
     };
 
 function syntheticEmail(orgId: string) {
@@ -78,7 +80,7 @@ export async function createStaffMember(
   if (position.categoryKey !== "commission") {
     const seats = await checkSeatsForActivation(orgId, 1, { source: "staff.create" });
     if (!seats.ok) {
-      return { ok: false, error: seats.error, status: 402, code: seats.code, payUrl: seats.payUrl };
+      return { ok: false, error: seats.error, status: 402, code: seats.code, payUrl: seats.payUrl, limit: seats.limit };
     }
   }
 

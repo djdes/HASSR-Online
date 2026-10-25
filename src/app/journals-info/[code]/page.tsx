@@ -18,6 +18,7 @@ import {
 } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { getFillingGuide } from "@/lib/journal-filling-guides";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ogImageUrl } from "@/lib/og-image";
 import { BlankDownloadButton } from "@/components/public/blank-download";
 
@@ -329,7 +330,7 @@ export default async function JournalInfoDetailPage({
                 <ArrowRight className="size-4" />
               </Link>
               <p className="mt-3 text-[12px] leading-[1.5] text-[#6f7282]">
-                {t("freeDescription")}
+                {t("freeDescription", { trialDays: TRIAL_DAYS })}
               </p>
             </div>
 

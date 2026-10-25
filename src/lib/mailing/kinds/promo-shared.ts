@@ -164,7 +164,7 @@ export function designDefaults(design: PromoDesign): Pick<PromoMailPayload, "sub
 }
 
 export const PROMO_DEFAULT_BENEFITS = [
-  "До 10 сотрудников в одном кабинете",
+  "До 25 сотрудников на точку",
   "Все журналы СанПиН и ХАССП",
   "Напоминания и задачи сотрудникам",
   "Готовый архив для проверки Роспотребнадзора",
@@ -174,7 +174,7 @@ export function defaultPromoPayload(design: PromoDesign = "aurora"): PromoMailPa
   return {
     design,
     ...designDefaults(design),
-    tariffLabel: "PRO",
+    tariffLabel: "Стандарт",
     priceRub: PROMO_DEFAULT_PRICE_RUB,
     discountPercent: PROMO_DEFAULT_PERCENT,
     durationDays: PROMO_DEFAULT_DAYS,

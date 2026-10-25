@@ -47,6 +47,34 @@ describe("buildInvoiceLines", () => {
     assert.doesNotMatch(lines[0].title, /\d{2}\.\d{2}\.\d{4}/);
   });
 
+  it("тариф 2026-10: доплата за повышение — на оставшиеся дни, продление — с конца текущего срока", () => {
+    const tariff = { title: "Премиум — помесячно", periodDays: 30, priceRub: 5000 };
+    const upgrade = buildInvoiceLines({
+      order: { id: 28, createdAt, amountRub: 999, bundleConfig: null, changeKind: "upgrade", periodEndsAt: new Date(createdAt.getTime() + 15 * 24 * 60 * 60 * 1000) },
+      tariff,
+      seller,
+      buyer,
+    });
+    assert.match(upgrade[0].title, /доплата за повышение тарифа на 15 дн\. до конца оплаченного срока/);
+    assert.doesNotMatch(upgrade[0].title, /30 дн\./);
+    const renew = buildInvoiceLines({
+      order: { id: 29, createdAt, amountRub: 5000, bundleConfig: null, changeKind: "renew", periodEndsAt: null },
+      tariff,
+      seller,
+      buyer,
+    });
+    assert.match(renew[0].title, /30 дн\. \(период — с окончания текущего оплаченного срока\)/);
+    const switched = buildInvoiceLines({
+      order: { id: 30, createdAt, amountRub: 23180, bundleConfig: null, changeKind: "switch", periodEndsAt: new Date("2027-10-19T19:05:00Z") },
+      tariff: { title: "Стандарт — за год", periodDays: 365, priceRub: 23880 },
+      seller,
+      buyer,
+    });
+    // Конец — дата из расчёта при оформлении, а не «365 дн. с даты оплаты».
+    assert.match(switched[0].title, /до 19\.10\.2027 \(переход с зачётом остатка текущего срока\)/);
+    assert.doesNotMatch(switched[0].title, /с даты оплаты/);
+  });
+
   it("комплект — оборудование строками, услуге остаток", () => {
     const lines = buildInvoiceLines({
       order: { id: 27, createdAt, amountRub: 1990 + 12900, bundleConfig: { tablet: 1 } },
@@ -105,6 +133,17 @@ describe("buildInvoiceDraft", () => {
     assert.equal(draft.dueAt.getTime() - createdAt.getTime(), INVOICE_VALID_DAYS * 24 * 60 * 60 * 1000);
     assert.equal(draft.seller.bank?.bik, "044525225");
     assert.match(draft.basis, /оферта/);
+  });
+
+  it("срок из заказа (доплата — не дольше оплаченного срока) печатается в счёте", () => {
+    const dueAt = new Date(createdAt.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const draft = buildInvoiceDraft({
+      order: { id: 27, createdAt, amountRub: 267, bundleConfig: null, changeKind: "upgrade", periodEndsAt: dueAt, dueAt },
+      tariff: { title: "Премиум", periodDays: 30, priceRub: 5000 },
+      seller,
+      buyer,
+    });
+    assert.equal(draft.dueAt.getTime(), dueAt.getTime());
   });
 });
 
