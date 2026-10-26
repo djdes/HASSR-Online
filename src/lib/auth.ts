@@ -237,8 +237,18 @@ export const authOptions: NextAuthOptions = {
       if (token.id) {
         try {
           const { db } = await import("@/lib/db");
-          const flags = await db.user.findUnique({ where: { id: String(token.id) }, select: { canManageSettings: true } });
+          const flags = await db.user.findUnique({
+            where: { id: String(token.id) },
+            select: { canManageSettings: true, organizationId: true },
+          });
           token.canManageSettings = flags?.canManageSettings === true;
+          // Домашняя организация сменилась (организацию слили в точку
+          // другой — OrganizationMerge): токен переезжает следом, без
+          // перевхода. Прежняя организация больше не активна.
+          if (flags?.organizationId && flags.organizationId !== token.organizationId) {
+            if (token.activeOrganizationId === token.organizationId) token.activeOrganizationId = null;
+            token.organizationId = flags.organizationId;
+          }
         } catch {
           /* оставляем прежнее значение */
         }

@@ -5,6 +5,8 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getActiveBuildingId } from "@/lib/active-building";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
   parseJournalAutomationJson,
@@ -128,10 +130,15 @@ export async function GET() {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
 
-  const org = await db.organization.findUnique({
+  const orgRow = await db.organization.findUnique({
     where: { id: getActiveOrgId(session) },
     select: { journalAutomationJson: true },
   });
+  // У точки со своей автоматикой (слитая организация) — её настройки.
+  const org = withBuildingJournalSettings(
+    orgRow,
+    await readBuildingJournalSettings(db, await getActiveBuildingId(session)),
+  );
 
   return NextResponse.json({
     automation: parseJournalAutomationJson(org?.journalAutomationJson),
@@ -192,10 +199,15 @@ export async function PUT(request: Request) {
       }
     }
 
-    const org = await db.organization.findUnique({
+    // Точка со своей автоматикой (слитая организация) хранит её у себя:
+    // правка на экране активной точки меняет только эту точку.
+    const activeBuildingId = await getActiveBuildingId(session);
+    const ownBuildingId = (await readBuildingJournalSettings(db, activeBuildingId)) ? activeBuildingId : null;
+    const orgRow = await db.organization.findUnique({
       where: { id: organizationId },
       select: { journalAutomationJson: true },
     });
+    const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, ownBuildingId));
     const map: JournalAutomationMap = parseJournalAutomationJson(
       org?.journalAutomationJson
     );
@@ -221,13 +233,20 @@ export async function PUT(request: Request) {
       .filter(([, value]) => value.autoCreate)
       .map(([code]) => code)
       .sort();
-    await db.organization.update({
-      where: { id: organizationId },
-      data: {
-        journalAutomationJson: map as never,
-        autoJournalCodes: codes as never,
-      },
-    });
+    if (ownBuildingId) {
+      await db.building.update({
+        where: { id: ownBuildingId },
+        data: { journalAutomationJson: map as never, autoJournalCodes: codes as never },
+      });
+    } else {
+      await db.organization.update({
+        where: { id: organizationId },
+        data: {
+          journalAutomationJson: map as never,
+          autoJournalCodes: codes as never,
+        },
+      });
+    }
 
     // Тумблер автозаполнения живёт и в организации, и в каждом документе.
     // Без каскада включение в журнале не действовало на уже открытый
@@ -241,6 +260,7 @@ export async function PUT(request: Request) {
       const updated = await db.journalDocument.updateMany({
         where: {
           organizationId,
+          ...(ownBuildingId ? { buildingId: ownBuildingId } : {}),
           status: "active",
           template: { code: change.code },
           dateTo: { gte: todayUtcStart },

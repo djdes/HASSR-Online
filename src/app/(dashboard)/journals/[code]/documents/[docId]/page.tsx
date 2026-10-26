@@ -49,6 +49,7 @@ import { supportsOrderScans } from "@/lib/journal-order-scans";
 import { canManageOrderScans, listOrderScans } from "@/lib/journal-order-scans-db";
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import {
   getHygieneDemoTeamUsers,
   normalizeHealthEntryData,
@@ -344,7 +345,7 @@ async function JournalDocumentBody({
   const tNames = await getTranslations("journals.names");
   const tFryer = await getTranslations("fryerOil");
 
-  const [document, organization, employees, equipment, tasksFlowIntegration] =
+  const [document, organization, employees, allEquipment, tasksFlowIntegration] =
     await Promise.all([
       db.journalDocument.findUnique({
         where: { id: docId },
@@ -385,7 +386,7 @@ async function JournalDocumentBody({
             organizationId: getActiveOrgId(session),
           },
         },
-        select: { id: true, name: true },
+        select: { id: true, name: true, area: { select: { buildingId: true } } },
         orderBy: { name: "asc" },
       }),
       // Lightweight integration check — only exposed to journals that
@@ -434,6 +435,11 @@ async function JournalDocumentBody({
   ) {
     notFound();
   }
+
+  // Оборудование документа точки — цеха этой точки и общие (без точки).
+  const equipment = allEquipment
+    .filter((item) => !document.buildingId || !item.area.buildingId || item.area.buildingId === document.buildingId)
+    .map(({ id, name }) => ({ id, name }));
 
   // Уволенные / архивные сотрудники, на которых ссылаются записи этого
   // документа. Ростер выше берёт только активных (ORG_ROSTER_WHERE), и
@@ -518,9 +524,13 @@ async function JournalDocumentBody({
   // «Изменения день в день»: документ ведёт автоматика ⇒ прошлые дни
   // закрыты на редактирование. Сегодняшний день считаем на СЕРВЕРЕ —
   // в рендере клиента `new Date()` запрещён (react-hooks/purity).
+  // У точки со своей автоматикой (слитая организация) — её настройки.
   const automationLocked =
     document.autoFill === true &&
-    isJournalAutomationEnabled(organization, document.template.code);
+    isJournalAutomationEnabled(
+      withBuildingJournalSettings(organization, await readBuildingJournalSettings(db, document.buildingId)),
+      document.template.code,
+    );
   // Дата считается в зоне организации, а не в UTC процесса: иначе до
   // 03:00 МСК «сегодня» на сервере — вчерашний день (см. orgTodayKey).
   const todayKey = orgTodayKey(organization?.timezone);

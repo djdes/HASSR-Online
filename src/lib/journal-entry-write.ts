@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { db } from "@/lib/db";
 import { detectTemperatureCapas } from "@/lib/capa-auto-detect";
 import {
@@ -35,6 +36,8 @@ export type EntryWriteDoc = {
   organizationId: string;
   autoFill: boolean;
   template?: { code: string } | null;
+  /** Точка документа; не передана — читается из БД (автоматика точки). */
+  buildingId?: string | null;
 };
 
 export type EntryWriteContext = {
@@ -58,7 +61,7 @@ export type EntryWriteContext = {
 export async function loadEntryWriteContext(
   doc: EntryWriteDoc
 ): Promise<EntryWriteContext> {
-  const org = await db.organization.findUnique({
+  const orgRow = await db.organization.findUnique({
     where: { id: doc.organizationId },
     select: {
       shiftEndHour: true,
@@ -68,6 +71,12 @@ export async function loadEntryWriteContext(
       timezone: true,
     },
   });
+  // У точки со своей автоматикой (слитая организация) — её настройки.
+  const buildingId =
+    doc.buildingId !== undefined
+      ? doc.buildingId
+      : (await db.journalDocument.findUnique({ where: { id: doc.id }, select: { buildingId: true } }))?.buildingId;
+  const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, buildingId));
 
   return {
     todayKey: orgTodayKey(org?.timezone ?? undefined),

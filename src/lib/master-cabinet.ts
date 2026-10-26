@@ -11,7 +11,7 @@ import {
   type MasterCabinetChoiceSummary,
   type MasterCabinetObject,
 } from "@/lib/master-cabinet-choice";
-import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { findPoolMasterOrgId, listPoolOrganizations, MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { MasterCabinetError } from "@/lib/master-cabinet-error";
 import { inviteMasterCabinetEmployee } from "@/lib/master-cabinet-staff";
 import { assertOrgMembership, listAccessibleOrganizations } from "@/lib/organization-access";
@@ -77,8 +77,33 @@ async function listMasterUsers(masterOrgId: string): Promise<MasterCabinetUser[]
 
 export async function getMasterCabinetStatus(
   organizationId: string,
-  viewerUserId?: string
+  viewerUserId?: string,
+  buildingId?: string | null
 ): Promise<MasterCabinetStatus> {
+  // Точка, подключённая к пулу (слитая организация), — её мастер-кабинет.
+  const building = buildingId
+    ? await db.building.findFirst({ where: { id: buildingId, organizationId }, select: { linkedServiceCode: true } })
+    : null;
+  if (building?.linkedServiceCode) {
+    const masterId = await findPoolMasterOrgId(organizationId, buildingId);
+    const masterOrg = masterId
+      ? await db.organization.findUnique({ where: { id: masterId }, select: { id: true, name: true } })
+      : null;
+    return {
+      code: building.linkedServiceCode,
+      poolOrganizations: masterOrg
+        ? (await listPoolOrganizations(masterOrg.id)).map((object) => ({ id: object.id, name: object.name }))
+        : [],
+      master: masterOrg
+        ? {
+            organizationId: masterOrg.id,
+            name: masterOrg.name,
+            users: await listMasterUsers(masterOrg.id),
+            viewerCanOpen: viewerUserId ? await assertOrgMembership(viewerUserId, masterOrg.id) : false,
+          }
+        : null,
+    };
+  }
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { serviceCode: true, linkedServiceCode: true },

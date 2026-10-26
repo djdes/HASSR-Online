@@ -17,5 +17,6 @@ export type MasterBrakerageHistoryBatch = {
   createdByName: string;
   createdAt: string;
   updatedAt: string;
-  result?: { organizations: Array<{ organizationId: string; organizationName: string; documentId: string | null; added: number; skippedNames?: string[]; delivery?: MasterDelivery }> } | null;
+  /** `targetId` — ключ объекта пула (организация или `<организация>:<точка>`), есть у выгрузок после 2026-10-26. */
+  result?: { organizations: Array<{ organizationId: string; buildingId?: string | null; targetId?: string; organizationName: string; documentId: string | null; added: number; skippedNames?: string[]; delivery?: MasterDelivery }> } | null;
 };

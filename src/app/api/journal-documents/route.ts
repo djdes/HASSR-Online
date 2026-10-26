@@ -975,6 +975,7 @@ export async function POST(request: Request) {
     // Переключатели колонок в диалоге создания стартуют с общего набора
     // организации, поэтому присланные флаги — выбор человека.
     respectColumnFlags: true,
+    buildingId: activeBuildingId,
   });
 
   const finalResponsibleUserId =
@@ -1143,6 +1144,7 @@ export async function POST(request: Request) {
     dateFrom: doc.dateFrom,
     dateTo: doc.dateTo,
     responsibleUserId: finalResponsibleUserId ?? null,
+    buildingId: activeBuildingId,
   }).catch((err) => {
     console.warn(
       `[journal-documents] seedEntries failed for ${resolvedTemplateCode}`,

@@ -34,7 +34,7 @@ import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { normalizeSphere } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, getDisabledPaperJournalIds, parseDisabledCodes } from "@/lib/disabled-journals";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { PausedBanner } from "@/components/dashboard/paused-banner";
@@ -141,14 +141,17 @@ export default async function DashboardPage() {
 
   // Selected journal set comes from organization settings:
   // active templates minus disabled journal codes.
-  const disabledCodes = parseDisabledCodes(org?.disabledJournalCodes);
+  // У точки со своим набором журналов (слитая организация) — её набор.
+  const disabledCodes = await getDisabledJournalCodes(organizationId, activeBuildingId);
   // Бумажные журналы сферы. Отдельный список: они не участвуют ни в
   // счётчике «N из M», ни в проценте готовности — заполняются ручкой,
   // и «недозаполненными» в системе быть не могут по определению.
   const sphere = normalizeSphere(org?.type);
   // Скрытые в /settings/journals бланки на дашборд не выводим: человек
   // сказал, что этот журнал он не ведёт, — напоминать больше не о чем.
-  const disabledPaper = parseDisabledCodes(org?.disabledPaperJournalIds);
+  const disabledPaper = activeBuildingId
+    ? await getDisabledPaperJournalIds(organizationId, activeBuildingId)
+    : parseDisabledCodes(org?.disabledPaperJournalIds);
   const paperItems = paperJournalsFor(sphere).filter(
     (paper) => !disabledPaper.has(paper.id)
   );

@@ -15,6 +15,7 @@ import {
   getAutofillCapability,
 } from "@/lib/journal-autofill-capability";
 import { listAutomationCodes } from "@/lib/journal-automation";
+import { loadBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveAutomationStaff } from "@/lib/journal-automation-staff";
 import { resolveDayStart } from "@/lib/today-compliance";
@@ -99,15 +100,20 @@ async function runForOrganization(
   // его страница отвечает «журнал отключён», а автоматика всё равно
   // заводила документ и заполняла его.
   const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
-  const rows = listAutomationCodes(org).filter(
-    (row) => row.automation.autoCreate && !disabledCodes.has(row.code)
-  );
-  if (rows.length === 0) return result;
-  // Точки: каждый журнал автоматики ведётся на каждой точке отдельно.
+  // Точки: каждый журнал автоматики ведётся на каждой точке отдельно, а
+  // у точки со своей автоматикой (слитая организация) — по её настройкам.
   const targets = await buildingTargets(org.id);
-  const jobs = rows.flatMap((row) =>
-    targets.map((buildingId) => ({ ...row, buildingId })),
-  );
+  const buildingSettings = await loadBuildingJournalSettings(db, org.id);
+  const jobs = targets.flatMap((buildingId) => {
+    const settings = withBuildingJournalSettings(org, buildingId ? buildingSettings.get(buildingId) : null);
+    const targetDisabled = buildingId && buildingSettings.has(buildingId)
+      ? parseDisabledCodes(settings?.disabledJournalCodes)
+      : disabledCodes;
+    return listAutomationCodes(settings)
+      .filter((row) => row.automation.autoCreate && !targetDisabled.has(row.code))
+      .map((row) => ({ ...row, buildingId }));
+  });
+  if (jobs.length === 0) return result;
 
   const todayDate = new Date(`${todayKey}T00:00:00.000Z`);
 
@@ -123,10 +129,9 @@ async function runForOrganization(
     },
     // name + role нужны движку: имя уходит в подпись контролёра фритюра,
     // роль — в фолбэк «ответственный не задан → primary-менеджер».
-    select: { id: true, name: true, role: true },
+    select: { id: true, name: true, role: true, buildingIds: true },
     orderBy: { id: "asc" },
   });
-  const employeeIds = employees.map((employee) => employee.id);
 
   for (const row of jobs) {
     const { code, automation, buildingId } = row;
@@ -182,16 +187,19 @@ async function runForOrganization(
       if (!document.autoFill) continue;
 
       // Состав строк кадровых журналов: политика списка, если она задана,
-      // иначе прежний расчёт крона (все активные сотрудники).
-      let staffIds = employeeIds;
+      // иначе прежний расчёт крона (все активные сотрудники точки).
+      let staffIds = employees
+        .filter((employee) => worksAtBuilding(employee, document.buildingId))
+        .map((employee) => employee.id);
       if (capability === "staff") {
-        if (employeeIds.length === 0) continue;
+        if (staffIds.length === 0) continue;
         const staffPolicy = automation.staff;
         if (staffPolicy) {
           const resolved = await resolveAutomationStaff(db, {
             organizationId: org.id,
             templateCode: code,
             staffPolicy,
+            buildingId: document.buildingId,
           });
           if (resolved.employeeIds.length > 0) staffIds = resolved.employeeIds;
         }

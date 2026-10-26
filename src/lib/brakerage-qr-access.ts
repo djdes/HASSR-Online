@@ -16,6 +16,8 @@ export async function resolveBrakerageQrAccess(params: {
   code: string;
   config: { commissionMembers?: readonly BrakerageCommissionMember[] };
   employeeId: string;
+  /** Точка документа: состав точки, если он у неё свой. */
+  buildingId?: string | null;
 }): Promise<{ role: BrakerageQrRole; orgMember: BrakerageCommissionMember | null; orgMembers: BrakerageCommissionMember[] }> {
   const commissionFlow = isCommissionJournalCode(params.code);
   const [person, orgMembers] = await Promise.all([
@@ -23,7 +25,7 @@ export async function resolveBrakerageQrAccess(params: {
       where: { id: params.employeeId },
       select: { role: true, canEditBrakerageDishes: true, jobPosition: { select: { categoryKey: true } } },
     }),
-    commissionFlow ? readOrgCommission(params.organizationId, params.code) : Promise.resolve([] as BrakerageCommissionMember[]),
+    commissionFlow ? readOrgCommission(params.organizationId, params.code, params.buildingId) : Promise.resolve([] as BrakerageCommissionMember[]),
   ]);
   const role = brakerageQrRole({
     config: params.config,

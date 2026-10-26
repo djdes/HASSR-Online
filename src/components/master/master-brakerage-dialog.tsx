@@ -358,7 +358,7 @@ export function MasterBrakerageDialog({
           ["selected", t("scopeSelected")],
           ["history", t("scopeHistory")],
         ] as const).map(([value, label]) => <label key={value} className="flex items-start gap-2"><input type="radio" name="master-correction-scope" value={value} checked={scope === value} disabled={busy || (value !== "history" && !recipients.length)} onChange={() => setScope(value)} className="mt-0.5 accent-[#5566f6]" />{label}</label>)}</div>
-        {scope === "selected" ? <div className="max-h-48 space-y-2 overflow-auto rounded-2xl border border-[#ececf4] bg-white p-3">{recipients.map(org => <label key={org.organizationId} className="flex items-start gap-2 text-[13px]"><input type="checkbox" checked={selectedOrganizations.includes(org.organizationId)} disabled={busy} onChange={event => setSelectedOrganizations(ids => event.target.checked ? [...ids, org.organizationId] : ids.filter(id => id !== org.organizationId))} className="mt-0.5 accent-[#5566f6]" /><span className="break-words">{org.organizationName}</span></label>)}</div> : null}
+        {scope === "selected" ? <div className="max-h-48 space-y-2 overflow-auto rounded-2xl border border-[#ececf4] bg-white p-3">{recipients.map(org => { const key = org.targetId ?? org.organizationId; return <label key={key} className="flex items-start gap-2 text-[13px]"><input type="checkbox" checked={selectedOrganizations.includes(key)} disabled={busy} onChange={event => setSelectedOrganizations(ids => event.target.checked ? [...ids, key] : ids.filter(id => id !== key))} className="mt-0.5 accent-[#5566f6]" /><span className="break-words">{org.organizationName}</span></label>; })}</div> : null}
         <p className="text-[12.5px] leading-relaxed text-[#6f7282]">{t("correctionsNote")}</p>
       </div> : null}
       <div className="space-y-2">
@@ -514,7 +514,7 @@ function OrgResults({ result }: { result: MasterBrakerageResult }) {
       data-testid={dry ? "master-brakerage-preview" : "master-brakerage-result"}
     >
       {result.organizations.map((org) => (
-        <li key={org.organizationId} className="flex items-start gap-3 px-3.5 py-3" data-testid="master-brakerage-org">
+        <li key={org.targetId ?? org.organizationId} className="flex items-start gap-3 px-3.5 py-3" data-testid="master-brakerage-org">
           <span
             className={cn(
               "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl",

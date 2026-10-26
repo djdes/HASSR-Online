@@ -20,6 +20,7 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { Prisma } from "@prisma/client";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { buildingWhere } from "@/lib/building-scope";
 import { sharedDocumentFlag } from "@/lib/journal-document-shared";
 import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
@@ -1474,7 +1475,12 @@ export default async function JournalDocumentsPage({
   // Состояние автоматики читаем из уже загруженной строки организации —
   // переключателю больше не нужен собственный запрос (он давал вспышку
   // «выключено» на включённом журнале).
-  const journalAutomation = getJournalAutomation(orgSettings, resolvedCode);
+  // У точки со своей автоматикой (слитая организация) — её настройки.
+  const automationSettings = withBuildingJournalSettings(
+    orgSettings,
+    await readBuildingJournalSettings(db, activeBuildingId),
+  );
+  const journalAutomation = getJournalAutomation(automationSettings, resolvedCode);
   const canManageAutomation = hasFullWorkspaceAccess(session.user);
 
   // Ответственный по умолчанию в диалоге создания — основной слот из
@@ -1620,7 +1626,7 @@ export default async function JournalDocumentsPage({
     const automation = isAutomationSupported(resolvedCode)
       ? {
           code: resolvedCode,
-          enabled: isJournalAutomationEnabled(orgSettings, resolvedCode),
+          enabled: isJournalAutomationEnabled(automationSettings, resolvedCode),
           canManage: hasFullWorkspaceAccess(session.user),
           // Разовое уведомление про автоматику — отметка в аккаунте:
           // в localStorage оно всплывало заново в каждом браузере.

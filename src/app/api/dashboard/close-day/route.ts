@@ -1,4 +1,5 @@
 import { rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
   if (blocked) return blocked;
   // Точки: закрываем день и создаём документ для активной точки.
   const activeBuildingId = await getActiveBuildingId(session);
-  const org = await db.organization.findUnique({
+  const orgRow = await db.organization.findUnique({
     where: { id: organizationId },
     select: {
       timezone: true,
@@ -128,6 +129,8 @@ export async function POST(request: Request) {
       autoJournalCodes: true,
     },
   });
+  // Автоматика активной точки (у слитой организации своя) поверх организации.
+  const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, activeBuildingId));
   const disabledCodes = parseDisabledCodes(org?.disabledJournalCodes);
 
   const now = new Date();
@@ -153,11 +156,12 @@ export async function POST(request: Request) {
       archivedAt: null,
       OR: [{ dismissal: null }, { dismissal: { date: { gt: upToDate } } }],
     },
-    select: { id: true, name: true, role: true },
+    select: { id: true, name: true, role: true, buildingIds: true },
     orderBy: { id: "asc" },
   });
-  const employeeIds = employees.map((e) => e.id);
-  const aliveIds = new Set(employeeIds);
+  const aliveIds = new Set(employees.map((e) => e.id));
+  // Строки кадровых журналов — сотрудники активной точки.
+  const employeeIds = employees.filter((e) => worksAtBuilding(e, activeBuildingId)).map((e) => e.id);
 
   const summaries: CloseDaySummary[] = [];
   let totalFilled = 0;
@@ -253,6 +257,7 @@ export async function POST(request: Request) {
             doc.config && typeof doc.config === "object" && !Array.isArray(doc.config)
               ? (doc.config as Record<string, unknown>)
               : undefined,
+          buildingId: activeBuildingId,
         });
         const nextResponsible = responsibleAlive
           ? doc.responsibleUserId
@@ -326,6 +331,7 @@ export async function POST(request: Request) {
           organizationId,
           templateCode: tpl.code,
           staffPolicy: policy,
+          buildingId: activeBuildingId,
         });
         if (resolved.employeeIds.length > 0) staffIds = resolved.employeeIds;
         if (staffIds.length === 0) {

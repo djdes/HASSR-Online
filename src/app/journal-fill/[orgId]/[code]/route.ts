@@ -95,6 +95,7 @@ import { normalizePinRequestKind, pinRequestStatusText } from "@/lib/qr-pin-requ
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { relativeRedirect, safeInternalPath } from "@/lib/relative-redirect";
+import { findMergedOrganization, mergedJournalFillPath } from "@/lib/organization-merge";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { QR_FILL_CORRECTION_PRESETS } from "@/lib/qr-correction-presets";
@@ -269,6 +270,12 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   const check = token ? verifyJournalFillToken(token, orgId, code) : ({ ok: false } as const);
   const org = check.ok ? await loadOrganizationForFill(orgId) : null;
+  // Организация слита в точку другой: старый плакат ведёт в тот же журнал
+  // новой организации (src/lib/organization-merge.ts).
+  if (check.ok && !org) {
+    const merged = await findMergedOrganization(orgId);
+    if (merged) return relativeRedirect(mergedJournalFillPath(check, code, merged), 307);
+  }
   if (!check.ok || !org) return html(renderInvalidLink(), 200);
 
   const mode = normalizeQrFillMode(org.qrFillMode);
@@ -505,7 +512,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       : null;
   if (commissionOnly && brakerageConfig) {
     // Утверждённый состав: копия документа или (запасная проверка) состав организации.
-    const orgMembers = await readOrgCommission(orgId, code);
+    const orgMembers = await readOrgCommission(orgId, code, document?.buildingId);
     const members = employees.filter(
       (item) => isCommissionMember(brakerageConfig, item.id) || isCommissionMember({ commissionMembers: orgMembers }, item.id)
     );
@@ -549,7 +556,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   let listCapable = false;
   let view: "list" | "add" = "add";
   if (isBrakerage && brakerageConfig) {
-    const access = await resolveBrakerageQrAccess({ organizationId: orgId, code, config: brakerageConfig, employeeId: employee.id });
+    const access = await resolveBrakerageQrAccess({ organizationId: orgId, code, config: brakerageConfig, employeeId: employee.id, buildingId: document?.buildingId });
     role = access.role;
     orgMember = access.orgMember;
     // Вошёл по PIN без кабинета — только оценка и подпись.

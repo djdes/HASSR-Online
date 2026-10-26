@@ -38,10 +38,9 @@ export async function JournalSetPage({ setId, session }: { setId: JournalSetId; 
   const organizationId = getActiveOrgId(session);
   const codes = journalSetAllCodes(set);
 
-  const [locale, t, disabled, templates, customNames, buildingId] = await Promise.all([
+  const [locale, t, templates, customNames, buildingId] = await Promise.all([
     getSiteLocale(),
     getTranslations("journalSets"),
-    getDisabledJournalCodes(organizationId),
     db.journalTemplate.findMany({
       where: { code: { in: codes }, isActive: true },
       select: { id: true, code: true, name: true },
@@ -49,6 +48,8 @@ export async function JournalSetPage({ setId, session }: { setId: JournalSetId; 
     getOrgCustomNames(organizationId),
     getActiveBuildingId(session),
   ]);
+  // У точки со своим набором журналов (слитая организация) — её набор.
+  const disabled = await getDisabledJournalCodes(organizationId, buildingId);
   const messages = await loadMessages(locale);
   const filledIds = await getTemplatesFilledToday(organizationId, new Date(), templates, disabled, {
     treatAperiodicAsFilled: false,

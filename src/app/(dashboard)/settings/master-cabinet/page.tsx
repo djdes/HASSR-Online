@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { MasterCabinetClient } from "@/components/settings/master-cabinet-client";
 import { PageHeader } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { db } from "@/lib/db";
 import { getMasterCabinetStatus } from "@/lib/master-cabinet";
 import { MASTER_ORG_KIND } from "@/lib/master-directory";
@@ -28,7 +29,7 @@ export default async function MasterCabinetSettingsPage() {
   });
   if (org?.kind === MASTER_ORG_KIND) redirect("/master");
 
-  const status = await getMasterCabinetStatus(orgId, session.user.id);
+  const status = await getMasterCabinetStatus(orgId, session.user.id, await getActiveBuildingId(session));
 
   return (
     <div className="space-y-5">

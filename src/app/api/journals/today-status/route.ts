@@ -14,7 +14,7 @@ import {
   resolveDayStart,
   rollupConfigDocumentForDay,
 } from "@/lib/today-compliance";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { journalDisplayName } from "@/lib/custom-names";
 import { compareJournalNames } from "@/lib/journal-sort";
@@ -55,7 +55,11 @@ export async function GET() {
     where: { id: organizationId },
     select: { timezone: true, disabledJournalCodes: true },
   });
-  const disabledCodes = parseDisabledCodes(org?.disabledJournalCodes);
+  // У точки со своим набором журналов (слитая организация) — её набор.
+  const activeBuildingId = await getActiveBuildingId(session);
+  const disabledCodes = activeBuildingId
+    ? await getDisabledJournalCodes(organizationId, activeBuildingId)
+    : parseDisabledCodes(org?.disabledJournalCodes);
   const now = new Date();
   const todayStart = resolveDayStart(org?.timezone ?? null, now);
   const todayEnd = new Date(todayStart);
@@ -69,7 +73,7 @@ export async function GET() {
       status: "active",
       dateFrom: { lte: todayStart },
       dateTo: { gte: todayStart },
-      ...buildingWhere(await getActiveBuildingId(session)),
+      ...buildingWhere(activeBuildingId),
     },
     select: {
       id: true,

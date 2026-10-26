@@ -759,6 +759,7 @@ export async function POST(request: Request) {
         organizationId,
         journalCode: tpl.code,
         baseConfig: {},
+        buildingId,
       });
       const createdDoc = await db.journalDocument.create({
         data: {
@@ -782,6 +783,7 @@ export async function POST(request: Request) {
         dateFrom: createdDoc.dateFrom,
         dateTo: createdDoc.dateTo,
         responsibleUserId: prefill.responsibleUserId,
+        buildingId,
       }).catch((err) => {
         console.warn(
           `[bulk-assign-today] seedEntries failed for ${tpl.code}`,

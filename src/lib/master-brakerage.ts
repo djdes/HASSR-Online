@@ -11,7 +11,7 @@ import {
   type MasterBrakerageCommon,
   type MasterBrakerageRow,
 } from "@/lib/master-brakerage-plan";
-import { listPoolOrganizations } from "@/lib/master-directory";
+import { listPoolOrganizations, type PoolObject } from "@/lib/master-directory";
 import { rememberNames } from "@/lib/name-suggestions-db";
 import { captureMasterDelivery, type MasterDelivery } from "@/lib/master-brakerage-correction";
 
@@ -25,6 +25,10 @@ import { captureMasterDelivery, type MasterDelivery } from "@/lib/master-brakera
 
 export type MasterBrakerageOrgResult = {
   organizationId: string;
+  /** Точка-объект пула (слитая организация); у организации целиком — null. */
+  buildingId?: string | null;
+  /** Ключ объекта пула (`poolObjectId`): id организации или `<организация>:<точка>`. */
+  targetId?: string;
   organizationName: string;
   documentId: string | null;
   documentTitle: string | null;
@@ -81,16 +85,18 @@ type Existing = {
   verifierUserId: string | null;
 };
 
-async function findDocumentForDate(organizationId: string, templateId: string, date: string) {
+async function findDocumentForDate(organizationId: string, templateId: string, date: string, buildingId: string | null) {
   const day = dayStartUtc(date);
+  // Объект-точка — только документ этой точки.
+  const scope = buildingId ? { buildingId } : {};
   const active = await db.journalDocument.findFirst({
-    where: { organizationId, templateId, status: "active", dateFrom: { lte: day }, dateTo: { gte: day } },
+    where: { organizationId, ...scope, templateId, status: "active", dateFrom: { lte: day }, dateTo: { gte: day } },
     select: { id: true, title: true, config: true, responsibleUserId: true, verifierUserId: true },
     orderBy: { createdAt: "asc" },
   });
   if (active) return { active: active as Existing, closed: false };
   const closed = await db.journalDocument.findFirst({
-    where: { organizationId, templateId, status: "closed", dateFrom: { lte: day }, dateTo: { gte: day } },
+    where: { organizationId, ...scope, templateId, status: "closed", dateFrom: { lte: day }, dateTo: { gte: day } },
     select: { id: true },
   });
   return { active: null, closed: Boolean(closed) };
@@ -101,15 +107,18 @@ const DISABLED_ERROR = "Журнал бракеража готовой прод�
 
 async function processOrganization(params: {
   org: { id: string; name: string; disabledJournalCodes: unknown };
+  target: PoolObject;
   templateId: string;
   rows: MasterBrakerageRow[];
   common: MasterBrakerageCommon;
   dryRun: boolean;
 }): Promise<MasterBrakerageOrgResult> {
-  const { org, rows, common } = params;
+  const { org, target, rows, common } = params;
   const base: MasterBrakerageOrgResult = {
     organizationId: org.id,
-    organizationName: org.name,
+    buildingId: target.buildingId,
+    targetId: target.id,
+    organizationName: target.name,
     documentId: null,
     documentTitle: null,
     documentCreated: false,
@@ -118,7 +127,7 @@ async function processOrganization(params: {
     skippedNames: [],
     error: null,
   };
-  const found = await findDocumentForDate(org.id, params.templateId, common.date);
+  const found = await findDocumentForDate(org.id, params.templateId, common.date, target.buildingId);
 
   if (params.dryRun) {
     if (found.active) {
@@ -152,12 +161,13 @@ async function processOrganization(params: {
       organizationId: org.id,
       templateCode: FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
       now: new Date(`${common.date}T12:00:00.000Z`),
+      buildingId: target.buildingId,
     });
     if (report.reason === "period-closed") return { ...base, error: CLOSED_ERROR };
     if (!report.documentId) return { ...base, error: "Не удалось создать документ журнала" };
     documentId = report.documentId;
     documentCreated = report.created;
-    console.info("[master-brakerage] document created", { organizationId: org.id, documentId, date: common.date });
+    console.info("[master-brakerage] document created", { organizationId: org.id, buildingId: target.buildingId, documentId, date: common.date });
   }
 
   type Outcome = { error: string | null; added: string[]; skipped: string[]; delivery?: MasterDelivery };
@@ -218,24 +228,31 @@ export async function addMasterBrakerageToPool(params: {
   organizationIds?: string[];
 }): Promise<MasterBrakerageResult> {
   const [pool, templateId] = await Promise.all([listPoolOrganizations(params.masterOrgId), findTemplateId()]);
+  // Объекты пула — организации и точки (слитая организация): выбор идёт по
+  // ключу объекта, запись — в документ организации или её точки.
   const selection = selectPoolOrganizationIds(
-    pool.map((org) => org.id),
+    pool.map((object) => object.id),
     params.organizationIds
   );
   if ("error" in selection) throw new MasterBrakerageSelectionError(selection.error);
-  const orgs = selection.ids.length
+  const targets = pool.filter((object) => selection.ids.includes(object.id));
+  const orgRows = targets.length
     ? await db.organization.findMany({
-        where: { id: { in: selection.ids } },
+        where: { id: { in: [...new Set(targets.map((object) => object.organizationId))] } },
         select: { id: true, name: true, disabledJournalCodes: true },
-        orderBy: { name: "asc" },
       })
     : [];
+  const orgById = new Map(orgRows.map((org) => [org.id, org]));
   const results: MasterBrakerageOrgResult[] = [];
-  for (const org of orgs) {
+  for (const target of targets) {
+    const org = orgById.get(target.organizationId);
+    if (!org) continue;
     if (!templateId) {
       results.push({
         organizationId: org.id,
-        organizationName: org.name,
+        buildingId: target.buildingId,
+        targetId: target.id,
+        organizationName: target.name,
         documentId: null,
         documentTitle: null,
         documentCreated: false,
@@ -248,14 +265,16 @@ export async function addMasterBrakerageToPool(params: {
     }
     try {
       results.push(
-        await processOrganization({ org, templateId, rows: params.rows, common: params.common, dryRun: params.dryRun })
+        await processOrganization({ org, target, templateId, rows: params.rows, common: params.common, dryRun: params.dryRun })
       );
     } catch (err) {
       // Один сломанный пищеблок не останавливает остальные.
-      console.error("[master-brakerage] organization failed", { organizationId: org.id, masterOrgId: params.masterOrgId }, err);
+      console.error("[master-brakerage] organization failed", { organizationId: org.id, buildingId: target.buildingId, masterOrgId: params.masterOrgId }, err);
       results.push({
         organizationId: org.id,
-        organizationName: org.name,
+        buildingId: target.buildingId,
+        targetId: target.id,
+        organizationName: target.name,
         documentId: null,
         documentTitle: null,
         documentCreated: false,

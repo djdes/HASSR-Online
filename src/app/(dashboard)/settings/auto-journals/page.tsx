@@ -5,6 +5,7 @@ import { MapPin, Sparkles } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { buildingTargets, getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
@@ -26,7 +27,8 @@ export default async function AutoJournalsPage() {
   const t = await getTranslations("settingsUi.autoJournalsPage");
   if ((await getJournalControls(organizationId)).specialMode) redirect("/settings/organization");
 
-  const [templates, org, activeDocs] = await Promise.all([
+  const activeBuildingId = await getActiveBuildingId(session);
+  const [templates, orgRow, activeDocs, buildingSettings] = await Promise.all([
     db.journalTemplate.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
@@ -53,12 +55,15 @@ export default async function AutoJournalsPage() {
         status: "active",
         dateFrom: { lte: new Date() },
         dateTo: { gte: new Date() },
-        ...buildingWhere(await getActiveBuildingId(session)),
+        ...buildingWhere(activeBuildingId),
       },
       select: { templateId: true },
       distinct: ["templateId"],
     }),
+    readBuildingJournalSettings(db, activeBuildingId),
   ]);
+  // У точки со своей автоматикой (слитая организация) — её настройки.
+  const org = withBuildingJournalSettings(orgRow, buildingSettings);
 
   const disabledSet = new Set<string>(
     Array.isArray(org?.disabledJournalCodes)

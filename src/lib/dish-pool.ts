@@ -57,8 +57,21 @@ export type DishPoolInfo = {
   poolSize: number;
 };
 
-export async function getDishPoolInfo(organizationId: string): Promise<DishPoolInfo> {
+export async function getDishPoolInfo(organizationId: string, buildingId?: string | null): Promise<DishPoolInfo> {
   const ownCode = await ensureServiceCode(organizationId);
+  // Точка, подключённая к пулу (слитая организация), — пул точки.
+  const building = buildingId
+    ? await db.building.findFirst({ where: { id: buildingId, organizationId }, select: { linkedServiceCode: true } })
+    : null;
+  if (building?.linkedServiceCode) {
+    const code = building.linkedServiceCode;
+    const [owner, orgs, buildings] = await Promise.all([
+      db.organization.findFirst({ where: { serviceCode: code }, select: { name: true } }),
+      db.organization.count({ where: { OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }] } }),
+      db.building.count({ where: { linkedServiceCode: code } }),
+    ]);
+    return { ownCode, linkedCode: code, linkedOrganizationName: owner?.name ?? null, poolSize: orgs + buildings };
+  }
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { linkedServiceCode: true } });
   const linkedCode = org?.linkedServiceCode ?? null;
   const owner = linkedCode

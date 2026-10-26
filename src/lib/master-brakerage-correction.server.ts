@@ -2,6 +2,12 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { MasterCorrectionError, planMasterCorrection, recoverMasterDelivery } from "@/lib/master-brakerage-correction";
 import { masterBrakerageHistoryInputSchema, type MasterBrakerageHistoryBatch, type MasterBrakerageHistoryInput } from "@/lib/master-brakerage-history";
+import { isPoolObjectInPool } from "@/lib/master-directory";
+
+/** Ключ получателя: объект пула (организация или её точка), у старых выгрузок — организация. */
+function recipientKey(recipient: { organizationId: string; targetId?: string }): string {
+  return recipient.targetId ?? recipient.organizationId;
+}
 
 export type MasterCorrectionScope = "history" | "all" | "selected";
 
@@ -21,16 +27,15 @@ export async function correctMasterDistribution(params: {
     const savedResult = current.result && typeof current.result === "object" && !Array.isArray(current.result) ? current.result as Record<string, Prisma.JsonValue> : {};
     const organizations = (Array.isArray(savedResult.organizations) ? structuredClone(savedResult.organizations) : []) as unknown as NonNullable<MasterBrakerageHistoryBatch["result"]>["organizations"];
     const recipients = organizations.filter(org => org.added > 0 && org.documentId);
-    const requested = params.scope === "all" ? recipients.map(org => org.organizationId) : params.scope === "selected" ? params.organizationIds : [];
+    const requested = params.scope === "all" ? recipients.map(recipientKey) : params.scope === "selected" ? params.organizationIds : [];
     const ids = [...new Set(requested)];
     if (params.scope !== "history" && !ids.length) throw new MasterCorrectionError("Выберите хотя бы один пищеблок, в который была выполнена выгрузка.");
-    if (ids.some(id => !recipients.some(org => org.organizationId === id))) throw new MasterCorrectionError("Выбран пищеблок, которого нет среди получателей этой выгрузки.");
+    if (ids.some(id => !recipients.some(org => recipientKey(org) === id))) throw new MasterCorrectionError("Выбран пищеблок, которого нет среди получателей этой выгрузки.");
     const changed: Array<{ organizationId: string; documentId: string; rowIds: string[] }> = [];
     // A stable lock order prevents two histories targeting the same documents from deadlocking.
-    const selected = recipients.filter(org => ids.includes(org.organizationId)).sort((a, b) => a.documentId!.localeCompare(b.documentId!));
+    const selected = recipients.filter(org => ids.includes(recipientKey(org))).sort((a, b) => a.documentId!.localeCompare(b.documentId!));
     for (const recipient of selected) {
-      const org = await tx.organization.findUnique({ where: { id: recipient.organizationId }, select: { kind: true, serviceCode: true, linkedServiceCode: true } });
-      if (!org || org.kind === "directory" || !code || (org.linkedServiceCode ?? org.serviceCode) !== code) throw new MasterCorrectionError(`«${recipient.organizationName}» больше не подключён к этому мастер-кабинету.`);
+      if (!code || !(await isPoolObjectInPool(recipient, code))) throw new MasterCorrectionError(`«${recipient.organizationName}» больше не подключён к этому мастер-кабинету.`);
       const documentId = recipient.documentId!;
       await tx.$queryRaw`SELECT id FROM "JournalDocument" WHERE id = ${documentId} FOR UPDATE`;
       const doc = await tx.journalDocument.findFirst({ where: { id: documentId, organizationId: recipient.organizationId }, include: { template: { select: { code: true } } } });

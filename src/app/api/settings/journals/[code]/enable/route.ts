@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getActiveBuildingId } from "@/lib/active-building";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
@@ -37,14 +38,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   const source: JournalEnableSource = body?.source === "blank-qr" ? "blank-qr" : "journal-page";
 
   const organizationId = getActiveOrgId(session);
-  const disabled = await getDisabledJournalCodes(organizationId);
+  // Точка со своим набором журналов (слитая организация) — набор точки.
+  const buildingId = await getActiveBuildingId(session);
+  const disabled = await getDisabledJournalCodes(organizationId, buildingId);
   if (!disabled.has(code)) return NextResponse.json({ ok: true, changed: false });
 
   const next = [...disabled].filter((item) => item !== code);
   // Бесплатный тариф после пробного — один включённый журнал.
   const journals = await checkJournalLimit(organizationId, next, { source: `settings/journals/${code}/enable` });
   if (!journals.ok) return limitResponse(journals);
-  await setDisabledJournalCodes(organizationId, next);
+  await setDisabledJournalCodes(organizationId, next, buildingId);
   await recordAuditLog({
     request,
     session,

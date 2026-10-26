@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
   const organizationId = getActiveOrgId(session);
   const blocked = await rejectJournalAutomation(organizationId);
   if (blocked) return blocked;
-  const org = await db.organization.findUnique({
+  const orgRow = await db.organization.findUnique({
     where: { id: organizationId },
     select: {
       timezone: true,
@@ -88,6 +89,9 @@ export async function GET(request: Request) {
       autoJournalCodes: true,
     },
   });
+  // Активная точка: её автоматика (у слитой организации своя) и её сотрудники.
+  const activeBuildingId = await getActiveBuildingId(session);
+  const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, activeBuildingId));
   const automation = getJournalAutomation(org, code);
   const perEmployee = isPerEmployeeJournal(code);
 
@@ -170,6 +174,7 @@ export async function GET(request: Request) {
       organizationId,
       templateCode: code,
       staffPolicy: { mode: "inherit" },
+      buildingId: activeBuildingId,
     });
     const inheritIds = inherited.employeeIds;
     const savedCustom =

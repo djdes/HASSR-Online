@@ -146,9 +146,11 @@ export async function getEligibleEmployees(
 export async function pickSingleAssignee(
   organizationId: string,
   template: { id: string; defaultAssigneeId: string | null },
-  dateKey: Date
+  dateKey: Date,
+  /** Точка обязательства: исполнитель — из тех, кто на ней работает. */
+  buildingId: string | null = null
 ): Promise<EligibleEmployee | null> {
-  const eligible = await getEligibleEmployees(organizationId, template.id);
+  const eligible = await getEligibleEmployees(organizationId, template.id, buildingId);
   if (eligible.length === 0) return null;
 
   if (template.defaultAssigneeId) {

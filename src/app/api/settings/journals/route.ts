@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import {
   setDisabledJournalCodes,
@@ -49,7 +50,9 @@ export async function PATCH(request: Request) {
   const organizationId = getActiveOrgId(session);
   const journals = await checkJournalLimit(organizationId, codes, { source: "settings/journals" });
   if (!journals.ok) return limitResponse(journals);
-  const stored = await setDisabledJournalCodes(organizationId, codes);
+  // Точка со своим набором журналов (слитая организация) — набор точки.
+  const activeBuildingId = await getActiveBuildingId(session);
+  const stored = await setDisabledJournalCodes(organizationId, codes, activeBuildingId);
 
   let storedPaper: string[] | undefined;
   if (Array.isArray(body.disabledPaperIds)) {
@@ -57,7 +60,7 @@ export async function PATCH(request: Request) {
     for (const id of body.disabledPaperIds) {
       if (typeof id === "string" && id.length > 0) paperIds.push(id);
     }
-    storedPaper = await setDisabledPaperJournalIds(organizationId, paperIds);
+    storedPaper = await setDisabledPaperJournalIds(organizationId, paperIds, activeBuildingId);
   }
 
   return NextResponse.json({

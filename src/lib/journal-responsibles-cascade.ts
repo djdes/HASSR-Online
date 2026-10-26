@@ -195,6 +195,8 @@ export async function cascadeResponsibleToActiveDocuments(input: {
    *  (back-compat). UI с двумя кнопками передаёт active-any для
    *  «изменить в активных» и all для «изменить во всех». */
   scope?: CascadeScope;
+  /** Только документы этой точки (мастер настройки бракеража на точке). */
+  buildingId?: string | null;
 }): Promise<{
   documentsUpdated: number;
   pickedPrimaryUserId: string | null;
@@ -309,6 +311,7 @@ export async function cascadeResponsibleToActiveDocuments(input: {
     const docWhere: Record<string, unknown> = {
       organizationId,
       templateId,
+      ...(input.buildingId ? { buildingId: input.buildingId } : {}),
     };
     if (scope === "active-today") {
       docWhere.status = "active";
@@ -459,6 +462,8 @@ export async function prefillResponsiblesForNewDocument(input: {
    * — они важнее общего набора колонок организации для своих колонок.
    */
   respectColumnFlags?: boolean;
+  /** Точка нового документа: её комиссия и мастер-кабинет её пула. */
+  buildingId?: string | null;
 }): Promise<{
   config: Record<string, unknown>;
   responsibleUserId: string | null;
@@ -599,13 +604,13 @@ export async function prefillResponsiblesForNewDocument(input: {
 
   // 6. Бракеражи: состав комиссии организации — новому документу
   // (окно «Сторонняя бракеражная комиссия», модель «копия»).
-  config = await withOrgCommission(input.organizationId, journalCode, config ?? {});
+  config = await withOrgCommission(input.organizationId, journalCode, config ?? {}, input.buildingId);
 
   // 6b. Бракеражи: меню и сырьё мастер-кабинета справочников пула
   // (src/lib/master-directory-push.ts). Слияние с памятью `shared*`, поэтому
   // повторный вызов для уже засеянного конфига ничего не дублирует. Нет
   // мастера в пуле — конфиг не меняется.
-  config = await withMasterSharedLists(input.organizationId, journalCode, config ?? {});
+  config = await withMasterSharedLists(input.organizationId, journalCode, config ?? {}, input.buildingId);
 
   // 7. Гигиена: новый документ — по форме Приложения №1 СанПиН
   // (config.hygieneFormVersion = 2), в т.ч. когда конфиг перенесён из

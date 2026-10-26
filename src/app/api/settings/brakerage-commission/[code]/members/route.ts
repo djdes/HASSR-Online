@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { addOrgCommissionMember, ensureCommissionPosition } from "@/lib/brakerage-commission-org";
@@ -67,11 +68,16 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
   }
   const pin = requestedPin || generateEmployeeQrPin();
   const pinError = await setEmployeeQrPin(created.user.id, pin);
-  const commission = await addOrgCommissionMember(organizationId, code, {
-    employeeId: created.user.id,
-    role: parsed.data.role,
-    roleKind: parsed.data.roleKind,
-  });
+  const commission = await addOrgCommissionMember(
+    organizationId,
+    code,
+    {
+      employeeId: created.user.id,
+      role: parsed.data.role,
+      roleKind: parsed.data.roleKind,
+    },
+    await getActiveBuildingId(session)
+  );
   await recordAuditLog({
     request,
     session,
