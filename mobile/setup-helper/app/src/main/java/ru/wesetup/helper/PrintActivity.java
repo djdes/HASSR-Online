@@ -14,7 +14,9 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,12 +24,14 @@ import android.widget.Toast;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +48,7 @@ import ru.wesetup.helper.template.TemplateValues;
 /**
  * Печать по шаблону: выбрать шаблон, заполнить поля, посмотреть этикетку
  * (ровно те точки, что уйдут на принтер) и напечатать нужное число копий.
+ * «История» — прошлые печати: повторить одним нажатием или поправить.
  */
 public final class PrintActivity extends BaseActivity {
 
@@ -54,6 +59,10 @@ public final class PrintActivity extends BaseActivity {
     private PrinterInfo printer;
     private LabelTemplate template;
     private ChipGroup chips;
+    private HorizontalScrollView templatesScroll;
+    private View templatesPrev;
+    private View templatesNext;
+    private PrintHistory history;
     private TextView description;
     private ImageView preview;
     private LinearLayout fieldsView;
@@ -81,7 +90,11 @@ public final class PrintActivity extends BaseActivity {
         Ui.applySystemBarInsets(this, findViewById(R.id.print_root));
         openedAt = System.currentTimeMillis();
 
+        history = new PrintHistory(this);
         chips = findViewById(R.id.print_templates);
+        templatesScroll = findViewById(R.id.print_templates_scroll);
+        templatesPrev = findViewById(R.id.print_templates_prev);
+        templatesNext = findViewById(R.id.print_templates_next);
         description = findViewById(R.id.print_description);
         preview = findViewById(R.id.print_preview);
         fieldsView = findViewById(R.id.print_fields);
@@ -93,6 +106,11 @@ public final class PrintActivity extends BaseActivity {
         findViewById(R.id.print_minus).setOnClickListener(v -> setCopies(copies - 1));
         findViewById(R.id.print_plus).setOnClickListener(v -> setCopies(copies + 1));
         findViewById(R.id.print_submit).setOnClickListener(v -> print());
+        findViewById(R.id.print_history).setOnClickListener(v -> showHistory());
+        // Стрелки листают шаблоны на две трети ширины; у края стрелка гаснет.
+        templatesPrev.setOnClickListener(v -> templatesScroll.smoothScrollBy(-templatesScroll.getWidth() * 2 / 3, 0));
+        templatesNext.setOnClickListener(v -> templatesScroll.smoothScrollBy(templatesScroll.getWidth() * 2 / 3, 0));
+        templatesScroll.setOnScrollChangeListener((v, x, y, oldX, oldY) -> updateArrows());
 
         List<LabelTemplate> templates = app.templates().all();
         String initial = getIntent().getStringExtra(EXTRA_TEMPLATE);
@@ -102,6 +120,13 @@ public final class PrintActivity extends BaseActivity {
             chip.setText(t.title);
             chip.setCheckable(true);
             chip.setCheckedIconVisible(false);
+            // Крупно, чтобы попадать пальцем: высота 56 dp, текст 16 sp.
+            chip.setChipMinHeight(dp(56));
+            chip.setTextSize(16);
+            chip.setChipStartPadding(dp(10));
+            chip.setChipEndPadding(dp(10));
+            chip.setChipCornerRadius(dp(16));
+            chip.setTag(t.id);
             chip.setOnClickListener(v -> select(t));
             chips.addView(chip);
             boolean pick = initial != null ? t.id.equals(initial) : selected == null && !LabelTemplate.TEST_ID.equals(t.id);
@@ -116,9 +141,28 @@ public final class PrintActivity extends BaseActivity {
         }
         if (selected != null) select(selected);
         setCopies(1);
+        templatesScroll.post(this::updateArrows);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void updateArrows() {
+        boolean back = templatesScroll.canScrollHorizontally(-1);
+        boolean forward = templatesScroll.canScrollHorizontally(1);
+        templatesPrev.setEnabled(back);
+        templatesPrev.setAlpha(back ? 1f : 0.35f);
+        templatesNext.setEnabled(forward);
+        templatesNext.setAlpha(forward ? 1f : 0.35f);
     }
 
     private void select(LabelTemplate next) {
+        select(next, null);
+    }
+
+    /** {@code from} — запись истории: поля заполняются её значениями. */
+    private void select(LabelTemplate next, PrintHistory.Entry from) {
         rememberTexts();
         template = next;
         description.setText(next.description);
@@ -132,15 +176,20 @@ public final class PrintActivity extends BaseActivity {
         LayoutInflater inflater = LayoutInflater.from(this);
         for (TemplateField field : next.fields) {
             switch (field.type) {
-                case TEXT:
-                    addTextField(inflater, field, remembered.getString(rememberKey(field), base.resolve(field.defaultValue)));
+                case TEXT: {
+                    String value = from != null && from.texts.containsKey(field.key) ? from.texts.get(field.key)
+                            : remembered.getString(rememberKey(field), base.resolve(field.defaultValue));
+                    addTextField(inflater, field, value);
                     break;
+                }
                 case DATETIME:
-                    times.put(field.key, TemplateValues.defaultTime(field.defaultValue, openedAt));
+                    times.put(field.key, from != null && from.times.containsKey(field.key) ? from.times.get(field.key)
+                            : TemplateValues.defaultTime(field.defaultValue, openedAt));
                     addDateField(inflater, field);
                     break;
                 case DURATION:
-                    durations.put(field.key, Durations.parseMinutes(field.defaultValue));
+                    durations.put(field.key, from != null && from.durations.containsKey(field.key)
+                            ? from.durations.get(field.key) : Durations.parseMinutes(field.defaultValue));
                     addDurationField(inflater, field);
                     break;
                 default:
@@ -292,9 +341,21 @@ public final class PrintActivity extends BaseActivity {
             }
         }
         rememberTexts();
-        LabelTemplate current = template;
-        TemplateValues values = values();
-        int count = copies;
+        send(template, values(), copies, snapshot(template, copies));
+    }
+
+    /** Значения полей сейчас — для истории. */
+    private PrintHistory.Entry snapshot(LabelTemplate current, int count) {
+        Map<String, String> texts = new LinkedHashMap<>();
+        for (TemplateField field : current.fields) {
+            EditText input = textInputs.get(field.key);
+            if (input != null && input.getText() != null) texts.put(field.key, input.getText().toString().trim());
+        }
+        return new PrintHistory.Entry(current.id, current.title, count, System.currentTimeMillis(),
+                texts, times, durations);
+    }
+
+    private void send(LabelTemplate current, TemplateValues values, int count, PrintHistory.Entry record) {
         withBluetooth(false, () -> {
             Ui.Progress progress = new Ui.Progress(this, current.title, null);
             progress.update(getString(R.string.print_sending));
@@ -302,6 +363,8 @@ public final class PrintActivity extends BaseActivity {
                 @Override
                 public void onSuccess(Void value) {
                     progress.dismiss();
+                    history.add(new PrintHistory.Entry(record.templateId, record.templateTitle, count,
+                            System.currentTimeMillis(), record.texts, record.times, record.durations));
                     Toast.makeText(PrintActivity.this, getString(R.string.print_done_copies, count),
                             Toast.LENGTH_SHORT).show();
                 }
@@ -313,6 +376,66 @@ public final class PrintActivity extends BaseActivity {
                 }
             });
         });
+    }
+
+    private void showHistory() {
+        List<PrintHistory.Entry> entries = history.all();
+        if (entries.isEmpty()) {
+            Ui.message(this, getString(R.string.history_title), getString(R.string.history_empty));
+            return;
+        }
+        String[] lines = new String[entries.size()];
+        for (int i = 0; i < entries.size(); i++) {
+            PrintHistory.Entry e = entries.get(i);
+            String head = getString(R.string.history_line, e.templateTitle, e.copies);
+            String summary = e.summary();
+            lines[i] = head + "\n" + (summary.isEmpty() ? "" : summary + " · ") + Ui.dateTime(e.printedAt);
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_history, R.id.history_text, lines);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.history_title)
+                .setAdapter(adapter, (dialog, which) -> openHistoryEntry(entries.get(which)))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void openHistoryEntry(PrintHistory.Entry entry) {
+        LabelTemplate saved = app.templates().byId(entry.templateId);
+        if (saved == null) {
+            Toast.makeText(this, R.string.history_template_missing, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String summary = entry.summary();
+        String details = getString(R.string.history_details, Ui.dateTime(entry.printedAt), entry.copies);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(entry.templateTitle)
+                .setMessage(summary.isEmpty() ? details : summary + "\n" + details)
+                .setPositiveButton(R.string.history_repeat, (d, w) -> reprint(saved, entry))
+                .setNeutralButton(R.string.history_edit, (d, w) -> editFromHistory(saved, entry))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    /** Ровно та же этикетка: те же тексты, даты и число копий. */
+    void reprint(LabelTemplate saved, PrintHistory.Entry entry) {
+        TemplateValues values = PrintJobs.baseValues(app, printer, System.currentTimeMillis());
+        for (Map.Entry<String, String> e : entry.texts.entrySet()) values.text(e.getKey(), e.getValue());
+        for (Map.Entry<String, Long> e : entry.times.entrySet()) values.time(e.getKey(), e.getValue());
+        for (Map.Entry<String, Integer> e : entry.durations.entrySet()) values.duration(e.getKey(), e.getValue());
+        send(saved, values, entry.copies, entry);
+    }
+
+    /** Открыть шаблон с полями из истории: поправить и напечатать. */
+    void editFromHistory(LabelTemplate saved, PrintHistory.Entry entry) {
+        for (int i = 0; i < chips.getChildCount(); i++) {
+            View chip = chips.getChildAt(i);
+            if (saved.id.equals(chip.getTag())) {
+                ((Chip) chip).setChecked(true);
+                templatesScroll.post(() -> templatesScroll.smoothScrollTo(Math.max(0, chip.getLeft() - dp(16)), 0));
+            }
+        }
+        select(saved, entry);
+        setCopies(entry.copies);
     }
 
     /** Тексты, кроме подставленных по умолчанию, запоминаются для следующего раза. */

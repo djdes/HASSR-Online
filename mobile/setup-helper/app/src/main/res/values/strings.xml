@@ -87,6 +87,17 @@
     <string name="print_copies">Копий</string>
     <string name="print_submit">Печать</string>
     <string name="print_required">Заполните «%1$s»</string>
+    <string name="print_choose_template">Шаблон этикетки — листайте вбок или жмите стрелки</string>
+    <string name="print_templates_prev">Предыдущие шаблоны</string>
+    <string name="print_templates_next">Следующие шаблоны</string>
+    <string name="history_button">История</string>
+    <string name="history_title">История печати</string>
+    <string name="history_empty">Пока ничего не печатали — здесь появятся напечатанные этикетки, их можно будет повторить.</string>
+    <string name="history_line">%1$s · %2$d шт.</string>
+    <string name="history_details">Напечатано: %1$s, %2$d шт.</string>
+    <string name="history_repeat">Напечатать ещё раз</string>
+    <string name="history_edit">Изменить</string>
+    <string name="history_template_missing">Этого шаблона больше нет в приложении</string>
 
     <!-- Настройки этикетки -->
     <string name="settings_title">Настройки этикетки</string>

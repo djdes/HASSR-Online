@@ -44,6 +44,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/print_history"
+            style="@style/SetupHelper.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/history_button"
+            app:icon="@drawable/ic_history"
+            app:iconGravity="textStart" />
     </LinearLayout>
 
     <ScrollView
@@ -60,19 +71,71 @@
             android:paddingEnd="20dp"
             android:paddingBottom="16dp">
 
-            <HorizontalScrollView
+            <TextView
+                style="@style/SetupHelper.Muted"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
+                android:text="@string/print_choose_template" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/print_templates"
-                    android:layout_width="wrap_content"
+            <!-- Шаблоны листаются вбок: стрелки по краям показывают, что есть ещё. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/print_templates_prev"
+                    style="@style/Widget.Material3.Button.TonalButton.Icon"
+                    android:layout_width="44dp"
+                    android:layout_height="56dp"
+                    android:contentDescription="@string/print_templates_prev"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_chevron_left"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="28dp" />
+
+                <HorizontalScrollView
+                    android:id="@+id/print_templates_scroll"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    app:selectionRequired="true"
-                    app:singleLine="true"
-                    app:singleSelection="true" />
-            </HorizontalScrollView>
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:fadingEdgeLength="24dp"
+                    android:requiresFadingEdge="horizontal"
+                    android:scrollbars="none">
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/print_templates"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:chipSpacingHorizontal="8dp"
+                        app:selectionRequired="true"
+                        app:singleLine="true"
+                        app:singleSelection="true" />
+                </HorizontalScrollView>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/print_templates_next"
+                    style="@style/Widget.Material3.Button.TonalButton.Icon"
+                    android:layout_width="44dp"
+                    android:layout_height="56dp"
+                    android:contentDescription="@string/print_templates_next"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_chevron_right"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="28dp" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/print_description"

@@ -4,12 +4,15 @@ plugins {
 
 // Версия приложения. Номер сборки (versionCode) растёт с каждым выпуском:
 // по нему приложение на телефоне понимает, что на сайте есть новее.
-def appVersionName = '1.1.1'
-def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 3
+def appVersionName = '1.2.0'
+def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 4
 
 // Сертификат, которым подписаны все выпуски. Android ставит обновление
 // поверх, только если ключ тот же, — publishRelease проверяет это до выкладки.
-def releaseCertSha256 = 'e67c22a2cfef328e62b9f69a79677e0ae513007dc83b77a39639d8c57110ce2a'
+// С 1.2.0 (26.10.2026) — новый ключ: прежний (e67c22a2…) потерян, телефоны
+// с 1.0/1.1 один раз переставляют приложение вручную. Ключ — в секретах
+// GitHub (SETUP_HELPER_KEYSTORE_BASE64 и пароли), выпуск собирает CI.
+def releaseCertSha256 = '20b6bd349e4699bddb23ef0f81cf3a612607d3b8190813ba6403215641dfecb4'
 
 // Ключ подписи — из переменных окружения: репозиторий публичный, ключу в git
 // не место. SETUP_HELPER_KEYSTORE — путь к файлу, SETUP_HELPER_KEYSTORE_BASE64 —
