@@ -38,28 +38,34 @@ const visitorOf = (response) => /wesetup\.visitor=([^;]+)/.exec(response.headers
 const IOS15 = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1";
 
 async function limits() {
-  // 3. Old iOS: `_rsc` reaches the proxy and selects the background budget.
-  const rsc = await burst(200, (i) => get(`/login?_rsc=e2e${i}`, { "x-real-ip": "198.51.100.11", "user-agent": IOS15 }));
-  check("_rsc без Fetch Metadata — фоновый бюджет: 200 запросов без 429", !rsc.statuses[429], JSON.stringify(rsc.statuses));
-  const docs = await burst(101, () => get("/login", { "x-real-ip": "198.51.100.11", "user-agent": IOS15 }), 30);
+  // 3. Old iOS without Fetch Metadata: Next's RSC fetch asks for */*, a page load for text/html.
+  const html = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+  const rsc = await burst(200, (i) => get(`/login?_rsc=e2e${i}`, { "x-real-ip": "198.51.100.11", "user-agent": IOS15, accept: "*/*", rsc: "1" }));
+  check("старый iOS: RSC-запрос (Accept */*) — фоновый бюджет: 200 запросов без 429", !rsc.statuses[429], JSON.stringify(rsc.statuses));
+  const docs = await burst(101, () => get("/login", { "x-real-ip": "198.51.100.11", "user-agent": IOS15, accept: html }), 30);
   check("страницы того же адреса сохранили свой бюджет: 100 проходят, 101-я — 429", docs.statuses[429] === 1, JSON.stringify(docs.statuses));
+  const curlStar = await burst(21, () => get("/login", { "x-real-ip": "198.51.100.19", "user-agent": "curl/8.5.0", accept: "*/*" }), 21);
+  check("curl с Accept */* остаётся на бюджете страниц (21-й — 429)", curlStar.statuses[429] === 1, JSON.stringify(curlStar.statuses));
 
   // 4. Guests: a signed cookie gives each browser its own budget.
-  const ip = { "x-real-ip": "198.51.100.12", "user-agent": "curl/8.5.0" };
+  const ip = { "x-real-ip": "198.51.100.12", "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130", accept: html };
   const first = await get("/blog", ip);
   const cookieA = visitorOf(first);
   check("гостю выдана cookie посетителя", Boolean(cookieA) && /HttpOnly/i.test(first.headers.get("set-cookie")), first.headers.get("set-cookie")?.replace(/=v1\.[^;]+/, "=v1.…"));
-  const rest = await burst(20, () => get("/blog", ip), 10);
+  const rest = await burst(100, () => get("/blog", ip), 25);
   const waited = rest.responses.find((response) => response.status === 429);
-  check("адрес без cookie по-прежнему упирается в лимит (20 проходят, 21-й — 429)", rest.statuses[429] === 1, JSON.stringify(rest.statuses));
+  check("адрес без cookie по-прежнему упирается в лимит (100 проходят, 101-й — 429)", rest.statuses[429] === 1, JSON.stringify(rest.statuses));
   const cookieB = waited && visitorOf(waited);
   check("экран ожидания тоже выдаёт cookie", Boolean(cookieB));
-  const withA = await burst(21, () => get("/blog", { ...ip, cookie: `wesetup.visitor=${cookieA}` }), 10);
-  check("с cookie — свой бюджет: 20 проходят при заблокированном адресе, 21-й — 429", withA.statuses[200] === 20 && withA.statuses[429] === 1, JSON.stringify(withA.statuses));
-  const withB = await burst(20, () => get("/blog", { ...ip, cookie: `wesetup.visitor=${cookieB}` }), 10);
-  check("второй браузер того же адреса — независимый бюджет", withB.statuses[200] === 20, JSON.stringify(withB.statuses));
+  const withA = await burst(101, () => get("/blog", { ...ip, cookie: `wesetup.visitor=${cookieA}` }), 25);
+  check("с cookie — свой бюджет: 100 проходят при заблокированном адресе, 101-й — 429", withA.statuses[200] === 100 && withA.statuses[429] === 1, JSON.stringify(withA.statuses));
+  const retries = await burst(30, () => get("/blog", { ...ip, cookie: `wesetup.visitor=${cookieA}` }), 10);
+  const withB = await burst(99, () => get("/blog", { ...ip, cookie: `wesetup.visitor=${cookieB}` }), 25);
+  check("второй браузер того же адреса — независимый бюджет; повторы первого во время паузы его не съели", withB.statuses[200] === 99 && retries.statuses[429] === 30, `${JSON.stringify(withB.statuses)}, повторы ${JSON.stringify(retries.statuses)}`);
   const forged = await get("/blog", { ...ip, cookie: "wesetup.visitor=v1.AAAAAAAAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAA" });
   check("поддельная cookie считается по адресу (429)", forged.status === 429);
+  const tool = await get("/blog", { "x-real-ip": "198.51.100.20", "user-agent": "python-requests/2.31" });
+  check("скрипту cookie не выдаётся", !visitorOf(tool), String(tool.status));
 
   // 2. Signed-in users: every budget ×3.
   const token = await encode({ secret: SECRET, token: { id: "e2e-limit-user", sub: "e2e-limit-user", role: "owner", orgKind: "regular", isRoot: false } });
@@ -67,7 +73,7 @@ async function limits() {
   check("вошедший пользователь: 60 страниц (20×3) проходят, 61-я — 429", user.statuses[429] === 1 && !user.statuses[500], JSON.stringify(user.statuses));
 
   // A fake crawler is an ordinary client.
-  const fake = await burst(101, () => get("/blog", { "x-real-ip": "198.51.100.16", "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" }), 20);
+  const fake = await burst(101, () => get("/blog", { "x-real-ip": "198.51.100.16", "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", accept: "text/html,*/*;q=0.8" }), 20);
   check("назвался Googlebot без подтверждения DNS — обычные пороги (101-я — 429)", fake.statuses[429] === 1, JSON.stringify(fake.statuses));
 
   // Ordinary pages still render.

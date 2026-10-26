@@ -167,11 +167,14 @@ test("scale multiplies every budget of one check, and is per check", () => {
 });
 
 test("admits: a known subject always, a new one only while there is room", () => {
-  const limit = createPageNavigationLimiter(() => 0, 1);
+  let now = 0;
+  const limit = createPageNavigationLimiter(() => now, 1);
   assert.equal(limit.admits("a"), true);
   limit.check("a", false, false);
   assert.equal(limit.admits("a"), true);
   assert.equal(limit.admits("b"), false);
+  now = MINUTE;
+  assert.equal(limit.admits("b"), true, "a full table frees idle entries even if only new subjects knock");
 });
 
 test("the emergency switch reads only valid values", () => {

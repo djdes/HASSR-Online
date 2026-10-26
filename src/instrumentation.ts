@@ -4,11 +4,12 @@
  * logged and never stops the server.
  */
 export async function register(): Promise<void> {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  try {
-    const { startPageLimitStatsFlusher } = await import("./lib/page-limit-stats.server");
-    startPageLimitStatsFlusher();
-  } catch (error) {
-    console.error("[instrumentation] page limit statistics are off:", error instanceof Error ? error.message : error);
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    try {
+      const { startPageLimitStatsFlusher } = await import("./lib/page-limit-stats.server");
+      startPageLimitStatsFlusher();
+    } catch (error) {
+      console.error("[instrumentation] page limit statistics are off:", error instanceof Error ? error.message : error);
+    }
   }
 }

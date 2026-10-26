@@ -19,7 +19,8 @@ const CLAIMS: [CrawlerFamily, RegExp][] = [
 ];
 
 const DOMAINS: Record<CrawlerFamily, string[]> = {
-  google: [".googlebot.com", ".google.com", ".googleusercontent.com"],
+  // Not googleusercontent.com: any Google Cloud VM resolves under it.
+  google: [".googlebot.com", ".google.com"],
   yandex: [".yandex.ru", ".yandex.net", ".yandex.com"],
   bing: [".search.msn.com"],
 };

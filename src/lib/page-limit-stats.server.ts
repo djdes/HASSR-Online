@@ -66,7 +66,7 @@ export function startPageLimitStatsFlusher(): void {
 export type PageLimitCount = { value: string; passed: number; limited: number };
 
 export type PageLimitOverview = {
-  days: { day: string; passed: number; limited: number; limitedBySubject: Record<string, number> }[];
+  days: { day: string; passed: number; limited: number }[];
   /** Pages and 429 by each dimension over the whole period. Sections: 429 only. */
   by: Record<"subject" | "reason" | "client" | "platform" | "request" | "metadata" | "section", PageLimitCount[]>;
   passed: number;
@@ -81,9 +81,11 @@ export async function readPageLimitOverview(days = 7, now = Date.now()): Promise
   const rows = await db.pageLimitStat.findMany({
     where: { day: { gte: dateOf(dayKeys[dayKeys.length - 1]) } },
     select: { day: true, outcome: true, reason: true, subject: true, client: true, platform: true, request: true, metadata: true, section: true, count: true },
+    // A runaway week keeps its largest buckets.
+    orderBy: { count: "desc" },
     take: 50_000,
   });
-  const perDay = new Map(dayKeys.map((day) => [day, { day, passed: 0, limited: 0, limitedBySubject: {} as Record<string, number> }]));
+  const perDay = new Map(dayKeys.map((day) => [day, { day, passed: 0, limited: 0 }]));
   const by = Object.fromEntries(DIMENSIONS.map((dimension) => [dimension, new Map<string, PageLimitCount>()])) as Record<(typeof DIMENSIONS)[number], Map<string, PageLimitCount>>;
   let passed = 0;
   let limited = 0;
@@ -93,12 +95,8 @@ export async function readPageLimitOverview(days = 7, now = Date.now()): Promise
     if (isLimited) limited += row.count;
     else passed += row.count;
     if (day) {
-      if (isLimited) {
-        day.limited += row.count;
-        day.limitedBySubject[row.subject] = (day.limitedBySubject[row.subject] ?? 0) + row.count;
-      } else {
-        day.passed += row.count;
-      }
+      if (isLimited) day.limited += row.count;
+      else day.passed += row.count;
     }
     for (const dimension of DIMENSIONS) {
       const value = dimension === "metadata" ? (row.metadata ? "yes" : "no") : row[dimension];

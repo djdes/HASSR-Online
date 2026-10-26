@@ -3363,8 +3363,8 @@ model PageLimitStat {
   count     Int      @default(0)
   updatedAt DateTime @updatedAt
 
+  /// Начинается с day — им же читаются последние сутки.
   @@unique([day, outcome, reason, subject, client, platform, request, metadata, section], name: "bucket")
-  @@index([day])
 }
 
 /// Правка строки каталога интерфейса (src/i18n/messages/<locale>.json)

@@ -1,0 +1,56 @@
+ok 1 - sections are known routes only; IDs and unknown paths are «other»
+ok 2 - platform: old iOS (before 16.4) apart, the rest coarse
+ok 3 - days are Moscow calendar days
+ok 4 - counts aggregate by dimensions; passed pages lose reason and section
+ok 5 - the store is bounded: new buckets beyond the cap are dropped, known ones still count
+ok 6 - budgets are loose: a person never meets them, each minute budget binds
+ok 7 - normal browsing and a burst across pages share a rolling budget
+ok 8 - the 10-second window expires at its boundary
+ok 9 - sustained browsing and automation hit the minute budget without a burst
+ok 10 - UA changes do not erase recorded requests
+ok 11 - automation is only a signal, not a ban or allowlist
+ok 12 - excess background requests never block documents or extend their own window
+ok 13 - slow browsing with many speculative requests does not trigger a document cooldown
+ok 14 - background retries cannot extend or clear an actual document cooldown
+ok 15 - expired budgets are swept and capacity cannot evict a blocked subject
+ok 16 - a page cooldown also holds back prefetch
+ok 17 - every refusal names its reason for the statistics
+ok 18 - scale multiplies every budget of one check, and is per check
+ok 19 - admits: a known subject always, a new one only while there is room
+ok 20 - the emergency switch reads only valid values
+ok 21 - a cookie the server signed verifies, and every token is new
+ok 22 - forged, altered or foreign cookies are not a visitor
+ok 23 - without a secret there is no cookie and nothing verifies
+ok 24 - only crawler tokens count as a claim, not apps people browse with
+ok 25 - a crawler is verified by reverse DNS under its domain and the same address forward
+ok 26 - IPv6 crawlers: the proxy's bracketed address matches any spelling of the forward answer
+ok 27 - verdicts are cached, failures are negative, and a slow DNS gives up
+ok 28 - too many checks at once are answered without DNS, concurrent ones share a lookup
+ok 29 - real proxy denies documents and RSC before content, with a private Russian wait page
+ok 30 - assets, API, callbacks and operational links survive a page cooldown
+ok 31 - document prefetch spoofing and forged sessions cannot reset a blocked IP
+ok 32 - marked and markerless RSC fetches stay bounded without blocking browser documents
+ok 33 - ordinary employee navigation survives excess Next.js background requests
+ok 34 - subject uses verified accounts or a canonical trusted peer, never client identity hints
+ok 35 - JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+ok 36 - marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages
+ok 37 - deploy prewarm key: only an exact match of a long key from the process env
+ok 38 - deploy prewarm with the per-deploy key skips the page budget; other requests stay limited
+ok 39 - old browsers without Fetch Metadata: a request not asking for text/html is background
+ok 40 - guests: a signed visitor cookie gives each browser its own budget
+ok 41 - all guests of one address share a ceiling of three budgets
+ok 42 - tools get no visitor cookie and their cookies are ignored
+ok 43 - without a secret there is no visitor cookie and guests count by address
+ok 44 - emergency switch: off never answers 429, scale multiplies every budget
+ok 45 - a crawler verified by DNS is not limited and gets no cookie
+ok 46 - a user-agent naming a search crawler gets no exemption without DNS proof
+ok 47 - statistics count pages and 429 by coarse dimensions, never addresses or paths
+ok 48 - English document keeps its explicit route and receives a trusted locale
+ok 49 - caller-supplied locale headers cannot change the locale of the requested URL
+ok 50 - English prefix never rewrites protected routes or callbacks
+ok 51 - prefetching another language does not overwrite the visitor preference
+ok 52 - English pages retain the navigation budget and show an English cooldown
+ok 53 - partners and privacy trust their six explicit URLs without rewriting navigation
+# tests 53
+# pass 53
+# fail 0

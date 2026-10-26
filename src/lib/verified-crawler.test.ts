@@ -37,6 +37,8 @@ test("a crawler is verified by reverse DNS under its domain and the same address
   assert.equal(await verify.verify("203.0.113.9", "google"), false, "a suffix in the middle is not the domain");
   assert.equal(await verify.verify("203.0.113.10", "google"), false, "the forward lookup must return the same address");
   assert.equal(await verify.verify("198.51.100.1", "google"), false, "no PTR record");
+  const cloud = createCrawlerVerifier(resolver({ "34.1.2.3": ["3.2.1.34.bc.googleusercontent.com"] }, { "3.2.1.34.bc.googleusercontent.com": ["34.1.2.3"] }));
+  assert.equal(await cloud.verify("34.1.2.3", "google"), false, "a Google Cloud VM is not Googlebot");
 });
 
 test("IPv6 crawlers: the proxy's bracketed address matches any spelling of the forward answer", async () => {

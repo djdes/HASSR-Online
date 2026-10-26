@@ -76,7 +76,8 @@ export default async function RootPageLimitPage() {
             {t("summary", { passed: n(overview.passed), limited: n(overview.limited), share: share(overview.limited, overview.passed) })}
           </p>
           <div className={CARD}>
-            <table className="w-full min-w-[520px] text-[13.5px]" data-testid="page-limit-days">
+            {/* ds-no-scroll: the tables fit a phone; the mobile rule would shrink them to their content. */}
+            <table className="ds-no-scroll w-full text-[13.5px]" data-testid="page-limit-days">
               <caption className="px-4 pt-4 text-left text-[15px] font-semibold text-[#0b1024]">{t("byDay")}</caption>
               <thead>
                 <tr className={HEAD}>
@@ -139,7 +140,7 @@ function BreakdownTable({
 }) {
   return (
     <div className={CARD}>
-      <table className="w-full text-[13.5px]">
+      <table className="ds-no-scroll w-full text-[13.5px]">
         <caption className="px-4 pt-4 text-left text-[15px] font-semibold text-[#0b1024]">{title}</caption>
         <thead>
           <tr className={HEAD}>

@@ -36,23 +36,31 @@
    нет: регистрация открыта, и аккаунт не должен снимать защиту.
    - AC2. Для `user:<id>`: 300 страниц за 10 с, 1200 в минуту, фон 3600.
 3. Старые браузеры без Fetch Metadata.
-   - AC3. Запрос с параметром `_rsc` (метка RSC-запросов Next.js) — фоновый,
-     как `Sec-Fetch-Dest: empty`. Подмена даёт только фоновый бюджет — то же,
-     что подмена Fetch Metadata сейчас. Проверено на production-сборке,
-     что proxy видит `_rsc`.
+   - AC3. Запрос без `Sec-Fetch-Dest` (и без `RSC: 1`) от браузера, не
+     просящий `text/html` в `Accept`, — фоновый: так выглядит RSC-запрос
+     Next.js в iOS до 16.4 и старых WebView, а загрузка страницы всегда
+     просит `text/html`. Инструменты (curl тоже шлёт `*/*`) и запросы с
+     объявленным `Sec-Fetch-Dest` остаются на бюджете страниц. Подмена даёт
+     только фоновый бюджет — то же, что подмена Fetch Metadata сейчас.
+     (Первый вариант — параметр `_rsc` — production-сборка не доносит до
+     proxy: Next убирает его и заголовок `RSC` раньше; проверено e2e.)
 4. Гости за общим IP.
-   - AC4.1. Proxy выдаёт гостю cookie `wesetup.visitor` (случайный ID +
-     HMAC из `NEXTAUTH_SECRET`; HttpOnly, SameSite=Lax, Secure на https,
-     30 дней) на странице и на 429.
+   - AC4.1. Proxy выдаёт гостю-браузеру cookie `wesetup.visitor` (случайный
+     ID + HMAC из `NEXTAUTH_SECRET`; HttpOnly, SameSite=Lax, Secure на https,
+     30 дней) на странице и на 429. Инструментам (curl, скрипты) cookie не
+     выдаётся, а их cookie не учитывается.
    - AC4.2. Гость с верной cookie считается по `visitor:<id>` (обычные
-     пороги) и по потолку адреса `ipcap:<ip>` (×3); оба должны пройти.
-     Без cookie или с неверной — `ip:<ip>`, как сейчас.
+     пороги), без cookie или с неверной — по `ip:<ip>`, как сейчас. Все
+     гости одного адреса вместе — не больше ×3 (`ipcap:<ip>`); отклонённый
+     запрос потолок не тратит.
    - AC4.3. Посетители — в отдельной таблице на 20 000 записей; если она
-     заполнена, запрос считается по IP (как сейчас), а не ждёт.
+     заполнена и не освобождается очисткой, запрос считается по IP (как
+     сейчас), а не ждёт.
 5. Поисковые роботы.
    - AC5. UA Googlebot/Google-InspectionTool/GoogleOther/AdsBot/bingbot/
-     YandexBot и др. проверяется обратным DNS (googlebot.com, google.com,
-     googleusercontent.com; yandex.ru/.net/.com; search.msn.com) и прямым
+     YandexBot и др. проверяется обратным DNS (googlebot.com, google.com —
+     не googleusercontent.com, под ним любая ВМ Google Cloud;
+     yandex.ru/.net/.com; search.msn.com) и прямым
      подтверждением IP. Подтверждённый робот не ограничивается. Кэш
      5000 адресов (24 ч / 1 ч), не больше 16 одновременных проверок,
      запросы DNS через c-ares (не `dns.lookup`, который занимает общий

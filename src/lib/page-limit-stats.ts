@@ -69,10 +69,12 @@ export function sectionOf(pathname: string): string {
 /** Old iOS (before 16.4) sends no Fetch Metadata: its prefetches look like page loads. */
 export function platformOf(userAgent: string | null): PageLimitPlatform {
   if (!userAgent) return "other";
-  const ios = /\b(?:iPhone|iPad|iPod)\b.*?\bOS (\d+)[_.](\d+)/.exec(userAgent);
-  if (ios) {
-    const major = Number(ios[1]);
-    const minor = Number(ios[2]);
+  // Two linear patterns: one with `.*?` between them is quadratic on a long header.
+  if (/\b(?:iPhone|iPad|iPod)\b/.test(userAgent)) {
+    const version = /\bOS (\d+)[_.](\d+)/.exec(userAgent);
+    if (!version) return "ios";
+    const major = Number(version[1]);
+    const minor = Number(version[2]);
     return major < 16 || (major === 16 && minor < 4) ? "ios-old" : "ios";
   }
   if (/Android/i.test(userAgent)) return "android";
@@ -85,11 +87,11 @@ const MOSCOW = 3 * 3_600_000;
 const MAX_BUCKETS = 2_000;
 const STORE = Symbol.for("wesetup.pageLimitStats");
 
-type Store = { counts: Map<string, number>; dropped: number };
+type Store = { counts: Map<string, number> };
 
 function store(): Store {
   const global = globalThis as { [STORE]?: Store };
-  global[STORE] ??= { counts: new Map(), dropped: 0 };
+  global[STORE] ??= { counts: new Map() };
   return global[STORE];
 }
 
@@ -108,10 +110,8 @@ function add(bucket: BucketKey, count: number): void {
   const current = store();
   const key = keyOf(bucket);
   const previous = current.counts.get(key);
-  if (previous === undefined && current.counts.size >= MAX_BUCKETS) {
-    current.dropped += count;
-    return;
-  }
+  // Full: a new combination is not counted; known ones keep counting.
+  if (previous === undefined && current.counts.size >= MAX_BUCKETS) return;
   current.counts.set(key, (previous ?? 0) + count);
 }
 
@@ -157,9 +157,4 @@ export function takePageLimitStats(): PageLimitBucket[] {
 /** Put back buckets a failed write could not save (within the same size cap). */
 export function restorePageLimitStats(buckets: readonly PageLimitBucket[]): void {
   for (const { count, ...bucket } of buckets) add(bucket, count);
-}
-
-/** Pages not counted because the in-memory store was full (since start). */
-export function droppedPageLimitBuckets(): number {
-  return store().dropped;
 }

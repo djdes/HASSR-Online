@@ -42,6 +42,9 @@ test("platform: old iOS (before 16.4) apart, the rest coarse", () => {
   assert.equal(platformOf("Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130"), "desktop");
   assert.equal(platformOf("curl/8"), "other");
   assert.equal(platformOf(null), "other");
+  const started = performance.now();
+  platformOf(`iPhone ${"iPhone ".repeat(2_000)}`);
+  assert.ok(performance.now() - started < 50, "linear on a long header");
 });
 
 test("days are Moscow calendar days", () => {

@@ -40,15 +40,18 @@ export function createPageNavigationLimiter(now = Date.now, maxSubjects = MAX_SU
   let nextSweep = 0;
   const pass: PageLimitDecision = { wait: 0, reason: null };
 
+  function sweep(time: number) {
+    if (time < nextSweep) return;
+    for (const [key, entry] of subjects) {
+      if (time - entry.touched >= MINUTE && entry.blockedUntil <= time) subjects.delete(key);
+    }
+    nextSweep = time + MINUTE;
+  }
+
   /** `scale` multiplies every budget of this check (accounts, the env switch). */
   function decide(subject: string, automated: boolean, prefetch: boolean, scale = 1): PageLimitDecision {
     const time = now();
-    if (time >= nextSweep) {
-      for (const [key, entry] of subjects) {
-        if (time - entry.touched >= MINUTE && entry.blockedUntil <= time) subjects.delete(key);
-      }
-      nextSweep = time + MINUTE;
-    }
+    sweep(time);
     let entry = subjects.get(subject);
     if (!entry) {
       // Keep existing budgets intact at capacity: unseen subjects wait until expiry.
@@ -87,7 +90,11 @@ export function createPageNavigationLimiter(now = Date.now, maxSubjects = MAX_SU
     get size() { return subjects.size; },
     /** The subject already has a budget, or there is room for a new one. */
     admits(subject: string): boolean {
-      return subjects.has(subject) || subjects.size < maxSubjects;
+      if (subjects.has(subject)) return true;
+      // A full table frees its idle entries here too: otherwise only known
+      // subjects would ever sweep it, and new ones would wait forever.
+      if (subjects.size >= maxSubjects) sweep(now());
+      return subjects.size < maxSubjects;
     },
     decide,
     /** Seconds to wait, 0 when the request passes. */

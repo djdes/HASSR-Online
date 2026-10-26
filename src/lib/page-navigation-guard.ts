@@ -13,7 +13,12 @@ const limiter = createPageNavigationLimiter();
 // Guests with a signed cookie: a table of its own, so minted cookies can never
 // crowd addresses and accounts out of the main one. Full — counted by address.
 const visitors = createPageNavigationLimiter(Date.now, 20_000);
-const crawlers = createCrawlerVerifier();
+let crawlers = createCrawlerVerifier();
+
+/** Tests only: a verifier with a stubbed DNS. */
+export function setPageCrawlerVerifierForTests(verifier: ReturnType<typeof createCrawlerVerifier>): void {
+  crawlers = verifier;
+}
 const EXCLUDED = ["/api", "/_next", "/.well-known", "/og", "/og-default", "/payment", "/invite", "/equipment-fill", "/room-fill", "/task-fill", "/kiosk"];
 const ASSET = /\.(?:css|js|map|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|pdf|mp4|webm|mp3|wav|txt|xml|webmanifest)$/i;
 const PUBLIC_ASSETS = ["/brand/", "/icons/", "/journal-samples/", "/landing/", "/uploads/"];
@@ -98,12 +103,18 @@ export function isDeployWarmRequest(headers: { get(name: string): string | null 
 
 /**
  * Next.js background fetches: client navigations and prefetches. Fetch
- * Metadata where the browser sends it; `_rsc` — Next's own mark on every
- * RSC fetch — for browsers that send none (iOS before 16.4, old WebViews).
- * Forging either only selects the bounded background budget.
+ * Metadata where the browser sends it. Browsers that send none (iOS before
+ * 16.4, old WebViews) are told apart by `Accept`: a page load always asks
+ * for text/html, Next's RSC fetch leaves the browser default. (Next strips
+ * its own `RSC` header and `_rsc` mark before the proxy runs.) Tools such as
+ * curl also send no text/html and stay on the page budget. Forging any of it
+ * only selects the bounded background budget.
  */
-export function isBackgroundPageRequest(req: NextRequest): boolean {
-  return req.headers.get("sec-fetch-dest") === "empty" || req.headers.get("rsc") === "1" || req.nextUrl.searchParams.has("_rsc");
+export function isBackgroundPageRequest(headers: { get(name: string): string | null }, automated: boolean): boolean {
+  const destination = headers.get("sec-fetch-dest");
+  if (destination === "empty" || headers.get("rsc") === "1") return true;
+  if (destination || automated) return false;
+  return !(headers.get("accept") ?? "").toLowerCase().includes("text/html");
 }
 
 export type PageGuardResult = {
@@ -130,9 +141,10 @@ type Check = { table: typeof limiter; subject: string; scale: number };
 export async function pageNavigationGuard(req: NextRequest, verifiedUserId?: unknown): Promise<PageGuardResult> {
   const result: PageGuardResult = { limited: null, visitorCookie: null };
   if (!isLimitedPageRequest(req) || isDeployWarmRequest(req.headers)) return result;
-  const userAgent = req.headers.get("user-agent");
+  // Headers can be long; nothing below needs more than the start of the user-agent.
+  const userAgent = req.headers.get("user-agent")?.slice(0, 512) ?? null;
   const automated = hasAutomationUserAgent(userAgent);
-  const background = isBackgroundPageRequest(req);
+  const background = isBackgroundPageRequest(req.headers, automated);
   const ip = trustedClientIp(req.headers);
   const userId = verifiedUser(verifiedUserId);
   const crawler = userId ? null : claimedCrawler(userAgent);
@@ -145,18 +157,19 @@ export async function pageNavigationGuard(req: NextRequest, verifiedUserId?: unk
     subject = "user";
     checks = [{ table: limiter, subject: pageNavigationSubject(req.headers, userId), scale: PAGE_NAVIGATION_LIMITS.userScale }];
   } else {
-    const visitorId = verifiedVisitorId(req.cookies.get(VISITOR_COOKIE)?.value);
+    // Every guest of one address shares a ceiling; the first check charges
+    // only a request that passes it, so a refused one never eats the ceiling.
+    const ceiling: Check = { table: limiter, subject: `ipcap:${ip ?? "unknown"}`, scale: PAGE_NAVIGATION_LIMITS.visitorIpScale };
+    // Tools get no cookie and no budget of their own: a script keeping
+    // cookies must not multiply its share of the address.
+    const visitorId = automated ? null : verifiedVisitorId(req.cookies.get(VISITOR_COOKIE)?.value);
     if (visitorId && visitors.admits(`visitor:${visitorId}`)) {
       subject = "visitor";
-      // The browser's own budget, and a ceiling for all cookie holders of one address.
-      checks = [
-        { table: limiter, subject: `ipcap:${ip ?? "unknown"}`, scale: PAGE_NAVIGATION_LIMITS.visitorIpScale },
-        { table: visitors, subject: `visitor:${visitorId}`, scale: 1 },
-      ];
+      checks = [{ table: visitors, subject: `visitor:${visitorId}`, scale: 1 }, ceiling];
     } else {
       subject = ip ? "ip" : "unknown";
-      checks = [{ table: limiter, subject: pageNavigationSubject(req.headers), scale: 1 }];
-      if (!visitorId && !verifiedCrawler) result.visitorCookie = issueVisitorToken();
+      checks = [{ table: limiter, subject: pageNavigationSubject(req.headers), scale: 1 }, ceiling];
+      if (!visitorId && !automated && !verifiedCrawler) result.visitorCookie = issueVisitorToken();
     }
   }
 
