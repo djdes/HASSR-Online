@@ -24,6 +24,8 @@ export async function recordQrFillAudit(input: {
   authMode?: "public" | "pin" | "auth";
   /** Что записано (форма адаптера) — для журнальных QR. */
   values?: Record<string, unknown>;
+  /** Запись пришла из бота мессенджера, а не со страницы QR. */
+  channel?: "max";
 }): Promise<void> {
   await recordAuditLog({
     request: input.request,
@@ -47,6 +49,7 @@ export async function recordQrFillAudit(input: {
       ...(typeof input.humidity === "number" ? { humidity: input.humidity } : {}),
       outOfRange: input.outOfRange === true,
       ...(input.authMode ? { authMode: input.authMode } : {}),
+      ...(input.channel ? { channel: input.channel } : {}),
       ...(input.values ? { values: input.values } : {}),
     },
   });

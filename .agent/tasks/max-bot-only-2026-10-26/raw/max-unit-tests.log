@@ -1,0 +1,245 @@
+TAP version 13
+# Subtest: select step shows options as buttons and a pick moves to the next field
+ok 1 - select step shows options as buttons and a pick moves to the next field
+  ---
+  duration_ms: 4.91055
+  type: 'test'
+  ...
+# Subtest: confirm screen lists answers with save, edit and cancel
+ok 2 - confirm screen lists answers with save, edit and cancel
+  ---
+  duration_ms: 2.259923
+  type: 'test'
+  ...
+# Subtest: edit returns to the chosen field and back to confirm after the answer
+ok 3 - edit returns to the chosen field and back to confirm after the answer
+  ---
+  duration_ms: 0.883186
+  type: 'test'
+  ...
+# Subtest: back walks to the previous field and from confirm to the last field
+ok 4 - back walks to the previous field and from confirm to the last field
+  ---
+  duration_ms: 0.206702
+  type: 'test'
+  ...
+# Subtest: object reading: norm, quick values and «Выключено» button
+ok 5 - object reading: norm, quick values and «Выключено» button
+  ---
+  duration_ms: 3.621819
+  type: 'test'
+  ...
+# Subtest: out-of-norm reading asks what was done once and sends the correction
+ok 6 - out-of-norm reading asks what was done once and sends the correction
+  ---
+  duration_ms: 0.796095
+  type: 'test'
+  ...
+# Subtest: optional text can be skipped and required text cannot be empty
+ok 7 - optional text can be skipped and required text cannot be empty
+  ---
+  duration_ms: 0.441932
+  type: 'test'
+  ...
+# Subtest: typed answers are parsed per field type
+ok 8 - typed answers are parsed per field type
+  ---
+  duration_ms: 1.072859
+  type: 'test'
+  ...
+# Subtest: time, date and signature steps offer one-tap buttons
+ok 9 - time, date and signature steps offer one-tap buttons
+  ---
+  duration_ms: 1.034348
+  type: 'test'
+  ...
+# Subtest: defaults: adapter values first, then journal hints; offered as «Оставить»
+ok 10 - defaults: adapter values first, then journal hints; offered as «Оставить»
+  ---
+  duration_ms: 0.648933
+  type: 'test'
+  ...
+# Subtest: stale or wrong presses never change the answer
+ok 11 - stale or wrong presses never change the answer
+  ---
+  duration_ms: 0.260387
+  type: 'test'
+  ...
+# Subtest: instructions from the journal pipeline are shown on the first step; empty forms go to confirm
+ok 12 - instructions from the journal pipeline are shown on the first step; empty forms go to confirm
+  ---
+  duration_ms: 0.447913
+  type: 'test'
+  ...
+# Subtest: document and row choices are buttons with cancel
+ok 13 - document and row choices are buttons with cancel
+  ---
+  duration_ms: 0.232802
+  type: 'test'
+  ...
+# Subtest: submission keeps only current form fields
+ok 14 - submission keeps only current form fields
+  ---
+  duration_ms: 0.11453
+  type: 'test'
+  ...
+# Subtest: bot payloads: commands, legacy buttons and strict ids
+ok 15 - bot payloads: commands, legacy buttons and strict ids
+  ---
+  duration_ms: 2.518938
+  type: 'test'
+  ...
+# Subtest: wizard payloads round-trip and reject junk
+ok 16 - wizard payloads round-trip and reject junk
+  ---
+  duration_ms: 0.51916
+  type: 'test'
+  ...
+# Subtest: dialog state expires after two hours and invalid JSON is ignored
+ok 17 - dialog state expires after two hours and invalid JSON is ignored
+  ---
+  duration_ms: 5.557275
+  type: 'test'
+  ...
+# Subtest: employee menu: progress, one-tap next journal, tasks and all journals
+ok 18 - employee menu: progress, one-tap next journal, tasks and all journals
+  ---
+  duration_ms: 0.443683
+  type: 'test'
+  ...
+# Subtest: manager menu adds summary, reminders and staff connection; no fill without access
+ok 19 - manager menu adds summary, reminders and staff connection; no fill without access
+  ---
+  duration_ms: 0.152214
+  type: 'test'
+  ...
+# Subtest: all done and no tasks have their own copy
+ok 20 - all done and no tasks have their own copy
+  ---
+  duration_ms: 0.378995
+  type: 'test'
+  ...
+# Subtest: today list: pending first, object journals point to the sticker hint
+ok 21 - today list: pending first, object journals point to the sticker hint
+  ---
+  duration_ms: 0.237958
+  type: 'test'
+  ...
+# Subtest: journals list pages by eight with navigation
+ok 22 - journals list pages by eight with navigation
+  ---
+  duration_ms: 0.502202
+  type: 'test'
+  ...
+# Subtest: summary shows who has not filled and offers reminders only for MAX users
+ok 23 - summary shows who has not filled and offers reminders only for MAX users
+  ---
+  duration_ms: 0.47697
+  type: 'test'
+  ...
+# Subtest: reminder confirmation, throttle and empty cases
+ok 24 - reminder confirmation, throttle and empty cases
+  ---
+  duration_ms: 0.781096
+  type: 'test'
+  ...
+# Subtest: invites: list without connected staff, forwardable text and strict codes
+ok 25 - invites: list without connected staff, forwardable text and strict codes
+  ---
+  duration_ms: 0.782779
+  type: 'test'
+  ...
+# Subtest: no mini-site: only the unlinked screen carries a site link
+ok 26 - no mini-site: only the unlinked screen carries a site link
+  ---
+  duration_ms: 0.254108
+  type: 'test'
+  ...
+# Subtest: message body respects MAX keyboard limits
+ok 27 - message body respects MAX keyboard limits
+  ---
+  duration_ms: 0.419464
+  type: 'test'
+  ...
+# Subtest: MAX webhook fails closed for missing, wrong or unconfigured secrets
+ok 28 - MAX webhook fails closed for missing, wrong or unconfigured secrets
+  ---
+  duration_ms: 5.069055
+  type: 'test'
+  ...
+# Subtest: MAX JSON actions reject cross-site requests and oversized/malformed bodies
+ok 29 - MAX JSON actions reject cross-site requests and oversized/malformed bodies
+  ---
+  duration_ms: 5.275072
+  type: 'test'
+  ...
+# Subtest: MAX bot_started identifies the real user and private chat
+ok 30 - MAX bot_started identifies the real user and private chat
+  ---
+  duration_ms: 4.510232
+  type: 'test'
+  ...
+# Subtest: MAX group messages are explicitly marked and malformed IDs fail closed
+ok 31 - MAX group messages are explicitly marked and malformed IDs fail closed
+  ---
+  duration_ms: 2.393813
+  type: 'test'
+  ...
+# Subtest: MAX callback sender is the callback user, never the bot message sender
+ok 32 - MAX callback sender is the callback user, never the bot message sender
+  ---
+  duration_ms: 1.365474
+  type: 'test'
+  ...
+# Subtest: MAX duplicate event IDs are stable across JSON key order
+ok 33 - MAX duplicate event IDs are stable across JSON key order
+  ---
+  duration_ms: 0.266651
+  type: 'test'
+  ...
+# Subtest: MAX ids reject unsafe numbers and preserve string int64
+ok 34 - MAX ids reject unsafe numbers and preserve string int64
+  ---
+  duration_ms: 1.632436
+  type: 'test'
+  ...
+# Subtest: MAX return paths allow site screens and reject redirects and API actions
+ok 35 - MAX return paths allow site screens and reject redirects and API actions
+  ---
+  duration_ms: 1.807522
+  type: 'test'
+  ...
+# Subtest: MAX linking tokens are high entropy and hashes do not store bearer credentials
+ok 36 - MAX linking tokens are high entropy and hashes do not store bearer credentials
+  ---
+  duration_ms: 0.88548
+  type: 'test'
+  ...
+# Subtest: MAX policy never grants ROOT through management role and respects settings flag
+ok 37 - MAX policy never grants ROOT through management role and respects settings flag
+  ---
+  duration_ms: 0.510815
+  type: 'test'
+  ...
+# Subtest: MAX menu honors organization capability overrides
+ok 38 - MAX menu honors organization capability overrides
+  ---
+  duration_ms: 0.290908
+  type: 'test'
+  ...
+# Subtest: MAX confirmation rejects expiry, another owner and already consumed requests
+ok 39 - MAX confirmation rejects expiry, another owner and already consumed requests
+  ---
+  duration_ms: 0.278794
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1743.12414
+exit 0
