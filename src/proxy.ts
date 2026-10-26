@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decode } from "next-auth/jwt";
-import { pageNavigationGuard } from "@/lib/page-navigation-guard";
+import { applyVisitorCookie, pageNavigationGuard } from "@/lib/page-navigation-guard";
 import { publicLocaleRoute, SITE_LOCALE_COOKIE, SITE_LOCALE_HEADER } from "@/i18n/site-locale";
 import { pickSessionCookie } from "@/lib/auth-cookies";
 import {
@@ -33,13 +33,13 @@ import {
  * Прокидываем в обработчики метод/путь запроса и id партнёра. Клиентские
  * значения этих заголовков всегда затираются — им доверяет getServerSession.
  */
-function withRequestContext(
+async function withRequestContext(
   req: NextRequest,
   claim: PartnerAccessClaim | null,
   verifiedUserId?: unknown,
-): NextResponse {
-  const limited = pageNavigationGuard(req, verifiedUserId);
-  if (limited) return limited;
+): Promise<NextResponse> {
+  const guard = await pageNavigationGuard(req, verifiedUserId);
+  if (guard.limited) return guard.limited;
   const headers = new Headers(req.headers);
   const localized = publicLocaleRoute(req.nextUrl.pathname);
   // Never trust a locale header supplied by the client. Only explicitly
@@ -64,6 +64,7 @@ function withRequestContext(
     );
   }
   const res = NextResponse.next({ request: { headers } });
+  if (guard.visitorCookie) applyVisitorCookie(res, req, guard.visitorCookie);
   if (localized && req.headers.get("sec-fetch-dest") !== "empty") {
     res.cookies.set(SITE_LOCALE_COOKIE, localized.locale, {
       path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", secure: req.nextUrl.protocol === "https:",

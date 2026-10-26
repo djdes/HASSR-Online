@@ -15557,6 +15557,7 @@
     "audit": "Audit",
     "impersonation": "Mijoz akkauntiga kirishlar",
     "timings": "Bajarilish vaqtlari",
+    "pageLimit": "Sahifalar cheklovchisi",
     "yandexDirect": "Yandex Direct"
   },
   "telegramShortcuts": {
@@ -19297,6 +19298,81 @@
       "ip": "IP",
       "started": "kirish",
       "stopped": "chiqish"
+    }
+  },
+  "rootPageLimit": {
+    "title": "Sahifalar cheklovchisi",
+    "description": "7 kun ichida sayt nechta sahifa ochgani va «Juda koʻp oʻtishlar» pauzasini necha marta koʻrsatgani. IP, akkaunt, cookie va sahifa manzillarisiz; hisoblar bu yerga daqiqada bir marta tushadi.",
+    "settings": "Sozlamalar",
+    "modeOn": "Yoqilgan",
+    "modeOff": "Oʻchirilgan: PAGE_NAVIGATION_LIMIT=off",
+    "scale": "Chegaralar koʻpaytiruvchisi ×{scale}",
+    "browserLimit": "Brauzer: 10 soniyada {burst} ta sahifa, daqiqada {minute} ta",
+    "automatedLimit": "curl, skriptlar, boʻsh user-agent: 10 soniyada {burst} ta, daqiqada {minute} ta",
+    "backgroundLimit": "Next.js fon soʻrovlari: daqiqada {count} ta",
+    "cooldown": "Chegaradan keyingi pauza: {seconds} soniya",
+    "userScale": "Tizimga kirgan foydalanuvchilar: barcha chegaralar ×{scale}",
+    "visitorScale": "Tashrif cookie fayli bor mehmonlar: oʻz byudjeti va manzil uchun umumiy chegara ×{scale}",
+    "visitorOff": "Tashrif cookie fayli oʻchirilgan: NEXTAUTH_SECRET yoʻq",
+    "crawlers": "DNS orqali tasdiqlangan Google, Yandex va Bing qidiruv robotlari cheklanmaydi",
+    "summary": "Sahifalar: {passed} · pauzalar (429): {limited} · ulushi: {share}",
+    "empty": "7 kun uchun maʼlumot yoʻq. Birinchi sahifalar ochilganidan bir daqiqa oʻtib paydo boʻladi.",
+    "byDay": "Kunlar boʻyicha",
+    "day": "Kun",
+    "pages": "Sahifalar",
+    "limited": "429",
+    "share": "429 ulushi",
+    "value": "Qiymat",
+    "dimensions": {
+      "subject": "Kim",
+      "reason": "Pauza sababi",
+      "client": "Mijoz",
+      "platform": "Platforma",
+      "request": "Soʻrov turi",
+      "metadata": "Brauzer Sec-Fetch-Dest yubordi",
+      "section": "Boʻlim (faqat 429)"
+    },
+    "values": {
+      "subject": {
+        "user": "Tizimga kirgan foydalanuvchilar",
+        "visitor": "Cookie fayli bor mehmonlar",
+        "ip": "IP boʻyicha mehmonlar",
+        "unknown": "Manzilsiz"
+      },
+      "reason": {
+        "burst": "10 soniyadagi keskin oʻsish",
+        "minute": "Daqiqalik chegara",
+        "background": "Fon soʻrovlari",
+        "cooldown": "Pauza paytida takrorlash",
+        "capacity": "Jadval toʻlgan",
+        "unknown": "Koʻrsatilmagan"
+      },
+      "client": {
+        "browser": "Brauzer",
+        "automation": "curl, skriptlar",
+        "app": "WeSetup ilovasi",
+        "crawler": "Qidiruv roboti (DNS)",
+        "fake-crawler": "Robot deb atadi, DNS tasdiqlamadi"
+      },
+      "platform": {
+        "ios-old": "iOS 16.4 dan oldingi",
+        "ios": "iOS",
+        "android": "Android",
+        "desktop": "Kompyuter",
+        "other": "Boshqa"
+      },
+      "request": {
+        "document": "Sahifa",
+        "background": "Fon (RSC, oldindan yuklash)"
+      },
+      "metadata": {
+        "yes": "Ha",
+        "no": "Yoʻq"
+      },
+      "section": {
+        "home": "Bosh sahifa",
+        "other": "Boshqa manzillar"
+      }
     }
   },
   "miniBonus": {
