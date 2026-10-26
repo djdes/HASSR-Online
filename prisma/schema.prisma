@@ -20,9 +20,21 @@ model Account {
   /// Организации такого аккаунта просто теряют привязку (accountId
   /// становится null) — их всё равно удаляют вместе с ним.
   owner              User           @relation("AccountOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  /// free | standard | premium (тарифы 2026-10); paid — «Подписка» прежнего
+  /// тарифа до конца оплаченного срока. Пробный период сюда не пишется —
+  /// он выводится из `createdAt`/`trialEndsAt` (src/lib/billing-period.ts).
   subscriptionPlan   String         @default("free")
   subscriptionEnd    DateTime?
   planAutoUpgradedAt DateTime?
+  /// Период оплаченного тарифа: month | year. null — прежняя «Подписка» (месяц).
+  planCycle          String?
+  /// Сколько точек оплачено (цена × точки, от 3 точек −5 % на каждую).
+  planPoints         Int            @default(1)
+  /// Пробный период до (ROOT продлил). null — 14 дней от создания аккаунта,
+  /// но не раньше запуска тарифов 2026-10.
+  trialEndsAt        DateTime?
+  /// Понижение тарифа с конца оплаченного срока: { tier, cycle, points, at }.
+  scheduledPlanJson  Json?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   organizations      Organization[]
@@ -3127,11 +3139,13 @@ model ProductionCalendarDay {
 /// Глобальная таблица (без organizationId): тарифы одни для всех клиентов.
 model PlatformTariff {
   /// Стабильный ключ, на который ссылаются кнопки и PaymentOrder:
-  ///   • "monthly" — «Подписка»
-  ///   • "bundle"  — «Подписка + оборудование» (сумма железа считается
-  ///     сервером по hardware-pricing.ts и прибавляется к priceRub)
+  ///   • "standard_month" / "standard_year" — «Стандарт» (2026-10)
+  ///   • "premium_month" / "premium_year"   — «Премиум» (2026-10)
+  ///   • "monthly", "bundle" — «Подписка» прежнего тарифа: только история
+  ///     заказов, продажа закрыта (src/lib/tariff-plans.ts)
   key        String   @id
   title      String
+  /// Цена за месяц. У годовых тарифов списывается сразу за 12 месяцев.
   priceRub   Int
   /// На сколько дней продлевает подписку организации после оплаты.
   periodDays Int      @default(30)
@@ -3216,6 +3230,23 @@ model PaymentOrder {
   /// id AccountLifetimeDiscount. promoCode/discountRub тогда — код этой
   /// привязки и её скидка; такой заказ не считается использованием кода.
   lifetimeDiscountId     String?
+  /// Тарифы 2026-10: сколько точек оплачено этим заказом (null — 1).
+  points                 Int?
+  /// Вид перехода (src/lib/tariff-plans.ts): new | renew | upgrade | switch.
+  /// null — заказы до 2026-10 (продление на periodDays).
+  changeKind             String?
+  /// Зачёт неиспользованного остатка текущего срока, ₽ (switch).
+  creditRub              Int              @default(0)
+  /// Конец срока, до которого считалась доплата (upgrade): оплата не
+  /// продлевает срок, а меняет тариф до этой даты.
+  periodEndsAt           DateTime?
+  /// Подписка аккаунта, от которой посчитан заказ: `{ current: { tier,
+  /// cycle, points, paidUntil } | null }`. Оплата сверяет её с подпиской
+  /// на момент оформления (src/lib/plan-payment.ts); null — заказы до сверки.
+  basePlanJson           Json?
+  /// Оплата не применена к тарифу — подписка изменилась после оформления;
+  /// ждёт ручного разбора, УПД до разбора не выпускается.
+  heldAt                 DateTime?
   partnerAccruals        PartnerAccrual[]
 
   @@index([email])

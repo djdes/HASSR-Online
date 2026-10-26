@@ -1,46 +1,78 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Check, Loader2 } from "lucide-react";
+import { Archive, Check, Loader2 } from "lucide-react";
 import type { Tariff } from "@/lib/tariffs";
+import { CYCLE_MONTHS, parsePlanTariffKey } from "@/lib/tariff-plans";
 
 /**
- * Inline-правка тарифов. Форма на каждую строку: цена, название,
- * период и признак активности. Сохраняем по строке, а не всё скопом —
- * так понятнее, что именно поменялось, и одна опечатка не блокирует
+ * Inline-правка тарифов. Форма на каждую строку: цена, название и
+ * признак «в продаже». Сохраняем по строке, а не всё скопом — так
+ * понятнее, что именно поменялось, и одна опечатка не блокирует
  * сохранение соседнего тарифа.
+ *
+ * Тарифы 2026-10 — четыре строки («Стандарт» и «Премиум», помесячно и за
+ * год), цена — за месяц; срок задаёт период. Прежние «Подписки» — в
+ * архиве: по ним не продаём, цена `monthly` нужна для зачёта остатка.
  */
 export function TariffsClient({ initial }: { initial: Tariff[] }) {
+  const t = useTranslations("rootTariffs");
   const [rows, setRows] = useState<Tariff[]>(initial);
 
   const patch = (key: string, changes: Partial<Tariff>) =>
     setRows((prev) =>
       prev.map((r) => (r.key === key ? { ...r, ...changes } : r)),
     );
+  const plans = rows.filter((row) => parsePlanTariffKey(row.key));
+  const legacy = rows.filter((row) => !parsePlanTariffKey(row.key));
 
   return (
     <div className="space-y-4">
-      {rows.map((tariff) => (
+      {plans.map((tariff) => (
         <TariffRow
           key={tariff.key}
           tariff={tariff}
           onChange={(changes) => patch(tariff.key, changes)}
         />
       ))}
+      {legacy.length > 0 ? (
+        <details className="group rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 md:p-6">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-[14px] font-medium text-[#3c4053]">
+            <Archive className="size-4 text-[#6f7282]" />
+            {t("legacyTitle", { count: legacy.length })}
+          </summary>
+          <p className="mt-2 text-[12.5px] leading-[1.6] text-[#6f7282]">{t("legacyNote")}</p>
+          <div className="mt-4 space-y-4">
+            {legacy.map((tariff) => (
+              <TariffRow
+                key={tariff.key}
+                tariff={tariff}
+                legacy
+                onChange={(changes) => patch(tariff.key, changes)}
+              />
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }
 
 function TariffRow({
   tariff,
+  legacy = false,
   onChange,
 }: {
   tariff: Tariff;
+  /** Прежняя «Подписка»: не продаётся, без переключателя. */
+  legacy?: boolean;
   onChange: (changes: Partial<Tariff>) => void;
 }) {
   const t = useTranslations("rootTariffs");
+  const locale = useLocale();
+  const plan = parsePlanTariffKey(tariff.key);
   const currentT = useRef(t);
   useEffect(() => { currentT.current = t; }, [t]);
   const [saving, setSaving] = useState(false);
@@ -57,13 +89,13 @@ function TariffRow({
           key: tariff.key,
           title: tariff.title,
           priceRub: tariff.priceRub,
-          periodDays: tariff.periodDays,
-          active: tariff.active,
+          ...(plan ? {} : { periodDays: tariff.periodDays }),
+          ...(legacy ? {} : { active: tariff.active }),
         }),
       });
-      await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        toast.error(currentT.current("saveFailed"));
+        toast.error(data.error ?? currentT.current("saveFailed"));
         return;
       }
       setSaved(true);
@@ -82,18 +114,22 @@ function TariffRow({
         <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 font-mono text-[12px] text-[#3848c7]">
           {tariff.key}
         </span>
-        <label className="inline-flex items-center gap-2 text-[13px] text-[#3c4053]">
-          <input
-            type="checkbox"
-            checked={tariff.active}
-            onChange={(e) => onChange({ active: e.target.checked })}
-            className="size-4 accent-[#5566f6]"
-          />
-          {tariff.active ? t("active") : t("inactive")}
-        </label>
+        {legacy ? (
+          <span className="text-[12.5px] text-[#9b9fb3]">{t("legacyBadge")}</span>
+        ) : (
+          <label className="inline-flex items-center gap-2 text-[13px] text-[#3c4053]">
+            <input
+              type="checkbox"
+              checked={tariff.active}
+              onChange={(e) => onChange({ active: e.target.checked })}
+              className="size-4 accent-[#5566f6]"
+            />
+            {tariff.active ? t("active") : t("inactive")}
+          </label>
+        )}
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_140px_140px]">
+      <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_160px_140px]">
         <Field label={t("name")}>
           <input
             value={tariff.title}
@@ -101,7 +137,7 @@ function TariffRow({
             className={inputClass}
           />
         </Field>
-        <Field label={t("price")}>
+        <Field label={plan ? t("priceMonthly") : t("price")}>
           <input
             type="number"
             min={1}
@@ -117,15 +153,18 @@ function TariffRow({
             min={1}
             max={366}
             value={tariff.periodDays}
+            disabled={Boolean(plan)}
             onChange={(e) => onChange({ periodDays: Number(e.target.value) })}
-            className={inputClass + " tabular-nums"}
+            className={inputClass + " tabular-nums disabled:bg-[#fafbff] disabled:text-[#6f7282]"}
           />
         </Field>
       </div>
 
-      {tariff.key === "bundle" ? (
+      {plan?.cycle === "year" ? (
         <p className="mt-3 text-[12px] leading-[1.6] text-[#9b9fb3]">
-          {t("equipmentNote")}
+          {t("yearTotal", {
+            amount: `${(tariff.priceRub * CYCLE_MONTHS.year).toLocaleString(locale)} ₽`,
+          })}
         </p>
       ) : null}
 

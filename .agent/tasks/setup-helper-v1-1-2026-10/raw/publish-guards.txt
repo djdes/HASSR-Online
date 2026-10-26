@@ -1,0 +1,11 @@
+# publishRelease без ключа подписи
+* What went wrong:
+Execution failed for task ':app:publishRelease'.
+> Нет ключа подписи (SETUP_HELPER_KEYSTORE или SETUP_HELPER_KEYSTORE_BASE64): сборку с другим ключом телефоны не смогут поставить поверх
+
+
+# publishRelease тем же номером сборки
+* What went wrong:
+Execution failed for task ':app:publishRelease'.
+> Номер сборки 2 не больше выложенного 2: поднимите appVersionCode, иначе телефоны не увидят обновление
+

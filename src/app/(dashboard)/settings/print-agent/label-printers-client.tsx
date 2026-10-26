@@ -20,6 +20,9 @@ import { formatDate, type Locale } from "@/i18n/locales";
  * Даты — в часовом поясе организации, а не браузера: иначе разметка
  * сервера и браузера разойдётся (ошибка гидрации), а время подключения у
  * управляющей в другом поясе съедет.
+ *
+ * Телефон со старой версией помечен: приложение само скачает с сайта новую
+ * и поставит её, как только будет интернет.
  */
 
 export type LabelPrinterView = {
@@ -41,6 +44,8 @@ export type HelperDeviceView = {
   userName: string | null;
   appVersion: string | null;
   lastSeenAt: string | null;
+  /** Версия старее выложенной на сайте — приложение обновится само. */
+  outdated?: boolean;
 };
 
 const DATE_TIME: Intl.DateTimeFormatOptions = {
@@ -55,6 +60,14 @@ const DATE_TIME: Intl.DateTimeFormatOptions = {
 const TEMPLATE_KEYS = {
   "test-58x40": "test58x40",
   product: "product",
+  "semi-finished": "semiFinished",
+  dish: "dish",
+  defrost: "defrost",
+  freeze: "freeze",
+  "daily-sample": "dailySample",
+  incoming: "incoming",
+  allergens: "allergens",
+  reject: "reject",
   opened: "opened",
   "free-text": "freeText",
 } as const;
@@ -63,10 +76,12 @@ export function LabelPrintersClient({
   printers,
   devices,
   timeZone,
+  latestVersion = null,
 }: {
   printers: LabelPrinterView[];
   devices: HelperDeviceView[];
   timeZone: string;
+  latestVersion?: string | null;
 }) {
   const router = useRouter();
   const t = useTranslations("printAgent.labelPrinters");
@@ -165,6 +180,11 @@ export function LabelPrintersClient({
                         : t("devices.neverSeen", { user })}
                       {device.appVersion ? ` · ${t("devices.version", { version: device.appVersion })}` : null}
                     </div>
+                    {device.outdated && latestVersion ? (
+                      <div className="mt-0.5 text-[12px] text-[#a65f00]">
+                        {t("devices.updatePending", { version: latestVersion })}
+                      </div>
+                    ) : null}
                   </div>
                   <button
                     type="button"

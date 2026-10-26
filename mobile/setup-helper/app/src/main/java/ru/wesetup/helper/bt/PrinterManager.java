@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.wesetup.helper.print.Tspl;
 
@@ -46,6 +47,8 @@ public final class PrinterManager {
     private final Context context;
     private final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
+    /** Подключение или печать в работе — обновление приложения подождёт. */
+    private final AtomicInteger busy = new AtomicInteger();
     private PrinterConnection active;
     private String activeAddress;
     private ScheduledFuture<?> idleClose;
@@ -55,7 +58,12 @@ public final class PrinterManager {
     }
 
     /** Подключить новый принтер с экрана поиска. */
+    public boolean isBusy() {
+        return busy.get() > 0;
+    }
+
     public void connectNew(FoundDevice device, PrinterConnector.Progress progress, Callback<PrinterInfo> callback) {
+        busy.incrementAndGet();
         worker.execute(() -> {
             try {
                 closeActive();
@@ -77,12 +85,15 @@ public final class PrinterManager {
                 closeActive();
                 String message = explain(e);
                 post(() -> callback.onError(message));
+            } finally {
+                busy.decrementAndGet();
             }
         });
     }
 
     /** Отправить задание на принтер; подключится сам, если нужно. */
     public void send(PrinterInfo printer, JobBuilder builder, PrinterConnector.Progress progress, Callback<Void> callback) {
+        busy.incrementAndGet();
         worker.execute(() -> {
             try {
                 byte[] job = builder.build();
@@ -105,6 +116,8 @@ public final class PrinterManager {
                 if (!(e instanceof PrinterProblem)) closeActive();
                 String message = explain(e);
                 post(() -> callback.onError(message));
+            } finally {
+                busy.decrementAndGet();
             }
         });
     }
@@ -164,7 +177,7 @@ public final class PrinterManager {
 
     /** Понятная причина вместо «read failed, socket might closed or timeout». */
     static String explain(Exception e) {
-        if (e instanceof PrinterProblem) return e.getMessage();
+        if (e instanceof PrinterProblem || e instanceof PrinterConnector.ConnectFailure) return e.getMessage();
         if (e instanceof SecurityException) return "Нет доступа к Bluetooth — разрешите его в настройках приложения";
         String detail = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
         return "Принтер не ответил. Проверьте, что он включён, стоит рядом и не подключён к другому телефону. ("

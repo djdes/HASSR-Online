@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { DEFAULT_FREE_PERIOD } from "@/lib/billing-period";
+import { DEFAULT_TRIAL_SETTINGS } from "@/lib/billing-period";
 
 import {
   accountEndAfterLeave,
@@ -20,9 +20,10 @@ import {
 } from "./org-conversion-core";
 import { computePaymentAccruals, DEFAULT_REWARD_RULE } from "./rewards";
 
-// После бесплатного периода (он кончается 11.10.2026): переход на оплату действует.
+// После пробного периода (у аккаунтов старше запуска тарифов он кончается
+// 9.11.2026): переход на оплату действует.
 const NOW = new Date("2026-11-15T09:00:00.000Z");
-const IN_FREE_PERIOD = new Date("2026-10-05T09:00:00.000Z");
+const IN_FREE_PERIOD = new Date("2026-10-30T09:00:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 const MIN = 60 * 1000;
 
@@ -74,6 +75,7 @@ function conversion(patch: SnapshotPatch = {}): ConversionSnapshot {
       balanceRub: 0,
       activeUsers: 3,
       actorMemberRole: "owner",
+      createdAt: new Date("2025-03-01"),
     },
     account: {
       id: "acc-1",
@@ -91,7 +93,7 @@ function conversion(patch: SnapshotPatch = {}): ConversionSnapshot {
     activeLink: null,
     orders: [],
     rule: DEFAULT_REWARD_RULE,
-    settings: DEFAULT_FREE_PERIOD,
+    settings: DEFAULT_TRIAL_SETTINGS,
   };
   return {
     ...base,
@@ -531,8 +533,9 @@ function returning(patch: ReturnPatch = {}): ReturnSnapshot {
       subscriptionEnd: new Date("2026-12-01T09:00:00.000Z"),
       organizationEnds: [null, null],
       activeUsers: 4,
+      createdAt: new Date("2025-01-01"),
     },
-    settings: DEFAULT_FREE_PERIOD,
+    settings: DEFAULT_TRIAL_SETTINGS,
   };
   return {
     ...base,

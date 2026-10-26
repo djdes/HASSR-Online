@@ -1,0 +1,194 @@
+[
+  {
+    "name": "landing-1280:status",
+    "status": 200,
+    "url": "/",
+    "errors": []
+  },
+  {
+    "name": "landing-pricing-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/landing-pricing-1280.png"
+  },
+  {
+    "name": "pricing-1280:status",
+    "status": 200,
+    "url": "/pricing",
+    "errors": []
+  },
+  {
+    "name": "pricing-page-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/pricing-page-1280.png"
+  },
+  {
+    "name": "pricing-month-3points-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/pricing-month-3points-1280.png"
+  },
+  {
+    "name": "pricing-month-3points-1280:texts",
+    "standard": "СтандартПопулярныйКоманда до 25 человек на точку и все журналы8 550 ₽/месоплата каждый месяц · за 3 точки · −5 % за точкиВыбрать «Стандарт»Всё из «Бесплатного», плюс:До 25 сотрудников на точкуВсе журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок10 МБ на приказы к журналам и свои документыРаздел «Пакет документов» — наполняете сами",
+    "premium": "ПремиумАвтоматизация: фото датчиков, оборудование и типовые документы14 250 ₽/месоплата каждый месяц · за 3 точки · −5 % за точкиВыбрать «Премиум»Всё из «Стандарта», плюс:1 ГБ на все документыФото температурного датчика — показатели заполняются самиПодключение оборудования: самостоятельно или по подпискеДоставка уже подключённого оборудования — заказ в кабинетеТиповой пакет документов: распечатать и заполнить"
+  },
+  {
+    "name": "landing-390:status",
+    "status": 200,
+    "url": "/",
+    "errors": []
+  },
+  {
+    "name": "landing-pricing-390",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/landing-pricing-390.png"
+  },
+  {
+    "name": "pricing-390:status",
+    "status": 200,
+    "url": "/pricing",
+    "errors": []
+  },
+  {
+    "name": "pricing-page-390",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/pricing-page-390.png"
+  },
+  {
+    "name": "pricing-month-3points-390",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/pricing-month-3points-390.png"
+  },
+  {
+    "name": "pricing-month-3points-390:texts",
+    "standard": "СтандартПопулярныйКоманда до 25 человек на точку и все журналы8 550 ₽/месоплата каждый месяц · за 3 точки · −5 % за точкиВыбрать «Стандарт»Всё из «Бесплатного», плюс:До 25 сотрудников на точкуВсе журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок10 МБ на приказы к журналам и свои документыРаздел «Пакет документов» — наполняете сами",
+    "premium": "ПремиумАвтоматизация: фото датчиков, оборудование и типовые документы14 250 ₽/месоплата каждый месяц · за 3 точки · −5 % за точкиВыбрать «Премиум»Всё из «Стандарта», плюс:1 ГБ на все документыФото температурного датчика — показатели заполняются самиПодключение оборудования: самостоятельно или по подпискеДоставка уже подключённого оборудования — заказ в кабинетеТиповой пакет документов: распечатать и заполнить"
+  },
+  {
+    "name": "landing-en-1280:status",
+    "status": 200,
+    "url": "/en",
+    "errors": []
+  },
+  {
+    "name": "landing-en-pricing-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/landing-en-pricing-1280.png"
+  },
+  {
+    "name": "subscription-trial-1280:status",
+    "status": 200,
+    "url": "/settings/subscription",
+    "errors": []
+  },
+  {
+    "name": "subscription-trial-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/subscription-trial-1280.png"
+  },
+  {
+    "name": "subscription-trial-1280:status-text",
+    "status": "Ваш тарифПробный период — по 8 ноябряОткрыто всё, что есть в «Премиуме», — осталось 14 дней. Потом бесплатно остаются 1 сотрудник и 1 журнал, или выберите тариф ниже.Сотрудники1 · без ограниченийТочки3 · без ограниченийЖурналы46 · без ограниченийДокументы0 КБ из 1 ГБ",
+    "standardCta": "СтандартПопулярныйКоманда до 25 человек на точку и все журналы5 672 ₽/мес68 058 ₽ за год · экономия 34 542 ₽ · за 3 точки · −5 % за точкиПодключить — 68 058 ₽Всё из «Бесплатного», плюс:До 25 сотрудников на точкуВсе журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок10 МБ на приказы к журналам и свои документыРаздел «Пакет документов» — наполняете сами",
+    "premiumCta": "ПремиумАвтоматизация: фото датчиков, оборудование и типовые документы11 372 ₽/мес136 458 ₽ за год · экономия 34 542 ₽ · за 3 точки · −5 % за точкиПодключить — 136 458 ₽Всё из «Стандарта», плюс:1 ГБ на все документыФото температурного датчика — показатели заполняются самиПодключение оборудования: самостоятельно или по подпискеДоставка уже подключённого оборудования — заказ в кабинетеТиповой пакет документов: распечатать и заполнить"
+  },
+  {
+    "name": "package-trial:status",
+    "status": 200,
+    "url": "/production-control/documents/package",
+    "errors": []
+  },
+  {
+    "name": "package-trial-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/package-trial-1280.png"
+  },
+  {
+    "name": "ppk-overview-trial:status",
+    "status": 200,
+    "url": "/production-control",
+    "errors": []
+  },
+  {
+    "name": "ppk-overview-trial-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/ppk-overview-trial-1280.png"
+  },
+  {
+    "name": "subscription-trial-390:status",
+    "status": 200,
+    "url": "/settings/subscription",
+    "errors": []
+  },
+  {
+    "name": "subscription-trial-390",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/subscription-trial-390.png"
+  },
+  {
+    "name": "subscription-trial-390:status-text",
+    "status": "Ваш тарифПробный период — по 8 ноябряОткрыто всё, что есть в «Премиуме», — осталось 14 дней. Потом бесплатно остаются 1 сотрудник и 1 журнал, или выберите тариф ниже.Сотрудники1 · без ограниченийТочки3 · без ограниченийЖурналы46 · без ограниченийДокументы0 КБ из 1 ГБ",
+    "standardCta": "СтандартПопулярныйКоманда до 25 человек на точку и все журналы5 672 ₽/мес68 058 ₽ за год · экономия 34 542 ₽ · за 3 точки · −5 % за точкиПодключить — 68 058 ₽Всё из «Бесплатного», плюс:До 25 сотрудников на точкуВсе журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок10 МБ на приказы к журналам и свои документыРаздел «Пакет документов» — наполняете сами",
+    "premiumCta": "ПремиумАвтоматизация: фото датчиков, оборудование и типовые документы11 372 ₽/мес136 458 ₽ за год · экономия 34 542 ₽ · за 3 точки · −5 % за точкиПодключить — 136 458 ₽Всё из «Стандарта», плюс:1 ГБ на все документыФото температурного датчика — показатели заполняются самиПодключение оборудования: самостоятельно или по подпискеДоставка уже подключённого оборудования — заказ в кабинетеТиповой пакет документов: распечатать и заполнить"
+  },
+  {
+    "name": "subscription-standard-1280:status",
+    "status": 200,
+    "url": "/settings/subscription",
+    "errors": []
+  },
+  {
+    "name": "subscription-standard-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/subscription-standard-1280.png"
+  },
+  {
+    "name": "subscription-standard-1280:status-text",
+    "status": "Ваш тарифСтандарт до 9 ноябряпомесячная оплата · 1 точкаСотрудники1 из 25Точки1 из 1Журналы46 · без ограниченийДокументы0 КБ из 10 МБ",
+    "standardCta": "СтандартТекущийКоманда до 25 человек на точку и все журналы3 000 ₽/месоплата каждый месяцПродлить — 3 000 ₽Всё из «Бесплатного», плюс:До 25 сотрудников на точкуВсе журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок10 МБ на приказы к журналам и свои документыРаздел «Пакет документов» — наполняете сами",
+    "premiumCta": "ПремиумАвтоматизация: фото датчиков, оборудование и типовые документы5 000 ₽/месоплата каждый месяцПовысить — доплата 999 ₽Сразу, доплата за 15 оставшихся дней: разница 2 000 ₽ за период. Дата окончания не меняетсяВсё из «Стандарта», плюс:1 ГБ на все документыФото температурного датчика — показатели заполняются самиПодключение оборудования: самостоятельно или по подпискеДоставка уже подключённого оборудования — заказ в кабинетеТиповой пакет документов: распечатать и заполнить"
+  },
+  {
+    "name": "package-standard:status",
+    "status": 200,
+    "url": "/production-control/documents/package",
+    "errors": []
+  },
+  {
+    "name": "package-standard-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/package-standard-1280.png"
+  },
+  {
+    "name": "ppk-overview-standard:status",
+    "status": 200,
+    "url": "/production-control",
+    "errors": []
+  },
+  {
+    "name": "ppk-overview-standard-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/ppk-overview-standard-1280.png"
+  },
+  {
+    "name": "subscription-premium-1280:status",
+    "status": 200,
+    "url": "/settings/subscription",
+    "errors": []
+  },
+  {
+    "name": "subscription-premium-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/subscription-premium-1280.png"
+  },
+  {
+    "name": "subscription-premium-1280:status-text",
+    "status": "Ваш тарифПремиум до 13 маяоплата за год · 3 точкиСотрудники1 из 75Точки1 из 3Журналы46 · без ограниченийДокументы0 КБ из 1 ГБ",
+    "standardCta": "СтандартПопулярныйКоманда до 25 человек на точку и все журналы5 672 ₽/мес68 058 ₽ за год · экономия 34 542 ₽ · за 3 точки · −5 % за точкиПерейти с 13 маяС конца оплаченного срока — сейчас платить не нужноВсё из «Бесплатного», плюс:До 25 сотрудников на точкуВсе журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок10 МБ на приказы к журналам и свои документыРаздел «Пакет документов» — наполняете сами",
+    "premiumCta": "ПремиумТекущийАвтоматизация: фото датчиков, оборудование и типовые документы11 372 ₽/мес136 458 ₽ за год · экономия 34 542 ₽ · за 3 точки · −5 % за точкиПродлить — 136 458 ₽Всё из «Стандарта», плюс:1 ГБ на все документыФото температурного датчика — показатели заполняются самиПодключение оборудования: самостоятельно или по подпискеДоставка уже подключённого оборудования — заказ в кабинетеТиповой пакет документов: распечатать и заполнить"
+  },
+  {
+    "name": "package-premium:status",
+    "status": 200,
+    "url": "/production-control/documents/package",
+    "errors": []
+  },
+  {
+    "name": "package-premium-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/package-premium-1280.png"
+  },
+  {
+    "name": "ppk-overview-premium:status",
+    "status": 200,
+    "url": "/production-control",
+    "errors": []
+  },
+  {
+    "name": "ppk-overview-premium-1280",
+    "file": "/home/user/HASSR-Online/.agent/tasks/tariffs-v3-2026-10/raw/screenshots/ppk-overview-premium-1280.png"
+  }
+]

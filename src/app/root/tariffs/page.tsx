@@ -2,9 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { requireRoot } from "@/lib/auth-helpers";
 import { readTariffs } from "@/lib/tariffs";
-import { collectBillingOverview, readFreePeriodSettings } from "@/lib/billing.server";
+import { collectBillingOverview, readTrialSettings } from "@/lib/billing.server";
 import { TariffsClient } from "./tariffs-client";
-import { BillingPeriodCard } from "./billing-period-card";
+import { TrialSettingsCard } from "./trial-settings-card";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,9 +21,9 @@ export async function generateMetadata() {
  */
 export default async function RootTariffsPage() {
   await requireRoot();
-  const [tariffs, freePeriod, billingOverview] = await Promise.all([
+  const [tariffs, trial, billingOverview] = await Promise.all([
     readTariffs(),
-    readFreePeriodSettings(),
+    readTrialSettings(),
     collectBillingOverview(),
   ]);
 
@@ -41,14 +41,14 @@ export default async function RootTariffsPage() {
       <div className="mt-6">
         <TariffsClient initial={tariffs} />
       </div>
-      {/* Бесплатный период «подписка для всех» и переход на оплату (2026-10). */}
+      {/* Пробный период тарифов 2026-10 и переход на оплату. */}
       <div className="mt-6">
-        <BillingPeriodCard
+        <TrialSettingsCard
           initialSettings={{
-            startsAt: freePeriod.startsAt.toISOString(),
-            endsAt: freePeriod.endsAt.toISOString(),
-            graceDays: freePeriod.graceDays,
-            transitionEnabled: freePeriod.transitionEnabled,
+            trialDays: trial.trialDays,
+            launchedAt: trial.launchedAt.toISOString(),
+            graceDays: trial.graceDays,
+            transitionEnabled: trial.transitionEnabled,
           }}
           initialOverview={billingOverview}
         />

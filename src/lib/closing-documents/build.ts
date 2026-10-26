@@ -45,6 +45,8 @@ export type BuildInput = {
     description: string;
     /** "balance_topup" — пополнение баланса: строка без периода подписки. */
     tariffKey?: string | null;
+    /** Вид перехода тарифа 2026-10: у доплаты период — с оплаты до конца срока. */
+    changeKind?: string | null;
     bundleConfig: unknown;
     promoCode?: string | null;
     discountRub?: number;
@@ -98,9 +100,11 @@ export function subscriptionPeriod(input: {
   paidAt: Date;
   periodDays: number;
   subscriptionEnd: Date | null;
+  /** Доплата за повышение тарифа: период — с оплаты до прежнего конца срока. */
+  fromPaidAt?: boolean;
 }): { from: Date; to: Date } {
   const to = input.subscriptionEnd ?? new Date(input.paidAt.getTime() + input.periodDays * DAY_MS);
-  const from = new Date(to.getTime() - input.periodDays * DAY_MS);
+  const from = input.fromPaidAt ? input.paidAt : new Date(to.getTime() - input.periodDays * DAY_MS);
   return { from, to };
 }
 
@@ -154,6 +158,7 @@ export function buildClosingLines(input: BuildInput): ClosingLine[] {
     paidAt: input.order.paidAt,
     periodDays: input.tariff?.periodDays ?? 30,
     subscriptionEnd: input.subscriptionEnd,
+    fromPaidAt: input.order.changeKind === "upgrade",
   });
   const tariffTitle = input.tariff?.title?.trim() || input.order.description.trim() || "Подписка";
   const promotionNote =

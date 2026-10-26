@@ -21,7 +21,7 @@ import { FORMAT_LOCALES, formatNumber, type Locale } from "@/i18n/locales";
  */
 export function SubscriptionDiscountCard({
   offer,
-  periodDays,
+  planLabel,
   lifetime,
   applied,
   typedCode,
@@ -30,9 +30,10 @@ export function SubscriptionDiscountCard({
   personalPending = false,
   payHref,
 }: {
-  /** Цена подписки с акцией (сервер). */
+  /** Сумма к оплате тарифа с акцией (сервер). */
   offer: Pick<PriceWithPromotion, "baseRub" | "priceRub" | "promotion">;
-  periodDays: number;
+  /** Что оплачивается: «Стандарт · оплата за год · 1 точка». */
+  planLabel: string;
   /** Действующая скидка навсегда аккаунта. */
   lifetime: LifetimeDiscountView | null;
   /** Что применится к оплате (код или скидка навсегда). */
@@ -152,7 +153,7 @@ export function SubscriptionDiscountCard({
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
               <div className="min-w-0 text-[13px] text-[#3c4053]">
                 <div className="text-[12px] font-medium uppercase tracking-[0.06em] text-[#6f7282]">
-                  {t("payFor", { days: periodDays })}
+                  {t("payFor", { plan: planLabel })}
                 </div>
                 <PromoPrice price={offer} personal={applied} size="md" className="mt-1" />
               </div>

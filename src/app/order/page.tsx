@@ -4,13 +4,13 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getBalance } from "@/lib/balance/ledger";
-import { readTariffs, fallbackTariffs, TARIFF_BUNDLE } from "@/lib/tariffs";
-import { normalizeHardwareConfig, hardwareTotal } from "@/lib/hardware-pricing";
-import { getDisplayOffer } from "@/lib/promo/offer";
+import type { Tariff } from "@/lib/tariffs";
+import { IMPERSONATION_CHECKOUT_ERROR, parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
+import { formatMskDate } from "@/lib/billing-period";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
 import { PROMO_COOKIE } from "@/lib/promo/personal-link";
-import { OrderClient, type OrderDiscountState } from "./order-client";
+import { OrderClient, type OrderDiscountState, type OrderPlanView } from "./order-client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
@@ -46,32 +46,10 @@ export default async function OrderPage({
     return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
   };
 
-  const tariffs = await readTariffs().catch(() => fallbackTariffs());
-
   // Залогиненного не переспрашиваем о почте: после мгновенной
   // регистрации он мог сразу нажать «Оплатить картой».
   const session = await getServerSession(authOptions).catch(() => null);
   const sessionEmail = session?.user?.email ?? "";
-
-  const planKey = first("plan") || "monthly";
-  const tariff = tariffs.find((t) => t.key === planKey && t.active) ?? null;
-
-  // Состав корзины приезжает из калькулятора base64-строкой. Здесь он
-  // нужен только чтобы показать сумму — платёжную сумму всё равно
-  // пересчитает сервер в /api/payments/robokassa/create.
-  let bundleConfig: Record<string, number> | null = null;
-  if (tariff?.key === TARIFF_BUNDLE) {
-    bundleConfig = normalizeHardwareConfig(decodeConfig(first("cfg")));
-  }
-
-  // Цена подписки с действующей акцией — та же, что на витринах. Здесь
-  // она только для показа: сумму к оплате заново посчитает сервер при
-  // создании заказа и сверит с этой (акция могла кончиться, пока открыта
-  // страница).
-  const offer = tariff ? await getDisplayOffer(tariff) : null;
-  const amountRub = offer
-    ? offer.priceRub + (bundleConfig ? hardwareTotal(bundleConfig) : 0)
-    : 0;
 
   // Баллы показываем только тому, кто может распоряжаться деньгами
   // организации. ROOT в режиме «войти как» баллы клиента не тратит —
@@ -80,6 +58,66 @@ export default async function OrderPage({
     Boolean(session?.user) &&
     hasFullWorkspaceAccess(session!.user) &&
     !isImpersonating(session!);
+
+  // Тариф, период и точки — из адреса (`plan=premium&cycle=year&points=2`;
+  // старые `plan=monthly`/`bundle` ведут на «Стандарт»/«Премиум»). Сумма —
+  // по виду перехода от текущей подписки (доплата за остаток, зачёт при
+  // переходе на год) с действующей акцией: та же функция, что посчитает
+  // заказ (`quoteCheckout`). Здесь — только для показа и сверки.
+  const isCheckoutView = !first("InvId") && !first("complete");
+  const impersonating = Boolean(session?.user) && isImpersonating(session!);
+  const target = parseCheckoutTarget({ plan: first("plan") || "standard", cycle: first("cycle") || undefined, points: first("points") || undefined });
+  const quote =
+    target && isCheckoutView && !impersonating
+      ? await quoteCheckout({
+          organizationId: canSpendPoints ? getActiveOrgId(session!) : null,
+          target,
+          now: new Date(),
+          // Сотрудник платит за аккаунт своей организации — откажем сразу,
+          // если там идёт оплаченный срок (см. quoteCheckout).
+          payer: !canSpendPoints && sessionEmail ? { email: sessionEmail.trim().toLowerCase(), guest: false } : null,
+        }).catch((error) => {
+          console.error("[billing] order page quote failed", error);
+          return null;
+        })
+      : null;
+  const offer = quote?.ok ? quote.offer : null;
+  const tariff: Tariff | null = quote?.ok
+    ? { key: quote.tariffKey, title: quote.title, priceRub: quote.change.periodPriceRub, periodDays: quote.periodDays, active: true, sort: 0 }
+    : null;
+  // «Новая» в последние сутки срока добавляется к его концу (`planAfterPayment`):
+  // показываем срок от конца текущего, а не от оплаты.
+  const appendFrom =
+    // У «новой» начало периода — момент расчёта.
+    quote?.ok && quote.change.kind === "new" && quote.base?.paidUntil && quote.base.paidUntil.getTime() > quote.change.periodStart.getTime()
+      ? quote.base.paidUntil
+      : null;
+  const plan: OrderPlanView | null = quote?.ok
+    ? {
+        tier: quote.target.tier,
+        cycle: quote.target.cycle,
+        points: quote.target.points,
+        kind: quote.change.kind,
+        periodPriceRub: quote.change.periodPriceRub,
+        creditRub: quote.change.creditRub,
+        differenceRub: quote.change.differenceRub,
+        remainingDays: quote.change.remainingDays,
+        periodStartLabel: formatMskDate(appendFrom ?? quote.change.periodStart),
+        periodEndLabel: formatMskDate(
+          appendFrom
+            ? new Date(appendFrom.getTime() + (quote.change.periodEnd.getTime() - quote.change.periodStart.getTime()))
+            : quote.change.periodEnd,
+        ),
+        appendsToCurrent: appendFrom !== null,
+      }
+    : null;
+  const refusal =
+    impersonating && isCheckoutView
+      ? IMPERSONATION_CHECKOUT_ERROR
+      : quote && !quote.ok && quote.code !== "unavailable"
+        ? quote.error
+        : null;
+  const amountRub = offer ? offer.priceRub : 0;
   const pointsAvailable = canSpendPoints
     ? await getBalance(getActiveOrgId(session!)).catch(() => 0)
     : 0;
@@ -87,7 +125,7 @@ export default async function OrderPage({
   // Промокод из `?promo=` (ссылка /promo/CODE, страница тарифа) или из
   // cookie ссылки; скидка навсегда вошедшего аккаунта — сама. Считает та
   // же функция, что и создание заказа, — здесь только для показа.
-  const isCheckout = !first("InvId") && !first("complete");
+  const isCheckout = isCheckoutView;
   const promoParam = Array.isArray(params.promo) ? params.promo[0] : params.promo;
   const cookieCode = promoParam === undefined ? ((await cookies()).get(PROMO_COOKIE)?.value ?? null) : null;
   const promoRaw = (promoParam ?? cookieCode ?? "").trim() || null;
@@ -144,12 +182,12 @@ export default async function OrderPage({
         <OrderClient
           tariff={tariff}
           offer={offer}
-          bundleConfig={bundleConfig}
+          plan={plan}
+          refusal={refusal}
+          bundleConfig={null}
           amountRub={amountRub}
           sessionEmail={sessionEmail}
           pointsAvailable={pointsAvailable}
-          // Баллами оплачивается только подписка: оборудование —
-          // физический товар с себестоимостью.
           pointsCap={offer?.priceRub ?? 0}
           // Пришли из кабинета по кнопке «Включить автопродление».
           recurringDefault={first("recurring") === "1"}
@@ -167,11 +205,3 @@ export default async function OrderPage({
   );
 }
 
-function decodeConfig(raw: string): unknown {
-  if (!raw) return null;
-  try {
-    return JSON.parse(Buffer.from(raw, "base64").toString("utf8"));
-  } catch {
-    return null;
-  }
-}

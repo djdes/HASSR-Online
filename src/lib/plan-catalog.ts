@@ -1,31 +1,27 @@
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
-import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import { pluralRu } from "@/lib/plural-ru";
+import {
+  FREE_MAX_JOURNALS,
+  FREE_MAX_POINTS,
+  POINTS_DISCOUNT_FROM,
+  POINTS_DISCOUNT_PERCENT,
+  SEATS_PER_POINT,
+  STORAGE_BYTES,
+  TRIAL_DAYS,
+  isPaidTier,
+  planMonthlyRub,
+  type PaidTier,
+  type PlanFeature,
+  type PlanRates,
+  type TierId,
+} from "@/lib/tariff-plans";
 
 /**
- * Витрина тарифов — единственное место копирайта для `/settings/subscription`.
- *
- * Почему отдельно от `src/lib/plans.ts`: там лежат мёртвые starter/standard/pro,
- * которые никогда не писались в `Organization.subscriptionPlan`. Реальных
- * тарифов два — бесплатный (`free`; legacy-значение `trial` читается как
- * он же) и платный (`paid`), и витрина описывает именно их.
+ * Копирайт тарифов 2026-10 — единственное место русских фраз про тарифы для
+ * серверных текстов (SEO-описания, письма, бот, КП). Витрины на сайте и в
+ * кабинете берут подписи из каталогов i18n, а числа — отсюда и из
+ * `tariff-plans.ts`, поэтому смена лимита не требует правки текстов.
  */
-
-export type CatalogPlanId = "free" | "paid";
-
-export type CatalogPlan = {
-  id: CatalogPlanId;
-  /** Значения `Organization.subscriptionPlan`, которые считаются этим тарифом. */
-  matches: string[];
-  nameRu: string;
-  /** Цена строкой: у платного она зависит от численности, числом не выразить. */
-  price: string;
-  priceHint: string;
-  tagline: string;
-  /** Кумулятивная витрина: у платного показываем «Всё из «Бесплатного»» + дельту. */
-  inheritsFrom?: string;
-  features: string[];
-};
 
 /** «1 сотрудник», «3 сотрудника», «10 сотрудников». */
 export function employeesLabel(count: number): string {
@@ -34,77 +30,177 @@ export function employeesLabel(count: number): string {
 
 /**
  * Родительный падеж после «до», «для», «на»: «до 1 сотрудника», «для
- * 10 сотрудников». Числа в текстах тарифов — только через эти помощники:
- * раньше строки вида «до 3 сотрудников» были вшиты по всему сайту и
- * расходились с константами при каждой смене тарифа.
+ * 25 сотрудников». Числа в текстах тарифов — только через эти помощники.
  */
 export function employeesGenitiveLabel(count: number): string {
   return `${count} ${pluralRu(count, "сотрудника", "сотрудников", "сотрудников")}`;
 }
 
-/** Сколько мест в бесплатном тарифе: «1 сотрудник». */
-export const FREE_SEATS_LABEL = employeesLabel(FREE_MAX_USERS);
+/** «14 дней бесплатно» — для описаний и SEO. */
+export const FREE_TIER_SHORT = `${TRIAL_DAYS} дней бесплатно`;
 
-/** Короткая фраза для описаний и SEO: «Бесплатно для 1 сотрудника». */
-export const FREE_TIER_SHORT = `Бесплатно для ${employeesGenitiveLabel(FREE_MAX_USERS)}`;
+/** «Бесплатный тариф — 14 дней без ограничений» — для офферов и рекламы. */
+export const FREE_PLAN_TITLE = `Бесплатный тариф — ${TRIAL_DAYS} дней без ограничений`;
 
-/** «Бесплатный тариф на 1 сотрудника» — для офферов и рекламы. */
-export const FREE_PLAN_TITLE = `Бесплатный тариф на ${employeesGenitiveLabel(FREE_MAX_USERS)}`;
+/** Что остаётся бесплатно после пробного: «1 сотрудник и 1 журнал». */
+export const FREE_AFTER_TRIAL_LABEL = `${employeesLabel(FREE_MAX_USERS)} и ${FREE_MAX_JOURNALS} журнал`;
+
+/** Условие бесплатного тарифа одной строкой — под карточкой и в кабинете. */
+export const FREE_PLAN_NOTE =
+  `${TRIAL_DAYS} дней — все журналы, сотрудники и точки без ограничений, без карты. ` +
+  `Дальше бесплатно — ${FREE_AFTER_TRIAL_LABEL}.`;
+
+/** «до 25 сотрудников на точку». */
+export const PAID_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT)} на точку`;
+
+/** Скидка за точки одной фразой. */
+export const POINTS_NOTE =
+  `Каждая точка — как ещё один тариф; от ${POINTS_DISCOUNT_FROM} точек — скидка ${POINTS_DISCOUNT_PERCENT} % на каждую.`;
+
+export const TIER_NAMES: Record<TierId, string> = {
+  free: "Бесплатный",
+  standard: "Стандарт",
+  premium: "Премиум",
+};
+
+/** «Стандарт — от 1 990 ₽/мес, Премиум — от 3 990 ₽/мес» (цены при оплате за год). */
+export function pricesFromLine(rates: PlanRates): string {
+  const fmt = (n: number) => `${new Intl.NumberFormat("ru-RU").format(n)} ₽`;
+  return `«${TIER_NAMES.standard}» — от ${fmt(planMonthlyRub(rates, "standard", "year"))}/мес, «${TIER_NAMES.premium}» — от ${fmt(planMonthlyRub(rates, "premium", "year"))}/мес`;
+}
+
+/** Какой карточке витрины соответствует значение `subscriptionPlan`. */
+export function tierIdForPlan(plan: string | null | undefined): TierId | "legacy" {
+  const key = String(plan ?? "free").trim();
+  if (isPaidTier(key)) return key;
+  if (key === "free" || key === "trial" || key === "") return "free";
+  return "legacy";
+}
+
+// ------------------------------------------------- таблица сравнения
 
 /**
- * Единственное условие бесплатного тарифа — численность. Тестового
- * периода и лимитов на записи/датчики/AI нет: фраза стоит под карточкой
- * бесплатного тарифа на лендинге и в кабинете.
+ * Значение клетки: галочка, прочерк или подпись из каталога i18n
+ * (`landingComponents.tariffs.cells.<key>`) с числами.
  */
-export const FREE_PLAN_NOTE = `${FREE_TIER_SHORT}, без ограничений по записям.`;
+export type ComparisonCell =
+  | { kind: "yes" }
+  | { kind: "no" }
+  | { kind: "text"; key: string; values?: Record<string, number> };
 
-/** Сколько сотрудников покрывает платная подписка. */
-export const SUBSCRIPTION_MAX_USERS = 10;
+export type ComparisonRow = {
+  /** `landingComponents.tariffs.rows.<key>` */
+  key: string;
+  /** Возможность тарифа, которой соответствует строка, — для проверки тестом. */
+  feature?: PlanFeature;
+  cells: Record<TierId, ComparisonCell>;
+};
 
-/** «до 10 сотрудников» — сколько мест в подписке. */
-export const SUBSCRIPTION_SEATS_LABEL = `до ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}`;
+export type ComparisonGroup = {
+  /** `landingComponents.tariffs.groups.<key>` */
+  key: string;
+  rows: ComparisonRow[];
+};
 
-/** Каждый сотрудник сверх `SUBSCRIPTION_MAX_USERS` — фиксированная доплата в месяц. */
-export const EXTRA_USER_PRICE_RUB = 100;
+const yes: ComparisonCell = { kind: "yes" };
+const no: ComparisonCell = { kind: "no" };
+const text = (key: string, values?: Record<string, number>): ComparisonCell => ({ kind: "text", key, values });
+const MB = 1024 * 1024;
 
-/** Одна фраза для витрины, блока тарифов и кабинета — чтобы цена не разошлась. */
-export const LARGE_TEAM_NOTE =
-  `Каждый сотрудник сверх ${SUBSCRIPTION_MAX_USERS} — ${EXTRA_USER_PRICE_RUB} ₽/мес.`;
-
-export const PLAN_CATALOG: CatalogPlan[] = [
+/** Таблица под колонками — одна на лендинг, /pricing и кабинет. */
+export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
   {
-    id: "free",
-    matches: ["free", "trial"],
-    nameRu: "Бесплатный",
-    price: "0 ₽",
-    priceHint: "/мес",
-    tagline: "Всё нужное для маленькой кухни — без оплаты и навсегда",
-    features: [
-      FREE_SEATS_LABEL,
-      `Все ${JOURNALS_TOTAL_LABEL} СанПиН и ХАССП`,
-      "Telegram-бот и Mini App",
-      "PDF-отчёты для проверки",
-      "Без ограничений по записям, датчикам и AI-сообщениям",
+    key: "team",
+    rows: [
+      {
+        key: "employees",
+        cells: {
+          free: text("employeesFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_USERS }),
+          standard: text("employeesPaid", { count: SEATS_PER_POINT }),
+          premium: text("employeesPaid", { count: SEATS_PER_POINT }),
+        },
+      },
+      {
+        key: "points",
+        cells: {
+          free: text("pointsFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_POINTS }),
+          standard: text("pointsPaid", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT }),
+          premium: text("pointsPaid", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT }),
+        },
+      },
     ],
   },
   {
-    id: "paid",
-    matches: ["paid"],
-    nameRu: "Подписка",
-    price: "1 990 ₽",
-    priceHint: "/мес",
-    tagline: `Для команды ${SUBSCRIPTION_SEATS_LABEL} и автоматического заполнения`,
-    inheritsFrom: "Бесплатного",
-    features: [
-      `До ${employeesGenitiveLabel(SUBSCRIPTION_MAX_USERS)}`,
-      "Свои IoT-датчики и автозаполнение",
-      "Приоритетная поддержка в Telegram",
+    key: "journals",
+    rows: [
+      {
+        key: "journals",
+        cells: {
+          free: text("journalsFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_JOURNALS }),
+          standard: text("journalsAll"),
+          premium: text("journalsAll"),
+        },
+      },
+      { key: "telegram", cells: { free: yes, standard: yes, premium: yes } },
+      { key: "pdf", cells: { free: yes, standard: yes, premium: yes } },
+    ],
+  },
+  {
+    key: "documents",
+    rows: [
+      {
+        key: "storage",
+        cells: {
+          free: text("storageFree", { trialDays: TRIAL_DAYS }),
+          standard: text("storageStandard", { mb: Math.round(STORAGE_BYTES.standard / MB) }),
+          premium: text("storagePremium", { gb: Math.round(STORAGE_BYTES.premium / (1024 * MB)) }),
+        },
+      },
+      { key: "ownDocuments", cells: { free: no, standard: yes, premium: yes } },
+      { key: "typicalPackage", feature: "typicalPackage", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
+      // Цена — услуги «ППК индивидуально» из ROOT; подставляет таблица
+      // (строкой: узбекские разряды у сервера и браузера разные).
+      { key: "ppkIndividual", cells: { free: text("ppkFrom"), standard: text("ppkFrom"), premium: text("ppkFrom") } },
+    ],
+  },
+  {
+    key: "equipment",
+    rows: [
+      { key: "photoAutofill", feature: "photoAutofill", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
+      { key: "equipmentConnect", feature: "equipmentConnect", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
+      { key: "equipmentDelivery", feature: "equipmentDelivery", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
     ],
   },
 ];
 
-/** Какой карточке витрины соответствует текущее значение из БД. */
-export function catalogPlanIdFor(plan: string | null | undefined): CatalogPlanId {
-  const key = (plan ?? "free").trim();
-  return PLAN_CATALOG.find((p) => p.matches.includes(key))?.id ?? "free";
-}
+/**
+ * Пункты карточек (накопительно: «Всё из «Стандарта», плюс:») — ключи
+ * `landingComponents.tariffs.points.<key>` с числами.
+ */
+export const CARD_POINTS: Record<TierId, ReadonlyArray<{ key: string; values?: Record<string, number> }>> = {
+  free: [
+    { key: "trialAll", values: { trialDays: TRIAL_DAYS } },
+    { key: "noCard" },
+    { key: "afterTrial", values: { employees: FREE_MAX_USERS, journals: FREE_MAX_JOURNALS } },
+  ],
+  standard: [
+    { key: "employees", values: { count: SEATS_PER_POINT } },
+    { key: "allJournals" },
+    { key: "storageOrders", values: { mb: Math.round(STORAGE_BYTES.standard / MB) } },
+    { key: "ownPackage" },
+  ],
+  premium: [
+    { key: "storageAll", values: { gb: Math.round(STORAGE_BYTES.premium / (1024 * MB)) } },
+    { key: "photoAutofill" },
+    { key: "equipmentConnect" },
+    { key: "equipmentDelivery" },
+    { key: "typicalPackage" },
+  ],
+};
+
+/** Что даёт каждый платный тариф — для русских серверных текстов (письма, КП). */
+export const PAID_TIER_SUMMARY: Record<PaidTier, string> = {
+  standard: `до ${employeesGenitiveLabel(SEATS_PER_POINT)} на точку, все журналы, 10 МБ на приказы к журналам и свои документы`,
+  premium:
+    "всё из «Стандарта», 1 ГБ на все документы, автоввод показаний с фото датчика, подключение и доставка оборудования, типовой пакет документов",
+};

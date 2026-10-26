@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ORG_SPHERES } from "@/lib/org-profile";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /**
  * Модалка «Новая организация».
@@ -32,6 +33,7 @@ export function CreateOrganizationDialog({
   const t = useTranslations("layoutUi.createOrganizationDialog");
   const tc = useTranslations("common");
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [name, setName] = useState("");
   const [sphere, setSphere] = useState(currentSphere);
   const [copy, setCopy] = useState(true);
@@ -55,6 +57,8 @@ export function CreateOrganizationDialog({
         }),
       });
       const data = await response.json().catch(() => null);
+      // Новая организация — новая точка тарифа: toast с кнопкой «Выбрать тариф».
+      if (!response.ok && tariffLimit(data)) return;
       if (!response.ok) throw new Error(data?.error ?? t("createFailed"));
       toast.success(t("created", { name: name.trim() }));
       onClose();

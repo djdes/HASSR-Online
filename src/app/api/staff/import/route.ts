@@ -8,7 +8,6 @@ import { normalizePhone } from "@/lib/phone";
 import { recordAuditLog } from "@/lib/audit-log";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { seatAllowance, seatLimitSummary } from "@/lib/billing.server";
-import { FREE_LIMIT_MESSAGE } from "@/lib/billing-period";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
 import { STAFF_SHEET_NAME, parseStaffSheet } from "@/lib/staff-excel";
@@ -132,7 +131,8 @@ export async function POST(request: Request) {
   let updated = 0;
   let skipped = 0;
   // Лимит тарифа — по строкам ДО создания каждой (комиссия не считается).
-  let seatsLeft = (await seatAllowance(orgId)).left;
+  const seats = await seatAllowance(orgId);
+  let seatsLeft = seats.left;
   let seatBlocked = 0;
 
   for (const row of parsed.rows) {
@@ -240,7 +240,7 @@ export async function POST(request: Request) {
           line: row.line,
           code: "seatLimit",
           params: { name: row.fullName },
-          message: `«${row.fullName}»: ${FREE_LIMIT_MESSAGE}`,
+          message: `«${row.fullName}»: ${seats.message}`,
         });
         seatBlocked += 1;
         continue;
@@ -300,7 +300,7 @@ export async function POST(request: Request) {
   }
 
   const planCheck = await ensurePlanForHeadcount(orgId);
-  const billingLimit = seatLimitSummary(seatBlocked, "staff.import", orgId);
+  const billingLimit = seatLimitSummary(seatBlocked, "staff.import", orgId, seats);
 
   await recordAuditLog({
     request,

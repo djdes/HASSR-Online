@@ -2,15 +2,28 @@ plugins {
     id 'com.android.application'
 }
 
-// Версия приложения. Номер сборки можно передать: ./gradlew assembleRelease -PversionCode=2
-def appVersionName = '1.0.0'
-def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 1
+// Версия приложения. Номер сборки (versionCode) растёт с каждым выпуском:
+// по нему приложение на телефоне понимает, что на сайте есть новее.
+def appVersionName = '1.1.0'
+def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 2
 
-// Ключ подписи берём из переменных окружения: репозиторий публичный, ключу в
-// git не место. Без ключа release подписывается отладочным ключом машины —
-// для проверки этого хватает, но такую сборку нельзя поставить поверх
-// подписанной другим ключом (см. README).
+// Сертификат, которым подписаны все выпуски. Android ставит обновление
+// поверх, только если ключ тот же, — publishRelease проверяет это до выкладки.
+def releaseCertSha256 = 'e67c22a2cfef328e62b9f69a79677e0ae513007dc83b77a39639d8c57110ce2a'
+
+// Ключ подписи — из переменных окружения: репозиторий публичный, ключу в git
+// не место. SETUP_HELPER_KEYSTORE — путь к файлу, SETUP_HELPER_KEYSTORE_BASE64 —
+// сам файл в base64 (удобно для секретов окружения). Без ключа release
+// подписывается отладочным ключом машины: для проверки хватает, но выложить
+// такую сборку нельзя (см. README).
 def releaseKeystore = System.getenv('SETUP_HELPER_KEYSTORE')
+def releaseKeystoreBase64 = System.getenv('SETUP_HELPER_KEYSTORE_BASE64')
+if (!releaseKeystore && releaseKeystoreBase64) {
+    def decoded = layout.buildDirectory.file('signing/release.jks').get().asFile
+    decoded.parentFile.mkdirs()
+    decoded.bytes = releaseKeystoreBase64.trim().decodeBase64()
+    releaseKeystore = decoded.path
+}
 
 android {
     namespace = 'ru.wesetup.helper'
@@ -80,4 +93,55 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xlint:deprecation']
+}
+
+// Выпуск новой версии: собрать подписанный APK, убедиться, что подпись та же,
+// что у прежних выпусков, и положить APK с version.json в resources/setup-helper
+// сайта. После деплоя приложения на телефонах увидят версию и обновятся сами.
+tasks.register('publishRelease') {
+    group = 'publishing'
+    description = 'Подписанный APK и version.json — в resources/setup-helper сайта'
+    dependsOn 'assembleRelease'
+    doLast {
+        if (!releaseKeystore) {
+            throw new GradleException('Нет ключа подписи (SETUP_HELPER_KEYSTORE или SETUP_HELPER_KEYSTORE_BASE64): '
+                    + 'сборку с другим ключом телефоны не смогут поставить поверх')
+        }
+        def apk = layout.buildDirectory.file('outputs/apk/release/app-release.apk').get().asFile
+        def apksigner = new File(android.sdkDirectory, "build-tools/${android.buildToolsVersion}/apksigner")
+        def process = [apksigner.path, 'verify', '--print-certs', apk.path].execute()
+        def output = process.text
+        if (process.waitFor() != 0) throw new GradleException("APK не прошёл проверку подписи:\n${output}")
+        def digest = (output =~ /certificate SHA-256 digest: ([0-9a-f]{64})/)
+        if (!digest.find() || digest.group(1) != releaseCertSha256) {
+            throw new GradleException("APK подписан не тем ключом: ожидался сертификат ${releaseCertSha256}")
+        }
+
+        def target = new File(rootDir, '../../resources/setup-helper')
+        def manifestFile = new File(target, 'version.json')
+        if (manifestFile.exists()) {
+            def previous = new groovy.json.JsonSlurper().parse(manifestFile)
+            if ((previous.versionCode as int) >= appVersionCode) {
+                throw new GradleException("Номер сборки ${appVersionCode} не больше выложенного ${previous.versionCode}: "
+                        + 'поднимите appVersionCode, иначе телефоны не увидят обновление')
+            }
+        }
+        target.mkdirs()
+        def published = new File(target, 'setup-helper.apk')
+        published.bytes = apk.bytes
+        def sha256 = java.security.MessageDigest.getInstance('SHA-256').digest(published.bytes).encodeHex().toString()
+        def notesFile = file('release-notes.txt')
+        def manifest = [
+                versionCode: appVersionCode,
+                versionName: appVersionName,
+                sha256     : sha256,
+                size       : published.length(),
+                publishedAt: new Date().format('yyyy-MM-dd', TimeZone.getTimeZone('UTC')),
+                notes      : notesFile.exists() ? notesFile.getText('UTF-8').trim() : '',
+        ]
+        def json = new groovy.json.JsonGenerator.Options().disableUnicodeEscaping().build()
+        manifestFile.setText('{\n' + manifest.collect { key, value -> "  \"${key}\": ${json.toJson(value)}" }.join(',\n')
+                + '\n}\n', 'UTF-8')
+        logger.lifecycle("Выложено: ${published} (${appVersionName}, сборка ${appVersionCode}, sha256 ${sha256})")
+    }
 }

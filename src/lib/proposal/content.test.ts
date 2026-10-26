@@ -4,8 +4,7 @@ import { describe, it } from "node:test";
 import { EMPTY_REQUISITES } from "@/lib/closing-documents/types";
 import { ACTIVE_JOURNAL_CATALOG, JOURNALS_TOTAL } from "@/lib/journal-catalog";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
-import { EXTRA_USER_PRICE_RUB, SUBSCRIPTION_MAX_USERS } from "@/lib/plan-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { SEATS_PER_POINT, TRIAL_DAYS } from "@/lib/tariff-plans";
 import { rulesFor } from "@/lib/sphere-journal-rules";
 
 import { JOURNALS_SHOWN_MAX, buildProposalContent, proposalJournals, type ProposalContent } from "./content";
@@ -135,15 +134,15 @@ describe("тексты КП — честность по правилам сфе�
     const [free, team] = content.offer.rows;
     const plain = (text: string) => text.replace(/\u00a0/g, " ");
     assert.match(plain(free.title), new RegExp(`все ${JOURNALS_TOTAL} журнал`));
-    assert.match(plain(free.title), new RegExp(`для ${FREE_MAX_USERS} сотрудника`));
-    assert.match(plain(team.title), new RegExp(`до ${SUBSCRIPTION_MAX_USERS} сотрудников`));
-    assert.match(plain(team.text), new RegExp(`сверх ${SUBSCRIPTION_MAX_USERS} — ${EXTRA_USER_PRICE_RUB} ₽/мес`));
+    assert.match(plain(free.title), new RegExp(`Бесплатно ${TRIAL_DAYS} дней`));
+    assert.match(plain(free.text), /Дальше бесплатно — 1 сотрудник и 1 журнал/);
+    assert.match(plain(team.title), new RegExp(`«Стандарт» — до ${SEATS_PER_POINT} сотрудников на точку`));
     assert.equal(plain(team.price), "1 791 ₽");
     assert.equal(plain(team.oldPrice ?? ""), "1 990 ₽");
     assert.equal(plain(team.badge ?? ""), "−10 % навсегда");
-    assert.match(team.text, /На подписке показание можно снять фото термометра/);
+    assert.match(plain(team.text), /В «Премиуме» \(3 990 ₽\/мес\) показание можно снять фото термометра/);
     const salon = buildProposalContent({ sphere: "beauty" }, sampleProposalContext());
-    assert.match(salon.offer.rows[1].text, /На подписке показание можно снять фото дисплея прибора/);
+    assert.match(salon.offer.rows[1].text, /показание можно снять фото дисплея прибора/);
   });
 
   it("заголовок: ХАССП — только пищевым сферам", () => {
@@ -162,11 +161,9 @@ describe("тексты КП — честность по правилам сфе�
     assert.equal(cardOnly.offer.payment, "Оплата картой на сайте.");
   });
 
-  it("бесплатный период — строка только до его конца", () => {
-    const before = buildProposalContent({ sphere: "cafe" }, sampleProposalContext());
-    assert.ok(before.offer.notes.some((note) => /С 1 по 10 октября подписка «до 10 сотрудников» бесплатна для всех/.test(note.replace(/\u00a0/g, " "))));
-    const after = buildProposalContent({ sphere: "cafe" }, sampleProposalContext({ now: new Date("2026-10-20T09:00:00.000Z") }));
-    assert.equal(after.offer.notes.length, 0);
+  it("без промокода и акции пояснений к цене нет", () => {
+    const content = buildProposalContent({ sphere: "cafe" }, sampleProposalContext());
+    assert.equal(content.offer.notes.length, 0);
   });
 
   it("истёкший промокод: цена без скидки, пометка, CTA — на страницу сферы", () => {

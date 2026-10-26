@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { PpkFolderKey } from "@/lib/ppk/folders";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 type FolderFile = {
   id: string;
@@ -31,6 +32,7 @@ function formatSize(bytes: number, locale: string): string {
 export function PpkFolder({ folder, canManage }: { folder: PpkFolderKey; canManage: boolean }) {
   const t = useTranslations("productionControl");
   const locale = useLocale();
+  const tariffLimit = useTariffLimitToast();
   const input = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<FolderFile[] | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -67,6 +69,8 @@ export function PpkFolder({ folder, canManage }: { folder: PpkFolderKey; canMana
           uploaded += 1;
         } else {
           const data = await response.json().catch(() => null);
+          // Хранилище тарифа заполнено — toast с кнопкой «Выбрать тариф», остальные не шлём.
+          if (tariffLimit(data)) break;
           toast.error(data?.error ?? t("folder.failed", { name: file.name }));
         }
       }

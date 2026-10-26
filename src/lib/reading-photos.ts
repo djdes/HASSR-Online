@@ -42,7 +42,7 @@ export const TARIFFS_HREF = "/settings/subscription";
 /** Тексты — одни на QR-форме и в документе журнала. */
 export const READING_PHOTO_TEXT = {
   button: "Фото",
-  paidOnly: "Автоввод с фото — на платном тарифе",
+  paidOnly: "Автоввод с фото — в тарифе «Премиум»",
   tariffsLink: "Тарифы",
   unreadable: "Не разобрали цифры — введите вручную",
   checkMark: "с фото — проверьте",

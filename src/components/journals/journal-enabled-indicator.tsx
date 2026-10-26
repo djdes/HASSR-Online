@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
 /**
  * «Журнал включён / отключён» прямо на странице журнала.
@@ -43,6 +44,7 @@ function useJournalEnabledToggle({
 }) {
   const t = useTranslations("journalUi.journalEnabled");
   const router = useRouter();
+  const tariffLimit = useTariffLimitToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -56,6 +58,8 @@ function useJournalEnabledToggle({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        // Отказ по лимиту тарифа — toast с кнопкой «Выбрать тариф».
+        if (tariffLimit(body)) return;
         throw new Error(body?.error || t("saveFailed"));
       }
       toast.success(successText);

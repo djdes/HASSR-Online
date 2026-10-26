@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireKnowledgeAccess } from "@/lib/knowledge-documents.server";
 import { KNOWLEDGE_MAX_BYTES, knowledgeFileType } from "@/lib/knowledge-documents";
 import { recordAuditLog } from "@/lib/audit-log";
+import { checkStorageForUpload, limitResponse } from "@/lib/billing.server";
 
 export const dynamic = "force-dynamic";
 export async function GET() {
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
   const file = form?.get("file");
   if (!(file instanceof File) || !file.size) return NextResponse.json({ error: "Выберите непустой файл" }, { status: 400 });
   if (file.size > KNOWLEDGE_MAX_BYTES) return NextResponse.json({ error: "Максимальный размер файла — 25 МБ" }, { status: 413 });
+  // Хранилище тарифа (Стандарт 10 МБ, Премиум 1 ГБ) — до чтения файла.
+  const storage = await checkStorageForUpload(auth.organizationId, file.size, { source: "knowledge-documents" });
+  if (!storage.ok) return limitResponse(storage);
   const content = new Uint8Array(await file.arrayBuffer());
   const mimeType = knowledgeFileType(file.name, content);
   if (!mimeType) return NextResponse.json({ error: "Формат или содержимое файла не поддерживается. Подойдут PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, ZIP, RAR и 7Z." }, { status: 415 });

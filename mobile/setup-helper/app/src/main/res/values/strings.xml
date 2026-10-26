@@ -38,6 +38,27 @@
     <string name="main_logout_text">Подключённые принтеры и неотправленные отметки на этом телефоне удалятся. Чтобы печатать снова, понадобится вход с интернетом.</string>
     <string name="main_no_bluetooth">На этом телефоне нет Bluetooth — принтер подключить не получится.</string>
 
+    <!-- Обновление -->
+    <string name="main_menu_updates">Проверить обновления</string>
+    <string name="main_menu_version">Версия %1$s</string>
+    <string name="update_pending">Нашлась новая версия %1$s — скачаем, когда будет интернет.</string>
+    <string name="update_downloading">Скачиваем новую версию %1$s…</string>
+    <string name="update_ready_auto">Новая версия %1$s скачана. Установится сама, когда вы свернёте приложение.</string>
+    <string name="update_install_now">Установить сейчас</string>
+    <string name="update_needs_confirmation">Новая версия %1$s готова к установке.</string>
+    <string name="update_install">Установить</string>
+    <string name="update_needs_permission">Новая версия %1$s скачана. Разрешите приложению устанавливать обновления — это нужно один раз, дальше оно будет обновляться само.</string>
+    <string name="update_allow">Разрешить</string>
+    <string name="update_installing">Устанавливаем версию %1$s… Если приложение закроется, откройте его снова.</string>
+    <string name="update_failed">Обновление %1$s не установлено. %2$s</string>
+    <string name="update_retry">Повторить</string>
+    <string name="update_notes">Что нового: %1$s</string>
+    <string name="updated_toast">Приложение обновлено до версии %1$s</string>
+    <string name="update_check_offline">Нет интернета — проверим обновления, когда он появится</string>
+    <string name="update_check_latest">У вас последняя версия</string>
+    <string name="update_check_found">Нашлась новая версия — смотрите вверху экрана</string>
+    <string name="update_check_failed">Не удалось проверить обновления — попробуем позже</string>
+
     <!-- Принтер -->
     <string name="printer_test">Пробная этикетка 58×40</string>
     <string name="printer_test_size">Пробная этикетка %1$s</string>
@@ -81,12 +102,17 @@
 
     <!-- Поиск -->
     <string name="scan_title">Добавить оборудование</string>
-    <string name="scan_hint">Включите принтер и держите его рядом с телефоном. Если принтер уже подключён к другому телефону, сначала отключите его там.</string>
+    <string name="scan_hint">Включите принтер и держите его рядом с телефоном. Поиск идёт до 40 секунд. Если принтер уже подключён к другому телефону, сначала отключите его там.</string>
     <string name="scan_running">Ищем устройства Bluetooth…</string>
     <string name="scan_done">Поиск закончен</string>
     <string name="scan_again">Искать снова</string>
-    <string name="scan_show_unnamed">Показывать устройства без имени</string>
+    <string name="scan_show_all">Показать все устройства (ещё %1$d)</string>
+    <string name="scan_hide_unnamed">Скрыть устройства без имени</string>
     <string name="scan_empty">Ничего не нашли. Включите принтер, держите его рядом и нажмите «Искать снова».</string>
+    <string name="scan_help_title">Принтер не нашёлся?</string>
+    <string name="scan_help_steps">• Включите принтер и поднесите его к телефону.\n• Если принтер подключён к другому телефону или компьютеру или открыт в другом приложении — отключите его там.\n• Выключите и снова включите принтер, затем нажмите «Искать снова».\n• Не помогло — сопрягите принтер в настройках Bluetooth телефона (PIN 0000 или 1234) и вернитесь сюда: он появится в списке с пометкой «Сопряжён».</string>
+    <string name="scan_help_location">На некоторых телефонах поиск Bluetooth работает только с включённой геолокацией. Включите её и нажмите «Искать снова».</string>
+    <string name="scan_bt_settings">Настройки Bluetooth</string>
     <string name="scan_printer_badge">Похоже на принтер</string>
     <string name="scan_bonded_badge">Сопряжён</string>
     <string name="scan_ble_badge">BLE</string>

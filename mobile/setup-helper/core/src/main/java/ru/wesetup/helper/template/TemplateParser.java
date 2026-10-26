@@ -66,13 +66,24 @@ public final class TemplateParser {
             default:
                 throw new IllegalArgumentException("Неизвестный тип поля «" + key + "»: " + raw.optString("type"));
         }
+        int maxLength = raw.optInt("maxLength", 80);
+        if (maxLength < 1 || maxLength > 500) {
+            throw new IllegalArgumentException("Длина поля «" + key + "» — от 1 до 500: " + maxLength);
+        }
         List<String> options = new ArrayList<>();
         JSONArray rawOptions = raw.optJSONArray("options");
         if (rawOptions != null) {
+            if (type == TemplateField.Type.DATETIME) {
+                throw new IllegalArgumentException("У даты «" + key + "» вариантов не бывает");
+            }
             for (int i = 0; i < rawOptions.length(); i++) {
                 String option = rawOptions.getString(i);
-                if (Durations.parseMinutes(option) < 0) {
+                if (type == TemplateField.Type.DURATION && Durations.parseMinutes(option) < 0) {
                     throw new IllegalArgumentException("Срок «" + option + "» в поле «" + key + "» не понят");
+                }
+                if (type == TemplateField.Type.TEXT && (option.trim().isEmpty() || option.length() > maxLength)) {
+                    throw new IllegalArgumentException("Вариант «" + option + "» в поле «" + key
+                            + "» пустой или длиннее " + maxLength + " знаков");
                 }
                 options.add(option);
             }
@@ -81,9 +92,13 @@ public final class TemplateParser {
         if (type == TemplateField.Type.DURATION && Durations.parseMinutes(defaultValue) < 0) {
             throw new IllegalArgumentException("Срок по умолчанию в поле «" + key + "» не понят: " + defaultValue);
         }
+        boolean dateOnly = raw.optBoolean("dateOnly", false);
+        if (dateOnly && type != TemplateField.Type.DATETIME) {
+            throw new IllegalArgumentException("«dateOnly» — только у даты, а «" + key + "» не дата");
+        }
         return new TemplateField(key, requireString(raw, "label"), type, defaultValue,
-                raw.optBoolean("required", false), raw.optInt("maxLength", 80),
-                raw.optBoolean("multiline", false), raw.optString("hint", ""), options);
+                raw.optBoolean("required", false), maxLength,
+                raw.optBoolean("multiline", false), raw.optString("hint", ""), options, dateOnly);
     }
 
     private static TemplateElement parseElement(JSONObject raw) throws JSONException {

@@ -1,0 +1,4 @@
+r7-tz@example.test: standard · month · до 28.10.2026, 22:51:55 МСК
+r7-switch@example.test: standard · month · до 04.11.2026, 22:51:55 МСК
+r7-short@example.test: standard · month · до 26.10.2026, 23:51:55 МСК
+r7-zero@example.test: paid · — · до 24.10.2028, 22:51:55 МСК

@@ -1,17 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { quoteSubscription } from "@/lib/subscription-pricing";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
+import { SEATS_PER_POINT, planMonthlyRub, type PlanRates } from "@/lib/tariff-plans";
+import { pluralRu } from "@/lib/plural-ru";
 
 /**
  * H10 — ROI калькулятор на лендинге. Slider «сколько у вас сотрудников»
  * → расчёт «сколько стоит» + «сколько часов экономите» + «средний штраф
  * РПН который мы помогаем избежать».
  *
- * Стоимость — по единой модели `quoteSubscription`: цену подписки
- * страница читает из БД и передаёт пропсом, компонент клиентский и
+ * Стоимость — «Стандарт» при оплате за год в пересчёте на месяц, на
+ * столько точек, сколько нужно по численности (25 сотрудников на точку):
+ * цены страница читает из БД и передаёт пропсом, компонент клиентский и
  * в БД не ходит.
  *
  * Цифры экономии — приблизительные/маркетинговые, основаны на
@@ -22,21 +24,19 @@ import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
  *     1-2 раза в год без системы
  */
 export function RoiCalculator({
-  subscriptionMonthly,
+  rates,
   promotion = null,
 }: {
-  /** Цена подписки из БД (`PlatformTariff.monthly`), ₽/мес. */
-  subscriptionMonthly: number;
-  /**
-   * Действующая акция (сервер): скидка — на всю сумму подписки, вместе с
-   * доплатой за сотрудников сверх лимита.
-   */
+  /** Цены тарифов из БД (`PlatformTariff`), ₽/мес. */
+  rates: PlanRates;
+  /** Действующая акция (сервер): скидка — на всю сумму тарифа. */
   promotion?: AppliedPromotion | null;
 }) {
   const [employees, setEmployees] = useState(15);
 
   const calc = useMemo(() => {
-    const price = quoteSubscription(employees, subscriptionMonthly);
+    const points = Math.max(1, Math.ceil(employees / SEATS_PER_POINT));
+    const tariffMonthlyRub = planMonthlyRub(rates, "standard", "year", points);
     // 30 мин/день × 22 рабочих дня × employees × 500 ₽/час (средняя
     // ставка повара/менеджера на бумажную работу).
     const hoursSavedPerMonth = (employees * 22 * 0.5);
@@ -45,7 +45,7 @@ export function RoiCalculator({
     // С системой — почти 0. 50_000 ₽ × 1.5 / 12 = 6_250 ₽/мес.
     const fineProtectionPerMonth = 6_250;
     const totalMonthlySaving = moneySavedPerMonth + fineProtectionPerMonth;
-    const withPromotion = applyPromotion(price.monthlyRub, promotion);
+    const withPromotion = applyPromotion(tariffMonthlyRub, promotion);
     const monthlyCost = withPromotion.priceRub;
     const netBenefit = totalMonthlySaving - monthlyCost;
     const roiX =
@@ -63,9 +63,12 @@ export function RoiCalculator({
       netBenefit: netBenefit,
       netBenefitFormatted: netBenefit.toLocaleString("ru-RU"),
       roiX: Number.isFinite(roiX) ? roiX : null,
-      tier: price.tierLabel,
+      tier:
+        points === 1
+          ? "«Стандарт», оплата за год"
+          : `«Стандарт» на ${points} ${pluralRu(points, "точку", "точки", "точек")}, оплата за год`,
     };
-  }, [employees, subscriptionMonthly, promotion]);
+  }, [employees, rates, promotion]);
 
   return (
     <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-10">

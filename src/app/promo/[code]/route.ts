@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
  *
  * Код действует → cookie `wesetup.promo` на 30 дней и:
  *   - руководитель в кабинете → /settings/subscription?promo=CODE;
- *   - другой вошедший (сотрудник) → /order?plan=monthly&promo=CODE;
+ *   - другой вошедший (сотрудник) → /order?plan=standard&cycle=year&promo=CODE;
  *   - гость → регистрация со сферой, после неё — тариф с кодом.
  * Не действует или неизвестен → /promo?code=CODE («Промокод больше не
  * действует» со ссылкой на тарифы). Исключение: у руководителя этот код

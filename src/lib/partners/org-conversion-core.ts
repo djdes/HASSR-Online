@@ -30,7 +30,7 @@ import {
   computeAccountBilling,
   isReallyPaid,
   type AccountBillingState,
-  type FreePeriodSettings,
+  type TrialSettings,
 } from "@/lib/billing-period";
 import { employeesGenitiveLabel, employeesLabel } from "@/lib/plan-catalog";
 import { isInactivePlan } from "@/lib/plan-limits";
@@ -222,6 +222,8 @@ export type ConversionSnapshot = {
     activeUsers: number;
     /** Роль человека в `OrganizationMember` этой организации, если есть. */
     actorMemberRole: string | null;
+    /** Создание организации: после перевода пробный считается от него. */
+    createdAt?: Date | null;
   };
   /** Аккаунт, в котором сейчас организация. */
   account: {
@@ -252,7 +254,7 @@ export type ConversionSnapshot = {
    */
   orders: ConversionOrder[];
   rule: RewardRule;
-  settings: FreePeriodSettings;
+  settings: TrialSettings;
 };
 
 export type HomeMove = { toOrganizationId: string; toOrganizationName: string };
@@ -531,6 +533,7 @@ function organizationStateAfter(snapshot: ConversionSnapshot, billing: { subscri
       plan: billing.subscriptionPlan,
       subscriptionEnd: billing.subscriptionEnd,
       activeUsers: snapshot.organization.activeUsers,
+      createdAt: snapshot.organization.createdAt ?? null,
       inactive: isInactivePlan(billing.subscriptionPlan),
     },
     snapshot.settings,
@@ -622,7 +625,7 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
   if (stateAfter.kind === "needs_decision") {
     seats.push(
       `Оплаченного срока у организации нет, а бесплатный тариф — на ${employeesGenitiveLabel(stateAfter.seatLimit ?? 1)}. ` +
-        "Чтобы в работе остались все сотрудники, клиенту нужно оплатить подписку.",
+        "Чтобы в работе остались все сотрудники, клиенту нужно подключить тариф «Стандарт» или «Премиум».",
     );
     presentation.seats.push({ key: "seatLimit", params: { limit: stateAfter.seatLimit ?? 1 } });
   }
@@ -729,8 +732,11 @@ export type ReturnSnapshot = {
     /** Сроки зеркал организаций аккаунта. */
     organizationEnds: Array<Date | null>;
     activeUsers: number;
+    /** Создание аккаунта и продлённый ROOT пробный — для пробного периода. */
+    createdAt?: Date | null;
+    trialEndsAt?: Date | null;
   } | null;
-  settings: FreePeriodSettings;
+  settings: TrialSettings;
 };
 
 export type ReturnOps = {
@@ -808,7 +814,7 @@ export function returnBlockers(snapshot: ReturnSnapshot): Blocker[] {
       presentation: { key: "seat_limit", params: { limit: seat.limit, total: seat.total, organizationName: organization.name } },
       message:
         `В вашем аккаунте бесплатный тариф на ${employeesGenitiveLabel(seat.limit)}, а после возврата активных станет ${seat.total}. ` +
-        `Оплатите подписку аккаунта, затем верните ${quoted(organization.name)}.`,
+        `Подключите аккаунту тариф «Стандарт» или «Премиум», затем верните ${quoted(organization.name)}.`,
     });
   }
   return blockers;
@@ -823,6 +829,8 @@ export function mergedAccountState(snapshot: ReturnSnapshot): AccountBillingStat
       plan: account.subscriptionPlan,
       subscriptionEnd: maxDate([account.subscriptionEnd, ...account.organizationEnds, organization.subscriptionEnd]),
       activeUsers: account.activeUsers + organization.activeUsers,
+      createdAt: account.createdAt ?? null,
+      trialEndsAt: account.trialEndsAt ?? null,
       inactive: isInactivePlan(account.subscriptionPlan),
     },
     snapshot.settings,

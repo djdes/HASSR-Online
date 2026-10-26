@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { quoteSubscription } from "@/lib/subscription-pricing";
-import { fallbackTariffs, readTariff, TARIFF_MONTHLY } from "@/lib/tariffs";
+import { isBillingCycle, isPaidTier, planMonthlyRub, SEATS_PER_POINT } from "@/lib/tariff-plans";
+import { isInactivePlan } from "@/lib/plan-limits";
+import { readPlanPricing } from "@/lib/tariffs";
 
 /**
  * Метрики по одной организации для ROOT-дашборда. Считаются по сырым
@@ -49,13 +50,13 @@ export type OrgMetrics = {
   weeklyTrendPct: number | null;
   /// Когда последний раз кто-то заполнял журнал. null = никогда.
   lastEntryAt: string | null;
-  /// Расчётный MRR — quoteSubscription(activeUsers, цена тарифа).monthlyRub:
-  /// до FREE_MAX_USERS активных — 0, до SUBSCRIPTION_MAX_USERS — одна
-  /// подписка на команду, дальше +EXTRA_USER_PRICE_RUB ₽/мес за каждого. Для trial это «потенциальный MRR»
-  /// (что было бы, если бы организация платила).
+  /// Расчётный MRR — «Стандарт» за год в пересчёте на месяц на столько
+  /// точек, сколько нужно по численности (25 сотрудников на точку): что
+  /// платила бы организация на самом дешёвом подходящем тарифе.
   potentialMrrRub: number;
-  /// Реальный MRR — 0 для trial, иначе potentialMrrRub. Простая
-  /// эвристика, потом заменим на честный billing.
+  /// Реальный MRR — оплаченный тариф аккаунта (Стандарт/Премиум, период,
+  /// точки) в пересчёте на месяц; прежняя «Подписка» — по её цене; не
+  /// оплачено — 0.
   actualMrrRub: number;
   /// Баллы на балансе организации (1 балл = 1 ₽) — обязательство
   /// платформы: их можно потратить на подписку вместо денег.
@@ -165,9 +166,17 @@ export async function getAllOrgMetrics(
       subscriptionEnd: true,
       createdAt: true,
       balanceRub: true,
-      _count: { select: { journalDocuments: true } },
+      _count: { select: { journalDocuments: true, buildings: true } },
+      accountId: true,
+      account: { select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true } },
     },
   });
+  // Тариф живёт на аккаунте (сеть платит один раз): его MRR — у самой
+  // старой организации аккаунта, у остальных 0, иначе сумма на дашборде
+  // задваивалась бы. Список отсортирован от новых к старым — последняя
+  // запись по аккаунту и есть самая старая.
+  const mrrOrgByAccount = new Map<string, string>();
+  for (const org of orgs) if (org.accountId) mrrOrgByAccount.set(org.accountId, org.id);
 
   const since30 = new Date(refDate.getTime() - 30 * DAY_MS);
   const since7 = new Date(refDate.getTime() - 7 * DAY_MS);
@@ -186,7 +195,7 @@ export async function getAllOrgMetrics(
     lastDocByOrgRaw,
     lastLoginByOrgRaw,
     usersForOwner,
-    monthlyTariff,
+    pricing,
   ] = await Promise.all([
     db.user.groupBy({
       by: ["organizationId"],
@@ -237,13 +246,10 @@ export async function getAllOrgMetrics(
         lastLoginAt: true,
       },
     }),
-    // Цена подписки — из БД, один раз на весь список: MRR считается по
-    // той же цифре, что видят клиенты на витрине. Снятый с продажи или
-    // недоступный тариф не должен ронять ROOT-дашборд — берём дефолт.
-    readTariff(TARIFF_MONTHLY).catch(() => null),
+    // Цены тарифов — из БД, один раз на весь список: MRR считается по
+    // тем же цифрам, что видят клиенты на витрине (сбой — цены по умолчанию).
+    readPlanPricing(),
   ]);
-
-  const subscriptionMonthlyRub = (monthlyTariff ?? fallbackTariffs()[0]).priceRub;
 
   type OwnerRow = (typeof usersForOwner)[number];
   const ownerByOrg = new Map<string, OwnerRow>();
@@ -299,9 +305,20 @@ export async function getAllOrgMetrics(
 
     const owner = ownerByOrg.get(org.id);
 
-    const calc = quoteSubscription(activeUsers, subscriptionMonthlyRub);
-    const isPaid =
-      org.subscriptionPlan === "paid" || org.subscriptionPlan === "pro";
+    const pointsNeeded = Math.max(1, Math.ceil(activeUsers / SEATS_PER_POINT));
+    const potentialMrrRub = planMonthlyRub(pricing.rates, "standard", "year", pointsNeeded);
+    const plan = org.account?.subscriptionPlan ?? org.subscriptionPlan;
+    const paidUntil = [org.account?.subscriptionEnd, org.subscriptionEnd]
+      .filter((d): d is Date => d instanceof Date)
+      .reduce<Date | null>((latest, d) => (latest && latest > d ? latest : d), null);
+    const isPaid = Boolean(paidUntil && paidUntil > refDate) && plan !== "paused" && plan !== "cancelled" && plan !== "free";
+    const cycle = isBillingCycle(org.account?.planCycle) ? org.account.planCycle : "month";
+    const countsAccountMrr = !org.accountId || mrrOrgByAccount.get(org.accountId) === org.id;
+    const actualMrrRub = !isPaid || !countsAccountMrr
+      ? 0
+      : isPaidTier(plan)
+        ? planMonthlyRub(pricing.rates, plan, cycle, org.account?.planPoints ?? 1)
+        : pricing.legacyMonthlyRub;
 
     return {
       organizationId: org.id,
@@ -312,22 +329,26 @@ export async function getAllOrgMetrics(
       ownerLastLoginAt: owner?.lastLoginAt?.toISOString() ?? null,
       type: org.type,
       ownershipKind: org.ownershipKind ?? null,
-      locationsCount: org.locationsCount ?? 0,
+      // Точки в работе (здание = точка, без зданий — одна), как в тарифе;
+      // ответ анкеты «Точек» мог не стать зданиями из-за лимита тарифа.
+      locationsCount: Math.max(1, org._count.buildings),
       inn: org.inn ?? null,
       isDemo: org.isDemo,
       demoExpiresAt: org.demoExpiresAt?.toISOString() ?? null,
       isDirectory: org.kind === "directory",
       documentsCount: org._count.journalDocuments,
-      subscriptionPlan: org.subscriptionPlan,
-      subscriptionEnd: org.subscriptionEnd?.toISOString() ?? null,
+      // Тариф и срок — аккаунта (у второй организации сети своя копия
+      // может остаться «бесплатной»); пауза и отмена — у самой организации.
+      subscriptionPlan: isInactivePlan(org.subscriptionPlan) ? org.subscriptionPlan : plan,
+      subscriptionEnd: paidUntil?.toISOString() ?? null,
       createdAt: org.createdAt.toISOString(),
       activeUsers,
       entries7d: e7,
       entries30d: e30,
       weeklyTrendPct: trend,
       lastEntryAt: lastEntryAt?.toISOString() ?? null,
-      potentialMrrRub: calc.monthlyRub,
-      actualMrrRub: isPaid ? calc.monthlyRub : 0,
+      potentialMrrRub,
+      actualMrrRub,
       balanceRub: org.balanceRub,
     };
   });

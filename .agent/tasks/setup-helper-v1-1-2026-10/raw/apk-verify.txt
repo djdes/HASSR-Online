@@ -1,0 +1,63 @@
+# apksigner verify --print-certs (1.1.0)
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Signer #1 certificate DN: CN=WeSetup Setup Helper (test), O=WeSetup, C=RU
+Signer #1 certificate SHA-256 digest: e67c22a2cfef328e62b9f69a79677e0ae513007dc83b77a39639d8c57110ce2a
+
+# сертификат 1.0.0 (raw/apk-verify.txt задачи setup-helper-app-2026-10)
+Signer #1 certificate SHA-256 digest: e67c22a2cfef328e62b9f69a79677e0ae513007dc83b77a39639d8c57110ce2a
+
+# sha256 / size / version.json
+63eb1c323bdf81c133b6a2441e4474d025f7e411b167426a42c43ed79df11af8  resources/setup-helper/setup-helper.apk
+size 1976726
+{
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "sha256": "63eb1c323bdf81c133b6a2441e4474d025f7e411b167426a42c43ed79df11af8",
+  "size": 1976726,
+  "publishedAt": "2026-10-25",
+  "notes": "Шаблоны для пищевого производства, надёжнее поиск принтера, приложение обновляется само."
+}
+
+# aapt2 dump badging
+package: name='ru.wesetup.helper' versionCode='2' versionName='1.1.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+targetSdkVersion:'36'
+uses-permission: name='android.permission.INTERNET'
+uses-permission: name='android.permission.ACCESS_NETWORK_STATE'
+uses-permission: name='android.permission.REQUEST_INSTALL_PACKAGES'
+uses-permission: name='android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION'
+uses-permission: name='android.permission.RECEIVE_BOOT_COMPLETED'
+uses-permission: name='android.permission.BLUETOOTH_SCAN' usesPermissionFlags='neverForLocation'
+uses-permission: name='android.permission.BLUETOOTH_CONNECT'
+uses-permission: name='android.permission.BLUETOOTH' maxSdkVersion='30'
+uses-permission: name='android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30'
+uses-permission: name='android.permission.ACCESS_FINE_LOCATION' maxSdkVersion='30'
+uses-permission: name='android.permission.ACCESS_COARSE_LOCATION' maxSdkVersion='30'
+uses-permission: name='ru.wesetup.helper.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'
+application-label:'Сетап помощник'
+launchable-activity: name='ru.wesetup.helper.MainActivity'  label='' icon=''
+
+# debuggable
+false
+
+# компоненты автообновления
+            A: http://schemas.android.com/apk/res/android:name(0x01010003)="ru.wesetup.helper.update.UpdateJobService" (Raw: "ru.wesetup.helper.update.UpdateJobService")
+            A: http://schemas.android.com/apk/res/android:permission(0x01010006)="android.permission.BIND_JOB_SERVICE" (Raw: "android.permission.BIND_JOB_SERVICE")
+            A: http://schemas.android.com/apk/res/android:name(0x01010003)="ru.wesetup.helper.update.UpdateStatusReceiver" (Raw: "ru.wesetup.helper.update.UpdateStatusReceiver")
+
+# шаблоны в APK
+assets/templates/10-test-58x40.json
+assets/templates/20-product.json
+assets/templates/21-semi-finished.json
+assets/templates/22-dish.json
+assets/templates/23-defrost.json
+assets/templates/24-freeze.json
+assets/templates/25-daily-sample.json
+assets/templates/26-incoming.json
+assets/templates/27-allergens.json
+assets/templates/28-reject.json
+assets/templates/30-opened.json
+assets/templates/40-free-text.json

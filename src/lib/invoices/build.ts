@@ -12,9 +12,10 @@ import { HARDWARE_DEVICES, normalizeHardwareConfig } from "@/lib/hardware-pricin
  *
  * Счёт — не закрывающий документ: он предшествует оплате, период
  * подписки начнётся с даты поступления денег. Поэтому в строке услуги
- * не даты, а длительность («30 дн. с даты оплаты»), а строки
- * оборудования — по каталогу, как в УПД. Сумма счёта = полная цена без
- * баллов: баллы списываются только при оплате картой из кабинета.
+ * обычно не даты, а длительность («30 дн. с даты оплаты»); дата — только у
+ * перехода на год, который кончается датой из расчёта при оформлении.
+ * Строки оборудования — по каталогу, как в УПД. Сумма счёта = полная цена
+ * без баллов: баллы списываются только при оплате картой из кабинета.
  */
 export const INVOICE_VALID_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -64,6 +65,11 @@ export type InvoiceBuildInput = {
     createdAt: Date;
     amountRub: number;
     bundleConfig: unknown;
+    /** Вид перехода тарифа 2026-10 и конец срока по расчёту при оформлении. */
+    changeKind?: string | null;
+    periodEndsAt?: Date | null;
+    /** Срок оплаты из заказа (у доплаты — не дольше оплаченного срока). */
+    dueAt?: Date | null;
   };
   tariff: { title: string; periodDays: number; priceRub: number } | null;
   seller: PartySnapshot;
@@ -94,8 +100,23 @@ export function buildInvoiceLines(input: InvoiceBuildInput): ClosingLine[] {
   const serviceSum = round2(Math.max(0, total - hardwareSum));
   const title = input.tariff?.title?.trim() || "Подписка";
   const days = input.tariff?.periodDays ?? 30;
+  const { changeKind, periodEndsAt } = input.order;
+  // Доплата за повышение — за оставшиеся дни, конец срока прежний;
+  // продление — с конца текущего срока, а не с оплаты.
+  const upgradeDays =
+    changeKind === "upgrade" && periodEndsAt
+      ? Math.max(1, Math.ceil((periodEndsAt.getTime() - input.order.createdAt.getTime()) / DAY_MS))
+      : null;
+  // Переход на год с зачётом остатка кончается датой из расчёта при
+  // оформлении (зачёт посчитан на тот момент), а не через год от оплаты.
+  const switchEnd = changeKind === "switch" && periodEndsAt ? periodEndsAt : null;
   const service: ClosingLine = {
-    title: `Доступ к сервису WeSetup, тариф «${title}», ${days} дн. (период — с даты оплаты)`,
+    title:
+      upgradeDays !== null
+        ? `Доступ к сервису WeSetup, тариф «${title}» — доплата за повышение тарифа на ${upgradeDays} дн. до конца оплаченного срока`
+        : switchEnd
+          ? `Доступ к сервису WeSetup, тариф «${title}» до ${formatRuDate(switchEnd)} (переход с зачётом остатка текущего срока)`
+          : `Доступ к сервису WeSetup, тариф «${title}», ${days} дн. (период — ${changeKind === "renew" ? "с окончания текущего оплаченного срока" : "с даты оплаты"})`,
     unit: "усл. ед.",
     unitCode: "876",
     qty: 1,
@@ -110,7 +131,7 @@ export function buildInvoiceDraft(input: InvoiceBuildInput): InvoiceDraft {
   return {
     number: String(input.order.id),
     issuedAt: input.order.createdAt,
-    dueAt: new Date(input.order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+    dueAt: input.order.dueAt ?? new Date(input.order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
     seller: input.seller,
     buyer: input.buyer,
     lines,

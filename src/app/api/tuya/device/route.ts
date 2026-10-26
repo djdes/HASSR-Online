@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { getDeviceTemperature } from "@/lib/tuya";
+import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 
 export async function GET(request: Request) {
   try {
@@ -48,6 +49,10 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
+
+    // Опрос IoT-датчиков — возможность «Премиума» (и пробного периода).
+    const feature = await checkPlanFeature(equipment.area.organizationId, "equipmentConnect", "tuya/device");
+    if (!feature.ok) return limitResponse(feature);
 
     const { temperature, humidity } = await getDeviceTemperature(
       equipment.tuyaDeviceId

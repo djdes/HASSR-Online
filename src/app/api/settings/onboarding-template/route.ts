@@ -6,6 +6,7 @@ import { getOrgTemplate } from "@/lib/onboarding-templates";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { positionMatchKey } from "@/lib/sphere-positions";
 import { pickMirrorArea } from "@/lib/area-building";
+import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +51,18 @@ export async function POST(request: NextRequest) {
       { error: `Неизвестный тип шаблона: ${kind}` },
       { status: 400 },
     );
+  }
+
+  // Набор журналов шаблона — проверяем ДО любых записей: на бесплатном
+  // тарифе после пробного включённым может быть один журнал, и шаблон не
+  // должен примениться наполовину.
+  const templateEnabled = template.enabledJournals !== null ? new Set(template.enabledJournals) : null;
+  const templateDisabled = templateEnabled
+    ? ACTIVE_JOURNAL_CATALOG.map((j) => j.code).filter((c) => !templateEnabled.has(c))
+    : null;
+  if (templateDisabled) {
+    const journals = await checkJournalLimit(organizationId, templateDisabled, { source: `onboarding-template:${template.kind}` });
+    if (!journals.ok) return limitResponse(journals);
   }
 
   let positionsCreated = 0;
@@ -188,13 +201,10 @@ export async function POST(request: NextRequest) {
   // трактовали это как «включить все журналы», затирая набор по сфере и
   // ручные тумблеры. Карточка обещает добавление, а не замену — поэтому
   // при `null` набор не трогаем вовсе.
-  if (template.enabledJournals !== null) {
-    const enabled = new Set(template.enabledJournals);
-    const allCodes = ACTIVE_JOURNAL_CATALOG.map((j) => j.code);
-    const disabled = allCodes.filter((c) => !enabled.has(c));
+  if (templateDisabled) {
     await db.organization.update({
       where: { id: organizationId },
-      data: { disabledJournalCodes: disabled as never },
+      data: { disabledJournalCodes: templateDisabled as never },
     });
   }
 

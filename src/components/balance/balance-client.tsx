@@ -288,7 +288,7 @@ function HeroCard({
 
         {data.balanceRub > 0 && !inApp ? (
           <Link
-            href="/order?plan=monthly"
+            href="/settings/subscription"
             className={
               mini
                 ? "inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-[14px] font-medium"

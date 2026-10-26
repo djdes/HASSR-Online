@@ -9,6 +9,7 @@ import { checkCronSecret } from "@/lib/cron-auth";
 import { getDeviceTemperature } from "@/lib/tuya";
 import { pickPrimaryManager } from "@/lib/user-roles";
 import { maybeCreateRealtimeCapa } from "@/lib/iot-violation-capa";
+import { hasPlanFeature } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +52,8 @@ type RunReport = {
   entriesWritten: number;
   mappingsUpdated: number;
   skipped: number;
+  /** Тариф без IoT (не «Премиум» и не пробный) — не опрашиваем. */
+  lockedByPlan: number;
 };
 
 function utcDayStart(now: Date): Date {
@@ -92,6 +95,7 @@ async function handle(request: Request) {
     entriesWritten: 0,
     mappingsUpdated: 0,
     skipped: 0,
+    lockedByPlan: 0,
   };
 
   // Pull all Tuya-paired equipment with their sensor mappings + the area's
@@ -126,10 +130,17 @@ async function handle(request: Request) {
 
   const orgsTouched = new Set<string>();
   const managerByOrg = new Map<string, string | null>();
+  // IoT-датчики — возможность «Премиума» (и пробного): без неё не опрашиваем.
+  const connectByOrg = new Map<string, boolean>();
 
   for (const eq of equipments) {
     const orgId = eq.area.organizationId;
     if (!eq.tuyaDeviceId) continue;
+    if (!connectByOrg.has(orgId)) connectByOrg.set(orgId, await hasPlanFeature(orgId, "equipmentConnect"));
+    if (!connectByOrg.get(orgId)) {
+      report.lockedByPlan += 1;
+      continue;
+    }
 
     // Skip equipment whose mappings are all on non-sensor templates.
     const activeMappings = eq.sensorMappings.filter(

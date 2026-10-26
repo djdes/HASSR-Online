@@ -22,7 +22,7 @@ export type PpkMenuGroup = { key: PpkMenuGroupKey; labelled: boolean };
 export type PpkBlockKey =
   | "program" | "instructions" | "procedures" | "floor-plans" | "products" | "pest-control" | "lab" | "flowcharts"
   | "team" | "policy" | "hazards" | "control-points" | "audit"
-  | "orders" | "posters" | "norm-documents" | "storage";
+  | "package" | "orders" | "posters" | "norm-documents" | "storage";
 
 export type PpkTabKey =
   | "overview" | "program" | "haccpPlan"
@@ -102,7 +102,12 @@ export const PPK_BLOCKS: readonly PpkBlock[] = [
     ],
   },
   { key: "audit", menuGroup: "haccp", href: "/production-control/haccp/audit", icon: "ClipboardCheck", counted: true, access: "fullAccess", serviceKey: "pre-inspection-audit", ready: true },
-  // Группа «Документы».
+  // Группа «Документы». «Пакет документов» (тарифы 2026-10): типовой пакет
+  // в «Премиуме», свои документы — в любом платном тарифе.
+  {
+    key: "package", menuGroup: "documents", href: "/production-control/documents/package", icon: "FolderOpen", counted: false,
+    access: "fullAccess", serviceKey: "ppk-development", ready: true,
+  },
   { key: "orders", menuGroup: "documents", href: "/orders", icon: "Stamp", counted: true, access: "fullAccess", ready: true },
   { key: "posters", menuGroup: "documents", href: "/production-control/documents/posters", icon: "Image", counted: false, access: "fullAccess", ready: true },
   {

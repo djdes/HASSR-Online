@@ -3,12 +3,12 @@ import type { Locale } from "./locales";
 import { localizedHref } from "./site-locale";
 import { translatorFor } from "./translator";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
-import { FREE_MAX_USERS } from "@/lib/plan-limits";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 export async function publicMetadataFor(locale: Locale): Promise<Metadata> {
   const t = await translatorFor(locale);
   const title = t("landing.metadata.title");
-  const description = t("landing.metadata.description", { journalCount: JOURNALS_TOTAL, freeUsers: FREE_MAX_USERS });
+  const description = t("landing.metadata.description", { journalCount: JOURNALS_TOTAL, trialDays: TRIAL_DAYS });
   const image = { url: `https://wesetup.ru/og/landing/${locale}`, width: 1200, height: 630, alt: title };
   return {
     formatDetection: { telephone: false, date: false, email: false, address: false },

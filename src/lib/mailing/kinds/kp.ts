@@ -110,9 +110,9 @@ export function kpPdfFilename(content: Pick<ProposalContent, "companyName" | "sp
 
 /**
  * Текст колокольчика, push и Telegram — строки предложения КП:
- * «Команда до 10 сотрудников — 1 791 ₽/мес со скидкой 10 % навсегда по
- * промокоду ROMASHKA10 (код действует до 13 октября). Бесплатно — все …
- * для 1 сотрудника.»
+ * «„Стандарт“ — до 25 сотрудников на точку — 1 791 ₽/мес со скидкой 10 %
+ * навсегда по промокоду ROMASHKA10 (код действует до 13 октября). Бесплатно
+ * 14 дней — все … журналов без ограничений.»
  */
 export function kpChannelText(content: ProposalContent): string {
   const [free, team] = content.offer.rows;

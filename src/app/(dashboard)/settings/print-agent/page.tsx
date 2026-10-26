@@ -5,7 +5,8 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { isAgentOnline } from "@/lib/print-agent-auth";
 import { brandQrSvg } from "@/lib/brand-qr";
-import { setupHelperDownloadUrl } from "@/lib/setup-helper";
+import { compareAppVersions, setupHelperDownloadUrl } from "@/lib/setup-helper";
+import { readSetupHelperRelease } from "@/lib/setup-helper-release";
 import { PageHeader } from "@/components/ui/page-header";
 import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
 import { PrintAgentSettingsClient } from "./print-agent-settings-client";
@@ -35,7 +36,7 @@ export default async function PrintAgentSettingsPage() {
     getLocale(),
   ]);
 
-  const [agents, labelPrinters, helperDevices, organization] = await Promise.all([
+  const [agents, labelPrinters, helperDevices, organization, release] = await Promise.all([
     db.printAgent.findMany({
       where: { organizationId, revokedAt: null },
       orderBy: { lastSeenAt: "desc" },
@@ -72,6 +73,8 @@ export default async function PrintAgentSettingsPage() {
       select: { id: true, name: true, userId: true, appVersion: true, lastSeenAt: true },
     }),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
+    // Версия APK на сайте: её же видит приложение и обновляется само.
+    readSetupHelperRelease(),
   ]);
   const helperUserIds = [
     ...new Set([
@@ -183,8 +186,12 @@ export default async function PrintAgentSettingsPage() {
                   <Download className="size-4" />
                   {labels("download")}
                 </a>
-                <span className="text-[13px] text-[#6f7282]">{labels("downloadHint")}</span>
+                <span className="text-[13px] text-[#6f7282]">
+                  {release ? `${labels("version", { version: release.versionName })} · ` : null}
+                  {labels("downloadHint")}
+                </span>
               </div>
+              <p className="mt-2 text-[13px] leading-snug text-[#6f7282]">{labels("autoUpdate")}</p>
             </div>
           </div>
           <div className="flex shrink-0 flex-col items-center gap-2 sm:w-[148px]">
@@ -200,6 +207,7 @@ export default async function PrintAgentSettingsPage() {
 
       <LabelPrintersClient
         timeZone={organization?.timezone ?? "Europe/Moscow"}
+        latestVersion={release?.versionName ?? null}
         printers={labelPrinters.map((printer) => ({
           id: printer.id,
           name: printer.name,
@@ -218,6 +226,7 @@ export default async function PrintAgentSettingsPage() {
           userName: userName.get(device.userId) ?? null,
           appVersion: device.appVersion,
           lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
+          outdated: Boolean(release && device.appVersion && compareAppVersions(device.appVersion, release.versionName) < 0),
         }))}
       />
     </div>

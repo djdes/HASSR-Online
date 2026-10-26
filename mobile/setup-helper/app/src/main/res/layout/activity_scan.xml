@@ -68,14 +68,6 @@
                 android:layout_marginTop="8dp"
                 android:indeterminate="true" />
 
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/scan_show_unnamed"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/scan_show_unnamed"
-                android:textColor="@color/text" />
-
             <TextView
                 android:id="@+id/scan_empty"
                 style="@style/SetupHelper.Body"
@@ -91,6 +83,67 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
+
+            <!-- Безымянные устройства, не похожие на принтер, — по кнопке: их
+                 бывает десятки (часы, наушники соседей). -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/scan_show_all"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
+
+            <!-- Поиск закончился, а похожего на принтер нет: что проверить и
+                 запасной путь — сопрячь в системных настройках Bluetooth. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/scan_help"
+                style="@style/SetupHelper.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/SetupHelper.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/scan_help_title" />
+
+                    <TextView
+                        style="@style/SetupHelper.Body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/scan_help_steps" />
+
+                    <TextView
+                        android:id="@+id/scan_help_location"
+                        style="@style/SetupHelper.Body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/scan_help_location"
+                        android:textColor="@color/danger"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/scan_help_settings"
+                        style="@style/SetupHelper.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/scan_bt_settings"
+                        app:icon="@drawable/ic_bluetooth"
+                        app:iconGravity="textStart" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/scan_again"

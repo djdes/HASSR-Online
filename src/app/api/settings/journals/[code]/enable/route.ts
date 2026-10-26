@@ -5,6 +5,7 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { JOURNAL_ENABLE_AUDIT_ACTION, blankSignupJournal, type JournalEnableSource } from "@/lib/blank-signup";
 import { getDisabledJournalCodes, setDisabledJournalCodes } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,10 +40,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   const disabled = await getDisabledJournalCodes(organizationId);
   if (!disabled.has(code)) return NextResponse.json({ ok: true, changed: false });
 
-  await setDisabledJournalCodes(
-    organizationId,
-    [...disabled].filter((item) => item !== code),
-  );
+  const next = [...disabled].filter((item) => item !== code);
+  // Бесплатный тариф после пробного — один включённый журнал.
+  const journals = await checkJournalLimit(organizationId, next, { source: `settings/journals/${code}/enable` });
+  if (!journals.ok) return limitResponse(journals);
+  await setDisabledJournalCodes(organizationId, next);
   await recordAuditLog({
     request,
     session,

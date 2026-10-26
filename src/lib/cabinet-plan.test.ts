@@ -2,124 +2,66 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  DEFAULT_FREE_PERIOD,
+  DEFAULT_TRIAL_SETTINGS,
   computeAccountBilling,
   voluntaryDowngradeCheck,
-  type AccountBillingState,
+  type AccountBillingInput,
+  type TrialSettings,
 } from "@/lib/billing-period";
-import {
-  buildCabinetPlanCard,
-  overageBreakdown,
-  planBreakdownRows,
-  subscriptionTotal,
-} from "@/lib/cabinet-plan";
+import { buildCabinetPlanCard, cabinetPlanTitle, planTotal } from "@/lib/cabinet-plan";
 import type { AppliedPromotion } from "@/lib/promo/promotions";
+import { DEFAULT_PLAN_RATES } from "@/lib/tariff-plans";
 
-const TARIFF = 1990;
 /** Пробелы Intl (неразрывные) → обычные: сравниваем текст, а не символ. */
 const plain = (s: string | null) => (s ?? "").replace(/\s/g, " ");
+const R = DEFAULT_PLAN_RATES;
+const DAY = 24 * 60 * 60 * 1000;
+const S: TrialSettings = { ...DEFAULT_TRIAL_SETTINGS, launchedAt: new Date("2026-10-25T21:00:00.000Z") };
+const CREATED = new Date("2026-05-01T10:00:00.000Z");
+const AFTER_TRIAL = new Date("2026-11-20T09:00:00.000Z");
+/** «Сегодня» для названий со сроком: год в названии — только у чужого года. */
+const TITLE_NOW = new Date("2026-10-25T09:00:00.000Z");
 
 const PROMO: AppliedPromotion = {
   id: "p1",
   title: "Осень",
   percent: 20,
   startsAt: "2026-10-01T00:00:00.000Z",
-  endsAt: "2026-11-01T00:00:00.000Z",
+  endsAt: "2026-12-01T00:00:00.000Z",
 };
 
-describe("subscriptionTotal — итог в месяц", () => {
-  it("≤ 10 сотрудников — только подписка, без превышения", () => {
-    const t = subscriptionTotal({ employees: 7, tariffRub: TARIFF, promotion: null, personal: null });
-    assert.equal(t.quote.isFree, false);
-    assert.equal(t.quote.extraEmployees, 0);
-    assert.equal(t.finalRub, 1990);
+function state(input: Partial<AccountBillingInput>, now = AFTER_TRIAL) {
+  return computeAccountBilling(
+    { plan: "free", subscriptionEnd: null, activeUsers: 1, enabledJournals: 1, createdAt: CREATED, ...input },
+    S,
+    now
+  );
+}
+
+describe("planTotal — итог по тарифу", () => {
+  it("Премиум за год, 1 точка: 47 880 ₽ = 3 990 ₽/мес", () => {
+    const t = planTotal({ rates: R, tier: "premium", cycle: "year", points: 1, promotion: null, personal: null });
+    assert.equal(t.periodRub, 47_880);
+    assert.equal(t.monthlyFinalRub, 3990);
     assert.equal(t.discounted, false);
-    assert.equal(overageBreakdown(t.quote), null);
-    assert.deepEqual(
-      planBreakdownRows(t.quote).map((r) => [plain(r.label), r.amountRub]),
-      [["Подписка до 10 сотрудников", 1990]]
-    );
   });
 
-  it("> 10 — подписка + 100 ₽ за каждого сверх 10 (пример владельца: 38 → 4 790 ₽)", () => {
-    const t = subscriptionTotal({ employees: 38, tariffRub: TARIFF, promotion: null, personal: null });
-    assert.equal(t.quote.extraEmployees, 28);
-    assert.equal(t.quote.extraRub, 2800);
-    assert.equal(t.finalRub, 4790);
-    assert.equal(plain(overageBreakdown(t.quote)), "1 990 ₽ + 28 × 100 ₽ сверх 10");
-    assert.deepEqual(
-      planBreakdownRows(t.quote).map((r) => [plain(r.label), r.amountRub]),
-      [
-        ["Подписка до 10 сотрудников", 1990],
-        ["Сверх 10: 28 × 100 ₽", 2800],
-      ]
-    );
-  });
-
-  it("со скидкой: акция на всю сумму, скидка навсегда — поверх цены с акцией", () => {
-    const promo = subscriptionTotal({ employees: 38, tariffRub: TARIFF, promotion: PROMO, personal: null });
-    assert.equal(promo.withPromotion.baseRub, 4790);
-    assert.equal(promo.finalRub, 4790 - 958);
-    assert.equal(promo.discounted, true);
-
-    const both = subscriptionTotal({
-      employees: 38,
-      tariffRub: TARIFF,
-      promotion: PROMO,
-      personal: { kind: "percent", value: 10 },
-    });
-    // 3 832 − 10 % = 3 832 − 383 = 3 449
-    assert.equal(both.personalRub, 383);
-    assert.equal(both.finalRub, 3449);
-
-    const fixed = subscriptionTotal({
-      employees: 5,
-      tariffRub: TARIFF,
-      promotion: null,
-      personal: { kind: "fixed", value: 500 },
-    });
-    assert.equal(fixed.finalRub, 1490);
-  });
-
-  it("бесплатный (1 сотрудник) — 0 ₽, скидка не применяется, строк расчёта нет", () => {
-    const t = subscriptionTotal({
-      employees: 1,
-      tariffRub: TARIFF,
-      promotion: PROMO,
-      personal: { kind: "fixed", value: 500 },
-    });
-    assert.equal(t.quote.isFree, true);
-    assert.equal(t.finalRub, 0);
-    assert.equal(t.personalRub, 0);
-    assert.deepEqual(planBreakdownRows(t.quote), []);
+  it("акция на сумму периода, скидка навсегда — поверх цены с акцией", () => {
+    const t = planTotal({ rates: R, tier: "standard", cycle: "month", points: 2, promotion: PROMO, personal: { kind: "percent", value: 10 } });
+    // 6 000 − 20 % = 4 800; −10 % = 4 320
+    assert.equal(t.withPromotion.priceRub, 4800);
+    assert.equal(t.personalRub, 480);
+    assert.equal(t.finalRub, 4320);
+    assert.equal(t.discounted, true);
   });
 });
 
-function state(kind: AccountBillingState["kind"], extra: Partial<AccountBillingState> = {}): AccountBillingState {
-  return {
-    kind,
-    phase: "after",
-    enforcement: true,
-    inactive: false,
-    activeUsers: 38,
-    paidUntil: null,
-    reason: null,
-    graceEndsAt: null,
-    graceExpired: false,
-    seatLimit: null,
-    paidFeatures: true,
-    ...extra,
-  };
-}
-
 describe("buildCabinetPlanCard — карточка «Мой кабинет»", () => {
   const base = {
-    settings: DEFAULT_FREE_PERIOD,
-    plan: "paid",
+    plan: "premium",
     exempt: false,
-    organizationsCount: 5,
     employees: 38,
-    tariffRub: TARIFF,
+    rates: R,
     promotion: null,
     personal: null,
     canManagePlan: true,
@@ -127,71 +69,69 @@ describe("buildCabinetPlanCard — карточка «Мой кабинет»", 
     testMode: false,
   };
 
-  it("подписка: организации, сотрудники, сумма с расшифровкой, «Изменить тариф»", () => {
-    const card = buildCabinetPlanCard({ ...base, state: state("paid", { paidUntil: new Date("2026-11-03T09:00:00Z") }) });
-    assert.equal(card.title, "Подписка до 3 ноября");
-    assert.equal(plain(card.counts), "5 организаций · 38 сотрудников");
-    assert.equal(card.price?.finalRub, 4790);
-    assert.equal(plain(card.price?.breakdown ?? null), "1 990 ₽ + 28 × 100 ₽ сверх 10");
+  it("Премиум за год на 2 точки: точки, сотрудники из лимита, сумма в месяц, «Изменить тариф»", () => {
+    const s = state({
+      plan: "premium",
+      subscriptionEnd: new Date("2027-03-03T09:00:00Z"),
+      planCycle: "year",
+      planPoints: 2,
+      pointsInUse: 2,
+      activeUsers: 38,
+    });
+    const card = buildCabinetPlanCard({ ...base, state: s, now: TITLE_NOW });
+    // Срок в следующем году — с годом.
+    assert.equal(card.title, "Премиум до 3 марта 2027");
+    assert.equal(plain(card.counts), "2 точки · 38 сотрудников из 50");
+    assert.equal(card.price?.finalRub, 7980);
+    assert.equal(card.price?.breakdown, "оплата за год");
     assert.deepEqual(card.link, { href: "/settings/subscription", label: "Изменить тариф" });
   });
 
-  it("бесплатный: без суммы, «Подключить подписку»; одна организация — «1 организация»", () => {
-    const card = buildCabinetPlanCard({
-      ...base,
-      plan: "free",
-      organizationsCount: 1,
-      employees: 1,
-      state: state("free", { activeUsers: 1 }),
-    });
-    assert.equal(card.title, "Бесплатный");
-    assert.equal(plain(card.counts), "1 организация · 1 сотрудник");
+  it("пробный период: без суммы, «Выбрать тариф», сотрудники без лимита", () => {
+    const s = state({ activeUsers: 12, enabledJournals: 30 }, new Date("2026-10-30T09:00:00Z"));
+    const card = buildCabinetPlanCard({ ...base, plan: "free", employees: 12, state: s });
+    assert.equal(card.title, "Пробный период — по 8 ноября");
+    assert.equal(plain(card.counts), "1 точка · 12 сотрудников");
     assert.equal(card.price, null);
-    assert.equal(card.link?.label, "Подключить подписку");
+    assert.equal(card.link?.label, "Выбрать тариф");
+  });
+
+  it("бесплатный после пробного: «Бесплатный», 1 сотрудник из 1", () => {
+    const card = buildCabinetPlanCard({ ...base, plan: "free", employees: 1, state: state({}) });
+    assert.equal(card.title, "Бесплатный");
+    assert.equal(plain(card.counts), "1 точка · 1 сотрудник из 1");
+    assert.equal(card.link?.label, "Выбрать тариф");
   });
 
   it("сотрудник без права на тариф и приложение WeSetup — только название", () => {
+    const s = state({ plan: "standard", subscriptionEnd: new Date("2026-12-03T09:00:00Z") });
     for (const who of [{ canManagePlan: false, inMobileApp: false }, { canManagePlan: true, inMobileApp: true }]) {
-      const card = buildCabinetPlanCard({ ...base, ...who, state: state("paid") });
-      assert.deepEqual(card, { title: "Подписка", counts: null, price: null, link: null });
+      const card = buildCabinetPlanCard({ ...base, ...who, state: s, now: TITLE_NOW });
+      assert.deepEqual(card, { title: "Стандарт до 3 декабря", counts: null, price: null, link: null });
     }
   });
 
-  it("бесплатный период: «Подписка — бесплатно по 10 октября», сумма с 11 октября", () => {
-    const card = buildCabinetPlanCard({ ...base, state: state("free_period", { phase: "free_period", enforcement: false }) });
-    assert.equal(card.title, "Подписка — бесплатно по 10 октября");
-    assert.equal(card.price?.note, "с 11 октября");
+  it("прежняя «Подписка» — название и срок, без суммы по новым тарифам", () => {
+    const s = state({ plan: "paid", subscriptionEnd: new Date("2026-12-03T09:00:00Z") });
+    assert.equal(cabinetPlanTitle(s, "paid", TITLE_NOW), "Подписка (прежний тариф) до 3 декабря");
+    assert.equal(buildCabinetPlanCard({ ...base, plan: "paid", state: s }).price, null);
   });
 });
 
 describe("voluntaryDowngradeCheck — добровольный переход на бесплатный", () => {
-  const settings = DEFAULT_FREE_PERIOD;
-  const at = (iso: string) => new Date(iso);
-
-  it("разрешён: оплачено, бесплатный период, до периода, нужно решение", () => {
+  it("разрешён: оплачено, пробный, нужно решение", () => {
     const cases = [
-      computeAccountBilling({ plan: "paid", subscriptionEnd: at("2026-12-01T00:00:00Z"), activeUsers: 38 }, settings, at("2026-11-01T00:00:00Z")),
-      computeAccountBilling({ plan: "paid", subscriptionEnd: null, activeUsers: 5 }, settings, at("2026-10-05T00:00:00Z")),
-      computeAccountBilling({ plan: "paid", subscriptionEnd: null, activeUsers: 5 }, settings, at("2026-09-20T00:00:00Z")),
-      computeAccountBilling({ plan: "paid", subscriptionEnd: null, activeUsers: 5 }, settings, at("2026-10-12T00:00:00Z")),
+      state({ plan: "premium", subscriptionEnd: new Date(AFTER_TRIAL.getTime() + 10 * DAY) }),
+      state({ activeUsers: 5 }, new Date("2026-10-30T09:00:00Z")),
+      state({ activeUsers: 5 }),
     ];
-    assert.deepEqual(cases.map((s) => s.kind), ["paid", "free_period", "legacy", "needs_decision"]);
+    assert.deepEqual(cases.map((s) => s.kind), ["paid", "free_period", "needs_decision"]);
     for (const s of cases) assert.deepEqual(voluntaryDowngradeCheck(s), { ok: true });
   });
 
   it("запрещён: нет тарифа (демо, мастер-кабинет, платформа) и организация на паузе", () => {
-    const exempt = computeAccountBilling(
-      { plan: "paid", subscriptionEnd: null, activeUsers: 5, exempt: true },
-      settings,
-      at("2026-11-01T00:00:00Z")
-    );
-    const paused = computeAccountBilling(
-      { plan: "paused", subscriptionEnd: null, activeUsers: 5 },
-      settings,
-      at("2026-11-01T00:00:00Z")
-    );
-    const e = voluntaryDowngradeCheck(exempt);
-    const p = voluntaryDowngradeCheck(paused);
+    const e = voluntaryDowngradeCheck(state({ exempt: true }));
+    const p = voluntaryDowngradeCheck(state({ plan: "paused" }));
     assert.equal(e.ok, false);
     assert.equal(p.ok, false);
     if (!e.ok) assert.equal(e.status, 409);

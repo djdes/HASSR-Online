@@ -14,6 +14,7 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -61,7 +62,7 @@ public final class PrintActivity extends BaseActivity {
     private long openedAt;
 
     private final Map<String, TextInputLayout> textLayouts = new HashMap<>();
-    private final Map<String, TextInputEditText> textInputs = new HashMap<>();
+    private final Map<String, EditText> textInputs = new HashMap<>();
     private final Map<String, Long> times = new HashMap<>();
     private final Map<String, Integer> durations = new HashMap<>();
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -150,10 +151,17 @@ public final class PrintActivity extends BaseActivity {
     }
 
     private void addTextField(LayoutInflater inflater, TemplateField field, String value) {
-        TextInputLayout layout = (TextInputLayout) inflater.inflate(R.layout.field_text, fieldsView, false);
-        TextInputEditText input = layout.findViewById(R.id.field_input);
+        boolean withOptions = !field.options.isEmpty();
+        TextInputLayout layout = (TextInputLayout) inflater.inflate(
+                withOptions ? R.layout.field_text_options : R.layout.field_text, fieldsView, false);
+        EditText input = layout.findViewById(R.id.field_input);
         layout.setHint(field.label);
-        layout.setCounterMaxLength(field.maxLength);
+        if (withOptions) {
+            // Варианты — подсказки: можно выбрать из списка или вписать своё.
+            ((MaterialAutoCompleteTextView) input).setSimpleItems(field.options.toArray(new String[0]));
+        } else {
+            layout.setCounterMaxLength(field.maxLength);
+        }
         if (!field.hint.isEmpty()) layout.setPlaceholderText(field.hint);
         input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(field.maxLength)});
         if (field.multiline) {
@@ -161,7 +169,11 @@ public final class PrintActivity extends BaseActivity {
                     | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
             input.setMinLines(2);
         }
-        input.setText(value);
+        if (withOptions) {
+            ((MaterialAutoCompleteTextView) input).setText(value, false);
+        } else {
+            input.setText(value);
+        }
         input.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -186,8 +198,8 @@ public final class PrintActivity extends BaseActivity {
         TextInputLayout layout = (TextInputLayout) inflater.inflate(R.layout.field_datetime, fieldsView, false);
         TextInputEditText input = layout.findViewById(R.id.field_input);
         layout.setHint(field.label);
-        input.setText(Ui.dateTime(times.get(field.key)));
-        View.OnClickListener pick = v -> pickDateTime(field.key, input);
+        input.setText(field.dateOnly ? Ui.date(times.get(field.key)) : Ui.dateTime(times.get(field.key)));
+        View.OnClickListener pick = v -> pickDateTime(field.key, field.dateOnly, input);
         input.setOnClickListener(pick);
         layout.setEndIconOnClickListener(pick);
         fieldsView.addView(layout);
@@ -210,12 +222,19 @@ public final class PrintActivity extends BaseActivity {
         fieldsView.addView(layout);
     }
 
-    private void pickDateTime(String key, TextInputEditText input) {
+    private void pickDateTime(String key, boolean dateOnly, TextInputEditText input) {
         Calendar calendar = Calendar.getInstance();
         Long current = times.get(key);
         if (current != null) calendar.setTimeInMillis(current);
         new DatePickerDialog(this, (view, year, month, day) -> {
             calendar.set(year, month, day);
+            if (dateOnly) {
+                // Время на такой этикетке не печатается — остаётся прежним.
+                times.put(key, calendar.getTimeInMillis());
+                input.setText(Ui.date(calendar.getTimeInMillis()));
+                updatePreview();
+                return;
+            }
             new TimePickerDialog(this, (timeView, hour, minute) -> {
                 calendar.set(Calendar.HOUR_OF_DAY, hour);
                 calendar.set(Calendar.MINUTE, minute);
@@ -229,7 +248,7 @@ public final class PrintActivity extends BaseActivity {
 
     private TemplateValues values() {
         TemplateValues values = PrintJobs.baseValues(app, printer, System.currentTimeMillis());
-        for (Map.Entry<String, TextInputEditText> entry : textInputs.entrySet()) {
+        for (Map.Entry<String, EditText> entry : textInputs.entrySet()) {
             Editable text = entry.getValue().getText();
             values.text(entry.getKey(), text == null ? "" : text.toString().trim());
         }
@@ -263,7 +282,7 @@ public final class PrintActivity extends BaseActivity {
         if (template == null) return;
         for (TemplateField field : template.fields) {
             if (field.type != TemplateField.Type.TEXT || !field.required) continue;
-            TextInputEditText input = textInputs.get(field.key);
+            EditText input = textInputs.get(field.key);
             Editable text = input == null ? null : input.getText();
             if (text == null || text.toString().trim().isEmpty()) {
                 TextInputLayout layout = textLayouts.get(field.key);
@@ -301,7 +320,7 @@ public final class PrintActivity extends BaseActivity {
         if (template == null || textInputs.isEmpty()) return;
         SharedPreferences.Editor editor = getSharedPreferences(PrintJobs.VALUES_PREFS, MODE_PRIVATE).edit();
         for (TemplateField field : template.fields) {
-            TextInputEditText input = textInputs.get(field.key);
+            EditText input = textInputs.get(field.key);
             if (input == null || input.getText() == null) continue;
             editor.putString(rememberKey(field), input.getText().toString());
         }
