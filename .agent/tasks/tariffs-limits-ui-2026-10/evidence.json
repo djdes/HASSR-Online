@@ -42,7 +42,8 @@
     "header_align": "raw/header-align-check.txt",
     "toast_tap": "raw/toast-tap-check.txt",
     "archive_label": "raw/archive-label-check.txt",
-    "join_qr": "raw/join-qr-check.txt"
+    "join_qr": "raw/join-qr-check.txt",
+    "master_cabinet": "raw/master-cabinet-check.txt"
   },
   "schema_changes": [],
   "deploy_side_effects": [
@@ -106,7 +107,7 @@
       "verdict": "PASS",
       "failed": [],
       "fixes_after": [
-        "MEDIUM regression of round-2 fix: only the front toast's buttons take clicks over a modal (globals.css); toast bodies click-through again, tap/swipe no longer closes the dialog",
+        "MEDIUM regression of round-2 fix: only the front toast's buttons take clicks over a modal (globals.css); toast bodies click through again, as before the task",
         "master-cabinet seat refusal: shared billing toast (next tier, localized, button)",
         "archive note link names the next tier",
         "invitee refusal on paid tiers names the limit (QR join page)",
@@ -120,6 +121,22 @@
         "raw/toast-dialog-check.txt",
         "raw/archive-label-check.txt",
         "raw/join-qr-check.txt"
+      ]
+    },
+    "round4": {
+      "commit": "dc557066",
+      "verdict": "PASS",
+      "failed": [],
+      "fixes_after": [
+        "master-cabinet: the confirm dialog closes on a seat refusal so the support chat is usable",
+        "master-cabinet access card on /settings/permissions: shared billing toast; inside the cabinet (/master) the old server text stays (the plan page is not reachable there)",
+        "evidence wording about taps on toast bodies corrected"
+      ],
+      "not_fixed": [
+        "toast bodies click through to whatever lies under them over dialogs — pre-existing on master, app-wide, outside the task"
+      ],
+      "rechecked": [
+        "raw/master-cabinet-check.txt"
       ]
     }
   }

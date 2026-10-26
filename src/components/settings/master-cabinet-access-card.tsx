@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { isBillingLimitError, useBillingError } from "@/lib/billing-limit-toast";
 import {
   ACCESS_EMAIL_RE,
   groupAccessCandidates,
@@ -56,7 +57,9 @@ async function callAccessApi(
   endpoint: string,
   method: "POST" | "DELETE",
   body: Record<string, unknown>,
-  fallbackError: string
+  fallbackError: string,
+  /** Отказ по местам — общий тост с кнопкой тарифа; null — текст сервера (страница тарифа недоступна). */
+  toastApiError: ((data: unknown, fallback: string) => void) | null
 ): Promise<ApiResponse | null> {
   const response = await fetch(endpoint, {
     method,
@@ -65,7 +68,9 @@ async function callAccessApi(
   }).catch(() => null);
   const json = (await response?.json().catch(() => null)) as ApiResponse | null;
   if (!response?.ok) {
-    toast.error(json?.error ?? fallbackError);
+    // Места тарифа заняты — общий тост: следующий тариф на языке интерфейса и кнопка.
+    if (toastApiError && isBillingLimitError(json)) toastApiError(json, fallbackError);
+    else toast.error(json?.error ?? fallbackError);
     return null;
   }
   return json;
@@ -114,6 +119,7 @@ export function MasterCabinetAccessCard({ initial }: { initial: AccessData }) {
               cabinet={cabinet}
               candidates={access.candidates}
               onChange={setAccess}
+              billingToast
             />
           ))}
         </div>
@@ -128,13 +134,21 @@ export function CabinetAccessBlock({
   cabinet,
   candidates,
   onChange,
+  billingToast = false,
 }: {
   endpoint: string;
   cabinet: CabinetAccess;
   candidates: AccessCandidate[];
   onChange: (next: AccessData) => void;
+  /**
+   * Отказ по местам — общий тост с кнопкой тарифа. Только там, где страница
+   * тарифа открывается («Права доступа»); в самом мастер-кабинете она закрыта.
+   */
+  billingToast?: boolean;
 }) {
   const t = useTranslations("masterUi.masterCabinetAccessCard");
+  const { toastApiError: billingError } = useBillingError();
+  const toastApiError = billingToast ? billingError : null;
   const [mode, setMode] = useState<null | "invite" | "grant">(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -154,7 +168,7 @@ export function CabinetAccessBlock({
     event.preventDefault();
     if (!inviteValid || busy) return;
     setBusy(true);
-    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, name, email }, t("apiFallbackError"));
+    const json = await callAccessApi(endpoint, "POST", { action: "invite", cabinetId: cabinet.id, name, email }, t("apiFallbackError"), toastApiError);
     setBusy(false);
     if (!json?.access || !json.inviteUrl) return;
     onChange(json.access);
@@ -168,7 +182,7 @@ export function CabinetAccessBlock({
   async function grant(candidate: AccessCandidate) {
     if (grantingId) return;
     setGrantingId(candidate.id);
-    const json = await callAccessApi(endpoint, "POST", { action: "grant", cabinetId: cabinet.id, userId: candidate.id }, t("apiFallbackError"));
+    const json = await callAccessApi(endpoint, "POST", { action: "grant", cabinetId: cabinet.id, userId: candidate.id }, t("apiFallbackError"), toastApiError);
     setGrantingId(null);
     if (!json?.access) return;
     onChange(json.access);
@@ -181,7 +195,7 @@ export function CabinetAccessBlock({
 
   async function revoke() {
     if (!removing) return;
-    const json = await callAccessApi(endpoint, "DELETE", { cabinetId: cabinet.id, userId: removing.userId }, t("apiFallbackError"));
+    const json = await callAccessApi(endpoint, "DELETE", { cabinetId: cabinet.id, userId: removing.userId }, t("apiFallbackError"), toastApiError);
     if (!json?.access) return;
     onChange(json.access);
     toast.success(t("accessRevoked", { name: removing.name }));

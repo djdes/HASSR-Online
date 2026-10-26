@@ -102,7 +102,9 @@ export function MasterCabinetClient({
     const json = (await response?.json().catch(() => null)) as PostResponse | null;
     if (!response?.ok || !json?.inviteUrl) {
       // Места тарифа заняты — тот же тост, что везде: следующий тариф и кнопка.
+      // Окно подтверждения закрываем: иначе чат «Связаться» откроется под ним.
       if (isBillingLimitError(json)) {
+        setConfirmOpen(false);
         toastApiError(json, t("apiFallbackError"));
         return false;
       }
