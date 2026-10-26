@@ -20,6 +20,8 @@
  * не создаём никогда.
  */
 import type { PrismaClient } from "@prisma/client";
+import { buildingWhere } from "@/lib/building-scope";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import type { JournalAutomationStaff } from "@/lib/journal-automation";
 import { filterRoster } from "@/lib/journal-roster";
 import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
@@ -82,10 +84,11 @@ export function mergeInheritedWithNewcomers(
  * Легаси-правило: должности из `JobPositionJournalAccess`, при пустом
  * результате — весь активный ростер (тот же fallback, что и раньше в
  * сидере: доступ выдан по должности, а `jobPositionId` у людей ещё null).
+ * С точкой — только сотрудники, работающие на ней (`User.buildingIds`).
  */
 export async function loadLegacyEligibleEmployees(
   db: StaffDb,
-  args: { organizationId: string; templateCode: string }
+  args: { organizationId: string; templateCode: string; buildingId?: string | null }
 ): Promise<string[]> {
   const template = await db.journalTemplate.findUnique({
     where: { code: args.templateCode },
@@ -106,6 +109,7 @@ export async function loadLegacyEligibleEmployees(
       archivedAt: null,
       isRoot: false,
       ...NOT_COMMISSION_WHERE,
+      ...staffAtBuildingWhere(args.buildingId),
       ...(allowedPositionIds.length > 0
         ? { jobPositionId: { in: allowedPositionIds } }
         : {}),
@@ -124,6 +128,7 @@ export async function loadLegacyEligibleEmployees(
       archivedAt: null,
       isRoot: false,
       ...NOT_COMMISSION_WHERE,
+      ...staffAtBuildingWhere(args.buildingId),
     },
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
@@ -135,7 +140,7 @@ export async function loadLegacyEligibleEmployees(
 
 async function loadAliveIds(
   db: StaffDb,
-  args: { organizationId: string; ids: string[] }
+  args: { organizationId: string; ids: string[]; buildingId?: string | null }
 ): Promise<Set<string>> {
   if (args.ids.length === 0) return new Set();
   const alive = await db.user.findMany({
@@ -145,6 +150,7 @@ async function loadAliveIds(
       isActive: true,
       archivedAt: null,
       ...NOT_COMMISSION_WHERE,
+      ...staffAtBuildingWhere(args.buildingId),
     },
     select: { id: true },
   });
@@ -153,7 +159,7 @@ async function loadAliveIds(
 
 async function resolveInherited(
   db: StaffDb,
-  args: { organizationId: string; templateCode: string }
+  args: { organizationId: string; templateCode: string; buildingId?: string | null }
 ): Promise<string[]> {
   const template = await db.journalTemplate.findUnique({
     where: { code: args.templateCode },
@@ -162,7 +168,7 @@ async function resolveInherited(
   if (!template) return [];
 
   const lastDocument = await db.journalDocument.findFirst({
-    where: { organizationId: args.organizationId, templateId: template.id },
+    where: { organizationId: args.organizationId, templateId: template.id, ...buildingWhere(args.buildingId) },
     orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
     select: { id: true, createdAt: true },
   });
@@ -179,6 +185,7 @@ async function resolveInherited(
   const aliveIds = await loadAliveIds(db, {
     organizationId: args.organizationId,
     ids: previousIds,
+    buildingId: args.buildingId,
   });
   const inherited = keepAliveIds(previousIds, aliveIds);
 
@@ -195,6 +202,7 @@ async function resolveInherited(
       isActive: true,
       archivedAt: null,
       ...NOT_COMMISSION_WHERE,
+      ...staffAtBuildingWhere(args.buildingId),
       createdAt: { gt: lastDocument.createdAt },
     },
     select: { id: true },
@@ -212,6 +220,8 @@ export async function resolveAutomationStaff(
     organizationId: string;
     templateCode: string;
     staffPolicy?: JournalAutomationStaff;
+    /** Точка документа: в строки попадают только её сотрудники. */
+    buildingId?: string | null;
   }
 ): Promise<ResolveAutomationStaffResult> {
   const policy = args.staffPolicy;
@@ -220,6 +230,7 @@ export async function resolveAutomationStaff(
     const aliveIds = await loadAliveIds(db, {
       organizationId: args.organizationId,
       ids: policy.userIds,
+      buildingId: args.buildingId,
     });
     const employeeIds = keepAliveIds(policy.userIds, aliveIds);
     if (employeeIds.length > 0) return { employeeIds, source: "custom" };

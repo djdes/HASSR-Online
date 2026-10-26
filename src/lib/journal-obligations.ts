@@ -121,7 +121,8 @@ export type ObligationDeps = {
   /// получает «просроченные» журналы.
   isUserOffOn: (userId: string, date: Date) => Promise<boolean>;
   getAllowedJournalCodes: (actor: UserActor) => Promise<string[] | null>;
-  getDisabledJournalCodes: (organizationId: string) => Promise<Set<string>>;
+  /** С точкой — набор точки, если он у неё свой (слитая организация). */
+  getDisabledJournalCodes: (organizationId: string, buildingId?: string | null) => Promise<Set<string>>;
   listTemplates: () => Promise<ObligationTemplate[]>;
   /// Множество user-id, которым в принципе разрешено брать на себя
   /// этот шаблон (по white-list-у должностей + UserJournalAccess
@@ -144,6 +145,7 @@ export type ObligationDeps = {
     organizationId: string;
     template: ObligationTemplate;
     dateKey: Date;
+    buildingId?: string | null;
   }) => Promise<{ id: string; organizationId: string } | null>;
   getTemplateTodaySummary: (
     organizationId: string,
@@ -283,14 +285,15 @@ function createDefaultDeps(): ObligationDeps {
         ? userBuildingTargets(organizationId, userId)
         : buildingTargets(organizationId);
     },
-    async pickSingleAssignee({ organizationId, template, dateKey }) {
+    async pickSingleAssignee({ organizationId, template, dateKey, buildingId }) {
       const picked = await loadSingleAssignee(
         organizationId,
         {
           id: template.id,
           defaultAssigneeId: template.defaultAssigneeId ?? null,
         },
-        dateKey
+        dateKey,
+        buildingId ?? null
       );
       return picked
         ? { id: picked.id, organizationId: picked.organizationId }
@@ -541,9 +544,16 @@ export async function syncDailyJournalObligationsForUser(
   const userTargets = await deps.getBuildingTargets(args.organizationId, args.userId);
   const rows: ObligationRow[] = [];
   const keepDedupeKeys = new Set<string>();
+  // Свой набор журналов точки (слитая организация): выключенный на точке
+  // журнал там обязательством не становится.
+  const pointDisabled = new Map<string, Set<string>>();
+  for (const buildingId of userTargets) {
+    if (buildingId) pointDisabled.set(buildingId, await deps.getDisabledJournalCodes(args.organizationId, buildingId));
+  }
   for (const template of filteredTemplates) {
     const isDocumentTarget = usesDocumentTarget(template);
     for (const buildingId of userTargets) {
+    if (buildingId && pointDisabled.get(buildingId)?.has(template.code)) continue;
     const summary = await deps.getTemplateTodaySummary(
       args.organizationId,
       template.id,
@@ -667,12 +677,17 @@ export async function syncDailyJournalObligationsForOrganization(
   // Точки: единственное обязательство — на каждую точку (исполнитель
   // выбирается тем же раунд-робином; ограничение по точке — в eligibility).
   const orgTargets = await deps.getBuildingTargets(organizationId, null);
+  const pointDisabled = new Map<string, Set<string>>();
+  for (const buildingId of orgTargets) {
+    if (buildingId) pointDisabled.set(buildingId, await deps.getDisabledJournalCodes(organizationId, buildingId));
+  }
   for (const template of templates) {
     if (!isDailyObligationCode(template.code)) continue;
     if (disabledCodes.has(template.code)) continue;
     if (templateFillMode(template) !== "single") continue;
 
     for (const buildingId of orgTargets) {
+    if (buildingId && pointDisabled.get(buildingId)?.has(template.code)) continue;
     const summary = await deps.getTemplateTodaySummary(
       organizationId,
       template.id,
@@ -682,10 +697,12 @@ export async function syncDailyJournalObligationsForOrganization(
     );
     if (summary.aperiodic) continue;
 
+    // Исполнитель — из сотрудников этой точки.
     const assignee = await deps.pickSingleAssignee({
       organizationId,
       template,
       dateKey,
+      buildingId,
     });
     if (!assignee) continue;
     // Тот же принцип, что и в per-employee: в свой выходной человек

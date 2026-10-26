@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
 import { commissionRoleKind, isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { readOrgCommission, saveOrgCommission } from "@/lib/brakerage-commission-org";
@@ -30,14 +31,20 @@ async function guard(ctx: Ctx) {
   if (!isCommissionJournalCode(code)) {
     return { error: NextResponse.json({ error: "Бракеражная комиссия есть только у бракеража готовой и скоропортящейся продукции" }, { status: 400 }) } as const;
   }
-  return { session, code, organizationId: getActiveOrgId(session) } as const;
+  // Точка со своим составом (слитая организация) — состав активной точки.
+  return {
+    session,
+    code,
+    organizationId: getActiveOrgId(session),
+    buildingId: await getActiveBuildingId(session),
+  } as const;
 }
 
 export async function GET(_request: Request, ctx: Ctx) {
   const auth = await guard(ctx);
   if ("error" in auth) return auth.error;
   const [members, users] = await Promise.all([
-    readOrgCommission(auth.organizationId, auth.code),
+    readOrgCommission(auth.organizationId, auth.code, auth.buildingId),
     db.user.findMany({
       where: { organizationId: auth.organizationId, ...ORG_SIGNER_WHERE },
       select: {
@@ -88,7 +95,7 @@ export async function PUT(request: Request, ctx: Ctx) {
       roleKind: commissionRoleKind(item.roleKind),
     }))
     .filter((item) => item.employeeId);
-  const result = await saveOrgCommission(auth.organizationId, auth.code, input);
+  const result = await saveOrgCommission(auth.organizationId, auth.code, input, auth.buildingId);
   await recordAuditLog({
     request,
     session: auth.session,

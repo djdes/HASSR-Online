@@ -1,4 +1,5 @@
 import { omitPoolSublabel } from "@/lib/journal-task-pool-copy";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
@@ -6,7 +7,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
 import { type ClaimRow } from "@/lib/journal-task-claims";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { journalIconName, looksLikeJournalCode } from "@/lib/journal-label";
@@ -110,7 +111,11 @@ export async function GET() {
     where: { id: organizationId },
     select: { disabledJournalCodes: true, timezone: true, taskFlowMode: true },
   });
-  const disabled = parseDisabledCodes(org?.disabledJournalCodes);
+  // У точки со своим набором журналов (слитая организация) — её набор.
+  const activeBuildingId = await getActiveBuildingId(session);
+  const disabled = activeBuildingId
+    ? await getDisabledJournalCodes(organizationId, activeBuildingId)
+    : parseDisabledCodes(org?.disabledJournalCodes);
 
   // «Сегодня» — по поясу организации, а не по UTC. С 00:00 до 03:00 по
   // Москве процесс на сервере живёт ещё во вчера: экран показывал

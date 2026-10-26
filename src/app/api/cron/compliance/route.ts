@@ -6,7 +6,9 @@ import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
 import { sendComplianceReminderEmail } from "@/lib/email";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
+import { buildingTargets } from "@/lib/building-targets";
+import { worksAtBuilding } from "@/lib/building-settings";
 import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
@@ -84,7 +86,32 @@ async function handle(request: Request) {
     const results: { org: string; missing: string[] }[] = [];
 
     for (const org of organizations) {
-      const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
+      // Точки: напоминание по каждой точке отдельно — её набор журналов,
+      // её документы и её руководители (слитая организация, 2026-10-26).
+      // Без точек — одно напоминание на организацию, как раньше.
+      const targets = await buildingTargets(org.id);
+      const pointIds = targets.filter((id): id is string => Boolean(id));
+      const pointNames = new Map(
+        (pointIds.length > 0
+          ? await db.building.findMany({ where: { id: { in: pointIds } }, select: { id: true, name: true } })
+          : []
+        ).map((building) => [building.id, building.name])
+      );
+      const managers = stageCfg.emailEnabled
+        ? await db.user.findMany({
+            where: {
+              organizationId: org.id,
+              role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
+              isActive: true,
+            },
+            select: { email: true, locale: true, buildingIds: true },
+          })
+        : [];
+
+      for (const buildingId of targets) {
+      const disabledCodes = buildingId
+        ? await getDisabledJournalCodes(org.id, buildingId)
+        : parseDisabledCodes(org.disabledJournalCodes);
 
       // Use the same compliance helper the dashboard uses. Aperiodic
       // journals are already treated as filled by default, disabled
@@ -96,7 +123,7 @@ async function handle(request: Request) {
         new Date(),
         mandatoryTemplates.map((t) => ({ id: t.id, code: t.code })),
         disabledCodes,
-        { treatAperiodicAsFilled: false }
+        { treatAperiodicAsFilled: false, buildingId }
       );
 
       const missingTemplates = mandatoryTemplates.filter(
@@ -110,12 +137,16 @@ async function handle(request: Request) {
       const missingNames = missingTemplates.map((t) =>
         journalDisplayName(customNames, t.code, t.name)
       );
+      const pointName = buildingId ? pointNames.get(buildingId) ?? null : null;
+      const placeName = pointName ? `${org.name} · ${pointName}` : org.name;
 
-      results.push({ org: org.name, missing: missingNames });
+      results.push({ org: placeName, missing: missingNames });
 
       // Эскалация: контент сообщения зависит от stage (soft / warn / urgent).
       const telegramMsg =
-        `${stageCfg.emoji} <b>${stageCfg.prefix}: незаполненные журналы за сегодня</b>\n\n` +
+        `${stageCfg.emoji} <b>${stageCfg.prefix}: незаполненные журналы за сегодня</b>\n` +
+        (pointName ? `Точка: ${esc(pointName)}\n` : "") +
+        `\n` +
         missingNames.map((n) => `• ${esc(n)}`).join("\n") +
         `\n\nВсего не заполнено: ${missingNames.length} из ${mandatoryTemplates.length}`;
 
@@ -126,34 +157,29 @@ async function handle(request: Request) {
         org.id,
         telegramMsg,
         ["owner", "technologist"],
-        "compliance"
+        "compliance",
+        undefined,
+        { buildingId }
       ).catch((err) =>
-        console.error(`Compliance telegram error (${org.name}):`, err)
+        console.error(`Compliance telegram error (${placeName}):`, err)
       );
 
       // Email шлём только начиная со stage `warn`. На stage `soft`
-      // (12:00) — только Telegram, чтобы не спамить почту.
+      // (12:00) — только Telegram, чтобы не спамить почту. Руководителю
+      // точки — только про его точку.
       if (stageCfg.emailEnabled) {
-        const users = await db.user.findMany({
-          where: {
-            organizationId: org.id,
-            role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
-            isActive: true,
-          },
-          select: { email: true, locale: true },
-        });
-
-        for (const user of users) {
+        for (const user of managers.filter((manager) => worksAtBuilding(manager, buildingId))) {
           sendComplianceReminderEmail({
             to: user.email,
             missingJournals: missingNames,
-            organizationName: org.name,
+            organizationName: placeName,
             organizationId: org.id,
             locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: org.locale }),
           }).catch((err) =>
             console.error(`Compliance email error:`, err)
           );
         }
+      }
       }
     }
 

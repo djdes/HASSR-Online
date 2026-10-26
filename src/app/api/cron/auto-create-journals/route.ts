@@ -10,6 +10,7 @@ import {
   ensureNextPeriodDocument,
 } from "@/lib/journal-auto-create";
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
+import { loadBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
@@ -112,39 +113,47 @@ async function handle(request: Request) {
     // Коды, которые целиком ведёт cron автоматизации 06:00
     // (/api/cron/journal-automation), здесь пропускаем: он создаёт
     // документ сразу с autoFill=true, а мы бы создали его без флага.
-    const ownedByAutomation = new Set(listAutomationOwnedCodes(org));
-    const codes = (
-      Array.isArray(org.autoJournalCodes)
-        ? (org.autoJournalCodes as string[]).filter(
-            (c): c is string => typeof c === "string"
-          )
-        : []
-    ).filter((code) => !ownedByAutomation.has(code) && !disabledCodes.has(code));
-    if (codes.length === 0) continue;
+    // У точки со своей автоматикой (слитая организация) — её списки.
+    const buildingSettings = await loadBuildingJournalSettings(db, org.id);
+    const jobs = targets.flatMap((buildingId) => {
+      const settings = withBuildingJournalSettings(
+        org,
+        buildingId ? buildingSettings.get(buildingId) : null,
+      );
+      const ownedByAutomation = new Set(listAutomationOwnedCodes(settings));
+      const targetDisabled = parseDisabledCodes(settings?.disabledJournalCodes);
+      const codes = (
+        Array.isArray(settings?.autoJournalCodes)
+          ? (settings.autoJournalCodes as unknown[]).filter(
+              (c): c is string => typeof c === "string"
+            )
+          : []
+      ).filter((code) => !ownedByAutomation.has(code) && !targetDisabled.has(code));
+      return codes.map((code) => ({ code, buildingId }));
+    });
+    if (jobs.length === 0) continue;
     orgsTouched += 1;
 
-    for (const code of codes) {
-      for (const buildingId of targets) {
-        try {
-          const cur = await ensureActiveDocument(db, {
-            organizationId: org.id,
-            templateCode: code,
-            buildingId,
-          });
-          if (cur.created) totalCurrentCreated += 1;
+    for (const { code, buildingId } of jobs) {
+      try {
+        const cur = await ensureActiveDocument(db, {
+          organizationId: org.id,
+          templateCode: code,
+          buildingId,
+        });
+        if (cur.created) totalCurrentCreated += 1;
 
-          const nxt = await ensureNextPeriodDocument(db, {
-            organizationId: org.id,
-            templateCode: code,
-            lookaheadDays: 7,
-            buildingId,
-          });
-          if (nxt.created) totalNextCreated += 1;
-        } catch (err) {
-          errors.push(
-            `org=${org.id} code=${code}: ${(err as Error).message ?? "ошибка"}`
-          );
-        }
+        const nxt = await ensureNextPeriodDocument(db, {
+          organizationId: org.id,
+          templateCode: code,
+          lookaheadDays: 7,
+          buildingId,
+        });
+        if (nxt.created) totalNextCreated += 1;
+      } catch (err) {
+        errors.push(
+          `org=${org.id} code=${code}: ${(err as Error).message ?? "ошибка"}`
+        );
       }
     }
   }

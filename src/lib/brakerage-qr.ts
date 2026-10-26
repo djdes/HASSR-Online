@@ -88,16 +88,23 @@ export async function listBrakerageDayRows(params: {
       dateFrom: { lte: today },
       dateTo: { gte: yesterday },
     },
-    select: { id: true, config: true, dateTo: true },
+    select: { id: true, config: true, dateTo: true, buildingId: true },
     orderBy: { dateFrom: "desc" },
   });
   // Выбранный документ и вчерашний, ещё не закрытый (кончился вчера — переход
   // месяца). Документы других точек с тем же журналом сюда не попадают.
-  const docs = found.filter((doc) => doc.id === params.primaryDocumentId || doc.dateTo < today);
+  const primaryBuildingId = found.find((doc) => doc.id === params.primaryDocumentId)?.buildingId ?? null;
+  const docs = found.filter(
+    (doc) =>
+      doc.id === params.primaryDocumentId ||
+      (doc.dateTo < today && (!primaryBuildingId || !doc.buildingId || doc.buildingId === primaryBuildingId))
+  );
   const primary = docs.find((doc) => doc.id === params.primaryDocumentId) ?? docs[0];
   const rows: BrakerageQrRow[] = [];
-  // Утверждённый состав организации — у обоих бракеражей с комиссией.
-  const orgMembers = isCommissionJournalCode(params.code) ? await readOrgCommission(params.organizationId, params.code) : [];
+  // Утверждённый состав (точки, если у неё свой) — у обоих бракеражей с комиссией.
+  const orgMembers = isCommissionJournalCode(params.code)
+    ? await readOrgCommission(params.organizationId, params.code, primaryBuildingId)
+    : [];
 
   for (const doc of docs) {
     if (params.code === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE) {

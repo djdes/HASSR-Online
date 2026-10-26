@@ -563,7 +563,7 @@ export async function PATCH(
   // страница была открыта, не затираются — слияние под блокировкой
   // документа (см. brakerage-row-merge.ts).
   let updated;
-  const orgCommissionMember = template?.code === "finished_product" && (await readOrgCommission(doc.organizationId, template.code)).some(member => member.employeeId === session.user.id);
+  const orgCommissionMember = template?.code === "finished_product" && (await readOrgCommission(doc.organizationId, template.code, doc.buildingId)).some(member => member.employeeId === session.user.id);
   try {
   updated =
     isBrakerageJournalCode(template?.code) && data.config !== undefined

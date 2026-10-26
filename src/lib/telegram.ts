@@ -1,4 +1,5 @@
 import { Bot, InputFile } from "grammy";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { isUrgentKind, parseQuietHours, quietUntil } from "@/lib/quiet-hours";
 
 import { createTelegramFetch } from "@/lib/telegram-fetch";
@@ -782,7 +783,9 @@ export type OrganizationRecipient = {
 export async function listOrganizationRecipients(
   organizationId: string,
   roles: string[] = ["owner", "technologist"],
-  type?: NotificationType
+  type?: NotificationType,
+  /** Точка: только руководители, работающие на ней (пустой `buildingIds` — везде). */
+  buildingId?: string | null
 ): Promise<OrganizationRecipient[]> {
   const { db } = await import("./db");
   const mobilePush = await import("./mobile-push");
@@ -806,6 +809,7 @@ export async function listOrganizationRecipients(
             ],
           }
         : { telegramChatId: { not: null } }),
+      ...(buildingId ? { AND: [staffAtBuildingWhere(buildingId)] } : {}),
       isActive: true,
     },
     select: {
@@ -874,6 +878,8 @@ export async function notifyOrganization(
      * и push уходит оттуда. Одно событие — один push.
      */
     appPush?: boolean;
+    /** Событие точки: получают руководители этой точки и всей организации. */
+    buildingId?: string | null;
   }
 ): Promise<void> {
   const { telegramConsultantFooter } = await import("./partners/branding");
@@ -883,7 +889,7 @@ export async function notifyOrganization(
   // партнёра нет или клиент скрыл брендинг.
   const consultantFooter = await telegramConsultantFooter(organizationId);
 
-  const filtered = await listOrganizationRecipients(organizationId, roles, type);
+  const filtered = await listOrganizationRecipients(organizationId, roles, type, opts?.buildingId);
 
   const replyMarkup = action
     ? buildTelegramWebAppKeyboard({

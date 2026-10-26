@@ -15,6 +15,8 @@ import { db } from "@/lib/db";
 export type LockedDocument = {
   id: string;
   organizationId: string;
+  /** Точка документа (комиссия и списки мастера — по точке). */
+  buildingId: string | null;
   config: Prisma.JsonValue;
   status: string;
   verifierUserId: string | null;
@@ -37,6 +39,7 @@ export async function withDocumentConfigLock<T>(
         select: {
           id: true,
           organizationId: true,
+          buildingId: true,
           config: true,
           status: true,
           verifierUserId: true,
@@ -49,6 +52,7 @@ export async function withDocumentConfigLock<T>(
         {
           id: doc.id,
           organizationId: doc.organizationId,
+          buildingId: doc.buildingId,
           config: doc.config,
           status: doc.status,
           verifierUserId: doc.verifierUserId,

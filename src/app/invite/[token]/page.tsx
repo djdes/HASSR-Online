@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { listPoolOrganizations } from "@/lib/master-directory";
 import { hashInviteToken } from "@/lib/invite-tokens";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
@@ -80,7 +80,7 @@ export default async function InviteAcceptPage({ params }: PageProps) {
       // скольким пищеблокам уходят его списки (пул служебного кода без самого кабинета).
       const org = row.user.organization;
       const poolObjects =
-        org.kind === "directory" ? Math.max(0, (await resolveDishPoolOrgIds(org.id)).length - 1) : 0;
+        org.kind === "directory" ? (await listPoolOrganizations(org.id)).length : 0;
       // Приглашён в мастер-кабинет сотрудником организации (группа
       // «Мастер-кабинет»): кабинет — тот, куда звали (lastActiveOrganizationId).
       const cabinets = org.kind === "directory" ? [] : row.user.organizationMemberships.map((m) => m.organization);
@@ -90,7 +90,7 @@ export default async function InviteAcceptPage({ params }: PageProps) {
         ? {
             id: cabinet.id,
             name: cabinet.name,
-            poolObjects: Math.max(0, (await resolveDishPoolOrgIds(cabinet.id)).length - 1),
+            poolObjects: (await listPoolOrganizations(cabinet.id)).length,
           }
         : null;
       user = {

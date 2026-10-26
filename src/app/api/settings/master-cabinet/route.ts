@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getActiveBuildingId } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
 import { checkSeatsForActivation, seatLimitResponse, type SeatGuard } from "@/lib/billing.server";
 import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
@@ -43,13 +44,13 @@ async function guard() {
   if (!hasFullWorkspaceAccess(session.user)) {
     return { error: NextResponse.json({ error: "Это настройка руководителя" }, { status: 403 }) } as const;
   }
-  return { session, organizationId: getActiveOrgId(session) } as const;
+  return { session, organizationId: getActiveOrgId(session), buildingId: await getActiveBuildingId(session) } as const;
 }
 
 export async function GET() {
   const auth = await guard();
   if ("error" in auth) return auth.error;
-  return NextResponse.json(await getMasterCabinetStatus(auth.organizationId, auth.session.user.id));
+  return NextResponse.json(await getMasterCabinetStatus(auth.organizationId, auth.session.user.id, auth.buildingId));
 }
 
 /** PATCH { name } — переименовать мастер-кабинет пула (владелец / руководитель пищеблока). */
@@ -57,7 +58,7 @@ export async function PATCH(request: Request) {
   const auth = await guard();
   if ("error" in auth) return auth.error;
   const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
-  const status = await getMasterCabinetStatus(auth.organizationId, auth.session.user.id);
+  const status = await getMasterCabinetStatus(auth.organizationId, auth.session.user.id, auth.buildingId);
   if (!status.master) {
     return NextResponse.json({ error: "Мастер-кабинета в вашем пуле пока нет" }, { status: 404 });
   }
@@ -88,7 +89,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({
       name: result.name,
       changed: result.changed,
-      status: await getMasterCabinetStatus(auth.organizationId, auth.session.user.id),
+      status: await getMasterCabinetStatus(auth.organizationId, auth.session.user.id, auth.buildingId),
     });
   } catch (err) {
     if (err instanceof MasterCabinetError) return NextResponse.json({ error: err.message }, { status: err.status });
@@ -191,6 +192,6 @@ export async function POST(request: Request) {
     user: result.user,
     inviteUrl: result.inviteUrl,
     emailSent,
-    status: await getMasterCabinetStatus(auth.organizationId, auth.session.user.id),
+    status: await getMasterCabinetStatus(auth.organizationId, auth.session.user.id, auth.buildingId),
   });
 }

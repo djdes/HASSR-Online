@@ -335,8 +335,32 @@ export async function readOrgKind(orgId: string | null | undefined): Promise<Org
   return parseOrgKind(org?.kind);
 }
 
-/** Мастер-кабинет (`kind="directory"`) в пуле организации; сам мастер — тоже находит себя. */
-export async function findPoolMasterOrgId(orgId: string): Promise<string | null> {
+/** Мастер-кабинет пула с кодом `code` (самый ранний, если их несколько). */
+async function findMasterByPoolCode(code: string): Promise<string | null> {
+  const master = await db.organization.findFirst({
+    where: {
+      kind: MASTER_ORG_KIND,
+      OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }],
+    },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return master?.id ?? null;
+}
+
+/**
+ * Мастер-кабинет (`kind="directory"`) в пуле организации; сам мастер — тоже
+ * находит себя. С точкой, подключённой к пулу (`Building.linkedServiceCode`,
+ * слитая организация), — мастер пула точки.
+ */
+export async function findPoolMasterOrgId(orgId: string, buildingId?: string | null): Promise<string | null> {
+  if (buildingId) {
+    const building = await db.building.findFirst({
+      where: { id: buildingId, organizationId: orgId },
+      select: { linkedServiceCode: true },
+    });
+    if (building?.linkedServiceCode) return findMasterByPoolCode(building.linkedServiceCode);
+  }
   const self = await db.organization.findUnique({
     where: { id: orgId },
     select: { kind: true, serviceCode: true, linkedServiceCode: true },
@@ -356,6 +380,27 @@ export async function findPoolMasterOrgId(orgId: string): Promise<string | null>
   return master?.id ?? null;
 }
 
+/**
+ * Все мастер-кабинеты организации: её пула и пулов её точек. Для подсказок
+ * и справочника организации, где точка не выбрана, — списки объединяются.
+ */
+async function findPoolMasterOrgIds(orgId: string): Promise<string[]> {
+  const [own, buildings] = await Promise.all([
+    findPoolMasterOrgId(orgId),
+    db.building.findMany({
+      where: { organizationId: orgId, linkedServiceCode: { not: null } },
+      select: { linkedServiceCode: true },
+      distinct: ["linkedServiceCode"],
+    }),
+  ]);
+  const ids = own ? [own] : [];
+  for (const building of buildings) {
+    const master = building.linkedServiceCode ? await findMasterByPoolCode(building.linkedServiceCode) : null;
+    if (master && !ids.includes(master)) ids.push(master);
+  }
+  return ids;
+}
+
 export async function listSharedItems(masterOrgId: string, kind: SharedKind): Promise<SharedItem[]> {
   const rows = await db.sharedDirectoryItem.findMany({
     where: { organizationId: masterOrgId, kind },
@@ -372,11 +417,27 @@ export async function listSharedItems(masterOrgId: string, kind: SharedKind): Pr
   }));
 }
 
-/** Список мастера в пуле организации (пусто — мастера в пуле нет). */
-export async function listPoolSharedItems(orgId: string, kind: SharedKind): Promise<SharedItem[]> {
-  const masterOrgId = await findPoolMasterOrgId(orgId);
-  if (!masterOrgId) return [];
-  return listSharedItems(masterOrgId, kind);
+/**
+ * Список мастера в пуле организации (пусто — мастера в пуле нет). Без
+ * точки у организации, чьи точки в разных пулах, — списки всех её мастеров.
+ */
+export async function listPoolSharedItems(
+  orgId: string,
+  kind: SharedKind,
+  buildingId?: string | null
+): Promise<SharedItem[]> {
+  const masterOrgIds = buildingId
+    ? [await findPoolMasterOrgId(orgId, buildingId)].filter((id): id is string => Boolean(id))
+    : await findPoolMasterOrgIds(orgId);
+  if (masterOrgIds.length <= 1) return masterOrgIds[0] ? listSharedItems(masterOrgIds[0], kind) : [];
+  const lists = await Promise.all(masterOrgIds.map((id) => listSharedItems(id, kind)));
+  const seen = new Set<string>();
+  return lists.flat().filter((item) => {
+    const key = keyOf(item.name);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /** Имена списка мастера в пуле организации (пусто — мастера в пуле нет). */
@@ -413,13 +474,82 @@ export async function replaceSharedItems(
   return { total: normalized.length };
 }
 
-/** Организации пула мастер-кабинета, кроме самого кабинета. */
-export async function listPoolOrganizations(masterOrgId: string): Promise<Array<{ id: string; name: string }>> {
-  const poolIds = await resolveDishPoolOrgIds(masterOrgId);
-  const orgs = await db.organization.findMany({
-    where: { id: { in: poolIds.filter((id) => id !== masterOrgId) }, ...NOT_DIRECTORY_ORG_WHERE },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
+/**
+ * Объект пула мастера: организация целиком или её точка, подключённая к
+ * пулу (`Building.linkedServiceCode`, слитая организация). `id` — ключ
+ * объекта: id организации или `<организация>:<точка>`.
+ */
+export type PoolObject = {
+  id: string;
+  name: string;
+  organizationId: string;
+  buildingId: string | null;
+};
+
+export function poolObjectId(organizationId: string, buildingId: string | null | undefined): string {
+  return buildingId ? `${organizationId}:${buildingId}` : organizationId;
+}
+
+/** Название объекта точки: «Организация · Точка». */
+export function poolObjectName(organizationName: string, buildingName: string | null | undefined): string {
+  return buildingName ? `${organizationName} · ${buildingName}` : organizationName;
+}
+
+/** Код пула мастер-кабинета: привязка или свой код. */
+export async function masterPoolCode(masterOrgId: string): Promise<string | null> {
+  const master = await db.organization.findUnique({
+    where: { id: masterOrgId },
+    select: { serviceCode: true, linkedServiceCode: true },
   });
-  return orgs;
+  return master?.linkedServiceCode ?? master?.serviceCode ?? null;
+}
+
+/** Объекты пула мастер-кабинета (организации и точки), кроме самого кабинета. */
+export async function listPoolOrganizations(masterOrgId: string): Promise<PoolObject[]> {
+  const [poolIds, code] = await Promise.all([resolveDishPoolOrgIds(masterOrgId), masterPoolCode(masterOrgId)]);
+  const [orgs, buildings] = await Promise.all([
+    db.organization.findMany({
+      where: { id: { in: poolIds.filter((id) => id !== masterOrgId) }, ...NOT_DIRECTORY_ORG_WHERE },
+      select: { id: true, name: true },
+    }),
+    code
+      ? db.building.findMany({
+          where: { linkedServiceCode: code, organization: NOT_DIRECTORY_ORG_WHERE },
+          select: { id: true, name: true, organizationId: true, organization: { select: { name: true } } },
+        })
+      : Promise.resolve([]),
+  ]);
+  const objects: PoolObject[] = [
+    ...orgs.map((org) => ({ id: org.id, name: org.name, organizationId: org.id, buildingId: null })),
+    // Точка организации, которая и сама целиком в пуле, отдельным объектом
+    // не нужна — её документы уже получает организация.
+    ...buildings
+      .filter((building) => !poolIds.includes(building.organizationId))
+      .map((building) => ({
+        id: poolObjectId(building.organizationId, building.id),
+        name: poolObjectName(building.organization.name, building.name),
+        organizationId: building.organizationId,
+        buildingId: building.id,
+      })),
+  ];
+  return objects.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+}
+
+/** Объект ещё в пуле этого кода: точка — по своей привязке, организация — по своей. */
+export async function isPoolObjectInPool(
+  object: { organizationId: string; buildingId?: string | null },
+  code: string
+): Promise<boolean> {
+  if (object.buildingId) {
+    const building = await db.building.findFirst({
+      where: { id: object.buildingId, organizationId: object.organizationId },
+      select: { linkedServiceCode: true, organization: { select: { kind: true } } },
+    });
+    return Boolean(building && building.organization.kind !== MASTER_ORG_KIND && building.linkedServiceCode === code);
+  }
+  const org = await db.organization.findUnique({
+    where: { id: object.organizationId },
+    select: { kind: true, serviceCode: true, linkedServiceCode: true },
+  });
+  return Boolean(org && org.kind !== MASTER_ORG_KIND && (org.linkedServiceCode ?? org.serviceCode) === code);
 }

@@ -9,6 +9,7 @@ import {
   getAutofillCapability,
 } from "@/lib/journal-autofill-capability";
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
+import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 
 export const runtime = "nodejs";
@@ -44,7 +45,7 @@ const SUPPORTED_CODES = AUTOFILL_SUPPORTED_CODES.filter(
   (code) => getAutofillCapability(code) !== "config-matrix",
 );
 
-type OrgUser = { id: string; name: string; role: string };
+type OrgUser = { id: string; name: string; role: string; buildingIds: string[] };
 
 async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
@@ -83,10 +84,12 @@ async function handle(request: Request) {
   //    остаться `autoFill: true`, и cron заполнял бы журнал, который
   //    организация не ведёт.
   const skippedByOrg = new Map<string, Set<string>>();
-  async function getSkippedCodes(organizationId: string): Promise<Set<string>> {
-    const cached = skippedByOrg.get(organizationId);
+  async function getSkippedCodes(organizationId: string, buildingId: string | null): Promise<Set<string>> {
+    // У точки со своей автоматикой (слитая организация) — её настройки.
+    const cacheKey = `${organizationId}:${buildingId ?? ""}`;
+    const cached = skippedByOrg.get(cacheKey);
     if (cached) return cached;
-    const org = await db.organization.findUnique({
+    const orgRow = await db.organization.findUnique({
       where: { id: organizationId },
       select: {
         journalAutomationJson: true,
@@ -94,11 +97,12 @@ async function handle(request: Request) {
         disabledJournalCodes: true,
       },
     });
+    const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, buildingId));
     const skipped = new Set([
       ...listAutomationOwnedCodes(org),
       ...parseDisabledCodes(org?.disabledJournalCodes),
     ]);
-    skippedByOrg.set(organizationId, skipped);
+    skippedByOrg.set(cacheKey, skipped);
     return skipped;
   }
 
@@ -110,7 +114,7 @@ async function handle(request: Request) {
       where: { organizationId, isActive: true },
       // name нужен движку для подписи контролёра (фритюр), role — для
       // фолбэка «ответственный не задан → primary-менеджер».
-      select: { id: true, name: true, role: true },
+      select: { id: true, name: true, role: true, buildingIds: true },
       orderBy: [{ role: "asc" }, { id: "asc" }],
     });
     usersByOrg.set(organizationId, users);
@@ -127,9 +131,12 @@ async function handle(request: Request) {
     if ((await getJournalControls(document.organizationId)).specialMode) continue;
     const code = document.template.code;
     try {
-      const skipped = await getSkippedCodes(document.organizationId);
+      const skipped = await getSkippedCodes(document.organizationId, document.buildingId);
       if (skipped.has(code)) continue;
-      const users = await getUsers(document.organizationId);
+      // Строки кадровых журналов — сотрудники точки документа.
+      const users = (await getUsers(document.organizationId)).filter((user) =>
+        worksAtBuilding(user, document.buildingId),
+      );
       if (users.length === 0) continue;
 
       const result = await applyJournalAutoFill(db, {

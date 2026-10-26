@@ -1,4 +1,5 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
+import { readBuildingJournalSettings, staffAtBuildingWhere, withBuildingJournalSettings } from "@/lib/building-settings";
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -76,11 +77,13 @@ export async function POST(
     return NextResponse.json({ error: "Не указано действие" }, { status: 400 });
   }
 
-  // Ростер документа — живые сотрудники этой организации, без ROOT.
+  // Ростер документа — живые сотрудники этой организации, без ROOT;
+  // у документа точки — только сотрудники, работающие на ней.
   const users = await db.user.findMany({
     where: {
       organizationId: getActiveOrgId(session),
       ...ORG_ROSTER_WHERE,
+      ...staffAtBuildingWhere(document.buildingId),
     },
     select: { id: true, role: true },
   });
@@ -94,21 +97,24 @@ export async function POST(
    * Политики нет — прежнее поведение (все активные сотрудники).
    */
   const templateCode = document.template.code;
+  const documentBuildingId = document.buildingId;
   const organizationId = getActiveOrgId(session);
   const allUserIds = users.map((user) => user.id);
 
   async function resolveTargetUserIds(): Promise<string[]> {
     if (!isPerEmployeeJournal(templateCode)) return allUserIds;
-    const org = await db.organization.findUnique({
+    const orgRow = await db.organization.findUnique({
       where: { id: organizationId },
       select: { journalAutomationJson: true, autoJournalCodes: true },
     });
+    const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, documentBuildingId));
     const staffPolicy = getJournalAutomation(org, templateCode).staff;
     if (!staffPolicy) return allUserIds;
     const resolved = await resolveAutomationStaff(db, {
       organizationId,
       templateCode,
       staffPolicy,
+      buildingId: documentBuildingId,
     });
     return resolved.employeeIds.length > 0 ? resolved.employeeIds : allUserIds;
   }

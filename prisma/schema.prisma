@@ -566,8 +566,33 @@ model Organization {
   journalOrderScans              JournalOrderScan[]
   /// «Пришла проверка» → журнал посещений (2026-10-17).
   inspectionVisits               InspectionVisit[]
+  /// Организации, слитые в точки этой (2026-10-26).
+  mergedOrganizations            OrganizationMerge[]
 
   @@index([isDemo, demoExpiresAt])
+}
+
+/// Организация, слитая в точку другой (2026-10-26, кабинет МАУ «КП «ДК»).
+///
+/// Сама организация удалена: её данные переехали в `organizationId`, а
+/// документы, цеха и сотрудники привязаны к точке `buildingId`. Строка
+/// остаётся навсегда — по старому id старые QR-ссылки
+/// (`/journal-fill/<старый id>/…`) ведут в нужную точку
+/// (`src/lib/organization-merge.ts`), а снимок хранит все поля и логотип
+/// прежней организации.
+model OrganizationMerge {
+  oldOrganizationId String       @id
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  buildingId        String?
+  oldName           String
+  /// Строка `Organization` целиком на момент слияния.
+  snapshot          Json
+  logo              Bytes?
+  logoMime          String?
+  mergedAt          DateTime     @default(now())
+
+  @@index([organizationId])
 }
 
 model MasterBrakerageBatch {
@@ -936,11 +961,30 @@ model Building {
   mercuryEnterprises MercuryEnterprise[]
   /// Цеха точки (2026-10-17): «точка → помещения → оборудование».
   areas              Area[]
+  /// Свои настройки журналов точки поверх организации (2026-10-26, слияние
+  /// организаций в точки): те же поля, что у `Organization`; null — как у
+  /// организации. Автоматику читает src/lib/building-settings.ts, комиссию —
+  /// src/lib/brakerage-commission-org.ts.
+  autoJournalCodes      Json?
+  journalAutomationJson Json?
+  journalCommissionJson Json?
+  /// Журналы, выключенные на точке (как `Organization.disabledJournalCodes`).
+  /// Задан — «Сегодня», список журналов, наборы и автоматика точки берут
+  /// его; у организации тогда остаются выключенными только журналы,
+  /// выключенные на всех точках (src/lib/disabled-journals.ts).
+  disabledJournalCodes  Json?
+  /// Бумажные бланки, скрытые на точке (как `Organization.disabledPaperJournalIds`).
+  disabledPaperJournalIds Json?
+  /// Код пула мастер-кабинета, к которому подключена точка (как
+  /// `Organization.linkedServiceCode`, но для одной точки): мастер видит
+  /// её отдельным объектом и пишет только в её документы.
+  linkedServiceCode     String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
   @@unique([organizationId, name])
   @@index([organizationId, sortOrder])
+  @@index([linkedServiceCode])
 }
 
 /// Помещение в здании. Используется как row в матрице журнала

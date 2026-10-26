@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
-import { loadBuildingContext } from "@/lib/active-building";
+import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
@@ -40,7 +40,7 @@ export async function GET() {
   });
   const [allowedCodes, disabledCodes, perms, areas, scope, buildingContext] = await Promise.all([
     getAllowedJournalCodes(actor),
-    getDisabledJournalCodes(getActiveOrgId(session)),
+    getDisabledJournalCodes(getActiveOrgId(session), await getActiveBuildingId(session)),
     getUserPermissions(session.user.id),
     db.area.findMany({
       where: { organizationId: getActiveOrgId(session), lat: { not: null }, lng: { not: null } },

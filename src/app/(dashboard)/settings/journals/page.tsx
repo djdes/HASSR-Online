@@ -5,7 +5,7 @@ import { getActiveBuildingId } from "@/lib/active-building";
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, getDisabledPaperJournalIds, parseDisabledCodes } from "@/lib/disabled-journals";
 import { getFillMode } from "@/lib/journal-routing";
 import { JournalsSettingsClient } from "./journals-settings-client";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -79,8 +79,14 @@ export default async function JournalsSettingsPage() {
     activeDocuments.map((row) => [row.templateId, row._count._all])
   );
 
-  const disabled = parseDisabledCodes(organization?.disabledJournalCodes);
-  const disabledPaper = parseDisabledCodes(organization?.disabledPaperJournalIds);
+  // У точки со своим набором журналов (слитая организация) — её набор.
+  const activeBuildingId = await getActiveBuildingId(session);
+  const disabled = activeBuildingId
+    ? await getDisabledJournalCodes(organizationId, activeBuildingId)
+    : parseDisabledCodes(organization?.disabledJournalCodes);
+  const disabledPaper = activeBuildingId
+    ? await getDisabledPaperJournalIds(organizationId, activeBuildingId)
+    : parseDisabledCodes(organization?.disabledPaperJournalIds);
   const sphere = normalizeSphere(organization?.type);
   const accessByTemplate = new Map<string, string[]>();
   for (const row of positionAccess) {

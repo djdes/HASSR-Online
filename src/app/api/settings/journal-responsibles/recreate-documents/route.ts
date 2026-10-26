@@ -115,12 +115,14 @@ export async function POST() {
       // Считаем prefill ВНЕ транзакции — он сам делает много read-only
       // запросов (org JSON, candidates), нет смысла держать lock.
       const period = resolveJournalPeriod(tpl.code, now, overrides);
+      for (const buildingId of targets) {
+      // Комиссия и списки мастера — свои у точки (слитая организация).
       const prefill = await prefillResponsiblesForNewDocument({
         organizationId,
         journalCode: tpl.code,
         baseConfig: {},
+        buildingId,
       });
-      for (const buildingId of targets) {
       // Атомарно: close existing + create new. Если что-то фейлит —
       // откатим. Без этого можно остаться с закрытыми старыми и без
       // нового → юзер открывает /journals и видит пустой журнал.
@@ -175,6 +177,7 @@ export async function POST() {
         dateFrom: newDoc.dateFrom,
         dateTo: newDoc.dateTo,
         responsibleUserId: prefill.responsibleUserId,
+        buildingId,
       }).catch((err) => {
         // Сидинг — best-effort: если не получилось (например, нет
         // ответственного), документ всё равно остаётся создан, юзер

@@ -14,6 +14,7 @@
  * отчёте «уже был».
  */
 import { buildingWhere } from "@/lib/building-scope";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import type { PrismaClient } from "@prisma/client";
 import {
   parseJournalPeriodsJson,
@@ -537,6 +538,7 @@ async function resolveSeedEmployeeIds(
     organizationId: string;
     templateCode: string;
     org: { journalAutomationJson?: unknown; autoJournalCodes?: unknown } | null;
+    buildingId?: string | null;
   }
 ): Promise<string[] | undefined> {
   if (!isPerEmployeeJournal(args.templateCode)) return undefined;
@@ -546,6 +548,7 @@ async function resolveSeedEmployeeIds(
     organizationId: args.organizationId,
     templateCode: args.templateCode,
     staffPolicy,
+    buildingId: args.buildingId,
   });
   return resolved.employeeIds.length > 0 ? resolved.employeeIds : undefined;
 }
@@ -658,6 +661,11 @@ export async function ensureActiveDocument(
       journalResponsibleUsersJson: true,
     },
   });
+  // Точка со своей автоматикой (слитая организация) — её настройки поверх.
+  const automationOrg = withBuildingJournalSettings(
+    orgRow,
+    await readBuildingJournalSettings(db, args.buildingId),
+  );
   const overrides = parseJournalPeriodsJson(orgRow?.journalPeriods ?? null);
   const period = resolveJournalPeriod(args.templateCode, now, overrides);
 
@@ -694,7 +702,7 @@ export async function ensureActiveDocument(
   const desired = await resolveDesiredResponsibles(db, {
     organizationId: args.organizationId,
     templateId: template.id,
-    policy: getJournalAutomation(orgRow, args.templateCode).responsibles,
+    policy: getJournalAutomation(automationOrg, args.templateCode).responsibles,
   });
   // «Как прошлый журнал» — для cleaning подтягиваем config предыдущего
   // документа (rooms, ответственные, weekday-маски), отрезая matrix/marks
@@ -751,6 +759,7 @@ export async function ensureActiveDocument(
     journalCode: args.templateCode,
     baseConfig: prevConfig ?? carriedConfig ?? {},
     slotOverrides: buildSlotOverrides(args.templateCode, slotDesired),
+    buildingId: args.buildingId ?? null,
   });
   // C1: cleaning собирается от Room организации, а не от blueprint'ов.
   const cleaningRooms =
@@ -776,7 +785,8 @@ export async function ensureActiveDocument(
     resolveSeedEmployeeIds(db, {
       organizationId: args.organizationId,
       templateCode: args.templateCode,
-      org: orgRow,
+      org: automationOrg,
+      buildingId: args.buildingId ?? null,
     }),
   ]);
   const doc = await db.journalDocument.create({
@@ -804,6 +814,7 @@ export async function ensureActiveDocument(
     dateTo: doc.dateTo,
     responsibleUserId,
     employeeIds: seedEmployeeIds,
+    buildingId: args.buildingId ?? null,
   }).catch((err) => {
     console.warn(
       `[journal-auto-create] seedEntries failed for ${args.templateCode}`,
@@ -933,6 +944,10 @@ export async function ensureNextPeriodDocument(
       autoJournalCodes: true,
     },
   });
+  const automationOrgNext = withBuildingJournalSettings(
+    orgRowNext,
+    await readBuildingJournalSettings(db, args.buildingId),
+  );
   const nextOverrides = parseJournalPeriodsJson(
     orgRowNext?.journalPeriods ?? null
   );
@@ -986,13 +1001,14 @@ export async function ensureNextPeriodDocument(
   const desiredNext = await resolveDesiredResponsibles(db, {
     organizationId: args.organizationId,
     templateId: template.id,
-    policy: getJournalAutomation(orgRowNext, args.templateCode).responsibles,
+    policy: getJournalAutomation(automationOrgNext, args.templateCode).responsibles,
   });
   const prefillNext = await prefillResponsiblesForNewDocument({
     organizationId: args.organizationId,
     journalCode: args.templateCode,
     baseConfig: prevConfigNext ?? {},
     slotOverrides: buildSlotOverrides(args.templateCode, desiredNext),
+    buildingId: args.buildingId ?? null,
   });
   const planCfgNext = preplanCleaningConfig(
     args.templateCode,
@@ -1006,7 +1022,8 @@ export async function ensureNextPeriodDocument(
     resolveSeedEmployeeIds(db, {
       organizationId: args.organizationId,
       templateCode: args.templateCode,
-      org: orgRowNext,
+      org: automationOrgNext,
+      buildingId: args.buildingId ?? null,
     }),
   ]);
   const doc = await db.journalDocument.create({
@@ -1038,6 +1055,7 @@ export async function ensureNextPeriodDocument(
     dateTo: doc.dateTo,
     responsibleUserId: prefillNext.responsibleUserId,
     employeeIds: seedEmployeeIdsNext,
+    buildingId: args.buildingId ?? null,
   }).catch((err) => {
     console.warn(
       `[journal-auto-create:next] seedEntries failed for ${args.templateCode}`,

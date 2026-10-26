@@ -98,6 +98,8 @@ export async function seedEntriesForDocument(input: {
    * `JobPositionJournalAccess`, иначе весь активный ростер.
    */
   employeeIds?: string[];
+  /** Точка документа: легаси-состав — только её сотрудники. */
+  buildingId?: string | null;
 }): Promise<EntrySeedResult> {
   const {
     documentId,
@@ -163,6 +165,7 @@ data: { _autoSeeded: true } as never,
         : await loadLegacyEligibleEmployees(db, {
             organizationId,
             templateCode: journalCode,
+            buildingId: input.buildingId,
           });
 
     if (seedEmployeeIds.length === 0) {

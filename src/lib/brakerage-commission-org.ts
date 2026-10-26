@@ -34,23 +34,52 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
-export async function readOrgCommission(organizationId: string, code: string): Promise<BrakerageCommissionMember[]> {
+/**
+ * Где хранится состав: у точки со своим составом (слитая организация,
+ * `Building.journalCommissionJson` задан) — в точке, иначе в организации.
+ */
+async function commissionOwner(
+  organizationId: string,
+  buildingId: string | null | undefined
+): Promise<{ buildingId: string | null; json: unknown }> {
+  if (buildingId) {
+    const building = await db.building.findFirst({
+      where: { id: buildingId, organizationId },
+      select: { journalCommissionJson: true },
+    });
+    if (building && building.journalCommissionJson !== null) {
+      return { buildingId, json: building.journalCommissionJson };
+    }
+  }
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { journalCommissionJson: true },
   });
-  return normalizeCommissionMembers(asRecord(org?.journalCommissionJson)[code]);
+  return { buildingId: null, json: org?.journalCommissionJson ?? null };
+}
+
+/** Состав комиссии журнала; с точкой — состав точки, если он у неё свой. */
+export async function readOrgCommission(
+  organizationId: string,
+  code: string,
+  buildingId?: string | null
+): Promise<BrakerageCommissionMember[]> {
+  const owner = await commissionOwner(organizationId, buildingId);
+  return normalizeCommissionMembers(asRecord(owner.json)[code]);
 }
 
 /**
  * Сохранить состав: имена и id берутся из базы (только сотрудники этой
  * организации, включая стороннюю комиссию), роль — из запроса. Возвращает
- * состав и число обновлённых активных документов.
+ * состав и число обновлённых активных документов. С точкой, у которой свой
+ * состав, — пишется в точку и копируется только в её документы; состав
+ * организации не трогает документы точек со своим составом.
  */
 export async function saveOrgCommission(
   organizationId: string,
   code: string,
-  input: Array<{ employeeId: string; role?: string; roleKind?: CommissionRoleKind }>
+  input: Array<{ employeeId: string; role?: string; roleKind?: CommissionRoleKind }>,
+  buildingId?: string | null
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
   if (!isCommissionJournalCode(code)) throw new Error("Журнал без комиссии");
   const ids = [...new Set(input.map((item) => item.employeeId).filter(Boolean))];
@@ -70,16 +99,36 @@ export async function saveOrgCommission(
       }))
   );
 
-  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { journalCommissionJson: true } });
-  await db.organization.update({
-    where: { id: organizationId },
-    data: {
-      journalCommissionJson: { ...asRecord(org?.journalCommissionJson), [code]: members } as Prisma.InputJsonValue,
-    },
-  });
+  const owner = await commissionOwner(organizationId, buildingId);
+  const nextJson = { ...asRecord(owner.json), [code]: members } as Prisma.InputJsonValue;
+  if (owner.buildingId) {
+    await db.building.update({ where: { id: owner.buildingId }, data: { journalCommissionJson: nextJson } });
+  } else {
+    await db.organization.update({ where: { id: organizationId }, data: { journalCommissionJson: nextJson } });
+  }
 
+  // Точки со своим составом живут отдельно: состав организации их не трогает.
+  const ownBuildingIds = owner.buildingId
+    ? []
+    : (
+        await db.building.findMany({
+          where: { organizationId },
+          select: { id: true, journalCommissionJson: true },
+        })
+      )
+        .filter((building) => building.journalCommissionJson !== null)
+        .map((building) => building.id);
   const docs = await db.journalDocument.findMany({
-    where: { organizationId, status: "active", template: { code } },
+    where: {
+      organizationId,
+      status: "active",
+      template: { code },
+      ...(owner.buildingId
+        ? { buildingId: owner.buildingId }
+        : ownBuildingIds.length > 0
+          ? { OR: [{ buildingId: null }, { buildingId: { notIn: ownBuildingIds } }] }
+          : {}),
+    },
     select: { id: true },
   });
   let updatedDocuments = 0;
@@ -93,18 +142,19 @@ export async function saveOrgCommission(
   return { members, updatedDocuments };
 }
 
-/** Состав для нового документа: берётся из организации, если в конфиге его нет. */
+/** Состав для нового документа: берётся из точки или организации, если в конфиге его нет. */
 export async function withOrgCommission(
   organizationId: string,
   code: string,
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  buildingId?: string | null
 ): Promise<Record<string, unknown>> {
   if (!isCommissionJournalCode(code)) return config;
   // Свой действующий состав (перенос из прошлого документа) не трогаем.
   // Старая копия скоропорта без метки — не действующая: её заменяет
   // утверждённый состав организации.
   if (effectiveCommissionMembers(code, config).length > 0) return config;
-  const members = await readOrgCommission(organizationId, code);
+  const members = await readOrgCommission(organizationId, code, buildingId);
   return members.length > 0 ? { ...config, commissionMembers: members, commissionEnabled: true } : config;
 }
 
@@ -145,16 +195,22 @@ export async function ensureCommissionPosition(organizationId: string): Promise<
 export async function addOrgCommissionMember(
   organizationId: string,
   code: string,
-  member: { employeeId: string; role?: string; roleKind?: CommissionRoleKind }
+  member: { employeeId: string; role?: string; roleKind?: CommissionRoleKind },
+  buildingId?: string | null
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
-  const current = await readOrgCommission(organizationId, code);
+  const current = await readOrgCommission(organizationId, code, buildingId);
   if (current.some((item) => item.employeeId === member.employeeId)) {
     return { members: current, updatedDocuments: 0 };
   }
-  return saveOrgCommission(organizationId, code, [
-    ...current.map((item) => ({ employeeId: item.employeeId, role: item.role, roleKind: item.roleKind })),
-    { employeeId: member.employeeId, ...normalizeCommissionRole(member.role, member.roleKind) },
-  ]);
+  return saveOrgCommission(
+    organizationId,
+    code,
+    [
+      ...current.map((item) => ({ employeeId: item.employeeId, role: item.role, roleKind: item.roleKind })),
+      { employeeId: member.employeeId, ...normalizeCommissionRole(member.role, member.roleKind) },
+    ],
+    buildingId
+  );
 }
 
 /**
@@ -171,7 +227,7 @@ export async function syncDocCommissionMember(documentId: string, member: Braker
     // оживает — вместо неё в документ встаёт утверждённый состав организации.
     const inactiveCopy = COMMISSION_FLAG_JOURNAL_CODES.has(locked.templateCode) && config.commissionEnabled !== true;
     const members = inactiveCopy
-      ? await readOrgCommission(locked.organizationId, locked.templateCode)
+      ? await readOrgCommission(locked.organizationId, locked.templateCode, locked.buildingId)
       : effectiveCommissionMembers(locked.templateCode, config);
     if (!inactiveCopy && members.some((item) => item.employeeId === member.employeeId)) return { result: true };
     const next = normalizeCommissionMembers([...members, member]);

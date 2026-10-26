@@ -13,7 +13,7 @@ import { aclActorFromSession, getAllowedJournalCodes } from "@/lib/journal-acl";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
 import { hasCapability } from "@/lib/permission-presets";
@@ -52,7 +52,11 @@ export default async function JournalsPage() {
     }),
   ]);
 
-  const disabledCodes = parseDisabledCodes(organization?.disabledJournalCodes);
+  // У точки со своим набором журналов (слитая организация) — её набор.
+  const activeBuildingId = await getActiveBuildingId(session);
+  const disabledCodes = activeBuildingId
+    ? await getDisabledJournalCodes(getActiveOrgId(session), activeBuildingId)
+    : parseDisabledCodes(organization?.disabledJournalCodes);
 
   // Employees (cooks, waiters) don't need to see disabled journals —
   // they can't navigate to settings to re-enable them, so showing the
@@ -63,7 +67,6 @@ export default async function JournalsPage() {
     : templates.filter((t) => !disabledCodes.has(t.code));
 
   // Точки: бейджи «заполнено»/«есть документ» — для активной точки.
-  const activeBuildingId = await getActiveBuildingId(session);
   const filledTodayIds = await getTemplatesFilledToday(
     getActiveOrgId(session),
     new Date(),

@@ -140,10 +140,20 @@ function applyLists(code: string, config: Record<string, unknown>, lists: Master
   return config;
 }
 
-async function pushListsToOrg(orgId: string, lists: MasterLists): Promise<{ documents: number }> {
+async function pushListsToOrg(
+  orgId: string,
+  lists: MasterLists,
+  buildingId: string | null = null
+): Promise<{ documents: number }> {
   // «Активный документ» — как у saveOrgCommission: status="active" нужного журнала.
+  // Объект-точка (слитая организация) получает списки только в свои документы.
   const docs = await db.journalDocument.findMany({
-    where: { organizationId: orgId, status: "active", template: { code: { in: [...MASTER_SHARED_JOURNAL_CODES] } } },
+    where: {
+      organizationId: orgId,
+      ...(buildingId ? { buildingId } : {}),
+      status: "active",
+      template: { code: { in: [...MASTER_SHARED_JOURNAL_CODES] } },
+    },
     select: { id: true },
   });
   let documents = 0;
@@ -172,10 +182,10 @@ export async function pushSharedListsToPool(
   let documents = 0;
   for (const org of orgs) {
     try {
-      documents += (await pushListsToOrg(org.id, lists)).documents;
+      documents += (await pushListsToOrg(org.organizationId, lists, org.buildingId)).documents;
     } catch (err) {
       // Одна сломанная организация не должна останавливать раздачу остальным.
-      console.error("[master-directory] push failed", { orgId: org.id, masterOrgId }, err);
+      console.error("[master-directory] push failed", { orgId: org.organizationId, buildingId: org.buildingId, masterOrgId }, err);
     }
   }
   return { organizations: orgs.length, documents };
@@ -183,16 +193,18 @@ export async function pushSharedListsToPool(
 
 /**
  * Новый документ БЖГП/скоропорта у организации пула: сразу со списками
- * мастера. Без мастера в пуле конфиг не меняется.
+ * мастера. Документ точки, подключённой к пулу, — списки мастера её пула.
+ * Без мастера в пуле конфиг не меняется.
  */
 export async function withMasterSharedLists(
   organizationId: string,
   journalCode: string,
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
+  buildingId?: string | null
 ): Promise<Record<string, unknown>> {
   if (!(MASTER_SHARED_JOURNAL_CODES as readonly string[]).includes(journalCode)) return config;
   try {
-    const masterOrgId = await findPoolMasterOrgId(organizationId);
+    const masterOrgId = await findPoolMasterOrgId(organizationId, buildingId);
     if (!masterOrgId || masterOrgId === organizationId) return config;
     return applyLists(journalCode, config, await loadMasterLists(masterOrgId));
   } catch (err) {

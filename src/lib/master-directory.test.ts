@@ -8,6 +8,8 @@ import {
   normalizeSharedItems,
   parseSharedItemsFromSheet,
   parseSharedItemsFromText,
+  poolObjectId,
+  poolObjectName,
   sharedItemsForKind,
   type SharedItem,
 } from "@/lib/master-directory";
@@ -230,4 +232,11 @@ test("diffSharedItems: counts changed portion/time of the same dish as «changed
 test("diffSharedItems: raw materials — supplier changes are not «changed» (menu fields only)", () => {
   const diff = diffSharedItems([item("Молоко", "А")], [item("Молоко", "Б")]);
   assert.deepEqual(diff, { added: [], removed: [], changed: [], unchanged: 1 });
+});
+
+test("объект пула: точка слитой организации — свой ключ и название", () => {
+  assert.equal(poolObjectId("org-1", null), "org-1");
+  assert.equal(poolObjectId("org-1", "b-2"), "org-1:b-2");
+  assert.equal(poolObjectName("МАУ «КП «ДК»", "д/с №68"), "МАУ «КП «ДК» · д/с №68");
+  assert.equal(poolObjectName("Кафе", null), "Кафе");
 });

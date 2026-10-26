@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getActiveBuildingId } from "@/lib/active-building";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
@@ -74,7 +75,7 @@ function presentSets(disabled: ReadonlySet<string>) {
 export async function GET() {
   const auth = await requireManager();
   if (!auth.ok) return auth.response;
-  const disabled = await getDisabledJournalCodes(getActiveOrgId(auth.session));
+  const disabled = await getDisabledJournalCodes(getActiveOrgId(auth.session), await getActiveBuildingId(auth.session));
   return NextResponse.json(
     { sets: presentSets(disabled) },
     { headers: { "Cache-Control": "private, no-store" } },
@@ -99,13 +100,15 @@ export async function POST(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
-  const disabled = await getDisabledJournalCodes(organizationId);
+  // Точка со своим набором журналов (слитая организация) — набор точки.
+  const buildingId = await getActiveBuildingId(session);
+  const disabled = await getDisabledJournalCodes(organizationId, buildingId);
   const next = enableJournalSetCodes(disabled, setId);
   if (next.enabled.length > 0) {
     // Бесплатный тариф после пробного — один включённый журнал.
     const journals = await checkJournalLimit(organizationId, next.disabledCodes, { source: `settings/journals/sets:${setId}` });
     if (!journals.ok) return limitResponse(journals);
-    await setDisabledJournalCodes(organizationId, next.disabledCodes);
+    await setDisabledJournalCodes(organizationId, next.disabledCodes, buildingId);
     for (const code of next.enabled) {
       await recordAuditLog({
         request,

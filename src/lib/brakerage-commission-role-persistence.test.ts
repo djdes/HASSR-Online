@@ -27,6 +27,8 @@ test("actual commission APIs and organization persistence retain role provenance
       update: async ({ data }: { data: { journalCommissionJson: Record<string, unknown> } }) => { organization = plain(data.journalCommissionJson); },
     },
     journalDocument: { findMany: async ({ where }: { where: { status: string; organizationId: string } }) => { assert.equal(where.status, "active"); assert.equal(where.organizationId, "org"); return [{ id: "active-document" }]; } },
+    // Точек со своим составом нет — состав организации.
+    building: { findFirst: async () => null, findMany: async () => [] },
   };
   const org = load("src/lib/brakerage-commission-org.ts", {
     "@/lib/brakerage-commission": commission, "@/lib/db": { db },
@@ -35,6 +37,7 @@ test("actual commission APIs and organization persistence retain role provenance
   let management = true;
   const common = {
     "@/lib/auth-helpers": { getActiveOrgId: () => "org" }, "@/lib/auth": { authOptions: {} },
+    "@/lib/active-building": { getActiveBuildingId: async () => null },
     "@/lib/server-session": { getServerSession: async () => ({ user: { id: "manager" } }) },
     "@/lib/role-access": { hasFullWorkspaceAccess: () => management },
     "@/lib/db": { db }, "@/lib/audit-log": { recordAuditLog: async () => undefined },
