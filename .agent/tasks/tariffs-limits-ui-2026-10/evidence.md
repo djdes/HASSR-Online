@@ -22,10 +22,12 @@
 
 ## Проверки
 
-На ветке (master `8297f67f` + изменения): `npm run typecheck` — 0 ошибок; `npm run test:gate` — pass 4846, fail 0
-(падавший сначала `buildCabinetPlanCard` ждал старые 25 мест «Премиума» на точку — ожидание обновлено до 100);
-`npm run i18n:check` — проходит; eslint по изменённым файлам — 0 ошибок. Живые проверки — `raw/ui-check-1.txt`,
-`raw/limits-check.txt`, `raw/limits-ui-check.txt`, `raw/limits-server-check.txt` (next dev + локальная PostgreSQL).
+Независимая проверка 1 (`f94d3514`) — FAIL по AC1, AC2, AC7, AC8: разбор и исправления — `problems.md`. После исправлений
+(`15e66124`) и слияния с master `e2b2f344` (`b504100e`): `npm run typecheck` — 0 ошибок; `npm run test:gate` — pass 4848,
+fail 0; `npm run i18n:check` — проходит; eslint по изменённым файлам — 0 ошибок. Живые проверки: `raw/ui-check-v2.txt`
+(ширины 640–1536, видимые кнопки, вылезание, центр точек, зоны нажатия), `raw/limits-check-2.txt`, `raw/invite-check.txt`,
+а также прежние `raw/limits-check.txt`, `raw/limits-ui-check.txt`, `raw/limits-server-check.txt`. Тестовые должности
+`limpos-*` в локальной БД — для проверки `POST /api/staff`.
 
 ## Деплой (что изменит выкладка)
 

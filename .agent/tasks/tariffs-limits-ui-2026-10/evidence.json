@@ -15,8 +15,9 @@
     "AC9": "typecheck 0, test:gate 4846/0, i18n:check pass, eslint 0"
   },
   "checks": {
+    "base": "master e2b2f344 (merged b504100e)",
     "typecheck": "0 errors",
-    "test_gate": "pass 4846, fail 0",
+    "test_gate": "pass 4848, fail 0",
     "i18n_check": "pass",
     "eslint_changed": "0 errors"
   },
@@ -41,5 +42,31 @@
     "Mercury gated by account plan feature: legacy pro/business without active payment and Standard/free lose access; cron skips them",
     "What's new changed — modal shows once"
   ],
-  "verification": {}
+  "verification": {
+    "round1": {
+      "commit": "f94d3514",
+      "verdict": "FAIL",
+      "failed": [
+        "AC1",
+        "AC2",
+        "AC7",
+        "AC8"
+      ],
+      "fixed_in": "15e66124",
+      "fixes": [
+        "POST /api/staff and master-cabinet 402 carry tier/nextTier",
+        "invite page text by nextTier (ru/en/uz)",
+        "staff page seat banner; app shows the fact only",
+        "card column minmax(0,1fr), wrapping header, flex button row, lg:p-5 xl:p-7",
+        "controls: equal side columns, centre = stepper only, hint second row, nowrap labels ≥44 px",
+        "switch off-track #858aa0 (3.42:1)",
+        "GET /api/mercury/documents gated"
+      ],
+      "rechecked": [
+        "raw/ui-check-v2.txt",
+        "raw/limits-check-2.txt",
+        "raw/invite-check.txt"
+      ]
+    }
+  }
 }
