@@ -138,6 +138,19 @@
       "rechecked": [
         "raw/master-cabinet-check.txt"
       ]
+    },
+    "round5": {
+      "commit": "0d8e7f86",
+      "verdict": "PASS",
+      "failed": [],
+      "notes": [
+        "master-cabinet settings: confirm closed on refusal, pay → /settings/subscription, contact → usable chat (1280 and 390 px)",
+        "/settings/permissions access card (owner v6-p11 with kitchen + cabinet): shared billing toast for standard/premium/null/no nextTier",
+        "/master access dialog keeps the server text without a plan button (plan page unreachable there)"
+      ],
+      "not_fixed": [
+        "/master access dialog server text stays Russian in en/uz (pre-existing)"
+      ]
     }
   }
 }
