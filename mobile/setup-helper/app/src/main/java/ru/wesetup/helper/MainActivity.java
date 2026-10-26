@@ -94,6 +94,7 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
         if (app.sessions().load() == null) return;
         app.sync().addListener(this);
         app.sync().requestSync();
+        if (!BuildConfig.SELF_UPDATE) return;
         app.updater().addListener(this);
         // Не чаще раза в 30 минут и только при сети — иначе ни одного запроса.
         app.updater().checkAsync(false, null);
@@ -107,7 +108,7 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
             return;
         }
         render();
-        if (app.updater().takeJustUpdated()) {
+        if (BuildConfig.SELF_UPDATE && app.updater().takeJustUpdated()) {
             Toast.makeText(this, getString(R.string.updated_toast, BuildConfig.VERSION_NAME), Toast.LENGTH_LONG).show();
         }
     }
@@ -147,6 +148,11 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     /** Плашка обновления: что происходит и что нажать — если вообще нужно. */
     private void renderUpdate() {
         if (updateCard == null) return;
+        // Вариант для Google Play: обновляет магазин, плашки нет.
+        if (!BuildConfig.SELF_UPDATE) {
+            updateCard.setVisibility(View.GONE);
+            return;
+        }
         Updater updater = app.updater();
         Updater.State state = updater.state();
         UpdateInfo info = updater.store().available();
@@ -435,7 +441,7 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
         menu.getMenu().add(0, 1, 0, R.string.main_menu_sync);
-        menu.getMenu().add(0, 3, 1, R.string.main_menu_updates);
+        if (BuildConfig.SELF_UPDATE) menu.getMenu().add(0, 3, 1, R.string.main_menu_updates);
         menu.getMenu().add(0, 2, 2, R.string.main_menu_logout);
         menu.getMenu().add(0, 4, 3, getString(R.string.main_menu_version, BuildConfig.VERSION_NAME)).setEnabled(false);
         menu.setOnMenuItemClickListener(item -> {

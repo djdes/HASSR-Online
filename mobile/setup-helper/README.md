@@ -175,12 +175,23 @@ PRINT 1,1
 
 ## Сборка
 
+Два варианта (`productFlavors`, измерение `distribution`):
+
+- **site** — APK с wesetup.ru, обновляется сам через сайт (`publishRelease`);
+- **play** — для Google Play: без самообновления (Play запрещает приложению
+  ставить обновления в обход магазина). Нет разрешений на установку пакетов,
+  фонового задания и плашки обновления (`src/play/AndroidManifest.xml`,
+  `BuildConfig.SELF_UPDATE`). Всё для карточки магазина и инструкция
+  загрузки — `store/google-play/`.
+
 Нужны JDK 21 и Android SDK (platform 36, build-tools 35+).
 
 ```bash
 cd mobile/setup-helper
-./gradlew :core:test :app:testDebugUnitTest   # тесты: ядро, экраны (Robolectric)
-./gradlew assembleRelease                      # app/build/outputs/apk/release/app-release.apk
+./gradlew :core:test :app:testSiteDebugUnitTest   # тесты: ядро, экраны (Robolectric)
+./gradlew :app:testPlayDebugUnitTest --tests ru.wesetup.helper.PlayFlavorTest   # вариант Google Play
+./gradlew assembleSiteRelease                      # APK для сайта: app/build/outputs/apk/site/release/
+./gradlew bundlePlayRelease                        # AAB для Google Play: app/build/outputs/bundle/playRelease/
 ```
 
 Тест `LabelPreviewTest` кладёт PNG-превью всех шаблонов и поток команд пробной

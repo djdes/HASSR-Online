@@ -4,8 +4,8 @@ plugins {
 
 // Версия приложения. Номер сборки (versionCode) растёт с каждым выпуском:
 // по нему приложение на телефоне понимает, что на сайте есть новее.
-def appVersionName = '1.2.0'
-def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 4
+def appVersionName = '1.2.1'
+def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 5
 
 // Сертификат, которым подписаны все выпуски. Android ставит обновление
 // поверх, только если ключ тот же, — publishRelease проверяет это до выкладки.
@@ -39,6 +39,23 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         buildConfigField 'String', 'DEFAULT_SERVER', '"https://wesetup.ru"'
+    }
+
+    // Откуда ставят приложение. site — APK с wesetup.ru: обновляется само
+    // через сайт. play — Google Play: обновляет магазин, своё самообновление
+    // Play запрещает (нет разрешения на установку пакетов, нет задания и
+    // плашки обновления — см. src/play/AndroidManifest.xml).
+    flavorDimensions = ['distribution']
+    productFlavors {
+        site {
+            dimension = 'distribution'
+            isDefault = true
+            buildConfigField 'boolean', 'SELF_UPDATE', 'true'
+        }
+        play {
+            dimension = 'distribution'
+            buildConfigField 'boolean', 'SELF_UPDATE', 'false'
+        }
     }
 
     buildFeatures {
@@ -104,13 +121,13 @@ tasks.withType(JavaCompile).configureEach {
 tasks.register('publishRelease') {
     group = 'publishing'
     description = 'Подписанный APK и version.json — в resources/setup-helper сайта'
-    dependsOn 'assembleRelease'
+    dependsOn 'assembleSiteRelease'
     doLast {
         if (!releaseKeystore) {
             throw new GradleException('Нет ключа подписи (SETUP_HELPER_KEYSTORE или SETUP_HELPER_KEYSTORE_BASE64): '
                     + 'сборку с другим ключом телефоны не смогут поставить поверх')
         }
-        def apk = layout.buildDirectory.file('outputs/apk/release/app-release.apk').get().asFile
+        def apk = layout.buildDirectory.file('outputs/apk/site/release/app-site-release.apk').get().asFile
         def apksigner = new File(android.sdkDirectory, "build-tools/${android.buildToolsVersion}/apksigner")
         def process = [apksigner.path, 'verify', '--print-certs', apk.path].execute()
         def output = process.text
