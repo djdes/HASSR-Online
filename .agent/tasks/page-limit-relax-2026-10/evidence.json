@@ -1,0 +1,13 @@
+{
+  "task": "page-limit-relax-2026-10",
+  "verdict": "PASS",
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS" },
+  "limits": { "browser": "100/10s, 400/min", "automated": "20/10s, 90/min", "background": "1200/min", "cooldown_s": 15 },
+  "checks": {
+    "typecheck": "exit 0",
+    "test_gate": "pass=4841 fail=0",
+    "live_browser_101": "100x200, 1x429",
+    "live_curl_21": "20x200, 1x429",
+    "retry_after": "15"
+  }
+}
