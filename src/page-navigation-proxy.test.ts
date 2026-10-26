@@ -4,6 +4,9 @@ import { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import { proxy } from "./proxy";
 import { isDeployWarmRequest, pageNavigationSubject } from "./lib/page-navigation-guard";
+import { PAGE_NAVIGATION_LIMITS } from "./lib/page-navigation-limit";
+
+const { automated, background, cooldownSeconds } = PAGE_NAVIGATION_LIMITS;
 
 let address = 0;
 function client(extra: Record<string, string> = {}) {
@@ -12,7 +15,7 @@ function client(extra: Record<string, string> = {}) {
     proxy(new NextRequest(`https://wesetup.test${path}`, { method, headers: { ...headers, ...more } }));
 }
 async function exhaust(request: ReturnType<typeof client>, path = "/blog") {
-  for (let i = 0; i < 6; i++) assert.equal((await request(path)).status, 200);
+  for (let i = 0; i < automated.burst; i++) assert.equal((await request(path)).status, 200);
   assert.equal((await request(path)).status, 429);
 }
 
@@ -23,7 +26,7 @@ test("real proxy denies documents and RSC before content, with a private Russian
   for (const headers of variants) {
     const response = await request("/journals?secret=never-reflect-this", headers);
     assert.equal(response.status, 429);
-    assert.equal(response.headers.get("retry-after"), "30");
+    assert.equal(response.headers.get("retry-after"), String(cooldownSeconds));
     assert.match(response.headers.get("cache-control")!, /no-store/);
     assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
     assert.equal(response.headers.get("x-middleware-next"), null);
@@ -59,7 +62,7 @@ test("document prefetch spoofing and forged sessions cannot reset a blocked IP",
 test("marked and markerless RSC fetches stay bounded without blocking browser documents", async () => {
   const request = client({ "user-agent": "Mozilla/5.0 Chrome/130" });
   const headers = { rsc: "1", "next-router-prefetch": "1" };
-  for (let i = 0; i < 240; i++) {
+  for (let i = 0; i < background; i++) {
     const variant: Record<string, string> = i % 3 === 0 ? headers : i % 3 === 1 ? { rsc: "1" } : { "sec-fetch-dest": "empty" };
     assert.equal((await request("/blog", variant)).status, 200);
   }
@@ -86,7 +89,7 @@ test("ordinary employee navigation survives excess Next.js background requests",
       "user-agent": "Mozilla/5.0 Chrome/130",
       cookie: `__Secure-haccp-online.session-token=${token}`,
     });
-    for (let i = 0; i < 240; i++) {
+    for (let i = 0; i < background; i++) {
       assert.equal((await request(`/journals?prefetch=${i}`, { "sec-fetch-dest": "empty" })).status, 200);
     }
     for (let i = 0; i < 5; i++) {
@@ -152,7 +155,7 @@ test("JWT subjects isolate shared IPs; root, directory, partner and staff checks
 test("marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages", async () => {
   const request = client();
   const headers = { rsc: "1", "next-router-prefetch": "1" };
-  for (let i = 0; i < 240; i++) {
+  for (let i = 0; i < background; i++) {
     const variant: Record<string, string> = i % 3 === 0 ? headers : i % 3 === 1 ? { rsc: "1" } : { "sec-fetch-dest": "empty" };
     assert.equal((await request("/blog", variant)).status, 200);
   }
@@ -180,8 +183,8 @@ test("deploy prewarm with the per-deploy key skips the page budget; other reques
   process.env.DEPLOY_WARM_TOKEN = key;
   try {
     const request = client();
-    for (let i = 0; i < 40; i++) assert.equal((await request(`/journals?warm=${i}`, { "x-deploy-warm": key })).status, 200);
-    // The prewarm spent none of the address's budget: curl still gets its 6 pages.
+    for (let i = 0; i < automated.burst * 2; i++) assert.equal((await request(`/journals?warm=${i}`, { "x-deploy-warm": key })).status, 200);
+    // The prewarm spent none of the address's budget: curl still gets its full burst.
     await exhaust(request);
     for (const wrong of ["", key.slice(1), `${key}0`, "f".repeat(64)]) {
       assert.equal((await request("/blog", { "x-deploy-warm": wrong })).status, 429, wrong);

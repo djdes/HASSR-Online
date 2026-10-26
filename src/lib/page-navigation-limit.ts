@@ -1,6 +1,23 @@
 const MINUTE = 60_000;
-const COOLDOWN = 30_000;
+const BURST_WINDOW = 10_000;
 const MAX_SUBJECTS = 5_000;
+
+/**
+ * Budgets per subject (verified user or guest IP). Deliberately loose: a
+ * person clicking through pages never gets near them, only machine-speed
+ * crawling does. Keep each minute budget below six bursts, or it never binds.
+ */
+export const PAGE_NAVIGATION_LIMITS = {
+  /** Document loads from a browser: per 10 seconds and per minute. */
+  browser: { burst: 100, minute: 400 },
+  /** Document loads with an empty or tool user-agent (curl, python-requests…). */
+  automated: { burst: 20, minute: 90 },
+  /** Next.js RSC fetches and prefetches per minute; their overflow waits alone. */
+  background: 1200,
+  /** Pause after a document budget is exceeded. */
+  cooldownSeconds: 15,
+} as const;
+const COOLDOWN = PAGE_NAVIGATION_LIMITS.cooldownSeconds * 1000;
 
 type Visits = { pages: number[]; prefetches: number[]; blockedUntil: number; touched: number };
 
@@ -36,17 +53,18 @@ export function createPageNavigationLimiter(now = Date.now, maxSubjects = MAX_SU
       // Speculative Next.js traffic must never put actual documents on cooldown.
       // Reject only background requests until a slot in their rolling window opens.
       if (prefetch) {
-        if (entry.prefetches.length >= 240) {
+        if (entry.prefetches.length >= PAGE_NAVIGATION_LIMITS.background) {
           return Math.ceil((entry.prefetches[0] + MINUTE - time) / 1000);
         }
         entry.prefetches.push(time);
         return 0;
       }
-      const exceeded = entry.pages.length >= (automated ? 30 : 120) ||
-        entry.pages.filter((at) => at > time - 10_000).length >= (automated ? 6 : 20);
+      const budget = automated ? PAGE_NAVIGATION_LIMITS.automated : PAGE_NAVIGATION_LIMITS.browser;
+      const exceeded = entry.pages.length >= budget.minute ||
+        entry.pages.filter((at) => at > time - BURST_WINDOW).length >= budget.burst;
       if (exceeded) {
         entry.blockedUntil = time + COOLDOWN;
-        return COOLDOWN / 1000;
+        return PAGE_NAVIGATION_LIMITS.cooldownSeconds;
       }
       entry.pages.push(time);
       return 0;

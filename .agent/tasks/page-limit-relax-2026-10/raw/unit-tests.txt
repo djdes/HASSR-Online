@@ -1,0 +1,30 @@
+ok 1 - budgets are loose: a person never meets them, each minute budget binds
+ok 2 - normal browsing and a burst across pages share a rolling budget
+ok 3 - the 10-second window expires at its boundary
+ok 4 - sustained browsing and automation hit the minute budget without a burst
+ok 5 - UA changes do not erase recorded requests
+ok 6 - automation is only a signal, not a ban or allowlist
+ok 7 - excess background requests never block documents or extend their own window
+ok 8 - slow browsing with many speculative requests does not trigger a document cooldown
+ok 9 - background retries cannot extend or clear an actual document cooldown
+ok 10 - expired budgets are swept and capacity cannot evict a blocked subject
+ok 11 - a page cooldown also holds back prefetch
+ok 12 - real proxy denies documents and RSC before content, with a private Russian wait page
+ok 13 - assets, API, callbacks and operational links survive a page cooldown
+ok 14 - document prefetch spoofing and forged sessions cannot reset a blocked IP
+ok 15 - marked and markerless RSC fetches stay bounded without blocking browser documents
+ok 16 - ordinary employee navigation survives excess Next.js background requests
+ok 17 - subject uses verified accounts or a canonical trusted peer, never client identity hints
+ok 18 - JWT subjects isolate shared IPs; root, directory, partner and staff checks retain precedence
+ok 19 - marked and markerless RSC fetches share a bounded budget; its overflow never blocks real pages
+ok 20 - deploy prewarm key: only an exact match of a long key from the process env
+ok 21 - deploy prewarm with the per-deploy key skips the page budget; other requests stay limited
+ok 22 - English document keeps its explicit route and receives a trusted locale
+ok 23 - caller-supplied locale headers cannot change the locale of the requested URL
+ok 24 - English prefix never rewrites protected routes or callbacks
+ok 25 - prefetching another language does not overwrite the visitor preference
+ok 26 - English pages retain the navigation budget and show an English cooldown
+ok 27 - partners and privacy trust their six explicit URLs without rewriting navigation
+# tests 27
+# pass 27
+# fail 0
