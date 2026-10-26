@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { MAX_FRAME_ANCESTORS } from "./src/lib/max/browser";
 import createNextIntlPlugin from "next-intl/plugin";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
@@ -168,14 +167,6 @@ const nextConfig: NextConfig = {
     ];
 
     return [
-      {
-        source: "/max/:path*",
-        headers: [...commonSecurityHeaders, permissionsPolicy("()"), { key: "Content-Security-Policy", value: MAX_FRAME_ANCESTORS }],
-      },
-      {
-        source: "/max",
-        headers: [...commonSecurityHeaders, permissionsPolicy("()"), { key: "Content-Security-Policy", value: MAX_FRAME_ANCESTORS }],
-      },
       {
         // Mini App: разрешаем embedding в Telegram Web.
         source: "/mini/:path*",

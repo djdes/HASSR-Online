@@ -56,8 +56,28 @@ model MaxIdentity {
   privateChatId        String
   displayName          String
   activeOrganizationId String?
+  /// Bot dialog state (journal fill wizard); null when idle. See src/lib/max/bot-state.ts.
+  botState             Json?
+  botStateAt           DateTime?
   createdAt            DateTime @default(now())
+  /// Legacy browser handoffs (mini-site removed 2026-10-26); kept so db push stays additive.
   handoffs             MaxSessionHandoff[]
+}
+
+/// Personal one-time bot link a manager issues for an employee (`/start inv_…`).
+model MaxInvite {
+  id              String       @id @default(cuid())
+  tokenHash       String       @unique
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdByUserId String
+  expiresAt       DateTime
+  usedAt          DateTime?
+  createdAt       DateTime     @default(now())
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model MaxLinkRequest {
@@ -85,6 +105,8 @@ model MaxOrganizationIntegration {
   chatTitle      String?
   linkedByUserId String?
   linkedAt       DateTime?
+  /// Last «Напомнить не заполнившим» from the bot (30-minute throttle).
+  lastReminderAt DateTime?
   updatedAt      DateTime     @updatedAt
 }
 
@@ -497,6 +519,7 @@ model Organization {
   botInviteTokens                BotInviteToken[]
   maxIntegration                 MaxOrganizationIntegration?
   maxLinkRequests                MaxLinkRequest[]
+  maxInvites                     MaxInvite[]
   journalObligations             JournalObligation[]
   workShifts                     WorkShift[]
   jobPositionJournalAccess       JobPositionJournalAccess[]
@@ -1093,6 +1116,7 @@ model User {
   telegramChatId              String?
   maxIdentity                 MaxIdentity?
   maxLinkRequests             MaxLinkRequest[]
+  maxInvites                  MaxInvite[]
   notificationPrefs           Json?
   isActive                    Boolean                  @default(true)
   // Platform-level superadmin flag. Orthogonal to `role` (which is the in-org
