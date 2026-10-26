@@ -200,14 +200,34 @@ export SETUP_HELPER_KEY_ALIAS=setup-helper
 export SETUP_HELPER_KEY_PASSWORD=…
 ```
 
-Все выпуски подписаны одним ключом — сертификат SHA-256
-`e67c22a2cfef328e62b9f69a79677e0ae513007dc83b77a39639d8c57110ce2a`
-(`releaseCertSha256` в `app/build.gradle`). Android ставит обновление поверх
-только с тем же ключом: потеря ключа = на всех телефонах приложение придётся
-удалить и поставить заново. Ключ (файл и пароль) хранит владелец; для сборки
-агентом его кладут в секреты окружения (`SETUP_HELPER_KEYSTORE_BASE64` и
-пароли). Без переменных release подписывается отладочным ключом машины —
+Все выпуски с 1.2.0 подписаны одним ключом — сертификат SHA-256
+`20b6bd349e4699bddb23ef0f81cf3a612607d3b8190813ba6403215641dfecb4`
+(`releaseCertSha256` в `app/build.gradle`). Версии 1.0 и 1.1 подписаны прежним
+ключом (`e67c22a2…`), который не сохранился: с них на 1.2.0 переходят
+вручную (удалить и поставить заново), дальше обновления встают сами.
+Android ставит обновление поверх только с тем же ключом: потеря ключа = на
+всех телефонах приложение придётся удалить и поставить заново.
+
+**Где лежит ключ** (alias `setup-helper`, PKCS12; пароли — в `.env` рядом):
+
+| Где | Что |
+|---|---|
+| Сервер wesetup.ru: `/var/www/wesetupru/data/secrets/setup-helper/` (права 700, вне сайта и деплоя) | `setup-helper-release.jks` + `setup-helper-release.env` |
+| Рабочий компьютер разработки: `C:\Users\Oleg\.wesetup-keys\` | те же два файла |
+| Секреты GitHub репозитория | `SETUP_HELPER_KEYSTORE_BASE64`, `SETUP_HELPER_KEYSTORE_PASSWORD`, `SETUP_HELPER_KEY_ALIAS`, `SETUP_HELPER_KEY_PASSWORD` (прочитать нельзя, только использовать в CI) |
+
+SHA-256 файла ключа: `58c5783828e498e2848b9bdfc6f66b1b6f9779607ee50307032e995711d5fba5`.
+Достать с сервера: `pscp -P 22 wesetupru@wesetup.ru:/var/www/wesetupru/data/secrets/setup-helper/* .`
+(SSH — как в CLAUDE.md, раздел Deployment). В git ключ не кладём: репозиторий публичный.
+
+Без переменных подписи release подписывается отладочным ключом машины —
 такую сборку `publishRelease` выложить не даст.
+
+**Выпуск через CI** (Android SDK локально не нужен): Actions → «Сетап помощник —
+проверка» → Run workflow на master с галочкой `publish` (или
+`gh workflow run setup-helper-check.yml -f publish=true`). Артефакт
+`setup-helper-publish-N` — готовые `setup-helper.apk` и `version.json`:
+положить в `resources/setup-helper/` и закоммитить в master.
 
 ### Выпустить новую версию
 
