@@ -72,10 +72,13 @@ public class HelperApp extends Application {
         templates = new TemplateRepository(this);
         updater = new Updater(this, new UpdateStore(this), createUpdateSource(), new SessionInstaller(this),
                 new AppEnv());
-        updater.onAppStarted();
-        trackVisibility();
-        // Проверка обновлений в фоне раз в 6 часов, когда есть сеть.
-        UpdateJobService.schedule(this);
+        // Вариант для Google Play обновляет магазин: ни проверок, ни задания.
+        if (BuildConfig.SELF_UPDATE) {
+            updater.onAppStarted();
+            trackVisibility();
+            // Проверка обновлений в фоне раз в 6 часов, когда есть сеть.
+            UpdateJobService.schedule(this);
+        }
 
         // Появилась сеть — отправить, что накопилось без неё, и проверить обновление.
         ConnectivityManager connectivity = getSystemService(ConnectivityManager.class);
@@ -85,7 +88,7 @@ public class HelperApp extends Application {
                     @Override
                     public void onAvailable(Network network) {
                         sync.requestSync();
-                        updater.checkAsync(false, null);
+                        if (BuildConfig.SELF_UPDATE) updater.checkAsync(false, null);
                     }
                 });
             } catch (RuntimeException e) {
