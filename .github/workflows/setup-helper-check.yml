@@ -49,12 +49,22 @@ jobs:
           ./gradlew :core:test :app:testDebugUnitTest --no-daemon
 
       - name: Сборка APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
 
       - uses: actions/upload-artifact@v7
         with:
           name: setup-helper-debug-apk-${{ github.run_number }}
           path: mobile/setup-helper/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      # Release-сборка (сжатая, как на сайте) — для ручной проверки на старых
+      # телефонах. Ключа выпуска в CI нет: подписана отладочным ключом машины,
+      # поверх официальной версии не встанет, на сайт не выкладывается.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: setup-helper-release-apk-${{ github.run_number }}
+          path: mobile/setup-helper/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14
 
