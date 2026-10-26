@@ -6599,7 +6599,10 @@
       "failure": "Could not set the password. Please try again.",
       "genericError": "Something went wrong. Please try again.",
       "invalidInvite": "This invitation link is invalid or has already been used.",
-      "seatLimit": "Your account could not be activated because your plan has reached its active-user limit ({activeUsers, number} of {limit, number}). Ask an administrator to change the plan."
+      "seatLimit": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to move to a higher plan and try again.",
+      "seatLimitStandard": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to switch to Standard and try again.",
+      "seatLimitPremium": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to move to Premium and try again.",
+      "seatLimitContact": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to contact WeSetup support and try again."
     },
     "welcomeTitle": "Welcome, <strong>{name}</strong>!",
     "invitedToOrganization": "You have been invited to <strong>{organization}</strong>. Set a password to sign in.",
@@ -28105,7 +28108,15 @@
       "organizationFallback": "Organisation",
       "seatsNote": "All seats on your plan are taken ({limit, number}). Employees can be restored from the archive on Standard — up to {seats, number} per location.",
       "seatsNotePremium": "All seats on your plan are taken ({limit, number}). Employees can be restored from the archive on Premium — up to {seats, number} per location.",
-      "seatsNoteContact": "All seats on your plan are taken ({limit, number}). More than {seats, number} employees per location — by arrangement: contact us."
+      "seatsNoteContact": "All seats on your plan are taken ({limit, number}). More than {seats, number} employees per location — by arrangement: contact us.",
+      "seatsBannerToStandard": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added. Move to Standard — up to {seats, number} employees per location.",
+      "seatsBannerToPremium": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added. Move to Premium — up to {seats, number} employees per location.",
+      "seatsBannerContact": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added. More than {seats, number} employees per location — by arrangement: contact us.",
+      "seatsBannerApp": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added.",
+      "seatsBannerCtaStandard": "Switch to Standard",
+      "seatsBannerCtaPremium": "Move to Premium",
+      "contact": "Contact us",
+      "contactSubject": "More employees on the Premium plan"
     },
     "auditLogViewer": {
       "durMs": "{ms, number} ms",

@@ -183,10 +183,14 @@ export function TariffComparison({
       {/* Над колонками — три зоны, как у ИИ-подписок: по центру число точек с
           пояснением (точки меняют все три цены), справа тумблер «За год».
           Левая зона пустая — точки стоят ровно над средней карточкой. */}
-      <div data-testid="tariff-controls" className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-start">
-        <div aria-hidden className="hidden sm:block" />
+      <div
+        data-testid="tariff-controls"
+        className="grid items-center gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
+      >
+        <div aria-hidden className="hidden sm:col-start-1 sm:row-start-1 sm:block" />
 
-        <div data-testid="tariff-points-picker" className="flex flex-col items-center gap-2 text-center">
+        {/* Центр — только счётчик: колонки по краям равные, точки ровно по центру. */}
+        <div data-testid="tariff-points-picker" className="flex justify-center sm:col-start-2 sm:row-start-1">
           <div className="inline-flex items-center gap-3">
             <span className="text-[14px] font-medium text-[#3c4053]">{t("pointsPicker.label")}</span>
             <div className="inline-flex items-center rounded-2xl border border-[#dcdfed] bg-white">
@@ -219,19 +223,29 @@ export function TariffComparison({
               </button>
             </div>
           </div>
-          <p data-testid="tariff-points-hint" className="max-w-[420px] text-[13px] leading-snug text-[#6f7282]">
-            {t("pointsPicker.hint", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}
-          </p>
         </div>
 
-        <div role="group" aria-label={t("toggle.label")} data-testid="tariff-cycle" className="flex items-center justify-center gap-1.5 sm:justify-end">
+        {/* Пояснение — под счётчиком на всю ширину (на телефоне — сразу под ним). */}
+        <p
+          data-testid="tariff-points-hint"
+          className="order-2 mx-auto max-w-[420px] text-center text-[13px] leading-snug text-[#6f7282] sm:order-none sm:col-span-3 sm:row-start-2"
+        >
+          {t("pointsPicker.hint", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}
+        </p>
+
+        <div
+          role="group"
+          aria-label={t("toggle.label")}
+          data-testid="tariff-cycle"
+          className="order-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 sm:order-none sm:col-start-3 sm:row-start-1 sm:justify-end"
+        >
           <button
             type="button"
             aria-pressed={cycle === "month"}
             data-testid="tariff-cycle-month"
             onClick={() => setCycle("month")}
             className={cn(
-              "min-h-11 px-1 text-[14px] font-medium transition-colors",
+              "min-h-11 min-w-11 whitespace-nowrap px-1 text-[14px] font-medium transition-colors",
               cycle === "month" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
             )}
           >
@@ -249,7 +263,7 @@ export function TariffComparison({
             <span
               className={cn(
                 "relative inline-flex h-7 w-12 items-center rounded-full transition-colors group-focus-visible:ring-4 group-focus-visible:ring-[#5566f6]/30",
-                cycle === "year" ? "bg-[#5566f6]" : "bg-[#9b9fb3]",
+                cycle === "year" ? "bg-[#5566f6]" : "bg-[#858aa0]",
               )}
             >
               <span
@@ -266,14 +280,14 @@ export function TariffComparison({
             data-testid="tariff-cycle-year"
             onClick={() => setCycle("year")}
             className={cn(
-              "min-h-11 px-1 text-[14px] font-medium transition-colors",
+              "min-h-11 min-w-11 whitespace-nowrap px-1 text-[14px] font-medium transition-colors",
               cycle === "year" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
             )}
           >
             {t("toggle.year")}
           </button>
           {savings > 0 ? (
-            <span className="ml-1 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[12px] font-semibold text-[#116b2a]">
+            <span className="ml-1 whitespace-nowrap rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[12px] font-semibold text-[#116b2a]">
               {t("toggle.save", { percent: savings })}
             </span>
           ) : null}
@@ -540,7 +554,10 @@ function TierCard({
       data-testid={`tariff-card-${tier}`}
       data-tariff-key={rest["data-tariff-key"]}
       className={cn(
-        "relative flex flex-col rounded-3xl p-5 sm:p-7 lg:row-span-6 lg:grid lg:grid-rows-subgrid lg:gap-y-0",
+        // `minmax(0,1fr)`: колонка карточки не шире самой карточки — длинная
+        // строка (название с плашкой) не растягивает остальные.
+        // 1024–1279 px — отступы меньше: в кабинете рядом с меню колонки узкие.
+        "relative flex flex-col rounded-3xl p-5 sm:p-7 lg:row-span-6 lg:grid lg:grid-cols-[minmax(0,1fr)] lg:grid-rows-subgrid lg:gap-y-0 lg:p-5 xl:p-7",
         highlighted
           ? "overflow-hidden bg-[#0b1024] text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)]"
           : "border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]",
@@ -552,7 +569,7 @@ function TierCard({
           <div className="absolute -bottom-10 -left-16 size-[240px] rounded-full bg-[#7a5cff] opacity-30 blur-[120px]" />
         </div>
       ) : null}
-      <div className="relative flex items-center gap-3">
+      <div className="relative flex flex-wrap items-center gap-x-3 gap-y-2">
         <span
           className={
             highlighted
@@ -562,7 +579,7 @@ function TierCard({
         >
           <Icon className="size-5" />
         </span>
-        <div className="text-[20px] font-semibold tracking-[-0.01em]">{name}</div>
+        <div className="min-w-0 text-[20px] font-semibold tracking-[-0.01em]">{name}</div>
         {badge ? (
           <span
             className={cn(
@@ -579,7 +596,7 @@ function TierCard({
       <div data-testid={`tariff-price-${tier}`} className="relative mt-5">
         {price}
       </div>
-      <div data-testid={`tariff-action-${tier}`} className="relative mt-5">
+      <div data-testid={`tariff-action-${tier}`} className="relative mt-5 flex flex-col">
         {action}
         {note ? (
           <p className={cn("mt-2 text-center text-[12.5px] leading-snug", highlighted ? "text-white/70" : "text-[#6f7282]")}>{note}</p>

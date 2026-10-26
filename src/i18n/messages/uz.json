@@ -6599,7 +6599,10 @@
       "failure": "Parolni o‘rnatib bo‘lmadi. Qayta urinib ko‘ring.",
       "genericError": "Xatolik yuz berdi. Qayta urinib ko‘ring.",
       "invalidInvite": "Taklif havolasi yaroqsiz yoki allaqachon ishlatilgan.",
-      "seatLimit": "Tarifdagi faol xodimlar limiti ({activeUsers, number} / {limit, number}) to‘lgani uchun hisobni faollashtirib bo‘lmadi. Tarifni o‘zgartirish uchun administratordan so‘rang."
+      "seatLimit": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan yuqoriroq tarifga o‘tishni so‘rang va qayta urinib ko‘ring.",
+      "seatLimitStandard": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan «Standart»ni ulashni so‘rang va qayta urinib ko‘ring.",
+      "seatLimitPremium": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan «Premium»ga o‘tishni so‘rang va qayta urinib ko‘ring.",
+      "seatLimitContact": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan WeSetup qo‘llab-quvvatlash xizmatiga murojaat qilishni so‘rang va qayta urinib ko‘ring."
     },
     "welcomeTitle": "Xush kelibsiz, <strong>{name}</strong>!",
     "invitedToOrganization": "Siz <strong>{organization}</strong> tashkilotiga taklif qilindingiz. Tizimga kirish uchun parol o‘rnating.",
@@ -28105,7 +28108,15 @@
       "organizationFallback": "Tashkilot",
       "seatsNote": "Tarif o‘rinlari band ({limit, number}). Xodimlarni arxivdan «Standart»da qaytarish mumkin — har bir nuqtaga {seats, number} nafargacha.",
       "seatsNotePremium": "Tarif o‘rinlari band ({limit, number}). Xodimlarni arxivdan «Premium»da qaytarish mumkin — har bir nuqtaga {seats, number} nafargacha.",
-      "seatsNoteContact": "Tarif o‘rinlari band ({limit, number}). Har bir nuqtaga {seats, number} nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing."
+      "seatsNoteContact": "Tarif o‘rinlari band ({limit, number}). Har bir nuqtaga {seats, number} nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing.",
+      "seatsBannerToStandard": "Tarif o‘rinlari band: {used, number} / {limit, number} — yangi xodim qo‘shib bo‘lmaydi. «Standart»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
+      "seatsBannerToPremium": "Tarif o‘rinlari band: {used, number} / {limit, number} — yangi xodim qo‘shib bo‘lmaydi. «Premium»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
+      "seatsBannerContact": "Tarif o‘rinlari band: {used, number} / {limit, number} — yangi xodim qo‘shib bo‘lmaydi. Har bir nuqtaga {seats, number} nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing.",
+      "seatsBannerApp": "Tarif o‘rinlari band: {used, number} / {limit, number} — yangi xodim qo‘shib bo‘lmaydi.",
+      "seatsBannerCtaStandard": "«Standart»ni ulash",
+      "seatsBannerCtaPremium": "«Premium»ga o‘tish",
+      "contact": "Bog‘lanish",
+      "contactSubject": "«Premium» tarifida ko‘proq xodim"
     },
     "auditLogViewer": {
       "durMs": "{ms, number} ms",

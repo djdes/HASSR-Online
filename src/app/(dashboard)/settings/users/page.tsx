@@ -166,12 +166,37 @@ export default async function StaffPage() {
     billing?.state.seatLimit != null && billing.state.activeUsers >= billing.state.seatLimit;
   // Места заняты — следующий тариф; у «Премиума» — больше по согласованию.
   const seatsUpgrade = billing ? seatUpgradeTarget(billing.state.tier) : null;
+  const seatsUsed = billing?.state.activeUsers ?? 0;
+  const seatsLimit = billing?.state.seatLimit ?? null;
+  // Заметка под шапкой «Сотрудников»: в приложении WeSetup — только факт.
+  const seatsBanner =
+    seatsFull && seatsLimit !== null
+      ? {
+          text: inMobileApp
+            ? t("seatsBannerApp", { used: seatsUsed, limit: seatsLimit })
+            : seatsUpgrade === "standard"
+              ? t("seatsBannerToStandard", { used: seatsUsed, limit: seatsLimit, seats: SEATS_PER_POINT.standard })
+              : seatsUpgrade === "premium"
+                ? t("seatsBannerToPremium", { used: seatsUsed, limit: seatsLimit, seats: SEATS_PER_POINT.premium })
+                : t("seatsBannerContact", { used: seatsUsed, limit: seatsLimit, seats: SEATS_PER_POINT.premium }),
+          action: inMobileApp
+            ? null
+            : seatsUpgrade
+              ? {
+                  kind: "pay" as const,
+                  href: `${BILLING_PAY_HREF}#tariffs`,
+                  label: seatsUpgrade === "standard" ? t("seatsBannerCtaStandard") : t("seatsBannerCtaPremium"),
+                }
+              : { kind: "contact" as const, subject: t("contactSubject"), label: t("contact") },
+        }
+      : null;
 
   return (
     <DomainMessagesBoundary namespaces={["staffManagement", "journals"]}>
     <>
     <PinRequestsPanel initial={pinRequests} />
     <StaffPageClient
+      seatsBanner={seatsBanner}
       positionSuggestions={positionSuggestions}
       buildings={staffBuildings}
       perLocationJournals={organization?.perLocationJournals === true}
@@ -256,15 +281,17 @@ export default async function StaffPage() {
       }))}
       seatsNote={
         seatsFull && billing?.state.seatLimit != null
-          ? seatsUpgrade === "standard"
-            ? t("seatsNote", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.standard })
-            : seatsUpgrade === "premium"
-              ? t("seatsNotePremium", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.premium })
-              : t("seatsNoteContact", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.premium })
+          ? inMobileApp
+            ? t("seatsBannerApp", { used: seatsUsed, limit: billing.state.seatLimit })
+            : seatsUpgrade === "standard"
+              ? t("seatsNote", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.standard })
+              : seatsUpgrade === "premium"
+                ? t("seatsNotePremium", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.premium })
+                : t("seatsNoteContact", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.premium })
           : null
       }
       payHref={seatsFull && !inMobileApp && seatsUpgrade ? BILLING_PAY_HREF : null}
-      contactSupport={seatsFull && !seatsUpgrade}
+      contactSupport={seatsFull && !seatsUpgrade && !inMobileApp}
     />
     {ownedAccount ? (
       <div className="mt-6">

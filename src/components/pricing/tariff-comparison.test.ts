@@ -205,8 +205,11 @@ test("v2 layout: period switch, centered points with explanation, Premium 100 se
     assert.ok(html.includes(t("features.mercury")), `${locale}: mercury point`);
     assert.ok(html.includes(t("rows.mercury")), `${locale}: mercury row`);
     assert.ok(html.includes(t("cells.employeesPremium", { count: 100 })), `${locale}: table premium seats`);
-    // Строки карточек — общая сетка: каждая карточка занимает шесть строк.
-    assert.equal(html.match(/lg:row-span-6 lg:grid lg:grid-rows-subgrid/g)?.length, 3, `${locale}: subgrid cards`);
+    // Строки карточек — общая сетка: каждая карточка занимает шесть строк, а её
+    // колонка не шире карточки (minmax(0,1fr)) — длинная строка не растягивает остальные.
+    assert.equal(html.match(/lg:row-span-6 lg:grid lg:grid-cols-\[minmax\(0,1fr\)\] lg:grid-rows-subgrid/g)?.length, 3, `${locale}: subgrid cards`);
+    // Ряд настроек: равные края, в центре — только счётчик.
+    assert.match(html, /sm:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/, `${locale}: equal side columns`);
   }
 });
 

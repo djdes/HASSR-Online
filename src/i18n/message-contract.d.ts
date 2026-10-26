@@ -6600,7 +6600,10 @@ export type MessageContract = {
       "failure": "Не удалось установить пароль. Попробуйте ещё раз.",
       "genericError": "Произошла ошибка. Попробуйте ещё раз.",
       "invalidInvite": "Ссылка недействительна или уже использована.",
-      "seatLimit": "Не удалось активировать учётную запись: достигнут лимит активных сотрудников по тарифу ({activeUsers, number} из {limit, number}). Попросите администратора изменить тариф."
+      "seatLimit": "Не удалось активировать учётную запись: все места тарифа заняты ({activeUsers, number} из {limit, number}). Попросите руководителя перейти на тариф выше и повторите.",
+      "seatLimitStandard": "Не удалось активировать учётную запись: все места тарифа заняты ({activeUsers, number} из {limit, number}). Попросите руководителя подключить «Стандарт» и повторите.",
+      "seatLimitPremium": "Не удалось активировать учётную запись: все места тарифа заняты ({activeUsers, number} из {limit, number}). Попросите руководителя перейти на «Премиум» и повторите.",
+      "seatLimitContact": "Не удалось активировать учётную запись: все места тарифа заняты ({activeUsers, number} из {limit, number}). Попросите руководителя связаться с поддержкой WeSetup и повторите."
     },
     "welcomeTitle": "Добро пожаловать, <strong>{name}</strong>!",
     "invitedToOrganization": "Вас пригласили в <strong>{organization}</strong>. Установите пароль, чтобы войти.",
@@ -28106,7 +28109,15 @@ export type MessageContract = {
       "organizationFallback": "Организация",
       "seatsNote": "Места тарифа заняты ({limit, number}). Вернуть сотрудников из архива можно на «Стандарте» — до {seats, number} сотрудников на точку.",
       "seatsNotePremium": "Места тарифа заняты ({limit, number}). Вернуть сотрудников из архива можно на «Премиуме» — до {seats, number} сотрудников на точку.",
-      "seatsNoteContact": "Места тарифа заняты ({limit, number}). Больше {seats, number} сотрудников на точку — по согласованию: напишите нам."
+      "seatsNoteContact": "Места тарифа заняты ({limit, number}). Больше {seats, number} сотрудников на точку — по согласованию: напишите нам.",
+      "seatsBannerToStandard": "Места тарифа заняты: {used, number} из {limit, number} — новых сотрудников не добавить. Перейдите на «Стандарт» — до {seats, number} сотрудников на точку.",
+      "seatsBannerToPremium": "Места тарифа заняты: {used, number} из {limit, number} — новых сотрудников не добавить. Перейдите на «Премиум» — до {seats, number} сотрудников на точку.",
+      "seatsBannerContact": "Места тарифа заняты: {used, number} из {limit, number} — новых сотрудников не добавить. Больше {seats, number} сотрудников на точку — по согласованию: напишите нам.",
+      "seatsBannerApp": "Места тарифа заняты: {used, number} из {limit, number} — новых сотрудников не добавить.",
+      "seatsBannerCtaStandard": "Подключить «Стандарт»",
+      "seatsBannerCtaPremium": "Перейти на «Премиум»",
+      "contact": "Связаться",
+      "contactSubject": "Больше сотрудников на тарифе «Премиум»"
     },
     "auditLogViewer": {
       "durMs": "{ms, number} мс",

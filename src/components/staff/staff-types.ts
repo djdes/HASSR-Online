@@ -99,4 +99,13 @@ export type StaffPageProps = {
   vacations: StaffPeriodRow[];
   sickLeaves: StaffPeriodRow[];
   dismissals: StaffDismissalRow[];
+  /**
+   * Места тарифа заняты — заметка под шапкой: лимит и следующий тариф
+   * (кнопка на страницу тарифа) или «по согласованию» у «Премиума»
+   * («Связаться»); в приложении WeSetup — только факт, без кнопки.
+   */
+  seatsBanner?: {
+    text: string;
+    action: { kind: "pay"; href: string; label: string } | { kind: "contact"; subject: string; label: string } | null;
+  } | null;
 };

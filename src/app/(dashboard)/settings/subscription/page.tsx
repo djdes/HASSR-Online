@@ -599,7 +599,7 @@ export default async function SubscriptionPage({
               activeUsers: state?.activeUsers ?? 0,
             }}
             freeAction={
-              voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} className="w-full" /> : null
+              voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} className="h-auto min-h-12 w-full py-2 leading-tight sm:min-h-11" /> : null
             }
             showTable
           />
