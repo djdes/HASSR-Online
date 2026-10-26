@@ -1,0 +1,7 @@
+ok 1 - a page request loses the router headers, everything else stays
+ok 2 - RSC requests keep their router headers: navigations and prefetches work as before
+ok 3 - the guard cleans requests on a real http.Server before its listeners, once
+ok 4 - other server events pass through untouched
+# tests 4
+# pass 4
+# fail 0

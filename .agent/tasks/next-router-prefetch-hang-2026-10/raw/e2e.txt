@@ -1,0 +1,15 @@
+PASS /login с next-router-prefetch — ответ, как без заголовка — 200 за 60 мс, HTML 14151 против 14151
+PASS /login с next-router-prefetch + next-router-segment-prefetch — ответ, как без заголовка — 200 за 63 мс, HTML 14151 против 14151
+PASS /login с next-router-state-tree — ответ, как без заголовка — 200 за 57 мс, HTML 14151 против 14151
+PASS /pricing с next-router-prefetch — ответ, как без заголовка — 200 за 82 мс, HTML 54953 против 54953
+PASS /pricing с next-router-prefetch + next-router-segment-prefetch — ответ, как без заголовка — 200 за 71 мс, HTML 54953 против 54953
+PASS /pricing с next-router-state-tree — ответ, как без заголовка — 200 за 74 мс, HTML 54953 против 54953
+PASS / с next-router-prefetch — ответ, как без заголовка — 200 за 122 мс, HTML 180251 против 180251
+PASS / с next-router-prefetch + next-router-segment-prefetch — ответ, как без заголовка — 200 за 116 мс, HTML 180251 против 180251
+PASS / с next-router-state-tree — ответ, как без заголовка — 200 за 121 мс, HTML 180251 против 180251
+PASS /journals-info с next-router-prefetch — ответ, как без заголовка — 200 за 92 мс, HTML 103694 против 103694
+PASS /journals-info с next-router-prefetch + next-router-segment-prefetch — ответ, как без заголовка — 200 за 88 мс, HTML 103694 против 103694
+PASS /journals-info с next-router-state-tree — ответ, как без заголовка — 200 за 76 мс, HTML 103694 против 103694
+PASS RSC-переход отдаёт text/x-component — 200 text/x-component за 33 мс
+PASS RSC-предзагрузка отдаёт text/x-component и не длиннее полного ответа — 200 text/x-component, 179 против 166181 байт
+PASS клиентский переход в браузере: без перезагрузки, RSC-запросы успешны — переход без перезагрузки: true, RSC-ответы: 200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200

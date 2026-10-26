@@ -1,0 +1,6 @@
+{
+  "task": "next-router-prefetch-hang-2026-10",
+  "verdict": "PASS (AC5 after deploy)",
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "pending-deploy" },
+  "checks": { "typecheck": "exit 0", "test_gate": "pass=4903 fail=0", "unit": "4/4", "e2e_production_build": "15/15", "before_prod": "no response in 12 s on /login, /pricing, /" }
+}
