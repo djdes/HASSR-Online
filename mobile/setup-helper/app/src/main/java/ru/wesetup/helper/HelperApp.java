@@ -225,5 +225,7 @@ public class HelperApp extends Application {
         outbox.clear();
         printerStore.clear();
         getSharedPreferences(PrintJobs.VALUES_PREFS, MODE_PRIVATE).edit().clear().apply();
+        // История печати — тексты этикеток этого заведения: при выходе не оставляем.
+        getSharedPreferences(PrintHistory.PREFS, MODE_PRIVATE).edit().clear().apply();
     }
 }
