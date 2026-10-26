@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="file:///D:/handoff/wesetup-2026-10-18/presentation/source/node_modules/@fontsource/unbounded/700.css">
+<link rel="stylesheet" href="file:///D:/handoff/wesetup-2026-10-18/presentation/source/node_modules/@fontsource/onest/500.css">
+<link rel="stylesheet" href="file:///D:/handoff/wesetup-2026-10-18/presentation/source/node_modules/@fontsource/onest/600.css">
+<style>
+  html,body{margin:0;background:#0b1024}
+  /* Баннер Google Play 1024×500. Важное — в центре: Play может обрезать края и наложить кнопку видео. */
+  #card{position:relative;width:1024px;height:500px;overflow:hidden;color:#fff;font-family:"Onest",sans-serif;
+    background:radial-gradient(60% 80% at 0% 0%,rgba(101,115,255,.75),transparent 70%),radial-gradient(50% 70% at 100% 100%,rgba(122,92,255,.55),transparent 70%),#1a2160}
+  .left{position:absolute;left:72px;top:92px;width:470px}
+  .tile{width:76px;height:76px;border-radius:22px;background:#fff;display:grid;place-items:center;box-shadow:0 18px 40px -16px rgba(0,0,0,.6)}
+  .tile svg{width:52px;height:52px}
+  h1{font-family:"Unbounded",sans-serif;font-weight:700;font-size:46px;line-height:1.05;letter-spacing:-.03em;margin:26px 0 0}
+  p{margin:16px 0 0;font-size:23px;line-height:1.35;color:#d9ddff;font-weight:500}
+  .chips{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
+  .chips span{padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);font-size:17px;font-weight:600}
+  .labels{position:absolute;right:56px;top:58px;width:400px;height:384px}
+  .label{position:absolute;background:#fff;border-radius:14px;padding:10px;box-shadow:0 30px 60px -24px rgba(0,0,0,.75)}
+  .label img{display:block;width:100%;image-rendering:pixelated}
+  .l1{width:330px;right:0;top:0;transform:rotate(3deg);z-index:3}
+  .l2{width:250px;left:-6px;top:236px;transform:rotate(-6deg);z-index:2;opacity:.95}
+</style></head>
+<body>
+<div id="card">
+  <div class="left">
+    <div class="tile"><svg viewBox="19.6 18 72 72"><path fill="#5566F6" fill-rule="evenodd" d="M33,36 L67,36 Q69,36 70.2,37.6 L81,52.4 Q82.2,54 81,55.6 L70.2,70.4 Q69,72 67,72 L33,72 Q29,72 29,68 L29,40 Q29,36 33,36 Z M66.6,54 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 Z M35,44 h24 v4 h-24 Z M35,52 h16 v4 h-16 Z M35,60 h20 v4 h-20 Z"/></svg></div>
+    <h1>Сетап помощник</h1>
+    <p>Этикетки для кухни на Bluetooth-принтер — за пару нажатий</p>
+    <div class="chips"><span>Шаблоны</span><span>Сроки годности</span><span>Без интернета</span></div>
+  </div>
+  <div class="labels">
+    <div class="label l1"><img src="assets/product.png" alt=""></div>
+    <div class="label l2"><img src="assets/defrost.png" alt=""></div>
+  </div>
+</div>
+<script>window.__ready=false;document.fonts.ready.then(()=>Promise.all([...document.images].map(i=>i.decode()))).then(()=>{window.__ready=true});</script>
+</body></html>

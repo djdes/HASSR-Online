@@ -70,7 +70,13 @@
 |---|---|---|
 | Значок | `graphics/icon-512.png` | 512×512 PNG, до 1 МБ |
 | Баннер | `graphics/feature-1024x500.png` | 1024×500 PNG/JPEG |
-| Скриншоты телефона | `graphics/screenshots/*.png` | 2–8 шт., 1080×1920 |
+| Скриншоты телефона | `graphics/screenshots/phone/*.png` | 2–8 шт., 1080×1920 |
+| Скриншоты планшета 7" | `graphics/screenshots/tablet-7/*.png` | до 8 шт., 1200×1920 |
+| Скриншоты планшета 10" | `graphics/screenshots/tablet-10/*.png` | до 8 шт., 1600×2560 |
+
+Скриншоты — чистые экраны приложения без рамок устройства (Play рамки не
+любит). Нарисованы тестом `StoreScreenshotsTest` из настоящих экранов,
+пересобираются CI (артефакт `setup-helper-store-screenshots-N`).
 
 ## Что нового (для первой версии)
 
