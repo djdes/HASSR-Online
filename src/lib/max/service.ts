@@ -2,10 +2,8 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { listAccessibleOrganizations, assertOrgMembership } from "@/lib/organization-access";
 import { userHasPermission } from "@/lib/permissions-server";
-import { getAllowedJournalCodes } from "@/lib/journal-acl";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { canConfirmMaxRequest, maxMenuPolicy, visibleMaxJournals } from "./policy";
-import { hashMaxToken, maxToken, MAX_HANDOFF_TTL_MS, MAX_LINK_TTL_MS, safeMaxReturnPath } from "./security";
+import { canConfirmMaxRequest, maxMenuPolicy } from "./policy";
+import { hashMaxToken, maxToken, MAX_LINK_TTL_MS } from "./security";
 
 export class MaxError extends Error {
   constructor(message:string,public status=400) {super(message);}
@@ -106,29 +104,4 @@ export async function maxContext(identityId:string,organizationOverride?:string)
   const orgPresetOverrides=organization.presetCapabilitiesJson && typeof organization.presetCapabilitiesJson==="object" && !Array.isArray(organization.presetCapabilitiesJson)?organization.presetCapabilitiesJson as Record<string,string[]>:null;
   const actor={...user,orgPresetOverrides,...(member?{role:member.role,permissionPreset:"admin"}:{})};
   return {identity,user,actor,organization,organizationId,policy:maxMenuPolicy(actor)};
-}
-export async function maxJournalList(identityId:string,organizationOverride?:string) {
-  const ctx=await maxContext(identityId,organizationOverride);
-  const [allowed,templates,canView]=await Promise.all([
-    getAllowedJournalCodes({id:ctx.user.id,role:ctx.actor.role,isRoot:ctx.user.isRoot}),
-    db.journalTemplate.findMany({where:{isActive:true},select:{code:true,name:true},orderBy:{sortOrder:"asc"}}),
-    userHasPermission(ctx.user.id,"journals.view"),
-  ]);
-  return {ctx,journals:canView ? visibleMaxJournals(templates,allowed,parseDisabledCodes(ctx.organization.disabledJournalCodes)):[]};
-}
-
-export async function createMaxHandoff(identityId:string,returnPath:string) {
-  const ctx=await maxContext(identityId); const token=maxToken();
-  await db.maxSessionHandoff.create({data:{tokenHash:hashMaxToken(token),identityId,organizationId:ctx.organizationId,returnPath:safeMaxReturnPath(returnPath),expiresAt:new Date(Date.now()+MAX_HANDOFF_TTL_MS)}});
-  return token;
-}
-export async function consumeMaxHandoff(token:string) {
-  if(!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new MaxError("Ссылка входа недействительна. Откройте новую из бота.",401);
-  const handoff=await db.maxSessionHandoff.findUnique({where:{tokenHash:hashMaxToken(token)}});
-  if(!handoff || handoff.usedAt || handoff.expiresAt<=new Date()) throw new MaxError("Ссылка входа истекла или уже использована. Откройте новую из бота.",401);
-  const ctx=await maxContext(handoff.identityId);
-  if(ctx.organizationId!==handoff.organizationId) throw new MaxError("Вы сменили организацию. Откройте новую ссылку из бота.",409);
-  const result=await db.maxSessionHandoff.updateMany({where:{id:handoff.id,usedAt:null,expiresAt:{gt:new Date()}},data:{usedAt:new Date()}});
-  if(result.count!==1) throw new MaxError("Ссылка входа уже использована.",401);
-  return {ctx,returnPath:safeMaxReturnPath(handoff.returnPath)};
 }

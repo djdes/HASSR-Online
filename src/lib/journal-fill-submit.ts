@@ -77,6 +77,12 @@ export type JournalFillSubmitInput = {
   openedAt?: number | null;
   /** Бракераж «Несколько сразу»: наименования, по строке журнала на каждое (до 30). */
   bulkNames?: string[];
+  /**
+   * Запись из бота мессенджера: сотрудник подтверждён привязкой своего
+   * аккаунта — без PIN и сессии кабинета, только от своего имени. Лимит —
+   * на этого пользователя, а не на общий адрес вебхука.
+   */
+  messenger?: { channel: "max"; userKey: string };
 };
 
 export type JournalFillSubmitResult =
@@ -126,7 +132,10 @@ export async function journalFillTokenAllowsDocument(params: {
 
 export async function submitJournalFill(input: JournalFillSubmitInput): Promise<JournalFillSubmitResult> {
   const { request, orgId, code } = input;
-  if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "journal", input.documentId))) {
+  const rateKey = input.messenger
+    ? `${input.messenger.channel}:${input.messenger.userKey}:journal:${input.documentId}`
+    : qrFillRateKey(clientIp(request), "journal", input.documentId);
+  if (!qrFillRateLimiter.consume(rateKey)) {
     return { ok: false, status: 429, error: QR_FILL_RATE_LIMIT_ERROR };
   }
   const check = verifyJournalFillToken(input.token, orgId, code);
@@ -182,13 +191,14 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   const documentId = document.id;
 
   const actor = await resolveQrFillActor({
-    mode,
+    // Мессенджер: личность уже подтверждена привязкой — как PIN-пропуск.
+    mode: input.messenger ? "public" : mode,
     organizationId: orgId,
     employeeId: input.employeeId,
     pin: input.pin,
     // PIN уже подтверждён отдельным шагом ДО формы — второй раз не спрашиваем
     // (раньше в public-режиме сотрудника с PIN спрашивали повторно).
-    pinVerified: input.pinVerified === true,
+    pinVerified: input.pinVerified === true || Boolean(input.messenger),
     // Сторонняя комиссия — только у бракеража готовой продукции.
     includeCommission: isCommissionJournalCode(code),
   });
@@ -304,7 +314,7 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   if (offKeys.size > 0 && schema) {
     const labels = schema.fields.filter((field) => offKeys.has(field.key)).map((field) => cleanLabel(field.label));
     const stamp = stampFor(org.timezone || "Europe/Moscow");
-    const text = `⚠️ ${document.title}: ${actor.employee.name} отметил(а) «Выключено / нет показания» — ${labels.join(", ")} (${stamp.date} ${stamp.time}, по QR). Показание не снято, в журнале прочерк с пометкой.`;
+    const text = `⚠️ ${document.title}: ${actor.employee.name} отметил(а) «Выключено / нет показания» — ${labels.join(", ")} (${stamp.date} ${stamp.time}, ${input.messenger ? "в MAX" : "по QR"}). Показание не снято, в журнале прочерк с пометкой.`;
     await Promise.all([
       // Push уходит из колокольчика (notifyManagement ниже) — у бота без второго.
       notifyOrganization(orgId, text, ["owner", "technologist"], "temperature", undefined, { appPush: false }).catch(() => null),
@@ -353,7 +363,8 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     employee: { id: actor.employee.id, name: actor.employee.name },
     documentIds: [documentId],
     dateKey: todayKey,
-    authMode: mode,
+    authMode: input.messenger ? "auth" : mode,
+    channel: input.messenger?.channel,
     // «обсл»/«рем» — в аудите тем же словом, что в журнале.
     values:
       statusKeys.size > 0
