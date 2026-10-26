@@ -56,6 +56,8 @@ export const OUTRO_VOICE_OFFSET = 12;
 export const TAGLINE_PAUSE_SECONDS = 0.5;
 /** Финал держит логотип ещё 1,5 с после «Это сетап.» (тишина до конца ролика ≥ 1 с; ролик ≤ 60 с). */
 export const OUTRO_HOLD_SECONDS = 1.5;
+/** Затем — экран контактов: номер (MAX, Telegram) и почта. */
+export const CONTACTS_SECONDS = 5;
 
 /** Кадр итога сцены (запись уже в бланке) — от него глава держится. */
 export const HOLD_FROM = sceneFrame(RESULT_SECONDS);
@@ -92,14 +94,14 @@ export function buildTimeline(tracks: VoiceTrack[]): Timeline {
     const track = tracks[index + 1];
     push({ id: track.id, kind: "chapter", chapterIndex: index, durationInFrames: chapterFrames(track), voices: [{ track, offset: CHAPTER_VOICE_OFFSET }] });
   });
-  // Финал: «Без бумаги…», пауза, «Это сетап.» отдельным клипом, потом логотип держится.
+  // Финал: «Без бумаги…», пауза, «Это сетап.» отдельным клипом, логотип держится, потом контакты.
   const outro = tracks[tracks.length - 2];
   const tagline = tracks[tracks.length - 1];
   const taglineOffset = OUTRO_VOICE_OFFSET + audioFrames(outro) + Math.round(TAGLINE_PAUSE_SECONDS * FPS);
   push({
     id: outro.id,
     kind: "outro",
-    durationInFrames: taglineOffset + audioFrames(tagline) + Math.round(OUTRO_HOLD_SECONDS * FPS),
+    durationInFrames: taglineOffset + audioFrames(tagline) + Math.round((OUTRO_HOLD_SECONDS + CONTACTS_SECONDS) * FPS),
     voices: [
       { track: outro, offset: OUTRO_VOICE_OFFSET },
       { track: tagline, offset: taglineOffset },

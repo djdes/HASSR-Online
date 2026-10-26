@@ -1,3 +1,4 @@
+import { Mail, Phone } from "lucide-react";
 import { NextIntlClientProvider } from "next-intl";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
@@ -16,6 +17,7 @@ import {
 
 import { CHAPTERS, FPS } from "@/components/landing/qr-player/chapters";
 import {
+  CONTACTS_SECONDS,
   buildTimeline,
   holdProgress,
   sceneLocalFor,
@@ -53,6 +55,9 @@ import outroTagline from "../public/landing/video/voice/ru/08-outro-tagline.json
  */
 
 export const VIDEO = { width: 1920, height: 1080, fps: FPS } as const;
+/** Контакты в ролике: номер — в углу всего ролика и крупно в конце (по нему нас находят в MAX и Telegram). */
+export const CONTACTS = { phone: "+7 925 305-80-77", email: "admin@wesetup.ru" } as const;
+const CONTACTS_FRAMES = Math.round(CONTACTS_SECONDS * FPS);
 export const TRACKS: VoiceTrack[] = [intro, fridge, locker, uv, forgot, sensor, outro, outroTagline];
 export const TIMELINE = buildTimeline(TRACKS);
 export const CUES: Cue[] = timelineCues(TIMELINE);
@@ -109,6 +114,7 @@ export const QrTourNarrated: React.FC<QrTourProps> = ({ qr, today }) => {
             </Sequence>
           ))}
           <Captions />
+          <CornerPhone />
         </SceneAssets.Provider>
       </NextIntlClientProvider>
     </AbsoluteFill>
@@ -255,6 +261,9 @@ function OutroCard({ part }: { part: TimelinePart }) {
   const fadeIn = interpolate(frame, [0, 14], [0, 1], clamp);
   const lift = interpolate(frame, [logoAt - 8, logoAt + 16], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
   const caption = interpolate(frame, [logoAt + 20, logoAt + 44], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  // Последние секунды — контакты: логотип с подписью уезжает наверх, «Без бумаги…» гаснет.
+  const contactsAt = part.durationInFrames - CONTACTS_FRAMES;
+  const toContacts = interpolate(frame, [contactsAt, contactsAt + 24], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
   return (
     <AbsoluteFill style={{ opacity: fadeIn }}>
       <HeroBackdrop frame={frame + 400}>
@@ -263,8 +272,16 @@ function OutroCard({ part }: { part: TimelinePart }) {
           <div style={{ width: 1100, height: 520, borderRadius: 9999, background: "radial-gradient(closest-side, rgba(85,102,246,0.55), rgba(85,102,246,0))", opacity: logoValue * 0.9, transform: `translateY(40px) scale(${(0.8 + 0.2 * logoValue).toFixed(4)})` }} />
         </AbsoluteFill>
       </HeroBackdrop>
-      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", color: "#ffffff", textAlign: "center" }}>
-        <div style={{ transform: `translateY(${(-70 * lift).toFixed(2)}px)`, opacity: 1 - 0.45 * lift }}>
+      <AbsoluteFill
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#ffffff",
+          textAlign: "center",
+          transform: `translateY(${(-262 * toContacts).toFixed(2)}px) scale(${(1 - 0.3 * toContacts).toFixed(4)})`,
+        }}
+      >
+        <div style={{ transform: `translateY(${(-70 * lift).toFixed(2)}px)`, opacity: (1 - 0.45 * lift) * (1 - toContacts) }}>
           <SpokenLine
             part={part}
             frame={frame}
@@ -292,7 +309,84 @@ function OutroCard({ part }: { part: TimelinePart }) {
           {OUTRO_TAGLINE}
         </div>
       </AbsoluteFill>
+      <ContactsCard frame={frame} at={contactsAt + 10} />
     </AbsoluteFill>
+  );
+}
+
+/* ---------------------------------------------------------------------
+ * Контакты: по номеру нас находят в MAX и Telegram, ниже — почта.
+ * Строки проявляются по очереди, как титры.
+ * ------------------------------------------------------------------- */
+
+function ContactsCard({ frame, at }: { frame: number; at: number }) {
+  const card = reveal(frame, at, 16, 40, 14);
+  const icon: CSSProperties = { display: "block", width: 104, height: 104 };
+  return (
+    <AbsoluteFill style={{ alignItems: "center", justifyContent: "flex-start", paddingTop: 486, color: "#ffffff", textAlign: "center" }}>
+      <div
+        style={{
+          ...card,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 30,
+          padding: "42px 76px 48px",
+          borderRadius: 48,
+          background: "rgba(255,255,255,0.06)",
+          boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.12), 0 50px 110px -50px rgba(0,0,0,0.8)",
+        }}
+      >
+        <div style={{ ...reveal(frame, at + 6), fontSize: 34, fontWeight: 500, color: "rgba(255,255,255,0.76)" }}>
+          Найдите нас в <span style={ACCENT_TEXT}>MAX</span> и <span style={ACCENT_TEXT}>Telegram</span> по номеру
+        </div>
+        <div style={{ ...reveal(frame, at + 12), display: "flex", alignItems: "center", gap: 26 }}>
+          <Img src={staticFile("landing/video/messengers/max.png")} style={{ ...icon, borderRadius: 26 }} />
+          <Img src={staticFile("landing/video/messengers/telegram.svg")} style={icon} />
+          <div style={{ marginLeft: 14, fontSize: 96, fontWeight: 700, letterSpacing: "-0.01em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+            {CONTACTS.phone}
+          </div>
+        </div>
+        <div style={{ ...reveal(frame, at + 18), display: "flex", alignItems: "center", gap: 18, fontSize: 52, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>
+          <Mail size={46} strokeWidth={2} color="#aab4ff" />
+          {CONTACTS.email}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+}
+
+/** Номер — в правом нижнем углу всего ролика; на экране контактов его сменяет крупный. */
+function CornerPhone() {
+  const frame = useCurrentFrame();
+  const outro = TIMELINE.parts[TIMELINE.parts.length - 1];
+  const contactsAt = outro.from + outro.durationInFrames - CONTACTS_FRAMES;
+  const shown = Math.min(interpolate(frame, [10, 26], [0, 1], clamp), interpolate(frame, [contactsAt - 4, contactsAt + 10], [1, 0], clamp));
+  if (shown <= 0) return null;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: 40,
+        bottom: 40,
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        height: 52,
+        padding: "0 22px 0 18px",
+        borderRadius: 9999,
+        background: "rgba(5,7,15,0.62)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12), 0 18px 40px -24px rgba(0,0,0,0.8)",
+        color: "rgba(255,255,255,0.94)",
+        fontSize: 24,
+        fontWeight: 600,
+        fontVariantNumeric: "tabular-nums",
+        opacity: shown,
+      }}
+    >
+      <Phone size={20} strokeWidth={2.2} color="#aab4ff" />
+      {CONTACTS.phone}
+    </div>
   );
 }
 
