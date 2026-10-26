@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createPageNavigationLimiter, hasAutomationUserAgent, PAGE_NAVIGATION_LIMITS } from "./page-navigation-limit";
+import { createPageNavigationLimiter, hasAutomationUserAgent, PAGE_NAVIGATION_LIMITS, pageLimitMode } from "./page-navigation-limit";
 
 const { browser, automated, background, cooldownSeconds } = PAGE_NAVIGATION_LIMITS;
 const COOLDOWN = cooldownSeconds * 1000;
@@ -12,6 +12,8 @@ test("budgets are loose: a person never meets them, each minute budget binds", (
     automated: { burst: 20, minute: 90 },
     background: 1200,
     cooldownSeconds: 15,
+    userScale: 3,
+    visitorIpScale: 3,
   });
   for (const budget of [browser, automated]) assert.ok(budget.minute < budget.burst * 6);
 });
@@ -134,4 +136,52 @@ test("a page cooldown also holds back prefetch", () => {
   for (let i = 0; i < automated.burst; i++) assert.equal(limit.check("a", true, false), 0);
   assert.equal(limit.check("a", true, false), cooldownSeconds);
   assert.equal(limit.check("a", true, true), cooldownSeconds);
+});
+
+test("every refusal names its reason for the statistics", () => {
+  let now = 0;
+  const limit = createPageNavigationLimiter(() => now, 3);
+  for (let i = 0; i < browser.burst; i++) assert.deepEqual(limit.decide("burst", false, false), { wait: 0, reason: null });
+  assert.deepEqual(limit.decide("burst", false, false), { wait: cooldownSeconds, reason: "burst" });
+  assert.deepEqual(limit.decide("burst", false, true), { wait: cooldownSeconds, reason: "cooldown" });
+  for (let i = 0; i < background; i++) limit.decide("background", false, true);
+  assert.deepEqual(limit.decide("background", false, true), { wait: 60, reason: "background" });
+  const step = Math.floor(MINUTE / (automated.minute + 10));
+  for (let i = 0; i < automated.minute; i++) {
+    now = i * step;
+    limit.decide("minute", true, false);
+  }
+  now = automated.minute * step;
+  assert.deepEqual(limit.decide("minute", true, false), { wait: cooldownSeconds, reason: "minute" });
+  assert.equal(limit.decide("fourth", false, false).reason, "capacity");
+});
+
+test("scale multiplies every budget of one check, and is per check", () => {
+  const limit = createPageNavigationLimiter(() => 0);
+  for (let i = 0; i < automated.burst * 3; i++) assert.equal(limit.check("user", true, false, 3), 0);
+  assert.equal(limit.check("user", true, false, 3), cooldownSeconds);
+  for (let i = 0; i < background * 3; i++) assert.equal(limit.check("prefetch", false, true, 3), 0);
+  assert.equal(limit.check("prefetch", false, true, 3), 60);
+  for (let i = 0; i < automated.burst / 4; i++) assert.equal(limit.check("tight", true, false, 0.25), 0);
+  assert.equal(limit.check("tight", true, false, 0.25), cooldownSeconds);
+});
+
+test("admits: a known subject always, a new one only while there is room", () => {
+  let now = 0;
+  const limit = createPageNavigationLimiter(() => now, 1);
+  assert.equal(limit.admits("a"), true);
+  limit.check("a", false, false);
+  assert.equal(limit.admits("a"), true);
+  assert.equal(limit.admits("b"), false);
+  now = MINUTE;
+  assert.equal(limit.admits("b"), true, "a full table frees idle entries even if only new subjects knock");
+});
+
+test("the emergency switch reads only valid values", () => {
+  assert.deepEqual(pageLimitMode({}), { off: false, scale: 1 });
+  assert.deepEqual(pageLimitMode({ PAGE_NAVIGATION_LIMIT: " OFF ", PAGE_NAVIGATION_LIMIT_SCALE: "2.5" }), { off: true, scale: 2.5 });
+  for (const value of ["", "0", "0.1", "101", "abc", "Infinity", "-3"]) {
+    assert.equal(pageLimitMode({ PAGE_NAVIGATION_LIMIT_SCALE: value }).scale, 1, value);
+  }
+  assert.equal(pageLimitMode({ PAGE_NAVIGATION_LIMIT: "on" }).off, false);
 });

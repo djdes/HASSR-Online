@@ -1,0 +1,1 @@
+PASS PAGE_NAVIGATION_LIMIT=off: 60 запросов curl без 429 — {"200":60}

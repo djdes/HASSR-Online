@@ -15557,6 +15557,7 @@
     "audit": "Audit",
     "impersonation": "Customer account access",
     "timings": "Timings",
+    "pageLimit": "Page rate limiter",
     "yandexDirect": "Yandex Direct"
   },
   "telegramShortcuts": {
@@ -19297,6 +19298,81 @@
       "ip": "IP",
       "started": "sign-in",
       "stopped": "sign-out"
+    }
+  },
+  "rootPageLimit": {
+    "title": "Page rate limiter",
+    "description": "How many pages the site served and how many times it showed the “Too many page requests” pause over 7 days. No IPs, accounts, cookies or page addresses; counts arrive here once a minute.",
+    "settings": "Settings",
+    "modeOn": "On",
+    "modeOff": "Off: PAGE_NAVIGATION_LIMIT=off",
+    "scale": "Limit multiplier ×{scale}",
+    "browserLimit": "Browser: {burst} pages per 10 s, {minute} per minute",
+    "automatedLimit": "curl, scripts, empty user agent: {burst} per 10 s, {minute} per minute",
+    "backgroundLimit": "Next.js background requests: {count} per minute",
+    "cooldown": "Pause after the limit: {seconds} s",
+    "userScale": "Signed-in users: every limit ×{scale}",
+    "visitorScale": "Guests with a visitor cookie: a budget of their own and a shared address ceiling ×{scale}",
+    "visitorOff": "Visitor cookie is off: no NEXTAUTH_SECRET",
+    "crawlers": "Google, Yandex and Bing crawlers verified by DNS are not limited",
+    "summary": "Pages: {passed} · pauses (429): {limited} · share: {share}",
+    "empty": "No data for 7 days. It appears a minute after the first pages are opened.",
+    "byDay": "By day",
+    "day": "Day",
+    "pages": "Pages",
+    "limited": "429",
+    "share": "429 share",
+    "value": "Value",
+    "dimensions": {
+      "subject": "Who",
+      "reason": "Pause reason",
+      "client": "Client",
+      "platform": "Platform",
+      "request": "Request type",
+      "metadata": "Browser sent Sec-Fetch-Dest",
+      "section": "Section (429 only)"
+    },
+    "values": {
+      "subject": {
+        "user": "Signed-in users",
+        "visitor": "Guests with a cookie",
+        "ip": "Guests by IP",
+        "unknown": "No address"
+      },
+      "reason": {
+        "burst": "Burst within 10 s",
+        "minute": "Per-minute limit",
+        "background": "Background requests",
+        "cooldown": "Retry during the pause",
+        "capacity": "Table is full",
+        "unknown": "Not specified"
+      },
+      "client": {
+        "browser": "Browser",
+        "automation": "curl, scripts",
+        "app": "WeSetup app",
+        "crawler": "Search crawler (DNS)",
+        "fake-crawler": "Claimed to be a crawler, DNS disagreed"
+      },
+      "platform": {
+        "ios-old": "iOS before 16.4",
+        "ios": "iOS",
+        "android": "Android",
+        "desktop": "Computer",
+        "other": "Other"
+      },
+      "request": {
+        "document": "Page",
+        "background": "Background (RSC, prefetch)"
+      },
+      "metadata": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "section": {
+        "home": "Home",
+        "other": "Other addresses"
+      }
     }
   },
   "miniBonus": {

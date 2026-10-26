@@ -1,0 +1,23 @@
+ outcome |  reason  | subject |    client    | platform |  request   | metadata | section | count 
+---------+----------+---------+--------------+----------+------------+----------+---------+-------
+ limited | cooldown | visitor | browser      | desktop  | document   | f        | blog    |    30
+ limited | burst    | ip      | automation   | other    | document   | f        | pricing |     2
+ limited | cooldown | ip      | automation   | other    | document   | t        | pricing |     2
+ limited | cooldown | ip      | browser      | desktop  | document   | f        | blog    |     1
+ limited | burst    | ip      | browser      | desktop  | document   | f        | blog    |     1
+ limited | burst    | user    | automation   | other    | document   | f        | blog    |     1
+ limited | burst    | visitor | browser      | desktop  | document   | f        | blog    |     1
+ limited | burst    | ip      | fake-crawler | other    | document   | f        | blog    |     1
+ limited | burst    | ip      | browser      | ios-old  | document   | f        | login   |     1
+ limited | burst    | ip      | automation   | other    | document   | f        | login   |     1
+ passed  | -        | ip      | browser      | ios-old  | background | f        | *       |   200
+ passed  | -        | visitor | browser      | desktop  | document   | f        | *       |   199
+ passed  | -        | ip      | browser      | ios-old  | document   | f        | *       |   100
+ passed  | -        | ip      | fake-crawler | other    | document   | f        | *       |   100
+ passed  | -        | ip      | browser      | desktop  | document   | f        | *       |   100
+ passed  | -        | ip      | automation   | other    | document   | f        | *       |    61
+ passed  | -        | user    | automation   | other    | document   | f        | *       |    60
+ passed  | -        | ip      | browser      | other    | document   | t        | *       |     5
+ passed  | -        | ip      | automation   | other    | document   | t        | *       |     1
+(19 rows)
+

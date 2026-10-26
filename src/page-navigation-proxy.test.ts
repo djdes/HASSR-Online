@@ -3,19 +3,25 @@ import { test } from "node:test";
 import { NextRequest } from "next/server";
 import { encode } from "next-auth/jwt";
 import { proxy } from "./proxy";
-import { isDeployWarmRequest, pageNavigationSubject } from "./lib/page-navigation-guard";
+import { isDeployWarmRequest, pageNavigationSubject, setPageCrawlerVerifierForTests } from "./lib/page-navigation-guard";
+import { takePageLimitStats } from "./lib/page-limit-stats";
 import { PAGE_NAVIGATION_LIMITS } from "./lib/page-navigation-limit";
+import { issueVisitorToken } from "./lib/page-visitor";
+import { createCrawlerVerifier } from "./lib/verified-crawler";
 
-const { automated, background, cooldownSeconds } = PAGE_NAVIGATION_LIMITS;
+const { browser, automated, background, cooldownSeconds, userScale, visitorIpScale } = PAGE_NAVIGATION_LIMITS;
+/** Signed-in accounts get every budget times `userScale`. */
+const userBurst = automated.burst * userScale;
 
 let address = 0;
 function client(extra: Record<string, string> = {}) {
-  const headers = { "x-real-ip": `192.0.2.${++address}`, "user-agent": "curl/8", ...extra };
+  // A page load asks for HTML, like any browser navigation.
+  const headers = { "x-real-ip": `192.0.2.${++address}`, "user-agent": "curl/8", accept: "text/html,application/xhtml+xml,*/*;q=0.8", ...extra };
   return (path = "/blog", more: Record<string, string> = {}, method = "GET") =>
     proxy(new NextRequest(`https://wesetup.test${path}`, { method, headers: { ...headers, ...more } }));
 }
-async function exhaust(request: ReturnType<typeof client>, path = "/blog") {
-  for (let i = 0; i < automated.burst; i++) assert.equal((await request(path)).status, 200);
+async function exhaust(request: ReturnType<typeof client>, path = "/blog", budget: number = automated.burst) {
+  for (let i = 0; i < budget; i++) assert.equal((await request(path)).status, 200);
   assert.equal((await request(path)).status, 429);
 }
 
@@ -32,6 +38,8 @@ test("real proxy denies documents and RSC before content, with a private Russian
     assert.equal(response.headers.get("x-middleware-next"), null);
     const body = await response.text();
     assert.match(body, /Слишком много переходов/);
+    assert.match(body, /Страница откроется сама/);
+    assert.match(body, /Math\.max\(15,3\)/, "never reopens itself sooner than 3 seconds");
     assert.match(body, /id="reload-help"/);
     assert.doesNotMatch(body, /never-reflect-this|192\.0\.2/);
   }
@@ -89,7 +97,7 @@ test("ordinary employee navigation survives excess Next.js background requests",
       "user-agent": "Mozilla/5.0 Chrome/130",
       cookie: `__Secure-haccp-online.session-token=${token}`,
     });
-    for (let i = 0; i < background; i++) {
+    for (let i = 0; i < background * userScale; i++) {
       assert.equal((await request(`/journals?prefetch=${i}`, { "sec-fetch-dest": "empty" })).status, 200);
     }
     for (let i = 0; i < 5; i++) {
@@ -129,23 +137,23 @@ test("JWT subjects isolate shared IPs; root, directory, partner and staff checks
       return client({ "x-real-ip": "203.0.113.1", cookie: `next-auth.session-token=${token}` });
     }
     const a = await session("limit-a");
-    await exhaust(a);
+    await exhaust(a, "/blog", userBurst);
     assert.equal((await a("/blog", { "x-real-ip": "203.0.113.2" })).status, 429);
     assert.equal((await (await session("limit-b"))()).status, 200);
     assert.equal((await a("/root")).status, 404);
     assert.equal((await a("/api/root/users")).status, 404);
     const directory = await session("limit-directory", { orgKind: "directory" });
-    await exhaust(directory, "/master");
+    await exhaust(directory, "/master", userBurst);
     assert.equal(new URL((await directory("/dashboard")).headers.get("location")!).pathname, "/master");
     const staff = await session("limit-staff", { role: "cook" });
-    await exhaust(staff);
+    await exhaust(staff, "/blog", userBurst);
     assert.equal(new URL((await staff("/settings")).headers.get("location")!).pathname, "/journals");
     const partner = await session("limit-partner", { activeOrganizationId: "client", partnerAccess: { partnerId: "partner", organizationId: "client", level: "view" } });
-    await exhaust(partner);
+    await exhaust(partner, "/blog", userBurst);
     assert.equal((await partner("/api/payments")).status, 403);
     assert.equal(new URL((await partner("/settings/consultant")).headers.get("location")!).pathname, "/partner/denied");
     const root = await session("limit-root", { isRoot: true });
-    await exhaust(root, "/root");
+    await exhaust(root, "/root", userBurst);
   } finally {
     if (saved === undefined) delete process.env.NEXTAUTH_SECRET;
     else process.env.NEXTAUTH_SECRET = saved;
@@ -195,4 +203,154 @@ test("deploy prewarm with the per-deploy key skips the page budget; other reques
     if (saved === undefined) delete process.env.DEPLOY_WARM_TOKEN;
     else process.env.DEPLOY_WARM_TOKEN = saved;
   }
+});
+
+async function withEnv(values: Record<string, string>, work: () => Promise<void>) {
+  const saved = Object.fromEntries(Object.keys(values).map((name) => [name, process.env[name]]));
+  Object.assign(process.env, values);
+  try {
+    await work();
+  } finally {
+    for (const [name, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
+
+const visitorCookieOf = (response: Response) => /wesetup\.visitor=([^;]+)/.exec(response.headers.get("set-cookie") ?? "")?.[1];
+
+test("old browsers without Fetch Metadata: a request not asking for text/html is background", async () => {
+  const ios15 = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_7 like Mac OS X) AppleWebKit/605.1.15";
+  const request = client({ "user-agent": ios15 });
+  for (let i = 0; i < browser.burst * 2; i++) assert.equal((await request("/journals", { accept: "*/*" })).status, 200);
+  const page = { accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" };
+  for (let i = 0; i < browser.burst; i++) assert.equal((await request("/journals", page)).status, 200, "pages keep their own budget");
+  assert.equal((await request("/journals", page)).status, 429);
+  // Tools also send */*, and a declared page destination wins: both stay on the page budget.
+  await exhaust(client(), "/journals");
+  const declared = client({ "user-agent": ios15, "sec-fetch-dest": "document", accept: "*/*" });
+  for (let i = 0; i < browser.burst; i++) await declared("/journals");
+  assert.equal((await declared("/journals")).status, 429);
+});
+
+const BROWSER = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130";
+
+test("guests: a signed visitor cookie gives each browser its own budget", async () => {
+  await withEnv({ NEXTAUTH_SECRET: "visitor-proxy-fixture-not-a-credential" }, async () => {
+    const request = client({ "user-agent": BROWSER });
+    const first = await request();
+    assert.equal(first.status, 200);
+    const cookie = first.headers.get("set-cookie") ?? "";
+    assert.match(cookie, /wesetup\.visitor=v1\./);
+    assert.match(cookie, /HttpOnly/i);
+    assert.match(cookie, /SameSite=lax/i);
+    assert.match(cookie, /Max-Age=2592000/);
+    for (let i = 1; i < browser.burst; i++) await request();
+    const waited = await request();
+    assert.equal(waited.status, 429, "the address without a cookie still runs out");
+    assert.ok(visitorCookieOf(waited), "the wait page hands out a cookie for after the pause");
+    const a = visitorCookieOf(first)!;
+    for (let i = 0; i < browser.burst; i++) {
+      const response = await request("/blog", { cookie: `wesetup.visitor=${a}` });
+      assert.equal(response.status, 200);
+      assert.equal(visitorCookieOf(response), undefined, "a valid cookie is not replaced");
+    }
+    assert.equal((await request("/blog", { cookie: `wesetup.visitor=${a}` })).status, 429, "each browser has a budget");
+    // A browser in its own pause keeps retrying: the refused requests never eat the address ceiling.
+    for (let i = 0; i < 50; i++) assert.equal((await request("/blog", { cookie: `wesetup.visitor=${a}` })).status, 429);
+    const b = visitorCookieOf(waited)!;
+    for (let i = 0; i < browser.burst; i++) assert.equal((await request("/blog", { cookie: `wesetup.visitor=${b}` })).status, 200);
+    const forged = await request("/blog", { cookie: "wesetup.visitor=v1.AAAAAAAAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAA" });
+    assert.equal(forged.status, 429, "a forged cookie is counted by address");
+  });
+});
+
+test("all guests of one address share a ceiling of three budgets", async () => {
+  await withEnv({ NEXTAUTH_SECRET: "visitor-ceiling-fixture-not-a-credential" }, async () => {
+    const request = client({ "user-agent": BROWSER });
+    for (let i = 0; i < browser.burst; i++) assert.equal((await request()).status, 200, "first visits use the address budget");
+    const tokens = Array.from({ length: visitorIpScale }, () => issueVisitorToken()!);
+    for (const token of tokens.slice(0, visitorIpScale - 1)) {
+      for (let i = 0; i < browser.burst; i++) assert.equal((await request("/blog", { cookie: `wesetup.visitor=${token}` })).status, 200);
+    }
+    assert.equal((await request("/blog", { cookie: `wesetup.visitor=${tokens[visitorIpScale - 1]}` })).status, 429, "the address is at three budgets");
+  });
+});
+
+test("tools get no visitor cookie and their cookies are ignored", async () => {
+  await withEnv({ NEXTAUTH_SECRET: "visitor-tools-fixture-not-a-credential" }, async () => {
+    const request = client();
+    const first = await request();
+    assert.equal(visitorCookieOf(first), undefined);
+    const token = issueVisitorToken()!;
+    for (let i = 1; i < automated.burst; i++) await request("/blog", { cookie: `wesetup.visitor=${token}` });
+    assert.equal((await request("/blog", { cookie: `wesetup.visitor=${token}` })).status, 429, "curl with a cookie still counts by address");
+  });
+});
+
+test("without a secret there is no visitor cookie and guests count by address", async () => {
+  await withEnv({ NEXTAUTH_SECRET: "", AUTH_SECRET: "" }, async () => {
+    const response = await client()();
+    assert.equal(response.status, 200);
+    assert.equal(visitorCookieOf(response), undefined);
+  });
+});
+
+test("emergency switch: off never answers 429, scale multiplies every budget", async () => {
+  await withEnv({ PAGE_NAVIGATION_LIMIT: "off" }, async () => {
+    const request = client();
+    for (let i = 0; i < automated.burst * 3; i++) assert.equal((await request()).status, 200);
+  });
+  await withEnv({ PAGE_NAVIGATION_LIMIT_SCALE: "2" }, async () => {
+    await exhaust(client(), "/blog", automated.burst * 2);
+  });
+  await withEnv({ PAGE_NAVIGATION_LIMIT_SCALE: "nonsense" }, async () => {
+    await exhaust(client());
+  });
+});
+
+test("a crawler verified by DNS is not limited and gets no cookie", async () => {
+  const ip = "66.249.66.1";
+  setPageCrawlerVerifierForTests(createCrawlerVerifier({
+    reverse: async (address) => (address === ip ? ["crawl-66-249-66-1.googlebot.com"] : []),
+    lookup: async (host) => (host === "crawl-66-249-66-1.googlebot.com" ? [ip] : []),
+  }));
+  try {
+    await withEnv({ NEXTAUTH_SECRET: "crawler-fixture-not-a-credential" }, async () => {
+      takePageLimitStats();
+      const googlebot = client({ "x-real-ip": ip, "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" });
+      for (let i = 0; i < browser.burst * 2; i++) {
+        const response = await googlebot(`/blog?page=${i}`);
+        assert.equal(response.status, 200);
+        assert.equal(visitorCookieOf(response), undefined);
+      }
+      assert.ok(takePageLimitStats().every((bucket) => bucket.client === "crawler" && bucket.outcome === "passed"));
+      // The same address without the crawler's user-agent is an ordinary guest.
+      await exhaust(client({ "x-real-ip": ip }));
+    });
+  } finally {
+    setPageCrawlerVerifierForTests(createCrawlerVerifier());
+  }
+});
+
+test("a user-agent naming a search crawler gets no exemption without DNS proof", async () => {
+  takePageLimitStats();
+  await exhaust(client({ "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" }), "/blog", browser.burst);
+  assert.ok(takePageLimitStats().some((bucket) => bucket.client === "fake-crawler" && bucket.outcome === "limited"));
+});
+
+test("statistics count pages and 429 by coarse dimensions, never addresses or paths", async () => {
+  takePageLimitStats();
+  const request = client();
+  for (let i = 0; i < automated.burst; i++) await request("/journals/clx-secret-document?token=abc");
+  assert.equal((await request("/journals/clx-secret-document?token=abc")).status, 429);
+  const buckets = takePageLimitStats();
+  const passed = buckets.filter((bucket) => bucket.outcome === "passed");
+  const limited = buckets.filter((bucket) => bucket.outcome === "limited");
+  assert.equal(passed.reduce((sum, bucket) => sum + bucket.count, 0), automated.burst);
+  assert.deepEqual(limited.map(({ day: _day, ...rest }) => rest), [
+    { outcome: "limited", reason: "burst", subject: "ip", client: "automation", platform: "other", request: "document", metadata: false, section: "journals", count: 1 },
+  ]);
+  assert.doesNotMatch(JSON.stringify(buckets), /192\.0\.2|secret|token|abc/);
 });

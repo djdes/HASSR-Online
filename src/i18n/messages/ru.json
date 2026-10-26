@@ -15557,6 +15557,7 @@
     "audit": "Аудит",
     "impersonation": "Входы под клиента",
     "timings": "Тайминги",
+    "pageLimit": "Ограничитель переходов",
     "yandexDirect": "Яндекс Директ"
   },
   "telegramShortcuts": {
@@ -19297,6 +19298,81 @@
       "ip": "IP",
       "started": "вход",
       "stopped": "выход"
+    }
+  },
+  "rootPageLimit": {
+    "title": "Ограничитель переходов",
+    "description": "Сколько страниц сайт открыл и сколько раз показал паузу «Слишком много переходов» за 7 дней. Без IP, аккаунтов, cookie и адресов страниц; счётчики попадают сюда раз в минуту.",
+    "settings": "Настройки",
+    "modeOn": "Включён",
+    "modeOff": "Выключен: PAGE_NAVIGATION_LIMIT=off",
+    "scale": "Множитель порогов ×{scale}",
+    "browserLimit": "Браузер: {burst} страниц за 10 с, {minute} в минуту",
+    "automatedLimit": "curl, скрипты, пустой user-agent: {burst} за 10 с, {minute} в минуту",
+    "backgroundLimit": "Фоновые запросы Next.js: {count} в минуту",
+    "cooldown": "Пауза после превышения: {seconds} с",
+    "userScale": "Вошедшие пользователи: все пороги ×{scale}",
+    "visitorScale": "Гости с cookie посетителя: свой бюджет и общий потолок адреса ×{scale}",
+    "visitorOff": "Cookie посетителя выключена: нет NEXTAUTH_SECRET",
+    "crawlers": "Поисковые роботы Google, Яндекса и Bing, подтверждённые DNS, не ограничиваются",
+    "summary": "Страниц: {passed} · пауз (429): {limited} · доля: {share}",
+    "empty": "За 7 дней данных нет. Они появятся через минуту после первых открытых страниц.",
+    "byDay": "По дням",
+    "day": "День",
+    "pages": "Страниц",
+    "limited": "429",
+    "share": "Доля 429",
+    "value": "Значение",
+    "dimensions": {
+      "subject": "Кто",
+      "reason": "Причина паузы",
+      "client": "Клиент",
+      "platform": "Платформа",
+      "request": "Тип запроса",
+      "metadata": "Браузер прислал Sec-Fetch-Dest",
+      "section": "Раздел (только 429)"
+    },
+    "values": {
+      "subject": {
+        "user": "Вошедшие пользователи",
+        "visitor": "Гости с cookie",
+        "ip": "Гости по IP",
+        "unknown": "Без адреса"
+      },
+      "reason": {
+        "burst": "Всплеск за 10 с",
+        "minute": "Предел за минуту",
+        "background": "Фоновые запросы",
+        "cooldown": "Повтор во время паузы",
+        "capacity": "Таблица переполнена",
+        "unknown": "Не указана"
+      },
+      "client": {
+        "browser": "Браузер",
+        "automation": "curl, скрипты",
+        "app": "Приложение WeSetup",
+        "crawler": "Поисковый робот (DNS)",
+        "fake-crawler": "Назвался роботом, DNS не подтвердил"
+      },
+      "platform": {
+        "ios-old": "iOS до 16.4",
+        "ios": "iOS",
+        "android": "Android",
+        "desktop": "Компьютер",
+        "other": "Другое"
+      },
+      "request": {
+        "document": "Страница",
+        "background": "Фоновый (RSC, предзагрузка)"
+      },
+      "metadata": {
+        "yes": "Да",
+        "no": "Нет"
+      },
+      "section": {
+        "home": "Главная",
+        "other": "Другие адреса"
+      }
     }
   },
   "miniBonus": {

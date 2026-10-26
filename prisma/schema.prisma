@@ -3360,6 +3360,37 @@ model PlatformSetting {
   updatedAt DateTime @updatedAt
 }
 
+/// Ограничитель переходов (src/lib/page-navigation-guard.ts): суточные
+/// счётчики проверенных страниц и ответов 429 по грубым признакам — без
+/// IP, аккаунта, cookie и адреса страницы. Пишет page-limit-stats.server.ts
+/// раз в минуту, строки старше 90 дней удаляются. Читает /root/page-limit.
+model PageLimitStat {
+  id        String   @id @default(cuid())
+  /// Сутки по Москве.
+  day       DateTime @db.Date
+  /// passed | limited
+  outcome   String
+  /// burst | minute | background | cooldown | capacity; для прошедших «-».
+  reason    String
+  /// user | visitor | ip | unknown
+  subject   String
+  /// browser | automation | app | crawler | fake-crawler
+  client    String
+  /// ios-old | ios | android | desktop | other
+  platform  String
+  /// document | background
+  request   String
+  /// Браузер прислал Sec-Fetch-Dest.
+  metadata  Boolean
+  /// Первый сегмент пути из известных разделов, иначе other; для прошедших «*».
+  section   String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  /// Начинается с day — им же читаются последние сутки.
+  @@unique([day, outcome, reason, subject, client, platform, request, metadata, section], name: "bucket")
+}
+
 /// Правка строки каталога интерфейса (src/i18n/messages/<locale>.json)
 /// поверх файла. Подмешивается в loadMessages(); пустая правка не
 /// хранится — сброс удаляет строку (редактор переводов, 2026-10-24).

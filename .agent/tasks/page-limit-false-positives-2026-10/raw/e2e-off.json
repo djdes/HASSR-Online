@@ -1,0 +1,7 @@
+[
+  {
+    "name": "PAGE_NAVIGATION_LIMIT=off: 60 запросов curl без 429",
+    "ok": true,
+    "detail": "{\"200\":60}"
+  }
+]

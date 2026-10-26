@@ -14,6 +14,7 @@ import {
   FileClock,
   FileDown,
   FileText,
+  Gauge,
   Handshake,
   HeartPulse,
   Languages,
@@ -128,6 +129,7 @@ const NAV: NavEntry[] = [
       { href: "/root/audit", label: "audit", icon: FileClock },
       { href: "/root/audit-impersonations", label: "impersonation", icon: UserCog },
       { href: "/root/timings", label: "timings", icon: Timer },
+      { href: "/root/page-limit", label: "pageLimit", icon: Gauge },
     ],
   },
 ];
