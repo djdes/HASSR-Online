@@ -3,6 +3,7 @@ package ru.wesetup.helper;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -21,6 +22,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -118,6 +121,14 @@ public final class PrintActivity extends BaseActivity {
         templatesScroll.setOnScrollChangeListener((v, x, y, oldX, oldY) -> updateArrows());
 
         List<LabelTemplate> templates = app.templates().all();
+        // Выбранный шаблон — заливкой и синей рамкой, остальные — белые.
+        int[][] states = {{android.R.attr.state_checked}, {}};
+        ColorStateList chipBackground = new ColorStateList(states, new int[]{
+                ContextCompat.getColor(this, R.color.brand_soft), ContextCompat.getColor(this, R.color.card)});
+        ColorStateList chipStroke = new ColorStateList(states, new int[]{
+                ContextCompat.getColor(this, R.color.brand), ContextCompat.getColor(this, R.color.border)});
+        ColorStateList chipText = new ColorStateList(states, new int[]{
+                ContextCompat.getColor(this, R.color.brand_dark), ContextCompat.getColor(this, R.color.ink)});
         String initial = getIntent().getStringExtra(EXTRA_TEMPLATE);
         LabelTemplate selected = null;
         for (LabelTemplate t : templates) {
@@ -131,6 +142,10 @@ public final class PrintActivity extends BaseActivity {
             chip.setChipStartPadding(dp(10));
             chip.setChipEndPadding(dp(10));
             chip.setChipCornerRadius(dp(16));
+            chip.setChipBackgroundColor(chipBackground);
+            chip.setChipStrokeColor(chipStroke);
+            chip.setChipStrokeWidth(dp(2));
+            chip.setTextColor(chipText);
             chip.setTag(t.id);
             chip.setOnClickListener(v -> select(t));
             chips.addView(chip);
@@ -146,7 +161,11 @@ public final class PrintActivity extends BaseActivity {
         }
         if (selected != null) select(selected);
         setCopies(1);
-        templatesScroll.post(this::updateArrows);
+        final String shown = selected == null ? null : selected.id;
+        templatesScroll.post(() -> {
+            scrollToTemplate(shown, false);
+            updateArrows();
+        });
     }
 
     /** Принтер «по умолчанию» для предпросмотра: этикетка 58×40, как у AIYIN IP-802BT. */
@@ -158,6 +177,20 @@ public final class PrintActivity extends BaseActivity {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    /** Показать кнопку шаблона в ленте — чтобы выбранный был виден, а не за краем. */
+    private void scrollToTemplate(String id, boolean smooth) {
+        if (id == null) return;
+        for (int i = 0; i < chips.getChildCount(); i++) {
+            View chip = chips.getChildAt(i);
+            if (id.equals(chip.getTag())) {
+                int x = Math.max(0, chip.getLeft() - dp(16));
+                if (smooth) templatesScroll.smoothScrollTo(x, 0);
+                else templatesScroll.scrollTo(x, 0);
+                return;
+            }
+        }
     }
 
     private void updateArrows() {
@@ -403,9 +436,10 @@ public final class PrintActivity extends BaseActivity {
         String[] lines = new String[entries.size()];
         for (int i = 0; i < entries.size(); i++) {
             PrintHistory.Entry e = entries.get(i);
-            String head = getString(R.string.history_line, e.templateTitle, e.copies);
+            // «Маркировка продукта» / «Салат «Цезарь»» / «4 шт. · 25.10.2026 11:30».
             String summary = e.summary();
-            lines[i] = head + "\n" + (summary.isEmpty() ? "" : summary + " · ") + Ui.dateTime(e.printedAt);
+            lines[i] = e.templateTitle + "\n" + (summary.isEmpty() ? "" : summary + "\n")
+                    + getString(R.string.history_line, e.copies, Ui.dateTime(e.printedAt));
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_history, R.id.history_text, lines);
         new MaterialAlertDialogBuilder(this)
@@ -445,11 +479,9 @@ public final class PrintActivity extends BaseActivity {
     void editFromHistory(LabelTemplate saved, PrintHistory.Entry entry) {
         for (int i = 0; i < chips.getChildCount(); i++) {
             View chip = chips.getChildAt(i);
-            if (saved.id.equals(chip.getTag())) {
-                ((Chip) chip).setChecked(true);
-                templatesScroll.post(() -> templatesScroll.smoothScrollTo(Math.max(0, chip.getLeft() - dp(16)), 0));
-            }
+            if (saved.id.equals(chip.getTag())) ((Chip) chip).setChecked(true);
         }
+        templatesScroll.post(() -> scrollToTemplate(saved.id, true));
         select(saved, entry);
         setCopies(entry.copies);
     }

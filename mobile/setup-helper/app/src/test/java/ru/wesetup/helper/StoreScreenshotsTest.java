@@ -45,8 +45,9 @@ import ru.wesetup.helper.bt.PrinterInfo;
 public class StoreScreenshotsTest {
 
     private static final long NOW = 1792927800000L; // 25.10.2026 14:30 МСК
-    private static final int WIDTH = 1080;
-    private static final int HEIGHT = 1920;
+    /** Размер кадра — из экрана Robolectric (qualifiers): телефон 1080×1920, планшеты 1200×1920 и 1600×2560. */
+    private int width;
+    private int height;
 
     private HelperApp app;
     private File out;
@@ -54,9 +55,9 @@ public class StoreScreenshotsTest {
     @Before
     public void setUp() {
         app = (HelperApp) RuntimeEnvironment.getApplication();
-        out = new File("build/store-screenshots");
-        //noinspection ResultOfMethodCallIgnored
-        out.mkdirs();
+        android.util.DisplayMetrics metrics = app.getResources().getDisplayMetrics();
+        width = metrics.widthPixels;
+        height = metrics.heightPixels;
     }
 
     private void signIn() throws Exception {
@@ -74,11 +75,11 @@ public class StoreScreenshotsTest {
         return printer;
     }
 
-    private static Bitmap draw(View root) {
-        root.measure(View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
-        root.layout(0, 0, WIDTH, HEIGHT);
-        Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
+    private Bitmap draw(View root) {
+        root.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, width, height);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         canvas.drawColor(Color.WHITE);
         root.draw(canvas);
@@ -93,15 +94,16 @@ public class StoreScreenshotsTest {
     /** Окно поверх экрана: затемнение и диалог по центру, как на телефоне. */
     private Bitmap withDialog(Bitmap base, Dialog dialog) {
         View decor = dialog.getWindow().getDecorView();
-        int width = WIDTH - 2 * 72;
-        decor.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(HEIGHT - 400, View.MeasureSpec.AT_MOST));
-        decor.layout(0, 0, width, decor.getMeasuredHeight());
+        int side = Math.max(72, (width - 1100) / 2);
+        int dialogWidth = width - 2 * side;
+        decor.measure(View.MeasureSpec.makeMeasureSpec(dialogWidth, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height - 400, View.MeasureSpec.AT_MOST));
+        decor.layout(0, 0, dialogWidth, decor.getMeasuredHeight());
         Bitmap result = base.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(result);
         canvas.drawColor(Color.argb(140, 0, 0, 0));
         canvas.save();
-        canvas.translate(72, (HEIGHT - decor.getMeasuredHeight()) / 2f);
+        canvas.translate(side, (height - decor.getMeasuredHeight()) / 2f);
         decor.draw(canvas);
         canvas.restore();
         return result;
@@ -119,7 +121,26 @@ public class StoreScreenshotsTest {
     }
 
     @Test
-    public void testRenderStoreScreenshots() throws Exception {
+    public void testPhoneScreenshots() throws Exception {
+        render("phone");
+    }
+
+    @Test
+    @Config(qualifiers = "w600dp-h960dp-xhdpi")
+    public void testTablet7Screenshots() throws Exception {
+        render("tablet-7");
+    }
+
+    @Test
+    @Config(qualifiers = "w800dp-h1280dp-xhdpi")
+    public void testTablet10Screenshots() throws Exception {
+        render("tablet-10");
+    }
+
+    private void render(String device) throws Exception {
+        out = new File("build/store-screenshots/" + device);
+        //noinspection ResultOfMethodCallIgnored
+        out.mkdirs();
         LoginActivity login = Robolectric.buildActivity(LoginActivity.class).setup().get();
         save(screen(login), "1-login.png");
 

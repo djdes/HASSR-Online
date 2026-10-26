@@ -97,7 +97,7 @@
     <string name="history_button">История</string>
     <string name="history_title">История печати</string>
     <string name="history_empty">Пока ничего не печатали — здесь появятся напечатанные этикетки, их можно будет повторить.</string>
-    <string name="history_line">%1$s · %2$d шт.</string>
+    <string name="history_line">%1$d шт. · %2$s</string>
     <string name="history_details">Напечатано: %1$s, %2$d шт.</string>
     <string name="history_repeat">Напечатать ещё раз</string>
     <string name="history_edit">Изменить</string>
