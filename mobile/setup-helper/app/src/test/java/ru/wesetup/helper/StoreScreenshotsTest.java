@@ -133,7 +133,7 @@ public class StoreScreenshotsTest {
                 .putExtra(PrintActivity.EXTRA_TEMPLATE, "product");
         PrintActivity print = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
         setText(print.findViewById(R.id.print_fields), 0, "Салат «Цезарь» с курицей");
-        ShadowLooper.idleMainLooper(java.time.Duration.ofMillis(300));
+        ShadowLooper.idleMainLooper(300, java.util.concurrent.TimeUnit.MILLISECONDS);
         save(screen(print), "3-print.png");
 
         PrintHistory history = new PrintHistory(app);
