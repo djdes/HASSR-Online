@@ -1014,14 +1014,21 @@
     "error": "Could not complete the action. Please try again.",
     "billing": {
       "limit": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}.",
-      "limitAction": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}. Change the plan or add a location to add employees.",
+      "limitAction": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}. Move to a higher plan to add employees.",
       "pay": "Choose a plan",
+      "payStandard": "Switch to Standard",
+      "payPremium": "Move to Premium",
       "pointLimit": "All locations on the plan are in use — {count, plural, one {# location} other {# locations}}. Each new location costs one more plan: add it on the plan page.",
       "journalLimit": "The free plan includes {count, plural, one {# log} other {# logs}}. Choose Standard or Premium to keep every log.",
       "storageFull": "Your plan’s document storage is full. Delete files you no longer need or switch to Premium — 1 GB for all documents.",
       "storageClosed": "Document uploads come with Standard and Premium. Files uploaded earlier can still be opened and deleted.",
       "featureLocked": "This feature comes with the Premium plan.",
-      "unavailable": "Not available on the current plan."
+      "unavailable": "Not available on the current plan.",
+      "limitToStandard": "All seats on the free plan are taken — {count, plural, one {# employee} other {# employees}}. Move to Standard — up to {seats, number} employees per location.",
+      "limitToPremium": "All seats on Standard are taken — {count, plural, one {# employee} other {# employees}}. Move to Premium — up to {seats, number} employees per location.",
+      "limitContact": "All seats on Premium are taken — {count, plural, one {# employee} other {# employees}}. More than {seats, number} employees per location — by arrangement: contact us.",
+      "contact": "Contact us",
+      "contactSubject": "More employees on the Premium plan"
     },
     "assistant": {
       "title": "AI assistant",
@@ -5489,7 +5496,7 @@
       "productDescription": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections.",
       "freeOfferDescription": "All {journalCount, number} {journalCount, plural, one {log} other {logs}} with no limits on employees or locations — {trialDays, number} {trialDays, plural, one {day} other {days}} from activation, no card required",
       "standardDescription": "Up to {employees, number} employees per location, all logs, {mb, number} MB for log orders and your own documents. Price per month when paid yearly.",
-      "premiumDescription": "Everything in Standard, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, a template document pack. Price per month when paid yearly."
+      "premiumDescription": "Up to {employees, number} employees per location, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, Mercury (VetIS), a template document pack. Price per month when paid yearly."
     },
     "journals": {
       "sectionLead": "{journalCount, number} electronic logs for daily sanitation checks and complete HACCP records. Choose your business to see the relevant logs, orders and checklists."
@@ -5593,13 +5600,14 @@
         "label": "Billing period",
         "month": "Monthly",
         "year": "Yearly",
-        "save": "−{percent, number}%"
+        "save": "−{percent, number}%",
+        "switchLabel": "Pay yearly"
       },
       "pointsPicker": {
         "label": "Locations",
         "decrease": "Remove a location",
         "increase": "Add a location",
-        "hint": "Each location costs one more plan; from {from, number} locations — {percent, number}% off each"
+        "hint": "A location is a separate set of logs and employees inside one organisation — a café, a workshop, a branch. Each costs one more plan; from {from, number} locations — {percent, number}% off each."
       },
       "tiers": {
         "free": {
@@ -5646,7 +5654,9 @@
         "photoAutofill": "Photo of a temperature sensor — readings fill in automatically",
         "equipmentConnect": "Equipment connection: on your own or as a subscription",
         "equipmentDelivery": "Delivery of pre-connected equipment — order in your account",
-        "typicalPackage": "Template document pack: print and fill in"
+        "typicalPackage": "Template document pack: print and fill in",
+        "employeesPremium": "Up to {count, number} employees per location, more by arrangement",
+        "mercury": "Mercury (VetIS): incoming vet certificates and clearance from the acceptance journal"
       },
       "cta": {
         "startFree": "Start for free",
@@ -5702,7 +5712,8 @@
         "ppkIndividual": "Production control programme for your site",
         "photoAutofill": "Readings filled in from a sensor photo",
         "equipmentConnect": "Equipment and IoT sensor connection",
-        "equipmentDelivery": "Delivery of connected equipment"
+        "equipmentDelivery": "Delivery of connected equipment",
+        "mercury": "Mercury (VetIS) integration"
       },
       "cells": {
         "employeesFree": "{trialDays, number} days — unlimited, then {count, number}",
@@ -5715,7 +5726,14 @@
         "storageStandard": "{mb, number} MB: log orders and your own documents",
         "storagePremium": "{gb, number} GB for all documents",
         "trialOnly": "Only during the {trialDays, number}-day trial",
-        "ppkFrom": "Custom, from {price}"
+        "ppkFrom": "Custom, from {price}",
+        "employeesPremium": "{count, number} per location, more by arrangement"
+      },
+      "contactLink": "contact us",
+      "contactSubject": "More than 100 employees on the Premium plan",
+      "headcount": {
+        "toPremium": "You have {count, plural, one {# employee} other {# employees}}; this plan allows up to {limit, number} — Premium fits.",
+        "contact": "You have {count, plural, one {# employee} other {# employees}}; this plan allows up to {limit, number} — more by arrangement."
       }
     }
   },
@@ -6583,7 +6601,10 @@
       "failure": "Could not set the password. Please try again.",
       "genericError": "Something went wrong. Please try again.",
       "invalidInvite": "This invitation link is invalid or has already been used.",
-      "seatLimit": "Your account could not be activated because your plan has reached its active-user limit ({activeUsers, number} of {limit, number}). Ask an administrator to change the plan."
+      "seatLimit": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to move to a higher plan and try again.",
+      "seatLimitStandard": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to switch to Standard and try again.",
+      "seatLimitPremium": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to move to Premium and try again.",
+      "seatLimitContact": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to contact WeSetup support and try again."
     },
     "welcomeTitle": "Welcome, <strong>{name}</strong>!",
     "invitedToOrganization": "You have been invited to <strong>{organization}</strong>. Set a password to sign in.",
@@ -7632,7 +7653,9 @@
       "archivedSince": "archived since {date}",
       "paySubscription": "Change plan",
       "restore": "Restore",
-      "restoreAll": "Restore all"
+      "restoreAll": "Restore all",
+      "contact": "Contact us",
+      "contactSubject": "More employees on the Premium plan"
     },
     "qrPin": {
       "removed": "PIN removed",
@@ -14827,7 +14850,9 @@
         "inviteUsed": "This invitation has already been used.",
         "inviteExpired": "This invitation has expired. Ask for a new link.",
         "alreadyLinkedInvite": "This Telegram account is already linked to another employee. Use a different account.",
-        "inviteSeatLimit": "All seats on the organisation’s plan are taken ({limit, plural, one {# employee} other {# employees}}). Ask your manager to change the plan or add a location and try again."
+        "inviteSeatLimit": "All seats on the organisation’s plan are taken ({limit, plural, one {# employee} other {# employees}}). Ask your manager to switch to Standard and try again.",
+        "inviteSeatLimitPremium": "All seats on the organisation’s plan are taken ({limit, plural, one {# employee} other {# employees}}). Ask your manager to move to Premium and try again.",
+        "inviteSeatLimitContact": "All seats on the organisation’s plan are taken ({limit, plural, one {# employee} other {# employees}}). Ask your manager to contact WeSetup support and try again."
       },
       "commands": {
         "start": "🏠 Open WeSetup",
@@ -15721,7 +15746,7 @@
     "page": {
       "title": "Platform metrics",
       "summary": "Activity, retention and revenue across all organizations.",
-      "pricing": "Potential MRR is Standard billed yearly, per month, for as many locations as the headcount needs (up to {seatsPerPoint, number} employees per location); actual MRR is the account’s paid plan per month, 0 for those who have not paid. Trend is the percentage change in 7-day activity compared with the previous week.",
+      "pricing": "Potential MRR is the plan the headcount needs, billed yearly, per month: up to {standardSeats, number} employees — Standard, more — Premium; actual MRR is the account’s paid plan per month, 0 for those who have not paid. Trend is the percentage change in 7-day activity compared with the previous week.",
       "tableHelp": "Email belongs to the person who registered the organization. Click column headings to sort, or search using part of an address or name. Click an entry count to see which journals the organization uses and who fills them in.",
       "ipHistory": "Login IP addresses have been recorded since {since}. Earlier addresses were recovered from the audit log, so the column is empty for people who have neither signed in nor performed administrative actions since then."
     },
@@ -25657,7 +25682,7 @@
     "page": {
       "eyebrow": "FGIS “Mercury”",
       "title": "Incoming VSD",
-      "proTitle": "The integration is available on the “Pro” plan",
+      "proTitle": "The integration comes with the Premium plan",
       "proDescription": "Incoming veterinary documents, one-tap clearance and automatic filling of the acceptance journal.",
       "description": "Once you have accepted the goods, record the inspection and clear the document right here.",
       "overdue": "Overdue {count, number}",
@@ -25673,7 +25698,8 @@
       "q1": "Why can’t I just “clear everything”?",
       "a1": "Clearance confirms that the batch was physically accepted and inspected. Without an inspection it is a signature under something that never happened — and the incoming-control journal stops being evidence for an inspection.",
       "q2": "Mercury is not responding — what about acceptance?",
-      "a2": "The journal line is saved immediately and does not depend on Mercury. The clearance will be queued and sent when the gateway responds."
+      "a2": "The journal line is saved immediately and does not depend on Mercury. The clearance will be queued and sent when the gateway responds.",
+      "proCta": "Move to Premium"
     },
     "incomingVsdClient": {
       "tabPending": "Awaiting clearance",
@@ -26766,7 +26792,7 @@
       "saveFailed": "Could not save",
       "credentialsSaved": "Details saved",
       "error": "Error",
-      "unavailableTitle": "Mercury is available on the Pro plan",
+      "unavailableTitle": "Mercury comes with the Premium plan",
       "unavailableBody": "Incoming VSDs, one-tap certification and automatic filling of the acceptance journal.",
       "demoTitle": "Demo mode — data is not from Mercury",
       "demoBody": "The Vetis.API access key has not been configured on the server yet, so sample documents are shown. Real VSDs will appear once Rosselkhoznadzor approves the application.",
@@ -26799,7 +26825,8 @@
       "noErrors": "No errors",
       "notifyWhom": "Who to remind about deadlines",
       "notifyChanged": "Responsible person changed",
-      "allManagement": "All management"
+      "allManagement": "All management",
+      "unavailableCta": "Move to Premium"
     },
     "mercuryPage": {
       "eyebrow": "Integrations",
@@ -28081,7 +28108,17 @@
     },
     "usersPage": {
       "organizationFallback": "Organisation",
-      "seatsNote": "All seats on your plan are taken ({limit, number}): employees can be restored from the archive after changing the plan or adding a location."
+      "seatsNote": "All seats on your plan are taken ({limit, number}). Employees can be restored from the archive on Standard — up to {seats, number} per location.",
+      "seatsNotePremium": "All seats on your plan are taken ({limit, number}). Employees can be restored from the archive on Premium — up to {seats, number} per location.",
+      "seatsNoteContact": "All seats on your plan are taken ({limit, number}). More than {seats, number} employees per location — by arrangement: contact us.",
+      "seatsBannerToStandard": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added. Move to Standard — up to {seats, number} employees per location.",
+      "seatsBannerToPremium": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added. Move to Premium — up to {seats, number} employees per location.",
+      "seatsBannerContact": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added. More than {seats, number} employees per location — by arrangement: contact us.",
+      "seatsBannerApp": "All seats on your plan are taken: {used, number} of {limit, number} — no new employees can be added.",
+      "seatsBannerCtaStandard": "Switch to Standard",
+      "seatsBannerCtaPremium": "Move to Premium",
+      "contact": "Contact us",
+      "contactSubject": "More employees on the Premium plan"
     },
     "auditLogViewer": {
       "durMs": "{ms, number} ms",
@@ -28299,13 +28336,19 @@
       "scheduleCancelled": "Switch cancelled",
       "tariffsChoose": "Choose a plan",
       "tariffsChange": "Change plan",
-      "rulePoints": "The price is per location: each location costs one more plan and includes up to {seats, number} employees. From {from, number} locations — {percent, number}% off each.",
+      "rulePoints": "The price is per location: a location is a separate set of logs and employees inside the organisation, and each one costs one more plan. From {from, number} locations — {percent, number}% off each.",
       "ruleUpgrade": "Upgrading the plan or adding locations applies right away: you pay the difference for the remaining days only, the end date stays the same.",
       "ruleSwitch": "Switching from monthly to yearly billing applies right away: the yearly price minus the unused balance of the month.",
       "ruleDowngrade": "Downgrading, fewer locations or switching to monthly billing apply from the end of the paid term — nothing to pay now.",
       "ruleTrial": "The trial lasts {trialDays, number} days with no card. A plan paid during the trial starts on the payment day.",
       "examplesTitle": "Monthly price when billed yearly",
-      "colPoints": "Locations"
+      "colPoints": "Locations",
+      "ruleSeats": "Employees: Standard — up to {standard, number} per location, Premium — up to {premium, number}, more by arrangement. Out of seats — move to the next plan.",
+      "overSeatsPremium": "You have more employees than Standard allows ({used, number} of {limit, number}): new ones cannot be added. Move to Premium — up to {seats, number} employees per location.",
+      "overSeatsContact": "You have more employees than Premium allows ({used, number} of {limit, number}): new ones cannot be added. More than {seats, number} per location — by arrangement: contact us.",
+      "overSeatsCta": "Move to Premium",
+      "contact": "Contact us",
+      "contactSubject": "More employees on the Premium plan"
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Commission — signs off the quality check",

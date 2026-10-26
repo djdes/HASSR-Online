@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
-import { checkSeatsForActivation } from "@/lib/billing.server";
+import { checkSeatsForActivation, seatLimitResponse, type SeatGuard } from "@/lib/billing.server";
 import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { recordAuditLog } from "@/lib/audit-log";
 import { sendInviteTokenEmail } from "@/lib/email";
@@ -109,6 +109,9 @@ export async function POST(request: Request) {
   }
 
   let result;
+  // Места кончились — тот же 402, что у остальных путей (лимит и следующий тариф).
+  // `as`: присваивается в колбэке — без него TS сузил бы тип до null.
+  let seatRefusal = null as Extract<SeatGuard, { ok: false }> | null;
   try {
     result = await createOrInviteMasterCabinet({
       organizationId: auth.organizationId,
@@ -121,10 +124,14 @@ export async function POST(request: Request) {
         const adding = await masterCabinetSeatsToAdd(cabinetId);
         if (adding === 0) return;
         const seats = await checkSeatsForActivation(auth.organizationId, adding, { source: "master-cabinet.invite" });
-        if (!seats.ok) throw new MasterCabinetError(seats.error, 402);
+        if (!seats.ok) {
+          seatRefusal = seats;
+          throw new MasterCabinetError(seats.error, 402);
+        }
       },
     });
   } catch (err) {
+    if (seatRefusal) return seatLimitResponse(seatRefusal);
     if (err instanceof MasterCabinetError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }

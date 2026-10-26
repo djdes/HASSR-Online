@@ -55,7 +55,7 @@ export default async function RootMetricsPage() {
               <SeedDemoButton />
             </div>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              {t("page.summary")} {t("page.pricing", { seatsPerPoint: SEATS_PER_POINT })} {t("page.tableHelp")} {t("page.ipHistory", { since: "26.08.2026" })}
+              {t("page.summary")} {t("page.pricing", { standardSeats: SEATS_PER_POINT.standard })} {t("page.tableHelp")} {t("page.ipHistory", { since: "26.08.2026" })}
             </p>
           </div>
         </div>

@@ -28,6 +28,7 @@ import {
 import { readPlanPricing } from "@/lib/tariffs";
 import { BILLING_TEST_MODE, FREE_MAX_USERS, isFreePlan } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
+import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { PromoBadge } from "@/components/pricing/promo-price";
 import { SubscriptionDiscountCard } from "@/components/settings/subscription-discount-card";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
@@ -116,6 +117,16 @@ export default async function SubscriptionPage({
     : billing && !billing.unit.exempt
       ? Math.max(1, billing.unit.activeUsers)
       : org?._count.users || 1;
+
+  // Сотрудников уже больше, чем даёт оплаченный тариф (понизили или купили
+  // «Стандарт» на большую команду): новых не добавить — предлагаем следующий.
+  const overSeats =
+    state?.kind === "paid" &&
+    (state.paidTier === "standard" || state.paidTier === "premium") &&
+    state.seatLimit !== null &&
+    state.activeUsers > state.seatLimit
+      ? { tier: state.paidTier, used: state.activeUsers, limit: state.seatLimit, cycle: state.planCycle, points: state.planPoints }
+      : null;
 
   const tierName = (tier: PaidTier) => (tier === "standard" ? tt("tiers.standard.name") : tt("tiers.premium.name"));
   const cycleLabel = (cycle: BillingCycle) => (cycle === "year" ? t("cycleYear") : t("cycleMonth"));
@@ -509,6 +520,33 @@ export default async function SubscriptionPage({
             ))}
           </dl>
         ) : null}
+        {overSeats ? (
+          <div
+            data-testid="subscription-over-seats"
+            className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#f5d9a8] bg-[#fffaf0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span className="text-[13.5px] leading-[1.5] text-[#7a4a00]">
+              {overSeats.tier === "standard"
+                ? t("overSeatsPremium", { used: overSeats.used, limit: overSeats.limit, seats: SEATS_PER_POINT.premium })
+                : t("overSeatsContact", { used: overSeats.used, limit: overSeats.limit, seats: SEATS_PER_POINT.premium })}
+            </span>
+            {overSeats.tier === "standard" ? (
+              <a
+                href={`/order?plan=premium&cycle=${overSeats.cycle}&points=${overSeats.points}`}
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
+              >
+                {t("overSeatsCta")}
+              </a>
+            ) : (
+              <ContactSupportButton
+                subject={t("contactSubject")}
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff]"
+              >
+                {t("contact")}
+              </ContactSupportButton>
+            )}
+          </div>
+        ) : null}
         {scheduled ? (
           <div
             data-testid="subscription-scheduled"
@@ -558,9 +596,10 @@ export default async function SubscriptionPage({
                 : null,
               legacyMonthlyRub: pricing.legacyMonthlyRub,
               nowIso: now.toISOString(),
+              activeUsers: state?.activeUsers ?? 0,
             }}
             freeAction={
-              voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} className="w-full" /> : null
+              voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} className="h-auto min-h-12 w-full py-2 leading-tight sm:min-h-11" /> : null
             }
             showTable
           />
@@ -740,7 +779,8 @@ export default async function SubscriptionPage({
               {t("howCalculated")}
             </h2>
             <ul className="mt-2 max-w-[720px] list-disc space-y-1.5 pl-5 text-[13.5px] leading-relaxed text-[#3c4053]">
-              <li>{t("rulePoints", { seats: SEATS_PER_POINT, from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}</li>
+              <li>{t("rulePoints", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}</li>
+              <li>{t("ruleSeats", { standard: SEATS_PER_POINT.standard, premium: SEATS_PER_POINT.premium })}</li>
               <li>{t("ruleUpgrade")}</li>
               <li>{t("ruleSwitch")}</li>
               <li>{t("ruleDowngrade")}</li>

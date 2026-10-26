@@ -51,7 +51,7 @@ test("actual ROOT metrics page gates reads, retains one now anchor and original 
     const t = createTranslator({ locale, messages, namespace: "rootMetrics" });
     assert.ok(html.includes(messages.rootMetrics.page.title)); assert.ok(html.includes("Customer A &lt;&amp;&gt;"));
     assert.ok(html.includes(t("format.rubles", { amount: 2390 }))); assert.ok(html.includes(t("format.rubles", { amount: 400 })));
-    assert.ok(html.includes(t("page.pricing", { seatsPerPoint: 25 })));
+    assert.ok(html.includes(t("page.pricing", { standardSeats: 25 })));
     assert.deepEqual(events, ["guard", "metrics"]); events.length = 0; denied = true;
     await assert.rejects(Page(), /ROOT-only/); assert.deepEqual(events, ["guard"]);
   }

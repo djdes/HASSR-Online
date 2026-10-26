@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
+import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 import { buildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { describeDeadline } from "@/lib/mercury/deadline";
@@ -30,6 +31,9 @@ export async function GET(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
+  // «Меркурий» — возможность «Премиума»: без неё документы не отдаём.
+  const feature = await checkPlanFeature(organizationId, "mercury", "mercury.documents");
+  if (!feature.ok) return limitResponse(feature);
   const buildingId = await getActiveBuildingId(session);
   const { searchParams } = new URL(request.url);
   const tab = searchParams.get("tab") ?? "pending";

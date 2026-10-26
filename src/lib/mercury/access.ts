@@ -1,24 +1,12 @@
 /**
- * Доступность Меркурия по тарифу и настройкам организации.
+ * Правила интеграции с «Меркурием».
  *
- * В `src/lib/plans.ts:66` «ФГИС Меркурий» перечислена как возможность
- * старшего тарифа. Общего механизма feature-gate в проекте нет
- * (`plan-limits.ts` умеет только численность), поэтому проверка локальная
- * — если появится общий, эта функция станет его тонкой обёрткой.
+ * Доступна ли интеграция, решает тариф аккаунта: это возможность
+ * «Премиума» `mercury` (`tariff-plans.ts`; есть и в пробном, в прежней
+ * «Подписке», у демо и платформы). Проверка на сервере —
+ * `hasPlanFeature` / `checkPlanFeature` из `billing.server.ts`.
  */
 import type { AutoProcessMode } from "./types";
-
-/** Тарифы, на которых интеграция доступна. */
-const MERCURY_PLANS = new Set(["pro", "business", "enterprise"]);
-
-export function canUseMercury(org: {
-  plan?: string | null;
-  isDemo?: boolean | null;
-}): boolean {
-  // Демо-организации показывают фичу целиком: это витрина для продаж.
-  if (org.isDemo) return true;
-  return MERCURY_PLANS.has((org.plan ?? "").toLowerCase());
-}
 
 export function normalizeAutoProcessMode(value: unknown): AutoProcessMode {
   return value === "off" || value === "auto_after_journal" ? value : "assisted";

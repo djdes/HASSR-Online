@@ -165,8 +165,13 @@ export function SupportWidget({
   // Всплывашка и колокольчик открывают переписку через шину.
   useEffect(() => {
     if (hideChat) return;
-    window.addEventListener(SUPPORT_CHAT_OPEN_EVENT, openChat);
-    return () => window.removeEventListener(SUPPORT_CHAT_OPEN_EVENT, openChat);
+    const onOpen = (event: Event) => {
+      // Чат открыт — вызывающий не уходит на запасной путь (почту).
+      event.preventDefault();
+      openChat();
+    };
+    window.addEventListener(SUPPORT_CHAT_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(SUPPORT_CHAT_OPEN_EVENT, onOpen);
   }, [hideChat, openChat]);
 
   // Deep-link `?support=chat` — из письма, из Telegram, из уведомления.

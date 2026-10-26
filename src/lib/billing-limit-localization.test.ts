@@ -3,6 +3,8 @@ import test from "node:test";
 import { billingErrorPresentation } from "./billing-limit-toast";
 import { BILLING_LIMIT_CODE, BILLING_PAY_HREF } from "./billing-period";
 import { translatorFor } from "@/i18n/translator";
+import { loadMessages } from "@/i18n/messages";
+import { formatNumber } from "@/i18n/locales";
 
 test("billing limit copy follows the caller locale, keeps native payment suppression and ignores legacy error text", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {
@@ -64,4 +66,112 @@ test("tariff limit refusals (points, journals, storage, Premium) get localized c
       assert.doesNotMatch([copy.points(3), copy.journals(1), copy.storageFull, copy.storageClosed, copy.feature, copy.pay].join(" "), /\p{Script=Cyrillic}/u);
     }
   }
+});
+
+test("seat refusals name the next plan (free → Standard, Standard → Premium) or offer a contact on Premium", async () => {
+  const { tariffLimitPresentation, billingErrorPresentation, seatOfferFrom } = await import("./billing-limit-toast");
+  assert.equal(seatOfferFrom({ code: BILLING_LIMIT_CODE }), "generic");
+  assert.equal(seatOfferFrom({ code: BILLING_LIMIT_CODE, nextTier: "standard" }), "standard");
+  assert.equal(seatOfferFrom({ code: BILLING_LIMIT_CODE, nextTier: "premium" }), "premium");
+  assert.equal(seatOfferFrom({ code: BILLING_LIMIT_CODE, nextTier: null }), "contact");
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const t = await translatorFor(locale);
+    const copy = {
+      seats: (count: number) => t("common.billing.limitAction", { count }),
+      seatsToStandard: (count: number) => t("common.billing.limitToStandard", { count, seats: 25 }),
+      seatsToPremium: (count: number) => t("common.billing.limitToPremium", { count, seats: 100 }),
+      seatsContact: (count: number) => t("common.billing.limitContact", { count, seats: 100 }),
+      payStandard: t("common.billing.payStandard"),
+      payPremium: t("common.billing.payPremium"),
+      contact: t("common.billing.contact"),
+      points: (count: number) => t("common.billing.pointLimit", { count }),
+      journals: (count: number) => t("common.billing.journalLimit", { count }),
+      storageFull: t("common.billing.storageFull"),
+      storageClosed: t("common.billing.storageClosed"),
+      feature: t("common.billing.featureLocked"),
+      seatsInApp: (count: number) => t("common.billing.limit", { count }),
+      unavailableInApp: t("common.billing.unavailable"),
+      pay: t("common.billing.pay"),
+    };
+    const free = tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 1, nextTier: "standard" }, copy, false);
+    assert.equal(free?.message, copy.seatsToStandard(1));
+    assert.equal(free?.href, BILLING_PAY_HREF);
+    // Кнопка называет следующий тариф; без него — общая «Выбрать тариф».
+    assert.equal(free?.actionLabel, copy.payStandard);
+    assert.equal(tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 50 }, copy, false)?.actionLabel, copy.pay);
+    const standard = tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 50, nextTier: "premium" }, copy, false);
+    assert.equal(standard?.message, copy.seatsToPremium(50));
+    assert.equal(standard?.actionLabel, copy.payPremium);
+    assert.ok(standard?.message.includes(formatNumber(locale, 100)), `${locale}: Premium seats named`);
+    const premium = tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 100, nextTier: null }, copy, false);
+    assert.equal(premium?.message, copy.seatsContact(100));
+    assert.equal(premium?.contact, true);
+    assert.equal(premium?.href, undefined, "Premium: contact, not the plan page");
+    assert.equal(premium?.actionLabel, copy.contact);
+    // В приложении — только факт, без призыва к оплате и без «связаться».
+    assert.deepEqual(tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 100, nextTier: null }, copy, true), { message: copy.seatsInApp(100) });
+
+    const errorCopy = {
+      limit: t("common.billing.limit", { count: 25 }),
+      limitAction: t("common.billing.limitAction", { count: 25 }),
+      pay: t("common.billing.pay"),
+      toStandard: t("common.billing.limitToStandard", { count: 25, seats: 25 }),
+      toPremium: t("common.billing.limitToPremium", { count: 25, seats: 100 }),
+      payStandard: t("common.billing.payStandard"),
+      payPremium: t("common.billing.payPremium"),
+      contact: t("common.billing.limitContact", { count: 25, seats: 100 }),
+      contactLabel: t("common.billing.contact"),
+    };
+    const toPremium = billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: "premium" }, "x", errorCopy, false);
+    assert.equal(toPremium.message, errorCopy.toPremium);
+    assert.equal(toPremium.actionLabel, errorCopy.payPremium);
+    assert.equal(billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: "standard" }, "x", errorCopy, false).actionLabel, errorCopy.payStandard);
+    if (locale !== "ru") assert.doesNotMatch(errorCopy.payStandard + errorCopy.payPremium, /\p{Script=Cyrillic}/u);
+    const contact = billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: null }, "x", errorCopy, false);
+    assert.equal(contact.message, errorCopy.contact);
+    assert.equal(contact.contact, true);
+    assert.equal(contact.href, undefined);
+  }
+});
+
+test("seat refusal toast: only the front toast's buttons take clicks over a modal dialog", async () => {
+  const { readFileSync } = await import("node:fs");
+  // Radix ставит body pointer-events: none — кнопка действия должна нажиматься, а тело
+  // сообщения пропускать клики (тап по нему не закрывает окно).
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /\[data-sonner-toast\]\[data-front="true"\] \[data-button\] \{\s*pointer-events: auto;/);
+  const toaster = readFileSync("src/components/ui/sonner.tsx", "utf8");
+  assert.doesNotMatch(toaster, /pointerEvents/, "the toaster container keeps inheriting pointer-events");
+});
+
+test("no text offers a location (or money) for more employees — catalogs, bot, server refusals, What's new", async () => {
+  const { FREE_LIMIT_MESSAGE, FREE_LIMIT_INVITEE_MESSAGE, paidSeatLimitMessage, paidSeatLimitInviteeMessage } = await import("./billing-period");
+  const { WHATS_NEW_NOTES } = await import("./whats-new-notes");
+  const addLocation = /добав\S* точк|добавлени\S* точк|точку на странице|add a location|adding a location|nuqta qo‘sh/i;
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    const seatTexts = [
+      ...Object.entries(messages.common.billing).filter(([key]) => key.startsWith("limit")).map(([, value]) => value),
+      messages.telegram.bot.errors.inviteSeatLimit,
+      messages.telegram.bot.errors.inviteSeatLimitPremium,
+      messages.telegram.bot.errors.inviteSeatLimitContact,
+      messages.settingsUi.usersPage.seatsNote,
+      messages.settingsUi.usersPage.seatsNotePremium,
+      messages.settingsUi.usersPage.seatsNoteContact,
+      messages.settingsUi.subscriptionPage.rulePoints,
+      messages.settingsUi.subscriptionPage.ruleSeats,
+    ];
+    for (const text of seatTexts) assert.doesNotMatch(text, addLocation, `${locale}: ${text}`);
+  }
+  const server = [
+    FREE_LIMIT_MESSAGE,
+    FREE_LIMIT_INVITEE_MESSAGE,
+    paidSeatLimitMessage("standard"),
+    paidSeatLimitMessage("premium"),
+    paidSeatLimitInviteeMessage("standard"),
+    paidSeatLimitInviteeMessage("premium"),
+  ];
+  for (const text of server) assert.doesNotMatch(text, addLocation, text);
+  const notes = JSON.stringify(WHATS_NEW_NOTES);
+  assert.doesNotMatch(notes, /за каждого сотрудника|до 3 сотрудников|бесплатных мест/i);
 });

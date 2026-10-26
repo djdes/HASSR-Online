@@ -310,7 +310,11 @@ export function registerStartHandler(composer: Composer<Context>): void {
       if (seats.code === BILLING_LIMIT_CODE) {
         const messages = await loadMessages(inviteeLocale);
         const t = createTranslator({ locale: inviteeLocale, messages, namespace: "telegram.bot.errors" });
-        await ctx.reply(t("inviteSeatLimit", { limit: seats.limit }));
+        // Лимит текущего тарифа и следующий: бесплатный → «Стандарт»,
+        // «Стандарт» → «Премиум», «Премиум» → поддержка (по согласованию).
+        const key =
+          seats.nextTier === "standard" ? "inviteSeatLimit" : seats.nextTier === "premium" ? "inviteSeatLimitPremium" : "inviteSeatLimitContact";
+        await ctx.reply(t(key, { limit: seats.limit }));
       } else {
         await ctx.reply(seats.error);
       }

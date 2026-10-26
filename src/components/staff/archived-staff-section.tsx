@@ -8,6 +8,7 @@ import { Archive, ChevronDown, Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { isBillingLimitError, useBillingError } from "@/lib/billing-limit-toast";
+import { contactSupport as openSupport } from "@/lib/support-chat-bus";
 import { cn } from "@/lib/utils";
 
 /**
@@ -30,12 +31,18 @@ export function ArchivedStaffSection({
   employees,
   seatsNote,
   payHref,
+  payLabel,
+  contactSupport: withContact = false,
 }: {
   employees: ArchivedEmployee[];
   /** Подсказка про места тарифа (null — мест хватает или лимита нет). */
   seatsNote: string | null;
   /** Ссылка на оплату рядом с подсказкой; null — не звать (приложение). */
   payHref: string | null;
+  /** Подпись ссылки — следующий тариф («Подключить «Стандарт»»); нет — «Сменить тариф». */
+  payLabel?: string;
+  /** У «Премиума» больше мест — по согласованию: кнопка «Связаться». */
+  contactSupport?: boolean;
 }) {
   const { toastApiError } = useBillingError();
   const t = useTranslations("staffManagement.archive");
@@ -105,8 +112,16 @@ export function ArchivedStaffSection({
               {seatsNote}{" "}
               {payHref ? (
                 <Link href={payHref} className="font-medium text-[#3848c7] underline underline-offset-2">
-                  {t("paySubscription")}
+                  {payLabel ?? t("paySubscription")}
                 </Link>
+              ) : withContact ? (
+                <button
+                  type="button"
+                  onClick={() => openSupport(t("contactSubject"))}
+                  className="font-medium text-[#3848c7] underline underline-offset-2"
+                >
+                  {t("contact")}
+                </button>
               ) : null}
             </p>
           ) : null}

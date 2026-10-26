@@ -31,7 +31,8 @@ import {
   staffScheduleKey,
   STAFF_JOURNAL_TEMPLATE_CODES,
 } from "@/lib/staff-journal-autofill";
-import { createStaffMember } from "@/lib/staff-create";
+import { createStaffMember, type CreateStaffResult } from "@/lib/staff-create";
+import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 import { isManagementRole } from "@/lib/user-roles";
 import { orgTodayKey } from "@/lib/timezone";
 
@@ -351,11 +352,12 @@ export function verifyActionToken(
 export type ExecuteResult =
   /** `entityId` — id созданного сотрудника для add_staff. */
   | { ok: true; summary: string; entityId?: string }
-  | { ok: false; error: string };
+  /** `code` — `billing_free_limit`, если места тарифа заняты (API ответит 402). */
+  | { ok: false; error: string; code?: string };
 
 export async function verifyAndExecuteAction(
   token: string,
-  ctx: { orgId: string; actor: ActionActor; locale?: Locale }
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale; inApp?: boolean }
 ): Promise<ExecuteResult> {
   const t = await translatorFor(ctx.locale ?? "ru");
   const verified = verifyActionToken(token, {
@@ -374,7 +376,8 @@ export async function verifyAndExecuteAction(
  */
 export async function executeProposedAction(
   action: ProposedAction,
-  ctx: { orgId: string; actor: ActionActor; locale?: Locale },
+  /** `inApp` — запрос из приложения WeSetup: к оплате не зовём (правила сторов). */
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale; inApp?: boolean },
   opts: { audit?: { action: string; details?: Record<string, unknown> } | false } = {}
 ): Promise<ExecuteResult> {
   const audit = opts.audit === undefined ? { action: "ai_assistant.action" } : opts.audit;
@@ -411,23 +414,41 @@ export async function executeProposedAction(
 
 async function executeAddStaff(
   input: z.infer<typeof addStaffSchema>,
-  ctx: { orgId: string; actor: ActionActor; locale?: Locale }
+  ctx: { orgId: string; actor: ActionActor; locale?: Locale; inApp?: boolean }
 ): Promise<ExecuteResult> {
   const t = await translatorFor(ctx.locale ?? "ru");
   if (!isManagementRole(ctx.actor.role) && !ctx.actor.isRoot) {
     return { ok: false, error: t("assistantActions.managerOnly") };
   }
   const result = await createStaffMember(ctx.orgId, input);
-  if (!result.ok) return { ok: false, error: result.code === "billing_free_limit"
-    ? t("common.billing.limit", { count: result.limit ?? FREE_MAX_USERS })
-    : result.status === 404 ? t("assistantActions.positionMissing")
-    : result.status === 400 ? t("assistantActions.invalidPhone")
-    : t("common.assistant.actionFailed") };
+  if (!result.ok) return result.code === "billing_free_limit"
+    ? { ok: false, error: seatLimitReply(t, result, ctx.inApp === true), code: result.code }
+    : { ok: false, error: result.status === 404 ? t("assistantActions.positionMissing")
+      : result.status === 400 ? t("assistantActions.invalidPhone")
+      : t("common.assistant.actionFailed") };
   return {
     ok: true,
     summary: t("assistantActions.staffAdded", { name: result.user.name, position: result.positionName }),
     entityId: result.user.id,
   };
+}
+
+/**
+ * Места заняты — лимит и следующий тариф, как в тосте: бесплатный →
+ * «Стандарт», «Стандарт» → «Премиум», «Премиум» → по согласованию. В
+ * приложении WeSetup — только факт.
+ */
+function seatLimitReply(
+  t: Awaited<ReturnType<typeof translatorFor>>,
+  refusal: Extract<CreateStaffResult, { ok: false }>,
+  inApp: boolean
+): string {
+  const count = refusal.limit ?? FREE_MAX_USERS;
+  if (inApp) return t("common.billing.limit", { count });
+  if (refusal.nextTier === "standard") return t("common.billing.limitToStandard", { count, seats: SEATS_PER_POINT.standard });
+  if (refusal.nextTier === "premium") return t("common.billing.limitToPremium", { count, seats: SEATS_PER_POINT.premium });
+  if (refusal.nextTier === null) return t("common.billing.limitContact", { count, seats: SEATS_PER_POINT.premium });
+  return t("common.billing.limitAction", { count });
 }
 
 async function executeFillCells(

@@ -21,7 +21,20 @@ import {
 type Status = "valid" | "expired" | "used" | "not_found";
 type InviteError =
   | { key: "password.tooShort" | "password.mismatch" | "password.invalidInvite" | "password.failure" | "password.genericError" }
-  | { key: "password.seatLimit"; activeUsers: number; limit: number };
+  | {
+      /** Места заняты: просьба к руководителю по следующему тарифу (`nextTier` ответа 402). */
+      key: "password.seatLimit" | "password.seatLimitStandard" | "password.seatLimitPremium" | "password.seatLimitContact";
+      activeUsers: number;
+      limit: number;
+    };
+
+/** Какой текст отказа по местам: следующий тариф или «по согласованию» у «Премиума». */
+function seatLimitKey(nextTier: unknown): Extract<InviteError, { activeUsers: number }>["key"] {
+  if (nextTier === "standard") return "password.seatLimitStandard";
+  if (nextTier === "premium") return "password.seatLimitPremium";
+  if (nextTier === null) return "password.seatLimitContact";
+  return "password.seatLimit";
+}
 
 type Props = {
   status: Status;
@@ -100,7 +113,7 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         } else if (body?.code === "invalid_password") {
           setError({ key: "password.tooShort" });
         } else if (body?.code === BILLING_LIMIT_CODE) {
-          setError({ key: "password.seatLimit",
+          setError({ key: seatLimitKey(body.nextTier),
             activeUsers: Number.isFinite(body.activeUsers) ? body.activeUsers : 0,
             limit: Number.isFinite(body.limit) ? body.limit : 0,
           });
@@ -173,7 +186,7 @@ export function InviteAcceptClient({ status, token, user }: Props) {
         <CardContent className="space-y-4">
           {error && (
             <div role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {error.key === "password.seatLimit"
+              {"activeUsers" in error
                 ? t(error.key, { activeUsers: error.activeUsers, limit: error.limit })
                 : t(error.key)}
             </div>
