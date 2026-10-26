@@ -406,12 +406,12 @@ export default async function LandingPage() {
             {
               name: copy("landingComponents.tariffs.tiers.standard.name"),
               price: standardFrom,
-              description: copy("landing.seo.standardDescription", { employees: SEATS_PER_POINT, mb: STORAGE_BYTES.standard / MB }),
+              description: copy("landing.seo.standardDescription", { employees: SEATS_PER_POINT.standard, mb: STORAGE_BYTES.standard / MB }),
             },
             {
               name: copy("landingComponents.tariffs.tiers.premium.name"),
               price: premiumFrom,
-              description: copy("landing.seo.premiumDescription", { gb: STORAGE_BYTES.premium / (1024 * MB) }),
+              description: copy("landing.seo.premiumDescription", { employees: SEATS_PER_POINT.premium, gb: STORAGE_BYTES.premium / (1024 * MB) }),
             },
           ].map((tier) => ({
             "@type": "Offer",

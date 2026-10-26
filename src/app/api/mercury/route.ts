@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { canUseMercury } from "@/lib/mercury/access";
+import { hasPlanFeature } from "@/lib/billing.server";
 import { countPendingVetDocuments } from "@/lib/mercury/sync";
 import { resolveTransportMode } from "@/lib/mercury/transport";
 import { getServerSession } from "@/lib/server-session";
@@ -30,7 +30,7 @@ export async function GET() {
   const [org, integration] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { subscriptionPlan: true, isDemo: true, timezone: true },
+      select: { timezone: true },
     }),
     db.mercuryIntegration.findUnique({
       where: { organizationId },
@@ -54,7 +54,7 @@ export async function GET() {
     : { pending: 0, overdue: 0, todayKey: "" };
 
   return NextResponse.json({
-    available: canUseMercury({ plan: org?.subscriptionPlan, isDemo: org?.isDemo }),
+    available: await hasPlanFeature(organizationId, "mercury"),
     configured: Boolean(integration),
     enabled: integration?.enabled ?? false,
     // Демо-режим показывается в интерфейсе крупной плашкой: принять

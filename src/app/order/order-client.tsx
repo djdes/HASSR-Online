@@ -29,6 +29,9 @@ import {
   recurringPeriodText,
 } from "@/lib/recurring-consent";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
+import { ContactSupportButton } from "@/components/support/contact-support-button";
+import { pluralRu } from "@/lib/plural-ru";
+import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 
 type ReturnParams = {
   outSum: string;
@@ -88,6 +91,12 @@ export type OrderPlanView = {
   periodEndLabel: string;
   /** «Новая» в последние сутки срока: период — после окончания текущего. */
   appendsToCurrent?: boolean;
+  /**
+   * Сотрудников больше, чем даёт выбранный тариф на эти точки: подсказка
+   * следующего тарифа (`upgradeHref`) или «по согласованию» у «Премиума»
+   * (null). Оплату не закрываем — лишних не удаляем, новых не добавить.
+   */
+  headcount?: { team: number; limit: number; upgradeHref: string | null } | null;
 };
 
 /**
@@ -542,6 +551,36 @@ function Checkout({
                 ? `Срок — ${tariff.periodDays} дней после окончания текущего (${plan.periodStartLabel}), до ${plan.periodEndLabel}.`
                 : `Срок — ${tariff.periodDays} дней с оплаты${plan ? `, до ${plan.periodEndLabel}` : ""}.`}
       </p>
+
+      {plan?.headcount ? (
+        <div
+          data-testid="order-headcount"
+          className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#f5d9a8] bg-[#fffaf0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <span className="text-[13.5px] leading-[1.5] text-[#7a4a00]">
+            {plan.headcount.upgradeHref
+              ? `У вас ${plan.headcount.team} ${pluralRu(plan.headcount.team, "сотрудник", "сотрудника", "сотрудников")}, а на «Стандарте» — до ${SEATS_PER_POINT.standard} на точку (здесь ${plan.headcount.limit}): новых добавить не получится. Подойдёт «Премиум» — до ${SEATS_PER_POINT.premium} сотрудников на точку.`
+              : `У вас ${plan.headcount.team} ${pluralRu(plan.headcount.team, "сотрудник", "сотрудника", "сотрудников")}, а на «Премиуме» — до ${SEATS_PER_POINT.premium} на точку (здесь ${plan.headcount.limit}): новых добавить не получится. Больше — по согласованию.`}
+          </span>
+          {plan.headcount.upgradeHref ? (
+            <a
+              href={plan.headcount.upgradeHref}
+              data-testid="order-headcount-upgrade"
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
+            >
+              Перейти на «Премиум»
+            </a>
+          ) : (
+            <ContactSupportButton
+              subject="Больше 100 сотрудников на точку — тариф «Премиум»"
+              testId="order-headcount-contact"
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff]"
+            >
+              Связаться
+            </ContactSupportButton>
+          )}
+        </div>
+      ) : null}
 
       <div className="mt-6 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5">
         <div className="flex items-baseline justify-between gap-3">

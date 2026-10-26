@@ -13,6 +13,7 @@ import { normalizeSphere } from "@/lib/org-profile";
 import { ArchivedStaffSection } from "@/components/staff/archived-staff-section";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { BILLING_PAY_HREF } from "@/lib/billing-period";
+import { SEATS_PER_POINT, seatUpgradeTarget } from "@/lib/tariff-plans";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
@@ -163,6 +164,8 @@ export default async function StaffPage() {
   ]);
   const seatsFull =
     billing?.state.seatLimit != null && billing.state.activeUsers >= billing.state.seatLimit;
+  // Места заняты — следующий тариф; у «Премиума» — больше по согласованию.
+  const seatsUpgrade = billing ? seatUpgradeTarget(billing.state.tier) : null;
 
   return (
     <DomainMessagesBoundary namespaces={["staffManagement", "journals"]}>
@@ -253,10 +256,15 @@ export default async function StaffPage() {
       }))}
       seatsNote={
         seatsFull && billing?.state.seatLimit != null
-          ? t("seatsNote", { limit: billing.state.seatLimit })
+          ? seatsUpgrade === "standard"
+            ? t("seatsNote", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.standard })
+            : seatsUpgrade === "premium"
+              ? t("seatsNotePremium", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.premium })
+              : t("seatsNoteContact", { limit: billing.state.seatLimit, seats: SEATS_PER_POINT.premium })
           : null
       }
-      payHref={seatsFull && !inMobileApp ? BILLING_PAY_HREF : null}
+      payHref={seatsFull && !inMobileApp && seatsUpgrade ? BILLING_PAY_HREF : null}
+      contactSupport={seatsFull && !seatsUpgrade}
     />
     {ownedAccount ? (
       <div className="mt-6">

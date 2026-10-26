@@ -21,7 +21,9 @@ import {
   pointsFactor,
   quotePlanChange,
   resolvePlanTariffKey,
-  seatLimitForPoints,
+  seatLimitFor,
+  seatUpgradeTarget,
+  tierForHeadcount,
   yearlySavingsPercent,
   yearlySavingsRub,
   type CurrentSubscription,
@@ -106,18 +108,37 @@ describe("лимиты и возможности", () => {
 
   it("Стандарт — 25 сотрудников на точку, 10 МБ, без возможностей Премиума", () => {
     const e = entitlementsFor("standard", 2);
-    assert.equal(e.seatLimit, 2 * SEATS_PER_POINT);
+    assert.equal(e.seatLimit, 2 * SEATS_PER_POINT.standard);
+    assert.equal(e.seatLimit, 50);
     assert.equal(e.pointLimit, 2);
     assert.equal(e.journalLimit, null);
     assert.equal(e.storageBytes, 10 * 1024 * 1024);
     assert.equal(Object.values(e.features).some(Boolean), false);
   });
 
-  it("Премиум — 1 ГБ, автоввод с фото, оборудование, типовой пакет", () => {
+  it("Премиум — 100 сотрудников на точку, 1 ГБ, автоввод с фото, оборудование, типовой пакет, «Меркурий»", () => {
     const e = entitlementsFor("premium", 1);
-    assert.equal(e.seatLimit, 25);
+    assert.equal(e.seatLimit, 100);
+    assert.equal(entitlementsFor("premium", 3).seatLimit, 300);
     assert.equal(e.storageBytes, 1024 * 1024 * 1024);
-    assert.deepEqual(e.features, { photoAutofill: true, equipmentConnect: true, equipmentDelivery: true, typicalPackage: true });
+    assert.deepEqual(e.features, {
+      photoAutofill: true,
+      equipmentConnect: true,
+      equipmentDelivery: true,
+      typicalPackage: true,
+      mercury: true,
+    });
+  });
+
+  it("места кончились — следующий тариф, а не точка; у «Премиума» — по согласованию", () => {
+    assert.equal(seatUpgradeTarget("free"), "standard");
+    assert.equal(seatUpgradeTarget("standard"), "premium");
+    assert.equal(seatUpgradeTarget("premium"), null);
+    assert.equal(seatUpgradeTarget("trial"), null);
+    assert.equal(tierForHeadcount(1), "standard");
+    assert.equal(tierForHeadcount(25), "standard");
+    assert.equal(tierForHeadcount(26), "premium");
+    assert.equal(tierForHeadcount(120), "premium");
   });
 
   it("прежняя «Подписка» — как раньше: без новых лимитов, с возможностями", () => {
@@ -133,7 +154,8 @@ describe("лимиты и возможности", () => {
     assert.equal(countPointsInUse([0]), 1);
     assert.equal(countPointsInUse([3]), 3);
     assert.equal(countPointsInUse([0, 2, 1]), 4);
-    assert.equal(seatLimitForPoints(3), 75);
+    assert.equal(seatLimitFor("standard", 3), 75);
+    assert.equal(seatLimitFor("premium", 2), 200);
   });
 });
 

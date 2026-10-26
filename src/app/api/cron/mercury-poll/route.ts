@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { hasPlanFeature } from "@/lib/billing.server";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
 import { countPendingVetDocuments, enqueueEnterpriseSync } from "@/lib/mercury/sync";
@@ -50,8 +51,16 @@ export async function GET(request: Request) {
 
     let enqueued = 0;
     let reminded = 0;
+    let skippedPlan = 0;
 
     for (const integration of integrations) {
+      // «Меркурий» — возможность «Премиума» (пробного, прежней «Подписки»,
+      // демо): без неё площадки не опрашиваем — тариф понизили или пробный
+      // кончился. Вернут «Премиум» — опрос продолжится сам.
+      if (!(await hasPlanFeature(integration.organizationId, "mercury"))) {
+        skippedPlan += 1;
+        continue;
+      }
       for (const enterprise of integration.enterprises) {
         try {
           await enqueueEnterpriseSync({ integration, enterprise });
@@ -105,6 +114,7 @@ export async function GET(request: Request) {
       integrations: integrations.length,
       enqueued,
       reminded,
+      skippedPlan,
       ms: Date.now() - started,
     });
   } catch (error) {

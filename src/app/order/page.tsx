@@ -14,6 +14,25 @@ import { OrderClient, type OrderDiscountState, type OrderPlanView } from "./orde
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
+import { seatLimitFor, type PlanTarget } from "@/lib/tariff-plans";
+
+/**
+ * Сотрудников больше, чем даёт выбранный тариф на эти точки (spec
+ * tariffs-limits-ui Р4): у «Стандарта» — ссылка на тот же заказ «Премиума»,
+ * у «Премиума» — null (больше по согласованию). Оплату не закрываем.
+ */
+function headcountFor(
+  target: PlanTarget,
+  team: number,
+  promo: string | undefined,
+): OrderPlanView["headcount"] {
+  const limit = seatLimitFor(target.tier, target.points);
+  if (team <= limit) return null;
+  if (target.tier === "premium") return { team, limit, upgradeHref: null };
+  const params = new URLSearchParams({ plan: "premium", cycle: target.cycle, points: String(target.points) });
+  if (promo) params.set("promo", promo);
+  return { team, limit, upgradeHref: `/order?${params.toString()}` };
+}
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -109,6 +128,7 @@ export default async function OrderPage({
             : quote.change.periodEnd,
         ),
         appendsToCurrent: appendFrom !== null,
+        headcount: headcountFor(quote.target, quote.activeUsers, first("promo")),
       }
     : null;
   const refusal =

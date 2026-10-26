@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { isBillingCycle, isPaidTier, planMonthlyRub, SEATS_PER_POINT } from "@/lib/tariff-plans";
+import { isBillingCycle, isPaidTier, planMonthlyRub, tierForHeadcount } from "@/lib/tariff-plans";
 import { isInactivePlan } from "@/lib/plan-limits";
 import { readPlanPricing } from "@/lib/tariffs";
 
@@ -50,9 +50,9 @@ export type OrgMetrics = {
   weeklyTrendPct: number | null;
   /// Когда последний раз кто-то заполнял журнал. null = никогда.
   lastEntryAt: string | null;
-  /// Расчётный MRR — «Стандарт» за год в пересчёте на месяц на столько
-  /// точек, сколько нужно по численности (25 сотрудников на точку): что
-  /// платила бы организация на самом дешёвом подходящем тарифе.
+  /// Расчётный MRR — тариф по численности за год в пересчёте на месяц (до
+  /// 25 сотрудников — «Стандарт», больше — «Премиум»): что платила бы
+  /// организация на самом дешёвом подходящем тарифе.
   potentialMrrRub: number;
   /// Реальный MRR — оплаченный тариф аккаунта (Стандарт/Премиум, период,
   /// точки) в пересчёте на месяц; прежняя «Подписка» — по её цене; не
@@ -305,8 +305,9 @@ export async function getAllOrgMetrics(
 
     const owner = ownerByOrg.get(org.id);
 
-    const pointsNeeded = Math.max(1, Math.ceil(activeUsers / SEATS_PER_POINT));
-    const potentialMrrRub = planMonthlyRub(pricing.rates, "standard", "year", pointsNeeded);
+    // Тариф по численности (до 25 — «Стандарт», больше — «Премиум»), а не
+    // точки по численности: места докупаются переходом на тариф выше.
+    const potentialMrrRub = planMonthlyRub(pricing.rates, tierForHeadcount(activeUsers), "year");
     const plan = org.account?.subscriptionPlan ?? org.subscriptionPlan;
     const paidUntil = [org.account?.subscriptionEnd, org.subscriptionEnd]
       .filter((d): d is Date => d instanceof Date)

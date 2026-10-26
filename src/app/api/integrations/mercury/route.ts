@@ -4,7 +4,8 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { canUseMercury, normalizeAutoProcessMode } from "@/lib/mercury/access";
+import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
+import { normalizeAutoProcessMode } from "@/lib/mercury/access";
 import { getServerSession } from "@/lib/server-session";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
@@ -51,18 +52,9 @@ async function guard() {
     };
   }
   const organizationId = getActiveOrgId(session);
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { subscriptionPlan: true, isDemo: true },
-  });
-  if (!canUseMercury({ plan: org?.subscriptionPlan, isDemo: org?.isDemo })) {
-    return {
-      error: NextResponse.json(
-        { error: "Интеграция с Меркурием доступна на тарифе «Про»" },
-        { status: 402 },
-      ),
-    };
-  }
+  // «Меркурий» — возможность «Премиума» (и пробного, прежней «Подписки», демо).
+  const feature = await checkPlanFeature(organizationId, "mercury", "mercury.settings");
+  if (!feature.ok) return { error: limitResponse(feature) };
   return { organizationId };
 }
 

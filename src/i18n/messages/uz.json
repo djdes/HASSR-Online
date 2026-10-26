@@ -1014,14 +1014,19 @@
     "error": "Amalni bajarib bo‘lmadi. Qayta urinib ko‘ring.",
     "billing": {
       "limit": "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}.",
-      "limitAction": "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. Xodim qo‘shish uchun tarifni o‘zgartiring yoki nuqta qo‘shing.",
+      "limitAction": "Tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. Xodim qo‘shish uchun yuqoriroq tarifga o‘ting.",
       "pay": "Tarifni tanlash",
       "pointLimit": "Tarifning barcha nuqtalari band — {count, plural, other {# ta nuqta}}. Har bir yangi nuqta — yana bitta tarif kabi: uni tarif sahifasida qo‘shing.",
       "journalLimit": "Bepul tarifda — {count, plural, other {# ta jurnal}}. Barcha jurnallarni yuritish uchun «Standart» yoki «Premium»ni ulang.",
       "storageFull": "Tarifdagi hujjatlar uchun joy tugadi. Keraksiz fayllarni o‘chiring yoki «Premium»ga o‘ting — barcha hujjatlar uchun 1 GB.",
       "storageClosed": "Hujjat yuklash — «Standart» va «Premium» tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin.",
       "featureLocked": "Bu imkoniyat — «Premium» tarifida.",
-      "unavailable": "Joriy tarifda mavjud emas."
+      "unavailable": "Joriy tarifda mavjud emas.",
+      "limitToStandard": "Bepul tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. «Standart»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
+      "limitToPremium": "«Standart»ning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. «Premium»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
+      "limitContact": "«Premium»ning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. Har bir nuqtaga {seats, number} nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing.",
+      "contact": "Bog‘lanish",
+      "contactSubject": "«Premium» tarifida ko‘proq xodim"
     },
     "assistant": {
       "title": "AI yordamchi",
@@ -5489,7 +5494,7 @@
       "productDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang.",
       "freeOfferDescription": "Barcha {journalCount, number} {journalCount, plural, other {ta jurnal}} xodimlar va nuqtalar bo‘yicha cheklovsiz — faollashtirilgandan boshlab {trialDays, number} {trialDays, plural, other {kun}}, karta bog‘lash shart emas",
       "standardDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha jurnallar, jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB. Narx — yillik to‘lovda oyiga.",
-      "premiumDescription": "«Standart»dagi hammasi, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga."
+      "premiumDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, «Merkuriy» FDAT, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga."
     },
     "journals": {
       "sectionLead": "Kundalik sanitariya tekshiruvlari va HACCP yozuvlarining to‘liq to‘plami uchun {journalCount, number} ta elektron jurnal. Mos jurnallar, buyruqlar va tekshiruv ro‘yxatlarini ko‘rish uchun faoliyat sohasini tanlang."
@@ -5593,13 +5598,14 @@
         "label": "To‘lov davri",
         "month": "Oyma-oy",
         "year": "Yillik",
-        "save": "−{percent, number} %"
+        "save": "−{percent, number} %",
+        "switchLabel": "Yillik to‘lov"
       },
       "pointsPicker": {
         "label": "Nuqtalar",
         "decrease": "Nuqtani olib tashlash",
         "increase": "Nuqta qo‘shish",
-        "hint": "Har bir nuqta — yana bitta tarif kabi; {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma"
+        "hint": "Nuqta — bitta tashkilot ichidagi alohida jurnallar va xodimlar: kafe, sex, filial. Har biri yana bitta tarif kabi; {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma."
       },
       "tiers": {
         "free": {
@@ -5646,7 +5652,9 @@
         "photoAutofill": "Harorat datchigi fotosi — ko‘rsatkichlar o‘zi to‘ladi",
         "equipmentConnect": "Uskunani ulash: mustaqil yoki obuna bo‘yicha",
         "equipmentDelivery": "Ulangan uskunani yetkazib berish — kabinetda buyurtma",
-        "typicalPackage": "Namunaviy hujjatlar to‘plami: chop etib to‘ldiring"
+        "typicalPackage": "Namunaviy hujjatlar to‘plami: chop etib to‘ldiring",
+        "employeesPremium": "Har bir nuqtaga {count, number} nafargacha xodim, undan ko‘pi — kelishuv bo‘yicha",
+        "mercury": "«Merkuriy» FDAT: kiruvchi VSDlar va qabul jurnalidan so‘ndirish"
       },
       "cta": {
         "startFree": "Bepul boshlash",
@@ -5702,7 +5710,8 @@
         "ppkIndividual": "Obyektingiz uchun nazorat dasturi",
         "photoAutofill": "Datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish",
         "equipmentConnect": "Uskuna va IoT-datchiklarni ulash",
-        "equipmentDelivery": "Ulangan uskunani yetkazib berish"
+        "equipmentDelivery": "Ulangan uskunani yetkazib berish",
+        "mercury": "«Merkuriy» FDAT (VetIS)"
       },
       "cells": {
         "employeesFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
@@ -5715,7 +5724,14 @@
         "storageStandard": "{mb, number} MB: jurnal buyruqlari va o‘z hujjatlaringiz",
         "storagePremium": "Barcha hujjatlar uchun {gb, number} GB",
         "trialOnly": "Faqat {trialDays, number} kunlik sinov davrida",
-        "ppkFrom": "Individual, {price} dan"
+        "ppkFrom": "Individual, {price} dan",
+        "employeesPremium": "Har bir nuqtaga {count, number}, undan ko‘pi — kelishuv bo‘yicha"
+      },
+      "contactLink": "bog‘lanish",
+      "contactSubject": "«Premium» tarifida 100 nafardan ortiq xodim",
+      "headcount": {
+        "toPremium": "Sizda {count, plural, other {# nafar xodim}} bor, bu tarifda {limit, number} nafargacha — «Premium» mos keladi.",
+        "contact": "Sizda {count, plural, other {# nafar xodim}} bor, bu tarifda {limit, number} nafargacha — undan ko‘pi kelishuv bo‘yicha."
       }
     }
   },
@@ -7632,7 +7648,9 @@
       "archivedSince": "arxivga o‘tkazilgan sana: {date}",
       "paySubscription": "Tarifni o‘zgartirish",
       "restore": "Qaytarish",
-      "restoreAll": "Hammasini qaytarish"
+      "restoreAll": "Hammasini qaytarish",
+      "contact": "Bog‘lanish",
+      "contactSubject": "«Premium» tarifida ko‘proq xodim"
     },
     "qrPin": {
       "removed": "PIN olib tashlandi",
@@ -14827,7 +14845,9 @@
         "inviteUsed": "Bu taklifdan allaqachon foydalanilgan.",
         "inviteExpired": "Taklif muddati tugagan. Yangi havola so‘rang.",
         "alreadyLinkedInvite": "Bu Telegram boshqa xodim hisobiga ulangan. Boshqa hisobdan foydalaning.",
-        "inviteSeatLimit": "Tashkilot tarifining barcha o‘rinlari band ({limit, plural, other {# nafar xodim}}). Rahbardan tarifni o‘zgartirish yoki nuqta qo‘shishni so‘rang va qayta urinib ko‘ring."
+        "inviteSeatLimit": "Tashkilot tarifining barcha o‘rinlari band ({limit, plural, other {# nafar xodim}}). Rahbardan «Standart»ni ulashni so‘rang va qayta urinib ko‘ring.",
+        "inviteSeatLimitPremium": "Tashkilot tarifining barcha o‘rinlari band ({limit, plural, other {# nafar xodim}}). Rahbardan «Premium»ga o‘tishni so‘rang va qayta urinib ko‘ring.",
+        "inviteSeatLimitContact": "Tashkilot tarifining barcha o‘rinlari band ({limit, plural, other {# nafar xodim}}). Rahbardan WeSetup qo‘llab-quvvatlash xizmatiga murojaat qilishni so‘rang va qayta urinib ko‘ring."
       },
       "commands": {
         "start": "🏠 WeSetup’ni ochish",
@@ -15721,7 +15741,7 @@
     "page": {
       "title": "Platforma ko‘rsatkichlari",
       "summary": "Barcha tashkilotlardagi faollik, mijozlarni saqlab qolish va tushum.",
-      "pricing": "Hisoblangan MRR — xodimlar soniga kerak bo‘lgan nuqtalar uchun yillik «Standart»ning oylik narxi (har bir nuqtaga {seatsPerPoint, number} nafargacha xodim); haqiqiysi — hisobning to‘langan tarifi oyiga, to‘lamaganlar uchun 0. Trend — 7 kunlik faollikning oldingi haftaga nisbatan o‘zgarishi, %.",
+      "pricing": "Hisoblangan MRR — xodimlar soniga mos tarifning yillik to‘lovdagi oylik narxi: {standardSeats, number} nafargacha — «Standart», undan ko‘p — «Premium»; haqiqiysi — hisobning to‘langan tarifi oyiga, to‘lamaganlar uchun 0. Trend — 7 kunlik faollikning oldingi haftaga nisbatan o‘zgarishi, %.",
       "tableHelp": "Email — tashkilotni ro‘yxatdan o‘tkazgan shaxsning manzili. Saralash uchun ustun sarlavhasini bosing yoki manzil va nomning bir qismi bo‘yicha qidiring. Yozuvlar sonini bossangiz, tashkilot yuritayotgan jurnallar va ularni kim to‘ldirayotgani ko‘rsatiladi.",
       "ipHistory": "Kirish IP manzillari {since} sanasidan beri yoziladi. Avvalgi manzillar amallar jurnalidan olingan. Shu vaqtdan beri tizimga kirmagan va ma’muriy amal bajarmagan foydalanuvchilarda bu ustun bo‘sh bo‘ladi."
     },
@@ -25657,7 +25677,7 @@
     "page": {
       "eyebrow": "FGIS “Merkuriy”",
       "title": "Kiruvchi VSD",
-      "proTitle": "Integratsiya “Pro” tarifida mavjud",
+      "proTitle": "Integratsiya «Premium» tarifida mavjud",
       "proDescription": "Kiruvchi veterinariya hujjatlari, bir bosishda so‘ndirish va qabul jurnalini avtomatik to‘ldirish.",
       "description": "Tovarni qabul qildingiz — nazoratni shu yerda kiriting va hujjatni so‘ndiring.",
       "overdue": "Muddati o‘tgan {count, number}",
@@ -25673,7 +25693,8 @@
       "q1": "Nega hammasini “so‘ndirib” bo‘lmaydi?",
       "a1": "So‘ndirish partiya jismonan qabul qilingani va tekshirilganini tasdiqlaydi. Ko‘rik o‘tkazilmasa, bu bo‘lmagan narsaga qo‘yilgan imzo — va kirish nazorati jurnali tekshiruv uchun dalil bo‘lishdan qoladi.",
       "q2": "Merkuriy javob bermayapti — qabul-chi?",
-      "a2": "Jurnal qatori darhol saqlanadi va Merkuriyga bog‘liq emas. So‘ndirish navbatga qo‘yiladi va shlyuz javob berganda yuboriladi."
+      "a2": "Jurnal qatori darhol saqlanadi va Merkuriyga bog‘liq emas. So‘ndirish navbatga qo‘yiladi va shlyuz javob berganda yuboriladi.",
+      "proCta": "«Premium»ga o‘tish"
     },
     "incomingVsdClient": {
       "tabPending": "So‘ndirilishini kutmoqda",
@@ -26766,7 +26787,7 @@
       "saveFailed": "Saqlab bo‘lmadi",
       "credentialsSaved": "Rekvizitlar saqlandi",
       "error": "Xatolik",
-      "unavailableTitle": "Merkuriy “Pro” tarifida mavjud",
+      "unavailableTitle": "Merkuriy «Premium» tarifida mavjud",
       "unavailableBody": "Kiruvchi VSDlar, bir bosishda so‘ndirish va qabul jurnalini avtomatik to‘ldirish.",
       "demoTitle": "Demo rejim — ma’lumotlar Merkuriydan emas",
       "demoBody": "Vetis.API kirish kaliti serverda hali sozlanmagan, shuning uchun o‘quv hujjatlari ko‘rsatilmoqda. Haqiqiy VSDlar Rosselxoznadzor arizani tasdiqlagandan keyin paydo bo‘ladi.",
@@ -26799,7 +26820,8 @@
       "noErrors": "Xatolar yo‘q",
       "notifyWhom": "Muddatlar haqida kimga eslatish",
       "notifyChanged": "Mas’ul shaxs o‘zgartirildi",
-      "allManagement": "Barcha rahbariyat"
+      "allManagement": "Barcha rahbariyat",
+      "unavailableCta": "«Premium»ga o‘tish"
     },
     "mercuryPage": {
       "eyebrow": "Integratsiyalar",
@@ -28081,7 +28103,9 @@
     },
     "usersPage": {
       "organizationFallback": "Tashkilot",
-      "seatsNote": "Tarif o‘rinlari band ({limit, number}): xodimlarni arxivdan tarifni o‘zgartirgach yoki nuqta qo‘shgach qaytarish mumkin."
+      "seatsNote": "Tarif o‘rinlari band ({limit, number}). Xodimlarni arxivdan «Standart»da qaytarish mumkin — har bir nuqtaga {seats, number} nafargacha.",
+      "seatsNotePremium": "Tarif o‘rinlari band ({limit, number}). Xodimlarni arxivdan «Premium»da qaytarish mumkin — har bir nuqtaga {seats, number} nafargacha.",
+      "seatsNoteContact": "Tarif o‘rinlari band ({limit, number}). Har bir nuqtaga {seats, number} nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing."
     },
     "auditLogViewer": {
       "durMs": "{ms, number} ms",
@@ -28299,13 +28323,19 @@
       "scheduleCancelled": "O‘tish bekor qilindi",
       "tariffsChoose": "Tarifni tanlang",
       "tariffsChange": "Tarifni o‘zgartirish",
-      "rulePoints": "Narx — nuqta uchun: har bir nuqta yana bitta tarif kabi, unda {seats, number} nafargacha xodim. {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma.",
+      "rulePoints": "Narx — nuqta uchun: nuqta — tashkilot ichidagi alohida jurnallar va xodimlar, har biri yana bitta tarif kabi. {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma.",
       "ruleUpgrade": "Tarif yoki nuqtalar sonini oshirish — darhol: farqni faqat qolgan kunlar uchun to‘laysiz, tugash sanasi o‘zgarmaydi.",
       "ruleSwitch": "Oylik to‘lovdan yillikka o‘tish — darhol: yil narxidan oyning foydalanilmagan qoldig‘i ayriladi.",
       "ruleDowngrade": "Tarifni pasaytirish, kamroq nuqta yoki oylik to‘lovga o‘tish — to‘langan muddat tugagach, hozir to‘lash shart emas.",
       "ruleTrial": "Sinov davri — kartasiz {trialDays, number} kun. Sinov davrida to‘langan tarif to‘lov kunidan amal qiladi.",
       "examplesTitle": "Yillik to‘lovda oylik narx",
-      "colPoints": "Nuqtalar"
+      "colPoints": "Nuqtalar",
+      "ruleSeats": "Xodimlar: «Standart» — har bir nuqtaga {standard, number} nafargacha, «Premium» — {premium, number} nafargacha, undan ko‘pi — kelishuv bo‘yicha. O‘rin yetmasa — keyingi tarifga o‘ting.",
+      "overSeatsPremium": "Xodimlar «Standart» bergandan ko‘p ({limit, number} tadan {used, number}): yangisini qo‘shib bo‘lmaydi. «Premium»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
+      "overSeatsContact": "Xodimlar «Premium» bergandan ko‘p ({limit, number} tadan {used, number}): yangisini qo‘shib bo‘lmaydi. Har bir nuqtaga {seats, number} nafardan ortig‘i — kelishuv bo‘yicha: bizga yozing.",
+      "overSeatsCta": "«Premium»ga o‘tish",
+      "contact": "Bog‘lanish",
+      "contactSubject": "«Premium» tarifida ko‘proq xodim"
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Komissiya — brakerajni imzolaydi",

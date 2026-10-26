@@ -136,7 +136,7 @@ describe("тексты КП — честность по правилам сфе�
     assert.match(plain(free.title), new RegExp(`все ${JOURNALS_TOTAL} журнал`));
     assert.match(plain(free.title), new RegExp(`Бесплатно ${TRIAL_DAYS} дней`));
     assert.match(plain(free.text), /Дальше бесплатно — 1 сотрудник и 1 журнал/);
-    assert.match(plain(team.title), new RegExp(`«Стандарт» — до ${SEATS_PER_POINT} сотрудников на точку`));
+    assert.match(plain(team.title), new RegExp(`«Стандарт» — до ${SEATS_PER_POINT.standard} сотрудников на точку`));
     assert.equal(plain(team.price), "1 791 ₽");
     assert.equal(plain(team.oldPrice ?? ""), "1 990 ₽");
     assert.equal(plain(team.badge ?? ""), "−10 % навсегда");

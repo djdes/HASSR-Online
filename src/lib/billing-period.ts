@@ -1,5 +1,5 @@
 import { FREE_MAX_USERS, isFreePlan, isInactivePlan } from "@/lib/plan-limits";
-import { employeesLabel } from "@/lib/plan-catalog";
+import { employeesGenitiveLabel, employeesLabel } from "@/lib/plan-catalog";
 import {
   FREE_MAX_JOURNALS,
   SEATS_PER_POINT,
@@ -8,6 +8,7 @@ import {
   isBillingCycle,
   normalizePoints,
   paidTierFromPlan,
+  seatUpgradeTarget,
   withoutFeatures,
   type BillingCycle,
   type EntitlementTier,
@@ -342,30 +343,66 @@ export const FEATURE_LOCKED_CODE = "billing_feature_locked";
 /** Куда вести оплату из кабинета: там и карта, и счёт по безналу. */
 export const BILLING_PAY_HREF = "/settings/subscription";
 
+const TIER_TITLE: Record<PaidTier, string> = { standard: "«Стандарт»", premium: "«Премиум»" };
+
+/** «Перейдите на «Премиум» — до 100 сотрудников на точку». */
+function upgradeOffer(target: PaidTier): string {
+  return `Перейдите на ${TIER_TITLE[target]} — до ${employeesGenitiveLabel(SEATS_PER_POINT[target])} на точку`;
+}
+
+/** У «Премиума» следующего тарифа нет: больше — по согласованию. */
+const PREMIUM_MORE_SEATS =
+  `Больше ${employeesGenitiveLabel(SEATS_PER_POINT.premium)} на точку — по согласованию: ` +
+  "напишите нам в чат поддержки или на support@wesetup.ru";
+
 /** Текст отказа руководителю на бесплатном тарифе. */
 export const FREE_LIMIT_MESSAGE =
   `Бесплатный тариф — ${employeesLabel(FREE_MAX_USERS)}. ` +
-  "Подключите «Стандарт» или «Премиум», чтобы добавить сотрудников или вернуть их из архива.";
+  `${upgradeOffer("standard")}, чтобы добавить сотрудников или вернуть их из архива.`;
 
 /** Текст отказа тому, кто принимает приглашение: платить не ему. */
 export const FREE_LIMIT_INVITEE_MESSAGE =
   `На бесплатном тарифе организации — ${employeesLabel(FREE_MAX_USERS)}. ` +
-  "Попросите руководителя подключить тариф и повторите.";
+  "Попросите руководителя подключить «Стандарт» и повторите.";
 
-const TIER_TITLE: Record<PaidTier, string> = { standard: "«Стандарт»", premium: "«Премиум»" };
+/**
+ * Отказ по лимиту сотрудников оплаченного тарифа (25 или 100 на точку):
+ * лимит и следующий тариф — не «добавьте точку» (spec tariffs-limits-ui Р2, Р3).
+ */
+export function paidSeatLimitMessage(tier: PaidTier): string {
+  const head = `На тарифе ${TIER_TITLE[tier]} — до ${employeesGenitiveLabel(SEATS_PER_POINT[tier])} на точку, все места заняты.`;
+  const target = seatUpgradeTarget(tier);
+  return target
+    ? `${head} ${upgradeOffer(target)}, или переведите лишних в архив.`
+    : `${head} ${PREMIUM_MORE_SEATS}. Или переведите лишних в архив.`;
+}
 
-/** Отказ по лимиту сотрудников оплаченного тарифа: 25 на точку. */
-export function paidSeatLimitMessage(tier: PaidTier, points: number): string {
-  return (
-    `На тарифе ${TIER_TITLE[tier]} — до ${SEATS_PER_POINT} сотрудников на точку ` +
-    `(оплачено точек: ${normalizePoints(points)}, всего мест: ${SEATS_PER_POINT * normalizePoints(points)}). ` +
-    "Добавьте точку на странице тарифа или переведите лишних в архив."
-  );
+/** Отказ тому, кто принимает приглашение, на оплаченном тарифе: решает руководитель. */
+export function paidSeatLimitInviteeMessage(tier: PaidTier): string {
+  return seatUpgradeTarget(tier)
+    ? `Все места тарифа организации заняты. Попросите руководителя перейти на ${TIER_TITLE.premium} и повторите.`
+    : "Все места тарифа организации заняты. Попросите руководителя связаться с поддержкой WeSetup и повторите.";
+}
+
+/** Текст отказа по местам для состояния аккаунта. */
+export function seatLimitMessage(state: Pick<AccountBillingState, "tier">, audience: "manager" | "invitee" = "manager"): string {
+  if (state.tier === "standard" || state.tier === "premium") {
+    return audience === "invitee" ? paidSeatLimitInviteeMessage(state.tier) : paidSeatLimitMessage(state.tier);
+  }
+  return audience === "invitee" ? FREE_LIMIT_INVITEE_MESSAGE : FREE_LIMIT_MESSAGE;
 }
 
 export type SeatCheck =
   | { ok: true }
-  | { ok: false; limit: number; activeUsers: number; message: string };
+  | {
+      ok: false;
+      limit: number;
+      activeUsers: number;
+      message: string;
+      /** Тариф, на котором кончились места, и куда звать (null — по согласованию). */
+      tier: EntitlementTier;
+      nextTier: PaidTier | null;
+    };
 
 /**
  * Можно ли сделать активными ещё `adding` сотрудников. Проверяется ДО
@@ -375,11 +412,14 @@ export function checkSeats(state: AccountBillingState, adding: number): SeatChec
   if (!(adding > 0)) return { ok: true };
   if (state.seatLimit === null) return { ok: true };
   if (state.activeUsers + adding <= state.seatLimit) return { ok: true };
-  const message =
-    state.tier === "standard" || state.tier === "premium"
-      ? paidSeatLimitMessage(state.tier, state.planPoints)
-      : FREE_LIMIT_MESSAGE;
-  return { ok: false, limit: state.seatLimit, activeUsers: state.activeUsers, message };
+  return {
+    ok: false,
+    limit: state.seatLimit,
+    activeUsers: state.activeUsers,
+    message: seatLimitMessage(state),
+    tier: state.tier,
+    nextTier: seatUpgradeTarget(state.tier),
+  };
 }
 
 export type LimitCheck = { ok: true } | { ok: false; limit: number; current: number; message: string };
@@ -462,6 +502,7 @@ export const FEATURE_LOCKED_MESSAGE: Record<PlanFeature, string> = {
   equipmentConnect: "Подключение оборудования и IoT-датчиков — в тарифе «Премиум».",
   equipmentDelivery: "Доставка подключённого оборудования — в тарифе «Премиум».",
   typicalPackage: "Типовой пакет документов — в тарифе «Премиум».",
+  mercury: "Интеграция с «Меркурием» (ВетИС) — в тарифе «Премиум».",
 };
 
 export type TransitionAction =

@@ -81,7 +81,8 @@ describe("buildCabinetPlanCard — карточка «Мой кабинет»", 
     const card = buildCabinetPlanCard({ ...base, state: s, now: TITLE_NOW });
     // Срок в следующем году — с годом.
     assert.equal(card.title, "Премиум до 3 марта 2027");
-    assert.equal(plain(card.counts), "2 точки · 38 сотрудников из 50");
+    // «Премиум» — 100 сотрудников на точку.
+    assert.equal(plain(card.counts), "2 точки · 38 сотрудников из 200");
     assert.equal(card.price?.finalRub, 7980);
     assert.equal(card.price?.breakdown, "оплата за год");
     assert.deepEqual(card.link, { href: "/settings/subscription", label: "Изменить тариф" });

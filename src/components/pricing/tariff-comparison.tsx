@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Building2, Check, Crown, FileText, Gift, Minus, Plus, Sparkles, Users } from "lucide-react";
 
 import { PromoPrice } from "@/components/pricing/promo-price";
+import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/site-locale";
 import { CARD_POINTS, COMPARISON_GROUPS, type ComparisonCell } from "@/lib/plan-catalog";
@@ -21,6 +22,7 @@ import {
   planPeriodPriceRub,
   planTariffKey,
   quotePlanChange,
+  seatLimitFor,
   yearlySavingsRub,
   type BillingCycle,
   type CurrentSubscription,
@@ -61,7 +63,11 @@ export type TariffCabinetState = {
   legacyMonthlyRub: number;
   /** Серверное «сейчас» (ISO) — одинаковые суммы на сервере и в браузере. */
   nowIso: string;
+  /** Активных сотрудников аккаунта — подсказка, если тарифа не хватает. */
+  activeUsers?: number;
 };
+
+type CardPoint = { key: string; content: ReactNode };
 
 type Props = {
   mode: "public" | "cabinet";
@@ -138,35 +144,49 @@ export function TariffComparison({
   const intro = (tier: TierId) =>
     tier === "free" ? t("includes.free") : tier === "standard" ? t("includes.standard") : t("includes.premium");
 
+  // Пункты карточки; у «Премиума» первый — лимит с короткой ссылкой
+  // «связаться» (больше 100 на точку — по согласованию, чат поддержки).
+  const cardPoints = (tier: TierId): CardPoint[] =>
+    CARD_POINTS[tier].map((p) => {
+      const text = t(`features.${p.key}` as never, (p.values ?? {}) as never) as string;
+      if (p.key !== "employeesPremium") return { key: p.key, content: text };
+      return {
+        key: p.key,
+        content: (
+          <>
+            {text}
+            {" · "}
+            <ContactSupportButton
+              subject={t("contactSubject")}
+              testId="tariff-premium-contact"
+              className="font-medium text-[#3848c7] underline decoration-[#3848c7]/40 underline-offset-2 hover:decoration-[#3848c7]"
+            >
+              {t("contactLink")}
+            </ContactSupportButton>
+          </>
+        ),
+      };
+    });
+
+  // Кабинет: сотрудников больше, чем даёт тариф на выбранные точки, —
+  // подсказка следующего тарифа (у «Премиума» — по согласованию). Оплату
+  // не закрываем: лишних не удаляем, новых не добавить.
+  const headcountNote = (tier: PaidTier): string | null => {
+    const team = cabinet?.activeUsers ?? 0;
+    const limit = seatLimitFor(tier, points);
+    if (!cabinet || team <= limit) return null;
+    return tier === "standard" ? t("headcount.toPremium", { count: team, limit }) : t("headcount.contact", { count: team, limit });
+  };
+
   return (
     <div className={cn("space-y-6", className)} data-testid="tariff-comparison">
-      {/* Переключатель периода и число точек — над колонками, как у ИИ-подписок. */}
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-        <div role="radiogroup" aria-label={t("toggle.label")} className="inline-flex rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] p-1">
-          {(["month", "year"] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={cycle === value}
-              data-testid={`tariff-cycle-${value}`}
-              onClick={() => setCycle(value)}
-              className={cn(
-                "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-[14px] font-medium transition-colors",
-                cycle === value ? "bg-white text-[#0b1024] shadow-[0_1px_3px_rgba(11,16,36,0.12)]" : "text-[#6f7282] hover:text-[#0b1024]",
-              )}
-            >
-              {value === "month" ? t("toggle.month") : t("toggle.year")}
-              {value === "year" && savings > 0 ? (
-                <span className="rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[12px] font-semibold text-[#116b2a]">
-                  {t("toggle.save", { percent: savings })}
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </div>
+      {/* Над колонками — три зоны, как у ИИ-подписок: по центру число точек с
+          пояснением (точки меняют все три цены), справа тумблер «За год».
+          Левая зона пустая — точки стоят ровно над средней карточкой. */}
+      <div data-testid="tariff-controls" className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-start">
+        <div aria-hidden className="hidden sm:block" />
 
-        <div className="flex flex-col items-center gap-1 sm:items-end">
+        <div data-testid="tariff-points-picker" className="flex flex-col items-center gap-2 text-center">
           <div className="inline-flex items-center gap-3">
             <span className="text-[14px] font-medium text-[#3c4053]">{t("pointsPicker.label")}</span>
             <div className="inline-flex items-center rounded-2xl border border-[#dcdfed] bg-white">
@@ -176,11 +196,15 @@ export function TariffComparison({
                 data-testid="tariff-points-dec"
                 disabled={points <= minPoints}
                 onClick={() => setPoints((n) => Math.max(minPoints, n - 1))}
-                className="flex size-10 items-center justify-center rounded-l-2xl text-[#3c4053] transition-colors hover:bg-[#f5f6ff] disabled:opacity-40"
+                className="flex size-11 items-center justify-center rounded-l-2xl text-[#3c4053] transition-colors hover:bg-[#f5f6ff] disabled:opacity-40"
               >
                 <Minus className="size-4" />
               </button>
-              <span data-testid="tariff-points" className="min-w-[2.5rem] text-center text-[16px] font-semibold tabular-nums text-[#0b1024]">
+              <span
+                data-testid="tariff-points"
+                aria-live="polite"
+                className="min-w-[2.75rem] text-center text-[17px] font-semibold tabular-nums text-[#0b1024]"
+              >
                 {points}
               </span>
               <button
@@ -189,19 +213,77 @@ export function TariffComparison({
                 data-testid="tariff-points-inc"
                 disabled={points >= MAX_POINTS}
                 onClick={() => setPoints((n) => Math.min(MAX_POINTS, n + 1))}
-                className="flex size-10 items-center justify-center rounded-r-2xl text-[#3c4053] transition-colors hover:bg-[#f5f6ff] disabled:opacity-40"
+                className="flex size-11 items-center justify-center rounded-r-2xl text-[#3c4053] transition-colors hover:bg-[#f5f6ff] disabled:opacity-40"
               >
                 <Plus className="size-4" />
               </button>
             </div>
           </div>
-          <span className="max-w-[360px] text-center text-[12.5px] leading-snug text-[#6f7282] sm:text-right">
+          <p data-testid="tariff-points-hint" className="max-w-[420px] text-[13px] leading-snug text-[#6f7282]">
             {t("pointsPicker.hint", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}
-          </span>
+          </p>
+        </div>
+
+        <div role="group" aria-label={t("toggle.label")} data-testid="tariff-cycle" className="flex items-center justify-center gap-1.5 sm:justify-end">
+          <button
+            type="button"
+            aria-pressed={cycle === "month"}
+            data-testid="tariff-cycle-month"
+            onClick={() => setCycle("month")}
+            className={cn(
+              "min-h-11 px-1 text-[14px] font-medium transition-colors",
+              cycle === "month" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
+            )}
+          >
+            {t("toggle.month")}
+          </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={cycle === "year"}
+            aria-label={t("toggle.switchLabel")}
+            data-testid="tariff-cycle-switch"
+            onClick={() => setCycle((value) => (value === "year" ? "month" : "year"))}
+            className="group inline-flex h-11 w-14 shrink-0 items-center justify-center rounded-full focus-visible:outline-none"
+          >
+            <span
+              className={cn(
+                "relative inline-flex h-7 w-12 items-center rounded-full transition-colors group-focus-visible:ring-4 group-focus-visible:ring-[#5566f6]/30",
+                cycle === "year" ? "bg-[#5566f6]" : "bg-[#9b9fb3]",
+              )}
+            >
+              <span
+                className={cn(
+                  "tariff-switch-knob inline-block size-5 rounded-full shadow-[0_1px_3px_rgba(11,16,36,0.3)] transition-transform",
+                  cycle === "year" ? "translate-x-6" : "translate-x-1",
+                )}
+              />
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={cycle === "year"}
+            data-testid="tariff-cycle-year"
+            onClick={() => setCycle("year")}
+            className={cn(
+              "min-h-11 px-1 text-[14px] font-medium transition-colors",
+              cycle === "year" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
+            )}
+          >
+            {t("toggle.year")}
+          </button>
+          {savings > 0 ? (
+            <span className="ml-1 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[12px] font-semibold text-[#116b2a]">
+              {t("toggle.save", { percent: savings })}
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <div className="grid items-stretch gap-5 lg:grid-cols-3">
+      {/* Строки карточек общие (subgrid): шапка, подзаголовок, цена, кнопка,
+          «что входит», список — цены и кнопки трёх тарифов на одной линии при
+          любой длине текстов и в любом языке. */}
+      <div className="grid gap-5 lg:grid-cols-3 lg:grid-rows-[repeat(5,auto)_1fr] lg:gap-y-0">
         {/* Бесплатный */}
         <TierCard
           tier="free"
@@ -221,7 +303,7 @@ export function TariffComparison({
             </div>
           }
           intro={intro("free")}
-          points={CARD_POINTS.free.map((p) => t(`features.${p.key}` as never, (p.values ?? {}) as never))}
+          points={cardPoints("free")}
           action={
             mode === "public" ? (
               <CtaLink href={href(startHref)} variant="outline" testId="tariff-cta-free">
@@ -296,8 +378,9 @@ export function TariffComparison({
                 </div>
               }
               intro={intro(tier)}
-              points={CARD_POINTS[tier].map((p) => t(`features.${p.key}` as never, (p.values ?? {}) as never))}
+              points={cardPoints(tier)}
               note={quote ? changeNote(quote, t, rub) : null}
+              warning={headcountNote(tier)}
               action={
                 !isAvailable ? (
                   <CtaStatic>{t("cta.unavailable")}</CtaStatic>
@@ -428,6 +511,7 @@ function TierCard({
   intro,
   points,
   note = null,
+  warning = null,
   action,
   highlighted = false,
   ...rest
@@ -438,22 +522,29 @@ function TierCard({
   badge: string | null;
   price: ReactNode;
   intro: string;
-  points: string[];
+  points: CardPoint[];
   note?: string | null;
+  /** Тарифа не хватает по численности — подсказка следующего (кабинет). */
+  warning?: string | null;
   action: ReactNode;
   highlighted?: boolean;
   "data-tariff-key"?: string;
 }) {
   const Icon = TIER_ICON[tier];
+  // Шесть строк карточки — строки общей сетки (subgrid от `lg`): шапка,
+  // подзаголовок, цена, кнопка с заметкой, «что входит», список. Строка
+  // берёт высоту самой длинной ячейки трёх карточек, поэтому цены и кнопки
+  // стоят на одной линии. До `lg` карточки идут столбиком (flex).
   return (
     <div
       data-testid={`tariff-card-${tier}`}
       data-tariff-key={rest["data-tariff-key"]}
-      className={
+      className={cn(
+        "relative flex flex-col rounded-3xl p-5 sm:p-7 lg:row-span-6 lg:grid lg:grid-rows-subgrid lg:gap-y-0",
         highlighted
-          ? "relative flex h-full flex-col overflow-hidden rounded-3xl bg-[#0b1024] p-5 text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)] sm:p-7"
-          : "relative flex h-full flex-col rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7"
-      }
+          ? "overflow-hidden bg-[#0b1024] text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)]"
+          : "border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]",
+      )}
     >
       {highlighted ? (
         <div className="pointer-events-none absolute inset-0">
@@ -461,46 +552,59 @@ function TierCard({
           <div className="absolute -bottom-10 -left-16 size-[240px] rounded-full bg-[#7a5cff] opacity-30 blur-[120px]" />
         </div>
       ) : null}
-      <div className="relative z-10 flex h-full flex-col">
-        <div className="flex items-center gap-3">
+      <div className="relative flex items-center gap-3">
+        <span
+          className={
+            highlighted
+              ? "flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20"
+              : "flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]"
+          }
+        >
+          <Icon className="size-5" />
+        </span>
+        <div className="text-[20px] font-semibold tracking-[-0.01em]">{name}</div>
+        {badge ? (
           <span
-            className={
-              highlighted
-                ? "flex size-11 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/20"
-                : "flex size-11 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]"
-            }
+            className={cn(
+              "ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider",
+              highlighted ? "bg-[#7cf5c0]/20 text-[#7cf5c0]" : "bg-[#eef1ff] text-[#3848c7]",
+            )}
           >
-            <Icon className="size-5" />
+            {tier === "premium" ? <Sparkles className="size-3" /> : null}
+            {badge}
           </span>
-          <div className="text-[20px] font-semibold tracking-[-0.01em]">{name}</div>
-          {badge ? (
-            <span
-              className={cn(
-                "ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider",
-                highlighted ? "bg-[#7cf5c0]/20 text-[#7cf5c0]" : "bg-[#eef1ff] text-[#3848c7]",
-              )}
-            >
-              {tier === "premium" ? <Sparkles className="size-3" /> : null}
-              {badge}
-            </span>
-          ) : null}
-        </div>
-        <p className={cn("mt-2 text-[14px] leading-[1.5]", highlighted ? "text-white/70" : "text-[#6f7282]")}>{tagline}</p>
-        <div className="mt-5">{price}</div>
-        <div className="mt-5">{action}</div>
+        ) : null}
+      </div>
+      <p className={cn("relative mt-2 text-[14px] leading-[1.5]", highlighted ? "text-white/70" : "text-[#6f7282]")}>{tagline}</p>
+      <div data-testid={`tariff-price-${tier}`} className="relative mt-5">
+        {price}
+      </div>
+      <div data-testid={`tariff-action-${tier}`} className="relative mt-5">
+        {action}
         {note ? (
           <p className={cn("mt-2 text-center text-[12.5px] leading-snug", highlighted ? "text-white/70" : "text-[#6f7282]")}>{note}</p>
         ) : null}
-        <div className={cn("mt-6 text-[13px] font-medium", highlighted ? "text-white/60" : "text-[#9b9fb3]")}>{intro}</div>
-        <ul className={cn("mt-3 flex-1 space-y-2.5 text-[14px]", highlighted ? "text-white/85" : "text-[#3c4053]")}>
-          {points.map((point) => (
-            <li key={point} className="flex items-start gap-2">
-              <Check className={cn("mt-0.5 size-4 shrink-0", highlighted ? "text-[#7cf5c0]" : "text-[#5566f6]")} />
-              <span>{point}</span>
-            </li>
-          ))}
-        </ul>
+        {warning ? (
+          <p
+            data-testid={`tariff-headcount-${tier}`}
+            className={cn(
+              "mt-2 rounded-xl px-3 py-2 text-center text-[12.5px] leading-snug",
+              highlighted ? "bg-[#ffd48a]/15 text-[#ffd48a]" : "bg-[#fffaf0] text-[#7a4a00]",
+            )}
+          >
+            {warning}
+          </p>
+        ) : null}
       </div>
+      <div className={cn("relative mt-6 text-[13px] font-medium", highlighted ? "text-white/60" : "text-[#9b9fb3]")}>{intro}</div>
+      <ul className={cn("relative mt-3 space-y-2.5 text-[14px]", highlighted ? "text-white/85" : "text-[#3c4053]")}>
+        {points.map((point) => (
+          <li key={point.key} className="flex items-start gap-2">
+            <Check className={cn("mt-0.5 size-4 shrink-0", highlighted ? "text-[#7cf5c0]" : "text-[#5566f6]")} />
+            <span>{point.content}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

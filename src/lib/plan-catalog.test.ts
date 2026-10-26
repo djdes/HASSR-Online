@@ -14,7 +14,7 @@ import {
   pricesFromLine,
   tierIdForPlan,
 } from "@/lib/plan-catalog";
-import { DEFAULT_PLAN_RATES, TIER_IDS, entitlementsFor } from "@/lib/tariff-plans";
+import { DEFAULT_PLAN_RATES, PLAN_FEATURES, TIER_IDS, entitlementsFor } from "@/lib/tariff-plans";
 import { NICHES } from "@/content/niches";
 import { SEO_LANDINGS } from "@/content/seo-landings";
 import { COMPARISONS } from "@/content/comparisons";
@@ -51,7 +51,8 @@ describe("тарифы 2026-10: Бесплатный 14 дней, Стандар
   it("таблица сравнения не расходится с лимитами: строки-возможности есть только у Премиума", () => {
     const rows = COMPARISON_GROUPS.flatMap((group) => group.rows);
     const featureRows = rows.filter((row) => row.feature);
-    assert.equal(featureRows.length, 4);
+    // Каждая возможность тарифа — строкой таблицы (в т. ч. «Меркурий»).
+    assert.deepEqual(featureRows.map((row) => row.feature).sort(), [...PLAN_FEATURES].sort());
     for (const row of featureRows) {
       const feature = row.feature!;
       assert.equal(entitlementsFor("premium").features[feature], true, row.key);

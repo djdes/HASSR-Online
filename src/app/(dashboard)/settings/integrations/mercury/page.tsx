@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { requireAuth } from "@/lib/auth-helpers";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { canUseMercury } from "@/lib/mercury/access";
+import { hasPlanFeature } from "@/lib/billing.server";
 import { resolveTransportMode } from "@/lib/mercury/transport";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
@@ -33,7 +33,7 @@ export default async function MercurySettingsPage() {
   const [org, integration, buildings, users] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { subscriptionPlan: true, isDemo: true, inn: true, name: true },
+      select: { inn: true, name: true },
     }),
     db.mercuryIntegration.findUnique({
       where: { organizationId },
@@ -77,10 +77,8 @@ export default async function MercurySettingsPage() {
     }),
   ]);
 
-  const available = canUseMercury({
-    plan: org?.subscriptionPlan,
-    isDemo: org?.isDemo,
-  });
+  // «Меркурий» — возможность «Премиума» (и пробного, прежней «Подписки», демо).
+  const available = await hasPlanFeature(organizationId, "mercury");
   const mode = resolveTransportMode({});
 
   return (

@@ -863,6 +863,12 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .tarif
   background-color: rgba(255, 255, 255, 0.9) !important;
 }
 
+/* Ручка тумблера «За год» на витрине — белая в обеих темах (без класса
+   `bg-white`, который тёмная тема перекрашивает в цвет поверхности). */
+.tariff-switch-knob {
+  background-color: #ffffff;
+}
+
 /* Border strip под headers (sticky top-0 border-b bg-white) — должен
    наследовать dark, иначе белая полоса при скролле */
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) header.sticky,

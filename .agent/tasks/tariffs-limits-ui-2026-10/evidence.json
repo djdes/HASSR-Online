@@ -1,0 +1,45 @@
+{
+  "task": "tariffs-limits-ui-2026-10",
+  "branch": "claude/practical-feynman-6y3ub5",
+  "base": "master 8297f67f",
+  "spec": ".agent/tasks/tariffs-limits-ui-2026-10/spec.md",
+  "acceptance": {
+    "AC1": "seats per point: standard 25, premium 100; refusals name the next tier; 402 carries tier/nextTier",
+    "AC2": "toasts/notes/bot/invitee by nextTier; Premium → contact (support chat, mail fallback); app — fact only",
+    "AC3": "no 'add a location' for employees in ru/en/uz catalogs, server, bot, What's new; ROI calculator and ROOT MRR by tier",
+    "AC4": "Premium card: up to 100 per point, more by arrangement + compact contact link; table/SEO/summary updated",
+    "AC5": "/order and cabinet headcount notes with next tier; payment not blocked",
+    "AC6": "plan feature 'mercury' (premium/trial/legacy/exempt); pages/API/cron gated; Premium card + table row",
+    "AC7": "cards on a shared subgrid: price and CTA tops spread 0.00 px (pricing day/night, landing ru/en/uz, cabinet light/dark)",
+    "AC8": "points stepper centered (0 px), explanation shown, role=switch on the right; click/Space/label toggle; targets 44 px",
+    "AC9": "typecheck 0, test:gate 4846/0, i18n:check pass, eslint 0"
+  },
+  "checks": {
+    "typecheck": "0 errors",
+    "test_gate": "pass 4846, fail 0",
+    "i18n_check": "pass",
+    "eslint_changed": "0 errors"
+  },
+  "live": {
+    "ui": "raw/ui-check-1.txt",
+    "limits_http": "raw/limits-check.txt",
+    "limits_browser": "raw/limits-ui-check.txt",
+    "limits_server": "raw/limits-server-check.txt",
+    "screenshots_local": [
+      "raw/ui-pricing-day.png",
+      "raw/ui-pricing-night.png",
+      "raw/ui-controls-day.png",
+      "raw/ui-controls-night.png",
+      "raw/ui-controls-mobile-night.png",
+      "raw/ui-cabinet-dark.png",
+      "raw/limits-toast-premium.png"
+    ]
+  },
+  "schema_changes": [],
+  "deploy_side_effects": [
+    "Premium seat limit 25 → 100 per point",
+    "Mercury gated by account plan feature: legacy pro/business without active payment and Standard/free lose access; cron skips them",
+    "What's new changed — modal shows once"
+  ],
+  "verification": {}
+}

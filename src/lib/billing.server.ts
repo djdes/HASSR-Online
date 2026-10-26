@@ -10,9 +10,8 @@ import {
   DEFAULT_TRIAL_SETTINGS,
   FEATURE_LOCKED_CODE,
   FEATURE_LOCKED_MESSAGE,
-  FREE_LIMIT_INVITEE_MESSAGE,
   FREE_LIMIT_MESSAGE,
-  paidSeatLimitMessage,
+  seatLimitMessage,
   JOURNAL_LIMIT_CODE,
   LEGACY_FREE_PERIOD_SETTING_KEY,
   POINT_LIMIT_CODE,
@@ -52,6 +51,8 @@ import {
   countPointsInUse,
   parseScheduledPlan,
   planMonthlyRub,
+  seatUpgradeTarget,
+  type PaidTier,
   type PlanFeature,
   type ScheduledPlan,
 } from "@/lib/tariff-plans";
@@ -373,6 +374,9 @@ export type SeatGuard =
       payUrl: string;
       limit: number;
       activeUsers: number;
+      /** Тариф, на котором кончились места, и следующий (null — больше по согласованию). */
+      tier: string;
+      nextTier: PaidTier | null;
     };
 
 /** Загрузка тарифа для проверки; сбой БД — не блокируем работу. */
@@ -410,11 +414,13 @@ export async function checkSeatsForActivation(
   return {
     ok: false,
     status: 402,
-    error: options.audience === "invitee" ? FREE_LIMIT_INVITEE_MESSAGE : check.message,
+    error: options.audience === "invitee" ? seatLimitMessage(loaded.state, "invitee") : check.message,
     code: BILLING_LIMIT_CODE,
     payUrl: BILLING_PAY_HREF,
     limit: check.limit,
     activeUsers: check.activeUsers,
+    tier: check.tier,
+    nextTier: check.nextTier,
   };
 }
 
@@ -424,15 +430,20 @@ export async function checkSeatsForActivation(
  */
 export async function seatAllowance(
   organizationId: string
-): Promise<{ left: number; limit: number | null; message: string }> {
+): Promise<{ left: number; limit: number | null; message: string; nextTier: PaidTier | null }> {
   const loaded = await loadForGuard(organizationId, "seat-allowance");
   const limit = loaded?.state.seatLimit ?? null;
-  if (!loaded || limit === null) return { left: Number.POSITIVE_INFINITY, limit: null, message: FREE_LIMIT_MESSAGE };
+  if (!loaded || limit === null) {
+    return { left: Number.POSITIVE_INFINITY, limit: null, message: FREE_LIMIT_MESSAGE, nextTier: null };
+  }
   const { state } = loaded;
-  // Текст отказа — по тарифу: на оплаченном «25 на точку», а не бесплатный.
-  const message =
-    state.tier === "standard" || state.tier === "premium" ? paidSeatLimitMessage(state.tier, state.planPoints) : FREE_LIMIT_MESSAGE;
-  return { left: Math.max(0, limit - state.activeUsers), limit, message };
+  // Текст отказа — по тарифу: лимит текущего и следующий тариф.
+  return {
+    left: Math.max(0, limit - state.activeUsers),
+    limit,
+    message: seatLimitMessage(state),
+    nextTier: seatUpgradeTarget(state.tier),
+  };
 }
 
 /** Итог импорта списком, если часть строк упёрлась в лимит тарифа. */
@@ -440,7 +451,7 @@ export function seatLimitSummary(
   blocked: number,
   source: string,
   organizationId: string,
-  seats?: { limit: number | null; message: string }
+  seats?: { limit: number | null; message: string; nextTier?: PaidTier | null }
 ) {
   if (blocked <= 0) return null;
   console.info("[billing] seat limit: import rows blocked", { organizationId, source, blocked });
@@ -450,6 +461,7 @@ export function seatLimitSummary(
     payUrl: BILLING_PAY_HREF,
     blocked,
     ...(typeof seats?.limit === "number" ? { limit: seats.limit } : {}),
+    ...(seats && seats.nextTier !== undefined ? { nextTier: seats.nextTier } : {}),
   };
 }
 
@@ -499,6 +511,8 @@ export function seatLimitResponse(guard: Extract<SeatGuard, { ok: false }>): Nex
       payUrl: guard.payUrl,
       limit: guard.limit,
       activeUsers: guard.activeUsers,
+      tier: guard.tier,
+      nextTier: guard.nextTier,
     },
     { status: guard.status }
   );

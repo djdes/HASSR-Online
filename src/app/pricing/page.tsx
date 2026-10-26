@@ -12,7 +12,7 @@ import {
   DEFAULT_TWITTER_CARD,
   DEFAULT_TWITTER_IMAGES,
 } from "@/lib/meta-defaults";
-import { FREE_AFTER_TRIAL_LABEL, FREE_TIER_SHORT, PAID_SEATS_LABEL } from "@/lib/plan-catalog";
+import { FREE_AFTER_TRIAL_LABEL, FREE_TIER_SHORT, PAID_SEATS_LABEL, PREMIUM_SEATS_LABEL } from "@/lib/plan-catalog";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { readActivePromotion } from "@/lib/promo/offer";
@@ -81,8 +81,8 @@ export default async function PricingPage() {
             ограничений, карта не нужна. Потом бесплатно остаются{" "}
             {FREE_AFTER_TRIAL_LABEL}, или тариф «Стандарт» — {PAID_SEATS_LABEL}, от{" "}
             <PromoPrice price={standardFrom} size="text" tone="inherit" suffix="/мес" showBadge={false} /> при
-            оплате за год. «Премиум» добавляет фото датчиков, оборудование и
-            типовой пакет документов.
+            оплате за год. «Премиум» — {PREMIUM_SEATS_LABEL}, фото датчиков, оборудование,
+            «Меркурий» и типовой пакет документов.
           </p>
         </div>
 

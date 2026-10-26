@@ -121,6 +121,12 @@ export function MercurySettingsClient({
         <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-[1.6] text-[#6f7282]">
           {t("unavailableBody")}
         </p>
+        <a
+          href="/settings/subscription#tariffs"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
+        >
+          {t("unavailableCta")}
+        </a>
       </div>
     );
   }
