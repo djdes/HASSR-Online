@@ -185,7 +185,7 @@ export function TariffComparison({
           Левая зона пустая — точки стоят ровно над средней карточкой. */}
       <div
         data-testid="tariff-controls"
-        className="grid items-center gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
+        className="grid items-start gap-x-3 gap-y-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]"
       >
         <div aria-hidden className="hidden sm:col-start-1 sm:row-start-1 sm:block" />
 
@@ -233,61 +233,66 @@ export function TariffComparison({
           {t("pointsPicker.hint", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}
         </p>
 
+        {/* «Помесячно ◯ За год» не разрывается; на узкой правой колонке на
+            следующую строку уходит только плашка скидки, тумблер остаётся на
+            линии счётчика (ряд выровнен по верху). */}
         <div
           role="group"
           aria-label={t("toggle.label")}
           data-testid="tariff-cycle"
-          className="order-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 sm:order-none sm:col-start-3 sm:row-start-1 sm:justify-end"
+          className="order-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:order-none sm:col-start-3 sm:row-start-1 sm:justify-end"
         >
-          <button
-            type="button"
-            aria-pressed={cycle === "month"}
-            data-testid="tariff-cycle-month"
-            onClick={() => setCycle("month")}
-            className={cn(
-              "min-h-11 min-w-11 whitespace-nowrap px-1 text-[14px] font-medium transition-colors",
-              cycle === "month" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
-            )}
-          >
-            {t("toggle.month")}
-          </button>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={cycle === "year"}
-            aria-label={t("toggle.switchLabel")}
-            data-testid="tariff-cycle-switch"
-            onClick={() => setCycle((value) => (value === "year" ? "month" : "year"))}
-            className="group inline-flex h-11 w-14 shrink-0 items-center justify-center rounded-full focus-visible:outline-none"
-          >
-            <span
+          <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              aria-pressed={cycle === "month"}
+              data-testid="tariff-cycle-month"
+              onClick={() => setCycle("month")}
               className={cn(
-                "relative inline-flex h-7 w-12 items-center rounded-full transition-colors group-focus-visible:ring-4 group-focus-visible:ring-[#5566f6]/30",
-                cycle === "year" ? "bg-[#5566f6]" : "bg-[#858aa0]",
+                "min-h-11 min-w-11 whitespace-nowrap px-0.5 text-[14px] font-medium transition-colors",
+                cycle === "month" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
               )}
+            >
+              {t("toggle.month")}
+            </button>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={cycle === "year"}
+              aria-label={t("toggle.switchLabel")}
+              data-testid="tariff-cycle-switch"
+              onClick={() => setCycle((value) => (value === "year" ? "month" : "year"))}
+              className="group inline-flex h-11 w-12 shrink-0 items-center justify-center rounded-full focus-visible:outline-none"
             >
               <span
                 className={cn(
-                  "tariff-switch-knob inline-block size-5 rounded-full shadow-[0_1px_3px_rgba(11,16,36,0.3)] transition-transform",
-                  cycle === "year" ? "translate-x-6" : "translate-x-1",
+                  "relative inline-flex h-7 w-12 items-center rounded-full transition-colors group-focus-visible:ring-4 group-focus-visible:ring-[#5566f6]/30",
+                  cycle === "year" ? "bg-[#5566f6]" : "bg-[#858aa0]",
                 )}
-              />
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={cycle === "year"}
-            data-testid="tariff-cycle-year"
-            onClick={() => setCycle("year")}
-            className={cn(
-              "min-h-11 min-w-11 whitespace-nowrap px-1 text-[14px] font-medium transition-colors",
-              cycle === "year" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
-            )}
-          >
-            {t("toggle.year")}
-          </button>
+              >
+                <span
+                  className={cn(
+                    "tariff-switch-knob inline-block size-5 rounded-full shadow-[0_1px_3px_rgba(11,16,36,0.3)] transition-transform",
+                    cycle === "year" ? "translate-x-6" : "translate-x-1",
+                  )}
+                />
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={cycle === "year"}
+              data-testid="tariff-cycle-year"
+              onClick={() => setCycle("year")}
+              className={cn(
+                "min-h-11 min-w-11 whitespace-nowrap px-0.5 text-[14px] font-medium transition-colors",
+                cycle === "year" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
+              )}
+            >
+              {t("toggle.year")}
+            </button>
+          </span>
           {savings > 0 ? (
-            <span className="ml-1 whitespace-nowrap rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[12px] font-semibold text-[#116b2a]">
+            <span className="whitespace-nowrap rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[12px] font-semibold text-[#116b2a]">
               {t("toggle.save", { percent: savings })}
             </span>
           ) : null}
@@ -569,7 +574,7 @@ function TierCard({
           <div className="absolute -bottom-10 -left-16 size-[240px] rounded-full bg-[#7a5cff] opacity-30 blur-[120px]" />
         </div>
       ) : null}
-      <div className="relative flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="relative flex flex-wrap content-start items-center gap-x-3 gap-y-2">
         <span
           className={
             highlighted

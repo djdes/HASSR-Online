@@ -1016,6 +1016,8 @@
       "limit": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}.",
       "limitAction": "All seats on the plan are taken — {count, plural, one {# employee} other {# employees}}. Move to a higher plan to add employees.",
       "pay": "Choose a plan",
+      "payStandard": "Switch to Standard",
+      "payPremium": "Move to Premium",
       "pointLimit": "All locations on the plan are in use — {count, plural, one {# location} other {# locations}}. Each new location costs one more plan: add it on the plan page.",
       "journalLimit": "The free plan includes {count, plural, one {# log} other {# logs}}. Choose Standard or Premium to keep every log.",
       "storageFull": "Your plan’s document storage is full. Delete files you no longer need or switch to Premium — 1 GB for all documents.",

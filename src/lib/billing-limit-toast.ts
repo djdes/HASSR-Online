@@ -17,8 +17,8 @@ import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 /**
  * Ошибка API в toast. Места тарифа заняты (402 +
  * `code: "billing_free_limit"`) — текст с лимитом и следующим тарифом
- * (бесплатный → «Стандарт», «Стандарт» → «Премиум») и кнопка «Выбрать
- * тариф»; у «Премиума» — «больше по согласованию» и «Связаться» (чат
+ * и кнопка с его названием («Подключить «Стандарт»», «Перейти на
+ * «Премиум»»); у «Премиума» — «больше по согласованию» и «Связаться» (чат
  * поддержки). Никаких «добавьте точку»: точка — новое место работы, а не
  * способ докупить сотрудников. В приложении WeSetup к оплате не зовём
  * (правила сторов): там только факт — «Все места тарифа заняты».
@@ -48,6 +48,9 @@ export function seatOfferFrom(data: unknown): SeatOffer {
 type SeatOfferCopy = {
   toStandard?: string;
   toPremium?: string;
+  /** Кнопки со следующим тарифом; нет — общая `pay`. */
+  payStandard?: string;
+  payPremium?: string;
   contact?: string;
   contactLabel?: string;
 };
@@ -83,9 +86,14 @@ export function billingErrorPresentation(
   if (offer === "contact" && copy.contact && copy.contactLabel) {
     return { message: copy.contact, id: "billing-limit", actionLabel: copy.contactLabel, contact: true };
   }
-  const message =
-    offer === "standard" && copy.toStandard ? copy.toStandard : offer === "premium" && copy.toPremium ? copy.toPremium : copy.limitAction;
-  return { message, id: "billing-limit", href: safePayHref(d?.payUrl), actionLabel: copy.pay };
+  const href = safePayHref(d?.payUrl);
+  if (offer === "standard" && copy.toStandard) {
+    return { message: copy.toStandard, id: "billing-limit", href, actionLabel: copy.payStandard ?? copy.pay };
+  }
+  if (offer === "premium" && copy.toPremium) {
+    return { message: copy.toPremium, id: "billing-limit", href, actionLabel: copy.payPremium ?? copy.pay };
+  }
+  return { message: copy.limitAction, id: "billing-limit", href, actionLabel: copy.pay };
 }
 
 /** Сколько мест у тарифа — из ответа 402; нет — бесплатный тариф. */
@@ -109,6 +117,9 @@ export type TariffLimitCopy = {
   seatsToStandard?: (count: number) => string;
   seatsToPremium?: (count: number) => string;
   seatsContact?: (count: number) => string;
+  /** Кнопки со следующим тарифом; нет — общая `pay`. */
+  payStandard?: string;
+  payPremium?: string;
   contact?: string;
   points: (count: number) => string;
   journals: (count: number) => string;
@@ -131,8 +142,9 @@ const TARIFF_LIMIT_CODES: ReadonlySet<string> = new Set([
 
 /**
  * Отказ 402 по лимиту тарифа (места, точки, журналы, хранилище, возможность
- * «Премиума») → текст в языке интерфейса и кнопка «Выбрать тариф». Текст
- * ответа сервера не показываем: он на русском. null — это не отказ тарифа.
+ * «Премиума») → текст в языке интерфейса и кнопка на страницу тарифа (у мест —
+ * с названием следующего тарифа). Текст ответа сервера не показываем: он на
+ * русском. null — это не отказ тарифа.
  */
 export function tariffLimitPresentation(
   data: unknown,
@@ -152,13 +164,14 @@ export function tariffLimitPresentation(
     if (offer === "contact" && copy.seatsContact && copy.contact) {
       return { message: copy.seatsContact(count), actionLabel: copy.contact, contact: true };
     }
-    const seatsMessage =
-      offer === "standard" && copy.seatsToStandard
-        ? copy.seatsToStandard(count)
-        : offer === "premium" && copy.seatsToPremium
-          ? copy.seatsToPremium(count)
-          : copy.seats(count);
-    return { message: seatsMessage, href: safePayHref(d?.payUrl), actionLabel: copy.pay };
+    const href = safePayHref(d?.payUrl);
+    if (offer === "standard" && copy.seatsToStandard) {
+      return { message: copy.seatsToStandard(count), href, actionLabel: copy.payStandard ?? copy.pay };
+    }
+    if (offer === "premium" && copy.seatsToPremium) {
+      return { message: copy.seatsToPremium(count), href, actionLabel: copy.payPremium ?? copy.pay };
+    }
+    return { message: copy.seats(count), href, actionLabel: copy.pay };
   }
   const message =
     code === POINT_LIMIT_CODE
@@ -174,7 +187,7 @@ export function tariffLimitPresentation(
 }
 
 /**
- * Для `if (!res.ok)`: отказ тарифа — toast с кнопкой «Выбрать тариф» и
+ * Для `if (!res.ok)`: отказ тарифа — toast с кнопкой на страницу тарифа и
  * `true` (вызывающий дальше ничего не показывает), иначе `false`.
  */
 export function useTariffLimitToast(): (data: unknown) => boolean {
@@ -187,6 +200,8 @@ export function useTariffLimitToast(): (data: unknown) => boolean {
         seatsToStandard: (count) => t("limitToStandard", { count, seats: SEATS_PER_POINT.standard }),
         seatsToPremium: (count) => t("limitToPremium", { count, seats: SEATS_PER_POINT.premium }),
         seatsContact: (count) => t("limitContact", { count, seats: SEATS_PER_POINT.premium }),
+        payStandard: t("payStandard"),
+        payPremium: t("payPremium"),
         contact: t("contact"),
         points: (count) => t("pointLimit", { count }),
         journals: (count) => t("journalLimit", { count }),
@@ -240,6 +255,8 @@ export function useBillingError() {
       pay: t("pay"),
       toStandard: t("limitToStandard", { count: limit, seats: SEATS_PER_POINT.standard }),
       toPremium: t("limitToPremium", { count: limit, seats: SEATS_PER_POINT.premium }),
+      payStandard: t("payStandard"),
+      payPremium: t("payPremium"),
       contact: t("limitContact", { count: limit, seats: SEATS_PER_POINT.premium }),
       contactLabel: t("contact"),
     }, isInsideMobileApp());

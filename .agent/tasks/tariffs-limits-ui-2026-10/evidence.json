@@ -5,20 +5,20 @@
   "spec": ".agent/tasks/tariffs-limits-ui-2026-10/spec.md",
   "acceptance": {
     "AC1": "seats per point: standard 25, premium 100; refusals name the next tier; 402 carries tier/nextTier",
-    "AC2": "toasts/notes/bot/invitee by nextTier; Premium → contact (support chat, mail fallback); app — fact only",
+    "AC2": "toasts/notes/bot/invitee/AI assistant/API by nextTier, button names the next tier and works over open dialogs; Premium → contact (support chat, mail fallback); app — fact only",
     "AC3": "no 'add a location' for employees in ru/en/uz catalogs, server, bot, What's new; ROI calculator and ROOT MRR by tier",
     "AC4": "Premium card: up to 100 per point, more by arrangement + compact contact link; table/SEO/summary updated",
     "AC5": "/order and cabinet headcount notes with next tier; payment not blocked",
     "AC6": "plan feature 'mercury' (premium/trial/legacy/exempt); pages/API/cron gated; Premium card + table row",
     "AC7": "cards on a shared subgrid: price and CTA tops spread 0.00 px (pricing day/night, landing ru/en/uz, cabinet light/dark)",
-    "AC8": "points stepper centered (0 px), explanation shown, role=switch on the right; click/Space/label toggle; targets 44 px",
-    "AC9": "typecheck 0, test:gate 4846/0, i18n:check pass, eslint 0"
+    "AC8": "points stepper centered (0 px), explanation shown, role=switch on the right; 'Monthly ◯ Yearly' never splits, only the badge wraps; click/Space/label toggle; targets ≥44 px",
+    "AC9": "typecheck 0, test:gate 4850/0, i18n:check 95/95, eslint 0"
   },
   "checks": {
     "base": "master e2b2f344 (merged b504100e)",
     "typecheck": "0 errors",
-    "test_gate": "pass 4848, fail 0",
-    "i18n_check": "pass",
+    "test_gate": "pass 4850, fail 0",
+    "i18n_check": "pass (95/95)",
     "eslint_changed": "0 errors"
   },
   "live": {
@@ -34,7 +34,12 @@
       "raw/ui-controls-mobile-night.png",
       "raw/ui-cabinet-dark.png",
       "raw/limits-toast-premium.png"
-    ]
+    ],
+    "toast_dialog": "raw/toast-dialog-check.txt",
+    "ai_api_seats": "raw/ai-api-seat-check.txt",
+    "ui_v3": "raw/ui-check-v3.txt",
+    "toggle_wrap": "raw/toggle-wrap-check.txt",
+    "header_align": "raw/header-align-check.txt"
   },
   "schema_changes": [],
   "deploy_side_effects": [
@@ -66,6 +71,31 @@
         "raw/ui-check-v2.txt",
         "raw/limits-check-2.txt",
         "raw/invite-check.txt"
+      ]
+    },
+    "round2": {
+      "commit": "33943e2f",
+      "verdict": "FAIL",
+      "failed": [
+        "AC2"
+      ],
+      "fixes": [
+        "toaster pointer-events auto: toast action clickable while a Radix dialog is open (closes the dialog, runs the action)",
+        "AI assistant add_staff and public API add_employee: refusal names the next tier; app — fact only (inApp from User-Agent); API 402",
+        "toast button label by nextTier: payStandard / payPremium (ru/en/uz)",
+        "yearly switch: 'Monthly ◯ Yearly' kept together, only the badge wraps; controls row top-aligned",
+        "card header content-start: plan names aligned when a badge wraps",
+        "uz Standard seats wording unified"
+      ],
+      "not_fixed": [
+        "L3 (pre-existing): invite/edit-user and master-cabinet dialogs show the Russian server text in en/uz"
+      ],
+      "rechecked": [
+        "raw/toast-dialog-check.txt",
+        "raw/ai-api-seat-check.txt",
+        "raw/ui-check-v3.txt",
+        "raw/toggle-wrap-check.txt",
+        "raw/header-align-check.txt"
       ]
     }
   }

@@ -67,3 +67,26 @@ test("«Сотрудники → Добавить»: отказ по места�
     assert.equal(body.nextTier, nextTier);
   }
 });
+
+test("API add_employee: места заняты — 402 с текстом про следующий тариф, прочие отказы — 422", async () => {
+  const { z } = require("zod") as typeof import("zod");
+  const ctx = { orgId: "org", actor: { id: "manager", role: "manager", isRoot: false, name: "Руководитель" }, locale: "ru" };
+  const seats = "Все места «Стандарта» заняты — 25 сотрудников. Перейдите на «Премиум» — до 100 сотрудников на точку.";
+  for (const [result, status] of [
+    [{ ok: false, error: seats, code: "billing_free_limit" }, 402],
+    [{ ok: false, error: "Должность не найдена" }, 422],
+  ] as const) {
+    const tools = load("src/lib/public-api/tools/staff-tools.ts", {
+      "@/lib/db": { db: { user: { findMany: async () => [] } } },
+      "@/lib/ai-assistant/actions": {
+        assistantAddStaffSchema: z.object({ fullName: z.string(), jobPositionId: z.string() }),
+        prepareAction: async () => ({ ok: true }),
+        executeProposedAction: async () => result,
+      },
+      "../dates": { capList: <T>(items: T[]) => ({ items, truncated: false }) },
+      "./types": require("@/lib/public-api/tools/types"),
+    }) as unknown as Record<string, { handler: (input: unknown, ctx: unknown) => Promise<unknown> }>;
+    const reply = await tools.addEmployeeTool.handler({ fullName: "Новый Сотрудник", jobPositionId: "pos" }, ctx);
+    assert.deepEqual(reply, { ok: false, status, error: result.error });
+  }
+});

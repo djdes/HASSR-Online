@@ -1,0 +1,13 @@
+ok   ИИ-помощник lim-std-full ru: «Все места «Стандарта» заняты — 25 сотрудников. Перейдите на «Премиум» — до 100 сотрудников на точку.» · в приложении: «Все места тарифа заняты — 25 сотрудников.»
+ok   ИИ-помощник lim-std-full en: «All seats on Standard are taken — 25 employees. Move to Premium — up to 100 employees per location.» · в приложении: «All seats on the plan are taken — 25 employees.»
+ok   ИИ-помощник lim-std-full uz: ««Standart»ning barcha o‘rinlari band — 25 nafar xodim. «Premium»ga o‘ting — har bir nuqtaga 100 nafargacha xodim.» · в приложении: «Tarifning barcha o‘rinlari band — 25 nafar xodim.»
+ok   API add_employee lim-std-full: 402 «Все места «Стандарта» заняты — 25 сотрудников. Перейдите на «Премиум» — до 100 сотрудников на точку.»
+     сотрудников в организации: 26 → 26
+ok   ИИ-помощник lim-prem-full ru: «Все места «Премиума» заняты — 100 сотрудников. Больше 100 сотрудников на точку — по согласованию: напишите нам.» · в приложении: «Все места тарифа заняты — 100 сотрудников.»
+ok   ИИ-помощник lim-prem-full en: «All seats on Premium are taken — 100 employees. More than 100 employees per location — by arrangement: contact us.» · в приложении: «All seats on the plan are taken — 100 employees.»
+ok   ИИ-помощник lim-prem-full uz: ««Premium»ning barcha o‘rinlari band — 100 nafar xodim. Har bir nuqtaga 100 nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing.» · в приложении: «Tarifning barcha o‘rinlari band — 100 nafar xodim.»
+ok   API add_employee lim-prem-full: 402 «Все места «Премиума» заняты — 100 сотрудников. Больше 100 сотрудников на точку — по согласованию: напишите нам.»
+     сотрудников в организации: 101 → 101
+
+удалено строк аудита public_api.call: 0
+ИТОГ: отказ называет следующий тариф, в приложении — только факт, API — 402

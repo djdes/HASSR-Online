@@ -81,6 +81,8 @@ test("seat refusals name the next plan (free → Standard, Standard → Premium)
       seatsToStandard: (count: number) => t("common.billing.limitToStandard", { count, seats: 25 }),
       seatsToPremium: (count: number) => t("common.billing.limitToPremium", { count, seats: 100 }),
       seatsContact: (count: number) => t("common.billing.limitContact", { count, seats: 100 }),
+      payStandard: t("common.billing.payStandard"),
+      payPremium: t("common.billing.payPremium"),
       contact: t("common.billing.contact"),
       points: (count: number) => t("common.billing.pointLimit", { count }),
       journals: (count: number) => t("common.billing.journalLimit", { count }),
@@ -94,8 +96,12 @@ test("seat refusals name the next plan (free → Standard, Standard → Premium)
     const free = tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 1, nextTier: "standard" }, copy, false);
     assert.equal(free?.message, copy.seatsToStandard(1));
     assert.equal(free?.href, BILLING_PAY_HREF);
+    // Кнопка называет следующий тариф; без него — общая «Выбрать тариф».
+    assert.equal(free?.actionLabel, copy.payStandard);
+    assert.equal(tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 50 }, copy, false)?.actionLabel, copy.pay);
     const standard = tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 50, nextTier: "premium" }, copy, false);
     assert.equal(standard?.message, copy.seatsToPremium(50));
+    assert.equal(standard?.actionLabel, copy.payPremium);
     assert.ok(standard?.message.includes(formatNumber(locale, 100)), `${locale}: Premium seats named`);
     const premium = tariffLimitPresentation({ code: BILLING_LIMIT_CODE, limit: 100, nextTier: null }, copy, false);
     assert.equal(premium?.message, copy.seatsContact(100));
@@ -111,10 +117,16 @@ test("seat refusals name the next plan (free → Standard, Standard → Premium)
       pay: t("common.billing.pay"),
       toStandard: t("common.billing.limitToStandard", { count: 25, seats: 25 }),
       toPremium: t("common.billing.limitToPremium", { count: 25, seats: 100 }),
+      payStandard: t("common.billing.payStandard"),
+      payPremium: t("common.billing.payPremium"),
       contact: t("common.billing.limitContact", { count: 25, seats: 100 }),
       contactLabel: t("common.billing.contact"),
     };
-    assert.equal(billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: "premium" }, "x", errorCopy, false).message, errorCopy.toPremium);
+    const toPremium = billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: "premium" }, "x", errorCopy, false);
+    assert.equal(toPremium.message, errorCopy.toPremium);
+    assert.equal(toPremium.actionLabel, errorCopy.payPremium);
+    assert.equal(billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: "standard" }, "x", errorCopy, false).actionLabel, errorCopy.payStandard);
+    if (locale !== "ru") assert.doesNotMatch(errorCopy.payStandard + errorCopy.payPremium, /\p{Script=Cyrillic}/u);
     const contact = billingErrorPresentation({ code: BILLING_LIMIT_CODE, nextTier: null }, "x", errorCopy, false);
     assert.equal(contact.message, errorCopy.contact);
     assert.equal(contact.contact, true);

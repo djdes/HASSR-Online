@@ -1,0 +1,41 @@
+# toggle-wrap-check.cjs на next dev + локальной БД после исправлений проверки 2 (вывод прогонов как есть).
+# Колонки сетки — «левая центр правая»; trioW — ширина «Помесячно ◯ За год»; labelW — месяц/тумблер/год/плашка.
+
+## /pricing (ru)
+640 {"controlsW":592,"cols":"190.578px 186.844px 190.578px","trioW":187,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[83,48,48,55]}
+660 {"controlsW":612,"cols":"200.578px 186.844px 200.578px","trioW":187,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[83,48,48,55]}
+680 {"controlsW":632,"cols":"210.578px 186.844px 210.578px","trioW":187,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[83,48,48,55]}
+700 {"controlsW":652,"cols":"220.578px 186.844px 220.578px","trioW":187,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[83,48,48,55]}
+720 {"controlsW":672,"cols":"230.578px 186.844px 230.578px","trioW":187,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[83,48,48,55]}
+768 {"controlsW":720,"cols":"254.578px 186.844px 254.578px","trioW":187,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[83,48,48,55]}
+800 {"controlsW":752,"cols":"270.578px 186.844px 270.578px","trioW":187,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[83,48,48,55]}
+900 {"controlsW":852,"cols":"320.578px 186.844px 320.578px","trioW":187,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[83,48,48,55]}
+1024 {"controlsW":976,"cols":"382.578px 186.844px 382.578px","trioW":187,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[83,48,48,55]}
+
+## /en
+640 {"controlsW":592,"cols":"178.375px 211.25px 178.375px","trioW":161,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[59,48,46,52]}
+660 {"controlsW":612,"cols":"188.375px 211.25px 188.375px","trioW":161,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[59,48,46,52]}
+700 {"controlsW":647,"cols":"208.375px 211.25px 208.375px","trioW":159,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":69,"labelW":[58,48,46,51]}
+760 {"controlsW":712,"cols":"238.375px 211.25px 238.375px","trioW":161,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[59,48,46,52]}
+800 {"controlsW":746,"cols":"258.375px 211.25px 258.375px","trioW":159,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[58,48,46,51]}
+
+## /uz
+640 {"controlsW":592,"cols":"182.328px 203.344px 182.328px","trioW":166,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[66,48,44,55]}
+660 {"controlsW":607,"cols":"192.328px 203.344px 192.328px","trioW":165,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":69,"labelW":[65,48,44,54]}
+700 {"controlsW":647,"cols":"212.328px 203.344px 212.328px","trioW":165,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":69,"labelW":[65,48,44,54]}
+760 {"controlsW":706,"cols":"242.328px 203.344px 242.328px","trioW":165,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[65,48,44,54]}
+800 {"controlsW":752,"cols":"262.328px 203.344px 262.328px","trioW":166,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[66,48,44,55]}
+
+## Кабинет /settings/subscription (lim-std-full)
+640 {"controlsW":608,"cols":"199.562px 184.859px 199.578px","trioW":183,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[81,48,47,50]}
+700 {"controlsW":668,"cols":"229.562px 184.859px 229.578px","trioW":183,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-1,"groupH":70,"labelW":[81,48,47,50]}
+768 {"controlsW":704,"cols":"247.562px 184.859px 247.578px","trioW":183,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[81,48,47,50]}
+1024 {"controlsW":704,"cols":"247.562px 184.859px 247.578px","trioW":183,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[81,48,47,50]}
+1060 {"controlsW":740,"cols":"265.562px 184.859px 265.578px","trioW":183,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[81,48,47,50]}
+1152 {"controlsW":832,"cols":"311.562px 184.859px 311.578px","trioW":183,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[81,48,47,50]}
+1280 {"controlsW":960,"cols":"375.562px 184.859px 375.578px","trioW":183,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":-1,"groupH":44,"labelW":[81,48,47,50]}
+
+## До исправления (/pricing ru, тот же скрипт): тройка разрывалась на 640–680 px, тумблер выше счётчика на 24/13 px
+640 {"controlsW":592,"cols":"186.578px 186.844px 186.578px","trioW":84,"trioOneLine":false,"badgeSameLine":true,"switchVsStepper":-24,"groupH":92,"labelW":[87,56,52,55]}
+700 {"controlsW":652,"cols":"216.578px 186.844px 216.578px","trioW":207,"trioOneLine":true,"badgeSameLine":false,"switchVsStepper":-13,"groupH":70,"labelW":[87,56,52,55]}
+900 {"controlsW":852,"cols":"316.578px 186.844px 316.578px","trioW":207,"trioOneLine":true,"badgeSameLine":true,"switchVsStepper":0,"groupH":44,"labelW":[87,56,52,55]}

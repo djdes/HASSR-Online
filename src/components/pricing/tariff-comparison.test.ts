@@ -210,6 +210,12 @@ test("v2 layout: period switch, centered points with explanation, Premium 100 se
     assert.equal(html.match(/lg:row-span-6 lg:grid lg:grid-cols-\[minmax\(0,1fr\)\] lg:grid-rows-subgrid/g)?.length, 3, `${locale}: subgrid cards`);
     // Ряд настроек: равные края, в центре — только счётчик.
     assert.match(html, /sm:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/, `${locale}: equal side columns`);
+    // «Помесячно ◯ За год» — одна неразрывная группа; переносится только плашка скидки.
+    const trio = html.match(/<span class="inline-flex items-center gap-1">([\s\S]*?)<\/span><span class="whitespace-nowrap rounded-full/);
+    assert.ok(trio, `${locale}: trio kept together, badge outside`);
+    for (const id of ["tariff-cycle-month", "tariff-cycle-switch", "tariff-cycle-year"]) {
+      assert.ok(trio[1].includes(`data-testid="${id}"`), `${locale}: ${id} in the trio`);
+    }
   }
 });
 
