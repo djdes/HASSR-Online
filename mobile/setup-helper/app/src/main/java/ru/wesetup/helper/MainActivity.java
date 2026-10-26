@@ -55,6 +55,7 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     private TextView empty;
     private LinearLayout printersList;
     private View updateCard;
+    private View templatesButton;
     private TextView updateText;
     private TextView updateNotes;
     private MaterialButton updateAction;
@@ -83,6 +84,9 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
         updateNotes = findViewById(R.id.main_update_notes);
         updateAction = findViewById(R.id.main_update_action);
 
+        templatesButton = findViewById(R.id.main_templates);
+        // Шаблоны и предпросмотр — и без принтера (например, до его покупки).
+        templatesButton.setOnClickListener(v -> startActivity(new Intent(this, PrintActivity.class)));
         MaterialButton add = findViewById(R.id.main_add);
         add.setOnClickListener(v -> withBluetooth(true, () -> startActivity(new Intent(this, ScanActivity.class))));
         findViewById(R.id.main_menu).setOnClickListener(this::showMenu);
@@ -274,6 +278,7 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     private void renderPrinters() {
         List<PrinterInfo> printers = app.printerStore().all();
         printersList.removeAllViews();
+        templatesButton.setVisibility(printers.isEmpty() ? View.VISIBLE : View.GONE);
         empty.setVisibility(printers.isEmpty() ? View.VISIBLE : View.GONE);
         LayoutInflater inflater = LayoutInflater.from(this);
         for (PrinterInfo printer : printers) {

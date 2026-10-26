@@ -57,6 +57,8 @@ public final class PrintActivity extends BaseActivity {
 
     private HelperApp app;
     private PrinterInfo printer;
+    /** Открыли без принтера: шаблоны и предпросмотр, печать — после подключения. */
+    private boolean previewOnly;
     private LabelTemplate template;
     private ChipGroup chips;
     private HorizontalScrollView templatesScroll;
@@ -81,7 +83,9 @@ public final class PrintActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = HelperApp.get(this);
-        printer = app.printerStore().get(getIntent().getStringExtra(EXTRA_ADDRESS));
+        String address = getIntent().getStringExtra(EXTRA_ADDRESS);
+        previewOnly = address == null;
+        printer = previewOnly ? previewPrinter() : app.printerStore().get(address);
         if (printer == null || app.sessions().load() == null) {
             finish();
             return;
@@ -99,7 +103,8 @@ public final class PrintActivity extends BaseActivity {
         preview = findViewById(R.id.print_preview);
         fieldsView = findViewById(R.id.print_fields);
         copiesView = findViewById(R.id.print_copies);
-        ((TextView) findViewById(R.id.print_printer)).setText(getString(R.string.printer_details, printer.displayName(),
+        ((TextView) findViewById(R.id.print_printer)).setText(previewOnly ? getString(R.string.print_preview_only)
+                : getString(R.string.printer_details, printer.displayName(),
                 getString(R.string.printer_label, printer.label.sizeLabel(), MainActivity.formatMm(printer.label.gapMm))));
 
         findViewById(R.id.print_back).setOnClickListener(v -> finish());
@@ -142,6 +147,13 @@ public final class PrintActivity extends BaseActivity {
         if (selected != null) select(selected);
         setCopies(1);
         templatesScroll.post(this::updateArrows);
+    }
+
+    /** Принтер «по умолчанию» для предпросмотра: этикетка 58×40, как у AIYIN IP-802BT. */
+    private PrinterInfo previewPrinter() {
+        PrinterInfo preview = new PrinterInfo("");
+        preview.name = getString(R.string.print_no_printer);
+        return preview;
     }
 
     private int dp(int value) {
@@ -356,6 +368,10 @@ public final class PrintActivity extends BaseActivity {
     }
 
     private void send(LabelTemplate current, TemplateValues values, int count, PrintHistory.Entry record) {
+        if (previewOnly) {
+            Ui.message(this, current.title, getString(R.string.print_need_printer));
+            return;
+        }
         withBluetooth(false, () -> {
             Ui.Progress progress = new Ui.Progress(this, current.title, null);
             progress.update(getString(R.string.print_sending));

@@ -59,7 +59,7 @@ public class StoreScreenshotsTest {
         out.mkdirs();
     }
 
-    private void signIn() {
+    private void signIn() throws Exception {
         app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@kafe-romashka.ru",
                 "Кафе «Ромашка»", "https://wesetup.ru", 1L));
     }
