@@ -1,0 +1,8 @@
+# до исправления, wesetup.ru (2026-10-26T17:40:29Z), прод на f28c907
+/login с Next-Router-Prefetch: 000 12.000157s
+нет ответа за 12 с
+/pricing с Next-Router-Prefetch: 000 12.001194s
+нет ответа за 12 с
+/ с Next-Router-Prefetch: 000 12.000756s
+нет ответа за 12 с
+/login без заголовка: 200 1.453857s
