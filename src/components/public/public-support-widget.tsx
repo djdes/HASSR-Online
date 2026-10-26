@@ -301,7 +301,11 @@ function SupportWidgetBody() {
     else afterContact.current = "chat";
   };
   useEffect(() => {
-    const handler = () => openChatRef.current();
+    const handler = (event: Event) => {
+      // Чат открыт — вызывающий не уходит на запасной путь (почту).
+      event.preventDefault();
+      openChatRef.current();
+    };
     window.addEventListener(SUPPORT_CHAT_OPEN_EVENT, handler);
     return () => window.removeEventListener(SUPPORT_CHAT_OPEN_EVENT, handler);
   }, []);

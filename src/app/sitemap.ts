@@ -62,6 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // требуют — вход всегда происходит по прямой ссылке или из шапки.
     { url: `${SITE}/oferta`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE}/setup-helper/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/consent`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];

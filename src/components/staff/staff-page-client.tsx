@@ -9,6 +9,7 @@ import {
   useTransition,
 } from "react";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { customSectionName } from "@/lib/custom-names";
 import { useRouter } from "next/navigation";
@@ -772,6 +773,30 @@ export function StaffPageClient(props: StaffPageProps) {
           </>
         }
       />
+
+      {props.seatsBanner ? (
+        <div
+          data-testid="staff-seats-banner"
+          className="flex flex-col gap-3 rounded-2xl border border-[#f5d9a8] bg-[#fffaf0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <span className="text-[13.5px] leading-[1.5] text-[#7a4a00]">{props.seatsBanner.text}</span>
+          {props.seatsBanner.action?.kind === "pay" ? (
+            <a
+              href={props.seatsBanner.action.href}
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
+            >
+              {props.seatsBanner.action.label}
+            </a>
+          ) : props.seatsBanner.action?.kind === "contact" ? (
+            <ContactSupportButton
+              subject={props.seatsBanner.action.subject}
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff]"
+            >
+              {props.seatsBanner.action.label}
+            </ContactSupportButton>
+          ) : null}
+        </div>
+      ) : null}
 
       {staffWithoutBuilding > 0 ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-[#ffe1b5] bg-[#fff8ec] px-4 py-2.5 text-[13px] leading-snug text-[#8a5a12]">

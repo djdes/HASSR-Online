@@ -7,6 +7,7 @@ import { normalizePhone } from "@/lib/phone";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { checkSeatsForActivation } from "@/lib/billing.server";
+import type { PaidTier } from "@/lib/tariff-plans";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
 import { resolveJournalAccessBootstrap } from "@/lib/staff-journal-bootstrap";
 
@@ -52,6 +53,9 @@ export type CreateStaffResult =
       payUrl?: string;
       /** Сколько мест у тарифа (402). */
       limit?: number;
+      /** Тариф, на котором кончились места, и следующий (null — больше по согласованию). */
+      tier?: string;
+      nextTier?: PaidTier | null;
     };
 
 function syntheticEmail(orgId: string) {
@@ -80,7 +84,16 @@ export async function createStaffMember(
   if (position.categoryKey !== "commission") {
     const seats = await checkSeatsForActivation(orgId, 1, { source: "staff.create" });
     if (!seats.ok) {
-      return { ok: false, error: seats.error, status: 402, code: seats.code, payUrl: seats.payUrl, limit: seats.limit };
+      return {
+        ok: false,
+        error: seats.error,
+        status: 402,
+        code: seats.code,
+        payUrl: seats.payUrl,
+        limit: seats.limit,
+        tier: seats.tier,
+        nextTier: seats.nextTier,
+      };
     }
   }
 

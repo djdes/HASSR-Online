@@ -163,7 +163,7 @@ export async function setLocalizedTelegramChatCommands(
 
 export type TelegramStaticStartErrorKey = Exclude<
   keyof Messages["telegram"]["bot"]["errors"],
-  "inviteSeatLimit"
+  "inviteSeatLimit" | "inviteSeatLimitPremium" | "inviteSeatLimitContact"
 >;
 
 export function telegramStartError(

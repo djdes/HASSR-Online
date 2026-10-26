@@ -1,0 +1,4 @@
+ok   lim-std-full@example.test: тост «Все места «Стандарта» заняты — 25 сотрудников. Перейдите на «Премиум» — до 100 сотрудников на точку.» · кнопка «Перейти на «Премиум»» · окно открыто true · body pointer-events none, у сообщений none (высота контейнера 0px) · в точке кнопки — кнопка: true → после клика /settings/subscription, чат false, окно false · ошибки консоли: Failed to load resource: the server responded with a status of 402 (Payment Required)
+ok   lim-prem-full@example.test: тост «Все места «Премиума» заняты — 100 сотрудников. Больше 100 сотрудников на точку — по согласованию: напишите нам.» · кнопка «Связаться» · окно открыто true · body pointer-events none, у сообщений none (высота контейнера 0px) · в точке кнопки — кнопка: true → после клика /settings/users, чат true, окно false · ошибки консоли: Failed to load resource: the server responded with a status of 402 (Payment Required)
+
+ИТОГ: кнопка тоста нажимается поверх окна, переход верный

@@ -8,12 +8,15 @@ import { FREE_MAX_USERS } from "@/lib/plan-limits";
  *     После — 1 сотрудник, 1 журнал, 1 точка, загрузка файлов закрыта.
  *   • Стандарт — 25 сотрудников на точку, все журналы, 10 МБ на приказы к
  *     журналам и свои документы.
- *   • Премиум — всё из Стандарта, 1 ГБ на все документы, автоввод показаний
- *     с фото, подключение оборудования, доставка подключённого оборудования,
- *     типовой пакет документов.
+ *   • Премиум — 100 сотрудников на точку (больше — по согласованию), всё из
+ *     Стандарта, 1 ГБ на все документы, автоввод показаний с фото, подключение
+ *     оборудования, доставка подключённого оборудования, типовой пакет
+ *     документов, «Меркурий» (spec `.agent/tasks/tariffs-limits-ui-2026-10/`).
  *
- * Каждая точка сверх первой стоит как ещё один тариф; от трёх точек — минус
- * 5 % на каждую. Цена за месяц живёт в `PlatformTariff` (правит ROOT), сюда
+ * Точка — отдельный адрес со своими журналами и сотрудниками; каждая точка
+ * сверх первой стоит как ещё один тариф, от трёх точек — минус 5 % на каждую.
+ * Не хватает мест — следующий тариф, а не новая точка (`seatUpgradeTarget`).
+ * Цена за месяц живёт в `PlatformTariff` (правит ROOT), сюда
  * её приносит вызывающий код (`PlanRates`), поэтому модуль чистый: его
  * читают сервер (сумма заказа), клиентские витрины и тесты.
  */
@@ -31,8 +34,8 @@ export const TRIAL_DAYS = 14;
 /** После пробного периода: один журнал и одна точка (сотрудник — `FREE_MAX_USERS`). */
 export const FREE_MAX_JOURNALS = 1;
 export const FREE_MAX_POINTS = 1;
-/** Сотрудников на одну оплаченную точку. */
-export const SEATS_PER_POINT = 25;
+/** Сотрудников на одну оплаченную точку; у «Премиума» больше — по согласованию. */
+export const SEATS_PER_POINT: Readonly<Record<PaidTier, number>> = { standard: 25, premium: 100 };
 /**
  * Верхняя граница выбора точек на витрине и в заказе — от опечаток, с
  * запасом на крупные сети: заказ не может быть меньше точек в работе.
@@ -152,9 +155,25 @@ export function maxYearlySavingsPercent(rates: PlanRates): number {
   return Math.max(...PAID_TIERS.map((tier) => yearlySavingsPercent(rates, tier)));
 }
 
-/** Лимит сотрудников оплаченного тарифа. */
-export function seatLimitForPoints(points: number): number {
-  return SEATS_PER_POINT * normalizePoints(points);
+/** Лимит сотрудников оплаченного тарифа на `points` точек. */
+export function seatLimitFor(tier: PaidTier, points: number): number {
+  return SEATS_PER_POINT[tier] * normalizePoints(points);
+}
+
+/**
+ * Куда звать, когда места тарифа заняты: бесплатный → «Стандарт»,
+ * «Стандарт» → «Премиум»; у «Премиума» следующего нет — больше по
+ * согласованию (null). Тарифы без лимита мест сюда не попадают.
+ */
+export function seatUpgradeTarget(tier: EntitlementTier): PaidTier | null {
+  if (tier === "free") return "standard";
+  if (tier === "standard") return "premium";
+  return null;
+}
+
+/** Какой тариф нужен команде на одной точке: до 25 — «Стандарт», больше — «Премиум». */
+export function tierForHeadcount(employees: number): PaidTier {
+  return employees <= SEATS_PER_POINT.standard ? "standard" : "premium";
 }
 
 /**
@@ -167,13 +186,14 @@ export function countPointsInUse(buildingsPerOrganization: readonly number[]): n
 
 // -------------------------------------------------------------- возможности
 
-export type PlanFeature = "photoAutofill" | "equipmentConnect" | "equipmentDelivery" | "typicalPackage";
+export type PlanFeature = "photoAutofill" | "equipmentConnect" | "equipmentDelivery" | "typicalPackage" | "mercury";
 
 export const PLAN_FEATURES: readonly PlanFeature[] = [
   "photoAutofill",
   "equipmentConnect",
   "equipmentDelivery",
   "typicalPackage",
+  "mercury",
 ];
 
 /**
@@ -204,6 +224,7 @@ const ALL_FEATURES: Record<PlanFeature, boolean> = {
   equipmentConnect: true,
   equipmentDelivery: true,
   typicalPackage: true,
+  mercury: true,
 };
 
 const NO_FEATURES: Record<PlanFeature, boolean> = {
@@ -211,6 +232,7 @@ const NO_FEATURES: Record<PlanFeature, boolean> = {
   equipmentConnect: false,
   equipmentDelivery: false,
   typicalPackage: false,
+  mercury: false,
 };
 
 export function entitlementsFor(tier: EntitlementTier, points = 1): Entitlements {
@@ -228,9 +250,9 @@ export function entitlementsFor(tier: EntitlementTier, points = 1): Entitlements
         features: { ...NO_FEATURES },
       };
     case "standard":
-      return { tier, seatLimit: seatLimitForPoints(n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES.standard, features: { ...NO_FEATURES } };
+      return { tier, seatLimit: seatLimitFor("standard", n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES.standard, features: { ...NO_FEATURES } };
     case "premium":
-      return { tier, seatLimit: seatLimitForPoints(n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES.premium, features: { ...ALL_FEATURES } };
+      return { tier, seatLimit: seatLimitFor("premium", n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES.premium, features: { ...ALL_FEATURES } };
     case "legacy_paid":
       return { tier, seatLimit: null, pointLimit: null, journalLimit: null, storageBytes: STORAGE_BYTES.premium, features: { ...ALL_FEATURES } };
     case "exempt":

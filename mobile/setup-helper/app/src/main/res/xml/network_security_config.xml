@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Только HTTPS. Исключение — локальный сервер разработчика в эмуляторе. -->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false" />
+    <!--
+      Android 7.0 (API 24) не знает корень Let's Encrypt ISRG Root X1 (он есть
+      в системе с 7.1.1), а сертификат wesetup.ru выдан Let's Encrypt — без
+      своего корня приложение на 7.0 не могло соединиться («Нет связи»).
+      Системные корни остаются, X1 добавлен к ним (res/raw/isrg_root_x1.pem,
+      SHA-256 96:BC:EC:06:…:08:C6, действует до 2035).
+    -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/isrg_root_x1" />
+        </trust-anchors>
+    </base-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
         <domain includeSubdomains="false">localhost</domain>

@@ -50,8 +50,11 @@ export const FREE_PLAN_NOTE =
   `${TRIAL_DAYS} дней — все журналы, сотрудники и точки без ограничений, без карты. ` +
   `Дальше бесплатно — ${FREE_AFTER_TRIAL_LABEL}.`;
 
-/** «до 25 сотрудников на точку». */
-export const PAID_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT)} на точку`;
+/** «до 25 сотрудников на точку» — «Стандарт». */
+export const PAID_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT.standard)} на точку`;
+
+/** «до 100 сотрудников на точку, больше — по согласованию» — «Премиум». */
+export const PREMIUM_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT.premium)} на точку, больше — по согласованию`;
 
 /** Скидка за точки одной фразой. */
 export const POINTS_NOTE =
@@ -116,8 +119,8 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
         key: "employees",
         cells: {
           free: text("employeesFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_USERS }),
-          standard: text("employeesPaid", { count: SEATS_PER_POINT }),
-          premium: text("employeesPaid", { count: SEATS_PER_POINT }),
+          standard: text("employeesPaid", { count: SEATS_PER_POINT.standard }),
+          premium: text("employeesPremium", { count: SEATS_PER_POINT.premium }),
         },
       },
       {
@@ -143,6 +146,8 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
       },
       { key: "telegram", cells: { free: yes, standard: yes, premium: yes } },
       { key: "pdf", cells: { free: yes, standard: yes, premium: yes } },
+      // Входящие ВСД и гашение из журнала приёмки — `mercury` в /mercury и API.
+      { key: "mercury", feature: "mercury", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
     ],
   },
   {
@@ -184,23 +189,27 @@ export const CARD_POINTS: Record<TierId, ReadonlyArray<{ key: string; values?: R
     { key: "afterTrial", values: { employees: FREE_MAX_USERS, journals: FREE_MAX_JOURNALS } },
   ],
   standard: [
-    { key: "employees", values: { count: SEATS_PER_POINT } },
+    { key: "employees", values: { count: SEATS_PER_POINT.standard } },
     { key: "allJournals" },
     { key: "storageOrders", values: { mb: Math.round(STORAGE_BYTES.standard / MB) } },
     { key: "ownPackage" },
   ],
   premium: [
+    // Первым — лимит: «больше — по согласованию» и ссылка «связаться» (витрина).
+    { key: "employeesPremium", values: { count: SEATS_PER_POINT.premium } },
     { key: "storageAll", values: { gb: Math.round(STORAGE_BYTES.premium / (1024 * MB)) } },
     { key: "photoAutofill" },
     { key: "equipmentConnect" },
     { key: "equipmentDelivery" },
+    { key: "mercury" },
     { key: "typicalPackage" },
   ],
 };
 
 /** Что даёт каждый платный тариф — для русских серверных текстов (письма, КП). */
 export const PAID_TIER_SUMMARY: Record<PaidTier, string> = {
-  standard: `до ${employeesGenitiveLabel(SEATS_PER_POINT)} на точку, все журналы, 10 МБ на приказы к журналам и свои документы`,
+  standard: `${PAID_SEATS_LABEL}, все журналы, 10 МБ на приказы к журналам и свои документы`,
   premium:
-    "всё из «Стандарта», 1 ГБ на все документы, автоввод показаний с фото датчика, подключение и доставка оборудования, типовой пакет документов",
+    `${PREMIUM_SEATS_LABEL}, всё из «Стандарта», 1 ГБ на все документы, автоввод показаний с фото датчика, ` +
+    "подключение и доставка оборудования, ФГИС «Меркурий», типовой пакет документов",
 };

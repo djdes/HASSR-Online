@@ -8,22 +8,18 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  canAutoProcess,
-  canUseMercury,
-  normalizeAutoProcessMode,
-} from "@/lib/mercury/access";
+import { canAutoProcess, normalizeAutoProcessMode } from "@/lib/mercury/access";
+import { entitlementsFor } from "@/lib/tariff-plans";
 
-describe("canUseMercury", () => {
-  it("старшие тарифы — да, младшие — нет", () => {
-    assert.equal(canUseMercury({ plan: "pro" }), true);
-    assert.equal(canUseMercury({ plan: "business" }), true);
-    assert.equal(canUseMercury({ plan: "free" }), false);
-    assert.equal(canUseMercury({ plan: null }), false);
-  });
-
-  it("демо-организации видят фичу целиком — это витрина", () => {
-    assert.equal(canUseMercury({ plan: "free", isDemo: true }), true);
+describe("«Меркурий» — возможность «Премиума»", () => {
+  it("«Премиум», пробный, прежняя «Подписка», демо и платформа — да; бесплатный и «Стандарт» — нет", () => {
+    assert.equal(entitlementsFor("premium").features.mercury, true);
+    assert.equal(entitlementsFor("trial").features.mercury, true);
+    assert.equal(entitlementsFor("legacy_paid").features.mercury, true);
+    assert.equal(entitlementsFor("exempt").features.mercury, true);
+    assert.equal(entitlementsFor("unrestricted").features.mercury, true);
+    assert.equal(entitlementsFor("standard").features.mercury, false);
+    assert.equal(entitlementsFor("free").features.mercury, false);
   });
 });
 

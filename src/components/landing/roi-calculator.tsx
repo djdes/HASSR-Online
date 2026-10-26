@@ -3,18 +3,18 @@
 import { useMemo, useState } from "react";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
-import { SEATS_PER_POINT, planMonthlyRub, type PlanRates } from "@/lib/tariff-plans";
-import { pluralRu } from "@/lib/plural-ru";
+import { SEATS_PER_POINT, planMonthlyRub, tierForHeadcount, type PlanRates } from "@/lib/tariff-plans";
 
 /**
  * H10 — ROI калькулятор на лендинге. Slider «сколько у вас сотрудников»
  * → расчёт «сколько стоит» + «сколько часов экономите» + «средний штраф
  * РПН который мы помогаем избежать».
  *
- * Стоимость — «Стандарт» при оплате за год в пересчёте на месяц, на
- * столько точек, сколько нужно по численности (25 сотрудников на точку):
- * цены страница читает из БД и передаёт пропсом, компонент клиентский и
- * в БД не ходит.
+ * Стоимость — тариф по численности одной точки при оплате за год в
+ * пересчёте на месяц: до 25 сотрудников — «Стандарт», до 100 — «Премиум»,
+ * больше — «Премиум» и «по согласованию» (места докупаются переходом на
+ * тариф выше, не точками). Цены страница читает из БД и передаёт
+ * пропсом, компонент клиентский и в БД не ходит.
  *
  * Цифры экономии — приблизительные/маркетинговые, основаны на
  * разговорах с клиентами:
@@ -35,8 +35,8 @@ export function RoiCalculator({
   const [employees, setEmployees] = useState(15);
 
   const calc = useMemo(() => {
-    const points = Math.max(1, Math.ceil(employees / SEATS_PER_POINT));
-    const tariffMonthlyRub = planMonthlyRub(rates, "standard", "year", points);
+    const tier = tierForHeadcount(employees);
+    const tariffMonthlyRub = planMonthlyRub(rates, tier, "year");
     // 30 мин/день × 22 рабочих дня × employees × 500 ₽/час (средняя
     // ставка повара/менеджера на бумажную работу).
     const hoursSavedPerMonth = (employees * 22 * 0.5);
@@ -64,9 +64,11 @@ export function RoiCalculator({
       netBenefitFormatted: netBenefit.toLocaleString("ru-RU"),
       roiX: Number.isFinite(roiX) ? roiX : null,
       tier:
-        points === 1
+        tier === "standard"
           ? "«Стандарт», оплата за год"
-          : `«Стандарт» на ${points} ${pluralRu(points, "точку", "точки", "точек")}, оплата за год`,
+          : employees > SEATS_PER_POINT.premium
+            ? `«Премиум», оплата за год; больше ${SEATS_PER_POINT.premium} сотрудников — по согласованию`
+            : "«Премиум», оплата за год",
     };
   }, [employees, rates, promotion]);
 

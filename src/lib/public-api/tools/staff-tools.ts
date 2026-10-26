@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { assistantAddStaffSchema, executeProposedAction, prepareAction } from "@/lib/ai-assistant/actions";
+import { BILLING_LIMIT_CODE } from "@/lib/billing-period";
 import { capList } from "../dates";
 import { toolError, toolOk, type ApiTool } from "./types";
 
@@ -94,7 +95,8 @@ export const addEmployeeTool: ApiTool = {
     const prepared = await prepareAction({ kind: "add_staff", input: staff }, actionCtx);
     if (!prepared.ok) return toolError(422, prepared.error);
     const result = await executeProposedAction({ kind: "add_staff", input: staff }, actionCtx, { audit: false });
-    if (!result.ok) return toolError(422, result.error);
+    // Места тарифа заняты — 402, как во всём приложении; текст называет следующий тариф.
+    if (!result.ok) return toolError(result.code === BILLING_LIMIT_CODE ? 402 : 422, result.error);
     return toolOk({ employee: { id: result.entityId ?? null, name: staff.fullName }, summary: result.summary }, result.summary);
   },
 };

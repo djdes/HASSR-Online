@@ -7,7 +7,7 @@ import { getActiveBuildingId } from "@/lib/active-building";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { buildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
-import { canUseMercury } from "@/lib/mercury/access";
+import { hasPlanFeature } from "@/lib/billing.server";
 import { describeDeadline } from "@/lib/mercury/deadline";
 import { resolveTransportMode } from "@/lib/mercury/transport";
 
@@ -29,11 +29,9 @@ export default async function MercuryPage() {
   const organizationId = getActiveOrgId(session);
   const buildingId = await getActiveBuildingId(session);
 
-  const [org, integration, rows] = await Promise.all([
-    db.organization.findUnique({
-      where: { id: organizationId },
-      select: { subscriptionPlan: true, isDemo: true },
-    }),
+  const [available, integration, rows] = await Promise.all([
+    // «Меркурий» — возможность «Премиума» (и пробного, прежней «Подписки», демо).
+    hasPlanFeature(organizationId, "mercury"),
     db.mercuryIntegration.findUnique({
       where: { organizationId },
       select: { enabled: true, autoProcessMode: true },
@@ -69,10 +67,6 @@ export default async function MercuryPage() {
     }),
   ]);
 
-  const available = canUseMercury({
-    plan: org?.subscriptionPlan,
-    isDemo: org?.isDemo,
-  });
   const now = new Date();
   const documents = rows.map((row) => ({
     ...row,
@@ -98,6 +92,12 @@ export default async function MercuryPage() {
           <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-[1.6] text-[#6f7282]">
             {t("proDescription")}
           </p>
+          <Link
+            href="/settings/subscription#tariffs"
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
+          >
+            {t("proCta")}
+          </Link>
         </div>
       </div>
     );

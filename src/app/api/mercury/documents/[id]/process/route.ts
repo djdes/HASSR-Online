@@ -3,8 +3,7 @@ import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { db } from "@/lib/db";
-import { canUseMercury } from "@/lib/mercury/access";
+import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 import { processIncomingVetDocument } from "@/lib/mercury/process-incoming";
 import { getServerSession } from "@/lib/server-session";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -59,16 +58,8 @@ export async function POST(
   }
 
   const organizationId = getActiveOrgId(session);
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { subscriptionPlan: true, isDemo: true },
-  });
-  if (!canUseMercury({ plan: org?.subscriptionPlan, isDemo: org?.isDemo })) {
-    return NextResponse.json(
-      { error: "Интеграция с Меркурием доступна на тарифе «Про»" },
-      { status: 402 },
-    );
-  }
+  const feature = await checkPlanFeature(organizationId, "mercury", "mercury.process");
+  if (!feature.ok) return limitResponse(feature);
 
   const { id } = await ctx.params;
   const body = await request.json().catch(() => null);

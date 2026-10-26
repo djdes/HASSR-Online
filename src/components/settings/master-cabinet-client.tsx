@@ -20,6 +20,7 @@ import { DishPoolSection } from "@/components/journals/dish-pool-section";
 import { renameMasterCabinetDialog } from "@/components/master/rename-master-cabinet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageGuide } from "@/components/ui/page-guide";
+import { isBillingLimitError, useBillingError } from "@/lib/billing-limit-toast";
 import type { MasterCabinetStatus } from "@/lib/master-cabinet";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +76,7 @@ export function MasterCabinetClient({
 }) {
   const t = useTranslations("settingsUi.masterCabinetClient");
   const tRename = useTranslations("masterUi.renameMasterCabinet");
+  const { toastApiError } = useBillingError();
   const [status, setStatus] = useState<MasterCabinetStatus>(initialStatus);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -99,6 +101,13 @@ export function MasterCabinetClient({
     }).catch(() => null);
     const json = (await response?.json().catch(() => null)) as PostResponse | null;
     if (!response?.ok || !json?.inviteUrl) {
+      // Места тарифа заняты — тот же тост, что везде: следующий тариф и кнопка.
+      // Окно подтверждения закрываем: иначе чат «Связаться» откроется под ним.
+      if (isBillingLimitError(json)) {
+        setConfirmOpen(false);
+        toastApiError(json, t("apiFallbackError"));
+        return false;
+      }
       const message = json?.error ?? t("apiFallbackError");
       setError(message);
       toast.error(message);

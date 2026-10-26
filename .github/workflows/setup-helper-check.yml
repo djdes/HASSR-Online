@@ -15,6 +15,11 @@ on:
       - "mobile/setup-helper/**"
       - ".github/workflows/setup-helper-check.yml"
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Выпуск: подписанный APK и version.json для resources/setup-helper"
+        type: boolean
+        default: false
 
 concurrency:
   group: setup-helper-check-${{ github.ref }}
@@ -46,17 +51,72 @@ jobs:
       - name: Тесты
         run: |
           chmod +x gradlew
-          ./gradlew :core:test :app:testDebugUnitTest --no-daemon
+          ./gradlew :core:test :app:testSiteDebugUnitTest --no-daemon
+          # Вариант для Google Play: без самообновления (разрешения, задание, плашка).
+          ./gradlew :app:testPlayDebugUnitTest --tests ru.wesetup.helper.PlayFlavorTest --no-daemon
 
       - name: Сборка APK
-        run: ./gradlew assembleDebug --no-daemon
+        env:
+          # Ключ выпуска — из секретов. В pull request из чужого форка их нет:
+          # тогда release подписывается отладочным ключом (только для проверки).
+          SETUP_HELPER_KEYSTORE_BASE64: ${{ secrets.SETUP_HELPER_KEYSTORE_BASE64 }}
+          SETUP_HELPER_KEYSTORE_PASSWORD: ${{ secrets.SETUP_HELPER_KEYSTORE_PASSWORD }}
+          SETUP_HELPER_KEY_ALIAS: ${{ secrets.SETUP_HELPER_KEY_ALIAS }}
+          SETUP_HELPER_KEY_PASSWORD: ${{ secrets.SETUP_HELPER_KEY_PASSWORD }}
+        # site — APK для сайта, play — AAB для Google Play (ключ загрузки = ключ выпуска).
+        run: ./gradlew assembleSiteDebug assembleSiteRelease bundlePlayRelease --no-daemon
+
+      # Выпуск по кнопке (workflow_dispatch, publish=true): publishRelease
+      # сверяет подпись и номер сборки и пишет APK + version.json; их коммитят
+      # в resources/setup-helper — после деплоя телефоны обновятся сами.
+      - name: Выпуск (publishRelease)
+        if: ${{ inputs.publish }}
+        env:
+          SETUP_HELPER_KEYSTORE_BASE64: ${{ secrets.SETUP_HELPER_KEYSTORE_BASE64 }}
+          SETUP_HELPER_KEYSTORE_PASSWORD: ${{ secrets.SETUP_HELPER_KEYSTORE_PASSWORD }}
+          SETUP_HELPER_KEY_ALIAS: ${{ secrets.SETUP_HELPER_KEY_ALIAS }}
+          SETUP_HELPER_KEY_PASSWORD: ${{ secrets.SETUP_HELPER_KEY_PASSWORD }}
+        run: ./gradlew publishRelease --no-daemon
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ inputs.publish }}
+        with:
+          name: setup-helper-publish-${{ github.run_number }}
+          path: resources/setup-helper/
+          if-no-files-found: error
+          retention-days: 30
 
       - uses: actions/upload-artifact@v7
         with:
           name: setup-helper-debug-apk-${{ github.run_number }}
-          path: mobile/setup-helper/app/build/outputs/apk/debug/app-debug.apk
+          path: mobile/setup-helper/app/build/outputs/apk/site/debug/app-site-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      # Release-сборка (сжатая, как на сайте), подписана ключом выпуска.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: setup-helper-release-apk-${{ github.run_number }}
+          path: mobile/setup-helper/app/build/outputs/apk/site/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      # Google Play: подписанный ключом загрузки AAB — его загружают в Play Console.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: setup-helper-play-aab-${{ github.run_number }}
+          path: mobile/setup-helper/app/build/outputs/bundle/playRelease/*.aab
+          if-no-files-found: error
+          retention-days: 30
+
+      # Скриншоты экранов для карточки Google Play (StoreScreenshotsTest).
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: setup-helper-store-screenshots-${{ github.run_number }}
+          path: mobile/setup-helper/app/build/store-screenshots/
+          if-no-files-found: warn
+          retention-days: 30
 
       # Превью этикеток из тестов: что напечатает принтер.
       - uses: actions/upload-artifact@v7

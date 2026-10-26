@@ -173,3 +173,86 @@ test("trial cabinet offers new subscriptions at full price and marks the trial",
   assert.ok(html.includes(t("cta.newPlan", { amount: `${formatNumber("ru", 1990 * 12 * 2)}\u00a0₽` })));
   assert.ok(html.includes("/order?plan=premium&amp;cycle=year&amp;points=2"));
 });
+
+test("v2 layout: period switch, centered points with explanation, Premium 100 seats with contact link and Mercury", async () => {
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    const t = createTranslator({ locale, messages, namespace: "landingComponents.tariffs" });
+    const html = await render(
+      locale,
+      createElement(TariffComparison, {
+        mode: "public",
+        rates: DEFAULT_PLAN_RATES,
+        available,
+        promotion: null,
+        ppkFromRub: 10_000,
+        ppkHref: "/uslugi",
+        showTable: true,
+      })
+    );
+    // Тумблер «За год»: switch, включён по умолчанию, подписи с обеих сторон.
+    assert.match(html, /role="switch" aria-checked="true" aria-label="[^"]+" data-testid="tariff-cycle-switch"/, `${locale}: switch`);
+    for (const id of ["tariff-cycle-month", "tariff-cycle-year", "tariff-points-picker", "tariff-points-hint"]) {
+      assert.ok(html.includes(`data-testid="${id}"`), `${locale}: ${id}`);
+    }
+    assert.ok(html.includes(t("pointsPicker.hint", { from: 3, percent: 5 })), `${locale}: points explanation`);
+    // «Премиум»: 100 сотрудников на точку и короткая ссылка «связаться».
+    assert.ok(html.includes(t("features.employeesPremium", { count: 100 })), `${locale}: premium seats`);
+    assert.ok(html.includes('data-testid="tariff-premium-contact"'), `${locale}: contact link`);
+    assert.ok(html.includes(t("contactLink")), `${locale}: contact label`);
+    assert.ok(html.includes(t("features.employees", { count: 25 })), `${locale}: standard seats`);
+    // «Меркурий» — пункт «Премиума» и строка таблицы.
+    assert.ok(html.includes(t("features.mercury")), `${locale}: mercury point`);
+    assert.ok(html.includes(t("rows.mercury")), `${locale}: mercury row`);
+    assert.ok(html.includes(t("cells.employeesPremium", { count: 100 })), `${locale}: table premium seats`);
+    // Строки карточек — общая сетка: каждая карточка занимает шесть строк, а её
+    // колонка не шире карточки (minmax(0,1fr)) — длинная строка не растягивает остальные.
+    assert.equal(html.match(/lg:row-span-6 lg:grid lg:grid-cols-\[minmax\(0,1fr\)\] lg:grid-rows-subgrid/g)?.length, 3, `${locale}: subgrid cards`);
+    // Ряд настроек: равные края, в центре — только счётчик.
+    assert.match(html, /sm:grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/, `${locale}: equal side columns`);
+    // «Помесячно ◯ За год» — одна неразрывная группа; переносится только плашка скидки.
+    const trio = html.match(/<span class="inline-flex items-center gap-1">([\s\S]*?)<\/span><span class="whitespace-nowrap rounded-full/);
+    assert.ok(trio, `${locale}: trio kept together, badge outside`);
+    for (const id of ["tariff-cycle-month", "tariff-cycle-switch", "tariff-cycle-year"]) {
+      assert.ok(trio[1].includes(`data-testid="${id}"`), `${locale}: ${id} in the trio`);
+    }
+  }
+});
+
+test("cabinet: a card that the headcount outgrows suggests the next plan, payment stays open", async () => {
+  const now = new Date("2026-10-26T09:00:00.000Z");
+  const base: TariffCabinetState = {
+    status: "paid",
+    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "month", points: 1 },
+    trialUntilLabel: null,
+    trialDaysLeft: null,
+    pointsInUse: 1,
+    scheduled: null,
+    legacyMonthlyRub: 1990,
+    nowIso: now.toISOString(),
+  };
+  const props = (activeUsers: number) => ({
+    mode: "cabinet" as const,
+    rates: DEFAULT_PLAN_RATES,
+    available,
+    promotion: null,
+    ppkFromRub: 10_000,
+    ppkHref: "/settings/services",
+    cabinet: { ...base, activeUsers },
+    showTable: false,
+  });
+  const messages = await loadMessages("ru");
+  const t = createTranslator({ locale: "ru", messages, namespace: "landingComponents.tariffs" });
+
+  const forty = await render("ru", createElement(TariffComparison, props(40)));
+  assert.ok(forty.includes('data-testid="tariff-headcount-standard"'));
+  assert.ok(forty.includes(t("headcount.toPremium", { count: 40, limit: 25 })));
+  assert.ok(!forty.includes('data-testid="tariff-headcount-premium"'), "Premium fits 40");
+  assert.ok(forty.includes('data-testid="tariff-cta-standard"'), "Standard stays payable");
+
+  const many = await render("ru", createElement(TariffComparison, props(140)));
+  assert.ok(many.includes(t("headcount.contact", { count: 140, limit: 100 })));
+
+  const fits = await render("ru", createElement(TariffComparison, props(20)));
+  assert.ok(!fits.includes("tariff-headcount-"), "no note when the team fits");
+});

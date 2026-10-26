@@ -3,6 +3,7 @@ import { z } from "zod";
 import { resolveRequestLocale } from "@/i18n/site-locale";
 import { translatorFor } from "@/i18n/translator";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
+import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import { aiChatRateLimiter } from "@/lib/rate-limit";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import {
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
       orgId,
       actor,
       locale,
+      inApp: isMobileAppUserAgent(request.headers.get("user-agent")),
     });
     return NextResponse.json({ actionResult: result }, { headers: localizedHeaders });
   }

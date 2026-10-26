@@ -53,7 +53,11 @@ public final class ApiClient implements UpdateSource {
     /** До сервера не достучались: нет сети, не тот адрес, перехват Wi-Fi. */
     public static final class OfflineException extends IOException {
         public OfflineException(Throwable cause) {
-            super("Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.", cause);
+            super(cause instanceof SSLException
+                    // Сеть есть, но защищённое соединение не сложилось: чаще всего
+                    // неверные дата и время на телефоне или сеть подменяет сертификат.
+                    ? "Не удалось установить защищённое соединение с сервером. Проверьте дату и время на телефоне и попробуйте ещё раз."
+                    : "Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.", cause);
         }
     }
 

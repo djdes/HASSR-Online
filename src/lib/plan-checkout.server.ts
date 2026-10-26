@@ -47,6 +47,8 @@ export type CheckoutQuote =
       offer: SubscriptionOffer;
       /** Точек сейчас в работе (у аккаунта). */
       pointsInUse: number;
+      /** Активных сотрудников аккаунта (гость — 0): подсказка, если тарифа не хватает. */
+      activeUsers: number;
       /** Подписка, от которой посчитан переход, — снимок в заказ (`basePlanJson`). */
       base: CurrentSubscription | null;
     }
@@ -126,10 +128,15 @@ export function subscriptionFromState(state: AccountBillingState): CurrentSubscr
 export async function accountSubscription(
   organizationId: string,
   now: Date
-): Promise<{ current: CurrentSubscription | null; pointsInUse: number; exempt: boolean }> {
+): Promise<{ current: CurrentSubscription | null; pointsInUse: number; activeUsers: number; exempt: boolean }> {
   const loaded = await loadAccountBilling(organizationId, now);
-  if (!loaded) return { current: null, pointsInUse: 1, exempt: false };
-  return { pointsInUse: loaded.state.pointsInUse, current: subscriptionFromState(loaded.state), exempt: loaded.unit.exempt };
+  if (!loaded) return { current: null, pointsInUse: 1, activeUsers: 0, exempt: false };
+  return {
+    pointsInUse: loaded.state.pointsInUse,
+    activeUsers: loaded.state.activeUsers,
+    current: subscriptionFromState(loaded.state),
+    exempt: loaded.unit.exempt,
+  };
 }
 
 export async function quoteCheckout(args: {
@@ -148,10 +155,11 @@ export async function quoteCheckout(args: {
 
   let current: CurrentSubscription | null = null;
   let pointsInUse = 1;
+  let activeUsers = 0;
   if (args.organizationId) {
     const account = await accountSubscription(args.organizationId, now);
     if (account.exempt) return { ok: false, status: 409, code: "exempt", error: EXEMPT_CHECKOUT_ERROR };
-    ({ current, pointsInUse } = account);
+    ({ current, pointsInUse, activeUsers } = account);
   } else if (args.payer?.email) {
     const user = await db.user.findUnique({ where: { email: args.payer.email }, select: { organizationId: true } });
     if (user && args.payer.guest) {
@@ -168,6 +176,7 @@ export async function quoteCheckout(args: {
     // подписки, иначе оплата сочла бы заказ устаревшим.
     if (payerAccount) {
       pointsInUse = payerAccount.pointsInUse;
+      activeUsers = payerAccount.activeUsers;
       current = payerAccount.current;
     }
   }
@@ -213,6 +222,7 @@ export async function quoteCheckout(args: {
       promotionEndsAt: price.promotion?.endsAt ?? null,
     },
     pointsInUse,
+    activeUsers,
     base: current,
   };
 }

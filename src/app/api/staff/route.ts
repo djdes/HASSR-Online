@@ -71,7 +71,8 @@ export async function POST(request: Request) {
   );
   if (!result.ok) {
     return NextResponse.json(
-      { error: result.error, code: result.code, payUrl: result.payUrl, limit: result.limit },
+      // tier/nextTier — тост назовёт следующий тариф (у «Премиума» — «Связаться»).
+      { error: result.error, code: result.code, payUrl: result.payUrl, limit: result.limit, tier: result.tier, nextTier: result.nextTier },
       { status: result.status }
     );
   }

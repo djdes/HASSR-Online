@@ -1,7 +1,7 @@
 import type { PlatformRequisites } from "@/lib/closing-documents/types";
 import { ACTIVE_JOURNAL_CATALOG, JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import type { OrgSphere } from "@/lib/org-profile";
-import { FREE_AFTER_TRIAL_LABEL, PAID_SEATS_LABEL } from "@/lib/plan-catalog";
+import { FREE_AFTER_TRIAL_LABEL, PAID_SEATS_LABEL, PREMIUM_SEATS_LABEL } from "@/lib/plan-catalog";
 import { pluralRu } from "@/lib/plural-ru";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { promotionEndLabel, type AppliedPromotion } from "@/lib/promo/promotions";
@@ -22,7 +22,7 @@ import { normalizeProposalVars } from "./vars";
  *
  * Правила честности (спека proposal-kp, п. 2):
  *   • числа — только из констант и тарифа (`JOURNALS_TOTAL`,
- *     `TRIAL_DAYS`, `SEATS_PER_POINT`, `PlatformTariff`);
+ *     `TRIAL_DAYS`, `SEATS_PER_POINT` (25 у «Стандарта», 100 у «Премиума»), `PlatformTariff`);
  *   • «обязательные» — только `electronicRequired` сферы, с условием
  *     («при наличии фритюра»); остальное — «рекомендуем»;
  *   • «по счёту для юрлиц» — только если счёт реально выставляется
@@ -322,7 +322,7 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
       ctx.premiumPriceRub,
     )}/мес) показание можно снять фото ${
       copy.food ? "термометра" : "дисплея прибора"
-    } — число подставится само, плюс подключение оборудования и 1 ГБ на документы.`,
+    } — число подставится само, плюс ${PREMIUM_SEATS_LABEL}, подключение оборудования, «Меркурий» и 1 ГБ на документы.`,
   };
 
   const notes: string[] = [];
