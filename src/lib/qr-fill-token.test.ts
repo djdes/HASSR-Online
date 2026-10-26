@@ -45,7 +45,10 @@ test("токен помещения не принимается как токе�
 test("испорченный токен и бессрочность", () => {
   const token = mintQrFillToken("room", "abc");
   const [subject, issued, sig] = token.split(".");
-  assert.deepEqual(verifyQrFillToken(`${subject}.${issued}.${sig.slice(0, -2)}xx`), { ok: false, reason: "bad-sig" });
+  // Spoil the first character: it carries all 6 bits. The last one carries
+  // only 4, so «…xw» → «…xx» decodes to the same bytes (≈1 run in 1000).
+  const spoiled = `${sig[0] === "A" ? "B" : "A"}${sig.slice(1)}`;
+  assert.deepEqual(verifyQrFillToken(`${subject}.${issued}.${spoiled}`), { ok: false, reason: "bad-sig" });
   assert.deepEqual(verifyQrFillToken(`room:other.${issued}.${sig}`), { ok: false, reason: "bad-sig" });
   assert.deepEqual(verifyQrFillToken("abc"), { ok: false, reason: "bad-format" });
 
