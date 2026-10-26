@@ -303,6 +303,15 @@ Critical env vars (see `.env.shared` for template):
 - **Non-root `/root/*` access**: Returns 404 (not redirect) to prevent information leakage.
 - **Cache headers**: App pages carry strict `no-store` headers. Next.js static assets (`/_next/static/*`) are cached for 1 year.
 
+## Ключ подписи «Сетап помощника» (Android, `mobile/setup-helper`)
+
+Ключ выпуска (с 1.2.0, сертификат SHA-256 `20b6bd34…dfecb4`) хранится в трёх местах и **никогда не кладётся в git** (репозиторий публичный):
+- сервер wesetup.ru: `/var/www/wesetupru/data/secrets/setup-helper/` — `setup-helper-release.jks` + `setup-helper-release.env` (пароли), права 700, вне сайта и деплоя;
+- рабочий компьютер: `C:\Users\Oleg\.wesetup-keys\`;
+- секреты GitHub `SETUP_HELPER_KEYSTORE_BASE64`, `SETUP_HELPER_KEYSTORE_PASSWORD`, `SETUP_HELPER_KEY_ALIAS`, `SETUP_HELPER_KEY_PASSWORD` — ими CI подписывает выпуск.
+
+Потеря ключа = на всех телефонах приложение переставлять вручную. Как выпустить версию — `mobile/setup-helper/README.md`, раздел «Подпись».
+
 ## Conventions for AI Agents
 
 - **«В прод»** from the owner means: merge the task's PR into `master` (squash) without asking again; the push to `master` deploys it.
