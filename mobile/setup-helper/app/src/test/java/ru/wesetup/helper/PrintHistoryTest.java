@@ -106,4 +106,30 @@ public class PrintHistoryTest {
         assertTrue(activity.findViewById(R.id.print_templates_prev) != null);
         assertTrue(activity.findViewById(R.id.print_history) != null);
     }
+
+    @Test
+    public void testTemplatesCanBeViewedWithoutPrinter() throws Exception {
+        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@example.com",
+                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
+        MainActivity main = Robolectric.buildActivity(MainActivity.class).setup().get();
+        android.view.View button = main.findViewById(R.id.main_templates);
+        assertEquals(android.view.View.VISIBLE, button.getVisibility());
+        button.performClick();
+        Intent next = org.robolectric.Shadows.shadowOf(main).getNextStartedActivity();
+        assertEquals(PrintActivity.class.getName(), next.getComponent().getClassName());
+
+        PrintActivity print = Robolectric.buildActivity(PrintActivity.class, next).setup().get();
+        assertTrue(!print.isFinishing());
+        assertEquals("Принтер не подключён — только просмотр",
+                String.valueOf(((android.widget.TextView) print.findViewById(R.id.print_printer)).getText()));
+        ChipGroup chips = print.findViewById(R.id.print_templates);
+        assertEquals(app.templates().all().size(), chips.getChildCount());
+        // «Печать» без принтера — подсказка подключить принтер, а не ошибка.
+        LinearLayout fields = print.findViewById(R.id.print_fields);
+        TextInputLayout first = (TextInputLayout) fields.getChildAt(0);
+        ((TextInputEditText) first.findViewById(R.id.field_input)).setText("Салат");
+        print.findViewById(R.id.print_submit).performClick();
+        android.app.Dialog dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog();
+        assertTrue(dialog != null && dialog.isShowing());
+    }
 }

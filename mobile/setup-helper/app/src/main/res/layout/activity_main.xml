@@ -172,6 +172,19 @@
                 app:iconGravity="textStart"
                 app:iconPadding="10dp" />
 
+            <!-- Без принтера: посмотреть шаблоны и предпросмотр этикеток. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/main_templates"
+                style="@style/SetupHelper.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="52dp"
+                android:text="@string/main_templates"
+                android:visibility="gone"
+                app:icon="@drawable/ic_label"
+                app:iconGravity="textStart" />
+
             <TextView
                 style="@style/SetupHelper.Section"
                 android:layout_width="match_parent"

@@ -87,6 +87,10 @@
     <string name="print_copies">Копий</string>
     <string name="print_submit">Печать</string>
     <string name="print_required">Заполните «%1$s»</string>
+    <string name="main_templates">Посмотреть шаблоны этикеток</string>
+    <string name="print_no_printer">Без принтера</string>
+    <string name="print_preview_only">Принтер не подключён — только просмотр</string>
+    <string name="print_need_printer">Чтобы напечатать, подключите принтер: на главном экране «Добавить оборудование».</string>
     <string name="print_choose_template">Шаблон этикетки — листайте вбок или жмите стрелки</string>
     <string name="print_templates_prev">Предыдущие шаблоны</string>
     <string name="print_templates_next">Следующие шаблоны</string>
