@@ -6,6 +6,8 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { StaffPageClient } from "@/components/staff/staff-page-client";
+import { StaffPlaceFilter } from "@/components/staff/staff-place-filter";
+import { isOfficeBuilding } from "@/lib/building-scope";
 import { PinRequestsPanel } from "@/components/staff/pin-requests-panel";
 import { listPendingQrPinRequests } from "@/lib/qr-pin-requests";
 import { AddOrganizationButton } from "@/components/settings/add-organization-button";
@@ -19,7 +21,13 @@ import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-bounda
 
 export const dynamic = "force-dynamic";
 
-export default async function StaffPage() {
+export default async function StaffPage({
+  searchParams,
+}: {
+  /** `place` — фильтр «Где работает» (id офиса/точки или `none`); `add` — сразу открыть добавление в это место. */
+  searchParams: Promise<{ place?: string | string[]; add?: string | string[] }>;
+}) {
+  const query = await searchParams;
   const t = await getTranslations("settingsUi.usersPage");
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
@@ -119,6 +127,24 @@ export default async function StaffPage() {
   const staffBuildings = await listOrganizationBuildings(orgId);
   const activeBuildingId = await getActiveBuildingId(session);
 
+  // «Где работает» (2026-10-26): офис, точка или без места.
+  const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? null;
+  const placeParam = one(query.place);
+  const place =
+    placeParam === "none" || staffBuildings.some((building) => building.id === placeParam) ? placeParam : null;
+  const addParam = one(query.add);
+  const initialAddBuilding = staffBuildings.find((building) => building.id === addParam) ?? null;
+  const placeOf = (u: { buildingIds: string[] }) =>
+    place === null ? true : place === "none" ? u.buildingIds.length === 0 : u.buildingIds.includes(place);
+  const showPlaceFilter = organization?.perLocationJournals === true && staffBuildings.length >= 2;
+  const countedStaff = employees.filter((u) => u.isActive && !u.isRoot);
+  const placeOptions = staffBuildings.map((building) => ({
+    id: building.id,
+    name: building.name,
+    office: isOfficeBuilding(building),
+    count: countedStaff.filter((u) => u.buildingIds.includes(building.id)).length,
+  }));
+
   const positionSuggestions = {
     management: positionSuggestionOptionsFor(
       sphere,
@@ -196,6 +222,21 @@ export default async function StaffPage() {
     <>
     <PinRequestsPanel initial={pinRequests} />
     <StaffPageClient
+      placeFilter={
+        showPlaceFilter ? (
+          <StaffPlaceFilter
+            active={place}
+            total={countedStaff.length}
+            unplaced={countedStaff.filter((u) => u.buildingIds.length === 0).length}
+            places={placeOptions}
+          />
+        ) : null
+      }
+      initialAdd={
+        initialAddBuilding
+          ? { buildingId: initialAddBuilding.id, office: isOfficeBuilding(initialAddBuilding) }
+          : null
+      }
       seatsBanner={seatsBanner}
       positionSuggestions={positionSuggestions}
       buildings={staffBuildings}
@@ -217,7 +258,7 @@ export default async function StaffPage() {
         sortOrder: p.sortOrder,
         plannedHeadcount: p.plannedHeadcount ?? null,
       }))}
-      employees={employees.map((u) => ({
+      employees={employees.filter(placeOf).map((u) => ({
         id: u.id,
         name: u.name,
         email: u.email,

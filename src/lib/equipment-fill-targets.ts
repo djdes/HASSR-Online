@@ -52,6 +52,12 @@ export type EquipmentFillTargets = {
   hasActiveDocument: boolean;
 };
 
+/** Точка оборудования (через цех) — якорь перехода периода по QR. */
+async function equipmentAnchor(areaId: string): Promise<{ buildingId: string } | undefined> {
+  const area = await db.area.findUnique({ where: { id: areaId }, select: { buildingId: true } });
+  return area?.buildingId ? { buildingId: area.buildingId } : undefined;
+}
+
 export async function resolveEquipmentFillTargets(params: {
   equipment: { id: string; areaId: string; areaName: string };
   organizationId: string;
@@ -62,10 +68,14 @@ export async function resolveEquipmentFillTargets(params: {
 
   // Первый скан нового периода: документ холодильников создаётся по
   // образцу прошлого (те же холодильники), и замер ложится как обычно.
+  // Только на точке оборудования: скан на одной точке не заводит документы
+  // остальным (их догонит ночной крон по их собственному графику).
+  const anchor = await equipmentAnchor(equipment.areaId);
   await ensureQrPeriodDocuments({
     organizationId,
     templateCode: COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
     todayKey: day.toISOString().slice(0, 10),
+    anchor,
     source: "equipment-fill",
   });
   const documents = await db.journalDocument.findMany({
@@ -119,6 +129,7 @@ async function resolveClimateTarget(params: {
     organizationId,
     templateCode: CLIMATE_DOCUMENT_TEMPLATE_CODE,
     todayKey: day.toISOString().slice(0, 10),
+    anchor: await equipmentAnchor(equipment.areaId),
     source: "equipment-fill",
   });
   const document = await db.journalDocument.findFirst({

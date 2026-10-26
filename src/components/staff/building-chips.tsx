@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { MapPin } from "lucide-react";
-import type { BuildingOption } from "@/lib/building-scope";
+import { Briefcase, MapPin } from "lucide-react";
+import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,6 +29,18 @@ export function BuildingChips(props: {
   const [expanded, setExpanded] = useState(false);
   if (buildings.length < 2) return null;
   const all = value.length === 0;
+  // Офис (2026-10-26) — отдельно от точек: сотрудник офиса видит все точки,
+  // а работает только в офисе, поэтому офис и точки не выбираются вместе.
+  const office = buildings.find(isOfficeBuilding) ?? null;
+  const inOffice = office ? value.includes(office.id) : false;
+  const pickOffice = () => {
+    if (!office) return;
+    onChange(inOffice ? [] : [office.id]);
+  };
+  const pickPoint = (id: string, active: boolean) => {
+    const points = office ? value.filter((item) => item !== office.id) : value;
+    onChange(active ? points.filter((item) => item !== id) : [...points, id]);
+  };
   const collapsible = buildings.length > VISIBLE_LIMIT + 1;
   const visible =
     !collapsible || expanded
@@ -53,7 +65,7 @@ export function BuildingChips(props: {
           {t("heading")}
         </div>
         <span className="text-[11px] leading-snug text-[#6f7282]">
-          {t("allTasksHint")}
+          {inOffice ? t("officeHint") : t("allTasksHint")}
         </span>
       </div>
       <div
@@ -71,7 +83,21 @@ export function BuildingChips(props: {
         >
           {t("all")}
         </button>
-        {visible.map((building) => {
+        {office ? (
+          <button
+            type="button"
+            disabled={disabled}
+            aria-pressed={inOffice}
+            title={t("officeTitle")}
+            onClick={pickOffice}
+            className={chipClass(inOffice)}
+            data-building-chip="office"
+          >
+            <Briefcase className="size-3.5 shrink-0" />
+            <span className="truncate">{t("office")}</span>
+          </button>
+        ) : null}
+        {visible.filter((building) => !isOfficeBuilding(building)).map((building) => {
           const active = value.includes(building.id);
           return (
             <button
@@ -80,13 +106,7 @@ export function BuildingChips(props: {
               disabled={disabled}
               aria-pressed={active}
               title={building.address ? `${building.name}, ${building.address}` : building.name}
-              onClick={() =>
-                onChange(
-                  active
-                    ? value.filter((id) => id !== building.id)
-                    : [...value, building.id],
-                )
-              }
+              onClick={() => pickPoint(building.id, active)}
               className={chipClass(active)}
             >
               <MapPin className="size-3.5 shrink-0" />

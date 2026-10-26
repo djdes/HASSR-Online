@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { MapPin, QrCode, Thermometer } from "lucide-react";
+import { ArrowRight, MapPin, Plus, QrCode, Thermometer } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { listOrganizationBuildings, listPersonBuildings } from "@/lib/active-building";
 import { buildPlaceOptions } from "@/lib/area-building";
 import { getUserDisplayTitle, isManagementRole } from "@/lib/user-roles";
-import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { UV_LAMP_TYPE, isUvLampType, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -18,6 +18,12 @@ import { EquipmentDialog } from "@/components/settings/equipment-dialog";
 import { DeleteButton } from "@/components/settings/delete-button";
 import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { PointDeleteBlock, PointHeadBlock, PointRoomsBlock } from "@/components/settings/point-page-client";
+import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
+import { isOfficeBuilding } from "@/lib/building-scope";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
+import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
+import { listAutomationCodes } from "@/lib/journal-automation";
+import { readOrgCommission } from "@/lib/brakerage-commission-org";
 
 export const dynamic = "force-dynamic";
 
@@ -41,15 +47,28 @@ function isEquipmentTypeKey(value: string): value is (typeof EQUIPMENT_TYPE_KEYS
   return (EQUIPMENT_TYPE_KEYS as readonly string[]).includes(value);
 }
 
+/** Сколько сотрудников показать на странице точки; остальные — в «Сотрудниках». */
+const POINT_STAFF_PREVIEW = 12;
+
+const PRIMARY_LINK =
+  "inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "•";
+}
+
 const OUTLINE_LINK =
   "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /**
  * Страница точки (скан 82, лист 5; 2026-10-18): ⇒ название и адрес,
- * ⇒ цеха и помещения, ⇒ оборудование, ⇒ УФ-лампы, QR-наклейки, в конце —
- * удаление. Точка — пункт меню «Мои точки» раздела «Торговые точки».
- * Права — как у «Точек» (`/settings/buildings`); чужая или недоступная
- * человеку точка — 404.
+ * ⇒ сотрудники точки, ⇒ журналы точки (2026-10-26: всё конкретное по
+ * точке — здесь, общее — в «Моей компании»), ⇒ цеха и помещения,
+ * ⇒ оборудование, ⇒ УФ-лампы, QR-наклейки, в конце — удаление. Точка —
+ * пункт меню «Мои точки» раздела «Торговые точки». Права — как у «Точек»
+ * (`/settings/buildings`); чужая или недоступная человеку точка — 404.
+ * Офис организации — не торговая точка: его страница в «Моей компании».
  */
 export default async function PointPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth();
@@ -65,6 +84,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
       where: { id, organizationId: orgId },
       select: {
         id: true,
+        kind: true,
         name: true,
         address: true,
         kpp: true,
@@ -114,6 +134,26 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
     }),
   ]);
   if (!point) notFound();
+  if (isOfficeBuilding(point)) redirect("/settings/organization/office");
+
+  // Сотрудники точки и сводка её журналов (набор, автоматика, комиссия).
+  const [pointStaff, disabledCodes, activeTemplates, orgAutomation, buildingAutomation, commission] = await Promise.all([
+    db.user.findMany({
+      // Все люди точки, включая бракеражную комиссию, — как в «Сотрудниках».
+      where: { organizationId: orgId, ...ORG_SIGNER_WHERE, buildingIds: { has: point.id } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } } },
+    }),
+    getDisabledJournalCodes(orgId, point.id),
+    db.journalTemplate.findMany({ where: { isActive: true }, select: { code: true } }),
+    db.organization.findUnique({ where: { id: orgId }, select: { autoJournalCodes: true, journalAutomationJson: true } }),
+    readBuildingJournalSettings(db, point.id),
+    readOrgCommission(orgId, "finished_product", point.id),
+  ]);
+  const journalsInWork = activeTemplates.filter((template) => !disabledCodes.has(template.code)).length;
+  const automationCount = listAutomationCodes(withBuildingJournalSettings(orgAutomation, buildingAutomation)).filter(
+    (row) => row.automation.autoCreate && !disabledCodes.has(row.code),
+  ).length;
 
   // Оборудование точки — через цех точки (`Area.buildingId`).
   const equipment = await db.equipment.findMany({
@@ -214,7 +254,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
         <PageGuide
           title={t("page.guideTitle")}
           storageKey="settings-point-v1"
-          bullets={(["head", "rooms", "equipment", "qr"] as const).map((key) => ({
+          bullets={(["head", "staff", "journals", "rooms", "equipment", "qr"] as const).map((key) => ({
             title: t(`page.guide.${key}.title`),
             body: t(`page.guide.${key}.body`),
           }))}
@@ -233,7 +273,104 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
           readOnly={readOnly}
         />
 
+        <PointBlock
+          number={2}
+          testId="staff"
+          title={t("staff.title")}
+          hint={t("staff.hint")}
+          action={
+            <>
+              {pointStaff.length > 0 ? (
+                <span className="rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[13px] font-medium tabular-nums text-[#3848c7]">
+                  {t("staff.count", { count: pointStaff.length })}
+                </span>
+              ) : null}
+              {readOnly ? null : (
+                <Link href={`/settings/users?add=${encodeURIComponent(point.id)}`} className={PRIMARY_LINK} data-point-staff-add>
+                  <Plus className="size-4" />
+                  {t("staff.add")}
+                </Link>
+              )}
+            </>
+          }
+        >
+          {pointStaff.length === 0 ? (
+            <PointBlockEmpty title={t("staff.emptyTitle")} body={t("staff.emptyBody")} />
+          ) : (
+            <div className="space-y-3">
+              <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {pointStaff.slice(0, POINT_STAFF_PREVIEW).map((person) => (
+                  <li
+                    key={person.id}
+                    data-point-staff={person.id}
+                    className="flex min-w-0 items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3.5 py-2.5"
+                  >
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[12.5px] font-semibold text-[#3848c7]">
+                      {initialsOf(person.name)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-medium text-[#0b1024]">{person.name}</span>
+                      <span className="block truncate text-[12.5px] text-[#6f7282]">
+                        {getUserDisplayTitle(person) || t("staff.noPosition")}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link href={`/settings/users?place=${encodeURIComponent(point.id)}`} className={OUTLINE_LINK}>
+                {pointStaff.length > POINT_STAFF_PREVIEW
+                  ? t("staff.allMore", { count: pointStaff.length - POINT_STAFF_PREVIEW })
+                  : t("staff.all")}
+                <ArrowRight className="size-4 text-[#5566f6]" />
+              </Link>
+            </div>
+          )}
+        </PointBlock>
+
+        <PointBlock number={3} testId="journals" title={t("journals.title")} hint={t("journals.hint")}>
+          <div className="space-y-4">
+            <div className="grid gap-2 sm:grid-cols-3">
+              {(
+                [
+                  ["inWork", t("journals.inWork", { count: journalsInWork })],
+                  ["auto", automationCount > 0 ? t("journals.auto", { count: automationCount }) : t("journals.autoOff")],
+                  ["commission", commission.length > 0 ? t("journals.commission", { count: commission.length }) : t("journals.commissionNone")],
+                ] as const
+              ).map(([key, value]) => (
+                <div key={key} className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3" data-point-journals={key}>
+                  <div className="text-[16px] font-semibold tabular-nums text-[#0b1024]">{value}</div>
+                  <div className="mt-0.5 text-[12.5px] text-[#6f7282]">{t(`journals.${key}Hint`)}</div>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <OpenAtPointButton buildingId={point.id} href="/dashboard" variant="primary" failedText={t("journals.failed")} testId="today">
+                {t("journals.openToday")}
+              </OpenAtPointButton>
+              {readOnly ? null : (
+                <>
+                  <OpenAtPointButton buildingId={point.id} href="/settings/journals" failedText={t("journals.failed")} testId="set">
+                    {t("journals.openSet")}
+                  </OpenAtPointButton>
+                  <OpenAtPointButton buildingId={point.id} href="/settings/auto-journals" failedText={t("journals.failed")} testId="auto">
+                    {t("journals.openAuto")}
+                  </OpenAtPointButton>
+                  <OpenAtPointButton
+                    buildingId={point.id}
+                    href="/settings/brakerage-commission"
+                    failedText={t("journals.failed")}
+                    testId="commission"
+                  >
+                    {t("journals.openCommission")}
+                  </OpenAtPointButton>
+                </>
+              )}
+            </div>
+          </div>
+        </PointBlock>
+
         <PointRoomsBlock
+          number={4}
           pointId={point.id}
           rooms={point.rooms}
           users={users}
@@ -243,7 +380,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
         />
 
         <PointBlock
-          number={3}
+          number={5}
           testId="equipment"
           title={t("equipment.title")}
           hint={t("equipment.hint")}
@@ -293,7 +430,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
         </PointBlock>
 
         <PointBlock
-          number={4}
+          number={6}
           testId="uv"
           title={t("uv.title")}
           hint={t("uv.hint")}
@@ -360,7 +497,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
           )}
         </PointBlock>
 
-        <PointBlock number={5} testId="qr" title={t("qr.title")} hint={t("qr.hint")}>
+        <PointBlock number={7} testId="qr" title={t("qr.title")} hint={t("qr.hint")}>
           {stickerIds.length === 0 && roomIds.length === 0 ? (
             <PointBlockEmpty title={t("qr.empty")}>
               <Link href="/settings/qr-posters" className={OUTLINE_LINK}>

@@ -1,4 +1,4 @@
-import type { BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 
 /**
  * Что стоит в центре шапки кабинета (эскиз руководителя 2026-10-18: слева —
@@ -24,6 +24,8 @@ export type HeaderPointOption = {
   title: HeaderPointTitle;
   /** Адрес второй строкой — когда заголовок не сам адрес. */
   address: string | null;
+  /** Офис организации (не торговая точка): подпись «Организация», свой значок. */
+  office?: boolean;
 };
 
 export type HeaderPoint =
@@ -62,10 +64,11 @@ export function sameAsCompany(pointName: string | null | undefined, companyName:
 export function headerPointOption(building: BuildingOption, companyName: string): HeaderPointOption {
   const name = building.name?.replace(/\s+/g, " ").trim() ?? "";
   const address = building.address?.replace(/\s+/g, " ").trim() || null;
+  const office = isOfficeBuilding(building) ? { office: true as const } : {};
   const duplicate = sameAsCompany(name, companyName);
-  if (name && !duplicate) return { id: building.id, title: { source: "name", text: name }, address };
-  if (address) return { id: building.id, title: { source: "address", text: address }, address: null };
-  return { id: building.id, title: { source: duplicate ? "main" : "untitled", text: null }, address: null };
+  if (name && !duplicate) return { id: building.id, title: { source: "name", text: name }, address, ...office };
+  if (address) return { id: building.id, title: { source: "address", text: address }, address: null, ...office };
+  return { id: building.id, title: { source: duplicate ? "main" : "untitled", text: null }, address: null, ...office };
 }
 
 export function resolveHeaderPoint(input: {

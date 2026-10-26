@@ -22,7 +22,16 @@ export type BuildingOption = {
   id: string;
   name: string;
   address: string | null;
+  /** "office" — офис организации, иначе (или не задано) — торговая точка. */
+  kind?: string;
 };
+
+/** Вид `Building` для офиса организации (2026-10-26). */
+export const OFFICE_BUILDING_KIND = "office";
+
+export function isOfficeBuilding(building: object | null | undefined): boolean {
+  return (building as { kind?: unknown } | null | undefined)?.kind === OFFICE_BUILDING_KIND;
+}
 
 export type BuildingContext = {
   /** Точки включены и их ≥ 2 — документы делятся по точкам. */
@@ -61,12 +70,29 @@ export function decodeBuildingCookie(
 }
 
 /**
- * Точки, на которых работает сотрудник. Пустой `buildingIds` = все.
- * Если в списке остались только удалённые точки — тоже все: висящие id
- * не должны отрезать человека от журналов (тот же принцип, что у
- * `cleanIds` в cleaning-room-responsibles.ts).
+ * Точки, которые сотрудник видит (переключатель, «Мои точки», страницы
+ * точек). Пустой `buildingIds` = все. Сотрудник офиса видит все точки
+ * компании. Если в списке остались только удалённые точки — тоже все:
+ * висящие id не должны отрезать человека от журналов (тот же принцип,
+ * что у `cleanIds` в cleaning-room-responsibles.ts).
  */
 export function allowedBuildingsForUser(
+  buildings: BuildingOption[],
+  userBuildingIds: readonly string[],
+): BuildingOption[] {
+  if (userBuildingIds.length === 0) return buildings;
+  const wanted = new Set(userBuildingIds);
+  const subset = buildings.filter((building) => wanted.has(building.id));
+  if (subset.some(isOfficeBuilding)) return buildings;
+  return subset.length > 0 ? subset : buildings;
+}
+
+/**
+ * Точки, где сотрудник работает: строки кадровых журналов, обязательства,
+ * задачи. В отличие от `allowedBuildingsForUser`, сотрудник офиса работает
+ * только в офисе — точки он видит, но их журналы ведут люди точки.
+ */
+export function workBuildingsForUser(
   buildings: BuildingOption[],
   userBuildingIds: readonly string[],
 ): BuildingOption[] {

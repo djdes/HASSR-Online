@@ -51,6 +51,8 @@ type Building = {
   phone?: string | null;
   /** Наименование в шапке журналов; в интерфейсе — короткое `name`. */
   journalName?: string | null;
+  /** "office" — офис организации (2026-10-26), иначе торговая точка. */
+  kind?: string;
   sortOrder: number;
   rooms: Room[];
 };
@@ -604,6 +606,11 @@ function BuildingCard({
               <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
                 {building.name}
               </h2>
+              {building.kind === "office" ? (
+                <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]" data-building-office>
+                  {t("officeBadge")}
+                </span>
+              ) : null}
             </div>
             {building.address ? (
               <div className="mt-0.5 text-[13px] text-[#6f7282]">{building.address}</div>

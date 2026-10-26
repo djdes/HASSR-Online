@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Check, ChevronDown, Loader2, Plus, Settings2, Store } from "lucide-react";
+import { Building2, Check, ChevronDown, Loader2, Plus, Settings2, Store } from "lucide-react";
 import type { BuildingOption } from "@/lib/building-scope";
 import type { HeaderPoint, HeaderPointOption } from "@/lib/header-point";
 import { cn } from "@/lib/utils";
@@ -79,9 +79,10 @@ export function CurrentPointSwitcher({
     const caption = point.kind === "all" ? t("captionMany") : t("caption");
     const title = point.kind === "all" ? t("all", { count: String(point.count) }) : titleOf(point.point);
     const hint = point.kind === "all" ? point.options.map(titleOf).join(" · ") : hintOf(point.point);
+    const office = point.kind === "single" && point.point.office === true;
     return (
       <span className={BASE} data-current-point={point.kind} title={hint}>
-        <PointLabel caption={caption} title={title} />
+        <PointLabel caption={office ? t("captionOffice") : caption} title={title} office={office} />
       </span>
     );
   }
@@ -101,7 +102,11 @@ export function CurrentPointSwitcher({
   );
   const body = (
     <>
-      <PointLabel caption={t("caption")} title={titleOf(active)} />
+      <PointLabel
+        caption={active.office ? t("captionOffice") : t("caption")}
+        title={titleOf(active)}
+        office={active.office === true}
+      />
       {busyId ? (
         <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" aria-hidden />
       ) : (
@@ -159,19 +164,22 @@ export function CurrentPointSwitcher({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-[300px]">
-        {options.map((option) => {
+        {options.map((option, index) => {
           const isActive = option.id === active.id;
           const building = buildings.find((item) => item.id === option.id);
+          const Icon = option.office ? Building2 : Store;
+          // Офис — первым, под ним черта: дальше торговые точки.
+          const divider = option.office && index < options.length - 1;
           return (
+            <Fragment key={option.id}>
             <DropdownMenuItem
-              key={option.id}
               onSelect={() => {
                 if (building) void switchTo({ ...building, name: titleOf(option) }, active.id);
               }}
               className={cn("items-start", isActive && MENU_ITEM_ACTIVE_CLASS)}
               data-point-option={option.id}
             >
-              <Store className={cn("mt-0.5 size-4", isActive ? "text-[#3848c7]" : "text-[#9b9fb3]")} />
+              <Icon className={cn("mt-0.5 size-4", isActive ? "text-[#3848c7]" : "text-[#9b9fb3]")} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{titleOf(option)}</span>
                 {option.address ? (
@@ -180,6 +188,8 @@ export function CurrentPointSwitcher({
               </span>
               {isActive ? <Check className="mt-0.5 size-4 text-[#3848c7]" /> : null}
             </DropdownMenuItem>
+            {divider ? <DropdownMenuSeparator /> : null}
+            </Fragment>
           );
         })}
         {manageHref ? (
@@ -201,11 +211,12 @@ export function CurrentPointSwitcher({
 const BASE =
   "inline-flex h-11 min-w-0 max-w-[min(40vw,420px)] items-center gap-2 rounded-2xl px-3 text-left max-sm:max-w-[min(52vw,240px)] max-sm:px-2";
 
-/** Иконка точки, тихая подпись «Точка» и название — две строки. */
-function PointLabel({ caption, title }: { caption: string; title: string }) {
+/** Иконка точки, тихая подпись «Точка» («Организация» у офиса) и название — две строки. */
+function PointLabel({ caption, title, office = false }: { caption: string; title: string; office?: boolean }) {
+  const Icon = office ? Building2 : Store;
   return (
     <>
-      <Store className="size-[18px] shrink-0 text-[#5566f6]" aria-hidden />
+      <Icon className="size-[18px] shrink-0 text-[#5566f6]" aria-hidden />
       <span className="flex min-w-0 flex-col leading-tight">
         <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]" data-point-caption>
           {caption}

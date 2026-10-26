@@ -102,6 +102,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
   "Торговые точки": MapPin,
   "Моя компания": Building2,
+  "Офис и точки": Building2,
   "Пришла проверка": ShieldCheck,
   "Производственный контроль": FileCheck2,
   "Производственный контроль — раздел": ClipboardCheck,

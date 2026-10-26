@@ -262,6 +262,27 @@ export function StaffPageClient(props: StaffPageProps) {
     });
   const clearSelection = () => setSelected(new Set());
 
+  // `?add=<место>` со страницы офиса или точки: сразу окно добавления в это
+  // место, а параметр убираем — обновление страницы не откроет окно снова.
+  const initialAddHandled = useRef(false);
+  useEffect(() => {
+    const target = props.initialAdd;
+    if (!target || initialAddHandled.current) return;
+    initialAddHandled.current = true;
+    const categoryKey: PositionCategory = target.office ? "management" : "staff";
+    const position = props.positions.find((p) => p.categoryKey === categoryKey) ?? null;
+    setDlg({
+      kind: "add-flow",
+      initialStep: position ? 2 : 1,
+      categoryKey,
+      positionId: position?.id ?? null,
+      buildingIds: [target.buildingId],
+    });
+    const url = new URL(window.location.href);
+    url.searchParams.delete("add");
+    router.replace(`${url.pathname}${url.search}`, { scroll: false });
+  }, [props.initialAdd, props.positions, router]);
+
   // Modal state.
   const [dlg, setDlg] = useState<
     | {
@@ -269,6 +290,8 @@ export function StaffPageClient(props: StaffPageProps) {
         initialStep: 1 | 2;
         categoryKey: PositionCategory;
         positionId: string | null;
+        /** Место работы нового сотрудника (офис или точка), если задано заранее. */
+        buildingIds?: string[];
       }
     | { kind: "edit-position"; position: StaffPosition }
     | { kind: "edit-employee"; employee: StaffEmployee; pending: boolean }
@@ -773,6 +796,7 @@ export function StaffPageClient(props: StaffPageProps) {
           </>
         }
       />
+      {props.placeFilter ?? null}
 
       {props.seatsBanner ? (
         <div
@@ -1214,9 +1238,10 @@ export function StaffPageClient(props: StaffPageProps) {
           buildings={props.buildings ?? []}
           perLocationJournals={props.perLocationJournals === true}
           defaultBuildingIds={
-            props.perLocationJournals && props.activeBuildingId
+            dlg.buildingIds ??
+            (props.perLocationJournals && props.activeBuildingId
               ? [props.activeBuildingId]
-              : []
+              : [])
           }
           open
           onClose={() => setDlg(null)}

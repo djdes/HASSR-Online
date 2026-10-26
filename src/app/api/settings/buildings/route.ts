@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
@@ -76,7 +77,8 @@ export async function POST(request: Request) {
 
   // Точки тарифа: первое здание места не добавляет — организация и так
   // считалась одной точкой; каждое следующее — ещё одна точка.
-  const buildingsNow = await db.building.count({ where: { organizationId: orgId } });
+  // Офис организации — не торговая точка и в тариф не считается.
+  const buildingsNow = await db.building.count({ where: { organizationId: orgId, kind: { not: OFFICE_BUILDING_KIND } } });
   const points = await checkPointsForCreation(orgId, buildingsNow > 0 ? 1 : 0, { source: "settings/buildings" });
   if (!points.ok) return limitResponse(points);
 

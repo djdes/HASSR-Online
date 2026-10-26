@@ -1,4 +1,4 @@
-import { allowedBuildingsForUser } from "@/lib/building-scope";
+import { workBuildingsForUser } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 
 /**
@@ -28,8 +28,9 @@ export async function buildingTargets(
 }
 
 /**
- * Точки сотрудника: `User.buildingIds` ∩ точки организации; пустой
- * список = все точки. Организация без точек → `[null]`.
+ * Точки, где сотрудник работает: `User.buildingIds` ∩ точки организации;
+ * пустой список = все точки; сотрудник офиса — только офис
+ * (`workBuildingsForUser`). Организация без точек → `[null]`.
  */
 export async function userBuildingTargets(
   organizationId: string,
@@ -44,7 +45,7 @@ export async function userBuildingTargets(
     db.building.findMany({
       where: { organizationId },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      select: { id: true, name: true, address: true },
+      select: { id: true, name: true, address: true, kind: true },
     }),
     db.user.findUnique({
       where: { id: userId },
@@ -54,7 +55,7 @@ export async function userBuildingTargets(
   if (buildings.length < 2) return [null];
   const userBuildingIds =
     user && user.organizationId === organizationId ? user.buildingIds : [];
-  return allowedBuildingsForUser(buildings, userBuildingIds).map((building) => building.id);
+  return workBuildingsForUser(buildings, userBuildingIds).map((building) => building.id);
 }
 
 /** Оставить только точки этой организации, без дублей, в исходном порядке. */

@@ -2720,7 +2720,8 @@
         "all": "Hammasi: {count}",
         "add": "Nuqta qo‘shish",
         "addHint": "Qadam-baqadam qo‘shish ochiladi: nomi va manzil, xonalar, uskunalar",
-        "open": "Nuqtani ochish"
+        "open": "Nuqtani ochish",
+        "captionOffice": "Tashkilot"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
@@ -2740,7 +2741,8 @@
             "appearance": "Ko‘rinish",
             "documents": "Hujjatlar uchun ma’lumotlar",
             "branding": "Logotip va ranglar",
-            "contacts": "Kontaktlar va bildirishnomalar"
+            "contacts": "Kontaktlar va bildirishnomalar",
+            "office": "Ofis"
           }
         },
         "staff": {
@@ -3177,7 +3179,8 @@
       "acknowledge": "Tanishish uchun hujjatlar",
       "settings_organization_documents": "Hujjatlar uchun ma’lumotlar",
       "settings_organization_branding": "Logotip va ranglar",
-      "settings_organization_contacts": "Kontaktlar va bildirishnomalar"
+      "settings_organization_contacts": "Kontaktlar va bildirishnomalar",
+      "settings_organization_office": "Ofis"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",
@@ -7732,13 +7735,16 @@
       "another": "Yana bitta yaratish"
     },
     "buildings": {
-      "heading": "Manzillar",
+      "heading": "Qayerda ishlaydi",
       "allTasksHint": "Bo‘sh qoldirilsa, vazifalar barcha manzillarga biriktiriladi",
       "employeeLabel": "Xodim manzillari",
       "allTitle": "Barcha manzillarda ishlaydi",
       "all": "Barcha manzillar",
       "collapse": "Yig‘ish",
-      "more": "Yana {count, number}"
+      "more": "Yana {count, number}",
+      "office": "Ofis",
+      "officeTitle": "Ofis: kompaniyaning barcha nuqtalarini ko‘radi, jurnallar va vazifalar faqat ofisniki",
+      "officeHint": "Ofis — barcha nuqtalarni ko‘radi, ofisda ishlaydi"
     },
     "weekdays": {
       "groupLabel": "Haftalik dam olish kunlari",
@@ -8360,6 +8366,11 @@
       "owner": "Ega",
       "technologist": "Texnolog",
       "operator": "Operator"
+    },
+    "place": {
+      "label": "Qayerda ishlaydi",
+      "all": "Hammasi",
+      "none": "Joy belgilanmagan"
     }
   },
   "capaManagement": {
@@ -8810,6 +8821,14 @@
           "qr": {
             "title": "Stikerlar va plakatlar",
             "body": "Uskunalar uchun stikerlarni va xonalar uchun plakatlarni chop eting: xodim skanerlaydi va kabinetga kirmasdan yozuv qiladi."
+          },
+          "staff": {
+            "title": "Nuqta xodimlari",
+            "body": "Nuqtada kim ishlaydi: ularning jurnallari va vazifalari faqat shu yerda. «Xodim qo‘shish» odamni darhol shu nuqtaga biriktiradi."
+          },
+          "journals": {
+            "title": "Nuqta jurnallari",
+            "body": "O‘z jurnallar to‘plami, avtomatika va komissiya — tugmalar sozlamalarni shu nuqta bilan ochadi."
           }
         },
         "qa": {
@@ -9001,6 +9020,34 @@
         "done": "«{name}» nuqtasi yaratildi",
         "partial": "«{name}» nuqtasi yaratildi, lekin qo‘shilmadi: {items}. Qolganini nuqta sahifasida qo‘shing.",
         "failed": "Nuqtani yaratib bo‘lmadi"
+      },
+      "staff": {
+        "title": "Nuqta xodimlari",
+        "hint": "Oshpazlar, oshxona ishchilari, ofitsiantlar — shu yerda ishlaydiganlar: ularning jurnallari va vazifalari faqat shu nuqtada.",
+        "count": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
+        "add": "Xodim qo‘shish",
+        "emptyTitle": "Nuqtada hozircha hech kim yo‘q",
+        "emptyBody": "Xodimlarni qo‘shing — ular faqat shu nuqtani ko‘radi.",
+        "noPosition": "Lavozim ko‘rsatilmagan",
+        "all": "«Xodimlar»da ochish",
+        "allMore": "Yana {count, number} — «Xodimlar»da"
+      },
+      "journals": {
+        "title": "Nuqta jurnallari",
+        "hint": "Nuqta qaysi jurnallarni yuritadi, qaysilari o‘zi yuritiladi va brakeraj komissiyasida kim bor — har bir nuqtada o‘ziniki.",
+        "inWork": "{count, plural, other {# ta jurnal}}",
+        "inWorkHint": "nuqtada ishlatilmoqda",
+        "auto": "{count, plural, other {# ta jurnal}}",
+        "autoOff": "Yo‘q",
+        "autoHint": "o‘zi yuritiladi",
+        "commission": "{count, plural, other {# kishi}}",
+        "commissionNone": "Belgilanmagan",
+        "commissionHint": "brakeraj komissiyasi",
+        "openToday": "Bugungi jurnallar",
+        "openSet": "Jurnallar to‘plami",
+        "openAuto": "Avtomatika",
+        "openCommission": "Komissiya",
+        "failed": "Nuqtani ochib bo‘lmadi"
       }
     },
     "appearance": {
@@ -10280,6 +10327,61 @@
         "notFound": "Tashkilot topilmadi.",
         "failed": "Shablonni qo‘llab bo‘lmadi. Qayta urinib ko‘ring.",
         "network": "Serverga ulanib bo‘lmadi. Ulanishni tekshirib, qayta urinib ko‘ring."
+      }
+    },
+    "office": {
+      "description": "Butun kompaniyaga tegishli hamma narsa: ofis xodimlari va ofis jurnallari. Nuqtaga oid aniq ishlar — nuqta sahifasida.",
+      "guide": {
+        "title": "Ofis va nuqtalar qanday tuzilgan",
+        "office": {
+          "title": "Ofis — kompaniya rahbariyati",
+          "body": "Direktor, brend-oshpaz, hududiy rahbarlar. Ular barcha nuqtalarni ko‘radi, jurnallar va vazifalari esa faqat ofisniki — nuqtalar jurnaliga qo‘shilmaydi."
+        },
+        "points": {
+          "title": "Nuqta — uning xodimlari va jurnallari",
+          "body": "Oshpazlar, oshxona ishchilari, ofitsiantlar, mudira — o‘z nuqtasi sahifasida: u yerda jurnallar to‘plami, avtomatika va komissiya ham bor."
+        },
+        "move": {
+          "title": "Xodimni qanday o‘tkazish",
+          "body": "Xodimni oching va «Qayerda ishlaydi»da «Ofis» yoki kerakli nuqtani tanlang. Joyi yo‘q xodimlar pastda ogohlantirish bilan ko‘rsatiladi."
+        }
+      },
+      "disabled": {
+        "title": "Ofis nuqtalar bilan birga paydo bo‘ladi",
+        "body": "Jurnallar nuqtalar bo‘yicha alohida yuritilganda bu yerda kompaniya ofisini ajratish mumkin.",
+        "link": "Savdo nuqtalarini ochish"
+      },
+      "create": {
+        "title": "Ofisni ajrating",
+        "body": "Ofis — kompaniya rahbarlari joyi: ular barcha nuqtalarni ko‘radi, lekin nuqtalar jurnali va vazifalariga qo‘shilmaydi. Nuqta xodimlariga ta’sir qilmaydi.",
+        "button": "Ofisni ajratish",
+        "done": "Ofis ajratildi",
+        "failed": "Ofisni ajratib bo‘lmadi"
+      },
+      "staff": {
+        "title": "Ofis xodimlari",
+        "hint": "Direktor, brend-oshpaz, hududiy rahbarlar — barcha nuqtalarni ko‘radi, jurnallar va vazifalar faqat ofisniki.",
+        "count": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
+        "add": "Ofisga qo‘shish",
+        "emptyTitle": "Ofisda hozircha hech kim yo‘q",
+        "emptyBody": "Kompaniya rahbarlarini qo‘shing — ular barcha nuqtalarni ko‘radi.",
+        "noPosition": "Lavozim ko‘rsatilmagan",
+        "all": "«Xodimlar»da ochish"
+      },
+      "journals": {
+        "title": "Ofis jurnallari",
+        "hint": "Ofis o‘z jurnallarini yuritsa (ombor, ofis xodimlari gigiyenasi) — ular nuqtalardan alohida.",
+        "open": "Ofis jurnallarini ochish",
+        "failed": "Ofisni ochib bo‘lmadi"
+      },
+      "points": {
+        "title": "Kompaniyaning savdo nuqtalari",
+        "hint": "Nuqtaga oid hamma narsa — xodimlar, jurnallar, xonalar va jihozlar — nuqta sahifasida.",
+        "add": "Nuqta qo‘shish",
+        "unplaced": "{count, plural, other {# ta xodimga}} hali joy belgilanmagan: ular barcha nuqtalar jurnaliga tushadi.",
+        "unplacedLink": "Taqsimlash",
+        "noAddress": "Manzil ko‘rsatilmagan",
+        "staff": "{count, plural, =0 {xodim yo‘q} other {# xodim}}"
       }
     }
   },
@@ -26510,7 +26612,8 @@
       "configure": "Sozlash",
       "roomNamePlaceholder": "Xona nomi",
       "add": "Qo‘shish",
-      "addRoom": "Xona qo‘shish"
+      "addRoom": "Xona qo‘shish",
+      "officeBadge": "Ofis"
     },
     "calendarPage": {
       "kindMedbook": "Tibbiy daftarchalar",

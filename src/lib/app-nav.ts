@@ -277,6 +277,9 @@ const COMPANY_MENU: NavMenuGroup[] = [
     // и цвета; контакты — бывшие секции формы реквизитов.
     items: [
       { id: "organization", icon: "Building2", href: "/settings/organization", access: ADMIN },
+      // Офис (2026-10-26): сотрудники и журналы офиса, точки компании — всё,
+      // что касается всей компании; конкретика точки — на её странице.
+      { id: "office", icon: "BriefcaseBusiness", href: "/settings/organization/office", access: ADMIN },
       { id: "documents", icon: "ScrollText", href: "/settings/organization/documents", access: ADMIN },
       { id: "branding", icon: "SwatchBook", href: "/settings/organization/branding", access: ADMIN },
       { id: "contacts", icon: "Contact", href: "/settings/organization/contacts", access: ADMIN },

@@ -6,6 +6,7 @@ import { hasJournalAccess } from "@/lib/journal-acl";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { listPersonBuildings } from "@/lib/active-building";
+import { isOfficeBuilding } from "@/lib/building-scope";
 import {
   visibleNav,
   visibleSettingsCards,
@@ -71,7 +72,12 @@ export async function loadNavFacts(session: Session): Promise<NavFacts> {
 export async function loadNavMenuData(session: Session): Promise<NavMenuData> {
   if (!hasFullWorkspaceAccess(session.user)) return {};
   const buildings = await listPersonBuildings(session).catch(() => []);
-  return { buildings: buildings.map((building) => ({ id: building.id, name: building.name })) };
+  // Офис — в «Моей компании», в «Мои точки» только торговые точки.
+  return {
+    buildings: buildings
+      .filter((building) => !isOfficeBuilding(building))
+      .map((building) => ({ id: building.id, name: building.name })),
+  };
 }
 
 export async function buildNavModel(input: {

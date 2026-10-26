@@ -2720,7 +2720,8 @@
         "all": "All: {count}",
         "add": "Add outlet",
         "addHint": "Opens the wizard: name and address, rooms, equipment",
-        "open": "Open outlet"
+        "open": "Open outlet",
+        "captionOffice": "Company"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
@@ -2740,7 +2741,8 @@
             "appearance": "Appearance",
             "documents": "Document details",
             "branding": "Logo and colors",
-            "contacts": "Contacts and notifications"
+            "contacts": "Contacts and notifications",
+            "office": "Office"
           }
         },
         "staff": {
@@ -3177,7 +3179,8 @@
       "acknowledge": "Documents to read",
       "settings_organization_documents": "Document details",
       "settings_organization_branding": "Logo and colors",
-      "settings_organization_contacts": "Contacts and notifications"
+      "settings_organization_contacts": "Contacts and notifications",
+      "settings_organization_office": "Office"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",
@@ -7732,13 +7735,16 @@
       "another": "Create another"
     },
     "buildings": {
-      "heading": "Locations",
+      "heading": "Works at",
       "allTasksHint": "Leave empty to assign tasks at every location",
       "employeeLabel": "Employee locations",
       "allTitle": "Works at every location",
       "all": "All locations",
       "collapse": "Show less",
-      "more": "More {count, number}"
+      "more": "More {count, number}",
+      "office": "Office",
+      "officeTitle": "Office: sees all company outlets, journals and tasks are office-only",
+      "officeHint": "Office — sees all outlets, works in the office"
     },
     "weekdays": {
       "groupLabel": "Days off each week",
@@ -8360,6 +8366,11 @@
       "owner": "Owner",
       "technologist": "Technologist",
       "operator": "Operator"
+    },
+    "place": {
+      "label": "Works at",
+      "all": "All",
+      "none": "Not assigned"
     }
   },
   "capaManagement": {
@@ -8810,6 +8821,14 @@
           "qr": {
             "title": "Stickers and posters",
             "body": "Print stickers for equipment and posters for rooms: an employee scans one and makes an entry without signing in."
+          },
+          "staff": {
+            "title": "Outlet staff",
+            "body": "Who works at the outlet: their journals and tasks are only here. «Add employee» assigns the person to this outlet right away."
+          },
+          "journals": {
+            "title": "Outlet journals",
+            "body": "Its own journal set, automation and commission — the buttons open settings with this outlet already selected."
           }
         },
         "qa": {
@@ -9001,6 +9020,34 @@
         "done": "Outlet “{name}” created",
         "partial": "Outlet “{name}” created, but not added: {items}. Add the rest on the outlet page.",
         "failed": "Couldn't create the outlet"
+      },
+      "staff": {
+        "title": "Outlet staff",
+        "hint": "Cooks, kitchen workers, waiters — who works here: their journals and tasks are only at this outlet.",
+        "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
+        "add": "Add employee",
+        "emptyTitle": "No one at this outlet yet",
+        "emptyBody": "Add staff — they will see only this outlet.",
+        "noPosition": "No position",
+        "all": "Open in «Staff»",
+        "allMore": "{count, number} more — in «Staff»"
+      },
+      "journals": {
+        "title": "Outlet journals",
+        "hint": "Which journals the outlet keeps, which run automatically and who is on the grading commission — each outlet has its own.",
+        "inWork": "{count, plural, one {# journal} other {# journals}}",
+        "inWorkHint": "in use at the outlet",
+        "auto": "{count, plural, one {# journal} other {# journals}}",
+        "autoOff": "None",
+        "autoHint": "run automatically",
+        "commission": "{count, plural, one {# person} other {# people}}",
+        "commissionNone": "Not set",
+        "commissionHint": "grading commission",
+        "openToday": "Today's journals",
+        "openSet": "Journal set",
+        "openAuto": "Automation",
+        "openCommission": "Commission",
+        "failed": "Could not open the outlet"
       }
     },
     "appearance": {
@@ -10280,6 +10327,61 @@
         "notFound": "Organization not found.",
         "failed": "Could not apply the template. Try again.",
         "network": "Could not reach the server. Check your connection and try again."
+      }
+    },
+    "office": {
+      "description": "Everything that concerns the whole company: office staff and office journals. Outlet specifics live on the outlet page.",
+      "guide": {
+        "title": "How the office and outlets work",
+        "office": {
+          "title": "Office — company management",
+          "body": "Director, brand chef, area managers. They see every outlet, while their journals and tasks are office-only — they are not added to outlet journals."
+        },
+        "points": {
+          "title": "Outlet — its staff and journals",
+          "body": "Cooks, kitchen workers, waiters, the outlet manager — on their outlet page, together with its journal set, automation and commission."
+        },
+        "move": {
+          "title": "How to move a person",
+          "body": "Open the employee and choose «Office» or an outlet under «Works at». Staff without a place are flagged below."
+        }
+      },
+      "disabled": {
+        "title": "The office appears together with outlets",
+        "body": "When journals are kept per outlet, you can set up the company office here.",
+        "link": "Open outlets"
+      },
+      "create": {
+        "title": "Set up the office",
+        "body": "The office is where company management works: they see every outlet but are not added to outlet journals and tasks. Outlet staff are not affected.",
+        "button": "Set up office",
+        "done": "Office set up",
+        "failed": "Could not set up the office"
+      },
+      "staff": {
+        "title": "Office staff",
+        "hint": "Director, brand chef, area managers — see every outlet, journals and tasks are office-only.",
+        "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
+        "add": "Add to office",
+        "emptyTitle": "No one in the office yet",
+        "emptyBody": "Add company managers — they will see every outlet.",
+        "noPosition": "No position",
+        "all": "Open in «Staff»"
+      },
+      "journals": {
+        "title": "Office journals",
+        "hint": "If the office keeps its own journals (warehouse, office staff hygiene), they are kept apart from outlets.",
+        "open": "Open office journals",
+        "failed": "Could not open the office"
+      },
+      "points": {
+        "title": "Company outlets",
+        "hint": "Everything specific to an outlet — staff, journals, rooms and equipment — is on the outlet page.",
+        "add": "Add outlet",
+        "unplaced": "{count, plural, one {# employee is} other {# employees are}} not assigned to a place yet: they are added to the journals of every outlet.",
+        "unplacedLink": "Assign",
+        "noAddress": "No address",
+        "staff": "{count, plural, =0 {no staff} one {# employee} other {# employees}}"
       }
     }
   },
@@ -26510,7 +26612,8 @@
       "configure": "Set up",
       "roomNamePlaceholder": "Room name",
       "add": "Add",
-      "addRoom": "Add room"
+      "addRoom": "Add room",
+      "officeBadge": "Office"
     },
     "calendarPage": {
       "kindMedbook": "Medical books",

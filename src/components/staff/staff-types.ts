@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { BuildingOption } from "@/lib/building-scope";
 
 /** «commission» — сторонняя бракеражная комиссия (третья колонка «Комиссия»). */
@@ -87,6 +88,13 @@ export type StaffPageProps = {
   perLocationJournals?: boolean;
   /** Активная точка — новый сотрудник по умолчанию привязывается к ней. */
   activeBuildingId?: string | null;
+  /**
+   * Открыть добавление сотрудника сразу в это место (`?add=` со страницы
+   * офиса или точки): офис — рубрика «Руководство», точка — «Сотрудники».
+   */
+  initialAdd?: { buildingId: string; office: boolean } | null;
+  /** Фильтр «Где работает» — под заголовком страницы (рисует сервер). */
+  placeFilter?: ReactNode;
   telegramBotUrl: string | null;
   /** Интеграция TasksFlow подключена — промо-блок не показываем. */
   hasTasksflowIntegration: boolean;

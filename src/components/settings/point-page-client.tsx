@@ -187,6 +187,7 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
 
 /** Блок 2 — «Цеха и помещения»: помещения точки, окно помещения, копирование из другой точки. */
 export function PointRoomsBlock({
+  number = 2,
   pointId,
   rooms,
   users,
@@ -194,6 +195,8 @@ export function PointRoomsBlock({
   donors,
   readOnly,
 }: {
+  /** Номер блока на странице точки. */
+  number?: number;
   pointId: string;
   rooms: BuildingRoom[];
   users: RoomResponsibleUser[];
@@ -305,7 +308,7 @@ export function PointRoomsBlock({
 
   return (
     <PointBlock
-      number={2}
+      number={number}
       testId="rooms"
       title={t("title")}
       hint={t("hint")}

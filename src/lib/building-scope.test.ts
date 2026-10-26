@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   allowedBuildingsForUser,
+  isOfficeBuilding,
+  workBuildingsForUser,
   buildingWhere,
   decodeBuildingCookie,
   encodeBuildingCookie,
@@ -123,4 +125,19 @@ test("подписи: организация с точкой и адресом, 
   assert.equal(withBuildingSuffix("Уборка · Кухня", "Точка 2"), "Уборка · Кухня · Точка 2");
   assert.equal(withBuildingSuffix("Уборка · Кухня", null), "Уборка · Кухня");
   assert.equal(withBuildingSuffix("Уборка", "  "), "Уборка");
+});
+
+test("офис: сотрудник офиса видит все точки, а работает только в офисе", () => {
+  const OFFICE = { id: "b-office", name: "Офис", address: null, kind: "office" };
+  const all = [OFFICE, A, B];
+  assert.deepEqual(allowedBuildingsForUser(all, [OFFICE.id]), all);
+  assert.deepEqual(workBuildingsForUser(all, [OFFICE.id]), [OFFICE]);
+  // Сотрудник точки — только своя точка, и видит, и работает.
+  assert.deepEqual(allowedBuildingsForUser(all, [A.id]), [A]);
+  assert.deepEqual(workBuildingsForUser(all, [A.id]), [A]);
+  // Без места — как раньше, везде.
+  assert.deepEqual(allowedBuildingsForUser(all, []), all);
+  assert.deepEqual(workBuildingsForUser(all, []), all);
+  assert.equal(isOfficeBuilding(OFFICE), true);
+  assert.equal(isOfficeBuilding(A), false);
 });

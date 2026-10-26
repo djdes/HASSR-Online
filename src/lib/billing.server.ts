@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
@@ -287,7 +288,8 @@ export async function loadBillingUnit(organizationId: string): Promise<BillingUn
               id: { not: PLATFORM_ORG_ID() },
             }
           : { id: org.id },
-        select: { id: true, subscriptionEnd: true, disabledJournalCodes: true, _count: { select: { buildings: true } } },
+        // Офис организации — не торговая точка: в тариф не считается.
+        select: { id: true, subscriptionEnd: true, disabledJournalCodes: true, _count: { select: { buildings: { where: { kind: { not: OFFICE_BUILDING_KIND } } } } } },
       });
   const scopeOrgIds = scopeOrgs.map((o) => o.id);
 
@@ -1383,7 +1385,7 @@ export async function listBillingUnits(): Promise<UnitRow[]> {
   });
   const [seats, buildings, codes] = await Promise.all([
     db.user.groupBy({ by: ["organizationId"], where: SEAT_USER_WHERE, _count: { _all: true } }),
-    db.building.groupBy({ by: ["organizationId"], _count: { _all: true } }),
+    db.building.groupBy({ by: ["organizationId"], where: { kind: { not: OFFICE_BUILDING_KIND } }, _count: { _all: true } }),
     activeJournalCodes(),
   ]);
   const seatsByOrg = new Map(seats.map((row) => [row.organizationId, row._count._all]));
