@@ -134,6 +134,16 @@ test("seat refusals name the next plan (free → Standard, Standard → Premium)
   }
 });
 
+test("seat refusal toast: only the front toast's buttons take clicks over a modal dialog", async () => {
+  const { readFileSync } = await import("node:fs");
+  // Radix ставит body pointer-events: none — кнопка действия должна нажиматься, а тело
+  // сообщения пропускать клики (тап по нему не закрывает окно).
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /\[data-sonner-toast\]\[data-front="true"\] \[data-button\] \{\s*pointer-events: auto;/);
+  const toaster = readFileSync("src/components/ui/sonner.tsx", "utf8");
+  assert.doesNotMatch(toaster, /pointerEvents/, "the toaster container keeps inheriting pointer-events");
+});
+
 test("no text offers a location (or money) for more employees — catalogs, bot, server refusals, What's new", async () => {
   const { FREE_LIMIT_MESSAGE, FREE_LIMIT_INVITEE_MESSAGE, paidSeatLimitMessage, paidSeatLimitInviteeMessage } = await import("./billing-period");
   const { WHATS_NEW_NOTES } = await import("./whats-new-notes");

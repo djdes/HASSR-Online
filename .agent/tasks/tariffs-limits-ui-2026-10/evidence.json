@@ -12,12 +12,12 @@
     "AC6": "plan feature 'mercury' (premium/trial/legacy/exempt); pages/API/cron gated; Premium card + table row",
     "AC7": "cards on a shared subgrid: price and CTA tops spread 0.00 px (pricing day/night, landing ru/en/uz, cabinet light/dark)",
     "AC8": "points stepper centered (0 px), explanation shown, role=switch on the right; 'Monthly ◯ Yearly' never splits, only the badge wraps; click/Space/label toggle; targets ≥44 px",
-    "AC9": "typecheck 0, test:gate 4850/0, i18n:check 95/95, eslint 0"
+    "AC9": "typecheck 0, test:gate 4851/0, i18n:check 95/95, eslint 0"
   },
   "checks": {
-    "base": "master e2b2f344 (merged b504100e)",
+    "base": "master 0dc5749d (merged aa258371)",
     "typecheck": "0 errors",
-    "test_gate": "pass 4850, fail 0",
+    "test_gate": "pass 4851, fail 0",
     "i18n_check": "pass (95/95)",
     "eslint_changed": "0 errors"
   },
@@ -39,7 +39,10 @@
     "ai_api_seats": "raw/ai-api-seat-check.txt",
     "ui_v3": "raw/ui-check-v3.txt",
     "toggle_wrap": "raw/toggle-wrap-check.txt",
-    "header_align": "raw/header-align-check.txt"
+    "header_align": "raw/header-align-check.txt",
+    "toast_tap": "raw/toast-tap-check.txt",
+    "archive_label": "raw/archive-label-check.txt",
+    "join_qr": "raw/join-qr-check.txt"
   },
   "schema_changes": [],
   "deploy_side_effects": [
@@ -96,6 +99,27 @@
         "raw/ui-check-v3.txt",
         "raw/toggle-wrap-check.txt",
         "raw/header-align-check.txt"
+      ]
+    },
+    "round3": {
+      "commit": "aa258371",
+      "verdict": "PASS",
+      "failed": [],
+      "fixes_after": [
+        "MEDIUM regression of round-2 fix: only the front toast's buttons take clicks over a modal (globals.css); toast bodies click-through again, tap/swipe no longer closes the dialog",
+        "master-cabinet seat refusal: shared billing toast (next tier, localized, button)",
+        "archive note link names the next tier",
+        "invitee refusal on paid tiers names the limit (QR join page)",
+        "unreachable in-app branch removed on the subscription page"
+      ],
+      "not_fixed": [
+        "hydration warning on /settings/users at 390 px (PartnerHint Radix id) — unrelated to the task"
+      ],
+      "rechecked": [
+        "raw/toast-tap-check.txt",
+        "raw/toast-dialog-check.txt",
+        "raw/archive-label-check.txt",
+        "raw/join-qr-check.txt"
       ]
     }
   }

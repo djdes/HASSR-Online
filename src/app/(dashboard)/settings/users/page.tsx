@@ -291,6 +291,7 @@ export default async function StaffPage() {
           : null
       }
       payHref={seatsFull && !inMobileApp && seatsUpgrade ? BILLING_PAY_HREF : null}
+      payLabel={seatsUpgrade === "standard" ? t("seatsBannerCtaStandard") : t("seatsBannerCtaPremium")}
       contactSupport={seatsFull && !seatsUpgrade && !inMobileApp}
     />
     {ownedAccount ? (

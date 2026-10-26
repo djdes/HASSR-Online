@@ -253,6 +253,9 @@ describe("лимиты", () => {
     const premium = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 100 }, now);
     assert.match(seatLimitMessage(standard, "invitee"), /перейти на «Премиум»/);
     assert.match(seatLimitMessage(premium, "invitee"), /связаться с поддержкой/);
+    // Лимит тарифа назван и приглашённому (страница входа по QR показывает этот текст).
+    assert.match(seatLimitMessage(standard, "invitee"), /«Стандарт» — до 25 сотрудников на точку, все места заняты/);
+    assert.match(seatLimitMessage(premium, "invitee"), /«Премиум» — до 100 сотрудников на точку, все места заняты/);
     assert.match(seatLimitMessage(state({}, after), "invitee"), /подключить «Стандарт»/);
   });
 

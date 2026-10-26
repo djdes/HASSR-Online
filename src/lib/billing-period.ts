@@ -377,11 +377,12 @@ export function paidSeatLimitMessage(tier: PaidTier): string {
     : `${head} ${PREMIUM_MORE_SEATS}. Или переведите лишних в архив.`;
 }
 
-/** Отказ тому, кто принимает приглашение, на оплаченном тарифе: решает руководитель. */
+/** Отказ тому, кто принимает приглашение, на оплаченном тарифе: лимит, решает руководитель. */
 export function paidSeatLimitInviteeMessage(tier: PaidTier): string {
+  const head = `На тарифе организации ${TIER_TITLE[tier]} — до ${employeesGenitiveLabel(SEATS_PER_POINT[tier])} на точку, все места заняты.`;
   return seatUpgradeTarget(tier)
-    ? `Все места тарифа организации заняты. Попросите руководителя перейти на ${TIER_TITLE.premium} и повторите.`
-    : "Все места тарифа организации заняты. Попросите руководителя связаться с поддержкой WeSetup и повторите.";
+    ? `${head} Попросите руководителя перейти на ${TIER_TITLE.premium} и повторите.`
+    : `${head} Попросите руководителя связаться с поддержкой WeSetup и повторите.`;
 }
 
 /** Текст отказа по местам для состояния аккаунта. */

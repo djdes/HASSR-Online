@@ -530,7 +530,7 @@ export default async function SubscriptionPage({
                 ? t("overSeatsPremium", { used: overSeats.used, limit: overSeats.limit, seats: SEATS_PER_POINT.premium })
                 : t("overSeatsContact", { used: overSeats.used, limit: overSeats.limit, seats: SEATS_PER_POINT.premium })}
             </span>
-            {inMobileApp ? null : overSeats.tier === "standard" ? (
+            {overSeats.tier === "standard" ? (
               <a
                 href={`/order?plan=premium&cycle=${overSeats.cycle}&points=${overSeats.points}`}
                 className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"

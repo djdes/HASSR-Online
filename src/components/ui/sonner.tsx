@@ -35,12 +35,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
-          // Модальное окно Radix ставит body `pointer-events: none`, и
-          // сообщения (они вне окна) это наследовали: кнопку «Перейти на
-          // «Премиум»» в отказе по местам из окна «Добавить сотрудника»
-          // было не нажать. Клик по сообщению закрывает окно как клик
-          // снаружи — и срабатывает действие.
-          pointerEvents: "auto",
         } as React.CSSProperties
       }
       {...props}
