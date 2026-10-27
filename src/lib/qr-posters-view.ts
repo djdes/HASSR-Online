@@ -1,11 +1,14 @@
 import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
 import { db } from "@/lib/db";
-import { normalizeBrandColor, type DocumentBrand } from "@/lib/document-brand";
+import { brandQrOptionsFor } from "@/lib/brand-qr-center.server";
+import type { BrandQrOptions } from "@/lib/brand-qr";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { JOURNAL_FILL_HUB_CODE, journalFillValidUntil, todayKeyFor } from "@/lib/journal-fill";
 import { HYGIENE_VERIFY_SUFFIX, isJournalObjectQrCode, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { loadPrintBrand } from "@/lib/print-brand.server";
+import type { PrintBrand } from "@/lib/print-brand";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import {
   buildJournalPoster,
@@ -67,8 +70,8 @@ export type QrPostersView = {
   filtered: boolean;
   origin: string;
   autoprint: boolean;
-  /** Логотип и фирменный цвет организации — на печатных плакатах и наклейках. */
-  brand: DocumentBrand;
+  /** Фирменный стиль печати: логотип слева, сайт справа, цвета; `mono` — режим «Ч/б». */
+  brand: PrintBrand;
 };
 
 const MAX_EXTRA_DOCUMENTS = 30;
@@ -102,6 +105,10 @@ type OrgContext = {
   origin: string;
   /** Свои названия журналов организации. */
   names: CustomNames;
+  /** Цвет рамки и центр фирменного QR. */
+  qr: BrandQrOptions;
+  /** Открыто с `layout=plate`: оборудованию с температурой — табличка по умолчанию. */
+  wantsPlate: boolean;
 };
 
 /**
@@ -141,7 +148,7 @@ async function mainItems(ctx: OrgContext, code: string, name: string, request: Q
       key: code,
       group: "main",
       poster: {
-        ...(await buildJournalPoster({ organizationId: ctx.organizationId, code, name, subtitle, orgName: ctx.orgName, origin: ctx.origin, buildingId })),
+        ...(await buildJournalPoster({ organizationId: ctx.organizationId, code, name, subtitle, orgName: ctx.orgName, origin: ctx.origin, qr: ctx.qr, buildingId })),
         notice: notices.get(code) ?? null,
       },
       defaultSelected: pick(request.selectedIds, code, true),
@@ -165,7 +172,7 @@ async function mainItems(ctx: OrgContext, code: string, name: string, request: Q
           name: HYGIENE_VERIFY_TITLE,
           subtitle: point ? `${point} · ${HYGIENE_VERIFY_SUBTITLE}` : HYGIENE_VERIFY_SUBTITLE,
           orgName: ctx.orgName,
-          origin: ctx.origin,
+          origin: ctx.origin, qr: ctx.qr,
           buildingId,
           verify: true,
         })),
@@ -201,7 +208,7 @@ async function extraItemsForDoc(ctx: OrgContext, code: string, name: string, doc
         name: verify ? HYGIENE_VERIFY_TITLE : name,
         subtitle,
         orgName: ctx.orgName,
-        origin: ctx.origin,
+        origin: ctx.origin, qr: ctx.qr,
         documentId: doc.id,
         validUntil,
         verify,
@@ -244,14 +251,14 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
     const scope = await resolveJournalObjectScope(ctx.organizationId, code, ctx.todayKey, documentId);
     const objectKind = scope?.kind ?? (code === "climate_control" ? "room" : "equipment");
     const ids = new Set(scope?.ids ?? []);
-    const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind: objectKind, origin: ctx.origin, allowed: (id) => ids.has(id) });
+    const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind: objectKind, origin: ctx.origin, qr: ctx.qr, allowed: (id) => ids.has(id) });
     for (const poster of loaded.posters) {
       items.push({
         key: poster.id,
         group: "object",
         poster,
         defaultSelected: pick(request.selectedIds, poster.id, true),
-        defaultFormat: request.format ?? "sticker",
+        defaultFormat: ctx.wantsPlate && poster.plate ? "plate" : (request.format ?? "sticker"),
         label: poster.title,
         sublabel: poster.norms.length > 0 ? `норма ${poster.norms.join(", ")}` : null,
         caption: objectKind === "room" ? CAPTION.room : code === "uv_lamp_runtime" ? CAPTION.uv : CAPTION.equipment,
@@ -311,7 +318,7 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
 }
 
 async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "equipment" | "room"): Promise<Omit<QrPostersView, "origin" | "autoprint" | "brand">> {
-  const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind, origin: ctx.origin, explicitIds: request.selectedIds ?? [] });
+  const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind, origin: ctx.origin, qr: ctx.qr, explicitIds: request.selectedIds ?? [] });
   const format = request.format ?? "a4";
   return {
     screen: "objects",
@@ -323,7 +330,7 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
       group: "object" as const,
       poster,
       defaultSelected: true,
-      defaultFormat: format,
+      defaultFormat: ctx.wantsPlate && poster.plate ? "plate" : format,
       label: poster.title,
       sublabel: poster.norms.length > 0 ? `норма ${poster.norms.join(", ")}` : null,
       caption:
@@ -376,7 +383,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
         name: "Все журналы",
         subtitle: "Один плакат на стену: сотрудник выбирает журнал после сканирования",
         orgName: ctx.orgName,
-        origin: ctx.origin,
+        origin: ctx.origin, qr: ctx.qr,
       }),
       defaultSelected: pick(request.selectedIds, JOURNAL_FILL_HUB_CODE, true),
       defaultFormat: format,
@@ -398,7 +405,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
           name: HYGIENE_VERIFY_TITLE,
           subtitle: point ? `${point} · ${HYGIENE_VERIFY_SUBTITLE}` : HYGIENE_VERIFY_SUBTITLE,
           orgName: ctx.orgName,
-          origin: ctx.origin,
+          origin: ctx.origin, qr: ctx.qr,
           buildingId,
           verify: true,
         })),
@@ -430,7 +437,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
           name: journal.name,
           subtitle: isObject ? objectSubtitle(journal.code) : pointSubtitle,
           orgName: ctx.orgName,
-          origin: ctx.origin,
+          origin: ctx.origin, qr: ctx.qr,
           buildingId,
         })),
         notice: notices.get(journal.code) ?? null,
@@ -449,7 +456,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
   const known = new Set(items.map((item) => item.key));
   for (const id of request.selectedIds ?? []) {
     if (known.has(id)) continue;
-    const poster = await loadQrPoster({ organizationId: ctx.organizationId, kind: "journal", id, origin: ctx.origin, activeBuildingId: ctx.activeBuildingId });
+    const poster = await loadQrPoster({ organizationId: ctx.organizationId, kind: "journal", id, origin: ctx.origin, qr: ctx.qr, activeBuildingId: ctx.activeBuildingId });
     if (!poster) {
       missing.push({ id, label: splitJournalPosterId(id).code || id, reason: "Журнал или документ не найден" });
       continue;
@@ -489,8 +496,14 @@ export async function loadQrPostersView(params: {
   request: QrPostersRequest;
   origin: string;
   activeBuildingId: string | null;
+  /** `?bw=1`: всё чёрное на белом. */
+  mono?: boolean;
 }): Promise<QrPostersView> {
-  const { request } = params;
+  // Табличка — формат оборудования; остальным карточкам «plate» не нужен.
+  const wantsPlate = params.request.format === "plate";
+  const request: QrPostersRequest = wantsPlate ? { ...params.request, format: null } : params.request;
+  const brand = await loadPrintBrand(params.organizationId, { mono: params.mono });
+  const qr = await brandQrOptionsFor(params.organizationId, brand);
   const org = await db.organization.findUnique({
     where: { id: params.organizationId },
     select: {
@@ -500,8 +513,6 @@ export async function loadQrPostersView(params: {
       name: true,
       journalShortName: true,
       legalProfileJson: true,
-      logoUrl: true,
-      brandColor: true,
     },
   });
   const ctx: OrgContext = {
@@ -513,6 +524,8 @@ export async function loadQrPostersView(params: {
     activeBuildingId: params.activeBuildingId,
     origin: params.origin,
     names: await getOrgCustomNames(params.organizationId),
+    qr,
+    wantsPlate,
   };
 
   let body: Omit<QrPostersView, "origin" | "autoprint" | "brand">;
@@ -539,6 +552,6 @@ export async function loadQrPostersView(params: {
     items: orderQrPosterItems(body.items),
     origin: params.origin,
     autoprint: request.autoprint,
-    brand: { logoUrl: org?.logoUrl ?? null, color: normalizeBrandColor(org?.brandColor) },
+    brand,
   };
 }

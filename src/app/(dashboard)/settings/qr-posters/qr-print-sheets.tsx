@@ -5,8 +5,8 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 
 import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
-import { brandPalette, type DocumentBrand } from "@/lib/document-brand";
 import { isJournalObjectQrCode } from "@/lib/journal-qr-target";
+import { PRINT_LOGO_MM, printBrandCssVars, type PrintBrand } from "@/lib/print-brand";
 import { formatQrValidUntil, posterDetailLine, type QrPoster, type QrPrintFormat } from "@/lib/qr-fill-types";
 import type { QrPrintPage } from "@/lib/qr-print-layout";
 
@@ -28,9 +28,12 @@ import type { QrPrintPage } from "@/lib/qr-print-layout";
  * Цвета — свои классы с явными значениями: тёмная тема кабинета
  * перекрашивает `bg-white`/`text-[#…]`, а на бумаге нужно чёрное по белому.
  *
- * Логотип организации — над плакатом A4/A5 и перед названием организации на
- * наклейке; фирменный цвет — полоса по верху плаката (`border-top`: рамки
- * печатаются и без «фоновой графики»). Без логотипа и цвета — как раньше.
+ * Фирменный стиль (2026-10-27, `print-brand.ts`): у каждого листа шапка —
+ * логотип организации слева, сайт справа (логотип вдвое крупнее прежнего:
+ * A4 24 мм, A5 20 мм, наклейка 5,2 мм); плакат A4/A5 и табличка — в рамке
+ * основного цвета. Цвет только в `border-color` и в SVG (печать кабинета
+ * обнуляет фоны, а `currentColor` в ней чёрный); режим «Ч/б» — все цвета
+ * чёрные. Без логотипа в шапке — название организации.
  */
 
 type SheetTranslator = ReturnType<typeof useTranslations<"settingsUi.qrPrintSheets">>;
@@ -102,25 +105,34 @@ function Code({ poster, mm, className, fluid = false }: { poster: QrPoster; mm: 
   );
 }
 
-/** Логотип организации на листе; адрес — загруженный файл или ссылка из «Реквизитов». */
-function Logo({ brand, className }: { brand: DocumentBrand | null; className: string }) {
-  if (!brand?.logoUrl) return null;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={brand.logoUrl} alt="" className={className} />;
+/** Шапка листа: логотип слева (без него — название организации), сайт справа. */
+function Header({ brand, size }: { brand: PrintBrand; size: keyof typeof PRINT_LOGO_MM }) {
+  const logo = PRINT_LOGO_MM[size];
+  return (
+    <div className={`qrp-head qrp-head-${size}`} data-qr-print-head="">
+      {brand.logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- логотип организации, любой адрес
+        <img src={brand.logoUrl} alt="" className="qrp-logo" style={{ height: `${logo.height}mm`, maxWidth: `${logo.maxWidth}mm` }} />
+      ) : (
+        <span className="qrp-head-name">{brand.orgName}</span>
+      )}
+      <span className="qrp-site">{brand.site}</span>
+    </div>
+  );
 }
 
-function PosterA4({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
+function PosterA4({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
   const validity = validityLine(poster, t);
   return (
-    <div className={`qrp-a4${brand?.color ? " qrp-brand-band" : ""}`}>
-      <Logo brand={brand} className="qrp-a4-logo" />
+    <div className="qrp-a4 qrp-frame">
+      <Header brand={brand} size="a4" />
       <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
       <div className="qrp-a4-title">{poster.title}</div>
       <div className="qrp-org">{poster.orgName}</div>
       {detail ? <div className="qrp-detail">{detail}</div> : null}
-      <Code poster={poster} mm={105} className="qrp-a4-code" />
+      <Code poster={poster} mm={100} className="qrp-a4-code" />
       <ol className="qrp-steps qrp-a4-steps">
         {stepsFor(poster, t).map((step, index) => (
           <li key={step}>
@@ -133,58 +145,89 @@ function PosterA4({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | 
   );
 }
 
-function PosterA5({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
+function PosterA5({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
   const validity = validityLine(poster, t);
   return (
     <div className="qrp-a5">
-      <Code poster={poster} mm={78} className="qrp-a5-code" />
-      {/* Полоса — над текстом, а не над листом: пунктир реза между A5 остаётся. */}
-      <div className={`qrp-a5-text${brand?.color ? " qrp-brand-band" : ""}`}>
-        <Logo brand={brand} className="qrp-a5-logo" />
-        <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
-        <div className="qrp-a5-title">{poster.title}</div>
-        <div className="qrp-org">{poster.orgName}</div>
-        {detail ? <div className="qrp-detail">{detail}</div> : null}
-        <ol className="qrp-steps qrp-a5-steps">
-          {stepsFor(poster, t).map((step, index) => (
-            <li key={step}>
-              <b>{index + 1}.</b> {step}
-            </li>
-          ))}
-        </ol>
-        {validity ? <div className="qrp-valid">{validity}</div> : null}
+      {/* Рамка — внутри ячейки: пунктир реза между A5 остаётся снаружи рамок. */}
+      <div className="qrp-a5-frame qrp-frame">
+        <Header brand={brand} size="a5" />
+        <div className="qrp-a5-body">
+          <Code poster={poster} mm={72} className="qrp-a5-code" />
+          <div className="qrp-a5-text">
+            <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
+            <div className="qrp-a5-title">{poster.title}</div>
+            <div className="qrp-org">{poster.orgName}</div>
+            {detail ? <div className="qrp-detail">{detail}</div> : null}
+            <ol className="qrp-steps qrp-a5-steps">
+              {stepsFor(poster, t).map((step, index) => (
+                <li key={step}>
+                  <b>{index + 1}.</b> {step}
+                </li>
+              ))}
+            </ol>
+            {validity ? <div className="qrp-valid">{validity}</div> : null}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function Sticker({ poster, brand }: { poster: QrPoster; brand: DocumentBrand | null }) {
+function Sticker({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
   const validity = validityLine(poster, t);
   return (
     <div className="qrp-sticker">
+      <Header brand={brand} size="sticker" />
       <Code poster={poster} mm={36} className="qrp-sticker-code" fluid />
       <div className="qrp-sticker-title">{poster.title}</div>
-      <div className="qrp-sticker-org">
-        <Logo brand={brand} className="qrp-sticker-logo" />
-        {poster.orgName}
-      </div>
+      <div className="qrp-sticker-org">{poster.orgName}</div>
       {detail ? <div className="qrp-sticker-detail">{detail}</div> : null}
       {validity ? <div className="qrp-sticker-detail">{validity}</div> : null}
     </div>
   );
 }
 
-function Sheet({ page, posters, brand }: { page: QrPrintPage; posters: Map<string, QrPoster>; brand: DocumentBrand | null }) {
+/** Табличка на холодильник или морозильник: слово, режим, номер, цех и QR для записи температуры. */
+function Plate({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
+  const t = useTranslations("settingsUi.qrPrintSheets");
+  const plate = poster.plate;
+  if (!plate) return null;
+  return (
+    <div className="qrp-plate" data-qr-print-plate="">
+      <div className="qrp-plate-frame qrp-frame">
+        <Header brand={brand} size="plate" />
+        <div className="qrp-plate-word">{plate.word}</div>
+        <div className="qrp-plate-label">{t("plateRegimeLabel")}</div>
+        <div className="qrp-plate-regime">{plate.regime}</div>
+        <Code poster={poster} mm={46} className="qrp-plate-code" />
+        <div className="qrp-plate-foot">
+          <span className="qrp-plate-no">{`№ ${plate.number}`}</span>
+          <span className="qrp-plate-area">{plate.area}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Sheet({ page, posters, brand }: { page: QrPrintPage; posters: Map<string, QrPoster>; brand: PrintBrand }) {
   const list = page.keys.map((key) => posters.get(key)).filter((poster): poster is QrPoster => Boolean(poster));
   const format: QrPrintFormat = page.format;
   return (
     <div className={`qrp-sheet qrp-sheet-${format}`} data-qr-sheet={format}>
       {format === "a4" ? list.map((poster) => <PosterA4 key={poster.id} poster={poster} brand={brand} />) : null}
       {format === "a5" ? list.map((poster) => <PosterA5 key={poster.id} poster={poster} brand={brand} />) : null}
+      {format === "plate" ? (
+        <div className="qrp-plate-grid">
+          {list.map((poster) => (
+            <Plate key={poster.id} poster={poster} brand={brand} />
+          ))}
+        </div>
+      ) : null}
       {format === "sticker" ? (
         <div className="qrp-sticker-grid">
           {list.map((poster) => (
@@ -205,19 +248,19 @@ export function useHydrated(): boolean {
 export function QrPrintSheets({
   pages,
   posters,
-  brand = null,
+  brand,
 }: {
   pages: QrPrintPage[];
   posters: Map<string, QrPoster>;
-  /** Логотип и фирменный цвет организации («Моя компания → Логотип и цвета»). */
-  brand?: DocumentBrand | null;
+  /** Фирменный стиль организации (`loadPrintBrand`): логотип, сайт, цвета, «Ч/б». */
+  brand: PrintBrand;
 }) {
   const hydrated = useHydrated();
   if (!hydrated) return null;
   const target = document.body;
-  const style = brand?.color ? ({ "--qrp-brand": brandPalette(brand.color).ink } as CSSProperties) : undefined;
+  const style = printBrandCssVars(brand.colors) as CSSProperties;
   return createPortal(
-    <div className="qrp-root" data-qr-print-root="" aria-hidden style={style}>
+    <div className="qrp-root" data-qr-print-root="" data-print-mono={brand.mono ? "1" : undefined} aria-hidden style={style}>
       {/* Стиль — первым: у последнего ЛИСТА должен быть `:last-child`. */}
       <style>{PRINT_CSS}</style>
       {pages.map((page, index) => (
@@ -242,50 +285,74 @@ const PRINT_CSS = `
   }
   .qrp-sheet:last-child, .qrp-sheet:last-of-type { break-after: auto; page-break-after: auto; }
   .qrp-root svg { display: block; }
+  .qrp-root img { display: block; }
 
-  .qrp-eyebrow { font-size: 10.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #333 !important; }
+  /* Цвет — только border-color и SVG: фоны печать кабинета обнуляет. В «Ч/б» все переменные чёрные. */
+  .qrp-root .qrp-frame { border: 1.2mm solid var(--pb-primary) !important; border-radius: 5mm !important; }
+  .qrp-root .qrp-eyebrow { font-size: 10.5pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pb-primary-ink) !important; }
   .qrp-org { font-size: 12pt; margin-top: 1.5mm; }
   .qrp-detail { font-size: 11pt; margin-top: 1mm; font-weight: 600; }
   .qrp-steps { list-style: none; margin: 0; padding: 0; }
   .qrp-steps li { margin-top: 1.6mm; }
-  .qrp-valid { margin-top: 4mm; font-size: 11pt; font-weight: 600; border: 0.3mm solid #000; padding: 1.5mm 3mm; display: inline-block; }
+  .qrp-root .qrp-steps li b { color: var(--pb-primary-ink) !important; }
+  .qrp-root .qrp-valid { margin-top: 4mm; font-size: 11pt; font-weight: 600; border: 0.3mm solid var(--pb-primary-ink) !important; padding: 1.5mm 3mm; display: inline-block; }
 
-  /* Фирменная полоса — рамкой: фон обнулён правилом выше и без «фоновой графики» не печатается. */
-  .qrp-brand-band { border-top: 2mm solid var(--qrp-brand, #000) !important; }
-  .qrp-a5-text.qrp-brand-band { padding-top: 3mm; }
-  .qrp-a4-logo { display: block; height: 12mm; width: auto; max-width: 60mm; object-fit: contain; margin-bottom: 3mm; }
-  .qrp-a5-logo { display: block; height: 10mm; width: auto; max-width: 50mm; object-fit: contain; margin-bottom: 2.5mm; }
-  .qrp-sticker-logo { display: inline-block; height: 2.6mm; width: auto; max-width: 12mm; object-fit: contain; vertical-align: -0.4mm; margin-right: 1mm; }
-  .qrp-a4 { height: 250mm; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 6mm; }
-  .qrp-a4-title { font-size: 24pt; font-weight: 700; line-height: 1.15; margin-top: 4mm; max-width: 175mm; }
-  .qrp-a4-code { margin-top: 8mm; }
-  .qrp-a4-steps { font-size: 13pt; margin-top: 8mm; width: 150mm; text-align: left; }
+  /* Шапка: логотип слева, сайт справа, линия основного цвета. */
+  .qrp-root .qrp-head { display: flex; align-items: center; justify-content: space-between; gap: 5mm; width: 100%; padding-bottom: 2.5mm; border-bottom: 0.6mm solid var(--pb-primary-ink) !important; }
+  .qrp-logo { width: auto; object-fit: contain; object-position: left center; flex: 0 1 auto; min-width: 0; }
+  .qrp-head-name { min-width: 0; font-size: 13pt; font-weight: 700; line-height: 1.15; }
+  .qrp-root .qrp-site { flex-shrink: 0; font-size: 12pt; font-weight: 600; letter-spacing: -0.01em; color: var(--pb-primary-ink) !important; }
 
-  .qrp-a5 { height: 125mm; display: flex; align-items: center; gap: 8mm; padding: 0 4mm; }
+  .qrp-a4 { height: 250mm; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6mm 8mm; }
+  .qrp-a4 .qrp-eyebrow { margin-top: 5mm; }
+  .qrp-a4-title { font-size: 24pt; font-weight: 700; line-height: 1.15; margin-top: 3mm; max-width: 170mm; }
+  .qrp-a4-code { margin-top: 6mm; }
+  .qrp-a4-steps { font-size: 13pt; margin-top: 6mm; width: 150mm; text-align: left; }
+
+  .qrp-a5 { height: 125mm; padding: 2mm; }
   .qrp-a5 + .qrp-a5 { border-top: 0.3mm dashed #666 !important; }
+  .qrp-root .qrp-a5-frame { height: 100%; padding: 4mm 5mm; border-width: 0.9mm !important; border-radius: 4mm !important; display: flex; flex-direction: column; }
+  .qrp-a5-body { flex: 1; min-height: 0; display: flex; align-items: center; gap: 6mm; }
   .qrp-a5-text { min-width: 0; flex: 1; }
-  .qrp-a5-title { font-size: 17pt; font-weight: 700; line-height: 1.15; margin-top: 2mm; }
-  .qrp-a5-steps { font-size: 10.5pt; margin-top: 4mm; }
+  .qrp-a5-title { font-size: 16pt; font-weight: 700; line-height: 1.15; margin-top: 2mm; }
+  .qrp-a5-steps { font-size: 10pt; margin-top: 3mm; }
   .qrp-a5 .qrp-valid { font-size: 9.5pt; margin-top: 3mm; }
 
   .qrp-sticker-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 60mm); gap: 3mm; height: 249mm; }
   .qrp-sticker {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center;
     border: 0.3mm dashed #777 !important; padding: 2mm 2.5mm; overflow: hidden;
   }
-  /* Код наклейки — всё, что осталось над текстом: от 29 до 36 мм по ширине
-     (высота плитки = ширина × пропорция с полосой). Текст под кодом —
+  .qrp-root .qrp-sticker .qrp-head { padding-bottom: 1mm; border-bottom-width: 0.35mm !important; gap: 2mm; }
+  .qrp-sticker .qrp-head-name { font-size: 7pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .qrp-root .qrp-sticker .qrp-site { font-size: 6.5pt; }
+  /* Код наклейки — всё, что осталось под шапкой и над текстом: от 25 до 36 мм
+     по ширине (высота плитки = ширина × пропорция с полосой). Текст под кодом —
      не больше пяти строк: название — две, организация, период/документ и
-     срок — по одной (длинные обрезаются многоточием), поэтому код самой
-     длинной наклейки (допуск гигиены по документу) — около 30 мм, а не 22. */
+     срок — по одной (длинные обрезаются многоточием). */
   .qrp-sticker-code {
-    flex: 1 1 0; min-height: ${(29 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(36 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
-    width: 100%; display: flex; justify-content: center;
+    flex: 1 1 0; min-height: ${(25 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(36 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
+    width: 100%; display: flex; justify-content: center; margin-top: 1mm;
   }
   .qrp-sticker-code svg { height: 100%; width: auto; }
-  .qrp-sticker-title { font-size: 10pt; font-weight: 700; line-height: 1.1; margin-top: 1.5mm; max-height: 2.2em; overflow: hidden; }
+  .qrp-sticker-title { font-size: 10pt; font-weight: 700; line-height: 1.1; margin-top: 1.2mm; max-height: 2.2em; overflow: hidden; }
   .qrp-sticker-org { font-size: 7.5pt; line-height: 1.15; margin-top: 0.6mm; }
   .qrp-sticker-detail { font-size: 7.5pt; font-weight: 600; line-height: 1.15; margin-top: 0.3mm; }
   .qrp-sticker-org, .qrp-sticker-detail { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Табличка на оборудование: 4 на лист (2 × 2), каждая в толстой скруглённой рамке. */
+  .qrp-plate-grid { display: grid; grid-template-columns: repeat(2, 95mm); grid-template-rows: repeat(2, 125mm); height: 250mm; }
+  .qrp-plate { padding: 2mm; height: 125mm; }
+  .qrp-root .qrp-plate-frame { height: 100%; padding: 4mm 5mm; display: flex; flex-direction: column; align-items: center; text-align: center; border-width: 2.2mm !important; border-radius: 6mm !important; }
+  .qrp-root .qrp-plate .qrp-head { gap: 3mm; padding-bottom: 2mm; }
+  .qrp-plate .qrp-head-name { font-size: 10pt; }
+  .qrp-root .qrp-plate .qrp-site { font-size: 10pt; }
+  .qrp-root .qrp-plate-word { margin-top: 3mm; font-size: 38pt; font-weight: 800; line-height: 1; letter-spacing: 0.04em; color: var(--pb-primary-ink) !important; }
+  .qrp-plate-label { margin-top: 2mm; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .qrp-plate-regime { margin-top: 0.5mm; font-size: 20pt; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+  .qrp-plate-code { margin-top: 3mm; }
+  .qrp-plate-foot { margin-top: auto; width: 100%; display: flex; align-items: center; justify-content: center; gap: 3mm; padding-top: 2mm; }
+  .qrp-root .qrp-plate-no { font-size: 17pt; font-weight: 800; border: 0.7mm solid var(--pb-primary) !important; border-radius: 3mm !important; padding: 0.5mm 3mm; white-space: nowrap; }
+  .qrp-plate-area { min-width: 0; font-size: 13pt; font-weight: 700; line-height: 1.1; max-height: 2.3em; overflow: hidden; }
 }
 `;

@@ -14,6 +14,7 @@
 import { sanitizeOrgJournalName } from "@/lib/org-journal-name";
 import { ORG_LOGO_PATH_PATTERN } from "@/lib/org-logo-file";
 import { normalizeOwnership, normalizeSphere } from "@/lib/org-profile";
+import { normalizeWebsite } from "@/lib/print-brand";
 
 export const ORG_PROFILE_FIELDS = [
   "name",
@@ -27,6 +28,11 @@ export const ORG_PROFILE_FIELDS = [
   "locale",
   "timezone",
   "brandColor",
+  "brandColor2",
+  "brandColor3",
+  "website",
+  "qrBrandFrame",
+  "qrCenterLogo",
   "logoUrl",
   "shiftEndHour",
   "lockPastDayEdits",
@@ -139,6 +145,26 @@ export function parseOrganizationProfilePatch(
     if (v === "") data.brandColor = null;
     else if (!HEX_COLOR.test(v)) errors.push("Брендовый цвет в формате #RRGGBB");
     else data.brandColor = v;
+  }
+  // Дополнительный цвет и фон фирменного стиля печати — те же правила, что у основного.
+  for (const key of ["brandColor2", "brandColor3"] as const) {
+    if (!has(key)) continue;
+    const v = typeof body[key] === "string" ? (body[key] as string).trim() : "";
+    if (v === "") data[key] = null;
+    else if (!HEX_COLOR.test(v)) errors.push("Цвет в формате #RRGGBB");
+    else data[key] = v;
+  }
+  if (has("website")) {
+    const raw = typeof body.website === "string" ? body.website.trim() : "";
+    if (raw === "") data.website = null;
+    else {
+      const site = normalizeWebsite(raw);
+      if (site === null) errors.push("Укажите сайт вида dobroe-kafe.ru");
+      else data.website = site;
+    }
+  }
+  for (const key of ["qrBrandFrame", "qrCenterLogo"] as const) {
+    if (has(key) && typeof body[key] === "boolean") data[key] = body[key];
   }
   if (has("logoUrl")) {
     const v = typeof body.logoUrl === "string" ? body.logoUrl.trim() : "";

@@ -149,6 +149,7 @@ model Organization {
   masterBrakerageBatches         MasterBrakerageBatch[]
   knowledgeDocuments            KnowledgeDocument[]
   logo                          OrganizationLogo?
+  qrIcon                        OrganizationQrIcon?
   ppkRecords                    PpkRecord[]
   ppkAcknowledgements           PpkAcknowledgement[]
   checklistTemplates            ChecklistTemplate[]
@@ -281,6 +282,19 @@ model Organization {
   locale                         String                         @default("ru")
   brandColor                     String?
   logoUrl                        String?
+  /// Фирменный стиль печати (2026-10-27): второй цвет (номера шагов, значки)
+  /// и третий (светлые подложки). Пусто — подбираются из `brandColor`, а без
+  /// него — из цвета WeSetup. Сборка — `src/lib/print-brand.ts`.
+  brandColor2                    String?
+  brandColor3                    String?
+  /// Сайт справа в шапке плакатов, QR и этикеток. Пусто — wesetup.ru.
+  website                        String?
+  /// Значок для центра QR (квадратный): /api/org-assets/<id>/icon?v=<n>.
+  qrIconUrl                      String?
+  /// QR-коды: рамка и полоса «Отсканировать» в фирменном цвете (иначе чёрные).
+  qrBrandFrame                   Boolean                        @default(true)
+  /// QR-коды: значок или логотип организации в центре вместо знака WeSetup.
+  qrCenterLogo                   Boolean                        @default(true)
   yookassaShopId                 String?
   createdAt                      DateTime                       @default(now())
   updatedAt                      DateTime                       @updatedAt
@@ -681,6 +695,18 @@ model PpkAcknowledgement {
 /// Отдаётся через /api/org-assets/<organizationId>/logo?v=<version>;
 /// `Organization.logoUrl` указывает на этот адрес.
 model OrganizationLogo {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bytes          Bytes
+  mime           String
+  version        Int          @default(1)
+  updatedAt      DateTime     @updatedAt
+}
+
+/// Квадратный значок организации для центра QR-кодов (2026-10-27). Без него в
+/// центр идёт логотип, если он почти квадратный, иначе — первая буква названия.
+/// Отдаётся через /api/org-assets/<organizationId>/icon?v=<version>.
+model OrganizationQrIcon {
   organizationId String       @id
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   bytes          Bytes

@@ -226,7 +226,7 @@ export function QrObjectCard({ item, selected, format, onToggle, onFormat }: Car
         <p className="min-w-0 flex-1 text-[12.5px] leading-[1.45] text-[#6f7282]">{item.caption}</p>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-1">
-        <QrFormatSwitch value={format} onChange={onFormat} label={t("format", { label: item.label })} />
+        <QrFormatSwitch value={format} onChange={onFormat} label={t("format", { label: item.label })} withPlate={Boolean(item.poster.plate)} />
         <CheckLink url={item.poster.url} compact />
       </div>
     </article>

@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
-import { DOCUMENT_ORG_SELECT, buildDocumentOrgBlock, journalHeaderOrgText } from "@/lib/document-org-block";
+import { DOCUMENT_ORG_SELECT, buildDocumentOrgBlock } from "@/lib/document-org-block";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -12,10 +12,10 @@ import { OrganizationBrandingForm } from "@/components/settings/organization-bra
 export const dynamic = "force-dynamic";
 
 /**
- * «Моя компания → Логотип и цвета» (скан 82, лист 2, п. 2): логотип и
- * фирменный цвет с предпросмотром в шапке журнала и на QR-плакате. Раньше —
- * секция `#branding` формы реквизитов. Цвет клиента — только в документах и
- * на плакатах (план, раздел 7): кабинет не перекрашивается.
+ * «Моя компания → Фирменный стиль»: логотип, три цвета, сайт и настройки QR
+ * с предпросмотром плаката, QR-наклейки и этикетки (2026-10-27). Цвет клиента
+ * — только в печати (плакаты, QR, таблички, этикетки): кабинет не
+ * перекрашивается, журналы остаются чёрно-белыми.
  */
 export default async function OrganizationBrandingPage() {
   const session = await requireAuth();
@@ -23,12 +23,22 @@ export default async function OrganizationBrandingPage() {
   const organizationId = getActiveOrgId(session);
 
   const [org, t, tProfile] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: DOCUMENT_ORG_SELECT }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        ...DOCUMENT_ORG_SELECT,
+        brandColor2: true,
+        brandColor3: true,
+        website: true,
+        qrIconUrl: true,
+        qrBrandFrame: true,
+        qrCenterLogo: true,
+      },
+    }),
     getTranslations("settingsManagement.organizationProfile.brandingPage"),
     getTranslations("settingsManagement.organizationProfile"),
   ]);
   if (!org) notFound();
-  // Шапка журнала на всю организацию — та же строка, что печатает PDF.
   const block = buildDocumentOrgBlock({ org });
 
   return (
@@ -46,8 +56,16 @@ export default async function OrganizationBrandingPage() {
           qa={[{ q: tProfile("guide.brandQuestion"), a: tProfile("guide.brandAnswer") }]}
         />
         <OrganizationBrandingForm
-          initial={{ brandColor: org.brandColor, logoUrl: org.logoUrl }}
-          headerText={journalHeaderOrgText(block)}
+          initial={{
+            brandColor: org.brandColor,
+            brandColor2: org.brandColor2,
+            brandColor3: org.brandColor3,
+            website: org.website,
+            qrBrandFrame: org.qrBrandFrame,
+            qrCenterLogo: org.qrCenterLogo,
+            logoUrl: org.logoUrl,
+            qrIconUrl: org.qrIconUrl,
+          }}
           orgName={block.org.journalName}
         />
       </div>

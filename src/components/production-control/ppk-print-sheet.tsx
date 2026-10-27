@@ -42,6 +42,7 @@ export function PpkPrintSheet({
   subtitle,
   pdfHref,
   pdfLabel,
+  largeLogo = false,
   children,
 }: {
   org: PpkPrintOrg;
@@ -50,6 +51,8 @@ export function PpkPrintSheet({
   /** Адрес PDF собранного документа: рядом с печатью появляется «Скачать PDF». */
   pdfHref?: string;
   pdfLabel?: string;
+  /** Логотип вдвое крупнее (политика ХАССП, 2026-10-27): h-24 вместо h-12. Остальные листы ППК — прежние. */
+  largeLogo?: boolean;
   children: ReactNode;
 }) {
   const requisites = ppkRequisitesLine(org);
@@ -74,7 +77,7 @@ export function PpkPrintSheet({
         <div className="mb-6 flex items-center gap-4" data-sheet-org>
           {org.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={org.logoUrl} alt="" className="h-12 w-auto max-w-[160px] object-contain" />
+            <img src={org.logoUrl} alt="" className={largeLogo ? "h-24 w-auto max-w-[320px] object-contain" : "h-12 w-auto max-w-[160px] object-contain"} />
           ) : null}
           <div className="min-w-0">
             <div className="font-semibold">{org.orgName}</div>

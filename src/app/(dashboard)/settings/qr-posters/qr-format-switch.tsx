@@ -2,7 +2,7 @@
 
 import { useRef, type KeyboardEvent } from "react";
 
-import { QR_PRINT_FORMATS, type QrPrintFormat } from "@/lib/qr-fill-types";
+import { qrPrintFormatOptions, type QrPrintFormat } from "@/lib/qr-fill-types";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,17 +18,21 @@ export function QrFormatSwitch({
   onChange,
   label,
   className,
+  withPlate = false,
 }: {
   /** null — у карточек группы разные форматы, ни один не выбран. */
   value: QrPrintFormat | null;
   onChange: (format: QrPrintFormat) => void;
   label: string;
   className?: string;
+  /** Показать «Табличка» — только у оборудования с температурой. */
+  withPlate?: boolean;
 }) {
+  const options = qrPrintFormatOptions(withPlate);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const activeIndex = Math.max(
     0,
-    QR_PRINT_FORMATS.findIndex((option) => option.value === value)
+    options.findIndex((option) => option.value === value)
   );
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -40,8 +44,8 @@ export function QrFormatSwitch({
           : 0;
     if (!step) return;
     event.preventDefault();
-    const next = (index + step + QR_PRINT_FORMATS.length) % QR_PRINT_FORMATS.length;
-    onChange(QR_PRINT_FORMATS[next].value);
+    const next = (index + step + options.length) % options.length;
+    onChange(options[next].value);
     refs.current[next]?.focus();
   }
 
@@ -55,7 +59,7 @@ export function QrFormatSwitch({
         className
       )}
     >
-      {QR_PRINT_FORMATS.map((option, index) => {
+      {options.map((option, index) => {
         const checked = option.value === value;
         return (
           <button

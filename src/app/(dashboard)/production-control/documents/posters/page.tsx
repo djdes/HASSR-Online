@@ -1,60 +1,64 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Palette } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { POSTERS } from "@/lib/ppk/posters";
+import { POSTER_GROUPS, orderPosters, posterInJournal } from "@/lib/ppk/posters";
+import { loadDisinfectantJournalNames } from "@/lib/ppk/poster-data.server";
+import { loadPrintBrand } from "@/lib/print-brand.server";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
-import { loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
 import { PosterSheet } from "@/components/production-control/poster-sheet";
+import { PostersPicker, type PosterPickerGroup } from "@/components/production-control/posters-picker";
 
 export const dynamic = "force-dynamic";
 
-/** Блок «Плакаты»: мини-листы с логотипом организации; открыть или распечатать каждый, либо все сразу. */
+/**
+ * Блок «Плакаты»: 17 плакатов в четырёх группах в одном фирменном стиле
+ * (рамка цвета организации, логотип слева, сайт справа). Выбрать галочками и
+ * напечатать, либо напечатать все; «Ч/б» — для чёрно-белого принтера.
+ */
 export default async function PostersPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
   const organizationId = getActiveOrgId(session);
 
-  const [org, t] = await Promise.all([
-    loadPpkPrintOrg(organizationId),
+  const [brand, journalNames, t] = await Promise.all([
+    loadPrintBrand(organizationId),
+    loadDisinfectantJournalNames(organizationId),
     getTranslations("productionControl.posters"),
   ]);
 
+  const ordered = orderPosters(journalNames);
+  const groups: PosterPickerGroup[] = POSTER_GROUPS.map((group) => ({
+    key: group.key,
+    title: group.title,
+    items: ordered
+      .filter((poster) => poster.group === group.key)
+      .map((poster) => ({
+        key: poster.key,
+        title: poster.title,
+        inJournal: posterInJournal(poster, journalNames),
+        preview: <PosterSheet poster={poster} brand={brand} size="preview" />,
+      })),
+  }));
+
   return (
     <div className="space-y-5">
-      <PpkBlockHeader
-        blockKey="posters"
-        lead={t("lead")}
-        actions={
-          <Link
-            href="/production-control/documents/posters/all"
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-          >
-            {t("printAll")}
-          </Link>
-        }
-      />
+      <PpkBlockHeader blockKey="posters" lead={t("lead")} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {POSTERS.map((poster) => (
-          <Link
-            key={poster.key}
-            href={`/production-control/documents/posters/${poster.key}`}
-            className="group flex flex-col rounded-3xl border border-[#ececf4] bg-white p-3 transition-colors duration-150 hover:border-[#5566f6]/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-          >
-            <div className="aspect-[1/1.414] overflow-hidden rounded-2xl border border-[#ececf4]">
-              <PosterSheet poster={poster} org={org} size="preview" />
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3 px-1">
-              <span className="text-[14.5px] font-medium text-[#0b1024]">{poster.title}</span>
-              <span className="shrink-0 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 group-hover:text-[#5566f6]">
-                {t("open")}
-              </span>
-            </div>
-          </Link>
-        ))}
+      <div className="flex flex-col gap-3 rounded-3xl border border-[#ececf4] bg-[#f5f6ff] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[13.5px] leading-snug text-[#3c4053]">{t("brandingHint")}</p>
+        <Link
+          href="/settings/organization/branding"
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        >
+          <Palette className="size-4" aria-hidden />
+          {t("brandingLink")}
+        </Link>
       </div>
+
+      <PostersPicker groups={groups} />
     </div>
   );
 }

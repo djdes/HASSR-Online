@@ -28,3 +28,10 @@ export function prepareOrgLogo(bytes: Uint8Array, declaredMime: string): Prepare
   if (!clean.ok) return { ok: false, error: clean.error };
   return { ok: true, bytes: new TextEncoder().encode(clean.svg), mime: check.mime };
 }
+
+export const ORG_QR_ICON_PATH_PATTERN = /^\/api\/org-assets\/[A-Za-z0-9_-]+\/icon(\?v=\d+)?$/;
+
+/** Значок для центра QR: тот же способ раздачи, что у логотипа. */
+export function orgQrIconUrl(organizationId: string, version: number): string {
+  return `/api/org-assets/${organizationId}/icon?v=${version}`;
+}

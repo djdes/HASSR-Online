@@ -127,6 +127,8 @@ describe("parseQrPostersRequest — все входы на страницу QR-�
   it("/settings/equipment (наклейки и плакаты) и /settings/buildings", () => {
     assert.equal(parse("/settings/qr-posters?kind=equipment&layout=sheet").format, "sticker");
     assert.equal(parse("/settings/qr-posters?kind=equipment").format, null);
+    // Таблички на оборудование (2026-10-27).
+    assert.equal(parse("/settings/qr-posters?kind=equipment&layout=plate").format, "plate");
     assert.deepEqual(parse("/settings/qr-posters?kind=rooms").target, { type: "objects", kind: "room", documentId: null });
   });
 

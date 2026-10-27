@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { SERIF } from "@/components/inspector/paper";
+import { brandQrOptionsFor } from "@/lib/brand-qr-center.server";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isInspectorQrRecord } from "@/lib/inspector-qr";
@@ -8,6 +9,7 @@ import { inspectorQrSvg, inspectorQrUrl } from "@/lib/inspector-qr-service";
 import { brandPalette } from "@/lib/document-brand";
 import { DOCUMENT_ORG_SELECT, buildDocumentOrgBlock, documentOrgRequisitesLine } from "@/lib/document-org-block";
 import { hasCapability } from "@/lib/permission-presets";
+import { loadPrintBrand } from "@/lib/print-brand.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PrintButton } from "./print-button";
 
@@ -50,7 +52,8 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
   const inactive = Boolean(token.revokedAt) || token.expiresAt < new Date();
 
   const url = inspectorQrUrl(token.id);
-  const svg = inactive ? "" : await inspectorQrSvg(url);
+  // QR в рамке корпоративного цвета и со значком организации в центре (2026-10-27).
+  const svg = inactive ? "" : await inspectorQrSvg(url, await brandQrOptionsFor(orgId, await loadPrintBrand(orgId)));
   // Реквизиты, логотип и цвет — общий блок сведений для документов.
   const block = buildDocumentOrgBlock({ org: token.organization });
   const orgTitle = block.org.journalName;
@@ -100,7 +103,7 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
           <div className="mt-8 border-y border-[#d8d8d8] py-4 text-center">
             {block.brand.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={block.brand.logoUrl} alt="" className="mx-auto mb-3 h-12 w-auto max-w-[200px] object-contain" data-org-logo />
+              <img src={block.brand.logoUrl} alt="" className="mx-auto mb-3 h-24 w-auto max-w-[400px] object-contain" data-org-logo />
             ) : null}
             <div className={`${SERIF} text-[clamp(18px,3.2vw,24px)] leading-tight`}>{orgTitle}</div>
             {block.org.fullName !== orgTitle ? <div className="mt-1 text-[14px] text-[#616161]">{block.org.fullName}</div> : null}

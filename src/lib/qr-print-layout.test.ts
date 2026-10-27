@@ -42,6 +42,8 @@ describe("composeQrPrintPages — раскладка смешанной печа
   it("ровно 12 наклеек — один лист, без пустого последнего", () => {
     assert.equal(composeQrPrintPages(entries("sticker", 12)).length, 1);
     assert.equal(composeQrPrintPages(entries("sticker", 24)).length, 2);
+    assert.equal(composeQrPrintPages(entries("plate", 4)).length, 1);
+    assert.equal(composeQrPrintPages(entries("plate", 5)).length, 2);
     assert.equal(composeQrPrintPages(entries("a5", 4)).length, 2);
   });
 

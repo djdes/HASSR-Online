@@ -88,3 +88,18 @@ test("правки реквизитов поверх ЕГРЮЛ: пусто — 
   const partner = parseOrganizationProfilePatch({ name: "Кафе", kpp: "770101001" }, ["name"]);
   assert.deepEqual(partner, { ok: true, data: { name: "Кафе" } });
 });
+
+test("фирменный стиль: цвета, сайт и переключатели QR", () => {
+  const parsed = parseOrganizationProfilePatch(
+    { brandColor2: " #112233 ", brandColor3: "", website: "https://www.Dobroe-Kafe.ru/", qrBrandFrame: false, qrCenterLogo: true },
+    ORG_PROFILE_FIELDS,
+  );
+  assert.deepEqual(parsed, {
+    ok: true,
+    data: { brandColor2: "#112233", brandColor3: null, website: "dobroe-kafe.ru", qrBrandFrame: false, qrCenterLogo: true },
+  });
+
+  assert.deepEqual(parseOrganizationProfilePatch({ website: "  " }, ORG_PROFILE_FIELDS), { ok: true, data: { website: null } });
+  assert.equal(parseOrganizationProfilePatch({ website: "кафе" }, ORG_PROFILE_FIELDS).ok, false);
+  assert.equal(parseOrganizationProfilePatch({ brandColor2: "красный" }, ORG_PROFILE_FIELDS).ok, false);
+});

@@ -236,7 +236,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/settings/organization": "Информация об организации",
   "/settings/organization/office": "Офис",
   "/settings/organization/documents": "Сведения для документов",
-  "/settings/organization/branding": "Логотип и цвета",
+  "/settings/organization/branding": "Фирменный стиль",
   "/settings/organization/contacts": "Контакты и уведомления",
   "/settings/partner": "Стать партнёром",
   "/settings/permissions": "Права доступа",

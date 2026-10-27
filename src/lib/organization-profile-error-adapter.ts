@@ -12,6 +12,8 @@ const PROFILE_ERRORS = {
   "Язык должен быть ru, en или uz": "invalidLocale",
   "Часовой пояс в формате IANA: Europe/Moscow": "invalidTimezone",
   "Брендовый цвет в формате #RRGGBB": "invalidBrandColor",
+  "Цвет в формате #RRGGBB": "invalidBrandColor",
+  "Укажите сайт вида dobroe-kafe.ru": "invalidWebsite",
   "URL логотипа должен начинаться с http:// или https://": "invalidLogoUrl",
   "Час окончания смены должен быть от 0 до 23": "invalidShiftEnd",
   "КПП — 9 знаков, например 770101001": "invalidKpp",

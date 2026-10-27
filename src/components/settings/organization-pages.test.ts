@@ -92,7 +92,7 @@ test("у каждого переехавшего поля есть своя но
   const documents = read(DOCUMENTS);
   for (const fn of ["buildDocumentOrgBlock(", "journalHeaderOrgText(", "documentOrgRows("]) assert.ok(documents.includes(fn), fn);
   const branding = read(BRANDING);
-  for (const fn of ["brandPalette(", "contrastRatio("]) assert.ok(branding.includes(fn), fn);
+  for (const fn of ["resolvePrintColors(", "resolvePrintBrand("]) assert.ok(branding.includes(fn), fn);
 });
 
 test("новые страницы закрыты так же, как «Реквизиты»: только admin.full", () => {

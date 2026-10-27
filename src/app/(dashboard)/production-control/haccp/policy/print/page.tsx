@@ -4,6 +4,8 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { brandQrSvg } from "@/lib/brand-qr";
+import { brandQrOptionsFor } from "@/lib/brand-qr-center.server";
+import { loadPrintBrand } from "@/lib/print-brand.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
@@ -54,11 +56,12 @@ export default async function PolicyPrintPage() {
       })
     : "";
   const publicUrl = `${process.env.NEXTAUTH_URL ?? "https://wesetup.ru"}/policy/${data.token}`;
-  const qrSvg = await brandQrSvg(publicUrl);
+  // QR в рамке корпоративного цвета и со значком организации в центре (2026-10-27).
+  const qrSvg = await brandQrSvg(publicUrl, await brandQrOptionsFor(organizationId, await loadPrintBrand(organizationId)));
   const paragraphs = data.text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
 
   return (
-    <PpkPrintSheet org={org} title={u("policyPrintPage.title")}>
+    <PpkPrintSheet org={org} title={u("policyPrintPage.title")} largeLogo>
       <div className="space-y-3 text-justify">
         {paragraphs.map((paragraph, index) => (
           <p key={index}>{paragraph}</p>

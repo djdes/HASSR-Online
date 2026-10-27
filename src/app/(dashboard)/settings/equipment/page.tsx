@@ -230,6 +230,16 @@ export default async function EquipmentSettingsPage() {
               {t("posters")}
             </Link>
           ) : null}
+          {canManage && equipment.length > 0 ? (
+            <Link
+              href="/settings/qr-posters?kind=equipment&layout=plate"
+              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              title={t("platesHint")}
+            >
+              <QrCode className="size-4 text-[#5566f6]" />
+              {t("plates")}
+            </Link>
+          ) : null}
           {canManage && (
             <EquipmentDialog
               areas={areas}

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import { brandQrSvg } from "@/lib/brand-qr";
+import { brandQrSvg, type BrandQrOptions } from "@/lib/brand-qr";
 import { db } from "@/lib/db";
 import { buildInspectorUrl, hashInspectorToken } from "@/lib/inspector-tokens";
 import {
@@ -60,8 +60,8 @@ export function inspectorQrUrl(tokenId: string): string {
 }
 
 /** Фирменный QR (`brand-qr.ts`) — тот же на портале и на листе A4 для печати. */
-export async function inspectorQrSvg(url: string): Promise<string> {
-  return brandQrSvg(url);
+export async function inspectorQrSvg(url: string, qr?: BrandQrOptions): Promise<string> {
+  return brandQrSvg(url, qr);
 }
 
 /**

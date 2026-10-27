@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowRight, LayoutGrid, Printer, Refrigerator, Warehouse } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { AlertTriangle, ArrowRight, Contrast, LayoutGrid, Printer, Refrigerator, Warehouse } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { JournalSelectionBar } from "@/components/journals/journal-selection-bar";
@@ -136,8 +137,26 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
   const setFormat = (key: string, format: QrPrintFormat) => setFormats((current) => ({ ...current, [key]: format }));
   const setGroupSelected = (list: QrPosterItem[], value: boolean) =>
     setSelected((current) => ({ ...current, ...Object.fromEntries(list.filter((item) => !item.expired).map((item) => [item.key, value])) }));
+  // Табличка бывает только у оборудования с температурой: остальным формат группы не меняем.
   const setGroupFormat = (list: QrPosterItem[], format: QrPrintFormat) =>
-    setFormats((current) => ({ ...current, ...Object.fromEntries(list.map((item) => [item.key, format])) }));
+    setFormats((current) => ({
+      ...current,
+      ...Object.fromEntries(list.filter((item) => format !== "plate" || item.poster.plate).map((item) => [item.key, format])),
+    }));
+
+  // «Ч/б» — параметр адреса `bw=1`: сервер собирает QR с чёрной рамкой, лист печатается чёрным.
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [monoPending, startMono] = useTransition();
+  const mono = view.brand.mono;
+  const toggleMono = () => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (mono) next.delete("bw");
+    else next.set("bw", "1");
+    const query = next.toString();
+    startMono(() => router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false }));
+  };
 
   // autoprint=1: печать после гидратации (портал печати смонтирован) и
   // только если что-то выбрано — иначе Chrome печатал пустые рамки.
@@ -203,6 +222,22 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
         actions={
           <>
             {journal?.disabled ? <PageHeaderStat tone="warn">{t("journalDisabled")}</PageHeaderStat> : null}
+            <button
+              type="button"
+              onClick={toggleMono}
+              aria-pressed={mono}
+              disabled={monoPending}
+              title={t("monoHint")}
+              data-qr-mono=""
+              className={cn(
+                OUTLINE_BUTTON_CLASS,
+                "disabled:opacity-60",
+                mono && "border-[#5566f6]/50 bg-[#f5f6ff] text-[#3848c7]"
+              )}
+            >
+              <Contrast className="size-4 text-[#5566f6]" />
+              {t("mono")}
+            </button>
             {view.screen !== "overview" ? (
               <Link href="/settings/qr-posters" className={OUTLINE_BUTTON_CLASS}>
                 <LayoutGrid className="size-4 text-[#5566f6]" />
@@ -455,11 +490,17 @@ export function QrPostersClient({ view }: { view: QrPostersView }) {
                   label={searching ? t("formatForFoundStickers") : t("formatForAllStickers")}
                   value={sameFormat(groups.object, formats)}
                   onChange={(format) => setGroupFormat(groups.object, format)}
+                  withPlate={groups.object.some((item) => item.poster.plate)}
                 />
               </>
             ) : null
           }
         >
+          {view.objectKind === "equipment" && groups.object.some((item) => !item.poster.plate) ? (
+            <p className="text-[12.5px] leading-[1.5] text-[#6f7282]" data-qr-plate-hint="">
+              {t("plateSkipHint", { count: String(groups.object.filter((item) => !item.poster.plate).length) })}
+            </p>
+          ) : null}
           {groups.object.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {groups.object.map((item) => (

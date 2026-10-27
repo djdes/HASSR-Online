@@ -4,6 +4,8 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { brandQrOptionsFor } from "@/lib/brand-qr-center.server";
+import { loadPrintBrand } from "@/lib/print-brand.server";
 import { loadQrPoster } from "@/lib/qr-fill-poster";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -41,8 +43,11 @@ export async function GET(
   });
 
   try {
+    const organizationId = getActiveOrgId(session);
     const poster = await loadQrPoster({
-      organizationId: getActiveOrgId(session),
+      organizationId,
+      // Превью в диалоге — тот же QR, что на печати: рамка и центр организации.
+      qr: await brandQrOptionsFor(organizationId, await loadPrintBrand(organizationId)),
       kind,
       id,
       origin,

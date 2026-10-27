@@ -8,13 +8,14 @@ import { db } from "@/lib/db";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { brandQrSvg } from "@/lib/brand-qr";
+import { brandQrSvg, type BrandQrOptions } from "@/lib/brand-qr";
 import { buildingTargets } from "@/lib/building-targets";
 import { JOURNAL_FILL_HUB_CODE, JOURNAL_FILL_PERPETUAL_UNTIL, journalFillSubject, journalFillValidUntil, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
 import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { HYGIENE_VERIFY_SUFFIX, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
+import { buildEquipmentPlate, indexEquipmentInAreas } from "@/lib/qr-plate";
 import type { QrFillKind, QrPoster, QrPosterMissing } from "@/lib/qr-fill-types";
 import { loadDirectoryBuildings } from "@/lib/room-directory";
 import { encodeRouteParam } from "@/lib/route-param";
@@ -43,9 +44,13 @@ export function rangeLabel(min: number | null, max: number | null, unit: string)
   return null;
 }
 
-/** Фирменный ч/б QR (`brand-qr.ts`): знак, коррекция H, полоса «Отсканировать». */
-async function qrSvg(url: string): Promise<string> {
-  return brandQrSvg(url);
+/**
+ * Фирменный QR (`brand-qr.ts`): коррекция H, полоса «Отсканировать». `qr` —
+ * цвет рамки и центр организации (`brand-qr-center.server.ts`); без него —
+ * чёрно-белый со знаком WeSetup.
+ */
+async function qrSvg(url: string, qr?: BrandQrOptions): Promise<string> {
+  return brandQrSvg(url, qr);
 }
 
 export function qrFillUrl(origin: string, kind: QrFillKind, id: string): string {
@@ -83,7 +88,10 @@ type EquipmentSource = {
 export async function buildEquipmentPoster(
   item: EquipmentSource,
   origin: string,
-  orgName: string
+  orgName: string,
+  qr?: BrandQrOptions,
+  /** Порядок в цехе (с 0) — для таблички; нет — таблички нет. */
+  plateIndex?: number
 ): Promise<QrPoster> {
   const url = qrFillUrl(origin, "equipment", item.id);
   // УФ-лампа температуру не меряет — норму «…°C» на её наклейке не печатаем.
@@ -100,7 +108,8 @@ export async function buildEquipmentPoster(
     subtitle: "",
     norms: norm ? [norm] : [],
     url,
-    svg: await qrSvg(url),
+    svg: await qrSvg(url, qr),
+    plate: plateIndex === undefined ? null : buildEquipmentPlate({ ...item, equipmentKind }, plateIndex),
   };
 }
 
@@ -110,7 +119,8 @@ export async function buildRoomPoster(
   room: RoomSource,
   _buildingName: string,
   origin: string,
-  orgName: string
+  orgName: string,
+  qr?: BrandQrOptions
 ): Promise<QrPoster> {
   const norms = normalizeClimateRoomNorms(room.climateNorms);
   const url = qrFillUrl(origin, "room", room.id);
@@ -126,7 +136,7 @@ export async function buildRoomPoster(
       metricLabel(norms?.humidity ?? DEFAULT_CLIMATE_HUMIDITY, "%"),
     ].filter((label): label is string => Boolean(label)),
     url,
-    svg: await qrSvg(url),
+    svg: await qrSvg(url, qr),
   };
 }
 
@@ -202,6 +212,8 @@ export async function buildJournalPoster(params: {
   validUntil?: string | null;
   /** Точка основного QR (`resolveMainJournalQrBuilding`); только без `documentId`. */
   buildingId?: string | null;
+  /** Цвет рамки и центр QR организации. */
+  qr?: BrandQrOptions;
 }): Promise<QrPoster> {
   const subject = journalFillSubject(params.organizationId, params.code, params.documentId, {
     validUntil: params.documentId ? params.validUntil : null,
@@ -217,7 +229,7 @@ export async function buildJournalPoster(params: {
     subtitle: params.subtitle,
     norms: [],
     url,
-    svg: await qrSvg(url),
+    svg: await qrSvg(url, params.qr),
     journalCode: params.code,
     documentId: params.documentId ?? null,
     validUntil: params.documentId ? (params.validUntil ?? null) : null,
@@ -329,6 +341,7 @@ async function buildJournalPosterById(params: {
   origin: string;
   /** Активная точка кабинета: основной QR в сети точек привязан к ней. */
   activeBuildingId?: string | null;
+  qr?: BrandQrOptions;
 }): Promise<ExplicitJournalPoster> {
   const { code, documentId, verify } = splitJournalPosterId(params.id);
   if (!code) return { missing: { id: params.id, label: params.id, reason: "Пустой код журнала" } };
@@ -346,6 +359,7 @@ async function buildJournalPosterById(params: {
         subtitle: "Сотрудник выбирает журнал после сканирования",
         orgName: params.orgName,
         origin: params.origin,
+        qr: params.qr,
       }),
     };
   }
@@ -379,6 +393,7 @@ async function buildJournalPosterById(params: {
         verify: true,
         validUntil,
         buildingId,
+        qr: params.qr,
       })
     : await buildJournalPoster({
         organizationId: params.organizationId,
@@ -390,6 +405,7 @@ async function buildJournalPosterById(params: {
         origin: params.origin,
         validUntil,
         buildingId,
+        qr: params.qr,
       });
   if (document) poster.periodLabel = formatPeriodLabel(document.dateFrom, document.dateTo);
   return { poster, code, document };
@@ -443,6 +459,8 @@ export async function loadQrPosters(params: {
   origin: string;
   allowed?: (id: string) => boolean;
   explicitIds?: string[];
+  /** Цвет рамки и центр QR организации. */
+  qr?: BrandQrOptions;
 }): Promise<QrPostersResult> {
   const allowed = params.allowed ?? (() => true);
   const posters: QrPoster[] = [];
@@ -470,7 +488,7 @@ export async function loadQrPosters(params: {
       const missing: QrPosterMissing[] = [];
       const built: Array<Extract<ExplicitJournalPoster, { poster: QrPoster }>> = [];
       for (const id of explicitIds) {
-        const result = await buildJournalPosterById({ organizationId: params.organizationId, id, orgName, origin: params.origin });
+        const result = await buildJournalPosterById({ organizationId: params.organizationId, id, orgName, origin: params.origin, qr: params.qr });
         if ("missing" in result) missing.push(result.missing);
         else built.push(result);
       }
@@ -494,6 +512,7 @@ export async function loadQrPosters(params: {
           subtitle: "Один плакат на стену: сотрудник выбирает журнал после сканирования",
           orgName,
           origin: params.origin,
+          qr: params.qr,
         })
       );
     }
@@ -509,6 +528,7 @@ export async function loadQrPosters(params: {
           subtitle: "Запись в журнал с телефона",
           orgName,
           origin: params.origin,
+          qr: params.qr,
         })),
         notice,
       });
@@ -521,6 +541,7 @@ export async function loadQrPosters(params: {
             orgName,
             origin: params.origin,
             verify: true,
+            qr: params.qr,
           })),
           notice,
         });
@@ -538,7 +559,7 @@ export async function loadQrPosters(params: {
       for (const room of building.rooms) {
         if (!wanted(room.id)) continue;
         locations[room.id] = building.name;
-        posters.push(await buildRoomPoster(room, building.name, params.origin, orgName));
+        posters.push(await buildRoomPoster(room, building.name, params.origin, orgName, params.qr));
       }
     }
   } else {
@@ -547,11 +568,13 @@ export async function loadQrPosters(params: {
       orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
       select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
     });
+    // Номер таблички — порядок среди всего оборудования цеха, а не среди выбранного.
+    const plateIndex = indexEquipmentInAreas(equipment.map((item) => ({ id: item.id, name: item.name, area: { name: item.area?.name ?? "" } })));
     for (const item of equipment) {
       if (!wanted(item.id)) continue;
       if (item.area?.name) locations[item.id] = item.area.name;
       equipmentTypes[item.id] = item.type;
-      posters.push(await buildEquipmentPoster(item, params.origin, orgName));
+      posters.push(await buildEquipmentPoster(item, params.origin, orgName, params.qr, plateIndex.get(item.id)));
     }
   }
   const found = new Set(posters.map((poster) => poster.id));
@@ -569,6 +592,7 @@ export async function loadQrPoster(params: {
   origin: string;
   /** Активная точка кабинета — для основного QR журнала в сети точек. */
   activeBuildingId?: string | null;
+  qr?: BrandQrOptions;
 }): Promise<QrPoster | null> {
   const orgName = await loadPosterOrgName(params.organizationId);
   if (params.kind === "journal") {
@@ -578,6 +602,7 @@ export async function loadQrPoster(params: {
       orgName,
       origin: params.origin,
       activeBuildingId: params.activeBuildingId,
+      qr: params.qr,
     });
     return "poster" in result ? result.poster : null;
   }
@@ -587,12 +612,12 @@ export async function loadQrPoster(params: {
       select: { id: true, name: true, climateNorms: true, building: { select: { name: true } } },
     });
     if (!room) return null;
-    return buildRoomPoster(room, room.building.name, params.origin, orgName);
+    return buildRoomPoster(room, room.building.name, params.origin, orgName, params.qr);
   }
   const item = await db.equipment.findFirst({
     where: { id: params.id, area: { organizationId: params.organizationId } },
     select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
   });
   if (!item) return null;
-  return buildEquipmentPoster(item, params.origin, orgName);
+  return buildEquipmentPoster(item, params.origin, orgName, params.qr);
 }

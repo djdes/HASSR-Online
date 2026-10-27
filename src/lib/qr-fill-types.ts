@@ -2,6 +2,8 @@
  * Плакат / наклейка с QR-кодом для заполнения без входа (client-safe:
  * только типы, без node-импортов — см. memory `client-safe-lib-split`).
  */
+import type { EquipmentPlate } from "@/lib/qr-plate";
+
 export type QrFillKind = "equipment" | "room" | "journal";
 
 export type QrPoster = {
@@ -47,6 +49,8 @@ export type QrPoster = {
    * Я выключил») или фритюрница (начало и окончание жарки). Нет — замер.
    */
   equipmentKind?: "uv" | "fryer" | null;
+  /** Данные таблички на оборудование (ХОЛОД/МОРОЗ); нет — у ламп, фритюрниц и оборудования без температуры. */
+  plate?: EquipmentPlate | null;
 };
 
 /** Запрошенный в `ids=` плакат, который собрать не вышло, — и почему. */
@@ -74,14 +78,20 @@ export function posterDetailLine(poster: Pick<QrPoster, "subtitle" | "norms">): 
 /** Раскладка страницы печати: плакат на лист или наклейки сеткой. */
 export type QrPosterLayout = "poster" | "sheet";
 
-/** Формат печати карточки: плакат A4, половина листа A5, наклейка 12 на лист. */
-export type QrPrintFormat = "a4" | "a5" | "sticker";
+/** Формат печати карточки: плакат A4, половина листа A5, наклейка 12 на лист, табличка на оборудование 4 на лист. */
+export type QrPrintFormat = "a4" | "a5" | "sticker" | "plate";
 
 export const QR_PRINT_FORMATS: ReadonlyArray<{ value: QrPrintFormat; label: string; hint: string }> = [
   { value: "a4", label: "A4", hint: "Плакат на весь лист — на стену или дверь" },
   { value: "a5", label: "A5", hint: "Полплаката — два на листе, лист режется пополам" },
   { value: "sticker", label: "Наклейка", hint: "Маленький код — 12 на листе, на дверцу или лампу" },
+  { value: "plate", label: "Табличка", hint: "Табличка на холодильник или морозильник: ХОЛОД/МОРОЗ, режим, номер — 4 на листе A4" },
 ];
+
+/** Форматы для карточки: табличка — только у оборудования с температурой (`withPlate`). */
+export function qrPrintFormatOptions(withPlate: boolean) {
+  return QR_PRINT_FORMATS.filter((option) => withPlate || option.value !== "plate");
+}
 
 /**
  * Группа карточки на странице QR-кодов:

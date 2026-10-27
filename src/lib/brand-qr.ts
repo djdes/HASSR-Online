@@ -6,6 +6,8 @@ import QRCode from "qrcode";
 import { journalPdfCopy } from "@/i18n/journal-pdf-copy";
 
 import { BRAND_QR_CAPTION_ASPECT, BRAND_QR_FRAME } from "@/lib/brand-qr-shared";
+import { brandOnColor, hexToRgb, normalizeBrandColor } from "@/lib/document-brand";
+import { readPngSize } from "@/lib/partners/validation";
 
 /**
  * Фирменный QR WeSetup — ОДИН помощник для всех мест, где сайт выдаёт QR:
@@ -40,9 +42,29 @@ import { BRAND_QR_CAPTION_ASPECT, BRAND_QR_FRAME } from "@/lib/brand-qr-shared";
  * из `@/lib/brand-qr-shared`.
  */
 
+/**
+ * Центр кода (2026-10-27): знак WeSetup (по умолчанию), значок-картинка
+ * организации (PNG) или буква в круге основного цвета. Всё сидит на той же
+ * белой подложке (≤ 20 % стороны матрицы), поэтому читаемость кода не
+ * зависит от выбора.
+ */
+export type BrandQrCenter =
+  | { kind: "mark" }
+  | { kind: "image"; png: Uint8Array }
+  | { kind: "letter"; letter: string; color: string };
+
 export type BrandQrOptions = {
   /** Рамка и полоса «Отсканировать» снизу. По умолчанию — есть. */
   caption?: boolean;
+  /**
+   * Цвет рамки и полосы «Отсканировать» (`#rrggbb`). По умолчанию — чёрный.
+   * Модули и «глаза» кода от него не зависят: всегда чёрные на белом.
+   * Белая надпись должна читаться на цвете — это забота вызывающего
+   * (`qrFrameColor` в `print-brand.ts`).
+   */
+  frameColor?: string;
+  /** Что в центре кода. По умолчанию — знак WeSetup. */
+  center?: BrandQrCenter;
   /** Locale of the built-in caption; QR payload and geometry stay unchanged. */
   locale?: "ru" | "en" | "uz";
 };
@@ -132,6 +154,11 @@ export type BrandQrLayout = {
   pad: BrandQrBox;
   mark: BrandQrBox;
   title: BrandQrText | null;
+  /** Цвет рамки и полосы. */
+  frameColor: string;
+  center: BrandQrCenter;
+  /** Картинка центра, вписанная в `mark` (координаты плитки); только для `kind: "image"`. */
+  image: BrandQrBox | null;
 };
 
 /** Матрица QR — коррекция H (под знаком по центру вырезаны модули). */
@@ -176,6 +203,10 @@ export function brandQrLayout(url: string, options: BrandQrOptions = {}): BrandQ
   const pad: BrandQrBox = { x: codeWindow.x + quiet + start, y: codeWindow.y + quiet + start, w: k, h: k, r: padRadius };
   const inset = k * MARK_INSET;
   const mark: BrandQrBox = { x: pad.x + inset, y: pad.y + inset, w: k - 2 * inset, h: k - 2 * inset, r: 0 };
+  const requested: BrandQrCenter = options.center ?? { kind: "mark" };
+  const image = requested.kind === "image" ? fitImage(requested.png, mark) : null;
+  // Не PNG вместо картинки — знак WeSetup, а не пустая подложка.
+  const center: BrandQrCenter = requested.kind === "image" && !image ? { kind: "mark" } : requested;
 
   let block: BrandQrBox | null = null;
   let strip: BrandQrBox | null = null;
@@ -207,17 +238,41 @@ export function brandQrLayout(url: string, options: BrandQrOptions = {}): BrandQ
     pad,
     mark,
     title,
+    frameColor: normalizeBrandColor(options.frameColor) ?? BRAND_QR_INK,
+    center,
+    image,
   };
+}
+
+/** Картинка в квадрате `box` с сохранением пропорций, по центру; не PNG → null. */
+function fitImage(png: Uint8Array, box: BrandQrBox): BrandQrBox | null {
+  const size = readPngSize(png);
+  if (!size || !(size.width > 0) || !(size.height > 0)) return null;
+  const scale = Math.min(box.w / size.width, box.h / size.height);
+  const w = size.width * scale;
+  const h = size.height * scale;
+  return { x: box.x + (box.w - w) / 2, y: box.y + (box.h - h) / 2, w, h, r: 0 };
 }
 
 // ---------------------------------------------------------------------------
 // Общее: модули, подложка и знак — через «кисть» вывода
 // ---------------------------------------------------------------------------
 
+/** Заливка: чёрная, белая или цвет рамки. */
+type Ink = boolean | "frame";
+
 type Painter = {
-  box(x: number, y: number, w: number, h: number, r: number, ink: boolean): void;
-  circle(cx: number, cy: number, r: number, ink: boolean): void;
+  box(x: number, y: number, w: number, h: number, r: number, ink: Ink): void;
+  circle(cx: number, cy: number, r: number, ink: Ink): void;
+  /** Картинка центра (PNG), уже вписанная в свой прямоугольник. */
+  image(png: Uint8Array, x: number, y: number, w: number, h: number): void;
+  /** Круг цвета `color` с буквой `letter` цвета `onColor`, жирной, по центру. */
+  letter(cx: number, cy: number, r: number, letter: string, color: string, onColor: string): void;
 };
+
+/** Кегль буквы — доля диаметра круга; базовая линия — доля кегля ниже центра (заглавная по центру). */
+const LETTER_SIZE = 0.72;
+const LETTER_BASELINE = 0.365;
 
 /** Подряд идущие рисуемые модули строки: [начало, длина]. */
 function moduleRuns(layout: BrandQrLayout, row: number): Array<[number, number]> {
@@ -246,6 +301,18 @@ function paintMark(p: Painter, layout: BrandQrLayout, ox: number, oy: number, u:
   p.box(pad.x, pad.y, layout.pad.w * u, layout.pad.h * u, layout.pad.r * u, false);
   const mark = at(layout.mark);
   const s = layout.mark.w * u;
+  const center = layout.center;
+  if (center.kind === "image" && layout.image) {
+    const image = at(layout.image);
+    p.image(center.png, image.x, image.y, layout.image.w * u, layout.image.h * u);
+    return;
+  }
+  if (center.kind === "letter") {
+    const letter = center.letter.trim().slice(0, 2) || "W";
+    const color = normalizeBrandColor(center.color) ?? BRAND_QR_INK;
+    p.letter(mark.x + s / 2, mark.y + s / 2, s / 2, letter, color, brandOnColor(color));
+    return;
+  }
   for (const shape of MARK_SHAPES) {
     if (shape.kind === "rect") p.box(mark.x + shape.x * s, mark.y + shape.y * s, shape.w * s, shape.h * s, shape.r * s, shape.ink);
     else p.circle(mark.x + shape.cx * s, mark.y + shape.cy * s, shape.r * s, shape.ink);
@@ -277,8 +344,8 @@ function modulesPath(layout: BrandQrLayout): string {
   return d;
 }
 
-function svgPainter(parts: string[]): Painter {
-  const fill = (ink: boolean) => (ink ? BRAND_QR_INK : PAPER);
+function svgPainter(parts: string[], frameColor: string): Painter {
+  const fill = (ink: Ink) => (ink === "frame" ? frameColor : ink ? BRAND_QR_INK : PAPER);
   return {
     box(x, y, w, h, r, ink) {
       const rx = r > 0 ? ` rx="${num(r)}"` : "";
@@ -286,6 +353,17 @@ function svgPainter(parts: string[]): Painter {
     },
     circle(cx, cy, r, ink) {
       parts.push(`<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(r)}" fill="${fill(ink)}"/>`);
+    },
+    image(png, x, y, w, h) {
+      const data = Buffer.from(png).toString("base64");
+      parts.push(`<image x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}" href="data:image/png;base64,${data}"/>`);
+    },
+    letter(cx, cy, r, letter, color, onColor) {
+      parts.push(`<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(r)}" fill="${color}"/>`);
+      const size = r * 2 * LETTER_SIZE;
+      parts.push(
+        `<text x="${num(cx)}" y="${num(cy + size * LETTER_BASELINE)}" font-size="${num(size)}" font-weight="700" font-family="'Segoe UI','Helvetica Neue',Arial,'DejaVu Sans',sans-serif" fill="${onColor}" text-anchor="middle">${escapeXml(letter)}</text>`
+      );
     },
   };
 }
@@ -305,10 +383,10 @@ function renderBrandQrSvg(layout: BrandQrLayout): string {
   const parts: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${pxWidth}" height="${pxHeight}" viewBox="0 0 ${num(layout.width)} ${num(layout.height)}" role="img" aria-label="QR-код WeSetup">`,
   ];
-  const painter = svgPainter(parts);
+  const painter = svgPainter(parts, layout.frameColor);
   if (layout.block) {
     const b = layout.block;
-    painter.box(b.x, b.y, b.w, b.h, b.r, true);
+    painter.box(b.x, b.y, b.w, b.h, b.r, "frame");
     const w = layout.window;
     painter.box(w.x, w.y, w.w, w.h, w.r, false);
   } else {
@@ -344,20 +422,39 @@ function ensureFonts(canvas: CanvasModule): string {
   return canvas.GlobalFonts.has(FONT_BOLD) ? FONT_BOLD : "sans-serif";
 }
 
-function canvasPainter(ctx: Ctx): Painter {
+function canvasPainter(ctx: Ctx, frameColor: string, family: string, image: unknown): Painter {
+  const fill = (ink: Ink) => (ink === "frame" ? frameColor : ink ? BRAND_QR_INK : PAPER);
   return {
     box(x, y, w, h, r, ink) {
-      ctx.fillStyle = ink ? BRAND_QR_INK : PAPER;
+      ctx.fillStyle = fill(ink);
       ctx.beginPath();
       if (r > 0) ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2));
       else ctx.rect(x, y, w, h);
       ctx.fill();
     },
     circle(cx, cy, r, ink) {
-      ctx.fillStyle = ink ? BRAND_QR_INK : PAPER;
+      ctx.fillStyle = fill(ink);
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
+    },
+    image(_png, x, y, w, h) {
+      if (!image) return;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(image as Parameters<Ctx["drawImage"]>[0], x, y, w, h);
+    },
+    letter(cx, cy, r, letter, color, onColor) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      const size = r * 2 * LETTER_SIZE;
+      ctx.font = `bold ${size}px ${family}`;
+      ctx.fillStyle = onColor;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(letter, cx, cy + size * LETTER_BASELINE);
     },
   };
 }
@@ -379,13 +476,15 @@ export async function brandQrPng(url: string, options: BrandQrOptions & { width?
   const h = frame + side + stripHeight;
   const canvas = canvasModule.createCanvas(w, h);
   const ctx = canvas.getContext("2d");
-  const painter = canvasPainter(ctx);
+  const family = ensureFonts(canvasModule);
+  const image = layout.center.kind === "image" ? await canvasModule.loadImage(Buffer.from(layout.center.png)) : null;
+  const painter = canvasPainter(ctx, layout.frameColor, family, image);
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, w, h);
 
   if (layout.block) {
     const radius = (layout.block.r / layout.width) * w;
-    painter.box(0, 0, w, h, radius, true);
+    painter.box(0, 0, w, h, radius, "frame");
     painter.box(frame, frame, side, side, Math.max(0, radius - frame), false);
   }
   ctx.fillStyle = BRAND_QR_INK;
@@ -398,7 +497,6 @@ export async function brandQrPng(url: string, options: BrandQrOptions & { width?
 
   if (layout.title && layout.strip) {
     const t = layout.title;
-    const family = ensureFonts(canvasModule);
     const maxWidth = w * (1 - 2 * TITLE_SIDE);
     let px = t.size * scale;
     ctx.font = `${px}px ${family}`;
@@ -451,12 +549,31 @@ function withPdfState<T>(doc: jsPDF, draw: () => T): T {
 }
 
 /** Цвета — только серые операторы PDF (`g`): чёрный 0, белый 1 (никаких `rg`/`k`). */
-function pdfPainter(doc: jsPDF): Painter {
-  const color = (ink: boolean) => {
+function pdfPainter(doc: jsPDF, frameColor: string, fontName: string): Painter {
+  const color = (ink: Ink) => {
+    if (ink === "frame") {
+      const [r, g, b] = hexToRgb(frameColor);
+      doc.setFillColor(r, g, b);
+      return;
+    }
     const c = ink ? 0 : 255;
     doc.setFillColor(c, c, c);
   };
   return {
+    image(png, x, y, w, h) {
+      doc.addImage(png, "PNG", x, y, w, h, undefined, "FAST");
+    },
+    letter(cx, cy, r, letter, fill, onColor) {
+      const [fr, fg, fb] = hexToRgb(fill);
+      doc.setFillColor(fr, fg, fb);
+      doc.circle(cx, cy, r, "F");
+      const [tr, tg, tb] = hexToRgb(onColor);
+      doc.setTextColor(tr, tg, tb);
+      doc.setFont(pdfBoldFont(doc, fontName), "bold");
+      const size = r * 2 * LETTER_SIZE;
+      doc.setFontSize((size * 72) / 25.4);
+      doc.text(letter, cx, cy + size * LETTER_BASELINE, { align: "center", baseline: "alphabetic" });
+    },
     box(x, y, w, h, r, ink) {
       color(ink);
       if (r > 0) {
@@ -538,8 +655,8 @@ export function drawBrandQrTilePdf(
   const ox = x + w.x * u;
   const oy = y + w.y * u;
   withPdfState(doc, () => {
-    const painter = pdfPainter(doc);
-    painter.box(x, y, width, height, block.r * u, true);
+    const painter = pdfPainter(doc, layout.frameColor, options.fontName);
+    painter.box(x, y, width, height, block.r * u, "frame");
     painter.box(ox, oy, w.w * u, w.h * u, w.r * u, false);
     pdfModules(doc, layout, ox, oy, u);
     paintMark(painter, layout, ox, oy, u);
@@ -579,10 +696,10 @@ export function drawBrandQrCellPdf(
   const ox = box.x0;
   const oy = box.y0 + (windowHeight - side) / 2;
   withPdfState(doc, () => {
-    const painter = pdfPainter(doc);
+    const painter = pdfPainter(doc, layout.frameColor, options.fontName);
     // Белый фон окна (перекрывает, если бланк что-то уже нарисовал) и полоса.
     painter.box(box.x0, box.y0, width, windowHeight, 0, false);
-    painter.box(box.x0, box.y1 - stripHeight, width, stripHeight, 0, true);
+    painter.box(box.x0, box.y1 - stripHeight, width, stripHeight, 0, "frame");
     pdfModules(doc, layout, ox, oy, u);
     paintMark(painter, layout, ox, oy, u);
     const baseline = box.y1 - stripHeight + (title.y - strip.y) * u;

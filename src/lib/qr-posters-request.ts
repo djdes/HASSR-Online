@@ -49,6 +49,7 @@ function parseFormat(layout: string, format: string): QrPrintFormat | null {
   if (raw === "sheet" || raw === "sticker") return "sticker";
   if (raw === "poster" || raw === "a4") return "a4";
   if (raw === "a5") return "a5";
+  if (raw === "plate") return "plate";
   return null;
 }
 

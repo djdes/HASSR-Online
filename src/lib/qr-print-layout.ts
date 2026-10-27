@@ -5,7 +5,8 @@ import type { QrPrintFormat } from "@/lib/qr-fill-types";
  *
  *   • A4       — один плакат на лист;
  *   • A5       — два на лист, половинки с линией реза;
- *   • наклейка — 12 на лист, сетка 3 × 4.
+ *   • наклейка — 12 на лист, сетка 3 × 4;
+ *   • табличка на оборудование — 4 на лист, сетка 2 × 2.
  *
  * Листы режем в JS, а не надеемся на `break-inside` внутри grid/flex:
  * `break-after` работает только у блочных коробок, поэтому каждый лист —
@@ -17,6 +18,7 @@ export const QR_PRINT_PER_SHEET: Readonly<Record<QrPrintFormat, number>> = Objec
   a4: 1,
   a5: 2,
   sticker: 12,
+  plate: 4,
 });
 
 export type QrPrintEntry = { key: string; format: QrPrintFormat };
