@@ -2708,9 +2708,12 @@ export type MessageContract = {
         "journals": "Журналы",
         "checklists": "Чек-листы",
         "productionControl": "Производственный контроль",
-        "billing": "Оплата",
+        "billing": "Подписки",
         "more": "Остальное",
-        "inspection": "Пришла проверка"
+        "inspection": "К Вам пришла проверка",
+        "office": "Офис",
+        "monitoring": "Мониторинг",
+        "settings": "Настройки и оформление"
       },
       "tabs": {
         "template": "Шаблон заведения",
@@ -2737,7 +2740,11 @@ export type MessageContract = {
         "inspectionDay": "Что делать",
         "portal": "QR-доступы",
         "readiness": "Готовность",
-        "program": "Программа"
+        "program": "Программа",
+        "office": "Сотрудники офиса",
+        "access": "Права и доступ",
+        "overview": "Сводка",
+        "points": "Журналы точек"
       },
       "groups": {
         "staff": "Сотрудники",
@@ -2771,19 +2778,17 @@ export type MessageContract = {
       "brand": "WeSetup",
       "menus": {
         "company": {
-          "groups": {
-            "more": "Ещё"
-          },
           "items": {
+            "office": "Офис",
+            "points": "Торговые точки",
+            "master": "Мастер-кабинет",
+            "more": "Остальное",
+            "organization": "Реквизиты"
+          },
+          "tabs": {
             "organization": "Реквизиты",
-            "names": "Названия разделов",
-            "onboarding": "Быстрая настройка",
-            "template": "Шаблон заведения",
-            "appearance": "Оформление",
             "documents": "Сведения для документов",
-            "branding": "Фирменный стиль",
-            "contacts": "Контакты и уведомления",
-            "office": "Офис"
+            "contacts": "Контакты и уведомления"
           }
         },
         "staff": {
@@ -2795,7 +2800,6 @@ export type MessageContract = {
           "items": {
             "positions": "Должности",
             "users": "Сотрудники",
-            "access": "Доступ и права",
             "commission": "Бракеражная комиссия",
             "haccpGroup": "Группа ХАССП",
             "controlGroup": "Контроль-группа",
@@ -2812,20 +2816,18 @@ export type MessageContract = {
         },
         "points": {
           "groups": {
-            "myPoints": "Мои точки",
-            "allPoints": "Все точки",
             "more": "Ещё"
           },
           "items": {
-            "add": "Добавить точку",
-            "buildings": "Точки",
+            "staff": "Сотрудники точек",
+            "journals": "Журналы",
+            "productionControl": "Программа производственного контроля",
             "areas": "Цеха и помещения",
             "equipment": "Оборудование",
             "qr": "QR-наклейки и плакаты",
             "printer": "Онлайн-принтер",
             "kiosk": "Общий планшет",
-            "products": "Справочник продуктов",
-            "master": "Мастер-кабинет"
+            "products": "Справочник продуктов"
           }
         },
         "journals": {
@@ -2834,6 +2836,7 @@ export type MessageContract = {
             "more": "Ещё"
           },
           "items": {
+            "points": "Журналы точек",
             "today": "Сегодня",
             "control": "Сегодня",
             "all": "Все журналы",
@@ -2901,14 +2904,39 @@ export type MessageContract = {
           }
         },
         "inspection": {
+          "groups": {
+            "more": "Ещё"
+          },
           "items": {
+            "laws": "Нормативные документы",
+            "norms": "ППК и план ХАССП",
+            "portal": "QR для проверяющего",
+            "experts": "Консалтинг",
             "now": "Что делать сейчас",
             "visits": "Журнал посещений",
-            "norms": "Нормативка",
-            "portal": "QR для проверяющего",
             "readiness": "Готовность к проверке",
-            "experts": "Подготовка с экспертом и выезд",
             "special": "Спецрежим"
+          }
+        },
+        "office": {
+          "items": {
+            "office": "Сотрудники офиса",
+            "access": "Права и доступ"
+          }
+        },
+        "monitoring": {
+          "items": {
+            "overview": "Сводка",
+            "checklists": "Чек-листы"
+          }
+        },
+        "settings": {
+          "items": {
+            "appearance": "Оформление",
+            "branding": "Фирменный стиль",
+            "names": "Названия разделов",
+            "onboarding": "Быстрая настройка",
+            "template": "Шаблон заведения"
           }
         }
       },
@@ -2924,6 +2952,10 @@ export type MessageContract = {
         "done": "Заполнен",
         "started": "Начат",
         "empty": "Пусто"
+      },
+      "back": "Назад",
+      "badges": {
+        "pro": "PRO"
       }
     },
     "header": {
@@ -3080,8 +3112,8 @@ export type MessageContract = {
     "routes": {
       "inspection": "Пришла проверка",
       "inspection_visits": "Журнал посещений",
-      "inspection_norms": "Нормативка",
-      "inspection_experts": "Подготовка с экспертом и выезд",
+      "inspection_norms": "ППК и план ХАССП",
+      "inspection_experts": "Консалтинг",
       "inspection_special_mode": "Спецрежим",
       "production_control": "Программа производственного контроля",
       "more": "Остальное",
@@ -3221,7 +3253,11 @@ export type MessageContract = {
       "settings_organization_documents": "Сведения для документов",
       "settings_organization_branding": "Фирменный стиль",
       "settings_organization_contacts": "Контакты и уведомления",
-      "settings_organization_office": "Офис"
+      "settings_organization_office": "Офис",
+      "home": "Главная",
+      "monitoring": "Мониторинг",
+      "journals_points": "Журналы точек",
+      "inspection_laws": "Нормативные документы"
     },
     "breadcrumbs": {
       "neighbors": "Соседние разделы",
@@ -29375,6 +29411,92 @@ export type MessageContract = {
       "stuck": "Зависло",
       "remind": "Напомнить",
       "nobodyTook": "никто не взял"
+    }
+  },
+  "homePage": {
+    "tagline": "Ваш электронный ХАССП",
+    "contactsTitle": "Мы на связи",
+    "contacts": {
+      "support": "Поддержка",
+      "sales": "Отдел продаж",
+      "consulting": "Консалтинг"
+    },
+    "via": {
+      "telegram": "в Telegram",
+      "support": "чат на сайте",
+      "sales": "тарифы и оплата",
+      "consulting": "подготовка с экспертом"
+    },
+    "phone": "Телефон",
+    "setupTitle": "Начальная настройка",
+    "setupBody": "Компания, точки, сотрудники и журналы — по шагам",
+    "favorites": {
+      "title": "Избранное",
+      "add": "Добавить в избранное",
+      "addHint": "Закрепите страницу, которую открываете чаще всего",
+      "remove": "Убрать из избранного",
+      "pickDescription": "Страница появится на главной — открывайте её в один клик.",
+      "search": "Найти страницу",
+      "nothing": "Ничего не нашлось",
+      "saved": "Избранное сохранено",
+      "failed": "Не удалось сохранить избранное"
+    }
+  },
+  "monitoringPage": {
+    "lead": "Как идут дела на точках: журналы за сегодня, чек-листы и программа производственного контроля.",
+    "allPoints": "Все точки",
+    "pointsAria": "Выбор точки",
+    "open": "Подробнее",
+    "setUp": "Настроить",
+    "journals": {
+      "title": "Журналы",
+      "count": "Заполнено сегодня: {done} из {total}",
+      "empty": "Журналы не выбраны — добавьте их точке",
+      "shared": "Набор журналов общий для всех точек"
+    },
+    "checklists": {
+      "title": "Чек-листы",
+      "count": "Выполнено: {done} из {total}",
+      "empty": "Сейчас нет назначенных чек-листов",
+      "hint": "Назначения на сегодня и текущий период"
+    },
+    "ppk": {
+      "title": "Программа производственного контроля",
+      "count": "Готово разделов: {done} из {total}",
+      "hint": "Одна программа на всю компанию"
+    },
+    "guide": {
+      "title": "Как читать мониторинг",
+      "journals": "Журналы — сколько журналов набора точки уже заполнено сегодня.",
+      "checklists": "Чек-листы — сколько назначенных проверок выполнено в текущем периоде.",
+      "ppk": "ППК — сколько разделов программы производственного контроля готово."
+    },
+    "title": "Мониторинг"
+  },
+  "pointJournals": {
+    "lead": "Какие журналы ведутся на каждой точке. Добавьте или уберите журнал — изменится только эта точка.",
+    "leadShared": "Набор журналов общий для всех точек. Добавьте или уберите журнал — изменится набор всей компании.",
+    "allPoints": "Все точки",
+    "inWork": "{count, plural, one {# журнал в работе} few {# журнала в работе} many {# журналов в работе} other {# журнала в работе}}",
+    "add": "Добавить журнал",
+    "removeAria": "Убрать «{name}» с точки «{point}»",
+    "empty": "На точке пока нет журналов",
+    "pickTitle": "Добавить журнал: {point}",
+    "pickDescription": "Журнал появится в «Сегодня» и в списке журналов только этой точки.",
+    "pickDescriptionShared": "Журнал появится в «Сегодня» и в списке журналов.",
+    "search": "Найти журнал",
+    "nothing": "Все журналы уже добавлены",
+    "notFound": "Ничего не нашлось",
+    "added": "Журнал добавлен: {name}",
+    "removed": "Журнал убран: {name}",
+    "undo": "Вернуть",
+    "failed": "Не удалось сохранить — попробуйте ещё раз",
+    "settings": "Настройка журналов",
+    "guide": {
+      "title": "Как это работает",
+      "list": "Здесь все торговые точки и журналы, которые на них ведутся.",
+      "add": "«Добавить журнал» — журнал появится у сотрудников этой точки в «Сегодня».",
+      "remove": "«×» у журнала — он перестанет напоминать о себе; записи не удаляются."
     }
   }
 };

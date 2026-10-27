@@ -1,0 +1,15 @@
+import { chromium } from "playwright";
+const browser = await chromium.launch({ executablePath: process.env.CHROME });
+const page = await (await browser.newContext()).newPage();
+await page.goto("http://localhost:3047/login");
+await page.fill("#email", "head@test.local");
+await page.fill("#password", "Test-12345");
+await page.click('button[type="submit"]');
+await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 120000 });
+await page.waitForTimeout(8000);
+console.log("url", page.url());
+console.log("home?", await page.$("[data-home-page]") !== null);
+const r = await page.evaluate(async () => { const x = await fetch("/home", { redirect: "manual" }); return [x.status, x.type, x.url]; });
+console.log("fetch /home", r);
+await page.screenshot({ path: "F:/wt/chef.png" });
+await browser.close();

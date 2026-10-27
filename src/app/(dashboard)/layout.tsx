@@ -39,6 +39,8 @@ import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/
 import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
+import { HOME_HREF, canSeeHomePage } from "@/lib/home-page";
+import { sidebarLegalName } from "@/lib/org-journal-name";
 import { isPointScoped } from "@/lib/point-scope";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { hasCapability } from "@/lib/permission-presets";
@@ -62,7 +64,7 @@ import { SectionTabs } from "@/components/layout/section-tabs";
 import { SectionFrame } from "@/components/layout/section-frame";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
-import { buildNavModel, loadNavFacts, loadNavMenuData } from "@/lib/app-nav.server";
+import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banner";
 import {
@@ -167,6 +169,9 @@ export default async function DashboardLayout({
         brandColor: true,
         logoUrl: true,
         name: true,
+        // Краткое юр. наименование под логотипом в меню.
+        journalShortName: true,
+        legalProfileJson: true,
         // E2: тариф и численность едут в меню профиля пропсами —
         // клиентского fetch'а за этим ради одной строки не заводим.
         subscriptionPlan: true,
@@ -314,16 +319,13 @@ export default async function DashboardLayout({
     // берут меню, крошки и страницы через CustomNamesProvider.
     getOrgCustomNames(activeOrgId),
   ]);
-  // Меню кабинета (девять разделов слева, 2026-10-16): что человек
-  // откроет — то и показываем. Один расчёт на сайдбар, вкладки, крошки,
-  // мобильное меню и ⌘K.
-  // Точки человека — пункты «Мои точки» в меню «Торговых точек».
+  // Меню кабинета (дерево разделов, 2026-10-28): что человек откроет — то и
+  // показываем. Один расчёт на сайдбар, вкладки, крошки, мобильное меню и ⌘K.
   const navFacts = await loadNavFacts(session);
   const navModel = await buildNavModel({
     user: session.user,
     facts: navFacts,
     customNames,
-    menuData: await loadNavMenuData(session),
   });
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
@@ -444,9 +446,12 @@ export default async function DashboardLayout({
             <AppSidebar
               logoUrl={headerLogoUrl}
               organizationName={companyName}
+              legalName={sidebarLegalName(brandedOrg, { companyName, hasLogo: Boolean(headerLogoUrl) })}
               homeHref={
-                (navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
-                getWebHomeHref(session.user)
+                canSeeHomePage(session.user)
+                  ? HOME_HREF
+                  : ((navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
+                    getWebHomeHref(session.user))
               }
               canEditBranding={hasCapability(session.user, "admin.full")}
               whiteLabel={Boolean(consultant)}
@@ -765,7 +770,6 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     user: session.user,
     facts: await loadNavFacts(session),
     customNames,
-    menuData: await loadNavMenuData(session),
   });
 
   // Окно решения и плашка сотруднику — те же, что на сайте (П-3); анонс

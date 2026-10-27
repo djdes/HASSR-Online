@@ -30,16 +30,10 @@ test("набор у руководства: администратор види�
   assert.deepEqual(visibleKeys(admin, "depends"), []);
   const headChef = presetSections("head_chef", "management", null);
   assert.equal(headChef.company, "hidden");
-  assert.deepEqual(visibleKeys(headChef), [
-    "staff",
-    "points",
-    "journals",
-    "checklists",
-    "productionControl",
-    "billing",
-    "more",
-    "inspection",
-  ]);
+  assert.deepEqual(
+    visibleKeys(headChef),
+    NAV_SECTIONS.map((section) => section.key).filter((key) => key !== "company"),
+  );
 });
 
 test("набор у сотрудника: повару — только чек-листы и то по личному доступу", () => {

@@ -64,8 +64,11 @@ PUBLIC_ROUTES=(
 # 307 → /login). Но сам redirect происходит ИЗ page.tsx, что и нужно
 # для компиляции manifest'а.
 PRIVATE_ROUTES=(
+  /home
+  /monitoring
   /dashboard
   /journals
+  /journals/points
   /reports
   /capa
   /batches

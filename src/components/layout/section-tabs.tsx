@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { activeMenuItemId, sectionForPath } from "@/lib/app-nav";
+import { sectionForPath } from "@/lib/app-nav";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
 
@@ -32,11 +32,9 @@ export function useSectionPlace() {
   const section = owner ? sections.find((item) => item.key === owner.section) : undefined;
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
   const atRoot = Boolean(section?.tabs.some((tab) => tab.href === clean));
-  // Пункты из данных (точки) в статической модели не значатся — страница точки
-  // достаётся своему пункту по адресам меню человека (`activeMenuItemId`).
   const items = section?.menu?.flatMap((group) => group.items) ?? [];
-  const itemId = owner && items.length > 0 ? activeMenuItemId(pathname, items.map((entry) => entry.id)) : null;
-  const menuItem = itemId ? items.find((entry) => entry.id === itemId) : undefined;
+  const itemId = owner?.menuItemId ?? null;
+  const menuItem = itemId ? items.find((entry) => entry.id === itemId && !entry.section) : undefined;
   const menuTab = menuItem?.tabs?.find((tab) => tab.href === clean);
   let depth: "item" | "deep" | null = null;
   if (menuItem) depth = clean === menuItem.href || menuTab ? "item" : "deep";

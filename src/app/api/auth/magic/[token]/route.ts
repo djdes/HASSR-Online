@@ -5,6 +5,7 @@ import { issueSession } from "@/lib/issue-session";
 import { recordLogin } from "@/lib/login-trace";
 import { consumeMagicLink } from "@/lib/magic-link";
 import { twoFactorRequired } from "@/lib/two-factor";
+import { HOME_HREF } from "@/lib/home-page";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,5 +27,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   const xff = request.headers.get("x-forwarded-for") ?? "";
   const ip = xff.split(",")[0].trim() || null;
   await recordLogin(user.id, ip, { userAgent: request.headers.get("user-agent"), method: "magic" });
-  return issueSession(relativeRedirect("/dashboard"), user, user.organization.name);
+  return issueSession(relativeRedirect(HOME_HREF), user, user.organization.name);
 }

@@ -5,14 +5,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
-import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
-import type { NavModelSection } from "@/lib/app-nav.server";
+import { mainNavSections, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
+import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/brand/logo";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { NavIcon } from "@/components/layout/nav-icons";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
-import { NavChevron } from "@/components/layout/section-menu-list";
+import {
+  NavBadge,
+  NavChevron,
+  menuHostKey,
+  sectionChain,
+  topSectionKey,
+} from "@/components/layout/section-menu-list";
 import { SectionStatusDot } from "@/components/layout/section-status-dot";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
@@ -22,27 +28,32 @@ const SIDEBAR_ITEM =
   "flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /**
- * Меню кабинета слева (≥1024px): логотип компании и разделы. «Пришла
- * проверка» прижата к низу — в спешке её ищут глазами первой; это отдельное
- * действие (контурная кнопка), а не выбранный пункт. У разделов со своим
- * меню — стрелка ›.
+ * Меню кабинета слева (≥1024px): логотип компании, под ним краткое юр.
+ * наименование, и разделы. «Пришла проверка» прижата к низу — в спешке её
+ * ищут глазами первой; это отдельное действие (контурная кнопка), а не
+ * выбранный пункт. У разделов со своим меню — стрелка ›.
  *
- * У раздела своё меню (`section.menu`, эскизы руководителя 2026-10-17): при
- * входе в раздел левое меню меняется целиком. Две панели лежат на ленте
- * шириной 200%, при входе лента сдвигается на панель раздела (логотип,
- * «‹ Главное меню», заголовок раздела и его пункты), а «‹ Главное меню»
- * возвращает обычный список, не меняя страницу. Раздел без меню
- * («Остальное») — обычный список, подразделы — вкладки над основным окном.
+ * У раздела своё меню (`section.menu`): при входе в раздел левое меню
+ * меняется целиком. Разделы вложены (эскизы 2026-10-28: «Моя компания →
+ * Торговые точки → Журналы»): пункт-раздел со стрелкой открывает меню
+ * вложенного раздела, «‹ Назад» поднимает на уровень вверх — в меню родителя,
+ * из раздела главного меню — в главное меню; страница при этом не меняется.
+ * Две панели лежат на ленте шириной 200%: главное меню и меню раздела, вход и
+ * выход из главного меню — сдвиг ленты. Раздел без меню («Остальное») —
+ * пункт меню родителя.
  */
 export function AppSidebar({
   logoUrl,
   organizationName,
+  legalName,
   homeHref,
   canEditBranding = false,
   whiteLabel = false,
 }: {
   logoUrl: string | null;
   organizationName: string;
+  /** Краткое юр. наименование под логотипом (эскиз: «Юр. наименование (сокр.)»). */
+  legalName?: string | null;
   homeHref: string;
   canEditBranding?: boolean;
   /** White-label партнёра: отметку «сетап» внизу не ставим. */
@@ -52,61 +63,92 @@ export function AppSidebar({
   const { sections } = useAppNav();
   const pathname = usePathname() || "/";
   const { section: placeSection, menuItem } = useSectionPlace();
-  const active = sectionForPath(pathname)?.section ?? null;
-  const main = sections.filter((section) => section.key !== "inspection");
-  const inspection = sections.find((section) => section.key === "inspection");
+  const current = sectionForPath(pathname)?.section ?? null;
+  const top = topSectionKey(sections, current);
+  const hostKey = menuHostKey(sections, current);
+  const inside = new Set(sectionChain(sections, current).map((section) => section.key));
+  const mainSections = mainNavSections(sections);
+  const main = mainSections.filter((section) => section.key !== "inspection");
+  const inspection = mainSections.find((section) => section.key === "inspection");
+
+  // Какое меню показано, помним вместе с путём: при смене пути снова видно
+  // меню текущего раздела (`hostKey`).
+  const [view, setView] = useState<{ path: string; key: NavSectionKey | "main" } | null>(null);
+  const viewKey = view && view.path === pathname ? view.key : (hostKey ?? "main");
+  const viewSection = viewKey === "main" ? undefined : sections.find((section) => section.key === viewKey && section.menu);
+  const showSection = Boolean(viewSection);
 
   // Панель раздела рисуется заранее, чтобы вход и выход были сдвигом ленты.
-  // Вне раздела с меню в ней — последний открытый раздел с меню: при уходе в
-  // «Остальное» за 200 мс сдвига не мелькает меню чужого раздела.
-  const [lastMenuKey, setLastMenuKey] = useState<NavSectionKey | null>(
-    placeSection?.menu ? placeSection.key : null,
-  );
-  if (placeSection?.menu && placeSection.key !== lastMenuKey) setLastMenuKey(placeSection.key);
-  const menuSection: NavModelSection | undefined = placeSection?.menu
-    ? placeSection
-    : (sections.find((section) => section.key === lastMenuKey && section.menu) ??
-      sections.find((section) => section.menu));
-  const inSection = Boolean(placeSection?.menu);
-  // «Показано главное меню» помним вместе с путём: при смене пути оно само сбрасывается.
-  const [mainShownFor, setMainShownFor] = useState<string | null>(null);
-  const showSection = inSection && mainShownFor !== pathname;
-  const statuses = useSectionStatuses(inSection ? menuSection?.key : undefined);
+  // В главном меню в ней — последний показанный раздел: за 200 мс сдвига не
+  // мелькает меню чужого раздела.
+  const [lastMenuKey, setLastMenuKey] = useState<NavSectionKey | null>(viewSection?.key ?? null);
+  if (viewSection && viewSection.key !== lastMenuKey) setLastMenuKey(viewSection.key);
+  const menuSection: NavModelSection | undefined =
+    viewSection ??
+    sections.find((section) => section.key === lastMenuKey && section.menu) ??
+    sections.find((section) => section.menu);
+  const statuses = useSectionStatuses(showSection ? menuSection?.key : undefined);
 
   // Фокус не должен пропадать, когда панель становится inert: после
-  // «‹ Главное меню» — на пункт текущего раздела, при возврате в меню раздела —
-  // на «‹ Главное меню». Переносим только после действия человека.
+  // «‹ Назад» — на пункт раздела, из которого вышли, при входе в меню
+  // раздела — на «‹ Назад». Переносим только после действия человека.
   const asideRef = useRef<HTMLElement>(null);
   const backRef = useRef<HTMLButtonElement>(null);
-  const focusAfter = useRef(false);
+  const focusAfter = useRef<NavSectionKey | "back" | null>(null);
   useEffect(() => {
-    if (!focusAfter.current) return;
-    focusAfter.current = false;
-    if (showSection) backRef.current?.focus();
-    else if (active) asideRef.current?.querySelector<HTMLElement>(`[data-nav-section="${active}"]`)?.focus();
-  }, [showSection, active]);
+    const target = focusAfter.current;
+    if (!target) return;
+    focusAfter.current = null;
+    if (target === "back") backRef.current?.focus();
+    else
+      asideRef.current
+        ?.querySelector<HTMLElement>(`[data-nav-section="${target}"], [data-menu-section="${target}"]`)
+        ?.focus();
+  }, [viewKey]);
 
-  // Пункт раздела с меню возвращает его панель, даже если путь не меняется:
-  // уже внутри раздела — не уводим на его корень, только возвращаем панель.
-  const selectHandler = (section: NavModelSection) =>
-    section.menu
+  const openMenu = (key: NavSectionKey) => {
+    focusAfter.current = "back";
+    setView({ path: pathname, key });
+  };
+  const goBack = () => {
+    const parent = viewSection?.parent;
+    const parentHasMenu = parent ? sections.some((section) => section.key === parent && section.menu) : false;
+    focusAfter.current = viewSection?.key ?? null;
+    setView({ path: pathname, key: parent && parentHasMenu ? parent : "main" });
+  };
+
+  // Раздел со своим меню, внутри которого человек уже стоит, не уводит на
+  // корень: только открывает своё меню. Иначе — обычный переход на корень,
+  // меню откроется само (по пути).
+  const selectHandler = (key: NavSectionKey, hasMenu: boolean) =>
+    hasMenu
       ? (event: MouseEvent<HTMLAnchorElement>) => {
-          if (inSection && active === section.key) {
+          if (inside.has(key)) {
             event.preventDefault();
-            focusAfter.current = true;
+            openMenu(key);
+          } else {
+            setView(null);
           }
-          setMainShownFor(null);
         }
       : undefined;
 
   const logo = (
-    <div className="flex h-[72px] shrink-0 items-center border-b border-[#ececf4] px-5" data-sidebar-logo>
+    <div className="shrink-0 border-b border-[#ececf4] px-5 pt-4 pb-3" data-sidebar-logo>
       <OrganizationBrand
         logoUrl={logoUrl}
         name={organizationName}
         homeHref={homeHref}
         canEditBranding={canEditBranding}
+        large
       />
+      {legalName ? (
+        <div
+          className="mt-3 border-t border-[#ececf4] pt-2.5 text-[13px] leading-snug font-medium text-[#3c4053] [overflow-wrap:anywhere]"
+          data-sidebar-legal-name
+        >
+          {legalName}
+        </div>
+      ) : null}
     </div>
   );
 
@@ -127,8 +169,8 @@ export function AppSidebar({
             <SidebarItem
               key={section.key}
               section={section}
-              active={active === section.key}
-              onSelect={selectHandler(section)}
+              active={top === section.key}
+              onSelect={selectHandler(section.key, Boolean(section.menu))}
             />
           ))}
         </div>
@@ -136,9 +178,9 @@ export function AppSidebar({
           <div className="mt-auto border-t border-[#ececf4] pt-3">
             <SidebarItem
               section={inspection}
-              active={active === "inspection"}
+              active={top === "inspection"}
               action
-              onSelect={selectHandler(inspection)}
+              onSelect={selectHandler("inspection", Boolean(inspection.menu))}
             />
           </div>
         ) : null}
@@ -159,11 +201,15 @@ export function AppSidebar({
     );
   }
 
+  const menuItemActive = (item: NavModelMenuItem) =>
+    item.section ? inside.has(item.section) : menuSection.key === placeSection?.key && menuItem?.id === item.id;
+
   return (
     <aside
       ref={asideRef}
       data-app-sidebar
       data-sidebar-mode={showSection ? "section" : "main"}
+      data-sidebar-section={showSection ? menuSection.key : undefined}
       aria-label={t("sidebarAria")}
       className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 overflow-hidden border-r border-[#ececf4] bg-white lg:block print:hidden"
     >
@@ -182,15 +228,12 @@ export function AppSidebar({
             <button
               ref={backRef}
               type="button"
-              onClick={() => {
-                focusAfter.current = true;
-                setMainShownFor(pathname);
-              }}
+              onClick={goBack}
               data-back-to-main
               className="inline-flex h-9 items-center gap-1 rounded-xl px-2.5 text-[13.5px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
               <ChevronLeft className="size-4" aria-hidden />
-              {t("backToMain")}
+              {t("back")}
             </button>
           </div>
           <Link
@@ -211,15 +254,18 @@ export function AppSidebar({
                 ) : null}
                 <div className="space-y-1">
                   {group.items.map((item) => {
-                    const isActive = inSection && menuItem?.id === item.id;
+                    const isActive = menuItemActive(item);
                     return (
                       <Link
                         key={item.id}
                         href={item.href}
-                        aria-current={isActive ? "page" : undefined}
+                        onClick={item.section ? selectHandler(item.section, Boolean(item.hasMenu)) : undefined}
+                        aria-current={isActive ? (item.section ? "true" : "page") : undefined}
                         data-menu-item={item.id}
+                        data-menu-section={item.section}
                         className={cn(
                           SIDEBAR_ITEM,
+                          "group",
                           isActive
                             ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
                             : "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]",
@@ -229,8 +275,10 @@ export function AppSidebar({
                           name={item.icon}
                           className={cn("size-5 shrink-0", isActive ? "text-[#5566f6]" : "text-[#6f7282]")}
                         />
-                        <span className="min-w-0">{item.label}</span>
+                        <span className="min-w-0 flex-1">{item.label}</span>
+                        {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
                         <SectionStatusDot status={statuses[item.id]} />
+                        {item.hasMenu ? <NavChevron active={isActive} /> : null}
                       </Link>
                     );
                   })}
@@ -248,7 +296,7 @@ export function AppSidebar({
 /**
  * Пункт главного меню. У раздела со своим меню — постоянная стрелка ›
  * (руководитель: «все меню, которые разворачиваются, должны быть со
- * стрелочкой»); у «Остального» её нет — это одна страница.
+ * стрелочкой»).
  *
  * `action` — «Пришла проверка» внизу: отдельное действие, а не выбранный
  * пункт, поэтому в покое это контурная кнопка (белая, с рамкой и индиго-

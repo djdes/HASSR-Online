@@ -23,7 +23,7 @@ export type SectionVisibility = "visible" | "hidden" | "depends";
 /** Группа должности: она задаёт роль (руководство — полный доступ к кабинету). */
 export type PositionGroup = "management" | "staff";
 
-/** Девять разделов меню в порядке сайдбара — с иконками. */
+/** Разделы меню в порядке `NAV_SECTIONS` — с иконками. */
 export const ACCESS_SECTIONS: ReadonlyArray<{ key: NavSectionKey; icon: string }> = NAV_SECTIONS.map((section) => ({
   key: section.key,
   icon: section.icon,

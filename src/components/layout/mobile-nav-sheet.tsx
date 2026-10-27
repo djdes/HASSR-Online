@@ -14,6 +14,7 @@ import {
   BackToMainButton,
   NavSectionsList,
   SectionMenuList,
+  menuHostKey,
   useSheetMenu,
 } from "@/components/layout/section-menu-list";
 import { useSectionPlace } from "@/components/layout/section-tabs";
@@ -28,8 +29,9 @@ const ROW =
  * Меню на телефоне и планшете (<1024px): тот же список разделов, что в
  * сайдбаре, — листом снизу. Сверху логотип компании клиента и точки (если их
  * несколько), внизу выход. В разделе с меню (`section.menu`) лист открывается
- * с меню раздела: кнопка «‹ Главное меню» переключает его на список разделов,
- * а нажатие на раздел со стрелкой › раскрывает его меню прямо в листе.
+ * с меню раздела: кнопка «‹ Назад» переключает его на меню уровнем выше,
+ * а нажатие на раздел со стрелкой › раскрывает его меню прямо в листе;
+ * «‹ Назад» поднимает на уровень вверх (вложенные разделы, 2026-10-28).
  */
 export function MobileNavSheet({
   open,
@@ -55,7 +57,7 @@ export function MobileNavSheet({
   const menu = useSheetMenu({
     scope: "mobile",
     sections,
-    currentKey: placeSection?.menu ? placeSection.key : null,
+    currentKey: menuHostKey(sections, active),
     pathname,
   });
   const shown = menu.shown;
@@ -101,11 +103,13 @@ export function MobileNavSheet({
         />
         {shown?.menu ? (
           <>
-            <BackToMainButton onClick={menu.showMain} />
+            <BackToMainButton onClick={menu.back} />
             <SectionMenuList
               section={shown}
               activeItemId={shown.key === placeSection?.key ? menuItem?.id : undefined}
+              currentKey={active}
               statuses={statuses}
+              onOpenMenu={menu.openMenu}
             />
           </>
         ) : (
@@ -113,7 +117,7 @@ export function MobileNavSheet({
             {buildings.length >= 2 ? (
               <LocationSwitcherList buildings={buildings} activeBuildingId={activeBuildingId} />
             ) : null}
-            <NavSectionsList sections={sections} active={active} onOpenMenu={menu.openMenu} />
+            <NavSectionsList sections={sections} currentKey={active} onOpenMenu={menu.openMenu} />
           </>
         )}
       </nav>

@@ -2707,9 +2707,12 @@
         "journals": "Journals",
         "checklists": "Checklists",
         "productionControl": "Production control",
-        "billing": "Billing",
+        "billing": "Subscriptions",
         "more": "More",
-        "inspection": "Inspection visit"
+        "inspection": "Inspection visit",
+        "office": "Office",
+        "monitoring": "Monitoring",
+        "settings": "Settings and appearance"
       },
       "tabs": {
         "template": "Venue template",
@@ -2736,7 +2739,11 @@
         "inspectionDay": "What to do",
         "portal": "QR access",
         "readiness": "Readiness",
-        "program": "Program"
+        "program": "Program",
+        "office": "Office staff",
+        "access": "Rights and access",
+        "overview": "Overview",
+        "points": "Outlet journals"
       },
       "groups": {
         "staff": "Staff",
@@ -2770,19 +2777,17 @@
       "brand": "WeSetup",
       "menus": {
         "company": {
-          "groups": {
-            "more": "More"
-          },
           "items": {
+            "office": "Office",
+            "points": "Outlets",
+            "master": "Master cabinet",
+            "more": "More",
+            "organization": "Company details"
+          },
+          "tabs": {
             "organization": "Company details",
-            "names": "Section names",
-            "onboarding": "Quick setup",
-            "template": "Venue template",
-            "appearance": "Appearance",
             "documents": "Document details",
-            "branding": "Brand style",
-            "contacts": "Contacts and notifications",
-            "office": "Office"
+            "contacts": "Contacts and notifications"
           }
         },
         "staff": {
@@ -2794,7 +2799,6 @@
           "items": {
             "positions": "Job titles",
             "users": "Staff",
-            "access": "Access and permissions",
             "commission": "Food inspection committee",
             "haccpGroup": "HACCP team",
             "controlGroup": "Control group",
@@ -2811,20 +2815,18 @@
         },
         "points": {
           "groups": {
-            "myPoints": "My outlets",
-            "allPoints": "All outlets",
             "more": "More"
           },
           "items": {
-            "add": "Add outlet",
-            "buildings": "Outlets",
+            "staff": "Outlet staff",
+            "journals": "Journals",
+            "productionControl": "Production control program",
             "areas": "Workshops and rooms",
             "equipment": "Equipment",
             "qr": "QR stickers and posters",
             "printer": "Online printer",
             "kiosk": "Shared tablet",
-            "products": "Product directory",
-            "master": "Master cabinet"
+            "products": "Product directory"
           }
         },
         "journals": {
@@ -2833,6 +2835,7 @@
             "more": "More"
           },
           "items": {
+            "points": "Outlet journals",
             "today": "Today",
             "control": "Today",
             "all": "All journals",
@@ -2900,14 +2903,39 @@
           }
         },
         "inspection": {
+          "groups": {
+            "more": "More"
+          },
           "items": {
+            "laws": "Regulatory documents",
+            "norms": "PCP and HACCP plan",
+            "portal": "QR for the inspector",
+            "experts": "Consulting",
             "now": "What to do now",
             "visits": "Visit log",
-            "norms": "Regulations",
-            "portal": "QR for the inspector",
             "readiness": "Inspection readiness",
-            "experts": "Expert preparation and visit",
             "special": "Special mode"
+          }
+        },
+        "office": {
+          "items": {
+            "office": "Office staff",
+            "access": "Rights and access"
+          }
+        },
+        "monitoring": {
+          "items": {
+            "overview": "Overview",
+            "checklists": "Checklists"
+          }
+        },
+        "settings": {
+          "items": {
+            "appearance": "Appearance",
+            "branding": "Brand style",
+            "names": "Section names",
+            "onboarding": "Quick setup",
+            "template": "Venue template"
           }
         }
       },
@@ -2923,6 +2951,10 @@
         "done": "Done",
         "started": "Started",
         "empty": "Empty"
+      },
+      "back": "Back",
+      "badges": {
+        "pro": "PRO"
       }
     },
     "header": {
@@ -3079,8 +3111,8 @@
     "routes": {
       "inspection": "Inspection visit",
       "inspection_visits": "Visit log",
-      "inspection_norms": "Regulations",
-      "inspection_experts": "Expert preparation and visit",
+      "inspection_norms": "PCP and HACCP plan",
+      "inspection_experts": "Consulting",
       "inspection_special_mode": "Special mode",
       "production_control": "Production control program",
       "more": "More",
@@ -3220,7 +3252,11 @@
       "settings_organization_documents": "Document details",
       "settings_organization_branding": "Brand style",
       "settings_organization_contacts": "Contacts and notifications",
-      "settings_organization_office": "Office"
+      "settings_organization_office": "Office",
+      "home": "Home",
+      "monitoring": "Monitoring",
+      "journals_points": "Outlet journals",
+      "inspection_laws": "Regulatory documents"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",
@@ -29374,6 +29410,92 @@
       "stuck": "Stuck",
       "remind": "Remind",
       "nobodyTook": "nobody took it"
+    }
+  },
+  "homePage": {
+    "tagline": "Your electronic HACCP",
+    "contactsTitle": "We are here to help",
+    "contacts": {
+      "support": "Support",
+      "sales": "Sales",
+      "consulting": "Consulting"
+    },
+    "via": {
+      "telegram": "on Telegram",
+      "support": "chat on the site",
+      "sales": "plans and payment",
+      "consulting": "preparation with an expert"
+    },
+    "phone": "Phone",
+    "setupTitle": "Initial setup",
+    "setupBody": "Company, outlets, staff and journals — step by step",
+    "favorites": {
+      "title": "Favorites",
+      "add": "Add to favorites",
+      "addHint": "Pin the page you open most often",
+      "remove": "Remove from favorites",
+      "pickDescription": "The page will appear on the home screen — open it in one click.",
+      "search": "Find a page",
+      "nothing": "Nothing found",
+      "saved": "Favorites saved",
+      "failed": "Could not save favorites"
+    }
+  },
+  "monitoringPage": {
+    "lead": "How your outlets are doing: today's journals, checklists and the production control program.",
+    "allPoints": "All outlets",
+    "pointsAria": "Choose an outlet",
+    "open": "Details",
+    "setUp": "Set up",
+    "journals": {
+      "title": "Journals",
+      "count": "Filled today: {done} of {total}",
+      "empty": "No journals selected — add them to an outlet",
+      "shared": "The journal set is shared by all outlets"
+    },
+    "checklists": {
+      "title": "Checklists",
+      "count": "Completed: {done} of {total}",
+      "empty": "No checklists are assigned right now",
+      "hint": "Assignments for today and the current period"
+    },
+    "ppk": {
+      "title": "Production control program",
+      "count": "Sections ready: {done} of {total}",
+      "hint": "One program for the whole company"
+    },
+    "guide": {
+      "title": "How to read monitoring",
+      "journals": "Journals — how many of the outlet's journals are already filled today.",
+      "checklists": "Checklists — how many assigned checks are done in the current period.",
+      "ppk": "PCP — how many sections of the production control program are ready."
+    },
+    "title": "Monitoring"
+  },
+  "pointJournals": {
+    "lead": "Which journals each outlet keeps. Add or remove a journal — only that outlet changes.",
+    "leadShared": "The journal set is shared by all outlets. Add or remove a journal — the whole company's set changes.",
+    "allPoints": "All outlets",
+    "inWork": "{count, plural, one {# journal in use} other {# journals in use}}",
+    "add": "Add journal",
+    "removeAria": "Remove “{name}” from “{point}”",
+    "empty": "No journals at this outlet yet",
+    "pickTitle": "Add a journal: {point}",
+    "pickDescription": "The journal will appear in Today and in the journal list of this outlet only.",
+    "pickDescriptionShared": "The journal will appear in Today and in the journal list.",
+    "search": "Find a journal",
+    "nothing": "All journals are already added",
+    "notFound": "Nothing found",
+    "added": "Journal added: {name}",
+    "removed": "Journal removed: {name}",
+    "undo": "Undo",
+    "failed": "Could not save — please try again",
+    "settings": "Journal settings",
+    "guide": {
+      "title": "How it works",
+      "list": "Here are all outlets and the journals they keep.",
+      "add": "“Add journal” — the journal appears in Today for this outlet's staff.",
+      "remove": "“×” next to a journal — it stops reminding; entries are not deleted."
     }
   }
 }

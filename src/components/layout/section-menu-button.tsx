@@ -12,6 +12,7 @@ import {
   BackToMainButton,
   NavSectionsList,
   SectionMenuList,
+  menuHostKey,
   useSheetMenu,
 } from "@/components/layout/section-menu-list";
 import { useSectionPlace } from "@/components/layout/section-tabs";
@@ -19,8 +20,8 @@ import { useSectionStatuses } from "@/components/layout/use-section-statuses";
 
 /**
  * Меню раздела в Mini App (П-3): полоса над вкладками, по нажатию — лист, как
- * бургер сайта: логотип компании клиента, «‹ Главное меню» и пункты раздела.
- * «‹ Главное меню» переключает лист на девять разделов; раздел со стрелкой ›
+ * бургер сайта: логотип компании клиента, «‹ Назад» и пункты раздела.
+ * «‹ Назад» переключает лист на меню уровнем выше; раздел со стрелкой ›
  * раскрывает своё меню на месте. Показывается, когда путь принадлежит разделу
  * с меню и разделов у человека два и больше (повару с одним разделом меню не
  * нужно — как и бургер на сайте).
@@ -39,7 +40,10 @@ export function SectionMenuButton({
   const pathname = usePathname() || "/";
   const { section, menuItem } = useSectionPlace();
   const [open, setOpen] = useState(false);
-  const menuSection = showSidebar && section?.menu ? section : undefined;
+  const currentKey = sectionForPath(pathname)?.section ?? null;
+  // Раздел без своего меню («Остальное») — в меню родителя.
+  const hostKey = menuHostKey(sections, currentKey);
+  const menuSection = showSidebar && hostKey ? sections.find((entry) => entry.key === hostKey) : undefined;
   const menu = useSheetMenu({ scope: "mini", sections, currentKey: menuSection?.key ?? null, pathname });
   const shown = menu.shown;
   const statuses = useSectionStatuses(open && shown ? shown.key : undefined);
@@ -86,19 +90,17 @@ export function SectionMenuButton({
           />
           {shown?.menu ? (
             <>
-              <BackToMainButton onClick={menu.showMain} />
+              <BackToMainButton onClick={menu.back} />
               <SectionMenuList
                 section={shown}
-                activeItemId={shown.key === menuSection.key ? menuItem?.id : undefined}
+                activeItemId={shown.key === section?.key ? menuItem?.id : undefined}
+                currentKey={currentKey}
                 statuses={statuses}
+                onOpenMenu={menu.openMenu}
               />
             </>
           ) : (
-            <NavSectionsList
-              sections={sections}
-              active={sectionForPath(pathname)?.section ?? null}
-              onOpenMenu={menu.openMenu}
-            />
+            <NavSectionsList sections={sections} currentKey={currentKey} onOpenMenu={menu.openMenu} />
           )}
         </nav>
       </BottomSheet>

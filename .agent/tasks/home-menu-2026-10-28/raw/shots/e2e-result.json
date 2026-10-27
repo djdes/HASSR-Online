@@ -1,0 +1,167 @@
+[
+  {
+    "name": "AC7 вход руководителя → /home",
+    "ok": true,
+    "detail": "http://localhost:3047/home"
+  },
+  {
+    "name": "AC1 главное меню владельца",
+    "ok": true,
+    "detail": "company,monitoring,billing,settings,inspection"
+  },
+  {
+    "name": "AC1 у всех пунктов главного меню стрелка ›",
+    "ok": true,
+    "detail": "5"
+  },
+  {
+    "name": "AC5 краткое юр. наименование под логотипом",
+    "ok": true,
+    "detail": "ООО «Ромашка»"
+  },
+  {
+    "name": "AC6 главная: подпись и телефон",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 главная: три контакта",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 главная: три пустых слота избранного",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 избранное сохраняется после перезагрузки",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 API отбрасывает чужие адреса",
+    "ok": true,
+    "detail": "{\"hrefs\":[\"/monitoring\"]}"
+  },
+  {
+    "name": "AC2 меню «Моей компании»",
+    "ok": true,
+    "detail": "office,points,master,more,organization"
+  },
+  {
+    "name": "Мастер-кабинет с меткой PRO",
+    "ok": true,
+    "detail": "Мастер-кабинетPRO"
+  },
+  {
+    "name": "AC2 меню «Торговых точек»",
+    "ok": true,
+    "detail": "staff,journals,productionControl,areas,equipment,qr,printer,kiosk,products"
+  },
+  {
+    "name": "AC7 корень «Торговых точек» — список точек",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 «‹ Назад» из точек → меню «Моей компании»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 пункт-родитель подсвечен",
+    "ok": true,
+    "detail": "true"
+  },
+  {
+    "name": "AC2 «‹ Назад» из компании → главное меню",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC9 карточки точек (без офиса)",
+    "ok": true,
+    "detail": "b-lenina,b-mira"
+  },
+  {
+    "name": "AC2 «Журналы» — своё меню слева",
+    "ok": true,
+    "detail": "journals"
+  },
+  {
+    "name": "AC9 убрать журнал на одной точке — другая не меняется",
+    "ok": true,
+    "detail": "Ленина 46→45, Мира 46→46"
+  },
+  {
+    "name": "AC9 добавить журнал обратно",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC8 три карточки мониторинга",
+    "ok": true,
+    "detail": "journals,checklists,ppk"
+  },
+  {
+    "name": "AC8 переключатель точек",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC8 выбор точки",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 «Мониторинг» → «Чек-листы ›»",
+    "ok": true,
+    "detail": "overview,checklists"
+  },
+  {
+    "name": "AC10 «Пришла проверка»: четыре пункта эскиза сверху",
+    "ok": true,
+    "detail": "laws,norms,portal,experts,now,visits,readiness,special"
+  },
+  {
+    "name": "AC10 «Нормативные документы» — страница раздела, меню не переключается",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "нет ошибок страницы (владелец)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 главная на 390 px без прокрутки вбок",
+    "ok": true,
+    "detail": "лишние 0px"
+  },
+  {
+    "name": "AC2 лист на телефоне открывается с меню «Журналов»",
+    "ok": true,
+    "detail": "journals"
+  },
+  {
+    "name": "AC2 «‹ Назад» в листе → меню «Торговых точек»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC7 заведующая после входа — не на /home",
+    "ok": true,
+    "detail": "/dashboard"
+  },
+  {
+    "name": "AC3 заведующая: разделы закрытой «Моей компании» — в главном меню",
+    "ok": true,
+    "detail": "office,points,monitoring,billing,settings,more,inspection"
+  },
+  {
+    "name": "заведующую /home уводит на её домашнюю",
+    "ok": true,
+    "detail": "http://localhost:3047/dashboard"
+  }
+]

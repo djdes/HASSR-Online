@@ -2707,9 +2707,12 @@
         "journals": "Jurnallar",
         "checklists": "Chek-listlar",
         "productionControl": "Ishlab chiqarish nazorati",
-        "billing": "To‘lov",
+        "billing": "Obunalar",
         "more": "Boshqalar",
-        "inspection": "Tekshiruv keldi"
+        "inspection": "Tekshiruv keldi",
+        "office": "Ofis",
+        "monitoring": "Monitoring",
+        "settings": "Sozlamalar va bezak"
       },
       "tabs": {
         "template": "Muassasa shabloni",
@@ -2736,7 +2739,11 @@
         "inspectionDay": "Nima qilish kerak",
         "portal": "QR-kirish",
         "readiness": "Tayyorgarlik",
-        "program": "Dastur"
+        "program": "Dastur",
+        "office": "Ofis xodimlari",
+        "access": "Huquqlar va kirish",
+        "overview": "Umumiy ko‘rinish",
+        "points": "Nuqtalar jurnallari"
       },
       "groups": {
         "staff": "Xodimlar",
@@ -2770,19 +2777,17 @@
       "brand": "WeSetup",
       "menus": {
         "company": {
-          "groups": {
-            "more": "Yana"
-          },
           "items": {
+            "office": "Ofis",
+            "points": "Savdo nuqtalari",
+            "master": "Master-kabinet",
+            "more": "Boshqalar",
+            "organization": "Rekvizitlar"
+          },
+          "tabs": {
             "organization": "Rekvizitlar",
-            "names": "Bo‘lim nomlari",
-            "onboarding": "Tezkor sozlash",
-            "template": "Muassasa shabloni",
-            "appearance": "Ko‘rinish",
             "documents": "Hujjatlar uchun ma’lumotlar",
-            "branding": "Brend uslubi",
-            "contacts": "Kontaktlar va bildirishnomalar",
-            "office": "Ofis"
+            "contacts": "Kontaktlar va bildirishnomalar"
           }
         },
         "staff": {
@@ -2794,7 +2799,6 @@
           "items": {
             "positions": "Lavozimlar",
             "users": "Xodimlar",
-            "access": "Kirish va huquqlar",
             "commission": "Taom sifatini tekshirish komissiyasi",
             "haccpGroup": "HACCP guruhi",
             "controlGroup": "Nazorat guruhi",
@@ -2811,20 +2815,18 @@
         },
         "points": {
           "groups": {
-            "myPoints": "Mening nuqtalarim",
-            "allPoints": "Barcha nuqtalar",
             "more": "Yana"
           },
           "items": {
-            "add": "Nuqta qo‘shish",
-            "buildings": "Nuqtalar",
+            "staff": "Nuqtalar xodimlari",
+            "journals": "Jurnallar",
+            "productionControl": "Ishlab chiqarish nazorati dasturi",
             "areas": "Sexlar va xonalar",
             "equipment": "Uskunalar",
             "qr": "QR-stikerlar va plakatlar",
             "printer": "Onlayn printer",
             "kiosk": "Umumiy planshet",
-            "products": "Mahsulotlar katalogi",
-            "master": "Master-kabinet"
+            "products": "Mahsulotlar katalogi"
           }
         },
         "journals": {
@@ -2833,6 +2835,7 @@
             "more": "Yana"
           },
           "items": {
+            "points": "Nuqtalar jurnallari",
             "today": "Bugun",
             "control": "Bugun",
             "all": "Barcha jurnallar",
@@ -2900,14 +2903,39 @@
           }
         },
         "inspection": {
+          "groups": {
+            "more": "Yana"
+          },
           "items": {
+            "laws": "Me’yoriy hujjatlar",
+            "norms": "IChN va HACCP rejasi",
+            "portal": "Tekshiruvchi uchun QR",
+            "experts": "Konsalting",
             "now": "Hozir nima qilish kerak",
             "visits": "Tashriflar jurnali",
-            "norms": "Me’yoriy hujjatlar",
-            "portal": "Tekshiruvchi uchun QR",
             "readiness": "Tekshiruvga tayyorgarlik",
-            "experts": "Ekspert bilan tayyorgarlik va chiqish",
             "special": "Maxsus rejim"
+          }
+        },
+        "office": {
+          "items": {
+            "office": "Ofis xodimlari",
+            "access": "Huquqlar va kirish"
+          }
+        },
+        "monitoring": {
+          "items": {
+            "overview": "Umumiy ko‘rinish",
+            "checklists": "Chek-listlar"
+          }
+        },
+        "settings": {
+          "items": {
+            "appearance": "Ko‘rinish",
+            "branding": "Brend uslubi",
+            "names": "Bo‘lim nomlari",
+            "onboarding": "Tezkor sozlash",
+            "template": "Muassasa shabloni"
           }
         }
       },
@@ -2923,6 +2951,10 @@
         "done": "Toʻldirilgan",
         "started": "Boshlangan",
         "empty": "Boʻsh"
+      },
+      "back": "Orqaga",
+      "badges": {
+        "pro": "PRO"
       }
     },
     "header": {
@@ -3079,8 +3111,8 @@
     "routes": {
       "inspection": "Tekshiruv keldi",
       "inspection_visits": "Tashriflar jurnali",
-      "inspection_norms": "Me’yoriy hujjatlar",
-      "inspection_experts": "Ekspert bilan tayyorgarlik va chiqish",
+      "inspection_norms": "IChN va HACCP rejasi",
+      "inspection_experts": "Konsalting",
       "inspection_special_mode": "Maxsus rejim",
       "production_control": "Ishlab chiqarish nazorati dasturi",
       "more": "Boshqalar",
@@ -3220,7 +3252,11 @@
       "settings_organization_documents": "Hujjatlar uchun ma’lumotlar",
       "settings_organization_branding": "Brend uslubi",
       "settings_organization_contacts": "Kontaktlar va bildirishnomalar",
-      "settings_organization_office": "Ofis"
+      "settings_organization_office": "Ofis",
+      "home": "Bosh sahifa",
+      "monitoring": "Monitoring",
+      "journals_points": "Nuqtalar jurnallari",
+      "inspection_laws": "Me’yoriy hujjatlar"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",
@@ -29374,6 +29410,92 @@
       "stuck": "Qotib qolgan",
       "remind": "Eslatish",
       "nobodyTook": "hech kim olmadi"
+    }
+  },
+  "homePage": {
+    "tagline": "Sizning elektron HACCP tizimingiz",
+    "contactsTitle": "Biz aloqadamiz",
+    "contacts": {
+      "support": "Qo‘llab-quvvatlash",
+      "sales": "Sotuv bo‘limi",
+      "consulting": "Konsalting"
+    },
+    "via": {
+      "telegram": "Telegram’da",
+      "support": "saytdagi chat",
+      "sales": "tariflar va to‘lov",
+      "consulting": "ekspert bilan tayyorgarlik"
+    },
+    "phone": "Telefon",
+    "setupTitle": "Boshlang‘ich sozlash",
+    "setupBody": "Kompaniya, nuqtalar, xodimlar va jurnallar — bosqichma-bosqich",
+    "favorites": {
+      "title": "Sevimlilar",
+      "add": "Sevimlilarga qo‘shish",
+      "addHint": "Eng ko‘p ochadigan sahifangizni mahkamlang",
+      "remove": "Sevimlilardan olib tashlash",
+      "pickDescription": "Sahifa bosh sahifada paydo bo‘ladi — uni bir bosishda oching.",
+      "search": "Sahifani topish",
+      "nothing": "Hech narsa topilmadi",
+      "saved": "Sevimlilar saqlandi",
+      "failed": "Sevimlilarni saqlab bo‘lmadi"
+    }
+  },
+  "monitoringPage": {
+    "lead": "Nuqtalardagi ishlar: bugungi jurnallar, chek-listlar va ishlab chiqarish nazorati dasturi.",
+    "allPoints": "Barcha nuqtalar",
+    "pointsAria": "Nuqtani tanlash",
+    "open": "Batafsil",
+    "setUp": "Sozlash",
+    "journals": {
+      "title": "Jurnallar",
+      "count": "Bugun to‘ldirildi: {done} / {total}",
+      "empty": "Jurnallar tanlanmagan — ularni nuqtaga qo‘shing",
+      "shared": "Jurnallar to‘plami barcha nuqtalar uchun umumiy"
+    },
+    "checklists": {
+      "title": "Chek-listlar",
+      "count": "Bajarildi: {done} / {total}",
+      "empty": "Hozir tayinlangan chek-listlar yo‘q",
+      "hint": "Bugungi va joriy davr tayinlovlari"
+    },
+    "ppk": {
+      "title": "Ishlab chiqarish nazorati dasturi",
+      "count": "Tayyor bo‘limlar: {done} / {total}",
+      "hint": "Butun kompaniya uchun bitta dastur"
+    },
+    "guide": {
+      "title": "Monitoringni qanday o‘qish kerak",
+      "journals": "Jurnallar — nuqta to‘plamidagi qancha jurnal bugun to‘ldirilgan.",
+      "checklists": "Chek-listlar — joriy davrda tayinlangan tekshiruvlardan qanchasi bajarilgan.",
+      "ppk": "IChN — ishlab chiqarish nazorati dasturining qancha bo‘limi tayyor."
+    },
+    "title": "Monitoring"
+  },
+  "pointJournals": {
+    "lead": "Har bir nuqtada qaysi jurnallar yuritiladi. Jurnal qo‘shing yoki olib tashlang — faqat shu nuqta o‘zgaradi.",
+    "leadShared": "Jurnallar to‘plami barcha nuqtalar uchun umumiy. Jurnal qo‘shing yoki olib tashlang — butun kompaniya to‘plami o‘zgaradi.",
+    "allPoints": "Barcha nuqtalar",
+    "inWork": "{count, plural, other {# ta jurnal yuritilmoqda}}",
+    "add": "Jurnal qo‘shish",
+    "removeAria": "«{name}»ni «{point}» nuqtasidan olib tashlash",
+    "empty": "Bu nuqtada hozircha jurnal yo‘q",
+    "pickTitle": "Jurnal qo‘shish: {point}",
+    "pickDescription": "Jurnal faqat shu nuqtaning «Bugun» va jurnallar ro‘yxatida paydo bo‘ladi.",
+    "pickDescriptionShared": "Jurnal «Bugun» va jurnallar ro‘yxatida paydo bo‘ladi.",
+    "search": "Jurnalni topish",
+    "nothing": "Barcha jurnallar allaqachon qo‘shilgan",
+    "notFound": "Hech narsa topilmadi",
+    "added": "Jurnal qo‘shildi: {name}",
+    "removed": "Jurnal olib tashlandi: {name}",
+    "undo": "Qaytarish",
+    "failed": "Saqlab bo‘lmadi — qayta urinib ko‘ring",
+    "settings": "Jurnal sozlamalari",
+    "guide": {
+      "title": "Bu qanday ishlaydi",
+      "list": "Bu yerda barcha savdo nuqtalari va ularda yuritiladigan jurnallar.",
+      "add": "«Jurnal qo‘shish» — jurnal shu nuqta xodimlarining «Bugun» bo‘limida paydo bo‘ladi.",
+      "remove": "Jurnal yonidagi «×» — u eslatmaydi; yozuvlar o‘chirilmaydi."
     }
   }
 }

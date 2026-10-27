@@ -1,0 +1,105 @@
+/**
+ * Меню раздела, которое человек откроет: пункты и вкладки — через `navAllows`;
+ * у пункта с вкладками адрес — первая видимая вкладка, без видимых вкладок
+ * пункт убирается; пункт с `hideIfVisible` прячется, если виден тот пункт;
+ * вложенные разделы (`sections`) — первыми, если раздел человеку виден;
+ * пустые группы тоже убираются.
+ */
+function visibleMenu(
+  actor: NavActor,
+  groups: NavMenuGroup[],
+  facts: NavFacts,
+  sectionItem: (key: NavSectionKey) => VisibleNavMenuItem | null,
+): VisibleNavMenuGroup[] {
+  const allowed = groups.map((group) => {
+    const items: (VisibleNavMenuItem & { hideIfVisible?: string })[] = [];
+    for (const key of group.sections ?? []) {
+      const item = sectionItem(key);
+      if (item) items.push(item);
+    }
+    for (const item of group.items) {
+      if (!navAllows(actor, item.href, item.access, facts)) continue;
+      const hide = item.hideIfVisible ? { hideIfVisible: item.hideIfVisible } : {};
+      if (!item.tabs) {
+        items.push({ id: item.id, icon: item.icon, href: item.href, ...hide });
+        continue;
+      }
+      const tabs = item.tabs
+        .filter((tab) => navAllows(actor, tab.href, tab.access, facts))
+        .map(({ id, href }) => ({ id, href }));
+      if (tabs.length === 0) continue;
+      items.push({ id: item.id, icon: item.icon, href: tabs[0].href, tabs, ...hide });
+    }
+    return { label: group.label, items };
+  });
+  const allowedIds = new Set(allowed.flatMap((group) => group.items.map((item) => item.id)));
+  const result: VisibleNavMenuGroup[] = [];
+  for (const group of allowed) {
+    const items = group.items
+      .filter((item) => !item.hideIfVisible || !allowedIds.has(item.hideIfVisible))
+      .map(({ hideIfVisible: _hidden, ...item }) => item);
+    if (items.length > 0) result.push({ label: group.label, items });
+  }
+  return result;
+}
+
+/**
+ * Разделы и вкладки, которые человек откроет. Пустые разделы отброшены.
+ * Вложенный раздел — пункт меню родителя (`parent`), если родитель виден;
+ * иначе он стоит в главном меню (см. `mainNavSections`).
+ */
+export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[] {
+  const shown = new Map<NavSectionKey, { section: NavSection; tabs: VisibleNavTab[] }>();
+  for (const section of NAV_SECTIONS) {
+    if (section.access && !ruleAllows(actor, section.access, facts)) continue;
+    if (section.companyOnly && isPointScoped(actor)) continue;
+    const allowed = section.tabs.filter((tab) => navAllows(actor, tab.href, tab.access, facts));
+    const allowedIds = new Set(allowed.map((tab) => tab.id));
+    const tabs = allowed
+      .filter((tab) => !tab.hideIfVisible || !allowedIds.has(tab.hideIfVisible))
+      .map((tab): VisibleNavTab => ({ id: tab.id, label: tab.label, href: tab.href }));
+    if (tabs.length > 0) shown.set(section.key, { section, tabs });
+  }
+  const parentOf = (section: NavSection) =>
+    section.parent && shown.has(section.parent) ? section.parent : undefined;
+
+  const menus = new Map<NavSectionKey, VisibleNavMenuGroup[]>();
+  const menuOf = (key: NavSectionKey): VisibleNavMenuGroup[] => {
+    const known = menus.get(key);
+    if (known) return known;
+    const { section } = shown.get(key)!;
+    const menu = visibleMenu(actor, section.menu ?? [], facts, (childKey) => {
+      const child = shown.get(childKey);
+      if (!child || parentOf(child.section) !== key) return null;
+      return {
+        id: childKey,
+        icon: child.section.icon,
+        href: child.tabs[0].href,
+        section: childKey,
+        ...(menuOf(childKey).length > 0 ? { hasMenu: true } : {}),
+      };
+    });
+    menus.set(key, menu);
+    return menu;
+  };
+
+  return [...shown.values()].map(({ section, tabs }) => {
+    const menu = menuOf(section.key);
+    const parent = parentOf(section);
+    return {
+      key: section.key,
+      icon: section.icon,
+      ...(parent ? { parent } : {}),
+      rootHref: tabs[0].href,
+      tabs,
+      ...(menu.length > 0 ? { menu } : {}),
+      ...(section.renameHref ? { renameHref: section.renameHref } : {}),
+    };
+  });
+}
+
+/** Главное меню: разделы без видимого родителя, в порядке `NAV_SECTIONS`. */
+export function mainNavSections<T extends { parent?: NavSectionKey }>(sections: readonly T[]): T[] {
+  return sections.filter((section) => !section.parent);
+}
+

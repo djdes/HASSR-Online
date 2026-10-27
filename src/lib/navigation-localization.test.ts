@@ -12,8 +12,8 @@ import { buildJournalSwitcherMenu, journalSwitcherOptions, filterCrumbMenu, matc
 import { NAV_SECTIONS } from "./app-nav";
 import type { Session } from "next-auth";
 
-test("143 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
-  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 143);
+test("147 static routes and dynamic journal-task route resolve typed localized titles without changing paths", async () => {
+  assert.equal(Object.keys(ROUTE_TITLE_KEYS).length, 147);
   assert.deepEqual(Object.keys(ROUTE_TITLE_KEYS), Object.keys(ROUTE_TITLES));
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
@@ -39,6 +39,7 @@ test("143 static routes and dynamic journal-task route resolve typed localized t
     for (const section of NAV_SECTIONS) {
       const menuLabels = (section.menu ?? []).flatMap((group) => [
         ...(group.label ? [menuLabel(`shell.menus.${section.key}.groups.${group.label}`)] : []),
+        ...(group.sections ?? []).map((key) => menuLabel(`shell.menus.${section.key}.items.${key}`)),
         ...group.items.flatMap((item) => [
           menuLabel(`shell.menus.${section.key}.items.${item.id}`),
           ...(item.tabs ?? []).map((tab) => menuLabel(`shell.menus.${section.key}.tabs.${tab.id}`)),

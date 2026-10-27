@@ -1,0 +1,418 @@
+/**
+ * Меню разделов по эскизам руководителя (2026-10-17, сканы 82–83; дерево —
+ * 2026-10-28, «Отсканированный документ 95»): у раздела своё левое меню.
+ * Пункт — существующая страница или вложенный раздел (`sections` группы);
+ * вкладки раздела (`tabs`) остаются кандидатами на корень раздела для разных
+ * ролей и в разделе с меню не рисуются. Что не нарисовано на эскизе, — в
+ * нижней группе «Ещё».
+ *
+ * Главное меню руководителя — четыре раздела (Моя компания, Мониторинг,
+ * Подписки, Настройки и оформление) и «Пришла проверка» внизу.
+ */
+const COMPANY_MENU: NavMenuGroup[] = [
+  // Лист 2: Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Остальное, Реквизиты.
+  {
+    label: null,
+    sections: ["office", "points"],
+    items: [{ id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS }],
+  },
+  {
+    label: null,
+    sections: ["more"],
+    items: [
+      {
+        // Реквизиты, блок сведений «в любом документе» и контакты — вкладки одного пункта.
+        id: "organization",
+        icon: "Building2",
+        href: "/settings/organization",
+        access: ADMIN,
+        tabs: [
+          { id: "organization", href: "/settings/organization", access: ADMIN },
+          { id: "documents", href: "/settings/organization/documents", access: ADMIN },
+          { id: "contacts", href: "/settings/organization/contacts", access: ADMIN },
+        ],
+      },
+    ],
+  },
+];
+
+/**
+ * Прежние страницы прав — подробные редакторы пункта «Права и доступ»: он
+ * одна страница со сводкой, а они открываются из её блоков (с теми же
+ * правами, что у страниц) и подсвечивают пункт.
+ */
+const ACCESS_EDITORS = [
+  "/settings/permissions",
+  "/settings/role-presets",
+  "/settings/journal-access",
+  "/settings/journals-by-position",
+];
+
+/** «Офис» (лист 3): сотрудники офиса и права доступа — всё про всю компанию. */
+const OFFICE_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "office", icon: "BriefcaseBusiness", href: "/settings/organization/office", access: ADMIN },
+      { id: "access", icon: "ShieldCheck", href: "/settings/access", access: FULL_ACCESS, match: ACCESS_EDITORS },
+    ],
+  },
+];
+
+/** «Сотрудники» — вложенный раздел «Торговых точек»: корень — сотрудники по точкам. */
+const STAFF_MENU: NavMenuGroup[] = [
+  {
+    label: "directories",
+    items: [
+      { id: "users", icon: "Users", href: "/settings/users", access: FULL_ACCESS },
+      { id: "positions", icon: "BriefcaseBusiness", href: "/settings/positions", access: FULL_ACCESS },
+    ],
+  },
+  {
+    // «Отдельно» на эскизе (скан 82, лист 4): группы людей с особой ролью.
+    label: "groups",
+    items: [
+      { id: "commission", icon: "UtensilsCrossed", href: "/settings/brakerage-commission", access: FULL_ACCESS },
+      { id: "haccpGroup", icon: "ShieldPlus", href: "/settings/haccp-group", access: FULL_ACCESS },
+      { id: "controlGroup", icon: "Binoculars", href: "/settings/control-group", access: FULL_ACCESS },
+      { id: "inspectors", icon: "UserSearch", href: "/settings/inspectors", access: FULL_ACCESS },
+    ],
+  },
+  {
+    label: "more",
+    items: [
+      { id: "team", icon: "UsersRound", href: "/team", access: anyOf("staff.view", "tasks.verify", "admin.full") },
+      { id: "schedule", icon: "CalendarDays", href: "/settings/schedule", access: FULL_ACCESS },
+      { id: "health", icon: "HeartPulse", href: "/settings/staff-health", access: FULL_ACCESS },
+      { id: "responsibles", icon: "UserCheck", href: "/settings/journal-responsibles", access: ADMIN },
+      { id: "hierarchy", icon: "Network", href: "/settings/staff-hierarchy", access: PERMISSIONS_FACT },
+      { id: "visibility", icon: "Eye", href: "/settings/position-staff-visibility", access: FULL_ACCESS },
+      { id: "workload", icon: "Scale", href: "/settings/workload-balance", access: ADMIN },
+      { id: "phone", icon: "Phone", href: "/settings/phone", access: STAFF_PATH },
+    ],
+  },
+];
+
+/**
+ * «Торговые точки» (лист 4): корень — список всех точек и «Добавить точку»;
+ * сотрудники, журналы и ППК — вложенные разделы, справочники — по всем точкам.
+ */
+const POINTS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    sections: ["staff", "journals", "productionControl"],
+    items: [
+      { id: "areas", icon: "DoorOpen", href: "/settings/areas", access: STAFF_PATH },
+      { id: "equipment", icon: "Refrigerator", href: "/settings/equipment", access: STAFF_PATH },
+      { id: "qr", icon: "QrCode", href: "/settings/qr-posters", access: FULL_ACCESS },
+    ],
+  },
+  {
+    label: "more",
+    items: [
+      { id: "printer", icon: "Printer", href: "/settings/print-agent", access: FULL_ACCESS },
+      { id: "kiosk", icon: "TabletSmartphone", href: "/settings/kiosk", access: FULL_ACCESS },
+      { id: "products", icon: "Package", href: "/settings/products", access: FULL_ACCESS },
+    ],
+  },
+];
+
+/** Пути карточек «Настройки журналов» — они подсвечивают её пункт. */
+const JOURNAL_SETUP_MATCH = SETTINGS_CARDS.filter((card) => card.section === "journals").flatMap((card) => [
+  card.href,
+  ...(card.match ?? []),
+]);
+
+const JOURNALS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      // Журналы всех точек: что ведётся на каждой, добавить/убрать журнал точке.
+      { id: "points", icon: "Store", href: "/journals/points", access: ADMIN },
+      { id: "today", icon: "CalendarCheck", href: "/dashboard", access: JOURNALS_TODAY, match: ["/dashboard/catch-up"] },
+      // «Сегодня» заведующей — панель контроля (у управляющей есть своё «Сегодня»).
+      {
+        id: "control",
+        icon: "CalendarCheck",
+        href: "/control-board",
+        access: anyOf("tasks.verify", "admin.full"),
+        hideIfVisible: "today",
+      },
+      { id: "all", icon: "ClipboardList", href: "/journals", access: anyOf("journals.view") },
+    ],
+  },
+  {
+    // Наборы журналов (скан 82, лист 1): состав — `JOURNAL_SETS`, guard — как у
+    // API наборов (`hasFullWorkspaceAccess`).
+    label: "sets",
+    items: [
+      { id: "standard", icon: "ListOrdered", href: "/journals/sets/standard", access: FULL_ACCESS },
+      { id: "haccp", icon: "ShieldCheck", href: "/journals/sets/haccp", access: FULL_ACCESS },
+      { id: "extra", icon: "ListPlus", href: "/journals/sets/extra", access: FULL_ACCESS },
+    ],
+  },
+  {
+    // Безымянная группа после подписанной слилась бы с ней — поэтому «Ещё».
+    label: "more",
+    items: [
+      { id: "verify", icon: "BadgeCheck", href: "/verifications", access: anyOf("tasks.verify") },
+      { id: "setup", icon: "Settings2", href: "/settings/sections/journals", access: FULL_ACCESS, match: JOURNAL_SETUP_MATCH },
+    ],
+  },
+];
+
+/**
+ * «Чек-листы» (скан 82, лист 3; решения раздела 7, 2026-10-19): готовые
+ * шаблоны → конструктор → назначение (только руководителю) → результаты.
+ * Корень раздела — «Шаблоны»: новичок сначала видит готовые чек-листы.
+ * Страница проверки (`/checklists/inspections/<id>`) — глубина «Результатов».
+ * С 2026-10-28 — вложенный раздел «Мониторинга».
+ */
+const CHECKLISTS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "templates", icon: "LayoutTemplate", href: "/checklists/templates", access: CHECKLISTS_FACT },
+      { id: "builder", icon: "ListChecks", href: "/checklists", access: CHECKLISTS_FACT },
+      { id: "assignments", icon: "CalendarRange", href: "/checklists/assignments", access: ADMIN },
+      {
+        id: "results",
+        icon: "ClipboardCheck",
+        href: "/checklists/results",
+        access: CHECKLISTS_FACT,
+        match: ["/checklists/inspections"],
+      },
+    ],
+  },
+];
+
+/** «Мониторинг» (лист 5): сводка — журналы, чек-листы и ППК в процентах. */
+const MONITORING_MENU: NavMenuGroup[] = [
+  { label: null, items: [{ id: "overview", icon: "Gauge", href: "/monitoring", access: FULL_ACCESS }] },
+  { label: null, sections: ["checklists"], items: [] },
+];
+
+const BILLING_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "plan", icon: "CreditCard", href: "/settings/subscription", access: FULL_ACCESS },
+      { id: "balance", icon: "Wallet", href: "/settings/balance", access: STAFF_PATH },
+      { id: "services", icon: "Handshake", href: "/settings/services", access: STAFF_PATH },
+    ],
+  },
+];
+
+/** «Настройки и оформление» (лист 1): внешний вид кабинета и быстрый старт. */
+const SETTINGS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "appearance", icon: "Palette", href: "/settings/appearance", access: ADMIN },
+      { id: "branding", icon: "SwatchBook", href: "/settings/organization/branding", access: ADMIN },
+      { id: "names", icon: "PenLine", href: "/settings/names", access: FULL_ACCESS },
+      { id: "onboarding", icon: "Rocket", href: "/settings/onboarding", access: ADMIN },
+      { id: "template", icon: "LayoutTemplate", href: "/settings/onboarding-template", access: ADMIN },
+    ],
+  },
+];
+
+// Фото 6-го листа: нормативные документы, ППК и ХАССП («как сейчас»), QR для
+// проверяющего, консалтинг; остальные блоки раздела — в «Ещё». Заведующей
+// открыто всё, что не требует руководства: проверка часто приходит при ней одной.
+const INSPECTION_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "laws", icon: "Scale", href: "/inspection/laws", access: FULL_ACCESS },
+      { id: "norms", icon: "BookOpen", href: "/inspection/norms", access: fullAccessOr("tasks.verify") },
+      { id: "portal", icon: "QrCode", href: "/settings/inspector-portal", access: FULL_ACCESS },
+      { id: "experts", icon: "Handshake", href: "/inspection/experts", access: FULL_ACCESS },
+    ],
+  },
+  {
+    label: "more",
+    items: [
+      { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
+      { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
+      { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
+      { id: "special", icon: "ShieldCheck", href: "/inspection/special-mode", access: fullAccessOr("tasks.verify") },
+    ],
+  },
+];
+
+/**
+ * Порядок — порядок главного меню: разделы без видимого родителя идут в нём
+ * в этом порядке, вложенные стоят за родителем (на случай, когда родитель
+ * человеку закрыт и раздел поднимается в главное меню).
+ */
+export const NAV_SECTIONS: NavSection[] = [
+  {
+    key: "company",
+    icon: "Building2",
+    // Реквизиты и мастер-кабинет просят `admin.full` / руководство;
+    // заведующей целый раздел ни к чему — её разделы поднимаются в главное меню.
+    access: ADMIN,
+    companyOnly: true,
+    aliases: ["/settings"],
+    tabs: [{ id: "organization", label: "organization", href: "/settings/organization", access: ADMIN }],
+    menu: COMPANY_MENU,
+  },
+  {
+    key: "office",
+    icon: "BriefcaseBusiness",
+    parent: "company",
+    companyOnly: true,
+    tabs: [
+      { id: "office", label: "office", href: "/settings/organization/office", access: ADMIN },
+      { id: "access", label: "access", href: "/settings/access", access: FULL_ACCESS },
+    ],
+    menu: OFFICE_MENU,
+  },
+  {
+    key: "points",
+    icon: "Store",
+    parent: "company",
+    access: FULL_ACCESS,
+    // `/settings/sections/points` — бывшая «Настройка», см. «Сотрудники».
+    hiddenMatch: ["/settings/sections/points"],
+    tabs: [
+      { id: "buildings", label: "buildings", href: "/settings/buildings", access: FULL_ACCESS },
+      { id: "areas", label: "areas", href: "/settings/areas", access: STAFF_PATH },
+      { id: "equipment", label: "equipment", href: "/settings/equipment", access: STAFF_PATH },
+      { id: "qr", label: "qr", href: "/settings/qr-posters", access: FULL_ACCESS },
+    ],
+    menu: POINTS_MENU,
+  },
+  {
+    key: "staff",
+    icon: "Users",
+    parent: "points",
+    access: fullAccessOr("staff.view", "tasks.verify"),
+    renameHref: "/settings/users",
+    // `/settings/sections/staff` — бывшая «Настройка»: её карточки стали
+    // пунктами меню, сама страница уводит к сотрудникам.
+    hiddenMatch: ["/staff", "/competencies", "/settings/sections/staff"],
+    tabs: [
+      { id: "users", label: "users", href: "/settings/users", access: FULL_ACCESS },
+      {
+        id: "team",
+        label: "team",
+        href: "/team",
+        access: anyOf("staff.view", "tasks.verify", "admin.full"),
+      },
+      { id: "schedule", label: "schedule", href: "/settings/schedule", access: FULL_ACCESS },
+      { id: "health", label: "health", href: "/settings/staff-health", access: FULL_ACCESS },
+    ],
+    menu: STAFF_MENU,
+  },
+  {
+    key: "journals",
+    icon: "ClipboardList",
+    parent: "points",
+    renameHref: "/journals",
+    hiddenMatch: ["/journals-progress", "/acknowledge"],
+    tabs: [
+      { id: "points", label: "points", href: "/journals/points", access: ADMIN },
+      {
+        id: "today",
+        label: "today",
+        href: "/dashboard",
+        access: JOURNALS_TODAY,
+        match: ["/dashboard/catch-up"],
+      },
+      {
+        // «Сегодня» заведующей — панель контроля: журналов как журналов
+        // она не видит. У управляющей вкладка не нужна — есть «Сегодня».
+        id: "control",
+        label: "today",
+        href: "/control-board",
+        access: anyOf("tasks.verify", "admin.full"),
+        hideIfVisible: "today",
+      },
+      { id: "all", label: "all", href: "/journals", access: anyOf("journals.view") },
+      { id: "verify", label: "verify", href: "/verifications", access: anyOf("tasks.verify") },
+      { id: "setup", label: "setup", href: "/settings/sections/journals", access: FULL_ACCESS },
+    ],
+    menu: JOURNALS_MENU,
+  },
+  {
+    key: "productionControl",
+    icon: "FileCheck2",
+    parent: "points",
+    access: FULL_ACCESS,
+    // Вкладка одна — корень раздела; навигация внутри — меню раздела слева.
+    tabs: [{ id: "program", label: "program", href: PPK_OVERVIEW_HREF, access: FULL_ACCESS }],
+    menu: ppkMenu(),
+  },
+  {
+    key: "monitoring",
+    icon: "Gauge",
+    access: FULL_ACCESS,
+    tabs: [{ id: "overview", label: "overview", href: "/monitoring", access: FULL_ACCESS }],
+    menu: MONITORING_MENU,
+  },
+  {
+    key: "checklists",
+    icon: "ListChecks",
+    parent: "monitoring",
+    tabs: [{ id: "main", label: "main", href: "/checklists/templates", access: CHECKLISTS_FACT }],
+    menu: CHECKLISTS_MENU,
+  },
+  {
+    key: "billing",
+    icon: "CreditCard",
+    // Баланс открыт и повару, но целый раздел ему ни к чему: свои баллы
+    // он видит из меню аватара.
+    access: FULL_ACCESS,
+    // Тариф и услуги — дело офиса; руководителю точки раздел не нужен.
+    companyOnly: true,
+    tabs: [
+      { id: "plan", label: "plan", href: "/settings/subscription", access: FULL_ACCESS },
+      { id: "balance", label: "balance", href: "/settings/balance", access: STAFF_PATH },
+      { id: "services", label: "services", href: "/settings/services", access: STAFF_PATH },
+    ],
+    menu: BILLING_MENU,
+  },
+  {
+    key: "settings",
+    icon: "Palette",
+    access: FULL_ACCESS,
+    companyOnly: true,
+    tabs: [
+      { id: "appearance", label: "appearance", href: "/settings/appearance", access: ADMIN },
+      { id: "names", label: "names", href: "/settings/names", access: FULL_ACCESS },
+    ],
+    menu: SETTINGS_MENU,
+  },
+  {
+    key: "more",
+    icon: "LayoutGrid",
+    parent: "company",
+    access: FULL_ACCESS,
+    // Убраны из меню владельцем 2026-09-25 — открываются по адресу.
+    // Своего меню нет: раздел — одна страница с карточками.
+    // `/translations` — редактор переводов (2026-10-24): вход из меню профиля.
+    hiddenMatch: ["/batches", "/losses", "/changes", "/bonuses", "/translations", "/settings/integrations/max"],
+    tabs: [{ id: "main", label: "main", href: "/more", access: FULL_ACCESS }],
+  },
+  {
+    key: "inspection",
+    icon: "ShieldAlert",
+    // Проверяющий часто приходит, когда на месте только заведующая.
+    access: fullAccessOr("tasks.verify"),
+    tabs: [
+      {
+        id: "day",
+        label: "inspectionDay",
+        href: "/inspection",
+        access: fullAccessOr("tasks.verify"),
+      },
+      { id: "laws", label: "laws", href: "/inspection/laws", access: FULL_ACCESS },
+      { id: "portal", label: "portal", href: "/settings/inspector-portal", access: FULL_ACCESS },
+      { id: "readiness", label: "readiness", href: "/dashboard/compliance-audit", access: ADMIN },
+    ],
+    menu: INSPECTION_MENU,
+  },
+];
+

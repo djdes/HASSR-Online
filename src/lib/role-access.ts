@@ -39,6 +39,8 @@ export const STAFF_RESTRICTED_WEB_PREFIXES = [
   "/sanpin",
   "/more",
   "/production-control",
+  "/home",
+  "/monitoring",
 ] as const;
 
 export function isStaffRestrictedWebPath(pathname: string): boolean {
@@ -69,7 +71,9 @@ export function canAccessWebPath(
  * сайта в своей оболочке (П-3).
  */
 export function getWebHomeHref(actor: RoleAccessActor): string {
-  return hasFullWorkspaceAccess(actor) ? "/dashboard" : "/journals";
+  // Главная руководства — `/home` (эскиз 2026-10-28); тем, у кого нет
+  // `admin.full` (заведующая), она сама отдаёт «Сегодня» / панель контроля.
+  return hasFullWorkspaceAccess(actor) ? "/home" : "/journals";
 }
 
 export function getBotMiniAppLabel(actor: RoleAccessActor): string {

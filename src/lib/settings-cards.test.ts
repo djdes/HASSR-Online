@@ -162,7 +162,8 @@ test("карточки сотрудников и точек стали пунк�
   }
   // «Доступ и права» (2026-10-18) — одна страница: прежние четыре страницы прав —
   // её подробные редакторы (`match` пункта), ссылки на них стоят в её блоках.
-  const access = (NAV_SECTIONS.find((section) => section.key === "staff")?.menu ?? [])
+  // С 2026-10-28 пункт — в «Офисе» (эскиз: «Офис → Права, доступ»).
+  const access = (NAV_SECTIONS.find((section) => section.key === "office")?.menu ?? [])
     .flatMap((group) => group.items)
     .find((item) => item.id === "access");
   const accessPage = readFileSync(join(process.cwd(), "src", "components", "staff", "access-page-client.tsx"), "utf8");
@@ -175,9 +176,11 @@ test("карточки сотрудников и точек стали пунк�
     assert.ok(access?.match?.includes(href), href);
     assert.ok(accessPage.includes(`href="${href}"`), `ссылка на ${href} со страницы «Доступ и права»`);
   }
-  for (const href of ["/settings/print-agent", "/settings/kiosk", "/settings/products", "/settings/master-cabinet"]) {
+  for (const href of ["/settings/print-agent", "/settings/kiosk", "/settings/products"]) {
     assert.ok(menuOf("points").includes(href), href);
   }
+  // Мастер-кабинет (2026-10-28) — пункт «Моей компании» (эскиз, лист 2).
+  assert.ok(menuOf("company").includes("/settings/master-cabinet"));
   assert.deepEqual(
     [...new Set(SETTINGS_CARDS.map((card) => card.section))].sort(),
     ["journals", "more"],

@@ -22,13 +22,13 @@ function initialsOf(name: string): string {
   );
 }
 
-function Monogram({ name, compact = false }: { name: string; compact?: boolean }) {
+function Monogram({ name, compact = false, large = false }: { name: string; compact?: boolean; large?: boolean }) {
   return (
     <span
       aria-hidden
       className={cn(
         "flex shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] font-semibold text-[#3848c7]",
-        compact ? "size-8 text-[13px]" : "size-9 text-[14px]",
+        compact ? "size-8 text-[13px]" : large ? "size-14 rounded-2xl text-[20px]" : "size-9 text-[14px]",
       )}
     >
       {initialsOf(name)}
@@ -41,10 +41,13 @@ export function OrganizationMark({
   logoUrl,
   name,
   compact = false,
+  large = false,
 }: {
   logoUrl: string | null;
   name: string;
   compact?: boolean;
+  /** Шапка меню сайта (эскиз 2026-10-28: «лого крупнее в 2 раза») — до 80 px. */
+  large?: boolean;
 }) {
   // Битая ссылка на логотип не должна оставлять пустое место — монограмма.
   const [failed, setFailed] = useState(false);
@@ -54,7 +57,10 @@ export function OrganizationMark({
       <img
         src={logoUrl}
         alt={name}
-        className={cn("w-auto object-contain object-left", compact ? "h-7 max-w-[120px]" : "max-h-10 max-w-[200px]")}
+        className={cn(
+          "w-auto object-contain object-left",
+          compact ? "h-7 max-w-[120px]" : large ? "max-h-20 max-w-[216px]" : "max-h-10 max-w-[200px]",
+        )}
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
       />
@@ -62,8 +68,12 @@ export function OrganizationMark({
   }
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <Monogram name={name} compact={compact} />
-      {compact ? null : <span className="truncate text-[15px] font-semibold text-[#0b1024]">{name}</span>}
+      <Monogram name={name} compact={compact} large={large} />
+      {compact ? null : (
+        <span className={cn("font-semibold text-[#0b1024]", large ? "line-clamp-2 text-[16px] leading-tight" : "truncate text-[15px]")}>
+          {name}
+        </span>
+      )}
     </span>
   );
 }
@@ -79,12 +89,15 @@ export function OrganizationBrand({
   name,
   homeHref,
   canEditBranding = false,
+  large = false,
   className,
 }: {
   logoUrl: string | null;
   name: string;
   homeHref: string;
   canEditBranding?: boolean;
+  /** Крупный логотип — шапка сайдбара. */
+  large?: boolean;
   className?: string;
 }) {
   const t = useTranslations("navigation.shell");
@@ -95,14 +108,14 @@ export function OrganizationBrand({
         className={cn("flex min-w-0 items-center rounded-xl transition-colors duration-150", FOCUS, className)}
         data-organization-brand
       >
-        <OrganizationMark key={logoUrl ?? "none"} logoUrl={logoUrl} name={name} />
+        <OrganizationMark key={logoUrl ?? "none"} logoUrl={logoUrl} name={name} large={large} />
       </Link>
     );
   }
   return (
     <div className={cn("flex min-w-0 items-center gap-2.5", className)} data-organization-brand>
       <Link href={homeHref} tabIndex={-1} aria-hidden className="shrink-0 rounded-xl">
-        <Monogram name={name} />
+        <Monogram name={name} large={large} />
       </Link>
       <div className="flex min-w-0 flex-col leading-tight">
         <Link

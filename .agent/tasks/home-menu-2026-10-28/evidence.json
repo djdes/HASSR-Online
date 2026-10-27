@@ -1,0 +1,16 @@
+{
+  "task": "home-menu-2026-10-28",
+  "base": "origin/master 8038a1ad, затем перенос на 4cd3d986",
+  "checks": {
+    "typecheck": "npm run typecheck — 0 ошибок",
+    "i18n": "npm run i18n:check — 95/95",
+    "tests": "scripts/test-with-baseline.sh — 4997 pass; новых регрессий нет (deploy-scripts.test.ts под нагрузкой — флаки, отдельно 13/13)",
+    "eslint": "изменённые файлы — 0 ошибок",
+    "browser": "raw/e2e.mjs на локальной базе wesetup_home_menu — 33/33 PASS (raw/shots/e2e-result.json)"
+  },
+  "acceptance": {
+    "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS",
+    "AC7": "PASS", "AC8": "PASS", "AC9": "PASS", "AC10": "PASS", "AC11": "PASS",
+    "AC12": "PASS после выкладки (см. отчёт сессии)"
+  }
+}

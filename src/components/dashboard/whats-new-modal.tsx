@@ -12,6 +12,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import {
   Library,
+  House,
   Dumbbell,
   BellRing,
   ChevronDown,
@@ -106,6 +107,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Замена на другой точке": MapPin,
   "Мастер-кабинет: точки по отдельности": MapPin,
   "QR-наклейки по точкам": QrCode,
+  "Главная и меню по эскизам": House,
   "Плакаты, QR и этикетки в фирменном стиле": Palette,
   "Моя компания": Building2,
   "Офис и точки": Building2,

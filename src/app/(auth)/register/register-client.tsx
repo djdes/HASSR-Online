@@ -23,6 +23,7 @@ import {
   ymGoal,
 } from "@/lib/signup-source";
 import { blankSignupPlace } from "@/lib/blank-download";
+import { HOME_HREF } from "@/lib/home-page";
 
 /** Те же цели Метрики, что у форм на лендинге, с местом «register». */
 const GOAL_PARAMS = { place: "register" };
@@ -149,10 +150,10 @@ function RegisterScreen({
         ymGoal("instant_register_done", GOAL_PARAMS);
         ymGoal("signup_created", GOAL_PARAMS);
         if (locale !== "ru") {
-          window.location.assign(nextPath ?? "/dashboard?welcome=1");
+          window.location.assign(nextPath ?? `${HOME_HREF}?welcome=1`);
           return;
         }
-        router.push(nextPath ?? "/dashboard?welcome=1");
+        router.push(nextPath ?? `${HOME_HREF}?welcome=1`);
         router.refresh();
         return;
       }

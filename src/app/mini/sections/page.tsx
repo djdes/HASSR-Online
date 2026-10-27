@@ -2,7 +2,8 @@ import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
-import { buildNavModel, loadNavFacts, loadNavMenuData } from "@/lib/app-nav.server";
+import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
+import { mainNavSections } from "@/lib/app-nav";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 
 import { MiniSectionsClient, type MiniSectionGroupView } from "./sections-client";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 /**
  * «Все разделы» — вход из мини-приложения в любую страницу кабинета.
  *
- * Те же девять разделов, что слева на сайте (меню 2026-10-16,
+ * То же главное меню, что слева на сайте (меню 2026-10-16,
  * `lib/app-nav.ts`), с теми же правами: страницы сайта открываются в
  * оболочке приложения как есть, со своими guard'ами (П-3, П-4). Внутри
  * раздела — те же вкладки сверху. Под названием раздела — его вкладки,
@@ -31,13 +32,13 @@ export default async function MiniSectionsPage() {
       user,
       facts: await loadNavFacts(session),
       customNames,
-      menuData: await loadNavMenuData(session),
-    });
+      });
     groups.push({
       id: "sections",
       title: "",
       subtitle: "",
-      items: model.sections.map((section) => ({
+      // Главное меню: вложенные разделы открываются из меню родителя.
+      items: mainNavSections(model.sections).map((section) => ({
         href: section.rootHref,
         label: section.label,
         // Раздел с меню — первые четыре пункта; остальные — вкладки раздела.

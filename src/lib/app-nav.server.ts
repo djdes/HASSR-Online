@@ -5,14 +5,13 @@ import { customSectionNameByHref, type CustomNames } from "@/lib/custom-names";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { listPersonBuildings } from "@/lib/active-building";
-import { isOfficeBuilding } from "@/lib/building-scope";
+import { getActiveOrgId } from "@/lib/auth-helpers";
+import { getOrgCustomNames } from "@/lib/org-custom-names";
 import {
   visibleNav,
   visibleSettingsCards,
   type NavActor,
   type NavFacts,
-  type NavMenuData,
   type NavSectionKey,
 } from "@/lib/app-nav";
 
@@ -24,6 +23,12 @@ export type NavModelMenuItem = {
   href: string;
   label: string;
   tabs?: NavModelTab[];
+  /** Пункт — вложенный раздел (`key`): ведёт на его корень. */
+  section?: NavSectionKey;
+  /** У вложенного раздела своё меню — стрелка ›. */
+  hasMenu?: boolean;
+  /** Метка у пункта («PRO»). */
+  badge?: string;
 };
 /** Группа меню раздела; `label: null` — группа без подписи. */
 export type NavModelMenuGroup = { label: string | null; items: NavModelMenuItem[] };
@@ -31,6 +36,8 @@ export type NavModelSection = {
   key: NavSectionKey;
   icon: string;
   label: string;
+  /** Видимый раздел-родитель; нет — раздел стоит в главном меню. */
+  parent?: NavSectionKey;
   rootHref: string;
   tabs: NavModelTab[];
   /** Меню раздела: при входе в раздел левое меню меняется на него. */
@@ -64,28 +71,10 @@ export async function loadNavFacts(session: Session): Promise<NavFacts> {
   return { checklists, settingsPermissions };
 }
 
-/**
- * Записи для пунктов меню из данных: точки, доступные человеку (тот же список,
- * что у переключателя в шапке, — `listPersonBuildings`). Страница точки —
- * только руководству, поэтому остальным запроса в БД нет.
- */
-export async function loadNavMenuData(session: Session): Promise<NavMenuData> {
-  if (!hasFullWorkspaceAccess(session.user)) return {};
-  const buildings = await listPersonBuildings(session).catch(() => []);
-  // Офис — в «Моей компании», в «Мои точки» только торговые точки.
-  return {
-    buildings: buildings
-      .filter((building) => !isOfficeBuilding(building))
-      .map((building) => ({ id: building.id, name: building.name })),
-  };
-}
-
 export async function buildNavModel(input: {
   user: NavUser;
   facts: NavFacts;
   customNames: CustomNames | null;
-  /** Записи для пунктов из данных (`loadNavMenuData`); без них — только статика. */
-  menuData?: NavMenuData;
 }): Promise<NavModel> {
   const t = await getTranslations("navigation.shell");
   const tCards = await getTranslations("settingsManagement.home.cards");
@@ -93,13 +82,15 @@ export async function buildNavModel(input: {
   // собираются из модели (`NAV_SECTIONS`), поэтому их наличие на всех языках
   // сверяет тест (`navigation-localization.test.ts`), а не тип.
   const menuLabel = t as unknown as (key: string) => string;
-  const visible = visibleNav(input.user, input.facts, input.menuData);
+  const visible = visibleNav(input.user, input.facts);
+  const renameHrefOf = new Map(visible.map((section) => [section.key, section.renameHref]));
   const sections = visible.map((section) => ({
     key: section.key,
     icon: section.icon,
     label:
       customSectionNameByHref(input.customNames, section.renameHref) ??
       t(`sections.${section.key}`),
+    ...(section.parent ? { parent: section.parent } : {}),
     rootHref: section.rootHref,
     tabs: section.tabs.map((tab) => ({
       id: tab.id,
@@ -114,8 +105,13 @@ export async function buildNavModel(input: {
               id: item.id,
               icon: item.icon,
               href: item.href,
-              // Пункт из данных (точка) подписан своим названием.
-              label: item.label ?? menuLabel(`menus.${section.key}.items.${item.id}`),
+              // Вложенный раздел, переименованный организацией, — под своим именем.
+              label:
+                (item.section ? customSectionNameByHref(input.customNames, renameHrefOf.get(item.section)) : null) ??
+                menuLabel(`menus.${section.key}.items.${item.id}`),
+              ...(item.section ? { section: item.section } : {}),
+              ...(item.hasMenu ? { hasMenu: true } : {}),
+              ...(item.badge ? { badge: t(`badges.${item.badge}`) } : {}),
               ...(item.tabs
                 ? {
                     tabs: item.tabs.map((tab) => ({
@@ -138,4 +134,13 @@ export async function buildNavModel(input: {
     icon: card.icon,
   }));
   return { sections, showSidebar: sections.length >= 2, search };
+}
+
+/** Меню человека для страниц и API вне макета (главная, «Избранное»). */
+export async function loadNavModel(session: Session): Promise<NavModel> {
+  const [facts, customNames] = await Promise.all([
+    loadNavFacts(session),
+    getOrgCustomNames(getActiveOrgId(session)),
+  ]);
+  return buildNavModel({ user: session.user, facts, customNames });
 }

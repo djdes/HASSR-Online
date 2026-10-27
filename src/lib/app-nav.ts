@@ -1,5 +1,5 @@
 /**
- * Меню кабинета — девять разделов слева (решение владельца 2026-10-16,
+ * Меню кабинета — дерево разделов слева (2026-10-28; девять разделов — 2026-10-16,
  * задача ProjectsFlow 3931776f, дизайн
  * `docs/superpowers/specs/2026-10-16-cabinet-sidebar-nav-design.md`).
  *
@@ -39,6 +39,9 @@ import {
 
 export type NavSectionKey =
   | "company"
+  | "office"
+  | "monitoring"
+  | "settings"
   | "staff"
   | "points"
   | "journals"
@@ -107,7 +110,11 @@ export type NavTabLabel =
   | "services"
   | "inspectionDay"
   | "portal"
-  | "readiness";
+  | "readiness"
+  | "office"
+  | "access"
+  | "overview"
+  | "points";
 
 export type NavTab = {
   id: string;
@@ -142,6 +149,8 @@ export type NavMenuItem = {
   match?: string[];
   /** Пункт не показываем, если виден пункт с этим id (как у вкладок). */
   hideIfVisible?: string;
+  /** Метка у пункта: «PRO» — возможность тарифа PRO (эскиз: «доступно в PRO»). */
+  badge?: "pro";
 };
 
 /** Ключ подписи группы: `menus.<раздел>.groups.<label>`. */
@@ -151,40 +160,25 @@ export type NavMenuGroupLabel =
   | "directories"
   | "groups"
   | "sets"
-  | "more"
-  | "myPoints"
-  | "allPoints";
+  | "more";
 
 /**
- * Источник пунктов из данных (2026-10-18, «Торговые точки»): у группы, кроме
- * обычных пунктов, — по пункту на запись (точку). Адрес пункта —
- * `<hrefBase>/<id>`, поэтому в статической модели динамических сегментов нет.
+ * Группа пунктов меню раздела; `label: null` — группа без подписи.
+ * `sections` — вложенные разделы (эскизы 2026-10-28: «Моя компания → Торговые
+ * точки → Журналы»): пункт ведёт на корень вложенного раздела, у раздела со
+ * своим меню — стрелка ›. Идут первыми, перед обычными пунктами группы;
+ * подпись — `menus.<раздел>.items.<ключ вложенного раздела>`.
  */
-export type NavMenuSourceKey = "buildings";
-
-export type NavMenuSource = {
-  icon: string;
-  /** Адрес страницы записи без id: пункт ведёт на `<hrefBase>/<id>`. */
-  hrefBase: string;
-  /** Повторяет guard страницы записи (`<hrefBase>/[id]/page.tsx`). */
-  access: NavAccess;
-};
-
-/** Запись для пунктов из данных: id и подпись (название точки, не через i18n). */
-export type NavSourceRecord = { id: string; name: string };
-
-/** Записи источников, доступные человеку, — готовит сервер (`loadNavMenuData`). */
-export type NavMenuData = Partial<Record<NavMenuSourceKey, ReadonlyArray<NavSourceRecord>>>;
-
-/**
- * Группа пунктов меню раздела; `label: null` — группа без подписи. `source` —
- * пункты из данных идут первыми, перед обычными пунктами группы.
- */
-export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[]; source?: NavMenuSourceKey };
+export type NavMenuGroup = { label: NavMenuGroupLabel | null; items: NavMenuItem[]; sections?: NavSectionKey[] };
 
 export type NavSection = {
   key: NavSectionKey;
   icon: string;
+  /**
+   * Раздел-родитель: раздел — пункт его меню, а не главного. Если родитель
+   * человеку закрыт, раздел стоит в главном меню — права не меняются.
+   */
+  parent?: NavSectionKey;
   /** Проверка раздела целиком — поверх правил вкладок. */
   access?: NavAccess;
   /** Первая видимая вкладка — корень раздела для этого человека. */
@@ -212,14 +206,19 @@ export type VisibleNavMenuItem = {
   icon: string;
   href: string;
   tabs?: { id: string; href: string }[];
-  /** Подпись пункта из данных (название точки) — не через i18n. */
-  label?: string;
+  /** Пункт — вложенный раздел: ведёт на его корень. */
+  section?: NavSectionKey;
+  /** У вложенного раздела своё меню — у пункта стрелка ›. */
+  hasMenu?: boolean;
+  badge?: NavMenuItem["badge"];
 };
 export type VisibleNavMenuGroup = { label: NavMenuGroupLabel | null; items: VisibleNavMenuItem[] };
 
 export type VisibleNavSection = {
   key: NavSectionKey;
   icon: string;
+  /** Видимый родитель; нет — раздел в главном меню. */
+  parent?: NavSectionKey;
   rootHref: string;
   tabs: VisibleNavTab[];
   menu?: VisibleNavMenuGroup[];
@@ -270,39 +269,45 @@ function ppkMenu(): NavMenuGroup[] {
 }
 
 /**
- * Меню разделов по эскизам руководителя (сканы 82–83, 2026-10-17): у раздела
- * своё левое меню. Пункт — существующая страница; вкладки раздела (`tabs`)
- * остаются кандидатами на корень раздела для разных ролей и в разделе с меню
- * не рисуются. Что не нарисовано на эскизе, — в нижней группе «Ещё».
+ * Меню разделов по эскизам руководителя (2026-10-17, сканы 82–83; дерево —
+ * 2026-10-28, «Отсканированный документ 95»): у раздела своё левое меню.
+ * Пункт — существующая страница или вложенный раздел (`sections` группы);
+ * вкладки раздела (`tabs`) остаются кандидатами на корень раздела для разных
+ * ролей и в разделе с меню не рисуются. Что не нарисовано на эскизе, — в
+ * нижней группе «Ещё».
+ *
+ * Главное меню руководителя — четыре раздела (Моя компания, Мониторинг,
+ * Подписки, Настройки и оформление) и «Пришла проверка» внизу.
  */
 const COMPANY_MENU: NavMenuGroup[] = [
+  // Лист 2: Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Остальное, Реквизиты.
   {
     label: null,
-    // Скан 82, лист 2: реквизиты, блок сведений «в любом документе», логотип
-    // и цвета; контакты — бывшие секции формы реквизитов.
-    items: [
-      { id: "organization", icon: "Building2", href: "/settings/organization", access: ADMIN },
-      // Офис (2026-10-26): сотрудники и журналы офиса, точки компании — всё,
-      // что касается всей компании; конкретика точки — на её странице.
-      { id: "office", icon: "BriefcaseBusiness", href: "/settings/organization/office", access: ADMIN },
-      { id: "documents", icon: "ScrollText", href: "/settings/organization/documents", access: ADMIN },
-      { id: "branding", icon: "SwatchBook", href: "/settings/organization/branding", access: ADMIN },
-      { id: "contacts", icon: "Contact", href: "/settings/organization/contacts", access: ADMIN },
-    ],
+    sections: ["office", "points"],
+    items: [{ id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS, badge: "pro" }],
   },
   {
-    label: "more",
+    label: null,
+    sections: ["more"],
     items: [
-      { id: "names", icon: "PenLine", href: "/settings/names", access: FULL_ACCESS },
-      { id: "onboarding", icon: "Rocket", href: "/settings/onboarding", access: ADMIN },
-      { id: "template", icon: "LayoutTemplate", href: "/settings/onboarding-template", access: ADMIN },
-      { id: "appearance", icon: "Palette", href: "/settings/appearance", access: ADMIN },
+      {
+        // Реквизиты, блок сведений «в любом документе» и контакты — вкладки одного пункта.
+        id: "organization",
+        icon: "Building2",
+        href: "/settings/organization",
+        access: ADMIN,
+        tabs: [
+          { id: "organization", href: "/settings/organization", access: ADMIN },
+          { id: "documents", href: "/settings/organization/documents", access: ADMIN },
+          { id: "contacts", href: "/settings/organization/contacts", access: ADMIN },
+        ],
+      },
     ],
   },
 ];
 
 /**
- * Прежние страницы прав — подробные редакторы пункта «Доступ и права»: он
+ * Прежние страницы прав — подробные редакторы пункта «Права и доступ»: он
  * одна страница со сводкой, а они открываются из её блоков (с теми же
  * правами, что у страниц) и подсвечивают пункт.
  */
@@ -313,13 +318,24 @@ const ACCESS_EDITORS = [
   "/settings/journals-by-position",
 ];
 
+/** «Офис» (лист 3): сотрудники офиса и права доступа — всё про всю компанию. */
+const OFFICE_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "office", icon: "BriefcaseBusiness", href: "/settings/organization/office", access: ADMIN },
+      { id: "access", icon: "ShieldCheck", href: "/settings/access", access: FULL_ACCESS, match: ACCESS_EDITORS },
+    ],
+  },
+];
+
+/** «Сотрудники» — вложенный раздел «Торговых точек»: корень — сотрудники по точкам. */
 const STAFF_MENU: NavMenuGroup[] = [
   {
     label: "directories",
     items: [
-      { id: "positions", icon: "BriefcaseBusiness", href: "/settings/positions", access: FULL_ACCESS },
       { id: "users", icon: "Users", href: "/settings/users", access: FULL_ACCESS },
-      { id: "access", icon: "ShieldCheck", href: "/settings/access", access: FULL_ACCESS, match: ACCESS_EDITORS },
+      { id: "positions", icon: "BriefcaseBusiness", href: "/settings/positions", access: FULL_ACCESS },
     ],
   },
   {
@@ -347,25 +363,15 @@ const STAFF_MENU: NavMenuGroup[] = [
   },
 ];
 
-/** Источники пунктов из данных: точка — страница `/settings/buildings/<id>`. */
-export const NAV_MENU_SOURCES: Record<NavMenuSourceKey, NavMenuSource> = {
-  buildings: { icon: "Store", hrefBase: "/settings/buildings", access: FULL_ACCESS },
-};
-
 /**
- * «Торговые точки» (скан 82, лист 5): сверху «Мои точки» — по пункту на точку
- * и «+ Добавить точку», ниже справочники всех точек.
+ * «Торговые точки» (лист 4): корень — список всех точек и «Добавить точку»;
+ * сотрудники, журналы и ППК — вложенные разделы, справочники — по всем точкам.
  */
 const POINTS_MENU: NavMenuGroup[] = [
   {
-    label: "myPoints",
-    source: "buildings",
-    items: [{ id: "add", icon: "Plus", href: "/settings/buildings/new", access: FULL_ACCESS }],
-  },
-  {
-    label: "allPoints",
+    label: null,
+    sections: ["staff", "journals", "productionControl"],
     items: [
-      { id: "buildings", icon: "Store", href: "/settings/buildings", access: FULL_ACCESS },
       { id: "areas", icon: "DoorOpen", href: "/settings/areas", access: STAFF_PATH },
       { id: "equipment", icon: "Refrigerator", href: "/settings/equipment", access: STAFF_PATH },
       { id: "qr", icon: "QrCode", href: "/settings/qr-posters", access: FULL_ACCESS },
@@ -377,7 +383,6 @@ const POINTS_MENU: NavMenuGroup[] = [
       { id: "printer", icon: "Printer", href: "/settings/print-agent", access: FULL_ACCESS },
       { id: "kiosk", icon: "TabletSmartphone", href: "/settings/kiosk", access: FULL_ACCESS },
       { id: "products", icon: "Package", href: "/settings/products", access: FULL_ACCESS },
-      { id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS },
     ],
   },
 ];
@@ -392,6 +397,8 @@ const JOURNALS_MENU: NavMenuGroup[] = [
   {
     label: null,
     items: [
+      // Журналы всех точек: что ведётся на каждой, добавить/убрать журнал точке.
+      { id: "points", icon: "Store", href: "/journals/points", access: ADMIN },
       { id: "today", icon: "CalendarCheck", href: "/dashboard", access: JOURNALS_TODAY, match: ["/dashboard/catch-up"] },
       // «Сегодня» заведующей — панель контроля (у управляющей есть своё «Сегодня»).
       {
@@ -429,6 +436,7 @@ const JOURNALS_MENU: NavMenuGroup[] = [
  * шаблоны → конструктор → назначение (только руководителю) → результаты.
  * Корень раздела — «Шаблоны»: новичок сначала видит готовые чек-листы.
  * Страница проверки (`/checklists/inspections/<id>`) — глубина «Результатов».
+ * С 2026-10-28 — вложенный раздел «Мониторинга».
  */
 const CHECKLISTS_MENU: NavMenuGroup[] = [
   {
@@ -448,6 +456,12 @@ const CHECKLISTS_MENU: NavMenuGroup[] = [
   },
 ];
 
+/** «Мониторинг» (лист 5): сводка — журналы, чек-листы и ППК в процентах. */
+const MONITORING_MENU: NavMenuGroup[] = [
+  { label: null, items: [{ id: "overview", icon: "Gauge", href: "/monitoring", access: FULL_ACCESS }] },
+  { label: null, sections: ["checklists"], items: [] },
+];
+
 const BILLING_MENU: NavMenuGroup[] = [
   {
     label: null,
@@ -459,54 +473,91 @@ const BILLING_MENU: NavMenuGroup[] = [
   },
 ];
 
-// Блоки страницы «Пришла проверка» стали пунктами (S4, 2026-10-18); заведующей
+/** «Настройки и оформление» (лист 1): внешний вид кабинета и быстрый старт. */
+const SETTINGS_MENU: NavMenuGroup[] = [
+  {
+    label: null,
+    items: [
+      { id: "appearance", icon: "Palette", href: "/settings/appearance", access: ADMIN },
+      { id: "branding", icon: "SwatchBook", href: "/settings/organization/branding", access: ADMIN },
+      { id: "names", icon: "PenLine", href: "/settings/names", access: FULL_ACCESS },
+      { id: "onboarding", icon: "Rocket", href: "/settings/onboarding", access: ADMIN },
+      { id: "template", icon: "LayoutTemplate", href: "/settings/onboarding-template", access: ADMIN },
+    ],
+  },
+];
+
+// Фото 6-го листа: нормативные документы, ППК и ХАССП («как сейчас»), QR для
+// проверяющего, консалтинг; остальные блоки раздела — в «Ещё». Заведующей
 // открыто всё, что не требует руководства: проверка часто приходит при ней одной.
 const INSPECTION_MENU: NavMenuGroup[] = [
   {
     label: null,
     items: [
-      { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
-      { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
+      { id: "laws", icon: "Scale", href: "/inspection/laws", access: FULL_ACCESS },
       { id: "norms", icon: "BookOpen", href: "/inspection/norms", access: fullAccessOr("tasks.verify") },
       { id: "portal", icon: "QrCode", href: "/settings/inspector-portal", access: FULL_ACCESS },
-      { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
       { id: "experts", icon: "Handshake", href: "/inspection/experts", access: FULL_ACCESS },
+    ],
+  },
+  {
+    label: "more",
+    items: [
+      { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
+      { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
+      { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
       { id: "special", icon: "ShieldCheck", href: "/inspection/special-mode", access: fullAccessOr("tasks.verify") },
     ],
   },
 ];
 
+/**
+ * Порядок — порядок главного меню: разделы без видимого родителя идут в нём
+ * в этом порядке, вложенные стоят за родителем (на случай, когда родитель
+ * человеку закрыт и раздел поднимается в главное меню).
+ */
 export const NAV_SECTIONS: NavSection[] = [
   {
     key: "company",
     icon: "Building2",
-    // Реквизиты, оформление и быстрая настройка просят `admin.full`;
-    // одних «Названий» мало, чтобы заводить заведующей целый раздел.
+    // Реквизиты и мастер-кабинет просят `admin.full` / руководство;
+    // заведующей целый раздел ни к чему — её разделы поднимаются в главное меню.
     access: ADMIN,
     companyOnly: true,
     aliases: ["/settings"],
-    tabs: [
-      { id: "organization", label: "organization", href: "/settings/organization", access: ADMIN },
-      { id: "appearance", label: "appearance", href: "/settings/appearance", access: ADMIN },
-      { id: "names", label: "names", href: "/settings/names", access: FULL_ACCESS },
-      {
-        id: "onboarding",
-        label: "onboarding",
-        href: "/settings/onboarding",
-        access: ADMIN,
-      },
-      {
-        id: "template",
-        label: "template",
-        href: "/settings/onboarding-template",
-        access: ADMIN,
-      },
-    ],
+    tabs: [{ id: "organization", label: "organization", href: "/settings/organization", access: ADMIN }],
     menu: COMPANY_MENU,
+  },
+  {
+    key: "office",
+    icon: "BriefcaseBusiness",
+    parent: "company",
+    companyOnly: true,
+    tabs: [
+      { id: "office", label: "office", href: "/settings/organization/office", access: ADMIN },
+      { id: "access", label: "access", href: "/settings/access", access: FULL_ACCESS },
+    ],
+    menu: OFFICE_MENU,
+  },
+  {
+    key: "points",
+    icon: "Store",
+    parent: "company",
+    access: FULL_ACCESS,
+    // `/settings/sections/points` — бывшая «Настройка», см. «Сотрудники».
+    hiddenMatch: ["/settings/sections/points"],
+    tabs: [
+      { id: "buildings", label: "buildings", href: "/settings/buildings", access: FULL_ACCESS },
+      { id: "areas", label: "areas", href: "/settings/areas", access: STAFF_PATH },
+      { id: "equipment", label: "equipment", href: "/settings/equipment", access: STAFF_PATH },
+      { id: "qr", label: "qr", href: "/settings/qr-posters", access: FULL_ACCESS },
+    ],
+    menu: POINTS_MENU,
   },
   {
     key: "staff",
     icon: "Users",
+    parent: "points",
     access: fullAccessOr("staff.view", "tasks.verify"),
     renameHref: "/settings/users",
     // `/settings/sections/staff` — бывшая «Настройка»: её карточки стали
@@ -526,25 +577,13 @@ export const NAV_SECTIONS: NavSection[] = [
     menu: STAFF_MENU,
   },
   {
-    key: "points",
-    icon: "Store",
-    access: FULL_ACCESS,
-    // `/settings/sections/points` — бывшая «Настройка», см. «Сотрудники».
-    hiddenMatch: ["/settings/sections/points"],
-    tabs: [
-      { id: "buildings", label: "buildings", href: "/settings/buildings", access: FULL_ACCESS },
-      { id: "areas", label: "areas", href: "/settings/areas", access: STAFF_PATH },
-      { id: "equipment", label: "equipment", href: "/settings/equipment", access: STAFF_PATH },
-      { id: "qr", label: "qr", href: "/settings/qr-posters", access: FULL_ACCESS },
-    ],
-    menu: POINTS_MENU,
-  },
-  {
     key: "journals",
     icon: "ClipboardList",
+    parent: "points",
     renameHref: "/journals",
     hiddenMatch: ["/journals-progress", "/acknowledge"],
     tabs: [
+      { id: "points", label: "points", href: "/journals/points", access: ADMIN },
       {
         id: "today",
         label: "today",
@@ -568,18 +607,27 @@ export const NAV_SECTIONS: NavSection[] = [
     menu: JOURNALS_MENU,
   },
   {
-    key: "checklists",
-    icon: "ListChecks",
-    tabs: [{ id: "main", label: "main", href: "/checklists/templates", access: CHECKLISTS_FACT }],
-    menu: CHECKLISTS_MENU,
-  },
-  {
     key: "productionControl",
     icon: "FileCheck2",
+    parent: "points",
     access: FULL_ACCESS,
     // Вкладка одна — корень раздела; навигация внутри — меню раздела слева.
     tabs: [{ id: "program", label: "program", href: PPK_OVERVIEW_HREF, access: FULL_ACCESS }],
     menu: ppkMenu(),
+  },
+  {
+    key: "monitoring",
+    icon: "Gauge",
+    access: FULL_ACCESS,
+    tabs: [{ id: "overview", label: "overview", href: "/monitoring", access: FULL_ACCESS }],
+    menu: MONITORING_MENU,
+  },
+  {
+    key: "checklists",
+    icon: "ListChecks",
+    parent: "monitoring",
+    tabs: [{ id: "main", label: "main", href: "/checklists/templates", access: CHECKLISTS_FACT }],
+    menu: CHECKLISTS_MENU,
   },
   {
     key: "billing",
@@ -597,8 +645,20 @@ export const NAV_SECTIONS: NavSection[] = [
     menu: BILLING_MENU,
   },
   {
+    key: "settings",
+    icon: "Palette",
+    access: FULL_ACCESS,
+    companyOnly: true,
+    tabs: [
+      { id: "appearance", label: "appearance", href: "/settings/appearance", access: ADMIN },
+      { id: "names", label: "names", href: "/settings/names", access: FULL_ACCESS },
+    ],
+    menu: SETTINGS_MENU,
+  },
+  {
     key: "more",
     icon: "LayoutGrid",
+    parent: "company",
     access: FULL_ACCESS,
     // Убраны из меню владельцем 2026-09-25 — открываются по адресу.
     // Своего меню нет: раздел — одна страница с карточками.
@@ -657,52 +717,31 @@ export function navAllows(
   return ruleAllows(actor, access, facts);
 }
 
-/** Id пункта записи источника: `buildings:<id>` — не совпадает со статическими id. */
-export function sourceMenuItemId(source: NavMenuSourceKey, recordId: string): string {
-  return `${source}:${recordId}`;
-}
-
-/**
- * Пункты из данных — в порядке записей (точки уже отсортированы, как в
- * переключателе шапки): адрес `<hrefBase>/<id>`, подпись — название.
- */
-export function sourceMenuItems(
-  source: NavMenuSourceKey,
-  records: ReadonlyArray<NavSourceRecord>,
-): VisibleNavMenuItem[] {
-  const { icon, hrefBase } = NAV_MENU_SOURCES[source];
-  return records.map((record) => ({
-    id: sourceMenuItemId(source, record.id),
-    icon,
-    href: `${hrefBase}/${encodeURIComponent(record.id)}`,
-    label: record.name,
-  }));
-}
-
 /**
  * Меню раздела, которое человек откроет: пункты и вкладки — через `navAllows`;
  * у пункта с вкладками адрес — первая видимая вкладка, без видимых вкладок
  * пункт убирается; пункт с `hideIfVisible` прячется, если виден тот пункт;
- * пункты из данных (`source`) — первыми, если человеку открыта их страница;
+ * вложенные разделы (`sections`) — первыми, если раздел человеку виден;
  * пустые группы тоже убираются.
  */
 function visibleMenu(
   actor: NavActor,
   groups: NavMenuGroup[],
   facts: NavFacts,
-  data: NavMenuData,
+  sectionItem: (key: NavSectionKey) => VisibleNavMenuItem | null,
 ): VisibleNavMenuGroup[] {
   const allowed = groups.map((group) => {
     const items: (VisibleNavMenuItem & { hideIfVisible?: string })[] = [];
-    if (group.source) {
-      const source = NAV_MENU_SOURCES[group.source];
-      if (navAllows(actor, source.hrefBase, source.access, facts)) {
-        items.push(...sourceMenuItems(group.source, data[group.source] ?? []));
-      }
+    for (const key of group.sections ?? []) {
+      const item = sectionItem(key);
+      if (item) items.push(item);
     }
     for (const item of group.items) {
       if (!navAllows(actor, item.href, item.access, facts)) continue;
-      const hide = item.hideIfVisible ? { hideIfVisible: item.hideIfVisible } : {};
+      const hide = {
+        ...(item.hideIfVisible ? { hideIfVisible: item.hideIfVisible } : {}),
+        ...(item.badge ? { badge: item.badge } : {}),
+      };
       if (!item.tabs) {
         items.push({ id: item.id, icon: item.icon, href: item.href, ...hide });
         continue;
@@ -728,10 +767,11 @@ function visibleMenu(
 
 /**
  * Разделы и вкладки, которые человек откроет. Пустые разделы отброшены.
- * `data` — записи для пунктов из данных (точки); без него — только статика.
+ * Вложенный раздел — пункт меню родителя (`parent`), если родитель виден;
+ * иначе он стоит в главном меню (см. `mainNavSections`).
  */
-export function visibleNav(actor: NavActor, facts: NavFacts, data: NavMenuData = {}): VisibleNavSection[] {
-  const result: VisibleNavSection[] = [];
+export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[] {
+  const shown = new Map<NavSectionKey, { section: NavSection; tabs: VisibleNavTab[] }>();
   for (const section of NAV_SECTIONS) {
     if (section.access && !ruleAllows(actor, section.access, facts)) continue;
     if (section.companyOnly && isPointScoped(actor)) continue;
@@ -740,18 +780,49 @@ export function visibleNav(actor: NavActor, facts: NavFacts, data: NavMenuData =
     const tabs = allowed
       .filter((tab) => !tab.hideIfVisible || !allowedIds.has(tab.hideIfVisible))
       .map((tab): VisibleNavTab => ({ id: tab.id, label: tab.label, href: tab.href }));
-    if (tabs.length === 0) continue;
-    const menu = visibleMenu(actor, section.menu ?? [], facts, data);
-    result.push({
+    if (tabs.length > 0) shown.set(section.key, { section, tabs });
+  }
+  const parentOf = (section: NavSection) =>
+    section.parent && shown.has(section.parent) ? section.parent : undefined;
+
+  const menus = new Map<NavSectionKey, VisibleNavMenuGroup[]>();
+  const menuOf = (key: NavSectionKey): VisibleNavMenuGroup[] => {
+    const known = menus.get(key);
+    if (known) return known;
+    const { section } = shown.get(key)!;
+    const menu = visibleMenu(actor, section.menu ?? [], facts, (childKey) => {
+      const child = shown.get(childKey);
+      if (!child || parentOf(child.section) !== key) return null;
+      return {
+        id: childKey,
+        icon: child.section.icon,
+        href: child.tabs[0].href,
+        section: childKey,
+        ...(menuOf(childKey).length > 0 ? { hasMenu: true } : {}),
+      };
+    });
+    menus.set(key, menu);
+    return menu;
+  };
+
+  return [...shown.values()].map(({ section, tabs }) => {
+    const menu = menuOf(section.key);
+    const parent = parentOf(section);
+    return {
       key: section.key,
       icon: section.icon,
+      ...(parent ? { parent } : {}),
       rootHref: tabs[0].href,
       tabs,
       ...(menu.length > 0 ? { menu } : {}),
       ...(section.renameHref ? { renameHref: section.renameHref } : {}),
-    });
-  }
-  return result;
+    };
+  });
+}
+
+/** Главное меню: разделы без видимого родителя, в порядке `NAV_SECTIONS`. */
+export function mainNavSections<T extends { parent?: NavSectionKey }>(sections: readonly T[]): T[] {
+  return sections.filter((section) => !section.parent);
 }
 
 /** Карточки настроек, которые человек откроет (для поиска ⌘K). */
@@ -868,27 +939,4 @@ export function sectionForPath(pathname: string): {
     // Вкладка пункта — только когда путь равен её адресу или лежит глубже.
     menuTabHref: best.menuTabHref,
   };
-}
-
-/**
- * Пункт меню раздела для пути с учётом пунктов из данных: `/settings/buildings/<id>`
- * (и глубже) — пункт этой точки, если он есть в меню человека (`itemIds`);
- * иначе — пункт по статической модели (`sectionForPath`): на
- * `/settings/buildings/new` — «Добавить точку», на `/settings/buildings` — «Точки».
- */
-export function activeMenuItemId(pathname: string, itemIds: ReadonlyArray<string>): string | null {
-  const path = normalize(pathname);
-  for (const [key, source] of Object.entries(NAV_MENU_SOURCES) as [NavMenuSourceKey, NavMenuSource][]) {
-    if (!path.startsWith(`${source.hrefBase}/`)) continue;
-    const segment = path.slice(source.hrefBase.length + 1).split("/")[0];
-    let recordId = segment;
-    try {
-      recordId = decodeURIComponent(segment);
-    } catch {
-      // Битый адрес — пункта точки нет, остаётся статический.
-    }
-    const id = sourceMenuItemId(key, recordId);
-    if (itemIds.includes(id)) return id;
-  }
-  return sectionForPath(pathname)?.menuItemId ?? null;
 }

@@ -41,5 +41,5 @@ test("bot CTA copy and mini app root follow the same home rule", () => {
   assert.equal(getWebHomeHref(staff), "/journals");
 
   assert.equal(getBotMiniAppLabel(manager), "Открыть кабинет");
-  assert.equal(getWebHomeHref(manager), "/dashboard");
+  assert.equal(getWebHomeHref(manager), "/home");
 });

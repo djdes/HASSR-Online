@@ -13,6 +13,7 @@ import { BrandLogo } from "@/components/brand/logo";
 import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { looksLikePhoneInput, phoneQueryValue } from "@/lib/login-identifier";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
+import { HOME_HREF } from "@/lib/home-page";
 
 function LoginForm() {
   const t = useTranslations("auth");
@@ -38,7 +39,7 @@ function LoginForm() {
   // (open redirect) отбрасываем и идём в кабинет.
   const nextPath = (() => {
     const raw = searchParams.get("next") ?? "";
-    return raw.startsWith("/") && !raw.startsWith("//") && raw.length <= 500 ? raw : "/dashboard";
+    return raw.startsWith("/") && !raw.startsWith("//") && raw.length <= 500 ? raw : HOME_HREF;
   })();
   const prefilledEmail = (() => {
     const raw = searchParams.get("email")?.trim().toLowerCase() ?? "";
@@ -82,7 +83,7 @@ function LoginForm() {
       });
       const verJson = (await ver.json()) as { error?: string };
       if (!ver.ok) throw new Error(verJson.error ?? t("login.passkey.verificationFailed"));
-      window.location.href = "/dashboard";
+      window.location.href = HOME_HREF;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       setError(/NotAllowed|cancel|abort/i.test(msg) ? t("login.passkey.cancelled") : authError(msg, t("errors.passkeySignIn")));
