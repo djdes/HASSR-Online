@@ -1,6 +1,7 @@
 import { worksAtBuilding } from "@/lib/building-scope";
 import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
+import { expireOrgPointAssignments } from "@/lib/point-assignments.server";
 
 /**
  * QR по точке (2026-10-27): на наклейке объекта и на QR журнала в «Кто
@@ -16,6 +17,8 @@ export type QrPointScope = {
   buildingName: string;
   /** Точки организации — чтобы висящие id удалённых точек не отрезали людей. */
   orgBuildingIds: string[];
+  /** Кто здесь на замене (временная точка) — подпись «Замена» в «Кто вы?». */
+  substituteUserIds?: string[];
 } | null;
 
 export const QR_POINT_DENIED =
@@ -29,11 +32,21 @@ export async function loadQrPointScope(
   if (!buildingId) return null;
   const targets = await buildingTargets(organizationId);
   if (!targets.includes(buildingId)) return null;
-  const building = await db.building.findUnique({ where: { id: buildingId }, select: { name: true } });
+  // Срок замены вышел — сначала вернуть людей на их точки (крон ходит раз
+  // в 5 минут, а QR сканируют сейчас).
+  await expireOrgPointAssignments(organizationId);
+  const [building, substitutes] = await Promise.all([
+    db.building.findUnique({ where: { id: buildingId }, select: { name: true } }),
+    db.userPointAssignment.findMany({
+      where: { organizationId, buildingId, endedAt: null, endsAt: { gt: new Date() } },
+      select: { userId: true },
+    }),
+  ]);
   return {
     buildingId,
     buildingName: building?.name ?? "",
     orgBuildingIds: targets.filter((id): id is string => id !== null),
+    substituteUserIds: substitutes.map((row) => row.userId),
   };
 }
 

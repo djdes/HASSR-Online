@@ -71,6 +71,8 @@ import {
   StaffUnlinkTelegramDialog,
 } from "@/components/staff/staff-telegram-dialogs";
 import { WeekdayChips } from "@/components/staff/weekday-chips";
+import { SubstituteBadge } from "@/components/staff/substitute-badge";
+import { useSubstituteBadgeText } from "@/components/staff/point-assignment";
 import {
   dayOffOverrideKey,
   isStaffDayOff,
@@ -633,6 +635,7 @@ export function StaffPageClient(props: StaffPageProps) {
       phone?: string | null;
       weeklyDaysOff?: number[];
       buildingIds?: string[];
+      primaryBuildingId?: string | null;
     }
   ) {
     setDlg((current) =>
@@ -1291,6 +1294,11 @@ export function StaffPageClient(props: StaffPageProps) {
           pending={dlg.pending}
           buildings={props.buildings ?? []}
           perLocationJournals={props.perLocationJournals === true}
+          todayKey={props.todayKey}
+          onAssignmentChanged={() => {
+            setDlg(null);
+            startTransition(() => router.refresh());
+          }}
           open
           onClose={() => setDlg(null)}
           onSave={(patch) => void saveEmployeeEdit(dlg.employee.id, patch)}
@@ -1400,6 +1408,7 @@ function CategoryColumn(props: {
   onEditPosition: (position: StaffPosition) => void;
 }) {
   const t = useTranslations("staffManagement.page");
+  const substituteBadge = useSubstituteBadgeText();
   const headerAccentClass =
     props.categoryKey === "management"
       ? "bg-[#fff8eb] text-[#b25f00]"
@@ -1557,6 +1566,9 @@ function CategoryColumn(props: {
                                   <span className="ml-1.5 text-[11px] text-[#9b9fb3]">
                                     {t("self")}
                                   </span>
+                                ) : null}
+                                {e.pointAssignment ? (
+                                  <SubstituteBadge className="ml-1.5 align-middle" {...substituteBadge(e.pointAssignment)} />
                                 ) : null}
                               </span>
                               {/* Контакты — сразу в строке: позвонить или написать

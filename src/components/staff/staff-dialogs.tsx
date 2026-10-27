@@ -32,6 +32,7 @@ import type {
 import { TasksFlowPromoHint } from "@/components/tasksflow/tasksflow-promo-hint";
 import { WeekdayChips } from "@/components/staff/weekday-chips";
 import { BuildingChips } from "@/components/staff/building-chips";
+import { PointAssignmentSection } from "@/components/staff/point-assignment";
 import type { BuildingOption } from "@/lib/building-scope";
 import {
   DEFAULT_WEEKLY_DAYS_OFF,
@@ -803,12 +804,17 @@ export function StaffEditEmployeeDialog(props: {
   /** Точки организации и включён ли режим точек — чипы «Точки». */
   buildings?: BuildingOption[];
   perLocationJournals?: boolean;
+  /** «Сегодня» по часам организации — для блока «Временно на другую точку». */
+  todayKey?: string;
+  /** Назначили или завершили замену — обновить список. */
+  onAssignmentChanged?: () => void;
   onSave: (patch: {
     name?: string;
     phone?: string | null;
     contactEmail?: string | null;
     weeklyDaysOff?: number[];
     buildingIds?: string[];
+    primaryBuildingId?: string | null;
     canEditBrakerageDishes?: boolean;
     keepsCoreJournals?: boolean;
     canManageSettings?: boolean;
@@ -828,6 +834,9 @@ export function StaffEditEmployeeDialog(props: {
   const [buildingIds, setBuildingIds] = useState<string[]>(
     () => employee.buildingIds ?? []
   );
+  const [primaryBuildingId, setPrimaryBuildingId] = useState<string | null>(
+    () => employee.primaryBuildingId ?? null
+  );
   const [canEditDishes, setCanEditDishes] = useState(employee.canEditBrakerageDishes === true);
   const [keepsCore, setKeepsCore] = useState(employee.keepsCoreJournals === true);
   const [manageSettings, setManageSettings] = useState(employee.canManageSettings === true);
@@ -840,6 +849,7 @@ export function StaffEditEmployeeDialog(props: {
       setContactEmail(employee.contactEmail ?? "");
       setWeeklyDaysOff(normalizeWeeklyDaysOff(employee.weeklyDaysOff));
       setBuildingIds(employee.buildingIds ?? []);
+      setPrimaryBuildingId(employee.primaryBuildingId ?? null);
       setCanEditDishes(employee.canEditBrakerageDishes === true);
       setKeepsCore(employee.keepsCoreJournals === true);
       setManageSettings(employee.canManageSettings === true);
@@ -855,7 +865,10 @@ export function StaffEditEmployeeDialog(props: {
     employee.contactEmail,
     employee.weeklyDaysOff,
     employee.buildingIds,
+    employee.primaryBuildingId,
   ]);
+  const savedBuildingsKey = [...(employee.buildingIds ?? [])].sort().join(",");
+  const pointsDirty = [...buildingIds].sort().join(",") !== savedBuildingsKey;
 
   function submit() {
     const trimmedName = name.trim();
@@ -874,6 +887,7 @@ export function StaffEditEmployeeDialog(props: {
       contactEmail?: string | null;
       weeklyDaysOff?: number[];
       buildingIds?: string[];
+      primaryBuildingId?: string | null;
       canEditBrakerageDishes?: boolean;
       keepsCoreJournals?: boolean;
       canManageSettings?: boolean;
@@ -890,9 +904,14 @@ export function StaffEditEmployeeDialog(props: {
     if (nextWeekly.join(",") !== savedWeeklyDaysOff.join(",")) {
       patch.weeklyDaysOff = nextWeekly;
     }
-    const savedBuildings = [...(employee.buildingIds ?? [])].sort().join(",");
-    if ([...buildingIds].sort().join(",") !== savedBuildings) {
+    if (pointsDirty) {
       patch.buildingIds = buildingIds;
+    }
+    // Основная точка — только среди отмеченных; снятая точка снимает и звезду.
+    const nextPrimary = primaryBuildingId && buildingIds.includes(primaryBuildingId) ? primaryBuildingId : null;
+    // Звезду не трогали — сервер сам оставит или снимет её по новым точкам.
+    if (primaryBuildingId !== (employee.primaryBuildingId ?? null)) {
+      patch.primaryBuildingId = nextPrimary;
     }
     if (trimmedName !== employee.name) patch.name = trimmedName;
     const trimmedPhone = phone.trim();
@@ -965,12 +984,26 @@ export function StaffEditEmployeeDialog(props: {
               </p>
             </div>
             {props.perLocationJournals ? (
-              <BuildingChips
-                buildings={props.buildings ?? []}
-                value={buildingIds}
-                onChange={setBuildingIds}
-                ariaLabel={t("editEmployee.buildingsAria", { name: employee.name })}
-              />
+              <>
+                <BuildingChips
+                  buildings={props.buildings ?? []}
+                  value={buildingIds}
+                  onChange={setBuildingIds}
+                  ariaLabel={t("editEmployee.buildingsAria", { name: employee.name })}
+                  primaryId={primaryBuildingId}
+                  onPrimaryChange={setPrimaryBuildingId}
+                  temporaryId={employee.pointAssignment?.buildingId ?? null}
+                />
+                {props.todayKey ? (
+                  <PointAssignmentSection
+                    employee={employee}
+                    buildings={props.buildings ?? []}
+                    todayKey={props.todayKey}
+                    pointsDirty={pointsDirty}
+                    onChanged={() => props.onAssignmentChanged?.()}
+                  />
+                ) : null}
+              </>
             ) : null}
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]">
               <input

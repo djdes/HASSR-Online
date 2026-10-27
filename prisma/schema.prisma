@@ -1010,6 +1010,8 @@ model Building {
   /// `Organization.linkedServiceCode`, но для одной точки): мастер видит
   /// её отдельным объектом и пишет только в её документы.
   linkedServiceCode     String?
+  /// Временные назначения сотрудников на эту точку (замена).
+  pointAssignments      UserPointAssignment[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -1247,6 +1249,11 @@ model User {
   /// пересекают с существующими зданиями организации: удалённая точка
   /// оставляет висящий id, который просто игнорируется.
   buildingIds                 String[]                 @default([])
+  /// Основная точка (2026-10-27) у сотрудника на нескольких точках: её
+  /// берут уведомления «по месту». null или не из `buildingIds` — нет.
+  primaryBuildingId           String?
+  /// Временная работа на другой точке: срок и что вернуть по окончании.
+  pointAssignments            UserPointAssignment[]
   journalEntries              JournalEntry[]
   journalAccess               UserJournalAccess[]
   inviteToken                 InviteToken?
@@ -1413,6 +1420,36 @@ model StaffSickLeave {
 
   @@index([userId])
   @@index([dateFrom, dateTo])
+}
+
+/// Временная работа на другой точке (2026-10-27): замена заболевшего и т. п.
+/// Пока назначение действует, точка лежит в `User.buildingIds` — списки, QR,
+/// журналы и обязательства работают без правок; здесь — срок и что вернуть.
+/// "transfer" — на срок только на новой точке (`removedBuildingIds` — снятые
+/// точки), "extra" — и там, и там. `addedBuilding` — точку добавило само
+/// назначение (по окончании её убирают). `endedAt` — завершено (досрочно,
+/// по сроку или правкой точек). Логика — src/lib/point-assignments.ts.
+/// Связь с организацией — через сотрудника и точку (обе каскадные).
+model UserPointAssignment {
+  id                 String    @id @default(cuid())
+  organizationId     String
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buildingId         String
+  building           Building  @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  /// "transfer" | "extra"
+  mode               String
+  startsAt           DateTime
+  endsAt             DateTime
+  removedBuildingIds String[]  @default([])
+  addedBuilding      Boolean   @default(true)
+  endedAt            DateTime?
+  createdById        String?
+  createdAt          DateTime  @default(now())
+
+  @@index([organizationId, endedAt, endsAt])
+  @@index([userId, endedAt])
+  @@index([buildingId, endedAt])
 }
 
 /// Formal dismissal record (график увольнений). Unique per user — a single

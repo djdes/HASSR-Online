@@ -22,6 +22,8 @@ import { performOffboarding } from "@/lib/offboarding";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 import { computePointScope } from "@/lib/point-scope.server";
+import { assignmentSurvivesEdit, keepPrimaryBuilding } from "@/lib/point-assignments";
+import { reconcileAssignmentsAfterEdit } from "@/lib/point-assignments.server";
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
@@ -45,6 +47,9 @@ const updateUserSchema = z.object({
   weeklyDaysOff: z.array(z.number().int().min(0).max(6)).optional(),
   /// Точки, на которых работает сотрудник; пусто — на всех.
   buildingIds: z.array(z.string().min(1)).max(50).optional(),
+  /// Основная точка у сотрудника на нескольких точках (звезда в чипах);
+  /// null — снять. Должна быть среди его точек.
+  primaryBuildingId: z.string().min(1).nullable().optional(),
   /// «Уполномочен редактировать в бракеражных журналах список блюд».
   canEditBrakerageDishes: z.boolean().optional(),
   keepsCoreJournals: z.boolean().optional(),
@@ -90,7 +95,7 @@ export async function PUT(
     }
 
     const body = updateUserSchema.parse(await request.json());
-    const { name, role, phone, contactEmail, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes, keepsCoreJournals, canManageSettings } = body;
+    const { name, role, phone, contactEmail, positionTitle, isActive, weeklyDaysOff, buildingIds, primaryBuildingId, canEditBrakerageDishes, keepsCoreJournals, canManageSettings } = body;
     // «Разрешение менять настройки» себе не выдают — только другой руководитель.
     if (canManageSettings !== undefined && id === session.user.id) {
       return NextResponse.json({ error: "Разрешение на настройки себе изменить нельзя" }, { status: 400 });
@@ -104,6 +109,34 @@ export async function PUT(
             await sanitizeBuildingIds(getActiveOrgId(session), buildingIds),
           )
         : undefined;
+
+    // Временная точка (замена) лежит в buildingIds: правка целиком её не
+    // теряет — оставили точку, назначение живёт; сняли — завершится ниже.
+    // Основная точка остаётся, пока она среди точек (или вернётся с перевода).
+    const finalBuildingIds = cleanBuildingIds ?? user.buildingIds;
+    const activeAssignments =
+      cleanBuildingIds !== undefined || primaryBuildingId !== undefined
+        ? await db.userPointAssignment.findMany({
+            where: { userId: id, endedAt: null },
+            select: { buildingId: true, removedBuildingIds: true },
+          })
+        : [];
+    const returningIds = activeAssignments
+      .filter((assignment) => assignmentSurvivesEdit(finalBuildingIds, assignment))
+      .flatMap((assignment) => assignment.removedBuildingIds);
+    let nextPrimaryBuildingId: string | null | undefined;
+    if (primaryBuildingId !== undefined) {
+      if (primaryBuildingId !== null && !finalBuildingIds.includes(primaryBuildingId)) {
+        return NextResponse.json(
+          { error: "Основная точка должна быть среди точек сотрудника" },
+          { status: 400 }
+        );
+      }
+      nextPrimaryBuildingId = primaryBuildingId;
+    } else if (cleanBuildingIds !== undefined) {
+      const kept = keepPrimaryBuilding(user.primaryBuildingId, cleanBuildingIds, returningIds);
+      if (kept !== user.primaryBuildingId) nextPrimaryBuildingId = kept;
+    }
 
     if (id === session.user.id && role && normalizeUserRole(role) !== "manager") {
       return NextResponse.json(
@@ -167,6 +200,7 @@ export async function PUT(
           weeklyDaysOff: normalizeWeeklyDaysOff(weeklyDaysOff),
         }),
         ...(cleanBuildingIds !== undefined && { buildingIds: cleanBuildingIds }),
+        ...(nextPrimaryBuildingId !== undefined && { primaryBuildingId: nextPrimaryBuildingId }),
         ...(canEditBrakerageDishes !== undefined && { canEditBrakerageDishes }),
         ...(keepsCoreJournals !== undefined && { keepsCoreJournals }),
         ...(canManageSettings !== undefined && { canManageSettings }),
@@ -182,6 +216,14 @@ export async function PUT(
         contactEmail: true,
       },
     });
+    if (cleanBuildingIds !== undefined && activeAssignments.length > 0) {
+      await reconcileAssignmentsAfterEdit({
+        organizationId: getActiveOrgId(session),
+        userId: id,
+        nextBuildingIds: cleanBuildingIds,
+        session,
+      });
+    }
     // Права поменялись — старые сессии сотрудника закрываем: новый вход
     // возьмёт актуальную галку (proxy читает её из токена).
     if (canManageSettings !== undefined && canManageSettings !== (user.canManageSettings === true)) {

@@ -1,0 +1,102 @@
+{
+  "ok": true,
+  "at": "2026-10-27T21:25:18.377Z",
+  "steps": [
+    {
+      "step": "transfer a→b: buildingIds = [b]",
+      "buildingIds": [
+        "cmvr72b3x0002ns9m2iy7tjku"
+      ],
+      "returnKey": "2026-10-31"
+    },
+    {
+      "step": "second assignment for the same person rejected",
+      "result": {
+        "ok": false,
+        "status": 400,
+        "error": "У сотрудника уже есть временная точка — сначала завершите её в карточке сотрудника",
+        "code": "overlap"
+      }
+    },
+    {
+      "step": "'everywhere' employee rejected",
+      "result": {
+        "ok": false,
+        "status": 400,
+        "error": "Сотрудник работает на всех точках — он уже может работать и здесь, назначение не нужно",
+        "code": "everywhere"
+      }
+    },
+    {
+      "step": "QR «Кто вы?» at point b lists Anna with «Замена», not Boris",
+      "annaOnQr": {
+        "id": "cmvr72bb20005ns9mxnusqvz4",
+        "name": "Anna",
+        "positionTitle": "Повар · Замена",
+        "hasPin": false
+      }
+    },
+    {
+      "step": "active assignment view for the badge",
+      "view": {
+        "id": "cmvr72bk90008ns9mzqx0azxj",
+        "userId": "cmvr72bb20005ns9mxnusqvz4",
+        "buildingId": "cmvr72b3x0002ns9m2iy7tjku",
+        "buildingName": "Точка Б",
+        "mode": "transfer",
+        "returnKey": "2026-10-31",
+        "returnBuildingNames": [
+          "Точка А"
+        ]
+      }
+    },
+    {
+      "step": "expiry restores [a]; second sweep is a no-op",
+      "swept": {
+        "expired": 1
+      },
+      "again": {
+        "expired": 0
+      },
+      "buildingIds": [
+        "cmvr72b3x0001ns9mn6nxbcwl"
+      ]
+    },
+    {
+      "step": "extra a+c, «Завершить сейчас» → [a]; repeat is a no-op",
+      "ended": {
+        "userId": "cmvr72bc10006ns9mzkpx9wpl",
+        "buildingIds": [
+          "cmvr72b3x0001ns9mn6nxbcwl"
+        ]
+      },
+      "endedTwice": null
+    },
+    {
+      "step": "wholesale edit keeping the temp point keeps it; dropping it ends it, edit wins",
+      "buildingIds": [
+        "cmvr72b3x0001ns9mn6nxbcwl",
+        "cmvr72b3y0003ns9mr98yqn96"
+      ]
+    },
+    {
+      "step": "placeOfEvent uses the main point for a person on 2 points",
+      "place": "cmvr72b3y0003ns9mr98yqn96"
+    },
+    {
+      "step": "deleting the target point first returns transferred people",
+      "buildingIds": [
+        "cmvr72b3x0001ns9mn6nxbcwl"
+      ]
+    },
+    {
+      "step": "audit actions written",
+      "actions": [
+        "staff.point_assignment.create",
+        "staff.point_assignment.end",
+        "staff.point_assignment.expire"
+      ],
+      "count": 8
+    }
+  ]
+}

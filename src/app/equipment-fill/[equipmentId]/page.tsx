@@ -20,6 +20,7 @@ import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { formatTime, FRYER_OIL_TEMPLATE_CODE } from "@/lib/fryer-oil-document";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { employeeWorksAtQrPoint, filterByQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
+import { qrRosterPosition } from "@/lib/point-assignments";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
@@ -178,7 +179,7 @@ export default async function EquipmentFillPage({
         token={token}
         organizationName={equipment.area.organization.name}
         lamp={{ id: equipment.id, name: equipment.name, areaName: equipment.area.name }}
-        employees={list.map((e) => ({ id: e.id, name: e.name, positionTitle: position(e) || null, hasPin: Boolean(e.qrPinHash) }))}
+        employees={list.map((e) => ({ id: e.id, name: e.name, positionTitle: qrRosterPosition(pointScope?.substituteUserIds, e.id, position(e), messages.equipmentFill.page.substitute) || null, hasPin: Boolean(e.qrPinHash) }))}
         journalTitle={customJournalName(customNames, UV_LAMP_RUNTIME_TEMPLATE_CODE) ?? messages.equipmentFill.uv.title}
         mode={qrMode}
         sessionEmployee={sessionEmployee}
@@ -219,7 +220,7 @@ export default async function EquipmentFillPage({
         employees={(sessionEmployee && !sessionEmployee.canPickOthers
           ? roster.filter((e) => e.id === sessionEmployee!.id)
           : filterAllowedFillers(filterByQrPoint(roster, pointScope), equipment.fillerUserIds)
-        ).map((e) => ({ id: e.id, name: e.name, positionTitle: position(e) || null, hasPin: Boolean(e.qrPinHash) }))}
+        ).map((e) => ({ id: e.id, name: e.name, positionTitle: qrRosterPosition(pointScope?.substituteUserIds, e.id, position(e), messages.equipmentFill.page.substitute) || null, hasPin: Boolean(e.qrPinHash) }))}
         mode={qrMode}
         sessionEmployee={sessionEmployee}
         rememberedEmployeeId={qrMode === "auth" ? null : readRememberValue(organizationId, (await cookies()).get(rememberCookieName(organizationId))?.value)?.employeeId ?? null}
@@ -317,7 +318,7 @@ export default async function EquipmentFillPage({
       ).map((e) => ({
         id: e.id,
         name: e.name,
-        positionTitle: position(e) || null,
+        positionTitle: qrRosterPosition(pointScope?.substituteUserIds, e.id, position(e), messages.equipmentFill.page.substitute) || null,
         hasPin: Boolean(e.qrPinHash),
       }))}
     />

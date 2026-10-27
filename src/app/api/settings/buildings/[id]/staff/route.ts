@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { reconcileAssignmentsAfterEdit } from "@/lib/point-assignments.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,10 @@ const BodySchema = z.object({
  * список у сотрудника по-прежнему значит «все точки», поэтому снятие
  * единственной точки возвращает человека на все точки — об этом
  * предупреждает интерфейс.
+ *
+ * Временная точка (замена) лежит в тех же `buildingIds`: сняли её здесь —
+ * назначение завершается (без возврата, правка — новое «как надо»);
+ * оставили — живёт до срока.
  */
 export async function PUT(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireApiAuth();
@@ -62,6 +67,14 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
       ? [...user.buildingIds, building.id]
       : user.buildingIds.filter((id) => id !== building.id);
     await db.user.update({ where: { id: user.id }, data: { buildingIds: next } });
+    if (!want) {
+      await reconcileAssignmentsAfterEdit({
+        organizationId: orgId,
+        userId: user.id,
+        nextBuildingIds: next,
+        session: auth.session,
+      });
+    }
     changed += 1;
   }
 

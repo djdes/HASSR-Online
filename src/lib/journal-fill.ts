@@ -2,6 +2,7 @@ import { orderHubJournals } from "@/lib/hub-journals-order";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { filterByQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
+import { qrRosterPosition } from "@/lib/point-assignments";
 import { isPerpetualDateTo, parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
@@ -241,9 +242,11 @@ export async function listFillEmployees(
     orderBy: { name: "asc" },
   });
   // Документ точки — только сотрудники этой точки (пустые точки — везде).
-  const users = filterByQrPoint(everyone, options.pointScope ?? null);
-  // Должность — из справочника (как на сайте и в PDF), а не устаревшее поле.
-  return users.map((user) => ({ id: user.id, name: user.name, positionTitle: getUserDisplayTitle(user), hasPin: Boolean(user.qrPinHash) }));
+  const scope = options.pointScope ?? null;
+  const users = filterByQrPoint(everyone, scope);
+  // Должность — из справочника (как на сайте и в PDF), а не устаревшее поле;
+  // временный сотрудник точки — с пометкой «Замена».
+  return users.map((user) => ({ id: user.id, name: user.name, positionTitle: qrRosterPosition(scope?.substituteUserIds, user.id, getUserDisplayTitle(user), "Замена"), hasPin: Boolean(user.qrPinHash) }));
 }
 
 /**

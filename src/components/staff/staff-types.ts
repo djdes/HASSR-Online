@@ -13,6 +13,18 @@ export type StaffPosition = {
   plannedHeadcount?: number | null;
 };
 
+/** Действующая временная точка сотрудника (замена), см. point-assignments.ts. */
+export type StaffPointAssignment = {
+  id: string;
+  buildingId: string;
+  buildingName: string;
+  mode: "transfer" | "extra";
+  /** День возврата `YYYY-MM-DD` по часам организации. */
+  returnKey: string;
+  /** Точки, на которые вернётся после перевода. */
+  returnBuildingNames: string[];
+};
+
 export type StaffEmployee = {
   id: string;
   name: string;
@@ -31,6 +43,10 @@ export type StaffEmployee = {
   weeklyDaysOff: number[];
   /// Точки, на которых работает сотрудник; пусто — на всех.
   buildingIds?: string[];
+  /** Основная точка у сотрудника на нескольких точках. */
+  primaryBuildingId?: string | null;
+  /** Временная точка (замена), если есть. */
+  pointAssignment?: StaffPointAssignment | null;
   /// Задан ли PIN для QR-форм (сам PIN на клиент не уходит).
   hasQrPin?: boolean;
   /** «Уполномочен редактировать в бракеражных журналах список блюд». */
@@ -86,6 +102,8 @@ export type StaffPageProps = {
   buildings?: BuildingOption[];
   /** Журналы ведутся отдельно по точкам — чипы показываются только тогда. */
   perLocationJournals?: boolean;
+  /** «Сегодня» по часам организации — подпись «Вернётся 05.11» в окне замены. */
+  todayKey?: string;
   /** Активная точка — новый сотрудник по умолчанию привязывается к ней. */
   activeBuildingId?: string | null;
   /**
