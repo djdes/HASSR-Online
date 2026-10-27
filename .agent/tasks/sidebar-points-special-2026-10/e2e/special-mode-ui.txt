@@ -1,0 +1,8 @@
+по умолчанию: {"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false}
+/settings/auto-journals при выключенном: HTTP 200 → -
+переключатель включён: false
+окно: «Что включить в журналах», галочек 4
+после «Включить»: {"enabled":true,"autoFill":true,"autoCreate":true,"copyYesterday":false,"closeDayAutofill":true}
+/settings/auto-journals при включённом автосоздании: HTTP 200
+подтверждение выключения: «Выключить специальный режим? Из журналов пропадёт: Автозаполнение журналов Автосоздание документов «Автозаполнить» на главной Внесённые записи и настройки журналов сохранятся. Включите режим снова — всё вернётся как было»
+после выключения: {"enabled":false,"autoFill":true,"autoCreate":true,"copyYesterday":false,"closeDayAutofill":true}
