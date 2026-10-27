@@ -20,7 +20,11 @@ import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { PointDeleteBlock, PointHeadBlock, PointRoomsBlock } from "@/components/settings/point-page-client";
 import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
 import { isOfficeBuilding } from "@/lib/building-scope";
-import { isPointScoped } from "@/lib/point-scope";
+import { isPointScoped, staffInScope } from "@/lib/point-scope";
+import { expireOrgPointAssignments, loadActiveAssignments, organizationTodayKey } from "@/lib/point-assignments.server";
+import { TakeSubstituteButton, type SubstituteCandidate } from "@/components/staff/point-assignment";
+import { SubstituteBadge } from "@/components/staff/substitute-badge";
+import { shortDateLabel } from "@/lib/point-assignments";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { listAutomationCodes } from "@/lib/journal-automation";
@@ -79,6 +83,8 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
   // Точки человека — те же, что в меню «Мои точки».
   const personBuildings = await listPersonBuildings(session);
   if (!personBuildings.some((building) => building.id === id)) notFound();
+  // Срок замены вышел — вернуть людей на их точки до того, как их показать.
+  await expireOrgPointAssignments(orgId);
 
   const [point, users, buildings, areas, orgRooms, orgEquipmentNames, staff] = await Promise.all([
     db.building.findFirst({
@@ -131,7 +137,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
     db.user.findMany({
       where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, role: true, positionTitle: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, canManageSettings: true, buildingIds: true, jobPosition: { select: { name: true } } },
     }),
   ]);
   if (!point) notFound();
@@ -151,6 +157,56 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
     readBuildingJournalSettings(db, point.id),
     readOrgCommission(orgId, "finished_product", point.id),
   ]);
+  // Замена (2026-10-27): кто здесь временно и кого можно взять с других точек.
+  const [assignments, todayKey, orgPlaces, tAssign] = await Promise.all([
+    loadActiveAssignments(orgId),
+    organizationTodayKey(orgId),
+    db.organization.findUnique({ where: { id: orgId }, select: { perLocationJournals: true } }),
+    getTranslations("staffManagement.pointAssignment"),
+  ]);
+  const tradingPoints = buildings.filter((building) => !isOfficeBuilding(building));
+  const canTakeSubstitute = orgPlaces?.perLocationJournals === true && tradingPoints.length >= 2;
+  const officeIds = new Set(buildings.filter(isOfficeBuilding).map((building) => building.id));
+  const pointName = new Map(buildings.map((building) => [building.id, building.name]));
+  const substituteCandidates: SubstituteCandidate[] = canTakeSubstitute
+    ? staff.flatMap((user) => {
+        const known = user.buildingIds.filter((buildingId) => pointName.has(buildingId));
+        // «На всех точках» уже работает и здесь; офис на точки не назначают.
+        if (known.length === 0 || known.includes(point.id) || known.some((buildingId) => officeIds.has(buildingId))) return [];
+        const busy = assignments.get(user.id);
+        return [
+          {
+            id: user.id,
+            name: user.name,
+            position: getUserDisplayTitle(user) || null,
+            pointNames: known.map((buildingId) => pointName.get(buildingId)!),
+            busyUntilKey: busy ? busy.returnKey : null,
+            canTransfer: staffInScope(session.user, user.buildingIds),
+          },
+        ];
+      })
+    : [];
+  // Временные — первыми: их ищут глазами, и в превью из 12 они не теряются.
+  const isSubstituteHere = (userId: string) => assignments.get(userId)?.buildingId === point.id;
+  const orderedPointStaff = [
+    ...pointStaff.filter((person) => isSubstituteHere(person.id)),
+    ...pointStaff.filter((person) => !isSubstituteHere(person.id)),
+  ];
+  const substituteBadge = (userId: string) => {
+    const assignment = assignments.get(userId);
+    if (!assignment || assignment.buildingId !== point.id) return null;
+    const date = shortDateLabel(assignment.returnKey);
+    return (
+      <SubstituteBadge
+        label={tAssign("badge", { date })}
+        title={
+          assignment.mode === "transfer" && assignment.returnBuildingNames.length > 0
+            ? tAssign("activeTransfer", { point: assignment.buildingName, date, home: assignment.returnBuildingNames.join(", ") })
+            : tAssign("activeExtra", { point: assignment.buildingName, date })
+        }
+      />
+    );
+  };
   const journalsInWork = activeTemplates.filter((template) => !disabledCodes.has(template.code)).length;
   const automationCount = listAutomationCodes(withBuildingJournalSettings(orgAutomation, buildingAutomation)).filter(
     (row) => row.automation.autoCreate && !disabledCodes.has(row.code),
@@ -241,7 +297,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
   const roomIds = point.rooms.map((room) => room.id);
 
   return (
-    <DomainMessagesBoundary namespaces={["settingsManagement"]}>
+    <DomainMessagesBoundary namespaces={["settingsManagement", "staffManagement"]}>
       <div className="space-y-5" data-point-page={point.id}>
         <SectionPageHeader
           title={point.name}
@@ -286,6 +342,13 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
                   {t("staff.count", { count: pointStaff.length })}
                 </span>
               ) : null}
+              {readOnly || !canTakeSubstitute ? null : (
+                <TakeSubstituteButton
+                  point={{ id: point.id, name: point.name }}
+                  candidates={substituteCandidates}
+                  todayKey={todayKey}
+                />
+              )}
               {readOnly ? null : (
                 <Link href={`/settings/users?add=${encodeURIComponent(point.id)}`} className={PRIMARY_LINK} data-point-staff-add>
                   <Plus className="size-4" />
@@ -300,7 +363,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
           ) : (
             <div className="space-y-3">
               <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {pointStaff.slice(0, POINT_STAFF_PREVIEW).map((person) => (
+                {orderedPointStaff.slice(0, POINT_STAFF_PREVIEW).map((person) => (
                   <li
                     key={person.id}
                     data-point-staff={person.id}
@@ -311,8 +374,11 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-medium text-[#0b1024]">{person.name}</span>
-                      <span className="block truncate text-[12.5px] text-[#6f7282]">
-                        {getUserDisplayTitle(person) || t("staff.noPosition")}
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate text-[12.5px] text-[#6f7282]">
+                          {getUserDisplayTitle(person) || t("staff.noPosition")}
+                        </span>
+                        {substituteBadge(person.id)}
                       </span>
                     </span>
                   </li>

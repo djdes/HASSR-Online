@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { receivesPlaceEvent, splitsOfficeAndPoints, type BuildingKindRef } from "@/lib/building-scope";
+import { placeBuildingOfUser } from "@/lib/point-assignments";
 
 /**
  * Уведомления по месту (фаза 3 «Офис и точки», 2026-10-27): из получателей
@@ -37,8 +38,9 @@ export async function loadPlaceContext(organizationId: string): Promise<PlaceCon
 
 /**
  * Точка события: оборудование (стоит в помещении на точке), помещение,
- * документ журнала или сотрудник, работающий на одной точке, — что
- * известно, в этом порядке. Нет привязки — null (общее событие).
+ * документ журнала или сотрудник (одна точка или отмеченная основной, если
+ * точек несколько), — что известно, в этом порядке. Нет привязки — null
+ * (общее событие).
  */
 export async function placeOfEvent(
   organizationId: string,
@@ -68,9 +70,10 @@ export async function placeOfEvent(
   if (ref.userId) {
     const user = await db.user.findFirst({
       where: { id: ref.userId, organizationId },
-      select: { buildingIds: true },
+      select: { buildingIds: true, primaryBuildingId: true },
     });
-    if (user?.buildingIds.length === 1) return user.buildingIds[0];
+    const place = user ? placeBuildingOfUser(user) : null;
+    if (place) return place;
   }
   return null;
 }

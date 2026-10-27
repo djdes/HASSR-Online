@@ -19,6 +19,7 @@ import { BILLING_PAY_HREF } from "@/lib/billing-period";
 import { SEATS_PER_POINT, seatUpgradeTarget } from "@/lib/tariff-plans";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { expireOrgPointAssignments, loadActiveAssignments, organizationTodayKey } from "@/lib/point-assignments.server";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,8 @@ export default async function StaffPage({
   // Руководитель точки (фаза 2 «Офис и точки») видит людей своих точек.
   const inScope = staffScopeWhere(session.user);
   const pointScoped = isPointScoped(session.user);
+  // Срок замены вышел — вернуть людей на их точки до того, как их показать.
+  await expireOrgPointAssignments(orgId);
   const telegramBotUrl = process.env.TELEGRAM_BOT_USERNAME
     ? `https://t.me/${process.env.TELEGRAM_BOT_USERNAME.replace(/^@/, "")}`
     : null;
@@ -84,6 +87,7 @@ export default async function StaffPage({
           weeklyDaysOff: true,
           qrPinHash: true,
           buildingIds: true,
+          primaryBuildingId: true,
           canEditBrakerageDishes: true,
           keepsCoreJournals: true,
           canManageSettings: true,
@@ -132,7 +136,11 @@ export default async function StaffPage({
   const staffBuildings = (await listOrganizationBuildings(orgId)).filter((building) =>
     buildingInScope(session.user, building.id),
   );
-  const activeBuildingId = await getActiveBuildingId(session);
+  const [activeBuildingId, assignments, todayKey] = await Promise.all([
+    getActiveBuildingId(session),
+    loadActiveAssignments(orgId),
+    organizationTodayKey(orgId),
+  ]);
 
   // «Где работает» (2026-10-26): офис, точка или без места.
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? null;
@@ -249,6 +257,7 @@ export default async function StaffPage({
       buildings={staffBuildings}
       perLocationJournals={organization?.perLocationJournals === true}
       activeBuildingId={activeBuildingId}
+      todayKey={todayKey}
       hasTasksflowIntegration={Boolean(tasksflowIntegration)}
       organization={{
         id: organization?.id ?? orgId,
@@ -280,6 +289,8 @@ export default async function StaffPage({
         telegramLinked: Boolean(u.telegramChatId),
         weeklyDaysOff: u.weeklyDaysOff,
         buildingIds: u.buildingIds,
+        primaryBuildingId: u.primaryBuildingId,
+        pointAssignment: assignments.get(u.id) ?? null,
         hasQrPin: Boolean(u.qrPinHash),
         canEditBrakerageDishes: u.canEditBrakerageDishes,
         keepsCoreJournals: u.keepsCoreJournals,

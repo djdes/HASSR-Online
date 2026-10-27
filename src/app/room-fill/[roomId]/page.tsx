@@ -41,6 +41,7 @@ import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { customJournalName } from "@/lib/custom-names";
 import { normalizeUserRole } from "@/lib/user-roles";
 import { employeeWorksAtQrPoint, filterByQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
+import { qrRosterPosition } from "@/lib/point-assignments";
 import { OtherPointScreen } from "@/components/qr-fill/other-point-screen";
 
 export const runtime = "nodejs";
@@ -230,7 +231,7 @@ export default async function RoomFillPage({
       ).map((employee) => ({
         id: employee.id,
         name: employee.name,
-        position: position(employee),
+        position: qrRosterPosition(pointScope?.substituteUserIds, employee.id, position(employee), messages.equipmentFill.page.substitute),
         hasPin: Boolean(employee.qrPinHash),
       }))}
     />

@@ -5,6 +5,7 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { BUILDING_OUT_OF_SCOPE_ERROR, COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { closePointManagerSessions } from "@/lib/point-scope.server";
+import { endAssignmentsAtBuilding } from "@/lib/point-assignments.server";
 import { isOfficeBuilding } from "@/lib/building-scope";
 
 export const runtime = "nodejs";
@@ -91,6 +92,9 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   if (isPointScoped(auth.session.user)) {
     return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
   }
+  // Замены на эту точку завершаем с возвратом: иначе каскад удалил бы
+  // назначения, и снятые переводом точки людям уже не вернулись бы.
+  await endAssignmentsAtBuilding(orgId, id, auth.session);
   const removed = await db.building.delete({ where: { id }, select: { kind: true } });
   // Без офиса руководителей точек больше нет (фаза 2 «Офис и точки»).
   if (isOfficeBuilding(removed)) await closePointManagerSessions(orgId, auth.session.user.id);

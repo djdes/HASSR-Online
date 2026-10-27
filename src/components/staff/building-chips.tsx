@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Briefcase, MapPin } from "lucide-react";
+import { ArrowLeftRight, Briefcase, MapPin, Star } from "lucide-react";
 import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,10 @@ import { cn } from "@/lib/utils";
  * Стиль — как у WeekdayChips, чтобы блок «Выходные» и блок «Точки» в
  * одном диалоге читались одинаково. Больше трёх точек — сворачиваем,
  * чтобы диалог на телефоне оставался в одном экране.
+ *
+ * Основная точка (2026-10-27): у человека на ≥ 2 точках рядом с каждой
+ * выбранной — звезда; основная точка — та, по которой приходят уведомления
+ * «по месту». Временная точка (замена) помечена значком ⇄.
  */
 const VISIBLE_LIMIT = 3;
 
@@ -23,8 +27,13 @@ export function BuildingChips(props: {
   onChange: (next: string[]) => void;
   disabled?: boolean;
   ariaLabel?: string;
+  /** Основная точка; передан `onPrimaryChange` — звезда у выбранных точек. */
+  primaryId?: string | null;
+  onPrimaryChange?: (id: string | null) => void;
+  /** Временная точка (замена) — значок на чипе. */
+  temporaryId?: string | null;
 }) {
-  const { buildings, value, onChange, disabled } = props;
+  const { buildings, value, onChange, disabled, onPrimaryChange } = props;
   const t = useTranslations("staffManagement.buildings");
   const [expanded, setExpanded] = useState(false);
   if (buildings.length < 2) return null;
@@ -49,6 +58,9 @@ export function BuildingChips(props: {
           (building, index) => index < VISIBLE_LIMIT || value.includes(building.id),
         );
   const hidden = buildings.length - visible.length;
+  const selectedPoints = buildings.filter((building) => !isOfficeBuilding(building) && value.includes(building.id));
+  const showPrimary = Boolean(onPrimaryChange) && selectedPoints.length >= 2;
+  const primaryId = showPrimary && props.primaryId && value.includes(props.primaryId) ? props.primaryId : null;
 
   const chipClass = (active: boolean) =>
     cn(
@@ -65,7 +77,7 @@ export function BuildingChips(props: {
           {t("heading")}
         </div>
         <span className="text-[11px] leading-snug text-[#6f7282]">
-          {inOffice ? t("officeHint") : t("allTasksHint")}
+          {inOffice ? t("officeHint") : showPrimary ? t("primaryHint") : t("allTasksHint")}
         </span>
       </div>
       <div
@@ -99,19 +111,46 @@ export function BuildingChips(props: {
         ) : null}
         {visible.filter((building) => !isOfficeBuilding(building)).map((building) => {
           const active = value.includes(building.id);
-          return (
+          const temporary = active && props.temporaryId === building.id;
+          const chip = (
             <button
               key={building.id}
               type="button"
               disabled={disabled}
               aria-pressed={active}
-              title={building.address ? `${building.name}, ${building.address}` : building.name}
+              title={
+                temporary
+                  ? t("temporaryTitle", { name: building.name })
+                  : building.address
+                    ? `${building.name}, ${building.address}`
+                    : building.name
+              }
               onClick={() => pickPoint(building.id, active)}
-              className={chipClass(active)}
+              className={cn(chipClass(active), showPrimary && active && "rounded-r-none border-r-0")}
+              data-building-chip={building.id}
             >
-              <MapPin className="size-3.5 shrink-0" />
+              {temporary ? <ArrowLeftRight className="size-3.5 shrink-0" /> : <MapPin className="size-3.5 shrink-0" />}
               <span className="truncate">{building.name}</span>
             </button>
+          );
+          if (!showPrimary || !active) return chip;
+          const isPrimary = primaryId === building.id;
+          return (
+            <span key={building.id} className="inline-flex max-w-full">
+              {chip}
+              <button
+                type="button"
+                disabled={disabled}
+                aria-pressed={isPrimary}
+                aria-label={isPrimary ? t("primaryOn", { name: building.name }) : t("makePrimary", { name: building.name })}
+                title={isPrimary ? t("primaryOn", { name: building.name }) : t("makePrimary", { name: building.name })}
+                onClick={() => onPrimaryChange?.(isPrimary ? null : building.id)}
+                data-primary-star={building.id}
+                className="inline-flex h-9 items-center rounded-r-lg border border-l-white/30 border-[#5566f6] bg-[#5566f6] px-2 text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              >
+                <Star className={cn("size-3.5", isPrimary ? "fill-current" : "opacity-60")} />
+              </button>
+            </span>
           );
         })}
         {collapsible ? (

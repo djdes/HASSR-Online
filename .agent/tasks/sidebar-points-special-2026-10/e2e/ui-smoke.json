@@ -1,0 +1,41 @@
+{
+  "ok": true,
+  "at": "2026-10-27T21:50:30.630Z",
+  "steps": [
+    {
+      "step": "candidates: people of other points only (no 'everywhere', no own staff)",
+      "count": 2
+    },
+    {
+      "step": "explanation line",
+      "explanation": "Вернётся на «Точка А» 04.11 автоматически. До этого — только на «Точка В»."
+    },
+    {
+      "step": "3 actions: Anna transferred to «Точка В», badge on the point page",
+      "badge": "Замена до 04.11"
+    },
+    {
+      "step": "badge in the staff list",
+      "text": "Замена до 04.11"
+    },
+    {
+      "step": "main point saved via the star",
+      "primaryBuildingId": "cmvr7we8000026w9m9xj3kbif"
+    },
+    {
+      "step": "staff card: Galina also at «Точка Б» for 3 days",
+      "extraLine": "«Точка Б» уберётся у сотрудника 31.10 автоматически, его точки остаются."
+    },
+    {
+      "step": "«Завершить сейчас» restores [Точка А]",
+      "activeText": "Переведён на «Точка В» до 04.11, затем вернётся на «Точка А»"
+    },
+    {
+      "step": "'everywhere' employee sees why no assignment is needed",
+      "blocked": "Сотрудник работает на всех точках — он уже может работать и здесь, назначение не нужно. Чтобы закрепить его за точкой, отметьте её в «Где работает»."
+    },
+    {
+      "step": "phone width: dialog without horizontal scroll"
+    }
+  ]
+}

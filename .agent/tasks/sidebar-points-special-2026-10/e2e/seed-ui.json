@@ -1,0 +1,17 @@
+{
+  "orgId": "cmvr7we3700006w9m2syukznf",
+  "email": "ui-mvr7wdp1-manager@e2e.local",
+  "password": "Passw0rd!",
+  "points": {
+    "a": "cmvr7we8000016w9mtucldmqj",
+    "b": "cmvr7we8000026w9m9xj3kbif",
+    "c": "cmvr7we8000036w9mqfpi1sf3"
+  },
+  "users": {
+    "manager": "cmvr7wei700066w9mriesi4eo",
+    "anna": "cmvr7wejd00076w9m0cf5iwnf",
+    "boris": "cmvr7wekz00086w9mps2ob90w",
+    "galina": "cmvr7wenx00096w9mf0lnxer9",
+    "vera": "cmvr7weqc000a6w9mb2i244xp"
+  }
+}
