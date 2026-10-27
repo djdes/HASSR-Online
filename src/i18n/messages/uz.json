@@ -5138,7 +5138,9 @@
       "previewScope": "Bu taom tekshiruvi va tez sovitishdagi nomlarga tegishli; haroratlar va jurnal yozuvlari ulashilmaydi.",
       "previewUnlink": "Istalgan vaqtda uzish mumkin — o‘z taomlaringiz sizda qoladi.",
       "linked": "Ulandi: “{name}” bilan umumiy ma’lumotnoma",
-      "connect": "Umumiy ma’lumotnomani ulash"
+      "connect": "Umumiy ma’lumotnomani ulash",
+      "pointCode": "«{point}» nuqtasi jurnali kodi:",
+      "pointDescription": "Har bir nuqtaning o‘z jurnal kodi bor. Uni master kabinet xodimiga bering — u aynan shu nuqtani Ulangan obyektlar bo‘limida ulaydi. Boshqa nuqtalar o‘z kodlari bilan ulanadi."
     },
     "columnSettings": {
       "show": "“{label}” ustunini ko‘rsatish",
@@ -25769,16 +25771,24 @@
       "connectFailed": "Obyektni ulab bo‘lmadi",
       "connected": "Obyekt ulandi. Endi unga tanlangan sanaga ma’lumotnomani yuklash mumkin.",
       "title": "Ulangan obyektlar",
-      "description": "Ushbu oshxonalarga taomlar ma’lumotnomasini yuklash va tuzatishlarni yuborish mumkin.",
+      "description": "Bu nuqtalarning jurnallariga sana bo‘yicha taomlarni yuklash va tuzatishlarni yuborish mumkin. Har bir nuqtaning o‘z jurnali bor.",
       "empty": "Hozircha ulangan obyektlar yo‘q.",
       "connectTitle": "Obyekt jurnalini ulash",
-      "connectHint": "Oshxonaning brakeraj jurnali sozlamalarini oching va “Obyekt jurnali kodi”ni nusxalang. Uni shu yerga kiriting. Jurnalning mavjud yozuvlari saqlanadi; taomlarni yuklash alohida, sanani tanlagan holda bajariladi.",
-      "codeLabel": "Obyekt jurnali kodi",
+      "connectHint": "Kerakli nuqtada tayyor mahsulot brakeraj jurnali → sozlamalarni oching va jurnal kodini nusxalang. Uni shu yerga kiriting — faqat shu nuqta ulanadi, shu tashkilotning boshqa nuqtalari o‘z kodlari bilan ulanadi. Jurnal yozuvlari saqlanadi; taomlar alohida, sana tanlab yuklanadi.",
+      "codeLabel": "Nuqta jurnali kodi",
       "find": "Obyektni topish",
       "alreadyConnected": "Obyekt allaqachon ushbu master-kabinetga ulangan.",
       "confirmConnect": "Ushbu obyekt master-kabinet ma’lumotnomalariga ulansinmi?",
       "refreshList": "Ro‘yxatni yangilash",
-      "connect": "Obyektni ulash"
+      "connect": "Obyektni ulash",
+      "disconnect": "Uzish",
+      "disconnectAria": "«{name}»ni uzish",
+      "disconnectTitle": "«{name}» uzilsinmi?",
+      "disconnectNoMore": "Bu nuqta jurnaliga yangi taom yuklamalari endi bormaydi.",
+      "disconnectKeep": "Qo‘shilgan qatorlar va nuqta jurnali o‘zgarmaydi.",
+      "disconnectAgain": "Nuqta jurnali kodi bilan qayta ulash mumkin.",
+      "disconnected": "«{name}» kabinetdan uzildi",
+      "disconnectFailed": "Uzib bo‘lmadi"
     },
     "renameMasterCabinet": {
       "title": "Master-kabinet nomi",

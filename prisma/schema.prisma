@@ -1012,6 +1012,11 @@ model Building {
   linkedServiceCode     String?
   /// Временные назначения сотрудников на эту точку (замена).
   pointAssignments      UserPointAssignment[]
+  /// Код журнала бракеража точки (2026-10-28, владелец: «каждая точка имеет
+  /// свой уникальный ID журнала бракеража, независимо от организации»).
+  /// Мастер-кабинет подключает по нему одну точку, а не всю организацию.
+  /// Выдаётся при первом показе в настройках журнала (src/lib/dish-pool.ts).
+  serviceCode           String?             @unique
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 

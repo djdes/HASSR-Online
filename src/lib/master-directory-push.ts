@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { buildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE } from "@/lib/finished-product-document";
@@ -143,14 +144,17 @@ function applyLists(code: string, config: Record<string, unknown>, lists: Master
 async function pushListsToOrg(
   orgId: string,
   lists: MasterLists,
-  buildingId: string | null = null
+  buildingId: string | null = null,
+  withShared = false
 ): Promise<{ documents: number }> {
   // «Активный документ» — как у saveOrgCommission: status="active" нужного журнала.
-  // Объект-точка (слитая организация) получает списки только в свои документы.
+  // Объект-точка получает списки только в свои документы; точка организации,
+  // подключённой целиком, — ещё и в общие документы организации (без точки).
+  const scope = !buildingId ? {} : withShared ? buildingWhere(buildingId) : { buildingId };
   const docs = await db.journalDocument.findMany({
     where: {
       organizationId: orgId,
-      ...(buildingId ? { buildingId } : {}),
+      ...scope,
       status: "active",
       template: { code: { in: [...MASTER_SHARED_JOURNAL_CODES] } },
     },
@@ -182,7 +186,7 @@ export async function pushSharedListsToPool(
   let documents = 0;
   for (const org of orgs) {
     try {
-      documents += (await pushListsToOrg(org.organizationId, lists, org.buildingId)).documents;
+      documents += (await pushListsToOrg(org.organizationId, lists, org.buildingId, org.wholeOrganization)).documents;
     } catch (err) {
       // Одна сломанная организация не должна останавливать раздачу остальным.
       console.error("[master-directory] push failed", { orgId: org.organizationId, buildingId: org.buildingId, masterOrgId }, err);

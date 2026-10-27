@@ -5138,7 +5138,9 @@
       "previewScope": "This shares names used in food inspection and rapid cooling; temperatures and journal records are not shared.",
       "previewUnlink": "You can unlink at any time; your dishes will stay with you.",
       "linked": "Connected: shared directory with “{name}”",
-      "connect": "Connect shared directory"
+      "connect": "Connect shared directory",
+      "pointCode": "Journal code of “{point}”:",
+      "pointDescription": "Each site has its own journal code. Give it to the master cabinet operator — they will connect exactly this site under Connected sites. Other sites are connected with their own codes."
     },
     "columnSettings": {
       "show": "Show column “{label}”",
@@ -25769,16 +25771,24 @@
       "connectFailed": "Could not connect the site",
       "connected": "The site is connected. You can now export the directory to it for the selected date.",
       "title": "Connected sites",
-      "description": "You can export the dish directory to these catering units and send corrections.",
+      "description": "You can export dishes for a date to these sites’ journals and send corrections. Each site has its own journal.",
       "empty": "There are no connected sites yet.",
       "connectTitle": "Connect a site’s journal",
-      "connectHint": "Open the settings of the catering unit’s quality-control journal and copy the “Site journal code”. Enter it here. Existing journal entries are preserved; the dishes are exported separately, with a choice of date.",
+      "connectHint": "At the site you need, open the finished products quality-control journal → settings and copy the journal code. Enter it here — only this site will be connected; other sites of the same organization are connected with their own codes. Existing journal entries are preserved; the dishes are exported separately, with a choice of date.",
       "codeLabel": "Site journal code",
       "find": "Find the site",
       "alreadyConnected": "The site is already connected to this master cabinet.",
       "confirmConnect": "Connect this site to the master cabinet’s directories?",
       "refreshList": "Refresh the list",
-      "connect": "Connect the site"
+      "connect": "Connect the site",
+      "disconnect": "Disconnect",
+      "disconnectAria": "Disconnect “{name}”",
+      "disconnectTitle": "Disconnect “{name}”?",
+      "disconnectNoMore": "New dish exports will no longer go to this site’s journal.",
+      "disconnectKeep": "Rows already added and the site’s journal stay unchanged.",
+      "disconnectAgain": "You can connect it again with the site’s journal code.",
+      "disconnected": "“{name}” disconnected from the cabinet",
+      "disconnectFailed": "Could not disconnect"
     },
     "renameMasterCabinet": {
       "title": "Master cabinet name",

@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { db } from "@/lib/db";
 import { cleanYield, normalizeMenuTime } from "@/lib/finished-product-bulk";
 import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { journalPointsOf, wholeOrgPoints } from "@/lib/master-pool-points";
 import { parseOrgKind, type OrgKind } from "@/lib/master-directory-access";
 
 /**
@@ -484,6 +485,11 @@ export type PoolObject = {
   name: string;
   organizationId: string;
   buildingId: string | null;
+  /**
+   * Точка организации, подключённой целиком (2026-10-28): её общие документы
+   * (без точки) — тоже этого кабинета, списки раздаются и в них.
+   */
+  wholeOrganization?: boolean;
 };
 
 export function poolObjectId(organizationId: string, buildingId: string | null | undefined): string {
@@ -504,13 +510,23 @@ export async function masterPoolCode(masterOrgId: string): Promise<string | null
   return master?.linkedServiceCode ?? master?.serviceCode ?? null;
 }
 
-/** Объекты пула мастер-кабинета (организации и точки), кроме самого кабинета. */
+const POINT_SELECT = {
+  select: { id: true, name: true, kind: true, linkedServiceCode: true },
+  orderBy: [{ sortOrder: "asc" as const }, { name: "asc" as const }],
+};
+
+/**
+ * Объекты пула мастер-кабинета (организации и точки), кроме самого кабинета.
+ * Организация с журналами по точкам, подключённая целиком, — это её точки
+ * (2026-10-28: «у каждой точки свой журнал, по ним объединяется выгрузка»):
+ * у каждой свой объект и свой документ.
+ */
 export async function listPoolOrganizations(masterOrgId: string): Promise<PoolObject[]> {
   const [poolIds, code] = await Promise.all([resolveDishPoolOrgIds(masterOrgId), masterPoolCode(masterOrgId)]);
   const [orgs, buildings] = await Promise.all([
     db.organization.findMany({
       where: { id: { in: poolIds.filter((id) => id !== masterOrgId) }, ...NOT_DIRECTORY_ORG_WHERE },
-      select: { id: true, name: true },
+      select: { id: true, name: true, perLocationJournals: true, buildings: POINT_SELECT },
     }),
     code
       ? db.building.findMany({
@@ -520,9 +536,21 @@ export async function listPoolOrganizations(masterOrgId: string): Promise<PoolOb
       : Promise.resolve([]),
   ]);
   const objects: PoolObject[] = [
-    ...orgs.map((org) => ({ id: org.id, name: org.name, organizationId: org.id, buildingId: null })),
-    // Точка организации, которая и сама целиком в пуле, отдельным объектом
-    // не нужна — её документы уже получает организация.
+    ...orgs.flatMap((org): PoolObject[] => {
+      if (journalPointsOf(org, org.buildings).length === 0) {
+        return [{ id: org.id, name: org.name, organizationId: org.id, buildingId: null }];
+      }
+      // Точки, подключённые своим кодом к другому кабинету, — не здесь.
+      return wholeOrgPoints(org, org.buildings, code ?? "").map((point) => ({
+        id: poolObjectId(org.id, point.id),
+        name: poolObjectName(org.name, point.name),
+        organizationId: org.id,
+        buildingId: point.id,
+        wholeOrganization: true,
+      }));
+    }),
+    // Точка организации, которая и сама целиком в пуле, уже есть выше
+    // (точкой или в составе организации без журналов по точкам).
     ...buildings
       .filter((building) => !poolIds.includes(building.organizationId))
       .map((building) => ({
@@ -535,7 +563,10 @@ export async function listPoolOrganizations(masterOrgId: string): Promise<PoolOb
   return objects.sort((a, b) => a.name.localeCompare(b.name, "ru"));
 }
 
-/** Объект ещё в пуле этого кода: точка — по своей привязке, организация — по своей. */
+/**
+ * Объект ещё в пуле этого кода: точка — по своей привязке или как точка
+ * организации, подключённой целиком; организация — по своей привязке.
+ */
 export async function isPoolObjectInPool(
   object: { organizationId: string; buildingId?: string | null },
   code: string
@@ -543,9 +574,18 @@ export async function isPoolObjectInPool(
   if (object.buildingId) {
     const building = await db.building.findFirst({
       where: { id: object.buildingId, organizationId: object.organizationId },
-      select: { linkedServiceCode: true, organization: { select: { kind: true } } },
+      select: {
+        id: true,
+        name: true,
+        kind: true,
+        linkedServiceCode: true,
+        organization: { select: { kind: true, perLocationJournals: true, serviceCode: true, linkedServiceCode: true } },
+      },
     });
-    return Boolean(building && building.organization.kind !== MASTER_ORG_KIND && building.linkedServiceCode === code);
+    if (!building || building.organization.kind === MASTER_ORG_KIND) return false;
+    if (building.linkedServiceCode === code) return true;
+    const org = building.organization;
+    return (org.linkedServiceCode ?? org.serviceCode) === code && wholeOrgPoints(org, [building], code).length > 0;
   }
   const org = await db.organization.findUnique({
     where: { id: object.organizationId },
