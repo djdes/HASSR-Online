@@ -5,15 +5,17 @@
   "size": { "width": 58, "height": 40 },
   "fields": [],
   "elements": [
-    { "type": "frame", "inset": 0.75, "thickness": 0.375 },
-    { "type": "ticks", "inset": 0.75, "step": 5, "length": 1.2, "thickness": 0.25 },
-    { "type": "text", "x": 3, "y": 3, "w": 52, "h": 5.6, "text": "Сетап помощник", "size": 4.6, "bold": true, "align": "center", "maxLines": 1 },
-    { "type": "text", "x": 3, "y": 8.6, "w": 52, "h": 4, "text": "Пробная этикетка {{label.size}} мм", "size": 3, "align": "center", "maxLines": 1 },
-    { "type": "line", "x": 6, "y": 13.3, "x2": 52, "y2": 13.3, "thickness": 0.3 },
-    { "type": "text", "x": 4, "y": 14.3, "w": 50, "h": 4, "text": "Принтер: {{printer.name}}", "size": 3, "maxLines": 1 },
-    { "type": "text", "x": 4, "y": 18.6, "w": 50, "h": 4, "text": "{{org.name}}", "size": 3, "maxLines": 1 },
-    { "type": "text", "x": 4, "y": 22.9, "w": 50, "h": 4, "text": "{{user.name}}", "size": 3, "maxLines": 1 },
-    { "type": "text", "x": 4, "y": 27.2, "w": 50, "h": 4, "text": "{{now|datetime}}", "size": 3, "maxLines": 1 },
-    { "type": "text", "x": 4, "y": 31.6, "w": 50, "h": 4.4, "text": "Печать работает", "size": 3.3, "bold": true, "align": "center", "maxLines": 1 }
+    { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
+    { "type": "ticks", "inset": 0.8, "step": 5, "length": 1.2, "thickness": 0.25 },
+    { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },
+    { "type": "text", "x": 29, "y": 1.9, "w": 26.6, "h": 5, "text": "{{org.site}}", "size": 2.4, "bold": true, "align": "right", "valign": "center", "maxLines": 1 },
+    { "type": "line", "x": 2.4, "y": 7.6, "x2": 55.6, "y2": 7.6, "thickness": 0.3 },
+    {"type": "text", "x": 2.4, "y": 8.3, "w": 53.2, "h": 4.8, "text": "Пробная этикетка {{label.size}} мм", "size": 3.8, "bold": true, "align": "center", "maxLines": 1},
+    { "type": "line", "x": 6, "y": 13.6, "x2": 52, "y2": 13.6, "thickness": 0.3 },
+    {"type": "text", "x": 4, "y": 14.3, "w": 50, "h": 3.8, "text": "Принтер: {{printer.name}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 4, "y": 18.5, "w": 50, "h": 3.8, "text": "{{org.name}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 4, "y": 22.7, "w": 50, "h": 3.8, "text": "{{user.name}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 4, "y": 26.9, "w": 50, "h": 3.8, "text": "{{now|datetime}}", "size": 2.9, "maxLines": 1},
+    {"type": "text", "x": 4, "y": 31.8, "w": 50, "h": 4.6, "text": "Печать работает", "size": 3.3, "bold": true, "align": "center", "maxLines": 1}
   ]
 }

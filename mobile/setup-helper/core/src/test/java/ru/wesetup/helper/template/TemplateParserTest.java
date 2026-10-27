@@ -44,7 +44,7 @@ public class TemplateParserTest {
                 "daily-sample", "incoming", "allergens", "reject", "opened", "free-text"), ids);
 
         Set<String> context = new HashSet<>(Arrays.asList(
-                "user.name", "org.name", "printer.name", "printer.model", "label.size", "app.version", "now"));
+                "user.name", "org.name", "org.site", "printer.name", "printer.model", "label.size", "app.version", "now"));
         Pattern placeholder = Pattern.compile("\\{\\{\\s*([A-Za-z0-9_.]+)(?:\\s*\\+\\s*([A-Za-z0-9_.]+))?");
         for (LabelTemplate t : templates) {
             assertEquals(58f, t.widthMm, 0f);
@@ -52,6 +52,7 @@ public class TemplateParserTest {
             assertFalse(t.elements.isEmpty());
             Set<String> known = new HashSet<>(context);
             for (TemplateField field : t.fields) known.add(field.key);
+            assertBrandedHeader(t);
             for (TemplateElement e : t.elements) {
                 if (e.type != TemplateElement.Type.TEXT) continue;
                 assertTrue(t.id + ": текст вне шаблона " + e.text, e.x >= 0 && e.y >= 0
@@ -91,6 +92,72 @@ public class TemplateParserTest {
                 if (field.type == TemplateField.Type.TEXT && !field.options.isEmpty() && !field.defaultValue.isEmpty()) {
                     assertTrue(t.id + "." + field.key + ": умолчание из вариантов", field.options.contains(field.defaultValue));
                 }
+            }
+        }
+    }
+
+    /**
+     * Фирменная шапка: скруглённая рамка, логотип слева (с названием вместо него),
+     * сайт справа, линия под ними; всё содержимое лежит внутри рамки.
+     */
+    private static void assertBrandedHeader(LabelTemplate t) {
+        TemplateElement frame = null;
+        TemplateElement image = null;
+        boolean site = false;
+        for (TemplateElement e : t.elements) {
+            if (e.type == TemplateElement.Type.FRAME) frame = e;
+            if (e.type == TemplateElement.Type.IMAGE) image = e;
+            if (e.type == TemplateElement.Type.TEXT && e.text.contains("{{org.site}}")) site = true;
+        }
+        assertNotNull(t.id + ": нет рамки", frame);
+        assertTrue(t.id + ": рамка без скругления", frame.radius >= 1.5f);
+        assertNotNull(t.id + ": нет логотипа в шапке", image);
+        assertEquals("org.logo", image.src);
+        assertTrue(t.id + ": у логотипа нет запасного текста с названием", image.fallbackText.contains("{{org.name}}"));
+        assertTrue(t.id + ": нет сайта в шапке", site);
+        // Внутренний край рамки (inset + толщина) в миллиметрах шаблона 58x40.
+        float edge = frame.inset + frame.thickness;
+        for (TemplateElement e : t.elements) {
+            if (e.type == TemplateElement.Type.LINE) {
+                assertTrue(t.id + ": линия вне рамки", Math.min(e.x, e.x2) >= edge - 0.01f
+                        && Math.max(e.x, e.x2) <= t.widthMm - edge + 0.01f
+                        && Math.min(e.y, e.y2) >= edge - 0.01f && Math.max(e.y, e.y2) <= t.heightMm - edge + 0.01f);
+            } else if (e.type == TemplateElement.Type.TEXT || e.type == TemplateElement.Type.IMAGE) {
+                assertTrue(t.id + ": элемент вне рамки " + e.text + e.src, e.x >= edge - 0.01f && e.y >= edge - 0.01f
+                        && e.x + e.w <= t.widthMm - edge + 0.01f && e.y + e.h <= t.heightMm - edge + 0.01f);
+                if (e.type == TemplateElement.Type.TEXT && !e.text.contains("{{org.site}}")) {
+                    assertTrue(t.id + ": " + e.text + " налезает на шапку", e.y >= 7.6f);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testParsesImageAndRadius() {
+        LabelTemplate t = TemplateParser.parse("{\"id\":\"x\",\"title\":\"X\",\"size\":{\"width\":58,\"height\":40},"
+                + "\"elements\":[{\"type\":\"image\",\"src\":\"org.logo\",\"x\":1,\"y\":2,\"w\":20,\"h\":5,"
+                + "\"align\":\"right\",\"fallbackText\":\"{{org.name}}\"},"
+                + "{\"type\":\"frame\",\"radius\":2},{\"type\":\"rect\",\"w\":5,\"h\":5,\"radius\":1.5}]}");
+        TemplateElement image = t.elements.get(0);
+        assertEquals(TemplateElement.Type.IMAGE, image.type);
+        assertEquals("org.logo", image.src);
+        assertEquals(TemplateElement.Align.RIGHT, image.align);
+        assertEquals("{{org.name}}", image.fallbackText);
+        assertEquals(2f, t.elements.get(1).radius, 0f);
+        assertEquals(1.5f, t.elements.get(2).radius, 0f);
+    }
+
+    @Test
+    public void testImageNeedsSizeAndKey() {
+        for (String element : new String[]{
+                "{\"type\":\"image\",\"src\":\"org.logo\",\"w\":0,\"h\":5}",
+                "{\"type\":\"image\",\"src\":\"\",\"w\":5,\"h\":5}"}) {
+            try {
+                TemplateParser.parse("{\"id\":\"x\",\"title\":\"X\",\"size\":{\"width\":58,\"height\":40},"
+                        + "\"elements\":[" + element + "]}");
+                fail("Картинка без размера или ключа должна отклоняться");
+            } catch (IllegalArgumentException expected) {
+                // так и задумано
             }
         }
     }

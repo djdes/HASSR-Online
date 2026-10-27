@@ -11,14 +11,17 @@
     {"key": "employee", "label": "Отобрал", "type": "text", "default": "{{user.name}}", "maxLength": 40}
   ],
   "elements": [
-    {"type": "text", "x": 1.5, "y": 1.2, "w": 55, "h": 5.4, "text": "СУТОЧНАЯ ПРОБА", "size": 3.4, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true},
-    {"type": "text", "x": 2, "y": 7, "w": 54, "h": 8.8, "text": "{{dish}}", "size": 4.2, "bold": true, "align": "center", "valign": "center", "maxLines": 2},
-    {"type": "line", "x": 2, "y": 16.3, "x2": 56, "y2": 16.3, "thickness": 0.3},
-    {"type": "text", "x": 2, "y": 16.9, "w": 54, "h": 4.4, "text": "Приём пищи: {{meal}}", "size": 3, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 21.5, "w": 54, "h": 5, "text": "Хранить до: {{sampledAt+keepFor|datetime}}", "size": 3.5, "bold": true, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 26.8, "w": 54, "h": 4.2, "text": "Отобрано: {{sampledAt|datetime}}", "size": 2.9, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 31.2, "w": 54, "h": 4.2, "text": "Отобрал: {{employee}}", "size": 2.9, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 35.6, "w": 36, "h": 3.8, "text": "Хранение: +2…+6 °C", "size": 2.6, "maxLines": 1},
-    {"type": "text", "x": 39, "y": 35.6, "w": 17, "h": 3.8, "text": "{{org.name}}", "size": 2.6, "align": "right", "maxLines": 1}
+    { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
+    { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },
+    { "type": "text", "x": 29, "y": 1.9, "w": 26.6, "h": 5, "text": "{{org.site}}", "size": 2.4, "bold": true, "align": "right", "valign": "center", "maxLines": 1 },
+    { "type": "line", "x": 2.4, "y": 7.6, "x2": 55.6, "y2": 7.6, "thickness": 0.3 },
+    {"type": "text", "x": 2.4, "y": 8.4, "w": 53.2, "h": 4.4, "text": "СУТОЧНАЯ ПРОБА", "size": 3.2, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true},
+    {"type": "text", "x": 2.4, "y": 13.1, "w": 53.2, "h": 8.0, "text": "{{dish}}", "size": 4.0, "bold": true, "align": "center", "valign": "center", "maxLines": 2},
+    { "type": "line", "x": 2.4, "y": 21.5, "x2": 55.6, "y2": 21.5, "thickness": 0.3 },
+    {"type": "text", "x": 2.4, "y": 21.9, "w": 53.2, "h": 3.9, "text": "Приём пищи: {{meal}}", "size": 2.8, "maxLines": 1},
+    {"type": "text", "x": 2.4, "y": 25.9, "w": 53.2, "h": 4.6, "text": "Хранить до: {{sampledAt+keepFor|datetime}}", "size": 3.3, "bold": true, "maxLines": 1},
+    {"type": "text", "x": 2.4, "y": 30.6, "w": 53.2, "h": 3.7, "text": "Отобрано: {{sampledAt|datetime}}", "size": 2.7, "maxLines": 1},
+    {"type": "text", "x": 2.4, "y": 34.4, "w": 29.4, "h": 3.7, "text": "Отобрал: {{employee}}", "size": 2.7, "maxLines": 1},
+    {"type": "text", "x": 32.2, "y": 34.4, "w": 23.4, "h": 3.7, "text": "Хранение: +2…+6 °C", "size": 2.7, "align": "right", "maxLines": 1}
   ]
 }

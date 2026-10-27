@@ -165,7 +165,7 @@ public class ScreensTest {
                     .text("employee", "Иван Петров")
                     .text("text", "Только для персонала");
             fillFields(values, template);
-            MonoBitmap image = PrintJobs.render(template, printer.label, values);
+            MonoBitmap image = PrintJobs.render(app, template, printer.label, values);
             assertEquals(464, image.width);
             assertEquals(320, image.height);
             assertTrue(template.id + ": на этикетке почти ничего нет", image.blackCount() > 500);

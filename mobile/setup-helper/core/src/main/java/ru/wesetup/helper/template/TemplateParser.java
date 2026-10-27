@@ -126,11 +126,20 @@ public final class TemplateParser {
         element.fit = raw.optBoolean("fit", true);
         element.minScale = (float) raw.optDouble("minScale", element.minScale);
         element.invert = raw.optBoolean("invert", false);
+        element.radius = Math.max(0f, (float) raw.optDouble("radius", 0));
+        element.src = raw.optString("src", "");
+        element.fallbackText = raw.optString("fallbackText", "");
         element.inset = (float) raw.optDouble("inset", element.inset);
         element.step = (float) raw.optDouble("step", element.step);
         element.length = (float) raw.optDouble("length", element.length);
         if (element.type == TemplateElement.Type.TEXT && (element.w <= 0 || element.h <= 0)) {
             throw new IllegalArgumentException("У текста нужна ширина и высота: " + element.text);
+        }
+        if (element.type == TemplateElement.Type.IMAGE) {
+            if (element.w <= 0 || element.h <= 0) throw new IllegalArgumentException("У картинки нужна ширина и высота");
+            if (!element.src.matches("[A-Za-z][A-Za-z0-9_.]{0,39}")) {
+                throw new IllegalArgumentException("У картинки нужен ключ src, например org.logo: " + element.src);
+            }
         }
         if (element.type == TemplateElement.Type.TICKS && element.step <= 0) {
             throw new IllegalArgumentException("Шаг делений должен быть больше нуля");

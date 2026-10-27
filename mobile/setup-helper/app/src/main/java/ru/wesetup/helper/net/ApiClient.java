@@ -112,6 +112,48 @@ public final class ApiClient implements UpdateSource {
         }
     }
 
+    /** Фирменная шапка этикеток: название, сайт и готовый к печати логотип (1 бит). */
+    public static final class BrandingResult {
+        public final String version;
+        public final String orgName;
+        public final String site;
+        public final int logoWidth;
+        public final int logoHeight;
+        /** PNG логотипа или null, если у организации его нет. */
+        public final byte[] logoPng;
+
+        public BrandingResult(String version, String orgName, String site, int logoWidth, int logoHeight,
+                              byte[] logoPng) {
+            this.version = version;
+            this.orgName = orgName;
+            this.site = site;
+            this.logoWidth = logoWidth;
+            this.logoHeight = logoHeight;
+            this.logoPng = logoPng;
+        }
+
+        static BrandingResult fromJson(JSONObject json) throws IOException {
+            String version = json.optString("version", "");
+            if (version.isEmpty()) throw new IOException("Сервер не прислал версию оформления");
+            JSONObject logo = json.optJSONObject("logo");
+            byte[] png = null;
+            int width = 0;
+            int height = 0;
+            if (logo != null) {
+                try {
+                    png = android.util.Base64.decode(logo.optString("png", ""), android.util.Base64.DEFAULT);
+                } catch (IllegalArgumentException e) {
+                    png = null;
+                }
+                width = logo.optInt("widthDots", 0);
+                height = logo.optInt("heightDots", 0);
+                if (png == null || png.length == 0 || width <= 0 || height <= 0) png = null;
+            }
+            return new BrandingResult(version, json.optString("orgName", ""), json.optString("site", ""),
+                    png == null ? 0 : width, png == null ? 0 : height, png);
+        }
+    }
+
     /** Что приложение сообщает о себе при входе. */
     public static final class ClientInfo {
         public final String deviceName;
@@ -149,6 +191,20 @@ public final class ApiClient implements UpdateSource {
         put(body, "appVersion", BuildConfig.VERSION_NAME);
         put(body, "events", array);
         return SyncResult.fromJson(post(server + "/api/setup-helper/sync", body, token));
+    }
+
+    /** Фирменная шапка организации (название, сайт, логотип) — {@code GET /api/setup-helper/branding}. */
+    public BrandingResult fetchBranding(String server, String token) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            connection = open(server + "/api/setup-helper/branding", "GET", token);
+            return BrandingResult.fromJson(readJson(connection));
+        } catch (UnknownHostException | ConnectException | NoRouteToHostException | SocketTimeoutException
+                 | SSLException e) {
+            throw new OfflineException(e);
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
     }
 
     public void logout(String server, String token) throws IOException {

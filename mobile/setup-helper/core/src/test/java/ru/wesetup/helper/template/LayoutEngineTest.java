@@ -156,6 +156,98 @@ public class LayoutEngineTest {
         assertEquals(0.3f * 0.75f * 8, l.thickness, 0.001f); // толщина масштабируется вместе с шаблоном
     }
 
+    private static LabelTemplate imageTemplate(float w, float h, TemplateElement.Align align, String fallback) {
+        TemplateElement image = new TemplateElement(TemplateElement.Type.IMAGE);
+        image.src = "org.logo";
+        image.x = 2;
+        image.y = 2;
+        image.w = w;
+        image.h = h;
+        image.align = align;
+        image.fallbackText = fallback;
+        image.bold = true;
+        image.size = 2.6f;
+        image.valign = TemplateElement.VAlign.CENTER;
+        List<TemplateElement> elements = new ArrayList<>();
+        elements.add(image);
+        return new LabelTemplate("t", "T", "", 58, 40, Collections.<TemplateField>emptyList(), elements);
+    }
+
+    @Test
+    public void testImageFitsBoxKeepingAspectAndAlign() {
+        TemplateValues values = new TemplateValues(TimeZone.getDefault()).image("org.logo", 80, 40);
+        // Коробка 26x5 мм = 208x40 точек, картинка 2:1 -> 80x40, прижата влево.
+        DrawOp.Image left = (DrawOp.Image) LayoutEngine.layout(
+                imageTemplate(26, 5, TemplateElement.Align.LEFT, ""), new LabelSettings(), values, MONO).ops.get(0);
+        assertEquals("org.logo", left.src);
+        assertEquals(16f, left.left, 0.001f);
+        assertEquals(16f, left.top, 0.001f);
+        assertEquals(80f, left.width, 0.001f);
+        assertEquals(40f, left.height, 0.001f);
+        DrawOp.Image right = (DrawOp.Image) LayoutEngine.layout(
+                imageTemplate(26, 5, TemplateElement.Align.RIGHT, ""), new LabelSettings(), values, MONO).ops.get(0);
+        assertEquals(16f + 208f - 80f, right.left, 0.001f);
+        DrawOp.Image center = (DrawOp.Image) LayoutEngine.layout(
+                imageTemplate(26, 5, TemplateElement.Align.CENTER, ""), new LabelSettings(), values, MONO).ops.get(0);
+        assertEquals(16f + (208f - 80f) / 2f, center.left, 0.001f);
+
+        // Широкий логотип 480x40 в той же коробке -> ужимается по ширине до 208x17.33.
+        TemplateValues wide = new TemplateValues(TimeZone.getDefault()).image("org.logo", 480, 40);
+        DrawOp.Image squeezed = (DrawOp.Image) LayoutEngine.layout(
+                imageTemplate(26, 5, TemplateElement.Align.LEFT, ""), new LabelSettings(), wide, MONO).ops.get(0);
+        assertEquals(208f, squeezed.width, 0.01f);
+        assertEquals(208f * 40 / 480, squeezed.height, 0.01f);
+        assertEquals(16f + (40f - squeezed.height) / 2f, squeezed.top, 0.01f);
+    }
+
+    @Test
+    public void testImageScalesWithTemplate() {
+        LabelSettings settings = new LabelSettings();
+        settings.widthMm = 58;
+        settings.heightMm = 30; // масштаб 0.75
+        TemplateValues values = new TemplateValues(TimeZone.getDefault()).image("org.logo", 1000, 1000);
+        DrawOp.Image image = (DrawOp.Image) LayoutEngine.layout(
+                imageTemplate(26, 5, TemplateElement.Align.LEFT, ""), settings, values, MONO).ops.get(0);
+        assertEquals(5 * 0.75f * 8, image.height, 0.01f);
+        assertEquals(5 * 0.75f * 8, image.width, 0.01f);
+    }
+
+    @Test
+    public void testNoLogoFallsBackToBoldOrgName() {
+        TemplateValues values = new TemplateValues(TimeZone.getDefault()).text("org.name", "Кафе Ромашка");
+        LabelLayout layout = LayoutEngine.layout(
+                imageTemplate(26, 5, TemplateElement.Align.LEFT, "{{org.name}}"), new LabelSettings(), values, MONO);
+        assertEquals(1, layout.ops.size());
+        DrawOp.Text text = (DrawOp.Text) layout.ops.get(0);
+        assertEquals("Кафе Ромашка", text.text);
+        assertTrue(text.bold);
+        // Нет ни логотипа, ни названия - в шапке просто пусто.
+        assertEquals(0, LayoutEngine.layout(imageTemplate(26, 5, TemplateElement.Align.LEFT, "{{org.name}}"),
+                new LabelSettings(), new TemplateValues(TimeZone.getDefault()), MONO).ops.size());
+    }
+
+    @Test
+    public void testRoundedFrameAndRectCarryRadius() {
+        TemplateElement frame = new TemplateElement(TemplateElement.Type.FRAME);
+        frame.inset = 0.8f;
+        frame.radius = 2f;
+        TemplateElement rect = new TemplateElement(TemplateElement.Type.RECT);
+        rect.w = 10;
+        rect.h = 10;
+        rect.radius = 1f;
+        List<TemplateElement> elements = new ArrayList<>();
+        elements.add(frame);
+        elements.add(rect);
+        LabelTemplate template = new LabelTemplate("t", "T", "", 58, 40,
+                Collections.<TemplateField>emptyList(), elements);
+        LabelSettings settings = new LabelSettings();
+        settings.widthMm = 58;
+        settings.heightMm = 30; // масштаб 0.75: рамка радиус не масштабирует, прямоугольник - да
+        LabelLayout layout = LayoutEngine.layout(template, settings, new TemplateValues(TimeZone.getDefault()), MONO);
+        assertEquals(16f, ((DrawOp.Rect) layout.ops.get(0)).radius, 0.001f);
+        assertEquals(0.75f * 8f, ((DrawOp.Rect) layout.ops.get(1)).radius, 0.001f);
+    }
+
     @Test
     public void testShiftMovesEverything() {
         List<TemplateElement> elements = new ArrayList<>();

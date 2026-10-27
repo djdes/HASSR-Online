@@ -10,7 +10,7 @@ package ru.wesetup.helper.template;
  */
 public final class TemplateElement {
 
-    public enum Type { TEXT, LINE, RECT, FRAME, TICKS }
+    public enum Type { TEXT, LINE, RECT, FRAME, TICKS, IMAGE }
 
     public enum Align { LEFT, CENTER, RIGHT }
 
@@ -43,6 +43,13 @@ public final class TemplateElement {
     public float minScale = 0.6f;
     /** Белый текст на чёрной плашке. */
     public boolean invert;
+
+    /** Скругление углов RECT и FRAME, мм (у RECT масштабируется, у FRAME — нет). */
+    public float radius;
+
+    // Картинка: {@code src} — ключ картинки ({@code org.logo}), {@code fallbackText} — что печатать без неё.
+    public String src = "";
+    public String fallbackText = "";
 
     // Рамка и деления.
     public float inset = 0.75f;

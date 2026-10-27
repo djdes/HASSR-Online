@@ -80,10 +80,27 @@ public class LabelPreviewTest {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, layout.widthDots, layout.heightDots);
         for (DrawOp op : layout.ops) {
-            if (op instanceof DrawOp.Rect) {
+            if (op instanceof DrawOp.Image) {
+                // Логотип-заглушка: чёрный прямоугольник с белой серединой, ровно в отведённой коробке.
+                DrawOp.Image img = (DrawOp.Image) op;
+                g.setColor(Color.BLACK);
+                g.fill(new Rectangle2D.Float(img.left, img.top, img.width, img.height));
+                g.setColor(Color.WHITE);
+                g.fill(new Rectangle2D.Float(img.left + 2, img.top + 2, img.width - 4, img.height - 4));
+                g.setColor(Color.BLACK);
+                g.fill(new Rectangle2D.Float(img.left + 5, img.top + 5, img.width - 10, img.height - 10));
+            } else if (op instanceof DrawOp.Rect) {
                 DrawOp.Rect r = (DrawOp.Rect) op;
                 g.setColor(Color.BLACK);
-                if (r.fill) {
+                if (r.radius > 0 && r.fill) {
+                    g.fill(new java.awt.geom.RoundRectangle2D.Float(r.left, r.top, r.right - r.left, r.bottom - r.top,
+                            r.radius * 2, r.radius * 2));
+                } else if (r.radius > 0) {
+                    float h = r.thickness / 2f;
+                    g.setStroke(new BasicStroke(r.thickness));
+                    g.draw(new java.awt.geom.RoundRectangle2D.Float(r.left + h, r.top + h, r.right - r.left - r.thickness,
+                            r.bottom - r.top - r.thickness, (r.radius - h) * 2, (r.radius - h) * 2));
+                } else if (r.fill) {
                     g.fill(new Rectangle2D.Float(r.left, r.top, r.right - r.left, r.bottom - r.top));
                 } else {
                     float t = r.thickness;
@@ -137,6 +154,8 @@ public class LabelPreviewTest {
         return new TemplateValues(TimeZone.getTimeZone("Europe/Moscow"))
                 .text("user.name", "Иван Петров")
                 .text("org.name", "Кафе «Ромашка»")
+                .text("org.site", "romashka-cafe.ru")
+                .image("org.logo", 120, 40)
                 .text("printer.name", "IP-802BT")
                 .text("printer.model", "AIYIN IP-802BT")
                 .text("label.size", settings.sizeLabel())

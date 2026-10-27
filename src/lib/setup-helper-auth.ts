@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { VerifiedUser } from "@/lib/credentials";
 import { readBearerToken } from "@/lib/print-agent-auth";
+import { loadHelperBrandingVersion } from "@/lib/setup-helper-branding";
 import {
   generateHelperToken,
   hashHelperToken,
@@ -22,6 +23,8 @@ export type HelperLoginPayload = {
   deviceId: string;
   user: { name: string; email: string };
   organization: { name: string };
+  /** Версия фирменной шапки этикеток: изменилась — приложение скачает её заново. */
+  brandingVersion?: string;
 };
 
 /**
@@ -57,11 +60,15 @@ export async function issueHelperDevice(
     select: { id: true },
   });
 
+  // Вход не должен падать из-за оформления: без версии приложение возьмёт шапку при следующем запуске.
+  const brandingVersion = await loadHelperBrandingVersion(user.organizationId).catch(() => undefined);
+
   return {
     token: raw,
     deviceId: device.id,
     user: { name: user.name, email: user.email },
     organization: { name: user.organization.name },
+    ...(brandingVersion ? { brandingVersion } : {}),
   };
 }
 

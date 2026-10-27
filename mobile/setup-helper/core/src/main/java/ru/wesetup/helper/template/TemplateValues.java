@@ -20,8 +20,9 @@ import java.util.regex.Pattern;
  * как {@code duration}. Неизвестный ключ даёт пустую строку.
  *
  * <p>Кроме полей шаблона есть общие значения: {@code user.name},
- * {@code org.name}, {@code printer.name}, {@code printer.model},
- * {@code label.size}, {@code app.version}, {@code now}.
+ * {@code org.name}, {@code org.site}, {@code printer.name}, {@code printer.model},
+ * {@code label.size}, {@code app.version}, {@code now}. Картинка
+ * {@code org.logo} — отдельно, через {@link #image}.
  */
 public final class TemplateValues {
 
@@ -32,6 +33,7 @@ public final class TemplateValues {
     private final Map<String, String> texts = new HashMap<>();
     private final Map<String, Long> times = new HashMap<>();
     private final Map<String, Integer> durations = new HashMap<>();
+    private final Map<String, int[]> images = new HashMap<>();
     private final TimeZone zone;
 
     public TemplateValues(TimeZone zone) {
@@ -51,6 +53,17 @@ public final class TemplateValues {
     public TemplateValues duration(String key, int minutes) {
         durations.put(key, minutes);
         return this;
+    }
+
+    /** Картинка есть и имеет такой размер в точках (например, {@code org.logo}). */
+    public TemplateValues image(String key, int widthDots, int heightDots) {
+        if (widthDots > 0 && heightDots > 0) images.put(key, new int[] {widthDots, heightDots});
+        return this;
+    }
+
+    /** {ширина, высота} в точках или null, если картинки нет. */
+    public int[] imageSize(String key) {
+        return images.get(key);
     }
 
     public String text(String key) {

@@ -49,14 +49,41 @@ public abstract class DrawOp {
         public final float bottom;
         public final float thickness;
         public final boolean fill;
+        /** Радиус скругления углов, точки; 0 — прямые углы. */
+        public final float radius;
 
         Rect(float left, float top, float right, float bottom, float thickness, boolean fill) {
+            this(left, top, right, bottom, thickness, fill, 0f);
+        }
+
+        Rect(float left, float top, float right, float bottom, float thickness, boolean fill, float radius) {
             this.left = left;
             this.top = top;
             this.right = right;
             this.bottom = bottom;
             this.thickness = thickness;
             this.fill = fill;
+            this.radius = radius;
+        }
+    }
+
+    /**
+     * Готовая 1-битная картинка (логотип организации) в прямоугольнике.
+     * Саму картинку по {@code src} подставляет рисовальщик.
+     */
+    public static final class Image extends DrawOp {
+        public final String src;
+        public final float left;
+        public final float top;
+        public final float width;
+        public final float height;
+
+        Image(String src, float left, float top, float width, float height) {
+            this.src = src;
+            this.left = left;
+            this.top = top;
+            this.width = width;
+            this.height = height;
         }
     }
 }

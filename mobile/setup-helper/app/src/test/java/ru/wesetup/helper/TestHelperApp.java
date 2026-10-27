@@ -19,6 +19,11 @@ public class TestHelperApp extends HelperApp {
     }
 
     @Override
+    protected boolean brandingRefreshEnabled() {
+        return false;
+    }
+
+    @Override
     protected SessionStore createSessionStore() {
         return new SessionStore(this, new TokenCipher() {
             @Override

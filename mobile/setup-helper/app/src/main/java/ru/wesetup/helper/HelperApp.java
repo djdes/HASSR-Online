@@ -21,6 +21,7 @@ import ru.wesetup.helper.net.ApiClient;
 import ru.wesetup.helper.net.NetworkState;
 import ru.wesetup.helper.net.Outbox;
 import ru.wesetup.helper.net.SyncManager;
+import ru.wesetup.helper.print.BrandingStore;
 import ru.wesetup.helper.template.TemplateRepository;
 import ru.wesetup.helper.update.SessionInstaller;
 import ru.wesetup.helper.update.UpdateJobService;
@@ -39,6 +40,7 @@ public class HelperApp extends Application {
     private Outbox outbox;
     private SyncManager sync;
     private ApiClient api;
+    private BrandingStore branding;
     private TemplateRepository templates;
     private Updater updater;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -56,6 +58,7 @@ public class HelperApp extends Application {
         printerStore = new PrinterStore(this);
         printers = new PrinterManager(this);
         api = new ApiClient();
+        branding = new BrandingStore(this);
         SharedPreferences outboxPrefs = getSharedPreferences("outbox", MODE_PRIVATE);
         outbox = new Outbox(new Outbox.Storage() {
             @Override
@@ -88,6 +91,7 @@ public class HelperApp extends Application {
                     @Override
                     public void onAvailable(Network network) {
                         sync.requestSync();
+                        refreshBranding();
                         if (BuildConfig.SELF_UPDATE) updater.checkAsync(false, null);
                     }
                 });
@@ -95,6 +99,30 @@ public class HelperApp extends Application {
                 Log.w(TAG, "Не следим за сетью", e);
             }
         }
+    }
+
+    /** Тесты на Robolectric отключают: в сеть они не ходят. */
+    protected boolean brandingRefreshEnabled() {
+        return true;
+    }
+
+    /**
+     * Шапка этикеток (логотип, сайт): скачать, если на сайте новее. Без сети и
+     * без входа ничего не делает; ошибки молча пропускает - печать работает
+     * с последней копией.
+     */
+    public void refreshBranding() {
+        if (!brandingRefreshEnabled()) return;
+        io.execute(() -> {
+            SessionStore.Session session = sessions.load();
+            if (session == null || !NetworkState.isOnline(this)) return;
+            try {
+                branding.refresh(api, session.server, session.token);
+            } catch (java.io.IOException e) {
+                // 401 разберёт sync (выход из аккаунта), остальное - повторим при следующей связи.
+                Log.w(TAG, "Оформление этикеток не обновлено: " + e.getMessage());
+            }
+        });
     }
 
     /** Откуда брать обновления: сайт. Тесты на Robolectric подменяют — в сеть они не ходят. */
@@ -202,6 +230,10 @@ public class HelperApp extends Application {
         return sync;
     }
 
+    public BrandingStore branding() {
+        return branding;
+    }
+
     public ApiClient api() {
         return api;
     }
@@ -222,6 +254,7 @@ public class HelperApp extends Application {
     /** Выход или отключение на сайте: на телефоне не остаётся ничего от аккаунта. */
     public void wipeLocalData() {
         sessions.clear();
+        branding.clear();
         outbox.clear();
         printerStore.clear();
         getSharedPreferences(PrintJobs.VALUES_PREFS, MODE_PRIVATE).edit().clear().apply();

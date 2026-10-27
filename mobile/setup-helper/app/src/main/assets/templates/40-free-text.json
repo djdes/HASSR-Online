@@ -7,6 +7,10 @@
     { "key": "text", "label": "Текст", "type": "text", "required": true, "maxLength": 160, "multiline": true, "hint": "До 6 строк" }
   ],
   "elements": [
-    { "type": "text", "x": 2, "y": 2, "w": 54, "h": 36, "text": "{{text}}", "size": 6, "bold": true, "align": "center", "valign": "center", "maxLines": 6, "minScale": 0.4 }
+    { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
+    { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },
+    { "type": "text", "x": 29, "y": 1.9, "w": 26.6, "h": 5, "text": "{{org.site}}", "size": 2.4, "bold": true, "align": "right", "valign": "center", "maxLines": 1 },
+    { "type": "line", "x": 2.4, "y": 7.6, "x2": 55.6, "y2": 7.6, "thickness": 0.3 },
+    {"type": "text", "x": 2.4, "y": 8.8, "w": 53.2, "h": 29.2, "text": "{{text}}", "size": 6, "bold": true, "align": "center", "valign": "center", "maxLines": 6, "minScale": 0.4}
   ]
 }

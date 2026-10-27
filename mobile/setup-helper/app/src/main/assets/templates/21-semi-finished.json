@@ -12,14 +12,17 @@
     {"key": "employee", "label": "Изготовил", "type": "text", "default": "{{user.name}}", "maxLength": 40}
   ],
   "elements": [
-    {"type": "text", "x": 1.5, "y": 1.2, "w": 55, "h": 5.4, "text": "ПОЛУФАБРИКАТ", "size": 3.4, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true},
-    {"type": "text", "x": 2, "y": 7, "w": 54, "h": 8.8, "text": "{{product}}", "size": 4.2, "bold": true, "align": "center", "valign": "center", "maxLines": 2},
-    {"type": "line", "x": 2, "y": 16.3, "x2": 56, "y2": 16.3, "thickness": 0.3},
-    {"type": "text", "x": 2, "y": 16.9, "w": 54, "h": 4.4, "text": "Изготовлено: {{madeAt|datetime}}", "size": 3, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 21.5, "w": 54, "h": 5, "text": "Годен до: {{madeAt+shelfLife|datetime}}", "size": 3.5, "bold": true, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 26.8, "w": 38, "h": 4.2, "text": "Хранить: {{storage}}", "size": 2.9, "maxLines": 1},
-    {"type": "text", "x": 41, "y": 26.8, "w": 15, "h": 4.2, "text": "{{amount}}", "size": 2.9, "bold": true, "align": "right", "maxLines": 1},
-    {"type": "text", "x": 2, "y": 31.2, "w": 54, "h": 4.2, "text": "Изготовил: {{employee}}", "size": 2.9, "maxLines": 1},
-    {"type": "text", "x": 2, "y": 35.6, "w": 54, "h": 3.8, "text": "{{org.name}}", "size": 2.6, "align": "right", "maxLines": 1}
+    { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
+    { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },
+    { "type": "text", "x": 29, "y": 1.9, "w": 26.6, "h": 5, "text": "{{org.site}}", "size": 2.4, "bold": true, "align": "right", "valign": "center", "maxLines": 1 },
+    { "type": "line", "x": 2.4, "y": 7.6, "x2": 55.6, "y2": 7.6, "thickness": 0.3 },
+    {"type": "text", "x": 2.4, "y": 8.4, "w": 53.2, "h": 4.4, "text": "ПОЛУФАБРИКАТ", "size": 3.2, "bold": true, "align": "center", "valign": "center", "maxLines": 1, "invert": true},
+    {"type": "text", "x": 2.4, "y": 13.1, "w": 53.2, "h": 8.0, "text": "{{product}}", "size": 4.0, "bold": true, "align": "center", "valign": "center", "maxLines": 2},
+    { "type": "line", "x": 2.4, "y": 21.5, "x2": 55.6, "y2": 21.5, "thickness": 0.3 },
+    {"type": "text", "x": 2.4, "y": 21.9, "w": 53.2, "h": 3.9, "text": "Изготовлено: {{madeAt|datetime}}", "size": 2.8, "maxLines": 1},
+    {"type": "text", "x": 2.4, "y": 25.9, "w": 53.2, "h": 4.6, "text": "Годен до: {{madeAt+shelfLife|datetime}}", "size": 3.3, "bold": true, "maxLines": 1},
+    {"type": "text", "x": 2.4, "y": 30.6, "w": 36.0, "h": 3.7, "text": "Хранить: {{storage}}", "size": 2.7, "maxLines": 1},
+    {"type": "text", "x": 39, "y": 30.6, "w": 16.6, "h": 3.7, "text": "{{amount}}", "size": 2.7, "bold": true, "align": "right", "maxLines": 1},
+    {"type": "text", "x": 2.4, "y": 34.4, "w": 53.2, "h": 3.7, "text": "Изготовил: {{employee}}", "size": 2.7, "maxLines": 1}
   ]
 }

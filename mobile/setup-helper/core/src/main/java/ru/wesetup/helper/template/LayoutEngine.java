@@ -51,21 +51,54 @@ public final class LayoutEngine {
                 case RECT:
                     ops.add(new DrawOp.Rect((offsetX + e.x * scale) * dpm, (offsetY + e.y * scale) * dpm,
                             (offsetX + (e.x + e.w) * scale) * dpm, (offsetY + (e.y + e.h) * scale) * dpm,
-                            dots(e.thickness * scale), e.fill));
+                            dots(e.thickness * scale), e.fill, e.radius * scale * dpm));
                     break;
                 case FRAME:
                     ops.add(new DrawOp.Rect((e.inset + s.shiftXmm) * dpm, (e.inset + s.shiftYmm) * dpm,
                             (s.widthMm - e.inset + s.shiftXmm) * dpm, (s.heightMm - e.inset + s.shiftYmm) * dpm,
-                            dots(e.thickness), false));
+                            dots(e.thickness), false, e.radius * dpm));
                     break;
                 case TICKS:
                     addTicks(ops, e, s);
+                    break;
+                case IMAGE:
+                    layoutImage(ops, e, values, (offsetX + e.x * scale) * dpm, (offsetY + e.y * scale) * dpm,
+                            e.w * scale * dpm, e.h * scale * dpm, e.size * scale * dpm, measurer);
                     break;
                 default:
                     break;
             }
         }
         return new LabelLayout(s.widthDots(), s.heightDots(), ops);
+    }
+
+    /**
+     * Картинка вписывается в коробку с сохранением пропорций и прижимается по
+     * {@code align}; нет картинки — в той же коробке печатается {@code fallbackText}.
+     */
+    private static void layoutImage(List<DrawOp> ops, TemplateElement e, TemplateValues values, float left, float top,
+                                    float boxWidth, float boxHeight, float sizePx, TextMeasurer measurer) {
+        int[] size = values.imageSize(e.src);
+        if (size != null) {
+            float fit = Math.min(boxWidth / size[0], boxHeight / size[1]);
+            float width = size[0] * fit;
+            float height = size[1] * fit;
+            float x;
+            switch (e.align) {
+                case CENTER:
+                    x = left + (boxWidth - width) / 2f;
+                    break;
+                case RIGHT:
+                    x = left + boxWidth - width;
+                    break;
+                default:
+                    x = left;
+            }
+            ops.add(new DrawOp.Image(e.src, x, top + (boxHeight - height) / 2f, width, height));
+            return;
+        }
+        String fallback = values.resolve(e.fallbackText);
+        if (!fallback.trim().isEmpty()) layoutText(ops, e, fallback, left, top, boxWidth, boxHeight, sizePx, measurer);
     }
 
     /** Деления от краёв этикетки через {@code step} мм, каждое второе длиннее. */

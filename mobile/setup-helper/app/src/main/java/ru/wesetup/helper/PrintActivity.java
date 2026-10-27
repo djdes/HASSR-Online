@@ -358,7 +358,7 @@ public final class PrintActivity extends BaseActivity {
 
     private void updatePreview() {
         if (template == null) return;
-        MonoBitmap image = PrintJobs.render(template, printer.label, values());
+        MonoBitmap image = PrintJobs.render(app, template, printer.label, values());
         Bitmap bitmap = LabelRenderer.preview(image);
         BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
         // Без сглаживания: на экране видны те же точки, что напечатает принтер.
