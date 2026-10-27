@@ -3,6 +3,9 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { BUILDING_OUT_OF_SCOPE_ERROR, COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/point-scope";
+import { closePointManagerSessions } from "@/lib/point-scope.server";
+import { isOfficeBuilding } from "@/lib/building-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +41,10 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   if (!(await ensureOwn(orgId, id))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+  }
+  // Руководитель точки правит только свои точки (фаза 2 «Офис и точки»).
+  if (!buildingInScope(auth.session.user, id)) {
+    return NextResponse.json({ error: BUILDING_OUT_OF_SCOPE_ERROR }, { status: 403 });
   }
 
   let body: z.infer<typeof UpdateSchema>;
@@ -80,6 +87,12 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   if (!(await ensureOwn(orgId, id))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
-  await db.building.delete({ where: { id } });
+  // Убрать точку — решение компании, не руководителя точки.
+  if (isPointScoped(auth.session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
+  }
+  const removed = await db.building.delete({ where: { id }, select: { kind: true } });
+  // Без офиса руководителей точек больше нет (фаза 2 «Офис и точки»).
+  if (isOfficeBuilding(removed)) await closePointManagerSessions(orgId, auth.session.user.id);
   return NextResponse.json({ ok: true });
 }

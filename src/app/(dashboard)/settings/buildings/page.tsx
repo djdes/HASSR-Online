@@ -8,6 +8,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Plus, QrCode } from "lucide-react";
 import { listPersonBuildings } from "@/lib/active-building";
+import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +21,12 @@ export default async function BuildingsPage() {
   // Консультант уровня «просмотр» видит точки, но не меняет их:
   // отказ по клику выглядел бы как поломка.
   const readOnly = session.user.partnerAccess?.level === "view";
+  // Руководитель точки (фаза 2 «Офис и точки») ведёт только свои точки.
+  const pointManager = isPointScoped(session.user);
 
   const [buildings, users, organization, personBuildings] = await Promise.all([
     db.building.findMany({
-    where: { organizationId: orgId },
+    where: { organizationId: orgId, ...(pointManager ? { id: { in: session.user.pointScope ?? [] } } : {}) },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: {
       rooms: {
@@ -55,7 +58,7 @@ export default async function BuildingsPage() {
     }),
     // Сотрудники для мультивыбора «Кто убирает / Кто проверяет».
     db.user.findMany({
-      where: { organizationId: orgId, isActive: true, archivedAt: null },
+      where: { organizationId: orgId, isActive: true, archivedAt: null, ...staffScopeWhere(session.user) },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -99,7 +102,7 @@ export default async function BuildingsPage() {
         </Link>
       ) : null}
       {/* Мастер новой точки — главное действие страницы (меню: «+ Добавить точку»). */}
-      {readOnly ? null : (
+      {readOnly || pointManager ? null : (
         <Link
           href="/settings/buildings/new"
           data-add-point-header
@@ -131,6 +134,7 @@ export default async function BuildingsPage() {
         perLocationJournals={organization?.perLocationJournals === true}
         userBuildingIds={Object.fromEntries(users.map((u) => [u.id, u.buildingIds]))}
         readOnly={readOnly}
+        pointManager={pointManager}
         openableIds={personBuildings.map((building) => building.id)}
         unnamedCount={buildings.filter((b) => /^Точка \d+$/.test(b.name)).length}
       />

@@ -9,6 +9,7 @@ import { getPermissionRole } from "@/lib/user-roles";
 import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 import { sessionCookieName } from "@/lib/auth-cookies";
+import { parsePointScope } from "@/lib/point-scope";
 import { twoFactorRequired } from "@/lib/two-factor";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
@@ -239,7 +240,7 @@ export const authOptions: NextAuthOptions = {
           const { db } = await import("@/lib/db");
           const flags = await db.user.findUnique({
             where: { id: String(token.id) },
-            select: { canManageSettings: true, organizationId: true },
+            select: { canManageSettings: true, organizationId: true, buildingIds: true },
           });
           token.canManageSettings = flags?.canManageSettings === true;
           // Домашняя организация сменилась (организацию слили в точку
@@ -249,6 +250,15 @@ export const authOptions: NextAuthOptions = {
             if (token.activeOrganizationId === token.organizationId) token.activeOrganizationId = null;
             token.organizationId = flags.organizationId;
           }
+          // Руководитель точки (фаза 2 «Офис и точки»): только в домашней
+          // организации — в чужой человек работает по членству, а ROOT и
+          // партнёр видят всё.
+          const home =
+            token.isRoot !== true &&
+            !token.partnerAccess &&
+            (!token.activeOrganizationId || token.activeOrganizationId === token.organizationId);
+          const { computePointScope } = await import("@/lib/point-scope.server");
+          token.pointScope = home && flags ? await computePointScope(flags) : null;
         } catch {
           /* оставляем прежнее значение */
         }
@@ -318,6 +328,7 @@ export const authOptions: NextAuthOptions = {
           token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null;
         session.user.canManageSettings = token.canManageSettings === true;
         session.user.orgKind = token.orgKind === "directory" ? "directory" : "regular";
+        session.user.pointScope = parsePointScope(token.pointScope);
         // Галка «Разрешение менять настройки» = права руководителя в своей
         // организации: одна галка вместо уровней доступа.
         if (token.canManageSettings === true && !session.user.isRoot) {
@@ -409,11 +420,21 @@ export const authOptions: NextAuthOptions = {
           if (session.user.id) {
             const freshUser = await db.user.findUnique({
               where: { id: session.user.id },
-              select: { permissionPreset: true, locale: true },
+              select: { permissionPreset: true, locale: true, organizationId: true, buildingIds: true },
             });
             if (freshUser) {
               session.user.locale = freshUser.locale;
               session.user.permissionPreset = freshUser.permissionPreset ?? null;
+              // Руководитель точки (фаза 2 «Офис и точки») — свежо на каждый
+              // запрос: страницы и меню не ждут перевыпуска токена. Proxy
+              // читает те же точки из токена (выдаются при входе).
+              const home =
+                !session.user.isRoot &&
+                !session.user.partnerAccess &&
+                (!session.user.activeOrganizationId ||
+                  session.user.activeOrganizationId === session.user.organizationId);
+              const { computePointScope } = await import("@/lib/point-scope.server");
+              session.user.pointScope = home ? await computePointScope(freshUser) : null;
             }
           }
           // В кабинете клиента партнёр видит всё как руководитель;

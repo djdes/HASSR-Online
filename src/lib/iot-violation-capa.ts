@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
+import { placeOfEvent } from "@/lib/place-recipients";
 
 /**
  * Real-time IoT-trigger → CAPA (Feature 3.6.3):
@@ -105,7 +106,10 @@ export async function maybeCreateRealtimeCapa(args: {
     `(${args.tempMin}…${args.tempMax}°C, ${direction})\n` +
     `Длительность ${Math.round(gapMin)} мин.\n` +
     `Тикет: /capa/${ticket.id}`;
-  await notifyOrganization(args.organizationId, message, ["owner"]);
+  // Тревога точки оборудования — её руководителям и офису (фаза 3 «Офис и точки»).
+  await notifyOrganization(args.organizationId, message, ["owner"], undefined, undefined, {
+    buildingId: await placeOfEvent(args.organizationId, { equipmentId: args.equipmentId }),
+  });
 
   return { created: true, ticketId: ticket.id };
 }

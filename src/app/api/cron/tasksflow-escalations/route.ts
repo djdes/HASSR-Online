@@ -7,6 +7,7 @@ import {
   escapeTelegramHtml as esc,
 } from "@/lib/telegram";
 import { tasksflowClientFor, TasksFlowError } from "@/lib/tasksflow-client";
+import { placeOfEvent } from "@/lib/place-recipients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -215,11 +216,10 @@ async function handle(request: Request) {
             ? `«${esc(link.integration.label)}»`
             : "TasksFlow"
         } и переназначьте либо отмените.`;
-      await notifyOrganization(
-        link.integration.organizationId,
-        message,
-        ["owner"]
-      );
+      // Задача точки — её руководителям и офису (фаза 3 «Офис и точки»).
+      await notifyOrganization(link.integration.organizationId, message, ["owner"], undefined, undefined, {
+        buildingId: await placeOfEvent(link.integration.organizationId, { documentId: link.journalDocumentId }),
+      });
       escalatedL2 += 1;
     } else {
       skipped += 1;

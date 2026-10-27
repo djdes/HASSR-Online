@@ -8,6 +8,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { StaffPageClient } from "@/components/staff/staff-page-client";
 import { StaffPlaceFilter } from "@/components/staff/staff-place-filter";
 import { isOfficeBuilding } from "@/lib/building-scope";
+import { buildingInScope, isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 import { PinRequestsPanel } from "@/components/staff/pin-requests-panel";
 import { listPendingQrPinRequests } from "@/lib/qr-pin-requests";
 import { AddOrganizationButton } from "@/components/settings/add-organization-button";
@@ -36,6 +37,9 @@ export default async function StaffPage({
   }
 
   const orgId = getActiveOrgId(session);
+  // Руководитель точки (фаза 2 «Офис и точки») видит людей своих точек.
+  const inScope = staffScopeWhere(session.user);
+  const pointScoped = isPointScoped(session.user);
   const telegramBotUrl = process.env.TELEGRAM_BOT_USERNAME
     ? `https://t.me/${process.env.TELEGRAM_BOT_USERNAME.replace(/^@/, "")}`
     : null;
@@ -62,7 +66,7 @@ export default async function StaffPage({
         orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
       }),
       db.user.findMany({
-        where: { organizationId: orgId, archivedAt: null },
+        where: { organizationId: orgId, archivedAt: null, ...inScope },
         orderBy: { name: "asc" },
         select: {
           id: true,
@@ -86,25 +90,25 @@ export default async function StaffPage({
         },
       }),
       db.staffWorkOffDay.findMany({
-        where: { user: { organizationId: orgId } },
+        where: { user: { organizationId: orgId, ...inScope } },
         select: { userId: true, date: true, kind: true },
       }),
       db.staffVacation.findMany({
-        where: { user: { organizationId: orgId } },
+        where: { user: { organizationId: orgId, ...inScope } },
         orderBy: { dateFrom: "asc" },
         include: {
           user: { select: { name: true, jobPositionId: true, positionTitle: true, role: true } },
         },
       }),
       db.staffSickLeave.findMany({
-        where: { user: { organizationId: orgId } },
+        where: { user: { organizationId: orgId, ...inScope } },
         orderBy: { dateFrom: "asc" },
         include: {
           user: { select: { name: true, jobPositionId: true, positionTitle: true, role: true } },
         },
       }),
       db.staffDismissal.findMany({
-        where: { user: { organizationId: orgId } },
+        where: { user: { organizationId: orgId, ...inScope } },
         orderBy: { date: "desc" },
         include: {
           user: { select: { name: true, jobPositionId: true, positionTitle: true, role: true } },
@@ -123,8 +127,11 @@ export default async function StaffPage({
   // заведены: предлагать «Повар», когда «Повар» уже есть, бессмысленно.
   const sphere = normalizeSphere(organization?.type);
   const existingPositionNames = positions.map((p) => p.name);
-  // Точки: список для чипов «Точки» в диалогах сотрудника.
-  const staffBuildings = await listOrganizationBuildings(orgId);
+  // Точки: список для чипов «Точки» в диалогах сотрудника. Руководителю
+  // точки — только его точки (офиса среди них нет).
+  const staffBuildings = (await listOrganizationBuildings(orgId)).filter((building) =>
+    buildingInScope(session.user, building.id),
+  );
   const activeBuildingId = await getActiveBuildingId(session);
 
   // «Где работает» (2026-10-26): офис, точка или без места.
@@ -174,7 +181,7 @@ export default async function StaffPage({
   // бесплатный тариф). Уволенные по графику — во вкладке «Увольнения».
   const [archived, billing, inMobileApp] = await Promise.all([
     db.user.findMany({
-      where: { organizationId: orgId, archivedAt: { not: null }, isRoot: false, dismissal: { is: null } },
+      where: { organizationId: orgId, archivedAt: { not: null }, isRoot: false, dismissal: { is: null }, ...inScope },
       orderBy: [{ archivedAt: "desc" }, { name: "asc" }],
       take: 300,
       select: {
@@ -227,7 +234,7 @@ export default async function StaffPage({
           <StaffPlaceFilter
             active={place}
             total={countedStaff.length}
-            unplaced={countedStaff.filter((u) => u.buildingIds.length === 0).length}
+            unplaced={pointScoped ? 0 : countedStaff.filter((u) => u.buildingIds.length === 0).length}
             places={placeOptions}
           />
         ) : null

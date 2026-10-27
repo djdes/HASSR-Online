@@ -7,6 +7,7 @@ import { getUserRoleLabel } from "@/lib/user-roles";
 import { hasCapability, effectivePreset } from "@/lib/permission-presets";
 import { orgDayStartInstant } from "@/lib/timezone";
 import { loadStaffAbsenceForDay } from "@/lib/staff-absence";
+import { staffScopeWhere } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,6 +92,8 @@ export async function GET() {
       isActive: true,
       archivedAt: null,
       ...(allowedUserIds ? { id: { in: allowedUserIds } } : {}),
+      // Руководитель точки — только люди своих точек (фаза 2 «Офис и точки»).
+      ...staffScopeWhere(session.user),
       // Не показываем самого себя в team-list.
       NOT: { id: myUserId },
     },

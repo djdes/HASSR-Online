@@ -8,6 +8,7 @@ import {
   unlinkStaffTelegram,
 } from "@/lib/staff-telegram-management";
 import { isManagementRole } from "@/lib/user-roles";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,8 @@ export async function POST(
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   try {
     const result = await unlinkStaffTelegram({

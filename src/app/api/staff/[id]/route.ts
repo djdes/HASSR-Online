@@ -5,6 +5,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 const patchSchema = z.object({
   /// Недельное правило выходных: 0=Пн … 6=Вс.
@@ -31,6 +32,8 @@ export async function PATCH(
 
   const { id } = await params;
   const orgId = getActiveOrgId(session);
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   let parsed;
   try {
@@ -99,6 +102,8 @@ export async function DELETE(
 
   const { id } = await params;
   const orgId = getActiveOrgId(session);
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   if (id === session.user.id) {
     return NextResponse.json(

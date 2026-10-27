@@ -1,6 +1,9 @@
 import { collectCalendarEvents } from "@/lib/calendar/events";
 import { db } from "@/lib/db";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
+import { buildingWhere } from "@/lib/building-scope";
+import { filterRecipientsByPlace } from "@/lib/place-recipients";
+import { deliverableEmail } from "@/lib/core-journal-keepers";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
@@ -25,16 +28,44 @@ export function digestWeek(now: Date): { weekStart: Date; weekEnd: Date } {
 /**
  * Все цифры недельной сводки для одной организации. null — организации нет;
  * `totalSlots === 0` — журналов нет, слать нечего.
+ *
+ * `buildingId` — сводка одной точки (фаза 3 «Офис и точки»): её набор
+ * журналов, документы, люди, отклонения и задачи; сроки (календарь) — дело
+ * офиса, в сводку точки не идут.
  */
-export async function buildWeeklyDigestData(organizationId: string, now: Date): Promise<WeeklyDigestData | null> {
+export async function buildWeeklyDigestData(
+  organizationId: string,
+  now: Date,
+  buildingId: string | null = null,
+): Promise<WeeklyDigestData | null> {
   const { weekStart, weekEnd } = digestWeek(now);
-  const [templates, org] = await Promise.all([
+  const [templates, org, point] = await Promise.all([
     db.journalTemplate.findMany({ where: { isActive: true }, select: { id: true, code: true, name: true } }),
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, disabledJournalCodes: true } }),
+    buildingId
+      ? db.building.findFirst({ where: { id: buildingId, organizationId }, select: { name: true } })
+      : Promise.resolve(null),
   ]);
-  if (!org) return null;
+  if (!org || (buildingId && !point)) return null;
 
-  const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
+  const disabledCodes = buildingId
+    ? await getDisabledJournalCodes(organizationId, buildingId)
+    : parseDisabledCodes(org.disabledJournalCodes);
+  // Документы и оборудование точки — для задач и отклонений.
+  const [pointDocIds, pointEquipmentIds] = buildingId
+    ? await Promise.all([
+        db.journalDocument
+          .findMany({ where: { organizationId, buildingId }, select: { id: true } })
+          .then((rows) => rows.map((row) => row.id)),
+        db.equipment
+          .findMany({ where: { area: { organizationId, buildingId } }, select: { id: true } })
+          .then((rows) => rows.map((row) => row.id)),
+      ])
+    : [null, null];
+  const docScope = buildingWhere(buildingId);
+  const incidentScope = buildingId
+    ? { OR: [{ equipmentId: { in: pointEquipmentIds ?? [] } }, { documentId: { in: pointDocIds ?? [] } }] }
+    : {};
   const visibleTemplates = templates.filter((t) => !disabledCodes.has(t.code));
 
   const dailyResults: Array<{ day: Date; filledIds: Set<string> }> = [];
@@ -47,7 +78,7 @@ export async function buildWeeklyDigestData(organizationId: string, now: Date): 
       day,
       visibleTemplates.map((t) => ({ id: t.id, code: t.code })),
       disabledCodes,
-      { treatAperiodicAsFilled: false }
+      { treatAperiodicAsFilled: false, buildingId }
     );
     dailyResults.push({ day, filledIds: filled });
   }
@@ -68,33 +99,39 @@ export async function buildWeeklyDigestData(organizationId: string, now: Date): 
 
   const [entries, tfLinks, incidents, openIncidents, staff, staffEntries, calendar] = await Promise.all([
     db.journalDocumentEntry.findMany({
-      where: { document: { organizationId }, date: { gte: weekStart, lt: weekEnd }, ...NOT_AUTO_SEEDED },
+      where: { document: { organizationId, ...docScope }, date: { gte: weekStart, lt: weekEnd }, ...NOT_AUTO_SEEDED },
       select: { employeeId: true },
       take: 5000,
     }),
     db.tasksFlowTaskLink.findMany({
       where: {
         integration: { organizationId, enabled: true },
+        ...(pointDocIds ? { journalDocumentId: { in: pointDocIds } } : {}),
         OR: [{ completedAt: { gte: weekStart, lt: weekEnd } }, { remoteStatus: "active" }],
       },
       select: { remoteStatus: true, completedAt: true },
     }),
-    db.temperatureDeviationIncident.count({ where: { organizationId, createdAt: { gte: weekStart, lt: weekEnd } } }),
-    db.temperatureDeviationIncident.count({ where: { organizationId, createdAt: { gte: weekStart, lt: weekEnd }, resolvedAt: null } }),
+    db.temperatureDeviationIncident.count({ where: { organizationId, createdAt: { gte: weekStart, lt: weekEnd }, ...incidentScope } }),
+    db.temperatureDeviationIncident.count({ where: { organizationId, createdAt: { gte: weekStart, lt: weekEnd }, resolvedAt: null, ...incidentScope } }),
     db.user.findMany({
-      where: { organizationId, isActive: true, role: { notIn: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) } },
+      where: {
+        organizationId,
+        isActive: true,
+        role: { notIn: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
+        ...(buildingId ? { buildingIds: { has: buildingId } } : {}),
+      },
       select: { id: true, name: true },
     }),
     db.journalDocumentEntry.findMany({
       where: {
-        document: { organizationId, template: { code: { in: STAFF_TEMPLATE_CODES } } },
+        document: { organizationId, ...docScope, template: { code: { in: STAFF_TEMPLATE_CODES } } },
         date: { gte: weekStart, lt: weekEnd },
         ...NOT_AUTO_SEEDED,
       },
       select: { employeeId: true },
       distinct: ["employeeId"],
     }),
-    collectCalendarEvents(organizationId, now).catch(() => []),
+    buildingId ? Promise.resolve([]) : collectCalendarEvents(organizationId, now).catch(() => []),
   ]);
 
   const byEmployee = new Map<string, number>();
@@ -125,7 +162,7 @@ export async function buildWeeklyDigestData(organizationId: string, now: Date): 
     .map((e) => ({ date: e.date, title: e.title }));
 
   return {
-    orgName: org.name,
+    orgName: point ? `${org.name} · ${point.name}` : org.name,
     weekStart: weekStart.toISOString().slice(0, 10),
     weekEnd: weekEnd.toISOString().slice(0, 10),
     compliancePct,
@@ -142,18 +179,26 @@ export async function buildWeeklyDigestData(organizationId: string, now: Date): 
   };
 }
 
-/** Руководители, которым уходит письмо: активные, с настоящей почтой и не выключившие отчёт. */
-export async function weeklyDigestRecipients(organizationId: string): Promise<string[]> {
-  const users = await db.user.findMany({
+/**
+ * Руководители, которым уходит письмо: активные, с настоящей почтой и не
+ * выключившие отчёт. Сводка компании — офису, сводка точки (`buildingId`)
+ * — людям точки (фаза 3 «Офис и точки», `filterRecipientsByPlace`).
+ */
+export async function weeklyDigestRecipients(organizationId: string, buildingId: string | null = null): Promise<string[]> {
+  const managers = await db.user.findMany({
     where: { organizationId, isActive: true, role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) } },
-    select: { email: true, notificationPrefs: true },
+    select: { email: true, contactEmail: true, notificationPrefs: true, buildingIds: true },
   });
+  const users = await filterRecipientsByPlace(organizationId, managers, buildingId, buildingId !== null);
   const out: string[] = [];
   for (const u of users) {
-    if (!u.email || !u.email.includes("@") || u.email.endsWith(".local")) continue;
+    // Служебная почта сотрудника без входа (`…@<org>.local.haccp`) — не адрес;
+    // личная почта из карточки — адрес.
+    const email = deliverableEmail(u);
+    if (!email) continue;
     const prefs = (u.notificationPrefs ?? {}) as { weeklyDigest?: boolean };
     if (prefs.weeklyDigest === false) continue;
-    out.push(u.email);
+    out.push(email);
   }
   return Array.from(new Set(out));
 }

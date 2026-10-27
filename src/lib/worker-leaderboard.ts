@@ -12,6 +12,24 @@ import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
  * бонусов — из `BonusEntry.amountKopecks` со status="approved".
  */
 
+/**
+ * Руководитель точки (фаза 2 «Офис и точки») видит в рейтинге только людей
+ * своих точек: остальных убираем до сортировки. Без точек — все.
+ */
+async function dropOutsidePoints(
+  organizationId: string,
+  byUser: Map<string, unknown>,
+  pointScope: readonly string[] | null | undefined,
+): Promise<void> {
+  if (!pointScope || pointScope.length === 0) return;
+  const inScope = await db.user.findMany({
+    where: { organizationId, id: { in: [...byUser.keys()] }, buildingIds: { hasSome: [...pointScope] } },
+    select: { id: true },
+  });
+  const keep = new Set(inScope.map((user) => user.id));
+  for (const id of [...byUser.keys()]) if (!keep.has(id)) byUser.delete(id);
+}
+
 export type LeaderboardEntry = {
   userId: string;
   userName: string;
@@ -23,7 +41,8 @@ export type LeaderboardEntry = {
 export async function getWorkerLeaderboard(
   organizationId: string,
   limit = 3,
-  daysWindow = 30
+  daysWindow = 30,
+  pointScope?: readonly string[] | null
 ): Promise<LeaderboardEntry[]> {
   const since = new Date(Date.now() - daysWindow * 24 * 60 * 60 * 1000);
 
@@ -78,6 +97,7 @@ export async function getWorkerLeaderboard(
     byUser.set(b.userId, u);
   }
 
+  await dropOutsidePoints(organizationId, byUser, pointScope);
   if (byUser.size === 0) return [];
 
   // Sort by (entries DESC, then bonus DESC), take top N.
@@ -125,7 +145,8 @@ export async function getStrugglingWorkers(
   organizationId: string,
   limit = 3,
   daysWindow = 30,
-  minEntries = 1
+  minEntries = 1,
+  pointScope?: readonly string[] | null
 ): Promise<LeaderboardEntry[]> {
   const since = new Date(Date.now() - daysWindow * 24 * 60 * 60 * 1000);
 
@@ -176,6 +197,7 @@ export async function getStrugglingWorkers(
     byUser.set(b.userId, u);
   }
 
+  await dropOutsidePoints(organizationId, byUser, pointScope);
   if (byUser.size === 0) return [];
 
   // ASC по entries — внизу самые слабые.

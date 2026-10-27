@@ -11,6 +11,7 @@ import {
 } from "@/lib/invite-tokens";
 import { getServerSession } from "@/lib/server-session";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +47,8 @@ export async function POST(
 
   const organizationId = getActiveOrgId(session);
   const { id } = await ctx.params;
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   const user = await db.user.findFirst({
     where: { id, organizationId, archivedAt: null },

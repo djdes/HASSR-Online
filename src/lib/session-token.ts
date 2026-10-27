@@ -77,6 +77,14 @@ export async function rewriteSessionClaims(
     const { readOrgKind } = await import("@/lib/master-directory");
     const { tokenActiveOrgId } = await import("@/lib/master-directory-access");
     decoded.orgKind = await readOrgKind(tokenActiveOrgId(decoded));
+    // …и точки руководителя: они есть только в домашней организации.
+    const { computePointScopeForUserId } = await import("@/lib/point-scope.server");
+    const atHome =
+      decoded.isRoot !== true &&
+      !decoded.partnerAccess &&
+      tokenActiveOrgId(decoded) === decoded.organizationId &&
+      typeof decoded.id === "string";
+    decoded.pointScope = atHome ? await computePointScopeForUserId(decoded.id as string) : null;
   } catch {
     /* оставляем прежнее значение */
   }

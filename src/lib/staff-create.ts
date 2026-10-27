@@ -217,6 +217,8 @@ export async function createStaffMember(
       journalsToPopulate.map((j) =>
         notifyManagement({
           organizationId: orgId,
+          // Человек одной точки — её руководителям и офису (фаза 3 «Офис и точки»).
+          buildingId: buildingIds.length === 1 ? buildingIds[0] : null,
           kind: "staff.added.journal",
           dedupeKey: j.dedupeKey,
           title: "Список фамилий, которые нужно внести в",

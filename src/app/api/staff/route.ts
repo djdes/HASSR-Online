@@ -4,6 +4,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { isManagementRole } from "@/lib/user-roles";
 import { createStaffMember } from "@/lib/staff-create";
+import { isPointScoped, mergeScopedBuildingIds } from "@/lib/point-scope";
 
 /**
  * Minimal "add an employee" endpoint matching the reference-staff screen:
@@ -61,6 +62,10 @@ export async function POST(request: Request) {
   // (PUT /api/users/[id]): руководитель или ROOT. Остальным — не ошибка,
   // галки просто не ставятся.
   const { keepsCoreJournals, canManageSettings, ...rest } = parsed;
+  // Руководитель точки заводит людей только на свои точки (фаза 2).
+  if (isPointScoped(session.user)) {
+    rest.buildingIds = mergeScopedBuildingIds(session.user, [], rest.buildingIds ?? []);
+  }
   const mayGrantFlags = hasFullWorkspaceAccess({
     role: session.user.role,
     isRoot: session.user.isRoot === true,

@@ -7,11 +7,18 @@ import { getStrugglingWorkers, getWorkerLeaderboard } from "@/lib/worker-leaderb
  * за 30 дней. Жили на главной; с меню 2026-10-16 — в «Сотрудники →
  * Команда», рядом с теми, о ком они.
  */
-export async function WorkerLeaderboardCards({ organizationId }: { organizationId: string }) {
+export async function WorkerLeaderboardCards({
+  organizationId,
+  pointScope = null,
+}: {
+  organizationId: string;
+  /** Точки руководителя точки — рейтинг только их людей. */
+  pointScope?: readonly string[] | null;
+}) {
   const t = await getTranslations("dashboardUi.workerLeaderboardCard");
   const [leaderboard, strugglers] = await Promise.all([
-    getWorkerLeaderboard(organizationId, 3, 30),
-    getStrugglingWorkers(organizationId, 3, 30),
+    getWorkerLeaderboard(organizationId, 3, 30, pointScope),
+    getStrugglingWorkers(organizationId, 3, 30, 1, pointScope),
   ]);
   return (
     <>

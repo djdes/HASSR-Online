@@ -4,6 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
+import { closePointManagerSessions } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +57,18 @@ export async function POST(request: Request) {
     },
     select: { id: true, name: true },
   });
+  // Кто выделил офис — человек офиса: иначе, закреплённый за точкой, он
+  // стал бы руководителем точки и потерял «Моя компания → Офис».
+  const creator = await db.user.findFirst({
+    where: { id: session.user.id, organizationId },
+    select: { buildingIds: true },
+  });
+  if (creator && creator.buildingIds.length > 0) {
+    await db.user.update({ where: { id: session.user.id }, data: { buildingIds: [building.id] } });
+  }
+  // Руководители, закреплённые за точками, стали руководителями точек —
+  // их сессии перевыпускаются при следующем входе (фаза 2).
+  await closePointManagerSessions(organizationId, session.user.id);
   await recordAuditLog({
     request,
     session,

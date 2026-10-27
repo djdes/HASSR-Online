@@ -8,6 +8,8 @@ import {
 } from "@/lib/journal-catalog";
 import { getVerifierSlotId } from "@/lib/journal-responsible-schemas";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
+import { placeOfEvent } from "@/lib/place-recipients";
 
 async function guard(id: string, orgId: string) {
   const user = await db.user.findFirst({
@@ -27,6 +29,8 @@ export async function POST(
   }
   const { id } = await params;
   const orgId = getActiveOrgId(session);
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
   const user = await guard(id, orgId);
   if (!user) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
@@ -187,6 +191,8 @@ export async function POST(
     });
     await notifyManagement({
       organizationId: orgId,
+      // Человек одной точки — её руководителям и офису (фаза 3 «Офис и точки»).
+      buildingId: await placeOfEvent(orgId, { userId: user.id }),
       kind: "staff.archived.responsibles_orphan",
       dedupeKey: `staff.archived:${user.id}`,
       title: `Сотрудник «${userInfo?.name ?? "?"}» архивирован — освободились слоты в журналах`,
@@ -213,6 +219,8 @@ export async function DELETE(
   }
   const { id } = await params;
   const orgId = getActiveOrgId(session);
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
   const user = await guard(id, orgId);
   if (!user) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });

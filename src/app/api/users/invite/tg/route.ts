@@ -18,6 +18,7 @@ import {
   toCanonicalUserRole,
   USER_ROLE_VALUES,
 } from "@/lib/user-roles";
+import { mergeScopedBuildingIds } from "@/lib/point-scope";
 
 /**
  * POST /api/users/invite/tg
@@ -108,6 +109,8 @@ export async function POST(request: Request) {
     const { user } = await db.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
+          // Руководитель точки заводит людей на свои точки (фаза 2 «Офис и точки»).
+          buildingIds: mergeScopedBuildingIds(session.user, [], []),
           // Stub email: unique + never used for routing (no email ever sent).
           email: `tg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}@invite.local`,
           name: data.name,

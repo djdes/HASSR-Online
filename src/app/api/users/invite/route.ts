@@ -20,6 +20,7 @@ import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { checkSeatsForActivation, seatLimitResponse } from "@/lib/billing.server";
 import { resolveLocale } from "@/i18n/locales";
+import { mergeScopedBuildingIds } from "@/lib/point-scope";
 
 const inviteUserSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа"),
@@ -103,6 +104,8 @@ export async function POST(request: Request) {
     const { user } = await db.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
+          // Руководитель точки заводит людей на свои точки (фаза 2 «Офис и точки»).
+          buildingIds: mergeScopedBuildingIds(session.user, [], []),
           name: data.name,
           email: data.email,
           passwordHash: "",

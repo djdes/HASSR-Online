@@ -11,6 +11,7 @@ import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { recordAuditLog } from "@/lib/audit-log";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { seatAllowance, seatLimitSummary } from "@/lib/billing.server";
+import { mergeScopedBuildingIds } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -235,6 +236,8 @@ export async function POST(request: Request) {
     const user = await db.$transaction(async (tx) => {
       const u = await tx.user.create({
         data: {
+          // Руководитель точки заводит людей на свои точки (фаза 2 «Офис и точки»).
+          buildingIds: mergeScopedBuildingIds(session.user, [], []),
           organizationId: orgId,
           name: row.fullName,
           email: syntheticEmail(orgId),

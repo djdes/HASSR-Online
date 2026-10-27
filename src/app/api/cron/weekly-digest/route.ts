@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
 import { sendRawEmail } from "@/lib/email";
-import { notifyOrganization } from "@/lib/telegram";
+import { listOrganizationRecipients, notifyOrganization } from "@/lib/telegram";
+import { isOfficeBuilding } from "@/lib/building-scope";
+import { loadPlaceContext } from "@/lib/place-recipients";
 import { buildWeeklyDigestData, weeklyDigestRecipients } from "@/lib/weekly-digest/build";
 import { renderWeeklyDigestEmail, renderWeeklyDigestTelegram } from "@/lib/weekly-digest/render";
 import { isDigestSlot, shouldSendWeeklyDigest } from "@/lib/weekly-digest/schedule";
@@ -30,6 +32,34 @@ export const dynamic = "force-dynamic";
  * `&to=<email>` — письмо только на этот адрес (отметка об отправке при
  * этом не ставится).
  */
+/**
+ * Сводки точек (фаза 3 «Офис и точки»): только в организации, где выделен
+ * офис, и только точкам, у которых есть свои руководители.
+ */
+async function sendPointDigests(organizationId: string, now: Date, baseUrl: string): Promise<void> {
+  const place = await loadPlaceContext(organizationId);
+  if (!place?.split) return;
+  for (const point of place.buildings.filter((building) => !isOfficeBuilding(building))) {
+    const [emails, telegramRecipients] = await Promise.all([
+      weeklyDigestRecipients(organizationId, point.id),
+      listOrganizationRecipients(organizationId, ["owner", "manager"], "compliance", point.id, true),
+    ]);
+    if (emails.length === 0 && telegramRecipients.length === 0) continue;
+    const data = await buildWeeklyDigestData(organizationId, now, point.id);
+    if (!data || data.totalSlots === 0) continue;
+    const email = renderWeeklyDigestEmail(data, baseUrl);
+    for (const to of emails) await sendRawEmail(to, email.subject, email.html);
+    await notifyOrganization(
+      organizationId,
+      renderWeeklyDigestTelegram(data),
+      ["owner", "manager"],
+      "compliance",
+      { label: "📊 Открыть дашборд", miniAppUrl: `${baseUrl}/dashboard` },
+      { buildingId: point.id, onlyPlace: true }
+    );
+  }
+}
+
 async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
@@ -79,6 +109,11 @@ async function handle(request: Request) {
           miniAppUrl: `${baseUrl}/dashboard`,
         });
         telegram = true;
+        // Офис и точки (фаза 3): сводка компании — офису, руководителю
+        // точки — сводка его точки.
+        await sendPointDigests(org.id, now, baseUrl).catch((err) =>
+          console.error("[weekly-digest] point digests error", org.id, err)
+        );
         await db.organization.update({ where: { id: org.id }, data: { weeklyDigestSentAt: now } });
       }
       sent += 1;

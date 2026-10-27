@@ -8,6 +8,7 @@ import { invalidateJournalAcl } from "@/lib/journal-acl";
 import { hasCapability } from "@/lib/permission-presets";
 import { decidePresetChange } from "@/lib/staff-preset-change";
 import { recordAuditLog } from "@/lib/audit-log";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +40,8 @@ export async function POST(
   }
 
   const { id } = await ctx.params;
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
   let body: z.infer<typeof bodySchema>;
   try {
     body = bodySchema.parse(await request.json());

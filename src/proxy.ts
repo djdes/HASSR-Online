@@ -9,6 +9,7 @@ import {
   isStaffRestrictedWebPath,
 } from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
+import { evaluatePointScopeRequest } from "@/lib/point-scope";
 import {
   MINI_SHELL_COOKIE,
   MINI_SHELL_VALUE,
@@ -268,6 +269,15 @@ export async function proxy(req: NextRequest) {
     }
     if (directory.action === "redirect") {
       return NextResponse.redirect(new URL(directory.location, req.url));
+    }
+    // Руководитель точки (фаза 2 «Офис и точки»): общие разделы компании
+    // — офису. Решение — чистая функция с тестом (lib/point-scope.ts).
+    const scoped = evaluatePointScopeRequest({ method: req.method, pathname, pointScope: token.pointScope });
+    if (scoped.action === "deny") {
+      return NextResponse.json({ error: scoped.error }, { status: scoped.status });
+    }
+    if (scoped.action === "redirect") {
+      return NextResponse.redirect(new URL(scoped.location, req.url));
     }
   }
 

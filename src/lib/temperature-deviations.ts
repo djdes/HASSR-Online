@@ -10,6 +10,7 @@ import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-docu
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { MANAGEMENT_ROLES, getDbRoleValuesWithLegacy } from "@/lib/user-roles";
 import { resolveLocale } from "@/i18n/locales";
+import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
 
 /**
  * Отклонение температуры: сначала ответственному, потом руководству.
@@ -102,6 +103,13 @@ export type ResponsiblePerson = {
   telegramChatId: string | null;
 };
 
+/** Откуда тревога — по нему ищем точку (`placeOfEvent`). */
+export type TemperaturePlace = { equipmentId: string | null; documentId: string | null };
+
+function placeOfIncident(incident: { equipmentId: string | null; documentId: string | null }): TemperaturePlace {
+  return { equipmentId: incident.equipmentId, documentId: incident.documentId };
+}
+
 export type TemperatureReading = {
   organizationId: string;
   /** Ключ эпизода — `subjectKeyFor*`. */
@@ -175,9 +183,11 @@ export type Deps = {
     equipmentId: string | null;
   }) => Promise<ResponsiblePerson | null>;
   notifyResponsible: (userId: string, text: string) => Promise<void>;
-  notifyManagement: (organizationId: string, text: string) => Promise<void>;
+  /** `place` — откуда тревога: руководителям этой точки и офису (фаза 3). */
+  notifyManagement: (organizationId: string, text: string, place?: TemperaturePlace) => Promise<void>;
   emailManagement: (input: {
     organizationId: string;
+    place?: TemperaturePlace;
     subjectName: string;
     value: number;
     tempMin: number | null;
@@ -286,7 +296,7 @@ export async function processTemperatureReading(
       }
       // Руководству сообщаем только если оно об инциденте уже знало.
       if (open.escalatedAt) {
-        await deps.notifyManagement(open.organizationId, text);
+        await deps.notifyManagement(open.organizationId, text, placeOfIncident(open));
       }
       return { action: "resolved", incidentId: open.id };
     }
@@ -344,9 +354,10 @@ export async function processTemperatureReading(
     // Ответственного нет (или у него нет Telegram) — сообщаем сразу
     // руководству, иначе отклонение потеряется совсем.
     const text = alertTextForResponsible(reading);
-    await deps.notifyManagement(reading.organizationId, text);
+    await deps.notifyManagement(reading.organizationId, text, placeOfIncident(incident));
     await deps.emailManagement({
       organizationId: reading.organizationId,
+      place: placeOfIncident(incident),
       subjectName: reading.subjectName,
       value: reading.value,
       tempMin: reading.tempMin,
@@ -401,10 +412,12 @@ async function maybeEscalate(
 
   await deps.notifyManagement(
     incident.organizationId,
-    escalationText(incident, minutes, responsible?.name ?? null)
+    escalationText(incident, minutes, responsible?.name ?? null),
+    placeOfIncident(incident)
   );
   await deps.emailManagement({
     organizationId: incident.organizationId,
+    place: placeOfIncident(incident),
     subjectName: incident.subjectName,
     value: incident.lastValue,
     tempMin: incident.tempMin,
@@ -584,24 +597,31 @@ function defaultDeps(): Deps {
       await notifyEmployee(userId, text);
     },
 
-    notifyManagement: async (organizationId, text) => {
+    notifyManagement: async (organizationId, text, place) => {
       await notifyOrganization(
         organizationId,
         text,
         ["owner", "technologist"],
-        "temperature"
+        "temperature",
+        undefined,
+        { buildingId: place ? await placeOfEvent(organizationId, place) : null }
       );
     },
 
     emailManagement: async (input) => {
-      const users = await db.user.findMany({
+      const managers = await db.user.findMany({
         where: {
           organizationId: input.organizationId,
           role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
           isActive: true,
         },
-        select: { email: true, locale: true },
+        select: { email: true, locale: true, buildingIds: true },
       });
+      const users = await filterRecipientsByPlace(
+        input.organizationId,
+        managers,
+        input.place ? await placeOfEvent(input.organizationId, input.place) : null
+      );
       const organization = await db.organization.findUnique({ where: { id: input.organizationId }, select: { locale: true } });
       for (const user of users) {
         await sendTemperatureAlertEmail({

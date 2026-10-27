@@ -90,6 +90,8 @@ export type AccessPerson = {
   };
   /** Для права `settings.permissions` (см. `src/lib/permissions.ts`). */
   permissionActor: PermissionActor;
+  /** Руководитель точки: общие разделы компании ему закрыты (lib/point-scope.ts). */
+  pointScope?: readonly string[] | null;
 };
 
 /** Факты меню человека — как `loadNavFacts`, но без сессии и запросов. */
@@ -109,6 +111,7 @@ export function personSections(person: AccessPerson, orgPresetOverrides: Record<
     isRoot: person.isRoot === true,
     permissionPreset: person.permissionPreset,
     orgPresetOverrides,
+    pointScope: person.pointScope ?? null,
   };
   return visibleNav(actor, personNavFacts(person)).map((section) => section.key);
 }

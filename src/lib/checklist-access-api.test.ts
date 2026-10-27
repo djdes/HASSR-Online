@@ -28,6 +28,8 @@ function accessHandler(role = "owner") {
     if(name==="@/lib/login-prefix")return {orgLoginPrefix:()=>"qa"};
     // Чистый модуль пресетов: «Набор прав» в ответе GET (AC2 staff-data).
     if(name==="@/lib/permission-presets")return permissionPresets;
+    // Руководитель точки (фаза 2 «Офис и точки»): у владельца точек нет.
+    if(name==="@/lib/point-scope.server")return {staffOutOfScopeResponse:async()=>null};
     throw Error(`Unexpected access API dependency: ${name}`);
   }});
   return {...fakeModule.exports as {GET:(request:Request,ctx:{params:Promise<{id:string}>})=>Promise<Response>;PUT:(request:Request,ctx:{params:Promise<{id:string}>})=>Promise<Response>},writes};

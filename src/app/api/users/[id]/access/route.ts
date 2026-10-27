@@ -16,6 +16,7 @@ import {
   isValidPreset,
   presetCapabilitiesFor,
 } from "@/lib/permission-presets";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -178,6 +179,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
   if (!session.user.isRoot && user.organizationId !== activeOrg) {
     return NextResponse.json({ error: "Нет доступа" }, { status: 403 });
   }
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   const body = await request.json().catch(() => null);
   const rawAccess = Array.isArray(body?.access) ? body.access : [];

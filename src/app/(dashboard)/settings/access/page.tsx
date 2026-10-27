@@ -18,6 +18,7 @@ import {
 import { isManagementRole } from "@/lib/user-roles";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { AccessPageClient } from "@/components/staff/access-page-client";
+import { pointScopeForUser } from "@/lib/building-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,15 @@ export default async function AccessPage() {
 
   const activeCodes = ACTIVE_JOURNAL_CATALOG.map((journal) => journal.code);
   const [organization, positions, users, journalGrants, checklistRows] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { presetCapabilitiesJson: true } }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        presetCapabilitiesJson: true,
+        // Руководитель точки (фаза 2 «Офис и точки») видит меньше разделов.
+        perLocationJournals: true,
+        buildings: { select: { id: true, kind: true } },
+      },
+    }),
     db.jobPosition.findMany({
       where: { organizationId },
       orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
@@ -63,6 +72,7 @@ export default async function AccessPage() {
         positionTitle: true,
         journalAccessMigrated: true,
         permissionsJson: true,
+        buildingIds: true,
         jobPosition: { select: { name: true, categoryKey: true, permissionsJson: true } },
       },
     }),
@@ -115,6 +125,11 @@ export default async function AccessPage() {
             positionCategoryKey: user.jobPosition?.categoryKey ?? null,
             fallbackCategoryKey: isManagementRole(user.role) ? "management" : "staff",
           },
+          pointScope: pointScopeForUser({
+            enabled: organization?.perLocationJournals === true,
+            buildings: organization?.buildings ?? [],
+            userBuildingIds: user.buildingIds,
+          }),
         },
         overrides
       ),

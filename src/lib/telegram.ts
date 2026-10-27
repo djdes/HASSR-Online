@@ -1,5 +1,4 @@
 import { Bot, InputFile } from "grammy";
-import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { isUrgentKind, parseQuietHours, quietUntil } from "@/lib/quiet-hours";
 
 import { createTelegramFetch } from "@/lib/telegram-fetch";
@@ -784,8 +783,13 @@ export async function listOrganizationRecipients(
   organizationId: string,
   roles: string[] = ["owner", "technologist"],
   type?: NotificationType,
-  /** Точка: только руководители, работающие на ней (пустой `buildingIds` — везде). */
-  buildingId?: string | null
+  /**
+   * Точка события: её руководители и офис; без точки — общее, офису
+   * (фаза 3 «Офис и точки», `filterRecipientsByPlace`).
+   */
+  buildingId?: string | null,
+  /** Только люди самой точки — офис получает сводку отдельно. */
+  onlyPlace = false
 ): Promise<OrganizationRecipient[]> {
   const { db } = await import("./db");
   const mobilePush = await import("./mobile-push");
@@ -809,7 +813,6 @@ export async function listOrganizationRecipients(
             ],
           }
         : { telegramChatId: { not: null } }),
-      ...(buildingId ? { AND: [staffAtBuildingWhere(buildingId)] } : {}),
       isActive: true,
     },
     select: {
@@ -817,17 +820,22 @@ export async function listOrganizationRecipients(
       name: true,
       telegramChatId: true,
       notificationPrefs: true,
+      buildingIds: true,
     },
   });
+  const { filterRecipientsByPlace } = await import("./place-recipients");
+  const byPlace = (await filterRecipientsByPlace(organizationId, users, buildingId, onlyPlace)).map(
+    ({ buildingIds: _place, ...user }) => user,
+  );
 
   // Filter by notification preference if type is specified
   return type
-    ? users.filter((u) => {
+    ? byPlace.filter((u) => {
         if (!u.notificationPrefs) return true; // null = all enabled
         const prefs = u.notificationPrefs as Record<string, boolean>;
         return prefs[type] !== false;
       })
-    : users;
+    : byPlace;
 }
 
 /**
@@ -878,8 +886,10 @@ export async function notifyOrganization(
      * и push уходит оттуда. Одно событие — один push.
      */
     appPush?: boolean;
-    /** Событие точки: получают руководители этой точки и всей организации. */
+    /** Событие точки: получают руководители этой точки и офис (фаза 3). */
     buildingId?: string | null;
+    /** Только люди самой точки: офис получает сводку по всем точкам отдельно. */
+    onlyPlace?: boolean;
   }
 ): Promise<void> {
   const { telegramConsultantFooter } = await import("./partners/branding");
@@ -889,7 +899,7 @@ export async function notifyOrganization(
   // партнёра нет или клиент скрыл брендинг.
   const consultantFooter = await telegramConsultantFooter(organizationId);
 
-  const filtered = await listOrganizationRecipients(organizationId, roles, type, opts?.buildingId);
+  const filtered = await listOrganizationRecipients(organizationId, roles, type, opts?.buildingId, opts?.onlyPlace === true);
 
   const replyMarkup = action
     ? buildTelegramWebAppKeyboard({

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
 import { tasksflowClientFor, TasksFlowError } from "@/lib/tasksflow-client";
 import { pickPrimaryStaff } from "@/lib/user-roles";
+import { placeOfEvent } from "@/lib/place-recipients";
 
 /**
  * Автоматический offboarding (Feature 3.5.4):
@@ -188,7 +189,10 @@ export async function performOffboarding({
   // "owner" или "manager", он автоматически расширяется до полного
   // набора management ролей через MANAGEMENT_ROLES. Поэтому ["owner"]
   // достаточно — попадёт ко всем менеджерам/head_chef'ам/owner'ам.
-  await notifyOrganization(organizationId, message, ["owner"]);
+  // Человек одной точки — её руководителям и офису (фаза 3 «Офис и точки»).
+  await notifyOrganization(organizationId, message, ["owner"], undefined, undefined, {
+    buildingId: await placeOfEvent(organizationId, { userId: departing.id }),
+  });
 
   return {
     reassignedCount,

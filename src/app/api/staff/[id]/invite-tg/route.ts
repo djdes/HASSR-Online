@@ -8,6 +8,7 @@ import {
   issueStaffTelegramInvite,
 } from "@/lib/staff-telegram-invite";
 import { isManagementRole } from "@/lib/user-roles";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 /**
  * POST /api/staff/[id]/invite-tg
@@ -32,6 +33,8 @@ export async function POST(
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   const botUsername = process.env.TELEGRAM_BOT_USERNAME;
   if (!botUsername) {

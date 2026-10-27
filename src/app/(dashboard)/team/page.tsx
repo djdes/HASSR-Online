@@ -25,7 +25,7 @@ export default async function TeamPage() {
   return (
     <div className="space-y-5">
       <TeamClient />
-      <WorkerLeaderboardCards organizationId={getActiveOrgId(session)} />
+      <WorkerLeaderboardCards organizationId={getActiveOrgId(session)} pointScope={session.user.pointScope} />
     </div>
   );
 }

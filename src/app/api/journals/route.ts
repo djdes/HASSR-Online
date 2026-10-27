@@ -29,6 +29,8 @@ import {
   journalIdempotencyKey,
   prismaIdempotencyStore,
 } from "@/lib/idempotency";
+import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
+import { getActiveBuildingId } from "@/lib/active-building";
 
 // Universal deviation rules for all journal types
 type DeviationRule = {
@@ -390,6 +392,11 @@ export async function POST(request: Request) {
     const deviations = checkDeviations(templateCode, data as Record<string, unknown>);
     if (deviations.length > 0) {
       try {
+        // Событие точки (фаза 3 «Офис и точки»): точка помещения или
+        // оборудования, иначе — точка, где сейчас работает заполнивший.
+        const eventBuildingId =
+          (await placeOfEvent(organizationId, { areaId, equipmentId })) ??
+          (await getActiveBuildingId(session).catch(() => null));
         for (const deviation of deviations) {
           // deviation.alertType and deviation.details are composed in DEVIATION_RULES
           // above from already-escaped user data (via esc()), so they're safe to inline.
@@ -399,9 +406,9 @@ export async function POST(request: Request) {
             `Журнал: ${esc(template.name)}\n` +
             `Сотрудник: ${esc(filledByName)}`;
 
-          notifyOrganization(organizationId, telegramMsg, ["owner", "technologist"], "deviations").catch(
-            (err) => console.error("Telegram deviation alert error:", err)
-          );
+          notifyOrganization(organizationId, telegramMsg, ["owner", "technologist"], "deviations", undefined, {
+            buildingId: eventBuildingId,
+          }).catch((err) => console.error("Telegram deviation alert error:", err));
         }
 
         // Email alerts to owners/technologists
@@ -412,8 +419,9 @@ export async function POST(request: Request) {
               role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
               isActive: true,
             },
-            select: { email: true, locale: true },
+            select: { email: true, locale: true, buildingIds: true },
           })
+          .then((managers) => filterRecipientsByPlace(organizationId, managers, eventBuildingId))
           .then(async (users) => {
             const organization = await db.organization.findUnique({ where: { id: organizationId }, select: { locale: true } });
             for (const deviation of deviations) {

@@ -8,6 +8,7 @@ import {
   asNotificationMessageParams, isNotificationMessageKey, notificationPresenter,
   type NotificationMessageKey, type NotificationMessageMetadata, type NotificationMessageParams,
 } from "@/i18n/notification-messages";
+import { filterRecipientsByPlace } from "@/lib/place-recipients";
 
 /**
  * Shape of a single check-box row inside a Notification.
@@ -236,6 +237,11 @@ export async function notifyManagement(args: NotificationMessageMetadata & {
   linkHref?: string | null;
   linkLabel?: string | null;
   items: NotificationItem[];
+  /**
+   * Точка события: её руководители и офис; без точки — общее, офису
+   * (фаза 3 «Офис и точки», `filterRecipientsByPlace`).
+   */
+  buildingId?: string | null;
 }): Promise<void> {
   // Раньше: inline-list ["manager", "head_chef", "owner", "technologist"].
   // Если когда-нибудь добавим новую management-роль (или legacy alias),
@@ -249,10 +255,11 @@ export async function notifyManagement(args: NotificationMessageMetadata & {
       // «Разрешение менять настройки» — тоже руководство (2026-09-22).
       OR: [{ role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) } }, { canManageSettings: true }],
     },
-    select: { id: true },
+    select: { id: true, buildingIds: true },
   });
+  const recipients = await filterRecipientsByPlace(args.organizationId, managers, args.buildingId);
   await Promise.all(
-    managers.map((m) =>
+    recipients.map((m) =>
       upsertNotification({
         organizationId: args.organizationId,
         userId: m.id,

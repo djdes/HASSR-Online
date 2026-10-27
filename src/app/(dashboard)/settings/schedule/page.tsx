@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ScheduleEditor } from "@/components/settings/schedule-editor";
 import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
+import { staffScopeWhere } from "@/lib/point-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,8 @@ export default async function ScheduleSettingsPage() {
         isActive: true,
         archivedAt: null,
         ...NOT_COMMISSION_WHERE,
+        // Руководитель точки — график людей своих точек (фаза 2 «Офис и точки»).
+        ...staffScopeWhere(session.user),
       },
       orderBy: [{ name: "asc" }],
       select: {

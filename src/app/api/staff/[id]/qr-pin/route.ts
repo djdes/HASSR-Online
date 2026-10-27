@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { generateEmployeeQrPin, revealEmployeeQrPin, setEmployeeQrPin } from "@/lib/qr-fill-actor";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,8 @@ export async function POST(
   }
   const orgId = getActiveOrgId(auth.session);
   const { id } = await params;
+  const outOfScope = await staffOutOfScopeResponse(auth.session, id);
+  if (outOfScope) return outOfScope;
 
   const user = await db.user.findFirst({
     where: { id, organizationId: orgId },
@@ -56,6 +59,8 @@ export async function GET(
   }
   const orgId = getActiveOrgId(auth.session);
   const { id } = await params;
+  const outOfScope = await staffOutOfScopeResponse(auth.session, id);
+  if (outOfScope) return outOfScope;
   const user = await db.user.findFirst({ where: { id, organizationId: orgId }, select: { id: true, name: true, qrPinHash: true } });
   if (!user) return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   if (!user.qrPinHash) return NextResponse.json({ ok: true, userId: user.id, name: user.name, pin: null, hasPin: false });

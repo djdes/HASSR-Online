@@ -27,6 +27,7 @@ import {
   isStaffRestrictedWebPath,
 } from "@/lib/role-access";
 import { SETTINGS_CARDS, type SettingsCard } from "@/lib/settings-cards";
+import { isCompanyOnlyPath, isPointScoped } from "@/lib/point-scope";
 import {
   PPK_MENU_GROUPS,
   PPK_OVERVIEW_HREF,
@@ -52,6 +53,8 @@ export type NavActor = {
   isRoot?: boolean | null;
   permissionPreset?: string | null;
   orgPresetOverrides?: Record<string, string[]> | null;
+  /** Руководитель точки: общие разделы компании ему закрыты (lib/point-scope.ts). */
+  pointScope?: readonly string[] | null;
 };
 
 /** То, что нельзя вывести из роли: ACL журнала чек-листов и т.п. */
@@ -194,6 +197,8 @@ export type NavSection = {
   aliases?: string[];
   /** Своё название раздела организации («Настройки → Названия»). */
   renameHref?: "/journals" | "/settings/users";
+  /** Раздел целиком про всю компанию — руководителю точки не показываем. */
+  companyOnly?: boolean;
 };
 
 export type VisibleNavTab = {
@@ -478,6 +483,7 @@ export const NAV_SECTIONS: NavSection[] = [
     // Реквизиты, оформление и быстрая настройка просят `admin.full`;
     // одних «Названий» мало, чтобы заводить заведующей целый раздел.
     access: ADMIN,
+    companyOnly: true,
     aliases: ["/settings"],
     tabs: [
       { id: "organization", label: "organization", href: "/settings/organization", access: ADMIN },
@@ -581,6 +587,8 @@ export const NAV_SECTIONS: NavSection[] = [
     // Баланс открыт и повару, но целый раздел ему ни к чему: свои баллы
     // он видит из меню аватара.
     access: FULL_ACCESS,
+    // Тариф и услуги — дело офиса; руководителю точки раздел не нужен.
+    companyOnly: true,
     tabs: [
       { id: "plan", label: "plan", href: "/settings/subscription", access: FULL_ACCESS },
       { id: "balance", label: "balance", href: "/settings/balance", access: STAFF_PATH },
@@ -637,7 +645,7 @@ function ruleAllows(actor: NavActor, access: NavAccess, facts: NavFacts): boolea
   }
 }
 
-/** Откроется ли страница: сначала проверка `proxy.ts`, потом её собственная. */
+/** Откроется ли страница: сначала проверки `proxy.ts`, потом её собственная. */
 export function navAllows(
   actor: NavActor,
   href: string,
@@ -645,6 +653,7 @@ export function navAllows(
   facts: NavFacts,
 ): boolean {
   if (isStaffRestrictedWebPath(href) && !canAccessWebPath(actor, href)) return false;
+  if (isPointScoped(actor) && isCompanyOnlyPath(href)) return false;
   return ruleAllows(actor, access, facts);
 }
 
@@ -725,6 +734,7 @@ export function visibleNav(actor: NavActor, facts: NavFacts, data: NavMenuData =
   const result: VisibleNavSection[] = [];
   for (const section of NAV_SECTIONS) {
     if (section.access && !ruleAllows(actor, section.access, facts)) continue;
+    if (section.companyOnly && isPointScoped(actor)) continue;
     const allowed = section.tabs.filter((tab) => navAllows(actor, tab.href, tab.access, facts));
     const allowedIds = new Set(allowed.map((tab) => tab.id));
     const tabs = allowed

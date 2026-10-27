@@ -7,6 +7,7 @@ import {
   notifyOrganization,
   escapeTelegramHtml as esc,
 } from "@/lib/telegram";
+import { placeOfEvent } from "@/lib/place-recipients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -168,7 +169,10 @@ async function handle(request: Request) {
         `${Math.floor(minutesSinceStart / 60)} ч не заполнил ни одного ` +
         `журнала. Статус смены автоматически переведён на «absent». ` +
         `Если это ошибка — поправьте в графике.`;
-      await notifyOrganization(shift.organizationId, message, ["owner"]);
+      // Человек точки — её руководителям и офису (фаза 3 «Офис и точки»).
+      await notifyOrganization(shift.organizationId, message, ["owner"], undefined, undefined, {
+        buildingId: await placeOfEvent(shift.organizationId, { userId: shift.userId }),
+      });
       markedAbsent += 1;
       continue;
     }
@@ -237,7 +241,10 @@ async function handle(request: Request) {
         `Прошло ${minutesSinceStart} мин с начала смены, но он/она ` +
         `ещё не заполнил ни одного журнала. Возможно опаздывает или ` +
         `не отметился — проверьте.`;
-      await notifyOrganization(shift.organizationId, message, ["owner"]);
+      // Человек точки — её руководителям и офису (фаза 3 «Офис и точки»).
+      await notifyOrganization(shift.organizationId, message, ["owner"], undefined, undefined, {
+        buildingId: await placeOfEvent(shift.organizationId, { userId: shift.userId }),
+      });
       notified += 1;
     }
   }

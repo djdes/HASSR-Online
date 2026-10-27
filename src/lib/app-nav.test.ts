@@ -811,3 +811,26 @@ test("«Чек-листы»: «Назначение» — только руко�
     ?.menu?.[0].items.find((item) => item.id === "assignments");
   assert.deepEqual(assignments?.access, { kind: "anyOf", capabilities: ["admin.full"] });
 });
+
+// ---- Руководитель точки (фаза 2 «Офис и точки», 2026-10-27) ---------------
+
+test("руководитель точки: без «Моей компании», «Оплаты» и общих справочников", () => {
+  const pointManager: NavActor = { ...manager, pointScope: [LENINA.id] };
+  const sections = visibleNav(pointManager, withChecklists, records([LENINA]));
+  const keys = sections.map((section) => section.key);
+  assert.equal(keys.includes("company"), false);
+  assert.equal(keys.includes("billing"), false);
+  assert.ok(keys.includes("journals") && keys.includes("staff") && keys.includes("points"));
+  const items = (key: string) =>
+    (sections.find((section) => section.key === key)?.menu ?? []).flatMap((group) => group.items.map((item) => item.id));
+  // Сотрудники своей точки — да; должности и права на всю компанию — нет.
+  assert.ok(items("staff").includes("users"));
+  assert.equal(items("staff").includes("positions"), false);
+  assert.equal(items("staff").includes("access"), false);
+  // Своя точка — да, «+ Добавить точку» — нет.
+  assert.deepEqual(pointsMenu(pointManager, records([LENINA]))[0].items.map((item) => item.id), ["buildings:b-lenina"]);
+  // Набор журналов точки остаётся.
+  assert.ok(items("journals").includes("setup"));
+  // Тот же руководитель без ограничения точками видит всё, как раньше.
+  assert.ok(keys.length < visibleNav(manager, withChecklists, records([LENINA])).length);
+});

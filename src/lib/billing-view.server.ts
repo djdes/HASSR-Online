@@ -17,6 +17,7 @@ import { BILLING_ANNOUNCEMENT_COOKIE, isAnnouncementDismissed } from "@/lib/bill
 import { hasPendingInvoice, loadAccountBilling, type BillingUnit } from "@/lib/billing.server";
 import { BILLING_TEST_MODE, planLabel } from "@/lib/plan-limits";
 import { hasFullWorkspaceAccess, type RoleAccessActor } from "@/lib/role-access";
+import { isPointScoped, type PointScopeActor } from "@/lib/point-scope";
 import { planMonthlyRub, type PlanRates } from "@/lib/tariff-plans";
 import { readPlanPricing, type PlanPricing } from "@/lib/tariffs";
 
@@ -67,7 +68,7 @@ function paidLabel(state: AccountBillingState): string {
 
 export async function loadBillingView(args: {
   organizationId: string;
-  user: RoleAccessActor;
+  user: RoleAccessActor & PointScopeActor;
   impersonating: boolean;
   partnerAccess: boolean;
   inMobileApp: boolean;
@@ -77,7 +78,9 @@ export async function loadBillingView(args: {
   const loaded = await loadAccountBilling(args.organizationId, now);
   if (!loaded) return null;
   const { state, settings, unit } = loaded;
-  const fullAccess = hasFullWorkspaceAccess(args.user);
+  // Тариф выбирает компания: руководителю точки — как сотруднику (фаза 2
+  // «Офис и точки»), иначе окно выбора тарифа звало бы его на закрытую страницу.
+  const fullAccess = hasFullWorkspaceAccess(args.user) && !isPointScoped(args.user);
   const canDecide = fullAccess && !args.impersonating && !args.partnerAccess;
   const needsDecision = state.kind === "needs_decision" && !state.inactive;
 

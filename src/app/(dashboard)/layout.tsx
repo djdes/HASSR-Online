@@ -39,6 +39,7 @@ import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/
 import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { hasCapability } from "@/lib/permission-presets";
 import { getBalance } from "@/lib/balance/ledger";
@@ -273,7 +274,7 @@ export default async function DashboardLayout({
   // (как считает тариф — `loadBillingUnit`), сумма в месяц с акцией и
   // скидкой навсегда. Цену и ссылку видит тот, кто может менять тариф, и
   // не в приложении WeSetup (правила сторов).
-  const canManagePlan = hasFullWorkspaceAccess(session.user);
+  const canManagePlan = hasFullWorkspaceAccess(session.user) && !isPointScoped(session.user);
   const showPlanDetails = canManagePlan && !inMobileApp;
   const lifetimeDiscount =
     showPlanDetails && billing?.unit.accountId
@@ -352,6 +353,8 @@ export default async function DashboardLayout({
   const platformOrgId = (process.env.PLATFORM_ORG_ID ?? "platform").trim();
   const needsProfileCompletion =
     hasFullWorkspaceAccess(session.user) &&
+    // Анкету заведения заполняет компания, не руководитель точки.
+    !isPointScoped(session.user) &&
     !isImpersonating(session) &&
     !session.user.partnerAccess &&
     session.user.isRoot !== true &&

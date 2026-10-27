@@ -14,6 +14,7 @@ import {
 } from "@/lib/personal-login";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { notifyEmployee } from "@/lib/telegram";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +40,8 @@ async function load(id: string) {
     select: { id: true, name: true, email: true, contactEmail: true, qrPinHash: true, telegramChatId: true },
   });
   if (!user) return { error: NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 }) } as const;
+  const outOfScope = await staffOutOfScopeResponse(auth.session, id);
+  if (outOfScope) return { error: outOfScope } as const;
   return { auth, organizationId, user } as const;
 }
 

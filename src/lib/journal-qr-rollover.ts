@@ -140,6 +140,8 @@ export async function announceQrRollover(args: {
   );
   await notifyManagement({
     organizationId: args.organizationId,
+    // Документ точки — её руководителям и офису (фаза 3 «Офис и точки»).
+    buildingId: document?.buildingId ?? null,
     kind: args.first ? "journal.qr-first-document" : "journal.qr-rollover",
     dedupeKey: `${args.first ? "qr-first" : "qr-rollover"}:${args.documentId}`,
     title: args.first

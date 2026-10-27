@@ -117,8 +117,14 @@ export function BuildingsClient({
   unnamedCount = 0,
   userBuildingIds = {},
   openableIds = [],
+  pointManager = false,
 }: {
   initial: Building[];
+  /**
+   * Руководитель точки (фаза 2 «Офис и точки»): видит свои точки, а
+   * заводить, удалять точки и включать деление по точкам — дело офиса.
+   */
+  pointManager?: boolean;
   users: RoomResponsibleUser[];
   /** Точки, чью страницу человек откроет (`listPersonBuildings`), — у них «Открыть точку». */
   openableIds?: string[];
@@ -249,7 +255,7 @@ export function BuildingsClient({
         </div>
       ) : null}
 
-      {initial.length >= 2 ? (
+      {initial.length >= 2 && !pointManager ? (
         <div className="flex items-start justify-between gap-4 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
@@ -294,7 +300,7 @@ export function BuildingsClient({
             .filter((x) => x.id !== b.id && x.rooms.length > 0)
             .map((x) => ({ id: x.id, name: x.name, roomsCount: x.rooms.length }))}
           onRefresh={refresh}
-          onDelete={() => deleteBuilding(b.id, b.name)}
+          onDelete={pointManager ? null : () => deleteBuilding(b.id, b.name)}
           onEditRoom={openEditor}
           openHref={openable.has(b.id) ? `/settings/buildings/${b.id}` : null}
           openLabel={tPoint("open")}
@@ -314,7 +320,7 @@ export function BuildingsClient({
       />
 
       {/* Новая точка — мастером (название и адрес, помещения, оборудование). */}
-      {readOnly ? null : (
+      {readOnly || pointManager ? null : (
         <Link
           href="/settings/buildings/new"
           data-add-point
@@ -354,7 +360,8 @@ function BuildingCard({
   /** Другие точки с помещениями — откуда можно скопировать справочник. */
   donors: Array<{ id: string; name: string; roomsCount: number }>;
   onRefresh: () => void;
-  onDelete: () => void;
+  /** null — удалять точку нельзя (руководитель точки). */
+  onDelete: (() => void) | null;
   onEditRoom: (room: Room) => void;
 }) {
   const t = useTranslations("settingsUi.buildingsClient");
@@ -655,14 +662,16 @@ function BuildingCard({
             >
               <Pencil className="size-4" />
             </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              aria-label={t("deletePointConfirm")}
-              className="rounded-full p-1.5 text-[#9b9fb3] hover:bg-[#fff4f2] hover:text-[#d2453d]"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            {onDelete ? (
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label={t("deletePointConfirm")}
+                className="rounded-full p-1.5 text-[#9b9fb3] hover:bg-[#fff4f2] hover:text-[#d2453d]"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>

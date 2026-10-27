@@ -317,9 +317,14 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     const text = `⚠️ ${document.title}: ${actor.employee.name} отметил(а) «Выключено / нет показания» — ${labels.join(", ")} (${stamp.date} ${stamp.time}, ${input.messenger ? "в MAX" : "по QR"}). Показание не снято, в журнале прочерк с пометкой.`;
     await Promise.all([
       // Push уходит из колокольчика (notifyManagement ниже) — у бота без второго.
-      notifyOrganization(orgId, text, ["owner", "technologist"], "temperature", undefined, { appPush: false }).catch(() => null),
+      // Событие точки документа: её руководителям и офису (фаза 3 «Офис и точки»).
+      notifyOrganization(orgId, text, ["owner", "technologist"], "temperature", undefined, {
+        appPush: false,
+        buildingId: document.buildingId,
+      }).catch(() => null),
       notifyManagement({
         organizationId: orgId,
+        buildingId: document.buildingId,
         kind: "qr-fill-off",
         dedupeKey: `qr-fill-off:${documentId}:${todayKey}:${actor.employee.id}`,
         title: `${document.title}: выключено или нет показания — ${actor.employee.name}`,

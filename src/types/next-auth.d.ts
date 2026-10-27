@@ -64,6 +64,11 @@ declare module "next-auth" {
        * (сессии открыт только /master, см. lib/master-directory-access.ts).
        */
       orgKind?: "regular" | "directory";
+      /**
+       * Руководитель точки (фаза 2 «Офис и точки»): id его торговых точек;
+       * null — работает на всю компанию. См. lib/point-scope.ts.
+       */
+      pointScope?: string[] | null;
     } & DefaultSession["user"];
   }
 }
@@ -89,5 +94,7 @@ declare module "next-auth/jwt" {
     lockAt?: number;
     /** Вид активной организации — proxy по нему пускает только в /master. */
     orgKind?: "regular" | "directory";
+    /** Точки руководителя точки — proxy закрывает ему общие разделы компании. */
+    pointScope?: string[] | null;
   }
 }

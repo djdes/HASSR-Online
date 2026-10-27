@@ -102,6 +102,59 @@ export function workBuildingsForUser(
   return subset.length > 0 ? subset : buildings;
 }
 
+/** Точка для правил «где работает»: хватает id и вида. */
+export type BuildingKindRef = { id: string; kind?: string };
+
+/**
+ * Руководитель точки (фаза 2 «Офис и точки», 2026-10-27): организация
+ * работает по точкам, у неё есть офис, а человек закреплён только за
+ * торговыми точками. Возвращает id его точек; `null` — человек работает
+ * на всю компанию (офис, без места, офиса нет, точки выключены или в
+ * списке остались только удалённые точки).
+ */
+export function pointScopeForUser(args: {
+  enabled: boolean;
+  buildings: readonly BuildingKindRef[];
+  userBuildingIds: readonly string[];
+}): string[] | null {
+  if (!args.enabled || args.userBuildingIds.length === 0) return null;
+  if (!args.buildings.some(isOfficeBuilding)) return null;
+  const wanted = new Set(args.userBuildingIds);
+  const subset = args.buildings.filter((building) => wanted.has(building.id));
+  if (subset.length === 0 || subset.some(isOfficeBuilding)) return null;
+  return subset.map((building) => building.id);
+}
+
+/**
+ * Получает ли человек уведомление (фаза 3): событие точки — люди этой
+ * точки и вся компания (офис, без места); общее событие (`buildingId`
+ * пуст) — только компания, руководителю точки чужие и общие дела не шлём.
+ * `onlyPlace` — только люди самой точки: частые напоминания офис получает
+ * одной сводкой по всем точкам, а не по сообщению на точку. В организации
+ * без офиса — как раньше: общее всем, событие точки — тем, кто на ней
+ * работает (пустой `buildingIds` — везде).
+ */
+export function receivesPlaceEvent(args: {
+  enabled: boolean;
+  buildings: readonly BuildingKindRef[];
+  userBuildingIds: readonly string[];
+  buildingId: string | null | undefined;
+  onlyPlace?: boolean;
+}): boolean {
+  if (!splitsOfficeAndPoints(args)) {
+    return !args.buildingId || args.userBuildingIds.length === 0 || args.userBuildingIds.includes(args.buildingId);
+  }
+  const scope = pointScopeForUser(args);
+  if (!args.buildingId) return scope === null;
+  if (args.onlyPlace) return args.userBuildingIds.includes(args.buildingId);
+  return scope === null || scope.includes(args.buildingId);
+}
+
+/** Организация делит офис и точки: точки включены и офис выделен. */
+export function splitsOfficeAndPoints(args: { enabled: boolean; buildings: readonly BuildingKindRef[] }): boolean {
+  return args.enabled && args.buildings.some(isOfficeBuilding);
+}
+
 export function resolveActiveBuilding(args: {
   enabled: boolean;
   buildings: BuildingOption[];

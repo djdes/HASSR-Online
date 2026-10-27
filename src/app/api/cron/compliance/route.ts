@@ -9,6 +9,8 @@ import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { buildingTargets } from "@/lib/building-targets";
 import { worksAtBuilding } from "@/lib/building-settings";
+import { isOfficeBuilding, receivesPlaceEvent } from "@/lib/building-scope";
+import { loadPlaceContext } from "@/lib/place-recipients";
 import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
@@ -97,6 +99,11 @@ async function handle(request: Request) {
           : []
         ).map((building) => [building.id, building.name])
       );
+      // Офис и точки (фаза 3): напоминание точки — её людям, офису — одна
+      // сводка по всем точкам, а не по сообщению на каждую.
+      const place = await loadPlaceContext(org.id);
+      const split = place?.split === true;
+      const officeSummary: { pointName: string; missing: string[] }[] = [];
       const managers = stageCfg.emailEnabled
         ? await db.user.findMany({
             where: {
@@ -159,16 +166,25 @@ async function handle(request: Request) {
         ["owner", "technologist"],
         "compliance",
         undefined,
-        { buildingId }
+        { buildingId, onlyPlace: split }
       ).catch((err) =>
         console.error(`Compliance telegram error (${placeName}):`, err)
       );
+
+      if (split && buildingId && pointName && !isOfficeBuilding(place?.buildings.find((b) => b.id === buildingId))) {
+        officeSummary.push({ pointName, missing: missingNames });
+      }
 
       // Email шлём только начиная со stage `warn`. На stage `soft`
       // (12:00) — только Telegram, чтобы не спамить почту. Руководителю
       // точки — только про его точку.
       if (stageCfg.emailEnabled) {
-        for (const user of managers.filter((manager) => worksAtBuilding(manager, buildingId))) {
+        const recipients = managers.filter((manager) =>
+          place
+            ? receivesPlaceEvent({ ...place, userBuildingIds: manager.buildingIds, buildingId, onlyPlace: split })
+            : worksAtBuilding(manager, buildingId)
+        );
+        for (const user of recipients) {
           sendComplianceReminderEmail({
             to: user.email,
             missingJournals: missingNames,
@@ -180,6 +196,36 @@ async function handle(request: Request) {
           );
         }
       }
+      }
+
+      // Сводка офису: какие точки что не заполнили — одним сообщением.
+      if (split && officeSummary.length > 0) {
+        const summaryLines = officeSummary.map(
+          (point) => `${point.pointName}: ${point.missing.join(", ")}`
+        );
+        const summaryMsg =
+          `${stageCfg.emoji} <b>${stageCfg.prefix}: незаполненные журналы на точках</b>\n\n` +
+          officeSummary
+            .map((point) => `• <b>${esc(point.pointName)}</b> — ${point.missing.length}: ${esc(point.missing.join(", "))}`)
+            .join("\n") +
+          `\n\nТочек с пропусками: ${officeSummary.length}`;
+        notifyOrganization(org.id, summaryMsg, ["owner", "technologist"], "compliance").catch((err) =>
+          console.error(`Compliance office summary error (${org.name}):`, err)
+        );
+        if (stageCfg.emailEnabled && place) {
+          const office = managers.filter((manager) =>
+            receivesPlaceEvent({ ...place, userBuildingIds: manager.buildingIds, buildingId: null })
+          );
+          for (const user of office) {
+            sendComplianceReminderEmail({
+              to: user.email,
+              missingJournals: summaryLines,
+              organizationName: org.name,
+              organizationId: org.id,
+              locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: org.locale }),
+            }).catch((err) => console.error(`Compliance email error:`, err));
+          }
+        }
       }
     }
 

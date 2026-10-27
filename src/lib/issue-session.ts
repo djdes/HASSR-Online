@@ -59,6 +59,14 @@ export async function issueSession(
     });
   }
   const flags = await db.user.findUnique({ where: { id: user.id }, select: { canManageSettings: true } }).catch(() => null);
+  // Руководитель точки (фаза 2 «Офис и точки»): proxy закрывает ему общие
+  // разделы компании по точкам из токена — только в домашней организации.
+  const atHome =
+    user.isRoot !== true &&
+    !context?.actingAsOrganizationId &&
+    (!context?.activeOrganizationId || context.activeOrganizationId === user.organizationId);
+  const { computePointScopeForUserId } = await import("@/lib/point-scope.server");
+  const pointScope = atHome ? await computePointScopeForUserId(user.id).catch(() => null) : null;
   // Мастер-кабинет справочников: proxy пускает такую сессию только в /master.
   const { readOrgKind } = await import("@/lib/master-directory");
   const orgKind = await readOrgKind(user.organizationId).catch(() => "regular" as const);
@@ -80,6 +88,7 @@ export async function issueSession(
       actingAsOrganizationId: context?.actingAsOrganizationId ?? null,
       ...(context?.activeOrganizationId ? { activeOrganizationId: context.activeOrganizationId } : {}),
       permissionPreset: user.permissionPreset ?? null,
+      pointScope,
       sv: await getSessionVersion(user.id),
     },
   });

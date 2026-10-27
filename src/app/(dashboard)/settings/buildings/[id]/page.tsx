@@ -20,6 +20,7 @@ import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { PointDeleteBlock, PointHeadBlock, PointRoomsBlock } from "@/components/settings/point-page-client";
 import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
 import { isOfficeBuilding } from "@/lib/building-scope";
+import { isPointScoped } from "@/lib/point-scope";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { listAutomationCodes } from "@/lib/journal-automation";
@@ -550,7 +551,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
           )}
         </PointBlock>
 
-        {readOnly ? null : (
+        {readOnly || isPointScoped(session.user) ? null : (
           <PointDeleteBlock
             point={{ id: point.id, name: point.name }}
             roomsCount={point.rooms.length}

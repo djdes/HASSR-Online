@@ -19,6 +19,7 @@ import {
   parseSkipReasonPolicy,
   type SkipReasonPolicy,
 } from "@/lib/no-events-reason";
+import { placeOfEvent } from "@/lib/place-recipients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -182,7 +183,7 @@ export async function POST(
       );
     }
     validationWarnings = validation.warnings;
-    await runSideEffects(claim.organizationId, validation.sideEffects);
+    await runSideEffects(claim.organizationId, validation.sideEffects, claim.userId);
   }
 
   const fn =
@@ -369,7 +370,7 @@ async function releaseClaim(
   }
 }
 
-async function runSideEffects(organizationId: string, effects: SideEffect[]) {
+async function runSideEffects(organizationId: string, effects: SideEffect[], userId: string) {
   for (const e of effects) {
     if (e.kind === "create_capa") {
       try {
@@ -388,10 +389,14 @@ async function runSideEffects(organizationId: string, effects: SideEffect[]) {
       }
     } else if (e.kind === "telegram_alert") {
       try {
+        // Точка того, кто выполнял задачу, — её руководителям и офису (фаза 3).
         await notifyOrganization(
           organizationId,
           e.message,
-          e.recipients === "owners" ? ["owner", "manager"] : ["manager", "head_chef"]
+          e.recipients === "owners" ? ["owner", "manager"] : ["manager", "head_chef"],
+          undefined,
+          undefined,
+          { buildingId: await placeOfEvent(organizationId, { userId }) }
         );
       } catch (err) {
         console.error("[journal-claim] telegram_alert failed", err);

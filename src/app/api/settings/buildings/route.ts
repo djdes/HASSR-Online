@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { checkPointsForCreation, limitResponse } from "@/lib/billing.server";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
+import { closePointManagerSessions } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +52,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(auth.session);
+  // Новая точка и деление по точкам — решения компании (фаза 2 «Офис и точки»).
+  if (isPointScoped(auth.session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
+  }
 
   let body: z.infer<typeof CreateSchema>;
   try {
@@ -111,6 +117,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const orgId = getActiveOrgId(auth.session);
+  // Новая точка и деление по точкам — решения компании (фаза 2 «Офис и точки»).
+  if (isPointScoped(auth.session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
+  }
 
   let body: z.infer<typeof FlagSchema>;
   try {
@@ -139,5 +149,10 @@ export async function PATCH(request: Request) {
     where: { id: orgId },
     data: { perLocationJournals: body.perLocationJournals },
   });
+  // При офисе деление решает, кто руководитель точки, — сессии руководителей
+  // с местами перевыпускаются при следующем входе (фаза 2 «Офис и точки»).
+  if (await db.building.count({ where: { organizationId: orgId, kind: OFFICE_BUILDING_KIND } })) {
+    await closePointManagerSessions(orgId, auth.session.user.id);
+  }
   return NextResponse.json({ ok: true, perLocationJournals: body.perLocationJournals });
 }

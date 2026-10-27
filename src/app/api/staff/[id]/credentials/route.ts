@@ -8,6 +8,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { recordAuditLog } from "@/lib/audit-log";
 import { buildStaffLogin, loginSuffixSchema } from "@/lib/login-prefix";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +51,8 @@ export async function POST(
 
   const { id } = await params;
   const orgId = getActiveOrgId(session);
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   let parsed;
   try {

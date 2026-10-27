@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { bumpSessionVersion } from "@/lib/session-version";
 import { sanitizeBuildingIds } from "@/lib/building-targets";
+import { STAFF_OUT_OF_SCOPE_ERROR, mergeScopedBuildingIds, staffInScope } from "@/lib/point-scope";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
@@ -8,6 +9,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
 import {
+  isManagementRole,
   isLegacyUserRoleValue,
   isUserRoleValue,
   normalizeUserRole,
@@ -19,6 +21,7 @@ import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { performOffboarding } from "@/lib/offboarding";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
+import { computePointScope } from "@/lib/point-scope.server";
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
@@ -81,6 +84,10 @@ export async function PUT(
     if (!user) {
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
     }
+    // Руководитель точки правит только людей своих точек (фаза 2).
+    if (!staffInScope(session.user, user.buildingIds)) {
+      return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
+    }
 
     const body = updateUserSchema.parse(await request.json());
     const { name, role, phone, contactEmail, positionTitle, isActive, weeklyDaysOff, buildingIds, canEditBrakerageDishes, keepsCoreJournals, canManageSettings } = body;
@@ -88,9 +95,14 @@ export async function PUT(
     if (canManageSettings !== undefined && id === session.user.id) {
       return NextResponse.json({ error: "Разрешение на настройки себе изменить нельзя" }, { status: 400 });
     }
+    // Чужие точки человека руководитель точки не трогает, офис не назначает.
     const cleanBuildingIds =
       buildingIds !== undefined
-        ? await sanitizeBuildingIds(getActiveOrgId(session), buildingIds)
+        ? mergeScopedBuildingIds(
+            session.user,
+            user.buildingIds,
+            await sanitizeBuildingIds(getActiveOrgId(session), buildingIds),
+          )
         : undefined;
 
     if (id === session.user.id && role && normalizeUserRole(role) !== "manager") {
@@ -173,6 +185,15 @@ export async function PUT(
     // Права поменялись — старые сессии сотрудника закрываем: новый вход
     // возьмёт актуальную галку (proxy читает её из токена).
     if (canManageSettings !== undefined && canManageSettings !== (user.canManageSettings === true)) {
+      await bumpSessionVersion(id).catch(() => null);
+    } else if (
+      cleanBuildingIds !== undefined &&
+      (isManagementRole(toCanonicalUserRole(role ?? user.role)) || user.canManageSettings === true) &&
+      JSON.stringify(await computePointScope(user)) !==
+        JSON.stringify(await computePointScope({ organizationId: user.organizationId, buildingIds: cleanBuildingIds }))
+    ) {
+      // Руководитель стал руководителем точки или перестал им быть — те же
+      // точки в токене читает proxy (фаза 2 «Офис и точки»).
       await bumpSessionVersion(id).catch(() => null);
     }
 
@@ -284,6 +305,9 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
+    }
+    if (!staffInScope(session.user, user.buildingIds)) {
+      return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
     }
 
     await db.user.update({

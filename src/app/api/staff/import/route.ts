@@ -11,6 +11,7 @@ import { seatAllowance, seatLimitSummary } from "@/lib/billing.server";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
 import { STAFF_SHEET_NAME, parseStaffSheet } from "@/lib/staff-excel";
+import { mergeScopedBuildingIds } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -255,6 +256,8 @@ export async function POST(request: Request) {
     const user = await db.$transaction(async (tx) => {
       const record = await tx.user.create({
         data: {
+          // Руководитель точки заводит людей на свои точки (фаза 2 «Офис и точки»).
+          buildingIds: mergeScopedBuildingIds(session.user, [], []),
           organizationId: orgId,
           name: row.fullName,
           email: syntheticEmail(orgId),

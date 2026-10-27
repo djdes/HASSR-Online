@@ -5,6 +5,9 @@ import {
   allowedBuildingsForUser,
   isOfficeBuilding,
   workBuildingsForUser,
+  pointScopeForUser,
+  receivesPlaceEvent,
+  splitsOfficeAndPoints,
   buildingWhere,
   decodeBuildingCookie,
   encodeBuildingCookie,
@@ -140,4 +143,50 @@ test("офис: сотрудник офиса видит все точки, а �
   assert.deepEqual(workBuildingsForUser(all, []), all);
   assert.equal(isOfficeBuilding(OFFICE), true);
   assert.equal(isOfficeBuilding(A), false);
+});
+
+test("руководитель точки: только при офисе и включённых точках", () => {
+  const OFFICE = { id: "b-office", kind: "office" };
+  const withOffice = [OFFICE, A, B];
+  const on = (userBuildingIds: string[], buildings: { id: string; kind?: string }[] = withOffice, enabled = true) =>
+    pointScopeForUser({ enabled, buildings, userBuildingIds });
+  assert.deepEqual(on([A.id]), [A.id]);
+  assert.deepEqual(on([A.id, B.id]), [A.id, B.id]);
+  // Офис, без места, только удалённые точки — вся компания.
+  assert.equal(on([OFFICE.id]), null);
+  assert.equal(on([OFFICE.id, A.id]), null);
+  assert.equal(on([]), null);
+  assert.equal(on(["b-gone"]), null);
+  // Офиса нет или точки выключены — разделения нет.
+  assert.equal(on([A.id], [A, B]), null);
+  assert.equal(on([A.id], withOffice, false), null);
+});
+
+test("уведомления по месту: точке — её люди и офис, общее — офису", () => {
+  const OFFICE = { id: "b-office", kind: "office" };
+  const withOffice = [OFFICE, A, B];
+  const gets = (userBuildingIds: string[], buildingId: string | null, buildings: { id: string; kind?: string }[] = withOffice) =>
+    receivesPlaceEvent({ enabled: true, buildings, userBuildingIds, buildingId });
+  // Руководитель точки A: своё — да, точка B и общее — нет.
+  assert.equal(gets([A.id], A.id), true);
+  assert.equal(gets([A.id], B.id), false);
+  assert.equal(gets([A.id], null), false);
+  // Офис и без места: и любая точка, и общее.
+  assert.equal(gets([OFFICE.id], A.id), true);
+  assert.equal(gets([OFFICE.id], null), true);
+  assert.equal(gets([], B.id), true);
+  // Без офиса — как раньше: общее всем, точка — тем, кто на ней.
+  assert.equal(gets([A.id], null, [A, B]), true);
+  assert.equal(gets([A.id], B.id, [A, B]), false);
+  assert.equal(gets([], B.id, [A, B]), true);
+  // Только люди точки (напоминания): офису — сводкой, не по точке.
+  const strict = (userBuildingIds: string[], buildingId: string) =>
+    receivesPlaceEvent({ enabled: true, buildings: withOffice, userBuildingIds, buildingId, onlyPlace: true });
+  assert.equal(strict([A.id], A.id), true);
+  assert.equal(strict([OFFICE.id], A.id), false);
+  assert.equal(strict([], A.id), false);
+  assert.equal(strict([OFFICE.id], OFFICE.id), true);
+  assert.equal(splitsOfficeAndPoints({ enabled: true, buildings: withOffice }), true);
+  assert.equal(splitsOfficeAndPoints({ enabled: false, buildings: withOffice }), false);
+  assert.equal(splitsOfficeAndPoints({ enabled: true, buildings: [A, B] }), false);
 });
