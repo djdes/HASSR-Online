@@ -1,4 +1,5 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
+import { automationOn } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
@@ -128,7 +129,7 @@ async function handle(request: Request) {
   const errors: string[] = [];
 
   for (const document of documents) {
-    if ((await getJournalControls(document.organizationId)).specialMode) continue;
+    if (!automationOn(await getJournalControls(document.organizationId), "autoFill")) continue;
     const code = document.template.code;
     try {
       const skipped = await getSkippedCodes(document.organizationId, document.buildingId);

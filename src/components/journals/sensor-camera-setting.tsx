@@ -11,7 +11,6 @@ export function SensorCameraSetting({ code }: { code: SensorJournalCode }) {
   const t = useTranslations("journalUi.sensorCamera");
   const { controls, loaded, apply } = useJournalControls();
   const [saving, setSaving] = useState(false);
-  if (controls.specialMode) return null;
   return <div className="flex items-start justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
     <div><p className="text-[14px] font-medium text-[#0b1024]">{t("title")}</p><p className="mt-1 text-[13px] text-[#6f7282]">{t("hint")}</p></div>
     <Switch aria-label={t("title")} checked={controls.sensorCamera[code] === true} disabled={!loaded || saving} onCheckedChange={async (enabled) => {

@@ -821,8 +821,8 @@
       "step3Body": "Tekshiruvchi QR orqali tashriflar jurnaliga o‘zi yozuv kiritadi va qaror fotosini biriktiradi. Kiritmagan bo‘lsa — tashriflar jurnalini oching, yozuv qo‘shing va qarorni suratga oling.",
       "step4Title": "Hujjatlarni topshiring",
       "step4Body": "Kerakli davr uchun arxivni yuklab oling: jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi, CAPA va tashriflar jurnali — bitta ZIP faylda.",
-      "step5Title": "Maxsus rejimni yoqing (ixtiyoriy)",
-      "step5Body": "Tekshiruv vaqtida jurnallarda avtomatik yozuvlar paydo bo‘lmaydi: hammasini xodimlar o‘zlari kiritadi.",
+      "step5Title": "Maxsus rejimni tekshiring (ixtiyoriy)",
+      "step5Body": "Maxsus rejim jurnallar avtomatikasini yoqadi. Tekshiruv vaqtida uni o‘chirish mumkin — jurnallarda faqat xodimlarning yozuvlari qoladi.",
       "tipsTitle": "Maslahatlar",
       "tip1": "Tekshiruvchiga hamroh bo‘ling va tekshiruv predmeti bo‘yicha savollarga xotirjam va aniq javob bering.",
       "tip2": "Rejadan tashqari tekshiruvda odatda prokuratura bilan kelishilganlik belgisi bo‘ladi — uni qarorda ko‘ring.",
@@ -913,16 +913,45 @@
     },
     "special": {
       "title": "Maxsus rejim",
-      "lead": "Jurnallarda avtomatik yozuvlar paydo bo‘lmasligi kerak bo‘lsa, tekshiruv vaqtida yoqing.",
-      "effect1": "jurnal hujjatlarini avtomatik yaratmaydi",
-      "effect2": "yozuvlarni avtomatik to‘ldirmaydi",
-      "effect3": "«Kechagisini nusxalash» tugmasini yashiradi",
-      "keeps": "Kiritilgan ma’lumotlar va o‘zgarishlar tarixi saqlanadi. Istalgan vaqtda o‘chirish mumkin.",
+      "lead": "Jurnallarda avtomatikani yoqadi — faqat siz belgilaganini. Rejim o‘chiq bo‘lsa, jurnallarda avtomatika yo‘q: yozuvlarni xodimlar o‘zlari kiritadi.",
+      "offState": "Hozir avtomatika yashirilgan: jurnallarda avtomatik to‘ldirish, avtomatik hujjatlar va tezkor tugmalar yo‘q.",
+      "onState": "Jurnallarda ko‘rinadi:",
+      "noneChosen": "Hech narsa belgilanmagan — jurnallarda avtomatika yo‘q.",
+      "change": "O‘zgartirish",
+      "features": {
+        "autoFill": {
+          "title": "Jurnallarni avtomatik to‘ldirish",
+          "hint": "Hujjatlardagi «Avtomatik to‘ldirish» kaliti: belgilar va ko‘rsatkichlar har kuni o‘zi qo‘yiladi."
+        },
+        "autoCreate": {
+          "title": "Hujjatlarni avtomatik yaratish",
+          "hint": "Davr boshida jurnalning yangi hujjati o‘zi yaratiladi — qatorlar va mas’ullar bilan."
+        },
+        "copyYesterday": {
+          "title": "«Kechagisini nusxalash»",
+          "hint": "Hujjatdagi tugma: kechagi qatorlarni bugunga ko‘chiradi."
+        },
+        "closeDayAutofill": {
+          "title": "Bosh sahifadagi «Avtomatik to‘ldirish»",
+          "hint": "Jurnallar ro‘yxati ustidagi tugma: barcha kundalik jurnallarning bo‘sh kunlarini bugungacha to‘ldiradi."
+        }
+      },
+      "dialogTitle": "Jurnallarda nimani yoqish kerak",
+      "dialogLead": "Belgilanganlar tashkilotning barcha nuqtalaridagi jurnallarda paydo bo‘ladi. Tanlovni istalgan vaqtda «O‘zgartirish» tugmasi bilan o‘zgartirish mumkin.",
+      "dialogPickOne": "Kamida bitta bandni belgilang.",
+      "dialogEnable": "Yoqish",
+      "dialogSave": "Saqlash",
+      "dialogCancel": "Bekor qilish",
+      "offTitle": "Maxsus rejim o‘chirilsinmi?",
+      "offDescription": "Jurnallardan quyidagilar yo‘qoladi:",
+      "offKeeps": "Kiritilgan yozuvlar va jurnal sozlamalari saqlanadi. Rejimni qayta yoqing — hammasi avvalgidek qaytadi.",
+      "offConfirm": "O‘chirish",
+      "keeps": "Kiritilgan ma’lumotlar, o‘zgarishlar tarixi va jurnal sozlamalari har qanday almashtirishda saqlanadi.",
       "on": "Yoqilgan",
       "off": "O‘chirilgan",
       "saved": "Saqlandi",
       "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
-      "askManager": "Yoqish yoki o‘chirishni rahbar qila oladi — undan so‘rang."
+      "askManager": "Rejimni yoqish, o‘chirish yoki o‘zgartirishni rahbar qila oladi — undan so‘rang."
     },
     "experts": {
       "title": "Ekspert yordami",
@@ -945,7 +974,7 @@
       "q2": "Bo‘lim kimga ochiq?",
       "a2": "Rahbariyatga va vazifalarni tekshirish huquqi bor xodimlarga: tekshiruv ko‘pincha joyida faqat mudira bo‘lganda keladi. QR chiqarish, tayyorgarlik va xizmatlar — rahbariyatda.",
       "visitsLead": "Tekshiruvchi QR orqali o‘zi yozuv kiritadi. Kiritmagan bo‘lsa — jurnalni oching va qaror skani bilan yozuv qo‘shing.",
-      "specialLead": "Tekshiruv vaqtida jurnallardagi avtomatik yozuvlarni o‘chiradi.",
+      "specialLead": "Jurnallar avtomatikasini yoqadi; tekshiruv vaqtida uni o‘chirish mumkin.",
       "moreTitle": "Bo‘limda yana",
       "normsHint": "Ishlab chiqarish nazorati dasturi, HACCP rejasi va SanPiN me’yorlari — tekshiruvchiga nimani ko‘rsatish",
       "readinessHint": "Tekshiruvchi kelguncha nimani tuzatish kerak",
@@ -992,15 +1021,15 @@
         "a1": "Tashkilot rahbariyati. Arizani WeSetup menejeri ko‘radi."
       },
       "special": {
-        "lead": "Tekshiruv vaqtida jurnallardagi avtomatik yozuvlarni o‘chiradi.",
+        "lead": "Jurnallar avtomatikasini belgilar bo‘yicha yoqadi: avtomatik to‘ldirish, hujjatlarni avtomatik yaratish va tezkor tugmalar.",
         "guideTitle": "Bilish muhim",
-        "guide1": "Rejim butun tashkilotga — barcha nuqtalarga birdaniga amal qiladi.",
-        "guide2": "Kiritilgan ma’lumotlar va o‘zgarishlar tarixi saqlanadi.",
-        "guide3": "Rahbar yoqadi va o‘chiradi; boshqalar rejim yoqilganini ko‘radi.",
+        "guide1": "Rejim sukut bo‘yicha o‘chiq: jurnallarda faqat xodimlar kiritgan yozuvlar bo‘ladi.",
+        "guide2": "Rejim butun tashkilotga — barcha nuqtalarga birdaniga amal qiladi.",
+        "guide3": "Rahbar yoqadi va o‘zgartiradi; boshqalar nima yoqilganini ko‘radi.",
         "whenTitle": "Qachon yoqish kerak",
-        "when1": "Tekshiruvchi keldi yoki bugun keladi — rejimni yoqing.",
-        "when2": "Tekshiruv davomida jurnallarda faqat xodimlar o‘zlari kiritgan yozuvlar bo‘ladi.",
-        "when3": "Tekshiruv tugadi — o‘chiring: hujjatlarni avtomatik yaratish, avtomatik to‘ldirish va «Kechagisini nusxalash» qaytadi."
+        "when1": "Jurnallar bir xil jadval bo‘yicha yuritiladi va yordam kerak — rejimni yoqing va keraklisini belgilang.",
+        "when2": "Tekshiruv keldi — rejimni o‘chirish mumkin: jurnallarda faqat xodimlarning yozuvlari qoladi.",
+        "when3": "Tekshiruv tugadi — qayta yoqing: avvalgi belgilar saqlanadi."
       }
     }
   },
@@ -10006,10 +10035,10 @@
       },
       "specialMode": {
         "title": "Maxsus rejim",
-        "description": "Jurnal yozuvlarini avtomatik yaratish, to‘ldirish va nusxalashni yashiradi hamda o‘chiradi. Kiritilgan ma’lumotlar va o‘zgarishlar tarixi saqlanadi.",
+        "description": "Jurnallar avtomatikasini belgilar bo‘yicha yoqadi: avtomatik to‘ldirish, hujjatlarni avtomatik yaratish va tezkor tugmalar. Sukut bo‘yicha o‘chiq.",
         "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
         "movedTitle": "Maxsus rejim — «Tekshiruv keldi» bo‘limida",
-        "movedBody": "Kalit va izoh endi o‘sha yerda — tekshiruvchi QR kodi va tashriflar jurnali yonida.",
+        "movedBody": "Maxsus rejim jurnallarda avtomatikani yoqadi — avtomatik to‘ldirish, avtomatik yaratish va tezkor tugmalar. Kalit va belgilar o‘sha yerda, tekshiruvchi QR kodi yonida.",
         "movedLink": "Ochish",
         "statusOn": "Hozir yoqilgan",
         "statusOff": "Hozir o‘chirilgan"

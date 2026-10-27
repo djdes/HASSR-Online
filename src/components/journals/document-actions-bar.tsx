@@ -1,5 +1,6 @@
 "use client";
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 
 import { TOUR } from "@/lib/tour-anchors";
 
@@ -131,7 +132,7 @@ export function DocumentActionsBar({
   const canManage = useCanManageJournalDocument();
   const router = useRouter();
   const { controls } = useJournalControls();
-  const items = (canManage ? menuItems : []).filter((item) => Boolean(item) && (!controls.specialMode || item.key !== "copy-yesterday"));
+  const items = (canManage ? menuItems : []).filter((item) => Boolean(item) && (automationOn(controls, "copyYesterday") || item.key !== "copy-yesterday"));
   const hasPrint = Boolean(showPrint && documentId);
   // Код журнала — из `backHref` (`/journals/<code>`): его передают все
   // клиенты, и отдельный проп не нужен. Есть код и документ — есть QR.

@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     : null;
 
   const organizationId = getActiveOrgId(session);
-  const blocked = await rejectJournalAutomation(organizationId);
+  const blocked = await rejectJournalAutomation(organizationId, "closeDayAutofill");
   if (blocked) return blocked;
   // Точки: закрываем день и создаём документ для активной точки.
   const activeBuildingId = await getActiveBuildingId(session);

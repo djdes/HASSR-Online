@@ -1,4 +1,5 @@
-import { rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { getJournalControls } from "@/lib/journal-controls.server";
+import { automationDisabledError, automationOn, type AutomationFeature } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "@/lib/server-session";
@@ -9,6 +10,7 @@ import { getActiveBuildingId } from "@/lib/active-building";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
+  getJournalAutomation,
   parseJournalAutomationJson,
   type JournalAutomation,
   type JournalAutomationMap,
@@ -171,8 +173,11 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Некорректный список" }, { status: 400 });
   }
   const organizationId = getActiveOrgId(session);
-  const blocked = await rejectJournalAutomation(organizationId);
-  if (blocked) return blocked;
+  // Спецрежим: включать автосоздание / автозаполнение можно, только если
+  // эта часть автоматики выбрана; выключать — всегда.
+  const controls = await getJournalControls(organizationId);
+  const blockedFeature = (feature: AutomationFeature) =>
+    NextResponse.json({ error: automationDisabledError(feature), code: "special_mode", feature }, { status: 403 });
 
   // Новый формат побеждает: он несёт обе половинки. Легаси `codes`
   // трактуем как «только автосоздание», не трогая автозаполнение —
@@ -211,6 +216,11 @@ export async function PUT(request: Request) {
     const map: JournalAutomationMap = parseJournalAutomationJson(
       org?.journalAutomationJson
     );
+    for (const item of parsed.items) {
+      const previous = getJournalAutomation(org, item.code);
+      if (item.autoCreate && !previous.autoCreate && !automationOn(controls, "autoCreate")) return blockedFeature("autoCreate");
+      if (item.autoFill === true && !previous.autoFill && !automationOn(controls, "autoFill")) return blockedFeature("autoFill");
+    }
     const autoFillChanges: { code: string; next: boolean }[] = [];
     for (const item of parsed.items) {
       const previous = map[item.code];
@@ -274,6 +284,7 @@ export async function PUT(request: Request) {
   }
 
   const unique = Array.from(new Set(parsed.codes ?? []));
+  if (unique.length > 0 && !automationOn(controls, "autoCreate")) return blockedFeature("autoCreate");
   await db.organization.update({
     where: { id: organizationId },
     data: { autoJournalCodes: unique },

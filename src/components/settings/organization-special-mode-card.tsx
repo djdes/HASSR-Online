@@ -8,7 +8,8 @@ import { useJournalControls } from "@/components/journals/journal-controls-provi
 
 /**
  * «Специальный режим» переехал в «Пришла проверка» (скан 83, решение
- * 2026-10-17): переключатель с пояснением — там, рядом с QR проверяющего.
+ * 2026-10-17): переключатель с галочками — там, рядом с QR проверяющего.
+ * С 2026-10-28 режим наоборот: включён — автоматика журналов видна.
  * В реквизитах остаётся ссылка и текущее состояние.
  */
 export function OrganizationSpecialModeCard() {
@@ -25,10 +26,10 @@ export function OrganizationSpecialModeCard() {
           {loaded ? (
             <span
               className={`rounded-full px-2.5 py-0.5 text-[12px] font-medium ${
-                controls.specialMode ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#f5f6ff] text-[#3848c7]"
+                controls.automation.enabled ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#f5f6ff] text-[#3848c7]"
               }`}
             >
-              {controls.specialMode ? t("specialMode.statusOn") : t("specialMode.statusOff")}
+              {controls.automation.enabled ? t("specialMode.statusOn") : t("specialMode.statusOff")}
             </span>
           ) : null}
         </div>

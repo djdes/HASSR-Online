@@ -226,7 +226,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   if (body.autoFill === true || body.config?.autoFill?.enabled === true) {
-    const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+    const blocked = await rejectJournalAutomation(getActiveOrgId(session), "autoFill");
     if (blocked) return blocked;
   }
   const { templateCode, title, dateFrom, dateTo, responsibleUserId, responsibleTitle, config } = body;

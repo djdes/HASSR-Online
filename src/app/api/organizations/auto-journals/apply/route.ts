@@ -1,4 +1,5 @@
-import { rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { getJournalControls, rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { automationOn } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "@/lib/server-session";
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
-  const blocked = await rejectJournalAutomation(organizationId);
+  const blocked = await rejectJournalAutomation(organizationId, "autoFill");
   if (blocked) return blocked;
   const orgRow = await db.organization.findUnique({
     where: { id: organizationId },
@@ -94,8 +95,9 @@ export async function POST(request: Request) {
 
   // Автосоздание включено, а документа на сегодня нет — заводим его
   // прямо сейчас: иначе заполнять было бы нечего и человек снова
-  // остался бы без результата.
-  if (automation.autoCreate) {
+  // остался бы без результата. Только если автосоздание включено и в
+  // спецрежиме.
+  if (automation.autoCreate && automationOn(await getJournalControls(organizationId), "autoCreate")) {
     await ensureActiveDocument(db, {
       organizationId,
       templateCode: code,

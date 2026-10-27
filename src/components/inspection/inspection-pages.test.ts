@@ -66,3 +66,13 @@ test("«Подготовка с экспертом и выезд»: услуги
   // Пустое состояние, если услуги выключены в каталоге.
   assert.ok(page("/experts").includes("data-experts-empty"));
 });
+
+test("спецрежим наоборот: включение — окно с галочками, выключение — подтверждение с перечнем (AC3.3)", () => {
+  const card = read("src/components/inspection/inspection-special-mode-card.tsx");
+  assert.ok(card.includes("<Dialog open={dialog !== null}"), "включение открывает окно");
+  assert.ok(card.includes("AUTOMATION_FEATURES.map"), "галочки по всем частям автоматики");
+  assert.ok(card.includes("<ConfirmDialog"), "выключение — ConfirmDialog");
+  assert.match(card, /variant="warn"/);
+  assert.ok(card.includes("save({ ...automation, enabled: false })"), "выключение не стирает выбор");
+  assert.ok(!card.includes("window.confirm"));
+});

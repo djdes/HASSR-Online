@@ -43,7 +43,7 @@ export async function POST(
     times?: unknown;
   };
   if (body.action === "apply_auto_fill") {
-    const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+    const blocked = await rejectJournalAutomation(getActiveOrgId(session), "autoFill");
     if (blocked) return blocked;
   }
   const action = body.action;

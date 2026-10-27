@@ -10,6 +10,7 @@ import {
 } from "@/lib/settings-cards";
 import { NavIcon } from "@/components/layout/nav-icons";
 import { LinkPendingOverlay } from "@/components/ui/link-pending";
+import { automationOn, type JournalControls } from "@/lib/journal-controls";
 
 /**
  * Карточки настроек раздела — бывший хаб `/settings`, разложенный по
@@ -21,13 +22,14 @@ export async function SettingsCardGrid({
   actor,
   facts,
   customNames,
-  specialMode = false,
+  controls = null,
 }: {
   section: SettingsCardSection;
   actor: NavActor;
   facts: NavFacts;
   customNames: CustomNames | null;
-  specialMode?: boolean;
+  /** Спецрежим: карточки автоматики видны только по своей галочке. */
+  controls?: JournalControls | null;
 }) {
   const tCards = await getTranslations("settingsManagement.home.cards");
   const tGroups = await getTranslations("navigation.shell.groups");
@@ -37,7 +39,7 @@ export async function SettingsCardGrid({
       cards: settingsCardsFor(section, group).filter(
         (card) =>
           navAllows(actor, card.href, card.access, facts) &&
-          !(specialMode && card.hideWhen === "specialMode"),
+          (!card.requiresAutomation || (controls !== null && automationOn(controls, card.requiresAutomation))),
       ),
     }))
     .filter((entry) => entry.cards.length > 0);

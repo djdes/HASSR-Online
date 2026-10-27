@@ -36,7 +36,7 @@ export async function POST() {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
-  const blocked = await rejectJournalAutomation(organizationId);
+  const blocked = await rejectJournalAutomation(organizationId, "autoCreate");
   if (blocked) return blocked;
   const org = await db.organization.findUnique({
     where: { id: organizationId },

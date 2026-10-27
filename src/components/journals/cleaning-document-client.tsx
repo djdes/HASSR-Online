@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -2481,7 +2482,7 @@ export function CleaningDocumentClient(props: Props) {
             их меняют раз в месяц, а место в полосе они занимали всегда. */}
         {/* Q3: рамка и свой фон #f5f6ff сняты — только общий токен-лента. */}
         {/* Настройка документа — право руководителя (сервер отвечал 403). */}
-        {canManageDocument && !journalControls.specialMode ? (
+        {canManageDocument && automationOn(journalControls, "autoFill") ? (
           <section className={DOC_AUTOFILL_STRIP_CLASS}>
             <Switch
               checked={config.autoFill.enabled}

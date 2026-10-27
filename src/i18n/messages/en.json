@@ -821,8 +821,8 @@
       "step3Body": "The inspector adds an entry to the visit log via the QR code and attaches a photo of the decision. If not — open the visit log, add the entry and photograph the decision.",
       "step4Title": "Hand over the documents",
       "step4Body": "Download the archive for the required period: journals, production control program, HACCP plan, CAPA and the visit log — in one ZIP file.",
-      "step5Title": "Turn on special mode (optional)",
-      "step5Body": "During the inspection, no automatic entries appear in the journals: employees enter everything themselves.",
+      "step5Title": "Check special mode (optional)",
+      "step5Body": "Special mode turns on journal automation. You can turn it off for the inspection — journals keep only the entries employees make.",
       "tipsTitle": "Tips",
       "tip1": "Accompany the inspector and answer questions within the scope of the inspection — calmly and to the point.",
       "tip2": "An unscheduled inspection usually carries a note of approval by the prosecutor's office — look for it in the decision.",
@@ -913,16 +913,45 @@
     },
     "special": {
       "title": "Special mode",
-      "lead": "Turn it on for the inspection if no automatic entries should appear in the journals.",
-      "effect1": "does not create journal documents automatically",
-      "effect2": "does not fill in entries automatically",
-      "effect3": "hides the “Copy yesterday” button",
-      "keeps": "Entered data and change history are preserved. You can turn it off at any time.",
+      "lead": "Turns on journal automation — only the parts you tick. While the mode is off, journals have no automation: employees make all entries themselves.",
+      "offState": "Automation is hidden now: journals have no autofill, no automatic documents and no quick-fill buttons.",
+      "onState": "Shown in journals:",
+      "noneChosen": "Nothing is ticked — journals have no automation.",
+      "change": "Change",
+      "features": {
+        "autoFill": {
+          "title": "Journal autofill",
+          "hint": "The “Fill in automatically” switch in documents: marks and readings are filled in every day by themselves."
+        },
+        "autoCreate": {
+          "title": "Automatic documents",
+          "hint": "At the start of each period a new journal document is created by itself, with rows and responsible people."
+        },
+        "copyYesterday": {
+          "title": "“Copy yesterday”",
+          "hint": "A button in the document that copies yesterday's rows into today."
+        },
+        "closeDayAutofill": {
+          "title": "“Autofill” on the home page",
+          "hint": "A button above the journal list that fills in the empty days of all daily journals up to today."
+        }
+      },
+      "dialogTitle": "What to turn on in journals",
+      "dialogLead": "The ticked items appear in journals at all locations of the organization. You can change the choice at any time with “Change”.",
+      "dialogPickOne": "Tick at least one item.",
+      "dialogEnable": "Turn on",
+      "dialogSave": "Save",
+      "dialogCancel": "Cancel",
+      "offTitle": "Turn off special mode?",
+      "offDescription": "This will disappear from journals:",
+      "offKeeps": "Entries and journal settings are kept. Turn the mode on again and everything comes back as it was.",
+      "offConfirm": "Turn off",
+      "keeps": "Entered data, change history and journal settings are kept whenever you switch.",
       "on": "On",
       "off": "Off",
       "saved": "Saved",
       "saveError": "Could not save changes",
-      "askManager": "Only a manager can turn it on or off — ask them."
+      "askManager": "Only a manager can turn the mode on, off or change it — ask them."
     },
     "experts": {
       "title": "Expert help",
@@ -945,7 +974,7 @@
       "q2": "Who can open this section?",
       "a2": "Management and employees allowed to verify tasks: an inspection often arrives when only the head chef is on site. Issuing the QR code, readiness and services are for management.",
       "visitsLead": "The inspector adds the entry via the QR code. If not — open the log and add the entry with a scan of the decision.",
-      "specialLead": "Turns off automatic entries in the journals for the time of the inspection.",
+      "specialLead": "Turns on journal automation; you can turn it off for the inspection.",
       "moreTitle": "More in this section",
       "normsHint": "Production control program, HACCP plan and SanPiN rules — what to show the inspector",
       "readinessHint": "What to fix before the inspector arrives",
@@ -992,15 +1021,15 @@
         "a1": "The organization's management. The request is seen by a WeSetup manager."
       },
       "special": {
-        "lead": "Turns off automatic entries in the journals for the time of the inspection.",
+        "lead": "Turns on journal automation item by item: autofill, automatic documents and quick-fill buttons.",
         "guideTitle": "Good to know",
-        "guide1": "The mode applies to the whole organization — all locations at once.",
-        "guide2": "Entered data and change history are preserved.",
-        "guide3": "A manager turns it on and off; others can see whether it is on.",
+        "guide1": "The mode is off by default: journals contain only what employees enter.",
+        "guide2": "The mode applies to the whole organization — all locations at once.",
+        "guide3": "A manager turns it on and changes it; others can see what is on.",
         "whenTitle": "When to turn it on",
-        "when1": "The inspector has arrived or is coming today — turn the mode on.",
-        "when2": "While the inspection is going on, the journals contain only entries that employees make themselves.",
-        "when3": "The inspection is over — turn it off: automatic document creation, autofill and “Copy yesterday” come back."
+        "when1": "Journals follow the same routine and you want help — turn the mode on and tick what you need.",
+        "when2": "An inspection has come — you can turn the mode off: journals keep only the entries employees make.",
+        "when3": "The inspection is over — turn it on again: your previous ticks are kept."
       }
     }
   },
@@ -10006,10 +10035,10 @@
       },
       "specialMode": {
         "title": "Special mode",
-        "description": "Hides and disables automatic journal entry creation, completion, and copying. Existing data and change history are preserved.",
+        "description": "Turns on journal automation item by item: autofill, automatic documents and quick-fill buttons. Off by default.",
         "saveError": "Could not save changes",
         "movedTitle": "Special mode is now in “Inspection”",
-        "movedBody": "The switch and its explanation are there now, next to the inspector QR code and the visit log.",
+        "movedBody": "Special mode turns on journal automation — autofill, automatic documents and quick-fill buttons. The switch and the ticks are there, next to the inspector QR code.",
         "movedLink": "Open",
         "statusOn": "Currently on",
         "statusOff": "Currently off"

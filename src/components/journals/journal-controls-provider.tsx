@@ -2,9 +2,10 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { parseJournalControls, type JournalControls } from "@/lib/journal-controls";
+import { automationOn, parseJournalControls, type AutomationFeature, type JournalControls } from "@/lib/journal-controls";
 
-const initial = { ...parseJournalControls(null), specialMode: true };
+// Fail-closed: до ответа сервера автоматика спецрежима скрыта целиком.
+const initial = parseJournalControls(null);
 const Context = createContext({ controls: initial, loaded: false, refresh: async () => {}, apply: (_controls: JournalControls) => {} });
 
 export function JournalControlsProvider({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,12 @@ export function JournalControlsProvider({ children }: { children: React.ReactNod
 }
 
 export function useJournalControls() { return useContext(Context); }
+
+/** Видна ли эта часть автоматики (спецрежим включён и галочка стоит). Пока грузится — нет. */
+export function useAutomationOn(feature: AutomationFeature): boolean {
+  const { controls } = useContext(Context);
+  return automationOn(controls, feature);
+}
 
 /** `fallbackMessage` is shown when the server returns no error text; pass a translated string. */
 export async function saveJournalControls(patch: unknown, fallbackMessage = "Failed to save settings") {

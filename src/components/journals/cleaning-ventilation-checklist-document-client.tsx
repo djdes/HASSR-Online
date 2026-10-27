@@ -117,6 +117,7 @@ import { useTodayKey } from "@/lib/use-today-key";
 import { NO_ROW_EMPLOYEE_MESSAGE, useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { TodayStripForJournal } from "@/components/journals/today-strip-for-journal";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 type UserItem = {
   id: string;
   name: string;
@@ -890,6 +891,8 @@ export function CleaningVentilationChecklistDocumentClient({
   // (тумблер + резюме + «Настроить»): настройки меняют редко, а места
   // раскрытая панель занимала больше, чем сам чек-лист.
   const [panelOpen, setPanelOpen] = useState(false);
+  // Тумблер автозаполнения — по галочке спецрежима; «Настроить» остаётся.
+  const autoFillAllowed = useAutomationOn("autoFill");
   const [selection, setSelection] = useState<string[]>([]);
   // Процедура, время которой правим из карточки. Раньше карточки этого
   // журнала отправляли во вкладку «Таблица».
@@ -1284,6 +1287,7 @@ export function CleaningVentilationChecklistDocumentClient({
             отдельным блоком под полосой. */}
         <div className={cn(DOC_AUTOFILL_STRIP_CLASS, panelOpen && "mb-0")}>
             <div className="flex min-w-0 flex-1 items-center gap-3">
+              {autoFillAllowed ? (<>
               <Switch
                 id="cleaning-ventilation-autofill"
                 checked={config.autoFillEnabled}
@@ -1303,6 +1307,7 @@ export function CleaningVentilationChecklistDocumentClient({
               >
                 {t("autoFill")}
               </label>
+              </>) : null}
             </div>
             <button
               type="button"

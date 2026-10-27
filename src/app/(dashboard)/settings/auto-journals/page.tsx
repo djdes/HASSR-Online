@@ -1,4 +1,5 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
+import { automationOn } from "@/lib/journal-controls";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MapPin, Sparkles } from "lucide-react";
@@ -25,7 +26,10 @@ export default async function AutoJournalsPage() {
   }
   const organizationId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.autoJournalsPage");
-  if ((await getJournalControls(organizationId)).specialMode) redirect("/settings/organization");
+  // Страница — про автосоздание; колонка автозаполнения — по своей галочке спецрежима.
+  const controls = await getJournalControls(organizationId);
+  if (!automationOn(controls, "autoCreate")) redirect("/inspection/special-mode");
+  const autoFillAvailable = automationOn(controls, "autoFill");
 
   const activeBuildingId = await getActiveBuildingId(session);
   const [templates, orgRow, activeDocs, buildingSettings] = await Promise.all([
@@ -139,7 +143,7 @@ export default async function AutoJournalsPage() {
           { q: t("qa2Q"), a: t("qa2A") },
         ]}
       />
-      <AutoJournalsClient items={items} />
+      <AutoJournalsClient items={items} autoFillAvailable={autoFillAvailable} />
     </div>
   );
 }

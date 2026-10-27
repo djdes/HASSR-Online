@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { hasRecordedMeasurements } from "@/lib/journal-measurement-attribution";
 import { SensorCameraSetting } from "@/components/journals/sensor-camera-setting";
 import { TOUR } from "@/lib/tour-anchors";
@@ -2342,7 +2343,7 @@ export function ClimateDocumentClient({
             «Не заполнять в выходные дни» — в «Настройки журнала» (C3). */}
         {/* Q3: единый токен-лента вместо локального r24 + py-5. */}
         {/* Настройка документа — право руководителя (сервер отвечал 403). */}
-        {canManageDocument && !journalControls.specialMode ? (
+        {canManageDocument && automationOn(journalControls, "autoFill") ? (
         <div className={DOC_AUTOFILL_STRIP_CLASS} data-tour={TOUR.autofill}>
           <Switch
             checked={checkedAutoFill}

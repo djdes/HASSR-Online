@@ -10,6 +10,7 @@
  */
 
 import type { NavAccess } from "@/lib/app-nav";
+import type { AutomationFeature } from "@/lib/journal-controls";
 import type { MessageContract } from "@/i18n/message-contract";
 
 /** Ключ карточки = ключ её текстов в каталоге. */
@@ -33,8 +34,8 @@ export type SettingsCard = {
   access: NavAccess;
   /** Другие пути той же настройки (редакторы, подстраницы). */
   match?: string[];
-  /** В «особом режиме» журналов карточку не показываем. */
-  hideWhen?: "specialMode";
+  /** Карточка видна, только если эта часть автоматики выбрана в спецрежиме. */
+  requiresAutomation?: AutomationFeature;
 };
 
 const STAFF_PATH: NavAccess = { kind: "staffPath" };
@@ -52,7 +53,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   // ---- Журналы → Настройка журналов: журналы --------------------------
   { id: "settings_journals", href: "/settings/journals", icon: "ClipboardList", iconClass: "text-[#d946ef]", bgClass: "bg-[#fdf4ff]", section: "journals", group: "journals", access: FULL_ACCESS },
   { id: "settings_journal_periods", href: "/settings/journal-periods", icon: "CalendarRange", ...MINT, section: "journals", group: "journals", access: FULL_ACCESS },
-  { id: "settings_auto_journals", href: "/settings/auto-journals", icon: "Sparkles", ...BRIGHT, section: "journals", group: "journals", access: FULL_ACCESS, hideWhen: "specialMode" },
+  { id: "settings_auto_journals", href: "/settings/auto-journals", icon: "Sparkles", ...BRIGHT, section: "journals", group: "journals", access: FULL_ACCESS, requiresAutomation: "autoCreate" },
   { id: "settings_compliance", href: "/settings/compliance", icon: "ShieldCheck", ...INDIGO, section: "journals", group: "journals", access: FULL_ACCESS },
   {
     id: "settings_journal_pipelines",

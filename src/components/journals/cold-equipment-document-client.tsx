@@ -2,6 +2,7 @@
 
 import { hasRecordedMeasurements } from "@/lib/journal-measurement-attribution";
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { SensorCameraSetting } from "@/components/journals/sensor-camera-setting";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -2051,7 +2052,7 @@ export function ColdEquipmentDocumentClient({
             полоса всегда держала эталонную высоту. */}
         {/* Автозаполнение — настройка документа, право руководителя.
             У сотрудника PATCH отвечал 403, а тумблер стоял на виду. */}
-        {canManageDocument && !journalControls.specialMode ? (
+        {canManageDocument && automationOn(journalControls, "autoFill") ? (
         <div
           className={cn(
             DOC_AUTOFILL_STRIP_CLASS,

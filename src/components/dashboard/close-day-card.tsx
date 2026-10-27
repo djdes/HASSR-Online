@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -70,7 +71,7 @@ export function CloseDayCard() {
 
   const busy = submitting || pending;
 
-  if (controls.specialMode) return <Link href="/settings/qr-posters" className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]"><QrCode className="size-4" />{t("qrCodes")}</Link>;
+  if (!automationOn(controls, "closeDayAutofill")) return <Link href="/settings/qr-posters" className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]"><QrCode className="size-4" />{t("qrCodes")}</Link>;
 
   return (
     <div

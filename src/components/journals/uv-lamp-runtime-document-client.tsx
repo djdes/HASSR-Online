@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
@@ -1607,7 +1608,7 @@ export function UvLampRuntimeDocumentClient(props: Props) {
 
       {/* Полоса автозаполнения — сразу под строкой заголовка (эталон). */}
       {/* Настройка документа — право руководителя (сервер отвечал 403). */}
-      {props.status === "active" && canManageDocument && !journalControls.specialMode && (
+      {props.status === "active" && canManageDocument && automationOn(journalControls, "autoFill") && (
         <div className={DOC_AUTOFILL_STRIP_CLASS}>
           <Switch checked={autoFill} onCheckedChange={(checked) => void handleAutoFillChange(checked)} />
           <span className={DOC_AUTOFILL_LABEL_CLASS}>{t("autofillLabel")}</span>

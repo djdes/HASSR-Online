@@ -39,7 +39,7 @@ export async function SectionSettingsPage({
         actor={session.user}
         facts={facts}
         customNames={customNames}
-        specialMode={controls?.specialMode ?? false}
+        controls={controls}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -52,6 +53,10 @@ export function JournalAutoCreateToggle({
 }) {
   const t = useTranslations("journalUi.autoCreate");
   const { controls } = useJournalControls();
+  // Спецрежим: каждый ряд — по своей галочке («Автосоздание документов»,
+  // «Автозаполнение журналов»).
+  const createAllowed = automationOn(controls, "autoCreate");
+  const fillAllowed = automationOn(controls, "autoFill");
   const router = useRouter();
   const [autoCreate, setAutoCreate] = useState(initialAutoCreate);
   const [autoFill, setAutoFill] = useState(initialAutoFill);
@@ -105,13 +110,14 @@ export function JournalAutoCreateToggle({
     try {
       // Автозаполнять можно только существующий документ, поэтому
       // автосоздание включается заодно — модалка об этом предупреждает.
+      // Если автосоздание в спецрежиме не выбрано — его не трогаем.
       await save({
-        autoCreate: true,
+        autoCreate: createAllowed ? true : autoCreate,
         autoFill: true,
         responsibles: choice.responsibles,
         ...(choice.staff ? { staff: choice.staff } : {}),
       });
-      setAutoCreate(true);
+      if (createAllowed) setAutoCreate(true);
       setAutoFill(true);
       setDialog(null);
 
@@ -223,7 +229,7 @@ export function JournalAutoCreateToggle({
     }
     // Выключение автосоздания при живом автозаполнении гасит и его:
     // заполнять станет нечего, и молча это делать нельзя.
-    if (autoFill) {
+    if (autoFill && fillAllowed) {
       setDisableConfirm(true);
       return;
     }
@@ -239,11 +245,12 @@ export function JournalAutoCreateToggle({
     setFillOffConfirm(true);
   }
 
-  if (controls.specialMode) return null;
+  if (!createAllowed && !(fillAllowed && autofillSupported)) return null;
 
   return (
     <>
       <div className="divide-y divide-white/70 rounded-2xl bg-[#f5f6ff] print:hidden">
+        {createAllowed ? (
         <label className="flex flex-wrap items-center gap-3 px-4 py-2.5">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-[#5566f6]">
             {busy === "create" ? (
@@ -265,8 +272,9 @@ export function JournalAutoCreateToggle({
             disabled={disabled || busy !== null}
           />
         </label>
+        ) : null}
 
-        {autofillSupported ? (
+        {autofillSupported && fillAllowed ? (
           <label className="flex flex-wrap items-center gap-3 px-4 py-2.5">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-[#5566f6]">
               {busy === "fill" ? (
@@ -293,7 +301,7 @@ export function JournalAutoCreateToggle({
         open={dialog !== null}
         mode={dialog ?? "auto-create"}
         templateCode={templateCode}
-        autoCreateEnabled={autoCreate}
+        autoCreateEnabled={autoCreate || !createAllowed}
         onClose={() => setDialog(null)}
         onConfirm={dialog === "auto-fill" ? enableAutoFill : enableAutoCreate}
       />

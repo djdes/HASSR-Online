@@ -85,20 +85,14 @@ test("withJournalAutomation не мутирует исходную карту", 
   assert.deepEqual(next.health_check, { autoCreate: true, autoFill: false });
 });
 
-test("дефолты новой организации включают журналы из AUTOMATION_DEFAULT_ON_CODES", () => {
-  const defaults = defaultJournalAutomationJson();
-  for (const code of AUTOMATION_DEFAULT_ON_CODES) {
-    assert.equal(isAutomationDefaultOn(code), true);
-    assert.equal(isAutomationSupported(code), true);
-    assert.deepEqual(defaults[code], { autoCreate: true, autoFill: true });
+test("новая организация начинает без автоматики журналов — её включают спецрежимом (2026-10-28)", () => {
+  assert.deepEqual([...AUTOMATION_DEFAULT_ON_CODES], []);
+  assert.deepEqual(defaultJournalAutomationJson(), {});
+  for (const code of ["hygiene", "health_check", "cleaning"]) {
+    assert.equal(isAutomationDefaultOn(code), false, code);
   }
-  assert.equal(isAutomationDefaultOn("cleaning"), false);
-});
-
-test("журнал здоровья не автоматизируется по умолчанию — он выключен у новых организаций", () => {
-  assert.deepEqual([...AUTOMATION_DEFAULT_ON_CODES], ["hygiene"]);
-  assert.equal(isAutomationDefaultOn("health_check"), false);
-  assert.equal(defaultJournalAutomationJson().health_check, undefined);
+  // Гигиена по-прежнему умеет автоматику — просто не включена сама.
+  assert.equal(isAutomationSupported("hygiene"), true);
 });
 
 test("listAutomationCodes объединяет карту и легаси-список", () => {

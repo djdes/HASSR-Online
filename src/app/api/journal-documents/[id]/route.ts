@@ -164,7 +164,7 @@ export async function PATCH(
     return errors.response("EMPTY_REQUEST");
   }
   if (body.autoFill === true && doc.autoFill !== true) {
-    const blocked = await rejectJournalAutomation(doc.organizationId);
+    const blocked = await rejectJournalAutomation(doc.organizationId, "autoFill");
     if (blocked) return blocked;
   }
   const data: Record<string, unknown> = {};

@@ -80,12 +80,13 @@ export type JournalAutomationOrg = {
 
 /**
  * Журналы, у которых автоматика включена «из коробки» у новых
- * организаций. Гигиенический — самый частый ежедневный (строка на
- * сотрудника × день). Журнал здоровья сюда НЕ входит: он выключен по
- * умолчанию (см. health-check-default-off.ts), и автоматика для
- * выключенного журнала плодила бы документы, которых никто не видит.
+ * организаций. С 2026-10-28 — ни одного: автоматика журналов включается
+ * спецрежимом (src/lib/journal-controls.ts), и новая организация
+ * начинает без неё — журналы заполняют сотрудники. Раньше здесь была
+ * гигиена: включи руководитель спецрежим позже, её автоматика ожила бы
+ * сама, хотя её никто не выбирал.
  */
-export const AUTOMATION_DEFAULT_ON_CODES = ["hygiene"] as const;
+export const AUTOMATION_DEFAULT_ON_CODES: readonly string[] = [];
 
 /**
  * Журналы, которые автоматика вообще умеет обслуживать (для остальных
@@ -109,7 +110,7 @@ export function isPerEmployeeJournal(code: string): boolean {
 
 /** Включена ли автоматика по умолчанию для этого кода журнала. */
 export function isAutomationDefaultOn(code: string): boolean {
-  return (AUTOMATION_DEFAULT_ON_CODES as readonly string[]).includes(code);
+  return AUTOMATION_DEFAULT_ON_CODES.includes(code);
 }
 
 function toStringArray(value: unknown): string[] {
@@ -240,8 +241,9 @@ export function withJournalAutomation(
 }
 
 /**
- * Дефолт новой организации. Гигиенический журнал ведётся сам с первого
- * дня — иначе новая компания месяц не подозревает, что автоматика есть.
+ * Дефолт новой организации: автоматики нет ни у одного журнала (см.
+ * AUTOMATION_DEFAULT_ON_CODES). Её включают сами — спецрежимом и
+ * тумблерами в журналах.
  */
 export function defaultJournalAutomationJson(): JournalAutomationMap {
   const map: JournalAutomationMap = {};

@@ -1,4 +1,5 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
+import { automationOn } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildingTargets } from "@/lib/active-building";
@@ -90,7 +91,13 @@ async function runForOrganization(
     errors: [],
   };
 
-  if ((await getJournalControls(org.id)).specialMode) return result;
+  // Спецрежим: этот прогон заводит документы (автосоздание) и заполняет
+  // сегодняшний день (автозаполнение) — каждая половинка по своей галочке.
+  // Без автосоздания документы прогон не ведёт вовсе; заполнение
+  // существующих документов остаётся за cron/auto-fill-journals.
+  const controls = await getJournalControls(org.id);
+  if (!automationOn(controls, "autoCreate")) return result;
+  const fillAllowed = automationOn(controls, "autoFill");
 
   // «Сегодня» — в зоне организации, а не процесса: на проде процесс живёт
   // в UTC, и с 00:00 до 03:00 МСК его «сегодня» — это ещё вчера.
@@ -154,7 +161,7 @@ async function runForOrganization(
       if (next.created) result.nextPeriodCreated += 1;
 
       const capability = getAutofillCapability(code);
-      if (!automation.autoFill || !capability) continue;
+      if (!fillAllowed || !automation.autoFill || !capability) continue;
       if (!current.documentId) continue;
 
       const document = await db.journalDocument.findFirst({

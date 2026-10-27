@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { navIcon } from "@/components/layout/nav-icons";
+import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 
 /**
  * J5+ — ⌘K / Ctrl+K command palette.
@@ -148,10 +149,12 @@ export function CommandPalette() {
     return [...sectionItems, ...cardItems];
   }, [nav]);
   // «Закрыть день» и «Догнать пропуски» — у кого есть «Сегодня».
+  // «Закрыть день» — это «Автозаполнить» на главной: по галочке спецрежима.
+  const closeDayAllowed = useAutomationOn("closeDayAutofill");
   const actionItems = useMemo<StaticItem[]>(() => {
     if (!nav.sections.some((section) => section.tabs.some((tab) => tab.href === "/dashboard"))) return [];
     return [
-      {
+      ...(closeDayAllowed ? [{
         kind: "action",
         label: t("closeDayLabel"),
         hint: t("closeDayHint"),
@@ -179,7 +182,7 @@ export function CommandPalette() {
             return false;
           }
         },
-      },
+      } satisfies StaticItem] : []),
       {
         kind: "route",
         label: t("catchUpLabel"),
@@ -189,7 +192,7 @@ export function CommandPalette() {
         keywords: t("catchUpKeywords").split(","),
       },
     ];
-  }, [nav, t]);
+  }, [nav, t, closeDayAllowed]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

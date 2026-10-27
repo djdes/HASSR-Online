@@ -27,6 +27,7 @@ import {
 } from "@/components/journals/journal-responsive";
 import { GRID_VIEWPORT_CLASS } from "@/components/journals/journal-grid";
 import { Switch } from "@/components/ui/switch";
+import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 import { TOUR, type TourAnchor } from "@/lib/tour-anchors";
 
 /**
@@ -165,7 +166,7 @@ export function JournalDocumentShell({
   headerChildren,
   closed = false,
   closedHint,
-  autoFill,
+  autoFill: autoFillStrip,
   todayProgress,
   beforeToggle,
   mobileView,
@@ -188,6 +189,8 @@ export function JournalDocumentShell({
   const t = useTranslations("journalControls.actions");
   const displayedTitle = useDocumentDisplayTitle(title);
   const canManage = useCanManageJournalDocument();
+  // Полоса автозаполнения — часть спецрежима («Автозаполнение журналов»).
+  const autoFill = useAutomationOn("autoFill") ? autoFillStrip : undefined;
   // Закрытый документ править нельзя: сервер отвечает 400 «Закрытый
   // документ нельзя редактировать», а кнопка «Настройки» создавала вид,
   // что можно — и окно зависало в «Сохранение…». Прячем её до тех пор,

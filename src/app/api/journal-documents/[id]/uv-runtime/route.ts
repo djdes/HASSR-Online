@@ -38,7 +38,7 @@ export async function POST(
   const { id } = await params;
   const body = (await request.json()) as { action?: UvRuntimeAction };
   if (body.action === "apply_auto_fill") {
-    const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+    const blocked = await rejectJournalAutomation(getActiveOrgId(session), "autoFill");
     if (blocked) return blocked;
   }
   if (body.action !== "apply_auto_fill") {

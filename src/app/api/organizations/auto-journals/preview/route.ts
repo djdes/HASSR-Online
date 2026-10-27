@@ -78,7 +78,7 @@ export async function GET(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
-  const blocked = await rejectJournalAutomation(organizationId);
+  const blocked = await rejectJournalAutomation(organizationId, ["autoCreate", "autoFill"]);
   if (blocked) return blocked;
   const orgRow = await db.organization.findUnique({
     where: { id: organizationId },

@@ -92,7 +92,7 @@ export async function POST(
   const overwrite = Boolean(body?.overwrite);
 
   const organizationId = getActiveOrgId(session);
-  const blocked = await rejectJournalAutomation(organizationId);
+  const blocked = await rejectJournalAutomation(organizationId, "copyYesterday");
   if (blocked) return blocked;
   const doc = await db.journalDocument.findUnique({
     where: { id: documentId },

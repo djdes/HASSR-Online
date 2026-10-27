@@ -28,7 +28,7 @@ export async function POST(
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as { action?: string };
 
-  const blocked = await rejectJournalAutomation(getActiveOrgId(session));
+  const blocked = await rejectJournalAutomation(getActiveOrgId(session), "autoFill");
   if (blocked) return blocked;
   if (body.action !== "apply_auto_fill") {
     return NextResponse.json({ error: "Неверное действие" }, { status: 400 });

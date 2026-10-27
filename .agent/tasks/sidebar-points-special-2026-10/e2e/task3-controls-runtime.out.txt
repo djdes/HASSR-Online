@@ -1,0 +1,154 @@
+[
+  {
+    "case": "old org with hygiene automation",
+    "automation": {
+      "enabled": true,
+      "autoFill": true,
+      "autoCreate": true,
+      "copyYesterday": true,
+      "closeDayAutofill": true
+    },
+    "persisted": {
+      "automation": {
+        "enabled": true,
+        "autoFill": true,
+        "autoCreate": true,
+        "copyYesterday": true,
+        "closeDayAutofill": true
+      },
+      "sensorCamera": {
+        "cold_equipment_control": false,
+        "climate_control": false
+      },
+      "brakerageSetup": {}
+    },
+    "guard": "allowed",
+    "ok": true
+  },
+  {
+    "case": "old org with legacy autoJournalCodes",
+    "automation": {
+      "enabled": true,
+      "autoFill": true,
+      "autoCreate": true,
+      "copyYesterday": true,
+      "closeDayAutofill": true
+    },
+    "persisted": {
+      "automation": {
+        "enabled": true,
+        "autoFill": true,
+        "autoCreate": true,
+        "copyYesterday": true,
+        "closeDayAutofill": true
+      },
+      "sensorCamera": {
+        "cold_equipment_control": false,
+        "climate_control": false
+      },
+      "brakerageSetup": {}
+    },
+    "guard": "allowed",
+    "ok": true
+  },
+  {
+    "case": "old org, automation never used",
+    "automation": {
+      "enabled": false,
+      "autoFill": false,
+      "autoCreate": false,
+      "copyYesterday": false,
+      "closeDayAutofill": false
+    },
+    "persisted": {
+      "automation": {
+        "enabled": false,
+        "autoFill": false,
+        "autoCreate": false,
+        "copyYesterday": false,
+        "closeDayAutofill": false
+      },
+      "sensorCamera": {
+        "cold_equipment_control": false,
+        "climate_control": false
+      },
+      "brakerageSetup": {}
+    },
+    "guard": 403,
+    "ok": true
+  },
+  {
+    "case": "old org with old specialMode=true",
+    "automation": {
+      "enabled": false,
+      "autoFill": false,
+      "autoCreate": false,
+      "copyYesterday": false,
+      "closeDayAutofill": false
+    },
+    "persisted": {
+      "automation": {
+        "enabled": false,
+        "autoFill": false,
+        "autoCreate": false,
+        "copyYesterday": false,
+        "closeDayAutofill": false
+      },
+      "sensorCamera": {
+        "cold_equipment_control": true,
+        "climate_control": false
+      },
+      "brakerageSetup": {}
+    },
+    "guard": 403,
+    "ok": true
+  },
+  {
+    "case": "new org after the cut-off",
+    "automation": {
+      "enabled": false,
+      "autoFill": false,
+      "autoCreate": false,
+      "copyYesterday": false,
+      "closeDayAutofill": false
+    },
+    "persisted": {
+      "automation": {
+        "enabled": false,
+        "autoFill": false,
+        "autoCreate": false,
+        "copyYesterday": false,
+        "closeDayAutofill": false
+      },
+      "sensorCamera": {
+        "cold_equipment_control": false,
+        "climate_control": false
+      },
+      "brakerageSetup": {}
+    },
+    "guard": 403,
+    "ok": true
+  },
+  {
+    "case": "explicit choice wins, camera patch keeps it, guard names the feature",
+    "automation": {
+      "enabled": true,
+      "autoFill": false,
+      "autoCreate": true,
+      "copyYesterday": false,
+      "closeDayAutofill": true
+    },
+    "camera": {
+      "cold_equipment_control": false,
+      "climate_control": true
+    },
+    "guard": 403,
+    "body": {
+      "error": "Функция «Автозаполнение журналов» выключена. Включить её: «Пришла проверка» → «Спецрежим».",
+      "code": "special_mode",
+      "feature": "autoFill"
+    },
+    "ok": true
+  }
+]
+PASS

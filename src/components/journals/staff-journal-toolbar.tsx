@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { TOUR } from "@/lib/tour-anchors";
 
 import { useEffect, useMemo, useState } from "react";
@@ -793,7 +794,7 @@ export function StaffJournalToolbar({
   const canManageDocument = useCanManageJournalDocument();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { controls } = useJournalControls();
-  hideAutoFill = hideAutoFill || controls.specialMode;
+  hideAutoFill = hideAutoFill || !automationOn(controls, "autoFill");
   const [checked, setChecked] = useState(autoFill);
   const [isSwitching, setIsSwitching] = useState(false);
   // Тумблер спрашивает всегда: включение — что заполним за прошедшие дни,

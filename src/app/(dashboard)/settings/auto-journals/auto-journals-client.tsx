@@ -34,6 +34,8 @@ type Item = {
 
 type Props = {
   items: Item[];
+  /** Галочка «Автозаполнение журналов» в спецрежиме: без неё колонки нет. */
+  autoFillAvailable?: boolean;
 };
 
 /**
@@ -44,7 +46,7 @@ type Props = {
  *   - справа: summary-плитки + действие «Создать сейчас» (ручной
  *     запуск, без ожидания cron'a).
  */
-export function AutoJournalsClient({ items }: Props) {
+export function AutoJournalsClient({ items, autoFillAvailable = true }: Props) {
   const router = useRouter();
   const t = useTranslations("settingsUi.autoJournalsClient");
   const [state, setState] = useState<Item[]>(items);
@@ -261,6 +263,7 @@ export function AutoJournalsClient({ items }: Props) {
                   ) : null}
                 </div>
               </label>
+              {autoFillAvailable ? (
               <div className="pb-3 pl-9 pr-1">
                 {item.autoFillSupported ? (
                   <button
@@ -283,6 +286,7 @@ export function AutoJournalsClient({ items }: Props) {
                   </span>
                 )}
               </div>
+              ) : null}
             </li>
           ))}
           {filtered.length === 0 ? (

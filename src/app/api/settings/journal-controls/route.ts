@@ -8,7 +8,14 @@ import { SENSOR_JOURNAL_CODES } from "@/lib/journal-controls";
 
 export const dynamic = "force-dynamic";
 const schema = z.object({
-  specialMode: z.boolean().optional(),
+  /** Спецрежим: включён ли и какие части автоматики видны в журналах. */
+  automation: z.object({
+    enabled: z.boolean(),
+    autoFill: z.boolean(),
+    autoCreate: z.boolean(),
+    copyYesterday: z.boolean(),
+    closeDayAutofill: z.boolean(),
+  }).strict().optional(),
   camera: z.object({ code: z.enum(SENSOR_JOURNAL_CODES), enabled: z.boolean() }).optional(),
   setup: z.object({ code: z.enum(["finished_product", "perishable_rejection"]), decision: z.literal("declined") }).optional(),
 }).strict().refine((body) => Object.keys(body).length > 0);
@@ -27,9 +34,9 @@ export async function PATCH(request: Request) {
   if (!body.success) return NextResponse.json({ error: "Проверьте настройки" }, { status: 400 });
   const organizationId = getActiveOrgId(auth.session);
   const before = await getJournalControls(organizationId);
-  const { specialMode, camera, setup } = body.data;
+  const { automation, camera, setup } = body.data;
   const controls = await updateJournalControls(organizationId, {
-    ...(specialMode !== undefined ? { specialMode } : {}),
+    ...(automation ? { automation } : {}),
     ...(camera ? { sensorCamera: { [camera.code]: camera.enabled } } : {}),
     ...(setup ? { brakerageSetup: { [setup.code]: setup.decision } } : {}),
   });

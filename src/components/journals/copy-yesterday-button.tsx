@@ -1,6 +1,7 @@
 "use client";
 
 import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Loader2 } from "lucide-react";
@@ -140,7 +141,7 @@ export function useCopyYesterdayAction(documentId: string) {
     </>
   );
 
-  return { run, busy, dialog, hidden: controls.specialMode };
+  return { run, busy, dialog, hidden: !automationOn(controls, "copyYesterday") };
 }
 
 export function CopyYesterdayButton({ documentId }: { documentId: string }) {
