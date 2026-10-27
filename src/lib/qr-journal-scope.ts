@@ -2,7 +2,7 @@ import { CLIMATE_DOCUMENT_TEMPLATE_CODE, normalizeClimateDocumentConfig } from "
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE, normalizeColdEquipmentDocumentConfig } from "@/lib/cold-equipment-document";
 import { db } from "@/lib/db";
 import { isJournalObjectQrCode } from "@/lib/journal-qr-target";
-import { isUvLampType } from "@/lib/uv-lamp";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE, normalizeUvRuntimeDocumentConfig } from "@/lib/uv-lamp-runtime-document";
 
 /**
@@ -53,13 +53,13 @@ async function directoryIds(organizationId: string, code: string): Promise<strin
   }
   const equipment = await db.equipment.findMany({
     where: { area: { organizationId } },
-    select: { id: true, type: true, tempMin: true, tempMax: true },
+    select: { id: true, name: true, type: true, tempMin: true, tempMax: true },
   });
-  if (code === UV_LAMP_RUNTIME_TEMPLATE_CODE) return equipment.filter((item) => isUvLampType(item.type)).map((item) => item.id);
+  if (code === UV_LAMP_RUNTIME_TEMPLATE_CODE) return equipment.filter((item) => isUvLampEquipment(item)).map((item) => item.id);
   // Как `buildColdEquipmentConfigFromEquipment`: холодильник/морозильник или норма температуры.
   return equipment
     .filter((item) => {
-      if (isUvLampType(item.type)) return false;
+      if (isUvLampEquipment(item)) return false;
       const type = item.type?.toLowerCase();
       return type === "refrigerator" || type === "freezer" || item.tempMin != null || item.tempMax != null;
     })

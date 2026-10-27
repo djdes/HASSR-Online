@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDuration, isUvLampType, lampRemainingHours, lampWarnLevel, sessionHours, shouldSendLampWarning } from "./uv-lamp";
+import { formatDuration, isUvLampEquipment, isUvLampType, lampRemainingHours, lampWarnLevel, sessionHours, shouldSendLampWarning } from "./uv-lamp";
 
 test("остаток ресурса и пороги: ≤10 % — «скоро», 0 — «исчерпан»", () => {
   assert.equal(lampRemainingHours(8000, 1500), 6500);
@@ -31,4 +31,17 @@ test("распознаём УФ-лампу по типу и старым наз�
   assert.equal(isUvLampType("uv_lamp"), true);
   assert.equal(isUvLampType("Бактерицидный облучатель"), true);
   assert.equal(isUvLampType("refrigerator"), false);
+});
+
+test("УФ-лампа — по типу и, у старых ламп «Другое», по названию", () => {
+  assert.equal(isUvLampEquipment({ type: "uv_lamp", name: "Лампа 1" }), true);
+  assert.equal(isUvLampEquipment({ type: "other", name: "УФ-лампа №1" }), true);
+  assert.equal(isUvLampEquipment({ type: "other", name: "Лампа UV в цехе" }), true);
+  assert.equal(isUvLampEquipment({ type: "other", name: "Бактерицидный облучатель ОБН-150" }), true);
+  assert.equal(isUvLampEquipment({ type: null, name: "Рециркулятор-облучатель" }), true);
+  // «Уфа» — не «УФ»; холодильник и фритюрница лампой не бывают.
+  assert.equal(isUvLampEquipment({ type: "other", name: "Холодильник Уфа" }), false);
+  assert.equal(isUvLampEquipment({ type: "refrigerator", name: "Холодильник с UV-подсветкой" }), false);
+  assert.equal(isUvLampEquipment({ type: "fryer", name: "Фритюрница УФ" }), false);
+  assert.equal(isUvLampEquipment({ type: "oven", name: "Пароконвектомат" }), false);
 });

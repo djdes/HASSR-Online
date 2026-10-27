@@ -26,6 +26,7 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
+import { isUvLampEquipment, lampRemainingHours } from "@/lib/uv-lamp";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,11 @@ function tempRange(t: TempRangeT, min: number | null, max: number | null): strin
   if (min !== null) return t("tempFrom", { value: min });
   if (max !== null) return t("tempTo", { value: max });
   return "—";
+}
+
+function lampLeftLabel(t: TempRangeT, lifetimeHours: number | null, usedHours: number): string {
+  const remaining = lampRemainingHours(lifetimeHours, usedHours);
+  return remaining === null ? "—" : t("lampLeft", { hours: Math.round(remaining) });
 }
 
 export default async function EquipmentSettingsPage() {
@@ -384,7 +390,10 @@ function EquipmentTable({
                   </span>
                 </td>
                 <td className="px-6 py-4 font-mono text-[14px] text-[#0b1024]">
-                  {tempRange(t, item.tempMin, item.tempMax)}
+                  {/* У УФ-лампы температуры нет — показываем остаток ресурса. */}
+                  {isUvLampEquipment(item)
+                    ? lampLeftLabel(t, item.lampLifetimeHours, item.lampUsedHours)
+                    : tempRange(t, item.tempMin, item.tempMax)}
                 </td>
                 <td className="px-6 py-4 text-center">
                   {item.tuyaDeviceId ? (

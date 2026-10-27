@@ -102,6 +102,23 @@ export function workBuildingsForUser(
   return subset.length > 0 ? subset : buildings;
 }
 
+/**
+ * Работает ли сотрудник на точке объекта (холодильник, склад, документ
+ * журнала) — кто попадает в «Кто заполняет» на QR и кому можно записать.
+ * Правила `workBuildingsForUser`: пустой `buildingIds` — везде; в списке
+ * только удалённые точки — тоже везде; сотрудник офиса работает в офисе,
+ * а не на торговой точке. `orgBuildingIds` — точки организации.
+ */
+export function worksAtBuilding(
+  orgBuildingIds: readonly string[],
+  userBuildingIds: readonly string[],
+  buildingId: string,
+): boolean {
+  if (userBuildingIds.length === 0) return true;
+  const known = userBuildingIds.filter((id) => orgBuildingIds.includes(id));
+  return known.length === 0 || known.includes(buildingId);
+}
+
 /** Точка для правил «где работает»: хватает id и вида. */
 export type BuildingKindRef = { id: string; kind?: string };
 

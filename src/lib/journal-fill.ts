@@ -1,6 +1,7 @@
 import { orderHubJournals } from "@/lib/hub-journals-order";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
+import { filterByQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
 import { isPerpetualDateTo, parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
@@ -231,14 +232,16 @@ export async function listJournalFillDocuments(orgId: string, code: string, toda
 
 export async function listFillEmployees(
   orgId: string,
-  options: { includeCommission?: boolean } = {}
+  options: { includeCommission?: boolean; pointScope?: QrPointScope } = {}
 ): Promise<JournalFillEmployee[]> {
   // Бракеражи: сторонняя комиссия тоже выбирает себя на QR, чтобы подписать.
-  const users = await db.user.findMany({
+  const everyone = await db.user.findMany({
     where: { organizationId: orgId, ...(options.includeCommission ? ORG_SIGNER_WHERE : ORG_ROSTER_WHERE) },
-    select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } }, qrPinHash: true },
+    select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } }, qrPinHash: true, buildingIds: true },
     orderBy: { name: "asc" },
   });
+  // Документ точки — только сотрудники этой точки (пустые точки — везде).
+  const users = filterByQrPoint(everyone, options.pointScope ?? null);
   // Должность — из справочника (как на сайте и в PDF), а не устаревшее поле.
   return users.map((user) => ({ id: user.id, name: user.name, positionTitle: getUserDisplayTitle(user), hasPin: Boolean(user.qrPinHash) }));
 }

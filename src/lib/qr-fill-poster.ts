@@ -5,6 +5,8 @@ import {
   type ClimateMetricConfig,
 } from "@/lib/climate-document";
 import { db } from "@/lib/db";
+import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { brandQrSvg } from "@/lib/brand-qr";
 import { buildingTargets } from "@/lib/building-targets";
@@ -72,6 +74,7 @@ export async function loadPosterOrgName(organizationId: string): Promise<string>
 type EquipmentSource = {
   id: string;
   name: string;
+  type?: string | null;
   tempMin: number | null;
   tempMax: number | null;
   area: { name: string };
@@ -83,10 +86,13 @@ export async function buildEquipmentPoster(
   orgName: string
 ): Promise<QrPoster> {
   const url = qrFillUrl(origin, "equipment", item.id);
-  const norm = rangeLabel(item.tempMin, item.tempMax, "°C");
+  // УФ-лампа температуру не меряет — норму «…°C» на её наклейке не печатаем.
+  const equipmentKind = isUvLampEquipment(item) ? "uv" : isFryerEquipmentType(item.type) ? "fryer" : null;
+  const norm = equipmentKind === "uv" ? null : rangeLabel(item.tempMin, item.tempMax, "°C");
   return {
     id: item.id,
     kind: "equipment",
+    equipmentKind,
     title: item.name,
     orgName,
     // Цех не печатаем: плакат висит на самом холодильнике, а строка с
@@ -585,7 +591,7 @@ export async function loadQrPoster(params: {
   }
   const item = await db.equipment.findFirst({
     where: { id: params.id, area: { organizationId: params.organizationId } },
-    select: { id: true, name: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
+    select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
   });
   if (!item) return null;
   return buildEquipmentPoster(item, params.origin, orgName);

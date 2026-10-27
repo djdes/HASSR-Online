@@ -29,6 +29,23 @@ export function isUvLampType(type: string | null | undefined): boolean {
   return value === UV_LAMP_TYPE || /(^|[^a-zа-я])(уф|uv|бактерицид|облучател)/i.test(value);
 }
 
+const COLD_TYPES = new Set(["refrigerator", "freezer", "fridge"]);
+/** «УФ» / «UV» отдельным словом (не «Уфа»), бактерицидный, облучатель. */
+const UV_NAME = /(^|[^a-zа-яё])(уф|uv)(?![a-zа-яё])|бактерицид|облучател/i;
+
+/**
+ * Это УФ-лампа — одно правило для наклейки, API, журнала и настроек
+ * (2026-10-27). Тип «УФ-лампа» — да; старые лампы, сохранённые с типом
+ * «Другое» (раньше тип «УФ-лампа» не проходил проверку), узнаём по
+ * названию. Холодильник, морозильник и фритюрница лампой не бывают.
+ */
+export function isUvLampEquipment(item: { type?: string | null; name?: string | null }): boolean {
+  if (isUvLampType(item.type)) return true;
+  const type = (item.type ?? "").trim().toLowerCase();
+  if (COLD_TYPES.has(type) || type === "fryer") return false;
+  return UV_NAME.test(item.name ?? "");
+}
+
 export function lampRemainingHours(lifetimeHours: number | null | undefined, usedHours: number): number | null {
   if (!lifetimeHours || lifetimeHours <= 0) return null;
   return Math.max(0, lifetimeHours - usedHours);

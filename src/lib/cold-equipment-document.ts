@@ -6,6 +6,7 @@ import {
   toDateKey,
 } from "@/lib/hygiene-document";
 import { normalizeReadingPhotos, withReadingPhoto } from "@/lib/reading-photos";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 
 export const COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE = "cold_equipment_control";
 /** Название журнала — по форме Приложения № 2 к СанПиН 2.3/2.4.4282-26 (`COLD_EQUIPMENT_LEGAL_BASIS`). */
@@ -445,6 +446,8 @@ export function buildColdEquipmentConfigFromEquipment(
   options: { sampleFallback?: boolean } = {}
 ): ColdEquipmentDocumentConfig {
   const relevantEquipment = equipment.filter((item) => {
+    // УФ-лампа температуру не меряет, даже если у старой лампы осталась норма.
+    if (isUvLampEquipment(item)) return false;
     const normalizedType = item.type?.toLowerCase();
     const looksColdType =
       normalizedType === "refrigerator" || normalizedType === "freezer";

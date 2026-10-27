@@ -5,6 +5,7 @@ import {
   allowedBuildingsForUser,
   isOfficeBuilding,
   workBuildingsForUser,
+  worksAtBuilding,
   pointScopeForUser,
   receivesPlaceEvent,
   splitsOfficeAndPoints,
@@ -189,4 +190,21 @@ test("уведомления по месту: точке — её люди и о
   assert.equal(splitsOfficeAndPoints({ enabled: true, buildings: withOffice }), true);
   assert.equal(splitsOfficeAndPoints({ enabled: false, buildings: withOffice }), false);
   assert.equal(splitsOfficeAndPoints({ enabled: true, buildings: [A, B] }), false);
+});
+
+test("QR по точке: кто работает на точке объекта", () => {
+  const OFFICE = "b-office";
+  const org = [OFFICE, A.id, B.id];
+  // Пустые точки — работает везде.
+  assert.equal(worksAtBuilding(org, [], A.id), true);
+  // Своя точка — да, чужая — нет.
+  assert.equal(worksAtBuilding(org, [A.id], A.id), true);
+  assert.equal(worksAtBuilding(org, [A.id], B.id), false);
+  assert.equal(worksAtBuilding(org, [A.id, B.id], B.id), true);
+  // Только удалённые точки — висящие id не отрезают человека.
+  assert.equal(worksAtBuilding(org, ["b-deleted"], B.id), true);
+  assert.equal(worksAtBuilding(org, ["b-deleted", A.id], B.id), false);
+  // Сотрудник офиса работает в офисе, а не на торговой точке.
+  assert.equal(worksAtBuilding(org, [OFFICE], A.id), false);
+  assert.equal(worksAtBuilding(org, [OFFICE], OFFICE), true);
 });

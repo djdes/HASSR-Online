@@ -7,6 +7,7 @@ import { FRYER_FILL_NO_DOCUMENT_ERROR, resolveFryerFillTarget } from "@/lib/equi
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { parseFryerQrInput, saveFryerQrEntry } from "@/lib/fryer-oil-qr";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
@@ -75,10 +76,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
   // Сотрудник этой организации; «Кто заполняет» — как у остальных наклеек.
   const employee = await db.user.findFirst({
     where: { id: actor.employee.id, organizationId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true, role: true, canManageSettings: true },
+    select: { id: true, name: true, role: true, canManageSettings: true, buildingIds: true },
   });
   if (!employee) {
     return NextResponse.json({ error: "Сотрудник не найден", errorCode: "equipmentFill.errors.employeeNotFound" }, { status: 404 });
+  }
+  // Точка цеха: записывают только сотрудники этой точки (как в списке на наклейке).
+  if (!worksAtQrPoint(await loadQrPointScope(organizationId, fryer.area.buildingId), employee.buildingIds)) {
+    return NextResponse.json({ error: QR_POINT_DENIED, errorCode: QR_POINT_DENIED_CODE }, { status: 403 });
   }
   if (!canFillObject(fryer.fillerUserIds, employee)) {
     return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });

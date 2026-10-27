@@ -6,10 +6,11 @@ import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { OBJECT_FILLER_DENIED } from "@/lib/object-fillers";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
+import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
-import { isUvLampType } from "@/lib/uv-lamp";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { ensureUvDocumentForLamp, lampState, listLampOperators, toggleLamp } from "@/lib/uv-lamp-runs";
 import { isManagementRole } from "@/lib/user-roles";
 import { decodeRouteParam } from "@/lib/route-param";
@@ -47,10 +48,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
       type: true,
       fillerUserIds: true,
       lampLifetimeHours: true,
-      area: { select: { name: true, organizationId: true, organization: { select: { timezone: true, qrFillMode: true } } } },
+      area: { select: { name: true, organizationId: true, buildingId: true, organization: { select: { timezone: true, qrFillMode: true } } } },
     },
   });
-  if (!lamp || !isUvLampType(lamp.type)) return NextResponse.json({ error: "Это не УФ-лампа", errorCode: "equipmentFill.errors.notUvLamp" }, { status: 404 });
+  if (!lamp || !isUvLampEquipment(lamp)) return NextResponse.json({ error: "Это не УФ-лампа", errorCode: "equipmentFill.errors.notUvLamp" }, { status: 404 });
   const organizationId = lamp.area.organizationId;
   const timeZone = lamp.area.organization.timezone || "Europe/Moscow";
   const mode = normalizeQrFillMode(lamp.area.organization.qrFillMode);
@@ -71,8 +72,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     lamp: { id: lamp.id, name: lamp.name, areaName: lamp.area.name, lampLifetimeHours: lamp.lampLifetimeHours },
     todayKey: orgTodayKey(timeZone),
   });
-  const operators = await listLampOperators({ organizationId, fillerUserIds: lamp.fillerUserIds, documentResponsibleId: doc?.responsibleUserId ?? null });
-  const person = await db.user.findUnique({ where: { id: actor.employee.id }, select: { role: true, canManageSettings: true } });
+  // Точка цеха лампы: записывают только её сотрудники — и руководство тоже.
+  const pointScope = await loadQrPointScope(organizationId, lamp.area.buildingId);
+  const operators = await listLampOperators({ organizationId, fillerUserIds: lamp.fillerUserIds, documentResponsibleId: doc?.responsibleUserId ?? null, pointScope });
+  const person = await db.user.findUnique({ where: { id: actor.employee.id }, select: { role: true, canManageSettings: true, buildingIds: true } });
+  if (!worksAtQrPoint(pointScope, person?.buildingIds)) return NextResponse.json({ error: QR_POINT_DENIED, errorCode: QR_POINT_DENIED_CODE }, { status: 403 });
   const allowed =
     operators.some((operator) => operator.id === actor.employee.id) || isManagementRole(person?.role ?? "") || person?.canManageSettings === true;
   if (!allowed) return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });

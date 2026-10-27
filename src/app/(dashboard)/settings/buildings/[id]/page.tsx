@@ -9,7 +9,7 @@ import { listOrganizationBuildings, listPersonBuildings } from "@/lib/active-bui
 import { buildPlaceOptions } from "@/lib/area-building";
 import { getUserDisplayTitle, isManagementRole } from "@/lib/user-roles";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
-import { UV_LAMP_TYPE, isUvLampType, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
+import { UV_LAMP_TYPE, isUvLampEquipment, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
@@ -181,8 +181,8 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
   };
   const hours = (value: number) => t("uv.hours", { value: numberFormat.format(Math.round(value)) });
 
-  const lamps = equipment.filter((item) => isUvLampType(item.type));
-  const units = equipment.filter((item) => !isUvLampType(item.type));
+  const lamps = equipment.filter((item) => isUvLampEquipment(item));
+  const units = equipment.filter((item) => !isUvLampEquipment(item));
   const donors = buildings
     .filter((building) => building.id !== point.id)
     .map((building) => ({

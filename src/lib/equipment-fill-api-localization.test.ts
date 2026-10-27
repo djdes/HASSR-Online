@@ -27,13 +27,14 @@ test("shared QR Russian compatibility catalog is identical to canonical RU", asy
   assert.deepEqual(equipmentFillRu,(await loadMessages("ru")).equipmentFill,"Run node scripts/generate-qr-fill-fallback.cjs after equipmentFill catalog changes");
 });
 const photo="/uploads/readings/0123456789abcdef0123456789abcdef.jpg";
-function fixture(options:{deny?:boolean;invalid?:boolean;limited?:boolean;missing?:boolean;uv?:boolean;required?:boolean;noDocument?:boolean;climate?:boolean}={}) {
+function fixture(options:{deny?:boolean;invalid?:boolean;limited?:boolean;missing?:boolean;uv?:boolean;required?:boolean;noDocument?:boolean;climate?:boolean;otherPoint?:boolean}={}) {
   const writes:Record<string,unknown>[]=[],audits:Record<string,unknown>[]=[],toggles:Record<string,unknown>[]=[],reads:unknown[]=[];
-  const person={id:"person",name:"Customer O‘tkir",role:"cook",canManageSettings:false,qrPinHash:"hash"};
+  const person={id:"person",name:"Customer O‘tkir",role:"cook",canManageSettings:false,qrPinHash:"hash",buildingIds:options.otherPoint?["pb"]:[]};
   const actor=options.deny?{ok:false,status:403,error:"legacy wrong PIN",errorCode:"equipmentFill.errors.pinWrong",errorParams:{attempts:3}}:{ok:true,employee:person};
   const equipment={id:"equipment",name:"Customer freezer",type:options.uv?"uv_lamp":"freezer",tempMin:0,tempMax:8,lampLifetimeHours:100,fillerUserIds:[],area:{id:"area",name:"Customer area",organizationId:"verified-org",organization:{timezone:"Asia/Tashkent",qrFillMode:"public"}}};
   const mocks:Record<string,unknown>={
     "@/lib/db":{db:{equipment:{findUnique:async()=>{reads.push("equipment");return equipment;}},user:{findFirst:async(q:{where:{organizationId:string}})=>{assert.equal(q.where.organizationId,"verified-org");return options.missing?null:person;},findUnique:async()=>person},journalDocumentEntry:{findUnique:async()=>({data:{responsibleTitle:"Customer title",temperatures:{other:2}}}),findMany:async()=>[],upsert:async(q:Record<string,unknown>)=>{writes.push(q);}}}},
+    "@/lib/qr-point-roster":{QR_POINT_DENIED:"legacy other point",QR_POINT_DENIED_CODE:"equipmentFill.errors.otherPoint",loadQrPointScope:async(org:string)=>{assert.equal(org,"verified-org");return options.otherPoint?{buildingId:"pa",buildingName:"Point A",orgBuildingIds:["pa","pb"]}:null;},worksAtQrPoint:(scope:{buildingId:string}|null,ids:string[]|undefined)=>!scope||(ids??[]).length===0||(ids??[]).includes(scope.buildingId)},
     "@/lib/equipment-qr-token":{verifyEquipmentQrToken:()=>options.invalid?{ok:false}:{ok:true,equipmentId:"equipment"}},
     "@/lib/client-ip":{clientIp:()=>"fixture-ip"},
     "@/lib/qr-fill-actor":{normalizeQrFillMode:(v:string)=>v,resolveQrFillActor:async()=>actor},
@@ -59,6 +60,7 @@ test("actual equipment handler adds codes before writes, preserves canonical mea
     [{limited:true},{...base,temperature:4},429,"errors.rateLimit"],
     [{deny:true},{...base,temperature:4},403,"errors.pinWrong"],
     [{missing:true},{...base,temperature:4},404,"errors.employeeNotFound"],
+    [{otherPoint:true},{...base,temperature:4},403,"errors.otherPoint"],
     [{required:true},{...base,temperature:4},400,"photo.requiredError"],
     [{noDocument:true},{...base,temperature:4},409,"reading.noDocument"],
     [{},{...base,temperature:12},400,"errors.correctionRequired"],
@@ -75,6 +77,7 @@ test("actual equipment handler adds codes before writes, preserves canonical mea
 test("actual UV handler retains on/off action, tenant, timezone, duration and audit payload",async()=>{
   for(const action of ["on","off"]){const f=fixture({uv:true});const response=await route("src/app/api/equipment-fill/[equipmentId]/uv/route.ts",f.mocks).POST(request({...base,action}),context);assert.equal(response.status,200);const result=await response.json();assert.equal(result.durationLabel,"1 ч 30 мин");assert.equal(result.hours,1.5);assert.equal(f.toggles[0].action,action);assert.equal(f.toggles[0].timeZone,"Asia/Tashkent");assert.equal(f.toggles[0].organizationId,"verified-org");assert.deepEqual(JSON.parse(JSON.stringify(f.audits[0].values)),action==="on"?{uvAction:"on"}:{uvAction:"off",hours:1.5});}
   const f=fixture({uv:true,deny:true});assert.equal((await route("src/app/api/equipment-fill/[equipmentId]/uv/route.ts",f.mocks).POST(request({...base,action:"on"}),context)).status,403);assert.equal(f.toggles.length,0);
+  const other=fixture({uv:true,otherPoint:true});const denied=await route("src/app/api/equipment-fill/[equipmentId]/uv/route.ts",other.mocks).POST(request({...base,action:"on"}),context);assert.equal(denied.status,403);assert.equal((await denied.json()).errorCode,"equipmentFill.errors.otherPoint");assert.equal(other.toggles.length,0);
 });
 test("actual climate target keeps numeric humidity, source correction, photo and organization calendar date",async()=>{
  const f=fixture({climate:true});const response=await route("src/app/api/equipment-fill/[equipmentId]/route.ts",f.mocks).POST(request({...base,temperature:4,humidity:95,correction:"Customer custom action",photo}),context);assert.equal(response.status,200);assert.equal(f.writes.length,2);

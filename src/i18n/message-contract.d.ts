@@ -15001,7 +15001,9 @@ export type MessageContract = {
     "page": {
       "invalidTitle": "Ссылка недействительна",
       "invalidDescription": "Наклейка повреждена или не подходит к этому оборудованию.",
-      "journalTitle": "Температура холодильного оборудования"
+      "journalTitle": "Температура холодильного оборудования",
+      "otherPointTitle": "Это оборудование другой точки",
+      "otherPointDescription": "Сюда записывают сотрудники этой точки. Если вы работаете здесь, попросите руководителя отметить точку в вашей карточке сотрудника."
     },
     "common": {
       "equipment": "Оборудование",
@@ -15252,7 +15254,8 @@ export type MessageContract = {
       "lampAlreadyOn": "Лампа уже включена с {time} — сначала нажмите «Я выключил».",
       "lampJustOn": "Лампу только что включили — обновите страницу.",
       "lampNotOn": "Лампа не включена — сначала нажмите «Я включил».",
-      "lampJustOff": "Лампу только что выключили — обновите страницу."
+      "lampJustOff": "Лампу только что выключили — обновите страницу.",
+      "otherPoint": "Этот сотрудник работает на другой точке — здесь записывают сотрудники этой точки."
     }
   },
   "notificationSettings": {
@@ -15598,7 +15601,8 @@ export type MessageContract = {
     "page": {
       "metadataTitle": "Замер температуры и влажности",
       "invalidDescription": "Плакат повреждён или не подходит к этому помещению.",
-      "journalTitle": "Температура и влажность помещений"
+      "journalTitle": "Температура и влажность помещений",
+      "otherPointTitle": "Это помещение другой точки"
     },
     "reading": {
       "enterReadings": "Введите показания",
@@ -26860,7 +26864,8 @@ export type MessageContract = {
       "colRange": "T° диапазон",
       "colActions": "Действия",
       "copyIdHint": "Скопировать Equipment ID (для DIY-датчика, скрипта)",
-      "entityName": "оборудование «{name}»"
+      "entityName": "оборудование «{name}»",
+      "lampLeft": "Ресурс: осталось {hours, number} ч"
     },
     "experimentalPage": {
       "title": "Бета-функции",
@@ -28453,7 +28458,13 @@ export type MessageContract = {
       "eyebrowStatus": "Статус за сегодня",
       "eyebrowFill": "Заполнить с телефона",
       "documentCode": "Код этого документа",
-      "validUntil": "Действует до {until} включительно"
+      "validUntil": "Действует до {until} включительно",
+      "eyebrowUv": "УФ-лампа",
+      "eyebrowFryer": "Фритюрница",
+      "uvChooseName": "Выберите своё имя и нажмите «Я включил облучатель».",
+      "uvTurnOff": "После работы отсканируйте код снова и нажмите «Я выключил облучатель».",
+      "fryerChooseName": "Выберите своё имя и отметьте начало жарки.",
+      "fryerEnd": "В конце смены отсканируйте код снова и отметьте окончание."
     },
     "subscriptionPage": {
       "planPaidUntil": "{plan} до {date}",

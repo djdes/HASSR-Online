@@ -40,6 +40,8 @@ import { QrFillPresentationProvider } from "@/components/qr-fill/qr-fill-present
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { customJournalName } from "@/lib/custom-names";
 import { normalizeUserRole } from "@/lib/user-roles";
+import { employeeWorksAtQrPoint, filterByQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
+import { OtherPointScreen } from "@/components/qr-fill/other-point-screen";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -130,6 +132,17 @@ export default async function RoomFillPage({
     }
     if (resolved.ok) sessionEmployee = resolved.employee;
   }
+  // Точка помещения: в списке только её сотрудники.
+  const pointScope = await loadQrPointScope(organizationId, room.buildingId);
+  if (sessionEmployee && !sessionEmployee.canPickOthers && !(await employeeWorksAtQrPoint(pointScope, sessionEmployee.id))) {
+    return wrap(
+      <OtherPointScreen
+        title={messages.roomFill.page.otherPointTitle}
+        description={messages.equipmentFill.page.otherPointDescription}
+        pointName={pointScope?.buildingName ?? ""}
+      />
+    );
+  }
   const now = new Date();
   const dateKey = orgTodayKey(timezone, now);
   const day = new Date(`${dateKey}T00:00:00.000Z`);
@@ -146,7 +159,7 @@ export default async function RoomFillPage({
   const [employees, documents, photoAutofill, photoFixation] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, buildingIds: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     db.journalDocument.findMany({
@@ -213,7 +226,7 @@ export default async function RoomFillPage({
       photoFixation={photoFixation}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((employee) => employee.id === sessionEmployee!.id)
-        : filterAllowedFillers(employees, room.fillerUserIds)
+        : filterAllowedFillers(filterByQrPoint(employees, pointScope), room.fillerUserIds)
       ).map((employee) => ({
         id: employee.id,
         name: employee.name,

@@ -33,6 +33,7 @@ function fixture(options: Options = {}) {
     "@/lib/object-fillers": { OBJECT_FILLER_DENIED: "legacy object denial", canFillObject: () => !options.wrongFiller },
     "@/lib/reading-photo-fixation.server": { getReadingPhotoSettings: async () => ({ enabled: true, required: options.required ?? false }) },
     "@/lib/reading-photo-store": { readingPhotoExists: async () => !options.missingPhoto },
+    "@/lib/qr-point-roster": { QR_POINT_DENIED: "legacy other point", QR_POINT_DENIED_CODE: "equipmentFill.errors.otherPoint", loadQrPointScope: async () => null, worksAtQrPoint: () => true },
     "@/lib/journal-qr-rollover": { ensureQrPeriodDocuments: async (query: { organizationId: string; templateCode: string; todayKey: string; anchor: { buildingId: string } }) => { assert.equal(query.organizationId, "verified-org"); assert.equal(query.templateCode, "climate_control"); assert.equal(query.todayKey, "2026-10-15"); assert.equal(query.anchor.buildingId, "building"); return { reason: options.rolloverReason ?? "no-document" }; }, qrRolloverMessage: (reason: string) => `legacy ${reason}` },
     "@/lib/temperature-deviations": { subjectKeyForDocumentItem: (doc: string, row: string) => `${doc}:${row}`, processTemperatureReading: async (query: Record<string, unknown>) => { notifications.push(query); } },
   };

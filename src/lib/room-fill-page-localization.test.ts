@@ -24,6 +24,8 @@ async function fixture(input: Options = {}) {
     if (id === "next/navigation") return { notFound: () => { throw Error("not-found"); }, redirect: (url: string) => { throw Error(`redirect:${url}`); } };
     if (id === "next/headers") return { cookies: async () => ({ get: () => input.cookie ? { value: input.cookie } : undefined }) };
     if (id === "@/lib/auth") return { authOptions: {} };
+    // Точки выключены: список без фильтра по точке (правило — в building-scope.test.ts).
+    if (id === "@/lib/qr-point-roster") return { loadQrPointScope: async () => null, filterByQrPoint: <T,>(users: T[]) => users, employeeWorksAtQrPoint: async () => true };
     if (id === "@/lib/server-session") return { getServerSession: async () => input.authenticated ? { user: { id: "viewer", locale: input.personal, organizationLocale: "ru", organizationId: "unrelated" } } : null };
     if (id === "@/i18n/site-locale-server") return { getSiteLocale: async () => input.cookie ?? "ru" };
     if (id === "@/lib/qr-fill-token") return { verifyQrFillTokenFor: (token: string, kind: string, objectId: string) => { assert.equal(token, "fixture-token"); assert.equal(kind, "room"); assert.equal(objectId, "room"); return input.invalid ? { ok: false, reason: "invalid" } : { ok: true }; } };

@@ -22,6 +22,7 @@ import {
 import { journalFillHints, type JournalFillHints } from "@/lib/journal-fill-hints";
 import { decideQrFirstDocument, ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { buildingTargets } from "@/lib/building-targets";
+import { employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
 import { loadObjectJournalStatus, renderObjectJournalStatus } from "@/lib/qr-object-journal-status";
 import {
@@ -417,10 +418,15 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (document && docParam === document.id) setCookies.push(cookie(docCookieName, document.id, cookiePath, 365 * 24 * 3600, false, secure));
 
   // ---- сотрудник
+  // Документ точки: заполняют только сотрудники этой точки.
+  const pointScope = await loadQrPointScope(orgId, document?.buildingId);
+  if (sessionEmployee && !sessionEmployee.canPickOthers && !(await employeeWorksAtQrPoint(pointScope, sessionEmployee.id))) {
+    return page(title, renderMessage("muted", `Этот документ ведёт точка «${pointScope?.buildingName ?? ""}» — заполняют её сотрудники. Если вы работаете здесь, попросите руководителя отметить эту точку в вашей карточке сотрудника.`));
+  }
   const employees: JournalFillEmployee[] =
     sessionEmployee && !sessionEmployee.canPickOthers
       ? [{ id: sessionEmployee.id, name: sessionEmployee.name, positionTitle: sessionEmployee.positionTitle, hasPin: false }]
-      : await listFillEmployees(orgId, { includeCommission: hasCommissionFlow });
+      : await listFillEmployees(orgId, { includeCommission: hasCommissionFlow, pointScope });
   // «Запомнить выбор на этом оборудовании»: знакомое устройство сразу
   // попадает к своему сотруднику (см. `qr-remember`). В режиме входа по
   // кабинету сотрудник — из сессии, устройство не запоминаем.

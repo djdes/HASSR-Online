@@ -26,6 +26,7 @@ import { findTaskEmployee } from "@/lib/journal-roster-db";
 import { appendFinishedProductRows } from "@/lib/tasksflow-adapters/finished-product";
 import { appendPerishableRows } from "@/lib/tasksflow-adapters/perishable-rejection";
 import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
+import { QR_POINT_DENIED, employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { getAdapter } from "@/lib/tasksflow-adapters";
@@ -203,6 +204,11 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     includeCommission: isCommissionJournalCode(code),
   });
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };
+  // Документ точки: по QR записывают только сотрудники этой точки (как в
+  // списке на QR). Мессенджер выбирает документ сам — его не трогаем.
+  if (!input.messenger && !(await employeeWorksAtQrPoint(await loadQrPointScope(orgId, document.buildingId), actor.employee.id))) {
+    return { ok: false, status: 403, error: QR_POINT_DENIED };
+  }
 
   if (!(await isRowKeyAllowed({ orgId, code, documentId, employeeId: actor.employee.id, rowKey: input.rowKey }))) {
     return { ok: false, status: 404, error: "Строка не найдена" };

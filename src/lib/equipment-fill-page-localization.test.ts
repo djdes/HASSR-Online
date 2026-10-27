@@ -14,7 +14,7 @@ import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { QrPinStep } from "@/components/qr-fill/qr-pin-step";
 import { QrFillPresentationProvider } from "@/components/qr-fill/qr-fill-presentation";
 
-async function fixture(input: { uv?: boolean; fryer?: boolean; fryerNoDocument?: boolean; cookie?: string; personal?: Locale | null; authenticated?: boolean; orgLocale?: string; invalid?: boolean; authMode?: boolean; customTitle?: string; unrelatedControlOnly?: boolean }) {
+async function fixture(input: { uv?: boolean; fryer?: boolean; fryerNoDocument?: boolean; cookie?: string; personal?: Locale | null; authenticated?: boolean; orgLocale?: string; invalid?: boolean; authMode?: boolean; customTitle?: string; unrelatedControlOnly?: boolean; legacyUv?: boolean; point?: string; roster?: Array<Record<string, unknown>>; capture?: (props: { employees: Array<{ name: string }> }) => void }) {
   const require = createRequire(import.meta.url), calls: string[] = [];
   const source = ts.transpileModule(readFileSync("src/app/equipment-fill/[equipmentId]/page.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const mod = { exports: {} };
@@ -26,7 +26,7 @@ async function fixture(input: { uv?: boolean; fryer?: boolean; fryerNoDocument?:
     if(id==="@/lib/server-session")return {getServerSession:async()=>input.authenticated?{user:{id:"viewer",locale:input.personal,organizationLocale:"ru",organizationId:"unrelated"}}:null};
     if(id==="@/i18n/site-locale-server")return {getSiteLocale:async()=>input.cookie??"ru"};
     if(id==="@/lib/equipment-qr-token")return {verifyEquipmentQrToken:()=>input.invalid?{ok:false,reason:"invalid"}:{ok:true,equipmentId:"equipment"}};
-    if(id==="@/lib/db")return {db:{equipment:{findUnique:async()=>{calls.push("equipment");return {id:"equipment",name:"Customer freezer",type:input.uv?"uv_lamp":input.fryer?"fryer":"freezer",tempMin:0,tempMax:8,fillerUserIds:[],sensorMappings:[],area:{id:"area",name:"Customer area",organizationId:"verified-org",organization:{name:"Customer organization",timezone:"Asia/Tashkent",qrFillMode:input.authMode?"auth":"public",locale:input.orgLocale??"uz"}}};}},user:{findMany:async(query:{where:{organizationId:string}})=>{assert.equal(query.where.organizationId,"verified-org");return [employee];}}}};
+    if(id==="@/lib/db")return {db:{equipment:{findUnique:async()=>{calls.push("equipment");return {id:"equipment",name:input.legacyUv?"УФ-лампа цеха":"Customer freezer",type:input.uv?"uv_lamp":input.fryer?"fryer":input.legacyUv?"other":"freezer",tempMin:0,tempMax:8,fillerUserIds:[],sensorMappings:[],area:{id:"area",name:"Customer area",organizationId:"verified-org",buildingId:input.point??null,organization:{name:"Customer organization",timezone:"Asia/Tashkent",qrFillMode:input.authMode?"auth":"public",locale:input.orgLocale??"uz"}}};}},user:{findMany:async(query:{where:{organizationId:string}})=>{assert.equal(query.where.organizationId,"verified-org");return input.roster??[employee];}}}};
     if(id==="@/lib/org-custom-names")return {getOrgCustomNames:async(org:string)=>{assert.equal(org,"verified-org");calls.push("custom");return {journals:input.customTitle?{cold_equipment_control:input.customTitle,[input.unrelatedControlOnly?"uv_lamp_control":"uv_lamp_runtime"]:input.customTitle}:{},sections:{}};}};
     if(id==="@/lib/qr-fill-actor")return {normalizeQrFillMode:(value:string)=>value,sessionEmployeeForQr:async()=>({ok:false,reason:"no-session"})};
     if(id==="@/lib/qr-object-pass")return {passEmployeeIdFromCookie:async()=>null};
@@ -34,8 +34,11 @@ async function fixture(input: { uv?: boolean; fryer?: boolean; fryerNoDocument?:
     if(id==="@/lib/equipment-fill-targets")return {resolveEquipmentFillTargets:async()=>({hasActiveDocument:true,climate:null}),resolveFryerFillTarget:async()=>input.fryerNoDocument?null:({documentId:"doc",phase:"start",row:{kind:"new"},last:null,config:{lists:{fatTypes:["Подсолнечное масло"],productTypes:["Картофель фри"],equipmentTypes:["Customer freezer"]},equipmentLinks:[]}})};
     if(id==="@/lib/qr-fill-siblings")return {listEquipmentSiblings:async()=>[]};
     if(id==="@/lib/uv-lamp-runs")return {listLampOperators:async()=>[employee],lampState:async()=>({running:null,lifetimeHours:100,usedHours:3,remainingHours:97})};
+    // Точка цеха: две точки организации, фильтр — настоящим правилом.
+    if(id==="@/lib/qr-point-roster"){const {worksAtBuilding}=require("@/lib/building-scope");const scopeFor=(b:string|null)=>b?{buildingId:b,buildingName:"Point A",orgBuildingIds:["pa","pb"]}:null;return {loadQrPointScope:async(_org:string,b:string|null)=>scopeFor(b),filterByQrPoint:(users:Array<{buildingIds?:string[]}>,scope:{buildingId:string;orgBuildingIds:string[]}|null)=>users.filter((u)=>!scope||worksAtBuilding(scope.orgBuildingIds,u.buildingIds??[],scope.buildingId)),employeeWorksAtQrPoint:async()=>true};}
     if(id==="@/lib/plan-limits.server")return {hasPaidPlan:async()=>false};
     if(id==="@/lib/reading-photo-fixation.server")return {getReadingPhotoSettings:async()=>({enabled:false,required:false})};
+    if(id==="./equipment-fill-client"&&input.capture)return {EquipmentFillClient:(props:{employees:Array<{name:string}>})=>{input.capture?.(props);return null;}};
     if(id.startsWith("./"))return require(`@/app/equipment-fill/[equipmentId]/${id.slice(2)}`);
     return require(id);
   }});
@@ -82,4 +85,19 @@ test("fryer sticker opens the frying-fat form instead of the temperature form in
   }
   const missing=await fixture({fryer:true,fryerNoDocument:true,cookie:"ru"});
   assert.ok(missing.html.includes((await loadMessages("ru")).equipmentFill.fryer.noDocument));
+});
+test("sticker of a point lists only that point's staff and staff of every point",async()=>{
+  const roster=[
+    {...{id:"a",name:"Worker of point A",role:"cook",positionTitle:null,qrPinHash:null,canManageSettings:false,jobPosition:null},buildingIds:["pa"]},
+    {...{id:"b",name:"Worker of point B",role:"cook",positionTitle:null,qrPinHash:null,canManageSettings:false,jobPosition:null},buildingIds:["pb"]},
+    {...{id:"c",name:"Worker of every point",role:"cook",positionTitle:null,qrPinHash:null,canManageSettings:false,jobPosition:null},buildingIds:[]},
+  ];
+  const names=async(point?:string)=>{let list:string[]=[];await fixture({cookie:"ru",point,roster,capture:(props)=>{list=props.employees.map((e)=>e.name);}});return list;};
+  assert.deepEqual(await names("pa"),["Worker of point A","Worker of every point"]);
+  assert.deepEqual(await names(),["Worker of point A","Worker of point B","Worker of every point"],"area without a point keeps everyone");
+});
+test("old UV lamp saved as «Другое» opens the switch-on screen, not the temperature form",async()=>{
+  const result=await fixture({legacyUv:true,cookie:"ru"});const messages=await loadMessages("ru");
+  assert.ok(result.html.includes(messages.equipmentFill.uv.title));
+  assert.ok(!result.html.includes(messages.equipmentFill.page.journalTitle));
 });

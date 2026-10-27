@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   applyEquipmentNormToColdConfig,
+  buildColdEquipmentConfigFromEquipment,
   coldEquipmentSlotKeys,
   coldReadingSlotKey,
   countColdEquipmentValues,
@@ -213,4 +214,13 @@ test("фото замера: хранится под ключом замера, 
   const merged = mergeColdEquipmentEntryData(roundTrip, { ...generated, readingPhotos: { freezer: retake } });
   assert.deepEqual(merged.readingPhotos, { "fridge#2": photo });
   assert.equal(merged.temperatures["fridge#2"], 4.5);
+});
+
+test("журнал холодильников не берёт УФ-лампы, даже со старой нормой температуры", () => {
+  const config = buildColdEquipmentConfigFromEquipment([
+    { id: "f1", name: "Холодильник", type: "refrigerator", tempMin: 2, tempMax: 6 },
+    { id: "l1", name: "УФ-лампа №1", type: "uv_lamp", tempMin: 2, tempMax: 6 },
+    { id: "l2", name: "УФ-лампа №2", type: "other", tempMin: 0, tempMax: 10 },
+  ]);
+  assert.deepEqual(config.equipment.map((item) => item.sourceEquipmentId), ["f1"]);
 });

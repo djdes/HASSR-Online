@@ -37,6 +37,8 @@ type SheetTranslator = ReturnType<typeof useTranslations<"settingsUi.qrPrintShee
 
 function stepsFor(poster: QrPoster, t: SheetTranslator): string[] {
   if (poster.kind !== "journal") {
+    if (poster.equipmentKind === "uv") return [t("scanCode"), t("uvChooseName"), t("uvTurnOff")];
+    if (poster.equipmentKind === "fryer") return [t("scanCode"), t("fryerChooseName"), t("fryerEnd")];
     return [t("scanCode"), t("chooseNameEnterReading"), t("pressSave")];
   }
   if (poster.id.includes("@verify")) {
@@ -53,7 +55,12 @@ function stepsFor(poster: QrPoster, t: SheetTranslator): string[] {
 
 function eyebrowFor(poster: QrPoster, t: SheetTranslator): string {
   if (poster.kind === "room") return t("eyebrowRoom");
-  if (poster.kind === "equipment") return t("eyebrowEquipment");
+  if (poster.kind === "equipment") {
+    // У лампы и фритюрницы температуру не вносят — «Температура» сверху сбивала.
+    if (poster.equipmentKind === "uv") return t("eyebrowUv");
+    if (poster.equipmentKind === "fryer") return t("eyebrowFryer");
+    return t("eyebrowEquipment");
+  }
   if (isJournalObjectQrCode(poster.journalCode) && !poster.documentId) return t("eyebrowStatus");
   return t("eyebrowFill");
 }

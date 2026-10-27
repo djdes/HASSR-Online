@@ -15000,7 +15000,9 @@
     "page": {
       "invalidTitle": "Invalid link",
       "invalidDescription": "The sticker is damaged or does not belong to this equipment.",
-      "journalTitle": "Refrigeration equipment temperature"
+      "journalTitle": "Refrigeration equipment temperature",
+      "otherPointTitle": "This equipment belongs to another site",
+      "otherPointDescription": "Only employees of this site record here. If you work here, ask your manager to add this site to your employee card."
     },
     "common": {
       "equipment": "Equipment",
@@ -15251,7 +15253,8 @@
       "lampAlreadyOn": "The lamp has been on since {time}. First tap “I switched it off”.",
       "lampJustOn": "The lamp was just switched on. Refresh the page.",
       "lampNotOn": "The lamp is not on. First tap “I switched it on”.",
-      "lampJustOff": "The lamp was just switched off. Refresh the page."
+      "lampJustOff": "The lamp was just switched off. Refresh the page.",
+      "otherPoint": "This employee works at another site. Only employees of this site can record here."
     }
   },
   "notificationSettings": {
@@ -15597,7 +15600,8 @@
     "page": {
       "metadataTitle": "Temperature and humidity reading",
       "invalidDescription": "The poster is damaged or does not belong to this room.",
-      "journalTitle": "Room temperature and humidity"
+      "journalTitle": "Room temperature and humidity",
+      "otherPointTitle": "This room belongs to another site"
     },
     "reading": {
       "enterReadings": "Enter the readings",
@@ -26859,7 +26863,8 @@
       "colRange": "T° range",
       "colActions": "Actions",
       "copyIdHint": "Copy the Equipment ID (for a DIY sensor or script)",
-      "entityName": "equipment “{name}”"
+      "entityName": "equipment “{name}”",
+      "lampLeft": "Lamp life: {hours, number} h left"
     },
     "experimentalPage": {
       "title": "Beta features",
@@ -28452,7 +28457,13 @@
       "eyebrowStatus": "Status for today",
       "eyebrowFill": "Fill in from your phone",
       "documentCode": "This document’s code",
-      "validUntil": "Valid until {until} inclusive"
+      "validUntil": "Valid until {until} inclusive",
+      "eyebrowUv": "UV lamp",
+      "eyebrowFryer": "Fryer",
+      "uvChooseName": "Choose your name and tap “I switched the UV lamp on”.",
+      "uvTurnOff": "When you are done, scan the code again and tap “I switched the UV lamp off”.",
+      "fryerChooseName": "Choose your name and record the start of frying.",
+      "fryerEnd": "At the end of the shift, scan the code again and record the end."
     },
     "subscriptionPage": {
       "planPaidUntil": "{plan} until {date}",

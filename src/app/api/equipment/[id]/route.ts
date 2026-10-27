@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { parseEquipmentExtras } from "@/lib/equipment-extras";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -195,12 +196,15 @@ export async function PUT(
     // не влияла, и журнал продолжал считать отклонением то, что уже в
     // норме. Трогаем только АКТИВНЫЕ документы — закрытые предъявляют
     // инспектору в том виде, в каком их подписали.
-    await syncColdEquipmentNorms({
-      organizationId: equipment.area.organizationId,
-      sourceEquipmentId: id,
-      min: parsedTempMin,
-      max: parsedTempMax,
-    });
+    // УФ-лампа температуру не меряет: её нормы в журнал холодильников не несём.
+    if (!isUvLampEquipment(updated)) {
+      await syncColdEquipmentNorms({
+        organizationId: equipment.area.organizationId,
+        sourceEquipmentId: id,
+        min: parsedTempMin,
+        max: parsedTempMax,
+      });
+    }
 
     // Фритюрница: новое имя, точка или тип доходят до журнала фритюра.
     if (isFryerEquipmentType(equipment.type) || isFryerEquipmentType(updated.type)) {

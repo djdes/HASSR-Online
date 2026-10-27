@@ -37,6 +37,7 @@ import {
 } from "@/lib/equipment-fill-targets";
 import { clientIp } from "@/lib/client-ip";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import {
@@ -145,6 +146,7 @@ export async function POST(
           id: true,
           organizationId: true,
           name: true,
+          buildingId: true,
           organization: { select: { timezone: true, qrFillMode: true } },
         },
       },
@@ -176,8 +178,12 @@ export async function POST(
       organizationId,
       ...ORG_ROSTER_WHERE,
     },
-    select: { id: true, name: true, role: true, canManageSettings: true },
+    select: { id: true, name: true, role: true, canManageSettings: true, buildingIds: true },
   });
+  // Точка цеха: записывают только сотрудники этой точки (как в списке на наклейке).
+  if (employee && !worksAtQrPoint(await loadQrPointScope(organizationId, equipment.area.buildingId), employee.buildingIds)) {
+    return NextResponse.json({ error: QR_POINT_DENIED, errorCode: QR_POINT_DENIED_CODE }, { status: 403 });
+  }
   // «Кто заполняет»: закреплённое оборудование — только своим (и руководству).
   if (employee && !canFillObject(equipment.fillerUserIds, employee)) {
     return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });

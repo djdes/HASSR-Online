@@ -1,6 +1,4 @@
 import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
-import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
-import { isUvLampType } from "@/lib/uv-lamp";
 import { db } from "@/lib/db";
 import { normalizeBrandColor, type DocumentBrand } from "@/lib/document-brand";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
@@ -331,9 +329,9 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
       caption:
         kind === "room"
           ? CAPTION.room
-          : isFryerEquipmentType(loaded.equipmentTypes?.[poster.id])
+          : poster.equipmentKind === "fryer"
             ? CAPTION.fryer
-            : isUvLampType(loaded.equipmentTypes?.[poster.id] ?? "")
+            : poster.equipmentKind === "uv"
               ? CAPTION.uv
               : CAPTION.equipment,
       location: loaded.locations?.[poster.id] ?? null,

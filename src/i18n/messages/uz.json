@@ -15000,7 +15000,9 @@
     "page": {
       "invalidTitle": "Havola yaroqsiz",
       "invalidDescription": "Yorliq shikastlangan yoki bu uskunaga tegishli emas.",
-      "journalTitle": "Sovutish uskunalari harorati"
+      "journalTitle": "Sovutish uskunalari harorati",
+      "otherPointTitle": "Bu uskuna boshqa nuqtaga tegishli",
+      "otherPointDescription": "Bu yerga ushbu nuqta xodimlari yozadi. Agar shu yerda ishlasangiz, rahbardan xodim kartangizda shu nuqtani belgilashni so‘rang."
     },
     "common": {
       "equipment": "Uskuna",
@@ -15251,7 +15253,8 @@
       "lampAlreadyOn": "Chiroq {time} dan beri yoqilgan. Avval «Men o‘chirdim» tugmasini bosing.",
       "lampJustOn": "Chiroq hozirgina yoqildi. Sahifani yangilang.",
       "lampNotOn": "Chiroq yoqilmagan. Avval «Men yoqdim» tugmasini bosing.",
-      "lampJustOff": "Chiroq hozirgina o‘chirildi. Sahifani yangilang."
+      "lampJustOff": "Chiroq hozirgina o‘chirildi. Sahifani yangilang.",
+      "otherPoint": "Bu xodim boshqa nuqtada ishlaydi — bu yerga ushbu nuqta xodimlari yozadi."
     }
   },
   "notificationSettings": {
@@ -15597,7 +15600,8 @@
     "page": {
       "metadataTitle": "Harorat va namlik ko‘rsatkichlari",
       "invalidDescription": "Plakat shikastlangan yoki bu xonaga tegishli emas.",
-      "journalTitle": "Xonalardagi harorat va namlik"
+      "journalTitle": "Xonalardagi harorat va namlik",
+      "otherPointTitle": "Bu xona boshqa nuqtaga tegishli"
     },
     "reading": {
       "enterReadings": "Ko‘rsatkichlarni kiriting",
@@ -26859,7 +26863,8 @@
       "colRange": "T° diapazoni",
       "colActions": "Amallar",
       "copyIdHint": "Equipment ID ni nusxalash (DIY-datchik, skript uchun)",
-      "entityName": "“{name}” uskunasi"
+      "entityName": "“{name}” uskunasi",
+      "lampLeft": "Resurs: {hours, number} soat qoldi"
     },
     "experimentalPage": {
       "title": "Beta funksiyalar",
@@ -28452,7 +28457,13 @@
       "eyebrowStatus": "Bugungi holat",
       "eyebrowFill": "Telefondan to‘ldirish",
       "documentCode": "Ushbu hujjat kodi",
-      "validUntil": "{until} gacha (shu kun ham) amal qiladi"
+      "validUntil": "{until} gacha (shu kun ham) amal qiladi",
+      "eyebrowUv": "UV chiroq",
+      "eyebrowFryer": "Fritur",
+      "uvChooseName": "Ismingizni tanlang va «Men UV chiroqni yoqdim» tugmasini bosing.",
+      "uvTurnOff": "Ish tugagach, kodni yana skanerlang va «Men UV chiroqni o‘chirdim» tugmasini bosing.",
+      "fryerChooseName": "Ismingizni tanlang va qovurish boshlanishini belgilang.",
+      "fryerEnd": "Smena oxirida kodni yana skanerlang va tugashini belgilang."
     },
     "subscriptionPage": {
       "planPaidUntil": "{plan} — {date} gacha",

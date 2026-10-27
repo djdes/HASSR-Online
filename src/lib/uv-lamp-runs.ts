@@ -5,6 +5,7 @@ import { announceQrRollover } from "@/lib/journal-qr-rollover";
 import { carryStructureFromPrevious } from "@/lib/journal-structure-carry";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { filterByQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
 import { orgTodayKey } from "@/lib/timezone";
 import { formatDuration, formatHours, lampRemainingHours, lampWarnLevel, sessionHours, shouldSendLampWarning } from "@/lib/uv-lamp";
 import {
@@ -158,13 +159,23 @@ async function aliveUserIds(organizationId: string, ids: Array<string | null | u
   return new Set(users.map((user) => user.id));
 }
 
-/** Кто отмечает лампу: закреплённые за ней, иначе ответственные журнала УФ-ламп, иначе все. */
-export async function listLampOperators(params: { organizationId: string; fillerUserIds: string[]; documentResponsibleId: string | null }) {
-  const roster = await db.user.findMany({
+/**
+ * Кто отмечает лампу: закреплённые за ней, иначе ответственные журнала
+ * УФ-ламп, иначе все — и всё это только среди сотрудников точки лампы.
+ */
+export async function listLampOperators(params: {
+  organizationId: string;
+  fillerUserIds: string[];
+  documentResponsibleId: string | null;
+  /** Точка цеха лампы (`loadQrPointScope`); null — без фильтра. */
+  pointScope?: QrPointScope;
+}) {
+  const everyone = await db.user.findMany({
     where: { organizationId: params.organizationId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+    select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, buildingIds: true, jobPosition: { select: { name: true } } },
     orderBy: { name: "asc" },
   });
+  const roster = filterByQrPoint(everyone, params.pointScope ?? null);
   const ids = new Set(params.fillerUserIds);
   if (ids.size === 0) {
     if (params.documentResponsibleId) ids.add(params.documentResponsibleId);

@@ -22,7 +22,7 @@ import { validateQrPin } from "@/lib/qr-pin-rules";
 import { qrPinRequestScreenWithMessages } from "@/lib/qr-object-pin-request";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
-import { isUvLampType } from "@/lib/uv-lamp";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { listLampOperators } from "@/lib/uv-lamp-runs";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE, normalizeUvRuntimeDocumentConfig } from "@/lib/uv-lamp-runtime-document";
 
@@ -65,7 +65,7 @@ async function loadPlace(target: QrObjectPinTarget): Promise<Place | null> {
     });
     if (!equipment) return null;
     const timezone = equipment.area.organization.timezone || "Europe/Moscow";
-    return isUvLampType(equipment.type)
+    return isUvLampEquipment(equipment)
       ? { type: "uv", id: equipment.id, name: equipment.name, fillerUserIds: equipment.fillerUserIds, timezone }
       : { type: "cold", id: equipment.id, areaId: equipment.area.id, areaName: equipment.area.name, fillerUserIds: equipment.fillerUserIds, timezone };
   }

@@ -101,6 +101,7 @@ function isCategoryNote(
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
   "Торговые точки": MapPin,
+  "QR-наклейки по точкам": QrCode,
   "Моя компания": Building2,
   "Офис и точки": Building2,
   "Пришла проверка": ShieldCheck,

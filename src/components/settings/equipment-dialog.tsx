@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Plus, Pencil, Building2, ArrowRight } from "lucide-react";
 import { getEquipmentTypeLabel } from "@/lib/equipment-type-label";
 import { FillerPicker, type FillerOption } from "@/components/settings/filler-picker";
-import { LAMP_PRESETS, UV_LAMP_TYPE, formatHours, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
+import { LAMP_PRESETS, UV_LAMP_TYPE, formatHours, isUvLampEquipment, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,8 +34,11 @@ import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 /** Синонимы старых кодов: «fridge» — тот же холодильник. */
 const TYPE_ALIASES: Record<string, string> = { fridge: "refrigerator" };
 
-function initialType(type: string | undefined): string {
+function initialType(type: string | undefined, name?: string): string {
   const value = (type ?? "").trim();
+  // Старые лампы сохранены как «Другое» или словами — открываем как «УФ-лампа»,
+  // тогда окно не просит температуру, а сохранение исправит тип.
+  if (value && isUvLampEquipment({ type: value, name })) return UV_LAMP_TYPE;
   return TYPE_ALIASES[value.toLowerCase()] ?? value;
 }
 
@@ -143,7 +146,7 @@ export function EquipmentDialog({
   const { busy: isSubmitting, acquire, release } = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(equipment?.name ?? "");
-  const [type, setType] = useState(initialType(equipment?.type ?? defaultType));
+  const [type, setType] = useState(initialType(equipment?.type ?? defaultType, equipment?.name));
   // Точка → помещение. Без точек — прежний список цехов.
   const byPoints = buildings.length > 0 && Boolean(places);
   const initialBuilding = equipment
@@ -164,7 +167,7 @@ export function EquipmentDialog({
 
   function resetForm() {
     setName(equipment?.name ?? "");
-    setType(initialType(equipment?.type ?? defaultType));
+    setType(initialType(equipment?.type ?? defaultType, equipment?.name));
     setBuildingId(initialBuilding);
     setPlaceKey(equipment?.areaId ? `area:${equipment.areaId}` : "");
     setSerialNumber(equipment?.serialNumber ?? "");
@@ -213,8 +216,10 @@ export function EquipmentDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const parsedMin = parseTempInput(tempMin);
-    const parsedMax = parseTempInput(tempMax);
+    // У УФ-лампы температуры нет: поля скрыты и не проверяются, а при
+    // сохранении старые нормы стираются (пустое значение — null на сервере).
+    const parsedMin = isLamp ? null : parseTempInput(tempMin);
+    const parsedMax = isLamp ? null : parseTempInput(tempMax);
     if (parsedMin === "invalid" || parsedMax === "invalid") {
       setError(t("tempNotNumber"));
       return;
@@ -258,7 +263,7 @@ export function EquipmentDialog({
           serialNumber: serialNumber || undefined,
           tempMin: parsedMin ?? undefined,
           tempMax: parsedMax ?? undefined,
-          tuyaDeviceId: tuyaDeviceId || undefined,
+          tuyaDeviceId: isLamp ? undefined : tuyaDeviceId || undefined,
           fillerUserIds,
           ...(isLamp
             ? {
@@ -476,6 +481,7 @@ export function EquipmentDialog({
               placeholder={t("serialPlaceholder")}
             />
           </div>
+          {isLamp ? null : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="eq-temp-min">{t("tempMinLabel")}</Label>
@@ -500,6 +506,7 @@ export function EquipmentDialog({
               />
             </div>
           </div>
+          )}
           {isLamp ? (
             <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="lamp-section">
               <div className="text-[14px] font-semibold text-[#0b1024]">{t("lampSection")}</div>
@@ -585,6 +592,7 @@ export function EquipmentDialog({
           {fillerOptions.length > 0 ? (
             <FillerPicker value={fillerUserIds} onChange={setFillerUserIds} options={fillerOptions} objectNoun={isLamp ? t("fillerNounLamp") : t("fillerNounEquipment")} />
           ) : null}
+          {isLamp ? null : (
           <div className="space-y-2">
             <Label htmlFor="eq-tuya">{t("tuyaLabel")}</Label>
             <Input
@@ -597,6 +605,7 @@ export function EquipmentDialog({
               {t("tuyaHint")}
             </p>
           </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button
               type="button"

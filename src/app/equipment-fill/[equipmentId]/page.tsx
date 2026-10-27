@@ -18,13 +18,15 @@ import { UvLampClient } from "./uv-lamp-client";
 import { FryerFillClient } from "./fryer-fill-client";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { formatTime, FRYER_OIL_TEMPLATE_CODE } from "@/lib/fryer-oil-document";
-import { isUvLampType } from "@/lib/uv-lamp";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
+import { employeeWorksAtQrPoint, filterByQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 import { lampState, listLampOperators } from "@/lib/uv-lamp-runs";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { decodeRouteParam } from "@/lib/route-param";
 import type { ReactNode } from "react";
+import { OtherPointScreen } from "@/components/qr-fill/other-point-screen";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { resolveLocale } from "@/i18n/locales";
@@ -151,11 +153,23 @@ export default async function EquipmentFillPage({
   // наклейка — без PIN, если выбран тот же сотрудник.
   const passEmployeeId = qrMode === "auth" ? null : await passEmployeeIdFromCookie(organizationId);
 
+  // Точка оборудования — точка его цеха: в списке только её сотрудники.
+  const pointScope = await loadQrPointScope(organizationId, equipment.area.buildingId);
+  if (sessionEmployee && !sessionEmployee.canPickOthers && !(await employeeWorksAtQrPoint(pointScope, sessionEmployee.id))) {
+    return wrap(
+      <OtherPointScreen
+        title={messages.equipmentFill.page.otherPointTitle}
+        description={messages.equipmentFill.page.otherPointDescription}
+        pointName={pointScope?.buildingName ?? ""}
+      />
+    );
+  }
+
   // УФ-лампа: «Я включил / Я выключил» вместо замера (2026-09-22).
-  if (isUvLampType(equipment.type)) {
+  if (isUvLampEquipment(equipment)) {
     const lampTz = equipment.area.organization.timezone || "Europe/Moscow";
     const [operators, state] = await Promise.all([
-      listLampOperators({ organizationId, fillerUserIds: equipment.fillerUserIds, documentResponsibleId: null }),
+      listLampOperators({ organizationId, fillerUserIds: equipment.fillerUserIds, documentResponsibleId: null, pointScope }),
       lampState(equipment.id, lampTz),
     ]);
     const list = sessionEmployee && !sessionEmployee.canPickOthers ? operators.filter((e) => e.id === sessionEmployee!.id) : operators;
@@ -183,7 +197,7 @@ export default async function EquipmentFillPage({
     const [roster, target] = await Promise.all([
       db.user.findMany({
         where: { organizationId, ...ORG_ROSTER_WHERE },
-        select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+        select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, buildingIds: true, jobPosition: { select: { name: true } } },
         orderBy: { name: "asc" },
       }),
       resolveFryerFillTarget({
@@ -204,7 +218,7 @@ export default async function EquipmentFillPage({
         fryer={{ id: equipment.id, name: equipment.name }}
         employees={(sessionEmployee && !sessionEmployee.canPickOthers
           ? roster.filter((e) => e.id === sessionEmployee!.id)
-          : filterAllowedFillers(roster, equipment.fillerUserIds)
+          : filterAllowedFillers(filterByQrPoint(roster, pointScope), equipment.fillerUserIds)
         ).map((e) => ({ id: e.id, name: e.name, positionTitle: position(e) || null, hasPin: Boolean(e.qrPinHash) }))}
         mode={qrMode}
         sessionEmployee={sessionEmployee}
@@ -240,7 +254,7 @@ export default async function EquipmentFillPage({
   const [employees, targets, photoAutofill, photoFixation] = await Promise.all([
     db.user.findMany({
       where: { organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, qrPinHash: true, canManageSettings: true, buildingIds: true, jobPosition: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     resolveEquipmentFillTargets({
@@ -299,7 +313,7 @@ export default async function EquipmentFillPage({
       photoFixation={photoFixation}
       employees={(sessionEmployee && !sessionEmployee.canPickOthers
         ? employees.filter((e) => e.id === sessionEmployee!.id)
-        : filterAllowedFillers(employees, equipment.fillerUserIds)
+        : filterAllowedFillers(filterByQrPoint(employees, pointScope), equipment.fillerUserIds)
       ).map((e) => ({
         id: e.id,
         name: e.name,
