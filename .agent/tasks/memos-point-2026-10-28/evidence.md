@@ -82,5 +82,9 @@ Playwright + Chromium 1243. Данные — `raw/seed-local.ts`: «МАУ «К�
 - `npm run typecheck` — exit 0.
 - `eslint` изменённых файлов — 0 ошибок (1 старое предупреждение в `whats-new-modal.tsx:251`).
 - Новые тесты: 26/26 (`poster-sheet`, `poster-point`, `posters`).
-- `npm run test:gate` — см. `evidence.json`.
+- `npm run test:gate` после слияния с master: pass=5049, fail=3 — один из списка известных и два
+  теста, зависящих от нагрузки, вне этой правки (`deploy-scripts.test.ts` «prewarm-routes.sh»,
+  `journal-order-scans.test.ts` «проверка загрузки…»): оба проходят отдельным запуском; итоговая
+  проверка — CI перед деплоем.
+- `typecheck` повторён после слияния с master — exit 0; браузер 26/26 и PDF 17/17 — тоже после слияния.
 - «Что нового»: категория «Памятки по точкам» (иконка `MapPin`).

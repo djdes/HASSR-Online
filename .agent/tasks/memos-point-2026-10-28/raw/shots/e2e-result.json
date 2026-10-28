@@ -62,12 +62,12 @@
   {
     "name": "AC3 QR осмотра ведёт в гигиенический журнал точки 112",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-112.1793198015089.SfpUi2iUkxBw62i9vHah8eWxgzX3NP4NNAT3Equp8pw"
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-112.1793199067898.i6Cbx3zD06_uhC8f1lubU5ZFGW1OhkQluGKHavzKldo"
   },
   {
     "name": "AC3 у другой точки — другой QR",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793198018099.5beGYQdXa7eAz83Nq9K3KNOYdpR2aGRPVXycjracti4"
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793199071296.MCveuqDZBGmHYwTSpDHxNOpnkjtZ4uXdh_vv_lzcj2U"
   },
   {
     "name": "AC2 офис в адресе — печать для точки по умолчанию",
@@ -92,7 +92,7 @@
   {
     "name": "AC3 QR — журнал своей точки",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793198055559.WHFo7FqqfUosh8Z9B5pMJfsBCwHaZng7Kn2yOP2CQbg"
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793199115985.Ko0s6k6B2aAZ7E2ZD4ziSmvxOgZCZ9TjlanHinyDSSU"
   },
   {
     "name": "AC4 свой сайт — в шапке, в подвале — wesetup.ru",
@@ -107,7 +107,7 @@
   {
     "name": "AC3 журналы общие — QR на общий журнал",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-one/hygiene?token=journal%3Aorg-one%3Ahygiene.1793198071636.nHzCHI4KS5FvGxHWMnCUdSz_N-W4vcQTp5_95KU34KU"
+    "detail": "http://localhost:3026/journal-fill/org-one/hygiene?token=journal%3Aorg-one%3Ahygiene.1793199140865.m0AoS3bUCZ76kU_x-i8CHNphPchNxlq1KLaqIcTb5dw"
   },
   {
     "name": "AC2 точек нет — подсказка и «Добавить точку»",
