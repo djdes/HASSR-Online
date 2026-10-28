@@ -1,7 +1,9 @@
 /**
  * Рамка печатного листа A4 в фирменном стиле (2026-10-27): плакаты, лист
  * проверяющего, политика ХАССП. Шапка — логотип организации слева, сайт
- * справа; подвал — название организации и сайт. Серверный компонент без
+ * организации справа («Фирменный стиль», пусто — wesetup.ru); подвал —
+ * название организации и всегда wesetup.ru (владелец, 2026-10-28: «второй
+ * адрес внизу — без возможности изменения»). Серверный компонент без
  * хуков. Цвета — `PrintBrand` (`src/lib/print-brand.ts`).
  *
  * Цвет рамки и линии шапки задан `border-color` — в печати кабинета он не
@@ -10,7 +12,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 
-import { PRINT_LOGO_MM, printBrandCssVars, type PrintBrand } from "@/lib/print-brand";
+import { DEFAULT_PRINT_SITE, PRINT_LOGO_MM, printBrandCssVars, type PrintBrand } from "@/lib/print-brand";
 
 /** Логотип слева, сайт справа. Без логотипа — название организации. */
 export function PrintBrandHeader({
@@ -66,7 +68,7 @@ export function PrintBrandHeader({
   );
 }
 
-/** Подвал листа: название организации · сайт. */
+/** Подвал листа: название организации · wesetup.ru (не меняется). */
 export function PrintBrandFooter({ brand, compact = false }: { brand: PrintBrand; compact?: boolean }) {
   return (
     <div
@@ -80,7 +82,7 @@ export function PrintBrandFooter({ brand, compact = false }: { brand: PrintBrand
       }}
     >
       <span>{brand.orgName}</span>
-      <span>{brand.site}</span>
+      <span data-print-brand-footer-site>{DEFAULT_PRINT_SITE}</span>
     </div>
   );
 }
