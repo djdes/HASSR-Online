@@ -118,8 +118,15 @@ export function BuildingsClient({
   userBuildingIds = {},
   openableIds = [],
   pointManager = false,
+  canSplitJournals,
 }: {
   initial: Building[];
+  /**
+   * Показывать «Вести журналы отдельно по точкам»: точек вместе с офисом две
+   * и больше. Офиса в списке нет (он в «Моя компания → Офис»), а делить
+   * журналы ему с точкой есть что. Не задано — по числу точек в списке.
+   */
+  canSplitJournals?: boolean;
   /**
    * Руководитель точки (фаза 2 «Офис и точки»): видит свои точки, а
    * заводить, удалять точки и включать деление по точкам — дело офиса.
@@ -255,7 +262,7 @@ export function BuildingsClient({
         </div>
       ) : null}
 
-      {initial.length >= 2 && !pointManager ? (
+      {(canSplitJournals ?? initial.length >= 2) && !pointManager ? (
         <div className="flex items-start justify-between gap-4 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[14px] font-semibold text-[#0b1024]">

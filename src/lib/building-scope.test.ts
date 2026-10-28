@@ -10,6 +10,7 @@ import {
   receivesPlaceEvent,
   splitsOfficeAndPoints,
   buildingWhere,
+  equipmentBuildingWhere,
   decodeBuildingCookie,
   encodeBuildingCookie,
   resolveActiveBuilding,
@@ -207,4 +208,12 @@ test("QR по точке: кто работает на точке объекта
   // Сотрудник офиса работает в офисе, а не на торговой точке.
   assert.equal(worksAtBuilding(org, [OFFICE], A.id), false);
   assert.equal(worksAtBuilding(org, [OFFICE], OFFICE), true);
+});
+
+test("оборудование точки: её цеха и цеха без точки, без точки — без фильтра", () => {
+  assert.deepEqual(equipmentBuildingWhere(null), {});
+  assert.deepEqual(equipmentBuildingWhere(undefined), {});
+  assert.deepEqual(equipmentBuildingWhere("b-a"), {
+    OR: [{ area: { buildingId: "b-a" } }, { area: { buildingId: null } }],
+  });
 });

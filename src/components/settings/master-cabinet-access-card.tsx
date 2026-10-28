@@ -135,9 +135,12 @@ export function CabinetAccessBlock({
   candidates,
   onChange,
   billingToast = false,
+  hideHeader = false,
 }: {
   endpoint: string;
   cabinet: CabinetAccess;
+  /** Без строки с названием кабинета — когда блок стоит в карточке этого кабинета. */
+  hideHeader?: boolean;
   candidates: AccessCandidate[];
   onChange: (next: AccessData) => void;
   /**
@@ -210,19 +213,21 @@ export function CabinetAccessBlock({
   }
 
   return (
-    <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 sm:p-5" data-testid="cabinet-access">
-      <div className="flex flex-wrap items-center gap-2">
-        <Library className="size-4 shrink-0 text-[#5566f6]" />
-        <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#0b1024]" data-testid="cabinet-access-name">
-          {cabinet.name}
+    <div className={cn(!hideHeader && "rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 sm:p-5")} data-testid="cabinet-access">
+      {hideHeader ? null : (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Library className="size-4 shrink-0 text-[#5566f6]" />
+          <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#0b1024]" data-testid="cabinet-access-name">
+            {cabinet.name}
+          </div>
+          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7] ring-1 ring-[#ececf4]">
+            {t("peopleCount", { count: cabinet.people.length })}
+          </span>
         </div>
-        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-medium tabular-nums text-[#3848c7] ring-1 ring-[#ececf4]">
-          {t("peopleCount", { count: cabinet.people.length })}
-        </span>
-      </div>
+      )}
 
       {cabinet.people.length > 0 ? (
-        <ul className="mt-3 divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-white">
+        <ul className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-white">
           {cabinet.people.map((person) => (
             <li key={person.userId} className="flex flex-wrap items-center gap-3 px-4 py-3" data-testid="cabinet-access-person">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[13px] font-semibold text-[#3848c7]">
@@ -263,7 +268,7 @@ export function CabinetAccessBlock({
           ))}
         </ul>
       ) : (
-        <p className="mt-3 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 py-3 text-[13px] text-[#6f7282]">
+        <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-white px-4 py-3 text-[13px] text-[#6f7282]">
           {t("ownerOnly")}
         </p>
       )}

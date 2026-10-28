@@ -1,4 +1,6 @@
+import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
+import { HOME_HREF } from "@/lib/home-page";
 
 /**
  * Что стоит в центре шапки кабинета (эскиз руководителя 2026-10-18: слева —
@@ -102,4 +104,25 @@ export function resolveHeaderPoint(input: {
     count: organizationBuildings.length,
     options: organizationBuildings.map((building) => headerPointOption(building, companyName)),
   };
+}
+
+/**
+ * Разделы про всю компанию (сканы 98–99, 2026-10-28: «именно тут это не
+ * нужно»): реквизиты, мастер-кабинет, офис, подписки, оформление. Выбор
+ * точки на этих страницах ничего не меняет — переключатель только путает.
+ */
+const COMPANY_WIDE_SECTIONS: ReadonlySet<NavSectionKey> = new Set(["company", "office", "billing", "settings"]);
+
+/** Страницы без своего раздела в списке выше: главная и список всех точек. */
+const COMPANY_WIDE_PATHS: ReadonlySet<string> = new Set([HOME_HREF, "/settings/buildings"]);
+
+/**
+ * Прятать ли точку в центре шапки на этом пути. На страницах точки
+ * (журналы, цеха, оборудование, QR, сотрудники, ППК) она остаётся.
+ */
+export function headerPointHidden(pathname: string | null | undefined): boolean {
+  const path = (pathname || "/").split(/[?#]/)[0].replace(/(.)\/+$/, "$1");
+  if (COMPANY_WIDE_PATHS.has(path)) return true;
+  const owner = sectionForPath(path);
+  return owner !== null && COMPANY_WIDE_SECTIONS.has(owner.section);
 }

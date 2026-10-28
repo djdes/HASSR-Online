@@ -2,7 +2,8 @@ import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
 import { db } from "@/lib/db";
 import { brandQrOptionsFor } from "@/lib/brand-qr-center.server";
 import type { BrandQrOptions } from "@/lib/brand-qr";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { equipmentBuildingWhere } from "@/lib/building-scope";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { JOURNAL_FILL_HUB_CODE, journalFillValidUntil, todayKeyFor } from "@/lib/journal-fill";
 import { HYGIENE_VERIFY_SUFFIX, isJournalObjectQrCode, splitJournalPosterId } from "@/lib/journal-qr-target";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
@@ -80,6 +81,7 @@ const HYGIENE_VERIFY_SUBTITLE = "Для ответственного: «Допу
 
 const CAPTION = {
   hub: "Сотрудник сканирует, выбирает журнал и себя — запись ложится в действующий документ.",
+  hubPoint: "Сотрудник сканирует, выбирает журнал этой точки и себя — запись ложится в документ точки.",
   main: "Сотрудник сканирует, выбирает себя и заполняет форму — запись ложится в действующий документ.",
   verify: "Ответственный сканирует и отмечает каждому на смене «Допущен» или «Отстранён».",
   objectMain: "Показывает статус объектов за сегодня. Записывают по наклейке на самом объекте.",
@@ -99,9 +101,17 @@ type OrgContext = {
   organizationId: string;
   orgName: string;
   todayKey: string;
+  /** Выключенные журналы — набор точки, если она выбрана. */
   disabledCodes: Set<string>;
   journalPeriods: unknown;
   activeBuildingId: string | null;
+  /**
+   * Точка экрана (сканы 98, 2026-10-28: «должно только этой торговой
+   * точки»): точка из шапки, если журналы ведутся по точкам. Наклейки,
+   * их счётчики, «Все журналы» и набор журналов — только её. null — вся
+   * организация, как раньше.
+   */
+  pointId: string | null;
   origin: string;
   /** Свои названия журналов организации. */
   names: CustomNames;
@@ -135,7 +145,7 @@ async function buildingName(buildingId: string | null): Promise<string | null> {
 
 /** Основные QR журнала: сам журнал и у гигиены «допуск». */
 async function mainItems(ctx: OrgContext, code: string, name: string, request: QrPostersRequest, isObject: boolean): Promise<QrPostersItem[]> {
-  const buildingId = await resolveMainJournalQrBuilding(ctx.organizationId, ctx.activeBuildingId);
+  const buildingId = ctx.pointId;
   const point = await buildingName(buildingId);
   const notices = isObject
     ? new Map<string, string | null>()
@@ -251,7 +261,8 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
     const scope = await resolveJournalObjectScope(ctx.organizationId, code, ctx.todayKey, documentId);
     const objectKind = scope?.kind ?? (code === "climate_control" ? "room" : "equipment");
     const ids = new Set(scope?.ids ?? []);
-    const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind: objectKind, origin: ctx.origin, qr: ctx.qr, allowed: (id) => ids.has(id) });
+    // Без документа — объекты точки; документ сам задаёт свои строки.
+    const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind: objectKind, origin: ctx.origin, qr: ctx.qr, allowed: (id) => ids.has(id), buildingId: scope?.document ? null : ctx.pointId });
     for (const poster of loaded.posters) {
       items.push({
         key: poster.id,
@@ -318,7 +329,16 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
 }
 
 async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "equipment" | "room"): Promise<Omit<QrPostersView, "origin" | "autoprint" | "brand">> {
-  const loaded = await loadQrPosters({ organizationId: ctx.organizationId, kind, origin: ctx.origin, qr: ctx.qr, explicitIds: request.selectedIds ?? [] });
+  // Отмеченные в адресе (`ids=`) — ровно они; иначе объекты точки из шапки.
+  const explicitIds = request.selectedIds ?? [];
+  const loaded = await loadQrPosters({
+    organizationId: ctx.organizationId,
+    kind,
+    origin: ctx.origin,
+    qr: ctx.qr,
+    explicitIds,
+    buildingId: explicitIds.length > 0 ? null : ctx.pointId,
+  });
   const format = request.format ?? "a4";
   return {
     screen: "objects",
@@ -364,7 +384,7 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
   });
   const official = new Map(templates.map((template) => [template.code, template]));
   const plan = planQrOverview(templates, ctx.disabledCodes, JOURNAL_FILL_HUB_CODE);
-  const buildingId = await resolveMainJournalQrBuilding(ctx.organizationId, ctx.activeBuildingId);
+  const buildingId = ctx.pointId;
   const point = await buildingName(buildingId);
   const notices = await loadMainJournalQrNotices({
     ...ctx,
@@ -377,20 +397,25 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
     {
       key: JOURNAL_FILL_HUB_CODE,
       group: "main",
+      // QR точки: журналы и документы только этой точки (скан 98, лист 6).
       poster: await buildJournalPoster({
         organizationId: ctx.organizationId,
         code: JOURNAL_FILL_HUB_CODE,
         name: "Все журналы",
-        subtitle: "Один плакат на стену: сотрудник выбирает журнал после сканирования",
+        subtitle: point
+          ? `${point} · сотрудник выбирает журнал после сканирования`
+          : "Один плакат на стену: сотрудник выбирает журнал после сканирования",
         orgName: ctx.orgName,
         origin: ctx.origin, qr: ctx.qr,
+        buildingId,
       }),
       defaultSelected: pick(request.selectedIds, JOURNAL_FILL_HUB_CODE, true),
       defaultFormat: format,
       label: "Все журналы",
-      sublabel: null,
-      caption: CAPTION.hub,
-      search: ["Все журналы", "универсальный общий"],
+      sublabel: point,
+      caption: point ? CAPTION.hubPoint : CAPTION.hub,
+      buildingName: point,
+      search: ["Все журналы", "универсальный общий", point],
     },
   ];
   if (plan.hygieneVerify) {
@@ -474,9 +499,10 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       search: [poster.title, poster.subtitle, poster.periodLabel, poster.journalCode],
     });
   }
+  // Счётчики наклеек — по точке экрана (скан 98, лист 7).
   const [equipment, rooms] = await Promise.all([
-    db.equipment.count({ where: { area: { organizationId: ctx.organizationId } } }),
-    db.room.count({ where: { building: { organizationId: ctx.organizationId } } }),
+    db.equipment.count({ where: { area: { organizationId: ctx.organizationId }, ...equipmentBuildingWhere(ctx.pointId) } }),
+    db.room.count({ where: { building: { organizationId: ctx.organizationId }, ...(ctx.pointId ? { buildingId: ctx.pointId } : {}) } }),
   ]);
   return {
     screen: "overview",
@@ -515,13 +541,17 @@ export async function loadQrPostersView(params: {
       legalProfileJson: true,
     },
   });
+  const pointId = await resolveMainJournalQrBuilding(params.organizationId, params.activeBuildingId);
   const ctx: OrgContext = {
     organizationId: params.organizationId,
     orgName: resolveOrgJournalName(org),
     todayKey: todayKeyFor(org?.timezone),
-    disabledCodes: parseDisabledCodes(org?.disabledJournalCodes),
+    disabledCodes: pointId
+      ? await getDisabledJournalCodes(params.organizationId, pointId)
+      : parseDisabledCodes(org?.disabledJournalCodes),
     journalPeriods: org?.journalPeriods ?? null,
     activeBuildingId: params.activeBuildingId,
+    pointId,
     origin: params.origin,
     names: await getOrgCustomNames(params.organizationId),
     qr,

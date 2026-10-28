@@ -28,8 +28,10 @@ export function mergedJournalFillPath(
   code: string,
   merged: MergedOrganization
 ): string {
+  // Хаб прежней организации — хаб её точки (2026-10-28): плакат висит там,
+  // и журналы остальных точек новой организации ему не нужны.
   const subject = check.hub
-    ? `${merged.organizationId}:${JOURNAL_FILL_HUB_CODE}`
+    ? journalFillSubject(merged.organizationId, JOURNAL_FILL_HUB_CODE, null, { buildingId: check.buildingId ?? merged.buildingId })
     : journalFillSubject(merged.organizationId, code, check.documentId, {
         validUntil: check.validUntil,
         // Основной QR прежней организации — это QR её точки.

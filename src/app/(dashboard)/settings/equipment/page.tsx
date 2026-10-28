@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
@@ -7,7 +6,6 @@ import { TemperatureChart } from "@/components/charts/temperature-chart";
 import {
   AlertTriangle,
   MapPin,
-  QrCode,
   Thermometer,
   Wifi,
   WifiOff,
@@ -24,6 +22,7 @@ import { getUserDisplayTitle, isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
+import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
 import { isUvLampEquipment, lampRemainingHours } from "@/lib/uv-lamp";
@@ -108,6 +107,8 @@ export default async function EquipmentSettingsPage() {
     keepEmpty: true,
   });
   const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
+  // Сколько оборудования на экране (точка из шапки и цеха без точки) — для кнопок QR.
+  const visibleCount = buildings.length === 0 ? equipment.length : groups.reduce((sum, group) => sum + group.items.length, 0);
   const places = buildPlaceOptions({ buildings, areas, rooms });
   const defaultBuildingId =
     buildingContext.activeBuildingId ?? (buildings.length === 1 ? buildings[0].id : null);
@@ -210,36 +211,8 @@ export default async function EquipmentSettingsPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {canManage && equipment.length > 0 ? (
-            <Link
-              href="/settings/qr-posters?kind=equipment&layout=sheet"
-              className="inline-flex h-10 items-center gap-2 rounded-lg border-0 bg-[#5566f6]/[0.04] px-4 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
-              title={t("stickersHint")}
-            >
-              <QrCode className="size-4" />
-              {t("stickers")}
-            </Link>
-          ) : null}
-          {canManage && equipment.length > 0 ? (
-            <Link
-              href="/settings/qr-posters?kind=equipment"
-              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-              title={t("postersHint")}
-            >
-              <QrCode className="size-4 text-[#5566f6]" />
-              {t("posters")}
-            </Link>
-          ) : null}
-          {canManage && equipment.length > 0 ? (
-            <Link
-              href="/settings/qr-posters?kind=equipment&layout=plate"
-              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-              title={t("platesHint")}
-            >
-              <QrCode className="size-4 text-[#5566f6]" />
-              {t("plates")}
-            </Link>
-          ) : null}
+          {/* QR — оборудование точки из шапки (скан 98: раньше печаталось всё оборудование организации). */}
+          {canManage && visibleCount > 0 ? <EquipmentQrButtons /> : null}
           {canManage && (
             <EquipmentDialog
               areas={areas}

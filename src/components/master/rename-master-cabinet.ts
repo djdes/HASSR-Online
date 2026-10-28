@@ -20,6 +20,8 @@ export async function renameMasterCabinetDialog(params: {
   currentName: string;
   endpoint: "/api/master/cabinet" | "/api/settings/master-cabinet";
   t: RenameMasterCabinetTranslator;
+  /** Какой кабинет (`/api/settings/master-cabinet`: у организации их может быть несколько). */
+  cabinetId?: string;
 }): Promise<{ name: string; body: Record<string, unknown> } | null> {
   const { t } = params;
   const raw = await promptAsync({
@@ -42,7 +44,7 @@ export async function renameMasterCabinetDialog(params: {
   const response = await fetch(params.endpoint, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(params.cabinetId ? { name, cabinetId: params.cabinetId } : { name }),
   }).catch(() => null);
   const body = ((await response?.json().catch(() => null)) ?? {}) as Record<string, unknown>;
   if (!response?.ok) {

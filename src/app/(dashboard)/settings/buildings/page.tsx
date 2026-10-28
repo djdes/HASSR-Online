@@ -8,6 +8,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Plus, QrCode } from "lucide-react";
 import { listPersonBuildings } from "@/lib/active-building";
+import { isOfficeBuilding } from "@/lib/building-scope";
 import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function BuildingsPage() {
   // Руководитель точки (фаза 2 «Офис и точки») ведёт только свои точки.
   const pointManager = isPointScoped(session.user);
 
-  const [buildings, users, organization, personBuildings] = await Promise.all([
+  const [allBuildings, users, organization, personBuildings] = await Promise.all([
     db.building.findMany({
     where: { organizationId: orgId, ...(pointManager ? { id: { in: session.user.pointScope ?? [] } } : {}) },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -78,6 +79,10 @@ export default async function BuildingsPage() {
     // Чью страницу точки человек откроет — у тех «Открыть точку».
     listPersonBuildings(session),
   ]);
+  // Только торговые точки (скан 98, 2026-10-28): офис — в «Моя компания → Офис».
+  // Офис с заведёнными помещениями остаётся: править их больше негде
+  // (страница точки для офиса уводит на «Офис»).
+  const buildings = allBuildings.filter((building) => !isOfficeBuilding(building) || building.rooms.length > 0);
 
   return (
     <div className="space-y-5">
@@ -132,6 +137,8 @@ export default async function BuildingsPage() {
         initial={buildings}
         users={users}
         perLocationJournals={organization?.perLocationJournals === true}
+        // Делить журналы есть что, пока точек с офисом две и больше.
+        canSplitJournals={allBuildings.length >= 2}
         userBuildingIds={Object.fromEntries(users.map((u) => [u.id, u.buildingIds]))}
         readOnly={readOnly}
         pointManager={pointManager}

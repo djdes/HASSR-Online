@@ -1,4 +1,5 @@
 import { orderHubJournals } from "@/lib/hub-journals-order";
+import { buildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { filterByQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
@@ -24,6 +25,8 @@ import { journalDisplayName, type CustomNames } from "@/lib/custom-names";
  * Токен плаката (подписанный субъект после `journal:`):
  *   • `<orgId>:<code>` — основной QR журнала, бессрочный;
  *   • `<orgId>:all` — хаб «Все журналы», принимается любым журналом;
+ *   • `<orgId>:all:b~<buildingId>` — хаб точки (2026-10-28): журналы и
+ *     документы только этой точки (и общие);
  *   • `<orgId>:<code>:<documentId>` — старый QR документа: ведёт в линию
  *     документа (новый период той же точки), бессрочный;
  *   • `<orgId>:<code>:<documentId>:<YYYY-MM-DD>` — дополнительный QR
@@ -98,7 +101,11 @@ export function verifyJournalFillToken(token: string, orgId: string, code: strin
   if (tokenOrg !== orgId) return { ok: false, reason: "mismatch" };
   const base = { ok: true as const, documentId: null, hub: false, validUntil: null, buildingId: null };
   if (tokenCode === JOURNAL_FILL_HUB_CODE) {
-    return segments.length === 2 ? { ...base, hub: true } : { ok: false, reason: "bad-format" };
+    if (third === undefined) return { ...base, hub: true };
+    // Хаб точки: «Все журналы» только этой точки.
+    const buildingId = third.startsWith(BUILDING_SEGMENT_PREFIX) ? third.slice(BUILDING_SEGMENT_PREFIX.length) : "";
+    if (!buildingId || fourth !== undefined) return { ok: false, reason: "bad-format" };
+    return { ...base, hub: true, buildingId };
   }
   // Плакат журнала открывает только свой журнал. Раньше пускал в любой
   // журнал организации — ради «Дальше →», которого больше нет (владелец,
@@ -254,10 +261,10 @@ export async function listFillEmployees(
  * (правило ночного крона: документы были, ни один не покрывает сегодня
  * или будущее; `perpetual` закрывают только руками).
  */
-async function listLapsedJournals(orgId: string, day: Date): Promise<Array<{ code: string; name: string }>> {
+async function listLapsedJournals(orgId: string, day: Date, buildingId?: string | null): Promise<Array<{ code: string; name: string }>> {
   const groups = await db.journalDocument.groupBy({
     by: ["templateId"],
-    where: { organizationId: orgId },
+    where: { organizationId: orgId, ...buildingWhere(buildingId) },
     _max: { dateTo: true },
   });
   const lapsedIds = groups
@@ -291,11 +298,13 @@ export async function listHubJournals(
      * подписью — для экрана хаба. Плакатам они не нужны: у объектов свои наклейки.
      */
     includeObjects?: boolean;
+    /** Хаб точки: только документы этой точки и общие (без точки). */
+    buildingId?: string | null;
   } = {}
 ) {
   const day = new Date(`${todayKey}T00:00:00.000Z`);
   const docs = await db.journalDocument.findMany({
-    where: { organizationId: orgId, status: "active", dateFrom: { lte: day }, dateTo: { gte: day } },
+    where: { organizationId: orgId, status: "active", dateFrom: { lte: day }, dateTo: { gte: day }, ...buildingWhere(options.buildingId) },
     select: { template: { select: { code: true, name: true } } },
   });
   const seen = new Map<string, string>();
@@ -312,7 +321,7 @@ export async function listHubJournals(
     add(doc.template.code, doc.template.name);
   }
   if (options.includeLapsed) {
-    for (const journal of await listLapsedJournals(orgId, day)) {
+    for (const journal of await listLapsedJournals(orgId, day, options.buildingId)) {
       if (disabledCodes.includes(journal.code)) continue;
       add(journal.code, journal.name);
     }

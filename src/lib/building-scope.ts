@@ -210,6 +210,20 @@ export function buildingWhere(buildingId: string | null | undefined): BuildingWh
   return buildingId ? { OR: [{ buildingId }, { buildingId: null }] } : {};
 }
 
+export type EquipmentBuildingWhere = {
+  OR?: Array<{ area: { buildingId: string | null } }>;
+};
+
+/**
+ * Оборудование точки — как список на странице «Оборудование»: цеха этой
+ * точки и цеха без точки (сканы 98, 2026-10-28: «нажатие выводит всё
+ * оборудование организации, а должно только этой торговой точки»).
+ * `null` — без фильтра. Разворачивается в `where` через spread.
+ */
+export function equipmentBuildingWhere(buildingId: string | null | undefined): EquipmentBuildingWhere {
+  return buildingId ? { OR: [{ area: { buildingId } }, { area: { buildingId: null } }] } : {};
+}
+
 /**
  * Подпись точки в шапке журнала: наименование для журналов, если задано
  * (точное юридическое по месту деятельности), иначе «Точка 2, ул. Ленина, 5»

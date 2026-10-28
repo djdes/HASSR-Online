@@ -102,6 +102,7 @@ function isCategoryNote(
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
+  "Точки, QR и мастер-кабинеты": QrCode,
   "Тарифы: цена за точку": Coins,
   "Торговые точки": MapPin,
   "Спецрежим: автоматика по галочкам": ShieldCheck,

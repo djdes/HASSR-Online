@@ -27096,11 +27096,11 @@
       "title": "Equipment",
       "subtitleByPoints": "Fridges, sensors, ovens — by point and room",
       "subtitle": "Fridges, sensors, ovens — by workshop",
-      "stickersHint": "Print QR stickers for quickly recording temperature from a phone",
+      "stickersHint": "QR stickers for the equipment of the point selected at the top — record temperature from a phone",
       "stickers": "QR stickers",
-      "postersHint": "An A4 poster with a QR code for each fridge: an employee scans it and records the temperature without signing in",
+      "postersHint": "An A4 poster with a QR code for each fridge of the point selected at the top: an employee scans it and records the temperature without signing in",
       "plates": "Plates",
-      "platesHint": "A plate for each fridge and freezer: COLD or FROST, temperature range, number, workshop and QR - 4 per A4 sheet",
+      "platesHint": "A plate for each fridge and freezer of the point selected at the top: COLD or FROST, temperature range, number, workshop and QR - 4 per A4 sheet",
       "posters": "A4 posters",
       "emptyTitle": "No equipment yet",
       "emptyAdd": "First create a room of the point, then the equipment in it.",
@@ -28013,8 +28013,8 @@
       "allHavePin": "Everyone has a PIN"
     },
     "masterCabinetPage": {
-      "title": "Master directory cabinet",
-      "description": "One person in the back office uploads the menu and raw materials, and every site with your code receives them in the quality-check and perishables journals."
+      "title": "Master cabinets",
+      "description": "The cabinet operator maintains the menu and raw materials, and the connected points receive them in their quality-check and perishables journals. Here you see which cabinets exist, which points are connected and who works in them."
     },
     "namesSettingsClient": {
       "fixFields": "Check the fields marked in red",
@@ -28958,70 +28958,100 @@
       "openFailed": "Could not open the master cabinet",
       "copyFailed": "Could not copy — select and copy it manually",
       "copy": "Copy",
-      "form": {
-        "nameLabel": "Back-office employee’s full name",
-        "namePlaceholder": "For example, Maria Ivanova",
-        "emailHint": "An email with a link will be sent to this address. The address must not already be used in WeSetup.",
-        "sendInvite": "Send invitation",
-        "createCabinet": "Create master cabinet",
-        "cancel": "Cancel"
-      },
+      "create": "New master cabinet",
       "guide": {
-        "title": "How the master cabinet works",
-        "step1Title": "1. Create a cabinet",
-        "step1Body": "Enter the full name and email of a back-office employee — they will get an invitation to a separate cabinet without journals or kitchen staff.",
-        "step2Title": "2. The back office uploads the menu and raw materials",
-        "step2Body": "As an Excel/CSV file or a list: one item per line. Before saving you can see what will be added and what will be removed.",
-        "step3Title": "3. Sites receive the lists",
-        "step3Body": "The dish directory is saved separately. To push it to the quality-check journals, pick a date in the master cabinet. Raw materials, suppliers and manufacturers are updated in the perishables journal on save.",
-        "qa1Q": "Will dishes that a site added itself disappear?",
-        "qa1A": "No. If the back office removes an item, only that item disappears from the sites — anything added by hand stays.",
-        "qa2Q": "How do I connect another site?",
-        "qa2A": "Copy the “Site journal code” in the kitchen’s BZhGP settings. In the master cabinet open “Connected sites”, enter that code and confirm the connection.",
-        "qa3Q": "Will the back-office employee see journals and people?",
-        "qa3A": "No. The master cabinet only shows the menu and raw-material lists and the list of connected sites.",
-        "qa4Q": "Need another master cabinet — for example, separate for schools and kindergartens?",
-        "qa4A": "Account owner: profile menu (the circle with initials at the top right) → “Cabinet” section → “Create master cabinet”. Give it a name and tick the sites — they will receive the menu and raw materials from the new cabinet. You can have as many cabinets as you like."
-      },
-      "code": {
-        "eyebrow": "Directory code",
-        "copied": "Code copied",
-        "none": "There is no code yet — it will be issued automatically when you create a master cabinet.",
-        "objectsReceive": "Sites with this code receive the menu and raw materials from the master cabinet.",
-        "objectsWithCode": "Sites with this code",
-        "onlyThisOrg": "So far only “{organizationName}”. Other sites are connected in the master cabinet using their own codes."
+        "title": "How master cabinets work",
+        "cabinetTitle": "1. Cabinet",
+        "cabinetBody": "A master cabinet is a separate cabinet without journals or kitchen staff. There can be several — for example, “Schools” and “Kindergartens”.",
+        "pointsTitle": "2. Points",
+        "pointsBody": "In the right cabinet, press “Add point” — the point starts receiving its menu and raw materials. A point receives them from one cabinet.",
+        "operatorTitle": "3. Operator",
+        "operatorBody": "Invite an operator by email — a back-office employee or an external technologist. They upload the menu and raw materials and send them to the points’ journals for the chosen date.",
+        "codeQ": "Isn’t the point code entered in the master cabinet?",
+        "codeA": "That works too: the operator enters the point’s journal code on the cabinet’s “Connected sites” tab. The code is in the settings of the finished-product quality-check journal at that point. The “Add point” button here does the same without a code.",
+        "ownQ": "Will the dishes a point added itself disappear?",
+        "ownA": "No. If the operator removes an item, only that item disappears at the points — what they added by hand stays.",
+        "seesQ": "Will the operator see journals and people?",
+        "seesA": "No. The master cabinet only has the menu and raw-material lists and the list of connected points.",
+        "moveQ": "How do I move a point to another cabinet?",
+        "moveA": "Press “Disconnect” next to the point in its current cabinet, then “Add point” in the other one. Journal records stay."
       },
       "cabinet": {
-        "eyebrow": "Master cabinet",
         "renameLabel": "Rename master cabinet",
         "rename": "Rename",
-        "distributes": "Distributes the menu and raw materials to {count, plural, one {# site} other {# sites}}",
-        "employees": "Cabinet employees",
+        "objects": "Supplies the menu and raw materials to {count, plural, one {# site} other {# sites}}",
+        "foreign": "Another account’s cabinet",
+        "open": "Open cabinet"
+      },
+      "points": {
+        "title": "Organisation points",
+        "titleOrganization": "Organisation",
+        "add": "Add point",
+        "addOrganization": "Connect organisation",
+        "addHint": "The point will start receiving the menu and raw materials from “{cabinet}”",
+        "allHere": "All points are already in this cabinet",
+        "pick": "Which point to connect",
+        "free": "Not connected",
+        "inOther": "In cabinet “{cabinet}”",
+        "moveHint": "There are no free points. To move a point, disconnect it in its cabinet.",
+        "withOrganization": "together with the organisation",
+        "disconnect": "Disconnect",
+        "root": "Main",
+        "rootHint": "The cabinet was created from this organisation — it cannot be disconnected here",
+        "none": "No point of “{organization}” receives the menu and raw materials from this cabinet yet.",
+        "connected": "“{name}” connected to “{cabinet}”",
+        "connectedHint": "The cabinet’s menu and raw materials will go to the point’s quality-check and perishables journals.",
+        "disconnected": "“{name}” disconnected from “{cabinet}”"
+      },
+      "operators": {
+        "title": "Operators",
+        "none": "No operators yet — invite a back-office employee or an external technologist.",
+        "invite": "Invite operator",
+        "connectFirst": "To invite an operator, connect a point to the cabinet.",
+        "ownerOnly": "Operators of this cabinet are added by the owner of its account.",
         "invited": "Invited",
         "resendTitle": "Issue a new invitation link — the previous one will stop working",
         "resend": "New link",
-        "joined": "Signed in",
-        "noEmployees": "There is nobody in the cabinet yet — invite a back-office employee.",
-        "open": "Open master cabinet",
-        "inviteMore": "Invite another",
-        "noCabinet": "There is no cabinet yet. Create one and invite a back-office employee — they will maintain the menu and raw materials for all sites with your code.",
-        "demoNotice": "A master cabinet is not created in a demo organisation — switch to a working organisation."
+        "joined": "Signed in"
+      },
+      "disconnect": {
+        "title": "Disconnect “{name}”?",
+        "description": "The “{cabinet}” cabinet will stop sending the menu and raw materials to this point’s journals.",
+        "confirm": "Disconnect",
+        "keeps": "What is already recorded in the quality-check and perishables journals stays.",
+        "whole": "The organisation was connected as a whole: its other points will stay in the cabinet.",
+        "again": "You can connect it again with “Add point”."
+      },
+      "form": {
+        "who": "An operator is a back-office employee or an external technologist. They will get an email with a link to set a password and go straight to the master cabinet.",
+        "nameLabel": "Operator’s full name",
+        "namePlaceholder": "For example, Maria Ivanova",
+        "emailHint": "An email with a link will be sent to this address. The address must not already be used in WeSetup.",
+        "sendInvite": "Send invitation",
+        "createCabinet": "Create cabinet and invite",
+        "cancel": "Cancel"
       },
       "result": {
         "sent": "Invitation sent to {email}",
-        "notSent": "The email to {email} was not delivered — send the link to the employee yourself",
+        "notSent": "The email to {email} was not delivered — send the link to the operator yourself",
         "linkLabel": "Invitation link",
         "linkCopied": "Invitation link copied",
-        "validity": "The link is valid for 7 days. The employee uses it to set a password and goes straight to the master cabinet."
+        "validity": "The link is valid for 7 days. The operator uses it to set a password and goes straight to the master cabinet."
+      },
+      "empty": {
+        "title": "No master cabinets yet",
+        "owner": "Create a cabinet: give it a name (for example, “Schools”) and select the sites. Then connect points and invite operators here.",
+        "other": "Create a cabinet and invite the first operator — they will maintain the menu and raw materials for “{organization}”.",
+        "demo": "A master cabinet is not created in a demo organisation — switch to a working organisation."
       },
       "confirm": {
         "title": "Create a master cabinet?",
-        "description": "The back-office employee {name} ({email}) will receive an invitation.",
+        "description": "The operator {name} ({email}) will receive an invitation.",
         "confirmLabel": "Create and invite",
         "bullet1": "A separate cabinet will appear — without journals, staff or kitchen settings.",
-        "bullet2": "The back-office employee will see only the menu, raw materials and the list of sites with your code.",
-        "bullet3": "The menu and raw materials they save will go to the quality-check and perishables journals at all sites with code{code} (currently: {count, number}).",
-        "bullet4": "Sites’ own items will not disappear — only what the back office sent changes."
+        "bullet2": "The operator will see only the menu, raw materials and the list of connected points.",
+        "bullet3": "The menu and raw materials they save will go to the quality-check and perishables journals of “{organization}”.",
+        "bullet4": "Points’ own items will not disappear — only what the operator sent changes."
       }
     },
     "onboardingDocHealthCard": {

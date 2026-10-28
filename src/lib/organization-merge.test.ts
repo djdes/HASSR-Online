@@ -47,10 +47,19 @@ describe("mergedJournalFillPath: старый QR слитой организац
     assert.equal(check.ok && check.buildingId, "b-own");
   });
 
-  it("общий QR всех журналов остаётся общим", () => {
+  it("QR всех журналов ведёт в хаб точки прежней организации", () => {
     const path = mergedJournalFillPath(oldCheck("org-old:all", "org-old", "all"), "all", MERGED);
     const { pathCode, check } = follow(path, "all");
     assert.equal(pathCode, "all");
     assert.equal(check.ok && check.hub, true);
+    assert.equal(check.ok && check.buildingId, "point-1");
+  });
+
+  it("хаб точки сохраняет свою точку", () => {
+    const subject = journalFillSubject("org-old", "all", null, { buildingId: "b-own" });
+    const path = mergedJournalFillPath(oldCheck(subject, "org-old", "all"), "all", MERGED);
+    const { check } = follow(path, "all");
+    assert.equal(check.ok && check.hub, true);
+    assert.equal(check.ok && check.buildingId, "b-own");
   });
 });

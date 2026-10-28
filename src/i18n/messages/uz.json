@@ -27096,11 +27096,11 @@
       "title": "Uskunalar",
       "subtitleByPoints": "Muzlatkichlar, datchiklar, pechlar — nuqtalar va xonalar bo‘yicha",
       "subtitle": "Muzlatkichlar, datchiklar, pechlar — sexlar bo‘yicha",
-      "stickersHint": "Telefondan haroratni tez yozish uchun QR-stikerlarni chop etish",
+      "stickersHint": "Yuqorida tanlangan nuqta jihozlari uchun QR-stikerlar — haroratni telefondan yozish",
       "stickers": "QR-stikerlar",
-      "postersHint": "Har bir muzlatkich uchun QR-kodli A4 plakat: xodim skanerlaydi va tizimga kirmasdan haroratni kiritadi",
+      "postersHint": "Yuqorida tanlangan nuqtaning har bir muzlatkichi uchun QR-kodli A4 plakat: xodim skanerlaydi va tizimga kirmasdan haroratni kiritadi",
       "plates": "Jadvallar",
-      "platesHint": "Har bir muzlatkich va muzlatgich uchun jadval: SOVUQ yoki MUZ, harorat rejimi, raqam, sex va QR - A4 varaqda 4 ta",
+      "platesHint": "Yuqorida tanlangan nuqtaning har bir muzlatkichi va muzlatgichi uchun jadval: SOVUQ yoki MUZ, harorat rejimi, raqam, sex va QR - A4 varaqda 4 ta",
       "posters": "A4 plakatlar",
       "emptyTitle": "Hozircha uskunalar yo‘q",
       "emptyAdd": "Avval nuqtaning xonasini, so‘ng undagi uskunani qo‘shing.",
@@ -28013,8 +28013,8 @@
       "allHavePin": "Hammada PIN bor"
     },
     "masterCabinetPage": {
-      "title": "Ma’lumotnomalar master-kabineti",
-      "description": "Menyu va xomashyoni bek-ofisdagi bitta odam yuklaydi — kodingiz bor barcha obyektlar ularni brakeraj va tez buziladigan mahsulotlar jurnallarida oladi."
+      "title": "Master-kabinetlar",
+      "description": "Kabinet operatori menyu va xom ashyoni yuritadi, ulangan nuqtalar esa ularni brakeraj va tez buziladigan mahsulotlar jurnallarida oladi. Bu yerda qaysi kabinetlar borligi, ularga qaysi nuqtalar ulangani va ularda kim ishlashi ko‘rinadi."
     },
     "namesSettingsClient": {
       "fixFields": "Qizil bilan belgilangan maydonlarni tekshiring",
@@ -28958,70 +28958,100 @@
       "openFailed": "Master-kabinetni ochib bo‘lmadi",
       "copyFailed": "Nusxalab bo‘lmadi — belgilab, qo‘lda nusxalang",
       "copy": "Nusxalash",
-      "form": {
-        "nameLabel": "Bek-ofis xodimining F.I.O.si",
-        "namePlaceholder": "Masalan, Ivanova Mariya Petrovna",
-        "emailHint": "Ushbu manzilga havolali xat keladi. Manzil WeSetup’da band bo‘lmasligi kerak.",
-        "sendInvite": "Taklifni yuborish",
-        "createCabinet": "Master-kabinet yaratish",
-        "cancel": "Bekor qilish"
-      },
+      "create": "Yangi master-kabinet",
       "guide": {
-        "title": "Master-kabinet qanday ishlaydi",
-        "step1Title": "1. Kabinet yarating",
-        "step1Body": "Bek-ofis xodimining F.I.O. va email manzilini kiriting — u jurnallar va oshxona xodimlarisiz alohida kabinetga taklif oladi.",
-        "step2Title": "2. Bek-ofis menyu va xom ashyoni yuklaydi",
-        "step2Body": "Excel/CSV fayl yoki ro‘yxat ko‘rinishida: bitta pozitsiya — bitta qator. Saqlashdan oldin nima qo‘shilishi va nima olib tashlanishi ko‘rinadi.",
-        "step3Title": "3. Obyektlar ro‘yxatlarni oladi",
-        "step3Body": "Taomlar ma’lumotnomasi alohida saqlanadi. Brakeraj jurnallariga yuklash uchun master-kabinetda sanani tanlang. Xom ashyo, yetkazib beruvchilar va ishlab chiqaruvchilar saqlanganda tez buziladigan mahsulotlar jurnalida yangilanadi.",
-        "qa1Q": "Obyekt o‘zi kiritgan taomlar yo‘qolib qoladimi?",
-        "qa1A": "Yo‘q. Bek-ofis pozitsiyani olib tashlasa, obyektlardan faqat o‘sha pozitsiya yo‘qoladi — qo‘lda qo‘shilganlari qoladi.",
-        "qa2Q": "Yana bitta obyektni qanday ulash mumkin?",
-        "qa2A": "Oshxonaning BJGP sozlamalaridan “Obyekt jurnali kodi”ni nusxalang. Master-kabinetda “Ulangan obyektlar”ni oching, shu kodni kiriting va ulanishni tasdiqlang.",
-        "qa3Q": "Bek-ofis xodimi jurnallar va odamlarni ko‘radimi?",
-        "qa3A": "Yo‘q. Master-kabinetda faqat menyu va xom ashyo ro‘yxatlari hamda ulangan obyektlar ro‘yxati mavjud.",
-        "qa4Q": "Yana bitta master-kabinet kerakmi — masalan, maktablar va bog‘chalar uchun alohida?",
-        "qa4A": "Akkaunt egasi: profil menyusi (yuqori o‘ngdagi bosh harflar yozilgan doira) → “Kabinet” bo‘limi → “Master-kabinet yaratish”. Nom bering va obyektlarni belgilang — ular menyu va xom ashyoni yangi kabinetdan oladi. Kabinetlar soni cheklanmagan."
-      },
-      "code": {
-        "eyebrow": "Ma’lumotnoma kodi",
-        "copied": "Kod nusxalandi",
-        "none": "Hozircha kod yo‘q — master-kabinet yaratganingizda u avtomatik beriladi.",
-        "objectsReceive": "Ushbu kodli obyektlar menyu va xom ashyoni master-kabinetdan oladi.",
-        "objectsWithCode": "Ushbu kodli obyektlar",
-        "onlyThisOrg": "Hozircha faqat “{organizationName}”. Boshqa obyektlar master-kabinetda o‘zlarining kodlari bo‘yicha ulanadi."
+        "title": "Master-kabinetlar qanday ishlaydi",
+        "cabinetTitle": "1. Kabinet",
+        "cabinetBody": "Master-kabinet — jurnallar va oshxona xodimlarisiz alohida kabinet. Kabinetlar bir nechta bo‘lishi mumkin — masalan, «Maktablar» va «Bog‘chalar».",
+        "pointsTitle": "2. Nuqtalar",
+        "pointsBody": "Kerakli kabinetda «Nuqta qo‘shish»ni bosing — nuqta uning menyu va xom ashyosini ola boshlaydi. Bitta nuqta ularni bitta kabinetdan oladi.",
+        "operatorTitle": "3. Operator",
+        "operatorBody": "Operatorni pochta orqali taklif qiling — bek-ofis xodimi yoki tashqi texnologni. U menyu va xom ashyoni yuklaydi va ularni kerakli sanaga nuqtalar jurnallariga tushiradi.",
+        "codeQ": "Nuqta kodi master-kabinetda kiritilmaydimi?",
+        "codeA": "Shunday ham bo‘ladi: operator nuqta jurnali kodini kabinetning «Ulangan obyektlar» bo‘limida kiritadi. Kod — shu nuqtadagi tayyor mahsulot brakeraji jurnali sozlamalarida. Bu yerdagi «Nuqta qo‘shish» tugmasi xuddi shuni kodsiz bajaradi.",
+        "ownQ": "Nuqta o‘zi kiritgan taomlar yo‘qolmaydimi?",
+        "ownA": "Yo‘q. Operator pozitsiyani olib tashlasa, nuqtalarda faqat u yo‘qoladi — qo‘lda qo‘shilganlari qoladi.",
+        "seesQ": "Operator jurnallar va odamlarni ko‘radimi?",
+        "seesA": "Yo‘q. Master-kabinetda faqat menyu va xom ashyo ro‘yxatlari hamda ulangan nuqtalar ro‘yxati bor.",
+        "moveQ": "Nuqtani boshqa kabinetga qanday o‘tkazish mumkin?",
+        "moveA": "Joriy kabinetda nuqta yonidagi «Uzish»ni, so‘ng kerakli kabinetda «Nuqta qo‘shish»ni bosing. Jurnallardagi yozuvlar qoladi."
       },
       "cabinet": {
-        "eyebrow": "Master-kabinet",
         "renameLabel": "Master-kabinet nomini o‘zgartirish",
         "rename": "Nomini o‘zgartirish",
-        "distributes": "Menyu va xom ashyoni {count, plural, one {# obyektga} other {# obyektga}} tarqatadi",
-        "employees": "Kabinet xodimlari",
+        "objects": "Menyu va xom ashyoni {count, plural, one {# obyektga} other {# obyektga}} tarqatadi",
+        "foreign": "Boshqa akkaunt kabineti",
+        "open": "Kabinetni ochish"
+      },
+      "points": {
+        "title": "Tashkilot nuqtalari",
+        "titleOrganization": "Tashkilot",
+        "add": "Nuqta qo‘shish",
+        "addOrganization": "Tashkilotni ulash",
+        "addHint": "Nuqta menyu va xom ashyoni «{cabinet}»dan ola boshlaydi",
+        "allHere": "Barcha nuqtalar allaqachon shu kabinetda",
+        "pick": "Qaysi nuqtani ulash",
+        "free": "Ulanmagan",
+        "inOther": "«{cabinet}» kabinetida",
+        "moveHint": "Bo‘sh nuqtalar yo‘q. Nuqtani o‘tkazish uchun uni o‘z kabinetida uzing.",
+        "withOrganization": "tashkilot bilan birga",
+        "disconnect": "Uzish",
+        "root": "Asosiy",
+        "rootHint": "Kabinet shu tashkilotdan yaratilgan — uni bu yerdan uzib bo‘lmaydi",
+        "none": "«{organization}»ning hech bir nuqtasi hozircha bu kabinetdan menyu va xom ashyo olmaydi.",
+        "connected": "«{name}» «{cabinet}»ga ulandi",
+        "connectedHint": "Kabinet menyu va xom ashyosi nuqtaning brakeraj va tez buziladigan mahsulotlar jurnallariga tushadi.",
+        "disconnected": "«{name}» «{cabinet}»dan uzildi"
+      },
+      "operators": {
+        "title": "Operatorlar",
+        "none": "Hozircha operatorlar yo‘q — bek-ofis xodimi yoki tashqi texnologni taklif qiling.",
+        "invite": "Operatorni taklif qilish",
+        "connectFirst": "Operatorni taklif qilish uchun kabinetga nuqta ulang.",
+        "ownerOnly": "Bu kabinet operatorlarini uning akkaunti egasi qo‘shadi.",
         "invited": "Taklif qilingan",
         "resendTitle": "Yangi taklif havolasini berish — avvalgisi ishlamay qoladi",
         "resend": "Yangi havola",
-        "joined": "Kirgan",
-        "noEmployees": "Kabinetda hozircha hech kim yo‘q — bek-ofis xodimini taklif qiling.",
-        "open": "Master-kabinetni ochish",
-        "inviteMore": "Yana taklif qilish",
-        "noCabinet": "Kabinet hali yo‘q. Uni yarating va bek-ofis xodimini taklif qiling — u kodingiz bilan barcha obyektlar uchun menyu va xom ashyoni yuritadi.",
-        "demoNotice": "Demo-tashkilotda master-kabinet yaratilmaydi — ishchi tashkilotga o‘ting."
+        "joined": "Kirgan"
+      },
+      "disconnect": {
+        "title": "«{name}» uzilsinmi?",
+        "description": "«{cabinet}» kabineti bu nuqta jurnallariga menyu va xom ashyo yuborishni to‘xtatadi.",
+        "confirm": "Uzish",
+        "keeps": "Brakeraj va tez buziladigan mahsulotlar jurnallarida yozilganlar qoladi.",
+        "whole": "Tashkilot to‘liq ulangan edi: uning boshqa nuqtalari kabinetda qoladi.",
+        "again": "Qayta ulash — «Nuqta qo‘shish» tugmasi bilan."
+      },
+      "form": {
+        "who": "Operator — bek-ofis xodimi yoki tashqi texnolog. Unga havolali xat keladi: u orqali parol o‘rnatadi va darhol master-kabinetga kiradi.",
+        "nameLabel": "Operatorning F.I.O.si",
+        "namePlaceholder": "Masalan, Ivanova Mariya Petrovna",
+        "emailHint": "Ushbu manzilga havolali xat keladi. Manzil WeSetup’da band bo‘lmasligi kerak.",
+        "sendInvite": "Taklifni yuborish",
+        "createCabinet": "Kabinet yaratish va taklif qilish",
+        "cancel": "Bekor qilish"
       },
       "result": {
         "sent": "Taklif {email} manziliga yuborildi",
-        "notSent": "{email} manziliga xat yetib bormadi — havolani xodimga o‘zingiz yuboring",
+        "notSent": "{email} manziliga xat yetib bormadi — havolani operatorga o‘zingiz yuboring",
         "linkLabel": "Taklif havolasi",
         "linkCopied": "Taklif havolasi nusxalandi",
-        "validity": "Havola 7 kun amal qiladi. U orqali xodim parol o‘rnatadi va darhol master-kabinetga kiradi."
+        "validity": "Havola 7 kun amal qiladi. U orqali operator parol o‘rnatadi va darhol master-kabinetga kiradi."
+      },
+      "empty": {
+        "title": "Hozircha master-kabinetlar yo‘q",
+        "owner": "Kabinet yarating: nom bering (masalan, «Maktablar») va obyektlarni belgilang. So‘ng nuqtalarni ulang va operatorlarni shu yerda taklif qiling.",
+        "other": "Kabinet yarating va birinchi operatorni taklif qiling — u «{organization}» uchun menyu va xom ashyoni yuritadi.",
+        "demo": "Demo-tashkilotda master-kabinet yaratilmaydi — ishchi tashkilotga o‘ting."
       },
       "confirm": {
         "title": "Master-kabinet yaratilsinmi?",
-        "description": "Bek-ofis xodimi {name} ({email}) taklif oladi.",
+        "description": "Operator {name} ({email}) taklif oladi.",
         "confirmLabel": "Yaratish va taklif qilish",
         "bullet1": "Alohida kabinet paydo bo‘ladi — jurnallar, xodimlar va oshxona sozlamalarisiz.",
-        "bullet2": "Bek-ofis xodimi faqat menyu, xom ashyo va kodingiz bilan obyektlar ro‘yxatini ko‘radi.",
-        "bullet3": "U saqlagan menyu va xom ashyo kod{code} bo‘lgan barcha obyektlardagi brakeraj va tez buziladigan mahsulotlar jurnallariga tushadi (hozir: {count, number}).",
-        "bullet4": "Obyektlarning o‘z pozitsiyalari yo‘qolmaydi — faqat bek-ofis yuborgani o‘zgaradi."
+        "bullet2": "Operator faqat menyu, xom ashyo va ulangan nuqtalar ro‘yxatini ko‘radi.",
+        "bullet3": "U saqlagan menyu va xom ashyo «{organization}»ning brakeraj va tez buziladigan mahsulotlar jurnallariga tushadi.",
+        "bullet4": "Nuqtalarning o‘z pozitsiyalari yo‘qolmaydi — faqat operator yuborgani o‘zgaradi."
       }
     },
     "onboardingDocHealthCard": {
