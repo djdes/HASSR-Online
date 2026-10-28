@@ -1,5 +1,5 @@
 import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
-import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingContext, type BuildingOption } from "@/lib/building-scope";
 import { HOME_HREF } from "@/lib/home-page";
 
 /**
@@ -142,4 +142,19 @@ export function headerPointHidden(pathname: string | null | undefined): boolean 
   if (COMPANY_WIDE_PATHS.has(path)) return true;
   const owner = sectionForPath(path);
   return owner !== null && COMPANY_WIDE_SECTIONS.has(owner.section);
+}
+
+/**
+ * Подпись точки в верхней панели Mini App — то же, что в центре шапки сайта
+ * (П-3): выбрана «Вся организация» без офиса — так и пишем (раньше там
+ * стояла первая точка списка), иначе название выбранной точки или офиса.
+ * Точки выключены — подписи нет.
+ */
+export function miniLocationLabel(
+  context: Pick<BuildingContext, "enabled" | "organizationView" | "activeBuilding"> | null,
+  organizationLabel: string,
+): string | null {
+  if (!context?.enabled) return null;
+  if (context.organizationView && !isOfficeBuilding(context.activeBuilding)) return organizationLabel;
+  return context.activeBuilding?.name ?? null;
 }
