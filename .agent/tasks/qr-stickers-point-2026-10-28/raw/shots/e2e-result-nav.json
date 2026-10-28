@@ -1,0 +1,77 @@
+{
+  "base": "http://localhost:3026",
+  "total": 14,
+  "failed": 0,
+  "results": [
+    {
+      "name": "AC5 «Сотрудники»: меню раздела",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "AC5 «Назад» → меню «Торговых точек» и их страница",
+      "ok": true,
+      "detail": "{\"mode\":\"section\",\"section\":\"points\",\"path\":\"/settings/buildings\"}"
+    },
+    {
+      "name": "AC5 «Назад» → меню «Моей компании» и её страница",
+      "ok": true,
+      "detail": "{\"mode\":\"section\",\"section\":\"company\",\"path\":\"/settings/organization\"}"
+    },
+    {
+      "name": "AC5 «Назад» → главное меню и главная",
+      "ok": true,
+      "detail": "{\"mode\":\"main\",\"section\":null,\"path\":\"/home\"}"
+    },
+    {
+      "name": "AC5 кнопка «назад» браузера — меню страницы, куда вернулись",
+      "ok": true,
+      "detail": "{\"mode\":\"section\",\"section\":\"company\",\"path\":\"/settings/organization\"}"
+    },
+    {
+      "name": "AC5 «вперёд» браузера — главная с главным меню",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "AC5 «Чек-листы» → «Назад» → «Мониторинг» и его страница",
+      "ok": true,
+      "detail": "{\"mode\":\"section\",\"section\":\"monitoring\",\"path\":\"/monitoring\"}"
+    },
+    {
+      "name": "AC5 «Мониторинг» → «Назад» → главное меню и главная",
+      "ok": true,
+      "detail": "{\"mode\":\"main\",\"section\":null,\"path\":\"/home\"}"
+    },
+    {
+      "name": "AC5 «Назад» — ссылка на корень родителя",
+      "ok": true,
+      "detail": "/settings/buildings"
+    },
+    {
+      "name": "AC5 руководитель точки: «Назад» → «Торговые точки»",
+      "ok": true,
+      "detail": "{\"mode\":\"section\",\"section\":\"points\",\"path\":\"/settings/buildings\"}"
+    },
+    {
+      "name": "AC5 руководитель точки: «Назад» → главное меню и главная",
+      "ok": true,
+      "detail": "{\"mode\":\"main\",\"section\":null,\"path\":\"/home\"}"
+    },
+    {
+      "name": "AC5 повар: сайдбара нет (оболочка Mini App) — «Назад» в нём не участвует",
+      "ok": true,
+      "detail": "/journals, сайдбаров: 0"
+    },
+    {
+      "name": "AC5 заведующая: «Назад» шаг за шагом → главное меню и её главная",
+      "ok": true,
+      "detail": "staff@/team → points@/settings/buildings → main@/control-board"
+    },
+    {
+      "name": "AC6 телефон: «Назад» в листе — меню уровнем выше, страница та же",
+      "ok": true,
+      "detail": "/settings/users"
+    }
+  ]
+}

@@ -38,8 +38,10 @@ const SIDEBAR_ITEM =
  * У раздела своё меню (`section.menu`): при входе в раздел левое меню
  * меняется целиком. Разделы вложены (эскизы 2026-10-28: «Моя компания →
  * Торговые точки → Журналы»): пункт-раздел со стрелкой открывает меню
- * вложенного раздела, «‹ Назад» поднимает на уровень вверх — в меню родителя,
- * из раздела главного меню — в главное меню; страница при этом не меняется.
+ * вложенного раздела и его страницу, «‹ Назад» поднимает на уровень вверх
+ * и меню, и страницу (владелец, 2026-10-28: «Назад» возвращает не только
+ * список, но и основное поле): в меню родителя и на его корень, из раздела
+ * главного меню — в главное меню и на главную (`homeHref`).
  * Две панели лежат на ленте шириной 200%: главное меню и меню раздела, вход и
  * выход из главного меню — сдвиг ленты. Раздел без меню («Остальное») —
  * пункт меню родителя.
@@ -74,9 +76,16 @@ export function AppSidebar({
   const inspection = mainSections.find((section) => section.key === "inspection");
 
   // Какое меню показано, помним вместе с путём: при смене пути снова видно
-  // меню текущего раздела (`hostKey`).
-  const [view, setView] = useState<{ path: string; key: NavSectionKey | "main" } | null>(null);
-  const viewKey = view && view.path === pathname ? view.key : (hostKey ?? "main");
+  // меню текущего раздела (`hostKey`). После «‹ Назад» меню уровнем выше
+  // показано сразу и переходит на страницу, куда «Назад» привела (`follow`):
+  // главная может лежать внутри раздела и даже перенаправлять дальше (у
+  // заведующей «Журналы» → панель контроля), а меню остаётся главным.
+  const [view, setView] = useState<{ path: string; key: NavSectionKey | "main"; follow?: boolean } | null>(null);
+  // Сменилась страница: после «Назад» выбранное меню закрепляется за новой
+  // страницей, в остальных случаях — забывается (возврат кнопкой браузера
+  // покажет меню той страницы, а не прежний выбор).
+  if (view && view.path !== pathname) setView(view.follow ? { path: pathname, key: view.key } : null);
+  const viewKey = view && (view.path === pathname || view.follow) ? view.key : (hostKey ?? "main");
   const viewSection = viewKey === "main" ? undefined : sections.find((section) => section.key === viewKey && section.menu);
   const showSection = Boolean(viewSection);
 
@@ -95,7 +104,7 @@ export function AppSidebar({
   // «‹ Назад» — на пункт раздела, из которого вышли, при входе в меню
   // раздела — на «‹ Назад». Переносим только после действия человека.
   const asideRef = useRef<HTMLElement>(null);
-  const backRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLAnchorElement>(null);
   const focusAfter = useRef<NavSectionKey | "back" | null>(null);
   useEffect(() => {
     const target = focusAfter.current;
@@ -112,11 +121,21 @@ export function AppSidebar({
     focusAfter.current = "back";
     setView({ path: pathname, key });
   };
-  const goBack = () => {
-    const parent = viewSection?.parent;
-    const parentHasMenu = parent ? sections.some((section) => section.key === parent && section.menu) : false;
+  // «‹ Назад»: меню родителя и его корень; родителя нет (или он закрыт
+  // человеку) — главное меню и главная.
+  const parentSection = viewSection?.parent
+    ? sections.find((section) => section.key === viewSection.parent && section.menu)
+    : undefined;
+  const backHref = parentSection ? parentSection.rootHref : homeHref;
+  const backPath = backHref.split(/[?#]/)[0] || "/";
+  const goBack = (event: MouseEvent<HTMLAnchorElement>) => {
+    // Открытие в новой вкладке — меню здесь не трогаем.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    // Уже на этой странице — переход не нужен, меняется только меню.
+    const stay = backPath === pathname;
+    if (stay) event.preventDefault();
     focusAfter.current = viewSection?.key ?? null;
-    setView({ path: pathname, key: parent && parentHasMenu ? parent : "main" });
+    setView({ path: pathname, key: parentSection ? parentSection.key : "main", follow: !stay });
   };
 
   // Раздел со своим меню, внутри которого человек уже стоит, не уводит на
@@ -220,16 +239,17 @@ export function AppSidebar({
         <div className="flex h-full w-1/2 shrink-0 flex-col" inert={!showSection} aria-hidden={!showSection}>
           {logo}
           <div className="shrink-0 px-3 pt-3">
-            <button
+            <Link
               ref={backRef}
-              type="button"
+              href={backHref}
               onClick={goBack}
               data-back-to-main
+              data-back-href={backPath}
               className="inline-flex h-9 items-center gap-1 rounded-xl px-2.5 text-[13.5px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
               <ChevronLeft className="size-4" aria-hidden />
               {t("back")}
-            </button>
+            </Link>
           </div>
           <Link
             href={menuSection.rootHref}

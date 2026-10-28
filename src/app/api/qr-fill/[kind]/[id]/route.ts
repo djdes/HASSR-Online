@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getActiveBuildingId, getViewedPointId } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { brandQrOptionsFor } from "@/lib/brand-qr-center.server";
 import { loadPrintBrand } from "@/lib/print-brand.server";
-import { loadQrPoster } from "@/lib/qr-fill-poster";
+import { loadQrPoster, resolveMainJournalQrBuilding } from "@/lib/qr-fill-poster";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { decodeRouteParam } from "@/lib/route-param";
@@ -53,6 +53,9 @@ export async function GET(
       origin,
       // Основной QR журнала в сети точек — на активную точку (как на странице QR-кодов).
       activeBuildingId: kind === "journal" ? await getActiveBuildingId(session) : null,
+      // Строка точки у оборудования цеха без точки — точка из шапки, как на печати.
+      printPointId:
+        kind === "journal" ? null : await resolveMainJournalQrBuilding(organizationId, await getViewedPointId(session)),
     });
     if (!poster) {
       return NextResponse.json({ error: "Объект не найден" }, { status: 404 });

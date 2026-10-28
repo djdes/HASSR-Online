@@ -1,0 +1,24 @@
+{
+  "task": "qr-stickers-point-2026-10-28",
+  "branch": "feat/qr-stickers-point-2026-10-28",
+  "database": "wesetup_memos @ 127.0.0.1:5432 (local, not production)",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["raw/e2e.mjs qr", "raw/shots/e2e-result-all.json"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/e2e.mjs qr — hygiene main QR, hub, verify"] },
+    "AC3": { "status": "PASS", "evidence": ["PDF pages == sheets", "no overflow in stickers/plates", "sticker code 27.9–30.9 mm, plate 37.1/42.7 mm", "raw/plate-probe.mjs"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/shots/1-equipment-cards-point5.png", "data-qr-card-point"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/e2e.mjs nav", "raw/focus-probe.mjs"] },
+    "AC6": { "status": "PASS", "evidence": ["phone sheet back keeps the page"] },
+    "AC7": { "status": "PASS", "evidence": ["qr-poster-point.test.ts 6/6", "eslint 0 errors", "i18n:check 97/97", "tsc 0 errors", "test:gate pass=5073 fail=2 (baseline + load-sensitive prewarm-routes.sh; deploy-scripts.test.ts 16/16 alone)"] },
+    "AC8": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts — «Наклейки по точкам и меню»"] },
+    "AC9": { "status": "PENDING", "evidence": ["deploy after squash merge"] }
+  },
+  "checks": {
+    "e2e_merged": "59/59 (after review fixes)",
+    "unit": "6/6",
+    "eslint_errors": 0,
+    "i18n_check": "97/97",
+    "tsc": "0 errors (merged tree)",
+    "test_gate": { "pass": 5073, "fail": 2, "new": ["prewarm-routes.sh (load-sensitive, passes alone)"] }
+  }
+}
