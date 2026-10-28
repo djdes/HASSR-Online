@@ -29,11 +29,18 @@ import type { WhatsNewNote } from "@/components/dashboard/whats-new-modal";
  * Поменяли список — модалка покажется сама, не поменяли — нет.
  * Оставлен как отметка о последнем ручном обновлении текста.
  */
-export const LATEST_NOTES_BUILD_SHA = "qr-stickers-point-2026-10-28";
+export const LATEST_NOTES_BUILD_SHA = "place-filter-chips-2026-10-28";
 
 export type { WhatsNewNote };
 
 export const WHATS_NEW_NOTES: WhatsNewNote[] = [
+  {
+    category: "Фильтр по точкам",
+    items: [
+      "«Журналы точек», «Цеха и участки» и «Оборудование» — с выбором точки над списком, как у «Сотрудников»: «Все», каждая точка со счётчиком и «Без точки». Кнопки «QR-наклейки», «Плакаты A4» и «Таблички» печатают ровно то, что выбрано.",
+      "Если вверху выбрана точка, на этих вкладках и на «Сотрудниках» она сразу отмечена в фильтре; «Все» — одним нажатием.",
+    ],
+  },
   {
     category: "Наклейки по точкам и меню",
     items: [

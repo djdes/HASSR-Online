@@ -1,4 +1,4 @@
-import { Building2, MapPin, Wrench } from "lucide-react";
+import { Building2, MapPin, MapPinOff, Wrench } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -8,18 +8,28 @@ import { DeleteButton } from "@/components/settings/delete-button";
 import { isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PageGuide } from "@/components/ui/page-guide";
+import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
+import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
+import { buildingInScope } from "@/lib/point-scope";
 
 export const dynamic = "force-dynamic";
 
-export default async function AreasSettingsPage() {
+export default async function AreasSettingsPage({
+  searchParams,
+}: {
+  /** `place` — фильтр по местам над списком: id точки или офиса, `none`, `all`. */
+  searchParams: Promise<{ place?: string | string[] }>;
+}) {
+  const query = await searchParams;
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.areasPage");
+  const tPlace = await getTranslations("settingsUi.placeFilter");
 
   const [areas, buildings, buildingContext] = await Promise.all([
     db.area.findMany({
@@ -32,24 +42,40 @@ export default async function AreasSettingsPage() {
     listOrganizationBuildings(orgId),
     loadBuildingContext(session),
   ]);
-  // Точка → её цеха (2026-10-17). Выбрана точка в шапке — только она и
-  // цеха без точки; точек нет — плоский список, как раньше.
-  // Торговая точка из шапки; «Вся организация» или офис — все точки.
+  // Точка → её цеха (2026-10-17); точек нет — плоский список, как раньше.
+  // Фильтр по местам над списком — как у сотрудников (2026-10-28): без
+  // выбора в адресе отмечена торговая точка из шапки. У точки — её цеха и
+  // цеха без точки (они видны на каждой точке), «Без точки» — только они.
+  // Места — только точки человека (как в переключателе шапки): руководитель
+  // точки чужих точек не видит.
   const viewedPoint = viewedPointId(buildingContext);
-  // Офис — не торговая точка: в списке он, только если у него есть свои цеха.
-  const groupBuildings = buildings.filter(
-    (building) => !isOfficeBuilding(building) || areas.some((area) => area.buildingId === building.id),
-  );
-  const groups = groupByBuilding(areas, (area) => area.buildingId, groupBuildings, {
-    activeBuildingId: viewedPoint,
-    keepEmpty: true,
+  const showPlaceFilter = buildingContext.enabled;
+  const scope = scopePlaces({
+    items: areas,
+    buildingIdOf: (area) => area.buildingId,
+    buildings,
+    scopeIds: showPlaceFilter
+      ? new Set(buildingContext.buildings.filter((building) => buildingInScope(session.user, building.id)).map((building) => building.id))
+      : null,
   });
+  const place = resolvePlaceFilter({
+    requested: showPlaceFilter ? placeFilterParam(query.place) : null,
+    places: scope.buildings.map((building) => building.id),
+    hasNone: scope.loose.length > 0,
+    headerPointId: viewedPoint,
+  });
+  const placePointId = place && place !== PLACE_NONE ? place : null;
+  const groups = groupByBuilding(scope.items, (area) => area.buildingId, scope.buildings, {
+    activeBuildingId: placePointId,
+    keepEmpty: true,
+  }).filter((group) => place !== PLACE_NONE || group.building === null);
   const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
-  // Оборудование цехов на экране (точка из шапки и цеха без точки) — для кнопок QR.
+  // Оборудование цехов на экране — для кнопок QR: они печатают то же, что в списке.
   const visibleAreas = buildings.length === 0 ? areas : groups.flatMap((group) => group.items);
   const equipmentCount = visibleAreas.reduce((sum, area) => sum + area._count.equipment, 0);
-  // Новый цех — в точку из шапки, а если точка одна — в неё.
-  const defaultBuildingId = viewedPoint ?? (buildings.length === 1 ? buildings[0].id : null);
+  const qrPoint = showPlaceFilter ? (place === PLACE_NONE ? PLACE_NONE : (placePointId ?? PLACE_ALL)) : null;
+  // Новый цех — в отмеченную точку, а если точка одна — в неё.
+  const defaultBuildingId = placePointId ?? (buildings.length === 1 ? buildings[0].id : null);
 
   const canManage = isManagementRole(session.user.role);
   // Раньше: isManagerRole — только role=manager. head_chef видел список,
@@ -85,9 +111,10 @@ export default async function AreasSettingsPage() {
         </div>
         {canManage ? (
           <div className="flex flex-wrap items-center gap-2">
-            {/* Те же QR, что на «Оборудовании» (скан 98): оборудование цехов этой точки, таблички — по цехам. */}
-            {equipmentCount > 0 ? <EquipmentQrButtons /> : null}
-            <AreaDialog buildings={buildingOptions} defaultBuildingId={defaultBuildingId} />
+            {/* Те же QR, что на «Оборудовании» (скан 98): оборудование цехов из списка, таблички — по цехам. */}
+            {equipmentCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
+            {/* key — новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия). */}
+            <AreaDialog key={defaultBuildingId ?? "none"} buildings={buildingOptions} defaultBuildingId={defaultBuildingId} />
           </div>
         ) : null}
       </div>
@@ -114,6 +141,23 @@ export default async function AreasSettingsPage() {
           },
         ]}
       />
+
+      {showPlaceFilter ? (
+        <PlaceFilterChips
+          kind="areas"
+          label={tPlace("label")}
+          basePath="/settings/areas"
+          active={place}
+          all={{ label: tPlace("all"), count: scope.items.length, icon: Building2 }}
+          places={scope.buildings.map((building) => ({
+            id: building.id,
+            name: building.name,
+            office: isOfficeBuilding(building),
+            count: scope.items.filter((area) => area.buildingId === building.id).length,
+          }))}
+          none={scope.loose.length > 0 ? { label: tPlace("none"), count: scope.loose.length, icon: MapPinOff } : null}
+        />
+      ) : null}
 
       {/* Content */}
       {areas.length === 0 && buildings.length === 0 ? (

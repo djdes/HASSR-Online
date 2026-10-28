@@ -107,7 +107,11 @@ export default async function OrganizationOfficePage() {
                     </span>
                   ) : null}
                   {readOnly ? null : (
-                    <Link href={`/settings/users?add=${encodeURIComponent(office.id)}`} className={PRIMARY_LINK} data-office-staff-add>
+                    <Link
+                      href={`/settings/users?place=${encodeURIComponent(office.id)}&add=${encodeURIComponent(office.id)}`}
+                      className={PRIMARY_LINK}
+                      data-office-staff-add
+                    >
                       <Plus className="size-4" />
                       {t("staff.add")}
                     </Link>

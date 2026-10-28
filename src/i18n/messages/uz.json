@@ -29424,6 +29424,11 @@
       "done": "Ariza yuborildi — menejer siz bilan bog‘lanadi",
       "failed": "Arizani yuborib bo‘lmadi",
       "empty": "Kamida bitta pozitsiyani tanlang"
+    },
+    "placeFilter": {
+      "label": "Nuqta",
+      "all": "Hammasi",
+      "none": "Nuqtasiz"
     }
   },
   "teamUi": {

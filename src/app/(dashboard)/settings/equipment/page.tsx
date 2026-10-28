@@ -6,6 +6,7 @@ import { TemperatureChart } from "@/components/charts/temperature-chart";
 import {
   AlertTriangle,
   MapPin,
+  MapPinOff,
   Thermometer,
   Wifi,
   WifiOff,
@@ -23,9 +24,12 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
+import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
+import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
+import { buildingInScope } from "@/lib/point-scope";
 import { isUvLampEquipment, lampRemainingHours } from "@/lib/uv-lamp";
 
 export const dynamic = "force-dynamic";
@@ -73,10 +77,17 @@ function lampLeftLabel(t: TempRangeT, lifetimeHours: number | null, usedHours: n
   return remaining === null ? "—" : t("lampLeft", { hours: Math.round(remaining) });
 }
 
-export default async function EquipmentSettingsPage() {
+export default async function EquipmentSettingsPage({
+  searchParams,
+}: {
+  /** `place` — фильтр по местам над списком: id точки или офиса, `none`, `all`. */
+  searchParams: Promise<{ place?: string | string[] }>;
+}) {
+  const query = await searchParams;
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.equipmentPage");
+  const tPlace = await getTranslations("settingsUi.placeFilter");
 
   const [equipment, areas, staff, buildings, rooms, buildingContext] = await Promise.all([
     db.equipment.findMany({
@@ -101,23 +112,40 @@ export default async function EquipmentSettingsPage() {
     }),
     loadBuildingContext(session),
   ]);
-  // Точка → помещение → оборудование (2026-10-17). Выбрана точка в шапке —
-  // её оборудование и оборудование цехов без точки.
-  // Торговая точка из шапки; «Вся организация» или офис — все точки.
+  // Точка → помещение → оборудование (2026-10-17). Фильтр по местам над
+  // списком — как у сотрудников (2026-10-28): без выбора в адресе отмечена
+  // торговая точка из шапки. У точки — её оборудование и оборудование цехов
+  // без точки (оно видно на каждой точке), «Без точки» — только оно.
+  // Места — только точки человека (как в переключателе шапки): руководитель
+  // точки чужих точек не видит; офис — если у него есть свои объекты.
   const viewedPoint = viewedPointId(buildingContext);
-  // Офис — не торговая точка: в списке он, только если у него есть свои объекты.
-  const groupBuildings = buildings.filter(
-    (building) => !isOfficeBuilding(building) || equipment.some((item) => item.area.buildingId === building.id),
-  );
-  const groups = groupByBuilding(equipment, (item) => item.area.buildingId, groupBuildings, {
-    activeBuildingId: viewedPoint,
-    keepEmpty: true,
+  const showPlaceFilter = buildingContext.enabled;
+  const scope = scopePlaces({
+    items: equipment,
+    buildingIdOf: (item) => item.area.buildingId,
+    buildings,
+    scopeIds: showPlaceFilter
+      ? new Set(buildingContext.buildings.filter((building) => buildingInScope(session.user, building.id)).map((building) => building.id))
+      : null,
   });
+  const place = resolvePlaceFilter({
+    requested: showPlaceFilter ? placeFilterParam(query.place) : null,
+    places: scope.buildings.map((building) => building.id),
+    hasNone: scope.loose.length > 0,
+    headerPointId: viewedPoint,
+  });
+  const placePointId = place && place !== PLACE_NONE ? place : null;
+  const groups = groupByBuilding(scope.items, (item) => item.area.buildingId, scope.buildings, {
+    activeBuildingId: placePointId,
+    keepEmpty: true,
+  }).filter((group) => place !== PLACE_NONE || group.building === null);
   const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
-  // Сколько оборудования на экране (точка из шапки и цеха без точки) — для кнопок QR.
+  // Сколько оборудования на экране — для кнопок QR: они печатают то же, что в списке.
   const visibleCount = buildings.length === 0 ? equipment.length : groups.reduce((sum, group) => sum + group.items.length, 0);
+  const qrPoint = showPlaceFilter ? (place === PLACE_NONE ? PLACE_NONE : (placePointId ?? PLACE_ALL)) : null;
   const places = buildPlaceOptions({ buildings, areas, rooms });
-  const defaultBuildingId = viewedPoint ?? (buildings.length === 1 ? buildings[0].id : null);
+  // Новое оборудование — в отмеченную точку, а если точка одна — в неё.
+  const defaultBuildingId = placePointId ?? (buildings.length === 1 ? buildings[0].id : null);
   // «Кто заполняет» по QR: руководство заполняет любой объект — в выборе не нужно.
   const fillerOptions = staff.map((user) => ({
     id: user.id,
@@ -217,10 +245,12 @@ export default async function EquipmentSettingsPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* QR — оборудование точки из шапки (скан 98: раньше печаталось всё оборудование организации). */}
-          {canManage && visibleCount > 0 ? <EquipmentQrButtons /> : null}
+          {/* QR — оборудование из списка (скан 98: раньше печаталось всё оборудование организации). */}
+          {canManage && visibleCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
           {canManage && (
             <EquipmentDialog
+              // Новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия).
+              key={defaultBuildingId ?? "none"}
               areas={areas}
               buildings={buildingOptions}
               places={places}
@@ -231,6 +261,23 @@ export default async function EquipmentSettingsPage() {
           )}
         </div>
       </div>
+
+      {showPlaceFilter && scope.items.length > 0 ? (
+        <PlaceFilterChips
+          kind="equipment"
+          label={tPlace("label")}
+          basePath="/settings/equipment"
+          active={place}
+          all={{ label: tPlace("all"), count: scope.items.length, icon: Wrench }}
+          places={scope.buildings.map((building) => ({
+            id: building.id,
+            name: building.name,
+            office: isOfficeBuilding(building),
+            count: scope.items.filter((item) => item.area.buildingId === building.id).length,
+          }))}
+          none={scope.loose.length > 0 ? { label: tPlace("none"), count: scope.loose.length, icon: MapPinOff } : null}
+        />
+      ) : null}
 
       {/* Content */}
       {equipment.length === 0 ? (

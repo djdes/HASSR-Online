@@ -501,6 +501,11 @@ export async function loadQrPosters(params: {
    * цехов без точки. Своя точка объекта важнее (`qrPosterPoint`).
    */
   printPointId?: string | null;
+  /**
+   * Только оборудование цехов без точки («Без точки» в фильтре над списком).
+   * Помещения всегда в здании — их при этом нет.
+   */
+  looseOnly?: boolean;
 }): Promise<QrPostersResult> {
   const allowed = params.allowed ?? (() => true);
   const posters: QrPoster[] = [];
@@ -603,9 +608,11 @@ export async function loadQrPosters(params: {
   const locations: Record<string, string> = {};
   const equipmentTypes: Record<string, string> = {};
   if (params.kind === "room") {
-    const buildings = (await loadDirectoryBuildings(params.organizationId)).filter(
-      (building) => !params.buildingId || building.id === params.buildingId
-    );
+    const buildings = params.looseOnly
+      ? []
+      : (await loadDirectoryBuildings(params.organizationId)).filter(
+          (building) => !params.buildingId || building.id === params.buildingId
+        );
     for (const building of buildings) {
       const point = qrPosterPoint(pointBuildings, building.id, params.printPointId);
       for (const room of building.rooms) {
@@ -616,7 +623,9 @@ export async function loadQrPosters(params: {
     }
   } else {
     const equipment = await db.equipment.findMany({
-      where: { area: { organizationId: params.organizationId }, ...equipmentBuildingWhere(params.buildingId) },
+      where: params.looseOnly
+        ? { area: { organizationId: params.organizationId, buildingId: null } }
+        : { area: { organizationId: params.organizationId }, ...equipmentBuildingWhere(params.buildingId) },
       orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
       select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true, buildingId: true } } },
     });

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { getActiveBuildingId, listOrganizationBuildings } from "@/lib/active-building";
+import { getActiveBuildingId, getViewedPointId, listOrganizationBuildings } from "@/lib/active-building";
+import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
 import { positionSuggestionOptionsFor } from "@/lib/sphere-positions";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic";
 export default async function StaffPage({
   searchParams,
 }: {
-  /** `place` — фильтр «Где работает» (id офиса/точки или `none`); `add` — сразу открыть добавление в это место. */
+  /** `place` — фильтр «Где работает» (id офиса/точки, `none` или `all`); `add` — сразу открыть добавление в это место. */
   searchParams: Promise<{ place?: string | string[]; add?: string | string[] }>;
 }) {
   const query = await searchParams;
@@ -142,16 +143,20 @@ export default async function StaffPage({
     organizationTodayKey(orgId),
   ]);
 
-  // «Где работает» (2026-10-26): офис, точка или без места.
+  // «Где работает» (2026-10-26): офис, точка или без места. Без выбора в
+  // адресе — точка из шапки, как на «Цехах» и «Оборудовании» (2026-10-28).
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? null;
-  const placeParam = one(query.place);
-  const place =
-    placeParam === "none" || staffBuildings.some((building) => building.id === placeParam) ? placeParam : null;
+  const showPlaceFilter = organization?.perLocationJournals === true && staffBuildings.length >= 2;
+  const place = resolvePlaceFilter({
+    requested: placeFilterParam(query.place),
+    places: staffBuildings.map((building) => building.id),
+    hasNone: true,
+    headerPointId: showPlaceFilter ? await getViewedPointId(session) : null,
+  });
   const addParam = one(query.add);
   const initialAddBuilding = staffBuildings.find((building) => building.id === addParam) ?? null;
   const placeOf = (u: { buildingIds: string[] }) =>
     place === null ? true : place === "none" ? u.buildingIds.length === 0 : u.buildingIds.includes(place);
-  const showPlaceFilter = organization?.perLocationJournals === true && staffBuildings.length >= 2;
   const countedStaff = employees.filter((u) => u.isActive && !u.isRoot);
   const placeOptions = staffBuildings.map((building) => ({
     id: building.id,
