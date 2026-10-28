@@ -80,6 +80,13 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "reports", href: "/reports", icon: "FileText", ...INDIGO, section: "more", group: "work", access: FULL_ACCESS },
   { id: "ideas", href: "/ideas", icon: "Lightbulb", ...AMBER, section: "more", group: "work", access: FULL_ACCESS },
   { id: "mercury", href: "/mercury", icon: "Plug", ...SKY, section: "more", group: "work", access: STAFF_PATH },
+  // Страницы без места в новом меню (владелец, 2026-10-28: «всё, что пока не
+  // распределили, — в „Остальное“, потом разнесём по назначению»).
+  { id: "batches", href: "/batches", icon: "Package", ...AMBER, section: "more", group: "work", access: STAFF_PATH },
+  { id: "losses", href: "/losses", icon: "TrendingDown", iconClass: "text-[#c2410c]", bgClass: "bg-[#fff7ed]", section: "more", group: "work", access: STAFF_PATH },
+  { id: "changes", href: "/changes", icon: "GitBranch", ...VIOLET, section: "more", group: "work", access: STAFF_PATH },
+  { id: "competencies", href: "/competencies", icon: "GraduationCap", ...MINT, section: "more", group: "work", access: STAFF_PATH },
+  { id: "bonuses", href: "/bonuses", icon: "Coins", iconClass: "text-[#b45309]", bgClass: "bg-[#fef3c7]", section: "more", group: "work", access: FULL_ACCESS },
 
   // ---- Остальное: подключения -----------------------------------------
   { id: "settings_notifications", href: "/settings/notifications", icon: "Bell", ...MINT, section: "more", group: "connections", access: STAFF_PATH },

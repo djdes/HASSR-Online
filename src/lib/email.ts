@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { closingDocumentFilename } from "@/lib/closing-documents/types";
 import { escapeHtml } from "@/lib/html-escape";
+import { HOME_PHONE } from "@/lib/home-page";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { translatorFor } from "@/i18n/translator";
 import type { Locale } from "@/i18n/locales";
@@ -460,6 +461,63 @@ export async function sendPasswordResetEmail(params: {
   return sendEmail(to, subject, localizedLayout(t, locale, t("email.passwordReset.title"), body));
 }
 
+/**
+ * План настройки в приветственном письме (2026-10-28, по образцу письма
+ * «setup checklist»): шаги в порядке меню кабинета — компания → точка →
+ * сотрудники → журналы → QR. Каждый шаг — ссылка на свою страницу.
+ */
+export const WELCOME_SETUP_STEPS = [
+  { id: "company", href: "/settings/organization" },
+  { id: "point", href: "/settings/buildings" },
+  { id: "staff", href: "/settings/users" },
+  { id: "journals", href: "/journals/points" },
+  { id: "qr", href: "/settings/qr-posters" },
+] as const;
+
+/** Кнопка «Начать настройку» — «Быстрая настройка» с этапами. */
+export const WELCOME_SETUP_START_HREF = "/settings/onboarding";
+
+export async function renderWelcomeEmail(params: {
+  name: string;
+  organizationName: string;
+  locale?: Locale;
+  brand?: EmailBrand | null;
+}): Promise<{ subject: string; html: string }> {
+  const locale = params.locale ?? "ru";
+  const t = await translatorFor(locale);
+  const link = (href: string) => escapeHtml(APP_URL + href);
+  const steps = WELCOME_SETUP_STEPS.map((step, index) => {
+    const title = t(`email.welcome.steps.${step.id}.title`);
+    const description = t(`email.welcome.steps.${step.id}.description`);
+    return `<tr>
+      <td width="40" valign="top" style="padding:0 0 18px;width:40px">
+        <div style="width:26px;height:26px;border:1.5px solid #5566f6;border-radius:13px;text-align:center;line-height:26px;font-size:13px;font-weight:600;color:#3848c7;background:#ffffff">${index + 1}</div>
+      </td>
+      <td valign="top" style="padding:2px 0 18px">
+        <a href="${link(step.href)}" data-welcome-step="${step.id}" style="font-size:16px;font-weight:600;color:#0b1024;text-decoration:none">${escapeHtml(title)}&nbsp;<span style="color:#5566f6">&rarr;</span></a>
+        <p style="margin:4px 0 0;font-size:14px;line-height:1.55;color:#3c4053">${escapeHtml(description)}</p>
+      </td>
+    </tr>`;
+  }).join("");
+
+  const body = [
+    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.greeting", { name: escapeHtml(params.name) })}</p>`,
+    `<p style="margin:0 0 24px;color:#3f3f46;line-height:1.6">${t("email.welcome.organizationReady", { organization: escapeHtml(params.organizationName), trialDays: TRIAL_DAYS })}</p>`,
+    `<div style="background:#fafbff;border:1px solid #ececf4;border-radius:16px;padding:24px 24px 6px;margin:0 0 24px">`,
+    `<p style="margin:0 0 6px;font-size:18px;font-weight:600;color:#0b1024">${escapeHtml(t("email.welcome.checklistTitle"))}</p>`,
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.55;color:#6f7282">${escapeHtml(t("email.welcome.checklistIntro"))}</p>`,
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${steps}</table>`,
+    `</div>`,
+    `<a href="${link(WELCOME_SETUP_START_HREF)}" data-welcome-start style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:600;font-size:15px">${escapeHtml(t("email.welcome.getStarted"))}</a>`,
+    `<p style="margin:24px 0 0;font-size:13px;line-height:1.55;color:#6f7282">${escapeHtml(t("email.welcome.help", { phone: HOME_PHONE.display }))}</p>`,
+  ].join("");
+
+  return {
+    subject: t("email.welcome.subject"),
+    html: localizedLayout(t, locale, t("email.welcome.title"), body, params.brand),
+  };
+}
+
 export async function sendWelcomeEmail(params: {
   to: string;
   name: string;
@@ -467,23 +525,14 @@ export async function sendWelcomeEmail(params: {
   organizationId?: string | null;
   locale?: Locale;
 }) {
-  const { to, name, organizationName, organizationId } = params;
-  const t = await translatorFor(params.locale ?? "ru");
-  const brand = await emailBrandForOrganization(organizationId);
-  const subject = t("email.welcome.subject");
-
-  const body = [
-    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.greeting", { name: escapeHtml(name) })}</p>`,
-    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.organizationReady", { organization: escapeHtml(organizationName), trialDays: TRIAL_DAYS })}</p>`,
-    `<div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px"><p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#18181b">${t("email.welcome.gettingStarted")}</p>`,
-    `<p style="margin:0 0 8px;color:#3f3f46;font-size:14px">1. ${t("email.welcome.stepAreas")}</p>`,
-    `<p style="margin:0 0 8px;color:#3f3f46;font-size:14px">2. ${t("email.welcome.stepEquipment")}</p>`,
-    `<p style="margin:0 0 8px;color:#3f3f46;font-size:14px">3. ${t("email.welcome.stepJournals")}</p>`,
-    `<p style="margin:0;color:#3f3f46;font-size:14px">4. ${t("email.welcome.stepStaff")}</p></div>`,
-    `<a href="${escapeHtml(APP_URL + "/dashboard")}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.welcome.openWorkspace")}</a>`,
-  ].join("");
-
-  return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", t("email.welcome.title"), body, brand));
+  const brand = await emailBrandForOrganization(params.organizationId);
+  const { subject, html } = await renderWelcomeEmail({
+    name: params.name,
+    organizationName: params.organizationName,
+    locale: params.locale,
+    brand,
+  });
+  return sendEmail(params.to, subject, html);
 }
 
 /**

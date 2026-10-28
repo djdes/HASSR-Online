@@ -3472,16 +3472,36 @@
       "nextSteps": "Parolni profil sozlamalarida almashtirishingiz mumkin. Jurnal sarlavhalari va tekshiruv PDF hujjatlarida ko‘rinishi uchun kabinetda tashkilot ma’lumotlarini to‘ldiring."
     },
     "welcome": {
-      "subject": "WeSetup'ga xush kelibsiz!",
-      "title": "Xush kelibsiz!",
+      "subject": "WeSetup’ga xush kelibsiz: 5 qadamli sozlash rejasi",
+      "title": "WeSetup’ga xush kelibsiz!",
       "greeting": "Assalomu alaykum, {name}!",
       "organizationReady": "{organization} tashkiloti ro‘yxatdan o‘tdi. {trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar va imkoniyatlar cheklovsiz, karta kerak emas.",
-      "gettingStarted": "Boshlash uchun:",
-      "stepAreas": "Sozlamalar → Hududlar bo'limida ishlab chiqarish hududlarini qo'shing",
-      "stepEquipment": "Sozlamalar → Uskunalar bo'limida uskunalarni qo'shing",
-      "stepJournals": "Jurnallar bo'limida birinchi jurnalni to'ldiring",
-      "stepStaff": "Sozlamalar → Xodimlar bo'limida hamkasblaringizni taklif qiling",
-      "openWorkspace": "Kabinetni ochish"
+      "checklistTitle": "Sozlash rejangiz",
+      "checklistIntro": "Besh qadam — va xodimlar jurnallarni telefondan to‘ldira boshlaydi. Har bir qadam havola orqali ochiladi.",
+      "steps": {
+        "company": {
+          "title": "Kompaniya ma’lumotlarini to‘ldiring",
+          "description": "Rekvizitlar va STIR — jurnal va hujjatlar sarlavhasi uchun, logotip — kabinet menyusi uchun."
+        },
+        "point": {
+          "title": "Savdo nuqtasini qo‘shing",
+          "description": "Kafe, sex yoki do‘kon: manzil, xonalar va uskunalar — muzlatgichlar, UB-lampalar, frityurlar."
+        },
+        "staff": {
+          "title": "Nuqta xodimlarini qo‘shing",
+          "description": "Ism, lavozim va telefon. Har bir xodim faqat o‘z vazifalarini ko‘radi."
+        },
+        "journals": {
+          "title": "Nuqta jurnallarini tanlang",
+          "description": "SanPiN va XACCP to‘plami sohangizga mos tanlangan — ortiqchasini olib tashlang yoki keraklisini qo‘shing."
+        },
+        "qr": {
+          "title": "QR-stikerlarni chop eting",
+          "description": "Muzlatgichlarga va xonalarga yopishtiring: xodim kodni telefon bilan skanerlaydi va darhol jurnalni to‘ldiradi."
+        }
+      },
+      "getStarted": "Sozlashni boshlash",
+      "help": "Yordam kerakmi? {phone} raqamiga qo‘ng‘iroq qiling — sozlashda yordam beramiz."
     },
     "common": {
       "footer": "SanPiN va HACCP elektron jurnallari.",
@@ -9910,6 +9930,26 @@
         "settings_appearance": {
           "title": "Ko'rinish",
           "description": "Ish joyi uchun yorug' yoki qorong'i mavzuni tanlang."
+        },
+        "batches": {
+          "title": "Mahsulot partiyalari",
+          "description": "Yaroqlilik muddatlari va partiyalar harakati"
+        },
+        "losses": {
+          "title": "Yo‘qotishlar hisobi",
+          "description": "Haftalik brak, hisobdan chiqarish va yo‘qotishlar"
+        },
+        "changes": {
+          "title": "O‘zgarishlarni boshqarish",
+          "description": "Yangi retseptlar, yetkazib beruvchilar, uskunalar"
+        },
+        "competencies": {
+          "title": "Xodimlarni o‘qitish",
+          "description": "Lavozimlar bo‘yicha xodimlarning ko‘nikma va darajalari"
+        },
+        "bonuses": {
+          "title": "Ish uchun mukofotlar",
+          "description": "Xodimlarning ballari va mukofotlari"
         }
       }
     },
