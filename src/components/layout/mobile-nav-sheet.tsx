@@ -19,6 +19,7 @@ import {
 } from "@/components/layout/section-menu-list";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
+import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 // Строка мобильного меню: от 52px высотой, шрифт 17px, иконка 24px —
 // палец попадает с первого раза.
@@ -46,7 +47,13 @@ export function MobileNavSheet({
   buildings: BuildingOption[];
   activeBuildingId: string | null;
   onLogout: () => void;
-  brand: { logoUrl: string | null; name: string; homeHref: string; canEditBranding: boolean };
+  brand: {
+    logoUrl: string | null;
+    name: string;
+    identity: SidebarOrgIdentity;
+    homeHref: string;
+    canEditBranding: boolean;
+  };
 }) {
   const t = useTranslations("navigation.shell");
   const { sections } = useAppNav();
@@ -93,13 +100,14 @@ export function MobileNavSheet({
         data-mobile-nav-mode={shown ? "section" : "main"}
         data-mobile-nav-section={shown?.key}
       >
-        {/* Логотип компании клиента — над меню, как в сайдбаре (эскиз руководителя). */}
+        {/* Логотип компании клиента, краткое название и ИНН — над меню, как в сайдбаре. */}
         <OrganizationBrand
           logoUrl={brand.logoUrl}
           name={brand.name}
+          identity={brand.identity}
           homeHref={brand.homeHref}
           canEditBranding={brand.canEditBranding}
-          className="mb-1 min-h-12 px-2.5"
+          className="mb-2 border-b border-[#ececf4] px-2.5 pt-1 pb-4"
         />
         {shown?.menu ? (
           <>

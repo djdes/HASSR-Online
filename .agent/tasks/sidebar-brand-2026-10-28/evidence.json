@@ -1,0 +1,15 @@
+{
+  "task": "sidebar-brand-2026-10-28",
+  "base": "b59b87f0",
+  "environment": "local database wesetup_brand on 127.0.0.1:5432 (not production), next dev on :3025, Playwright Chromium 1243",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["raw/shots/1-owner-no-logo.png", "raw/shots/2-owner-logo-uploaded.png", "raw/shots/e2e-result.json"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/sidebar-org-identity.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/shots/e2e-result.json", "src/components/layout/organization-brand.test.ts"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/shots/3-branding-page.png", "raw/shots/e2e-result.json"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/shots/6-head-no-logo.png", "src/components/layout/organization-brand.test.ts"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/shots/4-phone-sheet.png", "raw/shots/5-mini-sheet.png"] },
+    "AC7": { "status": "PASS", "evidence": ["npm run i18n:check (95/95)", "npm run typecheck (exit 0)", "eslint changed files (0)", "new tests 13/13", "npm run test:gate (pass=5027, fail=0)"] },
+    "AC8": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts", "CLAUDE.md (local, git-ignored)"] }
+  }
+}

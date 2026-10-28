@@ -40,7 +40,7 @@ import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { HOME_HREF, canSeeHomePage } from "@/lib/home-page";
-import { sidebarLegalName } from "@/lib/org-journal-name";
+import { sidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 import { isPointScoped } from "@/lib/point-scope";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { hasCapability } from "@/lib/permission-presets";
@@ -169,7 +169,7 @@ export default async function DashboardLayout({
         brandColor: true,
         logoUrl: true,
         name: true,
-        // Краткое юр. наименование под логотипом в меню.
+        // Краткое название и ИНН под логотипом в меню (`inn` — ниже).
         journalShortName: true,
         legalProfileJson: true,
         // E2: тариф и численность едут в меню профиля пропсами —
@@ -381,6 +381,8 @@ export default async function DashboardLayout({
   // Иконка «партнёрская программа» у логотипа. Считается после брендинга:
   // под чужим (white-label) логотипом звать под свой бренд неуместно.
   const headerLogoUrl = brandedOrg?.logoUrl ?? consultant?.logoUrl ?? null;
+  // Под логотипом в меню (сайдбар и лист на телефоне): краткое название и ИНН.
+  const orgIdentity = sidebarOrgIdentity(brandedOrg, companyName);
   const partnerHint = await getPartnerHintRates({
     organizationId: activeOrgId,
     userId: session.user.id,
@@ -446,7 +448,7 @@ export default async function DashboardLayout({
             <AppSidebar
               logoUrl={headerLogoUrl}
               organizationName={companyName}
-              legalName={sidebarLegalName(brandedOrg, { companyName, hasLogo: Boolean(headerLogoUrl) })}
+              identity={orgIdentity}
               homeHref={
                 canSeeHomePage(session.user)
                   ? HOME_HREF
@@ -502,6 +504,7 @@ export default async function DashboardLayout({
             userEmail={session.user.email ?? ""}
             organizationName={impersonatedName ?? session.user.organizationName ?? ""}
             organizationLogoUrl={headerLogoUrl}
+            organizationIdentity={orgIdentity}
             userRole={session.user.role ?? ""}
             isRoot={session.user.isRoot === true}
             balanceRub={balanceRub}
@@ -739,6 +742,10 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
           select: {
             name: true,
             logoUrl: true,
+            // Краткое название и ИНН под логотипом в листе меню — как на сайте (П-3).
+            inn: true,
+            journalShortName: true,
+            legalProfileJson: true,
             isDemo: true,
             demoExpiresAt: true,
             _count: {
@@ -764,6 +771,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     ]);
 
   const impersonatedName = impersonatedOrg?.name ?? null;
+  const brandName = orgDisplayName(impersonatedName ?? orgRow?.name ?? "", "") || "WeSetup";
   // Те же разделы и вкладки, что на сайте (П-3): вкладки раздела — над
   // страницей и в приложении.
   const navModel = await buildNavModel({
@@ -837,7 +845,8 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
               <SectionMenuButton
                 brand={{
                   logoUrl: orgRow?.logoUrl ?? null,
-                  name: orgDisplayName(impersonatedName ?? orgRow?.name ?? "", "") || "WeSetup",
+                  name: brandName,
+                  identity: sidebarOrgIdentity(orgRow, brandName),
                   homeHref: shell.homeHref,
                   canEditBranding: hasCapability(session.user, "admin.full"),
                 }}

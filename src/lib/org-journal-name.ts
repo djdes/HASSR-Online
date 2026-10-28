@@ -69,25 +69,3 @@ export function resolveOrgJournalName(
 export function suggestOrgJournalName(legalProfileJson: unknown): string | null {
   return legalShortName(legalProfileJson);
 }
-
-/**
- * Краткое юр. наименование под логотипом в меню кабинета (эскиз 2026-10-28):
- * краткое из ЕГРЮЛ, иначе «Название для журналов», иначе (при логотипе) —
- * название компании. Без логотипа название компании уже стоит в шапке —
- * то же самое второй раз не пишем.
- */
-export function sidebarLegalName(
-  organization: OrgJournalNameSource | null | undefined,
-  options: { companyName: string; hasLogo: boolean },
-): string | null {
-  const value =
-    legalShortName(organization?.legalProfileJson) ??
-    (sanitizeOrgJournalName(organization?.journalShortName) || null) ??
-    // С логотипом название компании нигде больше не написано.
-    (options.hasLogo ? sanitizeOrgJournalName(options.companyName) || null : null);
-  if (!value) return null;
-  if (!options.hasLogo && value.toLocaleLowerCase("ru-RU") === options.companyName.trim().toLocaleLowerCase("ru-RU")) {
-    return null;
-  }
-  return value;
-}

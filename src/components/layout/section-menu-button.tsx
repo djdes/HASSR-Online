@@ -17,6 +17,7 @@ import {
 } from "@/components/layout/section-menu-list";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
+import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 /**
  * Меню раздела в Mini App (П-3): полоса над вкладками, по нажатию — лист, как
@@ -33,7 +34,13 @@ import { useSectionStatuses } from "@/components/layout/use-section-statuses";
 export function SectionMenuButton({
   brand,
 }: {
-  brand: { logoUrl: string | null; name: string; homeHref: string; canEditBranding: boolean };
+  brand: {
+    logoUrl: string | null;
+    name: string;
+    identity: SidebarOrgIdentity;
+    homeHref: string;
+    canEditBranding: boolean;
+  };
 }) {
   const t = useTranslations("navigation.shell");
   const { sections, showSidebar } = useAppNav();
@@ -84,9 +91,10 @@ export function SectionMenuButton({
           <OrganizationBrand
             logoUrl={brand.logoUrl}
             name={brand.name}
+            identity={brand.identity}
             homeHref={brand.homeHref}
             canEditBranding={brand.canEditBranding}
-            className="mb-1 min-h-12 px-2.5"
+            className="mb-2 border-b border-[#ececf4] px-2.5 pt-1 pb-4"
           />
           {shown?.menu ? (
             <>

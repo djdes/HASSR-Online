@@ -22,14 +22,16 @@ import {
 import { SectionStatusDot } from "@/components/layout/section-status-dot";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useSectionStatuses } from "@/components/layout/use-section-statuses";
+import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 
 const SIDEBAR_ITEM =
   "flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /**
- * Меню кабинета слева (≥1024px): логотип компании, под ним краткое юр.
- * наименование, и разделы. «Пришла проверка» прижата к низу — в спешке её
+ * Меню кабинета слева (≥1024px): по центру логотип компании (нет — заглушка,
+ * руководителю — кнопка «Загрузить логотип»), под ним краткое название и ИНН,
+ * ниже разделы. «Пришла проверка» прижата к низу — в спешке её
  * ищут глазами первой; это отдельное действие (контурная кнопка), а не
  * выбранный пункт. У разделов со своим меню — стрелка ›.
  *
@@ -45,15 +47,15 @@ const SIDEBAR_ITEM =
 export function AppSidebar({
   logoUrl,
   organizationName,
-  legalName,
+  identity,
   homeHref,
   canEditBranding = false,
   whiteLabel = false,
 }: {
   logoUrl: string | null;
   organizationName: string;
-  /** Краткое юр. наименование под логотипом (эскиз: «Юр. наименование (сокр.)»). */
-  legalName?: string | null;
+  /** Под логотипом: краткое название и ИНН (эскиз: «Юр. наименование (сокр.)»). */
+  identity: SidebarOrgIdentity;
   homeHref: string;
   canEditBranding?: boolean;
   /** White-label партнёра: отметку «сетап» внизу не ставим. */
@@ -133,22 +135,15 @@ export function AppSidebar({
       : undefined;
 
   const logo = (
-    <div className="shrink-0 border-b border-[#ececf4] px-5 pt-4 pb-3" data-sidebar-logo>
+    <div className="shrink-0 border-b border-[#ececf4] px-5 pt-5 pb-4" data-sidebar-logo>
       <OrganizationBrand
         logoUrl={logoUrl}
         name={organizationName}
+        identity={identity}
         homeHref={homeHref}
         canEditBranding={canEditBranding}
         large
       />
-      {legalName ? (
-        <div
-          className="mt-3 border-t border-[#ececf4] pt-2.5 text-[13px] leading-snug font-medium text-[#3c4053] [overflow-wrap:anywhere]"
-          data-sidebar-legal-name
-        >
-          {legalName}
-        </div>
-      ) : null}
     </div>
   );
 
