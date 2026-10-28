@@ -1,0 +1,19 @@
+{
+  "task": "point-scope-ui-2026-10-28",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS",
+    "AC6": "PASS", "AC7": "PASS", "AC8": "PASS", "AC9": "PASS"
+  },
+  "checks": {
+    "typecheck": "0 errors (before and after merge with origin/master)",
+    "eslint_changed_files": "0 errors",
+    "test_gate": "5061 pass; prewarm-routes.sh flaky under load (13/13 alone); 1 baseline failure",
+    "smoke_before_merge": "29/29 PASS (raw/smoke-result.json)",
+    "smoke_after_merge": "31/31 functional PASS; phone width check not reached due to server load (passed before merge)"
+  },
+  "not_verified": [
+    "production data (prod DB reads not permitted): office rooms, account of the «Школы» cabinet",
+    "operator invitation emails (no mail locally)"
+  ]
+}

@@ -17,9 +17,10 @@ const check = (name, ok, detail = "") => {
 
 async function login(context, email) {
   const page = await context.newPage();
-  const csrf = await (await page.request.get(`${BASE}/api/auth/csrf`)).json();
+  const csrf = await (await page.request.get(`${BASE}/api/auth/csrf`, { timeout: 180000 })).json();
   const response = await page.request.post(`${BASE}/api/auth/callback/credentials`, {
     form: { csrfToken: csrf.csrfToken, email, password: ids.password, json: "true", callbackUrl: `${BASE}/home` },
+    timeout: 180000,
   });
   if (!response.ok()) throw new Error(`login ${email}: ${response.status()}`);
   return page;
@@ -41,13 +42,14 @@ async function shot(page, url, file) {
   await page.screenshot({ path: path.join(RAW, file), fullPage: true });
 }
 
+let browser = null;
 (async () => {
-  const browser = await chromium.launch({
+  browser = await chromium.launch({
     executablePath: "C:/Users/Two/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe",
   });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "ru-RU" });
   // «Что нового» не мешает снимкам.
-  await context.addCookies([{ name: "wesetup-whats-new", value: "trbvln", url: BASE }]);
+  await context.addCookies([{ name: "wesetup-whats-new", value: "czauyp", url: BASE }]);
   const page = await login(context, ids.owner);
   await setPoint(context, ids.garden);
 
@@ -146,7 +148,7 @@ async function shot(page, url, file) {
 
   // Руководитель (не владелец): видит кабинеты, приглашает только в подключённый.
   const managerContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "ru-RU" });
-  await managerContext.addCookies([{ name: "wesetup-whats-new", value: "trbvln", url: BASE }]);
+  await managerContext.addCookies([{ name: "wesetup-whats-new", value: "czauyp", url: BASE }]);
   const managerPage = await login(managerContext, ids.manager);
   await go(managerPage, `/settings/master-cabinet`);
   await managerPage.waitForTimeout(800);
@@ -157,9 +159,13 @@ async function shot(page, url, file) {
     (await managerPage.locator(`[data-cabinet-id='${ids.gardens}'] [data-testid=master-invite-open]`).count()) === 1
   );
 
+  // Открытые вкладки кабинета всё время опрашивают dev-сервер — закрываем их перед телефоном.
+  await context.close();
+  await managerContext.close();
+
   // Телефон: страница мастер-кабинета без горизонтальной прокрутки.
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "ru-RU", isMobile: true });
-  await phone.addCookies([{ name: "wesetup-whats-new", value: "trbvln", url: BASE }]);
+  await phone.addCookies([{ name: "wesetup-whats-new", value: "czauyp", url: BASE }]);
   const phonePage = await login(phone, ids.owner);
   await go(phonePage, `/settings/master-cabinet`);
   await phonePage.waitForTimeout(800);
@@ -172,7 +178,9 @@ async function shot(page, url, file) {
   const failed = results.filter((item) => !item.ok).length;
   console.log(`\n${results.length - failed}/${results.length} PASS`);
   process.exitCode = failed ? 1 : 0;
-})().catch((error) => {
+})().catch(async (error) => {
   console.error(error);
   process.exitCode = 2;
+  // Иначе браузер живёт дальше и продолжает опрашивать сервер.
+  await browser?.close().catch(() => null);
 });
