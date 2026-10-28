@@ -562,7 +562,7 @@ export const NAV_SECTIONS: NavSection[] = [
     renameHref: "/settings/users",
     // `/settings/sections/staff` — бывшая «Настройка»: её карточки стали
     // пунктами меню, сама страница уводит к сотрудникам.
-    hiddenMatch: ["/staff", "/competencies", "/settings/sections/staff"],
+    hiddenMatch: ["/staff", "/settings/sections/staff"],
     tabs: [
       { id: "users", label: "users", href: "/settings/users", access: FULL_ACCESS },
       {
@@ -660,10 +660,10 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: "LayoutGrid",
     parent: "company",
     access: FULL_ACCESS,
-    // Убраны из меню владельцем 2026-09-25 — открываются по адресу.
-    // Своего меню нет: раздел — одна страница с карточками.
+    // Своего меню нет: раздел — одна страница с карточками (`settings-cards.ts`).
+    // Партии, потери, изменения, премии — карточки «Остального» (2026-10-28).
     // `/translations` — редактор переводов (2026-10-24): вход из меню профиля.
-    hiddenMatch: ["/batches", "/losses", "/changes", "/bonuses", "/translations", "/settings/integrations/max"],
+    hiddenMatch: ["/translations", "/settings/integrations/max"],
     tabs: [{ id: "main", label: "main", href: "/more", access: FULL_ACCESS }],
   },
   {

@@ -3472,16 +3472,36 @@
       "nextSteps": "You can change your password in your profile settings. Add your organization details in the workspace so they appear on log headers and inspection PDFs."
     },
     "welcome": {
-      "subject": "Welcome to WeSetup!",
-      "title": "Welcome!",
+      "subject": "Welcome to WeSetup: your 5-step setup plan",
+      "title": "Welcome to WeSetup!",
       "greeting": "Hello, {name}!",
       "organizationReady": "The organisation {organization} has been registered. {trialDays, number} {trialDays, plural, one {day} other {days}} — every log and feature without limits, no card needed.",
-      "gettingStarted": "Here are a few ways to get started:",
-      "stepAreas": "Add production areas under Settings → Areas",
-      "stepEquipment": "Add equipment under Settings → Equipment",
-      "stepJournals": "Complete your first log under Journals",
-      "stepStaff": "Invite colleagues under Settings → Staff",
-      "openWorkspace": "Open your workspace"
+      "checklistTitle": "Your setup checklist",
+      "checklistIntro": "Five steps, and your staff can fill in journals from their phones. Each step opens with one link.",
+      "steps": {
+        "company": {
+          "title": "Fill in your company details",
+          "description": "Legal details and tax ID for journal and document headers, a logo for the workspace menu."
+        },
+        "point": {
+          "title": "Add a location",
+          "description": "A café, kitchen or shop: address, rooms and equipment such as fridges, UV lamps and fryers."
+        },
+        "staff": {
+          "title": "Add the location's staff",
+          "description": "Name, position and phone. Each employee sees only their own tasks."
+        },
+        "journals": {
+          "title": "Choose the location's journals",
+          "description": "A sanitary and HACCP set is already picked for your business type: remove what you don't need or add more."
+        },
+        "qr": {
+          "title": "Print the QR stickers",
+          "description": "Stick them on fridges and in rooms: an employee scans the code with a phone and fills in the journal right away."
+        }
+      },
+      "getStarted": "Start setup",
+      "help": "Need help? Call {phone} and we'll help you set up."
     },
     "common": {
       "footer": "Electronic SanPiN and HACCP logs.",
@@ -9910,6 +9930,26 @@
         "settings_appearance": {
           "title": "Appearance",
           "description": "Choose a light or dark workspace theme."
+        },
+        "batches": {
+          "title": "Product batches",
+          "description": "Expiry dates and batch movement"
+        },
+        "losses": {
+          "title": "Losses",
+          "description": "Defects, write-offs and losses for the week"
+        },
+        "changes": {
+          "title": "Change management",
+          "description": "New recipes, suppliers, equipment"
+        },
+        "competencies": {
+          "title": "Staff training",
+          "description": "Skills and levels of employees by position"
+        },
+        "bonuses": {
+          "title": "Work bonuses",
+          "description": "Employee points and bonuses"
         }
       }
     },
