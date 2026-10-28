@@ -5740,7 +5740,9 @@
         "yearTotal": "{amount} per year",
         "yearSavings": "you save {amount}",
         "monthly": "billed monthly",
-        "forPoints": "for {count, plural, one {# location} other {# locations}}",
+        "perPointMonth": "/mo per location",
+        "totalYear": "{count, plural, one {# location} other {# locations}}: {amount} per year",
+        "totalMonth": "{count, plural, one {# location} other {# locations}}: {amount} per month",
         "pointsDiscount": "−{percent, number}% for locations"
       },
       "includes": {
