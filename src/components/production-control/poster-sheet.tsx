@@ -525,7 +525,7 @@ function renderBlock(block: PosterBlock, index: number, ctx: { brand: PrintBrand
 
 /**
  * Лист плаката. `qrSvg` — QR на журнал для блока `journalQr` (готовит страница;
- * нет журнала или это мини-лист — null, остаётся подпись). `point` — торговая
+ * журнал выключен или это мини-лист — null, остаётся подпись). `point` — торговая
  * точка, для которой печатаем (`posterPointLine`); null — строки нет.
  */
 export function PosterSheet({

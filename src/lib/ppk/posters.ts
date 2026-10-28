@@ -43,7 +43,7 @@ export type PosterBlock =
   | { type: "text"; paragraphs: string[] }
   /** Образец этикетки 58×40 мм с выносками. */
   | { type: "labelSample"; callouts: { field: string; text: string }[] }
-  /** QR на журнал организации (если журнала нет — блок не рисуется). */
+  /** QR на журнал точки (или организации); журнал выключен — QR нет, остаётся подпись. */
   | { type: "journalQr"; templateCode: string; caption: string };
 
 export type PosterKey =

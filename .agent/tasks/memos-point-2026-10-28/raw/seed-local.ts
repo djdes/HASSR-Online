@@ -2,9 +2,10 @@
  * Тестовые данные для локальной проверки памяток (только отдельная база
  * wesetup_memos на 127.0.0.1:5432, НЕ прод):
  * - «org-dk»: журналы по точкам, офис + три точки (одна с длинным
- *   «наименованием для журналов»), гигиенический журнал у каждой точки;
+ *   «наименованием для журналов»), гигиенический журнал у двух точек, у
+ *   «Кафе на Мира» документа нет (QR создаст его при первом скане);
  * - «org-one»: одна точка, журналы общие, свой сайт организации;
- * - «org-none»: точек нет.
+ * - «org-none»: точек нет, гигиенический журнал выключен.
  * Пользователи: владельцы (admin) трёх организаций и админ «org-dk», которому
  * доступна только первая точка.
  * Запуск: npx tsx .agent/tasks/memos-point-2026-10-28/raw/seed-local.ts
@@ -23,15 +24,16 @@ async function main() {
   const hygiene = await db.journalTemplate.findUniqueOrThrow({ where: { code: "hygiene" }, select: { id: true } });
 
   const orgs = [
-    { id: "org-dk", name: "МАУ «КП «ДК»", perLocationJournals: true, website: null },
-    { id: "org-one", name: "Доброе кафе", perLocationJournals: false, website: "dobroe-kafe.ru" },
-    { id: "org-none", name: "Кафе без точек", perLocationJournals: false, website: null },
+    { id: "org-dk", name: "МАУ «КП «ДК»", perLocationJournals: true, website: null, disabledJournalCodes: [] as string[] },
+    { id: "org-one", name: "Доброе кафе", perLocationJournals: false, website: "dobroe-kafe.ru", disabledJournalCodes: [] as string[] },
+    { id: "org-none", name: "Кафе без точек", perLocationJournals: false, website: null, disabledJournalCodes: ["hygiene"] },
   ];
   for (const org of orgs) {
+    const { id, ...fields } = org;
     await db.organization.upsert({
-      where: { id: org.id },
-      update: { name: org.name, perLocationJournals: org.perLocationJournals, website: org.website },
-      create: { ...org, type: "restaurant", disabledJournalCodes: [] },
+      where: { id },
+      update: fields,
+      create: { ...org, type: "restaurant" },
     });
   }
 
@@ -56,9 +58,10 @@ async function main() {
   const documents = [
     { id: "doc-hyg-dk-5", organizationId: "org-dk", buildingId: "b-dk-5" },
     { id: "doc-hyg-dk-112", organizationId: "org-dk", buildingId: "b-dk-112" },
-    { id: "doc-hyg-dk-mira", organizationId: "org-dk", buildingId: "b-dk-mira" },
     { id: "doc-hyg-one", organizationId: "org-one", buildingId: null },
   ];
+  // «Кафе на Мира» — новая точка без документа гигиенического журнала.
+  await db.journalDocument.deleteMany({ where: { organizationId: "org-dk", buildingId: "b-dk-mira" } });
   for (const document of documents) {
     await db.journalDocument.upsert({
       where: { id: document.id },

@@ -62,12 +62,22 @@
   {
     "name": "AC3 QR осмотра ведёт в гигиенический журнал точки 112",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-112.1793199067898.i6Cbx3zD06_uhC8f1lubU5ZFGW1OhkQluGKHavzKldo"
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-112.1793201118304.ZpPChM3GGfGcmaMl3IOAWpbrHidEb2uLfebD2MLnFBw"
   },
   {
     "name": "AC3 у другой точки — другой QR",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793199071296.MCveuqDZBGmHYwTSpDHxNOpnkjtZ4uXdh_vv_lzcj2U"
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793201121708.bB1ofKo90uXah1Z3ko4thOHQFhENORdKZcPNxTuoFJo"
+  },
+  {
+    "name": "AC3 у точки без документа журнала QR есть (первый скан создаст документ)",
+    "ok": true,
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-mira.1793201124026.Zat1YyiUT2YU3doc1nPxqOR5pwtxSOSMtHctx253a3o"
+  },
+  {
+    "name": "AC7 плашка кабинета не печатается, 17 листов — 17 страниц",
+    "ok": true,
+    "detail": "none, 17 стр."
   },
   {
     "name": "AC2 офис в адресе — печать для точки по умолчанию",
@@ -92,7 +102,7 @@
   {
     "name": "AC3 QR — журнал своей точки",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793199115985.Ko0s6k6B2aAZ7E2ZD4ziSmvxOgZCZ9TjlanHinyDSSU"
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793201184955.V3kx06Zh4HmQ0H79BoI9tCZui4Bunv0oawbdeH2INe8"
   },
   {
     "name": "AC4 свой сайт — в шапке, в подвале — wesetup.ru",
@@ -107,7 +117,7 @@
   {
     "name": "AC3 журналы общие — QR на общий журнал",
     "ok": true,
-    "detail": "http://localhost:3026/journal-fill/org-one/hygiene?token=journal%3Aorg-one%3Ahygiene.1793199140865.m0AoS3bUCZ76kU_x-i8CHNphPchNxlq1KLaqIcTb5dw"
+    "detail": "http://localhost:3026/journal-fill/org-one/hygiene?token=journal%3Aorg-one%3Ahygiene.1793201199058.jjECJ-HnUzGmz0i1pyxnccnhQ2JUPy0PxNXL_N0tyD0"
   },
   {
     "name": "AC2 точек нет — подсказка и «Добавить точку»",
@@ -116,6 +126,11 @@
   },
   {
     "name": "AC1 без точки — строки нет, лист цел",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC3 гигиенический журнал выключен — QR нет, подпись осталась",
     "ok": true,
     "detail": ""
   },

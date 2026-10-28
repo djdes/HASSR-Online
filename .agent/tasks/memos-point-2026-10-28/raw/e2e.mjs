@@ -129,6 +129,37 @@ try {
     const qr5 = await readQr(page);
     check("AC3 у другой точки — другой QR", tokenOf(qr5).includes("b~b-dk-5") && !tokenOf(qr5).includes("b-dk-112"), qr5);
 
+    await page.goto(`${LIST}/daily-inspection?point=b-dk-mira`);
+    await page.waitForSelector("[data-poster-point]");
+    const qrMira = await readQr(page);
+    check(
+      "AC3 у точки без документа журнала QR есть (первый скан создаст документ)",
+      tokenOf(qrMira ?? "https://x/?token=").includes("b~b-dk-mira"),
+      qrMira,
+    );
+
+    // Плашка кабинета (объявление, NPS…) рядом со страницей не печатается и не сдвигает листы.
+    await page.goto(`${LIST}/all?point=b-dk-112`);
+    await page.waitForSelector("[data-print-brand-frame]");
+    // Плашку вставляем после гидратации, иначе React пересоберёт дерево.
+    await page.waitForFunction(() => {
+      const button = document.querySelector("[data-poster-print-root] button");
+      return Boolean(button && Object.keys(button).some((key) => key.startsWith("__reactFiber")));
+    });
+    await page.evaluate(() => {
+      const banner = document.createElement("div");
+      banner.setAttribute("data-test-banner", "");
+      banner.style.cssText = "height:240px;background:#fde68a";
+      banner.textContent = "Объявление для проверки печати";
+      document.querySelector("main > div").prepend(banner);
+    });
+    await page.emulateMedia({ media: "print" });
+    const bannerDisplay = await page.locator("[data-test-banner]").evaluate((el) => getComputedStyle(el).display);
+    await page.emulateMedia({ media: null });
+    const withBanner = await page.pdf({ format: "A4", preferCSSPageSize: true, printBackground: true });
+    const bannerPages = (withBanner.toString("latin1").match(/\/Type\s*\/Page(?![s\w])/g) ?? []).length;
+    check("AC7 плашка кабинета не печатается, 17 листов — 17 страниц", bannerDisplay === "none" && bannerPages === 17, `${bannerDisplay}, ${bannerPages} стр.`);
+
     await page.goto(`${LIST}/dishes?point=b-dk-office`);
     await page.waitForSelector("[data-poster-point]");
     const office = await text(page, "[data-poster-point]");
@@ -194,6 +225,13 @@ try {
     await page.goto(`${LIST}/dishes`);
     await page.waitForSelector("[data-print-brand-frame]");
     check("AC1 без точки — строки нет, лист цел", (await page.locator("[data-poster-point]").count()) === 0 && (await page.locator("[data-print-brand-footer]").count()) === 1);
+    await page.goto(`${LIST}/daily-inspection`);
+    await page.waitForSelector("[data-print-brand-frame]");
+    const caption = await page.locator("[data-print-brand-frame]").textContent();
+    check(
+      "AC3 гигиенический журнал выключен — QR нет, подпись осталась",
+      (await page.locator("[data-poster-qr]").count()) === 0 && caption.includes("Гигиеническом журнале"),
+    );
     await ctx.close();
   }
 
