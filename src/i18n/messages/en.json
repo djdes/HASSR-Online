@@ -600,7 +600,14 @@
       "clearGroup": "Clear selection",
       "inJournal": "In your journal",
       "back": "All posters",
-      "selectPoster": "Select poster “{title}”"
+      "selectPoster": "Select poster “{title}”",
+      "pointTitle": "Which location to print for",
+      "pointSingle": "Printing for this location",
+      "pointHint": "The location name is printed at the top of every sheet, and the “Daily check” QR opens this location’s journal.",
+      "pointUntitled": "Untitled location",
+      "pointsEmptyTitle": "Add a location",
+      "pointsEmptyBody": "Its name will be printed at the top of every sheet. Until you add one, posters print without it.",
+      "pointsAdd": "Add a location"
     },
     "norms": {
       "lead": "Mark the documents your establishment works under. They will go into the production control program.",

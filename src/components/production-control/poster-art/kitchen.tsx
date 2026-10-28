@@ -129,7 +129,13 @@ function Chef({ wrong, className, title }: PosterArtProps & { wrong: boolean }) 
       <path d="M67 79 H93" style={a("none", 2.2)} />
       <rect x="72" y="88" width="16" height="8" rx="2" style={{ ...o(), strokeWidth: 1.8 }} />
 
-      {/* голова */}
+      {/* голова; у «неправильно» — распущенные волосы до плеч, без колпака (скан 97) */}
+      {wrong ? (
+        <path
+          d="M69 34 Q67.5 17 80 17 Q92.5 17 91 34 L93.5 51 Q89 54 86.5 50 L85.5 43 H74.5 L73.5 50 Q71 54 66.5 51 Z"
+          style={o(T, 2)}
+        />
+      ) : null}
       <path d="M77 40 V47 M83 40 V47" style={o()} />
       <ellipse cx="80" cy="32" rx="8.5" ry="9.5" style={o(BG)} />
       <circle cx="76.5" cy="33" r="1.4" style={f(T)} />
@@ -138,8 +144,8 @@ function Chef({ wrong, className, title }: PosterArtProps & { wrong: boolean }) 
 
       {wrong ? (
         <>
-          <path d="M71.5 30 Q68 21 76 21.5 Q80 16 85 21.5 Q93 21 89 30 Q87 25 80 25 Q74 25 71.5 30 Z" style={o(T, 2)} />
-          <path d="M72 23 L66 17 M88 22.5 L95 16.5 M80 17 L80 10 M75 20 L72 12 M85 19 L88 11" style={o()} />
+          {/* чёлка */}
+          <path d="M71 31 Q71.5 21.5 80 21.5 Q88.5 21.5 89 31 Q86 26 81 25.5 Q76 27 71 31 Z" style={o(T, 2)} />
           {/* ручка в кармане */}
           <rect x="84" y="59" width="9" height="8" rx="2" style={{ ...o(), strokeWidth: 1.8 }} />
           <path d="M89 52 V63" style={a("none", 3)} />
@@ -328,6 +334,45 @@ function DsFridge({ className, title }: PosterArtProps) {
   );
 }
 
+/** Проба не меньше 100 г: миска с блюдом на кухонных весах (скан 97). */
+function DsWeight({ className, title }: PosterArtProps) {
+  return (
+    <Frame className={className} title={title} fallback="Миска с блюдом на весах: не менее 100 г">
+      {/* пар */}
+      <path d="M68 22 Q64 28 68 34 M80 18 Q76 24 80 30 M92 22 Q88 28 92 34" style={a()} />
+      {/* миска */}
+      <path d="M42 42 H118 Q117 68 92 70 H68 Q43 68 42 42 Z" style={o(W)} />
+      <ellipse cx="80" cy="42" rx="38" ry="6" style={o(BG)} />
+      {/* весы */}
+      <rect x="30" y="70" width="100" height="8" rx="4" style={o(W)} />
+      <path d="M38 78 L34 106 Q34 110 38 110 H122 Q126 110 126 106 L122 78" style={o(W)} />
+      <rect x="52" y="85" width="56" height="18" rx="5" style={o(BG, 2.4)} />
+      <text x="80" y="99" style={label(13)}>≥100 г</text>
+    </Frame>
+  );
+}
+
+/** Порционные блюда — поштучно, целиком: котлета и яблоко на тарелке, «1 шт». */
+function DsPortion({ className, title }: PosterArtProps) {
+  return (
+    <Frame className={className} title={title} fallback="Целая котлета и целое яблоко на тарелке: одна порция">
+      {/* тарелка */}
+      <ellipse cx="72" cy="88" rx="52" ry="15" style={o(W)} />
+      <ellipse cx="72" cy="86" rx="36" ry="9" style={{ ...o(), strokeWidth: 1.8 }} />
+      {/* котлета */}
+      <path d="M38 78 Q38 62 58 62 Q78 62 78 78 Q78 84 58 84 Q38 84 38 78 Z" style={o(BG)} />
+      <path d="M48 70 L54 66 M56 74 L64 68 M64 77 L70 72" style={a("none", 2.4)} />
+      {/* яблоко */}
+      <path d="M98 50 Q90 46 86 54 Q82 64 88 74 Q92 81 98 78 Q104 81 108 74 Q114 64 110 54 Q106 46 98 50 Z" style={o(W)} />
+      <path d="M98 50 Q98 44 101 40" style={o()} />
+      <path d="M100 44 Q107 38 112 42 Q106 47 100 44 Z" style={a(ACC, 2)} />
+      {/* одна штука */}
+      <rect x="112" y="14" width="38" height="22" rx="11" style={f(ACC)} />
+      <text x="131" y="29.5" style={{ ...label(12.5), fill: W }}>1 шт</text>
+    </Frame>
+  );
+}
+
 /* ------------------------------------------------------------------ осмотр */
 
 function HeadProfile() {
@@ -435,6 +480,8 @@ export const KITCHEN_ART: Record<KitchenArtName, PosterArtComponent> = {
   "ds-jar": DsJar,
   "ds-fridge": DsFridge,
   "ds-spoon": DsSpoon,
+  "ds-weight": DsWeight,
+  "ds-portion": DsPortion,
   "di-skin": DiSkin,
   "di-throat": DiThroat,
   "di-survey": DiSurvey,

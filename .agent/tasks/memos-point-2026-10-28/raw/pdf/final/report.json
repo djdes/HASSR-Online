@@ -1,0 +1,147 @@
+{
+  "base": "http://localhost:3026",
+  "email": "dk-owner@test.local",
+  "point": "b-dk-112",
+  "posters": [
+    {
+      "key": "hand-washing",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 204.8,
+      "slotMm": 204.9
+    },
+    {
+      "key": "antiseptic",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 193.1,
+      "slotMm": 193.2
+    },
+    {
+      "key": "hygiene",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 167.2,
+      "slotMm": 167.2
+    },
+    {
+      "key": "chef-clothing",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 170.7,
+      "slotMm": 170.7
+    },
+    {
+      "key": "daily-inspection",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 207.2,
+      "slotMm": 207.2
+    },
+    {
+      "key": "product-marking",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 187.9,
+      "slotMm": 187.8
+    },
+    {
+      "key": "board-marking",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 198.7,
+      "slotMm": 198.8
+    },
+    {
+      "key": "storage-times",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 208.5,
+      "slotMm": 208.6
+    },
+    {
+      "key": "storage",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 154.5,
+      "slotMm": 154.5
+    },
+    {
+      "key": "disinfectant-safety",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 196.8,
+      "slotMm": 196.8
+    },
+    {
+      "key": "nika-2",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 209,
+      "slotMm": 209
+    },
+    {
+      "key": "nika-chlor",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 194.2,
+      "slotMm": 194.3
+    },
+    {
+      "key": "chlormisept-r",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 182.3,
+      "slotMm": 182.3
+    },
+    {
+      "key": "cross-contamination",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 197.4,
+      "slotMm": 197.4
+    },
+    {
+      "key": "daily-sample",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 179.9,
+      "slotMm": 179.9
+    },
+    {
+      "key": "eggs",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 123,
+      "slotMm": 123.1
+    },
+    {
+      "key": "dishes",
+      "pages": 1,
+      "frameMm": 273,
+      "widthMm": 190,
+      "contentMm": 124.6,
+      "slotMm": 124.6
+    }
+  ],
+  "all": {
+    "pages": 17,
+    "sheets": 17
+  }
+}
