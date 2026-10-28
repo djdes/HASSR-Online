@@ -56,6 +56,8 @@ export const KITCHEN_ART_NAMES = [
   "ds-jar",
   "ds-fridge",
   "ds-spoon",
+  "ds-weight",
+  "ds-portion",
   "di-skin",
   "di-throat",
   "di-survey",

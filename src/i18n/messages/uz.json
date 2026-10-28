@@ -600,7 +600,14 @@
       "clearGroup": "Tanlovni bekor qilish",
       "inJournal": "Jurnalingizda bor",
       "back": "Barcha plakatlar",
-      "selectPoster": "«{title}» plakatini tanlash"
+      "selectPoster": "«{title}» plakatini tanlash",
+      "pointTitle": "Qaysi savdo nuqtasi uchun chop etamiz",
+      "pointSingle": "Shu nuqta uchun chop etamiz",
+      "pointHint": "Nuqta nomi har bir varaq tepasida chop etiladi, «Kundalik koʻrik» QR kodi esa shu nuqta jurnalini ochadi.",
+      "pointUntitled": "Nomsiz nuqta",
+      "pointsEmptyTitle": "Savdo nuqtasini qoʻshing",
+      "pointsEmptyBody": "Uning nomi har bir varaq tepasida chop etiladi. Hozircha nuqtalar yoʻq, plakatlar nomsiz chop etiladi.",
+      "pointsAdd": "Nuqta qoʻshish"
     },
     "norms": {
       "lead": "Muassasa ishlaydigan hujjatlarni belgilang. Ular ishlab chiqarish nazorati dasturiga kiradi.",
@@ -2768,7 +2775,8 @@
         "add": "Nuqta qo‘shish",
         "addHint": "Qadam-baqadam qo‘shish ochiladi: nomi va manzil, xonalar, uskunalar",
         "open": "Nuqtani ochish",
-        "captionOffice": "Tashkilot"
+        "captionOffice": "Tashkilot",
+        "organization": "Butun tashkilot"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
@@ -2960,6 +2968,15 @@
       "back": "Orqaga",
       "badges": {
         "pro": "PRO"
+      },
+      "pointMode": {
+        "title": "Bu bo‘lim butun tashkilot uchun",
+        "body": "Hozir sarlavhada «{point}» nuqtasi tanlangan. Nuqta tanlanganda «Jurnallar»da shu nuqtaning «Bugun», yozuvlarni tekshirish, sozlash va jurnallar to‘plamlari bor.",
+        "back": "Orqaga",
+        "chooseOrganization": "Butun tashkilotni tanlash",
+        "hintOrganization": "«Nuqtalar jurnallari» va «Barcha jurnallar» sarlavhada «Butun tashkilot» tanlanganda ochiladi.",
+        "hintPoint": "Siz o‘z nuqtangizda ishlaysiz — barcha nuqtalar jurnallarini kompaniya rahbariyati ko‘radi.",
+        "failed": "Butun tashkilotni tanlab bo‘lmadi"
       }
     },
     "header": {
@@ -10389,7 +10406,7 @@
         "siteTitle": "Sayt",
         "siteLead": "Har bir plakat va etiketka sarlavhasining o‘ng tomonida chop etiladi.",
         "siteLabel": "Sayt manzili",
-        "siteHint": "Bo‘sh — wesetup.ru chop etamiz",
+        "siteHint": "Bo‘sh — wesetup.ru chop etamiz. Varaq pastidagi manzil o‘zgarmaydi — doim wesetup.ru.",
         "sitePlaceholder": "dobroe-kafe.ru",
         "qrTitle": "QR-kodlar",
         "qrLead": "Ramka va markazdagi belgi kodni sizniki qiladi. Skanerlanishi avvalgidek ishonchli.",

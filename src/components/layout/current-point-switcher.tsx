@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Building2, Check, ChevronDown, Loader2, Plus, Settings2, Store } from "lucide-react";
-import type { BuildingOption } from "@/lib/building-scope";
+import { ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
 import { headerPointHidden, type HeaderPoint, type HeaderPointOption } from "@/lib/header-point";
 import { cn } from "@/lib/utils";
 import { useIsNarrowViewport } from "@/lib/use-narrow-viewport";
@@ -35,13 +35,13 @@ const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:rin
 export function CurrentPointSwitcher({
   point,
   buildings,
-  activeBuildingId,
   manageHref,
 }: {
   point: HeaderPoint;
   /** Точки для переключения (`kind: "switch"`). */
   buildings: BuildingOption[];
-  activeBuildingId: string | null;
+  /** Активная точка; выбранный пункт берётся из `point.activeId`. */
+  activeBuildingId?: string | null;
   manageHref: string | null;
 }) {
   const t = useTranslations("navigation.shell.point");
@@ -95,10 +95,13 @@ export function CurrentPointSwitcher({
   const options = point.options;
   const active = options.find((option) => option.id === point.activeId) ?? options[0];
   // В списке — те же подписи, что в шапке: точка с названием компании — по адресу.
-  const listBuildings = buildings.map((building) => {
-    const option = options.find((item) => item.id === building.id);
-    return option ? { ...building, name: titleOf(option) } : building;
-  });
+  // «Вся организация» — не точка из базы: её «точка» собирается из пункта.
+  const buildingOf = (option: HeaderPointOption): BuildingOption | null => {
+    const building = buildings.find((item) => item.id === option.id);
+    if (building) return { ...building, name: titleOf(option) };
+    return option.id === ORGANIZATION_VIEW_ID ? { id: option.id, name: titleOf(option), address: null, kind: "office" } : null;
+  };
+  const listBuildings = options.map(buildingOf).filter((building): building is BuildingOption => building !== null);
   const trigger = cn(
     BASE,
     "transition-colors duration-150 hover:bg-[#f5f6ff] data-[state=open]:bg-[#f5f6ff]",
@@ -138,7 +141,7 @@ export function CurrentPointSwitcher({
               if ((event.target as HTMLElement).closest("button,a")) setSheetOpen(false);
             }}
           >
-            <LocationSwitcherList buildings={listBuildings} activeBuildingId={activeBuildingId} />
+            <LocationSwitcherList buildings={listBuildings} activeBuildingId={active.id} />
             {manageHref ? (
               <Link
                 href={manageHref}
@@ -170,7 +173,7 @@ export function CurrentPointSwitcher({
       <DropdownMenuContent align="center" className="w-[300px]">
         {options.map((option, index) => {
           const isActive = option.id === active.id;
-          const building = buildings.find((item) => item.id === option.id);
+          const building = buildingOf(option);
           const Icon = option.office ? Building2 : Store;
           // Офис — первым, под ним черта: дальше торговые точки.
           const divider = option.office && index < options.length - 1;
@@ -178,7 +181,7 @@ export function CurrentPointSwitcher({
             <Fragment key={option.id}>
             <DropdownMenuItem
               onSelect={() => {
-                if (building) void switchTo({ ...building, name: titleOf(option) }, active.id);
+                if (building) void switchTo(building, active.id);
               }}
               className={cn("items-start", isActive && MENU_ITEM_ACTIVE_CLASS)}
               data-point-option={option.id}

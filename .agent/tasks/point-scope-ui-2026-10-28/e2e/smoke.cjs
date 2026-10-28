@@ -91,6 +91,17 @@ async function shot(page, url, file) {
   const hubHref = await page.locator("a[href*='/journal-fill/']").first().getAttribute("href").catch(() => null);
   check("AC5 ссылка QR «Все журналы» найдена", Boolean(hubHref), hubHref ?? "");
 
+  // «Вся организация» в шапке (PR #40) — счётчики и «Все журналы» по всей организации.
+  await setPoint(context, "organization");
+  await go(page, "/settings/qr-posters");
+  text = await page.locator("main").innerText();
+  const orgStickers = text.match(/Наклейки на оборудование\s*(\d+)/);
+  const orgRooms = text.match(/Наклейки на склады и помещения\s*(\d+)/);
+  check("«Вся организация»: оборудование всей организации", orgStickers && orgStickers[1] === "6", orgStickers ? orgStickers[1] : "нет счётчика");
+  check("«Вся организация»: помещения всей организации", orgRooms && orgRooms[1] === "3", orgRooms ? orgRooms[1] : "нет счётчика");
+  const orgHub = await page.locator("a[href*='/journal-fill/']").first().getAttribute("href").catch(() => null);
+  check("«Вся организация»: общий QR «Все журналы»", Boolean(orgHub) && !orgHub.includes("b~"), orgHub ?? "");
+
   // Другая точка в шапке — другие объекты.
   await setPoint(context, ids.school);
   await go(page, `/settings/qr-posters?kind=equipment&layout=sheet`);

@@ -24,6 +24,7 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
+import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
 import { isUvLampEquipment, lampRemainingHours } from "@/lib/uv-lamp";
 
@@ -102,16 +103,21 @@ export default async function EquipmentSettingsPage() {
   ]);
   // Точка → помещение → оборудование (2026-10-17). Выбрана точка в шапке —
   // её оборудование и оборудование цехов без точки.
-  const groups = groupByBuilding(equipment, (item) => item.area.buildingId, buildings, {
-    activeBuildingId: buildingContext.activeBuildingId,
+  // Торговая точка из шапки; «Вся организация» или офис — все точки.
+  const viewedPoint = viewedPointId(buildingContext);
+  // Офис — не торговая точка: в списке он, только если у него есть свои объекты.
+  const groupBuildings = buildings.filter(
+    (building) => !isOfficeBuilding(building) || equipment.some((item) => item.area.buildingId === building.id),
+  );
+  const groups = groupByBuilding(equipment, (item) => item.area.buildingId, groupBuildings, {
+    activeBuildingId: viewedPoint,
     keepEmpty: true,
   });
   const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
   // Сколько оборудования на экране (точка из шапки и цеха без точки) — для кнопок QR.
   const visibleCount = buildings.length === 0 ? equipment.length : groups.reduce((sum, group) => sum + group.items.length, 0);
   const places = buildPlaceOptions({ buildings, areas, rooms });
-  const defaultBuildingId =
-    buildingContext.activeBuildingId ?? (buildings.length === 1 ? buildings[0].id : null);
+  const defaultBuildingId = viewedPoint ?? (buildings.length === 1 ? buildings[0].id : null);
   // «Кто заполняет» по QR: руководство заполняет любой объект — в выборе не нужно.
   const fillerOptions = staff.map((user) => ({
     id: user.id,

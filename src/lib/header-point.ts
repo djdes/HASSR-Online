@@ -1,5 +1,5 @@
 import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
-import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
 import { HOME_HREF } from "@/lib/home-page";
 
 /**
@@ -19,7 +19,8 @@ import { HOME_HREF } from "@/lib/home-page";
  */
 export type HeaderPointTitle =
   | { source: "name" | "address"; text: string }
-  | { source: "main" | "untitled"; text: null };
+  /** `organization` — пункт «Вся организация» (без офиса, 2026-10-28). */
+  | { source: "main" | "untitled" | "organization"; text: null };
 
 export type HeaderPointOption = {
   id: string;
@@ -79,16 +80,32 @@ export function resolveHeaderPoint(input: {
   /** Все точки организации (без учёта режима «журналы по точкам»). */
   organizationBuildings: BuildingOption[];
   /** Контекст точек запроса (`loadBuildingContext`). */
-  context: { enabled: boolean; buildings: BuildingOption[]; activeBuildingId: string | null; canSwitch: boolean };
+  context: {
+    enabled: boolean;
+    buildings: BuildingOption[];
+    activeBuildingId: string | null;
+    canSwitch: boolean;
+    organizationView?: boolean;
+    canViewOrganization?: boolean;
+  };
   /** Может заводить точки (полный доступ — страница «Торговые точки»). */
   canManage: boolean;
 }): HeaderPoint {
   const { companyName, organizationBuildings, context, canManage } = input;
   if (context.enabled && context.canSwitch && context.buildings.length >= 2) {
     const options = context.buildings.map((building) => headerPointOption(building, companyName));
-    const activeId = options.some((option) => option.id === context.activeBuildingId)
-      ? (context.activeBuildingId as string)
-      : options[0].id;
+    // «Вся организация» — первым пунктом, если офиса нет (офис сам и есть
+    // уровень всей организации).
+    const virtualOrganization = context.canViewOrganization === true && !options.some((option) => option.office);
+    if (virtualOrganization) {
+      options.unshift({ id: ORGANIZATION_VIEW_ID, title: { source: "organization", text: null }, address: null, office: true });
+    }
+    const activeId =
+      virtualOrganization && context.organizationView
+        ? ORGANIZATION_VIEW_ID
+        : options.some((option) => option.id === context.activeBuildingId)
+          ? (context.activeBuildingId as string)
+          : options[0].id;
     return { kind: "switch", activeId, options };
   }
   if (context.enabled && context.activeBuildingId) {

@@ -5,7 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { POSTERS, findPoster, selectPosters } from "@/lib/ppk/posters";
-import { loadJournalQrSvg } from "@/lib/ppk/poster-data.server";
+import { posterPointLine, posterPointParam, resolvePosterPoint } from "@/lib/ppk/poster-point";
+import { loadJournalQrSvg, loadPosterPoints } from "@/lib/ppk/poster-data.server";
 import { isMonoParam } from "@/lib/print-brand";
 import { loadPrintBrand } from "@/lib/print-brand.server";
 import { PrintJournalButton } from "@/components/journals/print-journal-button";
@@ -17,7 +18,9 @@ const BASE = "/production-control/documents/posters";
 
 /**
  * Печать плакатов: один ключ или `all` (все; `?keys=a,b` — только выбранные,
- * в порядке каталога). `?bw=1` — чёрно-белый режим. Каждый плакат — на
+ * в порядке каталога). `?bw=1` — чёрно-белый режим, `?point=<id>` — торговая
+ * точка (её название на каждом листе, QR осмотра — в её журнал); без точки или
+ * с чужой — точка по умолчанию (`resolvePosterPoint`). Каждый плакат — на
  * отдельном листе A4.
  */
 export default async function PosterPrintPage({
@@ -42,26 +45,32 @@ export default async function PosterPrintPage({
 
   const organizationId = getActiveOrgId(session);
   const needsQr = list.some((item) => item.blocks.some((block) => block.type === "journalQr"));
-  const [brand, t] = await Promise.all([
+  const [brand, t, { points, headerPointId }] = await Promise.all([
     loadPrintBrand(organizationId, { mono }),
     getTranslations("productionControl.posters"),
+    loadPosterPoints(session),
   ]);
-  const qrSvg = needsQr ? await loadJournalQrSvg(organizationId, "hygiene", brand) : null;
+  const point = resolvePosterPoint(points, posterPointParam(query.point), headerPointId);
+  const pointLine = posterPointLine(point);
+  const qrSvg = needsQr ? await loadJournalQrSvg(organizationId, "hygiene", brand, point?.id ?? null) : null;
 
   const params2 = new URLSearchParams();
   if (!poster && picked.length > 0) params2.set("keys", picked.map((item) => item.key).join(","));
+  // Точку держим в адресе, только если выбирать есть из чего.
+  if (point && points.length > 1) params2.set("point", point.id);
   const here = (bw: boolean) => {
     const next = new URLSearchParams(params2);
     if (bw) next.set("bw", "1");
     const text = next.toString();
     return `${BASE}/${key}${text ? `?${text}` : ""}`;
   };
+  const back = point && points.length > 1 ? `${BASE}?point=${encodeURIComponent(point.id)}` : BASE;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-poster-print-root>
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <Link
-          href={BASE}
+          href={back}
           className="inline-flex h-10 items-center gap-2 rounded-2xl px-3 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           <ArrowLeft className="size-4" aria-hidden />
@@ -85,8 +94,10 @@ export default async function PosterPrintPage({
         </div>
       </div>
       {list.map((item, index) => (
-        <div key={item.key} className={index < list.length - 1 ? "print:break-after-page" : undefined}>
-          <PosterSheet poster={item} brand={brand} qrSvg={qrSvg} />
+        // В печати без отступа между листами: отступ после листа в 273 мм не
+        // помещался на A4 и добавлял пустую страницу в конце.
+        <div key={item.key} className={`print:m-0 ${index < list.length - 1 ? "print:break-after-page" : ""}`}>
+          <PosterSheet poster={item} brand={brand} qrSvg={qrSvg} point={pointLine} />
         </div>
       ))}
     </div>

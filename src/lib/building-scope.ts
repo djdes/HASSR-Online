@@ -42,6 +42,16 @@ export type BuildingContext = {
   activeBuilding: BuildingOption | null;
   /** Показывать переключатель: доступных точек ≥ 2. */
   canSwitch: boolean;
+  /**
+   * Выбрана «Вся организация» (2026-10-28): офис или пункт «Вся организация»
+   * в шапке. Данные по-прежнему пишутся в `activeBuildingId` (офис, а без
+   * офиса — первая точка), меняется только режим раздела «Журналы».
+   */
+  organizationView: boolean;
+  /** Человек может выбрать «Вся организация»: руководство на всю компанию. */
+  canViewOrganization: boolean;
+  /** Раздел «Журналы» в режиме точки — см. `journalsPointMode`. */
+  pointMode: boolean;
 };
 
 const DISABLED_CONTEXT: BuildingContext = {
@@ -50,7 +60,40 @@ const DISABLED_CONTEXT: BuildingContext = {
   activeBuildingId: null,
   activeBuilding: null,
   canSwitch: false,
+  organizationView: true,
+  canViewOrganization: false,
+  pointMode: false,
 };
+
+/**
+ * Значение cookie / `lastActiveBuildingId` для «Вся организация». Id точек —
+ * cuid, совпасть с этим словом не могут.
+ */
+export const ORGANIZATION_VIEW_ID = "organization";
+
+/**
+ * Раздел «Журналы» в режиме точки (2026-10-28, владелец): в шапке выбрана
+ * торговая точка — «Журналы точек» и «Все журналы» закрыты, вход в раздел —
+ * «Сегодня». Руководитель точки (закреплён только за своими точками) в нём
+ * всегда. Режим — только у руководящего звена (руководство, заведующая):
+ * линейному сотруднику «Все журналы» — единственный вход в журналы на сайте.
+ * Точки выключены или одна — режима нет.
+ */
+export function journalsPointMode(context: Pick<BuildingContext, "pointMode">): boolean {
+  return context.pointMode;
+}
+
+/**
+ * Торговая точка, на которую человек смотрит (шапка): цеха, оборудование и
+ * QR — только её объекты (сканы 98, 2026-10-28). null — вся организация:
+ * выбраны «Вся организация» или офис, точки выключены. Документы при этом
+ * по-прежнему пишутся в `activeBuildingId`.
+ */
+export function viewedPointId(
+  context: Pick<BuildingContext, "enabled" | "organizationView" | "activeBuildingId">,
+): string | null {
+  return context.enabled && !context.organizationView ? context.activeBuildingId : null;
+}
 
 export function encodeBuildingCookie(orgId: string, buildingId: string): string {
   return `${orgId}:${buildingId}`;
@@ -177,18 +220,32 @@ export function resolveActiveBuilding(args: {
   buildings: BuildingOption[];
   userBuildingIds: readonly string[];
   cookieBuildingId: string | null;
+  /** Руководство (`hasFullWorkspaceAccess`): ему доступна «Вся организация». */
+  fullAccess?: boolean;
 }): BuildingContext {
   if (!args.enabled || args.buildings.length < 2) return DISABLED_CONTEXT;
   const buildings = allowedBuildingsForUser(args.buildings, args.userBuildingIds);
-  const active =
-    buildings.find((building) => building.id === args.cookieBuildingId) ??
-    buildings[0];
+  // «Вся организация» — руководству, которое работает на всю компанию (видит
+  // все точки); руководитель точки всегда смотрит свою точку.
+  const canViewOrganization = args.fullAccess === true && buildings.length === args.buildings.length;
+  const office = buildings.find(isOfficeBuilding) ?? null;
+  // Без выбора руководство начинает со всей организации (корень «Журналов» —
+  // «Журналы точек»), остальные — с первой своей точки, как раньше.
+  const wantsOrganization =
+    canViewOrganization && (args.cookieBuildingId === ORGANIZATION_VIEW_ID || args.cookieBuildingId === null);
+  const active = wantsOrganization
+    ? (office ?? buildings[0])
+    : (buildings.find((building) => building.id === args.cookieBuildingId) ?? buildings[0]);
+  const organizationView = wantsOrganization || isOfficeBuilding(active);
   return {
     enabled: true,
     buildings,
     activeBuildingId: active.id,
     activeBuilding: active,
     canSwitch: buildings.length >= 2,
+    organizationView,
+    canViewOrganization,
+    pointMode: args.fullAccess === true && !organizationView,
   };
 }
 

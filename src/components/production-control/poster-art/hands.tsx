@@ -250,32 +250,42 @@ function HwInterlace({ title, className }: PosterArtProps) {
   );
 }
 
-/** Кулак обхватывает большой палец; sparkles — антисептик вместо пены. */
+/**
+ * Большой палец открытой руки зажат в кулаке другой руки (скан 97: «все руки»).
+ * Обе руки узнаются как руки: слева раскрытая ладонь с пальцами, её большой
+ * палец уходит в кулак — видны согнутые пальцы, большой палец кулака сверху и
+ * манжета. Кончик зажатого пальца выглядывает из кулака. Кулак рисуется в своей
+ * системе координат: зажатый палец — ось y, кисть уходит вправо.
+ * `sparkles` — антисептик вместо пены.
+ */
 function ThumbScene({ sparkles = false }: { sparkles?: boolean }) {
   return (
     <>
-      {/* большой палец другой руки */}
-      <rect x={72} y={28} width={14} height={64} rx={7} style={skin} />
-      <path d="M75.5 37a3.5 3.5 0 0 1 7 0" style={{ ...line, strokeWidth: 1.6 }} />
-      <rect x={66} y={88} width={26} height={16} rx={4} style={skin} />
-      <path d="M66 95H92" style={acc} />
-      {/* пальцы, обхватившие палец */}
-      <rect x={52} y={48} width={54} height={11} rx={5.5} style={skin} />
-      <rect x={52} y={59} width={54} height={11} rx={5.5} style={skin} />
-      <rect x={52} y={70} width={54} height={11} rx={5.5} style={skin} />
-      <rect x={52} y={81} width={54} height={9} rx={4.5} style={skin} />
-      {/* ладонь и рукав обхватывающей руки */}
-      <rect x={100} y={48} width={16} height={42} rx={7} style={skin} />
-      <rect x={114} y={50} width={26} height={38} rx={5} style={skin} />
-      <path d="M126 50V88" style={acc} />
-      <Arrow d="M58 30Q79 6 102 28" hx={102} hy={28} a={50} />
+      <Hand x={54} y={72} r={-14} s={0.98} />
+      <g transform="translate(77 71) rotate(24)">
+        {/* кончик зажатого большого пальца */}
+        <rect x={-5} y={-35} width={10} height={16} rx={5} style={skin} />
+        <path d="M-2.4 -30.5a2.4 2.4 0 0 1 4.8 0" style={{ ...line, strokeWidth: 1.5 }} />
+        {/* кисть и манжета кулака */}
+        <rect x={24} y={-14} width={18} height={27} rx={4} style={skin} />
+        <path d="M33 -14V13" style={acc} />
+        <rect x={4} y={-19} width={25} height={36} rx={9} style={skin} />
+        {/* четыре согнутых пальца */}
+        <rect x={-15} y={-17} width={28} height={9} rx={4.5} style={skin} />
+        <rect x={-15} y={-8} width={28} height={9} rx={4.5} style={skin} />
+        <rect x={-14} y={1} width={27} height={8.5} rx={4.25} style={skin} />
+        <rect x={-12} y={9.5} width={24} height={8} rx={4} style={skin} />
+        {/* большой палец кулака поверх */}
+        <rect x={-9} y={-25} width={33} height={9.5} rx={4.75} transform="rotate(-8 7 -20)" style={skin} />
+      </g>
+      <Arrow d="M40 26Q74 2 110 26" hx={110} hy={26} a={35} />
       {sparkles ? (
         <>
-          <Sparkle x={28} y={44} k={1.1} />
-          <Sparkle x={36} y={82} k={0.8} />
+          <Sparkle x={24} y={44} k={1.1} />
+          <Sparkle x={132} y={96} k={0.8} />
         </>
       ) : (
-        <Bubbles items={[[28, 44, 3.5], [38, 34, 2.2], [32, 82, 3]]} />
+        <Bubbles items={[[22, 46, 3.5], [30, 36, 2.2], [132, 96, 3], [140, 86, 2]]} />
       )}
     </>
   );

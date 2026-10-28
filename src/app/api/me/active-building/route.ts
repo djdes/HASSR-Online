@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { loadBuildingContext, setActiveBuildingCookie } from "@/lib/active-building";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
+import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { createRateLimiter } from "@/lib/rate-limit";
 
@@ -48,12 +49,23 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  const organizationId = getActiveOrgId(session);
+  // «Вся организация» (2026-10-28): режим раздела «Журналы» для руководства.
+  if (buildingId === ORGANIZATION_VIEW_ID) {
+    if (!context.canViewOrganization) {
+      return NextResponse.json({ error: "Выбрать всю организацию может только руководство" }, { status: 403 });
+    }
+    await setActiveBuildingCookie(organizationId, ORGANIZATION_VIEW_ID);
+    await db.user
+      .update({ where: { id: session.user.id }, data: { lastActiveBuildingId: ORGANIZATION_VIEW_ID } })
+      .catch(() => {});
+    return NextResponse.json({ ok: true, building: { id: ORGANIZATION_VIEW_ID, name: "", address: null } });
+  }
   const building = context.buildings.find((item) => item.id === buildingId);
   if (!building) {
     return NextResponse.json({ error: "Нет доступа к этой точке" }, { status: 403 });
   }
 
-  const organizationId = getActiveOrgId(session);
   await setActiveBuildingCookie(organizationId, building.id);
   // В аккаунт — чтобы на другом устройстве открылась та же точка.
   await db.user

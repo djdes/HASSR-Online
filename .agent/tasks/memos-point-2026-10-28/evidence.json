@@ -1,0 +1,61 @@
+{
+  "task": "memos-point-2026-10-28",
+  "base": "83bffc75 (merged with origin/master 2e297fa0)",
+  "environment": "local database wesetup_memos on 127.0.0.1:5432 (not production), next dev on :3026, Playwright Chromium 1243, test logo 24 mm in the sheet header",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/production-control/poster-sheet.test.ts",
+        "src/lib/ppk/poster-point.test.ts",
+        "raw/shots/e2e-result.json (17/17 sheets with point, 2-line clamp, no point → no line)"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "raw/shots/e2e-result.json (picker without office, default point, ?point= in print links, foreign point → default, single point, no points, phone 390 px, Mini App)"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "raw/shots/e2e-result.json (QR decoded with jsQR: b~b-dk-112 / b~b-dk-5; point without a document → b~b-dk-mira (first scan creates it); shared journals → no point segment; hygiene journal disabled → no QR, caption kept)",
+        "spec.md AC3 amended after review: QR no longer requires an existing document"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": ["src/components/production-control/poster-sheet.test.ts", "raw/shots/e2e-result.json"]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": ["src/lib/ppk/posters.test.ts", "raw/shots/4-dishes.png", "raw/shots/4-storage.png"]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": ["raw/art/thumbs-v1.png", "raw/art/chef-v1.png", "raw/art/sample-v1.png", "raw/shots/4-hand-washing.png", "raw/shots/4-chef-clothing.png", "raw/shots/4-daily-sample.png"]
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": [
+        "raw/pdf/baseline/report.json (before: 19 pages for 17 posters)",
+        "raw/pdf/final/report.json (2-line point: each poster 1 page, all 17 → 17 pages, merged code)",
+        "raw/pdf/final-b-dk-mira/report.json (1-line point: all 17 → 17 pages)",
+        "raw/shots/e2e-result.json (cabinet banner injected before sheets: display none in print, 17 → 17 pages)"
+      ]
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": [
+        "npm run i18n:check (95/95)",
+        "npm run typecheck on merged tree (exit 0), repeated after review fixes",
+        "browser check after review fixes: 29/29",
+        "eslint changed files (0 errors; 1 pre-existing warning whats-new-modal.tsx:251)",
+        "new/related tests 26/26 (pre-commit test-related)",
+        "npm run test:gate on merged tree: pass=5049, fail=3 — 1 baseline + 2 load-sensitive tests unrelated to this change (deploy-scripts.test.ts «prewarm-routes.sh», journal-order-scans.test.ts upload check); both pass when run alone; CI gate in deploy.yml is the final check",
+        "src/lib/whats-new-notes.ts («Памятки по точкам»)"
+      ]
+    }
+  }
+}

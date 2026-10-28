@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { isMonoParam } from "@/lib/print-brand";
 import { parseQrPostersRequest, type QrPostersSearch } from "@/lib/qr-posters-request";
@@ -47,7 +47,9 @@ export default async function QrPostersPage({ searchParams }: { searchParams: Pr
     organizationId,
     request,
     origin,
-    activeBuildingId: await getActiveBuildingId(session),
+    // Точка из шапки (скан 98): объекты и «Все журналы» — только её;
+    // «Вся организация» или офис — вся организация.
+    activeBuildingId: await getViewedPointId(session),
     mono: isMonoParam(search.bw),
   });
   return <QrPostersClient view={view} />;

@@ -9,10 +9,12 @@ import {
   decodeBuildingCookie,
   encodeBuildingCookie,
   resolveActiveBuilding,
+  viewedPointId,
   type BuildingContext,
   type BuildingOption,
 } from "@/lib/building-scope";
 import { db } from "@/lib/db";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 /**
  * Точки (2026-09-05): активная точка текущего запроса.
@@ -59,6 +61,7 @@ export const loadBuildingContext = cache(
       userBuildingIds,
       cookieBuildingId:
         cookieBuildingId ?? (homeOrg && user ? user.lastActiveBuildingId : null),
+      fullAccess: hasFullWorkspaceAccess(session.user),
     });
   },
 );
@@ -88,6 +91,11 @@ export const listPersonBuildings = cache(
 /** Id активной точки для фильтра документов; null — без фильтра. */
 export async function getActiveBuildingId(session: Session): Promise<string | null> {
   return (await loadBuildingContext(session)).activeBuildingId;
+}
+
+/** Торговая точка из шапки для справочников и QR; null — вся организация (`viewedPointId`). */
+export async function getViewedPointId(session: Session): Promise<string | null> {
+  return viewedPointId(await loadBuildingContext(session));
 }
 
 export async function listOrganizationBuildings(
