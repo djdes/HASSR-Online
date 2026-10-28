@@ -6,7 +6,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { listPersonBuildings, loadBuildingContext } from "@/lib/active-building";
-import { isOfficeBuilding } from "@/lib/building-scope";
+import { isOfficeBuilding, journalsPointMode } from "@/lib/building-scope";
 import { buildingInScope } from "@/lib/point-scope";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { customJournalName } from "@/lib/custom-names";
@@ -17,6 +17,7 @@ import { journalTitle } from "@/i18n/journal-presentation";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { PointModeUnavailable } from "@/components/journals/point-mode-unavailable";
 import { PointJournalsClient, type PointJournalsCard } from "@/components/journals/point-journals-client";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,16 @@ export const dynamic = "force-dynamic";
 export default async function PointJournalsPage() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  // В шапке выбрана торговая точка — страница всей организации закрыта.
+  const pointContext = await loadBuildingContext(session);
+  if (journalsPointMode(pointContext)) {
+    return (
+      <PointModeUnavailable
+        pointName={pointContext.activeBuilding?.name ?? ""}
+        canViewOrganization={pointContext.canViewOrganization}
+      />
+    );
+  }
   const organizationId = getActiveOrgId(session);
   const locale = await getSiteLocale();
   const [t, messages, context, personBuildings, templates, customNames] = await Promise.all([

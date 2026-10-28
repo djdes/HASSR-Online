@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import type { BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
 
 /** Блок `location` из /api/mini/home. */
 export type MiniLocationPayload = {
@@ -12,6 +12,8 @@ export type MiniLocationPayload = {
   buildings: BuildingOption[];
   activeBuildingId: string | null;
   canSwitch: boolean;
+  organizationView?: boolean;
+  canViewOrganization?: boolean;
 };
 
 /**
@@ -21,6 +23,7 @@ export type MiniLocationPayload = {
  */
 export function MiniLocationSwitcher() {
   const t = useTranslations("notificationSettings.miniSwitchers");
+  const tPoint = useTranslations("navigation.shell.point");
   const currentT = useRef(t);
   useEffect(() => {
     currentT.current = t;
@@ -46,9 +49,17 @@ export function MiniLocationSwitcher() {
   }, []);
 
   if (!location?.canSwitch) return null;
+  // «Вся организация» — первым пунктом, если офиса нет (как в шапке сайта).
+  const virtualOrganization =
+    location.canViewOrganization === true && !location.buildings.some(isOfficeBuilding);
+  const options: BuildingOption[] = virtualOrganization
+    ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...location.buildings]
+    : location.buildings;
+  const activeId =
+    virtualOrganization && location.organizationView ? ORGANIZATION_VIEW_ID : location.activeBuildingId;
 
   async function switchTo(building: BuildingOption) {
-    if (!location || building.id === location.activeBuildingId || busyId) return;
+    if (!location || building.id === activeId || busyId) return;
     setBusyId(building.id);
     try {
       const response = await fetch("/api/me/active-building", {
@@ -57,7 +68,11 @@ export function MiniLocationSwitcher() {
         body: JSON.stringify({ buildingId: building.id }),
       });
       if (!response.ok) throw new Error();
-      setLocation({ ...location, activeBuildingId: building.id });
+      setLocation(
+        building.id === ORGANIZATION_VIEW_ID
+          ? { ...location, organizationView: true }
+          : { ...location, activeBuildingId: building.id, organizationView: isOfficeBuilding(building) },
+      );
       toast.success(currentT.current("locationSwitched", { name: building.name }));
       router.refresh();
     } catch {
@@ -73,8 +88,8 @@ export function MiniLocationSwitcher() {
     <section className="mini-card p-4">
       <div className="mini-label mb-2.5">{t("locationHeading")}</div>
       <div className="space-y-2">
-        {location.buildings.map((building) => {
-          const active = building.id === location.activeBuildingId;
+        {options.map((building) => {
+          const active = building.id === activeId;
           return (
             <button
               key={building.id}

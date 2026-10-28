@@ -6,6 +6,8 @@ import { hasJournalAccess } from "@/lib/journal-acl";
 import { sessionHasPermission } from "@/lib/permissions-server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { loadBuildingContext } from "@/lib/active-building";
+import { journalsPointMode } from "@/lib/building-scope";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import {
   visibleNav,
@@ -68,7 +70,11 @@ export async function loadNavFacts(session: Session): Promise<NavFacts> {
   const settingsPermissions = hasFullWorkspaceAccess(user)
     ? await sessionHasPermission(session, "settings.permissions").catch(() => false)
     : false;
-  return { checklists, settingsPermissions };
+  // Выбранная в шапке точка: торговая — «Журналы» в режиме точки.
+  const journalsPointModeOn = await loadBuildingContext(session)
+    .then(journalsPointMode)
+    .catch(() => false);
+  return { checklists, settingsPermissions, journalsPointMode: journalsPointModeOn };
 }
 
 export async function buildNavModel(input: {

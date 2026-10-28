@@ -104,6 +104,9 @@ export async function GET() {
     activeBuildingId: buildingContext.activeBuildingId,
     activeBuilding: buildingContext.activeBuilding,
     canSwitch: buildingContext.canSwitch,
+    // «Вся организация» (2026-10-28) — как в шапке сайта.
+    organizationView: buildingContext.organizationView,
+    canViewOrganization: buildingContext.canViewOrganization,
   };
 
   if (isManagerLike) {
