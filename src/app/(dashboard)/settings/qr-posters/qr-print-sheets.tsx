@@ -35,10 +35,11 @@ import type { QrPrintPage } from "@/lib/qr-print-layout";
  * обнуляет фоны, а `currentColor` в ней чёрный); режим «Ч/б» — все цвета
  * чёрные. Без логотипа в шапке — название организации.
  *
- * Торговая точка (2026-10-28, как на памятках): под шапкой каждого плаката,
- * наклейки и таблички — строка с меткой и точкой, для которой напечатан код
- * (`poster.point`, правила — `qr-poster-point.ts`). Чтобы всё осталось в
- * своей рамке, с этой строкой код A5 чуть меньше, а код таблички, как у
+ * Торговая точка (2026-10-28, как на памятках): точка, для которой напечатан
+ * код (`poster.point`, правила — `qr-poster-point.ts`), — строкой с меткой под
+ * шапкой плаката и таблички; на наклейке — в строке организации (строк под
+ * кодом столько же, срок документа не обрезается). Чтобы всё осталось в своей
+ * рамке, код A5 со строкой точки чуть меньше, а код A4 и таблички, как у
  * наклейки, занимает оставшееся место.
  */
 
@@ -87,10 +88,13 @@ const SVG_SIZE = /<svg([^>]*?)\swidth="[^"]*"\s+height="[^"]*"/;
 const A5_CODE_MM = 72;
 const A5_CODE_WITH_POINT_MM = 64;
 /**
- * Код таблички — как у наклейки: занимает место, что осталось между режимом
- * и номером, от 30 до 46 мм по ширине. С логотипом в шапке, строкой точки и
- * цехом в две строки табличка всё равно остаётся в своей рамке.
+ * Код плаката A4 и таблички — как у наклейки: занимает место, что осталось
+ * между текстом сверху и снизу, от наименьшей до прежней ширины. С логотипом
+ * в шапке, строкой точки, заголовком в две строки и сроком документа лист
+ * всё равно остаётся в своей рамке, а без них код прежнего размера.
  */
+const A4_CODE_MM = 100;
+const A4_CODE_MIN_MM = 70;
 const PLATE_CODE_MM = 46;
 const PLATE_CODE_MIN_MM = 30;
 
@@ -138,25 +142,50 @@ function Header({ brand, size }: { brand: PrintBrand; size: keyof typeof PRINT_L
   );
 }
 
+/** Метка точки: цвет — заливкой SVG (печать кабинета обнуляет фоны). */
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="qrp-point-pin">
+      <path d="M12 22.5s7.5-6.6 7.5-12.7a7.5 7.5 0 0 0-15 0c0 6.1 7.5 12.7 7.5 12.7Z" style={{ fill: "var(--pb-primary-ink)" }} />
+      <circle cx="12" cy="9.8" r="2.9" style={{ fill: "#ffffff" }} />
+    </svg>
+  );
+}
+
 /**
- * Торговая точка, для которой напечатан код: метка и название жирным. Плакат
- * A4/A5 — наименование для журналов или название и адрес, до двух строк;
- * наклейка и табличка — короткое название точки одной строкой (длинные
- * наименования точек одной организации начинаются одинаково).
+ * Торговая точка, для которой напечатан код, — строкой под шапкой: метка и
+ * название жирным. Плакат A4/A5 — наименование для журналов или название и
+ * адрес, до двух строк; табличка — короткое название точки одной строкой
+ * (длинные наименования точек одной организации начинаются одинаково).
  */
-function PointLine({ poster, size }: { poster: QrPoster; size: keyof typeof PRINT_LOGO_MM }) {
+function PointLine({ poster, size }: { poster: QrPoster; size: "a4" | "a5" | "plate" }) {
   const point = poster.point;
   if (!point) return null;
-  const compact = size === "sticker" || size === "plate";
+  const compact = size === "plate";
   return (
     <div className={`qrp-point qrp-point-${size}`} data-qr-print-point="">
-      <svg viewBox="0 0 24 24" aria-hidden className="qrp-point-pin">
-        <path d="M12 22.5s7.5-6.6 7.5-12.7a7.5 7.5 0 0 0-15 0c0 6.1 7.5 12.7 7.5 12.7Z" style={{ fill: "var(--pb-primary-ink)" }} />
-        <circle cx="12" cy="9.8" r="2.9" style={{ fill: "#ffffff" }} />
-      </svg>
+      <PinIcon />
       <span className="qrp-point-text">
         <b>{compact ? point.short : point.title}</b>
         {!compact && point.detail ? ` · ${point.detail}` : null}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Строка организации на наклейке. С точкой — одной строкой «метка, точка ·
+ * организация»: строк текста под кодом остаётся столько же, и код не мельчает,
+ * а срок документа не обрезается. Не влезает — многоточие съедает организацию
+ * (она есть и в шапке), точка видна целиком.
+ */
+function StickerOrgLine({ poster }: { poster: QrPoster }) {
+  if (!poster.point) return <div className="qrp-sticker-org">{poster.orgName}</div>;
+  return (
+    <div className="qrp-sticker-org qrp-sticker-place" data-qr-print-point="">
+      <PinIcon />
+      <span className="qrp-point-text">
+        <b>{poster.point.short}</b> · {poster.orgName}
       </span>
     </div>
   );
@@ -174,7 +203,7 @@ function PosterA4({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
       <div className="qrp-a4-title">{poster.title}</div>
       <div className="qrp-org">{poster.orgName}</div>
       {detail ? <div className="qrp-detail">{detail}</div> : null}
-      <Code poster={poster} mm={100} className="qrp-a4-code" />
+      <Code poster={poster} mm={A4_CODE_MM} className="qrp-a4-code" fluid />
       <ol className="qrp-steps qrp-a4-steps">
         {stepsFor(poster, t).map((step, index) => (
           <li key={step}>
@@ -226,10 +255,9 @@ function Sticker({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   return (
     <div className="qrp-sticker">
       <Header brand={brand} size="sticker" />
-      <PointLine poster={poster} size="sticker" />
       <Code poster={poster} mm={36} className="qrp-sticker-code" fluid />
       <div className="qrp-sticker-title">{poster.title}</div>
-      <div className="qrp-sticker-org">{poster.orgName}</div>
+      <StickerOrgLine poster={poster} />
       {detail ? <div className="qrp-sticker-detail">{detail}</div> : null}
       {validity ? <div className="qrp-sticker-detail">{validity}</div> : null}
     </div>
@@ -354,20 +382,23 @@ const PRINT_CSS = `
   .qrp-point-text { min-width: 0; overflow: hidden; }
   .qrp-point-text b { font-weight: 700; }
   .qrp-point-a4 .qrp-point-text, .qrp-point-a5 .qrp-point-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .qrp-point-sticker .qrp-point-text, .qrp-point-plate .qrp-point-text { white-space: nowrap; text-overflow: ellipsis; }
+  .qrp-point-plate .qrp-point-text { white-space: nowrap; text-overflow: ellipsis; }
   .qrp-point-a4 { margin-top: 4mm; font-size: 14pt; justify-content: center; text-align: center; }
   .qrp-point-a4 .qrp-point-pin { width: 5.5mm; height: 5.5mm; margin-top: 0.2mm; }
   .qrp-point-a5 { margin-top: 2mm; font-size: 11pt; }
   .qrp-point-a5 .qrp-point-pin { width: 4.4mm; height: 4.4mm; margin-top: 0.1mm; }
-  .qrp-point-sticker { margin-top: 0.8mm; font-size: 7pt; gap: 0.8mm; align-items: center; justify-content: center; }
-  .qrp-point-sticker .qrp-point-pin { width: 2.8mm; height: 2.8mm; }
   .qrp-point-plate { margin-top: 2mm; font-size: 10pt; gap: 1.2mm; align-items: center; justify-content: center; }
   .qrp-point-plate .qrp-point-pin { width: 3.8mm; height: 3.8mm; }
 
   .qrp-a4 { height: 250mm; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6mm 8mm; }
   .qrp-a4 .qrp-eyebrow { margin-top: 5mm; }
   .qrp-a4-title { font-size: 24pt; font-weight: 700; line-height: 1.15; margin-top: 3mm; max-width: 170mm; }
-  .qrp-a4-code { margin-top: 6mm; }
+  /* Код A4 — всё место между текстом сверху и шагами снизу: от 70 до 100 мм по ширине. */
+  .qrp-a4-code {
+    flex: 1 1 0; min-height: ${(A4_CODE_MIN_MM * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(A4_CODE_MM * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
+    width: 100%; display: flex; justify-content: center; margin-top: 6mm;
+  }
+  .qrp-a4-code svg { height: 100%; width: auto; }
   .qrp-a4-steps { font-size: 13pt; margin-top: 6mm; width: 150mm; text-align: left; }
 
   .qrp-a5 { height: 125mm; padding: 2mm; }
@@ -400,6 +431,10 @@ const PRINT_CSS = `
   .qrp-sticker-org { font-size: 7.5pt; line-height: 1.15; margin-top: 0.6mm; }
   .qrp-sticker-detail { font-size: 7.5pt; font-weight: 600; line-height: 1.15; margin-top: 0.3mm; }
   .qrp-sticker-org, .qrp-sticker-detail { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Точка и организация одной строкой: метка, точка жирным, многоточие съедает организацию. */
+  .qrp-sticker-place { display: flex; align-items: center; justify-content: center; gap: 0.7mm; width: 100%; }
+  .qrp-sticker-place .qrp-point-pin { width: 2.6mm; height: 2.6mm; }
+  .qrp-sticker-place .qrp-point-text { white-space: nowrap; text-overflow: ellipsis; }
 
   /* Табличка на оборудование: 4 на лист (2 × 2), каждая в толстой скруглённой рамке. */
   .qrp-plate-grid { display: grid; grid-template-columns: repeat(2, 95mm); grid-template-rows: repeat(2, 125mm); height: 250mm; }

@@ -9,16 +9,16 @@
     "AC4": { "status": "PASS", "evidence": ["raw/shots/1-equipment-cards-point5.png", "data-qr-card-point"] },
     "AC5": { "status": "PASS", "evidence": ["raw/e2e.mjs nav", "raw/focus-probe.mjs"] },
     "AC6": { "status": "PASS", "evidence": ["phone sheet back keeps the page"] },
-    "AC7": { "status": "PASS", "evidence": ["qr-poster-point.test.ts 6/6", "eslint 0 errors", "i18n:check 97/97", "tsc: see checks", "test:gate pass=5073 fail=2 (baseline + load-sensitive prewarm-routes.sh; deploy-scripts.test.ts 16/16 alone)"] },
+    "AC7": { "status": "PASS", "evidence": ["qr-poster-point.test.ts 6/6", "eslint 0 errors", "i18n:check 97/97", "tsc 0 errors", "test:gate pass=5073 fail=2 (baseline + load-sensitive prewarm-routes.sh; deploy-scripts.test.ts 16/16 alone)"] },
     "AC8": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts — «Наклейки по точкам и меню»"] },
     "AC9": { "status": "PENDING", "evidence": ["deploy after squash merge"] }
   },
   "checks": {
-    "e2e_merged": "51/51",
+    "e2e_merged": "59/59 (after review fixes)",
     "unit": "6/6",
     "eslint_errors": 0,
     "i18n_check": "97/97",
-    "tsc": "pending",
+    "tsc": "0 errors (merged tree)",
     "test_gate": { "pass": 5073, "fail": 2, "new": ["prewarm-routes.sh (load-sensitive, passes alone)"] }
   }
 }

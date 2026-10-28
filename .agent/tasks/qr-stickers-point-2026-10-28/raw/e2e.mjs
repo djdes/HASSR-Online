@@ -79,6 +79,10 @@ async function printState(page) {
         url: el.querySelector("[data-qr-print-code]")?.getAttribute("data-qr-print-url") ?? "",
         point: point?.textContent?.trim() ?? null,
         pointClamped: pointText ? pointText.scrollHeight > pointText.clientHeight + 1 || pointText.scrollWidth > pointText.clientWidth + 1 : false,
+        pointCut: (() => {
+          const bold = point?.querySelector("b");
+          return bold && pointText ? bold.getBoundingClientRect().right > pointText.getBoundingClientRect().right + 0.5 : false;
+        })(),
         detail: el.querySelector(".qrp-detail, .qrp-sticker-detail")?.textContent ?? "",
         overflowPx: Math.round((bottom - box.bottom) * 10) / 10,
         scrollOverflow: el.scrollHeight - el.clientHeight,
@@ -143,7 +147,7 @@ async function qrChecks(browser) {
   check("AC4 карточки показывают точку наклейки", cards.every((card) => card.point === POINT_5), JSON.stringify(cards.map((card) => card.point)));
   await page.screenshot({ path: shot("1-equipment-cards-point5.png"), fullPage: true });
   let state = await printState(page);
-  check("AC1 у каждой наклейки — короткое название точки № 5", state.items.length === 4 && state.items.every((item) => item.point === POINT_5), JSON.stringify(state.items.map((item) => item.point)));
+  check("AC1 у каждой наклейки — короткое название точки № 5 (в строке организации)", state.items.length === 4 && state.items.every((item) => item.point?.startsWith(`${POINT_5} · `)), JSON.stringify(state.items.map((item) => item.point)));
   check("AC1 «Склад общий» (цех без точки) — точка из шапки", state.items.some((item) => item.title === "Холодильник склада" && item.point?.includes(POINT_5)));
   check("AC3 наклейки: 1 лист, ничего не обрезано", state.sheets === 1 && fits(state), fitDetail(state));
   check("AC3 код наклейки ≥ 25 мм", state.items.every((item) => (item.codeMm ?? 0) >= 25), state.items.map((item) => item.codeMm).join(","));
@@ -188,6 +192,29 @@ async function qrChecks(browser) {
   await openQr(page, "");
   state = await printState(page);
   check("AC2 «Все журналы» и допуск — строка точки № 5", state.items.length >= 1 && state.items.every((item) => item.point?.includes(POINT_5)), JSON.stringify(state.items.map((item) => item.point)));
+
+  // QR документа (кнопки «Наклейка» / «Плакат A4» в диалоге документа): срок не обрезается.
+  await openQr(page, "?journal=hygiene&ids=hygiene:doc-hyg-dk-5&layout=sheet");
+  state = await printState(page);
+  check("AC3 наклейка QR документа: строка срока видна, код ≥ 25 мм", state.items.length === 1 && fits(state) && (state.items[0].codeMm ?? 0) >= 25 && state.items[0].point?.startsWith(POINT_5), `${fitDetail(state)}; ${state.items.map((item) => [item.codeMm, item.point]).join(";")}`);
+  await openQr(page, "?journal=hygiene&ids=hygiene@verify:doc-hyg-dk-5,hygiene:doc-hyg-dk-5&layout=poster");
+  state = await printState(page);
+  check("AC3 плакаты A4 документа (логотип, заголовок в 2 строки, срок) — в рамке", state.items.length === 2 && fits(state), fitDetail(state));
+  check("AC3 код A4 документа 70–100 мм", state.items.every((item) => (item.codeMm ?? 0) >= 70 && (item.codeMm ?? 0) <= 100.3), state.items.map((item) => item.codeMm).join(","));
+  check("AC3 PDF плакатов документа — 2 страницы", (await pdfPages(page, "doc-a4-point5.pdf")) === 2);
+  await page.emulateMedia({ media: "print" });
+  await page.screenshot({ path: shot("11-doc-a4-print.png"), fullPage: true });
+  await page.emulateMedia({ media: null });
+
+  // Превью QR в диалоге — та же точка, что на печати (цех без точки → точка из шапки).
+  const preview = await page.request.get(`${BASE}/api/qr-fill/equipment/e-dk-shared-fridge`);
+  const previewPoint = (await preview.json())?.poster?.point?.short ?? null;
+  check("AC4 превью QR в диалоге: точка из шапки у цеха без точки", previewPoint === POINT_5, String(previewPoint));
+
+  // Старые ссылки на несколько QR: документ показывает свою точку в подписи.
+  await openQr(page, "?kind=journals&ids=hygiene:doc-hyg-dk-5");
+  const legacyRow = await page.locator('[data-qr-id="hygiene:doc-hyg-dk-5"]').first().textContent();
+  check("AC4 старая ссылка: у документа в подписи — точка", Boolean(legacyRow?.includes(POINT_5)), legacyRow?.replace(/s+/g, " ").slice(0, 120) ?? "null");
   await dk.ctx.close();
 
   // --- org-dk, «Вся организация»: своя точка у объектов, у цеха без точки строки нет.
@@ -197,9 +224,9 @@ async function qrChecks(browser) {
   state = await printState(page);
   const byTitle = Object.fromEntries(state.items.map((item) => [item.title, item.point]));
   check("AC1 «Вся организация»: всё оборудование организации", state.items.length === 5, Object.keys(byTitle).join(", "));
-  check("AC1 морозильник — своя точка (короткое название гимназии № 112)", byTitle["Морозильный ларь"] === SHORT_112, byTitle["Морозильный ларь"] ?? "null");
+  check("AC1 морозильник — своя точка (короткое название гимназии № 112)", Boolean(byTitle["Морозильный ларь"]?.startsWith(SHORT_112)), byTitle["Морозильный ларь"] ?? "null");
   check("AC1 цех без точки при «Вся организация» — без строки", byTitle["Холодильник склада"] === null, String(byTitle["Холодильник склада"]));
-  check("AC3 точка на наклейках помещается без многоточия", state.items.every((item) => !item.pointClamped), state.items.filter((item) => item.pointClamped).map((item) => item.title).join(",") || "ok");
+  check("AC3 точка на наклейках видна целиком (многоточие — только у организации)", state.items.every((item) => !item.pointCut), state.items.filter((item) => item.pointCut).map((item) => item.title).join(",") || "ok");
   check("AC3 наклейки «Вся организация»: 1 лист, ничего не обрезано", state.sheets === 1 && fits(state), fitDetail(state));
   check("AC3 PDF — 1 страница", (await pdfPages(page, "stickers-all.pdf")) === 1);
   await page.emulateMedia({ media: "print" });
@@ -224,11 +251,12 @@ async function qrChecks(browser) {
   check("AC3 плакаты A4 «Вся организация»: 5 листов, ничего не обрезано", state.sheets === 5 && fits(state), fitDetail(state));
   check("AC3 длинная точка на плакате — не больше двух строк", state.items.some((item) => item.title === "Морозильный ларь" && item.point?.includes(LONG_112)));
   check("AC3 PDF плакатов A4 — 5 страниц", (await pdfPages(page, "posters-all.pdf")) === 5);
+  check("AC3 код A4 70–100 мм", state.items.every((item) => (item.codeMm ?? 0) >= 70 && (item.codeMm ?? 0) <= 100.3), state.items.map((item) => item.codeMm).join(","));
 
   await openQr(page, "?kind=rooms&layout=sheet");
   state = await printState(page);
   const rooms = Object.fromEntries(state.items.map((item) => [item.title, item.point]));
-  check("AC1 склады — точка своего здания, архив — офис", Boolean(rooms["Склад сухих продуктов"]?.includes(POINT_5) && rooms["Овощной склад"] === SHORT_112 && rooms["Архив документов"]?.includes("Офис")), JSON.stringify(rooms));
+  check("AC1 склады — точка своего здания, архив — офис", Boolean(rooms["Склад сухих продуктов"]?.includes(POINT_5) && rooms["Овощной склад"]?.startsWith(SHORT_112) && rooms["Архив документов"]?.includes("Офис")), JSON.stringify(rooms));
   await all.ctx.close();
 
   // --- org-one: одна точка, цех без точки.
@@ -236,7 +264,8 @@ async function qrChecks(browser) {
   page = one.page;
   await openQr(page, "?kind=equipment&layout=sheet");
   state = await printState(page);
-  check("AC1 одна точка: наклейка холодильника — с этой точкой", state.items.length === 1 && Boolean(state.items[0].point?.includes(ONE_POINT)), JSON.stringify(state.items.map((item) => item.point)));
+  check("AC1 одна точка: наклейки холодильников — с этой точкой", state.items.length === 2 && state.items.every((item) => item.point?.includes(ONE_POINT)), JSON.stringify(state.items.map((item) => item.point)));
+  check("AC3 название в две строки: наклейка не обрезана, код ≥ 25 мм", fits(state) && state.items.every((item) => (item.codeMm ?? 0) >= 25), `${fitDetail(state)}; ${state.items.map((item) => item.codeMm).join(",")}`);
   await openQr(page, "?kind=rooms&layout=sheet");
   state = await printState(page);
   check("AC1 одна точка: склад — с этой точкой", state.items.length === 1 && Boolean(state.items[0].point?.includes(ONE_POINT)));

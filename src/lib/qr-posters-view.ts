@@ -533,10 +533,11 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
       defaultSelected: !(poster.validUntil && ctx.todayKey > poster.validUntil),
       defaultFormat: format,
       label: poster.title,
-      sublabel: poster.subtitle,
+      // Точка документа — своей строкой на печати; на экране — рядом с документом.
+      sublabel: [poster.subtitle, poster.point?.short].filter(Boolean).join(" · "),
       caption: CAPTION.main,
       expired: Boolean(poster.validUntil && ctx.todayKey > poster.validUntil),
-      search: [poster.title, poster.subtitle, poster.periodLabel, poster.journalCode],
+      search: [poster.title, poster.subtitle, poster.point?.short, poster.periodLabel, poster.journalCode],
     });
   }
   // Счётчики наклеек — по точке экрана (скан 98, лист 7).

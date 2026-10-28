@@ -43,6 +43,8 @@ async function main() {
     { id: "e-dk-112-freezer", areaId: "a-dk-112-cold", name: "Морозильный ларь", type: "freezer", tempMin: -25, tempMax: -18 },
     { id: "e-dk-shared-fridge", areaId: "a-dk-shared", name: "Холодильник склада", type: "refrigerator", tempMin: 0, tempMax: 4 },
     { id: "e-one-fridge", areaId: "a-one-kitchen", name: "Холодильник № 1", type: "refrigerator", tempMin: 2, tempMax: 6 },
+    // Название в две строки на наклейке — проверка, что текст под кодом не обрезается.
+    { id: "e-one-long", areaId: "a-one-kitchen", name: "Холодильник для молочной продукции и полуфабрикатов", type: "refrigerator", tempMin: 2, tempMax: 6 },
     { id: "e-none-fridge", areaId: "a-none-kitchen", name: "Холодильник", type: "refrigerator", tempMin: 2, tempMax: 6 },
   ];
   for (const item of equipment) {

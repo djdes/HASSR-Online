@@ -646,6 +646,11 @@ export async function loadQrPoster(params: {
   /** Активная точка кабинета — для основного QR журнала в сети точек. */
   activeBuildingId?: string | null;
   qr?: BrandQrOptions;
+  /**
+   * Точка, для которой печатают (как `pointId` страницы QR): её строку
+   * получает оборудование цеха без точки — превью совпадает с печатью.
+   */
+  printPointId?: string | null;
 }): Promise<QrPoster | null> {
   const [orgName, buildings] = await Promise.all([
     loadPosterOrgName(params.organizationId),
@@ -669,12 +674,12 @@ export async function loadQrPoster(params: {
       select: { id: true, name: true, climateNorms: true, buildingId: true },
     });
     if (!room) return null;
-    return buildRoomPoster(room, qrPosterPoint(buildings, room.buildingId, null), params.origin, orgName, params.qr);
+    return buildRoomPoster(room, qrPosterPoint(buildings, room.buildingId, params.printPointId), params.origin, orgName, params.qr);
   }
   const item = await db.equipment.findFirst({
     where: { id: params.id, area: { organizationId: params.organizationId } },
     select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true, buildingId: true } } },
   });
   if (!item) return null;
-  return buildEquipmentPoster(item, params.origin, orgName, params.qr, undefined, qrPosterPoint(buildings, item.area.buildingId, null));
+  return buildEquipmentPoster(item, params.origin, orgName, params.qr, undefined, qrPosterPoint(buildings, item.area.buildingId, params.printPointId));
 }
