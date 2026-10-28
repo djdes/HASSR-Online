@@ -1,0 +1,150 @@
+{
+ "hubHref": "http://localhost:3027/journal-fill/cmvs8samb0000zw9m9c37pl6e/all?token=journal%3Acmvs8samb0000zw9m9c37pl6e%3Aall%3Ab~cmvs8sb2i0005zw9mf9cxitnt.1793202290117.My2rlgDla9GN6KluUBKcIE_N4KR2f6NiNZ1GOCBnzyU",
+ "results": [
+  {
+   "name": "AC1 нет переключателя точки: /home",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC1 нет переключателя точки: /settings/organization",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC1 нет переключателя точки: /settings/master-cabinet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC1 нет переключателя точки: /settings/buildings",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC1 переключатель на странице точки: /settings/equipment",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC1 переключатель на странице точки: /settings/areas",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC1 переключатель на странице точки: /settings/qr-posters",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC2 офиса нет в списке точек",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC2 торговые точки в списке",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC2 тумблер «журналы по точкам» на месте",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC3 кнопки QR на цехах",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC4 наклейки: оборудование своей точки",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC4 наклейки: нет оборудования другой точки",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC4 помещения своей точки",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC5 счётчик оборудования по точке",
+   "ok": true,
+   "detail": "4"
+  },
+  {
+   "name": "AC5 счётчик помещений по точке",
+   "ok": true,
+   "detail": "2"
+  },
+  {
+   "name": "AC5 ссылка QR «Все журналы» найдена",
+   "ok": true,
+   "detail": "http://localhost:3027/journal-fill/cmvs8samb0000zw9m9c37pl6e/all?token=journal%3Acmvs8samb0000zw9m9c37pl6e%3Aall%3Ab~cmvs8sb2i0005zw9mf9cxitnt.1793202290117.My2rlgDla9GN6KluUBKcIE_N4KR2f6NiNZ1GOCBnzyU"
+  },
+  {
+   "name": "AC4 при «Гимназии» — её оборудование",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 видны оба кабинета",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 нет «Кода справочника» на главном экране",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 д/с №68 в «Садах»",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 оператор «Садов» виден",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 точка из другого кабинета недоступна",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 гимназия подключена к «Школам»",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 гимназия отключена",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 владелец: блок операторов с приглашением",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 руководитель видит оба кабинета",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "AC7 руководитель может пригласить оператора в «Сады»",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "телефон: без горизонтальной прокрутки",
+   "ok": true,
+   "detail": "лишние px: 0"
+  }
+ ]
+}

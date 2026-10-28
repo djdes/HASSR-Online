@@ -83,6 +83,18 @@ export function journalsPointMode(context: Pick<BuildingContext, "pointMode">): 
   return context.pointMode;
 }
 
+/**
+ * Торговая точка, на которую человек смотрит (шапка): цеха, оборудование и
+ * QR — только её объекты (сканы 98, 2026-10-28). null — вся организация:
+ * выбраны «Вся организация» или офис, точки выключены. Документы при этом
+ * по-прежнему пишутся в `activeBuildingId`.
+ */
+export function viewedPointId(
+  context: Pick<BuildingContext, "enabled" | "organizationView" | "activeBuildingId">,
+): string | null {
+  return context.enabled && !context.organizationView ? context.activeBuildingId : null;
+}
+
 export function encodeBuildingCookie(orgId: string, buildingId: string): string {
   return `${orgId}:${buildingId}`;
 }
@@ -253,6 +265,20 @@ export type BuildingWhere = {
  */
 export function buildingWhere(buildingId: string | null | undefined): BuildingWhere {
   return buildingId ? { OR: [{ buildingId }, { buildingId: null }] } : {};
+}
+
+export type EquipmentBuildingWhere = {
+  OR?: Array<{ area: { buildingId: string | null } }>;
+};
+
+/**
+ * Оборудование точки — как список на странице «Оборудование»: цеха этой
+ * точки и цеха без точки (сканы 98, 2026-10-28: «нажатие выводит всё
+ * оборудование организации, а должно только этой торговой точки»).
+ * `null` — без фильтра. Разворачивается в `where` через spread.
+ */
+export function equipmentBuildingWhere(buildingId: string | null | undefined): EquipmentBuildingWhere {
+  return buildingId ? { OR: [{ area: { buildingId } }, { area: { buildingId: null } }] } : {};
 }
 
 /**

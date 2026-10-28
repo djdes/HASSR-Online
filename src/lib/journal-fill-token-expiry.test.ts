@@ -51,6 +51,8 @@ describe("токен документа со сроком", () => {
       "org1:hygiene:",
       "org1:hygiene:b~",
       "org1:all:doc9",
+      "org1:all:b~",
+      "org1:all:b~b1:2026-09-30",
     ]) {
       assert.deepEqual(verifyJournalFillToken(mint(subject), "org1", "hygiene"), { ok: false, reason: "bad-format" }, subject);
     }
@@ -64,7 +66,7 @@ describe("токен документа со сроком", () => {
   });
 
   it("старые токены и основной QR не истекают", () => {
-    for (const subject of ["org1:hygiene", "org1:hygiene:doc9", "org1:all", "org1:hygiene:b~b1"]) {
+    for (const subject of ["org1:hygiene", "org1:hygiene:doc9", "org1:all", "org1:all:b~b1", "org1:hygiene:b~b1"]) {
       const check = verifyJournalFillToken(mint(subject), "org1", "hygiene");
       assert.equal(check.ok, true, subject);
       assert.equal(journalFillTokenExpired(check, "2099-01-01"), false, subject);

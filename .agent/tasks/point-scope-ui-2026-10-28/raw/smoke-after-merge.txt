@@ -1,0 +1,31 @@
+PASS AC1 нет переключателя точки: /home
+PASS AC1 нет переключателя точки: /settings/organization
+PASS AC1 нет переключателя точки: /settings/master-cabinet
+PASS AC1 нет переключателя точки: /settings/buildings
+PASS AC1 переключатель на странице точки: /settings/equipment
+PASS AC1 переключатель на странице точки: /settings/areas
+PASS AC1 переключатель на странице точки: /settings/qr-posters
+PASS AC2 офиса нет в списке точек
+PASS AC2 торговые точки в списке
+PASS AC2 тумблер «журналы по точкам» на месте
+PASS AC3 кнопки QR на цехах
+PASS AC4 наклейки: оборудование своей точки
+PASS AC4 наклейки: нет оборудования другой точки
+PASS AC4 помещения своей точки
+PASS AC5 счётчик оборудования по точке — 4
+PASS AC5 счётчик помещений по точке — 2
+PASS AC5 ссылка QR «Все журналы» найдена — http://localhost:3027/journal-fill/cmvs8samb0000zw9m9c37pl6e/all?token=journal%3Acmvs8samb0000zw9m9c37pl6e%3Aall%3Ab~cmvs8sb2i0005zw9mf9cxitnt.1793206545256.ZOqnJ0vwYuGhDHzbDaITEiIFWMjiTn9vLmNMQvcEXBI
+PASS «Вся организация»: оборудование всей организации — 6
+PASS «Вся организация»: помещения всей организации — 3
+PASS «Вся организация»: общий QR «Все журналы» — http://localhost:3027/journal-fill/cmvs8samb0000zw9m9c37pl6e/all?token=journal%3Acmvs8samb0000zw9m9c37pl6e%3Aall.1793206556830.O8yKkjgzviiOS8hxHLC2QSYFJAfb8bI5fqEmKBrnUUI
+PASS AC4 при «Гимназии» — её оборудование
+PASS AC7 видны оба кабинета
+PASS AC7 нет «Кода справочника» на главном экране
+PASS AC7 д/с №68 в «Садах»
+PASS AC7 оператор «Садов» виден
+PASS AC7 точка из другого кабинета недоступна
+PASS AC7 гимназия подключена к «Школам»
+PASS AC7 гимназия отключена
+PASS AC7 владелец: блок операторов с приглашением
+PASS AC7 руководитель видит оба кабинета
+PASS AC7 руководитель может пригласить оператора в «Сады»

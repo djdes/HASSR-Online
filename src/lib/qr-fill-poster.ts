@@ -9,6 +9,7 @@ import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { brandQrSvg, type BrandQrOptions } from "@/lib/brand-qr";
+import { equipmentBuildingWhere } from "@/lib/building-scope";
 import { buildingTargets } from "@/lib/building-targets";
 import { JOURNAL_FILL_HUB_CODE, JOURNAL_FILL_PERPETUAL_UNTIL, journalFillSubject, journalFillValidUntil, listHubJournals, todayKeyFor } from "@/lib/journal-fill";
 import { parseJournalPeriodsJson, resolveJournalPeriodKind } from "@/lib/journal-period";
@@ -165,7 +166,7 @@ export async function resolveMainJournalQrBuilding(organizationId: string, activ
 
 /**
  * Адрес основного QR журнала. `activeBuildingId` — из `getActiveBuildingId`
- * (шапка кабинета); хаб `all` к точке не привязывается. `verify` — второй
+ * (шапка кабинета); хаб `all` тоже QR точки (2026-10-28). `verify` — второй
  * основной QR гигиены («допуск»).
  */
 export async function mainJournalQrUrl(params: {
@@ -175,8 +176,7 @@ export async function mainJournalQrUrl(params: {
   activeBuildingId?: string | null;
   verify?: boolean;
 }): Promise<{ url: string; buildingId: string | null }> {
-  const buildingId =
-    params.code === JOURNAL_FILL_HUB_CODE ? null : await resolveMainJournalQrBuilding(params.organizationId, params.activeBuildingId);
+  const buildingId = await resolveMainJournalQrBuilding(params.organizationId, params.activeBuildingId);
   const subject = journalFillSubject(params.organizationId, params.code, null, { buildingId });
   return { url: qrFillUrl(params.origin, "journal", subject) + (params.verify ? "&view=all" : ""), buildingId };
 }
@@ -461,6 +461,11 @@ export async function loadQrPosters(params: {
   explicitIds?: string[];
   /** Цвет рамки и центр QR организации. */
   qr?: BrandQrOptions;
+  /**
+   * Только объекты этой точки (точка из шапки): помещения точки,
+   * оборудование её цехов и цехов без точки. Нет — вся организация.
+   */
+  buildingId?: string | null;
 }): Promise<QrPostersResult> {
   const allowed = params.allowed ?? (() => true);
   const posters: QrPoster[] = [];
@@ -554,7 +559,9 @@ export async function loadQrPosters(params: {
   const locations: Record<string, string> = {};
   const equipmentTypes: Record<string, string> = {};
   if (params.kind === "room") {
-    const buildings = await loadDirectoryBuildings(params.organizationId);
+    const buildings = (await loadDirectoryBuildings(params.organizationId)).filter(
+      (building) => !params.buildingId || building.id === params.buildingId
+    );
     for (const building of buildings) {
       for (const room of building.rooms) {
         if (!wanted(room.id)) continue;
@@ -564,7 +571,7 @@ export async function loadQrPosters(params: {
     }
   } else {
     const equipment = await db.equipment.findMany({
-      where: { area: { organizationId: params.organizationId } },
+      where: { area: { organizationId: params.organizationId }, ...equipmentBuildingWhere(params.buildingId) },
       orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
       select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
     });

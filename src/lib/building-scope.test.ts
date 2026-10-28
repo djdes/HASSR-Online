@@ -10,10 +10,12 @@ import {
   receivesPlaceEvent,
   splitsOfficeAndPoints,
   buildingWhere,
+  equipmentBuildingWhere,
   decodeBuildingCookie,
   encodeBuildingCookie,
   resolveActiveBuilding,
   journalsPointMode,
+  viewedPointId,
   ORGANIZATION_VIEW_ID,
   withBuildingLabel,
   withBuildingSuffix,
@@ -211,6 +213,14 @@ test("QR по точке: кто работает на точке объекта
   assert.equal(worksAtBuilding(org, [OFFICE], OFFICE), true);
 });
 
+test("оборудование точки: её цеха и цеха без точки, без точки — без фильтра", () => {
+  assert.deepEqual(equipmentBuildingWhere(null), {});
+  assert.deepEqual(equipmentBuildingWhere(undefined), {});
+  assert.deepEqual(equipmentBuildingWhere("b-a"), {
+    OR: [{ area: { buildingId: "b-a" } }, { area: { buildingId: null } }],
+  });
+});
+
 test("«Вся организация»: руководство на всю компанию, данные — офис или первая точка", () => {
   const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
   // Без выбора руководство начинает со всей организации; точка данных — первая.
@@ -247,4 +257,19 @@ test("режим точки: руководитель точки — всегд�
   // Точки выключены — режима нет.
   const off = resolveActiveBuilding({ enabled: false, buildings: [A, B], userBuildingIds: [], cookieBuildingId: "b-a", fullAccess: true });
   assert.equal(journalsPointMode(off), false);
+});
+
+test("просматриваемая точка: торговая точка — она, «Вся организация» и офис — вся организация", () => {
+  const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
+  const point = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b", fullAccess: true });
+  assert.equal(viewedPointId(point), "b-b");
+  const organization = resolveActiveBuilding({ enabled: true, buildings: [A, B], userBuildingIds: [], cookieBuildingId: ORGANIZATION_VIEW_ID, fullAccess: true });
+  assert.equal(viewedPointId(organization), null);
+  const office = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-o", fullAccess: true });
+  assert.equal(viewedPointId(office), null);
+  // Руководитель точки смотрит свою точку; точки выключены — вся организация.
+  const pointManager = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: ["b-a"], cookieBuildingId: null, fullAccess: true });
+  assert.equal(viewedPointId(pointManager), "b-a");
+  const off = resolveActiveBuilding({ enabled: false, buildings: [A, B], userBuildingIds: [], cookieBuildingId: "b-a", fullAccess: true });
+  assert.equal(viewedPointId(off), null);
 });

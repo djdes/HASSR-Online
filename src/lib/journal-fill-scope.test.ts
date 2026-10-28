@@ -25,6 +25,15 @@ test("хаб открывает любой журнал, плакат докум
   assert.deepEqual(verifyJournalFillToken(doc, "org1", "finished_product"), { ok: true, documentId: "doc9", hub: false, validUntil: null, buildingId: null });
 });
 
+test("хаб точки открывает любой журнал, но только документы своей точки", () => {
+  const hub = mintQrFillToken("journal", "org1:all:b~b1");
+  assert.deepEqual(verifyJournalFillToken(hub, "org1", "finished_product"), { ok: true, documentId: null, hub: true, validUntil: null, buildingId: "b1" });
+  assert.deepEqual(verifyJournalFillToken(hub, "org1", "all"), { ok: true, documentId: null, hub: true, validUntil: null, buildingId: "b1" });
+  assert.equal(verifyJournalFillToken(hub, "org2", "hygiene").ok, false);
+  // Чужой сегмент вместо точки — не хаб.
+  assert.equal(verifyJournalFillToken(mintQrFillToken("journal", "org1:all:doc9"), "org1", "hygiene").ok, false);
+});
+
 test("холодильники, склады и УФ-лампы заполняются по наклейке на объекте", () => {
   assert.equal(OBJECT_QR_JOURNAL_CODES.has("cold_equipment_control"), true);
   assert.equal(OBJECT_QR_JOURNAL_CODES.has("climate_control"), true);

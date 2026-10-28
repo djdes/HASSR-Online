@@ -22,6 +22,7 @@ import {
 import { journalFillHints, type JournalFillHints } from "@/lib/journal-fill-hints";
 import { decideQrFirstDocument, ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { buildingTargets } from "@/lib/building-targets";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
 import { loadObjectJournalStatus, renderObjectJournalStatus } from "@/lib/qr-object-journal-status";
@@ -285,7 +286,6 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   const customNames = parseCustomNames(org.customNamesJson);
   const timezone = org.timezone || "Europe/Moscow";
   const todayKey = todayKeyFor(org.timezone);
-  const disabledCodes = org.disabledJournalCodes as string[];
   // «Приказы к журналу» с камерой (гигиена, бракераж готовой продукции):
   // ставится после шага PIN, только руководству, вошедшему в кабинет.
   let orderScanBlock = "";
@@ -313,6 +313,10 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
     const building = await db.building.findFirst({ where: { id: check.buildingId, organizationId: orgId }, select: { id: true } });
     if (!building) return html(renderInvalidLink(org.name), 200);
   }
+  // QR точки (журнала или хаба) — набор журналов точки, если он у неё свой.
+  const disabledCodes = check.buildingId
+    ? [...(await getDisabledJournalCodes(orgId, check.buildingId))]
+    : (org.disabledJournalCodes as string[]);
 
   const isBrakerage = isBrakerageJournalCode(code);
   // Бракеражная комиссия — у готовой продукции и скоропорта (у скоропорта
@@ -341,7 +345,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (code === JOURNAL_FILL_HUB_CODE) {
     // Журналы с кончившимся периодом тоже в списке: документ нового
     // периода откроется при входе в журнал (ниже).
-    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true, names: customNames, includeObjects: true });
+    // Хаб точки — журналы и документы только этой точки (и общие).
+    const journals = await listHubJournals(orgId, disabledCodes, todayKey, { includeLapsed: true, names: customNames, includeObjects: true, buildingId: check.buildingId });
     // «Допуск сотрудников к смене» — тем же списком: гигиена в режиме
     // ответственного (view=all), как по отдельному плакату допуска.
     const items = withHubAdmission<{ code: string; name: string; note?: string; href: string }>(
@@ -356,11 +361,13 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   if (!template) return html(renderInvalidLink(org.name), 404);
   const title = journalDisplayName(customNames, code, template.name);
 
-  if (disabledCodes.includes(code)) return page(title, renderMessage("muted", "Этот журнал отключён в организации."));
+  if (disabledCodes.includes(code)) {
+    return page(title, renderMessage("muted", check.buildingId ? "Этот журнал отключён на этой точке." : "Этот журнал отключён в организации."));
+  }
   // Холодильники, склады и УФ-лампы — по наклейке на самом объекте. Здесь
   // только статус за сегодня, без ссылок на заполнение (решение 33d8559b).
   if (OBJECT_QR_JOURNAL_CODES.has(code)) {
-    const groups = await loadObjectJournalStatus({ organizationId: orgId, code, todayKey, timezone, documentId: check.documentId });
+    const groups = await loadObjectJournalStatus({ organizationId: orgId, code, todayKey, timezone, documentId: check.documentId, buildingId: check.buildingId });
     const responsible = groups.length === 0 ? await journalResponsibleLabel({ organizationId: orgId, templateCode: code, todayKey, documentId: check.documentId }) : "";
     return page(title, renderObjectJournalStatus({ code, groups, responsible }), "Статус за сегодня");
   }

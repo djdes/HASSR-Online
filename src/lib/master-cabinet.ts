@@ -11,10 +11,10 @@ import {
   type MasterCabinetChoiceSummary,
   type MasterCabinetObject,
 } from "@/lib/master-cabinet-choice";
-import { findPoolMasterOrgId, listPoolOrganizations, MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { MasterCabinetError } from "@/lib/master-cabinet-error";
 import { inviteMasterCabinetEmployee } from "@/lib/master-cabinet-staff";
-import { assertOrgMembership, listAccessibleOrganizations } from "@/lib/organization-access";
+import { listAccessibleOrganizations } from "@/lib/organization-access";
 
 export { MasterCabinetError } from "@/lib/master-cabinet-error";
 
@@ -27,18 +27,6 @@ export { MasterCabinetError } from "@/lib/master-cabinet-error";
 
 export type MasterCabinetUser = { id: string; name: string; email: string; invited: boolean };
 
-export type MasterCabinetStatus = {
-  code: string | null;
-  poolOrganizations: Array<{ id: string; name: string }>;
-  master: null | {
-    organizationId: string;
-    name: string;
-    users: MasterCabinetUser[];
-    /** Может ли смотрящий переключиться в кабинет (член кабинета). */
-    viewerCanOpen: boolean;
-  };
-};
-
 async function findMasterInPool(poolIds: string[]) {
   return db.organization.findFirst({
     where: { id: { in: poolIds }, kind: MASTER_ORG_KIND },
@@ -47,7 +35,7 @@ async function findMasterInPool(poolIds: string[]) {
   });
 }
 
-async function listMasterUsers(masterOrgId: string): Promise<MasterCabinetUser[]> {
+export async function listMasterUsers(masterOrgId: string): Promise<MasterCabinetUser[]> {
   // Люди кабинета: прежние аккаунты «только в кабинете» и сотрудники
   // организаций с доступом (владелец аккаунта не показывается — доступ у
   // него всегда). Приглашённый сотрудник, ещё не задавший пароль, — «invited».
@@ -73,64 +61,6 @@ async function listMasterUsers(masterOrgId: string): Promise<MasterCabinetUser[]
     people.push({ id: user.id, name: user.name, email: user.email, invited: !user.isActive });
   }
   return people;
-}
-
-export async function getMasterCabinetStatus(
-  organizationId: string,
-  viewerUserId?: string,
-  buildingId?: string | null
-): Promise<MasterCabinetStatus> {
-  // Точка, подключённая к пулу (слитая организация), — её мастер-кабинет.
-  const building = buildingId
-    ? await db.building.findFirst({ where: { id: buildingId, organizationId }, select: { linkedServiceCode: true } })
-    : null;
-  if (building?.linkedServiceCode) {
-    const masterId = await findPoolMasterOrgId(organizationId, buildingId);
-    const masterOrg = masterId
-      ? await db.organization.findUnique({ where: { id: masterId }, select: { id: true, name: true } })
-      : null;
-    return {
-      code: building.linkedServiceCode,
-      poolOrganizations: masterOrg
-        ? (await listPoolOrganizations(masterOrg.id)).map((object) => ({ id: object.id, name: object.name }))
-        : [],
-      master: masterOrg
-        ? {
-            organizationId: masterOrg.id,
-            name: masterOrg.name,
-            users: await listMasterUsers(masterOrg.id),
-            viewerCanOpen: viewerUserId ? await assertOrgMembership(viewerUserId, masterOrg.id) : false,
-          }
-        : null,
-    };
-  }
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { serviceCode: true, linkedServiceCode: true },
-  });
-  const code = poolCodeOf(org);
-  if (!code) return { code: null, poolOrganizations: [], master: null };
-  const poolIds = await resolveDishPoolOrgIds(organizationId);
-  const [poolOrganizations, master] = await Promise.all([
-    db.organization.findMany({
-      where: { id: { in: poolIds }, ...NOT_DIRECTORY_ORG_WHERE },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    findMasterInPool(poolIds),
-  ]);
-  return {
-    code,
-    poolOrganizations,
-    master: master
-      ? {
-          organizationId: master.id,
-          name: master.name,
-          users: await listMasterUsers(master.id),
-          viewerCanOpen: viewerUserId ? await assertOrgMembership(viewerUserId, master.id) : false,
-        }
-      : null,
-  };
 }
 
 /** Все коды журналов — кабинет журналы не ведёт, все выключены. */

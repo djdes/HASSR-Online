@@ -9,7 +9,9 @@ import { isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PageGuide } from "@/components/ui/page-guide";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
+import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
+import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
 
 export const dynamic = "force-dynamic";
@@ -32,14 +34,22 @@ export default async function AreasSettingsPage() {
   ]);
   // Точка → её цеха (2026-10-17). Выбрана точка в шапке — только она и
   // цеха без точки; точек нет — плоский список, как раньше.
-  const groups = groupByBuilding(areas, (area) => area.buildingId, buildings, {
-    activeBuildingId: buildingContext.activeBuildingId,
+  // Торговая точка из шапки; «Вся организация» или офис — все точки.
+  const viewedPoint = viewedPointId(buildingContext);
+  // Офис — не торговая точка: в списке он, только если у него есть свои цеха.
+  const groupBuildings = buildings.filter(
+    (building) => !isOfficeBuilding(building) || areas.some((area) => area.buildingId === building.id),
+  );
+  const groups = groupByBuilding(areas, (area) => area.buildingId, groupBuildings, {
+    activeBuildingId: viewedPoint,
     keepEmpty: true,
   });
   const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
+  // Оборудование цехов на экране (точка из шапки и цеха без точки) — для кнопок QR.
+  const visibleAreas = buildings.length === 0 ? areas : groups.flatMap((group) => group.items);
+  const equipmentCount = visibleAreas.reduce((sum, area) => sum + area._count.equipment, 0);
   // Новый цех — в точку из шапки, а если точка одна — в неё.
-  const defaultBuildingId =
-    buildingContext.activeBuildingId ?? (buildings.length === 1 ? buildings[0].id : null);
+  const defaultBuildingId = viewedPoint ?? (buildings.length === 1 ? buildings[0].id : null);
 
   const canManage = isManagementRole(session.user.role);
   // Раньше: isManagerRole — только role=manager. head_chef видел список,
@@ -73,7 +83,13 @@ export default async function AreasSettingsPage() {
             </div>
           </div>
         </div>
-        {canManage && <AreaDialog buildings={buildingOptions} defaultBuildingId={defaultBuildingId} />}
+        {canManage ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Те же QR, что на «Оборудовании» (скан 98): оборудование цехов этой точки, таблички — по цехам. */}
+            {equipmentCount > 0 ? <EquipmentQrButtons /> : null}
+            <AreaDialog buildings={buildingOptions} defaultBuildingId={defaultBuildingId} />
+          </div>
+        ) : null}
       </div>
 
       <PageGuide

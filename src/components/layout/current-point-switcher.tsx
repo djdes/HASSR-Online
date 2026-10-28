@@ -2,10 +2,11 @@
 
 import { Fragment, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Building2, Check, ChevronDown, Loader2, Plus, Settings2, Store } from "lucide-react";
 import { ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
-import type { HeaderPoint, HeaderPointOption } from "@/lib/header-point";
+import { headerPointHidden, type HeaderPoint, type HeaderPointOption } from "@/lib/header-point";
 import { cn } from "@/lib/utils";
 import { useIsNarrowViewport } from "@/lib/use-narrow-viewport";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -47,6 +48,9 @@ export function CurrentPointSwitcher({
   const narrow = useIsNarrowViewport();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { switchTo, busyId } = useSwitchBuilding();
+  // Главная, реквизиты, мастер-кабинет, офис, подписки, оформление и список
+  // всех точек — про всю компанию: выбор точки там ничего не меняет.
+  const hidden = headerPointHidden(usePathname());
 
   const titleOf = (option: HeaderPointOption) => {
     const title = option.title;
@@ -55,7 +59,7 @@ export function CurrentPointSwitcher({
   const hintOf = (option: HeaderPointOption) =>
     option.address ? `${titleOf(option)}, ${option.address}` : titleOf(option);
 
-  if (point.kind === "none") return null;
+  if (point.kind === "none" || hidden) return null;
 
   if (point.kind === "add") {
     // Сразу мастер «+ Добавить точку» (как в меню раздела), а не список точек.

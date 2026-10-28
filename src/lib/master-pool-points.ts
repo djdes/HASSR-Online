@@ -40,3 +40,58 @@ export function wholeOrgPoints<T extends PointBuilding>(
     (building) => !building.linkedServiceCode || building.linkedServiceCode === poolCode
   );
 }
+
+/** Объект организации в кабинете: точка (`building`) или организация целиком (`null`). */
+export type OrgPoolObject<T> = {
+  building: T | null;
+  /** Попала в кабинет вместе с организацией (организация подключена целиком). */
+  whole: boolean;
+  /**
+   * Можно отключить со страницы организации. Нельзя — организация сама
+   * держит код кабинета (кабинет создан из неё по старой схеме).
+   */
+  canDisconnect: boolean;
+};
+
+/**
+ * Что из организации стоит в кабинете с кодом `poolCode` — то же правило,
+ * что у `listPoolOrganizations` (страница «Мастер-кабинет» организации,
+ * скан 99 от 2026-10-28): организация в кабинете целиком — её точки со
+ * своими журналами (без точек — она сама); иначе — точки, подключённые
+ * своим кодом.
+ */
+export function orgObjectsInPool<T extends PointBuilding>(
+  org: { perLocationJournals: boolean; serviceCode: string | null; linkedServiceCode: string | null },
+  buildings: readonly T[],
+  poolCode: string | null
+): OrgPoolObject<T>[] {
+  if (!poolCode) return [];
+  const orgCode = org.linkedServiceCode ?? org.serviceCode;
+  if (orgCode === poolCode) {
+    const canDisconnect = org.linkedServiceCode === poolCode;
+    if (journalPointsOf(org, buildings).length === 0) return [{ building: null, whole: true, canDisconnect }];
+    return wholeOrgPoints(org, buildings, poolCode).map((building) => ({ building, whole: true, canDisconnect }));
+  }
+  return buildings
+    .filter((building) => building.linkedServiceCode === poolCode)
+    .map((building) => ({ building, whole: false, canDisconnect: true }));
+}
+
+/**
+ * Код кабинета, в котором сейчас объект организации: точка — своей
+ * привязкой или вместе с организацией; организация — своей привязкой или
+ * своим кодом. `cabinetCodes` — коды существующих кабинетов (свой код
+ * организации без кабинета — это не подключение).
+ */
+export function poolCodeOfObject(
+  org: { perLocationJournals: boolean; serviceCode: string | null; linkedServiceCode: string | null },
+  building: PointBuilding | null,
+  cabinetCodes: ReadonlySet<string>
+): string | null {
+  if (building?.linkedServiceCode && cabinetCodes.has(building.linkedServiceCode)) return building.linkedServiceCode;
+  const orgCode = org.linkedServiceCode ?? org.serviceCode;
+  if (!orgCode || !cabinetCodes.has(orgCode)) return null;
+  if (!building) return orgCode;
+  // Точка, подключённая своим кодом к другому кабинету, — не в кабинете организации.
+  return wholeOrgPoints(org, [building], orgCode).length > 0 ? orgCode : null;
+}

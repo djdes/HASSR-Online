@@ -33,6 +33,8 @@ export function parsePointScope(value: unknown): string[] | null {
 export const COMPANY_ONLY_PAGE_PREFIXES = [
   // «Моя компания»: реквизиты, офис, документы, бренд, контакты, названия, быстрая настройка.
   "/settings/organization",
+  // Мастер-кабинет: подключает точки всей компании и приглашает операторов.
+  "/settings/master-cabinet",
   "/settings/names",
   "/settings/onboarding",
   "/settings/onboarding-template",
@@ -84,6 +86,7 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
 /** API тех же страниц: изменения (не GET) руководителю точки закрыты. */
 export const COMPANY_ONLY_API_PREFIXES = [
   "/api/settings/organization",
+  "/api/settings/master-cabinet",
   "/api/settings/office",
   "/api/settings/custom-names",
   "/api/settings/onboarding",

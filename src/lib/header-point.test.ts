@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { comparableName, resolveHeaderPoint, sameAsCompany, type HeaderPoint } from "./header-point";
+import { comparableName, headerPointHidden, resolveHeaderPoint, sameAsCompany, type HeaderPoint } from "./header-point";
 
 const COMPANY = "Столовая «Берёзка»";
 const OFF = { enabled: false, buildings: [], activeBuildingId: null, canSwitch: false };
@@ -130,6 +130,39 @@ test("подпись в центре шапки никогда не равна �
     assert.equal(point.kind, "single");
     if (point.kind !== "single") continue;
     assert.ok(!point.point.title.text || !sameAsCompany(point.point.title.text, COMPANY));
+  }
+});
+
+test("переключатель точки скрыт на страницах про всю компанию", () => {
+  for (const path of [
+    "/home",
+    "/settings/organization",
+    "/settings/organization/documents",
+    "/settings/master-cabinet",
+    "/settings/organization/office",
+    "/settings/access",
+    "/settings/subscription",
+    "/settings/appearance",
+    "/settings/buildings",
+    "/settings/buildings/",
+  ]) {
+    assert.ok(headerPointHidden(path), path);
+  }
+});
+
+test("на страницах точки переключатель остаётся", () => {
+  for (const path of [
+    "/journals",
+    "/journals/hygiene",
+    "/dashboard",
+    "/settings/areas",
+    "/settings/equipment",
+    "/settings/qr-posters",
+    "/settings/users",
+    "/settings/buildings/b1",
+    "/monitoring",
+  ]) {
+    assert.ok(!headerPointHidden(path), path);
   }
 });
 

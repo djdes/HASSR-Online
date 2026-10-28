@@ -7,6 +7,7 @@ import {
   normalizeColdEquipmentEntryData,
   type ColdEquipmentStatus,
 } from "@/lib/cold-equipment-document";
+import { equipmentBuildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { esc } from "@/lib/journal-fill-html";
 import { resolveJournalObjectScope } from "@/lib/qr-journal-scope";
@@ -133,10 +134,14 @@ export async function loadObjectJournalStatus(params: {
   todayKey: string;
   timezone: string;
   documentId?: string | null;
+  /** QR точки (без документа): только объекты этой точки. */
+  buildingId?: string | null;
 }): Promise<ObjectStatusGroup[]> {
   const { organizationId, code, todayKey } = params;
   const scope = await resolveJournalObjectScope(organizationId, code, todayKey, params.documentId ?? null);
   if (!scope || scope.ids.length === 0) return [];
+  // Документ сам задаёт свои строки; без него — объекты точки QR.
+  const pointId = scope.document ? null : (params.buildingId ?? null);
   const day = new Date(`${todayKey}T00:00:00.000Z`);
   const activeDocs = await db.journalDocument.findMany({
     where: { organizationId, status: "active", template: { code }, dateFrom: { lte: day }, dateTo: { gte: day } },
@@ -150,7 +155,7 @@ export async function loadObjectJournalStatus(params: {
 
   if (code === CLIMATE_DOCUMENT_TEMPLATE_CODE) {
     const rooms = await db.room.findMany({
-      where: { id: { in: scope.ids }, building: { organizationId } },
+      where: { id: { in: scope.ids }, building: { organizationId }, ...(pointId ? { buildingId: pointId } : {}) },
       select: { id: true, name: true, building: { select: { name: true } } },
       orderBy: [{ building: { sortOrder: "asc" } }, { sortOrder: "asc" }, { name: "asc" }],
     });
@@ -187,7 +192,7 @@ export async function loadObjectJournalStatus(params: {
   }
 
   const equipment = await db.equipment.findMany({
-    where: { id: { in: scope.ids }, area: { organizationId } },
+    where: { id: { in: scope.ids }, area: { organizationId }, ...equipmentBuildingWhere(pointId) },
     select: { id: true, name: true, runningSince: true, area: { select: { name: true } } },
     orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
   });
