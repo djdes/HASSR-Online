@@ -10407,7 +10407,7 @@ export type MessageContract = {
         "siteTitle": "Сайт",
         "siteLead": "Печатается справа в шапке каждого плаката и этикетки.",
         "siteLabel": "Адрес сайта",
-        "siteHint": "Пусто — печатаем wesetup.ru",
+        "siteHint": "Пусто — печатаем wesetup.ru. Внизу листа адрес не меняется — всегда wesetup.ru.",
         "sitePlaceholder": "dobroe-kafe.ru",
         "qrTitle": "QR-коды",
         "qrLead": "Рамка и значок в центре делают код вашим. Сканируется он так же надёжно.",

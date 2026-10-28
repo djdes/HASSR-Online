@@ -10406,7 +10406,7 @@
         "siteTitle": "Site",
         "siteLead": "Printed on the right of every poster and label header.",
         "siteLabel": "Site address",
-        "siteHint": "Empty — we print wesetup.ru",
+        "siteHint": "Empty — we print wesetup.ru. The address at the bottom of the sheet never changes — always wesetup.ru.",
         "sitePlaceholder": "dobroe-kafe.ru",
         "qrTitle": "QR codes",
         "qrLead": "A frame and an icon in the centre make the code yours. It scans just as reliably.",

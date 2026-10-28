@@ -1,8 +1,9 @@
 /**
  * Рамка печатного листа A4 в фирменном стиле (2026-10-27): плакаты и
  * предпросмотр «Фирменного стиля». Шапка — логотип организации слева, сайт
- * организации справа; подвал — название организации и всегда `wesetup.ru`
- * (скан 97: «этот должен всегда оставаться Сетап»). Серверный компонент без
+ * организации справа («Фирменный стиль», пусто — wesetup.ru); подвал —
+ * название организации и всегда wesetup.ru (владелец, 2026-10-28: «второй
+ * адрес внизу — без возможности изменения»; скан 97). Серверный компонент без
  * хуков. Цвета — `PrintBrand` (`src/lib/print-brand.ts`).
  *
  * Лист на экране того же размера, что на бумаге: A4 минус поля `@page`
@@ -73,7 +74,7 @@ export function PrintBrandHeader({
   );
 }
 
-/** Подвал листа: название организации · wesetup.ru (свой сайт — только в шапке). */
+/** Подвал листа: название организации · wesetup.ru (не меняется; свой сайт — только в шапке). */
 export function PrintBrandFooter({ brand, compact = false }: { brand: PrintBrand; compact?: boolean }) {
   return (
     <div
@@ -87,7 +88,9 @@ export function PrintBrandFooter({ brand, compact = false }: { brand: PrintBrand
       }}
     >
       <span>{brand.orgName}</span>
-      <span className="shrink-0">{DEFAULT_PRINT_SITE}</span>
+      <span className="shrink-0" data-print-brand-footer-site>
+        {DEFAULT_PRINT_SITE}
+      </span>
     </div>
   );
 }
