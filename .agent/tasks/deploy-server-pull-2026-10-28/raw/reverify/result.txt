@@ -1,0 +1,18 @@
+PASS шапка: по умолчанию «Вся организация» — ОРГАНИЗАЦИЯ Вся организация
+PASS «Журналы точек» открыты всей организации
+PASS меню: есть «Журналы точек» и «Все журналы» — QV | Моя компания | Мониторинг | Подписки | Настройки и оформление | К Вам пришла проверка | QV | Журналы | Журналы точек | Сегодня | Все журналы | Проверка записей | Настройка журналов | Стандартный набор | Набор по ХАССП | Дополнительные
+PASS «Журналы точек» при точке — экран «недоступно»
+PASS меню при точке: без «Журналов точек» и «Всех журналов», есть «Сегодня», «Настройка журналов», наборы — QV | Моя компания | Мониторинг | Подписки | Настройки и оформление | К Вам пришла проверка | QV | Журналы | Сегодня | Проверка записей | Настройка журналов | Стандартный набор | Набор по ХАССП | Дополнительные
+PASS на странице журналов переключатель точки виден (#43 его не прячет)
+PASS «Все журналы» при точке — экран «недоступно»
+PASS «Назад» возвращает на прошлую страницу — http://localhost:3020/dashboard
+PASS главная: переключатель точки скрыт (#43)
+PASS «Выбрать всю организацию» открывает «Журналы точек»
+PASS «Остальное»: карточки партий, потерь, изменений, обучения, премий — plans, capa, reports, ideas, mercury, batches, losses, changes, competencies, bonuses, settings_notifications, settings_integrations_tasksflow, settings_integrations_mercury, settings_webhooks, settings_calendar, settings_backup, settings_accounting, settings_api, settings_audit, settings_security, settings_experimental, settings_partner, settings_consultant
+PASS памятка: внизу всегда wesetup.ru — wesetup.ru
+PASS памятка: в шапке есть адрес сайта — QR verify mvr0npcs wesetup.ru
+PASS мастер-кабинет: страница открывается — 200
+PASS мастер-кабинет: без ошибки на экране — карточек кабинетов: 0
+PASS мастер-кабинет: переключатель точки скрыт (#43)
+FAIL Mini App — ошибка: locator.waitFor: Timeout 180000ms exceeded.
+FAIL заведующая — ошибка: locator.evaluateAll: Execution context was destroyed, most likely because of a navigation

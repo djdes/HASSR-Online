@@ -10,6 +10,7 @@ import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { DASHBOARD_SITE_NAMESPACES } from "@/i18n/dashboard-namespaces";
 import { ImpersonationBanner } from "@/components/dashboard/impersonation-banner";
 import { CompleteProfileNudge } from "@/components/dashboard/complete-profile-nudge";
 import { WelcomeOrgBanner } from "@/components/organizations/welcome-org-banner";
@@ -409,7 +410,7 @@ export default async function DashboardLayout({
       : null;
 
   return (
-    <DomainMessagesBoundary namespaces={["dashboardUi", "billingUi", "organizationsUi", "cleaningUi"]}>
+    <DomainMessagesBoundary namespaces={DASHBOARD_SITE_NAMESPACES}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
@@ -803,7 +804,10 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
   return (
     // Сообщения пространства miniHome нужны навигации мини-приложения
     // (mini-nav); без них next-intl пишет MISSING_MESSAGE в консоль.
-    <DomainMessagesBoundary namespaces={["miniHome", "miniUi", "billingUi", "organizationsUi"]}>
+    // Страницы сайта в оболочке получают те же пространства, что на сайте
+    // (DASHBOARD_SITE_NAMESPACES, П-3): без dashboardUi на «Сегодня» вместо
+    // подписей были ключи вида dashboardUi.closeDayCard.qrCodes.
+    <DomainMessagesBoundary namespaces={["miniHome", "miniUi", ...DASHBOARD_SITE_NAMESPACES]}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />

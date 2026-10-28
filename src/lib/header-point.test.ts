@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { comparableName, headerPointHidden, resolveHeaderPoint, sameAsCompany, type HeaderPoint } from "./header-point";
+import { comparableName, headerPointHidden, miniLocationLabel, resolveHeaderPoint, sameAsCompany, type HeaderPoint } from "./header-point";
 
 const COMPANY = "Столовая «Берёзка»";
 const OFF = { enabled: false, buildings: [], activeBuildingId: null, canSwitch: false };
@@ -199,4 +199,18 @@ test("«Вся организация»: первым пунктом у руко
     context: { enabled: true, buildings, activeBuildingId: "b1", canSwitch: true, organizationView: false, canViewOrganization: false },
   });
   assert.equal(staff.kind === "switch" && staff.options.length, 2);
+});
+
+test("Mini App: в верхней панели «Вся организация», а не первая точка списка", () => {
+  const pointA = { id: "a", name: "Точка А", address: null };
+  const office = { id: "o", name: "Офис", address: null, kind: "office" };
+  // «Вся организация» без офиса: активной считается первая точка, но подпись — организация.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: pointA }, "Вся организация"), "Вся организация");
+  // Выбрана точка — её название.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: false, activeBuilding: pointA }, "Вся организация"), "Точка А");
+  // Офис играет роль всей организации — пишем офис, как в шапке сайта.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: office }, "Вся организация"), "Офис");
+  // Точки выключены или контекста нет — подписи нет.
+  assert.equal(miniLocationLabel({ enabled: false, organizationView: true, activeBuilding: null }, "Вся организация"), null);
+  assert.equal(miniLocationLabel(null, "Вся организация"), null);
 });

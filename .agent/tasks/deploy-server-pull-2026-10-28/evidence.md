@@ -22,7 +22,7 @@
 | AC2 | PASS | Тест «отпечаток не зависит от дат файлов и .build-time…»: другие даты и `.build-time` дают тот же отпечаток, другое содержимое или путь — другой. Тест «архив без файлов — ошибка». Файл: 16/16. |
 | AC3 | PASS | `7c227c04` локально (F:): codeload tar.gz → `deploy-tarball.sh` → отпечаток `000f480a19b7589c5c8e9610de8aa39e84fe9d16b8c2df73e50d383f4236ef76`, 4434 файла. Checkout того же коммита (`core.autocrlf=false`) → тот же отпечаток, 4434 файла. |
 | AC4 | PASS | deploy.yml: SCP `if: steps.pull.outcome != 'success'`; повтор SCP по `steps.scp.outcome == 'failure'`, как раньше (пропущенный SCP — `skipped`, повтор не идёт). YAML разбирается, шаги по порядку: … Prepare (retry) → Server downloads the commit from GitHub → Upload tarball via SCP → retry. |
-| AC5 | ждёт деплоя | Проверяется на первом прогоне после слияния. |
+| AC5 | PASS | Прогон 40744847181 (`cd04ad59`, #44), попытка 1: отпечаток в Actions `b7253a4509cb…`; сервер начал в 18:27:00, «скачано с GitHub: 273M» в 18:27:52, «deploy.tar собран сервером из cd04ad59…, отпечаток совпал» в 18:27:57; SCP пропущен; job выгрузки — 3 мин 19 с с учётом checkout. Деплой success в 18:38:32. На сервере `.build-sha` = `cd04ad59c6c565a85d70dde35326dfcf877c5a8f`, `haccp-online` online, `/api/build-info` отдаёт `cd04ad59…`; `deploy.tar` и `~/tmp/deploy-pull` после деплоя нет. |
 
 Прогнать серверную часть до слияния не удалось: запись на сервер вне
 деплоя (даже во временную папку) не разрешена в этой сессии. Поэтому шаг
