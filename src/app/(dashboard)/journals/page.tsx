@@ -6,13 +6,14 @@ import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
 import { JournalsBrowser } from "@/components/journals/journals-browser";
 import { PageGuide } from "@/components/ui/page-guide";
+import { PointModeUnavailable } from "@/components/journals/point-mode-unavailable";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { aclActorFromSession, getAllowedJournalCodes } from "@/lib/journal-acl";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { getActiveBuildingId } from "@/lib/active-building";
-import { buildingWhere } from "@/lib/building-scope";
+import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
+import { buildingWhere, journalsPointMode } from "@/lib/building-scope";
 import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
@@ -31,6 +32,17 @@ export default async function JournalsPage() {
       redirect("/control-board");
     }
     redirect("/mini/today");
+  }
+  // Руководство с выбранной в шапке торговой точкой: «Все журналы» — страница
+  // всей организации, в режиме точки её нет (владелец, 2026-10-28).
+  const pointContext = await loadBuildingContext(session);
+  if (journalsPointMode(pointContext)) {
+    return (
+      <PointModeUnavailable
+        pointName={pointContext.activeBuilding?.name ?? ""}
+        canViewOrganization={pointContext.canViewOrganization}
+      />
+    );
   }
   const isManager = hasFullWorkspaceAccess(session.user);
 

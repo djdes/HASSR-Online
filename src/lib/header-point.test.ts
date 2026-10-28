@@ -132,3 +132,38 @@ test("подпись в центре шапки никогда не равна �
     assert.ok(!point.point.title.text || !sameAsCompany(point.point.title.text, COMPANY));
   }
 });
+
+test("«Вся организация»: первым пунктом у руководства без офиса, офис сам её заменяет", () => {
+  const buildings = [
+    { id: "b1", name: "Кафе", address: null },
+    { id: "b2", name: "Цех", address: null },
+  ];
+  const organization = resolve({
+    organizationBuildings: buildings,
+    context: { enabled: true, buildings, activeBuildingId: "b1", canSwitch: true, organizationView: true, canViewOrganization: true },
+  });
+  assert.equal(organization.kind, "switch");
+  if (organization.kind !== "switch") return;
+  assert.equal(organization.options[0].id, "organization");
+  assert.deepEqual(organization.options[0].title, { source: "organization", text: null });
+  assert.equal(organization.activeId, "organization");
+  // Выбрана точка — активна она, пункт «Вся организация» остаётся в списке.
+  const point = resolve({
+    organizationBuildings: buildings,
+    context: { enabled: true, buildings, activeBuildingId: "b2", canSwitch: true, organizationView: false, canViewOrganization: true },
+  });
+  assert.equal(point.kind === "switch" && point.activeId, "b2");
+  // Есть офис — отдельного пункта нет.
+  const withOffice = [{ id: "o", name: "Офис", address: null, kind: "office" }, ...buildings];
+  const office = resolve({
+    organizationBuildings: withOffice,
+    context: { enabled: true, buildings: withOffice, activeBuildingId: "o", canSwitch: true, organizationView: true, canViewOrganization: true },
+  });
+  assert.equal(office.kind === "switch" && office.options.some((option) => option.id === "organization"), false);
+  // Не руководство — пункта нет.
+  const staff = resolve({
+    organizationBuildings: buildings,
+    context: { enabled: true, buildings, activeBuildingId: "b1", canSwitch: true, organizationView: false, canViewOrganization: false },
+  });
+  assert.equal(staff.kind === "switch" && staff.options.length, 2);
+});

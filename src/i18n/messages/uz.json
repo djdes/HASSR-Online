@@ -2768,7 +2768,8 @@
         "add": "Nuqta qo‘shish",
         "addHint": "Qadam-baqadam qo‘shish ochiladi: nomi va manzil, xonalar, uskunalar",
         "open": "Nuqtani ochish",
-        "captionOffice": "Tashkilot"
+        "captionOffice": "Tashkilot",
+        "organization": "Butun tashkilot"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
@@ -2960,6 +2961,15 @@
       "back": "Orqaga",
       "badges": {
         "pro": "PRO"
+      },
+      "pointMode": {
+        "title": "Bu bo‘lim butun tashkilot uchun",
+        "body": "Hozir sarlavhada «{point}» nuqtasi tanlangan. Nuqta tanlanganda «Jurnallar»da shu nuqtaning «Bugun», yozuvlarni tekshirish, sozlash va jurnallar to‘plamlari bor.",
+        "back": "Orqaga",
+        "chooseOrganization": "Butun tashkilotni tanlash",
+        "hintOrganization": "«Nuqtalar jurnallari» va «Barcha jurnallar» sarlavhada «Butun tashkilot» tanlanganda ochiladi.",
+        "hintPoint": "Siz o‘z nuqtangizda ishlaysiz — barcha nuqtalar jurnallarini kompaniya rahbariyati ko‘radi.",
+        "failed": "Butun tashkilotni tanlab bo‘lmadi"
       }
     },
     "header": {

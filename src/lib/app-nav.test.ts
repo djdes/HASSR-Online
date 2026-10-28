@@ -308,6 +308,8 @@ function guardTokens(access: NavAccess): string[][] {
       return [
         [access.fact === "settingsPermissions" ? "sessionHasPermission(" : "hasJournalAccess("],
       ];
+    case "notPointMode":
+      return [["journalsPointMode("]];
   }
 }
 
@@ -523,10 +525,10 @@ test("у каждого раздела, кроме «Остального», с�
     ["groups", ["commission", "haccpGroup", "controlGroup", "inspectors"]],
     ["more", ["team", "schedule", "health", "responsibles", "hierarchy", "visibility", "workload", "phone"]],
   ]);
+  // «Настройка» — в общем списке, под ним наборы журналов (владелец, 2026-10-28).
   assert.deepEqual(menuShape("journals"), [
-    [null, ["points", "today", "control", "all"]],
+    [null, ["points", "today", "control", "all", "verify", "setup"]],
     ["sets", ["standard", "haccp", "extra"]],
-    ["more", ["verify", "setup"]],
   ]);
   assert.deepEqual(menuShape("monitoring"), [[null, ["overview"]], [null, ["checklists"]]]);
   assert.deepEqual(menuShape("checklists"), [[null, ["templates", "builder", "assignments", "results"]]]);
@@ -641,8 +643,8 @@ function visibleItemIds(actor: NavActor, key: string, facts: NavFacts = withChec
 }
 
 test("«Сегодня»: у управляющей — журналы дня, у заведующей — панель контроля", () => {
-  assert.deepEqual(visibleItemIds(manager, "journals"), ["points", "today", "all", "standard", "haccp", "extra", "verify", "setup"]);
-  assert.deepEqual(visibleItemIds(headChef, "journals"), ["control", "standard", "haccp", "extra", "verify", "setup"]);
+  assert.deepEqual(visibleItemIds(manager, "journals"), ["points", "today", "all", "verify", "setup", "standard", "haccp", "extra"]);
+  assert.deepEqual(visibleItemIds(headChef, "journals"), ["control", "verify", "setup", "standard", "haccp", "extra"]);
   const journals = visibleNav(headChef, withChecklists).find((item) => item.key === "journals");
   assert.equal(journals?.menu?.[0].items[0].href, "/control-board");
 });
@@ -830,4 +832,20 @@ test("руководитель точки: без «Моей компании»,
   assert.ok(items("journals").includes("setup"));
   // Тот же руководитель без ограничения точками видит всё, как раньше.
   assert.ok(keys.length < visibleNav(manager, withChecklists).length);
+});
+
+test("«Журналы» в режиме точки: «Журналы точек» и «Все журналы» пропадают, вход — «Сегодня»", () => {
+  const pointMode: NavFacts = { ...withChecklists, journalsPointMode: true };
+  const menuOf = (actor: NavActor, facts: NavFacts) =>
+    (visibleNav(actor, facts).find((section) => section.key === "journals")?.menu ?? []).flatMap((group) =>
+      group.items.map((item) => item.id),
+    );
+  // Вся организация — полное меню; «Настройка» — в общем списке, под ним наборы.
+  assert.deepEqual(menuOf(manager, withChecklists), ["points", "today", "all", "verify", "setup", "standard", "haccp", "extra"]);
+  assert.deepEqual(menuOf(manager, pointMode), ["today", "verify", "setup", "standard", "haccp", "extra"]);
+  const journals = visibleNav(manager, pointMode).find((section) => section.key === "journals");
+  assert.equal(journals?.rootHref, "/dashboard");
+  // Заведующая: панель контроля вместо «Сегодня», «Всех журналов» нет.
+  assert.ok(!menuOf(headChef, pointMode).includes("all"));
+  assert.ok(menuOf(headChef, pointMode).includes("control"));
 });
