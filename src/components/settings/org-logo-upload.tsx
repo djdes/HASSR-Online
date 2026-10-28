@@ -7,6 +7,34 @@ import { ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { prepareLogo } from "@/components/partner/logo-uploader";
 import { LOGO_MAX_BYTES } from "@/lib/partners/validation";
 
+/** Какие файлы можно выбрать для логотипа и значка. */
+export const ORG_LOGO_ACCEPT = "image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg";
+
+/**
+ * Отправить файл логотипа (`kind="icon"` — значка для центра QR) и вернуть
+ * его адрес. PNG/JPG браузер ужимает и переводит в PNG (`prepareLogo`), SVG
+ * сервер проверяет и очищает. Ошибка — `Error` с текстом для человека.
+ * Общая для «Фирменного стиля» и кнопки «Загрузить логотип» в меню.
+ */
+export async function uploadOrgLogoFile(
+  file: File,
+  { kind = "logo", failedMessage }: { kind?: "logo" | "icon"; failedMessage: string },
+): Promise<string> {
+  const isIcon = kind === "icon";
+  const prepared = await prepareLogo(file);
+  if (prepared.size > LOGO_MAX_BYTES) throw new Error(failedMessage);
+  const form = new FormData();
+  form.set("file", prepared, prepared.name);
+  const response = await fetch(isIcon ? "/api/settings/organization/qr-icon" : "/api/settings/organization/logo", {
+    method: "POST",
+    body: form,
+  });
+  const data = await response.json().catch(() => null);
+  const url = data?.[isIcon ? "qrIconUrl" : "logoUrl"];
+  if (!response.ok || typeof url !== "string") throw new Error(data?.error ?? failedMessage);
+  return url;
+}
+
 /**
  * Логотип организации файлом — для меню слева. PNG/JPG браузер ужимает
  * и переводит в PNG (`prepareLogo`), SVG сервер проверяет и очищает.
@@ -25,7 +53,6 @@ export function OrgLogoUpload({
   const t = useTranslations("settingsManagement.organizationProfile");
   const isIcon = kind === "icon";
   const endpoint = isIcon ? "/api/settings/organization/qr-icon" : "/api/settings/organization/logo";
-  const responseKey = isIcon ? "qrIconUrl" : "logoUrl";
   const labels = isIcon
     ? {
         upload: t("brandingPage.iconUpload"),
@@ -49,16 +76,7 @@ export function OrgLogoUpload({
   async function upload(file: File) {
     setBusy(true);
     try {
-      const prepared = await prepareLogo(file);
-      if (prepared.size > LOGO_MAX_BYTES) throw new Error(labels.failed);
-      const form = new FormData();
-      form.set("file", prepared, prepared.name);
-      const response = await fetch(endpoint, { method: "POST", body: form });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || typeof data?.[responseKey] !== "string") {
-        throw new Error(data?.error ?? labels.failed);
-      }
-      onChange(data[responseKey]);
+      onChange(await uploadOrgLogoFile(file, { kind, failedMessage: labels.failed }));
       toast.success(labels.uploaded);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : labels.failed);
@@ -135,7 +153,7 @@ export function OrgLogoUpload({
       <input
         ref={input}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg"
+        accept={ORG_LOGO_ACCEPT}
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];

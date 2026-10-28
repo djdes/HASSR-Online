@@ -2939,7 +2939,12 @@
           }
         }
       },
-      "addLogo": "Logotip qo‘shish",
+      "uploadLogo": "Logotip yuklash",
+      "uploadLogoHint": "PNG, JPG yoki SVG, 500 KB gacha. Logotip shu yerda darhol paydo bo‘ladi, keyin uni «Brend uslubi» bo‘limida almashtirish mumkin.",
+      "logoUploading": "Yuklanmoqda…",
+      "logoUploaded": "Logotip yuklandi. Uni «Sozlamalar va bezak → Brend uslubi» bo‘limida almashtirish mumkin.",
+      "logoFailed": "Logotipni yuklab bo‘lmadi",
+      "inn": "STIR {inn}",
       "leads": {
         "journalsSetup": "Qaysi jurnallarni yuritasiz, ularni kim to‘ldiradi va vazifalar qanday taqsimlanadi — keraklisini oching.",
         "staffHealth": "Tibbiy daftarchalar muddati va xodimlarni o‘qitish: kimga tez orada uzaytirish kerak va kim hali yo‘riqnomadan o‘tmagan.",

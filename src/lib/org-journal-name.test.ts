@@ -6,7 +6,6 @@ import {
   ORG_JOURNAL_NAME_MAX,
   readHeaderOrgNameOverride,
   resolveOrgJournalName,
-  sidebarLegalName,
   sanitizeOrgJournalName,
   suggestOrgJournalName,
 } from "@/lib/org-journal-name";
@@ -56,13 +55,4 @@ test("подсказка из ЕГРЮЛ", () => {
   assert.equal(suggestOrgJournalName(org.legalProfileJson), "ООО «КАФЕ У ДОМА»");
   assert.equal(suggestOrgJournalName({ inn: "1" }), null);
   assert.equal(suggestOrgJournalName(null), null);
-});
-
-test("sidebarLegalName: ЕГРЮЛ → название для журналов → название при логотипе; без повтора", () => {
-  const profile = { nameShort: "ООО «Кафе у дома»" };
-  assert.equal(sidebarLegalName({ legalProfileJson: profile }, { companyName: "Кафе", hasLogo: false }), "ООО «Кафе у дома»");
-  assert.equal(sidebarLegalName({ journalShortName: "ИП Петров" }, { companyName: "Кафе", hasLogo: false }), "ИП Петров");
-  assert.equal(sidebarLegalName({}, { companyName: "Кафе", hasLogo: true }), "Кафе");
-  assert.equal(sidebarLegalName({}, { companyName: "Кафе", hasLogo: false }), null);
-  assert.equal(sidebarLegalName({ journalShortName: "кафе" }, { companyName: "Кафе", hasLogo: false }), null);
 });

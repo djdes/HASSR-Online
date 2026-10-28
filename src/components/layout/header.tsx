@@ -67,6 +67,7 @@ import { useAppNav } from "@/components/layout/app-nav-context";
 import { CurrentPointSwitcher } from "@/components/layout/current-point-switcher";
 import { MobileNavSheet } from "@/components/layout/mobile-nav-sheet";
 import { OrganizationMark } from "@/components/layout/organization-brand";
+import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 function getInitials(name: string): string {
   return name
@@ -82,6 +83,8 @@ type HeaderProps = {
   userEmail: string;
   organizationName: string;
   organizationLogoUrl?: string | null;
+  /** Краткое название и ИНН под логотипом в листе меню на телефоне (как в сайдбаре). */
+  organizationIdentity: SidebarOrgIdentity;
   userRole: string;
   isRoot: boolean;
   /**
@@ -148,6 +151,7 @@ export function Header({
   userEmail,
   organizationName: rawOrganizationName,
   organizationLogoUrl,
+  organizationIdentity,
   userRole,
   isRoot,
   balanceRub = null,
@@ -529,6 +533,7 @@ export function Header({
           brand={{
             logoUrl: organizationLogoUrl ?? null,
             name: organizationName || "WeSetup",
+            identity: organizationIdentity,
             homeHref,
             canEditBranding,
           }}

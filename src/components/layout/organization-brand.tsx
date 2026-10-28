@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ImagePlus } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BRANDING_SETTINGS_HREF } from "@/components/theme/theme-tiles";
+import { ORG_LOGO_ACCEPT, uploadOrgLogoFile } from "@/components/settings/org-logo-upload";
+import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
@@ -22,13 +25,13 @@ function initialsOf(name: string): string {
   );
 }
 
-function Monogram({ name, compact = false, large = false }: { name: string; compact?: boolean; large?: boolean }) {
+function Monogram({ name, compact = false }: { name: string; compact?: boolean }) {
   return (
     <span
       aria-hidden
       className={cn(
         "flex shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] font-semibold text-[#3848c7]",
-        compact ? "size-8 text-[13px]" : large ? "size-14 rounded-2xl text-[20px]" : "size-9 text-[14px]",
+        compact ? "size-8 text-[13px]" : "size-9 text-[14px]",
       )}
     >
       {initialsOf(name)}
@@ -36,18 +39,15 @@ function Monogram({ name, compact = false, large = false }: { name: string; comp
   );
 }
 
-/** Логотип организации; нет логотипа — монограмма и название. */
+/** Логотип организации в шапке без меню; нет логотипа — монограмма и название. */
 export function OrganizationMark({
   logoUrl,
   name,
   compact = false,
-  large = false,
 }: {
   logoUrl: string | null;
   name: string;
   compact?: boolean;
-  /** Шапка меню сайта (эскиз 2026-10-28: «лого крупнее в 2 раза») — до 80 px. */
-  large?: boolean;
 }) {
   // Битая ссылка на логотип не должна оставлять пустое место — монограмма.
   const [failed, setFailed] = useState(false);
@@ -57,10 +57,7 @@ export function OrganizationMark({
       <img
         src={logoUrl}
         alt={name}
-        className={cn(
-          "w-auto object-contain object-left",
-          compact ? "h-7 max-w-[120px]" : large ? "max-h-20 max-w-[216px]" : "max-h-10 max-w-[200px]",
-        )}
+        className={cn("w-auto object-contain object-left", compact ? "h-7 max-w-[120px]" : "max-h-10 max-w-[200px]")}
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}
       />
@@ -68,73 +65,152 @@ export function OrganizationMark({
   }
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <Monogram name={name} compact={compact} large={large} />
-      {compact ? null : (
-        <span className={cn("font-semibold text-[#0b1024]", large ? "line-clamp-2 text-[16px] leading-tight" : "truncate text-[15px]")}>
-          {name}
-        </span>
-      )}
+      <Monogram name={name} compact={compact} />
+      {compact ? null : <span className="truncate text-[15px] font-semibold text-[#0b1024]">{name}</span>}
     </span>
   );
 }
 
 /**
- * Шапка меню (эскиз руководителя: «Лого компании пользователя» над меню):
- * логотип компании клиента, без логотипа — монограмма и название. Руководителю
- * без логотипа — ссылка «Добавить логотип» на блок брендинга «Моей компании».
+ * Шапка меню (эскизы руководителя 2026-10-28): по центру логотип компании,
+ * под ним краткое название и ИНН. Логотипа нет — заглушка с инициалами, а
+ * руководителю (`admin.full`) ещё и компактная кнопка «Загрузить логотип»:
+ * файл уходит сразу, логотип встаёт на место заглушки, кнопка пропадает.
+ * Сменить или убрать логотип потом — только в «Фирменном стиле».
  * Общая для сайдбара, листа меню на телефоне и листа меню в Mini App (П-3).
  */
 export function OrganizationBrand({
   logoUrl,
   name,
+  identity,
   homeHref,
   canEditBranding = false,
   large = false,
   className,
 }: {
   logoUrl: string | null;
+  /** Название компании: подпись логотипа и инициалы заглушки. */
   name: string;
+  /** Под логотипом: краткое название и ИНН (`sidebarOrgIdentity`). */
+  identity: SidebarOrgIdentity;
   homeHref: string;
   canEditBranding?: boolean;
-  /** Крупный логотип — шапка сайдбара. */
+  /** Шапка сайдбара (эскиз: «лого крупнее в 2 раза») — логотип до 80 px. */
   large?: boolean;
   className?: string;
 }) {
   const t = useTranslations("navigation.shell");
-  if (logoUrl || !canEditBranding) {
-    return (
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  // Только что загруженный логотип стоит на месте заглушки, пока страница
+  // обновляется; пришёл логотип с сервера — свой больше не нужен.
+  const [uploaded, setUploaded] = useState<string | null>(null);
+  if (uploaded && logoUrl) setUploaded(null);
+  // Битая ссылка на логотип — снова заглушка (и кнопка, если её можно показать).
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const candidate = logoUrl ?? uploaded;
+  const logo = candidate && candidate !== failedSrc ? candidate : null;
+  const canUpload = canEditBranding && !logo;
+
+  async function upload(file: File) {
+    setBusy(true);
+    try {
+      setUploaded(await uploadOrgLogoFile(file, { failedMessage: t("logoFailed") }));
+      toast.success(t("logoUploaded"));
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("logoFailed"));
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  return (
+    <div
+      className={cn("flex flex-col items-center text-center", className)}
+      data-organization-brand
+      data-has-logo={logo ? "" : undefined}
+    >
       <Link
         href={homeHref}
-        className={cn("flex min-w-0 items-center rounded-xl transition-colors duration-150", FOCUS, className)}
-        data-organization-brand
+        aria-label={logo ? undefined : name}
+        className={cn(
+          "flex max-w-full items-center justify-center rounded-2xl transition-opacity duration-150 hover:opacity-90",
+          FOCUS,
+        )}
       >
-        <OrganizationMark key={logoUrl ?? "none"} logoUrl={logoUrl} name={name} large={large} />
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logo}
+            alt={name}
+            className={cn("w-auto max-w-full object-contain", large ? "max-h-20" : "max-h-14")}
+            referrerPolicy="no-referrer"
+            onError={() => setFailedSrc(logo)}
+          />
+        ) : (
+          <span
+            aria-hidden
+            data-logo-placeholder
+            className={cn(
+              "flex items-center justify-center rounded-2xl bg-[#eef1ff] font-semibold tracking-[-0.02em] text-[#3848c7] ring-1 ring-inset ring-[#5566f6]/10",
+              large ? "size-[72px] text-[24px]" : "size-14 text-[20px]",
+            )}
+          >
+            {initialsOf(name)}
+          </span>
+        )}
       </Link>
-    );
-  }
-  return (
-    <div className={cn("flex min-w-0 items-center gap-2.5", className)} data-organization-brand>
-      <Link href={homeHref} tabIndex={-1} aria-hidden className="shrink-0 rounded-xl">
-        <Monogram name={name} large={large} />
-      </Link>
-      <div className="flex min-w-0 flex-col leading-tight">
-        <Link
-          href={homeHref}
-          className={cn("truncate rounded-md text-[15px] font-semibold text-[#0b1024] transition-colors duration-150 hover:text-[#3848c7]", FOCUS)}
-        >
-          {name}
-        </Link>
-        <Link
-          href={BRANDING_SETTINGS_HREF}
-          data-add-logo
+      {canUpload ? (
+        <>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => input.current?.click()}
+            title={t("uploadLogoHint")}
+            data-logo-upload
+            className={cn(
+              "relative -mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-full border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#3848c7] shadow-[0_6px_16px_-10px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-70",
+              FOCUS,
+            )}
+          >
+            {busy ? (
+              <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+            ) : (
+              <Upload className="size-3.5 shrink-0" aria-hidden />
+            )}
+            {busy ? t("logoUploading") : t("uploadLogo")}
+          </button>
+          <input
+            ref={input}
+            type="file"
+            accept={ORG_LOGO_ACCEPT}
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void upload(file);
+            }}
+          />
+        </>
+      ) : null}
+      <div className={cn("flex w-full min-w-0 flex-col items-center gap-0.5", canUpload ? "mt-2.5" : "mt-3")}>
+        <span
           className={cn(
-            "mt-0.5 inline-flex w-fit items-center gap-1 rounded-md text-[12.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6]",
-            FOCUS,
+            "line-clamp-2 font-semibold leading-snug text-[#0b1024] [overflow-wrap:anywhere]",
+            large ? "text-[14px]" : "text-[15px]",
           )}
+          title={identity.name}
+          data-org-short-name
         >
-          <ImagePlus className="size-3.5 shrink-0" aria-hidden />
-          {t("addLogo")}
-        </Link>
+          {identity.name}
+        </span>
+        {identity.inn ? (
+          <span className="text-[12px] leading-tight tracking-[0.02em] text-[#6f7282] tabular-nums" data-org-inn>
+            {t("inn", { inn: identity.inn })}
+          </span>
+        ) : null}
       </div>
     </div>
   );

@@ -2939,7 +2939,12 @@
           }
         }
       },
-      "addLogo": "Add logo",
+      "uploadLogo": "Upload logo",
+      "uploadLogoHint": "PNG, JPG or SVG up to 500 KB. The logo appears here right away; you can change it later in Brand style.",
+      "logoUploading": "Uploading…",
+      "logoUploaded": "Logo uploaded. You can change it in Settings and appearance → Brand style.",
+      "logoFailed": "Couldn't upload the logo",
+      "inn": "TIN {inn}",
       "leads": {
         "journalsSetup": "Which journals you keep, who fills them in and how tasks are assigned — open the setting you need.",
         "staffHealth": "Medical book deadlines and staff training: who needs a renewal soon and who has not been briefed yet.",
