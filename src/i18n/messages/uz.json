@@ -5740,7 +5740,9 @@
         "yearTotal": "yiliga {amount}",
         "yearSavings": "tejash {amount}",
         "monthly": "har oy to‘lanadi",
-        "forPoints": "{count, plural, other {# ta nuqta}} uchun",
+        "perPointMonth": "/oy, bitta nuqta uchun",
+        "totalYear": "{count, plural, other {# ta nuqta}} uchun — yiliga {amount}",
+        "totalMonth": "{count, plural, other {# ta nuqta}} uchun — oyiga {amount}",
         "pointsDiscount": "nuqtalar uchun −{percent, number} %"
       },
       "includes": {

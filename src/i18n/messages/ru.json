@@ -5740,7 +5740,9 @@
         "yearTotal": "{amount} за год",
         "yearSavings": "экономия {amount}",
         "monthly": "оплата каждый месяц",
-        "forPoints": "за {count, plural, one {# точку} few {# точки} many {# точек} other {# точки}}",
+        "perPointMonth": "/мес за точку",
+        "totalYear": "{count, plural, one {За # точку} few {За # точки} many {За # точек} other {За # точки}} — {amount} за год",
+        "totalMonth": "{count, plural, one {За # точку} few {За # точки} many {За # точек} other {За # точки}} — {amount} в месяц",
         "pointsDiscount": "−{percent, number} % за точки"
       },
       "includes": {
