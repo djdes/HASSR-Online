@@ -1,6 +1,8 @@
 import type { Session } from "next-auth";
+import { getTranslations } from "next-intl/server";
 
 import { loadBuildingContext } from "@/lib/active-building";
+import { miniLocationLabel } from "@/lib/header-point";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { NPS_HIDDEN } from "@/lib/nps";
@@ -112,9 +114,10 @@ export async function loadMiniShellData(session: Session | null) {
     canCancelDeletion: session?.user
       ? hasFullWorkspaceAccess(session.user)
       : false,
-    locationName: buildingContext?.enabled
-      ? buildingContext.activeBuilding?.name ?? null
-      : null,
+    locationName: miniLocationLabel(
+      buildingContext,
+      (await getTranslations("navigation.shell.point"))("organization"),
+    ),
     partnerHint,
   };
 }

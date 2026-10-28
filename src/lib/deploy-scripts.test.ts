@@ -30,12 +30,12 @@ let warmSeen: string[] = [];
 
 // Асинхронно: заглушка сервера живёт в этом же процессе, и синхронный
 // запуск заблокировал бы её ответы. Прокси окружения к 127.0.0.1 не нужны.
-function run(script: string, args: string[], env: Record<string, string> = {}): Promise<{ status: number; stdout: string; stderr: string }> {
+function run(script: string, args: string[], env: Record<string, string> = {}, cwd = appDir): Promise<{ status: number; stdout: string; stderr: string }> {
   const childEnv: NodeJS.ProcessEnv = { ...process.env, POST_DEPLOY_ATTEMPTS: "2", POST_DEPLOY_PAUSE: "0", ...env };
   for (const name of Object.keys(childEnv)) if (/^(https?|all|no)_proxy$/i.test(name)) delete childEnv[name];
   childEnv.NO_PROXY = "*";
   return new Promise((resolve) => {
-    execFile("bash", [path.join(SCRIPTS, script), ...args], { cwd: appDir, encoding: "utf8", timeout: 30_000, env: childEnv }, (error, stdout, stderr) =>
+    execFile("bash", [path.join(SCRIPTS, script), ...args], { cwd, encoding: "utf8", timeout: 30_000, env: childEnv }, (error, stdout, stderr) =>
       resolve({ status: error ? (typeof error.code === "number" ? error.code : 1) : 0, stdout, stderr }),
     );
   });
@@ -234,5 +234,95 @@ describe("wait-for-port.sh", () => {
     const result = await run("wait-for-port.sh", ["127.0.0.1", String(await closedPort()), "2", "0"]);
     assert.equal(result.status, 1);
     assert.match(result.stdout, /SSH-порт сервера не отвечает/);
+  });
+});
+
+// Сервер собирает deploy.tar сам из скачанного с GitHub коммита и сверяет
+// отпечаток с архивом из GitHub Actions — оба скрипта должны давать
+// одинаковый результат на одинаковом коде.
+describe("deploy-tarball.sh и deploy-tree-digest.sh", () => {
+  let work = "";
+  const SOURCE: Record<string, string> = {
+    "package.json": "{}",
+    "src/app/(dashboard)/journals/page.tsx": "page",
+    "src/app/api/journals/route.ts": "route",
+    "public/logo.svg": "<svg/>",
+    "journals/source.json": "raw",
+    "docs/spec.md": "doc",
+    "mobile/app.json": "app",
+    "node_modules/x/index.js": "x",
+    ".agent/tasks/t/spec.md": "t",
+    ".next/cache/a": "a",
+  };
+
+  function tree(name: string, files: Record<string, string>) {
+    const root = path.join(work, name);
+    for (const [rel, body] of Object.entries(files)) {
+      fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      fs.writeFileSync(path.join(root, rel), body);
+    }
+    return root;
+  }
+
+  function sh(command: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      execFile("bash", ["-c", command], { cwd: work, encoding: "utf8", timeout: 30_000 }, (error, stdout, stderr) =>
+        error ? reject(new Error(stderr || String(error))) : resolve(stdout),
+      );
+    });
+  }
+
+  // Архив дерева `name` → его отпечаток. Пути относительные: GNU tar под
+  // Windows принимает «C:\…» за адрес удалённой машины.
+  async function digestOf(name: string) {
+    const packed = await run("deploy-tarball.sh", [name, `../${name}.tar`], {}, work);
+    assert.equal(packed.status, 0, packed.stdout + packed.stderr);
+    const digest = await run("deploy-tree-digest.sh", [`${name}.tar`], {}, work);
+    assert.equal(digest.status, 0, digest.stdout + digest.stderr);
+    return digest.stdout.trim();
+  }
+
+  before(() => {
+    work = fs.mkdtempSync(path.join(os.tmpdir(), "deploy-tarball-"));
+  });
+
+  after(() => fs.rmSync(work, { recursive: true, force: true }));
+
+  it("в архиве код со всеми маршрутами журналов, без зависимостей, документации и данных журналов", async () => {
+    tree("listed", SOURCE);
+    const packed = await run("deploy-tarball.sh", ["listed", "../listed.tar"], {}, work);
+    assert.equal(packed.status, 0, packed.stdout + packed.stderr);
+    const files = (await sh("tar tf listed.tar")).split(/\r?\n/).filter((line) => line && !line.endsWith("/"));
+    assert.deepEqual(files.sort(), [
+      "./package.json",
+      "./public/logo.svg",
+      "./src/app/(dashboard)/journals/page.tsx",
+      "./src/app/api/journals/route.ts",
+    ]);
+  });
+
+  it("отпечаток не зависит от дат файлов и .build-time, но меняется с содержимым и путями", async () => {
+    tree("runner", { ...SOURCE, ".build-time": "2026-10-28T17:00:00Z" });
+    const server = tree("server", { ...SOURCE, ".build-time": "2026-10-28T17:03:00Z" });
+    const old = new Date("2026-01-01T00:00:00Z");
+    for (const rel of Object.keys(SOURCE)) fs.utimesSync(path.join(server, rel), old, old);
+    tree("changed", { ...SOURCE, "src/app/api/journals/route.ts": "route v2" });
+    const { "public/logo.svg": logo, ...rest } = SOURCE;
+    tree("renamed", { ...rest, "public/logo-2.svg": logo });
+
+    const runner = await digestOf("runner");
+    assert.match(runner, /^[0-9a-f]{64}$/);
+    assert.equal(await digestOf("server"), runner);
+    assert.notEqual(await digestOf("changed"), runner);
+    assert.notEqual(await digestOf("renamed"), runner);
+  });
+
+  it("архив без файлов — ошибка, а не отпечаток", async () => {
+    tree("empty", { ".build-time": "t", "docs/only.md": "doc" });
+    const packed = await run("deploy-tarball.sh", ["empty", "../empty.tar"], {}, work);
+    assert.equal(packed.status, 0, packed.stdout + packed.stderr);
+    const digest = await run("deploy-tree-digest.sh", ["empty.tar"], {}, work);
+    assert.equal(digest.status, 1);
+    assert.match(digest.stderr, /в архиве нет файлов/);
   });
 });
