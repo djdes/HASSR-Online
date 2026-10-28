@@ -128,6 +128,8 @@ type OrgContext = {
   qr: BrandQrOptions;
   /** Открыто с `layout=plate`: оборудованию с температурой — табличка по умолчанию. */
   wantsPlate: boolean;
+  /** `?point=none` («Без точки» в фильтре «Цехов» и «Оборудования»): только объекты цехов без точки. */
+  looseOnly: boolean;
 };
 
 /**
@@ -366,7 +368,8 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
 }
 
 async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "equipment" | "room"): Promise<Omit<QrPostersView, "origin" | "autoprint" | "brand">> {
-  // Отмеченные в адресе (`ids=`) — ровно они; иначе объекты точки из шапки.
+  // Отмеченные в адресе (`ids=`) — ровно они; иначе объекты точки из шапки
+  // (или выбранной в фильтре над списком), а «Без точки» — цехов без точки.
   const explicitIds = request.selectedIds ?? [];
   const loaded = await loadQrPosters({
     organizationId: ctx.organizationId,
@@ -375,6 +378,7 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
     qr: ctx.qr,
     explicitIds,
     buildingId: explicitIds.length > 0 ? null : ctx.pointId,
+    looseOnly: explicitIds.length === 0 && ctx.looseOnly,
     printPointId: ctx.pointId,
   });
   const format = request.format ?? "a4";
@@ -563,6 +567,8 @@ export async function loadQrPostersView(params: {
   request: QrPostersRequest;
   origin: string;
   activeBuildingId: string | null;
+  /** `?point=none`: наклейки только оборудования цехов без точки. */
+  looseOnly?: boolean;
   /** `?bw=1`: всё чёрное на белом. */
   mono?: boolean;
 }): Promise<QrPostersView> {
@@ -600,6 +606,7 @@ export async function loadQrPostersView(params: {
     names: await getOrgCustomNames(params.organizationId),
     qr,
     wantsPlate,
+    looseOnly: params.looseOnly === true,
   };
 
   let body: Omit<QrPostersView, "origin" | "autoprint" | "brand">;

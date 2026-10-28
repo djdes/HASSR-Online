@@ -29424,6 +29424,11 @@
       "done": "Request sent — a manager will contact you",
       "failed": "Could not send the request",
       "empty": "Choose at least one item"
+    },
+    "placeFilter": {
+      "label": "Point",
+      "all": "All",
+      "none": "No point"
     }
   },
   "teamUi": {

@@ -350,7 +350,11 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
                 />
               )}
               {readOnly ? null : (
-                <Link href={`/settings/users?add=${encodeURIComponent(point.id)}`} className={PRIMARY_LINK} data-point-staff-add>
+                <Link
+                  href={`/settings/users?place=${encodeURIComponent(point.id)}&add=${encodeURIComponent(point.id)}`}
+                  className={PRIMARY_LINK}
+                  data-point-staff-add
+                >
                   <Plus className="size-4" />
                   {t("staff.add")}
                 </Link>

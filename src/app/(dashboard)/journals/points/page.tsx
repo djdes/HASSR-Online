@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Settings2 } from "lucide-react";
+import { ClipboardList, Settings2 } from "lucide-react";
+import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
+import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -28,9 +30,16 @@ export const dynamic = "force-dynamic";
  * добавить/убрать журнал»). Каждая точка — карточка с журналами её набора;
  * правка меняет набор только этой точки (`POST /api/journals/points`). Без
  * деления журналов по точкам — одна карточка «Все точки» с набором компании.
- * Права — `admin.full`, как у назначения набора журналов.
+ * Права — `admin.full`, как у назначения набора журналов. Над карточками —
+ * фильтр по точкам, как у сотрудников (2026-10-28, `?place=`); счётчик —
+ * журналы в работе.
  */
-export default async function PointJournalsPage() {
+export default async function PointJournalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ place?: string | string[] }>;
+}) {
+  const query = await searchParams;
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) redirect("/journals");
   // В шапке выбрана торговая точка — страница всей организации закрыта.
@@ -74,6 +83,19 @@ export default async function PointJournalsPage() {
       return { ...target, enabledCodes: journals.filter((journal) => !disabled.has(journal.code)).map((journal) => journal.code) };
     }),
   );
+  // Фильтр по точкам — как у сотрудников; страница открыта только при «Вся
+  // организация» в шапке, поэтому без выбора в адресе — все точки.
+  const pointCards = cards.filter((card): card is PointJournalsCard & { id: string } => card.id !== null);
+  const showPlaceFilter = context.enabled && pointCards.length >= 2;
+  const place = showPlaceFilter
+    ? resolvePlaceFilter({
+        requested: placeFilterParam(query.place),
+        places: pointCards.map((card) => card.id),
+        hasNone: false,
+        headerPointId: null,
+      })
+    : null;
+  const tPlace = await getTranslations("settingsUi.placeFilter");
 
   return (
     <div className="space-y-5" data-point-journals-page>
@@ -94,8 +116,28 @@ export default async function PointJournalsPage() {
         title={t("guide.title")}
         bullets={[t("guide.list"), t("guide.add"), t("guide.remove")]}
       />
+      {showPlaceFilter ? (
+        <PlaceFilterChips
+          kind="point-journals"
+          label={tPlace("label")}
+          basePath="/journals/points"
+          active={place}
+          all={{
+            label: tPlace("all"),
+            count: pointCards.reduce((sum, card) => sum + card.enabledCodes.length, 0),
+            icon: ClipboardList,
+          }}
+          places={pointCards.map((card) => ({ id: card.id, name: card.name, office: false, count: card.enabledCodes.length }))}
+        />
+      ) : null}
       <DomainMessagesBoundary namespaces={["pointJournals"]}>
-        <PointJournalsClient cards={cards} journals={journals} perPoint={context.enabled} />
+        <PointJournalsClient
+          // Набор журналов в карточках — состояние клиента: при смене фильтра собираем заново.
+          key={place ?? "all"}
+          cards={place ? cards.filter((card) => card.id === place) : cards}
+          journals={journals}
+          perPoint={context.enabled}
+        />
       </DomainMessagesBoundary>
     </div>
   );

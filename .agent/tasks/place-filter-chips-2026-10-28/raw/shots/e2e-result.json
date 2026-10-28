@@ -1,0 +1,162 @@
+{
+  "base": "http://localhost:3026",
+  "total": 31,
+  "failed": 0,
+  "results": [
+    {
+      "name": "Цеха: фильтр есть, отмечено «Все»",
+      "ok": true,
+      "detail": "[{\"id\":\"all\",\"current\":true,\"count\":\"3\"},{\"id\":\"b-dk-5\",\"current\":false,\"count\":\"1\"},{\"id\":\"b-dk-112\",\"current\":false,\"count\":\"1\"},{\"id\":\"b-dk-mira\",\"current\":false,\"count\":\"0\"},{\"id\":\"none\",\"current\":false,\"count\":\"1\"}]"
+    },
+    {
+      "name": "Цеха: чипы точек и «Без точки», без офиса без цехов",
+      "ok": true,
+      "detail": "all:3 b-dk-5:1 b-dk-112:1 b-dk-mira:0 none:1"
+    },
+    {
+      "name": "Цеха: «Все» — все группы (3 точки + без точки)",
+      "ok": true,
+      "detail": "Пищеблок СОШ № 5 | Пищеблок гимназии № 112 | Кафе на Мира | Без точки"
+    },
+    {
+      "name": "Цеха: QR при «Все» — point=all",
+      "ok": true,
+      "detail": "/settings/qr-posters?kind=equipment&layout=sheet&point=all"
+    },
+    {
+      "name": "Цеха: точка 112 — её цеха и цеха без точки",
+      "ok": true,
+      "detail": "Пищеблок гимназии № 112 | Без точки"
+    },
+    {
+      "name": "Цеха: QR по точке 112",
+      "ok": true,
+      "detail": "/settings/qr-posters?kind=equipment&layout=sheet&point=b-dk-112"
+    },
+    {
+      "name": "Цеха: «Без точки» — только цеха без точки",
+      "ok": true,
+      "detail": "Без точки"
+    },
+    {
+      "name": "Цеха: QR «Без точки» — point=none",
+      "ok": true,
+      "detail": "/settings/qr-posters?kind=equipment&layout=sheet&point=none"
+    },
+    {
+      "name": "Оборудование: отмечено «Все», счётчики",
+      "ok": true,
+      "detail": "all:5 b-dk-5:3 b-dk-112:1 b-dk-mira:0 none:1"
+    },
+    {
+      "name": "Оборудование: точка 112 — её и без точки",
+      "ok": true,
+      "detail": "Пищеблок гимназии № 112 | Без точки"
+    },
+    {
+      "name": "QR по точке 112: морозильник 112 и холодильник склада",
+      "ok": true,
+      "detail": "e-dk-112-freezer,e-dk-shared-fridge"
+    },
+    {
+      "name": "QR «Без точки»: ровно холодильник склада",
+      "ok": true,
+      "detail": "e-dk-shared-fridge"
+    },
+    {
+      "name": "Журналы точек: фильтр по точкам, отмечено «Все», все карточки",
+      "ok": true,
+      "detail": "all:138 b-dk-5:46 b-dk-112:46 b-dk-mira:46 / 3"
+    },
+    {
+      "name": "Журналы точек: точка 112 — одна карточка",
+      "ok": true,
+      "detail": "Пищеблок гимназии № 112"
+    },
+    {
+      "name": "Журналы точек: после «Все» карточки не устаревшие (журналы в работе у всех)",
+      "ok": true,
+      "detail": "Пищеблок СОШ № 5г. Казань, ул. Ленина, 546 журналов в работе | Пищеблок гимназии № 112г. Казань, пр. Победы, 10046 журналов | Кафе на Мира46 журналов в работеДобавить журналГигиенический"
+    },
+    {
+      "name": "Сотрудники: тот же фильтр, при «Вся организация» — «Все»",
+      "ok": true,
+      "detail": "all:4 b-dk-office:0 b-dk-5:2 b-dk-112:0 b-dk-mira:0 none:2"
+    },
+    {
+      "name": "Оборудование: без выбора — точка из шапки (№ 5) и без точки",
+      "ok": true,
+      "detail": "b-dk-5 / Пищеблок СОШ № 5 | Без точки"
+    },
+    {
+      "name": "Оборудование: QR по точке № 5",
+      "ok": true,
+      "detail": "/settings/qr-posters?kind=equipment&layout=sheet&point=b-dk-5"
+    },
+    {
+      "name": "Оборудование: «Все» при точке в шапке — все группы",
+      "ok": true,
+      "detail": "Пищеблок СОШ № 5 | Пищеблок гимназии № 112 | Кафе на Мира | Без точки"
+    },
+    {
+      "name": "QR при «Все» и точке в шапке: всё оборудование",
+      "ok": true,
+      "detail": "e-dk-112-freezer,e-dk-5-fridge,e-dk-5-fryer,e-dk-5-uv,e-dk-shared-fridge"
+    },
+    {
+      "name": "Цеха: без выбора — точка из шапки (№ 5)",
+      "ok": true,
+      "detail": "b-dk-5 / Пищеблок СОШ № 5 | Без точки"
+    },
+    {
+      "name": "Сотрудники: без выбора — точка из шапки (№ 5)",
+      "ok": true,
+      "detail": "all:4 b-dk-office:0 b-dk-5:2* b-dk-112:0 b-dk-mira:0 none:2"
+    },
+    {
+      "name": "Журналы точек при точке в шапке — закрыты, как раньше (фильтра нет)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Страница точки: «Добавить сотрудника» — с этой точкой в фильтре",
+      "ok": true,
+      "detail": "/settings/users?place=b-dk-5&add=b-dk-5"
+    },
+    {
+      "name": "Руководитель точки: в фильтре только его точка и «Без точки»",
+      "ok": true,
+      "detail": "all:4 b-dk-5:3 none:1"
+    },
+    {
+      "name": "Руководитель точки: чужая точка в адресе не открывается",
+      "ok": true,
+      "detail": "b-dk-5 / Пищеблок СОШ № 5 | Без точки"
+    },
+    {
+      "name": "Руководитель точки: «Все» — только его точка и без точки",
+      "ok": true,
+      "detail": "Пищеблок СОШ № 5 | Без точки"
+    },
+    {
+      "name": "Руководитель точки: QR чужой точки через адрес — не печатается",
+      "ok": true,
+      "detail": "e-dk-5-fridge,e-dk-5-fryer,e-dk-5-uv,e-dk-shared-fridge"
+    },
+    {
+      "name": "Руководитель точки: QR «вся организация» через адрес — не печатается",
+      "ok": true,
+      "detail": "e-dk-5-fridge,e-dk-5-fryer,e-dk-5-uv,e-dk-shared-fridge"
+    },
+    {
+      "name": "Руководитель точки: «Цеха» — только его точка и «Без точки»",
+      "ok": true,
+      "detail": "all,b-dk-5,none"
+    },
+    {
+      "name": "Mini App: фильтр на «Оборудовании» тот же",
+      "ok": true,
+      "detail": "all,b-dk-5,b-dk-112,b-dk-mira,none"
+    }
+  ]
+}
