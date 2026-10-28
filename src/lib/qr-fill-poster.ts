@@ -18,6 +18,7 @@ import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
 import { buildEquipmentPlate, indexEquipmentInAreas } from "@/lib/qr-plate";
 import type { QrFillKind, QrPoster, QrPosterMissing } from "@/lib/qr-fill-types";
+import { qrPosterPoint, type QrPointBuilding, type QrPosterPointLine } from "@/lib/qr-poster-point";
 import { loadDirectoryBuildings } from "@/lib/room-directory";
 import { encodeRouteParam } from "@/lib/route-param";
 
@@ -77,6 +78,18 @@ export async function loadPosterOrgName(organizationId: string): Promise<string>
   return resolveOrgJournalName(org);
 }
 
+/**
+ * Здания организации для строки точки на QR (`qr-poster-point.ts`): один
+ * запрос на весь лист — наклеек на нём бывают десятки.
+ */
+export async function loadQrPointBuildings(organizationId: string): Promise<QrPointBuilding[]> {
+  return db.building.findMany({
+    where: { organizationId },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, address: true, journalName: true, kind: true },
+  });
+}
+
 type EquipmentSource = {
   id: string;
   name: string;
@@ -92,7 +105,9 @@ export async function buildEquipmentPoster(
   orgName: string,
   qr?: BrandQrOptions,
   /** Порядок в цехе (с 0) — для таблички; нет — таблички нет. */
-  plateIndex?: number
+  plateIndex?: number,
+  /** Торговая точка оборудования (`qrPosterPoint`): строка под шапкой листа. */
+  point: QrPosterPointLine | null = null
 ): Promise<QrPoster> {
   const url = qrFillUrl(origin, "equipment", item.id);
   // УФ-лампа температуру не меряет — норму «…°C» на её наклейке не печатаем.
@@ -105,8 +120,9 @@ export async function buildEquipmentPoster(
     title: item.name,
     orgName,
     // Цех не печатаем: плакат висит на самом холодильнике, а строка с
-    // организацией и без него получалась длинной.
+    // организацией и без него получалась длинной. Точка — своей строкой.
     subtitle: "",
+    point,
     norms: norm ? [norm] : [],
     url,
     svg: await qrSvg(url, qr),
@@ -118,7 +134,8 @@ type RoomSource = { id: string; name: string; climateNorms: unknown };
 
 export async function buildRoomPoster(
   room: RoomSource,
-  _buildingName: string,
+  /** Здание помещения (`qrPosterPoint`): строка точки под шапкой листа. */
+  point: QrPosterPointLine | null,
   origin: string,
   orgName: string,
   qr?: BrandQrOptions
@@ -130,8 +147,8 @@ export async function buildRoomPoster(
     kind: "room",
     title: room.name,
     orgName,
-    // Точку не печатаем: её название почти повторяет организацию.
     subtitle: "",
+    point,
     norms: [
       metricLabel(norms?.temperature ?? DEFAULT_CLIMATE_TEMPERATURE, "°C"),
       metricLabel(norms?.humidity ?? DEFAULT_CLIMATE_HUMIDITY, "%"),
@@ -214,6 +231,8 @@ export async function buildJournalPoster(params: {
   buildingId?: string | null;
   /** Цвет рамки и центр QR организации. */
   qr?: BrandQrOptions;
+  /** Торговая точка плаката (`qrPosterPoint`): строка под шапкой листа. */
+  point?: QrPosterPointLine | null;
 }): Promise<QrPoster> {
   const subject = journalFillSubject(params.organizationId, params.code, params.documentId, {
     validUntil: params.documentId ? params.validUntil : null,
@@ -227,6 +246,7 @@ export async function buildJournalPoster(params: {
     title: params.name,
     orgName: params.orgName,
     subtitle: params.subtitle,
+    point: params.point ?? null,
     norms: [],
     url,
     svg: await qrSvg(url, params.qr),
@@ -342,7 +362,10 @@ async function buildJournalPosterById(params: {
   /** Активная точка кабинета: основной QR в сети точек привязан к ней. */
   activeBuildingId?: string | null;
   qr?: BrandQrOptions;
+  /** Здания организации (`loadQrPointBuildings`) — для строки точки; нет — строки нет. */
+  buildings?: QrPointBuilding[];
 }): Promise<ExplicitJournalPoster> {
+  const buildings = params.buildings ?? [];
   const { code, documentId, verify } = splitJournalPosterId(params.id);
   if (!code) return { missing: { id: params.id, label: params.id, reason: "Пустой код журнала" } };
   if (verify && code !== "hygiene") {
@@ -360,6 +383,7 @@ async function buildJournalPosterById(params: {
         orgName: params.orgName,
         origin: params.origin,
         qr: params.qr,
+        point: qrPosterPoint(buildings, null, null),
       }),
     };
   }
@@ -367,21 +391,25 @@ async function buildJournalPosterById(params: {
   if (!template) return { missing: { id: params.id, label: code, reason: "Такого журнала нет" } };
   let subtitle = "Запись в журнал с телефона";
   let document: { status: string; dateFrom: Date; dateTo: Date } | null = null;
+  let documentBuildingId: string | null = null;
   if (documentId) {
     const found = await db.journalDocument.findFirst({
       where: { id: documentId, organizationId: params.organizationId, template: { code } },
-      select: { title: true, status: true, dateFrom: true, dateTo: true, building: { select: { name: true } } },
+      select: { title: true, status: true, dateFrom: true, dateTo: true, buildingId: true },
     });
     if (!found) {
       return { missing: { id: params.id, label: template.name, reason: "Документ не найден — возможно, его удалили" } };
     }
     document = { status: found.status, dateFrom: found.dateFrom, dateTo: found.dateTo };
-    subtitle = found.building?.name ? `${found.title} · ${found.building.name}` : found.title;
+    // Точка документа — своей строкой (`point`), в подзаголовке только документ.
+    subtitle = found.title;
+    documentBuildingId = found.buildingId;
   }
   // Документ — дополнительный QR до конца его периода; журнал — основной,
   // в сети точек привязан к активной точке.
   const validUntil = document ? journalFillValidUntil(document.dateTo) : null;
   const buildingId = documentId ? null : await resolveMainJournalQrBuilding(params.organizationId, params.activeBuildingId);
+  const point = qrPosterPoint(buildings, documentId ? documentBuildingId : buildingId, null);
   const poster = verify
     ? await buildJournalPoster({
         organizationId: params.organizationId,
@@ -394,6 +422,7 @@ async function buildJournalPosterById(params: {
         validUntil,
         buildingId,
         qr: params.qr,
+        point,
       })
     : await buildJournalPoster({
         organizationId: params.organizationId,
@@ -406,6 +435,7 @@ async function buildJournalPosterById(params: {
         validUntil,
         buildingId,
         qr: params.qr,
+        point,
       });
   if (document) poster.periodLabel = formatPeriodLabel(document.dateFrom, document.dateTo);
   return { poster, code, document };
@@ -466,6 +496,11 @@ export async function loadQrPosters(params: {
    * оборудование её цехов и цехов без точки. Нет — вся организация.
    */
   buildingId?: string | null;
+  /**
+   * Точка, для которой печатают (из шапки): её строку получает оборудование
+   * цехов без точки. Своя точка объекта важнее (`qrPosterPoint`).
+   */
+  printPointId?: string | null;
 }): Promise<QrPostersResult> {
   const allowed = params.allowed ?? (() => true);
   const posters: QrPoster[] = [];
@@ -484,6 +519,9 @@ export async function loadQrPosters(params: {
     });
     if (!org) return { posters: [], missing: [] };
     const orgName = resolveOrgJournalName(org);
+    const buildings = await loadQrPointBuildings(params.organizationId);
+    // QR здесь общие для организации: строка точки — только у единственной торговой точки.
+    const orgPoint = qrPosterPoint(buildings, null, null);
     const todayKey = todayKeyFor(org.timezone);
     const day = new Date(`${todayKey}T00:00:00.000Z`);
     const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
@@ -493,7 +531,7 @@ export async function loadQrPosters(params: {
       const missing: QrPosterMissing[] = [];
       const built: Array<Extract<ExplicitJournalPoster, { poster: QrPoster }>> = [];
       for (const id of explicitIds) {
-        const result = await buildJournalPosterById({ organizationId: params.organizationId, id, orgName, origin: params.origin, qr: params.qr });
+        const result = await buildJournalPosterById({ organizationId: params.organizationId, id, orgName, origin: params.origin, qr: params.qr, buildings });
         if ("missing" in result) missing.push(result.missing);
         else built.push(result);
       }
@@ -518,6 +556,7 @@ export async function loadQrPosters(params: {
           orgName,
           origin: params.origin,
           qr: params.qr,
+          point: orgPoint,
         })
       );
     }
@@ -534,6 +573,7 @@ export async function loadQrPosters(params: {
           orgName,
           origin: params.origin,
           qr: params.qr,
+          point: orgPoint,
         })),
         notice,
       });
@@ -547,6 +587,7 @@ export async function loadQrPosters(params: {
             origin: params.origin,
             verify: true,
             qr: params.qr,
+            point: orgPoint,
           })),
           notice,
         });
@@ -554,7 +595,10 @@ export async function loadQrPosters(params: {
     }
     return { posters, missing: [] };
   }
-  const orgName = await loadPosterOrgName(params.organizationId);
+  const [orgName, pointBuildings] = await Promise.all([
+    loadPosterOrgName(params.organizationId),
+    loadQrPointBuildings(params.organizationId),
+  ]);
   const wanted = (id: string) => allowed(id) && (explicitIds.length === 0 || explicitIds.includes(id));
   const locations: Record<string, string> = {};
   const equipmentTypes: Record<string, string> = {};
@@ -563,17 +607,18 @@ export async function loadQrPosters(params: {
       (building) => !params.buildingId || building.id === params.buildingId
     );
     for (const building of buildings) {
+      const point = qrPosterPoint(pointBuildings, building.id, params.printPointId);
       for (const room of building.rooms) {
         if (!wanted(room.id)) continue;
         locations[room.id] = building.name;
-        posters.push(await buildRoomPoster(room, building.name, params.origin, orgName, params.qr));
+        posters.push(await buildRoomPoster(room, point, params.origin, orgName, params.qr));
       }
     }
   } else {
     const equipment = await db.equipment.findMany({
       where: { area: { organizationId: params.organizationId }, ...equipmentBuildingWhere(params.buildingId) },
       orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
-      select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
+      select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true, buildingId: true } } },
     });
     // Номер таблички — порядок среди всего оборудования цеха, а не среди выбранного.
     const plateIndex = indexEquipmentInAreas(equipment.map((item) => ({ id: item.id, name: item.name, area: { name: item.area?.name ?? "" } })));
@@ -581,7 +626,8 @@ export async function loadQrPosters(params: {
       if (!wanted(item.id)) continue;
       if (item.area?.name) locations[item.id] = item.area.name;
       equipmentTypes[item.id] = item.type;
-      posters.push(await buildEquipmentPoster(item, params.origin, orgName, params.qr, plateIndex.get(item.id)));
+      const point = qrPosterPoint(pointBuildings, item.area?.buildingId, params.printPointId);
+      posters.push(await buildEquipmentPoster(item, params.origin, orgName, params.qr, plateIndex.get(item.id), point));
     }
   }
   const found = new Set(posters.map((poster) => poster.id));
@@ -601,7 +647,10 @@ export async function loadQrPoster(params: {
   activeBuildingId?: string | null;
   qr?: BrandQrOptions;
 }): Promise<QrPoster | null> {
-  const orgName = await loadPosterOrgName(params.organizationId);
+  const [orgName, buildings] = await Promise.all([
+    loadPosterOrgName(params.organizationId),
+    loadQrPointBuildings(params.organizationId),
+  ]);
   if (params.kind === "journal") {
     const result = await buildJournalPosterById({
       organizationId: params.organizationId,
@@ -610,21 +659,22 @@ export async function loadQrPoster(params: {
       origin: params.origin,
       activeBuildingId: params.activeBuildingId,
       qr: params.qr,
+      buildings,
     });
     return "poster" in result ? result.poster : null;
   }
   if (params.kind === "room") {
     const room = await db.room.findFirst({
       where: { id: params.id, building: { organizationId: params.organizationId } },
-      select: { id: true, name: true, climateNorms: true, building: { select: { name: true } } },
+      select: { id: true, name: true, climateNorms: true, buildingId: true },
     });
     if (!room) return null;
-    return buildRoomPoster(room, room.building.name, params.origin, orgName, params.qr);
+    return buildRoomPoster(room, qrPosterPoint(buildings, room.buildingId, null), params.origin, orgName, params.qr);
   }
   const item = await db.equipment.findFirst({
     where: { id: params.id, area: { organizationId: params.organizationId } },
-    select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true } } },
+    select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { name: true, buildingId: true } } },
   });
   if (!item) return null;
-  return buildEquipmentPoster(item, params.origin, orgName, params.qr);
+  return buildEquipmentPoster(item, params.origin, orgName, params.qr, undefined, qrPosterPoint(buildings, item.area.buildingId, null));
 }

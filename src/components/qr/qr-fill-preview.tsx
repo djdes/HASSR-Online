@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ExternalLink, FileText, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
+import { ExternalLink, FileText, MapPin, Printer, QrCode, RefreshCw, Sticker } from "lucide-react";
 
 import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
 import { formatQrValidUntil, posterDetailLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
@@ -135,6 +135,12 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
                 </div>
                 <div className="text-[12.5px] leading-[1.5] text-[#6f7282]">
                   {state.poster.orgName}
+                  {state.poster.point ? (
+                    <span className="flex min-w-0 items-center gap-1 font-medium text-[#3c4053]" data-qr-preview-point="" title={state.poster.point.title}>
+                      <MapPin className="size-3.5 shrink-0 text-[#5566f6]" aria-hidden />
+                      <span className="truncate">{state.poster.point.short}</span>
+                    </span>
+                  ) : null}
                   {posterDetailLine(state.poster) ? (
                     <span className="block">{posterDetailLine(state.poster)}</span>
                   ) : null}

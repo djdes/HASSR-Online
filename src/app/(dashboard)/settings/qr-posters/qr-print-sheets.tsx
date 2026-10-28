@@ -34,6 +34,12 @@ import type { QrPrintPage } from "@/lib/qr-print-layout";
  * основного цвета. Цвет только в `border-color` и в SVG (печать кабинета
  * обнуляет фоны, а `currentColor` в ней чёрный); режим «Ч/б» — все цвета
  * чёрные. Без логотипа в шапке — название организации.
+ *
+ * Торговая точка (2026-10-28, как на памятках): под шапкой каждого плаката,
+ * наклейки и таблички — строка с меткой и точкой, для которой напечатан код
+ * (`poster.point`, правила — `qr-poster-point.ts`). Чтобы всё осталось в
+ * своей рамке, с этой строкой код A5 чуть меньше, а код таблички, как у
+ * наклейки, занимает оставшееся место.
  */
 
 type SheetTranslator = ReturnType<typeof useTranslations<"settingsUi.qrPrintSheets">>;
@@ -76,6 +82,17 @@ function validityLine(poster: QrPoster, t: SheetTranslator): string | null {
 }
 
 const SVG_SIZE = /<svg([^>]*?)\swidth="[^"]*"\s+height="[^"]*"/;
+
+/** Ширина кода A5, мм; со строкой точки — чуть меньше, чтобы половинка листа не переполнилась. */
+const A5_CODE_MM = 72;
+const A5_CODE_WITH_POINT_MM = 64;
+/**
+ * Код таблички — как у наклейки: занимает место, что осталось между режимом
+ * и номером, от 30 до 46 мм по ширине. С логотипом в шапке, строкой точки и
+ * цехом в две строки табличка всё равно остаётся в своей рамке.
+ */
+const PLATE_CODE_MM = 46;
+const PLATE_CODE_MIN_MM = 30;
 
 /**
  * SVG с явными размерами в мм (помощник `brand-qr.ts` ставит width/height
@@ -121,6 +138,30 @@ function Header({ brand, size }: { brand: PrintBrand; size: keyof typeof PRINT_L
   );
 }
 
+/**
+ * Торговая точка, для которой напечатан код: метка и название жирным. Плакат
+ * A4/A5 — наименование для журналов или название и адрес, до двух строк;
+ * наклейка и табличка — короткое название точки одной строкой (длинные
+ * наименования точек одной организации начинаются одинаково).
+ */
+function PointLine({ poster, size }: { poster: QrPoster; size: keyof typeof PRINT_LOGO_MM }) {
+  const point = poster.point;
+  if (!point) return null;
+  const compact = size === "sticker" || size === "plate";
+  return (
+    <div className={`qrp-point qrp-point-${size}`} data-qr-print-point="">
+      <svg viewBox="0 0 24 24" aria-hidden className="qrp-point-pin">
+        <path d="M12 22.5s7.5-6.6 7.5-12.7a7.5 7.5 0 0 0-15 0c0 6.1 7.5 12.7 7.5 12.7Z" style={{ fill: "var(--pb-primary-ink)" }} />
+        <circle cx="12" cy="9.8" r="2.9" style={{ fill: "#ffffff" }} />
+      </svg>
+      <span className="qrp-point-text">
+        <b>{compact ? point.short : point.title}</b>
+        {!compact && point.detail ? ` · ${point.detail}` : null}
+      </span>
+    </div>
+  );
+}
+
 function PosterA4({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   const t = useTranslations("settingsUi.qrPrintSheets");
   const detail = posterDetailLine(poster);
@@ -128,6 +169,7 @@ function PosterA4({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   return (
     <div className="qrp-a4 qrp-frame">
       <Header brand={brand} size="a4" />
+      <PointLine poster={poster} size="a4" />
       <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
       <div className="qrp-a4-title">{poster.title}</div>
       <div className="qrp-org">{poster.orgName}</div>
@@ -154,8 +196,9 @@ function PosterA5({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
       {/* Рамка — внутри ячейки: пунктир реза между A5 остаётся снаружи рамок. */}
       <div className="qrp-a5-frame qrp-frame">
         <Header brand={brand} size="a5" />
+        <PointLine poster={poster} size="a5" />
         <div className="qrp-a5-body">
-          <Code poster={poster} mm={72} className="qrp-a5-code" />
+          <Code poster={poster} mm={poster.point ? A5_CODE_WITH_POINT_MM : A5_CODE_MM} className="qrp-a5-code" />
           <div className="qrp-a5-text">
             <div className="qrp-eyebrow">{eyebrowFor(poster, t)}</div>
             <div className="qrp-a5-title">{poster.title}</div>
@@ -183,6 +226,7 @@ function Sticker({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
   return (
     <div className="qrp-sticker">
       <Header brand={brand} size="sticker" />
+      <PointLine poster={poster} size="sticker" />
       <Code poster={poster} mm={36} className="qrp-sticker-code" fluid />
       <div className="qrp-sticker-title">{poster.title}</div>
       <div className="qrp-sticker-org">{poster.orgName}</div>
@@ -201,10 +245,11 @@ function Plate({ poster, brand }: { poster: QrPoster; brand: PrintBrand }) {
     <div className="qrp-plate" data-qr-print-plate="">
       <div className="qrp-plate-frame qrp-frame">
         <Header brand={brand} size="plate" />
+        <PointLine poster={poster} size="plate" />
         <div className="qrp-plate-word">{plate.word}</div>
         <div className="qrp-plate-label">{t("plateRegimeLabel")}</div>
         <div className="qrp-plate-regime">{plate.regime}</div>
-        <Code poster={poster} mm={46} className="qrp-plate-code" />
+        <Code poster={poster} mm={PLATE_CODE_MM} className="qrp-plate-code" fluid />
         <div className="qrp-plate-foot">
           <span className="qrp-plate-no">{`№ ${plate.number}`}</span>
           <span className="qrp-plate-area">{plate.area}</span>
@@ -303,6 +348,22 @@ const PRINT_CSS = `
   .qrp-head-name { min-width: 0; font-size: 13pt; font-weight: 700; line-height: 1.15; }
   .qrp-root .qrp-site { flex-shrink: 0; font-size: 12pt; font-weight: 600; letter-spacing: -0.01em; color: var(--pb-primary-ink) !important; }
 
+  /* Точка под шапкой: метка основного цвета (в «Ч/б» — чёрная), название жирным, адрес обычным. */
+  .qrp-point { display: flex; align-items: flex-start; gap: 1.6mm; width: 100%; line-height: 1.25; }
+  .qrp-point-pin { flex-shrink: 0; }
+  .qrp-point-text { min-width: 0; overflow: hidden; }
+  .qrp-point-text b { font-weight: 700; }
+  .qrp-point-a4 .qrp-point-text, .qrp-point-a5 .qrp-point-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .qrp-point-sticker .qrp-point-text, .qrp-point-plate .qrp-point-text { white-space: nowrap; text-overflow: ellipsis; }
+  .qrp-point-a4 { margin-top: 4mm; font-size: 14pt; justify-content: center; text-align: center; }
+  .qrp-point-a4 .qrp-point-pin { width: 5.5mm; height: 5.5mm; margin-top: 0.2mm; }
+  .qrp-point-a5 { margin-top: 2mm; font-size: 11pt; }
+  .qrp-point-a5 .qrp-point-pin { width: 4.4mm; height: 4.4mm; margin-top: 0.1mm; }
+  .qrp-point-sticker { margin-top: 0.8mm; font-size: 7pt; gap: 0.8mm; align-items: center; justify-content: center; }
+  .qrp-point-sticker .qrp-point-pin { width: 2.8mm; height: 2.8mm; }
+  .qrp-point-plate { margin-top: 2mm; font-size: 10pt; gap: 1.2mm; align-items: center; justify-content: center; }
+  .qrp-point-plate .qrp-point-pin { width: 3.8mm; height: 3.8mm; }
+
   .qrp-a4 { height: 250mm; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6mm 8mm; }
   .qrp-a4 .qrp-eyebrow { margin-top: 5mm; }
   .qrp-a4-title { font-size: 24pt; font-weight: 700; line-height: 1.15; margin-top: 3mm; max-width: 170mm; }
@@ -348,11 +409,15 @@ const PRINT_CSS = `
   .qrp-plate .qrp-head-name { font-size: 10pt; }
   .qrp-root .qrp-plate .qrp-site { font-size: 10pt; }
   .qrp-root .qrp-plate-word { margin-top: 3mm; font-size: 38pt; font-weight: 800; line-height: 1; letter-spacing: 0.04em; color: var(--pb-primary-ink) !important; }
-  .qrp-plate-label { margin-top: 2mm; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .qrp-plate-label { margin-top: 2mm; font-size: 8.5pt; font-weight: 600; line-height: 1.15; letter-spacing: 0.1em; text-transform: uppercase; }
   .qrp-plate-regime { margin-top: 0.5mm; font-size: 20pt; font-weight: 700; line-height: 1.1; white-space: nowrap; }
-  .qrp-plate-code { margin-top: 3mm; }
+  .qrp-plate-code {
+    flex: 1 1 0; min-height: ${(PLATE_CODE_MIN_MM * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(PLATE_CODE_MM * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
+    width: 100%; display: flex; justify-content: center; margin-top: 2.5mm;
+  }
+  .qrp-plate-code svg { height: 100%; width: auto; }
   .qrp-plate-foot { margin-top: auto; width: 100%; display: flex; align-items: center; justify-content: center; gap: 3mm; padding-top: 2mm; }
-  .qrp-root .qrp-plate-no { font-size: 17pt; font-weight: 800; border: 0.7mm solid var(--pb-primary) !important; border-radius: 3mm !important; padding: 0.5mm 3mm; white-space: nowrap; }
+  .qrp-root .qrp-plate-no { font-size: 17pt; font-weight: 800; line-height: 1.1; border: 0.7mm solid var(--pb-primary) !important; border-radius: 3mm !important; padding: 0.5mm 3mm; white-space: nowrap; }
   .qrp-plate-area { min-width: 0; font-size: 13pt; font-weight: 700; line-height: 1.1; max-height: 2.3em; overflow: hidden; }
 }
 `;

@@ -116,10 +116,10 @@ export function QrMainCard({ item, selected, format, onToggle, onFormat }: CardP
             <InfinityIcon className="size-3.5" aria-hidden />
             {t("perpetual")}
           </span>
-          {item.sublabel ? (
-            <p className="mt-2 flex items-center gap-1 text-[12.5px] font-medium text-[#3c4053]">
+          {item.sublabel || item.poster.point ? (
+            <p className="mt-2 flex items-center gap-1 text-[12.5px] font-medium text-[#3c4053]" data-qr-card-point="">
               <MapPin className="size-3.5 shrink-0 text-[#5566f6]" aria-hidden />
-              <span className="min-w-0 truncate">{item.sublabel}</span>
+              <span className="min-w-0 truncate">{item.sublabel || item.poster.point?.short}</span>
             </p>
           ) : null}
           <p className="mt-2 text-[13px] leading-[1.5] text-[#6f7282]">{item.caption}</p>
@@ -219,6 +219,13 @@ export function QrObjectCard({ item, selected, format, onToggle, onFormat }: Car
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14.5px] font-semibold text-[#0b1024]">{item.label}</span>
           {item.sublabel ? <span className="block truncate text-[12.5px] font-medium text-[#3848c7]">{item.sublabel}</span> : null}
+          {/* Точка, которая напечатается под шапкой наклейки. */}
+          {item.poster.point ? (
+            <span className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] text-[#6f7282]" data-qr-card-point="" title={item.poster.point.title}>
+              <MapPin className="size-3.5 shrink-0 text-[#5566f6]" aria-hidden />
+              <span className="truncate">{item.poster.point.short}</span>
+            </span>
+          ) : null}
         </span>
       </label>
       <div className="mt-2 flex items-center gap-3">
