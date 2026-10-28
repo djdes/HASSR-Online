@@ -600,7 +600,14 @@
       "clearGroup": "Tanlovni bekor qilish",
       "inJournal": "Jurnalingizda bor",
       "back": "Barcha plakatlar",
-      "selectPoster": "«{title}» plakatini tanlash"
+      "selectPoster": "«{title}» plakatini tanlash",
+      "pointTitle": "Qaysi savdo nuqtasi uchun chop etamiz",
+      "pointSingle": "Shu nuqta uchun chop etamiz",
+      "pointHint": "Nuqta nomi har bir varaq tepasida chop etiladi, «Kundalik koʻrik» QR kodi esa shu nuqta jurnalini ochadi.",
+      "pointUntitled": "Nomsiz nuqta",
+      "pointsEmptyTitle": "Savdo nuqtasini qoʻshing",
+      "pointsEmptyBody": "Uning nomi har bir varaq tepasida chop etiladi. Hozircha nuqtalar yoʻq, plakatlar nomsiz chop etiladi.",
+      "pointsAdd": "Nuqta qoʻshish"
     },
     "norms": {
       "lead": "Muassasa ishlaydigan hujjatlarni belgilang. Ular ishlab chiqarish nazorati dasturiga kiradi.",

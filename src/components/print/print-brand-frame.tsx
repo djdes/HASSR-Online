@@ -1,8 +1,12 @@
 /**
- * Рамка печатного листа A4 в фирменном стиле (2026-10-27): плакаты, лист
- * проверяющего, политика ХАССП. Шапка — логотип организации слева, сайт
- * справа; подвал — название организации и сайт. Серверный компонент без
+ * Рамка печатного листа A4 в фирменном стиле (2026-10-27): плакаты и
+ * предпросмотр «Фирменного стиля». Шапка — логотип организации слева, сайт
+ * организации справа; подвал — название организации и всегда `wesetup.ru`
+ * (скан 97: «этот должен всегда оставаться Сетап»). Серверный компонент без
  * хуков. Цвета — `PrintBrand` (`src/lib/print-brand.ts`).
+ *
+ * Лист на экране того же размера, что на бумаге: A4 минус поля `@page`
+ * (1 см) — ширина 190 мм, рамка не ниже 273 мм. Что видно, то и печатается.
  *
  * Цвет рамки и линии шапки задан `border-color` — в печати кабинета он не
  * сбрасывается и печатается даже с выключенной «печатью фона».
@@ -10,7 +14,10 @@
 
 import type { CSSProperties, ReactNode } from "react";
 
-import { PRINT_LOGO_MM, printBrandCssVars, type PrintBrand } from "@/lib/print-brand";
+import { DEFAULT_PRINT_SITE, PRINT_LOGO_MM, printBrandCssVars, type PrintBrand } from "@/lib/print-brand";
+
+/** Размер листа, мм (тот же, что в классах рамки `max-w-[190mm] min-h-[273mm]`). */
+export const PRINT_SHEET_MM = { width: 190, minHeight: 273 } as const;
 
 /** Логотип слева, сайт справа. Без логотипа — название организации. */
 export function PrintBrandHeader({
@@ -66,7 +73,7 @@ export function PrintBrandHeader({
   );
 }
 
-/** Подвал листа: название организации · сайт. */
+/** Подвал листа: название организации · wesetup.ru (свой сайт — только в шапке). */
 export function PrintBrandFooter({ brand, compact = false }: { brand: PrintBrand; compact?: boolean }) {
   return (
     <div
@@ -80,7 +87,7 @@ export function PrintBrandFooter({ brand, compact = false }: { brand: PrintBrand
       }}
     >
       <span>{brand.orgName}</span>
-      <span>{brand.site}</span>
+      <span className="shrink-0">{DEFAULT_PRINT_SITE}</span>
     </div>
   );
 }
@@ -114,7 +121,7 @@ export function PrintBrandFrame({
       data-print-brand-frame
       data-print-mono={brand.mono ? "1" : undefined}
       className={`mx-auto flex flex-col bg-white ${
-        compact ? "h-full gap-1.5 p-2" : "min-h-[1050px] max-w-[794px] gap-[5mm] p-[8mm] print:min-h-[273mm] print:max-w-none"
+        compact ? "h-full gap-1.5 p-2" : "w-full max-w-[190mm] min-h-[273mm] gap-[4mm] p-[7mm] print:max-w-none"
       } ${className}`}
       style={style}
     >

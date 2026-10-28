@@ -133,6 +133,45 @@ test("ежедневный осмотр ведёт на гигиенически
   assert.equal(qr.templateCode, "hygiene");
 });
 
+// Правки по скану 97 (2026-10-28).
+test("мытьё посуды: «Важно» — щётки, металлические мочалки и губчатый материал не используются", () => {
+  const callouts = findPoster("dishes")?.blocks.filter((block) => block.type === "callout") ?? [];
+  assert.equal(callouts.length, 1);
+  const [callout] = callouts;
+  assert.ok(callout.type === "callout");
+  assert.equal(callout.tone, "warn");
+  assert.equal(
+    callout.text,
+    "Щётки с наличием дефектов, плесени и видимых загрязнений, а также металлические мочалки и губчатый материал для обработки посуды — не используются!",
+  );
+  assert.doesNotMatch(callout.text, /Посудомоечную машину/);
+});
+
+test("товарное соседство: хлеб в шкафах с вентиляцией, хранение на подтоварниках", () => {
+  const list = findPoster("storage")?.blocks.find((block) => block.type === "list");
+  assert.ok(list && list.type === "list");
+  const texts = list.items.map((item) => item.text);
+  assert.ok(texts.includes("Хлеб хранится в отдельных шкафах с отверстиями для вентиляции"));
+  assert.ok(texts.includes("Хранение допускается только на подтоварниках, не ниже 15 см от пола"));
+  assert.ok(!texts.some((text) => text.startsWith("Яйца")));
+  assert.ok(!texts.some((text) => text.startsWith("Не ставьте продукты на пол")));
+  assert.equal(texts.length, 8);
+});
+
+test("суточная проба: у каждого пункта своя картинка", () => {
+  const list = findPoster("daily-sample")?.blocks.find((block) => block.type === "list");
+  assert.ok(list && list.type === "list");
+  assert.deepEqual(
+    list.items.map((item) => item.art),
+    ["ds-jar", "ds-spoon", "ds-weight", "ds-portion", "ds-fridge"],
+  );
+});
+
+test("длинные памятки средств печатаются плотнее, чтобы помещаться на лист", () => {
+  assert.equal(findPoster("chlormisept-r")?.density, "dense");
+  assert.equal(findPoster("disinfectant-safety")?.density, "dense");
+});
+
 test("findPoster и selectPosters", () => {
   assert.equal(findPoster("нет такого"), null);
   assert.deepEqual(

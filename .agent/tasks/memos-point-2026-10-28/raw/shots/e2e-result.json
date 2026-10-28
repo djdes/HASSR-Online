@@ -1,0 +1,132 @@
+[
+  {
+    "name": "AC2 переключатель: три торговые точки, офиса нет",
+    "ok": true,
+    "detail": "b-dk-5,b-dk-112,b-dk-mira"
+  },
+  {
+    "name": "AC2 по умолчанию — первая торговая точка (в шапке офис)",
+    "ok": true,
+    "detail": "b-dk-5"
+  },
+  {
+    "name": "AC1 мини-листы — с точкой по умолчанию",
+    "ok": true,
+    "detail": "Пищеблок СОШ № 5 · г. Казань, ул. Ленина, 5"
+  },
+  {
+    "name": "AC2 выбор точки — в адресе и подсвечен",
+    "ok": true,
+    "detail": "b-dk-112"
+  },
+  {
+    "name": "AC2 «Печатать все» несёт точку",
+    "ok": true,
+    "detail": "/production-control/documents/posters/all?point=b-dk-112"
+  },
+  {
+    "name": "AC2 «Печатать выбранные» несёт точку",
+    "ok": true,
+    "detail": "/production-control/documents/posters/all?keys=dishes&point=b-dk-112"
+  },
+  {
+    "name": "AC1 точка на каждом из 17 листов",
+    "ok": true,
+    "detail": "17/17"
+  },
+  {
+    "name": "AC1 текст точки — наименование для журналов",
+    "ok": true,
+    "detail": "МАУ «Комбинат питания «Дружба», пищеблок МБОУ «Средняя общео"
+  },
+  {
+    "name": "AC1 длинное название — не больше двух строк",
+    "ok": true,
+    "detail": "2 строк"
+  },
+  {
+    "name": "AC4 подвал на всех листах: организация и wesetup.ru",
+    "ok": true,
+    "detail": "МАУ «КП «ДК»wesetup.ru"
+  },
+  {
+    "name": "AC2 «Все плакаты» возвращает к выбранной точке",
+    "ok": true,
+    "detail": "/production-control/documents/posters?point=b-dk-112"
+  },
+  {
+    "name": "AC2 «Ч/б» сохраняет точку",
+    "ok": true,
+    "detail": "/production-control/documents/posters/all?point=b-dk-112&bw=1"
+  },
+  {
+    "name": "AC3 QR осмотра ведёт в гигиенический журнал точки 112",
+    "ok": true,
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-112.1793198015089.SfpUi2iUkxBw62i9vHah8eWxgzX3NP4NNAT3Equp8pw"
+  },
+  {
+    "name": "AC3 у другой точки — другой QR",
+    "ok": true,
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793198018099.5beGYQdXa7eAz83Nq9K3KNOYdpR2aGRPVXycjracti4"
+  },
+  {
+    "name": "AC2 офис в адресе — печать для точки по умолчанию",
+    "ok": true,
+    "detail": "Пищеблок СОШ № 5 · г. Казань, ул. Ленина, 5"
+  },
+  {
+    "name": "страницы без ошибок в браузере",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 одна доступная точка — без выбора",
+    "ok": true,
+    "detail": "1/0 Печатаем для точки"
+  },
+  {
+    "name": "AC2 чужая точка в адресе не печатается",
+    "ok": true,
+    "detail": "Пищеблок СОШ № 5 · г. Казань, ул. Ленина, 5"
+  },
+  {
+    "name": "AC3 QR — журнал своей точки",
+    "ok": true,
+    "detail": "http://localhost:3026/journal-fill/org-dk/hygiene?token=journal%3Aorg-dk%3Ahygiene%3Ab~b-dk-5.1793198055559.WHFo7FqqfUosh8Z9B5pMJfsBCwHaZng7Kn2yOP2CQbg"
+  },
+  {
+    "name": "AC4 свой сайт — в шапке, в подвале — wesetup.ru",
+    "ok": true,
+    "detail": "Доброе кафеdobroe-kafe.ru | Доброе кафеwesetup.ru"
+  },
+  {
+    "name": "AC1 одна точка — её название и адрес",
+    "ok": true,
+    "detail": "Доброе кафе на Садовой · ул. Садовая, 7"
+  },
+  {
+    "name": "AC3 журналы общие — QR на общий журнал",
+    "ok": true,
+    "detail": "http://localhost:3026/journal-fill/org-one/hygiene?token=journal%3Aorg-one%3Ahygiene.1793198071636.nHzCHI4KS5FvGxHWMnCUdSz_N-W4vcQTp5_95KU34KU"
+  },
+  {
+    "name": "AC2 точек нет — подсказка и «Добавить точку»",
+    "ok": true,
+    "detail": "/settings/buildings"
+  },
+  {
+    "name": "AC1 без точки — строки нет, лист цел",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "телефон 390 px — без горизонтальной прокрутки",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "П-3 Mini App: тот же выбор точки",
+    "ok": true,
+    "detail": "b-dk-mira"
+  }
+]

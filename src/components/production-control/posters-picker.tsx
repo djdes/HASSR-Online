@@ -22,8 +22,9 @@ const BASE = "/production-control/documents/posters";
  * Список плакатов по группам: галочка на каждой карточке, липкая панель
  * «Печатать выбранные / все» и переключатель «Ч/б». Выбор живёт в состоянии
  * страницы; печать открывает серверную страницу `posters/all?keys=…&bw=1`.
+ * `pointId` — выбранная торговая точка (`&point=…`; null — точка по умолчанию).
  */
-export function PostersPicker({ groups }: { groups: PosterPickerGroup[] }) {
+export function PostersPicker({ groups, pointId = null }: { groups: PosterPickerGroup[]; pointId?: string | null }) {
   const t = useTranslations("productionControl.posters");
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [bw, setBw] = useState(false);
@@ -34,6 +35,7 @@ export function PostersPicker({ groups }: { groups: PosterPickerGroup[] }) {
     const params = new URLSearchParams();
     if (keys?.length) params.set("keys", keys.join(","));
     if (bw) params.set("bw", "1");
+    if (pointId) params.set("point", pointId);
     const text = params.toString();
     return text ? `?${text}` : "";
   };
@@ -124,7 +126,7 @@ export function PostersPicker({ groups }: { groups: PosterPickerGroup[] }) {
                 return (
                   <div key={item.key} className="relative">
                     <Link
-                      href={`${BASE}/${item.key}${bw ? "?bw=1" : ""}`}
+                      href={`${BASE}/${item.key}${query()}`}
                       className={`group flex h-full flex-col items-center rounded-3xl border bg-white p-3 transition-colors duration-150 hover:border-[#5566f6]/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 ${
                         checked ? "border-[#5566f6] ring-4 ring-[#5566f6]/10" : "border-[#ececf4]"
                       }`}

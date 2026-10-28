@@ -1,8 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { PrintBrandFrame } from "@/components/print/print-brand-frame";
+import { PRINT_SHEET_MM, PrintBrandFrame } from "@/components/print/print-brand-frame";
 import { PosterArt } from "@/components/production-control/poster-art";
 import type { PrintBrand } from "@/lib/print-brand";
+import type { PosterPointLine } from "@/lib/ppk/poster-point";
 import type { Poster, PosterBlock } from "@/lib/ppk/posters";
 
 /**
@@ -15,13 +16,18 @@ import type { Poster, PosterBlock } from "@/lib/ppk/posters";
  * `--pb-*`; цветной фон — только у элементов с `data-print-keep-bg`. В «Ч/б»
  * переменные становятся чёрными и белыми, смысл несут значки ✓ / ✗ и текст.
  *
+ * Под шапкой — торговая точка, для которой лист напечатан (скан 97); каждая
+ * памятка помещается на один лист A4 (проверка печатью в PDF —
+ * `.agent/tasks/memos-point-2026-10-28`).
+ *
  * `preview` — тот же лист, уменьшенный в 0,3 раза, для карточки списка.
  */
 
-/** Сторона мини-листа: A4 в пикселях × масштаб. */
+/** Сторона мини-листа: лист в пикселях × масштаб. */
 export const POSTER_PREVIEW_SCALE = 0.3;
-const SHEET_W = 794;
-const SHEET_H = 1123;
+const PX_PER_MM = 96 / 25.4;
+const SHEET_W = Math.round(PRINT_SHEET_MM.width * PX_PER_MM);
+const SHEET_H = Math.round(PRINT_SHEET_MM.minHeight * PX_PER_MM);
 export const POSTER_PREVIEW_SIZE = {
   width: Math.round(SHEET_W * POSTER_PREVIEW_SCALE),
   height: Math.round(SHEET_H * POSTER_PREVIEW_SCALE),
@@ -37,8 +43,10 @@ const BOARD_COLOR: Record<string, string> = {
   белый: "#ffffff",
 };
 
+// `pad` у «normal» — только таблица «Маркировки разделочного инвентаря»:
+// 7 px дают ей запас по высоте листа с названием точки в две строки.
 const SIZES = {
-  normal: { body: 17, small: 14, gap: 20, cell: 16, pad: 9 },
+  normal: { body: 17, small: 14, gap: 20, cell: 16, pad: 7 },
   compact: { body: 14, small: 12.5, gap: 14, cell: 13.5, pad: 5.5 },
   dense: { body: 12.5, small: 11.5, gap: 10, cell: 12.5, pad: 3.5 },
 } as const;
@@ -131,6 +139,35 @@ function InfoIcon({ size = 26 }: { size?: number }) {
   );
 }
 
+/** Метка места — у строки торговой точки. */
+function PinIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden className="mt-px shrink-0">
+      <path d="M12 22.5s7.5-6.6 7.5-12.7a7.5 7.5 0 0 0-15 0c0 6.1 7.5 12.7 7.5 12.7Z" style={{ fill: "var(--pb-secondary)" }} />
+      <circle cx="12" cy="9.8" r="2.9" style={{ fill: "var(--pb-on-secondary)" }} />
+    </svg>
+  );
+}
+
+/**
+ * Торговая точка листа: название жирным, адрес обычным. Не больше двух
+ * строк — длинное «наименование для журналов» не сдвигает памятку.
+ */
+function PointLine({ point }: { point: PosterPointLine }) {
+  return (
+    <div data-poster-point className="mb-3 flex items-start gap-2" style={{ fontSize: 16 }}>
+      <PinIcon />
+      <span
+        className="min-w-0 leading-[1.3]"
+        style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+      >
+        <span className="font-semibold">{point.title}</span>
+        {point.detail ? <span className="text-[#3c4053]"> · {point.detail}</span> : null}
+      </span>
+    </div>
+  );
+}
+
 function Swatch({ color, mono }: { color: string; mono: boolean }) {
   const fill = mono ? "#ffffff" : (BOARD_COLOR[color] ?? "#ffffff");
   return (
@@ -153,7 +190,9 @@ function defaultColumns(count: number): 2 | 3 | 4 | 5 {
   return 5;
 }
 
-const ART_HEIGHT = { 2: 220, 3: 160, 4: 130, 5: 118 } as const;
+// Пять колонок — «Мойте руки»: две строки карточек, рисунок пониже, чтобы лист
+// с названием точки в две строки помещался на A4 с запасом.
+const ART_HEIGHT = { 2: 220, 3: 160, 4: 130, 5: 104 } as const;
 const STEP_FONT = { 2: 17, 3: 15, 4: 14, 5: 13.5 } as const;
 
 function StepsBlock({ block }: { block: Extract<PosterBlock, { type: "steps" }> }) {
@@ -440,7 +479,11 @@ function JournalQrBlock({
         </CalloutBox>
       </div>
       {qrSvg ? (
-        <div className="w-[130px] shrink-0 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+        <div
+          data-poster-qr
+          className="w-[130px] shrink-0 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+          dangerouslySetInnerHTML={{ __html: qrSvg }}
+        />
       ) : null}
     </div>
   );
@@ -482,26 +525,30 @@ function renderBlock(block: PosterBlock, index: number, ctx: { brand: PrintBrand
 
 /**
  * Лист плаката. `qrSvg` — QR на журнал для блока `journalQr` (готовит страница;
- * нет журнала или это мини-лист — null, остаётся подпись).
+ * нет журнала или это мини-лист — null, остаётся подпись). `point` — торговая
+ * точка, для которой печатаем (`posterPointLine`); null — строки нет.
  */
 export function PosterSheet({
   poster,
   brand,
   size = "print",
   qrSvg = null,
+  point = null,
 }: {
   poster: Poster;
   brand: PrintBrand;
   size?: "print" | "preview";
   qrSvg?: string | null;
+  point?: PosterPointLine | null;
 }) {
   const sizes = SIZES[poster.density ?? "normal"];
   const titleSize = poster.title.length > 48 ? 24 : poster.title.length > 30 ? 28 : 33;
 
   const sheet = (
     <PrintBrandFrame brand={brand} className={size === "preview" ? "h-full" : ""}>
-      <div className="flex flex-col" style={{ gap: sizes.gap }}>
+      <div data-poster-content className="flex flex-col" style={{ gap: sizes.gap }}>
         <div>
+          {point ? <PointLine point={point} /> : null}
           <h2 className="m-0 font-semibold leading-[1.12] tracking-[-0.025em]" style={{ fontSize: titleSize }}>
             {poster.title}
           </h2>

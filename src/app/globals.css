@@ -1809,6 +1809,16 @@ html, body {
     max-width: 100% !important;
   }
 
+  /* Плакаты (скан 97, 2026-10-28): лист на всю ширину области печати —
+   * 190 мм, без боковых полей кабинета (`px-4 md:px-8` у обёртки в main).
+   * С полями лист выходил уже бумаги, текст переносился чаще, и длинная
+   * памятка уезжала подвалом на второй лист. Маркер — на странице печати. */
+  body:has([data-poster-print-root]) main > div {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: none !important;
+  }
+
   /* Document tables — чёрные границы, белый фон, монохром.
    *
    * A18: `[data-print-keep-bg]` — опт-аут для ячеек, чья заливка НЕСЁТ
