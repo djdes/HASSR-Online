@@ -56,9 +56,10 @@ test("public pricing renders three columns, points, PPK and the comparison table
     for (const name of [t("tiers.free.name"), t("tiers.standard.name"), t("tiers.premium.name"), t("table.title")]) {
       assert.ok(html.includes(name), `${locale}: ${name}`);
     }
-    // За год по умолчанию: «от» 1 990 и 3 990 в месяц, итог за год.
+    // За год по умолчанию: крупно 1 990 и 3 990 за точку в месяц, ниже — итог за год.
     assert.ok(html.includes(formatNumber(locale, 1990)), `${locale}: standard yearly price`);
     assert.ok(html.includes(formatNumber(locale, 3990)), `${locale}: premium yearly price`);
+    assert.ok(html.includes(t("price.perPointMonth")), `${locale}: per point suffix`);
     assert.ok(html.includes(t("price.yearTotal", { amount: `${formatNumber(locale, 23_880)}\u00a0₽` })), `${locale}: year total`);
     assert.ok(html.includes(t("ppk.price", { price: `${formatNumber(locale, 10_000)}\u00a0₽` })), `${locale}: PPK price`);
     assert.ok(html.includes("/order?plan=standard&amp;cycle=year&amp;points=1"), `${locale}: order link`);
@@ -70,7 +71,7 @@ test("cabinet pricing shows the change kind and the server-equal surcharge for a
   const now = new Date("2026-10-26T09:00:00.000Z");
   const cabinet: TariffCabinetState = {
     status: "paid",
-    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "month", points: 1 },
+    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "year", points: 1 },
     trialUntilLabel: null,
     trialDaysLeft: null,
     pointsInUse: 1,
@@ -95,12 +96,12 @@ test("cabinet pricing shows the change kind and the server-equal surcharge for a
         showTable: false,
       })
     );
-    // «Стандарт» помесячно — текущий: продление на полную цену месяца.
+    // «Стандарт» за год — текущий: продление на полную цену года.
     assert.ok(html.includes(t("badges.current")), `${locale}: current badge`);
-    assert.ok(html.includes(t("cta.renew", { amount: rub(3000) })), `${locale}: renew`);
-    // «Премиум» помесячно: (5 000 − 3 000) × 15/30 = 1 000 ₽, срок не меняется.
-    assert.ok(html.includes(t("cta.upgrade", { amount: rub(1000) })), `${locale}: upgrade`);
-    assert.ok(html.includes(t("explain.upgrade", { days: 15, difference: rub(2000) })), `${locale}: upgrade note`);
+    assert.ok(html.includes(t("cta.renew", { amount: rub(23_880) })), `${locale}: renew`);
+    // «Премиум» за год: (47 880 − 23 880) × 15/365 = 986 ₽, срок не меняется.
+    assert.ok(html.includes(t("cta.upgrade", { amount: rub(986) })), `${locale}: upgrade`);
+    assert.ok(html.includes(t("explain.upgrade", { days: 15, difference: rub(24_000) })), `${locale}: upgrade note`);
     assert.ok(!html.includes('data-testid="tariff-table"'), `${locale}: table hidden`);
     if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
   }
@@ -110,7 +111,7 @@ test("cabinet buttons show the amount after an active promotion, as the order pa
   const now = new Date("2026-10-26T09:00:00.000Z");
   const cabinet: TariffCabinetState = {
     status: "paid",
-    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "month", points: 1 },
+    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "year", points: 1 },
     trialUntilLabel: null,
     trialDaysLeft: null,
     pointsInUse: 1,
@@ -135,9 +136,64 @@ test("cabinet buttons show the amount after an active promotion, as the order pa
       showTable: false,
     })
   );
-  // −20 %: продление 3 000 → 2 400 ₽, доплата за повышение 1 000 → 800 ₽.
-  assert.ok(html.includes(t("cta.renew", { amount: rub(2400) })));
-  assert.ok(html.includes(t("cta.upgrade", { amount: rub(800) })));
+  // −20 %: продление 23 880 → 19 104 ₽, доплата за повышение 986 → 789 ₽.
+  assert.ok(html.includes(t("cta.renew", { amount: rub(19_104) })));
+  assert.ok(html.includes(t("cta.upgrade", { amount: rub(789) })));
+  // Итог за год под ценой — тоже с акцией, как спишет оплата.
+  assert.ok(html.includes(t("price.yearTotal", { amount: rub(19_104) })));
+});
+
+test("a monthly subscriber with 14 points opens on «per year»: price per point big, total for all points below", async () => {
+  // Как на скриншоте владельца: «Стандарт» помесячно, 14 точек.
+  const now = new Date("2026-10-26T09:00:00.000Z");
+  const cabinet: TariffCabinetState = {
+    status: "paid",
+    current: { paidUntil: new Date(now.getTime() + 15 * DAY).toISOString(), tier: "standard", cycle: "month", points: 14 },
+    trialUntilLabel: null,
+    trialDaysLeft: null,
+    pointsInUse: 14,
+    scheduled: null,
+    legacyMonthlyRub: 1990,
+    nowIso: now.toISOString(),
+  };
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    const t = createTranslator({ locale, messages, namespace: "landingComponents.tariffs" });
+    const rub = (value: number) => `${formatNumber(locale, value)} ₽`;
+    const html = await render(
+      locale,
+      createElement(TariffComparison, {
+        mode: "cabinet",
+        rates: DEFAULT_PLAN_RATES,
+        available,
+        promotion: null,
+        ppkFromRub: 10_000,
+        ppkHref: "/settings/services",
+        cabinet,
+        showTable: false,
+      })
+    );
+    // «За год» включён, хотя подписка помесячная.
+    assert.match(html, /role="switch" aria-checked="true"/, `${locale}: year by default`);
+    const norm = (text: string) => text.replace(/\s+/g, " ");
+    // Блок цены карточки: от начала карточки до блока кнопки.
+    const priceOf = (tier: string) => {
+      const from = html.slice(html.indexOf(`data-testid="tariff-card-${tier}"`));
+      return norm(visibleText(from.slice(0, from.indexOf(`data-testid="tariff-action-${tier}"`))));
+    };
+    // Крупно — одна точка в месяц: 1 990 × 0,95 = 1 891 и 3 990 × 0,95 = 3 791.
+    assert.ok(priceOf("standard").includes(norm(rub(1891))), `${locale}: standard per point`);
+    assert.ok(priceOf("premium").includes(norm(rub(3791))), `${locale}: premium per point`);
+    assert.ok(priceOf("standard").includes(norm(t("price.perPointMonth"))), `${locale}: per point suffix`);
+    // Мельче — за все 14 точек за год, экономия и скидка за точки.
+    assert.ok(priceOf("standard").includes(norm(t("price.totalYear", { count: 14, amount: rub(317_604) }))), `${locale}: standard total`);
+    assert.ok(priceOf("premium").includes(norm(t("price.totalYear", { count: 14, amount: rub(636_804) }))), `${locale}: premium total`);
+    assert.ok(priceOf("standard").includes(norm(t("price.yearSavings", { amount: rub(161_196) }))), `${locale}: savings`);
+    assert.ok(priceOf("standard").includes(norm(t("price.pointsDiscount", { percent: 5 }))), `${locale}: points discount`);
+    // Кнопка — переход на год с зачётом остатка месяца: 317 604 − 39 900 × 15/30.
+    assert.ok(html.includes(t("cta.switchYear", { amount: rub(317_604 - 19_950) })), `${locale}: switch to year`);
+    if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
+  }
 });
 
 test("trial cabinet offers new subscriptions at full price and marks the trial", async () => {

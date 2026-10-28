@@ -13,6 +13,8 @@ import {
   decodeBuildingCookie,
   encodeBuildingCookie,
   resolveActiveBuilding,
+  journalsPointMode,
+  ORGANIZATION_VIEW_ID,
   withBuildingLabel,
   withBuildingSuffix,
   buildingPrintName,
@@ -207,4 +209,42 @@ test("QR по точке: кто работает на точке объекта
   // Сотрудник офиса работает в офисе, а не на торговой точке.
   assert.equal(worksAtBuilding(org, [OFFICE], A.id), false);
   assert.equal(worksAtBuilding(org, [OFFICE], OFFICE), true);
+});
+
+test("«Вся организация»: руководство на всю компанию, данные — офис или первая точка", () => {
+  const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
+  // Без выбора руководство начинает со всей организации; точка данных — первая.
+  const fresh = resolveActiveBuilding({ enabled: true, buildings: [A, B], userBuildingIds: [], cookieBuildingId: null, fullAccess: true });
+  assert.equal(fresh.organizationView, true);
+  assert.equal(fresh.canViewOrganization, true);
+  assert.equal(fresh.pointMode, false);
+  assert.equal(fresh.activeBuildingId, "b-a");
+  // Выбрана «Вся организация» при офисе — данные офиса.
+  const withOffice = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: ORGANIZATION_VIEW_ID, fullAccess: true });
+  assert.equal(withOffice.activeBuildingId, "b-o");
+  assert.equal(withOffice.organizationView, true);
+  // Выбрана торговая точка — режим точки.
+  const point = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b", fullAccess: true });
+  assert.equal(point.activeBuildingId, "b-b");
+  assert.equal(point.organizationView, false);
+  assert.equal(journalsPointMode(point), true);
+  // Выбран офис — это тоже вся организация.
+  const office = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-o", fullAccess: true });
+  assert.equal(journalsPointMode(office), false);
+});
+
+test("режим точки: руководитель точки — всегда, линейный сотрудник — никогда", () => {
+  const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
+  // Заведующая закреплена за точкой: «Вся организация» ей недоступна, cookie её не включит.
+  const pointManager = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: ["b-a"], cookieBuildingId: ORGANIZATION_VIEW_ID, fullAccess: true });
+  assert.equal(pointManager.canViewOrganization, false);
+  assert.equal(pointManager.activeBuildingId, "b-a");
+  assert.equal(journalsPointMode(pointManager), true);
+  // Повар на точке: «Все журналы» остаются — режима точки нет.
+  const cook = resolveActiveBuilding({ enabled: true, buildings: [A, B], userBuildingIds: ["b-b"], cookieBuildingId: null });
+  assert.equal(cook.canViewOrganization, false);
+  assert.equal(journalsPointMode(cook), false);
+  // Точки выключены — режима нет.
+  const off = resolveActiveBuilding({ enabled: false, buildings: [A, B], userBuildingIds: [], cookieBuildingId: "b-a", fullAccess: true });
+  assert.equal(journalsPointMode(off), false);
 });

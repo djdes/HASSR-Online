@@ -17,9 +17,9 @@ import {
   TRIAL_DAYS,
   hasPointsDiscount,
   maxYearlySavingsPercent,
-  planMonthlyRub,
   planPeriodFullRub,
   planPeriodPriceRub,
+  planPointMonthlyRub,
   planTariffKey,
   quotePlanChange,
   seatLimitFor,
@@ -116,7 +116,9 @@ export function TariffComparison({
   const t = useTranslations("landingComponents.tariffs");
   const locale = useLocale() as Locale;
   const currentPaid = cabinet?.current ?? null;
-  const [cycle, setCycle] = useState<BillingCycle>(currentPaid?.cycle ?? "year");
+  // Всегда «За год» (владелец, 2026-10-28) — и у помесячной подписки:
+  // её кнопка — «Перейти на год» с зачётом остатка, «Помесячно» — по клику.
+  const [cycle, setCycle] = useState<BillingCycle>("year");
   const minPoints = Math.max(1, cabinet?.pointsInUse ?? 1);
   const [points, setPoints] = useState(Math.max(minPoints, currentPaid?.points ?? 1));
   // Неразрывный пробел перед «₽»: сумма в кнопке и в цене не разрывается.
@@ -337,10 +339,17 @@ export function TariffComparison({
         />
 
         {(["standard", "premium"] as const).map((tier) => {
-          const monthlyList = planMonthlyRub(rates, tier, cycle, points);
           const periodRub = planPeriodPriceRub(rates, tier, cycle, points);
           const fullRub = planPeriodFullRub(rates, tier, cycle, points);
-          const price = applyPromotion(monthlyList, promotion);
+          // Крупно — одна точка в месяц; итог за все точки — строкой ниже,
+          // с акцией, как спишет оплата.
+          const price = applyPromotion(planPointMonthlyRub(rates, tier, cycle, points), promotion);
+          const totalRub = applyPromotion(periodRub, promotion).priceRub;
+          const savingsRub = cycle === "year" ? yearlySavingsRub(rates, tier, points) : 0;
+          const details = [
+            savingsRub > 0 ? t("price.yearSavings", { amount: rub(savingsRub) }) : null,
+            hasPointsDiscount(points) && fullRub > periodRub ? t("price.pointsDiscount", { percent: POINTS_DISCOUNT_PERCENT }) : null,
+          ].filter(Boolean);
           const isAvailable = available[tier][cycle];
           const quote = quotes?.[tier] ?? null;
           // К оплате — с действующей акцией, как посчитает страница заказа.
@@ -374,25 +383,30 @@ export function TariffComparison({
                     layout="stacked"
                     tone={tier === "standard" ? "dark" : "light"}
                     suffix={
-                      <span className={cn("ml-1 text-[14px]", tier === "standard" ? "text-white/60" : "text-[#9b9fb3]")}>
-                        {t("price.perMonth")}
+                      <span
+                        data-testid={`tariff-per-point-${tier}`}
+                        // При акции цена с подписью — в неразрывном блоке; подпись
+                        // может перенести «за точку» в узкой колонке кабинета.
+                        className={cn("ml-1 whitespace-normal text-[14px]", tier === "standard" ? "text-white/60" : "text-[#9b9fb3]")}
+                      >
+                        {t("price.perPointMonth")}
                       </span>
                     }
                   />
-                  <div
-                    data-testid={`tariff-period-${tier}`}
-                    className={cn("text-[13px] leading-snug", tier === "standard" ? "text-white/70" : "text-[#6f7282]")}
-                  >
-                    {cycle === "year"
-                      ? t("price.yearTotal", { amount: rub(periodRub) })
-                      : t("price.monthly")}
-                    {cycle === "year" && yearlySavingsRub(rates, tier, points) > 0
-                      ? ` · ${t("price.yearSavings", { amount: rub(yearlySavingsRub(rates, tier, points)) })}`
-                      : ""}
-                    {points > 1 ? ` · ${t("price.forPoints", { count: points })}` : ""}
-                    {hasPointsDiscount(points) && fullRub > periodRub
-                      ? ` · ${t("price.pointsDiscount", { percent: POINTS_DISCOUNT_PERCENT })}`
-                      : ""}
+                  <div data-testid={`tariff-period-${tier}`} className="space-y-0.5 text-[13px] leading-snug">
+                    <div
+                      data-testid={`tariff-total-${tier}`}
+                      className={cn("font-medium", tier === "standard" ? "text-white/85" : "text-[#3c4053]")}
+                    >
+                      {points > 1
+                        ? t(cycle === "year" ? "price.totalYear" : "price.totalMonth", { count: points, amount: rub(totalRub) })
+                        : cycle === "year"
+                          ? t("price.yearTotal", { amount: rub(totalRub) })
+                          : t("price.monthly")}
+                    </div>
+                    {details.length > 0 ? (
+                      <div className={tier === "standard" ? "text-white/60" : "text-[#6f7282]"}>{details.join(" · ")}</div>
+                    ) : null}
                   </div>
                 </div>
               }

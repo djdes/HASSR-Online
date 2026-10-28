@@ -103,6 +103,7 @@ function isCategoryNote(
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
   "Памятки по точкам": MapPin,
+  "Тарифы: цена за точку": Coins,
   "Торговые точки": MapPin,
   "Спецрежим: автоматика по галочкам": ShieldCheck,
   "Замена на другой точке": MapPin,

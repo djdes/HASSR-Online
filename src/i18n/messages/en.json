@@ -2775,7 +2775,8 @@
         "add": "Add outlet",
         "addHint": "Opens the wizard: name and address, rooms, equipment",
         "open": "Open outlet",
-        "captionOffice": "Company"
+        "captionOffice": "Company",
+        "organization": "Whole company"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
@@ -2967,6 +2968,15 @@
       "back": "Back",
       "badges": {
         "pro": "PRO"
+      },
+      "pointMode": {
+        "title": "This page is for the whole company",
+        "body": "The outlet “{point}” is selected in the header. With an outlet selected, Journals shows Today, entry checks, settings and the journal sets of that outlet.",
+        "back": "Back",
+        "chooseOrganization": "Select the whole company",
+        "hintOrganization": "Outlet journals and All journals open when “Whole company” is selected in the header.",
+        "hintPoint": "You work at your outlet — journals of all outlets are visible to company management.",
+        "failed": "Couldn't select the whole company"
       }
     },
     "header": {
@@ -5747,7 +5757,9 @@
         "yearTotal": "{amount} per year",
         "yearSavings": "you save {amount}",
         "monthly": "billed monthly",
-        "forPoints": "for {count, plural, one {# location} other {# locations}}",
+        "perPointMonth": "/mo per location",
+        "totalYear": "{count, plural, one {# location} other {# locations}}: {amount} per year",
+        "totalMonth": "{count, plural, one {# location} other {# locations}}: {amount} per month",
         "pointsDiscount": "−{percent, number}% for locations"
       },
       "includes": {

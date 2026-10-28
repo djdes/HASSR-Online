@@ -65,6 +65,12 @@ export type NavFacts = {
   checklists: boolean;
   /** Право `settings.permissions` из БД (роль/категория должности). */
   settingsPermissions: boolean;
+  /**
+   * «Журналы» в режиме точки (`journalsPointMode`, 2026-10-28): в шапке
+   * выбрана торговая точка или человек — руководитель точки. Не задано —
+   * режима нет (точки выключены).
+   */
+  journalsPointMode?: boolean;
 };
 
 /**
@@ -74,7 +80,9 @@ export type NavFacts = {
  *   • `anyOf`        — любая из возможностей пресета;
  *   • `fullAccessOr` — руководство или любая из возможностей;
  *   • `all`          — все правила сразу;
- *   • `fact`         — факт, посчитанный на сервере (`NavFacts`).
+ *   • `fact`         — факт, посчитанный на сервере (`NavFacts`);
+ *   • `notPointMode` — страница всей организации: в режиме точки закрыта
+ *     (страница показывает «недоступно при выбранной точке»).
  */
 export type NavAccess =
   | { kind: "staffPath" }
@@ -82,7 +90,8 @@ export type NavAccess =
   | { kind: "anyOf"; capabilities: Capability[] }
   | { kind: "fullAccessOr"; capabilities: Capability[] }
   | { kind: "all"; rules: NavAccess[] }
-  | { kind: "fact"; fact: keyof NavFacts };
+  | { kind: "fact"; fact: Exclude<keyof NavFacts, "journalsPointMode"> }
+  | { kind: "notPointMode" };
 
 /** Ключ подписи вкладки: `navigation.shell.tabs.<label>`. */
 export type NavTabLabel =
@@ -238,6 +247,11 @@ const PERMISSIONS_FACT: NavAccess = { kind: "fact", fact: "settingsPermissions" 
 const CHECKLISTS_FACT: NavAccess = { kind: "fact", fact: "checklists" };
 // `/dashboard` без `journals.view` уводит на панель контроля.
 const JOURNALS_TODAY: NavAccess = { kind: "all", rules: [anyOf("journals.view"), FULL_ACCESS] };
+// «Журналы точек» и «Все журналы» — страницы всей организации: при выбранной
+// в шапке торговой точке их нет (владелец, 2026-10-28).
+const NOT_POINT_MODE: NavAccess = { kind: "notPointMode" };
+const JOURNALS_POINTS: NavAccess = { kind: "all", rules: [ADMIN, NOT_POINT_MODE] };
+const JOURNALS_ALL: NavAccess = { kind: "all", rules: [anyOf("journals.view"), NOT_POINT_MODE] };
 
 /** Правило пункта реестра ППК — по виду доступа блока. */
 const PPK_ACCESS: Record<PpkBlockAccess, NavAccess> = {
@@ -393,12 +407,17 @@ const JOURNAL_SETUP_MATCH = SETTINGS_CARDS.filter((card) => card.section === "jo
   ...(card.match ?? []),
 ]);
 
+/**
+ * Меню «Журналов» (владелец, 2026-10-28): «Настройка» — в общем списке, под
+ * ним наборы журналов. При выбранной в шапке торговой точке «Журналы точек»
+ * и «Все журналы» пропадают (`NOT_POINT_MODE`) — вход в раздел «Сегодня».
+ */
 const JOURNALS_MENU: NavMenuGroup[] = [
   {
     label: null,
     items: [
       // Журналы всех точек: что ведётся на каждой, добавить/убрать журнал точке.
-      { id: "points", icon: "Store", href: "/journals/points", access: ADMIN },
+      { id: "points", icon: "Store", href: "/journals/points", access: JOURNALS_POINTS },
       { id: "today", icon: "CalendarCheck", href: "/dashboard", access: JOURNALS_TODAY, match: ["/dashboard/catch-up"] },
       // «Сегодня» заведующей — панель контроля (у управляющей есть своё «Сегодня»).
       {
@@ -408,7 +427,9 @@ const JOURNALS_MENU: NavMenuGroup[] = [
         access: anyOf("tasks.verify", "admin.full"),
         hideIfVisible: "today",
       },
-      { id: "all", icon: "ClipboardList", href: "/journals", access: anyOf("journals.view") },
+      { id: "all", icon: "ClipboardList", href: "/journals", access: JOURNALS_ALL },
+      { id: "verify", icon: "BadgeCheck", href: "/verifications", access: anyOf("tasks.verify") },
+      { id: "setup", icon: "Settings2", href: "/settings/sections/journals", access: FULL_ACCESS, match: JOURNAL_SETUP_MATCH },
     ],
   },
   {
@@ -419,14 +440,6 @@ const JOURNALS_MENU: NavMenuGroup[] = [
       { id: "standard", icon: "ListOrdered", href: "/journals/sets/standard", access: FULL_ACCESS },
       { id: "haccp", icon: "ShieldCheck", href: "/journals/sets/haccp", access: FULL_ACCESS },
       { id: "extra", icon: "ListPlus", href: "/journals/sets/extra", access: FULL_ACCESS },
-    ],
-  },
-  {
-    // Безымянная группа после подписанной слилась бы с ней — поэтому «Ещё».
-    label: "more",
-    items: [
-      { id: "verify", icon: "BadgeCheck", href: "/verifications", access: anyOf("tasks.verify") },
-      { id: "setup", icon: "Settings2", href: "/settings/sections/journals", access: FULL_ACCESS, match: JOURNAL_SETUP_MATCH },
     ],
   },
 ];
@@ -583,7 +596,7 @@ export const NAV_SECTIONS: NavSection[] = [
     renameHref: "/journals",
     hiddenMatch: ["/journals-progress", "/acknowledge"],
     tabs: [
-      { id: "points", label: "points", href: "/journals/points", access: ADMIN },
+      { id: "points", label: "points", href: "/journals/points", access: JOURNALS_POINTS },
       {
         id: "today",
         label: "today",
@@ -600,7 +613,7 @@ export const NAV_SECTIONS: NavSection[] = [
         access: anyOf("tasks.verify", "admin.full"),
         hideIfVisible: "today",
       },
-      { id: "all", label: "all", href: "/journals", access: anyOf("journals.view") },
+      { id: "all", label: "all", href: "/journals", access: JOURNALS_ALL },
       { id: "verify", label: "verify", href: "/verifications", access: anyOf("tasks.verify") },
       { id: "setup", label: "setup", href: "/settings/sections/journals", access: FULL_ACCESS },
     ],
@@ -702,6 +715,8 @@ function ruleAllows(actor: NavActor, access: NavAccess, facts: NavFacts): boolea
       return access.rules.every((rule) => ruleAllows(actor, rule, facts));
     case "fact":
       return facts[access.fact] === true;
+    case "notPointMode":
+      return facts.journalsPointMode !== true;
   }
 }
 

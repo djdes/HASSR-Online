@@ -6,6 +6,7 @@ import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/l
 import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
 import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
 import { resolveHeaderPoint } from "@/lib/header-point";
+import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -252,6 +253,12 @@ export default async function DashboardLayout({
     context: buildingContext,
     canManage: hasFullWorkspaceAccess(session.user),
   });
+  // «Вся организация» (без офиса) — первым пунктом и в листе меню на телефоне.
+  const tPoint = await getTranslations("navigation.shell.point");
+  const switcherBuildings =
+    headerPoint.kind === "switch" && headerPoint.options[0]?.id === ORGANIZATION_VIEW_ID
+      ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...buildingContext.buildings]
+      : buildingContext.buildings;
 
   // Тариф живёт на аккаунте: у сети из трёх кафе один договор. Пока
   // организация не привязана к аккаунту — тариф самой организации.
@@ -516,8 +523,8 @@ export default async function DashboardLayout({
               // Что в центре шапки — `resolveHeaderPoint`: точка, «+ Добавить
               // точку» руководителю или ничего; название компании — никогда.
               point: headerPoint,
-              buildings: buildingContext.canSwitch ? buildingContext.buildings : [],
-              activeBuildingId: buildingContext.activeBuildingId,
+              buildings: buildingContext.canSwitch ? switcherBuildings : [],
+              activeBuildingId: headerPoint.kind === "switch" ? headerPoint.activeId : buildingContext.activeBuildingId,
               manageHref: hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null,
             }}
             canCreateOrganization={Boolean(ownedAccount)}

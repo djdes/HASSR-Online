@@ -17,6 +17,7 @@ import {
   planMonthlyRub,
   planPeriodFullRub,
   planPeriodPriceRub,
+  planPointMonthlyRub,
   planTariffKey,
   pointsFactor,
   quotePlanChange,
@@ -66,6 +67,18 @@ describe("цены тарифов (владелец, 2026-10)", () => {
     assert.equal(planPeriodFullRub(R, "standard", "month", 3), 9000);
     assert.equal(planPeriodPriceRub(R, "premium", "year", 3), 136_458);
     assert.equal(planMonthlyRub(R, "premium", "year", 3), 11_372);
+  });
+
+  it("цена одной точки в месяц — со скидкой за точки, целые рубли", () => {
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 1), 3000);
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 2), 3000);
+    // 14 точек помесячно: 3 000 × 0,95 = 2 850 (итог — 39 900 ₽ в месяц).
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 14), 2850);
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 14) * 14, planPeriodPriceRub(R, "standard", "month", 14));
+    // 1 990 × 0,95 = 1 890,5 → 1 891 (без потери на дробях).
+    assert.equal(planPointMonthlyRub(R, "standard", "year", 14), 1891);
+    assert.equal(planPointMonthlyRub(R, "premium", "year", 3), 3791);
+    assert.equal(planPointMonthlyRub(R, "premium", "month", 14), 4750);
   });
 
   it("число точек — целое от 1 до 50", () => {

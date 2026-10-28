@@ -138,6 +138,16 @@ export function planMonthlyRub(rates: PlanRates, tier: PaidTier, cycle: BillingC
   return Math.round(planPeriodPriceRub(rates, tier, cycle, points) / CYCLE_MONTHS[cycle]);
 }
 
+/**
+ * Цена одной точки в месяц со скидкой за точки — крупная цена витрины
+ * («2 850 ₽/мес за точку» при 14 точках помесячно). Целочисленно: 1 990 × 0,95
+ * через дроби дало бы 1 890,4999… вместо 1 890,5.
+ */
+export function planPointMonthlyRub(rates: PlanRates, tier: PaidTier, cycle: BillingCycle, points = 1): number {
+  const rate = rates[tier][cycle];
+  return hasPointsDiscount(points) ? Math.round((rate * (100 - POINTS_DISCOUNT_PERCENT)) / 100) : rate;
+}
+
 /** Выгода годовой оплаты в процентах (Стандарт 3 000 → 1 990 — 34 %). */
 export function yearlySavingsPercent(rates: PlanRates, tier: PaidTier): number {
   const month = rates[tier].month;

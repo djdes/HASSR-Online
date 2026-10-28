@@ -2776,7 +2776,8 @@ export type MessageContract = {
         "add": "Добавить точку",
         "addHint": "Откроется мастер: название и адрес, помещения, оборудование",
         "open": "Открыть точку",
-        "captionOffice": "Организация"
+        "captionOffice": "Организация",
+        "organization": "Вся организация"
       },
       "sidebarAria": "Разделы кабинета",
       "tabsAria": "Подразделы",
@@ -2968,6 +2969,15 @@ export type MessageContract = {
       "back": "Назад",
       "badges": {
         "pro": "PRO"
+      },
+      "pointMode": {
+        "title": "Этот раздел — для всей организации",
+        "body": "Сейчас в шапке выбрана точка «{point}». С выбранной точкой в «Журналах» — «Сегодня», проверка записей, настройка и наборы журналов этой точки.",
+        "back": "Назад",
+        "chooseOrganization": "Выбрать всю организацию",
+        "hintOrganization": "«Журналы точек» и «Все журналы» открываются, когда в шапке выбрана «Вся организация».",
+        "hintPoint": "Вы работаете на своей точке — журналы всех точек видит руководство компании.",
+        "failed": "Не удалось выбрать всю организацию"
       }
     },
     "header": {
@@ -5748,7 +5758,9 @@ export type MessageContract = {
         "yearTotal": "{amount} за год",
         "yearSavings": "экономия {amount}",
         "monthly": "оплата каждый месяц",
-        "forPoints": "за {count, plural, one {# точку} few {# точки} many {# точек} other {# точки}}",
+        "perPointMonth": "/мес за точку",
+        "totalYear": "{count, plural, one {За # точку} few {За # точки} many {За # точек} other {За # точки}} — {amount} за год",
+        "totalMonth": "{count, plural, one {За # точку} few {За # точки} many {За # точек} other {За # точки}} — {amount} в месяц",
         "pointsDiscount": "−{percent, number} % за точки"
       },
       "includes": {
