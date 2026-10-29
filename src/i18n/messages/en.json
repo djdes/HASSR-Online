@@ -1403,6 +1403,12 @@
         "weekday6": "Sat",
         "weekday7": "Sun"
       }
+    },
+    "pointRowsNotice": {
+      "equipmentTitle": "This document includes equipment of other locations: {count}",
+      "roomsTitle": "This document includes rooms of other locations: {count}",
+      "body": "The document was built before journals were split by location. The next period will include only this location's objects. To fix it now, use “Recreate documents” in journal responsibles.",
+      "action": "Open “Recreate documents”"
     }
   },
   "journalFields": {
@@ -7870,7 +7876,8 @@
       "primaryHint": "★ — main location: location-based notifications use it",
       "primaryOn": "“{name}” is the main location. Click to unset",
       "makePrimary": "Make “{name}” the main location: location-based notifications will use it",
-      "temporaryTitle": "“{name}” is a temporary location (substitution)"
+      "temporaryTitle": "“{name}” is a temporary location (substitution)",
+      "allEverywhereHint": "“All locations” — the employee appears in the journals and QR codes of every location. Select their location to keep them to it."
     },
     "weekdays": {
       "groupLabel": "Days off each week",

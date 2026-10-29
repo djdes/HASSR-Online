@@ -40,6 +40,19 @@ export function rowsPointFromTargets(
   return buildingId && targets.includes(buildingId) ? buildingId : null;
 }
 
+/**
+ * Сколько объектов в строках документа точки — с других точек: документ
+ * собран до разделения журналов по точкам. Удалённые объекты (нет в
+ * `knownIds`) и объекты точки или общие (`pointIds`) не считаются.
+ */
+export function countForeignRows(
+  rowObjectIds: ReadonlyArray<string | null | undefined>,
+  pointIds: ReadonlySet<string>,
+  knownIds: ReadonlySet<string>,
+): number {
+  return new Set(rowObjectIds.filter((id): id is string => Boolean(id) && knownIds.has(id as string) && !pointIds.has(id as string))).size;
+}
+
 /** Точка, по которой собираются строки документа; null — вся организация. */
 export async function documentRowsPointId(
   organizationId: string,

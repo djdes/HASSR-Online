@@ -58,3 +58,12 @@ test("«Допуск сотрудников»: сотрудники точки �
   // Без точки (документ общий) — вся организация.
   assert.equal(admissionRoster(everyone, everyone, new Set()).length, 4);
 });
+
+test("объекты других точек в старом документе точки: удалённые и свои/общие не считаются, повторы — один раз", async () => {
+  const { countForeignRows } = await import("./document-point-rows");
+  const point = new Set(["fridge-a", "fridge-shared"]);
+  const known = new Set(["fridge-a", "fridge-shared", "fridge-b", "fridge-c"]);
+  assert.equal(countForeignRows(["fridge-a", "fridge-b", "fridge-c", "fridge-b", "deleted", null, undefined], point, known), 2);
+  assert.equal(countForeignRows(["fridge-a", "fridge-shared"], point, known), 0);
+  assert.equal(countForeignRows([], point, known), 0);
+});
