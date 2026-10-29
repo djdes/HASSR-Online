@@ -13,5 +13,13 @@
   убран, у шапки остаётся; плашки `aria-hidden`; движение выключается при `prefers-reduced-motion`.
 - Тестовый прогон перезаписывает PDF в `.agent/tasks/english-version-1375e736/raw/` — возвращены к
   закоммиченным версиям, в коммит не входят.
+- После слияния `origin/master` (#54): `npm run typecheck` (exit 0), `npm run test:gate` (pass=5105,
+  fail=0).
+- Прод-сборка `NODE_OPTIONS=--max-old-space-size=8192 npm run build` (`next build --webpack`) — exit 0.
+  В итоговом CSS на месте: `:root{--app-wordmark-gradient…;--app-wordmark-tagline…}` и тёмные значения,
+  9 тонов `[data-tone=…]`, `[data-nav-chip]`, `@keyframes nav-chip-pop` / `nav-row-rise`, `[data-motion]`,
+  блоки `prefers-reduced-motion`. `next start` + те же сценарии Playwright: замеры совпали с dev
+  (подпись 675–1021 px при буквах 674.6–1021.3; наведение `translate 0 -1px`, `scale 1.06`,
+  `rotate -6deg`; знака под меню нет).
 
 Вердикт: **PASS**.
