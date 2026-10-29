@@ -517,6 +517,7 @@ model Organization {
   products                       Product[]
   nameSuggestions                NameSuggestion[]
   auditLogs                      AuditLog[]
+  clientContracts                ClientContract[]
   journalChecklistItems          JournalChecklistItem[]
   journalChecklistChecks         JournalChecklistCheck[]
   managerScopes                  ManagerScope[]
@@ -4270,6 +4271,41 @@ model ClosingDocument {
   updatedAt      DateTime  @updatedAt
 
   @@index([organizationId, issuedAt])
+}
+
+/// Договор оказания услуг ООО «БФС» с организацией-клиентом (2026-10-29).
+/// Выпускает ROOT на странице организации; текст — `src/lib/contracts/template.ts`
+/// (версия в `templateVersion`), PDF/DOCX перерисовываются только из снимков
+/// `seller` / `buyer` / `params`, а не из текущих реквизитов.
+model ClientContract {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// «WS-2026/0001»: год договора и порядковый номер в году.
+  number          String       @unique
+  year            Int
+  seq             Int
+  /// Дата договора (полдень UTC выбранного дня — без сдвига часового пояса).
+  issuedAt        DateTime
+  city            String
+  templateVersion String
+  seller          Json
+  buyer           Json
+  /// Подписант клиента, основание, факсимиле: `ContractParams`.
+  params          Json
+  /// issued | sent | voided.
+  status          String       @default("issued")
+  sentAt          DateTime?
+  sentTo          String[]     @default([])
+  sentByUserId    String?
+  voidedAt        DateTime?
+  voidedByUserId  String?
+  createdByUserId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([year, seq])
+  @@index([organizationId, createdAt])
 }
 
 /// Промокод на скидку при оформлении подписки. Создаёт ROOT. Скидка

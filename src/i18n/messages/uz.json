@@ -29603,5 +29603,134 @@
       "add": "«Jurnal qo‘shish» — jurnal shu nuqta xodimlarining «Bugun» bo‘limida paydo bo‘ladi.",
       "remove": "Jurnal yonidagi «×» — u eslatmaydi; yozuvlar o‘chirilmaydi."
     }
+  },
+  "rootClientContract": {
+    "title": "Xizmat koʻrsatish shartnomasi",
+    "subtitle": "«BFS» MChJ rekvizitlari va mijozning STIR boʻyicha maʼlumotlari avtomatik qoʻyiladi — tekshiring, rasmiylashtiring va yuboring.",
+    "version": "{version} sanali shablon",
+    "lawyerNote": "Shartnoma matni yurist uchun qoralama: keng yuborishdan oldin uni yuristga koʻrsating.",
+    "cancel": "Bekor qilish",
+    "seller": {
+      "title": "«BFS» MChJ rekvizitlari",
+      "ready": "Tayyor",
+      "missing": "Maʼlumot yetishmaydi",
+      "edit": "Rekvizitlarni toʻldirish",
+      "items": {
+        "nameFull": "Toʻliq nomi",
+        "inn": "STIR (INN)",
+        "ogrn": "Roʻyxat raqami (OGRN)",
+        "address": "Yuridik manzil",
+        "bank": "Bank, BIK, hisob raqami va vakillik hisobi",
+        "head": "Rahbar (lavozimi va F.I.Sh.)",
+        "facsimile": "Imzo faksimilesi — ixtiyoriy",
+        "stamp": "Muhr — ixtiyoriy"
+      }
+    },
+    "buyer": {
+      "title": "Mijoz maʼlumotlari",
+      "legal": "Yuridik shaxs",
+      "individual": "YaTT",
+      "refresh": "Reyestrdan yangilash",
+      "refreshing": "Yangilanmoqda…",
+      "refreshed": "Reyestr maʼlumotlari yangilandi",
+      "updated": "{date} sanali reyestr nusxasi",
+      "noProfile": "Reyestr nusxasi yoʻq — maʼlumotlar mijozning rekvizitlaridan olingan",
+      "optionalHint": "Yetishmagan maʼlumot oʻrniga shartnomada qoʻlda toʻldirish uchun chiziq qoladi.",
+      "items": {
+        "inn": "STIR (INN)",
+        "nameFull": "Reyestr boʻyicha toʻliq nomi",
+        "ogrn": "Roʻyxat raqami (OGRN)",
+        "ogrnIndividual": "YaTT roʻyxat raqami (OGRNIP)",
+        "legalAddress": "Yuridik manzil",
+        "legalAddressIndividual": "Manzil",
+        "kpp": "Hisobga qoʻyish kodi (KPP)",
+        "signer": "Rahbar (lavozimi va F.I.Sh.)",
+        "signerIndividual": "Tadbirkorning F.I.Sh.",
+        "basis": "Vakolat asosi",
+        "email": "Bildirishnomalar uchun pochta"
+      }
+    },
+    "form": {
+      "title": "Shartnoma maʼlumotlari",
+      "date": "Shartnoma sanasi",
+      "city": "Shahar",
+      "cityPlaceholder": "Masalan, Korolyov",
+      "signerName": "Mijoz tomonidan imzolovchi — F.I.Sh.",
+      "signerNameIndividual": "Tadbirkor yoki vakilning F.I.Sh.",
+      "signerPost": "Lavozimi",
+      "signerPostPlaceholder": "bosh direktor",
+      "signerBasis": "Qaysi asosda harakat qiladi",
+      "signerBasisIndividual": "Vakilning ishonchnomasi",
+      "basisHint": "Rus tilida, qaratqich kelishigida: «Устава» (ustav), «доверенности № 12 от 01.10.2026» (ishonchnoma).",
+      "basisHintIndividual": "Faqat tadbirkorning oʻzi emas, vakil imzolasa toʻldiring.",
+      "buyerEmail": "Bildirishnomalar uchun mijoz pochtasi",
+      "buyerEmailHint": "Shartnoma rekvizitlariga tushadi — bildirishnomalar shu manzilga yuboriladi.",
+      "facsimile": "«BFS» MChJ imzo faksimilesi va muhri",
+      "facsimileHint": "Imzo va muhr PDFga avtomatik qoʻyiladi.",
+      "facsimileMissing": "Faksimile va muhrni «Rekvizitlar» boʻlimiga yuklang.",
+      "preview": "PDF loyihasi",
+      "previewing": "Tayyorlanmoqda…",
+      "issue": "Shartnomani rasmiylashtirish",
+      "issuing": "Rasmiylashtirilmoqda…",
+      "issued": "{number}-son shartnoma rasmiylashtirildi",
+      "blocked": "Shartnomani rasmiylashtirish uchun toʻldiring: {items}",
+      "whatNext": "Rasmiylashtirilgach, shartnomaga raqam beriladi — uni PDF yoki Word formatida yuklab olish va mijozga pochta orqali yuborish mumkin."
+    },
+    "history": {
+      "title": "Rasmiylashtirilgan shartnomalar",
+      "count": "{count, plural, =0 {hali yoʻq} other {# ta shartnoma}}",
+      "empty": "Hali shartnomalar yoʻq",
+      "emptyHint": "Yuqoridagi maʼlumotlarni toʻldirib, «Shartnomani rasmiylashtirish» tugmasini bosing.",
+      "current": "Amaldagi",
+      "status": {
+        "issued": "Rasmiylashtirilgan",
+        "sent": "Yuborilgan",
+        "voided": "Bekor qilingan"
+      },
+      "issuedBy": "Rasmiylashtirilgan: {date} · {name}",
+      "issuedAt": "Rasmiylashtirilgan: {date}",
+      "sentTo": "Yuborilgan: {date}, {emails}",
+      "sentToBy": "Yuborilgan: {date}, {emails} · {name}",
+      "voided": "Bekor qilingan: {date}",
+      "pdf": "PDF",
+      "docx": "Word",
+      "send": "Yuborish",
+      "void": "Bekor qilish"
+    },
+    "send": {
+      "title": "{number}-son shartnomani yuborish",
+      "description": "Xat PDF ilova bilan yuboriladi. Mijoz shartnomani imzolab, javob xatida skanini yuboradi.",
+      "recipients": "Kimga",
+      "sources": {
+        "owner": "egasi",
+        "ownerContact": "egasining aloqa pochtasi",
+        "accountant": "buxgalter",
+        "registry": "reyestr",
+        "manual": "qoʻlda"
+      },
+      "addPlaceholder": "Manzil qoʻshing va Enter tugmasini bosing",
+      "add": "Qoʻshish",
+      "invalidEmail": "Bu pochta manziliga oʻxshamaydi",
+      "noSuggestions": "Mos manzil topilmadi — egasida xizmat pochtasi. Mijoz manzilini qoʻlda qoʻshing.",
+      "subject": "Mavzu",
+      "message": "Xat matni",
+      "confirm": "Yuborish",
+      "sending": "Yuborilmoqda…",
+      "sent": "Shartnoma yuborildi: {emails}",
+      "notConfigured": "Serverda pochta sozlanmagan — xat faqat jurnalga yozildi, shartnoma yuborilgan deb belgilanmadi",
+      "failed": "Shartnomani yuborib boʻlmadi"
+    },
+    "void": {
+      "title": "{number}-son shartnoma bekor qilinsinmi?",
+      "description": "Shartnoma tarixda qoladi, lekin haqiqiy boʻlmaydi.",
+      "bulletNumber": "Raqam boʻshatilmaydi va qayta berilmaydi",
+      "bulletSend": "Bu shartnomani endi yuborib boʻlmaydi",
+      "bulletPdf": "PDFda «Bekor qilingan» belgisi paydo boʻladi",
+      "confirm": "Bekor qilish",
+      "done": "{number}-son shartnoma bekor qilindi"
+    },
+    "errors": {
+      "generic": "Nimadir xato ketdi — qaytadan urinib koʻring"
+    }
   }
 }

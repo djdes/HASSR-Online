@@ -17,6 +17,7 @@ import { BalanceCard } from "./balance-card";
 import { HeldOrderActions } from "./held-order-actions";
 import { InvoiceActions } from "./invoice-actions";
 import { isTopupOrder } from "@/lib/balance/topup-core";
+import { ClientContractSection } from "@/components/root/client-contract-section";
 
 export const dynamic = "force-dynamic";
 
@@ -229,6 +230,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           />
         </div>
       </div>
+
+      <ClientContractSection organizationId={org.id} />
 
       <BalanceCard
         organizationId={org.id}
