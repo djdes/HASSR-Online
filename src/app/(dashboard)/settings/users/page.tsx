@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { getActiveBuildingId, getViewedPointId, listOrganizationBuildings } from "@/lib/active-building";
+import { listOrganizationBuildings } from "@/lib/active-building";
 import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
 import { positionSuggestionOptionsFor } from "@/lib/sphere-positions";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -137,22 +137,25 @@ export default async function StaffPage({
   const staffBuildings = (await listOrganizationBuildings(orgId)).filter((building) =>
     buildingInScope(session.user, building.id),
   );
-  const [activeBuildingId, assignments, todayKey] = await Promise.all([
-    getActiveBuildingId(session),
+  const [assignments, todayKey] = await Promise.all([
     loadActiveAssignments(orgId),
     organizationTodayKey(orgId),
   ]);
 
-  // «Где работает» (2026-10-26): офис, точка или без места. Без выбора в
-  // адресе — точка из шапки, как на «Цехах» и «Оборудовании» (2026-10-28).
+  // «Где работает» (2026-10-26): офис, точка или без места. Точку здесь
+  // выбирают только в этом фильтре — переключатель в шапке на странице скрыт
+  // (2026-10-29, партнёр: «один список»), без выбора в адресе — «Все».
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? null;
   const showPlaceFilter = organization?.perLocationJournals === true && staffBuildings.length >= 2;
   const place = resolvePlaceFilter({
     requested: placeFilterParam(query.place),
     places: staffBuildings.map((building) => building.id),
     hasNone: true,
-    headerPointId: showPlaceFilter ? await getViewedPointId(session) : null,
+    headerPointId: null,
   });
+  // Новый сотрудник по умолчанию — в место из фильтра (раньше — в точку из
+  // шапки, даже если ниже выбрана другая); «Все» и «Без места» — без места.
+  const defaultPlaceId = place && place !== "none" ? place : null;
   const addParam = one(query.add);
   const initialAddBuilding = staffBuildings.find((building) => building.id === addParam) ?? null;
   const placeOf = (u: { buildingIds: string[] }) =>
@@ -261,7 +264,7 @@ export default async function StaffPage({
       positionSuggestions={positionSuggestions}
       buildings={staffBuildings}
       perLocationJournals={organization?.perLocationJournals === true}
-      activeBuildingId={activeBuildingId}
+      activeBuildingId={defaultPlaceId}
       todayKey={todayKey}
       hasTasksflowIntegration={Boolean(tasksflowIntegration)}
       organization={{

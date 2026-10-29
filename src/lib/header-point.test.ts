@@ -151,18 +151,14 @@ test("переключатель точки скрыт на страницах �
 });
 
 test("на страницах точки переключатель остаётся", () => {
-  for (const path of [
-    "/journals",
-    "/journals/hygiene",
-    "/dashboard",
-    "/settings/areas",
-    "/settings/equipment",
-    "/settings/qr-posters",
-    "/settings/users",
-    "/settings/buildings/b1",
-    "/monitoring",
-  ]) {
+  for (const path of ["/journals", "/journals/hygiene", "/dashboard", "/settings/qr-posters", "/settings/buildings/b1", "/monitoring"]) {
     assert.ok(!headerPointHidden(path), path);
+  }
+});
+
+test("на вкладках с фильтром по точкам переключатель в шапке скрыт — один выбор точки", () => {
+  for (const path of ["/settings/users", "/settings/areas", "/settings/equipment/", "/journals/points"]) {
+    assert.ok(headerPointHidden(path), path);
   }
 });
 

@@ -134,12 +134,24 @@ const COMPANY_WIDE_SECTIONS: ReadonlySet<NavSectionKey> = new Set(["company", "o
 const COMPANY_WIDE_PATHS: ReadonlySet<string> = new Set([HOME_HREF, "/settings/buildings"]);
 
 /**
+ * Вкладки со своим фильтром по точкам над списком (`PlaceFilterChips`,
+ * 2026-10-29, партнёр: «нужен один список — или сверху, или снизу»): точку
+ * там выбирают только в фильтре, переключатель в шапке его не дублирует.
+ */
+const PLACE_FILTER_PATHS: ReadonlySet<string> = new Set([
+  "/settings/users",
+  "/settings/areas",
+  "/settings/equipment",
+  "/journals/points",
+]);
+
+/**
  * Прятать ли точку в центре шапки на этом пути. На страницах точки
- * (журналы, цеха, оборудование, QR, сотрудники, ППК) она остаётся.
+ * (журналы, QR, ППК) она остаётся; на вкладках с фильтром по точкам — нет.
  */
 export function headerPointHidden(pathname: string | null | undefined): boolean {
   const path = (pathname || "/").split(/[?#]/)[0].replace(/(.)\/+$/, "$1");
-  if (COMPANY_WIDE_PATHS.has(path)) return true;
+  if (COMPANY_WIDE_PATHS.has(path) || PLACE_FILTER_PATHS.has(path)) return true;
   const owner = sectionForPath(path);
   return owner !== null && COMPANY_WIDE_SECTIONS.has(owner.section);
 }

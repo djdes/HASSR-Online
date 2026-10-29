@@ -26,7 +26,7 @@ import { BuildingGroupHeader } from "@/components/settings/building-group-header
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
-import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
+import { isOfficeBuilding } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope } from "@/lib/point-scope";
@@ -113,12 +113,11 @@ export default async function EquipmentSettingsPage({
     loadBuildingContext(session),
   ]);
   // Точка → помещение → оборудование (2026-10-17). Фильтр по местам над
-  // списком — как у сотрудников (2026-10-28): без выбора в адресе отмечена
-  // торговая точка из шапки. У точки — её оборудование и оборудование цехов
-  // без точки (оно видно на каждой точке), «Без точки» — только оно.
-  // Места — только точки человека (как в переключателе шапки): руководитель
-  // точки чужих точек не видит; офис — если у него есть свои объекты.
-  const viewedPoint = viewedPointId(buildingContext);
+  // списком — как у сотрудников (2026-10-28), это единственный выбор точки на
+  // странице (переключатель в шапке скрыт, 2026-10-29); без выбора в адресе —
+  // «Все». У точки — её оборудование и оборудование цехов без точки (оно
+  // видно на каждой точке), «Без точки» — только оно. Места — только точки
+  // человека: руководитель точки чужих не видит; офис — если у него есть объекты.
   const showPlaceFilter = buildingContext.enabled;
   const scope = scopePlaces({
     items: equipment,
@@ -132,7 +131,8 @@ export default async function EquipmentSettingsPage({
     requested: showPlaceFilter ? placeFilterParam(query.place) : null,
     places: scope.buildings.map((building) => building.id),
     hasNone: scope.loose.length > 0,
-    headerPointId: viewedPoint,
+    // Переключатель в шапке здесь скрыт — точку выбирают только в фильтре.
+    headerPointId: null,
   });
   const placePointId = place && place !== PLACE_NONE ? place : null;
   const groups = groupByBuilding(scope.items, (item) => item.area.buildingId, scope.buildings, {

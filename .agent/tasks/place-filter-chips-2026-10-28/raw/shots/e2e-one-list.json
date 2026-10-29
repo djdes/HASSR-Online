@@ -1,0 +1,47 @@
+{
+  "base": "http://localhost:3026",
+  "total": 8,
+  "failed": 0,
+  "results": [
+    {
+      "name": "/settings/users: переключателя точки в шапке нет",
+      "ok": true,
+      "detail": "[data-current-point]: 0"
+    },
+    {
+      "name": "/settings/users: без выбора — «Все», хотя в шапке была точка № 5",
+      "ok": true,
+      "detail": "all"
+    },
+    {
+      "name": "/settings/areas: переключателя точки в шапке нет",
+      "ok": true,
+      "detail": "[data-current-point]: 0"
+    },
+    {
+      "name": "/settings/areas: без выбора — «Все», хотя в шапке была точка № 5",
+      "ok": true,
+      "detail": "all"
+    },
+    {
+      "name": "/settings/equipment: переключателя точки в шапке нет",
+      "ok": true,
+      "detail": "[data-current-point]: 0"
+    },
+    {
+      "name": "/settings/equipment: без выбора — «Все», хотя в шапке была точка № 5",
+      "ok": true,
+      "detail": "all"
+    },
+    {
+      "name": "/settings/qr-posters: переключатель в шапке остаётся",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Добавление сотрудника: «Где работает» — точка из фильтра (112)",
+      "ok": true,
+      "detail": "[\"b-dk-112\"]"
+    }
+  ]
+}
