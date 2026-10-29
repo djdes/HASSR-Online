@@ -164,6 +164,12 @@ export function BuildingChips(props: {
           </button>
         ) : null}
       </div>
+      {/* Без точки сотрудник попадает в журналы и QR каждой точки (2026-10-29). */}
+      {all ? (
+        <p className="text-[12px] leading-snug text-[#6f7282]" data-building-chips-everywhere="">
+          {t("allEverywhereHint")}
+        </p>
+      ) : null}
     </div>
   );
 }

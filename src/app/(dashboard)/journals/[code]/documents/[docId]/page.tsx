@@ -50,7 +50,8 @@ import { canManageOrderScans, listOrderScans } from "@/lib/journal-order-scans-d
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding as worksAtDocumentPoint } from "@/lib/building-settings";
-import { documentRowsPointId } from "@/lib/document-point-rows";
+import { countForeignRows, documentRowsPointId } from "@/lib/document-point-rows";
+import { PointRowsNotice } from "@/components/journals/point-rows-notice";
 import {
   getHygieneDemoTeamUsers,
   normalizeHealthEntryData,
@@ -924,10 +925,20 @@ async function JournalDocumentBody({
   }
 
   if (document.template.code === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE) {
+    // Документ точки, собранный до разделения по точкам: оборудование других точек.
+    const coldConfig = normalizeColdEquipmentDocumentConfig(document.config);
+    const foreignEquipment = rowsPointId
+      ? countForeignRows(
+          coldConfig.equipment.map((item) => item.sourceEquipmentId),
+          new Set(equipment.map((item) => item.id)),
+          new Set(allEquipment.map((item) => item.id)),
+        )
+      : 0;
     return (
       // «Сегодня» — из пояса организации, а не из часов устройства:
       // иначе сервер отвергал заполнение с «только сегодняшний день».
       <TodayKeyProvider value={todayKey}>
+      <PointRowsNotice kind="equipment" count={foreignEquipment} />
       <ColdEquipmentDocumentClient
         documentId={document.id}
         controlPeriodicity={controlPeriodicity}
@@ -940,7 +951,7 @@ async function JournalDocumentBody({
         status={document.status}
         autoFill={document.autoFill}
         employees={enrichedEmployees}
-        config={normalizeColdEquipmentDocumentConfig(document.config)}
+        config={coldConfig}
         initialEntries={document.entries.map((entry) => ({
           id: entry.id,
           employeeId: entry.employeeId,
@@ -1482,7 +1493,17 @@ async function JournalDocumentBody({
         },
       },
     });
+    // Документ точки, собранный до разделения по точкам: помещения других точек.
+    const foreignRooms = rowsPointId
+      ? countForeignRows(
+          selectedRoomIds,
+          new Set(buildings.filter((b) => b.id === rowsPointId).flatMap((b) => b.rooms.map((r) => r.id))),
+          new Set(buildings.flatMap((b) => b.rooms.map((r) => r.id))),
+        )
+      : 0;
     return (
+      <>
+      <PointRowsNotice kind="rooms" count={foreignRooms} />
       <CleaningDocumentClient
         documentId={document.id}
         controlPeriodicity={controlPeriodicity}
@@ -1544,6 +1565,7 @@ async function JournalDocumentBody({
         hasTasksFlowIntegration={hasTasksFlowIntegration}
         useV2={organization?.experimentalUiV2 ?? true}
       />
+      </>
     );
   }
 
