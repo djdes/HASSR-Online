@@ -2966,6 +2966,7 @@
       },
       "backToMain": "Asosiy menyu",
       "sectionMenuAria": "Boʻlim menyusi",
+      "placeAria": "Menyuda qayerdasiz",
       "status": {
         "done": "Toʻldirilgan",
         "started": "Boshlangan",

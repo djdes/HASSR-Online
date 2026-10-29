@@ -120,6 +120,7 @@ export function MobileNavSheet({
               currentKey={active}
               statuses={statuses}
               onOpenMenu={menu.openMenu}
+              onGoTo={menu.goTo}
             />
           </>
         ) : (

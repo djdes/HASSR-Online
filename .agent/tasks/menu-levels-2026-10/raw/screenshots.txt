@@ -1,0 +1,222 @@
+Локальные скриншоты (PNG не коммитятся: .gitignore → .agent/**/*.png). Playwright Chromium, next dev, демо-владелец;
+сайдбар — 1440×900, DPR 2, обрезка 256 px; телефон — 390×844, DPR 2.
+
+- jump-company-light.png — с уровня 3 ступенью «Моя компания»: меню компании, /settings/organization
+- level0-main-dark.png — главное меню (уровень 0), тёмная тема
+- level0-main-light.png — главное меню (уровень 0), стопка у разделов со стрелкой
+- level1-company-dark.png — уровень 1 «Моя компания», тёмная тема
+- level1-company-light.png — уровень 1: «Моя компания», карточка «Главное меню · Моя компания»
+- level2-points-dark.png — уровень 2 «Торговые точки», тёмная тема
+- level2-points-light.png — уровень 2: «Торговые точки», оранжевая подложка
+- level3-journals-dark.png — уровень 3 «Журналы», тёмная тема
+- level3-journals-light.png — уровень 3: «Журналы», путь из четырёх ступеней
+- mini-after-points.png — Mini App: ступень «Торговые точки» — меню точек
+- mini-level3.png — Mini App (ws-shell=mini): лист меню раздела на /journals
+- sheet-after-company.png — лист: ступень «Моя компания» — меню компании, URL прежний
+- sheet-after-root.png — лист: ступень «Главное меню» — главное меню
+- sheet-company-light.png — лист: после ступени «Моя компания»
+- sheet-level3.png — лист на /journals: четыре ступени
+- sheet-points-light.png — лист на телефоне (390), /settings/equipment: карточка в листе
+
+Сценарии (лежат здесь же, запуск: BASE=http://localhost:3100 node levels.cjs): levels.cjs (сайдбар, уровни 0–3, переходы ступенями, стопка, каскад), sheet-check.cjs (лист сайта),
+mini-check.cjs (Mini App, кука ws-shell=mini).
+
+Замеры сайдбара (levels.cjs):
+{
+ "level1-company-light": {
+  "steps": [
+   "Главное меню",
+   "Моя компания"
+  ],
+  "current": "Моя компания",
+  "tone": "indigo",
+  "bg": "rgb(240, 241, 254)"
+ },
+ "level2-points-light": {
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "Торговые точки"
+  ],
+  "current": "Торговые точки",
+  "tone": "orange",
+  "bg": "rgb(252, 240, 234)"
+ },
+ "level3-journals-light": {
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "Торговые точки",
+   "Журналы"
+  ],
+  "current": "Журналы",
+  "tone": "indigo",
+  "bg": "rgb(240, 241, 254)"
+ },
+ "stackMainChip": "rgba(255, 255, 255, 0.28) 0px 1px 0px 0px inset, rgba(85, 102, 246, 0.45) 0px 2px 6px -3px, rgba(85, 102, 246, 0.45) 3px 3px 0px -1px",
+ "stackPointsRow": null,
+ "jumpToCompany": {
+  "url": "/settings/organization",
+  "focus": "points"
+ },
+ "jumpToMain": {
+  "url": "/home",
+  "focus": "company"
+ },
+ "stack": {
+  "pointsRow": "rgba(255, 255, 255, 0.28) 0px 1px 0px 0px inset, rgba(220, 90, 18, 0.42) 0px 2px 6px -3px, rgba(220, 90, 18, 0.42) 3px 3px 0px -1px",
+  "masterRow": "rgba(255, 255, 255, 0.28) 0px 1px 0px 0px inset, rgba(124, 92, 245, 0.45) 0px 2px 6px -3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+ },
+ "level1-company-dark": {
+  "steps": [
+   "Главное меню",
+   "Моя компания"
+  ],
+  "current": "Моя компания",
+  "tone": "indigo",
+  "bg": "rgba(163, 173, 255, 0.13)"
+ },
+ "level2-points-dark": {
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "Торговые точки"
+  ],
+  "current": "Торговые точки",
+  "tone": "orange",
+  "bg": "rgba(238, 174, 134, 0.12)"
+ },
+ "level3-journals-dark": {
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "Торговые точки",
+   "Журналы"
+  ],
+  "current": "Журналы",
+  "tone": "indigo",
+  "bg": "rgba(163, 173, 255, 0.13)"
+ },
+ "sheetPoints": [
+  "Главное меню",
+  "Моя компания",
+  "Торговые точки"
+ ],
+ "sheetAfterJump": {
+  "url": "/settings/equipment",
+  "steps": [
+   "Главное меню",
+   "Моя компания"
+  ]
+ },
+ "cascade-no-preference": [
+  "Главное меню | nav-row-rise 0s",
+  "Моя компания | nav-row-rise 0.028s",
+  "Торговые точки | nav-row-rise 0.056s",
+  "Журналы | nav-row-rise 0.084s",
+  "Журналы точек | nav-row-rise 0.112s",
+  "Сегодня | nav-row-rise 0.14s",
+  "Все журналы | nav-row-rise 0.168s"
+ ],
+ "cascade-reduce": [
+  "Главное меню | none 0s",
+  "Моя компания | none 0s",
+  "Торговые точки | none 0s",
+  "Журналы | none 0s",
+  "Журналы точек | none 0s",
+  "Сегодня | none 0s",
+  "Все журналы | none 0s"
+ ]
+}
+
+Лист на телефоне (sheet-check.cjs):
+{
+ "open": {
+  "url": "/journals",
+  "mode": "section",
+  "section": "journals",
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "Торговые точки",
+   "*Журналы"
+  ],
+  "focus": ""
+ },
+ "afterCompany": {
+  "url": "/journals",
+  "mode": "section",
+  "section": "company",
+  "steps": [
+   "Главное меню",
+   "*Моя компания"
+  ],
+  "focus": "Торговые точки"
+ },
+ "afterRoot": {
+  "url": "/journals",
+  "mode": "main",
+  "section": null,
+  "steps": [],
+  "focus": "Моя компания"
+ },
+ "consoleErrors": []
+}
+
+Mini App (mini-check.cjs):
+{
+ "before": {
+  "url": "/journals",
+  "button": "journals",
+  "title": null,
+  "steps": [],
+  "stacked": [],
+  "focus": "(self.__next_s=self.__next_s||[]).push(["
+ },
+ "open": {
+  "url": "/journals",
+  "button": "journals",
+  "title": "Журналы",
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "Торговые точки",
+   "*Журналы"
+  ],
+  "stacked": [],
+  "focus": ""
+ },
+ "afterPoints": {
+  "url": "/journals",
+  "button": "journals",
+  "title": "Торговые точки",
+  "steps": [
+   "Главное меню",
+   "Моя компания",
+   "*Торговые точки"
+  ],
+  "stacked": [
+   "Сотрудники точек",
+   "Журналы",
+   "Программа производственного ко"
+  ],
+  "focus": "Журналы"
+ },
+ "afterRoot": {
+  "url": "/journals",
+  "button": "journals",
+  "title": "Главное меню",
+  "steps": [],
+  "stacked": [
+   "Моя компания",
+   "Мониторинг",
+   "Подписки",
+   "Настройки и оформление",
+   "К Вам пришла проверка"
+  ],
+  "focus": "Моя компания"
+ },
+ "consoleErrors": [
+  "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+ ]
+}
