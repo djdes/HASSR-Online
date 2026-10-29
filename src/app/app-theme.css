@@ -652,6 +652,7 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .borde
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#d4d8ec\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#dbe0f1\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#dfe1ec\],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-\[\#dfe3ff\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .border-gray-300 {
   border-color: var(--app-border-strong);
 }
