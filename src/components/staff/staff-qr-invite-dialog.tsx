@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Copy, Loader2, Printer, RefreshCcw, X } from "lucide-react";
 import { toast } from "sonner";
-import { getNativeBridge, printHtml } from "@/lib/native-bridge";
+import { getNativeBridge, PRINT_WINDOW_PAGE_CSS, printHtml } from "@/lib/native-bridge";
 import type { StaffPosition } from "@/components/staff/staff-types";
 
 type Props = {
@@ -87,6 +87,7 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
       <!doctype html>
       <html lang="${locale}"><head><title>${t("print.title")}</title>
       <style>
+        ${PRINT_WINDOW_PAGE_CSS}
         body { font-family: -apple-system, system-ui, sans-serif; padding: 40px; text-align: center; color: #0b1024; }
         img { width: 320px; height: auto; margin: 24px auto; display: block; }
         h1 { font-size: 22px; margin-bottom: 4px; }

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Loader2, Mail, Printer, QrCode, Send, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
-import { getNativeBridge, printHtml } from "@/lib/native-bridge";
+import { getNativeBridge, PRINT_WINDOW_PAGE_CSS, printHtml } from "@/lib/native-bridge";
 
 type Status = { active: boolean; createdAt: string | null; lastUsedAt: string | null; hasPin: boolean; canTelegram: boolean; email: string | null };
 
@@ -73,7 +73,7 @@ export function PersonalQrCard({ employeeId, employeeName }: { employeeId: strin
   function print() {
     if (!issued) return;
     const safeName = employeeName.replace(/[<>&]/g, "");
-    const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><title>${t("printTitle")} — ${safeName}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{display:block;margin:2mm auto;width:70mm;height:auto}</style></head><body><div class="card"><h1>${safeName}</h1><p>${t("printHeading")}</p>${issued.svg}<p>${t("printScan")}</p><p style="color:#9b9fb3">${t("printKeepSafe")}</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
+    const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><title>${t("printTitle")} — ${safeName}</title><style>${PRINT_WINDOW_PAGE_CSS}body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;display:flex;justify-content:center}.card{width:105mm;padding:8mm;border:1px dashed #9b9fb3;border-radius:6mm;margin:10mm;text-align:center}h1{font-size:18px;margin:0 0 2mm}p{font-size:12px;color:#3c4053;margin:2mm 0}svg{display:block;margin:2mm auto;width:70mm;height:auto}</style></head><body><div class="card"><h1>${safeName}</h1><p>${t("printHeading")}</p>${issued.svg}<p>${t("printScan")}</p><p style="color:#9b9fb3">${t("printKeepSafe")}</p></div><script>window.onload=function(){window.print()}</script></body></html>`;
     // В приложении WeSetup новых окон нет — печатаем карточку системной печатью.
     if (getNativeBridge()) {
       void printHtml(html);
