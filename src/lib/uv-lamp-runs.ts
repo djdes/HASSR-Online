@@ -1,6 +1,7 @@
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { deliverableEmail, notifyCoreJournalRecipients, type CoreJournalRecipient } from "@/lib/core-journal-keepers";
 import { db } from "@/lib/db";
+import { documentRowsPointId } from "@/lib/document-point-rows";
 import { announceQrRollover } from "@/lib/journal-qr-rollover";
 import { carryStructureFromPrevious } from "@/lib/journal-structure-carry";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
@@ -92,10 +93,15 @@ export async function ensureUvDocumentForLamp(params: {
       const alive = await aliveUserIds(params.organizationId, [previous?.responsibleUserId, previous?.verifierUserId]);
       const previousResponsible = previous?.responsibleUserId && alive.has(previous.responsibleUserId) ? previous.responsibleUserId : null;
       const responsibleUserId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? previousResponsible;
+      // Документ — точки цеха лампы (2026-10-29: раньше без точки, и журнал
+      // лампы одной точки висел во всех точках). Цех без точки — общий.
+      const lampArea = await db.equipment.findUnique({ where: { id: params.lamp.id }, select: { area: { select: { buildingId: true } } } });
+      const buildingId = await documentRowsPointId(params.organizationId, lampArea?.area.buildingId ?? null);
       const created = await db.journalDocument.create({
         data: {
           organizationId: params.organizationId,
           templateId: template.id,
+          buildingId,
           title: `${UV_LAMP_RUNTIME_PAGE_TITLE} · ${params.lamp.name}`,
           dateFrom,
           dateTo,

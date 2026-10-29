@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
+import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
 import { findOverlappingDocument } from "@/lib/journal-document-overlap";
 import { db } from "@/lib/db";
 import {
@@ -245,6 +246,13 @@ export async function POST(request: Request) {
   const template = await db.journalTemplate.findUnique({ where: { code: resolvedTemplateCode } });
   if (!template) return NextResponse.json({ error: "Шаблон не найден" }, { status: 404 });
 
+  // Точки: новый документ принадлежит активной точке, его строки — из её
+  // справочников (2026-10-29: «в журналы конкретной точки выводятся все
+  // помещения / сотрудники / оборудование организации»).
+  const activeBuildingId = await getActiveBuildingId(session);
+  const rowsPointId = await documentRowsPointId(getActiveOrgId(session), activeBuildingId);
+  const pointRows = pointRowsWhere(rowsPointId);
+
   const coldEquipmentConfig =
     resolvedTemplateCode === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE
       ? buildColdEquipmentConfigFromEquipment(
@@ -253,6 +261,7 @@ export async function POST(request: Request) {
               area: {
                 organizationId: getActiveOrgId(session),
               },
+              AND: [pointRows.equipment],
             },
             select: {
               id: true,
@@ -269,9 +278,9 @@ export async function POST(request: Request) {
   const cleaningUsers =
     resolvedTemplateCode === CLEANING_DOCUMENT_TEMPLATE_CODE
       ? await db.user.findMany({
+          // ORG_ROSTER_WHERE сам занимает `AND` — точку кладём рядом.
           where: {
-            organizationId: getActiveOrgId(session),
-            ...ORG_ROSTER_WHERE,
+            AND: [{ organizationId: getActiveOrgId(session), ...ORG_ROSTER_WHERE }, pointRows.staff],
           },
           select: {
             id: true,
@@ -380,6 +389,7 @@ export async function POST(request: Request) {
       ? await db.area.findMany({
           where: {
             organizationId: getActiveOrgId(session),
+            AND: [pointRows.area],
           },
           select: {
             id: true,
@@ -396,6 +406,7 @@ export async function POST(request: Request) {
             area: {
               organizationId: getActiveOrgId(session),
             },
+            AND: [pointRows.equipment],
           },
           select: {
             name: true,
@@ -409,6 +420,7 @@ export async function POST(request: Request) {
       ? await db.area.findMany({
           where: {
             organizationId: getActiveOrgId(session),
+            AND: [pointRows.area],
           },
           select: {
             id: true,
@@ -417,9 +429,6 @@ export async function POST(request: Request) {
           orderBy: { name: "asc" },
         })
       : [];
-
-  // Точки: новый документ принадлежит активной точке, помещения — её же.
-  const activeBuildingId = await getActiveBuildingId(session);
 
   // 2026-09-04: единый справочник помещений. Климат и график ген. уборок
   // сидируются из Room (/settings/buildings), а не из legacy Area.
@@ -521,6 +530,8 @@ export async function POST(request: Request) {
           where: {
             organizationId: getActiveOrgId(session),
             template: { code: CLEANING_DOCUMENT_TEMPLATE_CODE },
+            // «Как прошлый» — документ этой точки или общий, не чужой точки.
+            ...buildingWhere(rowsPointId),
           },
           orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
           select: { id: true, dateFrom: true, config: true },
@@ -537,6 +548,7 @@ export async function POST(request: Request) {
             area: {
               organizationId: getActiveOrgId(session),
             },
+            AND: [pointRows.equipment],
           },
           select: {
             id: true,
@@ -564,6 +576,7 @@ export async function POST(request: Request) {
             area: {
               organizationId: getActiveOrgId(session),
             },
+            AND: [pointRows.equipment],
           },
           select: { id: true, name: true, type: true },
           orderBy: [{ area: { name: "asc" } }, { name: "asc" }],

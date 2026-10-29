@@ -49,7 +49,8 @@ import { supportsOrderScans } from "@/lib/journal-order-scans";
 import { canManageOrderScans, listOrderScans } from "@/lib/journal-order-scans-db";
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
-import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
+import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding as worksAtDocumentPoint } from "@/lib/building-settings";
+import { documentRowsPointId } from "@/lib/document-point-rows";
 import {
   getHygieneDemoTeamUsers,
   normalizeHealthEntryData,
@@ -377,7 +378,7 @@ async function JournalDocumentBody({
           organizationId: getActiveOrgId(session),
           ...ORG_ROSTER_WHERE,
         },
-        select: { id: true, name: true, role: true, email: true, positionTitle: true, jobPosition: { select: { name: true, categoryKey: true } } },
+        select: { id: true, name: true, role: true, email: true, positionTitle: true, buildingIds: true, jobPosition: { select: { name: true, categoryKey: true } } },
         orderBy: [{ role: "asc" }, { name: "asc" }],
       }),
       db.equipment.findMany({
@@ -440,6 +441,13 @@ async function JournalDocumentBody({
   const equipment = allEquipment
     .filter((item) => !document.buildingId || !item.area.buildingId || item.area.buildingId === document.buildingId)
     .map(({ id, name }) => ({ id, name }));
+
+  // Кого добавлять в строки гигиены и здоровья — сотрудники точки документа
+  // (2026-10-29); люди без точек работают везде. Уже добавленные строки
+  // показываются из полного ростера.
+  const rowsPointId = await documentRowsPointId(getActiveOrgId(session), document.buildingId);
+  const pointEmployeeIds = new Set(employees.filter((user) => worksAtDocumentPoint(user, rowsPointId)).map((user) => user.id));
+  const addableEmployees = enrichedEmployees.filter((user) => pointEmployeeIds.has(user.id));
 
   // Уволенные / архивные сотрудники, на которых ссылаются записи этого
   // документа. Ростер выше берёт только активных (ORG_ROSTER_WHERE), и
@@ -566,6 +574,7 @@ async function JournalDocumentBody({
           status={document.status}
           autoFill={document.autoFill}
           employees={enrichedEmployees}
+          addableEmployees={addableEmployees}
           inactiveEmployees={inactiveEmployees}
           initialEntries={document.entries.map((entry) => ({
             employeeId: entry.employeeId,
@@ -600,6 +609,7 @@ async function JournalDocumentBody({
         status={document.status}
         autoFill={document.autoFill}
         employees={enrichedEmployees}
+        addableEmployees={addableEmployees}
         inactiveEmployees={inactiveEmployees}
         printEmptyRows={
           document.config &&
@@ -1434,8 +1444,17 @@ async function JournalDocumentBody({
   }
 
   if (document.template.code === CLEANING_DOCUMENT_TEMPLATE_CODE) {
+    // Документ точки — её помещения (2026-10-29: без выбранных помещений
+    // журнал показывал помещения всей организации). Точки, где лежат уже
+    // выбранные в документе помещения, остаются — их строки не пропадают.
+    const selectedRoomIds = normalizeCleaningDocumentConfig(document.config).selectedRoomIds ?? [];
     const buildings = await db.building.findMany({
-      where: { organizationId: getActiveOrgId(session) },
+      where: rowsPointId
+        ? {
+            organizationId: getActiveOrgId(session),
+            OR: [{ id: rowsPointId }, { rooms: { some: { id: { in: selectedRoomIds } } } }],
+          }
+        : { organizationId: getActiveOrgId(session) },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       include: {
         rooms: {

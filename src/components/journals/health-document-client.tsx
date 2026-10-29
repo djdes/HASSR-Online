@@ -94,6 +94,13 @@ type Props = {
   autoFill?: boolean;
   employees: { id: string; name: string; role: string }[];
   /**
+   * Кого можно добавить в строки: сотрудники точки документа (2026-10-29).
+   * Без него — все `employees`. Уже добавленные строки показываются из
+   * `employees`, чтобы строки и отметки других точек в старых документах
+   * не пропадали.
+   */
+  addableEmployees?: { id: string; name: string; role: string }[];
+  /**
    * Уволенные / архивные сотрудники, на которых ссылаются записи.
    * ТОЛЬКО для отображения строки в бланке.
    */
@@ -239,6 +246,7 @@ export function HealthDocumentClient(props: Props) {
     status,
     autoFill = false,
     employees,
+    addableEmployees,
     inactiveEmployees = [],
     initialEntries,
     printEmptyRows = 0,
@@ -658,7 +666,7 @@ export function HealthDocumentClient(props: Props) {
             autoFill={autoFill}
             responsibleTitle={props.responsibleTitle}
             responsibleUserId={props.responsibleUserId ?? null}
-            users={employees}
+            users={addableEmployees ?? employees}
             includedEmployeeIds={includedEmployeeIds}
             routeCode="health_check"
             organizationName={organizationLabel}
@@ -918,7 +926,7 @@ export function HealthDocumentClient(props: Props) {
             documentId={documentId}
             title={documentTitle}
             status={status}
-            users={employees}
+            users={addableEmployees ?? employees}
             includedEmployeeIds={includedEmployeeIds}
             className={DOC_ADD_ROW_IN_SHEET_CLASS}
           />
@@ -1108,7 +1116,7 @@ export function HealthDocumentClient(props: Props) {
           <AddEmployeeDialog
             open={addRowOpen}
             onOpenChange={setAddRowOpen}
-            users={employees}
+            users={addableEmployees ?? employees}
             includedEmployeeIds={includedEmployeeIds}
             documentId={documentId}
           />
