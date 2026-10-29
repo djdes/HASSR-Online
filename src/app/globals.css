@@ -590,6 +590,13 @@
   background-image: none !important;
   background-color: var(--app-tint-indigo) !important;
 }
+/* Произвольный градиент `bg-[linear-gradient(135deg,#f5f6ff_…)]` (блок MCP
+   на /developers и /settings/api) правила выше не ловят: фон оставался
+   светлым, а текст ночная тема уже осветлила — светлое на светлом. */
+.app-shell[data-app-theme="dark"] [class*="bg-[linear-gradient(135deg,#f5f6ff"] {
+  background-image: none !important;
+  background-color: var(--app-tint-indigo) !important;
+}
 
 /* #f7f8ff — saving-row highlight в hygiene/health grids */
 .app-shell[data-app-theme="dark"] .bg-\[\#f7f8ff\] {
