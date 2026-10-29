@@ -22,6 +22,7 @@ import { InvoiceActions } from "./invoice-actions";
 import { CopyButton } from "./copy-button";
 import { PanelAccessButton } from "./panel-access-button";
 import { isTopupOrder } from "@/lib/balance/topup-core";
+import { ClientContractSection } from "@/components/root/client-contract-section";
 
 export const dynamic = "force-dynamic";
 
@@ -201,7 +202,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* Навигация по карточке: всё на одной странице, разделы — якорями. */}
         <nav aria-label={t("nav.label")} className="sticky top-0 z-20 -mx-4 overflow-x-auto border-b border-[#ececf4] bg-[#f4f5fb]/95 px-4 py-2 backdrop-blur sm:-mx-8 sm:px-8">
           <div className="flex gap-1.5">
-            {(["contacts", "billing", "people", "security"] as const).map((key) => (
+            {(["contacts", "documents", "billing", "people", "security"] as const).map((key) => (
               <a key={key} href={`#${key}`} className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-[#3c4053] transition-colors duration-150 hover:bg-white hover:text-[#3848c7]">
                 {t(`nav.${key}`)}
               </a>
@@ -289,6 +290,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               <MiniStat label={t("subscription.paidTotal")} value={t("format.rubles", { amount: paidTotalRub })} />
             </div>
           </div>
+        </section>
+
+        {/* Документы клиенту: договор с реквизитами БФС и клиента. */}
+        <section id="documents" className="scroll-mt-16">
+          <ClientContractSection organizationId={org.id} />
         </section>
 
         {/* Подписка, баллы и оплаты */}
