@@ -147,7 +147,9 @@ export function CompleteProfileNudge({
   return (
     <>
       {!hidden ? (
-        <div className="flex items-center gap-3 bg-[#5566f6] px-4 py-2.5 text-white md:px-6">
+        // print:hidden — на печати плашка сдвигала лист памятки, и подвал
+        // уходил на второй лист (2026-10-29).
+        <div className="flex items-center gap-3 bg-[#5566f6] px-4 py-2.5 text-white print:hidden md:px-6">
           <Sparkles className="size-4 shrink-0" />
           <p className="hidden min-w-0 flex-1 text-[13px] leading-[1.45] sm:block">
             <span className="font-medium">{tn("bannerTitle")}</span>{" "}

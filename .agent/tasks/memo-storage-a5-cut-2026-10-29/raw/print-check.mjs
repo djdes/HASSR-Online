@@ -54,7 +54,7 @@ try {
 
   // ---- Лист A5: два журнала в формате A5 --------------------------------------
   await page.goto(`${base}/settings/qr-posters`, { timeout: T });
-  const a5 = page.getByRole("button", { name: "A5", exact: true });
+  const a5 = page.getByRole("radio", { name: "A5", exact: true });
   await a5.first().waitFor({ timeout: T });
   await a5.nth(0).click();
   await a5.nth(1).click();
