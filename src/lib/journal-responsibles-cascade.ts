@@ -24,6 +24,7 @@ import {
   type RosterUser,
 } from "@/lib/journal-roster";
 import { getUserDisplayTitle } from "@/lib/user-roles";
+import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
 
 /** Ростер для авто-подбора слотов (опционально — только выбранные должности). */
 async function loadSlotRoster(
@@ -62,17 +63,23 @@ async function loadSlotRoster(
  * enriched-дефолтов журналов. Используется prefill/cascade чтобы при
  * создании или backfill'е документа таблица сразу содержала реальные
  * цеха/оборудование/продукты, а не stub'ы.
+ *
+ * Документ точки — справочники только этой точки (2026-10-29: «в журналы
+ * конкретной точки выводятся все помещения / сотрудники / оборудование
+ * организации»), см. `pointRowsWhere`.
  */
 async function fetchOrgDataForDefaults(
-  organizationId: string
+  organizationId: string,
+  buildingId?: string | null,
 ): Promise<DefaultConfigOrgData> {
+  const rows = pointRowsWhere(await documentRowsPointId(organizationId, buildingId));
   const [org, areas, rooms, equipment, users, products, supplierRows] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, isDemo: true },
     }),
     db.area.findMany({
-      where: { organizationId },
+      where: { organizationId, AND: [rows.area] },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
@@ -80,7 +87,7 @@ async function fetchOrgDataForDefaults(
     // ген. уборок сидируются из Room (2026-09-22: вместе с графиком
     // генуборки — план сразу заполняется датами).
     db.room.findMany({
-      where: { building: { organizationId } },
+      where: { building: { organizationId }, AND: [rows.room] },
       select: {
         id: true,
         name: true,
@@ -92,7 +99,7 @@ async function fetchOrgDataForDefaults(
       orderBy: [{ buildingId: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
     }),
     db.equipment.findMany({
-      where: { area: { organizationId } },
+      where: { area: { organizationId }, AND: [rows.equipment] },
       select: {
         id: true,
         name: true,
@@ -103,7 +110,8 @@ async function fetchOrgDataForDefaults(
       orderBy: { name: "asc" },
     }),
     db.user.findMany({
-      where: { organizationId, ...ORG_ROSTER_WHERE },
+      // ORG_ROSTER_WHERE сам занимает `AND` — точку кладём рядом, а не поверх.
+      where: { AND: [{ organizationId, ...ORG_ROSTER_WHERE }, rows.staff] },
       // Должность нужна, чтобы бланк печатался с «Иванова · Повар», а не
       // с одним ФИО: иначе человеку всё равно приходится вписывать её
       // рукой в каждую строку.
@@ -323,21 +331,21 @@ export async function cascadeResponsibleToActiveDocuments(input: {
     // scope === "all" — без дополнительных where-клозов.
     const docs = await db.journalDocument.findMany({
       where: docWhere,
-      select: { id: true, config: true, _count: { select: { entries: true } } },
+      select: { id: true, config: true, buildingId: true, _count: { select: { entries: true } } },
     });
 
-    // Если есть пустые конфиги — нужны org-данные для enriched дефолта
-    // (см. prefill ниже). Тянем один раз, переиспользуем для всех docs.
-    const hasEmptyConfigs = docs.some((d) => {
-      const cfg =
-        d.config && typeof d.config === "object" && !Array.isArray(d.config)
-          ? (d.config as Record<string, unknown>)
-          : {};
-      return Object.keys(cfg).length === 0 && d._count.entries === 0;
-    });
-    const cascadeOrgData = hasEmptyConfigs
-      ? await fetchOrgDataForDefaults(organizationId)
-      : undefined;
+    // Пустым конфигам нужны org-данные для enriched дефолта (см. prefill
+    // ниже) — по точке документа, один запрос на точку.
+    const orgDataByPoint = new Map<string, Promise<DefaultConfigOrgData>>();
+    const cascadeOrgDataFor = (buildingId: string | null) => {
+      const key = buildingId ?? "";
+      let data = orgDataByPoint.get(key);
+      if (!data) {
+        data = fetchOrgDataForDefaults(organizationId, buildingId);
+        orgDataByPoint.set(key, data);
+      }
+      return data;
+    };
 
     let documentsUpdated = 0;
     for (const doc of docs) {
@@ -356,7 +364,7 @@ export async function cascadeResponsibleToActiveDocuments(input: {
       const isEmpty =
         Object.keys(cfgObj).length === 0 && doc._count.entries === 0;
       const baseCfg = isEmpty
-        ? getDefaultConfigForJournal(journalCode, cascadeOrgData)
+        ? getDefaultConfigForJournal(journalCode, await cascadeOrgDataFor(doc.buildingId))
         : cfgObj;
 
       const patched = hasDocumentConfigPatcher(journalCode)
@@ -483,11 +491,12 @@ export async function prefillResponsiblesForNewDocument(input: {
   // холодильники, для glass-list — оборудование/продукты, для
   // equipment-calibration — список оборудования. Без этого при
   // создании нового документа таблица была пустой и менеджеру
-  // приходилось вручную добавлять каждую строку.
+  // приходилось вручную добавлять каждую строку. Документ точки — её
+  // холодильники, помещения и люди (2026-10-29).
   const orgData =
     input.baseConfig && Object.keys(input.baseConfig).length > 0
       ? undefined
-      : await fetchOrgDataForDefaults(organizationId);
+      : await fetchOrgDataForDefaults(organizationId, input.buildingId);
   const baseConfig =
     input.baseConfig && Object.keys(input.baseConfig).length > 0
       ? input.baseConfig

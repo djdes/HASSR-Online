@@ -94,6 +94,13 @@ type Props = {
   autoFill?: boolean;
   employees: { id: string; name: string; role: string }[];
   /**
+   * Кого можно добавить в строки: сотрудники точки документа (2026-10-29).
+   * Без него — все `employees`. Уже добавленные строки показываются из
+   * `employees`, чтобы строки и отметки других точек в старых документах
+   * не пропадали.
+   */
+  addableEmployees?: { id: string; name: string; role: string }[];
+  /**
    * Уволенные / архивные сотрудники, на которых ссылаются записи.
    * ТОЛЬКО для отображения строки в бланке: в «Добавить сотрудника» и
    * в выбор ответственного они не попадают.
@@ -351,6 +358,7 @@ export function HygieneDocumentClient({
   status,
   autoFill = false,
   employees,
+  addableEmployees,
   inactiveEmployees = [],
   initialEntries,
   useV2 = false,
@@ -437,7 +445,8 @@ export function HygieneDocumentClient({
   const matchedRosterUsers = [...employees, ...inactiveEmployees].filter(
     (employee) => includedEmployeeIds.includes(employee.id)
   );
-  const rosterUsers = matchedRosterUsers.length > 0 ? matchedRosterUsers : employees;
+  // Строк нет — сотрудники точки документа, а не вся организация (2026-10-29).
+  const rosterUsers = matchedRosterUsers.length > 0 ? matchedRosterUsers : addableEmployees ?? employees;
   // Строк ровно столько, сколько сотрудников. Раньше бланк дорисовывал
   // «пол» в семь строк, как на бумаге: на экране они ничего не значили,
   // нажать на них было нельзя, а человек видел журнал с шестью пустыми
@@ -1121,7 +1130,7 @@ export function HygieneDocumentClient({
             autoFill={autoFill}
             responsibleTitle={responsibleTitle}
             responsibleUserId={responsibleUserId}
-            users={employees}
+            users={addableEmployees ?? employees}
             includedEmployeeIds={includedEmployeeIds}
             routeCode={routeCode}
             controlPeriodicity={controlPeriodicity}
@@ -1305,7 +1314,7 @@ export function HygieneDocumentClient({
           autoFill={autoFill}
           responsibleTitle={responsibleTitle}
           responsibleUserId={responsibleUserId}
-          users={employees}
+          users={addableEmployees ?? employees}
           includedEmployeeIds={includedEmployeeIds}
           routeCode={routeCode}
           // Без этого пропа поле в «Настройках журнала» открывалось
@@ -1675,7 +1684,7 @@ export function HygieneDocumentClient({
               documentId={documentId}
               title={documentTitle}
               status={status}
-              users={employees}
+              users={addableEmployees ?? employees}
               includedEmployeeIds={includedEmployeeIds}
               className={DOC_ADD_ROW_IN_SHEET_CLASS}
             />
@@ -1906,7 +1915,7 @@ export function HygieneDocumentClient({
             <AddEmployeeDialog
               open={addRowOpen}
               onOpenChange={setAddRowOpen}
-              users={employees}
+              users={addableEmployees ?? employees}
               includedEmployeeIds={includedEmployeeIds}
               documentId={documentId}
             />

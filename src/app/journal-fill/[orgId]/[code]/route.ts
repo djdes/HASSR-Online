@@ -426,9 +426,13 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
 
   // ---- сотрудник
   // Документ точки: заполняют только сотрудники этой точки.
-  const pointScope = await loadQrPointScope(orgId, document?.buildingId);
-  if (sessionEmployee && !sessionEmployee.canPickOthers && !(await employeeWorksAtQrPoint(pointScope, sessionEmployee.id))) {
-    return page(title, renderMessage("muted", `Этот документ ведёт точка «${pointScope?.buildingName ?? ""}» — заполняют её сотрудники. Если вы работаете здесь, попросите руководителя отметить эту точку в вашей карточке сотрудника.`));
+  const documentPointScope = await loadQrPointScope(orgId, document?.buildingId);
+  // Списки «Кто вы?» и «Допуск сотрудников»: у общего документа, открытого с
+  // QR точки, — её сотрудники (2026-10-29: на QR гимназии в «Допуске» была
+  // вся организация). Запрет входа ниже — по точке самого документа.
+  const pointScope = document?.buildingId ? documentPointScope : await loadQrPointScope(orgId, check.buildingId ?? null);
+  if (sessionEmployee && !sessionEmployee.canPickOthers && !(await employeeWorksAtQrPoint(documentPointScope, sessionEmployee.id))) {
+    return page(title, renderMessage("muted", `Этот документ ведёт точка «${documentPointScope?.buildingName ?? ""}» — заполняют её сотрудники. Если вы работаете здесь, попросите руководителя отметить эту точку в вашей карточке сотрудника.`));
   }
   const employees: JournalFillEmployee[] =
     sessionEmployee && !sessionEmployee.canPickOthers
@@ -734,6 +738,7 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
       disabledCodes,
       authMode: mode,
       keeper: healthKeeper,
+      pointScope,
       view: healthView,
       who: whoOk,
       link: (params) => link({ ...keep, ...params }),

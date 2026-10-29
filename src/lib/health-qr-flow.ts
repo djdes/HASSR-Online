@@ -11,6 +11,8 @@ import { applyHygieneVerification, hygieneV2View } from "@/lib/hygiene-v2";
 import { renderResult } from "@/lib/journal-fill-html";
 import { ensureQrPeriodDocuments } from "@/lib/journal-qr-rollover";
 import { listFillEmployees, type JournalFillEmployee } from "@/lib/journal-fill";
+import { admissionRoster, pickCompanionDocument } from "@/lib/health-qr-roster";
+import type { QrPointScope } from "@/lib/qr-point-roster";
 import { isExaminationExpired, normalizeMedBookEntryData } from "@/lib/med-book-document";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
@@ -40,6 +42,8 @@ type HealthCtx = {
   disabledCodes: string[];
   authMode: "public" | "pin" | "auth";
   keeper: boolean;
+  /** Точка документа (или QR точки у общего документа): «Допуск сотрудников» — только её люди. */
+  pointScope: QrPointScope;
   view: "me" | "all";
   who: string;
   /** Ссылка на экран с сохранением сотрудника/пропуска. */
@@ -81,7 +85,8 @@ async function resolvePair(ctx: HealthCtx): Promise<{ hygieneId: string | null; 
       });
       if (ensured.status === "created") candidates = await listCandidates();
     }
-    companionId = (candidates.find((doc) => doc.buildingId === (primary?.buildingId ?? null)) ?? candidates[0])?.id ?? null;
+    // Своей точки или общий — документ другой точки не берём (2026-10-29).
+    companionId = pickCompanionDocument(candidates, primary?.buildingId ?? null)?.id ?? null;
   }
   return ctx.code === "hygiene"
     ? { hygieneId: ctx.document.id, healthId: companionId }
@@ -138,7 +143,10 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
 
   // ---- сводка дня для хранителя журналов
   const loadDay = async () => {
-    const people = await listFillEmployees(ctx.orgId);
+    // Только сотрудники точки документа (2026-10-29: на вкладке была вся
+    // организация); кто уже отметился здесь сегодня — тоже, чтобы допустить.
+    const everyone = await listFillEmployees(ctx.orgId);
+    const pointPeople = ctx.pointScope ? await listFillEmployees(ctx.orgId, { pointScope: ctx.pointScope }) : everyone;
     const entries = pair.hygieneId
       ? await db.journalDocumentEntry.findMany({ where: { documentId: pair.hygieneId, date: dayDate(ctx.todayKey) }, select: { employeeId: true, data: true } })
       : [];
@@ -150,6 +158,11 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
         ? await db.journalDocumentEntry.findMany({ where: { documentId: pair.healthId, date: dayDate(ctx.todayKey) }, select: { employeeId: true, data: true } })
         : [];
     const answerByEmployee = new Map(healthOnly.map((entry) => [entry.employeeId, entry.data]));
+    const marked = new Set([
+      ...entries.filter((entry) => isRealHygieneEntry(entry.data)).map((entry) => entry.employeeId),
+      ...healthOnly.filter((entry) => canAdmitEmployee({ result: "admitted", entry: entry.data }).ok).map((entry) => entry.employeeId),
+    ]);
+    const people = admissionRoster(pointPeople, everyone, marked);
     const absences = await loadStaffAbsenceForDay(db, { organizationId: ctx.orgId, employeeIds: people.map((p) => p.id), dateKey: ctx.todayKey });
     return people.map((person) => {
       const absence = absences.get(person.id);

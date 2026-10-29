@@ -401,8 +401,10 @@ const PRINT_CSS = `
   .qrp-a4-code svg { height: 100%; width: auto; }
   .qrp-a4-steps { font-size: 13pt; margin-top: 6mm; width: 150mm; text-align: left; }
 
-  .qrp-a5 { height: 125mm; padding: 2mm; }
-  .qrp-a5 + .qrp-a5 { border-top: 0.3mm dashed #666 !important; }
+  /* Пунктир реза — как у наклеек: каждая половинка обведена со всех сторон, общий
+     край двух половинок — одна линия. Режут по пунктиру — куски одинаковые. */
+  .qrp-a5 { height: 125mm; padding: 2mm; border: 0.3mm dashed #777 !important; }
+  .qrp-a5 + .qrp-a5 { border-top: 0 !important; }
   .qrp-root .qrp-a5-frame { height: 100%; padding: 4mm 5mm; border-width: 0.9mm !important; border-radius: 4mm !important; display: flex; flex-direction: column; }
   .qrp-a5-body { flex: 1; min-height: 0; display: flex; align-items: center; gap: 6mm; }
   .qrp-a5-text { min-width: 0; flex: 1; }
@@ -438,7 +440,11 @@ const PRINT_CSS = `
 
   /* Табличка на оборудование: 4 на лист (2 × 2), каждая в толстой скруглённой рамке. */
   .qrp-plate-grid { display: grid; grid-template-columns: repeat(2, 95mm); grid-template-rows: repeat(2, 125mm); height: 250mm; }
-  .qrp-plate { padding: 2mm; height: 125mm; }
+  /* Пунктир реза, как у наклеек: правый и нижний край у каждой таблички, левый — у
+     первой колонки, верхний — у первого ряда; общие края — одной линией. */
+  .qrp-plate { padding: 2mm; height: 125mm; border-right: 0.3mm dashed #777 !important; border-bottom: 0.3mm dashed #777 !important; }
+  .qrp-plate:nth-child(odd) { border-left: 0.3mm dashed #777 !important; }
+  .qrp-plate:nth-child(-n+2) { border-top: 0.3mm dashed #777 !important; }
   .qrp-root .qrp-plate-frame { height: 100%; padding: 4mm 5mm; display: flex; flex-direction: column; align-items: center; text-align: center; border-width: 2.2mm !important; border-radius: 6mm !important; }
   .qrp-root .qrp-plate .qrp-head { gap: 3mm; padding-bottom: 2mm; }
   .qrp-plate .qrp-head-name { font-size: 10pt; }
