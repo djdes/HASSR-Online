@@ -8,7 +8,7 @@ import {
   settingsCardsFor,
   type SettingsCardSection,
 } from "@/lib/settings-cards";
-import { NavIcon } from "@/components/layout/nav-icons";
+import { NavIconChip } from "@/components/layout/nav-icons";
 import { LinkPendingOverlay } from "@/components/ui/link-pending";
 import { automationOn, type JournalControls } from "@/lib/journal-controls";
 
@@ -64,14 +64,11 @@ export async function SettingsCardGrid({
                   key={card.href}
                   href={card.href}
                   data-settings-card={card.id}
+                  data-nav-row
                   className="group relative overflow-hidden rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
                 >
                   <div className="flex h-full items-start gap-4 rounded-2xl border border-[#ececf4] bg-white px-5 py-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-all duration-150 hover:border-[#d6d9ee] hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)]">
-                    <div
-                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-150 group-hover:scale-105 ${card.bgClass}`}
-                    >
-                      <NavIcon name={card.icon} className={`size-5 ${card.iconClass}`} />
-                    </div>
+                    <NavIconChip name={card.icon} className="size-10 rounded-xl" iconClassName="size-5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[15px] font-semibold text-[#0b1024]">{title}</div>

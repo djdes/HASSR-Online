@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 import { mainNavSections, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
+import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
-import { BrandLogo } from "@/components/brand/logo";
 import { useAppNav } from "@/components/layout/app-nav-context";
-import { NavIcon } from "@/components/layout/nav-icons";
+import { NavIconChip } from "@/components/layout/nav-icons";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
   NavBadge,
@@ -25,8 +25,17 @@ import { useSectionStatuses } from "@/components/layout/use-section-statuses";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 
+// Пункт меню: слева цветная плашка 32px (вариант C, 2026-10-29) — отступ
+// слева меньше, чтобы плашка стояла ближе к краю, как в макете.
 const SIDEBAR_ITEM =
-  "flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "relative flex min-h-11 items-center gap-2.5 rounded-2xl py-1.5 pr-2.5 pl-1.5 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+
+// Плашка пункта и выбранный пункт: фон и текст своего тона (`data-tone`
+// строки), полоска слева и кольцо вокруг плашки — `data-active` в app-theme.css.
+const SIDEBAR_CHIP = "size-8 rounded-[10px]";
+const SIDEBAR_CHIP_ICON = "size-[18px]";
+const SIDEBAR_ITEM_ACTIVE = "bg-[var(--tone-row)] font-semibold text-[var(--tone-ink)]";
+const SIDEBAR_ITEM_IDLE = "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]";
 
 /**
  * Меню кабинета слева (≥1024px): по центру логотип компании (нет — заглушка,
@@ -34,6 +43,10 @@ const SIDEBAR_ITEM =
  * ниже разделы. «Пришла проверка» прижата к низу — в спешке её
  * ищут глазами первой; это отдельное действие (контурная кнопка), а не
  * выбранный пункт. У разделов со своим меню — стрелка ›.
+ *
+ * У каждого пункта своя цветная плашка (владелец, 2026-10-29, вариант C):
+ * цвет — по иконке (`lib/nav-tones.ts`). Знака «сетап» под меню больше нет —
+ * место отдано меню.
  *
  * У раздела своё меню (`section.menu`): при входе в раздел левое меню
  * меняется целиком. Разделы вложены (эскизы 2026-10-28: «Моя компания →
@@ -52,7 +65,6 @@ export function AppSidebar({
   identity,
   homeHref,
   canEditBranding = false,
-  whiteLabel = false,
 }: {
   logoUrl: string | null;
   organizationName: string;
@@ -60,8 +72,6 @@ export function AppSidebar({
   identity: SidebarOrgIdentity;
   homeHref: string;
   canEditBranding?: boolean;
-  /** White-label партнёра: отметку «сетап» внизу не ставим. */
-  whiteLabel?: boolean;
 }) {
   const t = useTranslations("navigation.shell");
   const { sections } = useAppNav();
@@ -166,14 +176,6 @@ export function AppSidebar({
     </div>
   );
 
-  // Маленькая отметка «сетап» внизу (решение по эскизам: логотип клиента
-  // сверху, наш знак — тихо снизу).
-  const brandMark = whiteLabel ? null : (
-    <div className="shrink-0 px-5 pt-2 pb-4 text-[#b4b8c8]" data-sidebar-brand-mark>
-      <BrandLogo height={12} title={t("brand")} />
-    </div>
-  );
-
   const mainPane = (
     <>
       {logo}
@@ -199,7 +201,6 @@ export function AppSidebar({
           </div>
         ) : null}
       </nav>
-      {brandMark}
     </>
   );
 
@@ -217,6 +218,10 @@ export function AppSidebar({
 
   const menuItemActive = (item: NavModelMenuItem) =>
     item.section ? inside.has(item.section) : menuSection.key === placeSection?.key && menuItem?.id === item.id;
+  // Номер пункта сквозь группы — для каскада при входе в меню раздела.
+  const groupOffsets = menuSection.menu.map((_, index) =>
+    menuSection.menu!.slice(0, index).reduce((sum, group) => sum + group.items.length, 0),
+  );
 
   return (
     <aside
@@ -253,22 +258,32 @@ export function AppSidebar({
           </div>
           <Link
             href={menuSection.rootHref}
-            className="mx-3 mt-1 shrink-0 rounded-xl px-2.5 pt-2.5 pb-1.5 text-[15px] font-semibold text-[#0b1024] transition-colors duration-150 hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            data-tone={navTone(menuSection.icon)}
+            data-nav-row
+            className="group mx-3 mt-1 flex shrink-0 items-center gap-2.5 rounded-xl px-1.5 pt-2 pb-1.5 text-[15px] font-bold text-[#0b1024] transition-colors duration-150 hover:text-[var(--tone-ink)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
           >
+            <NavIconChip name={menuSection.icon} className="size-7 rounded-[9px]" iconClassName="size-4" />
             {menuSection.label}
           </Link>
+          {/* Ключ — показанное меню: при входе в раздел и при «‹ Назад» в
+              родителя меню собирается заново, и пункты появляются каскадом
+              (`data-nav-rise`). Спрятанная панель — без анимации. */}
           <nav
+            key={showSection ? viewKey : "hidden"}
             aria-label={t("sectionMenuAria")}
             data-section-menu={menuSection.key}
+            data-nav-rise={showSection ? "" : undefined}
             className="min-h-0 flex-1 overflow-y-auto px-3 pb-4"
           >
             {menuSection.menu.map((group, index) => (
               <div key={group.label ?? `group-${index}`}>
                 {group.label ? (
-                  <div className="px-2.5 pt-3 pb-1 text-[12px] font-semibold text-[#9b9fb3]">{group.label}</div>
+                  <div className="px-2.5 pt-3.5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b9fb3]">
+                    {group.label}
+                  </div>
                 ) : null}
                 <div className="space-y-1">
-                  {group.items.map((item) => {
+                  {group.items.map((item, itemIndex) => {
                     const isActive = menuItemActive(item);
                     return (
                       <Link
@@ -278,18 +293,14 @@ export function AppSidebar({
                         aria-current={isActive ? (item.section ? "true" : "page") : undefined}
                         data-menu-item={item.id}
                         data-menu-section={item.section}
-                        className={cn(
-                          SIDEBAR_ITEM,
-                          "group",
-                          isActive
-                            ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
-                            : "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]",
-                        )}
+                        data-tone={navTone(item.icon)}
+                        data-nav-row
+                        data-nav-bar
+                        data-active={isActive ? "" : undefined}
+                        style={{ "--nav-i": groupOffsets[index] + itemIndex } as CSSProperties}
+                        className={cn(SIDEBAR_ITEM, "group", isActive ? SIDEBAR_ITEM_ACTIVE : SIDEBAR_ITEM_IDLE)}
                       >
-                        <NavIcon
-                          name={item.icon}
-                          className={cn("size-5 shrink-0", isActive ? "text-[#5566f6]" : "text-[#6f7282]")}
-                        />
+                        <NavIconChip name={item.icon} className={SIDEBAR_CHIP} iconClassName={SIDEBAR_CHIP_ICON} />
                         <span className="min-w-0 flex-1">{item.label}</span>
                         {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
                         <SectionStatusDot status={statuses[item.id]} />
@@ -301,7 +312,6 @@ export function AppSidebar({
               </div>
             ))}
           </nav>
-          {brandMark}
         </div>
       </div>
     </aside>
@@ -314,8 +324,8 @@ export function AppSidebar({
  * стрелочкой»).
  *
  * `action` — «Пришла проверка» внизу: отдельное действие, а не выбранный
- * пункт, поэтому в покое это контурная кнопка (белая, с рамкой и индиго-
- * текстом), а заливка — только когда раздел открыт, как у остальных пунктов.
+ * пункт, поэтому в покое это контурная кнопка (белая, с рамкой и розовой
+ * плашкой), а заливка — только когда раздел открыт, как у остальных пунктов.
  */
 function SidebarItem({
   section,
@@ -335,22 +345,23 @@ function SidebarItem({
       aria-current={active ? "page" : undefined}
       data-nav-section={section.key}
       data-nav-action={action ? "" : undefined}
+      data-tone={navTone(section.icon)}
+      data-nav-row
+      data-nav-bar
+      data-active={active ? "" : undefined}
       className={cn(
         SIDEBAR_ITEM,
         "group",
         action
           ? active
-            ? "border border-[#5566f6]/25 bg-[#5566f6]/[0.09] text-[#5566f6]"
-            : "border border-[#dcdfed] bg-white text-[#3848c7] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            ? cn("border border-transparent", SIDEBAR_ITEM_ACTIVE)
+            : "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
           : active
-            ? "bg-[#5566f6]/[0.09] text-[#5566f6]"
-            : "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]",
+            ? SIDEBAR_ITEM_ACTIVE
+            : SIDEBAR_ITEM_IDLE,
       )}
     >
-      <NavIcon
-        name={section.icon}
-        className={cn("size-5 shrink-0", active || action ? "text-[#5566f6]" : "text-[#6f7282]")}
-      />
+      <NavIconChip name={section.icon} className={SIDEBAR_CHIP} iconClassName={SIDEBAR_CHIP_ICON} />
       <span className="min-w-0 flex-1">{section.label}</span>
       {section.menu ? <NavChevron active={active} /> : null}
     </Link>
