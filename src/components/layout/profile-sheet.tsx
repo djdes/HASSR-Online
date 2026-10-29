@@ -66,6 +66,7 @@ export function ProfileSheet({
   canEditBranding,
   canEditTranslations = false,
   isRoot,
+  platformPanel = isRoot,
   onLogout,
 }: {
   open: boolean;
@@ -90,6 +91,8 @@ export function ProfileSheet({
   /** ROOT или переводчик — пункт «Переводы интерфейса». */
   canEditTranslations?: boolean;
   isRoot: boolean;
+  /** Ссылка на панель платформы (владелец или сотрудник с разделами). */
+  platformPanel?: boolean;
   onLogout: () => void;
 }) {
   const t = useTranslations("navigation");
@@ -207,8 +210,8 @@ export function ProfileSheet({
         </Link>
       ) : null}
 
-      {isRoot ? (
-        <Link href="/root" onClick={onClose} className={SHEET_ROW_CLASS}>
+      {platformPanel ? (
+        <Link href={isRoot ? "/root" : "/api/me/platform-panel"} prefetch={false} onClick={onClose} className={SHEET_ROW_CLASS}>
           <ShieldCheck className="size-5 shrink-0 text-[#5566f6]" />
           <span className="min-w-0 flex-1">{t("header.platformPanel")}</span>
         </Link>
