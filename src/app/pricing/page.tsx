@@ -17,7 +17,7 @@ import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
-import { readPpkIndividualPrice } from "@/lib/services/catalog";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { HARDWARE_BUNDLES, bundleTotal } from "@/lib/hardware-pricing";
 import { POINTS_DISCOUNT_FROM, POINTS_DISCOUNT_PERCENT, planMonthlyRub } from "@/lib/tariff-plans";
 
@@ -60,10 +60,9 @@ export const metadata = {
 export default async function PricingPage() {
   // Витрина с кнопками оплаты — не для приложения (правила магазинов).
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
-  const [pricing, promotion, ppkFromRub] = await Promise.all([
+  const [pricing, promotion] = await Promise.all([
     readPlanPricing(),
     readActivePromotion().catch(() => null),
-    readPpkIndividualPrice(),
   ]);
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const hardwareFromRub = Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
@@ -91,8 +90,8 @@ export default async function PricingPage() {
           rates={pricing.rates}
           available={pricing.available}
           promotion={promotion}
-          ppkFromRub={ppkFromRub}
           ppkHref="/uslugi#ppk-development"
+          contactTelegramUrl={contactTelegramUrl(process.env)}
           startHref="/register"
           showTable
         />

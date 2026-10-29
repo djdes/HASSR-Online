@@ -790,7 +790,6 @@
     "individual": {
       "title": "A production control programme for your site",
       "text": "A specialist will develop the production control programme and document pack for your site: control points, lab testing, responsible staff. Available with any plan.",
-      "price": "from {price}",
       "cta": "Order a custom programme"
     }
   },
@@ -967,9 +966,7 @@
       "auditHint": "An expert finds violations before the inspector does and gives a report with solutions.",
       "visit": "Specialist visit",
       "visitHint": "A specialist comes on site, looks at production and goes through the issues with you.",
-      "priceFrom": "from {price} ₽",
-      "priceExact": "{price} ₽",
-      "priceOnRequest": "price on request"
+      "priceNote": "The price depends on the site and the city — we will quote it after a short conversation."
     },
     "now": {
       "guideTitle": "How the Inspection visit section works",
@@ -5816,7 +5813,6 @@
       "ppk": {
         "title": "Production control programme — made for you",
         "text": "A specialist will develop a programme for your site: control points, lab testing, responsible staff. Available with any plan.",
-        "price": "from {price}",
         "cta": "Order a custom programme"
       },
       "table": {
@@ -5857,7 +5853,7 @@
         "storageStandard": "{mb, number} MB: log orders and your own documents",
         "storagePremium": "{gb, number} GB for all documents",
         "trialOnly": "Only during the {trialDays, number}-day trial",
-        "ppkFrom": "Custom, from {price}",
+        "ppkOnRequest": "Custom, on request",
         "employeesPremium": "{count, number} per location, more by arrangement"
       },
       "contactLink": "contact us",
@@ -24663,6 +24659,21 @@
       "fullBenefit": " — {benefit}. ",
       "copyTitle": "Copy promo code",
       "go": "Open"
+    },
+    "contactUs": {
+      "cta": "Contact us",
+      "title": "Contact us",
+      "lead": "Tell us what you need and we will quote a price for your site.",
+      "about": "Service: {service}",
+      "call": "Call us",
+      "telegram": "Telegram",
+      "telegramHint": "Message us on Telegram",
+      "emailHint": "Write to us",
+      "chat": "Website chat",
+      "chatHint": "We will reply right here in the chat",
+      "subjectService": "Service price: {service}",
+      "subjectGeneral": "Question about service prices",
+      "priceNote": "We will quote a price for your site"
     }
   },
   "checklistsUi": {
@@ -28371,34 +28382,27 @@
     },
     "servicesPage": {
       "title": "Services",
-      "description": "Work by a food safety specialist: journal setup, a pre-inspection audit, documentation development.",
-      "balancePoints": "Points on balance: {amount} ₽"
+      "description": "Work by a food safety specialist: journal setup, a pre-inspection audit, documentation development."
     },
     "servicesCatalog": {
       "contactRequired": "Enter a name and a phone number for contact",
       "sendFailed": "Could not send the request",
-      "paidSuccess": "{amount} ₽ paid from the balance. We will contact you within one working day",
-      "insufficientSuccess": "Request sent. There were not enough points, so we will discuss payment separately",
       "sentSuccess": "Request sent. We will contact you within one working day",
       "managerOnlyNotice": "Services are ordered by the head of the organisation. Show this section to a manager or the owner — they can place a request.",
-      "order": "Order",
+      "order": "Leave a request",
       "orderedByManager": "Ordered by the manager",
-      "orderTitle": "Order: {title}",
-      "orderService": "Order a service",
-      "bulletDebit": "We will debit {price} ₽ from the balance, leaving {rest} ₽",
+      "orderTitle": "Request: {title}",
+      "orderService": "Service request",
       "bulletContactDay": "We will contact you within one working day",
-      "bulletBalanceShort": "The balance is {balance} ₽ — that is not enough, we will discuss payment separately",
-      "bulletAcceptAnyway": "We will accept the request anyway and contact you",
-      "bulletPriceByVolume": "The price depends on the scope — we will calculate it after a conversation",
-      "bulletNoPointsDebited": "Points are not debited for this service now",
       "sending": "Sending…",
-      "payAndOrder": "Pay and order",
       "sendRequest": "Send request",
       "nameLabel": "What should we call you",
       "phoneLabel": "Contact phone number",
       "commentLabel": "What we should know in advance",
       "commentPlaceholder": "For example: we open in a month, inspection in October",
-      "payNotice": "Payment is made with points immediately after confirmation. A refund is possible by agreement if we have not started work yet."
+      "requestLead": "Leave a phone number — we will contact you and quote a price for your site.",
+      "bulletNothingCharged": "You pay nothing now — this is only a request",
+      "contactsTitle": "Prefer to call or message us right away?"
     },
     "staffHierarchyPage": {
       "title": "Management hierarchy",
