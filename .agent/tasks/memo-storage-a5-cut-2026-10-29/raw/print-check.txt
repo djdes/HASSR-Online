@@ -1,0 +1,6 @@
+PASS памятка: строка «Или в соответствии с маркировочным ярлыком производителя.»
+PASS памятка: ровно один лист A4 — листов: 1
+PASS памятка: содержимое помещается в лист — 210.9/210.9 мм
+PASS A5: первая половинка обведена пунктиром со всех сторон — dashed/dashed/dashed/dashed | none/dashed/dashed/dashed
+PASS A5: у второй сверху линии нет (общий край — одна линия) — dashed/dashed/dashed/dashed | none/dashed/dashed/dashed
+PASS таблички: пунктир по краям, общие края — одной линией — dashed/dashed/dashed/dashed

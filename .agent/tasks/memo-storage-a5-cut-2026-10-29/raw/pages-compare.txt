@@ -1,0 +1,4 @@
+storage-times: 2 лист(а)
+storage: 2 лист(а)
+board-marking: 2 лист(а)
+hygiene: 2 лист(а)
