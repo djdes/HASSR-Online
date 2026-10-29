@@ -220,3 +220,29 @@ Mini App (mini-check.cjs):
   "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
  ]
 }
+
+Прод-сборка (next build --webpack + next start -p 3200), наведение (hover-check.cjs):
+{
+ "light": {
+  "root": {
+   "idle": "rgb(111, 114, 130)",
+   "hover": "rgb(11, 16, 36)"
+  },
+  "company": {
+   "idle": "rgb(60, 64, 83)",
+   "hover": "rgb(11, 16, 36)"
+  },
+  "current": "rgb(56, 72, 199)"
+ },
+ "dark": {
+  "root": {
+   "idle": "rgb(169, 172, 192)",
+   "hover": "rgb(242, 243, 251)"
+  },
+  "company": {
+   "idle": "rgb(204, 206, 224)",
+   "hover": "rgb(242, 243, 251)"
+  },
+  "current": "rgb(201, 206, 255)"
+ }
+}
