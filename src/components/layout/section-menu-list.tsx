@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, House } from "lucide-react";
 import type { NavModelSection } from "@/lib/app-nav.server";
-import { mainNavSections, type NavSectionKey } from "@/lib/app-nav";
+import { mainNavSections, navSectionPath, type NavSectionKey } from "@/lib/app-nav";
 import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
@@ -50,6 +50,142 @@ export function topSectionKey(sections: NavModelSection[], key: NavSectionKey | 
   return sectionChain(sections, key).at(-1)?.key ?? null;
 }
 
+/** Куда ведёт ступень карточки «Вы здесь»: ссылка (сайдбар) или кнопка (лист). */
+export type PlaceTarget = { href?: string; onClick?: (event: MouseEvent<HTMLElement>) => void };
+
+const PLACE_SIZES = {
+  sidebar: {
+    step: "min-h-7 text-[12.5px]",
+    icon: "size-3.5",
+    chip: "size-5 rounded-[6px]",
+    chipIcon: "size-3",
+    current: "min-h-10 text-[14.5px]",
+    currentChip: "size-8 rounded-[10px]",
+    currentIcon: "size-[18px]",
+  },
+  sheet: {
+    step: "min-h-9 text-[14px]",
+    icon: "size-4",
+    chip: "size-6 rounded-[7px]",
+    chipIcon: "size-3.5",
+    current: "min-h-12 text-[17px]",
+    currentChip: "size-9 rounded-xl",
+    currentIcon: "size-5",
+  },
+} as const;
+
+// Ступень: слева 26px под линию с точкой (`[data-place-step]` в app-theme.css).
+const PLACE_ROW =
+  "group flex w-full items-center gap-2 rounded-xl py-1 pr-2 pl-[26px] text-left font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+
+function PlaceLink({
+  target,
+  className,
+  order,
+  current = false,
+  attrs,
+  children,
+}: {
+  target: PlaceTarget;
+  className: string;
+  /** Номер в каскаде входа (`--nav-i`): сначала ступени, за ними пункты меню. */
+  order: number;
+  current?: boolean;
+  attrs?: Record<string, string>;
+  children: ReactNode;
+}) {
+  const common = {
+    className,
+    style: { "--nav-i": order } as CSSProperties,
+    "aria-current": current ? ("location" as const) : undefined,
+    ...attrs,
+  };
+  return target.href !== undefined ? (
+    <Link href={target.href} onClick={target.onClick} {...common}>
+      {children}
+    </Link>
+  ) : (
+    <button type="button" onClick={target.onClick} {...common}>
+      {children}
+    </button>
+  );
+}
+
+/**
+ * «Вы здесь» над меню раздела (владелец, 2026-10-29: «чтобы интуитивно было
+ * понятно, где ты»). Меню разделов вложено, и при входе левое меню меняется
+ * целиком — путь «Моя компания → Торговые точки → Журналы» терялся. Карточка
+ * показывает его ступеньками, как маршрут: «Главное меню», разделы-родители с
+ * их плашками и текущий раздел — крупно, на подложке своего цвета. Ступень —
+ * переход на свой уровень (`root`, `step`); текущий раздел ведёт на свой корень.
+ */
+export function SectionPlace({
+  path,
+  size,
+  root,
+  step,
+  className,
+}: {
+  /** Разделы сверху вниз, последний — текущий (`navSectionPath`). */
+  path: readonly NavModelSection[];
+  size: keyof typeof PLACE_SIZES;
+  root: PlaceTarget;
+  step: (section: NavModelSection) => PlaceTarget;
+  className?: string;
+}) {
+  const t = useTranslations("navigation.shell");
+  const current = path.at(-1);
+  if (!current) return null;
+  const sizes = PLACE_SIZES[size];
+  return (
+    <nav
+      aria-label={t("placeAria")}
+      data-section-place={current.key}
+      data-tone={navTone(current.icon)}
+      className={cn("rounded-2xl bg-[var(--tone-row)] p-1.5", className)}
+    >
+      <ol className="flex flex-col">
+        <li data-place-step>
+          <PlaceLink
+            target={root}
+            order={0}
+            attrs={{ "data-place-root": "", "data-nav-row": "" }}
+            className={cn(PLACE_ROW, sizes.step, "text-[#6f7282] hover:text-[#0b1024]")}
+          >
+            <House className={cn("shrink-0", sizes.icon)} aria-hidden />
+            <span className="min-w-0 flex-1 truncate">{t("backToMain")}</span>
+          </PlaceLink>
+        </li>
+        {path.slice(0, -1).map((section, index) => (
+          <li key={section.key} data-place-step>
+            <PlaceLink
+              target={step(section)}
+              order={index + 1}
+              attrs={{ "data-place-section": section.key, "data-tone": navTone(section.icon), "data-nav-row": "" }}
+              className={cn(PLACE_ROW, sizes.step, "text-[#3c4053] hover:text-[#0b1024]")}
+            >
+              <NavIconChip name={section.icon} className={sizes.chip} iconClassName={sizes.chipIcon} />
+              <span className="min-w-0 flex-1 truncate">{section.label}</span>
+            </PlaceLink>
+          </li>
+        ))}
+        <li data-place-step data-current>
+          <PlaceLink
+            target={{ href: current.rootHref }}
+            order={path.length}
+            current
+            attrs={{ "data-place-current": current.key, "data-nav-row": "" }}
+            className={cn(PLACE_ROW, sizes.current, "font-bold text-[var(--tone-ink)]")}
+          >
+            <NavIconChip name={current.icon} className={sizes.currentChip} iconClassName={sizes.currentIcon} />
+            <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{current.label}</span>
+          </PlaceLink>
+        </li>
+      </ol>
+    </nav>
+  );
+}
+
 /** Метка у пункта меню («PRO»): градиентная, в тон цветным плашкам. */
 export function NavBadge({ children }: { children: string }) {
   return (
@@ -60,9 +196,9 @@ export function NavBadge({ children }: { children: string }) {
 }
 
 /**
- * Список меню раздела для листа снизу: заголовок-ссылка на корень раздела,
- * группы и пункты с точками статуса. Общий для мобильного листа сайта и
- * кнопки меню в Mini App (П-3).
+ * Список меню раздела для листа снизу: карточка «Вы здесь» (путь к разделу,
+ * раздел — ссылка на свой корень), группы и пункты с точками статуса. Общий
+ * для мобильного листа сайта и кнопки меню в Mini App (П-3).
  */
 export function SectionMenuList({
   section,
@@ -70,6 +206,7 @@ export function SectionMenuList({
   currentKey,
   statuses,
   onOpenMenu,
+  onGoTo,
 }: {
   section: NavModelSection;
   activeItemId: string | undefined;
@@ -78,21 +215,21 @@ export function SectionMenuList({
   statuses: Record<string, PpkNavStatus>;
   /** Нажатие на вложенный раздел со стрелкой раскрывает его меню в листе. */
   onOpenMenu?: (key: NavSectionKey) => void;
+  /** Ступень карточки «Вы здесь»: листает меню на свой уровень (без перехода). */
+  onGoTo: (key: NavSectionKey | "main") => void;
 }) {
   const { sections } = useAppNav();
   if (!section.menu) return null;
   const inside = new Set(sectionChain(sections, currentKey).map((entry) => entry.key));
   return (
     <>
-      <Link
-        href={section.rootHref}
-        data-tone={navTone(section.icon)}
-        data-nav-row
-        className="group flex items-center gap-2.5 rounded-xl px-1.5 pt-1 pb-1.5 text-[17px] font-bold text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-      >
-        <NavIconChip name={section.icon} className="size-8 rounded-[10px]" iconClassName="size-[18px]" />
-        {section.label}
-      </Link>
+      <SectionPlace
+        path={navSectionPath(sections, section.key)}
+        size="sheet"
+        root={{ onClick: () => onGoTo("main") }}
+        step={(entry) => ({ onClick: () => onGoTo(entry.key) })}
+        className="mb-1"
+      />
       {section.menu.map((group, index) => (
         <div key={group.label ?? `group-${index}`} className="flex flex-col gap-1">
           {group.label ? (
@@ -112,6 +249,7 @@ export function SectionMenuList({
               "data-menu-section": item.section,
               "data-tone": navTone(item.icon),
               "data-nav-row": "",
+              "data-has-menu": item.hasMenu ? "" : undefined,
               "data-active": isActive ? "" : undefined,
               className,
             };
@@ -216,6 +354,7 @@ export function NavSectionsList({
           "data-nav-action": action ? "" : undefined,
           "data-tone": navTone(section.icon),
           "data-nav-row": "",
+          "data-has-menu": section.menu ? "" : undefined,
           "data-active": isActive ? "" : undefined,
           className,
         };
@@ -297,6 +436,15 @@ export function useSheetMenu({
         key: (shown?.parent && sections.some((section) => section.key === shown.parent && section.menu) ? shown.parent : null) ?? "main",
         focus: shown?.key ?? "main",
       }),
+    /**
+     * Ступень карточки «Вы здесь»: меню выбранного уровня (`main` — главное).
+     * Фокус — на пункт, через который из этого меню шли вглубь.
+     */
+    goTo: (key: NavSectionKey | "main") => {
+      const path = shown ? navSectionPath(sections, shown.key) : [];
+      const from = path[key === "main" ? 0 : path.findIndex((section) => section.key === key) + 1];
+      setView({ path: pathname, key, focus: from?.key ?? "main" });
+    },
     reset: () => setView(null),
   };
 }

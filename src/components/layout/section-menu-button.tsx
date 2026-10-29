@@ -105,6 +105,7 @@ export function SectionMenuButton({
                 currentKey={currentKey}
                 statuses={statuses}
                 onOpenMenu={menu.openMenu}
+                onGoTo={menu.goTo}
               />
             </>
           ) : (

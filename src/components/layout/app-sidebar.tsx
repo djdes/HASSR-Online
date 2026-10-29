@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
-import { mainNavSections, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
+import { mainNavSections, navSectionPath, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
 import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
   NavBadge,
   NavChevron,
+  SectionPlace,
   menuHostKey,
   sectionChain,
   topSectionKey,
@@ -138,15 +139,22 @@ export function AppSidebar({
     : undefined;
   const backHref = parentSection ? parentSection.rootHref : homeHref;
   const backPath = backHref.split(/[?#]/)[0] || "/";
-  const goBack = (event: MouseEvent<HTMLAnchorElement>) => {
+  // Переход на уровень `target` (`null` — главное меню и главная): «‹ Назад»
+  // и ступени карточки «Вы здесь». Фокус — на пункт, через который из
+  // целевого меню шли вглубь.
+  const goTo = (target: NavModelSection | null) => (event: MouseEvent<HTMLElement>) => {
     // Открытие в новой вкладке — меню здесь не трогаем.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     // Уже на этой странице — переход не нужен, меняется только меню.
-    const stay = backPath === pathname;
+    const targetPath = (target ? target.rootHref : homeHref).split(/[?#]/)[0] || "/";
+    const stay = targetPath === pathname;
     if (stay) event.preventDefault();
-    focusAfter.current = viewSection?.key ?? null;
-    setView({ path: pathname, key: parentSection ? parentSection.key : "main", follow: !stay });
+    const path = viewSection ? navSectionPath(sections, viewSection.key) : [];
+    const from = path[target ? path.findIndex((section) => section.key === target.key) + 1 : 0];
+    focusAfter.current = from?.key ?? null;
+    setView({ path: pathname, key: target ? target.key : "main", follow: !stay });
   };
+  const goBack = goTo(parentSection ?? null);
 
   // Раздел со своим меню, внутри которого человек уже стоит, не уводит на
   // корень: только открывает своё меню. Иначе — обычный переход на корень,
@@ -218,10 +226,13 @@ export function AppSidebar({
 
   const menuItemActive = (item: NavModelMenuItem) =>
     item.section ? inside.has(item.section) : menuSection.key === placeSection?.key && menuItem?.id === item.id;
-  // Номер пункта сквозь группы — для каскада при входе в меню раздела.
+  // Номер пункта сквозь группы — для каскада при входе в меню раздела
+  // (после ступеней карточки «Вы здесь»).
   const groupOffsets = menuSection.menu.map((_, index) =>
     menuSection.menu!.slice(0, index).reduce((sum, group) => sum + group.items.length, 0),
   );
+  // Путь к показанному меню: «Главное меню → … → раздел».
+  const placePath = navSectionPath(sections, menuSection.key);
 
   return (
     <aside
@@ -256,62 +267,66 @@ export function AppSidebar({
               {t("back")}
             </Link>
           </div>
-          <Link
-            href={menuSection.rootHref}
-            data-tone={navTone(menuSection.icon)}
-            data-nav-row
-            className="group mx-3 mt-1 flex shrink-0 items-center gap-2.5 rounded-xl px-1.5 pt-2 pb-1.5 text-[15px] font-bold text-[#0b1024] transition-colors duration-150 hover:text-[var(--tone-ink)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-          >
-            <NavIconChip name={menuSection.icon} className="size-7 rounded-[9px]" iconClassName="size-4" />
-            {menuSection.label}
-          </Link>
-          {/* Ключ — показанное меню: при входе в раздел и при «‹ Назад» в
-              родителя меню собирается заново, и пункты появляются каскадом
-              (`data-nav-rise`). Спрятанная панель — без анимации. */}
-          <nav
+          {/* Ключ — показанное меню: при входе в раздел и при переходе на
+              уровень вверх карточка «Вы здесь» и пункты собираются заново и
+              появляются каскадом (`data-nav-rise`). Спрятанная панель — без
+              анимации. */}
+          <div
             key={showSection ? viewKey : "hidden"}
-            aria-label={t("sectionMenuAria")}
-            data-section-menu={menuSection.key}
             data-nav-rise={showSection ? "" : undefined}
-            className="min-h-0 flex-1 overflow-y-auto px-3 pb-4"
+            className="flex min-h-0 flex-1 flex-col"
           >
-            {menuSection.menu.map((group, index) => (
-              <div key={group.label ?? `group-${index}`}>
-                {group.label ? (
-                  <div className="px-2.5 pt-3.5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b9fb3]">
-                    {group.label}
+            <SectionPlace
+              path={placePath}
+              size="sidebar"
+              root={{ href: homeHref, onClick: goTo(null) }}
+              step={(section) => ({ href: section.rootHref, onClick: goTo(section) })}
+              className="mx-3 mt-2 mb-1 shrink-0"
+            />
+            <nav
+              aria-label={t("sectionMenuAria")}
+              data-section-menu={menuSection.key}
+              className="min-h-0 flex-1 overflow-y-auto px-3 pb-4"
+            >
+              {menuSection.menu.map((group, index) => (
+                <div key={group.label ?? `group-${index}`}>
+                  {group.label ? (
+                    <div className="px-2.5 pt-3.5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b9fb3]">
+                      {group.label}
+                    </div>
+                  ) : null}
+                  <div className="space-y-1">
+                    {group.items.map((item, itemIndex) => {
+                      const isActive = menuItemActive(item);
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={item.section ? selectHandler(item.section, Boolean(item.hasMenu)) : undefined}
+                          aria-current={isActive ? (item.section ? "true" : "page") : undefined}
+                          data-menu-item={item.id}
+                          data-menu-section={item.section}
+                          data-tone={navTone(item.icon)}
+                          data-nav-row
+                          data-nav-bar
+                          data-has-menu={item.hasMenu ? "" : undefined}
+                          data-active={isActive ? "" : undefined}
+                          style={{ "--nav-i": placePath.length + 1 + groupOffsets[index] + itemIndex } as CSSProperties}
+                          className={cn(SIDEBAR_ITEM, "group", isActive ? SIDEBAR_ITEM_ACTIVE : SIDEBAR_ITEM_IDLE)}
+                        >
+                          <NavIconChip name={item.icon} className={SIDEBAR_CHIP} iconClassName={SIDEBAR_CHIP_ICON} />
+                          <span className="min-w-0 flex-1">{item.label}</span>
+                          {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
+                          <SectionStatusDot status={statuses[item.id]} />
+                          {item.hasMenu ? <NavChevron active={isActive} /> : null}
+                        </Link>
+                      );
+                    })}
                   </div>
-                ) : null}
-                <div className="space-y-1">
-                  {group.items.map((item, itemIndex) => {
-                    const isActive = menuItemActive(item);
-                    return (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        onClick={item.section ? selectHandler(item.section, Boolean(item.hasMenu)) : undefined}
-                        aria-current={isActive ? (item.section ? "true" : "page") : undefined}
-                        data-menu-item={item.id}
-                        data-menu-section={item.section}
-                        data-tone={navTone(item.icon)}
-                        data-nav-row
-                        data-nav-bar
-                        data-active={isActive ? "" : undefined}
-                        style={{ "--nav-i": groupOffsets[index] + itemIndex } as CSSProperties}
-                        className={cn(SIDEBAR_ITEM, "group", isActive ? SIDEBAR_ITEM_ACTIVE : SIDEBAR_ITEM_IDLE)}
-                      >
-                        <NavIconChip name={item.icon} className={SIDEBAR_CHIP} iconClassName={SIDEBAR_CHIP_ICON} />
-                        <span className="min-w-0 flex-1">{item.label}</span>
-                        {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
-                        <SectionStatusDot status={statuses[item.id]} />
-                        {item.hasMenu ? <NavChevron active={isActive} /> : null}
-                      </Link>
-                    );
-                  })}
                 </div>
-              </div>
-            ))}
-          </nav>
+              ))}
+            </nav>
+          </div>
         </div>
       </div>
     </aside>
@@ -348,6 +363,7 @@ function SidebarItem({
       data-tone={navTone(section.icon)}
       data-nav-row
       data-nav-bar
+      data-has-menu={section.menu ? "" : undefined}
       data-active={active ? "" : undefined}
       className={cn(
         SIDEBAR_ITEM,
