@@ -240,9 +240,12 @@ export const authOptions: NextAuthOptions = {
           const { db } = await import("@/lib/db");
           const flags = await db.user.findUnique({
             where: { id: String(token.id) },
-            select: { canManageSettings: true, organizationId: true, buildingIds: true },
+            select: { canManageSettings: true, organizationId: true, buildingIds: true, platformSections: true },
           });
           token.canManageSettings = flags?.canManageSettings === true;
+          // Разделы панели платформы (/root), выданные владельцем: proxy читает
+          // только токен, поэтому кладём их сюда; requireRoot() сверяет с БД.
+          token.platformSections = flags?.platformSections ?? [];
           // Домашняя организация сменилась (организацию слили в точку
           // другой — OrganizationMerge): токен переезжает следом, без
           // перевхода. Прежняя организация больше не активна.
@@ -327,6 +330,9 @@ export const authOptions: NextAuthOptions = {
         session.user.kioskDeviceId =
           token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null;
         session.user.canManageSettings = token.canManageSettings === true;
+        session.user.platformSections = Array.isArray(token.platformSections)
+          ? token.platformSections.filter((item): item is string => typeof item === "string")
+          : [];
         session.user.orgKind = token.orgKind === "directory" ? "directory" : "regular";
         session.user.pointScope = parsePointScope(token.pointScope);
         // Галка «Разрешение менять настройки» = права руководителя в своей

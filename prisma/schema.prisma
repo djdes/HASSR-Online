@@ -1205,6 +1205,12 @@ model User {
   // job title). Root users still belong to a real `Organization`; the synthetic
   // "platform" org carries them so every existing FK/query keeps working.
   isRoot                      Boolean                  @default(false)
+  // Delegated platform panel (/root) sections — see src/lib/platform-access.ts.
+  // Empty = no panel access. The superadmin (isRoot) grants them on /root/team.
+  platformSections            String[]                 @default([])
+  platformGrantedAt           DateTime?
+  platformGrantedById         String?
+  platformMailSender          PlatformMailSender?
   // False until the owner has explicitly edited this user's journal ACL in
   // /settings/users. While false, `hasJournalAccess` grants all journals —
   // this gives zero-regression behaviour for employees predating the ACL.
@@ -3479,6 +3485,34 @@ model PlatformSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+/// Personal outgoing mailbox of a platform panel user (2026-10-29): contracts,
+/// proposals and invoices sent by this person go through their SMTP account
+/// with their name in From. No row (or not verified) — the system mailer with
+/// Reply-To to the person. The password is AES-256-GCM encrypted
+/// (src/lib/platform-mail-crypto.ts) and never leaves the server.
+model PlatformMailSender {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  host        String
+  port        Int
+  secure      Boolean   @default(true)
+  username    String
+  passwordEnc String
+  fromName    String
+  fromEmail   String
+  replyTo     String?
+  /// Signature block in proposals and letters: position and direct phone.
+  position    String?
+  phone       String?
+  signature   String?
+  enabled     Boolean   @default(true)
+  verifiedAt  DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 /// Ограничитель переходов (src/lib/page-navigation-guard.ts): суточные

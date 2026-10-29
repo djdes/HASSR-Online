@@ -15900,7 +15900,7 @@
     "backToApp": "Ilovani ochish",
     "sections": "Bo‘limlar",
     "navigationLabel": "Platforma bo‘limlari",
-    "organizations": "Tashkilotlar",
+    "organizations": "Mijozlar",
     "money": "Daromad va savdo",
     "tariffs": "Tariflar",
     "promotions": "Aksiyalar",
@@ -15929,7 +15929,11 @@
     "impersonation": "Mijoz akkauntiga kirishlar",
     "timings": "Bajarilish vaqtlari",
     "pageLimit": "Sahifalar cheklovchisi",
-    "yandexDirect": "Yandex Direct"
+    "yandexDirect": "Yandex Direct",
+    "team": "Jamoa va ruxsatlar",
+    "myMail": "Mening pochtam",
+    "myMailHint": "Shartnoma, tijorat taklifi va hisoblaringiz shu pochtadan yuboriladi",
+    "accessOwner": "Platforma egasi — to‘liq ruxsat"
   },
   "telegramShortcuts": {
     "journals": {
@@ -16120,7 +16124,9 @@
       "summary": "Barcha tashkilotlardagi faollik, mijozlarni saqlab qolish va tushum.",
       "pricing": "Hisoblangan MRR — xodimlar soniga mos tarifning yillik to‘lovdagi oylik narxi: {standardSeats, number} nafargacha — «Standart», undan ko‘p — «Premium»; haqiqiysi — hisobning to‘langan tarifi oyiga, to‘lamaganlar uchun 0. Trend — 7 kunlik faollikning oldingi haftaga nisbatan o‘zgarishi, %.",
       "tableHelp": "Email — tashkilotni ro‘yxatdan o‘tkazgan shaxsning manzili. Saralash uchun ustun sarlavhasini bosing yoki manzil va nomning bir qismi bo‘yicha qidiring. Yozuvlar sonini bossangiz, tashkilot yuritayotgan jurnallar va ularni kim to‘ldirayotgani ko‘rsatiladi.",
-      "ipHistory": "Kirish IP manzillari {since} sanasidan beri yoziladi. Avvalgi manzillar amallar jurnalidan olingan. Shu vaqtdan beri tizimga kirmagan va ma’muriy amal bajarmagan foydalanuvchilarda bu ustun bo‘sh bo‘ladi."
+      "ipHistory": "Kirish IP manzillari {since} sanasidan beri yoziladi. Avvalgi manzillar amallar jurnalidan olingan. Shu vaqtdan beri tizimga kirmagan va ma’muriy amal bajarmagan foydalanuvchilarda bu ustun bo‘sh bo‘ladi.",
+      "clientsTitle": "Mijozlar",
+      "clientsSubtitle": "WeSetup’dagi barcha tashkilotlar: kim to‘laydi, kim ishlaydi, qanday bog‘lanish mumkin. Kontaktlar va hujjatlar kartasini ochish uchun mijozni bosing."
     },
     "stats": {
       "organizations": "Tashkilotlar",
@@ -16131,7 +16137,11 @@
       "liabilities": "platforma majburiyatlari",
       "mrr": "MRR",
       "ofTotal": "{count, number} tadan",
-      "potential": "imkoniyat: {amount, number} ₽"
+      "potential": "imkoniyat: {amount, number} ₽",
+      "clients": "Mijozlar",
+      "newWeek": "7 kunda +{count, number}",
+      "paying": "To‘laydi",
+      "payingHint": "MRR {amount}"
     },
     "format": {
       "rubles": "{amount, number} ₽"
@@ -16227,6 +16237,41 @@
       "usersCount": "Xodimlar: {count, number}",
       "documentsCount": "Jurnal hujjatlari: {count, number}",
       "deleteConsequences": "Tashkilot bilan birga yozuvlar, loglar va sozlamalar ham o‘chiriladi"
+    },
+    "list": {
+      "searchPlaceholder": "Nomi, STIR, pochta yoki telefon",
+      "segments": {
+        "all": "Hammasi",
+        "paying": "To‘laydi",
+        "notPaying": "To‘lamaydi",
+        "new": "7 kunda yangi",
+        "sleeping": "14+ kun faol emas",
+        "demo": "Demo"
+      },
+      "sortLabel": "Avval",
+      "sort": {
+        "mrr": "Ko‘proq to‘laydi",
+        "newest": "Yangilar",
+        "active": "Faollar",
+        "sleeping": "Uzoq kirmaganlar",
+        "name": "Nomi bo‘yicha"
+      },
+      "columns": {
+        "client": "Mijoz",
+        "contact": "Kontakt",
+        "plan": "Tarif",
+        "activity": "Faollik",
+        "money": "MRR"
+      },
+      "since": "{date} dan",
+      "until": "{date} gacha",
+      "points": "{count, plural, other {# nuqta}}",
+      "noContact": "Kontakt yo‘q",
+      "entries7d": "7 kunda {count}",
+      "balance": "ballar {amount}",
+      "showMore": "Yana {count, number} ta ko‘rsatish",
+      "shown": "{total, number} dan {shown, number} ko‘rsatildi",
+      "open": "Kartani ochish"
     }
   },
   "publicFeatures": {
@@ -16458,7 +16503,10 @@
     "page": {
       "back": "Barcha tashkilotlar",
       "created": "{type} · {date} sanasida yaratilgan",
-      "inn": " · STIR (INN) {inn}"
+      "inn": " · STIR (INN) {inn}",
+      "backToClients": "Barcha mijozlar",
+      "since": "{date} dan mijoz",
+      "lastActivity": "Oxirgi faollik: {value}"
     },
     "stats": {
       "users": "Xodimlar",
@@ -16642,7 +16690,81 @@
       "noAccount": "Tashkilotning hisobi yo‘q — davr, nuqtalar va sinovni saqlab bo‘lmaydi",
       "notHeld": "Faqat ko‘rib chiqishni kutayotgan to‘lovni belgilash mumkin",
       "freeWithEnd": "«Bepul» tarifda to‘langan muddat yo‘q — sanani belgilash uchun «Standart», «Premium» yoki «Obuna (avvalgi tarif)»ni tanlang"
-    }
+    },
+    "nav": {
+      "label": "Karta bo‘limlari",
+      "contacts": "Kontaktlar",
+      "documents": "Hujjatlar",
+      "billing": "Obuna va to‘lovlar",
+      "people": "Xodimlar",
+      "security": "Kirishlar"
+    },
+    "contacts": {
+      "title": "Qanday bog‘lanish",
+      "owner": "Ega",
+      "ownerMissing": "Ega topilmadi — tashkilotda xodimlar yo‘q",
+      "company": "Kompaniya",
+      "phone": "Telefon",
+      "email": "Pochta",
+      "login": "WeSetup’ga kirish",
+      "accountant": "Buxgalteriya",
+      "website": "Sayt",
+      "address": "Manzil",
+      "messengers": "Messenjerlar",
+      "telegramLinked": "Telegram ulangan",
+      "maxLinked": "MAX ulangan",
+      "noPhone": "Telefon ko‘rsatilmagan",
+      "noEmail": "Pochta ko‘rsatilmagan",
+      "noCompanyContacts": "Kompaniya telefoni va pochtasi yo‘q — ularni STIR bo‘yicha reyestrdan olish mumkin.",
+      "copy": "Nusxalash",
+      "copied": "Nusxalandi",
+      "call": "Qo‘ng‘iroq",
+      "write": "Yozish",
+      "fromRegistry": "reyestrdan"
+    },
+    "requisites": {
+      "title": "Rekvizitlar",
+      "fullName": "Nomi",
+      "inn": "STIR",
+      "kpp": "KPP",
+      "address": "Yuridik manzil",
+      "director": "Rahbar",
+      "missing": "Rekvizitlar yo‘q: mijoz hali STIR kiritmagan.",
+      "copyAll": "Rekvizitlarni nusxalash"
+    },
+    "summary": {
+      "title": "Qisqacha",
+      "people": "Xodimlar",
+      "documents": "Hujjatlar",
+      "activeDocuments": "Faol",
+      "entries": "Yozuvlar"
+    },
+    "documents": {
+      "title": "Mijozga hujjatlar",
+      "hint": "Shartnoma, taklif va hisob BFS rekvizitlari va mijoz ma’lumotlari bilan to‘ldiriladi."
+    },
+    "people": {
+      "title": "Xodimlar va kontaktlar",
+      "name": "Xodim",
+      "phone": "Telefon",
+      "email": "Pochta",
+      "messengers": "Messenjerlar",
+      "lastLogin": "Oxirgi kirish",
+      "status": "Holat",
+      "ownerBadge": "Ega",
+      "archived": "Arxivda",
+      "never": "Kirmagan",
+      "panel": "Panel",
+      "withContacts": "{count, plural, other {# ta kontakti bor}}"
+    },
+    "security": {
+      "title": "Eganing kirishlari",
+      "registrationIp": "Ro‘yxatdan o‘tishdagi IP",
+      "lastLoginIp": "Oxirgi kirish IP",
+      "lastLoginAt": "Oxirgi kirish",
+      "none": "Ma’lumot yo‘q: manzillar 26.08.2026 dan boshlab kirishda yoziladi"
+    },
+    "readOnly": "Tarif va ballarni «To‘lovlar va tariflar» bo‘limi bor xodim o‘zgartira oladi."
   },
   "miniHome": {
     "entry": {
@@ -29602,6 +29724,188 @@
       "list": "Bu yerda barcha savdo nuqtalari va ularda yuritiladigan jurnallar.",
       "add": "«Jurnal qo‘shish» — jurnal shu nuqta xodimlarining «Bugun» bo‘limida paydo bo‘ladi.",
       "remove": "Jurnal yonidagi «×» — u eslatmaydi; yozuvlar o‘chirilmaydi."
+    }
+  },
+  "rootPanel": {
+    "sections": {
+      "clients": {
+        "title": "Mijozlar",
+        "hint": "Mijozlar ro‘yxati, karta, kontaktlar, shartnoma va taklif"
+      },
+      "billing": {
+        "title": "To‘lovlar va tariflar",
+        "hint": "Tariflar, hisoblar, to‘lov belgisi, ballar, rekvizitlar"
+      },
+      "sales": {
+        "title": "Savdo",
+        "hint": "Takliflar, tarqatmalar, xizmatlar va arizalar, promokodlar va aksiyalar"
+      },
+      "partners": {
+        "title": "Hamkorlar",
+        "hint": "Hamkor arizalari, mijozlar, to‘lovlar"
+      },
+      "edo": {
+        "title": "EHA",
+        "hint": "Shartnoma, hisob va UPDni Saby orqali yuborish"
+      },
+      "support": {
+        "title": "Fikr-mulohaza",
+        "hint": "Murojaatlar, sharhlar, g‘oyalar, NPS"
+      },
+      "assistant": {
+        "title": "Yordamchi",
+        "hint": "Savollar jurnali va yordamchi sozlamalari"
+      },
+      "content": {
+        "title": "Blog",
+        "hint": "Maqolalar va ularning tarjimalari"
+      },
+      "seo": {
+        "title": "SEO va reklama",
+        "hint": "Sayt holati, pozitsiyalar, Yandex Direct"
+      },
+      "translations": {
+        "title": "Tarjimalar",
+        "hint": "Tarjimalar katalogi va tarjimonlar"
+      },
+      "monitoring": {
+        "title": "Monitoring",
+        "hint": "Holat, jurnallar, audit, vaqtlar, cheklagich"
+      }
+    },
+    "presets": {
+      "admin": {
+        "title": "Administrator",
+        "hint": "Panelning barcha bo‘limlari"
+      },
+      "sales": {
+        "title": "Savdo",
+        "hint": "Mijozlar, takliflar va tarqatmalar, hamkorlar, EHA"
+      },
+      "support": {
+        "title": "Qo‘llab-quvvatlash",
+        "hint": "Mijozlar, murojaatlar va sharhlar, yordamchi"
+      },
+      "seo": {
+        "title": "SEO va kontent",
+        "hint": "Blog, SEO va reklama, tarjimalar"
+      },
+      "finance": {
+        "title": "Buxgalteriya",
+        "hint": "Mijozlar, to‘lovlar va tariflar, EHA"
+      },
+      "analyst": {
+        "title": "Tahlil",
+        "hint": "Mijozlar va platforma monitoringi"
+      },
+      "custom": {
+        "title": "O‘z to‘plami",
+        "hint": "Kerakli bo‘limlarni belgilang"
+      }
+    },
+    "access": {
+      "title": "Panelga ruxsat: {name}",
+      "description": "Rolni tanlang yoki bo‘limlarni belgilang. Inson panelda faqat ularni ko‘radi — qolgan sahifalar yopiq.",
+      "presetsLabel": "Rol",
+      "sectionsLabel": "Bo‘limlar",
+      "ownerOnly": "Mijoz nomidan kirish, tashkilotni o‘chirish va jamoani boshqarish faqat egada qoladi.",
+      "willSee": "Ko‘radi: {sections}",
+      "nothing": "Hech narsa tanlanmagan — panelga ruxsat yopiladi",
+      "lands": "Kirgandan keyin «{section}» ochiladi",
+      "grant": "Ruxsat berish",
+      "update": "Ruxsatni saqlash",
+      "revoke": "Ruxsatni yopish",
+      "revokeTitle": "Panelga ruxsat yopilsinmi?",
+      "revokeBody": "{name} endi platforma panelini ocha olmaydi. Yuborilgan xatlar va jurnal yozuvlari qoladi.",
+      "saved": "Ruxsat saqlandi: {name}",
+      "revoked": "Ruxsat yopildi: {name}",
+      "failed": "Ruxsatni saqlab bo‘lmadi",
+      "button": "Panelga ruxsat",
+      "buttonHas": "Panel: {role}",
+      "ownerBadge": "Ega",
+      "refreshHint": "«Platforma paneli» havolasi sahifa yangilangandan keyin kabinetda paydo bo‘ladi."
+    },
+    "team": {
+      "title": "Jamoa va ruxsatlar",
+      "description": "Platforma paneli kimga va qaysi bo‘limlar bilan ochiq. Ega hammasini ko‘radi; boshqalar — faqat berilgan bo‘limlarni.",
+      "addTitle": "Jamoaga qo‘shish",
+      "addHint": "WeSetup’da ro‘yxatdan o‘tgan insonni toping va rol tanlang. Akkaunt yo‘q bo‘lsa — wesetup.ru’da ro‘yxatdan o‘tishni so‘rang.",
+      "searchLabel": "Pochta, ism yoki telefon bo‘yicha topish",
+      "searchPlaceholder": "Pochta, ism yoki telefon",
+      "searching": "Qidirilmoqda…",
+      "noResults": "Hech kim topilmadi. Pochtani tekshiring yoki ro‘yxatdan o‘tishni so‘rang.",
+      "membersTitle": "Jamoada",
+      "membersCount": "{count, plural, other {# kishi}}",
+      "person": "Inson",
+      "role": "Rol va bo‘limlar",
+      "mail": "Xat pochtasi",
+      "granted": "Berilgan",
+      "cabinet": "Kabinet: {name}",
+      "lastLogin": "Oxirgi kirish {date}",
+      "neverLoggedIn": "Hali kirmagan",
+      "edit": "O‘zgartirish",
+      "empty": "Hozircha jamoada faqat ega bor. Yuqorida xodimni toping va bo‘limlarni bering.",
+      "allSections": "Barcha bo‘limlar",
+      "mailStatus": {
+        "none": "Ulanmagan",
+        "unverified": "Tekshirilmagan",
+        "verified": "Ishlayapti",
+        "disabled": "O‘chirilgan",
+        "error": "Xato"
+      },
+      "rolesTitle": "Har bir rol nimani ochadi"
+    },
+    "me": {
+      "title": "Mijozlarga xat uchun pochtam",
+      "description": "Paneldan yuboradigan shartnoma, taklif va hisoblaringiz shu manzildan, sizning ismingiz bilan ketadi.",
+      "fallback": "Pochta ulanmaguncha xatlar noreply@wesetup.ru’dan ketadi, mijoz javoblari esa sizning manzilingizga keladi.",
+      "connectionTitle": "Ulanish",
+      "presets": "Tez sozlash",
+      "signatureTitle": "Xat va takliflardagi imzo",
+      "signatureHint": "Tijorat taklifi imzosi va xatlarda ishlatiladi.",
+      "fields": {
+        "fromName": "Yuboruvchi ismi",
+        "fromEmail": "Yuboruvchi manzili",
+        "host": "SMTP server",
+        "port": "Port",
+        "secure": "SSL/TLS (465-port)",
+        "username": "Login",
+        "password": "Parol",
+        "passwordKeep": "Saqlangan — o‘zgartirmaslik uchun bo‘sh qoldiring",
+        "replyTo": "Javoblar manzili (ixtiyoriy)",
+        "position": "Lavozim",
+        "phone": "Telefon",
+        "signature": "Imzoning qo‘shimcha qatori"
+      },
+      "placeholders": {
+        "fromName": "Denis Volkov",
+        "fromEmail": "denis@wesetup.ru",
+        "host": "smtp.yandex.ru",
+        "username": "Odatda — to‘liq pochta manzili",
+        "replyTo": "Javoblar boshqa manzilga kerak bo‘lsa",
+        "position": "Mijozlar bilan ishlash menejeri",
+        "phone": "+7 (900) 000-00-00",
+        "signature": "Masalan: «Telegram’da yozing @wesetup»"
+      },
+      "save": "Saqlash va tekshirish",
+      "saving": "Saqlanmoqda…",
+      "verifying": "Pochta tekshirilmoqda…",
+      "test": "Yana tekshirish",
+      "disable": "O‘chirish",
+      "disableTitle": "Shaxsiy pochta o‘chirilsinmi?",
+      "disableBody": "Xatlar yana noreply@wesetup.ru’dan, javoblar sizning manzilingizga ketadi. Sozlamalar saqlanadi, istalgan vaqtda yoqish mumkin.",
+      "status": {
+        "none": "Ulanmagan — xatlar umumiy pochtadan ketadi",
+        "unverified": "Saqlangan, lekin hali tekshirilmagan",
+        "verified": "Ishlayapti · tekshirildi {date}",
+        "disabled": "O‘chirilgan — xatlar umumiy pochtadan ketadi",
+        "error": "Ishlamayapti: {error}"
+      },
+      "verified": "Pochta ishlayapti — tekshiruv xati {email} manziliga ketdi",
+      "failed": "Pochta tekshiruvdan o‘tmadi",
+      "savedOnly": "Sozlamalar saqlandi",
+      "disabled": "Shaxsiy pochta o‘chirildi",
+      "errorGeneric": "Sozlamalarni saqlab bo‘lmadi"
     }
   }
 }
