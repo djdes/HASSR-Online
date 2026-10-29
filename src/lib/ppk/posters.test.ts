@@ -116,6 +116,14 @@ test("мытьё рук — десять шагов с картинками, с�
   assert.equal(times.rows.length, 23);
 });
 
+test("сроки хранения: под таблицей — «Или в соответствии с маркировочным ярлыком производителя»", () => {
+  const blocks = findPoster("storage-times")?.blocks ?? [];
+  const last = blocks[blocks.length - 1];
+  assert.equal(blocks[blocks.length - 2]?.type, "table");
+  assert.ok(last && last.type === "text");
+  assert.deepEqual(last.paragraphs, ["Или в соответствии с маркировочным ярлыком производителя."]);
+});
+
 test("маркировка разделочного инвентаря: таблица из десяти строк по три колонки", () => {
   const board = POSTERS.find((poster) => poster.key === "board-marking");
   const table = board?.blocks.find((block) => block.type === "table");
