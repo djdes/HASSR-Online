@@ -2,13 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LogOut } from "lucide-react";
 import { sectionForPath } from "@/lib/app-nav";
 import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { LocationSwitcherList } from "@/components/layout/location-switcher";
+import { NavIconChip } from "@/components/layout/nav-icons";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
   BackToMainButton,
@@ -23,8 +23,9 @@ import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 // Строка мобильного меню: от 52px высотой, шрифт 17px, иконка 24px —
 // палец попадает с первого раза.
+// Строка как у разделов листа: плашка 40px слева (цвет «Выйти» — розовый).
 const ROW =
-  "flex min-h-[52px] items-center gap-3.5 rounded-2xl px-3.5 py-3 text-[17px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "flex min-h-[52px] items-center gap-3 rounded-2xl py-1.5 pr-3.5 pl-1.5 text-[17px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /**
  * Меню на телефоне и планшете (<1024px): тот же список разделов, что в
@@ -83,9 +84,10 @@ export function MobileNavSheet({
         <button
           type="button"
           onClick={onLogout}
-          className={cn(ROW, "w-full text-[#a13a32] hover:bg-[#fff4f2]")}
+          data-nav-row
+          className={cn(ROW, "group w-full text-[#a13a32] hover:bg-[#fff4f2]")}
         >
-          <LogOut className="size-6 shrink-0" />
+          <NavIconChip name="LogOut" className="size-10 rounded-xl" iconClassName="size-[22px]" />
           {t("logout")}
         </button>
       }

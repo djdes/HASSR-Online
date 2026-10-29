@@ -3,18 +3,7 @@ import { PersonalLanguageSelect } from "@/components/i18n/personal-language-sele
 import { useTranslations } from "next-intl";
 
 import Link from "next/link";
-import {
-  Coins,
-  CreditCard,
-  Handshake,
-  Languages,
-  Library,
-  Loader2,
-  LogOut,
-  Palette,
-  Plus,
-  ShieldCheck,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import {
   BottomSheet,
@@ -30,10 +19,17 @@ import {
   ThemeTiles,
 } from "@/components/theme/theme-tiles";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
+import { NavIconChip } from "@/components/layout/nav-icons";
+import { cn } from "@/lib/utils";
 import { CabinetPlanCardView } from "@/components/layout/cabinet-plan-card";
 import type { CabinetPlanCard } from "@/lib/cabinet-plan";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
+
+// Строка с плашкой 32px: отступы меньше общей строки листа, высота та же.
+const CHIP_ROW = cn(SHEET_ROW_CLASS, "py-2 pl-2");
+const CHIP = "size-8 rounded-[10px]";
+const CHIP_ICON = "size-[18px]";
 
 /**
  * Меню профиля на телефоне — лист снизу, как в мобильных приложениях.
@@ -45,7 +41,8 @@ import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
  * Appearance в приложении Claude): нажал — тема сменилась сразу.
  *
  * Пункты те же, что в меню на компьютере, поэтому человек, привыкший к
- * одному, найдёт то же самое и в другом.
+ * одному, найдёт то же самое и в другом. Слева у пункта — цветная плашка
+ * его иконки, как в меню кабинета (`lib/nav-tones.ts`).
  */
 export function ProfileSheet({
   open,
@@ -108,9 +105,10 @@ export function ProfileSheet({
             onClose();
             onLogout();
           }}
-          className={`${SHEET_ROW_CLASS} text-[#a13a32] hover:bg-[#fff4f2] active:bg-[#ffe9e5]`}
+          data-nav-row
+          className={cn(CHIP_ROW, "text-[#a13a32] hover:bg-[#fff4f2] active:bg-[#ffe9e5]")}
         >
-          <LogOut className="size-5 shrink-0" />
+          <NavIconChip name="LogOut" className={CHIP} iconClassName={CHIP_ICON} />
           {t("header.logout")}
         </button>
       }
@@ -139,8 +137,8 @@ export function ProfileSheet({
         <>
           <div className={SHEET_GROUP_LABEL_CLASS}>{t("profile.otherCabinets")}</div>
           {partnerCabinet ? (
-            <Link href="/partner" onClick={onClose} className={SHEET_ROW_CLASS}>
-              <Handshake className="size-5 shrink-0 text-[#5566f6]" />
+            <Link href="/partner" onClick={onClose} className={CHIP_ROW} data-nav-row>
+              <NavIconChip name="Handshake" className={CHIP} iconClassName={CHIP_ICON} />
               <span className="min-w-0 flex-1 truncate">{t("header.partnerCabinet")}</span>
               <span className="max-w-[110px] shrink-0 truncate text-[12px] text-[#6f7282]">
                 {partnerCabinet.brandName}
@@ -152,10 +150,11 @@ export function ProfileSheet({
               key={cabinet.id}
               type="button"
               onClick={() => void openMaster.open(cabinet)}
-              className={SHEET_ROW_CLASS}
+              className={CHIP_ROW}
               data-testid="profile-master-cabinet"
+              data-nav-row
             >
-              <Library className="size-5 shrink-0 text-[#5566f6]" />
+              <NavIconChip name="Library" className={CHIP} iconClassName={CHIP_ICON} />
               <span className="min-w-0 flex-1 truncate">{cabinet.name}</span>
               {openMaster.openingId === cabinet.id ? (
                 <Loader2 className="size-5 shrink-0 animate-spin text-[#5566f6]" />
@@ -169,10 +168,11 @@ export function ProfileSheet({
                 onClose();
                 onOpenCreate("master-cabinet");
               }}
-              className={`${SHEET_ROW_CLASS} text-[#5566f6]`}
+              className={cn(CHIP_ROW, "text-[#5566f6]")}
               data-testid="profile-create-master-cabinet"
+              data-nav-row
             >
-              <Plus className="size-5 shrink-0" />
+              <NavIconChip name="Plus" className={CHIP} iconClassName={CHIP_ICON} />
               <span className="min-w-0 flex-1">{t("profile.createMasterCabinet")}</span>
             </button>
           ) : null}
@@ -180,8 +180,8 @@ export function ProfileSheet({
       ) : null}
 
       <div className={SHEET_GROUP_LABEL_CLASS}>{t("profile.accountGroup")}</div>
-      <Link href="/settings/balance" onClick={onClose} className={SHEET_ROW_CLASS}>
-        <Coins className="size-5 shrink-0 text-[#5566f6]" />
+      <Link href="/settings/balance" onClick={onClose} className={CHIP_ROW} data-nav-row>
+        <NavIconChip name="Coins" className={CHIP} iconClassName={CHIP_ICON} />
         <span className="min-w-0 flex-1">{t("profile.balanceBonuses")}</span>
         {balanceRub !== null ? (
           <span className="shrink-0 text-[13px] tabular-nums text-[#3848c7]">
@@ -194,22 +194,22 @@ export function ProfileSheet({
           ссылки там нет (правила магазинов) — страница тарифа для
           просмотра остаётся отдельным пунктом. */}
       {canManagePlan && inApp ? (
-        <Link href="/settings/subscription" onClick={onClose} className={SHEET_ROW_CLASS}>
-          <CreditCard className="size-5 shrink-0 text-[#5566f6]" />
+        <Link href="/settings/subscription" onClick={onClose} className={CHIP_ROW} data-nav-row>
+          <NavIconChip name="CreditCard" className={CHIP} iconClassName={CHIP_ICON} />
           <span className="min-w-0 flex-1">{t("profile.plan")}</span>
         </Link>
       ) : null}
 
       {canEditTranslations ? (
-        <Link href={isRoot ? "/root/translations" : "/translations"} onClick={onClose} className={SHEET_ROW_CLASS}>
-          <Languages className="size-5 shrink-0 text-[#5566f6]" />
+        <Link href={isRoot ? "/root/translations" : "/translations"} onClick={onClose} className={CHIP_ROW} data-nav-row>
+          <NavIconChip name="Languages" className={CHIP} iconClassName={CHIP_ICON} />
           <span className="min-w-0 flex-1">{t("profile.translations")}</span>
         </Link>
       ) : null}
 
       {isRoot ? (
-        <Link href="/root" onClick={onClose} className={SHEET_ROW_CLASS}>
-          <ShieldCheck className="size-5 shrink-0 text-[#5566f6]" />
+        <Link href="/root" onClick={onClose} className={CHIP_ROW} data-nav-row>
+          <NavIconChip name="ShieldCheck" className={CHIP} iconClassName={CHIP_ICON} />
           <span className="min-w-0 flex-1">{t("header.platformPanel")}</span>
         </Link>
       ) : null}
@@ -224,9 +224,10 @@ export function ProfileSheet({
           href={BRANDING_SETTINGS_HREF}
           onClick={onClose}
           data-testid="theme-branding-link"
-          className="mx-1 mt-1 inline-flex items-center gap-1.5 rounded-xl px-2 py-2 text-[13px] font-medium text-[var(--app-indigo-deep)] transition-colors hover:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          data-nav-row
+          className="mx-1 mt-1 inline-flex items-center gap-2 rounded-xl px-2 py-2 text-[13px] font-medium text-[var(--app-indigo-deep)] transition-colors hover:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
-          <Palette className="size-4 shrink-0" aria-hidden />
+          <NavIconChip name="Palette" className="size-6 rounded-[7px]" iconClassName="size-3.5" />
           {t("profile.branding")}
         </Link>
       ) : null}

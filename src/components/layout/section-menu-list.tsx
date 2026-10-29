@@ -6,20 +6,25 @@ import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { NavModelSection } from "@/lib/app-nav.server";
 import { mainNavSections, type NavSectionKey } from "@/lib/app-nav";
+import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
-import { NavIcon } from "@/components/layout/nav-icons";
+import { NavIconChip } from "@/components/layout/nav-icons";
 import { SectionStatusDot } from "@/components/layout/section-status-dot";
 import type { PpkNavStatus } from "@/components/layout/use-section-statuses";
 
 // Пункт меню раздела: 48px высотой, как строки оглавления на телефоне.
+// Слева цветная плашка 36px (вариант C, 2026-10-29) — цвет по иконке.
 const SECTION_ROW =
-  "flex min-h-[48px] items-center gap-3 rounded-2xl px-3.5 py-2.5 text-[16px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "relative flex min-h-[48px] items-center gap-3 rounded-2xl py-1.5 pr-3.5 pl-1.5 text-[16px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
-// Строка раздела в главном меню листа: от 52px высотой, шрифт 17px, иконка
-// 24px — палец попадает с первого раза.
+// Строка раздела в главном меню листа: от 52px высотой, шрифт 17px,
+// плашка 40px — палец попадает с первого раза.
 const MAIN_ROW =
-  "flex min-h-[52px] items-center gap-3.5 rounded-2xl px-3.5 py-3 text-[17px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "relative flex min-h-[52px] items-center gap-3 rounded-2xl py-1.5 pr-3.5 pl-1.5 text-[17px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+
+// Выбранная строка листа — фон и текст своего тона (`data-tone` строки).
+const ROW_ACTIVE = "bg-[var(--tone-row)] font-semibold text-[var(--tone-ink)]";
 
 /** Раздел и его видимые предки — от самого раздела вверх. */
 export function sectionChain(sections: NavModelSection[], key: NavSectionKey | null | undefined): NavModelSection[] {
@@ -45,10 +50,10 @@ export function topSectionKey(sections: NavModelSection[], key: NavSectionKey | 
   return sectionChain(sections, key).at(-1)?.key ?? null;
 }
 
-/** Метка у пункта меню («PRO»). */
+/** Метка у пункта меню («PRO»): градиентная, в тон цветным плашкам. */
 export function NavBadge({ children }: { children: string }) {
   return (
-    <span className="shrink-0 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-[#3848c7]">
+    <span className="shrink-0 rounded-full bg-[#6d4bf0] bg-[linear-gradient(135deg,#6d4bf0,#a925c0)] px-2 py-0.5 text-[11px] font-bold tracking-[0.04em] text-white shadow-[0_4px_10px_-4px_rgba(124,92,245,0.6)]">
       {children}
     </span>
   );
@@ -81,28 +86,38 @@ export function SectionMenuList({
     <>
       <Link
         href={section.rootHref}
-        className="rounded-xl px-2.5 pt-1 pb-1.5 text-[17px] font-semibold text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        data-tone={navTone(section.icon)}
+        data-nav-row
+        className="group flex items-center gap-2.5 rounded-xl px-1.5 pt-1 pb-1.5 text-[17px] font-bold text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
       >
+        <NavIconChip name={section.icon} className="size-8 rounded-[10px]" iconClassName="size-[18px]" />
         {section.label}
       </Link>
       {section.menu.map((group, index) => (
         <div key={group.label ?? `group-${index}`} className="flex flex-col gap-1">
           {group.label ? (
-            <div className="px-2.5 pt-3 pb-1 text-[12px] font-semibold text-[#9b9fb3]">{group.label}</div>
+            <div className="px-2.5 pt-3.5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b9fb3]">
+              {group.label}
+            </div>
           ) : null}
           {group.items.map((item) => {
             const isActive = item.section ? inside.has(item.section) : activeItemId === item.id;
             const className = cn(
               SECTION_ROW,
               "group w-full text-left",
-              isActive ? "bg-[#f5f6ff] text-[#5566f6]" : "text-[#3c4053] hover:bg-[#fafbff]",
+              isActive ? ROW_ACTIVE : "text-[#3c4053] hover:bg-[#fafbff]",
             );
+            const rowProps = {
+              "data-menu-item": item.id,
+              "data-menu-section": item.section,
+              "data-tone": navTone(item.icon),
+              "data-nav-row": "",
+              "data-active": isActive ? "" : undefined,
+              className,
+            };
             const content = (
               <>
-                <NavIcon
-                  name={item.icon}
-                  className={cn("size-5 shrink-0", isActive ? "text-[#5566f6]" : "text-[#6f7282]")}
-                />
+                <NavIconChip name={item.icon} className="size-9 rounded-xl" iconClassName="size-5" />
                 <span className="min-w-0 flex-1">{item.label}</span>
                 {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
                 <SectionStatusDot status={statuses[item.id]} />
@@ -115,9 +130,7 @@ export function SectionMenuList({
                 type="button"
                 onClick={() => onOpenMenu(item.section!)}
                 aria-current={isActive ? "true" : undefined}
-                data-menu-item={item.id}
-                data-menu-section={item.section}
-                className={className}
+                {...rowProps}
               >
                 {content}
               </button>
@@ -126,9 +139,7 @@ export function SectionMenuList({
                 key={item.id}
                 href={item.href}
                 aria-current={isActive ? (item.section ? "true" : "page") : undefined}
-                data-menu-item={item.id}
-                data-menu-section={item.section}
-                className={className}
+                {...rowProps}
               >
                 {content}
               </Link>
@@ -144,7 +155,8 @@ export function SectionMenuList({
  * Стрелка › у пункта главного меню, у которого есть своё меню раздела
  * (руководитель: «все меню, которые разворачиваются, должны быть со
  * стрелочкой»). Видна всегда, не только у активного пункта и не только при
- * наведении; при наведении на пункт чуть сдвигается и становится индиго.
+ * наведении; при наведении на пункт чуть сдвигается и берёт цвет пункта
+ * (`--tone` строки; вне цветной строки — индиго). Переход — в app-theme.css.
  */
 export function NavChevron({ active = false, className }: { active?: boolean; className?: string }) {
   return (
@@ -152,8 +164,10 @@ export function NavChevron({ active = false, className }: { active?: boolean; cl
       aria-hidden
       data-nav-chevron
       className={cn(
-        "size-4 shrink-0 transition-[color,transform] duration-150 motion-reduce:transition-none",
-        active ? "text-[#5566f6]" : "text-[#9b9fb3] group-hover:translate-x-0.5 group-hover:text-[#5566f6]",
+        "size-4 shrink-0",
+        active
+          ? "text-[var(--tone,#5566f6)]"
+          : "text-[#9b9fb3] group-hover:translate-x-0.5 group-hover:text-[var(--tone,#5566f6)]",
         className,
       )}
     />
@@ -190,44 +204,35 @@ export function NavSectionsList({
           "group w-full text-left",
           action
             ? isActive
-              ? "border border-[#5566f6]/25 bg-[#f5f6ff] text-[#5566f6]"
-              : "border border-[#dcdfed] bg-white text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              ? cn("border border-transparent", ROW_ACTIVE)
+              : "border border-[#dcdfed] bg-white text-[#0b1024] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
             : isActive
-              ? "bg-[#f5f6ff] text-[#5566f6]"
+              ? ROW_ACTIVE
               : "text-[#3c4053] hover:bg-[#fafbff]",
         );
+        const rowProps = {
+          "aria-current": isActive ? ("page" as const) : undefined,
+          "data-nav-section": section.key,
+          "data-nav-action": action ? "" : undefined,
+          "data-tone": navTone(section.icon),
+          "data-nav-row": "",
+          "data-active": isActive ? "" : undefined,
+          className,
+        };
         const content = (
           <>
-            <NavIcon
-              name={section.icon}
-              className={cn("size-6 shrink-0", isActive || action ? "text-[#5566f6]" : "text-[#6f7282]")}
-            />
+            <NavIconChip name={section.icon} className="size-10 rounded-xl" iconClassName="size-[22px]" />
             <span className="min-w-0 flex-1">{section.label}</span>
             {section.menu ? <NavChevron active={isActive} className="size-5" /> : null}
           </>
         );
         const row =
           section.menu && onOpenMenu ? (
-            <button
-              key={section.key}
-              type="button"
-              onClick={() => onOpenMenu(section.key)}
-              aria-current={isActive ? "page" : undefined}
-              data-nav-section={section.key}
-              data-nav-action={action ? "" : undefined}
-              className={className}
-            >
+            <button key={section.key} type="button" onClick={() => onOpenMenu(section.key)} {...rowProps}>
               {content}
             </button>
           ) : (
-            <Link
-              key={section.key}
-              href={section.rootHref}
-              aria-current={isActive ? "page" : undefined}
-              data-nav-section={section.key}
-              data-nav-action={action ? "" : undefined}
-              className={className}
-            >
+            <Link key={section.key} href={section.rootHref} {...rowProps}>
               {content}
             </Link>
           );
