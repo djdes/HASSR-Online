@@ -11,6 +11,11 @@ import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
  *
  * Прозы-стили заданы один раз здесь через `[&_h2]`-селекторы: страницы
  * пишут чистый JSX (h2/p/ul), не повторяя классы в каждом абзаце.
+ *
+ * Цвета прозы — токены темы (`--app-text…`), а не HEX: ночная тема
+ * перекрашивает классы вида `.text-[#3c4053]`, но тот же HEX во вложенном
+ * селекторе (`[&_p]:…`) она не узнаёт, и текст оставался тёмным на тёмном
+ * фоне. В светлой теме токены равны прежним HEX.
  */
 export function LegalArticle({
   title,
@@ -45,19 +50,19 @@ export function LegalArticle({
           className={
             "mt-8 border-t border-[#ececf4] pt-8 " +
             // Заголовки разделов
-            "[&_h2]:mt-9 [&_h2]:text-[18px] [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-[#0b1024] " +
+            "[&_h2]:mt-9 [&_h2]:text-[18px] [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-[var(--app-text)] " +
             "[&_h2:first-child]:mt-0 " +
-            "[&_h3]:mt-6 [&_h3]:text-[15px] [&_h3]:font-semibold [&_h3]:text-[#0b1024] " +
+            "[&_h3]:mt-6 [&_h3]:text-[15px] [&_h3]:font-semibold [&_h3]:text-[var(--app-text)] " +
             // Абзацы и списки
-            "[&_p]:mt-3 [&_p]:text-[15px] [&_p]:leading-[1.7] [&_p]:text-[#3c4053] " +
+            "[&_p]:mt-3 [&_p]:text-[15px] [&_p]:leading-[1.7] [&_p]:text-[var(--app-text-secondary)] " +
             "[&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 " +
             "[&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-5 " +
-            "[&_li]:text-[15px] [&_li]:leading-[1.7] [&_li]:text-[#3c4053] " +
-            "[&_li::marker]:text-[#9b9fb3] " +
+            "[&_li]:text-[15px] [&_li]:leading-[1.7] [&_li]:text-[var(--app-text-secondary)] " +
+            "[&_li::marker]:text-[var(--app-text-faint)] " +
             // Ссылки внутри текста
-            "[&_a]:text-[#3848c7] [&_a]:underline [&_a]:decoration-[#3848c7]/30 [&_a]:underline-offset-2 " +
-            "[&_a]:transition-colors hover:[&_a]:decoration-[#3848c7] " +
-            "[&_strong]:font-semibold [&_strong]:text-[#0b1024]"
+            "[&_a]:text-[var(--app-indigo-deep)] [&_a]:underline [&_a]:decoration-[var(--app-indigo-deep)]/30 [&_a]:underline-offset-2 " +
+            "[&_a]:transition-colors hover:[&_a]:decoration-[var(--app-indigo-deep)] " +
+            "[&_strong]:font-semibold [&_strong]:text-[var(--app-text)]"
           }
         >
           {children}

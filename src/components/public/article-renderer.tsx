@@ -4,7 +4,10 @@ const calloutTone: Record<
   NonNullable<Extract<ArticleBlock, { type: "callout" }>["tone"]>,
   { bg: string; border: string; fg: string }
 > = {
-  info: { bg: "#eef1ff", border: "#c7ccea", fg: "#3848c7" },
+  // Текст врезки — токен, а не #3848c7: фон ночная тема перекрашивает по
+  // inline-стилю (globals.css), а для синего текста такого правила нет —
+  // оставался тёмно-синим на тёмном. В светлой теме токен = #3848c7.
+  info: { bg: "#eef1ff", border: "#c7ccea", fg: "var(--app-indigo-deep)" },
   warn: { bg: "#fff4f2", border: "#ffd2cd", fg: "#a13a32" },
   tip: { bg: "#ecfdf5", border: "#c8f0d5", fg: "#116b2a" },
 };
