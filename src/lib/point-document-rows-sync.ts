@@ -1,11 +1,12 @@
 import { buildingTargets } from "@/lib/building-targets";
 import { CLEANING_DOCUMENT_TEMPLATE_CODE } from "@/lib/cleaning-document";
 import { CLIMATE_DOCUMENT_TEMPLATE_CODE } from "@/lib/climate-document";
-import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
+import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE, createColdEquipmentConfigItem } from "@/lib/cold-equipment-document";
 import { db } from "@/lib/db";
 import { EQUIPMENT_CALIBRATION_TEMPLATE_CODE } from "@/lib/equipment-calibration-document";
 import { EQUIPMENT_MAINTENANCE_TEMPLATE_CODE } from "@/lib/equipment-maintenance-document";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
+import { isUvLampEquipment } from "@/lib/uv-lamp";
 
 /**
  * Документы точки, собранные до разделения журналов по точкам (до
@@ -40,7 +41,24 @@ export type PointDirectory = {
   equipmentPoint: ReadonlyMap<string, string | null>;
   /** Помещение → его точка. */
   roomPoint: ReadonlyMap<string, string>;
+  /**
+   * Холодильное оборудование организации (как в новом документе: холодильник,
+   * морозильник или задана норма; не УФ-лампа) — для пустого журнала точки.
+   */
+  coldEquipment?: ReadonlyArray<{ id: string; name: string; pointId: string | null; min: number | null; max: number | null }>;
 };
+
+/** Оборудование идёт в журнал холодильников — правило `buildColdEquipmentConfigFromEquipment`. */
+export function isColdJournalEquipment(item: {
+  type?: string | null;
+  name?: string | null;
+  tempMin?: number | null;
+  tempMax?: number | null;
+}): boolean {
+  if (isUvLampEquipment(item)) return false;
+  const type = item.type?.toLowerCase();
+  return type === "refrigerator" || type === "freezer" || item.tempMin != null || item.tempMax != null;
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
@@ -81,7 +99,24 @@ export function trimPointDocumentConfig(
   };
 
   if (templateCode === COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE) {
-    return filterList("equipment", (row) => foreignEquipment(linked(row.sourceEquipmentId)));
+    const trimmed = filterList("equipment", (row) => foreignEquipment(linked(row.sourceEquipmentId)));
+    // Пустой журнал точки, а холодильники у точки есть: документ собран
+    // раньше, чем их завели (д/с №83, 2026-10-30), — ставим их, как в новом
+    // документе. Журнал с ручными строками не трогаем.
+    const rows = (trimmed?.config.equipment ?? record.equipment) as unknown;
+    const own = (directory.coldEquipment ?? []).filter((item) => item.pointId === pointId || item.pointId === null);
+    if (Array.isArray(rows) && rows.length === 0 && own.length > 0) {
+      return {
+        config: {
+          ...(trimmed?.config ?? record),
+          equipment: own.map((item) =>
+            createColdEquipmentConfigItem({ sourceEquipmentId: item.id, name: item.name, min: item.min, max: item.max }),
+          ),
+        },
+        removed: trimmed?.removed ?? 0,
+      };
+    }
+    return trimmed;
   }
   if (templateCode === EQUIPMENT_CALIBRATION_TEMPLATE_CODE || templateCode === EQUIPMENT_MAINTENANCE_TEMPLATE_CODE) {
     return filterList("rows", (row) => foreignEquipment(linked(row.sourceEquipmentId)));
@@ -163,12 +198,19 @@ export async function syncPointDocumentRows(
   });
   if (documents.length === 0) return 0;
   const [equipment, rooms] = await Promise.all([
-    db.equipment.findMany({ where: { area: { organizationId } }, select: { id: true, area: { select: { buildingId: true } } } }),
+    db.equipment.findMany({
+      where: { area: { organizationId } },
+      select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { buildingId: true } } },
+      orderBy: { name: "asc" },
+    }),
     db.room.findMany({ where: { building: { organizationId } }, select: { id: true, buildingId: true } }),
   ]);
   const directory: PointDirectory = {
     equipmentPoint: new Map(equipment.map((item) => [item.id, item.area.buildingId])),
     roomPoint: new Map(rooms.map((room) => [room.id, room.buildingId])),
+    coldEquipment: equipment
+      .filter(isColdJournalEquipment)
+      .map((item) => ({ id: item.id, name: item.name, pointId: item.area.buildingId, min: item.tempMin, max: item.tempMax })),
   };
   let fixed = 0;
   for (const document of documents) {
