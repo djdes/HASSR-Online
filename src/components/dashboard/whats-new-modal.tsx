@@ -102,6 +102,7 @@ function isCategoryNote(
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
+  "Счёт на оплату в новом оформлении": FileText,
   "Смена точки и закрытые разделы": PanelLeft,
   "Услуги: цена по запросу": Handshake,
   "Фильтр по точкам": MapPin,
