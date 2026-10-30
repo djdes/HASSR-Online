@@ -25,6 +25,7 @@ import { defaultContractMessage, defaultContractSubject } from "@/lib/contracts/
 import { SIGNER_BASIS_PRESETS } from "@/lib/contracts/format";
 import { isDeliverableEmail, normalizeEmail } from "@/lib/contracts/recipients";
 import type { ContractContext, ContractIssueInput, ContractListItem } from "@/lib/contracts/service.server";
+import { EdoSendButton } from "@/components/root/edo-send-button";
 import type { ContractChecklistItem, ContractRecipientSource } from "@/lib/contracts/types";
 
 /**
@@ -104,7 +105,7 @@ async function downloadResponse(response: Response, fallbackName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-export function ClientContractCard({ initial }: { initial: ContractContext }) {
+export function ClientContractCard({ initial, edo = false }: { initial: ContractContext; edo?: boolean }) {
   const t = useTranslations("rootClientContract");
   const locale = useLocale();
   const [ctx, setCtx] = useState(initial);
@@ -410,6 +411,7 @@ export function ClientContractCard({ initial }: { initial: ContractContext }) {
                           <Send className={`size-3.5 ${current ? "" : "text-[#5566f6]"}`} />
                           {t("history.send")}
                         </button>
+                        {edo ? <EdoSendButton organizationId={initial.organizationId} kind="contract" sourceId={contract.id} quiet /> : null}
                         <button
                           type="button"
                           onClick={() => setVoidTarget(contract)}

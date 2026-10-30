@@ -1,0 +1,13 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=5157, fail=1 ===
+
+✗ НОВЫЕ регрессии (нет в baseline):
+  - prewarm-routes.sh
+
+Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
+Если регрессии — почините код.
+EXIT 1
