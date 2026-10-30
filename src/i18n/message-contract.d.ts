@@ -2967,6 +2967,7 @@ export type MessageContract = {
       },
       "backToMain": "Главное меню",
       "sectionMenuAria": "Меню раздела",
+      "placeAria": "Где вы в меню",
       "status": {
         "done": "Заполнен",
         "started": "Начат",

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { ChevronRight, LayoutGrid, Search } from "lucide-react";
-import { NavIcon } from "@/components/layout/nav-icons";
+import { NavIconChip } from "@/components/layout/nav-icons";
 
 export type MiniSectionItemView = {
   href: string;
@@ -149,11 +149,10 @@ export function MiniSectionsClient({
               <Link
                 key={item.href}
                 href={item.href}
+                data-nav-row
                 className="mini-item mini-press"
               >
-                <span className="mini-tile">
-                  <NavIcon name={item.icon} className="size-5" />
-                </span>
+                <NavIconChip name={item.icon} className="size-10 rounded-xl" iconClassName="size-5" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{item.label}</span>
                   {item.hint ? <span className="mini-item-hint">{item.hint}</span> : null}

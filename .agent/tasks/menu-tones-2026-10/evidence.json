@@ -1,0 +1,166 @@
+{
+  "task_id": "menu-tones-2026-10",
+  "spec": "spec.md",
+  "date": "2026-10-29",
+  "acceptance": {
+    "AC1": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/lib/nav-tones.ts",
+        "src/lib/nav-tones.test.ts",
+        "src/app/app-theme.css"
+      ]
+    },
+    "AC2": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/components/layout/app-sidebar.tsx",
+        "raw/sidebar-main-light.png",
+        "raw/sidebar-company-light.png",
+        "raw/sidebar-points-light.png"
+      ],
+      "measurements": {
+        "activeRowBg": "rgb(233, 244, 250)",
+        "activeRowColor": "rgb(10, 106, 161)",
+        "activeBar": "rgb(10, 134, 201) 3px"
+      }
+    },
+    "AC3": {
+      "verdict": "PASS",
+      "measurements": {
+        "brandMarkLight": 0,
+        "brandMarkDark": 0
+      }
+    },
+    "AC4": {
+      "verdict": "PASS",
+      "measurements": {
+        "hoverChip": {
+          "translate": "0px -1px",
+          "scale": "1.06",
+          "rotate": "-6deg",
+          "transitionProperty": "translate, scale, rotate, box-shadow"
+        }
+      },
+      "evidence": [
+        "raw/sidebar-hover-light.png",
+        "src/app/app-theme.css"
+      ]
+    },
+    "AC5": {
+      "verdict": "PASS",
+      "evidence": [
+        "raw/profile-menu-light.png",
+        "raw/command-palette-light.png",
+        "raw/more-cards-light.png",
+        "raw/favorites-picker-light.png",
+        "raw/mobile-sheet-light.png",
+        "raw/mobile-sheet-dark.png"
+      ],
+      "notes": "Mini App «Разделы» — по коду, без скриншота (вход через Telegram)"
+    },
+    "AC6": {
+      "verdict": "PASS",
+      "measurements": {
+        "1440": {
+          "logoBox": [
+            662,
+            1054
+          ],
+          "inkExpected": [
+            674.6,
+            1021.3
+          ],
+          "tagline": [
+            675,
+            1021
+          ],
+          "overflowX": false
+        },
+        "390": {
+          "logoBox": [
+            81,
+            322
+          ],
+          "inkExpected": [
+            88.8,
+            301.9
+          ],
+          "tagline": [
+            88,
+            301
+          ],
+          "overflowX": false
+        }
+      },
+      "evidence": [
+        "src/lib/wordmark-tagline.ts",
+        "src/lib/wordmark-tagline.test.ts",
+        "src/components/brand/logo.test.ts",
+        "raw/home-1440-light.png",
+        "raw/home-390-light.png"
+      ]
+    },
+    "AC7": {
+      "verdict": "PASS",
+      "measurements": {
+        "darkTagline": "rgb(163, 173, 255)"
+      },
+      "evidence": [
+        "raw/home-1440-dark.png",
+        "raw/sidebar-points-dark.png",
+        "raw/mobile-sheet-dark.png"
+      ]
+    },
+    "AC8": {
+      "verdict": "PASS",
+      "commands": [
+        {
+          "cmd": "npm run typecheck",
+          "exit": 0
+        },
+        {
+          "cmd": "npm run test:gate",
+          "exit": 0,
+          "pass": 5102,
+          "fail": 0
+        },
+        {
+          "cmd": "npx eslint <21 changed files>",
+          "exit": 0
+        },
+        {
+          "cmd": "npm run i18n:check",
+          "exit": 0,
+          "pass": 97,
+          "fail": 0
+        }
+      ]
+    },
+    "AC9": {
+      "verdict": "PASS",
+      "artifacts": [
+        "raw/command-palette-light.png",
+        "raw/favorites-picker-light.png",
+        "raw/home-1440-dark.png",
+        "raw/home-1440-light.png",
+        "raw/home-390-dark.png",
+        "raw/home-390-light.png",
+        "raw/mobile-sheet-dark.png",
+        "raw/mobile-sheet-light.png",
+        "raw/more-cards-light.png",
+        "raw/page-points-1440-dark.png",
+        "raw/page-points-1440-light.png",
+        "raw/profile-menu-light.png",
+        "raw/sidebar-company-dark.png",
+        "raw/sidebar-company-light.png",
+        "raw/sidebar-hover-light.png",
+        "raw/sidebar-main-dark.png",
+        "raw/sidebar-main-light.png",
+        "raw/sidebar-points-dark.png",
+        "raw/sidebar-points-light.png"
+      ]
+    }
+  },
+  "overall": "PASS"
+}

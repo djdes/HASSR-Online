@@ -2966,6 +2966,7 @@
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",
+      "placeAria": "Where you are in the menu",
       "status": {
         "done": "Done",
         "started": "Started",

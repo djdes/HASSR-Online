@@ -1,4 +1,5 @@
 import { createElement } from "react";
+import { navTone, type NavTone } from "@/lib/nav-tones";
 import {
   AlertTriangle,
   Archive,
@@ -34,6 +35,7 @@ import {
   HeartPulse,
   Image,
   KeyRound,
+  Languages,
   LayoutGrid,
   LayoutTemplate,
   Library,
@@ -41,6 +43,7 @@ import {
   ListChecks,
   ListOrdered,
   ListPlus,
+  LogOut,
   Map,
   Network,
   Package,
@@ -118,6 +121,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   HeartPulse,
   Image,
   KeyRound,
+  Languages,
   LayoutGrid,
   LayoutTemplate,
   Library,
@@ -125,6 +129,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   ListChecks,
   ListOrdered,
   ListPlus,
+  LogOut,
   Map,
   Network,
   Package,
@@ -169,6 +174,9 @@ export function hasNavIcon(name: string): boolean {
   return Object.hasOwn(NAV_ICONS, name);
 }
 
+/** Все имена иконок меню — у каждой должен быть свой тон (`nav-tones.test.ts`). */
+export const NAV_ICON_NAMES: readonly string[] = Object.keys(NAV_ICONS);
+
 /**
  * Иконка меню по имени. Через `createElement`, а не `const Icon = …`
  * в рендере: компилятор React считает такой `Icon` новым компонентом
@@ -176,4 +184,47 @@ export function hasNavIcon(name: string): boolean {
  */
 export function NavIcon({ name, className }: { name: string; className?: string }) {
   return createElement(navIcon(name), { className, "aria-hidden": true });
+}
+
+/**
+ * Цветная плашка иконки (вариант C, 2026-10-29): градиент тона и белая
+ * иконка. Тон — по имени иконки (`lib/nav-tones.ts`), так что пункт одного
+ * цвета во всех меню. Размер и скругление задаёт место (`className`);
+ * цвета, свечение и движение — `[data-nav-chip]` в `app-theme.css`.
+ * Строка вокруг с `data-nav-row` оживляет плашку при наведении, с
+ * `data-active` — выделяет. `text-current` на иконке: правило пунктов меню
+ * красит серым каждую иконку без своего цвета.
+ */
+export function NavIconChip({
+  name,
+  className,
+  iconClassName,
+}: {
+  name: string;
+  className?: string;
+  iconClassName?: string;
+}) {
+  return createElement(ToneChip, { tone: navTone(name), icon: navIcon(name), className, iconClassName });
+}
+
+/** Плашка с явным тоном — для иконок вне меню (каналы связи на главной). */
+export function ToneChip({
+  tone,
+  icon,
+  className,
+  iconClassName,
+}: {
+  tone: NavTone;
+  icon: LucideIcon;
+  className?: string;
+  iconClassName?: string;
+}) {
+  return createElement(
+    "span",
+    { "data-nav-chip": "", "data-tone": tone, "aria-hidden": true, className },
+    createElement(icon, {
+      className: iconClassName ? `text-current ${iconClassName}` : "text-current",
+      "aria-hidden": true,
+    }),
+  );
 }

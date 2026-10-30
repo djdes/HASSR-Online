@@ -467,7 +467,6 @@ export default async function DashboardLayout({
                     getWebHomeHref(session.user))
               }
               canEditBranding={hasCapability(session.user, "admin.full")}
-              whiteLabel={Boolean(consultant)}
             />
           ) : null}
           <div className="flex min-w-0 flex-1 flex-col">
