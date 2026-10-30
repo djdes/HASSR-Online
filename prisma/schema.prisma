@@ -156,6 +156,8 @@ model Organization {
   checklistInspections          ChecklistInspection[]
   checklistAttachments          ChecklistAttachment[]
   checklistAssignments          ChecklistAssignment[]
+  /// Документы, отправленные этой организации по ЭДО (ROOT → /root/edo).
+  edoDocuments                  EdoDocument[]
   id                             String                         @id @default(cuid())
   /// Автопродление подписки включено.
   ///
@@ -4904,4 +4906,84 @@ model ApiAccessKey {
 
   @@index([organizationId, revokedAt])
   @@index([userId])
+}
+
+/// Кабинет Saby (СБИС) нашей компании (ООО «БФС») для отправки документов
+/// клиентам по ЭДО. Один на платформу, подключает ROOT на /root/edo.
+/// Вход — по ключам приложения: ID подключения открыто, защищённый ключ
+/// и сессия — зашифрованы (src/lib/edo/secret-crypto.ts) и наружу не
+/// отдаются. Сервис — src/lib/edo/cabinet.server.ts.
+model EdoCabinet {
+  id              String    @id @default(cuid())
+  /// "saby" — пока единственный оператор.
+  provider        String    @default("saby")
+  /// ID подключения Saby (`app_client_id`).
+  clientId        String    @unique
+  /// Защищённый ключ (`app_secret`), AES-256-GCM.
+  appSecretEnc    String
+  /// Кэш сессии `{accessToken, token}`, AES-256-GCM: у приложения Saby
+  /// не больше пяти активных сессий, поэтому входим только без кэша или на 401.
+  sessionEnc      String?
+  baseUrl         String    @default("https://online.saby.ru")
+  /// Наши организации кабинета (`СБИС.СписокНашихОрганизаций`, разобранные
+  /// `{inn, kpp, name, edoEnabled}[]`) на момент последней проверки.
+  orgs            Json?
+  /// "unchecked" | "ok" | "error" — итог последней проверки.
+  status          String    @default("unchecked")
+  checkedAt       DateTime?
+  lastError       String?
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+/// Документ, записанный в Saby черновиком для клиента-организации:
+/// договор, счёт, УПД или другой файл. Подписывает КЭП и отправляет
+/// человек в Saby по ссылке `signUrl` — отложенной подписи у Saby нет.
+/// `sabyDocId` (наш GUID) сохраняется ДО записи: повтор и потерянный
+/// ответ находят тот же документ, второй не создаётся.
+model EdoDocument {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// "contract" | "invoice" | "upd" | "other"
+  kind            String
+  /// Источник: номер заказа (PaymentOrder.id) у счёта и УПД, id договора;
+  /// null — файл загружен вручную.
+  sourceId        String?
+  /// Тип документа в Saby: "ДоговорДок" | "СчетИсх" | "ДокОтгрИсх".
+  sabyType        String
+  number          String
+  /// Дата документа "ГГГГ-ММ-ДД".
+  docDate         String
+  fileName        String
+  sabyDocId       String       @unique
+  /// ID подключения кабинета, куда записан документ: другой кабинет его не видит.
+  cabinetClientId String
+  recipientInn    String
+  recipientKpp    String?
+  recipientName   String
+  /// ID участника ЭДО, если документ адресован по нему (ручное переопределение).
+  recipientEdoId  String?
+  /// Итог проверки получателя перед записью: "saby" | "roaming" | "invited" | "none".
+  recipientEdo    String?
+  /// Оператор ЭДО получателя (для роуминга).
+  recipientOperator String?
+  /// `Состояние.Код` Saby: 0 черновик, 3 отправлен, 4 доставлен, 6 ошибка
+  /// доставки, 7 подписан, 9 отклонён, 10 обрабатывается, 22 аннулирован,
+  /// 23 ждёт подписи. null — запись ещё не прошла.
+  stateCode       Int?
+  stateName       String?
+  signUrl         String?
+  error           String?
+  /// Черновик удалили в Saby руками — документ больше не мешает новой отправке.
+  deletedAt       DateTime?
+  sentByUserId    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  refreshedAt     DateTime?
+
+  @@index([organizationId, createdAt])
+  @@index([kind, sourceId])
+  @@index([createdAt])
 }

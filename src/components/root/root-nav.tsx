@@ -13,6 +13,7 @@ import {
   ClipboardList,
   FileClock,
   FileDown,
+  FileSignature,
   FileText,
   Gauge,
   Handshake,
@@ -95,6 +96,7 @@ const NAV: NavEntry[] = [
       { href: "/root/blank-downloads", label: "blankDownloads", icon: FileDown },
       { href: "/root/partners", label: "partners", icon: Handshake },
       { href: "/root/requisites", label: "requisites", icon: Stamp },
+      { href: "/root/edo", label: "edo", icon: FileSignature },
     ],
   },
   {
