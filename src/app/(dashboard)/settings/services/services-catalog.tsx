@@ -2,25 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { CheckCircle2, Lock, Sparkles } from "lucide-react";
+import { Lock } from "lucide-react";
 
+import { ContactUsButton, ContactUsPanel } from "@/components/contact/contact-us-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useInsideMobileApp } from "@/lib/use-inside-mobile-app";
-import {
-  formatServicePrice,
-  isInstantPayable,
-  type PlatformServiceItem,
-  type ServiceCategory,
-} from "@/lib/services/constants";
+import type { PlatformServiceItem, ServiceCategory } from "@/lib/services/constants";
 
 /**
- * Карточки услуг с заказом в один диалог.
+ * Карточки услуг с заявкой в один диалог.
  *
- * Диалог всегда объясняет, что именно произойдёт: спишем баллы сейчас
- * или сначала свяжемся и посчитаем. Без этой строки человек не знает,
- * подтверждает он покупку или заявку, и не нажимает ни то, ни другое.
+ * Цен нет (владелец, 2026-10-29): на их месте «Свяжитесь с нами» — окно с
+ * крупными контактами. Заказ — простая заявка: ничего не оплачивается и не
+ * списывается, стоимость называем после разговора. Диалог заявки так и
+ * говорит и сразу предлагает позвонить или написать.
  */
 const FIELD_CLASS =
   "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
@@ -33,35 +29,28 @@ type Group = {
 
 export function ServicesCatalog({
   groups,
-  balanceRub,
   canOrder,
   contact,
+  telegramUrl,
   initialServiceKey = null,
 }: {
   groups: Group[];
-  balanceRub: number;
   canOrder: boolean;
   contact: { name: string; phone: string; email: string };
+  /** Telegram окна «Свяжитесь с нами» — `contactTelegramUrl` с сервера. */
+  telegramUrl: string;
   /**
    * `?order=<key>` — пришли из «Производственного контроля» по кнопке
-   * «Заказать разработку»: сразу открываем диалог этой услуги.
+   * «Заказать индивидуально»: сразу открываем диалог этой услуги.
    */
   initialServiceKey?: string | null;
 }) {
   const t = useTranslations("settingsUi.servicesCatalog");
-  const locale = useLocale();
   const router = useRouter();
-  // В приложении WeSetup без слова «оплатить»: правила магазинов про
-  // покупки. Услуга всё равно оказывается вне приложения, списываются баллы.
-  const insideApp = useInsideMobileApp();
   const [active, setActive] = useState<PlatformServiceItem | null>(null);
   const [form, setForm] = useState(contact);
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
-
-  const price = active?.priceRub ?? 0;
-  const payable = active ? isInstantPayable(active) : false;
-  const enoughBalance = payable && balanceRub >= price;
 
   useEffect(() => {
     if (!initialServiceKey || !canOrder) return;
@@ -88,6 +77,7 @@ export function ServicesCatalog({
 
     setSending(true);
     try {
+      // Без `payFromBalance`: заявка, а не покупка — баллы не списываются.
       const response = await fetch("/api/services/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,35 +87,17 @@ export function ServicesCatalog({
           contactPhone: form.phone.trim(),
           contactEmail: form.email.trim() || undefined,
           comment: comment.trim() || undefined,
-          payFromBalance: enoughBalance,
         }),
       });
-      const data = (await response.json().catch(() => null)) as {
-        paidRub?: number;
-        paymentSkippedReason?: string | null;
-        error?: string;
-      } | null;
-
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) {
         throw new Error(data?.error ?? t("sendFailed"));
       }
-
-      if (data?.paidRub && data.paidRub > 0) {
-        toast.success(
-          t("paidSuccess", { amount: data.paidRub.toLocaleString(locale) })
-        );
-      } else if (data?.paymentSkippedReason === "insufficient") {
-        toast.success(t("insufficientSuccess"));
-      } else {
-        toast.success(t("sentSuccess"));
-      }
-
+      toast.success(t("sentSuccess"));
       setActive(null);
       router.refresh();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("sendFailed")
-      );
+      toast.error(error instanceof Error ? error.message : t("sendFailed"));
     } finally {
       setSending(false);
     }
@@ -148,47 +120,46 @@ export function ServicesCatalog({
             {group.label}
           </div>
           <div className="grid gap-3 lg:grid-cols-2">
-            {group.items.map((service) => {
-              const instant = isInstantPayable(service);
-              return (
-                <div
-                  key={service.key}
-                  className="flex flex-col rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-shadow duration-150 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)]"
-                >
-                  <div className="text-[15px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024]">
-                    {service.title}
-                  </div>
-                  <p className="mt-1.5 text-[13px] leading-[1.55] text-[#6f7282]">
-                    {service.summary}
-                  </p>
-                  <p className="mt-3 text-[13px] leading-[1.6] text-[#3c4053]">
-                    {service.description}
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="text-[17px] font-semibold tabular-nums tracking-[-0.01em] text-[#0b1024]">
-                      {formatServicePrice(service)}
-                    </div>
-                    {canOrder ? (
-                      <button
-                        type="button"
-                        onClick={() => openService(service)}
-                        className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
-                      >
-                        {instant && balanceRub >= (service.priceRub ?? 0) ? (
-                          <Sparkles className="size-4" />
-                        ) : null}
-                        {t("order")}
-                      </button>
-                    ) : (
-                      <span className="text-[12.5px] text-[#9b9fb3]">
-                        {t("orderedByManager")}
-                      </span>
-                    )}
-                  </div>
+            {group.items.map((service) => (
+              <div
+                key={service.key}
+                data-service-card={service.key}
+                className="flex flex-col rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-shadow duration-150 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)]"
+              >
+                <div className="text-[15px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024]">
+                  {service.title}
                 </div>
-              );
-            })}
+                <p className="mt-1.5 text-[13px] leading-[1.55] text-[#6f7282]">
+                  {service.summary}
+                </p>
+                <p className="mt-3 text-[13px] leading-[1.6] text-[#3c4053]">
+                  {service.description}
+                </p>
+
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5">
+                  {/* Вместо цены — окно с крупными контактами. */}
+                  <ContactUsButton
+                    service={service.title}
+                    telegramUrl={telegramUrl}
+                    testId={`service-contact-${service.key}`}
+                  />
+                  {canOrder ? (
+                    <button
+                      type="button"
+                      onClick={() => openService(service)}
+                      data-testid={`service-order-${service.key}`}
+                      className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                    >
+                      {t("order")}
+                    </button>
+                  ) : (
+                    <span className="text-[12.5px] text-[#9b9fb3]">
+                      {t("orderedByManager")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       ))}
@@ -202,52 +173,13 @@ export function ServicesCatalog({
           active ? t("orderTitle", { title: active.title }) : t("orderService")
         }
         description={
-          active ? (
-            <span className="text-[13px] text-[#3c4053]">
-              {formatServicePrice(active)}
-            </span>
-          ) : undefined
+          <span className="text-[13px] text-[#3c4053]">{t("requestLead")}</span>
         }
-        bullets={
-          enoughBalance
-            ? [
-                {
-                  label: t("bulletDebit", {
-                    price: price.toLocaleString(locale),
-                    rest: (balanceRub - price).toLocaleString(locale),
-                  }),
-                  tone: "info",
-                },
-                { label: t("bulletContactDay") },
-              ]
-            : payable
-              ? [
-                  {
-                    label: t("bulletBalanceShort", {
-                      balance: balanceRub.toLocaleString(locale),
-                    }),
-                    tone: "warn",
-                  },
-                  { label: t("bulletAcceptAnyway") },
-                ]
-              : [
-                  {
-                    label: t("bulletPriceByVolume"),
-                    tone: "info",
-                  },
-                  { label: t("bulletNoPointsDebited") },
-                  { label: t("bulletContactDay") },
-                ]
-        }
-        confirmLabel={
-          sending
-            ? t("sending")
-            : enoughBalance
-              ? insideApp
-                ? t("order")
-                : t("payAndOrder")
-              : t("sendRequest")
-        }
+        bullets={[
+          { label: t("bulletNothingCharged"), tone: "info" },
+          { label: t("bulletContactDay") },
+        ]}
+        confirmLabel={sending ? t("sending") : t("sendRequest")}
         confirmDisabled={sending}
       >
         <div className="space-y-3">
@@ -288,12 +220,10 @@ export function ServicesCatalog({
               className="w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 py-2.5 text-[14px] leading-[1.5] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
             />
           </label>
-          {enoughBalance ? (
-            <div className="flex items-start gap-2 rounded-2xl bg-[#ecfdf5] p-3">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#116b2a]" />
-              <span className="text-[12.5px] leading-[1.5] text-[#116b2a]">
-                {t("payNotice")}
-              </span>
+          {active ? (
+            <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3" data-service-order-contacts>
+              <div className="mb-2.5 text-[13px] font-medium text-[#3c4053]">{t("contactsTitle")}</div>
+              <ContactUsPanel service={active.title} telegramUrl={telegramUrl} onBeforeChat={() => setActive(null)} />
             </div>
           ) : null}
         </div>

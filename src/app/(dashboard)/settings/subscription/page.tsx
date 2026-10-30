@@ -38,7 +38,7 @@ import { PROMO_COOKIE } from "@/lib/promo/personal-link";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { isTopupOrder } from "@/lib/balance/topup-core";
-import { readPpkIndividualPrice } from "@/lib/services/catalog";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import {
   FREE_MAX_JOURNALS,
   POINTS_DISCOUNT_FROM,
@@ -178,10 +178,9 @@ export default async function SubscriptionPage({
 
   // Цены тарифов (ROOT → «Тарифы») и акция (ROOT → «Акции») — те же, что
   // на лендинге и в заказе.
-  const [pricing, promotion, ppkFromRub] = await Promise.all([
+  const [pricing, promotion] = await Promise.all([
     billing ? Promise.resolve(billing.pricing) : readPlanPricing(),
     readActivePromotion(now).catch(() => null),
-    readPpkIndividualPrice(),
   ]);
   const storage: StorageSummary | null =
     billing && !billing.unit.exempt
@@ -574,8 +573,8 @@ export default async function SubscriptionPage({
             rates={pricing.rates}
             available={pricing.available}
             promotion={promotion}
-            ppkFromRub={ppkFromRub}
             ppkHref="/settings/services?order=ppk-development"
+            contactTelegramUrl={contactTelegramUrl(process.env)}
             promoCode={acceptedCode}
             cabinet={{
               status: cabinetStatus,

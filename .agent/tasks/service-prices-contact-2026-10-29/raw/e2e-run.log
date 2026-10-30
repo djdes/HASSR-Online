@@ -1,0 +1,76 @@
+PASS /uslugi: JSON-LD без price/minPrice/offers — ld bytes 10212, "price" in html: false
+PASS /uslugi: в разметке (без <script>) нет «₽» — ok
+PASS /uslugi @1440: нет цены в article[id] — ok (12)
+PASS /uslugi @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /uslugi @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS / @1440: нет цены в [data-testid="tariff-ppk"] — ok (1)
+PASS / @1440: нет цены в ppkRow — ok
+PASS / @1440: цена тарифа на месте [data-testid="tariff-card-standard"] — 1 990 ₽
+PASS / @1440: цена тарифа на месте [data-testid="tariff-card-premium"] — 3 990 ₽
+PASS / @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS / @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS /pricing @1440: нет цены в [data-testid="tariff-ppk"] — ok (1)
+PASS /pricing @1440: нет цены в ppkRow — ok
+PASS /pricing @1440: цена тарифа на месте [data-testid="tariff-card-standard"] — 1 990 ₽
+PASS /pricing @1440: цена тарифа на месте [data-testid="tariff-card-premium"] — 3 990 ₽
+PASS /pricing @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /pricing @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS /settings/services @1440: нет цены в [data-service-card] — ok (12)
+PASS /settings/services @1440: нет цены в main — ok (1)
+PASS /settings/services @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /settings/services @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS /settings/services @1440: «Чат на сайте» закрывает окно и открывает чат — events 1
+PASS /settings/services @1440: окно заявки без цены и оплаты, с телефоном — phone visible
+PASS /inspection/experts @1440: нет цены в [data-inspection-experts] — ok (1)
+PASS /inspection/experts @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /inspection/experts @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS /production-control @1440: нет цены в [data-testid="ppk-individual-order"] — ok (1)
+PASS /production-control @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /production-control @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS /settings/subscription @1440: нет цены в [data-testid="tariff-ppk"] — ok (1)
+PASS /settings/subscription @1440: цена тарифа на месте [data-testid="tariff-card-standard"] — 1 891 ₽
+PASS /settings/subscription @1440: цена тарифа на месте [data-testid="tariff-card-premium"] — 3 791 ₽
+PASS /settings/subscription @1440: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /settings/subscription @1440: окно контактов — крупный телефон — font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot
+PASS /uslugi @390: нет цены в article[id] — ok (12)
+PASS /uslugi @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /uslugi @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS / @390: нет цены в [data-testid="tariff-ppk"] — ok (1)
+PASS / @390: нет цены в ppkRow — ok
+PASS / @390: цена тарифа на месте [data-testid="tariff-card-standard"] — 1 990 ₽
+PASS / @390: цена тарифа на месте [data-testid="tariff-card-premium"] — 3 990 ₽
+PASS / @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS / @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /pricing @390: нет цены в [data-testid="tariff-ppk"] — ok (1)
+PASS /pricing @390: нет цены в ppkRow — ok
+PASS /pricing @390: цена тарифа на месте [data-testid="tariff-card-standard"] — 1 990 ₽
+PASS /pricing @390: цена тарифа на месте [data-testid="tariff-card-premium"] — 3 990 ₽
+PASS /pricing @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /pricing @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /settings/services @390: нет цены в [data-service-card] — ok (12)
+PASS /settings/services @390: нет цены в main — ok (1)
+PASS /settings/services @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /settings/services @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /settings/services @390: «Чат на сайте» закрывает окно и открывает чат — events 1
+PASS /settings/services @390: окно заявки без цены и оплаты, с телефоном — phone visible
+PASS /inspection/experts @390: нет цены в [data-inspection-experts] — ok (1)
+PASS /inspection/experts @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /inspection/experts @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /production-control @390: нет цены в [data-testid="ppk-individual-order"] — ok (1)
+PASS /production-control @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /production-control @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /settings/subscription @390: нет цены в [data-testid="tariff-ppk"] — ok (1)
+PASS /settings/subscription @390: цена тарифа на месте [data-testid="tariff-card-standard"] — 1 891 ₽
+PASS /settings/subscription @390: цена тарифа на месте [data-testid="tariff-card-premium"] — 3 791 ₽
+PASS /settings/subscription @390: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /settings/subscription @390: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /settings/services @390 mini: страница в оболочке Mini App (#mini-root) — http://localhost:3033/settings/services
+PASS /settings/services @390 mini: нет цены в [data-service-card] — ok (12)
+PASS /settings/services @390 mini: нет цены в main — ok (1)
+PASS /settings/services @390 mini: без горизонтальной прокрутки страницы — scrollWidth − innerWidth = 0
+PASS /settings/services @390 mini: окно контактов — крупный телефон — font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot
+PASS /settings/services @390 mini: «Чат на сайте» закрывает окно и открывает чат — events 1
+PASS /settings/services @390 mini: окно заявки без цены и оплаты, с телефоном — phone visible
+
+73/73 passed
+EXIT 0
