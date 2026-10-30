@@ -3,9 +3,11 @@ import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { invoiceRequisitesReady } from "@/lib/invoices/build";
 import { readActivePromotion } from "@/lib/promo/offer";
 import { planMonthlyRub } from "@/lib/tariff-plans";
+import { readPpkIndividualPrice } from "@/lib/services/catalog";
 import { readPlanPricing } from "@/lib/tariffs";
 
 import type { ProposalContext } from "./content";
+import { equipmentFromRub } from "./design";
 import type { ProposalSender } from "./types";
 import { normalizeSender } from "./vars";
 
@@ -48,7 +50,7 @@ export async function loadProposalContext(now: Date = new Date()): Promise<Propo
   // (`tariffActive`), рассылка видит строку в логе.
   const pricing = await readPlanPricing();
   if (!pricing.available.standard.year) console.warn("[kp] standard_year tariff is inactive — offer shows its last price");
-  const [promotion, requisites, defaultSender] = await Promise.all([
+  const [promotion, requisites, defaultSender, ppkFromRub] = await Promise.all([
     readActivePromotion(now).catch((error) => {
       console.error("[kp] active promotion read failed", error);
       return null;
@@ -58,6 +60,7 @@ export async function loadProposalContext(now: Date = new Date()): Promise<Propo
       return null;
     }),
     readDefaultProposalSender(),
+    readPpkIndividualPrice(),
   ]);
   return {
     now,
@@ -68,5 +71,8 @@ export async function loadProposalContext(now: Date = new Date()): Promise<Propo
     requisites,
     invoiceReady: requisites ? invoiceRequisitesReady(requisites) : false,
     defaultSender,
+    rates: pricing.rates,
+    ppkFromRub,
+    equipmentFromRub: equipmentFromRub(),
   };
 }

@@ -24,7 +24,6 @@ import {
   renderJournalDocumentPdf,
   type JournalDocumentPdfInput,
 } from "@/lib/document-pdf";
-import { renderInvoicePdf } from "@/lib/invoices/pdf";
 import { SAMPLE_JOURNAL_CODES, SAMPLE_ORGANIZATION, buildJournalSampleInput } from "@/lib/journal-sample-fixtures";
 import { ORDER_TEMPLATES } from "@/lib/orders/catalog";
 import { renderOrderPdf } from "@/lib/orders/pdf";
@@ -226,7 +225,10 @@ const SELLER: PartySnapshot = {
 const BUYER: PartySnapshot = { name: "ООО «Ромашка»", inn: "7701234567", kpp: "770101001", ogrn: null, address: "г Москва", head: null };
 const LINES = [{ title: "Доступ к сервису WeSetup", unit: "усл. ед.", unitCode: "876", qty: 1, priceRub: 2990, sumRub: 2990 }];
 
-test("пакет проверяющего, приказы, счёт и УПД — без цвета", async () => {
+// Счёт на оплату с 2026-10-30 — в фирменном дизайне «WeSetup - КП и счета (новый
+// дизайн)» по просьбе владельца (тёмные карточки, индиго); его форма проверяется в
+// src/lib/invoices/pdf.test.ts. УПД, приказы и пакет проверяющего — по-прежнему без цвета.
+test("пакет проверяющего, приказы и УПД — без цвета", async () => {
   const period = { periodFrom: new Date("2026-09-01T00:00:00Z"), periodTo: new Date("2026-09-27T00:00:00Z") };
   const cover = buildRegulatorCoverPdf({
     organizationName: "ООО «Ромашка»",
@@ -254,11 +256,6 @@ test("пакет проверяющего, приказы, счёт и УПД �
   }
 
   const issuedAt = new Date("2026-09-20T09:00:00Z");
-  const invoice = renderInvoicePdf(
-    { number: "7", issuedAt, dueAt: issuedAt, seller: SELLER, buyer: BUYER, lines: LINES, totalRub: 2990, basis: "Оферта" },
-    { facsimile: null, stamp: null },
-  );
-  assert.deepEqual(await coloredOps(invoice), [], "счёт");
   const draft: ClosingDocumentDraft = {
     orderId: 7,
     number: "7",

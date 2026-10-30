@@ -100,6 +100,9 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/organizations/*", gate: "billing", methods: ["PATCH", "PUT"] },
   { pattern: "/api/root/organizations/*", gate: "superadmin", methods: ["DELETE"] },
   { pattern: "/api/root/organizations/*/balance", gate: "billing" },
+  // «Документы клиенту»: счёт — деньги, КП — продажи (договор — в разделе «Клиенты»).
+  { pattern: "/api/root/organizations/*/invoices", gate: "billing" },
+  { pattern: "/api/root/organizations/*/proposal", gate: "sales" },
 
   // Money.
   { pattern: "/root/tariffs", gate: "billing" },

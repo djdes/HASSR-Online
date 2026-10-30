@@ -30039,5 +30039,119 @@
     "errors": {
       "generic": "Something went wrong — please try again"
     }
+  },
+  "rootClientDocuments": {
+    "title": "Documents for the client",
+    "subtitle": "Agreement, commercial proposal and invoice in the WeSetup style. Emails go out from your mailbox.",
+    "cancel": "Cancel",
+    "download": "Download PDF",
+    "preparing": "Preparing…",
+    "noAccess": "Requires the «{section}» panel section",
+    "sections": {
+      "sales": "Sales",
+      "billing": "Payments and tariffs"
+    },
+    "contract": {
+      "title": "Agreement",
+      "none": "Not issued yet",
+      "status": "No. {number} of {date} · {status}",
+      "statuses": {
+        "issued": "issued",
+        "sent": "sent",
+        "voided": "voided"
+      },
+      "open": "Go to agreement"
+    },
+    "proposal": {
+      "title": "Commercial proposal",
+      "none": "Not sent yet",
+      "last": "Sent {date}",
+      "lastBy": "Sent {date} · {name}",
+      "action": "Send proposal",
+      "dialogTitle": "Proposal for {company}",
+      "dialogDescription": "One A4 page in the WeSetup style: tariff price, what is included, how to start and your signature. The email goes out with the PDF attached.",
+      "plan": "Tariff",
+      "plans": {
+        "standard": "Standard",
+        "premium": "Premium"
+      },
+      "addressee": "Addressee line under the title",
+      "addresseeHint": "In Russian dative case: we declined the director’s name automatically — please check.",
+      "greeting": "Greeting",
+      "extras": "«Additional» rows in the price table",
+      "extraPpk": "Production control programme",
+      "extraEquipment": "Temperature sensors with installation (Premium)",
+      "promo": "Promo code",
+      "promoNone": "No promo code",
+      "signedBy": "Signed by: {name}",
+      "signedHint": "Name, position and phone come from «My mailbox» or your profile.",
+      "confirm": "Send proposal",
+      "sending": "Sending…",
+      "sent": "Proposal sent: {emails}",
+      "failed": "Could not send the proposal",
+      "warnings": "Please note: {text}"
+    },
+    "invoice": {
+      "title": "Invoice",
+      "none": "No invoices yet",
+      "latest": "No. {number} · {amount} · {status}",
+      "statuses": {
+        "pending": "awaiting payment",
+        "paid": "paid",
+        "cancelled": "cancelled",
+        "failed": "failed",
+        "refunded": "refunded"
+      },
+      "action": "Issue invoice",
+      "send": "Send invoice",
+      "blockedRequisites": "Fill in the BFS LLC details — an invoice cannot be issued without them",
+      "blockedInn": "The client has no tax ID — an invoice cannot be issued",
+      "dialogTitle": "Invoice for {company}",
+      "dialogDescription": "The invoice appears in the client’s payments and in their account. The amount follows the tariff and the current subscription, as on the website.",
+      "plan": "Tariff",
+      "cycle": "Period",
+      "cycles": {
+        "month": "Month",
+        "year": "Year"
+      },
+      "points": "Locations",
+      "estimate": "Estimate: {amount}. The exact amount accounts for the client’s current subscription and discounts.",
+      "promo": "Promo code — optional",
+      "issue": "Issue invoice",
+      "issuing": "Issuing…",
+      "issued": "Invoice No. {number} for {amount} issued",
+      "existing": "This invoice already exists — No. {number} for {amount}",
+      "ready": "Invoice No. {number} for {amount} is ready. Download the PDF or send it to the client.",
+      "sendTitle": "Send invoice No. {number}",
+      "sendDescription": "The email goes out with the PDF attached — the invoice has a QR code for paying from a banking app.",
+      "sent": "Invoice sent: {emails}",
+      "failed": "Could not send the invoice"
+    },
+    "recipients": {
+      "label": "To",
+      "add": "Add",
+      "addPlaceholder": "Add an address and press Enter",
+      "invalid": "This does not look like an email address",
+      "empty": "No suitable addresses — add the client’s email manually.",
+      "sources": {
+        "owner": "owner",
+        "company": "company",
+        "accountant": "accountant",
+        "person": "employee",
+        "manual": "added"
+      }
+    },
+    "mail": {
+      "subject": "Subject",
+      "message": "Message",
+      "personalOn": "The email goes out from your mailbox",
+      "personalOff": "Your mailbox is not connected — the email goes out from the shared address, replies come to you",
+      "viaPersonal": "From your mailbox: {from}",
+      "viaSystem": "From the shared address noreply@wesetup.ru, replies come to you. Connect «My mailbox» to send from your own address.",
+      "viaSystemFallback": "Your mailbox failed ({reason}) — sent from the shared address, replies come to you."
+    },
+    "errors": {
+      "generic": "Something went wrong — please try again"
+    }
   }
 }

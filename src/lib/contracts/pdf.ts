@@ -5,7 +5,6 @@ import {
   brandSeller,
   createBrandPdf,
   decoratePages,
-  eyebrow,
   lineHeight,
   measurePartyRows,
   partyRows,
@@ -43,30 +42,19 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
   const width = BRAND_PAGE.contentW;
   const brand = brandSeller(seller);
 
-  // ── шапка документа
-  eyebrow(pdf, document.title, x, flow.y + 2.6);
-  setText(pdf, { size: 7, color: C.faint });
-  doc.text(`Редакция ${document.templateVersion}`, x + width, flow.y + 2.6, { align: "right" });
-  flow.gap(6.4);
-
-  setText(pdf, { size: 17, weight: "semibold", color: C.ink });
-  const titleLines = doc.splitTextToSize(`${document.title} №${NBSP}${document.number}`, width) as string[];
-  titleLines.forEach((line) => {
-    doc.text(line, x, flow.y + lineHeight(17, 1.15) * 0.8);
-    flow.gap(lineHeight(17, 1.15));
-  });
+  // ── шапка документа — как в договоре образца 2026-10-30: заголовок по центру,
+  // под ним предмет, ниже город и дата по краям.
+  const cx = x + width / 2;
+  setText(pdf, { size: 16, weight: "semibold", color: C.ink });
+  doc.text(`ДОГОВОР №${NBSP}${document.number}`, cx, flow.y + 6, { align: "center" });
+  flow.gap(9.6);
+  setText(pdf, { size: 12, color: C.ink });
+  doc.text("на оказание услуг по предоставлению доступа к сервису WeSetup", cx, flow.y + 3.6, { align: "center" });
+  flow.gap(10);
   setText(pdf, { size: 9.5, color: C.muted });
-  doc.text("на доступ к сервису электронных журналов WeSetup и сопутствующие услуги", x, flow.y + 3.4);
-  flow.gap(7.6);
-
-  setText(pdf, { size: 9.5, color: C.ink2 });
   doc.text(document.city, x, flow.y + 3.4);
   doc.text(document.dateLong, x + width, flow.y + 3.4, { align: "right" });
-  flow.gap(5.6);
-  doc.setDrawColor(...C.indigo);
-  doc.setLineWidth(0.6);
-  doc.line(x, flow.y, x + width, flow.y);
-  flow.gap(4.2);
+  flow.gap(8);
 
   const notice = document.voided
     ? { label: "АННУЛИРОВАН — договор недействителен", bg: VOID_BG, fg: VOID_FG }
@@ -82,16 +70,6 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
     flow.gap(9);
   }
 
-  flow.y = partyRows(pdf, {
-    y: flow.y,
-    labelWidth: 30,
-    rows: [
-      { label: "Исполнитель", value: requisitesLine(document.requisites.seller), strong: false },
-      { label: "Заказчик", value: requisitesLine(document.requisites.buyer), strong: false },
-    ],
-  });
-  flow.gap(4.4);
-
   flow.paragraph(document.preamble, { size: BODY, after: 1.6 });
 
   // ── разделы
@@ -100,7 +78,7 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
     if (section === last) break;
     flow.ensure(lineHeight(12, 1.25) + 4 + lineHeight(BODY, 1.42) * 2);
     flow.gap(3.6);
-    sectionTitle(pdf, x, flow.y + 4.2, { num: section.num, title: section.title });
+    sectionTitle(pdf, x, flow.y + 4.2, { title: `${section.num}. ${section.title}` });
     flow.gap(lineHeight(12, 1.25) + 2.4);
     for (const block of section.blocks) {
       if (block.kind === "clause") flow.paragraph(block.text, { size: BODY, lead: block.num });
@@ -119,7 +97,7 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
   const signatureH = 34;
   flow.ensure(lineHeight(12, 1.25) + 6 + 9 + rowsH + signatureH);
   flow.gap(3.6);
-  sectionTitle(pdf, x, flow.y + 4.2, { num: last.num, title: last.title });
+  sectionTitle(pdf, x, flow.y + 4.2, { title: `${last.num}. ${last.title}` });
   flow.gap(lineHeight(12, 1.25) + 3);
 
   const top = flow.y;
@@ -149,21 +127,11 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
     });
   }
 
+  // «страница N из M» — в подвале, как в образце; над подвалом — только отметка аннулирования.
   const pages = decoratePages(pdf, brand, {
-    pageLabel: (page, total) => `${document.voided ? "АННУЛИРОВАН  ·  " : ""}${document.runningTitle}  ·  Стр.${NBSP}${page} из ${total}`,
-    footnoteLeft: () => "Исполнитель ____________     Заказчик ____________",
+    pageInFooter: true,
+    pageLabel: document.voided ? () => `АННУЛИРОВАН  ·  ${document.runningTitle}` : null,
   });
 
   return { bytes: Buffer.from(doc.output("arraybuffer")), pages };
-}
-
-/** «Общество …, ИНН 5018215599, КПП 501801001» — строка стороны в сводке над преамбулой. */
-function requisitesLine(rows: ContractDocument["requisites"]["seller"]): string {
-  const name = rows.find((row) => row.label === "Наименование")?.value ?? "";
-  const ids = rows.find((row) => row.label.startsWith("ИНН"));
-  if (!ids) return name;
-  const labels = ids.label.split(" / ");
-  const values = ids.value.split(" / ");
-  const parts = labels.map((label, index) => `${label}${NBSP}${values[index] ?? ""}`);
-  return [name, ...parts].join(", ");
 }

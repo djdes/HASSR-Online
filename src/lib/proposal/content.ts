@@ -3,7 +3,7 @@ import { ACTIVE_JOURNAL_CATALOG, JOURNALS_TOTAL_LABEL } from "@/lib/journal-cata
 import type { OrgSphere } from "@/lib/org-profile";
 import { FREE_AFTER_TRIAL_LABEL, PAID_SEATS_LABEL, PREMIUM_SEATS_LABEL } from "@/lib/plan-catalog";
 import { pluralRu } from "@/lib/plural-ru";
-import { TRIAL_DAYS } from "@/lib/tariff-plans";
+import { TRIAL_DAYS, type PlanRates } from "@/lib/tariff-plans";
 import { promotionEndLabel, type AppliedPromotion } from "@/lib/promo/promotions";
 import { rulesFor, type RuleBasis } from "@/lib/sphere-journal-rules";
 
@@ -11,6 +11,7 @@ import { displayUrl, proposalCta, type ProposalCtaKind } from "./cta";
 import { computeProposalPrice, formatProposalRub, type ProposalPrice } from "./price";
 import { proposalAlsoPhone, proposalSphereCopy, proposalSteps, type ProposalStep } from "./spheres";
 import type { ProposalSender, ProposalVars } from "./types";
+import { buildProposalDesign, type ProposalDesign } from "./design";
 import { normalizeProposalVars } from "./vars";
 
 /**
@@ -47,6 +48,12 @@ export type ProposalContext = {
   invoiceReady: boolean;
   /** Отправитель по умолчанию (`PlatformSetting` `proposal.sender`). */
   defaultSender: ProposalSender | null;
+  /** Цены тарифов за месяц (помесячно и за год) — таблица стоимости листа КП. */
+  rates?: PlanRates;
+  /** «ППК под ваше заведение — от …», ₽ (`readPpkIndividualPrice`). */
+  ppkFromRub?: number;
+  /** «Датчики температуры с установкой — от …», ₽ (самый дешёвый пакет оборудования). */
+  equipmentFromRub?: number;
 };
 
 export type ProposalJournalItem = {
@@ -130,6 +137,8 @@ export type ProposalContent = {
   requisites: string[] | null;
   site: string;
   price: ProposalPrice;
+  /** Лист КП в дизайне 2026-10-30 (PDF). Письмо и веб-версия — на полях выше. */
+  design: ProposalDesign;
   subject: string;
   preheader: string;
 };
@@ -429,6 +438,23 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
     requisites: requisitesLines(ctx.requisites),
     site: "wesetup.ru",
     price,
+    design: buildProposalDesign({
+      vars,
+      now: ctx.now,
+      dateLabel: proposalDateLabel(ctx.now),
+      requisites: ctx.requisites,
+      rates: ctx.rates,
+      ppkFromRub: ctx.ppkFromRub,
+      equipmentFromRub: ctx.equipmentFromRub,
+      promotion: ctx.promotion,
+      invoiceReady: ctx.invoiceReady,
+      sellerShort: (ctx.requisites?.nameShort || ctx.requisites?.nameFull || "").trim(),
+      sellerPhone: ctx.requisites?.phone?.trim() || null,
+      sellerEmail: ctx.requisites?.email?.trim() || null,
+      sender: senderData,
+      ctaUrl: cta.url,
+      promoCode: price.promo?.code ?? null,
+    }),
     subject,
     preheader,
   };

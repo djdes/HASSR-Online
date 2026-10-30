@@ -22,6 +22,8 @@ export type ProposalPromo = {
 
 export type ProposalSender = {
   name: string;
+  /** Должность — строка под именем в подписи КП: «Менеджер по работе с клиентами». */
+  position?: string | null;
   phone?: string | null;
   email?: string | null;
   /** «@username», «username» или ссылка t.me. */
@@ -41,7 +43,21 @@ export type ProposalVars = {
   ctaUrl?: string | null;
   /** Нет — отправитель по умолчанию из настройки ROOT (`PlatformSetting` `proposal.sender`). */
   sender?: ProposalSender | null;
+  /** Тариф в таблице стоимости; по умолчанию «Стандарт». */
+  plan?: ProposalPlan | null;
+  /** Строка адресата в дательном падеже: «Генеральному директору Куликовой Виктории Викторовне». */
+  addressee?: string | null;
+  /** Приветствие: «Уважаемая Виктория Викторовна!»; нет — по `recipientName` или «Добрый день!». */
+  greeting?: string | null;
+  /** Строки «Дополнительно» в таблице стоимости; по умолчанию все включены. */
+  extras?: ProposalExtras | null;
 };
+
+/** Тариф в КП. */
+export type ProposalPlan = "standard" | "premium";
+
+/** «Дополнительно» в таблице стоимости: ППК под заведение и датчики с установкой («Премиум»). */
+export type ProposalExtras = { ppk?: boolean; equipment?: boolean };
 
 export type ProposalEmailOptions = {
   /** Ссылка «Открыть в браузере». Не передан — своя подписанная ссылка; null — без ссылки. */
