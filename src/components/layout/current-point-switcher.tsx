@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MENU_ITEM_ACTIVE_CLASS } from "@/components/ui/menu-styles";
+import { ScrollList } from "@/components/ui/scroll-list";
 import { LocationSwitcherList, useSwitchBuilding } from "@/components/layout/location-switcher";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
@@ -175,6 +176,9 @@ export function CurrentPointSwitcher({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-[300px]">
+        {/* Много точек — список ограничен по высоте, справа полоса прокрутки;
+            «Управление точками» под ним всегда на виду. */}
+        <ScrollList maxHeightClassName="max-h-[min(360px,55vh)]">
         {options.map((option, index) => {
           const isActive = option.id === active.id;
           const building = buildingOf(option);
@@ -189,6 +193,7 @@ export function CurrentPointSwitcher({
               }}
               className={cn("items-start", isActive && MENU_ITEM_ACTIVE_CLASS)}
               data-point-option={option.id}
+              data-active-option={isActive ? "" : undefined}
             >
               <Icon className={cn("mt-0.5 size-4", isActive ? "text-[#3848c7]" : "text-[#9b9fb3]")} />
               <span className="min-w-0 flex-1">
@@ -203,6 +208,7 @@ export function CurrentPointSwitcher({
             </Fragment>
           );
         })}
+        </ScrollList>
         {manageHref ? (
           <>
             <DropdownMenuSeparator />

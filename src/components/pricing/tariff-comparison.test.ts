@@ -45,7 +45,6 @@ test("public pricing renders three columns, points, PPK and the comparison table
         rates: DEFAULT_PLAN_RATES,
         available,
         promotion: null,
-        ppkFromRub: 10_000,
         ppkHref: "/uslugi",
         showTable: true,
       })
@@ -61,7 +60,14 @@ test("public pricing renders three columns, points, PPK and the comparison table
     assert.ok(html.includes(formatNumber(locale, 3990)), `${locale}: premium yearly price`);
     assert.ok(html.includes(t("price.perPointMonth")), `${locale}: per point suffix`);
     assert.ok(html.includes(t("price.yearTotal", { amount: `${formatNumber(locale, 23_880)}\u00a0₽` })), `${locale}: year total`);
-    assert.ok(html.includes(t("ppk.price", { price: `${formatNumber(locale, 10_000)}\u00a0₽` })), `${locale}: PPK price`);
+    // ППК индивидуально — без цены: «Свяжитесь с нами» и «по запросу» в таблице (2026-10-29).
+    const contact = createTranslator({ locale, messages, namespace: "sharedUi.contactUs" });
+    const ppkBlock = html.slice(html.indexOf('data-testid="tariff-ppk"'), html.indexOf('data-testid="tariff-table"'));
+    assert.ok(ppkBlock.includes('data-testid="tariff-ppk-contact"'), `${locale}: PPK contact button`);
+    assert.ok(ppkBlock.includes(contact("cta")), `${locale}: PPK contact label`);
+    assert.doesNotMatch(visibleText(ppkBlock), /₽|\d[\d\s\u00a0\u202f.,]*000/u, `${locale}: PPK price leaked`);
+    assert.ok(html.includes(t("cells.ppkOnRequest")), `${locale}: PPK table cell`);
+    assert.equal(html.match(/data-contact-us-trigger/g)?.length, 4, `${locale}: PPK block + three table cells`);
     assert.ok(html.includes("/order?plan=standard&amp;cycle=year&amp;points=1"), `${locale}: order link`);
     if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
   }
@@ -90,7 +96,6 @@ test("cabinet pricing shows the change kind and the server-equal surcharge for a
         rates: DEFAULT_PLAN_RATES,
         available,
         promotion: null,
-        ppkFromRub: 10_000,
         ppkHref: "/settings/services?order=ppk-development",
         cabinet,
         showTable: false,
@@ -130,7 +135,6 @@ test("cabinet buttons show the amount after an active promotion, as the order pa
       rates: DEFAULT_PLAN_RATES,
       available,
       promotion,
-      ppkFromRub: 10_000,
       ppkHref: "/settings/services?order=ppk-development",
       cabinet,
       showTable: false,
@@ -167,7 +171,6 @@ test("a monthly subscriber with 14 points opens on «per year»: price per point
         rates: DEFAULT_PLAN_RATES,
         available,
         promotion: null,
-        ppkFromRub: 10_000,
         ppkHref: "/settings/services",
         cabinet,
         showTable: false,
@@ -217,7 +220,6 @@ test("trial cabinet offers new subscriptions at full price and marks the trial",
       rates: DEFAULT_PLAN_RATES,
       available,
       promotion: null,
-      ppkFromRub: 10_000,
       ppkHref: "/settings/services?order=ppk-development",
       cabinet,
       showTable: false,
@@ -241,7 +243,6 @@ test("v2 layout: period switch, centered points with explanation, Premium 100 se
         rates: DEFAULT_PLAN_RATES,
         available,
         promotion: null,
-        ppkFromRub: 10_000,
         ppkHref: "/uslugi",
         showTable: true,
       })
@@ -292,7 +293,6 @@ test("cabinet: a card that the headcount outgrows suggests the next plan, paymen
     rates: DEFAULT_PLAN_RATES,
     available,
     promotion: null,
-    ppkFromRub: 10_000,
     ppkHref: "/settings/services",
     cabinet: { ...base, activeUsers },
     showTable: false,

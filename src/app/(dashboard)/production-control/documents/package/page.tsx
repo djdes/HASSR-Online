@@ -9,7 +9,6 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasFeature } from "@/lib/billing-period";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { groupedOrderTemplates, ORDER_TEMPLATES } from "@/lib/orders/catalog";
-import { readPpkIndividualPrice } from "@/lib/services/catalog";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { PpkFolder } from "@/components/production-control/ppk-folder";
 import { PpkIndividualOrder } from "@/components/production-control/ppk-individual-order";
@@ -29,13 +28,12 @@ export default async function Page() {
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const canManage = hasCapability(session.user, "admin.full");
-  const [t, loaded, ppkFromRub] = await Promise.all([
+  const [t, loaded] = await Promise.all([
     getTranslations("productionControl"),
     loadAccountBilling(organizationId).catch((error) => {
       console.error("[ppk] package: billing load failed", error);
       return null;
     }),
-    readPpkIndividualPrice(),
   ]);
   const typical = hasFeature(loaded?.state, "typicalPackage");
   const uploadsClosed = loaded?.state.entitlements.storageBytes === 0;
@@ -122,7 +120,7 @@ export default async function Page() {
         <PpkFolder folder="package" canManage={canManage && !uploadsClosed} />
       </section>
 
-      <PpkIndividualOrder priceRub={ppkFromRub} />
+      <PpkIndividualOrder />
     </div>
   );
 }

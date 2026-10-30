@@ -1,9 +1,9 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
-import { getBalance } from "@/lib/balance/ledger";
 import { PageHeader } from "@/components/ui/page-header";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { groupServices, readActiveServices } from "@/lib/services/catalog";
 import { ServicesCatalog } from "./services-catalog";
 
@@ -18,9 +18,9 @@ export async function generateMetadata() {
  * Каталог платных услуг в кабинете.
  *
  * Отдельно от «Подписки»: подписка — за сам сервис, а здесь работа
- * живого специалиста, которую нельзя автоматизировать. Заказ уходит
- * заявкой владельцу; фиксированную цену можно закрыть баллами, которые
- * организация уже накопила за приглашения и отзывы.
+ * живого специалиста, которую нельзя автоматизировать. Цен на странице нет
+ * (владелец, 2026-10-29): вместо них «Свяжитесь с нами» с крупными
+ * контактами, заказ уходит владельцу заявкой без оплаты.
  */
 export default async function ServicesPage({
   searchParams,
@@ -28,15 +28,13 @@ export default async function ServicesPage({
   searchParams: Promise<{ order?: string | string[] }>;
 }) {
   const t = await getTranslations("settingsUi.servicesPage");
-  const locale = await getLocale();
   const session = await requireAuth();
   const { order } = await searchParams;
   const organizationId = getActiveOrgId(session);
   const canOrder = hasFullWorkspaceAccess(session.user);
 
-  const [services, balanceRub, org, user] = await Promise.all([
+  const [services, org, user] = await Promise.all([
     readActiveServices(),
-    getBalance(organizationId),
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, phone: true },
@@ -51,22 +49,12 @@ export default async function ServicesPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={t("title")}
-        description={t("description")}
-        actions={
-          canOrder ? (
-            <span className="inline-flex h-10 items-center rounded-2xl bg-[#f5f6ff] px-3.5 text-[13px] font-medium tabular-nums text-[#3848c7]">
-              {t("balancePoints", { amount: balanceRub.toLocaleString(locale) })}
-            </span>
-          ) : null
-        }
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <ServicesCatalog
         groups={groupServices(services)}
-        balanceRub={balanceRub}
         canOrder={canOrder}
+        telegramUrl={contactTelegramUrl(process.env)}
         initialServiceKey={typeof order === "string" ? order : null}
         contact={{
           name: user?.name ?? "",

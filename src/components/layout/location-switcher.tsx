@@ -6,11 +6,13 @@ import { toast } from "sonner";
 import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { ScrollList } from "@/components/ui/scroll-list";
 
 /**
- * Точки (2026-09-05): переключение активной точки. С 2026-10-16 —
- * из центра шапки (`current-point-switcher.tsx`) и из мобильного меню;
- * здесь хук переключения и список точек для листа на телефоне.
+ * Точки (2026-09-05): переключение активной точки. С 2026-10-16 — из центра
+ * шапки (`current-point-switcher.tsx`); с 2026-10-30 и на телефоне только
+ * оттуда, без дубля в меню (как на ПК). Здесь хук переключения и список
+ * точек для листа на телефоне.
  *
  * Страницы остаются одно-точечными: журналы, «сегодня» и пул задач
  * показываются для выбранной точки, а не сводятся в один экран. Список
@@ -53,7 +55,12 @@ export function useSwitchBuilding() {
   return { switchTo, busyId: pendingTag };
 }
 
-/** Тот же список плоскими кнопками — для мобильного меню-шторки. */
+/**
+ * Тот же список плоскими кнопками — для листа «Точки» на телефоне. Подписи
+ * «Точки» нет: она уже в заголовке листа. Высота ограничена, справа полоса
+ * прокрутки (`ScrollList`), чтобы «Управление точками» под списком было на
+ * виду и при двадцати точках.
+ */
 export function LocationSwitcherList({
   buildings,
   activeBuildingId,
@@ -61,22 +68,23 @@ export function LocationSwitcherList({
   buildings: BuildingOption[];
   activeBuildingId: string | null;
 }) {
-  const t = useTranslations("navigation.shell.point");
   const { switchTo, busyId } = useSwitchBuilding();
   if (buildings.length < 2) return null;
   const activeId = activeBuildingId ?? buildings[0]?.id ?? null;
 
   return (
-    <div className="mb-1 border-b border-[#ececf4] pb-2">
-      <div className="px-3 pb-1 pt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#9b9fb3]">
-        {t("list")}
-      </div>
+    <ScrollList
+      maxHeightClassName="max-h-[min(52vh,440px)] supports-[height:100dvh]:max-h-[min(52dvh,440px)]"
+      className="mb-1 border-b border-[#ececf4] pb-2"
+    >
       {buildings.map((building) => {
         const isActive = building.id === activeId;
         return (
           <button
             key={building.id}
             type="button"
+            data-location-option={building.id}
+            data-active-option={isActive ? "" : undefined}
             onClick={() => void switchTo(building, activeId)}
             className={cn(
               "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium transition-colors",
@@ -95,6 +103,6 @@ export function LocationSwitcherList({
           </button>
         );
       })}
-    </div>
+    </ScrollList>
   );
 }

@@ -111,12 +111,3 @@ export async function readService(key: string): Promise<PlatformServiceItem | nu
   return all.find((item) => item.key === key && item.active) ?? null;
 }
 
-/** Цена «от» для кнопки «Заказать индивидуально» в ППК и витрине тарифов. */
-export async function readPpkIndividualPrice(): Promise<number> {
-  const service = await readService(PPK_SERVICE_KEY).catch((error) => {
-    console.error("[services] ppk price read failed — default", error);
-    return null;
-  });
-  return service?.priceRub ?? PPK_INDIVIDUAL_FROM_RUB;
-}
-

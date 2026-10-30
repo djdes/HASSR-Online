@@ -1,0 +1,58 @@
+{
+  "task_id": "menu-points-cards-2026-10",
+  "spec": "spec.md",
+  "date": "2026-10-30",
+  "acceptance": {
+    "AC1": {
+      "verdict": "PASS",
+      "evidence": ["src/components/ui/scroll-list.tsx", "src/components/layout/current-point-switcher.tsx", "raw/before-points-pc.png", "raw/after-points-pc.png", "raw/kb-check.cjs"],
+      "measurements": {
+        "before": { "options": 14, "menuRect": [64, 807], "scrollbar": null },
+        "after": { "options": 14, "listHeight": 360, "listScrollHeight": 683, "scrollbarWidth": 12, "manageRect": [444, 477], "activeRow": { "rowRight": 979, "barLeft": 979, "labelTruncated": true, "checkRight": 967 } },
+        "keyboard": "ArrowDown moves focus and scrolls the list; Home/End work"
+      }
+    },
+    "AC2": {
+      "verdict": "PASS",
+      "evidence": ["src/components/layout/location-switcher.tsx", "raw/before-points-phone.png", "raw/after-points-phone.png"],
+      "measurements": {
+        "before": { "manageRect": [909, 957], "viewportHeight": 844, "duplicateCaption": 1 },
+        "after": { "listHeight": 439, "listScrollHeight": 672, "scrollbarWidth": 12, "manageRect": [787, 835], "duplicateCaption": 0 }
+      }
+    },
+    "AC3": {
+      "verdict": "PASS",
+      "evidence": ["src/components/layout/mobile-nav-sheet.tsx", "src/components/layout/header.tsx", "raw/before-burger-phone.png", "raw/after-burger-phone.png"],
+      "measurements": { "pointsInMenuBefore": 13, "pointsInMenuAfter": 0 }
+    },
+    "AC4": {
+      "verdict": "PASS",
+      "evidence": ["src/components/layout/mobile-nav-sheet.tsx", "raw/after-burger-phone-bottom.png"],
+      "measurements": { "logoutInsideMenuBefore": false, "logoutInsideMenuAfter": true }
+    },
+    "AC5": {
+      "verdict": "PASS",
+      "evidence": ["src/components/journals/journal-responsive.ts", "src/components/journals/journal-responsive.test.ts", "raw/after-docs-phone-light-cards.png", "raw/after-docs-pc-light.png", "raw/after-docs-pc-dark.png"],
+      "measurements": {
+        "borderBefore": "rgb(236, 236, 244)",
+        "borderAfter": "rgb(220, 223, 237)",
+        "accentAfter": "rgb(85, 102, 246)",
+        "responsiveTests": "14/14"
+      }
+    },
+    "AC6": {
+      "verdict": "PASS",
+      "commands": {
+        "npm run typecheck": "exit 0",
+        "npm run test:gate": "pass=5108, fail=0",
+        "npx eslint (6 changed/new TS files)": "exit 0"
+      }
+    },
+    "AC7": {
+      "verdict": "PASS",
+      "evidence": ["raw/screenshots.txt", "raw/fixes.cjs"],
+      "screenshots": 18
+    }
+  },
+  "deploy_changes": "UI only. Not merged: the owner asked not to publish to production this time."
+}
