@@ -1827,51 +1827,55 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-
   background-color: var(--tone);
   animation: nav-bar-grow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-/* «Вы здесь» над меню раздела (2026-10-29): путь от главного меню к
-   разделу ступеньками — слева линия с точками, как маршрут; точка текущего
-   раздела — его цвета. Ступени — `li[data-place-step]` одной колонкой без
-   зазоров, чтобы линия шла сплошной. */
+/* «Стопка уровней» — меню раздела (вариант 5 макета, 2026-10-30):
+   родители — вкладки, выглядывающие из-под карточки текущего раздела
+   (`SectionStack`). Фон вкладок и карточки непрозрачный — тон раздела
+   поверх `--app-surface`: в тёмной теме полупрозрачные вкладки иначе
+   просвечивали бы друг через друга там, где заходят одна на другую.
+   «Главное меню» — серая вкладка своих цветов. */
 :root,
 .app-shell {
-  --place-line: #d3d7e8;
+  --place-tab-root: #f2f3f8;
+  --place-tab-border: #dcdfed;
 }
 .app-shell[data-app-theme="dark"],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
-  --place-line: rgba(255, 255, 255, 0.24);
+  --place-tab-root: rgba(255, 255, 255, 0.07);
+  --place-tab-border: rgba(255, 255, 255, 0.16);
 }
-[data-place-step] {
-  position: relative;
-}
-[data-place-step]::before {
-  content: "";
-  position: absolute;
-  left: 11px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  border-radius: 1px;
-  background-color: var(--place-line);
-}
-[data-place-step]:first-child::before {
-  top: 50%;
-}
-[data-place-step]:last-child::before {
-  bottom: 50%;
-}
-[data-place-step]::after {
-  content: "";
-  position: absolute;
-  left: 7px;
-  top: calc(50% - 5px);
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+[data-place-tab] > :is(a, button) {
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+  border-bottom-width: 0;
   background-color: var(--app-surface, #fff);
-  box-shadow: inset 0 0 0 2px var(--place-line);
+  background-image: linear-gradient(var(--tone-row), var(--tone-row));
+  color: var(--tone-ink);
 }
-[data-place-step][data-current]::after {
-  background-color: var(--tone);
-  box-shadow: 0 0 0 3px var(--tone-glow);
+[data-place-tab="root"] > :is(a, button) {
+  border-color: var(--place-tab-border);
+  background-image: linear-gradient(var(--place-tab-root), var(--place-tab-root));
+  color: var(--app-text-secondary, #3c4053);
+}
+[data-place-tab] > :is(a, button):hover {
+  background-image:
+    linear-gradient(rgb(11 16 36 / 0.04), rgb(11 16 36 / 0.04)),
+    linear-gradient(var(--tone-row), var(--tone-row));
+}
+[data-place-tab="root"] > :is(a, button):hover {
+  background-image:
+    linear-gradient(rgb(11 16 36 / 0.04), rgb(11 16 36 / 0.04)),
+    linear-gradient(var(--place-tab-root), var(--place-tab-root));
+}
+[data-place-card] {
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+  background-color: var(--app-surface, #fff);
+  box-shadow:
+    0 -6px 16px -12px rgb(11 16 36 / 0.28),
+    0 12px 24px -18px var(--tone-glow);
+}
+/* Полоска выбранного пункта — по внутреннему краю карточки, а не в 12 px
+   левее строки (там край сайдбара). */
+[data-place-card] [data-nav-row][data-nav-bar][data-active]::before {
+  left: -6px;
 }
 
 /* Вход в меню раздела: пункты появляются каскадом (`--nav-i` — номер).

@@ -1,0 +1,326 @@
+Локальные скриншоты (PNG не коммитятся: .gitignore → .agent/**/*.png). Playwright Chromium, next dev, демо-владелец.
+Сайдбар 1440×900 (обрезка 256 px), телефон 390×844, DPR 2. Сценарий — stack.cjs (BASE=http://localhost:3100).
+
+- jump-company-light.png
+- level1-company-dark.png
+- level1-company-light.png
+- level2-points-dark.png
+- level2-points-light.png
+- level3-journals-dark.png
+- level3-journals-light.png
+- sheet-mini-company.png
+- sheet-mini-level3.png
+- sheet-site-company.png
+- sheet-site-level3.png
+
+Замеры (dev):
+{
+ "level1-company-light": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 215,
+    "top": 191,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(242, 243, 248), rgb(242, 243, 248))",
+    "color": "rgb(60, 64, 83)"
+   }
+  ],
+  "card": {
+   "width": 231,
+   "top": 222,
+   "border": "color(srgb 0.333333 0.4 0.964706 / 0.3)",
+   "bg": "rgb(255, 255, 255)",
+   "tone": "indigo",
+   "head": "Моя компания"
+  },
+  "backButtons": 0
+ },
+ "level2-points-light": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 199,
+    "top": 191,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(242, 243, 248), rgb(242, 243, 248))",
+    "color": "rgb(60, 64, 83)"
+   },
+   {
+    "label": "Моя компания",
+    "width": 215,
+    "top": 222,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(240, 241, 254), rgb(240, 241, 254))",
+    "color": "rgb(56, 72, 199)"
+   }
+  ],
+  "card": {
+   "width": 231,
+   "top": 255,
+   "border": "color(srgb 0.862745 0.352941 0.0705882 / 0.3)",
+   "bg": "rgb(255, 255, 255)",
+   "tone": "orange",
+   "head": "Торговые точки"
+  },
+  "backButtons": 0
+ },
+ "level3-journals-light": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 183,
+    "top": 191,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(242, 243, 248), rgb(242, 243, 248))",
+    "color": "rgb(60, 64, 83)"
+   },
+   {
+    "label": "Моя компания",
+    "width": 199,
+    "top": 222,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(240, 241, 254), rgb(240, 241, 254))",
+    "color": "rgb(56, 72, 199)"
+   },
+   {
+    "label": "Торговые точки",
+    "width": 215,
+    "top": 255,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(252, 240, 234), rgb(252, 240, 234))",
+    "color": "rgb(184, 72, 12)"
+   }
+  ],
+  "card": {
+   "width": 231,
+   "top": 288,
+   "border": "color(srgb 0.333333 0.4 0.964706 / 0.3)",
+   "bg": "rgb(255, 255, 255)",
+   "tone": "indigo",
+   "head": "Журналы"
+  },
+  "backButtons": 0
+ },
+ "jumpToCompany": {
+  "url": "/dashboard",
+  "focus": "points"
+ },
+ "jumpToMain": {
+  "url": "/home",
+  "focus": "company"
+ },
+ "level1-company-dark": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 215,
+    "top": 191,
+    "bg": "rgb(58, 55, 87)",
+    "img": "linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 25",
+    "color": "rgb(204, 206, 224)"
+   }
+  ],
+  "card": {
+   "width": 231,
+   "top": 222,
+   "border": "color(srgb 0.639216 0.678431 1 / 0.3)",
+   "bg": "rgb(58, 55, 87)",
+   "tone": "indigo",
+   "head": "Моя компания"
+  },
+  "backButtons": 0
+ },
+ "level2-points-dark": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 199,
+    "top": 191,
+    "bg": "rgb(58, 55, 87)",
+    "img": "linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 25",
+    "color": "rgb(204, 206, 224)"
+   },
+   {
+    "label": "Моя компания",
+    "width": 215,
+    "top": 222,
+    "bg": "rgb(58, 55, 87)",
+    "img": "linear-gradient(rgba(163, 173, 255, 0.13), rgba(163, 173, 25",
+    "color": "rgb(201, 206, 255)"
+   }
+  ],
+  "card": {
+   "width": 231,
+   "top": 255,
+   "border": "color(srgb 0.933333 0.682353 0.52549 / 0.3)",
+   "bg": "rgb(58, 55, 87)",
+   "tone": "orange",
+   "head": "Торговые точки"
+  },
+  "backButtons": 0
+ },
+ "level3-journals-dark": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 183,
+    "top": 191,
+    "bg": "rgb(58, 55, 87)",
+    "img": "linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 25",
+    "color": "rgb(204, 206, 224)"
+   },
+   {
+    "label": "Моя компания",
+    "width": 199,
+    "top": 222,
+    "bg": "rgb(58, 55, 87)",
+    "img": "linear-gradient(rgba(163, 173, 255, 0.13), rgba(163, 173, 25",
+    "color": "rgb(201, 206, 255)"
+   },
+   {
+    "label": "Торговые точки",
+    "width": 215,
+    "top": 255,
+    "bg": "rgb(58, 55, 87)",
+    "img": "linear-gradient(rgba(238, 174, 134, 0.12), rgba(238, 174, 13",
+    "color": "rgb(246, 205, 179)"
+   }
+  ],
+  "card": {
+   "width": 231,
+   "top": 288,
+   "border": "color(srgb 0.639216 0.678431 1 / 0.3)",
+   "bg": "rgb(58, 55, 87)",
+   "tone": "indigo",
+   "head": "Журналы"
+  },
+  "backButtons": 0
+ },
+ "cascade-no-preference": [
+  "Главное меню | nav-row-rise 0s",
+  "Моя компания | nav-row-rise 0.028s",
+  "Торговые точки | nav-row-rise 0.056s",
+  "Журналы | nav-row-rise 0.084s",
+  "Сегодня | nav-row-rise 0.112s",
+  "Проверка записей | nav-row-rise 0.14s",
+  "Настройка журналов | nav-row-rise 0.168s"
+ ],
+ "cascade-reduce": [
+  "Главное меню | none 0s",
+  "Моя компания | none 0s",
+  "Торговые точки | none 0s",
+  "Журналы | none 0s",
+  "Сегодня | none 0s",
+  "Проверка записей | none 0s",
+  "Настройка журналов | none 0s"
+ ],
+ "sheet-site": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 316,
+    "top": 360,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(242, 243, 248), rgb(242, 243, 248))",
+    "color": "rgb(60, 64, 83)"
+   },
+   {
+    "label": "Моя компания",
+    "width": 332,
+    "top": 398,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(240, 241, 254), rgb(240, 241, 254))",
+    "color": "rgb(56, 72, 199)"
+   },
+   {
+    "label": "Торговые точки",
+    "width": 348,
+    "top": 437,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(252, 240, 234), rgb(252, 240, 234))",
+    "color": "rgb(184, 72, 12)"
+   }
+  ],
+  "card": {
+   "width": 364,
+   "top": 476,
+   "border": "color(srgb 0.333333 0.4 0.964706 / 0.3)",
+   "bg": "rgb(255, 255, 255)",
+   "tone": "indigo",
+   "head": "Журналы"
+  },
+  "backButtons": 0
+ },
+ "sheet-site-afterCompany": {
+  "url": "/journals",
+  "tabs": [
+   "Главное меню"
+  ],
+  "head": "Моя компания",
+  "focus": "Торговые точки"
+ },
+ "sheet-site-openPoints": {
+  "head": "Торговые точки",
+  "focus": "Моя компания",
+  "focusIsTab": true
+ },
+ "sheet-site-afterRoot": {
+  "place": false,
+  "focus": "Моя компания"
+ },
+ "sheet-mini": {
+  "tabs": [
+   {
+    "label": "Главное меню",
+    "width": 316,
+    "top": 327,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(242, 243, 248), rgb(242, 243, 248))",
+    "color": "rgb(60, 64, 83)"
+   },
+   {
+    "label": "Моя компания",
+    "width": 332,
+    "top": 362,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(240, 241, 254), rgb(240, 241, 254))",
+    "color": "rgb(56, 72, 199)"
+   },
+   {
+    "label": "Торговые точки",
+    "width": 348,
+    "top": 399,
+    "bg": "rgb(255, 255, 255)",
+    "img": "linear-gradient(rgb(252, 240, 234), rgb(252, 240, 234))",
+    "color": "rgb(184, 72, 12)"
+   }
+  ],
+  "card": {
+   "width": 364,
+   "top": 436,
+   "border": "color(srgb 0.333333 0.4 0.964706 / 0.3)",
+   "bg": "rgb(255, 255, 255)",
+   "tone": "indigo",
+   "head": "Журналы"
+  },
+  "backButtons": 0
+ },
+ "sheet-mini-afterCompany": {
+  "url": "/journals",
+  "tabs": [
+   "Главное меню"
+  ],
+  "head": "Моя компания",
+  "focus": "Торговые точки"
+ },
+ "sheet-mini-openPoints": {
+  "head": "Торговые точки",
+  "focus": "Моя компания",
+  "focusIsTab": true
+ },
+ "sheet-mini-afterRoot": {
+  "place": false,
+  "focus": "Моя компания"
+ }
+}

@@ -9,7 +9,6 @@ import { useAppNav } from "@/components/layout/app-nav-context";
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
-  BackToMainButton,
   NavSectionsList,
   SectionMenuList,
   menuHostKey,
@@ -31,9 +30,10 @@ const ROW =
  * строкой — «Выйти». Точку выбирают в шапке, как на ПК: списка точек в меню
  * нет (владелец, 2026-10-30: «не дублировать»), и «Выйти» не закреплена
  * внизу листа — прокручивается вместе с меню. В разделе с меню (`section.menu`) лист открывается
- * с меню раздела: кнопка «‹ Назад» переключает его на меню уровнем выше,
- * а нажатие на раздел со стрелкой › раскрывает его меню прямо в листе;
- * «‹ Назад» поднимает на уровень вверх (вложенные разделы, 2026-10-28).
+ * с меню раздела — «стопкой уровней»: вкладки родителей над карточкой
+ * раздела переключают лист на свой уровень, а нажатие на раздел со
+ * стрелкой › раскрывает его меню прямо в листе (вложенные разделы,
+ * 2026-10-28; стопка вместо «‹ Назад» — 2026-10-30).
  */
 export function MobileNavSheet({
   open,
@@ -93,17 +93,14 @@ export function MobileNavSheet({
           className="mb-2 border-b border-[#ececf4] px-2.5 pt-1 pb-4"
         />
         {shown?.menu ? (
-          <>
-            <BackToMainButton onClick={menu.back} />
-            <SectionMenuList
-              section={shown}
-              activeItemId={shown.key === placeSection?.key ? menuItem?.id : undefined}
-              currentKey={active}
-              statuses={statuses}
-              onOpenMenu={menu.openMenu}
-              onGoTo={menu.goTo}
-            />
-          </>
+          <SectionMenuList
+            section={shown}
+            activeItemId={shown.key === placeSection?.key ? menuItem?.id : undefined}
+            currentKey={active}
+            statuses={statuses}
+            onOpenMenu={menu.openMenu}
+            onGoTo={menu.goTo}
+          />
         ) : (
           <NavSectionsList sections={sections} currentKey={active} onOpenMenu={menu.openMenu} />
         )}

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft } from "lucide-react";
 import { mainNavSections, navSectionPath, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
 import { navTone } from "@/lib/nav-tones";
@@ -15,7 +14,7 @@ import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
   NavBadge,
   NavChevron,
-  SectionPlace,
+  SectionStack,
   menuHostKey,
   sectionChain,
   topSectionKey,
@@ -112,16 +111,16 @@ export function AppSidebar({
   const statuses = useSectionStatuses(showSection ? menuSection?.key : undefined);
 
   // Фокус не должен пропадать, когда панель становится inert: после
-  // «‹ Назад» — на пункт раздела, из которого вышли, при входе в меню
-  // раздела — на «‹ Назад». Переносим только после действия человека.
+  // перехода на уровень вверх — на пункт раздела, из которого вышли, при
+  // входе в меню раздела — на ближайшую вкладку стопки (родителя). Переносим
+  // только после действия человека.
   const asideRef = useRef<HTMLElement>(null);
-  const backRef = useRef<HTMLAnchorElement>(null);
-  const focusAfter = useRef<NavSectionKey | "back" | null>(null);
+  const focusAfter = useRef<NavSectionKey | "parent" | null>(null);
   useEffect(() => {
     const target = focusAfter.current;
     if (!target) return;
     focusAfter.current = null;
-    if (target === "back") backRef.current?.focus();
+    if (target === "parent") [...(asideRef.current?.querySelectorAll<HTMLElement>("[data-place-tab] > a") ?? [])].at(-1)?.focus();
     else
       asideRef.current
         ?.querySelector<HTMLElement>(`[data-nav-section="${target}"], [data-menu-section="${target}"]`)
@@ -129,19 +128,12 @@ export function AppSidebar({
   }, [viewKey]);
 
   const openMenu = (key: NavSectionKey) => {
-    focusAfter.current = "back";
+    focusAfter.current = "parent";
     setView({ path: pathname, key });
   };
-  // «‹ Назад»: меню родителя и его корень; родителя нет (или он закрыт
-  // человеку) — главное меню и главная.
-  const parentSection = viewSection?.parent
-    ? sections.find((section) => section.key === viewSection.parent && section.menu)
-    : undefined;
-  const backHref = parentSection ? parentSection.rootHref : homeHref;
-  const backPath = backHref.split(/[?#]/)[0] || "/";
-  // Переход на уровень `target` (`null` — главное меню и главная): «‹ Назад»
-  // и ступени карточки «Вы здесь». Фокус — на пункт, через который из
-  // целевого меню шли вглубь.
+  // Переход на уровень `target` (`null` — главное меню и главная): вкладки
+  // «стопки уровней». Фокус — на пункт, через который из целевого меню шли
+  // вглубь.
   const goTo = (target: NavModelSection | null) => (event: MouseEvent<HTMLElement>) => {
     // Открытие в новой вкладке — меню здесь не трогаем.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
@@ -154,7 +146,6 @@ export function AppSidebar({
     focusAfter.current = from?.key ?? null;
     setView({ path: pathname, key: target ? target.key : "main", follow: !stay });
   };
-  const goBack = goTo(parentSection ?? null);
 
   // Раздел со своим меню, внутри которого человек уже стоит, не уводит на
   // корень: только открывает своё меню. Иначе — обычный переход на корень,
@@ -254,78 +245,65 @@ export function AppSidebar({
         </div>
         <div className="flex h-full w-1/2 shrink-0 flex-col" inert={!showSection} aria-hidden={!showSection}>
           {logo}
-          <div className="shrink-0 px-3 pt-3">
-            <Link
-              ref={backRef}
-              href={backHref}
-              onClick={goBack}
-              data-back-to-main
-              data-back-href={backPath}
-              className="inline-flex h-9 items-center gap-1 rounded-xl px-2.5 text-[13.5px] font-semibold text-[#3848c7] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-            >
-              <ChevronLeft className="size-4" aria-hidden />
-              {t("back")}
-            </Link>
-          </div>
           {/* Ключ — показанное меню: при входе в раздел и при переходе на
-              уровень вверх карточка «Вы здесь» и пункты собираются заново и
-              появляются каскадом (`data-nav-rise`). Спрятанная панель — без
-              анимации. */}
+              уровень вверх стопка и пункты собираются заново и появляются
+              каскадом (`data-nav-rise`). Спрятанная панель — без анимации. */}
           <div
             key={showSection ? viewKey : "hidden"}
             data-nav-rise={showSection ? "" : undefined}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <SectionPlace
+            <SectionStack
               path={placePath}
               size="sidebar"
               root={{ href: homeHref, onClick: goTo(null) }}
               step={(section) => ({ href: section.rootHref, onClick: goTo(section) })}
-              className="mx-3 mt-2 mb-1 shrink-0"
-            />
-            <nav
-              aria-label={t("sectionMenuAria")}
-              data-section-menu={menuSection.key}
-              className="min-h-0 flex-1 overflow-y-auto px-3 pb-4"
+              className="mx-3 mt-3 mb-3 min-h-0 flex-1"
             >
-              {menuSection.menu.map((group, index) => (
-                <div key={group.label ?? `group-${index}`}>
-                  {group.label ? (
-                    <div className="px-2.5 pt-3.5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b9fb3]">
-                      {group.label}
+              <nav
+                aria-label={t("sectionMenuAria")}
+                data-section-menu={menuSection.key}
+                className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-1.5"
+              >
+                {menuSection.menu.map((group, index) => (
+                  <div key={group.label ?? `group-${index}`}>
+                    {group.label ? (
+                      <div className="px-2.5 pt-3.5 pb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#9b9fb3]">
+                        {group.label}
+                      </div>
+                    ) : null}
+                    <div className="space-y-1">
+                      {group.items.map((item, itemIndex) => {
+                        const isActive = menuItemActive(item);
+                        return (
+                          <Link
+                            key={item.id}
+                            href={item.href}
+                            onClick={item.section ? selectHandler(item.section, Boolean(item.hasMenu)) : undefined}
+                            aria-current={isActive ? (item.section ? "true" : "page") : undefined}
+                            data-menu-item={item.id}
+                            data-menu-section={item.section}
+                            data-tone={navTone(item.icon)}
+                            data-nav-row
+                            data-nav-bar
+                            data-has-menu={item.hasMenu ? "" : undefined}
+                            data-active={isActive ? "" : undefined}
+                            style={{ "--nav-i": placePath.length + 1 + groupOffsets[index] + itemIndex } as CSSProperties}
+                            className={cn(SIDEBAR_ITEM, "group", isActive ? SIDEBAR_ITEM_ACTIVE : SIDEBAR_ITEM_IDLE)}
+                          >
+                            <NavIconChip name={item.icon} className={SIDEBAR_CHIP} iconClassName={SIDEBAR_CHIP_ICON} />
+                            <span className="min-w-0 flex-1">{item.label}</span>
+                            {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
+                            <SectionStatusDot status={statuses[item.id]} />
+                            {item.hasMenu ? <NavChevron active={isActive} /> : null}
+                          </Link>
+                        );
+                      })}
                     </div>
-                  ) : null}
-                  <div className="space-y-1">
-                    {group.items.map((item, itemIndex) => {
-                      const isActive = menuItemActive(item);
-                      return (
-                        <Link
-                          key={item.id}
-                          href={item.href}
-                          onClick={item.section ? selectHandler(item.section, Boolean(item.hasMenu)) : undefined}
-                          aria-current={isActive ? (item.section ? "true" : "page") : undefined}
-                          data-menu-item={item.id}
-                          data-menu-section={item.section}
-                          data-tone={navTone(item.icon)}
-                          data-nav-row
-                          data-nav-bar
-                          data-has-menu={item.hasMenu ? "" : undefined}
-                          data-active={isActive ? "" : undefined}
-                          style={{ "--nav-i": placePath.length + 1 + groupOffsets[index] + itemIndex } as CSSProperties}
-                          className={cn(SIDEBAR_ITEM, "group", isActive ? SIDEBAR_ITEM_ACTIVE : SIDEBAR_ITEM_IDLE)}
-                        >
-                          <NavIconChip name={item.icon} className={SIDEBAR_CHIP} iconClassName={SIDEBAR_CHIP_ICON} />
-                          <span className="min-w-0 flex-1">{item.label}</span>
-                          {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
-                          <SectionStatusDot status={statuses[item.id]} />
-                          {item.hasMenu ? <NavChevron active={isActive} /> : null}
-                        </Link>
-                      );
-                    })}
                   </div>
-                </div>
-              ))}
-            </nav>
+                ))}
+              </nav>
+            </SectionStack>
           </div>
         </div>
       </div>
