@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { pointForRows, trimPointDocumentConfig, visiblePointStaffEntries } from "./point-document-rows-sync";
+import { isColdJournalEquipment, pointForRows, trimPointDocumentConfig, visiblePointStaffEntries } from "./point-document-rows-sync";
 
 // Партнёр, 2026-10-30: «в журналах темп. режима — всё оборудование
 // организации», «чтобы ТТ не своё просто не видела».
@@ -35,6 +35,38 @@ test("холодильники: в документе точки A остают�
     ["1", "3", "4", "5"],
   );
   assert.equal(got?.config.skipWeekends, true);
+});
+
+test("пустой журнал холодильников точки получает её холодильники (и общие), чужие — нет", () => {
+  const withCold = {
+    ...directory,
+    coldEquipment: [
+      { id: "fridge-a", name: "ШХ-А", pointId: "A", min: 2, max: 6 },
+      { id: "fridge-b", name: "ШХ-Б", pointId: "B", min: 2, max: 6 },
+      { id: "fridge-shared", name: "Общая камера", pointId: null, min: -18, max: null },
+    ],
+  };
+  const empty = trimPointDocumentConfig("cold_equipment_control", { equipment: [], skipWeekends: true }, "A", withCold);
+  assert.deepEqual(
+    (empty?.config.equipment as Array<{ sourceEquipmentId: string }>).map((row) => row.sourceEquipmentId),
+    ["fridge-a", "fridge-shared"],
+  );
+  assert.equal(empty?.config.skipWeekends, true);
+  // Только чужие строки → убрать и поставить свои.
+  const foreignOnly = trimPointDocumentConfig("cold_equipment_control", { equipment: [{ id: "x", sourceEquipmentId: "fridge-b" }] }, "A", withCold);
+  assert.equal(foreignOnly?.removed, 1);
+  assert.deepEqual((foreignOnly?.config.equipment as Array<{ name: string }>).map((row) => row.name), ["ШХ-А", "Общая камера"]);
+  // Ручные строки — выбор человека, не дополняем.
+  assert.equal(trimPointDocumentConfig("cold_equipment_control", { equipment: [{ id: "m", sourceEquipmentId: null, name: "Свой" }] }, "A", withCold), null);
+  // У точки нет холодильников — пустой журнал остаётся пустым.
+  assert.equal(trimPointDocumentConfig("cold_equipment_control", { equipment: [] }, "C", { ...withCold, coldEquipment: [withCold.coldEquipment[1]] }), null);
+});
+
+test("в журнал холодильников — холодильник, морозильник или оборудование с нормой; УФ-лампа — нет", () => {
+  assert.equal(isColdJournalEquipment({ type: "refrigerator", name: "ШХ" }), true);
+  assert.equal(isColdJournalEquipment({ type: "other", name: "Камера", tempMin: 0 }), true);
+  assert.equal(isColdJournalEquipment({ type: "other", name: "Плита" }), false);
+  assert.equal(isColdJournalEquipment({ type: "uv_lamp", name: "Гелиос", tempMin: 2 }), false);
 });
 
 test("всё своё — менять нечего (null)", () => {
