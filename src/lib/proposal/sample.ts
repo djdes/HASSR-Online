@@ -8,6 +8,7 @@
 import { EMPTY_REQUISITES } from "@/lib/closing-documents/types";
 import type { ProposalContext } from "@/lib/proposal/content";
 import type { ProposalPromo } from "@/lib/proposal/types";
+import { DEFAULT_PLAN_RATES } from "@/lib/tariff-plans";
 
 export const SAMPLE_NOW = new Date("2026-09-29T12:00:00+03:00");
 
@@ -63,6 +64,9 @@ export function sampleProposalContext(overrides: Partial<ProposalContext> = {}):
       email: "support@wesetup.ru",
       telegram: "example_manager",
     },
+    rates: DEFAULT_PLAN_RATES,
+    ppkFromRub: 10_000,
+    equipmentFromRub: 17_750,
     ...overrides,
   };
 }

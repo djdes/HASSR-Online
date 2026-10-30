@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { jsPDF } from "jspdf";
 import autoTable, { type CellInput, type Styles } from "jspdf-autotable";
+import QRCode from "qrcode";
 
 import { pngSize } from "@/lib/closing-documents/pdf";
 import { registerProposalFonts, type ProposalWeight } from "@/lib/proposal/pdf-font";
@@ -170,7 +171,9 @@ export function fitText(pdf: BrandPdf, text: string, maxWidth: number, style: Te
 const ASSET_DIR = path.join(process.cwd(), "src", "lib", "brand-docs", "assets");
 const assetCache = new Map<string, Buffer | null>();
 
-export function brandAsset(name: "wordmark-gradient.png" | "icon-nfc.png"): Buffer | null {
+export type BrandAssetName = "wordmark-gradient.png" | "icon-nfc.png" | "icon-phone.png" | "icon-mail.png" | "check.png";
+
+export function brandAsset(name: BrandAssetName): Buffer | null {
   if (!assetCache.has(name)) {
     const file = path.join(ASSET_DIR, name);
     assetCache.set(name, fs.existsSync(file) ? fs.readFileSync(file) : null);
@@ -243,7 +246,13 @@ export function letterhead(pdf: BrandPdf, seller: BrandSeller): void {
 }
 
 /** Тёмная карточка-подвал текущего листа. */
-export function footerCard(pdf: BrandPdf, seller: BrandSeller, tagline = "Электронные журналы по принципам ХАССП"): void {
+export function footerCard(
+  pdf: BrandPdf,
+  seller: BrandSeller,
+  tagline = "Электронные журналы по принципам ХАССП",
+  /** Вторая строка справа; по умолчанию «почта · продавец». */
+  rightLine?: string,
+): void {
   const { doc } = pdf;
   const { side, contentW, h: pageH } = BRAND_PAGE;
   const { bottom, h, pad, radius } = BRAND_FOOTER;
@@ -265,14 +274,16 @@ export function footerCard(pdf: BrandPdf, seller: BrandSeller, tagline = "Эле
     doc.text(seller.phone, right, top + 5, { align: "right" });
   }
   setText(pdf, { size: 8, color: C.lav });
-  doc.text([seller.email, seller.nameShort].filter(Boolean).join("  ·  "), right, top + 9.3, { align: "right" });
+  doc.text(rightLine ?? [seller.email, seller.nameShort].filter(Boolean).join("  ·  "), right, top + 9.3, { align: "right" });
 }
 
 export type DecorateOptions = {
-  /** Подпись справа над подвалом: «Договор № … · Стр. 2 из 7». */
-  pageLabel?: (page: number, total: number) => string;
+  /** Подпись справа над подвалом: «Договор № … · Стр. 2 из 7». null — не рисовать. */
+  pageLabel?: ((page: number, total: number) => string) | null;
   /** Подпись слева над подвалом (например, места для инициалов сторон). */
   footnoteLeft?: (page: number, total: number) => string | null;
+  /** «страница N из M» во второй строке подвала справа (как в договоре образца). */
+  pageInFooter?: boolean;
 };
 
 /** Шапка, подвал и подписи над подвалом — на каждом листе. Вызывать последним. */
@@ -283,10 +294,16 @@ export function decoratePages(pdf: BrandPdf, seller: BrandSeller, options: Decor
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
     letterhead(pdf, seller);
-    footerCard(pdf, seller);
-    const label = options.pageLabel?.(page, total) ?? `Стр.${NBSP}${page} из ${total}`;
+    footerCard(
+      pdf,
+      seller,
+      undefined,
+      options.pageInFooter ? [seller.email, `страница${NBSP}${page} из ${total}`].filter(Boolean).join("  ·  ") : undefined,
+    );
+    const fallback = options.pageInFooter ? null : `Стр.${NBSP}${page} из ${total}`;
+    const label = options.pageLabel === null ? null : options.pageLabel ? options.pageLabel(page, total) : fallback;
     setText(pdf, { size: 7, color: C.faint });
-    doc.text(label, BRAND_PAGE.side + BRAND_PAGE.contentW, labelY, { align: "right" });
+    if (label) doc.text(label, BRAND_PAGE.side + BRAND_PAGE.contentW, labelY, { align: "right" });
     const note = options.footnoteLeft?.(page, total);
     if (note) doc.text(note, BRAND_PAGE.side, labelY);
   }
@@ -302,12 +319,16 @@ export function eyebrow(pdf: BrandPdf, text: string, x: number, y: number, color
 }
 
 /** «01  Стоимость  за 1 точку, без НДС». y — базовая линия. Возвращает высоту блока. */
-export function sectionTitle(pdf: BrandPdf, x: number, y: number, title: { num: string | number; title: string; hint?: string | null }): number {
+export function sectionTitle(pdf: BrandPdf, x: number, y: number, title: { num?: string | number | null; title: string; hint?: string | null }): number {
   const { doc } = pdf;
-  const num = typeof title.num === "number" ? String(title.num).padStart(2, "0") : title.num;
-  setText(pdf, { size: 9, weight: "semibold", color: C.indigo });
-  doc.text(num, x, y);
-  const titleX = x + Math.max(doc.getTextWidth(num) + 3.2, 7.4);
+  let titleX = x;
+  // Образец 2026-10-30 — заголовки без номера; «01» остаётся по желанию.
+  if (title.num !== undefined && title.num !== null) {
+    const num = typeof title.num === "number" ? String(title.num).padStart(2, "0") : title.num;
+    setText(pdf, { size: 9, weight: "semibold", color: C.indigo });
+    doc.text(num, x, y);
+    titleX = x + Math.max(doc.getTextWidth(num) + 3.2, 7.4);
+  }
   setText(pdf, { size: 12, weight: "semibold", color: C.ink });
   doc.text(title.title, titleX, y);
   if (title.hint) {
@@ -537,6 +558,47 @@ export function signatureBlock(
   doc.line(tx, y + 22, tx + 34, y + 22);
   if (options.facsimile) drawPng(pdf, options.facsimile, { x: tx + 1, y: y + 12, w: 32, h: 11 });
   return y + 25;
+}
+
+// ───────────────────────────── QR и значки ─────────────────────────────
+
+/**
+ * Простой QR без рамки (как в образце): тёмные модули прямоугольниками,
+ * вектор — печатается чётко. Возвращает сторону модуля, мм.
+ */
+export function drawQr(
+  pdf: BrandPdf,
+  text: string,
+  box: { x: number; y: number; size: number },
+  options: { ecc?: "L" | "M" | "Q" | "H"; color?: RGB } = {},
+): { module: number; modules: number } {
+  const qr = QRCode.create(text, { errorCorrectionLevel: options.ecc ?? "M" });
+  const n = qr.modules.size;
+  const cell = box.size / n;
+  fill(pdf, options.color ?? C.ink);
+  for (let row = 0; row < n; row += 1) {
+    let start = -1;
+    for (let col = 0; col <= n; col += 1) {
+      const dark = col < n && qr.modules.get(row, col);
+      if (dark && start < 0) start = col;
+      if (!dark && start >= 0) {
+        // Серии модулей одной строки — одним прямоугольником (меньше PDF, без щелей).
+        pdf.doc.rect(box.x + start * cell, box.y + row * cell, (col - start) * cell + 0.01, cell + 0.01, "F");
+        start = -1;
+      }
+    }
+  }
+  return { module: cell, modules: n };
+}
+
+/** Галочка в светлом кружке (PNG образца) — «есть» в таблице сравнения; jsPDF кладёт картинку в файл один раз. */
+export function checkBadge(pdf: BrandPdf, cx: number, cy: number, size = 3.4): void {
+  drawPng(pdf, brandAsset("check.png"), { x: cx - size / 2, y: cy - size / 2, w: size, h: size });
+}
+
+/** Значок «телефон» / «почта» (lucide, PNG образца). */
+export function contactIcon(pdf: BrandPdf, kind: "phone" | "mail", x: number, y: number, size = 3.2): void {
+  drawPng(pdf, brandAsset(kind === "phone" ? "icon-phone.png" : "icon-mail.png"), { x, y, w: size, h: size }, "left");
 }
 
 // ───────────────────────────── поток текста ─────────────────────────────

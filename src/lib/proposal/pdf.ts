@@ -1,730 +1,452 @@
-import fs from "node:fs";
-import path from "node:path";
+import {
+  BRAND_COLORS as C,
+  BRAND_CONTENT_BOTTOM,
+  BRAND_CONTENT_TOP,
+  BRAND_PAGE,
+  PT,
+  brandSeller,
+  checkBadge,
+  contactIcon,
+  createBrandPdf,
+  drawQr,
+  footerCard,
+  letterhead,
+  setText,
+  type BrandPdf,
+  type RGB,
+  type TextStyle,
+} from "@/lib/brand-docs/pdf-kit";
+import type { ProposalWeight } from "@/lib/proposal/pdf-font";
 
-import { jsPDF } from "jspdf";
-
-import { brandQrLayout, drawBrandQrTilePdf } from "@/lib/brand-qr";
-
-import type { ProposalContent, ProposalJournalItem, ProposalOfferRow } from "./content";
-import { registerProposalFonts, type ProposalFonts, type ProposalWeight } from "./pdf-font";
-
-/**
- * КП на одном листе A4 (jsPDF, вектор).
- *
- * Вёрстка — «измерить, потом рисовать»: каждый блок сначала считает свою
- * высоту по реальным метрикам шрифта (`splitTextToSize`/`getTextWidth`),
- * и если лист не помещается (длинное название компании, много журналов у
- * сферы), кегли и отступы уменьшаются ступенями (`scale`) до той, при
- * которой всё влезает. Не влезло даже на самой мелкой — ошибка, а не
- * обрезанный текст: так упадёт тест, а не клиентский PDF.
- *
- * Всё нарисованное записывается в `bounds` — по ним тест проверяет, что
- * ничего не вылезает за поля.
- *
- * Цвета — токены сайта. Мелкий текст — только тёмными (#0b1024, #3c4053,
- * #3848c7): при ч/б печати индиго #5566f6 выходит средне-серым, им
- * рисуются только крупные элементы и заливки.
- */
-
-type RGB = readonly [number, number, number];
-
-const INK: RGB = [11, 16, 36];
-const BODY: RGB = [60, 64, 83];
-const MUTED: RGB = [111, 114, 130];
-const ACCENT: RGB = [85, 102, 246];
-const ACCENT_DEEP: RGB = [56, 72, 199];
-const TINT: RGB = [245, 246, 255];
-const TINT_2: RGB = [238, 241, 255];
-const LINE: RGB = [220, 223, 237];
-const WHITE: RGB = [255, 255, 255];
-
-export const PAGE_W = 210;
-export const PAGE_H = 297;
-export const MARGIN_X = 14;
-export const MARGIN_TOP = 12;
-export const MARGIN_BOTTOM = 12;
-const CONTENT_W = PAGE_W - 2 * MARGIN_X;
-
-/** pt → мм. */
-const PT = 25.4 / 72;
-/** Высота заглавных Manrope — доля кегля (OS/2 sCapHeight 1440 / 2000). */
-const CAP = 0.72;
+import type { ProposalContent } from "./content";
+import type { ProposalDesign, ProposalDesignCell } from "./design";
 
 /**
- * Плотность вёрстки: 1 — обычные кегли и отступы. Не влезает — ищется
- * наибольшая плотность в [MIN_SCALE, 1], при которой лист помещается
- * (двоичный поиск с шагом ~0,5 %), чтобы не мельчить сильнее нужного.
+ * КП на одном листе A4 в дизайне «WeSetup - КП и счета (новый дизайн)»
+ * (2026-10-30): тёмные карточки шапки и подвала (кит `brand-docs`), крупный
+ * заголовок «КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ» по центру, «Стоимость за одну точку»,
+ * «Что входит» и «Как начать» рядом, подпись отправителя и карточка с QR.
+ *
+ * Вёрстка — «измерить, потом рисовать»: при длинном названии компании или
+ * «Премиуме» (две доп. строки) отступы, затем высота строк и кегли
+ * уменьшаются ступенями (`scale`), пока лист не поместится. Не влезло даже
+ * на самой мелкой ступени — ошибка, а не обрезанный текст.
+ *
+ * Всё нарисованное записывается в `bounds` — тест проверяет, что ничего не
+ * выходит за поля и лист один.
  */
-const MIN_SCALE = 0.8;
-const SCALE_STEP = 0.005;
+
+export const PAGE_W = BRAND_PAGE.w;
+export const PAGE_H = BRAND_PAGE.h;
+export const MARGIN_X = BRAND_PAGE.side;
+/** Верх шапки и низ подвала — края карточек. */
+export const MARGIN_TOP = 5;
+export const MARGIN_BOTTOM = 5;
 
 export type PdfBox = { x0: number; y0: number; x1: number; y1: number; what: string };
 
 export type ProposalPdfRender = {
   buffer: Buffer;
   pages: number;
-  /** Габариты всего нарисованного, мм. */
   bounds: PdfBox[];
-  /** Ступень плотности, на которой всё поместилось. */
+  /** Ступень плотности, на которой всё поместилось (1 — как в образце). */
   scale: number;
   qr: { url: string; box: PdfBox; module: number };
 };
 
-type TextOptions = {
-  size: number;
-  weight?: ProposalWeight;
-  color?: RGB;
-  lh?: number;
-  align?: "left" | "right" | "center";
-  charSpace?: number;
-  what?: string;
+const MIN_SCALE = 0.3;
+const X = BRAND_PAGE.side;
+const W = BRAND_PAGE.contentW;
+const NODE: RGB = [124, 139, 248];
+const RAIL: RGB = [201, 207, 245];
+const QR_SIZE = 15;
+
+type Ctx = {
+  pdf: BrandPdf;
+  d: ProposalDesign;
+  /** Плотность: отступы × s, строки таблиц и кегли — мягче. */
+  s: number;
+  draw: boolean;
+  bounds: PdfBox[];
 };
 
-type Span = { text: string; weight?: ProposalWeight; color?: RGB; strike?: boolean };
+const gap = (ctx: Ctx, mm: number) => mm * ctx.s;
+const rowH = (ctx: Ctx, mm: number) => mm * (0.82 + 0.18 * ctx.s);
+const fs = (ctx: Ctx, pt: number) => pt * (0.9 + 0.1 * ctx.s);
 
-class Painter {
-  readonly bounds: PdfBox[] = [];
-
-  constructor(
-    readonly doc: jsPDF,
-    readonly fonts: ProposalFonts,
-    readonly dry: boolean,
-  ) {}
-
-  mark(x0: number, y0: number, x1: number, y1: number, what: string) {
-    this.bounds.push({ x0, y0, x1, y1, what });
-  }
-
-  font(weight: ProposalWeight, size: number) {
-    const face = this.fonts.face[weight];
-    this.doc.setFont(face.family, face.style);
-    this.doc.setFontSize(size);
-  }
-
-  width(text: string, weight: ProposalWeight, size: number, charSpace = 0): number {
-    this.font(weight, size);
-    return this.doc.getTextWidth(text) + charSpace * Math.max(0, Array.from(text).length - 1);
-  }
-
-  split(text: string, weight: ProposalWeight, size: number, maxWidth: number): string[] {
-    this.font(weight, size);
-    return this.doc.splitTextToSize(text, maxWidth) as string[];
-  }
-
-  /** Строки текста сверху вниз от `y`; возвращает высоту блока. */
-  text(input: string | string[], x: number, y: number, width: number, o: TextOptions): number {
-    const weight = o.weight ?? "regular";
-    const lh = o.lh ?? 1.4;
-    const lines = Array.isArray(input) ? input : this.split(input, weight, o.size, width);
-    const s = o.size * PT;
-    const l = s * lh;
-    lines.forEach((line, index) => {
-      const top = y + index * l;
-      const baseline = top + l / 2 + (CAP * s) / 2;
-      const w = this.width(line, weight, o.size, o.charSpace ?? 0);
-      const lx = o.align === "right" ? x + width - w : o.align === "center" ? x + (width - w) / 2 : x;
-      if (!this.dry) {
-        this.font(weight, o.size);
-        this.doc.setTextColor(...(o.color ?? INK));
-        this.doc.text(line, lx, baseline, o.charSpace ? { charSpace: o.charSpace } : undefined);
-      }
-      this.mark(lx, top, lx + w, top + l, o.what ?? "text");
-    });
-    return lines.length * l;
-  }
-
-  /**
-   * Абзац из кусков разного начертания и цвета с переносом по словам.
-   * Неразрывный пробел — часть слова («41 журнал», «1 990 ₽»).
-   */
-  rich(spans: Span[], x: number, y: number, width: number, size: number, lh = 1.4, what = "rich"): number {
-    type Word = { text: string; weight: ProposalWeight; color: RGB; strike: boolean; w: number; space: boolean };
-    const words: Word[] = [];
-    for (const span of spans) {
-      const weight = span.weight ?? "regular";
-      const parts = span.text.split(" ");
-      let pendingSpace = false;
-      parts.forEach((part, index) => {
-        // Пустая часть — пробел в начале куска или двойной пробел.
-        if (!part) {
-          pendingSpace = true;
-          return;
-        }
-        words.push({
-          text: part,
-          weight,
-          color: span.color ?? INK,
-          strike: span.strike ?? false,
-          w: this.width(part, weight, size),
-          // Первое слово куска приклеивается к предыдущему («1 990 ₽» + «/мес»),
-          // если кусок не начинается с пробела.
-          space: index > 0 || pendingSpace,
-        });
-        pendingSpace = false;
-      });
-    }
-    const spaceW = (weight: ProposalWeight) => this.width(" ", weight, size);
-    const lines: Word[][] = [];
-    let line: Word[] = [];
-    let used = 0;
-    words.forEach((word) => {
-      const gap = line.length > 0 && word.space ? spaceW(word.weight) : 0;
-      if (line.length > 0 && used + gap + word.w > width + 1e-6) {
-        lines.push(line);
-        line = [];
-        used = 0;
-      }
-      used += (line.length > 0 ? gap : 0) + word.w;
-      line.push(word);
-    });
-    if (line.length > 0) lines.push(line);
-    const s = size * PT;
-    const l = s * lh;
-    lines.forEach((items, row) => {
-      const top = y + row * l;
-      const baseline = top + l / 2 + (CAP * s) / 2;
-      let cx = x;
-      items.forEach((word, index) => {
-        if (index > 0 && word.space) cx += spaceW(word.weight);
-        if (!this.dry) {
-          this.font(word.weight, size);
-          this.doc.setTextColor(...word.color);
-          this.doc.text(word.text, cx, baseline);
-          if (word.strike) {
-            this.doc.setDrawColor(...word.color);
-            this.doc.setLineWidth(Math.max(0.2, s * 0.07));
-            const sy = baseline - CAP * s * 0.42;
-            this.doc.line(cx - 0.3, sy, cx + word.w + 0.3, sy);
-          }
-        }
-        cx += word.w;
-      });
-      this.mark(x, top, cx, top + l, what);
-    });
-    return lines.length * l;
-  }
-
-  box(x: number, y: number, w: number, h: number, o: { fill?: RGB; stroke?: RGB; r?: number; lw?: number; what?: string }) {
-    if (!this.dry) {
-      if (o.fill) this.doc.setFillColor(...o.fill);
-      if (o.stroke) {
-        this.doc.setDrawColor(...o.stroke);
-        this.doc.setLineWidth(o.lw ?? 0.3);
-      }
-      const style = o.fill && o.stroke ? "FD" : o.fill ? "F" : "S";
-      if (o.r && o.r > 0) this.doc.roundedRect(x, y, w, h, o.r, o.r, style);
-      else this.doc.rect(x, y, w, h, style);
-    }
-    this.mark(x, y, x + w, y + h, o.what ?? "box");
-  }
-
-  line(x0: number, y0: number, x1: number, y1: number, color: RGB, lw = 0.3) {
-    if (!this.dry) {
-      this.doc.setDrawColor(...color);
-      this.doc.setLineWidth(lw);
-      this.doc.line(x0, y0, x1, y1);
-    }
-    this.mark(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1), "line");
-  }
-
-  dot(cx: number, cy: number, r: number, color: RGB, filled: boolean) {
-    if (!this.dry) {
-      if (filled) {
-        this.doc.setFillColor(...color);
-        this.doc.circle(cx, cy, r, "F");
-      } else {
-        this.doc.setDrawColor(...color);
-        this.doc.setLineWidth(0.28);
-        this.doc.circle(cx, cy, r, "S");
-      }
-    }
-    this.mark(cx - r, cy - r, cx + r, cy + r, "dot");
-  }
-
-  /** Галочка в круге — маркер преимущества. */
-  check(x: number, y: number, size: number) {
-    const r = size / 2;
-    const cx = x + r;
-    const cy = y + r;
-    if (!this.dry) {
-      this.doc.setFillColor(...TINT_2);
-      this.doc.circle(cx, cy, r, "F");
-      this.doc.setDrawColor(...ACCENT_DEEP);
-      this.doc.setLineWidth(size * 0.12);
-      this.doc.setLineCap("round");
-      this.doc.setLineJoin("round");
-      this.doc.lines(
-        [
-          [size * 0.16, size * 0.16],
-          [size * 0.3, -size * 0.34],
-        ],
-        cx - size * 0.24,
-        cy + size * 0.01,
-        [1, 1],
-        "S",
-        false,
-      );
-      this.doc.setLineCap("butt");
-    }
-    this.mark(x, y, x + size, y + size, "check");
-  }
-
-  /** Номер шага в круге. */
-  number(x: number, y: number, size: number, value: string) {
-    const r = size / 2;
-    if (!this.dry) {
-      this.doc.setFillColor(...ACCENT);
-      this.doc.circle(x + r, y + r, r, "F");
-    }
-    this.mark(x, y, x + size, y + size, "number");
-    const fontSize = (size / PT) * 0.52;
-    const s = fontSize * PT;
-    const w = this.width(value, "extrabold", fontSize);
-    if (!this.dry) {
-      this.font("extrabold", fontSize);
-      this.doc.setTextColor(...WHITE);
-      this.doc.text(value, x + r - w / 2, y + r + (CAP * s) / 2);
-    }
-  }
-
-  image(data: Buffer, x: number, y: number, w: number, h: number, what: string) {
-    if (!this.dry) this.doc.addImage(new Uint8Array(data), "PNG", x, y, w, h, undefined, "FAST");
-    this.mark(x, y, x + w, y + h, what);
-  }
+function mark(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, what: string) {
+  ctx.bounds.push({ x0, y0, x1, y1, what });
 }
 
-// ---------------------------------------------------------------------------
-// Знак сайта
-// ---------------------------------------------------------------------------
-
-const WORDMARK_FILE = path.join(process.cwd(), "public", "brand", "wordmark-dark.png");
-/** Пропорция файла знака (900 × 239). */
-const WORDMARK_RATIO = 900 / 239;
-let wordmarkCache: Buffer | null | undefined;
-
-function wordmark(): Buffer | null {
-  if (wordmarkCache !== undefined) return wordmarkCache;
-  wordmarkCache = fs.existsSync(WORDMARK_FILE) ? fs.readFileSync(WORDMARK_FILE) : null;
-  return wordmarkCache;
+function style(ctx: Ctx, size: number, weight: ProposalWeight = "regular", color: RGB = C.ink): TextStyle {
+  return { size: fs(ctx, size), weight, color };
 }
 
-// ---------------------------------------------------------------------------
-// Общие блоки
-// ---------------------------------------------------------------------------
+/** Базовая линия текста, вертикально по центру полосы высотой h. */
+function middle(top: number, h: number, size: number): number {
+  return top + h / 2 + size * PT * 0.34;
+}
 
-type Ctx = { p: Painter; k: number; content: ProposalContent };
+function text(ctx: Ctx, value: string, x: number, y: number, st: TextStyle, align: "left" | "center" | "right" = "left", what = "text") {
+  setText(ctx.pdf, st);
+  const w = ctx.pdf.doc.getTextWidth(value);
+  const x0 = align === "left" ? x : align === "center" ? x - w / 2 : x - w;
+  if (ctx.draw) ctx.pdf.doc.text(value, x0, y);
+  mark(ctx, x0, y - st.size * PT * 0.8, x0 + w, y + st.size * PT * 0.25, what);
+}
 
-/** Размер с учётом ступени плотности. */
-const sz = (ctx: Ctx, pt: number) => pt * ctx.k;
-const gap = (ctx: Ctx, mm: number) => mm * ctx.k;
+function wrap(ctx: Ctx, value: string, width: number, st: TextStyle): string[] {
+  setText(ctx.pdf, st);
+  return ctx.pdf.doc.splitTextToSize(value, width) as string[];
+}
 
-function drawHeader(ctx: Ctx, y: number): number {
-  const { p, content } = ctx;
-  const markH = 7.2;
-  const mark = wordmark();
-  if (mark) p.image(mark, MARGIN_X, y, markH * WORDMARK_RATIO, markH, "wordmark");
-  else p.text("WeSetup", MARGIN_X, y, 60, { size: 16, weight: "extrabold" });
-  p.text(content.eyebrow.toUpperCase(), MARGIN_X, y + 0.2, CONTENT_W, {
-    size: 6.8,
-    weight: "semibold",
-    color: MUTED,
-    align: "right",
-    charSpace: 0.35,
-    what: "eyebrow",
+function fillRect(ctx: Ctx, x: number, y: number, w: number, h: number, color: RGB, what = "fill") {
+  if (ctx.draw) {
+    ctx.pdf.doc.setFillColor(...color);
+    ctx.pdf.doc.rect(x, y, w, h, "F");
+  }
+  mark(ctx, x, y, x + w, y + h, what);
+}
+
+function line(ctx: Ctx, x1: number, y1: number, x2: number, y2: number, color: RGB, width = 0.2) {
+  if (!ctx.draw) return;
+  ctx.pdf.doc.setDrawColor(...color);
+  ctx.pdf.doc.setLineWidth(width);
+  ctx.pdf.doc.line(x1, y1, x2, y2);
+}
+
+// ───────────────────────────── блоки ─────────────────────────────
+
+function heading(ctx: Ctx, value: string, x: number, y: number): number {
+  const h = fs(ctx, 12) * PT * 1.35;
+  text(ctx, value, x, y + h * 0.78, style(ctx, 12, "semibold"), "left", "heading");
+  return h + gap(ctx, 2.2);
+}
+
+function titleBlock(ctx: Ctx, y: number): number {
+  const { d } = ctx;
+  const cx = X + W / 2;
+  let cursor = y;
+  // «КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ» разрядкой: ширину считаем с межбуквенным интервалом сами.
+  const titleSt = style(ctx, 20, "semibold");
+  const title = d.title.toLocaleUpperCase("ru-RU");
+  const charSpace = 0.42;
+  setText(ctx.pdf, titleSt);
+  const tw = ctx.pdf.doc.getTextWidth(title) + charSpace * (Array.from(title).length - 1);
+  const base = cursor + titleSt.size * PT * 0.95;
+  if (ctx.draw) ctx.pdf.doc.text(title, cx - tw / 2, base, { charSpace });
+  mark(ctx, cx - tw / 2, base - titleSt.size * PT * 0.8, cx + tw / 2, base + 1, "title");
+  cursor = base + gap(ctx, 3.2);
+  if (d.forLine) {
+    const st = style(ctx, 12, "semibold", C.indigo);
+    for (const row of wrap(ctx, d.forLine, W - 10, st)) {
+      cursor += st.size * PT * 1.25;
+      text(ctx, row, cx, cursor, st, "center", "for-line");
+    }
+    cursor += gap(ctx, 1.6);
+  }
+  const meta = style(ctx, 9.5, "regular", C.muted);
+  cursor += meta.size * PT * 1.3;
+  text(ctx, d.metaLine, cx, cursor, meta, "center", "meta");
+  if (d.addressee) {
+    cursor += meta.size * PT * 1.45;
+    text(ctx, d.addressee, cx, cursor, style(ctx, 9.5, "regular", C.ink2), "center", "addressee");
+  }
+  return cursor + gap(ctx, 1.5) - y;
+}
+
+function greetingBlock(ctx: Ctx, y: number): number {
+  const { d } = ctx;
+  const cx = X + W / 2;
+  const greet = style(ctx, 12, "semibold");
+  let cursor = y + greet.size * PT * 1.1;
+  text(ctx, d.greeting, cx, cursor, greet, "center", "greeting");
+  const body = style(ctx, 9.5, "regular", C.ink);
+  cursor += gap(ctx, 1.4);
+  for (const paragraph of d.lead) {
+    for (const row of wrap(ctx, paragraph, W - 2, body)) {
+      cursor += body.size * PT * 1.45;
+      text(ctx, row, cx, cursor, body, "center", "lead");
+    }
+  }
+  return cursor + gap(ctx, 1) - y;
+}
+
+/** «Стоимость за одну точку»: тёмная шапка, «Каждый месяц», «Сразу за год», «Дополнительно». */
+function priceTable(ctx: Ctx, y: number): number {
+  const { d } = ctx;
+  const cols = [66, 34, 34, W - 134];
+  const xs = cols.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [X]);
+  const pad = 2.6;
+  const headH = rowH(ctx, 8.4);
+  const bodyH = rowH(ctx, 8.6);
+  const extraH = rowH(ctx, 7.4);
+  const body = style(ctx, 9.5);
+  let cursor = y;
+
+  fillRect(ctx, X, cursor, W, headH, C.ink, "price-head");
+  d.price.columns.forEach((label, i) => {
+    const right = i > 0;
+    text(ctx, label, right ? xs[i + 1] - pad : xs[i] + pad, middle(cursor, headH, body.size), style(ctx, 9.5, "semibold", C.white), right ? "right" : "left", "price-head-text");
+    if (i > 0) line(ctx, xs[i], cursor, xs[i], cursor + headH, [58, 63, 85], 0.2);
   });
-  p.text(`${content.dateLabel} · ${content.site}`, MARGIN_X, y + 4, CONTENT_W, {
-    size: 8.2,
-    color: BODY,
-    align: "right",
-    what: "date",
-  });
-  const bottom = y + markH + 3.2;
-  p.line(MARGIN_X, bottom, PAGE_W - MARGIN_X, bottom, LINE, 0.3);
-  return bottom - y;
-}
+  cursor += headH;
 
-function drawTitle(ctx: Ctx, x: number, y: number, width: number, titleSize: number): number {
-  const { p, content } = ctx;
-  let h = 0;
-  if (content.addressee) {
-    h += p.text(content.addressee, x, y, width, {
-      size: sz(ctx, 9.5),
-      weight: "semibold",
-      color: ACCENT_DEEP,
-      lh: 1.35,
-      what: "addressee",
-    });
-    h += gap(ctx, 1.6);
-  }
-  // «для кафе и кофейни» не рвётся посередине, если помещается строкой целиком.
-  const size = sz(ctx, titleSize);
-  const together = content.titleFor.replace(/ /g, "\u00a0");
-  const forText = p.width(together, "extrabold", size) <= width ? together : content.titleFor;
-  h += p.rich(
-    [
-      { text: content.titleLead, weight: "extrabold", color: INK },
-      { text: ` ${forText}`, weight: "extrabold", color: ACCENT },
-    ],
-    x,
-    y + h,
-    width,
-    size,
-    1.13,
-    "title",
-  );
-  return h;
-}
-
-function sectionLabel(ctx: Ctx, text: string, x: number, y: number, width: number): number {
-  return ctx.p.text(text.toUpperCase(), x, y, width, {
-    size: sz(ctx, 6.9),
-    weight: "semibold",
-    color: MUTED,
-    lh: 1.3,
-    charSpace: 0.32,
-    what: "label",
-  });
-}
-
-function drawBenefits(ctx: Ctx, x: number, y: number, width: number): number {
-  const { p, content } = ctx;
-  let h = sectionLabel(ctx, content.benefitsTitle, x, y, width) + gap(ctx, 2.2);
-  const icon = 4.2 * ctx.k;
-  const indent = icon + 2.4;
-  content.benefits.forEach((item, index) => {
-    if (index > 0) h += gap(ctx, 2.6);
-    p.check(x, y + h + 0.1, icon);
-    h += p.text(item.title, x + indent, y + h, width - indent, {
-      size: sz(ctx, 9.2),
-      weight: "extrabold",
-      lh: 1.3,
-      what: "benefit-title",
-    });
-    h += p.text(item.text, x + indent, y + h + 0.3, width - indent, {
-      size: sz(ctx, 8.3),
-      color: BODY,
-      lh: 1.38,
-      what: "benefit",
-    }) + 0.3;
-  });
-  return h;
-}
-
-function journalItems(ctx: Ctx, items: ProposalJournalItem[], x: number, y: number, width: number, filled: boolean): number {
-  const { p } = ctx;
-  let h = 0;
-  const size = sz(ctx, 8.2);
-  const lh = 1.32;
-  items.forEach((item, index) => {
-    if (index > 0) h += gap(ctx, 1.1);
-    const line = size * PT * lh;
-    p.dot(x + 1, y + h + line / 2, 0.85 * ctx.k, ACCENT, filled);
-    const spans: Span[] = [{ text: item.name, color: INK }];
-    if (item.note) spans.push({ text: ` — ${item.note}`, color: MUTED });
-    h += p.rich(spans, x + 4, y + h, width - 4, size, lh, "journal");
-  });
-  return h;
-}
-
-function drawJournals(ctx: Ctx, x: number, y: number, width: number): number {
-  const { p, content } = ctx;
-  let h = sectionLabel(ctx, content.journalsTitle, x, y, width) + gap(ctx, 2.2);
-  if (content.journalsRequired.length > 0) {
-    h += p.text("Обязательные", x, y + h, width, { size: sz(ctx, 8), weight: "semibold", color: ACCENT_DEEP, lh: 1.3 });
-    h += gap(ctx, 1);
-    h += journalItems(ctx, content.journalsRequired, x, y + h, width, true);
-  }
-  if (content.journalsRecommended.length > 0) {
-    h += gap(ctx, 2.2);
-    h += p.text("Рекомендуем", x, y + h, width, { size: sz(ctx, 8), weight: "semibold", color: ACCENT_DEEP, lh: 1.3 });
-    h += gap(ctx, 1);
-    h += journalItems(ctx, content.journalsRecommended, x, y + h, width, false);
-  }
-  h += gap(ctx, 2);
-  const tail: Span[] = [];
-  if (content.journalsMore) tail.push({ text: `${capitalizeFirst(content.journalsMore)}.`, weight: "semibold", color: INK });
-  tail.push({ text: ` ${content.journalsTotal}`, color: BODY });
-  h += p.rich(tail, x, y + h, width, sz(ctx, 7.9), 1.38, "journals-total");
-  return h;
-}
-
-function capitalizeFirst(text: string): string {
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
-}
-
-/**
- * Цена крупно и «/мес» мелко на одной базовой линии; не влезает в ширину —
- * «/мес» переносится под цену. Возвращает высоту.
- */
-function priceLine(ctx: Ctx, price: string, unit: string, x: number, y: number, width: number, size: number): number {
-  const { p } = ctx;
-  const s = size * PT;
-  const lineH = s * 1.12;
-  const unitSize = size * 0.46;
-  const pw = p.width(price, "extrabold", size);
-  const uw = unit ? p.width(unit, "semibold", unitSize) : 0;
-  const baseline = y + lineH / 2 + (CAP * s) / 2;
-  if (!p.dry) {
-    p.font("extrabold", size);
-    p.doc.setTextColor(...INK);
-    p.doc.text(price, x, baseline);
-  }
-  p.mark(x, y, x + pw, y + lineH, "price");
-  if (!unit) return lineH;
-  const inline = pw + 1 + uw <= width;
-  const ux = inline ? x + pw + 1 : x;
-  const uy = inline ? baseline : baseline + unitSize * PT * 1.5;
-  if (!p.dry) {
-    p.font("semibold", unitSize);
-    p.doc.setTextColor(...BODY);
-    p.doc.text(unit, ux, uy);
-  }
-  p.mark(ux, uy - CAP * unitSize * PT, ux + uw, uy + 0.3 * unitSize * PT, "price-unit");
-  return inline ? lineH : lineH + unitSize * PT * 1.5;
-}
-
-/** Строка предложения: цена слева, описание справа. */
-function offerRow(ctx: Ctx, row: ProposalOfferRow, x: number, y: number, width: number, priceW: number): number {
-  const { p } = ctx;
-  let left = 0;
-  if (row.oldPrice) {
-    left += p.rich([{ text: row.oldPrice, weight: "semibold", color: MUTED, strike: true }], x, y, priceW, sz(ctx, 9.5), 1.2, "old-price");
-  }
-  left += priceLine(ctx, row.price, row.unit, x, y + left, priceW, sz(ctx, 17));
-  if (row.badge) {
-    left += gap(ctx, 1.4);
-    const bs = sz(ctx, 7.2);
-    const bw = p.width(row.badge, "extrabold", bs) + 3.6;
-    const bh = bs * PT * 1.7;
-    p.box(x, y + left, Math.min(bw, priceW), bh, { fill: ACCENT_DEEP, r: bh / 2, what: "badge" });
-    p.text(row.badge, x, y + left, Math.min(bw, priceW), {
-      size: bs,
-      weight: "extrabold",
-      color: WHITE,
-      align: "center",
-      lh: 1.7,
-      what: "badge-text",
-    });
-    left += bh;
-  }
-  const tx = x + priceW + gap(ctx, 4);
-  const tw = width - priceW - gap(ctx, 4);
-  let right = p.text(row.title, tx, y, tw, { size: sz(ctx, 9.6), weight: "extrabold", lh: 1.28, what: "offer-title" });
-  right += gap(ctx, 0.8);
-  right += p.text(row.text, tx, y + right, tw, { size: sz(ctx, 8.2), color: BODY, lh: 1.38, what: "offer-text" });
-  return Math.max(left, right);
-}
-
-/** QR-плитка и подпись под ней; возвращает высоту и габариты окна кода. */
-function drawQr(ctx: Ctx, x: number, y: number, width: number): { h: number; box: PdfBox; module: number } {
-  const { p, content } = ctx;
-  const layout = brandQrLayout(content.offer.ctaUrl);
-  const height = (layout.height / layout.width) * width;
-  let placed = { x0: x, y0: y, x1: x + width, y1: y + height };
-  let module = width / layout.width;
-  if (!p.dry) {
-    const drawn = drawBrandQrTilePdf(p.doc, layout, x, y, width, { fontName: p.fonts.face.semibold.family });
-    placed = drawn.window;
-    module = drawn.module;
-  }
-  p.mark(x, y, x + width, y + height, "qr");
-  let h = height + gap(ctx, 2);
-  if (content.offer.promoCode) {
-    const size = sz(ctx, 10.5);
-    const text = content.offer.promoCode;
-    const tw = p.width(text, "extrabold", size, 0.4);
-    const bw = Math.min(width, tw + 5);
-    const bh = size * PT * 1.9;
-    const bx = x + (width - bw) / 2;
-    if (!p.dry) {
-      p.doc.setLineDashPattern([1, 0.8], 0);
-    }
-    p.box(bx, y + h, bw, bh, { fill: WHITE, stroke: ACCENT_DEEP, lw: 0.35, r: 1.6, what: "promo-code" });
-    if (!p.dry) p.doc.setLineDashPattern([], 0);
-    p.text(text, bx, y + h, bw, { size, weight: "extrabold", color: INK, align: "center", lh: 1.9, charSpace: 0.4, what: "promo-code-text" });
-    h += bh;
-  } else {
-    // Адрес под QR — одной строкой: кегль уменьшается, пока адрес не влезет
-    // в ширину плитки (перенос посреди адреса читается как два адреса).
-    let size = sz(ctx, 7.6);
-    while (size > 5.2 && p.width(content.offer.qrCaption, "semibold", size) > width) size -= 0.2;
-    h += p.text([content.offer.qrCaption], x, y + h, width, { size, weight: "semibold", color: BODY, align: "center", lh: 1.3, what: "qr-caption" });
-  }
-  return { h, box: { ...placed, what: "qr-window" }, module };
-}
-
-function drawFooter(ctx: Ctx, bottom: number): number {
-  const { p, content } = ctx;
-  // Высота считается «сухо» от низа листа: сначала меряем, потом рисуем.
-  const measure = (dry: boolean, top: number): number => {
-    const q = dry ? new Painter(p.doc, p.fonts, true) : p;
-    let left = 0;
-    const leftW = CONTENT_W * 0.5;
-    if (content.sender) {
-      left += q.text(content.sender.name, MARGIN_X, top + left, leftW, { size: sz(ctx, 8.8), weight: "extrabold", lh: 1.3, what: "sender" });
-      const parts = content.sender.lines.map((line) => line.value);
-      if (parts.length > 0) {
-        left += q.text(parts.join("  ·  "), MARGIN_X, top + left, leftW, { size: sz(ctx, 8), color: BODY, lh: 1.38, what: "sender-lines" });
-      }
-    }
-    let right = 0;
-    if (content.requisites) {
-      right = q.text(content.requisites.join(" · "), MARGIN_X + CONTENT_W * 0.5 + 4, top, CONTENT_W * 0.5 - 4, {
-        size: sz(ctx, 6.9),
-        color: MUTED,
-        lh: 1.38,
-        align: "right",
-        what: "requisites",
-      });
-    }
-    return Math.max(left, right);
+  const row = (cells: [string, string, string, string], tint: boolean) => {
+    if (tint) fillRect(ctx, X, cursor, W, bodyH, C.tint, "price-tint");
+    const base = middle(cursor, bodyH, body.size);
+    text(ctx, cells[0], xs[0] + pad, base, style(ctx, 9.5, tint ? "semibold" : "regular"), "left", "price-cell");
+    text(ctx, cells[1], xs[2] - pad, base, style(ctx, 9.5, tint ? "semibold" : "regular", tint ? C.indigo : C.ink), "right", "price-cell");
+    text(ctx, cells[2], xs[3] - pad, base, style(ctx, 9.5, tint ? "semibold" : "regular", tint ? C.indigo : C.muted), "right", "price-cell");
+    text(ctx, cells[3], xs[4] - pad, base, style(ctx, 9.5, "semibold"), "right", "price-cell");
+    for (let i = 1; i < 4; i += 1) line(ctx, xs[i], cursor, xs[i], cursor + bodyH, C.border);
+    line(ctx, X, cursor + bodyH, X + W, cursor + bodyH, C.border);
+    cursor += bodyH;
   };
-  const inner = measure(true, 0);
-  const top = bottom - inner;
-  p.line(MARGIN_X, top - 3, PAGE_W - MARGIN_X, top - 3, LINE, 0.3);
-  measure(false, top);
-  return inner + 3;
-}
+  row([d.price.month.label, d.price.month.monthly, d.price.month.saving, d.price.month.total], false);
+  row([d.price.year.label, d.price.year.monthly, d.price.year.saving, d.price.year.total], true);
+  for (const extra of d.price.extras) {
+    const base = middle(cursor, extraH, body.size);
+    text(ctx, extra.label, xs[0] + pad, base, style(ctx, 9.5, "regular", C.muted), "left", "price-extra");
+    text(ctx, extra.price, xs[4] - pad, base, style(ctx, 9.5), "right", "price-extra");
+    line(ctx, xs[3], cursor, xs[3], cursor + extraH, C.border);
+    line(ctx, X, cursor + extraH, X + W, cursor + extraH, C.border);
+    cursor += extraH;
+  }
+  // Внешняя рамка (верх — тёмная шапка).
+  if (ctx.draw) {
+    ctx.pdf.doc.setDrawColor(...C.border2);
+    ctx.pdf.doc.setLineWidth(0.25);
+    ctx.pdf.doc.rect(X, y + headH, W, cursor - y - headH, "S");
+  }
+  mark(ctx, X, y, X + W, cursor, "price-table");
 
-// ---------------------------------------------------------------------------
-// Композиция — сверху вниз, предложение внизу во всю ширину
-// ---------------------------------------------------------------------------
-
-function composeA(ctx: Ctx): { bottom: number; qr: { box: PdfBox; module: number } } {
-  const { p, content } = ctx;
-  let y = MARGIN_TOP;
-  y += drawHeader(ctx, y) + gap(ctx, 5);
-  y += drawTitle(ctx, MARGIN_X, y, CONTENT_W, 21) + gap(ctx, 3.2);
-  y += p.text(content.lead, MARGIN_X, y, CONTENT_W - 6, { size: sz(ctx, 9.8), color: BODY, lh: 1.45, what: "lead" });
-  y += gap(ctx, 6);
-
-  // Как это работает — три карточки в ряд.
-  y += sectionLabel(ctx, "Как это работает", MARGIN_X, y, CONTENT_W) + gap(ctx, 2.4);
-  const colGap = 4;
-  const cardW = (CONTENT_W - 2 * colGap) / 3;
-  const pad = 3.6 * ctx.k;
-  const numSize = 6.2 * ctx.k;
-  const cardHeights = content.steps.map((step) => {
-    const q = new Painter(p.doc, p.fonts, true);
-    let h = pad + numSize + gap(ctx, 2);
-    h += q.text(step.title, 0, 0, cardW - 2 * pad, { size: sz(ctx, 9.4), weight: "extrabold", lh: 1.28 });
-    h += gap(ctx, 0.8);
-    h += q.text(step.text, 0, 0, cardW - 2 * pad, { size: sz(ctx, 8.1), color: BODY, lh: 1.38 });
-    return h + pad;
-  });
-  const cardH = Math.max(...cardHeights);
-  content.steps.forEach((step, index) => {
-    const x = MARGIN_X + index * (cardW + colGap);
-    p.box(x, y, cardW, cardH, { fill: TINT, r: 2.6, what: "step-card" });
-    p.number(x + pad, y + pad, numSize, String(index + 1));
-    let h = pad + numSize + gap(ctx, 2);
-    h += p.text(step.title, x + pad, y + h, cardW - 2 * pad, { size: sz(ctx, 9.4), weight: "extrabold", lh: 1.28, what: "step-title" });
-    h += gap(ctx, 0.8);
-    p.text(step.text, x + pad, y + h, cardW - 2 * pad, { size: sz(ctx, 8.1), color: BODY, lh: 1.38, what: "step" });
-  });
-  y += cardH + gap(ctx, 2.8);
-  y += p.text(content.stepsNote, MARGIN_X, y, CONTENT_W, { size: sz(ctx, 8.1), color: BODY, lh: 1.4, what: "steps-note" });
-  y += gap(ctx, 6);
-
-  // Преимущества и журналы — две колонки.
-  const colW = (CONTENT_W - 8) / 2;
-  const leftH = drawBenefits(ctx, MARGIN_X, y, colW);
-  const rightH = drawJournals(ctx, MARGIN_X + colW + 8, y, colW);
-  y += Math.max(leftH, rightH) + gap(ctx, 6);
-
-  // Предложение — панель во всю ширину, QR справа.
-  const panelPad = 5 * ctx.k;
-  const qrW = 38 * ctx.k;
-  const innerW = CONTENT_W - 2 * panelPad - qrW - 7;
-  const priceW = 31 * ctx.k;
-  const measureOffer = (painter: Painter, top: number): number => {
-    const c = { ...ctx, p: painter };
-    let h = 0;
-    h += painter.text(content.offer.title.toUpperCase(), MARGIN_X + panelPad, top + h, innerW, {
-      size: sz(ctx, 7.2),
-      weight: "extrabold",
-      color: ACCENT_DEEP,
-      lh: 1.3,
-      charSpace: 0.35,
-      what: "offer-label",
-    });
-    h += gap(ctx, 3);
-    h += offerRow(c, content.offer.rows[0], MARGIN_X + panelPad, top + h, innerW, priceW);
-    h += gap(ctx, 3);
-    painter.line(MARGIN_X + panelPad, top + h, MARGIN_X + panelPad + innerW, top + h, LINE, 0.3);
-    h += gap(ctx, 3);
-    h += offerRow(c, content.offer.rows[1], MARGIN_X + panelPad, top + h, innerW, priceW);
-    for (const note of content.offer.notes) {
-      h += gap(ctx, 2.2);
-      h += painter.text(note, MARGIN_X + panelPad, top + h, innerW, { size: sz(ctx, 8), weight: "semibold", color: ACCENT_DEEP, lh: 1.38, what: "offer-note" });
+  const small = style(ctx, 8, "regular", C.muted);
+  cursor += gap(ctx, 1.6);
+  for (const paragraph of [d.price.note, d.price.discountNote].filter((item): item is string => Boolean(item))) {
+    for (const rowText of wrap(ctx, paragraph, W, small)) {
+      cursor += small.size * PT * 1.4;
+      text(ctx, rowText, X, cursor, small, "left", "price-note");
     }
-    h += gap(ctx, 3);
-    h += painter.text(content.offer.howTo, MARGIN_X + panelPad, top + h, innerW, { size: sz(ctx, 8.6), weight: "extrabold", color: INK, lh: 1.38, what: "offer-howto" });
-    h += gap(ctx, 1);
-    h += painter.text(content.offer.payment, MARGIN_X + panelPad, top + h, innerW, { size: sz(ctx, 8), color: BODY, lh: 1.38, what: "offer-payment" });
-    return h;
-  };
-  const qrH = (() => {
-    const q = new Painter(p.doc, p.fonts, true);
-    return drawQr({ ...ctx, p: q }, 0, 0, qrW).h;
-  })();
-  const offerH = measureOffer(new Painter(p.doc, p.fonts, true), 0);
-  const panelH = Math.max(offerH, qrH) + 2 * panelPad;
-  p.box(MARGIN_X, y, CONTENT_W, panelH, { fill: TINT_2, r: 3.2, what: "offer-panel" });
-  measureOffer(p, y + panelPad);
-  const qr = drawQr(ctx, PAGE_W - MARGIN_X - panelPad - qrW, y + panelPad + Math.max(0, (panelH - 2 * panelPad - qrH) / 2), qrW);
-  y += panelH;
-
-  return { bottom: y, qr };
+  }
+  return cursor + gap(ctx, 1) - y;
 }
 
-// ---------------------------------------------------------------------------
-
-function newDocument(): jsPDF {
-  return new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+function valueCell(ctx: Ctx, cell: ProposalDesignCell, cx: number, top: number, h: number, bold: boolean) {
+  if (cell.kind === "yes") {
+    if (ctx.draw) checkBadge(ctx.pdf, cx, top + h / 2, Math.min(4, h * 0.72));
+    mark(ctx, cx - 1.7, top + h / 2 - 1.7, cx + 1.7, top + h / 2 + 1.7, "check");
+    return;
+  }
+  const st = cell.kind === "no" ? style(ctx, 9.5, "regular", C.faint) : style(ctx, 9.5, bold ? "semibold" : "regular");
+  text(ctx, cell.kind === "no" ? "—" : cell.text, cx, middle(top, h, st.size), st, "center", "compare-cell");
 }
 
-/**
- * Одна попытка вёрстки при плотности `k`. «Сухие» попытки только меряют и
- * делят один документ `measure`: разбор шрифтов (addFont) — самое дорогое в
- * jsPDF, и новый документ на каждую ступень поиска плотности утраивал время.
- */
-function attempt(content: ProposalContent, k: number, dry: boolean, measure?: jsPDF) {
-  const doc = dry && measure ? measure : newDocument();
-  const fonts = registerProposalFonts(doc);
-  const painter = new Painter(doc, fonts, dry);
-  const ctx: Ctx = { p: painter, k, content };
-  const footerH = drawFooter({ ...ctx, p: new Painter(doc, fonts, true) }, PAGE_H - MARGIN_BOTTOM);
-  const footerTop = PAGE_H - MARGIN_BOTTOM - footerH;
-  const body = composeA(ctx);
-  if (!dry) drawFooter(ctx, PAGE_H - MARGIN_BOTTOM);
-  // Между телом и футером — не меньше 4 мм воздуха.
-  const fits = body.bottom <= footerTop - 4 + 1e-6;
-  return { doc, painter, fits, body, footerTop };
+/** «Что входит»: два тарифа, текущий — индиго. */
+function comparisonTable(ctx: Ctx, x: number, y: number, width: number): number {
+  const { d } = ctx;
+  const first = width - 54;
+  const colW = 27;
+  const xs = [x, x + first, x + first + colW, x + width];
+  const headH = rowH(ctx, 7.6);
+  const bodyH = rowH(ctx, 5.75);
+  const priceH = rowH(ctx, 6.6);
+  const current = d.comparison.current;
+  let cursor = y;
+
+  fillRect(ctx, x, cursor, width, headH, C.soft, "compare-head");
+  d.comparison.columns.forEach((name, i) => {
+    const active = i === current;
+    if (active) fillRect(ctx, xs[i + 1], cursor, colW, headH, C.indigo, "compare-head-active");
+    text(ctx, name, xs[i + 1] + colW / 2, middle(cursor, headH, fs(ctx, 9.5)), style(ctx, 9.5, "semibold", active ? C.white : C.ink), "center", "compare-head-text");
+  });
+  cursor += headH;
+  line(ctx, x, cursor, x + width, cursor, C.border);
+
+  for (const rowData of d.comparison.rows) {
+    fillRect(ctx, xs[current + 1], cursor, colW, bodyH, C.tint, "compare-tint");
+    text(ctx, rowData.label, x + 2.4, middle(cursor, bodyH, fs(ctx, 9.5)), style(ctx, 9.5), "left", "compare-label");
+    rowData.cells.forEach((cell, i) => valueCell(ctx, cell, xs[i + 1] + colW / 2, cursor, bodyH, false));
+    cursor += bodyH;
+    line(ctx, x, cursor, x + width, cursor, C.border);
+  }
+
+  fillRect(ctx, x, cursor, width, priceH, C.soft, "compare-price");
+  fillRect(ctx, xs[current + 1], cursor, colW, priceH, C.tint2, "compare-price-active");
+  text(ctx, d.comparison.priceRow.label, x + 2.4, middle(cursor, priceH, fs(ctx, 9.5)), style(ctx, 9.5), "left", "compare-price-label");
+  d.comparison.priceRow.values.forEach((value, i) => {
+    text(ctx, value, xs[i + 1] + colW / 2, middle(cursor, priceH, fs(ctx, 9.5)), style(ctx, 9.5, "semibold", i === current ? C.indigo : C.ink), "center", "compare-price-value");
+  });
+  cursor += priceH;
+
+  if (ctx.draw) {
+    ctx.pdf.doc.setDrawColor(...C.border2);
+    ctx.pdf.doc.setLineWidth(0.25);
+    ctx.pdf.doc.rect(x, y, width, cursor - y, "S");
+    for (const vx of [xs[1], xs[2]]) line(ctx, vx, y, vx, cursor, C.border);
+  }
+  mark(ctx, x, y, x + width, cursor, "compare-table");
+  return cursor - y;
+}
+
+/** «Как начать»: вертикальная линия с полыми кружками. */
+function timeline(ctx: Ctx, x: number, y: number, width: number): number {
+  const { d } = ctx;
+  const step = rowH(ctx, 14);
+  const nodeX = x + 2.6;
+  const firstNode = y + 3.2;
+  const lastNode = y + 3.2 + step * (d.steps.items.length - 1);
+  line(ctx, nodeX, firstNode, nodeX, lastNode, RAIL, 0.35);
+  d.steps.items.forEach((item, i) => {
+    const ny = firstNode + step * i;
+    if (ctx.draw) {
+      ctx.pdf.doc.setFillColor(...C.white);
+      ctx.pdf.doc.setDrawColor(...NODE);
+      ctx.pdf.doc.setLineWidth(0.45);
+      ctx.pdf.doc.circle(nodeX, ny, 1.35, "FD");
+    }
+    mark(ctx, nodeX - 1.6, ny - 1.6, nodeX + 1.6, ny + 1.6, "node");
+    const base = ny + fs(ctx, 9.5) * PT * 0.35;
+    text(ctx, String(i + 1), x + 8.4, base, style(ctx, 9.5, "semibold", NODE), "center", "step-num");
+    const tx = x + 13.2;
+    text(ctx, item.title, tx, base, style(ctx, 9.5, "semibold"), "left", "step-title");
+    const sub = style(ctx, 9.5, "regular", C.muted);
+    wrap(ctx, item.text, width - 13.2, sub).forEach((rowText, k) => {
+      text(ctx, rowText, tx, base + sub.size * PT * 1.45 * (k + 1), sub, "left", "step-text");
+    });
+  });
+  return lastNode - y + step * 0.6;
+}
+
+/** Подпись отправителя слева и карточка «Есть вопросы?» с QR справа. */
+function signatureRow(ctx: Ctx, y: number): { h: number; qr: { box: PdfBox; module: number } } {
+  const { d } = ctx;
+  const cardX = X + 82.8;
+  const cardW = W - 82.8;
+  const cardH = Math.max(rowH(ctx, 27.5), QR_SIZE + 10);
+  fillRect(ctx, cardX, y, cardW, cardH, C.tint, "contact-card");
+
+  // Аватар с инициалами.
+  const ax = X + 5.8;
+  const ay = y + 8.2;
+  if (ctx.draw) {
+    ctx.pdf.doc.setFillColor(...C.ink);
+    ctx.pdf.doc.setDrawColor(...NODE);
+    ctx.pdf.doc.setLineWidth(0.5);
+    ctx.pdf.doc.circle(ax, ay, 5.4, "FD");
+  }
+  mark(ctx, ax - 5.6, ay - 5.6, ax + 5.6, ay + 5.6, "avatar");
+  text(ctx, d.sender.initials, ax, ay + 1.3, style(ctx, 10, "semibold", C.lilacText), "center", "avatar-text");
+
+  const tx = X + 15.6;
+  const textW = cardX - tx - 4;
+  let cursor = y + 4.6;
+  text(ctx, "С уважением,", tx, cursor, style(ctx, 9.5, "regular", C.muted), "left", "regards");
+  cursor += fs(ctx, 12) * PT * 1.55;
+  text(ctx, d.sender.displayName, tx, cursor, style(ctx, 12, "semibold"), "left", "sender-name");
+  const muted = style(ctx, 9.5, "regular", C.muted);
+  for (const row of wrap(ctx, d.sender.position, textW, muted).slice(0, 2)) {
+    cursor += muted.size * PT * 1.4;
+    text(ctx, row, tx, cursor, muted, "left", "sender-position");
+  }
+  if (d.sender.signature) {
+    cursor += 7;
+    line(ctx, tx, cursor + 0.6, tx + 28, cursor + 0.6, C.faint, 0.25);
+    text(ctx, d.sender.signature, tx + 30, cursor, style(ctx, 9.5), "left", "sender-signature");
+  }
+
+  // Карточка: текст, телефон, почта и QR.
+  const qrX = cardX + cardW - QR_SIZE - 12;
+  const qrY = y + 4;
+  const textX = cardX + 5.6;
+  let c = y + 6.4;
+  const body = style(ctx, 9.5);
+  text(ctx, d.contact.lines[0], textX, c, body, "left", "contact-text");
+  c += body.size * PT * 1.4;
+  text(ctx, d.contact.lines[1], textX, c, body, "left", "contact-text");
+  for (const [kind, value] of [
+    ["phone", d.contact.phone],
+    ["mail", d.contact.email],
+  ] as const) {
+    if (!value) continue;
+    c += body.size * PT * 1.6;
+    if (ctx.draw) contactIcon(ctx.pdf, kind, textX, c - 2.7, 3.2);
+    text(ctx, value, textX + 5, c, body, "left", "contact-value");
+  }
+  let qrModule = QR_SIZE / 29;
+  if (ctx.draw) qrModule = drawQr(ctx.pdf, d.contact.qrUrl, { x: qrX, y: qrY, size: QR_SIZE }, { ecc: "M" }).module;
+  mark(ctx, qrX, qrY, qrX + QR_SIZE, qrY + QR_SIZE, "qr");
+  text(ctx, d.contact.qrCaption, qrX + QR_SIZE / 2, qrY + QR_SIZE + 4, style(ctx, 8, "regular", C.muted), "center", "qr-caption");
+  return { h: cardH, qr: { box: { x0: qrX, y0: qrY, x1: qrX + QR_SIZE, y1: qrY + QR_SIZE, what: "qr-window" }, module: qrModule } };
+}
+
+// ───────────────────────────── сборка ─────────────────────────────
+
+function compose(ctx: Ctx): { bottom: number; qr: { box: PdfBox; module: number } } {
+  let y = BRAND_CONTENT_TOP - 1;
+  y += titleBlock(ctx, y);
+  y += gap(ctx, 6);
+  y += greetingBlock(ctx, y);
+  y += gap(ctx, 6.5);
+  y += heading(ctx, ctx.d.price.title, X, y);
+  y += priceTable(ctx, y);
+  y += gap(ctx, 5.5);
+
+  const leftW = 112;
+  const rightX = X + leftW + 7;
+  const rightW = X + W - rightX;
+  const headH = heading(ctx, ctx.d.comparison.title, X, y);
+  heading(ctx, ctx.d.steps.title, rightX, y);
+  y += headH;
+  const leftH = comparisonTable(ctx, X, y, leftW);
+  const rightH = timeline(ctx, rightX, y, rightW);
+  y += Math.max(leftH, rightH);
+  y += gap(ctx, 7);
+
+  const sign = signatureRow(ctx, y);
+  y += sign.h + gap(ctx, 4.2);
+  const small = style(ctx, 8, "regular", C.muted);
+  for (const row of wrap(ctx, ctx.d.disclaimer, W, small)) {
+    y += small.size * PT * 1.35;
+    text(ctx, row, X, y, small, "left", "disclaimer");
+  }
+  return { bottom: y + 1, qr: sign.qr };
 }
 
 export function renderProposalPdfDocument(content: ProposalContent): ProposalPdfRender {
-  const measure = newDocument();
-  const fits = (k: number) => attempt(content, k, true, measure).fits;
+  const d = content.design;
+  const measure = createBrandPdf({ title: "Коммерческое предложение WeSetup" });
+  const fits = (s: number) => compose({ pdf: measure, d, s, draw: false, bounds: [] }).bottom <= BRAND_CONTENT_BOTTOM;
   let scale: number | null = null;
   if (fits(1)) scale = 1;
   else if (fits(MIN_SCALE)) {
     let lo = MIN_SCALE;
     let hi = 1;
-    while (hi - lo > SCALE_STEP) {
+    while (hi - lo > 0.01) {
       const mid = (lo + hi) / 2;
       if (fits(mid)) lo = mid;
       else hi = mid;
     }
-    scale = Math.floor(lo * 1000) / 1000;
+    scale = Math.floor(lo * 100) / 100;
   }
   if (scale === null) throw new Error(`КП не помещается на лист A4 (сфера ${content.sphere})`);
-  const real = attempt(content, scale, false);
+
+  const pdf = createBrandPdf({
+    title: `Коммерческое предложение WeSetup — ${d.planName}`,
+    subject: "Электронные журналы СанПиН и ХАССП",
+  });
+  const ctx: Ctx = { pdf, d, s: scale, draw: true, bounds: [] };
+  const seller = brandSeller({ ...d.seller, site: "wesetup.ru" });
+  letterhead(pdf, seller);
+  footerCard(pdf, seller);
+  mark(ctx, X, MARGIN_TOP, X + W, MARGIN_TOP + 21, "letterhead");
+  mark(ctx, X, PAGE_H - MARGIN_BOTTOM - 12, X + W, PAGE_H - MARGIN_BOTTOM, "footer");
+  const body = compose(ctx);
   return {
-    buffer: Buffer.from(real.doc.output("arraybuffer")),
-    pages: real.doc.getNumberOfPages(),
-    bounds: real.painter.bounds,
+    buffer: Buffer.from(pdf.doc.output("arraybuffer")),
+    pages: pdf.doc.getNumberOfPages(),
+    bounds: ctx.bounds,
     scale,
-    qr: { url: content.offer.ctaUrl, box: real.body.qr.box, module: real.body.qr.module },
+    qr: { url: d.contact.qrUrl, box: body.qr.box, module: body.qr.module },
   };
 }

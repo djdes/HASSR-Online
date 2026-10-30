@@ -39,12 +39,32 @@ export function normalizeSender(value: unknown): ProposalSender | null {
   const name = clean(raw.name, SENDER_FIELD_MAX);
   if (!name) return null;
   const email = clean(raw.email, SENDER_FIELD_MAX);
+  const position = clean(raw.position, SENDER_FIELD_MAX);
   return {
     name,
     phone: clean(raw.phone, SENDER_FIELD_MAX),
     email: email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email.toLowerCase() : null,
     telegram: normalizeTelegram(raw.telegram),
+    // Только если задана: прежние отправители (рассылка, токен) — без поля.
+    ...(position ? { position } : {}),
   };
+}
+
+export const ADDRESSEE_MAX = 200;
+export const GREETING_MAX = 120;
+
+/** Новые поля КП (2026-10-30) — только заданные, чтобы старые вызовы получали прежний объект. */
+function normalizeDesignVars(vars: ProposalVars): Partial<ProposalVars> {
+  const out: Partial<ProposalVars> = {};
+  if (vars.plan === "standard" || vars.plan === "premium") out.plan = vars.plan;
+  const addressee = clean(vars.addressee, ADDRESSEE_MAX);
+  if (addressee) out.addressee = addressee;
+  const greeting = clean(vars.greeting, GREETING_MAX);
+  if (greeting) out.greeting = greeting;
+  if (vars.extras && typeof vars.extras === "object") {
+    out.extras = { ppk: vars.extras.ppk !== false, equipment: vars.extras.equipment !== false };
+  }
+  return out;
 }
 
 export function normalizePromo(value: unknown): ProposalPromo | null {
@@ -79,5 +99,6 @@ export function normalizeProposalVars(vars: ProposalVars): ProposalVars {
     promo: normalizePromo(vars.promo),
     ctaUrl: clean(vars.ctaUrl, 2000),
     sender: normalizeSender(vars.sender),
+    ...normalizeDesignVars(vars),
   };
 }

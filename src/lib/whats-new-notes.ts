@@ -29,11 +29,17 @@ import type { WhatsNewNote } from "@/components/dashboard/whats-new-modal";
  * Поменяли список — модалка покажется сама, не поменяли — нет.
  * Оставлен как отметка о последнем ручном обновлении текста.
  */
-export const LATEST_NOTES_BUILD_SHA = "point-skeleton-access-2026-10-30";
+export const LATEST_NOTES_BUILD_SHA = "invoice-design-2026-10-30";
 
 export type { WhatsNewNote };
 
 export const WHATS_NEW_NOTES: WhatsNewNote[] = [
+  {
+    category: "Счёт на оплату в новом оформлении",
+    items: [
+      "Счёт на оплату — в новом фирменном оформлении на одном листе, с QR-кодом для оплаты: отсканируйте его в приложении банка, и реквизиты, сумма и назначение платежа подставятся сами.",
+    ],
+  },
   {
     category: "Смена точки и закрытые разделы",
     items: [

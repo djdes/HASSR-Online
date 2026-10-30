@@ -2,12 +2,27 @@ import { db } from "@/lib/db";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { invoiceRequisitesReady } from "@/lib/invoices/build";
 import { readActivePromotion } from "@/lib/promo/offer";
-import { planMonthlyRub } from "@/lib/tariff-plans";
+import { PPK_INDIVIDUAL_FROM_RUB, planMonthlyRub } from "@/lib/tariff-plans";
+import { PPK_SERVICE_KEY, readService } from "@/lib/services/catalog";
 import { readPlanPricing } from "@/lib/tariffs";
 
 import type { ProposalContext } from "./content";
+import { equipmentFromRub } from "./design";
 import type { ProposalSender } from "./types";
 import { normalizeSender } from "./vars";
+
+/**
+ * «ППК — от …» для строки «Дополнительно» в КП. На сайте цены услуг с
+ * 30.10 заменены на «Свяжитесь с нами» (#60), но КП — личный документ с
+ * ценами по образцу дизайна: берём цену услуги из ROOT → «Услуги».
+ */
+async function readPpkFromRub(): Promise<number> {
+  const service = await readService(PPK_SERVICE_KEY).catch((error) => {
+    console.error("[kp] ppk price read failed — default", error);
+    return null;
+  });
+  return service?.priceRub ?? PPK_INDIVIDUAL_FROM_RUB;
+}
 
 /**
  * Данные КП на момент отрисовки: цены тарифов и акция (как на витринах),
@@ -48,7 +63,7 @@ export async function loadProposalContext(now: Date = new Date()): Promise<Propo
   // (`tariffActive`), рассылка видит строку в логе.
   const pricing = await readPlanPricing();
   if (!pricing.available.standard.year) console.warn("[kp] standard_year tariff is inactive — offer shows its last price");
-  const [promotion, requisites, defaultSender] = await Promise.all([
+  const [promotion, requisites, defaultSender, ppkFromRub] = await Promise.all([
     readActivePromotion(now).catch((error) => {
       console.error("[kp] active promotion read failed", error);
       return null;
@@ -58,6 +73,7 @@ export async function loadProposalContext(now: Date = new Date()): Promise<Propo
       return null;
     }),
     readDefaultProposalSender(),
+    readPpkFromRub(),
   ]);
   return {
     now,
@@ -68,5 +84,8 @@ export async function loadProposalContext(now: Date = new Date()): Promise<Propo
     requisites,
     invoiceReady: requisites ? invoiceRequisitesReady(requisites) : false,
     defaultSender,
+    rates: pricing.rates,
+    ppkFromRub,
+    equipmentFromRub: equipmentFromRub(),
   };
 }

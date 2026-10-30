@@ -22,7 +22,7 @@ import { InvoiceActions } from "./invoice-actions";
 import { CopyButton } from "./copy-button";
 import { PanelAccessButton } from "./panel-access-button";
 import { isTopupOrder } from "@/lib/balance/topup-core";
-import { ClientContractSection } from "@/components/root/client-contract-section";
+import { ClientDocumentsSection } from "@/components/root/client-documents-section";
 import { EdoSendButton } from "@/components/root/edo-send-button";
 
 export const dynamic = "force-dynamic";
@@ -295,9 +295,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Документы клиенту: договор с реквизитами БФС и клиента. */}
+        {/* Документы клиенту: договор, КП и счёт — с почты сотрудника. */}
         <section id="documents" className="scroll-mt-16">
-          <ClientContractSection organizationId={org.id} edo={canEdo} />
+          <ClientDocumentsSection organizationId={org.id} edo={canEdo} />
         </section>
 
         {/* Подписка, баллы и оплаты */}

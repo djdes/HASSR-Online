@@ -18,7 +18,13 @@ type SpecVars = {
   recipientName?: string | null;
   promo?: { code: string; kind: "percent" | "fixed"; value: number; lifetime: boolean; endsAt: Date | null } | null;
   ctaUrl?: string | null;
-  sender?: { name: string; phone?: string | null; email?: string | null; telegram?: string | null } | null;
+  sender?: { name: string; phone?: string | null; email?: string | null; telegram?: string | null; position?: string | null } | null;
+  // Расширение 2026-10-30 (КП в новом дизайне, отправка из карточки клиента):
+  // только необязательные поля — вызовы рассылки и генератора не меняются.
+  plan?: "standard" | "premium" | null;
+  addressee?: string | null;
+  greeting?: string | null;
+  extras?: { ppk?: boolean; equipment?: boolean } | null;
 };
 type SpecEmailOptions = { webUrl?: string | null; unsubscribeUrl?: string | null; trackUrl?: (url: string) => string };
 

@@ -19,7 +19,9 @@ import { basePlanSnapshot, changeKindNote, planTariffTitle } from "@/lib/plan-pa
 import { isTestMode } from "@/lib/robokassa";
 import { readTariffAny } from "@/lib/tariffs";
 
-import { INVOICE_VALID_DAYS, buildInvoiceDraft, invoiceRequisitesReady } from "./build";
+import { brandSeller } from "@/lib/brand-docs/pdf-kit";
+
+import { INVOICE_VALID_DAYS, buildInvoiceDraft, formatRuDate, invoiceRequisitesReady } from "./build";
 import { invoiceDeadline } from "./due";
 import { renderInvoicePdf } from "./pdf";
 
@@ -242,11 +244,19 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
     buyer: buildBuyerSnapshot(organization),
     purpose: topup ? "topup" : "subscription",
   });
-  const [facsimile, stamp] = await Promise.all([
+  const [facsimile, stamp, contract] = await Promise.all([
     readLegalImage("facsimile", requisites),
     readLegalImage("stamp", requisites),
+    // Есть выпущенный договор с клиентом — счёт выставлен по нему, а не по оферте.
+    db.clientContract.findFirst({
+      where: { organizationId: order.organizationId, status: { not: "voided" }, issuedAt: { lte: order.createdAt } },
+      orderBy: { issuedAt: "desc" },
+      select: { number: true, issuedAt: true },
+    }),
   ]);
-  return { order, pdf: renderInvoicePdf(draft, { facsimile, stamp }) };
+  if (contract) draft.basis = `Договор № ${contract.number} от ${formatRuDate(contract.issuedAt)}`;
+  const brand = brandSeller({ ...requisites, site: "wesetup.ru" });
+  return { order, pdf: renderInvoicePdf(draft, { facsimile, stamp }, { brand }) };
 }
 
 /** Письмо со счётом клиенту и заметка админу — best-effort, после ответа клиенту. */

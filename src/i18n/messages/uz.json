@@ -30298,5 +30298,119 @@
     "errors": {
       "generic": "Nimadir xato ketdi — qaytadan urinib koʻring"
     }
+  },
+  "rootClientDocuments": {
+    "title": "Mijozga hujjatlar",
+    "subtitle": "Shartnoma, tijorat taklifi va hisob — WeSetup uslubida. Xatlar sizning pochtangizdan yuboriladi.",
+    "cancel": "Bekor qilish",
+    "download": "PDF yuklab olish",
+    "preparing": "Tayyorlanmoqda…",
+    "noAccess": "Panelda «{section}» boʻlimiga ruxsat kerak",
+    "sections": {
+      "sales": "Savdo",
+      "billing": "Toʻlovlar va tariflar"
+    },
+    "contract": {
+      "title": "Shartnoma",
+      "none": "Hali rasmiylashtirilmagan",
+      "status": "{number}-son, {date} · {status}",
+      "statuses": {
+        "issued": "rasmiylashtirilgan",
+        "sent": "yuborilgan",
+        "voided": "bekor qilingan"
+      },
+      "open": "Shartnomaga oʻtish"
+    },
+    "proposal": {
+      "title": "Tijorat taklifi",
+      "none": "Hali yuborilmagan",
+      "last": "Yuborilgan: {date}",
+      "lastBy": "Yuborilgan: {date} · {name}",
+      "action": "Taklifni yuborish",
+      "dialogTitle": "{company} uchun taklif",
+      "dialogDescription": "WeSetup uslubidagi bitta A4 varaq: tarif narxi, nimalar kiradi, qanday boshlash va sizning imzoingiz. Xat PDF ilova bilan yuboriladi.",
+      "plan": "Tarif",
+      "plans": {
+        "standard": "Standart",
+        "premium": "Premium"
+      },
+      "addressee": "Sarlavha ostidagi qabul qiluvchi qatori",
+      "addresseeHint": "Rus tilida jo‘nalish kelishigida: rahbarning F.I.Sh.ni avtomatik turladik — tekshiring.",
+      "greeting": "Murojaat",
+      "extras": "Narxlar jadvalidagi «Qoʻshimcha» qatorlari",
+      "extraPpk": "Ishlab chiqarish nazorati dasturi",
+      "extraEquipment": "Oʻrnatish bilan harorat datchiklari (Premiumda)",
+      "promo": "Promokod",
+      "promoNone": "Promokodsiz",
+      "signedBy": "Taklifdagi imzo: {name}",
+      "signedHint": "Ism, lavozim va telefon «Mening pochtam» yoki profildan olinadi.",
+      "confirm": "Taklifni yuborish",
+      "sending": "Yuborilmoqda…",
+      "sent": "Taklif yuborildi: {emails}",
+      "failed": "Taklifni yuborib boʻlmadi",
+      "warnings": "Eʼtibor bering: {text}"
+    },
+    "invoice": {
+      "title": "Toʻlov hisobi",
+      "none": "Hali hisoblar yoʻq",
+      "latest": "{number}-son · {amount} · {status}",
+      "statuses": {
+        "pending": "toʻlov kutilmoqda",
+        "paid": "toʻlangan",
+        "cancelled": "bekor qilingan",
+        "failed": "oʻtmadi",
+        "refunded": "qaytarilgan"
+      },
+      "action": "Hisob chiqarish",
+      "send": "Hisobni yuborish",
+      "blockedRequisites": "«BFS» MChJ rekvizitlarini toʻldiring — ularsiz hisob chiqarib boʻlmaydi",
+      "blockedInn": "Mijozda STIR yoʻq — hisob chiqarib boʻlmaydi",
+      "dialogTitle": "{company} uchun hisob",
+      "dialogDescription": "Hisob mijozning toʻlovlarida va kabinetida paydo boʻladi. Summa — tarif va joriy obunaga koʻra, saytdagi toʻlov kabi.",
+      "plan": "Tarif",
+      "cycle": "Davr",
+      "cycles": {
+        "month": "Oy",
+        "year": "Yil"
+      },
+      "points": "Nuqtalar",
+      "estimate": "Taxminan: {amount}. Aniq summa mijozning joriy obunasi va chegirmalariga qarab hisoblanadi.",
+      "promo": "Promokod — ixtiyoriy",
+      "issue": "Hisob chiqarish",
+      "issuing": "Chiqarilmoqda…",
+      "issued": "{number}-son hisob {amount} ga chiqarildi",
+      "existing": "Bunday hisob allaqachon bor — {number}-son, {amount}",
+      "ready": "{number}-son hisob {amount} ga tayyor. PDFni yuklab oling yoki mijozga yuboring.",
+      "sendTitle": "{number}-son hisobni yuborish",
+      "sendDescription": "Xat PDF ilova bilan yuboriladi — hisobda bank ilovasidan toʻlash uchun QR bor.",
+      "sent": "Hisob yuborildi: {emails}",
+      "failed": "Hisobni yuborib boʻlmadi"
+    },
+    "recipients": {
+      "label": "Kimga",
+      "add": "Qoʻshish",
+      "addPlaceholder": "Manzil qoʻshing va Enter tugmasini bosing",
+      "invalid": "Bu pochta manziliga oʻxshamaydi",
+      "empty": "Mos manzillar yoʻq — mijoz pochtasini qoʻlda qoʻshing.",
+      "sources": {
+        "owner": "egasi",
+        "company": "kompaniya",
+        "accountant": "buxgalter",
+        "person": "xodim",
+        "manual": "qoʻlda"
+      }
+    },
+    "mail": {
+      "subject": "Mavzu",
+      "message": "Xat matni",
+      "personalOn": "Xat sizning pochtangizdan yuboriladi",
+      "personalOff": "Shaxsiy pochta ulanmagan — xat umumiy manzildan yuboriladi, javoblar sizga keladi",
+      "viaPersonal": "Sizning pochtangizdan: {from}",
+      "viaSystem": "Umumiy noreply@wesetup.ru manzilidan, javoblar sizga keladi. Xatlar oʻz manzilingizdan ketishi uchun «Mening pochtam»ni ulang.",
+      "viaSystemFallback": "Shaxsiy pochta ishlamadi ({reason}) — umumiy manzildan yuborildi, javoblar sizga keladi."
+    },
+    "errors": {
+      "generic": "Nimadir xato ketdi — qaytadan urinib koʻring"
+    }
   }
 }

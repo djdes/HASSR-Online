@@ -37,7 +37,8 @@ function check(
     assert.ok(box.y0 >= MARGIN_TOP - EPS && box.y1 <= PAGE_H - MARGIN_BOTTOM + EPS, `${sphere}: ${box.what} за верхним/нижним полем (${box.y0.toFixed(1)}–${box.y1.toFixed(1)})`);
   }
   assert.equal(render.qr.url, content.offer.ctaUrl);
-  assert.ok(render.qr.box.x1 - render.qr.box.x0 >= 28, `${sphere}: QR мельче 28 мм`);
+  // Дизайн 2026-10-30: QR в карточке контактов — 15 мм, модуль не мельче 0,5 мм.
+  assert.ok(render.qr.box.x1 - render.qr.box.x0 >= 15 - EPS, `${sphere}: QR мельче 15 мм`);
   assert.equal(render.buffer.subarray(0, 5).toString("latin1"), "%PDF-");
   return render;
 }
