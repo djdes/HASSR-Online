@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { journalTitle } from "@/i18n/journal-presentation";
 import { loadMessages } from "@/i18n/messages";
@@ -41,7 +41,7 @@ const STATUS_CLASS: Record<ExternalInspectorStatus, string> = {
  */
 export default async function InspectorsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   // «Ответственных за журналы» (там меняют проверяющего журнала и аудиторов) открывает admin.full.
   const canEditResponsibles = hasCapability(session.user, "admin.full");

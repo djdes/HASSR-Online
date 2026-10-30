@@ -25,6 +25,7 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
+import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { isOfficeBuilding } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
@@ -262,6 +263,9 @@ export default async function EquipmentSettingsPage({
         </div>
       </div>
 
+      {/* Чипы мест и список — одна область: нажатие на чип показывает
+          скелет списка, пока не придут данные места (2026-10-29). */}
+      <PlaceFilterScope>
       {showPlaceFilter && scope.items.length > 0 ? (
         <PlaceFilterChips
           kind="equipment"
@@ -280,6 +284,7 @@ export default async function EquipmentSettingsPage({
       ) : null}
 
       {/* Content */}
+      <PlaceFilterResults>
       {equipment.length === 0 ? (
         <div className="rounded-2xl border border-[#ececf4] bg-white px-8 py-16 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#f0edff]">
@@ -330,6 +335,8 @@ export default async function EquipmentSettingsPage({
           </div>
         )
       )}
+      </PlaceFilterResults>
+      </PlaceFilterScope>
     </div>
   );
 }

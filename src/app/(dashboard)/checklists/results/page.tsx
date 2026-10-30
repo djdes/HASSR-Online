@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasJournalAccess } from "@/lib/journal-acl";
@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function ChecklistResultsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await requireAuth();
-  if (!(await hasJournalAccess(session.user, CHECKLIST_CODE))) notFound();
+  if (!(await hasJournalAccess(session.user, CHECKLIST_CODE))) forbidden();
   const organizationId = getActiveOrgId(session);
   const params = await searchParams;
   const filters = parseChecklistResultFilters(params);

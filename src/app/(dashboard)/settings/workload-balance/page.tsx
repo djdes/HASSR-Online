@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { loadMessages } from "@/i18n/messages";
 import { journalTitle } from "@/i18n/journal-presentation";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -32,7 +32,7 @@ const VALID_CODES: Set<string> = new Set(
 
 export default async function WorkloadBalancePage() {
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
   const locale = await getSiteLocale();
   const [t, messages] = await Promise.all([

@@ -98,7 +98,7 @@ test("у каждого переехавшего поля есть своя но
 test("новые страницы закрыты так же, как «Реквизиты»: только admin.full", () => {
   for (const page of PAGES) {
     const text = read(page);
-    assert.match(text, /if \(!hasCapability\(session\.user, "admin\.full"\)\) redirect\("\/settings"\);/, page);
+    assert.match(text, /if \(!hasCapability\(session\.user, "admin\.full"\)\) forbidden\(\);/, page);
     assert.ok(text.includes("<SectionPageHeader"), page);
     assert.ok(text.includes("<PageGuide"), page);
   }

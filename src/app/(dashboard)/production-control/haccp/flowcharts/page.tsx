@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 /** ХАССП, блок-схемы техпроцесса: список схем с мини-превью, создание и удаление. */
 export default async function Page() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [rows, t] = await Promise.all([

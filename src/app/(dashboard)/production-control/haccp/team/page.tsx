@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 /** ХАССП, шаг 1 — группа ХАССП: состав, приказ, положение и подписанные документы. */
 export default async function TeamPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [rows, staff, order, t, locale] = await Promise.all([

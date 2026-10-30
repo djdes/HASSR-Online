@@ -19,19 +19,26 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
 import { hasCapability } from "@/lib/permission-presets";
 import { resolveSectionName } from "@/lib/org-custom-names";
+import { DENIED_PARAM, keepDeniedParam } from "@/lib/denied-notice";
 
 export const dynamic = "force-dynamic";
 
-export default async function JournalsPage() {
+export default async function JournalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requireAuth();
   const ui = await getTranslations("journals.ui.index");
   // Заведующая (head_chef) и не-admin'ы не должны видеть «журналы как
-  // журналы». Перенаправляем туда где они работают.
+  // журналы». Перенаправляем туда где они работают — с меткой `?denied=`,
+  // если сюда увёл proxy: объяснение покажет страница, где человек окажется.
   if (!hasCapability(session.user, "journals.view")) {
+    const denied = (await searchParams)[DENIED_PARAM];
     if (hasCapability(session.user, "tasks.verify")) {
-      redirect("/control-board");
+      redirect(keepDeniedParam("/control-board", denied));
     }
-    redirect("/mini/today");
+    redirect(keepDeniedParam("/mini/today", denied));
   }
   // Руководство с выбранной в шапке торговой точкой: «Все журналы» — страница
   // всей организации, в режиме точки её нет (владелец, 2026-10-28).

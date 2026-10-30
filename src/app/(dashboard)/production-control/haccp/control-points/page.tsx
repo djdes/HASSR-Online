@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ListChecks } from "lucide-react";
 import Link from "next/link";
@@ -25,7 +25,7 @@ export default async function ControlPointsPage({
   searchParams: Promise<{ hazard?: string | string[] }>;
 }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const { hazard } = await searchParams;
   const focusHazardId = typeof hazard === "string" ? hazard.slice(0, 64) : null;

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 /** ХАССП, шаг 2 — политика качества: текст, утвердивший и лист с QR для цеха. */
 export default async function PolicyPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [row, org, staff, t] = await Promise.all([

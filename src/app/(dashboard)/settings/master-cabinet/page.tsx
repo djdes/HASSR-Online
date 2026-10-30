@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { MasterCabinetClient } from "@/components/settings/master-cabinet-client";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function MasterCabinetSettingsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const orgId = getActiveOrgId(session);
 
   const org = await db.organization.findUnique({ where: { id: orgId }, select: { kind: true } });

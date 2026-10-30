@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
+import { useContentTransition } from "@/components/layout/content-transition";
 
 /** Блок `location` из /api/mini/home. */
 export type MiniLocationPayload = {
@@ -20,6 +20,9 @@ export type MiniLocationPayload = {
  * Точки (2026-09-05): переключение точки в Mini App — зеркало пилюли в
  * шапке сайта (П-3). Список тянем клиентом из /api/mini/home, как и
  * переключатель организации в этом же профиле.
+ *
+ * Как и на сайте (2026-10-29), запрос и обновление страницы — один переход:
+ * «…» у пункта держится, пока не придут данные новой точки, тост — после.
  */
 export function MiniLocationSwitcher() {
   const t = useTranslations("notificationSettings.miniSwitchers");
@@ -28,9 +31,8 @@ export function MiniLocationSwitcher() {
   useEffect(() => {
     currentT.current = t;
   }, [t]);
-  const router = useRouter();
   const [location, setLocation] = useState<MiniLocationPayload | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { refreshAfter, pendingTag: busyId, isPending } = useContentTransition();
 
   useEffect(() => {
     let cancelled = false;
@@ -58,30 +60,34 @@ export function MiniLocationSwitcher() {
   const activeId =
     virtualOrganization && location.organizationView ? ORGANIZATION_VIEW_ID : location.activeBuildingId;
 
-  async function switchTo(building: BuildingOption) {
-    if (!location || building.id === activeId || busyId) return;
-    setBusyId(building.id);
-    try {
-      const response = await fetch("/api/me/active-building", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ buildingId: building.id }),
-      });
-      if (!response.ok) throw new Error();
-      setLocation(
-        building.id === ORGANIZATION_VIEW_ID
-          ? { ...location, organizationView: true }
-          : { ...location, activeBuildingId: building.id, organizationView: isOfficeBuilding(building) },
-      );
-      toast.success(currentT.current("locationSwitched", { name: building.name }));
-      router.refresh();
-    } catch {
-      // Как и у организации: сбой должен быть виден, иначе человек решит,
-      // что точка переключилась, а данные показываются от прежней.
-      toast.error(currentT.current("locationSwitchFailed"));
-    } finally {
-      setBusyId(null);
-    }
+  function switchTo(building: BuildingOption) {
+    if (!location || building.id === activeId || isPending) return;
+    const current = location;
+    refreshAfter(
+      building.id,
+      async () => {
+        try {
+          const response = await fetch("/api/me/active-building", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ buildingId: building.id }),
+          });
+          if (!response.ok) throw new Error();
+          setLocation(
+            building.id === ORGANIZATION_VIEW_ID
+              ? { ...current, organizationView: true }
+              : { ...current, activeBuildingId: building.id, organizationView: isOfficeBuilding(building) },
+          );
+          return true;
+        } catch {
+          // Как и у организации: сбой должен быть виден, иначе человек решит,
+          // что точка переключилась, а данные показываются от прежней.
+          toast.error(currentT.current("locationSwitchFailed"));
+          return false;
+        }
+      },
+      () => toast.success(currentT.current("locationSwitched", { name: building.name })),
+    );
   }
 
   return (

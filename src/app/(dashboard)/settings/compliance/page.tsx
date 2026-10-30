@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ShieldCheck } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function CompliancePage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.compliancePage");

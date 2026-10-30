@@ -11,6 +11,7 @@ import { adoptCookieSession } from "./_lib/cookie-session";
 import { isSignedOutManually, miniEntryStep } from "./_lib/signed-out-mark";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
 import { NPS_PREVIEW_PARAM, isNpsPreviewRequested, withNpsPreview } from "@/lib/nps";
+import { DENIED_PARAM, withDeniedParam } from "@/lib/denied-notice";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getTelegramWebApp } from "./_components/telegram-web-app";
 import { miniEntryErrorPresentation, type MiniEntryErrorKey } from "@/lib/mini-entry-error-presentation";
@@ -75,6 +76,9 @@ export default function MiniEntryPage() {
   // `/mini?nps=1` — показать опрос «Посоветуете WeSetup коллегам?» сразу:
   // своей главной у приложения нет, поэтому метку несём туда, куда уводим.
   const npsPreview = isNpsPreviewRequested(searchParams.get(NPS_PREVIEW_PARAM));
+  // `/mini?denied=<раздел>` — proxy увёл из закрытого раздела: метку несём
+  // на домашнюю, она один раз объяснит, почему (2026-10-29).
+  const deniedFrom = searchParams.get(DENIED_PARAM);
 
   useEffect(() => {
     if (status !== "unauthenticated" || signInStarted.current) return;
@@ -167,8 +171,9 @@ export default function MiniEntryPage() {
     // вели на `/journals`, откуда сразу перекидывало дальше — лишний
     // прыжок и мигающий экран.
     const target = nextPath ?? miniHomeHref(session?.user ?? null);
-    router.replace(npsPreview ? withNpsPreview(target) : target);
-  }, [nextPath, npsPreview, router, session?.user, status]);
+    const withNps = npsPreview ? withNpsPreview(target) : target;
+    router.replace(deniedFrom ? withDeniedParam(withNps, deniedFrom) : withNps);
+  }, [deniedFrom, nextPath, npsPreview, router, session?.user, status]);
 
   if (localState.kind === "error") {
     return (

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { PageCrumbs } from "@/components/layout/page-nav";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -19,7 +19,7 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
   const t = await getTranslations("settingsUi.userAccessPage");
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    notFound();
+    forbidden();
   }
   const { id } = await params;
 

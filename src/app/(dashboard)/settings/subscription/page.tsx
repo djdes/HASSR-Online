@@ -1,7 +1,7 @@
 import { Coins, FlaskConical, HardDrive, Layers, MapPin, Users } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
@@ -71,7 +71,7 @@ export default async function SubscriptionPage({
   const locale = await getLocale();
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/dashboard");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
 

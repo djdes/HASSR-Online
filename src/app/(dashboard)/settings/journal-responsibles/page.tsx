@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function JournalResponsiblesPage() {
   const t = await getTranslations("settingsUi.journalResponsiblesPage");
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [positions, users, templates, accessRows, org] = await Promise.all([

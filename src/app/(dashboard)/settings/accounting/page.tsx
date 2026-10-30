@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { FileSpreadsheet } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -13,7 +13,7 @@ export default async function AccountingSettingsPage() {
   const t = await getTranslations("settingsManagement.accounting");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
 

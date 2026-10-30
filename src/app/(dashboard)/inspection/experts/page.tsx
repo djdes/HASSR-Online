@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight, Handshake } from "lucide-react";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function InspectionExpertsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/inspection");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const [services, t] = await Promise.all([
     readActiveServices().catch(() => []),

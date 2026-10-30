@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight, ListChecks } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export default async function JournalChecklistsHubPage() {
   const t = await getTranslations("settingsUi.journalChecklistsPage");
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   // Считаем пункты per-journal для отображения «N в чек-листе».

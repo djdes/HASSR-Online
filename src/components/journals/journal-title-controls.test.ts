@@ -22,7 +22,7 @@ test("карандаш — у тех же, кому доступна «Назв�
   );
   assert.match(
     read("src/app/(dashboard)/settings/names/page.tsx"),
-    /if \(!hasFullWorkspaceAccess\(session\.user\)\) redirect/,
+    /if \(!hasFullWorkspaceAccess\(session\.user\)\) forbidden\(\);/,
     "«Названия»: те же права"
   );
   assert.match(

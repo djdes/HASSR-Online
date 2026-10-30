@@ -1,6 +1,6 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
 import { automationOn } from "@/lib/journal-controls";
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MapPin, Sparkles } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function AutoJournalsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const organizationId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.autoJournalsPage");

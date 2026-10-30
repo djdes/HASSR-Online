@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { loadControlGroup } from "@/lib/control-group.server";
 import { hasCapability } from "@/lib/permission-presets";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function ControlGroupPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   // Набор прав меняет администратор (как API); «Иерархию» открывает право из БД.
   const canManage = hasCapability(session.user, "admin.full");

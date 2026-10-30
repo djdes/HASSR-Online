@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { listOrganizationBuildings } from "@/lib/active-building";
 import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
@@ -20,6 +20,7 @@ import { BILLING_PAY_HREF } from "@/lib/billing-period";
 import { SEATS_PER_POINT, seatUpgradeTarget } from "@/lib/tariff-plans";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { expireOrgPointAssignments, loadActiveAssignments, organizationTodayKey } from "@/lib/point-assignments.server";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +35,8 @@ export default async function StaffPage({
   const t = await getTranslations("settingsUi.usersPage");
   const session = await requireAuth();
   if (!isManagementRole(session.user.role) && !session.user.isRoot) {
-    // Non-managers don't manage staff. Push them to the generic settings hub.
-    redirect("/settings");
+    // Non-managers don't manage staff: explained «no access» inside the layout.
+    forbidden();
   }
 
   const orgId = getActiveOrgId(session);
@@ -244,6 +245,9 @@ export default async function StaffPage({
     <DomainMessagesBoundary namespaces={["staffManagement", "journals"]}>
     <>
     <PinRequestsPanel initial={pinRequests} />
+    {/* Чипы «Где работает» и список сотрудников — одна область: нажатие на
+        чип — скелет списка до прихода данных места (2026-10-29). */}
+    <PlaceFilterScope>
     <StaffPageClient
       placeFilter={
         showPlaceFilter ? (
@@ -339,6 +343,7 @@ export default async function StaffPage({
         date: d.date.toISOString().slice(0, 10),
       }))}
     />
+    </PlaceFilterScope>
     <ArchivedStaffSection
       employees={archived.map((u) => ({
         id: u.id,

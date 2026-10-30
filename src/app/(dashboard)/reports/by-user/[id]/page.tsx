@@ -1,6 +1,6 @@
 import { FileText } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -25,7 +25,7 @@ export default async function ByUserReportPage({
 }) {
   // Role-gate через единый helper — все management-роли имеют доступ.
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const orgId = getActiveOrgId(session);
   const { id: userId } = await params;
   const { from, to } = await searchParams;

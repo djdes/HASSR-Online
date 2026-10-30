@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Handshake } from "lucide-react";
 
@@ -27,7 +27,7 @@ export default async function ConsultantSettingsPage({
   const session = await requireAuth();
   const t = await getTranslations("settingsUi.consultantPage");
   if (session.user.partnerAccess) redirect("/partner/denied?reason=" + encodeURIComponent(t("clientOnly")));
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const { attach, level } = await searchParams;
   const slugCheck = attach ? validateSlug(attach) : null;

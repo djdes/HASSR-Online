@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -26,7 +26,7 @@ function SignatureLine({ post, name }: { post: string; name: string }) {
 /** Протокол заседания группы ХАССП для печати. */
 export default async function TeamMeetingProtocolPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const { id } = await params;
   const u = await getTranslations("productionControlUi");

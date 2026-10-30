@@ -144,7 +144,7 @@ test("actual settings page keeps management/tenant guards and renders localized 
       },
       "@/lib/auth-helpers": { requireAuth: async () => ({ user: { id: "manager", organizationId: "original-org" } }), getActiveOrgId: () => "active-org" },
       "@/lib/role-access": { hasFullWorkspaceAccess: () => allowed },
-      "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect ${url}`); } },
+      "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect ${url}`); }, forbidden: () => { throw new Error("Forbidden"); } },
       "@/lib/db": { db: {
         printAgent: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", revokedAt: null })); queries++; return [{ ...agent, lastSeenAt: new Date(agent.lastSeenAt!) }]; } },
         // Принтеры этикеток и телефоны «Сетап помощника» — тоже только активной организации.
@@ -165,6 +165,6 @@ test("actual settings page keeps management/tenant guards and renders localized 
     assert.ok(html.includes(labelsT("version", { version: "1.1.0" })), `${locale}: версия приложения`);
     assert.ok(html.includes(messages.printAgent.labelPrinters.autoUpdate.slice(0, 40)), `${locale}: про автообновление`);
     assert.equal(queries, 1);
-    allowed = false; await assert.rejects(page.default, /Redirect \/settings/); assert.equal(queries, 1);
+    allowed = false; await assert.rejects(page.default, /Forbidden/); assert.equal(queries, 1);
   }
 });

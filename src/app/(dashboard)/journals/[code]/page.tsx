@@ -9,7 +9,7 @@ import type React from "react";
 import { LiveRefresh } from "@/components/live/live-refresh";
 import { hasSeenNotice } from "@/lib/seen-notices";
 import { formatCardDateTime } from "@/lib/journal-card-date";
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
@@ -1364,7 +1364,8 @@ export default async function JournalDocumentsPage({
     resolvedCode
   );
   if (!allowed) {
-    notFound();
+    // The journal exists, but it isn't granted to this person: explain, don't 404.
+    forbidden();
   }
 
   // Organization-level toggle (see /settings/journals). If the manager

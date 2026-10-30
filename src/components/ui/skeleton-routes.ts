@@ -46,3 +46,44 @@ export function journalsSkeletonFor(pathname: string | null | undefined): Journa
   if (parts[2] === "documents" && parts.length === 4) return "document";
   return "page";
 }
+
+export type GenericSkeletonBody = "cards" | "list" | "table" | "panel";
+
+/**
+ * Тело общего скелета (`PageSkeleton`) для разделов без своего клиентского
+ * `loading.tsx` — по тому, что на странице: таблица, список, панель-форма или
+ * карточки (по умолчанию). Партии и потери — как их серверные `loading.tsx`.
+ */
+const GENERIC_BODIES: Record<string, GenericSkeletonBody> = {
+  acknowledge: "list",
+  batches: "table",
+  capa: "list",
+  changes: "list",
+  competencies: "table",
+  ideas: "list",
+  losses: "table",
+  mercury: "panel",
+  orders: "list",
+  plans: "list",
+  staff: "list",
+  translations: "table",
+};
+
+export type RouteSkeletonChoice =
+  | { kind: "section"; section: string }
+  | { kind: "generic"; body: GenericSkeletonBody };
+
+/**
+ * Какой скелет показать по адресу (2026-10-29): раздел со своим скелетом
+ * (`sectionsWithOwn` — первый сегмент пути) — его; остальным — общий
+ * `PageSkeleton` с подходящим телом. Так корневой `(dashboard)/loading.tsx`
+ * и ожидание после смены точки рисуют то же, что свой скелет раздела.
+ */
+export function routeSkeletonFor(
+  pathname: string | null | undefined,
+  sectionsWithOwn: readonly string[],
+): RouteSkeletonChoice {
+  const first = normalize(pathname)?.split("/").filter(Boolean)[0] ?? "";
+  if (first && sectionsWithOwn.includes(first)) return { kind: "section", section: first };
+  return { kind: "generic", body: GENERIC_BODIES[first] ?? "cards" };
+}

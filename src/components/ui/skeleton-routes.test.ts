@@ -1,16 +1,56 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { PageSkeleton } from "./skeleton";
-import { isSectionRoot, journalsSkeletonFor } from "./skeleton-routes";
+import { isSectionRoot, journalsSkeletonFor, routeSkeletonFor } from "./skeleton-routes";
 
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
 const APP = "src/app/(dashboard)";
+
+describe("общий скелет кабинета (2026-10-29): у каждого раздела, без прыжка к своему", () => {
+  const own = ["dashboard", "journals", "settings"];
+
+  it("раздел со своим скелетом — его, остальным — PageSkeleton с подходящим телом", () => {
+    assert.deepEqual(routeSkeletonFor("/dashboard", own), { kind: "section", section: "dashboard" });
+    assert.deepEqual(routeSkeletonFor("/dashboard/catch-up", own), { kind: "section", section: "dashboard" });
+    assert.deepEqual(routeSkeletonFor("/settings/users/", own), { kind: "section", section: "settings" });
+    assert.deepEqual(routeSkeletonFor("/monitoring", own), { kind: "generic", body: "cards" });
+    assert.deepEqual(routeSkeletonFor("/batches/abc", own), { kind: "generic", body: "table" });
+    assert.deepEqual(routeSkeletonFor("/capa", own), { kind: "generic", body: "list" });
+    assert.deepEqual(routeSkeletonFor(null, own), { kind: "generic", body: "cards" });
+  });
+
+  it("(dashboard)/loading.tsx есть и берёт скелет по адресу", () => {
+    const src = read(`${APP}/loading.tsx`);
+    assert.match(src, /^"use client";/);
+    assert.match(src, /usePathname\(\)/);
+    assert.match(src, /<RouteSkeleton\b/);
+  });
+
+  it("каждый клиентский loading.tsx раздела — в выборе общего скелета; серверные — с тем же телом", () => {
+    const chooser = read("src/components/layout/route-skeleton.tsx");
+    const sections = readdirSync(path.join(ROOT, APP), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && existsSync(path.join(ROOT, APP, entry.name, "loading.tsx")))
+      .map((entry) => entry.name);
+    assert.ok(sections.length >= 10, "разделы со своими скелетами нашлись");
+    for (const section of sections) {
+      const src = read(`${APP}/${section}/loading.tsx`);
+      if (/export default async function/.test(src)) {
+        // Серверный скелет нельзя подключить в клиентский выбор — то же тело.
+        const body = /body="(\w+)"/.exec(src)?.[1];
+        assert.ok(body, section);
+        assert.deepEqual(routeSkeletonFor(`/${section}`, []), { kind: "generic", body }, section);
+      } else {
+        assert.ok(chooser.includes(`from "@/app/(dashboard)/${section}/loading"`), `${section}: нет в route-skeleton.tsx`);
+      }
+    }
+  });
+});
 
 describe("скелетон по адресу: подстраница не грузится под раскладкой главной страницы раздела", () => {
   it("главная раздела — её скелет, подстраница — общий скелет страницы", () => {

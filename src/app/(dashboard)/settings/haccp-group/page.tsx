@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowRight, Pencil, ScrollText } from "lucide-react";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -33,7 +33,7 @@ const ROLE_ORDER: Record<TeamRole, number> = { leader: 0, deputy: 1, member: 2, 
  */
 export default async function HaccpGroupPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [rows, staff, order, t, tTeam, locale] = await Promise.all([

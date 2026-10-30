@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function ChecklistAssignmentsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/checklists/templates");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
   const params = await searchParams;
   const now = new Date();

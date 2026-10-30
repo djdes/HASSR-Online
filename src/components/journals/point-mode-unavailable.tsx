@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Building2, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
+import { useContentTransition } from "@/components/layout/content-transition";
 
 /**
  * Страница всей организации («Журналы точек», «Все журналы»), а в шапке
@@ -22,7 +22,9 @@ export function PointModeUnavailable({
 }) {
   const t = useTranslations("navigation.shell.pointMode");
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  // Тот же переход, что у переключателя в шапке: пока страница всей
+  // организации собирается, вместо панели — скелет (2026-10-29).
+  const { refreshAfter, isPending: busy } = useContentTransition();
 
   function goBack() {
     // Пришли по прямой ссылке — назад некуда: ведём в «Сегодня» точки.
@@ -30,22 +32,23 @@ export function PointModeUnavailable({
     else router.push("/dashboard");
   }
 
-  async function chooseOrganization() {
+  function chooseOrganization() {
     if (busy) return;
-    setBusy(true);
-    try {
-      const response = await fetch("/api/me/active-building", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ buildingId: ORGANIZATION_VIEW_ID }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? t("failed"));
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("failed"));
-      setBusy(false);
-    }
+    refreshAfter(ORGANIZATION_VIEW_ID, async () => {
+      try {
+        const response = await fetch("/api/me/active-building", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ buildingId: ORGANIZATION_VIEW_ID }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.error ?? t("failed"));
+        return true;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t("failed"));
+        return false;
+      }
+    });
   }
 
   return (

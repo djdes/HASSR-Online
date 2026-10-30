@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -12,7 +12,7 @@ export default async function InspectorPortalPage() {
   const t = await getTranslations("settingsUi.inspectorPortalPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
   const { tokens, activity } = await loadCabinetInspectorData(orgId);

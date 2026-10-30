@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Download, FileText, Lock } from "lucide-react";
 
@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function Page() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const canManage = hasCapability(session.user, "admin.full");
   const [t, loaded, ppkFromRub] = await Promise.all([

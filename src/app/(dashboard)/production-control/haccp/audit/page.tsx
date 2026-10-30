@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -26,7 +26,7 @@ function inspectionTitle(snapshot: unknown, fallback: string): string {
 /** ХАССП, шаг 7 — внутренний аудит: журналы аудита и последние проверки по чек-листам. */
 export default async function AuditPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const yearAgo = new Date();

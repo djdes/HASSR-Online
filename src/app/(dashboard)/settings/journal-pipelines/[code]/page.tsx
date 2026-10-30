@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight, Building2 } from "lucide-react";
 import { getServerSession } from "@/lib/server-session";
@@ -20,7 +20,7 @@ export default async function JournalPipelineEditorPage({
   const t = await getTranslations("settingsUi.journalPipelinesCodePage");
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-  if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   // Cleaning unification 2026-05-08: для cleaning журнала pipeline

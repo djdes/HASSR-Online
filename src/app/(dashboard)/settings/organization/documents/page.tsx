@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function OrganizationDocumentsPage() {
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [org, points, context, t] = await Promise.all([

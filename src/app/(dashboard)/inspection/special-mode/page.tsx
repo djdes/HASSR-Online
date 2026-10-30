@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function InspectionSpecialModePage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) forbidden();
 
   const t = await getTranslations("inspectionDay.pages.special");
 
