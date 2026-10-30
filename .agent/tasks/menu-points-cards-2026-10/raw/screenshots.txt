@@ -1,0 +1,208 @@
+Локальные скриншоты (PNG не коммитятся: .gitignore → .agent/**/*.png). Playwright Chromium, next dev, демо-владелец,
+локально 14 точек (офис + 13 с длинными названиями, как у владельца), активная — «д/с №68…», два документа гигиенического журнала.
+ПК 1440×900, телефон 390×844, DPR 2. before-* — код master 9487930, after-* — эта задача.
+
+- after-burger-phone-bottom.png
+- after-burger-phone.png
+- after-docs-pc-dark.png
+- after-docs-pc-light.png
+- after-docs-phone-dark-cards.png
+- after-docs-phone-dark.png
+- after-docs-phone-light-cards.png
+- after-docs-phone-light.png
+- after-points-pc.png
+- after-points-phone.png
+- before-burger-phone-bottom.png
+- before-burger-phone.png
+- before-docs-pc-dark.png
+- before-docs-pc-light.png
+- before-docs-phone-dark.png
+- before-docs-phone-light.png
+- before-points-pc.png
+- before-points-phone.png
+
+Сценарии: fixes.cjs (PHASE=before|after), kb-check.cjs (клавиатура в списке точек на ПК).
+
+Замеры до:
+{
+ "pcDropdown": {
+  "options": 14,
+  "rootRect": [
+   64,
+   807
+  ],
+  "listHeight": null,
+  "listScrollHeight": null,
+  "scrollbar": null,
+  "manage": {
+   "rect": [
+    767,
+    800
+   ],
+   "inViewport": true
+  },
+  "captions": 0
+ },
+ "cards": [
+  {
+   "border": "rgb(236, 236, 244)",
+   "shadow": "none",
+   "accent": null,
+   "rect": [
+    536,
+    806
+   ]
+  },
+  {
+   "border": "rgb(236, 236, 244)",
+   "shadow": "none",
+   "accent": null,
+   "rect": [
+    822,
+    1093
+   ]
+  }
+ ],
+ "phoneSheet": {
+  "options": 0,
+  "rootRect": [
+   101,
+   844
+  ],
+  "listHeight": null,
+  "listScrollHeight": null,
+  "scrollbar": null,
+  "manage": {
+   "rect": [
+    909,
+    957
+   ],
+   "inViewport": false
+  },
+  "captions": 1
+ },
+ "burgerOpen": {
+  "mode": "main",
+  "pointsInMenu": 13,
+  "logoutInsideMenu": false,
+  "logoutRect": [
+   779,
+   831
+  ]
+ },
+ "burgerScrolled": {
+  "mode": "main",
+  "pointsInMenu": 13,
+  "logoutInsideMenu": false,
+  "logoutRect": [
+   779,
+   831
+  ]
+ }
+}
+
+Замеры после:
+{
+ "pcDropdown": {
+  "options": 14,
+  "rootRect": [
+   64,
+   484
+  ],
+  "listHeight": 360,
+  "listScrollHeight": 683,
+  "scrollbar": {
+   "visible": true,
+   "rect": [
+    71,
+    431
+   ],
+   "width": 12
+  },
+  "manage": {
+   "rect": [
+    444,
+    477
+   ],
+   "inViewport": true
+  },
+  "activeRow": {
+   "rowRight": 979,
+   "labelOverflow": true,
+   "labelRight": 941,
+   "checkRight": 967,
+   "barLeft": 979
+  },
+  "captions": 0
+ },
+ "cards": [
+  {
+   "border": "rgb(220, 223, 237)",
+   "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0",
+   "accent": "rgb(85, 102, 246)",
+   "rect": [
+    536,
+    806
+   ]
+  },
+  {
+   "border": "rgb(220, 223, 237)",
+   "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0",
+   "accent": "rgb(85, 102, 246)",
+   "rect": [
+    822,
+    1093
+   ]
+  }
+ ],
+ "phoneSheet": {
+  "options": 14,
+  "rootRect": [
+   237,
+   844
+  ],
+  "listHeight": 439,
+  "listScrollHeight": 672,
+  "scrollbar": {
+   "visible": true,
+   "rect": [
+    335,
+    782
+   ],
+   "width": 12
+  },
+  "manage": {
+   "rect": [
+    787,
+    835
+   ],
+   "inViewport": true
+  },
+  "activeRow": {
+   "rowRight": 365,
+   "labelOverflow": true,
+   "labelRight": 325,
+   "checkRight": 353,
+   "barLeft": 365
+  },
+  "captions": 0
+ },
+ "burgerOpen": {
+  "mode": "main",
+  "pointsInMenu": 0,
+  "logoutInsideMenu": true,
+  "logoutRect": [
+   783,
+   835
+  ]
+ },
+ "burgerScrolled": {
+  "mode": "main",
+  "pointsInMenu": 0,
+  "logoutInsideMenu": true,
+  "logoutRect": [
+   783,
+   835
+  ]
+ }
+}
