@@ -172,8 +172,22 @@ async function login(page) {
     check("повтор счёта по API — тот же черновик (rewritten)", again.ok() && againJson.rewritten === true && (await (await fetch(`http://127.0.0.1:${MOCK_PORT}/__mock/calls`)).json()).docs.length === 3);
     const foreign = await page.request.post(`${BASE}/api/root/edo/documents`, { data: { organizationId: "org-dk", kind: "invoice", sourceId: inv.number } });
     check("чужой счёт для другой организации — 400", foreign.status() === 400, String(foreign.status()));
-    const contractSource = await page.request.post(`${BASE}/api/root/edo/documents`, { data: { organizationId: "org-one", kind: "contract", sourceId: "c1" } });
-    check("договор из WeSetup пока не подключён — понятная ошибка", contractSource.status() === 400 && (await contractSource.json()).error.includes("не подключена"));
+    const missingContract = await page.request.post(`${BASE}/api/root/edo/documents`, { data: { organizationId: "org-one", kind: "contract", sourceId: "c1" } });
+    check("несуществующий договор — понятная ошибка", missingContract.status() === 400 && (await missingContract.json()).error.includes("не найден"));
+    // Договор, выпущенный в карточке клиента, уходит в Saby одним кликом (2026-10-30).
+    const card = await (await page.request.get(`${BASE}/api/root/organizations/org-one/contracts`)).json();
+    const issued = await page.request.post(`${BASE}/api/root/organizations/org-one/contracts`, { data: card.context?.defaults ?? card.defaults });
+    const issuedJson = await issued.json();
+    check("договор выпущен в карточке клиента", issued.ok() && /^WS-\d{4}\/\d{4}$/.test(issuedJson.contract?.number ?? ""), JSON.stringify(issuedJson).slice(0, 200));
+    const contractSend = await page.request.post(`${BASE}/api/root/edo/documents`, { data: { organizationId: "org-one", kind: "contract", sourceId: issuedJson.contract?.id } });
+    const docsAfter = (await (await fetch(`http://127.0.0.1:${MOCK_PORT}/__mock/calls`)).json()).docs;
+    const contractDoc = docsAfter.find((doc) => doc.type === "ДоговорДок" && doc.number === issuedJson.contract?.number);
+    check("договор из WeSetup записан в Saby как ДоговорДок с PDF", contractSend.ok() && contractDoc && contractDoc.files.length === 1 && contractDoc.files[0].name.endsWith(".pdf") && contractDoc.files[0].size > 1000, JSON.stringify(contractDoc?.files));
+    await page.goto(`${BASE}/root/organizations/org-one`, { waitUntil: "load" });
+    await page.waitForSelector("#documents [data-testid=client-contract-card]");
+    check("в карточке клиента у договора есть кнопка «В ЭДО»", (await page.locator("#documents [data-testid=edo-send-button], #documents a[href*='saby'], #documents [data-testid=edo-sign-link]").count()) > 0);
+    check("в оплатах клиента есть «В ЭДО» у счёта", (await page.locator("#billing [data-testid=edo-send-button], #billing [data-testid=edo-sign-link]").count()) > 0);
+    await page.goto(`${BASE}/root/edo`, { waitUntil: "load" });
     await page.screenshot({ path: path.join(SHOTS, "04b-invoice-upd.png"), fullPage: true, caret: "initial" });
 
     // 7. Отключение через ConfirmDialog.
@@ -181,7 +195,7 @@ async function login(page) {
     await page.waitForSelector("text=Отключить кабинет Saby?");
     await page.getByRole("dialog").getByRole("button", { name: "Отключить" }).click();
     await page.waitForSelector('input[name="edo-client-id"]');
-    check("кабинет отключён, история осталась", (await page.locator("[data-testid=edo-history-row]").count()) === 3 && (await readCabinetRow()).length === 0);
+    check("кабинет отключён, история осталась", (await page.locator("[data-testid=edo-history-row]").count()) === 4 && (await readCabinetRow()).length === 0);
     const logouts = (await (await fetch(`http://127.0.0.1:${MOCK_PORT}/__mock/calls`)).json()).calls.filter((c) => c.method === "logout").length;
     check("при отключении сайт вышел из сессии Saby", logouts >= 1, `${logouts}`);
 
