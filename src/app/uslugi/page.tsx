@@ -14,10 +14,10 @@ import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import {
   readActiveServices,
   groupServices,
-  formatServicePrice,
-  isInstantPayable,
   type PlatformServiceItem,
 } from "@/lib/services/catalog";
+import { ContactUsButton } from "@/components/contact/contact-us-dialog";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import {
   DEFAULT_OG_IMAGES,
@@ -33,15 +33,16 @@ import { ServiceRequestForm } from "./service-request-form";
  * Зачем страница. Сервис закрывает «вести журналы», но не закрывает
  * «разобраться, что именно вам обязательно» и «пройти проверку». Эти
  * вопросы приходят в поддержку каждую неделю, и до сих пор ответом было
- * письмо руками. Здесь тот же спрос выражен ценой и кнопкой.
+ * письмо руками. Здесь тот же спрос выражен карточкой и кнопкой.
  *
- * Цены живут в БД (`PlatformService`) и правятся ROOT'ом без деплоя,
- * поэтому `force-dynamic`: ISR отдавал бы старый прайс после правки.
+ * Цен на странице нет (владелец, 2026-10-29): вместо них «Свяжитесь с
+ * нами» — окно с крупными контактами. Каталог живёт в БД
+ * (`PlatformService`) и правится ROOT'ом без деплоя, поэтому
+ * `force-dynamic`: ISR отдавал бы старый список после правки.
  *
  * Форма заявки работает без регистрации сознательно — человек,
  * который ищет аудит перед проверкой, не готов заводить аккаунт ради
- * звонка. Оплата баллами тут недоступна (списывать не с чего), это
- * ветка кабинета.
+ * звонка.
  */
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ const CANONICAL = "https://wesetup.ru/uslugi";
 // в выдаче. Полная формулировка ушла в description.
 const TITLE = "Услуги по пищевой безопасности: аудит и ХАССП";
 const DESCRIPTION =
-  "Аудит перед проверкой Роспотребнадзора, разработка документации ХАССП и ППК, консультации и обучение персонала. Цены на сайте, заявка без регистрации — перезвоним в течение рабочего дня.";
+  "Аудит перед проверкой Роспотребнадзора, разработка документации ХАССП и ППК, консультации и обучение персонала. Стоимость назовём под ваш объект, заявка без регистрации — перезвоним в течение рабочего дня.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -100,7 +101,7 @@ const STEPS = [
   {
     icon: ClipboardCheck,
     title: "Называем объём и цену",
-    text: "Фиксируем, что входит и в какой срок. Цены «от» на сайте — ориентир до этого разговора.",
+    text: "Фиксируем, что входит, в какой срок и сколько это стоит, — до начала работ.",
   },
   {
     icon: BadgeCheck,
@@ -115,8 +116,8 @@ const FAQ = [
     a: "Нет. Форма на этой странице работает без аккаунта: оставьте имя и телефон, остальное обсудим по звонку. Аккаунт нужен только для самих электронных журналов.",
   },
   {
-    q: "Почему у части услуг цена «от»?",
-    a: "Стоимость аудита, выезда и разработки документации зависит от площади, числа цехов, ассортимента и города. Указанная цена — нижняя граница; итоговую называем после короткого разговора и до начала работ.",
+    q: "Сколько стоят услуги?",
+    a: "Стоимость аудита, выезда и разработки документации зависит от площади, числа цехов, ассортимента и города. Свяжитесь с нами или оставьте заявку — назовём цену под ваш объект после короткого разговора и до начала работ.",
   },
   {
     q: "Вы работаете только в своём городе?",
@@ -133,41 +134,19 @@ const FAQ = [
 ];
 
 /**
- * `Service` в разметке: у фиксированной цены — `Offer` с точной суммой,
- * у «от N ₽» — `PriceSpecification` с `minPrice`, чтобы не заявлять
- * поисковику точную цену, которой у нас нет. «Цена по запросу» остаётся
- * вовсе без offers — пустой Offer Google считает ошибкой.
+ * `Service` в разметке — без `offers`: цен на странице нет, а заявлять
+ * поисковику сумму, которой нет на экране, нельзя. Пустой Offer Google
+ * считает ошибкой, поэтому его нет вовсе.
  */
 function serviceJsonLd(item: PlatformServiceItem) {
-  const offers =
-    item.priceRub === null
-      ? {}
-      : {
-          offers: {
-            "@type": "Offer",
-            url: `${CANONICAL}#${item.key}`,
-            priceCurrency: "RUB",
-            availability: "https://schema.org/InStock",
-            ...(item.priceFrom
-              ? {
-                  priceSpecification: {
-                    "@type": "PriceSpecification",
-                    minPrice: item.priceRub,
-                    priceCurrency: "RUB",
-                  },
-                }
-              : { price: item.priceRub }),
-          },
-        };
-
   return {
     "@type": "Service",
     name: item.title,
     description: item.description,
     serviceType: item.title,
+    url: `${CANONICAL}#${item.key}`,
     areaServed: { "@type": "Country", name: "Россия" },
     provider: { "@id": "https://wesetup.ru/#org" },
-    ...offers,
   };
 }
 
@@ -177,6 +156,7 @@ export default async function UslugiPage() {
   // ценны сами по себе, а заявку человек оставит через чат поддержки.
   const services = await readActiveServices().catch(() => []);
   const groups = groupServices(services);
+  const telegramUrl = contactTelegramUrl(process.env);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -250,17 +230,18 @@ export default async function UslugiPage() {
             <p className="mt-4 max-w-[720px] text-[16px] leading-[1.65] text-white/80 md:text-[18px]">
               Аудит перед проверкой, разработка документации ХАССП и программы
               производственного контроля, консультации, обучение смены и
-              настройка журналов под ваше предприятие. Цены — на странице,
-              заявка — без регистрации.
+              настройка журналов под ваше предприятие. Стоимость назовём под
+              ваш объект, заявка — без регистрации.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href="#catalog"
                 className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-medium text-[#0b1024] transition-colors duration-150 hover:bg-white/90"
               >
-                Смотреть услуги и цены
+                Смотреть услуги
                 <ArrowRight className="size-4" />
               </a>
+              <ContactUsButton variant="onDark" telegramUrl={telegramUrl} testId="uslugi-hero-contact" />
               <a
                 href="#how"
                 className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-5 text-[15px] font-medium text-white transition-colors duration-150 hover:bg-white/10"
@@ -345,18 +326,20 @@ export default async function UslugiPage() {
                     </p>
 
                     <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-[#ececf4] pt-5">
+                      {/* Вместо цены — «Свяжитесь с нами»: окно с крупными
+                          контактами (владелец, 2026-10-29). */}
                       <div>
-                        <div className="text-[22px] font-semibold tracking-[-0.02em] tabular-nums text-[#0b1024]">
-                          {formatServicePrice(item)}
-                        </div>
-                        <div className="mt-1 text-[12px] leading-[1.5] text-[#9b9fb3]">
-                          {isInstantPayable(item)
-                            ? "Фиксированная цена, пересчёта не будет"
-                            : "Итоговую стоимость назовём после разговора"}
+                        <ContactUsButton
+                          service={item.title}
+                          telegramUrl={telegramUrl}
+                          testId={`uslugi-contact-${item.key}`}
+                        />
+                        <div className="mt-1.5 text-[12px] leading-[1.5] text-[#9b9fb3]">
+                          Стоимость назовём под ваш объект
                         </div>
                       </div>
                       {/* Форма живёт в самой карточке: она раскрывается
-                          под ценой и не уводит человека со страницы. */}
+                          под кнопкой и не уводит человека со страницы. */}
                       <ServiceRequestForm
                         serviceKey={item.key}
                         serviceTitle={item.title}

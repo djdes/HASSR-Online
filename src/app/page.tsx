@@ -54,7 +54,7 @@ import { TariffComparison } from "@/components/pricing/tariff-comparison";
 import { PromoPrice, formatPriceRub } from "@/components/pricing/promo-price";
 import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
-import { readPpkIndividualPrice } from "@/lib/services/catalog";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { SEATS_PER_POINT, STORAGE_BYTES, TRIAL_DAYS, planMonthlyRub } from "@/lib/tariff-plans";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
@@ -304,10 +304,9 @@ export default async function LandingPage() {
 
   // Тарифы 2026-10 (ROOT → «Тарифы»): цены месяц/год из `PlatformTariff`,
   // действующая акция (ROOT → «Акции») — в первом экране, колонках и JSON-LD.
-  const [pricing, promotion, ppkFromRub] = await Promise.all([
+  const [pricing, promotion] = await Promise.all([
     readPlanPricing(),
     readActivePromotion().catch(() => null),
-    readPpkIndividualPrice(),
   ]);
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const premiumFrom = applyPromotion(planMonthlyRub(pricing.rates, "premium", "year"), promotion);
@@ -822,8 +821,8 @@ export default async function LandingPage() {
           rates={pricing.rates}
           available={pricing.available}
           promotion={promotion}
-          ppkFromRub={ppkFromRub}
           ppkHref="/uslugi#ppk-development"
+          contactTelegramUrl={contactTelegramUrl(process.env)}
           startHref="#start"
           showTable
           className="mt-2"
