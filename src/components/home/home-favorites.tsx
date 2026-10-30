@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Star, X } from "lucide-react";
 import type { FavoriteCandidate } from "@/lib/home-page";
 import { HOME_FAVORITES_MAX } from "@/lib/home-page";
-import { NavIcon } from "@/components/layout/nav-icons";
+import { navTone } from "@/lib/nav-tones";
+import { NavIconChip } from "@/components/layout/nav-icons";
 import { SearchPickDialog, type SearchPickGroup } from "@/components/ui/search-pick-dialog";
 
 type Strings = {
@@ -94,6 +95,8 @@ export function HomeFavorites({
               onClick={() => setPicking(true)}
               disabled={busy}
               data-home-favorite-empty
+              data-nav-row
+              style={{ "--nav-i": index + 1 } as CSSProperties}
               className="group flex min-h-[148px] flex-col items-start justify-between rounded-3xl border-2 border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-left transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60"
             >
               <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-[#5566f6] shadow-[0_0_0_1px_rgba(220,223,237,0.9)] transition-colors duration-150 group-hover:bg-[#5566f6] group-hover:text-white">
@@ -101,7 +104,7 @@ export function HomeFavorites({
               </span>
               <span>
                 <span className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.14em] text-[#9b9fb3] uppercase">
-                  <Star className="size-3.5" aria-hidden />
+                  <Star className="size-3.5 text-[#c27803]" aria-hidden />
                   {strings.title}
                 </span>
                 <span className="mt-1 block text-[14.5px] font-medium leading-tight text-[#3848c7]">{strings.add}</span>
@@ -114,11 +117,12 @@ export function HomeFavorites({
           <div key={href} className="relative" data-home-favorite={href}>
             <Link
               href={href}
-              className="group flex min-h-[148px] flex-col justify-between rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[#5566f6]/40 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              data-tone={navTone(page.icon)}
+              data-nav-row
+              style={{ "--nav-i": index + 1 } as CSSProperties}
+              className="group flex min-h-[148px] flex-col justify-between rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[var(--tone-glow)] hover:shadow-[0_16px_40px_-24px_var(--tone-glow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
             >
-              <span className="flex size-10 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]">
-                <NavIcon name={page.icon} className="size-5" />
-              </span>
+              <NavIconChip name={page.icon} className="size-10 rounded-2xl" iconClassName="size-5" />
               <span className="pr-6">
                 <span className="block text-[11.5px] font-medium text-[#9b9fb3]">{page.sectionLabel}</span>
                 <span className="mt-0.5 block text-[15px] font-semibold leading-tight text-[#0b1024]">{page.label}</span>

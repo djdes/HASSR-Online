@@ -9,6 +9,7 @@ import {
   isStaffRestrictedWebPath,
 } from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
+import { canAccessPlatformPath, hasPlatformPanel, normalizePlatformSections, platformHomeHref } from "@/lib/platform-access";
 import { evaluatePointScopeRequest } from "@/lib/point-scope";
 import { deniedRedirectLocation } from "@/lib/denied-notice";
 import {
@@ -254,7 +255,16 @@ export async function proxy(req: NextRequest) {
 
   const token = await decode({ token: rawToken, secret }).catch(() => null);
   if (pathname.startsWith("/root") || pathname.startsWith("/api/root")) {
-    if (!token || token.isRoot !== true) {
+    // Superadmin — everything; delegated staff — their sections only
+    // (src/lib/platform-access.ts). requireRoot() re-checks against the DB.
+    const viewer = {
+      superadmin: token?.isRoot === true,
+      sections: normalizePlatformSections(token?.platformSections),
+    };
+    if (token && !viewer.superadmin && pathname === "/root" && hasPlatformPanel(viewer) && !canAccessPlatformPath(viewer, pathname)) {
+      return NextResponse.redirect(new URL(platformHomeHref(viewer), req.url));
+    }
+    if (!token || !canAccessPlatformPath(viewer, pathname, req.method)) {
       return NextResponse.rewrite(new URL("/404", req.url), { status: 404 });
     }
     return withRequestContext(req, null, token.id ?? token.sub);

@@ -21,8 +21,8 @@ import type { OrgMetrics } from "@/lib/org-metrics";
 
 const now = new Date("2026-10-15T12:30:00.000Z").getTime();
 const rows: OrgMetrics[] = [
-  { organizationId: "org-a", organizationName: "Customer A <&>", ownerEmail: "owner@example.test", ownerRegistrationIp: "9.9.9.9", ownerLastLoginIp: "10.0.0.2", ownerLastLoginAt: "2026-10-14T23:30:00.000Z", type: "restaurant", ownershipKind: "private", locationsCount: 2, inn: "1234567890", isDemo: true, demoExpiresAt: "2026-10-16T23:30:00.000Z", documentsCount: 12, subscriptionPlan: "paid", subscriptionEnd: null, createdAt: "2026-10-01T23:30:00.000Z", activeUsers: 14, entries7d: 1234, entries30d: 2345, weeklyTrendPct: 20, lastEntryAt: "2026-10-15T10:30:00.000Z", potentialMrrRub: 2390, actualMrrRub: 2390, balanceRub: 400 },
-  { organizationId: "org-b", organizationName: "Customer B", ownerEmail: null, ownerRegistrationIp: null, ownerLastLoginIp: null, ownerLastLoginAt: null, type: "meat", ownershipKind: null, locationsCount: 1, inn: null, isDemo: false, demoExpiresAt: null, isDirectory: true, documentsCount: 0, subscriptionPlan: "Customer plan", subscriptionEnd: null, createdAt: "2026-09-01T00:00:00.000Z", activeUsers: 1, entries7d: 0, entries30d: 0, weeklyTrendPct: null, lastEntryAt: null, potentialMrrRub: 0, actualMrrRub: 0, balanceRub: 0 },
+  { organizationId: "org-a", organizationName: "Customer A <&>", ownerEmail: "owner@example.test", ownerName: "Owner Person", ownerPhone: "+7 900 111-22-33", ownerContactEmail: "owner@example.test", orgPhone: null, ownerRegistrationIp: "9.9.9.9", ownerLastLoginIp: "10.0.0.2", ownerLastLoginAt: "2026-10-14T23:30:00.000Z", type: "restaurant", ownershipKind: "private", locationsCount: 2, inn: "1234567890", isDemo: true, demoExpiresAt: "2026-10-16T23:30:00.000Z", documentsCount: 12, subscriptionPlan: "paid", subscriptionEnd: null, createdAt: "2026-10-01T23:30:00.000Z", activeUsers: 14, entries7d: 1234, entries30d: 2345, weeklyTrendPct: 20, lastEntryAt: "2026-10-15T10:30:00.000Z", potentialMrrRub: 2390, actualMrrRub: 2390, balanceRub: 400 },
+  { organizationId: "org-b", organizationName: "Customer B", ownerEmail: null, ownerName: null, ownerPhone: null, ownerContactEmail: null, orgPhone: null, ownerRegistrationIp: null, ownerLastLoginIp: null, ownerLastLoginAt: null, type: "meat", ownershipKind: null, locationsCount: 1, inn: null, isDemo: false, demoExpiresAt: null, isDirectory: true, documentsCount: 0, subscriptionPlan: "Customer plan", subscriptionEnd: null, createdAt: "2026-09-01T00:00:00.000Z", activeUsers: 1, entries7d: 0, entries30d: 0, weeklyTrendPct: null, lastEntryAt: null, potentialMrrRub: 0, actualMrrRub: 0, balanceRub: 0 },
 ];
 const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {} };
 async function render(locale: Locale, children: ReactNode) {
@@ -36,7 +36,8 @@ test("actual ROOT metrics page gates reads, retains one now anchor and original 
     const mod = { exports: {} };
     const source = ts.transpileModule(readFileSync("src/app/root/page.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
     vm.runInNewContext(source, { module: mod, exports: mod.exports, Date, process: { env: { PLATFORM_ORG_ID: "fixture-platform" } }, require: (id: string) => {
-      if (id === "@/lib/auth-helpers") return { requireRoot: async () => { events.push("guard"); if (denied) throw Error("ROOT-only"); } };
+      if (id === "@/lib/auth-helpers") return { requireRoot: async () => { events.push("guard"); if (denied) throw Error("ROOT-only"); return { user: { id: "root-user", isRoot: true } }; } };
+      if (id === "@/lib/platform-access.server") return { platformViewerForSession: async () => ({ superadmin: true, sections: [] }) };
       if (id === "@/lib/org-metrics") return { getAllOrgMetrics: async (platform: string, date: Date) => { assert.equal(platform, "fixture-platform"); assert.deepEqual(events, ["guard"]); events.push("metrics"); anchor = date; return rows; } };
       if (id === "next-intl/server") return { getTranslations: async () => createTranslator({ locale, messages, namespace: "rootMetrics" }) };
       if (id === "@/i18n/site-locale-server") return { getSiteLocale: async () => locale };
@@ -49,9 +50,9 @@ test("actual ROOT metrics page gates reads, retains one now anchor and original 
     const Page = (mod.exports as { default: () => Promise<ReactNode> }).default;
     const html = await render(locale, await Page());
     const t = createTranslator({ locale, messages, namespace: "rootMetrics" });
-    assert.ok(html.includes(messages.rootMetrics.page.title)); assert.ok(html.includes("Customer A &lt;&amp;&gt;"));
+    assert.ok(html.includes(messages.rootMetrics.page.clientsTitle)); assert.ok(html.includes("Customer A &lt;&amp;&gt;"));
     assert.ok(html.includes(t("format.rubles", { amount: 2390 }))); assert.ok(html.includes(t("format.rubles", { amount: 400 })));
-    assert.ok(html.includes(t("page.pricing", { standardSeats: 25 })));
+    assert.ok(html.includes(messages.rootMetrics.page.clientsSubtitle));
     assert.deepEqual(events, ["guard", "metrics"]); events.length = 0; denied = true;
     await assert.rejects(Page(), /ROOT-only/); assert.deepEqual(events, ["guard"]);
   }
@@ -61,7 +62,9 @@ test("actual metrics table renders empty/populated/missing values in all locales
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
     const html = await render(locale, createElement(MetricsTable, { rows, now, sourceJournalNames: sourceNames }));
-    for (const text of [messages.rootMetrics.columns.ownerEmail, messages.rootMetrics.table.never, messages.rootMetrics.table.noUsers, messages.rootMetrics.table.directory, "Customer plan", "1234567890", "9.9.9.9", "10.0.0.2", "owner@example.test"]) assert.ok(html.includes(text), text);
+    for (const text of [messages.rootMetrics.list.columns.contact, messages.rootMetrics.table.never, messages.rootMetrics.list.noContact, messages.rootMetrics.table.directory, "Customer plan", "1234567890", "owner@example.test", "Owner Person", "tel:+79001112233"]) assert.ok(html.includes(text), text);
+    // IP адреса переехали в карточку клиента — в списке их нет.
+    for (const text of ["9.9.9.9", "10.0.0.2"]) assert.ok(!html.includes(text), text);
     assert.ok(html.includes(messages.settingsManagement.organizationProfile.form.spheres.restaurant));
     assert.ok(html.includes(messages.settingsManagement.organizationProfile.form.spheres.production));
     assert.ok((await render(locale, createElement(MetricsTable, { rows: [], now, sourceJournalNames: sourceNames }))).includes(messages.rootMetrics.table.noOrganizations));

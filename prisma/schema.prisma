@@ -517,6 +517,7 @@ model Organization {
   products                       Product[]
   nameSuggestions                NameSuggestion[]
   auditLogs                      AuditLog[]
+  clientContracts                ClientContract[]
   journalChecklistItems          JournalChecklistItem[]
   journalChecklistChecks         JournalChecklistCheck[]
   managerScopes                  ManagerScope[]
@@ -1205,6 +1206,12 @@ model User {
   // job title). Root users still belong to a real `Organization`; the synthetic
   // "platform" org carries them so every existing FK/query keeps working.
   isRoot                      Boolean                  @default(false)
+  // Delegated platform panel (/root) sections — see src/lib/platform-access.ts.
+  // Empty = no panel access. The superadmin (isRoot) grants them on /root/team.
+  platformSections            String[]                 @default([])
+  platformGrantedAt           DateTime?
+  platformGrantedById         String?
+  platformMailSender          PlatformMailSender?
   // False until the owner has explicitly edited this user's journal ACL in
   // /settings/users. While false, `hasJournalAccess` grants all journals —
   // this gives zero-regression behaviour for employees predating the ACL.
@@ -3481,6 +3488,34 @@ model PlatformSetting {
   updatedAt DateTime @updatedAt
 }
 
+/// Personal outgoing mailbox of a platform panel user (2026-10-29): contracts,
+/// proposals and invoices sent by this person go through their SMTP account
+/// with their name in From. No row (or not verified) — the system mailer with
+/// Reply-To to the person. The password is AES-256-GCM encrypted
+/// (src/lib/platform-mail-crypto.ts) and never leaves the server.
+model PlatformMailSender {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  host        String
+  port        Int
+  secure      Boolean   @default(true)
+  username    String
+  passwordEnc String
+  fromName    String
+  fromEmail   String
+  replyTo     String?
+  /// Signature block in proposals and letters: position and direct phone.
+  position    String?
+  phone       String?
+  signature   String?
+  enabled     Boolean   @default(true)
+  verifiedAt  DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 /// Ограничитель переходов (src/lib/page-navigation-guard.ts): суточные
 /// счётчики проверенных страниц и ответов 429 по грубым признакам — без
 /// IP, аккаунта, cookie и адреса страницы. Пишет page-limit-stats.server.ts
@@ -4270,6 +4305,41 @@ model ClosingDocument {
   updatedAt      DateTime  @updatedAt
 
   @@index([organizationId, issuedAt])
+}
+
+/// Договор оказания услуг ООО «БФС» с организацией-клиентом (2026-10-29).
+/// Выпускает ROOT на странице организации; текст — `src/lib/contracts/template.ts`
+/// (версия в `templateVersion`), PDF/DOCX перерисовываются только из снимков
+/// `seller` / `buyer` / `params`, а не из текущих реквизитов.
+model ClientContract {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// «WS-2026/0001»: год договора и порядковый номер в году.
+  number          String       @unique
+  year            Int
+  seq             Int
+  /// Дата договора (полдень UTC выбранного дня — без сдвига часового пояса).
+  issuedAt        DateTime
+  city            String
+  templateVersion String
+  seller          Json
+  buyer           Json
+  /// Подписант клиента, основание, факсимиле: `ContractParams`.
+  params          Json
+  /// issued | sent | voided.
+  status          String       @default("issued")
+  sentAt          DateTime?
+  sentTo          String[]     @default([])
+  sentByUserId    String?
+  voidedAt        DateTime?
+  voidedByUserId  String?
+  createdByUserId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([year, seq])
+  @@index([organizationId, createdAt])
 }
 
 /// Промокод на скидку при оформлении подписки. Создаёт ROOT. Скидка

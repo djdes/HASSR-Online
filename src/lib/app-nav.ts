@@ -840,6 +840,25 @@ export function mainNavSections<T extends { parent?: NavSectionKey }>(sections: 
   return sections.filter((section) => !section.parent);
 }
 
+/**
+ * Путь к разделу сверху вниз — по видимым родителям: раздел главного меню,
+ * вложенные разделы, сам раздел («Моя компания → Торговые точки → Журналы»).
+ * Его показывает карточка «Вы здесь» над меню раздела.
+ */
+export function navSectionPath<T extends { key: NavSectionKey; parent?: NavSectionKey }>(
+  sections: readonly T[],
+  key: NavSectionKey,
+): T[] {
+  const path: T[] = [];
+  let current = sections.find((section) => section.key === key);
+  while (current && !path.includes(current)) {
+    path.unshift(current);
+    const parent: NavSectionKey | undefined = current.parent;
+    current = parent ? sections.find((section) => section.key === parent) : undefined;
+  }
+  return path;
+}
+
 /** Карточки настроек, которые человек откроет (для поиска ⌘K). */
 export function visibleSettingsCards(actor: NavActor, facts: NavFacts): SettingsCard[] {
   const sections = new Set<string>(visibleNav(actor, facts).map((section) => section.key));

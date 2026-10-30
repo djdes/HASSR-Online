@@ -18,6 +18,8 @@ declare module "next-auth" {
       organizationLocale?: string | null;
       /** «Разрешение менять настройки» (2026-09-22). */
       canManageSettings?: boolean;
+      /** Разделы панели платформы (/root), выданные владельцем; см. lib/platform-access.ts. */
+      platformSections?: string[];
       id: string;
       role: string;
       organizationId: string;
@@ -96,5 +98,7 @@ declare module "next-auth/jwt" {
     orgKind?: "regular" | "directory";
     /** Точки руководителя точки — proxy закрывает ему общие разделы компании. */
     pointScope?: string[] | null;
+    /** Разделы панели платформы (/root) — proxy пускает по ним сотрудников. */
+    platformSections?: string[];
   }
 }

@@ -2966,6 +2966,7 @@
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",
+      "placeAria": "Where you are in the menu",
       "status": {
         "done": "Done",
         "started": "Started",
@@ -15917,7 +15918,7 @@
     "backToApp": "Open application",
     "sections": "Sections",
     "navigationLabel": "Platform sections",
-    "organizations": "Organizations",
+    "organizations": "Clients",
     "money": "Revenue and sales",
     "tariffs": "Plans",
     "promotions": "Promotions",
@@ -15946,7 +15947,11 @@
     "impersonation": "Customer account access",
     "timings": "Timings",
     "pageLimit": "Page rate limiter",
-    "yandexDirect": "Yandex Direct"
+    "yandexDirect": "Yandex Direct",
+    "team": "Team and access",
+    "myMail": "My mailbox",
+    "myMailHint": "Mailbox your contracts, proposals and invoices are sent from",
+    "accessOwner": "Platform owner — full access"
   },
   "telegramShortcuts": {
     "journals": {
@@ -16137,7 +16142,9 @@
       "summary": "Activity, retention and revenue across all organizations.",
       "pricing": "Potential MRR is the plan the headcount needs, billed yearly, per month: up to {standardSeats, number} employees — Standard, more — Premium; actual MRR is the account’s paid plan per month, 0 for those who have not paid. Trend is the percentage change in 7-day activity compared with the previous week.",
       "tableHelp": "Email belongs to the person who registered the organization. Click column headings to sort, or search using part of an address or name. Click an entry count to see which journals the organization uses and who fills them in.",
-      "ipHistory": "Login IP addresses have been recorded since {since}. Earlier addresses were recovered from the audit log, so the column is empty for people who have neither signed in nor performed administrative actions since then."
+      "ipHistory": "Login IP addresses have been recorded since {since}. Earlier addresses were recovered from the audit log, so the column is empty for people who have neither signed in nor performed administrative actions since then.",
+      "clientsTitle": "Clients",
+      "clientsSubtitle": "All organizations on WeSetup: who pays, who works, how to reach them. Click a client to open the card with contacts and documents."
     },
     "stats": {
       "organizations": "Organizations",
@@ -16148,7 +16155,11 @@
       "liabilities": "platform liabilities",
       "mrr": "MRR",
       "ofTotal": "of {count, number}",
-      "potential": "potential: ₽{amount, number}"
+      "potential": "potential: ₽{amount, number}",
+      "clients": "Clients",
+      "newWeek": "+{count, number} in 7 days",
+      "paying": "Paying",
+      "payingHint": "MRR {amount}"
     },
     "format": {
       "rubles": "₽{amount, number}"
@@ -16244,6 +16255,41 @@
       "usersCount": "Employees: {count, number}",
       "documentsCount": "Journal documents: {count, number}",
       "deleteConsequences": "Entries, logs and settings will be deleted with the organization"
+    },
+    "list": {
+      "searchPlaceholder": "Name, tax ID, e-mail or phone",
+      "segments": {
+        "all": "All",
+        "paying": "Paying",
+        "notPaying": "Not paying",
+        "new": "New in 7 days",
+        "sleeping": "Idle 14+ days",
+        "demo": "Demo"
+      },
+      "sortLabel": "Sort by",
+      "sort": {
+        "mrr": "Highest MRR",
+        "newest": "Newest",
+        "active": "Most active",
+        "sleeping": "Idle longest",
+        "name": "Name"
+      },
+      "columns": {
+        "client": "Client",
+        "contact": "Contact",
+        "plan": "Plan",
+        "activity": "Activity",
+        "money": "MRR"
+      },
+      "since": "since {date}",
+      "until": "until {date}",
+      "points": "{count, plural, one {# location} other {# locations}}",
+      "noContact": "No contacts",
+      "entries7d": "{count} in 7 days",
+      "balance": "points {amount}",
+      "showMore": "Show {count, number} more",
+      "shown": "Shown {shown, number} of {total, number}",
+      "open": "Open card"
     }
   },
   "publicFeatures": {
@@ -16475,7 +16521,10 @@
     "page": {
       "back": "All organizations",
       "created": "{type} · created {date}",
-      "inn": " · INN {inn}"
+      "inn": " · INN {inn}",
+      "backToClients": "All clients",
+      "since": "Client since {date}",
+      "lastActivity": "Last activity: {value}"
     },
     "stats": {
       "users": "Employees",
@@ -16659,7 +16708,81 @@
       "noAccount": "The organisation has no account — period, locations and trial cannot be saved",
       "notHeld": "Only a payment awaiting review can be marked as reviewed",
       "freeWithEnd": "The Free plan has no paid term — to set a date, choose Standard, Premium or Subscription (previous plan)"
-    }
+    },
+    "nav": {
+      "label": "Card sections",
+      "contacts": "Contacts",
+      "documents": "Documents",
+      "billing": "Subscription and payments",
+      "people": "Employees",
+      "security": "Sign-ins"
+    },
+    "contacts": {
+      "title": "How to reach",
+      "owner": "Owner",
+      "ownerMissing": "Owner not found — the organization has no employees",
+      "company": "Company",
+      "phone": "Phone",
+      "email": "E-mail",
+      "login": "WeSetup login",
+      "accountant": "Accounting",
+      "website": "Website",
+      "address": "Address",
+      "messengers": "Messengers",
+      "telegramLinked": "Telegram connected",
+      "maxLinked": "MAX connected",
+      "noPhone": "No phone",
+      "noEmail": "No e-mail",
+      "noCompanyContacts": "No company phones or e-mails — they can be pulled from the registry by tax ID.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "call": "Call",
+      "write": "Write",
+      "fromRegistry": "from registry"
+    },
+    "requisites": {
+      "title": "Requisites",
+      "fullName": "Legal name",
+      "inn": "Tax ID",
+      "kpp": "KPP",
+      "address": "Legal address",
+      "director": "Director",
+      "missing": "No requisites: the client has not entered a tax ID yet.",
+      "copyAll": "Copy requisites"
+    },
+    "summary": {
+      "title": "Summary",
+      "people": "Employees",
+      "documents": "Documents",
+      "activeDocuments": "Active",
+      "entries": "Entries"
+    },
+    "documents": {
+      "title": "Documents for the client",
+      "hint": "Contract, proposal and invoice are filled with BFS requisites and the client's data."
+    },
+    "people": {
+      "title": "Employees and contacts",
+      "name": "Employee",
+      "phone": "Phone",
+      "email": "E-mail",
+      "messengers": "Messengers",
+      "lastLogin": "Last sign-in",
+      "status": "Status",
+      "ownerBadge": "Owner",
+      "archived": "Archived",
+      "never": "Never",
+      "panel": "Panel",
+      "withContacts": "{count, plural, one {# with contacts} other {# with contacts}}"
+    },
+    "security": {
+      "title": "Owner sign-ins",
+      "registrationIp": "Registration IP",
+      "lastLoginIp": "Last sign-in IP",
+      "lastLoginAt": "Last sign-in",
+      "none": "No data: addresses are recorded on sign-in since 26.08.2026"
+    },
+    "readOnly": "Plan and points can be changed by a team member with the “Payments and plans” section."
   },
   "miniHome": {
     "entry": {
@@ -29619,6 +29742,320 @@
       "list": "Here are all outlets and the journals they keep.",
       "add": "“Add journal” — the journal appears in Today for this outlet's staff.",
       "remove": "“×” next to a journal — it stops reminding; entries are not deleted."
+    }
+  },
+  "rootPanel": {
+    "sections": {
+      "clients": {
+        "title": "Clients",
+        "hint": "Client list, client card, contacts, contract and proposal"
+      },
+      "billing": {
+        "title": "Payments and plans",
+        "hint": "Plans, invoices, payment marks, points, requisites"
+      },
+      "sales": {
+        "title": "Sales",
+        "hint": "Proposals, mailings, services and requests, promo codes and promotions"
+      },
+      "partners": {
+        "title": "Partners",
+        "hint": "Partner applications, clients, payouts"
+      },
+      "edo": {
+        "title": "E-documents",
+        "hint": "Sending contracts, invoices and UPD via Saby"
+      },
+      "support": {
+        "title": "Feedback",
+        "hint": "Requests, reviews, ideas, NPS"
+      },
+      "assistant": {
+        "title": "Assistant",
+        "hint": "Question log and assistant settings"
+      },
+      "content": {
+        "title": "Blog",
+        "hint": "Articles and their translations"
+      },
+      "seo": {
+        "title": "SEO and ads",
+        "hint": "Site health, positions, Yandex Direct"
+      },
+      "translations": {
+        "title": "Translations",
+        "hint": "Translation catalog and translators"
+      },
+      "monitoring": {
+        "title": "Monitoring",
+        "hint": "Status, logs, audit, timings, rate limiter"
+      }
+    },
+    "presets": {
+      "admin": {
+        "title": "Administrator",
+        "hint": "All panel sections"
+      },
+      "sales": {
+        "title": "Sales",
+        "hint": "Clients, proposals and mailings, partners, e-documents"
+      },
+      "support": {
+        "title": "Support",
+        "hint": "Clients, requests and reviews, assistant"
+      },
+      "seo": {
+        "title": "SEO and content",
+        "hint": "Blog, SEO and ads, translations"
+      },
+      "finance": {
+        "title": "Accounting",
+        "hint": "Clients, payments and plans, e-documents"
+      },
+      "analyst": {
+        "title": "Analytics",
+        "hint": "Clients and platform monitoring"
+      },
+      "custom": {
+        "title": "Custom set",
+        "hint": "Tick the sections you need"
+      }
+    },
+    "access": {
+      "title": "Panel access: {name}",
+      "description": "Choose a role or tick sections. The person will see only them — other panel pages stay closed.",
+      "presetsLabel": "Role",
+      "sectionsLabel": "Sections",
+      "ownerOnly": "Signing in as a client, deleting organizations and managing the team stay with the owner only.",
+      "willSee": "Will see: {sections}",
+      "nothing": "Nothing selected — panel access will be closed",
+      "lands": "After sign-in “{section}” opens",
+      "grant": "Grant access",
+      "update": "Save access",
+      "revoke": "Revoke access",
+      "revokeTitle": "Revoke panel access?",
+      "revokeBody": "{name} will no longer open the platform panel. Sent letters and log records stay.",
+      "saved": "Access saved: {name}",
+      "revoked": "Access revoked: {name}",
+      "failed": "Could not save access",
+      "button": "Panel access",
+      "buttonHas": "Panel: {role}",
+      "ownerBadge": "Owner",
+      "refreshHint": "The “Platform panel” link appears in the person's cabinet after a page refresh."
+    },
+    "team": {
+      "title": "Team and access",
+      "description": "Who can open the platform panel and which sections. The owner sees everything; others — only granted sections.",
+      "addTitle": "Add to the team",
+      "addHint": "Find a person registered on WeSetup and choose a role. No account — ask them to sign up at wesetup.ru.",
+      "searchLabel": "Find by e-mail, name or phone",
+      "searchPlaceholder": "E-mail, name or phone",
+      "searching": "Searching…",
+      "noResults": "Nobody found. Check the e-mail or ask the person to sign up.",
+      "membersTitle": "Team",
+      "membersCount": "{count, plural, one {# person} other {# people}}",
+      "person": "Person",
+      "role": "Role and sections",
+      "mail": "Sending mailbox",
+      "granted": "Granted",
+      "cabinet": "Cabinet: {name}",
+      "lastLogin": "Last sign-in {date}",
+      "neverLoggedIn": "Never signed in",
+      "edit": "Edit",
+      "empty": "Only the owner is in the team so far. Find an employee above and grant sections.",
+      "allSections": "All sections",
+      "mailStatus": {
+        "none": "Not connected",
+        "unverified": "Not verified",
+        "verified": "Working",
+        "disabled": "Disabled",
+        "error": "Error"
+      },
+      "rolesTitle": "What each role opens"
+    },
+    "me": {
+      "title": "My mailbox for client letters",
+      "description": "Contracts, proposals and invoices you send from the panel go from this address, signed with your name.",
+      "fallback": "Until the mailbox is connected, letters go from noreply@wesetup.ru and client replies come to your address.",
+      "connectionTitle": "Connection",
+      "presets": "Quick setup",
+      "signatureTitle": "Signature in letters and proposals",
+      "signatureHint": "Used in the proposal signature and letters.",
+      "fields": {
+        "fromName": "Sender name",
+        "fromEmail": "Sender address",
+        "host": "SMTP server",
+        "port": "Port",
+        "secure": "SSL/TLS (port 465)",
+        "username": "Login",
+        "password": "Password",
+        "passwordKeep": "Saved — leave empty to keep it",
+        "replyTo": "Replies to (optional)",
+        "position": "Position",
+        "phone": "Phone",
+        "signature": "Extra signature line"
+      },
+      "placeholders": {
+        "fromName": "Denis Volkov",
+        "fromEmail": "denis@wesetup.ru",
+        "host": "smtp.yandex.ru",
+        "username": "Usually the full e-mail address",
+        "replyTo": "If replies should go elsewhere",
+        "position": "Account manager",
+        "phone": "+7 (900) 000-00-00",
+        "signature": "For example: “Message us on Telegram @wesetup”"
+      },
+      "save": "Save and verify",
+      "saving": "Saving…",
+      "verifying": "Verifying the mailbox…",
+      "test": "Verify again",
+      "disable": "Disable",
+      "disableTitle": "Disable your mailbox?",
+      "disableBody": "Letters will go from noreply@wesetup.ru again, replies to your address. Settings are kept and can be enabled any time.",
+      "status": {
+        "none": "Not connected — letters go from the shared mailbox",
+        "unverified": "Saved but not verified yet",
+        "verified": "Working · verified {date}",
+        "disabled": "Disabled — letters go from the shared mailbox",
+        "error": "Not working: {error}"
+      },
+      "verified": "Mailbox works — a test letter was sent to {email}",
+      "failed": "Mailbox verification failed",
+      "savedOnly": "Settings saved",
+      "disabled": "Personal mailbox disabled",
+      "errorGeneric": "Could not save settings"
+    }
+  },
+  "rootClientContract": {
+    "title": "Services agreement",
+    "subtitle": "BFS LLC details and the client's registry data (by tax ID) are filled in automatically — review, issue and send.",
+    "version": "Template of {version}",
+    "lawyerNote": "The agreement text is a draft for legal review: have a lawyer read it before sending it widely.",
+    "cancel": "Cancel",
+    "seller": {
+      "title": "BFS LLC details",
+      "ready": "Ready",
+      "missing": "Details missing",
+      "edit": "Fill in details",
+      "items": {
+        "nameFull": "Full legal name",
+        "inn": "Tax ID (INN)",
+        "ogrn": "Registration number (OGRN)",
+        "address": "Registered address",
+        "bank": "Bank, BIC, settlement and correspondent accounts",
+        "head": "Director (position and full name)",
+        "facsimile": "Signature facsimile — optional",
+        "stamp": "Company stamp — optional"
+      }
+    },
+    "buyer": {
+      "title": "Client details",
+      "legal": "Company",
+      "individual": "Sole trader",
+      "refresh": "Update from registry",
+      "refreshing": "Updating…",
+      "refreshed": "Registry data updated",
+      "updated": "Registry snapshot of {date}",
+      "noProfile": "No registry snapshot — data comes from the client's own details",
+      "optionalHint": "Anything missing stays as a blank line to fill in by hand.",
+      "items": {
+        "inn": "Tax ID (INN)",
+        "nameFull": "Full legal name from the registry",
+        "ogrn": "Registration number (OGRN)",
+        "ogrnIndividual": "Sole trader registration number (OGRNIP)",
+        "legalAddress": "Registered address",
+        "legalAddressIndividual": "Address",
+        "kpp": "Tax registration code (KPP)",
+        "signer": "Director (position and full name)",
+        "signerIndividual": "Sole trader full name",
+        "basis": "Authority basis",
+        "email": "Email for notices"
+      }
+    },
+    "form": {
+      "title": "Agreement details",
+      "date": "Agreement date",
+      "city": "City",
+      "cityPlaceholder": "For example, Korolyov",
+      "signerName": "Client signatory — full name",
+      "signerNameIndividual": "Sole trader or representative full name",
+      "signerPost": "Position",
+      "signerPostPlaceholder": "general director",
+      "signerBasis": "Acting on the basis of",
+      "signerBasisIndividual": "Representative power of attorney",
+      "basisHint": "In Russian, genitive case: «Устава» (charter), «доверенности № 12 от 01.10.2026» (power of attorney).",
+      "basisHintIndividual": "Fill in only if someone other than the sole trader signs.",
+      "buyerEmail": "Client email for notices",
+      "buyerEmailHint": "Goes into the agreement details — notices are sent there.",
+      "facsimile": "BFS LLC signature facsimile and stamp",
+      "facsimileHint": "The signature and stamp are placed in the PDF automatically.",
+      "facsimileMissing": "Upload the facsimile and stamp in Requisites.",
+      "preview": "Draft PDF",
+      "previewing": "Preparing…",
+      "issue": "Issue agreement",
+      "issuing": "Issuing…",
+      "issued": "Agreement No. {number} issued",
+      "blocked": "To issue the agreement, fill in: {items}",
+      "whatNext": "Once issued, the agreement gets a number — download it as PDF or Word and email it to the client."
+    },
+    "history": {
+      "title": "Issued agreements",
+      "count": "{count, plural, =0 {none yet} one {# agreement} other {# agreements}}",
+      "empty": "No agreements yet",
+      "emptyHint": "Fill in the details above and click Issue agreement.",
+      "current": "Current",
+      "status": {
+        "issued": "Issued",
+        "sent": "Sent",
+        "voided": "Voided"
+      },
+      "issuedBy": "Issued {date} · {name}",
+      "issuedAt": "Issued {date}",
+      "sentTo": "Sent {date} to {emails}",
+      "sentToBy": "Sent {date} to {emails} · {name}",
+      "voided": "Voided {date}",
+      "pdf": "PDF",
+      "docx": "Word",
+      "send": "Send",
+      "void": "Void"
+    },
+    "send": {
+      "title": "Send agreement No. {number}",
+      "description": "The email goes out with the PDF attached. The client signs it and replies with a scan.",
+      "recipients": "To",
+      "sources": {
+        "owner": "owner",
+        "ownerContact": "owner contact",
+        "accountant": "accountant",
+        "registry": "registry",
+        "manual": "added"
+      },
+      "addPlaceholder": "Add an address and press Enter",
+      "add": "Add",
+      "invalidEmail": "This does not look like an email address",
+      "noSuggestions": "No suitable addresses found — the owner has a service email. Add the client's address manually.",
+      "subject": "Subject",
+      "message": "Message",
+      "confirm": "Send",
+      "sending": "Sending…",
+      "sent": "Agreement sent: {emails}",
+      "notConfigured": "Email is not configured on the server — the message was only logged and the agreement is not marked as sent",
+      "failed": "Could not send the agreement",
+      "viaPersonal": "From your mailbox: {from}",
+      "viaSystem": "From the shared noreply@wesetup.ru, replies come to you. Connect “My mailbox” to send from your address.",
+      "viaSystemFallback": "Your mailbox failed ({reason}) — sent from the shared one, replies come to you."
+    },
+    "void": {
+      "title": "Void agreement No. {number}?",
+      "description": "The agreement stays in the history but becomes invalid.",
+      "bulletNumber": "The number is not released or reused",
+      "bulletSend": "This agreement can no longer be sent",
+      "bulletPdf": "The PDF gets a Voided mark",
+      "confirm": "Void",
+      "done": "Agreement No. {number} voided"
+    },
+    "errors": {
+      "generic": "Something went wrong — please try again"
     }
   }
 }
