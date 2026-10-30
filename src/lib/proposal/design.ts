@@ -30,7 +30,7 @@ import type { AppliedPromotion } from "@/lib/promo/promotions";
  *
  *   • стоимость «Каждый месяц / Сразу за год» — `PlanRates` (ROOT → тарифы),
  *     акция и промокод — тем же порядком, что на оплате (`computeProposalPrice`);
- *   • «Дополнительно» — ППК «от» (`readPpkIndividualPrice`), в «Премиуме» ещё
+ *   • «Дополнительно» — ППК «от» (услуга «ppk-development»), в «Премиуме» ещё
  *     датчики с установкой «от» (самый дешёвый пакет оборудования); каждую
  *     строку можно выключить (`vars.extras`);
  *   • «Что входит» — строки из `COMPARISON_GROUPS` и лимитов `tariff-plans.ts`;

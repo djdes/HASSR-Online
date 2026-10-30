@@ -1,0 +1,109 @@
+Локальные скриншоты (PNG не коммитятся: .gitignore → .agent/**/*.png). DPR 2, Playwright Chromium, next dev, демо-владелец.
+
+- command-palette-light.png
+- favorites-picker-light.png
+- home-1440-dark.png
+- home-1440-light.png
+- home-390-dark.png
+- home-390-light.png
+- mobile-sheet-dark.png
+- mobile-sheet-light.png
+- more-cards-light.png
+- page-points-1440-dark.png
+- page-points-1440-light.png
+- profile-menu-light.png
+- sidebar-company-dark.png
+- sidebar-company-light.png
+- sidebar-hover-light.png
+- sidebar-main-dark.png
+- sidebar-main-light.png
+- sidebar-points-dark.png
+- sidebar-points-light.png
+
+Замеры Playwright:
+{
+ "wordmark-1440-light": {
+  "logoBox": [
+   662,
+   1054
+  ],
+  "tagline": [
+   675,
+   1021
+  ],
+  "viewport": 1440,
+  "overflowX": false
+ },
+ "points-light": [
+  "violet linear-gradient(135deg, rgb(148, 120, 255), rgb( | Сотрудники точек",
+  "indigo linear-gradient(135deg, rgb(115, 131, 255), rgb( | Журналы",
+  "teal linear-gradient(135deg, rgb(31, 179, 159), rgb(1 | Программа производственного ",
+  "amber linear-gradient(135deg, rgb(235, 154, 28), rgb(1 | Цеха и помещения",
+  "sky linear-gradient(135deg, rgb(41, 163, 227), rgb(1 | Оборудование",
+  "fuchsia linear-gradient(135deg, rgb(217, 94, 234), rgb(1 | QR-наклейки и плакаты",
+  "violet linear-gradient(135deg, rgb(148, 120, 255), rgb( | Онлайн-принтер",
+  "green linear-gradient(135deg, rgb(44, 181, 102), rgb(1 | Общий планшет",
+  "orange linear-gradient(135deg, rgb(251, 133, 69), rgb(2 | Справочник продуктов"
+ ],
+ "brandmark-light": 0,
+ "wordmark-1440-dark": {
+  "logoBox": [
+   662,
+   1054
+  ],
+  "tagline": [
+   675,
+   1021
+  ],
+  "viewport": 1440,
+  "overflowX": false
+ },
+ "points-dark": [
+  "violet linear-gradient(135deg, rgb(148, 120, 255), rgb( | Сотрудники точек",
+  "indigo linear-gradient(135deg, rgb(115, 131, 255), rgb( | Журналы",
+  "teal linear-gradient(135deg, rgb(31, 179, 159), rgb(1 | Программа производственного ",
+  "amber linear-gradient(135deg, rgb(235, 154, 28), rgb(1 | Цеха и помещения",
+  "sky linear-gradient(135deg, rgb(41, 163, 227), rgb(1 | Оборудование",
+  "fuchsia linear-gradient(135deg, rgb(217, 94, 234), rgb(1 | QR-наклейки и плакаты",
+  "violet linear-gradient(135deg, rgb(148, 120, 255), rgb( | Онлайн-принтер",
+  "green linear-gradient(135deg, rgb(44, 181, 102), rgb(1 | Общий планшет",
+  "orange linear-gradient(135deg, rgb(251, 133, 69), rgb(2 | Справочник продуктов"
+ ],
+ "brandmark-dark": 0,
+ "hoverChip": {
+  "translate": "0px -1px",
+  "scale": "1.06",
+  "rotate": "-6deg",
+  "transitionProperty": "translate, scale, rotate, box-shadow"
+ },
+ "activeChip": {
+  "active": true,
+  "rowBg": "rgb(233, 244, 250)",
+  "rowColor": "rgb(10, 106, 161)",
+  "bar": "rgb(10, 134, 201) 3px"
+ },
+ "wordmark-390-light": {
+  "logoBox": [
+   81,
+   322
+  ],
+  "tagline": [
+   88,
+   301
+  ],
+  "viewport": 390,
+  "overflowX": false
+ },
+ "wordmark-390-dark": {
+  "logoBox": [
+   81,
+   322
+  ],
+  "tagline": [
+   88,
+   301
+  ],
+  "viewport": 390,
+  "overflowX": false
+ }
+}

@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Building2, Check, Crown, FileText, Gift, Minus, Plus, Sparkles, Users } from "lucide-react";
 
+import { ContactUsDialog, ContactUsTrigger } from "@/components/contact/contact-us-dialog";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
@@ -74,10 +75,13 @@ type Props = {
   rates: PlanRates;
   available: Record<PaidTier, Record<BillingCycle, boolean>>;
   promotion: AppliedPromotion | null;
-  /** «Заказать индивидуально» в блоке ППК — цена «от». */
-  ppkFromRub: number;
   /** Куда ведёт заказ ППК: страница услуг (кабинет) или /uslugi. */
   ppkHref: string;
+  /**
+   * Telegram окна «Свяжитесь с нами» (`contactTelegramUrl` с сервера): цены
+   * ППК на витрине нет, вместо неё — контакты (владелец, 2026-10-29).
+   */
+  contactTelegramUrl?: string | null;
   /** Кнопка «Начать бесплатно» (лендинг — якорь формы, /pricing — регистрация). */
   startHref?: string;
   /** Промокод из ссылки — уезжает в заказ. */
@@ -101,8 +105,8 @@ export function TariffComparison({
   rates,
   available,
   promotion,
-  ppkFromRub,
   ppkHref,
+  contactTelegramUrl = null,
   startHref = "/register",
   promoCode = null,
   cabinet,
@@ -121,6 +125,8 @@ export function TariffComparison({
   const [cycle, setCycle] = useState<BillingCycle>("year");
   const minPoints = Math.max(1, cabinet?.pointsInUse ?? 1);
   const [points, setPoints] = useState(Math.max(minPoints, currentPaid?.points ?? 1));
+  // Одно окно контактов на блок ППК и клетки таблицы.
+  const [contactOpen, setContactOpen] = useState(false);
   // Неразрывный пробел перед «₽»: сумма в кнопке и в цене не разрывается.
   const rub = (value: number) => `${formatNumber(locale, value)}\u00a0₽`;
   const href = (path: string) => (mode === "public" ? localizedHref(path, locale) : path);
@@ -481,7 +487,7 @@ export function TariffComparison({
       </p>
 
       {/* ППК индивидуально — у всех тарифов (владелец: «во все тарифы … кнопку
-          заказать индивидуально от 10 000»). */}
+          заказать индивидуально»). Цены нет — «Свяжитесь с нами» (2026-10-29). */}
       <div
         data-testid="tariff-ppk"
         className="flex flex-col gap-4 rounded-3xl border border-[#ececf4] bg-[#fafbff] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
@@ -496,16 +502,26 @@ export function TariffComparison({
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
-          <span className="text-center text-[15px] font-semibold text-[#0b1024] sm:text-right">
-            {t("ppk.price", { price: rub(ppkFromRub) })}
-          </span>
+          <ContactUsTrigger
+            onClick={() => setContactOpen(true)}
+            variant="link"
+            testId="tariff-ppk-contact"
+            className="self-center text-[15px] font-semibold sm:self-end"
+          />
           <CtaLink href={href(ppkHref)} variant="outline" testId="tariff-ppk-cta">
             {t("ppk.cta")}
           </CtaLink>
         </div>
       </div>
 
-      {showTable ? <ComparisonTable ppkPrice={rub(ppkFromRub)} /> : null}
+      {showTable ? <ComparisonTable onContact={() => setContactOpen(true)} /> : null}
+
+      <ContactUsDialog
+        open={contactOpen}
+        onOpenChange={setContactOpen}
+        service={t("ppk.title")}
+        telegramUrl={contactTelegramUrl}
+      />
     </div>
   );
 }
@@ -690,7 +706,7 @@ function CtaStatic({ children }: { children: ReactNode }) {
 }
 
 /** Таблица сравнения: строки — из `COMPARISON_GROUPS`, подписи — из каталога i18n. */
-function ComparisonTable({ ppkPrice }: { ppkPrice: string }) {
+function ComparisonTable({ onContact }: { onContact: () => void }) {
   const t = useTranslations("landingComponents.tariffs");
   const tiers: TierId[] = ["free", "standard", "premium"];
   const cell = (value: ComparisonCell) => {
@@ -708,8 +724,15 @@ function ComparisonTable({ ppkPrice }: { ppkPrice: string }) {
         </span>
       );
     }
-    const values = value.key === "ppkFrom" ? { price: ppkPrice } : (value.values ?? {});
-    return <span>{t(`cells.${value.key}` as never, values as never)}</span>;
+    // «ППК под ваш объект»: «по запросу» — кнопка окна контактов, без цены.
+    if (value.key === "ppkOnRequest") {
+      return (
+        <ContactUsTrigger onClick={onContact} variant="link" icon={false} className="justify-start text-[14px]">
+          {t("cells.ppkOnRequest")}
+        </ContactUsTrigger>
+      );
+    }
+    return <span>{t(`cells.${value.key}` as never, (value.values ?? {}) as never)}</span>;
   };
   return (
     <section data-testid="tariff-table" className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">

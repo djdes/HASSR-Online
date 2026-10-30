@@ -1,0 +1,15 @@
+{
+  "task_id": "menu-stack-2026-10",
+  "spec": "spec.md",
+  "date": "2026-10-30",
+  "acceptance": {
+    "AC1": { "verdict": "PASS", "evidence": ["src/components/layout/section-menu-list.tsx", "src/components/layout/app-sidebar.tsx", "raw/level3-journals-light.png"], "measurements": { "level1Tabs": [215], "level2Tabs": [199, 215], "level3Tabs": [183, 199, 215], "cardWidth": 231, "backButtons": 0 } },
+    "AC2": { "verdict": "PASS", "measurements": { "tabCompanyFromLevel3": { "url": "/settings/organization", "focus": "points" }, "tabMain": { "url": "/home", "focus": "company" }, "sheetOpenDeeperFocusIsTab": true } },
+    "AC3": { "verdict": "PASS", "evidence": ["src/app/app-theme.css"], "measurements": { "cardHeadAriaCurrent": "location", "cardBorder": "color-mix(var(--tone) 30%)" } },
+    "AC4": { "verdict": "PASS", "evidence": ["src/components/layout/mobile-nav-sheet.tsx", "src/components/layout/section-menu-button.tsx", "raw/sheet-site-level3.png", "raw/sheet-mini-level3.png"], "measurements": { "sheetTabs": [316, 332, 348], "afterCompanyUrl": "/journals", "afterCompanyFocus": "Торговые точки" } },
+    "AC5": { "verdict": "PASS", "evidence": ["raw/level3-journals-dark.png"], "measurements": { "darkTabAndCardBg": "rgb(58, 55, 87)" } },
+    "AC6": { "verdict": "PASS", "commands": { "npm run typecheck": "exit 0", "npm run test:gate": "pass=5131, fail=0", "npx eslint (4 files)": "exit 0", "next build --webpack": "exit 0" } },
+    "AC7": { "verdict": "PASS", "evidence": ["raw/screenshots.txt", "raw/stack.cjs"], "screenshots": 11, "measurements": { "cascade": ["0s", "0.028s", "0.056s", "0.084s", "0.112s", "0.14s", "0.168s"], "reducedMotion": "none" } }
+  },
+  "deploy_changes": "UI only (sidebar, phone sheet, Mini App sheet, CSS). No Prisma schema changes."
+}

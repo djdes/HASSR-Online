@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { NavIcon } from "@/components/layout/nav-icons";
+import { NavIconChip } from "@/components/layout/nav-icons";
 
 export type SearchPickItem = { id: string; label: string; hint?: string; icon?: string };
 export type SearchPickGroup = { label: string | null; items: SearchPickItem[] };
@@ -104,14 +104,13 @@ export function SearchPickDialog({
                     disabled={busy}
                     onClick={() => onPick(item.id)}
                     data-pick-item={item.id}
+                    data-nav-row
                     className={cn(
                       "flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:bg-[#f5f6ff] focus-visible:outline-none disabled:opacity-60",
                     )}
                   >
                     {item.icon ? (
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#3848c7]">
-                        <NavIcon name={item.icon} className="size-4" />
-                      </span>
+                      <NavIconChip name={item.icon} className="size-8 rounded-xl" iconClassName="size-4" />
                     ) : null}
                     <span className="min-w-0 flex-1">
                       <span className="block text-[14.5px] font-medium text-[#0b1024]">{item.label}</span>

@@ -20,6 +20,22 @@
 | AC8 E2E | PASS | `raw/e2e-documents.cjs` → `raw/out/e2e-org-one-results.json` |
 | AC9 проверки | см. ниже | |
 
+## Слияние с origin/master (ee344a07, ЭДО #62, цены услуг #60)
+
+- Конфликты add/add из-за squash #59: `pdf-kit.ts`, `contracts/pdf.ts`, `platform-access.ts` в master совпадали с базой ветки — взята версия ветки; файлы, которые ветка не меняла (шапка, профиль, карточка договора, e2e root-admin), — версия master; каталоги i18n — master + `rootClientDocuments`; тест страницы клиента — `rootEdo` из master + мок «Документов клиенту».
+- Страница клиента: `ClientDocumentsSection` принимает и передаёт `edo` в карточку договора (кнопка ЭДО из #62 сохранена).
+- #60 убрал `readPpkIndividualPrice`: цена ППК для КП читается через `readService("ppk-development")` (запасной — `PPK_INDIVIDUAL_FROM_RUB`).
+- ЭДО (#62) рендерит счёт через `renderInvoice` — получает новый дизайн автоматически.
+
+## Проверки после слияния
+
+- `npm run typecheck` — exit 0.
+- `npm run i18n:check` — 97 pass, 0 fail.
+- eslint изменённых файлов — чисто.
+- затронутые наборы + тесты ЭДО — 257/257.
+- `npm run test:gate` — pass 5210, fail 2; «новый» относительно baseline только `prewarm-routes.sh` (`deploy-scripts.test.ts`: скрипт и тест не тронуты, 60+ вызовов curl упираются в 30-секундный таймаут этой машины — падает и отдельно). PDF english-version, переписанные гейтом, откатаны.
+- `verify-worktree` — `corrupted: 0` (до коммита восстановлены 5 тихо испорченных файлов `pgdata/` из HEAD).
+
 ## Решения, отступающие от буквы образца
 
 - «Готовые бланки документов» → «Готовые шаблоны документов»: слово «бланк» запрещено тестом `no-blank-word` (решение владельца 29.09).

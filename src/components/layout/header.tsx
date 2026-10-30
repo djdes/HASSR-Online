@@ -8,20 +8,10 @@ import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
-import {
-  Coins,
-  CreditCard,
-  Handshake,
-  Languages,
-  Library,
-  Loader2,
-  LogOut,
-  Menu,
-  Palette,
-  Plus,
-  ShieldCheck,
-} from "lucide-react";
+import { Handshake, Loader2, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { navTone } from "@/lib/nav-tones";
+import { NavIconChip } from "@/components/layout/nav-icons";
 
 /** Staff with platform sections enter the panel through a token refresh. */
 const PLATFORM_PANEL_ENTRY = "/api/me/platform-panel";
@@ -71,6 +61,9 @@ import { CurrentPointSwitcher } from "@/components/layout/current-point-switcher
 import { MobileNavSheet } from "@/components/layout/mobile-nav-sheet";
 import { OrganizationMark } from "@/components/layout/organization-brand";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
+
+/** Плашка пункта меню профиля — цвет по иконке, как в меню кабинета. */
+const MENU_CHIP = "size-7 rounded-[9px]";
 
 function getInitials(name: string): string {
   return name
@@ -283,12 +276,17 @@ export function Header({
           <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
+          {/* Кнопки шапки — мягкая подложка цвета своей иконки
+              (`lib/nav-tones.ts`), как пункты меню; подъём при наведении —
+              `[data-tone-button]` в app-theme.css. */}
           {partnerCabinet ? (
             <Link
               href="/partner"
               aria-label={t("header.partnerCabinet")}
               title={t("header.partnerTitle", { brand: partnerCabinet.brandName })}
-              className="hidden h-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] px-2.5 text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#5566f6]/[0.09]"
+              data-tone={navTone("Handshake")}
+              data-tone-button
+              className="hidden h-10 shrink-0 items-center justify-center rounded-lg px-2.5 md:inline-flex"
             >
               <Handshake className="size-5 shrink-0" />
             </Link>
@@ -300,21 +298,24 @@ export function Header({
               prefetch={false}
               aria-label={t("header.platformPanel")}
               title={t("header.platformPanel")}
+              data-tone={navTone("ShieldCheck")}
+              data-tone-button
               className={cn(
-                "hidden h-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] px-2.5 text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#5566f6]/[0.09]",
-                pathname.startsWith("/root") && "bg-[#5566f6]/[0.09]"
+                "hidden h-10 shrink-0 items-center justify-center rounded-lg px-2.5 md:inline-flex",
+                pathname.startsWith("/root") && "ring-2 ring-[var(--tone-glow)]"
               )}
             >
               <ShieldCheck className="size-5 shrink-0" />
             </Link>
           ) : null}
 
+          {/* Выход — нейтральный, краснеет только при наведении. */}
           <button
             type="button"
             onClick={handleLogout}
             aria-label={t("header.logout")}
             title={t("header.logout")}
-            className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#5566f6]/[0.04] text-[#5566f6] transition-colors duration-200 md:inline-flex hover:bg-[#fff4f2] hover:text-[#d2453d]"
+            className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 md:inline-flex hover:bg-[#fff4f2] hover:text-[#d2453d]"
           >
             <LogOut className="size-5" />
           </button>
@@ -328,7 +329,7 @@ export function Header({
               aria-label={t("header.profile")}
             >
               <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                <AvatarFallback className="bg-[#5566f6]/[0.09] text-[13px] font-semibold text-[#5566f6]">
+                <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white">
                   {getInitials(userName)}
                 </AvatarFallback>
               </Avatar>
@@ -345,7 +346,7 @@ export function Header({
                     согласован с остальными контролами шапки — size-10
                     (на телефоне size-11, как все кнопки шапки). */}
                 <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                  <AvatarFallback className="bg-[#5566f6]/[0.09] text-[13px] font-semibold text-[#5566f6]">
+                  <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>
@@ -403,9 +404,9 @@ export function Header({
                       {t("profile.otherCabinets")}
                     </div>
                     {partnerCabinet ? (
-                      <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
+                      <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
                         <Link href="/partner">
-                          <Handshake className="mr-2 size-4 text-[#5566f6]" />
+                          <NavIconChip name="Handshake" className={MENU_CHIP} iconClassName="size-4" />
                           <span className="flex-1 truncate">{t("header.partnerCabinet")}</span>
                           <span className="max-w-[120px] truncate text-[11px] text-[#6f7282]">
                             {partnerCabinet.brandName}
@@ -419,6 +420,7 @@ export function Header({
                         className="focus:bg-[#f5f6ff]"
                         title={t("header.masterCabinetTitle")}
                         data-testid="profile-master-cabinet"
+                        data-nav-row
                         onSelect={(event) => {
                           // Меню не закрываем: видно, что идёт переключение,
                           // дальше — полная загрузка /master.
@@ -426,7 +428,7 @@ export function Header({
                           void openMaster.open(cabinet);
                         }}
                       >
-                        <Library className="mr-2 size-4 text-[#5566f6]" />
+                        <NavIconChip name="Library" className={MENU_CHIP} iconClassName="size-4" />
                         <span className="flex-1 truncate">{cabinet.name}</span>
                         {openMaster.openingId === cabinet.id ? (
                           <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" />
@@ -438,9 +440,10 @@ export function Header({
                         className="text-[#5566f6] focus:bg-[#f5f6ff] focus:text-[#5566f6]"
                         title={t("header.backOfficeTitle")}
                         data-testid="profile-create-master-cabinet"
+                        data-nav-row
                         onSelect={() => openCreateDialog("master-cabinet")}
                       >
-                        <Plus className="mr-2 size-4" />
+                        <NavIconChip name="Plus" className={MENU_CHIP} iconClassName="size-4" />
                         {t("profile.createMasterCabinet")}
                       </DropdownMenuItem>
                     ) : null}
@@ -449,9 +452,9 @@ export function Header({
                 ) : null}
                 {/* Баланс и бонусы — над «Тарифами и оплатой»: баллы
                     тратятся именно там, и порядок повторяет сценарий. */}
-                <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
+                <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
                   <Link href="/settings/balance">
-                    <Coins className="mr-2 size-4 text-[#5566f6]" />
+                    <NavIconChip name="Coins" className={MENU_CHIP} iconClassName="size-4" />
                     <span className="flex-1">{t("profile.balanceBonuses")}</span>
                     {balanceRub !== null ? (
                       <span className="text-[11px] tabular-nums text-[#3848c7]">
@@ -461,27 +464,27 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 {canManagePlan && inApp ? (
-                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
+                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
                     <Link href="/settings/subscription">
-                      <CreditCard className="mr-2 size-4 text-[#5566f6]" />
+                      <NavIconChip name="CreditCard" className={MENU_CHIP} iconClassName="size-4" />
                       {t("profile.plan")}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
 
                 {canEditTranslations ? (
-                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]">
+                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
                     <Link href={isRoot ? "/root/translations" : "/translations"} data-testid="profile-translations">
-                      <Languages className="mr-2 size-4 text-[#5566f6]" />
+                      <NavIconChip name="Languages" className={MENU_CHIP} iconClassName="size-4" />
                       {t("profile.translations")}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
 
                 {platformPanel ? (
-                  <DropdownMenuItem asChild className="md:hidden">
+                  <DropdownMenuItem asChild className="md:hidden" data-nav-row>
                     <Link href={isRoot ? "/root" : PLATFORM_PANEL_ENTRY} prefetch={false}>
-                      <ShieldCheck className="mr-2 size-4" />
+                      <NavIconChip name="ShieldCheck" className={MENU_CHIP} iconClassName="size-4" />
                       {t("header.platformPanel")}
                     </Link>
                   </DropdownMenuItem>
@@ -502,9 +505,10 @@ export function Header({
                   <DropdownMenuItem
                     asChild
                     className="mt-1 w-fit gap-1.5 px-2 py-1.5 text-[13px]"
+                    data-nav-row
                   >
                     <Link href={BRANDING_SETTINGS_HREF} data-testid="theme-branding-link">
-                      <Palette className="size-3.5 text-[var(--app-indigo-deep)]" aria-hidden />
+                      <NavIconChip name="Palette" className="size-6 rounded-[7px]" iconClassName="size-3.5" />
                       <span className="font-medium text-[var(--app-indigo-deep)]">
                         {t("profile.branding")}
                       </span>
@@ -519,8 +523,9 @@ export function Header({
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-[#a13a32] focus:bg-[#fff4f2] focus:text-[#a13a32]"
+                  data-nav-row
                 >
-                  <LogOut className="mr-2 size-4" />
+                  <NavIconChip name="LogOut" className={MENU_CHIP} iconClassName="size-4" />
                   {t("header.logout")}
                 </DropdownMenuItem>
               </div>
@@ -534,8 +539,6 @@ export function Header({
         <MobileNavSheet
           open={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
-          buildings={currentPoint.buildings}
-          activeBuildingId={currentPoint.activeBuildingId}
           onLogout={handleLogout}
           brand={{
             logoUrl: organizationLogoUrl ?? null,

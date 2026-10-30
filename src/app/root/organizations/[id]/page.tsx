@@ -23,6 +23,7 @@ import { CopyButton } from "./copy-button";
 import { PanelAccessButton } from "./panel-access-button";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 import { ClientDocumentsSection } from "@/components/root/client-documents-section";
+import { EdoSendButton } from "@/components/root/edo-send-button";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     db.journalDocument.count({ where: { organizationId: id, status: "active" } }),
   ]);
   const canBill = canUsePlatformSection(viewer, "billing");
+  // «В ЭДО» (Saby) — у кого есть раздел ЭДО.
+  const canEdo = canUsePlatformSection(viewer, "edo");
 
   // История оплат и сумма за всё время. Считаем только проведённые платежи.
   const payments = await db.paymentOrder.findMany({
@@ -172,7 +175,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     : "";
 
   return (
-    <DomainMessagesBoundary namespaces={["rootOrganizationManagement", "rootPanel"]}>
+    <DomainMessagesBoundary namespaces={canEdo ? ["rootOrganizationManagement", "rootPanel", "rootEdo"] : ["rootOrganizationManagement", "rootPanel"]}>
       <div className="space-y-6">
         {/* Шапка */}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -294,7 +297,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
         {/* Документы клиенту: договор, КП и счёт — с почты сотрудника. */}
         <section id="documents" className="scroll-mt-16">
-          <ClientDocumentsSection organizationId={org.id} />
+          <ClientDocumentsSection organizationId={org.id} edo={canEdo} />
         </section>
 
         {/* Подписка, баллы и оплаты */}
@@ -441,6 +444,16 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                           ) : heldForReview(payment) ? null : (
                             <span className="text-[#c9ccdb]">—</span>
                           )}
+                          {canEdo && payment.paymentMethod === "invoice" && payment.status !== "cancelled" ? (
+                            <div className="mt-1.5">
+                              <EdoSendButton organizationId={org.id} kind="invoice" sourceId={String(payment.id)} quiet />
+                            </div>
+                          ) : null}
+                          {canEdo && closingEligible(payment) ? (
+                            <div className="mt-1.5">
+                              <EdoSendButton organizationId={org.id} kind="upd" sourceId={String(payment.id)} label="УПД в ЭДО" quiet />
+                            </div>
+                          ) : null}
                           {heldForReview(payment) && canBill ? (
                             <div className={payment.paymentMethod === "invoice" ? "mt-1.5" : undefined}>
                               <HeldOrderActions orderId={payment.id} />

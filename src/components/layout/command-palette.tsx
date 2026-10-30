@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppNav } from "@/components/layout/app-nav-context";
-import { navIcon } from "@/components/layout/nav-icons";
+import { ToneChip, navIcon } from "@/components/layout/nav-icons";
+import { navTone, type NavTone } from "@/lib/nav-tones";
 import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 
 /**
@@ -46,6 +47,8 @@ type StaticItem = {
   action?: () => Promise<boolean>;
   keywords?: string[];
   icon: typeof Search;
+  /** Цвет плашки — тон иконки пункта меню (`lib/nav-tones.ts`). */
+  tone: NavTone;
 };
 
 type Hit = {
@@ -68,6 +71,13 @@ const KIND_ICON = {
   document: FileSpreadsheet,
   equipment: Boxes,
 } as const;
+
+const KIND_TONE: Record<Hit["kind"], NavTone> = {
+  user: navTone("User"),
+  template: navTone("ClipboardList"),
+  document: navTone("FileSpreadsheet"),
+  equipment: navTone("Boxes"),
+};
 
 function fuzzyMatch(item: StaticItem, q: string): boolean {
   const lq = q.toLowerCase();
@@ -99,6 +109,7 @@ export function CommandPalette() {
         label: section.tabs.length > 1 ? `${section.label} · ${tab.label}` : section.label,
         href: tab.href,
         icon: navIcon(section.icon),
+        tone: navTone(section.icon),
         keywords: [section.label, tab.label],
       })),
     );
@@ -112,6 +123,7 @@ export function CommandPalette() {
             label: `${section.label} · ${item.label}`,
             href: item.href,
             icon: navIcon(item.icon),
+            tone: navTone(item.icon),
             keywords: [section.label, item.label, ...(item.tabs ?? []).map((tab) => tab.label)],
           },
           ...(item.tabs ?? []).map((tab) => ({
@@ -119,6 +131,7 @@ export function CommandPalette() {
             label: `${item.label} · ${tab.label}`,
             href: tab.href,
             icon: navIcon(item.icon),
+            tone: navTone(item.icon),
             keywords: [section.label, item.label, tab.label],
           })),
         ]),
@@ -143,6 +156,7 @@ export function CommandPalette() {
         label: card.sectionLabel ? `${card.sectionLabel} · ${card.label}` : card.label,
         href: card.href,
         icon: navIcon(card.icon),
+        tone: navTone(card.icon),
         keywords: [card.label, card.sectionLabel],
       });
     }
@@ -159,6 +173,7 @@ export function CommandPalette() {
         label: t("closeDayLabel"),
         hint: t("closeDayHint"),
         icon: ArrowDownToLine,
+        tone: navTone("ArrowDownToLine"),
         keywords: t("closeDayKeywords").split(","),
         action: async () => {
           try {
@@ -188,6 +203,7 @@ export function CommandPalette() {
         label: t("catchUpLabel"),
         hint: t("catchUpHint"),
         icon: Wand2,
+        tone: navTone("Wand2"),
         href: "/dashboard/catch-up",
         keywords: t("catchUpKeywords").split(","),
       },
@@ -388,41 +404,41 @@ export function CommandPalette() {
                   {section.items.map((item) => {
                     runningIdx += 1;
                     const i = runningIdx;
-                    const Icon =
-                      item.source === "static"
+                    const isRunning = actionRunning === i;
+                    const icon = isRunning
+                      ? Loader2
+                      : item.source === "static"
                         ? item.icon
                         : KIND_ICON[item.kind];
+                    const tone = item.source === "static" ? item.tone : KIND_TONE[item.kind];
                     const isActive = i === activeIdx;
-                    const isRunning = actionRunning === i;
+                    // Строка в цвете своей страницы, как пункт меню: плашка
+                    // тона, выбранная строка — фон и текст тона, кольцо.
                     return (
                       <li
                         key={`${section.title}-${i}`}
                         onClick={() => pick(i)}
                         onMouseEnter={() => setActiveIdx(i)}
+                        data-tone={tone}
+                        data-nav-row
+                        data-active={isActive ? "" : undefined}
                         className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 ${
                           isActive
-                            ? "bg-[#f5f6ff]"
+                            ? "bg-[var(--tone-row)]"
                             : "hover:bg-[#fafbff]"
                         }`}
                       >
-                        <span
-                          className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${
-                            isActive
-                              ? "bg-[#eef1ff] text-[#3848c7]"
-                              : "bg-[#fafbff] text-[#6f7282]"
-                          }`}
-                        >
-                          {isRunning ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <Icon className="size-4" />
-                          )}
-                        </span>
+                        <ToneChip
+                          tone={tone}
+                          icon={icon}
+                          className="size-8 rounded-xl"
+                          iconClassName={isRunning ? "size-4 animate-spin" : "size-4"}
+                        />
                         <div className="min-w-0 flex-1">
                           <div
                             className={`text-[14px] ${
                               isActive
-                                ? "font-medium text-[#3848c7]"
+                                ? "font-semibold text-[var(--tone-ink)]"
                                 : "text-[#0b1024]"
                             }`}
                           >
@@ -434,7 +450,9 @@ export function CommandPalette() {
                             </div>
                           ) : null}
                         </div>
-                        <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+                        <ArrowRight
+                          className={`size-4 shrink-0 ${isActive ? "text-[var(--tone)]" : "text-[#9b9fb3]"}`}
+                        />
                       </li>
                     );
                   })}

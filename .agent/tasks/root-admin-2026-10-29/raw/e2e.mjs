@@ -91,6 +91,7 @@ try {
   check("Карточка: бухгалтерия и телефон компании", contactsText?.includes("buh@dk-example.ru") && contactsText?.includes("000-11-22"));
   const peoplePhones = await root.locator('[data-client-people] a[href^="tel:"]').count();
   check("Карточка: телефоны сотрудников", peoplePhones >= 3, `${peoplePhones} телефонов`);
+  check("Карточка: раздел «Документы» с договором", (await root.locator('#documents [data-testid="client-contract-card"]').count()) === 1);
   await shot(root, "3-client-card");
 
   // Grant SEO preset to the chef from the people list.

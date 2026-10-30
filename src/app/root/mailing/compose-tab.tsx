@@ -625,7 +625,7 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
       ) : r.telegram ? (
         <div className="rounded-2xl bg-[#e7ebf0] p-3">
           <div
-            className="max-w-[92%] whitespace-pre-wrap rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[14px] leading-[1.5] text-[#0b1024] [overflow-wrap:anywhere] [&_a]:text-[#3848c7] [&_a]:underline"
+            className="max-w-[92%] whitespace-pre-wrap rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[14px] leading-[1.5] text-[#0b1024] [overflow-wrap:anywhere] [&_a]:text-[var(--app-indigo-deep)] [&_a]:underline"
             // Текст собран сервером из экранированного ввода ROOT (<b>, <a>).
             dangerouslySetInnerHTML={{ __html: r.telegram.text }}
           />

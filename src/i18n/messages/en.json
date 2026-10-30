@@ -790,7 +790,6 @@
     "individual": {
       "title": "A production control programme for your site",
       "text": "A specialist will develop the production control programme and document pack for your site: control points, lab testing, responsible staff. Available with any plan.",
-      "price": "from {price}",
       "cta": "Order a custom programme"
     }
   },
@@ -967,9 +966,7 @@
       "auditHint": "An expert finds violations before the inspector does and gives a report with solutions.",
       "visit": "Specialist visit",
       "visitHint": "A specialist comes on site, looks at production and goes through the issues with you.",
-      "priceFrom": "from {price} ₽",
-      "priceExact": "{price} ₽",
-      "priceOnRequest": "price on request"
+      "priceNote": "The price depends on the site and the city — we will quote it after a short conversation."
     },
     "now": {
       "guideTitle": "How the Inspection visit section works",
@@ -2966,6 +2963,7 @@
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",
+      "placeAria": "Where you are in the menu",
       "status": {
         "done": "Done",
         "started": "Started",
@@ -5816,7 +5814,6 @@
       "ppk": {
         "title": "Production control programme — made for you",
         "text": "A specialist will develop a programme for your site: control points, lab testing, responsible staff. Available with any plan.",
-        "price": "from {price}",
         "cta": "Order a custom programme"
       },
       "table": {
@@ -5857,7 +5854,7 @@
         "storageStandard": "{mb, number} MB: log orders and your own documents",
         "storagePremium": "{gb, number} GB for all documents",
         "trialOnly": "Only during the {trialDays, number}-day trial",
-        "ppkFrom": "Custom, from {price}",
+        "ppkOnRequest": "Custom, on request",
         "employeesPremium": "{count, number} per location, more by arrangement"
       },
       "contactLink": "contact us",
@@ -15930,10 +15927,247 @@
     "timings": "Timings",
     "pageLimit": "Page rate limiter",
     "yandexDirect": "Yandex Direct",
+    "edo": "E-documents",
     "team": "Team and access",
     "myMail": "My mailbox",
     "myMailHint": "Mailbox your contracts, proposals and invoices are sent from",
     "accessOwner": "Platform owner — full access"
+  },
+  "rootEdo": {
+    "metadata": {
+      "title": "E-documents: contracts, invoices and UTDs for clients",
+      "description": "Send documents to clients through Saby on behalf of BFS LLC"
+    },
+    "page": {
+      "title": "E-documents",
+      "description": "Contracts, invoices and UTDs for clients through Saby on behalf of BFS LLC. The recipient is found by the organization's TIN, and the document appears in Saby as a draft: sign it with a qualified e-signature and send it there."
+    },
+    "steps": {
+      "label": "How to send a document",
+      "connect": {
+        "title": "Connect the Saby account",
+        "text": "Once: the connection ID and secure key of the BFS LLC account."
+      },
+      "pick": {
+        "title": "Choose the client and the document",
+        "text": "The recipient is found by TIN, so there is nothing to type."
+      },
+      "sign": {
+        "title": "Sign in Saby",
+        "text": "Open the document from the link and click Sign and send: the qualified signature is applied only there."
+      }
+    },
+    "status": {
+      "writing": "Saving",
+      "not_written": "Not saved",
+      "deleted": "Deleted in Saby",
+      "draft": "Waiting for signature in Saby",
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "processing": "Processing",
+      "waiting_sign": "Waiting for the recipient's signature",
+      "done": "Signed",
+      "rejected": "Rejected",
+      "error": "Delivery error",
+      "annulled": "Annulled",
+      "unknown": "State {code}"
+    },
+    "sign": {
+      "open": "Sign in Saby"
+    },
+    "recipient": {
+      "checking": "Looking up the client in e-document exchange by TIN…",
+      "participantId": "Participant ID: {id}",
+      "saby": {
+        "title": "Connected to e-document exchange: Saby",
+        "hint": "The document will reach the client directly, without roaming."
+      },
+      "roaming": {
+        "title": "Through roaming: {operator}",
+        "hint": "The client uses another operator, so Saby will deliver the document through roaming."
+      },
+      "invited": {
+        "title": "Invited but not connected yet",
+        "hint": "An invitation to e-document exchange has already been sent. The document will arrive once the client accepts it."
+      },
+      "none": {
+        "title": "Not found in e-document exchange: Saby will send an invitation",
+        "hint": "The client has no e-document mailbox. After sending, Saby will invite them by their details; ask the client to accept the invitation."
+      }
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again",
+      "network": "No connection to the server. Check the internet and try again"
+    },
+    "send": {
+      "title": "Send a document",
+      "cabinetFirst": "Connect the Saby account in the Saby account card first: without it there is nowhere to save the document.",
+      "done": "The document is saved in Saby as a draft",
+      "rewritten": "The Saby draft was updated; no second document was created",
+      "nextStep": "Open Saby and click Sign and send.",
+      "org": {
+        "label": "Client",
+        "placeholder": "Organization name or TIN",
+        "searching": "Searching…",
+        "nothing": "Nothing found. Check the name or TIN",
+        "noInn": "No TIN",
+        "requisites": "TIN {inn} · KPP {kpp}",
+        "change": "Choose another client"
+      },
+      "kind": {
+        "label": "What to send"
+      },
+      "file": {
+        "pick": "Choose the document file",
+        "hint": "PDF, DOCX, ODT or RTF up to 10 MB",
+        "size": "{size} MB: click to replace",
+        "contractNote": "We take the number and date from the file name when they are there.",
+        "badType": "Only PDF, DOCX, ODT and RTF are accepted",
+        "tooBig": "The file is larger than 10 MB, Saby will not accept it"
+      },
+      "number": "Document number",
+      "numberPlaceholder": "For example, 2810-1",
+      "date": "Document date",
+      "source": {
+        "invoices": "Client invoice",
+        "upds": "Client UTD",
+        "pickOrgFirst": "Choose the client first to see their documents.",
+        "loading": "Loading the client's documents…",
+        "noInvoices": "The client has no bank-transfer invoices.",
+        "noUpds": "The client has no paid orders, so there is nothing to issue a UTD for.",
+        "invoiceRow": "Invoice No. {number} of {date}",
+        "updRow": "UTD No. {number} of {date}",
+        "notIssuedYet": "issued on sending",
+        "voided": "annulled",
+        "amount": "{amount} RUB"
+      },
+      "advanced": {
+        "title": "Saby cannot find the client? Enter the e-document participant ID",
+        "participantId": "Client's e-document participant ID",
+        "hint": "Usually not needed: the recipient is found by TIN. The ID is shown in the client's card at their e-document operator."
+      },
+      "submit": "Send for e-signature",
+      "submitHint": "The document appears in Saby as a draft and goes nowhere without your signature.",
+      "result": {
+        "title": "Document No. {number} is waiting for your signature in Saby",
+        "rewrittenTitle": "Draft No. {number} in Saby was updated",
+        "step1": "Click Sign in Saby to open the document card.",
+        "step2": "Check the recipient and the file, click Sign and send and choose the qualified signature.",
+        "step3": "Come back and click Refresh statuses to see that the document was delivered.",
+        "noLink": "Saby returned no link. Find the document in Outgoing."
+      }
+    },
+    "kinds": {
+      "contract": {
+        "title": "Contract",
+        "hint": "Contract file"
+      },
+      "invoice": {
+        "title": "Invoice",
+        "hint": "From WeSetup invoices"
+      },
+      "upd": {
+        "title": "UTD",
+        "hint": "For a paid order"
+      },
+      "other": {
+        "title": "Other",
+        "hint": "Act or another file"
+      }
+    },
+    "history": {
+      "title": "Sent documents",
+      "hint": "Saby does not report changes by itself. Click Refresh statuses to see whether the document is signed.",
+      "empty": {
+        "title": "Nothing sent yet",
+        "text": "Choose a client and a document above, and the record will appear here with a link to sign in Saby."
+      },
+      "docTitle": "No. {number} of {date}",
+      "inn": "TIN {inn}",
+      "sentAt": "saved {at}",
+      "openInSaby": "Open in Saby",
+      "recipient": {
+        "saby": "client in Saby",
+        "roaming": "roaming: {operator}",
+        "invited": "client invited",
+        "none": "client not connected"
+      },
+      "refresh": {
+        "button": "Refresh statuses",
+        "nothing": "All statuses are final, nothing to re-read",
+        "done": "Documents checked: {checked}, changed: {changed}",
+        "failed": "Could not check: {failed}. The reason is in the document row"
+      }
+    },
+    "button": {
+      "label": "Send for e-signature",
+      "hint": "Saved in Saby as a draft from BFS LLC; sign and send it there",
+      "openSettings": "Open e-documents",
+      "disabled": {
+        "notConnected": "The Saby account is not connected.",
+        "notReady": "The Saby account is not ready: check the connection.",
+        "error": "Could not find out whether the Saby account is connected."
+      }
+    },
+    "cabinet": {
+      "title": "Saby account",
+      "ready": "Ready to send",
+      "notReady": "Needs attention",
+      "clientId": "Connection ID",
+      "contour": "Environment",
+      "checkedAt": "Checked",
+      "recheck": "Check connection",
+      "replaceKeys": "Replace keys",
+      "disconnect": "Disconnect",
+      "baseUrl": {
+        "production": "Production: {url}",
+        "production_alt": "Production (old address): {url}",
+        "test": "Test environment: {url}",
+        "dev_stub": "Local stub (development only): {url}"
+      },
+      "orgs": {
+        "title": "Our organizations in the account",
+        "empty": "Saby returned no organizations. Check the connection permissions.",
+        "requisites": "TIN {inn} · KPP {kpp}",
+        "sender": "sender",
+        "edoOn": "E-documents on",
+        "edoOff": "E-documents off"
+      },
+      "sender": {
+        "missing": "The account has no organization with TIN {inn} ({name}). Connect our company's account or check the TIN in ROOT → Requisites.",
+        "edoOff": "Document exchange is not enabled for {name} in Saby. Enable it in Saby and click Check connection.",
+        "ambiguous": "The account has several organizations with TIN {inn} and document exchange enabled. Enter the KPP in ROOT → Requisites."
+      },
+      "toast": {
+        "connected": "Saby account connected",
+        "checked": "The connection works",
+        "checkFailed": "Saby did not respond. The reason is in the account card",
+        "disconnected": "Saby account disconnected"
+      },
+      "form": {
+        "intro": "Documents are sent from BFS LLC through this account. Keys are stored encrypted and never shown on screen again.",
+        "clientId": "Connection ID",
+        "clientIdPlaceholder": "For example, 1234567",
+        "appSecret": "Secure key",
+        "appSecretPlaceholder": "Paste the key from Saby",
+        "appSecretHint": "The field is cleared after saving; the key stays only on the server.",
+        "contour": "Saby environment",
+        "whereTitle": "Where to get the keys",
+        "where1": "Saby → Settings → Security → Connections to Saby → +.",
+        "where2": "Type Closed, service access: Saby shows the connection ID and the secure key.",
+        "where3": "The key can be revoked there with one click if it leaks.",
+        "tariff": "A Saby plan with API access (Exchange with counterparties) is required: EDO Start has no integration.",
+        "save": "Connect and check",
+        "cancel": "Cancel"
+      },
+      "disconnectDialog": {
+        "title": "Disconnect the Saby account?",
+        "description": "The site signs out of the Saby session and deletes the keys. Documents cannot be sent until the account is connected again.",
+        "bulletKeys": "The keys are deleted from the server; reconnecting needs the ID and the secure key",
+        "bulletHistory": "The sending history stays on this page",
+        "bulletDrafts": "Drafts and sent documents in Saby itself are not touched"
+      }
+    }
   },
   "telegramShortcuts": {
     "journals": {
@@ -24785,6 +25019,21 @@
       "fullBenefit": " — {benefit}. ",
       "copyTitle": "Copy promo code",
       "go": "Open"
+    },
+    "contactUs": {
+      "cta": "Contact us",
+      "title": "Contact us",
+      "lead": "Tell us what you need and we will quote a price for your site.",
+      "about": "Service: {service}",
+      "call": "Call us",
+      "telegram": "Telegram",
+      "telegramHint": "Message us on Telegram",
+      "emailHint": "Write to us",
+      "chat": "Website chat",
+      "chatHint": "We will reply right here in the chat",
+      "subjectService": "Service price: {service}",
+      "subjectGeneral": "Question about service prices",
+      "priceNote": "We will quote a price for your site"
     }
   },
   "checklistsUi": {
@@ -28493,34 +28742,27 @@
     },
     "servicesPage": {
       "title": "Services",
-      "description": "Work by a food safety specialist: journal setup, a pre-inspection audit, documentation development.",
-      "balancePoints": "Points on balance: {amount} ₽"
+      "description": "Work by a food safety specialist: journal setup, a pre-inspection audit, documentation development."
     },
     "servicesCatalog": {
       "contactRequired": "Enter a name and a phone number for contact",
       "sendFailed": "Could not send the request",
-      "paidSuccess": "{amount} ₽ paid from the balance. We will contact you within one working day",
-      "insufficientSuccess": "Request sent. There were not enough points, so we will discuss payment separately",
       "sentSuccess": "Request sent. We will contact you within one working day",
       "managerOnlyNotice": "Services are ordered by the head of the organisation. Show this section to a manager or the owner — they can place a request.",
-      "order": "Order",
+      "order": "Leave a request",
       "orderedByManager": "Ordered by the manager",
-      "orderTitle": "Order: {title}",
-      "orderService": "Order a service",
-      "bulletDebit": "We will debit {price} ₽ from the balance, leaving {rest} ₽",
+      "orderTitle": "Request: {title}",
+      "orderService": "Service request",
       "bulletContactDay": "We will contact you within one working day",
-      "bulletBalanceShort": "The balance is {balance} ₽ — that is not enough, we will discuss payment separately",
-      "bulletAcceptAnyway": "We will accept the request anyway and contact you",
-      "bulletPriceByVolume": "The price depends on the scope — we will calculate it after a conversation",
-      "bulletNoPointsDebited": "Points are not debited for this service now",
       "sending": "Sending…",
-      "payAndOrder": "Pay and order",
       "sendRequest": "Send request",
       "nameLabel": "What should we call you",
       "phoneLabel": "Contact phone number",
       "commentLabel": "What we should know in advance",
       "commentPlaceholder": "For example: we open in a month, inspection in October",
-      "payNotice": "Payment is made with points immediately after confirmation. A refund is possible by agreement if we have not started work yet."
+      "requestLead": "Leave a phone number — we will contact you and quote a price for your site.",
+      "bulletNothingCharged": "You pay nothing now — this is only a request",
+      "contactsTitle": "Prefer to call or message us right away?"
     },
     "staffHierarchyPage": {
       "title": "Management hierarchy",

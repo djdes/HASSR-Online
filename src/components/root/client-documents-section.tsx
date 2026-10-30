@@ -11,7 +11,7 @@ import { ClientDocumentsPanel } from "./client-documents-panel";
  * Раздел «Документы клиенту» карточки клиента: плитки договора, КП и счёта
  * и под ними — карточка договора. Страница вставляет его одной строкой.
  */
-export async function ClientDocumentsSection({ organizationId }: { organizationId: string }) {
+export async function ClientDocumentsSection({ organizationId, edo = false }: { organizationId: string; edo?: boolean }) {
   const session = await getServerSession(authOptions);
   const context = session ? await loadClientDocumentsContext(organizationId, session) : null;
   return (
@@ -22,7 +22,7 @@ export async function ClientDocumentsSection({ organizationId }: { organizationI
         </DomainMessagesBoundary>
       ) : null}
       <div id="client-contract" className="scroll-mt-16">
-        <ClientContractSection organizationId={organizationId} />
+        <ClientContractSection organizationId={organizationId} edo={edo} />
       </div>
     </div>
   );

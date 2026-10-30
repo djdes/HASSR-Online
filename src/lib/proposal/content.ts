@@ -50,7 +50,7 @@ export type ProposalContext = {
   defaultSender: ProposalSender | null;
   /** Цены тарифов за месяц (помесячно и за год) — таблица стоимости листа КП. */
   rates?: PlanRates;
-  /** «ППК под ваше заведение — от …», ₽ (`readPpkIndividualPrice`). */
+  /** «ППК под ваше заведение — от …», ₽ (услуга «ppk-development»). */
   ppkFromRub?: number;
   /** «Датчики температуры с установкой — от …», ₽ (самый дешёвый пакет оборудования). */
   equipmentFromRub?: number;
