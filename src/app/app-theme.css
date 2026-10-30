@@ -1596,3 +1596,399 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
     --app-sidebar-w: 256px;
   }
 }
+
+/* ── Цвета пунктов меню (владелец, 2026-10-29, вариант C) ─────────────
+ * У каждого пункта меню своя плашка: градиент тона и белая иконка. Тон —
+ * по имени иконки (`lib/nav-tones.ts`), компоненты ставят `data-tone`, а
+ * цвета берут отсюда:
+ *   --tone       иконка, полоска выбранного пункта, стрелка при наведении;
+ *   --tone-soft  мягкая подложка (кнопки шапки);
+ *   --tone-ink   текст выбранного пункта (≥ 4.5:1 на --tone-row);
+ *   --tone-row   фон выбранного пункта;
+ *   --tone-from / --tone-to  градиент плашки (на нём белая иконка);
+ *   --tone-glow  свечение плашки.
+ * Иконка на своей подложке — не меньше 3:1. */
+[data-tone] {
+  --tone: #5566f6;
+  --tone-soft: #eef1ff;
+  --tone-ink: #3848c7;
+  --tone-row: #f0f1fe;
+  --tone-from: #7383ff;
+  --tone-to: #4554e8;
+  --tone-glow: rgba(85, 102, 246, 0.45);
+}
+[data-tone="violet"] {
+  --tone: #7c5cf5;
+  --tone-soft: #f1edff;
+  --tone-ink: #5b3fd1;
+  --tone-row: #f3f0fe;
+  --tone-from: #9478ff;
+  --tone-to: #6847e6;
+  --tone-glow: rgba(124, 92, 245, 0.45);
+}
+[data-tone="sky"] {
+  --tone: #0a86c9;
+  --tone-soft: #e5f5fd;
+  --tone-ink: #0a6aa1;
+  --tone-row: #e9f4fa;
+  --tone-from: #29a3e3;
+  --tone-to: #0a72b0;
+  --tone-glow: rgba(10, 134, 201, 0.42);
+}
+[data-tone="teal"] {
+  --tone: #0b8f80;
+  --tone-soft: #e2f6f2;
+  --tone-ink: #0b7468;
+  --tone-row: #e9f5f4;
+  --tone-from: #1fb39f;
+  --tone-to: #0b7d70;
+  --tone-glow: rgba(11, 143, 128, 0.42);
+}
+[data-tone="green"] {
+  --tone: #16924f;
+  --tone-soft: #e6f7ec;
+  --tone-ink: #127a43;
+  --tone-row: #eaf5ef;
+  --tone-from: #2cb566;
+  --tone-to: #128043;
+  --tone-glow: rgba(22, 146, 79, 0.42);
+}
+[data-tone="amber"] {
+  --tone: #c27803;
+  --tone-soft: #fff4dc;
+  --tone-ink: #a35f00;
+  --tone-row: #faf3e8;
+  --tone-from: #eb9a1c;
+  --tone-to: #b05f00;
+  --tone-glow: rgba(194, 120, 3, 0.42);
+}
+[data-tone="orange"] {
+  --tone: #dc5a12;
+  --tone-soft: #fff0e5;
+  --tone-ink: #b8480c;
+  --tone-row: #fcf0ea;
+  --tone-from: #fb8545;
+  --tone-to: #d54f0c;
+  --tone-glow: rgba(220, 90, 18, 0.42);
+}
+[data-tone="rose"] {
+  --tone: #e5395c;
+  --tone-soft: #ffedf0;
+  --tone-ink: #b81f42;
+  --tone-row: #fdedf0;
+  --tone-from: #fb5f7d;
+  --tone-to: #d42a4c;
+  --tone-glow: rgba(229, 57, 92, 0.42);
+}
+[data-tone="fuchsia"] {
+  --tone: #c43bd9;
+  --tone-soft: #fbedfd;
+  --tone-ink: #9a24ad;
+  --tone-row: #faedfc;
+  --tone-from: #d95eea;
+  --tone-to: #b02cc5;
+  --tone-glow: rgba(196, 59, 217, 0.42);
+}
+
+/* Тёмная тема: иконки и тексты светлее и приглушённее (как статусы тёмной
+   темы), подложки полупрозрачные. Градиент плашки тот же — на нём белая
+   иконка. Порталы (меню профиля, ⌘K, листы) — через `body`. Каждый тон —
+   своим правилом одной специфичности: общее `body:is(…) [data-tone]`
+   перебило бы тона внутри `.app-shell` (у него на `body` выше вес). */
+.app-shell[data-app-theme="dark"] [data-tone="indigo"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="indigo"] {
+  --tone: #a3adff;
+  --tone-soft: rgba(163, 173, 255, 0.16);
+  --tone-ink: #c9ceff;
+  --tone-row: rgba(163, 173, 255, 0.13);
+  --tone-glow: rgba(115, 131, 255, 0.5);
+}
+.app-shell[data-app-theme="dark"] [data-tone="violet"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="violet"] {
+  --tone: #b9a6f5;
+  --tone-soft: rgba(185, 166, 245, 0.16);
+  --tone-ink: #d6cbfa;
+  --tone-row: rgba(185, 166, 245, 0.13);
+  --tone-glow: rgba(148, 120, 255, 0.5);
+}
+.app-shell[data-app-theme="dark"] [data-tone="sky"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="sky"] {
+  --tone: #8cc8ea;
+  --tone-soft: rgba(140, 200, 234, 0.15);
+  --tone-ink: #b9def3;
+  --tone-row: rgba(140, 200, 234, 0.12);
+  --tone-glow: rgba(41, 163, 227, 0.45);
+}
+.app-shell[data-app-theme="dark"] [data-tone="teal"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="teal"] {
+  --tone: #86d3c4;
+  --tone-soft: rgba(134, 211, 196, 0.15);
+  --tone-ink: #b3e6dc;
+  --tone-row: rgba(134, 211, 196, 0.12);
+  --tone-glow: rgba(31, 179, 159, 0.45);
+}
+.app-shell[data-app-theme="dark"] [data-tone="green"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="green"] {
+  --tone: #9bc8b0;
+  --tone-soft: rgba(155, 200, 176, 0.15);
+  --tone-ink: #c2ddcf;
+  --tone-row: rgba(155, 200, 176, 0.12);
+  --tone-glow: rgba(44, 181, 102, 0.45);
+}
+.app-shell[data-app-theme="dark"] [data-tone="amber"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="amber"] {
+  --tone: #e6c27a;
+  --tone-soft: rgba(230, 194, 122, 0.15);
+  --tone-ink: #f2dba9;
+  --tone-row: rgba(230, 194, 122, 0.12);
+  --tone-glow: rgba(235, 154, 28, 0.45);
+}
+.app-shell[data-app-theme="dark"] [data-tone="orange"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="orange"] {
+  --tone: #eeae86;
+  --tone-soft: rgba(238, 174, 134, 0.15);
+  --tone-ink: #f6cdb3;
+  --tone-row: rgba(238, 174, 134, 0.12);
+  --tone-glow: rgba(251, 133, 69, 0.45);
+}
+.app-shell[data-app-theme="dark"] [data-tone="rose"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="rose"] {
+  --tone: #e5a3b0;
+  --tone-soft: rgba(229, 163, 176, 0.15);
+  --tone-ink: #f2c7cf;
+  --tone-row: rgba(229, 163, 176, 0.12);
+  --tone-glow: rgba(251, 95, 125, 0.45);
+}
+.app-shell[data-app-theme="dark"] [data-tone="fuchsia"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-tone="fuchsia"] {
+  --tone: #dca6ea;
+  --tone-soft: rgba(220, 166, 234, 0.15);
+  --tone-ink: #ecd2f3;
+  --tone-row: rgba(220, 166, 234, 0.12);
+  --tone-glow: rgba(217, 94, 234, 0.45);
+}
+
+/* Плашка (`NavIconChip`): размер и скругление ставит место, остальное —
+   здесь. Переход сдвига объявлен специфичнее `.app-shell *` (тот
+   оставляет переходы только цвету и тени — сдвиг плашки прыгал бы). */
+[data-nav-chip] {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: var(--tone-to);
+  background-image: linear-gradient(135deg, var(--tone-from), var(--tone-to));
+  --chip-stack: 0 0 #0000;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 2px 6px -3px var(--tone-glow), var(--chip-stack);
+}
+/* Пункт, у которого своё меню (стрелка ›), — плашка «стопкой»: за ней
+   второй слой того же цвета. Раздел отличается от страницы ещё до клика;
+   у выбранного пункта вместо стопки — кольцо. */
+[data-has-menu]:not([data-active]) > [data-nav-chip] {
+  --chip-stack: 3px 3px 0 -1px var(--tone-glow);
+}
+[data-nav-chip],
+.app-shell [data-nav-chip] {
+  transition:
+    translate 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease-out;
+}
+/* Наведение на строку меню: плашка поднимается, растёт, чуть
+   поворачивается и светится; иконка коротко качается. */
+:is([data-nav-row]:hover, [data-nav-row]:focus-visible, [data-nav-row][data-highlighted]) [data-nav-chip] {
+  translate: 0 -1px;
+  scale: 1.06;
+  rotate: -6deg;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 8px 16px -6px var(--tone-glow), var(--chip-stack);
+}
+[data-nav-row]:hover [data-nav-chip] > svg:not(.animate-spin) {
+  animation: nav-chip-wiggle 0.5s ease;
+}
+/* Выбранный пункт: кольцо вокруг плашки и «щелчок» при выборе. */
+[data-nav-row][data-active] [data-nav-chip] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 0 0 3px var(--app-surface, #fff),
+    0 0 0 5px var(--tone-glow);
+  animation: nav-chip-pop 0.42s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+/* Полоска слева у выбранного пункта сайдбара (строка — `relative`,
+   отступ меню — 12px, полоска ложится на край сайдбара). */
+[data-nav-row][data-nav-bar][data-active]::before {
+  content: "";
+  position: absolute;
+  inset-block: 10px;
+  left: -12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background-color: var(--tone);
+  animation: nav-bar-grow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* «Вы здесь» над меню раздела (2026-10-29): путь от главного меню к
+   разделу ступеньками — слева линия с точками, как маршрут; точка текущего
+   раздела — его цвета. Ступени — `li[data-place-step]` одной колонкой без
+   зазоров, чтобы линия шла сплошной. */
+:root,
+.app-shell {
+  --place-line: #d3d7e8;
+}
+.app-shell[data-app-theme="dark"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
+  --place-line: rgba(255, 255, 255, 0.24);
+}
+[data-place-step] {
+  position: relative;
+}
+[data-place-step]::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--place-line);
+}
+[data-place-step]:first-child::before {
+  top: 50%;
+}
+[data-place-step]:last-child::before {
+  bottom: 50%;
+}
+[data-place-step]::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background-color: var(--app-surface, #fff);
+  box-shadow: inset 0 0 0 2px var(--place-line);
+}
+[data-place-step][data-current]::after {
+  background-color: var(--tone);
+  box-shadow: 0 0 0 3px var(--tone-glow);
+}
+
+/* Вход в меню раздела: пункты появляются каскадом (`--nav-i` — номер).
+   `backwards`, а не `both`: застывший конец анимации перебивал бы сдвиг
+   строки при наведении. */
+[data-nav-rise] [data-nav-row] {
+  animation: nav-row-rise 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--nav-i, 0) * 28ms);
+}
+/* Сдвиги и повороты по наведению (карточка и ракета «Начальной
+   настройки», стрелки): `.app-shell *` оставляет переходы только цвету
+   и тени — `data-motion` возвращает их сдвигу. */
+[data-motion],
+.app-shell [data-motion] {
+  transition:
+    translate 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    rotate 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    scale 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease-out,
+    background-color 0.18s ease-out,
+    color 0.18s ease-out;
+}
+/* Стрелка › пункта с меню: сдвиг при наведении — плавно. */
+[data-nav-chevron],
+.app-shell [data-nav-chevron] {
+  transition:
+    translate 0.15s ease-out,
+    color 0.15s ease-out;
+}
+/* Кнопки шапки (колокольчик, партнёрский кабинет, панель платформы):
+   мягкая подложка тона, при наведении — приподнимаются. */
+[data-tone-button] {
+  background-color: var(--tone-soft);
+  color: var(--tone);
+}
+[data-tone-button],
+.app-shell [data-tone-button] {
+  transition:
+    translate 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s ease-out,
+    background-color 0.18s ease-out,
+    color 0.18s ease-out;
+}
+[data-tone-button]:hover {
+  translate: 0 -1px;
+  box-shadow: 0 6px 14px -6px var(--tone-glow);
+}
+[data-tone-button][data-bell]:hover > svg {
+  animation: nav-bell-ring 0.6s ease;
+  transform-origin: 50% 12%;
+}
+@keyframes nav-chip-pop {
+  0% { scale: 0.82; }
+  55% { scale: 1.1; }
+  100% { scale: 1; }
+}
+@keyframes nav-chip-wiggle {
+  0% { rotate: 0deg; }
+  30% { rotate: -12deg; }
+  60% { rotate: 8deg; }
+  100% { rotate: 0deg; }
+}
+@keyframes nav-bar-grow {
+  from { scale: 1 0; }
+  to { scale: 1 1; }
+}
+@keyframes nav-row-rise {
+  from { opacity: 0; translate: 0 6px; }
+  to { opacity: 1; translate: none; }
+}
+@keyframes nav-bell-ring {
+  0% { rotate: 0deg; }
+  20% { rotate: 14deg; }
+  40% { rotate: -12deg; }
+  60% { rotate: 8deg; }
+  80% { rotate: -4deg; }
+  100% { rotate: 0deg; }
+}
+/* «Уменьшить движение» в системе — только цвета, без движения. */
+@media (prefers-reduced-motion: reduce) {
+  [data-nav-chip],
+  [data-nav-chip] > svg,
+  [data-nav-row],
+  [data-nav-row]::before,
+  [data-nav-chevron],
+  [data-tone-button],
+  [data-tone-button] > svg,
+  [data-motion] {
+    animation: none !important;
+    transition: none !important;
+  }
+  :is([data-nav-row]:hover, [data-nav-row]:focus-visible, [data-nav-row][data-highlighted]) [data-nav-chip],
+  [data-tone-button]:hover,
+  [data-motion],
+  [data-nav-chevron] {
+    translate: none !important;
+    scale: none !important;
+    rotate: none !important;
+  }
+}
+
+/* Знак «сетап» на главной — градиент индиго → бирюза → лаванда, как на
+   визитке, но насыщеннее, чтобы читался на белом (все цвета ≥ 3:1). */
+:root,
+.app-shell {
+  --app-wordmark-gradient: linear-gradient(90deg, #5566f6 5%, #13a08f 50%, #9a6cf0 95%);
+  /* Подпись под знаком — индиго; в тёмной теме светлее, как на визитке. */
+  --app-wordmark-tagline: #5566f6;
+}
+.app-shell[data-app-theme="dark"],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
+  --app-wordmark-gradient: linear-gradient(90deg, #a3adff 5%, #86d3c4 50%, #c4b0f7 95%);
+  --app-wordmark-tagline: #a3adff;
+}
+
+/* Акцент партнёра (white-label) перекрашивает заливку `bg-[#5566f6]`;
+   градиент поверх неё — наш, поэтому под акцентом его убираем. */
+.app-shell[data-partner-accent] :is([data-home-setup], [data-avatar-gradient]) {
+  background-image: none;
+}

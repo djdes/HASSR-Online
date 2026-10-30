@@ -22,18 +22,31 @@ const WORDMARK_SRC = "/brand/wordmark.png";
  * вокруг знака были поля, и маска центрировала коробку, а не сам знак —
  * он вставал выше оптического центра строки.
  */
-const WORDMARK_RATIO = 2006 / 533;
+export const WORDMARK_RATIO = 2006 / 533;
+
+/**
+ * Где в файле знака буквы (доли ширины, непрозрачность ≥ 32 из 255): слева
+ * поле 3.2%, справа 8.3% — остальное почти прозрачная кайма. По буквам, а не
+ * по коробке, равняется подпись на главной (`logo.test.ts` сверяет с файлом).
+ */
+export const WORDMARK_INK = { left: 29 / 900, right: 75 / 900 } as const;
 
 export function BrandLogo({
   height = 22,
   className,
   title = "WeSetup",
+  gradient = false,
 }: {
   /** Высота знака в px. */
   height?: number;
   className?: string;
   /** Пустая строка — знак декоративный, читалка его пропустит. */
   title?: string;
+  /**
+   * Градиент индиго → бирюза → лаванда, как на визитке (главная, 2026-10-29):
+   * через ту же маску, цвета — `--app-wordmark-gradient` (свой для тёмной темы).
+   */
+  gradient?: boolean;
 }) {
   return (
     <span
@@ -47,7 +60,9 @@ export function BrandLogo({
         display: "block",
         height: `var(--logo-h, ${height}px)`,
         width: `calc(var(--logo-h, ${height}px) * ${WORDMARK_RATIO})`,
-        backgroundColor: "currentColor",
+        ...(gradient
+          ? { backgroundImage: "var(--app-wordmark-gradient)" }
+          : { backgroundColor: "currentColor" }),
         WebkitMaskImage: `url(${WORDMARK_SRC})`,
         maskImage: `url(${WORDMARK_SRC})`,
         WebkitMaskSize: "contain",

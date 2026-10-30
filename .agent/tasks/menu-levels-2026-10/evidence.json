@@ -1,0 +1,96 @@
+{
+  "task_id": "menu-levels-2026-10",
+  "spec": "spec.md",
+  "date": "2026-10-29",
+  "acceptance": {
+    "AC1": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/components/layout/section-menu-list.tsx",
+        "src/components/layout/app-sidebar.tsx",
+        "src/app/app-theme.css",
+        "raw/level1-company-light.png",
+        "raw/level2-points-light.png",
+        "raw/level3-journals-light.png"
+      ],
+      "measurements": {
+        "level1": ["Главное меню", "Моя компания"],
+        "level2": ["Главное меню", "Моя компания", "Торговые точки"],
+        "level3": ["Главное меню", "Моя компания", "Торговые точки", "Журналы"],
+        "currentAria": "location",
+        "cardBg": { "indigo": "rgb(240, 241, 254)", "orange": "rgb(252, 240, 234)" }
+      }
+    },
+    "AC2": {
+      "verdict": "PASS",
+      "evidence": ["src/components/layout/app-sidebar.tsx", "raw/jump-company-light.png"],
+      "measurements": {
+        "level3ToCompany": { "url": "/settings/organization", "focus": "points" },
+        "level3ToMain": { "url": "/home", "focus": "company" }
+      }
+    },
+    "AC3": {
+      "verdict": "PASS",
+      "evidence": ["src/app/app-theme.css", "raw/level0-main-light.png", "raw/sheet-after-company.png"],
+      "measurements": {
+        "mainCompanyChip": "rgba(255, 255, 255, 0.28) 0px 1px 0px 0px inset, rgba(85, 102, 246, 0.45) 0px 2px 6px -3px, rgba(85, 102, 246, 0.45) 3px 3px 0px -1px",
+        "pointsRowChip": "rgba(255, 255, 255, 0.28) 0px 1px 0px 0px inset, rgba(220, 90, 18, 0.42) 0px 2px 6px -3px, rgba(220, 90, 18, 0.42) 3px 3px 0px -1px",
+        "masterPageChip": "rgba(255, 255, 255, 0.28) 0px 1px 0px 0px inset, rgba(124, 92, 245, 0.45) 0px 2px 6px -3px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      }
+    },
+    "AC4": {
+      "verdict": "PASS",
+      "evidence": ["src/lib/app-nav.ts", "src/lib/nav-section-path.test.ts"],
+      "tests": 3
+    },
+    "AC5": {
+      "verdict": "PASS",
+      "evidence": [
+        "src/components/layout/section-menu-list.tsx",
+        "src/components/layout/mobile-nav-sheet.tsx",
+        "src/components/layout/section-menu-button.tsx",
+        "raw/sheet-level3.png",
+        "raw/sheet-after-company.png",
+        "raw/sheet-after-root.png",
+        "raw/mini-level3.png",
+        "raw/mini-after-points.png"
+      ],
+      "measurements": {
+        "sheet": {
+          "open": ["Главное меню", "Моя компания", "Торговые точки", "*Журналы"],
+          "afterCompany": { "section": "company", "focus": "Торговые точки", "url": "/journals" },
+          "afterRoot": { "mode": "main", "focus": "Моя компания", "url": "/journals" }
+        },
+        "miniApp": {
+          "open": ["Главное меню", "Моя компания", "Торговые точки", "*Журналы"],
+          "afterPoints": { "title": "Торговые точки", "focus": "Журналы" },
+          "afterRoot": { "title": "Главное меню", "focus": "Моя компания" }
+        }
+      }
+    },
+    "AC6": {
+      "verdict": "PASS",
+      "evidence": ["src/app/app-theme.css", "raw/level3-journals-dark.png", "raw/level2-points-dark.png"],
+      "measurements": {
+        "cascade": ["0s", "0.028s", "0.056s", "0.084s", "0.112s", "0.14s", "0.168s"],
+        "reducedMotion": "animation-name: none",
+        "darkCardBg": { "indigo": "rgba(163, 173, 255, 0.13)", "orange": "rgba(238, 174, 134, 0.12)" }
+      }
+    },
+    "AC7": {
+      "verdict": "PASS",
+      "commands": {
+        "npm run typecheck": "exit 0",
+        "npm run test:gate": "pass=5108, fail=0",
+        "npx eslint (7 changed/new TS files)": "exit 0",
+        "npm run i18n:check": "pass 97, fail 0"
+      }
+    },
+    "AC8": {
+      "verdict": "PASS",
+      "evidence": ["raw/screenshots.txt", "raw/levels.cjs", "raw/sheet-check.cjs", "raw/mini-check.cjs", "raw/hover-check.cjs"],
+      "screenshots": 16
+    }
+  },
+  "deploy_changes": "UI only (sidebar, phone sheet, Mini App sheet, CSS, i18n label). No Prisma schema changes."
+}
