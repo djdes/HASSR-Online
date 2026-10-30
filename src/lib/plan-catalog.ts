@@ -163,9 +163,8 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
       },
       { key: "ownDocuments", cells: { free: no, standard: yes, premium: yes } },
       { key: "typicalPackage", feature: "typicalPackage", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
-      // Цена — услуги «ППК индивидуально» из ROOT; подставляет таблица
-      // (строкой: узбекские разряды у сервера и браузера разные).
-      { key: "ppkIndividual", cells: { free: text("ppkFrom"), standard: text("ppkFrom"), premium: text("ppkFrom") } },
+      // Без цены: «по запросу» открывает окно контактов (владелец, 2026-10-29).
+      { key: "ppkIndividual", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest") } },
     ],
   },
   {

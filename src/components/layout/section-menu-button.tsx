@@ -9,7 +9,6 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
-  BackToMainButton,
   NavSectionsList,
   SectionMenuList,
   menuHostKey,
@@ -21,9 +20,9 @@ import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 /**
  * Меню раздела в Mini App (П-3): полоса над вкладками, по нажатию — лист, как
- * бургер сайта: логотип компании клиента, «‹ Назад» и пункты раздела.
- * «‹ Назад» переключает лист на меню уровнем выше; раздел со стрелкой ›
- * раскрывает своё меню на месте. Показывается, когда путь принадлежит разделу
+ * бургер сайта: логотип компании клиента и «стопка уровней» с пунктами
+ * раздела. Вкладки родителей переключают лист на свой уровень; раздел со
+ * стрелкой › раскрывает своё меню на месте. Показывается, когда путь принадлежит разделу
  * с меню и разделов у человека два и больше (повару с одним разделом меню не
  * нужно — как и бургер на сайте).
  *
@@ -97,17 +96,14 @@ export function SectionMenuButton({
             className="mb-2 border-b border-[#ececf4] px-2.5 pt-1 pb-4"
           />
           {shown?.menu ? (
-            <>
-              <BackToMainButton onClick={menu.back} />
-              <SectionMenuList
-                section={shown}
-                activeItemId={shown.key === section?.key ? menuItem?.id : undefined}
-                currentKey={currentKey}
-                statuses={statuses}
-                onOpenMenu={menu.openMenu}
-                onGoTo={menu.goTo}
-              />
-            </>
+            <SectionMenuList
+              section={shown}
+              activeItemId={shown.key === section?.key ? menuItem?.id : undefined}
+              currentKey={currentKey}
+              statuses={statuses}
+              onOpenMenu={menu.openMenu}
+              onGoTo={menu.goTo}
+            />
           ) : (
             <NavSectionsList sections={sections} currentKey={currentKey} onOpenMenu={menu.openMenu} />
           )}

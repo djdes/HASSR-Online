@@ -52,7 +52,10 @@ export const STORAGE_BYTES: Record<PaidTier, number> = {
   premium: 1024 * MB,
 };
 
-/** «Заказать индивидуально» в разделе ППК — цена «от». */
+/**
+ * Прайс услуги «ППК индивидуально» по умолчанию (ROOT → «Услуги»). На сайте
+ * не показывается — там «Свяжитесь с нами» (2026-10-29).
+ */
 export const PPK_INDIVIDUAL_FROM_RUB = 10_000;
 
 export const CYCLE_MONTHS: Record<BillingCycle, number> = { month: 1, year: 12 };

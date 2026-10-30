@@ -1,0 +1,373 @@
+{
+  "base": "http://localhost:3033",
+  "at": "2026-10-29T20:25:54.178Z",
+  "passed": 73,
+  "failed": 0,
+  "results": [
+    {
+      "check": "/uslugi: JSON-LD без price/minPrice/offers",
+      "ok": true,
+      "detail": "ld bytes 10212, \"price\" in html: false"
+    },
+    {
+      "check": "/uslugi: в разметке (без <script>) нет «₽»",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "check": "/uslugi @1440: нет цены в article[id]",
+      "ok": true,
+      "detail": "ok (12)"
+    },
+    {
+      "check": "/uslugi @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/uslugi @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/ @1440: нет цены в [data-testid=\"tariff-ppk\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/ @1440: нет цены в ppkRow",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "check": "/ @1440: цена тарифа на месте [data-testid=\"tariff-card-standard\"]",
+      "ok": true,
+      "detail": "1 990 ₽"
+    },
+    {
+      "check": "/ @1440: цена тарифа на месте [data-testid=\"tariff-card-premium\"]",
+      "ok": true,
+      "detail": "3 990 ₽"
+    },
+    {
+      "check": "/ @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/ @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/pricing @1440: нет цены в [data-testid=\"tariff-ppk\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/pricing @1440: нет цены в ppkRow",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "check": "/pricing @1440: цена тарифа на месте [data-testid=\"tariff-card-standard\"]",
+      "ok": true,
+      "detail": "1 990 ₽"
+    },
+    {
+      "check": "/pricing @1440: цена тарифа на месте [data-testid=\"tariff-card-premium\"]",
+      "ok": true,
+      "detail": "3 990 ₽"
+    },
+    {
+      "check": "/pricing @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/pricing @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/services @1440: нет цены в [data-service-card]",
+      "ok": true,
+      "detail": "ok (12)"
+    },
+    {
+      "check": "/settings/services @1440: нет цены в main",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/settings/services @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/settings/services @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/services @1440: «Чат на сайте» закрывает окно и открывает чат",
+      "ok": true,
+      "detail": "events 1"
+    },
+    {
+      "check": "/settings/services @1440: окно заявки без цены и оплаты, с телефоном",
+      "ok": true,
+      "detail": "phone visible"
+    },
+    {
+      "check": "/inspection/experts @1440: нет цены в [data-inspection-experts]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/inspection/experts @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/inspection/experts @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/production-control @1440: нет цены в [data-testid=\"ppk-individual-order\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/production-control @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/production-control @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/subscription @1440: нет цены в [data-testid=\"tariff-ppk\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/settings/subscription @1440: цена тарифа на месте [data-testid=\"tariff-card-standard\"]",
+      "ok": true,
+      "detail": "1 891 ₽"
+    },
+    {
+      "check": "/settings/subscription @1440: цена тарифа на месте [data-testid=\"tariff-card-premium\"]",
+      "ok": true,
+      "detail": "3 791 ₽"
+    },
+    {
+      "check": "/settings/subscription @1440: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/settings/subscription @1440: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 28px, phone box 525–915 of 1440, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/uslugi @390: нет цены в article[id]",
+      "ok": true,
+      "detail": "ok (12)"
+    },
+    {
+      "check": "/uslugi @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/uslugi @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/ @390: нет цены в [data-testid=\"tariff-ppk\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/ @390: нет цены в ppkRow",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "check": "/ @390: цена тарифа на месте [data-testid=\"tariff-card-standard\"]",
+      "ok": true,
+      "detail": "1 990 ₽"
+    },
+    {
+      "check": "/ @390: цена тарифа на месте [data-testid=\"tariff-card-premium\"]",
+      "ok": true,
+      "detail": "3 990 ₽"
+    },
+    {
+      "check": "/ @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/ @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/pricing @390: нет цены в [data-testid=\"tariff-ppk\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/pricing @390: нет цены в ppkRow",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "check": "/pricing @390: цена тарифа на месте [data-testid=\"tariff-card-standard\"]",
+      "ok": true,
+      "detail": "1 990 ₽"
+    },
+    {
+      "check": "/pricing @390: цена тарифа на месте [data-testid=\"tariff-card-premium\"]",
+      "ok": true,
+      "detail": "3 990 ₽"
+    },
+    {
+      "check": "/pricing @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/pricing @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/services @390: нет цены в [data-service-card]",
+      "ok": true,
+      "detail": "ok (12)"
+    },
+    {
+      "check": "/settings/services @390: нет цены в main",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/settings/services @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/settings/services @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/services @390: «Чат на сайте» закрывает окно и открывает чат",
+      "ok": true,
+      "detail": "events 1"
+    },
+    {
+      "check": "/settings/services @390: окно заявки без цены и оплаты, с телефоном",
+      "ok": true,
+      "detail": "phone visible"
+    },
+    {
+      "check": "/inspection/experts @390: нет цены в [data-inspection-experts]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/inspection/experts @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/inspection/experts @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/production-control @390: нет цены в [data-testid=\"ppk-individual-order\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/production-control @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/production-control @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/subscription @390: нет цены в [data-testid=\"tariff-ppk\"]",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/settings/subscription @390: цена тарифа на месте [data-testid=\"tariff-card-standard\"]",
+      "ok": true,
+      "detail": "1 891 ₽"
+    },
+    {
+      "check": "/settings/subscription @390: цена тарифа на месте [data-testid=\"tariff-card-premium\"]",
+      "ok": true,
+      "detail": "3 791 ₽"
+    },
+    {
+      "check": "/settings/subscription @390: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/settings/subscription @390: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/services @390 mini: страница в оболочке Mini App (#mini-root)",
+      "ok": true,
+      "detail": "http://localhost:3033/settings/services"
+    },
+    {
+      "check": "/settings/services @390 mini: нет цены в [data-service-card]",
+      "ok": true,
+      "detail": "ok (12)"
+    },
+    {
+      "check": "/settings/services @390 mini: нет цены в main",
+      "ok": true,
+      "detail": "ok (1)"
+    },
+    {
+      "check": "/settings/services @390 mini: без горизонтальной прокрутки страницы",
+      "ok": true,
+      "detail": "scrollWidth − innerWidth = 0"
+    },
+    {
+      "check": "/settings/services @390 mini: окно контактов — крупный телефон",
+      "ok": true,
+      "detail": "font 24px, phone box 25–365 of 390, tg https://t.me/wesetupbot"
+    },
+    {
+      "check": "/settings/services @390 mini: «Чат на сайте» закрывает окно и открывает чат",
+      "ok": true,
+      "detail": "events 1"
+    },
+    {
+      "check": "/settings/services @390 mini: окно заявки без цены и оплаты, с телефоном",
+      "ok": true,
+      "detail": "phone visible"
+    }
+  ]
+}

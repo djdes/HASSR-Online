@@ -790,7 +790,6 @@
     "individual": {
       "title": "Obyektingiz uchun nazorat dasturi — individual",
       "text": "Mutaxassis ishlab chiqarishingiz uchun nazorat dasturi va hujjatlar to‘plamini ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
-      "price": "{price} dan",
       "cta": "Individual buyurtma berish"
     }
   },
@@ -967,9 +966,7 @@
       "auditHint": "Ekspert buzilishlarni tekshiruvchidan oldin topadi va yechimlar bilan hisobot beradi.",
       "visit": "Mutaxassisning chiqishi",
       "visitHint": "Mutaxassis keladi, ishlab chiqarishni ko‘radi va kamchiliklarni joyida tahlil qiladi.",
-      "priceFrom": "{price} ₽ dan",
-      "priceExact": "{price} ₽",
-      "priceOnRequest": "narxi so‘rov bo‘yicha"
+      "priceNote": "Narx obyekt va shaharga bog‘liq — qisqa suhbatdan keyin aytamiz."
     },
     "now": {
       "guideTitle": "«Tekshiruv keldi» bo‘limi qanday tuzilgan",
@@ -5817,7 +5814,6 @@
       "ppk": {
         "title": "Ishlab chiqarish nazorati dasturi — individual",
         "text": "Mutaxassis obyektingiz uchun dastur ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
-        "price": "{price} dan",
         "cta": "Individual buyurtma berish"
       },
       "table": {
@@ -5858,7 +5854,7 @@
         "storageStandard": "{mb, number} MB: jurnal buyruqlari va o‘z hujjatlaringiz",
         "storagePremium": "Barcha hujjatlar uchun {gb, number} GB",
         "trialOnly": "Faqat {trialDays, number} kunlik sinov davrida",
-        "ppkFrom": "Individual, {price} dan",
+        "ppkOnRequest": "Individual, so‘rov bo‘yicha",
         "employeesPremium": "Har bir nuqtaga {count, number}, undan ko‘pi — kelishuv bo‘yicha"
       },
       "contactLink": "bog‘lanish",
@@ -25023,6 +25019,21 @@
       "fullBenefit": " — {benefit}. ",
       "copyTitle": "Promokodni nusxalash",
       "go": "O‘tish"
+    },
+    "contactUs": {
+      "cta": "Biz bilan bog‘laning",
+      "title": "Biz bilan bog‘laning",
+      "lead": "Nima kerakligini ayting — obyektingiz uchun narxni aytamiz.",
+      "about": "Xizmat: {service}",
+      "call": "Qo‘ng‘iroq qilish",
+      "telegram": "Telegram",
+      "telegramHint": "Telegram orqali yozish",
+      "emailHint": "Xat yozish",
+      "chat": "Saytdagi chat",
+      "chatHint": "Shu yerning o‘zida, chat oynasida javob beramiz",
+      "subjectService": "Xizmat narxi: {service}",
+      "subjectGeneral": "Xizmatlar narxi bo‘yicha savol",
+      "priceNote": "Obyektingiz uchun narxni aytamiz"
     }
   },
   "checklistsUi": {
@@ -28731,34 +28742,27 @@
     },
     "servicesPage": {
       "title": "Xizmatlar",
-      "description": "Oziq-ovqat xavfsizligi mutaxassisining ishi: jurnallarni sozlash, tekshiruv oldidan audit, hujjatlarni ishlab chiqish.",
-      "balancePoints": "Balansdagi ballar: {amount} ₽"
+      "description": "Oziq-ovqat xavfsizligi mutaxassisining ishi: jurnallarni sozlash, tekshiruv oldidan audit, hujjatlarni ishlab chiqish."
     },
     "servicesCatalog": {
       "contactRequired": "Bog‘lanish uchun ism va telefon raqamini kiriting",
       "sendFailed": "Buyurtmani yuborib bo‘lmadi",
-      "paidSuccess": "Balansdan {amount} ₽ to‘landi. Ish kuni davomida siz bilan bog‘lanamiz",
-      "insufficientSuccess": "Buyurtma yuborildi. Ballar yetmadi, shuning uchun to‘lovni alohida muhokama qilamiz",
       "sentSuccess": "Buyurtma yuborildi. Ish kuni davomida siz bilan bog‘lanamiz",
       "managerOnlyNotice": "Xizmatlarni tashkilot rahbari buyurtma qiladi. Bu bo‘limni boshqaruvchi yoki egasiga ko‘rsating — ular buyurtma berishi mumkin.",
-      "order": "Buyurtma berish",
+      "order": "Ariza qoldirish",
       "orderedByManager": "Rahbar buyurtma qiladi",
-      "orderTitle": "Buyurtma: {title}",
-      "orderService": "Xizmatga buyurtma berish",
-      "bulletDebit": "Balansdan {price} ₽ yechamiz, {rest} ₽ qoladi",
+      "orderTitle": "Ariza: {title}",
+      "orderService": "Xizmatga ariza",
       "bulletContactDay": "Ish kuni davomida siz bilan bog‘lanamiz",
-      "bulletBalanceShort": "Balansda {balance} ₽ — bu yetmaydi, to‘lovni alohida muhokama qilamiz",
-      "bulletAcceptAnyway": "Buyurtmani baribir qabul qilamiz va siz bilan bog‘lanamiz",
-      "bulletPriceByVolume": "Narx hajmga bog‘liq — suhbatdan keyin hisoblaymiz",
-      "bulletNoPointsDebited": "Bu xizmat uchun hozir ballar yechilmaydi",
       "sending": "Yuborilmoqda…",
-      "payAndOrder": "To‘lash va buyurtma berish",
       "sendRequest": "Buyurtma yuborish",
       "nameLabel": "Sizga qanday murojaat qilamiz",
       "phoneLabel": "Bog‘lanish uchun telefon",
       "commentLabel": "Oldindan nimani bilish muhim",
       "commentPlaceholder": "Masalan: bir oydan keyin ochilamiz, tekshiruv oktabrda",
-      "payNotice": "To‘lov tasdiqlangandan so‘ng darhol ballar bilan amalga oshiriladi. Qaytarish — ish boshlanmagan bo‘lsa, kelishuv asosida."
+      "requestLead": "Telefon raqamingizni qoldiring — bog‘lanamiz va obyektingiz uchun narxni aytamiz.",
+      "bulletNothingCharged": "Hozir hech narsa to‘lamaysiz — bu faqat ariza",
+      "contactsTitle": "Darhol qo‘ng‘iroq qilish yoki yozish qulayroqmi?"
     },
     "staffHierarchyPage": {
       "title": "Boshqaruv ierarxiyasi",

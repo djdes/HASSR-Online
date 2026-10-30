@@ -1,19 +1,19 @@
 import Link from "next/link";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { FileText } from "lucide-react";
 
-import { formatNumber, type Locale } from "@/i18n/locales";
+import { ContactUsButton } from "@/components/contact/contact-us-dialog";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { PPK_SERVICE_KEY } from "@/lib/services/catalog";
 
 /**
- * «ППК под ваш объект — заказать индивидуально, от 10 000 ₽» — внизу обзора
- * раздела «Производственный контроль» и блока «Пакет документов», у любого
- * тарифа (тарифы 2026-10). Цена — из услуги `ppk-development` (ROOT →
- * «Услуги»), заявка — на странице услуг.
+ * «ППК под ваш объект — заказать индивидуально» — внизу обзора раздела
+ * «Производственный контроль» и блока «Пакет документов», у любого тарифа
+ * (тарифы 2026-10). Цены нет (владелец, 2026-10-29): вместо неё «Свяжитесь с
+ * нами» — окно с крупными контактами; заявка — на странице услуг.
  */
-export async function PpkIndividualOrder({ priceRub }: { priceRub: number }) {
+export async function PpkIndividualOrder() {
   const t = await getTranslations("productionControl.individual");
-  const locale = (await getLocale()) as Locale;
   return (
     <section
       data-testid="ppk-individual-order"
@@ -29,9 +29,13 @@ export async function PpkIndividualOrder({ priceRub }: { priceRub: number }) {
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
-        <span className="text-center text-[15px] font-semibold text-[#0b1024] sm:text-right">
-          {t("price", { price: `${formatNumber(locale, priceRub)} ₽` })}
-        </span>
+        <ContactUsButton
+          variant="link"
+          service={t("title")}
+          telegramUrl={contactTelegramUrl(process.env)}
+          testId="ppk-individual-contact"
+          className="self-center text-[15px] font-semibold sm:self-end"
+        />
         <Link
           href={`/settings/services?order=${PPK_SERVICE_KEY}`}
           className="inline-flex h-11 items-center justify-center rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"

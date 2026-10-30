@@ -3,15 +3,12 @@
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { sectionForPath } from "@/lib/app-nav";
-import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppNav } from "@/components/layout/app-nav-context";
-import { LocationSwitcherList } from "@/components/layout/location-switcher";
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
-  BackToMainButton,
   NavSectionsList,
   SectionMenuList,
   menuHostKey,
@@ -29,24 +26,23 @@ const ROW =
 
 /**
  * Меню на телефоне и планшете (<1024px): тот же список разделов, что в
- * сайдбаре, — листом снизу. Сверху логотип компании клиента и точки (если их
- * несколько), внизу выход. В разделе с меню (`section.menu`) лист открывается
- * с меню раздела: кнопка «‹ Назад» переключает его на меню уровнем выше,
- * а нажатие на раздел со стрелкой › раскрывает его меню прямо в листе;
- * «‹ Назад» поднимает на уровень вверх (вложенные разделы, 2026-10-28).
+ * сайдбаре, — листом снизу. Сверху логотип компании клиента, последней
+ * строкой — «Выйти». Точку выбирают в шапке, как на ПК: списка точек в меню
+ * нет (владелец, 2026-10-30: «не дублировать»), и «Выйти» не закреплена
+ * внизу листа — прокручивается вместе с меню. В разделе с меню (`section.menu`) лист открывается
+ * с меню раздела — «стопкой уровней»: вкладки родителей над карточкой
+ * раздела переключают лист на свой уровень, а нажатие на раздел со
+ * стрелкой › раскрывает его меню прямо в листе (вложенные разделы,
+ * 2026-10-28; стопка вместо «‹ Назад» — 2026-10-30).
  */
 export function MobileNavSheet({
   open,
   onClose,
-  buildings,
-  activeBuildingId,
   onLogout,
   brand,
 }: {
   open: boolean;
   onClose: () => void;
-  buildings: BuildingOption[];
-  activeBuildingId: string | null;
   onLogout: () => void;
   brand: {
     logoUrl: string | null;
@@ -76,22 +72,7 @@ export function MobileNavSheet({
   };
 
   return (
-    <BottomSheet
-      open={open}
-      onClose={close}
-      title={t("menu")}
-      footer={
-        <button
-          type="button"
-          onClick={onLogout}
-          data-nav-row
-          className={cn(ROW, "group w-full text-[#a13a32] hover:bg-[#fff4f2]")}
-        >
-          <NavIconChip name="LogOut" className="size-10 rounded-xl" iconClassName="size-[22px]" />
-          {t("logout")}
-        </button>
-      }
-    >
+    <BottomSheet open={open} onClose={close} title={t("menu")}>
       <nav
         data-sheet-menu="mobile"
         onClick={(event) => {
@@ -112,25 +93,29 @@ export function MobileNavSheet({
           className="mb-2 border-b border-[#ececf4] px-2.5 pt-1 pb-4"
         />
         {shown?.menu ? (
-          <>
-            <BackToMainButton onClick={menu.back} />
-            <SectionMenuList
-              section={shown}
-              activeItemId={shown.key === placeSection?.key ? menuItem?.id : undefined}
-              currentKey={active}
-              statuses={statuses}
-              onOpenMenu={menu.openMenu}
-              onGoTo={menu.goTo}
-            />
-          </>
+          <SectionMenuList
+            section={shown}
+            activeItemId={shown.key === placeSection?.key ? menuItem?.id : undefined}
+            currentKey={active}
+            statuses={statuses}
+            onOpenMenu={menu.openMenu}
+            onGoTo={menu.goTo}
+          />
         ) : (
-          <>
-            {buildings.length >= 2 ? (
-              <LocationSwitcherList buildings={buildings} activeBuildingId={activeBuildingId} />
-            ) : null}
-            <NavSectionsList sections={sections} currentKey={active} onOpenMenu={menu.openMenu} />
-          </>
+          <NavSectionsList sections={sections} currentKey={active} onOpenMenu={menu.openMenu} />
         )}
+        <div className="mt-2 border-t border-[#ececf4] pt-2">
+          <button
+            type="button"
+            onClick={onLogout}
+            data-nav-row
+            data-nav-logout
+            className={cn(ROW, "group w-full text-[#a13a32] hover:bg-[#fff4f2]")}
+          >
+            <NavIconChip name="LogOut" className="size-10 rounded-xl" iconClassName="size-[22px]" />
+            {t("logout")}
+          </button>
+        </div>
       </nav>
     </BottomSheet>
   );
