@@ -532,8 +532,6 @@ export function Header({
         <MobileNavSheet
           open={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
-          buildings={currentPoint.buildings}
-          activeBuildingId={currentPoint.activeBuildingId}
           onLogout={handleLogout}
           brand={{
             logoUrl: organizationLogoUrl ?? null,

@@ -81,9 +81,15 @@ export const JOURNAL_TAB_UNDERLINE_CLASS =
  * 3. У ВТОРОГО ребёнка (первая мета-колонка) вертикальный разделитель
  *    снят: линии рисуются только МЕЖДУ мета-колонками. На мобиле
  *    горизонтальные разделители остаются у всех секций.
+ * 4. Владелец, 2026-10-30: «когда 2 журнала, не понятно, где заканчивается
+ *    и что это вообще 2 журнала». Граница карточки была светлее
+ *    внутренних разделителей (#ececf4 против #e6e6f0), и две карточки на
+ *    телефоне читались одной. Теперь край карточки — граница `#dcdfed` и
+ *    тень, слева полоска цвета бренда (как у выбранного пункта меню), а
+ *    разделители внутри светлее края (`JOURNAL_CARD_SECTION_CLASS`).
  */
 export const JOURNAL_LIST_CARD_CLASS =
-  "flex flex-col gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-3.5 sm:flex-row sm:items-center sm:gap-0 sm:px-5 sm:[&>:first-child]:min-w-0 sm:[&>:first-child]:flex-1 sm:[&>:nth-child(2)]:border-l-0";
+  "relative flex flex-col gap-3 rounded-2xl border border-[#dcdfed] bg-white py-3.5 pr-4 pl-5 shadow-[0_1px_2px_rgba(11,16,36,0.05),0_10px_24px_-18px_rgba(11,16,36,0.3)] before:absolute before:inset-y-3.5 before:left-0 before:w-1 before:rounded-r-full before:bg-[#5566f6] sm:flex-row sm:items-center sm:gap-0 sm:pr-5 sm:pl-6 sm:[&>:first-child]:min-w-0 sm:[&>:first-child]:flex-1 sm:[&>:nth-child(2)]:border-l-0";
 
 /**
  * Shared card typography (list of documents inside a journal). Normalized
@@ -130,7 +136,7 @@ export const JOURNAL_CARD_VALUE_CLASS =
  * нельзя, название переносится само.
  */
 export const JOURNAL_CARD_SECTION_CLASS =
-  "border-t border-[#e6e6f0] pt-3 sm:flex sm:w-[260px] sm:shrink-0 sm:flex-col sm:justify-center sm:border-l sm:border-t-0 sm:px-6 sm:pt-0";
+  "border-t border-[#f0f1f7] pt-3 sm:flex sm:w-[260px] sm:shrink-0 sm:flex-col sm:justify-center sm:border-l sm:border-t-0 sm:px-6 sm:pt-0";
 
 /** Вертикальный зазор между карточками списка — 16px (эталон 14-18px). */
 export const JOURNAL_LIST_CARDS_CLASS = "space-y-4";
