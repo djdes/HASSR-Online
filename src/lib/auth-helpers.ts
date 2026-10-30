@@ -89,9 +89,31 @@ export async function requireApiRole(
  */
 export async function requireRoot() {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user.isRoot) {
-    notFound();
-  }
+  if (!session) notFound();
+  if (session.user.isRoot) return session;
+
+  // Delegated panel access (2026-10-29): the section is derived from the
+  // request path the proxy stamped on the request (clients can't forge it),
+  // and the person's sections are re-read from the DB on every call.
+  const { headers } = await import("next/headers");
+  const { PARTNER_HEADER_METHOD, PARTNER_HEADER_PATH } = await import("@/lib/partners/request-context");
+  const requestHeaders = await headers();
+  const path = requestHeaders.get(PARTNER_HEADER_PATH);
+  const method = requestHeaders.get(PARTNER_HEADER_METHOD) ?? "GET";
+  if (!path) notFound();
+  const { canAccessPlatformPath, hasPlatformPanel, platformHomeHref } = await import("@/lib/platform-access");
+  const { platformViewerForSession } = await import("@/lib/platform-access.server");
+  const viewer = await platformViewerForSession(session);
+  if (canAccessPlatformPath(viewer, path, method)) return session;
+  // The panel's front page without the «Клиенты» section: go to their own.
+  if (path === "/root" && hasPlatformPanel(viewer)) redirect(platformHomeHref(viewer));
+  notFound();
+}
+
+/** Owner-only actions inside the panel (team, impersonation, deletion). */
+export async function requireSuperRoot() {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user.isRoot) notFound();
   return session;
 }
 

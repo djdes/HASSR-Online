@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { isBillingCycle, isPaidTier, planMonthlyRub, tierForHeadcount } from "@/lib/tariff-plans";
 import { isInactivePlan } from "@/lib/plan-limits";
 import { readPlanPricing } from "@/lib/tariffs";
+import { isTechnicalEmail } from "@/lib/technical-email";
 
 /**
  * Метрики по одной организации для ROOT-дашборда. Считаются по сырым
@@ -16,6 +17,14 @@ export type OrgMetrics = {
   /// потом заблокировали, это всё ещё адрес, по которому ROOT ищет
   /// клиента в поддержке. null — в организации не осталось никого.
   ownerEmail: string | null;
+  /// Контакт владельца для списка клиентов (2026-10-29): имя, телефон и
+  /// адрес, на который реально писать (контактная почта или вход, если он
+  /// не служебный). Владелец — хозяин аккаунта, иначе самый ранний.
+  ownerName: string | null;
+  ownerPhone: string | null;
+  ownerContactEmail: string | null;
+  /// Телефон организации из «Реквизитов».
+  orgPhone: string | null;
   /// IP владельца: с какого адреса завели организацию и с какого заходили
   /// последний раз. Оба null у аккаунтов, созданных до появления полей,
   /// и у тех, кого завели вручную из кабинета.
@@ -166,9 +175,10 @@ export async function getAllOrgMetrics(
       subscriptionEnd: true,
       createdAt: true,
       balanceRub: true,
+      phone: true,
       _count: { select: { journalDocuments: true, buildings: true } },
       accountId: true,
-      account: { select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true } },
+      account: { select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, ownerUserId: true } },
     },
   });
   // Тариф живёт на аккаунте (сеть платит один раз): его MRR — у самой
@@ -239,8 +249,12 @@ export async function getAllOrgMetrics(
       // совпадает до миллисекунды, и без него выбор был бы случайным.
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: {
+        id: true,
         organizationId: true,
+        name: true,
         email: true,
+        contactEmail: true,
+        phone: true,
         registrationIp: true,
         lastLoginIp: true,
         lastLoginAt: true,
@@ -253,7 +267,9 @@ export async function getAllOrgMetrics(
 
   type OwnerRow = (typeof usersForOwner)[number];
   const ownerByOrg = new Map<string, OwnerRow>();
+  const userById = new Map<string, OwnerRow>();
   for (const u of usersForOwner) {
+    userById.set(u.id, u);
     if (!ownerByOrg.has(u.organizationId)) {
       ownerByOrg.set(u.organizationId, u);
     }
@@ -303,7 +319,13 @@ export async function getAllOrgMetrics(
         null
       );
 
-    const owner = ownerByOrg.get(org.id);
+    // Хозяин аккаунта, если он работает в этой организации, иначе тот, кто
+    // её регистрировал (самый ранний пользователь).
+    const accountOwner = org.account?.ownerUserId ? userById.get(org.account.ownerUserId) : undefined;
+    const owner = accountOwner && accountOwner.organizationId === org.id ? accountOwner : ownerByOrg.get(org.id);
+    const ownerContactEmail = owner
+      ? owner.contactEmail?.trim() || (isTechnicalEmail(owner.email) ? null : owner.email)
+      : null;
 
     // Тариф по численности (до 25 — «Стандарт», больше — «Премиум»), а не
     // точки по численности: места докупаются переходом на тариф выше.
@@ -325,6 +347,10 @@ export async function getAllOrgMetrics(
       organizationId: org.id,
       organizationName: org.name,
       ownerEmail: owner?.email ?? null,
+      ownerName: owner?.name ?? null,
+      ownerPhone: owner?.phone?.trim() || null,
+      ownerContactEmail,
+      orgPhone: org.phone?.trim() || null,
       ownerRegistrationIp: owner?.registrationIp ?? null,
       ownerLastLoginIp: owner?.lastLoginIp ?? null,
       ownerLastLoginAt: owner?.lastLoginAt?.toISOString() ?? null,

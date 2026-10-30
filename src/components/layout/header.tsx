@@ -12,6 +12,9 @@ import { Handshake, Loader2, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navTone } from "@/lib/nav-tones";
 import { NavIconChip } from "@/components/layout/nav-icons";
+
+/** Staff with platform sections enter the panel through a token refresh. */
+const PLATFORM_PANEL_ENTRY = "/api/me/platform-panel";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -80,6 +83,8 @@ type HeaderProps = {
   organizationIdentity: SidebarOrgIdentity;
   userRole: string;
   isRoot: boolean;
+  /** Ссылка на панель платформы: владелец или сотрудник с разделами /root. */
+  platformPanel?: boolean;
   /**
    * Баллы организации. `null` — у пользователя нет прав на деньги
    * организации: пункт меню он видит, сумму — нет.
@@ -147,6 +152,7 @@ export function Header({
   organizationIdentity,
   userRole,
   isRoot,
+  platformPanel = isRoot,
   balanceRub = null,
   organizations,
   activeOrganizationId,
@@ -286,9 +292,10 @@ export function Header({
             </Link>
           ) : null}
 
-          {isRoot ? (
+          {platformPanel ? (
             <Link
-              href="/root"
+              href={isRoot ? "/root" : PLATFORM_PANEL_ENTRY}
+              prefetch={false}
               aria-label={t("header.platformPanel")}
               title={t("header.platformPanel")}
               data-tone={navTone("ShieldCheck")}
@@ -474,9 +481,9 @@ export function Header({
                   </DropdownMenuItem>
                 ) : null}
 
-                {isRoot ? (
+                {platformPanel ? (
                   <DropdownMenuItem asChild className="md:hidden" data-nav-row>
-                    <Link href="/root">
+                    <Link href={isRoot ? "/root" : PLATFORM_PANEL_ENTRY} prefetch={false}>
                       <NavIconChip name="ShieldCheck" className={MENU_CHIP} iconClassName="size-4" />
                       {t("header.platformPanel")}
                     </Link>
@@ -564,6 +571,7 @@ export function Header({
         canEditBranding={canEditBranding}
         canEditTranslations={canEditTranslations}
         isRoot={isRoot}
+        platformPanel={platformPanel}
         onLogout={handleLogout}
       />
 
