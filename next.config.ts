@@ -47,6 +47,9 @@ const nextConfig: NextConfig = {
     // (journal-order-scans.ts), плюс обёртка multipart: без запаса файл
     // ровно в лимит приходил бы обрезанным.
     proxyClientMaxBodySize: "27mb",
+    // `forbidden()` в guard'ах страниц кабинета: «Нет доступа» рисуется
+    // внутри макета (`(dashboard)/forbidden.tsx`) вместо тихого редиректа.
+    authInterrupts: true,
   },
   typescript: {
     // Temporary deploy unblocker: unrelated dashboard pages still carry legacy Next build type errors.

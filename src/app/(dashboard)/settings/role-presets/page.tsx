@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { getServerSession } from "@/lib/server-session";
@@ -21,7 +21,7 @@ export default async function RolePresetsPage() {
   const t = await getTranslations("settingsUi.rolePresetsPage");
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-  if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
 
   const orgId = getActiveOrgId(session);
   const org = await db.organization.findUnique({

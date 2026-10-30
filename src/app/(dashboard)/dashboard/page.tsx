@@ -41,6 +41,7 @@ import { PausedBanner } from "@/components/dashboard/paused-banner";
 import { getLocale, getTranslations } from "next-intl/server";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
+import { DENIED_PARAM, keepDeniedParam } from "@/lib/denied-notice";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -79,20 +80,26 @@ function getEntryData(data: unknown): EntryData {
 /** Журналы, для которых есть готовое превью бланка. */
 const SAMPLE_CODES = new Set<string>(SAMPLE_JOURNAL_CODES);
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const tDash = await getTranslations("dashboardUi.dashboardPage");
   const locale = await getLocale();
   const session = await requireAuth();
   // Заведующая (head_chef) и не-admin'ы не должны видеть «журналы» —
-  // редирект на control-board или mini-app.
+  // редирект на control-board или mini-app. Это маршрут к своей домашней,
+  // а не отказ; метку `?denied=` (сюда увёл proxy) несём дальше.
+  const denied = (await searchParams)[DENIED_PARAM];
   if (!hasCapability(session.user, "journals.view")) {
     if (hasCapability(session.user, "tasks.verify")) {
-      redirect("/control-board");
+      redirect(keepDeniedParam("/control-board", denied));
     }
-    redirect("/mini/today");
+    redirect(keepDeniedParam("/mini/today", denied));
   }
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/journals");
+    redirect(keepDeniedParam("/journals", denied));
   }
   const organizationId = getActiveOrgId(session);
   // Точки: «сегодня» на дашборде считается для активной точки.

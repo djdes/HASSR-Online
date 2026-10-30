@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 export default async function NamesSettingsPage() {
   const t = await getTranslations("settingsUi.namesPage");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/dashboard");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [templates, organization] = await Promise.all([

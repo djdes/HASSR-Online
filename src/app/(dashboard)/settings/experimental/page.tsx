@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { FlaskConical } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function ExperimentalPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.experimentalPage");

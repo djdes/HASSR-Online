@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TaskVisibilityPage() {
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
   const locale = await getSiteLocale();
   const t = await getTranslations({ locale, namespace: "settingsTaskVisibility" });

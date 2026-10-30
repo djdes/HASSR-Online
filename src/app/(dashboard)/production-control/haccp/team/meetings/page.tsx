@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 /** ХАССП, шаг 1 — заседания группы: список протоколов и срок следующего заседания. */
 export default async function TeamMeetingsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [meetings, staff, teamRows, t] = await Promise.all([

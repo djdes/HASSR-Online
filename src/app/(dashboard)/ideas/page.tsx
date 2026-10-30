@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/ui/page-header";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export default async function IdeasPage() {
   const t = await getTranslations("ideasUi.ideasPage");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   return (
     <div className="space-y-6">
       <PageHeader

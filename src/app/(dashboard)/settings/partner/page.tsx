@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Award } from "lucide-react";
 
@@ -18,7 +18,7 @@ export default async function PartnerApplicationPage() {
   const t = await getTranslations("settingsUi.partnerPage");
   const session = await requireAuth();
   if (session.user.partnerAccess) redirect("/partner");
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   return (
     <div className="space-y-5">

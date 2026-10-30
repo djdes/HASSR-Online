@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function JournalsSettingsPage() {
   const t = await getTranslations("settingsUi.journalsPage");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/dashboard");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [templates, organization, positions, users, positionAccess] =

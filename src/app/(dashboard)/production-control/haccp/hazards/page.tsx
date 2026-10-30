@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 /** ХАССП, шаг 5 — анализ опасностей: опасности по этапам с риском и матрицей 4×4. */
 export default async function HazardsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [rows, flowcharts, t] = await Promise.all([

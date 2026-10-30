@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import type { BuildingOption } from "@/lib/building-scope";
 import { cn } from "@/lib/utils";
+import { useContentTransition } from "@/components/layout/content-transition";
 import { ScrollList } from "@/components/ui/scroll-list";
 
 /**
@@ -20,34 +19,40 @@ import { ScrollList } from "@/components/ui/scroll-list";
  * приходит с сервера по активной организации (не по членству), поэтому
  * партнёр в кабинете клиента и ROOT при импёрсонации видят те же точки,
  * что и владелец.
+ *
+ * Смена — общий переход кабинета (`content-transition.tsx`, 2026-10-29):
+ * пока новая страница не пришла, контент — скелет, у пункта — крутилка,
+ * тост «Точка: …» — после того, как данные точки уже на экране.
  */
 
 export function useSwitchBuilding() {
   const t = useTranslations("navigation.shell.point");
-  const router = useRouter();
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { refreshAfter, pendingTag, isPending } = useContentTransition();
 
-  async function switchTo(building: BuildingOption, activeBuildingId: string | null) {
-    if (building.id === activeBuildingId || busyId) return;
-    setBusyId(building.id);
-    try {
-      const response = await fetch("/api/me/active-building", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ buildingId: building.id }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? t("failed"));
-      toast.success(t("switched", { name: building.name }));
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("failed"));
-    } finally {
-      setBusyId(null);
-    }
+  function switchTo(building: BuildingOption, activeBuildingId: string | null) {
+    if (building.id === activeBuildingId || isPending) return;
+    refreshAfter(
+      building.id,
+      async () => {
+        try {
+          const response = await fetch("/api/me/active-building", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ buildingId: building.id }),
+          });
+          const data = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(data?.error ?? t("failed"));
+          return true;
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t("failed"));
+          return false;
+        }
+      },
+      () => toast.success(t("switched", { name: building.name })),
+    );
   }
 
-  return { switchTo, busyId };
+  return { switchTo, busyId: pendingTag };
 }
 
 /**

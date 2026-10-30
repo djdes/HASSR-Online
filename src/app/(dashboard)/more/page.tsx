@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AlertTriangle, Package, TrendingDown } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -21,7 +21,7 @@ const DAY = 24 * 60 * 60 * 1000;
  */
 export default async function MorePage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const t = await getTranslations("moreUi");
   const organizationId = getActiveOrgId(session);
   const now = Date.now();

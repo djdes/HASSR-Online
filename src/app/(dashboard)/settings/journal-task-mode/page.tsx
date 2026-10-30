@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -25,7 +25,7 @@ export default async function JournalTaskModePage() {
       isRoot: session.user.isRoot,
     })
   ) {
-    redirect("/settings");
+    forbidden();
   }
   const organizationId = getActiveOrgId(session);
 

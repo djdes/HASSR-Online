@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { Coins } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -32,7 +32,7 @@ const NO_BONUS_DEFAULT_CODES = new Set([
 export default async function JournalBonusesPage() {
   const t = await getTranslations("settingsUi.journalBonusesPage");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const codes = ACTIVE_JOURNAL_CATALOG.map((j) => j.code);
   const templates = await db.journalTemplate.findMany({

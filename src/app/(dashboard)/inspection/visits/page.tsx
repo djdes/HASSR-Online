@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function InspectionVisitsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [visits, org, t] = await Promise.all([

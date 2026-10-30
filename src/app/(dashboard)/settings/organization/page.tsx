@@ -1,5 +1,5 @@
 import { OrganizationSpecialModeCard } from "@/components/settings/organization-special-mode-card";
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
 export default async function OrganizationInfoPage() {
   const t = await getTranslations("settingsManagement.organizationProfile");
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const org = await db.organization.findUnique({

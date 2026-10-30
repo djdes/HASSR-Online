@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
+import { MiniDeniedNotice } from "@/app/mini/_components/mini-denied-notice";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
@@ -23,6 +24,10 @@ export default async function MiniTodayLayout({ children }: { children: ReactNod
   return (
     <DomainMessagesBoundary namespaces={["miniToday", "miniTaskPool"]}>
       {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
+      {/* Увели сюда из закрытого раздела (`?denied=`) — объясняем один раз. */}
+      <Suspense fallback={null}>
+        <MiniDeniedNotice />
+      </Suspense>
       {children}
     </DomainMessagesBoundary>
   );

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { CalendarRange } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -20,7 +20,7 @@ export default async function ScheduleSettingsPage() {
   const t = await getTranslations("settingsUi.schedulePage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const organizationId = getActiveOrgId(session);
   const now = new Date();

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowRight } from "lucide-react";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -99,7 +99,7 @@ function MetricCard({
  */
 export default async function MonitoringPage({ searchParams }: { searchParams: Promise<{ point?: string }> }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const { point } = await searchParams;
   const [data, t] = await Promise.all([loadMonitoring(session, point ?? null), getTranslations("monitoringPage")]);
 

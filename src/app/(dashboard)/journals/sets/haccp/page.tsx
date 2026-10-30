@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { JournalSetPage } from "@/components/journals/journal-set-page";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -12,6 +12,6 @@ export const dynamic = "force-dynamic";
  */
 export default async function HaccpJournalSetPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   return <JournalSetPage setId="haccp" session={session} />;
 }

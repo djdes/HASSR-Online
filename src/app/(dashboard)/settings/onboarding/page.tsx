@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import {
   Building2,
@@ -48,7 +48,7 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
   const t = await getTranslations("settingsUi.onboardingPage");
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   // Условия трёх этапов живут в `getCoreSetupStatus` — их же читает

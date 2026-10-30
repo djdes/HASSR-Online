@@ -99,3 +99,46 @@ describe("proxy: какая кука сессии", () => {
     assert.equal(await outcome("/journals", { [SESSION_COOKIE_PROD]: tokenA }), "/master");
   });
 });
+
+describe("proxy: уход из закрытого раздела объясняется (?denied=, 2026-10-29)", () => {
+  beforeEach(() => {
+    env.NEXTAUTH_SECRET = SECRET;
+    env.NODE_ENV = "production";
+  });
+
+  afterEach(() => {
+    env.NODE_ENV = saved.NODE_ENV;
+    env.NEXTAUTH_SECRET = saved.NEXTAUTH_SECRET;
+  });
+
+  async function location(path: string, claims: Record<string, unknown>, extra: Record<string, string> = {}) {
+    const token = await mint({ sub: "user-c", id: "user-c", organizationId: "org-cafe", orgKind: "regular", ...claims });
+    const response = await proxy(request(path, { [SESSION_COOKIE_PROD]: token, ...extra }));
+    const target = response.headers.get("location");
+    return target ? new URL(target) : null;
+  }
+
+  it("сотрудник в разделе руководства — в «Журналы» с меткой, откуда увели", async () => {
+    const target = await location("/settings/users", { role: "cook" });
+    assert.equal(target?.pathname, "/journals");
+    assert.equal(target?.searchParams.get("denied"), "/settings/users");
+  });
+
+  it("в оболочке приложения — на его главный экран, метка та же", async () => {
+    const target = await location("/production-control", { role: "cook" }, { "ws-shell": "mini" });
+    assert.equal(target?.pathname, "/mini");
+    assert.equal(target?.searchParams.get("denied"), "/production-control");
+  });
+
+  it("домашняя сотрудника (/dashboard) — маршрут, а не отказ: без метки", async () => {
+    const target = await location("/dashboard", { role: "cook" });
+    assert.equal(target?.pathname, "/journals");
+    assert.equal(target?.search, "");
+  });
+
+  it("руководитель точки на странице всей компании — на «Сегодня» с меткой", async () => {
+    const target = await location("/settings/organization", { role: "manager", pointScope: ["b-1"] });
+    assert.equal(target?.pathname, "/dashboard");
+    assert.equal(target?.searchParams.get("denied"), "/settings/organization");
+  });
+});

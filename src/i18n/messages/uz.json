@@ -2981,7 +2981,24 @@
         "hintOrganization": "«Nuqtalar jurnallari» va «Barcha jurnallar» sarlavhada «Butun tashkilot» tanlanganda ochiladi.",
         "hintPoint": "Siz o‘z nuqtangizda ishlaysiz — barcha nuqtalar jurnallarini kompaniya rahbariyati ko‘radi.",
         "failed": "Butun tashkilotni tanlab bo‘lmadi"
-      }
+      },
+      "access": {
+        "forbiddenTitle": "Bu bo‘limga kirish huquqingiz yo‘q",
+        "forbiddenBody": "Bu bo‘lim sizning rolingiz uchun yopiq. Agar u ishingiz uchun kerak bo‘lsa, rahbaringizdan ruxsat berishni so‘rang.",
+        "notFoundTitle": "Bunday sahifa yo‘q",
+        "notFoundBody": "Havola eskirgan yoki manzil xato yozilgan.",
+        "hintSidebar": "Kerakli bo‘limni chapdagi menyudan tanlang — unda faqat sizga ochiq bo‘limlar bor.",
+        "hintBurger": "Yuqori chapdagi ☰ menyuni oching va kerakli bo‘limni tanlang.",
+        "hintMini": "Kerakli bo‘limni ilovaning pastki menyusidan tanlang.",
+        "hintNoMenu": "Bosh sahifaga qayting — ishlaydigan hamma narsangiz o‘sha yerdan ochiladi.",
+        "home": "Bosh sahifaga",
+        "back": "Orqaga",
+        "deniedNotice": "«{section}» bo‘limi sizning rolingiz uchun yopiq — shuning uchun shu sahifa ochildi.",
+        "deniedNoticeGeneric": "U bo‘lim sizning rolingiz uchun yopiq — shuning uchun shu sahifa ochildi.",
+        "dismiss": "Tushunarli"
+      },
+      "contentLoading": "Sahifa yangilanmoqda…",
+      "listLoading": "Ro‘yxat yuklanmoqda…"
     },
     "header": {
       "staff": "Xodimlar",

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Library, ShieldCheck } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -22,7 +22,7 @@ export default async function PermissionsSettingsPage() {
   const session = await requireAuth();
   const hasAccess = await sessionHasPermission(session, "settings.permissions");
   if (!hasAccess) {
-    redirect("/settings");
+    forbidden();
   }
 
   const organizationId = getActiveOrgId(session);

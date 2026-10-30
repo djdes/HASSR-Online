@@ -92,6 +92,7 @@ import { printPage } from "@/lib/native-bridge";
 import { staffApiErrorKey } from "@/components/staff/staff-api-error";
 import { occupiesSeat, positionStaffing } from "@/lib/staffing";
 import { formatPhone } from "@/lib/phone";
+import { PlaceFilterResults } from "@/components/layout/place-filter-scope";
 
 type TabKey = "work-off" | "vacations" | "sick-leaves" | "dismissals";
 
@@ -987,6 +988,9 @@ export function StaffPageClient(props: StaffPageProps) {
         ) : null}
       </div>
 
+      {/* Список по должностям, вкладки и таблица — область фильтра «Где
+          работает»: пока данные места не пришли, вместо неё скелет. */}
+      <PlaceFilterResults className="space-y-6" rows={6}>
       {/* Positions by category. Синюю шапку с названием организации
           убрали: название и так есть в hero и в крошках, а лишний
           аккордеон только отодвигал список вниз. */}
@@ -1228,6 +1232,7 @@ export function StaffPageClient(props: StaffPageProps) {
           />
         )}
       </section>
+      </PlaceFilterResults>
 
       {/* Modals */}
       {dlg?.kind === "add-flow" ? (

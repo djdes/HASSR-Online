@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowRight, MapPin, Plus, QrCode, Thermometer } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -77,7 +77,7 @@ const OUTLINE_LINK =
  */
 export default async function PointPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const { id } = await params;
   const orgId = getActiveOrgId(session);
   // Точки человека — те же, что в меню «Мои точки».

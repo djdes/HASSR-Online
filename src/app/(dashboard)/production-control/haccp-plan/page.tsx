@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 /** План ХАССП: собирается из заполненных блоков группы, политики, продукции, схем, опасностей и ККТ. */
 export default async function HaccpPlanPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [bundle, versionRows, staff, t, nav, u] = await Promise.all([

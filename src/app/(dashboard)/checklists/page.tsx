@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasJournalAccess } from "@/lib/journal-acl";
@@ -9,7 +9,7 @@ import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-bounda
 
 export default async function ChecklistsPage() {
   const session = await requireAuth();
-  if (!(await hasJournalAccess(session.user, CHECKLIST_CODE))) notFound();
+  if (!(await hasJournalAccess(session.user, CHECKLIST_CODE))) forbidden();
   const t = await getTranslations("checklistsUi.checklistsPage");
   return <div className="space-y-6"><PageHeader title={t("title")} description={t("description")} /><DomainMessagesBoundary namespaces={["checklistPages", "checklistsUi"]}><ChecklistsClient /></DomainMessagesBoundary></div>;
 }

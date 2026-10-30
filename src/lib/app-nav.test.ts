@@ -5,6 +5,11 @@ import { join, relative, sep } from "node:path";
 
 import {
   NAV_SECTIONS,
+  OPEN_TO_ALL_NAV_HREFS,
+  ROLE_HOME_NAV_HREFS,
+  deniedNavHrefs,
+  isNavHrefDenied,
+  routedAwayNavHrefs,
   mainNavSections,
   navAllows,
   sectionForPath,
@@ -33,13 +38,18 @@ const noChecklists: NavFacts = { checklists: false, settingsPermissions: false }
 const withChecklists: NavFacts = { checklists: true, settingsPermissions: false };
 
 const DASHBOARD_DIR = join(process.cwd(), "src", "app", "(dashboard)");
+const MISSING_CATCH_ALL = "[...missing]";
 
-/** Все страницы кабинета как пути: `[code]` → `x`. */
+/**
+ * Все страницы кабинета как пути: `[code]` → `x`. Ловушки неизвестных адресов
+ * (`<раздел>/[...missing]`, только `notFound()`) — не страницы, их пропускаем.
+ */
 function dashboardRoutes(): { route: string; file: string }[] {
   const result: { route: string; file: string }[] = [];
   const walk = (dir: string) => {
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
+      if (name === MISSING_CATCH_ALL) continue;
       if (statSync(full).isDirectory()) walk(full);
       else if (name === "page.tsx") {
         const rel = relative(DASHBOARD_DIR, dir).split(sep).filter(Boolean);
@@ -724,9 +734,10 @@ test("новые страницы «Сотрудников»: только ру�
     // Повара не пускают ни proxy.ts, ни правило пункта; заведующую — пускают.
     assert.equal(navAllows(cook, href, item.access, withChecklists), false, href);
     assert.equal(navAllows(headChef, href, item.access, withChecklists), true, href);
-    // Guard страницы — явный hasFullWorkspaceAccess( и уход со страницы, а не падение.
+    // Guard страницы — явный hasFullWorkspaceAccess( и объяснённый отказ
+    // внутри кабинета (`forbidden()`), а не падение и не тихий уход.
     const source = readFileSync(pageFileFor(href) ?? "", "utf8");
-    assert.match(source, /if \(!hasFullWorkspaceAccess\(session\.user\)\) redirect\(/, href);
+    assert.match(source, /if \(!hasFullWorkspaceAccess\(session\.user\)\) forbidden\(\);/, href);
   }
   assert.deepEqual(visibleItemIds(cook, "staff"), []);
   // Контроль-группа с линейной ролью новых страниц не видит (их режет proxy.ts).
@@ -848,4 +859,90 @@ test("«Журналы» в режиме точки: «Журналы точек
   // Заведующая: панель контроля вместо «Сегодня», «Всех журналов» нет.
   assert.ok(!menuOf(headChef, pointMode).includes("all"));
   assert.ok(menuOf(headChef, pointMode).includes("control"));
+});
+
+test("«Нет доступа» на месте страницы: закрытые пункты меню — по роли, не по режиму точки", () => {
+  // Руководству с правом на права закрытых пунктов нет; без права из БД —
+  // закрыта только иерархия (её страница пускает по тому же праву).
+  const allFacts: NavFacts = { checklists: true, settingsPermissions: true };
+  assert.deepEqual(deniedNavHrefs(owner, allFacts), []);
+  assert.deepEqual(deniedNavHrefs(root, allFacts), []);
+  assert.deepEqual(deniedNavHrefs(owner, withChecklists), ["/settings/staff-hierarchy"]);
+  // Повару закрыты разделы руководства, но не его баланс.
+  const cookDenied = deniedNavHrefs(cook, noChecklists);
+  for (const href of ["/production-control", "/settings/users", "/monitoring", "/inspection", "/verifications"]) {
+    assert.ok(cookDenied.includes(href), href);
+  }
+  assert.ok(!cookDenied.includes("/settings/balance"));
+  // Заведующей закрыто только то, что просит admin.full.
+  const headChefDenied = deniedNavHrefs(headChef, withChecklists);
+  assert.ok(headChefDenied.includes("/settings/organization"));
+  assert.ok(headChefDenied.includes("/checklists/assignments"));
+  assert.ok(!headChefDenied.includes("/settings/users"));
+  assert.ok(!headChefDenied.includes("/production-control"));
+  // Режим точки — не отказ: «Журналы точек» и «Все журналы» сами объясняют,
+  // что нужна «Вся организация» (PointModeUnavailable).
+  const pointMode: NavFacts = { ...allFacts, journalsPointMode: true };
+  assert.deepEqual(deniedNavHrefs(manager, pointMode), []);
+  // Страницы, открытые всем (руководству — с правкой), «Нет доступа» не получают.
+  for (const href of OPEN_TO_ALL_NAV_HREFS) assert.ok(!cookDenied.includes(href), href);
+  // Домашние по роли уводят повара на «Сегодня» приложения — не отказ: плашку
+  // «раздел закрыт» покажет страница, куда уведут.
+  for (const href of ROLE_HOME_NAV_HREFS) {
+    assert.ok(!cookDenied.includes(href), href);
+    assert.ok(!headChefDenied.includes(href), href);
+  }
+  assert.deepEqual(routedAwayNavHrefs(cook, noChecklists), ["/control-board", "/dashboard", "/journals", "/team"]);
+  assert.deepEqual(routedAwayNavHrefs(headChef, withChecklists), ["/dashboard", "/journals"]);
+  assert.deepEqual(routedAwayNavHrefs(owner, allFacts), []);
+});
+
+test("isNavHrefDenied: точный адрес пункта, хвостовой слэш не мешает, глубина — не отказ", () => {
+  const denied = ["/production-control", "/settings/users"];
+  assert.equal(isNavHrefDenied("/settings/users", denied), true);
+  assert.equal(isNavHrefDenied("/settings/users/", denied), true);
+  assert.equal(isNavHrefDenied("/settings/users?place=all", denied), true);
+  // Подстраницы проверяют свои guard'ы на сервере.
+  assert.equal(isNavHrefDenied("/settings/users/abc/access", denied), false);
+  assert.equal(isNavHrefDenied("/journals", denied), false);
+  assert.equal(isNavHrefDenied("/settings/users", undefined), false);
+});
+
+test("страница каждого пункта меню уходит сама — панель меню не спорит с сервером", () => {
+  const entries: { href: string; access: NavAccess }[] = [];
+  for (const section of NAV_SECTIONS) {
+    for (const tab of section.tabs) entries.push(tab);
+    for (const group of section.menu ?? []) {
+      for (const item of group.items) entries.push(item, ...(item.tabs ?? []));
+    }
+  }
+  entries.push(...SETTINGS_CARDS);
+  const hardGuard = /forbidden\(\)|redirect\(|notFound\(\)/;
+  for (const { href, access } of entries) {
+    if (access.kind === "staffPath") continue;
+    const source = readFileSync(pageFileFor(href) ?? "", "utf8");
+    if (OPEN_TO_ALL_NAV_HREFS.includes(href)) {
+      assert.ok(!hardGuard.test(source), `${href}: страница закрыта — уберите её из OPEN_TO_ALL_NAV_HREFS`);
+    } else if (ROLE_HOME_NAV_HREFS.includes(href)) {
+      // Домашняя по роли уводит к своей домашней, а не отказывает.
+      assert.match(source, /redirect\(/, `${href}: домашняя по роли без редиректа`);
+    } else {
+      // Отказ — объяснённой панелью (`forbidden()`), иначе «Нет доступа» меню
+      // и сервер разошлись бы.
+      assert.match(source, /forbidden\(\)/, `${href}: без forbidden() — добавьте его или внесите в списки выше`);
+    }
+  }
+});
+
+test("у каждого раздела кабинета без своего динамического сегмента — ловушка неизвестных адресов", () => {
+  for (const name of readdirSync(DASHBOARD_DIR)) {
+    const dir = join(DASHBOARD_DIR, name);
+    if (!statSync(dir).isDirectory()) continue;
+    const children = readdirSync(dir);
+    const dynamic = children.filter((child) => child.startsWith("[") && child !== MISSING_CATCH_ALL);
+    if (dynamic.length > 0) continue;
+    const trap = join(dir, MISSING_CATCH_ALL, "page.tsx");
+    assert.ok(statSync(trap, { throwIfNoEntry: false })?.isFile(), `${name}: нет ${MISSING_CATCH_ALL}/page.tsx`);
+    assert.match(readFileSync(trap, "utf8"), /notFound\(\)/, name);
+  }
 });

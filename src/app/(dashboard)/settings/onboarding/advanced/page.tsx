@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import {
   Bell,
@@ -43,7 +43,7 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingAdvancedPage() {
   const t = await getTranslations("settingsUi.onboardingAdvancedPage");
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/settings");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [

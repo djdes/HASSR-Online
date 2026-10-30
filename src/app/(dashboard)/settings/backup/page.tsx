@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { CloudUpload } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function BackupSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("yandexBackup");

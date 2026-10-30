@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PageGuide } from "@/components/ui/page-guide";
@@ -27,7 +27,7 @@ export const revalidate = 0;
 export default async function MercurySettingsPage() {
   const t = await getTranslations("settingsUi.mercuryPage");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const organizationId = getActiveOrgId(session);
   const [org, integration, buildings, users] = await Promise.all([
