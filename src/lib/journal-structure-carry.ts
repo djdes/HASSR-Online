@@ -30,6 +30,11 @@ export type StructureCarryNeeds = { equipment: boolean; rooms: boolean };
 export type StructureCarryOptions = {
   /** Живое оборудование организации (для холодильников и УФ-ламп). */
   liveEquipmentIds?: ReadonlySet<string>;
+  /**
+   * Лампы не этой точки (2026-10-30): документ УФ точки не копирует лампу
+   * чужой точки или общего цеха — иначе журнал лампы размножался по точкам.
+   */
+  foreignEquipmentIds?: ReadonlySet<string>;
   /** Живые помещения справочника (для климата). */
   liveRoomIds?: ReadonlySet<string>;
   /** Начало нового периода, `YYYY-MM-DD` (год и дата в шапке). */
@@ -100,6 +105,7 @@ export function carryStructureFromPrevious(
     if (Object.keys(previous).length === 0) return null;
     const config = { ...previous };
     const equipmentId = linkedId(config.equipmentId);
+    if (equipmentId && options.foreignEquipmentIds?.has(equipmentId)) return null;
     if (equipmentId && !isAlive(equipmentId, options.liveEquipmentIds)) delete config.equipmentId;
     return config;
   }

@@ -5,6 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolveBuildingInput } from "@/lib/area-building-sync";
+import { syncUvDocumentPoints } from "@/lib/uv-document-points";
 
 export async function PUT(
   request: Request,
@@ -56,6 +57,13 @@ export async function PUT(
         ...(buildingInput.buildingId !== undefined ? { buildingId: buildingInput.buildingId } : {}),
       },
     });
+
+    // Цех перенесли на другую точку — журналы УФ его ламп туда же.
+    if (updated.buildingId !== area.buildingId) {
+      await syncUvDocumentPoints(area.organizationId).catch((error) =>
+        console.warn("[uv-document-points]", error),
+      );
+    }
 
     return NextResponse.json({ area: updated });
   } catch (error) {

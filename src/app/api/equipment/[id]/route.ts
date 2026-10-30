@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
+import { syncUvDocumentPoints } from "@/lib/uv-document-points";
 import { parseEquipmentExtras } from "@/lib/equipment-extras";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
@@ -209,6 +210,13 @@ export async function PUT(
     // Фритюрница: новое имя, точка или тип доходят до журнала фритюра.
     if (isFryerEquipmentType(equipment.type) || isFryerEquipmentType(updated.type)) {
       await syncFryerOilDocumentsSafe(equipment.area.organizationId);
+    }
+
+    // Лампу перенесли в цех другой точки — её журнал УФ туда же.
+    if (updated.areaId !== equipment.areaId) {
+      await syncUvDocumentPoints(equipment.area.organizationId).catch((error) =>
+        console.warn("[uv-document-points]", error),
+      );
     }
 
     return NextResponse.json({ equipment: updated });

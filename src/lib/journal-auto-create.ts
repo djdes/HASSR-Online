@@ -54,6 +54,7 @@ import { buildDateKeys, toDateKey } from "@/lib/hygiene-document";
 import { buildDocumentAutoTitle } from "@/lib/journal-document-title";
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { carryStructureFromPrevious, structureCarryNeeds } from "@/lib/journal-structure-carry";
+import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 
 /**
  * Название автосозданного документа.
@@ -140,13 +141,23 @@ async function loadCarriedStructure(
   if (!previous) return null;
   const [equipment, rooms] = await Promise.all([
     needs.equipment
-      ? db.equipment.findMany({ where: { area: { organizationId: args.organizationId } }, select: { id: true } })
-      : Promise.resolve([] as Array<{ id: string }>),
+      ? db.equipment.findMany({
+          where: { area: { organizationId: args.organizationId } },
+          select: { id: true, area: { select: { buildingId: true } } },
+        })
+      : Promise.resolve([] as Array<{ id: string; area: { buildingId: string | null } }>),
     needs.rooms
       ? db.room.findMany({ where: { building: { organizationId: args.organizationId } }, select: { id: true } })
       : Promise.resolve([] as Array<{ id: string }>),
   ]);
+  // Документ точки: журнал УФ-лампы чужой точки или общего цеха сюда не
+  // копируем — у лампы свой документ на точке её цеха (2026-10-30).
+  const foreignEquipmentIds =
+    args.templateCode === UV_LAMP_RUNTIME_TEMPLATE_CODE && args.buildingId
+      ? new Set(equipment.filter((item) => item.area.buildingId !== args.buildingId).map((item) => item.id))
+      : undefined;
   return carryStructureFromPrevious(args.templateCode, previous.config, {
+    foreignEquipmentIds,
     liveEquipmentIds: needs.equipment ? new Set(equipment.map((item) => item.id)) : undefined,
     liveRoomIds: needs.rooms ? new Set(rooms.map((room) => room.id)) : undefined,
     periodFrom: args.periodFrom,

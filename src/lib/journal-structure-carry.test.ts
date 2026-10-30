@@ -116,6 +116,25 @@ describe("carryStructureFromPrevious — УФ-лампа", () => {
     const got = carryStructureFromPrevious("uv_lamp_runtime", prev, { liveEquipmentIds: live(), periodFrom: PERIOD });
     assert.deepEqual(got, { lampNumber: "2", areaName: "Холодный цех", spec: prev.spec });
   });
+
+  it("лампа чужой точки или общего цеха в документ точки не копируется (2026-10-30)", () => {
+    assert.equal(
+      carryStructureFromPrevious("uv_lamp_runtime", prev, {
+        liveEquipmentIds: live("lamp-1"),
+        foreignEquipmentIds: live("lamp-1"),
+        periodFrom: PERIOD,
+      }),
+      null
+    );
+    assert.deepEqual(
+      carryStructureFromPrevious("uv_lamp_runtime", prev, {
+        liveEquipmentIds: live("lamp-1"),
+        foreignEquipmentIds: live("lamp-other"),
+        periodFrom: PERIOD,
+      }),
+      prev
+    );
+  });
 });
 
 describe("carryStructureFromPrevious — журналы с «Сделать копию»", () => {

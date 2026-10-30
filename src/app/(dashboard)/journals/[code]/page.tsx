@@ -23,6 +23,7 @@ import { getActiveBuildingId } from "@/lib/active-building";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { buildingWhere } from "@/lib/building-scope";
 import { sharedDocumentFlag } from "@/lib/journal-document-shared";
+import { syncUvDocumentPoints } from "@/lib/uv-document-points";
 import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
 import { db } from "@/lib/db";
 import { HygieneDocumentsClient } from "@/components/journals/hygiene-documents-client";
@@ -2872,6 +2873,14 @@ export default async function JournalDocumentsPage({
           users: orgUsers,
         });
       }
+    }
+
+    // Журнал лампы — на точке её цеха: старые документы без точки висели во
+    // всех точках (2026-10-30). Переносим до выборки, без «Пересоздать».
+    if (resolvedCode === UV_LAMP_RUNTIME_TEMPLATE_CODE) {
+      await syncUvDocumentPoints(getActiveOrgId(session)).catch((error) =>
+        console.warn("[uv-document-points]", error),
+      );
     }
 
     const documents = await db.journalDocument.findMany({
