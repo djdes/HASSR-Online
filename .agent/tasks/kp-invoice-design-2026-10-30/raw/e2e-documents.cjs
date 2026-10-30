@@ -129,7 +129,8 @@ async function pdfText(bytes) {
 
   // ── Счёт виден в таблице оплат карточки
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.getByTestId("client-documents").waitFor({ timeout: 120000 });
+  // Пока страница приходит потоком, React держит скрытую копию блока вне <main> — ждём видимый.
+  await page.locator("main [data-testid=client-documents]").first().waitFor({ state: "visible", timeout: 120000 });
   const html = await page.content();
   results.paymentsTable = { hasInvoiceRow: html.includes(`/api/payments/invoice/${orderId}/pdf`) };
   await page.locator("#billing").screenshot({ path: path.join(OUT, `e2e-${ORG}-billing.png`) }).catch(() => undefined);
