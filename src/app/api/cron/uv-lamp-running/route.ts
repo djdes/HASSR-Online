@@ -4,6 +4,7 @@ import { deliverableEmail, notifyCoreJournalRecipients } from "@/lib/core-journa
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
+import { syncAllUvDocumentPoints } from "@/lib/uv-document-points";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 
 export const runtime = "nodejs";
@@ -21,6 +22,12 @@ const FORGOTTEN_AFTER_MS = 12 * 60 * 60 * 1000;
 async function handle(request: Request) {
   const denied = checkCronSecret(request);
   if (denied) return denied;
+  // Журналы ламп — на точках их цехов (2026-10-30): старые документы без
+  // точки висели во всех точках. Раз в час по всем организациям.
+  const movedDocuments = await syncAllUvDocumentPoints().catch((error) => {
+    console.warn("[uv-document-points]", error);
+    return 0;
+  });
   const lamps = await db.equipment.findMany({
     where: { runningSince: { lt: new Date(Date.now() - FORGOTTEN_AFTER_MS) } },
     select: { id: true, name: true, runningSince: true, area: { select: { organizationId: true } } },
@@ -58,7 +65,7 @@ async function handle(request: Request) {
     }).catch(() => null);
     notified += 1;
   }
-  return NextResponse.json({ ok: true, lamps: lamps.length, notified });
+  return NextResponse.json({ ok: true, lamps: lamps.length, notified, movedDocuments });
 }
 
 export const GET = handle;

@@ -51,6 +51,7 @@ import {
   filterManageMenuItems,
   useCanManageDocuments,
 } from "@/components/journals/document-list-ui";
+import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import { useJournalDocumentActions } from "@/components/journals/use-journal-document-actions";
 import {
   JOURNAL_CARD_LABEL_CLASS,
@@ -73,6 +74,8 @@ import {
 type DocumentItem = {
   id: string;
   title: string;
+  /** Документ без точки (лампа в общем цехе) — виден во всех точках. */
+  shared?: boolean;
   status: "active" | "closed";
   responsibleTitle: string | null;
   responsibleUserId?: string | null;
@@ -379,6 +382,7 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
             <div key={document.id} className={JOURNAL_LIST_CARD_CLASS}>
               <Link href={href} className={JOURNAL_CARD_TITLE_CLASS}>
                 {resolvedTitle}
+                <SharedDocumentBadge shared={document.shared} />
               </Link>
 
               <Link href={href} className={JOURNAL_CARD_SECTION_CLASS}>

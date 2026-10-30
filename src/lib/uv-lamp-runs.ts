@@ -1,7 +1,7 @@
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { deliverableEmail, notifyCoreJournalRecipients, type CoreJournalRecipient } from "@/lib/core-journal-keepers";
 import { db } from "@/lib/db";
-import { documentRowsPointId } from "@/lib/document-point-rows";
+import { uvLampPointId } from "@/lib/uv-document-points";
 import { announceQrRollover } from "@/lib/journal-qr-rollover";
 import { carryStructureFromPrevious } from "@/lib/journal-structure-carry";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
@@ -46,23 +46,43 @@ export async function ensureUvDocumentForLamp(params: {
   todayKey: string;
 }): Promise<{ id: string; responsibleUserId: string | null } | null> {
   const day = new Date(`${params.todayKey}T00:00:00.000Z`);
+  // Документ лампы живёт на точке её цеха (uv-document-points.ts); цех без
+  // точки — общий, null.
+  const lampPointId = await uvLampPointId(params.organizationId, params.lamp.id);
   const findLinked = async () => {
     const docs = await db.journalDocument.findMany({
       where: { organizationId: params.organizationId, status: "active", template: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE }, dateFrom: { lte: day }, dateTo: { gte: day } },
-      select: { id: true, config: true, responsibleUserId: true },
+      select: { id: true, buildingId: true, config: true, responsibleUserId: true },
       orderBy: { dateFrom: "desc" },
     });
-    return { docs, linked: docs.find((doc) => normalizeUvRuntimeDocumentConfig(doc.config).equipmentId === params.lamp.id) ?? null };
+    const linkedDocs = docs.filter((doc) => normalizeUvRuntimeDocumentConfig(doc.config).equipmentId === params.lamp.id);
+    // Несколько документов лампы — берём документ её точки.
+    return { docs, linked: linkedDocs.find((doc) => doc.buildingId === lampPointId) ?? linkedDocs[0] ?? null };
+  };
+  // Документ, заведённый без точки (до 2026-10-29) или на другой точке, —
+  // на точку лампы: иначе журнал лампы висит во всех точках (2026-10-30).
+  const placeOnLampPoint = async (doc: { id: string; buildingId: string | null }) => {
+    if (lampPointId && doc.buildingId !== lampPointId) {
+      await db.journalDocument.update({ where: { id: doc.id }, data: { buildingId: lampPointId } });
+    }
   };
   const { docs, linked } = await findLinked();
-  if (linked) return { id: linked.id, responsibleUserId: linked.responsibleUserId };
+  if (linked) {
+    await placeOnLampPoint(linked);
+    return { id: linked.id, responsibleUserId: linked.responsibleUserId };
+  }
   const byName = docs.find((doc) => {
     const config = normalizeUvRuntimeDocumentConfig(doc.config);
-    return !config.equipmentId && config.lampNumber.trim().toLowerCase() === params.lamp.name.trim().toLowerCase();
+    // Лампа с тем же названием на другой точке — не наш документ.
+    const samePoint = !lampPointId || doc.buildingId === null || doc.buildingId === lampPointId;
+    return samePoint && !config.equipmentId && config.lampNumber.trim().toLowerCase() === params.lamp.name.trim().toLowerCase();
   });
   if (byName) {
     const config = { ...((byName.config as Record<string, unknown> | null) ?? {}), equipmentId: params.lamp.id };
-    await db.journalDocument.update({ where: { id: byName.id }, data: { config: config as never } });
+    await db.journalDocument.update({
+      where: { id: byName.id },
+      data: { config: config as never, ...(lampPointId ? { buildingId: lampPointId } : {}) },
+    });
     return { id: byName.id, responsibleUserId: byName.responsibleUserId };
   }
   const template = await db.journalTemplate.findFirst({ where: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE }, select: { id: true, name: true } });
@@ -74,7 +94,10 @@ export async function ensureUvDocumentForLamp(params: {
     async () => {
       // Под замком — заново: документ мог создать соседний запрос.
       const again = (await findLinked()).linked;
-      if (again) return { doc: { id: again.id, responsibleUserId: again.responsibleUserId }, rollover: false };
+      if (again) {
+        await placeOnLampPoint(again);
+        return { doc: { id: again.id, responsibleUserId: again.responsibleUserId }, rollover: false };
+      }
 
       const dateFrom = new Date(Date.UTC(year, month - 1, 1));
       const dateTo = new Date(Date.UTC(year, month, 0));
@@ -93,15 +116,12 @@ export async function ensureUvDocumentForLamp(params: {
       const alive = await aliveUserIds(params.organizationId, [previous?.responsibleUserId, previous?.verifierUserId]);
       const previousResponsible = previous?.responsibleUserId && alive.has(previous.responsibleUserId) ? previous.responsibleUserId : null;
       const responsibleUserId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? previousResponsible;
-      // Документ — точки цеха лампы (2026-10-29: раньше без точки, и журнал
-      // лампы одной точки висел во всех точках). Цех без точки — общий.
-      const lampArea = await db.equipment.findUnique({ where: { id: params.lamp.id }, select: { area: { select: { buildingId: true } } } });
-      const buildingId = await documentRowsPointId(params.organizationId, lampArea?.area.buildingId ?? null);
       const created = await db.journalDocument.create({
         data: {
           organizationId: params.organizationId,
           templateId: template.id,
-          buildingId,
+          // Точка цеха лампы (2026-10-29); цех без точки — общий документ.
+          buildingId: lampPointId,
           title: `${UV_LAMP_RUNTIME_PAGE_TITLE} · ${params.lamp.name}`,
           dateFrom,
           dateTo,
