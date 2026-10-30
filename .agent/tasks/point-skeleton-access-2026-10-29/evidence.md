@@ -58,10 +58,23 @@
   `no-html-link-for-pages` и 1 предупреждение `react-hooks/purity` в
   `more/page.tsx`, `settings/schedule/page.tsx`, `settings/equipment/page.tsx`
   есть и в `origin/master` (проверено линтом версий из master), строки не трогали.
-- `node --import tsx --test src/lib/app-nav.test.ts src/lib/denied-notice.test.ts src/proxy.test.ts src/components/ui/skeleton-routes.test.ts src/components/inspection/inspection-pages.test.ts src/components/settings/organization-pages.test.ts "src/app/(dashboard)/settings/print-agent/print-agent-settings.test.ts" src/app/route-slug-collisions.test.ts src/i18n/loading-surface.test.ts` — все зелёные.
-- `npm run i18n:types` + `npm run i18n:check` — 97/97 pass.
-- `npm run test:gate` — см. ниже.
-- Playwright `raw/e2e.mjs` — см. `raw/e2e-results.json`.
+- Тесты рядом с изменениями (`node --import tsx --test`: app-nav,
+  denied-notice, proxy, skeleton-routes, inspection-pages, organization-pages,
+  print-agent-settings, journal-title-controls, mini-home-localization,
+  route-slug-collisions, loading-surface, nav-section-path, platform-access) —
+  все зелёные; pre-commit «тесты рядом с изменениями» — 106/106.
+- `npm run i18n:types` + `npm run i18n:check` — 97/97 pass (до и после слияния).
+- `npm run test:gate` (после слияния origin/master #54–#59) — pass=5144,
+  fail=3: 1 из baseline и 2 «новых», оба проходят поодиночке и не связаны с
+  правкой: `prewarm-routes.sh` (`deploy-scripts.test.ts`, ~70 вызовов curl
+  против заглушки при лимите 30 с; поодиночке 27 с, 16/16) и
+  `checklist-assignments.server.test.ts` (поодиночке 2/2). PDF, которые гейт
+  переписал в `.agent/tasks/english-version-*/raw`, откачены.
+- Playwright `raw/e2e.mjs` на дереве после слияния — 32/32 PASS
+  (`raw/e2e-results.json`). Перед прогоном: `prisma generate` + `prisma db push`
+  в локальную `wesetup_access` (в master появился `User.platformSections`).
+- `raw/status-probe.mjs`, `raw/first-nav.mjs` — статусы панелей и гонка сразу
+  после входа (см. «Ограничения»).
 
 ## Ограничения
 

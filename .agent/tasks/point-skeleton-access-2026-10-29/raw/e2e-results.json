@@ -2,12 +2,12 @@
   {
     "name": "AC1 смена точки: скелет в контенте появился и ушёл",
     "ok": true,
-    "detail": "[[\"content-on\",442],[\"content-off\",4251],[\"toast\",4328]]"
+    "detail": "[[\"content-on\",4871],[\"content-off\",16606],[\"toast\",16751]]"
   },
   {
     "name": "AC1 тост — после прихода новой страницы",
     "ok": true,
-    "detail": "[[\"content-on\",442],[\"content-off\",4251],[\"toast\",4328]]"
+    "detail": "[[\"content-on\",4871],[\"content-off\",16606],[\"toast\",16751]]"
   },
   {
     "name": "AC1 переключатель занят, пока идёт смена",
@@ -17,7 +17,7 @@
   {
     "name": "AC1 в шапке — новая точка",
     "ok": true,
-    "detail": "Пищеблок СОШ № 5 → Офис"
+    "detail": "Офис → Пищеблок СОШ № 5"
   },
   {
     "name": "AC2 чипы мест на «Оборудовании» есть",
@@ -32,7 +32,7 @@
   {
     "name": "AC2 скелет списка появился и ушёл",
     "ok": true,
-    "detail": "[[\"list-on\",379],[\"list-off\",1256]]"
+    "detail": "[[\"list-on\",508],[\"list-off\",3510]]"
   },
   {
     "name": "AC2 чипы видны во время загрузки",
@@ -47,7 +47,7 @@
   {
     "name": "AC2 общий скелет контента не включался",
     "ok": true,
-    "detail": "[[\"list-on\",379],[\"list-off\",1256]]"
+    "detail": "[[\"list-on\",508],[\"list-off\",3510]]"
   },
   {
     "name": "AC6 неизвестный адрес: панель внутри макета",
@@ -102,7 +102,7 @@
   {
     "name": "AC8 руководитель точки: увели на «Сегодня»",
     "ok": true,
-    "detail": "http://localhost:3034/dashboard?denied=%2Fsettings%2Forganization"
+    "detail": "http://localhost:3034/dashboard"
   },
   {
     "name": "AC8 плашка называет раздел",
