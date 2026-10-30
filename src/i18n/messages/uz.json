@@ -15944,10 +15944,247 @@
     "timings": "Bajarilish vaqtlari",
     "pageLimit": "Sahifalar cheklovchisi",
     "yandexDirect": "Yandex Direct",
+    "edo": "EHA",
     "team": "Jamoa va ruxsatlar",
     "myMail": "Mening pochtam",
     "myMailHint": "Shartnoma, tijorat taklifi va hisoblaringiz shu pochtadan yuboriladi",
     "accessOwner": "Platforma egasi — to‘liq ruxsat"
+  },
+  "rootEdo": {
+    "metadata": {
+      "title": "EHA — mijozlarga shartnomalar, hisoblar va UTH",
+      "description": "Hujjatlarni mijozlarga Saby orqali BFS MChJ nomidan yuborish"
+    },
+    "page": {
+      "title": "EHA",
+      "description": "Shartnomalar, hisoblar va UTH mijozlarga Saby orqali BFS MChJ nomidan yuboriladi. Qabul qiluvchi tashkilot STIR bo‘yicha topiladi, hujjat Saby’da qoralama bo‘lib paydo bo‘ladi — uni o‘sha yerda malakali elektron imzo bilan imzolab yuboring."
+    },
+    "steps": {
+      "label": "Hujjatni qanday yuborish",
+      "connect": {
+        "title": "Saby kabinetini ulang",
+        "text": "Bir marta: BFS MChJ kabinetining ulanish ID va himoyalangan kaliti."
+      },
+      "pick": {
+        "title": "Mijoz va hujjatni tanlang",
+        "text": "Qabul qiluvchi STIR bo‘yicha aniqlanadi — hech narsa yozish shart emas."
+      },
+      "sign": {
+        "title": "Saby’da imzolang",
+        "text": "Hujjatni havola orqali oching va «Imzolash va yuborish» tugmasini bosing — malakali imzo faqat o‘sha yerda qo‘yiladi."
+      }
+    },
+    "status": {
+      "writing": "Yozilmoqda",
+      "not_written": "Yozilmadi",
+      "deleted": "Saby’da o‘chirilgan",
+      "draft": "Saby’da imzo kutmoqda",
+      "sent": "Yuborildi",
+      "delivered": "Yetkazildi",
+      "processing": "Ishlanmoqda",
+      "waiting_sign": "Qabul qiluvchi imzosini kutmoqda",
+      "done": "Imzolandi",
+      "rejected": "Rad etildi",
+      "error": "Yetkazishda xato",
+      "annulled": "Bekor qilindi",
+      "unknown": "Holat {code}"
+    },
+    "sign": {
+      "open": "Saby’da imzolash"
+    },
+    "recipient": {
+      "checking": "Mijozni EHAda STIR bo‘yicha qidirmoqdamiz…",
+      "participantId": "Ishtirokchi ID: {id}",
+      "saby": {
+        "title": "EHAga ulangan: Saby",
+        "hint": "Hujjat mijozga to‘g‘ridan-to‘g‘ri, roumingsiz yetadi."
+      },
+      "roaming": {
+        "title": "Rouming orqali: {operator}",
+        "hint": "Mijoz boshqa operatorda ishlaydi — Saby hujjatni rouming orqali yetkazadi."
+      },
+      "invited": {
+        "title": "Taklif qilingan, lekin hali ulanmagan",
+        "hint": "EHAga taklif allaqachon yuborilgan. Mijoz uni qabul qilgach, hujjat yetadi."
+      },
+      "none": {
+        "title": "EHAda topilmadi — Saby taklif yuboradi",
+        "hint": "Mijozda EHA qutisi yo‘q. Yuborilgandan keyin Saby uni rekvizitlar bo‘yicha taklif qiladi — mijozdan taklifni qabul qilishni so‘rang."
+      }
+    },
+    "errors": {
+      "generic": "Bo‘lmadi — qayta urinib ko‘ring",
+      "network": "Server bilan aloqa yo‘q — internetni tekshirib, qaytadan urining"
+    },
+    "send": {
+      "title": "Hujjat yuborish",
+      "cabinetFirst": "Avval «Saby kabineti» kartochkasida kabinetni ulang — usiz hujjatni yozadigan joy yo‘q.",
+      "done": "Hujjat Saby’ga qoralama bo‘lib yozildi",
+      "rewritten": "Saby’dagi qoralama yangilandi — ikkinchi hujjat yaratilmadi",
+      "nextStep": "Saby’ni oching va «Imzolash va yuborish» tugmasini bosing.",
+      "org": {
+        "label": "Mijoz",
+        "placeholder": "Tashkilot nomi yoki STIR",
+        "searching": "Qidirilmoqda…",
+        "nothing": "Hech narsa topilmadi — nom yoki STIRni tekshiring",
+        "noInn": "STIR ko‘rsatilmagan",
+        "requisites": "STIR {inn} · KPP {kpp}",
+        "change": "Boshqa mijozni tanlash"
+      },
+      "kind": {
+        "label": "Nima yuboramiz"
+      },
+      "file": {
+        "pick": "Hujjat faylini tanlang",
+        "hint": "PDF, DOCX, ODT yoki RTF, 10 MB gacha",
+        "size": "{size} MB — almashtirish uchun bosing",
+        "contractNote": "Raqam va sanani fayl nomidan olamiz, agar ular bo‘lsa.",
+        "badType": "Faqat PDF, DOCX, ODT va RTF mos keladi",
+        "tooBig": "Fayl 10 MB dan katta — Saby uni qabul qilmaydi"
+      },
+      "number": "Hujjat raqami",
+      "numberPlaceholder": "Masalan, 2810-1",
+      "date": "Hujjat sanasi",
+      "source": {
+        "invoices": "Mijoz hisobi",
+        "upds": "Mijoz UTH",
+        "pickOrgFirst": "Avval mijozni tanlang — uning hujjatlarini ko‘rsatamiz.",
+        "loading": "Mijoz hujjatlari yuklanmoqda…",
+        "noInvoices": "Mijozda naqd pulsiz to‘lov hisoblari yo‘q.",
+        "noUpds": "Mijozda to‘langan buyurtmalar yo‘q — UTH chiqarishga asos yo‘q.",
+        "invoiceRow": "Hisob № {number}, {date}",
+        "updRow": "UTH № {number}, {date}",
+        "notIssuedYet": "yuborishda chiqaramiz",
+        "voided": "bekor qilingan",
+        "amount": "{amount} rubl"
+      },
+      "advanced": {
+        "title": "Saby mijozni topmayaptimi? EHA ishtirokchisi ID sini kiriting",
+        "participantId": "Mijozning EHA ishtirokchisi ID si",
+        "hint": "Odatda kerak emas: qabul qiluvchi STIR bo‘yicha aniqlanadi. ID mijozning EHA operatoridagi kartochkasida bor."
+      },
+      "submit": "EHAga yuborish",
+      "submitHint": "Hujjat Saby’da qoralama bo‘lib paydo bo‘ladi — imzoingizsiz hech qayerga ketmaydi.",
+      "result": {
+        "title": "№ {number} hujjat Saby’da imzoingizni kutmoqda",
+        "rewrittenTitle": "Saby’dagi № {number} qoralama yangilandi",
+        "step1": "«Saby’da imzolash» tugmasini bosing — hujjat kartochkasi ochiladi.",
+        "step2": "Qabul qiluvchi va faylni tekshiring, «Imzolash va yuborish» tugmasini bosib, malakali imzoni tanlang.",
+        "step3": "Bu yerga qaytib «Holatlarni yangilash» tugmasini bosing — hujjat yetkazilganini ko‘rasiz.",
+        "noLink": "Saby havola qaytarmadi — hujjatni «Chiquvchi» bo‘limidan toping."
+      }
+    },
+    "kinds": {
+      "contract": {
+        "title": "Shartnoma",
+        "hint": "Shartnoma fayli"
+      },
+      "invoice": {
+        "title": "Hisob",
+        "hint": "WeSetup hisoblaridan"
+      },
+      "upd": {
+        "title": "UTH",
+        "hint": "To‘langan buyurtma bo‘yicha"
+      },
+      "other": {
+        "title": "Boshqa",
+        "hint": "Dalolatnoma yoki boshqa fayl"
+      }
+    },
+    "history": {
+      "title": "Yuborilgan hujjatlar",
+      "hint": "Saby o‘zgarishlar haqida o‘zi xabar bermaydi — hujjat imzolanganini bilish uchun «Holatlarni yangilash» tugmasini bosing.",
+      "empty": {
+        "title": "Hali hech narsa yuborilmagan",
+        "text": "Yuqorida mijoz va hujjatni tanlang — yozuv shu yerda Saby’da imzolash havolasi bilan paydo bo‘ladi."
+      },
+      "docTitle": "№ {number}, {date}",
+      "inn": "STIR {inn}",
+      "sentAt": "yozildi {at}",
+      "openInSaby": "Saby’da ochish",
+      "recipient": {
+        "saby": "mijoz Saby’da",
+        "roaming": "rouming: {operator}",
+        "invited": "mijoz taklif qilingan",
+        "none": "mijoz EHAda emas"
+      },
+      "refresh": {
+        "button": "Holatlarni yangilash",
+        "nothing": "Barcha holatlar yakuniy — qayta o‘qish shart emas",
+        "done": "Tekshirilgan hujjatlar: {checked}, o‘zgargan: {changed}",
+        "failed": "Tekshirib bo‘lmadi: {failed} — sababi hujjat qatorida"
+      }
+    },
+    "button": {
+      "label": "EHAga yuborish",
+      "hint": "BFS MChJ nomidan Saby’ga qoralama bo‘lib yoziladi — imzolash va yuborish o‘sha yerda",
+      "openSettings": "EHAni ochish",
+      "disabled": {
+        "notConnected": "Saby kabineti ulanmagan.",
+        "notReady": "Saby kabineti tayyor emas: ulanishni tekshiring.",
+        "error": "Saby kabineti ulanganini aniqlab bo‘lmadi."
+      }
+    },
+    "cabinet": {
+      "title": "Saby kabineti",
+      "ready": "Yuborishga tayyor",
+      "notReady": "E’tibor talab qiladi",
+      "clientId": "Ulanish ID",
+      "contour": "Kontur",
+      "checkedAt": "Tekshirildi",
+      "recheck": "Ulanishni tekshirish",
+      "replaceKeys": "Kalitlarni almashtirish",
+      "disconnect": "Uzish",
+      "baseUrl": {
+        "production": "Asosiy — {url}",
+        "production_alt": "Asosiy (eski manzil) — {url}",
+        "test": "Test konturi — {url}",
+        "dev_stub": "Mahalliy zaglushka (faqat ishlab chiqish) — {url}"
+      },
+      "orgs": {
+        "title": "Kabinetdagi bizning tashkilotlar",
+        "empty": "Saby birorta tashkilot qaytarmadi — ulanish huquqlarini tekshiring.",
+        "requisites": "STIR {inn} · KPP {kpp}",
+        "sender": "yuboruvchi",
+        "edoOn": "EHA ulangan",
+        "edoOff": "EHA o‘chirilgan"
+      },
+      "sender": {
+        "missing": "Kabinetda STIR {inn} ({name}) bo‘lgan tashkilot yo‘q. Kompaniyamiz kabinetini ulang yoki ROOT → «Rekvizitlar»da STIRni tekshiring.",
+        "edoOff": "Saby’da «{name}» uchun hujjat almashinuvi ulanmagan. Saby’da EHAni yoqing va «Ulanishni tekshirish» tugmasini bosing.",
+        "ambiguous": "Kabinetda STIR {inn} va EHA ulangan bir nechta tashkilot bor. ROOT → «Rekvizitlar»da KPPni ko‘rsating."
+      },
+      "toast": {
+        "connected": "Saby kabineti ulandi",
+        "checked": "Ulanish ishlayapti",
+        "checkFailed": "Saby javob bermadi — sababi kabinet kartochkasida",
+        "disconnected": "Saby kabineti uzildi"
+      },
+      "form": {
+        "intro": "Hujjatlar BFS MChJ nomidan shu kabinetdan yuboriladi. Kalitlar shifrlangan holda saqlanadi va ekranda qayta ko‘rsatilmaydi.",
+        "clientId": "Ulanish ID",
+        "clientIdPlaceholder": "Masalan, 1234567",
+        "appSecret": "Himoyalangan kalit",
+        "appSecretPlaceholder": "Saby’dagi kalitni qo‘ying",
+        "appSecretHint": "Saqlangandan keyin maydon tozalanadi — kalit faqat serverda qoladi.",
+        "contour": "Saby konturi",
+        "whereTitle": "Kalitlarni qayerdan olish",
+        "where1": "Saby → Sozlamalar → Xavfsizlik → Saby’ga ulanishlar → «+».",
+        "where2": "«Yopiq» turi, servis kirish — Saby ulanish ID va himoyalangan kalitni ko‘rsatadi.",
+        "where3": "Kalit oshkor bo‘lsa, o‘sha yerda bitta tugma bilan bekor qilinadi.",
+        "tariff": "API bilan Saby tarifi kerak («Kontragentlar bilan almashinuv»): «EDO Start»da integratsiya yo‘q.",
+        "save": "Ulash va tekshirish",
+        "cancel": "Bekor qilish"
+      },
+      "disconnectDialog": {
+        "title": "Saby kabinetini uzasizmi?",
+        "description": "Sayt Saby sessiyasidan chiqadi va kalitlarni o‘chiradi. Kabinet qayta ulanmaguncha hujjat yuborib bo‘lmaydi.",
+        "bulletKeys": "Kalitlar serverdan o‘chiriladi — qayta ulash uchun ID va himoyalangan kalit kerak bo‘ladi",
+        "bulletHistory": "Yuborishlar tarixi shu sahifada qoladi",
+        "bulletDrafts": "Saby’ning o‘zidagi qoralamalar va yuborilgan hujjatlarga tegmaymiz"
+      }
+    }
   },
   "telegramShortcuts": {
     "journals": {

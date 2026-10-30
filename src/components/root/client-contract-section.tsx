@@ -8,11 +8,11 @@ import { ClientContractCard } from "./client-contract-card";
  * грузит готовность, значения формы и историю, отдаёт свои переводы.
  * Страница вставляет её одной строкой — остальное живёт здесь.
  */
-export async function ClientContractSection({ organizationId }: { organizationId: string }) {
+export async function ClientContractSection({ organizationId, edo = false }: { organizationId: string; edo?: boolean }) {
   const context = await loadContractContext(organizationId);
   return (
-    <DomainMessagesBoundary namespaces={["rootClientContract"]}>
-      <ClientContractCard initial={context} />
+    <DomainMessagesBoundary namespaces={edo ? ["rootClientContract", "rootEdo"] : ["rootClientContract"]}>
+      <ClientContractCard initial={context} edo={edo} />
     </DomainMessagesBoundary>
   );
 }

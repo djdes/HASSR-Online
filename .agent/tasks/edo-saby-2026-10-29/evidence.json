@@ -1,0 +1,23 @@
+{
+  "task": "edo-saby-2026-10-29",
+  "branch": "feat/edo-saby-2026-10-29",
+  "base": "3cc11530",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/edo/saby/*.test.ts"] },
+    "AC2": { "status": "PASS", "evidence": ["prisma/schema.prisma (EdoCabinet, EdoDocument)", "prisma db push on local wesetup_edo"] },
+    "AC3": { "status": "PASS", "note": "СБИС.ИнформацияОКонтрагенте; verified against local mock only", "evidence": ["src/lib/edo/saby/counterparty.test.ts", "raw/e2e-result.json"] },
+    "AC4": { "status": "PASS", "note": "mock Saby only", "evidence": ["src/lib/edo/send-core.test.ts", "src/lib/edo/registry.test.ts", "raw/e2e-result.json"] },
+    "AC5": { "status": "PASS", "evidence": ["src/app/api/root/edo/**", "raw/e2e-result.json"] },
+    "AC6": { "status": "PASS", "evidence": ["src/app/root/edo/*", "src/components/root/edo-send-button.tsx", "src/components/root/edo-status.test.ts", "raw/e2e-result.json"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/i18n-check.txt", "raw/test-gate.txt", "raw/e2e-result.json"] }
+  },
+  "commands": {
+    "unit": "node --import tsx --test src/lib/edo/*.test.ts src/lib/edo/saby/*.test.ts src/components/root/edo-status.test.ts → 64 pass",
+    "eslint": "npx eslint (changed files) → clean",
+    "typecheck": "npm run typecheck → raw/typecheck.txt",
+    "i18n": "npm run i18n:check → 97 pass",
+    "gate": "npm run test:gate → 5157 pass / 1 load-flaky (prewarm-routes.sh, passes alone 16/16); TEST_CONCURRENCY=4 → 5158 pass, 0 fail (raw/test-gate-c4.txt)",
+    "e2e": "node raw/e2e-edo.cjs → 32/32 checks"
+  },
+  "notVerified": ["live Saby API (production or fix-online)", "ДокОтгрИсх with a PDF-only attachment", "other kind as ДокОтгрИсх", "EdoSendButton placement on a real page"]
+}
