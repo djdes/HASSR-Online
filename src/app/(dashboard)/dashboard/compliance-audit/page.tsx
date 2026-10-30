@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import {
   AlertTriangle,
@@ -39,7 +39,7 @@ export default async function ComplianceAuditPage() {
     productionControl: t("categoryProductionControl"),
   };
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/dashboard");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
   const report = await runComplianceAudit(organizationId);
 

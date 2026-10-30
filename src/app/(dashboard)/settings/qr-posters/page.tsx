@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { listPersonBuildings, loadBuildingContext } from "@/lib/active-building";
@@ -45,7 +45,7 @@ export default async function QrPostersPage({
   searchParams: Promise<QrPostersSearch & { bw?: string | string[]; point?: string | string[] }>;
 }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const search = await searchParams;
   const request = parseQrPostersRequest(search);

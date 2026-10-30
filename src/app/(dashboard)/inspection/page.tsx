@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowRight, BookOpen, Gauge, Handshake, type LucideIcon } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -36,7 +36,7 @@ const OPEN_LINK =
 export default async function InspectionPage() {
   const session = await requireAuth();
   const fullAccess = hasFullWorkspaceAccess(session.user);
-  if (!fullAccess && !hasCapability(session.user, "tasks.verify")) redirect("/journals");
+  if (!fullAccess && !hasCapability(session.user, "tasks.verify")) forbidden();
   const organizationId = getActiveOrgId(session);
   const showReadiness = hasCapability(session.user, "admin.full");
 

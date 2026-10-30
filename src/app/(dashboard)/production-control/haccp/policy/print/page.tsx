@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 /** Печатный лист политики: текст, строка «Утверждаю» и QR, ведущий на публичную страницу политики. */
 export default async function PolicyPrintPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const row = await db.ppkRecord.findFirst({

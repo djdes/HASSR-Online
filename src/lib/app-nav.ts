@@ -867,6 +867,77 @@ export function visibleSettingsCards(actor: NavActor, facts: NavFacts): Settings
   );
 }
 
+/**
+ * Страницы пунктов меню без жёсткой проверки: открываются всем, руководству —
+ * с правкой (`canManage`). В меню они только у руководства, но «Нет доступа»
+ * на них не показываем. Остальные страницы пунктов обязаны уходить сами
+ * (`forbidden()` / редирект) — это сверяет тест.
+ */
+export const OPEN_TO_ALL_NAV_HREFS: readonly string[] = ["/orders", "/settings/products"];
+
+/**
+ * Домашние по роли: не отказывают, а уводят человека к его домашней
+ * («Журналы» и «Сегодня» повара — на «Сегодня» приложения, заведующей — на
+ * панель контроля). «Нет доступа» на них не показываем, иначе редирект
+ * страницы не успел бы сработать.
+ */
+export const ROLE_HOME_NAV_HREFS: readonly string[] = ["/dashboard", "/journals", "/control-board", "/team"];
+
+/**
+ * Адреса пунктов меню, вкладок и карточек, закрытые человеку по роли и правам
+ * (2026-10-29): на них `SectionFrame` вместо страницы показывает «Нет доступа»
+ * с подсказкой выбрать раздел в меню. Правило каждого адреса повторяет guard
+ * его страницы (тест «правило каждой вкладки и карточки повторяет guard
+ * страницы»), поэтому панель не спорит с сервером. Режим точки не в счёт:
+ * такие страницы сами объясняют, что нужна «Вся организация»
+ * (`PointModeUnavailable`). Адрес, который открывает хоть одно правило (одна
+ * страница бывает и вкладкой, и пунктом), закрытым не считается.
+ */
+export function deniedNavHrefs(actor: NavActor, facts: NavFacts): string[] {
+  return closedNavHrefs(actor, facts)
+    .filter((href) => !OPEN_TO_ALL_NAV_HREFS.includes(href) && !ROLE_HOME_NAV_HREFS.includes(href))
+    .sort();
+}
+
+/**
+ * Домашние по роли, с которых человека уведут к его домашней (повар на
+ * «Журналах» → «Сегодня» приложения): плашка «раздел закрыт» там не
+ * показывается — её покажет страница, куда уведут.
+ */
+export function routedAwayNavHrefs(actor: NavActor, facts: NavFacts): string[] {
+  return closedNavHrefs(actor, facts)
+    .filter((href) => ROLE_HOME_NAV_HREFS.includes(href))
+    .sort();
+}
+
+/** Адреса пунктов, вкладок и карточек, которые не открывает ни одно правило (режим точки не в счёт). */
+function closedNavHrefs(actor: NavActor, facts: NavFacts): string[] {
+  const relaxed: NavFacts = { ...facts, journalsPointMode: false };
+  const seen = new Set<string>();
+  const allowed = new Set<string>();
+  const visit = (href: string, access: NavAccess) => {
+    seen.add(href);
+    if (navAllows(actor, href, access, relaxed)) allowed.add(href);
+  };
+  for (const section of NAV_SECTIONS) {
+    for (const tab of section.tabs) visit(tab.href, tab.access);
+    for (const group of section.menu ?? []) {
+      for (const item of group.items) {
+        visit(item.href, item.access);
+        for (const tab of item.tabs ?? []) visit(tab.href, tab.access);
+      }
+    }
+  }
+  for (const card of SETTINGS_CARDS) visit(card.href, card.access);
+  return [...seen].filter((href) => !allowed.has(href));
+}
+
+/** Открытая страница — закрытый человеку пункт меню (точное совпадение адреса). */
+export function isNavHrefDenied(pathname: string, denied: readonly string[] | undefined): boolean {
+  if (!denied || denied.length === 0) return false;
+  return denied.includes(normalize(pathname));
+}
+
 type PathOwner = {
   prefix: string;
   section: NavSectionKey;

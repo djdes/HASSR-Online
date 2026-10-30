@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function StaffHealthPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const tRoutes = await getTranslations("navigation.routes");
   const tLeads = await getTranslations("navigation.shell.leads");
   return (

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { KeyRound } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function JournalAccessMatrixPage() {
   const t = await getTranslations("settingsManagement.accessMatrices");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/settings");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [users, access] = await Promise.all([

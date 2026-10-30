@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { ArrowRight, ChevronDown, Fingerprint, MessageSquareText, ScrollText, ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function ExternalApiSettingsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const orgId = getActiveOrgId(session);
   const [t, tLegacy, org, keys] = await Promise.all([
     getTranslations("settingsManagement.aiConnect"),

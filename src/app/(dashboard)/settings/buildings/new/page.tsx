@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function NewPointPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   // Консультант уровня «просмотр» точки не заводит.
   if (session.user.partnerAccess?.level === "view") redirect("/settings/buildings");
   const orgId = getActiveOrgId(session);

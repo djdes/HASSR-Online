@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -31,7 +31,7 @@ export default async function PosterPrintPage({
   searchParams: Promise<{ [name: string]: string | string[] | undefined }>;
 }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const { key } = await params;
   const query = await searchParams;
   const mono = isMonoParam(query.bw);

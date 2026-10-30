@@ -64,6 +64,7 @@ import { PageNav, PageNavProvider } from "@/components/layout/page-nav";
 import { SectionMenuButton } from "@/components/layout/section-menu-button";
 import { SectionTabs } from "@/components/layout/section-tabs";
 import { SectionFrame } from "@/components/layout/section-frame";
+import { ContentTransitionProvider } from "@/components/layout/content-transition";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
 import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
@@ -452,6 +453,9 @@ export default async function DashboardLayout({
               нижний угол страницы. */}
           <FabDockProvider>
           <AppNavProvider model={navModel}>
+          {/* Смена точки/организации — один переход на шапку и страницу:
+              пока новая страница не пришла, контент — скелет. */}
+          <ContentTransitionProvider>
           {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
               страница, футер. Сайдбар — только когда разделов два и больше. */}
           <div className="flex min-h-screen flex-1 print:block">
@@ -616,7 +620,7 @@ export default async function DashboardLayout({
                 <Suspense fallback={null}>
                   <NpsBanner ask={nps.ask} canPreview={nps.eligible} />
                 </Suspense>
-                <SectionFrame>{children}</SectionFrame>
+                <SectionFrame homeHref={getWebHomeHref(session.user)}>{children}</SectionFrame>
               </PageNavProvider>
             </div>
           </main>
@@ -627,6 +631,7 @@ export default async function DashboardLayout({
           <DashboardFooter partnerBrandName={consultant?.brandName ?? null} />
           </div>
           </div>
+          </ContentTransitionProvider>
           {/* AI помощник — доступен ВСЕМ авторизованным (решение
               владельца 2026-09-02): отвечает по текущей странице и данным
               организации, действия предлагает карточкой с подтверждением.
@@ -829,6 +834,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       <SiteThemeProvider initialTheme={shell.initialTheme} controlled>
         <MiniAppShell {...shell}>
             <AppNavProvider model={navModel}>
+            <ContentTransitionProvider>
             <PageNavProvider>
               {/* Человек должен видеть, что он в чужом кабинете или в
                   песочнице, — в телефоне это важнее, чем на сайте:
@@ -866,7 +872,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 }}
               />
               <SectionTabs />
-              <SectionFrame>{children}</SectionFrame>
+              <SectionFrame shell="mini" homeHref={shell.homeHref}>{children}</SectionFrame>
               {billing?.gate ? (
                 <BillingTransitionGate
                   copy={billing.gate.copy}
@@ -876,6 +882,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 />
               ) : null}
             </PageNavProvider>
+            </ContentTransitionProvider>
             </AppNavProvider>
         </MiniAppShell>
       </SiteThemeProvider>

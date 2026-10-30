@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MapPin, Palette, Plus, Store } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -34,7 +34,7 @@ export default async function PostersPage({
   searchParams: Promise<{ [name: string]: string | string[] | undefined }>;
 }) {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const query = await searchParams;
 

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function TranslationsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const actor = await getTranslationActor();
-  if (!actor) notFound();
+  if (!actor) forbidden();
   const [t, categories] = await Promise.all([getTranslations("translationEditor"), listCategoryStats()]);
   // Вид из адреса (`?q=&section=&filter=&page=&key=`) — ссылка открывает тот же экран.
   const initialView = parseTranslationView(await searchParams, { known: new Set(categories.map((item) => item.id)), fallback: categories[0]?.id ?? "all" });

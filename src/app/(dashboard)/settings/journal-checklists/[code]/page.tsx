@@ -1,4 +1,4 @@
-import { redirect, notFound } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -28,7 +28,7 @@ export default async function JournalChecklistEditorPage({
   const t = await getTranslations("settingsUi.journalChecklistsCodePage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) {
-    redirect("/settings");
+    forbidden();
   }
   const organizationId = getActiveOrgId(session);
 

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { CHECKLIST_CODE } from "@/lib/custom-checklists";
@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function AccessPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   // Набор человеку и «Настроить наборы» — администратору (как API и /settings/role-presets).
   const canChangePresets = hasCapability(session.user, "admin.full");

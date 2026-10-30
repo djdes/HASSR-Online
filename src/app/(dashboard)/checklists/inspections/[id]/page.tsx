@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasJournalAccess } from "@/lib/journal-acl";
 import { hasCapability } from "@/lib/permission-presets";
@@ -13,7 +13,7 @@ import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-bounda
 
 export default async function ChecklistInspectionPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth();
-  if (!(await hasJournalAccess(session.user, CHECKLIST_CODE))) notFound();
+  if (!(await hasJournalAccess(session.user, CHECKLIST_CODE))) forbidden();
   const { id } = await params;
   // Свои проверки, все — с `journals.manage`, и те, где человек проверяющий по назначению.
   const inspection = await db.checklistInspection.findFirst({

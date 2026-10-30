@@ -1,4 +1,4 @@
-import { redirect, notFound } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { ListChecks } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -15,7 +15,7 @@ export default async function JournalScopePage({
 }) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/settings/journals");
+    forbidden();
   }
 
   const t = await getTranslations("settingsUi.journalScopePage");

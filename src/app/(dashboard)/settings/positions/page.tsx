@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function PositionsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   // Создать, переименовать, удалить и переставить разрешает API `/api/positions*` —
   // то же правило; остальным страница только показывает.

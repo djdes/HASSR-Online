@@ -9,6 +9,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PageGuide } from "@/components/ui/page-guide";
 import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
+import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
@@ -142,58 +143,62 @@ export default async function AreasSettingsPage({
         ]}
       />
 
-      {showPlaceFilter ? (
-        <PlaceFilterChips
-          kind="areas"
-          label={tPlace("label")}
-          basePath="/settings/areas"
-          active={place}
-          all={{ label: tPlace("all"), count: scope.items.length, icon: Building2 }}
-          places={scope.buildings.map((building) => ({
-            id: building.id,
-            name: building.name,
-            office: isOfficeBuilding(building),
-            count: scope.items.filter((area) => area.buildingId === building.id).length,
-          }))}
-          none={scope.loose.length > 0 ? { label: tPlace("none"), count: scope.loose.length, icon: MapPinOff } : null}
-        />
-      ) : null}
+      <PlaceFilterScope>
+        {showPlaceFilter ? (
+          <PlaceFilterChips
+            kind="areas"
+            label={tPlace("label")}
+            basePath="/settings/areas"
+            active={place}
+            all={{ label: tPlace("all"), count: scope.items.length, icon: Building2 }}
+            places={scope.buildings.map((building) => ({
+              id: building.id,
+              name: building.name,
+              office: isOfficeBuilding(building),
+              count: scope.items.filter((area) => area.buildingId === building.id).length,
+            }))}
+            none={scope.loose.length > 0 ? { label: tPlace("none"), count: scope.loose.length, icon: MapPinOff } : null}
+          />
+        ) : null}
 
-      {/* Content */}
-      {areas.length === 0 && buildings.length === 0 ? (
-        <EmptyState canManage={canManage} />
-      ) : buildings.length === 0 ? (
-        <AreasTable
-          areas={areas}
-          canManage={canManage}
-          canDelete={canDelete}
-          buildings={buildingOptions}
-        />
-      ) : (
-        <div className="space-y-6">
-          {groups.map((group) => (
-            <section key={group.building?.id ?? "loose"} className="space-y-3" data-testid="area-building-group">
-              <BuildingGroupHeader
-                building={group.building}
-                countLabel={t("workshopCount", { count: group.items.length })}
-                looseHint={t("looseHint")}
-              />
-              {group.items.length > 0 ? (
-                <AreasTable
-                  areas={group.items}
-                  canManage={canManage}
-                  canDelete={canDelete}
-                  buildings={buildingOptions}
-                />
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-6 text-[13px] text-[#6f7282]">
-                  {t("emptyPoint")}
-                </div>
-              )}
-            </section>
-          ))}
-        </div>
-      )}
+        {/* Content */}
+        <PlaceFilterResults>
+          {areas.length === 0 && buildings.length === 0 ? (
+            <EmptyState canManage={canManage} />
+          ) : buildings.length === 0 ? (
+            <AreasTable
+              areas={areas}
+              canManage={canManage}
+              canDelete={canDelete}
+              buildings={buildingOptions}
+            />
+          ) : (
+            <div className="space-y-6">
+              {groups.map((group) => (
+                <section key={group.building?.id ?? "loose"} className="space-y-3" data-testid="area-building-group">
+                  <BuildingGroupHeader
+                    building={group.building}
+                    countLabel={t("workshopCount", { count: group.items.length })}
+                    looseHint={t("looseHint")}
+                  />
+                  {group.items.length > 0 ? (
+                    <AreasTable
+                      areas={group.items}
+                      canManage={canManage}
+                      canDelete={canDelete}
+                      buildings={buildingOptions}
+                    />
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-6 text-[13px] text-[#6f7282]">
+                      {t("emptyPoint")}
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
+          )}
+        </PlaceFilterResults>
+      </PlaceFilterScope>
     </div>
   );
 }

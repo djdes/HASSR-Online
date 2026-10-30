@@ -11,6 +11,7 @@ import {
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
 import { canAccessPlatformPath, hasPlatformPanel, normalizePlatformSections, platformHomeHref } from "@/lib/platform-access";
 import { evaluatePointScopeRequest } from "@/lib/point-scope";
+import { deniedRedirectLocation } from "@/lib/denied-notice";
 import {
   MINI_SHELL_COOKIE,
   MINI_SHELL_VALUE,
@@ -287,7 +288,8 @@ export async function proxy(req: NextRequest) {
       return NextResponse.json({ error: scoped.error }, { status: scoped.status });
     }
     if (scoped.action === "redirect") {
-      return NextResponse.redirect(new URL(scoped.location, req.url));
+      // `?denied=` — «Сегодня» точки один раз объяснит, почему сюда увели.
+      return NextResponse.redirect(new URL(deniedRedirectLocation(scoped.location, pathname), req.url));
     }
   }
 
@@ -328,8 +330,10 @@ export async function proxy(req: NextRequest) {
 
   // В приложении «нет прав на раздел» — это возврат на его главный
   // экран: списка журналов сайта там нет, и человек упёрся бы в чужой хром.
+  // `?denied=` — страница приземления один раз объяснит, что раздел закрыт
+  // (раньше уводили молча, и было непонятно, что произошло).
   return NextResponse.redirect(
-    new URL(miniShell ? "/mini" : "/journals", req.url)
+    new URL(deniedRedirectLocation(miniShell ? "/mini" : "/journals", pathname), req.url)
   );
 }
 

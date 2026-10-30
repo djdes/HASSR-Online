@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { Coins } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -41,7 +41,7 @@ export default async function BonusesPage({
     isRoot: session.user.isRoot === true,
   });
   if (!fullAccess) {
-    redirect("/dashboard");
+    forbidden();
   }
 
   const orgId = getActiveOrgId(session);

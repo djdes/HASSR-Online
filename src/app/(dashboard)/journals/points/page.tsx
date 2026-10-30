@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ClipboardList, Settings2 } from "lucide-react";
 import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
+import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -41,7 +42,7 @@ export default async function PointJournalsPage({
 }) {
   const query = await searchParams;
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   // В шапке выбрана торговая точка — страница всей организации закрыта.
   const pointContext = await loadBuildingContext(session);
   if (journalsPointMode(pointContext)) {
@@ -116,29 +117,33 @@ export default async function PointJournalsPage({
         title={t("guide.title")}
         bullets={[t("guide.list"), t("guide.add"), t("guide.remove")]}
       />
-      {showPlaceFilter ? (
-        <PlaceFilterChips
-          kind="point-journals"
-          label={tPlace("label")}
-          basePath="/journals/points"
-          active={place}
-          all={{
-            label: tPlace("all"),
-            count: pointCards.reduce((sum, card) => sum + card.enabledCodes.length, 0),
-            icon: ClipboardList,
-          }}
-          places={pointCards.map((card) => ({ id: card.id, name: card.name, office: false, count: card.enabledCodes.length }))}
-        />
-      ) : null}
-      <DomainMessagesBoundary namespaces={["pointJournals"]}>
-        <PointJournalsClient
-          // Набор журналов в карточках — состояние клиента: при смене фильтра собираем заново.
-          key={place ?? "all"}
-          cards={place ? cards.filter((card) => card.id === place) : cards}
-          journals={journals}
-          perPoint={context.enabled}
-        />
-      </DomainMessagesBoundary>
+      <PlaceFilterScope>
+        {showPlaceFilter ? (
+          <PlaceFilterChips
+            kind="point-journals"
+            label={tPlace("label")}
+            basePath="/journals/points"
+            active={place}
+            all={{
+              label: tPlace("all"),
+              count: pointCards.reduce((sum, card) => sum + card.enabledCodes.length, 0),
+              icon: ClipboardList,
+            }}
+            places={pointCards.map((card) => ({ id: card.id, name: card.name, office: false, count: card.enabledCodes.length }))}
+          />
+        ) : null}
+        <PlaceFilterResults>
+          <DomainMessagesBoundary namespaces={["pointJournals"]}>
+            <PointJournalsClient
+              // Набор журналов в карточках — состояние клиента: при смене фильтра собираем заново.
+              key={place ?? "all"}
+              cards={place ? cards.filter((card) => card.id === place) : cards}
+              journals={journals}
+              perPoint={context.enabled}
+            />
+          </DomainMessagesBoundary>
+        </PlaceFilterResults>
+      </PlaceFilterScope>
     </div>
   );
 }

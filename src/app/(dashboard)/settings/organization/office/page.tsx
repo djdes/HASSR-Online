@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AlertTriangle, ArrowRight, Building2, MapPin, Plus, Store } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -37,7 +37,7 @@ function initialsOf(name: string): string {
  */
 export default async function OrganizationOfficePage() {
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
   const readOnly = session.user.partnerAccess?.level === "view";
 

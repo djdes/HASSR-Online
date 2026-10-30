@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
@@ -22,7 +22,7 @@ const KIND_ORDER: CalendarEventKind[] = ["medbook", "calibration", "subscription
  */
 export default async function CalendarSettingsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const t = await getTranslations("settingsUi.calendarPage");
   const kindLabel = (kind: CalendarEventKind): string => {
     switch (kind) {

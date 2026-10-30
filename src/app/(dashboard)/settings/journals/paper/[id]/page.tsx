@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -28,7 +28,7 @@ export default async function PaperJournalPage({
 }) {
   const t = await getTranslations("settingsUi.journalsSettingsClient");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/dashboard");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const { id } = await params;
   const journal = paperJournalById(id);
   if (!journal) notFound();

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function KioskSettingsPage() {
   const t = await getTranslations("settingsUi.kioskPage");
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const orgId = getActiveOrgId(session);
 
   const [org, devices, employees] = await Promise.all([

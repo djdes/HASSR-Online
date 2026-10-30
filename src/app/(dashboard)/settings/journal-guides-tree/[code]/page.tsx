@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -24,7 +24,7 @@ export default async function JournalGuideTreePage({
   const { code } = await params;
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const organizationId = getActiveOrgId(session);
   const journalTemplate = await db.journalTemplate.findUnique({

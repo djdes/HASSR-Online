@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -12,7 +12,7 @@ export default async function TasksFlowSettingsPage() {
   const t = await getTranslations("settingsUi.tasksflowPage");
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
-    redirect("/journals");
+    forbidden();
   }
   const orgId = getActiveOrgId(session);
 

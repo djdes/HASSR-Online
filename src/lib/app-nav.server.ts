@@ -10,6 +10,8 @@ import { loadBuildingContext } from "@/lib/active-building";
 import { journalsPointMode } from "@/lib/building-scope";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import {
+  deniedNavHrefs,
+  routedAwayNavHrefs,
   visibleNav,
   visibleSettingsCards,
   type NavActor,
@@ -58,6 +60,16 @@ export type NavModel = {
   showSidebar: boolean;
   /** Карточки настроек для ⌘K (пусто/нет — только вкладки). */
   search?: NavModelSearchItem[];
+  /**
+   * Адреса пунктов меню, закрытые человеку по роли (`deniedNavHrefs`): на них
+   * `SectionFrame` показывает «Нет доступа» вместо страницы.
+   */
+  deniedHrefs?: string[];
+  /**
+   * Домашние по роли, с которых человека уведут (`routedAwayNavHrefs`):
+   * плашку «раздел закрыт» покажет страница, куда уведут.
+   */
+  routedAwayHrefs?: string[];
 };
 
 type NavUser = NavActor & { id: string; role: string; isRoot: boolean };
@@ -139,7 +151,13 @@ export async function buildNavModel(input: {
     sectionLabel: sectionLabels.get(card.section) ?? "",
     icon: card.icon,
   }));
-  return { sections, showSidebar: sections.length >= 2, search };
+  return {
+    sections,
+    showSidebar: sections.length >= 2,
+    search,
+    deniedHrefs: deniedNavHrefs(input.user, input.facts),
+    routedAwayHrefs: routedAwayNavHrefs(input.user, input.facts),
+  };
 }
 
 /** Меню человека для страниц и API вне макета (главная, «Избранное»). */

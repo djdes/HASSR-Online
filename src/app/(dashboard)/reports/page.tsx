@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { resolveSectionName } from "@/lib/org-custom-names";
@@ -28,7 +28,7 @@ export default async function ReportsPage() {
   // Role-gate через единый helper — manager/head_chef/owner/technologist
   // все имеют full workspace access (см. memory: feedback_manager_full_rights).
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("reportsUi.reportsPage");

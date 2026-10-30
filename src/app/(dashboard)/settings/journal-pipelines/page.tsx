@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { BookOpen } from "lucide-react";
@@ -67,7 +67,7 @@ export default async function JournalPipelinesPage() {
   const t = await getTranslations("settingsUi.journalPipelinesPage");
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-  if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
 
   const organizationId = getActiveOrgId(session);
 

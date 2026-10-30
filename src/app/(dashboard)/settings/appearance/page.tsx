@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { Palette } from "lucide-react";
 
 import { requireAuth } from "@/lib/auth-helpers";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 export default async function AppearanceSettingsPage() {
   const t = await getTranslations("settingsManagement.appearance");
   const session = await requireAuth();
-  if (!hasCapability(session.user, "admin.full")) redirect("/journals");
+  if (!hasCapability(session.user, "admin.full")) forbidden();
 
   const me = await db.user
     .findUnique({

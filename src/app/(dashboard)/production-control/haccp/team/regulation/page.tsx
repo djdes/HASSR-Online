@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -16,7 +16,7 @@ const ROLE_ORDER: Record<TeamMember["role"], number> = { leader: 0, deputy: 1, m
 /** Положение о группе ХАССП для печати: разделы, лист «Утверждаю» и состав группы из записей блока. */
 export default async function TeamRegulationPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
   const [org, rows, staff, t, u] = await Promise.all([

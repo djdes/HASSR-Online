@@ -39,11 +39,12 @@ test("якорь #special-mode остаётся на «Что делать се�
 });
 
 test("права страниц — как у блоков на прежней странице", () => {
-  const both = /if \(!hasFullWorkspaceAccess\(session\.user\) && !hasCapability\(session\.user, "tasks\.verify"\)\) redirect\("\/journals"\);/;
+  // Отказ — объяснённая панель внутри кабинета (`forbidden()`), а не тихий уход.
+  const both = /if \(!hasFullWorkspaceAccess\(session\.user\) && !hasCapability\(session\.user, "tasks\.verify"\)\) forbidden\(\);/;
   for (const route of ["/visits", "/norms", "/special-mode"]) assert.match(page(route), both, route);
-  assert.match(page(""), /if \(!fullAccess && !hasCapability\(session\.user, "tasks\.verify"\)\) redirect\("\/journals"\);/);
+  assert.match(page(""), /if \(!fullAccess && !hasCapability\(session\.user, "tasks\.verify"\)\) forbidden\(\);/);
   // Услуги — руководству, как карточка экспертов раньше.
-  assert.match(page("/experts"), /if \(!hasFullWorkspaceAccess\(session\.user\)\) redirect\("\/inspection"\);/);
+  assert.match(page("/experts"), /if \(!hasFullWorkspaceAccess\(session\.user\)\) forbidden\(\);/);
   // Скрывать посещения и переключать спецрежим — только admin.full.
   assert.match(page("/visits"), /canHide=\{hasCapability\(session\.user, "admin\.full"\)\}/);
   assert.match(page("/special-mode"), /canManage=\{hasCapability\(session\.user, "admin\.full"\)\}/);

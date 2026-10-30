@@ -108,12 +108,14 @@ export function CurrentPointSwitcher({
     "transition-colors duration-150 hover:bg-[#f5f6ff] data-[state=open]:bg-[#f5f6ff]",
     FOCUS,
   );
+  // Пока точка переключается — в шапке уже выбранная (страница под ней — скелет).
+  const shown = (busyId ? options.find((option) => option.id === busyId) : undefined) ?? active;
   const body = (
     <>
       <PointLabel
-        caption={active.office ? t("captionOffice") : t("caption")}
-        title={titleOf(active)}
-        office={active.office === true}
+        caption={shown.office ? t("captionOffice") : t("caption")}
+        title={titleOf(shown)}
+        office={shown.office === true}
       />
       {busyId ? (
         <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" aria-hidden />
@@ -133,6 +135,7 @@ export function CurrentPointSwitcher({
           aria-label={`${t("switch")}: ${titleOf(active)}`}
           title={hintOf(active)}
           data-current-point="switch"
+          aria-busy={busyId ? true : undefined}
         >
           {body}
         </button>
@@ -167,6 +170,7 @@ export function CurrentPointSwitcher({
           aria-label={`${t("switch")}: ${titleOf(active)}`}
           title={hintOf(active)}
           data-current-point="switch"
+          aria-busy={busyId ? true : undefined}
         >
           {body}
         </button>

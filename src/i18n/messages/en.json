@@ -2981,7 +2981,24 @@
         "hintOrganization": "Outlet journals and All journals open when “Whole company” is selected in the header.",
         "hintPoint": "You work at your outlet — journals of all outlets are visible to company management.",
         "failed": "Couldn't select the whole company"
-      }
+      },
+      "access": {
+        "forbiddenTitle": "You don't have access to this section",
+        "forbiddenBody": "This section is closed for your role. If you need it for your work, ask your manager to grant access.",
+        "notFoundTitle": "This page doesn't exist",
+        "notFoundBody": "The link is outdated or the address has a typo.",
+        "hintSidebar": "Choose a section in the menu on the left — it only lists what you can open.",
+        "hintBurger": "Open the ☰ menu at the top left and choose a section.",
+        "hintMini": "Choose a section in the app's bottom menu.",
+        "hintNoMenu": "Go back to the home page — everything you work with opens from there.",
+        "home": "Go to home",
+        "back": "Back",
+        "deniedNotice": "The “{section}” section is closed for your role, so this page opened instead.",
+        "deniedNoticeGeneric": "That section is closed for your role, so this page opened instead.",
+        "dismiss": "Got it"
+      },
+      "contentLoading": "Updating the page…",
+      "listLoading": "Loading the list…"
     },
     "header": {
       "staff": "Staff",

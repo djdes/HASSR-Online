@@ -9,6 +9,7 @@ import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import { DEMO_ORG_TTL_DAYS } from "@/lib/demo-organization.shared";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { switchOrganizationAndOpen } from "@/lib/switch-organization";
+import { useContentTransition } from "@/components/layout/content-transition";
 
 /**
  * Список организаций аккаунта в меню профиля + создание новой точки.
@@ -60,7 +61,10 @@ export function OrganizationSwitcher({
 }) {
   const t = useTranslations("layoutUi.organizationSwitcher");
   const router = useRouter();
-  const [switchingId, setSwitchingId] = useState<string | null>(null);
+  // Смена организации — общий переход кабинета: контент — скелет, пока не
+  // придёт страница новой организации; тост — после (2026-10-29).
+  const { refreshAfter, pendingTag, isPending } = useContentTransition();
+  const switchingId = pendingTag;
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const canOpenCreate = canCreate && Boolean(onOpenCreate);
   const { organizations } = splitCabinetMenu(allOrganizations);
@@ -70,24 +74,27 @@ export function OrganizationSwitcher({
 
   const hasDemo = organizations.some((organization) => organization.isDemo);
 
-  async function switchTo(organization: AccessibleOrganization) {
-    if (organization.id === activeId || switchingId || settingsId) return;
-    setSwitchingId(organization.id);
-    try {
-      const response = await fetch("/api/me/active-organization", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: organization.id }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? t("switchFailed"));
-      toast.success(t("switched", { name: organization.name }));
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("error"));
-    } finally {
-      setSwitchingId(null);
-    }
+  function switchTo(organization: AccessibleOrganization) {
+    if (organization.id === activeId || isPending || settingsId) return;
+    refreshAfter(
+      organization.id,
+      async () => {
+        try {
+          const response = await fetch("/api/me/active-organization", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ organizationId: organization.id }),
+          });
+          const data = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(data?.error ?? t("switchFailed"));
+          return true;
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t("error"));
+          return false;
+        }
+      },
+      () => toast.success(t("switched", { name: organization.name })),
+    );
   }
 
   /** Настройки организации одним нажатием: переключиться (если нужно) и открыть. */

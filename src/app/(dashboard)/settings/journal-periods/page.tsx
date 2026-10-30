@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function JournalPeriodsPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const orgId = getActiveOrgId(session);
   const locale = await getSiteLocale();
   const t = await getTranslations({ locale, namespace: "settingsJournalPeriods" });

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
@@ -19,7 +19,7 @@ const COMMISSION_JOURNALS = ["finished_product", "perishable_rejection"] as cons
  */
 export default async function BrakerageCommissionPage() {
   const session = await requireAuth();
-  if (!hasFullWorkspaceAccess(session.user)) redirect("/journals");
+  if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const organization = await db.organization.findUnique({
     where: { id: organizationId },

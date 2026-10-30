@@ -7,6 +7,7 @@ import ts from "typescript";
 
 import { TELEGRAM_SIGN_IN_MESSAGES } from "@/lib/telegram-auth-messages";
 import { miniEntryErrorPresentation } from "./mini-entry-error-presentation";
+import * as deniedNotice from "./denied-notice";
 import { miniNavItems, type MiniNavItem } from "@/app/mini/_lib/nav-items";
 
 type Dict = Record<string, unknown>;
@@ -177,6 +178,8 @@ function createEntry(options: EntryOptions = {}) {
       getTelegramWebApp: () => context.telegram && { ...context.telegram, close: () => { calls.close += 1; } },
     },
     "@/lib/mini-entry-error-presentation": { miniEntryErrorPresentation },
+    // `?denied=` из proxy несётся на домашнюю — настоящий модуль, он чистый.
+    "@/lib/denied-notice": deniedNotice,
   };
   const compiledModule: { exports: Record<string, (...args: never[]) => unknown> } = { exports: {} };
   const execute = vm.runInNewContext(`(function(require,module,exports){${compileSource("app/mini/page.tsx")}\n})`, {
