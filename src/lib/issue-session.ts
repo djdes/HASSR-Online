@@ -58,7 +58,7 @@ export async function issueSession(
       select: { id: true },
     });
   }
-  const flags = await db.user.findUnique({ where: { id: user.id }, select: { canManageSettings: true } }).catch(() => null);
+  const flags = await db.user.findUnique({ where: { id: user.id }, select: { canManageSettings: true, platformSections: true } }).catch(() => null);
   // Руководитель точки (фаза 2 «Офис и точки»): proxy закрывает ему общие
   // разделы компании по точкам из токена — только в домашней организации.
   const atHome =
@@ -76,6 +76,8 @@ export async function issueSession(
     maxAge: MAX_AGE,
     token: {
       canManageSettings: flags?.canManageSettings === true,
+      // Разделы панели платформы — proxy пускает по ним в /root сразу после входа.
+      platformSections: flags?.platformSections ?? [],
       orgKind,
       sub: user.id,
       id: user.id,

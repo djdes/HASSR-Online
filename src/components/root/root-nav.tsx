@@ -35,6 +35,7 @@ import {
   Ticket,
   Timer,
   UserCog,
+  UsersRound,
   Wallet,
 } from "lucide-react";
 
@@ -50,6 +51,7 @@ import {
   MENU_PANEL_PADDING_CLASS,
 } from "@/components/ui/menu-styles";
 import { cn } from "@/lib/utils";
+import { canAccessPlatformPath, type PlatformViewer } from "@/lib/platform-access";
 
 /**
  * Навигация платформенной панели.
@@ -130,9 +132,24 @@ const NAV: NavEntry[] = [
       { href: "/root/audit-impersonations", label: "impersonation", icon: UserCog },
       { href: "/root/timings", label: "timings", icon: Timer },
       { href: "/root/page-limit", label: "pageLimit", icon: Gauge },
+      { href: "/root/team", label: "team", icon: UsersRound },
     ],
   },
 ];
+
+/**
+ * Only what the person may open (2026-10-29, delegated access): the same
+ * path rules as requireRoot(), so a hidden item is also a closed page.
+ * A group with nothing left disappears.
+ */
+function navFor(viewer: PlatformViewer): NavEntry[] {
+  const allowed = (link: NavLink) => canAccessPlatformPath(viewer, link.href);
+  return NAV.flatMap<NavEntry>((entry) => {
+    if (!isGroup(entry)) return allowed(entry) ? [entry] : [];
+    const items = entry.items.filter(allowed);
+    return items.length ? [{ ...entry, items }] : [];
+  });
+}
 
 function isLinkActive(pathname: string, link: NavLink): boolean {
   return link.exact
@@ -146,8 +163,9 @@ const TRIGGER_CLASS =
 
 const TRIGGER_ACTIVE_CLASS = "bg-white/10 font-medium text-white";
 
-export function RootNav() {
+export function RootNav({ viewer }: { viewer: PlatformViewer }) {
   const t = useTranslations("rootNavigation");
+  const nav = navFor(viewer);
   const pathname = usePathname();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -170,7 +188,7 @@ export function RootNav() {
         aria-label={t("navigationLabel")}
         className="hidden flex-wrap items-center gap-1 md:flex"
       >
-        {NAV.map((entry) => {
+        {nav.map((entry) => {
           if (!isGroup(entry)) {
             const active = isLinkActive(pathname, entry);
             return (
@@ -267,7 +285,7 @@ export function RootNav() {
           }}
           className="flex flex-col gap-1"
         >
-          {NAV.map((entry) => {
+          {nav.map((entry) => {
             if (!isGroup(entry)) {
               const active = isLinkActive(pathname, entry);
               return (

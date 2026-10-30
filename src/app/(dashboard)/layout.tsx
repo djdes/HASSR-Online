@@ -161,6 +161,9 @@ export default async function DashboardLayout({
         phone: true,
         legalVersion: true,
         canEditTranslations: true,
+        // Разделы панели платформы — из БД, а не из токена: доступ могли
+        // выдать после входа (ссылка в шапке обновит токен сама).
+        platformSections: true,
       },
     }),
     // H1 — white-label: читаем brandColor для override основного
@@ -514,6 +517,7 @@ export default async function DashboardLayout({
             organizationIdentity={orgIdentity}
             userRole={session.user.role ?? ""}
             isRoot={session.user.isRoot === true}
+            platformPanel={session.user.isRoot === true || (profile?.platformSections?.length ?? 0) > 0}
             balanceRub={balanceRub}
             cabinetPlan={cabinetPlan}
             ownCabinet={!isImpersonating(session) && !partnerAccess}
