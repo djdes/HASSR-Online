@@ -51,6 +51,13 @@ import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding as worksAtDocumentPoint } from "@/lib/building-settings";
 import { countForeignRows, documentRowsPointId } from "@/lib/document-point-rows";
+import {
+  POINT_ROWS_CONFIG_CODES,
+  pointForRows,
+  syncPointDocumentRows,
+  visiblePointStaffEntries,
+} from "@/lib/point-document-rows-sync";
+import { buildingTargets } from "@/lib/building-targets";
 import { PointRowsNotice } from "@/components/journals/point-rows-notice";
 import {
   getHygieneDemoTeamUsers,
@@ -347,6 +354,14 @@ async function JournalDocumentBody({
   const tNames = await getTranslations("journals.names");
   const tFryer = await getTranslations("fryerOil");
 
+  // Документ точки, собранный до разделения по точкам, — без оборудования и
+  // помещений других точек (2026-10-30), без «Пересоздать документы».
+  if ((POINT_ROWS_CONFIG_CODES as readonly string[]).includes(resolvedCode)) {
+    await syncPointDocumentRows(getActiveOrgId(session), { documentId: docId }).catch((error) =>
+      console.warn("[point-document-rows]", error),
+    );
+  }
+
   const [document, organization, employees, allEquipment, tasksFlowIntegration] =
     await Promise.all([
       db.journalDocument.findUnique({
@@ -472,10 +487,27 @@ async function JournalDocumentBody({
             role: true,
             email: true,
             positionTitle: true,
+            buildingIds: true,
             jobPosition: { select: { name: true, categoryKey: true } },
           },
         })
       : [];
+  // Гигиена и здоровье в активном документе точки — строки только её
+  // сотрудников, сотрудников без точек и тех, кого здесь отметил человек
+  // (2026-10-30). Записи не удаляются — строки других точек лишь не видны.
+  const staffRowsTargets =
+    document.template.code === "hygiene" || document.template.code === "health_check"
+      ? await buildingTargets(getActiveOrgId(session))
+      : [];
+  const staffRowsPointId = pointForRows(document, staffRowsTargets);
+  const staffEntries = staffRowsPointId
+    ? visiblePointStaffEntries(
+        document.entries,
+        staffRowsPointId,
+        new Map([...employees, ...inactiveEmployees].map((user) => [user.id, user.buildingIds ?? []])),
+        new Set(staffRowsTargets.filter((id): id is string => Boolean(id))),
+      )
+    : document.entries;
   /** Ростер + уволенные: только для рендера ФИО и должностей. */
   const displayEmployees = [
     ...enrichedEmployees,
@@ -577,7 +609,7 @@ async function JournalDocumentBody({
           employees={enrichedEmployees}
           addableEmployees={addableEmployees}
           inactiveEmployees={inactiveEmployees}
-          initialEntries={document.entries.map((entry) => ({
+          initialEntries={staffEntries.map((entry) => ({
             employeeId: entry.employeeId,
             date: toDateKey(entry.date),
             data: normalizeHygieneEntryData(entry.data),
@@ -620,7 +652,7 @@ async function JournalDocumentBody({
             ? Math.max(0, (document.config as { printEmptyRows: number }).printEmptyRows)
             : 0
         }
-        initialEntries={document.entries.map((entry) => ({
+        initialEntries={staffEntries.map((entry) => ({
           employeeId: entry.employeeId,
           date: toDateKey(entry.date),
           data: normalizeHealthEntryData(entry.data),
