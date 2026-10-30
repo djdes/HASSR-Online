@@ -4,6 +4,7 @@ import { deliverableEmail, notifyCoreJournalRecipients } from "@/lib/core-journa
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
+import { syncAllPointDocumentRows } from "@/lib/point-document-rows-sync";
 import { syncAllUvDocumentPoints } from "@/lib/uv-document-points";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
 
@@ -26,6 +27,11 @@ async function handle(request: Request) {
   // точки висели во всех точках. Раз в час по всем организациям.
   const movedDocuments = await syncAllUvDocumentPoints().catch((error) => {
     console.warn("[uv-document-points]", error);
+    return 0;
+  });
+  // Там же — документы точек без оборудования и помещений других точек.
+  const trimmedPointDocuments = await syncAllPointDocumentRows().catch((error) => {
+    console.warn("[point-document-rows]", error);
     return 0;
   });
   const lamps = await db.equipment.findMany({
@@ -65,7 +71,7 @@ async function handle(request: Request) {
     }).catch(() => null);
     notified += 1;
   }
-  return NextResponse.json({ ok: true, lamps: lamps.length, notified, movedDocuments });
+  return NextResponse.json({ ok: true, lamps: lamps.length, notified, movedDocuments, trimmedPointDocuments });
 }
 
 export const GET = handle;

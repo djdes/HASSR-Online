@@ -6,6 +6,8 @@ import { breakdownDate, breakdownTitle } from "@/components/journals/breakdown-h
 import { accidentDateTime, accidentTitle } from "@/components/journals/accident-presentation";
 import { finishedTitle, finishedColumn, finishedCell } from "@/components/journals/finished-product-presentation";
 import { getJournalControls } from "@/lib/journal-controls.server";
+import { buildingTargets } from "@/lib/building-targets";
+import { pointForRows, syncPointDocumentRows, visiblePointStaffEntries } from "@/lib/point-document-rows-sync";
 import { perishableTitle, perishableCell, perishablePrintPresentation, perishableSignatureLines } from "@/components/journals/perishable-rejection-presentation";
 import { hasRecordedMeasurements } from "@/lib/journal-measurement-attribution";
 import type { Prisma } from "@prisma/client";
@@ -7308,7 +7310,13 @@ export async function loadJournalDocumentPdfInput(params: {
 }): Promise<JournalDocumentPdfInput> {
   const { documentId, organizationId } = params;
 
-  const document = await db.journalDocument.findUnique({
+  // Документ точки до разделения по точкам — без строк других точек, как на
+  // экране (2026-10-30).
+  await syncPointDocumentRows(organizationId, { documentId }).catch((error) =>
+    console.warn("[document-pdf] point rows skipped", error instanceof Error ? error.message : error),
+  );
+
+  const loaded = await db.journalDocument.findUnique({
     where: { id: documentId },
     include: {
       template: true,
@@ -7328,8 +7336,32 @@ export async function loadJournalDocumentPdfInput(params: {
     },
   });
 
-  if (!document || document.organizationId !== organizationId) {
+  if (!loaded || loaded.organizationId !== organizationId) {
     throw new Error("Документ не найден");
+  }
+
+  // Гигиена и здоровье в активном документе точки — строки её сотрудников,
+  // как на экране (visiblePointStaffEntries).
+  const staffTargets =
+    loaded.template.code === "hygiene" || loaded.template.code === "health_check"
+      ? await buildingTargets(organizationId)
+      : [];
+  const staffPointId = pointForRows(loaded, staffTargets);
+  let document = loaded;
+  if (staffPointId) {
+    const staff = await db.user.findMany({
+      where: { organizationId, id: { in: [...new Set(loaded.entries.map((entry) => entry.employeeId))] } },
+      select: { id: true, buildingIds: true },
+    });
+    document = {
+      ...loaded,
+      entries: visiblePointStaffEntries(
+        loaded.entries,
+        staffPointId,
+        new Map(staff.map((user) => [user.id, user.buildingIds])),
+        new Set(staffTargets.filter((id): id is string => Boolean(id))),
+      ),
+    };
   }
 
   // Должность берём из того же источника, что и экран документа:

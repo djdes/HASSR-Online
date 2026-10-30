@@ -7,6 +7,7 @@ import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
 import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
 import { resolveHeaderPoint } from "@/lib/header-point";
 import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
+import { syncOrganizationPointDocumentsSoon } from "@/lib/point-document-rows-sync";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -130,6 +131,9 @@ export default async function DashboardLayout({
     isImpersonating(session) && session.user.actingAsOrganizationId
       ? session.user.actingAsOrganizationId
       : getActiveOrgId(session);
+  // Документы точек, собранные до разделения по точкам, и журналы УФ-ламп —
+  // на свои точки (без ожидания, не чаще раза в 10 минут на организацию).
+  syncOrganizationPointDocumentsSoon(activeOrgId);
 
   const partnerAccess = session.user.partnerAccess ?? null;
 
@@ -739,6 +743,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     isImpersonating(session) && session.user.actingAsOrganizationId
       ? session.user.actingAsOrganizationId
       : getActiveOrgId(session);
+  syncOrganizationPointDocumentsSoon(activeOrgId);
   const partnerAccess = session.user.partnerAccess ?? null;
 
   const [shell, impersonatedOrg, orgRow, ownedAccount, partnerAccessBrand, customNames] =
