@@ -30552,7 +30552,9 @@
       "total": "for {sum}",
       "errors": {
         "failed": "Something went wrong. Please try again."
-      }
+      },
+      "pointLabel": "Location: {name}",
+      "noPoint": "Location not chosen"
     },
     "document": {
       "title": "UPD No. {number} of {date}",
@@ -30587,8 +30589,13 @@
       "decided": "{status} · {when}",
       "errors": {
         "failed": "Something went wrong. Please try again.",
-        "corrective": "For a rejected line, say what was done with the goods"
-      }
+        "corrective": "For a rejected line, say what was done with the goods",
+        "point": "Choose the location where the goods were received"
+      },
+      "pointTitle": "Receiving location",
+      "pointHint": "Rows go to this location's acceptance log. Choose the location where the goods arrived.",
+      "pointFromDocument": "The location was taken from the invoice — check that the goods arrived here.",
+      "acceptedAt": "Location: {name}"
     },
     "settings": {
       "eyebrow": "Connections",
@@ -30664,6 +30671,21 @@
       "licenseNote": "Each import signs in to the iiko server and signs out right away: a free API license is needed only for that time.",
       "errors": {
         "failed": "Could not connect. Check the details."
+      },
+      "stores": {
+        "title": "iiko stores and locations",
+        "hint": "Invoices and write-off acts of a store go to its location. “Don't import” skips the store's documents. Without a location, it is chosen when the invoice is accepted.",
+        "load": "Load stores from iiko",
+        "reload": "Refresh store list",
+        "loading": "Loading stores…",
+        "empty": "Click “Load stores from iiko” to see the server's stores.",
+        "none": "No location — choose on acceptance",
+        "skip": "Don't import",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Stores and locations saved",
+        "unsaved": "You have unsaved changes",
+        "failed": "Something went wrong. Please try again."
       }
     }
   },

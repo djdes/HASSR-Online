@@ -25,10 +25,21 @@ export function journalEntryPointWhere(pointId: string | null | undefined) {
   };
 }
 
-/** `LossRecord` точки: цеха точки и общие (`areaIds`) и записи без цеха. */
+/**
+ * `LossRecord` точки. Своя точка у записи (`buildingId`, 2026-11-01: акт
+ * списания iiko, запись на точке) — главнее цеха: запись другой точки не
+ * видна. Без точки — по цеху: цеха точки и общие (`pointAreaIds`) и записи
+ * без цеха.
+ */
 export function lossPointWhere(pointId: string | null | undefined, pointAreaIds: readonly string[]) {
   if (!pointId) return {};
-  return { OR: [{ areaId: null }, { areaId: { in: [...pointAreaIds] } }] };
+  return {
+    OR: [
+      { buildingId: pointId },
+      { buildingId: null, areaId: null },
+      { buildingId: null, areaId: { in: [...pointAreaIds] } },
+    ],
+  };
 }
 
 /** Цеха точки — для `lossPointWhere` и списков участков. */

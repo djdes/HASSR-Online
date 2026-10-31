@@ -9,6 +9,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { readSupplyItems } from "@/lib/supply/documents.server";
+import { loadSupplyPointAccess } from "@/lib/supply/point-access.server";
 import { orgTodayKey } from "@/lib/timezone";
 
 import { AcceptanceForm } from "./acceptance-form";
@@ -20,21 +21,28 @@ const DATE_TIME: Intl.DateTimeFormatOptions = { ...DATE, hour: "2-digit", minute
 
 /**
  * Накладная (УПД): что пришло по документу и форма приёмки. После приёмки —
- * статус и ссылка на журнал приёмки, куда легли строки.
+ * статус и ссылка на журнал приёмки, куда легли строки. Точки
+ * (2026-11-01): в форме выбирается точка приёмки; накладную другой точки
+ * человек, привязанный к точкам, не открывает.
  */
 export default async function EdoDocumentPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const { id } = await params;
+  // Накладная другой точки даже не читается: условие точки — в запросе.
+  const access = await loadSupplyPointAccess(session);
   const [t, tPage, rawLocale, doc, organization] = await Promise.all([
     getTranslations("supplyEdo.document"),
     getTranslations("supplyEdo.page"),
     getLocale(),
-    db.supplyDocument.findFirst({ where: { id, organizationId } }),
+    db.supplyDocument.findFirst({ where: { id, organizationId, ...access.seeWhere }, include: { building: { select: { name: true } } } }),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
   ]);
   if (!doc) notFound();
+  // Точка по умолчанию: точка накладной, иначе торговая точка из шапки; иначе
+  // ничего — человек выбирает сам (раньше молча брался офис или первая точка).
+  const defaultPointId = access.enabled ? (doc.buildingId ?? access.viewedPointId ?? null) : null;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ru";
   const timeZone = organization?.timezone || "Europe/Moscow";
   const items = readSupplyItems(doc.items);
@@ -64,6 +72,7 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
             {doc.basis ? <div>{t("basis")}: {doc.basis}</div> : null}
             {doc.shippedDate ? <div>{t("shipped", { date: formatDate(locale, doc.shippedDate, "UTC", DATE) })}</div> : null}
             <div>{t("source", { source: tPage(`source.${source}`) })}</div>
+            {access.enabled && doc.building ? <div data-edo-document-point>{t("acceptedAt", { name: doc.building.name })}</div> : null}
             {doc.total !== null ? <div className="font-semibold text-[#0b1024]">{tPage("total", { sum: money(doc.total) })}</div> : null}
           </div>
         </dl>
@@ -91,6 +100,9 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
       {status === "new" ? (
         <AcceptanceForm
           documentId={doc.id}
+          points={access.points}
+          defaultPointId={defaultPointId}
+          pointFromDocument={Boolean(doc.buildingId)}
           items={items.map((item) => ({ ...item, quantityLabel: quantity(item.quantity, item.unit) }))}
           defaults={{ deliveryDate: orgTodayKey(timeZone, now), deliveryTime: nowTime }}
         />

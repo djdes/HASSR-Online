@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { userBuildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { parseSyncRequest, planPrinterEvent, type HelperEvent } from "@/lib/setup-helper";
@@ -96,10 +97,14 @@ async function recordLabelPrint(
   device: AuthedHelperDevice,
   event: Extract<HelperEvent, { type: "label_printed" }>,
 ): Promise<void> {
+  // Точка этикетки (2026-11-01): точка сотрудника телефона, если она одна —
+  // журнал маркировки на точке показывает её этикетки.
+  const points = (await userBuildingTargets(device.organizationId, device.userId)).filter((id): id is string => id !== null);
   try {
     await db.labelPrint.create({
       data: {
         organizationId: device.organizationId,
+        buildingId: points.length === 1 ? points[0] : null,
         eventId: event.id,
         deviceId: device.id,
         userId: device.userId,

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 
 import { normalizeAcceptanceDocumentConfig } from "@/lib/acceptance-document";
 import { logAudit } from "@/lib/audit";
+import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { ensureActiveDocument } from "@/lib/journal-auto-create";
@@ -16,6 +17,7 @@ import {
   type SupplyItemCheck,
   type SupplySource,
 } from "./to-acceptance-row";
+import { pointByKpp } from "./supply-points";
 import type { ParsedUpd, SupplyItem } from "./upd";
 
 /**
@@ -76,6 +78,19 @@ export function readSupplyItems(value: unknown): SupplyItem[] {
   });
 }
 
+/**
+ * Точка накладной по КПП грузополучателя или покупателя (2026-11-01): только
+ * при включённых точках и только если КПП стоит ровно у одной точки.
+ */
+async function supplyPointByKpp(organizationId: string, parsed: ParsedUpd): Promise<string | null> {
+  const parties = [parsed.consignee, parsed.buyer];
+  if (!parties.some((party) => party?.kpp)) return null;
+  const points = (await buildingTargets(organizationId)).filter((id): id is string => id !== null);
+  if (points.length === 0) return null;
+  const buildings = await db.building.findMany({ where: { organizationId, id: { in: points } }, select: { id: true, kpp: true } });
+  return pointByKpp(parties, buildings);
+}
+
 export async function saveSupplyDocument(input: {
   organizationId: string;
   source: SupplySource;
@@ -83,6 +98,10 @@ export async function saveSupplyDocument(input: {
   parsed: ParsedUpd;
   fileName?: string | null;
   actor?: { id: string; name: string | null } | null;
+  /** Точка, известная заранее (склад iiko); иначе — по КПП грузополучателя. */
+  buildingId?: string | null;
+  /** Если КПП не помог: точка, на которой загрузили файл. */
+  fallbackBuildingId?: string | null;
 }): Promise<{ id: string; created: boolean }> {
   const where = {
     organizationId_source_externalId: {
@@ -106,10 +125,13 @@ export async function saveSupplyDocument(input: {
     select: { id: true },
   });
   if (sameInvoice) return { id: sameInvoice.id, created: false };
+  const buildingId =
+    input.buildingId ?? (await supplyPointByKpp(input.organizationId, parsed)) ?? input.fallbackBuildingId ?? null;
   try {
     const doc = await db.supplyDocument.create({
       data: {
         organizationId: input.organizationId,
+        buildingId,
         source: input.source,
         externalId: input.externalId,
         kind: parsed.kind,
@@ -246,6 +268,8 @@ export async function acceptSupplyDocument(input: AcceptSupplyInput): Promise<Ac
         decidedById: input.actor.id,
         journalDocumentId: report.documentId,
         journalRowIds: rowIds,
+        // Точка, где приняли товар, — накладная остаётся в её «Входящих».
+        buildingId: input.buildingId ?? doc.buildingId,
       },
     });
     await logAudit({
@@ -255,7 +279,7 @@ export async function acceptSupplyDocument(input: AcceptSupplyInput): Promise<Ac
       action: "supply.accept",
       entity: "SupplyDocument",
       entityId: doc.id,
-      details: { number: doc.number, seller: doc.sellerName, rows: rowIds.length, status },
+      details: { number: doc.number, seller: doc.sellerName, rows: rowIds.length, status, buildingId: input.buildingId ?? null },
     });
     return { status, journalDocumentId: report.documentId, rowIds };
   } catch (error) {
