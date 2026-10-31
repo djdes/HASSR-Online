@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { checkCronSecret } from "@/lib/cron-auth";
 import { runBillingTransitionJob } from "@/lib/billing.server";
+import { runNewcomerJourney } from "@/lib/newcomer-journey.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,9 @@ export const dynamic = "force-dynamic";
  *     аккаунта и самый заполняемый журнал, остальные сотрудники в архив,
  *     остальные журналы выключаются, уведомление в Telegram и на почту.
  *
+ * Здесь же — письма первых шагов новичкам (`runNewcomerJourney`, до трёх
+ * писем на организацию за 2–14 дни): у этой задачи уже есть расписание.
+ *
  * С выключенным переходом лимиты не применяет. Реально оплаченные аккаунты
  * не трогает. Повторный запуск безопасен. `?dryRun=1` — только посчитать.
  *
@@ -29,7 +33,12 @@ async function handle(request: Request) {
   if (cronAuth) return cronAuth;
   const dryRun = new URL(request.url).searchParams.get("dryRun") === "1";
   const report = await runBillingTransitionJob({ dryRun });
-  return NextResponse.json(report);
+  // Письма новичкам не должны ронять биллинг — и наоборот.
+  const journey = await runNewcomerJourney({ dryRun }).catch((error: unknown) => {
+    console.error("[billing-transition] newcomer journey failed", error);
+    return null;
+  });
+  return NextResponse.json({ ...report, journey });
 }
 
 export const GET = handle;

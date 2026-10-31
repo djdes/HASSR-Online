@@ -1,0 +1,603 @@
+
+> haccp-online@0.1.0 i18n:check
+> node scripts/i18n-types.mjs --check && node --import tsx --test src/i18n/*.test.ts
+
+TAP version 13
+# Subtest: access matrix messages match and both matrix UIs render in RU, EN, and Uzbek
+ok 1 - access matrix messages match and both matrix UIs render in RU, EN, and Uzbek
+  ---
+  duration_ms: 2216.021887
+  type: 'test'
+  ...
+# Subtest: top-up receipts and pending invoices retain rubles and ungrouped payment identifiers
+ok 2 - top-up receipts and pending invoices retain rubles and ungrouped payment identifiers
+  ---
+  duration_ms: 2181.592282
+  type: 'test'
+  ...
+# Subtest: balance, referral, review and top-up sections render in RU, EN, and Uzbek
+ok 3 - balance, referral, review and top-up sections render in RU, EN, and Uzbek
+  ---
+  duration_ms: 105.123124
+  type: 'test'
+  ...
+# Subtest: Mini App balance hides website-only top-up, referrals, and review rewards
+ok 4 - Mini App balance hides website-only top-up, referrals, and review rewards
+  ---
+  duration_ms: 14.401731
+  type: 'test'
+  ...
+# Subtest: top-up parser exposes stable validation codes while preserving legacy error strings and bounds
+ok 5 - top-up parser exposes stable validation codes while preserving legacy error strings and bounds
+  ---
+  duration_ms: 1.070739
+  type: 'test'
+  ...
+# Subtest: all frozen date shapes preserve healthy bytes and repair missing data/order in isolated implementations
+ok 6 - all frozen date shapes preserve healthy bytes and repair missing data/order in isolated implementations
+  ---
+  duration_ms: 8654.904846
+  type: 'test'
+  ...
+# Subtest: constructor cache is isolated and current timezone/options always remain authoritative
+ok 7 - constructor cache is isolated and current timezone/options always remain authoritative
+  ---
+  duration_ms: 24.93516
+  type: 'test'
+  ...
+# Subtest: unsupported option combinations and time-only calls retain native implementation behavior
+ok 8 - unsupported option combinations and time-only calls retain native implementation behavior
+  ---
+  duration_ms: 54.467532
+  type: 'test'
+  ...
+# Subtest: invalid values/zones/options preserve native error constructors and messages before fallback
+ok 9 - invalid values/zones/options preserve native error constructors and messages before fallback
+  ---
+  duration_ms: 17.367585
+  type: 'test'
+  ...
+# Subtest: valid extreme instants retain Gregorian weekdays when local civil dates exceed Date bounds
+ok 10 - valid extreme instants retain Gregorian weekdays when local civil dates exceed Date bounds
+  ---
+  duration_ms: 5281.415707
+  type: 'test'
+  ...
+# Subtest: only the effective enumerable option copy determines the fallback shape
+ok 11 - only the effective enumerable option copy determines the fallback shape
+  ---
+  duration_ms: 39.80368
+  type: 'test'
+  ...
+# Subtest: enumerable option getters are evaluated once and the captured values drive both paths
+ok 12 - enumerable option getters are evaluated once and the captured values drive both paths
+  ---
+  duration_ms: 14.689383
+  type: 'test'
+  ...
+# Subtest: throwing enumerable getters retain their exact error before native construction
+ok 13 - throwing enumerable getters retain their exact error before native construction
+  ---
+  duration_ms: 0.479456
+  type: 'test'
+  ...
+# Subtest: custom prototypes remain outside the envelope and inherited getters stay unread
+ok 14 - custom prototypes remain outside the envelope and inherited getters stay unread
+  ---
+  duration_ms: 1.301898
+  type: 'test'
+  ...
+# Subtest: raw catalog validation rejects duplicate keys before JSON can silently discard messages
+ok 15 - raw catalog validation rejects duplicate keys before JSON can silently discard messages
+  ---
+  duration_ms: 19.647253
+  type: 'test'
+  ...
+# Subtest: all implemented catalogs have complete keys and matching ICU arguments
+ok 16 - all implemented catalogs have complete keys and matching ICU arguments
+  ---
+  duration_ms: 1625.407772
+  type: 'test'
+  ...
+# Subtest: catalog validation rejects missing messages, broken ICU and lost arguments
+ok 17 - catalog validation rejects missing messages, broken ICU and lost arguments
+  ---
+  duration_ms: 1.175567
+  type: 'test'
+  ...
+# Subtest: different plural categories are valid but nested parameter loss is not
+ok 18 - different plural categories are valid but nested parameter loss is not
+  ---
+  duration_ms: 0.356485
+  type: 'test'
+  ...
+# Subtest: every default monitoring rule has three translations and legacy values resolve without mutating config
+ok 19 - every default monitoring rule has three translations and legacy values resolve without mutating config
+  ---
+  duration_ms: 501.478985
+  type: 'test'
+  ...
+# Subtest: monitoring rule translation is bound to journal code, not a phrase-wide replacement
+ok 20 - monitoring rule translation is bound to journal code, not a phrase-wide replacement
+  ---
+  duration_ms: 0.449571
+  type: 'test'
+  ...
+# Subtest: сайт и оболочка Mini App дают страницам кабинета одни и те же пространства сообщений (П-3)
+ok 21 - сайт и оболочка Mini App дают страницам кабинета одни и те же пространства сообщений (П-3)
+  ---
+  duration_ms: 1.150432
+  type: 'test'
+  ...
+# Subtest: в общем списке — «Сегодня» (dashboardUi), и все пространства есть в каталоге
+ok 22 - в общем списке — «Сегодня» (dashboardUi), и все пространства есть в каталоге
+  ---
+  duration_ms: 261.399103
+  type: 'test'
+  ...
+# Subtest: localized email templates use the recipient language and escape data without contacting SMTP
+ok 23 - localized email templates use the recipient language and escape data without contacting SMTP
+  ---
+  duration_ms: 872.895186
+  type: 'test'
+  ...
+# Subtest: journal route failures and Mini App fallbacks use the selected locale without exposing errors
+ok 24 - journal route failures and Mini App fallbacks use the selected locale without exposing errors
+  ---
+  duration_ms: 700.114328
+  type: 'test'
+  ...
+# Subtest: error and not-found screens render real translations without disclosing exception details
+ok 25 - error and not-found screens render real translations without disclosing exception details
+  ---
+  duration_ms: 21.002279
+  type: 'test'
+  ...
+# Subtest: emergency error screen works without providers; URL, saved choice and document language have deterministic fallbacks
+ok 26 - emergency error screen works without providers; URL, saved choice and document language have deterministic fallbacks
+  ---
+  duration_ms: 4.319752
+  type: 'test'
+  ...
+# Subtest: imperative dialogs load only their own copy and common action defaults
+ok 27 - imperative dialogs load only their own copy and common action defaults
+  ---
+  duration_ms: 19.446208
+  type: 'test'
+  ...
+# Subtest: actual feature index and all nine detail pages render translated body, destinations and matching breadcrumb data
+ok 28 - actual feature index and all nine detail pages render translated body, destinations and matching breadcrumb data
+  ---
+  duration_ms: 1491.060464
+  type: 'test'
+  ...
+# Subtest: feature aliases, request locale and actual sitemap expose exactly the same three-language routes
+ok 29 - feature aliases, request locale and actual sitemap expose exactly the same three-language routes
+  ---
+  duration_ms: 168.072314
+  type: 'test'
+  ...
+# Subtest: all feature text slots have stable typed copy and retain original source structure across three languages
+ok 30 - all feature text slots have stable typed copy and retain original source structure across three languages
+  ---
+  duration_ms: 619.669551
+  type: 'test'
+  ...
+# Subtest: feature metadata, sharing images and explicit public routes agree on each locale without touching private/API/QR paths
+ok 31 - feature metadata, sharing images and explicit public routes agree on each locale without touching private/API/QR paths
+  ---
+  duration_ms: 67.530801
+  type: 'test'
+  ...
+# Subtest: column template bar renders translated chrome in all locales
+ok 32 - column template bar renders translated chrome in all locales
+  ---
+  duration_ms: 42.981585
+  type: 'test'
+  ...
+# Subtest: only exact generated journal titles are localized, including their period
+ok 33 - only exact generated journal titles are localized, including their period
+  ---
+  duration_ms: 24.124093
+  type: 'test'
+  ...
+# Subtest: localized periods preserve calendar dates, month/year boundaries and Russian storage formatting
+ok 34 - localized periods preserve calendar dates, month/year boundaries and Russian storage formatting
+  ---
+  duration_ms: 2.318639
+  type: 'test'
+  ...
+# Subtest: editable journal headers localize accessible actions and preserve customer text for every role
+ok 35 - editable journal headers localize accessible actions and preserve customer text for every role
+  ---
+  duration_ms: 468.07382
+  type: 'test'
+  ...
+# Subtest: real document header shows translated default title/periodicity and exports with the selected personal locale
+ok 36 - real document header shows translated default title/periodicity and exports with the selected personal locale
+  ---
+  duration_ms: 73.105479
+  type: 'test'
+  ...
+# Subtest: generic journal layouts supply their client copy without leaking that namespace to other journals
+ok 37 - generic journal layouts supply their client copy without leaking that namespace to other journals
+  ---
+  duration_ms: 121.066335
+  type: 'test'
+  ...
+# Subtest: all 45 catalog journals have names in all three languages
+ok 38 - all 45 catalog journals have names in all three languages
+  ---
+  duration_ms: 370.048641
+  type: 'test'
+  ...
+# Subtest: localized answers retain their legacy values, original labels and validation metadata
+ok 39 - localized answers retain their legacy values, original labels and validation metadata
+  ---
+  duration_ms: 0.808978
+  type: 'test'
+  ...
+# Subtest: field catalogs match seeded keys and option values, preserving the original Russian labels
+ok 40 - field catalogs match seeded keys and option values, preserving the original Russian labels
+  ---
+  duration_ms: 276.993574
+  type: 'test'
+  ...
+# Subtest: route loading screens render accessible translated status copy for root and nested paths
+ok 41 - route loading screens render accessible translated status copy for root and nested paths
+  ---
+  duration_ms: 591.713379
+  type: 'test'
+  ...
+# Subtest: language resolution preserves personal choices across tenant switches and ignores guest cookies for staff
+ok 42 - language resolution preserves personal choices across tenant switches and ignores guest cookies for staff
+  ---
+  duration_ms: 1.339571
+  type: 'test'
+  ...
+# Subtest: formatting never changes the requested business timezone or monetary amount
+ok 43 - formatting never changes the requested business timezone or monetary amount
+  ---
+  duration_ms: 46.496089
+  type: 'test'
+  ...
+# Subtest: concurrent jobs keep independent locales and interpolate complete sentences
+ok 44 - concurrent jobs keep independent locales and interpolate complete sentences
+  ---
+  duration_ms: 489.584523
+  type: 'test'
+  ...
+# Subtest: read-only partners and directory users can change their own language, not organization settings
+ok 45 - read-only partners and directory users can change their own language, not organization settings
+  ---
+  duration_ms: 1.470102
+  type: 'test'
+  ...
+# Subtest: finite Uzbek decimal separators remain stable for SSR and browser presentation
+ok 46 - finite Uzbek decimal separators remain stable for SSR and browser presentation
+  ---
+  duration_ms: 4.479207
+  type: 'test'
+  ...
+# Subtest: Uzbek separator presentation preserves original words, options and nonfinite values
+ok 47 - Uzbek separator presentation preserves original words, options and nonfinite values
+  ---
+  duration_ms: 11.960051
+  type: 'test'
+  ...
+# Subtest: export selection defaults to the employee language and offers all three languages
+ok 48 - export selection defaults to the employee language and offers all three languages
+  ---
+  duration_ms: 824.183068
+  type: 'test'
+  ...
+# Subtest: journal selection actions render all count and busy states in the selected locale
+ok 49 - journal selection actions render all count and busy states in the selected locale
+  ---
+  duration_ms: 94.264763
+  type: 'test'
+  ...
+# Subtest: rated customer testimonials render localized accessibility text and retain original reviews
+ok 50 - rated customer testimonials render localized accessibility text and retain original reviews
+  ---
+  duration_ms: 23.700292
+  type: 'test'
+  ...
+# Subtest: domain message providers inherit locale and preserve parent namespaces
+ok 51 - domain message providers inherit locale and preserve parent namespaces
+  ---
+  duration_ms: 4.839319
+  type: 'test'
+  ...
+# Subtest: report and legal consent components render their real catalogs in every locale
+ok 52 - report and legal consent components render their real catalogs in every locale
+  ---
+  duration_ms: 84.900077
+  type: 'test'
+  ...
+# Subtest: known legacy auth failures retain rate-limit meaning and arbitrary messages cannot become keys
+ok 53 - known legacy auth failures retain rate-limit meaning and arbitrary messages cannot become keys
+  ---
+  duration_ms: 11.506778
+  type: 'test'
+  ...
+# Subtest: message argument types are generated from the current source catalog
+ok 54 - message argument types are generated from the current source catalog
+  ---
+  duration_ms: 1544.67972
+  type: 'test'
+  ...
+# Subtest: literal next-intl namespaces in current production sources exist in the canonical catalog
+ok 55 - literal next-intl namespaces in current production sources exist in the canonical catalog
+  ---
+  duration_ms: 3841.997611
+  type: 'test'
+  ...
+# Subtest: namespace scanner follows imports and ignores comments and unrelated functions
+ok 56 - namespace scanner follows imports and ignores comments and unrelated functions
+  ---
+  duration_ms: 0.994193
+  type: 'test'
+  ...
+# Subtest: catalog keys cannot hide dotted literal IDs that next-intl treats as nested paths
+ok 57 - catalog keys cannot hide dotted literal IDs that next-intl treats as nested paths
+  ---
+  duration_ms: 1.071413
+  type: 'test'
+  ...
+# Subtest: notification history is presented per reader without mutating persisted or customer text
+ok 58 - notification history is presented per reader without mutating persisted or customer text
+  ---
+  duration_ms: 475.768989
+  type: 'test'
+  ...
+# Subtest: explicit notification keys localize and unknown keys preserve the legacy fallback
+ok 59 - explicit notification keys localize and unknown keys preserve the legacy fallback
+  ---
+  duration_ms: 2.972333
+  type: 'test'
+  ...
+# Subtest: push messages retain employee names and render plural counts in each recipient locale
+ok 60 - push messages retain employee names and render plural counts in each recipient locale
+  ---
+  duration_ms: 42.832972
+  type: 'test'
+  ...
+# Subtest: parameterized descriptors preserve names and authored text in bell and push for every locale
+ok 61 - parameterized descriptors preserve names and authored text in bell and push for every locale
+  ---
+  duration_ms: 17.84441
+  type: 'test'
+  ...
+# Subtest: invalid descriptor parameters fall back without executing user strings or ICU
+ok 62 - invalid descriptor parameters fall back without executing user strings or ICU
+  ---
+  duration_ms: 4.320757
+  type: 'test'
+  ...
+# Subtest: narrow historical adapters translate known wrappers and never rewrite stored history
+ok 63 - narrow historical adapters translate known wrappers and never rewrite stored history
+  ---
+  duration_ms: 14.500323
+  type: 'test'
+  ...
+# Subtest: organization profile catalogs match and badge UI renders for each locale
+ok 64 - organization profile catalogs match and badge UI renders for each locale
+  ---
+  duration_ms: 160.383442
+  type: 'test'
+  ...
+# Subtest: partner consequence presentation renders localized sentences and preserves dynamic data
+ok 65 - partner consequence presentation renders localized sentences and preserves dynamic data
+  ---
+  duration_ms: 28.536774
+  type: 'test'
+  ...
+# Subtest: partner blockers render structured invoice data with localized dates and generic legacy fallback
+ok 66 - partner blockers render structured invoice data with localized dates and generic legacy fallback
+  ---
+  duration_ms: 15.74347
+  type: 'test'
+  ...
+# Subtest: pricing localization
+    # Subtest: keeps all three pricing catalogs in ICU parity
+    ok 1 - keeps all three pricing catalogs in ICU parity
+      ---
+      duration_ms: 14.324102
+      type: 'test'
+      ...
+    # Subtest: formats reusable price labels in each explicit locale
+    ok 2 - formats reusable price labels in each explicit locale
+      ---
+      duration_ms: 3.250657
+      type: 'test'
+      ...
+    # Subtest: localizes promotion and discount labels without changing user codes
+    ok 3 - localizes promotion and discount labels without changing user codes
+      ---
+      duration_ms: 52.159527
+      type: 'test'
+      ...
+    # Subtest: formats Uzbekistan prices with the Uzbek Latin number locale
+    ok 4 - formats Uzbekistan prices with the Uzbek Latin number locale
+      ---
+      duration_ms: 0.6407
+      type: 'test'
+      ...
+    1..4
+ok 67 - pricing localization
+  ---
+  duration_ms: 72.473695
+  type: 'suite'
+  ...
+# Subtest: English promotion deadline preserves the Moscow midnight boundary
+ok 68 - English promotion deadline preserves the Moscow midnight boundary
+  ---
+  duration_ms: 46.528162
+  type: 'test'
+  ...
+# Subtest: all 45 actual journal detail pages preserve RU content and localize body, metadata, FAQ, HowTo and routes in three locales
+ok 69 - all 45 actual journal detail pages preserve RU content and localize body, metadata, FAQ, HowTo and routes in three locales
+  ---
+  duration_ms: 2697.090477
+  type: 'test'
+  ...
+# Subtest: actual index renders all 45 cards, source ordering, 14 niche and 7 SEO links in three locales
+ok 70 - actual index renders all 45 cards, source ordering, 14 niche and 7 SEO links in three locales
+  ---
+  duration_ms: 1464.790277
+  type: 'test'
+  ...
+# Subtest: source provenance and future unmapped journal/link coverage fail closed
+ok 71 - source provenance and future unmapped journal/link coverage fail closed
+  ---
+  duration_ms: 46.299472
+  type: 'test'
+  ...
+# Subtest: actual index aliases, metadata and sitemap include translated detail routes and preserve unrelated routes
+ok 72 - actual index aliases, metadata and sitemap include translated detail routes and preserve unrelated routes
+  ---
+  duration_ms: 647.81329
+  type: 'test'
+  ...
+# Subtest: actual server locale resolution prioritizes the explicit index alias without loading personal preferences
+ok 73 - actual server locale resolution prioritizes the explicit index alias without loading personal preferences
+  ---
+  duration_ms: 114.735491
+  type: 'test'
+  ...
+# Subtest: public metadata and feed links are isolated by explicit locale
+ok 74 - public metadata and feed links are isolated by explicit locale
+  ---
+  duration_ms: 542.798041
+  type: 'test'
+  ...
+# Subtest: all public navigation source IDs have stable translations in every language
+ok 75 - all public navigation source IDs have stable translations in every language
+  ---
+  duration_ms: 15.834942
+  type: 'test'
+  ...
+# Subtest: public store teaser and pricing calculator render real localized catalogs
+ok 76 - public store teaser and pricing calculator render real localized catalogs
+  ---
+  duration_ms: 543.708745
+  type: 'test'
+  ...
+# Subtest: every QR chapter renders its actual messages in all locales and normal/deviation states
+ok 77 - every QR chapter renders its actual messages in all locales and normal/deviation states
+  ---
+  duration_ms: 1786.812436
+  type: 'test'
+  ...
+# Subtest: export date validation rejects ambiguous, impossible and timestamp dates before querying
+ok 78 - export date validation rejects ambiguous, impossible and timestamp dates before querying
+  ---
+  duration_ms: 2.116714
+  type: 'test'
+  ...
+# Subtest: export overrides are explicit and invalid values never silently switch language
+ok 79 - export overrides are explicit and invalid values never silently switch language
+  ---
+  duration_ms: 0.56965
+  type: 'test'
+  ...
+# Subtest: report presentation translates fixed fields and options without changing recorded values or people
+ok 80 - report presentation translates fixed fields and options without changing recorded values or people
+  ---
+  duration_ms: 455.578188
+  type: 'test'
+  ...
+# Subtest: report locale changes formatting without changing timezone, calendar day or small quantities
+ok 81 - report locale changes formatting without changing timezone, calendar day or small quantities
+  ---
+  duration_ms: 2.775172
+  type: 'test'
+  ...
+# Subtest: settings cards catalog keys resolve in each locale
+ok 82 - settings cards catalog keys resolve in each locale
+  ---
+  duration_ms: 13.157282
+  type: 'test'
+  ...
+# Subtest: /settings — only a redirect into the sections
+ok 83 - /settings — only a redirect into the sections
+  ---
+  duration_ms: 0.396042
+  type: 'test'
+  ...
+# Subtest: settings guide renders localized text independently of the retired hub route
+ok 84 - settings guide renders localized text independently of the retired hub route
+  ---
+  duration_ms: 440.896341
+  type: 'test'
+  ...
+# Subtest: API email locale comes from the request cookie or explicit authenticated preference without server render state
+ok 85 - API email locale comes from the request cookie or explicit authenticated preference without server render state
+  ---
+  duration_ms: 26.155232
+  type: 'test'
+  ...
+# Subtest: only explicit supported locale values are accepted
+ok 86 - only explicit supported locale values are accepted
+  ---
+  duration_ms: 0.269881
+  type: 'test'
+  ...
+# Subtest: translated public URLs round-trip without losing queries or hashes
+ok 87 - translated public URLs round-trip without losing queries or hashes
+  ---
+  duration_ms: 0.978129
+  type: 'test'
+  ...
+# Subtest: blog aliases preserve slugs and filters while explicit URLs override saved preferences
+ok 88 - blog aliases preserve slugs and filters while explicit URLs override saved preferences
+  ---
+  duration_ms: 0.761885
+  type: 'test'
+  ...
+# Subtest: language URLs cannot target private routes, callbacks or other origins
+ok 89 - language URLs cannot target private routes, callbacks or other origins
+  ---
+  duration_ms: 0.3395
+  type: 'test'
+  ...
+# Subtest: language alternates use canonical HTTPS URLs
+ok 90 - language alternates use canonical HTTPS URLs
+  ---
+  duration_ms: 0.270741
+  type: 'test'
+  ...
+# Subtest: Uzbek auth aliases round-trip and only advertise existing translated routes
+ok 91 - Uzbek auth aliases round-trip and only advertise existing translated routes
+  ---
+  duration_ms: 0.258979
+  type: 'test'
+  ...
+# Subtest: partners and privacy expose only explicit reciprocal public aliases
+ok 92 - partners and privacy expose only explicit reciprocal public aliases
+  ---
+  duration_ms: 1.268231
+  type: 'test'
+  ...
+# Subtest: translation preparation reuses exact text while retaining all contexts and stable review identities
+ok 93 - translation preparation reuses exact text while retaining all contexts and stable review identities
+  ---
+  duration_ms: 1.947073
+  type: 'test'
+  ...
+# Subtest: ambiguous translations and template fragments cannot appear as approved copy
+ok 94 - ambiguous translations and template fragments cannot appear as approved copy
+  ---
+  duration_ms: 0.755243
+  type: 'test'
+  ...
+1..94
+# tests 97
+# suites 1
+# pass 97
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23651.744629

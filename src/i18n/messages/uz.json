@@ -25126,6 +25126,8 @@
       "call": "Qo‘ng‘iroq qilish",
       "telegram": "Telegram",
       "telegramHint": "Telegram orqali yozish",
+      "max": "MAX",
+      "maxHint": "MAX messenjerida javob beramiz",
       "emailHint": "Xat yozish",
       "chat": "Saytdagi chat",
       "chatHint": "Shu yerning o‘zida, chat oynasida javob beramiz",

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import {
-  formatOutSum,
-  verifySuccessSignature,
-  verifyPaymentRequestSignature,
-} from "@/lib/robokassa";
+import { findOrderByReturnProof } from "@/lib/payment-order-proof.server";
 import { hashInviteToken } from "@/lib/invite-tokens";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 
@@ -28,7 +24,7 @@ export async function GET(request: NextRequest) {
     ? await db.paymentOrder.findUnique({
         where: { completeTokenHash: hashInviteToken(completeToken) },
       })
-    : await findBySignature(url);
+    : await findOrderByReturnProof(url);
 
   if (!order) {
     return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
@@ -60,47 +56,4 @@ export async function GET(request: NextRequest) {
     // страница не пишет «подписка продлена».
     held: Boolean(order.heldAt),
   });
-}
-
-async function findBySignature(url: URL) {
-  // `psig` — подпись запроса оплаты, которую страница оформления получила
-  // при создании заказа. Нужна, потому что при оплате в iFrame возврат на
-  // SuccessURL происходит ВНУТРИ рамки: внешняя страница о нём не узнаёт и
-  // должна сама опрашивать статус, пока клиент платит.
-  const paymentSig = url.searchParams.get("psig");
-  if (paymentSig) {
-    const invId = Number(url.searchParams.get("invId") ?? "");
-    if (!Number.isInteger(invId) || invId <= 0) return null;
-    const order = await db.paymentOrder.findUnique({ where: { id: invId } });
-    if (!order) return null;
-    const ok = verifyPaymentRequestSignature({
-      outSum: formatOutSum(order.amountRub.toString()),
-      invId: String(invId),
-      signature: paymentSig,
-      isTest: order.isTest,
-    });
-    return ok ? order : null;
-  }
-
-  const outSum = url.searchParams.get("OutSum") ?? "";
-  const invIdRaw = url.searchParams.get("InvId") ?? "";
-  const signature = url.searchParams.get("SignatureValue") ?? "";
-  const invId = Number(invIdRaw);
-
-  if (!outSum || !signature || !Number.isInteger(invId) || invId <= 0) {
-    return null;
-  }
-
-  const order = await db.paymentOrder.findUnique({ where: { id: invId } });
-  if (!order) return null;
-  if (formatOutSum(outSum) !== formatOutSum(order.amountRub.toString())) {
-    return null;
-  }
-  const ok = verifySuccessSignature({
-    outSum,
-    invId: invIdRaw,
-    signature,
-    isTest: order.isTest,
-  });
-  return ok ? order : null;
 }

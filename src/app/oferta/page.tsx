@@ -229,7 +229,7 @@ export default function OfertaPage() {
         адрес <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>.
       </p>
 
-      <h2>6. Порядок возврата денежных средств</h2>
+      <h2 id="refund">6. Порядок возврата денежных средств</h2>
       <p>
         6.1.{" "}
         <strong>Безусловный возврат в течение 14 дней.</strong> Если в течение

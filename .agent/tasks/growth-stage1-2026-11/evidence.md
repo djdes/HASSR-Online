@@ -1,0 +1,14 @@
+# Evidence: этап «Недели 1–2» плана «как стать №1» (31.10.2026)
+
+Ветка `claude/serene-mccarthy-rhrl3e` от master `a4481d06`. Проверки до слияния — в `raw/`.
+
+| AC | Статус | Доказательство |
+| --- | --- | --- |
+| AC1 Оплата понятна заранее | PASS | `lib/payment-copy.ts` (`PAYMENT_METHODS_NOTE`, `REFUND_NOTE`, `REFUND_HREF`) — /pricing под тарифами и /order под кнопкой оплаты; у оферты `id="refund"` на разделе 6 (текст оферты не менялся). Тест `completion-resend.test.ts` → «оплата понятна заранее» (2) сверяет формулировки с п. 5.2 и 6.1 оферты |
+| AC2 Неудачная оплата не тупик | PASS | Экран «Оплата не прошла»: «Попробовать ещё раз», «Оплатить по счёту» (`/settings/subscription`), «Связаться с нами» (`ContactSupportButton`). Тест «неудачная оплата — не тупик» |
+| AC3 Ссылку можно выслать ещё раз | PASS | `lib/payment-order-proof.server.ts` (`findOrderByReturnProof`, вынесено из статуса заказа без изменения логики), `POST /api/payments/robokassa/resend-completion`: то же доказательство, новый токен (старая ссылка гаснет), письмо, лимит 1 раз в минуту и 5 на заказ (`completionResendDecision`, записи `payment.completion_link.resent`), ответ всегда `{ ok: true }`. Кнопка «Выслать ссылку ещё раз» на экране возврата. Тесты «ссылку на достройку можно выслать ещё раз» (3) |
+| AC4 «СРОЧНО» не новичкам и не демо | PASS | `lib/newcomer-scope.ts` (`skipComplianceReminder`, 48 часов), крон `compliance` берёт `isDemo`, `createdAt` и проверяет записи (`org-activity.server.ts`) только у молодых. Тест `newcomer-scope.test.ts` (3) |
+| AC5 Письма новичку | PASS | `lib/newcomer-journey.ts` (`nextJourneyStep`, `composeJourneyEmail`), `newcomer-journey.server.ts` (окно 2–14 дней, ru, без демо/платформы/справочников/неактивных, стоп-лист, чат за сутки, запись `onboarding.journey` после успешной отправки, reply-to поддержки), запуск из `/api/cron/billing-transition` (ответ задачи — `journey`). Тест `newcomer-journey.test.ts` (7) |
+| AC6 Неотвеченный чат | PASS | `lib/support-unanswered.ts`, крон `/api/cron/support-unanswered` (секрет, окно 15 мин – 24 ч, пропуск уже отправленного по `TelegramLog` — `notifyPlatformAdmin` сам повтор не отсекает), строка crontab в `docs/telegram-admin-notifications.md`. Тест `support-unanswered.test.ts` (3) |
+| AC7 MAX по настройке | PASS | `contactMaxUrl` (`lib/contact-us.ts`), строка MAX в `ContactUsPanel` при `NEXT_PUBLIC_WESETUP_MAX_URL` (уточнение спецификации до реализации), тексты ru/en/uz, переменная в `.env.example`. Тесты в `contact-us.test.ts` (2 новых; исходные 2 сохранены) |
+| AC8 Ворота | PENDING | До слияния: `npm run typecheck` EXIT 0 (`raw/typecheck.txt`), `npm run i18n:check` 97/97, eslint изменённых файлов EXIT 0 (одно старое предупреждение в `compliance/route.ts:19`, не из этой задачи), целевые тесты 23/23 (`raw/targeted-tests.txt`), `npm run test:gate` 5387/5387 (`raw/test-gate.txt`). Слияние, выкладка и проверка прода — после PR |

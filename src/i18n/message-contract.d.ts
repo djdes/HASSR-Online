@@ -25127,6 +25127,8 @@ export type MessageContract = {
       "call": "Позвонить",
       "telegram": "Telegram",
       "telegramHint": "Написать в Telegram",
+      "max": "MAX",
+      "maxHint": "Ответим в мессенджере MAX",
       "emailHint": "Написать письмо",
       "chat": "Чат на сайте",
       "chatHint": "Ответим здесь же, в окне чата",

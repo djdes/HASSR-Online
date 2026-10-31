@@ -25126,6 +25126,8 @@
       "call": "Call us",
       "telegram": "Telegram",
       "telegramHint": "Message us on Telegram",
+      "max": "MAX",
+      "maxHint": "We reply in the MAX messenger",
       "emailHint": "Write to us",
       "chat": "Website chat",
       "chatHint": "We will reply right here in the chat",

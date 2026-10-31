@@ -18,6 +18,7 @@ import { PromoPrice } from "@/components/pricing/promo-price";
 import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { contactTelegramUrl } from "@/lib/contact-us";
+import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
 import { HARDWARE_BUNDLES, bundleTotal } from "@/lib/hardware-pricing";
 import { POINTS_DISCOUNT_FROM, POINTS_DISCOUNT_PERCENT, planMonthlyRub } from "@/lib/tariff-plans";
 
@@ -102,10 +103,10 @@ export default async function PricingPage() {
           hardwareFromRub={hardwareFromRub}
         />
 
-        <p className="text-center text-[13px] text-[#9b9fb3]">
-          Оплата картой через сервис «Робокасса» или по счёту для юрлица. Возврат за неиспользованный
-          период — по заявлению на support@wesetup.ru, условия описаны в{" "}
-          <Link href="/oferta" className="text-[#3848c7]">
+        <p className="text-center text-[13px] leading-[1.6] text-[#6f7282]">
+          {PAYMENT_METHODS_NOTE} {REFUND_NOTE} Заявление на возврат — на support@wesetup.ru,
+          условия — в{" "}
+          <Link href={REFUND_HREF} className="text-[#3848c7]">
             договоре-оферте
           </Link>
           .

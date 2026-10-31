@@ -1,0 +1,7 @@
+
+/home/user/HASSR-Online/src/app/api/cron/compliance/route.ts
+  19:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+
+eslint EXIT 0

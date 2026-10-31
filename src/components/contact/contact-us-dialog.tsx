@@ -2,10 +2,10 @@
 
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowUpRight, Mail, MessageCircle, Phone, Send } from "lucide-react";
+import { ArrowUpRight, Mail, MessageCircle, MessagesSquare, Phone, Send } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK } from "@/lib/contact-us";
+import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
 import { contactSupport } from "@/lib/support-chat-bus";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +69,9 @@ export function ContactUsPanel({
   const t = useTranslations("sharedUi.contactUs");
   const subject = service ? t("subjectService", { service }) : t("subjectGeneral");
   const telegram = telegramUrl || CONTACT_TELEGRAM_FALLBACK;
+  // MAX рядом с Telegram — страховка на случай ограничений Telegram. Появляется,
+  // когда владелец задал адрес канала поддержки в MAX.
+  const max = contactMaxUrl(process.env.NEXT_PUBLIC_WESETUP_MAX_URL);
 
   const openChat = () => {
     if (!onBeforeChat) {
@@ -100,6 +103,12 @@ export function ContactUsPanel({
       <a href={telegram} target="_blank" rel="noopener noreferrer" className={ROW_CLASS} data-contact-telegram>
         <ContactRow icon={<Send className="size-5" aria-hidden />} label={t("telegram")} hint={t("telegramHint")} />
       </a>
+
+      {max ? (
+        <a href={max} target="_blank" rel="noopener noreferrer" className={ROW_CLASS} data-contact-max>
+          <ContactRow icon={<MessagesSquare className="size-5" aria-hidden />} label={t("max")} hint={t("maxHint")} />
+        </a>
+      ) : null}
 
       <a
         href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`}
