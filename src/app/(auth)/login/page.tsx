@@ -43,6 +43,9 @@ export async function generateMetadata() {
   const url = `https://wesetup.ru${localizedHref("/login", locale)}`;
   return {
     ...russianMetadata, title, description,
+    // Служебный экран без контента под запрос: в sitemap его нет, в выдаче
+    // он только размывает набор страниц. Ссылки с него поисковик проходит.
+    robots: { index: false, follow: true },
     alternates: { canonical: url, languages: siteLanguageAlternates("/login") },
     openGraph: { ...russianMetadata.openGraph, title, description, url, locale: { ru: "ru_RU", en: "en_US", uz: "uz_UZ" }[locale], images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
     twitter: { ...russianMetadata.twitter, title, description, images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_TWITTER_IMAGES },

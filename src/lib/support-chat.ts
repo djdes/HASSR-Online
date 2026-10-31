@@ -130,6 +130,61 @@ export function composePartnerHandoffAdminMessage(args: {
 }
 
 /** Реплика оператора — руководству организации в Telegram. */
+/**
+ * Пауза, после которой новая реплика оператора без ответа гостя снова уходит
+ * письмом: в пределах одного «хода» шлём одно письмо, а не по письму на
+ * каждую строку, но вопрос «вы ещё здесь?» через час гость тоже получит.
+ */
+export const GUEST_REPLY_EMAIL_PAUSE_MS = 30 * 60 * 1000;
+
+/**
+ * Слать ли гостю письмо об ответе оператора. `previous` — реплика перед
+ * новой (null — ответ первый в ветке).
+ */
+export function shouldEmailGuestReply(
+  previous: { author: string; createdAt: Date } | null,
+  replyAt: Date
+): boolean {
+  if (!previous || previous.author !== "operator") return true;
+  return replyAt.getTime() - previous.createdAt.getTime() >= GUEST_REPLY_EMAIL_PAUSE_MS;
+}
+
+/**
+ * Письмо гостю сайта с ответом из онлайн-чата. Виджет обещает «ответим туда,
+ * даже если вы закроете сайт» — это и есть «туда». Текст экранирует `escape`,
+ * переносы строк сохраняются.
+ */
+export function composeGuestReplyEmail(args: {
+  operatorName: string | null;
+  body: string;
+  attachmentsCount: number;
+  appUrl: string;
+  escape: (value: string) => string;
+}): { subject: string; title: string; html: string } {
+  const P = 'style="margin:0 0 16px;color:#3f3f46;line-height:1.6"';
+  const BOX =
+    'style="background:#f5f6ff;border-radius:8px;padding:16px 20px;margin:0 0 16px;color:#0b1024;line-height:1.6"';
+  const BUTTON =
+    'style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px"';
+  const text = args.body.trim()
+    ? args.escape(args.body.trim()).replace(/\r?\n/g, "<br>")
+    : "📎 Вложение";
+  const who = args.operatorName?.trim() ? `<p ${P}>Отвечает: ${args.escape(args.operatorName.trim())}</p>` : "";
+  const files =
+    args.attachmentsCount > 0 ? `<p ${P}>К ответу приложены файлы — они в переписке на сайте.</p>` : "";
+  return {
+    subject: "Ответ поддержки WeSetup",
+    title: "Ответ из чата WeSetup",
+    html:
+      `<p ${P}>Здравствуйте! Вы писали нам в чат на сайте WeSetup — вот ответ.</p>` +
+      `<div ${BOX}>${text}</div>` +
+      who +
+      files +
+      `<p ${P}>Продолжить можно в чате на сайте или ответом на это письмо.</p>` +
+      `<a href="${args.appUrl}/?support=chat" ${BUTTON}>Открыть переписку</a>`,
+  };
+}
+
 export function composeOperatorReplyTelegram(args: {
   operatorLabel: string;
   body: string;

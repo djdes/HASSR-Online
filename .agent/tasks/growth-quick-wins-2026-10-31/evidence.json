@@ -1,0 +1,17 @@
+{
+  "task": "growth-quick-wins-2026-10-31",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "9583b7b9",
+  "checkedAt": "2026-10-31",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/billing-period.test.ts", "raw/targeted-tests.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/recurring-consent.test.ts", "raw/i18n-check.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/support-chat.test.ts"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/lead-alerts.test.ts"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/article-visibility.test.ts", "raw/baseline-prod-sitemap.txt"] },
+    "AC5a": { "status": "PASS", "evidence": ["src/i18n/public-ui-localization.test.ts"] },
+    "AC5b": { "status": "PASS", "evidence": ["src/lib/article-visibility.test.ts"] },
+    "AC6": { "status": "PENDING", "preMerge": "PASS", "evidence": ["src/components/auth/registration-challenge.test.ts", "raw/baseline-prod-cls.json"], "pending": "CLS < 0.1 on prod after deploy (e2e/cls-measure.cjs)" },
+    "AC7": { "status": "PENDING", "preMerge": { "typecheck": "EXIT 0", "testGate": "5340 pass, 0 fail", "i18nCheck": "97 pass", "eslintChanged": "EXIT 0" }, "pending": "merge, deploy, /api/build-info, prod sitemap and CLS" }
+  }
+}

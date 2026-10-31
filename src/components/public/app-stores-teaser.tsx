@@ -34,7 +34,7 @@ export function AppStoresTeaser({
           (card ? "max-w-[520px]" : "max-w-[280px]")
         }
       >
-        {t("description", { launchDate: t("launchDate") })}
+        {t("description")}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {STORES.map((store) => (

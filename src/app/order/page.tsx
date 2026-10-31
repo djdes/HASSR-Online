@@ -7,6 +7,7 @@ import { getBalance } from "@/lib/balance/ledger";
 import type { Tariff } from "@/lib/tariffs";
 import { IMPERSONATION_CHECKOUT_ERROR, parseCheckoutTarget, quoteCheckout } from "@/lib/plan-checkout.server";
 import { formatMskDate } from "@/lib/billing-period";
+import { effectiveRecurringConsent } from "@/lib/recurring-consent";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { discountForPrice, discountLabel, type AppliedDiscount } from "@/lib/promo/discounts";
 import { PROMO_COOKIE } from "@/lib/promo/personal-link";
@@ -209,8 +210,9 @@ export default async function OrderPage({
           sessionEmail={sessionEmail}
           pointsAvailable={pointsAvailable}
           pointsCap={offer?.priceRub ?? 0}
-          // Пришли из кабинета по кнопке «Включить автопродление».
-          recurringDefault={first("recurring") === "1"}
+          // Пришли из кабинета по кнопке «Включить автопродление» — только
+          // когда автосписания работают (RECURRING_CHARGES_LIVE).
+          recurringDefault={effectiveRecurringConsent(first("recurring") === "1")}
           initialDiscount={initialDiscount}
           returnParams={{
             outSum: first("OutSum"),

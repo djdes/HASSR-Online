@@ -24,6 +24,7 @@ import type { SubscriptionOffer } from "@/lib/promo/promotions";
 import type { AppliedDiscount } from "@/lib/promo/discounts";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import {
+  RECURRING_CHARGES_LIVE,
   RECURRING_CONSENT_TEXT,
   RECURRING_OFFER_HREF,
   recurringPeriodText,
@@ -407,7 +408,8 @@ function Checkout({
   const capAfterPromo = Math.max(0, pointsCap - discountRub);
   // К оплате 0 ₽ (зачёт или скидка) — автосписаний нет: галочка скрыта, и
   // согласие не действует, даже если пришло из ссылки (`?recurring=1`).
-  const autopay = recurringConsent && amountAfterPromo > 0;
+  // Пока автосписаний нет (RECURRING_CHARGES_LIVE), платёж всегда разовый.
+  const autopay = RECURRING_CHARGES_LIVE && recurringConsent && amountAfterPromo > 0;
   const pointsSpent =
     usePoints && !autopay
       ? Math.min(pointsAvailable, Math.min(capAfterPromo, amountAfterPromo))
@@ -790,7 +792,7 @@ function Checkout({
             не должно. Доплата за остаток срока — всегда разовая (сервер
             галочку у неё не учитывает), поэтому её не показываем; как и
             при сумме 0 ₽ (зачёт остатка или скидка). */}
-        {plan?.kind === "upgrade" || amountAfterPromo === 0 ? null : (
+        {!RECURRING_CHARGES_LIVE || plan?.kind === "upgrade" || amountAfterPromo === 0 ? null : (
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
             <input
               type="checkbox"

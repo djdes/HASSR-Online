@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Clock, NotebookText, Search } from "lucide-react";
 import { db } from "@/lib/db";
+import { publishedArticleWhere } from "@/lib/article-visibility";
 import { localizeArticles } from "@/lib/article-localization-server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { formatDate as localizedDate, type Locale } from "@/i18n/locales";
@@ -63,7 +64,8 @@ export default async function BlogListPage({
   // в памяти; для filter'а по tag/search'у нужны все). Если когда-то
   // будет 200+, — перейдём на DB-фильтр.
   const articleSources = await db.article.findMany({
-    where: { publishedAt: { not: null } },
+    // Отложенные статьи (дата в будущем) появятся в свой день.
+    where: publishedArticleWhere(new Date()),
     orderBy: { publishedAt: "desc" },
     select: {
       id: true,

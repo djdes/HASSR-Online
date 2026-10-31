@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  GUEST_REPLY_EMAIL_PAUSE_MS,
   buildSupportChatTag,
+  composeGuestReplyEmail,
   composePartnerHandoffAdminMessage,
   composeSupportChatAdminMessage,
   composeSupportChatPartnerMessage,
   extractSupportThreadId,
+  shouldEmailGuestReply,
 } from "@/lib/support-chat";
 
 // Тот же приём, что и в escapeTelegramHtml — тест не должен быть мягче.
@@ -100,4 +103,37 @@ test("partner message links to the partner chats page", () => {
   });
   assert.ok(text.includes("/partner/chats?thread=thr_9"));
   assert.ok(text.includes("&lt;b&gt;вопрос&lt;/b&gt;"));
+});
+
+test("guest reply email: one per operator turn, again after a 30-minute pause", () => {
+  const at = new Date("2026-10-31T12:00:00Z");
+  const ago = (minutes: number) => new Date(at.getTime() - minutes * 60_000);
+  // First reply in the thread, or the guest wrote last — email.
+  assert.equal(shouldEmailGuestReply(null, at), true);
+  assert.equal(shouldEmailGuestReply({ author: "client", createdAt: ago(1) }, at), true);
+  // The operator keeps typing in the same turn — no second email.
+  assert.equal(shouldEmailGuestReply({ author: "operator", createdAt: ago(2) }, at), false);
+  assert.equal(shouldEmailGuestReply({ author: "operator", createdAt: ago(29) }, at), false);
+  // A follow-up after a pause reaches the guest too.
+  assert.equal(shouldEmailGuestReply({ author: "operator", createdAt: ago(GUEST_REPLY_EMAIL_PAUSE_MS / 60_000) }, at), true);
+});
+
+test("guest reply email escapes the reply, keeps line breaks and links back to the chat", () => {
+  const mail = composeGuestReplyEmail({
+    operatorName: "Поддержка <WeSetup>",
+    body: "Здравствуйте!\nТариф <b>Стандарт</b> подойдёт.",
+    attachmentsCount: 1,
+    appUrl: "https://wesetup.ru",
+    escape,
+  });
+  assert.equal(mail.subject, "Ответ поддержки WeSetup");
+  assert.match(mail.html, /Здравствуйте!<br>Тариф &lt;b&gt;Стандарт&lt;\/b&gt; подойдёт\./);
+  assert.match(mail.html, /Отвечает: Поддержка &lt;WeSetup&gt;/);
+  assert.match(mail.html, /К ответу приложены файлы/);
+  assert.match(mail.html, /href="https:\/\/wesetup\.ru\/\?support=chat"/);
+  assert.doesNotMatch(mail.html, /<b>Стандарт<\/b>/);
+
+  const bare = composeGuestReplyEmail({ operatorName: null, body: "  ", attachmentsCount: 2, appUrl: "https://wesetup.ru", escape });
+  assert.match(bare.html, /📎 Вложение/);
+  assert.doesNotMatch(bare.html, /Отвечает:/);
 });

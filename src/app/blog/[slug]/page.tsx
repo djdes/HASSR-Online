@@ -8,6 +8,9 @@ import { formatDate as localizedDate, type Locale } from "@/i18n/locales";
 import { translatorFor } from "@/i18n/translator";
 import { localizedHref } from "@/i18n/site-locale";
 import { articleLanguageAlternates } from "@/lib/article-language-alternates";
+import { isArticlePublished, publishedArticleWhere } from "@/lib/article-visibility";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-session";
 import { loadMessages } from "@/i18n/messages";
 import { journalTitle } from "@/i18n/journal-presentation";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
@@ -39,6 +42,18 @@ function formatDate(date: Date | null, locale: Locale) {
   });
 }
 
+/**
+ * Статья открыта, если дата публикации наступила. Отложенную (дата в
+ * будущем) читатели и поисковики не видят, а ROOT открывает её из админки
+ * блога, чтобы проверить перед выходом. Сессию читаем только в этом случае.
+ */
+async function canViewArticle(publishedAt: Date | null): Promise<boolean> {
+  if (!publishedAt) return false;
+  if (isArticlePublished(publishedAt, new Date())) return true;
+  const session = await getServerSession(authOptions).catch(() => null);
+  return session?.user?.isRoot === true;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -51,18 +66,20 @@ export async function generateMetadata({
     where: { slug },
     select: { id: true, slug: true, body: true, tags: true, title: true, excerpt: true, publishedAt: true, translations: true },
   });
-  if (!source || !source.publishedAt) {
+  if (!source || !(await canViewArticle(source.publishedAt))) {
     return { title: { absolute: t("blogChrome.article.notFoundTitle") } };
   }
   const [article] = await localizeArticles([source], locale);
   const url = `https://wesetup.ru${localizedHref(`/blog/${slug}`, locale)}`;
+  // Отложенную статью до её дня видит только ROOT — и не для индекса.
+  const scheduled = !isArticlePublished(source.publishedAt, new Date());
   return {
     // article.title уже самостоятельный, layout.template добавит — WeSetup.
     title: article.title,
     description: article.excerpt,
     keywords: article.displayTags,
     alternates: { canonical: url, languages: articleLanguageAlternates(source, source.translations) },
-    ...(article.translationMissing ? { robots: { index: false, follow: true } } : {}),
+    ...(article.translationMissing || scheduled ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: "article",
       locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[article.contentLocale],
@@ -91,7 +108,7 @@ export default async function BlogArticlePage({
   const source = await db.article.findUnique({
     where: { slug },
   });
-  if (!source || !source.publishedAt) notFound();
+  if (!source || !(await canViewArticle(source.publishedAt))) notFound();
   const locale = await getSiteLocale();
   const t = await translatorFor(locale);
   const [article] = await localizeArticles([source], locale);
@@ -144,7 +161,7 @@ export default async function BlogArticlePage({
   // считаем overlap, сортируем, берём top-3.
   const relatedRaw = await db.article.findMany({
     where: {
-      publishedAt: { not: null },
+      ...publishedArticleWhere(new Date()),
       slug: { not: slug },
     },
     orderBy: { publishedAt: "desc" },

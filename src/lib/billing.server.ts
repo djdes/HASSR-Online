@@ -30,7 +30,12 @@ import {
   journalsLabel,
   lastDayBefore,
   normalizeTrialSettings,
+  PAID_REMINDER_STAGES,
   paidPlansHint,
+  paidReminderCopy,
+  paidReminderDue,
+  paidReminderStage,
+  paidTierTitle,
   pickKeeper,
   pickKeeperJournal,
   serializeTrialSettings,
@@ -100,6 +105,7 @@ export const AUDIT_ACTIONS = {
   silent: "billing.transition.silent_free",
   reminder: "billing.transition.reminder",
   trialReminder: "billing.trial.reminder",
+  paidReminder: "billing.paid.reminder",
   settings: "billing.trial.updated",
   scheduled: "billing.plan.scheduled",
   scheduleCancelled: "billing.plan.schedule_cancelled",
@@ -1182,6 +1188,8 @@ async function sendOwnerNotice(args: {
   email?: { subject: string; title: string; html: string } | null;
   /** Письмо — только если Telegram не привязан. */
   emailOnlyWithoutTelegram?: boolean;
+  /** Подпись кнопки в Telegram (по умолчанию «Открыть тариф»). */
+  buttonLabel?: string;
 }): Promise<{ telegram: boolean; email: boolean }> {
   const owner = await ownerContact(args.organizationId);
   if (!owner) return { telegram: false, email: false };
@@ -1193,7 +1201,7 @@ async function sendOwnerNotice(args: {
       await notifyEmployee(
         owner.userId,
         args.telegramText,
-        { label: "Открыть тариф", miniAppUrl: BILLING_PAY_HREF },
+        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: BILLING_PAY_HREF },
         { delivery: { organizationId: args.organizationId, kind: args.kind } }
       );
       telegram = true;
@@ -1323,6 +1331,48 @@ async function sendDecisionReminder(
         `<div ${BOX}>До <strong>${deadline}</strong> включительно выберите: подключить тариф — ${escapeHtml(paidPlansHint(prices))} — или остаться на бесплатном.</div>` +
         `<p ${P}>Если ничего не выбрать, в работе останутся владелец аккаунта и самый заполняемый журнал. Остальное можно вернуть после оплаты — записи сохранятся.</p>` +
         `<a href="${payUrl}" ${BUTTON}>Выбрать тариф</a>`,
+    },
+  });
+  return true;
+}
+
+/**
+ * Напоминание о конце оплаченного срока (за 7, 3 и 1 день). Автосписаний
+ * нет, поэтому письмо уходит всегда, а не только без Telegram: это деньги и
+ * доступ всей команды.
+ */
+async function sendPaidEndingReminder(
+  unit: BillingUnit,
+  state: AccountBillingState,
+  settings: TrialSettings
+): Promise<boolean> {
+  const { escapeHtml } = await import("@/lib/html-escape");
+  if (!state.paidUntil || state.paidDaysLeft === null) return false;
+  const lastDay = formatMskDay(lastDayBefore(state.paidUntil));
+  const copy = paidReminderCopy({
+    orgName: escapeHtml(unit.organizationName),
+    tierTitle: paidTierTitle(state.paidTier),
+    points: state.planPoints,
+    lastDayLabel: lastDay,
+    daysLeft: state.paidDaysLeft,
+    graceDays: settings.graceDays,
+    transitionEnabled: settings.transitionEnabled,
+  });
+  const payUrl = `${APP_URL}${BILLING_PAY_HREF}`;
+  await sendOwnerNotice({
+    organizationId: unit.organizationId,
+    kind: "billing.paid_reminder",
+    buttonLabel: "Продлить",
+    telegramText: ["⏳ " + copy.head, copy.renew, copy.after].filter(Boolean).join(" "),
+    email: {
+      subject: `«${unit.organizationName}»: оплата заканчивается ${lastDay}`,
+      title: "Оплата заканчивается",
+      html:
+        `<p ${P}>Здравствуйте!</p>` +
+        `<p ${P}>${copy.head}</p>` +
+        `<div ${BOX}>${copy.renew}</div>` +
+        (copy.after ? `<p ${P}>${copy.after}</p>` : "") +
+        `<a href="${payUrl}" ${BUTTON}>Продлить</a>`,
     },
   });
   return true;
@@ -1458,6 +1508,8 @@ export type BillingJobReport = {
   now: string;
   scanned: number;
   trialReminded: number;
+  /** Напоминания о конце оплаченного срока (7, 3, 1 день). */
+  paidReminded: number;
   silentFree: number;
   reminded: number;
   autoFree: number;
@@ -1489,6 +1541,7 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     now: now.toISOString(),
     scanned: 0,
     trialReminded: 0,
+    paidReminded: 0,
     silentFree: 0,
     reminded: 0,
     autoFree: 0,
@@ -1530,6 +1583,40 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
           outcome = "trial reminder sent";
         }
         report.trialReminded += 1;
+      } else if (action === "remind_paid_end") {
+        const stage = paidReminderStage(state.paidDaysLeft);
+        const paidUntil = state.paidUntil;
+        if (!stage || !paidUntil) {
+          outcome = "no paid reminder stage";
+        } else {
+          const sent = await db.auditLog.findMany({
+            where: {
+              organizationId: { in: unit.scopeOrgIds },
+              action: AUDIT_ACTIONS.paidReminder,
+              createdAt: { gte: new Date(paidUntil.getTime() - (PAID_REMINDER_STAGES[0] + 2) * DAY_MS) },
+            },
+            select: { details: true },
+          });
+          if (!paidReminderDue(sent.map((row) => row.details), paidUntil, stage)) {
+            outcome = `paid reminder ${stage} already sent`;
+          } else {
+            if (!dryRun) {
+              await sendPaidEndingReminder(unit, state, settings);
+              await db.auditLog.create({
+                data: {
+                  organizationId: unit.organizationId,
+                  userName: "WeSetup",
+                  action: AUDIT_ACTIONS.paidReminder,
+                  entity: unit.accountId ? "account" : "organization",
+                  entityId: unit.accountId ?? unit.organizationId,
+                  details: { paidUntil: paidUntil.toISOString(), stage, daysLeft: state.paidDaysLeft },
+                },
+              });
+              outcome = `paid reminder ${stage} sent`;
+            }
+            report.paidReminded += 1;
+          }
+        }
       } else if (action === "silent_free") {
         if (!dryRun) {
           const r = await transitionToFree({ organizationId: unit.organizationId, mode: "silent", actor: { userId: null, userName: "WeSetup" }, now });
@@ -1594,6 +1681,7 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     dryRun,
     scanned: report.scanned,
     trialReminded: report.trialReminded,
+    paidReminded: report.paidReminded,
     silentFree: report.silentFree,
     reminded: report.reminded,
     autoFree: report.autoFree,

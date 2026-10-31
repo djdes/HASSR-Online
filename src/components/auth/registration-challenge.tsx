@@ -22,6 +22,9 @@ declare global {
   interface Window { grecaptcha?: Recaptcha; wesetupRecaptchaReady?: () => void }
 }
 
+/** Высота compact-виджета reCAPTCHA v2 (164×144) — резервируется до его прихода. */
+export const CHALLENGE_RESERVED_CLASS = "min-h-[144px]";
+
 let scriptPromise: Promise<Recaptcha> | undefined;
 
 function loadRecaptcha(locale: SiteLocale): Promise<Recaptcha> {
@@ -130,11 +133,23 @@ function RegistrationChallenge({ onToken, onRetry, tone }: {
 
   return (
     <div className="mt-3 w-full min-w-0" data-registration-challenge>
-      <div ref={container} />
-      {loading && (
-        <p role="status" className={"text-[13px] " + (tone === "dark" ? "text-white/70" : "text-[#6f7282]")}>
-          {t("loading")}</p>
-      )}
+      {/* Место под compact-виджет (164×144) держим с первой отрисовки: виджет
+          приходит через секунды, и без этого форма вырастала на 124 px и
+          сдвигала первый экран (CLS 0,17 на телефоне). Надпись «загружается»
+          лежит поверх зарезервированного места и не влияет на высоту. */}
+      <div className={error ? "" : `relative ${CHALLENGE_RESERVED_CLASS}`}>
+        <div ref={container} />
+        {loading && (
+          <p
+            role="status"
+            className={
+              "absolute left-0 top-0 flex h-[144px] w-[164px] items-center justify-center rounded-[6px] border border-dashed px-3 text-center text-[13px] leading-snug " +
+              (tone === "dark" ? "border-white/25 text-white/70" : "border-[#dcdfed] text-[#6f7282]")
+            }
+          >
+            {t("loading")}</p>
+        )}
+      </div>
       {error && (
         <div role="alert" className={"text-[13px] " + (tone === "dark" ? "text-[#ffb4ab]" : "text-[#a13a32]")}>
           {t("failed")}<button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">

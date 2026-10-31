@@ -28,6 +28,8 @@ import {
 import { readPlanPricing } from "@/lib/tariffs";
 import { BILLING_TEST_MODE, FREE_MAX_USERS, isFreePlan } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
+import { RenewalCard } from "@/components/settings/renewal-card";
+import { RECURRING_CHARGES_LIVE } from "@/lib/recurring-consent";
 import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { PromoBadge } from "@/components/pricing/promo-price";
 import { SubscriptionDiscountCard } from "@/components/settings/subscription-discount-card";
@@ -644,9 +646,22 @@ export default async function SubscriptionPage({
         />
       ) : null}
 
+      {/* Пока автосписаний нет — честная карточка «Продление»: дата,
+          напоминания за 7, 3 и 1 день, оплата следующего периода заранее. */}
+      {!RECURRING_CHARGES_LIVE && kind === "paid" && nextChargeAt ? (
+        <RenewalCard
+          paidUntil={nextChargeAt.toISOString()}
+          renewHref={
+            current && current.tier !== "legacy" && !scheduled
+              ? orderHref({ tier: current.tier, cycle: current.cycle, points: current.points })
+              : "#tariffs"
+          }
+        />
+      ) : null}
+
       {/* Отключить автопродление можно всегда (оферта) — карточка есть и у
           прежней «Подписки», пока автопродление включено. */}
-      {(kind === "paid" && renewTarget) || org?.recurringActive === true ? (
+      {RECURRING_CHARGES_LIVE && ((kind === "paid" && renewTarget) || org?.recurringActive === true) ? (
         <RecurringCard
           active={org?.recurringActive === true}
           nextChargeAt={nextChargeAt?.toISOString() ?? null}

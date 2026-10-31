@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { normalizeSphere } from "@/lib/org-profile";
+import { normalizeSphere, sphereLabel } from "@/lib/org-profile";
+import { composeProfileCompletedAlert } from "@/lib/lead-alerts";
+import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { escapeTelegramHtml } from "@/lib/telegram";
 import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
 import { isUntouchedDisabledCodes } from "@/lib/health-check-default-off";
 import bcrypt from "bcryptjs";
@@ -202,6 +205,22 @@ export async function POST(request: Request) {
       locale: resolveLocale({ authenticated: true, userLocale: session.user.locale, organizationLocale: session.user.organizationLocale }),
     }).catch((err) => console.error("sendPasswordChangedEmail failed", err));
   }
+
+  // Анкета с телефоном — самый тёплый момент: человек сейчас в кабинете, и
+  // звонок «помочь с первым QR» в ближайшие минуты попадает в цель. Один раз
+  // на организацию (dedupeKey); сбой Telegram анкету не ломает.
+  notifyPlatformAdmin(
+    composeProfileCompletedAlert({
+      organizationName: data.organizationName,
+      sphereLabel: sphereLabel(data.sphere),
+      locationsCount: data.locationsCount,
+      name: displayName,
+      phone,
+      email,
+      escape: escapeTelegramHtml,
+    }),
+    { kind: "profile_completed", dedupeKey: `profile_completed:${organizationId}` },
+  ).catch((error) => console.error("[profile/complete] admin alert failed", error));
 
   // Точки: анкета показывает шаг «Назовите точки» — отдаём созданные.
   const buildings =

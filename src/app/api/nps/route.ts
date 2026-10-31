@@ -2,10 +2,43 @@ import { NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { canEditNpsResponse, isNpsScoreOnScale, normalizeNpsScale, npsScaleRange, parseNpsAnswer, parseNpsUpdate } from "@/lib/nps";
+import { composeLowNpsAlert, isLowNpsScore } from "@/lib/lead-alerts";
+import { canEditNpsResponse, isNpsScoreOnScale, normalizeNpsScale, npsScaleRange, parseNpsAnswer, parseNpsUpdate, type NpsScale } from "@/lib/nps";
+import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { escapeTelegramHtml } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * Низкая оценка — сразу админу в Telegram: позвонить, пока человек не ушёл.
+ * Сбой Telegram ответ не ломает; `dedupeKey` не даёт повторить сообщение.
+ */
+function alertLowScore(args: {
+  organizationId: string;
+  userName: string;
+  score: number;
+  scale: NpsScale;
+  comment: string | null;
+  followUp: boolean;
+  dedupeKey: string;
+}): void {
+  void (async () => {
+    const organization = await db.organization.findUnique({ where: { id: args.organizationId }, select: { name: true } });
+    await notifyPlatformAdmin(
+      composeLowNpsAlert({
+        organizationName: organization?.name ?? "—",
+        userName: args.userName,
+        score: args.score,
+        scale: args.scale,
+        comment: args.comment,
+        followUp: args.followUp,
+        escape: escapeTelegramHtml,
+      }),
+      { kind: "nps_low", dedupeKey: args.dedupeKey },
+    );
+  })().catch((error) => console.error("[nps] admin alert failed", error));
+}
 
 /**
  * POST { score, scale: 5, comment? } — ответ 1–5 (сохраняется сразу по клику, в ответе id);
@@ -28,6 +61,17 @@ export async function POST(request: Request) {
     }),
     db.user.update({ where: { id: session.user.id }, data: { npsAskedAt: now } }),
   ]);
+  if (isLowNpsScore(parsed.score, parsed.scale)) {
+    alertLowScore({
+      organizationId: session.user.organizationId,
+      userName: session.user.name ?? session.user.email ?? "—",
+      score: parsed.score,
+      scale: parsed.scale,
+      comment: parsed.comment,
+      followUp: false,
+      dedupeKey: `nps:${response.id}`,
+    });
+  }
   return NextResponse.json({ ok: true, id: response.id });
 }
 
@@ -41,7 +85,7 @@ export async function PATCH(request: Request) {
   if (parsed.kind === "invalid") return NextResponse.json({ error: parsed.error }, { status: 400 });
   const existing = await db.npsResponse.findFirst({
     where: { id: parsed.id, userId: session.user.id },
-    select: { id: true, scale: true, createdAt: true },
+    select: { id: true, scale: true, score: true, comment: true, createdAt: true },
   });
   if (!existing) return NextResponse.json({ error: "Ответ не найден — обновите страницу" }, { status: 404 });
   if (!canEditNpsResponse(existing.createdAt, new Date())) {
@@ -59,5 +103,24 @@ export async function PATCH(request: Request) {
       ...(parsed.comment !== undefined ? { comment: parsed.comment } : {}),
     },
   });
+  // Оценку опустили до низкой — как новая низкая; к низкой дописали
+  // комментарий — отдельным сообщением (по одному на ответ).
+  const score = parsed.score ?? existing.score;
+  const comment = parsed.comment !== undefined ? parsed.comment : existing.comment;
+  if (isLowNpsScore(score, scale)) {
+    const becameLow = parsed.score !== undefined && !isLowNpsScore(existing.score, scale);
+    const commented = parsed.comment !== undefined && Boolean(parsed.comment?.trim());
+    if (becameLow || commented) {
+      alertLowScore({
+        organizationId: session.user.organizationId,
+        userName: session.user.name ?? session.user.email ?? "—",
+        score,
+        scale,
+        comment,
+        followUp: !becameLow,
+        dedupeKey: becameLow ? `nps:${existing.id}` : `nps-comment:${existing.id}`,
+      });
+    }
+  }
   return NextResponse.json({ ok: true });
 }

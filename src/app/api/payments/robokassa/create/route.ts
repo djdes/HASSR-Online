@@ -21,6 +21,7 @@ import { createRateLimiter } from "@/lib/rate-limit";
 import {
   OFFER_REVISION,
   RECURRING_CONSENT_TEXT,
+  effectiveRecurringConsent,
 } from "@/lib/recurring-consent";
 import { encodePartnerRef, readPartnerRefFromRequest } from "@/lib/partners/referral";
 import { REFERRAL_COOKIE, readCookie } from "@/lib/balance/constants";
@@ -165,7 +166,10 @@ export async function POST(request: NextRequest) {
   // «Оплатить» без галочки обязано просто провести оплату, а не требовать
   // согласия. Доплата за остаток срока — разовая всегда: автосписания по
   // ней шли бы не по цене тарифа.
-  const recurringConsent = body.recurringConsent === true && quote.change.kind !== "upgrade" && offer.priceRub > 0;
+  // Пока автосписаний нет (RECURRING_CHARGES_LIVE), согласие из запроса не
+  // включает автоплатёж: обещать продление, которого не будет, нельзя.
+  const recurringConsent =
+    effectiveRecurringConsent(body.recurringConsent === true) && quote.change.kind !== "upgrade" && offer.priceRub > 0;
 
   // Баллы и автосписания несовместимы: касса запомнила бы карту с
   // уменьшенным OutSum, и будущие списания шли бы не по цене тарифа.

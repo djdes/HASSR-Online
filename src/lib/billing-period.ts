@@ -1,5 +1,6 @@
 import { FREE_MAX_USERS, isFreePlan, isInactivePlan } from "@/lib/plan-limits";
 import { employeesGenitiveLabel, employeesLabel } from "@/lib/plan-catalog";
+import { pluralRu } from "@/lib/plural-ru";
 import {
   FREE_MAX_JOURNALS,
   SEATS_PER_POINT,
@@ -63,6 +64,47 @@ export const GRACE_DAYS_MIN = 0;
 export const GRACE_DAYS_MAX = 60;
 /** За сколько дней до конца пробного напоминаем владельцу. */
 export const TRIAL_REMINDER_DAYS = 3;
+
+/**
+ * За сколько дней до конца оплаченного срока напоминаем владельцу — по
+ * одному разу на ступень. Автосписаний нет (`RECURRING_CHARGES_LIVE`), и без
+ * напоминаний срок кончался молча: через грейс сотрудники уходили в архив.
+ */
+export const PAID_REMINDER_STAGES = [7, 3, 1] as const;
+export type PaidReminderStage = (typeof PAID_REMINDER_STAGES)[number];
+
+/**
+ * Ступень напоминания для оставшихся дней оплаты: 7…4 → 7, 3…2 → 3, 1 → 1.
+ * Больше недели или срок уже кончился — null (после конца работает грейс).
+ */
+export function paidReminderStage(daysLeftValue: number | null | undefined): PaidReminderStage | null {
+  if (typeof daysLeftValue !== "number" || !(daysLeftValue > 0)) return null;
+  let stage: PaidReminderStage | null = null;
+  for (const candidate of PAID_REMINDER_STAGES) {
+    if (daysLeftValue <= candidate) stage = candidate;
+  }
+  return stage;
+}
+
+/**
+ * Нужно ли слать напоминание ступени `stage` для срока `paidUntil`, если уже
+ * отправлены `sent` (детали записей журнала). Ступени идут 7 → 3 → 1, поэтому
+ * запись того же срока с той же или более поздней ступенью закрывает текущую:
+ * повторный запуск не дублирует, а пропущенный день не теряет ближайшую ступень.
+ * Продлённый срок — другой `paidUntil`, напоминания по нему идут заново.
+ */
+export function paidReminderDue(
+  sent: ReadonlyArray<unknown>,
+  paidUntil: Date,
+  stage: PaidReminderStage
+): boolean {
+  const until = paidUntil.toISOString();
+  return !sent.some((raw) => {
+    if (!raw || typeof raw !== "object") return false;
+    const details = raw as { paidUntil?: unknown; stage?: unknown };
+    return details.paidUntil === until && typeof details.stage === "number" && details.stage <= stage;
+  });
+}
 
 export const DEFAULT_TRIAL_SETTINGS: TrialSettings = {
   trialDays: TRIAL_DAYS,
@@ -217,6 +259,8 @@ export type AccountBillingState = {
   pointsInUse: number;
   /** До какого числа реально оплачено; null — не оплачено. */
   paidUntil: Date | null;
+  /** Сколько дней оплаченного срока осталось (только у оплаченных, округление вверх). */
+  paidDaysLeft: number | null;
   /** Оплаченный тариф; null — не оплачено. */
   paidTier: PaidTier | "legacy" | null;
   planCycle: BillingCycle;
@@ -273,6 +317,7 @@ export function computeAccountBilling(
       enabledJournals,
       pointsInUse,
       paidUntil: null,
+      paidDaysLeft: null,
       paidTier: null,
       planCycle,
       planPoints,
@@ -296,6 +341,7 @@ export function computeAccountBilling(
     const paidTier = paidTierFromPlan(input.plan);
     return make("paid", paidTier === "legacy" ? "legacy_paid" : paidTier, {
       paidUntil: input.subscriptionEnd,
+      paidDaysLeft: input.subscriptionEnd ? daysLeft(input.subscriptionEnd, now) : null,
       paidTier,
     });
   }
@@ -511,6 +557,8 @@ export type TransitionAction =
   | "none"
   /** Пробный кончается через ≤ 3 дня — одно напоминание. */
   | "remind_trial_end"
+  /** Оплаченный срок кончается через ≤ 7 дней — напоминания за 7, 3 и 1 день. */
+  | "remind_paid_end"
   /** В пределах бесплатного, но тариф ещё записан платным — молча `free` + одно уведомление. */
   | "silent_free"
   /** Сверх бесплатного и грейс идёт — ждём решения руководителя (одно предупреждение). */
@@ -524,6 +572,7 @@ export function decideTransitionAction(
   plan: string | null | undefined
 ): TransitionAction {
   if (state.inactive) return "none";
+  if (state.kind === "paid") return paidReminderStage(state.paidDaysLeft) !== null ? "remind_paid_end" : "none";
   if (state.kind === "free_period") {
     return state.trialDaysLeft !== null && state.trialDaysLeft <= TRIAL_REMINDER_DAYS ? "remind_trial_end" : "none";
   }
@@ -662,6 +711,52 @@ function daysWord(n: number): string {
 /** «3 дня», «14 дней». */
 export function daysLabel(n: number): string {
   return `${n} ${daysWord(n)}`;
+}
+
+/** Тариф в тексте напоминания: «Стандарт», «Премиум» или прежняя «Подписка». */
+export function paidTierTitle(tier: PaidTier | "legacy" | null): string {
+  if (tier === "standard" || tier === "premium") return TIER_TITLE[tier];
+  return "«Подписка»";
+}
+
+export type PaidReminderCopy = {
+  /** «Оплата «Кафе» заканчивается через 3 дня — тариф «Стандарт», по 7 ноября включительно.» */
+  head: string;
+  /** Что сделать: продлить заранее, срок прибавится. */
+  renew: string;
+  /** Что будет, если не продлить; пусто, когда переход на бесплатный выключен. */
+  after: string;
+};
+
+/**
+ * Текст напоминания о конце оплаченного срока — без разметки (её добавляют
+ * Telegram и письмо). Название организации приходит уже экранированным.
+ */
+export function paidReminderCopy(args: {
+  orgName: string;
+  tierTitle: string;
+  points: number;
+  lastDayLabel: string;
+  daysLeft: number;
+  graceDays: number;
+  transitionEnabled: boolean;
+}): PaidReminderCopy {
+  const points = Math.max(1, Math.floor(args.points || 1));
+  const pointsPart = points > 1 ? `, ${points} ${pluralRu(points, "точка", "точки", "точек")}` : "";
+  const head =
+    `Оплата «${args.orgName}» заканчивается через ${daysLabel(Math.max(1, args.daysLeft))} — ` +
+    `тариф ${args.tierTitle}${pointsPart}, по ${args.lastDayLabel} включительно.`;
+  const renew =
+    "Продлите заранее: новый период прибавится к текущему сроку, оплаченные дни не пропадут. " +
+    "Оплатить можно картой или по счёту для юрлица.";
+  const grace = Math.max(0, Math.floor(args.graceDays || 0));
+  const after = !args.transitionEnabled
+    ? ""
+    : (grace > 0
+        ? `Если не продлить, после окончания будет ещё ${daysLabel(grace)} на оплату, потом организация перейдёт`
+        : "Если не продлить, сразу после окончания организация перейдёт") +
+      " на бесплатный тариф: в работе останутся владелец и один журнал, записи сохранятся.";
+  return { head, renew, after };
 }
 
 export type TrialBanner = {

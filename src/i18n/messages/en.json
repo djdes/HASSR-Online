@@ -7133,9 +7133,8 @@
     },
     "appStores": {
       "title": "Mobile app",
-      "description": "Employees will be able to keep logs and receive notifications on their phones. Launch: {launchDate}.",
-      "comingSoon": "coming soon",
-      "launchDate": "1 October"
+      "description": "Employees will be able to keep logs and receive notifications on their phones. The iPhone and Android apps are being prepared for the stores.",
+      "comingSoon": "coming soon"
     },
     "registrationErrors": {
       "invalidEmail": "Enter a valid email address",
@@ -29741,6 +29740,11 @@
       "paidKept": "The paid period will not be lost",
       "canReenable": "You can turn it back on at any time",
       "confirmLabel": "Disable"
+    },
+    "renewalCard": {
+      "title": "Renewal",
+      "body": "Paid until <strong>{date}</strong>. There are no automatic charges — renew the plan in advance: the new period is added to the current one. We will remind you in Telegram and by email 7, 3 and 1 day before it ends.",
+      "renew": "Renew early"
     },
     "resumePausedCard": {
       "resumeFailed": "Could not resume operation",
