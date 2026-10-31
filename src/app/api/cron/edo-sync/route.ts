@@ -13,12 +13,12 @@ const ADVISORY_LOCK_KEY = 9523861;
 const MIN_INTERVAL_MS = 10 * 60 * 1000;
 
 /**
- * GET /api/cron/edo-sync?secret=$CRON_SECRET — новые УПД из Диадока и СБИС
- * по всем подключениям. Без расписания накладные всё равно приходят: при
- * открытии «Входящих накладных» и кнопкой «Проверить новые».
+ * GET /api/cron/edo-sync (CRON_SECRET) — новые УПД из Диадока и СБИС и
+ * данные iiko по всем подключениям. Без расписания накладные всё равно
+ * приходят: при открытии «Входящих накладных» и кнопкой «Проверить новые».
  *
- * Внешнее расписание (crontab на сервере):
- *   *\/15 * * * * curl -s "https://wesetup.ru/api/cron/edo-sync?secret=$CRON_SECRET" >/dev/null
+ * Внешнее расписание (crontab на сервере, как соседние строки):
+ *   *\/15 * * * * curl -s -m 290 -H "Authorization: Bearer <CRON_SECRET>" http://127.0.0.1:3002/api/cron/edo-sync >/dev/null
  */
 export async function GET(request: Request) {
   const cronAuth = checkCronSecret(request);
