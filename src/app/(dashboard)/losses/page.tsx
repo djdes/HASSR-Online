@@ -298,6 +298,9 @@ export default async function LossesPage() {
                       >
                         {t("fromWriteoff", { date: dateFormat.format(source.dateFrom) })}
                       </Link>
+                    ) : r.sourceEntryId?.startsWith("iiko:") ? (
+                      // Акт списания из iiko (`/settings/integrations/iiko`).
+                      <span className="text-[#3c4053]">{t("fromIiko")}</span>
                     ) : (
                       <span className="text-[#9b9fb3]">{t("manual")}</span>
                     )}

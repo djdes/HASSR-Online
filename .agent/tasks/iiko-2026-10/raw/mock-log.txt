@@ -1,0 +1,17 @@
+GET /resto/api/auth login=api pass=wrong
+GET /resto/api/auth login=api pass=sha1(ok)
+GET /resto/api/logout key=yes
+GET /resto/api/auth login=api pass=sha1(ok)
+GET /resto/api/v2/entities/products/list key=yes
+GET /resto/api/v2/entities/list key=yes
+GET /resto/api/suppliers key=yes
+GET /resto/api/documents/export/incomingInvoice key=yes
+GET /resto/api/v2/documents/writeoff key=yes
+GET /resto/api/logout key=yes
+GET /resto/api/auth login=api pass=sha1(ok)
+GET /resto/api/v2/entities/products/list key=yes
+GET /resto/api/v2/entities/list key=yes
+GET /resto/api/suppliers key=yes
+GET /resto/api/documents/export/incomingInvoice key=yes
+GET /resto/api/v2/documents/writeoff key=yes
+GET /resto/api/logout key=yes

@@ -11,7 +11,8 @@ export const maxDuration = 120;
 const STALE_MS = 15 * 60 * 1000;
 
 /**
- * POST /api/edo/sync — забрать новые УПД из подключённых Диадока и СБИС.
+ * POST /api/edo/sync — забрать новые УПД из подключённых Диадока и СБИС и
+ * данные iiko (накладные, списания, товары).
  * `?ifStale=1` — только подключения, которые не проверялись 15 минут.
  */
 export async function POST(request: Request) {
@@ -21,6 +22,12 @@ export async function POST(request: Request) {
   const results = await syncOrganizationSupply(organizationId, { minIntervalMs: ifStale ? STALE_MS : 0 });
   return NextResponse.json({
     created: results.reduce((sum, result) => sum + result.created, 0),
-    results: results.map((result) => ({ provider: result.provider, ok: result.ok, error: result.error, created: result.created })),
+    results: results.map((result) => ({
+      provider: result.provider,
+      ok: result.ok,
+      error: result.error,
+      created: result.created,
+      ...(result.provider === "iiko" ? { losses: result.losses ?? 0, products: result.products ?? 0 } : {}),
+    })),
   });
 }

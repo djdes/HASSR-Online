@@ -1,0 +1,22 @@
+{
+  "task": "iiko-2026-10",
+  "branch": "claude/awesome-cannon-72xnuc",
+  "base": "d13612c",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/supply/iiko.test.ts", "raw/mock-log.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/supply/iiko.test.ts", "raw/losses.txt", "raw/products.txt", "raw/e2e-result.json"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/supply/iiko.test.ts", "raw/e2e-result.json (resync: 0 new)"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/supply/iiko.test.ts", "raw/e2e-result.json (privateAddress: 400)"] },
+    "AC5": { "status": "PASS", "note": "verified on a local iikoServer stub only (no live server)", "evidence": ["raw/iiko-settings-empty.png", "raw/iiko-settings-connected.png", "raw/iiko-inbox.png", "raw/iiko-invoice.png", "raw/iiko-losses.png"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/test-gate.txt", "typecheck exit 0", "eslint clean", "i18n:check 97/0"] }
+  },
+  "commands": {
+    "unit": "npx tsx --test src/lib/supply/*.test.ts + navigation/settings-cards/app-nav → 75 pass",
+    "typecheck": "npm run typecheck → exit 0",
+    "eslint": "npx eslint (changed files) → clean",
+    "i18n": "npm run i18n:check → 97 pass",
+    "gate": "npm run test:gate → pass=5284, fail=0",
+    "e2e": "node raw/iiko-e2e.cjs against next dev :3100 with raw/iiko-mock-server.cjs on 127.0.0.1:4577"
+  },
+  "deploy": "no schema change; new page /settings/integrations/iiko"
+}

@@ -4,11 +4,22 @@ import { createSabyCaller, type SabySessionStore } from "@/lib/edo/saby/session"
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
 
-import { diadocBaseUrl, syncFromDate, type DiadocStoredCredentials, type SabyStoredCredentials, type SupplyProvider } from "./connections";
+import {
+  diadocBaseUrl,
+  readIikoOptions,
+  syncFromDate,
+  type DiadocStoredCredentials,
+  type IikoStoredCredentials,
+  type SabyStoredCredentials,
+  type SupplyProvider,
+} from "./connections";
 import { createDiadocClient, DiadocError, type FetchLike } from "./diadoc";
 import { saveSupplyDocument } from "./documents.server";
+import { createIikoClient, IikoError } from "./iiko";
+import { addMissingProducts } from "./products.server";
+import { assertPublicServerUrl, UnsafeUrlError } from "./safe-url";
 import { createSabyIncomingApi, isAllowedSabyFileUrl } from "./saby-incoming";
-import { syncDiadocDocuments, syncSabyDocuments, type SyncCounters, type SyncSink } from "./sync";
+import { syncDiadocDocuments, syncIikoData, syncSabyDocuments, type SyncCounters, type SyncSink } from "./sync";
 
 /**
  * Загрузка входящих УПД по подключениям организации: Диадок и СБИС. Ошибка
@@ -20,6 +31,9 @@ export type ConnectionSyncResult = SyncCounters & {
   provider: SupplyProvider;
   ok: boolean;
   error: string | null;
+  /** iiko: новые строки потерь и товары в справочнике. */
+  losses?: number;
+  products?: number;
 };
 
 const DOWNLOAD_TIMEOUT_MS = 30_000;
@@ -38,7 +52,7 @@ class SupplySyncError extends Error {}
 
 /** Понятная причина без секретов: свои ошибки — как есть, чужие — общими словами. */
 function describe(error: unknown): string {
-  if (error instanceof DiadocError) return error.message;
+  if (error instanceof DiadocError || error instanceof IikoError || error instanceof UnsafeUrlError) return error.message;
   if (error instanceof SabyRpcError) return describeSabyError(error);
   if (error instanceof SupplySyncError) return error.message;
   return "Не удалось загрузить документы — повторим при следующей проверке";
@@ -67,8 +81,38 @@ export async function syncSupplyConnection(
   const fromDate = syncFromDate(connection.lastSyncAt, now);
 
   try {
-    let counters: SyncCounters;
-    if (provider === "diadoc") {
+    let counters: SyncCounters & { losses?: number; products?: number };
+    if (provider === "iiko") {
+      const creds = JSON.parse(decryptSecret(connection.credentialsEnc)) as IikoStoredCredentials;
+      const serverUrl = await assertPublicServerUrl(creds.serverUrl);
+      const organizationId = connection.organizationId;
+      counters = await syncIikoData({
+        client: createIikoClient({ ...creds, serverUrl }, { fetch: fetchImpl }),
+        fromDate,
+        toDate: now.toISOString().slice(0, 10),
+        options: readIikoOptions(creds.options),
+        sink,
+        losses: {
+          exists: async (sourceEntryId) => (await db.lossRecord.count({ where: { organizationId, sourceEntryId } })) > 0,
+          save: async (loss) => {
+            await db.lossRecord.create({
+              data: {
+                organizationId,
+                date: new Date(`${loss.date}T12:00:00.000Z`),
+                category: "writeoff",
+                productName: loss.productName,
+                quantity: loss.quantity,
+                unit: loss.unit,
+                costRub: loss.costRub,
+                cause: loss.cause,
+                sourceEntryId: loss.sourceEntryId,
+              },
+            });
+          },
+        },
+        products: { addMissing: (items) => addMissingProducts(organizationId, items) },
+      });
+    } else if (provider === "diadoc") {
       const creds = JSON.parse(decryptSecret(connection.credentialsEnc)) as DiadocStoredCredentials;
       if (!connection.boxId) throw new SupplySyncError("Не выбран ящик Диадока — подключите заново");
       const client = createDiadocClient(creds, { fetch: fetchImpl, baseUrl: diadocBaseUrl() });

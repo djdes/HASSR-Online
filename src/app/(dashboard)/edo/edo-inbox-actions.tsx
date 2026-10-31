@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-type Connection = { provider: "diadoc" | "saby"; ok: boolean; lastError: string | null; lastSyncAt: string | null };
+type Connection = { provider: "diadoc" | "saby" | "iiko"; ok: boolean; lastError: string | null; lastSyncAt: string | null };
 
 /** Проверка при открытии — не чаще раза в 15 минут на подключение (как и на сервере). */
 const STALE_MS = 15 * 60 * 1000;
@@ -33,7 +33,10 @@ export function EdoInboxActions({ connections }: { connections: Connection[] }) 
         | null;
       if (!res.ok || !body) throw new Error("sync");
       for (const result of body.results) {
-        if (!result.ok && result.error) toast.error(t("syncFailed", { provider: t(`source.${result.provider === "saby" ? "saby" : "diadoc"}`), error: result.error }));
+        if (!result.ok && result.error) {
+          const provider = result.provider === "saby" || result.provider === "iiko" ? result.provider : "diadoc";
+          toast.error(t("syncFailed", { provider: t(`source.${provider}`), error: result.error }));
+        }
       }
       if (!ifStale || body.created > 0) toast.success(t("synced", { count: body.created }));
       if (body.created > 0 || body.results.length > 0) router.refresh();

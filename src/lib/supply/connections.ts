@@ -10,7 +10,7 @@ import { DIADOC_BASE_URL } from "./diadoc";
  * ящик; пароль и защищённый ключ не отдаются никогда.
  */
 
-export const SUPPLY_PROVIDERS = ["diadoc", "saby"] as const;
+export const SUPPLY_PROVIDERS = ["diadoc", "saby", "iiko"] as const;
 export type SupplyProvider = (typeof SUPPLY_PROVIDERS)[number];
 
 export function isSupplyProvider(value: unknown): value is SupplyProvider {
@@ -34,6 +34,27 @@ export const sabyCredentialsSchema = z.object({
   clientId: z.string().trim().min(3).max(200),
   appSecret: z.string().trim().min(3).max(500),
 });
+
+export const iikoCredentialsSchema = z.object({
+  serverUrl: z.string().trim().min(8).max(300),
+  login: z.string().trim().min(1).max(200),
+  password: z.string().min(1).max(200),
+});
+
+/** Что забирать из iiko; по умолчанию — всё. */
+export const iikoOptionsSchema = z.object({
+  invoices: z.boolean().default(true),
+  writeoffs: z.boolean().default(true),
+  products: z.boolean().default(true),
+});
+
+export type IikoStoredCredentials = z.infer<typeof iikoCredentialsSchema> & { options?: z.infer<typeof iikoOptionsSchema> };
+export type IikoOptions = z.infer<typeof iikoOptionsSchema>;
+
+export function readIikoOptions(value: unknown): IikoOptions {
+  const parsed = iikoOptionsSchema.safeParse(value ?? {});
+  return parsed.success ? parsed.data : { invoices: true, writeoffs: true, products: true };
+}
 
 export type DiadocStoredCredentials = z.infer<typeof diadocCredentialsSchema>;
 export type SabyStoredCredentials = z.infer<typeof sabyCredentialsSchema>;
@@ -62,12 +83,15 @@ export function connectionView(
   row: { boxTitle: string | null; status: string; lastSyncAt: Date | null; lastError: string | null },
 ): SupplyConnectionView {
   const record = credentials && typeof credentials === "object" ? (credentials as Record<string, unknown>) : {};
+  const login = typeof record.login === "string" ? record.login : "";
   const account =
     provider === "diadoc"
-      ? maskLogin(typeof record.login === "string" ? record.login : "")
-      : typeof record.clientId === "string"
-        ? record.clientId
-        : "";
+      ? maskLogin(login)
+      : provider === "iiko"
+        ? `${login} · ${typeof record.serverUrl === "string" ? record.serverUrl : ""}`
+        : typeof record.clientId === "string"
+          ? record.clientId
+          : "";
   return {
     provider,
     connected: true,

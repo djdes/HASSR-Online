@@ -3260,6 +3260,7 @@
       "settings_equipment_qr_sheet": "Uskunalar uchun QR-yorliqlar",
       "settings_integrations_mercury": "Merkuriy federal axborot tizimi",
       "settings_integrations_edo": "EHA: Diadoc va SBIS",
+      "settings_integrations_iiko": "iiko",
       "mercury": "Kiruvchi veterinariya hujjatlari",
       "edo": "Kiruvchi yuk xatlari",
       "edo_document": "Yuk xati",
@@ -8871,6 +8872,7 @@
     "cause": "Sabab",
     "source": "Manba",
     "fromWriteoff": "{date} sanasidagi hisobdan chiqarish dalolatnomasidan",
+    "fromIiko": "iiko’dan",
     "manual": "qo‘lda kiritilgan",
     "empty": "Hozircha yozuvlar yo‘q",
     "categories": {
@@ -9774,6 +9776,10 @@
         "settings_integrations_edo": {
           "title": "EHA: Diadoc va SBIS",
           "description": "Yetkazib beruvchilarning UPD hujjatlari «Kiruvchi yuk xatlari»ga o‘zi tushadi"
+        },
+        "settings_integrations_iiko": {
+          "title": "iiko",
+          "description": "Yuk xatlari — «Kiruvchi»ga, hisobdan chiqarishlar — «Yo‘qotishlar»ga, tovarlar — mahsulotlar ma’lumotnomasiga"
         },
         "settings_print_agent": {
           "title": "Onlayn printer",
@@ -30516,10 +30522,12 @@
       "source": {
         "upload": "Fayl",
         "diadoc": "Diadoc",
-        "saby": "SBIS"
+        "saby": "SBIS",
+        "iiko": "iiko"
       },
       "items": "{count, plural, other {# ta pozitsiya}}",
       "number": "UPD № {number}",
+      "invoiceNumber": "Yuk xati № {number}",
       "date": "{date} sanali",
       "total": "{sum} summaga",
       "errors": {
@@ -30528,6 +30536,7 @@
     },
     "document": {
       "title": "UPD № {number}, {date}",
+      "invoiceTitle": "Kirim yuk xati № {number}, {date}",
       "seller": "Yetkazib beruvchi",
       "inn": "STIR {inn}",
       "basis": "Asos",
@@ -30593,6 +30602,46 @@
       "never": "Hali tekshirilmagan",
       "secretsNote": "Parol va kalitlar shifrlangan holda saqlanadi va ulangandan keyin ko‘rsatilmaydi.",
       "schedule": "Yangi yuk xatlari «Kiruvchi yuk xatlari» ochilganda, «Yangilarini tekshirish» tugmasi va server jadvali bo‘yicha tekshiriladi.",
+      "errors": {
+        "failed": "Ulab bo‘lmadi. Ma’lumotlarni tekshiring."
+      }
+    },
+    "iiko": {
+      "eyebrow": "Ulanishlar",
+      "title": "iiko",
+      "description": "iiko kirim yuk xatlari — «Kiruvchi yuk xatlari»ga (keyin UPD bilan bir xil qabul), hisobdan chiqarish dalolatnomalari — «Yo‘qotishlar»ga, yangi tovarlar va yarim tayyor mahsulotlar — mahsulotlar ma’lumotnomasiga.",
+      "hint": "iiko serveri (iikoOffice) kerak: manzil, API orqali kirish huquqiga ega foydalanuvchining logini va paroli.",
+      "serverUrl": "Server manzili",
+      "serverHint": "Masalan, https://name.iiko.it yoki http://manzil:8080",
+      "login": "Login",
+      "password": "Parol",
+      "options": {
+        "title": "Nimani olish",
+        "invoices": "Kirim yuk xatlari",
+        "writeoffs": "Hisobdan chiqarish dalolatnomalari",
+        "products": "Tovarlar va yarim tayyor mahsulotlar"
+      },
+      "connect": "Ulash",
+      "connecting": "Tekshirilmoqda…",
+      "connected": "Ulangan",
+      "reconnect": "Qayta ulash",
+      "disconnect": "Uzish",
+      "disconnected": "Uzildi",
+      "account": "Kirish: {account}",
+      "lastSync": "Tekshirilgan {when}",
+      "never": "Hali tekshirilmagan",
+      "sync": "Hozir olish",
+      "syncing": "Olinmoqda…",
+      "synced": "Yuk xatlari: {invoices}, yo‘qotish satrlari: {losses}, yangi mahsulotlar: {products}",
+      "status": {
+        "active": "Ishlamoqda",
+        "error": "Xato"
+      },
+      "openInbox": "Kiruvchi yuk xatlari",
+      "openLosses": "Yo‘qotishlar",
+      "openProducts": "Mahsulotlar ma’lumotnomasi",
+      "secretsNote": "Parol shifrlangan holda saqlanadi va ulangandan keyin ko‘rsatilmaydi.",
+      "licenseNote": "Har bir yuklash iiko serveriga kiradi va darhol chiqadi: bo‘sh API litsenziyasi faqat shu vaqtga kerak.",
       "errors": {
         "failed": "Ulab bo‘lmadi. Ma’lumotlarni tekshiring."
       }

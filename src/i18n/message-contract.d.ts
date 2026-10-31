@@ -3261,6 +3261,7 @@ export type MessageContract = {
       "settings_equipment_qr_sheet": "QR-наклейки оборудования",
       "settings_integrations_mercury": "ФГИС «Меркурий»",
       "settings_integrations_edo": "ЭДО: Диадок и СБИС",
+      "settings_integrations_iiko": "iiko",
       "mercury": "Входящие ВСД",
       "edo": "Входящие накладные",
       "edo_document": "Накладная",
@@ -8872,6 +8873,7 @@ export type MessageContract = {
     "cause": "Причина",
     "source": "Откуда",
     "fromWriteoff": "из акта списания от {date}",
+    "fromIiko": "из iiko",
     "manual": "вручную",
     "empty": "Записей пока нет",
     "categories": {
@@ -9775,6 +9777,10 @@ export type MessageContract = {
         "settings_integrations_edo": {
           "title": "ЭДО: Диадок и СБИС",
           "description": "Входящие УПД поставщиков сами попадают во «Входящие накладные»"
+        },
+        "settings_integrations_iiko": {
+          "title": "iiko",
+          "description": "Накладные — во «Входящие», списания — в «Потери», товары — в справочник продуктов"
         },
         "settings_print_agent": {
           "title": "Онлайн-принтер",
@@ -30517,10 +30523,12 @@ export type MessageContract = {
       "source": {
         "upload": "Файл",
         "diadoc": "Диадок",
-        "saby": "СБИС"
+        "saby": "СБИС",
+        "iiko": "iiko"
       },
       "items": "{count, plural, one {# позиция} few {# позиции} many {# позиций} other {# позиции}}",
       "number": "УПД № {number}",
+      "invoiceNumber": "Накладная № {number}",
       "date": "от {date}",
       "total": "на {sum}",
       "errors": {
@@ -30529,6 +30537,7 @@ export type MessageContract = {
     },
     "document": {
       "title": "УПД № {number} от {date}",
+      "invoiceTitle": "Приходная накладная № {number} от {date}",
       "seller": "Поставщик",
       "inn": "ИНН {inn}",
       "basis": "Основание",
@@ -30594,6 +30603,46 @@ export type MessageContract = {
       "never": "Ещё не проверяли",
       "secretsNote": "Пароль и ключи хранятся зашифрованными и после подключения не показываются.",
       "schedule": "Новые накладные проверяются при открытии «Входящих накладных», кнопкой «Проверить новые» и по расписанию сервера.",
+      "errors": {
+        "failed": "Не удалось подключить. Проверьте данные."
+      }
+    },
+    "iiko": {
+      "eyebrow": "Подключения",
+      "title": "iiko",
+      "description": "Приходные накладные iiko — во «Входящие накладные» (дальше та же приёмка, что у УПД), акты списания — в «Потери», новые товары и заготовки — в справочник продуктов.",
+      "hint": "Нужен сервер iiko (iikoOffice): адрес, логин и пароль пользователя с правом входа по API.",
+      "serverUrl": "Адрес сервера",
+      "serverHint": "Например, https://name.iiko.it или http://адрес:8080",
+      "login": "Логин",
+      "password": "Пароль",
+      "options": {
+        "title": "Что забирать",
+        "invoices": "Приходные накладные",
+        "writeoffs": "Акты списания",
+        "products": "Товары и заготовки"
+      },
+      "connect": "Подключить",
+      "connecting": "Проверяем…",
+      "connected": "Подключено",
+      "reconnect": "Подключить заново",
+      "disconnect": "Отключить",
+      "disconnected": "Отключено",
+      "account": "Вход: {account}",
+      "lastSync": "Проверено {when}",
+      "never": "Ещё не проверяли",
+      "sync": "Забрать сейчас",
+      "syncing": "Забираем…",
+      "synced": "Накладных: {invoices}, строк потерь: {losses}, новых продуктов: {products}",
+      "status": {
+        "active": "Работает",
+        "error": "Ошибка"
+      },
+      "openInbox": "Входящие накладные",
+      "openLosses": "Потери",
+      "openProducts": "Справочник продуктов",
+      "secretsNote": "Пароль хранится зашифрованным и после подключения не показывается.",
+      "licenseNote": "Каждая загрузка входит на сервер iiko и сразу выходит: свободная лицензия API нужна только на это время.",
       "errors": {
         "failed": "Не удалось подключить. Проверьте данные."
       }
