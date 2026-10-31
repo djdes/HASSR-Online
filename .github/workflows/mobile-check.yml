@@ -1,7 +1,7 @@
 # Проверка мобильного проекта без секретов: собирается ли Android (отладочный APK —
 # можно скачать из артефактов и поставить на телефон, и пробный выпуск с одноразовым
 # ключом) и iOS (для симулятора, без подписи). Запускается сам при изменениях в
-# mobile/ и вручную.
+# mobile/ — в PR и в master — и вручную.
 # macOS-минуты в приватном репозитории стоят в 10 раз дороже — задание iOS
 # держим коротким: без архива и подписи, одна сборка под симулятор.
 name: Проверка приложений
@@ -12,6 +12,13 @@ on:
     paths:
       - "mobile/**"
       # «Сетап помощник» проверяет свой workflow — setup-helper-check.yml.
+      - "!mobile/setup-helper/**"
+      - ".github/workflows/mobile-*.yml"
+  # И на PR — чтобы сломанная сборка приложения не доезжала до master
+  # (как у setup-helper-check.yml). Секретов workflow не использует.
+  pull_request:
+    paths:
+      - "mobile/**"
       - "!mobile/setup-helper/**"
       - ".github/workflows/mobile-*.yml"
   workflow_dispatch:
