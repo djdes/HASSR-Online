@@ -1,0 +1,19 @@
+Title:           Электронные журналы СанПиН и ХАССП онлайн — WeSetup
+Creator:         Chromium
+Producer:        Skia/PDF m153
+CreationDate:    Sat Oct 31 05:51:05 2026 UTC
+ModDate:         Sat Oct 31 05:51:05 2026 UTC
+Custom Metadata: no
+Metadata Stream: no
+Tagged:          no
+UserProperties:  no
+Suspects:        no
+Form:            none
+JavaScript:      no
+Pages:           1
+Encrypted:       no
+Page size:       595.92 x 842.88 pts (A4)
+Page rot:        0
+File size:       176402 bytes
+Optimized:       no
+PDF version:     1.4

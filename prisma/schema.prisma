@@ -415,6 +415,10 @@ model Organization {
   /// Публичный бейдж «журналы ведутся в WeSetup»: opt-in и код страницы /b/<code>.
   badgeEnabled                   Boolean                        @default(false)
   badgeCode                      String?                        @unique
+  /// Блок «Сегодня» на странице бейджа (отметки журналов и блюда бракеража
+  /// за сегодня, по сфере): отдельное согласие, по умолчанию выключено —
+  /// у уже включённых бейджей страница не меняется сама (2026-10-31).
+  badgeTodayEnabled              Boolean                        @default(false)
   /// IANA timezone для отображения дат и расчётов compliance.
   /// Default "Europe/Moscow" (UTC+3) — большинство клиентов в РФ.
   /// Используется для перевода дашборд/отчётов из UTC в локаль.

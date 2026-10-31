@@ -1,0 +1,9 @@
+# curl по /b/z4fwcexc4h (локально, dev 3100), сеть из 13 точек, сфера «Школа / Детсад / Лагерь»
+badgeTodayEnabled=false:
+  /b/<код>                       -> 200 today: False points: False   (страница как раньше)
+  /b/<код>?point=loc-p01         -> 200 today: False points: False   (параметр не учитывается)
+  /b/<код>?point=unknown-point   -> 200 today: False points: False
+badgeTodayEnabled=true:
+  /b/<код>                       -> 200 today: False points: True    (список точек)
+  /b/<код>?point=loc-p01         -> 200 today: True  points: False   (отметки и блюда точки)
+  /b/<код>?point=unknown-point   -> 404

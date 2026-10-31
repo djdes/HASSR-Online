@@ -1,0 +1,24 @@
+{
+  "task": "open-kitchen-2026-10",
+  "branch": "claude/awesome-cannon-72xnuc",
+  "base": "9e810e8",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/badge/today.ts", "src/lib/badge/today.test.ts (7 pass)"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/pages-school.json", "raw/pages-cafe.json", "raw/consent-states.txt", "raw/public-point-390.png", "raw/public-point-1280.png", "raw/cafe-public-point-390.png"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/public-network-390.png", "raw/pages-school.json (unknownPoint: 404)", "raw/consent-states.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/pages-school.json (leaks: false)", "raw/pages-cafe.json (leaks: false)", "src/lib/badge/today.test.ts"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/settings-badge-card.png", "raw/pages-school.json (card)", "src/app/api/settings/badge/route.ts", "src/lib/badge/describe.test.ts"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/sign-screen.png", "raw/sign-pdfinfo.txt (Pages: 1, A4)", "raw/pages-school.json (sign)"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "eslint 12 files clean", "npm run i18n:check fail 0"] },
+    "AC8": { "status": "PASS", "evidence": ["raw/*.png (local, gitignored)"] }
+  },
+  "commands": {
+    "unit": "npx tsx --test src/lib/badge/today.test.ts src/lib/badge/describe.test.ts src/i18n/organization-profile-localization.test.ts → 14 pass",
+    "eslint": "npx eslint (12 changed TS/TSX files) → clean",
+    "typecheck": "npm run typecheck → exit 0",
+    "i18n": "npm run i18n:check → fail 0",
+    "gate": "npm run test:gate → pass=5253, fail=0",
+    "pages": "node raw/open-kitchen.cjs against next dev :3100 with raw/seed-open-kitchen.ts fixtures"
+  },
+  "deploy": "prisma db push adds Organization.badgeTodayEnabled Boolean default false (no data loss)"
+}

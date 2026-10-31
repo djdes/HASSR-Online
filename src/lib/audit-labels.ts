@@ -98,6 +98,8 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "badge.enable": { label: "Бейдж включён", variant: "default" },
   "badge.disable": { label: "Бейдж выключен", variant: "secondary" },
   "badge.rotate": { label: "Бейдж перевыпущен", variant: "secondary" },
+  "badge.today.enable": { label: "Блок «Сегодня» на странице бейджа включён", variant: "default" },
+  "badge.today.disable": { label: "Блок «Сегодня» на странице бейджа выключен", variant: "secondary" },
 
   // --- Задачи сотрудников -----------------------------------------------
   "task.claim": { label: "Задача взята", variant: "outline" },
