@@ -48,8 +48,13 @@
       ]
     },
     "AC6": {
-      "status": "PENDING",
-      "note": "signed APK is built only by CI (publish) after the code is on master; release PR follows"
+      "status": "PASS",
+      "note": "signed release APK from CI run 41179315275 (artifact setup-helper-release-apk-22), release cert 20b6bd34…dfecb4, versionCode 7; version.json as publishRelease writes it; prod endpoint checked after deploy",
+      "evidence": [
+        "raw/release-1.4.0.txt",
+        "resources/setup-helper/version.json",
+        "src/app/api/setup-helper/version/route.test.ts (2 pass)"
+      ]
     }
   },
   "commands": {

@@ -1,0 +1,22 @@
+# Источник: CI «Сетап помощник — проверка», прогон 22 (run 41179315275) на master 5a36147,
+# артефакт setup-helper-release-apk-22 (id 13034128142), sha256 zip = ca95905e0f3637b881348ef7c63b4b69bb3d86ab75e6efa1909cda8bd2a0c2c5 (совпадает с digest артефакта).
+# Запуск publish через workflow_dispatch недоступен этой сессии (403), поэтому выпуск собран из release-артефакта того же прогона:
+# то же, что делает publishRelease — проверка подписи, номер сборки больше выложенного (4 → 7), APK + version.json.
+
+## apksigner verify --print-certs
+Signer #1 certificate DN: CN=WeSetup Setup Helper, O=WeSetup, C=RU
+Signer #1 certificate SHA-256 digest: 20b6bd349e4699bddb23ef0f81cf3a612607d3b8190813ba6403215641dfecb4
+ожидаемый сертификат (releaseCertSha256): 20b6bd349e4699bddb23ef0f81cf3a612607d3b8190813ba6403215641dfecb4
+
+## aapt2 dump badging
+package: name='ru.wesetup.helper' versionCode='7' versionName='1.4.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+
+## resources/setup-helper
+1cf9bb3d99b21055b4b3bc0c74b91c84a1eca90abc014728e63ad394eafa864d  resources/setup-helper/setup-helper.apk
+size 2000850
+
+## npx tsx --test src/app/api/setup-helper/version/route.test.ts
+ok 1 - published APK matches its version manifest
+ok 2 - version endpoint serves the manifest with an absolute, cache-busting download link
+# pass 2
+# fail 0
