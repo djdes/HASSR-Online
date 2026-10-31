@@ -72,6 +72,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "reports", href: "/reports", icon: "FileText", section: "more", group: "work", access: FULL_ACCESS },
   { id: "ideas", href: "/ideas", icon: "Lightbulb", section: "more", group: "work", access: FULL_ACCESS },
   { id: "mercury", href: "/mercury", icon: "Plug", section: "more", group: "work", access: STAFF_PATH },
+  { id: "edo", href: "/edo", icon: "FileText", section: "more", group: "work", access: FULL_ACCESS },
   // Страницы без места в новом меню (владелец, 2026-10-28: «всё, что пока не
   // распределили, — в „Остальное“, потом разнесём по назначению»).
   { id: "batches", href: "/batches", icon: "Package", section: "more", group: "work", access: STAFF_PATH },
@@ -84,6 +85,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "settings_notifications", href: "/settings/notifications", icon: "Bell", section: "more", group: "connections", access: STAFF_PATH },
   { id: "settings_integrations_tasksflow", href: "/settings/integrations/tasksflow", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_integrations_mercury", href: "/settings/integrations/mercury", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
+  { id: "settings_integrations_edo", href: "/settings/integrations/edo", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_webhooks", href: "/settings/webhooks", icon: "Webhook", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_calendar", href: "/settings/calendar", icon: "CalendarDays", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_backup", href: "/settings/backup", icon: "CloudUpload", section: "more", group: "connections", access: FULL_ACCESS },

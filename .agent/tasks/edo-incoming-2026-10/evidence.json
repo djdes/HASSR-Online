@@ -1,0 +1,22 @@
+{
+  "task": "edo-incoming-2026-10",
+  "branch": "claude/awesome-cannon-72xnuc",
+  "base": "7f1a774",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/supply/upd.test.ts (4 pass)", "src/lib/supply/upd-fixtures.ts"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/supply/to-acceptance-row.test.ts (3 pass)", "raw/acceptance-rows.json"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/e2e-result.json", "raw/supply-documents.txt"] },
+    "AC4": { "status": "PASS", "note": "Diadoc and SBIS verified on substituted transport and local stubs only (no live keys)", "evidence": ["src/lib/supply/connectors.test.ts (6 pass)", "raw/e2e-result.json", "raw/mock-log.txt", "raw/mock-servers.cjs"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/inbox-desktop.png", "raw/inbox-mobile.png", "raw/document-new.png", "raw/document-accepted.png", "raw/document-mobile.png", "raw/settings-empty.png", "raw/settings-connected.png"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/test-gate.txt", "typecheck exit 0", "eslint clean", "i18n:check 97/0"] }
+  },
+  "commands": {
+    "unit": "npx tsx --test src/lib/supply/*.test.ts + navigation/settings-cards/app-nav/acceptance tests → 88 pass",
+    "eslint": "npx eslint (changed files) → clean",
+    "typecheck": "npm run typecheck → exit 0",
+    "i18n": "npm run i18n:check → 97 pass",
+    "gate": "npm run test:gate → pass=5278, fail=0",
+    "e2e": "node raw/edo-e2e.cjs against next dev :3100 (DIADOC_API_URL=http://127.0.0.1:4566) with raw/mock-servers.cjs"
+  },
+  "deploy": "prisma db push creates SupplyDocument and SupplyConnection (no data loss); optional crontab line for /api/cron/edo-sync"
+}

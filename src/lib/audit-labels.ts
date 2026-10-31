@@ -101,6 +101,13 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "badge.today.enable": { label: "Блок «Сегодня» на странице бейджа включён", variant: "default" },
   "badge.today.disable": { label: "Блок «Сегодня» на странице бейджа выключен", variant: "secondary" },
 
+  // --- ЭДО: входящие накладные --------------------------------------------
+  "supply.document_add": { label: "Входящая накладная добавлена", variant: "secondary" },
+  "supply.accept": { label: "Накладная принята в журнал приёмки", variant: "default" },
+  "supply.ignore": { label: "Накладная отложена без приёмки", variant: "secondary" },
+  "supply.connect": { label: "ЭДО подключён", variant: "default" },
+  "supply.disconnect": { label: "ЭДО отключён", variant: "secondary" },
+
   // --- Задачи сотрудников -----------------------------------------------
   "task.claim": { label: "Задача взята", variant: "outline" },
   "task.complete": { label: "Задача выполнена", variant: "default" },

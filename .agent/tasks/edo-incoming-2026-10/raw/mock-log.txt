@@ -1,0 +1,15 @@
+diadoc POST /V3/Authenticate?type=password auth=DiadocAuth ddauth_api_client_id=local-dev-key-123
+diadoc POST /V3/Authenticate?type=password auth=DiadocAuth ddauth_api_client_id=local-dev-key-123
+diadoc GET /GetMyOrganizations auth=DiadocAuth ddauth_api_client_id=local-dev-key-123,ddauth_token=***
+diadoc POST /V3/Authenticate?type=password auth=DiadocAuth ddauth_api_client_id=local-dev-key-123
+diadoc GET /GetMyOrganizations auth=DiadocAuth ddauth_api_client_id=local-dev-key-123,ddauth_token=***
+saby POST /oauth/service/
+saby POST /oauth/service/
+diadoc POST /V3/Authenticate?type=password auth=DiadocAuth ddauth_api_client_id=local-dev-key-123
+diadoc GET /V3/GetDocuments?boxId=box-school%40diadoc.ru&filterCategory=Any.Inbound&fromDocumentDate=01.10.2026&count=100 auth=DiadocAuth ddauth_api_client_id=local-dev-key-123,ddauth_token=***
+diadoc GET /V4/GetEntityContent?boxId=box-school%40diadoc.ru&messageId=msg-1&entityId=ent-1 auth=DiadocAuth ddauth_api_client_id=local-dev-key-123,ddauth_token=***
+saby POST /service/?srv=1 token=***
+saby GET /file/upd17 token=***
+diadoc POST /V3/Authenticate?type=password auth=DiadocAuth ddauth_api_client_id=local-dev-key-123
+diadoc GET /V3/GetDocuments?boxId=box-school%40diadoc.ru&filterCategory=Any.Inbound&fromDocumentDate=28.10.2026&count=100 auth=DiadocAuth ddauth_api_client_id=local-dev-key-123,ddauth_token=***
+saby POST /service/?srv=1 token=***
