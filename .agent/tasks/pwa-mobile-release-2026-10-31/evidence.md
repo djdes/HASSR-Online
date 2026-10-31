@@ -39,14 +39,18 @@
   проверка версии/пакета в APK и IPA. YAML разобран (`yaml.safe_load`), Fastfile — `ruby -c` Syntax OK.
 - Gradle-проверка через `providers.exec` (без устаревшего `project.exec`).
 
-## AC4. Манифест приватности iOS — PASS (проверка в собранном приложении — в CI)
+## AC4. Манифест приватности iOS — PASS
 - `PrivacyInfo.xcprivacy`: `NSPrivacyTracking=false`, FileTimestamp `C617.1`; plist разобран plistlib.
 - `project.pbxproj`: PBXFileReference, PBXBuildFile, группа App, фаза Resources; id без коллизий.
-- `mobile-check.yml` (iOS) проверяет файл в `App.app` после сборки для симулятора — см. запуск CI ниже.
+- CI «Проверка приложений» #12 (PR #75, `d96fa6af`): шаг «Проверить privacy manifest внутри собранного
+  приложения» — success (plutil -lint, FileTimestamp, C617.1 в `App.app`).
 
-## AC5. Сборки — PASS (локально), CI — см. ниже
+## AC5. Сборки — PASS
 - Локально: `assembleDebug` BUILD SUCCESSFUL; release dry-run BUILD SUCCESSFUL.
-- «Проверка приложений» на ветке: запуск и итог добавлены в раздел «CI» после пуша.
+- CI «Проверка приложений» #12 на PR #75 (`d96fa6af`), https://github.com/djdes/HASSR-Online/actions/runs/41232272812 —
+  success: Android «Сборка APK» и «Пробный выпуск с одноразовым ключом»; iOS «Сборка без подписи» (macOS 26,
+  `pod install` через `cap sync ios`), синтаксис Fastfile, манифест приватности, артефакт симулятора.
+  Запуск #11 отменён группой concurrency из-за пуша следующего коммита — не падение.
 
 ## AC6–AC9. PWA — PASS
 - Иконки из `mobile/scripts/brand-mark.mjs` (рефакторинг `make-assets.mjs` дал побайтно те же `mobile/assets/*`):
@@ -71,13 +75,13 @@
 - `PUBLISHING.md` переписан на 31.10.2026; согласованы `mobile/README.md`, `docs/PWA.md`, `00`, `06`, `07`, `08`,
   `09`, `11`, `secrets.md` (имя репозитория `djdes/HASSR-Online`, пример минимальной версии 1.1.0).
 
-## AC12. Проверки репозитория — PASS
+## AC12. Проверки репозитория — PASS (и после слияния свежего master — `raw/post-merge-checks.txt`)
 - `npm run typecheck` — EXIT 0 (`raw/typecheck.txt`; первый запуск был убит OOM из-за параллельной сборки, повтор отдельно).
 - `npm run test:gate` — pass=5302, fail=0 (`raw/test-gate.txt`).
 - `npm run build` (`NEXT_DIST_DIR=.next-prodcheck`) — Compiled successfully, EXIT 0 (`raw/next-build.txt`).
 - ESLint по изменённым TS — 0 ошибок.
 
-## AC13–AC14 — после слияния
+## AC13 — после слияния; AC14 — BLOCKED (права, см. problems.md)
 Проверяются на master после деплоя и запуска «Выпуска приложений»; итог — в отчёте задачи и PR.
 
 ## Что тест сайта меняет вне задачи
