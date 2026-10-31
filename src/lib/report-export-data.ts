@@ -1,3 +1,5 @@
+import { buildingWhere } from "@/lib/building-scope";
+import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { loadMessages } from "@/i18n/messages";
@@ -17,6 +19,10 @@ import {
  * Легаси `JournalEntry` тоже подхватываем — если такие записи есть.
  * Фильтр «участок» есть только у легаси-записей: у документных записей
  * участка нет, поэтому они выгружаются целиком.
+ *
+ * Точка (2026-10-31): `pointId` — документы точки и общие, легаси-записи её
+ * цехов, общих цехов и без цеха. Без точки при журналах по точкам — у каждой
+ * строки колонка «Точка» (документы точек больше не сливаются молча).
  */
 export async function loadReportTable(params: {
   templateCode: string;
@@ -25,6 +31,8 @@ export async function loadReportTable(params: {
   dateTo: string;
   areaId?: string | null;
   locale?: Locale;
+  /** Торговая точка из шапки; null — вся организация. */
+  pointId?: string | null;
 }): Promise<{ templateName: string; timeZone: string; table: ReportTable; emptyMessage: string } | null> {
   const locale = params.locale ?? "ru";
   const messages = await loadMessages(locale);
@@ -43,15 +51,24 @@ export async function loadReportTable(params: {
   const periodStart = new Date(`${params.dateFrom.slice(0, 10)}T00:00:00.000Z`);
   const periodEnd = new Date(`${params.dateTo.slice(0, 10)}T23:59:59.999Z`);
 
+  const targets = await buildingTargets(params.organizationId);
+  const pointsEnabled = targets.some(Boolean);
+  const pointId = params.pointId && targets.includes(params.pointId) ? params.pointId : null;
+  // Вся организация при журналах по точкам — подписываем строки точкой.
+  const labelPoints = pointsEnabled && !pointId;
+  const allPoints = messages.reports.allPoints;
+
   const documents = await db.journalDocument.findMany({
     where: {
       organizationId: params.organizationId,
       templateId: template.id,
       dateFrom: { lte: periodEnd },
       dateTo: { gte: periodStart },
+      ...buildingWhere(pointId),
     },
-    select: { id: true },
+    select: { id: true, building: { select: { name: true } } },
   });
+  const pointOfDocument = new Map(documents.map((doc) => [doc.id, doc.building?.name ?? allPoints]));
 
   const [documentEntries, legacyEntries] = await Promise.all([
     documents.length === 0
@@ -63,6 +80,7 @@ export async function loadReportTable(params: {
             ...NOT_AUTO_SEEDED,
           },
           select: {
+            documentId: true,
             date: true,
             data: true,
             employee: { select: { name: true } },
@@ -75,12 +93,14 @@ export async function loadReportTable(params: {
         organizationId: params.organizationId,
         createdAt: { gte: periodStart, lte: periodEnd },
         ...(params.areaId ? { areaId: params.areaId } : {}),
+        // Точка: записи её цехов, общих цехов и без цеха.
+        ...(pointId ? { OR: [{ areaId: null }, { area: { buildingId: pointId } }, { area: { buildingId: null } }] } : {}),
       },
       select: {
         createdAt: true,
         data: true,
         filledBy: { select: { name: true } },
-        area: { select: { name: true } },
+        area: { select: { name: true, building: { select: { name: true } } } },
         equipment: { select: { name: true } },
       },
       orderBy: { createdAt: "asc" },
@@ -106,6 +126,7 @@ export async function loadReportTable(params: {
       date: entry.date,
       employeeName: entry.employee?.name ?? null,
       data: entry.data,
+      ...(labelPoints ? { pointName: pointOfDocument.get(entry.documentId) ?? allPoints } : {}),
     })),
     legacyEntries: legacyEntries.map((entry) => ({
       createdAt: entry.createdAt,
@@ -113,6 +134,7 @@ export async function loadReportTable(params: {
       areaName: entry.area?.name ?? null,
       equipmentName: entry.equipment?.name ?? null,
       data: entry.data,
+      ...(labelPoints ? { pointName: entry.area?.building?.name ?? allPoints } : {}),
     })),
   });
 

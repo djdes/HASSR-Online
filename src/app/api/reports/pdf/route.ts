@@ -5,6 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { generateJournalPDF } from "@/lib/pdf";
+import { getViewedPointId } from "@/lib/active-building";
 import { isManagementRole } from "@/lib/user-roles";
 import { resolveExportLocale } from "@/i18n/export-locale";
 import { translatorFor } from "@/i18n/translator";
@@ -88,6 +89,8 @@ export async function GET(request: Request) {
       dateTo,
       areaId,
       locale,
+      // Точка из шапки: только её документы и цеха (2026-10-31).
+      pointId: await getViewedPointId(session),
     });
 
     const fileName = `report_${templateCode}_${dateFrom}_${dateTo}.pdf`;

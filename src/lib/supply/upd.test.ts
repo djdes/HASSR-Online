@@ -14,6 +14,8 @@ test("UPD 5.01 in windows-1251: number, date, seller, buyer, lines, units, expir
   assert.equal(upd.date, "2026-10-31");
   assert.deepEqual(upd.seller, { name: "ООО «Молочный двор»", inn: "7701234567", kpp: "770101001" });
   assert.deepEqual(upd.buyer, { name: "МБОУ СОШ № 8", inn: "5001234567", kpp: "500101001" });
+  // Грузополучатель — по его КПП ищется точка доставки (2026-11-01).
+  assert.deepEqual(upd.consignee, { name: "МБОУ СОШ № 8, пищеблок", inn: "5001234567", kpp: "500102001" });
   assert.equal(upd.items.length, 2);
   assert.deepEqual(upd.items[0], {
     line: 1,
@@ -40,6 +42,7 @@ test("UPD 5.03 in UTF-8 from a sole trader: renamed attributes and ISO expiry", 
   assert.equal(upd.date, "2026-10-30");
   assert.deepEqual(upd.seller, { name: "ИП Петров Пётр Петрович", inn: "500100732259", kpp: null });
   assert.equal(upd.buyer, null);
+  assert.equal(upd.consignee, null);
   assert.equal(upd.items[0].unit, "кг");
   assert.equal(upd.items[0].quantity, 12.4);
   assert.equal(upd.items[0].expiryDate, "2026-11-02");

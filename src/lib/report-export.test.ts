@@ -79,3 +79,26 @@ test("formatReportValue: даты, массивы, булевы", () => {
   assert.equal(formatReportValue(true), "Да");
   assert.equal(formatReportValue(null), "");
 });
+
+test("вся организация с журналами по точкам: колонка «Точка» у каждой строки", () => {
+  const table = buildReportTable({
+    fields: [{ key: "temperature", label: "Температура, °C", type: "number" }],
+    documentEntries: [
+      { date: day("2026-10-01"), employeeName: "Анна", data: { temperature: 4 }, pointName: "Точка А" },
+      { date: day("2026-10-01"), employeeName: "Борис", data: { temperature: 5 }, pointName: "Точка Б" },
+    ],
+    timeZone: "Europe/Moscow",
+  });
+  assert.deepEqual(table.headers, ["Дата", "Точка", "Сотрудник", "Температура, °C"]);
+  assert.deepEqual(table.rows, [
+    ["01.10.2026", "Точка А", "Анна", "4"],
+    ["01.10.2026", "Точка Б", "Борис", "5"],
+  ]);
+  // Без подписей точек (точка выбрана или точки выключены) — колонки нет.
+  const plain = buildReportTable({
+    fields: [{ key: "temperature", label: "Температура, °C", type: "number" }],
+    documentEntries: [{ date: day("2026-10-01"), employeeName: "Анна", data: { temperature: 4 } }],
+    timeZone: "Europe/Moscow",
+  });
+  assert.deepEqual(plain.headers, ["Дата", "Сотрудник", "Температура, °C"]);
+});

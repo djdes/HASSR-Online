@@ -1,6 +1,7 @@
 import type { SabyAppSession } from "@/lib/edo/saby/rpc";
 import { SabyRpcError, describeSabyError } from "@/lib/edo/saby/rpc";
 import { createSabyCaller, type SabySessionStore } from "@/lib/edo/saby/session";
+import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
 
@@ -19,6 +20,7 @@ import { createIikoClient, IikoError } from "./iiko";
 import { addMissingProducts } from "./products.server";
 import { assertPublicServerUrl, UnsafeUrlError } from "./safe-url";
 import { createSabyIncomingApi, isAllowedSabyFileUrl } from "./saby-incoming";
+import { iikoStoreDecision, readIikoStorePoints } from "./supply-points";
 import { syncDiadocDocuments, syncIikoData, syncSabyDocuments, type SyncCounters, type SyncSink } from "./sync";
 
 /**
@@ -42,8 +44,8 @@ function sinkFor(organizationId: string, source: SupplyProvider): SyncSink {
   return {
     exists: async (externalId) =>
       (await db.supplyDocument.count({ where: { organizationId, source, externalId } })) > 0,
-    save: ({ externalId, parsed, fileName }) =>
-      saveSupplyDocument({ organizationId, source, externalId, parsed, fileName }),
+    save: ({ externalId, parsed, fileName, buildingId }) =>
+      saveSupplyDocument({ organizationId, source, externalId, parsed, fileName, buildingId }),
   };
 }
 
@@ -86,6 +88,9 @@ export async function syncSupplyConnection(
       const creds = JSON.parse(decryptSecret(connection.credentialsEnc)) as IikoStoredCredentials;
       const serverUrl = await assertPublicServerUrl(creds.serverUrl);
       const organizationId = connection.organizationId;
+      // Склад документа → точка (настройки iiko, 2026-11-01).
+      const storeMap = readIikoStorePoints(connection.storePoints).map;
+      const livePoints = new Set((await buildingTargets(organizationId)).filter((id): id is string => id !== null));
       counters = await syncIikoData({
         client: createIikoClient({ ...creds, serverUrl }, { fetch: fetchImpl }),
         fromDate,
@@ -94,10 +99,11 @@ export async function syncSupplyConnection(
         sink,
         losses: {
           exists: async (sourceEntryId) => (await db.lossRecord.count({ where: { organizationId, sourceEntryId } })) > 0,
-          save: async (loss) => {
+          save: async (loss, buildingId) => {
             await db.lossRecord.create({
               data: {
                 organizationId,
+                buildingId,
                 date: new Date(`${loss.date}T12:00:00.000Z`),
                 category: "writeoff",
                 productName: loss.productName,
@@ -111,6 +117,8 @@ export async function syncSupplyConnection(
           },
         },
         products: { addMissing: (items) => addMissingProducts(organizationId, items) },
+        // «Не загружать» действует всегда; точка — только пока точки включены.
+        storeDecision: (storeId) => iikoStoreDecision(storeId, storeMap, livePoints),
       });
     } else if (provider === "diadoc") {
       const creds = JSON.parse(decryptSecret(connection.credentialsEnc)) as DiadocStoredCredentials;

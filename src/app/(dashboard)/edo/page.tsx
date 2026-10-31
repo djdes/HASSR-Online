@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
 import { formatDate, formatNumber, isLocale, type Locale } from "@/i18n/locales";
@@ -9,6 +9,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { readSupplyItems } from "@/lib/supply/documents.server";
+import { loadSupplyPointAccess } from "@/lib/supply/point-access.server";
 
 import { EdoInboxActions } from "./edo-inbox-actions";
 
@@ -27,7 +28,9 @@ const DATE_TIME: Intl.DateTimeFormatOptions = { ...DATE, hour: "2-digit", minute
 /**
  * «Входящие накладные» (ЭДО, 2026-10-31): УПД поставщиков из Диадока, СБИС
  * или файлом. Ждущие приёмки — сверху; открыл, проверил товар — строки в
- * журнале приёмки. `?tab=done` — разобранные.
+ * журнале приёмки. `?tab=done` — разобранные. Точки (2026-11-01): на
+ * торговой точке — её накладные и накладные без точки; «Вся организация» —
+ * все, с пометкой точки.
  */
 export default async function EdoInboxPage({
   searchParams,
@@ -38,6 +41,7 @@ export default async function EdoInboxPage({
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
   const tab = (await searchParams).tab === "done" ? "done" : "new";
+  const access = await loadSupplyPointAccess(session);
   const [t, rawLocale, organization, connections, pendingCount, documents] = await Promise.all([
     getTranslations("supplyEdo.page"),
     getLocale(),
@@ -46,9 +50,13 @@ export default async function EdoInboxPage({
       where: { organizationId },
       select: { provider: true, status: true, lastSyncAt: true, lastError: true },
     }),
-    db.supplyDocument.count({ where: { organizationId, status: { in: ["new", "processing"] } } }),
+    db.supplyDocument.count({ where: { organizationId, status: { in: ["new", "processing"] }, ...access.listWhere } }),
     db.supplyDocument.findMany({
-      where: { organizationId, status: tab === "new" ? { in: ["new", "processing"] } : { in: ["accepted", "rejected", "ignored"] } },
+      where: {
+        organizationId,
+        status: tab === "new" ? { in: ["new", "processing"] } : { in: ["accepted", "rejected", "ignored"] },
+        ...access.listWhere,
+      },
       orderBy: tab === "new" ? [{ date: "desc" }, { createdAt: "desc" }] : [{ decidedAt: "desc" }],
       take: 200,
       select: {
@@ -62,6 +70,7 @@ export default async function EdoInboxPage({
         total: true,
         status: true,
         decidedAt: true,
+        building: { select: { name: true } },
       },
     }),
   ]);
@@ -135,6 +144,17 @@ export default async function EdoInboxPage({
                       <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-medium ${STATUS_TONE[doc.status] ?? STATUS_TONE.new}`}>
                         {t(`status.${(["new", "processing", "accepted", "rejected", "ignored"] as const).find((s) => s === doc.status) ?? "new"}`)}
                       </span>
+                      {access.enabled ? (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${
+                            doc.building ? "bg-[#f5f6ff] text-[#3848c7]" : "bg-[#fff8eb] text-[#7a4a00]"
+                          }`}
+                          data-edo-point
+                        >
+                          <MapPin className="size-3.5" aria-hidden />
+                          {doc.building ? t("pointLabel", { name: doc.building.name }) : t("noPoint")}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-1 text-[13.5px] text-[#3c4053]">
                       {[

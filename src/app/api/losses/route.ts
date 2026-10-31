@@ -2,6 +2,8 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { getViewedPointId } from "@/lib/active-building";
+import { areaPointWhere, lossPointWhere } from "@/lib/point-filters";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -22,6 +24,16 @@ export async function GET(req: NextRequest) {
     where.date = dateFilter;
   }
 
+  // На торговой точке — её потери, её цехов и общих, без места (2026-11-01);
+  // то же правило, что на странице «Потери».
+  const pointId = await getViewedPointId(session);
+  if (pointId) {
+    const pointAreas = await db.area.findMany({
+      where: { organizationId: getActiveOrgId(session), ...areaPointWhere(pointId) },
+      select: { id: true },
+    });
+    Object.assign(where, lossPointWhere(pointId, pointAreas.map((area) => area.id)));
+  }
   const records = await db.lossRecord.findMany({
     where,
     orderBy: { date: "desc" },
@@ -111,10 +123,11 @@ export async function POST(req: NextRequest) {
   // A мог привязать loss-record к area компании B (cross-tenant FK,
   // analytics ломается).
   let areaId: string | null = null;
+  let areaPointId: string | null = null;
   if (typeof body.areaId === "string" && body.areaId) {
     const area = await db.area.findFirst({
       where: { id: body.areaId, organizationId: orgId },
-      select: { id: true },
+      select: { id: true, buildingId: true },
     });
     if (!area) {
       return NextResponse.json(
@@ -123,6 +136,7 @@ export async function POST(req: NextRequest) {
       );
     }
     areaId = area.id;
+    areaPointId = area.buildingId;
   }
 
   const category = autoCategorize(body.category, body.cause, body.productName);
@@ -136,6 +150,8 @@ export async function POST(req: NextRequest) {
       costRub,
       cause: typeof body.cause === "string" ? body.cause.slice(0, 2000) : null,
       areaId,
+      // Точка: цеха, иначе торговая точка из шапки (2026-11-01).
+      buildingId: areaPointId ?? (await getViewedPointId(session)),
       ...(date ? { date } : {}),
       // Откуда запись: id документа-источника (акта списания).
       sourceEntryId:

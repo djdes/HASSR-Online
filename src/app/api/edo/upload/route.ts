@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getViewedPointId } from "@/lib/active-building";
 import { fileExternalId, saveSupplyDocument } from "@/lib/supply/documents.server";
 import { guardSupply } from "@/lib/supply/guard.server";
 import { parseUpd, UpdParseError } from "@/lib/supply/upd";
@@ -12,7 +13,8 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 /**
  * POST /api/edo/upload (multipart, поле `file`) — УПД файлом из любого ЭДО.
- * Тот же файл второй раз — та же накладная (`duplicate: true`).
+ * Тот же файл второй раз — та же накладная (`duplicate: true`). Точка — по
+ * КПП грузополучателя, иначе точка из шапки (2026-11-01).
  */
 export async function POST(request: Request) {
   const { session, organizationId, denied } = await guardSupply();
@@ -33,6 +35,8 @@ export async function POST(request: Request) {
       parsed,
       fileName: file.name.slice(0, 200) || null,
       actor: { id: session.user.id, name: session.user.name ?? null },
+      // Загрузили на торговой точке — накладная её, если КПП точку не нашёл.
+      fallbackBuildingId: await getViewedPointId(session),
     });
     return NextResponse.json({ id: saved.id, duplicate: !saved.created, number: parsed.number });
   } catch (error) {

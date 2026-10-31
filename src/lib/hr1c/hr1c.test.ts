@@ -149,8 +149,9 @@ test("OData: Basic auth, Cyrillic entities, pages; 1C empty dates; deletion mark
   const client = createZupClient({ baseUrl: "https://zup.example.ru/zup/", login: "odata", password: "secret" }, { fetch: fetchImpl });
   const employees = await client.employees();
   assert.deepEqual(employees, [
-    { externalId: "e-1", fullName: "Иванова Мария Петровна", position: "Повар", hiredAt: "2025-03-01", dismissedAt: null, archived: false, phone: null },
-    { externalId: "e-2", fullName: "Сидоров Сидор", position: "Мойщица посуды", hiredAt: "2024-05-01", dismissedAt: "2026-10-30", archived: false, phone: null },
+    // Подразделения в публикации нет (справочник отвечает 404) — синхронизация не ломается.
+    { externalId: "e-1", fullName: "Иванова Мария Петровна", position: "Повар", hiredAt: "2025-03-01", dismissedAt: null, archived: false, phone: null, departmentId: null, departmentName: null },
+    { externalId: "e-2", fullName: "Сидоров Сидор", position: "Мойщица посуды", hiredAt: "2024-05-01", dismissedAt: "2026-10-30", archived: false, phone: null, departmentId: null, departmentName: null },
   ]);
   assert.ok(calls[0].startsWith("Catalog_Сотрудники?$format=json&$select=Ref_Key,Description,DeletionMark,ВАрхиве&$top=1000&$skip=0"));
   assert.equal(zupDate("0001-01-01T00:00:00"), null);
@@ -184,7 +185,10 @@ test("API body from a 1C data processor is validated and mapped", () => {
   });
   assert.ok(body);
   assert.equal(body.apply, true);
-  assert.deepEqual(body.employees[0], { externalId: "000123", fullName: "Иванова Мария", position: "Повар", hiredAt: "2025-03-01", dismissedAt: null, archived: false, phone: null });
+  assert.deepEqual(body.employees[0], {
+    externalId: "000123", fullName: "Иванова Мария", position: "Повар", hiredAt: "2025-03-01", dismissedAt: null, archived: false, phone: null,
+    departmentId: null, departmentName: null,
+  });
   assert.equal(body.employees[1].dismissedAt, "2026-10-30");
   assert.equal(readHrEmployeesBody({ employees: [{ id: "", fullName: "X" }] }), null);
   assert.equal(readHrEmployeesBody({ employees: "nope" }), null);

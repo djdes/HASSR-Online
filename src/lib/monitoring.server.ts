@@ -8,9 +8,11 @@ import { listAssignmentRows } from "@/lib/checklist-assignments.server";
 import { loadPpkStatuses } from "@/lib/ppk/facts.server";
 import { ppkProgress } from "@/lib/ppk/status";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
+import { viewedPointId } from "@/lib/building-scope";
 import {
   checklistMetric,
   journalMetric,
+  resolveMonitoringPoint,
   sumMetrics,
   type MonitoringMetric,
 } from "@/lib/monitoring";
@@ -47,7 +49,7 @@ export async function loadMonitoring(session: Session, requestedPointId: string 
   const points = buildings
     .filter((building) => buildingInScope(session.user, building.id))
     .map((building) => ({ id: building.id, name: building.name }));
-  const pointId = requestedPointId && points.some((point) => point.id === requestedPointId) ? requestedPointId : null;
+  const pointId = resolveMonitoringPoint(requestedPointId, points, viewedPointId(context));
   const perPointJournals = context.enabled;
 
   const journalsAt = async (buildingId: string | null): Promise<MonitoringMetric> => {

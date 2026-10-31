@@ -13,6 +13,24 @@ export function metricPercent(metric: MonitoringMetric): number | null {
   return Math.round((Math.min(metric.done, metric.total) / metric.total) * 100);
 }
 
+/** «Все точки» в адресе страницы — явный выбор, когда в шапке выбрана точка. */
+export const MONITORING_ALL_POINTS = "all";
+
+/**
+ * Точка «Мониторинга» (2026-10-31): из адреса, если это точка человека;
+ * `?point=all` — «Все точки»; без параметра — торговая точка из шапки
+ * (раньше всегда «Все точки», и точка в шапке не влияла).
+ */
+export function resolveMonitoringPoint(
+  requested: string | null,
+  points: ReadonlyArray<{ id: string }>,
+  viewedPointId: string | null,
+): string | null {
+  if (requested === MONITORING_ALL_POINTS) return null;
+  const mine = (id: string | null) => (id && points.some((point) => point.id === id) ? id : null);
+  return requested ? mine(requested) : mine(viewedPointId);
+}
+
 /** Сумма показателей по точкам («Все точки»). */
 export function sumMetrics(metrics: readonly MonitoringMetric[]): MonitoringMetric {
   return metrics.reduce((sum, metric) => ({ done: sum.done + metric.done, total: sum.total + metric.total }), {

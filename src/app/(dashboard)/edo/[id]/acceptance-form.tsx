@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Loader2, MapPin, X } from "lucide-react";
 import { toast } from "sonner";
 
 type Item = {
@@ -46,18 +46,33 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (val
  * Приёмка накладной: общие отметки поставки и проверка каждой строки.
  * По умолчанию всё «в порядке» и «принять» — человек отмечает только
  * отклонения; у отклонённой строки обязательно, что сделали с товаром.
+ *
+ * Журналы по точкам (2026-11-01): точка приёмки выбирается явно — строки
+ * лягут в журнал приёмки этой точки. Без выбора форма не отправляется.
  */
 export function AcceptanceForm({
   documentId,
   items,
   defaults,
+  points = [],
+  defaultPointId = null,
+  pointFromDocument = false,
 }: {
   documentId: string;
   items: Item[];
   defaults: { deliveryDate: string; deliveryTime: string };
+  /** Точки, доступные человеку; пусто — журналы не по точкам. */
+  points?: Array<{ id: string; name: string }>;
+  defaultPointId?: string | null;
+  /** Точка подставлена из накладной (КПП грузополучателя, склад iiko). */
+  pointFromDocument?: boolean;
 }) {
   const t = useTranslations("supplyEdo.document");
   const router = useRouter();
+  const [pointId, setPointId] = useState<string | null>(
+    defaultPointId && points.some((point) => point.id === defaultPointId) ? defaultPointId : null,
+  );
+  const [pointMissing, setPointMissing] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState(defaults.deliveryDate);
   const [deliveryTime, setDeliveryTime] = useState(defaults.deliveryTime);
   const [transportOk, setTransportOk] = useState(true);
@@ -83,6 +98,12 @@ export function AcceptanceForm({
     setChecks((current) => ({ ...current, [line]: { ...current[line], ...patch } }));
 
   async function submit() {
+    if (points.length > 0 && !pointId) {
+      setPointMissing(true);
+      toast.error(t("errors.point"));
+      document.querySelector("[data-edo-point-picker]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (items.some((item) => checks[item.line].decision === "reject" && !checks[item.line].correctiveActions.trim())) {
       toast.error(t("errors.corrective"));
       return;
@@ -101,6 +122,7 @@ export function AcceptanceForm({
             transportOk,
             documentsOk,
           },
+          buildingId: points.length > 0 ? pointId : null,
           items: items.map((item) => {
             const check = checks[item.line];
             return {
@@ -149,6 +171,49 @@ export function AcceptanceForm({
 
   return (
     <section className="space-y-4" data-edo-acceptance>
+      {points.length > 0 ? (
+        <div
+          className={`rounded-3xl border bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-colors duration-200 sm:p-6 ${
+            pointMissing && !pointId ? "border-[#f3c9c4]" : "border-[#ececf4]"
+          }`}
+          data-edo-point-picker
+        >
+          <h2 className="flex items-center gap-2 text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
+            <MapPin className="size-5 text-[#5566f6]" aria-hidden />
+            {t("pointTitle")}
+          </h2>
+          <p className="mt-1 text-[14px] leading-relaxed text-[#6f7282]">
+            {pointFromDocument && pointId === defaultPointId ? t("pointFromDocument") : t("pointHint")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={t("pointTitle")}>
+            {points.map((point) => {
+              const active = point.id === pointId;
+              return (
+                <button
+                  key={point.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => {
+                    setPointId(point.id);
+                    setPointMissing(false);
+                  }}
+                  className={`inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-2xl border px-3.5 text-[13.5px] font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 ${
+                    active
+                      ? "border-[#5566f6] bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0]"
+                      : "border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
+                  }`}
+                  data-edo-point-option={point.id}
+                >
+                  {active ? <Check className="size-4 shrink-0" aria-hidden /> : null}
+                  <span className="truncate">{point.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {pointMissing && !pointId ? <p className="mt-2 text-[13px] text-[#a13a32]">{t("errors.point")}</p> : null}
+        </div>
+      ) : null}
       <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6">
         <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("checkTitle")}</h2>
         <p className="mt-1 text-[14px] leading-relaxed text-[#6f7282]">{t("checkHint")}</p>

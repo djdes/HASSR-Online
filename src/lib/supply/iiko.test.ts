@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createIikoClient, IikoError, parseIncomingInvoices, parseProducts, parseSuppliers, parseUnits, parseWriteoffs, sha1, type FetchLike } from "./iiko";
+import { createIikoClient, IikoError, parseCorporateItems, parseIncomingInvoices, parseProducts, parseSuppliers, parseUnits, parseWriteoffs, sha1, type FetchLike } from "./iiko";
 import { buildIikoDirectory, iikoInvoiceToDocument, iikoProductsForDirectory, iikoWriteoffToLosses } from "./iiko-map";
 import { assertPublicServerUrl, isPrivateAddress, UnsafeUrlError } from "./safe-url";
 import { syncIikoData, type SyncSink } from "./sync";
@@ -16,6 +16,7 @@ export const IIKO_INVOICES_XML = `<?xml version="1.0" encoding="UTF-8"?>
     <dateIncoming>2026-10-31T09:40:00</dateIncoming>
     <status>PROCESSED</status>
     <supplier>sup-1</supplier>
+    <defaultStore>st-kitchen</defaultStore>
     <items>
       <item><num>1</num><product>p-milk</product><productArticle>00012</productArticle><amount>40.000</amount><amountUnit>u-l</amountUnit><price>78.5</price><sum>3140</sum></item>
       <item><num>2</num><product>p-curd</product><amount>5.5</amount><price>310</price><sum>1705</sum></item>
@@ -46,13 +47,22 @@ export const IIKO_UNITS = [{ id: "u-l", name: "л" }, { id: "u-kg", name: "кг"
 export const IIKO_WRITEOFFS = {
   result: "SUCCESS",
   response: [
-    { id: "wo-1", documentNumber: "17", dateIncoming: "2026-10-31T21:00", status: "PROCESSED", comment: "Истёк срок годности", items: [
+    { id: "wo-1", documentNumber: "17", dateIncoming: "2026-10-31T21:00", status: "PROCESSED", comment: "Истёк срок годности", storeId: "st-bar", items: [
       { productId: "p-milk", amount: 2, measureUnitId: "u-l", cost: 157 },
       { productId: "p-unknown", amount: 1 },
     ] },
     { id: "wo-2", dateIncoming: "2026-10-30T21:00", status: "DELETED", items: [{ productId: "p-curd", amount: 1 }] },
   ],
 };
+
+export const IIKO_STORES_XML = `<corporateItemDtoes>
+  <corporateItemDto><id>st-kitchen</id><parentId>dep-1</parentId><code>1</code><name>Склад кухни</name><type>STORE</type></corporateItemDto>
+  <corporateItemDto><id>st-bar</id><parentId>dep-2</parentId><code>2</code><name>Склад бара</name><type>STORE</type></corporateItemDto>
+</corporateItemDtoes>`;
+export const IIKO_DEPARTMENTS_XML = `<corporateItemDtoes>
+  <corporateItemDto><id>dep-1</id><name>Гимназия № 4</name><type>DEPARTMENT</type></corporateItemDto>
+  <corporateItemDto><id>dep-2</id><name>Кафе на Ленина</name><type>DEPARTMENT</type></corporateItemDto>
+</corporateItemDtoes>`;
 
 /** Подделка сервера iiko; `fail` — на каком пути ответить ошибкой. */
 function fakeIiko(options: { password?: string; fail?: string; licenseBusy?: boolean } = {}) {
@@ -80,6 +90,10 @@ function fakeIiko(options: { password?: string; fail?: string; licenseBusy?: boo
         return new Response(IIKO_INVOICES_XML);
       case "/resto/api/v2/documents/writeoff":
         return Response.json(IIKO_WRITEOFFS);
+      case "/resto/api/corporation/stores":
+        return new Response(IIKO_STORES_XML);
+      case "/resto/api/corporation/departments":
+        return new Response(IIKO_DEPARTMENTS_XML);
       default:
         return new Response("not found", { status: 404 });
     }
@@ -121,6 +135,7 @@ test("iiko parsing: invoices, suppliers, products, units, write-offs in both sha
     date: "2026-10-31",
     supplierId: "sup-1",
     status: "PROCESSED",
+    storeId: "st-kitchen",
     items: [
       { num: 1, productId: "p-milk", article: "00012", amount: 40, unitId: "u-l", price: 78.5, sum: 3140 },
       { num: 2, productId: "p-curd", article: null, amount: 5.5, unitId: null, price: 310, sum: 1705 },
@@ -131,6 +146,18 @@ test("iiko parsing: invoices, suppliers, products, units, write-offs in both sha
   assert.equal(parseProducts(IIKO_PRODUCTS)[4].deleted, true);
   assert.equal(parseUnits(IIKO_UNITS).get("u-kg"), "кг");
   assert.equal(parseWriteoffs(IIKO_WRITEOFFS).length, 2);
+  assert.equal(parseWriteoffs(IIKO_WRITEOFFS)[0].storeId, "st-bar");
+  // Склад накладной без defaultStore — склад первой строки.
+  assert.equal(invoices[1].storeId, null);
+  assert.equal(
+    parseIncomingInvoices(IIKO_INVOICES_XML.replace("<defaultStore>st-kitchen</defaultStore>", "").replace("<num>1</num><product>p-milk</product><productArticle>", "<num>1</num><store>st-line</store><product>p-milk</product><productArticle>"))[0].storeId,
+    "st-line",
+  );
+  assert.deepEqual(parseCorporateItems(IIKO_STORES_XML), [
+    { id: "st-kitchen", name: "Склад кухни", parentId: "dep-1" },
+    { id: "st-bar", name: "Склад бара", parentId: "dep-2" },
+  ]);
+  assert.deepEqual(parseCorporateItems("<corporateItemDtoes/>"), []);
   assert.equal(parseWriteoffs(IIKO_WRITEOFFS.response).length, 2);
   assert.throws(() => parseIncomingInvoices("<<<"), IikoError);
 });
@@ -207,4 +234,46 @@ test("server address: public hosts only; localhost only outside production", asy
   await assert.rejects(assertPublicServerUrl("ftp://cafe.iiko.it", { NODE_ENV: "production" }, resolve), /https:\/\//);
   await assert.rejects(assertPublicServerUrl("https://user:pass@cafe.iiko.it", { NODE_ENV: "production" }, resolve), /не в адресе/);
   await assert.rejects(assertPublicServerUrl("https://unknown.example", { NODE_ENV: "production" }, resolve), UnsafeUrlError);
+});
+
+test("iiko sync по складам: накладная склада — на его точку, акт склада «не загружать» — пропущен", async () => {
+  const fake = fakeIiko();
+  const client = createIikoClient(creds, { fetch: fake.fetchImpl });
+  const saved: Array<{ id: string; buildingId: string | null | undefined }> = [];
+  const losses: Array<{ id: string; buildingId: string | null }> = [];
+  const run = (map: Record<string, string>) =>
+    syncIikoData({
+      client,
+      fromDate: "2026-10-01",
+      toDate: "2026-10-31",
+      options: { invoices: true, writeoffs: true, products: false },
+      sink: {
+        exists: async () => false,
+        save: async ({ externalId, buildingId }) => (saved.push({ id: externalId, buildingId }), { created: true }),
+      },
+      losses: { exists: async () => false, save: async (loss, buildingId) => void losses.push({ id: loss.sourceEntryId, buildingId }) },
+      products: { addMissing: async () => 0 },
+      storeDecision: (storeId) =>
+        storeId && map[storeId] === "skip" ? { skip: true, buildingId: null } : { skip: false, buildingId: storeId ? map[storeId] ?? null : null },
+    });
+  const first = await run({ "st-kitchen": "point-A", "st-bar": "point-B" });
+  assert.deepEqual(saved, [{ id: "inv-1", buildingId: "point-A" }]);
+  assert.deepEqual(losses, [{ id: "iiko:wo-1:1", buildingId: "point-B" }]);
+  assert.equal(first.created, 1);
+  saved.length = 0;
+  losses.length = 0;
+  const second = await run({ "st-kitchen": "skip", "st-bar": "skip" });
+  assert.deepEqual(saved, []);
+  assert.deepEqual(losses, []);
+  assert.equal(second.created, 0);
+  assert.equal(second.losses, 0);
+});
+
+test("iiko: склады и подразделения за одну сессию", async () => {
+  const fake = fakeIiko();
+  const client = createIikoClient(creds, { fetch: fake.fetchImpl });
+  const result = await client.withSession(async (session) => ({ stores: await session.stores(), departments: await session.departments() }));
+  assert.equal(result.stores.length, 2);
+  assert.equal(result.departments[1].name, "Кафе на Ленина");
+  assert.equal(fake.calls.at(-1), "/resto/api/logout?key=session-key-1");
 });

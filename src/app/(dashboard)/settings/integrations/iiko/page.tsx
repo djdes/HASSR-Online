@@ -5,12 +5,15 @@ import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { PageHeader } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { decryptSecret } from "@/lib/integration-crypto";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { connectionView, readIikoOptions } from "@/lib/supply/connections";
+import { readIikoStorePoints } from "@/lib/supply/supply-points";
 
 import { IikoSettingsClient } from "./iiko-settings-client";
+import { IikoStoresCard } from "./iiko-stores-card";
 
 export const dynamic = "force-dynamic";
 
@@ -20,17 +23,29 @@ const LINK =
 /**
  * iiko (сервер iikoOffice / iiko RMS): приходные накладные — во «Входящие»,
  * акты списания — в «Потери», товары и заготовки — в справочник продуктов.
- * Пароль — только зашифрованным; на странице — адрес и логин.
+ * Пароль — только зашифрованным; на странице — адрес и логин. Журналы по
+ * точкам — склады iiko сопоставляются с точками (2026-11-01).
  */
 export default async function IikoSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
-  const [t, organization, row] = await Promise.all([
+  const [t, organization, row, targets] = await Promise.all([
     getTranslations("supplyEdo.iiko"),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     db.supplyConnection.findUnique({ where: { organizationId_provider: { organizationId, provider: "iiko" } } }),
+    buildingTargets(organizationId),
   ]);
+  const pointIds = targets.filter((id): id is string => id !== null);
+  const points =
+    pointIds.length > 0
+      ? await db.building.findMany({
+          where: { organizationId, id: { in: pointIds } },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+          select: { id: true, name: true },
+        })
+      : [];
+  const storePoints = readIikoStorePoints(row?.storePoints);
   let credentials: unknown = null;
   if (row) {
     try {
@@ -61,6 +76,9 @@ export default async function IikoSettingsPage() {
           options={options}
           timeZone={organization?.timezone || "Europe/Moscow"}
         />
+        {row && points.length > 0 ? (
+          <IikoStoresCard initialStores={storePoints.stores} initialMap={storePoints.map} points={points} />
+        ) : null}
         <p className="text-[13px] leading-relaxed text-[#6f7282]">
           {t("secretsNote")} {t("licenseNote")}
         </p>

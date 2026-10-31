@@ -42,6 +42,8 @@ export type ParsedUpd = {
   date: string;
   seller: SupplyParty;
   buyer: SupplyParty | null;
+  /** Грузополучатель (`ГрузПолуч`) — по его КПП находится точка доставки. */
+  consignee?: SupplyParty | null;
   items: SupplyItem[];
   total: number | null;
   /** «Договор № 12 от 01.01.2026» — основание передачи. */
@@ -237,6 +239,7 @@ export function parseUpd(input: Uint8Array | string): ParsedUpd {
     date,
     seller,
     buyer: party(first(invoice["СвПокуп"])),
+    consignee: party(first(invoice["ГрузПолуч"])),
     items,
     total: parseAmount(attr(totals, "СтТовУчНалВсего")) ?? parseAmount(attr(totals, "СтТовБезНДСВсего")),
     ...basisOf(document),
