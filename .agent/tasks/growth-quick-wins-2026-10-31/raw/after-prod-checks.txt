@@ -1,0 +1,15 @@
+checked 2026-10-31T22:40:23Z
+build-info: {"buildId":"4cea338","buildTime":"2026-10-31T22:27:11Z","fullBuildId":"4cea338313a33e5a38f36ff27a7a76573110d1b9"}
+sitemap urls: 368
+sitemap urls with <lastmod>: 66
+distinct lastmod values (top 5):
+      6 <lastmod>2026-10-09T04:46:17.852Z</lastmod>
+      3 <lastmod>2026-10-09T04:46:17.847Z</lastmod>
+      3 <lastmod>2026-10-09T04:46:17.843Z</lastmod>
+      3 <lastmod>2026-10-09T04:46:17.840Z</lastmod>
+      3 <lastmod>2026-10-09T04:46:17.837Z</lastmod>
+/ (home) has <lastmod>? home: no | /blog lastmod: 2026-10-09T04:46:17.852Z
+/login robots meta: <meta name="robots" content="noindex, follow"
+home mentions «Запуск: 1 октября»: 0
+home has new app teaser text: 1
+home challenge placeholder reserved (min-h-[144px]): 1

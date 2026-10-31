@@ -1,0 +1,22 @@
+{
+ "url": "https://wesetup.ru/",
+ "device": "Pixel 7",
+ "measuredAt": "2026-10-31T22:41:01.719Z",
+ "runs": [
+  {
+   "cls": 0,
+   "shifts": [],
+   "challenge": true
+  },
+  {
+   "cls": 0,
+   "shifts": [],
+   "challenge": true
+  },
+  {
+   "cls": 0,
+   "shifts": [],
+   "challenge": true
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 # Evidence: быстрые правки для роста (31.10.2026)
 
-Ветка `claude/serene-mccarthy-rhrl3e` от master `9583b7b9`. Проверки до слияния — в `raw/`.
+Ветка `claude/serene-mccarthy-rhrl3e` от master `9583b7b9`, влито в master как `4cea3383` (PR #84), на проде с 31.10.2026 22:40 UTC. Итог: **все AC — PASS**.
 
 | AC | Статус | Доказательство |
 | --- | --- | --- |
@@ -11,5 +11,5 @@
 | AC5 SEO-гигиена | PASS | `sitemap.ts` без `const now`/`lastModified: now`; статьи — `updatedAt ?? publishedAt`, /blog — самая свежая статья; отложенные статьи скрыты в списке, похожих, на странице (404) и в sitemap; ROOT видит отложенную с `noindex`. Тест `article-visibility.test.ts` (5). До: `raw/baseline-prod-sitemap.txt` (305 из 368 с датой старта процесса) |
 | AC5a Без прошедшей даты запуска | PASS | `publicUi.appStores` без `launchDate` (ru/en/uz), тест `public-ui-localization.test.ts` проверяет, что «1 октября / 1 October / 1-oktabr» не рендерится |
 | AC5b /login noindex | PASS | `robots: { index: false, follow: true }` в `generateMetadata` входа; проверка в `article-visibility.test.ts` |
-| AC6 Первый экран не прыгает | PASS до выкладки / PENDING на проде | Резерв `min-h-[144px]` вокруг контейнера виджета, надпись «загружается» — поверх (absolute). Тест `registration-challenge.test.ts`. До: CLS 0,168 в двух прогонах (`raw/baseline-prod-cls.json`); после выкладки — тот же скрипт `e2e/cls-measure.cjs` |
-| AC7 Ворота | PENDING | До слияния: `npm run typecheck` EXIT 0 (`raw/typecheck.txt`), `npm run test:gate` 5340/5340 (`raw/test-gate.txt`), `npm run i18n:check` 97/97, eslint изменённых файлов EXIT 0 (`raw/eslint-changed.txt`). Слияние, выкладка и проверка прода — после PR |
+| AC6 Первый экран не прыгает | PASS | Резерв `min-h-[144px]` вокруг контейнера виджета, надпись «загружается» — поверх (absolute). Тест `registration-challenge.test.ts`. Прод, Pixel 7, `e2e/cls-measure.cjs`: до — CLS 0,168 и 0,168 (`raw/baseline-prod-cls.json`), после выкладки `4cea338` — 0, 0, 0 (`raw/after-prod-cls.json`) |
+| AC7 Ворота | PASS | До слияния: `npm run typecheck` EXIT 0, `npm run test:gate` 5340/5340, `npm run i18n:check` 97/97, eslint изменённых файлов EXIT 0. После слияния master `40546f74`: typecheck EXIT 0, test:gate 5366/5366 (`raw/*-after-master-merge.txt`). PR #84 влит squash-коммитом `4cea3383`, выкладка «Deploy to production» №2110 прошла, `/api/build-info` → `4cea338`. Прод (`raw/after-prod-checks.txt`): в sitemap 368 адресов, `lastmod` только у 66 (статьи и /blog), у главной нет; /login `noindex, follow`; на главной нет «Запуск: 1 октября», место под проверку зарезервировано |
