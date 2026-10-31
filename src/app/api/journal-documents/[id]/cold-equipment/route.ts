@@ -16,6 +16,7 @@ import {
   type ColdEquipmentDocumentConfig,
 } from "@/lib/cold-equipment-document";
 import { syncEquipmentDirectoryItem } from "@/lib/equipment-directory";
+import { documentRowsPointId } from "@/lib/document-point-rows";
 import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole, pickPrimaryManager } from "@/lib/user-roles";
 
@@ -175,7 +176,9 @@ export async function POST(
       );
     }
 
-    const item = await syncEquipmentDirectoryItem(getActiveOrgId(session), draft);
+    // Новый холодильник встаёт в цех точки документа (2026-10-31).
+    const pointId = await documentRowsPointId(getActiveOrgId(session), document.buildingId);
+    const item = await syncEquipmentDirectoryItem(getActiveOrgId(session), draft, pointId);
     const exists = config.equipment.some((current) => current.id === item.id);
     const nextConfig = normalizeColdEquipmentDocumentConfig({
       ...config,
@@ -196,11 +199,12 @@ export async function POST(
     }
     const wanted = new Set(itemIds);
     const equipment = [...config.equipment];
+    const pointId = await documentRowsPointId(getActiveOrgId(session), document.buildingId);
     let changed = false;
     for (let index = 0; index < equipment.length; index += 1) {
       const current = equipment[index];
       if (!wanted.has(current.id)) continue;
-      const synced = await syncEquipmentDirectoryItem(getActiveOrgId(session), current);
+      const synced = await syncEquipmentDirectoryItem(getActiveOrgId(session), current, pointId);
       if (synced.sourceEquipmentId !== current.sourceEquipmentId) {
         equipment[index] = synced;
         changed = true;

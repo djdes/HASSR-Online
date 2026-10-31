@@ -98,6 +98,42 @@ export async function loadDirectoryBuildings(
   }));
 }
 
+/** Помещения, на которые ссылаются строки конфига (`config[key][].roomId`). */
+export function configRoomIds(config: unknown, key: string): Set<string> {
+  const list =
+    config && typeof config === "object" && !Array.isArray(config)
+      ? (config as Record<string, unknown>)[key]
+      : null;
+  const ids = new Set<string>();
+  if (!Array.isArray(list)) return ids;
+  for (const row of list) {
+    const roomId = row && typeof row === "object" ? (row as Record<string, unknown>).roomId : null;
+    if (typeof roomId === "string" && roomId) ids.add(roomId);
+  }
+  return ids;
+}
+
+/**
+ * Справочник помещений для документа точки (2026-10-31): точка документа —
+ * первой (новое помещение из окна по умолчанию встаёт на неё), со всеми
+ * помещениями; у других точек остаются только помещения, на которые уже
+ * ссылаются строки документа, — чтобы их названия не пропали, но в выбор
+ * чужие помещения не попадали. `pointId = null` — справочник как есть.
+ */
+export function scopeDirectoryBuildings(
+  buildings: ReadonlyArray<DirectoryBuilding>,
+  pointId: string | null,
+  referencedRoomIds: ReadonlySet<string>,
+): DirectoryBuilding[] {
+  if (!pointId) return [...buildings];
+  const own = buildings.filter((building) => building.id === pointId);
+  const others = buildings
+    .filter((building) => building.id !== pointId)
+    .map((building) => ({ ...building, rooms: building.rooms.filter((room) => referencedRoomIds.has(room.id)) }))
+    .filter((building) => building.rooms.length > 0);
+  return [...own, ...others];
+}
+
 /** Цех (Area) без помещения с тем же названием — кандидат в помещение. */
 export type OrphanArea = {
   id: string;

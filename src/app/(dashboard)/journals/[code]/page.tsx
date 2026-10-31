@@ -20,7 +20,8 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { Prisma } from "@prisma/client";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
-import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
+import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
+import { documentRowsPointId } from "@/lib/document-point-rows";
 import { buildingWhere } from "@/lib/building-scope";
 import { sharedDocumentFlag } from "@/lib/journal-document-shared";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
@@ -1460,7 +1461,7 @@ export default async function JournalDocumentsPage({
       organizationId: getActiveOrgId(session),
       ...ORG_ROSTER_WHERE,
     },
-    select: { id: true, name: true, role: true, email: true, positionTitle: true, jobPosition: { select: { name: true, categoryKey: true } } },
+    select: { id: true, name: true, role: true, email: true, positionTitle: true, buildingIds: true, jobPosition: { select: { name: true, categoryKey: true } } },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
   /**
@@ -3987,12 +3988,16 @@ export default async function JournalDocumentsPage({
       isTrackedDocumentTemplate(resolvedCode)
     ) {
       if (resolvedCode === CLEANING_DOCUMENT_TEMPLATE_CODE) {
+        // Уборщиков и контролёров выбирают из сотрудников точки, на которой
+        // создаётся документ (2026-10-31); без точек — все.
+        const createPointId = await documentRowsPointId(getActiveOrgId(session), activeBuildingId);
+        const createPointUsers = orgUsers.filter((user) => worksAtBuilding(user, createPointId));
         return withBanner(
           <CleaningDocumentsClient
             activeTab={activeTab}
             routeCode={code}
             templateCode={resolvedCode}
-            users={orgUsers}
+            users={createPointUsers}
             documents={documents.map((document) => ({
               id: document.id,
               shared: sharedDocumentFlag(document, documents),

@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ensureDefaultArea } from "@/lib/equipment-directory";
+import { equipmentBuildingWhere } from "@/lib/building-scope";
+import { documentRowsPointId } from "@/lib/document-point-rows";
 import { canWriteJournal } from "@/lib/journal-acl";
 import { isManagementRole } from "@/lib/user-roles";
 
@@ -31,6 +33,7 @@ export async function POST(
     select: {
       organizationId: true,
       status: true,
+      buildingId: true,
       template: { select: { code: true } },
     },
   });
@@ -69,16 +72,20 @@ export async function POST(
     return NextResponse.json({ error: "Название обязательно" }, { status: 400 });
   }
 
-  // Повторное нажатие не должно плодить дубли справочника.
+  // Повторное нажатие не должно плодить дубли справочника. У документа
+  // точки дубль ищем среди оборудования этой точки и общих цехов, новая
+  // запись встаёт в цех точки (2026-10-31): одноимённый холодильник другой
+  // точки раньше привязывался к строке, и автоочистка её убирала.
+  const pointId = await documentRowsPointId(organizationId, document.buildingId);
   const existing = await db.equipment.findFirst({
-    where: { name, area: { organizationId } },
+    where: { name, area: { organizationId }, ...equipmentBuildingWhere(pointId) },
     select: { id: true, name: true },
   });
   if (existing) {
     return NextResponse.json({ equipment: existing, created: false });
   }
 
-  const areaId = await ensureDefaultArea(organizationId);
+  const areaId = await ensureDefaultArea(organizationId, pointId);
   const created = await db.equipment.create({
     data: {
       name,

@@ -125,3 +125,69 @@ test("точка для строк: только активный докумен
   assert.equal(pointForRows({ status: "active", buildingId: null }, ["A", "B"]), null);
   assert.equal(pointForRows({ status: "active", buildingId: "A" }, [null]), null);
 });
+
+test("график генуборок: помещения другой точки убраны, строки с отмеченной уборкой и ручные — остаются", () => {
+  const config = {
+    year: 2026,
+    rows: [
+      { id: "g1", roomId: "room-a", roomName: "Кухня А", cleanings: [] },
+      { id: "g2", roomId: "room-b", roomName: "Кухня Б", cleanings: [{ id: "p:2026-03-06", planned: "2026-03-06", done: null }] },
+      { id: "g3", roomId: "room-b", roomName: "Склад Б", cleanings: [{ id: "p:2026-02-06", planned: "2026-02-06", done: "2026-02-06" }] },
+      { id: "g4", roomId: "room-b", roomName: "Зал Б", fact: { jan: "15" } },
+      { id: "g5", roomName: "Ручная строка" },
+      { id: "g6", roomId: "deleted-room", roomName: "Снесённое" },
+    ],
+  };
+  const got = trimPointDocumentConfig("general_cleaning", config, "A", directory);
+  assert.equal(got?.removed, 1);
+  assert.deepEqual((got?.config.rows as Array<{ id: string }>).map((row) => row.id), ["g1", "g3", "g4", "g5", "g6"]);
+  assert.equal(got?.config.year, 2026);
+});
+
+test("уборка: люди другой точки убраны из уборщиков, ответственных, пар и расписания; свои, без точек и уволенные — остаются", () => {
+  const withStaff = {
+    ...directory,
+    staffPoints: new Map<string, string[]>([
+      ["anna", ["A"]],
+      ["boris", ["B"]],
+      ["vera", []],
+      ["dina", ["deleted-point"]],
+    ]),
+    livePointIds: new Set(["A", "B"]),
+  };
+  const config = {
+    cleaningMode: "rooms",
+    selectedRoomIds: ["room-a", "room-b"],
+    selectedCleanerUserIds: ["anna", "boris", "vera", "fired"],
+    cleanerByRoomId: { "room-a": ["anna", "boris"], "room-x": ["boris"] },
+    cleaningResponsibles: [
+      { id: "c1", userId: "anna", code: "С1" },
+      { id: "c2", userId: "boris", code: "С2" },
+    ],
+    controlResponsibles: [{ id: "k1", userId: "boris", code: "К1" }],
+    responsiblePersons: [{ userId: "boris", title: "Уборщица" }, { userId: "dina", title: "Уборщица" }],
+    responsiblePairs: [{ id: "p1", cleaningUserId: "anna", cleaningUserName: "Анна", controlUserId: "boris", controlUserName: "Борис" }],
+    controlUserId: "boris",
+    schedule: { disinfection: { times: ["12:00"], responsibleUserId: "boris" }, ventilation: { times: [], responsibleUserId: "anna" } },
+    cleanerCodeByUserId: { anna: 1, boris: 2 },
+  };
+  const got = trimPointDocumentConfig("cleaning", config, "A", withStaff);
+  assert.ok(got);
+  const next = got.config as typeof config;
+  assert.deepEqual(next.selectedRoomIds, ["room-a"]);
+  assert.deepEqual(next.selectedCleanerUserIds, ["anna", "vera", "fired"]);
+  assert.deepEqual(next.cleanerByRoomId, { "room-a": ["anna"] });
+  assert.deepEqual(next.cleaningResponsibles.map((item) => item.userId), ["anna"]);
+  assert.deepEqual(next.controlResponsibles, []);
+  assert.deepEqual(next.responsiblePersons.map((item) => item.userId), ["dina"]);
+  assert.deepEqual(next.responsiblePairs[0], { id: "p1", cleaningUserId: "anna", cleaningUserName: "Анна", controlUserId: null, controlUserName: "" });
+  assert.equal(next.controlUserId, null);
+  assert.equal(next.schedule.disinfection.responsibleUserId, null);
+  assert.equal(next.schedule.ventilation.responsibleUserId, "anna");
+  // Коды подписей — история, не трогаем.
+  assert.deepEqual(next.cleanerCodeByUserId, { anna: 1, boris: 2 });
+  // Всё своё — менять нечего.
+  assert.equal(trimPointDocumentConfig("cleaning", { selectedCleanerUserIds: ["anna", "vera"] }, "A", withStaff), null);
+  // Без справочника сотрудников — люди не трогаются.
+  assert.equal(trimPointDocumentConfig("cleaning", { selectedCleanerUserIds: ["boris"] }, "A", directory), null);
+});

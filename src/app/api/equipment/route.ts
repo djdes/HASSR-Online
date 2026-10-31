@@ -11,8 +11,10 @@ import { resolveEquipmentArea } from "@/lib/area-building-sync";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
+import { equipmentBuildingWhere } from "@/lib/building-scope";
+import { documentRowsPointId } from "@/lib/document-point-rows";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -23,9 +25,23 @@ export async function GET() {
       );
     }
 
+    // `?documentId=` — справочник для окна документа: у документа точки
+    // только оборудование её цехов и цехов без точки (2026-10-31: «Добавить
+    // оборудование» в журнале холодильников предлагало чужие холодильники).
+    const organizationId = getActiveOrgId(session);
+    const documentId = new URL(request.url).searchParams.get("documentId");
+    const document = documentId
+      ? await db.journalDocument.findFirst({
+          where: { id: documentId, organizationId },
+          select: { buildingId: true },
+        })
+      : null;
+    const pointId = document ? await documentRowsPointId(organizationId, document.buildingId) : null;
+
     const equipment = await db.equipment.findMany({
       where: {
-        area: { organizationId: getActiveOrgId(session) },
+        area: { organizationId },
+        ...equipmentBuildingWhere(pointId),
       },
       orderBy: { name: "asc" },
       include: {

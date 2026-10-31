@@ -9,6 +9,8 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { resolveJournalDisplayName } from "@/lib/org-custom-names";
 import { loadGuideNodesForUI } from "@/lib/journal-guide-tree";
 import { db } from "@/lib/db";
+import { getViewedPointId } from "@/lib/active-building";
+import { pointRowsWhere } from "@/lib/document-point-rows";
 import { DynamicForm } from "@/components/journals/dynamic-form";
 import { FinishedProductPipeline } from "@/components/journals/finished-product-pipeline";
 import { hasDocumentFillUi } from "@/lib/journal-document-helpers";
@@ -69,15 +71,20 @@ export default async function NewJournalEntryPage({
     );
   }
 
+  // Точка из шапки: цеха, оборудование и сотрудники — только её и общие
+  // (2026-10-31); «Вся организация» или точки выключены — без фильтра.
+  const viewedPointId = await getViewedPointId(session);
+  const pointRows = pointRowsWhere(viewedPointId);
   const [areas, equipment, employees, products] = await Promise.all([
     db.area.findMany({
-      where: { organizationId: getActiveOrgId(session) },
+      where: { organizationId: getActiveOrgId(session), ...pointRows.area },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
     db.equipment.findMany({
       where: {
         area: { organizationId: getActiveOrgId(session) },
+        ...pointRows.equipment,
       },
       select: {
         id: true,
@@ -93,6 +100,7 @@ export default async function NewJournalEntryPage({
       where: {
         organizationId: getActiveOrgId(session),
         isActive: true,
+        ...pointRows.staff,
       },
       select: { id: true, name: true },
       orderBy: { name: "asc" },

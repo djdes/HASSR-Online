@@ -359,6 +359,7 @@ function pickColdDirectoryOptions(
 }
 
 function EquipmentDialog({
+  documentId,
   open,
   onOpenChange,
   initialItem,
@@ -368,6 +369,8 @@ function EquipmentDialog({
   onDelete,
   countLostOnModeChange,
 }: {
+  /** Документ — справочник предлагает оборудование его точки. */
+  documentId: string;
   open: boolean;
   onOpenChange: (value: boolean) => void;
   initialItem: ColdEquipmentConfigItem | null;
@@ -415,7 +418,8 @@ function EquipmentDialog({
     }
     let cancelled = false;
     setDirectoryLoading(true);
-    fetch("/api/equipment")
+    // Справочник точки документа: чужие холодильники не предлагаем.
+    fetch(`/api/equipment?documentId=${encodeURIComponent(documentId)}`)
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (cancelled) return;
@@ -432,7 +436,7 @@ function EquipmentDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, initialItem, existingRows]);
+  }, [open, initialItem, existingRows, documentId]);
 
   /** Выбор готовой единицы: подставляем её имя и норму, ссылку запоминаем. */
   function pickFromDirectory(option: DirectoryOption) {
@@ -2878,6 +2882,7 @@ export function ColdEquipmentDocumentClient({
       />
 
       <EquipmentDialog
+        documentId={documentId}
         open={equipmentDialogOpen}
         onOpenChange={setEquipmentDialogOpen}
         initialItem={editingEquipment}
