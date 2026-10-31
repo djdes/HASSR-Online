@@ -9,6 +9,8 @@
  */
 import type { DiadocClient } from "./diadoc";
 import { isUpdDocument } from "./diadoc";
+import type { IikoClient } from "./iiko";
+import { buildIikoDirectory, iikoInvoiceToDocument, iikoProductsForDirectory, iikoWriteoffToLosses, type IikoLoss } from "./iiko-map";
 import type { SabyIncomingApi } from "./saby-incoming";
 import { pickUpdAttachment } from "./saby-incoming";
 import { parseUpd, UpdParseError, type ParsedUpd } from "./upd";
@@ -100,5 +102,56 @@ export async function syncSabyDocuments(input: {
     }
     if (!hasMore) break;
   }
+  return counters;
+}
+
+export type IikoSyncCounters = SyncCounters & { losses: number; products: number };
+
+/**
+ * iiko: одна сессия на всё (лицензия сервера!) — справочники, приходные
+ * накладные во «Входящие», акты списания в «Потери», новые товары и
+ * заготовки в справочник продуктов. Внешний id накладной — её id в iiko,
+ * строки потерь — `iiko:<акт>:<строка>`.
+ */
+export async function syncIikoData(input: {
+  client: Pick<IikoClient, "withSession">;
+  fromDate: string;
+  toDate: string;
+  options: { invoices: boolean; writeoffs: boolean; products: boolean };
+  sink: SyncSink;
+  losses: { exists(sourceEntryId: string): Promise<boolean>; save(loss: IikoLoss): Promise<void> };
+  products: { addMissing(items: Array<{ name: string; unit: string | null }>): Promise<number> };
+}): Promise<IikoSyncCounters> {
+  const counters: IikoSyncCounters = { created: 0, skipped: 0, failed: 0, losses: 0, products: 0 };
+  await input.client.withSession(async (session) => {
+    // По очереди, не параллельно: одна сессия iiko — один запрос за раз.
+    const products = await session.products();
+    const units = await session.units();
+    const suppliers = input.options.invoices ? await session.suppliers() : [];
+    const dir = buildIikoDirectory(products, units, suppliers);
+
+    if (input.options.invoices) {
+      for (const invoice of await session.incomingInvoices(input.fromDate, input.toDate)) {
+        const parsed = iikoInvoiceToDocument(invoice, dir);
+        if (!parsed || (await input.sink.exists(invoice.id))) {
+          counters.skipped += 1;
+          continue;
+        }
+        const saved = await input.sink.save({ externalId: invoice.id, parsed, fileName: null });
+        if (saved.created) counters.created += 1;
+        else counters.skipped += 1;
+      }
+    }
+    if (input.options.writeoffs) {
+      for (const writeoff of await session.writeoffs(input.fromDate, input.toDate)) {
+        for (const loss of iikoWriteoffToLosses(writeoff, dir)) {
+          if (await input.losses.exists(loss.sourceEntryId)) continue;
+          await input.losses.save(loss);
+          counters.losses += 1;
+        }
+      }
+    }
+    if (input.options.products) counters.products = await input.products.addMissing(iikoProductsForDirectory(dir));
+  });
   return counters;
 }

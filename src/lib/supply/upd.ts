@@ -32,7 +32,8 @@ export type SupplyItem = {
 };
 
 export type ParsedUpd = {
-  kind: "upd";
+  /** upd — УПД из ЭДО; invoice — приходная накладная из учётной системы (iiko). */
+  kind: "upd" | "invoice";
   /** СЧФДОП, ДОП, СЧФ… */
   function: string;
   formatVersion: string | null;

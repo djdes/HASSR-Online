@@ -1,0 +1,57 @@
+const { chromium } = require('playwright');
+const BASE = 'http://localhost:3100';
+const OUT = process.env.OUT;
+const report = {};
+(async () => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, locale: 'ru-RU' });
+  const page = await ctx.newPage();
+  await page.goto(BASE + '/login', { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(1000);
+  await page.fill('#email', 'admin@haccp.local'); await page.fill('#password', 'admin1234');
+  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 180000, waitUntil: 'commit' }), page.click('button[type=submit]')]);
+  await page.goto(BASE + '/settings/integrations/iiko', { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${OUT}/iiko-settings-empty.png`, fullPage: true });
+  const card = page.locator('[data-supply-connection="iiko"]');
+  const inputs = card.locator('input');
+  await inputs.nth(0).fill('http://127.0.0.1:4577');
+  await inputs.nth(1).fill('api');
+  await inputs.nth(2).fill('wrong');
+  await card.locator('button[type=submit]').click();
+  await page.waitForTimeout(2500);
+  report.wrongPassword = await page.locator('[data-sonner-toast]').last().textContent().catch(() => null);
+  report.privateAddress = await page.evaluate(async () => {
+    const res = await fetch('/api/settings/supply/iiko', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serverUrl: 'http://10.0.0.5:8080', login: 'api', password: 'secret' }) });
+    return { status: res.status, body: await res.json() };
+  });
+  await inputs.nth(2).fill('secret');
+  await card.locator('button[type=submit]').click();
+  await card.locator('[data-iiko-sync]').waitFor({ timeout: 60000 });
+  await page.waitForTimeout(500);
+  await card.locator('[data-iiko-sync]').click();
+  await page.waitForTimeout(6000);
+  report.syncToast = await page.locator('[data-sonner-toast]').allTextContents();
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${OUT}/iiko-settings-connected.png`, fullPage: true });
+  report.cardText = (await card.textContent()).replace(/\s+/g, ' ').slice(0, 300);
+  report.resync = await page.evaluate(async () => (await fetch('/api/edo/sync', { method: 'POST' })).json());
+
+  await page.goto(BASE + '/edo', { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(1000);
+  report.inbox = await page.locator('[data-edo-documents] li').allTextContents().then((a) => a.map((t) => t.replace(/\s+/g, ' ').slice(0, 180)));
+  await page.screenshot({ path: `${OUT}/iiko-inbox.png`, fullPage: true });
+  const iikoHref = await page.locator('[data-edo-documents] a', { hasText: 'ПН-2045' }).first().getAttribute('href');
+  await page.goto(BASE + iikoHref, { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(800);
+  report.invoiceTitle = await page.locator('h1').first().textContent();
+  await page.screenshot({ path: `${OUT}/iiko-invoice.png`, fullPage: true });
+
+  await page.goto(BASE + '/losses', { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: `${OUT}/iiko-losses.png`, fullPage: true });
+  report.lossesHasCause = await page.evaluate(() => document.body.innerText.includes('Истёк срок годности'));
+  await browser.close();
+  console.log(JSON.stringify(report, null, 1));
+})().catch((e) => { console.error(e); console.log(JSON.stringify(report, null, 1)); process.exit(1); });

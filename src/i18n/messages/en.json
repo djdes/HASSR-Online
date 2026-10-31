@@ -3260,6 +3260,7 @@
       "settings_equipment_qr_sheet": "Equipment QR labels",
       "settings_integrations_mercury": "Mercury federal information system",
       "settings_integrations_edo": "E-documents: Diadoc and SBIS",
+      "settings_integrations_iiko": "iiko",
       "mercury": "Incoming veterinary documents",
       "edo": "Incoming invoices",
       "edo_document": "Invoice",
@@ -8871,6 +8872,7 @@
     "cause": "Cause",
     "source": "Source",
     "fromWriteoff": "from write-off record dated {date}",
+    "fromIiko": "from iiko",
     "manual": "manual entry",
     "empty": "No records yet",
     "categories": {
@@ -9774,6 +9776,10 @@
         "settings_integrations_edo": {
           "title": "E-documents: Diadoc and SBIS",
           "description": "Supplier UPDs arrive in “Incoming invoices” by themselves"
+        },
+        "settings_integrations_iiko": {
+          "title": "iiko",
+          "description": "Invoices go to “Incoming”, write-offs — to “Losses”, goods — to the product directory"
         },
         "settings_print_agent": {
           "title": "Online printer",
@@ -30516,10 +30522,12 @@
       "source": {
         "upload": "File",
         "diadoc": "Diadoc",
-        "saby": "SBIS"
+        "saby": "SBIS",
+        "iiko": "iiko"
       },
       "items": "{count, plural, one {# item} other {# items}}",
       "number": "UPD No. {number}",
+      "invoiceNumber": "Invoice No. {number}",
       "date": "of {date}",
       "total": "for {sum}",
       "errors": {
@@ -30528,6 +30536,7 @@
     },
     "document": {
       "title": "UPD No. {number} of {date}",
+      "invoiceTitle": "Receipt invoice No. {number} of {date}",
       "seller": "Supplier",
       "inn": "TIN {inn}",
       "basis": "Basis",
@@ -30593,6 +30602,46 @@
       "never": "Not checked yet",
       "secretsNote": "The password and keys are stored encrypted and are not shown after connecting.",
       "schedule": "New invoices are checked when “Incoming invoices” opens, with the “Check for new” button and on the server schedule.",
+      "errors": {
+        "failed": "Could not connect. Check the details."
+      }
+    },
+    "iiko": {
+      "eyebrow": "Connections",
+      "title": "iiko",
+      "description": "iiko receipt invoices go to “Incoming invoices” (then the same acceptance as for UPDs), write-off acts — to “Losses”, new goods and semi-finished products — to the product directory.",
+      "hint": "You need an iiko server (iikoOffice): address, login and password of a user allowed to sign in via API.",
+      "serverUrl": "Server address",
+      "serverHint": "For example, https://name.iiko.it or http://address:8080",
+      "login": "Login",
+      "password": "Password",
+      "options": {
+        "title": "What to import",
+        "invoices": "Receipt invoices",
+        "writeoffs": "Write-off acts",
+        "products": "Goods and semi-finished products"
+      },
+      "connect": "Connect",
+      "connecting": "Checking…",
+      "connected": "Connected",
+      "reconnect": "Reconnect",
+      "disconnect": "Disconnect",
+      "disconnected": "Disconnected",
+      "account": "Login: {account}",
+      "lastSync": "Checked {when}",
+      "never": "Not checked yet",
+      "sync": "Import now",
+      "syncing": "Importing…",
+      "synced": "Invoices: {invoices}, loss rows: {losses}, new products: {products}",
+      "status": {
+        "active": "Working",
+        "error": "Error"
+      },
+      "openInbox": "Incoming invoices",
+      "openLosses": "Losses",
+      "openProducts": "Product directory",
+      "secretsNote": "The password is stored encrypted and is not shown after connecting.",
+      "licenseNote": "Each import signs in to the iiko server and signs out right away: a free API license is needed only for that time.",
       "errors": {
         "failed": "Could not connect. Check the details."
       }

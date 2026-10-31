@@ -8,18 +8,22 @@ import {
   connectionView,
   diadocBaseUrl,
   diadocCredentialsSchema,
+  iikoCredentialsSchema,
+  iikoOptionsSchema,
   isSupplyProvider,
   sabyCredentialsSchema,
 } from "@/lib/supply/connections";
 import { createDiadocClient, DiadocError } from "@/lib/supply/diadoc";
 import { guardSupply } from "@/lib/supply/guard.server";
+import { createIikoClient, IikoError } from "@/lib/supply/iiko";
+import { assertPublicServerUrl, UnsafeUrlError } from "@/lib/supply/safe-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * PUT /api/settings/supply/[diadoc|saby] — подключить ЭДО для входящих
- * накладных. Ключи проверяются входом и только потом сохраняются —
+ * PUT /api/settings/supply/[diadoc|saby|iiko] — подключить ЭДО для входящих
+ * накладных или iiko (накладные, списания, номенклатура). Ключи проверяются входом и только потом сохраняются —
  * зашифрованными; в ответе — только маска (логин, ящик), без секретов.
  * У Диадока с несколькими ящиками первый ответ — список ящиков (`needBox`),
  * второй запрос — с выбранным `boxId`.
@@ -41,7 +45,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ prov
   let boxTitle: string | null = null;
   let sessionEnc: string | null = null;
   try {
-    if (provider === "diadoc") {
+    if (provider === "iiko") {
+      const parsed = iikoCredentialsSchema.safeParse(body);
+      if (!parsed.success) return NextResponse.json({ error: "Заполните адрес сервера, логин и пароль iiko" }, { status: 400 });
+      const options = iikoOptionsSchema.parse((body as { options?: unknown }).options ?? {});
+      const serverUrl = await assertPublicServerUrl(parsed.data.serverUrl);
+      // Проверка входом: войти и сразу выйти — лицензию сервера не держим.
+      await createIikoClient({ ...parsed.data, serverUrl }).withSession(async () => true);
+      credentials = { ...parsed.data, serverUrl, options };
+      boxTitle = serverUrl;
+    } else if (provider === "diadoc") {
       const parsed = diadocCredentialsSchema.safeParse(body);
       if (!parsed.success) return NextResponse.json({ error: "Заполните ключ разработчика, логин и пароль" }, { status: 400 });
       const boxes = await createDiadocClient(parsed.data, { baseUrl: diadocBaseUrl() }).listBoxes();
@@ -65,7 +78,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ prov
       sessionEnc = encryptSecret(JSON.stringify(sessionValue));
     }
   } catch (error) {
-    if (error instanceof DiadocError) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error instanceof DiadocError || error instanceof IikoError || error instanceof UnsafeUrlError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     if (error instanceof SabyRpcError) return NextResponse.json({ error: describeSabyError(error) }, { status: 400 });
     throw error;
   }

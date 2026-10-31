@@ -42,7 +42,7 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
   const quantity = (value: number | null, unit: string | null) =>
     value === null ? "—" : `${formatNumber(locale, value, { maximumFractionDigits: 3 })}${unit ? ` ${unit}` : ""}`;
   const status = (["new", "processing", "accepted", "rejected", "ignored"] as const).find((s) => s === doc.status) ?? "new";
-  const source = doc.source === "diadoc" || doc.source === "saby" ? doc.source : "upload";
+  const source = doc.source === "diadoc" || doc.source === "saby" || doc.source === "iiko" ? doc.source : "upload";
   const now = new Date();
   const nowTime = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
 
@@ -50,7 +50,7 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
     <div className="space-y-5">
       <PageHeader
         eyebrow={tPage("eyebrow")}
-        title={t("title", { number: doc.number, date: formatDate(locale, doc.date, "UTC", DATE) })}
+        title={t(doc.source === "iiko" ? "invoiceTitle" : "title", { number: doc.number, date: formatDate(locale, doc.date, "UTC", DATE) })}
       />
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6" data-edo-document>
