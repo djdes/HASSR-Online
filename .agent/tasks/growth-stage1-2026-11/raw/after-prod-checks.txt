@@ -1,0 +1,7 @@
+checked 2026-10-31T23:44:08Z
+build-info: {"buildId":"3551951","buildTime":"2026-10-31T23:30:40Z","fullBuildId":"355195158c43d488597ed75884d0d0e93296bfef"}
+/pricing mentions СБП: 1
+/pricing mentions 14-day refund: 1
+/oferta has #refund anchor: 1
+resend-completion without proof: {"ok":true} [HTTP 200]
+support-unanswered cron without secret: HTTP 401
