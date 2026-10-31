@@ -4,13 +4,14 @@
   "description": "Продукт или заготовка в морозильнике: когда заморозили и до какого числа хранить.",
   "size": {"width": 58, "height": 40},
   "fields": [
-    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Фарш говяжий»"},
+    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Фарш говяжий»", "source": "products"},
     {"key": "frozenAt", "label": "Заморожено", "type": "datetime", "default": "now", "dateOnly": true},
     {"key": "storeFor", "label": "Срок хранения", "type": "duration", "default": "30d", "options": ["7d", "14d", "30d", "60d", "90d", "180d"]},
     {"key": "storage", "label": "Условия хранения", "type": "text", "default": "−18 °C и ниже", "maxLength": 30, "options": ["−18 °C и ниже", "−12 °C и ниже", "−24 °C и ниже"]},
     {"key": "amount", "label": "Количество или масса", "type": "text", "maxLength": 16, "hint": "Например, 1 кг"},
-    {"key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+    {"key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff"}
   ],
+  "record": {"item": "product", "start": "frozenAt", "until": "frozenAt+storeFor", "untilLabel": "Хранить до", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },

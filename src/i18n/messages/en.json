@@ -3265,6 +3265,7 @@
       "settings_journals_paper": "Paper journals",
       "settings_onboarding_advanced": "Advanced setup",
       "settings_print_agent": "Online printer",
+      "settings_print_agent_labels": "Labeling log",
       "settings_users_invite": "Employee invitation",
       "task_fill": "Task entry",
       "tasks": "Tasks",
@@ -10361,7 +10362,6 @@
         "signPoint": "Location",
         "signAllPoints": "Whole organization",
         "signOpen": "Open the sign for printing",
-        "signBack": "Back to company details",
         "signPrint": "Print",
         "signBw": "B/W",
         "signBadgeOff": "The badge is off — the QR code won't open anything yet. Turn it on in the badge card under Company details.",
@@ -13751,6 +13751,46 @@
         "opened": "Opened package",
         "freeText": "Free text"
       }
+    },
+    "labelLog": {
+      "eyebrow": "Setup Helper",
+      "title": "Labeling log",
+      "description": "Labels printed in the Setup Helper app: what was labeled, when it was made and how long it keeps. They arrive from the phone as soon as it is online.",
+      "periods": {
+        "today": "Today",
+        "7d": "7 days",
+        "30d": "30 days"
+      },
+      "attention": "Expiring and expired only",
+      "status": {
+        "ok": "Good",
+        "soon": "Expiring",
+        "expired": "Expired",
+        "none": "No date"
+      },
+      "copies": "{count, plural, one {# copy} other {# copies}}",
+      "by": "{label}: {name}",
+      "byDefault": "Made by",
+      "printed": "Printed {when}",
+      "start": "{label} {when}",
+      "until": "{label} {when}",
+      "startDefault": "Made",
+      "untilDefault": "Use by",
+      "empty": "No labels for this period. Prints from Setup Helper appear here once the phone is online.",
+      "emptyAttention": "No expiring or expired labels.",
+      "note": "The date is the one printed on the label. “Expired” does not mean the product is still in the kitchen: check and remove it if it is.",
+      "limit": "Showing the latest {count} labels of the period.",
+      "summary": {
+        "heading": "Labeling",
+        "description": "Every label printed in the app goes to the labeling log: what, when it was made, how long it keeps and who made it.",
+        "today": "Printed today",
+        "todayValue": "{labels} · {copies}",
+        "soon": "Expiring within a day",
+        "expired": "Expired in 7 days",
+        "open": "Open the labeling log",
+        "catalog": "Products with shelf life from the product directory, dishes from the brakerage log and staff names are filled into the app automatically."
+      },
+      "labels": "{count, plural, one {# label} other {# labels}}"
     }
   },
   "taskFillSchema": {

@@ -4,13 +4,14 @@
   "description": "Заготовка: когда сделана, до какого времени годна, как хранить и кто готовил.",
   "size": {"width": 58, "height": 40},
   "fields": [
-    {"key": "product", "label": "Наименование", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Котлеты куриные»"},
+    {"key": "product", "label": "Наименование", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Котлеты куриные»", "source": "products,dishes"},
     {"key": "madeAt", "label": "Изготовлено", "type": "datetime", "default": "now"},
-    {"key": "shelfLife", "label": "Срок годности", "type": "duration", "default": "24h", "options": ["6h", "12h", "18h", "24h", "36h", "48h", "72h"]},
-    {"key": "storage", "label": "Условия хранения", "type": "text", "default": "+2…+6 °C", "maxLength": 30, "options": ["+2…+6 °C", "0…+4 °C", "+4…+8 °C", "−18 °C и ниже"]},
+    {"key": "shelfLife", "label": "Срок годности", "type": "duration", "default": "24h", "options": ["6h", "12h", "18h", "24h", "36h", "48h", "72h"], "fillFrom": "shelfLife"},
+    {"key": "storage", "label": "Условия хранения", "type": "text", "default": "+2…+6 °C", "maxLength": 30, "options": ["+2…+6 °C", "0…+4 °C", "+4…+8 °C", "−18 °C и ниже"], "fillFrom": "storage"},
     {"key": "amount", "label": "Количество или масса", "type": "text", "maxLength": 16, "hint": "Например, 2 кг или 20 шт."},
-    {"key": "employee", "label": "Изготовил", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+    {"key": "employee", "label": "Изготовил", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff"}
   ],
+  "record": {"item": "product", "start": "madeAt", "until": "madeAt+shelfLife", "untilLabel": "Годен до", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },

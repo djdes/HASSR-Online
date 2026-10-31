@@ -87,6 +87,7 @@
     <string name="print_copies">Копий</string>
     <string name="print_submit">Печать</string>
     <string name="print_required">Заполните «%1$s»</string>
+    <string name="print_catalog_filled">Срок и хранение — из справочника продуктов на сайте</string>
     <string name="main_templates">Посмотреть шаблоны этикеток</string>
     <string name="print_no_printer">Без принтера</string>
     <string name="print_preview_only">Принтер не подключён — только просмотр</string>

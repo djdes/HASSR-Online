@@ -4,11 +4,12 @@
   "description": "Предупреждение: какие аллергены есть в продукте или блюде.",
   "size": {"width": 58, "height": 40},
   "fields": [
-    {"key": "product", "label": "Продукт или блюдо", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Торт Наполеон»"},
+    {"key": "product", "label": "Продукт или блюдо", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Торт Наполеон»", "source": "dishes,products"},
     {"key": "allergens", "label": "Аллергены", "type": "text", "required": true, "multiline": true, "maxLength": 120, "hint": "Например: глютен, молоко, яйца, орехи"},
     {"key": "madeAt", "label": "Дата", "type": "datetime", "default": "now", "dateOnly": true},
-    {"key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+    {"key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff"}
   ],
+  "record": {"item": "product", "start": "madeAt", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },

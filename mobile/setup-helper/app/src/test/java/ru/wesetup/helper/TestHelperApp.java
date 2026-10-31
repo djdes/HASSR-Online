@@ -19,7 +19,7 @@ public class TestHelperApp extends HelperApp {
     }
 
     @Override
-    protected boolean brandingRefreshEnabled() {
+    protected boolean siteDataRefreshEnabled() {
         return false;
     }
 

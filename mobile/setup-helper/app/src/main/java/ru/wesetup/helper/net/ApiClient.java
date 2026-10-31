@@ -207,6 +207,28 @@ public final class ApiClient implements UpdateSource {
         }
     }
 
+    /**
+     * Справочники для полей этикеток — {@code GET /api/setup-helper/catalog}:
+     * JSON целиком или null, если у телефона та же версия ({@code knownVersion}).
+     */
+    public String fetchCatalog(String server, String token, String knownVersion) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            String query = knownVersion == null || knownVersion.isEmpty() ? ""
+                    : "?version=" + java.net.URLEncoder.encode(knownVersion, "UTF-8");
+            connection = open(server + "/api/setup-helper/catalog" + query, "GET", token);
+            JSONObject json = readJson(connection);
+            if (json.optBoolean("unchanged", false)) return null;
+            if (json.optString("version", "").isEmpty()) throw new IOException("Сервер не прислал версию справочника");
+            return json.toString();
+        } catch (UnknownHostException | ConnectException | NoRouteToHostException | SocketTimeoutException
+                 | SSLException e) {
+            throw new OfflineException(e);
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
     public void logout(String server, String token) throws IOException {
         post(server + "/api/setup-helper/logout", new JSONObject(), token);
     }

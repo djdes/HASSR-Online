@@ -230,3 +230,95 @@ test("app versions compare numerically, part by part", () => {
   assert.equal(compareAppVersions("2.0.0", "1.99.99"), 1);
   assert.equal(compareAppVersions("1.1.0-beta", "1.1.0"), 0);
 });
+
+function labelPrinted(extra: Partial<Record<string, unknown>> = {}, label: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "label-0001",
+    type: "label_printed",
+    at: "2026-10-25T10:00:00.000Z",
+    printer: { address: "dc:0d:30:12:34:56" },
+    template: "semi-finished",
+    title: "Полуфабрикат",
+    copies: 2,
+    label: {
+      item: "  Котлеты куриные  ",
+      startAt: "2026-10-25T09:30:00.000Z",
+      startLabel: "Изготовлено",
+      until: "2026-10-26T09:30:00.000Z",
+      untilLabel: "Годен до",
+      by: "Иванова М.",
+      byLabel: "Изготовил",
+      fields: [
+        { label: "Условия хранения", value: "+2…+6 °C" },
+        { label: "Количество или масса", value: "" },
+      ],
+      ...label,
+    },
+    ...extra,
+  };
+}
+
+test("label prints carry what was labelled, its dates and the non-empty label fields", () => {
+  const event = eventOf(labelPrinted());
+  assert.equal(event.type, "label_printed");
+  if (event.type !== "label_printed") return;
+  assert.equal(event.address, "DC:0D:30:12:34:56");
+  assert.equal(event.title, "Полуфабрикат");
+  assert.equal(event.copies, 2);
+  assert.equal(event.label.item, "Котлеты куриные");
+  assert.equal(event.label.startAt?.toISOString(), "2026-10-25T09:30:00.000Z");
+  assert.equal(event.label.until?.toISOString(), "2026-10-26T09:30:00.000Z");
+  assert.equal(event.label.startLabel, "Изготовлено");
+  assert.equal(event.label.untilLabel, "Годен до");
+  assert.equal(event.label.dateOnly, false);
+  assert.equal(event.label.by, "Иванова М.");
+  assert.equal(event.label.byLabel, "Изготовил");
+  assert.deepEqual(event.label.fields, [{ label: "Условия хранения", value: "+2…+6 °C" }]);
+});
+
+test("label dates may be far from the print time but not absurd; dates are optional", () => {
+  const frozen = eventOf(
+    labelPrinted({}, { startAt: "2026-10-24T00:00:00.000Z", until: "2027-04-20T00:00:00.000Z", dateOnly: true }),
+  );
+  assert.ok(frozen.type === "label_printed" && frozen.label.until?.toISOString() === "2027-04-20T00:00:00.000Z");
+  assert.ok(frozen.type === "label_printed" && frozen.label.dateOnly);
+  const broken = eventOf(labelPrinted({}, { startAt: "1970-01-01T00:00:00.000Z", until: "2099-01-01T00:00:00.000Z" }));
+  assert.ok(broken.type === "label_printed" && broken.label.startAt === null && broken.label.until === null);
+  const plain = eventOf(
+    labelPrinted({}, { startAt: null, startLabel: null, until: undefined, untilLabel: "", by: "", fields: undefined }),
+  );
+  assert.ok(plain.type === "label_printed" && plain.label.by === null && plain.label.fields.length === 0);
+  assert.ok(plain.type === "label_printed" && plain.label.startLabel === null && plain.label.untilLabel === null);
+});
+
+test("a malformed label is rejected on its own, the rest of the batch goes through", () => {
+  const parsed = parseSyncRequest(
+    {
+      events: [
+        labelPrinted({ id: "label-empty-item" }, { item: "   " }),
+        labelPrinted({ id: "label-bad-copies", copies: 0 }),
+        labelPrinted({ id: "label-long-field" }, { fields: [{ label: "Причина", value: "x".repeat(161) }] }),
+        labelPrinted({ id: "label-good-0001" }),
+      ],
+    },
+    NOW,
+  );
+  assert.ok(parsed);
+  assert.deepEqual(parsed.rejected, ["label-empty-item", "label-bad-copies", "label-long-field"]);
+  assert.deepEqual(parsed.events.map((event) => event.id), ["label-good-0001"]);
+});
+
+test("a label print moves the printer's last print like a plain print and is skipped when stale", () => {
+  const state: PrinterState = {
+    connectedAt: new Date("2026-10-25T08:00:00.000Z"),
+    lastPrintAt: new Date("2026-10-25T09:00:00.000Z"),
+    removedAt: null,
+  };
+  assert.deepEqual(planPrinterEvent(state, eventOf(labelPrinted()), actor), {
+    kind: "update",
+    data: { lastPrintAt: new Date("2026-10-25T10:00:00.000Z"), lastTemplate: "semi-finished" },
+  });
+  const stale = eventOf(labelPrinted({ at: "2026-10-25T08:30:00.000Z" }));
+  assert.deepEqual(planPrinterEvent(state, stale, actor), { kind: "skip" });
+  assert.deepEqual(planPrinterEvent(null, eventOf(labelPrinted()), actor), { kind: "skip" });
+});

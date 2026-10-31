@@ -152,6 +152,11 @@ test("actual settings page keeps management/tenant guards and renders localized 
         setupHelperDevice: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", revokedAt: null })); return []; } },
         user: { findMany: async () => { throw new Error("No helper users to look up"); } },
         organization: { findUnique: async ({ where }: { where: { id: string } }) => { assert.equal(where.id, "active-org"); return { timezone: "Asia/Tashkent" }; } },
+        // Сводка журнала маркировки — тоже только активной организации.
+        labelPrint: {
+          aggregate: async ({ where }: { where: { organizationId: string } }) => { assert.equal(where.organizationId, "active-org"); return { _count: { _all: 3 }, _sum: { copies: 5 } }; },
+          count: async ({ where }: { where: { organizationId: string } }) => { assert.equal(where.organizationId, "active-org"); return 1; },
+        },
       } },
       "@/components/i18n/domain-messages-boundary": { DomainMessagesBoundary: ({ namespaces, children }: { namespaces: string[]; children: React.ReactNode }) => { assert.deepEqual(Array.from(namespaces), ["printAgent", "journalControls"]); return children; } },
       // Версия APK на сайте: страница показывает её у кнопки скачивания.
@@ -164,6 +169,10 @@ test("actual settings page keeps management/tenant guards and renders localized 
     const labelsT = createTranslator({ locale, messages, namespace: "printAgent.labelPrinters" });
     assert.ok(html.includes(labelsT("version", { version: "1.1.0" })), `${locale}: версия приложения`);
     assert.ok(html.includes(messages.printAgent.labelPrinters.autoUpdate.slice(0, 40)), `${locale}: про автообновление`);
+    const logT = createTranslator({ locale, messages, namespace: "printAgent.labelLog" });
+    assert.ok(html.includes(logT("summary.heading")), `${locale}: сводка маркировки`);
+    assert.ok(html.includes(logT("summary.todayValue", { labels: logT("labels", { count: 3 }), copies: logT("copies", { count: 5 }) })), `${locale}: напечатано сегодня`);
+    assert.ok(html.includes('href="/settings/print-agent/labels"'), `${locale}: ссылка на журнал маркировки`);
     assert.equal(queries, 1);
     allowed = false; await assert.rejects(page.default, /Forbidden/); assert.equal(queries, 1);
   }

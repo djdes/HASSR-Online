@@ -98,7 +98,7 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
         if (app.sessions().load() == null) return;
         app.sync().addListener(this);
         app.sync().requestSync();
-        app.refreshBranding();
+        app.refreshSiteData();
         if (!BuildConfig.SELF_UPDATE) return;
         app.updater().addListener(this);
         // Не чаще раза в 30 минут и только при сети — иначе ни одного запроса.

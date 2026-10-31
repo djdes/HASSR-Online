@@ -18,8 +18,9 @@ const limiter = createRateLimiter({ tokensPerInterval: 30, intervalMs: 60 * 1000
  *
  * Тело: `{ appVersion, events: [...] }` (Authorization: Bearer <ключ>).
  * Ответ: `{ accepted, rejected }` — id событий, которые телефон может
- * выбросить из очереди. Обработка идемпотентна (`planPrinterEvent`): если
- * ответ потерялся и телефон прислал пакет ещё раз, ничего не изменится.
+ * выбросить из очереди. Обработка идемпотентна (`planPrinterEvent`, этикетки
+ * `label_printed` — по id события): если ответ потерялся и телефон прислал
+ * пакет ещё раз, ничего не изменится.
  *
  * 401 с `code: "device_revoked"` — ключ отозван на сайте (или сотрудник
  * отключён): приложение выходит из аккаунта.
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
   // По порядку: подключение принтера идёт в очереди раньше его печати.
   for (const event of parsed.events) {
     await applyEvent(device, event);
+    if (event.type === "label_printed") await recordLabelPrint(device, event);
     accepted.push(event.id);
   }
 
@@ -82,5 +84,43 @@ async function applyEvent(device: AuthedHelperDevice, event: HelperEvent, retrie
     }
   } else if (plan.kind === "update" && existing) {
     await db.labelPrinter.update({ where: { id: existing.id }, data: plan.data });
+  }
+}
+
+/**
+ * Этикетка — в журнал маркировки. Ключ — id события в организации: если
+ * ответ потерялся и телефон прислал пакет ещё раз, вторая строка не
+ * появится (P2002 — уже записана, телефону отвечаем «принято»).
+ */
+async function recordLabelPrint(
+  device: AuthedHelperDevice,
+  event: Extract<HelperEvent, { type: "label_printed" }>,
+): Promise<void> {
+  try {
+    await db.labelPrint.create({
+      data: {
+        organizationId: device.organizationId,
+        eventId: event.id,
+        deviceId: device.id,
+        userId: device.userId,
+        printerAddress: event.address,
+        template: event.template,
+        templateTitle: event.title,
+        copies: event.copies,
+        item: event.label.item,
+        startAt: event.label.startAt,
+        startLabel: event.label.startLabel,
+        until: event.label.until,
+        untilLabel: event.label.untilLabel,
+        dateOnly: event.label.dateOnly,
+        employee: event.label.by,
+        employeeLabel: event.label.byLabel,
+        fields: event.label.fields.length > 0 ? event.label.fields : Prisma.DbNull,
+        printedAt: event.at,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return;
+    throw error;
   }
 }

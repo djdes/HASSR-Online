@@ -1,0 +1,5 @@
+# POST /api/setup-helper/sync — один и тот же пакет дважды
+{"accepted":["proof-connect-0001","proof-label-0001","proof-label-0002","proof-label-0003","proof-label-0004","proof-label-0005","proof-label-0006","proof-label-0007"],"rejected":[]} [200]
+{"accepted":["proof-connect-0001","proof-label-0001","proof-label-0002","proof-label-0003","proof-label-0004","proof-label-0005","proof-label-0006","proof-label-0007"],"rejected":[]} [200]
+# строк LabelPrint после двух пакетов:
+7

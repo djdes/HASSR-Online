@@ -152,7 +152,7 @@ public final class LoginActivity extends AppCompatActivity {
         // Пароль больше не нужен ни в памяти, ни на экране.
         password.setText("");
         app.sync().requestSync();
-        app.refreshBranding();
+        app.refreshSiteData();
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

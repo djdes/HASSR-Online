@@ -1,0 +1,6 @@
+# GET /api/setup-helper/catalog?version=32bdcddaf1c0845c
+{"version":"32bdcddaf1c0845c","unchanged":true}
+# без ключа
+{"error":"Приложение отключено от аккаунта — войдите заново","code":"device_revoked"} [401]
+# отозванный ключ
+{"error":"Приложение отключено от аккаунта — войдите заново","code":"device_revoked"} [401]

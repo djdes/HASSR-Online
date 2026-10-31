@@ -4,12 +4,13 @@
   "description": "Когда начали размораживать и до какого времени использовать. Повторно не замораживать.",
   "size": {"width": 58, "height": 40},
   "fields": [
-    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Филе куриное»"},
+    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Филе куриное»", "source": "products"},
     {"key": "defrostAt", "label": "Начало разморозки", "type": "datetime", "default": "now"},
     {"key": "useWithin", "label": "Использовать в течение", "type": "duration", "default": "24h", "options": ["6h", "12h", "24h", "48h"]},
     {"key": "method", "label": "Способ", "type": "text", "default": "В холодильнике +2…+4 °C", "maxLength": 40, "options": ["В холодильнике +2…+4 °C", "В пароконвектомате", "В СВЧ-печи", "Под проточной холодной водой"]},
-    {"key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+    {"key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff"}
   ],
+  "record": {"item": "product", "start": "defrostAt", "until": "defrostAt+useWithin", "untilLabel": "Использовать до", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },
