@@ -16,6 +16,7 @@ import {
   resolveActiveBuilding,
   journalsPointMode,
   viewedPointId,
+  poolBuildingsFromContext,
   ORGANIZATION_VIEW_ID,
   withBuildingLabel,
   withBuildingSuffix,
@@ -272,4 +273,20 @@ test("просматриваемая точка: торговая точка —
   assert.equal(viewedPointId(pointManager), "b-a");
   const off = resolveActiveBuilding({ enabled: false, buildings: [A, B], userBuildingIds: [], cookieBuildingId: "b-a", fullAccess: true });
   assert.equal(viewedPointId(off), null);
+});
+
+test("задачи дня: точка — только она, «Вся организация» — каждая точка, офис — офис, без точек — вся организация", () => {
+  const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
+  const ids = (context: Parameters<typeof poolBuildingsFromContext>[0]) => poolBuildingsFromContext(context).map((item) => item.id);
+  // Повар точки 2 и руководство, выбравшее точку 2.
+  const cook = resolveActiveBuilding({ enabled: true, buildings: [A, B], userBuildingIds: ["b-b"], cookieBuildingId: null });
+  assert.deepEqual(poolBuildingsFromContext(cook), [{ id: "b-b", name: "Точка 2" }]);
+  assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b", fullAccess: true })), ["b-b"]);
+  // «Вся организация» у руководства — все точки по отдельности.
+  assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [A, B], userBuildingIds: [], cookieBuildingId: ORGANIZATION_VIEW_ID, fullAccess: true })), ["b-a", "b-b"]);
+  assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: null, fullAccess: true })), ["b-o", "b-a", "b-b"]);
+  // Сотрудник офиса — офис, не все точки.
+  assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: ["b-o"], cookieBuildingId: null })), ["b-o"]);
+  // Точки выключены — одна общая подборка.
+  assert.deepEqual(ids(resolveActiveBuilding({ enabled: false, buildings: [A, B], userBuildingIds: [], cookieBuildingId: "b-a", fullAccess: true })), [null]);
 });

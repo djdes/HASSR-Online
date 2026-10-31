@@ -95,6 +95,28 @@ export function viewedPointId(
   return context.enabled && !context.organizationView ? context.activeBuildingId : null;
 }
 
+/**
+ * Точки, по которым собираются задачи дня («Сегодня», «Проверка записей»,
+ * панель заведующей), 2026-10-31: на точке — только её холодильники,
+ * помещения, документы и люди.
+ *  - точки выключены — `[null]`, вся организация как раньше;
+ *  - человек смотрит на торговую точку — только она;
+ *  - руководство в режиме «Вся организация» — все точки, каждая отдельно;
+ *  - сотрудник офиса — офис.
+ */
+export function poolBuildingsFromContext(
+  context: Pick<BuildingContext, "enabled" | "organizationView" | "canViewOrganization" | "activeBuildingId" | "buildings">,
+): Array<{ id: string | null; name: string | null }> {
+  if (!context.enabled || !context.activeBuildingId) return [{ id: null, name: null }];
+  const named = (id: string) => ({ id, name: context.buildings.find((building) => building.id === id)?.name ?? null });
+  const viewed = viewedPointId(context);
+  if (viewed) return [named(viewed)];
+  if (context.canViewOrganization && context.buildings.length > 0) {
+    return context.buildings.map((building) => ({ id: building.id, name: building.name }));
+  }
+  return [named(context.activeBuildingId)];
+}
+
 export function encodeBuildingCookie(orgId: string, buildingId: string): string {
   return `${orgId}:${buildingId}`;
 }

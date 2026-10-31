@@ -4,7 +4,9 @@ import { listCoreJournalRecipients, notifyCoreJournalRecipients } from "@/lib/co
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
 import { dayMarkFromEntry } from "@/lib/health-qr";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { listFillEmployees } from "@/lib/journal-fill";
+import { loadQrPointScope } from "@/lib/qr-point-roster";
 import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
 import { orgTodayKey } from "@/lib/timezone";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
@@ -52,15 +54,12 @@ async function handle(request: Request) {
       report.push({ orgId: org.id, missing: 0, suspended: 0, sent: false, skipped: "not-hour" });
       continue;
     }
-    if ((org.disabledJournalCodes as string[]).includes("hygiene")) {
-      report.push({ orgId: org.id, missing: 0, suspended: 0, sent: false, skipped: "hygiene-disabled" });
-      continue;
-    }
     const todayKey = orgTodayKey(tz);
     const day = new Date(`${todayKey}T00:00:00.000Z`);
     const docs = await db.journalDocument.findMany({
       where: { organizationId: org.id, status: "active", template: { code: "hygiene" }, dateFrom: { lte: day }, dateTo: { gte: day } },
-      select: { id: true },
+      select: { id: true, buildingId: true, building: { select: { name: true } } },
+      orderBy: { createdAt: "asc" },
     });
     if (docs.length === 0) {
       report.push({ orgId: org.id, missing: 0, suspended: 0, sent: false, skipped: "no-document" });
@@ -76,56 +75,77 @@ async function handle(request: Request) {
       const prev = byEmployee.get(entry.employeeId);
       if (!prev || dayMarkFromEntry(prev, null).state === "missing") byEmployee.set(entry.employeeId, entry.data);
     }
-    const people = await listFillEmployees(org.id);
-    const absences = await loadStaffAbsenceForDay(db, { organizationId: org.id, employeeIds: people.map((p) => p.id), dateKey: todayKey });
-    const missing: typeof people = [];
-    const suspended: typeof people = [];
-    for (const person of people) {
-      const absence = absences.get(person.id);
-      const mark = dayMarkFromEntry(byEmployee.get(person.id), absence ? STAFF_ABSENCE_LABEL[absence.status] : null);
-      if (mark.state === "missing") missing.push(person);
-      if (mark.state === "suspended") suspended.push(person);
-    }
-    if (missing.length === 0 && suspended.length === 0) {
-      report.push({ orgId: org.id, missing: 0, suspended: 0, sent: false, skipped: "all-marked" });
-      continue;
-    }
 
-    const dedupeKey = `health-qr-missing:${todayKey}`;
-    const recipients = await listCoreJournalRecipients(org.id, docs[0].id);
-    // Уже отправляли сегодня — не повторяем письмо и Telegram.
-    const alreadySent = await db.notification.findFirst({
-      where: { organizationId: org.id, dedupeKey, userId: { in: recipients.map((r) => r.id) } },
-      select: { id: true },
-    });
-    if (alreadySent) {
-      report.push({ orgId: org.id, missing: missing.length, suspended: suspended.length, sent: false, skipped: "already-sent" });
-      continue;
+    // По документу точки — отдельное уведомление (2026-10-31): раньше один
+    // список на всю сеть уходил ответственному произвольной точки, а
+    // ответственные остальных точек не получали ничего.
+    let missingTotal = 0;
+    let suspendedTotal = 0;
+    let sentAny = false;
+    let lastSkip = "all-marked";
+    for (const doc of docs) {
+      if ((await getDisabledJournalCodes(org.id, doc.buildingId)).has("hygiene")) {
+        lastSkip = "hygiene-disabled";
+        continue;
+      }
+      const pointScope = await loadQrPointScope(org.id, doc.buildingId);
+      const people = await listFillEmployees(org.id, { pointScope });
+      const absences = await loadStaffAbsenceForDay(db, { organizationId: org.id, employeeIds: people.map((p) => p.id), dateKey: todayKey });
+      const missing: typeof people = [];
+      const suspended: typeof people = [];
+      for (const person of people) {
+        const absence = absences.get(person.id);
+        const mark = dayMarkFromEntry(byEmployee.get(person.id), absence ? STAFF_ABSENCE_LABEL[absence.status] : null);
+        if (mark.state === "missing") missing.push(person);
+        if (mark.state === "suspended") suspended.push(person);
+      }
+      missingTotal += missing.length;
+      suspendedTotal += suspended.length;
+      if (missing.length === 0 && suspended.length === 0) continue;
+
+      const dedupeKey = pointScope ? `health-qr-missing:${todayKey}:${doc.id}` : `health-qr-missing:${todayKey}`;
+      const recipients = await listCoreJournalRecipients(org.id, doc.id);
+      // Уже отправляли сегодня — не повторяем письмо и Telegram.
+      const alreadySent = await db.notification.findFirst({
+        where: { organizationId: org.id, dedupeKey, userId: { in: recipients.map((r) => r.id) } },
+        select: { id: true },
+      });
+      if (alreadySent) {
+        lastSkip = "already-sent";
+        continue;
+      }
+      const pointName = pointScope ? doc.building?.name?.trim() || pointScope.buildingName : "";
+      const where = pointName ? ` — ${pointName}` : "";
+      const title =
+        missing.length > 0
+          ? `Не отметились по QR гигиенического журнала${where}: ${missing.length}`
+          : `Не допущены к работе сегодня${where}: ${suspended.length}`;
+      const lines = [
+        ...missing.map((p) => ({ id: p.id, label: p.name, hint: "не отметился" })),
+        ...suspended.map((p) => ({ id: `s-${p.id}`, label: p.name, hint: "не допущен" })),
+      ];
+      const listText = lines.map((line) => `• ${line.label} — ${line.hint}`).join("\n");
+      const listHtml = lines.map((line) => `<li>${escapeHtml(line.label)} — ${line.hint}</li>`).join("");
+      await notifyCoreJournalRecipients({
+        organizationId: org.id,
+        recipients,
+        kind: "health-qr-missing",
+        dedupeKey,
+        title,
+        items: lines,
+        linkHref: `/journals/hygiene/documents/${doc.id}`,
+        linkLabel: "Открыть гигиенический журнал",
+        telegramText: `🩺 ${title}\n${listText}\n\nПроверьте и отметьте в журнале или по QR гигиенического журнала → «Допуск сотрудников».`,
+        emailSubject: `${org.name}: ${title}`,
+        emailBodyHtml: `<p>Итог дня по гигиене и здоровью${pointName ? ` (${escapeHtml(pointName)})` : ""}, ${todayKey}:</p><ul>${listHtml}</ul><p>Отметить или поправить можно в гигиеническом журнале или по его QR → «Допуск сотрудников».</p>`,
+      });
+      sentAny = true;
     }
-    const title =
-      missing.length > 0
-        ? `Не отметились по QR гигиенического журнала: ${missing.length}`
-        : `Не допущены к работе сегодня: ${suspended.length}`;
-    const lines = [
-      ...missing.map((p) => ({ id: p.id, label: p.name, hint: "не отметился" })),
-      ...suspended.map((p) => ({ id: `s-${p.id}`, label: p.name, hint: "не допущен" })),
-    ];
-    const listText = lines.map((line) => `• ${line.label} — ${line.hint}`).join("\n");
-    const listHtml = lines.map((line) => `<li>${escapeHtml(line.label)} — ${line.hint}</li>`).join("");
-    await notifyCoreJournalRecipients({
-      organizationId: org.id,
-      recipients,
-      kind: "health-qr-missing",
-      dedupeKey,
-      title,
-      items: lines,
-      linkHref: `/journals/hygiene/documents/${docs[0].id}`,
-      linkLabel: "Открыть гигиенический журнал",
-      telegramText: `🩺 ${title}\n${listText}\n\nПроверьте и отметьте в журнале или по QR гигиенического журнала → «Допуск сотрудников».`,
-      emailSubject: `${org.name}: ${title}`,
-      emailBodyHtml: `<p>Итог дня по гигиене и здоровью (${todayKey}):</p><ul>${listHtml}</ul><p>Отметить или поправить можно в гигиеническом журнале или по его QR → «Допуск сотрудников».</p>`,
-    });
-    report.push({ orgId: org.id, missing: missing.length, suspended: suspended.length, sent: true });
+    report.push(
+      sentAny
+        ? { orgId: org.id, missing: missingTotal, suspended: suspendedTotal, sent: true }
+        : { orgId: org.id, missing: missingTotal, suspended: suspendedTotal, sent: false, skipped: missingTotal + suspendedTotal === 0 && lastSkip !== "hygiene-disabled" ? "all-marked" : lastSkip },
+    );
   }
   return NextResponse.json({ ok: true, orgs: report });
 }

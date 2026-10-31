@@ -4,8 +4,10 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
-import { generatePoolForDay } from "@/lib/journal-task-pool";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { generatePoolForPoints } from "@/lib/journal-task-pool";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
+import { getPoolBuildings } from "@/lib/active-building";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { customJournalName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
@@ -107,7 +109,15 @@ export async function GET(request: Request) {
     where: { id: organizationId },
     select: { disabledJournalCodes: true, timezone: true },
   });
-  const disabled = parseDisabledCodes(org?.disabledJournalCodes);
+  // Точка (2026-10-31): заведующая точки видела и одобряла работу всех
+  // точек. Одна точка — её задачи и работы её сотрудников; «Вся
+  // организация» — все точки.
+  const points = await getPoolBuildings(session);
+  const onePointId = points.length === 1 ? points[0].id : null;
+  const byPointStaff = onePointId ? { user: staffAtBuildingWhere(onePointId) } : {};
+  const disabled = onePointId
+    ? await getDisabledJournalCodes(organizationId, onePointId)
+    : parseDisabledCodes(org?.disabledJournalCodes);
   // «Сегодня» — в поясе организации: claim'ы сохраняются под днём
   // телефона сотрудника, и ночью по Москве UTC-день — это ещё вчера.
   const today = resolveDayStart(org?.timezone ?? null, new Date());
@@ -121,6 +131,7 @@ export async function GET(request: Request) {
       organizationId,
       status: "completed",
       OR: [{ verificationStatus: null }, { verificationStatus: "pending" }],
+      ...byPointStaff,
     },
     include: {
       user: { select: { id: true, name: true } },
@@ -132,7 +143,7 @@ export async function GET(request: Request) {
 
   // 2) In-progress claims — для info.
   const activeClaims = await db.journalTaskClaim.findMany({
-    where: { organizationId, status: "active" },
+    where: { organizationId, status: "active", ...byPointStaff },
     include: { user: { select: { id: true, name: true } } },
     orderBy: { claimedAt: "asc" },
   });
@@ -145,6 +156,7 @@ export async function GET(request: Request) {
             organizationId,
             status: histFilter === "approved" ? "completed" : { in: ["completed", "active"] },
             verificationStatus: histFilter,
+            ...byPointStaff,
           },
           include: {
             user: { select: { id: true, name: true } },
@@ -168,10 +180,11 @@ export async function GET(request: Request) {
 
   for (const code of POOL_CODES) {
     if (disabled.has(code)) continue;
-    const pool = await generatePoolForDay({
+    const pool = await generatePoolForPoints({
       organizationId,
       journalCode: code,
       date: today,
+      points,
     });
     if (!pool.pool || pool.scopes.length === 0) continue;
 

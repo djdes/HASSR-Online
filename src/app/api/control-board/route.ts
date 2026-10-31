@@ -4,8 +4,10 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability, effectivePreset } from "@/lib/permission-presets";
-import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { generatePoolForPoints, type TaskScope } from "@/lib/journal-task-pool";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
+import { getPoolBuildings } from "@/lib/active-building";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
 import { customJournalName } from "@/lib/custom-names";
@@ -138,12 +140,18 @@ export async function GET() {
     }
   }
 
+  // Точка (2026-10-31): на панели точки — её задачи и её сотрудники
+  // (и те, кто работает на всех точках); «Вся организация» — все.
+  const points = await getPoolBuildings(session);
+  const onePointId = points.length === 1 ? points[0].id : null;
+
   const subordinates = await db.user.findMany({
     where: {
       organizationId,
       isActive: true,
       archivedAt: null,
       ...(allowedUserIds ? { id: { in: allowedUserIds } } : {}),
+      ...staffAtBuildingWhere(onePointId),
       NOT: { id: myUserId },
     },
     select: {
@@ -164,7 +172,9 @@ export async function GET() {
     where: { id: organizationId },
     select: { disabledJournalCodes: true },
   });
-  const disabled = parseDisabledCodes(org?.disabledJournalCodes);
+  const disabled = onePointId
+    ? await getDisabledJournalCodes(organizationId, onePointId)
+    : parseDisabledCodes(org?.disabledJournalCodes);
   // Своё название журнала организации — вместо короткой подписи.
   const customNames = await getOrgCustomNames(organizationId);
 
@@ -189,10 +199,11 @@ export async function GET() {
 
   for (const code of POOL_CODES) {
     if (disabled.has(code)) continue;
-    const pool = await generatePoolForDay({
+    const pool = await generatePoolForPoints({
       organizationId,
       journalCode: code,
       date: today,
+      points,
     });
     if (!pool.pool || pool.scopes.length === 0) continue;
 
