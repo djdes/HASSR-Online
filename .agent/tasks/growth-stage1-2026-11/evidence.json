@@ -1,0 +1,52 @@
+{
+  "task": "growth-stage1-2026-11",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "a4481d06",
+  "merge": "35519515 (PR #86)",
+  "checkedAt": "2026-10-31T23:44Z",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS"
+    },
+    "AC2": {
+      "status": "PASS"
+    },
+    "AC3": {
+      "status": "PASS"
+    },
+    "AC4": {
+      "status": "PASS"
+    },
+    "AC5": {
+      "status": "PASS"
+    },
+    "AC6": {
+      "status": "PASS"
+    },
+    "AC7": {
+      "status": "PASS"
+    },
+    "AC8": {
+      "status": "PASS"
+    }
+  },
+  "gates": {
+    "typecheck": "EXIT 0",
+    "testGate": "5387 pass, 0 fail",
+    "i18nCheck": "97 pass",
+    "eslintChanged": "EXIT 0 (1 pre-existing warning)",
+    "targeted": "23/23"
+  },
+  "prod": {
+    "buildInfo": "3551951",
+    "pricing": "СБП + 14-day refund shown",
+    "oferta": "#refund anchor",
+    "resendCompletionNoProof": "200 {ok:true}",
+    "supportUnansweredNoSecret": "401"
+  },
+  "ownerActions": [
+    "crontab line for /api/cron/support-unanswered",
+    "NEXT_PUBLIC_WESETUP_MAX_URL in server .env"
+  ]
+}
