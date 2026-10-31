@@ -59,6 +59,8 @@ export const ROUTE_TITLE_KEYS = {
   "/settings/integrations/tasksflow": "settings_integrations_tasksflow",
   "/settings/integrations/mercury": "settings_integrations_mercury",
   "/mercury": "mercury",
+  "/settings/integrations/edo": "settings_integrations_edo",
+  "/edo": "edo",
   "/settings/journal-access": "settings_journal_access",
   "/settings/journal-bonuses": "settings_journal_bonuses",
   "/settings/journal-checklists": "settings_journal_checklists",
@@ -219,6 +221,8 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/settings/integrations/tasksflow": "TasksFlow",
   "/settings/integrations/mercury": "ФГИС «Меркурий»",
   "/mercury": "Входящие ВСД",
+  "/settings/integrations/edo": "ЭДО: Диадок и СБИС",
+  "/edo": "Входящие накладные",
   "/settings/journal-access": "Журналы для сотрудников",
   "/settings/journal-bonuses": "Премии за журналы",
   "/settings/journal-checklists": "Чек-листы для журналов",
@@ -321,15 +325,16 @@ export const ROUTE_TITLES: Record<string, string> = {
  * родителя: `/settings/journals/<code>/scope` без этого назывался
  * «Набор журналов», хотя это настройки задач одного журнала.
  */
-const DYNAMIC_ROUTE_TITLES: Array<[RegExp, string]> = [
-  [/^\/settings\/journals\/[^/]+\/scope$/, "Задачи журнала"],
+const DYNAMIC_ROUTE_TITLES: Array<[RegExp, string, RouteTitleKey]> = [
+  [/^\/settings\/journals\/[^/]+\/scope$/, "Задачи журнала", "journal_scope"],
+  [/^\/edo\/[^/]+$/, "Накладная", "edo_document"],
 ];
 
 /** Подпись динамического экрана по шаблону пути; иначе null. */
 export function getDynamicRouteTitle(pathname: string, t?: RouteTitleTranslator): string | null {
   const clean = pathname.replace(/\/+$/, "") || "/";
-  const title = DYNAMIC_ROUTE_TITLES.find(([pattern]) => pattern.test(clean))?.[1];
-  return title ? (t ? t("journal_scope") : title) : null;
+  const match = DYNAMIC_ROUTE_TITLES.find(([pattern]) => pattern.test(clean));
+  return match ? (t ? t(match[2]) : match[1]) : null;
 }
 
 /** Точное совпадение пути. Для динамических путей вернёт null. */

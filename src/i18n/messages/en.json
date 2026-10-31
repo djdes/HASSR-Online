@@ -3259,7 +3259,10 @@
       "reports_by_user": "Employee report",
       "settings_equipment_qr_sheet": "Equipment QR labels",
       "settings_integrations_mercury": "Mercury federal information system",
+      "settings_integrations_edo": "E-documents: Diadoc and SBIS",
       "mercury": "Incoming veterinary documents",
+      "edo": "Incoming invoices",
+      "edo_document": "Invoice",
       "settings_journal_guides_tree": "Journal guides",
       "settings_journal_pipelines_tree": "Step-by-step workflows",
       "settings_journals_paper": "Paper journals",
@@ -9760,9 +9763,17 @@
           "title": "Incoming veterinary documents",
           "description": "Accept and redeem veterinary documents in one window"
         },
+        "edo": {
+          "title": "Incoming invoices",
+          "description": "Supplier UPDs from e-documents — into the acceptance log after checking the goods"
+        },
         "settings_integrations_mercury": {
           "title": "Mercury federal information system",
           "description": "Connect Mercury for incoming veterinary documents"
+        },
+        "settings_integrations_edo": {
+          "title": "E-documents: Diadoc and SBIS",
+          "description": "Supplier UPDs arrive in “Incoming invoices” by themselves"
         },
         "settings_print_agent": {
           "title": "Online printer",
@@ -30469,6 +30480,122 @@
     },
     "errors": {
       "generic": "Something went wrong — please try again"
+    }
+  },
+  "supplyEdo": {
+    "page": {
+      "eyebrow": "E-documents",
+      "title": "Incoming invoices",
+      "description": "Supplier UPDs from Diadoc, SBIS or a file. Open an invoice and check the goods — the acceptance log rows are filled from the document.",
+      "pending": "{count, plural, one {# awaiting acceptance} other {# awaiting acceptance}}",
+      "settings": "Connections",
+      "upload": "Upload UPD (XML)",
+      "uploadHint": "A UPD file from any e-document operator — XML in the tax service format",
+      "uploading": "Uploading…",
+      "uploaded": "Invoice No. {number} added",
+      "duplicate": "Invoice No. {number} is already in incoming",
+      "sync": "Check for new",
+      "syncing": "Checking…",
+      "synced": "{count, plural, =0 {No new invoices} one {# new invoice} other {# new invoices}}",
+      "syncFailed": "{provider}: {error}",
+      "notConnected": "Diadoc and SBIS are not connected — upload UPD files or connect e-documents and invoices will arrive by themselves.",
+      "connectedVia": "Connected: {providers}",
+      "tabs": {
+        "new": "Awaiting acceptance",
+        "done": "Processed"
+      },
+      "empty": "No new invoices.",
+      "emptyDone": "No processed invoices yet.",
+      "status": {
+        "new": "Awaiting acceptance",
+        "processing": "Being accepted",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "ignored": "Set aside"
+      },
+      "source": {
+        "upload": "File",
+        "diadoc": "Diadoc",
+        "saby": "SBIS"
+      },
+      "items": "{count, plural, one {# item} other {# items}}",
+      "number": "UPD No. {number}",
+      "date": "of {date}",
+      "total": "for {sum}",
+      "errors": {
+        "failed": "Something went wrong. Please try again."
+      }
+    },
+    "document": {
+      "title": "UPD No. {number} of {date}",
+      "seller": "Supplier",
+      "inn": "TIN {inn}",
+      "basis": "Basis",
+      "shipped": "Shipped {date}",
+      "source": "Source: {source}",
+      "lines": "Invoice lines",
+      "checkTitle": "Acceptance",
+      "checkHint": "The document says what, from whom and how much. You check the goods: the acceptance log rows are filled from your check.",
+      "deliveryDate": "Delivery date",
+      "deliveryTime": "Delivery time",
+      "transportOk": "Transport is fine",
+      "documentsOk": "Goods match the documents",
+      "quantity": "Quantity",
+      "accept": "Accept",
+      "reject": "Reject",
+      "temperature": "Temperature, °C",
+      "packagingOk": "Packaging is fine",
+      "organolepticOk": "Organoleptic check passed",
+      "expiry": "Use by",
+      "corrective": "What was done with the rejected goods",
+      "submit": "Record in the acceptance log",
+      "submitting": "Recording…",
+      "done": "{count, plural, one {# row recorded in the acceptance log} other {# rows recorded in the acceptance log}}",
+      "ignore": "Do not record",
+      "ignoreHint": "For example, an invoice for a service or goods not for the kitchen.",
+      "ignored": "Invoice set aside without acceptance",
+      "openJournal": "Open the acceptance log",
+      "decided": "{status} · {when}",
+      "errors": {
+        "failed": "Something went wrong. Please try again.",
+        "corrective": "For a rejected line, say what was done with the goods"
+      }
+    },
+    "settings": {
+      "eyebrow": "Connections",
+      "title": "E-documents: Diadoc and SBIS",
+      "description": "Supplier UPDs will appear in “Incoming invoices” by themselves, and acceptance log rows from them. Documents are still signed in your e-document system.",
+      "open": "Incoming invoices",
+      "diadocTitle": "Diadoc (Kontur)",
+      "diadocHint": "The developer key is issued by Kontur (api-docs.diadoc.ru → “Get a key”). Login and password are your Diadoc ones.",
+      "apiClientId": "Developer key",
+      "login": "Login",
+      "password": "Password",
+      "box": "Organization box",
+      "chooseBox": "This login has several boxes — choose the organization box",
+      "sabyTitle": "SBIS (Saby)",
+      "sabyHint": "Application keys are created in SBIS: “Settings → Applications → Add”. You need the connection ID and the protected key.",
+      "clientId": "Connection ID",
+      "appSecret": "Protected key",
+      "connect": "Connect",
+      "connecting": "Checking…",
+      "connected": "Connected",
+      "reconnect": "Reconnect",
+      "account": "Login: {account}",
+      "boxValue": "Box: {box}",
+      "disconnect": "Disconnect",
+      "disconnected": "Disconnected",
+      "status": {
+        "active": "Working",
+        "error": "Error"
+      },
+      "lastSync": "Checked {when}",
+      "never": "Not checked yet",
+      "secretsNote": "The password and keys are stored encrypted and are not shown after connecting.",
+      "schedule": "New invoices are checked when “Incoming invoices” opens, with the “Check for new” button and on the server schedule.",
+      "errors": {
+        "failed": "Could not connect. Check the details."
+      }
     }
   }
 }

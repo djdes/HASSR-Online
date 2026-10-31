@@ -16,6 +16,12 @@ export type AuditAction =
   /** Меркурий: приёмка с гашением ВСД и приёмка без гашения. */
   | "mercury.process"
   | "mercury.acknowledge"
+  /** ЭДО: входящая накладная загружена, принята в журнал, не принята, отложена; подключение. */
+  | "supply.document_add"
+  | "supply.accept"
+  | "supply.ignore"
+  | "supply.connect"
+  | "supply.disconnect"
   /** Сотрудник задал пароль по ссылке руководителя и вошёл без Telegram. */
   | "employee.paired_device";
 

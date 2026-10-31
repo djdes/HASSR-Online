@@ -117,6 +117,13 @@ export type AcceptanceRow = {
    */
   batchId?: string;
   batchCode?: string;
+  /**
+   * ЭДО (2026-10-31): входящая накладная (`SupplyDocument`) и номер её
+   * строки, из которых выросла эта строка приёмки. Опциональные, как ключи
+   * Меркурия, — миграция не нужна.
+   */
+  supplyDocumentId?: string;
+  supplyDocumentLine?: string;
 };
 
 export type AcceptanceDocumentConfig = {
@@ -305,6 +312,13 @@ export function createAcceptanceRow(
       : {}),
     ...(has("batchCode") && normalizeText(raw.batchCode)
       ? { batchCode: normalizeText(raw.batchCode) }
+      : {}),
+    // ЭДО: ссылка на входящую накладную — тоже только при наличии.
+    ...(has("supplyDocumentId") && normalizeText(raw.supplyDocumentId)
+      ? { supplyDocumentId: normalizeText(raw.supplyDocumentId) }
+      : {}),
+    ...(has("supplyDocumentLine") && normalizeText(raw.supplyDocumentLine)
+      ? { supplyDocumentLine: normalizeText(raw.supplyDocumentLine) }
       : {}),
   };
 }

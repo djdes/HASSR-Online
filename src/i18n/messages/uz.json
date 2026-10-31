@@ -3259,7 +3259,10 @@
       "reports_by_user": "Xodim bo‘yicha hisobot",
       "settings_equipment_qr_sheet": "Uskunalar uchun QR-yorliqlar",
       "settings_integrations_mercury": "Merkuriy federal axborot tizimi",
+      "settings_integrations_edo": "EHA: Diadoc va SBIS",
       "mercury": "Kiruvchi veterinariya hujjatlari",
+      "edo": "Kiruvchi yuk xatlari",
+      "edo_document": "Yuk xati",
       "settings_journal_guides_tree": "Jurnallar bo‘yicha qo‘llanmalar",
       "settings_journal_pipelines_tree": "Bosqichma-bosqich jarayonlar",
       "settings_journals_paper": "Qog‘oz jurnallar",
@@ -9760,9 +9763,17 @@
           "title": "Kiruvchi veterinariya hujjatlari",
           "description": "Veterinariya hujjatlarini bitta oynada qabul qilish va so‘ndirish"
         },
+        "edo": {
+          "title": "Kiruvchi yuk xatlari",
+          "description": "EHA’dan yetkazib beruvchilarning UPD — tovar tekshirilgach qabul jurnaliga"
+        },
         "settings_integrations_mercury": {
           "title": "Merkuriy federal axborot tizimi",
           "description": "Kiruvchi veterinariya hujjatlari uchun Merkuriyga ulanish"
+        },
+        "settings_integrations_edo": {
+          "title": "EHA: Diadoc va SBIS",
+          "description": "Yetkazib beruvchilarning UPD hujjatlari «Kiruvchi yuk xatlari»ga o‘zi tushadi"
         },
         "settings_print_agent": {
           "title": "Onlayn printer",
@@ -30469,6 +30480,122 @@
     },
     "errors": {
       "generic": "Nimadir xato ketdi — qaytadan urinib koʻring"
+    }
+  },
+  "supplyEdo": {
+    "page": {
+      "eyebrow": "EHA",
+      "title": "Kiruvchi yuk xatlari",
+      "description": "Yetkazib beruvchilarning UPD hujjatlari Diadoc, SBIS yoki fayl orqali. Yuk xatini oching va tovarni tekshiring — qabul jurnali satrlari hujjatdan to‘ldiriladi.",
+      "pending": "{count, plural, other {# ta qabulni kutmoqda}}",
+      "settings": "Ulanishlar",
+      "upload": "UPD yuklash (XML)",
+      "uploadHint": "Istalgan EHA operatoridan UPD fayli — soliq xizmati formatidagi XML",
+      "uploading": "Yuklanmoqda…",
+      "uploaded": "№ {number} yuk xati qo‘shildi",
+      "duplicate": "№ {number} yuk xati allaqachon kiruvchilarda bor",
+      "sync": "Yangilarini tekshirish",
+      "syncing": "Tekshirilmoqda…",
+      "synced": "{count, plural, =0 {Yangi yuk xatlari yo‘q} other {Yangi yuk xatlari: #}}",
+      "syncFailed": "{provider}: {error}",
+      "notConnected": "Diadoc va SBIS ulanmagan — UPD ni fayl bilan yuklang yoki EHA ni ulang, yuk xatlari o‘zi keladi.",
+      "connectedVia": "Ulangan: {providers}",
+      "tabs": {
+        "new": "Qabulni kutmoqda",
+        "done": "Ko‘rib chiqilgan"
+      },
+      "empty": "Yangi yuk xatlari yo‘q.",
+      "emptyDone": "Hali ko‘rib chiqilgan yuk xatlari yo‘q.",
+      "status": {
+        "new": "Qabulni kutmoqda",
+        "processing": "Qabul qilinmoqda",
+        "accepted": "Qabul qilindi",
+        "rejected": "Qabul qilinmadi",
+        "ignored": "Chetga qo‘yildi"
+      },
+      "source": {
+        "upload": "Fayl",
+        "diadoc": "Diadoc",
+        "saby": "SBIS"
+      },
+      "items": "{count, plural, other {# ta pozitsiya}}",
+      "number": "UPD № {number}",
+      "date": "{date} sanali",
+      "total": "{sum} summaga",
+      "errors": {
+        "failed": "Bo‘lmadi. Qayta urinib ko‘ring."
+      }
+    },
+    "document": {
+      "title": "UPD № {number}, {date}",
+      "seller": "Yetkazib beruvchi",
+      "inn": "STIR {inn}",
+      "basis": "Asos",
+      "shipped": "Jo‘natilgan {date}",
+      "source": "Manba: {source}",
+      "lines": "Yuk xati satrlari",
+      "checkTitle": "Qabul",
+      "checkHint": "Hujjatda — nima, kimdan va qancha. Tovarni siz tekshirasiz: tekshiruv bo‘yicha qabul jurnali satrlari to‘ldiriladi.",
+      "deliveryDate": "Yetkazib berish sanasi",
+      "deliveryTime": "Yetkazib berish vaqti",
+      "transportOk": "Transport joyida",
+      "documentsOk": "Tovar hujjatlarga mos",
+      "quantity": "Miqdori",
+      "accept": "Qabul qilish",
+      "reject": "Rad etish",
+      "temperature": "Harorat, °C",
+      "packagingOk": "Qadoq joyida",
+      "organolepticOk": "Organoleptika me’yorda",
+      "expiry": "Yaroqlilik muddati",
+      "corrective": "Rad etilgan tovar bilan nima qilindi",
+      "submit": "Qabul jurnaliga yozish",
+      "submitting": "Yozilmoqda…",
+      "done": "{count, plural, other {Qabul jurnaliga # ta satr yozildi}}",
+      "ignore": "Jurnalga yozmaslik",
+      "ignoreHint": "Masalan, xizmat uchun yoki oshxona uchun bo‘lmagan tovar yuk xati.",
+      "ignored": "Yuk xati qabulsiz chetga qo‘yildi",
+      "openJournal": "Qabul jurnalini ochish",
+      "decided": "{status} · {when}",
+      "errors": {
+        "failed": "Bo‘lmadi. Qayta urinib ko‘ring.",
+        "corrective": "Rad etilgan satr uchun tovar bilan nima qilinganini yozing"
+      }
+    },
+    "settings": {
+      "eyebrow": "Ulanishlar",
+      "title": "EHA: Diadoc va SBIS",
+      "description": "Yetkazib beruvchilarning UPD hujjatlari «Kiruvchi yuk xatlari»da o‘zi paydo bo‘ladi, ular bo‘yicha — qabul jurnali satrlari. Hujjatlarni imzolash — avvalgidek EHA tizimingizda.",
+      "open": "Kiruvchi yuk xatlari",
+      "diadocTitle": "Diadoc (Kontur)",
+      "diadocHint": "Dasturchi kalitini Kontur beradi (api-docs.diadoc.ru → «Kalit olish»). Login va parol — Diadoc’niki.",
+      "apiClientId": "Dasturchi kaliti",
+      "login": "Login",
+      "password": "Parol",
+      "box": "Tashkilot qutisi",
+      "chooseBox": "Bu loginda bir nechta quti bor — tashkilot qutisini tanlang",
+      "sabyTitle": "SBIS (Saby)",
+      "sabyHint": "Ilova kalitlari SBIS’da yaratiladi: «Sozlamalar → Ilovalar → Qo‘shish». Ulanish ID va himoyalangan kalit kerak.",
+      "clientId": "Ulanish ID",
+      "appSecret": "Himoyalangan kalit",
+      "connect": "Ulash",
+      "connecting": "Tekshirilmoqda…",
+      "connected": "Ulangan",
+      "reconnect": "Qayta ulash",
+      "account": "Kirish: {account}",
+      "boxValue": "Quti: {box}",
+      "disconnect": "Uzish",
+      "disconnected": "Uzildi",
+      "status": {
+        "active": "Ishlamoqda",
+        "error": "Xato"
+      },
+      "lastSync": "Tekshirilgan {when}",
+      "never": "Hali tekshirilmagan",
+      "secretsNote": "Parol va kalitlar shifrlangan holda saqlanadi va ulangandan keyin ko‘rsatilmaydi.",
+      "schedule": "Yangi yuk xatlari «Kiruvchi yuk xatlari» ochilganda, «Yangilarini tekshirish» tugmasi va server jadvali bo‘yicha tekshiriladi.",
+      "errors": {
+        "failed": "Ulab bo‘lmadi. Ma’lumotlarni tekshiring."
+      }
     }
   }
 }

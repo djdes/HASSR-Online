@@ -566,6 +566,8 @@ model Organization {
   setupHelperDevices             SetupHelperDevice[]
   labelPrinters                  LabelPrinter[]
   labelPrints                    LabelPrint[]
+  supplyDocuments                SupplyDocument[]
+  supplyConnections              SupplyConnection[]
   journalGuideTemplates          JournalGuideTemplate[]
   journalPipelineTemplates       JournalPipelineTemplate[]
   partnerClients                 PartnerClient[]                @relation("PartnerClients")
@@ -3019,6 +3021,75 @@ model LabelPrinter {
 
   @@unique([organizationId, address])
   @@index([deviceId])
+}
+
+/// Входящая накладная поставщика (УПД, 2026-10-31): из Диадока, СБИС или
+/// загруженного файла ЭДО. По её строкам заполняется журнал приёмки: из
+/// документа — что, от кого, сколько; проверку товара делает человек.
+model SupplyDocument {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// upload | diadoc | saby
+  source            String
+  /// Без дублей: id документа у оператора ЭДО или sha256 загруженного файла.
+  externalId        String
+  /// upd
+  kind              String       @default("upd")
+  /// СЧФДОП, ДОП, СЧФ — функция УПД.
+  function          String?
+  number            String
+  date              DateTime
+  sellerName        String
+  sellerInn         String?
+  sellerKpp         String?
+  /// Строки: [{ line, name, unit, quantity, price, amount, code, expiryDate }].
+  items             Json
+  total             Float?
+  /// Основание передачи: «Договор поставки № 12 от 10.01.2026».
+  basis             String?
+  shippedDate       DateTime?
+  fileName          String?
+  /// new | accepted | rejected | ignored
+  status            String       @default("new")
+  decidedAt         DateTime?
+  decidedById       String?
+  /// Документ журнала приёмки и id строк, добавленных по накладной.
+  journalDocumentId String?
+  journalRowIds     Json?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([organizationId, source, externalId])
+  @@index([organizationId, status, date])
+  @@index([organizationId, number, date])
+}
+
+/// Подключение к внешней системе поставок (2026-10-31): Диадок или СБИС для
+/// входящих УПД. Ключи — только зашифрованными (`integration-crypto`), наружу
+/// не отдаются.
+model SupplyConnection {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// diadoc | saby
+  provider       String
+  /// JSON с ключами, зашифрованный AES-256-GCM.
+  credentialsEnc String
+  /// СБИС: сессия по ключам приложения (тоже зашифрована) — не входить на каждый запрос.
+  sessionEnc     String?
+  /// Диадок: ящик организации, из которого берём входящие.
+  boxId          String?
+  boxTitle       String?
+  /// active | error
+  status         String       @default("active")
+  lastSyncAt     DateTime?
+  lastError      String?
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, provider])
 }
 
 /// Этикетка маркировки, напечатанная в «Сетап помощнике» (2026-10-31): что
