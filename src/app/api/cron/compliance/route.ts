@@ -13,6 +13,8 @@ import { isOfficeBuilding, receivesPlaceEvent } from "@/lib/building-scope";
 import { loadPlaceContext } from "@/lib/place-recipients";
 import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { isWithinNewcomerQuietWindow, skipComplianceReminder } from "@/lib/newcomer-scope";
+import { organizationHasEntries } from "@/lib/org-activity.server";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
@@ -70,7 +72,7 @@ async function handle(request: Request) {
     // Get all organizations (with their disabled-journal toggle).
     const organizations = await db.organization.findMany({
       where: NOT_DIRECTORY_ORG_WHERE,
-      select: { id: true, name: true, disabledJournalCodes: true, customNamesJson: true, locale: true },
+      select: { id: true, name: true, disabledJournalCodes: true, customNamesJson: true, locale: true, isDemo: true, createdAt: true },
     });
 
     // Get all mandatory journal templates
@@ -88,6 +90,13 @@ async function handle(request: Request) {
     const results: { org: string; missing: string[] }[] = [];
 
     for (const org of organizations) {
+      // Демо и новичок без единой записи в первые 48 часов — без напоминаний:
+      // «СРОЧНО» на второй день после регистрации отпугивает, а не помогает.
+      const hasEntries = isWithinNewcomerQuietWindow(org.createdAt, now)
+        ? await organizationHasEntries(org.id)
+        : true;
+      if (skipComplianceReminder(org, hasEntries, now)) continue;
+
       // Точки: напоминание по каждой точке отдельно — её набор журналов,
       // её документы и её руководители (слитая организация, 2026-10-26).
       // Без точек — одно напоминание на организацию, как раньше.

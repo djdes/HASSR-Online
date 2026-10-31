@@ -23,6 +23,7 @@ import type { Tariff } from "@/lib/tariffs";
 import type { SubscriptionOffer } from "@/lib/promo/promotions";
 import type { AppliedDiscount } from "@/lib/promo/discounts";
 import { PromoPrice } from "@/components/pricing/promo-price";
+import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
 import {
   RECURRING_CHARGES_LIVE,
   RECURRING_CONSENT_TEXT,
@@ -859,6 +860,14 @@ function Checkout({
         ) : null}
       </form>
 
+      {/* Как платить и что с возвратом — до нажатия, а не мелким шрифтом в оферте. */}
+      <p className="mt-4 text-center text-[13px] leading-[1.6] text-[#3c4053]">
+        {PAYMENT_METHODS_NOTE} {REFUND_NOTE}{" "}
+        <Link href={REFUND_HREF} target="_blank" className="text-[#3848c7] underline-offset-4 hover:underline">
+          Условия возврата
+        </Link>
+      </p>
+
       <p className="mt-4 flex items-start gap-2 text-[12px] leading-[1.6] text-[#9b9fb3]">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
         <span>
@@ -887,6 +896,49 @@ function Checkout({
 }
 
 /* ------------------------------------------------------------------ return */
+
+/** Счёт по безналу выставляется в кабинете («Настройки → Тариф»); гостя кабинет сначала попросит войти. */
+const INVOICE_HREF = "/settings/subscription";
+
+/**
+ * «Выслать ссылку ещё раз»: письмо со ссылкой на достройку потерялось, а
+ * клиент уже заплатил. Сервер выпускает новую ссылку (старая перестаёт
+ * работать) и отвечает одинаково, поэтому и текст после нажатия — условный.
+ */
+function ResendCompletionLink({ query }: { query: string }) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function resend() {
+    setState("sending");
+    try {
+      const res = await fetch(`/api/payments/robokassa/resend-completion?${query}`, { method: "POST" });
+      setState(res.ok ? "sent" : "error");
+    } catch {
+      setState("error");
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        type="button"
+        onClick={resend}
+        disabled={state === "sending" || state === "sent"}
+        className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
+      >
+        {state === "sending" ? <Loader2 className="size-4 animate-spin" /> : null}
+        {state === "sent" ? "Ссылка отправлена" : "Выслать ссылку ещё раз"}
+      </button>
+      <p className="mt-2 text-[13px] leading-[1.6] text-[#9b9fb3]">
+        {state === "sent"
+          ? "Новое письмо придёт в течение пары минут — проверьте и папку «Спам». Прежняя ссылка больше не работает."
+          : state === "error"
+            ? "Не получилось отправить. Напишите на support@wesetup.ru — вышлем ссылку вручную."
+            : "Письма нет через 10 минут? Вышлем новую ссылку на ту же почту."}
+      </p>
+    </div>
+  );
+}
 
 function ReturnFlow({ params }: { params: ReturnParams }) {
   const [order, setOrder] = useState<OrderStatus | null>(null);
@@ -959,14 +1011,25 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
           Платёж не подтверждён. Деньги, если они списались, вернутся
           автоматически в течение нескольких дней.
         </p>
+        {/* Неудачная оплата — не тупик: ещё раз, по счёту или человеку. */}
+        <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
+          Можно попробовать снова, оплатить по счёту для юрлица — счёт
+          выставляется в кабинете за минуту — или написать нам.
+        </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <PrimaryLink href="/pricing">Попробовать ещё раз</PrimaryLink>
-          <a
-            href="mailto:support@wesetup.ru"
+          <Link
+            href={INVOICE_HREF}
             className="inline-flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
-            Написать в поддержку
-          </a>
+            Оплатить по счёту
+          </Link>
+          <ContactSupportButton
+            subject="Оплата не прошла"
+            className="inline-flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+          >
+            Связаться с нами
+          </ContactSupportButton>
         </div>
       </Card>
     );
@@ -1043,10 +1106,7 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
           Мы отправили на <strong>{order.email}</strong> письмо со ссылкой для
           завершения настройки: там нужно задать пароль и название организации.
         </p>
-        <p className="mt-2 text-[13px] text-[#9b9fb3]">
-          Письма нет через 10 минут? Напишите на support@wesetup.ru — вышлем
-          ссылку вручную.
-        </p>
+        <ResendCompletionLink query={query} />
       </Card>
     );
   }

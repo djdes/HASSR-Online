@@ -1144,14 +1144,15 @@ export async function cancelScheduledPlan(args: {
 
 // ---------------------------------------------------------- notifications
 
-type OwnerContact = {
+export type OwnerContact = {
   userId: string;
   name: string;
   email: string | null;
   telegram: boolean;
 };
 
-async function ownerContact(organizationId: string): Promise<OwnerContact | null> {
+/** Владелец аккаунта организации (или самый давний руководитель) и его рабочая почта. */
+export async function ownerContact(organizationId: string): Promise<OwnerContact | null> {
   const unit = await loadBillingUnit(organizationId);
   const { isTechnicalEmail } = await import("@/lib/technical-email");
   const pick = (u: {
