@@ -5,6 +5,7 @@ import { uvLampPointId } from "@/lib/uv-document-points";
 import { announceQrRollover } from "@/lib/journal-qr-rollover";
 import { carryStructureFromPrevious } from "@/lib/journal-structure-carry";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { filterByQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
 import { orgTodayKey } from "@/lib/timezone";
@@ -110,9 +111,9 @@ export async function ensureUvDocumentForLamp(params: {
         : null;
       const carriedSpec = carried && typeof carried.spec === "object" && carried.spec ? (carried.spec as Record<string, unknown>) : {};
       // Ответственный — как у остальных документов журнала (слот «ответственных
-      // за журналы»), иначе — из прошлого документа лампы, если человек ещё работает.
-      const org = await db.organization.findUnique({ where: { id: params.organizationId }, select: { journalResponsibleUsersJson: true } });
-      const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[UV_LAMP_RUNTIME_TEMPLATE_CODE] ?? {};
+      // за журналы» точки лампы), иначе — из прошлого документа лампы, если
+      // человек ещё работает.
+      const slots = await effectiveJournalSlots(params.organizationId, lampPointId, UV_LAMP_RUNTIME_TEMPLATE_CODE);
       const alive = await aliveUserIds(params.organizationId, [previous?.responsibleUserId, previous?.verifierUserId]);
       const previousResponsible = previous?.responsibleUserId && alive.has(previous.responsibleUserId) ? previous.responsibleUserId : null;
       const responsibleUserId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? previousResponsible;
@@ -205,8 +206,7 @@ export async function listLampOperators(params: {
   const ids = new Set(params.fillerUserIds);
   if (ids.size === 0) {
     if (params.documentResponsibleId) ids.add(params.documentResponsibleId);
-    const org = await db.organization.findUnique({ where: { id: params.organizationId }, select: { journalResponsibleUsersJson: true } });
-    const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[UV_LAMP_RUNTIME_TEMPLATE_CODE] ?? {};
+    const slots = await effectiveJournalSlots(params.organizationId, params.pointScope?.buildingId ?? null, UV_LAMP_RUNTIME_TEMPLATE_CODE);
     for (const value of Object.values(slots)) if (value) ids.add(value);
   }
   const list = ids.size > 0 ? roster.filter((user) => ids.has(user.id)) : roster;
@@ -321,7 +321,7 @@ export async function toggleLamp(params: {
 
   if (sendWarning && level) {
     const remaining = lampRemainingHours(current.lampLifetimeHours, usedHours);
-    const recipients = await lampRecipients(params.organizationId, doc?.responsibleUserId ?? null);
+    const recipients = await lampRecipients(params.organizationId, doc?.responsibleUserId ?? null, await uvLampPointId(params.organizationId, params.lamp.id));
     const title =
       level === "over"
         ? `${params.lamp.name}: ресурс лампы исчерпан — замените лампу`
@@ -352,12 +352,11 @@ export async function toggleLamp(params: {
   };
 }
 
-/** Ответственный журнала УФ-ламп (документ → слот журнала), иначе руководство. */
-async function lampRecipients(organizationId: string, documentResponsibleId: string | null): Promise<CoreJournalRecipient[]> {
+/** Ответственный журнала УФ-ламп (документ → слот журнала точки лампы), иначе руководство. */
+async function lampRecipients(organizationId: string, documentResponsibleId: string | null, lampPointId: string | null): Promise<CoreJournalRecipient[]> {
   let userId = documentResponsibleId;
   if (!userId) {
-    const org = await db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } });
-    const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[UV_LAMP_RUNTIME_TEMPLATE_CODE] ?? {};
+    const slots = await effectiveJournalSlots(organizationId, lampPointId, UV_LAMP_RUNTIME_TEMPLATE_CODE);
     userId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? null;
   }
   if (userId) {

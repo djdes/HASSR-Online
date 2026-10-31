@@ -129,6 +129,7 @@ import {
 } from "@/lib/journal-staff-binding";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-cascade";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { getPrimarySlotId, getVerifierSlotId } from "@/lib/journal-responsible-schemas";
 import {
   ORG_ROSTER_WHERE,
@@ -989,16 +990,10 @@ export async function POST(request: Request) {
       (user) => getUserPositionLabel(user) === requestedTitle
     );
     if (titleCandidates.length > 0) {
-      const savedSlots = await db.organization.findUnique({
-        where: { id: getActiveOrgId(session) },
-        select: { journalResponsibleUsersJson: true },
-      });
+      // Ответственные точки нового документа (2026-10-31).
       const savedPrimary = (
-        (savedSlots?.journalResponsibleUsersJson ?? {}) as Record<
-          string,
-          Record<string, string | null> | undefined
-        >
-      )[resolvedTemplateCode]?.[primarySlotId];
+        await effectiveJournalSlots(getActiveOrgId(session), activeBuildingId, resolvedTemplateCode)
+      )[primarySlotId];
       titleResponsibleUserId =
         titleCandidates.find((user) => user.id === savedPrimary)?.id ??
         rankRosterForSlot(titleCandidates, { kind: "filler" })?.id ??

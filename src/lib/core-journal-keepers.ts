@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { sendRawEmail, renderEmailLayout } from "@/lib/email";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { upsertNotification, type NotificationItem } from "@/lib/notifications";
 import { notifyEmployee } from "@/lib/telegram";
 
@@ -33,13 +34,15 @@ export async function listCoreJournalRecipients(organizationId: string, hygieneD
   for (const keeper of keepers) ids.add(keeper.id);
 
   let responsibleId: string | null = null;
+  let documentPointId: string | null = null;
   if (hygieneDocumentId) {
-    const doc = await db.journalDocument.findFirst({ where: { id: hygieneDocumentId, organizationId }, select: { responsibleUserId: true } });
+    const doc = await db.journalDocument.findFirst({ where: { id: hygieneDocumentId, organizationId }, select: { responsibleUserId: true, buildingId: true } });
     responsibleId = doc?.responsibleUserId ?? null;
+    documentPointId = doc?.buildingId ?? null;
   }
   if (!responsibleId) {
-    const org = await db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } });
-    const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>).hygiene ?? {};
+    // Ответственный гигиены точки документа (2026-10-31, ответственные по точкам).
+    const slots = await effectiveJournalSlots(organizationId, documentPointId, "hygiene");
     responsibleId = slots[getPrimarySlotId("hygiene")] ?? null;
   }
   if (responsibleId) ids.add(responsibleId);

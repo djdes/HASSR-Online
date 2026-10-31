@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { emitWebhook } from "@/lib/webhooks/dispatch";
 import { sendTemperatureAlertEmail } from "@/lib/email";
 import {
@@ -656,13 +657,23 @@ export async function findColdEquipmentResponsible(args: {
   const { organizationId, documentId, equipmentId } = args;
 
   let userId: string | null = null;
+  // Точка — документа, иначе цеха оборудования: ответственный её журнала.
+  let pointId: string | null = null;
 
   if (documentId) {
     const doc = await db.journalDocument.findFirst({
       where: { id: documentId, organizationId },
-      select: { responsibleUserId: true },
+      select: { responsibleUserId: true, buildingId: true },
     });
     userId = doc?.responsibleUserId ?? null;
+    pointId = doc?.buildingId ?? null;
+  }
+  if (!pointId && equipmentId) {
+    const equipment = await db.equipment.findFirst({
+      where: { id: equipmentId, area: { organizationId } },
+      select: { area: { select: { buildingId: true } } },
+    });
+    pointId = equipment?.area.buildingId ?? null;
   }
 
   if (!userId && equipmentId) {
@@ -694,15 +705,8 @@ export async function findColdEquipmentResponsible(args: {
   }
 
   if (!userId) {
-    const org = await db.organization.findUnique({
-      where: { id: organizationId },
-      select: { journalResponsibleUsersJson: true },
-    });
-    const byJournal = (org?.journalResponsibleUsersJson ?? {}) as Record<
-      string,
-      Record<string, string | null> | undefined
-    >;
-    const slots = byJournal[COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE] ?? {};
+    // Ответственные журнала холодильников точки (2026-10-31).
+    const slots = await effectiveJournalSlots(organizationId, pointId, COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE);
     const primarySlot = getPrimarySlotId(COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE);
     userId = slots[primarySlot] ?? null;
   }

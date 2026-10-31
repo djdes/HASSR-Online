@@ -1016,6 +1016,12 @@ model Building {
   /// его; у организации тогда остаются выключенными только журналы,
   /// выключенные на всех точках (src/lib/disabled-journals.ts).
   disabledJournalCodes  Json?
+  /// Ответственные за журналы на точке (2026-10-31, «ответственные по
+  /// точкам»): { [journalCode]: { [slotId]: userId } }, как
+  /// `Organization.journalResponsibleUsersJson`. Журнал без записи здесь
+  /// берёт ответственных организации, если человек работает на точке
+  /// (src/lib/journal-responsibles-points.ts). null — всё как у организации.
+  journalResponsibleUsersJson Json?
   /// Бумажные бланки, скрытые на точке (как `Organization.disabledPaperJournalIds`).
   disabledPaperJournalIds Json?
   /// Код пула мастер-кабинета, к которому подключена точка (как

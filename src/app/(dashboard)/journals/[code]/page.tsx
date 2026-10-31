@@ -20,6 +20,7 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { Prisma } from "@prisma/client";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { documentRowsPointId } from "@/lib/document-point-rows";
 import { buildingWhere } from "@/lib/building-scope";
@@ -1381,7 +1382,6 @@ export default async function JournalDocumentsPage({
       disabledJournalCodes: true,
       journalAutomationJson: true,
       autoJournalCodes: true,
-      journalResponsibleUsersJson: true,
       journalColumnsJson: true,
     },
   });
@@ -1488,13 +1488,11 @@ export default async function JournalDocumentsPage({
 
   // Ответственный по умолчанию в диалоге создания — основной слот из
   // «Ответственные за журналы», если этот человек всё ещё в ростере.
+  // У точки — её ответственные (2026-10-31, ответственные по точкам).
   const savedPrimaryResponsibleId =
-    (
-      (orgSettings?.journalResponsibleUsersJson ?? {}) as Record<
-        string,
-        Record<string, string | null> | undefined
-      >
-    )[resolvedCode]?.[getPrimarySlotId(resolvedCode)] ?? null;
+    (await effectiveJournalSlots(getActiveOrgId(session), activeBuildingId, resolvedCode))[
+      getPrimarySlotId(resolvedCode)
+    ] ?? null;
   const journalCreateDefaults = {
     defaultResponsibleUserId:
       savedPrimaryResponsibleId &&

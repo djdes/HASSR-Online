@@ -12,8 +12,10 @@ import {
   ChevronRight,
   Crown,
   Loader2,
+  MapPin,
   Minus,
   Plus,
+  RotateCcw,
   Save,
   Scale,
   Search,
@@ -100,6 +102,8 @@ type Journal = {
   /// preset не выбирает filler users, а ставит ВСЕ должности
   /// активных сотрудников в chips и admin'а в verifier.
   distribution: string;
+  /// У точки для журнала свои ответственные (иначе — как у организации).
+  ownForPoint?: boolean;
 };
 
 function isPerEmployeeJournal(j: Journal): boolean {
@@ -111,6 +115,8 @@ type Props = {
   users: UserItem[];
   journals: Journal[];
   difficultyOverride: Record<string, number>;
+  /// Ответственные по точкам (2026-10-31): выбрана торговая точка — правим её.
+  point?: { id: string; name: string } | null;
 };
 
 type Selection = {
@@ -649,6 +655,7 @@ export function JournalResponsiblesClient({
   users,
   journals,
   difficultyOverride,
+  point = null,
 }: Props) {
   const t = useTranslations("settingsUi.journalResponsiblesClient");
   const locale = useLocale();
@@ -672,6 +679,14 @@ export function JournalResponsiblesClient({
   const [collapsed, setCollapsed] = useState<Set<JournalCategory>>(
     () => new Set()
   );
+  // Журналы, у которых на точке свои ответственные.
+  const [ownCodes, setOwnCodes] = useState<Set<string>>(
+    () => new Set(journals.filter((j) => j.ownForPoint).map((j) => j.code))
+  );
+  const [resettingCode, setResettingCode] = useState<string | null>(null);
+  useEffect(() => {
+    setOwnCodes(new Set(journals.filter((j) => j.ownForPoint).map((j) => j.code)));
+  }, [journals]);
 
   // Скроллим к карточке журнала + раскрываем категорию + добавляем
   // красную рамку, когда юзер пришёл с ?fix=<code> из notification.
@@ -1432,6 +1447,7 @@ export function JournalResponsiblesClient({
               positionIds: [...a.positionIds],
               slotUsers: a.slotUsers,
               scope,
+              ...(point ? { buildingId: point.id } : {}),
             }),
           }
         );
@@ -1463,8 +1479,59 @@ export function JournalResponsiblesClient({
       };
       setCurr(updateBoth);
       setBase(updateBoth);
+      if (point) {
+        setOwnCodes((prev) => new Set([...prev, ...successful.keys()]));
+      }
     }
     return { ok, failed };
+  }
+
+  /** «Как у организации» на точке: убрать своих ответственных журнала. */
+  async function resetToOrganization(code: string) {
+    if (!point || resettingCode) return;
+    const journal = journals.find((j) => j.code === code);
+    const ok = await confirmAsync({
+      title: t("pointResetTitle"),
+      description: t("pointResetDescription", { journal: journal?.name ?? code, point: point.name }),
+      bullets: [
+        { label: t("pointResetBullet1"), tone: "info" },
+        { label: t("pointResetBullet2"), tone: "info" },
+      ],
+      variant: "info",
+      confirmLabel: t("pointResetConfirm"),
+    });
+    if (!ok) return;
+    setResettingCode(code);
+    try {
+      const res = await fetch(
+        `/api/settings/journal-responsibles/${code}?buildingId=${encodeURIComponent(point.id)}`,
+        { method: "DELETE" }
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error ?? t("pointResetError"));
+        return;
+      }
+      const slots = (data?.slotUsers ?? {}) as SlotUserMap;
+      const apply = (prev: Selection): Selection => {
+        const next = new Map(prev.slots);
+        next.set(code, { ...slots });
+        return { positions: prev.positions, slots: next };
+      };
+      setCurr(apply);
+      setBase(apply);
+      setOwnCodes((prev) => {
+        const next = new Set(prev);
+        next.delete(code);
+        return next;
+      });
+      toast.success(t("pointResetDone", { docs: data?.documentsUpdated ?? 0 }));
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("networkError"));
+    } finally {
+      setResettingCode(null);
+    }
   }
 
   function requestApplyAllPresets() {
@@ -1758,6 +1825,10 @@ export function JournalResponsiblesClient({
           {t("applyAllButton")}
         </button>
 
+        {/* Пересинхронизация, пересоздание и удаление документов — на всю
+            организацию: у точки их нет. */}
+        {point ? null : (
+        <>
         <button
           type="button"
           onClick={resyncAll}
@@ -1802,6 +1873,8 @@ export function JournalResponsiblesClient({
           )}
           {t("deleteButton")}
         </button>
+        </>
+        )}
 
         <div className="relative ml-auto flex items-center">
           <Search className="absolute left-3 size-4 text-[#9b9fb3]" />
@@ -1862,6 +1935,20 @@ export function JournalResponsiblesClient({
           </div>
         ) : null}
       </div>
+
+      {point ? (
+        <div className="flex items-start gap-3 rounded-3xl border border-[#5566f6]/20 bg-[#f5f6ff] p-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white shadow-[0_8px_18px_-8px_rgba(85,102,246,0.55)]">
+            <MapPin className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-[15px] font-semibold leading-tight text-[#0b1024]">
+              {t("pointBannerTitle", { point: point.name })}
+            </div>
+            <p className="mt-1 text-[13px] leading-[1.55] text-[#3c4053]">{t("pointBannerBody")}</p>
+          </div>
+        </div>
+      ) : null}
 
       {positions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[14px] text-[#6f7282]">
@@ -2214,6 +2301,18 @@ export function JournalResponsiblesClient({
                                   {MODE_LABELS[meta.mode]}
                                 </span>
                               ) : null}
+                              {point ? (
+                                ownCodes.has(j.code) ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
+                                    <MapPin className="size-3" />
+                                    {t("pointOwn")}
+                                  </span>
+                                ) : (
+                                  <span className="rounded-full bg-[#fafbff] px-2 py-0.5 text-[11px] text-[#6f7282] ring-1 ring-[#ececf4]">
+                                    {t("pointInherited")}
+                                  </span>
+                                )
+                              ) : null}
                             </div>
                             {meta?.who ? (
                               <p className="mt-1.5 text-[12px] leading-relaxed text-[#3c4053]">
@@ -2225,6 +2324,21 @@ export function JournalResponsiblesClient({
                               </p>
                             ) : null}
                           </div>
+                          {point && ownCodes.has(j.code) ? (
+                            <button
+                              type="button"
+                              onClick={() => void resetToOrganization(j.code)}
+                              disabled={resettingCode !== null}
+                              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[12px] text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60"
+                            >
+                              {resettingCode === j.code ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="size-3.5 text-[#5566f6]" />
+                              )}
+                              {t("pointReset")}
+                            </button>
+                          ) : null}
                           {meta ? (
                             <button
                               type="button"
@@ -2249,6 +2363,17 @@ export function JournalResponsiblesClient({
                           {[...set].map((pid) => {
                             const p = positionsById.get(pid);
                             if (!p) return null;
+                            if (point) {
+                              return (
+                                <span
+                                  key={pid}
+                                  className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
+                                >
+                                  <Check className="size-3" />
+                                  {p.name}
+                                </span>
+                              );
+                            }
                             return (
                               <button
                                 type="button"
@@ -2267,6 +2392,9 @@ export function JournalResponsiblesClient({
                           })}
                         </div>
 
+                        {point ? (
+                          <p className="mt-2 text-[11.5px] leading-snug text-[#9b9fb3]">{t("pointPositionsNote")}</p>
+                        ) : (
                         <details className="mt-3">
                           <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[12px] text-[#6f7282] hover:text-[#5566f6]">
                             <Plus className="size-3.5" />
@@ -2293,6 +2421,7 @@ export function JournalResponsiblesClient({
                               ))}
                           </div>
                         </details>
+                        )}
 
                         {/* Slot pickers — по одному на каждый «слот»
                             ответственного из schema этого журнала.

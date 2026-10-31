@@ -44,6 +44,11 @@ export async function cascadeVerifierToTasksflow(args: {
   journalCode: string;
   newPrimaryUserId: string | null;
   scope: VerifierCascadeScope;
+  /**
+   * Только задачи документов этой точки (ответственные точки, 2026-10-31);
+   * `null` — только общих документов (без точки); не задано — все.
+   */
+  buildingId?: string | null;
 }): Promise<VerifierCascadeReport> {
   const { organizationId, journalCode, newPrimaryUserId, scope } = args;
 
@@ -82,6 +87,13 @@ export async function cascadeVerifierToTasksflow(args: {
     integrationId: integration.id,
     journalCode,
   };
+  if (args.buildingId !== undefined) {
+    const pointDocs = await db.journalDocument.findMany({
+      where: { organizationId, buildingId: args.buildingId, template: { code: journalCode } },
+      select: { id: true },
+    });
+    linksWhere.journalDocumentId = { in: pointDocs.map((doc) => doc.id) };
+  }
   if (scope === "active-any") {
     // Активные: те что не "completed" со стороны WeSetup. У link есть
     // remoteStatus и поле claimedAt; "completed" — закрытые.
