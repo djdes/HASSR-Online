@@ -30552,7 +30552,9 @@
       "total": "{sum} summaga",
       "errors": {
         "failed": "Bo‘lmadi. Qayta urinib ko‘ring."
-      }
+      },
+      "pointLabel": "Nuqta: {name}",
+      "noPoint": "Nuqta tanlanmagan"
     },
     "document": {
       "title": "UPD № {number}, {date}",
@@ -30587,8 +30589,13 @@
       "decided": "{status} · {when}",
       "errors": {
         "failed": "Bo‘lmadi. Qayta urinib ko‘ring.",
-        "corrective": "Rad etilgan satr uchun tovar bilan nima qilinganini yozing"
-      }
+        "corrective": "Rad etilgan satr uchun tovar bilan nima qilinganini yozing",
+        "point": "Tovar qabul qilingan nuqtani tanlang"
+      },
+      "pointTitle": "Qabul nuqtasi",
+      "pointHint": "Qatorlar shu nuqtaning qabul jurnaliga tushadi. Tovar kelgan nuqtani tanlang.",
+      "pointFromDocument": "Nuqta yuk xati bo‘yicha aniqlandi — tovar shu yerga kelganini tekshiring.",
+      "acceptedAt": "Nuqta: {name}"
     },
     "settings": {
       "eyebrow": "Ulanishlar",
@@ -30664,6 +30671,21 @@
       "licenseNote": "Har bir yuklash iiko serveriga kiradi va darhol chiqadi: bo‘sh API litsenziyasi faqat shu vaqtga kerak.",
       "errors": {
         "failed": "Ulab bo‘lmadi. Ma’lumotlarni tekshiring."
+      },
+      "stores": {
+        "title": "iiko omborlari va savdo nuqtalari",
+        "hint": "Ombor yuk xatlari va hisobdan chiqarish dalolatnomalari uning nuqtasiga tushadi. «Yuklamaslik» — ombor hujjatlari o‘tkazib yuboriladi. Nuqtasiz — nuqta yuk xatini qabul qilishda tanlanadi.",
+        "load": "Omborlarni iiko’dan yuklash",
+        "reload": "Omborlar ro‘yxatini yangilash",
+        "loading": "Omborlar yuklanmoqda…",
+        "empty": "«Omborlarni iiko’dan yuklash» tugmasini bosing — server omborlari ro‘yxati chiqadi.",
+        "none": "Nuqtasiz — qabulda tanlash",
+        "skip": "Yuklamaslik",
+        "save": "Saqlash",
+        "saving": "Saqlanmoqda…",
+        "saved": "Omborlar va nuqtalar saqlandi",
+        "unsaved": "Saqlanmagan o‘zgarishlar bor",
+        "failed": "Bo‘lmadi. Qaytadan urinib ko‘ring."
       }
     }
   },

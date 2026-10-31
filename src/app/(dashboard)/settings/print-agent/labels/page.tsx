@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { formatDate, isLocale, type Locale } from "@/i18n/locales";
+import { getViewedPointId } from "@/lib/active-building";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import {
@@ -66,10 +67,13 @@ export default async function LabelLogPage({
   const now = new Date();
   const from = labelPeriodStart(period, orgDayStartInstant(timeZone, now));
 
+  // На торговой точке — её этикетки и этикетки без точки (2026-11-01).
+  const pointId = await getViewedPointId(session);
+  const atPoint = pointId ? { OR: [{ buildingId: pointId }, { buildingId: null }] } : {};
   const rows = await db.labelPrint.findMany({
     where: attention
-      ? { organizationId, until: { gte: from, lte: new Date(now.getTime() + LABEL_SOON_MS) } }
-      : { organizationId, printedAt: { gte: from } },
+      ? { organizationId, until: { gte: from, lte: new Date(now.getTime() + LABEL_SOON_MS) }, ...atPoint }
+      : { organizationId, printedAt: { gte: from }, ...atPoint },
     orderBy: attention ? { until: "asc" } : { printedAt: "desc" },
     take: LIMIT,
     select: {

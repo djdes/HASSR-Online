@@ -27,7 +27,8 @@ export default async function LossesPage() {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  // Точка из шапки (2026-10-31): потери её цехов, общих цехов и без цеха.
+  // Точка из шапки (2026-10-31): потери точки (2026-11-01: и по `buildingId`
+  // — акты списания iiko), её цехов, общих цехов и без места.
   const pointId = await getViewedPointId(session);
   const pointAreas = pointId
     ? await db.area.findMany({ where: { organizationId: orgId, ...areaPointWhere(pointId) }, select: { id: true } })

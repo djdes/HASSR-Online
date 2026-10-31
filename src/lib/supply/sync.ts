@@ -23,7 +23,8 @@ export type SyncCounters = { created: number; skipped: number; failed: number };
 export type SyncSink = {
   /** Уже загружен ли документ с таким внешним id. */
   exists(externalId: string): Promise<boolean>;
-  save(input: { externalId: string; parsed: ParsedUpd; fileName: string | null }): Promise<{ created: boolean }>;
+  /** `buildingId` — точка, известная заранее (склад iiko); без неё точку ищет сохранение. */
+  save(input: { externalId: string; parsed: ParsedUpd; fileName: string | null; buildingId?: string | null }): Promise<{ created: boolean }>;
 };
 
 async function store(
@@ -112,6 +113,9 @@ export type IikoSyncCounters = SyncCounters & { losses: number; products: number
  * накладные во «Входящие», акты списания в «Потери», новые товары и
  * заготовки в справочник продуктов. Внешний id накладной — её id в iiko,
  * строки потерь — `iiko:<акт>:<строка>`.
+ *
+ * `storeDecision` — склад документа → точка или «не загружать» (настройки
+ * iiko, 2026-11-01). Без него — как раньше: всё без точки.
  */
 export async function syncIikoData(input: {
   client: Pick<IikoClient, "withSession">;
@@ -119,9 +123,11 @@ export async function syncIikoData(input: {
   toDate: string;
   options: { invoices: boolean; writeoffs: boolean; products: boolean };
   sink: SyncSink;
-  losses: { exists(sourceEntryId: string): Promise<boolean>; save(loss: IikoLoss): Promise<void> };
+  losses: { exists(sourceEntryId: string): Promise<boolean>; save(loss: IikoLoss, buildingId: string | null): Promise<void> };
   products: { addMissing(items: Array<{ name: string; unit: string | null }>): Promise<number> };
+  storeDecision?: (storeId: string | null) => { skip: boolean; buildingId: string | null };
 }): Promise<IikoSyncCounters> {
+  const decide = input.storeDecision ?? (() => ({ skip: false, buildingId: null }));
   const counters: IikoSyncCounters = { created: 0, skipped: 0, failed: 0, losses: 0, products: 0 };
   await input.client.withSession(async (session) => {
     // По очереди, не параллельно: одна сессия iiko — один запрос за раз.
@@ -132,21 +138,24 @@ export async function syncIikoData(input: {
 
     if (input.options.invoices) {
       for (const invoice of await session.incomingInvoices(input.fromDate, input.toDate)) {
-        const parsed = iikoInvoiceToDocument(invoice, dir);
+        const store = decide(invoice.storeId);
+        const parsed = store.skip ? null : iikoInvoiceToDocument(invoice, dir);
         if (!parsed || (await input.sink.exists(invoice.id))) {
           counters.skipped += 1;
           continue;
         }
-        const saved = await input.sink.save({ externalId: invoice.id, parsed, fileName: null });
+        const saved = await input.sink.save({ externalId: invoice.id, parsed, fileName: null, buildingId: store.buildingId });
         if (saved.created) counters.created += 1;
         else counters.skipped += 1;
       }
     }
     if (input.options.writeoffs) {
       for (const writeoff of await session.writeoffs(input.fromDate, input.toDate)) {
+        const store = decide(writeoff.storeId);
+        if (store.skip) continue;
         for (const loss of iikoWriteoffToLosses(writeoff, dir)) {
           if (await input.losses.exists(loss.sourceEntryId)) continue;
-          await input.losses.save(loss);
+          await input.losses.save(loss, store.buildingId);
           counters.losses += 1;
         }
       }

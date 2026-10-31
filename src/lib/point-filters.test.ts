@@ -20,7 +20,10 @@ test("записи журнала точки: её цех, общий цех, б
 });
 
 test("потери точки: её цеха и без цеха", () => {
-  assert.deepEqual(lossPointWhere("A", ["area-a", "area-shared"]), { OR: [{ areaId: null }, { areaId: { in: ["area-a", "area-shared"] } }] });
+  // Своя точка записи (акт списания iiko) главнее цеха; без точки — по цеху.
+  assert.deepEqual(lossPointWhere("A", ["area-a", "area-shared"]), {
+    OR: [{ buildingId: "A" }, { buildingId: null, areaId: null }, { buildingId: null, areaId: { in: ["area-a", "area-shared"] } }],
+  });
 });
 
 test("чек-листы: назначение на другую точку и на сотрудника другой точки не видно", () => {

@@ -11,7 +11,9 @@ import { XMLParser } from "fast-xml-parser";
  *
  * Берём: приходные накладные (XML `documents/export/incomingInvoice`),
  * акты списания (JSON `v2/documents/writeoff`), номенклатуру
- * (`v2/entities/products/list`), единицы измерения и поставщиков. Чистый
+ * (`v2/entities/products/list`), единицы измерения, поставщиков, склады и
+ * подразделения (`corporation/stores`, `corporation/departments` — склад
+ * документа задаёт его торговую точку). Чистый
  * модуль: транспорт подменяется, пароль в текст ошибок не попадает.
  */
 
@@ -53,6 +55,8 @@ export type IikoInvoice = {
   date: string;
   supplierId: string | null;
   status: string | null;
+  /** Склад прихода (`defaultStore`, иначе склад первой строки) — по нему точка. */
+  storeId: string | null;
   items: IikoInvoiceItem[];
 };
 
@@ -63,11 +67,15 @@ export type IikoWriteoff = {
   date: string;
   status: string | null;
   comment: string | null;
+  /** Склад списания — по нему точка. */
+  storeId: string | null;
   items: Array<{ productId: string | null; amount: number | null; unitId: string | null; cost: number | null }>;
 };
 
 export type IikoProduct = { id: string; name: string; type: string | null; unitId: string | null; deleted: boolean };
 export type IikoSupplier = { id: string; name: string; inn: string | null };
+/** Склад или подразделение из `corporation/stores|departments`. */
+export type IikoCorporateItem = { id: string; name: string; parentId: string | null };
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
@@ -75,7 +83,7 @@ const xml = new XMLParser({
   ignoreAttributes: true,
   parseTagValue: false,
   trimValues: true,
-  isArray: (name) => ["document", "item", "employee"].includes(name),
+  isArray: (name) => ["document", "item", "employee", "corporateItemDto"].includes(name),
 });
 
 type Json = Record<string, unknown>;
@@ -115,7 +123,9 @@ export function parseIncomingInvoices(text: string): IikoInvoice[] {
     const date = dateKey(raw.incomingDate) ?? dateKey(raw.dateIncoming);
     if (!id || !date) return [];
     const itemsNode = isJson(raw.items) ? raw.items : {};
-    const items = (Array.isArray(itemsNode.item) ? itemsNode.item : []).flatMap((item, index) => {
+    const rawItems = Array.isArray(itemsNode.item) ? itemsNode.item : [];
+    const firstStore = rawItems.map((item) => (isJson(item) ? str(item.store) : null)).find(Boolean) ?? null;
+    const items = rawItems.flatMap((item, index) => {
       if (!isJson(item)) return [];
       return [
         {
@@ -136,9 +146,27 @@ export function parseIncomingInvoices(text: string): IikoInvoice[] {
         date,
         supplierId: str(raw.supplier),
         status: str(raw.status),
+        storeId: str(raw.defaultStore) ?? firstStore,
         items,
       },
     ];
+  });
+}
+
+/** Склады и подразделения: XML `<corporateItemDtoes><corporateItemDto>…`. */
+export function parseCorporateItems(text: string): IikoCorporateItem[] {
+  let parsed: unknown;
+  try {
+    parsed = xml.parse(text);
+  } catch {
+    throw new IikoError("bad_response", "iiko прислал склады не в XML");
+  }
+  const root = isJson(parsed) && isJson(parsed.corporateItemDtoes) ? parsed.corporateItemDtoes : {};
+  return (Array.isArray(root.corporateItemDto) ? root.corporateItemDto : []).flatMap((raw) => {
+    if (!isJson(raw)) return [];
+    const id = str(raw.id);
+    const name = str(raw.name);
+    return id && name ? [{ id, name, parentId: str(raw.parentId) }] : [];
   });
 }
 
@@ -171,7 +199,7 @@ export function parseWriteoffs(body: unknown): IikoWriteoff[] {
         ? [{ productId: str(item.productId), amount: num(item.amount), unitId: str(item.measureUnitId), cost: num(item.cost) }]
         : [],
     );
-    return [{ id, number: str(raw.documentNumber), date, status: str(raw.status), comment: str(raw.comment), items }];
+    return [{ id, number: str(raw.documentNumber), date, status: str(raw.status), comment: str(raw.comment), storeId: str(raw.storeId), items }];
   });
 }
 
@@ -263,6 +291,8 @@ export function createIikoClient(creds: IikoCredentials, options: { fetch?: Fetc
     products: async () => parseProducts(await json("/resto/api/v2/entities/products/list", { key, includeDeleted: "false" })),
     units: async () => parseUnits(await json("/resto/api/v2/entities/list", { key, rootType: "MeasureUnit" })),
     suppliers: async () => parseSuppliers(await text("/resto/api/suppliers", { key })),
+    stores: async () => parseCorporateItems(await text("/resto/api/corporation/stores", { key })),
+    departments: async () => parseCorporateItems(await text("/resto/api/corporation/departments", { key })),
   });
 
   return {
