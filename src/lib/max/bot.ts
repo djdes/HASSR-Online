@@ -32,6 +32,7 @@ import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { syncDailyJournalObligationsForOrganization, syncDailyJournalObligationsForUser } from "@/lib/journal-obligations";
 import { scheduleObligationSync, utcDayKey } from "@/lib/obligation-sync-throttle";
+import { documentInWorkerScope, documentWorkerScopeWhere, loadWorkerPointScope } from "@/lib/worker-point-scope";
 import { maxAnswer, maxApi, maxSend, type MaxView } from "./client";
 import { maxConfig } from "./config";
 import { claimMaxLink, MaxError, maxAccount, maxContext, maxOrganizations } from "./service";
@@ -283,7 +284,9 @@ async function startFill(event: MaxEvent, identity: Identity, ctx: Ctx, code: st
   const todayKey = todayKeyFor(org.timezone);
   // Первое заполнение после конца периода открывает документ нового периода — как скан QR.
   await ensureQrPeriodDocuments({ organizationId: ctx.organizationId, templateCode: code, todayKey, source: "max-bot" });
-  const docs = await listJournalFillDocuments(ctx.organizationId, code, todayKey);
+  // Документы точек сотрудника и общие: чужую точку бот не предлагает.
+  const scope = await loadWorkerPointScope(ctx.organizationId, ctx.user.id);
+  const docs = (await listJournalFillDocuments(ctx.organizationId, code, todayKey)).filter((doc) => documentInWorkerScope(scope, doc.buildingId));
   if (docs.length === 0) return respond(event, messageView(`На сегодня нет активного документа «${journalName}». Попросите руководителя создать его на сайте.`));
   const state: MaxFillState = {
     kind: "fill", id: newWizardId(), seq: 0, orgId: ctx.organizationId, code, name: journalName,
@@ -410,9 +413,11 @@ async function pendingByEmployee(ctx: Ctx) {
   } catch (error) {
     console.error("[max:bot] organization sync failed", error instanceof Error ? error.name : "UnknownError");
   }
+  // Руководитель точки видит и напоминает только по своим точкам (и общим).
+  const scope = await loadWorkerPointScope(ctx.organizationId, ctx.user.id);
   const [rows, name] = await Promise.all([
     db.journalObligation.findMany({
-      where: { organizationId: ctx.organizationId, dateKey, user: ORG_ROSTER_WHERE },
+      where: { organizationId: ctx.organizationId, dateKey, user: ORG_ROSTER_WHERE, ...documentWorkerScopeWhere(scope) },
       select: { userId: true, status: true, journalCode: true, template: { select: { name: true } }, user: { select: { name: true, maxIdentity: { select: { privateChatId: true } } } } },
     }),
     displayNames(ctx.organizationId),

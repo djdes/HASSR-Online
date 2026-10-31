@@ -28,7 +28,8 @@ export async function GET(request: Request) {
   if (!limiter.consume(device.id)) {
     return NextResponse.json({ error: "Слишком частые запросы. Повторим позже." }, { status: 429 });
   }
-  const catalog = await loadHelperCatalog(device.organizationId);
+  // Сотрудник точки получает справочники своей точки (см. loadHelperCatalog).
+  const catalog = await loadHelperCatalog(device.organizationId, new Date(), { userId: device.userId });
   const known = new URL(request.url).searchParams.get("version");
   const body = known && known === catalog.version ? { version: catalog.version, unchanged: true } : catalog;
   return NextResponse.json(body, { headers: { "Cache-Control": "no-store" } });

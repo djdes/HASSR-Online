@@ -204,9 +204,10 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     includeCommission: isCommissionJournalCode(code),
   });
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error };
-  // Документ точки: по QR записывают только сотрудники этой точки (как в
-  // списке на QR). Мессенджер выбирает документ сам — его не трогаем.
-  if (!input.messenger && !(await employeeWorksAtQrPoint(await loadQrPointScope(orgId, document.buildingId), actor.employee.id))) {
+  // Документ точки: записывают только сотрудники этой точки (как в списке на
+  // QR). Мессенджер тоже: бот предлагает документы своих точек, а запись в
+  // документ чужой точки отклоняется тем же правилом (2026-10-31).
+  if (!(await employeeWorksAtQrPoint(await loadQrPointScope(orgId, document.buildingId), actor.employee.id))) {
     return { ok: false, status: 403, error: QR_POINT_DENIED };
   }
 

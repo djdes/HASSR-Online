@@ -50,6 +50,7 @@ import { auditReportAdapter } from "./audit-report";
 import { traceabilityAdapter } from "./traceability";
 import { complaintRegisterAdapter } from "./complaint-register";
 import { buildGenericAdapter } from "./generic";
+import { withPointRows } from "./point-rows";
 import type { JournalAdapter } from "./types";
 
 /**
@@ -133,7 +134,7 @@ export async function listAdapters(): Promise<JournalAdapter[]> {
   for (const tpl of templates) {
     const specific = SPECIFIC_BY_CODE.get(tpl.code);
     if (specific) {
-      out.push(specific);
+      out.push(withPointRows(specific));
       continue;
     }
     let generic = GENERIC_CACHE.get(tpl.code);
@@ -141,8 +142,9 @@ export async function listAdapters(): Promise<JournalAdapter[]> {
       generic = buildGenericAdapter(tpl.code, tpl.name);
       GENERIC_CACHE.set(tpl.code, generic);
     }
-    out.push(generic);
+    out.push(withPointRows(generic));
   }
+  // Строки документа точки — только её сотрудники (см. point-rows.ts).
   return out;
 }
 
@@ -159,7 +161,7 @@ export async function listAdapters(): Promise<JournalAdapter[]> {
 export function getAdapter(templateCode: string | null | undefined): JournalAdapter | null {
   if (!templateCode) return null;
   const specific = SPECIFIC_BY_CODE.get(templateCode);
-  if (specific) return specific;
+  if (specific) return withPointRows(specific);
   let generic = GENERIC_CACHE.get(templateCode);
   if (!generic) {
     // Use templateCode as label fallback; listAdapters() will replace
@@ -167,7 +169,7 @@ export function getAdapter(templateCode: string | null | undefined): JournalAdap
     generic = buildGenericAdapter(templateCode, templateCode);
     GENERIC_CACHE.set(templateCode, generic);
   }
-  return generic;
+  return withPointRows(generic);
 }
 
 export function isJournalSupported(templateCode: string | null | undefined): boolean {
