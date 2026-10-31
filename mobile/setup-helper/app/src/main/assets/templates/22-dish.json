@@ -4,12 +4,13 @@
   "description": "Кулинарная продукция: когда приготовлено и до какого времени реализовать.",
   "size": {"width": 58, "height": 40},
   "fields": [
-    {"key": "dish", "label": "Блюдо", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Плов с курицей»"},
+    {"key": "dish", "label": "Блюдо", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Плов с курицей»", "source": "dishes"},
     {"key": "cookedAt", "label": "Приготовлено", "type": "datetime", "default": "now"},
     {"key": "sellWithin", "label": "Реализовать в течение", "type": "duration", "default": "2h", "options": ["1h", "2h", "3h", "6h", "12h", "24h", "36h", "48h"]},
     {"key": "serving", "label": "Подача и хранение", "type": "text", "default": "Горячее: не ниже +65 °C", "maxLength": 40, "options": ["Горячее: не ниже +65 °C", "Холодное: +2…+6 °C", "При комнатной температуре"]},
-    {"key": "employee", "label": "Повар", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+    {"key": "employee", "label": "Повар", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff"}
   ],
+  "record": {"item": "dish", "start": "cookedAt", "until": "cookedAt+sellWithin", "untilLabel": "Реализовать до", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },

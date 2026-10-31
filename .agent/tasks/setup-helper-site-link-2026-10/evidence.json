@@ -1,0 +1,65 @@
+{
+  "task": "setup-helper-site-link-2026-10",
+  "branch": "claude/awesome-cannon-72xnuc",
+  "base": "ddef6fb",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/setup-helper-catalog.test.ts (5 pass)",
+        "raw/catalog-response.json",
+        "raw/catalog-auth.txt",
+        "raw/catalog-isolation.txt"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/setup-helper.test.ts (19 pass)",
+        "raw/sync-body.json",
+        "raw/sync-idempotency.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "raw/labels-*-desktop.png",
+        "raw/labels-*-mobile.png",
+        "raw/summary-*.png",
+        "raw/label-log-report.json",
+        "src/lib/label-prints.test.ts (3 pass)"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "raw/android-tests.txt (core 55/0, app 48/0, play 2/0)"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "mobile/setup-helper/app/build.gradle (1.4.0, 7)",
+        "mobile/setup-helper/app/release-notes.txt",
+        "raw/test-gate.txt",
+        "typecheck exit 0",
+        "eslint clean",
+        "i18n:check 97/0"
+      ]
+    },
+    "AC6": {
+      "status": "PENDING",
+      "note": "signed APK is built only by CI (publish) after the code is on master; release PR follows"
+    }
+  },
+  "commands": {
+    "android": "ANDROID_HOME=/root/android-sdk gradle --no-daemon :core:test :app:testSiteDebugUnitTest; :app:testPlayDebugUnitTest --tests ru.wesetup.helper.PlayFlavorTest",
+    "unit": "npx tsx --test src/lib/setup-helper.test.ts src/lib/setup-helper-catalog.test.ts src/lib/label-prints.test.ts src/i18n/organization-profile-localization.test.ts → 30 pass",
+    "eslint": "npx eslint (13 changed TS/TSX files) → clean",
+    "typecheck": "npm run typecheck → exit 0",
+    "i18n": "npm run i18n:check → 97 pass",
+    "pages": "node raw/label-log.cjs against next dev :3100 with raw/seed-helper-link.ts fixtures and raw/sync-body.json events",
+    "gate": "npm run test:gate → pass=5265, fail=0"
+  },
+  "deploy": "prisma db push creates table LabelPrint (no data loss); new route GET /api/setup-helper/catalog"
+}

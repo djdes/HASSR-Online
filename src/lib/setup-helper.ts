@@ -150,11 +150,74 @@ const removedEventSchema = z.object({
   printer: z.object({ address: printerAddress }),
 });
 
+/** Поле этикетки «как напечатано»: подпись и значение. */
+const labelFieldSchema = z.object({
+  label: z.string().trim().min(1).max(60),
+  value: z.string().trim().max(160),
+});
+
+/**
+ * Этикетка маркировки (с 1.4.0): что, когда изготовлено, до какого времени
+ * годно и кто — то же, что напечатано на этикетке.
+ */
+const labelPrintedEventSchema = z.object({
+  id: eventId,
+  type: z.literal("label_printed"),
+  at: eventAt,
+  printer: z.object({ address: printerAddress }),
+  template: z.string().min(1).max(40).regex(/^[a-z0-9-]+$/),
+  title: z.string().trim().min(1).max(80),
+  copies: z.number().int().min(1).max(999),
+  label: z.object({
+    item: z.string().trim().min(1).max(120),
+    startAt: eventAt.nullish(),
+    startLabel: z.string().trim().max(40).nullish(),
+    until: eventAt.nullish(),
+    untilLabel: z.string().trim().max(40).nullish(),
+    dateOnly: z.boolean().optional(),
+    by: z.string().trim().max(80).nullish(),
+    byLabel: z.string().trim().max(40).nullish(),
+    fields: z.array(labelFieldSchema).max(12).optional(),
+  }),
+});
+
 const helperEventSchema = z.discriminatedUnion("type", [
   connectedEventSchema,
   printedEventSchema,
   removedEventSchema,
+  labelPrintedEventSchema,
 ]);
+
+export type LabelRecord = {
+  item: string;
+  startAt: Date | null;
+  /** «Изготовлено», «Вскрыто»… — как на этикетке. */
+  startLabel: string | null;
+  until: Date | null;
+  /** «Годен до», «Реализовать до»… */
+  untilLabel: string | null;
+  /** На этикетке только даты, без времени. */
+  dateOnly: boolean;
+  by: string | null;
+  /** «Изготовил», «Повар», «Отобрал»… */
+  byLabel: string | null;
+  fields: Array<{ label: string; value: string }>;
+};
+
+/**
+ * Даты этикетки — не время события: «хранить до» бывает и через полгода, а
+ * «заморожено» — вчера. Отсекаем только явный мусор часов (дальше двух лет
+ * от сейчас в любую сторону).
+ */
+export const LABEL_DATE_LIMIT_MS = 2 * 366 * 24 * 60 * 60 * 1000;
+
+function labelDate(raw: string | null | undefined, now: Date): Date | null {
+  if (!raw) return null;
+  const date = new Date(raw);
+  const time = date.getTime();
+  if (!Number.isFinite(time) || Math.abs(time - now.getTime()) > LABEL_DATE_LIMIT_MS) return null;
+  return date;
+}
 
 export type HelperEvent =
   | {
@@ -174,7 +237,17 @@ export type HelperEvent =
       template: string;
       copies: number;
     }
-  | { id: string; type: "printer_removed"; at: Date; address: string };
+  | { id: string; type: "printer_removed"; at: Date; address: string }
+  | {
+      id: string;
+      type: "label_printed";
+      at: Date;
+      address: string;
+      template: string;
+      title: string;
+      copies: number;
+      label: LabelRecord;
+    };
 
 export type ParsedSync = {
   events: HelperEvent[];
@@ -222,6 +295,28 @@ export function parseSyncRequest(raw: unknown, now: Date): ParsedSync | null {
       });
     } else if (event.type === "printer_printed") {
       events.push({ id: event.id, type: event.type, at, address, template: event.template, copies: event.copies });
+    } else if (event.type === "label_printed") {
+      events.push({
+        id: event.id,
+        type: event.type,
+        at,
+        address,
+        template: event.template,
+        title: event.title,
+        copies: event.copies,
+        label: {
+          item: event.label.item,
+          startAt: labelDate(event.label.startAt, now),
+          startLabel: event.label.startLabel || null,
+          until: labelDate(event.label.until, now),
+          untilLabel: event.label.untilLabel || null,
+          dateOnly: event.label.dateOnly ?? false,
+          by: event.label.by || null,
+          byLabel: event.label.byLabel || null,
+          // Пустые поля этикетки на сайте не нужны.
+          fields: (event.label.fields ?? []).filter((field) => field.value.length > 0),
+        },
+      });
     } else {
       events.push({ id: event.id, type: event.type, at, address });
     }
@@ -318,7 +413,7 @@ export function planPrinterEvent(
   // организацией.
   if (!existing) return { kind: "skip" };
 
-  if (event.type === "printer_printed") {
+  if (event.type === "printer_printed" || event.type === "label_printed") {
     if (existing.lastPrintAt && at <= existing.lastPrintAt.getTime()) return { kind: "skip" };
     return { kind: "update", data: { lastPrintAt: event.at, lastTemplate: event.template } };
   }

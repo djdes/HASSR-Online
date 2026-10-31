@@ -79,6 +79,11 @@ public final class TemplateValues {
         return durations.get(key);
     }
 
+    /** Часовой пояс, в котором печатаются даты. */
+    public TimeZone zone() {
+        return zone;
+    }
+
     public String resolve(String pattern) {
         if (pattern == null || pattern.isEmpty()) return "";
         Matcher matcher = PLACEHOLDER.matcher(pattern);

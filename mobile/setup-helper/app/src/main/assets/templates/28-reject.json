@@ -4,11 +4,12 @@
   "description": "Продукт, который нельзя использовать: причина, когда и кто отметил.",
   "size": {"width": 58, "height": 40},
   "fields": [
-    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Сметана 20%»"},
+    {"key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Сметана 20%»", "source": "products"},
     {"key": "reason", "label": "Причина", "type": "text", "required": true, "default": "Истёк срок годности", "maxLength": 50, "options": ["Истёк срок годности", "Нарушены условия хранения", "Повреждена упаковка", "Не соответствует по качеству", "Нет маркировки", "Возврат поставщику"]},
     {"key": "markedAt", "label": "Отмечено", "type": "datetime", "default": "now"},
-    {"key": "employee", "label": "Отметил", "type": "text", "default": "{{user.name}}", "maxLength": 40}
+    {"key": "employee", "label": "Отметил", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff"}
   ],
+  "record": {"item": "product", "start": "markedAt", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },

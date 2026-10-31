@@ -26,8 +26,12 @@ public final class Outbox {
         void write(String value);
     }
 
-    /** Предохранитель: очередь не должна расти бесконечно. */
-    static final int MAX_EVENTS = 300;
+    /**
+     * Предохранитель: очередь не должна расти бесконечно. С 1.4.0 в ней и
+     * этикетки для журнала маркировки (каждая — своё событие), поэтому запас
+     * на несколько дней печати без сети.
+     */
+    static final int MAX_EVENTS = 1000;
 
     private final Storage storage;
 

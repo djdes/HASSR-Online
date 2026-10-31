@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import ru.wesetup.helper.auth.SessionStore;
+import ru.wesetup.helper.catalog.Catalog;
 import ru.wesetup.helper.bt.BtSupport;
 import ru.wesetup.helper.bt.PrinterInfo;
 import ru.wesetup.helper.print.LabelRenderer;
@@ -322,6 +323,46 @@ public class ScreensTest {
         // «Искать снова» прячет подсказку до конца нового поиска.
         activity.findViewById(R.id.scan_again).performClick();
         assertEquals(View.GONE, help.getVisibility());
+    }
+
+    @Test
+    public void testCatalogFromTheSiteSuggestsProductsAndFillsShelfLifeAndStorage() throws Exception {
+        signIn();
+        PrinterInfo printer = savePrinter();
+        app.catalog().replaceForTest(Catalog.parse("{\"version\":\"v1\","
+                + "\"products\":[{\"name\":\"Котлеты куриные (п/ф)\",\"shelfLifeHours\":36,\"storage\":\"0…+4 °C\"}],"
+                + "\"dishes\":[\"Суп гороховый\"],\"suppliers\":[],\"staff\":[\"Белова Елена\",\"Иван Петров\"]}"));
+        Intent intent = new Intent(app, PrintActivity.class)
+                .putExtra(PrintActivity.EXTRA_ADDRESS, printer.address)
+                .putExtra(PrintActivity.EXTRA_TEMPLATE, "semi-finished");
+        PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
+        LinearLayout fields = activity.findViewById(R.id.print_fields);
+        // Наименование, изготовлено, срок, хранение, количество, изготовил.
+        TextInputLayout product = (TextInputLayout) fields.getChildAt(0);
+        View productInput = product.findViewById(R.id.field_input);
+        assertTrue("у продукта — список из справочника",
+                productInput instanceof com.google.android.material.textfield.MaterialAutoCompleteTextView);
+        android.widget.ListAdapter suggestions =
+                ((com.google.android.material.textfield.MaterialAutoCompleteTextView) productInput).getAdapter();
+        assertEquals(2, suggestions.getCount());
+        assertEquals("Котлеты куриные (п/ф)", String.valueOf(suggestions.getItem(0)));
+        assertEquals("Суп гороховый", String.valueOf(suggestions.getItem(1)));
+        TextInputLayout employee = (TextInputLayout) fields.getChildAt(5);
+        assertEquals(2, ((com.google.android.material.textfield.MaterialAutoCompleteTextView)
+                employee.findViewById(R.id.field_input)).getAdapter().getCount());
+
+        ((android.widget.EditText) productInput).setText("Котлеты куриные (п/ф)");
+        activity.applyProduct("Котлеты куриные (п/ф)", product);
+        TextInputLayout shelfLife = (TextInputLayout) fields.getChildAt(2);
+        assertEquals(Durations.format(36 * 60),
+                String.valueOf(((android.widget.EditText) shelfLife.findViewById(R.id.field_input)).getText()));
+        TextInputLayout storage = (TextInputLayout) fields.getChildAt(3);
+        assertEquals("0…+4 °C", String.valueOf(((android.widget.EditText) storage.findViewById(R.id.field_input)).getText()));
+        assertEquals(activity.getString(R.string.print_catalog_filled), String.valueOf(product.getHelperText()));
+        // Блюдо без срока в справочнике ничего не подставляет.
+        activity.applyProduct("Суп гороховый", product);
+        assertEquals("0…+4 °C", String.valueOf(((android.widget.EditText) storage.findViewById(R.id.field_input)).getText()));
+        app.catalog().clear();
     }
 
     @Test

@@ -32,14 +32,19 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import ru.wesetup.helper.bt.PrinterInfo;
 import ru.wesetup.helper.bt.PrinterManager;
+import ru.wesetup.helper.catalog.Catalog;
 import ru.wesetup.helper.print.LabelRenderer;
 import ru.wesetup.helper.print.MonoBitmap;
 import ru.wesetup.helper.print.Tspl;
@@ -52,11 +57,16 @@ import ru.wesetup.helper.template.TemplateValues;
  * Печать по шаблону: выбрать шаблон, заполнить поля, посмотреть этикетку
  * (ровно те точки, что уйдут на принтер) и напечатать нужное число копий.
  * «История» — прошлые печати: повторить одним нажатием или поправить.
+ *
+ * <p>Поля с {@code source} подсказывают из справочников сайта (продукты,
+ * блюда, поставщики, сотрудники); продукт из справочника подставляет срок
+ * годности и условия хранения в поля с {@code fillFrom}.
  */
 public final class PrintActivity extends BaseActivity {
 
     static final String EXTRA_ADDRESS = "address";
     static final String EXTRA_TEMPLATE = "template";
+    private static final Locale RU = Locale.forLanguageTag("ru");
 
     private HelperApp app;
     private PrinterInfo printer;
@@ -79,6 +89,9 @@ public final class PrintActivity extends BaseActivity {
     private final Map<String, EditText> textInputs = new HashMap<>();
     private final Map<String, Long> times = new HashMap<>();
     private final Map<String, Integer> durations = new HashMap<>();
+    private final Map<String, MaterialAutoCompleteTextView> durationInputs = new HashMap<>();
+    /** Справочники сайта — копия на телефоне; без неё подсказки только из шаблона. */
+    private Catalog catalog = Catalog.EMPTY;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable refresh = this::updatePreview;
 
@@ -94,6 +107,7 @@ public final class PrintActivity extends BaseActivity {
             return;
         }
         setContentView(R.layout.activity_print);
+        catalog = app.catalog().catalog();
         Ui.applySystemBarInsets(this, findViewById(R.id.print_root));
         openedAt = System.currentTimeMillis();
 
@@ -216,6 +230,7 @@ public final class PrintActivity extends BaseActivity {
         textInputs.clear();
         times.clear();
         durations.clear();
+        durationInputs.clear();
         SharedPreferences remembered = getSharedPreferences(PrintJobs.VALUES_PREFS, MODE_PRIVATE);
         TemplateValues base = PrintJobs.baseValues(app, printer, openedAt);
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -244,15 +259,33 @@ public final class PrintActivity extends BaseActivity {
         updatePreview();
     }
 
+    /** Варианты поля: свои из шаблона, затем справочник сайта — без повторов. */
+    private List<String> suggestions(TemplateField field) {
+        List<String> out = new ArrayList<>(field.options);
+        if (field.source.isEmpty()) return out;
+        Set<String> seen = new HashSet<>();
+        for (String option : field.options) seen.add(option.toLowerCase(RU));
+        for (String name : catalog.names(field.source)) {
+            if (seen.add(name.toLowerCase(RU))) out.add(name);
+        }
+        return out;
+    }
+
     private void addTextField(LayoutInflater inflater, TemplateField field, String value) {
-        boolean withOptions = !field.options.isEmpty();
+        List<String> suggestions = suggestions(field);
+        boolean withOptions = !suggestions.isEmpty();
         TextInputLayout layout = (TextInputLayout) inflater.inflate(
                 withOptions ? R.layout.field_text_options : R.layout.field_text, fieldsView, false);
         EditText input = layout.findViewById(R.id.field_input);
         layout.setHint(field.label);
         if (withOptions) {
             // Варианты — подсказки: можно выбрать из списка или вписать своё.
-            ((MaterialAutoCompleteTextView) input).setSimpleItems(field.options.toArray(new String[0]));
+            MaterialAutoCompleteTextView dropdown = (MaterialAutoCompleteTextView) input;
+            dropdown.setSimpleItems(suggestions.toArray(new String[0]));
+            if (field.source.contains(Catalog.PRODUCTS)) {
+                dropdown.setOnItemClickListener((parent, view, position, id) ->
+                        applyProduct(String.valueOf(parent.getItemAtPosition(position)), layout));
+            }
         } else {
             layout.setCounterMaxLength(field.maxLength);
         }
@@ -276,6 +309,8 @@ public final class PrintActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 layout.setError(null);
+                // «Из справочника» — пока продукт тот, что выбрали из списка.
+                layout.setHelperText(null);
             }
 
             @Override
@@ -313,7 +348,44 @@ public final class PrintActivity extends BaseActivity {
             durations.put(field.key, Durations.parseMinutes(options.get(position)));
             updatePreview();
         });
+        durationInputs.put(field.key, input);
         fieldsView.addView(layout);
+    }
+
+    /**
+     * Продукт выбран из справочника сайта: срок годности, условия хранения и
+     * поставщик — оттуда же (поля с {@code fillFrom}). Поправить можно руками.
+     */
+    void applyProduct(String name, TextInputLayout productLayout) {
+        Catalog.Product product = catalog.product(name);
+        if (product == null || template == null) return;
+        boolean filled = false;
+        for (TemplateField field : template.fields) {
+            if ("shelfLife".equals(field.fillFrom) && product.shelfLifeHours != null) {
+                int minutes = product.shelfLifeHours * 60;
+                durations.put(field.key, minutes);
+                MaterialAutoCompleteTextView input = durationInputs.get(field.key);
+                if (input != null) input.setText(Durations.format(minutes), false);
+                filled = true;
+            } else if ("storage".equals(field.fillFrom) && product.storage != null) {
+                filled |= setTextValue(field.key, product.storage);
+            } else if ("supplier".equals(field.fillFrom) && product.supplier != null) {
+                filled |= setTextValue(field.key, product.supplier);
+            }
+        }
+        if (filled) productLayout.setHelperText(getString(R.string.print_catalog_filled));
+        updatePreview();
+    }
+
+    private boolean setTextValue(String key, String value) {
+        EditText input = textInputs.get(key);
+        if (input == null) return false;
+        if (input instanceof MaterialAutoCompleteTextView) {
+            ((MaterialAutoCompleteTextView) input).setText(value, false);
+        } else {
+            input.setText(value);
+        }
+        return true;
     }
 
     private void pickDateTime(String key, boolean dateOnly, TextInputEditText input) {

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { forbidden } from "next/navigation";
-import { Download, Printer, Tag } from "lucide-react";
+import { ArrowRight, Download, Printer, Tag, Tags } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
@@ -7,6 +8,8 @@ import { isAgentOnline } from "@/lib/print-agent-auth";
 import { brandQrSvg } from "@/lib/brand-qr";
 import { compareAppVersions, setupHelperDownloadUrl } from "@/lib/setup-helper";
 import { readSetupHelperRelease } from "@/lib/setup-helper-release";
+import { LABEL_EXPIRED_WINDOW_MS, LABEL_SOON_MS } from "@/lib/label-prints";
+import { orgDayStartInstant } from "@/lib/timezone";
 import { PageHeader } from "@/components/ui/page-header";
 import { PrintAgentCard } from "@/components/dashboard/print-agent-card";
 import { PrintAgentSettingsClient } from "./print-agent-settings-client";
@@ -30,9 +33,10 @@ export default async function PrintAgentSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
-  const [t, labels, locale] = await Promise.all([
+  const [t, labels, labelLog, locale] = await Promise.all([
     getTranslations("printAgent.settings.page"),
     getTranslations("printAgent.labelPrinters"),
+    getTranslations("printAgent.labelLog"),
     getLocale(),
   ]);
 
@@ -75,6 +79,21 @@ export default async function PrintAgentSettingsPage() {
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     // Версия APK на сайте: её же видит приложение и обновляется само.
     readSetupHelperRelease(),
+  ]);
+  // Сводка журнала маркировки: этикетки из приложения (`label_printed`).
+  const now = new Date();
+  const [printedToday, expiringSoon, expiredRecently] = await Promise.all([
+    db.labelPrint.aggregate({
+      where: { organizationId, printedAt: { gte: orgDayStartInstant(organization?.timezone || "Europe/Moscow", now) } },
+      _count: { _all: true },
+      _sum: { copies: true },
+    }),
+    db.labelPrint.count({
+      where: { organizationId, until: { gt: now, lte: new Date(now.getTime() + LABEL_SOON_MS) } },
+    }),
+    db.labelPrint.count({
+      where: { organizationId, until: { gt: new Date(now.getTime() - LABEL_EXPIRED_WINDOW_MS), lte: now } },
+    }),
   ]);
   const helperUserIds = [
     ...new Set([
@@ -229,6 +248,55 @@ export default async function PrintAgentSettingsPage() {
           outdated: Boolean(release && device.appVersion && compareAppVersions(device.appVersion, release.versionName) < 0),
         }))}
       />
+
+      {/* Журнал маркировки: каждая этикетка из приложения — что, когда
+          изготовлено и до какого времени годно. */}
+      <section
+        id="label-log"
+        className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
+        data-label-log-summary
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+            <Tags className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{labelLog("summary.heading")}</h2>
+            <p className="mt-1 text-[14px] leading-[1.55] text-[#3c4053]">{labelLog("summary.description")}</p>
+            <dl className="mt-4 grid gap-2.5 sm:grid-cols-3">
+              <div className="rounded-2xl bg-[#f5f6ff] px-4 py-3">
+                <dt className="text-[12.5px] text-[#6f7282]">{labelLog("summary.today")}</dt>
+                <dd className="mt-0.5 text-[16px] font-semibold text-[#0b1024]">
+                  {labelLog("summary.todayValue", {
+                    labels: labelLog("labels", { count: printedToday._count._all }),
+                    copies: labelLog("copies", { count: printedToday._sum.copies ?? 0 }),
+                  })}
+                </dd>
+              </div>
+              <div className={`rounded-2xl px-4 py-3 ${expiringSoon > 0 ? "bg-[#fff8eb]" : "bg-[#f5f6ff]"}`}>
+                <dt className="text-[12.5px] text-[#6f7282]">{labelLog("summary.soon")}</dt>
+                <dd className={`mt-0.5 text-[16px] font-semibold ${expiringSoon > 0 ? "text-[#7a4a00]" : "text-[#0b1024]"}`}>
+                  {labelLog("labels", { count: expiringSoon })}
+                </dd>
+              </div>
+              <div className={`rounded-2xl px-4 py-3 ${expiredRecently > 0 ? "bg-[#fff4f2]" : "bg-[#f5f6ff]"}`}>
+                <dt className="text-[12.5px] text-[#6f7282]">{labelLog("summary.expired")}</dt>
+                <dd className={`mt-0.5 text-[16px] font-semibold ${expiredRecently > 0 ? "text-[#a13a32]" : "text-[#0b1024]"}`}>
+                  {labelLog("labels", { count: expiredRecently })}
+                </dd>
+              </div>
+            </dl>
+            <Link
+              href="/settings/print-agent/labels"
+              className="mt-4 inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            >
+              {labelLog("summary.open")}
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+            <p className="mt-3 text-[13px] leading-snug text-[#6f7282]">{labelLog("summary.catalog")}</p>
+          </div>
+        </div>
+      </section>
     </div>
     </DomainMessagesBoundary>
   );

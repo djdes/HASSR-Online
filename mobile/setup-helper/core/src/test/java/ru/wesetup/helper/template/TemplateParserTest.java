@@ -182,6 +182,56 @@ public class TemplateParserTest {
         expectError("{\"id\":\"x\",\"title\":\"x\",\"size\":{\"width\":58,\"height\":40},\"fields\":[{\"key\":\"a\",\"label\":\"A\",\"type\":\"duration\",\"default\":\"2h\",\"options\":[\"Обед\"]}],\"elements\":[]}", "Срок «Обед»");
     }
 
+    @Test
+    public void testMarkingTemplatesReportToTheSiteAndTakeHintsFromCatalog() throws IOException {
+        List<LabelTemplate> templates = bundled();
+        // Пробная этикетка и произвольный текст — не маркировка: в журнал не идут.
+        assertEquals(null, byId(templates, "test-58x40").record);
+        assertEquals(null, byId(templates, "free-text").record);
+        for (LabelTemplate t : templates) {
+            if (t.record == null) continue;
+            TemplateField item = t.field(t.record.item);
+            assertEquals(t.id, TemplateField.Type.TEXT, item.type);
+            assertTrue(t.id + ": у «что» нет подсказок из справочника", !item.source.isEmpty());
+            assertEquals(t.id, "staff", t.field(t.record.by).source);
+        }
+        RecordSpec semi = byId(templates, "semi-finished").record;
+        assertEquals("madeAt", semi.start);
+        assertEquals("madeAt", semi.untilKey);
+        assertEquals("shelfLife", semi.untilPlus);
+        assertEquals("Годен до", semi.untilLabel);
+        assertEquals("shelfLife", byId(templates, "semi-finished").field("shelfLife").fillFrom);
+        assertEquals("storage", byId(templates, "semi-finished").field("storage").fillFrom);
+        RecordSpec incoming = byId(templates, "incoming").record;
+        assertEquals("expiresAt", incoming.untilKey);
+        assertEquals("", incoming.untilPlus);
+        assertEquals("supplier", byId(templates, "incoming").field("supplier").fillFrom);
+        assertEquals("suppliers", byId(templates, "incoming").field("supplier").source);
+        assertEquals("", byId(templates, "reject").record.untilKey);
+        assertEquals("dishes", byId(templates, "daily-sample").field("dish").source);
+    }
+
+    @Test
+    public void testCatalogHintsAndRecordAreValidated() {
+        String head = "{\"id\":\"x\",\"title\":\"x\",\"size\":{\"width\":58,\"height\":40},\"elements\":[],\"fields\":[";
+        String fields = "{\"key\":\"product\",\"label\":\"Продукт\",\"type\":\"text\"},"
+                + "{\"key\":\"madeAt\",\"label\":\"Изготовлено\",\"type\":\"datetime\"},"
+                + "{\"key\":\"shelf\",\"label\":\"Срок\",\"type\":\"duration\",\"default\":\"24h\"}";
+        expectError(head + "{\"key\":\"a\",\"label\":\"A\",\"type\":\"text\",\"source\":\"recipes\"}]}", "Справочник «recipes»");
+        expectError(head + "{\"key\":\"a\",\"label\":\"A\",\"type\":\"duration\",\"default\":\"2h\",\"source\":\"products\"}]}", "только у текста");
+        expectError(head + "{\"key\":\"a\",\"label\":\"A\",\"type\":\"text\",\"fillFrom\":\"shelfLife\"}]}", "не подходит");
+        expectError(head + "{\"key\":\"a\",\"label\":\"A\",\"type\":\"duration\",\"default\":\"2h\",\"fillFrom\":\"storage\"}]}", "не подходит");
+        expectError(head + fields + "],\"record\":{\"item\":\"madeAt\"}}", "record.item");
+        expectError(head + fields + "],\"record\":{\"item\":\"product\",\"until\":\"madeAt+product\",\"untilLabel\":\"Годен до\"}}", "record.until");
+        expectError(head + fields + "],\"record\":{\"item\":\"product\",\"until\":\"madeAt+shelf\"}}", "untilLabel");
+        expectError(head + fields + "],\"record\":{\"item\":\"product\",\"by\":\"shelf\"}}", "record.by");
+        LabelTemplate ok = TemplateParser.parse(head + fields
+                + "],\"record\":{\"item\":\"product\",\"start\":\"madeAt\",\"until\":\"madeAt + shelf\",\"untilLabel\":\"Годен до\"}}");
+        assertEquals("madeAt", ok.record.untilKey);
+        assertEquals("shelf", ok.record.untilPlus);
+        assertEquals("", ok.record.by);
+    }
+
     private static void expectError(String json, String fragment) {
         try {
             TemplateParser.parse(json);

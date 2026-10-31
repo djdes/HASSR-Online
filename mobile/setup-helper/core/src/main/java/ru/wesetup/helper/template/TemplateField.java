@@ -27,6 +27,16 @@ public final class TemplateField {
     public final List<String> options;
     /** Для даты: выбирается только день («Годен до» по документам), время не печатается. */
     public final boolean dateOnly;
+    /**
+     * Подсказки из справочников сайта для текста: {@code products}, {@code dishes},
+     * {@code suppliers}, {@code staff} или несколько через запятую. Пусто — нет.
+     */
+    public final String source;
+    /**
+     * Что подставить из выбранного продукта справочника: срок — {@code shelfLife},
+     * текст — {@code storage} (условия хранения) или {@code supplier}. Пусто — ничего.
+     */
+    public final String fillFrom;
 
     public TemplateField(String key, String label, Type type, String defaultValue, boolean required,
                          int maxLength, boolean multiline, String hint, List<String> options) {
@@ -35,6 +45,12 @@ public final class TemplateField {
 
     public TemplateField(String key, String label, Type type, String defaultValue, boolean required,
                          int maxLength, boolean multiline, String hint, List<String> options, boolean dateOnly) {
+        this(key, label, type, defaultValue, required, maxLength, multiline, hint, options, dateOnly, "", "");
+    }
+
+    public TemplateField(String key, String label, Type type, String defaultValue, boolean required,
+                         int maxLength, boolean multiline, String hint, List<String> options, boolean dateOnly,
+                         String source, String fillFrom) {
         this.key = key;
         this.label = label;
         this.type = type;
@@ -45,5 +61,7 @@ public final class TemplateField {
         this.hint = hint == null ? "" : hint;
         this.options = options == null ? Collections.<String>emptyList() : Collections.unmodifiableList(options);
         this.dateOnly = dateOnly;
+        this.source = source == null ? "" : source;
+        this.fillFrom = fillFrom == null ? "" : fillFrom;
     }
 }

@@ -15,13 +15,16 @@ import ru.wesetup.helper.print.LabelRenderer;
 import ru.wesetup.helper.print.LabelSettings;
 import ru.wesetup.helper.print.MonoBitmap;
 import ru.wesetup.helper.print.Tspl;
+import ru.wesetup.helper.template.LabelRecord;
 import ru.wesetup.helper.template.LabelTemplate;
 import ru.wesetup.helper.template.LayoutEngine;
 import ru.wesetup.helper.template.TemplateValues;
 
 /**
  * Печать по шаблону: значения → разметка → картинка → TSPL → принтер, и
- * отметка для сайта о печати. Сеть для печати не нужна.
+ * отметка для сайта о печати: у шаблонов маркировки — этикетка целиком для
+ * журнала маркировки, у остальных — только «принтер печатал». Сеть для
+ * печати не нужна.
  */
 final class PrintJobs {
 
@@ -74,7 +77,10 @@ final class PrintJobs {
                             saved.lastPrintAt = now;
                             app.printerStore().save(saved);
                         }
-                        app.sync().enqueue(HelperEvents.printerPrinted(printer, template.id, copies, now));
+                        LabelRecord record = LabelRecord.of(template, values);
+                        app.sync().enqueue(record != null
+                                ? HelperEvents.labelPrinted(printer, template, record, copies, now)
+                                : HelperEvents.printerPrinted(printer, template.id, copies, now));
                         callback.onSuccess(null);
                     }
 

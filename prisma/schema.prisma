@@ -565,6 +565,7 @@ model Organization {
   printJobs                      PrintJob[]
   setupHelperDevices             SetupHelperDevice[]
   labelPrinters                  LabelPrinter[]
+  labelPrints                    LabelPrint[]
   journalGuideTemplates          JournalGuideTemplate[]
   journalPipelineTemplates       JournalPipelineTemplate[]
   partnerClients                 PartnerClient[]                @relation("PartnerClients")
@@ -2980,6 +2981,7 @@ model SetupHelperDevice {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   printers       LabelPrinter[]
+  labelPrints    LabelPrint[]
 
   @@index([organizationId])
 }
@@ -3016,6 +3018,54 @@ model LabelPrinter {
   updatedAt      DateTime           @updatedAt
 
   @@unique([organizationId, address])
+  @@index([deviceId])
+}
+
+/// Этикетка маркировки, напечатанная в «Сетап помощнике» (2026-10-31): что
+/// промаркировано, когда изготовлено и до какого времени годно. Телефон
+/// присылает событие `label_printed`, когда появится сеть, — поэтому ключ
+/// идемпотентности — id события: повтор пакета не задваивает строку.
+model LabelPrint {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// UUID события с телефона.
+  eventId        String
+  deviceId       String?
+  device         SetupHelperDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  /// Кто вошёл в приложении (на этикетке может стоять другой «Изготовил»).
+  userId         String?
+  printerAddress String
+  /// Код шаблона: "semi-finished", "dish", "defrost"…
+  template       String
+  /// Название шаблона, как в приложении: «Полуфабрикат».
+  templateTitle  String
+  copies         Int
+  /// Продукт или блюдо с этикетки.
+  item           String
+  /// Изготовлено / приготовлено / начало разморозки / вскрыто.
+  startAt        DateTime?
+  /// Подпись даты начала с этикетки: «Изготовлено», «Вскрыто»…
+  startLabel     String?
+  /// «Годен до» — та же дата, что напечатана на этикетке.
+  until          DateTime?
+  /// Подпись срока с этикетки: «Годен до», «Реализовать до»…
+  untilLabel     String?
+  /// На этикетке только даты, без времени (заморозка, приёмка сырья).
+  dateOnly       Boolean            @default(false)
+  /// «Изготовил» / «Ответственный» с этикетки.
+  employee       String?
+  /// Подпись к нему: «Изготовил», «Повар», «Отобрал»…
+  employeeLabel  String?
+  /// Остальные поля этикетки: [{ label, value }] — условия хранения, масса…
+  fields         Json?
+  /// Время печати по часам телефона.
+  printedAt      DateTime
+  createdAt      DateTime           @default(now())
+
+  @@unique([organizationId, eventId])
+  @@index([organizationId, printedAt])
+  @@index([organizationId, until])
   @@index([deviceId])
 }
 

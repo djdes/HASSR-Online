@@ -1,0 +1,208 @@
+{
+ "appVersion": "1.4.0",
+ "events": [
+  {
+   "id": "proof-connect-0001",
+   "type": "printer_connected",
+   "at": "2026-10-30T00:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56",
+    "name": "IP-802BT",
+    "model": "AIYIN IP-802BT",
+    "transport": "classic"
+   }
+  },
+  {
+   "id": "proof-label-0001",
+   "type": "label_printed",
+   "at": "2026-10-31T05:48:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "semi-finished",
+   "title": "Полуфабрикат",
+   "copies": 2,
+   "label": {
+    "item": "Котлеты куриные (п/ф)",
+    "startAt": "2026-10-31T05:42:19.000Z",
+    "startLabel": "Изготовлено",
+    "until": "2026-11-01T05:42:19.000Z",
+    "untilLabel": "Годен до",
+    "dateOnly": false,
+    "by": "Белова Елена Андреевна",
+    "fields": [
+     {
+      "label": "Условия хранения",
+      "value": "+2…+6 °C"
+     },
+     {
+      "label": "Количество или масса",
+      "value": "40 шт."
+     }
+    ],
+    "byLabel": "Изготовил"
+   }
+  },
+  {
+   "id": "proof-label-0002",
+   "type": "label_printed",
+   "at": "2026-10-31T05:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "dish",
+   "title": "Готовое блюдо",
+   "copies": 1,
+   "label": {
+    "item": "Суп гороховый с гренками",
+    "startAt": "2026-10-31T05:12:19.000Z",
+    "startLabel": "Приготовлено",
+    "until": "2026-10-31T07:12:19.000Z",
+    "untilLabel": "Реализовать до",
+    "dateOnly": false,
+    "by": "Грачев Виктор Ильич",
+    "fields": [
+     {
+      "label": "Подача и хранение",
+      "value": "Горячее: не ниже +65 °C"
+     }
+    ],
+    "byLabel": "Повар"
+   }
+  },
+  {
+   "id": "proof-label-0003",
+   "type": "label_printed",
+   "at": "2026-10-31T04:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "opened",
+   "title": "Вскрытая упаковка",
+   "copies": 1,
+   "label": {
+    "item": "Сметана 20%",
+    "startAt": "2026-10-30T04:18:19.000Z",
+    "startLabel": "Вскрыто",
+    "until": "2026-10-31T04:18:19.000Z",
+    "untilLabel": "Использовать до",
+    "dateOnly": false,
+    "by": "Волкова Анна Дмитриевна",
+    "fields": [],
+    "byLabel": "Ответственный"
+   }
+  },
+  {
+   "id": "proof-label-0004",
+   "type": "label_printed",
+   "at": "2026-10-31T03:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "freeze",
+   "title": "Заморозка",
+   "copies": 3,
+   "label": {
+    "item": "Фарш говяжий",
+    "startAt": "2026-10-31T03:18:19.000Z",
+    "startLabel": "Заморожено",
+    "until": "2027-01-29T06:18:19.000Z",
+    "untilLabel": "Хранить до",
+    "dateOnly": true,
+    "by": "Крылов Денис Сергеевич",
+    "fields": [
+     {
+      "label": "Условия хранения",
+      "value": "−18 °C и ниже"
+     },
+     {
+      "label": "Количество или масса",
+      "value": "5 кг"
+     }
+    ],
+    "byLabel": "Ответственный"
+   }
+  },
+  {
+   "id": "proof-label-0005",
+   "type": "label_printed",
+   "at": "2026-10-31T02:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "daily-sample",
+   "title": "Суточная проба",
+   "copies": 1,
+   "label": {
+    "item": "Каша молочная овсяная с маслом",
+    "startAt": "2026-10-31T02:18:19.000Z",
+    "startLabel": "Отобрано",
+    "until": "2026-11-02T02:18:19.000Z",
+    "untilLabel": "Хранить до",
+    "dateOnly": false,
+    "by": "Белова Елена Андреевна",
+    "fields": [
+     {
+      "label": "Приём пищи",
+      "value": "Завтрак"
+     }
+    ],
+    "byLabel": "Отобрал"
+   }
+  },
+  {
+   "id": "proof-label-0006",
+   "type": "label_printed",
+   "at": "2026-10-31T01:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "reject",
+   "title": "Брак — не использовать",
+   "copies": 1,
+   "label": {
+    "item": "Молоко 3,2%",
+    "startAt": "2026-10-31T01:18:19.000Z",
+    "startLabel": "Отмечено",
+    "until": null,
+    "untilLabel": null,
+    "dateOnly": false,
+    "by": "Волкова Анна Дмитриевна",
+    "fields": [
+     {
+      "label": "Причина",
+      "value": "Нарушены условия хранения"
+     }
+    ],
+    "byLabel": "Отметил"
+   }
+  },
+  {
+   "id": "proof-label-0007",
+   "type": "label_printed",
+   "at": "2026-10-29T04:18:19.000Z",
+   "printer": {
+    "address": "DC:0D:30:12:34:56"
+   },
+   "template": "defrost",
+   "title": "Разморозка",
+   "copies": 1,
+   "label": {
+    "item": "Филе куриное охлаждённое",
+    "startAt": "2026-10-29T04:18:19.000Z",
+    "startLabel": "Начало разморозки",
+    "until": "2026-10-30T04:18:19.000Z",
+    "untilLabel": "Использовать до",
+    "dateOnly": false,
+    "by": "Грачев Виктор Ильич",
+    "fields": [
+     {
+      "label": "Способ",
+      "value": "В холодильнике +2…+4 °C"
+     }
+    ],
+    "byLabel": "Ответственный"
+   }
+  }
+ ]
+}

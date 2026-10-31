@@ -1,0 +1,25 @@
+core (:core:test): tests=55 failures=0
+  CatalogTest: 4
+  LabelSettingsTest: 2
+  MonoBitmapTest: 7
+  TsplTest: 7
+  LabelPreviewTest: 1
+  LabelRecordTest: 4
+  LayoutEngineTest: 12
+  TemplateParserTest: 6
+  TemplateValuesTest: 6
+  UpdateInfoTest: 2
+  UpdatePolicyTest: 4
+app (:app:testSiteDebugUnitTest): tests=48 failures=0
+  PrintHistoryTest: 4
+  ScreensTest: 12
+  StoreScreenshotsTest: 3
+  SessionStoreTest: 1
+  PrinterNamesTest: 6
+  ScanThrottleTest: 2
+  HelperEventsTest: 2
+  OutboxTest: 4
+  UpdateBannerTest: 2
+  UpdaterTest: 12
+play (PlayFlavorTest): tests=2 failures=0
+  PlayFlavorTest: 2

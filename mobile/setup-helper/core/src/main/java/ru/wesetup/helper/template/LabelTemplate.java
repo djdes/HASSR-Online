@@ -23,9 +23,19 @@ public final class LabelTemplate {
     public final float heightMm;
     public final List<TemplateField> fields;
     public final List<TemplateElement> elements;
+    /**
+     * Что сообщить сайту о напечатанной этикетке (журнал маркировки), или null —
+     * у пробной этикетки и произвольного текста записи нет.
+     */
+    public final RecordSpec record;
 
     public LabelTemplate(String id, String title, String description, float widthMm, float heightMm,
                          List<TemplateField> fields, List<TemplateElement> elements) {
+        this(id, title, description, widthMm, heightMm, fields, elements, null);
+    }
+
+    public LabelTemplate(String id, String title, String description, float widthMm, float heightMm,
+                         List<TemplateField> fields, List<TemplateElement> elements, RecordSpec record) {
         this.id = id;
         this.title = title;
         this.description = description == null ? "" : description;
@@ -33,6 +43,7 @@ public final class LabelTemplate {
         this.heightMm = heightMm;
         this.fields = Collections.unmodifiableList(fields);
         this.elements = Collections.unmodifiableList(elements);
+        this.record = record;
     }
 
     public TemplateField field(String key) {

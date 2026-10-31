@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
 
 import { PrintJournalButton } from "@/components/journals/print-journal-button";
 import { PrintBrandFrame } from "@/components/print/print-brand-frame";
@@ -19,8 +18,6 @@ import { loadPrintBrand } from "@/lib/print-brand.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 export const dynamic = "force-dynamic";
-
-const BACK = "/settings/organization#badge";
 
 /**
  * Табличка для зала (2026-10-31, «знак чистой кухни»): лист A4 в фирменной
@@ -74,14 +71,8 @@ export default async function BadgeSignPage({
 
   return (
     <div className="space-y-6" data-badge-sign-root>
-      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <Link
-          href={BACK}
-          className="inline-flex h-10 items-center gap-2 rounded-2xl px-3 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          {t("signBack")}
-        </Link>
+      {/* «‹ Реквизиты» даёт общий PageNav — своей ссылки «назад» здесь нет. */}
+      <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={here(!mono)}

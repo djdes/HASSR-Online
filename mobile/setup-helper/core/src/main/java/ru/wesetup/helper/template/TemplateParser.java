@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import ru.wesetup.helper.catalog.Catalog;
+
 /**
  * Разбор шаблона из JSON (см. {@code assets/templates/*.json}).
  *
@@ -40,8 +42,12 @@ public final class TemplateParser {
             JSONArray rawElements = root.getJSONArray("elements");
             for (int i = 0; i < rawElements.length(); i++) elements.add(parseElement(rawElements.getJSONObject(i)));
 
-            return new LabelTemplate(id, requireString(root, "title"), root.optString("description", ""),
-                    width, height, fields, elements);
+            LabelTemplate draft = new LabelTemplate(id, requireString(root, "title"),
+                    root.optString("description", ""), width, height, fields, elements);
+            JSONObject rawRecord = root.optJSONObject("record");
+            if (rawRecord == null) return draft;
+            return new LabelTemplate(draft.id, draft.title, draft.description, width, height, fields, elements,
+                    parseRecord(draft, rawRecord));
         } catch (JSONException e) {
             throw new IllegalArgumentException("Шаблон не разобран: " + e.getMessage(), e);
         }
@@ -96,9 +102,54 @@ public final class TemplateParser {
         if (dateOnly && type != TemplateField.Type.DATETIME) {
             throw new IllegalArgumentException("«dateOnly» — только у даты, а «" + key + "» не дата");
         }
+        String source = raw.optString("source", "").trim();
+        if (!source.isEmpty() && (type != TemplateField.Type.TEXT || !Catalog.isKnownSource(source))) {
+            throw new IllegalArgumentException("Справочник «" + source + "» у поля «" + key
+                    + "»: бывает только у текста — products, dishes, suppliers, staff");
+        }
+        String fillFrom = raw.optString("fillFrom", "").trim();
+        if (!fillFrom.isEmpty()) {
+            boolean fits = type == TemplateField.Type.DURATION ? "shelfLife".equals(fillFrom)
+                    : type == TemplateField.Type.TEXT && ("storage".equals(fillFrom) || "supplier".equals(fillFrom));
+            if (!fits) {
+                throw new IllegalArgumentException("«fillFrom»: «" + fillFrom + "» не подходит к полю «" + key + "»");
+            }
+        }
         return new TemplateField(key, requireString(raw, "label"), type, defaultValue,
                 raw.optBoolean("required", false), maxLength,
-                raw.optBoolean("multiline", false), raw.optString("hint", ""), options, dateOnly);
+                raw.optBoolean("multiline", false), raw.optString("hint", ""), options, dateOnly, source, fillFrom);
+    }
+
+    /** Запись для журнала маркировки: ключи должны быть полями нужного типа. */
+    private static RecordSpec parseRecord(LabelTemplate template, JSONObject raw) {
+        String item = raw.optString("item", "").trim();
+        requireField(template, item, TemplateField.Type.TEXT, "item");
+        String start = raw.optString("start", "").trim();
+        if (!start.isEmpty()) requireField(template, start, TemplateField.Type.DATETIME, "start");
+        String until = raw.optString("until", "").trim();
+        String untilKey = "";
+        String untilPlus = "";
+        if (!until.isEmpty()) {
+            int plus = until.indexOf('+');
+            untilKey = (plus < 0 ? until : until.substring(0, plus)).trim();
+            untilPlus = plus < 0 ? "" : until.substring(plus + 1).trim();
+            requireField(template, untilKey, TemplateField.Type.DATETIME, "until");
+            if (!untilPlus.isEmpty()) requireField(template, untilPlus, TemplateField.Type.DURATION, "until");
+        }
+        String untilLabel = raw.optString("untilLabel", "").trim();
+        if (!until.isEmpty() && untilLabel.isEmpty()) {
+            throw new IllegalArgumentException("У срока в «record» нужна подпись untilLabel");
+        }
+        String by = raw.optString("by", "").trim();
+        if (!by.isEmpty()) requireField(template, by, TemplateField.Type.TEXT, "by");
+        return new RecordSpec(item, start, untilKey, untilPlus, untilLabel, by);
+    }
+
+    private static void requireField(LabelTemplate template, String key, TemplateField.Type type, String role) {
+        TemplateField field = template.field(key);
+        if (field == null || field.type != type) {
+            throw new IllegalArgumentException("«record." + role + "»: нет поля «" + key + "» нужного типа");
+        }
     }
 
     private static TemplateElement parseElement(JSONObject raw) throws JSONException {

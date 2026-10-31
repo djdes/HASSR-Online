@@ -4,11 +4,12 @@
   "description": "Название, когда изготовлено, до какого времени годно и кто отвечает.",
   "size": { "width": 58, "height": 40 },
   "fields": [
-    { "key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Салат Цезарь»" },
+    { "key": "product", "label": "Продукт", "type": "text", "required": true, "maxLength": 60, "hint": "Например, «Салат Цезарь»", "source": "products,dishes" },
     { "key": "madeAt", "label": "Изготовлено", "type": "datetime", "default": "now" },
-    { "key": "shelfLife", "label": "Срок годности", "type": "duration", "default": "24h", "options": ["2h", "6h", "12h", "24h", "36h", "48h", "72h", "5d", "7d"] },
-    { "key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40 }
+    { "key": "shelfLife", "label": "Срок годности", "type": "duration", "default": "24h", "options": ["2h", "6h", "12h", "24h", "36h", "48h", "72h", "5d", "7d"], "fillFrom": "shelfLife" },
+    { "key": "employee", "label": "Ответственный", "type": "text", "default": "{{user.name}}", "maxLength": 40, "source": "staff" }
   ],
+  "record": {"item": "product", "start": "madeAt", "until": "madeAt+shelfLife", "untilLabel": "Годен до", "by": "employee"},
   "elements": [
     { "type": "frame", "inset": 0.8, "thickness": 0.35, "radius": 2 },
     { "type": "image", "src": "org.logo", "x": 2.4, "y": 1.9, "w": 26, "h": 5, "align": "left", "fallbackText": "{{org.name}}", "size": 2.6, "bold": true, "valign": "center", "maxLines": 1 },

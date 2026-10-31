@@ -3265,6 +3265,7 @@
       "settings_journals_paper": "Qog‘oz jurnallar",
       "settings_onboarding_advanced": "Kengaytirilgan sozlash",
       "settings_print_agent": "Onlayn printer",
+      "settings_print_agent_labels": "Markirovka jurnali",
       "settings_users_invite": "Xodimni taklif qilish",
       "task_fill": "Vazifani to‘ldirish",
       "tasks": "Vazifalar",
@@ -10361,7 +10362,6 @@
         "signPoint": "Nuqta",
         "signAllPoints": "Butun tashkilot",
         "signOpen": "Lavhani chop etish uchun ochish",
-        "signBack": "Rekvizitlarga",
         "signPrint": "Chop etish",
         "signBw": "Oq-qora",
         "signBadgeOff": "Belgi o‘chirilgan — QR hozircha hech narsani ochmaydi. Uni «Rekvizitlar»dagi belgi kartochkasida yoqing.",
@@ -13751,6 +13751,46 @@
         "opened": "Ochilgan qadoq",
         "freeText": "Erkin matn"
       }
+    },
+    "labelLog": {
+      "eyebrow": "Setup yordamchisi",
+      "title": "Markirovka jurnali",
+      "description": "«Setup yordamchisi» ilovasida chop etilgan yorliqlar: nima markirovka qilingan, qachon tayyorlangan va qachongacha yaroqli. Telefonda internet paydo bo‘lishi bilan keladi.",
+      "periods": {
+        "today": "Bugun",
+        "7d": "7 kun",
+        "30d": "30 kun"
+      },
+      "attention": "Faqat muddati tugayotgan va tugaganlar",
+      "status": {
+        "ok": "Yaroqli",
+        "soon": "Muddati tugayapti",
+        "expired": "Muddati tugagan",
+        "none": "Muddatsiz"
+      },
+      "copies": "{count, plural, other {# nusxa}}",
+      "by": "{label}: {name}",
+      "byDefault": "Tayyorlagan",
+      "printed": "Chop etilgan {when}",
+      "start": "{label} {when}",
+      "until": "{label} {when}",
+      "startDefault": "Tayyorlangan",
+      "untilDefault": "Yaroqlilik muddati",
+      "empty": "Bu davrda yorliqlar yo‘q. «Setup yordamchisi»dagi chop etish telefonda internet bo‘lganda shu yerda paydo bo‘ladi.",
+      "emptyAttention": "Muddati tugayotgan yoki tugagan yorliqlar yo‘q.",
+      "note": "Muddat — yorliqda chop etilgani bilan bir xil. «Muddati tugagan» mahsulot hali oshxonada degani emas: tekshiring va qolgan bo‘lsa, olib tashlang.",
+      "limit": "Davrdagi oxirgi {count} ta yorliq ko‘rsatilgan.",
+      "summary": {
+        "heading": "Markirovka",
+        "description": "Ilovadagi har bir yorliq markirovka jurnaliga tushadi: nima, qachon tayyorlangan, qachongacha yaroqli va kim tayyorlagan.",
+        "today": "Bugun chop etilgan",
+        "todayValue": "{labels} · {copies}",
+        "soon": "Bir kun ichida muddati tugaydi",
+        "expired": "7 kunda muddati tugagan",
+        "open": "Markirovka jurnalini ochish",
+        "catalog": "Mahsulotlar ma’lumotnomasidagi yaroqlilik muddatlari, brakeraj jurnalidagi taomlar va xodimlar ilovaga avtomatik qo‘yiladi."
+      },
+      "labels": "{count, plural, other {# ta yorliq}}"
     }
   },
   "taskFillSchema": {

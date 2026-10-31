@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.wesetup.helper.auth.SessionStore;
+import ru.wesetup.helper.catalog.CatalogStore;
 import ru.wesetup.helper.bt.PrinterManager;
 import ru.wesetup.helper.bt.PrinterStore;
 import ru.wesetup.helper.net.ApiClient;
@@ -41,6 +42,7 @@ public class HelperApp extends Application {
     private SyncManager sync;
     private ApiClient api;
     private BrandingStore branding;
+    private CatalogStore catalog;
     private TemplateRepository templates;
     private Updater updater;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -59,6 +61,7 @@ public class HelperApp extends Application {
         printers = new PrinterManager(this);
         api = new ApiClient();
         branding = new BrandingStore(this);
+        catalog = new CatalogStore(this);
         SharedPreferences outboxPrefs = getSharedPreferences("outbox", MODE_PRIVATE);
         outbox = new Outbox(new Outbox.Storage() {
             @Override
@@ -91,7 +94,7 @@ public class HelperApp extends Application {
                     @Override
                     public void onAvailable(Network network) {
                         sync.requestSync();
-                        refreshBranding();
+                        refreshSiteData();
                         if (BuildConfig.SELF_UPDATE) updater.checkAsync(false, null);
                     }
                 });
@@ -102,17 +105,18 @@ public class HelperApp extends Application {
     }
 
     /** Тесты на Robolectric отключают: в сеть они не ходят. */
-    protected boolean brandingRefreshEnabled() {
+    protected boolean siteDataRefreshEnabled() {
         return true;
     }
 
     /**
-     * Шапка этикеток (логотип, сайт): скачать, если на сайте новее. Без сети и
-     * без входа ничего не делает; ошибки молча пропускает - печать работает
-     * с последней копией.
+     * Данные сайта для этикеток: шапка (логотип, сайт) и справочники
+     * (продукты, блюда, поставщики, сотрудники) — скачать, если на сайте
+     * новее. Без сети и без входа ничего не делает; ошибки молча пропускает -
+     * печать работает с последней копией.
      */
-    public void refreshBranding() {
-        if (!brandingRefreshEnabled()) return;
+    public void refreshSiteData() {
+        if (!siteDataRefreshEnabled()) return;
         io.execute(() -> {
             SessionStore.Session session = sessions.load();
             if (session == null || !NetworkState.isOnline(this)) return;
@@ -121,6 +125,11 @@ public class HelperApp extends Application {
             } catch (java.io.IOException e) {
                 // 401 разберёт sync (выход из аккаунта), остальное - повторим при следующей связи.
                 Log.w(TAG, "Оформление этикеток не обновлено: " + e.getMessage());
+            }
+            try {
+                catalog.refresh(api, session.server, session.token);
+            } catch (java.io.IOException e) {
+                Log.w(TAG, "Справочник не обновлён: " + e.getMessage());
             }
         });
     }
@@ -234,6 +243,10 @@ public class HelperApp extends Application {
         return branding;
     }
 
+    public CatalogStore catalog() {
+        return catalog;
+    }
+
     public ApiClient api() {
         return api;
     }
@@ -255,6 +268,7 @@ public class HelperApp extends Application {
     public void wipeLocalData() {
         sessions.clear();
         branding.clear();
+        catalog.clear();
         outbox.clear();
         printerStore.clear();
         getSharedPreferences(PrintJobs.VALUES_PREFS, MODE_PRIVATE).edit().clear().apply();

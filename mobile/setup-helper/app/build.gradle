@@ -4,8 +4,8 @@ plugins {
 
 // Версия приложения. Номер сборки (versionCode) растёт с каждым выпуском:
 // по нему приложение на телефоне понимает, что на сайте есть новее.
-def appVersionName = '1.3.0'
-def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 6
+def appVersionName = '1.4.0'
+def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 7
 
 // Сертификат, которым подписаны все выпуски. Android ставит обновление
 // поверх, только если ключ тот же, — publishRelease проверяет это до выкладки.
