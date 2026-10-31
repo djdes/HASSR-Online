@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { buildingTargets } from "@/lib/active-building";
 import { withBuildingSuffix } from "@/lib/building-scope";
+import { rowsPointFromTargets } from "@/lib/document-point-rows";
+import { makeDocumentPointFilter } from "@/lib/worker-point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
   getDbRoleValuesWithLegacy,
@@ -385,8 +387,11 @@ export async function POST(request: Request) {
       jobPositionId: true,
       jobPosition: { select: { id: true, name: true } },
       weeklyDaysOff: true,
+      buildingIds: true,
     },
   });
+  // Точки сотрудников: задачи документа точки — только её людям.
+  const buildingIdsByUser = new Map(earlyUsersData.map((u) => [u.id, u.buildingIds]));
   const earlyTfLinks = await db.tasksFlowUserLink.findMany({
     where: { integrationId: integration.id, tasksflowUserId: { not: null } },
     select: { wesetupUserId: true, tasksflowUserId: true },
@@ -631,14 +636,14 @@ export async function POST(request: Request) {
   // Подтянем Area для per-area режима — лениво, чтобы не делать
   // лишний SELECT когда per-area не активирован ни для одного журнала.
   let areasForOrg:
-    | Array<{ id: string; name: string }>
+    | Array<{ id: string; name: string; buildingId: string | null }>
     | null = null;
   async function getAreas() {
     if (areasForOrg !== null) return areasForOrg;
     areasForOrg = await db.area.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true },
+      select: { id: true, name: true, buildingId: true },
     });
     return areasForOrg;
   }
@@ -818,6 +823,16 @@ export async function POST(request: Request) {
       const docBuildingName = doc.buildingId
         ? buildingNameById.get(doc.buildingId) ?? null
         : null;
+      // Документ точки — исполнители только её сотрудники (и без точек):
+      // раньше «Гигиена · Точка 2» уходила всей организации. Строки
+      // адаптеров уже отфильтрованы в реестре (tasksflow-adapters/point-rows).
+      const docPointId = rowsPointFromTargets(bulkTargets, doc.buildingId);
+      const atDocPoint = makeDocumentPointFilter({
+        targets: bulkTargets,
+        documentBuildingId: doc.buildingId,
+        buildingIdsByUser,
+      });
+      const docCandidateUserIds = new Set([...candidateUserIds].filter(atDocPoint));
       // Отчёт — на документ (точку): «Гигиена · Точка 2».
       const report: JournalReport = {
         ...templateReport,
@@ -910,7 +925,7 @@ export async function POST(request: Request) {
 
       function linkedFromCandidates(): string[] {
         const out: string[] = [];
-        for (const uid of candidateUserIds) {
+        for (const uid of docCandidateUserIds) {
           if (linkedUserIds.has(uid)) out.push(uid);
         }
         return out;
@@ -942,7 +957,10 @@ export async function POST(request: Request) {
           filteredRows.length > 0 &&
           filteredRows.every((r) => Boolean(r.responsibleUserId));
         if (!adapterDidPerRowDistribution) {
-          const areas = await getAreas();
+          // Цеха точки документа и общие (без точки).
+          const areas = (await getAreas()).filter(
+            (area) => !docPointId || area.buildingId === docPointId || area.buildingId === null,
+          );
           const linkedCandidates = linkedFromCandidates();
           if (areas.length > 0 && linkedCandidates.length > 0) {
             rowsForSelection = areas.map((area, i) => ({
@@ -959,8 +977,8 @@ export async function POST(request: Request) {
         // По одной задаче на каждого юзера в WorkShift с
         // status=scheduled на сегодня. Pure-shift семантика:
         // активные сотрудники в смене получают свою задачу.
-        const linkedScheduled = [...scheduledUserIds].filter((id) =>
-          linkedUserIds.has(id),
+        const linkedScheduled = [...scheduledUserIds].filter(
+          (id) => linkedUserIds.has(id) && atDocPoint(id),
         );
         if (linkedScheduled.length > 0) {
           rowsForSelection = linkedScheduled.map((uid) => ({
@@ -1005,7 +1023,7 @@ export async function POST(request: Request) {
         const fillerUserIds = Object.entries(slotMap)
           .filter(([slotId, uid]) => slotId !== "_verifier" && !!uid)
           .map(([, uid]) => uid as string)
-          .filter((uid) => linkedUserIds.has(uid));
+          .filter((uid) => linkedUserIds.has(uid) && atDocPoint(uid));
         if (fillerUserIds.length > 0) {
           rowsForSelection = fillerUserIds.map((uid, i) => ({
             rowKey: `filler:${uid}:${i}`,
@@ -1048,7 +1066,7 @@ export async function POST(request: Request) {
           return new Set<string>();
         }
         const linkedScope = new Set<string>();
-        for (const uid of candidateUserIds) {
+        for (const uid of docCandidateUserIds) {
           if (linkedUserIds.has(uid)) linkedScope.add(uid);
         }
         if (!allowedPositionIdsForTpl || allowedPositionIdsForTpl.size === 0) {
@@ -1072,7 +1090,7 @@ export async function POST(request: Request) {
         bonusAmountKopecks: tpl.bonusAmountKopecks,
         rows: rowsForSelection,
         takenRowKeys,
-        onDutyUserIds: candidateUserIds,
+        onDutyUserIds: docCandidateUserIds,
         linkedUserIds,
         // Пробрасываем флаг чтобы текст ошибки и fallback-логика были
         // адекватны: при respectShifts=false (default) onDuty == scope,
