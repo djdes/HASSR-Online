@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadReportTable } from "@/lib/report-export-data";
+import { getViewedPointId } from "@/lib/active-building";
 import { resolveExportLocale } from "@/i18n/export-locale";
 import { translatorFor } from "@/i18n/translator";
 import { parseReportDate } from "@/lib/report-export";
@@ -62,6 +63,8 @@ export async function GET(request: Request) {
       dateTo: to,
       areaId,
       locale,
+      // Точка из шапки: только её документы и цеха (2026-10-31).
+      pointId: await getViewedPointId(session),
     });
 
     if (!loaded) {

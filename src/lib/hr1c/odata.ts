@@ -39,15 +39,24 @@ export function zupDate(value: unknown): string | null {
 
 const EMPTY_REF = "00000000-0000-0000-0000-000000000000";
 
-/** Сотрудники + кадровые данные + должности → единый список для правила синхронизации. */
-export function mergeZupEmployees(employees: unknown[], hrData: unknown[], positions: unknown[]): HrEmployee[] {
-  const positionNames = new Map<string, string>();
-  for (const raw of positions) {
+function namesById(rows: unknown[]): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const raw of rows) {
     if (!isJson(raw)) continue;
     const id = str(raw.Ref_Key);
     const name = str(raw.Description);
-    if (id && name) positionNames.set(id, name);
+    if (id && name) names.set(id, name);
   }
+  return names;
+}
+
+/**
+ * Сотрудники + кадровые данные + должности (+ подразделения) → единый список
+ * для правила синхронизации. Подразделение — для точки сотрудника.
+ */
+export function mergeZupEmployees(employees: unknown[], hrData: unknown[], positions: unknown[], departments: unknown[] = []): HrEmployee[] {
+  const positionNames = namesById(positions);
+  const departmentNames = namesById(departments);
   const hrByEmployee = new Map<string, Json>();
   for (const raw of hrData) {
     if (!isJson(raw)) continue;
@@ -61,6 +70,8 @@ export function mergeZupEmployees(employees: unknown[], hrData: unknown[], posit
     if (!externalId || !fullName || externalId === EMPTY_REF) return [];
     const hr = hrByEmployee.get(externalId);
     const positionId = hr ? str(hr.ТекущаяДолжность_Key) : null;
+    const departmentId = hr ? str(hr.ТекущееПодразделение_Key) : null;
+    const department = departmentId && departmentId !== EMPTY_REF ? departmentId : null;
     return [
       {
         externalId,
@@ -70,6 +81,8 @@ export function mergeZupEmployees(employees: unknown[], hrData: unknown[], posit
         dismissedAt: hr ? zupDate(hr.ДатаУвольнения) : null,
         archived: raw.ВАрхиве === true,
         phone: null,
+        departmentId: department,
+        departmentName: department ? departmentNames.get(department) ?? null : null,
       },
     ];
   });
@@ -124,12 +137,21 @@ export function createZupClient(creds: ZupCredentials, options: { fetch?: FetchL
     positions: () => all("Catalog_Должности", "Ref_Key,Description"),
     async employees(): Promise<HrEmployee[]> {
       const employees = await all("Catalog_Сотрудники", "Ref_Key,Description,DeletionMark,ВАрхиве");
-      const hrData = await all(
-        "InformationRegister_ТекущиеКадровыеДанныеСотрудников",
-        "Сотрудник_Key,ДатаПриема,ДатаУвольнения,ТекущаяДолжность_Key",
-      );
+      const HR = "InformationRegister_ТекущиеКадровыеДанныеСотрудников";
+      const HR_FIELDS = "Сотрудник_Key,ДатаПриема,ДатаУвольнения,ТекущаяДолжность_Key";
+      // Подразделение — для точки сотрудника (2026-10-31). Публикация без
+      // этого поля или без справочника подразделений не ломает синхронизацию:
+      // сотрудники приходят как раньше, без подразделения.
+      const hrData = await all(HR, `${HR_FIELDS},ТекущееПодразделение_Key`).catch((error: unknown) => {
+        if (error instanceof ZupError && (error.code === "http" || error.code === "bad_response")) return all(HR, HR_FIELDS);
+        throw error;
+      });
       const positions = await all("Catalog_Должности", "Ref_Key,Description");
-      return mergeZupEmployees(employees, hrData, positions);
+      const departments = await all("Catalog_ПодразделенияОрганизаций", "Ref_Key,Description").catch((error: unknown) => {
+        if (error instanceof ZupError && (error.code === "not_published" || error.code === "http")) return [];
+        throw error;
+      });
+      return mergeZupEmployees(employees, hrData, positions, departments);
     },
   };
 }

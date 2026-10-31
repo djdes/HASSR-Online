@@ -3,7 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { resolveSectionName } from "@/lib/org-custom-names";
 import { loadBuildingContext } from "@/lib/active-building";
-import { buildingWhere } from "@/lib/building-scope";
+import { buildingWhere, viewedPointId } from "@/lib/building-scope";
+import { areaPointWhere, journalEntryPointWhere } from "@/lib/point-filters";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
@@ -32,10 +33,12 @@ export default async function ReportsPage() {
 
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("reportsUi.reportsPage");
-  // Точки: графики и счётчики по документам — для активной точки; записи
-  // поле-ориентированных журналов остаются на организацию.
+  // Точки (2026-10-31): графики, счётчики, цеха и выгрузки — по торговой
+  // точке из шапки; «Вся организация» — вся организация (раньше в этом
+  // режиме графики считались по офису или первой точке).
   const buildingContext = await loadBuildingContext(session);
-  const activeBuildingId = buildingContext.activeBuildingId;
+  const pointId = viewedPointId(buildingContext);
+  const entryAtPoint = journalEntryPointWhere(pointId);
   const now = new Date();
   const since30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   // E7 — compare-mode: 7 дней «эта неделя» vs предыдущие 7 дней.
@@ -62,29 +65,30 @@ export default async function ReportsPage() {
       select: { id: true, code: true, name: true },
     }),
     db.area.findMany({
-      where: { organizationId: getActiveOrgId(session) },
+      where: { organizationId: getActiveOrgId(session), ...areaPointWhere(pointId) },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
-    getComplianceHeatmap(orgId, 30, now, { buildingId: activeBuildingId }),
-    getWeekdayHeatmap(orgId, 8, now, { buildingId: activeBuildingId }),
-    getComplianceTrend(orgId, 12, now, { buildingId: activeBuildingId }),
+    getComplianceHeatmap(orgId, 30, now, { buildingId: pointId }),
+    getWeekdayHeatmap(orgId, 8, now, { buildingId: pointId }),
+    getComplianceTrend(orgId, 12, now, { buildingId: pointId }),
     db.journalEntry.count({
-      where: { organizationId: orgId, createdAt: { gte: since30 } },
+      where: { organizationId: orgId, createdAt: { gte: since30 }, ...entryAtPoint },
     }),
     db.journalEntry.count({
       where: {
         organizationId: orgId,
         createdAt: { gte: since30 },
         attachments: { some: {} },
+        ...entryAtPoint,
       },
     }),
     db.journalEntry.count({
-      where: { organizationId: orgId, createdAt: { gte: since7 } },
+      where: { organizationId: orgId, createdAt: { gte: since7 }, ...entryAtPoint },
     }),
     db.journalDocumentEntry.count({
       where: {
-        document: { organizationId: orgId, ...buildingWhere(activeBuildingId) },
+        document: { organizationId: orgId, ...buildingWhere(pointId) },
         createdAt: { gte: since7 },
         ...NOT_AUTO_SEEDED,
       },
@@ -93,11 +97,12 @@ export default async function ReportsPage() {
       where: {
         organizationId: orgId,
         createdAt: { gte: since14, lt: since7 },
+        ...entryAtPoint,
       },
     }),
     db.journalDocumentEntry.count({
       where: {
-        document: { organizationId: orgId, ...buildingWhere(activeBuildingId) },
+        document: { organizationId: orgId, ...buildingWhere(pointId) },
         createdAt: { gte: since14, lt: since7 },
         ...NOT_AUTO_SEEDED,
       },
@@ -251,7 +256,7 @@ export default async function ReportsPage() {
       <ComplianceBundleCard />
 
       <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
-        {buildingContext.activeBuilding ? (
+        {pointId && buildingContext.activeBuilding ? (
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[13px] text-[#3848c7]">
             {t.rich("activePoint", {
               name: buildingContext.activeBuilding.name,

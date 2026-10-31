@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { localClock } from "@/lib/checklist-assignments";
 import { listAssignmentRows, loadAssignmentContext } from "@/lib/checklist-assignments.server";
+import { getViewedPointId } from "@/lib/active-building";
+import { checklistAssignmentAtPoint } from "@/lib/point-filters";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { AssignmentsPageClient } from "@/components/checklists/assignments-page-client";
 
@@ -21,14 +23,20 @@ export default async function ChecklistAssignmentsPage({ searchParams }: { searc
   const params = await searchParams;
   const now = new Date();
   const context = await loadAssignmentContext(organizationId);
-  const [templates, rows] = await Promise.all([
+  const [templates, allRows, pointId] = await Promise.all([
     db.checklistTemplate.findMany({
       where: { organizationId, archived: false },
       orderBy: { title: "asc" },
       select: { id: true, title: true },
     }),
     listAssignmentRows(organizationId, now, context),
+    getViewedPointId(session),
   ]);
+  // Точка из шапки (2026-10-31): назначения на другую точку или на
+  // сотрудника другой точки здесь не показываем.
+  const personPoints = new Map(context.people.map((person) => [person.id, person.buildingIds]));
+  const livePointIds = new Set(context.buildings.map((building) => building.id));
+  const rows = allRows.filter((row) => checklistAssignmentAtPoint(row, pointId, personPoints, livePointIds));
   const presetTemplate = typeof params.template === "string" && templates.some((item) => item.id === params.template) ? params.template : null;
 
   return (

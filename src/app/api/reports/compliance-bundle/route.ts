@@ -8,7 +8,8 @@ import { hasCapability } from "@/lib/permission-presets";
 import { recordAuditLog } from "@/lib/audit-log";
 import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
-import { buildingPrintName } from "@/lib/building-scope";
+import { buildingPrintName, buildingWhere } from "@/lib/building-scope";
+import { getViewedPointId } from "@/lib/active-building";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
 import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
 import { loadInspectionVisitFileContent, loadInspectionVisitsForBundle } from "@/lib/inspection-visits.server";
@@ -125,12 +126,20 @@ export async function GET(request: Request) {
   const toEndOfDay = new Date(to);
   toEndOfDay.setUTCHours(23, 59, 59, 999);
 
+  // Точка из шапки (2026-10-31): у руководителя точки и при выбранной точке —
+  // только её документы и общие; «Вся организация» — все, у файла точка.
+  const pointId = await getViewedPointId(session);
+  const point = pointId
+    ? await db.building.findFirst({ where: { id: pointId, organizationId }, select: { name: true, journalName: true } })
+    : null;
+
   const documents = await db.journalDocument.findMany({
     where: {
       organizationId,
       // Overlap: dateFrom <= to AND dateTo >= from
       dateFrom: { lte: toEndOfDay },
       dateTo: { gte: from },
+      ...buildingWhere(pointId),
     },
     include: {
       template: { select: { code: true, name: true } },
@@ -155,6 +164,7 @@ export async function GET(request: Request) {
   // Название — как в шапке журналов внутри архива.
   const organizationName = resolveOrgJournalName(organization);
   manifestLines.push(`Организация: ${organizationName}`);
+  if (point) manifestLines.push(`Точка: ${buildingPrintName(point)}`);
   manifestLines.push(`Период: ${ymd(from)} — ${ymd(to)}`);
   manifestLines.push(`Собран: ${now.toLocaleString("ru-RU")}`);
   manifestLines.push(``);

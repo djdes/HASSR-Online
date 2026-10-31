@@ -3119,6 +3119,12 @@ model HrConnection {
   lastError         String?
   /// Итог последнего прогона: { hired, dismissed, updated, linked, problems }.
   lastResult        Json?
+  /// Подразделение 1С → точка (2026-10-31): { [ключ подразделения]: buildingId | "*" }.
+  /// "*" — «все точки»; нет ключа — не сопоставлено. См. src/lib/hr1c/points.ts.
+  departmentPointsJson Json    @default("{}")
+  /// Подразделения работающих сотрудников из последнего прогона:
+  /// [{ key, name, count }] — для экрана сопоставления.
+  departmentsJson   Json         @default("[]")
   createdById       String?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
@@ -3138,6 +3144,11 @@ model HrEmployeeLink {
   position       String?
   hiredAt        DateTime?
   dismissedAt    DateTime?
+  /// Точки, которые поставила 1С по подразделению (2026-10-31). Пока точки
+  /// сотрудника совпадают с ними, 1С их обновляет; руководитель поменял —
+  /// 1С больше не трогает. `pointsSetBy1c = false` — 1С точки ещё не ставила.
+  pointsFrom1c   String[]     @default([])
+  pointsSetBy1c  Boolean      @default(false)
   lastSeenAt     DateTime     @default(now())
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

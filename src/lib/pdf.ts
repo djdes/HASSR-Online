@@ -19,6 +19,8 @@ export async function generateJournalPDF(params: {
   dateTo: string;
   areaId?: string;
   locale?: Locale;
+  /** Торговая точка из шапки; null — вся организация (колонка «Точка»). */
+  pointId?: string | null;
 }): Promise<Buffer> {
   const { templateCode, organizationId, organizationName, dateFrom, dateTo, areaId } = params;
   const locale = params.locale ?? "ru";
@@ -31,6 +33,7 @@ export async function generateJournalPDF(params: {
     dateTo,
     areaId,
     locale,
+    pointId: params.pointId ?? null,
   });
   if (!loaded) {
     throw new Error(t("reports.errors.templateNotFound"));
