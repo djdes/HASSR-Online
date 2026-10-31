@@ -1,0 +1,20 @@
+{
+  "orgId": "cmvr0npow0000zw9mq3eiejlc",
+  "pointA": "cmvr0nq140001zw9maq48u9sv",
+  "pointB": "cmvr0nq140002zw9m3mg464x1",
+  "password": "Verify-2026!",
+  "owner": "manager-cmvr0npow0000zw9mq3eiejlc@verify.local",
+  "cookA": "check-3110-cook-a@verify.local",
+  "cookB": "check-3110-cook-b@verify.local",
+  "headA": "check-3110-head-a@verify.local",
+  "names": {
+    "fridgeA": "ПРОВЕРКА 31.10 ШХ точки А",
+    "fridgeB": "ПРОВЕРКА 31.10 ШХ точки Б",
+    "lampA": "ПРОВЕРКА 31.10 УФ-лампа точки А",
+    "lampB": "ПРОВЕРКА 31.10 УФ-лампа точки Б",
+    "roomA": "ПРОВЕРКА 31.10 Склад точки А",
+    "roomB": "ПРОВЕРКА 31.10 Склад точки Б",
+    "cookA": "ПРОВЕРКА 31.10 Повар Анна (точка А)",
+    "cookB": "ПРОВЕРКА 31.10 Повар Борис (точка Б)"
+  }
+}
