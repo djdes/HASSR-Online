@@ -1,0 +1,5 @@
+after merging origin/master (ec20d610) into the branch:
+npm run typecheck: EXIT 0
+=== Test stats: pass=5302, fail=0 ===
+✓ Все тесты прошли.
+npm --prefix mobile run test:release: pass 13, fail 0
