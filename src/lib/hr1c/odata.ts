@@ -75,8 +75,13 @@ export function mergeZupEmployees(employees: unknown[], hrData: unknown[], posit
   });
 }
 
+/** «…/zup» или вставленный целиком адрес OData («…/zup/odata/standard.odata/…») → корень сервиса OData. */
+export function zupServiceRoot(baseUrl: string): string {
+  return `${baseUrl.replace(/\/odata\/standard\.odata(?:\/.*)?$/i, "").replace(/\/+$/, "")}/odata/standard.odata`;
+}
+
 export function createZupClient(creds: ZupCredentials, options: { fetch?: FetchLike; timeoutMs?: number } = {}) {
-  const base = `${creds.baseUrl.replace(/\/+$/, "")}/odata/standard.odata`;
+  const base = zupServiceRoot(creds.baseUrl);
   const fetchImpl: FetchLike = options.fetch ?? ((url, init) => fetch(url, init));
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const auth = `Basic ${Buffer.from(`${creds.login}:${creds.password}`, "utf8").toString("base64")}`;
