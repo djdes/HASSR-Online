@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { getUserDisplayTitle } from "@/lib/user-roles";
+import { buildingWhere } from "@/lib/building-scope";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 
 /**
  * Кто отвечает за журнал — чтобы сотрудник у QR-кода знал, к кому идти,
@@ -12,8 +14,8 @@ import { getUserDisplayTitle } from "@/lib/user-roles";
  * Порядок поиска:
  *   1. ответственный документа, из которого пришёл скан;
  *   2. ответственный активного сегодня документа;
- *   3. главный слот журнала в «Ответственных за журналы»
- *      (`journalResponsibleUsersJson`);
+ *   3. главный слот журнала в «Ответственных за журналы» — точки
+ *      документа, если у неё свои (2026-10-31);
  *   4. ответственный последнего документа журнала.
  * Только активные сотрудники этой организации. Никого — «руководитель».
  */
@@ -31,14 +33,6 @@ export function formatResponsiblePerson(person: { name: string; positionTitle: s
   return `${name}, ${lowered}`;
 }
 
-function slotUserId(json: unknown, templateCode: string): string | null {
-  if (!json || typeof json !== "object") return null;
-  const slots = (json as Record<string, unknown>)[templateCode];
-  if (!slots || typeof slots !== "object") return null;
-  const value = (slots as Record<string, unknown>)[getPrimarySlotId(templateCode)];
-  return typeof value === "string" && value ? value : null;
-}
-
 export async function findJournalResponsiblePerson(params: {
   organizationId: string;
   templateCode: string;
@@ -48,18 +42,20 @@ export async function findJournalResponsiblePerson(params: {
   const { organizationId, templateCode } = params;
   const day = new Date(`${params.todayKey}T00:00:00.000Z`);
   const templateWhere = { organizationId, template: { code: templateCode } };
-  const [tokenDoc, activeDoc, org, latestDoc] = await Promise.all([
-    params.documentId
-      ? db.journalDocument.findFirst({ where: { ...templateWhere, id: params.documentId }, select: { responsibleUserId: true } })
-      : Promise.resolve(null),
+  const tokenDoc = params.documentId
+    ? await db.journalDocument.findFirst({ where: { ...templateWhere, id: params.documentId }, select: { responsibleUserId: true, buildingId: true } })
+    : null;
+  // Точка документа скана: её документы и её ответственные, не другой точки.
+  const pointId = tokenDoc?.buildingId ?? null;
+  const [activeDoc, slots, latestDoc] = await Promise.all([
     db.journalDocument.findFirst({
-      where: { ...templateWhere, status: "active", dateFrom: { lte: day }, dateTo: { gte: day }, responsibleUserId: { not: null } },
+      where: { ...templateWhere, ...buildingWhere(pointId), status: "active", dateFrom: { lte: day }, dateTo: { gte: day }, responsibleUserId: { not: null } },
       orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
       select: { responsibleUserId: true },
     }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } }),
+    effectiveJournalSlots(organizationId, pointId, templateCode),
     db.journalDocument.findFirst({
-      where: { ...templateWhere, responsibleUserId: { not: null } },
+      where: { ...templateWhere, ...buildingWhere(pointId), responsibleUserId: { not: null } },
       orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
       select: { responsibleUserId: true },
     }),
@@ -67,7 +63,7 @@ export async function findJournalResponsiblePerson(params: {
   const order = [
     tokenDoc?.responsibleUserId ?? null,
     activeDoc?.responsibleUserId ?? null,
-    slotUserId(org?.journalResponsibleUsersJson, templateCode),
+    slots[getPrimarySlotId(templateCode)] ?? null,
     latestDoc?.responsibleUserId ?? null,
   ].filter((id): id is string => Boolean(id));
   if (order.length === 0) return null;

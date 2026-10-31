@@ -24,6 +24,7 @@ import {
   type JournalPeriodOverrideMap,
 } from "@/lib/journal-period";
 import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-cascade";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { isBrakerageJournalCode } from "@/lib/brakerage-row-merge";
 import { commissionConfigView, unsignedRows } from "@/lib/brakerage-commission";
@@ -667,9 +668,6 @@ export async function ensureActiveDocument(
       journalPeriods: true,
       journalAutomationJson: true,
       autoJournalCodes: true,
-      // Какие слоты ответственных заданы в /settings/journal-responsibles —
-      // незаданные прерванная цепочка берёт из прошлого документа.
-      journalResponsibleUsersJson: true,
     },
   });
   // Точка со своей автоматикой (слитая организация) — её настройки поверх.
@@ -751,10 +749,8 @@ export async function ensureActiveDocument(
   // получает человека из прошлого документа. Раньше наследование шло лишь
   // запасным вариантом после авто-подбора по ростеру — и новый период
   // рождался с «первым попавшимся» ответственным вместо прежнего.
-  const savedSlots =
-    ((orgRow?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[
-      args.templateCode
-    ] ?? {};
+  // Слоты точки документа (2026-10-31, ответственные по точкам).
+  const savedSlots = await effectiveJournalSlots(args.organizationId, args.buildingId ?? null, args.templateCode);
   const slotDesired = {
     responsibleUserId:
       desired.responsibleUserId ??

@@ -14,6 +14,7 @@
  */
 
 import { db } from "@/lib/db";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import {
   TasksFlowError,
   tasksflowClientFor,
@@ -65,7 +66,6 @@ export async function spawnRollingTask(args: {
     where: { id: args.organizationId },
     select: {
       journalTaskModesJson: true,
-      journalResponsibleUsersJson: true,
     },
   });
   const mode = getEffectiveTaskMode(
@@ -121,14 +121,18 @@ export async function spawnRollingTask(args: {
     return { ok: false, reason: "no-tf-user-link" };
   }
 
-  // 5. Verifier — берём из org slot users.
+  // 5. Verifier — из ответственных: у сотрудника одной точки — её
+  // (2026-10-31, ответственные по точкам), иначе — организации.
   let verifierTfUserId: number | undefined;
-  const slotsByJournal = (org?.journalResponsibleUsersJson ?? {}) as Record<
-    string,
-    Record<string, string | null>
-  >;
+  const filler = await db.user.findFirst({
+    where: { id: args.filledByUserId, organizationId: args.organizationId },
+    select: { buildingIds: true },
+  });
+  const fillerPointId = filler?.buildingIds?.length === 1 ? filler.buildingIds[0] : null;
   const verifierSlotId = getVerifierSlotId(args.journalCode);
-  const verifierWesetupUserId = slotsByJournal[args.journalCode]?.[verifierSlotId];
+  const verifierWesetupUserId = (
+    await effectiveJournalSlots(args.organizationId, fillerPointId, args.journalCode)
+  )[verifierSlotId];
   if (verifierWesetupUserId) {
     const vLink = await db.tasksFlowUserLink.findFirst({
       where: {

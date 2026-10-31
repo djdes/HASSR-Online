@@ -10,6 +10,7 @@ import { getVerifierSlotId } from "@/lib/journal-responsible-schemas";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
 import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 import { placeOfEvent } from "@/lib/place-recipients";
+import { removeUserFromPointResponsibles } from "@/lib/journal-responsibles-points";
 
 async function guard(id: string, orgId: string) {
   const user = await db.user.findFirst({
@@ -161,6 +162,8 @@ export async function POST(
         ]
       : []),
   ]);
+  // Ответственные точек (2026-10-31) — тоже без архивного сотрудника.
+  await removeUserFromPointResponsibles(orgId, user.id);
 
   // 5. Если были orphan-журналы — нотификация менеджменту с deep-link.
   if (orphans.length > 0) {

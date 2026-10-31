@@ -29416,7 +29416,20 @@
       "deleteBullet1": "Tiklab bo‘lmaydi — bu jurnal ma’lumotlarining to‘liq tiklanishi.",
       "deleteBullet2": "Faqat noldan boshlash kerak bo‘lganda ishlatiladi (sinov kompaniyasi, avvalgi pilot).",
       "deleteConfirm": "Butunlay o‘chirish",
-      "deletePhrase": "O‘CHIRISH"
+      "deletePhrase": "O‘CHIRISH",
+      "pointBannerTitle": "«{point}» nuqtasining mas'ullari",
+      "pointBannerBody": "Bu yerda — shu nuqta xodimlari va «Barcha nuqtalar» belgilanganlar. O'z mas'ullari yo'q jurnal ularni «Butun tashkilot» sozlamalaridan oladi, agar xodim shu nuqtada ishlasa; qolganlarini nuqta xodimlaridan tanlaymiz. Boshqa nuqta uchun uni yuqorida tanlang.",
+      "pointOwn": "Nuqtaning o'ziniki",
+      "pointInherited": "Tashkilotdagidek",
+      "pointReset": "Tashkilotdagidek qaytarish",
+      "pointResetTitle": "Tashkilot mas'ullari qaytarilsinmi?",
+      "pointResetDescription": "«{point}» nuqtasidagi «{journal}» jurnali yana «Butun tashkilot» sozlamalaridagi mas'ullarni oladi.",
+      "pointResetBullet1": "Ulardan kim shu nuqtada ishlamasa — o'rniga nuqta xodimini tanlaymiz.",
+      "pointResetBullet2": "Nuqtaning faol hujjatlari yangi mas'ullarni oladi, jurnal yozuvlari o'zgarmaydi.",
+      "pointResetConfirm": "Qaytarish",
+      "pointResetDone": "Jurnal yana tashkilotdagidek, yangilangan hujjatlar: {docs}",
+      "pointResetError": "Tashkilot mas'ullarini qaytarib bo'lmadi",
+      "pointPositionsNote": "Jurnalni yurituvchi lavozimlar tashkilot uchun umumiy — ularni «Butun tashkilot» rejimida o'zgartiring."
     },
     "journalTaskModeClient": {
       "saveFailed": "Saqlab bo‘lmadi",

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 
 import { deliverableEmail, notifyCoreJournalRecipients } from "@/lib/core-journal-keepers";
 import { checkCronSecret } from "@/lib/cron-auth";
@@ -36,13 +37,13 @@ async function handle(request: Request) {
   });
   const lamps = await db.equipment.findMany({
     where: { runningSince: { lt: new Date(Date.now() - FORGOTTEN_AFTER_MS) } },
-    select: { id: true, name: true, runningSince: true, area: { select: { organizationId: true } } },
+    select: { id: true, name: true, runningSince: true, area: { select: { organizationId: true, buildingId: true } } },
   });
   let notified = 0;
   for (const lamp of lamps) {
     const organizationId = lamp.area.organizationId;
-    const org = await db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } });
-    const slots = ((org?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null> | undefined>)[UV_LAMP_RUNTIME_TEMPLATE_CODE] ?? {};
+    // Ответственный журнала УФ-ламп на точке цеха лампы (2026-10-31).
+    const slots = await effectiveJournalSlots(organizationId, lamp.area.buildingId, UV_LAMP_RUNTIME_TEMPLATE_CODE);
     const responsibleId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? null;
     const users = await db.user.findMany({
       where: responsibleId
