@@ -7135,9 +7135,8 @@
     },
     "appStores": {
       "title": "Mobil ilova",
-      "description": "Xodimlar jurnallarni yuritib, bildirishnomalarni telefonlarida olishi mumkin bo‘ladi. Ishga tushirish: {launchDate}.",
-      "comingSoon": "tez orada",
-      "launchDate": "1-oktabr"
+      "description": "Xodimlar jurnallarni yuritib, bildirishnomalarni telefonlarida olishi mumkin bo‘ladi. iPhone va Android ilovalari do‘konlarga chiqarishga tayyorlanmoqda.",
+      "comingSoon": "tez orada"
     },
     "registrationErrors": {
       "invalidEmail": "To‘g‘ri elektron pochta manzilini kiriting",
@@ -29756,6 +29755,11 @@
       "paidKept": "To‘langan davr yo‘qolmaydi",
       "canReenable": "Istalgan vaqtda qayta yoqish mumkin",
       "confirmLabel": "O‘chirish"
+    },
+    "renewalCard": {
+      "title": "Uzaytirish",
+      "body": "<strong>{date}</strong> gacha to‘langan. Avtomatik yechib olish yo‘q — tarifni oldindan uzaytiring: yangi davr joriy muddatga qo‘shiladi. Tugashidan 7, 3 va 1 kun oldin Telegram va pochta orqali eslatamiz.",
+      "renew": "Oldindan uzaytirish"
     },
     "resumePausedCard": {
       "resumeFailed": "Ishni tiklab bo‘lmadi",

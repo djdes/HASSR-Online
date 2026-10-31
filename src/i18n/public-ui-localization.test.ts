@@ -24,7 +24,9 @@ test("public store teaser and pricing calculator render real localized catalogs"
 
     assert.deepEqual(failures, [], locale);
     assert.ok(html.includes(messages.publicUi.appStores.title));
-    assert.ok(html.includes(messages.publicUi.appStores.launchDate));
+    assert.ok(html.includes(messages.publicUi.appStores.description));
+    // Прошедшая дата запуска («1 октября») на витрине больше не показывается.
+    assert.doesNotMatch(html, /1 октября|1 October|1-oktabr/);
     assert.ok(html.includes(messages.publicUi.pricing.title));
     assert.ok(html.includes(messages.publicUi.pricing.bundles.standard.name));
     assert.ok(html.includes("₽"), "pricing remains in RUB");

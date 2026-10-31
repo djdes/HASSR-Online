@@ -20,7 +20,9 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { publishToOrganization, publishToUser, publishToUsers } from "@/lib/live-events";
-import { sendFeedbackAdminEmail } from "@/lib/email";
+import { renderEmailLayout, sendFeedbackAdminEmail, sendRawEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/html-escape";
+import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 import { notifyManagement } from "@/lib/notifications";
 import { platformOrgId } from "@/lib/partners/partner-hint";
 import { sendPartnerChatMessageEmail } from "@/lib/partners/emails";
@@ -35,10 +37,12 @@ import type { SupportAttachmentMeta } from "@/lib/support-attachments-shared";
 import {
   SUPPORT_CHAT_MAX_LENGTH,
   SUPPORT_CHAT_MIN_LENGTH,
+  composeGuestReplyEmail,
   composeOperatorReplyTelegram,
   composePartnerHandoffAdminMessage,
   composeSupportChatAdminMessage,
   composeSupportChatPartnerMessage,
+  shouldEmailGuestReply,
 } from "@/lib/support-chat";
 import {
   GUEST_KEY_PREFIX,
@@ -515,15 +519,53 @@ export async function postOperatorMessage(args: {
 }
 
 /**
- * Доставка ответа оператора организации: Telegram руководству и
- * колокольчик. Гость сайта увидит ответ в виджете сам (poll статуса).
+ * Ответ гостю сайта на его почту: виджет обещает «оставьте телефон или почту —
+ * ответим туда, даже если вы закроете сайт». Одно письмо на «ход» оператора
+ * (`shouldEmailGuestReply`); гостю только с телефоном отвечают звонком.
+ */
+async function emailGuestReply(ctx: {
+  thread: ThreadRow;
+  message: MessageDto;
+  operator: OperatorIdentity;
+}): Promise<boolean> {
+  const to = (ctx.thread.userEmail ?? "").trim();
+  if (!to.includes("@")) return false;
+  const replyAt = new Date(ctx.message.createdAt);
+  const previous = await db.supportMessage.findFirst({
+    where: { threadId: ctx.thread.id, id: { not: ctx.message.id }, createdAt: { lte: replyAt } },
+    orderBy: { createdAt: "desc" },
+    select: { author: true, createdAt: true },
+  });
+  if (!shouldEmailGuestReply(previous, replyAt)) return false;
+  const mail = composeGuestReplyEmail({
+    operatorName: ctx.message.operatorName ?? ctx.operator.name,
+    body: ctx.message.body,
+    attachmentsCount: ctx.message.attachments.length,
+    appUrl: APP_URL,
+    escape: escapeHtml,
+  });
+  return sendRawEmail(to, mail.subject, renderEmailLayout(mail.title, mail.html), { replyTo: SUPPORT_EMAIL });
+}
+
+/**
+ * Доставка ответа оператора: организации — Telegram руководству и
+ * колокольчик; гостю сайта — письмо, если он оставил почту (в виджете ответ
+ * он увидит и сам, но только пока сайт открыт).
  */
 export async function deliverOperatorMessage(ctx: {
   thread: ThreadRow;
   message: MessageDto;
   operator: OperatorIdentity;
-}): Promise<{ telegram: boolean; inApp: boolean }> {
-  const result = { telegram: false, inApp: false };
+}): Promise<{ telegram: boolean; inApp: boolean; email: boolean }> {
+  const result = { telegram: false, inApp: false, email: false };
+  if (threadKindOf(ctx.thread.key) === "guest") {
+    try {
+      result.email = await emailGuestReply(ctx);
+    } catch (error) {
+      console.error("[support-threads] guest reply email failed:", error);
+    }
+    return result;
+  }
   const orgId = ctx.thread.organizationId;
   if (!orgId || threadKindOf(ctx.thread.key) !== "org") return result;
 

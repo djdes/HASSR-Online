@@ -1,0 +1,15 @@
+# Evidence: быстрые правки для роста (31.10.2026)
+
+Ветка `claude/serene-mccarthy-rhrl3e` от master `9583b7b9`. Проверки до слияния — в `raw/`.
+
+| AC | Статус | Доказательство |
+| --- | --- | --- |
+| AC1 Напоминания о продлении | PASS | `billing-period.ts`: `paidDaysLeft`, ступени 7/3/1 (`paidReminderStage`), правило «одна ступень на срок» (`paidReminderDue`), текст (`paidReminderCopy`); `billing.server.ts`: действие `remind_paid_end`, запись `billing.paid.reminder` в AuditLog, Telegram с кнопкой «Продлить» и письмо всегда, счётчик `paidReminded`. Тесты: `billing-period.test.ts` → «напоминания о конце оплаченного срока» (4) и обновлённый «оплачено больше недели… — ничего». `raw/targeted-tests.txt` |
+| AC2 Честное автопродление | PASS | `RECURRING_CHARGES_LIVE = false` и `effectiveRecurringConsent` (`lib/recurring-consent.ts`) — сервер `/api/payments/robokassa/create`, `/order` (галочка скрыта, `?recurring=1` не действует), «Настройки → Тариф» (`RenewalCard` вместо `RecurringCard`). Тексты ru/en/uz `settingsUi.renewalCard`. Тест `recurring-consent.test.ts` (4), `raw/i18n-check.txt` |
+| AC3 Ответ гостю доходит | PASS | `deliverOperatorMessage` для веток `guest:*` шлёт письмо (`emailGuestReply`): ответ экранирован, «Открыть переписку» → `/?support=chat`, reply-to support@wesetup.ru, одно письмо на ход оператора (`shouldEmailGuestReply`, пауза 30 мин). Ошибка почты ловится. Тесты `support-chat.test.ts` (2 новых) |
+| AC4 Горячие лиды | PASS | `lib/lead-alerts.ts`; `/api/profile/complete` → «Анкета заполнена — можно звонить» (dedupe `profile_completed:<org>`), `/api/nps` → низкая оценка (1–3 из 5, 0–6 из 10) и дописанный комментарий (dedupe `nps:<id>`, `nps-comment:<id>`), всё без ожидания и с `.catch`. Тест `lead-alerts.test.ts` (4) |
+| AC5 SEO-гигиена | PASS | `sitemap.ts` без `const now`/`lastModified: now`; статьи — `updatedAt ?? publishedAt`, /blog — самая свежая статья; отложенные статьи скрыты в списке, похожих, на странице (404) и в sitemap; ROOT видит отложенную с `noindex`. Тест `article-visibility.test.ts` (5). До: `raw/baseline-prod-sitemap.txt` (305 из 368 с датой старта процесса) |
+| AC5a Без прошедшей даты запуска | PASS | `publicUi.appStores` без `launchDate` (ru/en/uz), тест `public-ui-localization.test.ts` проверяет, что «1 октября / 1 October / 1-oktabr» не рендерится |
+| AC5b /login noindex | PASS | `robots: { index: false, follow: true }` в `generateMetadata` входа; проверка в `article-visibility.test.ts` |
+| AC6 Первый экран не прыгает | PASS до выкладки / PENDING на проде | Резерв `min-h-[144px]` вокруг контейнера виджета, надпись «загружается» — поверх (absolute). Тест `registration-challenge.test.ts`. До: CLS 0,168 в двух прогонах (`raw/baseline-prod-cls.json`); после выкладки — тот же скрипт `e2e/cls-measure.cjs` |
+| AC7 Ворота | PENDING | До слияния: `npm run typecheck` EXIT 0 (`raw/typecheck.txt`), `npm run test:gate` 5340/5340 (`raw/test-gate.txt`), `npm run i18n:check` 97/97, eslint изменённых файлов EXIT 0 (`raw/eslint-changed.txt`). Слияние, выкладка и проверка прода — после PR |

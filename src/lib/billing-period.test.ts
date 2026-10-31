@@ -18,6 +18,11 @@ import {
   isReallyPaid,
   mskDayKey,
   normalizeTrialSettings,
+  PAID_REMINDER_STAGES,
+  paidReminderCopy,
+  paidReminderDue,
+  paidReminderStage,
+  paidTierTitle,
   pickKeeper,
   pickKeeperJournal,
   serializeTrialSettings,
@@ -319,9 +324,15 @@ describe("ежедневная задача", () => {
     assert.equal(decideTransitionAction(state({ activeUsers: 2 }, new Date(TRIAL_END_OLD.getTime() + 8 * DAY)), "free"), "auto_free");
   });
 
-  it("оплачено, пауза, выключенный переход — ничего", () => {
+  it("оплачено больше недели, пауза, выключенный переход — ничего", () => {
     const now = new Date(TRIAL_END_OLD.getTime() + 8 * DAY);
-    assert.equal(decideTransitionAction(state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY) }, now), "premium"), "none");
+    assert.equal(decideTransitionAction(state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + 30 * DAY) }, now), "premium"), "none");
+    assert.equal(decideTransitionAction(state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + 8 * DAY) }, now), "premium"), "none");
+    // Оплаченная, но приостановленная за неактивность — напоминаний нет.
+    assert.equal(
+      decideTransitionAction(state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), inactive: true }, now), "premium"),
+      "none"
+    );
     assert.equal(decideTransitionAction(state({ activeUsers: 5, inactive: true }, now), "paused"), "none");
     assert.equal(
       decideTransitionAction(state({ activeUsers: 5 }, now, { ...S, transitionEnabled: false }), "free"),
@@ -389,5 +400,91 @@ describe("тексты", () => {
   it("даты по Москве", () => {
     assert.equal(formatMskDay(msk("2026-11-08T23:59:59")), "8 ноября");
     assert.equal(mskDayKey(msk("2026-11-09T00:00:01")), "2026-11-09");
+  });
+});
+
+describe("напоминания о конце оплаченного срока", () => {
+  const now = msk("2026-11-02T10:00:00");
+  const paid = (daysAhead: number, extra: Partial<AccountBillingInput> = {}) =>
+    state({ plan: "standard", subscriptionEnd: new Date(now.getTime() + daysAhead * DAY), activeUsers: 6, ...extra }, now);
+
+  it("ступени 7 → 3 → 1: больше недели и после конца — ничего", () => {
+    assert.deepEqual([...PAID_REMINDER_STAGES], [7, 3, 1]);
+    assert.equal(paidReminderStage(8), null);
+    assert.equal(paidReminderStage(7), 7);
+    assert.equal(paidReminderStage(4), 7);
+    assert.equal(paidReminderStage(3), 3);
+    assert.equal(paidReminderStage(2), 3);
+    assert.equal(paidReminderStage(1), 1);
+    assert.equal(paidReminderStage(0), null);
+    assert.equal(paidReminderStage(null), null);
+  });
+
+  it("у оплаченной организации считаются оставшиеся дни, задача решает «напомнить» в последнюю неделю", () => {
+    assert.equal(paid(5).paidDaysLeft, 5);
+    assert.equal(paid(0.5).paidDaysLeft, 1);
+    assert.equal(state({}, now).paidDaysLeft, null);
+    assert.equal(decideTransitionAction(paid(7), "standard"), "remind_paid_end");
+    assert.equal(decideTransitionAction(paid(2.5), "standard"), "remind_paid_end");
+    assert.equal(decideTransitionAction(paid(0.2), "standard"), "remind_paid_end");
+    assert.equal(decideTransitionAction(paid(7.5), "standard"), "none");
+    // Срок кончился: дальше работают грейс и «выберите тариф», не это напоминание.
+    assert.notEqual(decideTransitionAction(paid(-1), "standard"), "remind_paid_end");
+  });
+
+  it("одно напоминание на ступень одного срока; пропущенный день не теряет ближайшую", () => {
+    const until = new Date(now.getTime() + 3 * DAY);
+    const iso = until.toISOString();
+    assert.equal(paidReminderDue([], until, 7), true);
+    assert.equal(paidReminderDue([{ paidUntil: iso, stage: 7 }], until, 7), false);
+    assert.equal(paidReminderDue([{ paidUntil: iso, stage: 7 }], until, 3), true);
+    assert.equal(paidReminderDue([{ paidUntil: iso, stage: 7 }, { paidUntil: iso, stage: 3 }], until, 3), false);
+    // Ступень 3 пропущена (задача не работала) — ступень 1 всё равно уходит, один раз.
+    assert.equal(paidReminderDue([{ paidUntil: iso, stage: 7 }], until, 1), true);
+    assert.equal(paidReminderDue([{ paidUntil: iso, stage: 1 }], until, 1), false);
+    // Срок продлили — по новому сроку напоминания заново.
+    const renewed = new Date(until.getTime() + 30 * DAY);
+    assert.equal(paidReminderDue([{ paidUntil: iso, stage: 1 }], renewed, 7), true);
+    // Мусор в журнале не мешает.
+    assert.equal(paidReminderDue([null, "x", { stage: "7" }, { paidUntil: iso }], until, 7), true);
+  });
+
+  it("текст: организация, тариф, точки, дата, что будет после; без перехода — без угрозы", () => {
+    const copy = paidReminderCopy({
+      orgName: "Кафе &amp; Ко",
+      tierTitle: paidTierTitle("standard"),
+      points: 2,
+      lastDayLabel: "4 ноября",
+      daysLeft: 3,
+      graceDays: 7,
+      transitionEnabled: true,
+    });
+    assert.equal(copy.head, "Оплата «Кафе &amp; Ко» заканчивается через 3 дня — тариф «Стандарт», 2 точки, по 4 ноября включительно.");
+    assert.match(copy.renew, /новый период прибавится к текущему сроку/);
+    assert.match(copy.renew, /по счёту для юрлица/);
+    assert.match(copy.after, /ещё 7 дней на оплату/);
+    assert.match(copy.after, /записи сохранятся/);
+    const single = paidReminderCopy({
+      orgName: "Цех",
+      tierTitle: paidTierTitle("legacy"),
+      points: 1,
+      lastDayLabel: "2 ноября",
+      daysLeft: 1,
+      graceDays: 0,
+      transitionEnabled: true,
+    });
+    assert.equal(single.head, "Оплата «Цех» заканчивается через 1 день — тариф «Подписка», по 2 ноября включительно.");
+    assert.match(single.after, /^Если не продлить, сразу после окончания/);
+    const noTransition = paidReminderCopy({
+      orgName: "Цех",
+      tierTitle: paidTierTitle("premium"),
+      points: 1,
+      lastDayLabel: "2 ноября",
+      daysLeft: 1,
+      graceDays: 7,
+      transitionEnabled: false,
+    });
+    assert.equal(noTransition.after, "");
+    assert.match(noTransition.head, /«Премиум»/);
   });
 });

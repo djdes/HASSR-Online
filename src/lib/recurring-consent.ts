@@ -13,6 +13,22 @@
 export const RECURRING_CONSENT_TEXT =
   "Я согласен на автоматические списания согласно условиям оферты";
 
+/**
+ * Работают ли автосписания. Кода, который списывает следующий период по
+ * сохранённой карте, пока нет: `recurringChargeOf`, `recurringNotifiedForEnd` и
+ * `recurringFailedAttempts` никто не пишет. Пока флаг выключен, сайт не
+ * обещает автопродление: на /order нет галочки, сервер не включает автоплатёж,
+ * в «Настройки → Тариф» — карточка «Продление» с датой и напоминаниями за 7, 3
+ * и 1 день (их шлёт ежедневная задача биллинга). Включать вместе с кодом
+ * списаний — флаг вернёт галочку и карточку «Автопродление».
+ */
+export const RECURRING_CHARGES_LIVE: boolean = false;
+
+/** Согласие на автоплатёж, которое действительно действует сейчас. */
+export function effectiveRecurringConsent(requested: boolean, live: boolean = RECURRING_CHARGES_LIVE): boolean {
+  return live && requested === true;
+}
+
 /** Периодичность — называем явно, скрытых платежей быть не должно. */
 export function recurringPeriodText(cycle: "month" | "year" = "month"): string {
   return (

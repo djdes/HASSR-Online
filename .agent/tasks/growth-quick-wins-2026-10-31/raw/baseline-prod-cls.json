@@ -1,0 +1,57 @@
+{
+ "url": "https://wesetup.ru/",
+ "device": "Pixel 7",
+ "measuredAt": "2026-10-31T21:39:11.951Z",
+ "runs": [
+  {
+   "cls": 0.168,
+   "shifts": [
+    {
+     "t": 4005,
+     "v": 0.1573,
+     "src": [
+      "absolute left-[10%] top-[-8%] size-[720px] rounded-full bg-[",
+      "absolute right-[5%] top-[40%] size-[620px] rounded-full bg-[",
+      "absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-trans",
+      "hero-consultation-note mt-6 max-w-[72ch] text-[13px] leading",
+      "mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12 scroll-mt-"
+     ]
+    },
+    {
+     "t": 4054,
+     "v": 0.0109,
+     "src": [
+      "absolute right-[5%] top-[40%] size-[620px] rounded-full bg-[",
+      "absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-trans"
+     ]
+    }
+   ],
+   "challenge": true
+  },
+  {
+   "cls": 0.168,
+   "shifts": [
+    {
+     "t": 4012,
+     "v": 0.1573,
+     "src": [
+      "absolute left-[10%] top-[-8%] size-[720px] rounded-full bg-[",
+      "absolute right-[5%] top-[40%] size-[620px] rounded-full bg-[",
+      "absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-trans",
+      "hero-consultation-note mt-6 max-w-[72ch] text-[13px] leading",
+      "mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12 scroll-mt-"
+     ]
+    },
+    {
+     "t": 4029,
+     "v": 0.0109,
+     "src": [
+      "absolute right-[5%] top-[40%] size-[620px] rounded-full bg-[",
+      "absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-trans"
+     ]
+    }
+   ],
+   "challenge": true
+  }
+ ]
+}
