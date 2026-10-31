@@ -5,7 +5,9 @@ import { FORMAT_LOCALES, formatNumber } from "@/i18n/locales";
 import { isLossCategory, lossUnitCode } from "@/components/losses/loss-presentation";
 import { Plus, TrendingDown } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { getViewedPointId } from "@/lib/active-building";
 import { db } from "@/lib/db";
+import { areaPointWhere, lossPointWhere } from "@/lib/point-filters";
 
 export default async function LossesPage() {
   const session = await requireAuth();
@@ -25,17 +27,23 @@ export default async function LossesPage() {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  // Точка из шапки (2026-10-31): потери её цехов, общих цехов и без цеха.
+  const pointId = await getViewedPointId(session);
+  const pointAreas = pointId
+    ? await db.area.findMany({ where: { organizationId: orgId, ...areaPointWhere(pointId) }, select: { id: true } })
+    : [];
+  const atPoint = lossPointWhere(pointId, pointAreas.map((area) => area.id));
   const [records, weekRecords, monthRecords] = await Promise.all([
     db.lossRecord.findMany({
-      where: { organizationId: orgId },
+      where: { organizationId: orgId, ...atPoint },
       orderBy: { date: "desc" },
       take: 100,
     }),
     db.lossRecord.findMany({
-      where: { organizationId: orgId, date: { gte: weekAgo } },
+      where: { organizationId: orgId, date: { gte: weekAgo }, ...atPoint },
     }),
     db.lossRecord.findMany({
-      where: { organizationId: orgId, date: { gte: monthAgo } },
+      where: { organizationId: orgId, date: { gte: monthAgo }, ...atPoint },
       select: { productName: true, cause: true, costRub: true, quantity: true },
     }),
   ]);

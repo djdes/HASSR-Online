@@ -1,7 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { checklistMetric, journalMetric, metricPercent, sumMetrics, type ChecklistAssignmentState } from "./monitoring";
+import {
+  checklistMetric,
+  journalMetric,
+  metricPercent,
+  MONITORING_ALL_POINTS,
+  resolveMonitoringPoint,
+  sumMetrics,
+  type ChecklistAssignmentState,
+} from "./monitoring";
 
 test("процент: целый, нечего считать — null, больше 100 не бывает", () => {
   assert.equal(metricPercent({ done: 3, total: 4 }), 75);
@@ -37,4 +45,14 @@ test("чек-листы: текущий период, без выключенн�
   assert.deepEqual(checklistMetric(rows, null), { done: 2, total: 4 });
   assert.deepEqual(checklistMetric(rows, "p1"), { done: 1, total: 2 });
   assert.deepEqual(checklistMetric(rows, "p3"), { done: 0, total: 0 });
+});
+
+test("точка мониторинга: без параметра — точка из шапки, «all» — все точки, чужая — все точки", () => {
+  const points = [{ id: "p1" }, { id: "p2" }];
+  assert.equal(resolveMonitoringPoint(null, points, "p2"), "p2");
+  assert.equal(resolveMonitoringPoint(null, points, null), null);
+  assert.equal(resolveMonitoringPoint(MONITORING_ALL_POINTS, points, "p2"), null);
+  assert.equal(resolveMonitoringPoint("p1", points, "p2"), "p1");
+  assert.equal(resolveMonitoringPoint("other", points, "p2"), null);
+  assert.equal(resolveMonitoringPoint(null, points, "office"), null);
 });

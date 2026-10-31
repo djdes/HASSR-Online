@@ -2383,7 +2383,9 @@
       "templateNotFound": "Shablon topilmadi",
       "internalServer": "Serverda ichki xatolik yuz berdi",
       "internal": "Ichki xatolik"
-    }
+    },
+    "point": "Nuqta",
+    "allPoints": "Barcha nuqtalar"
   },
   "journalForm": {
     "draft": {
@@ -30703,18 +30705,29 @@
       "problems": "Qo‘lda hal qilish kerak",
       "unchanged": "O‘zgarishsiz: {count}",
       "nothing": "O‘zgarish yo‘q",
-      "errors": "Bo‘lmadi"
+      "errors": "Bo‘lmadi",
+      "points": "Nuqtalar"
     },
     "problem": {
       "no_position": "WeSetup’da bunday lavozim yo‘q va standart lavozim tanlanmagan",
       "dismissed_in_wesetup": "WeSetup’da bo‘shatilgan, 1C’da esa ishlaydi — kerak bo‘lsa qo‘lda qaytaring",
-      "ambiguous_name": "WeSetup’da bunday F.I.Sh. bilan bir nechta xodim bor — qo‘lda bog‘lang"
+      "ambiguous_name": "WeSetup’da bunday F.I.Sh. bilan bir nechta xodim bor — qo‘lda bog‘lang",
+      "no_point_mapping": "«{department}» bo‘limi nuqtaga moslanmagan — bo‘limni nuqtaga moslang"
     },
     "apiTitle": "Bazani e’lon qilmasdan — 1C ishlov berish dasturidan",
     "apiHint": "1C’dagi ishlov berish dasturi xodimlar ro‘yxatini quyidagi manzilga «Sozlamalar → API»dagi tashkilot tokeni bilan yuboradi. «apply»siz sayt faqat nima o‘zgarishini javob beradi (avtomatik qo‘llash yoqilmagan bo‘lsa).",
     "apiToken": "API tokeni",
     "errors": {
       "failed": "Bo‘lmadi. Qayta urinib ko‘ring."
-    }
+    },
+    "departmentsTitle": "1C bo‘limlari → nuqtalar",
+    "departmentsHint": "1C dagi xodim o‘z bo‘limi nuqtasida ishlaydi: yangilarga bo‘lim nuqtalari beriladi, qolganlarida 1C faqat o‘zi qo‘ygan nuqtalarni o‘zgartiradi. Xodim kartasida qo‘lda berilgan nuqtalarga tegilmaydi.",
+    "departmentsEmpty": "Bo‘limlar «Tekshirish»dan keyin paydo bo‘ladi — 1C ularni xodimlar bilan birga yuboradi.",
+    "departmentCount": "{count} xodim",
+    "departmentNotMapped": "Tanlanmagan",
+    "departmentAllPoints": "Barcha nuqtalar",
+    "departmentsSave": "Moslikni saqlash",
+    "departmentsSaved": "Moslik saqlandi — keyingi ishga tushirishda qo‘llanadi",
+    "departmentsUnmapped": "Moslanmagan: {count}. Bu bo‘limlar xodimlari hozircha nuqtasiz."
   }
 }

@@ -4,7 +4,9 @@ import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { PageHeader } from "@/components/ui/page-header";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
+import { readDepartmentPointMap, readDepartments } from "@/lib/hr1c/points";
 import { decryptSecret } from "@/lib/integration-crypto";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
@@ -20,12 +22,20 @@ export default async function Hr1cSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
-  const [t, organization, connection, positions] = await Promise.all([
+  const [t, organization, connection, positions, targets] = await Promise.all([
     getTranslations("hr1c"),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     db.hrConnection.findUnique({ where: { organizationId } }),
     db.jobPosition.findMany({ where: { organizationId }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
+    buildingTargets(organizationId),
   ]);
+  // Подразделения 1С → точки (2026-10-31): только при включённых точках.
+  const pointIds = targets.filter((id): id is string => id !== null);
+  const points = pointIds.length > 0
+    ? await db.building.findMany({ where: { id: { in: pointIds } }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } })
+    : [];
+  const departments = readDepartments(connection?.departmentsJson);
+  const departmentMap = readDepartmentPointMap(connection?.departmentPointsJson, new Set(pointIds));
   const base = (process.env.NEXTAUTH_URL ?? "https://wesetup.ru").replace(/\/+$/, "");
   // Логин не секрет — показываем, чтобы не вводить заново; пароль — нет.
   let login = "";
@@ -57,6 +67,9 @@ export default async function Hr1cSettingsPage() {
               : null,
           }}
           positions={positions}
+          points={points}
+          departments={departments}
+          departmentMap={departmentMap}
           apiUrl={`${base}/api/external/hr/employees`}
           timeZone={organization?.timezone || "Europe/Moscow"}
         />

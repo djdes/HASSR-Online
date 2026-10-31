@@ -2383,7 +2383,9 @@
       "templateNotFound": "Template not found",
       "internalServer": "Internal server error",
       "internal": "Internal error"
-    }
+    },
+    "point": "Point",
+    "allPoints": "All points"
   },
   "journalForm": {
     "draft": {
@@ -30703,18 +30705,29 @@
       "problems": "Needs manual decision",
       "unchanged": "Unchanged: {count}",
       "nothing": "No changes",
-      "errors": "Failed"
+      "errors": "Failed",
+      "points": "Points"
     },
     "problem": {
       "no_position": "no such position in WeSetup and no default position selected",
       "dismissed_in_wesetup": "dismissed in WeSetup but working in 1C — restore manually if needed",
-      "ambiguous_name": "several working employees with this name in WeSetup — link manually"
+      "ambiguous_name": "several working employees with this name in WeSetup — link manually",
+      "no_point_mapping": "department «{department}» is not mapped to a point — map the department to a point"
     },
     "apiTitle": "Without publishing — from a 1C data processor",
     "apiHint": "A 1C data processor sends the employee list to the address below with the organization token from “Settings → API”. Without “apply” the site only answers what would change (unless automatic apply is on).",
     "apiToken": "API token",
     "errors": {
       "failed": "Something went wrong. Please try again."
-    }
+    },
+    "departmentsTitle": "1C departments → points",
+    "departmentsHint": "An employee from 1C works at their department's point: new hires get the department's points; for others 1C only changes points it set itself. Points set by hand in the employee card are never touched.",
+    "departmentsEmpty": "Departments appear after «Check» — 1C sends them with the employees.",
+    "departmentCount": "{count} empl.",
+    "departmentNotMapped": "Not selected",
+    "departmentAllPoints": "All points",
+    "departmentsSave": "Save mapping",
+    "departmentsSaved": "Mapping saved — applies on the next run",
+    "departmentsUnmapped": "Not mapped: {count}. Employees of these departments have no point yet."
   }
 }

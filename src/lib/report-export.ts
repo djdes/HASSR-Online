@@ -13,7 +13,10 @@ import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import ru from "@/i18n/messages/ru.json";
 
 export const REPORT_EMPTY_MESSAGE = ru.reports.empty;
-export type ReportCopy = Record<"date" | "employee" | "area" | "equipment" | "yes" | "no", string>;
+export type ReportCopy = Record<"date" | "employee" | "area" | "equipment" | "yes" | "no", string> & {
+  /** Колонка «Точка» — выгрузка всей организации с журналами по точкам. */
+  point?: string;
+};
 const DEFAULT_REPORT_COPY: ReportCopy = { ...ru.reports, yes: ru.common.yes, no: ru.common.no };
 type ReportPresentation = { locale?: Locale; copy?: ReportCopy };
 
@@ -29,6 +32,8 @@ export type ReportDocumentEntry = {
   date: Date;
   employeeName: string | null;
   data: unknown;
+  /** Точка документа — в выгрузке всей организации (2026-10-31). */
+  pointName?: string | null;
 };
 
 /** Запись легаси-журнала (`JournalEntry`). */
@@ -38,6 +43,8 @@ export type ReportLegacyEntry = {
   areaName: string | null;
   equipmentName: string | null;
   data: unknown;
+  /** Точка цеха записи — в выгрузке всей организации. */
+  pointName?: string | null;
 };
 
 export type ReportTable = {
@@ -209,7 +216,11 @@ export function buildReportTable(input: {
   }
 
   const withLegacyColumns = legacyEntries.length > 0;
-  const headers = [copy.date, copy.employee];
+  // Колонка «Точка» — когда строки помечены точками (вся организация).
+  const withPointColumn = [...documentEntries, ...legacyEntries].some((entry) => Boolean(entry.pointName));
+  const headers = [copy.date];
+  if (withPointColumn) headers.push(copy.point ?? "Точка");
+  headers.push(copy.employee);
   if (withLegacyColumns) headers.push(copy.area, copy.equipment);
   for (const key of orderedKeys) {
     const label = fieldByKey.get(key)?.label?.trim();
@@ -225,19 +236,18 @@ export function buildReportTable(input: {
 
   const rows: string[][] = [];
   for (const entry of documentEntries) {
-    const row = [formatReportDay(entry.date, locale), entry.employeeName ?? ""];
+    const row = [formatReportDay(entry.date, locale)];
+    if (withPointColumn) row.push(entry.pointName ?? "");
+    row.push(entry.employeeName ?? "");
     if (withLegacyColumns) row.push("", "");
     row.push(...valueCells(entry.data));
     rows.push(row);
   }
   for (const entry of legacyEntries) {
-    rows.push([
-      formatReportDateTime(entry.createdAt, input.timeZone, locale),
-      entry.filledByName ?? "",
-      entry.areaName ?? "",
-      entry.equipmentName ?? "",
-      ...valueCells(entry.data),
-    ]);
+    const row = [formatReportDateTime(entry.createdAt, input.timeZone, locale)];
+    if (withPointColumn) row.push(entry.pointName ?? "");
+    row.push(entry.filledByName ?? "", entry.areaName ?? "", entry.equipmentName ?? "", ...valueCells(entry.data));
+    rows.push(row);
   }
 
   return { headers, rows, isEmpty: rows.length === 0 };

@@ -21,6 +21,9 @@ export const hrEmployeesBodySchema = z.object({
         dismissedAt: date.nullish(),
         archived: z.boolean().optional(),
         phone: z.string().trim().max(40).nullish(),
+        /** Подразделение: id в 1С и/или название — для точки сотрудника. */
+        departmentId: z.string().trim().max(100).nullish(),
+        department: z.string().trim().max(200).nullish(),
       }),
     )
     .max(5000),
@@ -39,6 +42,8 @@ export function readHrEmployeesBody(raw: unknown): { apply: boolean | null; empl
       dismissedAt: item.dismissedAt ?? null,
       archived: item.archived === true,
       phone: item.phone || null,
+      departmentId: item.departmentId || null,
+      departmentName: item.department || null,
     })),
   };
 }

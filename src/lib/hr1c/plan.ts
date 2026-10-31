@@ -26,6 +26,9 @@ export type HrEmployee = {
   /** Сотрудник в архиве 1С — уволен давно, даты может не быть. */
   archived: boolean;
   phone: string | null;
+  /** Текущее подразделение в 1С (id и/или название) — для точки сотрудника. */
+  departmentId?: string | null;
+  departmentName?: string | null;
 };
 
 export type WsUser = { id: string; name: string; isActive: boolean; archived: boolean; jobPositionId: string | null };

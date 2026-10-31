@@ -7,6 +7,8 @@ import { CHECKLIST_CODE } from "@/lib/custom-checklists";
 import { checklistInspectionReadWhere } from "@/lib/custom-checklists.server";
 import { canReviewInspection, hasViolations, parseChecklistResultFilters, resultPeriodStart, summarizeChecklistResult } from "@/lib/checklist-results";
 import { loadAssignmentContext, targetName } from "@/lib/checklist-assignments.server";
+import { getViewedPointId } from "@/lib/active-building";
+import { checklistAssignmentAtPoint } from "@/lib/point-filters";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { ResultsPageClient } from "@/components/checklists/results-page-client";
 
@@ -71,8 +73,14 @@ export default async function ChecklistResultsPage({ searchParams }: { searchPar
   ]);
   const context = rows.some((row) => row.assignment) ? await loadAssignmentContext(organizationId) : null;
   const isAdmin = hasCapability(session.user, "admin.full");
+  // Точка из шапки (2026-10-31): проверки по назначениям на другую точку или
+  // на сотрудника другой точки на этой точке не показываем.
+  const pointId = await getViewedPointId(session);
+  const personPoints = new Map((context?.people ?? []).map((person) => [person.id, person.buildingIds]));
+  const livePointIds = new Set((context?.buildings ?? []).map((building) => building.id));
 
   const inspections = rows
+    .filter((row) => checklistAssignmentAtPoint(row.assignment, pointId, personPoints, livePointIds))
     .map((row) => {
       const summary = row.status === "completed" ? summarizeChecklistResult(row.result) : null;
       return {

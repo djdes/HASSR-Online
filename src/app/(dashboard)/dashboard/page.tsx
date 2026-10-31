@@ -31,7 +31,8 @@ import {
 import { SuperUserDevTools } from "@/components/dashboard/super-user-dev-tools";
 import { isSuperUser } from "@/lib/super-user";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getActiveBuildingId, getViewedPointId } from "@/lib/active-building";
+import { journalEntryPointWhere } from "@/lib/point-filters";
 import { normalizeSphere } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
 import { getDisabledJournalCodes, getDisabledPaperJournalIds, parseDisabledCodes } from "@/lib/disabled-journals";
@@ -104,6 +105,9 @@ export default async function DashboardPage({
   const organizationId = getActiveOrgId(session);
   // Точки: «сегодня» на дашборде считается для активной точки.
   const activeBuildingId = await getActiveBuildingId(session);
+  // «Ждут подтверждения» и записи за 48 ч — по торговой точке из шапки
+  // (2026-10-31): записи её цехов и оборудования и без цеха.
+  const entryAtPoint = journalEntryPointWhere(await getViewedPointId(session));
 
   const now = new Date();
   const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -116,10 +120,10 @@ export default async function DashboardPage({
     ppkToday,
   ] = await Promise.all([
     db.journalEntry.count({
-      where: { organizationId, status: "submitted" },
+      where: { organizationId, status: "submitted", ...entryAtPoint },
     }),
     db.journalEntry.findMany({
-      where: { organizationId, createdAt: { gte: cutoff48h } },
+      where: { organizationId, createdAt: { gte: cutoff48h }, ...entryAtPoint },
       orderBy: { createdAt: "desc" },
       take: 40,
       include: {

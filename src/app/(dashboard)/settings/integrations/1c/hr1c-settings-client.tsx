@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Loader2, Users, X } from "lucide-react";
+import { Check, Loader2, MapPin, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatDate, isLocale } from "@/i18n/locales";
@@ -23,21 +23,27 @@ type Initial = {
 
 type RunResult = {
   mode: "preview" | "apply";
-  summary: { hire: number; link: number; update: number; dismiss: number; problems: number; unchanged: number };
-  actions: Array<{ kind: "hire" | "link" | "update" | "dismiss"; fullName: string; detail: string | null }>;
-  problems: Array<{ fullName: string; reason: "no_position" | "dismissed_in_wesetup" | "ambiguous_name" }>;
+  summary: { hire: number; link: number; update: number; dismiss: number; problems: number; unchanged: number; points?: number };
+  actions: Array<{ kind: "hire" | "link" | "update" | "dismiss" | "points"; fullName: string; detail: string | null }>;
+  problems: Array<{ fullName: string; reason: "no_position" | "dismissed_in_wesetup" | "ambiguous_name" | "no_point_mapping"; detail?: string | null }>;
   errors: string[];
 };
+
+/** Подразделение 1С из последнего прогона. */
+type Department = { key: string; name: string; count: number };
+/** «Все точки» в карте сопоставления (как `ALL_POINTS` в src/lib/hr1c/points.ts). */
+const ALL_POINTS = "*";
 
 const INPUT =
   "mt-1 h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] text-[#0b1024] outline-none transition-colors focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15";
 const CARD = "rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6";
 const DATE_TIME: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" };
-const KINDS = ["hire", "dismiss", "update", "link"] as const;
+const KINDS = ["hire", "dismiss", "update", "points", "link"] as const;
 const KIND_TONE: Record<(typeof KINDS)[number], string> = {
   hire: "bg-[#ecfdf5] text-[#136c3e]",
   dismiss: "bg-[#fff4f2] text-[#a13a32]",
   update: "bg-[#eef1ff] text-[#3848c7]",
+  points: "bg-[#f5f6ff] text-[#3848c7]",
   link: "bg-[#f4f4f7] text-[#3c4053]",
 };
 
@@ -58,11 +64,18 @@ export function Hr1cSettingsClient({
   positions,
   apiUrl,
   timeZone,
+  points = [],
+  departments = [],
+  departmentMap = {},
 }: {
   initial: Initial;
   positions: Array<{ id: string; name: string }>;
   apiUrl: string;
   timeZone: string;
+  /** Точки организации; пусто — точки выключены, блок сопоставления не нужен. */
+  points?: Array<{ id: string; name: string }>;
+  departments?: Department[];
+  departmentMap?: Record<string, string>;
 }) {
   const t = useTranslations("hr1c");
   const rawLocale = useLocale();
@@ -73,8 +86,33 @@ export function Hr1cSettingsClient({
   const [password, setPassword] = useState("");
   const [defaultPositionId, setDefaultPositionId] = useState(initial.defaultPositionId);
   const [autoApply, setAutoApply] = useState(initial.autoApply);
-  const [busy, setBusy] = useState<"save" | "disconnect" | "preview" | "apply" | null>(null);
+  const [busy, setBusy] = useState<"save" | "disconnect" | "preview" | "apply" | "departments" | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
+  const [mapping, setMapping] = useState<Record<string, string>>(departmentMap);
+  const unmapped = departments.filter((department) => !mapping[department.key]).length;
+
+  async function saveDepartments() {
+    setBusy("departments");
+    try {
+      const res = await fetch("/api/settings/hr1c/departments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ map: Object.fromEntries(departments.map((department) => [department.key, mapping[department.key] || null])) }),
+      });
+      const body = (await res.json().catch(() => null)) as { error?: string; map?: Record<string, string> } | null;
+      if (!res.ok) {
+        toast.error(body?.error ?? t("errors.failed"));
+        return;
+      }
+      if (body?.map) setMapping(body.map);
+      toast.success(t("departmentsSaved"));
+      router.refresh();
+    } catch {
+      toast.error(t("errors.failed"));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function save() {
     setBusy("save");
@@ -245,6 +283,62 @@ export function Hr1cSettingsClient({
         </div>
       </section>
 
+      {initial.connected && points.length > 0 ? (
+        <section className={CARD} data-hr1c-departments>
+          <div className="flex items-start gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+              <MapPin className="size-5" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("departmentsTitle")}</h2>
+              <p className="mt-1 text-[14px] leading-relaxed text-[#6f7282]">{t("departmentsHint")}</p>
+              {departments.length === 0 ? (
+                <p className="mt-3 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13.5px] text-[#6f7282]">
+                  {t("departmentsEmpty")}
+                </p>
+              ) : (
+                <>
+                  <ul className="mt-3 divide-y divide-[#ececf4] rounded-2xl border border-[#ececf4]">
+                    {departments.map((department) => (
+                      <li key={department.key} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" data-hr1c-department={department.key}>
+                        <div className="min-w-0">
+                          <div className="truncate text-[14px] font-medium text-[#0b1024]">{department.name}</div>
+                          <div className="text-[12.5px] text-[#6f7282]">{t("departmentCount", { count: String(department.count) })}</div>
+                        </div>
+                        <select
+                          aria-label={department.name}
+                          value={mapping[department.key] ?? ""}
+                          onChange={(event) => setMapping((current) => ({ ...current, [department.key]: event.target.value }))}
+                          className={`${INPUT} mt-0 sm:w-[260px] ${mapping[department.key] ? "" : "border-[#f1d6a8] bg-[#fffaf0]"}`}
+                        >
+                          <option value="">{t("departmentNotMapped")}</option>
+                          <option value={ALL_POINTS}>{t("departmentAllPoints")}</option>
+                          {points.map((point) => (
+                            <option key={point.id} value={point.id}>{point.name}</option>
+                          ))}
+                        </select>
+                      </li>
+                    ))}
+                  </ul>
+                  {unmapped > 0 ? (
+                    <p className="mt-2 text-[12.5px] text-[#7a4a00]">{t("departmentsUnmapped", { count: String(unmapped) })}</p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void saveDepartments()}
+                    disabled={busy !== null}
+                    className="mt-3 inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
+                  >
+                    {busy === "departments" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                    {t("departmentsSave")}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {canRun ? (
         <section className={CARD} data-hr1c-run>
           <div className="flex flex-wrap gap-2">
@@ -297,7 +391,7 @@ export function Hr1cSettingsClient({
                   <ul className="mt-1.5 space-y-1 text-[13px] text-[#3c4053]">
                     {result.problems.map((problem, index) => (
                       <li key={`${problem.fullName}-${index}`}>
-                        <b className="font-medium">{problem.fullName}</b> — {t(`problem.${problem.reason}`)}
+                        <b className="font-medium">{problem.fullName}</b> — {t(`problem.${problem.reason}`, { department: problem.detail ?? "" })}
                       </li>
                     ))}
                   </ul>

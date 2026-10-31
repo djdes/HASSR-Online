@@ -7,7 +7,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { PPK_OVERVIEW_HREF } from "@/lib/ppk/registry";
 import { loadMonitoring } from "@/lib/monitoring.server";
-import { metricPercent, type MonitoringMetric } from "@/lib/monitoring";
+import { MONITORING_ALL_POINTS, metricPercent, type MonitoringMetric } from "@/lib/monitoring";
 import { cn } from "@/lib/utils";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -122,7 +122,8 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
             return (
               <Link
                 key={option.id ?? "all"}
-                href={option.id ? `/monitoring?point=${encodeURIComponent(option.id)}` : "/monitoring"}
+                // «Все точки» — явно: без параметра страница открывается на точке из шапки.
+                href={`/monitoring?point=${encodeURIComponent(option.id ?? MONITORING_ALL_POINTS)}`}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "inline-flex h-10 items-center rounded-2xl border px-4 text-[14px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
