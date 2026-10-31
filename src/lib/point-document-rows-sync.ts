@@ -5,6 +5,7 @@ import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE, createColdEquipmentConfigItem } 
 import { db } from "@/lib/db";
 import { EQUIPMENT_CALIBRATION_TEMPLATE_CODE } from "@/lib/equipment-calibration-document";
 import { EQUIPMENT_MAINTENANCE_TEMPLATE_CODE } from "@/lib/equipment-maintenance-document";
+import { SANITATION_DAY_TEMPLATE_CODE } from "@/lib/sanitation-day-document";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
 
@@ -18,7 +19,10 @@ import { isUvLampEquipment } from "@/lib/uv-lamp";
  *  - оборудование (холодильники, поверка, обслуживание) — цехов этой точки,
  *    цехов без точки и ручные строки; строки оборудования других точек
  *    убираются из конфига;
- *  - помещения (климат, уборка) — этой точки;
+ *  - помещения (климат, уборка, график генуборок) — этой точки; строку
+ *    генуборки с отмеченной уборкой не убираем — это запись журнала;
+ *  - сотрудники уборки (уборщики, ответственные, контролёры) — этой точки и
+ *    без точек (2026-10-31);
  *  - сотрудники (гигиена, здоровье) — см. `visiblePointStaffEntries`:
  *    записи не удаляем, строки сотрудников других точек не показываем.
  * Закрытые документы — история, их не трогаем. Показания из убранной строки
@@ -32,6 +36,7 @@ export const POINT_ROWS_CONFIG_CODES = [
   EQUIPMENT_MAINTENANCE_TEMPLATE_CODE,
   CLIMATE_DOCUMENT_TEMPLATE_CODE,
   CLEANING_DOCUMENT_TEMPLATE_CODE,
+  SANITATION_DAY_TEMPLATE_CODE,
 ] as const;
 
 export const POINT_STAFF_CODES = ["hygiene", "health_check"] as const;
@@ -46,7 +51,106 @@ export type PointDirectory = {
    * морозильник или задана норма; не УФ-лампа) — для пустого журнала точки.
    */
   coldEquipment?: ReadonlyArray<{ id: string; name: string; pointId: string | null; min: number | null; max: number | null }>;
+  /** Сотрудник → его точки (`User.buildingIds`) — для людей в конфиге уборки. */
+  staffPoints?: ReadonlyMap<string, ReadonlyArray<string>>;
+  /** Живые точки организации: удалённые точки в `buildingIds` не считаются. */
+  livePointIds?: ReadonlySet<string>;
 };
+
+/**
+ * Сотрудник другой точки: среди его живых точек нет `pointId`. Без точек
+ * (работает везде), только удалённые точки, неизвестный (уволен, удалён) —
+ * не чужой.
+ */
+export function isOtherPointStaff(
+  userId: string,
+  pointId: string,
+  staffPoints: ReadonlyMap<string, ReadonlyArray<string>>,
+  livePointIds: ReadonlySet<string>,
+): boolean {
+  const ids = staffPoints.get(userId);
+  if (!ids) return false;
+  const live = ids.filter((id) => livePointIds.has(id));
+  return live.length > 0 && !live.includes(pointId);
+}
+
+/** В строке графика генуборок уже отмечена уборка (новый формат — `cleanings`, старый — ячейки «факт»). */
+function hasRecordedCleaning(row: Record<string, unknown>): boolean {
+  if (Array.isArray(row.cleanings) && row.cleanings.some((item) => Boolean(asRecord(item)?.done))) return true;
+  const fact = asRecord(row.fact);
+  return Boolean(fact && Object.values(fact).some((value) => typeof value === "string" && value.trim() !== "" && value.trim() !== "-"));
+}
+
+/**
+ * Люди другой точки в конфиге журнала уборки: кто берёт задачи
+ * (`selectedCleanerUserIds`, `cleanerByRoomId`), ответственные и
+ * контролёры, расписание. Коды уборщиков (`cleanerCodeByUserId`) остаются —
+ * это подписи в уже заполненном журнале.
+ */
+function trimCleaningStaff(
+  record: Record<string, unknown>,
+  isForeignUser: (userId: string) => boolean,
+): { config: Record<string, unknown>; removed: number } | null {
+  const next: Record<string, unknown> = { ...record };
+  let removed = 0;
+  const foreign = (value: unknown) => typeof value === "string" && value !== "" && isForeignUser(value);
+
+  if (Array.isArray(record.selectedCleanerUserIds)) {
+    const kept = record.selectedCleanerUserIds.filter((id) => !foreign(id));
+    removed += record.selectedCleanerUserIds.length - kept.length;
+    next.selectedCleanerUserIds = kept;
+  }
+  const pinned = asRecord(record.cleanerByRoomId);
+  if (pinned) {
+    const kept: Record<string, unknown> = {};
+    for (const [roomId, value] of Object.entries(pinned)) {
+      const list = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+      const own = list.filter((id) => !foreign(id));
+      removed += list.length - own.length;
+      if (own.length > 0) kept[roomId] = Array.isArray(value) ? own : own[0];
+    }
+    next.cleanerByRoomId = kept;
+  }
+  for (const key of ["cleaningResponsibles", "controlResponsibles", "responsiblePersons"]) {
+    const list = record[key];
+    if (!Array.isArray(list)) continue;
+    const kept = list.filter((item) => !foreign(asRecord(item)?.userId));
+    removed += list.length - kept.length;
+    next[key] = kept;
+  }
+  if (Array.isArray(record.responsiblePairs)) {
+    next.responsiblePairs = record.responsiblePairs.map((item) => {
+      const pair = asRecord(item);
+      if (!pair) return item;
+      const copy = { ...pair };
+      for (const side of ["cleaning", "control"]) {
+        if (foreign(copy[`${side}UserId`])) {
+          copy[`${side}UserId`] = null;
+          copy[`${side}UserName`] = "";
+          removed += 1;
+        }
+      }
+      return copy;
+    });
+  }
+  if (foreign(record.controlUserId)) {
+    next.controlUserId = null;
+    removed += 1;
+  }
+  const schedule = asRecord(record.schedule);
+  if (schedule) {
+    const copy: Record<string, unknown> = { ...schedule };
+    for (const [key, value] of Object.entries(schedule)) {
+      const item = asRecord(value);
+      if (item && foreign(item.responsibleUserId)) {
+        copy[key] = { ...item, responsibleUserId: null };
+        removed += 1;
+      }
+    }
+    next.schedule = copy;
+  }
+  return removed > 0 ? { config: next, removed } : null;
+}
 
 /** Оборудование идёт в журнал холодильников — правило `buildColdEquipmentConfigFromEquipment`. */
 export function isColdJournalEquipment(item: {
@@ -124,13 +228,26 @@ export function trimPointDocumentConfig(
   if (templateCode === CLIMATE_DOCUMENT_TEMPLATE_CODE) {
     return filterList("rooms", (row) => foreignRoom(linked(row.roomId)));
   }
+  if (templateCode === SANITATION_DAY_TEMPLATE_CODE) {
+    return filterList("rows", (row) => foreignRoom(linked(row.roomId)) && !hasRecordedCleaning(row));
+  }
   if (templateCode === CLEANING_DOCUMENT_TEMPLATE_CODE) {
     const selected = record.selectedRoomIds;
-    if (!Array.isArray(selected)) return null;
-    const kept = selected.filter((id) => !foreignRoom(linked(id)));
-    return kept.length === selected.length
-      ? null
-      : { config: { ...record, selectedRoomIds: kept }, removed: selected.length - kept.length };
+    let rooms: { config: Record<string, unknown>; removed: number } | null = null;
+    if (Array.isArray(selected)) {
+      const kept = selected.filter((id) => !foreignRoom(linked(id)));
+      if (kept.length !== selected.length) {
+        rooms = { config: { ...record, selectedRoomIds: kept }, removed: selected.length - kept.length };
+      }
+    }
+    const staffPoints = directory.staffPoints;
+    const livePointIds = directory.livePointIds;
+    const staff =
+      staffPoints && livePointIds
+        ? trimCleaningStaff(rooms?.config ?? record, (userId) => isOtherPointStaff(userId, pointId, staffPoints, livePointIds))
+        : null;
+    if (!staff) return rooms;
+    return { config: staff.config, removed: (rooms?.removed ?? 0) + staff.removed };
   }
   return null;
 }
@@ -197,13 +314,17 @@ export async function syncPointDocumentRows(
     select: { id: true, buildingId: true, config: true, template: { select: { code: true } } },
   });
   if (documents.length === 0) return 0;
-  const [equipment, rooms] = await Promise.all([
+  const needsStaff = documents.some((document) => document.template.code === CLEANING_DOCUMENT_TEMPLATE_CODE);
+  const [equipment, rooms, staff] = await Promise.all([
     db.equipment.findMany({
       where: { area: { organizationId } },
       select: { id: true, name: true, type: true, tempMin: true, tempMax: true, area: { select: { buildingId: true } } },
       orderBy: { name: "asc" },
     }),
     db.room.findMany({ where: { building: { organizationId } }, select: { id: true, buildingId: true } }),
+    needsStaff
+      ? db.user.findMany({ where: { organizationId }, select: { id: true, buildingIds: true } })
+      : Promise.resolve([] as Array<{ id: string; buildingIds: string[] }>),
   ]);
   const directory: PointDirectory = {
     equipmentPoint: new Map(equipment.map((item) => [item.id, item.area.buildingId])),
@@ -211,6 +332,8 @@ export async function syncPointDocumentRows(
     coldEquipment: equipment
       .filter(isColdJournalEquipment)
       .map((item) => ({ id: item.id, name: item.name, pointId: item.area.buildingId, min: item.tempMin, max: item.tempMax })),
+    staffPoints: new Map(staff.map((user) => [user.id, user.buildingIds ?? []])),
+    livePointIds: new Set(livePoints),
   };
   let fixed = 0;
   for (const document of documents) {

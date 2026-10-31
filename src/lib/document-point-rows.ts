@@ -53,6 +53,43 @@ export function countForeignRows(
   return new Set(rowObjectIds.filter((id): id is string => Boolean(id) && knownIds.has(id as string) && !pointIds.has(id as string))).size;
 }
 
+function collectStrings(value: unknown, into: Set<string>, depth = 0): void {
+  if (depth > 12 || value == null) return;
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (text) into.add(text);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectStrings(item, into, depth + 1);
+    return;
+  }
+  if (typeof value === "object") {
+    for (const item of Object.values(value as Record<string, unknown>)) collectStrings(item, into, depth + 1);
+  }
+}
+
+/**
+ * Люди из списка, на которых документ уже ссылается: `employeeId` записей и
+ * любая строка в конфиге / данных записей, равная id или ФИО человека.
+ * Списки выбора документа точки — её сотрудники плюс эти люди, чтобы уже
+ * выбранный человек другой точки не пропадал из поля (2026-10-31).
+ */
+export function documentReferencedUserIds(
+  users: ReadonlyArray<{ id: string; name?: string | null }>,
+  sources: ReadonlyArray<unknown>,
+  entryEmployeeIds: Iterable<string | null | undefined>,
+): Set<string> {
+  const strings = new Set<string>();
+  for (const source of sources) collectStrings(source, strings);
+  for (const id of entryEmployeeIds) if (id) strings.add(id);
+  return new Set(
+    users
+      .filter((user) => strings.has(user.id) || (user.name?.trim() ? strings.has(user.name.trim()) : false))
+      .map((user) => user.id),
+  );
+}
+
 /** Точка, по которой собираются строки документа; null — вся организация. */
 export async function documentRowsPointId(
   organizationId: string,

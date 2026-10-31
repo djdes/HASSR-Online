@@ -1,0 +1,19 @@
+{
+  "orgId": "cmvwv6jsh0000hk9m86q8v2cn",
+  "manager": "manager-cmvwv6jsh0000hk9m86q8v2cn@verify.local",
+  "pointA": "cmvwv6jt00001hk9m82yfvguz",
+  "pointB": "cmvwv6jt50002hk9m9751ieeq",
+  "generalId": "cmvwv6k2k000ehk9mwmeio1k0",
+  "cleaningId": "cmvwv6k58000fhk9mti3usns2",
+  "coldId": "cmvwv6k5p000ghk9mtwk9cn9j",
+  "users": {
+    "anna": "cmvwv6k0k000bhk9mzcjgvu4w",
+    "boris": "cmvwv6k15000chk9m79kkngqq",
+    "vera": "cmvwv6k1w000dhk9mj8uozzod"
+  },
+  "rooms": {
+    "roomA": "cmvwv6jti0003hk9mki9gyu73",
+    "roomB": "cmvwv6jtw0004hk9mjc521u9s",
+    "roomB2": "cmvwv6ju30005hk9m122rmtmb"
+  }
+}

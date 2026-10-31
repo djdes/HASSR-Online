@@ -96,6 +96,11 @@ type Props = {
   responsibleUserId?: string | null;
   status: string;
   employees: EmployeeItem[];
+  /**
+   * Кому «Заполнить за сегодня» создаёт строки — сотрудники точки документа.
+   * Не задано — все из `employees`.
+   */
+  fillableEmployeeIds?: string[];
   fields: FieldItem[];
   initialEntries: EntryItem[];
   /** Design v2 toggle — пробрасывается в PestControlDocumentClient. */
@@ -138,6 +143,7 @@ function TrackedDocumentClientImpl({
   responsibleUserId,
   status,
   employees,
+  fillableEmployeeIds,
   fields,
   initialEntries,
   organizationName,
@@ -414,12 +420,15 @@ function TrackedDocumentClientImpl({
   }
 
   async function fillForToday() {
-    if (employees.length === 0) return;
+    const fillable = fillableEmployeeIds
+      ? employees.filter((employee) => fillableEmployeeIds.includes(employee.id))
+      : employees;
+    if (fillable.length === 0) return;
     setIsCreating(true);
     try {
       const today = localDayKey();
       await Promise.all(
-        employees.map((employee) =>
+        fillable.map((employee) =>
           fetch(`/api/journal-documents/${documentId}/entries`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },

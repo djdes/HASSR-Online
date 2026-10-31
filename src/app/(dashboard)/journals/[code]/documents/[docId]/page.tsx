@@ -50,7 +50,7 @@ import { canManageOrderScans, listOrderScans } from "@/lib/journal-order-scans-d
 import { readControlPeriodicity } from "@/lib/control-periodicity";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding as worksAtDocumentPoint } from "@/lib/building-settings";
-import { countForeignRows, documentRowsPointId } from "@/lib/document-point-rows";
+import { countForeignRows, documentReferencedUserIds, documentRowsPointId } from "@/lib/document-point-rows";
 import {
   POINT_ROWS_CONFIG_CODES,
   pointForRows,
@@ -88,7 +88,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { isTrackedDocumentTemplate } from "@/lib/tracked-document";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
 import { SANITATION_DAY_TEMPLATE_CODE } from "@/lib/sanitation-day-document";
-import { loadDirectoryBuildings } from "@/lib/room-directory";
+import { configRoomIds, loadDirectoryBuildings, scopeDirectoryBuildings } from "@/lib/room-directory";
 import { isScanOnlyDocumentTemplate } from "@/lib/scan-journal-config";
 import { getScanJournalPageCount } from "@/lib/scan-journal-pages";
 import { TRAINING_PLAN_TEMPLATE_CODE } from "@/lib/training-plan-document";
@@ -440,7 +440,7 @@ async function JournalDocumentBody({
   // молча меняли должность.
   const demoEmployees =
     organization?.isDemo === true ? getHygieneDemoTeamUsers(employees) : [];
-  const enrichedEmployees = employees.map((employee) => {
+  const rosterEmployees = employees.map((employee) => {
     const demo = demoEmployees.find((item) => item.id === employee.id);
     return demo || withDirectoryTitle(employee);
   });
@@ -463,7 +463,24 @@ async function JournalDocumentBody({
   // показываются из полного ростера.
   const rowsPointId = await documentRowsPointId(getActiveOrgId(session), document.buildingId);
   const pointEmployeeIds = new Set(employees.filter((user) => worksAtDocumentPoint(user, rowsPointId)).map((user) => user.id));
-  const addableEmployees = enrichedEmployees.filter((user) => pointEmployeeIds.has(user.id));
+  const addableEmployees = rosterEmployees.filter((user) => pointEmployeeIds.has(user.id));
+  // Списки выбора людей во всех журналах документа точки — её сотрудники и
+  // те, на кого документ уже ссылается (2026-10-31: «ответственный» и другие
+  // поля предлагали людей всех точек). Без точки — весь ростер.
+  const referencedEmployeeIds = rowsPointId
+    ? documentReferencedUserIds(
+        employees,
+        [document.config, document.responsibleUserId, ...document.entries.map((entry) => entry.data)],
+        document.entries.map((entry) => entry.employeeId),
+      )
+    : new Set<string>();
+  // Тот, кто открыл документ, остаётся в списке: от него журналы пишут
+  // строку по умолчанию (`useRosterViewerId`).
+  const enrichedEmployees = rowsPointId
+    ? rosterEmployees.filter(
+        (user) => pointEmployeeIds.has(user.id) || referencedEmployeeIds.has(user.id) || user.id === session.user.id,
+      )
+    : rosterEmployees;
 
   // Уволенные / архивные сотрудники, на которых ссылаются записи этого
   // документа. Ростер выше берёт только активных (ORG_ROSTER_WHERE), и
@@ -510,7 +527,7 @@ async function JournalDocumentBody({
     : document.entries;
   /** Ростер + уволенные: только для рендера ФИО и должностей. */
   const displayEmployees = [
-    ...enrichedEmployees,
+    ...rosterEmployees,
     ...inactiveEmployees.map(withDirectoryTitle),
   ];
 
@@ -1003,8 +1020,13 @@ async function JournalDocumentBody({
 
   if (document.template.code === SANITATION_DAY_TEMPLATE_CODE) {
     // 2026-09-04: единый справочник помещений — строки графика связаны с
-    // Room; карточка помещения открывается прямо из журнала.
-    const directoryBuildings = await loadDirectoryBuildings(getActiveOrgId(session));
+    // Room; карточка помещения открывается прямо из журнала. У документа
+    // точки в выборе — только её помещения (2026-10-31).
+    const directoryBuildings = scopeDirectoryBuildings(
+      await loadDirectoryBuildings(getActiveOrgId(session)),
+      rowsPointId,
+      configRoomIds(document.config, "rows"),
+    );
     return (
       <SanitationDayDocumentClient
         documentId={document.id}
@@ -1434,6 +1456,8 @@ async function JournalDocumentBody({
         responsibleUserId={document.responsibleUserId}
         status={document.status}
         employees={enrichedEmployees}
+        // «Заполнить за сегодня» — только сотрудникам точки документа.
+        fillableEmployeeIds={rowsPointId ? [...pointEmployeeIds] : undefined}
         fields={fields}
         initialEntries={document.entries.map((entry) => ({
           id: entry.id,
@@ -1448,8 +1472,13 @@ async function JournalDocumentBody({
 
   if (document.template.code === CLIMATE_DOCUMENT_TEMPLATE_CODE) {
     // 2026-09-04: единый справочник помещений — строки климата связаны с
-    // Room (нормы и имя из карточки помещения).
-    const directoryBuildings = await loadDirectoryBuildings(getActiveOrgId(session));
+    // Room (нормы и имя из карточки помещения). У документа точки в выборе —
+    // только её помещения (2026-10-31).
+    const directoryBuildings = scopeDirectoryBuildings(
+      await loadDirectoryBuildings(getActiveOrgId(session)),
+      rowsPointId,
+      configRoomIds(document.config, "rooms"),
+    );
     return (
       // «Сегодня» — из пояса организации (см. TodayKeyProvider).
       <TodayKeyProvider value={todayKey}>

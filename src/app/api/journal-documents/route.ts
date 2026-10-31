@@ -9,6 +9,9 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getActiveBuildingId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
+import { worksAtBuilding } from "@/lib/building-settings";
+import { buildingTargets } from "@/lib/building-targets";
+import { isOtherPointStaff, trimPointDocumentConfig } from "@/lib/point-document-rows-sync";
 import { findOverlappingDocument } from "@/lib/journal-document-overlap";
 import { db } from "@/lib/db";
 import {
@@ -307,11 +310,16 @@ export async function POST(request: Request) {
       name: true,
       role: true,
       positionTitle: true,
+      buildingIds: true,
       jobPosition: { select: { name: true, categoryKey: true } },
     },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
   const orgUserIds = new Set(allUsers.map((user) => user.id));
+  // Значения по умолчанию у документа точки (комиссия, выдающий СИЗ,
+  // ответственные) — из сотрудников этой точки (2026-10-31). Явный выбор в
+  // диалоге по-прежнему проверяется по всей организации (`allUsers`).
+  const defaultUsers = allUsers.filter((user) => worksAtBuilding(user, rowsPointId));
 
   // Явный выбор в диалоге создания проверяем сразу: чужой, архивный или
   // ROOT id — это ошибка клиента, а не повод молча поставить другого.
@@ -614,7 +622,7 @@ export async function POST(request: Request) {
 
 
   const calibrationYear = Number(String(dateFrom).slice(0, 4)) || new Date().getUTCFullYear();
-  const calibrationOwner = pickPrimaryManager(allUsers);
+  const calibrationOwner = pickPrimaryManager(defaultUsers);
   const calibrationProvidedRows =
     rawConfig && Array.isArray(rawConfig.rows) && rawConfig.rows.length > 0
       ? normalizeEquipmentCalibrationConfig(rawConfig).rows
@@ -709,33 +717,33 @@ export async function POST(request: Request) {
         )
       : resolvedTemplateCode === CLEANING_VENTILATION_CHECKLIST_TEMPLATE_CODE
       ? normalizeCleaningVentilationConfig(
-          rawConfig ?? getDefaultCleaningVentilationConfig(allUsers),
+          rawConfig ?? getDefaultCleaningVentilationConfig(defaultUsers),
           allUsers
         )
       : resolvedTemplateCode === FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE
       ? buildFinishedProductConfigFromUsers(
-          allUsers,
+          defaultUsers,
           allProducts.map((product) => product.name)
         )
       : resolvedTemplateCode === PRODUCT_WRITEOFF_TEMPLATE_CODE
       ? buildProductWriteoffConfigFromData({
-          users: allUsers,
+          users: defaultUsers,
           products: allProducts,
           batches: recentBatches,
           referenceDate: new Date(dateFrom),
         })
       : resolvedTemplateCode === GLASS_LIST_TEMPLATE_CODE
       ? buildGlassListConfigFromData({
-          users: allUsers,
+          users: defaultUsers,
           areas: allAreas,
           equipment: allEquipment,
           products: allProducts,
           referenceDate: new Date(dateFrom),
         })
       : isAcceptanceDocumentTemplate(resolvedTemplateCode)
-      ? getAcceptanceDocumentDefaultConfig(allUsers)
+      ? getAcceptanceDocumentDefaultConfig(defaultUsers)
       : resolvedTemplateCode === PPE_ISSUANCE_TEMPLATE_CODE
-      ? getPpeIssuanceDefaultConfig(allUsers)
+      ? getPpeIssuanceDefaultConfig(defaultUsers)
       : resolvedTemplateCode === SANITATION_DAY_TEMPLATE_CODE
       ? // «График и учет генеральных уборок» — годовой бланк. Строки
         // берём из помещений организации (раньше подставлялись
@@ -769,7 +777,7 @@ export async function POST(request: Request) {
       ? getDefaultAuditReportConfig()
       : resolvedTemplateCode === METAL_IMPURITY_TEMPLATE_CODE
       ? getDefaultMetalImpurityConfig({
-          users: allUsers,
+          users: defaultUsers,
           materials: allProducts.map((item) => item.name).filter(Boolean),
           suppliers: metalSuppliers
             .map((item) => item.supplier || "")
@@ -792,7 +800,7 @@ export async function POST(request: Request) {
       : isSanitaryDayChecklistTemplate(resolvedTemplateCode)
       ? rawConfig ?? defaultSdcConfig()
       : isRegisterDocumentTemplate(resolvedTemplateCode)
-      ? buildRegisterDocumentConfigFromUsers(allUsers)
+      ? buildRegisterDocumentConfigFromUsers(defaultUsers)
       : undefined;
 
   const cleaningControlRole =
@@ -907,11 +915,51 @@ export async function POST(request: Request) {
           config ?? initialConfig ?? undefined,
           allUsers
         );
+  // Журнал уборки точки: люди другой точки (из прошлого документа или
+  // присланные диалогом) не попадают в новый документ — то же правило, что
+  // у автоочистки старых документов (2026-10-31).
+  const cleaningStaffPoint =
+    resolvedTemplateCode === CLEANING_DOCUMENT_TEMPLATE_CODE && rowsPointId
+      ? {
+          staffPoints: new Map(allUsers.map((user) => [user.id, user.buildingIds ?? []] as const)),
+          livePointIds: new Set(
+            (await buildingTargets(getActiveOrgId(session))).filter((id): id is string => Boolean(id)),
+          ),
+        }
+      : null;
+  // График генуборок точки: «Сделать копию» и прошлый документ могли
+  // принести строки помещений других точек — убираем их так же.
+  const sanitationRoomPoint =
+    resolvedTemplateCode === SANITATION_DAY_TEMPLATE_CODE && rowsPointId
+      ? new Map(
+          (
+            await db.room.findMany({
+              where: { building: { organizationId: getActiveOrgId(session) } },
+              select: { id: true, buildingId: true },
+            })
+          ).map((room) => [room.id, room.buildingId] as const),
+        )
+      : null;
+  const pointConfigForDocument =
+    (cleaningStaffPoint || sanitationRoomPoint) && rowsPointId
+      ? (trimPointDocumentConfig(resolvedTemplateCode, configForDocument, rowsPointId, {
+          equipmentPoint: new Map(),
+          roomPoint: sanitationRoomPoint ?? new Map(),
+          ...(cleaningStaffPoint ?? {}),
+        })?.config ?? configForDocument)
+      : configForDocument;
+  const pointFallbackResponsibleUserId =
+    cleaningStaffPoint &&
+    rowsPointId &&
+    fallbackResponsibleUserId &&
+    isOtherPointStaff(fallbackResponsibleUserId, rowsPointId, cleaningStaffPoint.staffPoints, cleaningStaffPoint.livePointIds)
+      ? null
+      : fallbackResponsibleUserId;
   const normalizedDocumentState = normalizeJournalDocumentStaffState(
     resolvedTemplateCode,
     {
-      config: configForDocument,
-      responsibleUserId: bodyResponsibleUserId || fallbackResponsibleUserId,
+      config: pointConfigForDocument,
+      responsibleUserId: bodyResponsibleUserId || pointFallbackResponsibleUserId,
       responsibleTitle: fallbackResponsibleTitle,
     },
     allUsers,

@@ -15,8 +15,26 @@ import type { ColdEquipmentConfigItem } from "@/lib/cold-equipment-document";
 
 export const DEFAULT_AREA_NAME = "Основной цех";
 
-/** `Equipment.areaId` обязателен: первый цех организации или новый «Основной цех». */
-export async function ensureDefaultArea(organizationId: string): Promise<string> {
+/**
+ * `Equipment.areaId` обязателен: первый цех организации или новый «Основной
+ * цех». Для документа точки (`pointId`) — первый цех этой точки или новый
+ * «Основной цех» на ней (2026-10-31): холодильник, добавленный в журнале
+ * точки А, раньше попадал в первый по алфавиту цех — часто точки Б.
+ */
+export async function ensureDefaultArea(organizationId: string, pointId: string | null = null): Promise<string> {
+  if (pointId) {
+    const own = await db.area.findFirst({
+      where: { organizationId, buildingId: pointId },
+      orderBy: { name: "asc" },
+      select: { id: true },
+    });
+    if (own) return own.id;
+    const created = await db.area.create({
+      data: { organizationId, name: DEFAULT_AREA_NAME, buildingId: pointId },
+      select: { id: true },
+    });
+    return created.id;
+  }
   const existing = await db.area.findFirst({
     where: { organizationId },
     orderBy: { name: "asc" },
@@ -47,11 +65,13 @@ export function guessEquipmentType(item: Pick<ColdEquipmentConfigItem, "min" | "
 
 /**
  * Обновляет запись справочника или создаёт её. Возвращает строку с
- * заполненным `sourceEquipmentId`.
+ * заполненным `sourceEquipmentId`. `pointId` — точка документа: новая запись
+ * встаёт в её цех.
  */
 export async function syncEquipmentDirectoryItem(
   organizationId: string,
-  item: ColdEquipmentConfigItem
+  item: ColdEquipmentConfigItem,
+  pointId: string | null = null,
 ): Promise<ColdEquipmentConfigItem> {
   const name = item.name.trim().slice(0, 200);
   if (item.sourceEquipmentId) {
@@ -67,7 +87,7 @@ export async function syncEquipmentDirectoryItem(
       return item;
     }
   }
-  const areaId = await ensureDefaultArea(organizationId);
+  const areaId = await ensureDefaultArea(organizationId, pointId);
   const created = await db.equipment.create({
     data: {
       name,
