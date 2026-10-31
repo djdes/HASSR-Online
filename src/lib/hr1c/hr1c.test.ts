@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { readHrEmployeesBody } from "./api-body";
-import { createZupClient, mergeZupEmployees, zupDate, ZupError, type FetchLike } from "./odata";
+import { createZupClient, mergeZupEmployees, zupDate, ZupError, zupServiceRoot, type FetchLike } from "./odata";
 import { normalizeName, planHrSync, summarizePlan, type HrEmployee, type WsPosition, type WsUser } from "./plan";
 
 const TODAY = "2026-10-31";
@@ -154,6 +154,10 @@ test("OData: Basic auth, Cyrillic entities, pages; 1C empty dates; deletion mark
   ]);
   assert.ok(calls[0].startsWith("Catalog_Сотрудники?$format=json&$select=Ref_Key,Description,DeletionMark,ВАрхиве&$top=1000&$skip=0"));
   assert.equal(zupDate("0001-01-01T00:00:00"), null);
+  // Адрес публикации или вставленный целиком адрес OData — один и тот же сервис.
+  for (const pasted of ["https://zup.example.ru/zup", "https://zup.example.ru/zup/", "https://zup.example.ru/zup/odata/standard.odata", "https://zup.example.ru/zup/OData/standard.odata/$metadata"]) {
+    assert.equal(zupServiceRoot(pasted), "https://zup.example.ru/zup/odata/standard.odata");
+  }
   assert.deepEqual(mergeZupEmployees([{ Ref_Key: "00000000-0000-0000-0000-000000000000", Description: "Пусто" }], [], []), []);
 });
 

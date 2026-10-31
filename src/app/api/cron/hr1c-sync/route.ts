@@ -11,11 +11,11 @@ export const maxDuration = 300;
 const ADVISORY_LOCK_KEY = 9523873;
 
 /**
- * GET /api/cron/hr1c-sync?secret=$CRON_SECRET — применить изменения из 1С:ЗУП
+ * GET /api/cron/hr1c-sync (CRON_SECRET) — применить изменения из 1С:ЗУП
  * (OData) у организаций с включённым автоприменением.
  *
- * Внешнее расписание (crontab на сервере), например раз в час:
- *   7 * * * * curl -s "https://wesetup.ru/api/cron/hr1c-sync?secret=$CRON_SECRET" >/dev/null
+ * Внешнее расписание (crontab на сервере, как соседние строки), раз в час:
+ *   7 * * * * curl -s -m 290 -H "Authorization: Bearer <CRON_SECRET>" http://127.0.0.1:3002/api/cron/hr1c-sync >/dev/null
  */
 export async function GET(request: Request) {
   const cronAuth = checkCronSecret(request);
