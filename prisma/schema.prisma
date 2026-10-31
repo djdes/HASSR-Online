@@ -568,6 +568,8 @@ model Organization {
   labelPrints                    LabelPrint[]
   supplyDocuments                SupplyDocument[]
   supplyConnections              SupplyConnection[]
+  hrConnection                   HrConnection?
+  hrEmployeeLinks                HrEmployeeLink[]
   journalGuideTemplates          JournalGuideTemplate[]
   journalPipelineTemplates       JournalPipelineTemplate[]
   partnerClients                 PartnerClient[]                @relation("PartnerClients")
@@ -3090,6 +3092,52 @@ model SupplyConnection {
   updatedAt      DateTime     @updatedAt
 
   @@unique([organizationId, provider])
+}
+
+/// Подключение к 1С:ЗУП (2026-10-31): откуда брать сотрудников и как
+/// применять изменения. OData — когда база опубликована на веб-сервере;
+/// иначе обработка в 1С шлёт список на `/api/external/hr/employees`.
+model HrConnection {
+  id                String       @id @default(cuid())
+  organizationId    String       @unique
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Адрес опубликованной базы: https://host/zup; null — только API.
+  odataUrl          String?
+  /// Логин и пароль OData (JSON), зашифрованы AES-256-GCM.
+  credentialsEnc    String?
+  /// Должность новым сотрудникам, если должности из 1С в WeSetup нет.
+  defaultPositionId String?
+  /// Применять без кнопки: расписание и API из 1С.
+  autoApply         Boolean      @default(false)
+  lastSyncAt        DateTime?
+  lastError         String?
+  /// Итог последнего прогона: { hired, dismissed, updated, linked, problems }.
+  lastResult        Json?
+  createdById       String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+/// Сотрудник WeSetup ↔ сотрудник в 1С (id из 1С). Связь остаётся и после
+/// увольнения: по ней видно, кого уволили по данным 1С.
+model HrEmployeeLink {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Ref_Key сотрудника в 1С (или его id из обработки 1С).
+  externalId     String
+  userId         String
+  /// Последнее, что прислала 1С: ФИО, должность, приём, увольнение.
+  fullName       String
+  position       String?
+  hiredAt        DateTime?
+  dismissedAt    DateTime?
+  lastSeenAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, externalId])
+  @@index([userId])
 }
 
 /// Этикетка маркировки, напечатанная в «Сетап помощнике» (2026-10-31): что

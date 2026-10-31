@@ -3261,6 +3261,7 @@
       "settings_integrations_mercury": "Merkuriy federal axborot tizimi",
       "settings_integrations_edo": "EHA: Diadoc va SBIS",
       "settings_integrations_iiko": "iiko",
+      "settings_integrations_1c": "1C: kadrlar",
       "mercury": "Kiruvchi veterinariya hujjatlari",
       "edo": "Kiruvchi yuk xatlari",
       "edo_document": "Yuk xati",
@@ -9780,6 +9781,10 @@
         "settings_integrations_iiko": {
           "title": "iiko",
           "description": "Yuk xatlari — «Kiruvchi»ga, hisobdan chiqarishlar — «Yo‘qotishlar»ga, tovarlar — mahsulotlar ma’lumotnomasiga"
+        },
+        "settings_integrations_1c": {
+          "title": "1C: kadrlar",
+          "description": "1C:ZUP’da ishga olingan va bo‘shatilganlar — WeSetup’ga o‘zi"
         },
         "settings_print_agent": {
           "title": "Onlayn printer",
@@ -30645,6 +30650,58 @@
       "errors": {
         "failed": "Ulab bo‘lmadi. Ma’lumotlarni tekshiring."
       }
+    }
+  },
+  "hr1c": {
+    "eyebrow": "Ulanishlar",
+    "title": "1C: kadrlar",
+    "description": "1C:ZUP’da ishga olingan xodimlar WeSetup’da paydo bo‘ladi, bo‘shatilganlar — bo‘shatiladi (vazifalari vorisga o‘tadi). Avval «Tekshirish» — nima o‘zgarishi ko‘rinadi; keyin «Qo‘llash».",
+    "odataTitle": "E’lon qilingan baza (OData)",
+    "odataHint": "1C:ZUP 3 bazasining veb-serverdagi manzili, masalan https://1c.company.ru/zup. Konfiguratorda «Xodimlar», «Lavozimlar» ma’lumotnomalari va «Xodimlarning joriy kadr ma’lumotlari» registri uchun standart OData interfeysini yoqing.",
+    "odataUrl": "Baza manzili",
+    "login": "OData foydalanuvchisi",
+    "password": "Parol",
+    "passwordKeep": "Parol saqlangan — o‘zgartirmaslik uchun bo‘sh qoldiring",
+    "defaultPosition": "Standart lavozim",
+    "defaultPositionHint": "1C’dagi lavozimi WeSetup’da yo‘q yangi xodimlar uchun",
+    "noDefault": "Tanlanmagan",
+    "autoApply": "Avtomatik qo‘llash",
+    "autoApplyHint": "Server jadvali bo‘yicha va 1C ishlov berish dasturidan yuklanganda — tugmasiz",
+    "save": "Saqlash",
+    "saving": "Saqlanmoqda…",
+    "saved": "Saqlandi",
+    "disconnect": "Uzish",
+    "disconnected": "Uzildi",
+    "preview": "Tekshirish",
+    "previewing": "Tekshirilmoqda…",
+    "apply": "Qo‘llash",
+    "applying": "Qo‘llanmoqda…",
+    "applied": "Qo‘llandi",
+    "lastSync": "Oxirgi ishga tushirish {when}",
+    "never": "Hali ishga tushirilmagan",
+    "lastResult": "Olindi {hire}, bo‘shatildi {dismiss}, o‘zgartirildi {update}, bog‘landi {link}",
+    "result": {
+      "title": "Nima o‘zgaradi",
+      "appliedTitle": "Nima qilindi",
+      "hire": "Ishga olamiz",
+      "link": "WeSetup xodimi bilan bog‘laymiz",
+      "update": "Yangilaymiz",
+      "dismiss": "Bo‘shatamiz",
+      "problems": "Qo‘lda hal qilish kerak",
+      "unchanged": "O‘zgarishsiz: {count}",
+      "nothing": "O‘zgarish yo‘q",
+      "errors": "Bo‘lmadi"
+    },
+    "problem": {
+      "no_position": "WeSetup’da bunday lavozim yo‘q va standart lavozim tanlanmagan",
+      "dismissed_in_wesetup": "WeSetup’da bo‘shatilgan, 1C’da esa ishlaydi — kerak bo‘lsa qo‘lda qaytaring",
+      "ambiguous_name": "WeSetup’da bunday F.I.Sh. bilan bir nechta xodim bor — qo‘lda bog‘lang"
+    },
+    "apiTitle": "Bazani e’lon qilmasdan — 1C ishlov berish dasturidan",
+    "apiHint": "1C’dagi ishlov berish dasturi xodimlar ro‘yxatini quyidagi manzilga «Sozlamalar → API»dagi tashkilot tokeni bilan yuboradi. «apply»siz sayt faqat nima o‘zgarishini javob beradi (avtomatik qo‘llash yoqilmagan bo‘lsa).",
+    "apiToken": "API tokeni",
+    "errors": {
+      "failed": "Bo‘lmadi. Qayta urinib ko‘ring."
     }
   }
 }

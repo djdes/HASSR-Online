@@ -1,0 +1,11 @@
+GET Catalog_Должности $top=1000 $skip=0 auth=bad
+GET Catalog_Должности $top=1000 $skip=0 auth=ok
+GET Catalog_Сотрудники $top=1000 $skip=0 auth=ok
+GET InformationRegister_ТекущиеКадровыеДанныеСотрудников $top=1000 $skip=0 auth=ok
+GET Catalog_Должности $top=1000 $skip=0 auth=ok
+GET Catalog_Сотрудники $top=1000 $skip=0 auth=ok
+GET InformationRegister_ТекущиеКадровыеДанныеСотрудников $top=1000 $skip=0 auth=ok
+GET Catalog_Должности $top=1000 $skip=0 auth=ok
+GET Catalog_Сотрудники $top=1000 $skip=0 auth=ok
+GET InformationRegister_ТекущиеКадровыеДанныеСотрудников $top=1000 $skip=0 auth=ok
+GET Catalog_Должности $top=1000 $skip=0 auth=ok

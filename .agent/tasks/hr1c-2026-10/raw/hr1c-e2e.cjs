@@ -1,0 +1,54 @@
+const { chromium } = require('playwright');
+const BASE = 'http://localhost:3100';
+const OUT = process.env.OUT;
+const TOKEN = process.env.TOKEN;
+const report = {};
+(async () => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, locale: 'ru-RU' });
+  const page = await ctx.newPage();
+  await page.goto(BASE + '/login', { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(1000);
+  await page.fill('#email', 'admin@haccp.local'); await page.fill('#password', 'admin1234');
+  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 180000, waitUntil: 'commit' }), page.click('button[type=submit]')]);
+  await page.goto(BASE + '/settings/integrations/1c', { waitUntil: 'networkidle', timeout: 180000 });
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: `${OUT}/hr1c-empty.png`, fullPage: true });
+  const form = page.locator('[data-hr1c-settings]');
+  const inputs = form.locator('input');
+  await inputs.nth(0).fill('http://127.0.0.1:4588/zup');
+  await inputs.nth(1).fill('odata');
+  await inputs.nth(2).fill('wrong');
+  await form.locator('select').selectOption({ label: 'Повар' });
+  await form.locator('button[type=submit]').click();
+  await page.waitForTimeout(2500);
+  report.wrongPassword = await page.locator('[data-sonner-toast]').last().textContent().catch(() => null);
+  await inputs.nth(2).fill('secret');
+  await form.locator('button[type=submit]').click();
+  await page.locator('[data-hr1c-run]').waitFor({ timeout: 60000 });
+  await page.locator('[data-hr1c-mode="preview"]').click();
+  await page.locator('[data-hr1c-result]').waitFor({ timeout: 60000 });
+  await page.waitForTimeout(500);
+  report.preview = (await page.locator('[data-hr1c-result]').textContent()).replace(/\s+/g, ' ');
+  await page.screenshot({ path: `${OUT}/hr1c-preview.png`, fullPage: true });
+  await page.locator('[data-hr1c-mode="apply"]').click();
+  await page.waitForTimeout(6000);
+  report.applied = (await page.locator('[data-hr1c-result]').textContent()).replace(/\s+/g, ' ');
+  await page.screenshot({ path: `${OUT}/hr1c-applied.png`, fullPage: true });
+  report.again = await page.evaluate(async () => (await fetch('/api/settings/hr1c/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'preview' }) })).json());
+  await ctx.close();
+
+  // API из обработки 1С: без apply — только предпросмотр, с apply — применение.
+  const api = async (body, token = TOKEN) => {
+    const res = await fetch(BASE + '/api/external/hr/employees', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    return { status: res.status, body: await res.json() };
+  };
+  const payload = { employees: [{ id: '000777', fullName: 'Котова Дарья Игоревна', position: 'Мойщица посуды', hiredAt: '2026-10-30' }] };
+  report.apiPreview = await api(payload);
+  report.apiApply = await api({ ...payload, apply: true });
+  report.apiAgain = await api({ ...payload, apply: true });
+  report.apiBadToken = await api(payload, 'not-a-token');
+  report.apiBadBody = await api({ employees: [{ id: '', fullName: 'X' }] });
+  await browser.close();
+  console.log(JSON.stringify(report, null, 1));
+})().catch((e) => { console.error(e); console.log(JSON.stringify(report, null, 1)); process.exit(1); });

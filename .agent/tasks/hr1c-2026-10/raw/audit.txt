@@ -1,0 +1,4 @@
+hr1c.sync | {"hire": 0, "link": 0, "errors": 0, "update": 0, "dismiss": 0, "problems": 0, "unchanged": 1}
+hr1c.sync | {"hire": 1, "link": 0, "errors": 0, "update": 0, "dismiss": 0, "problems": 0, "unchanged": 0}
+hr1c.sync | {"hire": 2, "link": 2, "errors": 0, "update": 1, "dismiss": 1, "problems": 0, "unchanged": 1}
+offboarding.complete | {"errors": [], "successorId": "cmvu1mpu60003157dhvpx40m7", "departingRole": "operator", "successorName": "Кузнецов Павел Игоревич", "reassignedCount": 0, "departingUserName": "Грачев Виктор Ильич"}

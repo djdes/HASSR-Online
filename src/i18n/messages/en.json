@@ -3261,6 +3261,7 @@
       "settings_integrations_mercury": "Mercury federal information system",
       "settings_integrations_edo": "E-documents: Diadoc and SBIS",
       "settings_integrations_iiko": "iiko",
+      "settings_integrations_1c": "1C: HR",
       "mercury": "Incoming veterinary documents",
       "edo": "Incoming invoices",
       "edo_document": "Invoice",
@@ -9780,6 +9781,10 @@
         "settings_integrations_iiko": {
           "title": "iiko",
           "description": "Invoices go to “Incoming”, write-offs — to “Losses”, goods — to the product directory"
+        },
+        "settings_integrations_1c": {
+          "title": "1C: HR",
+          "description": "Hires and dismissals in 1C:ZUP reach WeSetup by themselves"
         },
         "settings_print_agent": {
           "title": "Online printer",
@@ -30645,6 +30650,58 @@
       "errors": {
         "failed": "Could not connect. Check the details."
       }
+    }
+  },
+  "hr1c": {
+    "eyebrow": "Connections",
+    "title": "1C: HR",
+    "description": "Employees hired in 1C:ZUP appear in WeSetup, dismissed ones are dismissed (their tasks go to a successor). First “Check” shows what will change, then “Apply”.",
+    "odataTitle": "Published database (OData)",
+    "odataHint": "Address of the 1C:ZUP 3 database published on a web server, e.g. https://1c.company.ru/zup. In the configurator, enable the standard OData interface for the “Employees” and “Positions” catalogs and the “Current HR data of employees” register.",
+    "odataUrl": "Database address",
+    "login": "OData user",
+    "password": "Password",
+    "passwordKeep": "Password saved — leave empty to keep it",
+    "defaultPosition": "Default position",
+    "defaultPositionHint": "For new hires whose 1C position is not in WeSetup",
+    "noDefault": "Not selected",
+    "autoApply": "Apply automatically",
+    "autoApplyHint": "On the server schedule and when a 1C data processor uploads — without the button",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "disconnect": "Disconnect",
+    "disconnected": "Disconnected",
+    "preview": "Check",
+    "previewing": "Checking…",
+    "apply": "Apply",
+    "applying": "Applying…",
+    "applied": "Applied",
+    "lastSync": "Last run {when}",
+    "never": "Not run yet",
+    "lastResult": "Hired {hire}, dismissed {dismiss}, updated {update}, linked {link}",
+    "result": {
+      "title": "What will change",
+      "appliedTitle": "What was done",
+      "hire": "Hire",
+      "link": "Link to a WeSetup employee",
+      "update": "Update",
+      "dismiss": "Dismiss",
+      "problems": "Needs manual decision",
+      "unchanged": "Unchanged: {count}",
+      "nothing": "No changes",
+      "errors": "Failed"
+    },
+    "problem": {
+      "no_position": "no such position in WeSetup and no default position selected",
+      "dismissed_in_wesetup": "dismissed in WeSetup but working in 1C — restore manually if needed",
+      "ambiguous_name": "several working employees with this name in WeSetup — link manually"
+    },
+    "apiTitle": "Without publishing — from a 1C data processor",
+    "apiHint": "A 1C data processor sends the employee list to the address below with the organization token from “Settings → API”. Without “apply” the site only answers what would change (unless automatic apply is on).",
+    "apiToken": "API token",
+    "errors": {
+      "failed": "Something went wrong. Please try again."
     }
   }
 }

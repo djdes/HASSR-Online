@@ -1,0 +1,99 @@
+{
+ "wrongPassword": "1С не пустила: проверьте логин и пароль пользователя OData",
+ "preview": "Что изменитсяПримем · 2Новикова Анна Сергеевна · ПоварПекарев Иван Ильич · ПоварУволим · 1Грачев Виктор Ильич · ПоварОбновим · 1Белова Елена Андреевна · ПоварСвяжем с сотрудником WeSetup · 2Белова Елена Андреевна · ПоварГрачев Виктор Ильич · ПоварБез изменений: 1",
+ "applied": "Что сделаноПримем · 2Новикова Анна Сергеевна · ПоварПекарев Иван Ильич · ПоварУволим · 1Грачев Виктор Ильич · ПоварОбновим · 1Белова Елена Андреевна · ПоварСвяжем с сотрудником WeSetup · 2Белова Елена Андреевна · ПоварГрачев Виктор Ильич · ПоварБез изменений: 1",
+ "again": {
+  "mode": "preview",
+  "summary": {
+   "hire": 0,
+   "link": 0,
+   "update": 0,
+   "dismiss": 0,
+   "problems": 0,
+   "unchanged": 5
+  },
+  "actions": [],
+  "problems": [],
+  "errors": []
+ },
+ "apiPreview": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "mode": "preview",
+   "summary": {
+    "hire": 1,
+    "link": 0,
+    "update": 0,
+    "dismiss": 0,
+    "problems": 0,
+    "unchanged": 0
+   },
+   "actions": [
+    {
+     "kind": "hire",
+     "fullName": "Котова Дарья Игоревна",
+     "detail": "Мойщица посуды"
+    }
+   ],
+   "problems": [],
+   "errors": []
+  }
+ },
+ "apiApply": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "mode": "apply",
+   "summary": {
+    "hire": 1,
+    "link": 0,
+    "update": 0,
+    "dismiss": 0,
+    "problems": 0,
+    "unchanged": 0
+   },
+   "actions": [
+    {
+     "kind": "hire",
+     "fullName": "Котова Дарья Игоревна",
+     "detail": "Мойщица посуды"
+    }
+   ],
+   "problems": [],
+   "errors": []
+  }
+ },
+ "apiAgain": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "mode": "apply",
+   "summary": {
+    "hire": 0,
+    "link": 0,
+    "update": 0,
+    "dismiss": 0,
+    "problems": 0,
+    "unchanged": 1
+   },
+   "actions": [],
+   "problems": [],
+   "errors": []
+  }
+ },
+ "apiBadToken": {
+  "status": 503,
+  "body": {
+   "ok": false,
+   "error": "External API token not configured on server"
+  }
+ },
+ "apiBadBody": {
+  "status": 400,
+  "body": {
+   "ok": false,
+   "error": "Ожидается { employees: [{ id, fullName, … }] }"
+  }
+ }
+}
