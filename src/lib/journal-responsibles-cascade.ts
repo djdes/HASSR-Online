@@ -25,13 +25,31 @@ import {
 } from "@/lib/journal-roster";
 import { getUserDisplayTitle } from "@/lib/user-roles";
 import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
+import { worksAtBuilding } from "@/lib/building-scope";
+import { buildingTargets } from "@/lib/building-targets";
+import {
+  droppedSlotIds,
+  loadEffectiveResponsibleSlots,
+  parseSlotMaps,
+  resolvePointSlots,
+  savePointJournalSlots,
+  type SlotMaps,
+} from "@/lib/journal-responsibles-points";
 
-/** Ростер для авто-подбора слотов (опционально — только выбранные должности). */
+/** Точка авто-подбора: её id и точки организации (висящие id удалённых точек не режут людей). */
+type RosterPoint = { id: string; orgBuildingIds: readonly string[] } | null;
+
+/**
+ * Ростер для авто-подбора слотов (опционально — только выбранные должности).
+ * Для точки — только её сотрудники и те, кто работает на всех точках
+ * (2026-10-31, ответственные по точкам).
+ */
 async function loadSlotRoster(
   organizationId: string,
-  positionIds: string[]
+  positionIds: string[],
+  point: RosterPoint = null,
 ): Promise<RosterUser[]> {
-  const users = await db.user.findMany({
+  const all = await db.user.findMany({
     where: {
       organizationId,
       ...ORG_ROSTER_WHERE,
@@ -43,10 +61,12 @@ async function loadSlotRoster(
       email: true,
       role: true,
       positionTitle: true,
+      buildingIds: true,
       jobPosition: { select: { name: true, categoryKey: true } },
     },
     orderBy: { name: "asc" },
   });
+  const users = point ? all.filter((user) => worksAtBuilding(point.orgBuildingIds, user.buildingIds ?? [], point.id)) : all;
   return users.map((user) => ({
     id: user.id,
     name: user.name,
@@ -161,19 +181,23 @@ async function fetchOrgDataForDefaults(
 
 /**
  * Каскад изменений «ответственных за журнал» в реальные JournalDocument'ы
- * + сохранение per-slot user assignments в Organization JSON-поле.
+ * + сохранение per-slot user assignments.
  *
  * Что делает:
- *   1. Сохраняет map { slotId → userId } в Organization.
- *      journalResponsibleUsersJson[code]. У каждого журнала своя
- *      схема слотов (см. journal-responsible-schemas.ts).
- *   2. Патчит CONFIG активных документов через per-journal patcher
+ *   1. Сохраняет map { slotId → userId }: без точки — в
+ *      Organization.journalResponsibleUsersJson[code], с точкой — в
+ *      Building.journalResponsibleUsersJson[code] («ответственные по
+ *      точкам», 2026-10-31). У каждого журнала своя схема слотов (см.
+ *      journal-responsible-schemas.ts).
+ *   2. Патчит CONFIG документов через per-journal patcher
  *      (см. journal-responsibles-doc-patchers.ts) — это куда уходят
  *      специфичные для журнала поля типа approveEmployeeId,
  *      cleaningResponsibles[], commission и т.д.
- *   3. Берёт PRIMARY-slot user и updateMany'ит на ВСЕХ активных
- *      документах этого журнала.responsibleUserId — это шапка
- *      printable-PDF и общий «ответственный по умолчанию».
+ *   3. Ставит responsibleUserId / verifierUserId документам.
+ * Люди для каждого документа — действующие ответственные его точки
+ * (`resolvePointSlots`): своё точки или организации, но только те, кто
+ * работает на точке; пустой слот точки — авто-подбор из её сотрудников.
+ * Сохранение точки трогает только её документы.
  *
  * Если конкретные ФИО не переданы (slots = пустой объект) — для
  * каждого слота подбираем подходящего сотрудника по schema.keywords,
@@ -192,6 +216,33 @@ export type CascadeScope =
    *  историю задним числом. UI требует подтверждение. */
   | "all";
 
+/** Авто-подбор пустых слотов из ростера (без дублей среди исполнителей). */
+function autoPickSlots(journalCode: string, slotUsers: SlotUserMap, roster: RosterUser[]): SlotUserMap {
+  const schema = getSchemaForJournal(journalCode);
+  const next: SlotUserMap = { ...slotUsers };
+  const usedUserIds = new Set<string>(Object.values(next).filter((v): v is string => Boolean(v)));
+  for (const slot of schema.slots) {
+    if (next[slot.id]) continue;
+    // Общее правило ростера: подходящая должность → персонал/руководство
+    // по типу слота; ROOT и аккаунты-заглушки — никогда не раньше людей.
+    // Проверяющий может совпадать с исполнителем.
+    const pick = rankRosterForSlot(
+      roster,
+      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords },
+      usedUserIds
+    );
+    if (pick) {
+      next[slot.id] = pick.id;
+      if (slot.kind !== "verifier") usedUserIds.add(pick.id);
+    }
+  }
+  return next;
+}
+
+function needsAutoPick(journalCode: string, slotUsers: SlotUserMap): boolean {
+  return allowsImplicitJournalResponsible(journalCode) && getSchemaForJournal(journalCode).slots.some((slot) => !slotUsers[slot.id]);
+}
+
 export async function cascadeResponsibleToActiveDocuments(input: {
   organizationId: string;
   templateId: string;
@@ -203,7 +254,11 @@ export async function cascadeResponsibleToActiveDocuments(input: {
    *  (back-compat). UI с двумя кнопками передаёт active-any для
    *  «изменить в активных» и all для «изменить во всех». */
   scope?: CascadeScope;
-  /** Только документы этой точки (мастер настройки бракеража на точке). */
+  /**
+   * Ответственные точки (2026-10-31): карта сохраняется в точке, каскад —
+   * только документы этой точки. Не точка организации (точки выключены) —
+   * как без неё: организация.
+   */
   buildingId?: string | null;
 }): Promise<{
   documentsUpdated: number;
@@ -212,224 +267,290 @@ export async function cascadeResponsibleToActiveDocuments(input: {
 }> {
   const { organizationId, templateId, journalCode, positionIds } = input;
   const scope: CascadeScope = input.scope ?? "active-today";
-  const schema = getSchemaForJournal(journalCode);
   const primarySlotId = getPrimarySlotId(journalCode);
-  const verifierSlotId = getVerifierSlotId(journalCode);
-  const slotUsers: SlotUserMap = { ...(input.slotUsers ?? {}) };
+  const targets = await buildingTargets(organizationId);
+  const orgBuildingIds = targets.filter((id): id is string => id !== null);
+  const pointId = input.buildingId && orgBuildingIds.includes(input.buildingId) ? input.buildingId : null;
 
-  // 1. Авто-подбор по слотам, если ничего не задано.
-  const usedUserIds = new Set<string>(
-    Object.values(slotUsers).filter((v): v is string => Boolean(v))
-  );
-
-  const cascadeRoster = allowsImplicitJournalResponsible(journalCode) && schema.slots.some((slot) => !slotUsers[slot.id])
-    ? await loadSlotRoster(organizationId, positionIds)
-    : [];
-  for (const slot of schema.slots) {
-    if (slotUsers[slot.id]) continue;
-    // Общее правило ростера: подходящая должность → персонал/руководство
-    // по типу слота; ROOT и аккаунты-заглушки — никогда не раньше людей.
-    // Проверяющий может совпадать с исполнителем.
-    const pick = rankRosterForSlot(
-      cascadeRoster,
-      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords },
-      usedUserIds
-    );
-    if (pick) {
-      slotUsers[slot.id] = pick.id;
-      if (slot.kind !== "verifier") {
-        usedUserIds.add(pick.id);
-      }
-    }
+  // 1. Авто-подбор по слотам, если ничего не задано: у точки — из её людей.
+  let slotUsers: SlotUserMap = { ...(input.slotUsers ?? {}) };
+  if (needsAutoPick(journalCode, slotUsers)) {
+    const roster = await loadSlotRoster(organizationId, positionIds, pointId ? { id: pointId, orgBuildingIds } : null);
+    slotUsers = autoPickSlots(journalCode, slotUsers, roster);
   }
 
-  // 2. Сохраняем slot map в Organization.journalResponsibleUsersJson.
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { journalResponsibleUsersJson: true },
-  });
-  const allOrgSlots = (org?.journalResponsibleUsersJson ?? {}) as Record<
-    string,
-    SlotUserMap
-  >;
-  allOrgSlots[journalCode] = slotUsers;
-  await db.organization.update({
-    where: { id: organizationId },
-    data: { journalResponsibleUsersJson: allOrgSlots as never },
-  });
-
-  // 3. Берём primary userId для responsibleUserId документа.
-  const primaryUserId = slotUsers[primarySlotId] ?? null;
-
-  if (!primaryUserId && !hasDocumentConfigPatcher(journalCode)) {
-    return {
-      documentsUpdated: 0,
-      pickedPrimaryUserId: null,
-      savedSlots: slotUsers,
-    };
-  }
-
-  // Защита: проверяем что все попавшие в slots userId — реально из этой
-  // орги. Иначе чисто отбрасываем.
-  const userIdsToValidate = Object.values(slotUsers).filter(
-    (v): v is string => typeof v === "string" && v.length > 0
-  );
-  let validUserIds = new Set<string>();
-  if (userIdsToValidate.length > 0) {
+  // 2. Чистим от невалидных (архивный / из чужой орги, если кто-то
+  // прокинул из клиента) и сохраняем: точка — в Building, иначе — в
+  // Organization.
+  const ids = Object.values(slotUsers).filter((v): v is string => typeof v === "string" && v.length > 0);
+  if (ids.length > 0) {
     const owned = await db.user.findMany({
-      where: {
-        id: { in: userIdsToValidate },
-        organizationId,
-        ...ORG_ROSTER_WHERE,
-      },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        positionTitle: true,
-        jobPosition: { select: { name: true } },
-      },
+      where: { id: { in: ids }, organizationId, ...ORG_ROSTER_WHERE },
+      select: { id: true },
     });
-    validUserIds = new Set(owned.map((u) => u.id));
-
-    // Очищаем slotUsers от невалидных (мог быть архивный/из чужой орги
-    // если кто-то прокинул из клиента).
+    const valid = new Set(owned.map((u) => u.id));
     for (const [k, v] of Object.entries(slotUsers)) {
-      if (v && !validUserIds.has(v)) slotUsers[k] = null;
+      if (v && !valid.has(v)) slotUsers[k] = null;
     }
-
-    // Patcher needs name+title — заведём lookup map.
-    const userNameMap = new Map(owned.map((u) => [u.id, u.name] as const));
-    const userPosMap = new Map(
-      owned.map((u) => [u.id, getUserDisplayTitle(u)] as const)
-    );
-
-    // 4. Патчим document.config + ставим responsibleUserId.
-    // Scope управляет какие документы попадают в каскад:
-    //   • active-today — только active с покрытием сегодня (back-compat).
-    //   • active-any   — все active.
-    //   • all          — active + closed, любые периоды.
-    // Last две опции используются когда менеджер хочет каскадно
-    // переписать ответственного на старых документах (например,
-    // уволили филлера → admin меняет старые записи на нового).
-    const now = new Date();
-    const todayUtcStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
-    const docWhere: Record<string, unknown> = {
-      organizationId,
-      templateId,
-      ...(input.buildingId ? { buildingId: input.buildingId } : {}),
-    };
-    if (scope === "active-today") {
-      docWhere.status = "active";
-      docWhere.dateFrom = { lte: todayUtcStart };
-      docWhere.dateTo = { gte: todayUtcStart };
-    } else if (scope === "active-any") {
-      docWhere.status = "active";
-    }
-    // scope === "all" — без дополнительных where-клозов.
-    const docs = await db.journalDocument.findMany({
-      where: docWhere,
-      select: { id: true, config: true, buildingId: true, _count: { select: { entries: true } } },
+  }
+  if (pointId) {
+    await savePointJournalSlots(organizationId, pointId, journalCode, slotUsers);
+  } else {
+    const org = await db.organization.findUnique({
+      where: { id: organizationId },
+      select: { journalResponsibleUsersJson: true },
     });
-
-    // Пустым конфигам нужны org-данные для enriched дефолта (см. prefill
-    // ниже) — по точке документа, один запрос на точку.
-    const orgDataByPoint = new Map<string, Promise<DefaultConfigOrgData>>();
-    const cascadeOrgDataFor = (buildingId: string | null) => {
-      const key = buildingId ?? "";
-      let data = orgDataByPoint.get(key);
-      if (!data) {
-        data = fetchOrgDataForDefaults(organizationId, buildingId);
-        orgDataByPoint.set(key, data);
-      }
-      return data;
-    };
-
-    let documentsUpdated = 0;
-    for (const doc of docs) {
-      // Если существующий config пустой ({}), подменяем дефолтным от
-      // соответствующей default-функции, чтобы у документа появились
-      // строки/зоны/оборудование. Это backfill для документов,
-      // созданных ДО prefill-фикса. Не трогаем конфиги где уже есть
-      // данные — иначе затрём пользовательские правки.
-      const cfgObj =
-        doc.config && typeof doc.config === "object" && !Array.isArray(doc.config)
-          ? (doc.config as Record<string, unknown>)
-          : {};
-      // Документ с записями, но пустым конфигом, не «досеиваем»: его уже
-      // вели, и подсунутые строки дефолта перемешались бы с реальными
-      // данными. Такому документу только проставляем людей.
-      const isEmpty =
-        Object.keys(cfgObj).length === 0 && doc._count.entries === 0;
-      const baseCfg = isEmpty
-        ? getDefaultConfigForJournal(journalCode, await cascadeOrgDataFor(doc.buildingId))
-        : cfgObj;
-
-      const patched = hasDocumentConfigPatcher(journalCode)
-        ? patchDocumentConfig(journalCode, baseCfg, slotUsers, {
-            getName: (id) => (id ? userNameMap.get(id) ?? "" : ""),
-            getPositionTitle: (id) => (id ? userPosMap.get(id) ?? "" : ""),
-          })
-        : null;
-
-      const data: Record<string, unknown> = {};
-      if (primaryUserId && validUserIds.has(primaryUserId)) {
-        data.responsibleUserId = primaryUserId;
-        // Также синхронизируем `responsibleTitle` (название должности
-        // primary-сотрудника) — чтобы preview-карточка журнала на
-        // /journals/<code> показывала «<position>: <name>», а не «—».
-        // Без этого изменения в /settings/journal-responsibles обновляли
-        // только userId — title оставался null/устаревший, и menager
-        // видел «—» в preview.
-        const primaryPosName = userPosMap.get(primaryUserId);
-        if (primaryPosName) {
-          data.responsibleTitle = primaryPosName;
-        }
-      }
-      // Phase C: пишем verifierUserId если verifier-slot заполнен.
-      // Если null — оставляем поле без change'а (legacy doc'и
-      // продолжают работать через responsibleUserId fallback в
-      // bulk-assign-today).
-      const verifierUserId = slotUsers[verifierSlotId] ?? null;
-      if (verifierUserId && validUserIds.has(verifierUserId)) {
-        data.verifierUserId = verifierUserId;
-      } else if (input.slotUsers && verifierSlotId in input.slotUsers) {
-        // Юзер явно очистил verifier slot — пишем null чтобы убрать.
-        data.verifierUserId = null;
-      }
-      if (patched) {
-        data.config = patched as never;
-      } else if (isEmpty && Object.keys(baseCfg).length > 0) {
-        // Patcher отсутствует, но дефолт для журнала есть — записываем
-        // его, чтобы документ перестал быть пустым.
-        data.config = baseCfg as never;
-      }
-      if (Object.keys(data).length === 0) continue;
-
-      await db.journalDocument.update({
-        where: { id: doc.id },
-        data,
-      });
-      documentsUpdated += 1;
-    }
-
-    return {
-      documentsUpdated,
-      pickedPrimaryUserId:
-        primaryUserId && validUserIds.has(primaryUserId)
-          ? primaryUserId
-          : null,
-      savedSlots: slotUsers,
-    };
+    const allOrgSlots = (org?.journalResponsibleUsersJson ?? {}) as Record<string, SlotUserMap>;
+    allOrgSlots[journalCode] = slotUsers;
+    await db.organization.update({
+      where: { id: organizationId },
+      data: { journalResponsibleUsersJson: allOrgSlots as never },
+    });
   }
 
+  // 3. Документы — по действующим ответственным их точки.
+  const documentsUpdated = await applyResponsiblesToDocuments({
+    organizationId,
+    templateId,
+    journalCode,
+    positionIds,
+    scope,
+    onlyBuildingId: pointId,
+    explicitSlotIds: new Set(Object.keys(input.slotUsers ?? {})),
+  });
+
+  const primaryUserId = slotUsers[primarySlotId] ?? null;
   return {
-    documentsUpdated: 0,
-    pickedPrimaryUserId: null,
+    documentsUpdated,
+    pickedPrimaryUserId: primaryUserId,
     savedSlots: slotUsers,
   };
+}
+
+/**
+ * Проставить документам журнала действующих ответственных их точки (без
+ * сохранения карт). `onlyBuildingId` — только документы этой точки
+ * («Вернуть как у организации» на точке, сохранение точки).
+ */
+export async function applyResponsiblesToDocuments(input: {
+  organizationId: string;
+  templateId: string;
+  journalCode: string;
+  positionIds: string[];
+  scope: CascadeScope;
+  onlyBuildingId?: string | null;
+  /** Слоты, которые человек явно трогал: пустой проверяющий из них — стереть. */
+  explicitSlotIds?: Set<string>;
+}): Promise<number> {
+  const { organizationId, templateId, journalCode, positionIds, scope } = input;
+  const primarySlotId = getPrimarySlotId(journalCode);
+  const verifierSlotId = getVerifierSlotId(journalCode);
+
+  // Scope управляет какие документы попадают в каскад:
+  //   • active-today — только active с покрытием сегодня (back-compat).
+  //   • active-any   — все active.
+  //   • all          — active + closed, любые периоды.
+  // Last две опции используются когда менеджер хочет каскадно
+  // переписать ответственного на старых документах (например,
+  // уволили филлера → admin меняет старые записи на нового).
+  const now = new Date();
+  const todayUtcStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const docWhere: Record<string, unknown> = {
+    organizationId,
+    templateId,
+    ...(input.onlyBuildingId ? { buildingId: input.onlyBuildingId } : {}),
+  };
+  if (scope === "active-today") {
+    docWhere.status = "active";
+    docWhere.dateFrom = { lte: todayUtcStart };
+    docWhere.dateTo = { gte: todayUtcStart };
+  } else if (scope === "active-any") {
+    docWhere.status = "active";
+  }
+  // scope === "all" — без дополнительных where-клозов.
+  const docs = await db.journalDocument.findMany({
+    where: docWhere,
+    select: { id: true, config: true, buildingId: true, _count: { select: { entries: true } } },
+  });
+  if (docs.length === 0) return 0;
+
+  // Карты ответственных: организация и точки (свои по журналу).
+  const [org, buildings, targets] = await Promise.all([
+    db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } }),
+    db.building.findMany({ where: { organizationId }, select: { id: true, journalResponsibleUsersJson: true } }),
+    buildingTargets(organizationId),
+  ]);
+  const orgSlots = parseSlotMaps(org?.journalResponsibleUsersJson);
+  const pointSlotsById = new Map(
+    buildings
+      .filter((b) => b.journalResponsibleUsersJson != null)
+      .map((b) => [b.id, parseSlotMaps(b.journalResponsibleUsersJson)] as const),
+  );
+  const orgBuildingIds = targets.filter((id): id is string => id !== null);
+
+  // Люди из карт — с их точками; ростер точки — для авто-подбора.
+  const mentioned = new Set<string>();
+  const addMap = (map: SlotMaps) => {
+    for (const userId of Object.values(map[journalCode] ?? {})) if (userId) mentioned.add(userId);
+  };
+  addMap(orgSlots);
+  for (const map of pointSlotsById.values()) addMap(map);
+  const mentionedUsers = mentioned.size
+    ? await db.user.findMany({ where: { id: { in: [...mentioned] }, organizationId }, select: { id: true, buildingIds: true } })
+    : [];
+  const pointsByUser = new Map(mentionedUsers.map((u) => [u.id, u.buildingIds ?? []]));
+
+  // Ответственные для документов одной точки (null — организация как есть).
+  const slotsByGroup = new Map<string, { slots: SlotUserMap; dropped: string[] }>();
+  const slotsFor = async (buildingId: string | null) => {
+    const key = buildingId ?? "";
+    const cached = slotsByGroup.get(key);
+    if (cached) return cached;
+    let result: { slots: SlotUserMap; dropped: string[] };
+    if (!buildingId || !orgBuildingIds.includes(buildingId)) {
+      result = { slots: { ...(orgSlots[journalCode] ?? {}) }, dropped: [] };
+    } else {
+      const pointSlots = pointSlotsById.get(buildingId) ?? null;
+      const resolved = resolvePointSlots({
+        orgSlots: { [journalCode]: orgSlots[journalCode] ?? {} },
+        pointSlots: pointSlots && Object.hasOwn(pointSlots, journalCode) ? { [journalCode]: pointSlots[journalCode] } : null,
+        worksAtPoint: (userId) => {
+          const ids = pointsByUser.get(userId);
+          return !ids || worksAtBuilding(orgBuildingIds, ids, buildingId);
+        },
+      });
+      const source = resolved.ownCodes.has(journalCode) ? pointSlots?.[journalCode] : orgSlots[journalCode];
+      let slots = resolved.slots[journalCode] ?? {};
+      // Пустые слоты точки — из её сотрудников (человек другой точки в
+      // документ точки не попадает).
+      if (needsAutoPick(journalCode, slots)) {
+        const roster = await loadSlotRoster(organizationId, positionIds, { id: buildingId, orgBuildingIds });
+        slots = autoPickSlots(journalCode, slots, roster);
+      }
+      result = { slots, dropped: droppedSlotIds(source, slots) };
+    }
+    slotsByGroup.set(key, result);
+    return result;
+  };
+
+  const groups = await Promise.all([...new Set(docs.map((doc) => doc.buildingId ?? null))].map((id) => slotsFor(id)));
+  const allIds = new Set<string>();
+  for (const group of groups) for (const v of Object.values(group.slots)) if (v) allIds.add(v);
+  if (allIds.size === 0 && !hasDocumentConfigPatcher(journalCode)) return 0;
+  const owned = allIds.size
+    ? await db.user.findMany({
+        where: { id: { in: [...allIds] }, organizationId, ...ORG_ROSTER_WHERE },
+        select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } } },
+      })
+    : [];
+  const validUserIds = new Set(owned.map((u) => u.id));
+  // Patcher needs name+title — заведём lookup map.
+  const userNameMap = new Map(owned.map((u) => [u.id, u.name] as const));
+  const userPosMap = new Map(owned.map((u) => [u.id, getUserDisplayTitle(u)] as const));
+
+  // Пустым конфигам нужны org-данные для enriched дефолта (см. prefill
+  // ниже) — по точке документа, один запрос на точку.
+  const orgDataByPoint = new Map<string, Promise<DefaultConfigOrgData>>();
+  const cascadeOrgDataFor = (buildingId: string | null) => {
+    const key = buildingId ?? "";
+    let data = orgDataByPoint.get(key);
+    if (!data) {
+      data = fetchOrgDataForDefaults(organizationId, buildingId);
+      orgDataByPoint.set(key, data);
+    }
+    return data;
+  };
+
+  let documentsUpdated = 0;
+  for (const doc of docs) {
+    const group = await slotsFor(doc.buildingId ?? null);
+    const slotUsers: SlotUserMap = {};
+    for (const [k, v] of Object.entries(group.slots)) slotUsers[k] = v && validUserIds.has(v) ? v : null;
+    const primaryUserId = slotUsers[primarySlotId] ?? null;
+    if (!primaryUserId && !hasDocumentConfigPatcher(journalCode)) continue;
+
+    // Если существующий config пустой ({}), подменяем дефолтным от
+    // соответствующей default-функции, чтобы у документа появились
+    // строки/зоны/оборудование. Это backfill для документов,
+    // созданных ДО prefill-фикса. Не трогаем конфиги где уже есть
+    // данные — иначе затрём пользовательские правки.
+    const cfgObj =
+      doc.config && typeof doc.config === "object" && !Array.isArray(doc.config)
+        ? (doc.config as Record<string, unknown>)
+        : {};
+    // Документ с записями, но пустым конфигом, не «досеиваем»: его уже
+    // вели, и подсунутые строки дефолта перемешались бы с реальными
+    // данными. Такому документу только проставляем людей.
+    const isEmpty = Object.keys(cfgObj).length === 0 && doc._count.entries === 0;
+    const baseCfg = isEmpty
+      ? getDefaultConfigForJournal(journalCode, await cascadeOrgDataFor(doc.buildingId))
+      : cfgObj;
+
+    const patched = hasDocumentConfigPatcher(journalCode)
+      ? patchDocumentConfig(journalCode, baseCfg, slotUsers, {
+          getName: (id) => (id ? userNameMap.get(id) ?? "" : ""),
+          getPositionTitle: (id) => (id ? userPosMap.get(id) ?? "" : ""),
+        })
+      : null;
+
+    const data: Record<string, unknown> = {};
+    if (primaryUserId) {
+      data.responsibleUserId = primaryUserId;
+      // Также синхронизируем `responsibleTitle` (название должности
+      // primary-сотрудника) — чтобы preview-карточка журнала на
+      // /journals/<code> показывала «<position>: <name>», а не «—».
+      const primaryPosName = userPosMap.get(primaryUserId);
+      if (primaryPosName) data.responsibleTitle = primaryPosName;
+    }
+    // Phase C: пишем verifierUserId если verifier-slot заполнен.
+    // Пусто — стираем, только если человек явно очистил слот или
+    // проверяющий организации на этой точке не работает (иначе legacy
+    // doc'и продолжают работать через responsibleUserId fallback в
+    // bulk-assign-today).
+    const verifierUserId = slotUsers[verifierSlotId] ?? null;
+    if (verifierUserId) {
+      data.verifierUserId = verifierUserId;
+    } else if (input.explicitSlotIds?.has(verifierSlotId) || group.dropped.includes(verifierSlotId)) {
+      data.verifierUserId = null;
+    }
+    if (patched) {
+      data.config = patched as never;
+    } else if (isEmpty && Object.keys(baseCfg).length > 0) {
+      // Patcher отсутствует, но дефолт для журнала есть — записываем
+      // его, чтобы документ перестал быть пустым.
+      data.config = baseCfg as never;
+    }
+    if (Object.keys(data).length === 0) continue;
+
+    await db.journalDocument.update({ where: { id: doc.id }, data });
+    documentsUpdated += 1;
+  }
+  return documentsUpdated;
+}
+
+/**
+ * «Как у организации» на точке: убрать своих ответственных точки по журналу и
+ * проставить её активным документам действующих (организации, кто работает на
+ * точке, остальное — авто-подбор из её сотрудников).
+ */
+export async function resetPointResponsibles(input: {
+  organizationId: string;
+  templateId: string;
+  journalCode: string;
+  buildingId: string;
+  positionIds: string[];
+}): Promise<{ documentsUpdated: number; slots: SlotUserMap }> {
+  await savePointJournalSlots(input.organizationId, input.buildingId, input.journalCode, null);
+  const documentsUpdated = await applyResponsiblesToDocuments({
+    organizationId: input.organizationId,
+    templateId: input.templateId,
+    journalCode: input.journalCode,
+    positionIds: input.positionIds,
+    scope: "active-any",
+    onlyBuildingId: input.buildingId,
+  });
+  const effective = await loadEffectiveResponsibleSlots(input.organizationId, input.buildingId);
+  return { documentsUpdated, slots: { ...(effective.slots[input.journalCode] ?? {}) } };
 }
 
 /**
@@ -502,16 +623,19 @@ export async function prefillResponsiblesForNewDocument(input: {
       ? input.baseConfig
       : getDefaultConfigForJournal(journalCode, orgData);
 
-  // 1. Читаем сохранённые слоты из Organization JSON.
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { journalResponsibleUsersJson: true, journalColumnsJson: true },
-  });
-  const allSlots = (org?.journalResponsibleUsersJson ?? {}) as Record<
-    string,
-    SlotUserMap
-  >;
-  const slots: SlotUserMap = { ...(allSlots[journalCode] ?? {}) };
+  // 1. Сохранённые слоты: у документа точки — действующие ответственные
+  // точки (своё точки или организации, кто работает на точке), 2026-10-31.
+  const [org, effective] = await Promise.all([
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { journalColumnsJson: true },
+    }),
+    loadEffectiveResponsibleSlots(organizationId, input.buildingId),
+  ]);
+  const slots: SlotUserMap = { ...(effective.slots[journalCode] ?? {}) };
+  const rosterPoint: RosterPoint = effective.pointId
+    ? { id: effective.pointId, orgBuildingIds: (await buildingTargets(organizationId)).filter((id): id is string => id !== null) }
+    : null;
 
   // 1b. Выбор автоматики важнее сохранённых слотов. Пустые значения
   // игнорируем: «не выбрано» в модалке значит «оставить как есть», а не
@@ -528,7 +652,7 @@ export async function prefillResponsiblesForNewDocument(input: {
     Object.values(slots).filter((v): v is string => Boolean(v))
   );
   const prefillRoster = allowsImplicitJournalResponsible(journalCode) && schema.slots.some((slot) => !slots[slot.id])
-    ? await loadSlotRoster(organizationId, [])
+    ? await loadSlotRoster(organizationId, [], rosterPoint)
     : [];
   for (const slot of schema.slots) {
     if (slots[slot.id]) continue;

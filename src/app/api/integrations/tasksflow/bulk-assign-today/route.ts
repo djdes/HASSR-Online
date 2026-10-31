@@ -36,6 +36,7 @@ import {
 } from "@/lib/tasksflow-bulk-assign";
 import { resolveJournalPeriod } from "@/lib/journal-period";
 import { prefillResponsiblesForNewDocument } from "@/lib/journal-responsibles-cascade";
+import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
 import { ensureTasksflowUserLinks } from "@/lib/tasksflow-ensure-links";
 import { bulkAssignRateLimiter } from "@/lib/rate-limit";
@@ -1011,15 +1012,8 @@ export async function POST(request: Request) {
         // Каждому назначенному filler-слоту в /settings/journal-
         // responsibles своя копия задачи. Используется для комиссий
         // (бракераж 3 человека).
-        const orgSlots = (await db.organization.findUnique({
-          where: { id: organizationId },
-          select: { journalResponsibleUsersJson: true },
-        })) ?? null;
-        const allSlots = (orgSlots?.journalResponsibleUsersJson ?? {}) as Record<
-          string,
-          Record<string, string | null>
-        >;
-        const slotMap = allSlots[tpl.code] ?? {};
+        // Ответственные точки документа (2026-10-31, ответственные по точкам).
+        const slotMap = await effectiveJournalSlots(organizationId, docPointId, tpl.code);
         const fillerUserIds = Object.entries(slotMap)
           .filter(([slotId, uid]) => slotId !== "_verifier" && !!uid)
           .map(([, uid]) => uid as string)

@@ -11,6 +11,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { getVerifierSlotId } from "@/lib/journal-responsible-schemas";
+import { parseSlotMaps, withoutUser } from "@/lib/journal-responsibles-points";
 import { ACCOUNT_DELETION_ERROR } from "@/lib/account-deletion-localization";
 import { notifyManagement } from "@/lib/notifications";
 import { getServerSession } from "@/lib/server-session";
@@ -164,6 +165,18 @@ export async function POST(request: Request) {
         where: { id: orgId },
         data: { journalResponsibleUsersJson: slotsByJournal as never },
       });
+    }
+    // Ответственные точек (2026-10-31) — тоже без удалённого сотрудника.
+    const pointMaps = await tx.building.findMany({
+      where: { organizationId: orgId },
+      select: { id: true, journalResponsibleUsersJson: true },
+    });
+    for (const building of pointMaps) {
+      if (building.journalResponsibleUsersJson == null) continue;
+      const cleaned = withoutUser(parseSlotMaps(building.journalResponsibleUsersJson), userId);
+      if (cleaned.changed) {
+        await tx.building.update({ where: { id: building.id }, data: { journalResponsibleUsersJson: cleaned.maps as never } });
+      }
     }
 
     // 2. Области видимости руководителей, должности, помещения.

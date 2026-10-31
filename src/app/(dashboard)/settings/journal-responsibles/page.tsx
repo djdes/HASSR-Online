@@ -12,6 +12,11 @@ import {
   getDefaultTaskMode,
   parseTaskModesJson,
 } from "@/lib/journal-task-modes";
+import { getViewedPointId } from "@/lib/active-building";
+import { worksAtBuilding } from "@/lib/building-scope";
+import { buildingTargets } from "@/lib/building-targets";
+import { loadEffectiveResponsibleSlots } from "@/lib/journal-responsibles-points";
+import { isPointScoped } from "@/lib/point-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +25,15 @@ export default async function JournalResponsiblesPage() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
+  // Ответственные по точкам (2026-10-31): выбрана торговая точка — её
+  // ответственные и её люди; «Вся организация» — общие. Руководитель точки
+  // видит только свою точку.
+  const viewedPointId = await getViewedPointId(session);
+  if (isPointScoped(session.user) && !viewedPointId) forbidden();
+  const orgBuildingIds = viewedPointId
+    ? (await buildingTargets(organizationId)).filter((id): id is string => id !== null)
+    : [];
+  const pointId = viewedPointId && orgBuildingIds.includes(viewedPointId) ? viewedPointId : null;
 
   const [positions, users, templates, accessRows, org] = await Promise.all([
     db.jobPosition.findMany({
@@ -43,6 +57,7 @@ export default async function JournalResponsiblesPage() {
         jobPositionId: true,
         role: true,
         isRoot: true,
+        buildingIds: true,
       },
     }),
     db.journalTemplate.findMany({
@@ -56,12 +71,19 @@ export default async function JournalResponsiblesPage() {
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
-        journalResponsibleUsersJson: true,
         journalDifficultyJson: true,
         journalTaskModesJson: true,
       },
     }),
   ]);
+  const [effective, point] = await Promise.all([
+    loadEffectiveResponsibleSlots(organizationId, pointId),
+    pointId ? db.building.findUnique({ where: { id: pointId }, select: { id: true, name: true } }) : Promise.resolve(null),
+  ]);
+  // У точки — только её сотрудники и те, кто работает на всех точках.
+  const pickableUsers = pointId
+    ? users.filter((user) => worksAtBuilding(orgBuildingIds, user.buildingIds ?? [], pointId))
+    : users;
 
   const templateIdToCode = new Map(templates.map((t) => [t.id, t.code]));
   const positionsByJournal = new Map<string, string[]>();
@@ -73,11 +95,9 @@ export default async function JournalResponsiblesPage() {
     positionsByJournal.set(code, list);
   }
 
-  // Карта slot users из Organization.journalResponsibleUsersJson.
-  const orgSlotUsers = (org?.journalResponsibleUsersJson ?? {}) as Record<
-    string,
-    Record<string, string | null>
-  >;
+  // Действующие ответственные: организации, у точки — её (своё или
+  // организации, кто работает на точке).
+  const slotUsersByJournal = effective.slots;
 
   // Per-journal task-mode (включая distribution: per-employee/per-area/...).
   // Используется в client'е чтобы preset для per-employee журналов
@@ -95,7 +115,8 @@ export default async function JournalResponsiblesPage() {
       name: j.name,
       description: tpl?.description ?? null,
       initialPositionIds: positionsByJournal.get(j.code) ?? [],
-      initialSlotUsers: orgSlotUsers[j.code] ?? {},
+      initialSlotUsers: slotUsersByJournal[j.code] ?? {},
+      ownForPoint: effective.ownCodes.has(j.code),
       distribution: (ovr.distribution ?? def.distribution) as string,
     };
   });
@@ -157,7 +178,8 @@ export default async function JournalResponsiblesPage() {
           categoryKey: p.categoryKey,
           activeUsers: p._count.users,
         }))}
-        users={users.map((u) => ({
+        point={point}
+        users={pickableUsers.map((u) => ({
           id: u.id,
           name: u.name,
           jobPositionId: u.jobPositionId,

@@ -49,6 +49,15 @@ test("proxy: общие страницы → «Сегодня», изменен�
   assert.equal(verdict("POST", "/api/settings/office"), "deny");
   assert.equal(verdict("GET", "/api/settings/organization"), "allow");
   assert.equal(verdict("POST", "/api/staff"), "allow");
+  // Ответственные за журналы (2026-10-31): страница и сохранение журнала
+  // открыты (маршрут сам пускает только к своей точке), общие действия — нет.
+  assert.equal(verdict("GET", "/settings/journal-responsibles"), "allow");
+  assert.equal(verdict("PUT", "/api/settings/journal-responsibles/hygiene"), "allow");
+  assert.equal(verdict("DELETE", "/api/settings/journal-responsibles/hygiene"), "allow");
+  assert.equal(verdict("POST", "/api/settings/journal-responsibles/resync-all"), "deny");
+  assert.equal(verdict("POST", "/api/settings/journal-responsibles/apply-presets"), "deny");
+  assert.equal(verdict("POST", "/api/settings/journal-responsibles/recreate-documents"), "deny");
+  assert.equal(verdict("POST", "/api/settings/journal-responsibles/backfill-verifiers"), "deny");
   // Офис и организации без офиса — без ограничений.
   assert.equal(verdict("GET", "/settings/organization", null), "allow");
   assert.equal(verdict("PATCH", "/api/settings/organization", []), "allow");

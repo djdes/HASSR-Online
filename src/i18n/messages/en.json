@@ -29415,7 +29415,20 @@
       "deleteBullet1": "It cannot be restored — this is a full reset of the journal data.",
       "deleteBullet2": "Use only when you need to start from scratch (a test company, a previous pilot).",
       "deleteConfirm": "Delete permanently",
-      "deletePhrase": "DELETE"
+      "deletePhrase": "DELETE",
+      "pointBannerTitle": "Responsibles of the point “{point}”",
+      "pointBannerBody": "Here are the staff of this point and those with “All points”. A journal without its own responsibles takes them from the “Whole organization” settings if the person works at this point; the rest are picked from the point's staff. For another point, choose it at the top.",
+      "pointOwn": "Own for the point",
+      "pointInherited": "Same as organization",
+      "pointReset": "Use organization settings",
+      "pointResetTitle": "Return to the organization's responsibles?",
+      "pointResetDescription": "The journal “{journal}” at the point “{point}” will take responsibles from the “Whole organization” settings again.",
+      "pointResetBullet1": "Anyone who does not work at this point is replaced with a staff member of the point.",
+      "pointResetBullet2": "Active documents of the point get the new responsibles; journal records do not change.",
+      "pointResetConfirm": "Return",
+      "pointResetDone": "The journal is the same as the organization again, documents updated: {docs}",
+      "pointResetError": "Could not return the organization's responsibles",
+      "pointPositionsNote": "The positions that keep the journal are shared by the organization — change them in “Whole organization” mode."
     },
     "journalTaskModeClient": {
       "saveFailed": "Failed to save",
