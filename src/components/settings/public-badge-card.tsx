@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import { BadgeCheck, CalendarCheck, Copy, ExternalLink, Printer, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -16,6 +16,9 @@ export type BadgeState = {
   embedHtml: string | null;
   percent: number | null;
   previewSvgDataUrl: string;
+  todayEnabled: boolean;
+  today: { audience: string; title: string; items: string[] };
+  points: Array<{ id: string; name: string }>;
 };
 
 const CARD = "rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7";
@@ -40,6 +43,8 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
   const [state, setState] = useState<BadgeState>(initial);
   const [busy, setBusy] = useState(false);
   const [rotateOpen, setRotateOpen] = useState(false);
+  // Табличка: для сети точек — сразу первая точка (у каждой свой QR).
+  const [signPoint, setSignPoint] = useState(initial.points[0]?.id ?? "");
 
   async function call(method: "PATCH" | "POST", body?: unknown): Promise<BadgeState | null> {
     setBusy(true);
@@ -93,6 +98,14 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
     if (!next) return;
     toast.success(enabled ? t("badge.turnedOn") : t("badge.turnedOff"));
   }
+
+  async function toggleToday(todayEnabled: boolean) {
+    const next = await call("PATCH", { todayEnabled });
+    if (!next) return;
+    toast.success(todayEnabled ? t("badge.todayTurnedOn") : t("badge.todayTurnedOff"));
+  }
+
+  const signHref = `/settings/organization/badge-sign${signPoint ? `?point=${encodeURIComponent(signPoint)}` : ""}`;
 
   return (
     <section id="badge" className={CARD} data-testid="badge-card">
@@ -212,6 +225,69 @@ export function PublicBadgeCard({ initial, organizationName }: { initial: BadgeS
               </p>
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-5 border-t border-[#f0f1f7] pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="min-w-0" data-testid="badge-today">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
+              <CalendarCheck className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+              {t("badge.todayTitle")}
+            </div>
+            <Switch
+              checked={state.todayEnabled}
+              disabled={busy}
+              onCheckedChange={(checked) => void toggleToday(checked)}
+              aria-label={state.todayEnabled ? t("badge.todayDisable") : t("badge.todayEnable")}
+              data-testid="badge-today-switch"
+            />
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
+            {t("badge.todayDescription", { audience: state.today.audience, title: state.today.title })}
+          </p>
+          <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-[#3c4053]" data-testid="badge-today-items">
+            {state.today.items.map((item) => (
+              <li key={item} className="flex items-start gap-2">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-[#5566f6]" aria-hidden />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-[#6f7282]">
+            {state.points.length > 0 ? t("badge.todayPoints") : null}
+            {state.enabled ? null : ` ${t("badge.todayNeedsBadge")}`}
+          </p>
+        </div>
+
+        <div className="min-w-0" data-testid="badge-sign">
+          <div className="flex min-w-0 items-center gap-2 text-[14px] font-semibold text-[#0b1024]">
+            <Printer className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+            {t("badge.signTitle")}
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">{t("badge.signDescription")}</p>
+          {state.points.length > 0 ? (
+            <label className="mt-3 block text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
+              {t("badge.signPoint")}
+              <select
+                value={signPoint}
+                onChange={(event) => setSignPoint(event.target.value)}
+                className="mt-1.5 block h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] font-normal normal-case tracking-normal text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                data-testid="badge-sign-point"
+              >
+                <option value="">{t("badge.signAllPoints")}</option>
+                {state.points.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <a href={signHref} target="_blank" rel="noreferrer" className={`${SECONDARY} mt-3`} data-testid="badge-sign-open">
+            <Printer className="size-4 text-[#5566f6]" aria-hidden />
+            {t("badge.signOpen")}
+          </a>
         </div>
       </div>
 

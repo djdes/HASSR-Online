@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { badgePreviewDataUrl, describeBadge } from "./describe";
+import { badgePreviewDataUrl, describeBadge, describeBadgeToday } from "./describe";
 
 test("бейдж включён: ссылки для вставки и живой пример с процентом", () => {
   const d = describeBadge({ badgeEnabled: true, badgeCode: "abcdefghjk" }, 93);
@@ -29,4 +29,23 @@ test("кода ещё нет: ни ссылок, ни «включён», при
   assert.equal(d.publicUrl, null);
   assert.equal(d.embedHtml, null);
   assert.match(decodeURIComponent(badgePreviewDataUrl(null)), /нет данных/);
+});
+
+test("«Сегодня» в настройках: по сфере — адресат, заголовок и пункты; флаг и точки из организации", () => {
+  const school = describeBadge(
+    { badgeEnabled: true, badgeCode: "abcdefghjk", badgeTodayEnabled: true, type: "education" },
+    90,
+    [{ id: "p1", name: "Детский сад №68" }],
+  );
+  assert.equal(school.todayEnabled, true);
+  assert.equal(school.today.audience, "Родителям");
+  assert.ok(school.today.items.some((item) => item.startsWith("Суточные пробы")));
+  assert.ok(school.today.items.some((item) => item.includes("список блюд")));
+  assert.deepEqual(school.points, [{ id: "p1", name: "Детский сад №68" }]);
+
+  const legacy = describeBadge({ badgeEnabled: true, badgeCode: "abcdefghjk" }, 90);
+  assert.equal(legacy.todayEnabled, false);
+  assert.equal(legacy.today.audience, "Посетителям");
+  assert.deepEqual(legacy.points, []);
+  assert.equal(describeBadgeToday("beauty").title, "Салон сегодня");
 });

@@ -10,6 +10,7 @@ import { DeleteOrganizationCard } from "@/components/settings/delete-organizatio
 import { describeBadge } from "@/lib/badge/describe";
 import { prepareBadgeCode } from "@/lib/badge/prepare";
 import { getBadgeStatusForOrganization } from "@/lib/badge/status";
+import { getBadgePoints } from "@/lib/badge/today-data";
 import { loadConversionPreview } from "@/lib/partners/org-conversion";
 import { readLegalProfile } from "@/lib/org-legal-profile";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -52,15 +53,18 @@ export default async function OrganizationInfoPage() {
       createdAt: true,
       badgeEnabled: true,
       badgeCode: true,
+      badgeTodayEnabled: true,
+      perLocationJournals: true,
       deletionRequestedAt: true,
     },
   });
   if (!org) notFound();
   // Бейдж: код заводится заранее (ничего не публикует — страница открывается
   // только у включённого), процент считается и для живого примера.
-  const [badgeCode, badgeStatus, conversion, me, healthCheck, branding] = await Promise.all([
+  const [badgeCode, badgeStatus, badgePoints, conversion, me, healthCheck, branding] = await Promise.all([
     prepareBadgeCode(organizationId, org.badgeCode),
     getBadgeStatusForOrganization(organizationId).catch(() => null),
+    getBadgePoints({ id: organizationId, perLocationJournals: org.perLocationJournals }).catch(() => []),
     // «Перевести в партнёрский кабинет» — только владельцу с партнёрским
     // кабинетом; null — блок не показывается.
     loadConversionPreview({
@@ -78,7 +82,11 @@ export default async function OrganizationInfoPage() {
     getVisibleOrgBranding(organizationId),
   ]);
   const consultant = toConsultantContact(branding);
-  const badge = describeBadge({ badgeEnabled: org.badgeEnabled, badgeCode }, badgeStatus?.percent ?? null);
+  const badge = describeBadge(
+    { badgeEnabled: org.badgeEnabled, badgeCode, badgeTodayEnabled: org.badgeTodayEnabled, type: org.type },
+    badgeStatus?.percent ?? null,
+    badgePoints,
+  );
 
   return (
     <DomainMessagesBoundary namespaces={["settingsManagement"]}>

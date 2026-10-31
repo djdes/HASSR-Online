@@ -48,6 +48,9 @@ test("organization profile catalogs match and badge UI renders for each locale",
               embedHtml: null,
               percent: null,
               previewSvgDataUrl: "data:image/svg+xml,<svg></svg>",
+              todayEnabled: false,
+              today: { audience: "Родителям", title: "Питание сегодня", items: ["Суточные пробы отобраны"] },
+              points: [{ id: "point-1", name: "Точка 1" }],
             },
           }),
         },
@@ -55,6 +58,9 @@ test("organization profile catalogs match and badge UI renders for each locale",
     );
     assert.ok(html.includes(badge.title), `${locale} title was not rendered`);
     assert.ok(html.includes(badge.description), `${locale} description was not rendered`);
+    assert.ok(html.includes(badge.todayTitle), `${locale} today block title was not rendered`);
+    assert.ok(html.includes(badge.signTitle), `${locale} sign block title was not rendered`);
+    assert.ok(html.includes(badge.signAllPoints), `${locale} sign point picker was not rendered`);
     assert.ok(html.includes("North Café"), "customer organization name should remain unchanged");
   }
 });
