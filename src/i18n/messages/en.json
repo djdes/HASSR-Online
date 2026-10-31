@@ -30581,7 +30581,7 @@
       "description": "Supplier UPDs will appear in “Incoming invoices” by themselves, and acceptance log rows from them. Documents are still signed in your e-document system.",
       "open": "Incoming invoices",
       "diadocTitle": "Diadoc (Kontur)",
-      "diadocHint": "The developer key is issued by Kontur (api-docs.diadoc.ru → “Get a key”). Login and password are your Diadoc ones.",
+      "diadocHint": "Requires a Diadoc developer key for login-and-password sign-in. Kontur issued such keys until July 2025 and no longer issues new ones. If you don't have one, download the UPD from Diadoc and upload the file to “Incoming invoices”.",
       "apiClientId": "Developer key",
       "login": "Login",
       "password": "Password",

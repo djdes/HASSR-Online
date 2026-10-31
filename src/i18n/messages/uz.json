@@ -30581,7 +30581,7 @@
       "description": "Yetkazib beruvchilarning UPD hujjatlari «Kiruvchi yuk xatlari»da o‘zi paydo bo‘ladi, ular bo‘yicha — qabul jurnali satrlari. Hujjatlarni imzolash — avvalgidek EHA tizimingizda.",
       "open": "Kiruvchi yuk xatlari",
       "diadocTitle": "Diadoc (Kontur)",
-      "diadocHint": "Dasturchi kalitini Kontur beradi (api-docs.diadoc.ru → «Kalit olish»). Login va parol — Diadoc’niki.",
+      "diadocHint": "Login va parol bilan kirish uchun Diadoc dasturchi kaliti kerak. Kontur bunday kalitlarni 2025-yil iyuligacha bergan, yangilarini bermaydi. Kalit bo‘lmasa, UPD’ni Diadoc’dan yuklab oling va «Kiruvchi yuk xatlari»ga fayl sifatida yuklang.",
       "apiClientId": "Dasturchi kaliti",
       "login": "Login",
       "password": "Parol",
