@@ -78,3 +78,18 @@ export async function assertPublicServerUrl(
   }
   return url.origin;
 }
+
+/**
+ * Как {@link assertPublicServerUrl}, но с путём: опубликованная база 1С живёт
+ * не в корне (`https://host/zup`). Запрос и якорь отбрасываются.
+ */
+export async function assertPublicBaseUrl(
+  raw: string,
+  env: { NODE_ENV?: string } = process.env,
+  resolve?: (host: string) => Promise<string[]>,
+): Promise<string> {
+  const origin = await assertPublicServerUrl(raw, env, resolve);
+  const path = new URL(raw.trim()).pathname.replace(/\/+$/, "");
+  return `${origin}${path}`;
+}
+

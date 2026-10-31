@@ -1,0 +1,22 @@
+{
+  "task": "hr1c-2026-10",
+  "branch": "claude/awesome-cannon-72xnuc",
+  "base": "fb57ff3",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/hr1c/hr1c.test.ts (plan)"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/hr1c/hr1c.test.ts (OData)", "raw/mock-log.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/links.txt", "raw/audit.txt", "raw/e2e-result.json"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/hr1c/hr1c.test.ts (api body)", "raw/e2e-result.json (apiPreview/apiApply/apiAgain/apiBadBody)"] },
+    "AC5": { "status": "PASS", "note": "verified on a local 1C:ZUP OData stub only (no live 1C)", "evidence": ["raw/hr1c-empty.png", "raw/hr1c-preview.png", "raw/hr1c-applied.png", "raw/resave.json"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/test-gate.txt", "typecheck exit 0", "eslint clean", "i18n:check 97/0"] }
+  },
+  "commands": {
+    "unit": "npx tsx --test src/lib/hr1c/*.test.ts src/lib/supply/*.test.ts + navigation/settings-cards/app-nav → 82 pass",
+    "typecheck": "npm run typecheck → exit 0",
+    "eslint": "npx eslint (changed files) → clean",
+    "i18n": "npm run i18n:check → 97 pass",
+    "gate": "npm run test:gate → pass=5291, fail=0",
+    "e2e": "node raw/hr1c-e2e.cjs against next dev :3100 with raw/zup-mock-server.cjs on 127.0.0.1:4588"
+  },
+  "deploy": "prisma db push creates HrConnection and HrEmployeeLink (no data loss); optional crontab line for /api/cron/hr1c-sync"
+}

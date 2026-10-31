@@ -107,6 +107,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "supply.ignore": { label: "Накладная отложена без приёмки", variant: "secondary" },
   "supply.connect": { label: "ЭДО подключён", variant: "default" },
   "supply.disconnect": { label: "ЭДО отключён", variant: "secondary" },
+  "hr1c.sync": { label: "Сотрудники синхронизированы с 1С", variant: "default" },
 
   // --- Задачи сотрудников -----------------------------------------------
   "task.claim": { label: "Задача взята", variant: "outline" },

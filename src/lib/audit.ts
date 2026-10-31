@@ -22,6 +22,8 @@ export type AuditAction =
   | "supply.ignore"
   | "supply.connect"
   | "supply.disconnect"
+  /** 1С кадры: прогон синхронизации сотрудников (сводка в details). */
+  | "hr1c.sync"
   /** Сотрудник задал пароль по ссылке руководителя и вошёл без Telegram. */
   | "employee.paired_device";
 
