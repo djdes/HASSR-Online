@@ -102,6 +102,7 @@ function isCategoryNote(
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
+  "Точка видит только своё": MapPin,
   "Журналы точки — только своё": MapPin,
   "Счёт на оплату в новом оформлении": FileText,
   "Смена точки и закрытые разделы": PanelLeft,
