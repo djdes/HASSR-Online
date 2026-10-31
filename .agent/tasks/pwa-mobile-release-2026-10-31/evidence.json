@@ -1,0 +1,101 @@
+{
+  "taskId": "pwa-mobile-release-2026-10-31",
+  "status": "verified_pre_merge",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "checks": [
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "result": "pass",
+      "artifact": "raw/typecheck.txt"
+    },
+    {
+      "name": "test_gate",
+      "command": "npm run test:gate",
+      "result": "pass",
+      "detail": "pass=5302 fail=0",
+      "artifact": "raw/test-gate.txt"
+    },
+    {
+      "name": "next_build",
+      "command": "NEXT_DIST_DIR=.next-prodcheck npm run build",
+      "result": "pass",
+      "artifact": "raw/next-build.txt"
+    },
+    {
+      "name": "mobile_test_release",
+      "command": "npm --prefix mobile run test:release",
+      "result": "pass",
+      "detail": "13/13",
+      "artifact": "raw/mobile-test-release.txt"
+    },
+    {
+      "name": "app_links_manifest_pwa_tests",
+      "command": "npx tsx --test src/lib/app-links.test.ts src/lib/manifest.test.ts src/lib/pwa-manifest-localization.test.ts src/lib/service-worker-scope.test.ts",
+      "result": "pass"
+    },
+    {
+      "name": "android_debug_build",
+      "command": "./gradlew assembleDebug",
+      "result": "pass",
+      "artifact": "raw/android-debug-build.txt"
+    },
+    {
+      "name": "android_release_blocked_without_firebase",
+      "command": "./gradlew bundleRelease assembleRelease (no google-services.json)",
+      "result": "blocked_as_expected",
+      "artifact": "raw/android-release-blocked-without-firebase.txt"
+    },
+    {
+      "name": "android_release_dry_run",
+      "command": "./gradlew bundleRelease assembleRelease + apksigner + jarsigner + aapt2 + release-manifest",
+      "result": "pass",
+      "artifact": "raw/android-release-dry-run-manifest.json"
+    },
+    {
+      "name": "mobile_check_dry_run_step_local",
+      "command": "bash -e <mobile-check.yml 'Пробный выпуск' step>",
+      "result": "pass",
+      "artifact": "raw/android-ci-dry-run-step-local.txt"
+    },
+    {
+      "name": "eslint_changed_ts",
+      "command": "npx eslint <changed ts files>",
+      "result": "pass"
+    },
+    {
+      "name": "ci_mobile_check_pr75",
+      "command": "GitHub Actions «Проверка приложений» run #12 on d96fa6af",
+      "result": "pass",
+      "url": "https://github.com/djdes/HASSR-Online/actions/runs/41232272812"
+    },
+    {
+      "name": "post_merge_master_checks",
+      "command": "npm run typecheck && npm run test:gate && npm --prefix mobile run test:release (after merging ec20d610)",
+      "result": "pass",
+      "artifact": "raw/post-merge-checks.txt"
+    }
+  ],
+  "acceptanceCriteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS",
+    "AC13": "PENDING_POST_MERGE",
+    "AC14": "BLOCKED_PERMISSIONS"
+  },
+  "notes": [
+    "iOS signing cannot be exercised without an Apple Developer account; iOS is verified by the simulator build in CI.",
+    "No real device testing in this environment (no emulator/simulator); store builds still need the phone checklist in docs/mobile/09-release.md, step 4.",
+    "npm run test:gate rewrites PDFs under .agent/tasks/english-version-1375e736/raw; those changes are not part of this task.",
+    "AC14: workflow_dispatch returns 403 for this integration (see problems.md); the owner runs «Выпуск приложений» manually."
+  ]
+}

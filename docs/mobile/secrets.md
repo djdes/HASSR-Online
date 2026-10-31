@@ -8,7 +8,7 @@
 
 - Секреты живут только в GitHub Secrets и в `.env` на сервере. В git, в чаты, в задачи и в логи — никогда.
 - Файлы-исходники (`.p8`, `.json`, `.plist`, `.jks`) после занесения храните в менеджере паролей, а не в папке «Загрузки».
-- Команды ниже — для Windows PowerShell 5.1. Репозиторий: `djdes/HACCP-Online`.
+- Команды ниже — для Windows PowerShell 5.1. Репозиторий: `djdes/HASSR-Online`.
 
 ## Секреты GitHub
 
@@ -17,13 +17,13 @@
 
 ```powershell
 # base64 файла → секрет
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\путь\к\файлу")) | gh secret set ИМЯ_СЕКРЕТА -R djdes/HACCP-Online
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\путь\к\файлу")) | gh secret set ИМЯ_СЕКРЕТА -R djdes/HASSR-Online
 
 # обычный текст → секрет (gh спросит значение, ввод скрыт)
-gh secret set ИМЯ_СЕКРЕТА -R djdes/HACCP-Online
+gh secret set ИМЯ_СЕКРЕТА -R djdes/HASSR-Online
 
 # проверить список (значения GitHub не показывает)
-gh secret list -R djdes/HACCP-Online
+gh secret list -R djdes/HASSR-Online
 ```
 
 | Секрет | Что это | Откуда | Как положить |
@@ -33,7 +33,7 @@ gh secret list -R djdes/HACCP-Online
 | `ANDROID_KEY_ALIAS` | Имя ключа в хранилище: `wesetup-upload` | При генерации | текст |
 | `ANDROID_KEY_PASSWORD` | Пароль ключа. Для хранилища PKCS12 (формат `keytool` по умолчанию) он **совпадает** с паролем хранилища | Тот же, что `ANDROID_KEYSTORE_PASSWORD` | текст |
 | `GOOGLE_SERVICES_JSON_BASE64` | `google-services.json` Android-приложения Firebase | Начальник, [04](04-firebase.md) шаг 2 | base64 файла |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | JSON-ключ сервисного аккаунта `play-publisher` | Начальник, [03](03-google-play-console.md) шаг 6 | **текст JSON как есть**, не base64: `Get-Content -Raw C:\путь\play.json \| gh secret set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON -R djdes/HACCP-Online` |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | JSON-ключ сервисного аккаунта `play-publisher` | Начальник, [03](03-google-play-console.md) шаг 6 | **текст JSON как есть**, не base64: `Get-Content -Raw C:\путь\play.json \| gh secret set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON -R djdes/HASSR-Online` |
 | `APPLE_TEAM_ID` | Team ID (10 символов) | Начальник, [01](01-apple-developer.md) шаг 3 | текст |
 | `ASC_KEY_ID` | Key ID ключа App Store Connect API | Начальник, [02](02-app-store-connect.md) шаг 4 | текст |
 | `ASC_ISSUER_ID` | Issuer ID ключа App Store Connect API | Там же | текст |
@@ -69,8 +69,8 @@ Signing) из Play Console — через запятую, без пробела 
 Занести файл в GitHub Secret (пароль — из `README.txt`, вставить как обычный текстовый секрет так же, как файл — base64):
 
 ```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\Users\Yaroslav\wesetup-android\upload.jks")) | gh secret set ANDROID_KEYSTORE_BASE64 -R djdes/HACCP-Online
-gh secret set ANDROID_KEY_ALIAS -R djdes/HACCP-Online -b "wesetup-upload"
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\Users\Yaroslav\wesetup-android\upload.jks")) | gh secret set ANDROID_KEYSTORE_BASE64 -R djdes/HASSR-Online
+gh secret set ANDROID_KEY_ALIAS -R djdes/HASSR-Online -b "wesetup-upload"
 # ANDROID_KEYSTORE_PASSWORD и ANDROID_KEY_PASSWORD — тем же способом, значение из README.txt (не вставлять в команду открытым текстом в общем терминале)
 ```
 
@@ -111,7 +111,7 @@ keytool -list -v -keystore upload-2.jks -alias wesetup-upload
 | `APPLE_TEAM_ID` | Team ID для `/.well-known/apple-app-site-association` | Начальник, [01](01-apple-developer.md) шаг 3 | `A1B2C3D4E5` |
 | `ANDROID_CERT_SHA256` | Отпечатки SHA-256 для `/.well-known/assetlinks.json`: ключ подписи приложения из Play Console (Play App Signing, начальник передаёт после первой загрузки, [03](03-google-play-console.md) шаг 7) **и** отпечаток ключа загрузки — тот всегда `8C:28:3E:01:28:7C:9A:D3:4B:1D:32:8F:5E:4F:2D:D0:6B:49:CF:91:54:4C:B8:DE:6D:65:5D:21:F9:6A:60:2D` | Разработчик (ключ загрузки) + начальник (ключ подписи приложения) | через запятую без пробелов: `AB:CD:...:EF,8C:28:...:2D` |
 | `APPLE_APP_ID` | Числовой Apple ID приложения для кнопки «Обновить» | Начальник, [02](02-app-store-connect.md) шаг 2 | `6740000000` |
-| `MOBILE_APP_MIN_VERSION` | Минимальная версия приложения; ниже — экран «Обновите приложение» | Решает разработчик ([11](11-updates.md)) | `1.0.0`; пусто — без проверки |
+| `MOBILE_APP_MIN_VERSION` | Минимальная версия приложения; ниже — экран «Обновите приложение» | Решает разработчик ([11](11-updates.md)) | `1.1.0`; пусто — без проверки |
 
 JSON сервисного аккаунта одной строкой (поле `private_key` содержит `\n` — в одинарных кавычках dotenv оставит их как
 есть, и `JSON.parse` превратит их в переводы строк):

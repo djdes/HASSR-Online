@@ -1,7 +1,7 @@
 # 06. Карточки приложений в магазинах
 
 Карточка — то, что человек видит в App Store и Google Play: название, описание, картинки. Все готовые тексты —
-в [store-listing.md](store-listing.md): копируйте оттуда без изменений (длины уже проверены).
+в [store-listing.md](store-listing.md): копируйте оттуда после проверки соответствия фактическому релизу.
 
 **Что понадобится заранее**
 
@@ -12,19 +12,20 @@
 
 **Сколько стоит** — бесплатно.
 
-## App Store: страница версии 1.0
+## App Store: страница версии 1.1.0
 
-App Store Connect → **Apps** → WeSetup → слева в блоке **iOS App** → **1.0 Prepare for Submission**.
+App Store Connect → **Apps** → WeSetup → слева в блоке **iOS App** → **1.1.0 Prepare for Submission**. Если запись
+создана с версией «1.0», поменяйте номер на `1.1.0` — первая версия в магазине та же, что в сборке.
 
 | Поле | Что вписать | Зачем |
 |---|---|---|
-| **iPhone screenshots (6.9" Display)** | 3–6 скриншотов от разработчика | Обязательны; для остальных размеров iPhone App Store уменьшит эти |
+| **iPhone screenshots (6.9" Display)** | 6 скриншотов из `docs/mobile/screenshots/ios` (1320×2868) | Обязательны; для остальных размеров iPhone App Store уменьшит эти |
 | **Promotional Text** | из [store-listing.md](store-listing.md) | Можно менять в любой момент без проверки |
 | **Description** | полное описание из [store-listing.md](store-listing.md) | |
 | **Keywords** | ключевые слова из [store-listing.md](store-listing.md) | Для поиска; без пробелов после запятых |
 | **Support URL** | `https://wesetup.ru` | Обязательное поле: там указана почта поддержки |
 | **Marketing URL** | `https://wesetup.ru` | По желанию |
-| **Version** | `1.0` | Должно совпадать со сборкой — проверит разработчик |
+| **Version** | `1.1.0` | Должно совпадать со сборкой (`mobile/package.json`) |
 | **Copyright** | `2026 ООО «БФС»` | Год и владелец прав |
 | **Build** | выбирается после загрузки сборки ([09](09-release.md)) | |
 | **App Review Information** | см. [08-review.md](08-review.md) | Вход и заметка для проверяющих |

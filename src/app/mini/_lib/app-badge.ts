@@ -12,6 +12,8 @@
  * поэтому каждый вызов защищён и молча ничего не делает.
  */
 
+import { NOTIFICATION_BADGE, NOTIFICATION_ICON } from "@/lib/pwa-assets";
+
 type BadgeNavigator = Navigator & {
   setAppBadge?: (count?: number) => Promise<void>;
   clearAppBadge?: () => Promise<void>;
@@ -51,8 +53,8 @@ export async function notifyQueueSent(
     if (!registration) return;
     await registration.showNotification(message.title, {
       body: message.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: NOTIFICATION_ICON,
+      badge: NOTIFICATION_BADGE,
       tag: "wesetup-queue-sent",
       data: { url: "/mini" },
     });

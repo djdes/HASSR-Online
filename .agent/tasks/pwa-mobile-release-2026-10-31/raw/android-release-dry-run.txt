@@ -1,0 +1,3 @@
+Проверка перед выпуском пройдена: android, сборка 7
+BUILD SUCCESSFUL in 2m 17s
+458 actionable tasks: 448 executed, 10 up-to-date

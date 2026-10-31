@@ -6,6 +6,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
+import { iosStartupImages } from "@/lib/pwa-assets";
 import { MiniSessionProvider } from "./_components/mini-session-provider";
 import { MiniAppShell } from "./_components/mini-app-shell";
 import { loadMiniShellData } from "./_components/mini-shell-data";
@@ -44,7 +45,15 @@ const BASE_METADATA: Metadata = {
     // Шапка приложения тёмно-синяя в обеих темах — статус-бар в тон,
     // иначе на iOS сверху остаётся светлая полоса над шапкой.
     statusBarStyle: "black-translucent",
+    // Заставка при запуске с экрана «Домой»: без неё iPhone показывает
+    // белый экран, пока грузится кабинет. Картинка на каждый размер экрана —
+    // iOS берёт только совпадающую до пикселя (src/lib/pwa-assets.ts).
+    startupImage: iosStartupImages(),
   },
+  // Next 16 выводит только `mobile-web-app-capable`. iOS до 16.4 манифест не
+  // читает и без старого тега открывал бы кабинет с экрана «Домой» вкладкой
+  // Safari — без полноэкранного режима и без заставки.
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 export async function generateMetadata(): Promise<Metadata> {

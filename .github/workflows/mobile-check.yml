@@ -1,6 +1,7 @@
 # Проверка мобильного проекта без секретов: собирается ли Android (отладочный APK —
-# можно скачать из артефактов и поставить на телефон) и iOS (для симулятора, без
-# подписи). Запускается сам при изменениях в mobile/ и вручную.
+# можно скачать из артефактов и поставить на телефон, и пробный выпуск с одноразовым
+# ключом) и iOS (для симулятора, без подписи). Запускается сам при изменениях в
+# mobile/ — в PR и в master — и вручную.
 # macOS-минуты в приватном репозитории стоят в 10 раз дороже — задание iOS
 # держим коротким: без архива и подписи, одна сборка под симулятор.
 name: Проверка приложений
@@ -11,6 +12,13 @@ on:
     paths:
       - "mobile/**"
       # «Сетап помощник» проверяет свой workflow — setup-helper-check.yml.
+      - "!mobile/setup-helper/**"
+      - ".github/workflows/mobile-*.yml"
+  # И на PR — чтобы сломанная сборка приложения не доезжала до master
+  # (как у setup-helper-check.yml). Секретов workflow не использует.
+  pull_request:
+    paths:
+      - "mobile/**"
       - "!mobile/setup-helper/**"
       - ".github/workflows/mobile-*.yml"
   workflow_dispatch:
@@ -49,6 +57,7 @@ jobs:
             mobile/android/**/gradle-wrapper.properties
 
       - run: npm ci
+      - run: npm run test:release
       - run: npx cap sync android
 
       - name: Сборка APK
@@ -63,6 +72,44 @@ jobs:
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      # Пробный выпуск без секретов: одноразовый ключ и ненастоящий
+      # Firebase-файл. Проходит тот же путь, что «Выпуск приложений» (проверка
+      # перед выпуском в Gradle, подпись AAB и APK, пакет и версия, паспорт
+      # выпуска), — чтобы настоящий выпуск не падал на сборке. Файлы этого шага
+      # никуда не выкладываются: они подписаны не тем ключом.
+      - name: Пробный выпуск с одноразовым ключом
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: dry-run-only
+          ANDROID_KEY_ALIAS: dry-run
+          ANDROID_KEY_PASSWORD: dry-run-only
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          keytool -genkeypair -keystore app/upload.jks -alias "$ANDROID_KEY_ALIAS" -keyalg RSA -keysize 2048 \
+            -validity 1 -storepass "$ANDROID_KEYSTORE_PASSWORD" -keypass "$ANDROID_KEY_PASSWORD" -dname "CN=WeSetup CI dry run"
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": { "project_number": "123456789012", "project_id": "wesetup-ci-dry-run", "storage_bucket": "wesetup-ci-dry-run.appspot.com" },
+            "client": [{
+              "client_info": { "mobilesdk_app_id": "1:123456789012:android:0123456789abcdef", "android_client_info": { "package_name": "ru.wesetup.app" } },
+              "oauth_client": [],
+              "api_key": [{ "current_key": "ci-dry-run-not-a-real-key" }],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+            }],
+            "configuration_version": "1"
+          }
+          JSON
+          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" --no-daemon
+          aab=app/build/outputs/bundle/release/app-release.aab
+          apk=app/build/outputs/apk/release/app-release.apk
+          tools=$(dirname "$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)")
+          "$tools/apksigner" verify "$apk"
+          jarsigner -J-Duser.language=en -verify "$aab" | grep -q "jar verified"
+          version=$(node -p "require('../package.json').version")
+          "$tools/aapt2" dump badging "$apk" | head -1 | grep "name='ru.wesetup.app' versionCode='$BUILD_NUMBER' versionName='$version'"
+          node ../scripts/release-manifest.mjs android
+          rm -f app/upload.jks app/google-services.json
 
   ios:
     name: iOS — сборка для симулятора
@@ -81,6 +128,7 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - run: npm ci
+      - run: npm run test:release
       - run: npx cap sync ios
 
       - name: Сборка без подписи
@@ -95,3 +143,24 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Проверить синтаксис сборщика релиза
+        working-directory: mobile/ios/App
+        run: ruby -c fastlane/Fastfile
+
+      - name: Проверить privacy manifest внутри собранного приложения
+        run: |
+          manifest="$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/App.app/PrivacyInfo.xcprivacy"
+          plutil -lint "$manifest"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSPrivacyAccessedAPITypes:0:NSPrivacyAccessedAPIType' "$manifest")" = "NSPrivacyAccessedAPICategoryFileTimestamp"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :NSPrivacyAccessedAPITypes:0:NSPrivacyAccessedAPITypeReasons:0' "$manifest")" = "C617.1"
+
+      - name: Упаковать приложение симулятора с правами файлов
+        run: tar -czf "$RUNNER_TEMP/WeSetup-ios-simulator.tar.gz" -C "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator" App.app
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wesetup-ios-simulator-${{ github.run_number }}
+          path: ${{ runner.temp }}/WeSetup-ios-simulator.tar.gz
+          if-no-files-found: error
+          retention-days: 14

@@ -3,10 +3,17 @@
   "name": "WeSetup — рабочая смена",
   "short_name": "WeSetup",
   "description": "Журналы СанПиН и ХАССП: задачи смены, заполнение и фото — с телефона",
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "start_url": "/mini?src=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "lang": "ru",
   "dir": "ltr",
@@ -14,22 +21,51 @@
   "theme_color": "#0b1024",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/app-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/app-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/app-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/app-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screens/today.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Задачи смены на сегодня"
+    },
+    {
+      "src": "/icons/screens/control-board.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Панель контроля: кто что взял и что ждёт проверки"
+    },
+    {
+      "src": "/icons/screens/fridges.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Температура холодильников с телефона"
     }
   ],
   "shortcuts": [
@@ -37,13 +73,41 @@
       "name": "Сегодня",
       "short_name": "Сегодня",
       "description": "Задачи текущей смены",
-      "url": "/mini/today?src=pwa"
+      "url": "/mini/today?src=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-today.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/shortcut-today.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ]
     },
     {
       "name": "Журналы",
       "short_name": "Журналы",
       "description": "Список журналов",
-      "url": "/mini?src=pwa"
+      "url": "/mini?src=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-journals.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/shortcut-journals.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ]
     }
   ]
 }
