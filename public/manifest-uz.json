@@ -3,6 +3,10 @@
   "name": "WeSetup — ish smenasi",
   "short_name": "WeSetup",
   "description": "SanPiN va HACCP jurnallari: smena vazifalari, yozuvlar va fotosuratlar — telefon orqali",
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "start_url": "/mini?src=pwa",
   "scope": "/",
   "display": "standalone",
@@ -17,22 +21,51 @@
   "theme_color": "#0b1024",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/app-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/app-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/app-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/app-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screens/today.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Bugungi smena vazifalari"
+    },
+    {
+      "src": "/icons/screens/control-board.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Nazorat paneli: kim nimani oldi va nima tekshiruvni kutmoqda"
+    },
+    {
+      "src": "/icons/screens/fridges.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Muzlatgichlar harorati telefondan"
     }
   ],
   "shortcuts": [
@@ -40,13 +73,41 @@
       "name": "Bugun",
       "short_name": "Bugun",
       "description": "Joriy smena vazifalari",
-      "url": "/mini/today?src=pwa"
+      "url": "/mini/today?src=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-today.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/shortcut-today.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ]
     },
     {
       "name": "Jurnallar",
       "short_name": "Jurnallar",
       "description": "Jurnallar ro‘yxati",
-      "url": "/mini?src=pwa"
+      "url": "/mini?src=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-journals.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/shortcut-journals.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "maskable"
+        }
+      ]
     }
   ]
 }

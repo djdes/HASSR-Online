@@ -1,0 +1,7 @@
+Build file '/home/user/HASSR-Online/mobile/android/app/build.gradle' line: 27
+
+* What went wrong:
+Выпуск остановлен: Нет файла android/app/google-services.json
+Выпуск остановлен: google-services.json (Firebase Android) не для ru.wesetup.app или неполный — без него не будет push
+
+* Try:

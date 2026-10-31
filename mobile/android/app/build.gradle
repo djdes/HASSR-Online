@@ -6,9 +6,29 @@ def appVersionName = new groovy.json.JsonSlurper().parse(file('../../package.jso
 def appVersionCode = project.hasProperty('versionCode') ? project.property('versionCode').toString().toInteger() : 1
 
 // Ключ загрузки Google Play: файл app/upload.jks кладёт CI из секрета
-// ANDROID_KEYSTORE_BASE64, пароли — из переменных окружения. Без файла
-// release-сборка остаётся неподписанной (для локальной проверки этого хватает).
+// ANDROID_KEYSTORE_BASE64, пароли — из переменных окружения.
 def uploadKeystore = file('upload.jks')
+
+// Release-сборка (AAB/APK для магазина) — только после той же проверки, что в
+// CI: mobile/scripts/release-preflight.mjs (ключ и пароли, Firebase для push,
+// боевой адрес сайта, версия в User-Agent). Так и локально не соберётся
+// неподписанный файл или сборка без push. Отладочной сборке секреты не нужны.
+gradle.taskGraph.whenReady { graph ->
+    def releaseTasks = ['bundleRelease', 'assembleRelease', 'packageRelease', 'signReleaseBundle']
+    if (releaseTasks.any { graph.hasTask(":app:${it}") }) {
+        def check = providers.exec {
+            workingDir = rootProject.projectDir.parentFile
+            environment('BUILD_NUMBER', appVersionCode.toString())
+            commandLine('node', 'scripts/release-preflight.mjs', '--platform', 'android')
+            ignoreExitValue = true
+        }
+        def output = (check.standardOutput.asText.get() + check.standardError.asText.get()).trim()
+        if (check.result.get().exitValue != 0) {
+            throw new GradleException(output)
+        }
+        logger.lifecycle(output)
+    }
+}
 
 android {
     namespace = "ru.wesetup.app"

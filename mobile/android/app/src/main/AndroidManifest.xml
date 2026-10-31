@@ -19,22 +19,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Ссылки wesetup.ru (QR-плакаты, сообщения бота, письма) открываются в
-                 приложении. Проверка домена — файл /.well-known/assetlinks.json на сайте. -->
+            <!-- Ссылки wesetup.ru (QR-плакаты и наклейки, сообщения бота, письма)
+                 открываются в приложении. Проверка домена — файл
+                 /.well-known/assetlinks.json на сайте. Набор путей тот же, что
+                 APP_LINK_PATHS в src/lib/app-links.ts (его сверяет тест): разделы —
+                 pathPrefix со слешем на конце, иначе "/journals" ловил бы и витрину
+                 "/journals-info", а "/q" — "/qb"; одиночные страницы — точный path. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:host="wesetup.ru" />
-                <data android:pathPrefix="/mini" />
-                <data android:pathPrefix="/journals" />
-                <data android:pathPrefix="/join" />
-                <data android:pathPrefix="/journal-fill" />
-                <data android:pathPrefix="/equipment-fill" />
-                <data android:pathPrefix="/room-fill" />
-                <data android:pathPrefix="/task-fill" />
-                <data android:pathPrefix="/delete-account" />
+                <data android:path="/mini" />
+                <data android:pathPrefix="/mini/" />
+                <data android:pathPrefix="/journals/" />
+                <data android:pathPrefix="/join/" />
+                <data android:pathPrefix="/invite/" />
+                <data android:pathPrefix="/pair/" />
+                <data android:pathPrefix="/q/" />
+                <data android:pathPrefix="/qj/" />
+                <data android:pathPrefix="/journal-fill/" />
+                <data android:pathPrefix="/equipment-fill/" />
+                <data android:pathPrefix="/room-fill/" />
+                <data android:pathPrefix="/task-fill/" />
+                <data android:path="/delete-account" />
             </intent-filter>
         </activity>
 

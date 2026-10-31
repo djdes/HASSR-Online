@@ -15,12 +15,29 @@
 /** Идентификатор приложения на обеих платформах. */
 export const APP_BUNDLE_ID = "ru.wesetup.app";
 
-/** Адреса сайта, которые открываются в приложении. */
+/**
+ * Адреса сайта, которые открываются в приложении.
+ *
+ * Тот же набор зашит в приложение Android —
+ * `mobile/android/app/src/main/AndroidManifest.xml` (intent-filter с
+ * autoVerify): «/x» там `android:path`, «/x/*» — `android:pathPrefix="/x/"`.
+ * Расхождение ловит `app-links.test.ts`. На iPhone новый путь заработает без
+ * новой версии приложения (iOS перечитывает файл через CDN Apple — при
+ * установке и обновлении приложения), на Android — только с новой версией.
+ *
+ * Только рабочие сценарии сотрудника: кабинет, журналы, QR-плакаты и
+ * наклейки, вход и приглашения. Витрина, тарифы, страницы для гостей
+ * (`/b/…`) и проверяющих (`/inspector/…`) остаются в браузере.
+ */
 export const APP_LINK_PATHS: readonly string[] = [
   "/mini",
   "/mini/*",
   "/journals/*",
   "/join/*",
+  "/invite/*",
+  "/pair/*",
+  "/q/*",
+  "/qj/*",
   "/journal-fill/*",
   "/equipment-fill/*",
   "/room-fill/*",

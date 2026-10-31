@@ -1,0 +1,4 @@
+BUILD SUCCESSFUL in 6m 32s
+336 actionable tasks: 336 executed
+EXIT 0
+package: name='ru.wesetup.app' versionCode='1' versionName='1.1.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'

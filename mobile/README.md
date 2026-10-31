@@ -20,18 +20,21 @@ Capacitor-оболочка вокруг мини-версии сайта. При
 | `package.json` | Версии Capacitor и плагинов (точные, без `^`) и **версия приложения** |
 | `www/offline.html` | Экран «Нет связи с интернетом» с кнопкой «Повторить» (`server.errorPath`) |
 | `www/index.html` | Заглушка: Capacitor требует папку веб-файлов, в работе не видна |
-| `assets/` | Исходники иконки и заставки (1024 и 2732 px), рисует `scripts/make-assets.mjs` |
+| `assets/` | Исходники иконки и заставки (1024 и 2732 px), рисует `scripts/make-assets.mjs` из вектора `scripts/brand-mark.mjs` (тот же знак у кабинета на домашнем экране — `scripts/make-pwa-assets.ts` в корне) |
+| `scripts/release-preflight.mjs` | Проверка перед выпуском: ключ и пароли, Firebase, боевой адрес сайта, версия в User-Agent. Запускают Gradle, fastlane и workflow |
+| `scripts/release-manifest.mjs` | Паспорт выпуска: файлы, SHA-256, коммит |
+| `scripts/store-assets.mjs`, `scripts/store-listing.mjs` | Паспорт картинок для магазинов (`docs/mobile/asset-manifest.json`) и тексты карточек (`docs/mobile/listing-values.json`) |
 | `android/` | Проект Android (Gradle) |
 | `ios/` | Проект iOS (Xcode + CocoaPods) |
-| `ios/App/fastlane/` | Сборка iOS и отправка в TestFlight |
+| `ios/App/fastlane/` | Сборка iOS (lane `release`) и отправка в TestFlight (`upload_beta`) |
+| `ios/App/App/PrivacyInfo.xcprivacy` | Манифест приватности: отслеживания нет, причина C617.1 для дат файлов (`@capacitor/filesystem`) |
 
 Своё в нативной части:
 
 - **WebPrint** — локальный плагин печати: `print({ jobName })` открывает системную
   печать текущей страницы (принтер или PDF), `printFile({ path, jobName })` —
   печать готового PDF (бланк журнала с сервера; сайт кладёт его во временную
-  папку через Filesystem; пока только Android — на iOS сайт открывает лист
-  «Поделиться», где есть «Напечатать»), `openSettings()` — экран приложения в настройках
+  папку через Filesystem; пока Android и iOS), `openSettings()` — экран приложения в настройках
   телефона. Android: `android/app/src/main/java/ru/wesetup/app/WebPrintPlugin.java`
   (регистрация в `MainActivity`), iOS: `ios/App/App/WebPrintPlugin.swift`
   (регистрация в `WeSetupViewController.capacitorDidLoad`).
@@ -41,25 +44,32 @@ Capacitor-оболочка вокруг мини-версии сайта. При
 - **Запасное скачивание файлов** на Android (`MainActivity.downloadFile`): если
   WebView получил файл с `Content-Disposition: attachment`, он скачивается
   системным загрузчиком с куками сессии. Основной путь — «Поделиться» из кода сайта.
-- **Универсальные ссылки**: Android — intent-filter с `autoVerify` для
-  `https://wesetup.ru` (`/mini`, `/journals`, `/join`, `/journal-fill`,
-  `/equipment-fill`, `/room-fill`, `/task-fill`, `/delete-account`); iOS —
-  `ios/App/App/App.entitlements` (`applinks:wesetup.ru`, `webcredentials:wesetup.ru`).
-- **Push**: `@capacitor-firebase/messaging`. Без файлов Firebase приложение
-  собирается и работает, только без push.
+- **Универсальные ссылки**: набор путей — `APP_LINK_PATHS` в `src/lib/app-links.ts`:
+  `/mini`, `/mini/…`, `/journals/…`, `/join/…`, `/invite/…`, `/pair/…`, `/q/…` (личный
+  QR-вход), `/qj/…` (QR в шапке печатного журнала), `/journal-fill/…`,
+  `/equipment-fill/…`, `/room-fill/…`, `/task-fill/…`, `/delete-account`. Android —
+  тот же набор в intent-filter с `autoVerify` (`android:path` для страницы,
+  `pathPrefix` со слешем для раздела — иначе `/journals` ловил бы и витрину
+  `/journals-info`); расхождение ловит `src/lib/app-links.test.ts`. iOS —
+  `ios/App/App/App.entitlements` (`applinks:wesetup.ru`, `webcredentials:wesetup.ru`),
+  пути отдаёт сайт в `/.well-known/apple-app-site-association`, поэтому на iPhone новый
+  путь работает без новой версии приложения, а на Android — только с новой.
+- **Push**: `@capacitor-firebase/messaging`. Без файлов Firebase отладочная сборка
+  собирается и работает без push; сборку для магазина без них не даст собрать
+  `scripts/release-preflight.mjs`.
 
 ## Версии
 
 | Пакет | Версия |
 |---|---|
-| @capacitor/core, cli, android, ios | 8.5.2 |
-| @capacitor/app | 8.1.1 |
+| @capacitor/core, cli, android, ios | 8.5.2 — 8.5.3 правит только Swift Package Manager (у нас CocoaPods), 8.6.0 вышла 28.10.2026, после проверки устройств |
+| @capacitor/app | 8.1.2 |
 | @capacitor/app-launcher | 8.0.1 |
-| @capacitor/filesystem | 8.1.3 |
-| @capacitor/share | 8.0.2 |
+| @capacitor/filesystem | 8.1.3 — 8.1.4/8.1.5 меняли разбор путей на iOS, а печать и «Поделиться» пишут файлы через него; поднимать вместе с проверкой на iPhone |
+| @capacitor/share | 8.0.3 (лист «Поделиться» на iOS открывается поверх верхнего окна) |
 | @capacitor/splash-screen | 8.0.2 |
-| @capacitor/status-bar | 8.0.3 |
-| @capacitor-firebase/messaging | 8.5.2 (Firebase Messaging: Android 25.0.1, iOS ~> 12.7) |
+| @capacitor/status-bar | 8.0.4 |
+| @capacitor-firebase/messaging | 8.5.2 (Firebase Messaging: Android 25.0.1, iOS ~> 12.7); 8.6.0 вышла 31.10.2026 |
 | @capacitor-community/speech-recognition | 7.0.1 (последняя; peer `@capacitor/core >= 7`) |
 | @capacitor/assets (dev) | 3.0.5 |
 | typescript (dev, нужен CLI для `capacitor.config.ts`) | 5.9.3 |
@@ -94,32 +104,40 @@ APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~7 МБ). Постав
 
 Подписанный выпуск локально (если есть ключ): положить `android/app/upload.jks`,
 задать `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` и
-выполнить `./gradlew bundleRelease -PversionCode=<номер>`. Без `upload.jks`
-release-сборка получается неподписанной.
+выполнить `./gradlew bundleRelease -PversionCode=<номер>`. Для release обязательны ключ, пароли и корректный Firebase-конфиг. Проверка `scripts/release-preflight.mjs` блокирует неподписанный выпуск и сборку с тестовым URL.
 
 iOS на Windows не собрать — это делает GitHub Actions (или Mac: `npx cap sync ios`,
 затем открыть `ios/App/App.xcworkspace` в Xcode).
 
 ## Выпуск: два workflow
 
+Маршрут первой публикации (что уже готово и что делает владелец) — [PUBLISHING.md](../docs/mobile/PUBLISHING.md).
+
 **«Проверка приложений»** (`.github/workflows/mobile-check.yml`) — сама
 запускается при изменениях в `mobile/**` и в `mobile-*.yml`, можно запустить
-вручную. Без секретов. Собирает отладочный APK (артефакт
-`wesetup-debug-apk-<номер>` — можно скачать и поставить) и iOS-сборку для
-симулятора без подписи. Задание macOS короткое: минуты macOS в приватном
-репозитории стоят в 10 раз дороже.
+вручную. Без секретов. `npm run test:release` (проверка перед выпуском, паспорт
+картинок и тексты карточек), отладочный APK (артефакт `wesetup-debug-apk-<номер>`
+— можно скачать и поставить), **пробный выпуск Android** с одноразовым ключом и
+ненастоящим Firebase-файлом (тот же путь, что у настоящего выпуска: проверка в
+Gradle, подписи AAB и APK, пакет и версия), iOS-сборка для симулятора с проверкой
+манифеста приватности (артефакт `wesetup-ios-simulator-<номер>`).
 
 **«Выпуск приложений»** (`.github/workflows/mobile-release.yml`) — только вручную:
-Actions → «Выпуск приложений» → Run workflow. Параметры:
+Actions → «Выпуск приложений» → Run workflow. Первым шагом перечисляет недостающие
+секреты GitHub. Параметры:
 
 - `platform` — `both` / `android` / `ios`;
-- `track` — `internal` (отправить AAB во внутреннее тестирование Google Play) или
-  `none` (только собрать, AAB — в артефактах);
-- `play_status` — `completed` обычно; `draft`, пока приложение в Google Play ещё
-  ни разу не выпускалось (Google не даёт создавать другие выпуски у черновика).
+- `track` — `none` (по умолчанию: только собрать, файлы — в артефактах) или
+  `internal` (ещё и AAB во внутреннее тестирование Google Play; первый AAB Google
+  принимает только вручную через Play Console);
+- `play_status` — `draft` (по умолчанию), пока приложение в Google Play ни разу не
+  публиковалось; потом `completed`;
+- `upload_ios` — `false` (по умолчанию: только IPA) или `true` (ещё и в TestFlight);
+- `build_number` — номер сборки; пусто — номер запуска workflow.
 
-Номер сборки = номер запуска workflow (`github.run_number`), общий для Android
-(`versionCode`) и iOS (`CFBundleVersion`), поэтому всегда растёт.
+Номер сборки общий для Android (`versionCode`) и iOS (`CFBundleVersion`) и должен расти.
+В артефактах: Android — `app-release.aab`, `app-release.apk`, `release-manifest.json`
+(SHA-256 и коммит), `upload-certificate.txt`; iOS — `WeSetup.ipa`, `release-manifest.json`.
 
 Секреты GitHub (названия точные; где взять — `docs/mobile/secrets.md`):
 
@@ -140,7 +158,7 @@ Actions → «Выпуск приложений» → Run workflow. Параме
 -authenticationKeyIssuerID`) сам заводит App ID, включает Push и Associated Domains
 по `App.entitlements`, создаёт профили; выгрузка в App Store подписывается
 **облачным сертификатом распространения** (cloud-managed) Apple. Затем
-`fastlane upload_to_testflight` отправляет сборку тем же ключом.
+lane `upload_beta` (`upload_to_testflight`) отправляет сборку тем же ключом.
 
 - Ключ App Store Connect API нужен **командный** (Users and Access → Integrations →
   App Store Connect API → Team Keys) с ролью **Admin**: только она даёт
@@ -171,7 +189,9 @@ Actions → «Выпуск приложений» → Run workflow. Параме
 
 ## Как поднять версию
 
-1. Поменять `"version"` в `mobile/package.json` (например, `1.0.0` → `1.1.0`).
+1. Поменять `"version"` в `mobile/package.json` (например, `1.1.0` → `1.2.0`) и дописать
+   «Что нового в версии …» в `docs/mobile/store-listing.md` (тест `npm run test:release` ждёт
+   заголовок с текущей версией), затем `node scripts/store-listing.mjs`.
 2. `npx cap sync` — версия попадает в приписку User-Agent (`WeSetupApp/1.1.0 (…)`),
    в `versionName` Android и в `MARKETING_VERSION` iOS (fastlane берёт её из
    `package.json`).

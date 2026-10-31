@@ -1,0 +1,3 @@
+Проверка перед выпуском пройдена: android, сборка 43
+BUILD SUCCESSFUL in 52s
+package: name='ru.wesetup.app' versionCode='43' versionName='1.1.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'

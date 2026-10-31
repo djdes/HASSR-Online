@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-10-31",
+  "assets": [
+    {
+      "file": "screenshots/ios/01-control-board.png",
+      "width": 1320,
+      "height": 2868,
+      "pngColorType": 2,
+      "bytes": 372314,
+      "sha256": "55b9c4770cdfa4115ba699fc97d92d8d0a819feda9b017efe79e9ff0689aef9e"
+    },
+    {
+      "file": "screenshots/ios/02-today.png",
+      "width": 1320,
+      "height": 2868,
+      "pngColorType": 2,
+      "bytes": 398115,
+      "sha256": "69ed2dfbbf0c19ec5440d5181d59843c3835f0c2fae422a4afe4a8e766022103"
+    },
+    {
+      "file": "screenshots/ios/03-cleaning-journal.png",
+      "width": 1320,
+      "height": 2868,
+      "pngColorType": 2,
+      "bytes": 327361,
+      "sha256": "f1082d36bf15f0b13cac55f82981f7d624f1ff1667daf801f95f86e080f866ac"
+    },
+    {
+      "file": "screenshots/ios/04-fridges.png",
+      "width": 1320,
+      "height": 2868,
+      "pngColorType": 2,
+      "bytes": 297953,
+      "sha256": "cf5cd5f86ab1214b86508758f22448fcd872955153fe42ab970859becd256273"
+    },
+    {
+      "file": "screenshots/ios/05-journals-today.png",
+      "width": 1320,
+      "height": 2868,
+      "pngColorType": 2,
+      "bytes": 452739,
+      "sha256": "0d7d45d6b82715dff386c576331da7f05d780a43ee1bd00ff02ed720ed391df7"
+    },
+    {
+      "file": "screenshots/ios/06-notifications.png",
+      "width": 1320,
+      "height": 2868,
+      "pngColorType": 2,
+      "bytes": 384125,
+      "sha256": "1800c44846e33e16f4d01a5c60231e74299fc144d6294b0c4ace1c13579ee93a"
+    },
+    {
+      "file": "screenshots/android/01-control-board.png",
+      "width": 1080,
+      "height": 1920,
+      "pngColorType": 2,
+      "bytes": 243535,
+      "sha256": "f2739e02f35ae0dc24b19b9fd3e1fc5b43ef721307e41cf238a9009708747018"
+    },
+    {
+      "file": "screenshots/android/02-today.png",
+      "width": 1080,
+      "height": 1920,
+      "pngColorType": 2,
+      "bytes": 263322,
+      "sha256": "a509b0f327dd577df830ca339f5f01f59ae6692144aa6abed8d566e3b1655e9a"
+    },
+    {
+      "file": "screenshots/android/03-cleaning-journal.png",
+      "width": 1080,
+      "height": 1920,
+      "pngColorType": 2,
+      "bytes": 233660,
+      "sha256": "b80c5d89fc47ecec3c3190ccc2ae602010780427e9320b436581139566b2c5d6"
+    },
+    {
+      "file": "screenshots/android/04-fridges.png",
+      "width": 1080,
+      "height": 1920,
+      "pngColorType": 2,
+      "bytes": 206726,
+      "sha256": "311fe9ce09cf5a5408ff889d07c270db7f303ddc181f1c7504603f2481f02745"
+    },
+    {
+      "file": "screenshots/android/05-journals-today.png",
+      "width": 1080,
+      "height": 1920,
+      "pngColorType": 2,
+      "bytes": 286961,
+      "sha256": "698e5833c8a4aa90df814b855e386a9940ddd65a0387d9c0b17d071dbf561d5f"
+    },
+    {
+      "file": "screenshots/android/06-notifications.png",
+      "width": 1080,
+      "height": 1920,
+      "pngColorType": 2,
+      "bytes": 258338,
+      "sha256": "67258405007a14ffdae2b5e4fdf33752a11e8d6ee9ce8d1dac2da4bc2803199c"
+    },
+    {
+      "file": "store-graphics/feature-graphic.png",
+      "width": 1024,
+      "height": 500,
+      "pngColorType": 2,
+      "bytes": 178055,
+      "sha256": "0359f63793a3dafb877679dc767a15322fe16bf8d051f7d783d71c95b4e485f6"
+    },
+    {
+      "file": "store-graphics/icon-512.png",
+      "width": 512,
+      "height": 512,
+      "pngColorType": 6,
+      "bytes": 55250,
+      "sha256": "5aebe342433939291bf24c79b92b09a97062081159dc5453ddb7f4fc438a66a7"
+    }
+  ]
+}

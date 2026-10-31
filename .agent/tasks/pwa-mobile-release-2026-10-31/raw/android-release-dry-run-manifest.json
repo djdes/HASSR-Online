@@ -1,0 +1,22 @@
+{
+  "platform": "android",
+  "applicationId": "ru.wesetup.app",
+  "version": "1.1.0",
+  "buildNumber": 7,
+  "sourceCommit": "f931b01a0ad8c83851f5703e63844b50ea4cf514",
+  "workflowRun": null,
+  "builtAt": "2026-10-31T18:02:06.598Z",
+  "verification": "Подписи проверены в workflow до записи паспорта. Перед отправкой на проверку — пройти список на телефоне (docs/mobile/09-release.md, шаг 4).",
+  "artifacts": [
+    {
+      "file": "app-release.aab",
+      "bytes": 4896006,
+      "sha256": "cf6e9ee517e21023d6e6d18126cfcc9e2ef4e74029c771a1c2e8d83654d3596e"
+    },
+    {
+      "file": "app-release.apk",
+      "bytes": 5239409,
+      "sha256": "2054e29de6cfc31c1af3157534b159b23073be735cf679a978ef004e944a6705"
+    }
+  ]
+}

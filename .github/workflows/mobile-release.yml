@@ -1,7 +1,15 @@
-# Выпуск приложений WeSetup: Android (AAB → Google Play, внутреннее тестирование)
-# и iOS (→ TestFlight). Запуск вручную: Actions → «Выпуск приложений» → Run workflow.
-# Номер сборки = номер запуска этого workflow, версия — из mobile/package.json.
-# Секреты и где их взять — docs/mobile/secrets.md.
+# Выпуск приложений WeSetup для магазинов: Android (подписанные AAB и APK) и iOS
+# (подписанный IPA). Запуск вручную: Actions → «Выпуск приложений» → Run workflow.
+#
+# По умолчанию ТОЛЬКО собирает и проверяет подписанные файлы (track=none,
+# upload_ios=false): их скачивают из артефактов запуска. Загрузка — отдельным
+# выбором: Android во внутреннее тестирование Google Play (track=internal, после
+# первой ручной загрузки в Play Console), iOS — в TestFlight (upload_ios=true).
+#
+# Номер сборки — build_number или номер запуска; версия — из mobile/package.json.
+# Перед подписью mobile/scripts/release-preflight.mjs проверяет ключи, Firebase и
+# боевой адрес сайта. Секреты и где их взять — docs/mobile/secrets.md, маршрут
+# первой публикации — docs/mobile/PUBLISHING.md.
 name: Выпуск приложений
 
 on:
@@ -13,15 +21,26 @@ on:
         options: [both, android, ios]
         default: both
       track:
-        description: "Куда отправить Android"
+        description: "Android: none — только собрать; internal — ещё и во внутреннее тестирование Google Play"
         type: choice
-        options: [internal, none]
-        default: internal
+        options: [none, internal]
+        default: none
       play_status:
-        description: "Статус выпуска в Google Play (draft — пока приложение ни разу не выпускалось)"
+        description: "Статус выпуска в Google Play (draft — пока приложение ни разу не публиковалось)"
         type: choice
-        options: [completed, draft]
-        default: completed
+        options: [draft, completed]
+        default: draft
+      upload_ios:
+        description: "iOS: загрузить собранный IPA в TestFlight"
+        type: boolean
+        default: false
+      build_number:
+        description: "Номер сборки; пусто — номер запуска. Должен быть больше всех загруженных раньше."
+        type: string
+        default: ""
+
+env:
+  BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
 
 concurrency:
   group: mobile-release
@@ -32,7 +51,7 @@ permissions:
 
 jobs:
   android:
-    name: Android — подписанный AAB
+    name: Android — подписанные AAB и APK
     if: inputs.platform != 'ios'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
@@ -40,6 +59,31 @@ jobs:
       run:
         working-directory: mobile
     steps:
+      # Сначала — все ли секреты на месте. Список недостающих целиком, чтобы
+      # не добавлять их по одному между запусками. Значения в лог не попадают.
+      - name: Секреты на месте
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          TRACK: ${{ inputs.track }}
+        working-directory: .
+        run: |
+          required="ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD GOOGLE_SERVICES_JSON_BASE64"
+          if [ "$TRACK" = "internal" ]; then required="$required GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"; fi
+          missing=""
+          for name in $required; do
+            if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Нет секретов GitHub для выпуска Android:$missing (Settings → Secrets and variables → Actions; docs/mobile/secrets.md)"
+            exit 1
+          fi
+          echo "Секреты Android на месте"
+
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
@@ -58,26 +102,19 @@ jobs:
             mobile/android/**/gradle-wrapper.properties
 
       - run: npm ci
+      - run: npm run test:release
 
-      - name: Секреты сборки
+      - name: Ключ подписи и Firebase
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "::error::Нет секрета ANDROID_KEYSTORE_BASE64 — без ключа загрузки Google Play не примет сборку (docs/mobile/secrets.md)"
-            exit 1
-          fi
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
-          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
-            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
-          else
-            echo "::warning::Нет секрета GOOGLE_SERVICES_JSON_BASE64 — сборка будет без push-уведомлений"
-          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
 
       - run: npx cap sync android
 
-      - name: Подписанный AAB
+      - name: Подписанные AAB и APK
         working-directory: mobile/android
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -85,9 +122,21 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew bundleRelease -PversionCode=${{ github.run_number }} --no-daemon
-          # Сборка без подписи Google Play не примет — проверяем до загрузки.
-          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+          # Перед сборкой Gradle сам запускает release-preflight (app/build.gradle).
+          ./gradlew bundleRelease assembleRelease -PversionCode="$BUILD_NUMBER" --no-daemon
+          aab=app/build/outputs/bundle/release/app-release.aab
+          apk=app/build/outputs/apk/release/app-release.apk
+          tools=$(dirname "$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)")
+          "$tools/apksigner" verify --verbose --print-certs "$apk"
+          # Без подписи Google Play файл не примет — проверяем до загрузки.
+          jarsigner -J-Duser.language=en -verify "$aab" | grep -q "jar verified"
+          keytool -printcert -jarfile "$aab" > app/build/outputs/upload-certificate.txt
+          # В файле тот пакет, номер и версия, которые ждёт магазин.
+          version=$(node -p "require('../package.json').version")
+          badging=$("$tools/aapt2" dump badging "$apk" | head -1)
+          echo "$badging"
+          echo "$badging" | grep -q "name='ru.wesetup.app' versionCode='$BUILD_NUMBER' versionName='$version'"
+          node ../scripts/release-manifest.mjs android
 
       - name: Убрать ключ с раннера
         if: always()
@@ -95,8 +144,12 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: wesetup-android-${{ github.run_number }}
-          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          name: wesetup-android-${{ env.BUILD_NUMBER }}
+          path: |
+            mobile/android/app/build/outputs/bundle/release/app-release.aab
+            mobile/android/app/build/outputs/apk/release/app-release.apk
+            mobile/android/app/build/outputs/release-manifest.json
+            mobile/android/app/build/outputs/upload-certificate.txt
           if-no-files-found: error
 
       - name: Внутреннее тестирование Google Play
@@ -110,7 +163,7 @@ jobs:
           status: ${{ inputs.play_status }}
 
   ios:
-    name: iOS — TestFlight
+    name: iOS — подписанный IPA
     if: inputs.platform != 'android'
     # macOS 26 + Xcode 26: App Store принимает только сборки на SDK iOS 26.
     runs-on: macos-26
@@ -119,6 +172,26 @@ jobs:
       run:
         working-directory: mobile
     steps:
+      # Первым делом, до дорогой подготовки macOS: все ли секреты на месте.
+      - name: Секреты на месте
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        working-directory: .
+        run: |
+          missing=""
+          for name in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64 GOOGLE_SERVICE_INFO_PLIST_BASE64; do
+            if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Нет секретов GitHub для выпуска iOS:$missing (Settings → Secrets and variables → Actions; docs/mobile/secrets.md)"
+            exit 1
+          fi
+          echo "Секреты iOS на месте"
+
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
@@ -128,22 +201,15 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
 
       - run: npm ci
+      - run: npm run test:release
 
-      - name: Секреты сборки
+      - name: Ключ App Store Connect и Firebase
         env:
           GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
           ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
         run: |
-          if [ -z "$ASC_KEY_P8_BASE64" ]; then
-            echo "::error::Нет секрета ASC_KEY_P8_BASE64 — без ключа App Store Connect API сборку не подписать (docs/mobile/secrets.md)"
-            exit 1
-          fi
           echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/asc_key.p8"
-          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
-            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
-          else
-            echo "::warning::Нет секрета GOOGLE_SERVICE_INFO_PLIST_BASE64 — сборка будет без push-уведомлений"
-          fi
+          echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
 
       # Ставит CocoaPods-зависимости (pod install) — CocoaPods есть на раннере.
       - run: npx cap sync ios
@@ -162,22 +228,41 @@ jobs:
           BUNDLE_PATH: vendor/bundle
         run: bundle install --jobs 4 --retry 3
 
-      - name: Сборка и TestFlight
+      - name: Подписанный IPA и, по выбору, TestFlight
         working-directory: mobile/ios/App
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
           BUNDLE_PATH: vendor/bundle
-        run: bundle exec fastlane beta
+          UPLOAD_IOS: ${{ inputs.upload_ios }}
+        run: |
+          # Lane release сам запускает release-preflight перед сборкой.
+          bundle exec fastlane release
+          verify_dir=$(mktemp -d "$RUNNER_TEMP/verify-ipa.XXXXXX")
+          unzip -q build/WeSetup.ipa -d "$verify_dir"
+          app="$verify_dir/Payload/App.app"
+          codesign --verify --deep --strict "$app"
+          plutil -lint "$app/PrivacyInfo.xcprivacy"
+          version=$(node -p "require('../../package.json').version")
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Info.plist")" = "ru.wesetup.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Info.plist")" = "$version"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Info.plist")" = "$BUILD_NUMBER"
+          test -f "$app/GoogleService-Info.plist"
+          node ../../scripts/release-manifest.mjs ios
+          if [ "$UPLOAD_IOS" = "true" ]; then
+            bundle exec fastlane upload_beta
+          fi
 
       - uses: actions/upload-artifact@v7
-        if: success()
+        if: always()
         with:
-          name: wesetup-ios-${{ github.run_number }}
-          path: mobile/ios/App/build/WeSetup.ipa
+          name: wesetup-ios-${{ env.BUILD_NUMBER }}
+          path: |
+            mobile/ios/App/build/WeSetup.ipa
+            mobile/ios/App/build/release-manifest.json
+            mobile/ios/App/build/WeSetup.app.dSYM.zip
           if-no-files-found: warn
 
       - name: Убрать ключи с раннера
