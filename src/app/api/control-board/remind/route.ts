@@ -8,6 +8,8 @@ import { hasCapability } from "@/lib/permission-presets";
 import { notifyEmployee } from "@/lib/telegram";
 import { orgDayStartInstant } from "@/lib/timezone";
 import { loadStaffAbsenceForDay } from "@/lib/staff-absence";
+import { getPoolBuildings } from "@/lib/active-building";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,6 +91,18 @@ export async function POST(request: Request) {
     } else {
       allowedIds = new Set();
     }
+  }
+
+  // Точка (2026-10-31): с панели точки — только её сотрудники (и те, кто
+  // работает на всех точках), как в списке панели.
+  const points = await getPoolBuildings(session);
+  const onePointId = points.length === 1 ? points[0].id : null;
+  if (onePointId) {
+    const atPoint = await db.user.findMany({
+      where: { organizationId, id: { in: [...allowedIds] }, ...staffAtBuildingWhere(onePointId) },
+      select: { id: true },
+    });
+    allowedIds = new Set(atPoint.map((u) => u.id));
   }
 
   let targetUserIds: string[];

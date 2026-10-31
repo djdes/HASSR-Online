@@ -8,6 +8,7 @@ import {
   allowedBuildingsForUser,
   decodeBuildingCookie,
   encodeBuildingCookie,
+  poolBuildingsFromContext,
   resolveActiveBuilding,
   viewedPointId,
   type BuildingContext,
@@ -91,6 +92,11 @@ export const listPersonBuildings = cache(
 /** Id активной точки для фильтра документов; null — без фильтра. */
 export async function getActiveBuildingId(session: Session): Promise<string | null> {
   return (await loadBuildingContext(session)).activeBuildingId;
+}
+
+/** Точки для задач дня — см. `poolBuildingsFromContext`. */
+export async function getPoolBuildings(session: Session): Promise<Array<{ id: string | null; name: string | null }>> {
+  return poolBuildingsFromContext(await loadBuildingContext(session));
 }
 
 /** Торговая точка из шапки для справочников и QR; null — вся организация (`viewedPointId`). */

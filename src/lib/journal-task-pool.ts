@@ -1,6 +1,6 @@
 import { poolDisplayCopy, poolEventCopy, type PoolDisplayCopy } from "@/lib/journal-task-pool-copy";
 import { db } from "@/lib/db";
-import { buildingWhere } from "@/lib/building-scope";
+import { buildingWhere, equipmentBuildingWhere } from "@/lib/building-scope";
 
 /**
  * Per-journal pool generator. Каждый журнал производит список
@@ -183,6 +183,61 @@ export async function generatePoolForDay(args: {
   }
 }
 
+/**
+ * Подборки нескольких точек — в одну (режим «Вся организация»), 2026-10-31.
+ * Одна точка или точки выключены — подборка как есть. Несколько — у каждой
+ * задачи в подписи название точки; общий объект (цех без точки) — один раз.
+ */
+export function mergePointPools(
+  journalCode: string,
+  dateKey: string,
+  pools: ReadonlyArray<{ point: { id: string | null; name: string | null }; pool: PoolForDayResult }>,
+): PoolForDayResult {
+  if (pools.length === 1) return pools[0].pool;
+  const seen = new Set<string>();
+  const scopes: TaskScope[] = [];
+  for (const { point, pool } of pools) {
+    if (!pool.pool) continue;
+    for (const scope of pool.scopes) {
+      if (seen.has(scope.scopeKey)) continue;
+      seen.add(scope.scopeKey);
+      if (!point.name) {
+        scopes.push(scope);
+        continue;
+      }
+      // Подпись — своя, с точкой: переведённая подпись без точки её затёрла бы.
+      const { displayCopy, ...rest } = scope;
+      const ownCopy = displayCopy?.scopeLabel ? { displayCopy: { version: 1 as const, scopeLabel: displayCopy.scopeLabel } } : {};
+      scopes.push({ ...rest, ...ownCopy, sublabel: scope.sublabel ? `${point.name} · ${scope.sublabel}` : point.name });
+    }
+  }
+  return { journalCode, dateKey, pool: pools.some(({ pool }) => pool.pool), scopes };
+}
+
+/** `generatePoolForDay` по точкам из `getPoolBuildings` — см. `mergePointPools`. */
+export async function generatePoolForPoints(args: {
+  organizationId: string;
+  journalCode: string;
+  date: Date;
+  points: ReadonlyArray<{ id: string | null; name: string | null }>;
+  includeDisplayCopy?: boolean;
+}): Promise<PoolForDayResult> {
+  const points = args.points.length > 0 ? args.points : [{ id: null, name: null }];
+  const pools = await Promise.all(
+    points.map(async (point) => ({
+      point,
+      pool: await generatePoolForDay({
+        organizationId: args.organizationId,
+        journalCode: args.journalCode,
+        date: args.date,
+        buildingId: point.id,
+        includeDisplayCopy: args.includeDisplayCopy,
+      }),
+    })),
+  );
+  return mergePointPools(args.journalCode, dayKey(utcMidnight(args.date)), pools);
+}
+
 const GENERIC_EVENT_LABELS: Record<string, string> = {
   accident_journal: "Регистрация ЧП",
   complaint_register: "Жалоба",
@@ -275,12 +330,18 @@ async function poolColdEquipment(args: {
   const fridges = await db.equipment.findMany({
     where: {
       area: { organizationId: args.organizationId },
-      OR: [
-        ...COLD_EQUIPMENT_MARKERS.flatMap((marker) => [
-          { type: { contains: marker, mode: "insensitive" as const } },
-          { name: { contains: marker, mode: "insensitive" as const } },
-        ]),
-        { AND: [{ tempMin: { not: null } }, { tempMax: { not: null } }] },
+      AND: [
+        {
+          OR: [
+            ...COLD_EQUIPMENT_MARKERS.flatMap((marker) => [
+              { type: { contains: marker, mode: "insensitive" as const } },
+              { name: { contains: marker, mode: "insensitive" as const } },
+            ]),
+            { AND: [{ tempMin: { not: null } }, { tempMax: { not: null } }] },
+          ],
+        },
+        // Точка: только её холодильники и общих цехов (2026-10-31).
+        equipmentBuildingWhere(args.buildingId),
       ],
     },
     select: { id: true, name: true, type: true, area: { select: { name: true } } },
@@ -423,10 +484,15 @@ async function poolFryerOil(args: {
   const fryers = await db.equipment.findMany({
     where: {
       area: { organizationId: args.organizationId },
-      OR: [
-        { type: { contains: "fryer", mode: "insensitive" } },
-        { type: { contains: "фритюр", mode: "insensitive" } },
-        { name: { contains: "фритюр", mode: "insensitive" } },
+      AND: [
+        {
+          OR: [
+            { type: { contains: "fryer", mode: "insensitive" } },
+            { type: { contains: "фритюр", mode: "insensitive" } },
+            { name: { contains: "фритюр", mode: "insensitive" } },
+          ],
+        },
+        equipmentBuildingWhere(args.buildingId),
       ],
     },
     select: { id: true, name: true, area: { select: { name: true } } },
@@ -507,12 +573,17 @@ async function poolUvLamp(args: {
   const lamps = await db.equipment.findMany({
     where: {
       area: { organizationId: args.organizationId },
-      OR: [
-        { type: { contains: "uv", mode: "insensitive" } },
-        { type: { contains: "уф", mode: "insensitive" } },
-        { type: { contains: "ультра", mode: "insensitive" } },
-        { name: { contains: "уф", mode: "insensitive" } },
-        { name: { contains: "бактерицид", mode: "insensitive" } },
+      AND: [
+        {
+          OR: [
+            { type: { contains: "uv", mode: "insensitive" } },
+            { type: { contains: "уф", mode: "insensitive" } },
+            { type: { contains: "ультра", mode: "insensitive" } },
+            { name: { contains: "уф", mode: "insensitive" } },
+            { name: { contains: "бактерицид", mode: "insensitive" } },
+          ],
+        },
+        equipmentBuildingWhere(args.buildingId),
       ],
     },
     select: { id: true, name: true, area: { select: { name: true } } },
@@ -549,7 +620,7 @@ async function poolEquipmentEvent(args: {
   journalCode: string;
 }): Promise<PoolForDayResult> {
   const equipment = await db.equipment.findMany({
-    where: { area: { organizationId: args.organizationId } },
+    where: { area: { organizationId: args.organizationId }, ...equipmentBuildingWhere(args.buildingId) },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

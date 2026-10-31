@@ -260,6 +260,47 @@ test("runMiniDigestCron sends manager and root digests once per organization wit
   });
 });
 
+test("руководитель одной точки получает сводку своей точки, руководство на всю сеть — общую", async () => {
+  const summaryCalls: Array<{ organizationId: string; buildingId: string | null }> = [];
+  const notifyCalls: Array<{ userId: string; text: string }> = [];
+  await runMiniDigestCron(
+    { miniAppBaseUrl: MINI_APP_BASE_URL, now: REQUEST_NOW },
+    {
+      listLinkedTelegramUsers: async () => [
+        { id: "owner", name: "Owner", role: "manager", isRoot: false, organizationId: "org_1", buildingIds: [] },
+        { id: "point_head", name: "Anna", role: "manager", isRoot: false, organizationId: "org_1", buildingIds: ["b-2"] },
+        // Висящая удалённая точка не делает сводку точечной.
+        { id: "stale", name: "Old", role: "manager", isRoot: false, organizationId: "org_1", buildingIds: ["gone"] },
+      ],
+      listOrganizationsByIds: async () => [{ id: "org_1", name: "Кафе" }],
+      syncDailyJournalObligationsForOrganization: async () => undefined,
+      listOpenJournalObligationsForUser: async () => [],
+      listOrganizationPoints: async () => [
+        { id: "b-1", name: "Точка 1" },
+        { id: "b-2", name: "Точка 2" },
+      ],
+      getManagerObligationSummary: async (organizationId, _now, _overrides, buildingId = null) => {
+        summaryCalls.push({ organizationId, buildingId });
+        return buildingId === "b-2"
+          ? { total: 3, pending: 1, done: 2, employeesWithPending: 1 }
+          : { total: 10, pending: 4, done: 6, employeesWithPending: 2 };
+      },
+      notifyEmployee: async (userId, text) => {
+        notifyCalls.push({ userId, text });
+      },
+    }
+  );
+  assert.deepEqual(summaryCalls, [
+    { organizationId: "org_1", buildingId: null },
+    { organizationId: "org_1", buildingId: "b-2" },
+  ]);
+  const byUser = new Map(notifyCalls.map((call) => [call.userId, call.text]));
+  assert.match(byUser.get("owner") ?? "", /Открыто: 4/);
+  assert.match(byUser.get("point_head") ?? "", /Кафе · Точка 2/);
+  assert.match(byUser.get("point_head") ?? "", /Открыто: 1/);
+  assert.match(byUser.get("stale") ?? "", /Открыто: 4/);
+});
+
 test("runMiniDigestCron isolates sync failures so one broken organization does not stop the rest", async () => {
   const notifyCalls: string[] = [];
 

@@ -14,6 +14,7 @@ import {
   buildStaffObligationDigest,
 } from "@/lib/telegram-obligation-digests";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { buildingTargets } from "@/lib/building-targets";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
@@ -25,6 +26,8 @@ type LinkedTelegramUser = {
   role: string;
   isRoot: boolean;
   organizationId: string;
+  /** Точки, где работает человек (пусто — все). */
+  buildingIds?: string[];
 };
 
 type LinkedOrganization = {
@@ -40,6 +43,8 @@ type MiniDigestDeps = {
   syncDailyJournalObligationsForOrganization: typeof syncDailyJournalObligationsForOrganization;
   listOpenJournalObligationsForUser: typeof listOpenJournalObligationsForUser;
   getManagerObligationSummary: typeof getManagerObligationSummary;
+  /** Точки организации с журналами по точкам; пусто — точки выключены. */
+  listOrganizationPoints: (organizationId: string) => Promise<Array<{ id: string; name: string }>>;
   notifyEmployee: typeof notifyEmployee;
   hasFullWorkspaceAccess: typeof hasFullWorkspaceAccess;
 };
@@ -68,6 +73,7 @@ function createDefaultDeps(): MiniDigestDeps {
           role: true,
           isRoot: true,
           organizationId: true,
+          buildingIds: true,
         },
         orderBy: [{ organizationId: "asc" }, { name: "asc" }],
       });
@@ -93,6 +99,11 @@ function createDefaultDeps(): MiniDigestDeps {
     syncDailyJournalObligationsForOrganization,
     listOpenJournalObligationsForUser,
     getManagerObligationSummary,
+    async listOrganizationPoints(organizationId) {
+      const ids = (await buildingTargets(organizationId)).filter((id): id is string => id !== null);
+      if (ids.length === 0) return [];
+      return db.building.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
+    },
     notifyEmployee,
     hasFullWorkspaceAccess,
   };
@@ -282,9 +293,50 @@ export async function runMiniDigestCron(
     }
   }
 
+  // Руководитель одной точки (2026-10-31) получает сводку своей точки, а
+  // не всей сети: раньше заведующая точки утром видела общий итог.
+  const pointsByOrganizationId = new Map<string, Array<{ id: string; name: string }>>();
+  const pointDigestByKey = new Map<string, ReturnType<typeof buildManagerObligationDigest> | null>();
+  async function managerDigestFor(user: LinkedTelegramUser) {
+    const orgDigest = managerDigestByOrganizationId.get(user.organizationId) ?? null;
+    if (!readyOrganizationIds.has(user.organizationId) || !user.buildingIds?.length) return orgDigest;
+    if (!pointsByOrganizationId.has(user.organizationId)) {
+      pointsByOrganizationId.set(
+        user.organizationId,
+        await deps.listOrganizationPoints(user.organizationId).catch(() => []),
+      );
+    }
+    const points = pointsByOrganizationId.get(user.organizationId) ?? [];
+    const own = points.filter((point) => user.buildingIds?.includes(point.id));
+    if (own.length !== 1) return orgDigest;
+    const point = own[0];
+    const key = `${user.organizationId}:${point.id}`;
+    if (!pointDigestByKey.has(key)) {
+      try {
+        const summary = await deps.getManagerObligationSummary(user.organizationId, requestNow, undefined, point.id);
+        pointDigestByKey.set(
+          key,
+          summary.total === 0
+            ? null
+            : buildManagerObligationDigest({
+                organizationId: user.organizationId,
+                organizationName: `${organizationNameById.get(user.organizationId) || "Организация"} · ${point.name}`,
+                summary,
+                cabinetUrl: args.miniAppBaseUrl,
+                now: requestNow,
+              }),
+        );
+      } catch (error) {
+        console.error("[cron/mini-digest] point summary failed", { organizationId: user.organizationId, pointId: point.id, error });
+        pointDigestByKey.set(key, null);
+      }
+    }
+    return pointDigestByKey.get(key) ?? null;
+  }
+
   let notifiedManagers = 0;
   for (const user of managerUsers) {
-    const digest = managerDigestByOrganizationId.get(user.organizationId);
+    const digest = await managerDigestFor(user);
     if (!digest) {
       continue;
     }

@@ -1,11 +1,11 @@
 import { omitPoolSublabel } from "@/lib/journal-task-pool-copy";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getActiveBuildingId, getPoolBuildings } from "@/lib/active-building";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { generatePoolForDay, type TaskScope } from "@/lib/journal-task-pool";
+import { generatePoolForPoints, type TaskScope } from "@/lib/journal-task-pool";
 import { type ClaimRow } from "@/lib/journal-task-claims";
 import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasJournalAccess } from "@/lib/journal-acl";
@@ -204,11 +204,14 @@ export async function GET() {
     // Day-window для batch claims-query — по дню организации.
     const dayStart = today;
     const dayEnd = tomorrow;
+    // Точка (2026-10-31): повар точки A видел холодильники, помещения и
+    // документ гигиены точки B — подборка строилась без точки.
+    const points = await getPoolBuildings(session);
 
     const [pools, allClaimsRaw] = await Promise.all([
       Promise.all(
         allowedCodes.map((code) =>
-          generatePoolForDay({ organizationId, journalCode: code, date: today, includeDisplayCopy: true })
+          generatePoolForPoints({ organizationId, journalCode: code, date: today, points, includeDisplayCopy: true })
         )
       ),
       db.journalTaskClaim.findMany({
