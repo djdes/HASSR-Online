@@ -6,6 +6,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
 import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
@@ -109,10 +110,12 @@ export default async function InspectionPage() {
       <InspectionGuide />
 
       <Step id="qr" number={2} title={t("qrTitle")}>
+        {/* Ссылка проверяющего открывает журналы всех точек — её выдаёт и
+            показывает офис, руководителю точки — «попросите руководителя». */}
         <InspectionQr
-          qr={activeQr ? { id: activeQr.id, svg: activeQr.qrSvg ?? "" } : null}
+          qr={activeQr && !isPointScoped(session.user) ? { id: activeQr.id, svg: activeQr.qrSvg ?? "" } : null}
           organizationName={orgDisplayName(org?.name ?? "", "")}
-          canIssue={fullAccess}
+          canIssue={fullAccess && !isPointScoped(session.user)}
         />
       </Step>
 

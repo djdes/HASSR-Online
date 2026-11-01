@@ -1,6 +1,7 @@
 import { GraduationCap } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 import { CompetencyCell } from "@/components/competencies/competency-cell";
 import { getTranslations } from "next-intl/server";
 import { COMPETENCY_SKILLS, COMPETENCY_LEVELS, competencyPositionLabel } from "@/components/competencies/competency-presentation";
@@ -18,9 +19,11 @@ export default async function CompetenciesPage() {
   const roleLabels = { manager: t("roles.manager"), head_chef: t("roles.head_chef"), cook: t("roles.cook"), waiter: t("roles.waiter") };
   const orgId = getActiveOrgId(session);
 
-  const [users, competencies] = await Promise.all([
+  // Руководитель точки (и люди точки) видят матрицу только своих точек.
+  const scoped = isPointScoped(session.user);
+  const [users, allCompetencies] = await Promise.all([
     db.user.findMany({
-      where: { organizationId: orgId, isActive: true },
+      where: { organizationId: orgId, isActive: true, ...staffScopeWhere(session.user) },
       select: {
         id: true,
         name: true,
@@ -34,6 +37,8 @@ export default async function CompetenciesPage() {
       where: { organizationId: orgId },
     }),
   ]);
+  const visibleUserIds = new Set(users.map((user) => user.id));
+  const competencies = scoped ? allCompetencies.filter((c) => visibleUserIds.has(c.userId)) : allCompetencies;
 
   const matrix: Record<string, Record<string, { level: number; id: string }>> = {};
   for (const c of competencies) {

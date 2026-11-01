@@ -3,6 +3,7 @@ import ExcelJS from "exceljs";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
+import { staffScopeWhere } from "@/lib/point-scope";
 import {
   INHERIT_JOURNALS_LABEL,
   STAFF_COLUMNS,
@@ -101,7 +102,8 @@ export async function GET(request: Request) {
     });
   } else {
     const users = await db.user.findMany({
-      where: { organizationId: orgId },
+      // Руководитель точки выгружает только людей своих точек.
+      where: { organizationId: orgId, ...staffScopeWhere(session.user) },
       orderBy: [{ archivedAt: "asc" }, { name: "asc" }],
       select: {
         id: true,

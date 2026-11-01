@@ -1048,7 +1048,9 @@ export function StaffPageClient(props: StaffPageProps) {
                     positionId: position.id,
                   })
                 }
-                onEditPosition={(position) => setDlg({ kind: "edit-position", position })}
+                onEditPosition={
+                  props.canEditPositions === false ? undefined : (position) => setDlg({ kind: "edit-position", position })
+                }
               />
           ))}
         </div>
@@ -1410,7 +1412,8 @@ function CategoryColumn(props: {
   onEditEmployee: (employee: StaffEmployee) => void;
   onAddPosition: () => void;
   onAddEmployee: (position: StaffPosition) => void;
-  onEditPosition: (position: StaffPosition) => void;
+  /** Нет — карандаш должности не показываем (должности правит офис). */
+  onEditPosition?: (position: StaffPosition) => void;
 }) {
   const t = useTranslations("staffManagement.page");
   const substituteBadge = useSubstituteBadgeText();
@@ -1519,14 +1522,16 @@ function CategoryColumn(props: {
                     >
                       <Plus className="size-3.5" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => props.onEditPosition(p)}
-                      aria-label={t("editPosition")}
-                      className="inline-flex size-7 items-center justify-center rounded-lg text-transparent transition-colors group-hover/pos:text-[#9b9fb3] hover:bg-[#f5f6ff] hover:!text-[#5566f6]"
-                    >
-                      <Pencil className="size-3.5" />
-                    </button>
+                    {props.onEditPosition ? (
+                      <button
+                        type="button"
+                        onClick={() => props.onEditPosition?.(p)}
+                        aria-label={t("editPosition")}
+                        className="inline-flex size-7 items-center justify-center rounded-lg text-transparent transition-colors group-hover/pos:text-[#9b9fb3] hover:bg-[#f5f6ff] hover:!text-[#5566f6]"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => props.togglePosition(p.id)}

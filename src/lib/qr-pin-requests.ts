@@ -6,6 +6,8 @@ import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 import { upsertNotification } from "@/lib/notifications";
 import { notifyEmployee } from "@/lib/telegram";
 import { setEmployeeQrPinHash } from "@/lib/qr-fill-actor";
+import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
+import { STAFF_OUT_OF_SCOPE_ERROR, staffInScope, staffScopeWhere, type PointScopeActor } from "@/lib/point-scope";
 import {
   isPinRequestActionable,
   pinRequestExpiresAt,
@@ -23,17 +25,25 @@ import {
 
 export const PIN_REQUESTS_HREF = "/settings/users?pinRequests=1#pin-requests";
 
-/** Кому сигнал: ответственный по журналу (если он руководитель) + все руководители. */
+/**
+ * Кому сигнал: ответственный по журналу (если он руководитель) + руководители
+ * точки сотрудника (журнала) и офис — руководителю другой точки чужие
+ * запросы не шлём (`filterRecipientsByPlace`).
+ */
 async function resolvePinRequestApprovers(params: {
   organizationId: string;
+  userId: string;
   documentId?: string | null;
 }): Promise<string[]> {
   const managerRoles = getDbRoleValuesWithLegacy(MANAGEMENT_ROLES);
-  const managers = await db.user.findMany({
-    where: { organizationId: params.organizationId, isActive: true, archivedAt: null, role: { in: managerRoles } },
-    select: { id: true },
-  });
-  const ids = new Set(managers.map((user) => user.id));
+  const [managers, place] = await Promise.all([
+    db.user.findMany({
+      where: { organizationId: params.organizationId, isActive: true, archivedAt: null, role: { in: managerRoles } },
+      select: { id: true, buildingIds: true },
+    }),
+    placeOfEvent(params.organizationId, { documentId: params.documentId, userId: params.userId }),
+  ]);
+  const ids = new Set((await filterRecipientsByPlace(params.organizationId, managers, place)).map((user) => user.id));
   if (params.documentId) {
     const document = await db.journalDocument.findUnique({
       where: { id: params.documentId },
@@ -97,6 +107,7 @@ export async function createQrPinRequest(params: {
   await notifyPinRequest({
     organizationId: params.organizationId,
     requestId: created.id,
+    userId: user.id,
     employeeName: user.name,
     kind: params.kind,
     documentId: params.documentId ?? null,
@@ -108,11 +119,16 @@ export async function createQrPinRequest(params: {
 async function notifyPinRequest(params: {
   organizationId: string;
   requestId: string;
+  userId: string;
   employeeName: string;
   kind: PinRequestKind;
   documentId: string | null;
 }): Promise<void> {
-  const approvers = await resolvePinRequestApprovers({ organizationId: params.organizationId, documentId: params.documentId });
+  const approvers = await resolvePinRequestApprovers({
+    organizationId: params.organizationId,
+    userId: params.userId,
+    documentId: params.documentId,
+  });
   const label = `${params.employeeName} — ${pinRequestKindLabel(params.kind).toLowerCase()}`;
   await Promise.all(
     approvers.map(async (userId) => {
@@ -154,7 +170,11 @@ export type PinRequestListItem = {
   expiresAt: string;
 };
 
-export async function listPendingQrPinRequests(organizationId: string): Promise<PinRequestListItem[]> {
+/** `viewer` — руководитель точки видит запросы только людей своих точек. */
+export async function listPendingQrPinRequests(
+  organizationId: string,
+  viewer?: PointScopeActor | null,
+): Promise<PinRequestListItem[]> {
   const now = new Date();
   const requests = await db.qrPinRequest.findMany({
     where: { organizationId, status: "pending", expiresAt: { gte: now } },
@@ -163,7 +183,7 @@ export async function listPendingQrPinRequests(organizationId: string): Promise<
   });
   if (requests.length === 0) return [];
   const users = await db.user.findMany({
-    where: { id: { in: requests.map((request) => request.userId) }, organizationId },
+    where: { id: { in: requests.map((request) => request.userId) }, organizationId, ...staffScopeWhere(viewer) },
     select: { id: true, name: true, positionTitle: true, jobPosition: { select: { name: true } } },
   });
   const byId = new Map(users.map((user) => [user.id, user]));
@@ -207,10 +227,21 @@ export async function decideQrPinRequest(params: {
   decidedById: string;
   approve: boolean;
   note?: string | null;
+  /** Кто решает: руководитель точки — только по людям своих точек. */
+  actor?: PointScopeActor | null;
 }): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
   const request = await db.qrPinRequest.findUnique({ where: { id: params.requestId } });
   if (!request || request.organizationId !== params.organizationId) {
     return { ok: false, status: 404, error: "Запрос не найден" };
+  }
+  if (params.actor) {
+    const employee = await db.user.findFirst({
+      where: { id: request.userId, organizationId: params.organizationId },
+      select: { buildingIds: true },
+    });
+    if (employee && !staffInScope(params.actor, employee.buildingIds)) {
+      return { ok: false, status: 403, error: STAFF_OUT_OF_SCOPE_ERROR };
+    }
   }
   if (!isPinRequestActionable(request)) {
     return { ok: false, status: 409, error: "Запрос уже решён или устарел" };

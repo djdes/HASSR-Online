@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 export const runtime = "nodejs";
@@ -78,10 +79,13 @@ export async function GET(request: Request) {
   const toEnd = new Date(to);
   toEnd.setUTCHours(23, 59, 59, 999);
 
+  // Руководитель точки видит смены только людей своих точек.
+  const scoped = isPointScoped(g.session?.user);
   const shifts = await db.workShift.findMany({
     where: {
       organizationId: g.orgId,
       date: { gte: from, lte: toEnd },
+      ...(scoped ? { user: staffScopeWhere(g.session?.user) } : {}),
     },
     select: {
       userId: true,
@@ -121,7 +125,7 @@ export async function PUT(request: Request) {
 
   const userIds = Array.from(new Set(parsed.shifts.map((s) => s.userId)));
   const owned = await db.user.findMany({
-    where: { organizationId: g.orgId, id: { in: userIds } },
+    where: { organizationId: g.orgId, id: { in: userIds }, ...staffScopeWhere(g.session?.user) },
     select: { id: true },
   });
   const ownedSet = new Set(owned.map((o) => o.id));
@@ -191,7 +195,7 @@ export async function DELETE(request: Request) {
     );
   }
   const owned = await db.user.findFirst({
-    where: { id: userId, organizationId: g.orgId },
+    where: { id: userId, organizationId: g.orgId, ...staffScopeWhere(g.session?.user) },
     select: { id: true },
   });
   if (!owned) return NextResponse.json({ deleted: 0 });

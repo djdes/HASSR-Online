@@ -9,6 +9,7 @@ import { policyTemplate } from "@/lib/ppk/haccp";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { ackSummaryFor } from "@/lib/ppk/acknowledge.server";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { AckSummary } from "@/components/production-control/ack-summary";
 import { PolicyClient } from "./policy-client";
 
@@ -35,7 +36,9 @@ export default async function PolicyPage() {
     ? `${process.env.NEXTAUTH_URL ?? "https://wesetup.ru"}/policy/${data.token}`
     : null;
   const qrSvg = publicUrl ? await brandQrSvg(publicUrl) : null;
-  const ack = row ? await ackSummaryFor(organizationId, "policy", org?.timezone ?? "Europe/Moscow") : null;
+  const ack = row
+    ? await ackSummaryFor(organizationId, "policy", org?.timezone ?? "Europe/Moscow", await visibleStaffWhere(session))
+    : null;
 
   return (
     <PolicyClient

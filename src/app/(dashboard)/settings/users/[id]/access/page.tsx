@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { PageCrumbs } from "@/components/layout/page-nav";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { isManagementRole } from "@/lib/user-roles";
+import { staffInScope } from "@/lib/point-scope";
 import { db } from "@/lib/db";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { sortJournalsByName } from "@/lib/journal-sort";
@@ -33,12 +34,17 @@ export default async function UserJournalAccessPage({ params }: PageProps) {
       role: true,
       organizationId: true,
       journalAccessMigrated: true,
+      buildingIds: true,
     },
   });
   if (!user) notFound();
 
   const activeOrg = getActiveOrgId(session);
   if (!session.user.isRoot && user.organizationId !== activeOrg) {
+    notFound();
+  }
+  // Человек другой точки — его ведёт офис (как и в API карточки).
+  if (!staffInScope(session.user, user.buildingIds)) {
     notFound();
   }
 

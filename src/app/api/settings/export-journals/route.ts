@@ -4,6 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { buildJournalsArchive } from "@/lib/journals-archive";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { resolveExportLocale } from "@/i18n/export-locale";
@@ -32,6 +33,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ code, error: code === "periodTooLong" ? t("errors.periodTooLong", { max: MAX_DAYS }) : t(`errors.${code}`) }, { status, headers: { "Content-Language": locale, "Cache-Control": "no-store" } });
   };
   if (!hasFullWorkspaceAccess(session.user)) return errorResponse("forbidden", 403);
+  // Архив всех точек — офису: страница /settings/backup руководителю точки закрыта.
+  if (isPointScoped(session.user)) return errorResponse("forbidden", 403);
   const orgId = getActiveOrgId(session);
   const { searchParams } = new URL(request.url);
   const organization = await db.organization.findUnique({ where: { id: orgId }, select: { locale: true } });

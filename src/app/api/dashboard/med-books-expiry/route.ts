@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,9 +41,11 @@ export async function GET() {
   const in30 = new Date(now);
   in30.setDate(in30.getDate() + 30);
 
+  // Точка видит медкнижки только своих людей (руководитель точки — своих точек).
+  const staffWhere = await visibleStaffWhere(session);
   const [users, certs] = await Promise.all([
     db.user.findMany({
-      where: { organizationId, isActive: true, archivedAt: null },
+      where: { organizationId, isActive: true, archivedAt: null, ...staffWhere },
       select: { id: true, name: true, role: true },
     }),
     db.staffCompetency.findMany({

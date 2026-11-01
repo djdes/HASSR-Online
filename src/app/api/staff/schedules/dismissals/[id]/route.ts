@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
@@ -22,6 +23,8 @@ export async function DELETE(
   if (!row) {
     return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
   }
+  const outOfScope = await staffOutOfScopeResponse(session, row.userId);
+  if (outOfScope) return outOfScope;
   // Снятие увольнения возвращает сотрудника в работу — это место в
   // тарифе. Проверяем до записи, иначе запись увольнения исчезла бы.
   const seats = await checkUserActivation(row.userId, { source: "staff.dismissal.undo" });

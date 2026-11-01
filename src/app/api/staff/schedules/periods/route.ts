@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 
@@ -64,6 +65,9 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
+  // Отпуск и больничный — только людям своих точек (руководитель точки).
+  const outOfScope = await staffOutOfScopeResponse(session, user.id);
+  if (outOfScope) return outOfScope;
 
   if (parsed.kind === "vacation") {
     const row = await db.staffVacation.create({

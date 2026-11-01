@@ -48,6 +48,7 @@ test("actual five producers attach descriptors while retaining recipient, dedupe
     "@/lib/integration-crypto": { isIntegrationCryptoConfigured: () => false },
     "@/lib/notifications": capture, "@/lib/telegram": { notifyEmployee: async () => true },
     "@/lib/qr-fill-actor": { setEmployeeQrPinHash: forbidden },
+    "@/lib/place-recipients": { placeOfEvent: async () => null, filterRecipientsByPlace: async (_org: string, users: unknown[]) => users },
   });
   await pin.createQrPinRequest({ organizationId: "org", userId: "employee", kind: "issue", pin: "4932", repeat: "4932", source: "journal-fill" });
   assert.equal(notices[1].userId, "manager");

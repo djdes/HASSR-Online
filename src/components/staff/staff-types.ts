@@ -120,6 +120,8 @@ export type StaffPageProps = {
   telegramBotUrl: string | null;
   /** Интеграция TasksFlow подключена — промо-блок не показываем. */
   hasTasksflowIntegration: boolean;
+  /** Править и удалять должности (справочник на всю компанию) — не руководителю точки. */
+  canEditPositions?: boolean;
   positions: StaffPosition[];
   employees: StaffEmployee[];
   /// Подсказки названий должностей для сферы организации, уже без

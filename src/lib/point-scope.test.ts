@@ -58,8 +58,33 @@ test("proxy: общие страницы → «Сегодня», изменен�
   assert.equal(verdict("POST", "/api/settings/journal-responsibles/apply-presets"), "deny");
   assert.equal(verdict("POST", "/api/settings/journal-responsibles/recreate-documents"), "deny");
   assert.equal(verdict("POST", "/api/settings/journal-responsibles/backfill-verifiers"), "deny");
+  // Подключения, права, удаление всех документов, ссылка проверяющего — офису (2026-11-01).
+  assert.equal(verdict("PUT", "/api/organizations/permissions"), "deny");
+  assert.equal(verdict("POST", "/api/settings/journals/delete-all-documents"), "deny");
+  assert.equal(verdict("PUT", "/api/settings/supply/iiko/stores"), "deny");
+  assert.equal(verdict("PUT", "/api/settings/hr1c/departments"), "deny");
+  assert.equal(verdict("POST", "/api/settings/inspector-tokens"), "deny");
+  assert.equal(verdict("PATCH", "/api/integrations/mercury"), "deny");
+  assert.equal(verdict("PATCH", "/api/max/organization"), "deny");
+  assert.equal(verdict("POST", "/api/products/import"), "deny");
+  assert.equal(verdict("POST", "/api/onboarding/apply"), "deny");
+  // TasksFlow: подключение и общие чистки — офису, задачи точки — открыты.
+  assert.equal(verdict("POST", "/api/integrations/tasksflow"), "deny");
+  assert.equal(verdict("DELETE", "/api/integrations/tasksflow"), "deny");
+  assert.equal(verdict("POST", "/api/integrations/tasksflow/cleanup-completed"), "deny");
+  assert.equal(verdict("POST", "/api/integrations/tasksflow/sync-users"), "deny");
+  assert.equal(verdict("POST", "/api/integrations/tasksflow/bulk-assign-today"), "allow");
+  assert.equal(verdict("POST", "/api/integrations/tasksflow/sync-room-photo-policy"), "allow");
+  assert.equal(verdict("GET", "/api/integrations/tasksflow"), "allow");
+  // Должность заводят при добавлении сотрудника, правят и удаляют — офис.
+  assert.equal(verdict("POST", "/api/positions"), "allow");
+  assert.equal(verdict("PATCH", "/api/positions/pos1"), "deny");
+  assert.equal(verdict("DELETE", "/api/positions/pos1"), "deny");
+  assert.equal(verdict("PUT", "/api/positions/order"), "deny");
+  assert.equal(verdict("GET", "/api/positions"), "allow");
   // Офис и организации без офиса — без ограничений.
   assert.equal(verdict("GET", "/settings/organization", null), "allow");
+  assert.equal(verdict("DELETE", "/api/positions/pos1", null), "allow");
   assert.equal(verdict("PATCH", "/api/settings/organization", []), "allow");
 });
 
