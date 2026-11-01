@@ -54,13 +54,69 @@ export function planPointJournalToggle(
     };
   });
   // Выключен у организации — только журнал, выключенный на всех точках.
-  const orgDisabled = [...new Set(next.flatMap((building) => building.disabled))].filter((entry) =>
-    next.every((building) => building.disabled.includes(entry)),
-  );
+  const orgDisabled = disabledEverywhere(next);
   return {
     orgDisabled,
     buildings: next.filter((building) => building.changed).map(({ id, disabled }) => ({ id, disabled })),
   };
+}
+
+/** Выключено у организации — только то, что выключено на всех точках. */
+function disabledEverywhere(sets: readonly { disabled: readonly string[] }[]): string[] {
+  return [...new Set(sets.flatMap((building) => building.disabled))].filter((entry) =>
+    sets.every((building) => building.disabled.includes(entry)),
+  );
+}
+
+function sameCodes(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((code) => b.includes(code));
+}
+
+/**
+ * Записать весь набор («Настройка журналов», 2026-11-01). `target` — точка
+ * из шапки (`viewedPointId`):
+ *  - точка — меняется только её набор; точкам, жившим набором организации,
+ *    копируется их текущий набор (как `planPointJournalToggle`);
+ *  - null — вся организация: что включили или выключили относительно набора
+ *    организации, меняется у организации и у каждой точки со своим набором.
+ *    Раньше правка «всей организации» уходила в набор офиса или первой точки.
+ */
+export function planJournalSetWrite(
+  sets: PointJournalSets,
+  target: string | null,
+  nextDisabled: readonly string[],
+): PointJournalPlan {
+  const desired = [...new Set(nextDisabled)];
+  if (target) {
+    if (!sets.buildings.some((building) => building.id === target)) {
+      throw new Error(`Точка ${target} не найдена`);
+    }
+    const next = sets.buildings.map((building) => ({
+      id: building.id,
+      disabled: building.id === target ? desired : [...(building.disabled ?? sets.orgDisabled)],
+      changed: building.id === target || building.disabled === null,
+    }));
+    return {
+      orgDisabled: disabledEverywhere(next),
+      buildings: next.filter((building) => building.changed).map(({ id, disabled }) => ({ id, disabled })),
+    };
+  }
+  const turnedOff = desired.filter((code) => !sets.orgDisabled.includes(code));
+  const turnedOn = new Set(sets.orgDisabled.filter((code) => !desired.includes(code)));
+  const own = sets.buildings
+    .filter((building) => building.disabled !== null)
+    .map((building) => ({
+      id: building.id,
+      disabled: [...new Set([...(building.disabled ?? []), ...turnedOff])].filter((code) => !turnedOn.has(code)),
+    }));
+  if (own.length === 0) return { orgDisabled: desired, buildings: [] };
+  const inherited = sets.buildings
+    .filter((building) => building.disabled === null)
+    .map((building) => ({ id: building.id, disabled: desired }));
+  const orgDisabled = disabledEverywhere([...own, ...inherited]);
+  // Точки без своего набора живут набором организации: если он станет уже
+  // нужного, им записывается свой — иначе у них включились бы лишние журналы.
+  return { orgDisabled, buildings: sameCodes(orgDisabled, desired) ? own : [...own, ...inherited] };
 }
 
 /** Набор точки после плана: выключенные коды (для ответа API и проверки тарифа). */

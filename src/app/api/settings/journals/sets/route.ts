@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getActiveBuildingId } from "@/lib/active-building";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { JOURNAL_ENABLE_AUDIT_ACTION, type JournalEnableSource } from "@/lib/blank-signup";
 import { getDisabledJournalCodes, setDisabledJournalCodes } from "@/lib/disabled-journals";
 import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
+import { journalSettingsPointId, journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import {
   JOURNAL_SETS,
@@ -75,7 +75,7 @@ function presentSets(disabled: ReadonlySet<string>) {
 export async function GET() {
   const auth = await requireManager();
   if (!auth.ok) return auth.response;
-  const disabled = await getDisabledJournalCodes(getActiveOrgId(auth.session), await getActiveBuildingId(auth.session));
+  const disabled = await getDisabledJournalCodes(getActiveOrgId(auth.session), await journalSettingsPointId(auth.session));
   return NextResponse.json(
     { sets: presentSets(disabled) },
     { headers: { "Cache-Control": "private, no-store" } },
@@ -100,8 +100,10 @@ export async function POST(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
-  // Точка со своим набором журналов (слитая организация) — набор точки.
-  const buildingId = await getActiveBuildingId(session);
+  // Точка из шапки — её набор; «Вся организация» — набор всех точек.
+  const target = await journalSettingsWriteTarget(session);
+  if (!target.ok) return target.response;
+  const buildingId = target.pointId;
   const disabled = await getDisabledJournalCodes(organizationId, buildingId);
   const next = enableJournalSetCodes(disabled, setId);
   if (next.enabled.length > 0) {

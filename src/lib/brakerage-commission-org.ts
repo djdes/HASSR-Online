@@ -10,6 +10,7 @@ import {
   type CommissionRoleKind,
   type BrakerageCommissionMember,
 } from "@/lib/brakerage-commission";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { COMMISSION_CATEGORY_KEY, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
@@ -69,22 +70,44 @@ export async function readOrgCommission(
 }
 
 /**
+ * Куда пишется состав (2026-11-01): точка из шапки получает свой состав —
+ * если его ещё не было, ей копируется состав организации по всем журналам,
+ * и дальше она живёт им; без точки — организация. Раньше правка точки без
+ * своего состава уходила в организацию и меняла комиссию всех точек.
+ */
+async function commissionWriteOwner(
+  organizationId: string,
+  pointId: string | null | undefined
+): Promise<{ buildingId: string | null; json: unknown }> {
+  if (!pointId) return commissionOwner(organizationId, null);
+  const building = await db.building.findFirst({
+    where: { id: pointId, organizationId },
+    select: { journalCommissionJson: true },
+  });
+  if (!building) throw new Error(`Точка ${pointId} не найдена`);
+  if (building.journalCommissionJson !== null) return { buildingId: pointId, json: building.journalCommissionJson };
+  const org = await commissionOwner(organizationId, null);
+  return { buildingId: pointId, json: org.json };
+}
+
+/**
  * Сохранить состав: имена и id берутся из базы (только сотрудники этой
- * организации, включая стороннюю комиссию), роль — из запроса. Возвращает
- * состав и число обновлённых активных документов. С точкой, у которой свой
- * состав, — пишется в точку и копируется только в её документы; состав
- * организации не трогает документы точек со своим составом.
+ * организации, включая стороннюю комиссию; у точки — работающие на ней),
+ * роль — из запроса. Возвращает состав и число обновлённых активных
+ * документов. `pointId` — точка из шапки: состав пишется ей
+ * (`commissionWriteOwner`) и копируется только в её документы; без точки —
+ * состав организации, он не трогает документы точек со своим составом.
  */
 export async function saveOrgCommission(
   organizationId: string,
   code: string,
   input: Array<{ employeeId: string; role?: string; roleKind?: CommissionRoleKind }>,
-  buildingId?: string | null
+  pointId?: string | null
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
   if (!isCommissionJournalCode(code)) throw new Error("Журнал без комиссии");
   const ids = [...new Set(input.map((item) => item.employeeId).filter(Boolean))];
   const users = await db.user.findMany({
-    where: { id: { in: ids }, organizationId, ...ORG_SIGNER_WHERE },
+    where: { id: { in: ids }, organizationId, ...ORG_SIGNER_WHERE, ...staffAtBuildingWhere(pointId) },
     select: { id: true, name: true },
   });
   const byId = new Map(users.map((user) => [user.id, user]));
@@ -99,7 +122,7 @@ export async function saveOrgCommission(
       }))
   );
 
-  const owner = await commissionOwner(organizationId, buildingId);
+  const owner = await commissionWriteOwner(organizationId, pointId);
   const nextJson = { ...asRecord(owner.json), [code]: members } as Prisma.InputJsonValue;
   if (owner.buildingId) {
     await db.building.update({ where: { id: owner.buildingId }, data: { journalCommissionJson: nextJson } });
@@ -196,9 +219,9 @@ export async function addOrgCommissionMember(
   organizationId: string,
   code: string,
   member: { employeeId: string; role?: string; roleKind?: CommissionRoleKind },
-  buildingId?: string | null
+  pointId?: string | null
 ): Promise<{ members: BrakerageCommissionMember[]; updatedDocuments: number }> {
-  const current = await readOrgCommission(organizationId, code, buildingId);
+  const current = await readOrgCommission(organizationId, code, pointId);
   if (current.some((item) => item.employeeId === member.employeeId)) {
     return { members: current, updatedDocuments: 0 };
   }
@@ -209,7 +232,7 @@ export async function addOrgCommissionMember(
       ...current.map((item) => ({ employeeId: item.employeeId, role: item.role, roleKind: item.roleKind })),
       { employeeId: member.employeeId, ...normalizeCommissionRole(member.role, member.roleKind) },
     ],
-    buildingId
+    pointId
   );
 }
 

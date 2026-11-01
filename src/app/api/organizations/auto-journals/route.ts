@@ -1,12 +1,14 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
 import { automationDisabledError, automationOn, type AutomationFeature } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { journalSettingsPointId, journalSettingsWriteTarget } from "@/lib/journal-settings-target";
+import { applyAutomationFlags, autoCreateCodes, type AutomationFlagChange } from "@/lib/point-journal-automation";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
@@ -136,10 +138,11 @@ export async function GET() {
     where: { id: getActiveOrgId(session) },
     select: { journalAutomationJson: true },
   });
-  // У точки со своей автоматикой (слитая организация) — её настройки.
+  // Точка из шапки — её автоматика (своя или как у организации);
+  // «Вся организация» — автоматика организации.
   const org = withBuildingJournalSettings(
     orgRow,
-    await readBuildingJournalSettings(db, await getActiveBuildingId(session)),
+    await readBuildingJournalSettings(db, await journalSettingsPointId(session)),
   );
 
   return NextResponse.json({
@@ -173,6 +176,12 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Некорректный список" }, { status: 400 });
   }
   const organizationId = getActiveOrgId(session);
+  // Точка из шапки — правится только её автоматика; «Вся организация» —
+  // организация и все точки со своей автоматикой. Руководитель точки —
+  // только свою точку.
+  const target = await journalSettingsWriteTarget(session);
+  if (!target.ok) return target.response;
+  const pointId = target.pointId;
   // Спецрежим: включать автосоздание / автозаполнение можно, только если
   // эта часть автоматики выбрана; выключать — всегда.
   const controls = await getJournalControls(organizationId);
@@ -204,15 +213,13 @@ export async function PUT(request: Request) {
       }
     }
 
-    // Точка со своей автоматикой (слитая организация) хранит её у себя:
-    // правка на экране активной точки меняет только эту точку.
-    const activeBuildingId = await getActiveBuildingId(session);
-    const ownBuildingId = (await readBuildingJournalSettings(db, activeBuildingId)) ? activeBuildingId : null;
+    // Точка хранит свою автоматику у себя: начинаем с того, что она видит
+    // сейчас (своё или как у организации), и пишем только ей.
     const orgRow = await db.organization.findUnique({
       where: { id: organizationId },
       select: { journalAutomationJson: true },
     });
-    const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, ownBuildingId));
+    const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, pointId));
     const map: JournalAutomationMap = parseJournalAutomationJson(
       org?.journalAutomationJson
     );
@@ -222,6 +229,7 @@ export async function PUT(request: Request) {
       if (item.autoFill === true && !previous.autoFill && !automationOn(controls, "autoFill")) return blockedFeature("autoFill");
     }
     const autoFillChanges: { code: string; next: boolean }[] = [];
+    const flagChanges: AutomationFlagChange[] = [];
     for (const item of parsed.items) {
       const previous = map[item.code];
       const entry: JournalAutomation = {
@@ -238,24 +246,42 @@ export async function PUT(request: Request) {
       if (entry.autoFill !== (previous?.autoFill ?? false)) {
         autoFillChanges.push({ code: item.code, next: entry.autoFill });
       }
+      if (entry.autoFill !== (previous?.autoFill ?? false) || entry.autoCreate !== (previous?.autoCreate ?? false)) {
+        flagChanges.push({ code: item.code, autoCreate: entry.autoCreate, autoFill: entry.autoFill });
+      }
     }
-    const codes = Object.entries(map)
-      .filter(([, value]) => value.autoCreate)
-      .map(([code]) => code)
-      .sort();
-    if (ownBuildingId) {
+    const codes = autoCreateCodes(map);
+    if (pointId) {
       await db.building.update({
-        where: { id: ownBuildingId },
+        where: { id: pointId },
         data: { journalAutomationJson: map as never, autoJournalCodes: codes as never },
       });
     } else {
-      await db.organization.update({
-        where: { id: organizationId },
-        data: {
-          journalAutomationJson: map as never,
-          autoJournalCodes: codes as never,
-        },
-      });
+      // Вся организация: точки со своей автоматикой получают те же
+      // тумблеры изменённых журналов, иначе правка до них не доходила.
+      const ownBuildings =
+        flagChanges.length > 0
+          ? await db.building.findMany({
+              where: { organizationId, journalAutomationJson: { not: Prisma.DbNull } },
+              select: { id: true, journalAutomationJson: true },
+            })
+          : [];
+      await db.$transaction([
+        db.organization.update({
+          where: { id: organizationId },
+          data: {
+            journalAutomationJson: map as never,
+            autoJournalCodes: codes as never,
+          },
+        }),
+        ...ownBuildings.map((building) => {
+          const buildingMap = applyAutomationFlags(parseJournalAutomationJson(building.journalAutomationJson), flagChanges);
+          return db.building.update({
+            where: { id: building.id },
+            data: { journalAutomationJson: buildingMap as never, autoJournalCodes: autoCreateCodes(buildingMap) as never },
+          });
+        }),
+      ]);
     }
 
     // Тумблер автозаполнения живёт и в организации, и в каждом документе.
@@ -270,7 +296,7 @@ export async function PUT(request: Request) {
       const updated = await db.journalDocument.updateMany({
         where: {
           organizationId,
-          ...(ownBuildingId ? { buildingId: ownBuildingId } : {}),
+          ...(pointId ? { buildingId: pointId } : {}),
           status: "active",
           template: { code: change.code },
           dateTo: { gte: todayUtcStart },
@@ -285,9 +311,13 @@ export async function PUT(request: Request) {
 
   const unique = Array.from(new Set(parsed.codes ?? []));
   if (unique.length > 0 && !automationOn(controls, "autoCreate")) return blockedFeature("autoCreate");
-  await db.organization.update({
-    where: { id: organizationId },
-    data: { autoJournalCodes: unique },
-  });
+  if (pointId) {
+    await db.building.update({ where: { id: pointId }, data: { autoJournalCodes: unique } });
+  } else {
+    await db.organization.update({
+      where: { id: organizationId },
+      data: { autoJournalCodes: unique },
+    });
+  }
   return NextResponse.json({ codes: unique });
 }

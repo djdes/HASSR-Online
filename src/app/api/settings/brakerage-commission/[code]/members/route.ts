@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { addOrgCommissionMember, ensureCommissionPosition } from "@/lib/brakerage-commission-org";
 import { recordAuditLog } from "@/lib/audit-log";
+import { journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 import { generateEmployeeQrPin, setEmployeeQrPin } from "@/lib/qr-fill-actor";
 import { validateQrPin } from "@/lib/qr-pin-rules";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -54,11 +54,16 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
     if (pinProblem) return NextResponse.json({ error: pinProblem }, { status: 400 });
   }
   const organizationId = getActiveOrgId(session);
+  // Точка из шапки — человек входит в её состав и работает на ней;
+  // руководитель точки — только своя точка.
+  const target = await journalSettingsWriteTarget(session);
+  if (!target.ok) return target.response;
   const position = await ensureCommissionPosition(organizationId);
   const created = await createStaffMember(organizationId, {
     jobPositionId: position.id,
     fullName: parsed.data.fullName,
     phone: parsed.data.phone || undefined,
+    ...(target.pointId ? { buildingIds: [target.pointId] } : {}),
   });
   if (!created.ok) {
     return NextResponse.json(
@@ -76,7 +81,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ code: stri
       role: parsed.data.role,
       roleKind: parsed.data.roleKind,
     },
-    await getActiveBuildingId(session)
+    target.pointId
   );
   await recordAuditLog({
     request,
