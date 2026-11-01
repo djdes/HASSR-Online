@@ -65,6 +65,8 @@ function fixture() {
     "@/lib/db": { db: mockedDb },
     "@/lib/role-access": require("@/lib/role-access"),
     "@/lib/journal-obligations": { getManagerObligationSummary: async () => ({ done: 0, total: 0, pending: 0, employeesWithPending: 0 }) },
+    "@/lib/bot/scoped-obligation-summary": { scopedManagerObligationSummary: async () => ({ done: 0, total: 0, pending: 0, employeesWithPending: 0 }) },
+    "@/lib/worker-point-scope": { ...require("@/lib/worker-point-scope"), loadManagerPointScope: async () => null, loadScopeAreaIds: async () => [] },
     "@/lib/telegram": require("@/lib/telegram"),
     "@/lib/org-custom-names": { getOrgCustomNames: async () => ({ journals: {}, sections: {} }) },
     "@/lib/custom-names": require("@/lib/custom-names"),

@@ -32,7 +32,7 @@ import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { syncDailyJournalObligationsForOrganization, syncDailyJournalObligationsForUser } from "@/lib/journal-obligations";
 import { scheduleObligationSync, utcDayKey } from "@/lib/obligation-sync-throttle";
-import { documentInWorkerScope, documentWorkerScopeWhere, loadWorkerPointScope } from "@/lib/worker-point-scope";
+import { documentInWorkerScope, documentWorkerScopeWhere, loadManagerPointScope, loadScopeDisabledCodes, loadWorkerPointScope, personInWorkerScope } from "@/lib/worker-point-scope";
 import { maxAnswer, maxApi, maxSend, type MaxView } from "./client";
 import { maxConfig } from "./config";
 import { claimMaxLink, MaxError, maxAccount, maxContext, maxOrganizations } from "./service";
@@ -144,7 +144,8 @@ async function loadFillableJournals(ctx: Ctx) {
   const org = await loadOrganizationForFill(ctx.organizationId);
   if (!org) throw new MaxError("Организация недоступна.", 403);
   const todayKey = todayKeyFor(org.timezone);
-  const disabled = [...parseDisabledCodes(org.disabledJournalCodes)];
+  // Точка со своим набором журналов: сотруднику — набор его точек.
+  const disabled = (await loadScopeDisabledCodes(ctx.organizationId, await loadWorkerPointScope(ctx.organizationId, ctx.user.id))) ?? [...parseDisabledCodes(org.disabledJournalCodes)];
   const hub = await listHubJournals(ctx.organizationId, disabled, todayKey, { includeLapsed: true, includeObjects: true });
   const codes = hub.map((item) => item.code);
   // Хаб QR объединяет гигиену и здоровье в одну отметку; в боте это два журнала.
@@ -277,7 +278,8 @@ async function startFill(event: MaxEvent, identity: Identity, ctx: Ctx, code: st
   if (!template || !org) return respond(event, messageView("Такого журнала нет. Откройте список журналов заново."));
   const journalName = name(code, template.name).slice(0, 300);
   if (OBJECT_QR_JOURNAL_CODES.has(code)) return respond(event, objectJournalView({ name: journalName, hint: OBJECT_QR_JOURNAL_HINTS[code] ?? "Этот журнал заполняют по QR-наклейке на объекте." }));
-  const blocked = journalFillCodeBlock(code, org.disabledJournalCodes);
+  const scope = await loadWorkerPointScope(ctx.organizationId, ctx.user.id);
+  const blocked = journalFillCodeBlock(code, (await loadScopeDisabledCodes(ctx.organizationId, scope)) ?? org.disabledJournalCodes);
   if (blocked) return respond(event, messageView(blocked.error));
   if (!(await canWriteJournal(aclActor(ctx), code))) return respond(event, messageView(`Заполнять «${journalName}» вам не разрешено. Обратитесь к руководителю.`));
 
@@ -285,7 +287,6 @@ async function startFill(event: MaxEvent, identity: Identity, ctx: Ctx, code: st
   // Первое заполнение после конца периода открывает документ нового периода — как скан QR.
   await ensureQrPeriodDocuments({ organizationId: ctx.organizationId, templateCode: code, todayKey, source: "max-bot" });
   // Документы точек сотрудника и общие: чужую точку бот не предлагает.
-  const scope = await loadWorkerPointScope(ctx.organizationId, ctx.user.id);
   const docs = (await listJournalFillDocuments(ctx.organizationId, code, todayKey)).filter((doc) => documentInWorkerScope(scope, doc.buildingId));
   if (docs.length === 0) return respond(event, messageView(`На сегодня нет активного документа «${journalName}». Попросите руководителя создать его на сайте.`));
   const state: MaxFillState = {
@@ -413,15 +414,17 @@ async function pendingByEmployee(ctx: Ctx) {
   } catch (error) {
     console.error("[max:bot] organization sync failed", error instanceof Error ? error.name : "UnknownError");
   }
-  // Руководитель точки видит и напоминает только по своим точкам (и общим).
-  const scope = await loadWorkerPointScope(ctx.organizationId, ctx.user.id);
-  const [rows, name] = await Promise.all([
+  // Руководитель точки видит и напоминает только по своим точкам (и общим)
+  // и только своим людям; руководитель офиса — по всей компании.
+  const scope = await loadManagerPointScope(ctx.organizationId, ctx.user.id);
+  const [allRows, name] = await Promise.all([
     db.journalObligation.findMany({
       where: { organizationId: ctx.organizationId, dateKey, user: ORG_ROSTER_WHERE, ...documentWorkerScopeWhere(scope) },
-      select: { userId: true, status: true, journalCode: true, template: { select: { name: true } }, user: { select: { name: true, maxIdentity: { select: { privateChatId: true } } } } },
+      select: { userId: true, status: true, journalCode: true, template: { select: { name: true } }, user: { select: { name: true, buildingIds: true, maxIdentity: { select: { privateChatId: true } } } } },
     }),
     displayNames(ctx.organizationId),
   ]);
+  const rows = allRows.filter((row) => personInWorkerScope(scope, row.user.buildingIds));
   const byUser = new Map<string, { userId: string; name: string; chatId: string | null; journals: Map<string, string> }>();
   for (const row of rows) {
     if (row.status !== "pending") continue;
@@ -491,18 +494,20 @@ async function sendReminders(ctx: Ctx): Promise<MaxView> {
 
 async function inviteScreen(ctx: Ctx, page: number): Promise<MaxView> {
   await requireManager(ctx);
-  const staff = await db.user.findMany({
+  // Руководитель точки подключает только людей своих точек.
+  const scope = await loadManagerPointScope(ctx.organizationId, ctx.user.id);
+  const staff = (await db.user.findMany({
     where: { organizationId: ctx.organizationId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true, role: true, positionTitle: true, jobPosition: { select: { name: true } }, maxIdentity: { select: { id: true } } },
+    select: { id: true, name: true, role: true, positionTitle: true, buildingIds: true, jobPosition: { select: { name: true } }, maxIdentity: { select: { id: true } } },
     orderBy: { name: "asc" },
-  });
+  })).filter((user) => personInWorkerScope(scope, user.buildingIds));
   const candidates = staff.filter((user) => !user.maxIdentity && user.id !== ctx.user.id).map((user) => ({ id: user.id, name: user.name, position: getUserDisplayTitle(user) || null }));
   return inviteListView({ candidates, connected: staff.filter((user) => user.maxIdentity).length, total: staff.length, page });
 }
 
 async function issueInvite(event: MaxEvent, ctx: Ctx, employeeId: string) {
   await requireManager(ctx);
-  const invite = await issueMaxInvite({ organizationId: ctx.organizationId, employeeId, createdByUserId: ctx.user.id });
+  const invite = await issueMaxInvite({ organizationId: ctx.organizationId, employeeId, createdByUserId: ctx.user.id, scope: await loadManagerPointScope(ctx.organizationId, ctx.user.id) });
   await db.auditLog.create({ data: { organizationId: ctx.organizationId, userId: ctx.user.id, userName: ctx.user.name, action: "max.invite", entity: "User", entityId: employeeId } }).catch(() => null);
   await respond(event, inviteIssuedView({ name: invite.employeeName, validDays: MAX_INVITE_TTL_DAYS }));
   await maxSend(event.chatId, inviteForwardText({ url: invite.url, code: invite.token, organizationName: ctx.organization.name }));

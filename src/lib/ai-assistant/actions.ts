@@ -35,6 +35,11 @@ import { createStaffMember, type CreateStaffResult } from "@/lib/staff-create";
 import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 import { isManagementRole } from "@/lib/user-roles";
 import { orgTodayKey } from "@/lib/timezone";
+import {
+  documentInWorkerScope,
+  loadManagerPointScope,
+  personWorkerScopeWhere,
+} from "@/lib/worker-point-scope";
 
 /**
  * Действия AI-помощника: предложение → подтверждение → исполнение.
@@ -190,10 +195,15 @@ export async function prepareAction(
         status: true,
         dateFrom: true,
         dateTo: true,
+        buildingId: true,
         template: { select: { code: true, name: true } },
       },
     });
-    if (!doc) return { ok: false, error: t("assistantActions.documentMissing") };
+    // Точки человека: документ чужой точки для него не существует.
+    const scope = await loadManagerPointScope(ctx.orgId, ctx.actor.id);
+    if (!doc || !documentInWorkerScope(scope, doc.buildingId)) {
+      return { ok: false, error: t("assistantActions.documentMissing") };
+    }
     if (doc.status === "closed") return { ok: false, error: t("assistantActions.documentClosed") };
 
     const templateCode = doc.template?.code ?? "";
@@ -235,7 +245,7 @@ export async function prepareAction(
     }
 
     const employees = await db.user.findMany({
-      where: { id: { in: input.employeeIds }, organizationId: ctx.orgId },
+      where: { id: { in: input.employeeIds }, organizationId: ctx.orgId, ...personWorkerScopeWhere(scope) },
       select: { id: true, name: true },
     });
     if (employees.length !== new Set(input.employeeIds).size) {
@@ -420,7 +430,10 @@ async function executeAddStaff(
   if (!isManagementRole(ctx.actor.role) && !ctx.actor.isRoot) {
     return { ok: false, error: t("assistantActions.managerOnly") };
   }
-  const result = await createStaffMember(ctx.orgId, input);
+  // Руководитель точки добавляет людей на свои точки, как форма на сайте
+  // (/api/staff): иначе новый сотрудник работал бы на всех точках.
+  const scope = await loadManagerPointScope(ctx.orgId, ctx.actor.id);
+  const result = await createStaffMember(ctx.orgId, scope ? { ...input, buildingIds: scope.points } : input);
   if (!result.ok) return result.code === "billing_free_limit"
     ? { ok: false, error: seatLimitReply(t, result, ctx.inApp === true), code: result.code }
     : { ok: false, error: result.status === 404 ? t("assistantActions.positionMissing")
@@ -463,7 +476,11 @@ async function executeFillCells(
     where: { id: input.documentId },
     include: { template: { select: { code: true } } },
   });
-  if (!doc || doc.organizationId !== ctx.orgId) {
+  if (
+    !doc ||
+    doc.organizationId !== ctx.orgId ||
+    !documentInWorkerScope(await loadManagerPointScope(ctx.orgId, ctx.actor.id), doc.buildingId)
+  ) {
     return { ok: false, error: t("assistantActions.documentMissing") };
   }
   if (doc.status === "closed") {

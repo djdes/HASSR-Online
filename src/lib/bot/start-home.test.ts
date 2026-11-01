@@ -69,6 +69,7 @@ test("loadTelegramStartHome gives staff the next open obligation url and reuses 
       }),
       getUserPermissions: async () => new Set(["journals.fill", "journals.view"]),
       getManagerScope: async () => null,
+      getManagerPointScope: async () => null,
     }
   );
 
@@ -130,6 +131,7 @@ test("loadTelegramStartHome gives managers a summary and reuses one request time
       getUserPermissions: async () =>
         new Set(["dashboard.view", "staff.manage", "journals.fill"]),
       getManagerScope: async () => null,
+      getManagerPointScope: async () => null,
     }
   );
 
@@ -239,6 +241,7 @@ test("loadTelegramStartHome gives readonly mode for users without journals.fill"
       }),
       getUserPermissions: async () => new Set(["journals.view"]),
       getManagerScope: async () => null,
+      getManagerPointScope: async () => null,
     }
   );
 
@@ -247,4 +250,36 @@ test("loadTelegramStartHome gives readonly mode for users without journals.fill"
     throw new Error("expected readonly home");
   }
   assert.equal(home.buttonUrl, "https://wesetup.ru/mini");
+});
+
+test("loadTelegramStartHome: руководитель точки получает сводку только по своим точкам", async () => {
+  const scoped: unknown[] = [];
+  const home = await loadTelegramStartHome(
+    { chatId: "889", miniAppBaseUrl: "https://wesetup.ru/mini" },
+    {
+      findLinkedUserByChatId: async () => ({
+        id: "user_point",
+        name: "Ирина",
+        role: "manager",
+        isRoot: false,
+        organizationId: "org_1",
+        permissionsJson: null,
+        jobPosition: { categoryKey: "management", permissionsJson: null },
+      }),
+      syncDailyJournalObligationsForOrganization: async () => undefined,
+      getManagerObligationSummary: async () => {
+        throw new Error("org-wide summary must not be used for a point manager");
+      },
+      getManagerPointScope: async () => ({ points: ["A"], orgBuildingIds: ["A", "B"] }),
+      scopedManagerObligationSummary: async (_org, _now, scope) => {
+        scoped.push(scope);
+        return { total: 3, pending: 1, done: 2, employeesWithPending: 1 };
+      },
+      getUserPermissions: async () => new Set(["dashboard.view", "staff.manage"]),
+      getManagerScope: async () => null,
+    }
+  );
+  assert.equal(home.kind, "manager");
+  assert.deepEqual(scoped, [{ points: ["A"], orgBuildingIds: ["A", "B"] }]);
+  if (home.kind === "manager") assert.equal(home.summary.total, 3);
 });

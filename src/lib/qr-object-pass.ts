@@ -27,19 +27,28 @@ export async function resolveQrObject(kind: QrObjectKind, objectId: string, toke
     if (!verify.ok || verify.equipmentId !== objectId) return null;
     const equipment = await db.equipment.findUnique({
       where: { id: objectId },
-      select: { area: { select: { organizationId: true, organization: { select: { qrFillMode: true } } } } },
+      select: { area: { select: { organizationId: true, buildingId: true, organization: { select: { qrFillMode: true } } } } },
     });
     if (!equipment) return null;
-    return { organizationId: equipment.area.organizationId, mode: normalizeQrFillMode(equipment.area.organization.qrFillMode) };
+    // buildingId — точка объекта (точка цеха / склада): PIN и пропуск — только людям этой точки.
+    return {
+      organizationId: equipment.area.organizationId,
+      buildingId: equipment.area.buildingId,
+      mode: normalizeQrFillMode(equipment.area.organization.qrFillMode),
+    };
   }
   const verify = verifyQrFillTokenFor(token, "room", objectId);
   if (!verify.ok) return null;
   const room = await db.room.findUnique({
     where: { id: objectId },
-    select: { building: { select: { organizationId: true, organization: { select: { qrFillMode: true } } } } },
+    select: { buildingId: true, building: { select: { organizationId: true, organization: { select: { qrFillMode: true } } } } },
   });
   if (!room) return null;
-  return { organizationId: room.building.organizationId, mode: normalizeQrFillMode(room.building.organization.qrFillMode) };
+  return {
+    organizationId: room.building.organizationId,
+    buildingId: room.buildingId as string | null,
+    mode: normalizeQrFillMode(room.building.organization.qrFillMode),
+  };
 }
 
 /** Текущий отпечаток PIN сотрудника организации; null — нет PIN, заблокирован или не из списка. */

@@ -13,6 +13,7 @@ import * as roles from "@/lib/user-roles";
 import * as locales from "@/i18n/site-locale";
 import * as limits from "@/lib/plan-limits";
 import * as tariffPlans from "@/lib/tariff-plans";
+import * as pointScope from "@/lib/worker-point-scope";
 import { z } from "zod";
 
 // Run current production modules with external persistence replaced. No database,
@@ -34,10 +35,11 @@ function moduleWithDependencies<T>(file: string, dependencies: Record<string, un
 
 const isoDay = (date: Date | string) => new Date(date).toISOString().slice(0, 10);
 const hygiene = { HYGIENE_STATUS_OPTIONS: ["healthy", "day_off", "sick_leave", "suspended", "vacation"].map(value => ({ value, label: value })), toDateKey: isoDay, isEntryDataEmpty: () => false };
-function actionsFixture(staffRefusal?: unknown) {
+type Scope = Awaited<ReturnType<typeof pointScope.loadManagerPointScope>>;
+function actionsFixture(staffRefusal?: unknown, scope: Scope = null, documentBuildingId: string | null = null) {
   const queries: unknown[] = [];
   const writes: unknown[] = [];
-  const document = { id: "doc", organizationId: "org", title: "CUSTOM_TITLE", status: "open", dateFrom: new Date("2026-10-01Z"), dateTo: new Date("2026-10-31Z"), template: { code: "hygiene", name: "Журнал гигиены" }, config: {}, responsibleUserId: null };
+  const document = { id: "doc", organizationId: "org", title: "CUSTOM_TITLE", status: "open", dateFrom: new Date("2026-10-01Z"), dateTo: new Date("2026-10-31Z"), template: { code: "hygiene", name: "Журнал гигиены" }, config: {}, responsibleUserId: null, buildingId: documentBuildingId };
   const db = {
     jobPosition: { findFirst: async (args: unknown) => { queries.push(args); return { name: "CUSTOM_POSITION" }; } },
     journalDocument: { findFirst: async (args: unknown) => { queries.push(args); return document; }, findUnique: async () => document },
@@ -57,6 +59,7 @@ function actionsFixture(staffRefusal?: unknown) {
     "@/lib/staff-journal-autofill": { STAFF_JOURNAL_TEMPLATE_CODES: ["hygiene", "health_check"], loadStaffScheduleMap: async () => new Map(), staffScheduleKey: () => "", buildStaffAutoFillEntryData: () => ({ status: "healthy" }) },
     "@/lib/staff-create": { createStaffMember: async (_org: string, input: unknown) => { if (staffRefusal) return staffRefusal; writes.push(input); return { ok: true, user: { name: "CUSTOM_EMPLOYEE" }, positionName: "CUSTOM_POSITION" }; } },
     "@/lib/user-roles": roles, "@/lib/timezone": { orgTodayKey: () => "2026-10-15" }, "@/lib/tariff-plans": tariffPlans,
+    "@/lib/worker-point-scope": { ...pointScope, loadManagerPointScope: async () => scope },
   });
   return { actions, document, queries, writes };
 }
@@ -111,7 +114,7 @@ test("assistant add_staff: a seat refusal names the next plan, inside the WeSetu
 
 test("assistant job captures explicit locale while preserving user content and escaping untrusted context", async () => {
   const db = { organization: { findUnique: async () => ({ name: "Customer <instruction>", timezone: "Europe/Moscow" }) }, user: { findUnique: async () => ({ name: "Manager", role: "manager" }), findMany: async () => [] }, jobPosition: { findMany: async () => [] }, journalTemplate: { findMany: async () => [] }, journalDocument: { findMany: async () => [] } };
-  const jobs = moduleWithDependencies<typeof import("./job-text")>("job-text", { "@/lib/db": { db }, "@/lib/hygiene-document": hygiene, "@/i18n/site-locale": locales });
+  const jobs = moduleWithDependencies<typeof import("./job-text")>("job-text", { "@/lib/db": { db }, "@/lib/hygiene-document": hygiene, "@/i18n/site-locale": locales, "@/lib/worker-point-scope": { ...pointScope, loadManagerPointScope: async () => null } });
   for (const locale of ["ru", "en", "uz"] as const) {
     const text = await jobs.buildChatJobText({ orgId: "org", userId: "manager", locale, history: [], question: "Customer <instruction>" });
     assert.ok(text.includes(`response_language: ${jobs.assistantResponseLanguage(locale)}`));
@@ -171,4 +174,27 @@ test("assistant route snapshots session locale for jobs/actions and returns isol
     assert.ok(!unavailableBody.error.includes("private"));
     if (locale !== "ru") assert.doesNotMatch(limitedBody.error + unavailableBody.error, /\p{Script=Cyrillic}/u);
   }));
+});
+
+test("assistant point scope: a point manager cannot fill another point's journal, new staff lands on own point", async () => {
+  // Аудит 2026-11-01: помощник руководителя точки А заполнял документ точки Б.
+  const scopeA = { points: ["A"], orgBuildingIds: ["A", "B"] };
+  const actor = { id: "manager", role: "manager", isRoot: false, name: "Manager" };
+  const input = { documentId: "doc", employeeIds: ["employee"], dates: ["2026-10-15"], values: { kind: "status", status: "healthy" } };
+  const foreign = actionsFixture(undefined, scopeA, "B");
+  const refused = await foreign.actions.prepareAction({ kind: "fill_journal_cells", input }, { orgId: "org", actor, locale: "ru" });
+  assert.equal(refused.ok, false);
+  const executed = await foreign.actions.executeProposedAction({ kind: "fill_journal_cells", input } as never, { orgId: "org", actor, locale: "ru" }, { audit: false });
+  assert.equal(executed.ok, false);
+  assert.equal(foreign.writes.length, 0);
+
+  const own = actionsFixture(undefined, scopeA, "A");
+  assert.equal((await own.actions.prepareAction({ kind: "fill_journal_cells", input }, { orgId: "org", actor, locale: "ru" })).ok, true);
+  const shared = actionsFixture(undefined, scopeA, null);
+  assert.equal((await shared.actions.prepareAction({ kind: "fill_journal_cells", input }, { orgId: "org", actor, locale: "ru" })).ok, true);
+
+  const staff = actionsFixture(undefined, scopeA, null);
+  const added = await staff.actions.executeProposedAction({ kind: "add_staff", input: { fullName: "CUSTOM_EMPLOYEE", jobPositionId: "position" } }, { orgId: "org", actor, locale: "ru" }, { audit: false });
+  assert.equal(added.ok, true);
+  assert.deepEqual((staff.writes[0] as { buildingIds?: string[] }).buildingIds, ["A"]);
 });

@@ -8,6 +8,7 @@ import { resolveQrObject, type QrObjectKind } from "@/lib/qr-object-pass";
 import { mintQrPass, qrPassClearCookie, qrPassSetCookie, qrPinFingerprint } from "@/lib/qr-pin-pass";
 import { rememberClearCookie, rememberSetCookie } from "@/lib/qr-remember";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
+import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,13 @@ export async function POST(request: Request) {
     response.headers.append("Set-Cookie", qrPassClearCookie(object.organizationId, { secure }));
     response.headers.append("Set-Cookie", rememberClearCookie(object.organizationId, { secure }));
     return response;
+  }
+
+  // Точка наклейки (аудит 2026-11-01): PIN и «запомнить» — только для
+  // сотрудника этой точки, как список «Кто вы?». Иначе наклейка точки А
+  // проверяла PIN людей точки Б.
+  if (!(await employeeWorksAtQrPoint(await loadQrPointScope(object.organizationId, object.buildingId), employeeId))) {
+    return NextResponse.json({ error: QR_POINT_DENIED, errorCode: QR_POINT_DENIED_CODE }, { status: 403 });
   }
 
   let pass: string | null = null;

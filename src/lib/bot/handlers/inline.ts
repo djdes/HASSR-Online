@@ -3,6 +3,7 @@ import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { buildInlineQueryResults } from "@/lib/bot/inline-results";
+import { loadManagerPointScope } from "@/lib/worker-point-scope";
 
 export function registerInlineQueryHandler(composer: Composer<Context>): void {
   composer.on("inline_query", async (ctx) => {
@@ -43,10 +44,14 @@ export function registerInlineQueryHandler(composer: Composer<Context>): void {
       (journal) => journal.name
     ).slice(0, 5);
 
-    // Search equipment
+    // Search equipment — только точек человека и общих цехов (аудит 2026-11-01).
+    const scope = await loadManagerPointScope(user.organizationId, user.id);
     const equipment = await db.equipment.findMany({
       where: {
-        area: { organizationId: user.organizationId },
+        area: {
+          organizationId: user.organizationId,
+          ...(scope ? { OR: [{ buildingId: { in: scope.points } }, { buildingId: null }] } : {}),
+        },
         name: { contains: query, mode: "insensitive" },
       },
       take: 5,
@@ -59,6 +64,8 @@ export function registerInlineQueryHandler(composer: Composer<Context>): void {
       equipment,
     });
 
-    await ctx.answerInlineQuery(results, { cache_time: 10 });
+    // is_personal: без него Telegram отдаёт закэшированный ответ любому, кто
+    // наберёт тот же запрос, — в том числе людям других организаций и точек.
+    await ctx.answerInlineQuery(results, { cache_time: 10, is_personal: true });
   });
 }

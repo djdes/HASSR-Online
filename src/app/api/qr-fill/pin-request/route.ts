@@ -21,6 +21,7 @@ import { validatePinRequestInput } from "@/lib/qr-pin-requests-core";
 import { validateQrPin } from "@/lib/qr-pin-rules";
 import { qrPinRequestScreenWithMessages } from "@/lib/qr-object-pin-request";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
+import { QR_POINT_DENIED, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { orgTodayKey } from "@/lib/timezone";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { listLampOperators } from "@/lib/uv-lamp-runs";
@@ -45,8 +46,8 @@ export const dynamic = "force-dynamic";
  */
 
 type Place =
-  | { type: "cold"; id: string; areaId: string; areaName: string; fillerUserIds: string[]; timezone: string }
-  | { type: "uv"; id: string; name: string; fillerUserIds: string[]; timezone: string }
+  | { type: "cold"; id: string; areaId: string; areaName: string; buildingId: string | null; fillerUserIds: string[]; timezone: string }
+  | { type: "uv"; id: string; name: string; buildingId: string | null; fillerUserIds: string[]; timezone: string }
   | { type: "room"; id: string; buildingId: string; fillerUserIds: string[]; timezone: string };
 
 const fail = (status: number, error: string, key: string) => ({ ok: false as const, response: NextResponse.json({ error, errorCode: `equipmentFill.${key}` }, { status }) });
@@ -60,14 +61,15 @@ async function loadPlace(target: QrObjectPinTarget): Promise<Place | null> {
         name: true,
         type: true,
         fillerUserIds: true,
-        area: { select: { id: true, name: true, organization: { select: { timezone: true } } } },
+        area: { select: { id: true, name: true, buildingId: true, organization: { select: { timezone: true } } } },
       },
     });
     if (!equipment) return null;
     const timezone = equipment.area.organization.timezone || "Europe/Moscow";
+    const buildingId = equipment.area.buildingId;
     return isUvLampEquipment(equipment)
-      ? { type: "uv", id: equipment.id, name: equipment.name, fillerUserIds: equipment.fillerUserIds, timezone }
-      : { type: "cold", id: equipment.id, areaId: equipment.area.id, areaName: equipment.area.name, fillerUserIds: equipment.fillerUserIds, timezone };
+      ? { type: "uv", id: equipment.id, name: equipment.name, buildingId, fillerUserIds: equipment.fillerUserIds, timezone }
+      : { type: "cold", id: equipment.id, areaId: equipment.area.id, areaName: equipment.area.name, buildingId, fillerUserIds: equipment.fillerUserIds, timezone };
   }
   const room = await db.room.findUnique({
     where: { id: target.objectId },
@@ -85,12 +87,17 @@ async function resolveRequester(target: QrObjectPinTarget) {
   const [employee, place] = await Promise.all([
     db.user.findFirst({
       where: { id: target.employeeId, organizationId: object.organizationId, ...ORG_ROSTER_WHERE },
-      select: { id: true, role: true, canManageSettings: true, qrPinHash: true },
+      select: { id: true, role: true, canManageSettings: true, qrPinHash: true, buildingIds: true },
     }),
     loadPlace(target),
   ]);
   if (!employee) return fail(404, "Сотрудник не найден", "errors.employeeNotFound");
   if (!place) return fail(404, "Объект не найден", "errors.objectNotFound");
+  // Точка объекта (аудит 2026-11-01): запрос PIN и «есть ли PIN» — только
+  // для сотрудника этой точки, как список «Кто вы?» на наклейке.
+  if (!worksAtQrPoint(await loadQrPointScope(object.organizationId, place.buildingId), employee.buildingIds)) {
+    return fail(403, QR_POINT_DENIED, "errors.otherPoint");
+  }
   const allowed =
     place.type === "uv"
       ? (await listLampOperators({ organizationId: object.organizationId, fillerUserIds: place.fillerUserIds, documentResponsibleId: null })).some(

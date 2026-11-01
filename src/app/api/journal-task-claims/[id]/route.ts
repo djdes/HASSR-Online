@@ -20,6 +20,7 @@ import {
   type SkipReasonPolicy,
 } from "@/lib/no-events-reason";
 import { placeOfEvent } from "@/lib/place-recipients";
+import { placeRefFromScopeKey } from "@/lib/task-claim-point";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -183,7 +184,7 @@ export async function POST(
       );
     }
     validationWarnings = validation.warnings;
-    await runSideEffects(claim.organizationId, validation.sideEffects, claim.userId);
+    await runSideEffects(claim.organizationId, validation.sideEffects, claim.userId, claim.scopeKey);
   }
 
   const fn =
@@ -370,7 +371,7 @@ async function releaseClaim(
   }
 }
 
-async function runSideEffects(organizationId: string, effects: SideEffect[], userId: string) {
+async function runSideEffects(organizationId: string, effects: SideEffect[], userId: string, scopeKey: string) {
   for (const e of effects) {
     if (e.kind === "create_capa") {
       try {
@@ -389,14 +390,15 @@ async function runSideEffects(organizationId: string, effects: SideEffect[], use
       }
     } else if (e.kind === "telegram_alert") {
       try {
-        // Точка того, кто выполнял задачу, — её руководителям и офису (фаза 3).
+        // Точка объекта задачи (холодильник, документ), без объекта — точка
+        // того, кто выполнял: её руководителям и офису (фаза 3; аудит 2026-11-01).
         await notifyOrganization(
           organizationId,
           e.message,
           e.recipients === "owners" ? ["owner", "manager"] : ["manager", "head_chef"],
           undefined,
           undefined,
-          { buildingId: await placeOfEvent(organizationId, { userId }) }
+          { buildingId: await placeOfEvent(organizationId, { ...placeRefFromScopeKey(scopeKey), userId }) }
         );
       } catch (err) {
         console.error("[journal-claim] telegram_alert failed", err);

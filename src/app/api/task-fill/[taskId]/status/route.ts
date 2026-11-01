@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyTaskFillToken } from "@/lib/task-fill-token";
 import { getActiveCloseEvent, documentBuildingId, utcDayStart } from "@/lib/journal-close-events";
+import { journalEntryPointWhere } from "@/lib/point-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,9 @@ export async function GET(
   // Count today's entries для shared-task — показывается как бейдж
   // «N записей сегодня» в TF UI. Учитываем и JournalDocumentEntry и
   // JournalEntry (legacy field-based журналы тоже могут быть shared).
+  // Точка документа задачи (аудит 2026-11-01): записи field-журнала других
+  // точек в бейдж не попадают.
+  const buildingId = await documentBuildingId(link.journalDocumentId);
   const [docEntryCount, legacyEntryCount, closeEvent] = await Promise.all([
     db.journalDocumentEntry.count({
       where: {
@@ -89,11 +93,10 @@ export async function GET(
         organizationId: link.integration.organizationId,
         templateId: template.id,
         createdAt: { gte: todayStart, lt: todayEnd },
+        ...journalEntryPointWhere(buildingId),
       },
     }),
-    documentBuildingId(link.journalDocumentId).then((buildingId) =>
-      getActiveCloseEvent(link.integration.organizationId, template.id, today, buildingId),
-    ),
+    getActiveCloseEvent(link.integration.organizationId, template.id, today, buildingId),
   ]);
 
   const todaysEntryCount = docEntryCount + legacyEntryCount;

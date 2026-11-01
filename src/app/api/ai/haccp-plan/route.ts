@@ -3,6 +3,9 @@ import { jsPDF } from "jspdf";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
+import { getViewedPointId } from "@/lib/active-building";
+import { buildingWhere, equipmentBuildingWhere } from "@/lib/building-scope";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { aiHeavyRateLimiter } from "@/lib/rate-limit";
 
@@ -74,17 +77,19 @@ export async function GET() {
   }
 
   const orgId = getActiveOrgId(auth.session);
+  // Точка из шапки (аудит 2026-11-01): у руководителя точки — счётчики его точки.
+  const pointId = await getViewedPointId(auth.session);
   const [org, userCount, equipmentCount, templates] = await Promise.all([
     db.organization.findUnique({
       where: { id: orgId },
       select: { name: true, type: true, address: true, inn: true },
     }),
     db.user.count({
-      where: { organizationId: orgId, isActive: true, archivedAt: null },
+      where: { organizationId: orgId, isActive: true, archivedAt: null, ...staffAtBuildingWhere(pointId) },
     }),
-    db.equipment.count({ where: { area: { organizationId: orgId } } }),
+    db.equipment.count({ where: { area: { organizationId: orgId }, ...equipmentBuildingWhere(pointId) } }),
     db.journalDocument.findMany({
-      where: { organizationId: orgId, status: "active" },
+      where: { organizationId: orgId, status: "active", ...buildingWhere(pointId) },
       select: { template: { select: { code: true, name: true } } },
       take: 50,
     }),

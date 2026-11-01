@@ -6,7 +6,11 @@ import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
+import { getViewedPointId } from "@/lib/active-building";
+import { buildingWhere } from "@/lib/building-scope";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { areaPointWhere, journalEntryPointWhere, lossPointWhere } from "@/lib/point-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,6 +102,16 @@ export async function POST(request: Request) {
     );
   }
 
+  // Точка из шапки (аудит 2026-11-01): руководитель точки видит отчёт только
+  // по своей точке; «Вся организация» — по всем.
+  const pointId = await getViewedPointId(session);
+  const [point, pointAreas] = pointId
+    ? await Promise.all([
+        db.building.findFirst({ where: { id: pointId, organizationId: orgId }, select: { name: true } }),
+        db.area.findMany({ where: { organizationId: orgId, ...areaPointWhere(pointId) }, select: { id: true } }),
+      ])
+    : [null, []];
+
   // Собираем данные параллельно.
   const [
     org,
@@ -112,7 +126,7 @@ export async function POST(request: Request) {
   ] = await Promise.all([
     db.organization.findUnique({
       where: { id: orgId },
-      select: { name: true, type: true, disabledJournalCodes: true },
+      select: { name: true, type: true },
     }),
     db.journalTemplate.findMany({
       where: { isActive: true },
@@ -125,17 +139,25 @@ export async function POST(request: Request) {
       where: { organizationId: orgId, status: { not: "closed" } },
     }),
     db.lossRecord.count({
-      where: { organizationId: orgId, date: { gte: periodFrom, lte: periodTo } },
+      where: {
+        organizationId: orgId,
+        date: { gte: periodFrom, lte: periodTo },
+        ...lossPointWhere(pointId, pointAreas.map((area) => area.id)),
+      },
     }),
     db.journalDocumentEntry.count({
       where: {
-        document: { organizationId: orgId },
+        document: { organizationId: orgId, ...buildingWhere(pointId) },
         createdAt: { gte: periodFrom, lte: periodTo },
         ...NOT_AUTO_SEEDED,
       },
     }),
     db.journalEntry.count({
-      where: { organizationId: orgId, createdAt: { gte: periodFrom, lte: periodTo } },
+      where: {
+        organizationId: orgId,
+        createdAt: { gte: periodFrom, lte: periodTo },
+        ...journalEntryPointWhere(pointId),
+      },
     }),
     db.journalCloseEvent.findMany({
       where: { organizationId: orgId, date: { gte: periodFrom, lte: periodTo } },
@@ -146,6 +168,7 @@ export async function POST(request: Request) {
         organizationId: orgId,
         status: "approved",
         createdAt: { gte: periodFrom, lte: periodTo },
+        ...(pointId ? { user: staffAtBuildingWhere(pointId) } : {}),
       },
     }),
   ]);
@@ -155,7 +178,7 @@ export async function POST(request: Request) {
   }
 
   // Compliance % за период.
-  const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
+  const disabledCodes = await getDisabledJournalCodes(orgId, pointId);
   const visibleTemplates = templates.filter((t) => !disabledCodes.has(t.code));
   const dailyResults: Array<{ filled: number; total: number }> = [];
   // Sample: каждый 3-й день для скорости (если период > 30 дней).
@@ -168,7 +191,7 @@ export async function POST(request: Request) {
       day,
       visibleTemplates,
       disabledCodes,
-      { treatAperiodicAsFilled: false }
+      { treatAperiodicAsFilled: false, buildingId: pointId }
     );
     dailyResults.push({ filled: filled.size, total: visibleTemplates.length });
   }
@@ -197,7 +220,7 @@ export async function POST(request: Request) {
     .map(([id, n]) => ({ name: tplById.get(id)?.name ?? "?", count: n }));
 
   const factsBlock = `
-Организация: ${org.name} (тип: ${org.type ?? "не указан"})
+Организация: ${org.name} (тип: ${org.type ?? "не указан"})${point ? `\nТочка: ${point.name} (журналы, записи, списания и премии — только этой точки; CAPA и автозакрытия — по всей организации)` : ""}
 Период: ${parsed.from} — ${parsed.to} (${days} дней)
 
 КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ:
