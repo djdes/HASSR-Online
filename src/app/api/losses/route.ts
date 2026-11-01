@@ -4,6 +4,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { getViewedPointId } from "@/lib/active-building";
 import { areaPointWhere, lossPointWhere } from "@/lib/point-filters";
+import { objectVisibleToSession } from "@/lib/point-objects.server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -118,10 +119,12 @@ export async function POST(req: NextRequest) {
   }
 
   const orgId = getActiveOrgId(session);
+  const viewedPointId = await getViewedPointId(session);
 
   // areaId — должна принадлежать той же org. Иначе менеджер компании
   // A мог привязать loss-record к area компании B (cross-tenant FK,
-  // analytics ломается).
+  // analytics ломается). И точки (2026-11-01, «точка видит только своё»):
+  // цех, видимый человеку, а при точке в шапке — её или общий.
   let areaId: string | null = null;
   let areaPointId: string | null = null;
   if (typeof body.areaId === "string" && body.areaId) {
@@ -129,7 +132,11 @@ export async function POST(req: NextRequest) {
       where: { id: body.areaId, organizationId: orgId },
       select: { id: true, buildingId: true },
     });
-    if (!area) {
+    if (
+      !area ||
+      !(await objectVisibleToSession(session, area.buildingId)) ||
+      (viewedPointId && area.buildingId && area.buildingId !== viewedPointId)
+    ) {
       return NextResponse.json(
         { error: "Помещение не найдено" },
         { status: 404 }
@@ -151,7 +158,7 @@ export async function POST(req: NextRequest) {
       cause: typeof body.cause === "string" ? body.cause.slice(0, 2000) : null,
       areaId,
       // Точка: цеха, иначе торговая точка из шапки (2026-11-01).
-      buildingId: areaPointId ?? (await getViewedPointId(session)),
+      buildingId: areaPointId ?? viewedPointId,
       ...(date ? { date } : {}),
       // Откуда запись: id документа-источника (акта списания).
       sourceEntryId:

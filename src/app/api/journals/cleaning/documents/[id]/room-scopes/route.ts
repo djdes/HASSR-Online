@@ -5,6 +5,8 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { recordAuditLog } from "@/lib/audit-log";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { documentRowsPointId } from "@/lib/document-point-rows";
+import { objectPointResponse } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +74,20 @@ export async function POST(
     }
     return NextResponse.json({ error: "Некорректные данные" }, { status: 400 });
   }
+
+  // Помещение — этой организации и точки документа; руководитель точки —
+  // только своей (2026-11-01, «точка видит только своё»): через документ
+  // уборки точки А переписывали чек-лист помещения точки Б.
+  const room = await db.room.findFirst({
+    where: { id: body.roomId, building: { organizationId } },
+    select: { id: true, buildingId: true },
+  });
+  const docPointId = await documentRowsPointId(organizationId, doc.buildingId);
+  if (!room || (docPointId && room.buildingId !== docPointId)) {
+    return NextResponse.json({ error: "Помещение не найдено" }, { status: 404 });
+  }
+  const outOfScope = objectPointResponse(auth.session.user, room.buildingId);
+  if (outOfScope) return outOfScope;
 
   const cleanLines = (lines: string[]): string[] =>
     lines
