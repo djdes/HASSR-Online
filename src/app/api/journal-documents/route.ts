@@ -142,6 +142,7 @@ import { findOrgUser } from "@/lib/journal-roster-db";
 import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
 import { orgTodayKey } from "@/lib/timezone";
 import { rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { recordsAtPointWhere } from "@/lib/point-records";
 
 /**
  * Журналы, где утверждающий шапки («УТВЕРЖДАЮ») — отдельный слот
@@ -385,6 +386,8 @@ export async function POST(request: Request) {
           where: {
             organizationId: getActiveOrgId(session),
             supplier: { not: null },
+            // Партии точки документа и общие (2026-11-01).
+            ...recordsAtPointWhere(rowsPointId),
           },
           select: {
             supplier: true,
@@ -399,6 +402,7 @@ export async function POST(request: Request) {
       ? await db.batch.findMany({
           where: {
             organizationId: getActiveOrgId(session),
+            ...recordsAtPointWhere(rowsPointId),
           },
           select: {
             code: true,

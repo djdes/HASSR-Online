@@ -77,9 +77,12 @@ export async function maybeCreateRealtimeCapa(args: {
 
   const direction =
     args.currentValue > args.tempMax ? "выше нормы" : "ниже нормы";
+  // Точка оборудования (2026-11-01): CAPA и тревога — этой точки.
+  const buildingId = await placeOfEvent(args.organizationId, { equipmentId: args.equipmentId });
   const ticket = await db.capaTicket.create({
     data: {
       organizationId: args.organizationId,
+      buildingId,
       title: `Превышение t° ${args.equipmentName} (${args.currentValue.toFixed(
         1
       )}°C)`,
@@ -107,9 +110,7 @@ export async function maybeCreateRealtimeCapa(args: {
     `Длительность ${Math.round(gapMin)} мин.\n` +
     `Тикет: /capa/${ticket.id}`;
   // Тревога точки оборудования — её руководителям и офису (фаза 3 «Офис и точки»).
-  await notifyOrganization(args.organizationId, message, ["owner"], undefined, undefined, {
-    buildingId: await placeOfEvent(args.organizationId, { equipmentId: args.equipmentId }),
-  });
+  await notifyOrganization(args.organizationId, message, ["owner"], undefined, undefined, { buildingId });
 
   return { created: true, ticketId: ticket.id };
 }

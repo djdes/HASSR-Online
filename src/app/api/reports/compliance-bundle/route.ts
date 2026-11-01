@@ -20,6 +20,7 @@ import {
   buildRegulatorCoverPdf,
   type RegulatorCapaRow,
 } from "@/lib/regulator-bundle";
+import { recordsAtPointWhere } from "@/lib/point-records";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -294,6 +295,8 @@ export async function GET(request: Request) {
   const capaRowsRaw = await db.capaTicket.findMany({
     where: {
       organizationId,
+      // CAPA точки из шапки и общие (2026-11-01).
+      ...recordsAtPointWhere(pointId),
       OR: [
         { status: { not: "closed" } },
         {

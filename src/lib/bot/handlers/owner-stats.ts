@@ -259,7 +259,7 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
   // /capa — открытые тикеты.
   composer.command("capa", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerOperationsTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
@@ -267,6 +267,8 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
       where: {
         organizationId: user.organizationId,
         status: { in: ["open", "in_progress"] },
+        // CAPA своих точек и общие (2026-11-01).
+        ...documentWorkerScopeWhere(scope),
       },
       select: {
         id: true,
@@ -478,7 +480,7 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
   // /batches — активные партии.
   composer.command("batches", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerOperationsTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
@@ -486,6 +488,8 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
       where: {
         organizationId: user.organizationId,
         status: { in: ["received", "in_use"] },
+        // Партии своих точек и общие (2026-11-01).
+        ...documentWorkerScopeWhere(scope),
       },
       orderBy: [{ expiryDate: "asc" }, { receivedAt: "desc" }],
       take: 15,

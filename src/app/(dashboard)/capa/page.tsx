@@ -7,6 +7,9 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { resolveSectionName } from "@/lib/org-custom-names";
 import { db } from "@/lib/db";
 import { CapaAutoDetectButton } from "@/components/capa/auto-detect-button";
+import { loadBuildingContext } from "@/lib/active-building";
+import { viewedPointId } from "@/lib/building-scope";
+import { pointRecordsWhere } from "@/lib/point-records";
 
 
 function isSlaBreached(
@@ -50,12 +53,16 @@ export default async function CapaPage() {
     other: t("categories.other"),
   };
 
-  const tickets: Awaited<ReturnType<typeof db.capaTicket.findMany>> =
-    await db.capaTicket.findMany({
-      where: { organizationId: getActiveOrgId(session) },
-      orderBy: [{ createdAt: "desc" }],
-      take: 200,
-    });
+  // Точки (2026-11-01): CAPA точки из шапки и общие; в «Вся организация» —
+  // все, с подписью точки.
+  const buildingContext = await loadBuildingContext(session);
+  const showPoint = buildingContext.enabled && !viewedPointId(buildingContext);
+  const tickets = await db.capaTicket.findMany({
+    where: { organizationId: getActiveOrgId(session), ...pointRecordsWhere(buildingContext) },
+    include: { building: { select: { name: true } } },
+    orderBy: [{ createdAt: "desc" }],
+    take: 200,
+  });
 
   const statuses = ["open", "investigating", "corrective_action", "verification", "closed"];
   const now = new Date();
@@ -157,6 +164,11 @@ export default async function CapaPage() {
                           <span>
                             {Object.hasOwn(CATEGORY_LABELS, ticket.category) ? CATEGORY_LABELS[ticket.category] : ticket.category}
                           </span>
+                          {showPoint && ticket.building && (
+                            <span className="truncate rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[#3848c7]">
+                              {ticket.building.name}
+                            </span>
+                          )}
                           {breached && (
                             <span className="flex items-center gap-0.5 text-[#a13a32]">
                               <Clock className="size-3" />

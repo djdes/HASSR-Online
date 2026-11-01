@@ -20,6 +20,7 @@ import {
 } from "@/lib/compliance-heatmap";
 import { getComplianceTrend } from "@/lib/compliance-trend";
 import { sortJournalsByName } from "@/lib/journal-sort";
+import { recordsAtPointWhere } from "@/lib/point-records";
 
 export const dynamic = "force-dynamic";
 
@@ -107,13 +108,15 @@ export default async function ReportsPage() {
         ...NOT_AUTO_SEEDED,
       },
     }),
+    // CAPA точки из шапки и общие (2026-11-01).
     db.capaTicket.count({
-      where: { organizationId: orgId, createdAt: { gte: since7 } },
+      where: { organizationId: orgId, createdAt: { gte: since7 }, ...recordsAtPointWhere(pointId) },
     }),
     db.capaTicket.count({
       where: {
         organizationId: orgId,
         createdAt: { gte: since14, lt: since7 },
+        ...recordsAtPointWhere(pointId),
       },
     }),
   ]);
