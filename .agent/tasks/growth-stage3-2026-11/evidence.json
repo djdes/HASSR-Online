@@ -2,8 +2,8 @@
   "task": "growth-stage3-2026-11",
   "branch": "claude/serene-mccarthy-rhrl3e",
   "base": "a5007036",
-  "mergedMaster": null,
-  "checkedAt": "2026-11-01T20:35Z",
+  "mergedMaster": "83331788",
+  "checkedAt": "2026-11-01T20:58Z",
   "acceptance": {
     "AC1": {
       "status": "PASS",
@@ -76,17 +76,24 @@
       ]
     },
     "AC7": {
-      "status": "PENDING_DEPLOY",
+      "status": "PASS",
       "evidence": [
         "raw/targeted-tests.txt",
         "raw/typecheck.txt",
         "raw/test-gate.txt",
-        "e2e/post-deploy-check.sh"
+        "e2e/post-deploy-check.sh",
+        "raw/before-prod-checks.txt",
+        "raw/after-prod-checks.txt",
+        "raw/prod-dialog.json",
+        "raw/prod-dialog-phone.jpg"
       ]
     }
   },
   "notes": [
     "Скриншоты raw/*.jpg игнорируются .gitignore и остались на стенде проверки.",
-    "Ролики MP4 отданы владельцу архивом и в репозиторий не положены (AC5)."
-  ]
+    "Ролики MP4 отданы владельцу архивом и в репозиторий не положены (AC5).",
+    "Прод: форма «Счёт по ИНН» скрыта — реквизиты WeSetup в /root/requisites заполнены не полностью (как и счёт из кабинета)."
+  ],
+  "deployRun": 2143,
+  "prodBuild": "8333178"
 }
