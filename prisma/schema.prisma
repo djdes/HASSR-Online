@@ -1009,6 +1009,8 @@ model Building {
   /// документы остаются в организации и становятся общими.
   journalDocuments   JournalDocument[]
   journalObligations JournalObligation[]
+  /// Бумажные журналы точки (2026-11-01). Точку удалили — документы общие.
+  paperJournalDocuments PaperJournalDocument[]
   /// Площадки этой точки в ФГИС «Меркурий».
   mercuryEnterprises MercuryEnterprise[]
   /// Цеха точки (2026-10-17): «точка → помещения → оборудование».
@@ -2935,6 +2937,12 @@ model PaperJournalDocument {
   status            String       @default("active") // active | closed
   closedAt          DateTime?
   createdById       String?
+  /// Точка документа (2026-11-01, владелец: «бумажные привязывай к точкам»):
+  /// документ точки виден на ней и руководству компании. null — общий
+  /// (старые документы и организации без журналов по точкам). Точку удалили —
+  /// документ становится общим, как у `JournalDocument`.
+  buildingId        String?
+  building          Building?    @relation(fields: [buildingId], references: [id], onDelete: SetNull)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 

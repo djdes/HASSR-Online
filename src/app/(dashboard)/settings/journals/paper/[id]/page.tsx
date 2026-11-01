@@ -4,6 +4,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 import { PageCrumbs } from "@/components/layout/page-nav";
 import { PaperDocumentsClient } from "./paper-documents-client";
@@ -39,8 +40,10 @@ export default async function PaperJournalPage({
       where: { id: organizationId },
       select: { name: true, journalShortName: true, legalProfileJson: true, inn: true, address: true },
     }),
+    // Люди точки из шапки (2026-11-01, бумажные по точкам): руководитель
+    // точки не видит людей других точек в выборе ответственного.
     db.user.findMany({
-      where: { organizationId, isActive: true, archivedAt: null },
+      where: { AND: [{ organizationId, isActive: true, archivedAt: null }, await visibleStaffWhere(session)] },
       select: {
         id: true,
         name: true,
