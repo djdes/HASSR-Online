@@ -42,6 +42,7 @@ import { LandingMotion } from "@/components/public/landing-motion";
 import { CursorGlow } from "@/components/public/cursor-glow";
 import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
+import { DemoRequestButton } from "@/components/public/demo-request-button";
 import { NavStartButton } from "@/components/landing/nav-start-button";
 import { getServerSession } from "@/lib/server-session";
 import { redirect } from "next/navigation";
@@ -938,6 +939,13 @@ export default async function LandingPage() {
                   // дочитал страницу, не надо снова вести его на форму.
                   <HeroEmailStart place="final" align="start" showLoginLink={false} />
                 )}
+                {/* Второй путь для тех, кто не готов регистрироваться сам:
+                    показ по видеосвязи. Звонят по-русски — только в ru. */}
+                {!isAuthed && locale === "ru" ? (
+                  <DemoRequestButton place="home:final" variant="link" className="mt-3">
+                    Не хотите разбираться сами? Покажем за 15 минут
+                  </DemoRequestButton>
+                ) : null}
               </div>
             </div>
             {/* Наклейка — как её увидит сотрудник. Код настоящий: ведёт

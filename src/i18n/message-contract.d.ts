@@ -5497,7 +5497,9 @@ export type MessageContract = {
     "popularJournals": "Частые журналы",
     "features": "Возможности",
     "companyTaxIds": "ИНН {inn} · КПП {kpp}",
-    "companyRegistrationId": "ОГРН {ogrn}"
+    "companyRegistrationId": "ОГРН {ogrn}",
+    "securityAndData": "Безопасность и данные",
+    "autofillOffer": "Журналы заполняются сами"
   },
   "landing": {
     "metadata": {
@@ -7210,6 +7212,32 @@ export type MessageContract = {
           "hint": "Вход в журналы одним касанием — по одному на активную смену."
         }
       }
+    },
+    "demoRequest": {
+      "trigger": "Покажите мне за 15 минут",
+      "title": "Покажем WeSetup за 15 минут",
+      "description": "Созвонимся по видео или телефону, покажем журналы на примере вашего заведения и ответим на вопросы. Бесплатно и без обязательств.",
+      "name": "Как к вам обращаться",
+      "namePlaceholder": "Имя",
+      "phone": "Телефон",
+      "when": "Когда удобно",
+      "when_today": "Сегодня",
+      "when_tomorrow": "Завтра",
+      "when_week": "На этой неделе",
+      "topic": "Что важно показать",
+      "optional": "необязательно",
+      "topicPlaceholder": "Например: датчики в холодильниках или подготовка к проверке",
+      "consent": "Даю <consent>согласие на обработку персональных данных</consent> и ознакомлен с <privacy>политикой конфиденциальности</privacy>",
+      "submit": "Записаться на показ",
+      "sending": "Отправляем…",
+      "errorName": "Укажите, как к вам обращаться",
+      "errorPhone": "Укажите телефон — по нему мы и перезвоним",
+      "errorConsent": "Отметьте согласие на обработку персональных данных",
+      "errorTooMany": "Слишком много заявок подряд. Попробуйте позже или позвоните нам",
+      "errorGeneric": "Не удалось отправить заявку. Попробуйте ещё раз или позвоните нам",
+      "doneTitle": "Заявка принята",
+      "doneBody": "Позвоним на {phone}, чтобы договориться о времени показа.",
+      "close": "Закрыть"
     }
   },
   "journalApi": {
@@ -16005,6 +16033,7 @@ export type MessageContract = {
     "navigationLabel": "Разделы платформы",
     "organizations": "Клиенты",
     "money": "Деньги и продажи",
+    "funnel": "Воронка",
     "tariffs": "Тарифы",
     "promotions": "Акции",
     "promoCodes": "Промокоды",

@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { RoiCalculator } from "@/components/landing/roi-calculator";
 import { HardwareStrip } from "@/components/landing/hardware-strip";
 import { TariffComparison } from "@/components/pricing/tariff-comparison";
+import { DemoRequestButton } from "@/components/public/demo-request-button";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { readPlanPricing } from "@/lib/tariffs";
 import {
@@ -146,12 +147,16 @@ export default async function PricingPage() {
             Регистрация занимает 2 минуты. {FREE_TIER_SHORT} — все журналы без
             ограничений. Карта не требуется.
           </p>
-          <Link
-            href="/register"
-            className="mt-6 inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-medium text-[#0b1024] transition-colors hover:bg-white/90"
-          >
-            Зарегистрироваться <ArrowRight className="size-4" />
-          </Link>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href="/register"
+              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-medium text-[#0b1024] transition-colors hover:bg-white/90"
+            >
+              Зарегистрироваться <ArrowRight className="size-4" />
+            </Link>
+            {/* Сетям и производствам проще посмотреть вместе с человеком. */}
+            <DemoRequestButton place="pricing" variant="onDark" />
+          </div>
         </section>
       </main>
       <PublicFooter />

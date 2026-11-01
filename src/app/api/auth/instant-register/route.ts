@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isEmptySnapshot, readSignupSnapshot, type SignupSourceSnapshot } from "@/lib/signup-channel";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { db } from "@/lib/db";
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
       : "";
   // Откуда пришла регистрация: место формы, посадочная, referrer, utm.
   // Собирает клиент (lib/signup-source.ts), здесь только режем длину.
-  const source = readSource((body as { source?: unknown } | null)?.source);
+  const source = readSignupSnapshot((body as { source?: unknown } | null)?.source);
   // Обязательное согласие с документами (2026-09-22): без галки — отказ.
   const consentGiven = (body as { consent?: unknown } | null)?.consent === true;
   const consentPlace = (body as { consentPlace?: unknown } | null)?.consentPlace === "landing" ? "landing" : "register";
@@ -168,6 +169,8 @@ export async function POST(request: Request) {
           // defaultJournalAutomationJson.
           journalAutomationJson: defaultJournalAutomationJson(),
           subscriptionPlan: "free",
+          // Источник визита — для воронки /root/funnel (по каналам).
+          ...(isEmptySnapshot(source) ? {} : { signupSourceJson: source }),
         },
       });
       const user = await tx.user.create({
@@ -290,35 +293,7 @@ export async function POST(request: Request) {
   );
 }
 
-type SignupSource = {
-  place: string;
-  landing: string;
-  referrer: string;
-  utmSource: string;
-  utmMedium: string;
-  utmCampaign: string;
-};
-
-function str(value: unknown, max = 200): string {
-  return typeof value === "string" ? value.trim().slice(0, max) : "";
-}
-
-function readSource(raw: unknown): SignupSource {
-  const o = (raw && typeof raw === "object" ? raw : {}) as Record<
-    string,
-    unknown
-  >;
-  return {
-    place: str(o.place, 40),
-    landing: str(o.landing),
-    referrer: str(o.referrer, 500),
-    utmSource: str(o.utmSource),
-    utmMedium: str(o.utmMedium),
-    utmCampaign: str(o.utmCampaign),
-  };
-}
-
-async function notifyOwner(email: string, source: SignupSource): Promise<void> {
+async function notifyOwner(email: string, source: SignupSourceSnapshot): Promise<void> {
   // Единая точка админ-уведомлений: регистрации и обращения больше не
   // разъезжаются по двум разным chat id из разных env-переменных.
   const utm = [source.utmSource, source.utmMedium, source.utmCampaign]
