@@ -1,0 +1,41 @@
+{
+  "total": {
+    "registered": 3,
+    "profile": 2,
+    "firstEntry": 1,
+    "team": 1,
+    "paid": 1
+  },
+  "channels": [
+    [
+      "Яндекс Директ",
+      {
+        "registered": 1,
+        "profile": 1,
+        "firstEntry": 1,
+        "team": 1,
+        "paid": 1
+      }
+    ],
+    [
+      "Поиск Яндекса",
+      {
+        "registered": 1,
+        "profile": 1,
+        "firstEntry": 0,
+        "team": 0,
+        "paid": 0
+      }
+    ],
+    [
+      "Нет данных",
+      {
+        "registered": 1,
+        "profile": 0,
+        "firstEntry": 0,
+        "team": 0,
+        "paid": 0
+      }
+    ]
+  ]
+}

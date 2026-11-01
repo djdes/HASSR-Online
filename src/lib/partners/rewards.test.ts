@@ -6,8 +6,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { readFileSync } from "node:fs";
+
 import {
   DEFAULT_REWARD_RULE,
+  REWARD_RULE_2026_11,
   buildPayoutSheet,
   computeHardwareAccrual,
   computePaymentAccruals,
@@ -17,6 +20,7 @@ import {
   periodMonthOf,
   previousPeriodMonth,
   roundRub,
+  shouldAdoptRewardRule2026_11,
 } from "@/lib/partners/rewards";
 
 const paidAt = new Date("2026-09-15T10:00:00Z");
@@ -159,4 +163,44 @@ test("ключ месяца считается по Москве; предыду
   assert.equal(periodMonthOf(new Date("2026-08-31T22:30:00Z")), "2026-09");
   assert.equal(previousPeriodMonth(new Date("2026-09-01T00:05:00+03:00")), "2026-08");
   assert.equal(previousPeriodMonth(new Date("2026-01-01T00:05:00+03:00")), "2025-12");
+});
+
+test("правила v2 с 01.11.2026: 30 % с подписки в первый год клиента, остальное как в v1", () => {
+  assert.deepEqual(REWARD_RULE_2026_11, {
+    version: 2,
+    subscriptionPercent: 30,
+    subscriptionMonths: 12,
+    hardwarePercent: 15,
+    bonusAmountRub: 3000,
+    bonusAfterPayments: 2,
+    minPayoutRub: 1000,
+  });
+  // Годовой «Стандарт» 23 880 ₽ → 7 164 ₽ партнёру.
+  const [subscription] = computePaymentAccruals(REWARD_RULE_2026_11, {
+    paidAt,
+    subscriptionRub: 23880,
+    firstPaymentAt: null,
+    paidSubscriptionPaymentsBefore: 0,
+  });
+  assert.equal(subscription.ratePercent, 30);
+  assert.equal(subscription.amountRub, 7164);
+  // Через 12 месяцев с первой оплаты — уже ничего.
+  const later = computePaymentAccruals(REWARD_RULE_2026_11, {
+    paidAt: new Date("2027-09-16T10:00:00Z"),
+    subscriptionRub: 23880,
+    firstPaymentAt: paidAt,
+    paidSubscriptionPaymentsBefore: 2,
+  });
+  assert.deepEqual(later, []);
+});
+
+test("v2 включается только поверх нетронутой v1 — правила ROOT не перетираем", () => {
+  assert.equal(shouldAdoptRewardRule2026_11(DEFAULT_REWARD_RULE), true);
+  assert.equal(shouldAdoptRewardRule2026_11(null), false);
+  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, subscriptionPercent: 25 }), false);
+  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, minPayoutRub: 500 }), false);
+  assert.equal(shouldAdoptRewardRule2026_11(REWARD_RULE_2026_11), false);
+  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, version: 3 }), false);
+  const extras = readFileSync(new URL("./schema-extras.ts", import.meta.url), "utf8");
+  assert.match(extras, /await ensureDefaultRewardRule\(\);\s*await ensureRewardRule2026_11\(\);/);
 });

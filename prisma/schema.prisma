@@ -516,6 +516,10 @@ model Organization {
   /// Ставится один раз при регистрации или первой оплате.
   referredByOrganizationId       String?
   referredAt                     DateTime?
+  /// Откуда пришла регистрация с формы (`lib/signup-channel.ts`): место
+  /// формы, посадочная, referrer, utm — для воронки /root/funnel. null —
+  /// регистрация до 01.11.2026 или не через форму (оплата гостем, приглашение).
+  signupSourceJson               Json?
   balanceTransactions            BalanceTransaction[]
   customerReviews                CustomerReview[]
   companyOrders                  CompanyOrder[]

@@ -5494,7 +5494,9 @@
     "popularJournals": "Ommabop jurnallar",
     "features": "Imkoniyatlar",
     "companyTaxIds": "Soliq raqami (INN) {inn} · KPP {kpp}",
-    "companyRegistrationId": "Ro‘yxatdan o‘tish raqami (OGRN) {ogrn}"
+    "companyRegistrationId": "Ro‘yxatdan o‘tish raqami (OGRN) {ogrn}",
+    "securityAndData": "Xavfsizlik va ma’lumotlar",
+    "autofillOffer": "O‘zi to‘ldiriladigan jurnallar"
   },
   "landing": {
     "metadata": {
@@ -7207,6 +7209,32 @@
           "hint": "Jurnallarga bir marta tekkizib kirish — faol smenaning har bir xodimiga bittadan."
         }
       }
+    },
+    "demoRequest": {
+      "trigger": "15 daqiqada ko‘rsating",
+      "title": "WeSetup’ni 15 daqiqada ko‘rsatamiz",
+      "description": "Video yoki telefon orqali bog‘lanamiz, jurnallarni sizning muassasangiz misolida ko‘rsatamiz va savollaringizga javob beramiz. Bepul va hech qanday majburiyatsiz.",
+      "name": "Sizga qanday murojaat qilaylik",
+      "namePlaceholder": "Ism",
+      "phone": "Telefon",
+      "when": "Qachon qulay",
+      "when_today": "Bugun",
+      "when_tomorrow": "Ertaga",
+      "when_week": "Shu hafta",
+      "topic": "Nimani ko‘rsatish muhim",
+      "optional": "ixtiyoriy",
+      "topicPlaceholder": "Masalan: muzlatgichlardagi datchiklar yoki tekshiruvga tayyorgarlik",
+      "consent": "<consent>Shaxsiy ma’lumotlarni qayta ishlashga rozilik</consent> beraman va <privacy>maxfiylik siyosati</privacy> bilan tanishdim",
+      "submit": "Ko‘rsatuvga yozilish",
+      "sending": "Yuborilmoqda…",
+      "errorName": "Sizga qanday murojaat qilishni yozing",
+      "errorPhone": "Telefon raqamini kiriting — shu raqamga qo‘ng‘iroq qilamiz",
+      "errorConsent": "Shaxsiy ma’lumotlarni qayta ishlashga rozilikni belgilang",
+      "errorTooMany": "Ketma-ket juda ko‘p so‘rov. Keyinroq urinib ko‘ring yoki bizga qo‘ng‘iroq qiling",
+      "errorGeneric": "So‘rovni yuborib bo‘lmadi. Qayta urinib ko‘ring yoki bizga qo‘ng‘iroq qiling",
+      "doneTitle": "So‘rov qabul qilindi",
+      "doneBody": "Ko‘rsatuv vaqtini kelishib olish uchun {phone} raqamiga qo‘ng‘iroq qilamiz.",
+      "close": "Yopish"
     }
   },
   "journalApi": {
@@ -15997,6 +16025,7 @@
     "navigationLabel": "Platforma bo‘limlari",
     "organizations": "Mijozlar",
     "money": "Daromad va savdo",
+    "funnel": "Voronka",
     "tariffs": "Tariflar",
     "promotions": "Aksiyalar",
     "promoCodes": "Promokodlar",

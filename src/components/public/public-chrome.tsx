@@ -226,6 +226,11 @@ export async function PublicFooter() {
               className="inline-flex min-h-[32px] items-center transition-colors hover:text-[#0b1024]"
             >
               {t("personalDataConsent")}</Link>
+            <Link
+              href="/security"
+              className="inline-flex min-h-[32px] items-center transition-colors hover:text-[#0b1024]"
+            >
+              {t("securityAndData")}</Link>
           </div>
 
           {inApp ? null : <AppStoresTeaser />}
@@ -234,6 +239,7 @@ export async function PublicFooter() {
         <div className="flex flex-col flex-wrap text-[13px] text-[#6f7282] md:items-end">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3] md:text-right">
             {t("sections")}</div>
+          <Link href="/avtozapolnenie" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("autofillOffer")}</Link>
           <Link href="/blog" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("blog")}</Link>
           <Link href="/glossary" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("glossary")}</Link>
           <Link href="/compare" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("comparisons")}</Link>

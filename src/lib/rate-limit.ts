@@ -215,6 +215,16 @@ export const serviceRequestRateLimiter = createRateLimiter({
   intervalMs: 10 * 60 * 1000,
 });
 
+/**
+ * Заявки «Покажите мне за 15 минут» — та же открытая форма с телефоном и
+ * тот же жёсткий лимит, но свой счётчик: заявка на показ не съедает
+ * попытки заказать услугу.
+ */
+export const demoRequestRateLimiter = createRateLimiter({
+  tokensPerInterval: 3,
+  intervalMs: 10 * 60 * 1000,
+});
+
 export const registrationCodeRateLimiter = createRateLimiter({
   tokensPerInterval: 5,
   intervalMs: 10 * 60 * 1000,

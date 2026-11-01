@@ -5494,7 +5494,9 @@
     "popularJournals": "Popular logs",
     "features": "Features",
     "companyTaxIds": "Tax ID (INN) {inn} · KPP {kpp}",
-    "companyRegistrationId": "Registration number (OGRN) {ogrn}"
+    "companyRegistrationId": "Registration number (OGRN) {ogrn}",
+    "securityAndData": "Security and data",
+    "autofillOffer": "Logs that fill themselves"
   },
   "landing": {
     "metadata": {
@@ -7207,6 +7209,32 @@
           "hint": "Access logs with one tap — one for each active shift."
         }
       }
+    },
+    "demoRequest": {
+      "trigger": "Show me in 15 minutes",
+      "title": "We will show you WeSetup in 15 minutes",
+      "description": "A video or phone call: we show the logs using your venue as the example and answer your questions. Free, no obligation.",
+      "name": "Your name",
+      "namePlaceholder": "Name",
+      "phone": "Phone",
+      "when": "When suits you",
+      "when_today": "Today",
+      "when_tomorrow": "Tomorrow",
+      "when_week": "This week",
+      "topic": "What should we show",
+      "optional": "optional",
+      "topicPlaceholder": "For example: fridge sensors or preparing for an inspection",
+      "consent": "I give <consent>consent to the processing of personal data</consent> and have read the <privacy>privacy policy</privacy>",
+      "submit": "Book a demo",
+      "sending": "Sending…",
+      "errorName": "Tell us how to address you",
+      "errorPhone": "Enter a phone number so we can call you back",
+      "errorConsent": "Tick the consent to the processing of personal data",
+      "errorTooMany": "Too many requests in a row. Try again later or call us",
+      "errorGeneric": "Could not send the request. Try again or call us",
+      "doneTitle": "Request received",
+      "doneBody": "We will call {phone} to agree on a time for the demo.",
+      "close": "Close"
     }
   },
   "journalApi": {
@@ -15997,6 +16025,7 @@
     "navigationLabel": "Platform sections",
     "organizations": "Clients",
     "money": "Revenue and sales",
+    "funnel": "Funnel",
     "tariffs": "Plans",
     "promotions": "Promotions",
     "promoCodes": "Promo codes",

@@ -15,6 +15,8 @@ export const webpackOverride: WebpackOverrideFn = (config) =>
       ...config.resolve,
       alias: {
         ...(config.resolve?.alias as Record<string, string> | undefined),
+        // Раньше «@»: точное совпадение должно сработать первым (см. заглушку).
+        "@/lib/translations/overrides.server$": path.join(process.cwd(), "remotion/stubs/translation-overrides.ts"),
         "@": path.join(process.cwd(), "src"),
       },
     },

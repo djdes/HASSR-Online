@@ -63,6 +63,42 @@ export const DEFAULT_REWARD_RULE: RewardRule = {
   minPayoutRub: 1000,
 };
 
+/**
+ * Правила v2 с 01.11.2026 (решение владельца): 30 % с каждого платежа клиента
+ * за подписку в его первый год вместо 20 %. Остальное — как в v1. По договору
+ * партнёра (п. 3.1, 7.2) новые правила действуют для платежей после
+ * публикации на /partners; начисления по v1 остаются как были (`ruleVersion`).
+ */
+export const REWARD_RULE_2026_11: RewardRule = {
+  ...DEFAULT_REWARD_RULE,
+  version: 2,
+  subscriptionPercent: 30,
+};
+
+export const REWARD_RULE_2026_11_COMMENT =
+  "30 % с подписки в первый год клиента вместо 20 % (решение владельца 01.11.2026)";
+
+function sameTerms(a: RewardRule, b: RewardRule): boolean {
+  return (
+    a.subscriptionPercent === b.subscriptionPercent &&
+    a.subscriptionMonths === b.subscriptionMonths &&
+    a.hardwarePercent === b.hardwarePercent &&
+    a.bonusAmountRub === b.bonusAmountRub &&
+    a.bonusAfterPayments === b.bonusAfterPayments &&
+    a.minPayoutRub === b.minPayoutRub
+  );
+}
+
+/**
+ * Переходить ли на v2 сейчас: только если действует нетронутая v1. Если
+ * ROOT уже выпустил свою версию правил (или поменял ставки), его решение
+ * не перетираем.
+ */
+export function shouldAdoptRewardRule2026_11(latest: RewardRule | null): boolean {
+  if (!latest) return false;
+  return latest.version === DEFAULT_REWARD_RULE.version && sameTerms(latest, DEFAULT_REWARD_RULE);
+}
+
 export type AccrualDraft = {
   kind: AccrualKind;
   /** База расчёта (сумма платежа клиента по этому основанию), ₽. */
