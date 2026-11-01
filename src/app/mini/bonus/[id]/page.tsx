@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { orgJournalBonusKopecks } from "@/lib/org-journal-settings";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -36,6 +37,7 @@ export default async function MiniBonusFillPage({
       claimedById: true,
       template: {
         select: {
+          id: true,
           name: true,
           description: true,
           bonusAmountKopecks: true,
@@ -50,6 +52,8 @@ export default async function MiniBonusFillPage({
   if (!obligation || obligation.organizationId !== orgId) {
     notFound();
   }
+  // Бонус — настройка организации (`OrganizationJournalSetting`), шаблон — дефолт.
+  obligation.template.bonusAmountKopecks = await orgJournalBonusKopecks(orgId, obligation.template);
 
   if (obligation.template.bonusAmountKopecks <= 0) {
     notFound();

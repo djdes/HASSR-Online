@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { buildingTargets, userBuildingTargets } from "@/lib/building-targets";
 import { buildingWhere } from "@/lib/building-scope";
@@ -123,7 +124,8 @@ export type ObligationDeps = {
   getAllowedJournalCodes: (actor: UserActor) => Promise<string[] | null>;
   /** С точкой — набор точки, если он у неё свой (слитая организация). */
   getDisabledJournalCodes: (organizationId: string, buildingId?: string | null) => Promise<Set<string>>;
-  listTemplates: () => Promise<ObligationTemplate[]>;
+  /** С организацией — с её распределением и исполнителем (`OrganizationJournalSetting`). */
+  listTemplates: (organizationId?: string) => Promise<ObligationTemplate[]>;
   /// Множество user-id, которым в принципе разрешено брать на себя
   /// этот шаблон (по white-list-у должностей + UserJournalAccess
   /// override). Per-employee режим использует это для фильтра
@@ -252,8 +254,8 @@ function createDefaultDeps(): ObligationDeps {
     },
     getAllowedJournalCodes: loadAllowedJournalCodes,
     getDisabledJournalCodes: loadDisabledJournalCodes,
-    async listTemplates() {
-      const templates = await db.journalTemplate.findMany({
+    async listTemplates(organizationId) {
+      const rows = await db.journalTemplate.findMany({
         where: { isActive: true },
         select: {
           id: true,
@@ -265,6 +267,7 @@ function createDefaultDeps(): ObligationDeps {
         },
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       });
+      const templates = organizationId ? await applyOrgJournalOverrides(organizationId, rows) : rows;
 
       return templates.map((template) => ({
         id: template.id,
@@ -506,7 +509,7 @@ export async function syncDailyJournalObligationsForUser(
   const [allowedCodes, disabledCodes, templates, existingRows] = await Promise.all([
     deps.getAllowedJournalCodes(actor),
     deps.getDisabledJournalCodes(args.organizationId),
-    deps.listTemplates(),
+    deps.listTemplates(args.organizationId),
     deps.listExistingDailyObligations({
       userId: args.userId,
       dateKey,
@@ -671,7 +674,7 @@ export async function syncDailyJournalObligationsForOrganization(
   // → выбранному pickSingleAssignee. Sensor пропускаем (Фаза 2).
   const dateKey = utcDayStart(now);
   const [templates, disabledCodes] = await Promise.all([
-    deps.listTemplates(),
+    deps.listTemplates(organizationId),
     deps.getDisabledJournalCodes(organizationId),
   ]);
   // Точки: единственное обязательство — на каждую точку (исполнитель

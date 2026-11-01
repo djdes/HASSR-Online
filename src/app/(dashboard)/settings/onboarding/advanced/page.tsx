@@ -26,6 +26,7 @@ import {
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
+import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { OnboardingFinishCta } from "@/components/settings/onboarding-finish-cta";
 import { OnboardingDocHealthCard } from "@/components/settings/onboarding-doc-health-card";
 import { OnboardingPipelineHealthCard } from "@/components/settings/onboarding-pipeline-health-card";
@@ -127,9 +128,11 @@ export default async function OnboardingAdvancedPage() {
     db.inspectorToken.count({
       where: { organizationId, revokedAt: null },
     }),
-    db.journalTemplate.count({
-      where: { isActive: true, bonusAmountKopecks: { gt: 0 } },
-    }),
+    // Бонус — настройка организации (`OrganizationJournalSetting`), шаблон — дефолт.
+    db.journalTemplate
+      .findMany({ where: { isActive: true }, select: { id: true, bonusAmountKopecks: true } })
+      .then((rows) => applyOrgJournalOverrides(organizationId, rows))
+      .then((rows) => rows.filter((row) => row.bonusAmountKopecks > 0).length),
     // Активные templates с кодами — нужны для двух метрик: общего
     // enabled-count (за вычетом disabled) и пересечения с
     // PIPELINE_EXEMPT_JOURNALS (журналы со своим адаптером, у которых

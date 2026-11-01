@@ -594,6 +594,8 @@ model Organization {
   inspectionVisits               InspectionVisit[]
   /// Организации, слитые в точки этой (2026-10-26).
   mergedOrganizations            OrganizationMerge[]
+  /// Свои настройки журналов: распределение, исполнитель, бонус (2026-11-01).
+  journalSettings                OrganizationJournalSetting[]
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -2129,8 +2131,30 @@ model JournalTemplate {
   bonusEntries        BonusEntry[]
   closeEvents         JournalCloseEvent[]
   formFillTimings     FormFillTiming[]
+  orgSettings         OrganizationJournalSetting[]
 
   @@index([defaultAssigneeId])
+}
+
+/// Настройки журнала у одной организации (2026-11-01): распределение
+/// (`fillMode`), исполнитель по умолчанию и бонус за заполнение. Раньше
+/// они писались прямо в `JournalTemplate`, общий для всех организаций, —
+/// правка одного клиента меняла задачи и бонусы у всех. null — значение
+/// шаблона (платформенный дефолт).
+model OrganizationJournalSetting {
+  id                 String          @id @default(cuid())
+  organizationId     String
+  organization       Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateId         String
+  template           JournalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  fillMode           String?
+  defaultAssigneeId  String?
+  bonusAmountKopecks Int?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@unique([organizationId, templateId])
+  @@index([templateId])
 }
 
 /// Race-claim для пула общих задач журнала (rooms, fridges, areas …).

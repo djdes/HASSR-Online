@@ -4,6 +4,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { buildingWhere } from "@/lib/building-scope";
 import { journalSettingsPointId } from "@/lib/journal-settings-target";
 import { db } from "@/lib/db";
+import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getDisabledJournalCodes, getDisabledPaperJournalIds, parseDisabledCodes } from "@/lib/disabled-journals";
@@ -23,7 +24,7 @@ export default async function JournalsSettingsPage() {
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
 
-  const [templates, organization, positions, users, positionAccess] =
+  const [templateRows, organization, positions, users, positionAccess] =
     await Promise.all([
       db.journalTemplate.findMany({
         where: { isActive: true },
@@ -68,6 +69,8 @@ export default async function JournalsSettingsPage() {
         select: { templateId: true, jobPositionId: true },
       }),
     ]);
+  // Распределение, исполнитель и бонус — свои у организации (`OrganizationJournalSetting`).
+  const templates = await applyOrgJournalOverrides(organizationId, templateRows);
 
   // Точка из шапки — её набор журналов; «Вся организация» — набор всех точек.
   const pointId = await journalSettingsPointId(session);
