@@ -8,6 +8,8 @@ import { areaSchema } from "@/lib/validators";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { guessRoomKind } from "@/lib/orphan-areas";
 import { resolveBuildingInput, soleBuildingId } from "@/lib/area-building-sync";
+import { isPointScoped } from "@/lib/point-scope";
+import { objectPointResponse, visibleObjectBuildingIds } from "@/lib/point-objects.server";
 
 export async function GET() {
   try {
@@ -20,8 +22,13 @@ export async function GET() {
       );
     }
 
+    // Цеха точек человека и общие (аудит точек, 2026-11-01: раньше — вся организация).
+    const visibleIds = await visibleObjectBuildingIds(session);
     const areas = await db.area.findMany({
-      where: { organizationId: getActiveOrgId(session) },
+      where: {
+        organizationId: getActiveOrgId(session),
+        ...(visibleIds ? { OR: [{ buildingId: { in: visibleIds } }, { buildingId: null }] } : {}),
+      },
       orderBy: { name: "asc" },
       include: {
         building: { select: { id: true, name: true } },
@@ -72,8 +79,17 @@ export async function POST(request: Request) {
     if (!buildingInput.ok) {
       return NextResponse.json({ error: "Точка не найдена" }, { status: 400 });
     }
+    // Руководитель точки без выбора — его единственная точка.
+    const scope = isPointScoped(session.user) ? (session.user.pointScope ?? []) : [];
     const buildingId =
-      buildingInput.buildingId === undefined ? await soleBuildingId(orgId) : buildingInput.buildingId;
+      buildingInput.buildingId === undefined
+        ? scope.length === 1
+          ? scope[0]
+          : await soleBuildingId(orgId)
+        : buildingInput.buildingId;
+    // Руководитель точки создаёт цеха только своей точки; цех без точки — офис.
+    const outOfScope = objectPointResponse(session.user, buildingId);
+    if (outOfScope) return outOfScope;
 
     const area = await db.area.create({
       data: {

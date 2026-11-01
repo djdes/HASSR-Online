@@ -6,6 +6,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 
 import { KioskClient, type KioskDeviceRow, type KioskEmployeeRow } from "./kiosk-client";
 
@@ -27,13 +28,18 @@ export default async function KioskSettingsPage() {
       where: { id: orgId },
       select: { kioskEnabled: true, kioskIdleLockSeconds: true, kioskPhotoRequired: true },
     }),
+    // Руководитель точки видит планшеты и людей только своих точек (аудит точек, 2026-11-01).
     db.kioskDevice.findMany({
-      where: { organizationId: orgId, revokedAt: null },
+      where: {
+        organizationId: orgId,
+        revokedAt: null,
+        ...(isPointScoped(session.user) ? { buildingId: { in: session.user.pointScope ?? [] } } : {}),
+      },
       select: { id: true, label: true, lastSeenAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
     db.user.findMany({
-      where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
+      where: { organizationId: orgId, ...ORG_ROSTER_WHERE, ...staffScopeWhere(session.user) },
       select: { id: true, name: true, positionTitle: true, qrPinHash: true },
       orderBy: { name: "asc" },
     }),

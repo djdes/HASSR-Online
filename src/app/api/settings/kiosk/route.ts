@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
+import { objectPointResponse } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,7 +39,21 @@ export async function PATCH(request: Request) {
     throw err;
   }
 
+  // Руководитель точки (аудит точек, 2026-11-01): отвязывает только планшеты
+  // своих точек, общие настройки планшетов — офис.
+  const pointScoped = isPointScoped(auth.session.user);
+  if (pointScoped && (typeof body.idleLockSeconds === "number" || typeof body.photoRequired === "boolean")) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
+  }
   if (body.revokeDeviceId) {
+    if (pointScoped) {
+      const device = await db.kioskDevice.findFirst({
+        where: { id: body.revokeDeviceId, organizationId: orgId, revokedAt: null },
+        select: { buildingId: true },
+      });
+      const outOfScope = device ? objectPointResponse(auth.session.user, device.buildingId) : null;
+      if (outOfScope) return outOfScope;
+    }
     await db.kioskDevice.updateMany({
       where: { id: body.revokeDeviceId, organizationId: orgId, revokedAt: null },
       data: { revokedAt: new Date() },

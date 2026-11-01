@@ -4,6 +4,14 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { reconcileAssignmentsAfterEdit } from "@/lib/point-assignments.server";
+import {
+  BUILDING_OUT_OF_SCOPE_ERROR,
+  STAFF_OUT_OF_SCOPE_ERROR,
+  buildingInScope,
+  isPointScoped,
+  mergeScopedBuildingIds,
+  staffInScope,
+} from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,20 +60,34 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
   if (!building) {
     return NextResponse.json({ error: "Точка не найдена" }, { status: 404 });
   }
+  // Руководитель точки (аудит точек, 2026-11-01): только своя точка и только
+  // люди его точек — чужих сотрудников и офис сюда не перетянуть (замена на
+  // точку — через «Взять на замену» с её правилами).
+  const actor = auth.session.user;
+  if (!buildingInScope(actor, building.id)) {
+    return NextResponse.json({ error: BUILDING_OUT_OF_SCOPE_ERROR }, { status: 403 });
+  }
 
   const users = await db.user.findMany({
     where: { organizationId: orgId, isActive: true, archivedAt: null, isRoot: false },
     select: { id: true, buildingIds: true },
   });
   const wanted = new Set(body.userIds);
+  if (isPointScoped(actor) && users.some((user) => wanted.has(user.id) && !staffInScope(actor, user.buildingIds))) {
+    return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
+  }
   let changed = 0;
   for (const user of users) {
     const has = user.buildingIds.includes(building.id);
     const want = wanted.has(user.id);
     if (has === want) continue;
-    const next = want
+    const requested = want
       ? [...user.buildingIds, building.id]
       : user.buildingIds.filter((id) => id !== building.id);
+    // Руководитель точки, сняв последнюю свою точку, не отпускает человека
+    // «на все точки компании» — как в карточке сотрудника.
+    const next = mergeScopedBuildingIds(actor, user.buildingIds, requested);
+    if (next.length === user.buildingIds.length && next.every((id) => user.buildingIds.includes(id))) continue;
     await db.user.update({ where: { id: user.id }, data: { buildingIds: next } });
     if (!want) {
       await reconcileAssignmentsAfterEdit({

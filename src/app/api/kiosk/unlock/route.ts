@@ -6,6 +6,7 @@ import { resolveKioskContext } from "@/lib/kiosk-context";
 import { resolveQrFillActor } from "@/lib/qr-fill-actor";
 import { issueKioskSession } from "@/lib/issue-session";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
+import { QR_POINT_DENIED, employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +42,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: err.issues[0]?.message ?? "Bad input" }, { status: 400 });
     }
     throw err;
+  }
+
+  // Планшет точки открывают только её сотрудники (аудит точек, 2026-11-01) —
+  // то же правило, что у списка на планшете и у QR-наклеек.
+  const pointScope = await loadQrPointScope(ctx.device.organizationId, ctx.device.buildingId);
+  if (!(await employeeWorksAtQrPoint(pointScope, body.userId))) {
+    return NextResponse.json({ error: QR_POINT_DENIED }, { status: 403 });
   }
 
   const actor = await resolveQrFillActor({

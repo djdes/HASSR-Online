@@ -100,12 +100,15 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
     [props.buildings, excluded, q],
   );
   // Цеха без помещения — подгружаем сами при открытии. Ошибка загрузки
-  // не ломает окно: группа просто не показывается.
+  // не ломает окно: группа просто не показывается. Цеха — точки, куда
+  // встанет новое помещение (аудит точек, 2026-11-01): чужие не предлагаем.
   const [orphans, setOrphans] = useState<OrphanArea[]>([]);
+  const orphanBuildingId = newBuildingId || props.buildings[0]?.id || "";
   useEffect(() => {
     if (!props.open) return;
     let cancelled = false;
-    fetch("/api/settings/rooms/orphan-areas", { cache: "no-store" })
+    const query = orphanBuildingId ? `?buildingId=${encodeURIComponent(orphanBuildingId)}` : "";
+    fetch(`/api/settings/rooms/orphan-areas${query}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((body: { areas?: OrphanArea[] } | null) => {
         if (!cancelled) setOrphans(Array.isArray(body?.areas) ? body.areas : []);
@@ -116,7 +119,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
     return () => {
       cancelled = true;
     };
-  }, [props.open]);
+  }, [props.open, orphanBuildingId]);
   const qNorm = normalizePlaceName(query);
   const visibleOrphans = useMemo(
     () => orphans.filter((a) => !qNorm || normalizePlaceName(a.name).includes(qNorm)),

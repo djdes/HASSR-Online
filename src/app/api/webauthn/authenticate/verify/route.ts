@@ -7,6 +7,7 @@ import { issueKioskSession, issueSession } from "@/lib/issue-session";
 import { resolveKioskContext } from "@/lib/kiosk-context";
 import { recordLogin } from "@/lib/login-trace";
 import { consumeWebAuthnChallenge, webAuthnOrigin, webAuthnRpId } from "@/lib/webauthn";
+import { QR_POINT_DENIED, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +77,11 @@ export async function POST(request: Request) {
   const kiosk = await resolveKioskContext();
 
   if (kiosk && kiosk.device.organizationId === user.organizationId) {
+    // Планшет точки — только её сотрудники (аудит точек, 2026-11-01).
+    const pointScope = await loadQrPointScope(kiosk.device.organizationId, kiosk.device.buildingId);
+    if (!worksAtQrPoint(pointScope, user.buildingIds)) {
+      return NextResponse.json({ error: QR_POINT_DENIED }, { status: 403 });
+    }
     const lockAt = Date.now() + kiosk.organization.kioskIdleLockSeconds * 1000;
     const response = NextResponse.json({ ok: true, mode: "kiosk", user: { id: user.id, name: user.name }, lockAt });
     await issueKioskSession(

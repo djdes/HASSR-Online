@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { objectVisibleToSession } from "@/lib/point-objects.server";
 
 interface TemperaturePoint {
   time: string;
@@ -58,11 +59,16 @@ export async function GET(request: Request) {
     const equipment = await db.equipment.findUnique({
       where: { id: equipmentId },
       include: {
-        area: { select: { organizationId: true } },
+        area: { select: { organizationId: true, buildingId: true } },
       },
     });
 
-    if (!equipment || equipment.area.organizationId !== getActiveOrgId(session)) {
+    // Чужая точка — как чужая организация (аудит точек, 2026-11-01).
+    if (
+      !equipment ||
+      equipment.area.organizationId !== getActiveOrgId(session) ||
+      !(await objectVisibleToSession(session, equipment.area.buildingId))
+    ) {
       return NextResponse.json(
         { error: "Оборудование не найдено" },
         { status: 404 }

@@ -3,6 +3,7 @@ import { forbidden } from "next/navigation";
 import { ArrowRight, Download, Printer, Tag, Tags } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { staffInScope } from "@/lib/point-scope";
 import { db } from "@/lib/db";
 import { isAgentOnline } from "@/lib/print-agent-auth";
 import { brandQrSvg } from "@/lib/brand-qr";
@@ -104,10 +105,14 @@ export default async function PrintAgentSettingsPage() {
   const helperUsers = helperUserIds.length
     ? await db.user.findMany({
         where: { id: { in: helperUserIds }, organizationId },
-        select: { id: true, name: true },
+        select: { id: true, name: true, buildingIds: true },
       })
     : [];
   const userName = new Map(helperUsers.map((user) => [user.id, user.name]));
+  // Руководитель точки видит и отключает телефоны только людей своих точек
+  // (аудит точек, 2026-11-01) — как `/api/setup-helper/devices/[id]/revoke`.
+  const userPoints = new Map(helperUsers.map((user) => [user.id, user.buildingIds]));
+  const visibleHelperDevices = helperDevices.filter((device) => staffInScope(session.user, userPoints.get(device.userId) ?? []));
   // Ссылку открывают с телефона, поэтому QR рядом с кнопкой: навёл камеру —
   // скачал. SVG собирает brandQrSvg из адреса сайта, ввода пользователя в нём нет.
   const downloadQr = await brandQrSvg(setupHelperDownloadUrl(), { locale: isLocale(locale) ? locale : "ru" });
@@ -239,7 +244,7 @@ export default async function PrintAgentSettingsPage() {
           lastPrintAt: printer.lastPrintAt?.toISOString() ?? null,
           lastTemplate: printer.lastTemplate,
         }))}
-        devices={helperDevices.map((device) => ({
+        devices={visibleHelperDevices.map((device) => ({
           id: device.id,
           name: device.name,
           userName: userName.get(device.userId) ?? null,

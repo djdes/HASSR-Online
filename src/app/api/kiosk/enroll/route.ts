@@ -6,6 +6,9 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { generateInviteToken, hashInviteToken } from "@/lib/invite-tokens";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
+import { getViewedPointId } from "@/lib/active-building";
+import { isPointScoped } from "@/lib/point-scope";
+import { objectPointResponse } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,21 +45,29 @@ export async function POST(request: Request) {
     throw err;
   }
 
-  if (body.buildingId) {
+  // Точка планшета (аудит точек, 2026-11-01): не передана — точка из шапки,
+  // у руководителя точки с одной точкой — она. Планшет без точки показывает
+  // сотрудников всей организации — его заводит только офис.
+  const scope = isPointScoped(auth.session.user) ? (auth.session.user.pointScope ?? []) : [];
+  const buildingId =
+    body.buildingId ?? (scope.length === 1 ? scope[0] : await getViewedPointId(auth.session));
+  if (buildingId) {
     const building = await db.building.findFirst({
-      where: { id: body.buildingId, organizationId: orgId },
+      where: { id: buildingId, organizationId: orgId },
       select: { id: true },
     });
     if (!building) {
       return NextResponse.json({ error: "Точка не найдена" }, { status: 400 });
     }
   }
+  const outOfScope = objectPointResponse(auth.session.user, buildingId);
+  if (outOfScope) return outOfScope;
 
   const enrollToken = generateInviteToken();
   const device = await db.kioskDevice.create({
     data: {
       organizationId: orgId,
-      buildingId: body.buildingId ?? null,
+      buildingId: buildingId ?? null,
       label: body.label,
       secretHash: hashInviteToken(enrollToken),
       createdById: auth.session.user.id,

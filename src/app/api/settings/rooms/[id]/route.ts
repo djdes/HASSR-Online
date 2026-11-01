@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { objectPointResponse } from "@/lib/point-objects.server";
 import { syncRoomChecklistItems } from "@/lib/cleaning-room-checklist-sync";
 import { parseScopeSteps, type ScopeStep } from "@/lib/cleaning-document";
 import { ROOM_KINDS } from "@/lib/room-kinds";
@@ -130,6 +131,9 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (!previous) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
+  // Руководитель точки правит только помещения своей точки (аудит точек, 2026-11-01).
+  const outOfScope = objectPointResponse(auth.session.user, previous.buildingId);
+  if (outOfScope) return outOfScope;
 
   let body: z.infer<typeof UpdateSchema>;
   try {
@@ -265,6 +269,8 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   if (!room) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
+  const outOfScope = objectPointResponse(auth.session.user, room.buildingId);
+  if (outOfScope) return outOfScope;
   await db.room.delete({ where: { id } });
   // Зеркальная Area этой точки удаляется только если к ней ничего не
   // привязано (оборудование, записи журналов) — иначе остаётся.

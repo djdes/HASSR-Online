@@ -12,6 +12,8 @@ import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { recordAuditLog } from "@/lib/audit-log";
 import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
+import { objectPointError } from "@/lib/point-objects";
+import { objectPointResponse } from "@/lib/point-objects.server";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
   applyEquipmentNormToColdConfig,
@@ -80,12 +82,15 @@ export async function PUT(
 
     const equipment = await db.equipment.findUnique({
       where: { id },
-      include: { area: { select: { organizationId: true } } },
+      include: { area: { select: { organizationId: true, buildingId: true } } },
     });
 
     if (!equipment || equipment.area.organizationId !== getActiveOrgId(session)) {
       return NextResponse.json({ error: "Оборудование не найдено" }, { status: 404 });
     }
+    // Руководитель точки правит только оборудование своей точки (аудит точек, 2026-11-01).
+    const outOfScope = objectPointResponse(session.user, equipment.area.buildingId);
+    if (outOfScope) return outOfScope;
 
     const body = await request.json().catch(() => ({}));
     const { name, type, serialNumber, tempMin, tempMax, tuyaDeviceId } = body;
@@ -97,12 +102,14 @@ export async function PUT(
 
     // Помещение: цех организации или помещение точки без цеха (цех
     // создаётся с точкой помещения). Не передано — остаётся прежнее.
-    const place = await resolveEquipmentArea(getActiveOrgId(session), {
-      areaId: body?.areaId,
-      roomId: body?.roomId,
-    });
+    // Перенос — только в цех своей точки.
+    const place = await resolveEquipmentArea(
+      getActiveOrgId(session),
+      { areaId: body?.areaId, roomId: body?.roomId },
+      (buildingId) => objectPointError(session.user, buildingId),
+    );
     if (!place.ok) {
-      return NextResponse.json({ error: place.error }, { status: 400 });
+      return NextResponse.json({ error: place.error }, { status: place.status ?? 400 });
     }
 
     // tempMin/tempMax — finite numbers либо null. Раньше Number("abc")
@@ -249,12 +256,15 @@ export async function DELETE(
 
     const equipment = await db.equipment.findUnique({
       where: { id },
-      include: { area: { select: { organizationId: true } } },
+      include: { area: { select: { organizationId: true, buildingId: true } } },
     });
 
     if (!equipment || equipment.area.organizationId !== getActiveOrgId(session)) {
       return NextResponse.json({ error: "Оборудование не найдено" }, { status: 404 });
     }
+    // Руководитель точки правит только оборудование своей точки (аудит точек, 2026-11-01).
+    const outOfScope = objectPointResponse(session.user, equipment.area.buildingId);
+    if (outOfScope) return outOfScope;
 
     await db.equipment.delete({ where: { id } });
 

@@ -16,7 +16,8 @@ import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-bui
 import { isOfficeBuilding } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
-import { buildingInScope } from "@/lib/point-scope";
+import { buildingInScope, isPointScoped } from "@/lib/point-scope";
+import { objectInScope, objectScopeIds } from "@/lib/point-objects";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,18 @@ export default async function AreasSettingsPage({
     activeBuildingId: placePointId,
     keepEmpty: true,
   }).filter((group) => place !== PLACE_NONE || group.building === null);
-  const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
+  // Точки в окне цеха — только точки человека (аудит точек, 2026-11-01).
+  const orgBuildingIds = buildings.map((building) => building.id);
+  const dialogScopeIds = objectScopeIds({
+    enabled: showPlaceFilter,
+    personBuildingIds: buildingContext.buildings.map((building) => building.id),
+    actor: session.user,
+  });
+  const buildingOptions = buildings
+    .filter((building) => objectInScope(dialogScopeIds, orgBuildingIds, building.id))
+    .map((building) => ({ id: building.id, name: building.name }));
+  // Цех без точки — общий, его ведёт офис: руководителю точки — только просмотр.
+  const pointScoped = isPointScoped(session.user);
   // Оборудование цехов на экране — для кнопок QR: они печатают то же, что в списке.
   const visibleAreas = buildings.length === 0 ? areas : groups.flatMap((group) => group.items);
   const equipmentCount = visibleAreas.reduce((sum, area) => sum + area._count.equipment, 0);
@@ -115,7 +127,12 @@ export default async function AreasSettingsPage({
             {/* Те же QR, что на «Оборудовании» (скан 98): оборудование цехов из списка, таблички — по цехам. */}
             {equipmentCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
             {/* key — новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия). */}
-            <AreaDialog key={defaultBuildingId ?? "none"} buildings={buildingOptions} defaultBuildingId={defaultBuildingId} />
+            <AreaDialog
+              key={defaultBuildingId ?? "none"}
+              buildings={buildingOptions}
+              defaultBuildingId={defaultBuildingId}
+              allowNoPoint={!pointScoped}
+            />
           </div>
         ) : null}
       </div>
@@ -171,6 +188,7 @@ export default async function AreasSettingsPage({
               canManage={canManage}
               canDelete={canDelete}
               buildings={buildingOptions}
+              pointScoped={pointScoped}
             />
           ) : (
             <div className="space-y-6">
@@ -187,6 +205,7 @@ export default async function AreasSettingsPage({
                       canManage={canManage}
                       canDelete={canDelete}
                       buildings={buildingOptions}
+                      pointScoped={pointScoped}
                     />
                   ) : (
                     <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-6 text-[13px] text-[#6f7282]">
@@ -216,11 +235,14 @@ function AreasTable({
   canManage,
   canDelete,
   buildings,
+  pointScoped = false,
 }: {
   areas: AreaRow[];
   canManage: boolean;
   canDelete: boolean;
   buildings: Array<{ id: string; name: string }>;
+  /** Руководитель точки: общие цеха (без точки) — без кнопок правки. */
+  pointScoped?: boolean;
 }) {
   const t = useTranslations("settingsUi.areasPage");
   return (
@@ -267,6 +289,7 @@ function AreasTable({
               </td>
               {canManage && (
                 <td className="px-6 py-4">
+                  {pointScoped && !area.buildingId ? null : (
                   <div className="flex justify-end gap-1">
                     <AreaDialog
                       area={{
@@ -276,6 +299,7 @@ function AreasTable({
                         buildingId: area.buildingId,
                       }}
                       buildings={buildings}
+                      allowNoPoint={!pointScoped}
                     />
                     {canDelete && (
                       <DeleteButton
@@ -286,6 +310,7 @@ function AreasTable({
                       />
                     )}
                   </div>
+                  )}
                 </td>
               )}
             </tr>

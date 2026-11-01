@@ -30,7 +30,8 @@ import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-bui
 import { isOfficeBuilding } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
-import { buildingInScope } from "@/lib/point-scope";
+import { buildingInScope, isPointScoped } from "@/lib/point-scope";
+import { objectInScope, objectScopeIds, objectSelectable, staffInObjectScope } from "@/lib/point-objects";
 import { isUvLampEquipment, lampRemainingHours } from "@/lib/uv-lamp";
 
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ export default async function EquipmentSettingsPage({
     db.user.findMany({
       where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, role: true, positionTitle: true, canManageSettings: true, jobPosition: { select: { name: true } } },
+      select: { id: true, name: true, role: true, positionTitle: true, canManageSettings: true, buildingIds: true, jobPosition: { select: { name: true } } },
     }),
     listOrganizationBuildings(orgId),
     db.room.findMany({
@@ -120,13 +121,14 @@ export default async function EquipmentSettingsPage({
   // видно на каждой точке), «Без точки» — только оно. Места — только точки
   // человека: руководитель точки чужих не видит; офис — если у него есть объекты.
   const showPlaceFilter = buildingContext.enabled;
+  const scopeIds = showPlaceFilter
+    ? new Set(buildingContext.buildings.filter((building) => buildingInScope(session.user, building.id)).map((building) => building.id))
+    : null;
   const scope = scopePlaces({
     items: equipment,
     buildingIdOf: (item) => item.area.buildingId,
     buildings,
-    scopeIds: showPlaceFilter
-      ? new Set(buildingContext.buildings.filter((building) => buildingInScope(session.user, building.id)).map((building) => building.id))
-      : null,
+    scopeIds,
   });
   const place = resolvePlaceFilter({
     requested: showPlaceFilter ? placeFilterParam(query.place) : null,
@@ -140,23 +142,36 @@ export default async function EquipmentSettingsPage({
     activeBuildingId: placePointId,
     keepEmpty: true,
   }).filter((group) => place !== PLACE_NONE || group.building === null);
-  const buildingOptions = buildings.map((building) => ({ id: building.id, name: building.name }));
+  // Окно оборудования — только места точек человека (аудит точек, 2026-11-01):
+  // руководитель точки не видит и не выбирает цеха, помещения и людей чужих точек.
+  const orgBuildingIds = buildings.map((building) => building.id);
+  const dialogScopeIds = objectScopeIds({
+    enabled: showPlaceFilter,
+    personBuildingIds: buildingContext.buildings.map((building) => building.id),
+    actor: session.user,
+  });
+  const dialogBuildings = buildings.filter((building) => objectInScope(dialogScopeIds, orgBuildingIds, building.id));
+  const dialogAreas = areas.filter((area) => objectSelectable(session.user, dialogScopeIds, orgBuildingIds, area.buildingId));
+  const dialogRooms = rooms.filter((room) => objectSelectable(session.user, dialogScopeIds, orgBuildingIds, room.buildingId));
+  const buildingOptions = dialogBuildings.map((building) => ({ id: building.id, name: building.name }));
   // Сколько оборудования на экране — для кнопок QR: они печатают то же, что в списке.
   const visibleCount = buildings.length === 0 ? equipment.length : groups.reduce((sum, group) => sum + group.items.length, 0);
   const qrPoint = showPlaceFilter ? (place === PLACE_NONE ? PLACE_NONE : (placePointId ?? PLACE_ALL)) : null;
-  const places = buildPlaceOptions({ buildings, areas, rooms });
+  const places = buildPlaceOptions({ buildings: dialogBuildings, areas: dialogAreas, rooms: dialogRooms });
   // Новое оборудование — в отмеченную точку, а если точка одна — в неё.
   const defaultBuildingId = placePointId ?? (buildings.length === 1 ? buildings[0].id : null);
   // «Кто заполняет» по QR: руководство заполняет любой объект — в выборе не нужно.
-  const fillerOptions = staff.map((user) => ({
+  const fillerOptions = staff
+    .filter((user) => staffInObjectScope(dialogScopeIds, orgBuildingIds, user.buildingIds))
+    .map((user) => ({
     id: user.id,
     name: user.name,
     position: getUserDisplayTitle(user) || null,
     management: isManagementRole(user.role) || user.canManageSettings,
   }));
 
-  // IoT readings
-  const iotIds = equipment.filter((e) => e.tuyaDeviceId).map((e) => e.id);
+  // IoT readings — только оборудование на экране своих точек.
+  const iotIds = scope.items.filter((e) => e.tuyaDeviceId).map((e) => e.id);
   const readings: Record<string, { temp: number; time: Date }> = {};
   for (const eqId of iotIds) {
     const entry = await db.journalEntry.findFirst({
@@ -174,7 +189,7 @@ export default async function EquipmentSettingsPage({
     }
   }
 
-  const equipmentNames = equipment.map((item) => item.name);
+  const equipmentNames = scope.items.map((item) => item.name);
   const canManage = isManagementRole(session.user.role);
   // Согласовано с DELETE /api/equipment/[id] на hasFullWorkspaceAccess.
   // Раньше head_chef видел список, но кнопка «Удалить» была скрыта.
@@ -183,16 +198,19 @@ export default async function EquipmentSettingsPage({
     isRoot: session.user.isRoot === true,
   });
 
+  // Оборудование без точки — общее, его ведёт офис: руководителю точки — только просмотр.
+  const sharedReadOnly = isPointScoped(session.user);
+
   const dialogProps: EquipmentDialogShared = {
-    areas,
+    areas: dialogAreas,
     buildings: buildingOptions,
     places,
     existingNames: equipmentNames,
     fillerOptions,
   };
 
-  // Датчики температуры (раньше — на главной, меню 2026-10-16).
-  const iotEquipment = equipment
+  // Датчики температуры (раньше — на главной, меню 2026-10-16) — своих точек.
+  const iotEquipment = scope.items
     .filter((item) => item.tuyaDeviceId)
     .map((item) => ({ id: item.id, name: item.name, tuyaDeviceId: item.tuyaDeviceId }));
 
@@ -252,7 +270,7 @@ export default async function EquipmentSettingsPage({
             <EquipmentDialog
               // Новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия).
               key={defaultBuildingId ?? "none"}
-              areas={areas}
+              areas={dialogAreas}
               buildings={buildingOptions}
               places={places}
               defaultBuildingId={defaultBuildingId}
@@ -285,7 +303,7 @@ export default async function EquipmentSettingsPage({
 
       {/* Content */}
       <PlaceFilterResults>
-      {equipment.length === 0 ? (
+      {scope.items.length === 0 ? (
         <div className="rounded-2xl border border-[#ececf4] bg-white px-8 py-16 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#f0edff]">
             <Wrench className="size-7 text-[#7a5cff]" />
@@ -306,6 +324,7 @@ export default async function EquipmentSettingsPage({
             readings={readings}
             canManage={canManage}
             canDelete={canDelete}
+            sharedReadOnly={sharedReadOnly}
             dialog={dialogProps}
           />
         ) : (
@@ -323,6 +342,7 @@ export default async function EquipmentSettingsPage({
                     readings={readings}
                     canManage={canManage}
                     canDelete={canDelete}
+                    sharedReadOnly={sharedReadOnly}
                     dialog={dialogProps}
                   />
                 ) : (
@@ -355,12 +375,15 @@ function EquipmentTable({
   readings,
   canManage,
   canDelete,
+  sharedReadOnly = false,
   dialog,
 }: {
   items: EquipmentRow[];
   readings: Record<string, { temp: number; time: Date }>;
   canManage: boolean;
   canDelete: boolean;
+  /** Общее оборудование (без точки) — без кнопок правки (руководитель точки). */
+  sharedReadOnly?: boolean;
   dialog: EquipmentDialogShared;
 }) {
   const t = useTranslations("settingsUi.equipmentPage");
@@ -476,6 +499,7 @@ function EquipmentTable({
                 </td>
                 {canManage && (
                   <td className="px-6 py-4">
+                    {sharedReadOnly && !item.area.buildingId ? null : (
                     <div className="flex justify-end gap-1">
                       <CopyIdButton
                         id={item.id}
@@ -509,6 +533,7 @@ function EquipmentTable({
                         />
                       )}
                     </div>
+                    )}
                   </td>
                 )}
               </tr>

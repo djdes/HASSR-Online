@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { resolveBuildingInput } from "@/lib/area-building-sync";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
+import { objectPointResponse } from "@/lib/point-objects.server";
 
 export async function PUT(
   request: Request,
@@ -32,6 +33,9 @@ export async function PUT(
     if (!area || area.organizationId !== getActiveOrgId(session)) {
       return NextResponse.json({ error: "Цех не найден" }, { status: 404 });
     }
+    // Руководитель точки правит только цеха своей точки (аудит точек, 2026-11-01).
+    const outOfScope = objectPointResponse(session.user, area.buildingId);
+    if (outOfScope) return outOfScope;
 
     const body = await request.json().catch(() => ({}));
     const { name, description } = body;
@@ -44,6 +48,11 @@ export async function PUT(
     const buildingInput = await resolveBuildingInput(area.organizationId, body?.buildingId);
     if (!buildingInput.ok) {
       return NextResponse.json({ error: "Точка не найдена" }, { status: 400 });
+    }
+    // Перенос — только на свою точку.
+    if (buildingInput.buildingId !== undefined) {
+      const moveOutOfScope = objectPointResponse(session.user, buildingInput.buildingId);
+      if (moveOutOfScope) return moveOutOfScope;
     }
 
     const updated = await db.area.update({
@@ -101,6 +110,9 @@ export async function DELETE(
     if (!area || area.organizationId !== getActiveOrgId(session)) {
       return NextResponse.json({ error: "Цех не найден" }, { status: 404 });
     }
+    // Руководитель точки правит только цеха своей точки (аудит точек, 2026-11-01).
+    const outOfScope = objectPointResponse(session.user, area.buildingId);
+    if (outOfScope) return outOfScope;
 
     // JournalEntry.area — Restrict: удаление цеха с записями бросало, и
     // человек видел «Внутренняя ошибка сервера» вместо причины.

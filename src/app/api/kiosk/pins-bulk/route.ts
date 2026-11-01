@@ -4,6 +4,7 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { generateEmployeeQrPin, setEmployeeQrPin } from "@/lib/qr-fill-actor";
+import { staffScopeWhere } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,8 @@ export async function POST() {
   const orgId = getActiveOrgId(auth.session);
 
   const users = await db.user.findMany({
-    where: { organizationId: orgId, ...ORG_ROSTER_WHERE, qrPinHash: null },
+    // Руководитель точки выдаёт ПИН только людям своих точек (аудит точек, 2026-11-01).
+    where: { organizationId: orgId, ...ORG_ROSTER_WHERE, qrPinHash: null, ...staffScopeWhere(auth.session.user) },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
