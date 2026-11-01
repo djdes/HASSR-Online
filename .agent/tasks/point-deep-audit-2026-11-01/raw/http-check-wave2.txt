@@ -1,0 +1,28 @@
+PASS владелец: /batches открывается — HTTP 200
+PASS владелец: /capa открывается — HTTP 200
+PASS владелец: /capa/new открывается — HTTP 200
+PASS владелец: /inspection открывается — HTTP 200
+PASS владелец: /settings/inspector-portal открывается — HTTP 200
+PASS владелец: /settings/print-agent открывается — HTTP 200
+PASS владелец: /settings/integrations/mercury открывается — HTTP 200
+PASS владелец: /reports открывается — HTTP 200
+PASS владелец: /more открывается — HTTP 200
+PASS владелец: /api/batches отвечает — HTTP 200
+PASS владелец: /api/capa отвечает — HTTP 200
+PASS владелец: /api/print/status отвечает — HTTP 200
+PASS владелец: /api/settings/inspector-tokens отвечает — HTTP 200
+PASS ссылка проверяющего на точку А выпущена — HTTP 200 "cmvr0nq140001zw9maq48u9sv"
+PASS портал проверяющего (точка А): журнал гигиены открывается — HTTP 200
+PASS портал проверяющего (точка А): нет документа точки Б
+PASS портал проверяющего (точка А): PDF документа точки Б — не найден — HTTP 404
+PASS руководитель точки А: ссылка проверяющего на точку Б — отказ — HTTP 403
+PASS руководитель точки А: ссылка на всю организацию — отказ — HTTP 403
+PASS руководитель точки А: ссылка на свою точку — выдана — HTTP 200
+PASS партия на точке Б создана с её точкой — HTTP 201 {"id":"cmvxoq08v000aoo9mo4q93teg","code":"B-20261101-001","organizationId":"cmvr0npow0000zw9mq3eiejlc","productName":"ПРОВЕРКА 01.11 партия точки Б","supplier":
+PASS CAPA на точке Б создана с её точкой — HTTP 201 {"id":"cmvxoq0bu000boo9m4qu4oh7n","organizationId":"cmvr0npow0000zw9mq3eiejlc","title":"ПРОВЕРКА 01.11 CAPA точки Б","description":null,"priority":"medium","sta
+PASS руководитель точки А: партия точки Б — не найдена — HTTP 404
+PASS руководитель точки А: в списке партий нет партии точки Б — HTTP 200
+PASS руководитель точки А: закрыть CAPA точки Б — отказ — HTTP 404
+PASS владелец смотрит точку А: CAPA точки Б в списке нет — HTTP 200
+PASS владелец «Вся организация»: CAPA точки Б в списке есть — HTTP 200
+ALL PASS 27
