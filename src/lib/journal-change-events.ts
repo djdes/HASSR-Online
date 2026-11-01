@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 import { emitWebhook } from "@/lib/webhooks/dispatch";
+import { webhookPointFields } from "@/lib/webhooks/point";
 
 import { publishToOrganization, type LiveEvent } from "@/lib/live-events";
 
@@ -327,7 +328,13 @@ export function notifyJournalWrite(
         const key = `${change.organizationId}:${change.code ?? ""}`;
         if (isCreate && !seen.has(key)) {
           seen.add(key);
-          emitWebhook(change.organizationId, "journal.entry", { journalCode: change.code, documentId: change.documentId });
+          const { organizationId, code, documentId } = change;
+          emitWebhook(organizationId, "journal.entry", async () => ({
+            journalCode: code,
+            documentId,
+            // Точка документа (2026-11-01) — получатель раскладывает события по точкам.
+            ...(await webhookPointFields(organizationId, { documentId })),
+          }));
         }
       }
     })

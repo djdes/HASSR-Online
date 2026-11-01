@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { PageGuide } from "@/components/ui/page-guide";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { buildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
@@ -27,7 +27,8 @@ export default async function MercuryPage() {
   const t = await getTranslations("mercuryUi.page");
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
-  const buildingId = await getActiveBuildingId(session);
+  // Точка из шапки; «Вся организация» — все ВСД (раньше офис или первая точка).
+  const buildingId = await getViewedPointId(session);
 
   const [available, integration, rows] = await Promise.all([
     // «Меркурий» — возможность «Премиума» (и пробного, прежней «Подписки», демо).

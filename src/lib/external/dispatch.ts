@@ -4,6 +4,10 @@ import { Prisma, type JournalDocument, type JournalTemplate } from "@prisma/clie
 import { db } from "@/lib/db";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
 import { resolveJournalPeriod } from "@/lib/journal-period";
+import { buildingTargets } from "@/lib/building-targets";
+import { withBuildingSuffix, workBuildingsForUser } from "@/lib/building-scope";
+import { staffAtBuildingWhere, worksAtBuilding } from "@/lib/building-settings";
+import { resolveExternalEntryPoint } from "@/lib/external/entry-point";
 import {
   normalizeJournalStaffBoundConfig,
   reconcileEntryStaffFields,
@@ -158,6 +162,7 @@ type EmployeeRecord = {
   role: string | null;
   positionTitle: string | null;
   jobPosition?: { name: string } | null;
+  buildingIds?: string[];
 };
 
 type Normalized = { employeeId: string; date: Date; data: unknown };
@@ -223,9 +228,10 @@ function uniqueByLowerName<T extends { name: string }>(items: T[]) {
   return new Map(items.map((item) => [item.name.trim().toLowerCase(), item] as const));
 }
 
-async function pickDefaultEmployeeId(organizationId: string): Promise<string | null> {
+async function pickDefaultEmployeeId(organizationId: string, buildingId: string | null = null): Promise<string | null> {
   const user = await db.user.findFirst({
-    where: { organizationId, isActive: true },
+    // Точка запроса — сотрудник по умолчанию из её людей.
+    where: { organizationId, isActive: true, ...staffAtBuildingWhere(buildingId) },
     orderBy: [{ createdAt: "asc" }],
     select: { id: true },
   });
@@ -239,21 +245,33 @@ async function findOrCreateDocument(params: {
   templateName: string;
   date: Date;
   createdById: string | null;
+  /**
+   * Точки (2026-11-01): `pointsEnabled` — документ своей точки или общий;
+   * точка не определена (`buildingId` null) — только общий документ, новый
+   * не создаётся. Без точек — как раньше.
+   */
+  pointsEnabled: boolean;
+  buildingId: string | null;
+  buildingName: string | null;
 }): Promise<{ doc: Awaited<ReturnType<typeof db.journalDocument.findFirst>>; created: boolean }> {
-  const { organizationId, templateId, templateCode, templateName, date, createdById } = params;
+  const { organizationId, templateId, templateCode, templateName, date, createdById, pointsEnabled, buildingId } = params;
   const day = startOfUtcDay(date);
 
-  const existing = await db.journalDocument.findFirst({
+  const active = await db.journalDocument.findMany({
     where: {
       organizationId,
       templateId,
       status: "active",
       dateFrom: { lte: day },
       dateTo: { gte: day },
+      ...(pointsEnabled ? { OR: [{ buildingId: null }, ...(buildingId ? [{ buildingId }] : [])] } : {}),
     },
     orderBy: { dateFrom: "desc" },
   });
+  // Свой документ точки важнее общего.
+  const existing = active.find((doc) => buildingId && doc.buildingId === buildingId) ?? active[0];
   if (existing) return { doc: existing, created: false };
+  if (pointsEnabled && !buildingId) return { doc: null, created: false };
 
   // Используем resolveJournalPeriod вместо плоского monthRange:
   // hygiene/health/cold-equipment получат half-month, годовые
@@ -263,7 +281,8 @@ async function findOrCreateDocument(params: {
     data: {
       organizationId,
       templateId,
-      title: templateName,
+      buildingId: pointsEnabled ? buildingId : null,
+      title: pointsEnabled ? withBuildingSuffix(templateName, params.buildingName) : templateName,
       dateFrom: period.dateFrom,
       dateTo: period.dateTo,
       status: "active",
@@ -731,6 +750,8 @@ export async function dispatchExternalEntries(params: {
   organizationId: string;
   journalCode: string;
   entries: ExternalEntryInput[];
+  /** Точка документа (2026-11-01); без неё — общая точка сотрудников строк. */
+  buildingId?: string | null;
 }): Promise<DispatchResult> {
   const { organizationId, journalCode } = params;
 
@@ -757,7 +778,22 @@ export async function dispatchExternalEntries(params: {
     return { ok: false, httpStatus: 400, error: "entries array is empty" };
   }
 
-  const fallbackEmployeeId = await pickDefaultEmployeeId(organizationId);
+  // Точки организации: id точек или `[null]` без точек.
+  const targets = await buildingTargets(organizationId);
+  const pointsEnabled = targets.some(Boolean);
+  const buildings = pointsEnabled
+    ? await db.building.findMany({
+        where: { organizationId },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        select: { id: true, name: true, address: true, kind: true },
+      })
+    : [];
+  const requestedPoint =
+    pointsEnabled && typeof params.buildingId === "string" && buildings.some((b) => b.id === params.buildingId)
+      ? params.buildingId
+      : null;
+
+  const fallbackEmployeeId = await pickDefaultEmployeeId(organizationId, requestedPoint);
   const anchorDate = (() => {
     for (const e of entries) {
       if (e?.date) {
@@ -798,6 +834,7 @@ export async function dispatchExternalEntries(params: {
       role: true,
       positionTitle: true,
       jobPosition: { select: { name: true } },
+      buildingIds: true,
     },
     orderBy: [{ createdAt: "asc" }],
   });
@@ -808,6 +845,21 @@ export async function dispatchExternalEntries(params: {
     }
   }
 
+  // Точка документа: явная из запроса или общая точка сотрудников строк.
+  const point = resolveExternalEntryPoint({
+    targets,
+    requested: typeof params.buildingId === "string" ? params.buildingId : null,
+    employees: [...new Set(normalized.map((entry) => entry.employeeId))].map((id) => ({
+      id,
+      points: workBuildingsForUser(buildings, employeesById.get(id)?.buildingIds ?? []).map((b) => b.id),
+    })),
+  });
+  if (!point.ok) {
+    return { ok: false, httpStatus: 400, error: point.error };
+  }
+  const pointId = point.pointId;
+  const buildingName = pointId ? buildings.find((b) => b.id === pointId)?.name ?? null : null;
+
   const { doc: foundDoc, created } = await findOrCreateDocument({
     organizationId,
     templateId: template.id,
@@ -815,11 +867,29 @@ export async function dispatchExternalEntries(params: {
     templateName: template.name,
     date: anchorDate,
     createdById: fallbackEmployeeId,
+    pointsEnabled,
+    buildingId: pointId,
+    buildingName,
   });
   const doc = foundDoc;
+  if (!doc && point.ambiguous) {
+    const names = point.candidates.map((id) => {
+      const name = buildings.find((b) => b.id === id)?.name;
+      return name ? `${name} (${id})` : id;
+    });
+    return {
+      ok: false,
+      httpStatus: 400,
+      error: `укажите buildingId: сотрудники строк работают на нескольких точках — ${names.join(", ")}`,
+    };
+  }
   if (!doc) {
     return { ok: false, httpStatus: 500, error: "failed to resolve document" };
   }
+  // Люди документа точки — только сотрудники этой точки (строки и списки
+  // конфига); общий документ и без точек — вся организация, как раньше.
+  const docPointId = pointsEnabled ? doc.buildingId : null;
+  const docUsers = docPointId ? allUsers.filter((user) => worksAtBuilding(user, docPointId)) : allUsers;
   const initialDoc: JournalDocument = doc;
 
   const docDateFrom = startOfUtcDay(new Date(initialDoc.dateFrom));
@@ -850,7 +920,7 @@ export async function dispatchExternalEntries(params: {
     organizationId,
     template,
     document: initialDoc,
-    allUsers,
+    allUsers: docUsers,
     employeesById,
   };
 
@@ -858,7 +928,8 @@ export async function dispatchExternalEntries(params: {
   const directoryRooms =
     template.code === CLIMATE_DOCUMENT_TEMPLATE_CODE
       ? await db.room.findMany({
-          where: { building: { organizationId } },
+          // Помещения точки документа: одинаковые названия у разных точек.
+          where: { building: { organizationId }, ...(docPointId ? { buildingId: docPointId } : {}) },
           select: { id: true, name: true, climateNorms: true },
         })
       : [];
@@ -868,7 +939,7 @@ export async function dispatchExternalEntries(params: {
     let currentDoc = initialDoc;
     let documentConfig: unknown = currentDoc.config;
     if (shouldPersistEntryConfig(template.code)) {
-      documentConfig = normalizeEntryDocumentConfig(template.code, currentDoc.config, allUsers);
+      documentConfig = normalizeEntryDocumentConfig(template.code, currentDoc.config, docUsers);
       currentDoc = await tx.journalDocument.update({
         where: { id: currentDoc.id },
         data: { config: toPrismaJsonValue(documentConfig) },
@@ -885,7 +956,7 @@ export async function dispatchExternalEntries(params: {
         document: currentDoc,
         template,
         entries: configEntries,
-        allUsers,
+        allUsers: docUsers,
         organizationName: organization.name,
       });
       written += configResult.written;
@@ -914,7 +985,7 @@ export async function dispatchExternalEntries(params: {
       });
 
       if (template.code === CLEANING_DOCUMENT_TEMPLATE_CODE) {
-        documentConfig = mergeCleaningEntryIntoConfig(documentConfig, normalizedData, entry.date, allUsers);
+        documentConfig = mergeCleaningEntryIntoConfig(documentConfig, normalizedData, entry.date, docUsers);
       }
 
       written += 1;

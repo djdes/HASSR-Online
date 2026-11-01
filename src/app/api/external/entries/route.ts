@@ -18,6 +18,8 @@ const SourceSchema = z.enum(["employee_app", "sensor", "manual"]).optional().nul
 const PayloadSchema = z.object({
   organizationId: z.string().min(1),
   journalCode: z.string().min(1),
+  /** Точка документа (id точки организации); без неё — общая точка сотрудников строк. */
+  buildingId: z.string().min(1).optional().nullable(),
   date: z.string().optional().nullable(),
   employeeId: z.string().optional().nullable(),
   source: SourceSchema,
@@ -201,6 +203,7 @@ export async function POST(request: Request) {
     organizationId,
     journalCode: payload.journalCode,
     entries,
+    buildingId: payload.buildingId ?? null,
   }).catch((error) => ({
     ok: false as const,
     httpStatus: 500,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 import { buildingWhere } from "@/lib/building-scope";
 import { db } from "@/lib/db";
@@ -34,7 +34,8 @@ export async function GET(request: Request) {
   // «Меркурий» — возможность «Премиума»: без неё документы не отдаём.
   const feature = await checkPlanFeature(organizationId, "mercury", "mercury.documents");
   if (!feature.ok) return limitResponse(feature);
-  const buildingId = await getActiveBuildingId(session);
+  // Точка из шапки; «Вся организация» — все ВСД (раньше офис или первая точка).
+  const buildingId = await getViewedPointId(session);
   const { searchParams } = new URL(request.url);
   const tab = searchParams.get("tab") ?? "pending";
   const onlyOverdue = searchParams.get("overdue") === "1";

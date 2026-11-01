@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { emitWebhook } from "@/lib/webhooks/dispatch";
+import { webhookPointFields } from "@/lib/webhooks/point";
 import { sendTemperatureAlertEmail } from "@/lib/email";
 import {
   escapeTelegramHtml as esc,
@@ -554,14 +555,19 @@ function defaultDeps(): Deps {
           lastSeenAt: input.now,
         },
       });
-      emitWebhook(row.organizationId, "journal.deviation", {
+      emitWebhook(row.organizationId, "journal.deviation", async () => ({
         incidentId: row.id,
         subject: row.subjectName,
         value: row.lastValue,
         tempMin: row.tempMin,
         tempMax: row.tempMax,
         equipmentId: row.equipmentId,
-      });
+        // Точка (2026-11-01): получатель раскладывает события по точкам.
+        ...(await webhookPointFields(row.organizationId, {
+          equipmentId: row.equipmentId,
+          documentId: row.documentId,
+        })),
+      }));
       return toIncident(row);
     },
 

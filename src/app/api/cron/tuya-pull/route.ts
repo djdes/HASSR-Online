@@ -7,8 +7,9 @@ import {
 } from "@/lib/temperature-deviations";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { getDeviceTemperature } from "@/lib/tuya";
-import { pickPrimaryManager } from "@/lib/user-roles";
 import { maybeCreateRealtimeCapa } from "@/lib/iot-violation-capa";
+import { buildingWhere } from "@/lib/building-scope";
+import { pickPointSigner, pickSensorDocuments, sensorRowKeys } from "@/lib/sensor-point";
 import { hasPlanFeature } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
@@ -28,10 +29,13 @@ export const dynamic = "force-dynamic";
  *   3. For each org, walk equipment list:
  *        - Pull current temp/humidity from Tuya
  *        - For each mapping (templateId, fieldKey, readingType):
- *            - Find active JournalDocument covering today
- *            - Upsert daily entry attributed to org's primary manager
+ *            - Find active JournalDocuments covering today at the
+ *              equipment's point (Equipment.area.buildingId): documents
+ *              that list the equipment, else the point's own / shared
+ *              one — never another point's (src/lib/sensor-point.ts)
+ *            - Upsert daily entry attributed to that point's manager
  *              (one entry per doc/manager/date — values merged into
- *              data.temperatures[equipmentId] for cold_equipment_control,
+ *              data.temperatures[rowId] for cold_equipment_control,
  *              data.measurements[roomId][nearestTime] for climate_control)
  *        - Update mapping.lastReadingAt + lastValue
  *
@@ -111,7 +115,7 @@ async function handle(request: Request) {
       tuyaDeviceId: true,
       tempMin: true,
       tempMax: true,
-      area: { select: { organizationId: true } },
+      area: { select: { organizationId: true, buildingId: true } },
       sensorMappings: {
         select: {
           id: true,
@@ -129,7 +133,21 @@ async function handle(request: Request) {
   });
 
   const orgsTouched = new Set<string>();
-  const managerByOrg = new Map<string, string | null>();
+  // Подписант записи датчика — человек точки документа (2026-11-01):
+  // раньше первый руководитель организации, то есть и чужой точки.
+  type SignerCandidate = { id: string; role: string; name: string; email: string | null; buildingIds: string[] };
+  const usersByOrg = new Map<string, SignerCandidate[]>();
+  const signerFor = async (orgId: string, buildingId: string | null): Promise<string | null> => {
+    let users = usersByOrg.get(orgId);
+    if (!users) {
+      users = await db.user.findMany({
+        where: { organizationId: orgId, isActive: true },
+        select: { id: true, role: true, name: true, email: true, buildingIds: true },
+      });
+      usersByOrg.set(orgId, users);
+    }
+    return pickPointSigner(users, buildingId)?.id ?? null;
+  };
   // IoT-датчики — возможность «Премиума» (и пробного): без неё не опрашиваем.
   const connectByOrg = new Map<string, boolean>();
 
@@ -165,23 +183,7 @@ async function handle(request: Request) {
     report.equipmentsChecked += 1;
     orgsTouched.add(orgId);
 
-    // Resolve the org's primary manager once per org — used as the
-    // employeeId for synthetic auto-fill entries (must be a valid User
-    // due to FK on JournalDocumentEntry.employeeId).
-    let managerId = managerByOrg.get(orgId);
-    if (managerId === undefined) {
-      const orgUsers = await db.user.findMany({
-        where: { organizationId: orgId, isActive: true },
-        select: { id: true, role: true },
-      });
-      const primary = pickPrimaryManager(orgUsers);
-      managerId = primary?.id ?? null;
-      managerByOrg.set(orgId, managerId);
-    }
-    if (!managerId) {
-      report.skipped += 1;
-      continue;
-    }
+    const pointId = eq.area.buildingId ?? null;
 
     // For each mapping, find the active document and write the value.
     for (const mapping of activeMappings) {
@@ -195,96 +197,118 @@ async function handle(request: Request) {
         continue;
       }
 
-      const doc = await db.journalDocument.findFirst({
+      // Документы точки оборудования и общие; чужая точка не подходит.
+      const candidates = await db.journalDocument.findMany({
         where: {
           organizationId: orgId,
           templateId: mapping.templateId,
           status: "active",
           dateFrom: { lte: todayStart },
           dateTo: { gte: todayStart },
+          ...buildingWhere(pointId),
         },
-        select: { id: true, config: true },
+        orderBy: { dateFrom: "desc" },
+        select: { id: true, buildingId: true, config: true },
       });
-      if (!doc) continue;
-
-      // Merge value into existing entry data (per-template shape).
-      const existing = await db.journalDocumentEntry.findUnique({
-        where: {
-          documentId_employeeId_date: {
-            documentId: doc.id,
-            employeeId: managerId,
-            date: todayStart,
-          },
-        },
-        select: { data: true },
+      const rowList = tplCode === CLIMATE_CODE ? "rooms" : "equipment";
+      const targets = pickSensorDocuments(candidates, {
+        pointId,
+        rowKeys: (candidate) => sensorRowKeys(candidate.config, eq.id, rowList),
       });
-      const baseDataRaw = (existing?.data as Record<string, unknown>) ?? {};
-      // Снимаем _autoSeeded маркер — мы пишем реальные данные с
-      // IoT-датчика. Если оставить, NOT_AUTO_SEEDED фильтр
-      // (дашборд / отчёты / weekly-digest / auto-pause) продолжит
-      // считать строку placeholder'ом и не покажет sensor-fill'ы.
-      const { _autoSeeded: _seeded, ...baseData } = baseDataRaw;
-      void _seeded;
-      let nextData: Record<string, unknown> = baseData;
+      if (targets.length === 0) continue;
 
-      if (tplCode === COLD_EQUIPMENT_CODE) {
-        const prevTemps =
-          (baseData.temperatures as Record<string, unknown> | undefined) ?? {};
-        nextData = {
-          ...baseData,
-          temperatures: { ...prevTemps, [eq.id]: value },
-        };
-      } else if (tplCode === CLIMATE_CODE) {
-        const cfg = (doc.config as { controlTimes?: unknown }) ?? {};
-        const controlTimes = Array.isArray(cfg.controlTimes)
-          ? (cfg.controlTimes as unknown[]).filter(
-              (t): t is string => typeof t === "string"
-            )
-          : [];
-        const slot = nearestControlTime(now, controlTimes);
-        if (!slot) continue;
-        const prevMeasurements =
-          (baseData.measurements as
-            | Record<string, Record<string, Record<string, unknown>>>
-            | undefined) ?? {};
-        const prevRoom = prevMeasurements[eq.id] ?? {};
-        const prevSlot = prevRoom[slot] ?? {};
-        nextData = {
-          ...baseData,
-          measurements: {
-            ...prevMeasurements,
-            [eq.id]: {
-              ...prevRoom,
-              [slot]: { ...prevSlot, [mapping.readingType]: value },
+      let wrote = false;
+      for (const { doc, keys } of targets) {
+        const managerId = await signerFor(orgId, doc.buildingId);
+        if (!managerId) {
+          report.skipped += 1;
+          continue;
+        }
+        // Строки документа для этого оборудования; документ без такой
+        // строки — запись по id оборудования, как раньше.
+        const rowKeys = keys.length > 0 ? keys : [eq.id];
+
+        // Merge value into existing entry data (per-template shape).
+        const existing = await db.journalDocumentEntry.findUnique({
+          where: {
+            documentId_employeeId_date: {
+              documentId: doc.id,
+              employeeId: managerId,
+              date: todayStart,
             },
           },
-        };
-      } else {
-        // Other sensor-fill templates not yet supported — log and skip.
-        console.info(
-          `[tuya-pull] skipping unsupported template ${tplCode}`
-        );
-        continue;
-      }
+          select: { data: true },
+        });
+        const baseDataRaw = (existing?.data as Record<string, unknown>) ?? {};
+        // Снимаем _autoSeeded маркер — мы пишем реальные данные с
+        // IoT-датчика. Если оставить, NOT_AUTO_SEEDED фильтр
+        // (дашборд / отчёты / weekly-digest / auto-pause) продолжит
+        // считать строку placeholder'ом и не покажет sensor-fill'ы.
+        const { _autoSeeded: _seeded, ...baseData } = baseDataRaw;
+        void _seeded;
+        let nextData: Record<string, unknown> = baseData;
 
-      const dataValue = nextData as Prisma.InputJsonValue;
-      await db.journalDocumentEntry.upsert({
-        where: {
-          documentId_employeeId_date: {
+        if (tplCode === COLD_EQUIPMENT_CODE) {
+          const prevTemps =
+            (baseData.temperatures as Record<string, unknown> | undefined) ?? {};
+          const statuses =
+            (baseData.statuses as Record<string, unknown> | undefined) ?? {};
+          const temperatures: Record<string, unknown> = { ...prevTemps };
+          // Холодильник на обслуживании/в ремонте («обсл»/«рем») — датчик не пишет поверх отметки.
+          for (const key of rowKeys) if (!statuses[key]) temperatures[key] = value;
+          nextData = { ...baseData, temperatures };
+        } else if (tplCode === CLIMATE_CODE) {
+          const cfg = (doc.config as { controlTimes?: unknown }) ?? {};
+          const controlTimes = Array.isArray(cfg.controlTimes)
+            ? (cfg.controlTimes as unknown[]).filter(
+                (t): t is string => typeof t === "string"
+              )
+            : [];
+          const slot = nearestControlTime(now, controlTimes);
+          if (!slot) continue;
+          const measurements: Record<string, Record<string, Record<string, unknown>>> = {
+            ...((baseData.measurements as
+              | Record<string, Record<string, Record<string, unknown>>>
+              | undefined) ?? {}),
+          };
+          for (const key of rowKeys) {
+            const prevRoom = measurements[key] ?? {};
+            const prevSlot = prevRoom[slot] ?? {};
+            measurements[key] = {
+              ...prevRoom,
+              [slot]: { ...prevSlot, [mapping.readingType]: value },
+            };
+          }
+          nextData = { ...baseData, measurements };
+        } else {
+          // Other sensor-fill templates not yet supported — log and skip.
+          console.info(
+            `[tuya-pull] skipping unsupported template ${tplCode}`
+          );
+          continue;
+        }
+
+        const dataValue = nextData as Prisma.InputJsonValue;
+        await db.journalDocumentEntry.upsert({
+          where: {
+            documentId_employeeId_date: {
+              documentId: doc.id,
+              employeeId: managerId,
+              date: todayStart,
+            },
+          },
+          create: {
             documentId: doc.id,
             employeeId: managerId,
             date: todayStart,
+            data: dataValue,
           },
-        },
-        create: {
-          documentId: doc.id,
-          employeeId: managerId,
-          date: todayStart,
-          data: dataValue,
-        },
-        update: { data: dataValue },
-      });
-      report.entriesWritten += 1;
+          update: { data: dataValue },
+        });
+        report.entriesWritten += 1;
+        wrote = true;
+      }
+      if (!wrote) continue;
 
       // IoT-trigger → CAPA: до апдейта mapping.lastValue/lastReadingAt
       // мы знаем «предыдущий» замер. Если оба out-of-range и зазор
