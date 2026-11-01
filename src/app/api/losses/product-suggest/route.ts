@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
+import { getViewedPointId } from "@/lib/active-building";
+import { areaPointWhere, lossPointWhere } from "@/lib/point-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,11 +23,19 @@ export async function GET(request: Request) {
   const q = (searchParams.get("q") ?? "").trim().toLowerCase();
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
+  // Подсказки — из потерь точки в шапке, как список потерь (2026-11-01,
+  // «точка видит только своё»): раньше — из потерь всех точек.
+  const pointId = await getViewedPointId(auth.session);
+  const pointAreas = pointId
+    ? await db.area.findMany({ where: { organizationId: orgId, ...areaPointWhere(pointId) }, select: { id: true } })
+    : [];
+
   const records = await db.lossRecord.findMany({
     where: {
       organizationId: orgId,
       date: { gte: since },
       ...(q ? { productName: { contains: q, mode: "insensitive" } } : {}),
+      ...lossPointWhere(pointId, pointAreas.map((area) => area.id)),
     },
     select: { productName: true },
     orderBy: { date: "desc" },

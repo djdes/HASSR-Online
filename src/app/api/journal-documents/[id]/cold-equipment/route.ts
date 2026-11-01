@@ -21,6 +21,7 @@ import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole, pickPrimaryManager } from "@/lib/user-roles";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
 import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { objectPointError } from "@/lib/point-objects";
 
 type ColdEquipmentAction =
   | "apply_auto_fill"
@@ -152,6 +153,10 @@ export async function POST(
     return NextResponse.json({ updated: document.entries.length });
   }
 
+  // Связанный холодильник — только точки документа или общий; руководитель
+  // точки меняет только свой (2026-11-01, «точка видит только своё»).
+  const pointError = (buildingId: string | null) => objectPointError(session.user, buildingId);
+
   if (action === "save_equipment") {
     const raw = body.item;
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -184,7 +189,9 @@ export async function POST(
 
     // Новый холодильник встаёт в цех точки документа (2026-10-31).
     const pointId = await documentRowsPointId(getActiveOrgId(session), document.buildingId);
-    const item = await syncEquipmentDirectoryItem(getActiveOrgId(session), draft, pointId);
+    const synced = await syncEquipmentDirectoryItem(getActiveOrgId(session), draft, pointId, pointError);
+    if (!synced.ok) return NextResponse.json({ error: synced.error }, { status: synced.status });
+    const item = synced.item;
     const exists = config.equipment.some((current) => current.id === item.id);
     const nextConfig = normalizeColdEquipmentDocumentConfig({
       ...config,
@@ -210,9 +217,14 @@ export async function POST(
     for (let index = 0; index < equipment.length; index += 1) {
       const current = equipment[index];
       if (!wanted.has(current.id)) continue;
-      const synced = await syncEquipmentDirectoryItem(getActiveOrgId(session), current, pointId);
-      if (synced.sourceEquipmentId !== current.sourceEquipmentId) {
-        equipment[index] = synced;
+      const synced = await syncEquipmentDirectoryItem(getActiveOrgId(session), current, pointId, pointError);
+      if (!synced.ok) {
+        // Заведённые до отказа записи не теряют связь со строками.
+        if (changed) await persistConfig(normalizeColdEquipmentDocumentConfig({ ...config, equipment }));
+        return NextResponse.json({ error: synced.error }, { status: synced.status });
+      }
+      if (synced.item.sourceEquipmentId !== current.sourceEquipmentId) {
+        equipment[index] = synced.item;
         changed = true;
       }
     }

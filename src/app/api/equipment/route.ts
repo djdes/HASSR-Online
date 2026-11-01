@@ -15,6 +15,7 @@ import { equipmentBuildingWhere } from "@/lib/building-scope";
 import { documentRowsPointId } from "@/lib/document-point-rows";
 import { objectPointError } from "@/lib/point-objects";
 import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export async function GET(request: Request) {
   try {
@@ -38,10 +39,15 @@ export async function GET(request: Request) {
           select: { buildingId: true },
         })
       : null;
+    // Документ чужой точки — как чужой организации (2026-11-01, «точка видит только своё»).
+    if (document && !(await canSeeDocumentPoint(session, document.buildingId))) {
+      return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+    }
     const pointId = document ? await documentRowsPointId(organizationId, document.buildingId) : null;
-    // Без документа — оборудование точек человека (аудит точек, 2026-11-01:
-    // раньше любой сотрудник получал оборудование всей организации).
-    const visibleIds = document ? null : await visibleObjectBuildingIds(session);
+    // Без документа и у общего документа (без точки) — оборудование точек
+    // человека и общее (аудит точек, 2026-11-01: раньше любой сотрудник
+    // получал оборудование всей организации).
+    const visibleIds = pointId ? null : await visibleObjectBuildingIds(session);
     const pointFilter = visibleIds
       ? { OR: [{ area: { buildingId: { in: visibleIds } } }, { area: { buildingId: null } }] }
       : equipmentBuildingWhere(pointId);
