@@ -1,4 +1,5 @@
 import { forbidden } from "next/navigation";
+import { getViewedPointId } from "@/lib/active-building";
 import { ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -20,7 +21,7 @@ export default async function InspectorPortalPage() {
   const orgId = getActiveOrgId(session);
   // Руководитель точки — ссылки своих точек; новые ссылки — на точку из шапки (2026-11-01).
   const [{ tokens, activity }, issuePoint, targets] = await Promise.all([
-    loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope) }),
+    loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope), viewedPointId: await getViewedPointId(session) }),
     resolveInspectorIssuePointForSession(session, orgId, undefined),
     buildingTargets(orgId),
   ]);

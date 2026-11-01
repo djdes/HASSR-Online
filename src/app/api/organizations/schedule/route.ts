@@ -4,7 +4,8 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
+import { staffScopeWhere } from "@/lib/point-scope";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 export const runtime = "nodejs";
@@ -79,13 +80,13 @@ export async function GET(request: Request) {
   const toEnd = new Date(to);
   toEnd.setUTCHours(23, 59, 59, 999);
 
-  // Руководитель точки видит смены только людей своих точек.
-  const scoped = isPointScoped(g.session?.user);
+  // Смены — людей точек руководителя точки и точки в шапке (аудит
+  // 2026-11-01: руководство с выбранной точкой видело смены всех точек).
   const shifts = await db.workShift.findMany({
     where: {
       organizationId: g.orgId,
       date: { gte: from, lte: toEnd },
-      ...(scoped ? { user: staffScopeWhere(g.session?.user) } : {}),
+      ...(g.session ? { user: await visibleStaffWhere(g.session) } : {}),
     },
     select: {
       userId: true,

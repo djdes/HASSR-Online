@@ -13,6 +13,7 @@ import {
 import { orgTodayKey } from "@/lib/timezone";
 import { formatDayKeyRu } from "@/lib/inspector-qr";
 import { inspectorTokensWhere } from "@/lib/inspector-point";
+import { buildingWhere } from "@/lib/building-scope";
 
 /**
  * Выпуск и поиск «QR для проверяющих» (серверная часть кабинета).
@@ -148,15 +149,19 @@ const ACTIVITY_TEXT: Record<string, string> = {
  */
 export async function loadCabinetInspectorData(
   organizationId: string,
-  options: { pointScope?: readonly string[] | null } = {}
+  /**
+   * `viewedPointId` — точка в шапке (аудит 2026-11-01): ссылки этой точки и
+   * на всю организацию; без неё — все (в пределах руководителя точки).
+   */
+  options: { pointScope?: readonly string[] | null; viewedPointId?: string | null } = {}
 ): Promise<{
   tokens: CabinetInspectorToken[];
   activity: CabinetInspectorActivity[];
 }> {
-  const scoped = Boolean(options.pointScope && options.pointScope.length > 0);
+  const scoped = Boolean(options.pointScope && options.pointScope.length > 0) || Boolean(options.viewedPointId);
   const [rows, logs] = await Promise.all([
     db.inspectorToken.findMany({
-      where: { organizationId, ...inspectorTokensWhere(options.pointScope) },
+      where: { organizationId, ...inspectorTokensWhere(options.pointScope), ...buildingWhere(options.viewedPointId) },
       orderBy: { createdAt: "desc" },
       take: 100,
       select: {

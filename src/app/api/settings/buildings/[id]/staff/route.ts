@@ -12,6 +12,7 @@ import {
   mergeScopedBuildingIds,
   staffInScope,
 } from "@/lib/point-scope";
+import { loadStaffScopeCheck } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,6 +75,13 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
   });
   const wanted = new Set(body.userIds);
   if (isPointScoped(actor) && users.some((user) => wanted.has(user.id) && !staffInScope(actor, user.buildingIds))) {
+    return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
+  }
+  // Людей всей компании (офис, без точки, все точки) руководитель точки не
+  // ставит на точку и не снимает с неё, даже если среди их мест есть его
+  // точка (2026-11-01); кого форма не меняет — не проверяем.
+  const inScope = await loadStaffScopeCheck(auth.session);
+  if (users.some((user) => wanted.has(user.id) !== user.buildingIds.includes(building.id) && !inScope(user.buildingIds))) {
     return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
   }
   let changed = 0;

@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { competencySchema } from "@/lib/validators";
 import { isManagementRole } from "@/lib/user-roles";
-import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export async function GET(_req: NextRequest) {
@@ -18,19 +18,16 @@ export async function GET(_req: NextRequest) {
   }
 
   const organizationId = getActiveOrgId(session);
-  // У навыка нет связи с человеком в схеме — ограничиваем по id людей точек.
-  const scopedUserIds = isPointScoped(session.user)
-    ? (
-        await db.user.findMany({
-          where: { organizationId, ...staffScopeWhere(session.user) },
-          select: { id: true },
-        })
-      ).map((user) => user.id)
-    : null;
+  // У навыка нет связи с человеком в схеме — ограничиваем по id людей списка:
+  // руководитель точки — его точек, точка в шапке — её люди (2026-11-01).
+  const visibleUsers = await db.user.findMany({
+    where: { organizationId, ...(await visibleStaffWhere(session)) },
+    select: { id: true },
+  });
   const competencies = await db.staffCompetency.findMany({
     where: {
       organizationId,
-      ...(scopedUserIds ? { userId: { in: scopedUserIds } } : {}),
+      userId: { in: visibleUsers.map((user) => user.id) },
     },
     orderBy: [{ userId: "asc" }, { skill: "asc" }],
   });

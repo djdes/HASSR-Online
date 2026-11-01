@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ScheduleEditor } from "@/components/settings/schedule-editor";
 import { NOT_COMMISSION_WHERE } from "@/lib/journal-roster";
-import { staffScopeWhere } from "@/lib/point-scope";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,15 +28,14 @@ export default async function ScheduleSettingsPage() {
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 13);
 
-  const [users, positions, shifts] = await Promise.all([
+  // Руководитель точки — график людей своих точек (фаза 2 «Офис и точки»),
+  // точка в шапке — её людей (2026-11-01); смены — только людей списка.
+  const staffWhere = await visibleStaffWhere(session);
+  const [users, positions] = await Promise.all([
     db.user.findMany({
       where: {
-        organizationId,
-        isActive: true,
-        archivedAt: null,
-        ...NOT_COMMISSION_WHERE,
-        // Руководитель точки — график людей своих точек (фаза 2 «Офис и точки»).
-        ...staffScopeWhere(session.user),
+        // NOT_COMMISSION_WHERE и условие точки оба занимают `AND` — кладём рядом.
+        AND: [{ organizationId, isActive: true, archivedAt: null, ...NOT_COMMISSION_WHERE }, staffWhere],
       },
       orderBy: [{ name: "asc" }],
       select: {
@@ -54,19 +53,20 @@ export default async function ScheduleSettingsPage() {
       orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
       select: { id: true, name: true, categoryKey: true },
     }),
-    db.workShift.findMany({
-      where: {
-        organizationId,
-        date: { gte: start, lte: end },
-      },
-      select: {
-        userId: true,
-        date: true,
-        status: true,
-        jobPositionId: true,
-      },
-    }),
   ]);
+  const shifts = await db.workShift.findMany({
+    where: {
+      organizationId,
+      userId: { in: users.map((user) => user.id) },
+      date: { gte: start, lte: end },
+    },
+    select: {
+      userId: true,
+      date: true,
+      status: true,
+      jobPositionId: true,
+    },
+  });
 
   const shiftsInitial = shifts.map((s) => ({
     userId: s.userId,

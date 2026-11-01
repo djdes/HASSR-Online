@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { bumpSessionVersion } from "@/lib/session-version";
 import { sanitizeBuildingIds } from "@/lib/building-targets";
-import { STAFF_OUT_OF_SCOPE_ERROR, mergeScopedBuildingIds, staffInScope } from "@/lib/point-scope";
+import { STAFF_OUT_OF_SCOPE_ERROR, mergeScopedBuildingIds } from "@/lib/point-scope";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
@@ -21,7 +21,7 @@ import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { performOffboarding } from "@/lib/offboarding";
 import { normalizeWeeklyDaysOff } from "@/lib/staff-days-off";
 import { checkUserActivation, seatLimitResponse } from "@/lib/billing.server";
-import { computePointScope } from "@/lib/point-scope.server";
+import { computePointScope, loadStaffScopeCheck } from "@/lib/point-scope.server";
 import { assignmentSurvivesEdit, keepPrimaryBuilding } from "@/lib/point-assignments";
 import { reconcileAssignmentsAfterEdit } from "@/lib/point-assignments.server";
 
@@ -89,8 +89,10 @@ export async function PUT(
     if (!user) {
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
     }
-    // Руководитель точки правит только людей своих точек (фаза 2).
-    if (!staffInScope(session.user, user.buildingIds)) {
+    // Руководитель точки правит только людей своих точек (фаза 2); людей
+    // всей компании (офис, без точки, все точки) — руководство компании (2026-11-01).
+    const inScope = await loadStaffScopeCheck(session);
+    if (!inScope(user.buildingIds)) {
       return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
     }
 
@@ -348,7 +350,8 @@ export async function DELETE(
     if (!user) {
       return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 });
     }
-    if (!staffInScope(session.user, user.buildingIds)) {
+    const inScope = await loadStaffScopeCheck(session);
+    if (!inScope(user.buildingIds)) {
       return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
     }
 

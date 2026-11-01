@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { objectPointResponse } from "@/lib/point-objects.server";
+import { worksAtBuilding } from "@/lib/building-scope";
+import { buildingTargets } from "@/lib/building-targets";
 import { syncRoomChecklistItems } from "@/lib/cleaning-room-checklist-sync";
 import { parseScopeSteps, type ScopeStep } from "@/lib/cleaning-document";
 import { ROOM_KINDS } from "@/lib/room-kinds";
@@ -116,6 +118,22 @@ async function ensureOrgUsers(orgId: string, ids: string[]): Promise<boolean> {
   return found.length === ids.length;
 }
 
+/**
+ * Уборщики работают на точке помещения (2026-11-01, «точка видит только
+ * своё»): правило `worksAtBuilding` — без точек или только с удалёнными
+ * точками — везде, офис — в офисе. Точки выключены — без проверки.
+ */
+async function cleanersWorkAtBuilding(orgId: string, ids: string[], buildingId: string): Promise<boolean> {
+  if (ids.length === 0) return true;
+  const orgBuildingIds = (await buildingTargets(orgId)).filter((target): target is string => Boolean(target));
+  if (orgBuildingIds.length === 0) return true;
+  const cleaners = await db.user.findMany({
+    where: { id: { in: ids }, organizationId: orgId },
+    select: { buildingIds: true },
+  });
+  return cleaners.every((cleaner) => worksAtBuilding(orgBuildingIds, cleaner.buildingIds, buildingId));
+}
+
 export async function PATCH(request: Request, ctx: Ctx) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
@@ -175,6 +193,12 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (!(await ensureOrgUsers(orgId, idsToCheck))) {
     return NextResponse.json(
       { error: "Некоторые сотрудники не принадлежат организации или в архиве" },
+      { status: 400 },
+    );
+  }
+  if (nextCleanerIds && !(await cleanersWorkAtBuilding(orgId, nextCleanerIds, previous.buildingId))) {
+    return NextResponse.json(
+      { error: "Уборщик работает на другой точке — выберите сотрудника этой точки" },
       { status: 400 },
     );
   }

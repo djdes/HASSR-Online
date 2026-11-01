@@ -6,7 +6,9 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
-import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
+import { isPointScoped } from "@/lib/point-scope";
+import { getViewedPointId } from "@/lib/active-building";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 
 import { KioskClient, type KioskDeviceRow, type KioskEmployeeRow } from "./kiosk-client";
 
@@ -22,6 +24,9 @@ export default async function KioskSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const orgId = getActiveOrgId(session);
+  // Точка в шапке (аудит 2026-11-01): планшеты точки и общие, люди точки —
+  // у руководства с выбранной точкой тоже, не только у руководителя точки.
+  const viewedPoint = await getViewedPointId(session);
 
   const [org, devices, employees] = await Promise.all([
     db.organization.findUnique({
@@ -34,12 +39,14 @@ export default async function KioskSettingsPage() {
         organizationId: orgId,
         revokedAt: null,
         ...(isPointScoped(session.user) ? { buildingId: { in: session.user.pointScope ?? [] } } : {}),
+        ...(viewedPoint ? { OR: [{ buildingId: viewedPoint }, { buildingId: null }] } : {}),
       },
       select: { id: true, label: true, lastSeenAt: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),
     db.user.findMany({
-      where: { organizationId: orgId, ...ORG_ROSTER_WHERE, ...staffScopeWhere(session.user) },
+      // Оба условия занимают `AND` — объединяем, а не перезаписываем.
+      where: { organizationId: orgId, AND: [ORG_ROSTER_WHERE, await visibleStaffWhere(session)] },
       select: { id: true, name: true, positionTitle: true, qrPinHash: true },
       orderBy: { name: "asc" },
     }),
