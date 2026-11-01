@@ -7465,7 +7465,8 @@ export async function loadJournalDocumentPdfInput(params: {
   // Нет секрета QR (стенд без настроек) — печатаем бланк без кода.
   let qr: JournalPdfQr | null = null;
   try {
-    qr = journalDocumentPdfQr(journalPdfQrOrigin(), organizationId, document.template.code);
+    // Документ точки — QR своей точки (аудит 2026-11-01), общий — организации.
+    qr = journalDocumentPdfQr(journalPdfQrOrigin(), organizationId, document.template.code, document.buildingId);
   } catch (error) {
     console.warn("[document-pdf] journal QR skipped", error instanceof Error ? error.message : error);
   }

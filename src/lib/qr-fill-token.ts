@@ -136,3 +136,25 @@ export function verifyJournalShortSig(orgId: string, code: string, sig: string):
   const given = Buffer.from(sig);
   return expected.length === given.length && crypto.timingSafeEqual(expected, given);
 }
+
+/**
+ * Короткая подпись QR журнала точки `/qj/<buildingId>/<code>/<sig>` (аудит
+ * 2026-11-01): бланк документа точки ведёт к документам этой точки, а не к
+ * выбору документов всех точек. Адрес той же длины, что у QR организации, —
+ * матрица по-прежнему влезает в шапку. Своя метка `qj|b~|` — подпись точки
+ * не подходит как подпись организации с тем же id и наоборот.
+ */
+export function journalPointShortSig(buildingId: string, code: string): string {
+  if (!SHORT_ID_RE.test(buildingId) || !SHORT_ID_RE.test(code)) {
+    throw new Error("Некорректный id для короткой ссылки журнала");
+  }
+  return sign(`qj|b~|${buildingId}|${code}`).slice(0, JOURNAL_SHORT_SIG_LENGTH);
+}
+
+export function verifyJournalPointShortSig(buildingId: string, code: string, sig: string): boolean {
+  if (typeof sig !== "string" || sig.length !== JOURNAL_SHORT_SIG_LENGTH) return false;
+  if (!SHORT_ID_RE.test(buildingId) || !SHORT_ID_RE.test(code)) return false;
+  const expected = Buffer.from(journalPointShortSig(buildingId, code));
+  const given = Buffer.from(sig);
+  return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+}

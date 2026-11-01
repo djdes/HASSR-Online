@@ -12,6 +12,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { decodeRouteParam } from "@/lib/route-param";
 import { db } from "@/lib/db";
 import { documentInWorkerScope, loadManagerPointScope } from "@/lib/worker-point-scope";
+import { splitJournalPosterId } from "@/lib/journal-qr-target";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +55,16 @@ export async function GET(
           : (await db.room.findFirst({ where: { id, building: { organizationId } }, select: { buildingId: true } }))?.buildingId;
       if (!documentInWorkerScope(await loadManagerPointScope(organizationId, session.user.id), objectPoint)) {
         return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
+      }
+    } else {
+      // QR документа чужой точки — как несуществующий (аудит 2026-11-01): его
+      // ссылка открывает запись в документ и список людей той точки.
+      const documentId = splitJournalPosterId(id).documentId;
+      if (documentId) {
+        const document = await db.journalDocument.findFirst({ where: { id: documentId, organizationId }, select: { buildingId: true } });
+        if (!document || !documentInWorkerScope(await loadManagerPointScope(organizationId, session.user.id), document.buildingId)) {
+          return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
+        }
       }
     }
     const poster = await loadQrPoster({
