@@ -10,8 +10,9 @@ set -uo pipefail
 BASE="${1:-https://wesetup.ru}"
 fail=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fail=1; fi; }
-get() { curl -sS --max-time 60 "$BASE$1"; }
-code() { curl -sS -o /dev/null -w "%{http_code}" --max-time 60 "$@"; }
+# GET повторяем при обрыве сети (у прода бывают «connection reset»); POST — нет.
+get() { local out; for _ in 1 2 3; do out=$(curl -sS --max-time 60 "$BASE$1") && { printf '%s' "$out"; return 0; }; sleep 3; done; return 1; }
+code() { local out; for _ in 1 2 3; do out=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 "$@") && { printf '%s' "$out"; return 0; }; sleep 3; done; printf '%s' "$out"; }
 post() { curl -sS --max-time 60 -X POST -H "content-type: application/json" -d "$2" -w " %{http_code}" "$BASE$1"; }
 
 echo "build-info: $(get /api/build-info)"
@@ -24,9 +25,9 @@ check "/sanpin-2-3-2-4-4282-26: заголовок, журналы, FAQ" '[[ "$s
 glossary=$(get /glossary/sanpin-2-3-2-4-4282-26)
 check "глоссарий ведёт на страницу СанПиН" '[[ "$glossary" == *"href=\"/sanpin-2-3-2-4-4282-26\""* ]]'
 sitemap=$(get /sitemap.xml)
-check "sitemap: /sanpin-2-3-2-4-4282-26" '[[ "$sitemap" == *"/sanpin-2-3-2-4-4282-26</loc>"* ]]'
+check "sitemap: /sanpin-2-3-2-4-4282-26" '[[ "$sitemap" == *"<loc>https://wesetup.ru/sanpin-2-3-2-4-4282-26</loc>"* ]]'
 
-slots_headers=$(curl -sSI --max-time 60 "$BASE/api/demo-request/slots" | tr -d '\r')
+slots_headers=$(for _ in 1 2 3; do curl -sSI --max-time 60 "$BASE/api/demo-request/slots" && break; sleep 3; done | tr -d '\r')
 slots=$(get /api/demo-request/slots)
 check "слоты показа: 200, no-store, Москва, 5 дней" '[[ "$slots_headers" == *" 200"* && "${slots_headers,,}" == *"no-store"* && "$slots" == *"\"timeZone\":\"Europe/Moscow\""* && $(grep -o "\"key\"" <<<"$slots" | wc -l) -eq 5 ]]'
 past=$(post /api/demo-request '{"name":"Проверка выкладки","phone":"+79990000000","slot":"2026-01-05T07:00:00.000Z","consent":true,"place":"deploy-check"}')
