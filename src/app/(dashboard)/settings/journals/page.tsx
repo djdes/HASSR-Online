@@ -1,7 +1,8 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { buildingWhere } from "@/lib/building-scope";
+import { journalSettingsPointId } from "@/lib/journal-settings-target";
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -68,24 +69,25 @@ export default async function JournalsSettingsPage() {
       }),
     ]);
 
+  // Точка из шапки — её набор журналов; «Вся организация» — набор всех точек.
+  const pointId = await journalSettingsPointId(session);
+
   // Сколько активных документов у каждого журнала: выключение прячет их
   // из всех списков, и человек должен увидеть число заранее.
   const activeDocuments = await db.journalDocument.groupBy({
     by: ["templateId"],
-    where: { organizationId, status: "active" },
+    where: { organizationId, status: "active", ...buildingWhere(pointId) },
     _count: { _all: true },
   });
   const activeDocsByTemplate = new Map(
     activeDocuments.map((row) => [row.templateId, row._count._all])
   );
 
-  // У точки со своим набором журналов (слитая организация) — её набор.
-  const activeBuildingId = await getActiveBuildingId(session);
-  const disabled = activeBuildingId
-    ? await getDisabledJournalCodes(organizationId, activeBuildingId)
+  const disabled = pointId
+    ? await getDisabledJournalCodes(organizationId, pointId)
     : parseDisabledCodes(organization?.disabledJournalCodes);
-  const disabledPaper = activeBuildingId
-    ? await getDisabledPaperJournalIds(organizationId, activeBuildingId)
+  const disabledPaper = pointId
+    ? await getDisabledPaperJournalIds(organizationId, pointId)
     : parseDisabledCodes(organization?.disabledPaperJournalIds);
   const sphere = normalizeSphere(organization?.type);
   const accessByTemplate = new Map<string, string[]>();
@@ -96,7 +98,7 @@ export default async function JournalsSettingsPage() {
   }
 
   // Снимки реальных документов — те же, что на дашборде и в /journals.
-  const previewUrls = await getJournalPreviewMap(organizationId, await getActiveBuildingId(session));
+  const previewUrls = await getJournalPreviewMap(organizationId, pointId);
 
   // Журналы по алфавиту: клиент раскладывает их по группам
   // («обязательные», «рекомендуем», остальные) с сохранением порядка.

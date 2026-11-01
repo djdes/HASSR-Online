@@ -6,8 +6,14 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
-import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
+import { buildingTargets } from "@/lib/building-targets";
+import {
+  loadBuildingJournalSettings,
+  readBuildingJournalSettings,
+  withBuildingJournalSettings,
+  worksAtBuilding,
+} from "@/lib/building-settings";
+import { journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getJournalAutomation } from "@/lib/journal-automation";
 import { getAutofillCapability } from "@/lib/journal-autofill-capability";
@@ -71,6 +77,11 @@ export async function POST(request: Request) {
   const organizationId = getActiveOrgId(session);
   const blocked = await rejectJournalAutomation(organizationId, "autoFill");
   if (blocked) return blocked;
+  // Точка из шапки — её автоматика и её документы; «Вся организация» —
+  // документы всех точек. Руководитель точки — только свою точку.
+  const target = await journalSettingsWriteTarget(session);
+  if (!target.ok) return target.response;
+  const pointId = target.pointId;
   const orgRow = await db.organization.findUnique({
     where: { id: organizationId },
     select: {
@@ -79,12 +90,7 @@ export async function POST(request: Request) {
       autoJournalCodes: true,
     },
   });
-  // Точка со своей автоматикой (слитая организация): настройки и документы
-  // только этой точки.
-  const activeBuildingId = await getActiveBuildingId(session);
-  const ownSettings = await readBuildingJournalSettings(db, activeBuildingId);
-  const ownBuildingId = ownSettings ? activeBuildingId : null;
-  const org = withBuildingJournalSettings(orgRow, ownSettings);
+  const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, pointId));
   const automation = getJournalAutomation(org, code);
   if (!automation.autoFill) {
     return NextResponse.json(
@@ -98,15 +104,26 @@ export async function POST(request: Request) {
   // остался бы без результата. Только если автосоздание включено и в
   // спецрежиме.
   if (automation.autoCreate && automationOn(await getJournalControls(organizationId), "autoCreate")) {
-    await ensureActiveDocument(db, {
-      organizationId,
-      templateCode: code,
-      autoFill: true,
-      buildingId: activeBuildingId,
-    }).catch((error) => {
-      console.warn(`[auto-journals/apply] ensureActiveDocument ${code}`, error);
-      return null;
-    });
+    // «Вся организация» — документ каждой точке, где автоматика журнала
+    // включена (у точки со своей автоматикой — по её настройкам).
+    const targets = pointId ? [pointId] : await buildingTargets(organizationId);
+    const ownByBuilding = pointId ? null : await loadBuildingJournalSettings(db, organizationId);
+    for (const buildingId of targets) {
+      const effective =
+        ownByBuilding && buildingId
+          ? getJournalAutomation(withBuildingJournalSettings(orgRow, ownByBuilding.get(buildingId)), code)
+          : automation;
+      if (!effective.autoCreate || !effective.autoFill) continue;
+      await ensureActiveDocument(db, {
+        organizationId,
+        templateCode: code,
+        autoFill: true,
+        buildingId,
+      }).catch((error) => {
+        console.warn(`[auto-journals/apply] ensureActiveDocument ${code}`, error);
+        return null;
+      });
+    }
   }
 
   const now = new Date();
@@ -116,7 +133,7 @@ export async function POST(request: Request) {
   const documents = await db.journalDocument.findMany({
     where: {
       organizationId,
-      ...(ownBuildingId ? { buildingId: ownBuildingId } : {}),
+      ...(pointId ? { buildingId: pointId } : {}),
       status: "active",
       autoFill: true,
       template: { code },

@@ -73,6 +73,16 @@ async function handle(request: Request) {
     // Отключённый журнал не должен возвращаться сам: его страница отвечает
     // «Этот журнал отключён», а ночной крон всё равно заводил документ.
     const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
+    // У точки со своими настройками (набор журналов, автоматика) — её
+    // настройки: выключенный на точке журнал не возвращается ей и при
+    // восстановлении цепочки.
+    const buildingSettings = await loadBuildingJournalSettings(db, org.id);
+    const disabledByBuilding = new Map<string, Set<string>>();
+    for (const buildingId of targets) {
+      if (!buildingId) continue;
+      const settings = withBuildingJournalSettings(org, buildingSettings.get(buildingId));
+      disabledByBuilding.set(buildingId, parseDisabledCodes(settings?.disabledJournalCodes));
+    }
     // Догоняющий шаг: документы прошлых периодов, у которых уже есть
     // преемник, переводим в «закрытые» — иначе они висят active до
     // авто-архива (365 дней). Делаем для ВСЕХ орг, даже без
@@ -99,6 +109,7 @@ async function handle(request: Request) {
         organizationId: org.id,
         buildingIds: targets,
         skipCodes: disabledCodes,
+        skipCodesByBuilding: disabledByBuilding,
       });
       for (const report of restored) {
         if (!report.created) continue;
@@ -114,8 +125,7 @@ async function handle(request: Request) {
     // Коды, которые целиком ведёт cron автоматизации 06:00
     // (/api/cron/journal-automation), здесь пропускаем: он создаёт
     // документ сразу с autoFill=true, а мы бы создали его без флага.
-    // У точки со своей автоматикой (слитая организация) — её списки.
-    const buildingSettings = await loadBuildingJournalSettings(db, org.id);
+    // У точки со своей автоматикой — её списки.
     const jobs = targets.flatMap((buildingId) => {
       const settings = withBuildingJournalSettings(
         org,

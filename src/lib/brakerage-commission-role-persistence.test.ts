@@ -38,6 +38,8 @@ test("actual commission APIs and organization persistence retain role provenance
   const common = {
     "@/lib/auth-helpers": { getActiveOrgId: () => "org" }, "@/lib/auth": { authOptions: {} },
     "@/lib/active-building": { getActiveBuildingId: async () => null },
+    // Точка из шапки не выбрана — «Вся организация».
+    "@/lib/journal-settings-target": { journalSettingsPointId: async () => null, journalSettingsWriteTarget: async () => ({ ok: true, pointId: null }) },
     "@/lib/server-session": { getServerSession: async () => ({ user: { id: "manager" } }) },
     "@/lib/role-access": { hasFullWorkspaceAccess: () => management },
     "@/lib/db": { db }, "@/lib/audit-log": { recordAuditLog: async () => undefined },

@@ -13,7 +13,7 @@
  * трогаем — возвращаем существующий id, чтобы клиент мог отправить в
  * отчёте «уже был».
  */
-import { buildingWhere } from "@/lib/building-scope";
+import { buildingWhere, worksAtBuilding } from "@/lib/building-scope";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import type { PrismaClient } from "@prisma/client";
 import {
@@ -383,9 +383,48 @@ export async function closeExpiredDocuments(
 }
 
 /**
- * Ответственный и проверяющий из ПОСЛЕДНЕГО документа шаблона. Оба
- * проверяются на «всё ещё сотрудник этой организации и активен» —
- * иначе новый документ получил бы ссылку на уволенного.
+ * Кто из людей может стать ответственным документа точки (2026-11-01):
+ * живой сотрудник организации, работающий на этой точке (`worksAtBuilding`).
+ * Без точки — все живые. Иначе документ точки Б наследовал человека точки А
+ * из старого общего документа или из политики «всей организации».
+ */
+export async function aliveAtPoint(
+  db: PrismaClient,
+  args: { organizationId: string; buildingId?: string | null },
+  ids: string[]
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const [alive, buildings] = await Promise.all([
+    db.user.findMany({
+      where: {
+        id: { in: ids },
+        organizationId: args.organizationId,
+        isActive: true,
+        // Архивный сотрудник — тот же уволенный: новый документ не должен
+        // рождаться с ссылкой на него.
+        archivedAt: null,
+        isRoot: false,
+      },
+      select: { id: true, buildingIds: true },
+    }),
+    args.buildingId
+      ? db.building.findMany({ where: { organizationId: args.organizationId }, select: { id: true } })
+      : Promise.resolve([] as { id: string }[]),
+  ]);
+  const orgBuildingIds = buildings.map((building) => building.id);
+  const pointId = args.buildingId && orgBuildingIds.includes(args.buildingId) ? args.buildingId : null;
+  return new Set(
+    alive
+      .filter((user) => !pointId || worksAtBuilding(orgBuildingIds, user.buildingIds ?? [], pointId))
+      .map((user) => user.id)
+  );
+}
+
+/**
+ * Ответственный и проверяющий из ПОСЛЕДНЕГО документа шаблона (своей точки
+ * или общего). Оба проверяются на «всё ещё сотрудник этой организации,
+ * активен и работает на точке документа» — иначе новый документ получил бы
+ * ссылку на уволенного или на человека другой точки.
  */
 async function inheritResponsiblesFromLastDocument(
   db: PrismaClient,
@@ -408,20 +447,7 @@ async function inheritResponsiblesFromLastDocument(
   if (candidateIds.length === 0) {
     return { responsibleUserId: null, verifierUserId: null };
   }
-  const alive = await db.user.findMany({
-    where: {
-      id: { in: candidateIds },
-      organizationId: args.organizationId,
-      isActive: true,
-      // Архивный сотрудник — тот же уволенный: новый документ не должен
-      // рождаться с ссылкой на него (раньше фильтра не было, и
-      // наследование протаскивало архив).
-      archivedAt: null,
-      isRoot: false,
-    },
-    select: { id: true },
-  });
-  const aliveIds = new Set(alive.map((user) => user.id));
+  const aliveIds = await aliveAtPoint(db, args, candidateIds);
   return {
     responsibleUserId:
       last.responsibleUserId && aliveIds.has(last.responsibleUserId)
@@ -454,6 +480,8 @@ async function resolveDesiredResponsibles(
     organizationId: string;
     templateId: string;
     policy?: JournalAutomationResponsibles;
+    /** Точка нового документа: наследование — с её (или общего) документа, люди — её. */
+    buildingId: string | null;
   }
 ): Promise<{ responsibleUserId: string | null; verifierUserId: string | null }> {
   const empty = { responsibleUserId: null, verifierUserId: null };
@@ -464,20 +492,7 @@ async function resolveDesiredResponsibles(
       args.policy.responsibleUserId,
       args.policy.verifierUserId,
     ].filter((id): id is string => Boolean(id));
-    const alive =
-      wanted.length > 0
-        ? await db.user.findMany({
-            where: {
-              id: { in: wanted },
-              organizationId: args.organizationId,
-              isActive: true,
-              archivedAt: null,
-              isRoot: false,
-            },
-            select: { id: true },
-          })
-        : [];
-    const aliveIds = new Set(alive.map((user) => user.id));
+    const aliveIds = await aliveAtPoint(db, args, wanted);
     const custom = {
       responsibleUserId: aliveIds.has(args.policy.responsibleUserId)
         ? args.policy.responsibleUserId
@@ -712,6 +727,7 @@ export async function ensureActiveDocument(
     organizationId: args.organizationId,
     templateId: template.id,
     policy: getJournalAutomation(automationOrg, args.templateCode).responsibles,
+    buildingId: args.buildingId ?? null,
   });
   // «Как прошлый журнал» — для cleaning подтягиваем config предыдущего
   // документа (rooms, ответственные, weekday-маски), отрезая matrix/marks
@@ -1009,6 +1025,7 @@ export async function ensureNextPeriodDocument(
     organizationId: args.organizationId,
     templateId: template.id,
     policy: getJournalAutomation(automationOrgNext, args.templateCode).responsibles,
+    buildingId: args.buildingId ?? null,
   });
   const prefillNext = await prefillResponsiblesForNewDocument({
     organizationId: args.organizationId,
@@ -1145,11 +1162,19 @@ export async function ensureCurrentDocumentsForBrokenChains(
      * «был документ → истёк → создаём новый» возвращала его каждый месяц.
      */
     skipCodes?: Set<string>;
+    /**
+     * Свой набор выключенных журналов точки (`getDisabledJournalCodes` с
+     * точкой): журнал, выключенный на точке, не возвращается ей сам. Точки
+     * без записи — `skipCodes`.
+     */
+    skipCodesByBuilding?: ReadonlyMap<string, ReadonlySet<string>>;
   }
 ): Promise<CreateReport[]> {
   const now = args.now ?? new Date();
   const targets =
     args.buildingIds && args.buildingIds.length > 0 ? args.buildingIds : [null];
+  const skipFor = (buildingId: string | null) =>
+    (buildingId ? args.skipCodesByBuilding?.get(buildingId) : undefined) ?? args.skipCodes;
 
   // Один запрос вместо N: шаблоны (и точки), у которых в этой орге есть
   // хоть один документ, вместе с самой поздней датой окончания.
@@ -1172,18 +1197,18 @@ export async function ensureCurrentDocumentsForBrokenChains(
   for (const templateId of templateIds) {
     const template = templateById.get(templateId);
     if (!template || !template.isActive) continue;
-    if (args.skipCodes?.has(template.code)) {
-      reports.push({
-        code: template.code,
-        name: template.name,
-        created: false,
-        documentId: "",
-        reason: "journal-disabled",
-      });
-      continue;
-    }
     const tplGroups = groups.filter((group) => group.templateId === templateId);
     for (const buildingId of targets) {
+      if (skipFor(buildingId)?.has(template.code)) {
+        reports.push({
+          code: template.code,
+          name: template.name,
+          created: false,
+          documentId: "",
+          reason: "journal-disabled",
+        });
+        continue;
+      }
       reports.push(
         await restoreBrokenChainForTemplate(db, {
           organizationId: args.organizationId,
@@ -1255,19 +1280,18 @@ export async function restoreBrokenChainForTemplate(
     });
     groups = rows.map((row) => ({ buildingId: row.buildingId, _max: { dateTo: row._max.dateTo } }));
   }
-  if (groups.length === 0) return skip("no-previous-document");
+  // Общий документ (без точки) покрывает все точки, свой — только свою.
+  // Журналом не пользовались ни на этой точке, ни общим документом — точке
+  // его не навязываем (раньше документ на точке А заводил его каждой точке).
+  const pointGroups =
+    args.buildingId === null
+      ? groups
+      : groups.filter((group) => (group.buildingId ?? null) === null || group.buildingId === args.buildingId);
+  if (pointGroups.length === 0) return skip("no-previous-document");
 
   const isCurrent = (group: TemplateDocumentGroup) =>
     Boolean(group._max.dateTo && group._max.dateTo.getTime() >= todayUtcStart.getTime());
-  // Общий документ (без точки) покрывает все точки, свой — только свою.
-  const hasCurrent =
-    args.buildingId === null
-      ? groups.some(isCurrent)
-      : groups.some(
-          (group) =>
-            ((group.buildingId ?? null) === null || group.buildingId === args.buildingId) &&
-            isCurrent(group),
-        );
+  const hasCurrent = pointGroups.some(isCurrent);
   // Есть документ, который покрывает сегодня или начинается позже —
   // цепочка цела (в т.ч. look-ahead документ на следующий период).
   if (hasCurrent) return skip("has-current-document");

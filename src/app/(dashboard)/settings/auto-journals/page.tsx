@@ -4,7 +4,8 @@ import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MapPin, Sparkles } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
-import { buildingTargets, getActiveBuildingId } from "@/lib/active-building";
+import { buildingTargets } from "@/lib/active-building";
+import { journalSettingsPointId } from "@/lib/journal-settings-target";
 import { buildingWhere } from "@/lib/building-scope";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -31,7 +32,8 @@ export default async function AutoJournalsPage() {
   if (!automationOn(controls, "autoCreate")) redirect("/inspection/special-mode");
   const autoFillAvailable = automationOn(controls, "autoFill");
 
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Точка из шапки — её автоматика; «Вся организация» — организация.
+  const pointId = await journalSettingsPointId(session);
   const [templates, orgRow, activeDocs, buildingSettings] = await Promise.all([
     db.journalTemplate.findMany({
       where: { isActive: true },
@@ -59,14 +61,14 @@ export default async function AutoJournalsPage() {
         status: "active",
         dateFrom: { lte: new Date() },
         dateTo: { gte: new Date() },
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(pointId),
       },
       select: { templateId: true },
       distinct: ["templateId"],
     }),
-    readBuildingJournalSettings(db, activeBuildingId),
+    readBuildingJournalSettings(db, pointId),
   ]);
-  // У точки со своей автоматикой (слитая организация) — её настройки.
+  // У точки со своей автоматикой — её настройки, иначе как у организации.
   const org = withBuildingJournalSettings(orgRow, buildingSettings);
 
   const disabledSet = new Set<string>(

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getActiveBuildingId } from "@/lib/active-building";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import {
   setDisabledJournalCodes,
@@ -7,6 +6,7 @@ import {
 } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
+import { journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 
 /**
  * PATCH /api/settings/journals
@@ -48,11 +48,12 @@ export async function PATCH(request: Request) {
   }
 
   const organizationId = getActiveOrgId(session);
+  // Точка из шапки — её набор; «Вся организация» — набор всех точек.
+  const target = await journalSettingsWriteTarget(session);
+  if (!target.ok) return target.response;
   const journals = await checkJournalLimit(organizationId, codes, { source: "settings/journals" });
   if (!journals.ok) return limitResponse(journals);
-  // Точка со своим набором журналов (слитая организация) — набор точки.
-  const activeBuildingId = await getActiveBuildingId(session);
-  const stored = await setDisabledJournalCodes(organizationId, codes, activeBuildingId);
+  const stored = await setDisabledJournalCodes(organizationId, codes, target.pointId);
 
   let storedPaper: string[] | undefined;
   if (Array.isArray(body.disabledPaperIds)) {
@@ -60,7 +61,7 @@ export async function PATCH(request: Request) {
     for (const id of body.disabledPaperIds) {
       if (typeof id === "string" && id.length > 0) paperIds.push(id);
     }
-    storedPaper = await setDisabledPaperJournalIds(organizationId, paperIds, activeBuildingId);
+    storedPaper = await setDisabledPaperJournalIds(organizationId, paperIds, target.pointId);
   }
 
   return NextResponse.json({

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
 import { commissionRoleKind, isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { readOrgCommission, saveOrgCommission } from "@/lib/brakerage-commission-org";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { db } from "@/lib/db";
+import { journalSettingsPointId, journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 import { recordAuditLog } from "@/lib/audit-log";
 import { COMMISSION_CATEGORY_KEY, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -31,12 +32,13 @@ async function guard(ctx: Ctx) {
   if (!isCommissionJournalCode(code)) {
     return { error: NextResponse.json({ error: "Бракеражная комиссия есть только у бракеража готовой и скоропортящейся продукции" }, { status: 400 }) } as const;
   }
-  // Точка со своим составом (слитая организация) — состав активной точки.
+  // Точка из шапки — её состав (свой или как у организации) и её люди;
+  // «Вся организация» — состав организации.
   return {
     session,
     code,
     organizationId: getActiveOrgId(session),
-    buildingId: await getActiveBuildingId(session),
+    buildingId: await journalSettingsPointId(session),
   } as const;
 }
 
@@ -46,7 +48,7 @@ export async function GET(_request: Request, ctx: Ctx) {
   const [members, users] = await Promise.all([
     readOrgCommission(auth.organizationId, auth.code, auth.buildingId),
     db.user.findMany({
-      where: { organizationId: auth.organizationId, ...ORG_SIGNER_WHERE },
+      where: { organizationId: auth.organizationId, ...ORG_SIGNER_WHERE, ...staffAtBuildingWhere(auth.buildingId) },
       select: {
         id: true,
         name: true,
@@ -85,6 +87,9 @@ export async function PUT(request: Request, ctx: Ctx) {
   if (!hasFullWorkspaceAccess(auth.session.user)) {
     return NextResponse.json({ error: "Состав комиссии меняет руководитель" }, { status: 403 });
   }
+  // Руководитель точки — только состав своей точки.
+  const target = await journalSettingsWriteTarget(auth.session);
+  if (!target.ok) return target.response;
   const body = (await request.json().catch(() => null)) as { members?: unknown } | null;
   const raw = Array.isArray(body?.members) ? body.members : [];
   const input = raw
@@ -95,7 +100,7 @@ export async function PUT(request: Request, ctx: Ctx) {
       roleKind: commissionRoleKind(item.roleKind),
     }))
     .filter((item) => item.employeeId);
-  const result = await saveOrgCommission(auth.organizationId, auth.code, input, auth.buildingId);
+  const result = await saveOrgCommission(auth.organizationId, auth.code, input, target.pointId);
   await recordAuditLog({
     request,
     session: auth.session,

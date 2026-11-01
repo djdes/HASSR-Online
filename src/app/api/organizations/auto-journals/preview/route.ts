@@ -4,8 +4,8 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { readBuildingJournalSettings, staffAtBuildingWhere, withBuildingJournalSettings } from "@/lib/building-settings";
+import { journalSettingsPointId } from "@/lib/journal-settings-target";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import {
@@ -89,9 +89,10 @@ export async function GET(request: Request) {
       autoJournalCodes: true,
     },
   });
-  // Активная точка: её автоматика (у слитой организации своя) и её сотрудники.
-  const activeBuildingId = await getActiveBuildingId(session);
-  const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, activeBuildingId));
+  // Точка из шапки: её автоматика (своя или как у организации), её документ
+  // и её сотрудники; «Вся организация» — организация целиком.
+  const pointId = await journalSettingsPointId(session);
+  const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, pointId));
   const automation = getJournalAutomation(org, code);
   const perEmployee = isPerEmployeeJournal(code);
 
@@ -120,12 +121,12 @@ export async function GET(request: Request) {
         status: "active",
         dateFrom: { lte: todayUtcStart },
         dateTo: { gte: todayUtcStart },
-        ...buildingWhere(await getActiveBuildingId(session)),
+        ...buildingWhere(pointId),
       },
       select: { id: true },
     }),
     db.user.findMany({
-      where: { organizationId, isActive: true, archivedAt: null },
+      where: { organizationId, isActive: true, archivedAt: null, ...staffAtBuildingWhere(pointId) },
       select: {
         id: true,
         name: true,
@@ -152,7 +153,7 @@ export async function GET(request: Request) {
   // «Как в последнем журнале»: ответственные последнего документа, если
   // они ещё работают. Уволенных не показываем — их подставит каскад.
   const lastDocument = await db.journalDocument.findFirst({
-    where: { organizationId, templateId: template.id },
+    where: { organizationId, templateId: template.id, ...buildingWhere(pointId) },
     orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
     select: { responsibleUserId: true, verifierUserId: true },
   });
@@ -163,6 +164,7 @@ export async function GET(request: Request) {
     organizationId,
     journalCode: code,
     baseConfig: {},
+    buildingId: pointId,
   }).catch(() => ({ responsibleUserId: null, verifierUserId: null }));
 
   let staff: {
@@ -174,7 +176,7 @@ export async function GET(request: Request) {
       organizationId,
       templateCode: code,
       staffPolicy: { mode: "inherit" },
-      buildingId: activeBuildingId,
+      buildingId: pointId,
     });
     const inheritIds = inherited.employeeIds;
     const savedCustom =

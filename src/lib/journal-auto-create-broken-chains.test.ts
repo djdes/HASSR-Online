@@ -126,3 +126,24 @@ test("организация без единого документа не тр�
 
   assert.deepEqual(reports, []);
 });
+
+test("точки: журнал, выключенный на точке, ей не возвращается", async () => {
+  const { db, calls } = fakeDb(
+    [{ templateId: "t4", buildingId: null, _max: { dateTo: new Date(NOW.getTime() + 5 * DAY) } } as Group],
+    [{ id: "t4", code: "hygiene", name: "Гигиенический журнал", isActive: true }]
+  );
+
+  const reports = await ensureCurrentDocumentsForBrokenChains(db, {
+    organizationId: "org-1",
+    now: NOW,
+    buildingIds: ["a", "b"],
+    skipCodes: new Set(),
+    skipCodesByBuilding: new Map([["b", new Set(["hygiene"])]]),
+  });
+
+  assert.equal(calls.creates, 0);
+  assert.deepEqual(
+    reports.map((report) => report.reason),
+    ["has-current-document", "journal-disabled"]
+  );
+});

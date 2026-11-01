@@ -73,6 +73,14 @@ describe("restoreBrokenChainForTemplate", () => {
     assert.deepEqual(other.calls.lockKeys, ["journal-period:o:hygiene:b1"]);
   });
 
+  it("точки: журнал вели только на другой точке — этой точке не навязываем", async () => {
+    const expired = new Date(NOW.getTime() - 3 * DAY);
+    const { db, calls } = fakeDb({ groups: [group("b2", expired)] });
+    const report = await restoreBrokenChainForTemplate(db, { organizationId: "o", template: TEMPLATE, buildingId: "b1", now: NOW });
+    assert.equal(report.reason, "no-previous-document");
+    assert.equal(calls.lockKeys.length, 0);
+  });
+
   it("perpetual — только руками", async () => {
     const { db, calls } = fakeDb({ groups: [group(null, new Date(NOW.getTime() - 400 * DAY))] });
     const report = await restoreBrokenChainForTemplate(db, {

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getActiveBuildingId } from "@/lib/active-building";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
@@ -7,6 +6,7 @@ import { JOURNAL_ENABLE_AUDIT_ACTION, blankSignupJournal, type JournalEnableSour
 import { getDisabledJournalCodes, setDisabledJournalCodes } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
+import { journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,8 +38,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   const source: JournalEnableSource = body?.source === "blank-qr" ? "blank-qr" : "journal-page";
 
   const organizationId = getActiveOrgId(session);
-  // Точка со своим набором журналов (слитая организация) — набор точки.
-  const buildingId = await getActiveBuildingId(session);
+  // Точка из шапки — её набор; «Вся организация» — набор всех точек.
+  const target = await journalSettingsWriteTarget(session);
+  if (!target.ok) return target.response;
+  const buildingId = target.pointId;
   const disabled = await getDisabledJournalCodes(organizationId, buildingId);
   if (!disabled.has(code)) return NextResponse.json({ ok: true, changed: false });
 

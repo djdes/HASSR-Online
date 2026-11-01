@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
-import { getActiveBuildingId, getViewedPointId } from "@/lib/active-building";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { journalSettingsPointId, journalSettingsWriteTarget } from "@/lib/journal-settings-target";
 import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -19,11 +20,13 @@ export async function GET() {
   if (!auth.ok) return auth.response;
   if (!hasCapability(auth.session.user, "admin.full")) return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   const organizationId = getActiveOrgId(auth.session);
-  // Ответственный бракеража — точки, на которую смотрит руководитель (2026-10-31).
+  // Ответственный, комиссия и люди — точки, на которую смотрит руководитель
+  // (2026-10-31); «Вся организация» — организации.
+  const pointId = await journalSettingsPointId(auth.session);
   const [users, slots, members] = await Promise.all([
-    db.user.findMany({ where: { organizationId, ...ORG_SIGNER_WHERE }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    effectiveJournalSlots(organizationId, await getViewedPointId(auth.session), "finished_product"),
-    readOrgCommission(organizationId, "finished_product", await getActiveBuildingId(auth.session)),
+    db.user.findMany({ where: { organizationId, ...ORG_SIGNER_WHERE, ...staffAtBuildingWhere(pointId) }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    effectiveJournalSlots(organizationId, pointId, "finished_product"),
+    readOrgCommission(organizationId, "finished_product", pointId),
   ]);
   return NextResponse.json({ users, members, responsibleUserId: slots.chef ?? "" });
 }
@@ -35,23 +38,30 @@ export async function PUT(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Выберите ответственного и хотя бы одного члена комиссии" }, { status: 400 });
   const organizationId = getActiveOrgId(auth.session);
+  // Выбрана торговая точка — её ответственный, её комиссия и только её
+  // документы (2026-10-31, ответственные по точкам); иначе — организации.
+  // Руководитель точки — только своя точка.
+  const target = await journalSettingsWriteTarget(auth.session);
+  if (!target.ok) return target.response;
+  const pointId = target.pointId;
   const { responsibleUserId, memberIds } = parsed.data;
   const ids = [...new Set([responsibleUserId, ...memberIds])];
-  const users = await db.user.findMany({ where: { organizationId, id: { in: ids }, ...ORG_SIGNER_WHERE }, select: { id: true } });
-  if (users.length !== ids.length) return NextResponse.json({ error: "Выберите действующих сотрудников этой организации" }, { status: 400 });
+  const users = await db.user.findMany({ where: { organizationId, id: { in: ids }, ...ORG_SIGNER_WHERE, ...staffAtBuildingWhere(pointId) }, select: { id: true } });
+  if (users.length !== ids.length) {
+    return NextResponse.json(
+      { error: pointId ? "Выберите действующих сотрудников этой точки" : "Выберите действующих сотрудников этой организации" },
+      { status: 400 },
+    );
+  }
   const template = await db.journalTemplate.findUnique({ where: { code: "finished_product" }, select: { id: true } });
   if (!template) return NextResponse.json({ error: "Журнал не найден" }, { status: 404 });
-  const activeBuildingId = await getActiveBuildingId(auth.session);
-  // Выбрана торговая точка — ответственный этой точки и только её документы
-  // (2026-10-31, ответственные по точкам); иначе — организации.
-  const pointOnly = await getViewedPointId(auth.session);
   await saveOrgCommission(
     organizationId,
     "finished_product",
     [...new Set(memberIds)].map((employeeId) => ({ employeeId })),
-    activeBuildingId
+    pointId
   );
-  await cascadeResponsibleToActiveDocuments({ organizationId, templateId: template.id, journalCode: "finished_product", positionIds: [], slotUsers: { chef: responsibleUserId }, scope: "active-any", buildingId: pointOnly });
+  await cascadeResponsibleToActiveDocuments({ organizationId, templateId: template.id, journalCode: "finished_product", positionIds: [], slotUsers: { chef: responsibleUserId }, scope: "active-any", buildingId: pointId });
   const controls = await updateJournalControls(organizationId, { brakerageSetup: { finished_product: "configured" } });
   await recordAuditLog({ request, session: auth.session, organizationId, action: "journal.brakerage_setup", entity: "Organization", entityId: organizationId, details: { responsibleUserId, memberIds } });
   return NextResponse.json(controls);

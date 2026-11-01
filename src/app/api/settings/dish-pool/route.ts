@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { journalSettingsPointId } from "@/lib/journal-settings-target";
 import { authOptions } from "@/lib/auth";
 import { getDishPoolInfo } from "@/lib/dish-pool";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -13,7 +13,8 @@ async function guard() {
   const session = await getServerSession(authOptions);
   if (!session) return { error: NextResponse.json({ error: "Не авторизован" }, { status: 401 }) } as const;
   if (!hasFullWorkspaceAccess(session.user)) return { error: NextResponse.json({ error: "Это настройка руководителя" }, { status: 403 }) } as const;
-  return { organizationId: getActiveOrgId(session), buildingId: await getActiveBuildingId(session) } as const;
+  // Точка из шапки — её код пула; «Вся организация» — код организации.
+  return { organizationId: getActiveOrgId(session), buildingId: await journalSettingsPointId(session) } as const;
 }
 
 export async function GET() {
