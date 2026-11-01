@@ -26,7 +26,24 @@ type TokenRow = CabinetInspectorToken;
 type Props = {
   initialTokens: TokenRow[];
   initialActivity: CabinetInspectorActivity[];
+  /** Точки включены: у ссылок подписывается точка (2026-11-01). */
+  pointsEnabled?: boolean;
+  /** Для какой точки выпускаются новые ссылки и QR; null — вся организация. */
+  issueTargetName?: string | null;
 };
+
+/** Подпись «точка / вся организация» у ссылки — только когда точки включены. */
+function ScopePill({ name }: { name: string | null }) {
+  const t = useTranslations("settingsUi.inspectorPortalClient");
+  return (
+    <span
+      className="inline-flex max-w-full items-center rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[11.5px] font-medium text-[#3848c7] [overflow-wrap:anywhere]"
+      data-token-scope
+    >
+      {name ? t("scopePoint", { name }) : t("scopeOrganization")}
+    </span>
+  );
+}
 
 type QrTtl = "1d" | "7d" | "30d" | "forever";
 
@@ -56,7 +73,7 @@ function fmtDate(value: string, locale: string): string {
   });
 }
 
-export function InspectorPortalClient({ initialTokens, initialActivity }: Props) {
+export function InspectorPortalClient({ initialTokens, initialActivity, pointsEnabled = false, issueTargetName = null }: Props) {
   const t = useTranslations("settingsUi.inspectorPortalClient");
   const locale = useLocale();
   const [tokens, setTokens] = useState<TokenRow[]>(initialTokens);
@@ -95,7 +112,17 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
 
   return (
     <div className="space-y-5">
+      {pointsEnabled ? (
+        <p
+          className="rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3 text-[13.5px] leading-relaxed text-[#3c4053]"
+          data-issue-target
+        >
+          {issueTargetName ? t("issueTargetPoint", { name: issueTargetName }) : t("issueTargetOrganization")}
+        </p>
+      ) : null}
+
       <InspectorQrCard
+        pointsEnabled={pointsEnabled}
         activeQrs={activeQrs}
         onCreated={(data) => {
           if (data.tokens) setTokens(data.tokens);
@@ -169,6 +196,11 @@ export function InspectorPortalClient({ initialTokens, initialActivity }: Props)
                         {tok.isQr ? "QR" : t("link")}
                       </span>
                       {tok.label ?? <span className="text-[#9b9fb3]">{t("untitled")}</span>}
+                      {pointsEnabled ? (
+                        <div className="mt-1">
+                          <ScopePill name={tok.buildingName} />
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3 text-[#3c4053]">
                       {tok.isQr ? t("inspectorChooses") : `${fmtDate(tok.periodFrom, locale)} — ${fmtDate(tok.periodTo, locale)}`}
@@ -575,10 +607,12 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
  * Превью и печать листа A4 — повторяемые, отзыв — через ConfirmDialog.
  */
 function InspectorQrCard({
+  pointsEnabled,
   activeQrs,
   onCreated,
   onRevoke,
 }: {
+  pointsEnabled: boolean;
   activeQrs: TokenRow[];
   onCreated: (data: { tokens?: TokenRow[]; activity?: CabinetInspectorActivity[] }) => void;
   onRevoke: (id: string) => void;
@@ -605,7 +639,7 @@ function InspectorQrCard({
       </div>
 
       {activeQrs.map((t) => (
-        <ActiveQrRow key={t.id} token={t} onRevoke={() => onRevoke(t.id)} />
+        <ActiveQrRow key={t.id} token={t} pointsEnabled={pointsEnabled} onRevoke={() => onRevoke(t.id)} />
       ))}
 
       {showForm ? (
@@ -630,7 +664,7 @@ function InspectorQrCard({
   );
 }
 
-function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => void }) {
+function ActiveQrRow({ token, pointsEnabled, onRevoke }: { token: TokenRow; pointsEnabled: boolean; onRevoke: () => void }) {
   const t = useTranslations("settingsUi.inspectorPortalClient");
   const locale = useLocale();
   async function copy() {
@@ -660,6 +694,11 @@ function ActiveQrRow({ token, onRevoke }: { token: TokenRow; onRevoke: () => voi
         <div className="text-[15px] font-semibold text-[#0b1024]">
           {token.label || t("qrTitle")}
         </div>
+        {pointsEnabled ? (
+          <div className="mt-1">
+            <ScopePill name={token.buildingName} />
+          </div>
+        ) : null}
         <dl className="mt-2 grid gap-x-4 gap-y-1 text-[13px] sm:grid-cols-2">
           <div className="flex gap-2">
             <dt className="text-[#6f7282]">{t("validity")}</dt>
