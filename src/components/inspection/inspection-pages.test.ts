@@ -45,9 +45,10 @@ test("права страниц — как у блоков на прежней �
   assert.match(page(""), /if \(!fullAccess && !hasCapability\(session\.user, "tasks\.verify"\)\) forbidden\(\);/);
   // Услуги — руководству, как карточка экспертов раньше.
   assert.match(page("/experts"), /if \(!hasFullWorkspaceAccess\(session\.user\)\) forbidden\(\);/);
-  // Скрывать посещения и переключать спецрежим — только admin.full.
+  // Скрывать посещения и переключать спецрежим — только admin.full; спецрежим —
+  // на всю компанию, руководителю точки — нет (аудит 2026-11-01).
   assert.match(page("/visits"), /canHide=\{hasCapability\(session\.user, "admin\.full"\)\}/);
-  assert.match(page("/special-mode"), /canManage=\{hasCapability\(session\.user, "admin\.full"\)\}/);
+  assert.match(page("/special-mode"), /canManage=\{hasCapability\(session\.user, "admin\.full"\) && !isPointScoped\(session\.user\)\}/);
 });
 
 test("«Нормативка» открывает файлы напрямую, без перехода в меню ППК", () => {

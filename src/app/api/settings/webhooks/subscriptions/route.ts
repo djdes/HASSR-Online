@@ -4,6 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { serializeWebhook } from "@/lib/webhooks/serialize";
 import { generateWebhookSecret, isValidWebhookUrl, isWebhookEvent, type WebhookEvent } from "@/lib/webhooks/sign";
 
@@ -16,6 +17,11 @@ async function guard() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     return { session, orgId: "", denied: NextResponse.json({ error: "Доступно руководителям", errorCode: "WEBHOOK_FORBIDDEN" }, { status: 403 }) };
+  }
+  // Подписки компании с секретами подписи (аудит 2026-11-01): страница
+  // руководителю точки закрыта, proxy режет ему только изменения.
+  if (isPointScoped(session.user)) {
+    return { session, orgId: "", denied: NextResponse.json({ error: COMPANY_ONLY_API_ERROR, errorCode: "WEBHOOK_FORBIDDEN" }, { status: 403 }) };
   }
   return { session, orgId: getActiveOrgId(session), denied: null };
 }

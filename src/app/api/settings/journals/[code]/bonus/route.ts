@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { db } from "@/lib/db";
 import { saveOrgJournalSetting } from "@/lib/org-journal-settings";
 
@@ -29,6 +30,11 @@ export async function PUT(
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  }
+  // Бонус журнала — на всю организацию, страница «Бонусы» руководителю
+  // точки закрыта (аудит 2026-11-01).
+  if (isPointScoped(auth.session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
   }
 
   const { code } = await params;

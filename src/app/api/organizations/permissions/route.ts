@@ -12,6 +12,7 @@ import {
   type Permission,
 } from "@/lib/permissions";
 import { sessionHasPermission } from "@/lib/permissions-server";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +53,11 @@ export async function GET() {
   }
   if (!(await sessionHasPermission(session, "settings.permissions"))) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  }
+  // Права всех сотрудников компании — офису (аудит 2026-11-01): страница
+  // «Права» руководителю точки закрыта, а proxy режет ему только изменения.
+  if (isPointScoped(session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
 

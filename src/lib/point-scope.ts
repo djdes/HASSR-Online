@@ -89,6 +89,8 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
 /** API тех же страниц: изменения (не GET) руководителю точки закрыты. */
 export const COMPANY_ONLY_API_PREFIXES = [
   "/api/settings/organization",
+  // Публичный бейдж компании — карточка на «Моей компании» (аудит 2026-11-01).
+  "/api/settings/badge",
   "/api/settings/master-cabinet",
   "/api/settings/office",
   "/api/settings/custom-names",

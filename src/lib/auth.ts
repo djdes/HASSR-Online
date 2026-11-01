@@ -266,21 +266,13 @@ export const authOptions: NextAuthOptions = {
           /* оставляем прежнее значение */
         }
       }
-      // Переключение между своими организациями пишет claim напрямую в
-      // cookie (см. lib/session-token.ts) — здесь только подхватываем.
-      if (trigger === "update" && session && typeof session === "object") {
-        if ("activeOrganizationId" in session) {
-          const next = session.activeOrganizationId;
-          token.activeOrganizationId =
-            typeof next === "string" && next.length > 0 ? next : null;
-        }
-        if ("partnerAccess" in session) {
-          const { parsePartnerAccessClaim } = await import(
-            "@/lib/partners/access-guard"
-          );
-          token.partnerAccess = parsePartnerAccessClaim(session.partnerAccess);
-        }
-      }
+      // Переключение организации и вход партнёра пишут claim'ы на сервере,
+      // после проверки членства и привязки (`rewriteSessionClaims`,
+      // lib/session-token.ts). Из `update()` клиента (`POST /api/auth/session`)
+      // `activeOrganizationId` и `partnerAccess` не берём (аудит 2026-11-01):
+      // тело запроса пишет сам человек, и вписанный claim снимал с
+      // руководителя точки `pointScope` — proxy переставал закрывать ему
+      // общие разделы компании.
       // Impersonation: root clicks "View as <org>" or "Stop" and the
       // client calls `update({ actingAsOrganizationId: ... })`. NextAuth v4
       // routes that through the jwt callback with trigger === "update".

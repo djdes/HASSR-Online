@@ -130,7 +130,13 @@ export default async function ExternalApiSettingsPage() {
                 {tLegacy("keyDescriptionMiddle")} «{org?.name}». {tLegacy("keyDescriptionAfter")}
               </p>
               <div className="mt-4">
-                <ApiTokenManager initialToken={org?.externalApiToken ?? null} />
+                {/* Общий ключ организации партнёру не показываем (аудит
+                    2026-11-01): ключ пережил бы отключение консультанта. */}
+                {session.user.partnerAccess ? (
+                  <p className="text-[13px] text-[#6f7282]">{manageBlockedReason}</p>
+                ) : (
+                  <ApiTokenManager initialToken={org?.externalApiToken ?? null} />
+                )}
               </div>
             </div>
             <div className="rounded-2xl border border-[#ececf4] bg-white p-4 text-[13px] sm:p-5">

@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
 import { getDisabledJournalCodes, getDisabledPaperJournalIds, parseDisabledCodes } from "@/lib/disabled-journals";
 import { getFillMode } from "@/lib/journal-routing";
 import { JournalsSettingsClient } from "./journals-settings-client";
@@ -23,6 +24,9 @@ export default async function JournalsSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // «Распределение» (кто ведёт журнал) — на всю организацию: руководителю
+  // точки его не показываем и людей всей компании не отдаём (аудит 2026-11-01).
+  const canEditDistribution = !isPointScoped(session.user);
 
   const [templateRows, organization, positions, users, positionAccess] =
     await Promise.all([
@@ -54,16 +58,18 @@ export default async function JournalsSettingsPage() {
         orderBy: [{ categoryKey: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
         select: { id: true, name: true, categoryKey: true },
       }),
-      db.user.findMany({
-        where: {
-          organizationId,
-          isActive: true,
-          archivedAt: null,
-          isRoot: false,
-        },
-        orderBy: [{ name: "asc" }],
-        select: { id: true, name: true, jobPositionId: true },
-      }),
+      canEditDistribution
+        ? db.user.findMany({
+            where: {
+              organizationId,
+              isActive: true,
+              archivedAt: null,
+              isRoot: false,
+            },
+            orderBy: [{ name: "asc" }],
+            select: { id: true, name: true, jobPositionId: true },
+          })
+        : Promise.resolve([]),
       db.jobPositionJournalAccess.findMany({
         where: { organizationId },
         select: { templateId: true, jobPositionId: true },
@@ -152,6 +158,7 @@ export default async function JournalsSettingsPage() {
         sampleCodes={SAMPLE_JOURNAL_CODES}
         positions={positions}
         users={users}
+        canEditDistribution={canEditDistribution}
         sphere={sphere}
       />
     </div>

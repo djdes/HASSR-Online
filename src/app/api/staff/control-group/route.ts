@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadControlGroup } from "@/lib/control-group.server";
 import { hasCapability } from "@/lib/permission-presets";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
 
@@ -34,6 +35,11 @@ export async function GET() {
   }
   if (!hasFullWorkspaceAccess({ role: session.user.role, isRoot: session.user.isRoot === true })) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  }
+  // Контрольная группа — на всю компанию (аудит 2026-11-01): страница
+  // руководителю точки закрыта, а здесь люди всех точек.
+  if (isPointScoped(session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
   const { members, candidates } = await loadControlGroup(organizationId, session.user.id);

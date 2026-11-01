@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { db } from "@/lib/db";
 import { FILL_MODES, type FillMode } from "@/lib/journal-routing";
 
@@ -32,6 +33,11 @@ export async function PUT(
   const session = auth.session;
   if (!hasFullWorkspaceAccess(session.user)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  }
+  // «Распределение» — на всю организацию: режим, исполнитель любой точки и
+  // доступ должностей (аудит 2026-11-01). Руководителю точки — нет.
+  if (isPointScoped(session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
   }
 
   const { code } = await params;

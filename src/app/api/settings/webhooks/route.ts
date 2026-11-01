@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { isPublicHttpsUrl } from "@/lib/url-allowlist";
 
 export const runtime = "nodejs";
@@ -35,6 +36,10 @@ export async function GET() {
   if (!auth.ok) return auth.response;
   if (!hasFullWorkspaceAccess(auth.session.user)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  }
+  // Адреса вебхуков компании — офису (аудит 2026-11-01).
+  if (isPointScoped(auth.session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
   }
   const orgId = getActiveOrgId(auth.session);
   const org = await db.organization.findUnique({
