@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
 import { InspectionSpecialModeCard } from "@/components/inspection/inspection-special-mode-card";
 import { InspectionHowItWorks } from "@/components/inspection/inspection-how-it-works";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
@@ -33,7 +34,8 @@ export default async function InspectionSpecialModePage() {
         bullets={[t("guide1"), t("guide2"), t("guide3")]}
       />
 
-      <InspectionSpecialModeCard canManage={hasCapability(session.user, "admin.full")} />
+      {/* Спецрежим — на всю компанию: руководитель точки только смотрит. */}
+      <InspectionSpecialModeCard canManage={hasCapability(session.user, "admin.full") && !isPointScoped(session.user)} />
 
       <InspectionHowItWorks id="special-mode" title={t("whenTitle")} steps={[t("when1"), t("when2"), t("when3")]} />
     </div>

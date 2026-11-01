@@ -6,7 +6,9 @@ import { escapeTelegramHtml } from "@/lib/telegram";
 import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
 import { isUntouchedDisabledCodes } from "@/lib/health-check-default-off";
 import bcrypt from "bcryptjs";
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
+import { isPointScoped } from "@/lib/point-scope";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { sendPasswordChangedEmail } from "@/lib/email";
 import { innDigits, isValidInn } from "@/lib/inn";
@@ -39,6 +41,22 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   const session = await requireAuth();
+  // Анкета переписывает организацию целиком (название, сфера, ИНН, точки)
+  // — её заполняет руководство всей компании, те же условия, что у показа
+  // анкеты в кабинете (аудит 2026-11-01: повар или руководитель точки
+  // переименовывали компанию и стирали ИНН прямым запросом).
+  if (
+    !hasFullWorkspaceAccess(session.user) ||
+    isPointScoped(session.user) ||
+    isImpersonating(session) ||
+    session.user.partnerAccess ||
+    session.user.isRoot === true
+  ) {
+    return NextResponse.json(
+      { error: "Анкету компании заполняет руководство компании" },
+      { status: 403 },
+    );
+  }
   const email = session.user.email;
   if (!email) {
     return NextResponse.json(

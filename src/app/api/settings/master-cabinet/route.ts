@@ -12,6 +12,7 @@ import { createOrInviteMasterCabinet, MasterCabinetError, renameMasterCabinet } 
 import { inviteMasterCabinetEmployee } from "@/lib/master-cabinet-staff";
 import { loadOrgMasterCabinets } from "@/lib/org-master-cabinets";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
 import { db } from "@/lib/db";
@@ -46,6 +47,11 @@ async function guard() {
   if (!session) return { error: NextResponse.json({ error: "Не авторизован" }, { status: 401 }) } as const;
   if (!hasFullWorkspaceAccess(session.user)) {
     return { error: NextResponse.json({ error: "Это настройка руководителя" }, { status: 403 }) } as const;
+  }
+  // Мастер-кабинет подключает точки всей компании (аудит 2026-11-01):
+  // страница руководителю точки закрыта — и чтение тоже.
+  if (isPointScoped(session.user)) {
+    return { error: NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 }) } as const;
   }
   return { session, organizationId: getActiveOrgId(session) } as const;
 }

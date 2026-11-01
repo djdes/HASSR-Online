@@ -8,6 +8,7 @@ import { getBadgeStatusForOrganization } from "@/lib/badge/status";
 import { getBadgePoints, invalidateBadgeToday } from "@/lib/badge/today-data";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,12 @@ async function guard() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) {
     return { session, orgId: "", denied: NextResponse.json({ error: "Доступно руководителям" }, { status: 403 }) };
+  }
+  // Бейдж — один на компанию, карточка на закрытой «Моей компании» (аудит
+  // 2026-11-01): руководитель точки его не включает, не выключает и не
+  // получает ссылки всех точек.
+  if (isPointScoped(session.user)) {
+    return { session, orgId: "", denied: NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 }) };
   }
   return { session, orgId: getActiveOrgId(session), denied: null };
 }

@@ -103,6 +103,7 @@ export function JournalsSettingsClient({
   paperItems,
   positions,
   users,
+  canEditDistribution = true,
   sphere,
   sampleCodes,
 }: {
@@ -110,6 +111,8 @@ export function JournalsSettingsClient({
   paperItems: PaperItem[];
   positions: Position[];
   users: StaffUser[];
+  /** «Кто» (распределение) — на всю организацию: руководителю точки — нет. */
+  canEditDistribution?: boolean;
   sphere: OrgSphere;
   /** Коды журналов, у которых на диске есть PNG-превью бланка. */
   sampleCodes: string[];
@@ -548,6 +551,7 @@ export function JournalsSettingsClient({
               помещаются: оставляем ряд из двух компактных с подписью в
               одну строку, а редактор распределения открываем модалкой. */}
           <div className="flex gap-1.5">
+            {canEditDistribution ? (
             <button
               type="button"
               onClick={() => setDistDialogCode(item.code)}
@@ -561,6 +565,7 @@ export function JournalsSettingsClient({
               <ModeIcon className="size-3.5 shrink-0 text-[#6f7282]" />
               <span className="truncate">{t("whoShort")}</span>
             </button>
+            ) : null}
             <Link
               href={`/settings/journals/${item.code}/scope`}
               title={t("scopeTitle")}

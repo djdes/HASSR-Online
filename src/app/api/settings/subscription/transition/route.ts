@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getActiveOrgId, isImpersonating, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { clientIp } from "@/lib/client-ip";
 import {
   listTransitionCandidates,
@@ -41,6 +42,14 @@ async function authorize() {
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Тариф выбирает руководитель" }, { status: 403 }),
+    };
+  }
+  // Тариф выбирает компания (аудит 2026-11-01): окно перехода руководителю
+  // точки не показывается, а список кандидатов — люди всех точек.
+  if (isPointScoped(session.user)) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 }),
     };
   }
   return auth;

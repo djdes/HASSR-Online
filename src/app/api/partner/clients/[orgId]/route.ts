@@ -61,13 +61,22 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ orgId: st
 
   const link = await db.partnerClient.findFirst({
     where: { partnerId: membership.partnerId, organizationId: orgId },
-    select: { id: true, detachedAt: true },
+    select: { id: true, detachedAt: true, accessLevel: true },
   });
   if (!link) return NextResponse.json({ error: "Клиент не найден" }, { status: 404 });
   if (link.detachedAt) {
     return NextResponse.json(
       { error: "Сопровождение отключено — организация вам больше не доступна", code: "detached" },
       { status: 409 },
+    );
+  }
+  // Реквизиты клиента меняет только партнёр с доступом «редактирование»
+  // (аудит 2026-11-01): интерфейс прятал форму при «просмотре», а прямой
+  // запрос проходил и менял организацию клиента.
+  if (link.accessLevel !== "edit") {
+    return NextResponse.json(
+      { error: "Клиент дал доступ только на просмотр — реквизиты меняет он сам", code: "view_only" },
+      { status: 403 },
     );
   }
 

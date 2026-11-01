@@ -3,6 +3,7 @@ import { decode } from "next-auth/jwt";
 import { cookies } from "next/headers";
 import { pickSessionCookie } from "@/lib/auth-cookies";
 import { evaluatePartnerRequest } from "@/lib/partners/access-guard";
+import { evaluatePointScopeRequest } from "@/lib/point-scope";
 import { isSessionVersionCurrent } from "@/lib/session-version";
 import { PARTNER_HEADER_METHOD, PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
 
@@ -84,10 +85,29 @@ export async function getServerSession(
       ...args: unknown[]
     ) => Promise<Session> | Session;
     const resolved = await callback({ session, token });
-    return enforcePartnerWriteGuard(resolved);
+    return enforcePointScopeGuard(await enforcePartnerWriteGuard(resolved));
   }
 
   return session;
+}
+
+/**
+ * Второй рубеж для руководителя точки (аудит 2026-11-01). Proxy закрывает
+ * ему изменения общих разделов компании по `pointScope` из cookie, а здесь —
+ * по точкам, перечитанным из БД в session-callback: устаревший или
+ * подделанный токен без точек не открывает общие настройки компании.
+ * Изменяющий запрос к такому API сессии не получает (как у партнёра ниже).
+ */
+async function enforcePointScopeGuard(session: Session | null): Promise<Session | null> {
+  if (!session?.user?.pointScope?.length) return session;
+  const { headers } = await import("next/headers");
+  const requestHeaders = await headers().catch(() => null);
+  if (!requestHeaders) return session;
+  const method = requestHeaders.get(PARTNER_HEADER_METHOD);
+  const pathname = requestHeaders.get(PARTNER_HEADER_PATH);
+  if (!method || !pathname) return session;
+  const verdict = evaluatePointScopeRequest({ method, pathname, pointScope: session.user.pointScope });
+  return verdict.action === "deny" ? null : session;
 }
 
 /**
