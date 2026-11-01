@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { isAgentOnline } from "@/lib/print-agent-auth";
+import { getViewedPointId } from "@/lib/active-building";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,10 +17,14 @@ const HISTORY_LIMIT = 15;
 export async function GET() {
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
+  // Точка в шапке (2026-11-01): её принтеры и задания плюс общие; «Вся
+  // организация» — всё. Руководитель точки всегда смотрит свою точку.
+  const viewedPointId = await getViewedPointId(session);
+  const pointWhere = viewedPointId ? { OR: [{ buildingId: viewedPointId }, { buildingId: null }] } : {};
 
   const [agents, jobs] = await Promise.all([
     db.printAgent.findMany({
-      where: { organizationId, revokedAt: null },
+      where: { organizationId, revokedAt: null, ...pointWhere },
       orderBy: { lastSeenAt: "desc" },
       select: {
         id: true,
@@ -27,10 +32,11 @@ export async function GET() {
         printerName: true,
         lastSeenAt: true,
         agentVersion: true,
+        building: { select: { name: true } },
       },
     }),
     db.printJob.findMany({
-      where: { organizationId },
+      where: { organizationId, ...pointWhere },
       orderBy: { createdAt: "desc" },
       take: HISTORY_LIMIT,
       select: {
@@ -51,6 +57,7 @@ export async function GET() {
       name: a.name,
       printerName: a.printerName,
       agentVersion: a.agentVersion,
+      buildingName: a.building?.name ?? null,
       lastSeenAt: a.lastSeenAt?.toISOString() ?? null,
       online: isAgentOnline(a.lastSeenAt),
     })),
