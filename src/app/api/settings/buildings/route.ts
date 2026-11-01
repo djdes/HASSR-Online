@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { checkPointsForCreation, limitResponse } from "@/lib/billing.server";
-import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
+import { COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { closePointManagerSessions } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
@@ -36,7 +36,13 @@ export async function GET() {
       },
     },
   });
-  return NextResponse.json({ buildings });
+  // Руководителю точки — только его точки с их помещениями (аудит
+  // 2026-11-01): точки и помещения остальных — дело руководства компании.
+  return NextResponse.json({
+    buildings: isPointScoped(auth.session.user)
+      ? buildings.filter((building) => buildingInScope(auth.session.user, building.id))
+      : buildings,
+  });
 }
 
 const CreateSchema = z.object({

@@ -36,6 +36,10 @@ test("чтение и запись общих разделов компании 
   }
 });
 
+test("список точек с помещениями руководителю точки — только его точки", () => {
+  assert.match(read("src/app/api/settings/buildings/route.ts"), /buildings\.filter\(\(building\) => buildingInScope\(auth\.session\.user, building\.id\)\)/);
+});
+
 test("бейдж компании — в общих API: proxy закрывает руководителю точки его изменения", () => {
   const verdict = evaluatePointScopeRequest({ method: "PATCH", pathname: "/api/settings/badge", pointScope: ["a"] });
   assert.equal(verdict.action, "deny");
