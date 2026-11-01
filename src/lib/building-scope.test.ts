@@ -151,7 +151,7 @@ test("офис: сотрудник офиса видит все точки, а �
   assert.equal(isOfficeBuilding(A), false);
 });
 
-test("руководитель точки: только при офисе и включённых точках", () => {
+test("руководитель точки: при включённых точках, с офисом и без", () => {
   const OFFICE = { id: "b-office", kind: "office" };
   const withOffice = [OFFICE, A, B];
   const on = (userBuildingIds: string[], buildings: { id: string; kind?: string }[] = withOffice, enabled = true) =>
@@ -163,9 +163,17 @@ test("руководитель точки: только при офисе и в�
   assert.equal(on([OFFICE.id, A.id]), null);
   assert.equal(on([]), null);
   assert.equal(on(["b-gone"]), null);
-  // Офиса нет или точки выключены — разделения нет.
-  assert.equal(on([A.id], [A, B]), null);
+  // Без офиса (решение владельца 2026-11-01): закреплённый за частью точек — руководитель точки,
+  // за всеми точками или без места — вся компания.
+  const C = { id: "b-c", kind: "point" };
+  assert.deepEqual(on([A.id], [A, B]), [A.id]);
+  assert.deepEqual(on([A.id, B.id], [A, B, C]), [A.id, B.id]);
+  assert.equal(on([A.id, B.id], [A, B]), null);
+  assert.equal(on([], [A, B]), null);
+  assert.equal(on(["b-gone"], [A, B]), null);
+  // Точки выключены — разделения нет.
   assert.equal(on([A.id], withOffice, false), null);
+  assert.equal(on([A.id], [A, B], false), null);
 });
 
 test("уведомления по месту: точке — её люди и офис, общее — офису", () => {

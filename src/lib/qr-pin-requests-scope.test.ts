@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
+import { STAFF_OUT_OF_SCOPE_ERROR } from "./point-scope";
 
 const require = createRequire(import.meta.url);
 
@@ -71,7 +72,7 @@ test("руководитель точки Б не одобряет PIN сотр�
   const pin = load(mocks(writes, [], [pointA]));
   const denied = await pin.decideQrPinRequest({ organizationId: "org", requestId: "req", decidedById: "manager-b", approve: true, actor: { pointScope: [pointB] } });
   // Объект создан в другом vm-контексте — сравниваем поля, не прототипы.
-  assert.deepEqual({ ...denied }, { ok: false, status: 403, error: "Этот сотрудник работает не на вашей точке — его ведёт офис" });
+  assert.deepEqual({ ...denied }, { ok: false, status: 403, error: STAFF_OUT_OF_SCOPE_ERROR });
   assert.deepEqual(writes, []);
 
   const allowed = await pin.decideQrPinRequest({ organizationId: "org", requestId: "req", decidedById: "manager-a", approve: true, actor: { pointScope: [pointA] } });
