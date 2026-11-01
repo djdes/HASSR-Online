@@ -4,6 +4,8 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 import { buildJournalDocumentTitle } from "@/lib/journal-document-title";
+import { loadBuildingContext } from "@/lib/active-building";
+import { paperDocumentBuilding, paperDocumentsListWhere } from "@/lib/paper-journal-point";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +28,11 @@ export async function GET(
   }
 
   const { id } = await params;
+  // Точки (2026-11-01): на точке — её документы и общие, на уровне
+  // организации — все доступные человеку.
+  const context = await loadBuildingContext(session);
   const documents = await db.paperJournalDocument.findMany({
-    where: { organizationId: getActiveOrgId(session), journalId: id },
+    where: { organizationId: getActiveOrgId(session), journalId: id, ...paperDocumentsListWhere(context) },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -39,10 +44,14 @@ export async function GET(
       closedAt: true,
       createdAt: true,
       updatedAt: true,
+      buildingId: true,
+      building: { select: { name: true } },
     },
   });
 
-  return NextResponse.json({ documents });
+  return NextResponse.json({
+    documents: documents.map(({ building, ...document }) => ({ ...document, buildingName: building?.name ?? null })),
+  });
 }
 
 /** `YYYY-MM-DD` → Date (UTC-полночь); мусор → null. */
@@ -71,6 +80,13 @@ export async function POST(
   const journal = paperJournalById(id);
   if (!journal) {
     return NextResponse.json({ error: "Журнал не найден" }, { status: 404 });
+  }
+
+  // Точки (2026-11-01): документ принадлежит точке из шапки, в режиме
+  // «Вся организация» без офиса — сначала выбрать точку.
+  const place = paperDocumentBuilding(await loadBuildingContext(session));
+  if ("error" in place) {
+    return NextResponse.json({ error: place.error }, { status: 400 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -106,6 +122,7 @@ export async function POST(
       verifier: text(body?.verifier),
       verifierUserId: text(body?.verifierUserId, 64),
       createdById: session.user.id,
+      buildingId: place.buildingId,
     },
     select: { id: true, title: true, status: true },
   });

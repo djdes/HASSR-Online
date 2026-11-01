@@ -36,6 +36,8 @@ export type PaperDocument = {
   closedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Точка документа (2026-11-01); null — общий документ. */
+  buildingName?: string | null;
 };
 
 /** `Date` из API приходит ISO-строкой — для подписи периода нужна дата. */
@@ -157,6 +159,7 @@ export function PaperDocumentsClient({
               isoDay(doc.dateTo),
             );
             const meta = [
+              doc.buildingName,
               period,
               doc.responsible,
               doc.closedAt

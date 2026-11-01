@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { loadBuildingContext } from "@/lib/active-building";
+import { paperDocumentVisibleWhere } from "@/lib/paper-journal-point";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +24,8 @@ export async function GET(
       id: docId,
       journalId: id,
       organizationId: getActiveOrgId(session),
+      // Документ чужой точки — «не найдено» (2026-11-01).
+      ...paperDocumentVisibleWhere(await loadBuildingContext(session)),
     },
   });
   if (!document) {
@@ -69,6 +73,8 @@ export async function PUT(
       id: docId,
       journalId: id,
       organizationId: getActiveOrgId(session),
+      // Документ чужой точки — «не найдено» (2026-11-01).
+      ...paperDocumentVisibleWhere(await loadBuildingContext(session)),
       ...(body?.status ? {} : { status: "active" }),
     },
     data: patch,
@@ -98,6 +104,8 @@ export async function DELETE(
       id: docId,
       journalId: id,
       organizationId: getActiveOrgId(session),
+      // Документ чужой точки — «не найдено» (2026-11-01).
+      ...paperDocumentVisibleWhere(await loadBuildingContext(session)),
     },
   });
   return NextResponse.json({ ok: true });
