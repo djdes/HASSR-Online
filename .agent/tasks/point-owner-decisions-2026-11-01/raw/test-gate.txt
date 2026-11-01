@@ -1,0 +1,4 @@
+f55084a7 Merge branch 'claude/dazzling-pascal-obsf8l' into iso2-integration
+=== Test stats: pass=5567, fail=0 ===
+✓ Все тесты прошли.
+TESTGATE EXIT 0

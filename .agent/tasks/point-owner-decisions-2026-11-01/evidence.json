@@ -1,0 +1,27 @@
+{
+  "task": "point-owner-decisions-2026-11-01",
+  "owner_decisions": "1. ппк на точку, 2. требовать выбрать точку, 3 закрытым, 4 бумажные привязывай к точкам, все мердж и в прод",
+  "environment": "локальные копии wesetup_points_before / wesetup_points2 (не прод), next build --webpack + next start",
+  "before_build": "f8b7c3e (master)",
+  "after_build": "iso2-integration = master + -closeday + -paper + -ppk + claude/dazzling-pascal-obsf8l",
+  "pull_requests": {
+    "closeday": "djdes/HASSR-Online#113",
+    "paper": "djdes/HASSR-Online#114",
+    "ppk": "djdes/HASSR-Online#115"
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["raw/live-after.txt", "raw/ppk-team-headA-after.png", "raw/ppk-policy-pointA-after.png", "raw/ppk-policy-pointB-after.png"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/live-after.txt", "raw/closeday-orgview-after.png"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/live-after.txt", "raw/orders-headA-after.png"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/live-after.txt", "raw/paper-list-orgview-after.png", "raw/paper-list-headB-after.png"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "prisma db push без предупреждений", "next build --webpack успешно"] },
+    "AC6": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts"] }
+  },
+  "checks": {
+    "live": { "before": "27 FAIL / 11 PASS", "after": "ALL PASS 38" },
+    "typecheck_errors": 0,
+    "test_gate": "pass 5567, fail 0 (f55084a7)",
+    "prisma_db_push": "in sync, без предупреждений о потере данных"
+  },
+  "verdict": "PASS"
+}

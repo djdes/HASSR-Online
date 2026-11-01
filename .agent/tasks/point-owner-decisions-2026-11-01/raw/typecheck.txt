@@ -1,0 +1,6 @@
+f55084a7 Merge branch 'claude/dazzling-pascal-obsf8l' into iso2-integration
+
+> haccp-online@0.1.0 typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+TYPECHECK EXIT 0
