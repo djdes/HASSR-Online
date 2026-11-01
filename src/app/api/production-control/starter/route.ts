@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { ppkSingletonKey, ppkWhere } from "@/lib/ppk/scope";
 import { flowchartTemplate } from "@/lib/ppk/diagram";
 import { policyTemplate } from "@/lib/ppk/haccp";
 import { STARTER_BLOCKS, isStarterKind, starterPack, type StarterBlock } from "@/lib/ppk/starter-packs";
@@ -56,15 +57,16 @@ export async function POST(request: Request) {
       const created: Partial<Record<StarterBlock, number>> = {};
       const skipped: StarterBlock[] = [];
       for (const block of STARTER_BLOCKS) {
-        const existing = await tx.ppkRecord.count({ where: { organizationId, block } });
+        const existing = await tx.ppkRecord.count({ where: { ...ppkWhere(auth.scope), block } });
         if (existing > 0) {
           skipped.push(block);
           continue;
         }
-        const singleton = block === "policy" || block === "norms" ? block : null;
+        const singleton = block === "policy" || block === "norms" ? ppkSingletonKey(block, auth.scope.buildingId) : null;
         await tx.ppkRecord.createMany({
           data: rows[block].map((data, index) => ({
             organizationId,
+            buildingId: auth.scope.buildingId,
             block,
             data: data as Prisma.InputJsonValue,
             sortOrder: index + 1,

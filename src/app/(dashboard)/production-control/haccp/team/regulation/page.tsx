@@ -8,6 +8,8 @@ import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import type { TeamMember } from "@/lib/ppk/records";
 import { teamRegulationSections } from "@/lib/ppk/team-regulation-document";
 import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +20,17 @@ export default async function TeamRegulationPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const [org, rows, staff, t, u] = await Promise.all([
-    loadPpkPrintOrg(organizationId),
+    loadPpkPrintOrg(organizationId, scope.buildingId),
     db.ppkRecord.findMany({
-      where: { organizationId, block: "team" },
+      where: { ...ppkWhere(scope), block: "team" },
       select: { data: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
-    loadPpkStaff(organizationId),
+    loadPpkStaff(scope),
     getTranslations("productionControl.print"),
     getTranslations("productionControlUi"),
   ]);

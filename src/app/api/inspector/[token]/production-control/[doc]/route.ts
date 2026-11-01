@@ -11,6 +11,8 @@ import { db } from "@/lib/db";
 import { knowledgeInline } from "@/lib/knowledge-documents";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
 import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { ppkScopeForPoint } from "@/lib/ppk/scope.server";
+import { ppkDocKindKey } from "@/lib/ppk/scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +49,9 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
     return plain(429, "Слишком много запросов. Повторите через минуту.");
   }
   const organizationId = access.token.organizationId;
+  // Ссылка на точку — ППК этой точки, на всю организацию — ППК организации
+  // (2026-11-01, «ППК на точку»).
+  const scope = await ppkScopeForPoint(organizationId, access.token.buildingId);
   const wantsFile = new URL(request.url).searchParams.get("file") === "1";
 
   let body: Uint8Array<ArrayBuffer>;
@@ -54,7 +59,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
   let fileName: string;
   if (wantsFile) {
     const file = await db.knowledgeDocument.findFirst({
-      where: { organizationId, kind: knowledgeKindOf(doc) },
+      where: { organizationId, kind: ppkDocKindKey(knowledgeKindOf(doc), scope.buildingId) },
       select: { fileName: true, mimeType: true, content: true },
     });
     if (!file) return plain(404, "Документ не загружен");
@@ -62,7 +67,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
     mimeType = file.mimeType;
     fileName = file.fileName;
   } else {
-    const bundle = await loadPpkBundle(organizationId);
+    const bundle = await loadPpkBundle(scope);
     body = new Uint8Array(doc === "ppk" ? buildPpkProgramPdf(bundle) : buildHaccpPlanPdf(bundle));
     mimeType = "application/pdf";
     fileName = `${TITLE[doc]} — ${bundle.org.orgName || "организация"}.pdf`.replace(/[\\/:*?"<>|]+/g, "-");

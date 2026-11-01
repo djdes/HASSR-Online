@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
 import { parsePpkRecords, type ParsedPpkRecord } from "./records";
+import { ppkWhere, type PpkScope } from "./scope";
 
 /** Версии ППК и ХАССП-плана организации (все документы, по порядку записи). */
-export async function loadDocVersions(organizationId: string): Promise<ParsedPpkRecord<"doc-versions">[]> {
+export async function loadDocVersions(scope: PpkScope): Promise<ParsedPpkRecord<"doc-versions">[]> {
   const rows = await db.ppkRecord.findMany({
-    where: { organizationId, block: "doc-versions" },
+    where: { ...ppkWhere(scope), block: "doc-versions" },
     select: { id: true, data: true, sortOrder: true, updatedAt: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
@@ -12,9 +13,9 @@ export async function loadDocVersions(organizationId: string): Promise<ParsedPpk
 }
 
 /** Заседания группы ХАССП организации. */
-export async function loadTeamMeetings(organizationId: string): Promise<ParsedPpkRecord<"team-meetings">[]> {
+export async function loadTeamMeetings(scope: PpkScope): Promise<ParsedPpkRecord<"team-meetings">[]> {
   const rows = await db.ppkRecord.findMany({
-    where: { organizationId, block: "team-meetings" },
+    where: { ...ppkWhere(scope), block: "team-meetings" },
     select: { id: true, data: true, sortOrder: true, updatedAt: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });

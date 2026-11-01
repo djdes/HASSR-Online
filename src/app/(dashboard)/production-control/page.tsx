@@ -21,6 +21,8 @@ import { PpkProgressBar } from "@/components/production-control/ppk-progress-bar
 import { PpkStatusDot } from "@/components/production-control/ppk-status-dot";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PpkIndividualOrder } from "@/components/production-control/ppk-individual-order";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkDocKindKeys, ppkDocKindOf, ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -33,19 +35,24 @@ export default async function ProductionControlPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
   const canManage = hasCapability(session.user, "admin.full");
 
   const [rows, statuses, t, nav, blockCounts] = await Promise.all([
-    db.knowledgeDocument.findMany({
-      where: { organizationId, kind: { in: [...PRODUCTION_DOC_KINDS] } },
-      select: { kind: true, fileName: true, mimeType: true, sizeBytes: true, updatedAt: true },
-    }),
-    loadPpkStatuses(organizationId),
+    db.knowledgeDocument
+      .findMany({
+        where: { organizationId, kind: { in: ppkDocKindKeys(scope.buildingId) } },
+        select: { kind: true, fileName: true, mimeType: true, sizeBytes: true, updatedAt: true },
+      })
+      // Документ точки хранится как `<kind>@<точка>` — дальше вид без точки.
+      .then((docs) => docs.map((doc) => ({ ...doc, kind: ppkDocKindOf(doc.kind) }))),
+    loadPpkStatuses(scope),
     getTranslations("productionControl"),
     getTranslations("navigation"),
     db.ppkRecord.groupBy({
       by: ["block"],
-      where: { organizationId, block: { in: [...STARTER_BLOCKS] } },
+      where: { ...ppkWhere(scope), block: { in: [...STARTER_BLOCKS] } },
       _count: { _all: true },
     }),
   ]);

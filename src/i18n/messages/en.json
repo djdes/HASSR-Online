@@ -25739,7 +25739,8 @@
       "sheetEmpty": "Empty journal page",
       "before": "Before",
       "after": "After",
-      "illustrationCaption": "Empty rows for today will be filled; anything already entered stays as it was."
+      "illustrationCaption": "Empty rows for today will be filled; anything already entered stays as it was.",
+      "pointRequired": "Select an outlet in the header: autofill closes the day for one outlet, not the whole company."
     },
     "consultantCard": {
       "title": "Your consultant",

@@ -25,9 +25,9 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
 
   // Напоминаем только людям своей точки (руководитель точки — своих точек).
-  const stats = await ackStats(auth.organizationId, parsed.data.docKey, await visibleStaffWhere(auth.session));
+  const stats = await ackStats(auth.scope, parsed.data.docKey, await visibleStaffWhere(auth.session));
   if (!stats) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
-  const doc = await ackDocument(auth.organizationId, parsed.data.docKey);
+  const doc = await ackDocument(auth.scope, parsed.data.docKey);
   if (!doc) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
 
   const linked = stats.pending.length

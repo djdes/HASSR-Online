@@ -20,6 +20,7 @@ import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { CloseDayCard } from "@/components/dashboard/close-day-card";
+import { closeDayNeedsPoint } from "@/lib/close-day-point";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { DashboardJournalsGrid } from "@/components/dashboard/dashboard-journals-grid";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
@@ -31,7 +32,7 @@ import {
 import { SuperUserDevTools } from "@/components/dashboard/super-user-dev-tools";
 import { isSuperUser } from "@/lib/super-user";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { getActiveBuildingId, getViewedPointId } from "@/lib/active-building";
+import { getActiveBuildingId, getViewedPointId, loadBuildingContext } from "@/lib/active-building";
 import { journalEntryPointWhere } from "@/lib/point-filters";
 import { normalizeSphere } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
@@ -43,6 +44,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { DENIED_PARAM, keepDeniedParam } from "@/lib/denied-notice";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -111,6 +113,8 @@ export default async function DashboardPage({
   // «Ждут подтверждения» и записи за 48 ч — по торговой точке из шапки
   // (2026-10-31): записи её цехов и оборудования и без цеха.
   const entryAtPoint = journalEntryPointWhere(viewedPoint);
+  // «Автозаполнить» на уровне организации просит выбрать точку (2026-11-01).
+  const closeDayPointRequired = closeDayNeedsPoint(await loadBuildingContext(session));
 
   const now = new Date();
   const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -150,7 +154,8 @@ export default async function DashboardPage({
       },
     }),
     // Плашка «Производственный контроль»: сбой загрузки её скрывает, главная не ломается.
-    loadPpkTodaySummary(organizationId).catch(() => null),
+    // ППК точки из шапки или организации (2026-11-01, «ППК на точку»).
+    ppkScopeForSession(session).then(loadPpkTodaySummary).catch(() => null),
   ]);
 
   // Selected journal set comes from organization settings:
@@ -286,7 +291,7 @@ export default async function DashboardPage({
                 disabledCodes={[...disabledCodes]}
                 sampleCodes={[...SAMPLE_CODES]}
                 canToggle={hasFullWorkspaceAccess(session.user)}
-                actions={<CloseDayCard />}
+                actions={<CloseDayCard pointRequired={closeDayPointRequired} />}
               />
             </DashboardSection>
           )}

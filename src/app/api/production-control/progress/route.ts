@@ -8,6 +8,6 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
-  const statuses = await loadPpkStatuses(auth.organizationId);
+  const statuses = await loadPpkStatuses(auth.scope);
   return NextResponse.json({ statuses }, { headers: { "Cache-Control": "private, no-store" } });
 }

@@ -10,7 +10,8 @@ async function change(request: Request, ctx: Ctx, remove: boolean) {
   const auth = await requireKnowledgeAccess(true);
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
-  const where = { id, organizationId: auth.organizationId };
+  // Только база знаний: документы ППК (точек) — в своём разделе (2026-11-01).
+  const where = { id, organizationId: auth.organizationId, kind: null, folder: null };
   const current = await db.knowledgeDocument.findFirst({ where, select: { title: true } });
   if (!current) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   let title = current.title;

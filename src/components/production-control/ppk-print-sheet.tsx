@@ -9,8 +9,10 @@ import { PrintJournalButton } from "@/components/journals/print-journal-button";
 export type { PpkPrintOrg } from "@/lib/ppk/print-org";
 
 /** Логотип, реквизиты и фирменный цвет организации — данные для `PpkPrintSheet`. */
-export async function loadPpkPrintOrg(organizationId: string): Promise<PpkPrintOrg> {
-  const block = (await loadDocumentOrgBlock(organizationId)) ?? buildDocumentOrgBlock({ org: { name: null } });
+export async function loadPpkPrintOrg(organizationId: string, buildingId: string | null = null): Promise<PpkPrintOrg> {
+  // ППК точки (2026-11-01) — в шапке реквизиты точки (адрес, наименование).
+  const block =
+    (await loadDocumentOrgBlock(organizationId, { buildingId })) ?? buildDocumentOrgBlock({ org: { name: null } });
   return ppkPrintOrgFromBlock(block);
 }
 

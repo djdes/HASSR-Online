@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { ackKnowledgeId, ackKnowledgeKey, formatAckMoment, isAckDocKey, type AckDocKey } from "./acknowledge";
 import { parsePpkRecords } from "./records";
+import { ppkWhere, type PpkScope } from "./scope";
 
 export type AckAudience = "staff" | "team";
 export type AckDoc = { docKey: AckDocKey; title: string; version: string; audience: AckAudience };
@@ -15,12 +16,15 @@ export const TEAM_REGULATION_ACK_TITLE = "Положение о группе Х�
  * Описание документа для ознакомления или null: документа нет в организации
  * (политика не заполнена, файл удалён или это документ раздела ППК).
  * Версия меняется при правке документа — прежние отметки перестают считаться.
+ * Политика и положение о группе — ППК точки человека (2026-11-01, «ППК на
+ * точку»); инструкции базы знаний — общие для организации.
  */
-export async function ackDocument(organizationId: string, docKey: string): Promise<AckDoc | null> {
+export async function ackDocument(scope: PpkScope, docKey: string): Promise<AckDoc | null> {
+  const { organizationId } = scope;
   if (!isAckDocKey(docKey)) return null;
   if (docKey === "policy") {
     const row = await db.ppkRecord.findFirst({
-      where: { organizationId, block: "policy" },
+      where: { ...ppkWhere(scope), block: "policy" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
     });
     if (!row) return null;
@@ -49,10 +53,10 @@ export function policyTextVersion(text: string): string {
   return createHash("sha256").update(text.trim().replace(/\s+/g, " ")).digest("hex").slice(0, 16);
 }
 
-/** Члены группы ХАССП, которые ещё работают в организации. */
-async function teamMemberIds(organizationId: string): Promise<string[]> {
+/** Члены группы ХАССП этой точки (или организации). */
+async function teamMemberIds(scope: PpkScope): Promise<string[]> {
   const rows = await db.ppkRecord.findMany({
-    where: { organizationId, block: "team" },
+    where: { ...ppkWhere(scope), block: "team" },
     select: { id: true, data: true, sortOrder: true, updatedAt: true },
   });
   return parsePpkRecords("team", rows).map((row) => row.data.userId);
@@ -77,7 +81,8 @@ async function rosterUsers(organizationId: string, staffWhere: AckStaffWhere = {
 export type AckListItem = AckDoc & { acknowledgedAt: string | null };
 
 /** Документы, с которыми этому человеку нужно ознакомиться (или уже ознакомлен). */
-export async function listAckDocsForUser(organizationId: string, userId: string): Promise<AckListItem[]> {
+export async function listAckDocsForUser(scope: PpkScope, userId: string): Promise<AckListItem[]> {
+  const { organizationId } = scope;
   const me = await db.user.findFirst({
     where: { id: userId, organizationId, ...ORG_ROSTER_WHERE },
     select: { id: true },
@@ -85,15 +90,15 @@ export async function listAckDocsForUser(organizationId: string, userId: string)
   if (!me) return [];
 
   const [policy, regulation, knowledge, teamIds] = await Promise.all([
-    ackDocument(organizationId, "policy"),
-    ackDocument(organizationId, "team-regulation"),
+    ackDocument(scope, "policy"),
+    ackDocument(scope, "team-regulation"),
     db.knowledgeDocument.findMany({
       where: { organizationId, kind: null, folder: null },
       select: { id: true, title: true, updatedAt: true },
       orderBy: { createdAt: "desc" },
       take: 500,
     }),
-    teamMemberIds(organizationId),
+    teamMemberIds(scope),
   ]);
   const knowledgeDocs: AckDoc[] = knowledge.map((doc) => ({
     docKey: ackKnowledgeKey(doc.id),
@@ -119,21 +124,22 @@ export async function listAckDocsForUser(organizationId: string, userId: string)
 }
 
 /** Входит ли человек в аудиторию документа (для отметки «Ознакомлен»). */
-export async function ackDocForUser(organizationId: string, userId: string, docKey: string): Promise<AckDoc | null> {
-  const doc = await ackDocument(organizationId, docKey);
+export async function ackDocForUser(scope: PpkScope, userId: string, docKey: string): Promise<AckDoc | null> {
+  const { organizationId } = scope;
+  const doc = await ackDocument(scope, docKey);
   if (!doc) return null;
   const user = await db.user.findFirst({
     where: { id: userId, organizationId, ...ORG_ROSTER_WHERE },
     select: { id: true },
   });
   if (!user) return null;
-  if (doc.audience === "team" && !(await teamMemberIds(organizationId)).includes(userId)) return null;
+  if (doc.audience === "team" && !(await teamMemberIds(scope)).includes(userId)) return null;
   return doc;
 }
 
 /** Сколько документов ждут отметки этого человека. */
-export async function countPendingAckForUser(organizationId: string, userId: string): Promise<number> {
-  return (await listAckDocsForUser(organizationId, userId)).filter((doc) => !doc.acknowledgedAt).length;
+export async function countPendingAckForUser(scope: PpkScope, userId: string): Promise<number> {
+  return (await listAckDocsForUser(scope, userId)).filter((doc) => !doc.acknowledgedAt).length;
 }
 
 export type AckStats = {
@@ -144,11 +150,11 @@ export type AckStats = {
 
 /** Кто ознакомился с текущей версией документа, а кто ещё нет. */
 export async function ackStats(
-  organizationId: string,
+  scope: PpkScope,
   docKey: string,
   staffWhere: AckStaffWhere = {},
 ): Promise<AckStats | null> {
-  return (await ackStatsMany(organizationId, [docKey], staffWhere))[docKey] ?? null;
+  return (await ackStatsMany(scope, [docKey], staffWhere))[docKey] ?? null;
 }
 
 /**
@@ -156,13 +162,14 @@ export async function ackStats(
  * заходом (страница инструкций спрашивает по всем файлам разом).
  */
 export async function ackStatsMany(
-  organizationId: string,
+  scope: PpkScope,
   docKeys: string[],
   staffWhere: AckStaffWhere = {},
 ): Promise<Record<string, AckStats>> {
+  const { organizationId } = scope;
   const knowledgeIds = docKeys.map(ackKnowledgeId).filter((id): id is string => id !== null);
   const [fixed, knowledge] = await Promise.all([
-    Promise.all(docKeys.filter((key) => ackKnowledgeId(key) === null).map((key) => ackDocument(organizationId, key))),
+    Promise.all(docKeys.filter((key) => ackKnowledgeId(key) === null).map((key) => ackDocument(scope, key))),
     knowledgeIds.length
       ? db.knowledgeDocument.findMany({
           where: { id: { in: knowledgeIds }, organizationId, kind: null, folder: null },
@@ -182,7 +189,7 @@ export async function ackStatsMany(
   if (!docs.length) return {};
   const [staff, teamIds, marks] = await Promise.all([
     rosterUsers(organizationId, staffWhere),
-    docs.some((doc) => doc.audience === "team") ? teamMemberIds(organizationId) : Promise.resolve<string[]>([]),
+    docs.some((doc) => doc.audience === "team") ? teamMemberIds(scope) : Promise.resolve<string[]>([]),
     db.ppkAcknowledgement.findMany({
       where: { organizationId, docKey: { in: docs.map((doc) => doc.docKey) } },
       select: { docKey: true, version: true, userId: true, acknowledgedAt: true },
@@ -208,12 +215,12 @@ export async function ackStatsMany(
 
 /** Сводка для руководителя: даты уже отформатированы в поясе организации. */
 export async function ackSummaryFor(
-  organizationId: string,
+  scope: PpkScope,
   docKey: string,
   timeZone: string,
   staffWhere: AckStaffWhere = {},
 ) {
-  const stats = await ackStats(organizationId, docKey, staffWhere);
+  const stats = await ackStats(scope, docKey, staffWhere);
   if (!stats) return null;
   return {
     acknowledged: stats.acknowledged.map((row) => ({

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { PpkFolder } from "@/components/production-control/ppk-folder";
 import { NormsClient } from "@/components/production-control/norms-client";
+import { ppkWhere, type PpkScope } from "@/lib/ppk/scope";
 
 const OUTLINE_LINK =
   "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
@@ -26,10 +27,11 @@ export async function NormDocumentsSanpinLink() {
  * документы» и «Пришла проверка → Нормативные документы» (эскиз 2026-10-28).
  * Страница сама проверяет права и даёт сообщения `productionControl`.
  */
-export async function NormDocumentsBody({ organizationId }: { organizationId: string }) {
+export async function NormDocumentsBody({ scope }: { scope: PpkScope }) {
   const [rows, t] = await Promise.all([
     db.ppkRecord.findMany({
-      where: { organizationId, block: "norms" },
+      // ППК на точку (2026-11-01): нормативы точки из шапки или организации.
+      where: { ...ppkWhere(scope), block: "norms" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),

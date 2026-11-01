@@ -5,20 +5,22 @@ import {
   type InspectionNorms,
 } from "@/lib/inspection-norms";
 import { PPK_RECORD_SCHEMAS, type DocVersion, type NormsData } from "@/lib/ppk/records";
+import { ppkDocKindKeys, ppkDocKindOf, ppkWhere, type PpkScope } from "@/lib/ppk/scope";
 
 /**
  * Данные «Нормативки» одним запросом на блок: метаданные загруженных ППК и
  * ХАССП-плана (без содержимого), отметки норм и версии документов. Битые
  * записи пропускаются.
  */
-export async function loadInspectionNorms(organizationId: string): Promise<InspectionNorms> {
+export async function loadInspectionNorms(scope: PpkScope): Promise<InspectionNorms> {
+  // ППК на точку (2026-11-01): документы и нормы точки (или организации).
   const [docs, rows] = await Promise.all([
     db.knowledgeDocument.findMany({
-      where: { organizationId, kind: { in: ["ppk", "haccp_plan"] } },
+      where: { organizationId: scope.organizationId, kind: { in: ppkDocKindKeys(scope.buildingId) } },
       select: { kind: true, fileName: true, updatedAt: true },
     }),
     db.ppkRecord.findMany({
-      where: { organizationId, block: { in: ["norms", "doc-versions"] } },
+      where: { ...ppkWhere(scope), block: { in: ["norms", "doc-versions"] } },
       select: { block: true, data: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
@@ -30,7 +32,7 @@ export async function loadInspectionNorms(organizationId: string): Promise<Inspe
       return parsed.success ? [parsed.data as T] : [];
     });
   const file = (kind: "ppk" | "haccp_plan") => {
-    const doc = docs.find((item) => item.kind === kind);
+    const doc = docs.find((item) => ppkDocKindOf(item.kind) === kind);
     return doc ? { fileName: doc.fileName, updatedAt: doc.updatedAt.toISOString() } : null;
   };
   const titles = resolveNormTitles(valid<NormsData>("norms")[0] ?? null);

@@ -4,6 +4,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { KNOWLEDGE_MAX_BYTES, knowledgeFileType } from "@/lib/knowledge-documents";
 import { isPpkFolder } from "@/lib/ppk/folders";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 import { checkStorageForUpload, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Неизвестная папка" }, { status: 400 });
   }
   const files = await db.knowledgeDocument.findMany({
-    where: { organizationId: auth.organizationId, folder },
+    where: { ...ppkWhere(auth.scope), folder },
     select: SELECT,
     orderBy: { createdAt: "desc" },
     take: 500,
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Максимальный размер файла — 25 МБ" }, { status: 413 });
   }
   const inFolder = await db.knowledgeDocument.count({
-    where: { organizationId: auth.organizationId, folder },
+    where: { ...ppkWhere(auth.scope), folder },
   });
   if (inFolder >= MAX_FILES_PER_FOLDER) {
     return NextResponse.json({ error: "В папке уже 100 файлов" }, { status: 409 });
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
   const created = await db.knowledgeDocument.create({
     data: {
       organizationId: auth.organizationId,
+      buildingId: auth.scope.buildingId,
       folder,
       title: fileName,
       fileName,
@@ -103,7 +105,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Файл не найден" }, { status: 404 });
   }
   const result = await db.knowledgeDocument.deleteMany({
-    where: { id, organizationId: auth.organizationId, folder: { not: null } },
+    where: { id, ...ppkWhere(auth.scope), folder: { not: null } },
   });
   if (result.count === 0) {
     return NextResponse.json({ error: "Файл не найден" }, { status: 404 });

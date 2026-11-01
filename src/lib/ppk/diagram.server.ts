@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PPK_RECORD_SCHEMAS, type ControlPointData, type DiagramData } from "./records";
+import { ppkWhere, type PpkScope } from "./scope";
 
 /** Схема своей организации нужного блока; чужая, битая или несуществующая — 404. */
 export async function loadDiagramRecord(
-  organizationId: string,
+  scope: PpkScope,
   block: "flowchart" | "floor-plan",
   id: string,
 ): Promise<{ id: string; data: DiagramData; updatedAt: Date }> {
   const row = await db.ppkRecord.findFirst({
-    where: { id, organizationId, block },
+    where: { id, ...ppkWhere(scope), block },
     select: { id: true, data: true, updatedAt: true },
   });
   if (!row) notFound();
@@ -19,9 +20,9 @@ export async function loadDiagramRecord(
 }
 
 /** Номера ККТ и ОПП организации — для выбора на этапе блок-схемы. */
-export async function loadControlNumbers(organizationId: string): Promise<string[]> {
+export async function loadControlNumbers(scope: PpkScope): Promise<string[]> {
   const rows = await db.ppkRecord.findMany({
-    where: { organizationId, block: "control-points" },
+    where: { ...ppkWhere(scope), block: "control-points" },
     select: { data: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });

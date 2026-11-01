@@ -4,6 +4,9 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { loadBuildingContext } from "@/lib/active-building";
+import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
+import { paperDocumentVisibleWhere } from "@/lib/paper-journal-point";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 import { PageCrumbs } from "@/components/layout/page-nav";
 import { PaperJournalEditor } from "../../paper-journal-editor";
@@ -34,25 +37,29 @@ export default async function PaperDocumentPage({
   if (!journal) notFound();
 
   const organizationId = getActiveOrgId(session);
-  const [organization, document, employees] = await Promise.all([
+  const [organization, document] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, journalShortName: true, legalProfileJson: true, inn: true, address: true },
     }),
+    // Документ чужой точки — «не найдено» (2026-11-01, бумажные по точкам).
     db.paperJournalDocument.findFirst({
-      where: { id: docId, journalId: id, organizationId },
-    }),
-    db.user.findMany({
-      where: { organizationId, isActive: true, archivedAt: null },
-      select: {
-        name: true,
-        positionTitle: true,
-        jobPosition: { select: { name: true } },
-      },
-      orderBy: { name: "asc" },
+      where: { id: docId, journalId: id, organizationId, ...paperDocumentVisibleWhere(await loadBuildingContext(session)) },
     }),
   ]);
   if (!document) notFound();
+  // Люди для подсказок ФИО — сотрудники точки документа (и без точек), как
+  // строки электронного документа точки.
+  const staffAtPoint = pointRowsWhere(await documentRowsPointId(organizationId, document.buildingId)).staff;
+  const employees = await db.user.findMany({
+    where: { AND: [{ organizationId, isActive: true, archivedAt: null }, staffAtPoint] },
+    select: {
+      name: true,
+      positionTitle: true,
+      jobPosition: { select: { name: true } },
+    },
+    orderBy: { name: "asc" },
+  });
 
   const staff = employees.map((u) => ({
     name: u.name,

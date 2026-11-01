@@ -12,6 +12,8 @@ import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { teamRegulationSections } from "@/lib/ppk/team-regulation-document";
 import { PPK_BUTTON_OUTLINE_CLASS } from "@/components/production-control/ppk-ui";
 import { AcknowledgeButton } from "./acknowledge-button";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,9 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
   const userId = session.user.id;
-  const doc = await ackDocForUser(organizationId, userId, docKey);
+  // Политика и положение о группе — ППК точки человека (2026-11-01).
+  const scope = await ppkScopeForSession(session);
+  const doc = await ackDocForUser(scope, userId, docKey);
   if (!doc) notFound();
 
   const [org, mark, t] = await Promise.all([
@@ -59,7 +63,7 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
   let body: React.ReactNode = null;
   if (doc.docKey === "policy") {
     const row = await db.ppkRecord.findFirst({
-      where: { organizationId, block: "policy" },
+      where: { ...ppkWhere(scope), block: "policy" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
     });
     const text = row ? (parsePpkRecords("policy", [row])[0]?.data.text ?? "") : "";
@@ -74,11 +78,11 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
   } else if (doc.docKey === "team-regulation") {
     const [rows, staff] = await Promise.all([
       db.ppkRecord.findMany({
-        where: { organizationId, block: "team" },
+        where: { ...ppkWhere(scope), block: "team" },
         select: { id: true, data: true, sortOrder: true, updatedAt: true },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       }),
-      loadPpkStaff(organizationId),
+      loadPpkStaff(scope),
     ]);
     const staffById = new Map(staff.map((person) => [person.id, person]));
     const members = parsePpkRecords("team", rows)

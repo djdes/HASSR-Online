@@ -3,6 +3,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadDiagramRecord, loadControlNumbers } from "@/lib/ppk/diagram.server";
 import { DiagramPage } from "@/components/production-control/diagram-page";
+import { ppkPageScope } from "@/lib/ppk/access.server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
-  const record = await loadDiagramRecord(organizationId, "flowchart", id);
-  const controlNumbers = await loadControlNumbers(organizationId);
+  const record = await loadDiagramRecord(scope, "flowchart", id);
+  const controlNumbers = await loadControlNumbers(scope);
 
   return (
     <DiagramPage

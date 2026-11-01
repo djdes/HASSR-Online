@@ -6,6 +6,7 @@ import { ensureClosingDocument, renderPdf } from "@/lib/closing-documents/servic
 import { closingDocumentFilename } from "@/lib/closing-documents/types";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
 import { getServerSession } from "@/lib/server-session";
 
 export const runtime = "nodejs";
@@ -42,7 +43,9 @@ export async function GET(_request: Request, ctx: { params: Promise<{ orderId: s
   const own =
     order.organizationId !== null &&
     order.organizationId === getActiveOrgId(session) &&
-    hasFullWorkspaceAccess(session.user);
+    hasFullWorkspaceAccess(session.user) &&
+    // УПД — документ компании: руководителю точки закрыт (2026-11-01).
+    !isPointScoped(session.user);
   if (!own && !session.user.isRoot) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }

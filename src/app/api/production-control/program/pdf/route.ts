@@ -12,7 +12,7 @@ export async function GET() {
   const auth = await requireProductionDocsAccess();
   if (!auth.ok) return auth.response;
 
-  const bundle = await loadPpkBundle(auth.organizationId);
+  const bundle = await loadPpkBundle(auth.scope);
   const pdf = buildPpkProgramPdf(bundle);
   const name = `ППК — ${bundle.org.orgName || "организация"}.pdf`.replace(/[\/:*?"<>|]+/g, "-");
   return new NextResponse(new Uint8Array(pdf), {
