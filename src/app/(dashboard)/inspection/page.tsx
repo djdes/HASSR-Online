@@ -6,8 +6,10 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { isPointScoped } from "@/lib/point-scope";
+import { parsePointScope } from "@/lib/point-scope";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
+import { inspectorPointName, resolveInspectorIssuePointForSession } from "@/lib/inspector-point.server";
+import { buildingTargets } from "@/lib/building-targets";
 import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { InspectionQr } from "@/components/inspection/inspection-qr";
@@ -40,9 +42,13 @@ export default async function InspectionPage() {
   if (!fullAccess && !hasCapability(session.user, "tasks.verify")) forbidden();
   const organizationId = getActiveOrgId(session);
   const showReadiness = hasCapability(session.user, "admin.full");
+  // QR проверяющего — на точку из шапки (руководителю точки — его точку),
+  // в «Вся организация» — на всю организацию (2026-11-01).
+  const issuePoint = await resolveInspectorIssuePointForSession(session, organizationId, undefined);
+  const qrPointId = issuePoint.ok ? issuePoint.buildingId : null;
 
-  const [inspector, report, org, visitCount, t, tItems, locale] = await Promise.all([
-    loadCabinetInspectorData(organizationId),
+  const [inspector, report, org, visitCount, t, tItems, locale, qrPointName, pointsEnabled] = await Promise.all([
+    loadCabinetInspectorData(organizationId, { pointScope: parsePointScope(session.user.pointScope) }),
     // Сбой аудита готовности не должен ронять экран — без балла, только ссылка.
     showReadiness ? runComplianceAudit(organizationId).catch(() => null) : Promise.resolve(null),
     db.organization.findUnique({
@@ -54,13 +60,20 @@ export default async function InspectionPage() {
     getTranslations("inspectionDay"),
     getTranslations("navigation.shell.menus.inspection.items"),
     getLocale(),
+    inspectorPointName(organizationId, qrPointId),
+    buildingTargets(organizationId).then((targets) => targets.some(Boolean)),
   ]);
   const timeZone = org?.timezone || "Europe/Moscow";
 
-  // Действующий QR — самый долгий: его и показываем, и печатаем.
+  // Действующий QR этой точки (или всей организации) — самый долгий: его и показываем, и печатаем.
   const activeQr = inspector.tokens
-    .filter((token) => token.isQr && token.qrSvg)
+    .filter((token) => token.isQr && token.qrSvg && token.buildingId === qrPointId)
     .sort((a, b) => b.expiresAt.localeCompare(a.expiresAt))[0];
+  const qrScopeLabel = pointsEnabled
+    ? qrPointName
+      ? t("qrScopePoint", { name: qrPointName })
+      : t("qrScopeOrganization")
+    : null;
   const recentViews = inspector.activity.slice(0, 5);
   const dateTime = new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -110,12 +123,15 @@ export default async function InspectionPage() {
       <InspectionGuide />
 
       <Step id="qr" number={2} title={t("qrTitle")}>
-        {/* Ссылка проверяющего открывает журналы всех точек — её выдаёт и
-            показывает офис, руководителю точки — «попросите руководителя». */}
+        {/* QR на точку из шапки: проверяющий увидит журналы только этой точки
+            и общие; в «Вся организация» — на всю организацию (2026-11-01).
+            Руководитель точки выпускает QR своей точки. */}
         <InspectionQr
-          qr={activeQr && !isPointScoped(session.user) ? { id: activeQr.id, svg: activeQr.qrSvg ?? "" } : null}
+          qr={activeQr ? { id: activeQr.id, svg: activeQr.qrSvg ?? "" } : null}
           organizationName={orgDisplayName(org?.name ?? "", "")}
-          canIssue={fullAccess && !isPointScoped(session.user)}
+          canIssue={fullAccess}
+          scopeLabel={qrScopeLabel}
+          pointName={qrPointName}
         />
       </Step>
 

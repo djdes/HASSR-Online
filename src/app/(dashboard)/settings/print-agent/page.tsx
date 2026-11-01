@@ -3,7 +3,9 @@ import { forbidden } from "next/navigation";
 import { ArrowRight, Download, Printer, Tag, Tags } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { staffInScope } from "@/lib/point-scope";
+import { buildingInScope, isPointScoped, staffInScope } from "@/lib/point-scope";
+import { loadBuildingContext } from "@/lib/active-building";
+import { canManageAgentPoint } from "@/lib/print-point-routing";
 import { db } from "@/lib/db";
 import { isAgentOnline } from "@/lib/print-agent-auth";
 import { brandQrSvg } from "@/lib/brand-qr";
@@ -52,6 +54,8 @@ export default async function PrintAgentSettingsPage() {
         agentVersion: true,
         lastSeenAt: true,
         createdAt: true,
+        buildingId: true,
+        building: { select: { name: true } },
       },
     }),
     // Принтеры этикеток из «Сетап помощника» — сюда их пишет телефон
@@ -113,6 +117,17 @@ export default async function PrintAgentSettingsPage() {
   // (аудит точек, 2026-11-01) — как `/api/setup-helper/devices/[id]/revoke`.
   const userPoints = new Map(helperUsers.map((user) => [user.id, user.buildingIds]));
   const visibleHelperDevices = helperDevices.filter((device) => staffInScope(session.user, userPoints.get(device.userId) ?? []));
+  // Принтер своей точки (2026-11-01): руководитель точки видит и ставит на
+  // точку только принтеры своих точек; выбор точки — когда журналы ведутся
+  // по точкам.
+  const pointScope = session.user.pointScope ?? null;
+  const visibleAgents = agents.filter((agent) => canManageAgentPoint({ scope: pointScope, current: agent.buildingId }));
+  const buildingContext = await loadBuildingContext(session);
+  const agentPoints = buildingContext.enabled
+    ? buildingContext.buildings
+        .filter((building) => buildingInScope(session.user, building.id))
+        .map((building) => ({ id: building.id, name: building.name }))
+    : [];
   // Ссылку открывают с телефона, поэтому QR рядом с кнопкой: навёл камеру —
   // скачал. SVG собирает brandQrSvg из адреса сайта, ввода пользователя в нём нет.
   const downloadQr = await brandQrSvg(setupHelperDownloadUrl(), { locale: isLocale(locale) ? locale : "ru" });
@@ -157,14 +172,18 @@ export default async function PrintAgentSettingsPage() {
       </section>
 
       <PrintAgentSettingsClient
-        agents={agents.map((a) => ({
+        agents={visibleAgents.map((a) => ({
           id: a.id,
           name: a.name,
           printerName: a.printerName,
           agentVersion: a.agentVersion,
           lastSeenAt: a.lastSeenAt?.toISOString() ?? null,
           online: isAgentOnline(a.lastSeenAt),
+          buildingId: a.buildingId ?? null,
+          buildingName: a.building?.name ?? null,
         }))}
+        points={agentPoints}
+        canChooseOrganization={!isPointScoped(session.user)}
       />
 
       {/* Последние задания печати — раньше их показывала «Настройка точек»,

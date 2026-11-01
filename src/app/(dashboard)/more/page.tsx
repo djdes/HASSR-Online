@@ -9,6 +9,8 @@ import { AlertPill } from "@/components/dashboard/alert-pill";
 import { StaleCapaNag } from "@/components/dashboard/stale-capa-nag";
 import { canManageMaxOrganization } from "@/lib/max/service";
 import { MaxIcon } from "@/components/max/max-icon";
+import { loadBuildingContext } from "@/lib/active-building";
+import { pointRecordsWhere } from "@/lib/point-records";
 
 export const dynamic = "force-dynamic";
 
@@ -26,15 +28,18 @@ export default async function MorePage() {
   const organizationId = getActiveOrgId(session);
   const now = Date.now();
 
+  // Нарушения и партии — точки из шапки и общие (2026-11-01).
+  const recordsWhere = pointRecordsWhere(await loadBuildingContext(session));
   const [openCapaCount, staleCapaCount, expiringBatches, weekLossCount] = await Promise.all([
-    db.capaTicket.count({ where: { organizationId, status: { not: "closed" } } }),
+    db.capaTicket.count({ where: { organizationId, status: { not: "closed" }, ...recordsWhere } }),
     // Открыты дольше недели — менеджер, скорее всего, забыл их закрыть.
     db.capaTicket.count({
-      where: { organizationId, status: { not: "closed" }, createdAt: { lt: new Date(now - 7 * DAY) } },
+      where: { organizationId, status: { not: "closed" }, createdAt: { lt: new Date(now - 7 * DAY) }, ...recordsWhere },
     }),
     db.batch.count({
       where: {
         organizationId,
+        ...recordsWhere,
         expiryDate: { lte: new Date(now + 3 * DAY) },
         status: { notIn: ["expired", "written_off", "shipped"] },
       },

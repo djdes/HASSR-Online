@@ -33,6 +33,8 @@ type Agent = {
   printerName: string | null;
   lastSeenAt: string | null;
   online: boolean;
+  /** Точка принтера (2026-11-01); нет — вся организация. */
+  buildingName?: string | null;
 };
 
 type Job = {
@@ -141,6 +143,9 @@ export function PrintAgentCard({ historyOnly = false }: { historyOnly?: boolean 
               {agent.name}
               {agent.printerName ? (
                 <span className="opacity-70">· {agent.printerName}</span>
+              ) : null}
+              {agent.buildingName ? (
+                <span className="opacity-70">· {agent.buildingName}</span>
               ) : null}
             </span>
           ))}

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authenticateAgent, touchAgent } from "@/lib/print-agent-auth";
+import { loadPointsWithOwnAgent } from "@/lib/print-agent-point.server";
+import { printJobQueueWhere } from "@/lib/print-point-routing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,8 +57,15 @@ export async function GET(request: Request) {
     },
   });
 
+  // Принтер своей точки (2026-11-01): агент точки — задания своей точки и
+  // общие; общий агент — ещё и задания точек без своего принтера.
+  const pointsWithAgent = agent.buildingId ? [] : await loadPointsWithOwnAgent(agent.organizationId);
   const next = await db.printJob.findFirst({
-    where: { organizationId: agent.organizationId, status: "pending" },
+    where: {
+      organizationId: agent.organizationId,
+      status: "pending",
+      ...printJobQueueWhere(agent, pointsWithAgent),
+    },
     orderBy: { createdAt: "asc" },
     select: { id: true, docTitle: true },
   });

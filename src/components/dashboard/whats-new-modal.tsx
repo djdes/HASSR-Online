@@ -102,6 +102,7 @@ function isCategoryNote(
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Сотрудники: Users,
+  "Проверка, принтер, партии и CAPA — по точке": Building2,
   "Чужая точка закрыта": ShieldCheck,
   "Настройки журналов и датчики": Settings2,
   "Точка видит только своё": MapPin,

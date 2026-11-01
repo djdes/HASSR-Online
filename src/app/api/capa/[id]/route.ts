@@ -4,6 +4,9 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { isManagementRole } from "@/lib/user-roles";
+import { loadBuildingContext } from "@/lib/active-building";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { pointRecordVisible } from "@/lib/point-records";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,7 +18,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const ticket = await db.capaTicket.findUnique({ where: { id } });
-  if (!ticket || ticket.organizationId !== getActiveOrgId(session)) {
+  if (
+    !ticket ||
+    ticket.organizationId !== getActiveOrgId(session) ||
+    // CAPA другой точки — «не найдено» (2026-11-01).
+    !pointRecordVisible(await loadBuildingContext(session), ticket.buildingId)
+  ) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
@@ -57,7 +65,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data.assignedToId = null;
     } else {
       const assignee = await db.user.findFirst({
-        where: { id: body.assignedToId, organizationId: getActiveOrgId(session) },
+        where: { id: body.assignedToId, organizationId: getActiveOrgId(session), ...staffAtBuildingWhere(ticket.buildingId) },
         select: { id: true },
       });
       if (!assignee) {

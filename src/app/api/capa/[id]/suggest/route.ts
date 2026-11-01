@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { loadBuildingContext } from "@/lib/active-building";
+import { pointRecordVisible } from "@/lib/point-records";
 import { resolveExportLocale } from "@/i18n/export-locale";
 import { resolveRequestLocale } from "@/i18n/site-locale";
 import { capaSuggestionLanguageInstruction } from "@/components/capa/capa-presentation";
@@ -80,7 +82,11 @@ export async function POST(
   }
 
   const ticket = await db.capaTicket.findUnique({ where: { id } });
-  if (!ticket || ticket.organizationId !== orgId) {
+  if (
+    !ticket ||
+    ticket.organizationId !== orgId ||
+    !pointRecordVisible(await loadBuildingContext(auth.session), ticket.buildingId)
+  ) {
     return capaSuggestionErrorResponse("NOT_FOUND", locale);
   }
 

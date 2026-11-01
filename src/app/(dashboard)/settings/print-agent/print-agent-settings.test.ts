@@ -59,9 +59,9 @@ function fixture(fetcher: typeof fetch = async () => { throw new Error("Unexpect
   }, { fetch: fetcher });
   return {
     states, nodes, successes, errors, get refreshes() { return refreshes; },
-    async render(locale: Locale, agents = [agent]) {
+    async render(locale: Locale, agents = [agent], extra: Partial<React.ComponentProps<typeof PrintAgentSettingsClient>> = {}) {
       cursor = 0; refCursor = 0; nodes.length = 0; effects.length = 0;
-      const html = await render(locale, React.createElement(component.PrintAgentSettingsClient, { agents }), () => { refreshes++; });
+      const html = await render(locale, React.createElement(component.PrintAgentSettingsClient, { agents, ...extra }), () => { refreshes++; });
       for (const effect of effects) effect();
       return html;
     },
@@ -144,6 +144,8 @@ test("actual settings page keeps management/tenant guards and renders localized 
       },
       "@/lib/auth-helpers": { requireAuth: async () => ({ user: { id: "manager", organizationId: "original-org" } }), getActiveOrgId: () => "active-org" },
       "@/lib/role-access": { hasFullWorkspaceAccess: () => allowed },
+      // Точки выключены — выбора точки у принтера нет (2026-11-01).
+      "@/lib/active-building": { loadBuildingContext: async () => ({ enabled: false, buildings: [] }) },
       "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect ${url}`); }, forbidden: () => { throw new Error("Forbidden"); } },
       "@/lib/db": { db: {
         printAgent: { findMany: async ({ where }: { where: unknown }) => { assert.equal(JSON.stringify(where), JSON.stringify({ organizationId: "active-org", revokedAt: null })); queries++; return [{ ...agent, lastSeenAt: new Date(agent.lastSeenAt!) }]; } },
@@ -176,4 +178,67 @@ test("actual settings page keeps management/tenant guards and renders localized 
     assert.equal(queries, 1);
     allowed = false; await assert.rejects(page.default, /Forbidden/); assert.equal(queries, 1);
   }
+});
+
+test("принтер своей точки: выбор точки в строке принтера отправляет PATCH, руководителю точки нет «Вся организация»", async () => {
+  const requests: { url: string; method?: string; body?: unknown }[] = [];
+  const view = fixture(async (url, init) => { requests.push({ url: String(url), method: init?.method, body: init?.body }); return Response.json({ ok: true }); });
+  const points = [{ id: "point-a", name: "Точка А" }, { id: "point-b", name: "Точка Б" }];
+  const messages = await loadMessages("ru");
+  const copy = messages.printAgent.settings;
+  const html = await view.render("ru", [{ ...agent, buildingId: "point-a", buildingName: "Точка А" }], { points });
+  for (const expected of [copy.devices.point, `<option value="">${copy.devices.allPoints}</option>`, copy.devices.pointHint, "Точка Б"]) assert.ok(html.includes(expected), expected);
+  const select = view.nodes.find(node => node.type === "select");
+  assert.ok(select);
+  assert.equal(select.props.value, "point-a");
+  (select.props.onChange as (event: { target: { value: string } }) => void)({ target: { value: "point-b" } });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.deepEqual(requests, [{ url: "/api/print/agents/original-device-id", method: "PATCH", body: JSON.stringify({ buildingId: "point-b" }) }]);
+  const t = createTranslator({ locale: "ru", messages, namespace: "printAgent.settings" });
+  assert.deepEqual(view.successes, [t("devices.pointChanged", { name: agent.name, point: "Точка Б" })]);
+  assert.equal(view.refreshes, 1);
+  assert.deepEqual(view.states, [null, false], "смена точки не трогает состояние отключения");
+  const scoped = await view.render("ru", [{ ...agent, buildingId: "point-a" }], { points: [points[0]], canChooseOrganization: false });
+  assert.ok(!scoped.includes('<option value="">'), "руководитель точки не делает принтер общим");
+  const withoutPoints = await view.render("ru", [{ ...agent, buildingId: "point-a", buildingName: "Точка А" }]);
+  assert.ok(!withoutPoints.includes(copy.devices.pointHint), "без журналов по точкам — без выбора");
+  assert.ok(withoutPoints.includes("Точка А"), "точка видна подписью");
+});
+
+test("страница принтера: руководитель точки видит только принтеры своих точек и свои точки в выборе", async () => {
+  const messages = await loadMessages("ru");
+  const agents = [
+    { ...agent, id: "agent-a", name: "Касса точки А", buildingId: "point-a", building: { name: "Точка А" }, lastSeenAt: new Date(agent.lastSeenAt!) },
+    { ...agent, id: "agent-b", name: "Касса точки Б", buildingId: "point-b", building: { name: "Точка Б" }, lastSeenAt: new Date(agent.lastSeenAt!) },
+    { ...agent, id: "agent-org", name: "Общий офисный", buildingId: null, building: null, lastSeenAt: new Date(agent.lastSeenAt!) },
+  ];
+  const page = load<{ default: () => Promise<React.ReactNode> }>(directory + "page.tsx", {
+    "next-intl/server": {
+      getTranslations: async (namespace: string) => createTranslator({ locale: "ru", messages, namespace: namespace as "printAgent.settings.page" }),
+      getLocale: async () => "ru",
+    },
+    "@/lib/auth-helpers": { requireAuth: async () => ({ user: { id: "point-manager", organizationId: "org", pointScope: ["point-a"] } }), getActiveOrgId: () => "org" },
+    "@/lib/role-access": { hasFullWorkspaceAccess: () => true },
+    "@/lib/active-building": {
+      loadBuildingContext: async () => ({ enabled: true, buildings: [{ id: "point-a", name: "Точка А" }, { id: "point-b", name: "Точка Б" }] }),
+    },
+    "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect ${url}`); }, forbidden: () => { throw new Error("Forbidden"); } },
+    "@/lib/db": { db: {
+      printAgent: { findMany: async () => agents },
+      labelPrinter: { findMany: async () => [] },
+      setupHelperDevice: { findMany: async () => [] },
+      user: { findMany: async () => [] },
+      organization: { findUnique: async () => ({ timezone: "Europe/Moscow" }) },
+      labelPrint: { aggregate: async () => ({ _count: { _all: 0 }, _sum: { copies: 0 } }), count: async () => 0 },
+    } },
+    "@/components/i18n/domain-messages-boundary": { DomainMessagesBoundary: ({ children }: { children: React.ReactNode }) => children },
+    "@/lib/setup-helper-release": { readSetupHelperRelease: async () => null },
+  });
+  const html = await render("ru", await page.default());
+  assert.ok(html.includes("Касса точки А"));
+  assert.ok(!html.includes("Касса точки Б"), "принтер чужой точки не виден");
+  assert.ok(!html.includes("Общий офисный"), "общий принтер ведёт руководство компании");
+  assert.ok(html.includes('value="point-a"'));
+  assert.ok(!html.includes('value="point-b"'), "чужая точка не предлагается");
+  assert.ok(!html.includes('<option value="">'), "«Вся организация» руководителю точки не предлагается");
 });

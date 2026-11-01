@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
 import { AGENT_ONLINE_WINDOW_MS } from "@/lib/print-agent-auth";
+import { agentMayTakeJob, pointsWithOwnAgent } from "@/lib/print-point-routing";
 import { resolveExportLocale } from "@/i18n/export-locale";
 import { translatorFor } from "@/i18n/translator";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
@@ -76,14 +77,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const online = await db.printAgent.findFirst({
-    where: {
-      organizationId,
-      revokedAt: null,
-      lastSeenAt: { gte: new Date(Date.now() - AGENT_ONLINE_WINDOW_MS) },
-    },
-    select: { id: true, name: true },
+  // Принтер своей точки (2026-11-01): «принтер на связи» — только тот,
+  // который возьмёт это задание (своей точки или общий, если у точки
+  // своего принтера нет).
+  const agents = await db.printAgent.findMany({
+    where: { organizationId, revokedAt: null },
+    select: { id: true, name: true, buildingId: true, lastSeenAt: true },
   });
+  const pointsWithAgent = pointsWithOwnAgent(agents);
+  const onlineSince = Date.now() - AGENT_ONLINE_WINDOW_MS;
+  const online =
+    agents.find(
+      (agent) =>
+        agent.lastSeenAt &&
+        agent.lastSeenAt.getTime() >= onlineSince &&
+        agentMayTakeJob(agent, doc.buildingId, pointsWithAgent),
+    ) ?? null;
 
   // Задание ставим в очередь даже без агента на связи: он может
   // подняться через минуту и допечатает. Но человеку об этом говорим
@@ -92,6 +101,7 @@ export async function POST(request: Request) {
     data: {
       organizationId,
       documentId: doc.id,
+      buildingId: doc.buildingId,
       locale,
       docTitle: `${doc.template.name} — ${doc.title}`,
       createdById: session.user.id,

@@ -393,11 +393,13 @@ export async function POST(request: Request) {
     // --- Universal deviation alerts for all journal types ---
     const deviations = checkDeviations(templateCode, data as Record<string, unknown>);
     if (deviations.length > 0) {
+      // Точка события — и для тревоги, и для авто-CAPA (2026-11-01).
+      let eventBuildingId: string | null = null;
       try {
         // Событие точки (фаза 3 «Офис и точки»): точка помещения или
         // оборудования, иначе — точка из шапки, иначе — где работает
         // заполнивший. «Вся организация» — не офис и не первая точка.
-        const eventBuildingId =
+        eventBuildingId =
           (await placeOfEvent(organizationId, { areaId, equipmentId })) ??
           (await getViewedPointId(session).catch(() => null)) ??
           (await placeOfEvent(organizationId, { userId: session.user.id }));
@@ -486,6 +488,7 @@ export async function POST(request: Request) {
             await db.capaTicket.create({
               data: {
                 organizationId: organizationId,
+                buildingId: eventBuildingId,
                 title: `${trigger.suffix} · ${template.name}`,
                 description:
                   `Автоматически открыт CAPA по записи журнала «${template.name}» от ${filledByName}. ` +

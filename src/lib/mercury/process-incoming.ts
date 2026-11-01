@@ -186,6 +186,8 @@ export async function processIncomingVetDocument(input: {
     .create({
       data: {
         organizationId: input.organizationId,
+        // Партия точки приёмки — той же, что и журнал (2026-11-01).
+        buildingId: pointId,
         code: batchKey,
         productName: row.productName || "Без названия",
         supplier: row.supplier || null,

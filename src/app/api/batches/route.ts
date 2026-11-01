@@ -4,6 +4,8 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { loadBuildingContext } from "@/lib/active-building";
+import { newRecordPoint, pointRecordVisible, pointRecordsWhere, recordsAtPointWhere } from "@/lib/point-records";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -13,8 +15,26 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
   const search = searchParams.get("search");
 
+  const organizationId = getActiveOrgId(session);
+  const context = await loadBuildingContext(session);
+  // Точки (2026-11-01): партии точки из шапки и общие; `?documentId=` —
+  // партии точки этого документа (выбор партии в журнале прослеживаемости).
+  let pointWhere: Record<string, unknown> = pointRecordsWhere(context);
+  const documentId = searchParams.get("documentId");
+  if (documentId) {
+    const document = await db.journalDocument.findFirst({
+      where: { id: documentId, organizationId },
+      select: { buildingId: true },
+    });
+    if (!document || !pointRecordVisible(context, document.buildingId)) {
+      return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    }
+    pointWhere = recordsAtPointWhere(document.buildingId);
+  }
+
   const where: Record<string, unknown> = {
-    organizationId: getActiveOrgId(session),
+    organizationId,
+    ...pointWhere,
   };
   if (status && status !== "all") where.status = status;
   if (search) {
@@ -82,6 +102,28 @@ export async function POST(req: NextRequest) {
 
   const orgId = getActiveOrgId(session);
 
+  // Точка партии: партия из строки приёмки — точка документа приёмки,
+  // иначе — точка из шапки (или явно выбранная доступная точка).
+  const context = await loadBuildingContext(session);
+  let buildingId: string | null = null;
+  const sourceDocument =
+    typeof body.sourceEntryId === "string" && body.sourceEntryId
+      ? await db.journalDocument.findFirst({
+          where: { id: body.sourceEntryId, organizationId: orgId },
+          select: { buildingId: true },
+        })
+      : null;
+  if (sourceDocument) {
+    if (!pointRecordVisible(context, sourceDocument.buildingId)) {
+      return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    }
+    buildingId = sourceDocument.buildingId;
+  } else {
+    const point = newRecordPoint(context, body.buildingId);
+    if (!point.ok) return NextResponse.json({ error: point.error }, { status: point.status });
+    buildingId = point.buildingId;
+  }
+
   // Generate batch code: B-YYYYMMDD-NNN. Раньше: count() + 1 → race
   // condition: два параллельных POST'а получали одинаковый count, оба
   // пробовали create с тем же кодом, второй падал на @@unique
@@ -94,6 +136,7 @@ export async function POST(req: NextRequest) {
   todayStart.setHours(0, 0, 0, 0);
   const baseData = {
     organizationId: orgId,
+    buildingId,
     productName: body.productName.trim().slice(0, 200),
     supplier:
       typeof body.supplier === "string"

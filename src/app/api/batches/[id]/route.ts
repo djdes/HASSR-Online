@@ -4,6 +4,8 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { isManagementRole } from "@/lib/user-roles";
+import { loadBuildingContext } from "@/lib/active-building";
+import { pointRecordVisible } from "@/lib/point-records";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,7 +13,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   const batch = await db.batch.findUnique({ where: { id } });
-  if (!batch || batch.organizationId !== getActiveOrgId(session)) {
+  if (
+    !batch ||
+    batch.organizationId !== getActiveOrgId(session) ||
+    // Партия другой точки — «не найдено» (2026-11-01).
+    !pointRecordVisible(await loadBuildingContext(session), batch.buildingId)
+  ) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
@@ -28,7 +35,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const batch = await db.batch.findUnique({ where: { id } });
-  if (!batch || batch.organizationId !== getActiveOrgId(session)) {
+  if (
+    !batch ||
+    batch.organizationId !== getActiveOrgId(session) ||
+    // Партия другой точки — «не найдено» (2026-11-01).
+    !pointRecordVisible(await loadBuildingContext(session), batch.buildingId)
+  ) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 

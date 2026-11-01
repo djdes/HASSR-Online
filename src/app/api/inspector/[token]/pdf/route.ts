@@ -16,6 +16,7 @@ import {
 } from "@/lib/inspector-access";
 import { loadInspectorJournals } from "@/lib/inspector-journals";
 import { formatDayKeyRu, inspectorControlCode, resolveInspectorPeriod } from "@/lib/inspector-qr";
+import { buildingPrintName } from "@/lib/building-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +64,7 @@ export async function GET(
   const rowsFlat = groups.flatMap((g) => g.rows);
   const controlCode = inspectorControlCode([
     access.org.id,
+    ...(access.token.buildingId ? [access.token.buildingId] : []),
     period.from,
     period.to,
     ...rowsFlat.map((r) => `${r.code}:${r.docCount}:${r.entryCount}`),
@@ -104,6 +106,14 @@ export async function GET(
     const wrapped = doc.splitTextToSize(line, pageW - 40);
     doc.text(wrapped, 20, y);
     y += 5 * wrapped.length;
+  }
+  if (access.building) {
+    // Ссылка на одну точку — сводка только по ней (и общим документам).
+    const pointLine = doc.splitTextToSize(`Точка: ${buildingPrintName(access.building)}`, pageW - 40);
+    doc.setTextColor(20);
+    doc.text(pointLine, 20, y);
+    y += 5 * pointLine.length;
+    doc.setTextColor(60);
   }
   y += 2;
   doc.setTextColor(20);

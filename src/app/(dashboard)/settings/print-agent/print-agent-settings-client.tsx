@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Download, Loader2, Unplug } from "lucide-react";
+import { Download, Loader2, MapPin, Unplug } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
@@ -24,9 +24,27 @@ type Agent = {
   agentVersion: string | null;
   lastSeenAt: string | null;
   online: boolean;
+  /** Точка принтера (2026-11-01); null — вся организация. */
+  buildingId?: string | null;
+  buildingName?: string | null;
 };
 
-export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
+type Point = { id: string; name: string };
+
+/** Значение «Вся организация» в выборе точки. */
+const ORGANIZATION_OPTION = "";
+
+export function PrintAgentSettingsClient({
+  agents,
+  points = [],
+  canChooseOrganization = true,
+}: {
+  agents: Agent[];
+  /** Точки, на которые можно поставить принтер; пусто — журналы не по точкам, выбора нет. */
+  points?: Point[];
+  /** Руководство компании может оставить принтер общим на всю организацию. */
+  canChooseOrganization?: boolean;
+}) {
   const router = useRouter();
   const t = useTranslations("printAgent.settings");
   const locale = useLocale() as Locale;
@@ -34,6 +52,32 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
   useEffect(() => { currentTranslations.current = t; }, [t]);
   const [revoking, setRevoking] = useState<Agent | null>(null);
   const [busy, setBusy] = useState(false);
+  // Смена точки — без своего состояния: запрос, тост и обновление страницы.
+  const savingPoint = useRef<string | null>(null);
+
+  async function changePoint(agent: Agent, value: string) {
+    if (savingPoint.current) return;
+    savingPoint.current = agent.id;
+    const buildingId = value === ORGANIZATION_OPTION ? null : value;
+    try {
+      const res = await fetch(`/api/print/agents/${agent.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buildingId }),
+      });
+      if (!res.ok) {
+        toast.error(currentTranslations.current(res.status === 403 ? "errors.forbidden" : res.status === 404 ? "errors.notFound" : "errors.failed"));
+        return;
+      }
+      const point = points.find((item) => item.id === buildingId)?.name ?? currentTranslations.current("devices.allPoints");
+      toast.success(currentTranslations.current("devices.pointChanged", { name: agent.name, point }));
+      router.refresh();
+    } catch {
+      toast.error(currentTranslations.current("errors.failed"));
+    } finally {
+      savingPoint.current = null;
+    }
+  }
 
   async function revoke(agent: Agent) {
     setBusy(true);
@@ -76,6 +120,12 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
           </a>
         </div>
 
+        {points.length > 0 ? (
+          <p className="border-b border-[#eef0f6] px-6 py-3 text-[12.5px] leading-snug text-[#6f7282]">
+            {t("devices.pointHint")}
+          </p>
+        ) : null}
+
         {agents.length === 0 ? (
           <div className="px-6 py-12 text-center text-[14px] text-[#6f7282]">
             {t("devices.empty")}
@@ -103,6 +153,33 @@ export function PrintAgentSettingsClient({ agents }: { agents: Agent[] }) {
                       ? t("devices.lastSeen", { printer: agent.printerName ?? t("devices.noPrinter"), when: new Date(agent.lastSeenAt).toLocaleString(FORMAT_LOCALES[locale]) })
                       : t("devices.neverSeen", { printer: agent.printerName ?? t("devices.noPrinter") })}
                   </div>
+                  {points.length > 0 ? (
+                    <label className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px] text-[#6f7282]">
+                      <MapPin className="size-3.5 text-[#5566f6]" aria-hidden />
+                      {t("devices.point")}
+                      <select
+                        value={agent.buildingId ?? ORGANIZATION_OPTION}
+                        onChange={(event) => void changePoint(agent, event.target.value)}
+                        aria-label={t("devices.pointAria", { name: agent.name })}
+                        title={t("devices.pointHint")}
+                        className="h-8 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[13px] text-[#0b1024] transition-colors hover:border-[#5566f6]/40 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                      >
+                        {canChooseOrganization || !agent.buildingId ? (
+                          <option value={ORGANIZATION_OPTION}>{t("devices.allPoints")}</option>
+                        ) : null}
+                        {points.map((point) => (
+                          <option key={point.id} value={point.id}>
+                            {point.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : agent.buildingName ? (
+                    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] text-[#3848c7]">
+                      <MapPin className="size-3" aria-hidden />
+                      {agent.buildingName}
+                    </span>
+                  ) : null}
                 </div>
                 <button
                   type="button"

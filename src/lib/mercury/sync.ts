@@ -20,6 +20,7 @@ import { orgTodayKey } from "@/lib/timezone";
 
 import { MercuryClient, mercuryClientFor } from "./client";
 import { computeProcessingDueAt } from "./deadline";
+import { applyEnterpriseList, vsdPointFollowsEnterprise } from "./enterprise-mapping";
 import { describeMercuryError, MercuryError } from "./errors";
 import {
   decideAfterStatusCheck,
@@ -145,12 +146,16 @@ export async function upsertVetDocument(input: {
   const keepLocal = ["processing", "processed", "process_failed"].includes(
     existing.localStatus,
   );
+  // Точка следует за площадкой, пока ВСД не погашен: погашенный уже лёг
+  // строкой в журнал приёмки своей точки (`enterprise-mapping.ts`).
+  const { buildingId, ...withoutPoint } = data;
+  const pointed = vsdPointFollowsEnterprise(existing.localStatus) ? { ...withoutPoint, buildingId } : withoutPoint;
 
   await db.mercuryVetDocument.update({
     where: { id: existing.id },
     data: keepLocal
-      ? data
-      : { ...data, localStatus: incoming ? existing.localStatus : "irrelevant" },
+      ? pointed
+      : { ...pointed, localStatus: incoming ? existing.localStatus : "irrelevant" },
   });
   return { created: false, overdue: false };
 }
@@ -442,6 +447,10 @@ export async function runMercuryOutbox(options: {
         if (outcome.xml) {
           if (row.action === "processIncomingConsignment") {
             await applyProcessResult(row.vetDocumentId, outcome.xml);
+          } else if (row.action === "getActivityLocationList") {
+            // «Загрузить площадки из Меркурия»: новые — без точки и выключены.
+            const parsed = MercuryClient.parseResult(row.action, outcome.xml);
+            if (parsed.kind === "enterprises") await applyEnterpriseList(integration, parsed.items);
           } else {
             await applyVetDocumentPage(integration, payload, outcome.xml, row.action);
           }

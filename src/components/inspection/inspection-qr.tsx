@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Loader2, Maximize2, Printer, QrCode, X } from "lucide-react";
+import { Loader2, MapPin, Maximize2, Printer, QrCode, X } from "lucide-react";
 
 const PRIMARY =
   "inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60";
@@ -16,15 +16,21 @@ const OUTLINE =
  * планшет можно просто развернуть к проверяющему — «На весь экран»
  * убирает всё лишнее. Нет QR — руководство выпускает его одной кнопкой
  * (бессрочный, до отзыва; тот же, что печатается на листе A4).
+ * `scopeLabel` — для какой точки этот QR (2026-11-01: ссылка на одну точку);
+ * `pointName` — подпись точки на полноэкранном показе.
  */
 export function InspectionQr({
   qr,
   organizationName,
   canIssue,
+  scopeLabel = null,
+  pointName = null,
 }: {
   qr: { id: string; svg: string } | null;
   organizationName: string;
   canIssue: boolean;
+  scopeLabel?: string | null;
+  pointName?: string | null;
 }) {
   const t = useTranslations("inspectionDay");
   const router = useRouter();
@@ -58,9 +64,20 @@ export function InspectionQr({
     }
   }
 
+  const scope = scopeLabel ? (
+    <span
+      className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#f5f6ff] px-3 py-1 text-[12.5px] font-medium text-[#3848c7] [overflow-wrap:anywhere]"
+      data-qr-scope
+    >
+      <MapPin className="size-3.5 shrink-0" aria-hidden />
+      {scopeLabel}
+    </span>
+  ) : null;
+
   if (!qr) {
     return (
       <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5">
+        {scope}
         <div className="text-[14px] text-[#6f7282]">{canIssue ? t("noQr") : t("askManager")}</div>
         {canIssue ? (
           <button type="button" onClick={issue} disabled={issuing} className={PRIMARY} data-issue-qr>
@@ -84,6 +101,7 @@ export function InspectionQr({
         dangerouslySetInnerHTML={{ __html: qr.svg }}
       />
       <div className="flex flex-wrap gap-2 sm:flex-col sm:items-start">
+        {scope}
         <button type="button" onClick={() => setFullscreen(true)} className={PRIMARY}>
           <Maximize2 className="size-4" />
           {t("fullscreen")}
@@ -118,6 +136,11 @@ export function InspectionQr({
           />
           <div className="max-w-[560px] text-center text-[20px] font-semibold tracking-[-0.01em]" style={{ color: "#0b1024" }}>
             {organizationName}
+            {pointName ? (
+              <span className="mt-1 block text-[16px] font-medium" style={{ color: "#3c4053" }} data-qr-point>
+                {pointName}
+              </span>
+            ) : null}
           </div>
         </div>
       ) : null}
