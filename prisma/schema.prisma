@@ -108,6 +108,9 @@ model MaxOrganizationIntegration {
   /// Last «Напомнить не заполнившим» from the bot (30-minute throttle).
   lastReminderAt DateTime?
   updatedAt      DateTime     @updatedAt
+  /// Последнее напоминание по точкам (2026-11-01): { [buildingId | "org"]: ISO-время } —
+  /// пауза между напоминаниями у каждой точки своя.
+  lastReminderByPoint Json?
 }
 
 model MaxSessionHandoff {
@@ -1043,6 +1046,11 @@ model Building {
   serviceCode           String?             @unique
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  inspectorTokens       InspectorToken[]
+  printAgents           PrintAgent[]
+  printJobs             PrintJob[]
+  batches               Batch[]
+  capaTickets           CapaTicket[]
 
   @@unique([organizationId, name])
   @@index([organizationId, sortOrder])
@@ -1594,9 +1602,14 @@ model InspectorToken {
   visits         InspectorVisit[]
   /// Записи журнала посещений, внесённые по этому токену.
   inspectionVisits InspectionVisit[]
+  /// Ссылка проверяющего на одну точку (2026-11-01): журналы только этой точки и общие.
+  /// null — вся организация. Удалили точку — удаляется и ссылка (иначе стала бы общей).
+  buildingId       String?
+  building         Building?         @relation(fields: [buildingId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([expiresAt])
+  @@index([buildingId])
 }
 
 /// B6 — Электронная подпись инспектора. Каждый раз когда инспектор
@@ -2554,10 +2567,14 @@ model Batch {
   createdById    String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  /// Точка партии (2026-11-01): приёмка этой точки; null — общая.
+  buildingId     String?
+  building       Building?    @relation(fields: [buildingId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
   @@index([organizationId, expiryDate])
+  @@index([organizationId, buildingId])
 }
 
 model CapaTicket {
@@ -2583,9 +2600,13 @@ model CapaTicket {
   createdById        String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+  /// Точка CAPA (2026-11-01): где случилось отклонение; null — вся организация.
+  buildingId         String?
+  building           Building?    @relation(fields: [buildingId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status])
   @@index([organizationId, priority])
+  @@index([organizationId, buildingId])
 }
 
 model LossRecord {
@@ -2954,6 +2975,9 @@ model PrintAgent {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   jobs           PrintJob[]
+  /// Принтер точки (2026-11-01): берёт задания документов своей точки и общих. null — вся организация.
+  buildingId     String?
+  building       Building?    @relation(fields: [buildingId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
 }
@@ -2988,6 +3012,9 @@ model PrintJob {
   errorMsg       String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+  /// Точка документа на момент постановки в очередь (2026-11-01); null — общий документ.
+  buildingId     String?
+  building       Building?        @relation(fields: [buildingId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status, createdAt])
   @@index([agentId, status])
