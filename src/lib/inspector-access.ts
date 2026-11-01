@@ -4,6 +4,7 @@ import { hashInspectorToken } from "@/lib/inspector-tokens";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { orgTodayKey } from "@/lib/timezone";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { inspectorDocumentVisible } from "@/lib/inspector-point";
 import { trustedClientIp } from "@/lib/page-navigation-guard";
 import {
   documentOverlaps,
@@ -40,7 +41,11 @@ export type InspectorAccess = {
     periodTo: Date;
     expiresAt: Date;
     organizationId: string;
+    /** Ссылка на одну точку (2026-11-01); null — вся организация. */
+    buildingId: string | null;
   };
+  /** Точка ссылки — для подписи на портале; null — вся организация. */
+  building: { id: string; name: string; journalName: string | null } | null;
   org: {
     id: string;
     name: string;
@@ -87,6 +92,8 @@ export async function loadInspectorAccess(raw: string): Promise<InspectorAccessR
       expiresAt: true,
       revokedAt: true,
       organizationId: true,
+      buildingId: true,
+      building: { select: { id: true, name: true, journalName: true, disabledJournalCodes: true } },
       organization: { select: inspectorOrgSelect },
     },
   });
@@ -103,12 +110,19 @@ export async function loadInspectorAccess(raw: string): Promise<InspectorAccessR
       periodTo: record.periodTo,
       expiresAt: record.expiresAt,
       organizationId: record.organizationId,
+      buildingId: record.buildingId,
     },
+    building: record.building ? { id: record.building.id, name: record.building.name, journalName: record.building.journalName } : null,
     org: record.organization,
     isQr: isInspectorQrRecord(record),
     today,
     window: inspectorWindow(record, today),
-    disabledCodes: parseDisabledCodes(record.organization.disabledJournalCodes),
+    // У ссылки на точку — набор журналов точки, если он у неё свой.
+    disabledCodes: parseDisabledCodes(
+      record.building && record.building.disabledJournalCodes !== null
+        ? record.building.disabledJournalCodes
+        : record.organization.disabledJournalCodes,
+    ),
   };
 }
 
@@ -226,8 +240,9 @@ export type InspectorDocument = {
 
 /**
  * Документ, который проверяющему разрешено видеть: своей организации,
- * пересекается с окном токена, журнал включён и активен. Иначе — null
- * (для маршрутов это 404, без подсказки, чем именно не подошёл).
+ * точки ссылки или общий, пересекается с окном токена, журнал включён и
+ * активен. Иначе — null (для маршрутов это 404, без подсказки, чем именно
+ * не подошёл).
  */
 export async function findInspectorDocument(
   access: InspectorAccess,
@@ -244,6 +259,7 @@ export async function findInspectorDocument(
       status: true,
       updatedAt: true,
       organizationId: true,
+      buildingId: true,
       responsibleTitle: true,
       responsibleUserId: true,
       template: { select: { id: true, code: true, name: true, isActive: true } },
@@ -251,6 +267,7 @@ export async function findInspectorDocument(
     },
   });
   if (!doc || doc.organizationId !== access.token.organizationId) return null;
+  if (!inspectorDocumentVisible(access.token.buildingId, doc.buildingId)) return null;
   if (!doc.template.isActive || access.disabledCodes.has(doc.template.code)) return null;
   if (!documentOverlaps(doc, access.window.from, access.window.to)) return null;
   return {

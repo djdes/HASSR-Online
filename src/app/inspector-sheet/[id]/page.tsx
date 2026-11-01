@@ -11,6 +11,9 @@ import { DOCUMENT_ORG_SELECT, buildDocumentOrgBlock, documentOrgRequisitesLine }
 import { hasCapability } from "@/lib/permission-presets";
 import { loadPrintBrand } from "@/lib/print-brand.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { buildingPrintName } from "@/lib/building-scope";
+import { inspectorTokenVisible } from "@/lib/inspector-point";
+import { parsePointScope } from "@/lib/point-scope";
 import { PrintButton } from "./print-button";
 
 export const dynamic = "force-dynamic";
@@ -45,10 +48,14 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
       expiresAt: true,
       createdAt: true,
       revokedAt: true,
+      buildingId: true,
+      building: { select: { name: true, journalName: true } },
       organization: { select: { ...DOCUMENT_ORG_SELECT, timezone: true } },
     },
   });
   if (!token || token.organizationId !== orgId || !isInspectorQrRecord(token)) notFound();
+  // Человек точки печатает только QR своей точки (2026-11-01: ссылка на одну точку).
+  if (!inspectorTokenVisible(parsePointScope(session.user.pointScope), token.buildingId)) notFound();
   const inactive = Boolean(token.revokedAt) || token.expiresAt < new Date();
 
   const url = inspectorQrUrl(token.id);
@@ -107,6 +114,11 @@ export default async function InspectorSheetPage({ params }: { params: Promise<{
             ) : null}
             <div className={`${SERIF} text-[clamp(18px,3.2vw,24px)] leading-tight`}>{orgTitle}</div>
             {block.org.fullName !== orgTitle ? <div className="mt-1 text-[14px] text-[#616161]">{block.org.fullName}</div> : null}
+            {token.building ? (
+              <div className="mt-2 text-[15px] font-medium text-[#141821]" data-sheet-point>
+                Точка: {buildingPrintName(token.building)}
+              </div>
+            ) : null}
             <div className="mt-1 text-[13.5px] text-[#616161]">{documentOrgRequisitesLine(block)}</div>
           </div>
 

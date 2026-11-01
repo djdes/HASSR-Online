@@ -4,6 +4,9 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
+import { inspectorPointName, resolveInspectorIssuePointForSession } from "@/lib/inspector-point.server";
+import { buildingTargets } from "@/lib/building-targets";
+import { parsePointScope } from "@/lib/point-scope";
 import { InspectorPortalClient } from "./inspector-portal-client";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +18,13 @@ export default async function InspectorPortalPage() {
     forbidden();
   }
   const orgId = getActiveOrgId(session);
-  const { tokens, activity } = await loadCabinetInspectorData(orgId);
+  // Руководитель точки — ссылки своих точек; новые ссылки — на точку из шапки (2026-11-01).
+  const [{ tokens, activity }, issuePoint, targets] = await Promise.all([
+    loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope) }),
+    resolveInspectorIssuePointForSession(session, orgId, undefined),
+    buildingTargets(orgId),
+  ]);
+  const issueTargetName = await inspectorPointName(orgId, issuePoint.ok ? issuePoint.buildingId : null);
 
   return (
     <div className="space-y-5">
@@ -33,7 +42,12 @@ export default async function InspectorPortalPage() {
         </div>
       </div>
 
-      <InspectorPortalClient initialTokens={tokens} initialActivity={activity} />
+      <InspectorPortalClient
+        initialTokens={tokens}
+        initialActivity={activity}
+        pointsEnabled={targets.some(Boolean)}
+        issueTargetName={issueTargetName}
+      />
     </div>
   );
 }

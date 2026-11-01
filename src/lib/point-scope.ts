@@ -73,8 +73,8 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
   "/settings/journal-bonuses",
   // Подключения и прочее на всю компанию.
   "/settings/integrations",
-  // Ссылка проверяющего открывает журналы всех точек.
-  "/settings/inspector-portal",
+  // «Портал инспектора» открыт (2026-11-01): ссылка проверяющего — на точку,
+  // руководитель точки выпускает и отзывает ссылки своей точки.
   "/settings/webhooks",
   "/settings/calendar",
   "/settings/backup",
@@ -139,8 +139,8 @@ export const COMPANY_ONLY_API_PREFIXES = [
   "/api/integrations/tasksflow/reset-negative-balances",
   "/api/integrations/tasksflow/sync-users",
   "/api/integrations/tasksflow/sync-hierarchy",
-  // Ссылка проверяющего открывает журналы всех точек.
-  "/api/settings/inspector-tokens",
+  // `/api/settings/inspector-tokens` открыт (2026-11-01): ссылка проверяющего —
+  // на точку, руководителю точки — только своей (проверка в маршруте).
 ] as const;
 
 /**

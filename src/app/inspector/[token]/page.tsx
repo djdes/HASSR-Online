@@ -21,6 +21,7 @@ import { loadInspectorPage } from "@/lib/inspector-page";
 import { formatDayKeyRu } from "@/lib/inspector-qr";
 import { brandPalette } from "@/lib/document-brand";
 import { buildDocumentOrgBlock, documentOrgRows } from "@/lib/document-org-block";
+import { buildingPrintName } from "@/lib/building-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,8 +59,9 @@ export default async function InspectorLandingPage({
   const [groups, norms, checklists, medBooks, ownVisits] = await Promise.all([
     loadInspectorJournals(access, period.from, period.to),
     loadInspectionNorms(orgId),
-    loadInspectorChecklistResults(orgId, period.from, period.to),
-    loadInspectorMedBookCounts(orgId),
+    // Ссылка на точку — чек-листы и медкнижки этой точки.
+    loadInspectorChecklistResults(orgId, period.from, period.to, access.token.buildingId),
+    loadInspectorMedBookCounts(orgId, undefined, access.token.buildingId),
     // Только записи, внесённые этим браузером: QR постоянный, его сканируют разные проверяющие.
     listInspectionVisits(orgId, {
       tokenId: access.token.id,
@@ -119,6 +121,12 @@ export default async function InspectorLandingPage({
             {orgTitle}
           </h1>
           {legalName ? <p className="mt-2 text-[15px] text-[#5b6170]">{legalName}</p> : null}
+          {access.building ? (
+            <p className="mt-2 text-[15px] text-[#141821]" data-inspector-point>
+              Точка: {buildingPrintName(access.building)}
+              <span className="block text-[13px] text-[#5b6170]">Журналы этой точки и общие для всей организации</span>
+            </p>
+          ) : null}
         </header>
 
         <dl className="mx-auto mt-6 max-w-[620px] divide-y divide-[#e3e5ea] border-y border-[#e3e5ea] text-[14px]" data-requisites>

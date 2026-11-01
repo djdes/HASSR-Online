@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { findOrCreateOrgInspectorQr, inspectorQrUrl } from "@/lib/inspector-qr-service";
+import { resolveInspectorIssuePointForSession } from "@/lib/inspector-point.server";
+import { isPointScoped } from "@/lib/point-scope";
 import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
@@ -136,7 +138,12 @@ export async function GET(request: Request) {
   ).length;
 
   // QR — постоянный доступ проверяющих организации (переиспользуется).
-  const qrToken = await findOrCreateOrgInspectorQr(orgId, session.user.id);
+  // Руководителю точки — QR его точки: ссылка на всю организацию — у
+  // руководства компании (2026-11-01).
+  const qrPoint = isPointScoped(session.user)
+    ? await resolveInspectorIssuePointForSession(session, orgId, undefined)
+    : null;
+  const qrToken = await findOrCreateOrgInspectorQr(orgId, session.user.id, qrPoint?.ok ? qrPoint.buildingId : null);
   const expiresAt = qrToken.expiresAt;
   const verifyUrl = inspectorQrUrl(qrToken.id);
 

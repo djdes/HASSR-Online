@@ -58,12 +58,14 @@ test("proxy: общие страницы → «Сегодня», изменен�
   assert.equal(verdict("POST", "/api/settings/journal-responsibles/apply-presets"), "deny");
   assert.equal(verdict("POST", "/api/settings/journal-responsibles/recreate-documents"), "deny");
   assert.equal(verdict("POST", "/api/settings/journal-responsibles/backfill-verifiers"), "deny");
-  // Подключения, права, удаление всех документов, ссылка проверяющего — офису (2026-11-01).
+  // Подключения, права, удаление всех документов — офису (2026-11-01).
   assert.equal(verdict("PUT", "/api/organizations/permissions"), "deny");
   assert.equal(verdict("POST", "/api/settings/journals/delete-all-documents"), "deny");
   assert.equal(verdict("PUT", "/api/settings/supply/iiko/stores"), "deny");
   assert.equal(verdict("PUT", "/api/settings/hr1c/departments"), "deny");
-  assert.equal(verdict("POST", "/api/settings/inspector-tokens"), "deny");
+  // Ссылка проверяющего — на точку (2026-11-01): выпуск открыт, своя точка проверяется в маршруте.
+  assert.equal(verdict("POST", "/api/settings/inspector-tokens"), "allow");
+  assert.equal(verdict("DELETE", "/api/settings/inspector-tokens"), "allow");
   assert.equal(verdict("PATCH", "/api/integrations/mercury"), "deny");
   assert.equal(verdict("PATCH", "/api/max/organization"), "deny");
   assert.equal(verdict("POST", "/api/products/import"), "deny");

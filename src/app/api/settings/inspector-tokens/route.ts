@@ -12,6 +12,9 @@ import {
 import { INSPECTOR_QR_TTL_DAYS, type InspectorQrTtl } from "@/lib/inspector-qr";
 import { createInspectorQrToken, loadCabinetInspectorData } from "@/lib/inspector-qr-service";
 import { recordAuditLog } from "@/lib/audit-log";
+import { inspectorTokenVisible } from "@/lib/inspector-point";
+import { resolveInspectorIssuePointForSession } from "@/lib/inspector-point.server";
+import { parsePointScope } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,18 +30,25 @@ export const dynamic = "force-dynamic";
  *
  * Read-only resolve happens on /inspector/<rawToken> page directly;
  * this API is admin-only.
+ *
+ * Точка (2026-11-01): `buildingId` в POST — ссылка на одну точку (не
+ * прислали — точка из шапки, в «Вся организация» — вся организация; null —
+ * явно вся организация). Руководитель точки выпускает, видит и отзывает
+ * только ссылки своих точек (`resolveInspectorIssuePoint`).
  */
 const createSchema = z.object({
   label: z.string().min(1).max(120).optional(),
   periodFrom: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   periodTo: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   ttlHours: z.number().int().min(1).max(24 * 14).optional(),
+  buildingId: z.string().min(1).max(64).nullable().optional(),
 });
 
 const qrSchema = z.object({
   mode: z.literal("qr"),
   label: z.string().trim().max(120).optional(),
   ttl: z.enum(Object.keys(INSPECTOR_QR_TTL_DAYS) as [InspectorQrTtl, ...InspectorQrTtl[]]),
+  buildingId: z.string().min(1).max(64).nullable().optional(),
 });
 
 function toUtcMidnight(value: string): Date {
@@ -55,7 +65,7 @@ export async function GET() {
   }
   const orgId = getActiveOrgId(session);
 
-  const data = await loadCabinetInspectorData(orgId);
+  const data = await loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope) });
   return NextResponse.json(data);
 }
 
@@ -74,11 +84,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Выберите срок действия QR" }, { status: 400 });
     }
     const orgId = getActiveOrgId(session);
+    const point = await resolveInspectorIssuePointForSession(session, orgId, qr.data.buildingId);
+    if (!point.ok) return NextResponse.json({ error: point.error }, { status: point.status });
     const created = await createInspectorQrToken({
       organizationId: orgId,
       createdById: session.user.id,
       ttl: qr.data.ttl,
       label: qr.data.label || null,
+      buildingId: point.buildingId,
     });
     await recordAuditLog({
       request,
@@ -87,9 +100,9 @@ export async function POST(request: Request) {
       action: "settings.inspector_qr.create",
       entity: "InspectorToken",
       entityId: created.id,
-      details: { ttl: qr.data.ttl, label: qr.data.label ?? null },
+      details: { ttl: qr.data.ttl, label: qr.data.label ?? null, buildingId: point.buildingId },
     });
-    const data = await loadCabinetInspectorData(orgId);
+    const data = await loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope) });
     return NextResponse.json({ ...data, createdId: created.id });
   }
 
@@ -118,13 +131,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const organizationId = getActiveOrgId(session);
+  const point = await resolveInspectorIssuePointForSession(session, organizationId, parsed.buildingId);
+  if (!point.ok) return NextResponse.json({ error: point.error }, { status: point.status });
+
   const raw = generateInspectorToken();
   const tokenHash = hashInspectorToken(raw);
   const expiresAt = inspectorTokenExpiresAt(parsed.ttlHours);
 
   const token = await db.inspectorToken.create({
     data: {
-      organizationId: getActiveOrgId(session),
+      organizationId,
+      buildingId: point.buildingId,
       tokenHash,
       label: parsed.label ?? null,
       periodFrom,
@@ -139,6 +157,7 @@ export async function POST(request: Request) {
       periodTo: true,
       expiresAt: true,
       createdAt: true,
+      buildingId: true,
     },
   });
 
@@ -166,9 +185,10 @@ export async function DELETE(request: Request) {
   const orgId = getActiveOrgId(session);
   const found = await db.inspectorToken.findUnique({
     where: { id },
-    select: { organizationId: true },
+    select: { organizationId: true, buildingId: true },
   });
-  if (!found || found.organizationId !== orgId) {
+  // Руководитель точки отзывает только ссылки своих точек.
+  if (!found || found.organizationId !== orgId || !inspectorTokenVisible(parsePointScope(session.user.pointScope), found.buildingId)) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
   await db.inspectorToken.update({

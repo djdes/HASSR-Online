@@ -3,10 +3,12 @@ import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { periodBounds } from "@/lib/inspector-qr";
 import type { InspectorAccess } from "@/lib/inspector-access";
+import { inspectorDocumentWhere, inspectorEntryWhere } from "@/lib/inspector-point";
 
 /**
  * Сводка журналов для проверяющего за период: включённые журналы
- * организации, сгруппированные «СанПиН / ХАССП / прочие», у каждого —
+ * организации (у ссылки на точку — документы точки и общие, записи по её
+ * цехам), сгруппированные «СанПиН / ХАССП / прочие», у каждого —
  * число документов, пересекающихся с периодом, и записей за период.
  *
  * Считаются только реально заполненные строки: `_autoSeeded`-заглушки
@@ -47,12 +49,13 @@ export async function loadInspectorJournals(
         organizationId: orgId,
         dateFrom: { lte: bounds.lte },
         dateTo: { gte: bounds.gte },
+        ...inspectorDocumentWhere(access.token.buildingId),
       },
       select: { id: true, templateId: true },
     }),
     db.journalEntry.groupBy({
       by: ["templateId"],
-      where: { organizationId: orgId, createdAt: bounds },
+      where: { organizationId: orgId, createdAt: bounds, ...inspectorEntryWhere(access.token.buildingId) },
       _count: { _all: true },
     }),
   ]);

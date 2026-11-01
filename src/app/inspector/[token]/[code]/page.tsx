@@ -13,6 +13,7 @@ import { listOrderScans } from "@/lib/journal-order-scans-db";
 import { dayKeyOf, formatDayKeyRu, periodBounds } from "@/lib/inspector-qr";
 import { buildDocumentOrgBlock } from "@/lib/document-org-block";
 import { buildingPrintName } from "@/lib/building-scope";
+import { inspectorDocumentWhere, inspectorEntryWhere } from "@/lib/inspector-point";
 import { describeSignature, loadSignatureEvidence, matchSignature } from "@/lib/signature-evidence";
 
 export const runtime = "nodejs";
@@ -64,6 +65,8 @@ export default async function InspectorJournalPage({
         templateId: template.id,
         dateFrom: { lte: bounds.lte },
         dateTo: { gte: bounds.gte },
+        // Ссылка на точку — документы точки и общие.
+        ...inspectorDocumentWhere(access.token.buildingId),
       },
       select: {
         id: true,
@@ -79,7 +82,7 @@ export default async function InspectorJournalPage({
       orderBy: { dateFrom: "desc" },
     }),
     db.journalEntry.findMany({
-      where: { organizationId: orgId, templateId: template.id, createdAt: bounds },
+      where: { organizationId: orgId, templateId: template.id, createdAt: bounds, ...inspectorEntryWhere(access.token.buildingId) },
       select: { id: true, createdAt: true, data: true, filledById: true, filledBy: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: 500,
@@ -160,7 +163,10 @@ export default async function InspectorJournalPage({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={block.brand.logoUrl} alt="" className="h-5 w-auto max-w-[80px] shrink-0 object-contain" data-org-logo />
               ) : null}
-              <span className="min-w-0 truncate">{orgTitle}</span>
+              <span className="min-w-0 truncate">
+                {orgTitle}
+                {access.building ? <span data-inspector-point> · {buildingPrintName(access.building)}</span> : null}
+              </span>
             </span>
           </div>
           <h1 className={`${SERIF} mt-5 text-[24px] leading-[1.2] sm:text-[30px]`} data-journal-title>
