@@ -64,21 +64,34 @@ export const DEFAULT_REWARD_RULE: RewardRule = {
 };
 
 /**
- * Правила v2 с 01.11.2026 (решение владельца): 30 % с каждого платежа клиента
+ * Правила с 01.11.2026 (решение владельца): 30 % с каждого платежа клиента
  * за подписку в его первый год вместо 20 %. Остальное — как в v1. По договору
  * партнёра (п. 3.1, 7.2) новые правила действуют для платежей после
- * публикации на /partners; начисления по v1 остаются как были (`ruleVersion`).
+ * публикации на /partners; старые начисления остаются как были (`ruleVersion`).
+ * Номер версии — следующий за действующей (у ROOT версии могли уже быть).
  */
-export const REWARD_RULE_2026_11: RewardRule = {
-  ...DEFAULT_REWARD_RULE,
-  version: 2,
+export const REWARD_TERMS_2026_11: Omit<RewardRule, "version"> = {
   subscriptionPercent: 30,
+  subscriptionMonths: DEFAULT_REWARD_RULE.subscriptionMonths,
+  hardwarePercent: DEFAULT_REWARD_RULE.hardwarePercent,
+  bonusAmountRub: DEFAULT_REWARD_RULE.bonusAmountRub,
+  bonusAfterPayments: DEFAULT_REWARD_RULE.bonusAfterPayments,
+  minPayoutRub: DEFAULT_REWARD_RULE.minPayoutRub,
 };
+
+/**
+ * С чего начинает новая установка (пустая таблица правил): сразу действующие
+ * условия, а не исторические 20 % v1 — переходить на 30 % ей не с чего.
+ */
+export const STARTING_REWARD_RULE: RewardRule = { version: 1, ...REWARD_TERMS_2026_11 };
 
 export const REWARD_RULE_2026_11_COMMENT =
   "30 % с подписки в первый год клиента вместо 20 % (решение владельца 01.11.2026)";
 
-function sameTerms(a: RewardRule, b: RewardRule): boolean {
+/** День решения: правила, выпущенные позже, — уже чьё-то новое решение. */
+export const REWARD_RULE_2026_11_DECIDED_AT = new Date("2026-11-01T00:00:00+03:00");
+
+function sameTerms(a: Omit<RewardRule, "version">, b: Omit<RewardRule, "version">): boolean {
   return (
     a.subscriptionPercent === b.subscriptionPercent &&
     a.subscriptionMonths === b.subscriptionMonths &&
@@ -90,13 +103,15 @@ function sameTerms(a: RewardRule, b: RewardRule): boolean {
 }
 
 /**
- * Переходить ли на v2 сейчас: только если действует нетронутая v1. Если
- * ROOT уже выпустил свою версию правил (или поменял ставки), его решение
- * не перетираем.
+ * Переходить ли на 30 % сейчас: только поверх стартовых условий (20 %),
+ * выпущенных до дня решения, — сколько бы раз их ни пересохраняли. Если ROOT
+ * уже поменял ставки или после решения сознательно вернул 20 %, его выбор не
+ * перетираем.
  */
-export function shouldAdoptRewardRule2026_11(latest: RewardRule | null): boolean {
-  if (!latest) return false;
-  return latest.version === DEFAULT_REWARD_RULE.version && sameTerms(latest, DEFAULT_REWARD_RULE);
+export function shouldAdoptRewardRule2026_11(latest: RewardRule | null, latestCreatedAt: Date | null): boolean {
+  if (!latest || !latestCreatedAt) return false;
+  if (latestCreatedAt.getTime() >= REWARD_RULE_2026_11_DECIDED_AT.getTime()) return false;
+  return sameTerms(latest, DEFAULT_REWARD_RULE);
 }
 
 export type AccrualDraft = {

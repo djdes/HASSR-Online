@@ -10,7 +10,9 @@ import { readFileSync } from "node:fs";
 
 import {
   DEFAULT_REWARD_RULE,
-  REWARD_RULE_2026_11,
+  REWARD_RULE_2026_11_DECIDED_AT,
+  REWARD_TERMS_2026_11,
+  STARTING_REWARD_RULE,
   buildPayoutSheet,
   computeHardwareAccrual,
   computePaymentAccruals,
@@ -165,9 +167,8 @@ test("ключ месяца считается по Москве; предыду
   assert.equal(previousPeriodMonth(new Date("2026-01-01T00:05:00+03:00")), "2025-12");
 });
 
-test("правила v2 с 01.11.2026: 30 % с подписки в первый год клиента, остальное как в v1", () => {
-  assert.deepEqual(REWARD_RULE_2026_11, {
-    version: 2,
+test("с 01.11.2026: 30 % с подписки в первый год клиента, остальное как в v1", () => {
+  assert.deepEqual(REWARD_TERMS_2026_11, {
     subscriptionPercent: 30,
     subscriptionMonths: 12,
     hardwarePercent: 15,
@@ -175,8 +176,9 @@ test("правила v2 с 01.11.2026: 30 % с подписки в первый 
     bonusAfterPayments: 2,
     minPayoutRub: 1000,
   });
+  const rule = { version: 2, ...REWARD_TERMS_2026_11 };
   // Годовой «Стандарт» 23 880 ₽ → 7 164 ₽ партнёру.
-  const [subscription] = computePaymentAccruals(REWARD_RULE_2026_11, {
+  const [subscription] = computePaymentAccruals(rule, {
     paidAt,
     subscriptionRub: 23880,
     firstPaymentAt: null,
@@ -185,22 +187,32 @@ test("правила v2 с 01.11.2026: 30 % с подписки в первый 
   assert.equal(subscription.ratePercent, 30);
   assert.equal(subscription.amountRub, 7164);
   // Через 12 месяцев с первой оплаты — уже ничего.
-  const later = computePaymentAccruals(REWARD_RULE_2026_11, {
+  const later = computePaymentAccruals(rule, {
     paidAt: new Date("2027-09-16T10:00:00Z"),
     subscriptionRub: 23880,
     firstPaymentAt: paidAt,
     paidSubscriptionPaymentsBefore: 2,
   });
   assert.deepEqual(later, []);
+  // Новая установка сразу начинает с 30 %.
+  assert.deepEqual(STARTING_REWARD_RULE, { version: 1, ...REWARD_TERMS_2026_11 });
 });
 
-test("v2 включается только поверх нетронутой v1 — правила ROOT не перетираем", () => {
-  assert.equal(shouldAdoptRewardRule2026_11(DEFAULT_REWARD_RULE), true);
-  assert.equal(shouldAdoptRewardRule2026_11(null), false);
-  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, subscriptionPercent: 25 }), false);
-  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, minPayoutRub: 500 }), false);
-  assert.equal(shouldAdoptRewardRule2026_11(REWARD_RULE_2026_11), false);
-  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, version: 3 }), false);
+test("30 % — поверх стартовых 20 %, выпущенных до решения; выбор ROOT не перетираем", () => {
+  const before = new Date("2026-09-22T10:00:00Z");
+  const after = new Date(REWARD_RULE_2026_11_DECIDED_AT.getTime() + 60_000);
+  assert.equal(shouldAdoptRewardRule2026_11(DEFAULT_REWARD_RULE, before), true);
+  // ROOT пересохранил те же 20 % новой версией до решения — тоже переходим.
+  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, version: 3 }, before), true);
+  assert.equal(shouldAdoptRewardRule2026_11(null, null), false);
+  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, subscriptionPercent: 25 }, before), false);
+  assert.equal(shouldAdoptRewardRule2026_11({ ...DEFAULT_REWARD_RULE, minPayoutRub: 500 }, before), false);
+  // ROOT после решения сознательно вернул 20 % — не трогаем.
+  assert.equal(shouldAdoptRewardRule2026_11(DEFAULT_REWARD_RULE, after), false);
+  // Уже 30 % — делать нечего.
+  assert.equal(shouldAdoptRewardRule2026_11({ version: 2, ...REWARD_TERMS_2026_11 }, before), false);
   const extras = readFileSync(new URL("./schema-extras.ts", import.meta.url), "utf8");
   assert.match(extras, /await ensureDefaultRewardRule\(\);\s*await ensureRewardRule2026_11\(\);/);
+  assert.match(extras, /version: latest!\.version \+ 1,/);
+  assert.match(extras, /version: STARTING_REWARD_RULE\.version,/);
 });
