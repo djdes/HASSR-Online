@@ -9,6 +9,7 @@
  */
 import { db } from "@/lib/db";
 import { orphanAreas } from "@/lib/orphan-areas";
+import { areaPointWhere } from "@/lib/point-filters";
 
 export const ROOM_DIRECTORY_SELECT = {
   id: true,
@@ -144,16 +145,21 @@ export type OrphanArea = {
 /**
  * Цеха организации, для которых нет Room с тем же названием (без регистра,
  * ё=е). Показываются в окне «Добавить помещение» отдельной группой.
+ *
+ * `pointId` (аудит точек, 2026-11-01) — точка, куда добавляют помещение:
+ * только её цеха и цеха без точки, а сравниваются они с помещениями только
+ * этой точки (раньше — цеха чужих точек, а свой цех пропадал, если у другой
+ * точки было помещение с тем же названием). null — вся организация.
  */
-export async function loadOrphanAreas(organizationId: string): Promise<OrphanArea[]> {
+export async function loadOrphanAreas(organizationId: string, pointId: string | null = null): Promise<OrphanArea[]> {
   const [areas, rooms] = await Promise.all([
     db.area.findMany({
-      where: { organizationId },
+      where: { organizationId, ...areaPointWhere(pointId) },
       orderBy: { name: "asc" },
       select: { id: true, name: true, _count: { select: { equipment: true } } },
     }),
     db.room.findMany({
-      where: { building: { organizationId } },
+      where: pointId ? { buildingId: pointId, building: { organizationId } } : { building: { organizationId } },
       select: { name: true },
     }),
   ]);

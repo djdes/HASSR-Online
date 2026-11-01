@@ -13,6 +13,8 @@ import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 import { equipmentBuildingWhere } from "@/lib/building-scope";
 import { documentRowsPointId } from "@/lib/document-point-rows";
+import { objectPointError } from "@/lib/point-objects";
+import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
 
 export async function GET(request: Request) {
   try {
@@ -37,11 +39,17 @@ export async function GET(request: Request) {
         })
       : null;
     const pointId = document ? await documentRowsPointId(organizationId, document.buildingId) : null;
+    // Без документа — оборудование точек человека (аудит точек, 2026-11-01:
+    // раньше любой сотрудник получал оборудование всей организации).
+    const visibleIds = document ? null : await visibleObjectBuildingIds(session);
+    const pointFilter = visibleIds
+      ? { OR: [{ area: { buildingId: { in: visibleIds } } }, { area: { buildingId: null } }] }
+      : equipmentBuildingWhere(pointId);
 
     const equipment = await db.equipment.findMany({
       where: {
         area: { organizationId },
-        ...equipmentBuildingWhere(pointId),
+        ...pointFilter,
       },
       orderBy: { name: "asc" },
       include: {
@@ -100,14 +108,16 @@ export async function POST(request: Request) {
 
     // Помещение — цех организации или помещение точки без цеха (тогда
     // цех создаётся с точкой помещения, 2026-10-17).
-    const place = await resolveEquipmentArea(getActiveOrgId(session), {
-      areaId: validatedData.areaId,
-      roomId: validatedData.roomId,
-    });
+    // Руководитель точки — только в цех своей точки (аудит точек, 2026-11-01).
+    const place = await resolveEquipmentArea(
+      getActiveOrgId(session),
+      { areaId: validatedData.areaId, roomId: validatedData.roomId },
+      (buildingId) => objectPointError(session.user, buildingId),
+    );
     if (!place.ok || !place.areaId) {
       return NextResponse.json(
         { error: place.ok ? "Выберите помещение" : place.error },
-        { status: 404 }
+        { status: place.ok ? 404 : (place.status ?? 404) }
       );
     }
 

@@ -30,12 +30,14 @@ interface AreaDialogProps {
   buildings?: Array<{ id: string; name: string }>;
   /** Точка нового цеха по умолчанию — выбранная в шапке или единственная. */
   defaultBuildingId?: string | null;
+  /** Можно ли «Без точки» (общий цех ведёт офис — руководителю точки нельзя). */
+  allowNoPoint?: boolean;
 }
 
 /** Значение «без точки» в выпадающем списке (Select не принимает пустую строку). */
 const NO_BUILDING = "__none__";
 
-export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: AreaDialogProps) {
+export function AreaDialog({ area, buildings = [], defaultBuildingId = null, allowNoPoint = true }: AreaDialogProps) {
   const t = useTranslations("settingsUi.areaDialog");
   const tc = useTranslations("common");
   const router = useRouter();
@@ -47,7 +49,8 @@ export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: A
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(area?.name ?? "");
   const [description, setDescription] = useState(area?.description ?? "");
-  const initialBuilding = (area ? area.buildingId : defaultBuildingId) ?? NO_BUILDING;
+  const initialBuilding =
+    (area ? area.buildingId : defaultBuildingId) ?? (allowNoPoint ? NO_BUILDING : (buildings[0]?.id ?? NO_BUILDING));
   const [buildingId, setBuildingId] = useState(initialBuilding);
   // Выбор точки — когда их несколько, или у цеха точки ещё нет (иначе его
   // не перенести в единственную точку).
@@ -127,7 +130,7 @@ export function AreaDialog({ area, buildings = [], defaultBuildingId = null }: A
                       {building.name}
                     </SelectItem>
                   ))}
-                  <SelectItem value={NO_BUILDING}>{t("noPoint")}</SelectItem>
+                  {allowNoPoint ? <SelectItem value={NO_BUILDING}>{t("noPoint")}</SelectItem> : null}
                 </SelectContent>
               </Select>
               <p className="text-[12.5px] text-[#6f7282]">

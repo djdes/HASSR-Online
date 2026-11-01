@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { BUILDING_OUT_OF_SCOPE_ERROR, buildingInScope } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,6 +79,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   ]);
   if (!target || !source) {
     return NextResponse.json({ error: "Точка не найдена" }, { status: 404 });
+  }
+  // Руководитель точки копирует только между своими точками (аудит точек,
+  // 2026-11-01): иначе писал бы в чужую точку или забирал её людей.
+  if (!buildingInScope(auth.session.user, target.id) || !buildingInScope(auth.session.user, source.id)) {
+    return NextResponse.json({ error: BUILDING_OUT_OF_SCOPE_ERROR }, { status: 403 });
   }
 
   const taken = new Set(target.rooms.map((room) => room.name.trim().toLowerCase()));

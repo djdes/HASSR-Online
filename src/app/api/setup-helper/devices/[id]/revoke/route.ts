@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { STAFF_OUT_OF_SCOPE_ERROR, isPointScoped, staffInScope } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,8 +23,24 @@ export async function POST(
   }
 
   const { id } = await params;
+  const organizationId = getActiveOrgId(session);
+  // Руководитель точки отключает только телефоны людей своих точек (аудит точек, 2026-11-01).
+  if (isPointScoped(session.user)) {
+    const device = await db.setupHelperDevice.findFirst({
+      where: { id, organizationId, revokedAt: null },
+      select: { userId: true },
+    });
+    if (!device) return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+    const owner = await db.user.findFirst({
+      where: { id: device.userId, organizationId },
+      select: { buildingIds: true },
+    });
+    if (!staffInScope(session.user, owner?.buildingIds ?? [])) {
+      return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
+    }
+  }
   const result = await db.setupHelperDevice.updateMany({
-    where: { id, organizationId: getActiveOrgId(session), revokedAt: null },
+    where: { id, organizationId, revokedAt: null },
     data: { revokedAt: new Date() },
   });
 

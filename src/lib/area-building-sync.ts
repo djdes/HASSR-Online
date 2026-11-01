@@ -119,17 +119,28 @@ export async function resolveBuildingInput(
  * Помещение оборудования из окна: цех (`areaId`) или помещение точки без
  * цеха (`roomId` — цех создаётся с этой точкой). Только своей организации.
  * Ничего не передано — `areaId: null` (вызывающий решает, ошибка ли это).
+ *
+ * `pointError` (аудит точек, 2026-11-01) — проверка точки места до любых
+ * изменений: руководитель точки не ставит оборудование в цех чужой точки,
+ * и цех-зеркало чужого помещения не создаётся. Текст отказа → 403.
  */
 export async function resolveEquipmentArea(
   organizationId: string,
   input: { areaId?: unknown; roomId?: unknown },
-): Promise<{ ok: true; areaId: string | null } | { ok: false; error: string }> {
+  pointError?: (buildingId: string | null) => string | null,
+): Promise<
+  | { ok: true; areaId: string | null; buildingId: string | null }
+  | { ok: false; error: string; status?: number }
+> {
   if (typeof input.areaId === "string" && input.areaId) {
     const area = await db.area.findFirst({
       where: { id: input.areaId, organizationId },
-      select: { id: true },
+      select: { id: true, buildingId: true },
     });
-    return area ? { ok: true, areaId: area.id } : { ok: false, error: "Цех не найден" };
+    if (!area) return { ok: false, error: "Цех не найден" };
+    const denied = pointError?.(area.buildingId) ?? null;
+    if (denied) return { ok: false, error: denied, status: 403 };
+    return { ok: true, areaId: area.id, buildingId: area.buildingId };
   }
   if (typeof input.roomId === "string" && input.roomId) {
     const room = await db.room.findFirst({
@@ -137,7 +148,9 @@ export async function resolveEquipmentArea(
       select: { id: true, name: true, buildingId: true },
     });
     if (!room) return { ok: false, error: "Помещение не найдено" };
-    return { ok: true, areaId: await ensureRoomMirrorArea({ organizationId, room }) };
+    const denied = pointError?.(room.buildingId) ?? null;
+    if (denied) return { ok: false, error: denied, status: 403 };
+    return { ok: true, areaId: await ensureRoomMirrorArea({ organizationId, room }), buildingId: room.buildingId };
   }
-  return { ok: true, areaId: null };
+  return { ok: true, areaId: null, buildingId: null };
 }

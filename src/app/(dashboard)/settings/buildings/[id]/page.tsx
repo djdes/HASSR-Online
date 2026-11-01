@@ -19,8 +19,9 @@ import { DeleteButton } from "@/components/settings/delete-button";
 import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { PointDeleteBlock, PointHeadBlock, PointRoomsBlock } from "@/components/settings/point-page-client";
 import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
-import { isOfficeBuilding } from "@/lib/building-scope";
-import { isPointScoped, staffInScope } from "@/lib/point-scope";
+import { isOfficeBuilding, worksAtBuilding } from "@/lib/building-scope";
+import { isPointScoped, staffInScope, staffScopeWhere } from "@/lib/point-scope";
+import { objectInScope, objectScopeIds, objectSelectable } from "@/lib/point-objects";
 import { expireOrgPointAssignments, loadActiveAssignments, organizationTodayKey } from "@/lib/point-assignments.server";
 import { TakeSubstituteButton, type SubstituteCandidate } from "@/components/staff/point-assignment";
 import { SubstituteBadge } from "@/components/staff/substitute-badge";
@@ -121,9 +122,10 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
         },
       },
     }),
-    // Сотрудники для «Кто убирает / Кто проверяет» в окне помещения.
+    // Сотрудники для «Кто убирает / Кто проверяет» в окне помещения — как в
+    // списке точек: руководителю точки только люди его точек (аудит точек, 2026-11-01).
     db.user.findMany({
-      where: { organizationId: orgId, isActive: true, archivedAt: null },
+      where: { organizationId: orgId, isActive: true, archivedAt: null, ...staffScopeWhere(session.user) },
       orderBy: { name: "asc" },
       select: { id: true, name: true, role: true, isRoot: true, positionTitle: true, jobPosition: { select: { name: true } } },
     }),
@@ -133,7 +135,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
       where: { building: { organizationId: orgId } },
       select: { id: true, name: true, buildingId: true, cleanerUserIds: true, verifierUserIds: true },
     }),
-    db.equipment.findMany({ where: { area: { organizationId: orgId } }, select: { name: true } }),
+    db.equipment.findMany({ where: { area: { organizationId: orgId } }, select: { name: true, area: { select: { buildingId: true } } } }),
     db.user.findMany({
       where: { organizationId: orgId, ...ORG_ROSTER_WHERE },
       orderBy: { name: "asc" },
@@ -239,7 +241,19 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
 
   const lamps = equipment.filter((item) => isUvLampEquipment(item));
   const units = equipment.filter((item) => !isUvLampEquipment(item));
-  const donors = buildings
+  // Окно оборудования и копирование помещений — только точки человека (аудит
+  // точек, 2026-11-01): чужие цеха, помещения и люди в выборе не появляются.
+  const orgBuildingIds = buildings.map((building) => building.id);
+  const pointsOn = orgPlaces?.perLocationJournals === true && buildings.length >= 2;
+  const dialogScopeIds = objectScopeIds({
+    enabled: pointsOn,
+    personBuildingIds: personBuildings.map((building) => building.id),
+    actor: session.user,
+  });
+  const dialogBuildings = buildings.filter((building) => objectInScope(dialogScopeIds, orgBuildingIds, building.id));
+  const dialogAreas = areas.filter((area) => objectSelectable(session.user, dialogScopeIds, orgBuildingIds, area.buildingId));
+  const dialogRooms = orgRooms.filter((room) => objectSelectable(session.user, dialogScopeIds, orgBuildingIds, room.buildingId));
+  const donors = dialogBuildings
     .filter((building) => building.id !== point.id)
     .map((building) => ({
       id: building.id,
@@ -249,16 +263,21 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
     .filter((donor) => donor.roomsCount > 0);
 
   const dialog = {
-    areas,
-    buildings: buildings.map((building) => ({ id: building.id, name: building.name })),
-    places: buildPlaceOptions({ buildings, areas, rooms: orgRooms }),
-    existingNames: orgEquipmentNames.map((item) => item.name),
-    fillerOptions: staff.map((user) => ({
-      id: user.id,
-      name: user.name,
-      position: getUserDisplayTitle(user) || null,
-      management: isManagementRole(user.role) || user.canManageSettings,
-    })),
+    areas: dialogAreas,
+    buildings: dialogBuildings.map((building) => ({ id: building.id, name: building.name })),
+    places: buildPlaceOptions({ buildings: dialogBuildings, areas: dialogAreas, rooms: dialogRooms }),
+    existingNames: orgEquipmentNames
+      .filter((item) => objectInScope(dialogScopeIds, orgBuildingIds, item.area.buildingId))
+      .map((item) => item.name),
+    // «Кто заполняет» по QR — люди этой точки (наклейка всё равно пускает только их).
+    fillerOptions: staff
+      .filter((user) => !pointsOn || worksAtBuilding(orgBuildingIds, user.buildingIds, point.id))
+      .map((user) => ({
+        id: user.id,
+        name: user.name,
+        position: getUserDisplayTitle(user) || null,
+        management: isManagementRole(user.role) || user.canManageSettings,
+      })),
   };
   const editProps = (item: (typeof equipment)[number]) => ({
     ...dialog,

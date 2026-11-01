@@ -5,6 +5,7 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ROOM_KINDS } from "@/lib/room-kinds";
 import { ensureRoomMirrorArea } from "@/lib/area-building-sync";
+import { objectPointResponse } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
       { status: 404 }
     );
   }
+  // Руководитель точки добавляет помещения только своей точке (аудит точек, 2026-11-01).
+  const outOfScope = objectPointResponse(auth.session.user, building.id);
+  if (outOfScope) return outOfScope;
 
   const exists = await db.room.findFirst({
     where: { buildingId: body.buildingId, name: body.name },
