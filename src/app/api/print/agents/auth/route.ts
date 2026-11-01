@@ -7,6 +7,9 @@ import {
   generateAgentToken,
   hashAgentToken,
 } from "@/lib/print-agent-auth";
+import { defaultAgentBuildingId, orgBuildingOrNull } from "@/lib/print-agent-point.server";
+import { computePointScope } from "@/lib/point-scope.server";
+import { canManageAgentPoint } from "@/lib/print-point-routing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +36,8 @@ export async function POST(request: Request) {
     password?: unknown;
     deviceName?: unknown;
     agentVersion?: unknown;
+    /** Точка принтера (необязательно, 2026-11-01); без неё — по человеку. */
+    buildingId?: unknown;
   };
   try {
     body = await request.json();
@@ -87,6 +92,16 @@ export async function POST(request: Request) {
     );
   }
 
+  // Точка принтера (2026-11-01): журнал точки печатается принтером своей
+  // точки. Руководитель точки ставит принтер только на свою точку; без
+  // явной точки — его точка, у руководства компании — вся организация.
+  const requestedBuildingId = await orgBuildingOrNull(user.organizationId, body.buildingId);
+  const scope = await computePointScope(user);
+  const buildingId =
+    requestedBuildingId && canManageAgentPoint({ scope, target: requestedBuildingId })
+      ? requestedBuildingId
+      : await defaultAgentBuildingId(user);
+
   const raw = generateAgentToken();
 
   // Переустановка на той же машине не должна плодить призраков в списке:
@@ -105,6 +120,7 @@ export async function POST(request: Request) {
     data: {
       organizationId: user.organizationId,
       createdById: user.id,
+      buildingId,
       name: deviceName,
       tokenHash: hashAgentToken(raw),
       agentVersion: agentVersion || null,

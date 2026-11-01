@@ -13696,7 +13696,12 @@
         "disconnect": "Disconnect",
         "disconnectAria": "Disconnect “{name}”",
         "disconnecting": "Disconnecting…",
-        "disconnected": "“{name}” has been disconnected from printing"
+        "disconnected": "“{name}” has been disconnected from printing",
+        "point": "Prints for",
+        "allPoints": "Whole organization",
+        "pointHint": "A location’s journals print on that location’s printer. “Whole organization” prints shared journals and locations without their own printer.",
+        "pointChanged": "“{name}” now prints for: {point}",
+        "pointAria": "Which location “{name}” prints for"
       },
       "confirm": {
         "title": "Disconnect “{name}”?",

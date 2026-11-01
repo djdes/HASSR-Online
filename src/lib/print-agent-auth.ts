@@ -53,6 +53,8 @@ export function readBearerToken(request: Request): string | null {
 export type AuthedAgent = {
   id: string;
   organizationId: string;
+  /** Точка принтера (2026-11-01); null — вся организация. */
+  buildingId: string | null;
   name: string;
   printerName: string | null;
 };
@@ -76,6 +78,7 @@ export async function authenticateAgent(
     select: {
       id: true,
       organizationId: true,
+      buildingId: true,
       name: true,
       printerName: true,
       revokedAt: true,
@@ -86,6 +89,7 @@ export async function authenticateAgent(
   return {
     id: agent.id,
     organizationId: agent.organizationId,
+    buildingId: agent.buildingId,
     name: agent.name,
     printerName: agent.printerName,
   };

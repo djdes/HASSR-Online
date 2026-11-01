@@ -13696,7 +13696,12 @@
         "disconnect": "Uzish",
         "disconnectAria": "«{name}»ni uzish",
         "disconnecting": "Uzilmoqda…",
-        "disconnected": "«{name}» chop etishdan uzildi"
+        "disconnected": "«{name}» chop etishdan uzildi",
+        "point": "Kim uchun chop etadi",
+        "allPoints": "Butun tashkilot",
+        "pointHint": "Nuqta jurnallari shu nuqta printerida chop etiladi. «Butun tashkilot» — umumiy jurnallar va o‘z printeri yo‘q nuqtalar.",
+        "pointChanged": "«{name}» endi chop etadi: {point}",
+        "pointAria": "«{name}» qaysi nuqta uchun chop etadi"
       },
       "confirm": {
         "title": "«{name}» uzilsinmi?",
