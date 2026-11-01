@@ -10,7 +10,7 @@
 import { worksAtBuilding } from "@/lib/building-scope";
 import { BUILDING_OUT_OF_SCOPE_ERROR, buildingInScope, isPointScoped, type PointScopeActor } from "@/lib/point-scope";
 
-export const SHARED_OBJECT_OFFICE_ERROR = "Объекты без точки ведёт офис — выберите свою точку";
+export const SHARED_OBJECT_OFFICE_ERROR = "Объекты без точки ведёт руководство компании — выберите свою точку";
 
 /** Может ли человек править объект точки `buildingId` (null — объект без точки). */
 export function canEditObjectAt(actor: PointScopeActor | null | undefined, buildingId: string | null | undefined): boolean {

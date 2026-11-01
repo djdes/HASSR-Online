@@ -6,8 +6,12 @@
  *
  *   node --import tsx scripts/move-journal-template-settings-to-orgs.ts            # только отчёт
  *   node --import tsx scripts/move-journal-template-settings-to-orgs.ts --apply    # перенести исполнителя
- *   … --apply --reset-defaults   # ещё и вернуть шаблонам дефолтные режим и бонус,
- *                                # сохранив бонус организациям, где им уже пользовались
+ *   … --apply --reset-bonus      # ещё и обнулить бонус шаблонов, сохранив его
+ *                                # организациям, где им уже пользовались
+ *   … --apply --reset-fill-mode  # вернуть шаблонам дефолтный режим (кроме «датчика»)
+ *
+ * 2026-11-01 на проде: --apply --reset-bonus (бонусом не пользовался никто,
+ * чьи — не установить); режим не сбрасывали — решение владельца.
  *
  * Без `--apply` ничего не пишет. Запуск на проде — только с разрешения владельца.
  */
@@ -15,7 +19,8 @@ import { db } from "@/lib/db";
 
 const PER_EMPLOYEE_CODES = new Set(["hygiene", "health_check", "ppe_issuance"]);
 const apply = process.argv.includes("--apply");
-const resetDefaults = process.argv.includes("--reset-defaults");
+const resetBonus = process.argv.includes("--reset-bonus");
+const resetFillMode = process.argv.includes("--reset-fill-mode");
 
 function defaultFillMode(code: string): string {
   return PER_EMPLOYEE_CODES.has(code) ? "per-employee" : "single";
@@ -74,8 +79,8 @@ async function main() {
       });
       await db.journalTemplate.update({ where: { id: template.id }, data: { defaultAssigneeId: null } });
     }
-    if (resetDefaults) {
-      // Бонус оставляем тем, у кого им уже пользовались; остальным — дефолт шаблона.
+    if (resetBonus && template.bonusAmountKopecks > 0) {
+      // Бонус оставляем тем, у кого им уже пользовались; остальным — дефолт шаблона (0).
       for (const organizationId of bonusOrgs) {
         await db.organizationJournalSetting.upsert({
           where: { organizationId_templateId: { organizationId, templateId: template.id } },
@@ -83,13 +88,10 @@ async function main() {
           update: {},
         });
       }
-      await db.journalTemplate.update({
-        where: { id: template.id },
-        data: {
-          bonusAmountKopecks: 0,
-          ...(template.fillMode === "sensor" ? {} : { fillMode: defaultFillMode(template.code) }),
-        },
-      });
+      await db.journalTemplate.update({ where: { id: template.id }, data: { bonusAmountKopecks: 0 } });
+    }
+    if (resetFillMode && template.fillMode !== "sensor" && template.fillMode !== defaultFillMode(template.code)) {
+      await db.journalTemplate.update({ where: { id: template.id }, data: { fillMode: defaultFillMode(template.code) } });
     }
   }
   console.log(apply ? "[move-settings] применено" : "[move-settings] только отчёт (без --apply)");
