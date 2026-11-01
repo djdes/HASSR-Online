@@ -105,7 +105,7 @@ export function MercurySettingsClient({
     runEnterprise(async () => {
       const body = await enterpriseRequest(`/api/integrations/mercury/enterprises/${enterprise.id}`, "PATCH", payload);
       const moved = Number(body.repointed ?? 0);
-      return moved > 0 ? t("enterpriseRepointed", { count: moved }) : t("enterpriseSaved");
+      return moved > 0 ? t("enterpriseRepointed", { count: String(moved) }) : t("enterpriseSaved");
     });
 
   const loadEnterprises = () =>
