@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { normalizeSphere, type OrgSphere } from "@/lib/org-profile";
 import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
+import { copyOrgLogo } from "@/lib/org-logo";
+import { orgLogoAssetOwner } from "@/lib/org-logo-file";
 
 /**
  * Создание организации внутри аккаунта.
@@ -69,7 +71,10 @@ export async function createOrganization(
             autoJournalCodes: donor.autoJournalCodes as never,
             locale: donor.locale,
             brandColor: donor.brandColor,
-            logoUrl: donor.logoUrl,
+            // Загруженный файл донора копируется ниже — своя копия и свой
+            // адрес (2026-11-01): общий адрес делал логотип общим на обе
+            // организации. Внешнюю ссылку берём как есть.
+            logoUrl: orgLogoAssetOwner(donor.logoUrl) ? null : donor.logoUrl,
           }
         : {}),
     },
@@ -93,6 +98,8 @@ export async function createOrganization(
 
   if (donor) {
     await copyPositions(donor.id, organization.id);
+    const logoOwner = orgLogoAssetOwner(donor.logoUrl);
+    if (logoOwner) await copyOrgLogo(logoOwner, organization.id);
   }
 
   return { organizationId: organization.id };

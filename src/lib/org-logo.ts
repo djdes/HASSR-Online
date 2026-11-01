@@ -27,6 +27,17 @@ export async function setOrgLogo(
   return url;
 }
 
+/**
+ * Скопировать загруженный логотип другой организации себе (2026-11-01):
+ * своя копия файла и свой адрес. Без копии новая организация «как
+ * текущая» ссылалась на файл донора, и смена логотипа там меняла его
+ * здесь. У донора нет файла — null, ничего не меняем.
+ */
+export async function copyOrgLogo(fromOrganizationId: string, toOrganizationId: string): Promise<string | null> {
+  const source = await readOrgLogo(fromOrganizationId);
+  return source ? setOrgLogo(toOrganizationId, source) : null;
+}
+
 /** Убрать логотип: и загруженный файл, и ссылку — кнопка «Удалить» одна. */
 export async function removeOrgLogo(organizationId: string): Promise<void> {
   await db.organizationLogo.deleteMany({ where: { organizationId } });

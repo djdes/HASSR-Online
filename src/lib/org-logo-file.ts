@@ -16,6 +16,17 @@ export function orgLogoUrl(organizationId: string, version: number): string {
   return `/api/org-assets/${organizationId}/logo?v=${version}`;
 }
 
+/**
+ * Чей загруженный файл логотипа стоит по адресу: id организации из
+ * `/api/org-assets/<id>/logo`, для внешней ссылки или пустого — null.
+ * Адрес чужой организации у себя значит общий файл: смена логотипа там
+ * меняла его и здесь (2026-11-01, «фирменный стиль не делится»).
+ */
+export function orgLogoAssetOwner(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl || !ORG_LOGO_PATH_PATTERN.test(logoUrl)) return null;
+  return logoUrl.split("/")[3] ?? null;
+}
+
 export type PreparedOrgLogo =
   | { ok: true; bytes: Uint8Array; mime: string }
   | { ok: false; error: string };
