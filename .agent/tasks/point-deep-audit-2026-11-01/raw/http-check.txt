@@ -1,0 +1,44 @@
+PASS владелец: /dashboard открывается — HTTP 200
+PASS владелец: /journals открывается — HTTP 200
+PASS владелец: /journals/points открывается — HTTP 200
+PASS владелец: /journals/hygiene открывается — HTTP 200
+PASS владелец: /journals/cold_equipment_control открывается — HTTP 200
+PASS владелец: /journals/hygiene/documents/cmvwwlpqs0003jg9mgf7lka5h открывается — HTTP 200
+PASS владелец: /journals/hygiene/documents/cmvwwlpsc0004jg9mg9ighite открывается — HTTP 200
+PASS владелец: /settings/journals открывается — HTTP 200
+PASS владелец: /settings/journal-bonuses открывается — HTTP 200
+PASS владелец: /settings/auto-journals открывается — HTTP 200
+PASS владелец: /settings/equipment открывается — HTTP 200
+PASS владелец: /settings/areas открывается — HTTP 200
+PASS владелец: /settings/users открывается — HTTP 200
+PASS владелец: /settings/kiosk открывается — HTTP 200
+PASS владелец: /competencies открывается — HTTP 200
+PASS владелец: /bonuses открывается — HTTP 200
+PASS владелец: /mercury открывается — HTTP 200
+PASS владелец: /inspection открывается — HTTP 200
+PASS владелец: /settings/staff-health открывается — HTTP 200
+PASS владелец: /api/mini/home отвечает — HTTP 200
+PASS владелец: /api/search?q=%D0%A8%D0%A5 отвечает — HTTP 200
+PASS владелец: /api/journal-task-pool/cold_equipment_control отвечает — HTTP 200
+PASS владелец: /api/equipment отвечает — HTTP 200
+PASS владелец: /api/areas отвечает — HTTP 200
+PASS владелец: /api/journals/today-status отвечает — HTTP 200
+PASS владелец (вся организация): в /api/equipment оба холодильника
+PASS владелец смотрит точку А: в /api/equipment только холодильник А
+PASS повар А: свой документ гигиены открывается — HTTP 200
+PASS повар А: документ гигиены точки Б — не найден — HTTP 404
+PASS повар А: страница документа точки Б — «не найдено», без содержимого — HTTP 200
+PASS повар А: своя страница документа открывается — HTTP 200
+PASS повар А: в /api/equipment нет холодильника точки Б — HTTP 200
+PASS руководитель точки А: правка холодильника точки Б — отказ — HTTP 403
+PASS руководитель точки А: удаление холодильника точки Б — отказ — HTTP 403
+PASS руководитель точки А: увольнение повара точки Б — отказ — HTTP 403
+PASS руководитель точки А: удалить все документы организации — отказ — HTTP 403
+PASS руководитель точки А: права сотрудников — отказ — HTTP 403
+PASS руководитель точки А: журнал действий компании — отказ — HTTP 403
+PASS руководитель точки А: документ точки Б — не найден — HTTP 404
+PASS владелец: сохранение «Распределения» гигиены — HTTP 200 {"ok":true}
+PASS общий шаблон гигиены не изменился — {"fillMode":"per-employee","defaultAssigneeId":null,"bonusAmountKopecks":0}
+PASS настройка записана своей организации — {"fillMode":"single","bonusAmountKopecks":12300}
+PASS /settings/journals после сохранения открывается — HTTP 200
+ALL PASS 43

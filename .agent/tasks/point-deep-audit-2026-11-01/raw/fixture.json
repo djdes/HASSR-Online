@@ -1,0 +1,22 @@
+{
+  "orgId": "cmvr0npow0000zw9mq3eiejlc",
+  "password": "Verify-2026!",
+  "office": "cmvxk1nhu0000dc9mok2itdub",
+  "pointA": "cmvr0nq140001zw9maq48u9sv",
+  "pointB": "cmvr0nq140002zw9m3mg464x1",
+  "owner": "manager-cmvr0npow0000zw9mq3eiejlc@verify.local",
+  "cookA": "check-3110-cook-a@verify.local",
+  "cookB": "check-3110-cook-b@verify.local",
+  "cookBId": "cmvwtzer20007u89me87y5551",
+  "pointManagerA": "check-0111-head-a@verify.local",
+  "fridgeA": "cmvxketgq0000v49m4oyfrye8",
+  "fridgeB": "cmvxketh20001v49mcffbhned",
+  "hygieneDocA": "cmvwwlpqs0003jg9mgf7lka5h",
+  "hygieneDocB": "cmvwwlpsc0004jg9mg9ighite",
+  "hygieneTemplateBefore": {
+    "id": "cmvawx2vx00035g9mfr291wkm",
+    "fillMode": "per-employee",
+    "defaultAssigneeId": null,
+    "bonusAmountKopecks": 0
+  }
+}
