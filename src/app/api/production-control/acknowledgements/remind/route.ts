@@ -7,6 +7,7 @@ import { ackDocPath } from "@/lib/ppk/acknowledge";
 import { ackDocument, ackStats } from "@/lib/ppk/acknowledge.server";
 import { buildMiniAppUrl, getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { notifyEmployee } from "@/lib/telegram";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,8 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
 
-  const stats = await ackStats(auth.organizationId, parsed.data.docKey);
+  // Напоминаем только людям своей точки (руководитель точки — своих точек).
+  const stats = await ackStats(auth.organizationId, parsed.data.docKey, await visibleStaffWhere(auth.session));
   if (!stats) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   const doc = await ackDocument(auth.organizationId, parsed.data.docKey);
   if (!doc) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });

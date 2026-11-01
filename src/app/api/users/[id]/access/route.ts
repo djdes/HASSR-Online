@@ -68,6 +68,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
   if (!session.user.isRoot && user.organizationId !== activeOrg) {
     return NextResponse.json({ error: "Нет доступа" }, { status: 403 });
   }
+  // Карточку человека другой точки руководитель точки не открывает (как и правку).
+  const outOfScope = await staffOutOfScopeResponse(session, id);
+  if (outOfScope) return outOfScope;
 
   const rows = await db.userJournalAccess.findMany({
     where: { userId: id },

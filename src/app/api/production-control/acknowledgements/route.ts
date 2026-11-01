@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
 import { isAckDocKey } from "@/lib/ppk/acknowledge";
 import { ackStatsMany } from "@/lib/ppk/acknowledge.server";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   if (!auth.ok) return auth.response;
   const raw = new URL(request.url).searchParams.get("docKeys") ?? "";
   const keys = [...new Set(raw.split(",").map((key) => key.trim()).filter(isAckDocKey))].slice(0, 200);
-  const many = await ackStatsMany(auth.organizationId, keys);
+  const many = await ackStatsMany(auth.organizationId, keys, await visibleStaffWhere(auth.session));
   const stats: Record<string, { acknowledged: number; total: number }> = {};
   for (const [key, one] of Object.entries(many)) {
     stats[key] = { acknowledged: one.acknowledged.length, total: one.acknowledged.length + one.pending.length };

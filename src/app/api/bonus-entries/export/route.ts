@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
+import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 /**
@@ -78,6 +79,8 @@ export async function GET(request: Request) {
       organizationId: orgId,
       createdAt: { gte: fromDate, lt: toExclusive },
       ...(userId ? { userId } : {}),
+      // Руководитель точки выгружает премии только людей своих точек.
+      ...(isPointScoped(session.user) ? { user: staffScopeWhere(session.user) } : {}),
     },
     orderBy: { createdAt: "asc" },
     select: {

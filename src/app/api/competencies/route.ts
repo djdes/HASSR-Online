@@ -6,13 +6,32 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { competencySchema } from "@/lib/validators";
 import { isManagementRole } from "@/lib/user-roles";
+import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  // Матрица навыков с медкнижками — руководству, руководителю точки — по его точкам.
+  if (!isManagementRole(session.user.role) && !session.user.isRoot) {
+    return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
+  }
 
+  const organizationId = getActiveOrgId(session);
+  // У навыка нет связи с человеком в схеме — ограничиваем по id людей точек.
+  const scopedUserIds = isPointScoped(session.user)
+    ? (
+        await db.user.findMany({
+          where: { organizationId, ...staffScopeWhere(session.user) },
+          select: { id: true },
+        })
+      ).map((user) => user.id)
+    : null;
   const competencies = await db.staffCompetency.findMany({
-    where: { organizationId: getActiveOrgId(session) },
+    where: {
+      organizationId,
+      ...(scopedUserIds ? { userId: { in: scopedUserIds } } : {}),
+    },
     orderBy: [{ userId: "asc" }, { skill: "asc" }],
   });
 
@@ -56,6 +75,8 @@ export async function POST(req: NextRequest) {
   if (!targetUser) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
+  const outOfScope = await staffOutOfScopeResponse(session, targetUser.id);
+  if (outOfScope) return outOfScope;
 
   const expiresAt =
     data.expiresAt && typeof data.expiresAt === "string" && data.expiresAt.length > 0

@@ -73,6 +73,8 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
   "/settings/journal-bonuses",
   // Подключения и прочее на всю компанию.
   "/settings/integrations",
+  // Ссылка проверяющего открывает журналы всех точек.
+  "/settings/inspector-portal",
   "/settings/webhooks",
   "/settings/calendar",
   "/settings/backup",
@@ -120,7 +122,39 @@ export const COMPANY_ONLY_API_PREFIXES = [
   "/api/settings/consultant",
   "/api/staff/control-group",
   "/api/manager-scope",
+  // Права людей и должностей, справочник продукции, быстрая настройка — на всю компанию.
+  "/api/organizations/permissions",
+  "/api/products",
+  "/api/onboarding/apply",
+  // Удалить все документы организации — только офис.
+  "/api/settings/journals/delete-all-documents",
+  // Подключения (страница /settings/integrations — офиса): ЭДО и iiko, 1С,
+  // Меркурий, Max, общие действия TasksFlow.
+  "/api/settings/supply",
+  "/api/settings/hr1c",
+  "/api/integrations/mercury",
+  "/api/max/organization",
+  "/api/integrations/tasksflow/cleanup-pending",
+  "/api/integrations/tasksflow/cleanup-completed",
+  "/api/integrations/tasksflow/reset-negative-balances",
+  "/api/integrations/tasksflow/sync-users",
+  "/api/integrations/tasksflow/sync-hierarchy",
+  // Ссылка проверяющего открывает журналы всех точек.
+  "/api/settings/inspector-tokens",
 ] as const;
+
+/**
+ * Ровно эти адреса (без вложенных): подключение и отключение TasksFlow —
+ * офису, а задачи точки (`/api/integrations/tasksflow/bulk-assign-today` и
+ * др.) руководитель точки отправляет сам.
+ */
+export const COMPANY_ONLY_API_EXACT = ["/api/integrations/tasksflow"] as const;
+
+/**
+ * Только вложенные адреса: должность заводят и при добавлении сотрудника
+ * (`POST /api/positions`), а переименовать, удалить и переставить — офис.
+ */
+export const COMPANY_ONLY_API_CHILDREN = ["/api/positions"] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -153,9 +187,11 @@ export function evaluatePointScopeRequest(args: {
   if (matchesPrefix(path, "/api")) {
     const method = args.method.toUpperCase();
     if (method === "GET" || method === "HEAD" || method === "OPTIONS") return { action: "allow" };
-    return COMPANY_ONLY_API_PREFIXES.some((prefix) => matchesPrefix(path, prefix))
-      ? { action: "deny", status: 403, error: COMPANY_ONLY_API_ERROR }
-      : { action: "allow" };
+    const companyOnly =
+      COMPANY_ONLY_API_PREFIXES.some((prefix) => matchesPrefix(path, prefix)) ||
+      COMPANY_ONLY_API_EXACT.some((exact) => path === exact) ||
+      COMPANY_ONLY_API_CHILDREN.some((parent) => path.startsWith(`${parent}/`));
+    return companyOnly ? { action: "deny", status: 403, error: COMPANY_ONLY_API_ERROR } : { action: "allow" };
   }
   return isCompanyOnlyPath(path) ? { action: "redirect", location: "/dashboard" } : { action: "allow" };
 }

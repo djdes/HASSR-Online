@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 /**
@@ -65,7 +66,7 @@ export async function POST(
 
   const bonus = await db.bonusEntry.findUnique({
     where: { id },
-    select: { id: true, organizationId: true, status: true },
+    select: { id: true, organizationId: true, status: true, userId: true },
   });
 
   if (!bonus || bonus.organizationId !== orgId) {
@@ -74,6 +75,9 @@ export async function POST(
       { status: 404 }
     );
   }
+  // Руководитель точки отзывает премии только людей своих точек.
+  const outOfScope = await staffOutOfScopeResponse(session, bonus.userId);
+  if (outOfScope) return outOfScope;
 
   if (bonus.status === "rejected") {
     return NextResponse.json(

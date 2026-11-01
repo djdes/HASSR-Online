@@ -11,7 +11,7 @@ import { seatAllowance, seatLimitSummary } from "@/lib/billing.server";
 import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { DEFAULT_WEEKLY_DAYS_OFF } from "@/lib/staff-days-off";
 import { STAFF_SHEET_NAME, parseStaffSheet } from "@/lib/staff-excel";
-import { mergeScopedBuildingIds } from "@/lib/point-scope";
+import { mergeScopedBuildingIds, staffInScope } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -193,8 +193,15 @@ export async function POST(request: Request) {
             name: row.fullName,
             jobPositionId: position.id,
           },
-      select: { id: true },
+      select: { id: true, buildingIds: true },
     });
+
+    // Сотрудник другой точки: руководитель точки его не обновляет и не
+    // заводит второй раз с тем же телефоном — пропускаем строку.
+    if (existing && !staffInScope(session.user, existing.buildingIds)) {
+      skipped += 1;
+      continue;
+    }
 
     if (existing) {
       if (mode !== "update") {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { STAFF_OUT_OF_SCOPE_ERROR, staffInScope } from "@/lib/point-scope";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { planWorkOffBulk } from "@/lib/staff-days-off";
@@ -65,10 +66,14 @@ export async function POST(request: Request) {
   const requestedUserIds = [...new Set(parsed.items.map((i) => i.userId))];
   const users = await db.user.findMany({
     where: { id: { in: requestedUserIds }, organizationId: orgId },
-    select: { id: true, weeklyDaysOff: true },
+    select: { id: true, weeklyDaysOff: true, buildingIds: true },
   });
   if (users.length !== requestedUserIds.length) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
+  }
+  // Руководитель точки ставит выходные только людям своих точек.
+  if (users.some((user) => !staffInScope(session.user, user.buildingIds))) {
+    return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
   }
 
   // Zod-регулярка пропускает `2026-13-99` — до БД такое доходить не должно.

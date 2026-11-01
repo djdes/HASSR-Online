@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
 export async function GET(request: Request) {
@@ -28,6 +29,10 @@ export async function GET(request: Request) {
         { error: "Это действие доступно руководителю" },
         { status: 403 }
       );
+    }
+    // Журнал действий всей компании — офису (страница /settings/audit закрыта руководителю точки).
+    if (isPointScoped(session.user)) {
+      return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);

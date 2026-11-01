@@ -187,7 +187,7 @@ export default async function StaffPage({
   // делят тариф и лимит мест. Приглашённому руководителю кнопку даже не
   // показываем — отказ по клику выглядел бы как поломка.
   // Запросы PIN с QR-страниц: сотрудник придумал PIN, руководитель одобряет.
-  const pinRequests = await listPendingQrPinRequests(orgId);
+  const pinRequests = await listPendingQrPinRequests(orgId, session.user);
 
   const ownedAccount = await db.account.findUnique({
     where: { ownerUserId: session.user.id },
@@ -271,6 +271,7 @@ export default async function StaffPage({
       activeBuildingId={defaultPlaceId}
       todayKey={todayKey}
       hasTasksflowIntegration={Boolean(tasksflowIntegration)}
+      canEditPositions={!pointScoped}
       organization={{
         id: organization?.id ?? orgId,
         name: organization?.name ?? t("organizationFallback"),

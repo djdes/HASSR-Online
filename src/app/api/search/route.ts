@@ -12,6 +12,10 @@ import {
 } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { sortJournalsByName } from "@/lib/journal-sort";
+import { loadBuildingContext } from "@/lib/active-building";
+import { viewedPointId } from "@/lib/building-scope";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { staffScopeWhere } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,10 +71,22 @@ export async function GET(request: Request) {
     role: session.user.role,
     isRoot: session.user.isRoot,
   });
+  // Точки (2026-11-01): точка видит только своё — документы, оборудование
+  // и людей выбранной в шапке точки (и общие), руководитель точки — своих
+  // точек. Руководство в «Вся организация» ищет по всей компании.
+  const buildingContext = await loadBuildingContext(session);
+  const viewedPoint = viewedPointId(buildingContext);
+  const visiblePoints = !buildingContext.enabled
+    ? null
+    : viewedPoint
+      ? [viewedPoint]
+      : buildingContext.canViewOrganization
+        ? null
+        : buildingContext.buildings.map((building) => building.id);
   // Палитра не должна возвращать журналы, которые org отключила в
   // /settings/journals — клик по такому результату вёл бы на
   // disabled-страницу, и сотрудник терял бы 5 секунд на возврат.
-  const disabledCodes = await getDisabledJournalCodes(organizationId);
+  const disabledCodes = await getDisabledJournalCodes(organizationId, viewedPoint);
   // Журнал ищется и по своему названию организации, и по официальному.
   // Своё живёт в Organization.customNamesJson, а не в шаблоне, поэтому
   // журналы (их меньше полусотни) фильтруем здесь общим матчером поиска
@@ -86,6 +102,8 @@ export async function GET(request: Request) {
           where: {
             organizationId,
             archivedAt: null,
+            ...staffScopeWhere(session.user),
+            AND: [staffAtBuildingWhere(viewedPoint)],
             OR: [
               { name: { contains: q, mode: "insensitive" } },
               { email: { contains: q, mode: "insensitive" } },
@@ -125,6 +143,7 @@ export async function GET(request: Request) {
       where: {
         organizationId,
         title: { contains: q, mode: "insensitive" },
+        ...(visiblePoints ? { OR: [{ buildingId: null }, { buildingId: { in: visiblePoints } }] } : {}),
       },
       select: {
         id: true,
@@ -139,6 +158,9 @@ export async function GET(request: Request) {
     db.equipment.findMany({
       where: {
         area: { organizationId },
+        ...(visiblePoints
+          ? { AND: [{ OR: [{ area: { buildingId: null } }, { area: { buildingId: { in: visiblePoints } } }] }] }
+          : {}),
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { type: { contains: q, mode: "insensitive" } },

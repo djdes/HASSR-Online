@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 
@@ -37,22 +38,26 @@ export async function DELETE(
   if (parsed.kind === "vacation") {
     const row = await db.staffVacation.findFirst({
       where: { id, user: { organizationId: orgId } },
-      select: { id: true },
+      select: { id: true, userId: true },
     });
     if (!row) {
       return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
     }
+    const outOfScope = await staffOutOfScopeResponse(session, row.userId);
+    if (outOfScope) return outOfScope;
     await db.staffVacation.delete({ where: { id: row.id } });
     return NextResponse.json({ ok: true });
   }
 
   const row = await db.staffSickLeave.findFirst({
     where: { id, user: { organizationId: orgId } },
-    select: { id: true },
+    select: { id: true, userId: true },
   });
   if (!row) {
     return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
   }
+  const outOfScope = await staffOutOfScopeResponse(session, row.userId);
+  if (outOfScope) return outOfScope;
   await db.staffSickLeave.delete({ where: { id: row.id } });
   return NextResponse.json({ ok: true });
 }

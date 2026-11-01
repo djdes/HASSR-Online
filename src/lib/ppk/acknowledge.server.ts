@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { ackKnowledgeId, ackKnowledgeKey, formatAckMoment, isAckDocKey, type AckDocKey } from "./acknowledge";
@@ -57,10 +58,17 @@ async function teamMemberIds(organizationId: string): Promise<string[]> {
   return parsePpkRecords("team", rows).map((row) => row.data.userId);
 }
 
+/**
+ * Условие на людей для сводок руководителя: точка видит только своих
+ * (`visibleStaffWhere` из people-scope.server.ts). Пусто — все.
+ */
+export type AckStaffWhere = Prisma.UserWhereInput;
+
 /** Живые сотрудники организации (кандидаты в аудиторию). */
-async function rosterUsers(organizationId: string) {
+async function rosterUsers(organizationId: string, staffWhere: AckStaffWhere = {}) {
   return db.user.findMany({
-    where: { organizationId, ...ORG_ROSTER_WHERE },
+    // ORG_ROSTER_WHERE сам занимает `AND` — условие точки кладём рядом, не поверх.
+    where: { AND: [{ organizationId, ...ORG_ROSTER_WHERE }, staffWhere] },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -135,15 +143,23 @@ export type AckStats = {
 };
 
 /** Кто ознакомился с текущей версией документа, а кто ещё нет. */
-export async function ackStats(organizationId: string, docKey: string): Promise<AckStats | null> {
-  return (await ackStatsMany(organizationId, [docKey]))[docKey] ?? null;
+export async function ackStats(
+  organizationId: string,
+  docKey: string,
+  staffWhere: AckStaffWhere = {},
+): Promise<AckStats | null> {
+  return (await ackStatsMany(organizationId, [docKey], staffWhere))[docKey] ?? null;
 }
 
 /**
  * Статистика сразу по нескольким документам: ростер и отметки читаются одним
  * заходом (страница инструкций спрашивает по всем файлам разом).
  */
-export async function ackStatsMany(organizationId: string, docKeys: string[]): Promise<Record<string, AckStats>> {
+export async function ackStatsMany(
+  organizationId: string,
+  docKeys: string[],
+  staffWhere: AckStaffWhere = {},
+): Promise<Record<string, AckStats>> {
   const knowledgeIds = docKeys.map(ackKnowledgeId).filter((id): id is string => id !== null);
   const [fixed, knowledge] = await Promise.all([
     Promise.all(docKeys.filter((key) => ackKnowledgeId(key) === null).map((key) => ackDocument(organizationId, key))),
@@ -165,7 +181,7 @@ export async function ackStatsMany(organizationId: string, docKeys: string[]): P
   ];
   if (!docs.length) return {};
   const [staff, teamIds, marks] = await Promise.all([
-    rosterUsers(organizationId),
+    rosterUsers(organizationId, staffWhere),
     docs.some((doc) => doc.audience === "team") ? teamMemberIds(organizationId) : Promise.resolve<string[]>([]),
     db.ppkAcknowledgement.findMany({
       where: { organizationId, docKey: { in: docs.map((doc) => doc.docKey) } },
@@ -191,8 +207,13 @@ export async function ackStatsMany(organizationId: string, docKeys: string[]): P
 }
 
 /** Сводка для руководителя: даты уже отформатированы в поясе организации. */
-export async function ackSummaryFor(organizationId: string, docKey: string, timeZone: string) {
-  const stats = await ackStats(organizationId, docKey);
+export async function ackSummaryFor(
+  organizationId: string,
+  docKey: string,
+  timeZone: string,
+  staffWhere: AckStaffWhere = {},
+) {
+  const stats = await ackStats(organizationId, docKey, staffWhere);
   if (!stats) return null;
   return {
     acknowledged: stats.acknowledged.map((row) => ({

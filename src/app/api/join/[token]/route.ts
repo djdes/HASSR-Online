@@ -6,6 +6,7 @@ import { hashInviteToken } from "@/lib/invite-tokens";
 import { ensurePlanForHeadcount } from "@/lib/plan-limits.server";
 import { checkSeatsForActivation, seatLimitResponse } from "@/lib/billing.server";
 import { resolveJournalAccessBootstrap } from "@/lib/staff-journal-bootstrap";
+import { computePointScope } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -206,6 +207,18 @@ export async function POST(request: Request, ctx: Ctx) {
     positionTemplates.map((t) => t.template.code)
   );
 
+  // Ссылку выписал руководитель точки — новый сотрудник работает на его
+  // точках, как при добавлении в «Сотрудниках» (`mergeScopedBuildingIds`).
+  // Иначе человек оказался бы «на всех точках», а сам руководитель его не видел.
+  const creator = await db.user.findUnique({
+    where: { id: r.row.createdById },
+    select: { organizationId: true, buildingIds: true, isRoot: true },
+  });
+  const creatorScope =
+    creator && !creator.isRoot && creator.organizationId === r.row.organizationId
+      ? await computePointScope(creator)
+      : null;
+
   // Создаём User + UserJournalAccess + помечаем токен использованным
   // в одной транзакции.
   let newUser: { id: string; name: string };
@@ -223,6 +236,7 @@ export async function POST(request: Request, ctx: Ctx) {
           positionTitle: position.name,
           isActive: true,
           journalAccessMigrated: accessBootstrap.journalAccessMigrated,
+          ...(creatorScope ? { buildingIds: creatorScope } : {}),
         },
       });
       if (accessBootstrap.grantedTemplateCodes.length > 0) {

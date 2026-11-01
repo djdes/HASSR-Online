@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 
 export const runtime = "nodejs";
@@ -42,9 +43,11 @@ export async function GET() {
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
+  // Точка видит обучение только своих людей (руководитель точки — своих точек).
+  const staffWhere = await visibleStaffWhere(session);
   const [users, recentEntries] = await Promise.all([
     db.user.findMany({
-      where: { organizationId, isActive: true, archivedAt: null },
+      where: { organizationId, isActive: true, archivedAt: null, ...staffWhere },
       select: { id: true, name: true, role: true },
     }),
     tpl

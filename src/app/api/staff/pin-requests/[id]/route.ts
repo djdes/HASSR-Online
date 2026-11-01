@@ -37,6 +37,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     decidedById: auth.session.user.id,
     approve: body.decision === "approve",
     note: body.note ?? null,
+    actor: auth.session.user,
   });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ ok: true });

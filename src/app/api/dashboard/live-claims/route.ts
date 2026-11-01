@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { orgDayStartInstant } from "@/lib/timezone";
 
 export const runtime = "nodejs";
@@ -40,9 +41,11 @@ export async function GET() {
   });
   const todayStart = orgDayStartInstant(organization?.timezone ?? undefined);
 
+  // Лента точки — только отметки её людей (руководитель точки — своих точек).
+  const staffWhere = await visibleStaffWhere(session);
   const [active, completedToday] = await Promise.all([
     db.journalTaskClaim.findMany({
-      where: { organizationId, status: "active" },
+      where: { organizationId, status: "active", user: staffWhere },
       include: { user: { select: { id: true, name: true } } },
       orderBy: { claimedAt: "desc" },
       take: 50,
@@ -52,6 +55,7 @@ export async function GET() {
         organizationId,
         status: "completed",
         completedAt: { gte: todayStart },
+        user: staffWhere,
       },
       include: { user: { select: { id: true, name: true } } },
       orderBy: { completedAt: "desc" },
