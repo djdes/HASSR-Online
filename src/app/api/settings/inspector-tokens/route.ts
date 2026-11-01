@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getViewedPointId } from "@/lib/active-building";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
@@ -65,7 +66,7 @@ export async function GET() {
   }
   const orgId = getActiveOrgId(session);
 
-  const data = await loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope) });
+  const data = await loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope), viewedPointId: await getViewedPointId(session) });
   return NextResponse.json(data);
 }
 
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       entityId: created.id,
       details: { ttl: qr.data.ttl, label: qr.data.label ?? null, buildingId: point.buildingId },
     });
-    const data = await loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope) });
+    const data = await loadCabinetInspectorData(orgId, { pointScope: parsePointScope(session.user.pointScope), viewedPointId: await getViewedPointId(session) });
     return NextResponse.json({ ...data, createdId: created.id });
   }
 

@@ -78,3 +78,16 @@ test("списки руководства не держат старый фил�
 test("уборщик другой точки — понятная ошибка", () => {
   assert.match(read("src/app/api/settings/rooms/[id]/route.ts"), /"Уборщик работает на другой точке/);
 });
+
+test("руководство с точкой в шапке: «Общий планшет», график и «Портал инспектора» — по точке", () => {
+  const kiosk = readFileSync("src/app/(dashboard)/settings/kiosk/page.tsx", "utf8");
+  assert.match(kiosk, /AND: \[ORG_ROSTER_WHERE, await visibleStaffWhere\(session\)\]/);
+  assert.match(kiosk, /viewedPoint \? \{ OR: \[\{ buildingId: viewedPoint \}, \{ buildingId: null \}\] \}/);
+  assert.match(readFileSync("src/app/api/organizations/schedule/route.ts", "utf8"), /user: await visibleStaffWhere\(g\.session\)/);
+  assert.match(readFileSync("src/lib/inspector-qr-service.ts", "utf8"), /\.\.\.buildingWhere\(options\.viewedPointId\)/);
+  assert.equal(
+    readFileSync("src/app/api/settings/inspector-tokens/route.ts", "utf8").match(/viewedPointId: await getViewedPointId\(session\)/g)?.length,
+    2,
+  );
+  assert.match(readFileSync("src/app/(dashboard)/settings/inspector-portal/page.tsx", "utf8"), /viewedPointId: await getViewedPointId\(session\)/);
+});
