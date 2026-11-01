@@ -118,10 +118,13 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
             className="mb-5"
             items={[{ name: "Журналы", href: "/journals-info" }, { name: c.navLabel }]}
           />
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#dcdfed] bg-[#fafbff] px-3 py-1 text-[12px] font-medium text-[#3848c7]">
+          <Link
+            href="/sanpin-2-3-2-4-4282-26"
+            className="inline-flex items-center gap-2 rounded-full border border-[#dcdfed] bg-[#fafbff] px-3 py-1 text-[12px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40"
+          >
             <ShieldCheck className="size-3.5" />
             СанПиН 2.3/2.4.4282-26 · Электронная форма разрешена
-          </div>
+          </Link>
           <h1 className="mt-5 max-w-[820px] text-[36px] font-semibold leading-[1.08] tracking-[-0.02em] md:text-[48px]">
             {c.hero}
           </h1>

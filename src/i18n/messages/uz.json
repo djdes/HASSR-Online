@@ -7236,7 +7236,22 @@
       "errorGeneric": "So‘rovni yuborib bo‘lmadi. Qayta urinib ko‘ring yoki bizga qo‘ng‘iroq qiling",
       "doneTitle": "So‘rov qabul qilindi",
       "doneBody": "Ko‘rsatuv vaqtini kelishib olish uchun {phone} raqamiga qo‘ng‘iroq qilamiz.",
-      "close": "Yopish"
+      "close": "Yopish",
+      "modeSlot": "Vaqtni tanlash",
+      "modeCallback": "Menga qo‘ng‘iroq qiling",
+      "slotsLoading": "Bo‘sh vaqtlarni ko‘ryapmiz…",
+      "pickTime": "Ko‘rsatuv vaqti",
+      "mskNote": "Moskva vaqti. Ko‘rsatuv video yoki telefon orqali 15 daqiqa davom etadi.",
+      "email": "Pochta",
+      "emailHint": "taqvimga taklif yuboramiz",
+      "errorSlot": "Ko‘rsatuv kuni va vaqtini tanlang",
+      "slotTaken": "Bu vaqt hozirgina band qilindi — boshqasini tanlang",
+      "noSlots": "Yaqin kunlarda bo‘sh vaqt yo‘q — telefon raqamingizni qoldiring, qo‘ng‘iroq qilib kelishib olamiz.",
+      "doneBookedTitle": "Ko‘rsatuvga yozildingiz",
+      "doneBookedBody": "Moskva vaqti bilan {when}. Shu vaqtda {phone} raqamiga qo‘ng‘iroq qilamiz.",
+      "addToCalendar": "Taqvimga qo‘shish",
+      "calendarSummary": "WeSetup ko‘rsatuvi, 15 daqiqa",
+      "calendarDescription": "Belgilangan vaqtda qo‘ng‘iroq qilamiz. Ko‘chirish uchun — support@wesetup.ru"
     }
   },
   "journalApi": {
@@ -16034,6 +16049,7 @@
     "money": "Daromad va savdo",
     "funnel": "Voronka",
     "tariffs": "Tariflar",
+    "guestInvoices": "Mehmonlar hisoblari",
     "promotions": "Aksiyalar",
     "promoCodes": "Promokodlar",
     "proposals": "Tijorat takliflari",
@@ -21732,6 +21748,25 @@
       "clause7": "Hamkor jalb qilingan mijozning xodimi yoki mansabdor shaxsi emas, uning xarid haqidagi qarorida ishtirok etmaydi va mukofotni mijoz xodimlariga bermaydi (korrupsiyaga qarshi shart, 273-ФЗ).",
       "clause8": "Shartlar buzilsa yoki mijozlar shikoyat qilsa, WeSetup hamkorlikni to‘xtatib turishi mumkin: brending olib tashlanadi, kabinetlarga kirish yopiladi, mukofot hisoblash to‘xtatiladi; jamlangan tarix saqlanadi.",
       "contact": "Dastur bo‘yicha savollar: <programEmailLink>partners@wesetup.ru</programEmailLink>."
+    },
+    "calculator": {
+      "title": "Birinchi yilda qancha ishlab topasiz",
+      "lead": "Mijozlaringiz bo‘yicha hisoblang: stavkalar amaldagi qoidalardan, narxlar saytdagi tariflardan olinadi.",
+      "clients": "Mijozlar",
+      "clientsMax": "Ko‘pi bilan {max}",
+      "tier": "Mijozlar tarifi",
+      "standard": "Standart",
+      "premium": "Premium",
+      "cycle": "Mijozlar to‘laydi",
+      "monthly": "Har oy",
+      "yearly": "Bir yilga",
+      "points": "Bitta mijozdagi nuqtalar",
+      "result": "Birinchi yildagi daromadingiz",
+      "subscriptionLine": "Obunalardan: {amount} — mijozning {payments} ta to‘lovi × {perPayment} ({percent} %)",
+      "bonusLine": "Bonuslar: {amount} — har bir mijoz uchun uning {after}-to‘lovidan keyin {bonus}",
+      "bonusLater": "Mijoz uchun {bonus} bonus uning {after}-to‘lovi bilan keladi — ikkinchi yilda",
+      "footnote": "{version}-versiya qoidalari: mijozning birinchi to‘lovidan boshlab {months} oy davomida har bir obuna to‘lovidan ulush. Uskunalar uchun yana {hardware} % alohida, bu yerga kirmaydi.",
+      "heroLink": "Daromadni hisoblash"
     }
   },
   "publicPrivacy": {
@@ -27191,7 +27226,8 @@
       "download": "Arxivni yuklab olish",
       "note": "Davri tanlanganiga to‘g‘ri keladigan barcha hujjatlar kiritiladi. Bitta arxivga ko‘pi bilan 400 kun.",
       "title": "Tekshiruv uchun yig‘ma hisobot",
-      "description": "Davr uchun barcha jurnallar bilan bitta ZIP. Tekshiruv tashrifi uchun qulay: arxivni topshirasiz — inspektor butun manzarani o‘zi ko‘radi. Ichida har bir jurnalning PDF fayli va ro‘yxat bilan manifest bor."
+      "description": "Davr uchun barcha jurnallar bilan bitta ZIP. Tekshiruv tashrifi uchun qulay: arxivni topshirasiz — inspektor butun manzarani o‘zi ko‘radi. Ichida har bir jurnalning PDF fayli va ro‘yxat bilan manifest bor.",
+      "downloadPdf": "Bitta PDF"
     },
     "complianceHeatmap": {
       "emptyTitle": "Faol jurnallar yo‘q",

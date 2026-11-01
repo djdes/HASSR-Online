@@ -225,6 +225,16 @@ export const demoRequestRateLimiter = createRateLimiter({
   intervalMs: 10 * 60 * 1000,
 });
 
+/**
+ * Счёт по ИНН без регистрации (/order): открытая форма, которая ходит в
+ * DaData и пишет заказ. Пять счетов за десять минут на IP — хватит
+ * бухгалтеру, который ошибся в ИНН, и мало, чтобы выжечь квоту DaData.
+ */
+export const guestInvoiceRateLimiter = createRateLimiter({
+  tokensPerInterval: 5,
+  intervalMs: 10 * 60 * 1000,
+});
+
 export const registrationCodeRateLimiter = createRateLimiter({
   tokensPerInterval: 5,
   intervalMs: 10 * 60 * 1000,

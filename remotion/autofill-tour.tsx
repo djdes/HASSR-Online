@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
 import {
   AbsoluteFill,
   Easing,
@@ -21,10 +21,13 @@ import {
 } from "lucide-react";
 
 import {
+  AUTOFILL_CLIP,
   AUTOFILL_FPS,
   AUTOFILL_SIZE,
   AUTOFILL_TOTAL_FRAMES,
+  autofillScene,
   autofillTimeline,
+  type AutofillClipSceneId,
   type AutofillScene,
   type AutofillSceneId,
 } from "@/lib/autofill-offer";
@@ -83,13 +86,13 @@ function usePop(delay: number): number {
   return spring({ frame: frame - delay, fps, config: { damping: 14, stiffness: 180 } });
 }
 
-function withAccent(text: string, accent: string | null): ReactNode {
+function withAccent(text: string, accent: string | null, keepTogether = false): ReactNode {
   if (!accent || !text.includes(accent)) return text;
   const [before, after] = text.split(accent);
   return (
     <>
       {before}
-      <span style={ACCENT_TEXT}>{accent}</span>
+      <span style={keepTogether ? { ...ACCENT_TEXT, whiteSpace: "nowrap" } : ACCENT_TEXT}>{accent}</span>
       {after}
     </>
   );
@@ -108,6 +111,23 @@ function celsius(value: number): string {
 const STAGE_BACKGROUND =
   "radial-gradient(1200px 700px at 85% -10%, rgba(85,102,246,0.28), transparent 60%), radial-gradient(900px 600px at -10% 110%, rgba(124,92,255,0.18), transparent 60%), #05070f";
 
+/**
+ * Раскладка кадра: «wide» — ролик 1920×1080 для сайта, «tall» — вертикальные
+ * ролики 1080×1920 для соцсетей (`AutofillClip`): те же сцены, заголовок
+ * сверху, источник над журналом.
+ */
+export type ClipLayout = "wide" | "tall";
+const LayoutContext = createContext<ClipLayout>("wide");
+const useLayout = () => useContext(LayoutContext);
+
+/**
+ * Вертикальная сцена: источник над журналом. Колонка собирается в тех же
+ * пропорциях, что и в большом ролике, и уменьшается, чтобы уместиться между
+ * заголовком и нижними 340 px — там в VK Клипах, Reels и Shorts подпись и
+ * кнопки плеера.
+ */
+const TALL_STAGE = { width: 952, left: 560, arrow: 70, right: 600, top: 540, bottom: 340 } as const;
+
 function SceneShell({ scene, centered = false, children }: { scene: AutofillScene; centered?: boolean; children?: ReactNode }) {
   const frame = useCurrentFrame();
   const opacity = Math.min(
@@ -116,31 +136,42 @@ function SceneShell({ scene, centered = false, children }: { scene: AutofillScen
   );
   const head = useProgress(4, 20);
   const sub = useProgress(14, 20);
+  const tall = useLayout() === "tall";
   return (
     <AbsoluteFill style={{ background: STAGE_BACKGROUND, fontFamily: FONT, opacity }}>
       <div
         style={{
           position: "absolute",
-          left: 120,
-          right: 120,
-          top: centered ? 300 : 80,
+          left: tall ? 64 : 120,
+          right: tall ? 64 : 120,
+          top: centered ? (tall ? 560 : 300) : tall ? 170 : 80,
           textAlign: centered ? "center" : "left",
         }}
       >
         {scene.chapter ? (
-          <div style={{ ...rise(head, 14), color: "#8b97ff", fontSize: 24, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase" }}>
+          <div style={{ ...rise(head, 14), color: "#8b97ff", fontSize: tall ? 30 : 24, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase" }}>
             {scene.chapter}
           </div>
         ) : null}
-        <div style={{ ...rise(head), marginTop: scene.chapter ? 14 : 0, color: "#fff", fontSize: centered ? 84 : 64, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.08 }}>
-          {withAccent(scene.title, scene.accent)}
+        <div
+          style={{
+            ...rise(head),
+            marginTop: scene.chapter ? 14 : 0,
+            color: "#fff",
+            fontSize: tall ? (centered ? 92 : 76) : centered ? 84 : 64,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.08,
+          }}
+        >
+          {withAccent(scene.title, scene.accent, tall)}
         </div>
         <div
           style={{
             ...rise(sub),
             marginTop: 18,
             color: "rgba(255,255,255,0.72)",
-            fontSize: centered ? 32 : 28,
+            fontSize: tall ? 33 : centered ? 32 : 28,
             lineHeight: 1.4,
             maxWidth: centered ? 1300 : 1500,
             marginLeft: centered ? "auto" : 0,
@@ -158,6 +189,33 @@ function SceneShell({ scene, centered = false, children }: { scene: AutofillScen
 /** Рабочая область сцены под заголовком: источник слева, журнал справа. */
 function Stage({ left, right }: { left: ReactNode; right: ReactNode }) {
   const arrow = useProgress(40, 24);
+  if (useLayout() === "tall") {
+    const height = TALL_STAGE.left + TALL_STAGE.arrow + TALL_STAGE.right;
+    const scale = (AUTOFILL_CLIP.height - TALL_STAGE.top - TALL_STAGE.bottom) / height;
+    return (
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: TALL_STAGE.top,
+          width: TALL_STAGE.width,
+          height,
+          transform: `translateX(-50%) scale(${scale})`,
+          transformOrigin: "top center",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ height: TALL_STAGE.left, position: "relative" }}>{left}</div>
+        <div style={{ height: TALL_STAGE.arrow, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="28" height="56" viewBox="0 0 28 56" style={{ opacity: arrow, transform: `translateY(${(1 - arrow) * -16}px)` }}>
+            <path d="M14 2v46M4 38l10 12 10-12" stroke="#8b97ff" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div style={{ flex: 1, position: "relative" }}>{right}</div>
+      </div>
+    );
+  }
   return (
     <div style={{ position: "absolute", left: 120, right: 120, top: 340, bottom: 80, display: "flex", gap: 0, alignItems: "stretch" }}>
       <div style={{ width: 600, position: "relative" }}>{left}</div>
@@ -777,6 +835,7 @@ function HumanItem({ label, delay }: { label: string; delay: number }) {
 
 function OutroScene({ scene }: { scene: AutofillScene }) {
   const frame = useCurrentFrame();
+  const tall = useLayout() === "tall";
   const opacity = interpolate(frame, [0, 12], [0, 1], clamp);
   const logo = useProgress(6, 24);
   const title = useProgress(22, 20);
@@ -800,7 +859,7 @@ function OutroScene({ scene }: { scene: AutofillScene }) {
           maskPosition: "center",
         }}
       />
-      <div style={{ ...rise(title), marginTop: 48, color: "#fff", fontSize: 64, fontWeight: 700, letterSpacing: "-0.02em" }}>
+      <div style={{ ...rise(title), marginTop: 48, color: "#fff", fontSize: 64, fontWeight: 700, letterSpacing: "-0.02em", ...(tall ? { maxWidth: 900, lineHeight: 1.12 } : null) }}>
         {withAccent(scene.title, scene.accent)}
       </div>
       <div
@@ -849,3 +908,25 @@ export const AutofillTour: React.FC = () => (
     })}
   </AbsoluteFill>
 );
+
+/* ---------------------------------------------------------------------
+ * Вертикальные ролики для соцсетей (2026-11-01)
+ * ------------------------------------------------------------------- */
+
+export type AutofillClipProps = { sceneId: AutofillClipSceneId };
+
+export const AutofillClip: React.FC<AutofillClipProps> = ({ sceneId }) => {
+  const Scene = SCENES[sceneId];
+  return (
+    <LayoutContext.Provider value="tall">
+      <AbsoluteFill style={{ background: INK }}>
+        <Sequence from={0} durationInFrames={AUTOFILL_CLIP.sceneFrames} name={sceneId}>
+          <Scene scene={{ ...autofillScene(sceneId), frames: AUTOFILL_CLIP.sceneFrames }} />
+        </Sequence>
+        <Sequence from={AUTOFILL_CLIP.sceneFrames} durationInFrames={AUTOFILL_CLIP.outroFrames} name="outro">
+          <OutroScene scene={{ ...autofillScene("outro"), frames: AUTOFILL_CLIP.outroFrames }} />
+        </Sequence>
+      </AbsoluteFill>
+    </LayoutContext.Provider>
+  );
+};

@@ -1,0 +1,30 @@
+ok 1 - страница и ролик «Журналы заполняются сами»
+ok 2 - страница СанПиН 2.3/2.4.4282-26
+ok 3 - брошенные заказы
+ok 4 - вертикальные ролики «Журналы, которые заполняются сами»
+ok 5 - оплата понятна заранее (AC1)
+ok 6 - неудачная оплата — не тупик (AC2)
+ok 7 - ссылку на достройку можно выслать ещё раз (AC3)
+ok 8 - показ за 15 минут — тексты
+ok 9 - показ за 15 минут — сервер
+ok 10 - показ за 15 минут — кнопка на трёх языках
+ok 11 - запись на показ: слоты
+ok 12 - сводка воронки по понедельникам
+ok 13 - счёт по ИНН без регистрации
+ok 14 - catalog terminology exceptions cannot hide the same word in journal messages
+ok 15 - в текстах для человека нет слова «бланк» — кроме исключений
+ok 16 - исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+ok 17 - журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+ok 18 - сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+ok 19 - калькулятор дохода партнёра
+ok 20 - «Пришла проверка» одним PDF
+ok 21 - every /root page and /api/root route is classified explicitly
+ok 22 - gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 23 - delegated viewer sees only own sections; superadmin sees everything
+ok 24 - presets use known sections and are recognised back
+# tests 62
+# suites 15
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0

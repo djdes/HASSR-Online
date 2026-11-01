@@ -10,28 +10,44 @@ import { FUNNEL_WEEKS, buildFunnel, funnelWindowStart, type Funnel, type FunnelO
 
 /** Пополнение баланса — не оплата тарифа. */
 const BALANCE_TOPUP_TARIFF = "balance_topup";
+
+/** Оплата тарифа: оплачен, не тестовый, не пополнение баланса, без возврата. */
+export const PAID_TARIFF_ORDER_WHERE = {
+  status: { in: [...PAID_ORDER_STATUSES] },
+  isTest: false,
+  refundedAt: null,
+  tariffKey: { not: BALANCE_TOPUP_TARIFF },
+} satisfies Prisma.PaymentOrderWhereInput;
 /** Предохранитель: столько регистраций за 12 недель с запасом. */
 const MAX_ORGS = 5000;
 
 /**
- * Факты для воронки /root/funnel по организациям, созданным за окно.
+ * Воронка /root/funnel по организациям, созданным за окно.
  * Без демо, платформенной и справочных организаций. Анкета — как у
  * кабинета (`needsProfileCompletion`): у первого пользователя есть телефон
  * и название не «Моя организация».
  */
 export async function loadSignupFunnel(now = new Date(), weeks = FUNNEL_WEEKS): Promise<Funnel> {
+  return buildFunnel(await loadFunnelOrgs(funnelWindowStart(now, weeks), now), now, weeks);
+}
+
+/**
+ * Факты воронки по организациям, созданным в `[from, to]` (общие для
+ * страницы /root/funnel и понедельничной сводки в Telegram).
+ */
+export async function loadFunnelOrgs(from: Date, to: Date): Promise<FunnelOrg[]> {
   const organizations = await db.organization.findMany({
     where: {
       ...NOT_DIRECTORY_ORG_WHERE,
       isDemo: false,
       id: { not: platformOrgId() },
-      createdAt: { gte: funnelWindowStart(now, weeks), lte: now },
+      createdAt: { gte: from, lte: to },
     },
     select: { id: true, name: true, createdAt: true, signupSourceJson: true, referredByOrganizationId: true },
     orderBy: { createdAt: "desc" },
     take: MAX_ORGS,
   });
-  if (organizations.length === 0) return buildFunnel([], now, weeks);
+  if (organizations.length === 0) return [];
 
   const ids = organizations.map((org) => org.id);
   const [users, partnerClients, entryGroups, documentEntryOrgs, paidGroups] = await Promise.all([
@@ -54,13 +70,7 @@ export async function loadSignupFunnel(now = new Date(), weeks = FUNNEL_WEEKS): 
     `,
     db.paymentOrder.groupBy({
       by: ["organizationId"],
-      where: {
-        organizationId: { in: ids },
-        status: { in: [...PAID_ORDER_STATUSES] },
-        isTest: false,
-        refundedAt: null,
-        tariffKey: { not: BALANCE_TOPUP_TARIFF },
-      },
+      where: { organizationId: { in: ids }, ...PAID_TARIFF_ORDER_WHERE },
     }),
   ]);
 
@@ -93,5 +103,5 @@ export async function loadSignupFunnel(now = new Date(), weeks = FUNNEL_WEEKS): 
       paid: paid.has(org.id),
     };
   });
-  return buildFunnel(facts, now, weeks);
+  return facts;
 }

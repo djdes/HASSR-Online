@@ -38,7 +38,12 @@ describe("неудачная оплата — не тупик (AC2)", () => {
     const client = read("src/app/order/order-client.tsx");
     const failed = client.slice(client.indexOf("Оплата не прошла"), client.indexOf("Проверяем оплату…"));
     assert.match(failed, /<PrimaryLink href="\/pricing">Попробовать ещё раз<\/PrimaryLink>/);
-    assert.match(failed, /href=\{INVOICE_HREF\}[\s\S]*Оплатить по счёту/);
+    // Счёт: гостю — форма «Счёт по ИНН» на той же странице заказа (когда реквизиты WeSetup
+    // заполнены), остальным — «Настройки → Тариф» в кабинете.
+    assert.match(
+      failed,
+      /href=\{guestInvoice && order\?\.tariffKey \? continueOrderPath\(\{ tariffKey: order\.tariffKey, points: order\.points \?\? 1 \}, "#invoice"\) : INVOICE_HREF\}[\s\S]*Оплатить по счёту/,
+    );
     assert.match(failed, /<ContactSupportButton\s+subject="Оплата не прошла"[\s\S]*Связаться с нами/);
     assert.match(client, /const INVOICE_HREF = "\/settings\/subscription";/);
   });

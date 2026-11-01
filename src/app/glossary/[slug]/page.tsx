@@ -40,6 +40,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+/** Термины, у которых есть своя подробная страница. */
+const TERM_PAGES: Record<string, { href: string; label: string }> = {
+  "sanpin-2-3-2-4-4282-26": { href: "/sanpin-2-3-2-4-4282-26", label: "Подробно: журналы и требования СанПиН 2.3/2.4.4282-26" },
+};
+
 export default async function GlossaryTermPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = GLOSSARY_BY_SLUG[slug];
@@ -68,6 +73,12 @@ export default async function GlossaryTermPage({ params }: { params: Promise<{ s
         <h1 className="mt-3 text-[32px] font-semibold leading-tight tracking-[-0.02em] sm:text-[44px]">{t.term}</h1>
         <p className="mt-4 text-[18px] leading-[1.6] text-[#0b1024]">{t.short}</p>
         <p className="mt-4 text-[16px] leading-[1.75] text-[#3c4053]">{t.body}</p>
+        {TERM_PAGES[t.slug] ? (
+          <Link href={TERM_PAGES[t.slug].href} className="mt-4 inline-flex items-center gap-1.5 text-[15px] font-medium text-[#3848c7] underline-offset-2 hover:underline">
+            {TERM_PAGES[t.slug].label}
+            <ArrowRight className="size-4" />
+          </Link>
+        ) : null}
 
         {journals.length > 0 ? (
           <section className="mt-8 rounded-3xl border border-[#ececf4] bg-[#fafbff] p-6">

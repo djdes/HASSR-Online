@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarRange, Download, Loader2, ShieldCheck } from "lucide-react";
+import { CalendarRange, Download, FileText, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { saveBlob } from "@/lib/native-bridge";
@@ -82,7 +82,7 @@ export function ComplianceBundleCard({
   const [busy, setBusy] = useState(false);
   const presets = useMemo(() => buildPresets(t), [t]);
 
-  async function download() {
+  async function download(format: "zip" | "pdf" = "zip") {
     if (busy) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
       toast.error(t("invalidDates"));
@@ -95,7 +95,7 @@ export function ComplianceBundleCard({
     setBusy(true);
     toast.info(t("building"));
     try {
-      const url = `/api/reports/compliance-bundle?from=${from}&to=${to}`;
+      const url = `/api/reports/compliance-bundle?from=${from}&to=${to}${format === "pdf" ? "&format=pdf" : ""}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
@@ -107,7 +107,7 @@ export function ComplianceBundleCard({
       const failed = response.headers.get("x-compliance-failed");
       const blob = await response.blob();
       // В браузере — скачивание, в приложении WeSetup — «Поделиться».
-      await saveBlob(blob, `compliance-${from}__${to}.zip`);
+      await saveBlob(blob, `compliance-${from}__${to}.${format}`);
       const parts = [t("included", { count: included ?? "?" })];
       if (failed && failed !== "0") parts.push(t("failedCount", { count: failed }));
       toast.success(t("downloaded", { details: parts.join(" · ") }));
@@ -166,10 +166,10 @@ export function ComplianceBundleCard({
             className="mt-1 h-11 rounded-2xl border-[#dcdfed]"
           />
         </div>
-        <div className="flex items-end">
+        <div className="flex flex-wrap items-end gap-2">
           <Button
             type="button"
-            onClick={download}
+            onClick={() => void download("zip")}
             disabled={busy}
             className="h-11 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
           >
@@ -179,6 +179,18 @@ export function ComplianceBundleCard({
               <Download className="size-4" />
             )}
             {busy ? t("downloadBusy") : t("download")}
+          </Button>
+          {/* Тот же состав одним файлом с содержанием — распечатать или отправить проверяющему. */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void download("pdf")}
+            disabled={busy}
+            data-compliance-bundle-pdf
+            className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[14px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+          >
+            <FileText className="size-4" />
+            {t("downloadPdf")}
           </Button>
         </div>
       </div>

@@ -27,6 +27,8 @@ import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_CARD, DEFAULT_TWITTER_IMAGES } from 
 import { PLATFORM_BADGE_TEXT } from "@/lib/partners/branding";
 import { formatRubFixed } from "@/lib/partners/rewards";
 import { getCurrentRewardRule } from "@/lib/partners/schema-extras";
+import { PartnerIncomeCalculator } from "@/components/partners/partner-income-calculator";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { getServerSession } from "@/lib/server-session";
 import { planPeriodPriceRub } from "@/lib/tariff-plans";
 import { readPlanPricing } from "@/lib/tariffs";
@@ -89,6 +91,10 @@ export default async function PartnersPage() {
                 href="#agreement"
                 className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 text-[15px] font-medium text-white transition-colors hover:bg-white/10"
               >{t("hero.conditions")}</a>
+              <a
+                href="#calculator"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-6 text-[15px] font-medium text-white transition-colors hover:bg-white/10"
+              >{t("calculator.heroLink")}</a>
             </div>
           </div>
         </section>
@@ -129,6 +135,22 @@ export default async function PartnersPage() {
             <li className="flex gap-2"><FileText className="mt-1 size-4 shrink-0 text-[#5566f6]" />{t("rewards.note4", { minPayoutRub: String(formatRubFixed(rule.minPayoutRub)) })}</li>
           </ul>
         </section>
+
+        {/* Калькулятор дохода (2026-11-01): ставки — действующие правила, цены — тарифы ROOT. */}
+        <DomainMessagesBoundary namespaces={["publicPartners"]}>
+          <PartnerIncomeCalculator
+            rule={{
+              subscriptionPercent: rule.subscriptionPercent,
+              subscriptionMonths: rule.subscriptionMonths,
+              bonusAmountRub: rule.bonusAmountRub,
+              bonusAfterPayments: rule.bonusAfterPayments,
+            }}
+            rates={pricing.rates}
+            version={rule.version}
+            hardwarePercent={rule.hardwarePercent}
+            locale={locale}
+          />
+        </DomainMessagesBoundary>
 
         <section>
           <h2 className="text-[26px] font-semibold tracking-[-0.02em]">{t("steps.title")}</h2>

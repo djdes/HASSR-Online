@@ -109,6 +109,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   // Money.
   { pattern: "/root/tariffs", gate: "billing" },
   { pattern: "/root/requisites", gate: "billing" },
+  // Счета по ИНН без регистрации — отметка оплаты, как в карточке клиента.
+  { pattern: "/root/invoices", gate: "billing" },
   { pattern: "/api/root/tariffs", gate: "billing" },
   { pattern: "/api/root/legal-requisites", gate: "billing" },
   { pattern: "/api/root/orders", gate: "billing" },

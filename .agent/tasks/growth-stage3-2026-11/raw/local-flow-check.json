@@ -1,0 +1,88 @@
+{
+  "checkedAt": "2026-11-01T20:27:32.672Z",
+  "base": "http://localhost:3021",
+  "pages": {
+    "/sanpin-2-3-2-4-4282-26": 200,
+    "/partners": 200,
+    "/order?plan=standard&cycle=month&points=1": 200,
+    "/sitemap.xml": 200,
+    "/root/invoices (без входа)": 404
+  },
+  "demo": {
+    "slot": "2026-11-02T07:00:00.000Z",
+    "firstStatus": 200,
+    "secondStatus": 409,
+    "secondCode": "slot-taken",
+    "slotHiddenAfterBooking": true,
+    "saved": [
+      {
+        "contactName": "stage3-e2e Анна",
+        "contactEmail": "anna@example.test",
+        "scheduledAt": "2026-11-02T07:00:00.000Z",
+        "comment": "Записались на: пн, 2 ноября, 10:00 (МСК)\nПочта: anna@example.test\nКнопка: e2e\nИсточник: Нет данных"
+      }
+    ]
+  },
+  "guestInvoice": {
+    "badInnStatus": 400,
+    "noNameStatus": 400,
+    "noNameCode": "name-required",
+    "existingAccount": {
+      "status": 409,
+      "error": "Для этой почты уже есть аккаунт WeSetup. Войдите в кабинет и оплатите тариф там — сумма посчитается с учётом вашей подписки."
+    },
+    "created": {
+      "status": 200,
+      "orderId": 10,
+      "amountRub": 3000,
+      "buyerName": "ООО «Проверка»"
+    },
+    "repeatReusesOrder": true,
+    "pdf": {
+      "status": 200,
+      "bytes": 88537,
+      "pages": 1,
+      "startsWith": "%PDF-"
+    },
+    "wrongSignatureStatus": 404,
+    "row": {
+      "organizationId": null,
+      "paymentMethod": "invoice",
+      "status": "pending",
+      "amountRub": 3000,
+      "invoiceDueAt": "2026-11-08T20:27:31.800Z",
+      "buyerJson": {
+        "inn": "5018215599",
+        "kpp": null,
+        "name": "ООО «Проверка»",
+        "address": null,
+        "legalProfile": null
+      },
+      "tariffKey": "standard_month"
+    }
+  },
+  "abandoned": {
+    "dry": {
+      "scanned": 1,
+      "sent": 0,
+      "skipped": 0,
+      "reason": "dry-run"
+    },
+    "first": {
+      "scanned": 1,
+      "sent": 1,
+      "skipped": 0
+    },
+    "second": {
+      "scanned": 1,
+      "sent": 0,
+      "skipped": 1
+    },
+    "auditMarks": 1
+  },
+  "funnelDigest": {
+    "sent": false,
+    "reason": "send-failed",
+    "weekStart": "2026-10-19"
+  }
+}

@@ -3695,6 +3695,9 @@ model PaymentOrder {
   /// Оплата не применена к тарифу — подписка изменилась после оформления;
   /// ждёт ручного разбора, УПД до разбора не выпускается.
   heldAt                 DateTime?
+  /// Реквизиты покупателя счёта без регистрации (/order, гость): снимок ЕГРЮЛ
+  /// по ИНН или введённые название и ИНН. У счетов организаций — null.
+  buyerJson              Json?
   partnerAccruals        PartnerAccrual[]
 
   @@index([email])
@@ -4957,6 +4960,8 @@ model ServiceRequest {
   paidRub           Int       @default(0)
   /// "app" — из кабинета, "site" — с публичной страницы /uslugi.
   source            String    @default("app")
+  /// Показ за 15 минут: выбранное клиентом время. null — «перезвоните».
+  scheduledAt       DateTime?
   /// Когда админ-уведомление реально ушло. null = канал промолчал —
   /// это видно в /root/service-requests, а не только в console.error.
   adminTgNotifiedAt DateTime?
@@ -4966,6 +4971,7 @@ model ServiceRequest {
 
   @@index([status, createdAt])
   @@index([organizationId, createdAt])
+  @@index([serviceKey, scheduledAt])
 }
 
 /// Свой шаблон колонок журнала (бракеражи): набор скрытых/переименованных/своих

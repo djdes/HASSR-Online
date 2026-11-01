@@ -24,6 +24,10 @@ import type { SubscriptionOffer } from "@/lib/promo/promotions";
 import type { AppliedDiscount } from "@/lib/promo/discounts";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
+import { PAYMENT_GOALS, reportPaymentSuccess } from "@/lib/payment-goals";
+import { GuestInvoicePanel } from "./guest-invoice-panel";
+import { continueOrderPath } from "@/lib/abandoned-orders";
+import { ymGoal } from "@/lib/signup-source";
 import {
   RECURRING_CHARGES_LIVE,
   RECURRING_CONSENT_TEXT,
@@ -50,6 +54,9 @@ type OrderStatus = {
   /** Сколько рублей закрыли баллами. */
   pointsSpent?: number;
   description: string;
+  /** Тариф и точки заказа — ссылка «счёт по ИНН» на экране неудачной оплаты. */
+  tariffKey?: string;
+  points?: number | null;
   isTest: boolean;
   needsCompletion: boolean;
   /** Пополнение баланса — не подписка: «Баланс пополнен», ссылка на баланс. */
@@ -152,6 +159,7 @@ export function OrderClient({
   amountRub,
   returnParams,
   sessionEmail = "",
+  guestInvoiceReady = false,
   recurringDefault = false,
   pointsAvailable = 0,
   pointsCap = 0,
@@ -172,6 +180,8 @@ export function OrderClient({
   /// Почта вошедшего пользователя — подставляем, чтобы не спрашивать её
   /// второй раз сразу после регистрации.
   sessionEmail?: string;
+  /** Гость и реквизиты WeSetup для счёта заполнены — можно счёт по ИНН. */
+  guestInvoiceReady?: boolean;
   /// Пришли по кнопке «Включить автопродление» — галочка уже отмечена.
   /// Это не нарушает требование Робокассы «не проставлено по умолчанию»:
   /// человек сам нажал кнопку с этим смыслом, а снять отметку он может.
@@ -185,7 +195,7 @@ export function OrderClient({
     (returnParams.invId && returnParams.signature) || returnParams.completeToken,
   );
   return isReturn ? (
-    <ReturnFlow params={returnParams} />
+    <ReturnFlow params={returnParams} guestInvoice={guestInvoiceReady} />
   ) : (
     <Checkout
       tariff={tariff}
@@ -195,6 +205,7 @@ export function OrderClient({
       bundleConfig={bundleConfig}
       amountRub={amountRub}
       sessionEmail={sessionEmail}
+      guestInvoiceReady={guestInvoiceReady}
       recurringDefault={recurringDefault}
       pointsAvailable={pointsAvailable}
       pointsCap={pointsCap}
@@ -213,6 +224,7 @@ function Checkout({
   bundleConfig,
   amountRub,
   sessionEmail,
+  guestInvoiceReady = false,
   recurringDefault = false,
   pointsAvailable = 0,
   pointsCap = 0,
@@ -225,6 +237,7 @@ function Checkout({
   bundleConfig: Record<string, number> | null;
   amountRub: number;
   sessionEmail: string;
+  guestInvoiceReady?: boolean;
   recurringDefault?: boolean;
   pointsAvailable?: number;
   pointsCap?: number;
@@ -275,7 +288,10 @@ function Checkout({
         if (res.ok) {
           const data = (await res.json()) as OrderStatus;
           if (isPaidStatus(data.status)) {
-            if (!stopped) setPaid(data);
+            if (!stopped) {
+              setPaid(data);
+              reportPaymentSuccess(data);
+            }
             return;
           }
           if (data.status !== "pending") {
@@ -480,6 +496,7 @@ function Checkout({
     e.preventDefault();
     setError(null);
     setLoading(true);
+    ymGoal(PAYMENT_GOALS.start, { plan: plan ? `${plan.tier}_${plan.cycle}` : tariff!.key });
     try {
       const res = await fetch("/api/payments/robokassa/create", {
         method: "POST",
@@ -891,6 +908,18 @@ function Checkout({
           .
         </span>
       </p>
+
+      {/* Счёт по ИНН без регистрации (2026-11-01) — только гостю: вошедший
+          выставляет счёт на свою организацию в «Настройки → Тариф». */}
+      {guestInvoiceReady && plan && amountAfterPromo > 0 ? (
+        <GuestInvoicePanel
+          email={email}
+          onEmailChange={setEmail}
+          plan={{ tier: plan.tier, cycle: plan.cycle, points: plan.points }}
+          promoCode={typedCode}
+          expectedGrossRub={amountAfterPromo}
+        />
+      ) : null}
     </Card>
   );
 }
@@ -940,7 +969,7 @@ function ResendCompletionLink({ query }: { query: string }) {
   );
 }
 
-function ReturnFlow({ params }: { params: ReturnParams }) {
+function ReturnFlow({ params, guestInvoice = false }: { params: ReturnParams; guestInvoice?: boolean }) {
   const [order, setOrder] = useState<OrderStatus | null>(null);
   const [failed, setFailed] = useState(false);
   const attempts = useRef(0);
@@ -960,6 +989,7 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
       }
       const data = (await res.json()) as OrderStatus;
       setOrder(data);
+      reportPaymentSuccess(data);
       // Вебхук может опоздать на пару секунд — ждём перехода в paid,
       // но не бесконечно: после ~20 попыток показываем «проверьте позже».
       if (data.status === "pending") {
@@ -1013,13 +1043,14 @@ function ReturnFlow({ params }: { params: ReturnParams }) {
         </p>
         {/* Неудачная оплата — не тупик: ещё раз, по счёту или человеку. */}
         <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
-          Можно попробовать снова, оплатить по счёту для юрлица — счёт
-          выставляется в кабинете за минуту — или написать нам.
+          {guestInvoice
+            ? "Можно попробовать снова, оплатить по счёту для юрлица — выставим его по ИНН без регистрации — или написать нам."
+            : "Можно попробовать снова, оплатить по счёту для юрлица — счёт выставляется в кабинете за минуту — или написать нам."}
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <PrimaryLink href="/pricing">Попробовать ещё раз</PrimaryLink>
           <Link
-            href={INVOICE_HREF}
+            href={guestInvoice && order?.tariffKey ? continueOrderPath({ tariffKey: order.tariffKey, points: order.points ?? 1 }, "#invoice") : INVOICE_HREF}
             className="inline-flex h-12 items-center rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
           >
             Оплатить по счёту

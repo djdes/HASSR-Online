@@ -7236,7 +7236,22 @@
       "errorGeneric": "Could not send the request. Try again or call us",
       "doneTitle": "Request received",
       "doneBody": "We will call {phone} to agree on a time for the demo.",
-      "close": "Close"
+      "close": "Close",
+      "modeSlot": "Pick a time",
+      "modeCallback": "Call me back",
+      "slotsLoading": "Checking free times…",
+      "pickTime": "Demo time",
+      "mskNote": "Moscow time. The demo takes 15 minutes by video or phone.",
+      "email": "Email",
+      "emailHint": "we will send a calendar invite",
+      "errorSlot": "Pick a day and time for the demo",
+      "slotTaken": "That time was just taken — pick another one",
+      "noSlots": "No free times in the coming days — leave your phone and we will call to agree on a time.",
+      "doneBookedTitle": "You are booked",
+      "doneBookedBody": "{when} Moscow time. We will call {phone} then.",
+      "addToCalendar": "Add to calendar",
+      "calendarSummary": "WeSetup demo in 15 minutes",
+      "calendarDescription": "We will call at the booked time. To reschedule — support@wesetup.ru"
     }
   },
   "journalApi": {
@@ -16034,6 +16049,7 @@
     "money": "Revenue and sales",
     "funnel": "Funnel",
     "tariffs": "Plans",
+    "guestInvoices": "Guest invoices",
     "promotions": "Promotions",
     "promoCodes": "Promo codes",
     "proposals": "Sales proposals",
@@ -21732,6 +21748,25 @@
       "clause7": "The partner is not an employee or officer of the referred client, does not participate in that client's procurement decision and does not pass rewards to the client's employees (anti-corruption clause, 273-ФЗ).",
       "clause8": "WeSetup may suspend the partnership following a breach of the terms or client complaints: branding is removed, workspace access is closed and accruals cease; the accumulated history is retained.",
       "contact": "Programme enquiries: <programEmailLink>partners@wesetup.ru</programEmailLink>."
+    },
+    "calculator": {
+      "title": "How much you earn in the first year",
+      "lead": "Estimate it for your clients: rates come from the current rules, prices from the tariffs on the site.",
+      "clients": "Clients",
+      "clientsMax": "At most {max}",
+      "tier": "Client plan",
+      "standard": "Standard",
+      "premium": "Premium",
+      "cycle": "Clients pay",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "points": "Locations per client",
+      "result": "Your first-year income",
+      "subscriptionLine": "From subscriptions: {amount} — {payments} client payments × {perPayment} ({percent}%)",
+      "bonusLine": "Bonuses: {amount} — {bonus} per client after their payment no. {after}",
+      "bonusLater": "The {bonus} bonus per client comes with their payment no. {after} — in the second year",
+      "footnote": "Rules version {version}: a share of every subscription payment for {months} months from the client's first payment. Hardware adds another {hardware}% and is not included here.",
+      "heroLink": "Estimate income"
     }
   },
   "publicPrivacy": {
@@ -27191,7 +27226,8 @@
       "download": "Download archive",
       "note": "All documents whose period overlaps the selected one are included. Maximum 400 days per archive.",
       "title": "Consolidated inspection report",
-      "description": "A single ZIP with all journals for the period. Suits an inspection visit: hand over the archive and the inspector sees the whole picture. Inside are the PDF of each journal plus a manifest listing them."
+      "description": "A single ZIP with all journals for the period. Suits an inspection visit: hand over the archive and the inspector sees the whole picture. Inside are the PDF of each journal plus a manifest listing them.",
+      "downloadPdf": "Single PDF"
     },
     "complianceHeatmap": {
       "emptyTitle": "No active journals",
