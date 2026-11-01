@@ -7,6 +7,7 @@ import { agentMayTakeJob, pointsWithOwnAgent } from "@/lib/print-point-routing";
 import { resolveExportLocale } from "@/i18n/export-locale";
 import { translatorFor } from "@/i18n/translator";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { getViewedPointId } from "@/lib/active-building";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +81,11 @@ export async function POST(request: Request) {
   // Принтер своей точки (2026-11-01): «принтер на связи» — только тот,
   // который возьмёт это задание (своей точки или общий, если у точки
   // своего принтера нет).
+  // Общий журнал (без точки) печатает принтер точки, откуда печатают
+  // (аудит 2026-11-01): задание без точки забирал первый опросивший агент,
+  // и бланк точки А выходил на принтере точки Б. «Вся организация» — как было.
+  const jobBuildingId = doc.buildingId ?? (await getViewedPointId(session));
+
   const agents = await db.printAgent.findMany({
     where: { organizationId, revokedAt: null },
     select: { id: true, name: true, buildingId: true, lastSeenAt: true },
@@ -91,7 +97,7 @@ export async function POST(request: Request) {
       (agent) =>
         agent.lastSeenAt &&
         agent.lastSeenAt.getTime() >= onlineSince &&
-        agentMayTakeJob(agent, doc.buildingId, pointsWithAgent),
+        agentMayTakeJob(agent, jobBuildingId, pointsWithAgent),
     ) ?? null;
 
   // Задание ставим в очередь даже без агента на связи: он может
@@ -101,7 +107,7 @@ export async function POST(request: Request) {
     data: {
       organizationId,
       documentId: doc.id,
-      buildingId: doc.buildingId,
+      buildingId: jobBuildingId,
       locale,
       docTitle: `${doc.template.name} — ${doc.title}`,
       createdById: session.user.id,

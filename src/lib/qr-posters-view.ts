@@ -117,6 +117,11 @@ type OrgContext = {
   /** Здания организации — строка точки у документов (`qrPosterPoint`). */
   pointBuildings: QrPointBuilding[];
   /**
+   * Какие документы журналов доступны на экране (аудит 2026-11-01): точки
+   * человека и точка экрана, общие — всем. Пустое условие — все.
+   */
+  docWhere: Record<string, unknown>;
+  /**
    * Строка точки на плакатах журналов: точка экрана, без неё — единственная
    * торговая точка организации; несколько точек и «Вся организация» — нет.
    */
@@ -269,8 +274,20 @@ async function extraItemsForDoc(ctx: OrgContext, code: string, name: string, doc
   return items;
 }
 
-async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: string, documentId: string | null): Promise<Omit<QrPostersView, "origin" | "autoprint" | "brand">> {
+/** Документ из адреса (`doc=`, `ids=код:документ`) доступен на экране. */
+async function docVisible(ctx: OrgContext, documentId: string): Promise<boolean> {
+  const found = await db.journalDocument.findFirst({
+    where: { id: documentId, organizationId: ctx.organizationId, AND: [ctx.docWhere] },
+    select: { id: true },
+  });
+  return Boolean(found);
+}
+
+async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: string, requestedDocumentId: string | null): Promise<Omit<QrPostersView, "origin" | "autoprint" | "brand">> {
   const empty = { objectKind: null, documentTitle: null, objectsEmpty: null, counts: null, filtered: false } as const;
+  // Документ чужой точки по прямой ссылке — как удалённый (аудит 2026-11-01):
+  // ни его QR, ни наклеек его объектов.
+  const documentId = requestedDocumentId && (await docVisible(ctx, requestedDocumentId)) ? requestedDocumentId : null;
   const template = await db.journalTemplate.findFirst({ where: { code }, select: { id: true, name: true } });
   if (!template || code === JOURNAL_FILL_HUB_CODE) {
     return { ...empty, screen: "journal", journal: null, items: [], missing: [{ id: code, label: code, reason: "Такого журнала нет" }] };
@@ -335,7 +352,7 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
     building: { select: { name: true } },
   } as const;
   const docs: ExtraDoc[] = await db.journalDocument.findMany({
-    where: { organizationId: ctx.organizationId, templateId: template.id, status: "active", dateTo: { gte: day } },
+    where: { organizationId: ctx.organizationId, templateId: template.id, status: "active", dateTo: { gte: day }, AND: [ctx.docWhere] },
     orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
     take: MAX_EXTRA_DOCUMENTS,
     select,
@@ -352,7 +369,7 @@ async function journalScreen(ctx: OrgContext, request: QrPostersRequest, code: s
   const extraIds = Array.from(wantedDocIds).filter((id) => !listed.has(id));
   if (extraIds.length > 0) {
     const found: ExtraDoc[] = await db.journalDocument.findMany({
-      where: { id: { in: extraIds }, organizationId: ctx.organizationId, templateId: template.id },
+      where: { id: { in: extraIds }, organizationId: ctx.organizationId, templateId: template.id, AND: [ctx.docWhere] },
       select,
     });
     const foundIds = new Set(found.map((doc) => doc.id));
@@ -377,7 +394,8 @@ async function objectsScreen(ctx: OrgContext, request: QrPostersRequest, kind: "
     origin: ctx.origin,
     qr: ctx.qr,
     explicitIds,
-    buildingId: explicitIds.length > 0 ? null : ctx.pointId,
+    // Отмеченные в адресе — тоже в пределах точки экрана (аудит 2026-11-01).
+    buildingId: ctx.pointId,
     looseOnly: explicitIds.length === 0 && ctx.looseOnly,
     printPointId: ctx.pointId,
   });
@@ -525,6 +543,11 @@ async function overviewScreen(ctx: OrgContext, request: QrPostersRequest): Promi
   const known = new Set(items.map((item) => item.key));
   for (const id of request.selectedIds ?? []) {
     if (known.has(id)) continue;
+    const linkedDocument = splitJournalPosterId(id).documentId;
+    if (linkedDocument && !(await docVisible(ctx, linkedDocument))) {
+      missing.push({ id, label: splitJournalPosterId(id).code || id, reason: "Журнал или документ не найден" });
+      continue;
+    }
     const poster = await loadQrPoster({ organizationId: ctx.organizationId, kind: "journal", id, origin: ctx.origin, qr: ctx.qr, activeBuildingId: ctx.activeBuildingId });
     if (!poster) {
       missing.push({ id, label: splitJournalPosterId(id).code || id, reason: "Журнал или документ не найден" });
@@ -571,6 +594,8 @@ export async function loadQrPostersView(params: {
   looseOnly?: boolean;
   /** `?bw=1`: всё чёрное на белом. */
   mono?: boolean;
+  /** Условие видимых документов (точки человека и экрана); нет — все. */
+  visibleDocumentWhere?: Record<string, unknown>;
 }): Promise<QrPostersView> {
   // Табличка — формат оборудования; остальным карточкам «plate» не нужен.
   const wantsPlate = params.request.format === "plate";
@@ -601,6 +626,7 @@ export async function loadQrPostersView(params: {
     activeBuildingId: params.activeBuildingId,
     pointId,
     pointBuildings,
+    docWhere: params.visibleDocumentWhere ?? {},
     printPoint: qrPosterPoint(pointBuildings, null, pointId),
     origin: params.origin,
     names: await getOrgCustomNames(params.organizationId),

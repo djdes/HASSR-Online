@@ -103,11 +103,14 @@ export default async function DashboardPage({
     redirect(keepDeniedParam("/journals", denied));
   }
   const organizationId = getActiveOrgId(session);
-  // Точки: «сегодня» на дашборде считается для активной точки.
+  // Точки: «сегодня» — по точке из шапки, «Вся организация» — по всем
+  // точкам (аудит 2026-11-01: считалось только по офису или первой точке,
+  // как на «Все журналы» до #91). Миниатюры — снимки активной точки.
   const activeBuildingId = await getActiveBuildingId(session);
+  const viewedPoint = await getViewedPointId(session);
   // «Ждут подтверждения» и записи за 48 ч — по торговой точке из шапки
   // (2026-10-31): записи её цехов и оборудования и без цеха.
-  const entryAtPoint = journalEntryPointWhere(await getViewedPointId(session));
+  const entryAtPoint = journalEntryPointWhere(viewedPoint);
 
   const now = new Date();
   const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -153,15 +156,15 @@ export default async function DashboardPage({
   // Selected journal set comes from organization settings:
   // active templates minus disabled journal codes.
   // У точки со своим набором журналов (слитая организация) — её набор.
-  const disabledCodes = await getDisabledJournalCodes(organizationId, activeBuildingId);
+  const disabledCodes = await getDisabledJournalCodes(organizationId, viewedPoint);
   // Бумажные журналы сферы. Отдельный список: они не участвуют ни в
   // счётчике «N из M», ни в проценте готовности — заполняются ручкой,
   // и «недозаполненными» в системе быть не могут по определению.
   const sphere = normalizeSphere(org?.type);
   // Скрытые в /settings/journals бланки на дашборд не выводим: человек
   // сказал, что этот журнал он не ведёт, — напоминать больше не о чем.
-  const disabledPaper = activeBuildingId
-    ? await getDisabledPaperJournalIds(organizationId, activeBuildingId)
+  const disabledPaper = viewedPoint
+    ? await getDisabledPaperJournalIds(organizationId, viewedPoint)
     : parseDisabledCodes(org?.disabledPaperJournalIds);
   const paperItems = paperJournalsFor(sphere).filter(
     (paper) => !disabledPaper.has(paper.id)
@@ -172,7 +175,7 @@ export default async function DashboardPage({
     now,
     templates.map((t) => ({ id: t.id, code: t.code })),
     disabledCodes,
-    { treatAperiodicAsFilled: false, buildingId: activeBuildingId }
+    { treatAperiodicAsFilled: false, buildingId: viewedPoint }
   );
 
   // Treat every enabled journal as required for today. This keeps the

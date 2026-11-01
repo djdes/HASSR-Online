@@ -3,9 +3,10 @@ import { getTranslations } from "next-intl/server";
 
 import { listPersonBuildings, loadBuildingContext } from "@/lib/active-building";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
-import { viewedPointId } from "@/lib/building-scope";
+import { buildingWhere, viewedPointId } from "@/lib/building-scope";
+import { documentVisibleWhere } from "@/lib/document-point-access";
 import { PLACE_ALL, PLACE_NONE, placeFilterParam } from "@/lib/place-filter";
-import { buildingInScope } from "@/lib/point-scope";
+import { buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { isMonoParam } from "@/lib/print-brand";
 import { parseQrPostersRequest, type QrPostersSearch } from "@/lib/qr-posters-request";
 import { loadQrPostersView } from "@/lib/qr-posters-view";
@@ -66,7 +67,9 @@ export default async function QrPostersPage({
     if (!buildingContext.enabled || buildingContext.canViewOrganization) activeBuildingId = null;
   } else if (pointParam === PLACE_NONE) {
     looseOnly = true;
-    activeBuildingId = null;
+    // Руководитель точки остаётся на своей точке: без неё экраны журналов и
+    // обзора собирались по всей организации (аудит 2026-11-01).
+    if (!isPointScoped(session.user)) activeBuildingId = null;
   } else if (pointParam) {
     const point = (await listPersonBuildings(session)).find((building) => building.id === pointParam);
     if (point && buildingInScope(session.user, point.id)) activeBuildingId = point.id;
@@ -78,6 +81,8 @@ export default async function QrPostersPage({
     activeBuildingId,
     looseOnly,
     mono: isMonoParam(search.bw),
+    // Документы — точек человека и точки экрана, общие — всем (2026-11-01).
+    visibleDocumentWhere: { AND: [documentVisibleWhere(buildingContext), buildingWhere(activeBuildingId)] },
   });
   return <QrPostersClient view={view} />;
 }

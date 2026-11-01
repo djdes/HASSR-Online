@@ -7,7 +7,7 @@ import { PageHeaderStat } from "@/components/ui/page-header";
 import { journalTitle } from "@/i18n/journal-presentation";
 import { loadMessages } from "@/i18n/messages";
 import { getSiteLocale } from "@/i18n/site-locale-server";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { customJournalName } from "@/lib/custom-names";
 import { db } from "@/lib/db";
@@ -46,7 +46,9 @@ export async function JournalSetPage({ setId, session }: { setId: JournalSetId; 
       select: { id: true, code: true, name: true },
     }),
     getOrgCustomNames(organizationId),
-    getActiveBuildingId(session),
+    // Точка из шапки; «Вся организация» — набор и «заполнено» по всем точкам
+    // (аудит 2026-11-01: раньше — по офису или первой точке).
+    getViewedPointId(session),
   ]);
   // У точки со своим набором журналов (слитая организация) — её набор.
   const disabled = await getDisabledJournalCodes(organizationId, buildingId);

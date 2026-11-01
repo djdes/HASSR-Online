@@ -1,6 +1,7 @@
 import type { JournalPdfQr } from "@/lib/pdf-journal-qr";
 import { qrFillUrl } from "@/lib/qr-fill-poster";
-import { journalShortSig, verifyJournalShortSig } from "@/lib/qr-fill-token";
+import { journalFillSubject } from "@/lib/journal-fill";
+import { journalPointShortSig, journalShortSig, verifyJournalPointShortSig, verifyJournalShortSig } from "@/lib/qr-fill-token";
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 
 /**
@@ -27,8 +28,19 @@ export function journalShortQrUrl(origin: string, orgId: string, code: string): 
   return `${base}/qj/${orgId}/${code}/${journalShortSig(orgId, code)}`;
 }
 
-export function journalDocumentPdfQr(origin: string, orgId: string, code: string): JournalPdfQr {
-  return { url: journalShortQrUrl(origin, orgId, code) };
+/** Короткий адрес QR журнала точки: `/qj/<точка>/<журнал>/<подпись точки>`. */
+export function journalPointShortQrUrl(origin: string, buildingId: string, code: string): string {
+  const base = origin.replace(/\/+$/, "");
+  return `${base}/qj/${buildingId}/${code}/${journalPointShortSig(buildingId, code)}`;
+}
+
+/**
+ * QR в шапке бланка документа. Документ точки — QR этой точки (аудит
+ * 2026-11-01): раньше скан открывал выбор документов всех точек с их
+ * людьми. Общий документ — QR журнала организации, как раньше.
+ */
+export function journalDocumentPdfQr(origin: string, orgId: string, code: string, buildingId?: string | null): JournalPdfQr {
+  return { url: buildingId ? journalPointShortQrUrl(origin, buildingId, code) : journalShortQrUrl(origin, orgId, code) };
 }
 
 export function journalSamplePdfQr(origin: string, code: string): JournalPdfQr {
@@ -43,4 +55,16 @@ export function journalSamplePdfQr(origin: string, code: string): JournalPdfQr {
 export function resolveJournalShortQr(orgId: string, code: string, sig: string): string | null {
   if (!verifyJournalShortSig(orgId, code, sig)) return null;
   return qrFillUrl("", "journal", `${orgId}:${code}`);
+}
+
+/**
+ * Адрес журнала точки по короткой ссылке точки: подпись сверяется до
+ * поиска точки в базе; организацию маршрут берёт у самой точки.
+ */
+export function isJournalPointShortQr(buildingId: string, code: string, sig: string): boolean {
+  return verifyJournalPointShortSig(buildingId, code, sig);
+}
+
+export function resolveJournalPointShortQr(organizationId: string, buildingId: string, code: string): string {
+  return qrFillUrl("", "journal", journalFillSubject(organizationId, code, null, { buildingId }));
 }

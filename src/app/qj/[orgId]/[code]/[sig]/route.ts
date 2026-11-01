@@ -1,4 +1,5 @@
-import { resolveJournalShortQr } from "@/lib/journal-pdf-qr-link";
+import { db } from "@/lib/db";
+import { isJournalPointShortQr, resolveJournalPointShortQr, resolveJournalShortQr } from "@/lib/journal-pdf-qr-link";
 import { relativeRedirect } from "@/lib/relative-redirect";
 
 export const runtime = "nodejs";
@@ -19,6 +20,12 @@ export async function GET(
   let target: string | null = null;
   try {
     target = resolveJournalShortQr(orgId, code, sig);
+    // QR бланка документа точки: первый сегмент — точка (аудит 2026-11-01).
+    // Подпись проверена до запроса в базу; организация — самой точки.
+    if (!target && isJournalPointShortQr(orgId, code, sig)) {
+      const building = await db.building.findUnique({ where: { id: orgId }, select: { organizationId: true } });
+      if (building) target = resolveJournalPointShortQr(building.organizationId, orgId, code);
+    }
   } catch (error) {
     console.error("[qj] short journal QR failed", error);
     return new Response("Не удалось открыть журнал", { status: 500 });
