@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,9 +62,9 @@ export async function GET(
   const organizationId = getActiveOrgId(session);
   const document = await db.journalDocument.findFirst({
     where: { id: documentId, organizationId },
-    select: { id: true, template: { select: { code: true } } },
+    select: { id: true, buildingId: true, template: { select: { code: true } } },
   });
-  if (!document) {
+  if (!document || !(await canSeeDocumentPoint(session, document.buildingId))) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
 

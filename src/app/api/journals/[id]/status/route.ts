@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
+import { canSeeDocumentPoint, JOURNAL_ENTRY_POINT_SELECT, journalEntryPointId } from "@/lib/document-point-access";
 
 export async function PATCH(
   request: Request,
@@ -28,9 +29,14 @@ export async function PATCH(
 
   const entry = await db.journalEntry.findUnique({
     where: { id },
+    include: JOURNAL_ENTRY_POINT_SELECT,
   });
 
-  if (!entry || entry.organizationId !== getActiveOrgId(session)) {
+  if (
+    !entry ||
+    entry.organizationId !== getActiveOrgId(session) ||
+    !(await canSeeDocumentPoint(session, journalEntryPointId(entry)))
+  ) {
     return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
   }
 

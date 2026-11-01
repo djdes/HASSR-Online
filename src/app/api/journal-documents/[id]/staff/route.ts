@@ -23,6 +23,7 @@ import {
   revertAutoFill,
   snapshotBeforeAutoFill,
 } from "@/lib/journal-autofill-undo";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 type StaffAction =
   | "add_employee"
@@ -59,7 +60,11 @@ export async function POST(
     },
   });
 
-  if (!document || document.organizationId !== getActiveOrgId(session)) {
+  if (
+    !document ||
+    document.organizationId !== getActiveOrgId(session) ||
+    !(await canSeeDocumentPoint(session, document.buildingId))
+  ) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
 

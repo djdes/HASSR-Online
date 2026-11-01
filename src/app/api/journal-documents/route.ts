@@ -6,8 +6,8 @@ import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
-import { buildingWhere } from "@/lib/building-scope";
+import { getViewedPointId, loadBuildingContext } from "@/lib/active-building";
+import { buildingWhere, isOfficeBuilding } from "@/lib/building-scope";
 import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
 import { worksAtBuilding } from "@/lib/building-settings";
 import { buildingTargets } from "@/lib/building-targets";
@@ -183,8 +183,9 @@ export async function GET(request: Request) {
       organizationId: getActiveOrgId(session),
       templateId: template.id,
       status,
-      // Точки: документы активной точки и общие (без точки).
-      ...buildingWhere(await getActiveBuildingId(session)),
+      // Точки: документы точки из шапки и общие (без точки); «Вся
+      // организация» — все (раньше — только офиса или первой точки).
+      ...buildingWhere(await getViewedPointId(session)),
     },
     orderBy: { dateFrom: "desc" },
     include: {
@@ -253,7 +254,26 @@ export async function POST(request: Request) {
   // Точки: новый документ принадлежит активной точке, его строки — из её
   // справочников (2026-10-29: «в журналы конкретной точки выводятся все
   // помещения / сотрудники / оборудование организации»).
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Точку можно передать явно (`buildingId`) — только из доступных человеку.
+  // В режиме «Вся организация» без офиса документ молча уходил на первую
+  // точку (2026-11-01) — теперь просим выбрать точку в шапке.
+  const buildingContext = await loadBuildingContext(session);
+  const requestedBuildingId = typeof body.buildingId === "string" && body.buildingId ? body.buildingId : null;
+  if (requestedBuildingId && buildingContext.enabled && !buildingContext.buildings.some((building) => building.id === requestedBuildingId)) {
+    return NextResponse.json({ error: "Точка не найдена" }, { status: 404 });
+  }
+  if (
+    !requestedBuildingId &&
+    buildingContext.enabled &&
+    buildingContext.organizationView &&
+    !isOfficeBuilding(buildingContext.activeBuilding)
+  ) {
+    return NextResponse.json(
+      { error: "Выберите точку в шапке: документ журнала создаётся для одной точки." },
+      { status: 400 }
+    );
+  }
+  const activeBuildingId = buildingContext.enabled ? (requestedBuildingId ?? buildingContext.activeBuildingId) : null;
   const rowsPointId = await documentRowsPointId(getActiveOrgId(session), activeBuildingId);
   const pointRows = pointRowsWhere(rowsPointId);
 

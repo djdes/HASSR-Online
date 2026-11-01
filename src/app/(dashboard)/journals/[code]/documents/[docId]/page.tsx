@@ -78,7 +78,7 @@ import { PpeIssuanceDocumentClient } from "@/components/journals/ppe-issuance-do
 import { isRegisterDocumentTemplate } from "@/lib/register-document";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
-import { withBuildingLabel } from "@/lib/building-scope";
+import { buildingWhere, withBuildingLabel } from "@/lib/building-scope";
 import { JournalHeaderEditProvider } from "@/components/journals/journal-header-edit";
 import { readHeaderTitleOverride } from "@/lib/journal-header-title";
 import { readHeaderOrgNameOverride, resolveOrgJournalName } from "@/lib/org-journal-name";
@@ -219,6 +219,7 @@ import { isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 import { orgTodayKey } from "@/lib/timezone";
 import { TodayKeyProvider } from "@/lib/today-key-context";
 import { readHygieneFormVersion } from "@/lib/hygiene-v2";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 export const dynamic = "force-dynamic";
 
 type TrackedFieldOption = {
@@ -448,7 +449,9 @@ async function JournalDocumentBody({
   if (
     !document ||
     document.organizationId !== getActiveOrgId(session) ||
-    document.template.code !== resolvedCode
+    document.template.code !== resolvedCode ||
+    // Документ чужой точки по прямой ссылке — «не найден» (2026-11-01).
+    !(await canSeeDocumentPoint(session, document.buildingId))
   ) {
     notFound();
   }
@@ -1102,6 +1105,8 @@ async function JournalDocumentBody({
       where: {
         organizationId: getActiveOrgId(session),
         template: { code: AUDIT_PLAN_TEMPLATE_CODE },
+        // Планы этой точки и общие — не других точек (2026-11-01).
+        ...buildingWhere(rowsPointId),
       },
       select: { id: true, title: true, config: true, dateFrom: true },
       orderBy: { dateFrom: "desc" },
@@ -1149,6 +1154,8 @@ async function JournalDocumentBody({
       where: {
         organizationId: getActiveOrgId(session),
         template: { code: AUDIT_PROTOCOL_TEMPLATE_CODE },
+        // Протоколы этой точки и общие — не других точек (2026-11-01).
+        ...buildingWhere(rowsPointId),
       },
       select: { id: true, title: true, config: true, dateFrom: true },
       orderBy: { dateFrom: "desc" },
@@ -1644,7 +1651,7 @@ async function JournalDocumentBody({
           dateTo={toDateKey(document.dateTo)}
           status={document.status}
           initialConfig={normalizeFinishedProductDocumentConfig(document.config)}
-          users={employees}
+          users={enrichedEmployees}
           responsibleUserId={document.responsibleUserId}
           verifierUserId={document.verifierUserId}
           useV2={organization?.experimentalUiV2 ?? true}

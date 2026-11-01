@@ -292,7 +292,7 @@ export function CatchUpClient() {
             </thead>
             <tbody>
               {data.rows.map((row) => (
-                <tr key={row.templateCode}>
+                <tr key={`${row.templateCode}:${row.documentId ?? ""}`}>
                   <td className="sticky left-0 z-10 border-b border-[#ececf4] bg-white px-4 py-3 align-top">
                     <Link
                       href={

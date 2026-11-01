@@ -6,6 +6,8 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { canWriteJournal } from "@/lib/journal-acl";
+import type { Session } from "next-auth";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 const PEST_CONTROL_TEMPLATE_CODE = "pest_control";
 
@@ -38,13 +40,13 @@ function buildStoredDate(
   return date;
 }
 
-async function getAuthorizedDocument(documentId: string, organizationId: string) {
+async function getAuthorizedDocument(documentId: string, organizationId: string, session: Session) {
   const document = await db.journalDocument.findUnique({
     where: { id: documentId },
     include: { template: true },
   });
 
-  if (!document || document.organizationId !== organizationId) {
+  if (!document || document.organizationId !== organizationId || !(await canSeeDocumentPoint(session, document.buildingId))) {
     return null;
   }
 
@@ -67,7 +69,8 @@ export async function POST(
   const { id: documentId } = await params;
   const document = await getAuthorizedDocument(
     documentId,
-    getActiveOrgId(session)
+    getActiveOrgId(session),
+    session
   );
 
   if (document === null) {
@@ -181,7 +184,8 @@ export async function PATCH(
   const { id: documentId } = await params;
   const document = await getAuthorizedDocument(
     documentId,
-    getActiveOrgId(session)
+    getActiveOrgId(session),
+    session
   );
 
   if (document === null) {
@@ -310,7 +314,8 @@ export async function DELETE(
   const { id: documentId } = await params;
   const document = await getAuthorizedDocument(
     documentId,
-    getActiveOrgId(session)
+    getActiveOrgId(session),
+    session
   );
 
   if (document === null) {

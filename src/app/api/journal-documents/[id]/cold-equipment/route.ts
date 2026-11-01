@@ -19,6 +19,8 @@ import { syncEquipmentDirectoryItem } from "@/lib/equipment-directory";
 import { documentRowsPointId } from "@/lib/document-point-rows";
 import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole, pickPrimaryManager } from "@/lib/user-roles";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 
 type ColdEquipmentAction =
   | "apply_auto_fill"
@@ -72,7 +74,11 @@ export async function POST(
     },
   });
 
-  if (!document || document.organizationId !== getActiveOrgId(session)) {
+  if (
+    !document ||
+    document.organizationId !== getActiveOrgId(session) ||
+    !(await canSeeDocumentPoint(session, document.buildingId))
+  ) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
 
@@ -218,10 +224,12 @@ export async function POST(
     return NextResponse.json({ config: nextConfig, equipmentIds });
   }
 
+  // Запасной ответственный — из людей точки документа, не всей организации.
   const users = await db.user.findMany({
     where: {
       organizationId: getActiveOrgId(session),
       isActive: true,
+      ...staffAtBuildingWhere(await documentRowsPointId(document.organizationId, document.buildingId)),
     },
     select: { id: true, role: true },
     orderBy: [{ role: "asc" }, { id: "asc" }],

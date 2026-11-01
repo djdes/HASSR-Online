@@ -5,6 +5,7 @@ import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
 import { AGENT_ONLINE_WINDOW_MS } from "@/lib/print-agent-auth";
 import { resolveExportLocale } from "@/i18n/export-locale";
 import { translatorFor } from "@/i18n/translator";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,10 +49,11 @@ export async function POST(request: Request) {
       id: true,
       title: true,
       organizationId: true,
+      buildingId: true,
       template: { select: { code: true, name: true } },
     },
   });
-  if (!doc || doc.organizationId !== organizationId) {
+  if (!doc || doc.organizationId !== organizationId || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return NextResponse.json({ code: "DOCUMENT_NOT_FOUND", error: t("journalPdf.errors.notFound") }, { status: 404 });
   }
 

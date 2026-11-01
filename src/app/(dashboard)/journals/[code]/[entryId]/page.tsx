@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { getCrumbOrganizationName } from "@/lib/crumb-organization";
+import { canSeeDocumentPoint, journalEntryPointId } from "@/lib/document-point-access";
 
 function formatValue(
   value: unknown,
@@ -121,12 +122,17 @@ export default async function EntryDetailPage({
     include: {
       template: true,
       filledBy: { select: { name: true } },
-      area: { select: { name: true } },
-      equipment: { select: { name: true } },
+      area: { select: { name: true, buildingId: true } },
+      equipment: { select: { name: true, area: { select: { buildingId: true } } } },
     },
   });
 
-  if (!entry || entry.organizationId !== getActiveOrgId(session)) {
+  if (
+    !entry ||
+    entry.organizationId !== getActiveOrgId(session) ||
+    // Запись цеха / оборудования чужой точки — «не найдена» (2026-11-01).
+    !(await canSeeDocumentPoint(session, journalEntryPointId(entry)))
+  ) {
     notFound();
   }
 

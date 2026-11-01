@@ -5,7 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { aclActorFromSession, getAllowedJournalCodes } from "@/lib/journal-acl";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { customJournalName } from "@/lib/custom-names";
@@ -78,7 +78,8 @@ export const getJournalCrumbMenu = cache(
       new Date(),
       enabled.map((t) => ({ id: t.id, code: t.code })),
       disabledCodes,
-      { buildingId: await getActiveBuildingId(session) },
+      // Точка из шапки; «Вся организация» — по всем точкам.
+      { buildingId: await getViewedPointId(session) },
     );
 
     return buildJournalSwitcherMenu({

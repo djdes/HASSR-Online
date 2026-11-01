@@ -8,6 +8,7 @@ import { equipmentBuildingWhere } from "@/lib/building-scope";
 import { documentRowsPointId } from "@/lib/document-point-rows";
 import { canWriteJournal } from "@/lib/journal-acl";
 import { isManagementRole } from "@/lib/user-roles";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 /**
  * «Добавить в справочник» из окна строки журнала (ППР, поверка, поломки).
@@ -37,7 +38,7 @@ export async function POST(
       template: { select: { code: true } },
     },
   });
-  if (!document || document.organizationId !== organizationId) {
+  if (!document || document.organizationId !== organizationId || !(await canSeeDocumentPoint(session, document.buildingId))) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
   // Закрытый документ не редактируют — значит и справочник из него не

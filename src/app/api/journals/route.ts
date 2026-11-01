@@ -30,7 +30,8 @@ import {
   prismaIdempotencyStore,
 } from "@/lib/idempotency";
 import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 // Universal deviation rules for all journal types
 type DeviationRule = {
@@ -231,9 +232,10 @@ export async function POST(request: Request) {
     if (areaId) {
       const area = await db.area.findFirst({
         where: { id: areaId, organizationId },
-        select: { id: true },
+        select: { id: true, buildingId: true },
       });
-      if (!area) {
+      // Цех чужой точки — как несуществующий (2026-11-01).
+      if (!area || !(await canSeeDocumentPoint(session, area.buildingId))) {
         return NextResponse.json(
           { error: "Помещение не найдено" },
           { status: 404 }
@@ -243,9 +245,9 @@ export async function POST(request: Request) {
     if (equipmentId) {
       const equipment = await db.equipment.findFirst({
         where: { id: equipmentId, area: { organizationId } },
-        select: { id: true },
+        select: { id: true, area: { select: { buildingId: true } } },
       });
-      if (!equipment) {
+      if (!equipment || !(await canSeeDocumentPoint(session, equipment.area.buildingId))) {
         return NextResponse.json(
           { error: "Оборудование не найдено" },
           { status: 404 }
@@ -393,10 +395,12 @@ export async function POST(request: Request) {
     if (deviations.length > 0) {
       try {
         // Событие точки (фаза 3 «Офис и точки»): точка помещения или
-        // оборудования, иначе — точка, где сейчас работает заполнивший.
+        // оборудования, иначе — точка из шапки, иначе — где работает
+        // заполнивший. «Вся организация» — не офис и не первая точка.
         const eventBuildingId =
           (await placeOfEvent(organizationId, { areaId, equipmentId })) ??
-          (await getActiveBuildingId(session).catch(() => null));
+          (await getViewedPointId(session).catch(() => null)) ??
+          (await placeOfEvent(organizationId, { userId: session.user.id }));
         for (const deviation of deviations) {
           // deviation.alertType and deviation.details are composed in DEVIATION_RULES
           // above from already-escaped user data (via esc()), so they're safe to inline.

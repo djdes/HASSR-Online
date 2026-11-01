@@ -19,11 +19,12 @@ import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { Prisma } from "@prisma/client";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { loadBuildingContext } from "@/lib/active-building";
 import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { documentRowsPointId } from "@/lib/document-point-rows";
-import { buildingWhere } from "@/lib/building-scope";
+import { buildingWhere, viewedPointId } from "@/lib/building-scope";
+import { journalEntryPointWhere } from "@/lib/point-filters";
 import { sharedDocumentFlag } from "@/lib/journal-document-shared";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
 import { aclActorFromSession, hasJournalAccess } from "@/lib/journal-acl";
@@ -1451,8 +1452,12 @@ export default async function JournalDocumentsPage({
   }
 
   const activeTab = tab === "closed" ? "closed" : "active";
-  // Точки: списки документов — активная точка + общие документы без точки.
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Точки (2026-11-01): списки документов — точка из шапки и общие
+  // документы; «Вся организация» — все точки (раньше — только офис или
+  // первая точка). Новый документ по-прежнему пишется в активную точку.
+  const buildingContext = await loadBuildingContext(session);
+  const activeBuildingId = buildingContext.activeBuildingId;
+  const listBuildingId = viewedPointId(buildingContext);
 
   // Ростер журнала: живые сотрудники этой организации без ROOT — из них
   // выбирают ответственного при создании документа.
@@ -1464,6 +1469,10 @@ export default async function JournalDocumentsPage({
     select: { id: true, name: true, role: true, email: true, positionTitle: true, buildingIds: true, jobPosition: { select: { name: true, categoryKey: true } } },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
+  // Кого предлагают диалоги создания и настроек на точке — её сотрудники
+  // (2026-11-01: предлагались люди всех точек). «Вся организация» — все.
+  const listRowsPointId = await documentRowsPointId(getActiveOrgId(session), listBuildingId);
+  const pointUsers = listRowsPointId ? orgUsers.filter((user) => worksAtBuilding(user, listRowsPointId)) : orgUsers;
   /**
    * Страница СПИСКА документов журнала повторяет эталон
    * (lk.haccp-online.ru): сразу H1 → вкладки → карточки. Ни хлебных крошек,
@@ -1596,7 +1605,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "asc" },
     });
@@ -1641,7 +1650,7 @@ export default async function JournalDocumentsPage({
           activeTab={activeTab}
           templateCode={resolvedCode}
           templateName={template.name}
-          users={orgUsers}
+          users={pointUsers}
           documents={mappedDocuments}
           automation={automation}
           canManageDocuments={hasFullWorkspaceAccess(session.user)}
@@ -1654,7 +1663,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={mappedDocuments}
         automation={automation}
         canManageDocuments={hasFullWorkspaceAccess(session.user)}
@@ -1685,7 +1694,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { createdAt: "desc" },
     });
@@ -1698,7 +1707,7 @@ export default async function JournalDocumentsPage({
         templateCode={resolvedCode}
         templateName={(configuredTemplateName = scanConfig?.title) || template.name}
         defaultResponsibleTitle={scanConfig?.defaultResponsibleTitle || null}
-        defaultResponsibleUserId={pickPrimaryManager(orgUsers)?.id || null}
+        defaultResponsibleUserId={pickPrimaryManager(pointUsers)?.id || null}
         documents={documents.map((document) => {
           let storedTitle: unknown, configuredTitle: unknown, configuredDateLabel: unknown;
           let storedResponsibleTitle: unknown, configuredResponsibleTitle: unknown;
@@ -1847,7 +1856,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { createdAt: "asc" },
     });
@@ -1857,7 +1866,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={medBookDocuments.map((doc) => ({
           id: doc.id,
           shared: sharedDocumentFlag(doc, medBookDocuments),
@@ -1940,7 +1949,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "asc" },
     });
@@ -1950,7 +1959,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((doc) => ({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
@@ -2089,7 +2098,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "desc" },
     });
@@ -2100,7 +2109,7 @@ export default async function JournalDocumentsPage({
         routeCode={code}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((doc) => {
           const config = normalizeGlassListConfig(doc.config);
           return {
@@ -2133,7 +2142,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "asc" },
     });
@@ -2144,7 +2153,7 @@ export default async function JournalDocumentsPage({
         routeCode={code === glassControlDocument.GLASS_CONTROL_SOURCE_SLUG ? code : resolvedCode}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((doc) => ({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
@@ -2234,7 +2243,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "asc" },
     });
@@ -2245,7 +2254,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((doc) => ({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
@@ -2402,7 +2411,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "desc" },
     });
@@ -2413,7 +2422,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((doc) => ({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
@@ -2487,7 +2496,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "desc" },
     });
@@ -2497,7 +2506,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((doc) => ({
           id: doc.id,
           shared: sharedDocumentFlag(doc, documents),
@@ -2887,7 +2896,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { dateFrom: "asc" },
     });
@@ -2907,7 +2916,7 @@ export default async function JournalDocumentsPage({
         <IntensiveCoolingDocumentsClient
           activeTab={activeTab}
           routeCode={code === INTENSIVE_COOLING_SOURCE_SLUG ? code : resolvedCode}
-          users={orgUsers}
+          users={pointUsers}
           dishSuggestions={products.map((item) => item.name)}
           documents={documents.map((document) => ({
             id: document.id,
@@ -2927,7 +2936,7 @@ export default async function JournalDocumentsPage({
           activeTab={activeTab}
           templateCode={resolvedCode}
           templateName={template.name}
-          users={orgUsers}
+          users={pointUsers}
           documents={documents.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, documents),
@@ -2946,7 +2955,7 @@ export default async function JournalDocumentsPage({
           activeTab={activeTab}
           templateCode={resolvedCode}
           templateName={template.name}
-          users={orgUsers}
+          users={pointUsers}
           documents={documents.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, documents),
@@ -2979,7 +2988,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -2989,7 +2998,7 @@ export default async function JournalDocumentsPage({
           routeCode={code === SANITATION_DAY_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={sanitationDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, sanitationDocuments),
@@ -3077,7 +3086,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -3088,7 +3097,7 @@ export default async function JournalDocumentsPage({
           routeCode={code === DISINFECTANT_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={disDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, disDocuments),
@@ -3159,7 +3168,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -3170,7 +3179,7 @@ export default async function JournalDocumentsPage({
           routeCode={code === TRAINING_PLAN_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={tpDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, tpDocuments),
@@ -3238,7 +3247,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -3249,7 +3258,7 @@ export default async function JournalDocumentsPage({
           routeCode={code === AUDIT_PLAN_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={auditPlanDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, auditPlanDocuments),
@@ -3310,7 +3319,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -3320,7 +3329,7 @@ export default async function JournalDocumentsPage({
           activeTab={activeTab}
           templateCode={resolvedCode}
           templateName={template.name}
-          users={orgUsers}
+          users={pointUsers}
           documents={equipmentCleaningDocuments.map((document) => {
             const config = normalizeEquipmentCleaningConfig(document.config);
             return {
@@ -3446,7 +3455,7 @@ export default async function JournalDocumentsPage({
               organizationId: getActiveOrgId(session),
               templateId: template.id,
               status: activeTab,
-              ...buildingWhere(activeBuildingId),
+              ...buildingWhere(listBuildingId),
             },
             orderBy: { createdAt: "asc" },
           });
@@ -3584,7 +3593,7 @@ export default async function JournalDocumentsPage({
                 organizationId: getActiveOrgId(session),
                 templateId: template.id,
                 status: activeTab,
-                ...buildingWhere(activeBuildingId),
+                ...buildingWhere(listBuildingId),
               },
               orderBy: { createdAt: "asc" },
             });
@@ -3655,7 +3664,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -3742,7 +3751,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { createdAt: "asc" },
       });
@@ -3778,7 +3787,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { dateFrom: "asc" },
       });
@@ -3789,7 +3798,7 @@ export default async function JournalDocumentsPage({
           routeCode={code === PPE_ISSUANCE_SOURCE_SLUG ? code : resolvedCode}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={ppeDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, ppeDocuments),
@@ -3861,7 +3870,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { dateFrom: "desc" },
       });
@@ -3871,7 +3880,7 @@ export default async function JournalDocumentsPage({
           routeCode={code}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={checklistDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, checklistDocuments),
@@ -3931,7 +3940,7 @@ export default async function JournalDocumentsPage({
           organizationId: getActiveOrgId(session),
           templateId: template.id,
           status: activeTab,
-          ...buildingWhere(activeBuildingId),
+          ...buildingWhere(listBuildingId),
         },
         orderBy: { dateFrom: "desc" },
       });
@@ -3941,7 +3950,7 @@ export default async function JournalDocumentsPage({
           routeCode={code}
           templateCode={resolvedCode}
           activeTab={activeTab}
-          users={orgUsers}
+          users={pointUsers}
           documents={sdcDocuments.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, sdcDocuments),
@@ -4016,7 +4025,7 @@ export default async function JournalDocumentsPage({
             routeCode={code}
             templateCode={resolvedCode}
             templateName={template.name}
-            users={orgUsers}
+            users={pointUsers}
             documents={documents.map((document) => ({
               id: document.id,
               shared: sharedDocumentFlag(document, documents),
@@ -4036,7 +4045,7 @@ export default async function JournalDocumentsPage({
             routeCode={code}
             templateCode={resolvedCode}
             templateName={template.name}
-            users={orgUsers}
+            users={pointUsers}
             documents={documents.map((document) => ({
               id: document.id,
               shared: sharedDocumentFlag(document, documents),
@@ -4066,7 +4075,7 @@ export default async function JournalDocumentsPage({
             routeCode={code}
             templateCode={resolvedCode}
             templateName={template.name}
-            users={orgUsers}
+            users={pointUsers}
             documents={documents.map((document) => {
               const config = normalizeUvRuntimeDocumentConfig(document.config);
               return {
@@ -4099,7 +4108,7 @@ export default async function JournalDocumentsPage({
           templateCode={resolvedCode}
           templateName={template.name}
           heading={trackedHeading}
-          users={orgUsers}
+          users={pointUsers}
           documents={documents.map((document) => ({
             id: document.id,
             shared: sharedDocumentFlag(document, documents),
@@ -4128,7 +4137,7 @@ export default async function JournalDocumentsPage({
         activeTab={activeTab}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((document) => ({
           id: document.id,
           shared: sharedDocumentFlag(document, documents),
@@ -4151,7 +4160,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { createdAt: "asc" },
     });
@@ -4180,7 +4189,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { createdAt: "asc" },
     });
@@ -4191,7 +4200,7 @@ export default async function JournalDocumentsPage({
         routeCode={code}
         templateCode={resolvedCode}
         templateName={template.name}
-        users={orgUsers}
+        users={pointUsers}
         documents={documents.map((document) => {
           const rows = (document.config as { rows?: unknown } | null)?.rows;
           return {
@@ -4214,7 +4223,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { createdAt: "asc" },
     });
@@ -4243,7 +4252,7 @@ export default async function JournalDocumentsPage({
         organizationId: getActiveOrgId(session),
         templateId: template.id,
         status: activeTab,
-        ...buildingWhere(activeBuildingId),
+        ...buildingWhere(listBuildingId),
       },
       orderBy: { createdAt: "asc" },
     });
@@ -4270,6 +4279,9 @@ export default async function JournalDocumentsPage({
     where: {
       organizationId: getActiveOrgId(session),
       templateId: template.id,
+      // Записи точки из шапки: её цеха и оборудование, общие и без цеха
+      // (2026-11-01: на точке были видны записи всех точек).
+      ...journalEntryPointWhere(listBuildingId),
     },
     orderBy: { createdAt: "desc" },
     include: {

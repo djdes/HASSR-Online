@@ -59,6 +59,9 @@ import {
   resolveResponsibleChoice,
 } from "@/lib/journal-roster";
 import { findOrgUser } from "@/lib/journal-roster-db";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { documentRowsPointId } from "@/lib/document-point-rows";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { orgTodayKey } from "@/lib/timezone";
 import { Prisma, TasksFlowOutboxStatus } from "@prisma/client";
 import { buildDocumentTaskDeleteCommands } from "@/lib/journal-document-tasks-cleanup";
@@ -110,7 +113,7 @@ export async function GET(
     },
   });
 
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return errors.response("DOCUMENT_NOT_FOUND");
   }
 
@@ -126,11 +129,15 @@ export async function GET(
     return errors.response("DOCUMENT_NOT_FOUND");
   }
 
-  // Load org employees for the grid rows
+  // Сотрудники для строк сетки: у документа точки — люди этой точки и те,
+  // кто уже есть в записях (2026-11-01, «точка видит только своё»).
+  const pointStaff = staffAtBuildingWhere(await documentRowsPointId(doc.organizationId, doc.buildingId));
+  const entryEmployeeIds = [...new Set(doc.entries.map((entry) => entry.employeeId).filter(Boolean))];
   const employees = await db.user.findMany({
     where: {
       organizationId: getActiveOrgId(session),
       isActive: true,
+      ...(pointStaff.OR ? { OR: [...pointStaff.OR, { id: { in: entryEmployeeIds } }] } : {}),
     },
     select: { id: true, name: true, role: true, positionTitle: true },
     orderBy: { name: "asc" },
@@ -149,7 +156,7 @@ export async function PATCH(
   if (!session) return errors.response("UNAUTHORIZED");
 
   const doc = await db.journalDocument.findUnique({ where: { id } });
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return errors.response("DOCUMENT_NOT_FOUND");
   }
   // Контроль-группа проверяет, а не заполняет: правка и закрытие документа
@@ -661,7 +668,7 @@ export async function DELETE(
   }
 
   const doc = await db.journalDocument.findUnique({ where: { id } });
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return errors.response("DOCUMENT_NOT_FOUND");
   }
 

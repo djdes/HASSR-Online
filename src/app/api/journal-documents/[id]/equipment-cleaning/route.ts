@@ -11,6 +11,8 @@ import {
 import { isManagementRole } from "@/lib/user-roles";
 import { canWriteJournal } from "@/lib/journal-acl";
 import { orgTodayKey } from "@/lib/timezone";
+import type { Session } from "next-auth";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 function aclActorFromSession(session: {
   user: { id: string; role: string; isRoot?: boolean };
@@ -22,13 +24,13 @@ function aclActorFromSession(session: {
   };
 }
 
-async function loadDocument(id: string, organizationId: string) {
+async function loadDocument(id: string, organizationId: string, session: Session) {
   const document = await db.journalDocument.findUnique({
     where: { id },
     include: { template: true },
   });
 
-  if (!document || document.organizationId !== organizationId) {
+  if (!document || document.organizationId !== organizationId || !(await canSeeDocumentPoint(session, document.buildingId))) {
     return null;
   }
 
@@ -93,7 +95,7 @@ export async function POST(
   }
 
   const { id } = await params;
-  const document = await loadDocument(id, getActiveOrgId(session));
+  const document = await loadDocument(id, getActiveOrgId(session), session);
   if (!document) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
@@ -172,7 +174,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const document = await loadDocument(id, getActiveOrgId(session));
+  const document = await loadDocument(id, getActiveOrgId(session), session);
   if (!document) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
@@ -249,7 +251,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const document = await loadDocument(id, getActiveOrgId(session));
+  const document = await loadDocument(id, getActiveOrgId(session), session);
   if (!document) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }

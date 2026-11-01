@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasCapability } from "@/lib/permission-presets";
 import {
@@ -56,7 +56,9 @@ export async function GET() {
     select: { timezone: true, disabledJournalCodes: true },
   });
   // У точки со своим набором журналов (слитая организация) — её набор.
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Точка из шапки; «Вся организация» — все точки (раньше — офис или
+  // первая точка, 2026-11-01).
+  const activeBuildingId = await getViewedPointId(session);
   const disabledCodes = activeBuildingId
     ? await getDisabledJournalCodes(organizationId, activeBuildingId)
     : parseDisabledCodes(org?.disabledJournalCodes);
