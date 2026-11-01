@@ -16,6 +16,7 @@ import {
   sumMetrics,
   type MonitoringMetric,
 } from "@/lib/monitoring";
+import { ppkScopeForPoint } from "@/lib/ppk/scope.server";
 
 export type MonitoringData = {
   points: { id: string; name: string }[];
@@ -39,17 +40,20 @@ export type MonitoringData = {
 export async function loadMonitoring(session: Session, requestedPointId: string | null): Promise<MonitoringData> {
   const organizationId = getActiveOrgId(session);
   const now = new Date();
-  const [buildings, context, templates, assignments, ppkStatuses] = await Promise.all([
+  const [buildings, context, templates, assignments] = await Promise.all([
     listPersonBuildings(session),
     loadBuildingContext(session),
     db.journalTemplate.findMany({ where: { isActive: true }, select: { id: true, code: true } }),
     listAssignmentRows(organizationId, now).catch(() => []),
-    loadPpkStatuses(organizationId).catch(() => null),
   ]);
   const points = buildings
     .filter((building) => buildingInScope(session.user, building.id))
     .map((building) => ({ id: building.id, name: building.name }));
   const pointId = resolveMonitoringPoint(requestedPointId, points, viewedPointId(context));
+  // ППК выбранной точки (2026-11-01, «ППК на точку»), без точки — организации.
+  const ppkStatuses = await ppkScopeForPoint(organizationId, pointId)
+    .then(loadPpkStatuses)
+    .catch(() => null);
   const perPointJournals = context.enabled;
 
   const journalsAt = async (buildingId: string | null): Promise<MonitoringMetric> => {

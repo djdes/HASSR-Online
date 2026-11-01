@@ -44,6 +44,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { DENIED_PARAM, keepDeniedParam } from "@/lib/denied-notice";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -153,7 +154,8 @@ export default async function DashboardPage({
       },
     }),
     // Плашка «Производственный контроль»: сбой загрузки её скрывает, главная не ломается.
-    loadPpkTodaySummary(organizationId).catch(() => null),
+    // ППК точки из шапки или организации (2026-11-01, «ППК на точку»).
+    ppkScopeForSession(session).then(loadPpkTodaySummary).catch(() => null),
   ]);
 
   // Selected journal set comes from organization settings:

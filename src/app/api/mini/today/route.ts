@@ -17,6 +17,7 @@ import { hasCapability } from "@/lib/permission-presets";
 import { customJournalName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { countPendingAckForUser } from "@/lib/ppk/acknowledge.server";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -334,7 +335,9 @@ export async function GET() {
   );
 
   // Документы, с которыми сотрудник ещё не ознакомился (политика, инструкции).
-  const pendingAck = await countPendingAckForUser(organizationId, userId).catch(() => 0);
+  const pendingAck = await ppkScopeForSession(session)
+    .then((scope) => countPendingAckForUser(scope, userId))
+    .catch(() => 0);
 
   return NextResponse.json({
     dateKey,

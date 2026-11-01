@@ -20,6 +20,7 @@ import {
   type ProductData,
   type TeamMember,
 } from "./records";
+import { ppkWhere, type PpkScope } from "./scope";
 
 export type BundleTeamMember = TeamMember & { name: string; title: string };
 
@@ -72,18 +73,19 @@ const TEAM_ORDER: Record<TeamMember["role"], number> = { leader: 0, deputy: 1, m
  * Данные всех блоков раздела одним объектом. Записи с битыми данными
  * пропускаются: одна испорченная строка не должна ломать документ.
  */
-export async function loadPpkBundle(organizationId: string): Promise<PpkBundle> {
+export async function loadPpkBundle(scope: PpkScope): Promise<PpkBundle> {
+  const { organizationId } = scope;
   const [org, rows, staff, journals, orgSettings, versionRows] = await Promise.all([
-    loadPpkPrintOrg(organizationId),
+    loadPpkPrintOrg(organizationId, scope.buildingId),
     db.ppkRecord.findMany({
-      where: { organizationId },
+      where: ppkWhere(scope),
       select: { id: true, block: true, data: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
-    loadPpkStaff(organizationId),
-    loadEnabledJournals(organizationId),
+    loadPpkStaff(scope),
+    loadEnabledJournals(organizationId, scope.buildingId),
     db.organization.findUnique({ where: { id: organizationId }, select: { journalResponsibleUsersJson: true } }),
-    loadDocVersions(organizationId),
+    loadDocVersions(scope),
   ]);
 
   const valid = <T,>(block: keyof typeof PPK_RECORD_SCHEMAS): { id: string; data: T }[] =>

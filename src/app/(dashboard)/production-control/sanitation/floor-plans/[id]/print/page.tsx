@@ -7,6 +7,7 @@ import { FLOW_KINDS, diagramBounds } from "@/lib/ppk/diagram";
 import type { FlowKind } from "@/lib/ppk/records";
 import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
 import { DiagramSvg, FlowLegend } from "@/components/production-control/diagram-svg";
+import { ppkPageScope } from "@/lib/ppk/access.server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,12 @@ export default async function Page({
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const [record, org, t] = await Promise.all([
-    loadDiagramRecord(organizationId, "floor-plan", id),
-    loadPpkPrintOrg(organizationId),
+    loadDiagramRecord(scope, "floor-plan", id),
+    loadPpkPrintOrg(organizationId, scope.buildingId),
     getTranslations("productionControl.diagram"),
   ]);
   const { data } = record;

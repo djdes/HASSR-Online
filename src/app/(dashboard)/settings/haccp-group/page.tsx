@@ -18,6 +18,8 @@ import {
   StaffEmptyState,
 } from "@/components/staff/staff-page-ui";
 import { cn } from "@/lib/utils";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -35,14 +37,16 @@ export default async function HaccpGroupPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // Группа ХАССП точки из шапки (или организации), 2026-11-01, «ППК на точку».
+  const scope = await ppkPageScope(session);
 
   const [rows, staff, order, t, tTeam, locale] = await Promise.all([
     db.ppkRecord.findMany({
-      where: { organizationId, block: "team" },
+      where: { ...ppkWhere(scope), block: "team" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
-    loadPpkStaff(organizationId),
+    loadPpkStaff(scope),
     db.companyOrder.findFirst({
       where: { organizationId, templateCode: "haccp-team" },
       orderBy: [{ issuedAt: "desc" }, { createdAt: "desc" }],

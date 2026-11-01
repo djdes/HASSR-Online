@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/page-header";
 import { ackDocPath, formatAckMoment } from "@/lib/ppk/acknowledge";
 import { listAckDocsForUser } from "@/lib/ppk/acknowledge.server";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,8 @@ export default async function AcknowledgeListPage() {
   const session = await requireAuth();
   const organizationId = getActiveOrgId(session);
   const [docs, org, t] = await Promise.all([
-    listAckDocsForUser(organizationId, session.user.id),
+    // Документы ППК точки человека (2026-11-01, «ППК на точку»).
+    ppkScopeForSession(session).then((scope) => listAckDocsForUser(scope, session.user.id)),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     getTranslations("acknowledge"),
   ]);

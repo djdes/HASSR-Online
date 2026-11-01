@@ -9,6 +9,8 @@ import { meetingNumber } from "@/lib/ppk/review";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
 import { PpkDocSection, PpkDocTable, ruDate } from "@/components/production-control/ppk-doc-ui";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -28,15 +30,17 @@ export default async function TeamMeetingProtocolPage({ params }: { params: Prom
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
   const { id } = await params;
   const u = await getTranslations("productionControlUi");
 
   const [org, meetings, staff, teamRows] = await Promise.all([
-    loadPpkPrintOrg(organizationId),
-    loadTeamMeetings(organizationId),
-    loadPpkStaff(organizationId),
+    loadPpkPrintOrg(organizationId, scope.buildingId),
+    loadTeamMeetings(scope),
+    loadPpkStaff(scope),
     db.ppkRecord.findMany({
-      where: { organizationId, block: "team" },
+      where: { ...ppkWhere(scope), block: "team" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),

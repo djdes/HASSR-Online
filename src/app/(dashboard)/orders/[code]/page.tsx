@@ -18,6 +18,8 @@ import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { buildHaccpTeamOrderValues } from "@/lib/ppk/team-order";
 import type { TeamMember } from "@/lib/ppk/records";
 import { OrderEditor } from "./order-editor";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -89,13 +91,15 @@ export default async function OrderPage({
   let initialValues = defaults;
   let preferInitial = false;
   if (query.prefill === "ppk-team" && template.code === "haccp-team" && canManage && !existing) {
+    const ppkScope = await ppkScopeForSession(session);
     const [rows, staff] = await Promise.all([
+      // Группа ХАССП из ППК точки в шапке (или организации), 2026-11-01.
       db.ppkRecord.findMany({
-        where: { organizationId, block: "team" },
+        where: { ...ppkWhere(ppkScope), block: "team" },
         select: { data: true },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       }),
-      loadPpkStaff(organizationId),
+      loadPpkStaff(ppkScope),
     ]);
     if (rows.length > 0) {
       initialValues = {

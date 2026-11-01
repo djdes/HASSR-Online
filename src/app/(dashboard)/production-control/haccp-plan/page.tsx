@@ -20,6 +20,7 @@ import {
   ruDate,
   type PpkEmptyBanner,
 } from "@/components/production-control/ppk-doc-ui";
+import { ppkPageScope } from "@/lib/ppk/access.server";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,13 @@ export default async function HaccpPlanPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const [bundle, versionRows, staff, t, nav, u] = await Promise.all([
-    loadPpkBundle(organizationId),
-    loadDocVersions(organizationId),
-    loadPpkStaff(organizationId),
+    loadPpkBundle(scope),
+    loadDocVersions(scope),
+    loadPpkStaff(scope),
     getTranslations("productionControl.program"),
     getTranslations("navigation"),
     getTranslations("productionControlUi"),

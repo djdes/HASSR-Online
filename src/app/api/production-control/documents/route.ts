@@ -3,11 +3,11 @@ import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { KNOWLEDGE_MAX_BYTES } from "@/lib/knowledge-documents";
 import {
-  PRODUCTION_DOC_KINDS,
   isProductionDocKind,
   productionDocFileType,
 } from "@/lib/production-control-docs";
 import { requireProductionDocsAccess } from "@/lib/production-control-docs.server";
+import { ppkDocKindKey, ppkDocKindKeys, ppkDocKindOf } from "@/lib/ppk/scope";
 import { checkStorageForUpload, limitResponse } from "@/lib/billing.server";
 
 export const runtime = "nodejs";
@@ -26,11 +26,16 @@ const SELECT = {
 export async function GET() {
   const auth = await requireProductionDocsAccess();
   if (!auth.ok) return auth.response;
+  // ППК на точку (2026-11-01): документы точки из шапки хранятся как
+  // `<kind>@<точка>`, клиенту отдаём вид без точки.
   const documents = await db.knowledgeDocument.findMany({
-    where: { organizationId: auth.organizationId, kind: { in: [...PRODUCTION_DOC_KINDS] } },
+    where: { organizationId: auth.organizationId, kind: { in: ppkDocKindKeys(auth.scope.buildingId) } },
     select: SELECT,
   });
-  return NextResponse.json({ documents }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json(
+    { documents: documents.map((document) => ({ ...document, kind: ppkDocKindOf(document.kind) })) },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }
 
 /** POST multipart: kind=ppk|haccp_plan, file — загрузить или заменить. */
@@ -49,9 +54,11 @@ export async function POST(request: Request) {
   if (file.size > KNOWLEDGE_MAX_BYTES) {
     return NextResponse.json({ error: "Максимальный размер файла — 25 МБ" }, { status: 413 });
   }
+  // Документ области ППК (точки или организации).
+  const key = ppkDocKindKey(kind, auth.scope.buildingId);
   // Хранилище тарифа: новый файл встаёт на место прежнего того же вида.
   const previous = await db.knowledgeDocument.findUnique({
-    where: { organizationId_kind: { organizationId: auth.organizationId, kind } },
+    where: { organizationId_kind: { organizationId: auth.organizationId, kind: key } },
     select: { sizeBytes: true },
   });
   const storage = await checkStorageForUpload(auth.organizationId, file.size, {
@@ -76,12 +83,13 @@ export async function POST(request: Request) {
     content,
     uploadedByName: auth.session.user.name ?? "",
   };
-  const document = await db.knowledgeDocument.upsert({
-    where: { organizationId_kind: { organizationId: auth.organizationId, kind } },
-    create: { organizationId: auth.organizationId, kind, ...data },
+  const stored = await db.knowledgeDocument.upsert({
+    where: { organizationId_kind: { organizationId: auth.organizationId, kind: key } },
+    create: { organizationId: auth.organizationId, buildingId: auth.scope.buildingId, kind: key, ...data },
     update: data,
     select: SELECT,
   });
+  const document = { ...stored, kind };
   await recordAuditLog({
     request,
     session: auth.session,
@@ -102,7 +110,9 @@ export async function DELETE(request: Request) {
   if (!isProductionDocKind(kind)) {
     return NextResponse.json({ error: "Неизвестный вид документа" }, { status: 400 });
   }
-  await db.knowledgeDocument.deleteMany({ where: { organizationId: auth.organizationId, kind } });
+  await db.knowledgeDocument.deleteMany({
+    where: { organizationId: auth.organizationId, kind: ppkDocKindKey(kind, auth.scope.buildingId) },
+  });
   await recordAuditLog({
     request,
     session: auth.session,

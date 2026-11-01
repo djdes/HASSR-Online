@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { ppkSingletonKey, ppkWhere } from "@/lib/ppk/scope";
 import { checkPpkRefs, checkPpkTeamGroup, ppkValidationError } from "@/lib/ppk/records.server";
 import { PPK_RECORD_LIMITS, PPK_RECORD_SCHEMAS, PPK_SINGLETON_BLOCKS, isPpkRecordBlock } from "@/lib/ppk/records";
 
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Неизвестный блок" }, { status: 400 });
   }
   const records = await db.ppkRecord.findMany({
-    where: { organizationId: auth.organizationId, block },
+    where: { ...ppkWhere(auth.scope), block },
     select: SELECT,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
@@ -46,16 +47,16 @@ export async function POST(request: Request) {
 
   const organizationId = auth.organizationId;
   const limitError = block === "policy" ? "Политика уже создана" : "Слишком много записей";
-  const count = await db.ppkRecord.count({ where: { organizationId, block } });
+  const count = await db.ppkRecord.count({ where: { ...ppkWhere(auth.scope), block } });
   if (count >= PPK_RECORD_LIMITS[block]) {
     return NextResponse.json({ error: limitError }, { status: 409 });
   }
 
-  const refError = await checkPpkRefs(organizationId, block, value);
+  const refError = await checkPpkRefs(auth.scope, block, value);
   if (refError) return NextResponse.json({ error: refError }, { status: 400 });
 
   if (block === "team") {
-    const groupError = await checkPpkTeamGroup(organizationId, value);
+    const groupError = await checkPpkTeamGroup(auth.scope, value);
     if (groupError) return NextResponse.json({ error: groupError }, { status: 409 });
   }
 
@@ -63,17 +64,21 @@ export async function POST(request: Request) {
   const data = block === "policy" ? { ...value, token: randomBytes(16).toString("base64url") } : value;
 
   const last = await db.ppkRecord.aggregate({
-    where: { organizationId, block },
+    where: { ...ppkWhere(auth.scope), block },
     _max: { sortOrder: true },
   });
   // Блок-одиночка пишет себя в `singleton`: уникальный индекс в БД не даст
   // второй записи, даже если два запроса проверили счётчик одновременно.
-  const singleton = (PPK_SINGLETON_BLOCKS as readonly string[]).includes(block) ? block : null;
+  // У точки — `<block>@<точка>` (ППК на точку, 2026-11-01).
+  const singleton = (PPK_SINGLETON_BLOCKS as readonly string[]).includes(block)
+    ? ppkSingletonKey(block, auth.scope.buildingId)
+    : null;
   let record;
   try {
     record = await db.ppkRecord.create({
       data: {
         organizationId,
+        buildingId: auth.scope.buildingId,
         block,
         data: data as Prisma.InputJsonValue,
         sortOrder: (last._max.sortOrder ?? 0) + 1,

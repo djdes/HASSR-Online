@@ -10,6 +10,8 @@ import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { loadEnabledJournals } from "@/lib/ppk/journals.server";
 import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
 import { PpkEmptyState, PPK_BUTTON_OUTLINE_CLASS } from "@/components/production-control/ppk-ui";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +24,19 @@ export default async function ControlPointWorksheetsPage({
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
   const { id } = await searchParams;
   const onlyId = typeof id === "string" ? id.slice(0, 64) : null;
 
   const select = { id: true, data: true } as const;
   const orderBy = [{ sortOrder: "asc" as const }, { createdAt: "asc" as const }];
   const [pointRows, hazardRows, staff, journals, org, t, tw, th] = await Promise.all([
-    db.ppkRecord.findMany({ where: { organizationId, block: "control-points" }, select, orderBy }),
-    db.ppkRecord.findMany({ where: { organizationId, block: "hazards" }, select }),
-    loadPpkStaff(organizationId),
-    loadEnabledJournals(organizationId),
-    loadPpkPrintOrg(organizationId),
+    db.ppkRecord.findMany({ where: { ...ppkWhere(scope), block: "control-points" }, select, orderBy }),
+    db.ppkRecord.findMany({ where: { ...ppkWhere(scope), block: "hazards" }, select }),
+    loadPpkStaff(scope),
+    loadEnabledJournals(organizationId, scope.buildingId),
+    loadPpkPrintOrg(organizationId, scope.buildingId),
     getTranslations("productionControl.controlPoints"),
     getTranslations("productionControl.worksheet"),
     getTranslations("productionControl.hazards"),

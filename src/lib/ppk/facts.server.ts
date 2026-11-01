@@ -18,6 +18,7 @@ import {
   type ProductData,
   type TeamMember,
 } from "./records";
+import { ppkWhere, type PpkScope } from "./scope";
 
 /** Окно «недавних» записей для блока аудита. */
 const RECENT_DAYS = 365;
@@ -65,7 +66,8 @@ function groupValidRecords(rows: { id: string; block: string; data: unknown }[])
  * Факты раздела ППК из базы: документы и папки, приказы, записи ХАССП
  * (группа, политика, продукция, опасности, ККТ), аудит.
  */
-export async function loadPpkFacts(organizationId: string): Promise<PpkFacts> {
+export async function loadPpkFacts(scope: PpkScope): Promise<PpkFacts> {
+  const { organizationId } = scope;
   const facts = emptyPpkFacts();
   const since = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000);
   const [knowledgeDocs, folderRows, ordersTotal, ppkApprovalCount, recordRows, rosterRows, auditDocs, checklistRuns] =
@@ -73,13 +75,13 @@ export async function loadPpkFacts(organizationId: string): Promise<PpkFacts> {
       db.knowledgeDocument.count({ where: { organizationId, kind: null, folder: null } }),
       db.knowledgeDocument.groupBy({
         by: ["folder"],
-        where: { organizationId, folder: { in: [...PPK_FOLDERS] } },
+        where: { ...ppkWhere(scope), folder: { in: [...PPK_FOLDERS] } },
         _count: { _all: true },
       }),
       db.companyOrder.count({ where: { organizationId } }),
       db.companyOrder.count({ where: { organizationId, templateCode: "ppk-approval" } }),
       db.ppkRecord.findMany({
-        where: { organizationId, block: { in: [...PPK_RECORD_BLOCKS] } },
+        where: { ...ppkWhere(scope), block: { in: [...PPK_RECORD_BLOCKS] } },
         select: { id: true, block: true, data: true },
       }),
       db.user.findMany({ where: { organizationId, ...ORG_ROSTER_WHERE }, select: { id: true } }),
@@ -180,6 +182,6 @@ export async function loadPpkFacts(organizationId: string): Promise<PpkFacts> {
   return facts;
 }
 
-export async function loadPpkStatuses(organizationId: string): Promise<Record<PpkBlockKey, PpkStatus>> {
-  return computePpkStatuses(await loadPpkFacts(organizationId));
+export async function loadPpkStatuses(scope: PpkScope): Promise<Record<PpkBlockKey, PpkStatus>> {
+  return computePpkStatuses(await loadPpkFacts(scope));
 }

@@ -4,6 +4,7 @@ import { parsePpkRecords } from "./records";
 import { ppkDueSoon, type PpkReminderItem } from "./reminders";
 import { ppkNextStep, ppkProgress } from "./status";
 import type { PpkBlockKey } from "./registry";
+import { ppkWhere, type PpkScope } from "./scope";
 
 export type PpkTodaySummary = {
   done: number;
@@ -20,13 +21,13 @@ export function moscowToday(now: Date = new Date()): string {
 
 /** Данные плашки «Производственный контроль» на главной руководителя. */
 export async function loadPpkTodaySummary(
-  organizationId: string,
+  scope: PpkScope,
   today: string = moscowToday(),
 ): Promise<PpkTodaySummary> {
   const [statuses, rows] = await Promise.all([
-    loadPpkStatuses(organizationId),
+    loadPpkStatuses(scope),
     db.ppkRecord.findMany({
-      where: { organizationId, block: { in: ["lab-plan", "pest-plan"] } },
+      where: { ...ppkWhere(scope), block: { in: ["lab-plan", "pest-plan"] } },
       select: { id: true, block: true, data: true, sortOrder: true, updatedAt: true },
     }),
   ]);

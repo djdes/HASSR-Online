@@ -9,6 +9,7 @@ import { loadMessages } from "@/i18n/messages";
 import { markPlanDone, moscowToday, nextDueAfterDone } from "@/lib/ppk/plan-done";
 import { PPK_RECORD_SCHEMAS, type LabPlanItem, type PestPlanItem } from "@/lib/ppk/records";
 import { resolveLinkedUser } from "./staff-tools";
+import { computePointScopeForUserId } from "@/lib/point-scope.server";
 
 /** YYYY-MM-DD → ДД.ММ.ГГГГ. */
 function dmy(value: string): string {
@@ -46,12 +47,16 @@ export function registerPpkHandlers(composer: Composer<Context>) {
       return;
     }
 
-    const record = hasFullWorkspaceAccess(user)
+    const found = hasFullWorkspaceAccess(user)
       ? await db.ppkRecord.findFirst({
           where: { id: recordId, organizationId: user.organizationId, block: { in: ["lab-plan", "pest-plan"] } },
-          select: { id: true, block: true, data: true },
+          select: { id: true, block: true, data: true, buildingId: true },
         })
       : null;
+    // ППК на точку (2026-11-01): руководитель точки отмечает только пункты
+    // плана своей точки, не организации и не другой точки.
+    const pointScope = found ? await computePointScopeForUserId(user.id) : null;
+    const record = found && (!pointScope || (found.buildingId !== null && pointScope.includes(found.buildingId))) ? found : null;
     if (!record) {
       await ctx.answerCallbackQuery({ text: t("noAccess"), show_alert: true });
       return;

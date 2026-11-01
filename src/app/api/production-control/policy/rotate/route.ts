@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
   const policy = await db.ppkRecord.findFirst({
-    where: { organizationId: auth.organizationId, block: "policy" },
+    where: { ...ppkWhere(auth.scope), block: "policy" },
     select: { id: true, data: true },
   });
   if (!policy) {

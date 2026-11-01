@@ -8,7 +8,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const auth = await requireKnowledgeAccess();
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
-  const file = await db.knowledgeDocument.findFirst({ where: { id, organizationId: auth.organizationId }, select: { fileName: true, mimeType: true, content: true } });
+  const file = await db.knowledgeDocument.findFirst({ where: { id, organizationId: auth.organizationId, kind: null, folder: null }, select: { fileName: true, mimeType: true, content: true } });
   if (!file) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   const download = new URL(request.url).searchParams.get("download") === "1" || !knowledgeInline(file.mimeType);
   return new Response(new Uint8Array(file.content), { headers: {

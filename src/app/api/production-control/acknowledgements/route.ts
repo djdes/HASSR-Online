@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   if (!auth.ok) return auth.response;
   const raw = new URL(request.url).searchParams.get("docKeys") ?? "";
   const keys = [...new Set(raw.split(",").map((key) => key.trim()).filter(isAckDocKey))].slice(0, 200);
-  const many = await ackStatsMany(auth.organizationId, keys, await visibleStaffWhere(auth.session));
+  const many = await ackStatsMany(auth.scope, keys, await visibleStaffWhere(auth.session));
   const stats: Record<string, { acknowledged: number; total: number }> = {};
   for (const [key, one] of Object.entries(many)) {
     stats[key] = { acknowledged: one.acknowledged.length, total: one.acknowledged.length + one.pending.length };

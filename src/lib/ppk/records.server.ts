@@ -1,16 +1,20 @@
 import { db } from "@/lib/db";
+import { ppkWhere, type PpkScope } from "./scope";
+import { ppkStaffWhere } from "./staff.server";
 import { checkTeamGroup, parsePpkRecords, type PpkRecordBlock, type TeamMember } from "./records";
 
 /**
  * Проверка ссылок внутри данных записи: сотрудник, опасность и журнал должны
- * существовать и принадлежать этой организации. Возвращает текст ошибки для
- * ответа 400 или null, если ссылки в порядке.
+ * существовать и принадлежать этой организации. ППК точки (2026-11-01) —
+ * только люди этой точки (и без точек) и опасности её же ППК. Возвращает
+ * текст ошибки для ответа 400 или null, если ссылки в порядке.
  */
 export async function checkPpkRefs(
-  organizationId: string,
+  scope: PpkScope,
   block: PpkRecordBlock,
   data: Record<string, unknown>,
 ): Promise<string | null> {
+  const { organizationId } = scope;
   const userIds: string[] = [];
   if (block === "team" && typeof data.userId === "string") userIds.push(data.userId);
   if (block === "policy" && typeof data.approvedById === "string") userIds.push(data.approvedById);
@@ -21,13 +25,15 @@ export async function checkPpkRefs(
   }
 
   if (userIds.length > 0) {
-    const found = await db.user.count({ where: { id: { in: userIds }, organizationId } });
+    const found = await db.user.count({
+      where: { AND: [{ id: { in: userIds }, organizationId }, await ppkStaffWhere(scope)] },
+    });
     if (found !== new Set(userIds).size) return "Сотрудник не найден";
   }
 
   if (block === "control-points" && typeof data.hazardId === "string") {
     const hazard = await db.ppkRecord.findFirst({
-      where: { id: data.hazardId, organizationId, block: "hazards" },
+      where: { id: data.hazardId, ...ppkWhere(scope), block: "hazards" },
       select: { id: true },
     });
     if (!hazard) return "Опасность не найдена";
@@ -56,12 +62,12 @@ export function ppkValidationError(error: { issues: { path: PropertyKey[] }[] })
  * Возвращает текст ошибки для ответа 409 или null.
  */
 export async function checkPpkTeamGroup(
-  organizationId: string,
+  scope: PpkScope,
   data: Record<string, unknown>,
   excludeId?: string,
 ): Promise<string | null> {
   const rows = await db.ppkRecord.findMany({
-    where: { organizationId, block: "team", ...(excludeId ? { id: { not: excludeId } } : {}) },
+    where: { ...ppkWhere(scope), block: "team", ...(excludeId ? { id: { not: excludeId } } : {}) },
     select: { id: true, data: true, sortOrder: true, updatedAt: true },
   });
   const others = parsePpkRecords("team", rows).map((row) => row.data);

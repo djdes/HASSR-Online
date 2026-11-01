@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 import { knowledgeInline } from "@/lib/knowledge-documents";
 
 export const runtime = "nodejs";
@@ -12,7 +13,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const file = await db.knowledgeDocument.findFirst({
-    where: { id, organizationId: auth.organizationId, folder: { not: null } },
+    where: { id, ...ppkWhere(auth.scope), folder: { not: null } },
     select: { fileName: true, mimeType: true, content: true },
   });
   if (!file) return NextResponse.json({ error: "Файл не найден" }, { status: 404 });

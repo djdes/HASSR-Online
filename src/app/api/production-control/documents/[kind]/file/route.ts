@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { knowledgeInline } from "@/lib/knowledge-documents";
 import { isProductionDocKind } from "@/lib/production-control-docs";
 import { requireProductionDocsAccess } from "@/lib/production-control-docs.server";
+import { ppkDocKindKey } from "@/lib/ppk/scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ kind: strin
     return NextResponse.json({ error: "Неизвестный вид документа" }, { status: 404 });
   }
   const file = await db.knowledgeDocument.findFirst({
-    where: { organizationId: auth.organizationId, kind },
+    where: { organizationId: auth.organizationId, kind: ppkDocKindKey(kind, auth.scope.buildingId) },
     select: { fileName: true, mimeType: true, content: true },
   });
   if (!file) return NextResponse.json({ error: "Документ не загружен" }, { status: 404 });

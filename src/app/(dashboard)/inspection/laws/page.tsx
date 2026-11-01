@@ -1,10 +1,11 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { NormDocumentsBody, NormDocumentsSanpinLink } from "@/components/production-control/norm-documents-body";
+import { ppkPageScope } from "@/lib/ppk/access.server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +18,15 @@ export const dynamic = "force-dynamic";
 export default async function InspectionLawsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
-  const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): нормативы точки из шапки или организации.
+  const scope = await ppkPageScope(session);
   const t = await getTranslations("productionControl");
 
   return (
     <DomainMessagesBoundary namespaces={["productionControl", "productionControlUi"]}>
       <div className="space-y-6">
         <SectionPageHeader description={t("norms.lead")} actions={<NormDocumentsSanpinLink />} />
-        <NormDocumentsBody organizationId={organizationId} />
+        <NormDocumentsBody scope={scope} />
       </div>
     </DomainMessagesBoundary>
   );
