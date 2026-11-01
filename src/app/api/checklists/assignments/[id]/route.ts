@@ -3,7 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { checklistAssignmentInputSchema, checklistAssignmentToggleSchema } from "@/lib/checklist-assignments";
-import { requireAssignmentAccess, validateAssignmentRefs } from "@/lib/checklist-assignments.api";
+import { loadAssignmentScope, requireAssignmentAccess, validateAssignmentRefs } from "@/lib/checklist-assignments.api";
+import { assignmentChangeRefusal } from "@/lib/checklist-point-scope";
 
 export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
@@ -12,13 +13,21 @@ type Ctx = { params: Promise<{ id: string }> };
  * PATCH — «Пауза/Включить» (`{ active }`) или правка формы целиком (плюс
  * необязательный `active`); DELETE — удалить назначение, проверки по нему
  * остаются в истории (`assignmentId` обнуляется). Оба — `admin.full`.
+ * Точка (2026-11-01, «точка видит только своё»): назначение другой точки —
+ * «не найдено», назначение на должность руководитель точки не меняет.
  */
 export async function PATCH(request: Request, ctx: Ctx) {
   const auth = await requireAssignmentAccess("write");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
-  const existing = await db.checklistAssignment.findFirst({ where: { id, organizationId: auth.organizationId }, select: { id: true } });
+  const existing = await db.checklistAssignment.findFirst({
+    where: { id, organizationId: auth.organizationId },
+    select: { id: true, targetKind: true, targetId: true, verifierUserId: true },
+  });
   if (!existing) return NextResponse.json({ error: "Назначение не найдено" }, { status: 404 });
+  const scope = await loadAssignmentScope(auth.session, auth.organizationId);
+  const refusal = assignmentChangeRefusal(scope.area, existing);
+  if (refusal) return NextResponse.json({ error: refusal.error }, { status: refusal.status });
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const toggle = checklistAssignmentToggleSchema.safeParse(body);
   let data: Prisma.ChecklistAssignmentUncheckedUpdateInput;
@@ -29,7 +38,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
     if (active !== undefined && typeof active !== "boolean") return NextResponse.json({ error: "Проверьте назначение" }, { status: 400 });
     const parsed = checklistAssignmentInputSchema.safeParse(rest);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Проверьте назначение" }, { status: 400 });
-    const problem = await validateAssignmentRefs(auth.organizationId, parsed.data, new Date());
+    const problem = await validateAssignmentRefs(auth.organizationId, parsed.data, new Date(), scope, existing.verifierUserId);
     if (problem) return problem;
     // Новые условия — новый счёт напоминаний: отметку периода сбрасываем.
     data = { ...parsed.data, ...(typeof active === "boolean" ? { active } : {}), lastReminderPeriodKey: null };
@@ -56,6 +65,9 @@ export async function DELETE(request: Request, ctx: Ctx) {
     select: { id: true, templateId: true, targetKind: true, targetId: true, _count: { select: { inspections: true } } },
   });
   if (!existing) return NextResponse.json({ error: "Назначение не найдено" }, { status: 404 });
+  const scope = await loadAssignmentScope(auth.session, auth.organizationId);
+  const refusal = assignmentChangeRefusal(scope.area, existing);
+  if (refusal) return NextResponse.json({ error: refusal.error }, { status: refusal.status });
   await db.checklistAssignment.delete({ where: { id } });
   await recordAuditLog({
     request,

@@ -7,6 +7,8 @@ import {
   inspectionVisitNotFound,
 } from "@/lib/inspection-visits.server";
 import { getServerSession } from "@/lib/server-session";
+import { inspectionVisitInArea } from "@/lib/checklist-point-scope";
+import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +16,8 @@ export const dynamic = "force-dynamic";
 /**
  * Скан основания проверки в кабинете: только своей организации и тем, кто
  * видит журнал посещений. Без сессии, чужая организация, повар — 404 (не
- * подсказываем, что файл есть). `?download=1` — скачать.
+ * подсказываем, что файл есть). `?download=1` — скачать. Кабинет на точке
+ * (2026-11-01, «точка видит только своё») — без записей по ссылке другой точки.
  */
 export async function GET(request: Request, ctx: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await ctx.params;
@@ -22,10 +25,11 @@ export async function GET(request: Request, ctx: { params: Promise<{ fileId: str
   if (!session) return inspectionVisitNotFound();
   const organizationId = getActiveOrgId(session);
   const file = await findInspectionVisitFile(fileId);
-  const allowed = inspectionVisitFileAccessible({
-    file,
-    viewer: { kind: "cabinet", organizationId, allowed: canUseInspectionVisits(session.user) },
-  });
+  const allowed =
+    inspectionVisitFileAccessible({
+      file,
+      viewer: { kind: "cabinet", organizationId, allowed: canUseInspectionVisits(session.user) },
+    }) && inspectionVisitInArea(await visibleObjectBuildingIds(session), file?.visit.token?.buildingId);
   if (!file || !allowed) {
     if (file) console.warn("[inspection-visits] file access denied", { fileId, organizationId, userId: session.user.id });
     return inspectionVisitNotFound();

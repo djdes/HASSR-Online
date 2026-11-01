@@ -10,6 +10,7 @@ import {
   listInspectionVisits,
   visitFilesFromForm,
 } from "@/lib/inspection-visits.server";
+import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Журнал посещений доступен руководству" }, { status: 403 });
   }
   const includeHidden = new URL(request.url).searchParams.get("hidden") === "1";
-  const visits = await listInspectionVisits(getActiveOrgId(auth.session), { includeHidden });
+  // Точка (2026-11-01, «точка видит только своё»): записи по ссылке другой точки не показываем.
+  const visits = await listInspectionVisits(getActiveOrgId(auth.session), { includeHidden, pointIds: await visibleObjectBuildingIds(auth.session) });
   return NextResponse.json({ visits }, { headers: { "Cache-Control": "private, no-store" } });
 }
 

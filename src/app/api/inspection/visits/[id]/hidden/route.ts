@@ -4,6 +4,8 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { canHideInspectionVisits, inspectionVisitHideSchema, INSPECTION_VISIT_ERRORS } from "@/lib/inspection-visits";
+import { inspectionVisitInArea } from "@/lib/checklist-point-scope";
+import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,10 +33,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const visit = /^[A-Za-z0-9_-]{1,64}$/.test(id)
     ? await db.inspectionVisit.findUnique({
         where: { id },
-        select: { id: true, organizationId: true, hiddenAt: true, inspectorName: true, authority: true },
+        select: { id: true, organizationId: true, hiddenAt: true, inspectorName: true, authority: true, token: { select: { buildingId: true } } },
       })
     : null;
-  if (!visit || visit.organizationId !== organizationId) {
+  // Точка (2026-11-01, «точка видит только своё»): запись по ссылке другой точки — «не найдена».
+  if (!visit || visit.organizationId !== organizationId || !inspectionVisitInArea(await visibleObjectBuildingIds(session), visit.token?.buildingId)) {
     return NextResponse.json({ error: "Посещение не найдено" }, { status: 404 });
   }
 

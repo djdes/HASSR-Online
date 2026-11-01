@@ -249,9 +249,10 @@ export async function GET(request: Request) {
     manifestLines.push("✗ Производственный контроль — не удалось собрать документы из разделов");
     console.error("[compliance-bundle] assembled production control docs failed", err);
   }
-  // Журнал посещений проверяющих за период и сканы оснований проверок.
+  // Журнал посещений проверяющих за период и сканы оснований проверок; архив
+  // точки — без записей по ссылке другой точки (2026-11-01).
   try {
-    const visits = await loadInspectionVisitsForBundle(organizationId, from, toEndOfDay);
+    const visits = await loadInspectionVisitsForBundle(organizationId, from, toEndOfDay, pointId ? [pointId] : null);
     const folder = "Посещения проверяющих";
     zip.file(
       `${folder}/Журнал посещений.pdf`,

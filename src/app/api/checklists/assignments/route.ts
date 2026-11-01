@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { checklistAssignmentInputSchema } from "@/lib/checklist-assignments";
 import { listAssignmentRows } from "@/lib/checklist-assignments.server";
-import { requireAssignmentAccess, validateAssignmentRefs } from "@/lib/checklist-assignments.api";
+import { loadAssignmentScope, requireAssignmentAccess, validateAssignmentRefs } from "@/lib/checklist-assignments.api";
+import { assignmentRowsInArea } from "@/lib/checklist-point-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +12,14 @@ export const dynamic = "force-dynamic";
  * Назначения чек-листов (2026-10-19). GET — список со статусом текущего
  * периода (руководству); POST — новое назначение (`admin.full`).
  * Без TasksFlow: напоминания — крон `/api/cron/checklist-reminders`.
+ * Точка (2026-11-01, «точка видит только своё»): список и новая цель — в
+ * пределах точки из шапки и точек руководителя точки.
  */
 export async function GET() {
   const auth = await requireAssignmentAccess("read");
   if (!auth.ok) return auth.response;
-  const assignments = await listAssignmentRows(auth.organizationId, new Date());
+  const scope = await loadAssignmentScope(auth.session, auth.organizationId);
+  const assignments = assignmentRowsInArea(scope.area, await listAssignmentRows(auth.organizationId, new Date(), scope.context));
   return NextResponse.json({ assignments }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
@@ -24,7 +28,8 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
   const parsed = checklistAssignmentInputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Проверьте назначение" }, { status: 400 });
-  const problem = await validateAssignmentRefs(auth.organizationId, parsed.data, new Date());
+  const scope = await loadAssignmentScope(auth.session, auth.organizationId);
+  const problem = await validateAssignmentRefs(auth.organizationId, parsed.data, new Date(), scope);
   if (problem) return problem;
   const assignment = await db.checklistAssignment.create({
     data: {

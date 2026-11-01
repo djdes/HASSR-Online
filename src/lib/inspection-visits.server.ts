@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
+import { inspectionVisitAreaWhere } from "@/lib/checklist-point-scope";
 import {
   INSPECTION_VISIT_ERRORS,
   INSPECTION_VISIT_FILE_MAX_BYTES,
@@ -278,11 +279,13 @@ const listSelect = {
 /**
  * Посещения организации (новые сверху) — без содержимого файлов.
  *   • `tokenId` + `ids` — портал: только записи этого токена из cookie браузера;
- *   • `includeHidden` — кабинет: со скрытыми (по умолчанию их нет).
+ *   • `includeHidden` — кабинет: со скрытыми (по умолчанию их нет);
+ *   • `pointIds` — кабинет на точке (2026-11-01, «точка видит только своё»):
+ *     без записей по ссылке другой точки (`inspectionVisitAreaWhere`).
  */
 export async function listInspectionVisits(
   organizationId: string,
-  options: { tokenId?: string; ids?: readonly string[]; includeHidden?: boolean; take?: number } = {}
+  options: { tokenId?: string; ids?: readonly string[]; includeHidden?: boolean; take?: number; pointIds?: readonly string[] | null } = {}
 ): Promise<InspectionVisitListItem[]> {
   if (options.ids && options.ids.length === 0) return [];
   const rows = await db.inspectionVisit.findMany({
@@ -291,6 +294,7 @@ export async function listInspectionVisits(
       ...(options.tokenId ? { tokenId: options.tokenId } : {}),
       ...(options.ids ? { id: { in: [...options.ids] } } : {}),
       ...(options.includeHidden ? {} : { hiddenAt: null }),
+      ...inspectionVisitAreaWhere(options.pointIds),
     },
     orderBy: [{ visitedAt: "desc" }, { id: "desc" }],
     take: options.take ?? 50,
@@ -307,11 +311,12 @@ export async function listInspectionVisits(
 /**
  * Посещения периода для архива — без скрытых и без содержимого файлов:
  * содержимое берётся по одному файлу при добавлении в архив
- * (`loadInspectionVisitFileContent`), в пределах объёма.
+ * (`loadInspectionVisitFileContent`), в пределах объёма. Архив точки
+ * (`pointIds`) — без записей по ссылке другой точки.
  */
-export async function loadInspectionVisitsForBundle(organizationId: string, from: Date, toEndOfDay: Date) {
+export async function loadInspectionVisitsForBundle(organizationId: string, from: Date, toEndOfDay: Date, pointIds: readonly string[] | null = null) {
   return db.inspectionVisit.findMany({
-    where: { organizationId, hiddenAt: null, visitedAt: { gte: from, lte: toEndOfDay } },
+    where: { organizationId, hiddenAt: null, visitedAt: { gte: from, lte: toEndOfDay }, ...inspectionVisitAreaWhere(pointIds) },
     orderBy: [{ visitedAt: "asc" }, { id: "asc" }],
     select: {
       id: true,
@@ -339,7 +344,7 @@ export async function loadInspectionVisitFileContent(fileId: string, organizatio
   return row && row.organizationId === organizationId ? row.content : null;
 }
 
-/** Файл с данными для проверки доступа (без содержимого). */
+/** Файл с данными для проверки доступа (без содержимого); точка ссылки записи — для кабинета на точке. */
 export async function findInspectionVisitFile(fileId: string) {
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(fileId)) return null;
   return db.inspectionVisitFile.findUnique({
@@ -350,7 +355,7 @@ export async function findInspectionVisitFile(fileId: string) {
       organizationId: true,
       fileName: true,
       mimeType: true,
-      visit: { select: { organizationId: true, tokenId: true, hiddenAt: true } },
+      visit: { select: { organizationId: true, tokenId: true, hiddenAt: true, token: { select: { buildingId: true } } } },
     },
   });
 }

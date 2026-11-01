@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { listInspectionVisits } from "@/lib/inspection-visits.server";
+import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
 import { InspectionVisitsCard } from "@/components/inspection/inspection-visits-card";
 import { InspectionHowItWorks } from "@/components/inspection/inspection-how-it-works";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
@@ -23,10 +24,12 @@ export default async function InspectionVisitsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) forbidden();
   const organizationId = getActiveOrgId(session);
+  // Точка (2026-11-01, «точка видит только своё»): записи по ссылке другой точки не показываем.
+  const pointIds = await visibleObjectBuildingIds(session);
 
   const [visits, org, t] = await Promise.all([
     // Со скрытыми: показать их можно переключателем в журнале.
-    listInspectionVisits(organizationId, { includeHidden: true }),
+    listInspectionVisits(organizationId, { includeHidden: true, pointIds }),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     getTranslations("inspectionDay"),
   ]);
