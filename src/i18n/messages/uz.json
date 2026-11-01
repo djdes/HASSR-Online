@@ -25739,7 +25739,8 @@
       "sheetEmpty": "Bo‘sh jurnal sahifasi",
       "before": "Avval",
       "after": "Keyin",
-      "illustrationCaption": "Bugungi bo‘sh qatorlar to‘ldiriladi, kiritilgan ma’lumotlar o‘zgarishsiz qoladi."
+      "illustrationCaption": "Bugungi bo‘sh qatorlar to‘ldiriladi, kiritilgan ma’lumotlar o‘zgarishsiz qoladi.",
+      "pointRequired": "Sarlavhada nuqtani tanlang: avtoto‘ldirish kunni butun tashkilot uchun emas, bitta nuqta uchun yopadi."
     },
     "consultantCard": {
       "title": "Sizning maslahatchingiz",

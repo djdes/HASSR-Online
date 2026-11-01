@@ -29,11 +29,15 @@ import {
  *     сотрудникам). Уже введённое не перезаписывается. Итог — тостом.
  *   • «QR-коды» — раздел печати QR `/settings/qr-posters`.
  *
+ * На уровне организации (офис или «Вся организация», режим точек) день
+ * закрывается для одной точки — «Автозаполнить» просит выбрать точку в
+ * шапке (`pointRequired`, владелец 2026-11-01), сервер отвечает так же.
+ *
  * С 2026-09-27 кнопки стоят не в строке заголовка секции, а в панели с
  * поиском над списком журналов (`DashboardJournalsGrid`): свёрнутая
  * секция — одна строка. Гасить клик больше не нужно — `<summary>` рядом нет.
  */
-export function CloseDayCard() {
+export function CloseDayCard({ pointRequired = false }: { pointRequired?: boolean } = {}) {
   const t = useTranslations("dashboardUi.closeDayCard");
   const { controls } = useJournalControls();
   const router = useRouter();
@@ -80,9 +84,11 @@ export function CloseDayCard() {
     >
       <button
         type="button"
-        onClick={() => setConfirming(true)}
+        onClick={() => (pointRequired ? toast.info(t("pointRequired")) : setConfirming(true))}
         disabled={busy}
+        title={pointRequired ? t("pointRequired") : undefined}
         data-autofill-open=""
+        data-point-required={pointRequired ? "" : undefined}
         className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:opacity-60 sm:min-w-[180px]"
       >
         <Wand2 className="size-4" />
