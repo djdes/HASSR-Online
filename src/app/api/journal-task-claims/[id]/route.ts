@@ -378,6 +378,8 @@ async function runSideEffects(organizationId: string, effects: SideEffect[], use
         await db.capaTicket.create({
           data: {
             organizationId,
+            // Точка объекта задачи, без объекта — точка выполнявшего (2026-11-01).
+            buildingId: await placeOfEvent(organizationId, { ...placeRefFromScopeKey(scopeKey), userId }),
             title: e.title,
             description: e.data ? JSON.stringify(e.data, null, 2) : null,
             priority: e.severity === "high" ? "high" : e.severity === "low" ? "low" : "medium",

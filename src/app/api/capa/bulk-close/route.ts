@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { loadBuildingContext } from "@/lib/active-building";
+import { pointRecordsWhere } from "@/lib/point-records";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +52,8 @@ export async function POST(request: Request) {
       id: { in: body.ids },
       organizationId: orgId,
       status: { not: "closed" },
+      // Только CAPA точки из шапки и общие (2026-11-01).
+      ...pointRecordsWhere(await loadBuildingContext(auth.session)),
     },
     data: {
       status: "closed",

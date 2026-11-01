@@ -2,6 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { CapaForm } from "@/components/capa/capa-form";
+import { loadBuildingContext } from "@/lib/active-building";
+import { viewedPointId } from "@/lib/building-scope";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 
 export default async function NewCapaPage({
   searchParams,
@@ -15,8 +18,11 @@ export default async function NewCapaPage({
 
   const initialDescription = typeof description === "string" ? description.slice(0, 2000) : undefined;
 
+  // Нарушение создаётся на точке из шапки — исполнитель из людей этой точки
+  // (2026-11-01); в «Вся организация» — все.
+  const pointId = viewedPointId(await loadBuildingContext(session));
   const users = await db.user.findMany({
-    where: { organizationId: getActiveOrgId(session), isActive: true },
+    where: { organizationId: getActiveOrgId(session), isActive: true, ...staffAtBuildingWhere(pointId) },
     select: { id: true, name: true },
   });
 

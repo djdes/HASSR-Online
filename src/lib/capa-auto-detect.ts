@@ -15,7 +15,8 @@
  */
 import { db } from "@/lib/db";
 import { getDbRoleValuesWithLegacy, MANAGER_ROLES } from "@/lib/user-roles";
-import { resolveOnDutyByCategory } from "@/lib/work-shifts";
+import { listOnDutyToday } from "@/lib/work-shifts";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 
 const SOURCE_TYPE = "auto_temp_3days";
 
@@ -55,7 +56,7 @@ export async function detectTemperatureCapas(args: {
       // has no meaning.
       OR: [{ tempMin: { not: null } }, { tempMax: { not: null } }],
     },
-    select: { id: true, name: true, tempMin: true, tempMax: true },
+    select: { id: true, name: true, tempMin: true, tempMax: true, area: { select: { buildingId: true } } },
   });
   if (equipmentList.length === 0) {
     return { created: 0, skippedExisting: 0, candidates: 0, details: [] };
@@ -159,7 +160,9 @@ export async function detectTemperatureCapas(args: {
   }
 
   // Lazy-load manager — only when we actually need to create a ticket.
-  let managerId: string | null | undefined;
+  // Точки (2026-11-01): ответственный — руководитель точки оборудования.
+  const managerByPoint = new Map<string, string | null>();
+  let onDutyManagementIds: string[] | undefined;
 
   for (const equip of equipmentList) {
     const readings = readingsByEquipment.get(equip.id) ?? [];
@@ -197,31 +200,32 @@ export async function detectTemperatureCapas(args: {
       continue;
     }
 
-    if (managerId === undefined) {
+    const pointId = equip.area.buildingId ?? null;
+    if (!managerByPoint.has(pointId ?? "")) {
       // Сначала пытаемся назначить на дежурного из руководства сегодня —
       // чтобы CAPA «проверить компрессор» упала не Иванову на 7-дневной
       // болезни, а тому, кто реально в смене. Если в workShift никого
       // из management-категории на сегодня нет, фолбэчимся на первого
-      // активного менеджера в организации.
-      const onDuty = await resolveOnDutyByCategory(
-        args.organizationId,
-        "management",
-        now
-      );
-      if (onDuty) {
-        managerId = onDuty.userId;
-      } else {
-        const manager = await db.user.findFirst({
-          where: {
-            organizationId: args.organizationId,
-            role: { in: getDbRoleValuesWithLegacy(MANAGER_ROLES) },
-            isActive: true,
-          },
+      // активного менеджера в организации. С точкой — только люди,
+      // работающие на точке оборудования; нет таких — как раньше.
+      onDutyManagementIds ??= (await listOnDutyToday(args.organizationId, now))
+        .filter((user) => user.categoryKey === "management")
+        .map((user) => user.userId);
+      const findManager = (where: Record<string, unknown>) =>
+        db.user.findFirst({
+          where: { organizationId: args.organizationId, isActive: true, ...where },
           select: { id: true },
         });
-        managerId = manager?.id ?? null;
-      }
+      const managerRoles = { role: { in: getDbRoleValuesWithLegacy(MANAGER_ROLES) } };
+      const atPoint = staffAtBuildingWhere(pointId);
+      const picked =
+        (onDutyManagementIds.length > 0 ? await findManager({ id: { in: onDutyManagementIds }, ...atPoint }) : null) ??
+        (pointId ? await findManager({ ...managerRoles, ...atPoint }) : null) ??
+        (onDutyManagementIds.length > 0 ? await findManager({ id: { in: onDutyManagementIds } }) : null) ??
+        (await findManager(managerRoles));
+      managerByPoint.set(pointId ?? "", picked?.id ?? null);
     }
+    const managerId = managerByPoint.get(pointId ?? "") ?? null;
     if (!managerId) {
       summary.details.push({
         equipmentId: equip.id,
@@ -243,6 +247,7 @@ export async function detectTemperatureCapas(args: {
     const ticket = await db.capaTicket.create({
       data: {
         organizationId: args.organizationId,
+        buildingId: pointId,
         title: `Проверить «${equip.name}» — отклонения температуры 3 дня подряд`,
         description:
           `Автоматически создано WeSetup: температурный режим «${equip.name}» ` +

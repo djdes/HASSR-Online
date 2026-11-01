@@ -17,6 +17,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BatchStatusActions } from "@/components/batches/batch-status-actions";
+import { loadBuildingContext } from "@/lib/active-building";
+import { pointRecordVisible } from "@/lib/point-records";
 
 const STATUS_VARIANTS: Record<BatchStatus, "default" | "secondary" | "outline" | "destructive"> = {
   received: "secondary",
@@ -47,7 +49,12 @@ export default async function BatchDetailPage({
   const dateTimeFormat = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], { dateStyle: "short", timeStyle: "medium" });
 
   const batch = await db.batch.findUnique({ where: { id } });
-  if (!batch || batch.organizationId !== getActiveOrgId(session)) {
+  if (
+    !batch ||
+    batch.organizationId !== getActiveOrgId(session) ||
+    // Партия другой точки — «не найдено» (2026-11-01).
+    !pointRecordVisible(await loadBuildingContext(session), batch.buildingId)
+  ) {
     notFound();
   }
 

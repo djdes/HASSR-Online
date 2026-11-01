@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 import { emitWebhook } from "@/lib/webhooks/dispatch";
 import { NextRequest, NextResponse } from "next/server";
 import { isManagementRole } from "@/lib/user-roles";
+import { loadBuildingContext } from "@/lib/active-building";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { newRecordPoint, pointRecordsWhere } from "@/lib/point-records";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -23,6 +26,8 @@ export async function GET(req: NextRequest) {
 
   const where: Record<string, unknown> = {
     organizationId: getActiveOrgId(session),
+    // Точки (2026-11-01): CAPA точки из шапки и общие.
+    ...pointRecordsWhere(await loadBuildingContext(session)),
   };
   if (status && status !== "all") where.status = status;
   if (priority && priority !== "all") where.priority = priority;
@@ -80,12 +85,16 @@ export async function POST(req: NextRequest) {
     slaHours = Math.floor(body.slaHours);
   }
 
+  // Точка CAPA (2026-11-01): из шапки или явно выбранная доступная точка.
+  const point = newRecordPoint(await loadBuildingContext(session), body.buildingId);
+  if (!point.ok) return NextResponse.json({ error: point.error }, { status: point.status });
+
   // assignedToId — должен быть юзером той же org. Раньше принимался
-  // любой UUID → cross-tenant FK.
+  // любой UUID → cross-tenant FK. С точкой — человек этой точки.
   let assignedToId: string | null = null;
   if (typeof body.assignedToId === "string" && body.assignedToId) {
     const assignee = await db.user.findFirst({
-      where: { id: body.assignedToId, organizationId: orgId },
+      where: { id: body.assignedToId, organizationId: orgId, ...staffAtBuildingWhere(point.buildingId) },
       select: { id: true },
     });
     if (!assignee) {
@@ -100,6 +109,7 @@ export async function POST(req: NextRequest) {
   const ticket = await db.capaTicket.create({
     data: {
       organizationId: orgId,
+      buildingId: point.buildingId,
       title,
       description:
         typeof body.description === "string" ? body.description.slice(0, 5000) : null,

@@ -6,6 +6,9 @@ import { BATCH_FILTERS, batchUnitCode, isBatchStatus, type BatchStatus } from "@
 import { AlertTriangle, Plus } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { loadBuildingContext } from "@/lib/active-building";
+import { viewedPointId } from "@/lib/building-scope";
+import { pointRecordsWhere } from "@/lib/point-records";
 
 const STATUS_CLASSES: Record<BatchStatus, string> = {
   received: "bg-[#eef1ff] text-[#3848c7]",
@@ -43,8 +46,14 @@ export default async function BatchesPage({
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
+  // Точки (2026-11-01): партии точки из шапки и общие; в «Вся организация» —
+  // все, с подписью точки. Плитки считают то же самое.
+  const buildingContext = await loadBuildingContext(session);
+  const showPoint = buildingContext.enabled && !viewedPointId(buildingContext);
+  const pointWhere = pointRecordsWhere(buildingContext);
   const where: Record<string, unknown> = {
     organizationId: getActiveOrgId(session),
+    ...pointWhere,
   };
   if (filters.status === "expired") {
     // «Просрочено» — это факт по сроку годности, а не статус в базе:
@@ -56,17 +65,24 @@ export default async function BatchesPage({
   }
 
   const [batches, stats] = await Promise.all([
-    db.batch.findMany({ where, orderBy: { createdAt: "desc" }, take: 100 }),
+    db.batch.findMany({
+      where,
+      include: { building: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
     Promise.all([
       db.batch.count({
         where: {
           organizationId: getActiveOrgId(session),
+          ...pointWhere,
           status: "received",
         },
       }),
       db.batch.count({
         where: {
           organizationId: getActiveOrgId(session),
+          ...pointWhere,
           status: "in_production",
         },
       }),
@@ -76,6 +92,7 @@ export default async function BatchesPage({
       db.batch.count({
         where: {
           organizationId: getActiveOrgId(session),
+          ...pointWhere,
           expiryDate: {
             gte: todayStart,
             lte: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -205,6 +222,11 @@ export default async function BatchesPage({
                     </td>
                     <td className="px-5 py-3 font-medium text-[#0b1024]">
                       {batch.productName}
+                      {showPoint && batch.building && (
+                        <span className="ml-2 rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[12px] font-normal text-[#3848c7]">
+                          {batch.building.name}
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-[13px] text-[#6f7282]">
                       {batch.supplier || "—"}

@@ -14,6 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CapaWorkflow } from "@/components/capa/capa-workflow";
+import { loadBuildingContext } from "@/lib/active-building";
+import { pointRecordVisible } from "@/lib/point-records";
 
 
 export default async function CapaDetailPage({
@@ -55,7 +57,12 @@ export default async function CapaDetailPage({
   const dateFormat = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], { dateStyle: "short", timeStyle: "medium" });
 
   const ticket = await db.capaTicket.findUnique({ where: { id } });
-  if (!ticket || ticket.organizationId !== getActiveOrgId(session)) {
+  if (
+    !ticket ||
+    ticket.organizationId !== getActiveOrgId(session) ||
+    // CAPA другой точки — «не найдено» (2026-11-01).
+    !pointRecordVisible(await loadBuildingContext(session), ticket.buildingId)
+  ) {
     notFound();
   }
 

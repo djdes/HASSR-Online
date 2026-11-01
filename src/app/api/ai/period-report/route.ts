@@ -11,6 +11,7 @@ import { getViewedPointId } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { areaPointWhere, journalEntryPointWhere, lossPointWhere } from "@/lib/point-filters";
+import { recordsAtPointWhere } from "@/lib/point-records";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,11 +133,12 @@ export async function POST(request: Request) {
       where: { isActive: true },
       select: { id: true, code: true, name: true },
     }),
+    // CAPA точки и общие (2026-11-01: у CAPA появилась точка).
     db.capaTicket.count({
-      where: { organizationId: orgId, createdAt: { gte: periodFrom, lte: periodTo } },
+      where: { organizationId: orgId, createdAt: { gte: periodFrom, lte: periodTo }, ...recordsAtPointWhere(pointId) },
     }),
     db.capaTicket.count({
-      where: { organizationId: orgId, status: { not: "closed" } },
+      where: { organizationId: orgId, status: { not: "closed" }, ...recordsAtPointWhere(pointId) },
     }),
     db.lossRecord.count({
       where: {
@@ -220,7 +222,7 @@ export async function POST(request: Request) {
     .map(([id, n]) => ({ name: tplById.get(id)?.name ?? "?", count: n }));
 
   const factsBlock = `
-Организация: ${org.name} (тип: ${org.type ?? "не указан"})${point ? `\nТочка: ${point.name} (журналы, записи, списания и премии — только этой точки; CAPA и автозакрытия — по всей организации)` : ""}
+Организация: ${org.name} (тип: ${org.type ?? "не указан"})${point ? `\nТочка: ${point.name} (журналы, записи, списания, премии и CAPA — только этой точки и общие; автозакрытия — по всей организации)` : ""}
 Период: ${parsed.from} — ${parsed.to} (${days} дней)
 
 КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ:

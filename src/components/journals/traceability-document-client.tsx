@@ -540,9 +540,12 @@ type ActiveBatch = {
  * номер) — чтобы журнал читался, даже если партию потом переименуют.
  */
 function BatchPicker(props: {
+  /** Документ журнала: партии его точки и общие. */
+  documentId: string;
   onPick: (batch: ActiveBatch) => void;
   disabled?: boolean;
 }) {
+  const { documentId } = props;
   const ui = useTranslations("journalUi.traceability");
   const format = useFormatter();
   const [open, setOpen] = useState(false);
@@ -555,7 +558,8 @@ function BatchPicker(props: {
     let cancelled = false;
     void (async () => {
       try {
-        const response = await fetch("/api/batches?status=received");
+        // Партии точки этого документа и общие (2026-11-01).
+        const response = await fetch(`/api/batches?status=received&documentId=${encodeURIComponent(documentId)}`);
         if (!response.ok) throw new Error("load failed");
         const data = (await response.json()) as ActiveBatch[];
         if (!cancelled) setBatches(Array.isArray(data) ? data : []);
@@ -566,7 +570,7 @@ function BatchPicker(props: {
     return () => {
       cancelled = true;
     };
-  }, [batches, open]);
+  }, [batches, documentId, open]);
 
   const filtered = (batches ?? []).filter((batch) => {
     const needle = query.trim().toLowerCase();
@@ -646,6 +650,7 @@ function BatchPicker(props: {
 }
 
 function RowDialog(props: {
+  documentId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   config: TraceabilityDocumentConfig;
@@ -757,6 +762,7 @@ function RowDialog(props: {
                 {/* Сырьё со склада: партия подставляет название и номер
                     и остаётся связанной со строкой. */}
                 <BatchPicker
+                  documentId={props.documentId}
                   onPick={(batch) => {
                     setRawOptions((current) => mergeUnique(current, [batch.productName]));
                     setDraft((current) =>
@@ -1320,7 +1326,7 @@ export function TraceabilityDocumentClient(props: Props) {
       <SettingsDialog open={settingsOpen} title={ui("documentSettings")} initial={headerSettings} onOpenChange={setSettingsOpen} onSave={saveSettings} useV2={props.useV2} />
       <ListsDialog open={listsOpen} onOpenChange={setListsOpen} config={config} onSave={saveLists} />
       {/* Закрытие без сохранения прерывает очередь («Изменено k из N»). */}
-      <RowDialog open={rowOpen} onOpenChange={(open) => { if (open) { setRowOpen(true); return; } seq.cancelled(); }} config={config} employees={employees} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} dateFrom={dateFrom} onSave={saveRow} />
+      <RowDialog documentId={props.documentId} open={rowOpen} onOpenChange={(open) => { if (open) { setRowOpen(true); return; } seq.cancelled(); }} config={config} employees={employees} initialRow={editingRow} titleSuffix={seq.progress ?? undefined} dateFrom={dateFrom} onSave={saveRow} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={importFile} />
       <FinishDialog open={finishOpen} onOpenChange={setFinishOpen} title={title || DEFAULT_TITLE} onFinish={finishJournal} feedbackRef={lifecycleFeedback} />
     </div>
