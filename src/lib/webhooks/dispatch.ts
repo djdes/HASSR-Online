@@ -9,16 +9,20 @@ import { MAX_ATTEMPTS, nextAttemptAt, signWebhookBody, type WebhookEvent } from 
 const TIMEOUT_MS = 10_000;
 const BATCH = 50;
 
-export async function enqueueWebhookEvent(organizationId: string, event: WebhookEvent, payload: Record<string, unknown>): Promise<number> {
+/** Данные события; функция — дорогие поля (точка) считаются, только если есть подписки. */
+export type WebhookPayload = Record<string, unknown> | (() => Promise<Record<string, unknown>>);
+
+export async function enqueueWebhookEvent(organizationId: string, event: WebhookEvent, payload: WebhookPayload): Promise<number> {
   const hooks = await db.webhook.findMany({ where: { organizationId, enabled: true, events: { has: event } }, select: { id: true } });
   if (hooks.length === 0) return 0;
-  const body = { event, organizationId, occurredAt: new Date().toISOString(), data: payload };
+  const data = typeof payload === "function" ? await payload() : payload;
+  const body = { event, organizationId, occurredAt: new Date().toISOString(), data };
   await db.webhookDelivery.createMany({ data: hooks.map((h) => ({ webhookId: h.id, event, payload: body as object, nextAttemptAt: new Date() })) });
   return hooks.length;
 }
 
 /** Ничего не роняет: вызывающий код не должен зависеть от вебхуков. */
-export function emitWebhook(organizationId: string, event: WebhookEvent, payload: Record<string, unknown>): void {
+export function emitWebhook(organizationId: string, event: WebhookEvent, payload: WebhookPayload): void {
   void enqueueWebhookEvent(organizationId, event, payload).catch((error) => console.error("[webhooks] enqueue failed", event, error));
 }
 

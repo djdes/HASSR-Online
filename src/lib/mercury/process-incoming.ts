@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 
 import { normalizeAcceptanceDocumentConfig } from "@/lib/acceptance-document";
 import { logAudit } from "@/lib/audit";
+import { buildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { ensureActiveDocument } from "@/lib/journal-auto-create";
 import { generateBatchKey } from "@/lib/journal-traceability";
@@ -61,6 +62,12 @@ export async function processIncomingVetDocument(input: {
   actor: { id: string; name: string | null; role: string };
   check: PhysicalCheckInput;
   withdraw: boolean;
+  /**
+   * Точка, если у ВСД её нет (площадка не сопоставлена): торговая точка,
+   * которую человек выбрал в шапке. Без точки при включённых точках
+   * приёмку не оформляем — строка ушла бы в журнал не той точки.
+   */
+  fallbackBuildingId?: string | null;
 }): Promise<ProcessIncomingOutcome> {
   const vsdRow = await db.mercuryVetDocument.findFirst({
     where: { id: input.vetDocumentId, organizationId: input.organizationId },
@@ -100,11 +107,26 @@ export async function processIncomingVetDocument(input: {
     raw: vsdRow.raw,
   };
 
-  // 1. Документ журнала приёмки — тем же путём, что ночной cron.
+  // 1. Документ журнала приёмки — тем же путём, что ночной cron, на точку
+  // площадки ВСД (2026-11-01): раньше строка падала в журнал приёмки любой
+  // точки, а без него создавался общий.
+  const targets = await buildingTargets(input.organizationId);
+  const orgPoints = targets.filter((id): id is string => Boolean(id));
+  const pointId = orgPoints.length === 0
+    ? null
+    : [vsdRow.buildingId, input.fallbackBuildingId].find(
+        (id): id is string => typeof id === "string" && orgPoints.includes(id),
+      ) ?? null;
+  if (orgPoints.length > 0 && !pointId) {
+    throw new Error(
+      "У ВСД не указана точка: выберите торговую точку вверху страницы, и приёмка попадёт в её журнал",
+    );
+  }
   const report = await ensureActiveDocument(db, {
     organizationId: input.organizationId,
     templateCode: ACCEPTANCE_TEMPLATE_CODE,
     now: new Date(),
+    buildingId: pointId,
   });
   if (!report.documentId) {
     throw new Error("Не удалось открыть журнал приёмки");

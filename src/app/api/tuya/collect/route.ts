@@ -13,6 +13,7 @@ import {
 import { detectTemperatureCapas } from "@/lib/capa-auto-detect";
 import { timingSafeEqualStrings } from "@/lib/timing-safe";
 import { hasPlanFeature } from "@/lib/billing.server";
+import { pickPointSigner } from "@/lib/sensor-point";
 
 export async function POST(request: Request) {
   try {
@@ -63,6 +64,10 @@ export async function POST(request: Request) {
     // IoT-датчики — возможность «Премиума» (и пробного): без неё не опрашиваем.
     const connectByOrg = new Map<string, boolean>();
     let lockedByPlan = 0;
+    // Руководство организации — один запрос на организацию; автор записи —
+    // руководитель точки оборудования (2026-11-01), а не первый попавшийся.
+    type Manager = { id: string; role: string; name: string; email: string | null; buildingIds: string[] };
+    const managersByOrg = new Map<string, Manager[]>();
 
     for (const equip of equipmentList) {
       const orgId = equip.area.organizationId;
@@ -76,14 +81,22 @@ export async function POST(request: Request) {
           equip.tuyaDeviceId!
         );
 
-        // Find system user (first manager in org) to attribute the entry
-        const systemUser = await db.user.findFirst({
-          where: {
-            organizationId: equip.area.organizationId,
-            role: { in: getDbRoleValuesWithLegacy(MANAGER_ROLES) },
-            isActive: true,
-          },
-        });
+        // Автор записи — руководитель точки оборудования (цех без точки —
+        // любой руководитель организации, как раньше).
+        let managers = managersByOrg.get(orgId);
+        if (!managers) {
+          managers = await db.user.findMany({
+            where: {
+              organizationId: orgId,
+              role: { in: getDbRoleValuesWithLegacy(MANAGER_ROLES) },
+              isActive: true,
+            },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, role: true, name: true, email: true, buildingIds: true },
+          });
+          managersByOrg.set(orgId, managers);
+        }
+        const systemUser = pickPointSigner(managers, equip.area.buildingId ?? null);
 
         if (!systemUser) {
           errors.push({

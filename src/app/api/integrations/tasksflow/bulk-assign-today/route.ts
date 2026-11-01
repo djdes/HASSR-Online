@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { buildingTargets } from "@/lib/active-building";
+import { buildingTargets, getViewedPointId } from "@/lib/active-building";
 import { withBuildingSuffix } from "@/lib/building-scope";
 import { rowsPointFromTargets } from "@/lib/document-point-rows";
 import { makeDocumentPointFilter } from "@/lib/worker-point-scope";
@@ -171,6 +171,10 @@ export async function POST(request: Request) {
   let organizationId: string;
   let actingUser: { id: string; name: string | null; email: string | null };
   let superUser = false;
+  // Точка, на которую смотрит человек (шапка), — 2026-11-01: руководитель
+  // точки А нажатием «Отправить задачи» создавал документы и задачи всех
+  // точек. null — вся организация (крон, ключ TasksFlow, «Вся организация»).
+  let sessionPointId: string | null = null;
 
   if (isInternal) {
     if (typeof body?.organizationId !== "string" || !body.organizationId) {
@@ -256,6 +260,7 @@ export async function POST(request: Request) {
         email: session.user.email ?? null,
       };
       superUser = isSuperUser(session);
+      sessionPointId = await getViewedPointId(session);
     }
   }
 
@@ -294,9 +299,28 @@ export async function POST(request: Request) {
     );
   }
 
+  // Точки организации и точки этого запуска: с точкой из шапки — только она.
+  const bulkTargets = await buildingTargets(organizationId);
+  const runTargets =
+    sessionPointId && bulkTargets.includes(sessionPointId) ? [sessionPointId] : bulkTargets;
+  const runPointId = runTargets.length === 1 ? runTargets[0] : null;
+
   if (force && !dryRun) {
+    // С точкой из шапки — только связи документов этой точки: задачи других
+    // точек (и общих документов) не пересоздаём.
+    const pointDocIds = runPointId
+      ? (
+          await db.journalDocument.findMany({
+            where: { organizationId, buildingId: runPointId },
+            select: { id: true },
+          })
+        ).map((doc) => doc.id)
+      : null;
     const wiped = await db.tasksFlowTaskLink.deleteMany({
-      where: { integrationId: integration.id },
+      where: {
+        integrationId: integration.id,
+        ...(pointDocIds ? { journalDocumentId: { in: pointDocIds } } : {}),
+      },
     });
     await db.auditLog.create({
       data: {
@@ -310,6 +334,7 @@ export async function POST(request: Request) {
           wiped: wiped.count,
           internal: isInternal,
           bypassTimeFilter,
+          buildingId: runPointId,
         },
       },
     });
@@ -505,11 +530,12 @@ export async function POST(request: Request) {
       await notifyManagement({
         organizationId,
         kind: "tasksflow.bulk_assign.skipped",
-        dedupeKey: `tasksflow.bulk_assign.skipped:${dayKey(now)}`,
+        dedupeKey: `tasksflow.bulk_assign.skipped:${runPointId ? `${runPointId}:` : ""}${dayKey(now)}`,
         title: "TasksFlow: часть журналов не отправлена",
         linkHref: "/settings/staff-hierarchy",
         linkLabel: "Проверить иерархию",
         items: [...notificationItems.values()],
+        buildingId: runPointId,
       });
     }
     return NextResponse.json({
@@ -686,9 +712,10 @@ export async function POST(request: Request) {
     pushSkippedItem(report.code, report.label, reason);
   }
 
-  // Точки (2026-09-05): документ дня ищем/создаём на каждую точку, задачи
-  // рассылаются по каждому документу, в заголовке задачи — название точки.
-  const bulkTargets = await buildingTargets(organizationId);
+  // Точки (2026-09-05): документ дня ищем/создаём на каждую точку запуска
+  // (`runTargets`), задачи рассылаются по каждому документу, в заголовке
+  // задачи — название точки. Фильтры людей по точке документа считают по
+  // всем точкам организации (`bulkTargets`).
   const buildingNameById = new Map(
     (
       await db.building.findMany({
@@ -742,7 +769,7 @@ export async function POST(request: Request) {
     });
     const docs: typeof docsForToday = [];
     const autoCreatedDocIds = new Set<string>();
-    for (const buildingId of bulkTargets) {
+    for (const buildingId of runTargets) {
       // Свой документ точки или общий (без точки); без точек — первый.
       const found = docsForToday.find(
         (d) =>
@@ -1394,11 +1421,12 @@ export async function POST(request: Request) {
     await notifyManagement({
       organizationId,
       kind: "tasksflow.bulk_assign.skipped",
-      dedupeKey: `tasksflow.bulk_assign.skipped:${dayKey(now)}`,
+      dedupeKey: `tasksflow.bulk_assign.skipped:${runPointId ? `${runPointId}:` : ""}${dayKey(now)}`,
       title: "TasksFlow: часть журналов не отправлена",
       linkHref: "/settings/staff-hierarchy",
       linkLabel: "Проверить иерархию",
       items: [...notificationItems.values()],
+      buildingId: runPointId,
     });
   }
 

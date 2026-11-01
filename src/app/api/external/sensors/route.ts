@@ -7,8 +7,9 @@ import {
   subjectKeyForEquipment,
 } from "@/lib/temperature-deviations";
 import { authenticateExternalRequest } from "@/lib/external/auth";
-import { pickPrimaryManager } from "@/lib/user-roles";
 import { maybeCreateRealtimeCapa } from "@/lib/iot-violation-capa";
+import { buildingWhere } from "@/lib/building-scope";
+import { pickPointSigner, pickSensorDocuments, sensorRowKeys } from "@/lib/sensor-point";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +19,10 @@ export const dynamic = "force-dynamic";
  *
  * Минимальный endpoint для DIY-датчиков (ESP32/Arduino/Raspberry).
  * Один POST = один замер. Никакого journalCode/document — мы
- * автоматически находим активный `cold_equipment_control` или
- * `climate_control` document для org и обновляем нужный slot.
+ * автоматически находим активный `cold_equipment_control` документ
+ * точки оборудования (где оно есть в строках; документ чужой точки —
+ * никогда, src/lib/sensor-point.ts) и обновляем нужный slot. Влажность
+ * в журнал холодильников не пишется.
  *
  * Headers:
  *   Authorization: Bearer <Organization.externalApiToken>
@@ -73,7 +76,7 @@ export async function POST(request: Request) {
       name: true,
       tempMin: true,
       tempMax: true,
-      area: { select: { organizationId: true } },
+      area: { select: { organizationId: true, buildingId: true } },
       sensorMappings: {
         select: {
           id: true,
@@ -110,28 +113,41 @@ export async function POST(request: Request) {
     (m) => m.readingType === body.type
   );
 
-  // Найти active document для cold_equipment_control (поддерживаем
-  // только этот шаблон в этом простом endpoint'е).
-  const doc = await db.journalDocument.findFirst({
-    where: {
-      organizationId: orgId,
-      template: { code: COLD_EQUIPMENT_CODE },
-      status: "active",
-      dateFrom: { lte: todayStart },
-      dateTo: { gte: todayStart },
-    },
-    select: { id: true },
+  // Активный cold_equipment_control документ точки оборудования (или
+  // общий); документ чужой точки не подходит. Влажность — не температура
+  // холодильника: её в этот журнал не пишем.
+  const pointId = equipment.area.buildingId ?? null;
+  const candidates =
+    body.type === "temperature"
+      ? await db.journalDocument.findMany({
+          where: {
+            organizationId: orgId,
+            template: { code: COLD_EQUIPMENT_CODE },
+            status: "active",
+            dateFrom: { lte: todayStart },
+            dateTo: { gte: todayStart },
+            ...buildingWhere(pointId),
+          },
+          orderBy: { dateFrom: "desc" },
+          select: { id: true, buildingId: true, config: true },
+        })
+      : [];
+  const targets = pickSensorDocuments(candidates, {
+    pointId,
+    rowKeys: (candidate) => sensorRowKeys(candidate.config, equipment.id, "equipment"),
   });
 
   let entriesWritten = 0;
-  if (doc) {
-    // Найти manager'а для employeeId записи (FK).
+  const documentIds: string[] = [];
+  if (targets.length > 0) {
+    // Подписант (employeeId записи, FK) — человек точки документа.
     const orgUsers = await db.user.findMany({
       where: { organizationId: orgId, isActive: true },
-      select: { id: true, role: true },
+      select: { id: true, role: true, name: true, email: true, buildingIds: true },
     });
-    const manager = pickPrimaryManager(orgUsers);
-    if (manager) {
+    for (const { doc, keys } of targets) {
+      const manager = pickPointSigner(orgUsers, doc.buildingId);
+      if (!manager) continue;
       const existing = await db.journalDocumentEntry.findUnique({
         where: {
           documentId_employeeId_date: {
@@ -150,10 +166,15 @@ export async function POST(request: Request) {
       void _seeded;
       const prevTemps =
         (baseData.temperatures as Record<string, unknown> | undefined) ?? {};
-      const nextData = {
-        ...baseData,
-        temperatures: { ...prevTemps, [equipment.id]: body.value },
-      } as Prisma.InputJsonValue;
+      const statuses =
+        (baseData.statuses as Record<string, unknown> | undefined) ?? {};
+      const temperatures: Record<string, unknown> = { ...prevTemps };
+      // Строки этого холодильника в документе; без строки — по id, как раньше.
+      // «обсл»/«рем» за день — датчик не пишет поверх отметки.
+      for (const key of keys.length > 0 ? keys : [equipment.id]) {
+        if (!statuses[key]) temperatures[key] = body.value;
+      }
+      const nextData = { ...baseData, temperatures } as Prisma.InputJsonValue;
       await db.journalDocumentEntry.upsert({
         where: {
           documentId_employeeId_date: {
@@ -171,6 +192,7 @@ export async function POST(request: Request) {
         update: { data: nextData },
       });
       entriesWritten += 1;
+      documentIds.push(doc.id);
     }
   }
 
@@ -222,7 +244,8 @@ export async function POST(request: Request) {
     ok: true,
     equipmentId: equipment.id,
     entriesWritten,
-    documentId: doc?.id ?? null,
+    documentId: documentIds[0] ?? null,
+    documentIds,
     capaCreated: capaResult?.created === true,
     capaTicketId: capaResult?.ticketId ?? null,
   });

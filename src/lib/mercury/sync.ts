@@ -526,6 +526,36 @@ export async function runMercuryOutbox(options: {
 }
 
 /** Сколько ВСД ждут гашения и сколько просрочено — для шапки и алертов. */
+/**
+ * То же по точкам (2026-11-01): напоминание о горящем гашении — людям точки
+ * площадки, а не всем руководителям организации. `buildingId` null — ВСД
+ * без точки (общее, офису).
+ */
+export async function countPendingVetDocumentsByPoint(
+  organizationId: string,
+  timezone?: string | null,
+): Promise<{ todayKey: string; points: Array<{ buildingId: string | null; pending: number; overdue: number }> }> {
+  const now = new Date();
+  const pendingWhere = { organizationId, localStatus: { in: ["new", "acknowledged"] } };
+  const [pending, overdue] = await Promise.all([
+    db.mercuryVetDocument.groupBy({ by: ["buildingId"], where: pendingWhere, _count: { _all: true } }),
+    db.mercuryVetDocument.groupBy({
+      by: ["buildingId"],
+      where: { ...pendingWhere, processingDueAt: { lt: now } },
+      _count: { _all: true },
+    }),
+  ]);
+  const overdueByPoint = new Map(overdue.map((row) => [row.buildingId, row._count._all] as const));
+  return {
+    todayKey: orgTodayKey(timezone ?? undefined, now),
+    points: pending.map((row) => ({
+      buildingId: row.buildingId,
+      pending: row._count._all,
+      overdue: overdueByPoint.get(row.buildingId) ?? 0,
+    })),
+  };
+}
+
 export async function countPendingVetDocuments(
   organizationId: string,
   timezone?: string | null,

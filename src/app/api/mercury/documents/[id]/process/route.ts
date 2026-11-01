@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { loadBuildingContext, getViewedPointId } from "@/lib/active-building";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
 import { processIncomingVetDocument } from "@/lib/mercury/process-incoming";
 import { getServerSession } from "@/lib/server-session";
@@ -62,6 +64,28 @@ export async function POST(
   if (!feature.ok) return limitResponse(feature);
 
   const { id } = await ctx.params;
+
+  // ВСД чужой точки (2026-11-01): гасить и записывать в журнал может только
+  // тот, кому доступна точка площадки (офис и руководство компании — все).
+  const vsd = await db.mercuryVetDocument.findFirst({
+    where: { id, organizationId },
+    select: { buildingId: true },
+  });
+  if (!vsd) {
+    return NextResponse.json({ error: "ВСД не найден" }, { status: 404 });
+  }
+  const buildingContext = await loadBuildingContext(session);
+  if (
+    buildingContext.enabled &&
+    vsd.buildingId &&
+    !buildingContext.buildings.some((building) => building.id === vsd.buildingId)
+  ) {
+    return NextResponse.json(
+      { error: "Это ВСД другой точки — её приёмку оформляют там" },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -104,6 +128,7 @@ export async function POST(
         correctiveActions: data.correctiveActions,
       },
       withdraw: data.withdraw,
+      fallbackBuildingId: await getViewedPointId(session),
     });
 
     return NextResponse.json({ ok: true, ...result });

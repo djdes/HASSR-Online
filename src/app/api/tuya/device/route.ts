@@ -5,6 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { getDeviceTemperature } from "@/lib/tuya";
 import { checkPlanFeature, limitResponse } from "@/lib/billing.server";
+import { loadBuildingContext } from "@/lib/active-building";
 
 export async function GET(request: Request) {
   try {
@@ -36,6 +37,20 @@ export async function GET(request: Request) {
     if (
       !equipment ||
       equipment.area.organizationId !== getActiveOrgId(session)
+    ) {
+      return NextResponse.json(
+        { error: "Оборудование не найдено" },
+        { status: 404 }
+      );
+    }
+
+    // Оборудование чужой точки (2026-11-01): показания видят люди точек,
+    // доступных человеку (офис и руководство на всю компанию — все).
+    const buildingContext = await loadBuildingContext(session);
+    if (
+      buildingContext.enabled &&
+      equipment.area.buildingId &&
+      !buildingContext.buildings.some((building) => building.id === equipment.area.buildingId)
     ) {
       return NextResponse.json(
         { error: "Оборудование не найдено" },

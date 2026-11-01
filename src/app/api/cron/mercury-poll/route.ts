@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { hasPlanFeature } from "@/lib/billing.server";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
-import { countPendingVetDocuments, enqueueEnterpriseSync } from "@/lib/mercury/sync";
+import { countPendingVetDocumentsByPoint, enqueueEnterpriseSync } from "@/lib/mercury/sync";
+import { withBuildingSuffix } from "@/lib/building-scope";
 import { notifyManagement } from "@/lib/notifications";
 
 export const runtime = "nodejs";
@@ -83,17 +84,29 @@ export async function GET(request: Request) {
         where: { id: integration.organizationId },
         select: { timezone: true },
       });
-      const counts = await countPendingVetDocuments(
+      // По точкам (2026-11-01): напоминание о точке — её людям и офису,
+      // а не всем руководителям организации.
+      const counts = await countPendingVetDocumentsByPoint(
         integration.organizationId,
         org?.timezone,
       );
-      if (counts.overdue > 0) {
+      const pointNames = new Map(
+        (
+          await db.building.findMany({
+            where: { organizationId: integration.organizationId },
+            select: { id: true, name: true },
+          })
+        ).map((building) => [building.id, building.name] as const),
+      );
+      for (const point of counts.points) {
+        if (point.overdue <= 0) continue;
+        const pointName = point.buildingId ? pointNames.get(point.buildingId) ?? null : null;
         await notifyManagement({
           organizationId: integration.organizationId,
           kind: "mercury-overdue",
-          // Дедуп по дню: напоминаем раз в сутки, а не каждые 10 минут.
-          dedupeKey: `mercury-overdue:${integration.organizationId}:${counts.todayKey}`,
-          title: `Просрочено гашение ВСД: ${counts.overdue}`,
+          // Дедуп по дню и точке: напоминаем раз в сутки, а не каждые 10 минут.
+          dedupeKey: `mercury-overdue:${integration.organizationId}:${point.buildingId ?? "org"}:${counts.todayKey}`,
+          title: withBuildingSuffix(`Просрочено гашение ВСД: ${point.overdue}`, pointName),
           linkHref: "/mercury",
           linkLabel: "Входящие ВСД",
           items: [
@@ -101,9 +114,10 @@ export async function GET(request: Request) {
               id: "mercury-overdue",
               label:
                 "Входящий ветеринарный документ гасится в течение одного рабочего дня",
-              hint: `всего ждут гашения: ${counts.pending}`,
+              hint: `всего ждут гашения: ${point.pending}`,
             },
           ],
+          buildingId: point.buildingId,
         }).catch(() => {});
         reminded += 1;
       }
