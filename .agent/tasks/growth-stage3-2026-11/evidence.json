@@ -1,0 +1,92 @@
+{
+  "task": "growth-stage3-2026-11",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "a5007036",
+  "mergedMaster": null,
+  "checkedAt": "2026-11-01T20:35Z",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/partners/income-calculator.test.ts",
+        "docs/partners-30-announcement.md",
+        "raw/ui-check.txt",
+        "raw/partners-calculator-phone.jpg"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/funnel-digest.test.ts",
+        "e2e/local-flow-check.ts",
+        "raw/local-flow-check.json"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/invoices/guest.test.ts",
+        "src/lib/abandoned-orders.test.ts",
+        "src/lib/completion-resend.test.ts",
+        "e2e/local-flow-check.ts",
+        "e2e/guest-paid-check.ts",
+        "e2e/smtp-sink.cjs",
+        "raw/local-flow-check.json",
+        "raw/guest-paid-check.json",
+        "raw/smtp-sink.txt",
+        "raw/ui-check.txt",
+        "raw/guest-invoice-form-phone.jpg",
+        "raw/guest-invoice-done-phone.jpg",
+        "raw/root-invoices-desktop.jpg"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/pdf-merge.test.ts",
+        "src/app/sanpin-2-3-2-4-4282-26/sanpin-page.test.ts",
+        "src/lib/no-blank-word.test.ts",
+        "raw/ui-check.txt",
+        "raw/local-flow-check.json",
+        "raw/reports-bundle-card.jpg",
+        "raw/sanpin-desktop.jpg"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/autofill-clips.test.ts",
+        "scripts/landing-video/render-clips.ts",
+        "raw/clips.txt",
+        "raw/clips-render.txt",
+        "raw/autofill-clip-01-sensors-still.jpg"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/demo-slots.test.ts",
+        "src/lib/demo-request.test.ts",
+        "e2e/local-flow-check.ts",
+        "raw/local-flow-check.json",
+        "raw/ui-check.txt",
+        "raw/demo-slot-phone.jpg",
+        "raw/demo-booked-phone.jpg",
+        "raw/probe-sheet.jpg"
+      ]
+    },
+    "AC7": {
+      "status": "PENDING_DEPLOY",
+      "evidence": [
+        "raw/targeted-tests.txt",
+        "raw/typecheck.txt",
+        "raw/test-gate.txt",
+        "e2e/post-deploy-check.sh"
+      ]
+    }
+  },
+  "notes": [
+    "Скриншоты raw/*.jpg игнорируются .gitignore и остались на стенде проверки.",
+    "Ролики MP4 отданы владельцу архивом и в репозиторий не положены (AC5)."
+  ]
+}

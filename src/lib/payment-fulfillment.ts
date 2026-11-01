@@ -28,6 +28,7 @@ import { notifyManagement } from "@/lib/notifications";
 import { subscriptionFromState } from "@/lib/plan-checkout.server";
 import { planAfterPayment, planOrderStillMatches, type PaidPlanUpdate } from "@/lib/plan-payment";
 import { parsePlanTariffKey } from "@/lib/tariff-plans";
+import { readGuestBuyer } from "@/lib/invoices/guest";
 
 /**
  * Что происходит после подтверждённой оплаты.
@@ -77,6 +78,24 @@ function extendFrom(current: Date | null, periodDays: number): Date {
   return new Date(base + periodDays * 24 * 60 * 60 * 1000);
 }
 
+/** ИНН, адрес и снимок ЕГРЮЛ из счёта без регистрации — для новой организации. */
+function guestBuyerOrganizationData(json: unknown): {
+  inn?: string;
+  address?: string;
+  legalProfileJson?: Prisma.InputJsonValue;
+  legalProfileUpdatedAt?: Date;
+} {
+  const buyer = readGuestBuyer(json);
+  if (!buyer) return {};
+  return {
+    inn: buyer.inn,
+    ...(buyer.address ? { address: buyer.address } : {}),
+    ...(buyer.legalProfile
+      ? { legalProfileJson: buyer.legalProfile as unknown as Prisma.InputJsonValue, legalProfileUpdatedAt: new Date() }
+      : {}),
+  };
+}
+
 type FulfillableOrder = {
   id: number;
   email: string;
@@ -103,6 +122,8 @@ type FulfillableOrder = {
   createdAt?: Date | null;
   /** Снимок подписки, от которой посчитан заказ (`basePlanSnapshot`). */
   basePlanJson?: unknown;
+  /** Покупатель счёта без регистрации (`invoices/guest.ts`): ИНН и реквизиты — новой организации. */
+  buyerJson?: unknown;
 };
 
 export async function fulfillPaidOrder(order: FulfillableOrder): Promise<FulfillmentResult> {
@@ -207,6 +228,9 @@ async function extendOrCreateForOrder(order: FulfillableOrder): Promise<Fulfillm
         type: "other",
         subscriptionPlan,
         subscriptionEnd,
+        // Счёт без регистрации: ИНН и снимок ЕГРЮЛ покупателя — сразу в
+        // организацию, чтобы УПД и следующие счета шли на неё.
+        ...guestBuyerOrganizationData(order.buyerJson),
         // Автоматика гигиенического журнала — сразу после оплаты.
         journalAutomationJson: defaultJournalAutomationJson(),
         // Журнал здоровья выключен по умолчанию (health-check-default-off.ts).
@@ -563,6 +587,7 @@ export async function completePaidOrder(order: {
   periodEndsAt?: Date | null;
   createdAt?: Date | null;
   basePlanJson?: unknown;
+  buyerJson?: unknown;
 }): Promise<{ organizationId: string | null; isNewClient: boolean }> {
   // Пополнение баланса — не подписка: не продлеваем, скидку навсегда не
   // привязываем, реферальную награду не запускаем. Баллы уже зачислены в

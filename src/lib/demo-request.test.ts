@@ -76,7 +76,9 @@ describe("показ за 15 минут — сервер", () => {
   it("заявка ложится в общий список заявок, лимит свой, уведомления не роняют заявку", () => {
     const route = read("src/app/api/demo-request/route.ts");
     assert.match(route, /demoRequestRateLimiter\.consume\(`demo:\$\{ip\}`\)/);
-    assert.match(route, /db\.serviceRequest\.create\(\{\s*data: \{\s*serviceKey: DEMO_SERVICE_KEY,/);
+    assert.match(route, /const data = \{\s*serviceKey: DEMO_SERVICE_KEY,/);
+    assert.match(route, /tx\.serviceRequest\.create\(\{ data, select: \{ id: true \} \}\)/);
+    assert.match(route, /db\.serviceRequest\.create\(\{ data, select: \{ id: true \} \}\)/);
     assert.match(route, /notifyPlatformAdmin\(composeDemoAlert\(demo, escapeTelegramHtml\)/);
     assert.match(route, /\.catch\(\(\) => false\)/);
     assert.match(route, /adminTgNotifiedAt: tgOk \? new Date\(\) : null/);

@@ -1,3 +1,4 @@
+import { formatSlotDay, formatSlotTime } from "@/lib/demo-slots";
 import { signupSourceSummary, type SignupSourceSnapshot } from "@/lib/signup-channel";
 
 /**
@@ -29,7 +30,12 @@ export function hasEnoughPhoneDigits(phone: string): boolean {
 export type DemoRequest = {
   name: string;
   phone: string;
-  when: DemoWhen;
+  /** «Перезвоните мне»: когда удобно. null — выбрано время (`slot`). */
+  when: DemoWhen | null;
+  /** Выбранное время показа, ISO; null — «перезвоните». */
+  slot?: string | null;
+  /** Почта для приглашения в календарь (необязательно). */
+  email?: string | null;
   topic: string | null;
   /** Где нажали кнопку: pricing, niche:cafe, home, autofill… */
   place: string;
@@ -37,10 +43,21 @@ export type DemoRequest = {
   organizationName: string | null;
 };
 
+/** «пн, 3 ноября, 11:30 (МСК)» — время показа для админа. */
+export function demoSlotLabel(slot: string): string {
+  return `${formatSlotDay(slot, "ru")}, ${formatSlotTime(slot)} (МСК)`;
+}
+
+function whenLine(request: DemoRequest): string {
+  if (request.slot) return `Записались на: ${demoSlotLabel(request.slot)}`;
+  return `Когда удобно: ${request.when ? DEMO_WHEN_LABEL[request.when] : "не указано"}`;
+}
+
 /** Комментарий к заявке в списке ROOT: всё, что не легло в отдельные поля. */
 export function composeDemoComment(request: DemoRequest): string {
   return [
-    `Когда удобно: ${DEMO_WHEN_LABEL[request.when]}`,
+    whenLine(request),
+    request.email ? `Почта: ${request.email}` : null,
     request.topic ? `Что показать: ${request.topic}` : null,
     request.place ? `Кнопка: ${request.place}` : null,
     `Источник: ${signupSourceSummary(request.source)}`,
@@ -52,10 +69,12 @@ export function composeDemoComment(request: DemoRequest): string {
 /** Сигнал админу в Telegram (HTML): позвонить, пока человек ждёт. */
 export function composeDemoAlert(request: DemoRequest, escape: (value: string) => string): string {
   return [
-    "<b>📅 Показ за 15 минут — позвоните в течение часа</b>",
-    `👤 ${escape(request.name)} · 📞 ${escape(request.phone)}`,
+    request.slot
+      ? `<b>📅 Показ за 15 минут: ${escape(demoSlotLabel(request.slot))}</b>`
+      : "<b>📅 Показ за 15 минут — позвоните в течение часа</b>",
+    `👤 ${escape(request.name)} · 📞 ${escape(request.phone)}${request.email ? ` · ${escape(request.email)}` : ""}`,
     request.organizationName ? `🏢 ${escape(request.organizationName)}` : null,
-    `🕐 Когда удобно: ${DEMO_WHEN_LABEL[request.when]}`,
+    request.slot ? "🕐 Записались на время — позвоните в назначенный час" : `🕐 Когда удобно: ${request.when ? DEMO_WHEN_LABEL[request.when] : "не указано"}`,
     request.topic ? `💬 ${escape(request.topic)}` : null,
     `🔎 ${escape(signupSourceSummary(request.source))}${request.place ? ` · кнопка «${escape(request.place)}»` : ""}`,
   ]

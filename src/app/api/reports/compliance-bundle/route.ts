@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { mergePdfParts } from "@/lib/pdf-merge";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -100,6 +101,8 @@ export async function GET(request: Request) {
 
   const organizationId = getActiveOrgId(session);
   const url = new URL(request.url);
+  // `format=pdf` — тот же состав одним файлом с содержанием (2026-11-01).
+  const format = url.searchParams.get("format") === "pdf" ? "pdf" : "zip";
   const now = new Date();
   const from =
     parseYmd(url.searchParams.get("from")) ?? firstOfCurrentMonthUtc(now);
@@ -403,6 +406,29 @@ export async function GET(request: Request) {
     console.error("[compliance-bundle] cover pdf failed", err);
   }
 
+  if (format === "pdf") {
+    const merged = await mergeBundlePdf(zip);
+    await recordAuditLog({
+      request,
+      session,
+      organizationId,
+      action: "reports.compliance-bundle",
+      entity: "Organization",
+      entityId: organizationId,
+      details: { from: ymd(from), to: ymd(to), included: totals.included, failed: totals.failed, format: "pdf", pages: merged.totalPages },
+    });
+    return new Response(new Uint8Array(merged.bytes), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="compliance-${ymd(from)}__${ymd(to)}.pdf"`,
+        "Content-Length": String(merged.bytes.length),
+        "X-Compliance-Included": String(totals.included),
+        "X-Compliance-Failed": String(totals.failed),
+      },
+    });
+  }
+
   const archive = await zip.generateAsync({
     type: "nodebuffer",
     compression: "DEFLATE",
@@ -436,5 +462,36 @@ export async function GET(request: Request) {
       "X-Compliance-Included": String(totals.included),
       "X-Compliance-Failed": String(totals.failed),
     },
+  });
+}
+
+const COVER_FILE = "00_СВОДКА.pdf";
+const PRODUCTION_FOLDER = "Производственный контроль/";
+const VISITS_FOLDER = "Посещения проверяющих/";
+const VISITS_LOG = `${VISITS_FOLDER}Журнал посещений.pdf`;
+
+/**
+ * Архив → один PDF: обложка, содержание, журналы, ППК и ХАССП-план, журнал
+ * посещений, CAPA. Сканы оснований проверок и загруженные файлы не в PDF
+ * остаются только в архиве — об этом строка в содержании.
+ */
+async function mergeBundlePdf(zip: JSZip) {
+  const names = Object.keys(zip.files).filter((name) => !zip.files[name].dir);
+  const isPdf = (name: string) => name.toLowerCase().endsWith(".pdf");
+  const journals = names.filter(
+    (name) => isPdf(name) && name !== COVER_FILE && name !== "CAPA.pdf" && !name.startsWith(PRODUCTION_FOLDER) && !name.startsWith(VISITS_FOLDER),
+  );
+  const production = names.filter((name) => name.startsWith(PRODUCTION_FOLDER) && isPdf(name));
+  const ordered = [...journals, ...production, ...names.filter((name) => name === VISITS_LOG), ...names.filter((name) => name === "CAPA.pdf")];
+  const archiveOnly = names.filter((name) => name !== "ОТЧЁТ.txt" && !ordered.includes(name) && name !== COVER_FILE).length;
+  const part = async (name: string) => ({
+    title: name.replace(/\.pdf$/i, "").replace(/\//g, " · "),
+    bytes: await zip.file(name)!.async("uint8array"),
+  });
+  return mergePdfParts({
+    cover: names.includes(COVER_FILE) ? await part(COVER_FILE) : null,
+    parts: await Promise.all(ordered.map(part)),
+    tocTitle: "Содержание",
+    notes: archiveOnly > 0 ? [`Только в архиве ZIP: файлов — ${archiveOnly} (сканы оснований проверок и загруженные документы не в формате PDF).`] : [],
   });
 }

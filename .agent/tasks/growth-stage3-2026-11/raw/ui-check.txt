@@ -1,0 +1,20 @@
+calculator total (10 клиентов): 138 000 ₽
+[3.6s] screenshot partners-calculator-phone
+slots offered on first free day: 11
+[7.4s] screenshot demo-slot-phone
+POST /api/demo-request: 200
+done text: Записали на показ пн, 2 ноября, 13:00 по Москве. Позвоним на +7 999 111-22-33 в это время. Добавить в календарь Закрыть
+ics link: data:text/calendar;charset=utf-8,BEGIN%3…
+[8.4s] screenshot demo-booked-phone
+[10.5s] screenshot guest-invoice-form-phone
+guest invoice done: Счёт № 7 на 3 000 ₽ выставлен Покупатель — ООО «Проверка из браузера». PDF отправили на buh-ui@example.test, оплатить нужно до 08.11.2026. Когда деньги придут, пришлём на эту почту ссылку для входа в кабинет — тариф подключится сам. Скачать счёт PDF
+guest invoice pdf: 200 application/pdf 88551
+[11.6s] screenshot guest-invoice-done-phone
+sanpin journals: 18
+[14.2s] screenshot sanpin-desktop
+[43.4s] screenshot reports-bundle-card
+bundle pdf: 200 application/pdf 2907987 bytes 13 pages attachment; filename="compliance-2026-11-01__2026-11-01.pdf"
+root invoices heading: Счета гостей
+root invoices has browser buyer: true
+[64.6s] screenshot root-invoices-desktop
+EXIT 0

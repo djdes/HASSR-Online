@@ -71,7 +71,7 @@ export function readSignupSource(place: string): SignupSource {
  * Цель Метрики. Счётчик берём из той же переменной, что и сам скрипт
  * Метрики, — хардкодить номер нельзя.
  */
-export function ymGoal(name: string, params?: Record<string, string>): void {
+export function ymGoal(name: string, params?: Record<string, string | number>): void {
   try {
     const counter = Number(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID);
     if (!Number.isFinite(counter) || counter <= 0) return;
@@ -81,7 +81,7 @@ export function ymGoal(name: string, params?: Record<string, string>): void {
           id: number,
           action: string,
           goal: string,
-          params?: Record<string, string>,
+          params?: Record<string, string | number>,
         ) => void;
       }
     ).ym;

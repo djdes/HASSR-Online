@@ -9,6 +9,8 @@ import { loadPlaceContext } from "@/lib/place-recipients";
 import { buildWeeklyDigestData, weeklyDigestRecipients } from "@/lib/weekly-digest/build";
 import { renderWeeklyDigestEmail, renderWeeklyDigestTelegram } from "@/lib/weekly-digest/render";
 import { isDigestSlot, shouldSendWeeklyDigest } from "@/lib/weekly-digest/schedule";
+import { sendFunnelDigest } from "@/lib/funnel-digest.server";
+import { runAbandonedOrderReminders } from "@/lib/abandoned-orders.server";
 import { sendRootHealthEmail } from "@/lib/root-health-email";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
@@ -27,6 +29,10 @@ export const dynamic = "force-dynamic";
  * поверки, партии, подписка), TasksFlow. Письмо каждый руководитель
  * выключает в «Настройки → Уведомления»; Telegram — по подписке на
  * оповещения «compliance».
+ *
+ * Здесь же (каждый час): сводка воронки админу в понедельник 08:00 по
+ * Москве (`sendFunnelDigest`) и письма по брошенным заказам
+ * (`runAbandonedOrderReminders`) — у этого крона уже есть расписание.
  *
  * Для проверки: `?orgId=<id>&force=1` — одна организация сейчас,
  * `&to=<email>` — письмо только на этот адрес (отметка об отправке при
@@ -140,7 +146,21 @@ async function handle(request: Request) {
       ? await sendRootHealthEmail({ now, force: rootHealthForce, to: rootHealthForce ? searchParams.get("to")?.trim() || null : null }).catch((error) => ({ sent: false, reason: `error: ${String(error).slice(0, 120)}` }))
       : { sent: false, reason: "not-slot" };
 
-  return NextResponse.json({ ok: true, now: now.toISOString(), sent, skipped, errors, total: orgs.length, results, rootHealth });
+  // Сводка воронки админу в Telegram — в тот же понедельничный слот по Москве
+  // (?funnelDigest=1 — проверка вне слота). Раз в неделю: ключ недели.
+  const funnelDigestForce = searchParams.get("funnelDigest") === "1";
+  const funnelDigest =
+    funnelDigestForce || (!orgIdFilter && isDigestSlot(now, "Europe/Moscow"))
+      ? await sendFunnelDigest({ now, force: funnelDigestForce, appUrl: baseUrl }).catch((error) => ({ sent: false, reason: `error: ${String(error).slice(0, 120)}` }))
+      : { sent: false, reason: "not-slot" };
+
+  // Брошенные заказы: письмо через час после незавершённой оплаты — крону
+  // нужен ежечасный запуск, а этот уже идёт каждый час.
+  const abandonedOrders = orgIdFilter
+    ? { scanned: 0, sent: 0, skipped: 0, reason: "org-filter" }
+    : await runAbandonedOrderReminders({ now }).catch((error) => ({ scanned: 0, sent: 0, skipped: 0, reason: `error: ${String(error).slice(0, 120)}` }));
+
+  return NextResponse.json({ ok: true, now: now.toISOString(), sent, skipped, errors, total: orgs.length, results, rootHealth, funnelDigest, abandonedOrders });
 }
 
 export const GET = handle;

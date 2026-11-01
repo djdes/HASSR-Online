@@ -11,6 +11,7 @@ import { resolveLocale } from "@/i18n/locales";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { completePaidOrder } from "@/lib/payment-fulfillment";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { escapeTelegramHtml } from "@/lib/telegram";
 import { resolveCheckoutDiscount } from "@/lib/promo/checkout";
 import { lifetimeTerm } from "@/lib/promo/discounts";
 import { computeCheckoutAmounts, orderDiscountNote } from "@/lib/promo/promotions";
@@ -23,6 +24,7 @@ import { brandSeller } from "@/lib/brand-docs/pdf-kit";
 
 import { INVOICE_VALID_DAYS, buildInvoiceDraft, formatRuDate, invoiceRequisitesReady } from "./build";
 import { invoiceDeadline } from "./due";
+import { readGuestBuyer, type GuestBuyer } from "./guest";
 import { renderInvoicePdf } from "./pdf";
 
 /**
@@ -63,6 +65,11 @@ async function loadOrganizationParty(organizationId: string) {
     address: org.address,
     legalProfile: legalProfileOf(org.legalProfileJson),
   };
+}
+
+/** Покупатель гостевого счёта в той же форме, что организация. */
+function guestBuyerParty(buyer: GuestBuyer) {
+  return { name: buyer.name, inn: buyer.inn, address: buyer.address, legalProfile: buyer.legalProfile };
 }
 
 export async function createInvoiceOrder(args: {
@@ -215,11 +222,16 @@ export async function createInvoiceOrder(args: {
 
 export async function renderInvoice(orderId: number): Promise<{ order: PaymentOrder; pdf: Buffer } | null> {
   const order = await db.paymentOrder.findUnique({ where: { id: orderId } });
-  if (!order || order.paymentMethod !== "invoice" || !order.organizationId) return null;
+  if (!order || order.paymentMethod !== "invoice") return null;
+  // Счёт гостя (/order без регистрации): покупатель — снимок из заказа.
+  // После оплаты у заказа появляется организация, но счёт остаётся на тех,
+  // кому его выставили.
+  const guestBuyer = readGuestBuyer(order.buyerJson);
+  if (!order.organizationId && !guestBuyer) return null;
   const topup = isTopupOrder(order);
   const [requisites, organization, tariff] = await Promise.all([
     readPlatformRequisites(),
-    loadOrganizationParty(order.organizationId),
+    guestBuyer ? Promise.resolve(guestBuyerParty(guestBuyer)) : loadOrganizationParty(order.organizationId!),
     topup ? Promise.resolve(null) : readTariffAny(order.tariffKey),
   ]);
   if (!organization) return null;
@@ -248,11 +260,14 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
     readLegalImage("facsimile", requisites),
     readLegalImage("stamp", requisites),
     // Есть выпущенный договор с клиентом — счёт выставлен по нему, а не по оферте.
-    db.clientContract.findFirst({
-      where: { organizationId: order.organizationId, status: { not: "voided" }, issuedAt: { lte: order.createdAt } },
-      orderBy: { issuedAt: "desc" },
-      select: { number: true, issuedAt: true },
-    }),
+    // У гостя договора нет: счёт — по оферте.
+    guestBuyer || !order.organizationId
+      ? Promise.resolve(null)
+      : db.clientContract.findFirst({
+          where: { organizationId: order.organizationId, status: { not: "voided" }, issuedAt: { lte: order.createdAt } },
+          orderBy: { issuedAt: "desc" },
+          select: { number: true, issuedAt: true },
+        }),
   ]);
   if (contract) draft.basis = `Договор № ${contract.number} от ${formatRuDate(contract.issuedAt)}`;
   const brand = brandSeller({ ...requisites, site: "wesetup.ru" });
@@ -265,8 +280,12 @@ export async function deliverInvoice(orderId: number, organizationName: string):
   if (!rendered) return;
   const { order, pdf } = rendered;
   const topup = isTopupOrder(order);
-  const recipient = await db.user.findFirst({ where: { email: order.email, organizationId: order.organizationId! }, select: { locale: true } });
-  const organization = await db.organization.findUnique({ where: { id: order.organizationId! }, select: { locale: true } });
+  const recipient = order.organizationId
+    ? await db.user.findFirst({ where: { email: order.email, organizationId: order.organizationId }, select: { locale: true } })
+    : null;
+  const organization = order.organizationId
+    ? await db.organization.findUnique({ where: { id: order.organizationId }, select: { locale: true } })
+    : null;
   const locale = resolveLocale({ authenticated: Boolean(recipient), userLocale: recipient?.locale, organizationLocale: organization?.locale });
   await sendInvoiceEmail({
     to: order.email,
@@ -386,4 +405,141 @@ export async function cancelInvoice(orderId: number): Promise<boolean> {
     data: { status: "cancelled" },
   });
   return result.count > 0;
+}
+
+/**
+ * Счёт по ИНН без регистрации (/order, гость, 2026-11-01). Сумма — та же,
+ * что у оплаты картой (`quoteCheckout` для гостя: почта существующего
+ * аккаунта — отказ «войдите в кабинет»), со скидкой по промокоду. Один
+ * действующий счёт на почту и ИНН с той же суммой: повторный запрос
+ * возвращает его же.
+ */
+export async function createGuestInvoiceOrder(args: {
+  email: string;
+  buyer: GuestBuyer;
+  target: CheckoutTarget;
+  promoCode?: string | null;
+  expectedGrossRub?: number | null;
+  /** Метка партнёра и реферальная метка клиента — как у оплаты картой. */
+  partnerSlug?: string | null;
+  referrerOrganizationId?: string | null;
+}): Promise<CreateInvoiceResult> {
+  const requisites = await readPlatformRequisites();
+  if (!invoiceRequisitesReady(requisites)) {
+    return { ok: false, status: 409, error: "Оплата по счёту пока недоступна — реквизиты исполнителя не заполнены" };
+  }
+  const now = new Date();
+  const quote = await quoteCheckout({ organizationId: null, target: args.target, now, payer: { email: args.email, guest: true } });
+  if (!quote.ok) return { ok: false, status: quote.status, error: quote.error };
+  const offer = quote.offer;
+  const discount = await resolveCheckoutDiscount({
+    promoRaw: args.promoCode ?? null,
+    organizationId: null,
+    email: args.email,
+    offerRub: offer.priceRub,
+    now,
+    scope: "invoice",
+  });
+  if (!discount.ok) return { ok: false, status: 400, error: discount.message };
+  const applied = discount.applied;
+  const amounts = computeCheckoutAmounts({
+    baseRub: offer.baseRub,
+    promotion: offer.promotion,
+    promo: applied ? { kind: applied.kind, value: applied.value } : null,
+  });
+  if (amounts.grossRub <= 0) {
+    return { ok: false, status: 400, error: "К оплате 0 ₽ — счёт не нужен. Оформите тариф на этой странице: он подключится сразу" };
+  }
+  if (typeof args.expectedGrossRub === "number" && Math.round(args.expectedGrossRub) !== amounts.grossRub) {
+    return {
+      ok: false,
+      status: 409,
+      error: `Сумма изменилась: теперь ${amounts.grossRub.toLocaleString("ru-RU")} ₽. Проверьте её и выставьте счёт ещё раз`,
+      grossRub: amounts.grossRub,
+    };
+  }
+
+  const existing = await db.paymentOrder.findFirst({
+    where: {
+      organizationId: null,
+      email: args.email,
+      paymentMethod: "invoice",
+      status: "pending",
+      tariffKey: offer.tariffKey,
+      points: quote.target.points,
+      amountRub: amounts.grossRub,
+      invoiceDueAt: { gt: now },
+      buyerJson: { path: ["inn"], equals: args.buyer.inn },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (existing) return { ok: true, order: existing, created: false };
+
+  const note = orderDiscountNote({
+    promotion: offer.promotion,
+    promotionDiscountRub: amounts.promotionDiscountRub,
+    promoCode: applied?.code ?? null,
+    promoDiscountRub: amounts.promoDiscountRub,
+    lifetime: applied ? (applied.source === "lifetime" ? "auto" : applied.lifetime ? "code" : null) : null,
+    lifetimeTerm: applied?.lifetime ? lifetimeTerm(applied) : null,
+  });
+  const order = await db.paymentOrder.create({
+    data: {
+      email: args.email,
+      tariffKey: offer.tariffKey,
+      amountRub: amounts.grossRub,
+      description: `${quote.title} (счёт без регистрации${note ? `; ${note}` : ""})`,
+      points: quote.target.points,
+      changeKind: quote.change.kind,
+      creditRub: quote.change.creditRub,
+      periodEndsAt: quote.change.periodEnd,
+      basePlanJson: basePlanSnapshot(quote.base),
+      status: "pending",
+      isTest: isTestMode(),
+      organizationId: null,
+      userId: null,
+      paymentMethod: "invoice",
+      invoiceDueAt: new Date(now.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+      baseRub: amounts.baseRub,
+      promotionId: offer.promotion?.id ?? null,
+      promotionPercent: offer.promotion?.percent ?? null,
+      promotionDiscountRub: amounts.promotionDiscountRub,
+      promoCode: applied?.code ?? null,
+      discountRub: amounts.promoDiscountRub,
+      lifetimeDiscountId: applied?.lifetimeDiscountId ?? null,
+      partnerSlug: args.partnerSlug ?? null,
+      referrerOrganizationId: args.referrerOrganizationId ?? null,
+      buyerJson: args.buyer as unknown as Prisma.InputJsonValue,
+    },
+  });
+  console.info(`[invoices] guest invoice #${order.id}: inn ${args.buyer.inn}, ${amounts.grossRub} ₽`);
+  return { ok: true, order, created: true };
+}
+
+/** Письмо с гостевым счётом и заметка админу — после ответа клиенту. */
+export async function deliverGuestInvoice(orderId: number): Promise<void> {
+  const rendered = await renderInvoice(orderId);
+  if (!rendered) return;
+  const { order, pdf } = rendered;
+  const buyer = readGuestBuyer(order.buyerJson);
+  await sendInvoiceEmail({
+    to: order.email,
+    number: String(order.id),
+    amountRub: Number(order.amountRub),
+    dueAt: order.invoiceDueAt ?? new Date(order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+    organizationId: null,
+    pdf,
+    purpose: "subscription",
+    locale: "ru",
+  }).catch((error) => console.error("[invoices] guest email failed", error));
+  await notifyPlatformAdmin(
+    [
+      `🧾 Счёт №${order.id} без регистрации`,
+      `Покупатель: ${escapeTelegramHtml(buyer?.name ?? "—")}, ИНН ${escapeTelegramHtml(buyer?.inn ?? "—")}`,
+      `Почта: ${escapeTelegramHtml(order.email)}`,
+      `Сумма: ${Number(order.amountRub).toLocaleString("ru-RU")} ₽ · ${order.description}`,
+      `Когда деньги придут — ROOT → «Счета гостей» → «Оплата поступила»: аккаунт заведётся сам, ссылка уйдёт на почту.`,
+    ].join("\n"),
+    { kind: "payment", dedupeKey: `invoice-created:${order.id}` },
+  ).catch((error) => console.error("[invoices] guest admin notify failed", error));
 }

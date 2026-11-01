@@ -141,3 +141,43 @@ export function autofillVtt(): string {
   );
   return `WEBVTT\n\n${cues.join("\n\n")}\n`;
 }
+
+/* ---------------------------------------------------------------------
+ * Вертикальные ролики для соцсетей (VK Клипы, Reels, Shorts), 2026-11-01:
+ * по сцене на источник данных. Та же сцена большого ролика в раскладке
+ * 1080×1920 (`AutofillClip` в `remotion/autofill-tour.tsx`), затем концовка
+ * с адресом. Рендер — `npm run video:render:clips`; файлы отдаются
+ * владельцу, в репозиторий и на сайт не кладутся.
+ * ------------------------------------------------------------------- */
+
+export const AUTOFILL_CLIP = {
+  width: 1080,
+  height: 1920,
+  /** Сцена (самая длинная в большом ролике — 11 с) с запасом, чтобы дочитать. */
+  sceneFrames: 330,
+  /** Концовка с адресом: 4 с. */
+  outroFrames: 120,
+  durationInFrames: 450,
+  durationSeconds: 15,
+} as const;
+
+export const AUTOFILL_CLIP_SCENES = ["sensors", "invoices", "mercury", "photo", "schedule"] as const satisfies readonly AutofillSceneId[];
+export type AutofillClipSceneId = (typeof AUTOFILL_CLIP_SCENES)[number];
+
+export function autofillScene(id: AutofillSceneId): AutofillScene {
+  const scene = AUTOFILL_SCENES.find((item) => item.id === id);
+  if (!scene) throw new Error(`Нет сцены ${id}`);
+  return scene;
+}
+
+/** Имя файла ролика: `autofill-clip-01-sensors`. */
+export function autofillClipBasename(id: AutofillClipSceneId): string {
+  return `autofill-clip-${String(AUTOFILL_CLIP_SCENES.indexOf(id) + 1).padStart(2, "0")}-${id}`;
+}
+
+/** Текст к публикации ролика — из текстов той же сцены и концовки. */
+export function autofillClipCaption(id: AutofillClipSceneId): string {
+  const scene = autofillScene(id);
+  return `${scene.title}. ${scene.sub}\n\nКак это устроено: https://${autofillScene("outro").sub}\n\n#ХАССП #СанПиН #общепит #WeSetup`;
+}
+

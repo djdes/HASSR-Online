@@ -15,6 +15,8 @@ import { OrderClient, type OrderDiscountState, type OrderPlanView } from "./orde
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
+import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
+import { invoiceRequisitesReady } from "@/lib/invoices/build";
 import { seatLimitFor, type PlanTarget } from "@/lib/tariff-plans";
 
 /**
@@ -185,6 +187,9 @@ export default async function OrderPage({
   const cookieAlreadyBound =
     codeSource === "cookie" && discount?.ok === true && discount.lifetime?.code === discount.typedCode;
   const keepCode = discount?.ok === true && !cookieAlreadyBound;
+  // Счёт гостю — как счёт из кабинета: только когда WeSetup заполнил свои
+  // реквизиты и банк (иначе форма всегда отвечала бы «недоступно»).
+  const guestInvoiceReady = !sessionEmail && invoiceRequisitesReady(await readPlatformRequisites());
   const initialDiscount: OrderDiscountState = {
     applied: withLabel(discount?.ok ? discount.applied : lifetimeFallback),
     // Код из cookie, который не подошёл, в поле не подставляем и ошибкой
@@ -208,6 +213,7 @@ export default async function OrderPage({
           bundleConfig={null}
           amountRub={amountRub}
           sessionEmail={sessionEmail}
+          guestInvoiceReady={guestInvoiceReady}
           pointsAvailable={pointsAvailable}
           pointsCap={offer?.priceRub ?? 0}
           // Пришли из кабинета по кнопке «Включить автопродление» — только

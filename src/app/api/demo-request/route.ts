@@ -11,10 +11,13 @@ import {
   DEMO_WHEN,
   composeDemoAlert,
   composeDemoComment,
+  demoSlotLabel,
   hasEnoughPhoneDigits,
   type DemoRequest,
 } from "@/lib/demo-request";
-import { sendRawEmail } from "@/lib/email";
+import { renderEmailLayout, sendRawEmail } from "@/lib/email";
+import { demoIcs, isBookableSlot } from "@/lib/demo-slots";
+import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 import { escapeHtml } from "@/lib/html-escape";
 import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
 import { demoRequestRateLimiter } from "@/lib/rate-limit";
@@ -42,7 +45,11 @@ const Schema = z.object({
     .trim()
     .max(32)
     .refine(hasEnoughPhoneDigits, "Укажите телефон — по нему мы и перезвоним"),
-  when: z.enum(DEMO_WHEN, "Выберите, когда удобно"),
+  /** «Перезвоните мне» — когда удобно; не нужно, если выбрано время. */
+  when: z.enum(DEMO_WHEN, "Выберите, когда удобно").optional(),
+  /** Выбранное время показа (ISO из `/api/demo-request/slots`). */
+  slot: z.string().trim().max(40).optional(),
+  email: z.string().trim().toLowerCase().email("Проверьте почту").max(160).optional().or(z.literal("")),
   topic: z.string().trim().max(500).optional(),
   place: z.string().trim().max(40).optional(),
   consent: z.literal(true, "Отметьте согласие на обработку персональных данных"),
@@ -64,6 +71,13 @@ export async function POST(request: Request) {
       { error: parsed.error.issues[0]?.message ?? "Некорректные данные" },
       { status: 400 },
     );
+  }
+  if (!parsed.data.slot && !parsed.data.when) {
+    return NextResponse.json({ error: "Выберите время показа или «Перезвоните мне»" }, { status: 400 });
+  }
+  const slot = parsed.data.slot ? normalizeSlot(parsed.data.slot) : null;
+  if (parsed.data.slot && !slot) {
+    return NextResponse.json({ error: "Это время уже недоступно — выберите другое", code: "slot-taken" }, { status: 409 });
   }
 
   const ip = clientIp(request) ?? "unknown";
@@ -87,7 +101,9 @@ export async function POST(request: Request) {
   const demo: DemoRequest = {
     name: parsed.data.name,
     phone: parsed.data.phone,
-    when: parsed.data.when,
+    when: slot ? null : (parsed.data.when ?? null),
+    slot,
+    email: parsed.data.email || null,
     topic: parsed.data.topic || null,
     place: parsed.data.place || "",
     source: isEmptySnapshot(source) ? null : source,
@@ -96,22 +112,39 @@ export async function POST(request: Request) {
 
   let requestId: string;
   try {
-    const row = await db.serviceRequest.create({
-      data: {
-        serviceKey: DEMO_SERVICE_KEY,
-        serviceTitle: DEMO_SERVICE_TITLE,
-        organizationId,
-        organizationName,
-        userId: session?.user?.id ?? null,
-        contactName: demo.name,
-        contactPhone: demo.phone,
-        comment: composeDemoComment(demo),
-        source: session ? "app" : "site",
-      },
-      select: { id: true },
-    });
+    const data = {
+      serviceKey: DEMO_SERVICE_KEY,
+      serviceTitle: DEMO_SERVICE_TITLE,
+      organizationId,
+      organizationName,
+      userId: session?.user?.id ?? null,
+      contactName: demo.name,
+      contactPhone: demo.phone,
+      contactEmail: demo.email ?? null,
+      comment: composeDemoComment(demo),
+      source: session ? "app" : "site",
+      scheduledAt: slot ? new Date(slot) : null,
+    };
+    // Время показа — одно на заявку: замок на слот, проверка и запись в одной
+    // транзакции, чтобы два человека не заняли одно и то же время.
+    const row = slot
+      ? await db.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`demo-slot:${slot}`}))`;
+          const now = new Date();
+          const taken = await tx.serviceRequest.findMany({
+            where: { serviceKey: DEMO_SERVICE_KEY, status: { not: "cancelled" }, scheduledAt: { gte: now } },
+            select: { scheduledAt: true },
+          });
+          const takenKeys = new Set(taken.flatMap((item) => (item.scheduledAt ? [item.scheduledAt.toISOString()] : [])));
+          if (!isBookableSlot(slot, now, takenKeys)) throw new SlotTakenError();
+          return tx.serviceRequest.create({ data, select: { id: true } });
+        })
+      : await db.serviceRequest.create({ data, select: { id: true } });
     requestId = row.id;
   } catch (error) {
+    if (error instanceof SlotTakenError) {
+      return NextResponse.json({ error: "Это время уже заняли — выберите другое", code: "slot-taken" }, { status: 409 });
+    }
     console.error("[demo-request] не удалось сохранить заявку:", error);
     return NextResponse.json(
       { error: "Не удалось отправить заявку. Попробуйте ещё раз или позвоните нам" },
@@ -132,9 +165,27 @@ export async function POST(request: Request) {
     );
     emailOk = await sendRawEmail(
       adminEmail,
-      `Показ за 15 минут: ${demo.name}`,
+      slot ? `Показ за 15 минут: ${demoSlotLabel(slot)}, ${demo.name}` : `Показ за 15 минут: ${demo.name}`,
       `<h2>${escapeHtml(DEMO_SERVICE_TITLE)}</h2><p>${lines.map((line) => escapeHtml(line)).join("<br>")}</p>`,
+      slot ? { attachments: [inviteAttachment(slot, requestId, `Показ WeSetup: ${demo.name}, ${demo.phone}`)] } : undefined,
     ).catch(() => false);
+  }
+
+  // Клиенту — приглашение в календарь, если оставил почту и выбрал время.
+  if (slot && demo.email) {
+    await sendRawEmail(
+      demo.email,
+      `Показ WeSetup: ${demoSlotLabel(slot)}`,
+      renderEmailLayout(
+        "Показ WeSetup за 15 минут",
+        `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">Здравствуйте, ${escapeHtml(demo.name)}! Записали вас на показ WeSetup: <b>${escapeHtml(demoSlotLabel(slot))}</b>. Позвоним на ${escapeHtml(demo.phone)} в это время — по видео или по телефону, как удобнее.</p>` +
+          `<p style="margin:0;color:#6f7282;line-height:1.6;font-size:13px">Приглашение для календаря — во вложении. Нужно перенести — ответьте на это письмо.</p>`,
+      ),
+      { replyTo: SUPPORT_EMAIL, attachments: [inviteAttachment(slot, requestId, "Показ WeSetup за 15 минут")] },
+    ).catch((error: unknown) => {
+      console.error("[demo-request] invite email failed", error);
+      return false;
+    });
   }
 
   await db.serviceRequest
@@ -147,5 +198,28 @@ export async function POST(request: Request) {
     })
     .catch((error) => console.error("[demo-request] отметки доставки не записаны:", error));
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, slot });
+}
+
+class SlotTakenError extends Error {}
+
+/** Слот из браузера → ключ слота, если это вообще время показа (занятость — позже, под замком). */
+function normalizeSlot(raw: string): string | null {
+  const date = new Date(raw);
+  if (!Number.isFinite(date.getTime())) return null;
+  const key = date.toISOString();
+  return isBookableSlot(key, new Date()) ? key : null;
+}
+
+function inviteAttachment(slot: string, requestId: string, summary: string) {
+  return {
+    filename: "wesetup-demo.ics",
+    content: demoIcs({
+      slot,
+      uid: `demo-${requestId}`,
+      summary,
+      description: "Показ WeSetup за 15 минут. Позвоним в назначенное время. Поддержка: support@wesetup.ru",
+    }),
+    contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+  };
 }

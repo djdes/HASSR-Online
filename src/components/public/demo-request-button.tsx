@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { Check, Loader2, Video } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { CalendarPlus, Check, Loader2, Video } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DEMO_WHEN, hasEnoughPhoneDigits, type DemoWhen } from "@/lib/demo-request";
+import { demoIcs, formatDayKey, formatSlotDay, formatSlotTime, type DemoSlotDay } from "@/lib/demo-slots";
 import { phoneInputProps } from "@/lib/phone-input";
 import { readSignupSource, rememberSignupSource, ymGoal } from "@/lib/signup-source";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,22 @@ export function DemoRequestButton({
   );
 }
 
+/** «пн, 2 ноября» → «Пн, 2 ноября»: CSS `capitalize` сделал бы заглавным и месяц. */
+function upperFirst(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Свободное время показа; не загрузилось — пустой список (остаётся «Перезвоните мне»). */
+async function fetchDemoSlots(): Promise<DemoSlotDay[]> {
+  try {
+    const response = await fetch("/api/demo-request/slots", { cache: "no-store" });
+    const data = (await response.json().catch(() => null)) as { days?: DemoSlotDay[] } | null;
+    return response.ok && Array.isArray(data?.days) ? data.days : [];
+  } catch {
+    return [];
+  }
+}
+
 function DemoRequestForm({ place, onClose }: { place: string; onClose: () => void }) {
   const t = useTranslations("publicUi.demoRequest");
   const ids = useId();
@@ -88,18 +105,48 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
   const [topic, setTopic] = useState("");
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
+  const locale = useLocale();
+  // Запись на время (2026-11-01): свободные слоты с сервера; нет слотов или
+  // не загрузились — остаётся «Перезвоните мне».
+  const [mode, setMode] = useState<"slot" | "callback">("slot");
+  const [days, setDays] = useState<DemoSlotDay[] | null>(null);
+  const [dayKey, setDayKey] = useState<string | null>(null);
+  const [slot, setSlot] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [booked, setBooked] = useState<string | null>(null);
   const sending = status === "sending";
+
+  const applySlots = useCallback((loaded: DemoSlotDay[]) => {
+    setDays(loaded);
+    const firstFree = loaded.find((day) => day.slots.length > 0);
+    if (!firstFree) {
+      setMode("callback");
+      return;
+    }
+    setDayKey((current) => (current && loaded.some((day) => day.key === current && day.slots.length > 0) ? current : firstFree.key));
+    setSlot((current) => (current && loaded.some((day) => day.slots.includes(current)) ? current : null));
+  }, []);
 
   // Первое касание вкладки — источник визита для заявки и регистрации.
   useEffect(() => {
     rememberSignupSource();
-  }, []);
+    let active = true;
+    void fetchDemoSlots().then((loaded) => {
+      if (active) applySlots(loaded);
+    });
+    return () => {
+      active = false;
+    };
+  }, [applySlots]);
+
+  const activeDay = days?.find((day) => day.key === dayKey) ?? null;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (sending) return;
     if (name.trim().length < 2) return setError(t("errorName"));
     if (!hasEnoughPhoneDigits(phone)) return setError(t("errorPhone"));
+    if (mode === "slot" && !slot) return setError(t("errorSlot"));
     if (!consent) return setError(t("errorConsent"));
     setError(null);
     setStatus("sending");
@@ -110,7 +157,7 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
-          when,
+          ...(mode === "slot" ? { slot, email: email.trim() || undefined } : { when }),
           topic: topic.trim() || undefined,
           place,
           consent,
@@ -120,10 +167,18 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
       });
       if (!response.ok) {
         setStatus("idle");
+        if (response.status === 409) {
+          // Время успели занять — обновляем слоты и просим выбрать другое.
+          setSlot(null);
+          void fetchDemoSlots().then(applySlots);
+          setError(t("slotTaken"));
+          return;
+        }
         setError(response.status === 429 ? t("errorTooMany") : t("errorGeneric"));
         return;
       }
-      ymGoal("demo_request", { place });
+      ymGoal("demo_request", { place, mode });
+      setBooked(mode === "slot" ? slot : null);
       setStatus("done");
     } catch {
       setStatus("idle");
@@ -138,9 +193,28 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
           <Check className="size-6" aria-hidden />
         </span>
         <DialogHeader className="text-left">
-          <DialogTitle className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">{t("doneTitle")}</DialogTitle>
-          <DialogDescription className="text-[15px] leading-[1.55] text-[#3c4053]">{t("doneBody", { phone: phone.trim() })}</DialogDescription>
+          <DialogTitle className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">
+            {booked ? t("doneBookedTitle") : t("doneTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-[15px] leading-[1.55] text-[#3c4053]">
+            {booked
+              ? t("doneBookedBody", { when: `${formatSlotDay(booked, locale)}, ${formatSlotTime(booked)}`, phone: phone.trim() })
+              : t("doneBody", { phone: phone.trim() })}
+          </DialogDescription>
         </DialogHeader>
+        {booked ? (
+          <a
+            href={`data:text/calendar;charset=utf-8,${encodeURIComponent(
+              demoIcs({ slot: booked, uid: `demo-${booked}`, summary: t("calendarSummary"), description: t("calendarDescription") }),
+            )}`}
+            download="wesetup-demo.ics"
+            className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            data-demo-request-ics
+          >
+            <CalendarPlus className="size-4 text-[#5566f6]" aria-hidden />
+            {t("addToCalendar")}
+          </a>
+        ) : null}
         <button
           type="button"
           onClick={onClose}
@@ -153,7 +227,9 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4">
+    // min-w-0: форма — ячейка сетки окна; без него строка дней (прокрутка
+    // по горизонтали) растягивала окно шире экрана телефона.
+    <form onSubmit={submit} noValidate className="min-w-0 space-y-4">
       <DialogHeader className="text-left">
         {/* Справа — место под крестик окна: длинный заголовок не должен под него заезжать. */}
         <DialogTitle className="pr-10 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">{t("title")}</DialogTitle>
@@ -178,25 +254,118 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
         <input id={`${ids}-phone`} className={INPUT_CLASS} placeholder="+7 (900) 000-00-00" maxLength={32} {...phoneInputProps(phone, setPhone)} />
       </div>
 
-      <fieldset>
-        <legend className={LABEL_CLASS}>{t("when")}</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {DEMO_WHEN.map((option) => (
-            <label
-              key={option}
-              className={cn(
-                "flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-2 text-center text-[14px] font-medium leading-tight transition-colors duration-150 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#5566f6]/15",
-                when === option
-                  ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
-                  : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
-              )}
-            >
-              <input type="radio" name={`${ids}-when`} value={option} checked={when === option} onChange={() => setWhen(option)} className="sr-only" />
-              {t(`when_${option}`)}
-            </label>
-          ))}
+      <div role="radiogroup" aria-label={t("when")} className="grid grid-cols-2 gap-1 rounded-2xl border border-[#dcdfed] bg-white p-1">
+        {(["slot", "callback"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={mode === option}
+            disabled={option === "slot" && days !== null && !days.some((day) => day.slots.length > 0)}
+            onClick={() => setMode(option)}
+            className={cn(
+              "min-h-10 rounded-xl px-2 text-[14px] font-medium transition-colors duration-150 disabled:opacity-40",
+              mode === option ? "bg-[#5566f6] text-white" : "text-[#0b1024] hover:bg-[#f5f6ff]",
+            )}
+          >
+            {option === "slot" ? t("modeSlot") : t("modeCallback")}
+          </button>
+        ))}
+      </div>
+
+      {mode === "slot" ? (
+        <div data-demo-request-slots>
+          {days === null ? (
+            <p className="flex items-center gap-2 text-[13px] text-[#6f7282]">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              {t("slotsLoading")}
+            </p>
+          ) : (
+            <>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                {days.map((day) => (
+                  <button
+                    key={day.key}
+                    type="button"
+                    onClick={() => {
+                      setDayKey(day.key);
+                      setSlot(null);
+                    }}
+                    disabled={day.slots.length === 0}
+                    aria-pressed={dayKey === day.key}
+                    className={cn(
+                      "shrink-0 rounded-2xl border px-3 py-2 text-[13px] font-medium transition-colors duration-150 disabled:opacity-40",
+                      dayKey === day.key
+                        ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
+                        : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40",
+                    )}
+                  >
+                    {upperFirst(formatDayKey(day.key, locale))}
+                  </button>
+                ))}
+              </div>
+              {activeDay ? (
+                <div className="mt-2 grid grid-cols-4 gap-2" role="radiogroup" aria-label={t("pickTime")}>
+                  {activeDay.slots.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      role="radio"
+                      aria-checked={slot === item}
+                      onClick={() => setSlot(item)}
+                      className={cn(
+                        "min-h-10 rounded-xl border text-[14px] font-medium tabular-nums transition-colors duration-150",
+                        slot === item ? "border-[#5566f6] bg-[#5566f6] text-white" : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40",
+                      )}
+                    >
+                      {formatSlotTime(item)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <p className="mt-2 text-[12px] text-[#9b9fb3]">{t("mskNote")}</p>
+              <div className="mt-3">
+                <label htmlFor={`${ids}-email`} className={LABEL_CLASS}>
+                  {t("email")} <span className="font-normal text-[#9b9fb3]">· {t("emailHint")}</span>
+                </label>
+                <input
+                  id={`${ids}-email`}
+                  type="email"
+                  className={INPUT_CLASS}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@company.ru"
+                  autoComplete="email"
+                  maxLength={160}
+                />
+              </div>
+            </>
+          )}
         </div>
-      </fieldset>
+      ) : (
+        <fieldset>
+          <legend className={LABEL_CLASS}>{t("when")}</legend>
+          <div className="grid grid-cols-3 gap-2">
+            {DEMO_WHEN.map((option) => (
+              <label
+                key={option}
+                className={cn(
+                  "flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-2 text-center text-[14px] font-medium leading-tight transition-colors duration-150 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-[#5566f6]/15",
+                  when === option
+                    ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
+                    : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+                )}
+              >
+                <input type="radio" name={`${ids}-when`} value={option} checked={when === option} onChange={() => setWhen(option)} className="sr-only" />
+                {t(`when_${option}`)}
+              </label>
+            ))}
+          </div>
+          {days !== null && !days.some((day) => day.slots.length > 0) ? (
+            <p className="mt-2 text-[12px] text-[#9b9fb3]">{t("noSlots")}</p>
+          ) : null}
+        </fieldset>
+      )}
 
       <div>
         <label htmlFor={`${ids}-topic`} className={LABEL_CLASS}>

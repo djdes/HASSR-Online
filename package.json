@@ -29,6 +29,7 @@
     "typecheck": "node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json",
     "video:render": "tsx scripts/landing-video/render.ts",
     "video:render:autofill": "tsx scripts/landing-video/render-autofill.ts",
+    "video:render:clips": "tsx scripts/landing-video/render-clips.ts",
     "test": "node --import tsx --test --test-reporter=spec \"src/**/*.test.ts\"",
     "test:watch": "node --import tsx --watch --test \"src/**/*.test.ts\"",
     "test:ci": "node --import tsx --test --test-reporter=tap \"src/**/*.test.ts\"",

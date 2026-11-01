@@ -2,7 +2,9 @@ import "./style.css";
 
 import { Composition } from "remotion";
 
-import { AUTOFILL_VIDEO_CONFIG, AutofillTour } from "./autofill-tour";
+import { AUTOFILL_CLIP, AUTOFILL_CLIP_SCENES, AUTOFILL_FPS } from "@/lib/autofill-offer";
+
+import { AUTOFILL_VIDEO_CONFIG, AutofillClip, AutofillTour } from "./autofill-tour";
 import { QrTourNarrated, TIMELINE, VIDEO, type QrTourProps } from "./tour";
 
 /**
@@ -28,5 +30,18 @@ export const RemotionRoot: React.FC = () => (
     />
     {/* «Журналы, которые заполняются сами» для /avtozapolnenie — без голоса. */}
     <Composition id="AutofillTour" component={AutofillTour} {...AUTOFILL_VIDEO_CONFIG} />
+    {/* Вертикальные ролики 1080×1920 по 15 с для соцсетей — по сцене на источник. */}
+    {AUTOFILL_CLIP_SCENES.map((sceneId) => (
+      <Composition
+        key={sceneId}
+        id={`AutofillClip-${sceneId}`}
+        component={AutofillClip}
+        fps={AUTOFILL_FPS}
+        width={AUTOFILL_CLIP.width}
+        height={AUTOFILL_CLIP.height}
+        durationInFrames={AUTOFILL_CLIP.durationInFrames}
+        defaultProps={{ sceneId }}
+      />
+    ))}
   </>
 );

@@ -1,0 +1,31 @@
+[email/dev] SMTP не настроен — письмо не отправлено на stage3-e2e-buyer@example.test.
+[email/dev] Subject: Оплата получена — завершите настройку
+[email/dev] Body:    Оплата получена — завершите настройку Здравствуйте! Мы получили вашу оплату. Спасибо! Тариф: Тариф «Стандарт» на месяц (счёт без регистрации) Сумма: 3 000 ₽ Подписка действует до: 01.12.2026 Осталось задать пароль и указать название организации — это займёт минуту. Завершить настройку Вопросы по оплате и возврату — support@wesetup.ru. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+{
+  "checkedAt": "2026-11-01T20:30:44.437Z",
+  "orderId": 10,
+  "markPaid": {
+    "ok": true
+  },
+  "markPaidAgain": {
+    "ok": false,
+    "status": 409,
+    "error": "Счёт уже отмечен оплаченным"
+  },
+  "order": {
+    "status": "paid",
+    "paidAt": "2026-11-01T20:30:42.855Z",
+    "hasCompletionLink": true
+  },
+  "organization": {
+    "name": "Организация stage3-e2e-buyer@example.test",
+    "inn": "5018215599",
+    "address": null,
+    "subscriptionPlan": "standard",
+    "subscriptionEnd": "2026-12-01T20:30:43.640Z"
+  },
+  "user": {
+    "role": "manager",
+    "organizationId": "cmvyabgu00000w87d8elnqg19"
+  }
+}

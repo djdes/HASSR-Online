@@ -45,6 +45,10 @@ export async function GET(request: NextRequest) {
     // иначе «оплата 1 490 ₽» при цене 1 990 ₽ читается как недоплата.
     pointsSpent: order.pointsSpent,
     description: order.description,
+    // Тариф и точки — экрану «Оплата не прошла»: гостя ведём к счёту по ИНН
+    // на тот же тариф (`continueOrderPath`).
+    tariffKey: order.tariffKey,
+    points: order.points,
     isTest: order.isTest,
     // Новому клиенту показываем форму достройки профиля; существующему —
     // просто «подписка продлена, войдите».

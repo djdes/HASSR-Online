@@ -1,0 +1,18 @@
+Сборка remotion/index.ts…
+autofill-clip-01-sensors.mp4: 0.39 МБ, 15 с, 1080×1920
+autofill-clip-02-invoices.mp4: 0.37 МБ, 15 с, 1080×1920
+autofill-clip-03-mercury.mp4: 0.31 МБ, 15 с, 1080×1920
+autofill-clip-04-photo.mp4: 0.31 МБ, 15 с, 1080×1920
+ProtocolError: Protocol error (Page.bringToFront): Target closed. https://www.remotion.dev/docs/target-closed
+    at CDPSession._onClosed (/home/user/HASSR-Online/node_modules/@remotion/renderer/dist/browser/Connection.js:224:42)
+    at #onClose (/home/user/HASSR-Online/node_modules/@remotion/renderer/dist/browser/Connection.js:131:21)
+    at Connection.dispose (/home/user/HASSR-Online/node_modules/@remotion/renderer/dist/browser/Connection.js:137:22)
+    at HeadlessBrowser.disconnect (/home/user/HASSR-Online/node_modules/@remotion/renderer/dist/browser/Browser.js:195:25)
+    at HeadlessBrowser.close (/home/user/HASSR-Online/node_modules/@remotion/renderer/dist/browser/Browser.js:191:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  code: undefined,
+  originalMessage: ''
+}
+autofill-clip-05-schedule.mp4: 0.34 МБ, 15 с, 1080×1920
+Готово: /tmp/claude-0/-home-user-HASSR-Online/569524e0-9c95-5a31-aad3-b0c92ff096e3/scratchpad/clips
+EXIT 0

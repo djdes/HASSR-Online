@@ -28,6 +28,7 @@ import {
   Menu,
   MessageSquareText,
   NotebookText,
+  Receipt,
   ScrollText,
   SearchCheck,
   Smile,
@@ -89,6 +90,7 @@ const NAV: NavEntry[] = [
     items: [
       { href: "/root/funnel", label: "funnel", icon: Filter },
       { href: "/root/tariffs", label: "tariffs", icon: Wallet },
+      { href: "/root/invoices", label: "guestInvoices", icon: Receipt },
       { href: "/root/promotions", label: "promotions", icon: BadgePercent },
       { href: "/root/promo-codes", label: "promoCodes", icon: Ticket },
       { href: "/root/proposals", label: "proposals", icon: FileText },

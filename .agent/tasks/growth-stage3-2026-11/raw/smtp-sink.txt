@@ -1,0 +1,2 @@
+smtp sink on 127.0.0.1:2525
+2026-11-01T20:27:32.581Z <stage3-e2e-abandoned@example.test> — =?UTF-8?B?0J7Qv9C70LDRgtCwIFdlU2V0dXAg0L3QtSDQt9Cw?=
