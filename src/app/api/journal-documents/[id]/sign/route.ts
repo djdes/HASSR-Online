@@ -7,6 +7,7 @@ import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { getServerSession } from "@/lib/server-session";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     select: { id: true, name: true },
   });
   if (!signer) return NextResponse.json({ error: "Подписывают только члены комиссии этого журнала" }, { status: 403 });
+  const target = await db.journalDocument.findFirst({ where: { id, organizationId }, select: { buildingId: true } });
+  if (!target || !(await canSeeDocumentPoint(session, target.buildingId))) {
+    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+  }
   const result = await signBrakerageRows({
     documentId: id,
     organizationId,

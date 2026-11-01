@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { recordAuditLog } from "@/lib/audit-log";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,9 +48,9 @@ export async function POST(
   // Проверяем что документ принадлежит этой орге и это cleaning.
   const doc = await db.journalDocument.findFirst({
     where: { id: documentId, organizationId },
-    select: { id: true, template: { select: { code: true } } },
+    select: { id: true, buildingId: true, template: { select: { code: true } } },
   });
-  if (!doc) {
+  if (!doc || !(await canSeeDocumentPoint(auth.session, doc.buildingId))) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
   if (doc.template.code !== "cleaning") {

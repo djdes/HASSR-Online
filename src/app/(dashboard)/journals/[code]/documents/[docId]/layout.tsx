@@ -1,5 +1,6 @@
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 import { db } from "@/lib/db";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import {
@@ -57,6 +58,7 @@ export default async function JournalDocumentLayout({
       select: {
         title: true,
         organizationId: true,
+        buildingId: true,
         template: { select: { name: true, code: true } },
       },
     }),
@@ -69,14 +71,17 @@ export default async function JournalDocumentLayout({
   // Чужой или несуществующий документ крошек не получает: 404 отдаёт сама
   // страница, а показывать в крошках чужое название организации нельзя.
   const showCrumbs =
-    Boolean(document) && document?.organizationId === activeOrgId;
+    Boolean(document) &&
+    document?.organizationId === activeOrgId &&
+    (await canSeeDocumentPoint(session, document.buildingId));
 
   // Оба списка нужны прямо здесь: из бланка уходят и в соседний журнал,
   // и в соседний документ этого же журнала.
   const [journalMenu, documentMenu] = showCrumbs
     ? await Promise.all([
         getJournalCrumbMenu(session, code, locale),
-        getDocumentCrumbMenu(activeOrgId, code, docId, await getActiveBuildingId(session), locale),
+        // Соседние документы — той же точки, что и этот (и общие).
+        getDocumentCrumbMenu(activeOrgId, code, docId, document?.buildingId ?? (await getViewedPointId(session)), locale),
       ])
     : [undefined, undefined];
 

@@ -19,6 +19,7 @@ import { checkEntryScope } from "@/lib/journal-entry-write";
 import { orgTodayKey } from "@/lib/timezone";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 /**
  * POST /api/journal-documents/[id]/entries/bulk
@@ -63,7 +64,7 @@ export async function POST(
     where: { id: documentId },
     include: { template: { select: { code: true } } },
   });
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
   if (doc.status === "closed") {

@@ -5,6 +5,7 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { logAudit } from "@/lib/audit";
 import { findOrgUser } from "@/lib/journal-roster-db";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -73,12 +74,14 @@ export async function POST(
     where: { id: docId, organizationId: orgId },
     select: {
       id: true,
+      buildingId: true,
       verifierUserId: true,
       responsibleUserId: true,
       status: true,
     },
   });
-  if (!doc) {
+  // Документ чужой точки — «не найден»; назначенный проверяющий его видит.
+  if (!doc || (doc.verifierUserId !== session.user.id && !(await canSeeDocumentPoint(session, doc.buildingId)))) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
 
@@ -433,6 +436,7 @@ export async function GET(
     where: { id: docId, organizationId: orgId },
     select: {
       id: true,
+      buildingId: true,
       verifierUserId: true,
       responsibleUserId: true,
       verificationStatus: true,
@@ -440,7 +444,10 @@ export async function GET(
       verificationRejectReason: true,
     },
   });
-  if (!doc) {
+  if (
+    !doc ||
+    (doc.verifierUserId !== auth.session.user.id && !(await canSeeDocumentPoint(auth.session, doc.buildingId)))
+  ) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
 

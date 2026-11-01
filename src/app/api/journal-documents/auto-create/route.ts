@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { buildingTargets } from "@/lib/active-building";
+import { buildingTargets, loadBuildingContext } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ensureDocumentsFor } from "@/lib/journal-auto-create";
+import { visibleBuildingTargets } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,8 +59,9 @@ export async function POST() {
   const results = await ensureDocumentsFor(db, {
     organizationId,
     templateCodes: codes,
-    // Точки: по документу на каждую точку организации.
-    buildingIds: await buildingTargets(organizationId),
+    // Точки: по документу на каждую точку организации — из доступных
+    // человеку (руководитель точки создаёт только для своих, 2026-11-01).
+    buildingIds: visibleBuildingTargets(await buildingTargets(organizationId), await loadBuildingContext(session)),
   });
   const created = results.filter((r) => r.created).length;
   const skipped = results.length - created;

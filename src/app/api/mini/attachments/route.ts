@@ -10,6 +10,7 @@ import { miniAttachmentRateLimiter } from "@/lib/rate-limit";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import crypto from "crypto";
+import { canSeeDocumentPoint, JOURNAL_ENTRY_POINT_SELECT, journalEntryPointId } from "@/lib/document-point-access";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 type AllowedType = (typeof ALLOWED_TYPES)[number];
@@ -75,9 +76,10 @@ export async function POST(req: NextRequest) {
     if (entryId) {
       const entry = await db.journalEntry.findFirst({
         where: { id: entryId, organizationId: getActiveOrgId(session) },
-        select: { id: true },
+        select: { id: true, ...JOURNAL_ENTRY_POINT_SELECT },
       });
-      if (!entry) {
+      // Запись цеха / оборудования чужой точки — как несуществующая.
+      if (!entry || !(await canSeeDocumentPoint(session, journalEntryPointId(entry)))) {
         return NextResponse.json({ error: "Запись не найдена" }, { status: 404 });
       }
     }

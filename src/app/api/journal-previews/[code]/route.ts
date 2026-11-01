@@ -2,6 +2,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +43,10 @@ export async function GET(
   const organizationId = getActiveOrgId(session);
 
   // Точки: `b` — ключ точки из URL превью; без своего снимка отдаём общий.
-  const buildingKey = new URL(request.url).searchParams.get("b") ?? "";
+  const requestedKey = new URL(request.url).searchParams.get("b") ?? "";
+  // Снимок чужой точки (реальные записи с фамилиями) не отдаём — вместо
+  // него общий (2026-11-01).
+  const buildingKey = requestedKey && (await canSeeDocumentPoint(session, requestedKey)) ? requestedKey : "";
   const preview =
     (await db.journalPreview.findUnique({
       where: { organizationId_code_buildingKey: { organizationId, code, buildingKey } },

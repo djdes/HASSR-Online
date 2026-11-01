@@ -17,6 +17,9 @@ import {
 } from "@/lib/climate-document";
 import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole, pickPrimaryManager } from "@/lib/user-roles";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { documentRowsPointId } from "@/lib/document-point-rows";
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 
 type ClimateAction =
   | "apply_auto_fill"
@@ -65,7 +68,11 @@ export async function POST(
     },
   });
 
-  if (!document || document.organizationId !== getActiveOrgId(session)) {
+  if (
+    !document ||
+    document.organizationId !== getActiveOrgId(session) ||
+    !(await canSeeDocumentPoint(session, document.buildingId))
+  ) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
 
@@ -147,10 +154,12 @@ export async function POST(
     return NextResponse.json({ updated: document.entries.length });
   }
 
+  // Запасной ответственный — из людей точки документа, не всей организации.
   const users = await db.user.findMany({
     where: {
       organizationId: getActiveOrgId(session),
       isActive: true,
+      ...staffAtBuildingWhere(await documentRowsPointId(document.organizationId, document.buildingId)),
     },
     select: { id: true, role: true },
     orderBy: [{ role: "asc" }, { id: "asc" }],

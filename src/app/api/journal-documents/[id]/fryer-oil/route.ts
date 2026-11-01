@@ -11,6 +11,8 @@ import { withFryerSource } from "@/lib/fryer-oil-equipment-link";
 import { MAX_BATCH_ITEMS, isValidDate, reserveUniqueDates } from "@/lib/fryer-oil-entries";
 import { getServerSession } from "@/lib/server-session";
 import { canWriteJournal } from "@/lib/journal-acl";
+import type { Session } from "next-auth";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 async function resolveEmployeeId(
   sessionUserId: string,
@@ -36,11 +38,12 @@ async function resolveEmployeeId(
   return fallback?.id ?? null;
 }
 
-async function getDocument(documentId: string, organizationId: string) {
-  return db.journalDocument.findFirst({
+async function getDocument(documentId: string, organizationId: string, session: Session) {
+  const document = await db.journalDocument.findFirst({
     where: { id: documentId, organizationId },
     include: { template: { select: { code: true } } },
   });
+  return document && (await canSeeDocumentPoint(session, document.buildingId)) ? document : null;
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -49,7 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   const orgId = getActiveOrgId(session);
-  const document = await getDocument(documentId, orgId);
+  const document = await getDocument(documentId, orgId, session);
   if (!document || document.template?.code !== FRYER_OIL_TEMPLATE_CODE) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
@@ -113,7 +116,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
-  const document = await getDocument(documentId, getActiveOrgId(session));
+  const document = await getDocument(documentId, getActiveOrgId(session), session);
   if (!document || document.template?.code !== FRYER_OIL_TEMPLATE_CODE) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }
@@ -164,7 +167,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
-  const document = await getDocument(documentId, getActiveOrgId(session));
+  const document = await getDocument(documentId, getActiveOrgId(session), session);
   if (!document || document.template?.code !== FRYER_OIL_TEMPLATE_CODE) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   }

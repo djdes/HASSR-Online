@@ -104,7 +104,7 @@ function serverBuilderFixture() {
       if (id === "@/lib/auth-helpers") return { getActiveOrgId: () => "active-org" };
       if (id === "@/lib/journal-acl") return { aclActorFromSession: () => ({ id: "actor" }), getAllowedJournalCodes: async () => ["cleaning", "hygiene", "climate_control"] };
       if (id === "@/lib/role-access") return { hasFullWorkspaceAccess: (user: {role: string}) => user.role === "owner" };
-      if (id === "@/lib/active-building") return { getActiveBuildingId: async () => "building-id" };
+      if (id === "@/lib/active-building") return { getViewedPointId: async () => "building-id" };
       if (id === "@/lib/org-custom-names") return { getOrgCustomNames: async () => ({ journals: { hygiene: "Своя гигиена O‘tkir" }, sections: {} }) };
       if (id === "@/lib/today-compliance") return { getTemplatesFilledToday: async (...input: unknown[]) => { queries.push({ name: "filled", input }); return new Set(["t-cleaning"]); } };
       if (id === "@/lib/db") return { db: {

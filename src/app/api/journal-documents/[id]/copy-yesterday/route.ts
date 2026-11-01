@@ -11,6 +11,7 @@ import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygien
 import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
 import { READING_PHOTOS_KEY } from "@/lib/reading-photos";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -100,13 +101,14 @@ export async function POST(
       id: true,
       status: true,
       organizationId: true,
+      buildingId: true,
       dateFrom: true,
       dateTo: true,
       config: true,
       template: { select: { code: true } },
     },
   });
-  if (!doc || doc.organizationId !== organizationId) {
+  if (!doc || doc.organizationId !== organizationId || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
   if (doc.status === "closed") {

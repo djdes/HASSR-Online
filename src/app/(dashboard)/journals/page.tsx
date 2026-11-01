@@ -12,8 +12,8 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { aclActorFromSession, getAllowedJournalCodes } from "@/lib/journal-acl";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
-import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
-import { buildingWhere, journalsPointMode } from "@/lib/building-scope";
+import { loadBuildingContext } from "@/lib/active-building";
+import { buildingWhere, journalsPointMode, viewedPointId } from "@/lib/building-scope";
 import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
@@ -72,7 +72,9 @@ export default async function JournalsPage({
   ]);
 
   // У точки со своим набором журналов (слитая организация) — её набор.
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Бейджи — по точке из шапки; «Вся организация» — по всем точкам
+  // (2026-11-01: раньше — по офису или первой точке).
+  const activeBuildingId = viewedPointId(pointContext);
   const disabledCodes = activeBuildingId
     ? await getDisabledJournalCodes(getActiveOrgId(session), activeBuildingId)
     : parseDisabledCodes(organization?.disabledJournalCodes);
@@ -114,7 +116,9 @@ export default async function JournalsPage({
   );
 
   // Снимки реальных документов — те же, что на дашборде.
-  const previewUrls = await getJournalPreviewMap(getActiveOrgId(session), activeBuildingId);
+  // Миниатюры — снимки документов активной точки (в режиме всей
+  // организации — офиса или первой точки), иначе общие.
+  const previewUrls = await getJournalPreviewMap(getActiveOrgId(session), pointContext.activeBuildingId);
 
   const items = visibleTemplates.map((template) => ({
     id: template.id,

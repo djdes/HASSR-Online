@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -51,7 +51,8 @@ export async function GET(
     getActiveOrgId(session),
     resolvedCode,
     undefined,
-    await getActiveBuildingId(session),
+    // Точка из шапки; «Вся организация» — все документы (не офис / первая точка).
+    await getViewedPointId(session),
     locale,
   );
 

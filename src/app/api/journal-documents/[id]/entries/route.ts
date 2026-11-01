@@ -27,6 +27,7 @@ import { checkEntryScope } from "@/lib/journal-entry-write";
 import { orgTodayKey } from "@/lib/timezone";
 import { decideEntryMove } from "@/lib/tracked-document";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 /**
  * Контекст автоматического запрета «день в день» — для PATCH/DELETE,
@@ -55,7 +56,7 @@ export async function PUT(
     where: { id: documentId },
     include: { template: { select: { code: true } } },
   });
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
@@ -284,7 +285,7 @@ export async function PATCH(
     where: { id: documentId },
     include: { template: { select: { code: true } } },
   });
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 
@@ -492,7 +493,7 @@ export async function DELETE(
     where: { id: documentId },
     include: { template: { select: { code: true } } },
   });
-  if (!doc || doc.organizationId !== getActiveOrgId(session)) {
+  if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 

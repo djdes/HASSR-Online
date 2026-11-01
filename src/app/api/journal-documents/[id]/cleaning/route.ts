@@ -11,6 +11,8 @@ import {
 } from "@/lib/cleaning-document";
 import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole } from "@/lib/user-roles";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
 
 export async function POST(
   request: Request,
@@ -34,15 +36,29 @@ export async function POST(
     return NextResponse.json({ error: "Неверное действие" }, { status: 400 });
   }
 
-  const [document, users, areas] = await Promise.all([
-    db.journalDocument.findUnique({
-      where: { id },
-      include: { template: true },
-    }),
+  const document = await db.journalDocument.findUnique({
+    where: { id },
+    include: { template: true },
+  });
+
+  if (
+    !document ||
+    document.organizationId !== getActiveOrgId(session) ||
+    !(await canSeeDocumentPoint(session, document.buildingId))
+  ) {
+    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+  }
+
+  // Автозаполнение документа точки — только её люди и цеха (2026-11-01):
+  // иначе пустые ответственные заполнялись людьми других точек, а при
+  // следующем открытии страницы их снова убирала синхронизация строк.
+  const rows = pointRowsWhere(await documentRowsPointId(document.organizationId, document.buildingId));
+  const [users, areas] = await Promise.all([
     db.user.findMany({
       where: {
         organizationId: getActiveOrgId(session),
         isActive: true,
+        ...rows.staff,
       },
       select: { id: true, name: true, role: true, positionTitle: true },
       orderBy: [{ role: "asc" }, { name: "asc" }],
@@ -50,15 +66,12 @@ export async function POST(
     db.area.findMany({
       where: {
         organizationId: getActiveOrgId(session),
+        ...rows.area,
       },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
   ]);
-
-  if (!document || document.organizationId !== getActiveOrgId(session)) {
-    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
-  }
 
   if (document.template.code !== CLEANING_DOCUMENT_TEMPLATE_CODE) {
     return NextResponse.json({ error: "Неверный тип документа" }, { status: 400 });

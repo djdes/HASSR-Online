@@ -12,6 +12,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { canWriteJournal } from "@/lib/journal-acl";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 
@@ -180,11 +181,16 @@ export async function POST(
     where: { id },
     select: {
       organizationId: true,
+      buildingId: true,
       status: true,
       template: { select: { code: true } },
     },
   });
-  if (!document || document.organizationId !== getActiveOrgId(session)) {
+  if (
+    !document ||
+    document.organizationId !== getActiveOrgId(session) ||
+    !(await canSeeDocumentPoint(session, document.buildingId))
+  ) {
     return asImportResponse({
       rows: [],
       errors: [{ rowNumber: 0, errors: ["Документ не найден"] }],

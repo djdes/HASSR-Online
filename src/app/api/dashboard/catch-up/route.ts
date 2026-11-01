@@ -5,8 +5,9 @@ import { sortJournalsByName } from "@/lib/journal-sort";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
-import { buildingWhere } from "@/lib/building-scope";
+import { loadBuildingContext } from "@/lib/active-building";
+import { documentVisibleWhere } from "@/lib/document-point-access";
+import { buildingWhere, viewedPointId, withBuildingSuffix } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { DAILY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
@@ -110,12 +111,18 @@ export async function GET() {
     select: { id: true, code: true, name: true },
   });
 
+  // Точка из шапки: её документы и общие. «Вся организация» (точки
+  // включены) — по строке на каждую точку (2026-11-01): раньше сетка молча
+  // показывала только офис или первую точку.
+  const buildingContext = await loadBuildingContext(session);
+  const viewedPoint = viewedPointId(buildingContext);
+  const perPoint = buildingContext.enabled && !viewedPoint;
   const docs = await db.journalDocument.findMany({
     where: {
       organizationId,
       status: "active",
       templateId: { in: templates.map((t) => t.id) },
-      ...buildingWhere(await getActiveBuildingId(session)),
+      ...buildingWhere(viewedPoint),
     },
     select: {
       id: true,
@@ -123,17 +130,24 @@ export async function GET() {
       templateId: true,
       dateFrom: true,
       dateTo: true,
+      buildingId: true,
+      building: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Pick one freshest active doc per template.
-  const freshDoc = new Map<string, (typeof docs)[number]>();
+  // Самый свежий активный документ журнала (в режиме всей организации —
+  // журнала на каждой точке).
+  const freshDocs = new Map<string, Array<(typeof docs)[number]>>();
+  const seenSlots = new Set<string>();
   for (const d of docs) {
-    if (!freshDoc.has(d.templateId)) freshDoc.set(d.templateId, d);
+    const slot = perPoint ? `${d.templateId}:${d.buildingId ?? ""}` : d.templateId;
+    if (seenSlots.has(slot)) continue;
+    seenSlots.add(slot);
+    freshDocs.set(d.templateId, [...(freshDocs.get(d.templateId) ?? []), d]);
   }
 
-  const docIds = [...freshDoc.values()].map((d) => d.id);
+  const docIds = [...freshDocs.values()].flat().map((d) => d.id);
   // _autoSeeded плейсхолдеры — пустые матриксы для employee×day,
   // их в counter «заполнено сегодня» включать нельзя: иначе вся
   // catch-up grid показывает «filled» там, где сотрудник реально
@@ -181,23 +195,7 @@ export async function GET() {
     days.push(d);
   }
 
-  // Строки сетки — журналы по алфавиту.
-  const rows: JournalRow[] = sortJournalsByName(templates, (tpl) => tpl.name).map((tpl) => {
-    const doc = freshDoc.get(tpl.id) ?? null;
-    if (!doc) {
-      return {
-        templateCode: tpl.code,
-        templateName: tpl.name,
-        documentId: null,
-        documentTitle: null,
-        expectedRoster: 0,
-        days: days.map((d) => ({
-          date: dayKey(d),
-          status: "no_document" as DayStatus,
-          filledCount: 0,
-        })),
-      };
-    }
+  const documentRow = (tpl: (typeof templates)[number], doc: (typeof docs)[number]): JournalRow => {
     const dateFrom = utcDayStart(doc.dateFrom);
     const dateToEnd = (() => {
       const e = utcDayStart(doc.dateTo);
@@ -206,11 +204,12 @@ export async function GET() {
     })();
     const docEntries = entriesByDoc.get(doc.id) ?? new Map();
 
+    const pointName = perPoint ? doc.building?.name?.trim() : null;
     return {
       templateCode: tpl.code,
       templateName: tpl.name,
       documentId: doc.id,
-      documentTitle: doc.title,
+      documentTitle: pointName && !doc.title.includes(pointName) ? withBuildingSuffix(doc.title, pointName) : doc.title,
       expectedRoster: rosterByDoc.get(doc.id) ?? 0,
       days: days.map((d) => {
         const k = dayKey(d);
@@ -229,6 +228,26 @@ export async function GET() {
         };
       }),
     };
+  };
+
+  // Строки сетки — журналы по алфавиту.
+  const rows: JournalRow[] = sortJournalsByName(templates, (tpl) => tpl.name).flatMap((tpl) => {
+    const templateDocs = freshDocs.get(tpl.id) ?? [];
+    if (templateDocs.length === 0) {
+      return [{
+        templateCode: tpl.code,
+        templateName: tpl.name,
+        documentId: null,
+        documentTitle: null,
+        expectedRoster: 0,
+        days: days.map((d) => ({
+          date: dayKey(d),
+          status: "no_document" as DayStatus,
+          filledCount: 0,
+        })),
+      }];
+    }
+    return templateDocs.map((doc) => documentRow(tpl, doc));
   });
 
   return NextResponse.json({
@@ -280,6 +299,8 @@ export async function POST(request: Request) {
       id: { in: [...byDoc.keys()] },
       organizationId,
       status: "active",
+      // Документы чужой точки не заполняем (2026-11-01).
+      ...documentVisibleWhere(await loadBuildingContext(session)),
     },
     select: {
       id: true,

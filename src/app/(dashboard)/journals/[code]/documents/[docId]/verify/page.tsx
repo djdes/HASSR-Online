@@ -12,7 +12,8 @@ import { getDocumentCrumbMenu } from "@/lib/journal-crumb-menu";
 import { documentStatusLegend } from "@/lib/crumb-menu";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { getViewedPointId } from "@/lib/active-building";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +46,7 @@ export default async function VerifyDocumentPage({
       id: true,
       title: true,
       status: true,
+      buildingId: true,
       verifierUserId: true,
       responsibleUserId: true,
       verificationStatus: true,
@@ -67,6 +69,8 @@ export default async function VerifyDocumentPage({
   if (!isVerifier && !isAdmin) {
     redirect(`/journals/${code}/documents/${docId}`);
   }
+  // Руководитель другой точки документ не проверяет (2026-11-01).
+  if (!isVerifier && !(await canSeeDocumentPoint(session, doc.buildingId))) notFound();
 
   const entries = await db.journalDocumentEntry.findMany({
     where: { documentId: docId },
@@ -94,7 +98,7 @@ export default async function VerifyDocumentPage({
   const [crumbOrganizationName, journalMenu, documentMenu] = await Promise.all([
     getCrumbOrganizationName(orgId),
     getJournalCrumbMenu(session, code, locale),
-    getDocumentCrumbMenu(orgId, code, docId, await getActiveBuildingId(session), locale),
+    getDocumentCrumbMenu(orgId, code, docId, doc.buildingId ?? (await getViewedPointId(session)), locale),
   ]);
 
   return (

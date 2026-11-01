@@ -7,6 +7,7 @@ import { generateJournalDocumentPdf } from "@/lib/document-pdf";
 import { journalPdfErrorResponse } from "@/lib/journal-pdf-error";
 import { resolveRequestLocale } from "@/i18n/site-locale";
 import { resolveExportLocale } from "@/i18n/export-locale";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export async function GET(
   request: Request,
@@ -35,10 +36,11 @@ export async function GET(
       where: { id },
       select: {
         organizationId: true,
+        buildingId: true,
         template: { select: { code: true } },
       },
     });
-    if (!docMeta || docMeta.organizationId !== orgId) {
+    if (!docMeta || docMeta.organizationId !== orgId || !(await canSeeDocumentPoint(session, docMeta.buildingId))) {
       return journalPdfErrorResponse(request, "DOCUMENT_NOT_FOUND", locale);
     }
     const access = await hasJournalAccess(

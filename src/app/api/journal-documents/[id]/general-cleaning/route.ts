@@ -22,6 +22,7 @@ import { getServerSession } from "@/lib/server-session";
 import { orgTodayKey } from "@/lib/timezone";
 import { syncDocumentToTasksFlow } from "@/lib/tasksflow-sync";
 import { isManagementRole } from "@/lib/user-roles";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 
 export const runtime = "nodejs";
 
@@ -59,6 +60,7 @@ export async function POST(
     select: {
       id: true,
       organizationId: true,
+      buildingId: true,
       status: true,
       template: { select: { code: true } },
     },
@@ -66,7 +68,8 @@ export async function POST(
   if (
     !doc ||
     doc.organizationId !== organizationId ||
-    doc.template.code !== SANITATION_DAY_TEMPLATE_CODE
+    doc.template.code !== SANITATION_DAY_TEMPLATE_CODE ||
+    !(await canSeeDocumentPoint(session, doc.buildingId))
   ) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
