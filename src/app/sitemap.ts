@@ -62,6 +62,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // высокий приоритет для индексации. Раньше отсутствовала в sitemap'е.
     { url: `${SITE}/pricing`, changeFrequency: "monthly", priority: 0.85 },
     { url: `${SITE}/partners`, changeFrequency: "monthly", priority: 0.6 },
+    // Оффер «журналы заполняются сами» и ответ про безопасность данных (2026-11-01).
+    { url: `${SITE}/avtozapolnenie`, changeFrequency: "monthly", priority: 0.85 },
+    { url: `${SITE}/security`, changeFrequency: "yearly", priority: 0.5 },
     // /login и /register в sitemap не входят: это служебные экраны без
     // контента под запрос. Их присутствие размывает краулинговый бюджет
     // и тянет вниз среднее качество набора страниц. Индексации они не

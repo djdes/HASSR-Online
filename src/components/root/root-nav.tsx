@@ -15,6 +15,7 @@ import {
   FileDown,
   FileSignature,
   FileText,
+  Filter,
   Gauge,
   Handshake,
   HeartPulse,
@@ -86,6 +87,7 @@ const NAV: NavEntry[] = [
     label: "money",
     icon: Wallet,
     items: [
+      { href: "/root/funnel", label: "funnel", icon: Filter },
       { href: "/root/tariffs", label: "tariffs", icon: Wallet },
       { href: "/root/promotions", label: "promotions", icon: BadgePercent },
       { href: "/root/promo-codes", label: "promoCodes", icon: Ticket },

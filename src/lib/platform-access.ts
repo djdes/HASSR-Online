@@ -96,6 +96,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/root", gate: "clients", exact: true },
   { pattern: "/root/organizations", gate: "clients" },
   { pattern: "/root/health", gate: "clients" },
+  // Воронка регистраций — про клиентов: продажи и аналитика её видят.
+  { pattern: "/root/funnel", gate: "clients" },
   { pattern: "/api/root/organizations", gate: "clients" },
   { pattern: "/api/root/organizations/*", gate: "billing", methods: ["PATCH", "PUT"] },
   { pattern: "/api/root/organizations/*", gate: "superadmin", methods: ["DELETE"] },

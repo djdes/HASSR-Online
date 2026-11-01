@@ -2,6 +2,7 @@ import "./style.css";
 
 import { Composition } from "remotion";
 
+import { AUTOFILL_VIDEO_CONFIG, AutofillTour } from "./autofill-tour";
 import { QrTourNarrated, TIMELINE, VIDEO, type QrTourProps } from "./tour";
 
 /**
@@ -15,13 +16,17 @@ const DEFAULT_PROPS: QrTourProps = {
 };
 
 export const RemotionRoot: React.FC = () => (
-  <Composition
-    id="QrTourNarrated"
-    component={QrTourNarrated}
-    durationInFrames={TIMELINE.durationInFrames}
-    fps={VIDEO.fps}
-    width={VIDEO.width}
-    height={VIDEO.height}
-    defaultProps={DEFAULT_PROPS}
-  />
+  <>
+    <Composition
+      id="QrTourNarrated"
+      component={QrTourNarrated}
+      durationInFrames={TIMELINE.durationInFrames}
+      fps={VIDEO.fps}
+      width={VIDEO.width}
+      height={VIDEO.height}
+      defaultProps={DEFAULT_PROPS}
+    />
+    {/* «Журналы, которые заполняются сами» для /avtozapolnenie — без голоса. */}
+    <Composition id="AutofillTour" component={AutofillTour} {...AUTOFILL_VIDEO_CONFIG} />
+  </>
 );

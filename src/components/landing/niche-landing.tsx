@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DemoRequestButton } from "@/components/public/demo-request-button";
 import {
   ArrowRight,
   CheckCircle2,
@@ -143,6 +144,7 @@ export function NicheLanding({ slug }: { slug: string }) {
                 Начать бесплатно
                 <ArrowRight className="size-4 text-[#5566f6] transition-transform group-hover:translate-x-1" />
               </Link>
+              <DemoRequestButton place={`niche:${data.slug}`} variant="onDark" />
               <div className="text-[12px] text-white/60">
                 Без карты · Все журналы включены
               </div>
@@ -512,13 +514,16 @@ export function NicheLanding({ slug }: { slug: string }) {
             {FREE_TIER_SHORT}: все {JOURNALS_TOTAL_LABEL}, сотрудники и точки без
             ограничений, без привязки карты.
           </p>
-          <Link
-            href="/register"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-[14px] font-semibold text-[#0b1024] hover:bg-white/90"
-          >
-            Начать бесплатно
-            <ArrowRight className="size-4 text-[#5566f6]" />
-          </Link>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/register"
+              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[14px] font-semibold text-[#0b1024] hover:bg-white/90"
+            >
+              Начать бесплатно
+              <ArrowRight className="size-4 text-[#5566f6]" />
+            </Link>
+            <DemoRequestButton place={`niche:${data.slug}:bottom`} variant="onDark" />
+          </div>
         </div>
       </section>
 

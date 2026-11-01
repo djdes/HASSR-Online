@@ -1,0 +1,23 @@
+{
+  "current": {
+    "version": 2,
+    "subscriptionPercent": 30,
+    "subscriptionMonths": 12,
+    "hardwarePercent": 15,
+    "bonusAmountRub": 3000,
+    "bonusAfterPayments": 2,
+    "minPayoutRub": 1000
+  },
+  "rows": [
+    {
+      "version": 1,
+      "subscriptionPercent": 20,
+      "comment": "Стартовые правила партнёрской программы"
+    },
+    {
+      "version": 2,
+      "subscriptionPercent": 30,
+      "comment": "30 % с подписки в первый год клиента вместо 20 % (решение владельца 01.11.2026)"
+    }
+  ]
+}

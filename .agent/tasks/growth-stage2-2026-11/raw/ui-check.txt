@@ -1,0 +1,14 @@
+[8.5s] screenshot demo-dialog-phone
+empty submit error: Укажите, как к вам обращаться
+no consent error: Отметьте согласие на обработку персональных данных
+POST /api/demo-request: 200
+[9.9s] screenshot demo-done-phone
+[12.8s] screenshot autofill-desktop
+[15.8s] screenshot security-desktop
+video: 200 video/mp4 1411960
+funnel heading: Воронка регистраций
+channels: Яндекс Директ | Поиск Яндекса | Нет данных
+[38.4s] screenshot root-funnel-desktop
+service requests has demo: true
+[41.3s] screenshot root-service-requests
+EXIT 0
