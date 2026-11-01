@@ -36,10 +36,9 @@ for (const path of [
   "/api/manager-scope",
   "/api/integrations/tasksflow/audit",
   "/api/integrations/tasksflow/links",
-  "/api/settings/supply/iiko/stores",
 ]) {
   const res = await req("GET", path, headA);
-  const leaked = hasAny(res.text, [...B_PEOPLE, "ШХ Бета", "Точка Б", fx.more.externalToken, "iso-webhook-secret"]);
+  const leaked = hasAny(res.text, [...B_PEOPLE, "ШХ Бета", "Точка Б", fx.more.externalToken, "iso-webhook-secret", "iso-hook-beta"]);
   check(`РТ А: GET ${path} — закрыто (403) или без точки Б`, denied(res) || (res.status === 200 && leaked.length === 0 && !path.includes("external-token") && !path.includes("subscriptions")), `HTTP ${res.status}${leaked.length ? ` · видно: ${leaked.join(", ")}` : ""}`);
 }
 // Владелец по-прежнему получает эти данные.
@@ -57,8 +56,18 @@ for (const path of ["/api/settings/organization/export", "/api/settings/external
   await db.query('update "Organization" set "badgeEnabled"=$2 where id=$1', [fx.orgId, before.badgeEnabled]);
 }
 {
-  const res = await req("PATCH", "/api/settings/journal-controls", headA, { setup: { code: "finished_product", decision: "declined" } });
-  check("РТ А: PATCH /api/settings/journal-controls (спецрежим компании) — отказ", denied(res), `HTTP ${res.status}`);
+  const camera = await req("PATCH", "/api/settings/journal-controls", headA, { camera: { code: "cold_equipment_control", enabled: true } });
+  check("РТ А: PATCH journal-controls — камера датчика (вся компания) — отказ", denied(camera), `HTTP ${camera.status}`);
+  const automation = await req("PATCH", "/api/settings/journal-controls", headA, { automation: { enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false } });
+  check("РТ А: PATCH journal-controls — спецрежим (вся компания) — отказ", denied(automation), `HTTP ${automation.status}`);
+  // Отказ от мастера бракеража — исключение владельца (бракераж настраивается отдельно).
+  const setup = await req("PATCH", "/api/settings/journal-controls", headA, { setup: { code: "finished_product", decision: "declined" } });
+  check("РТ А: отказ от мастера бракеража — по-прежнему можно", setup.status === 200, `HTTP ${setup.status}`);
+}
+{
+  // iiko в фикстуре не подключён: склады недоступны всем (400) — данных нет, проверка вживую невозможна.
+  const res = await req("GET", "/api/settings/supply/iiko/stores", headA);
+  note(`РТ А: GET /api/settings/supply/iiko/stores — HTTP ${res.status} (iiko не подключён, не проверяется)`);
 }
 {
   const res = await req("PUT", "/api/settings/journals/hygiene/distribution", headA, { fillMode: "single", defaultAssigneeId: fx.users.cookB.id, allowedPositionIds: [] });

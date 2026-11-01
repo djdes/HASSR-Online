@@ -1,0 +1,4 @@
+# bash scripts/test-with-baseline.sh (TEST_CONCURRENCY=2), ветка-сборка iso-integration ad9c8a0
+=== Test stats: pass=5553, fail=0 ===
+✓ Все тесты прошли.
+EXIT 0

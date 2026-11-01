@@ -5,11 +5,13 @@ import { chromium } from "playwright";
 import { base, dir, fx, login } from "./http-lib.mjs";
 
 const [email, point, url, file, highlight] = process.argv.slice(2);
-const cookieHeader = await login(email);
+// email «-» — без входа (скан QR с распечатки).
+const cookieHeader = email === "-" ? "" : await login(email);
 // Prod-сборка ставит cookie с префиксами __Secure-/__Host-: в браузер кладём
 // только сессию (secure — localhost считается безопасным источником).
 const cookies = cookieHeader
   .split("; ")
+  .filter(Boolean)
   .map((pair) => {
     const at = pair.indexOf("=");
     return { name: pair.slice(0, at), value: pair.slice(at + 1) };

@@ -1,0 +1,5 @@
+PASS РТ А без подмены: POST /api/products — отказ (proxy) — HTTP 403
+PASS РТ А с подменой partnerAccess: POST /api/products — отказ — HTTP 403 · создан: false · сессия pointScope=["cmvxs1ke90002nr7d0d5mr2uy"]
+PASS РТ А с подменой activeOrganizationId: POST /api/products — отказ — HTTP 403 · создан: false · активная организация в сессии: cmvxs1kcl0000nr7dyinqp4v5
+PASS РТ А с подменой activeOrganizationId: данные чужой организации не видны — HTTP 200
+ALL PASS 4

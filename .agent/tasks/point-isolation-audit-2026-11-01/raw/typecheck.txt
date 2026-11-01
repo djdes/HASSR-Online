@@ -1,0 +1,6 @@
+# npm run typecheck, ветка-сборка iso-integration ad9c8a0
+
+> haccp-online@0.1.0 typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+error TS: 0
