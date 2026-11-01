@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
+import { personInWorkerScope, type WorkerPointScope } from "@/lib/worker-point-scope";
 import { maxConfig } from "./config";
 import { hashMaxToken } from "./security";
 import { MaxError } from "./service";
@@ -28,14 +29,16 @@ export function maxInviteUrl(username: string, token: string): string {
   return `https://max.ru/${encodeURIComponent(username)}?start=${encodeURIComponent(token)}`;
 }
 
-export async function issueMaxInvite(params: { organizationId: string; employeeId: string; createdByUserId: string; now?: Date }) {
+export async function issueMaxInvite(params: { organizationId: string; employeeId: string; createdByUserId: string; now?: Date; scope?: WorkerPointScope }) {
   const cfg = maxConfig();
   if (!cfg.configured) throw new MaxError("Бот MAX ещё не настроен на сервере.", 503);
   const employee = await db.user.findFirst({
     where: { id: params.employeeId, organizationId: params.organizationId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true, maxIdentity: { select: { id: true } } },
+    select: { id: true, name: true, buildingIds: true, maxIdentity: { select: { id: true } } },
   });
   if (!employee) throw new MaxError("Сотрудник не найден или в архиве.", 404);
+  // Руководитель точки: ссылку входа — только людям своих точек.
+  if (!personInWorkerScope(params.scope ?? null, employee.buildingIds)) throw new MaxError("Этот сотрудник работает на другой точке — подключает его руководитель той точки или офис.", 403);
   if (employee.maxIdentity) throw new MaxError(`${employee.name} уже подключён(а) к MAX.`, 409);
   const token = newMaxInviteToken();
   const now = params.now ?? new Date();

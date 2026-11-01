@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { assistantAddStaffSchema, executeProposedAction, prepareAction } from "@/lib/ai-assistant/actions";
 import { BILLING_LIMIT_CODE } from "@/lib/billing-period";
 import { capList } from "../dates";
+import { loadManagerPointScope, personWorkerScopeWhere } from "@/lib/worker-point-scope";
 import { toolError, toolOk, type ApiTool } from "./types";
 
 const MAX_EMPLOYEES = 300;
@@ -24,9 +25,11 @@ export const listEmployeesTool: ApiTool = {
   async handler(input: { query?: string }, ctx) {
     // Поиск — в JS: ILIKE не сворачивает регистр кириллицы при локали базы «C».
     const needle = input.query?.trim().toLocaleLowerCase("ru");
+    // Владелец ключа — руководитель точки: только люди его точек (аудит 2026-11-01).
+    const scope = await loadManagerPointScope(ctx.orgId, ctx.actor.id);
     const [allUsers, positions] = await Promise.all([
       db.user.findMany({
-        where: { organizationId: ctx.orgId, isActive: true, archivedAt: null },
+        where: { organizationId: ctx.orgId, isActive: true, archivedAt: null, ...personWorkerScopeWhere(scope) },
         orderBy: { name: "asc" },
         select: {
           id: true,
@@ -78,8 +81,9 @@ export const addEmployeeTool: ApiTool = {
     const { allowDuplicate, ...staff } = input;
     if (!allowDuplicate) {
       const sameName = normalizeName(staff.fullName);
+      const scope = await loadManagerPointScope(ctx.orgId, ctx.actor.id);
       const candidates = await db.user.findMany({
-        where: { organizationId: ctx.orgId, isActive: true, archivedAt: null, jobPositionId: staff.jobPositionId },
+        where: { organizationId: ctx.orgId, isActive: true, archivedAt: null, jobPositionId: staff.jobPositionId, ...personWorkerScopeWhere(scope) },
         select: { id: true, name: true, jobPosition: { select: { name: true } } },
       });
       const duplicate = candidates.find((u) => normalizeName(u.name) === sameName);

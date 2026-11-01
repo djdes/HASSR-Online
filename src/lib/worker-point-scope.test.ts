@@ -4,8 +4,11 @@ import test from "node:test";
 import {
   documentInWorkerScope,
   documentWorkerScopeWhere,
+  lossWorkerScopeWhere,
   makeDocumentPointFilter,
+  managerPointScope,
   personInWorkerScope,
+  personWorkerScopeWhere,
   workerPointScope,
 } from "./worker-point-scope";
 
@@ -57,4 +60,45 @@ test("документ точки: исполнители — сотрудник
   assert.equal(shared("boris"), true);
   const disabled = makeDocumentPointFilter({ targets: [null], documentBuildingId: "A", buildingIdsByUser });
   assert.equal(disabled("boris"), true);
+});
+
+test("область руководителя: офис и без точек — вся компания; руководитель точки — свои точки", () => {
+  const buildings = [
+    { id: "OFFICE", name: "Офис", address: null, kind: "office" },
+    { id: "A", name: "Точка А", address: null },
+    { id: "B", name: "Точка Б", address: null },
+  ];
+  // Руководитель офиса: workerPointScope сузил бы до офиса, здесь — все точки.
+  assert.equal(managerPointScope({ enabled: true, buildings, userBuildingIds: ["OFFICE"] }), null);
+  assert.equal(managerPointScope({ enabled: true, buildings, userBuildingIds: [] }), null);
+  assert.equal(managerPointScope({ enabled: true, buildings, userBuildingIds: ["gone"] }), null);
+  assert.deepEqual(managerPointScope({ enabled: true, buildings, userBuildingIds: ["A"] }), {
+    points: ["A"],
+    orgBuildingIds: ["OFFICE", "A", "B"],
+  });
+  // Организация без офиса: закреплённый за точкой видит только её.
+  const noOffice = buildings.slice(1);
+  assert.deepEqual(managerPointScope({ enabled: true, buildings: noOffice, userBuildingIds: ["B"] }), {
+    points: ["B"],
+    orgBuildingIds: ["A", "B"],
+  });
+  // Точки выключены или одна — без ограничения.
+  assert.equal(managerPointScope({ enabled: false, buildings, userBuildingIds: ["A"] }), null);
+  assert.equal(managerPointScope({ enabled: true, buildings: buildings.slice(1, 2), userBuildingIds: ["A"] }), null);
+});
+
+test("where людей и списаний области — то же правило, что в памяти", () => {
+  const scope = workerPointScope({ allTargets: ["A", "B"], workTargets: ["A"] });
+  assert.deepEqual(personWorkerScopeWhere(scope), {
+    OR: [{ buildingIds: { hasSome: ["A"] } }, { NOT: { buildingIds: { hasSome: ["A", "B"] } } }],
+  });
+  assert.deepEqual(personWorkerScopeWhere(null), {});
+  assert.deepEqual(lossWorkerScopeWhere(scope, ["areaA", "shared"]), {
+    OR: [
+      { buildingId: { in: ["A"] } },
+      { buildingId: null, areaId: null },
+      { buildingId: null, areaId: { in: ["areaA", "shared"] } },
+    ],
+  });
+  assert.deepEqual(lossWorkerScopeWhere(null, []), {});
 });

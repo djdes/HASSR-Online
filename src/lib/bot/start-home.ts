@@ -7,6 +7,8 @@ import {
   syncDailyJournalObligationsForUser,
   type OpenJournalObligation,
 } from "@/lib/journal-obligations";
+import { scopedManagerObligationSummary } from "@/lib/bot/scoped-obligation-summary";
+import { loadManagerPointScope, type WorkerPointScope } from "@/lib/worker-point-scope";
 import { getUserPermissions } from "@/lib/permissions-server";
 import { isManagerLikePermissions } from "@/lib/permissions";
 import { getManagerScope, canAssignJournal, type ManagerScope } from "@/lib/manager-scope";
@@ -41,6 +43,9 @@ type StartHomeDeps = {
   getManagerObligationSummary: typeof getManagerObligationSummary;
   getUserPermissions: typeof getUserPermissions;
   getManagerScope: (managerId: string, organizationId: string) => Promise<ManagerScope | null>;
+  /** Точки, которые руководитель видит; null — вся организация. */
+  getManagerPointScope: (organizationId: string, userId: string) => Promise<WorkerPointScope>;
+  scopedManagerObligationSummary: typeof scopedManagerObligationSummary;
 };
 
 type StartHomeActor = {
@@ -107,6 +112,8 @@ function createDefaultDeps(): StartHomeDeps {
     getManagerObligationSummary,
     getUserPermissions,
     getManagerScope,
+    getManagerPointScope: loadManagerPointScope,
+    scopedManagerObligationSummary,
   };
 }
 
@@ -200,13 +207,14 @@ export async function loadTelegramStartHome(
       );
     }
 
+    // Руководитель точки — сводка по своим точкам и людям (аудит 2026-11-01).
+    const pointScope = await deps.getManagerPointScope(user.organizationId, user.id);
     return {
       kind: "manager",
       actor,
-      summary: await deps.getManagerObligationSummary(
-        user.organizationId,
-        requestNow
-      ),
+      summary: pointScope
+        ? await deps.scopedManagerObligationSummary(user.organizationId, requestNow, pointScope)
+        : await deps.getManagerObligationSummary(user.organizationId, requestNow),
       buttonUrl: args.miniAppBaseUrl,
     };
   }

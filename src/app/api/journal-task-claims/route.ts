@@ -13,6 +13,9 @@ import { canWriteJournal, hasJournalAccess } from "@/lib/journal-acl";
 import { hasCapability } from "@/lib/permission-presets";
 import { MANUAL_MODE_CLAIM_MESSAGE } from "@/lib/journal-task-flow-rules";
 import { recordAuditLog } from "@/lib/audit-log";
+import { getPoolBuildings } from "@/lib/active-building";
+import { generatePoolForPoints } from "@/lib/journal-task-pool";
+import { findScopePoint } from "@/lib/task-claim-point";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,6 +81,27 @@ export async function POST(request: Request) {
   if (!(await canWriteJournal(aclActor, body.journalCode))) {
     return NextResponse.json(
       { error: "Нет доступа к этому журналу" },
+      { status: 403 }
+    );
+  }
+
+  // Точка (аудит 2026-11-01): ключ задачи — свободный текст с клиента.
+  // Взять можно только задачу из подборки своих точек, как на «Сегодня».
+  const scopePoint = await findScopePoint({
+    organizationId,
+    journalCode: body.journalCode,
+    date: dateKey,
+    points: await getPoolBuildings(session),
+    scopeKey: body.scopeKey,
+  });
+  if (scopePoint.pool && !scopePoint.found) {
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: "scope_unavailable",
+        error: "Этой задачи нет в списке вашей точки",
+        message: "Этой задачи нет в списке вашей точки — обновите «Сегодня».",
+      },
       { status: 403 }
     );
   }
@@ -205,10 +229,11 @@ export async function GET(request: Request) {
     );
   }
   const dateKey = new Date(`${date}T00:00:00.000Z`);
-  const claims = await listClaimsForJournal({
-    organizationId,
-    journalCode,
-    dateKey,
-  });
-  return NextResponse.json({ claims });
+  const [claims, pool] = await Promise.all([
+    listClaimsForJournal({ organizationId, journalCode, dateKey }),
+    generatePoolForPoints({ organizationId, journalCode, date: dateKey, points: await getPoolBuildings(session) }),
+  ]);
+  // Точка: только задачи подборки своих точек — чужие имена не показываем.
+  const keys = new Set(pool.scopes.map((scope) => scope.scopeKey));
+  return NextResponse.json({ claims: pool.pool ? claims.filter((claim) => keys.has(claim.scopeKey)) : claims });
 }

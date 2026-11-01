@@ -85,6 +85,7 @@ test("API add_employee: места заняты — 402 с текстом про
       },
       "../dates": { capList: <T>(items: T[]) => ({ items, truncated: false }) },
       "./types": require("@/lib/public-api/tools/types"),
+      "@/lib/worker-point-scope": { loadManagerPointScope: async () => null, personWorkerScopeWhere: () => ({}) },
     }) as unknown as Record<string, { handler: (input: unknown, ctx: unknown) => Promise<unknown> }>;
     const reply = await tools.addEmployeeTool.handler({ fullName: "Новый Сотрудник", jobPositionId: "pos" }, ctx);
     assert.deepEqual(reply, { ok: false, status, error: result.error });

@@ -10,6 +10,8 @@ import { loadQrPoster, resolveMainJournalQrBuilding } from "@/lib/qr-fill-poster
 import { resolveQrPosterOrigin } from "@/lib/qr-poster-origin";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { decodeRouteParam } from "@/lib/route-param";
+import { db } from "@/lib/db";
+import { documentInWorkerScope, loadManagerPointScope } from "@/lib/worker-point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,6 +46,16 @@ export async function GET(
 
   try {
     const organizationId = getActiveOrgId(session);
+    // Руководитель точки (аудит 2026-11-01): QR только объектов своих точек.
+    if (kind !== "journal") {
+      const objectPoint =
+        kind === "equipment"
+          ? (await db.equipment.findFirst({ where: { id, area: { organizationId } }, select: { area: { select: { buildingId: true } } } }))?.area.buildingId
+          : (await db.room.findFirst({ where: { id, building: { organizationId } }, select: { buildingId: true } }))?.buildingId;
+      if (!documentInWorkerScope(await loadManagerPointScope(organizationId, session.user.id), objectPoint)) {
+        return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
+      }
+    }
     const poster = await loadQrPoster({
       organizationId,
       // Превью в диалоге — тот же QR, что на печати: рамка и центр организации.

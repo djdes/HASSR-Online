@@ -9,6 +9,12 @@ import { toDateKey } from "@/lib/hygiene-document";
 import { getAllowedJournalCodes, hasJournalAccess } from "@/lib/journal-acl";
 import { orgTodayKey } from "@/lib/timezone";
 import { CONFIG_DAILY_CODES, DAILY_JOURNAL_CODES, getTemplatesFilledToday } from "@/lib/today-compliance";
+import {
+  documentInWorkerScope,
+  documentWorkerScopeWhere,
+  loadManagerPointScope,
+  loadScopeDisabledCodes,
+} from "@/lib/worker-point-scope";
 import type { ApiCallContext } from "../context";
 import { capList, clampRange, instantForDateKey, resolveDateKey } from "../dates";
 import { toolError, toolOk, type ApiTool } from "./types";
@@ -56,8 +62,12 @@ export const listJournalsTool: ApiTool = {
     if (!resolved.ok) return toolError(422, resolved.error);
     const date = resolved.dateKey;
 
+    // Владелец ключа — руководитель точки: только документы его точек и
+    // набор журналов его точек (аудит 2026-11-01).
+    const scope = await loadManagerPointScope(ctx.orgId, ctx.actor.id);
+    const scopeDisabled = await loadScopeDisabledCodes(ctx.orgId, scope);
     const [disabled, allowed, templates, messages] = await Promise.all([
-      getDisabledJournalCodes(ctx.orgId),
+      scopeDisabled ? Promise.resolve(new Set(scopeDisabled)) : getDisabledJournalCodes(ctx.orgId),
       getAllowedJournalCodes(aclActor(ctx)),
       db.journalTemplate.findMany({
         where: { isActive: true },
@@ -77,12 +87,13 @@ export const listJournalsTool: ApiTool = {
         instantForDateKey(date),
         visible.map((t) => ({ id: t.id, code: t.code })),
         disabled,
-        { treatAperiodicAsFilled: false }
+        { treatAperiodicAsFilled: false, buildingId: scope?.points.length === 1 ? scope.points[0] : null }
       ),
       db.journalDocument.findMany({
         where: {
           organizationId: ctx.orgId,
           status: "active",
+          ...documentWorkerScopeWhere(scope),
           dateFrom: { lte: day },
           dateTo: { gte: day },
           templateId: { in: visible.map((t) => t.id) },
@@ -156,12 +167,17 @@ export const getJournalDocumentTool: ApiTool = {
         dateTo: true,
         status: true,
         config: true,
+        buildingId: true,
         template: { select: { code: true, name: true } },
         building: { select: { name: true } },
       },
     });
     const code = doc?.template?.code ?? "";
     if (!doc || (await isJournalDisabled(ctx, code))) return toolError(404, "Документ не найден.");
+    // Документ чужой точки владельцу ключа-руководителю точки не виден.
+    if (!documentInWorkerScope(await loadManagerPointScope(ctx.orgId, ctx.actor.id), doc.buildingId)) {
+      return toolError(404, "Документ не найден.");
+    }
     if (code && !(await hasJournalAccess(aclActor(ctx), code))) {
       return toolError(403, "Нет доступа к этому журналу.");
     }

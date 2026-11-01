@@ -8,6 +8,7 @@ import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
+import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { readObjectPassCookie, resolveObjectActor, type QrObjectKind } from "@/lib/qr-object-pass";
 import type { ReadingPhotoSettings } from "@/lib/reading-photo-fixation";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
@@ -67,12 +68,13 @@ async function loadObject(kind: QrObjectKind, objectId: string, token: string) {
       select: {
         name: true,
         fillerUserIds: true,
-        area: { select: { organizationId: true, organization: { select: { qrFillMode: true } } } },
+        area: { select: { organizationId: true, buildingId: true, organization: { select: { qrFillMode: true } } } },
       },
     });
     if (!equipment) return null;
     return {
       organizationId: equipment.area.organizationId,
+      buildingId: equipment.area.buildingId,
       mode: normalizeQrFillMode(equipment.area.organization.qrFillMode),
       name: equipment.name,
       fillerUserIds: equipment.fillerUserIds,
@@ -85,12 +87,14 @@ async function loadObject(kind: QrObjectKind, objectId: string, token: string) {
     select: {
       name: true,
       fillerUserIds: true,
+      buildingId: true,
       building: { select: { organizationId: true, organization: { select: { qrFillMode: true } } } },
     },
   });
   if (!room) return null;
   return {
     organizationId: room.building.organizationId,
+    buildingId: room.buildingId as string | null,
     mode: normalizeQrFillMode(room.building.organization.qrFillMode),
     name: room.name,
     fillerUserIds: room.fillerUserIds,
@@ -122,9 +126,13 @@ export async function authorizeQrReadingPhoto(input: {
 
   const employee = await db.user.findFirst({
     where: { id: input.employeeId, organizationId: object.organizationId, ...ORG_ROSTER_WHERE },
-    select: { id: true, name: true, role: true, canManageSettings: true },
+    select: { id: true, name: true, role: true, canManageSettings: true, buildingIds: true },
   });
   if (!employee) return { ok: false, status: 404, error: "Сотрудник не найден", errorCode: "equipmentFill.errors.employeeNotFound" };
+  // Точка объекта (аудит 2026-11-01): фото показаний — только сотрудник этой точки.
+  if (!worksAtQrPoint(await loadQrPointScope(object.organizationId, object.buildingId), employee.buildingIds)) {
+    return { ok: false, status: 403, error: QR_POINT_DENIED, errorCode: QR_POINT_DENIED_CODE };
+  }
   if (!canFillObject(object.fillerUserIds, employee)) return { ok: false, status: 403, error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" };
 
   const [autofill, photo] = await Promise.all([hasPaidPlan(object.organizationId), getReadingPhotoSettings(object.organizationId, input.kind === "equipment" ? "cold_equipment_control" : "climate_control")]);

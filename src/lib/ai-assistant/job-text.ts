@@ -2,6 +2,13 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { toDateKey } from "@/lib/hygiene-document";
 import { parseSiteLocale, type SiteLocale } from "@/i18n/site-locale";
+import {
+  documentInWorkerScope,
+  documentWorkerScopeWhere,
+  loadManagerPointScope,
+  personWorkerScopeWhere,
+  type WorkerPointScope,
+} from "@/lib/worker-point-scope";
 
 /**
  * Сборка самодостаточного текста AI-задания для диспетчера ProjectsFlow.
@@ -92,11 +99,13 @@ export type ChatHistoryItem = { role: "user" | "assistant"; content: string };
  * Что за страница открыта у пользователя. `pathname` приходит из
  * браузера и недоверен: используем только для матчинга известных
  * маршрутов; в выборки он попадает лишь как id документа, который тут же
- * проверяется на принадлежность организации.
+ * проверяется на принадлежность организации и точкам человека.
  */
 export async function describePage(
   pathname: string | undefined,
-  orgId: string
+  orgId: string,
+  /** Точки человека (`loadManagerPointScope`): документ чужой точки — «не найден». */
+  scope: WorkerPointScope = null
 ): Promise<string> {
   if (!pathname) return "Страница не передана.";
   const norm = pathname.replace(/^\/mini(?=\/|$)/, "") || "/";
@@ -111,6 +120,7 @@ export async function describePage(
         dateFrom: true,
         dateTo: true,
         status: true,
+        buildingId: true,
         template: { select: { code: true, name: true } },
         entries: {
           select: { employeeId: true, employee: { select: { name: true } } },
@@ -119,7 +129,9 @@ export async function describePage(
         },
       },
     });
-    if (!doc) return "Пользователь на странице документа журнала (документ не найден).";
+    if (!doc || !documentInWorkerScope(scope, doc.buildingId)) {
+      return "Пользователь на странице документа журнала (документ не найден).";
+    }
     const employees = doc.entries
       .map((e) => `${e.employee?.name ?? "?"} (id: ${e.employeeId})`)
       .join(", ");
@@ -156,8 +168,11 @@ export async function describePage(
   return `Пользователь на внутренней странице ${norm}.`;
 }
 
-/** Компактный срез организации для действий и ответов по данным. */
-async function buildOrgData(orgId: string, userId: string) {
+/**
+ * Компактный срез организации для действий и ответов по данным. Человеку
+ * точки — только люди и документы его точек (аудит 2026-11-01).
+ */
+async function buildOrgData(orgId: string, userId: string, scope: WorkerPointScope) {
   const [organization, asker, staff, positions, templates, documents] =
     await Promise.all([
       db.organization.findUnique({
@@ -169,7 +184,7 @@ async function buildOrgData(orgId: string, userId: string) {
         select: { name: true, role: true, positionTitle: true },
       }),
       db.user.findMany({
-        where: { organizationId: orgId, isActive: true },
+        where: { organizationId: orgId, isActive: true, ...personWorkerScopeWhere(scope) },
         orderBy: { name: "asc" },
         take: MAX_STAFF,
         select: { id: true, name: true, positionTitle: true, role: true },
@@ -184,7 +199,7 @@ async function buildOrgData(orgId: string, userId: string) {
         select: { code: true, name: true },
       }),
       db.journalDocument.findMany({
-        where: { organizationId: orgId },
+        where: { organizationId: orgId, ...documentWorkerScopeWhere(scope) },
         orderBy: { createdAt: "desc" },
         take: MAX_DOCUMENTS,
         select: {
@@ -236,9 +251,10 @@ export async function buildChatJobText(args: {
   question: string;
   locale?: SiteLocale;
 }): Promise<string> {
+  const scope = await loadManagerPointScope(args.orgId, args.userId);
   const [pageContext, orgData] = await Promise.all([
-    describePage(args.pathname, args.orgId),
-    buildOrgData(args.orgId, args.userId),
+    describePage(args.pathname, args.orgId, scope),
+    buildOrgData(args.orgId, args.userId, scope),
   ]);
 
   const history = args.history

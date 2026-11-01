@@ -42,6 +42,7 @@ function fixture() {
     shifts: Array<{ id?: string; userId?: string; status: string; user: { name: string | null }; jobPosition?: { name: string } | null }>;
     recent: Array<{ filledById: string | null }>;
     customNames: { journals: Record<string, string>; sections: Record<string, string> };
+    scope: { points: string[]; orgBuildingIds: string[] } | null;
   } = {
     user: { id: "user-1", name: "<Otkir> Chef & Co", organizationId: "org-1", role: "owner", isRoot: false, locale: "en", organization: { locale: "uz" } },
     summary: { done: 3, total: 4, pending: 1, employeesWithPending: 2 },
@@ -49,6 +50,7 @@ function fixture() {
     shifts: [],
     recent: [],
     customNames: { journals: {}, sections: {} },
+    scope: null,
   };
   const mockedDb = {
     user: {
@@ -72,6 +74,9 @@ function fixture() {
     "@/lib/db": { db: mockedDb },
     "@/lib/role-access": require("@/lib/role-access"),
     "@/lib/journal-obligations": { getManagerObligationSummary: async (organizationId: string, now: Date) => { calls.push({ source: "getManagerObligationSummary", args: { organizationId, now } }); return state.summary; } },
+    // Без области (руководитель на всю компанию) — сводка организации, как раньше.
+    "@/lib/bot/scoped-obligation-summary": { scopedManagerObligationSummary: async (organizationId: string, now: Date, scope: unknown) => { calls.push({ source: "getManagerObligationSummary", args: { organizationId, now } }); calls.push({ source: "scope", args: scope }); return state.summary; } },
+    "@/lib/worker-point-scope": { ...require("@/lib/worker-point-scope"), loadManagerPointScope: async () => state.scope, loadScopeAreaIds: async () => [] },
     "@/lib/telegram": require("@/lib/telegram"),
     "@/lib/org-custom-names": { getOrgCustomNames: async (organizationId: string) => { calls.push({ source: "getOrgCustomNames", args: organizationId }); return state.customNames; } },
     "@/lib/custom-names": require("@/lib/custom-names"),
@@ -262,4 +267,21 @@ test("manager denial uses linked recipient locale without running protected quer
   const deniedByOrganization = await organizationFallback.invoke("missing");
   assert.equal(deniedByOrganization.text, (await loadMessages("uz")).telegramManagerSummary.common.notAuthorized);
   assert.deepEqual(organizationFallback.calls.map((call) => call.source), ["user.findFirst"]);
+});
+
+test("руководитель точки: /missing, /staff и /who_late — только его точки и люди (аудит 2026-11-01)", async () => {
+  const { state, calls, invoke } = fixture();
+  state.scope = { points: ["A"], orgBuildingIds: ["A", "B"] };
+  await invoke("missing");
+  await invoke("staff");
+  await invoke("who_late");
+  const people = { OR: [{ buildingIds: { hasSome: ["A"] } }, { NOT: { buildingIds: { hasSome: ["A", "B"] } } }] };
+  const missing = calls.find((call) => call.source === "journalObligation.findMany")?.args as { where: Record<string, unknown> };
+  assert.deepEqual(missing.where.OR, [{ buildingId: null }, { buildingId: { in: ["A"] } }]);
+  assert.deepEqual(missing.where.user, people);
+  for (const call of calls.filter((entry) => entry.source === "workShift.findMany")) {
+    assert.deepEqual((call.args as { where: { user: unknown } }).where.user, people);
+  }
+  await invoke("today");
+  assert.deepEqual(calls.find((call) => call.source === "scope")?.args, state.scope);
 });

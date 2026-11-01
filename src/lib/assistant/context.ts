@@ -1,5 +1,11 @@
 import { db } from "@/lib/db";
 import { ASSISTANT_HISTORY_LIMIT } from "@/lib/assistant/store";
+import {
+  documentWorkerScopeWhere,
+  journalEntryWorkerScopeWhere,
+  loadManagerPointScope,
+  personWorkerScopeWhere,
+} from "@/lib/worker-point-scope";
 
 /**
  * База знаний, которую видит ассистент.
@@ -27,6 +33,8 @@ export async function buildAssistantContext(args: {
   userId: string;
   conversationId: string;
 }) {
+  // Человеку точки — только документы, записи и люди его точек (аудит 2026-11-01).
+  const scope = await loadManagerPointScope(args.organizationId, args.userId);
   const [organization, user, templates, documents, entries, history] =
     await Promise.all([
       db.organization.findUnique({
@@ -55,7 +63,7 @@ export async function buildAssistantContext(args: {
         },
       }),
       db.journalDocument.findMany({
-        where: { organizationId: args.organizationId },
+        where: { organizationId: args.organizationId, ...documentWorkerScopeWhere(scope) },
         orderBy: { createdAt: "desc" },
         take: RECENT_DOCUMENTS,
         select: {
@@ -69,7 +77,7 @@ export async function buildAssistantContext(args: {
         },
       }),
       db.journalEntry.findMany({
-        where: { organizationId: args.organizationId },
+        where: { organizationId: args.organizationId, ...journalEntryWorkerScopeWhere(scope) },
         orderBy: { createdAt: "desc" },
         take: RECENT_ENTRIES,
         select: {
@@ -87,7 +95,7 @@ export async function buildAssistantContext(args: {
     ]);
 
   const staffCount = await db.user.count({
-    where: { organizationId: args.organizationId, isActive: true },
+    where: { organizationId: args.organizationId, isActive: true, ...personWorkerScopeWhere(scope) },
   });
 
   return {

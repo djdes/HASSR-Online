@@ -22,6 +22,7 @@ import {
   utcDayStart, documentBuildingId } from "@/lib/journal-close-events";
 import { TaskFillClient } from "./task-fill-client";
 import { TaskVerifyClient } from "./task-verify-client";
+import { journalEntryPointWhere } from "@/lib/point-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -393,11 +394,11 @@ export default async function TaskFillPage({
   const todayEnd = new Date(todayStart);
   todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
   const isShared = template?.taskScope === "shared";
+  // Точка документа задачи (аудит 2026-11-01): бейдж — только её записи.
+  const taskBuildingId = await documentBuildingId(link.journalDocumentId);
   const [closeEvent, todaysEntryCount] = await Promise.all([
     template
-      ? documentBuildingId(link.journalDocumentId).then((buildingId) =>
-          getActiveCloseEvent(link.integration.organizationId, template.id, new Date(), buildingId),
-        )
+      ? getActiveCloseEvent(link.integration.organizationId, template.id, new Date(), taskBuildingId)
       : Promise.resolve(null),
     isShared
       ? Promise.all([
@@ -413,6 +414,7 @@ export default async function TaskFillPage({
                   organizationId: link.integration.organizationId,
                   templateId: template.id,
                   createdAt: { gte: todayStart, lt: todayEnd },
+                  ...journalEntryPointWhere(taskBuildingId),
                 },
               })
             : Promise.resolve(0),

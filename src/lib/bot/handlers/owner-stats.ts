@@ -2,7 +2,7 @@ import type { Composer, Context } from "grammy";
 import type { ReactNode } from "react";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { getManagerObligationSummary } from "@/lib/journal-obligations";
+import { scopedManagerObligationSummary } from "@/lib/bot/scoped-obligation-summary";
 import { escapeTelegramHtml as esc } from "@/lib/telegram";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { createTranslator } from "use-intl/core";
@@ -11,6 +11,14 @@ import { loadMessages } from "@/i18n/messages";
 import { journalTitle } from "@/i18n/journal-presentation";
 import { customJournalName } from "@/lib/custom-names";
 import ruMessages from "@/i18n/messages/ru.json";
+import {
+  documentWorkerScopeWhere,
+  loadManagerPointScope,
+  loadScopeAreaIds,
+  lossWorkerScopeWhere,
+  personWorkerScopeWhere,
+  type WorkerPointScope,
+} from "@/lib/worker-point-scope";
 
 /**
  * Команды бота для руководителя (manager / head_chef / owner / technologist /
@@ -35,12 +43,17 @@ type ManagementUser = {
   isRoot: boolean;
 };
 
-type ManagerCommandContext = { user: ManagementUser | null; locale: Locale };
+/**
+ * `scope` — точки, которые руководитель видит (аудит 2026-11-01): руководитель
+ * точки получает сводки только по своим точкам и своим людям, руководитель
+ * офиса и без точек — по всей компании (null).
+ */
+type ManagerCommandContext = { user: ManagementUser | null; locale: Locale; scope: WorkerPointScope };
 
 async function resolveManagerCommandContext(
   chatId: number | string | undefined
 ): Promise<ManagerCommandContext> {
-  if (chatId === undefined || chatId === null) return { user: null, locale: "ru" };
+  if (chatId === undefined || chatId === null) return { user: null, locale: "ru", scope: null };
   const candidate = await db.user.findFirst({
     where: {
       telegramChatId: String(chatId),
@@ -62,8 +75,9 @@ async function resolveManagerCommandContext(
     userLocale: candidate?.locale,
     organizationLocale: candidate?.organization.locale,
   });
-  if (!candidate || !hasFullWorkspaceAccess(candidate)) return { user: null, locale };
+  if (!candidate || !hasFullWorkspaceAccess(candidate)) return { user: null, locale, scope: null };
   return {
+    scope: await loadManagerPointScope(candidate.organizationId, candidate.id),
     user: {
       id: candidate.id,
       name: candidate.name,
@@ -135,12 +149,12 @@ function greetingKey(now: Date): "greetingNight" | "greetingMorning" | "greeting
 export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
   // /today — общий процент выполнения сегодня.
   composer.command("today", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
     const now = new Date();
-    const summary = await getManagerObligationSummary(user.organizationId, now);
+    const summary = await scopedManagerObligationSummary(user.organizationId, now, scope);
     const pct = summary.total === 0
       ? 0
       : Math.round((summary.done / summary.total) * 100);
@@ -180,7 +194,7 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
   // /missing — что не заполнено.
   composer.command("missing", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
@@ -191,6 +205,8 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
         organizationId: user.organizationId,
         dateKey,
         status: "pending",
+        ...documentWorkerScopeWhere(scope),
+        ...(scope ? { user: personWorkerScopeWhere(scope) } : {}),
       },
       select: {
         userId: true,
@@ -308,7 +324,7 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
 
   // /stats — 7-дневный график.
   composer.command("stats", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerOperationsTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
@@ -323,6 +339,8 @@ export function registerOwnerStatsHandlers(composer: Composer<Context>): void {
       where: {
         organizationId: user.organizationId,
         dateKey: { gte: weekStart },
+        ...documentWorkerScopeWhere(scope),
+        ...(scope ? { user: personWorkerScopeWhere(scope) } : {}),
       },
       _count: { _all: true },
     });
@@ -400,14 +418,15 @@ function bar10(pct: number): string {
 export function registerOwnerExtendedHandlers(composer: Composer<Context>): void {
   // /losses — последние списания.
   composer.command("losses", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerOperationsTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - 7);
+    const areaIds = await loadScopeAreaIds(user.organizationId, scope);
     const losses = await db.lossRecord.findMany({
-      where: { organizationId: user.organizationId, date: { gte: since } },
+      where: { organizationId: user.organizationId, date: { gte: since }, ...lossWorkerScopeWhere(scope, areaIds) },
       orderBy: { date: "desc" },
       take: 10,
       select: {
@@ -518,13 +537,13 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
 
   // /staff — кто сегодня на смене.
   composer.command("staff", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
     const today = utcDayStart(new Date());
     const shifts = await db.workShift.findMany({
-      where: { organizationId: user.organizationId, date: today },
+      where: { organizationId: user.organizationId, date: today, ...(scope ? { user: personWorkerScopeWhere(scope) } : {}) },
       select: {
         status: true,
         user: { select: { name: true } },
@@ -590,18 +609,19 @@ export function registerOwnerExtendedHandlers(composer: Composer<Context>): void
   // Перекликается с shift-watcher cron'ом, но on-demand: менеджер хочет
   // сразу узнать состояние, не ждать следующего cron-tick'а.
   composer.command("who_late", async (ctx) => {
-    const { user, locale } = await resolveManagerCommandContext(ctx.from?.id);
+    const { user, locale, scope } = await resolveManagerCommandContext(ctx.from?.id);
     const t = await managerTranslator(locale);
     if (!user) return replyNotAuthorized(ctx, locale);
 
     const now = new Date();
     const today = utcDayStart(now);
-    // Все активные смены сегодня в орге.
+    // Все активные смены сегодня в орге (руководителю точки — его людей).
     const shifts = await db.workShift.findMany({
       where: {
         organizationId: user.organizationId,
         date: today,
         status: { in: ["working", "scheduled"] },
+        ...(scope ? { user: personWorkerScopeWhere(scope) } : {}),
       },
       select: {
         id: true,

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
-import { generatePoolForDay } from "@/lib/journal-task-pool";
+import { getPoolBuildings } from "@/lib/active-building";
+import { generatePoolForPoints } from "@/lib/journal-task-pool";
 import {
   getActiveClaimForUser,
   listClaimsForJournal,
@@ -54,10 +54,12 @@ export async function GET(
 
   const organizationId = getActiveOrgId(session);
   const userId = session.user.id;
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Точки задач дня — как «Сегодня» (getPoolBuildings): в «Вся организация»
+  // руководству — все точки, на точке — только её (аудит 2026-11-01).
+  const points = await getPoolBuildings(session);
 
   const [pool, claims, myActive] = await Promise.all([
-    generatePoolForDay({ organizationId, journalCode: code, date, buildingId: activeBuildingId }),
+    generatePoolForPoints({ organizationId, journalCode: code, date, points }),
     listClaimsForJournal({
       organizationId,
       journalCode: code,

@@ -10,6 +10,10 @@ import { claimJournalTask } from "@/lib/journal-task-claims";
 import { mirrorClaimToTasksFlow } from "@/lib/tasksflow-claim-mirror";
 import { notifyEmployee } from "@/lib/telegram";
 import { recordAuditLog } from "@/lib/audit-log";
+import { getPoolBuildings } from "@/lib/active-building";
+import { worksAtBuilding } from "@/lib/building-scope";
+import { buildingTargets } from "@/lib/building-targets";
+import { findScopePoint } from "@/lib/task-claim-point";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +76,7 @@ export async function POST(request: Request) {
       jobPositionId: true,
       permissionPreset: true,
       isRoot: true,
+      buildingIds: true,
     },
   });
   if (!target || target.organizationId !== organizationId) {
@@ -93,6 +98,27 @@ export async function POST(request: Request) {
   const dateKey = new Date(`${body.dateKey}T00:00:00.000Z`);
   if (!Number.isFinite(dateKey.getTime())) {
     return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
+  }
+  // Точка (аудит 2026-11-01): поручить можно задачу своих точек и только
+  // сотруднику, который работает на точке этой задачи.
+  const scopePoint = await findScopePoint({
+    organizationId,
+    journalCode: body.journalCode,
+    date: dateKey,
+    points: await getPoolBuildings(session),
+    scopeKey: body.scopeKey,
+  });
+  if (scopePoint.pool && !scopePoint.found) {
+    return NextResponse.json({ error: "Этой задачи нет в списке вашей точки" }, { status: 403 });
+  }
+  if (scopePoint.pool && scopePoint.found && scopePoint.pointId) {
+    const orgBuildingIds = (await buildingTargets(organizationId)).filter((id): id is string => Boolean(id));
+    if (!worksAtBuilding(orgBuildingIds, target.buildingIds, scopePoint.pointId)) {
+      return NextResponse.json(
+        { error: `${target.name} работает на другой точке — поручите задачу сотруднику этой точки` },
+        { status: 403 }
+      );
+    }
   }
   const result = await claimJournalTask({
     organizationId,

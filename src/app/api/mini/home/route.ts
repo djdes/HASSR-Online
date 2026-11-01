@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
-import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
+import { loadBuildingContext } from "@/lib/active-building";
+import { viewedPointId } from "@/lib/building-scope";
+import { areaPointWhere } from "@/lib/point-filters";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sortJournalsByName } from "@/lib/journal-sort";
@@ -38,16 +40,21 @@ export async function GET() {
       isRoot: session.user.isRoot === true,
     },
   });
-  const [allowedCodes, disabledCodes, perms, areas, scope, buildingContext] = await Promise.all([
+  // Точка из шапки (аудит 2026-11-01): в «Вся организация» — вся
+  // организация, на точке — её набор журналов, сводка и цеха.
+  // `activeBuildingId` здесь не годится: в режиме организации это офис или
+  // первая точка.
+  const buildingContext = await loadBuildingContext(session);
+  const pointId = viewedPointId(buildingContext);
+  const [allowedCodes, disabledCodes, perms, areas, scope] = await Promise.all([
     getAllowedJournalCodes(actor),
-    getDisabledJournalCodes(getActiveOrgId(session), await getActiveBuildingId(session)),
+    getDisabledJournalCodes(getActiveOrgId(session), pointId),
     getUserPermissions(session.user.id),
     db.area.findMany({
-      where: { organizationId: getActiveOrgId(session), lat: { not: null }, lng: { not: null } },
+      where: { organizationId: getActiveOrgId(session), lat: { not: null }, lng: { not: null }, ...areaPointWhere(pointId) },
       select: { id: true, name: true, lat: true, lng: true },
     }),
     getManagerScope(session.user.id, getActiveOrgId(session)),
-    loadBuildingContext(session),
   ]);
   const fullAccess = hasFullWorkspaceAccess({
     role: session.user.role,
@@ -129,7 +136,7 @@ export async function GET() {
       getActiveOrgId(session),
       requestNow,
       undefined,
-      buildingContext.activeBuildingId
+      pointId
     );
 
     return NextResponse.json({

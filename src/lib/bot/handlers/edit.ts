@@ -15,6 +15,8 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { journalDisplayName } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { sortJournalsByName } from "@/lib/journal-sort";
+import { getDisabledJournalCodes } from "@/lib/disabled-journals";
+import { documentWorkerScopeWhere, loadManagerPointScope, loadScopeDisabledCodes } from "@/lib/worker-point-scope";
 
 /**
  * Bot-driven journal editor navigation.
@@ -78,11 +80,18 @@ async function buildTemplateListView(
     },
   };
   const allowed = await getAllowedJournalCodes(aclActorFromSession(fakeSession));
+  // Выключенные журналы не предлагаем; у точки бывает свой набор — человеку
+  // точки действует набор его точек (аудит 2026-11-01).
+  const scope = await loadManagerPointScope(user.organizationId, user.id);
+  const disabled =
+    (await loadScopeDisabledCodes(user.organizationId, scope)) ??
+    [...(await getDisabledJournalCodes(user.organizationId))];
 
   const rawTemplates = await db.journalTemplate.findMany({
     where: {
       isActive: true,
       ...(allowed ? { code: { in: allowed } } : {}),
+      ...(disabled.length > 0 ? { NOT: { code: { in: disabled } } } : {}),
     },
     orderBy: { sortOrder: "asc" },
     select: { code: true, name: true },
@@ -163,11 +172,14 @@ async function buildTemplateDocumentsView(
   );
   if (!allowed) return null;
 
+  // Документы своих точек и общие: чужую точку бот не предлагает.
+  const scope = await loadManagerPointScope(user.organizationId, user.id);
   const documents = await db.journalDocument.findMany({
     where: {
       organizationId: user.organizationId,
       templateId: template.id,
       status: "active",
+      ...documentWorkerScopeWhere(scope),
     },
     orderBy: [{ dateFrom: "desc" }, { createdAt: "desc" }],
     take: MAX_DOCS_PER_TEMPLATE,
