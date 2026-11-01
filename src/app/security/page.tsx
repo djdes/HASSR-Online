@@ -152,7 +152,7 @@ export default function SecurityPage() {
                 <Icon className="size-5" aria-hidden />
               </span>
               <h2 className="mt-4 text-[18px] font-semibold tracking-[-0.01em]">{title}</h2>
-              <p className="mt-2 text-[15px] leading-[1.6] text-[#3c4053] [&_a]:text-[#3848c7] [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-[#0b1024]">
+              <p className="mt-2 text-[15px] leading-[1.6] text-[#3c4053] [&_a]:text-[var(--app-indigo-deep)] [&_a]:underline [&_a]:decoration-[var(--app-indigo-deep)]/30 [&_a]:underline-offset-2 hover:[&_a]:decoration-[var(--app-indigo-deep)]">
                 {body}
               </p>
             </article>
