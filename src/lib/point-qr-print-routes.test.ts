@@ -45,3 +45,9 @@ test("QR в шапке бланка — точки документа", () => {
   assert.match(read("src/lib/document-pdf.ts"), /journalDocumentPdfQr\(journalPdfQrOrigin\(\), organizationId, document\.template\.code, document\.buildingId\)/);
   assert.match(read("src/app/qj/[orgId]/[code]/[sig]/route.ts"), /isJournalPointShortQr\(orgId, code, sig\)/);
 });
+
+test("«Онлайн-принтер»: принтеры и счётчики этикеток — по точке в шапке", () => {
+  const page = read("src/app/(dashboard)/settings/print-agent/page.tsx");
+  assert.match(page, /const atPoint = viewedPoint \? \{ OR: \[\{ buildingId: viewedPoint \}, \{ buildingId: null \}\] \} : \{\}/);
+  assert.equal(page.match(/\.\.\.atPoint/g)?.length, 4, "агенты и три счётчика этикеток");
+});

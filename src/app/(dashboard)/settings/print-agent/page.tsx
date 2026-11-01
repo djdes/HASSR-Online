@@ -5,6 +5,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { buildingInScope, isPointScoped, staffInScope } from "@/lib/point-scope";
 import { loadBuildingContext } from "@/lib/active-building";
+import { viewedPointId } from "@/lib/building-scope";
 import { canManageAgentPoint } from "@/lib/print-point-routing";
 import { db } from "@/lib/db";
 import { isAgentOnline } from "@/lib/print-agent-auth";
@@ -36,6 +37,10 @@ export default async function PrintAgentSettingsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // Точка в шапке (аудит 2026-11-01): принтеры и счётчики этикеток — её и
+  // общие, как на «Этикетках»; «Вся организация» — всё.
+  const viewedPoint = viewedPointId(await loadBuildingContext(session));
+  const atPoint = viewedPoint ? { OR: [{ buildingId: viewedPoint }, { buildingId: null }] } : {};
   const [t, labels, labelLog, locale] = await Promise.all([
     getTranslations("printAgent.settings.page"),
     getTranslations("printAgent.labelPrinters"),
@@ -45,7 +50,7 @@ export default async function PrintAgentSettingsPage() {
 
   const [agents, labelPrinters, helperDevices, organization, release] = await Promise.all([
     db.printAgent.findMany({
-      where: { organizationId, revokedAt: null },
+      where: { organizationId, revokedAt: null, ...atPoint },
       orderBy: { lastSeenAt: "desc" },
       select: {
         id: true,
@@ -89,15 +94,15 @@ export default async function PrintAgentSettingsPage() {
   const now = new Date();
   const [printedToday, expiringSoon, expiredRecently] = await Promise.all([
     db.labelPrint.aggregate({
-      where: { organizationId, printedAt: { gte: orgDayStartInstant(organization?.timezone || "Europe/Moscow", now) } },
+      where: { organizationId, printedAt: { gte: orgDayStartInstant(organization?.timezone || "Europe/Moscow", now) }, ...atPoint },
       _count: { _all: true },
       _sum: { copies: true },
     }),
     db.labelPrint.count({
-      where: { organizationId, until: { gt: now, lte: new Date(now.getTime() + LABEL_SOON_MS) } },
+      where: { organizationId, until: { gt: now, lte: new Date(now.getTime() + LABEL_SOON_MS) }, ...atPoint },
     }),
     db.labelPrint.count({
-      where: { organizationId, until: { gt: new Date(now.getTime() - LABEL_EXPIRED_WINDOW_MS), lte: now } },
+      where: { organizationId, until: { gt: new Date(now.getTime() - LABEL_EXPIRED_WINDOW_MS), lte: now }, ...atPoint },
     }),
   ]);
   const helperUserIds = [
