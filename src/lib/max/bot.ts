@@ -32,6 +32,7 @@ import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { syncDailyJournalObligationsForOrganization, syncDailyJournalObligationsForUser } from "@/lib/journal-obligations";
 import { scheduleObligationSync, utcDayKey } from "@/lib/obligation-sync-throttle";
+import { lastReminderFor, remindScopeKey, remindWaitMinutes, withReminder } from "@/lib/max/remind-throttle";
 import { documentInWorkerScope, documentWorkerScopeWhere, loadManagerPointScope, loadScopeDisabledCodes, loadWorkerPointScope, personInWorkerScope } from "@/lib/worker-point-scope";
 import { maxAnswer, maxApi, maxSend, type MaxView } from "./client";
 import { maxConfig } from "./config";
@@ -68,7 +69,6 @@ import { claimMaxInvite, issueMaxInvite, MAX_INVITE_TTL_DAYS, parseMaxInvitePayl
 type Ctx = Awaited<ReturnType<typeof maxContext>>;
 type Identity = NonNullable<Awaited<ReturnType<typeof findIdentity>>>;
 
-const REMIND_INTERVAL_MS = 30 * 60_000;
 const actionLimiter = createRateLimiter({ tokensPerInterval: 60, intervalMs: 60_000 });
 
 function findIdentity(maxUserId: string) {
@@ -433,7 +433,7 @@ async function pendingByEmployee(ctx: Ctx) {
     byUser.set(row.userId, entry);
   }
   const pending = [...byUser.values()].sort((a, b) => b.journals.size - a.journals.size || a.name.localeCompare(b.name, "ru"));
-  return { total: rows.length, done: rows.filter((row) => row.status === "done").length, pending };
+  return { total: rows.length, done: rows.filter((row) => row.status === "done").length, pending, scope };
 }
 
 async function requireManager(ctx: Ctx) {
@@ -447,18 +447,14 @@ async function summaryScreen(ctx: Ctx): Promise<MaxView> {
   return summaryView({ organizationName: ctx.organization.name, dateLabel: dateLabel(org?.timezone), total: data.total, done: data.done, rows });
 }
 
-function remindWait(lastReminderAt: Date | null | undefined, now = Date.now()): number | null {
-  if (!lastReminderAt) return null;
-  const left = lastReminderAt.getTime() + REMIND_INTERVAL_MS - now;
-  return left > 0 ? Math.ceil(left / 60_000) : null;
-}
-
 async function remindScreen(ctx: Ctx): Promise<MaxView> {
   await requireManager(ctx);
-  const [data, integration] = await Promise.all([pendingByEmployee(ctx), db.maxOrganizationIntegration.findUnique({ where: { organizationId: ctx.organizationId }, select: { lastReminderAt: true } })]);
+  const [data, integration] = await Promise.all([pendingByEmployee(ctx), db.maxOrganizationIntegration.findUnique({ where: { organizationId: ctx.organizationId }, select: { lastReminderAt: true, lastReminderByPoint: true } })]);
   const targets = data.pending.filter((entry) => entry.userId !== ctx.user.id);
   const reachable = targets.filter((entry) => entry.chatId).length;
-  return remindConfirmView({ reachable, notInMax: targets.length - reachable, waitMinutes: reachable ? remindWait(integration?.lastReminderAt) : null });
+  // Пауза — своя у области руководителя (точка или вся компания).
+  const last = lastReminderFor(integration?.lastReminderByPoint, remindScopeKey(data.scope), integration?.lastReminderAt);
+  return remindConfirmView({ reachable, notInMax: targets.length - reachable, waitMinutes: reachable ? remindWaitMinutes(last) : null });
 }
 
 async function sendReminders(ctx: Ctx): Promise<MaxView> {
@@ -468,14 +464,22 @@ async function sendReminders(ctx: Ctx): Promise<MaxView> {
   if (targets.length === 0) return remindConfirmView({ reachable: 0, notInMax: data.pending.length, waitMinutes: null });
   const now = new Date();
   await db.maxOrganizationIntegration.upsert({ where: { organizationId: ctx.organizationId }, create: { organizationId: ctx.organizationId }, update: {} });
-  // Не чаще раза в 30 минут на организацию: условное обновление, второй руководитель не продублирует.
-  const claimed = await db.maxOrganizationIntegration.updateMany({
-    where: { organizationId: ctx.organizationId, OR: [{ lastReminderAt: null }, { lastReminderAt: { lt: new Date(now.getTime() - REMIND_INTERVAL_MS) } }] },
-    data: { lastReminderAt: now },
+  // Не чаще раза в 30 минут на область руководителя (точка или вся компания):
+  // строку держим под блокировкой, второй руководитель той же области не продублирует.
+  const key = remindScopeKey(data.scope);
+  const wait = await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT 1 FROM "MaxOrganizationIntegration" WHERE "organizationId" = ${ctx.organizationId} FOR UPDATE`;
+    const row = await tx.maxOrganizationIntegration.findUnique({ where: { organizationId: ctx.organizationId }, select: { lastReminderAt: true, lastReminderByPoint: true } });
+    const left = remindWaitMinutes(lastReminderFor(row?.lastReminderByPoint, key, row?.lastReminderAt), now.getTime());
+    if (left !== null) return left;
+    await tx.maxOrganizationIntegration.update({
+      where: { organizationId: ctx.organizationId },
+      data: { lastReminderByPoint: withReminder(row?.lastReminderByPoint, key, now), lastReminderAt: now },
+    });
+    return null;
   });
-  if (claimed.count !== 1) {
-    const integration = await db.maxOrganizationIntegration.findUnique({ where: { organizationId: ctx.organizationId }, select: { lastReminderAt: true } });
-    return remindConfirmView({ reachable: targets.length, notInMax: 0, waitMinutes: remindWait(integration?.lastReminderAt) ?? 1 });
+  if (wait !== null) {
+    return remindConfirmView({ reachable: targets.length, notInMax: 0, waitMinutes: wait });
   }
   let sent = 0;
   for (const target of targets.slice(0, 100)) {

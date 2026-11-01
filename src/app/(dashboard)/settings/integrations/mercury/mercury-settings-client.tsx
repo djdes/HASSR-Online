@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CloudDownload, Loader2, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -73,6 +74,59 @@ export function MercurySettingsClient({
   );
   const [environment, setEnvironment] = useState(integration?.environment ?? "test");
   const [autoMode, setAutoMode] = useState(integration?.autoProcessMode ?? "assisted");
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ enterpriseGuid: "", activityLocationGuid: "", name: "", address: "", buildingId: "" });
+  const [deleting, setDeleting] = useState<Enterprise | null>(null);
+
+  async function enterpriseRequest(url: string, method: string, payload?: Record<string, unknown>) {
+    const res = await fetch(url, {
+      method,
+      headers: payload ? { "Content-Type": "application/json" } : undefined,
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || t("saveFailed"));
+    return body as Record<string, unknown>;
+  }
+
+  async function runEnterprise(action: () => Promise<string>) {
+    setSaving(true);
+    try {
+      toast.success(await action());
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("error"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const updateEnterprise = (enterprise: Enterprise, payload: Record<string, unknown>) =>
+    runEnterprise(async () => {
+      const body = await enterpriseRequest(`/api/integrations/mercury/enterprises/${enterprise.id}`, "PATCH", payload);
+      const moved = Number(body.repointed ?? 0);
+      return moved > 0 ? t("enterpriseRepointed", { count: moved }) : t("enterpriseSaved");
+    });
+
+  const loadEnterprises = () =>
+    runEnterprise(async () => {
+      const body = await enterpriseRequest("/api/integrations/mercury/enterprises/load", "POST");
+      return body.alreadyQueued ? t("loadAlreadyQueued") : t("loadQueued");
+    });
+
+  const addEnterprise = () =>
+    runEnterprise(async () => {
+      await enterpriseRequest("/api/integrations/mercury/enterprises", "POST", {
+        enterpriseGuid: draft.enterpriseGuid,
+        activityLocationGuid: draft.activityLocationGuid || null,
+        name: draft.name,
+        address: draft.address || null,
+        buildingId: draft.buildingId || null,
+      });
+      setAdding(false);
+      setDraft({ enterpriseGuid: "", activityLocationGuid: "", name: "", address: "", buildingId: "" });
+      return t("enterpriseAdded");
+    });
 
   async function connect() {
     setSaving(true);
@@ -285,34 +339,168 @@ export function MercurySettingsClient({
             </Button>
           </div>
 
+          <p className="mb-4 text-[13px] leading-[1.6] text-[#6f7282]">{t("enterprisesHint")}</p>
+
           {integration.enterprises.length === 0 ? (
-            <p className="text-[13px] leading-[1.6] text-[#6f7282]">
-              {t("noEnterprises")}
-            </p>
+            <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-8 text-center">
+              <p className="mx-auto max-w-[460px] text-[13px] leading-[1.6] text-[#6f7282]">{t("noEnterprises")}</p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {integration.enterprises.map((e) => (
                 <li
                   key={e.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#ececf4] px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] px-4 py-3 transition-colors duration-150 hover:bg-[#fafbff]"
                 >
-                  <span className="min-w-0">
-                    <span className="block text-[14px] font-medium text-[#0b1024]">
-                      {e.name}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-medium text-[#0b1024]">{e.name}</span>
+                    {e.address ? <span className="block text-[12px] text-[#6f7282]">{e.address}</span> : null}
+                    <span className="block break-all text-[11px] text-[#9b9fb3]">
+                      {e.enterpriseGuid}
+                      {e.activityLocationGuid ? ` · ${e.activityLocationGuid}` : ""}
                     </span>
-                    {e.address ? (
-                      <span className="block text-[12px] text-[#6f7282]">{e.address}</span>
+                    {!e.buildingId && !e.enabled ? (
+                      <span className="mt-1 block text-[12px] text-[#3848c7]">{t("mapHint")}</span>
                     ) : null}
                   </span>
-                  <span className="text-[12px] text-[#6f7282]">
-                    {e.buildingId
-                      ? (buildings.find((b) => b.id === e.buildingId)?.name ?? t("pointFallback"))
-                      : t("commonJournal")}
+                  <span className="flex flex-wrap items-center gap-2">
+                    <select
+                      aria-label={t("pointLabel")}
+                      value={e.buildingId ?? ""}
+                      disabled={saving}
+                      onChange={(event) => void updateEnterprise(e, { buildingId: event.target.value || null })}
+                      className="h-10 max-w-[240px] rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                    >
+                      <option value="">{t("notMapped")}</option>
+                      {buildings.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]">
+                      <input
+                        type="checkbox"
+                        checked={e.enabled}
+                        disabled={saving}
+                        onChange={(event) => void updateEnterprise(e, { enabled: event.target.checked })}
+                        className="size-4 accent-[#5566f6]"
+                      />
+                      {t("pollLabel")}
+                    </label>
+                    <button
+                      type="button"
+                      aria-label={t("deleteEnterprise")}
+                      title={t("deleteEnterprise")}
+                      disabled={saving}
+                      onClick={() => setDeleting(e)}
+                      className="inline-flex size-10 items-center justify-center rounded-2xl border border-[#ececf4] text-[#a13a32] transition-colors duration-150 hover:border-[#a13a32]/30 hover:bg-[#fff4f2] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </span>
                 </li>
               ))}
             </ul>
           )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => void loadEnterprises()}
+              disabled={saving}
+              className="h-10 rounded-2xl border-[#dcdfed] px-4 text-[14px] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            >
+              <CloudDownload className="mr-2 size-4 text-[#5566f6]" />
+              {t("loadEnterprises")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setAdding((value) => !value)}
+              disabled={saving}
+              className="h-10 rounded-2xl border-[#dcdfed] px-4 text-[14px] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            >
+              <Plus className="mr-2 size-4 text-[#5566f6]" />
+              {t("addEnterprise")}
+            </Button>
+          </div>
+
+          {adding ? (
+            <div className="mt-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="enterpriseGuid" className="text-[13px]">{t("enterpriseGuidLabel")}</Label>
+                  <Input
+                    id="enterpriseGuid"
+                    value={draft.enterpriseGuid}
+                    onChange={(event) => setDraft({ ...draft, enterpriseGuid: event.target.value })}
+                    placeholder={t("enterpriseGuidPlaceholder")}
+                    className="mt-1.5 h-11 rounded-2xl border-[#dcdfed] bg-white px-3.5 text-[14px]"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="activityLocationGuid" className="text-[13px]">{t("activityLocationGuidLabel")}</Label>
+                  <Input
+                    id="activityLocationGuid"
+                    value={draft.activityLocationGuid}
+                    onChange={(event) => setDraft({ ...draft, activityLocationGuid: event.target.value })}
+                    className="mt-1.5 h-11 rounded-2xl border-[#dcdfed] bg-white px-3.5 text-[14px]"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="enterpriseName" className="text-[13px]">{t("enterpriseNameLabel")}</Label>
+                  <Input
+                    id="enterpriseName"
+                    value={draft.name}
+                    onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                    className="mt-1.5 h-11 rounded-2xl border-[#dcdfed] bg-white px-3.5 text-[14px]"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="enterpriseAddress" className="text-[13px]">{t("enterpriseAddressLabel")}</Label>
+                  <Input
+                    id="enterpriseAddress"
+                    value={draft.address}
+                    onChange={(event) => setDraft({ ...draft, address: event.target.value })}
+                    className="mt-1.5 h-11 rounded-2xl border-[#dcdfed] bg-white px-3.5 text-[14px]"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="enterprisePoint" className="text-[13px]">{t("pointLabel")}</Label>
+                  <select
+                    id="enterprisePoint"
+                    value={draft.buildingId}
+                    onChange={(event) => setDraft({ ...draft, buildingId: event.target.value })}
+                    className="mt-1.5 h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                  >
+                    <option value="">{t("notMapped")}</option>
+                    {buildings.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  onClick={() => void addEnterprise()}
+                  disabled={saving || draft.enterpriseGuid.trim().length < 8 || !draft.name.trim()}
+                  className="h-10 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0]"
+                >
+                  {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                  {t("addConfirm")}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setAdding(false)}
+                  className="h-10 rounded-2xl border-[#dcdfed] px-4 text-[14px]"
+                >
+                  {t("cancel")}
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <dl className="mt-5 grid gap-3 text-[13px] sm:grid-cols-3">
             <div>
@@ -367,6 +555,25 @@ export function MercurySettingsClient({
           ) : null}
         </section>
       ) : null}
+
+      <ConfirmDialog
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        onConfirm={async () => {
+          const target = deleting;
+          setDeleting(null);
+          if (!target) return;
+          await runEnterprise(async () => {
+            await enterpriseRequest(`/api/integrations/mercury/enterprises/${target.id}`, "DELETE");
+            return t("enterpriseDeleted");
+          });
+        }}
+        title={t("deleteConfirmTitle", { name: deleting?.name ?? "" })}
+        description={t("deleteConfirmBody")}
+        confirmLabel={t("deleteEnterprise")}
+        cancelLabel={t("cancel")}
+        variant="danger"
+      />
     </div>
   );
 }
