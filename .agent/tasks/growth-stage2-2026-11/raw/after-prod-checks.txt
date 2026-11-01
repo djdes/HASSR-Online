@@ -1,0 +1,22 @@
+build-info: {"buildId":"3d89a6b","buildTime":"2026-11-01T12:06:30Z","fullBuildId":"3d89a6bb00cad72ac3189917b5c01dc34b81ef8b"}
+PASS /avtozapolnenie: заголовок, ролик, кнопка показа
+PASS ролик отдаётся: 200 video/mp4
+content-type: video/mp4
+content-length: 1411960
+curl: (35) Recv failure: Connection reset by peer
+FAIL /security: страница и факты
+PASS подвал главной: /security и /avtozapolnenie
+PASS главная: показ за 15 минут
+PASS /pricing: кнопка показа
+PASS /dlya-kafe: кнопки показа
+PASS /partners: 30 %
+PASS POST /api/demo-request без согласия → 400
+  {"error":"Отметьте согласие на обработку персональных данных"} 400
+PASS POST /api/demo-request с ловушкой → 200 без записи
+PASS /root/funnel без входа → 404
+PASS sitemap: /avtozapolnenie и /security
+try 1: HTTP 200, «Данные хранятся в России»: 1, AES-256-GCM: 1, demo: data-demo-request="security"
+try 2: HTTP 200, «Данные хранятся в России»: 1, AES-256-GCM: 1, demo: data-demo-request="security"
+try 3: HTTP 200, «Данные хранятся в России»: 1, AES-256-GCM: 1, demo: data-demo-request="security"
+dialog title: Покажем WeSetup за 15 минут
+poster: 200 vtt: 200 WEBVTT
