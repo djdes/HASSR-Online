@@ -189,10 +189,11 @@ export type BuildingKindRef = { id: string; kind?: string };
 
 /**
  * Руководитель точки (фаза 2 «Офис и точки», 2026-10-27): организация
- * работает по точкам, у неё есть офис, а человек закреплён только за
- * торговыми точками. Возвращает id его точек; `null` — человек работает
- * на всю компанию (офис, без места, офиса нет, точки выключены или в
- * списке остались только удалённые точки).
+ * работает по точкам, а человек закреплён только за частью торговых точек.
+ * Возвращает id его точек; `null` — человек работает на всю компанию (офис,
+ * без места, точки выключены или в списке остались только удалённые точки).
+ * С 2026-11-01 (решение владельца) — и в организации без офиса; там «вся
+ * компания» — ещё и тот, кто закреплён за всеми точками.
  */
 export function pointScopeForUser(args: {
   enabled: boolean;
@@ -200,10 +201,11 @@ export function pointScopeForUser(args: {
   userBuildingIds: readonly string[];
 }): string[] | null {
   if (!args.enabled || args.userBuildingIds.length === 0) return null;
-  if (!args.buildings.some(isOfficeBuilding)) return null;
   const wanted = new Set(args.userBuildingIds);
   const subset = args.buildings.filter((building) => wanted.has(building.id));
   if (subset.length === 0 || subset.some(isOfficeBuilding)) return null;
+  // Без офиса закреплённый за всеми точками — руководство всей компании.
+  if (!args.buildings.some(isOfficeBuilding) && subset.length >= args.buildings.length) return null;
   return subset.map((building) => building.id);
 }
 
