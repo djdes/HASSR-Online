@@ -1,0 +1,94 @@
+{
+  "task": "growth-stage2-2026-11",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "25deed4e",
+  "mergedMaster": "8cf7c432",
+  "checkedAt": "2026-11-01T12:35Z",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/demo-request.test.ts",
+        "raw/ui-check.txt",
+        "raw/local-db-checks.txt",
+        "raw/demo-dialog-phone.jpg",
+        "raw/demo-done-phone.jpg",
+        "raw/root-service-requests.jpg"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/signup-funnel.test.ts",
+        "raw/local-db-checks.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/signup-funnel.test.ts",
+        "e2e/funnel-db-check.ts",
+        "raw/funnel-db-check.json",
+        "raw/root-funnel-desktop.jpg"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/security/security-page.test.ts",
+        "raw/security-desktop.jpg",
+        "raw/after-prod-checks.txt"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/partners/rewards.test.ts",
+        "e2e/partner-rule-check.ts",
+        "raw/partner-rule-check.json",
+        "raw/after-prod-checks.txt"
+      ],
+      "note": "Clarified in spec.md before deploy: adopt 30 % over default 20 % terms issued before 2026-11-01, as the next version."
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/avtozapolnenie/autofill-page.test.ts",
+        "raw/autofill-desktop.jpg",
+        "raw/after-prod-checks.txt"
+      ],
+      "video": {
+        "bytes": 1411960,
+        "seconds": 60,
+        "codec": "h264",
+        "size": "1920x1080",
+        "audio": false
+      }
+    },
+    "AC7": {
+      "status": "PASS",
+      "preMerge": {
+        "typecheck": "EXIT 0",
+        "testGate": "5506 pass, 0 fail",
+        "i18nCheck": "97 pass",
+        "eslintChanged": "EXIT 0",
+        "targetedTests": "39 pass"
+      },
+      "merge": "PR #104 squash 3d89a6bb",
+      "deploy": "Deploy to production run 2130",
+      "prod": {
+        "buildInfo": "3d89a6b",
+        "checks": "raw/after-prod-checks.txt"
+      },
+      "evidence": [
+        "raw/typecheck.txt",
+        "raw/test-gate.txt",
+        "raw/targeted-tests.txt",
+        "raw/after-prod-checks.txt",
+        "raw/prod-dialog-phone.jpg"
+      ]
+    }
+  },
+  "verdict": "PASS",
+  "screenshotsNote": "raw/*.jpg are ignored by .gitignore (.agent/**/*.jpg) and stay on the verification stand; text logs in raw/*.txt|json are committed."
+}
