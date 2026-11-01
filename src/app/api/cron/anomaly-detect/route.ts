@@ -90,7 +90,8 @@ async function handle(request: Request) {
       `Превышение: <b>×${ratio.toFixed(1)}</b>\n\n` +
       `Проверьте свежие записи в /losses — возможно крупная партия списана или ошибка ввода (лишний 0 в costRub).`;
 
-    await notifyOrganization(org.id, message, ["owner"]);
+    // Сумма по всей сети — тем, кто работает на всю компанию (2026-11-01).
+    await notifyOrganization(org.id, message, ["owner"], undefined, undefined, { onlyPlace: true });
     await db.auditLog.create({
       data: {
         organizationId: org.id,

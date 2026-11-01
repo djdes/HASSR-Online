@@ -179,7 +179,8 @@ async function handle(request: Request) {
       const message =
         `🤖 <b>AI-сводка за неделю</b>\n\n` + narrative;
 
-      await notifyOrganization(org.id, message, ["owner"]);
+      // Сводка по всей сети — тем, кто работает на всю компанию (2026-11-01).
+      await notifyOrganization(org.id, message, ["owner"], undefined, undefined, { onlyPlace: true });
       sent += 1;
     } catch (err) {
       errors += 1;

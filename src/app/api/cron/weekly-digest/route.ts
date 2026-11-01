@@ -33,12 +33,14 @@ export const dynamic = "force-dynamic";
  * этом не ставится).
  */
 /**
- * Сводки точек (фаза 3 «Офис и точки»): только в организации, где выделен
- * офис, и только точкам, у которых есть свои руководители.
+ * Сводки точек (фаза 3 «Офис и точки»): точкам, у которых есть свои
+ * руководители. Без офиса (2026-11-01) — так же: руководитель точки
+ * получает сводку своей точки, а сводку компании — только те, кто
+ * работает на всю компанию (`receivesPlaceEvent` с `onlyPlace`).
  */
 async function sendPointDigests(organizationId: string, now: Date, baseUrl: string): Promise<void> {
   const place = await loadPlaceContext(organizationId);
-  if (!place?.split) return;
+  if (!place?.enabled || place.buildings.length < 2) return;
   for (const point of place.buildings.filter((building) => !isOfficeBuilding(building))) {
     const [emails, telegramRecipients] = await Promise.all([
       weeklyDigestRecipients(organizationId, point.id),
@@ -104,10 +106,15 @@ async function handle(request: Request) {
 
       let telegram = false;
       if (!toOverride) {
-        await notifyOrganization(org.id, renderWeeklyDigestTelegram(data), ["owner", "manager"], "compliance", {
-          label: "📊 Открыть дашборд",
-          miniAppUrl: `${baseUrl}/dashboard`,
-        });
+        await notifyOrganization(
+          org.id,
+          renderWeeklyDigestTelegram(data),
+          ["owner", "manager"],
+          "compliance",
+          { label: "📊 Открыть дашборд", miniAppUrl: `${baseUrl}/dashboard` },
+          // Сводка компании — тем, кто работает на всю компанию (офис, без места).
+          { onlyPlace: true }
+        );
         telegram = true;
         // Офис и точки (фаза 3): сводка компании — офису, руководителю
         // точки — сводка его точки.

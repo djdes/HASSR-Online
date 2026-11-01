@@ -5,6 +5,10 @@ import { checkCronSecret } from "@/lib/cron-auth";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
 import { sendComplianceReminderEmail } from "@/lib/email";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
+import { buildingTargets } from "@/lib/building-targets";
+import { filterRecipientsByPlace } from "@/lib/place-recipients";
+import { placeBuildingOfUser } from "@/lib/point-assignments";
+import { groupByPoint, liveEventPoint, pointHeading } from "@/lib/point-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,13 +39,16 @@ async function handle(request: Request) {
       include: {
         organization: { select: { id: true, name: true } },
         filledBy: { select: { name: true } },
+        // Точка записи — цех, без цеха — цех оборудования (journalEntryPointWhere).
+        area: { select: { buildingId: true } },
+        equipment: { select: { area: { select: { buildingId: true } } } },
       },
     });
 
     const alerts: Array<{ org: string; product: string; expiryDate: string }> = [];
 
     // Group by organization
-    const byOrg = new Map<string, Array<{ product: string; expiryDate: string }>>();
+    const byOrg = new Map<string, Array<{ product: string; expiryDate: string; pointId: string | null }>>();
 
     for (const entry of entries) {
       const data = entry.data as Record<string, unknown>;
@@ -57,55 +64,76 @@ async function handle(request: Request) {
         const orgId = entry.organizationId;
 
         if (!byOrg.has(orgId)) byOrg.set(orgId, []);
-        byOrg.get(orgId)!.push({ product: productName, expiryDate: expiryStr });
+        byOrg.get(orgId)!.push({
+          product: productName,
+          expiryDate: expiryStr,
+          pointId: entry.area?.buildingId ?? entry.equipment?.area.buildingId ?? null,
+        });
 
         alerts.push({ org: orgId, product: productName, expiryDate: expiryStr });
       }
     }
 
-    // Send notifications per org
-    for (const [orgId, products] of byOrg) {
-      const list = products
-        .map(
-          (p) =>
-            `- ${esc(p.product)} (срок: ${esc(
-              new Date(p.expiryDate).toLocaleDateString("ru-RU")
-            )})`
-        )
-        .join("\n");
-
-      const message =
-        `<b>Внимание: истекающие сроки годности!</b>\n\n` +
-        `${list}\n\n` +
-        `Проверьте наличие и примите решение о списании.`;
-
-      notifyOrganization(orgId, message, ["owner", "technologist"], "expiry").catch(
-        (err) => console.error("Telegram expiry alert error:", err)
+    // Точки (2026-11-01): сводка по каждой точке — её людям и офису.
+    const pointNames = async (orgId: string) =>
+      new Map(
+        (await db.building.findMany({ where: { organizationId: orgId }, select: { id: true, name: true } })).map(
+          (building) => [building.id, building.name] as const,
+        ),
       );
 
-      // Email
-      const org = await db.organization.findUnique({
-        where: { id: orgId },
-        select: { name: true, locale: true },
-      });
+    // Send notifications per org
+    for (const [orgId, orgProducts] of byOrg) {
+      const targets = await buildingTargets(orgId);
+      const names = await pointNames(orgId);
+      for (const [pointId, products] of groupByPoint(orgProducts, (p) => liveEventPoint(p.pointId, targets))) {
+        const list = products
+          .map(
+            (p) =>
+              `- ${esc(p.product)} (срок: ${esc(
+                new Date(p.expiryDate).toLocaleDateString("ru-RU")
+              )})`
+          )
+          .join("\n");
 
-      const users = await db.user.findMany({
-        where: {
-          organizationId: orgId,
-          role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
-          isActive: true,
-        },
-        select: { email: true, locale: true },
-      });
+        const message =
+          `<b>Внимание: истекающие сроки годности!</b>\n` +
+          esc(pointHeading(pointId ? names.get(pointId) : null)) +
+          `\n${list}\n\n` +
+          `Проверьте наличие и примите решение о списании.`;
 
-      for (const user of users) {
-        sendComplianceReminderEmail({
-          to: user.email,
-          missingJournals: products.map((p) => `${p.product} — срок до ${new Date(p.expiryDate).toLocaleDateString("ru-RU")}`),
-          organizationName: org?.name || "",
-          organizationId: orgId,
-          locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: org?.locale }),
-        }).catch((err) => console.error("Email expiry alert error:", err));
+        notifyOrganization(orgId, message, ["owner", "technologist"], "expiry", undefined, { buildingId: pointId }).catch(
+          (err) => console.error("Telegram expiry alert error:", err)
+        );
+
+        // Email
+        const org = await db.organization.findUnique({
+          where: { id: orgId },
+          select: { name: true, locale: true },
+        });
+
+        const users = await filterRecipientsByPlace(
+          orgId,
+          await db.user.findMany({
+            where: {
+              organizationId: orgId,
+              role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) },
+              isActive: true,
+            },
+            select: { email: true, locale: true, buildingIds: true },
+          }),
+          pointId,
+        );
+
+        for (const user of users) {
+          sendComplianceReminderEmail({
+            to: user.email,
+            missingJournals: products.map((p) => `${p.product} — срок до ${new Date(p.expiryDate).toLocaleDateString("ru-RU")}`),
+            organizationName: [org?.name, pointId ? names.get(pointId) : null].filter(Boolean).join(" · "),
+            organizationId: orgId,
+            locale: resolveLocale({ authenticated: true, userLocale: user.locale, organizationLocale: org?.locale }),
+          }).catch((err) => console.error("Email expiry alert error:", err));
+        }
       }
     }
 
@@ -127,6 +155,7 @@ async function handle(request: Request) {
         skill: string;
         expiresAt: Date;
         daysLeft: number;
+        place: string | null;
       }>
     >();
 
@@ -145,9 +174,11 @@ async function handle(request: Request) {
     const userIds = Array.from(new Set(competencies.map((c) => c.userId)));
     const users = await db.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, name: true },
+      select: { id: true, name: true, buildingIds: true, primaryBuildingId: true },
     });
     const userById = new Map(users.map((u) => [u.id, u.name]));
+    // Точка сотрудника «по месту»: его документы — его точке и офису.
+    const placeByUser = new Map(users.map((u) => [u.id, placeBuildingOfUser(u)]));
 
     const NOTIFY_WINDOWS = [3, 14, 30] as const;
     for (const comp of competencies) {
@@ -166,48 +197,56 @@ async function handle(request: Request) {
         skill: comp.skill,
         expiresAt: comp.expiresAt,
         daysLeft,
+        place: placeByUser.get(comp.userId) ?? null,
       });
       staffByOrg.set(comp.organizationId, list);
     }
 
     let staffAlerts = 0;
-    for (const [orgId, items] of staffByOrg) {
-      // emoji-intensity: 30→🟡, 14→🟠, ≤3→🔴.
-      const lines = items
-        .sort((a, b) => a.daysLeft - b.daysLeft)
-        .map((item) => {
-          const emoji =
-            item.daysLeft <= 3 ? "🔴" : item.daysLeft <= 14 ? "🟠" : "🟡";
-          const dateLabel = item.expiresAt.toLocaleDateString("ru-RU", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
+    for (const [orgId, orgItems] of staffByOrg) {
+      const targets = await buildingTargets(orgId);
+      const names = await pointNames(orgId);
+      for (const [pointId, items] of groupByPoint(orgItems, (item) => liveEventPoint(item.place, targets))) {
+        // emoji-intensity: 30→🟡, 14→🟠, ≤3→🔴.
+        const lines = items
+          .sort((a, b) => a.daysLeft - b.daysLeft)
+          .map((item) => {
+            const emoji =
+              item.daysLeft <= 3 ? "🔴" : item.daysLeft <= 14 ? "🟠" : "🟡";
+            const dateLabel = item.expiresAt.toLocaleDateString("ru-RU", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            });
+            const suffix =
+              item.daysLeft < 0
+                ? `<b>просрочена ${Math.abs(item.daysLeft)} дн.</b>`
+                : item.daysLeft === 0
+                  ? "<b>истекает сегодня</b>"
+                  : `через ${item.daysLeft} дн.`;
+            return `${emoji} <b>${esc(item.userName)}</b> — ${esc(
+              item.skill
+            )} (${esc(dateLabel)}, ${suffix})`;
           });
-          const suffix =
-            item.daysLeft < 0
-              ? `<b>просрочена ${Math.abs(item.daysLeft)} дн.</b>`
-              : item.daysLeft === 0
-                ? "<b>истекает сегодня</b>"
-                : `через ${item.daysLeft} дн.`;
-          return `${emoji} <b>${esc(item.userName)}</b> — ${esc(
-            item.skill
-          )} (${esc(dateLabel)}, ${suffix})`;
-        });
 
-      const message =
-        `<b>Срок действия документов сотрудников</b>\n\n` +
-        `${lines.join("\n")}\n\n` +
-        `Запланируйте обновление до истечения, иначе сотрудник не сможет работать.`;
+        const message =
+          `<b>Срок действия документов сотрудников</b>\n` +
+          esc(pointHeading(pointId ? names.get(pointId) : null)) +
+          `\n${lines.join("\n")}\n\n` +
+          `Запланируйте обновление до истечения, иначе сотрудник не сможет работать.`;
 
-      notifyOrganization(
-        orgId,
-        message,
-        ["owner", "technologist"],
-        "expiry"
-      ).catch((err) =>
-        console.error("Telegram staff-expiry alert error:", err)
-      );
-      staffAlerts += items.length;
+        notifyOrganization(
+          orgId,
+          message,
+          ["owner", "technologist"],
+          "expiry",
+          undefined,
+          { buildingId: pointId }
+        ).catch((err) =>
+          console.error("Telegram staff-expiry alert error:", err)
+        );
+        staffAlerts += items.length;
+      }
     }
 
     // B3 — auto-block при просрочке > 7 дней. Сотрудник с

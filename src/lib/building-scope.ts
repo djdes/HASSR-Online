@@ -214,7 +214,10 @@ export function pointScopeForUser(args: {
  * `onlyPlace` — только люди самой точки: частые напоминания офис получает
  * одной сводкой по всем точкам, а не по сообщению на точку. В организации
  * без офиса — как раньше: общее всем, событие точки — тем, кто на ней
- * работает (пустой `buildingIds` — везде).
+ * работает (пустой `buildingIds` или только удалённые точки — везде, как
+ * `worksAtBuilding`). `onlyPlace` без офиса при включённых точках (сводки
+ * точек, 2026-11-01): событие точки — только её людям, общее — только тем,
+ * кто работает на всю компанию.
  */
 export function receivesPlaceEvent(args: {
   enabled: boolean;
@@ -224,7 +227,13 @@ export function receivesPlaceEvent(args: {
   onlyPlace?: boolean;
 }): boolean {
   if (!splitsOfficeAndPoints(args)) {
-    return !args.buildingId || args.userBuildingIds.length === 0 || args.userBuildingIds.includes(args.buildingId);
+    const known = args.userBuildingIds.filter((id) => args.buildings.some((building) => building.id === id));
+    const companyWide =
+      known.length === 0 || args.buildings.every((building) => known.includes(building.id));
+    if (args.onlyPlace && args.enabled && args.buildings.length >= 2) {
+      return args.buildingId ? !companyWide && known.includes(args.buildingId) : companyWide;
+    }
+    return !args.buildingId || known.length === 0 || known.includes(args.buildingId);
   }
   const scope = pointScopeForUser(args);
   if (!args.buildingId) return scope === null;

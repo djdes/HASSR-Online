@@ -7,7 +7,7 @@ import {
   escapeTelegramHtml as esc,
 } from "@/lib/telegram";
 import { tasksflowClientFor, TasksFlowError } from "@/lib/tasksflow-client";
-import { placeOfEvent } from "@/lib/place-recipients";
+import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -182,11 +182,22 @@ async function handle(request: Request) {
             },
           ],
         },
-        select: { managerId: true, viewMode: true },
+        select: { managerId: true, viewMode: true, manager: { select: { buildingIds: true } } },
       });
+      // Только руководители, кому задача по месту (2026-11-01): задача точки А
+      // не уходит руководителю точки Б.
+      const place = await placeOfEvent(link.integration.organizationId, {
+        documentId: link.journalDocumentId,
+        userId: employeeId,
+      });
+      const nearby = await filterRecipientsByPlace(
+        link.integration.organizationId,
+        scopes.map((scope) => ({ ...scope, buildingIds: scope.manager.buildingIds })),
+        place,
+      );
       // Предпочитаем не "all" (более конкретный manager).
-      const specific = scopes.find((s) => s.viewMode === "specific_users");
-      managerToPing = specific?.managerId ?? scopes[0]?.managerId ?? null;
+      const specific = nearby.find((s) => s.viewMode === "specific_users");
+      managerToPing = specific?.managerId ?? nearby[0]?.managerId ?? null;
     }
 
     const titleText = taskTitle ?? `Задача #${link.tasksflowTaskId}`;

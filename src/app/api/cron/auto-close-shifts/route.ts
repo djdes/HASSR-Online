@@ -7,6 +7,7 @@ import { checkCronSecret } from "@/lib/cron-auth";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { closeJournalForDay, utcDayStart } from "@/lib/journal-close-events";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { journalEntryPointWhere } from "@/lib/point-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -115,6 +116,8 @@ async function handle(request: Request) {
             organizationId: org.id,
             templateId: tplId,
             createdAt: { gte: targetDate, lt: targetEnd },
+            // Запись точки А не держит смену точки Б открытой (2026-11-01).
+            ...journalEntryPointWhere(buildingId),
           },
         }),
       ]);

@@ -140,6 +140,14 @@ async function runForOrganization(
     orderBy: { id: "asc" },
   });
 
+  // Сводка по точкам (2026-11-01): руководитель точки узнаёт о своей точке.
+  const byPoint = new Map<string | null, { documents: number; entries: number }>();
+  const pointTotals = (buildingId: string | null) => {
+    const totals = byPoint.get(buildingId) ?? { documents: 0, entries: 0 };
+    byPoint.set(buildingId, totals);
+    return totals;
+  };
+
   for (const row of jobs) {
     const { code, automation, buildingId } = row;
     try {
@@ -149,7 +157,10 @@ async function runForOrganization(
         autoFill: automation.autoFill,
         buildingId,
       });
-      if (current.created) result.documentsCreated += 1;
+      if (current.created) {
+        result.documentsCreated += 1;
+        pointTotals(buildingId).documents += 1;
+      }
 
       const next = await ensureNextPeriodDocument(db, {
         organizationId: org.id,
@@ -227,10 +238,12 @@ async function runForOrganization(
         },
         dateKeys: [todayKey],
         employeeIds: staffIds,
-        users: employees,
+        // Подписант по умолчанию — из людей точки документа, не чужой точки.
+        users: employees.filter((employee) => worksAtBuilding(employee, document.buildingId)),
       });
       result.entriesCreated += filled.created;
       result.entriesUpdated += filled.updated;
+      pointTotals(buildingId).entries += filled.created + filled.updated;
       result.entriesSkipped += filled.skipped;
       if (filled.created > 0 || filled.updated > 0) result.codes.push(code);
     } catch (err) {
@@ -266,15 +279,28 @@ async function runForOrganization(
   // Сводка владельцу — только когда автоматика реально что-то сделала,
   // иначе бот превращается в ежедневный шум.
   if (result.documentsCreated > 0 || result.entriesCreated > 0) {
-    const message =
-      `🤖 <b>Журналы заполнены автоматически</b>\n\n` +
-      `Дата: ${esc(todayKey)}\n` +
-      `Создано документов: <b>${result.documentsCreated}</b>\n` +
-      `Заполнено строк: <b>${result.entriesCreated + result.entriesUpdated}</b>\n\n` +
-      `Если у кого-то температура или больничный — отметьте это сегодня: прошлые дни закрыты.`;
-    await notifyOrganization(org.id, message, ["owner"]).catch(() => {
-      /* Telegram недоступен — журнал всё равно заполнен */
-    });
+    const pointIds = [...byPoint.keys()].filter((id): id is string => Boolean(id));
+    const names = new Map(
+      pointIds.length > 0
+        ? (await db.building.findMany({ where: { id: { in: pointIds } }, select: { id: true, name: true } })).map(
+            (building) => [building.id, building.name] as const,
+          )
+        : [],
+    );
+    for (const [buildingId, totals] of byPoint) {
+      if (totals.documents === 0 && totals.entries === 0) continue;
+      const pointName = buildingId ? names.get(buildingId) : null;
+      const message =
+        `🤖 <b>Журналы заполнены автоматически</b>\n\n` +
+        (pointName ? `Точка: ${esc(pointName)}\n` : "") +
+        `Дата: ${esc(todayKey)}\n` +
+        `Создано документов: <b>${totals.documents}</b>\n` +
+        `Заполнено строк: <b>${totals.entries}</b>\n\n` +
+        `Если у кого-то температура или больничный — отметьте это сегодня: прошлые дни закрыты.`;
+      await notifyOrganization(org.id, message, ["owner"], undefined, undefined, { buildingId }).catch(() => {
+        /* Telegram недоступен — журнал всё равно заполнен */
+      });
+    }
   }
 
   return result;

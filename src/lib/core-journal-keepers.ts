@@ -4,6 +4,7 @@ import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { upsertNotification, type NotificationItem } from "@/lib/notifications";
+import { filterRecipientsByPlace } from "@/lib/place-recipients";
 import { notifyEmployee } from "@/lib/telegram";
 
 /**
@@ -26,13 +27,6 @@ export function deliverableEmail(user: { email: string | null; contactEmail?: st
 }
 
 export async function listCoreJournalRecipients(organizationId: string, hygieneDocumentId?: string | null): Promise<CoreJournalRecipient[]> {
-  const ids = new Set<string>();
-  const keepers = await db.user.findMany({
-    where: { organizationId, ...ORG_ROSTER_WHERE, keepsCoreJournals: true },
-    select: { id: true },
-  });
-  for (const keeper of keepers) ids.add(keeper.id);
-
   let responsibleId: string | null = null;
   let documentPointId: string | null = null;
   if (hygieneDocumentId) {
@@ -40,6 +34,15 @@ export async function listCoreJournalRecipients(organizationId: string, hygieneD
     responsibleId = doc?.responsibleUserId ?? null;
     documentPointId = doc?.buildingId ?? null;
   }
+
+  // Ведущие основных журналов — только те, кому событие по месту
+  // (2026-11-01): заведующая точки Б не получает «не отметились» точки А.
+  const ids = new Set<string>();
+  const keepers = await db.user.findMany({
+    where: { organizationId, ...ORG_ROSTER_WHERE, keepsCoreJournals: true },
+    select: { id: true, buildingIds: true },
+  });
+  for (const keeper of await filterRecipientsByPlace(organizationId, keepers, documentPointId)) ids.add(keeper.id);
   if (!responsibleId) {
     // Ответственный гигиены точки документа (2026-10-31, ответственные по точкам).
     const slots = await effectiveJournalSlots(organizationId, documentPointId, "hygiene");
@@ -47,11 +50,19 @@ export async function listCoreJournalRecipients(organizationId: string, hygieneD
   }
   if (responsibleId) ids.add(responsibleId);
 
-  const where =
+  const select = { id: true, name: true, email: true, contactEmail: true, buildingIds: true } as const;
+  const users =
     ids.size > 0
-      ? { organizationId, isActive: true, archivedAt: null, id: { in: [...ids] } }
-      : { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["manager", "head_chef", "owner", "technologist"] } };
-  const users = await db.user.findMany({ where, select: { id: true, name: true, email: true, contactEmail: true } });
+      ? await db.user.findMany({ where: { organizationId, isActive: true, archivedAt: null, id: { in: [...ids] } }, select })
+      : // Никого нет — руководство точки документа и офис.
+        await filterRecipientsByPlace(
+          organizationId,
+          await db.user.findMany({
+            where: { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["manager", "head_chef", "owner", "technologist"] } },
+            select,
+          }),
+          documentPointId,
+        );
   return users.map((user) => ({ id: user.id, name: user.name, email: deliverableEmail(user) }));
 }
 

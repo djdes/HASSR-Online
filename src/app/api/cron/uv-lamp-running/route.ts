@@ -5,6 +5,7 @@ import { deliverableEmail, notifyCoreJournalRecipients } from "@/lib/core-journa
 import { checkCronSecret } from "@/lib/cron-auth";
 import { db } from "@/lib/db";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
+import { filterRecipientsByPlace } from "@/lib/place-recipients";
 import { syncAllPointDocumentRows } from "@/lib/point-document-rows-sync";
 import { syncAllUvDocumentPoints } from "@/lib/uv-document-points";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
@@ -45,12 +46,18 @@ async function handle(request: Request) {
     // Ответственный журнала УФ-ламп на точке цеха лампы (2026-10-31).
     const slots = await effectiveJournalSlots(organizationId, lamp.area.buildingId, UV_LAMP_RUNTIME_TEMPLATE_CODE);
     const responsibleId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? null;
-    const users = await db.user.findMany({
-      where: responsibleId
-        ? { id: responsibleId, organizationId, isActive: true }
-        : { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["manager", "head_chef", "owner", "technologist"] } },
-      select: { id: true, name: true, email: true, contactEmail: true },
-    });
+    const select = { id: true, name: true, email: true, contactEmail: true, buildingIds: true } as const;
+    const users = responsibleId
+      ? await db.user.findMany({ where: { id: responsibleId, organizationId, isActive: true }, select })
+      : // Без ответственного — руководство точки лампы и офис, не вся сеть (2026-11-01).
+        await filterRecipientsByPlace(
+          organizationId,
+          await db.user.findMany({
+            where: { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["manager", "head_chef", "owner", "technologist"] } },
+            select,
+          }),
+          lamp.area.buildingId,
+        );
     const dedupeKey = `uv-lamp-running:${lamp.id}:${lamp.runningSince?.toISOString() ?? ""}`;
     const already = await db.notification.findFirst({ where: { organizationId, dedupeKey }, select: { id: true } });
     if (already) continue;

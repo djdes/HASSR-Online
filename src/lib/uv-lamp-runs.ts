@@ -8,6 +8,7 @@ import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
 import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { filterByQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
+import { filterRecipientsByPlace } from "@/lib/place-recipients";
 import { orgTodayKey } from "@/lib/timezone";
 import { formatDuration, formatHours, lampRemainingHours, lampWarnLevel, sessionHours, shouldSendLampWarning } from "@/lib/uv-lamp";
 import {
@@ -363,10 +364,15 @@ async function lampRecipients(organizationId: string, documentResponsibleId: str
     const user = await db.user.findFirst({ where: { id: userId, organizationId, isActive: true }, select: { id: true, name: true, email: true, contactEmail: true } });
     if (user) return [{ id: user.id, name: user.name, email: deliverableEmail(user) }];
   }
-  const managers = await db.user.findMany({
-    where: { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["manager", "head_chef", "owner", "technologist"] } },
-    select: { id: true, name: true, email: true, contactEmail: true },
-  });
+  // Руководство точки лампы и офис, не вся сеть (2026-11-01).
+  const managers = await filterRecipientsByPlace(
+    organizationId,
+    await db.user.findMany({
+      where: { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["manager", "head_chef", "owner", "technologist"] } },
+      select: { id: true, name: true, email: true, contactEmail: true, buildingIds: true },
+    }),
+    lampPointId,
+  );
   return managers.map((user) => ({ id: user.id, name: user.name, email: deliverableEmail(user) }));
 }
 
