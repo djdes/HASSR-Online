@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { orgLogoUrl, prepareOrgLogo } from "./org-logo-file";
+import { orgLogoAssetOwner, orgLogoUrl, prepareOrgLogo } from "./org-logo-file";
 
 const PNG_1x1 = Uint8Array.from(
   Buffer.from(
@@ -43,4 +43,13 @@ test("не картинка — понятная ошибка", () => {
   const result = prepareOrgLogo(new TextEncoder().encode("%PDF-1.4"), "application/pdf");
   assert.equal(result.ok, false);
   if (!result.ok) assert.match(result.error, /PNG/);
+});
+
+test("чей файл логотипа стоит по адресу: свой, чужой, внешняя ссылка", () => {
+  assert.equal(orgLogoAssetOwner("/api/org-assets/org_1/logo?v=3"), "org_1");
+  assert.equal(orgLogoAssetOwner("/api/org-assets/org_2/logo"), "org_2");
+  assert.equal(orgLogoAssetOwner("https://example.com/logo.png"), null);
+  assert.equal(orgLogoAssetOwner("/api/org-assets/org_1/icon?v=1"), null);
+  assert.equal(orgLogoAssetOwner(null), null);
+  assert.equal(orgLogoAssetOwner(""), null);
 });
