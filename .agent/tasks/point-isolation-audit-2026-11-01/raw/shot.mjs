@@ -6,12 +6,18 @@ import { base, dir, fx, login } from "./http-lib.mjs";
 
 const [email, point, url, file, highlight] = process.argv.slice(2);
 const cookieHeader = await login(email);
-const cookies = cookieHeader.split("; ").map((pair) => {
-  const at = pair.indexOf("=");
-  return { name: pair.slice(0, at), value: pair.slice(at + 1), url: base };
-});
+// Prod-сборка ставит cookie с префиксами __Secure-/__Host-: в браузер кладём
+// только сессию (secure — localhost считается безопасным источником).
+const cookies = cookieHeader
+  .split("; ")
+  .map((pair) => {
+    const at = pair.indexOf("=");
+    return { name: pair.slice(0, at), value: pair.slice(at + 1) };
+  })
+  .filter((cookie) => cookie.name.endsWith("haccp-online.session-token") && cookie.value.length > 100)
+  .map((cookie) => ({ ...cookie, domain: "localhost", path: "/", secure: cookie.name.startsWith("__Secure-"), httpOnly: true }));
 if (point && point !== "-") {
-  cookies.push({ name: "wesetup.building", value: `${fx.orgId}:${point}`, url: base });
+  cookies.push({ name: "wesetup.building", value: `${fx.orgId}:${point}`, domain: "localhost", path: "/", secure: false, httpOnly: false });
 }
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: "ru-RU" });

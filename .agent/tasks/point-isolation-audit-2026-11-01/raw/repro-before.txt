@@ -1,0 +1,58 @@
+FAIL РТ А: GET /api/settings/organization/export — закрыто (403) или без точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета, ШХ Бета, Точка Б
+FAIL РТ А: GET /api/settings/rpn-appendix — закрыто (403) или без точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета, ШХ Бета
+FAIL РТ А: GET /api/settings/external-token — закрыто (403) или без точки Б — HTTP 200 · видно: iso-ext-cmvxs1kcl0000nr7dyinqp4v5
+FAIL РТ А: GET /api/organizations/permissions — закрыто (403) или без точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL РТ А: GET /api/staff/control-group — закрыто (403) или без точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL РТ А: GET /api/settings/subscription/transition — закрыто (403) или без точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL РТ А: GET /api/settings/master-cabinet — закрыто (403) или без точки Б — HTTP 200 · видно: Точка Б
+FAIL РТ А: GET /api/settings/badge — закрыто (403) или без точки Б — HTTP 200 · видно: Точка Б
+PASS РТ А: GET /api/settings/webhooks — закрыто (403) или без точки Б — HTTP 200
+FAIL РТ А: GET /api/settings/webhooks/subscriptions — закрыто (403) или без точки Б — HTTP 200 · видно: iso-webhook-secret
+PASS РТ А: GET /api/manager-scope — закрыто (403) или без точки Б — HTTP 200
+PASS РТ А: GET /api/integrations/tasksflow/audit — закрыто (403) или без точки Б — HTTP 200
+PASS РТ А: GET /api/integrations/tasksflow/links — закрыто (403) или без точки Б — HTTP 200
+FAIL РТ А: GET /api/settings/supply/iiko/stores — закрыто (403) или без точки Б — HTTP 400
+PASS владелец: GET /api/settings/organization/export — доступно — HTTP 200
+PASS владелец: GET /api/settings/external-token — доступно — HTTP 200
+PASS владелец: GET /api/organizations/permissions — доступно — HTTP 200
+PASS владелец: GET /api/staff/control-group — доступно — HTTP 200
+PASS владелец: GET /api/settings/badge — доступно — HTTP 200
+FAIL РТ А: PATCH /api/settings/badge (бейдж всей компании) — отказ — HTTP 200
+FAIL РТ А: PATCH /api/settings/journal-controls (спецрежим компании) — отказ — HTTP 200
+FAIL РТ А: PUT распределения журнала (на всю организацию) — отказ — HTTP 200
+FAIL РТ А: PUT бонуса журнала (закрытая страница) — отказ — HTTP 400
+FAIL повар А: POST /api/profile/complete (анкета компании) — отказ — HTTP 200 · название: Взлом ИСО
+FAIL РТ А: смена пароля руководителю всей компании (офис + точка А) — отказ — HTTP 200
+FAIL РТ А: /reports/by-user/<повар Б> — «не найдено» — HTTP 200
+FAIL РТ А: сертификат повара Б — отказ — HTTP 200
+FAIL РТ А: вернуть на переделку задачу повара Б — отказ — HTTP 200 · rejected
+PASS РТ А: /bonuses — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /competencies — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /team — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /settings/schedule — без людей и ссылок точки Б — HTTP 200
+FAIL РТ А: /settings/inspectors — без людей и ссылок точки Б — HTTP 200 · видно: Руководитель Бета, Проверяющий Бета
+FAIL владелец на точке А: /bonuses — без людей и ссылок точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL владелец на точке А: /competencies — без людей и ссылок точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL владелец на точке А: /team — без людей и ссылок точки Б — HTTP 200 · видно: Повар Бета
+FAIL владелец на точке А: /settings/schedule — без людей и ссылок точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL владелец на точке А: /settings/inspectors — без людей и ссылок точки Б — HTTP 200 · видно: Руководитель Бета, Проверяющий Бета
+FAIL РТ А: GET /api/staff/inspectors-auditors — без точки Б — HTTP 200 · видно: Руководитель Бета, Проверяющий Бета
+FAIL владелец на точке А: GET /api/team — без людей точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL РТ А: /settings/journals — без людей точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета
+FAIL РТ А: холодильник точки Б через журнал точки А — не меняется — HTTP 200 · ШХ Бета ВЗЛОМ -50…50
+FAIL РТ А: чек-лист уборки помещения точки Б через документ А — отказ — HTTP 200 · пунктов: 1
+FAIL повар А: подсказки товаров потерь — без списаний точки Б — HTTP 200
+FAIL РТ А: /losses/new — без цехов точки Б — HTTP 200
+FAIL владелец на точке А: /losses/new — без цехов точки Б — HTTP 200
+FAIL повар А: потеря в цех точки Б — отказ — HTTP 201
+FAIL РТ А: /checklists/assignments — без людей и точки Б — HTTP 200 · видно: Повар Бета, Руководитель Бета, Точка Б
+FAIL РТ А: GET /api/checklists/assignments — без назначений точки Б — HTTP 200
+FAIL РТ А: назначить чек-лист точке Б — отказ — HTTP 201
+FAIL РТ А: приостановить назначение точки Б — отказ — HTTP 200 · active=false
+PASS РТ А: своё назначение точки А — можно — HTTP 200
+FAIL РТ А: /inspection/visits — без посещений по ссылке точки Б — HTTP 200
+FAIL РТ А: GET /api/inspection/visits — без посещений точки Б — HTTP 200
+FAIL РТ А: QR-коды гигиены — без документа точки Б — HTTP 200
+FAIL РТ А: QR документа гигиены точки Б по id — отказ — HTTP 200
+FAIL повар А: печать общего журнала — задание точки А, не общей очереди — HTTP 200 · buildingId=null
+FAILS 43 / PASS 14

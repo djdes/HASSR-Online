@@ -154,5 +154,20 @@
   "agentRaw": {
     "A": "agent-A-cmvxs1kcl0000nr7dyinqp4v5",
     "B": "agent-B-cmvxs1kcl0000nr7dyinqp4v5"
+  },
+  "more": {
+    "officeA": {
+      "id": "cmvxsx6xv0000do7dwxffxu2v",
+      "email": "iso-office-a@verify.local"
+    },
+    "externalToken": "iso-ext-cmvxs1kcl0000nr7dyinqp4v5",
+    "webhook": "cmvxsx70b0001do7de1j3wtjg",
+    "checklistTemplate": "cmvxsx70k0002do7dumzg8uow",
+    "assignB": "cmvxsx70x0003do7dvbhqtffr",
+    "assignCookB": "cmvxsx7110004do7dcjpehuf0",
+    "assignA": "cmvxsx7140005do7dyzlblca0",
+    "visitB": "cmvxsx7190006do7dynhv4pa0",
+    "claimB": "cmvxsx71g0007do7dwmywibuv",
+    "sharedDoc": "cmvxt01yf00003d7d6mr8hzaz"
   }
 }
