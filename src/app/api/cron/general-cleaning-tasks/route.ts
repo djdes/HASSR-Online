@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { SANITATION_DAY_TEMPLATE_CODE } from "@/lib/sanitation-day-document";
 import { sanitationDayAdapter } from "@/lib/tasksflow-adapters/sanitation-day";
 import { orgTodayKey } from "@/lib/timezone";
@@ -59,9 +59,13 @@ export async function GET(request: Request) {
         dateFrom: { lte: today },
         dateTo: { gte: today },
       },
-      select: { id: true },
+      select: { id: true, buildingId: true },
     });
     for (const doc of docs) {
+      // Точка со своим набором журналов могла выключить генуборку (2026-11-01).
+      if (doc.buildingId && (await getDisabledJournalCodes(integration.organizationId, doc.buildingId)).has(SANITATION_DAY_TEMPLATE_CODE)) {
+        continue;
+      }
       documents += 1;
       try {
         const report = await sanitationDayAdapter.syncDocument({

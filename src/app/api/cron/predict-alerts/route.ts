@@ -55,7 +55,8 @@ async function handle(request: Request) {
       `В обычный день к этому часу — <b>${forecast.historicalAvgAtHour}</b>.\n\n` +
       forecast.hint;
 
-    await notifyOrganization(org.id, message, ["owner"]);
+    // Прогноз по всей сети — тем, кто работает на всю компанию (2026-11-01).
+    await notifyOrganization(org.id, message, ["owner"], undefined, undefined, { onlyPlace: true });
     await db.auditLog.create({
       data: {
         organizationId: org.id,

@@ -501,7 +501,11 @@ export const authOptions: NextAuthOptions = {
           `👋 <b>Новенький в команде</b>\n\n` +
           `${esc(u.name ?? "Сотрудник")} зашёл в систему первый раз. ` +
           `Проверьте права доступа и медкнижку, прежде чем выпускать на смену.`;
-        await notifyOrganization(u.organizationId, message, ["owner"]);
+        // Новенький точки — её руководителям и офису (2026-11-01).
+        const { placeOfEvent } = await import("@/lib/place-recipients");
+        await notifyOrganization(u.organizationId, message, ["owner"], undefined, undefined, {
+          buildingId: await placeOfEvent(u.organizationId, { userId: u.id }),
+        });
       } catch (err) {
         console.warn("[auth/signIn] first-login notify failed", err);
       }

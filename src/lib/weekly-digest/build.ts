@@ -189,7 +189,9 @@ export async function weeklyDigestRecipients(organizationId: string, buildingId:
     where: { organizationId, isActive: true, role: { in: getDbRoleValuesWithLegacy(MANAGEMENT_ROLES) } },
     select: { email: true, contactEmail: true, notificationPrefs: true, buildingIds: true },
   });
-  const users = await filterRecipientsByPlace(organizationId, managers, buildingId, buildingId !== null);
+  // Только люди самого места: сводка точки — её руководителям, сводка
+  // компании — тем, кто работает на всю компанию (и без офиса, 2026-11-01).
+  const users = await filterRecipientsByPlace(organizationId, managers, buildingId, true);
   const out: string[] = [];
   for (const u of users) {
     // Служебная почта сотрудника без входа (`…@<org>.local.haccp`) — не адрес;

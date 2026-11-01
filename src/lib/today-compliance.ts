@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { buildingWhere } from "@/lib/building-scope";
+import { journalEntryPointWhere } from "@/lib/point-filters";
 import { closeEventBuildingKey, getActiveCloseEvent } from "@/lib/journal-close-events";
 import {
   DAILY_JOURNAL_CODES,
@@ -487,6 +488,9 @@ export async function getTemplatesFilledToday(
       where: {
         organizationId,
         createdAt: { gte: todayStart, lt: todayEnd },
+        // Записи по цеху/оборудованию точки (2026-11-01): запись точки А не
+        // закрывает журнал точки Б.
+        ...journalEntryPointWhere(options.buildingId),
       },
       select: { templateId: true },
       distinct: ["templateId"],

@@ -213,23 +213,28 @@ export async function createStaffMember(
   // Сторонняя бракеражная комиссия — не штат: в гигиену, здоровье и
   // инструктажи её не вносят, напоминать об этом руководителю не нужно.
   if (position.categoryKey !== "commission") try {
-    await Promise.all(
-      journalsToPopulate.map((j) =>
-        notifyManagement({
-          organizationId: orgId,
-          // Человек одной точки — её руководителям и офису (фаза 3 «Офис и точки»).
-          buildingId: buildingIds.length === 1 ? buildingIds[0] : null,
-          kind: "staff.added.journal",
-          dedupeKey: j.dedupeKey,
-          title: "Список фамилий, которые нужно внести в",
-          messageKey: "staffJournal",
-          linkLabelKey: "openJournal",
-          linkHref: j.href,
-          linkLabel: staticLinkLabels[j.href] ?? "журнал",
-          items: [{ id: user.id, label: displayLabel }],
-        })
-      )
-    );
+    // Человек точек — руководителям каждой его точки и офису (фаза 3 «Офис и
+    // точки»; 2026-11-01 — и при нескольких точках); без точек — общее.
+    // Точки по очереди: офис получает тот же колокольчик от каждой точки.
+    const places: Array<string | null> = buildingIds.length > 0 ? [...new Set(buildingIds)] : [null];
+    for (const place of places) {
+      await Promise.all(
+        journalsToPopulate.map((j) =>
+          notifyManagement({
+            organizationId: orgId,
+            buildingId: place,
+            kind: "staff.added.journal",
+            dedupeKey: j.dedupeKey,
+            title: "Список фамилий, которые нужно внести в",
+            messageKey: "staffJournal",
+            linkLabelKey: "openJournal",
+            linkHref: j.href,
+            linkLabel: staticLinkLabels[j.href] ?? "журнал",
+            items: [{ id: user.id, label: displayLabel }],
+          })
+        )
+      );
+    }
     await notifyManagement({
       organizationId: orgId,
       kind: "position.missing.trainingPlan",

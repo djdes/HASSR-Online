@@ -185,6 +185,22 @@ test("уведомления по месту: точке — её люди и о
   assert.equal(gets([A.id], null, [A, B]), true);
   assert.equal(gets([A.id], B.id, [A, B]), false);
   assert.equal(gets([], B.id, [A, B]), true);
+  // Без офиса: в списке только удалённые точки — работает везде (как worksAtBuilding).
+  assert.equal(gets(["b-deleted"], B.id, [A, B]), true);
+  assert.equal(gets(["b-deleted", A.id], B.id, [A, B]), false);
+  // Без офиса, сводки точек (onlyPlace): точке — только её люди, общее — только на всю компанию.
+  const own = (userBuildingIds: string[], buildingId: string | null, enabled = true) =>
+    receivesPlaceEvent({ enabled, buildings: [A, B], userBuildingIds, buildingId, onlyPlace: true });
+  assert.equal(own([A.id], A.id), true);
+  assert.equal(own([A.id], B.id), false);
+  assert.equal(own([A.id], null), false);
+  assert.equal(own([], null), true);
+  assert.equal(own(["b-deleted"], null), true);
+  assert.equal(own([A.id, B.id], null), true);
+  assert.equal(own([], A.id), false);
+  assert.equal(own([A.id, B.id], A.id), false);
+  // Точки выключены — onlyPlace без офиса ничего не меняет.
+  assert.equal(own([A.id], null, false), true);
   // Только люди точки (напоминания): офису — сводкой, не по точке.
   const strict = (userBuildingIds: string[], buildingId: string) =>
     receivesPlaceEvent({ enabled: true, buildings: withOffice, userBuildingIds, buildingId, onlyPlace: true });
