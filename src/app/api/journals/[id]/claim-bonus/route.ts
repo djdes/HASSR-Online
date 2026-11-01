@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { orgJournalBonusKopecks } from "@/lib/org-journal-settings";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { canWriteJournal } from "@/lib/journal-acl";
 
@@ -53,6 +54,8 @@ export async function POST(
       { status: 404 }
     );
   }
+  // Бонус — настройка организации (`OrganizationJournalSetting`), шаблон — дефолт.
+  obligation.template.bonusAmountKopecks = await orgJournalBonusKopecks(orgId, obligation.template);
 
   if (obligation.template.bonusAmountKopecks <= 0) {
     return NextResponse.json(

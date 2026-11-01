@@ -10,6 +10,7 @@ import { getDeviceTemperature } from "@/lib/tuya";
 import { pickPrimaryManager } from "@/lib/user-roles";
 import { maybeCreateRealtimeCapa } from "@/lib/iot-violation-capa";
 import { hasPlanFeature } from "@/lib/billing.server";
+import { loadOrgJournalOverrides, withOrgJournalOverride, type OrgJournalOverride } from "@/lib/org-journal-settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -132,6 +133,7 @@ async function handle(request: Request) {
   const managerByOrg = new Map<string, string | null>();
   // IoT-датчики — возможность «Премиума» (и пробного): без неё не опрашиваем.
   const connectByOrg = new Map<string, boolean>();
+  const overridesByOrg = new Map<string, Map<string, OrgJournalOverride>>();
 
   for (const eq of equipments) {
     const orgId = eq.area.organizationId;
@@ -142,9 +144,12 @@ async function handle(request: Request) {
       continue;
     }
 
-    // Skip equipment whose mappings are all on non-sensor templates.
+    // Skip equipment whose mappings are all on non-sensor templates
+    // (распределение — своё у организации, `OrganizationJournalSetting`).
+    if (!overridesByOrg.has(orgId)) overridesByOrg.set(orgId, await loadOrgJournalOverrides(orgId));
+    const overrides = overridesByOrg.get(orgId);
     const activeMappings = eq.sensorMappings.filter(
-      (m) => m.template.fillMode === "sensor"
+      (m) => withOrgJournalOverride(m.template, overrides?.get(m.template.id)).fillMode === "sensor"
     );
     if (activeMappings.length === 0) {
       report.skipped += 1;

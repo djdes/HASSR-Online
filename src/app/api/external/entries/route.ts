@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { authenticateExternalRequest, tokenHint } from "@/lib/external/auth";
 import { dispatchExternalEntries } from "@/lib/external/dispatch";
+import { externalIdempotencyKey } from "@/lib/external/idempotency-key";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,26 +121,12 @@ export async function POST(request: Request) {
 
   // Idempotency-Key support: if the caller repeats a request with the same
   // key, we replay the cached response instead of re-running the dispatcher.
-  // Matches the semantics Stripe/GitHub document — key scope is one token.
+  // Ключ — организация + отпечаток токена + ключ клиента (`externalIdempotencyKey`),
+  // поэтому ищем его после того, как узнали организацию.
   const idempotencyKey = request.headers
     .get("idempotency-key")
     ?.trim()
     .slice(0, 120);
-  if (idempotencyKey) {
-    try {
-      const cached = await db.journalExternalIdempotency.findUnique({
-        where: { key: `${tokenHint(auth.token)}:${idempotencyKey}` },
-      });
-      if (cached) {
-        return NextResponse.json(cached.response as Record<string, unknown>, {
-          status: cached.httpStatus,
-          headers: { "idempotent-replayed": "true" },
-        });
-      }
-    } catch (error) {
-      console.error("[external] idempotency lookup failed", error);
-    }
-  }
 
   let body: unknown;
   try {
@@ -187,6 +174,21 @@ export async function POST(request: Request) {
     auth.source === "organization" && auth.organizationId
       ? auth.organizationId
       : payload.organizationId;
+
+  const storedKey = idempotencyKey ? externalIdempotencyKey(organizationId, auth.token, idempotencyKey) : null;
+  if (storedKey) {
+    try {
+      const cached = await db.journalExternalIdempotency.findUnique({ where: { key: storedKey } });
+      if (cached && cached.organizationId === organizationId) {
+        return NextResponse.json(cached.response as Record<string, unknown>, {
+          status: cached.httpStatus,
+          headers: { "idempotent-replayed": "true" },
+        });
+      }
+    } catch (error) {
+      console.error("[external] idempotency lookup failed", error);
+    }
+  }
 
   const entries = normalizeRowsToEntries(payload);
 
@@ -243,11 +245,11 @@ export async function POST(request: Request) {
     templateCode: result.templateCode,
   };
 
-  if (idempotencyKey) {
+  if (storedKey) {
     try {
       await db.journalExternalIdempotency.create({
         data: {
-          key: `${tokenHint(auth.token)}:${idempotencyKey}`,
+          key: storedKey,
           organizationId,
           journalCode: payload.journalCode,
           httpStatus: 200,

@@ -97,10 +97,19 @@ async function main() {
 
   let cleanedCount = 0;
   for (const template of nonPerEmployee) {
+    // Организации со своим распределением журнала (`OrganizationJournalSetting`,
+    // 2026-11-01) не трогаем: режим шаблона для них не действует.
+    const ownSettingOrgs = (
+      await prisma.organizationJournalSetting.findMany({
+        where: { templateId: template.id, fillMode: { not: null } },
+        select: { organizationId: true },
+      })
+    ).map((row) => row.organizationId);
     const result = await prisma.journalObligation.deleteMany({
       where: {
         templateId: template.id,
         dateKey: { gte: todayUtc },
+        ...(ownSettingOrgs.length > 0 ? { organizationId: { notIn: ownSettingOrgs } } : {}),
         // Если есть defaultAssigneeId — оставляем obligations этого
         // пользователя, удаляем чужие (но только для single, sensor
         // не должен иметь obligations вообще).

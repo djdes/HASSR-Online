@@ -53,6 +53,7 @@ import {
   dayOffOverrideKey,
   isStaffDayOff,
 } from "@/lib/staff-days-off";
+import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -330,7 +331,7 @@ export async function POST(request: Request) {
   // The selected set is every active template minus disabled journal codes.
   // Aperiodic templates are required here too, because this fan-out follows
   // the organization's journal settings, not the old daily-only subset.
-  const [templates, org] = await Promise.all([
+  const [templateRows, org] = await Promise.all([
     db.journalTemplate.findMany({
       where: { isActive: true },
       // bonusAmountKopecks > 0 → шаблон фанаут-ится на всех eligible
@@ -351,6 +352,8 @@ export async function POST(request: Request) {
       select: { disabledJournalCodes: true },
     }),
   ]);
+  // Бонус — настройка организации (`OrganizationJournalSetting`), шаблон — дефолт.
+  const templates = await applyOrgJournalOverrides(organizationId, templateRows);
   const disabledCodes = new Set<string>(
     parseStringArray((org?.disabledJournalCodes ?? []) as unknown)
   );

@@ -9,8 +9,19 @@
 
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
+/**
+ * Криптостойкое число [0, 1): код открывает чужой мастер-кабинет к журналам
+ * организации, поэтому не `Math.random` (его состояние восстанавливается по
+ * нескольким выданным значениям). Web Crypto есть и в Node, и в браузере.
+ */
+function secureRandom(): number {
+  const value = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(value);
+  return value[0] / 0x1_0000_0000;
+}
+
 /** Новый код вида «ABCDE-FGH23». `random` — для тестов. */
-export function generateServiceCode(random: () => number = Math.random): string {
+export function generateServiceCode(random: () => number = secureRandom): string {
   let raw = "";
   for (let i = 0; i < 10; i += 1) raw += ALPHABET[Math.floor(random() * ALPHABET.length) % ALPHABET.length];
   return `${raw.slice(0, 5)}-${raw.slice(5)}`;

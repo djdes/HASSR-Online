@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireApiAuth } from "@/lib/auth-helpers";
+import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { saveOrgJournalSetting } from "@/lib/org-journal-settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,13 +12,14 @@ export const dynamic = "force-dynamic";
  *
  * Body: { rubles: number }   // 0 = убрать бонус
  *
- * Точечный апдейт `JournalTemplate.bonusAmountKopecks` без необходимости
- * передавать остальные параметры distribution. Полная форма редактируется
- * в /settings/journals (DistributionEditor); тут — отдельный экран
- * «премии» для быстрого обзора и редактирования всех бонусов сразу.
+ * Точечный апдейт бонуса журнала без необходимости передавать остальные
+ * параметры distribution. Полная форма редактируется в /settings/journals
+ * (DistributionEditor); тут — отдельный экран «премии» для быстрого обзора
+ * и редактирования всех бонусов сразу.
  *
- * Management-only. Шаблоны общие для всех орг — поэтому редактирует
- * глобально (см. комментарий в /distribution route про per-org override).
+ * Management-only. Бонус — настройка текущей организации
+ * (`OrganizationJournalSetting`); общий `JournalTemplate` не трогаем —
+ * до 2026-11-01 правка одного клиента меняла бонус у всех.
  */
 export async function PUT(
   request: NextRequest,
@@ -63,10 +65,7 @@ export async function PUT(
   }
 
   const bonusAmountKopecks = rubles * 100;
-  await db.journalTemplate.update({
-    where: { id: template.id },
-    data: { bonusAmountKopecks },
-  });
+  await saveOrgJournalSetting(getActiveOrgId(auth.session), template.id, { bonusAmountKopecks });
 
   return NextResponse.json({ ok: true, bonusAmountKopecks });
 }

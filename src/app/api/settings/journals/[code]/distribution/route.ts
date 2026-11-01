@@ -15,16 +15,13 @@ export const dynamic = "force-dynamic";
  *   defaultAssigneeId: string | null   // только для single, иначе null
  *   allowedPositionIds: string[]       // [] = разрешено всем должностям
  *
- * Management-only. Upsert'ит fillMode + defaultAssigneeId на
- * `JournalTemplate` (глобально для всех орг — это property шаблона)
- * и ПЕРЕЗАПИСЫВАЕТ JobPositionJournalAccess для текущей орги
- * (`organizationId` из сессии).
+ * Management-only. Сохраняет fillMode, defaultAssigneeId и бонус в
+ * настройку журнала текущей организации (`OrganizationJournalSetting`)
+ * и ПЕРЕЗАПИСЫВАЕТ JobPositionJournalAccess для неё же.
  *
- * NB: fillMode + defaultAssigneeId хранятся на JournalTemplate, а не
- * per-org, потому что Шаблоны общие для всех. На практике значит:
- * один и тот же fillMode у всех орг. Это устраивает MVP — все
- * рестораны типично хотят одинаковое поведение «гигиена per-employee,
- * climate single». В будущем можно перенести в per-org override-таблицу.
+ * До 2026-11-01 эти поля писались в `JournalTemplate`, общий для всех
+ * организаций: правка одного клиента меняла распределение и бонусы у всех.
+ * Шаблон теперь — только платформенный дефолт.
  */
 export async function PUT(
   request: NextRequest,
@@ -111,9 +108,16 @@ export async function PUT(
   }
 
   await db.$transaction([
-    db.journalTemplate.update({
-      where: { id: template.id },
-      data: {
+    db.organizationJournalSetting.upsert({
+      where: { organizationId_templateId: { organizationId, templateId: template.id } },
+      create: {
+        organizationId,
+        templateId: template.id,
+        fillMode: fillMode as FillMode,
+        defaultAssigneeId,
+        bonusAmountKopecks,
+      },
+      update: {
         fillMode: fillMode as FillMode,
         defaultAssigneeId,
         bonusAmountKopecks,

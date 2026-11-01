@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { buildingWhere } from "@/lib/building-scope";
 import { closeEventBuildingKey, getActiveCloseEvent } from "@/lib/journal-close-events";
 import {
@@ -699,10 +700,13 @@ export async function getTemplatesFilledToday(
   const templateIdsInPlay = [...documentsByTemplate.keys()];
   const templateFillModes =
     templateIdsInPlay.length > 0
-      ? await db.journalTemplate.findMany({
-          where: { id: { in: templateIdsInPlay } },
-          select: { id: true, fillMode: true },
-        })
+      ? await applyOrgJournalOverrides(
+          organizationId,
+          await db.journalTemplate.findMany({
+            where: { id: { in: templateIdsInPlay } },
+            select: { id: true, fillMode: true },
+          }),
+        )
       : [];
   const fillModeById = new Map(
     templateFillModes.map((t) => [t.id, t.fillMode])
@@ -896,10 +900,11 @@ export async function getTemplateTodaySummary(
     }),
     db.journalTemplate.findUnique({
       where: { id: templateId },
-      select: { fillMode: true },
+      select: { id: true, fillMode: true },
     }),
   ]);
-  const fillMode = template?.fillMode ?? "per-employee";
+  const ownTemplate = template ? (await applyOrgJournalOverrides(organizationId, [template]))[0] : null;
+  const fillMode = ownTemplate?.fillMode ?? "per-employee";
 
   const activeDocumentId = activeDocuments[0]?.id ?? null;
 

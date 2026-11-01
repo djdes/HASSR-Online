@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveBuildingId, loadBuildingContext } from "@/lib/active-building";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { loadOrgJournalOverrides, withOrgJournalOverride } from "@/lib/org-journal-settings";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { scheduleObligationSync, utcDayKey } from "@/lib/obligation-sync-throttle";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
@@ -201,10 +202,15 @@ export async function GET() {
           id: true,
           claimedById: true,
           claimedAt: true,
-          template: { select: { bonusAmountKopecks: true } },
+          template: { select: { id: true, bonusAmountKopecks: true } },
         },
       })
     : [];
+  // Бонус — настройка организации (`OrganizationJournalSetting`), шаблон — дефолт.
+  const bonusOverrides = await loadOrgJournalOverrides(getActiveOrgId(session));
+  for (const row of bonusRows) {
+    row.template = withOrgJournalOverride(row.template, bonusOverrides.get(row.template.id));
+  }
   const claimerIds = Array.from(
     new Set(
       bonusRows

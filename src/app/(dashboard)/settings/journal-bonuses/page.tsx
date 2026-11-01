@@ -1,9 +1,10 @@
 import { forbidden } from "next/navigation";
 import { Coins } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { requireAuth } from "@/lib/auth-helpers";
+import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
+import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { JournalBonusesEditor } from "@/components/settings/journal-bonuses-editor";
@@ -18,7 +19,8 @@ const NO_BONUS_DEFAULT_CODES = new Set([
 
 /**
  * Журнальные премии. Один screen — все шаблоны, у каждого свой ввод
- * для рублёвой суммы. Источник истины — `JournalTemplate.bonusAmountKopecks`,
+ * для рублёвой суммы. Источник истины — бонус организации (`OrganizationJournalSetting`,
+ * по умолчанию `JournalTemplate.bonusAmountKopecks`),
  * глобальный для всех орг (как и остальные настройки шаблона).
  *
  * Дефолты для новых организаций:
@@ -35,10 +37,14 @@ export default async function JournalBonusesPage() {
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
 
   const codes = ACTIVE_JOURNAL_CATALOG.map((j) => j.code);
-  const templates = await db.journalTemplate.findMany({
-    where: { code: { in: codes } },
-    select: { id: true, code: true, bonusAmountKopecks: true },
-  });
+  // Бонус — настройка организации (`OrganizationJournalSetting`), шаблон — дефолт.
+  const templates = await applyOrgJournalOverrides(
+    getActiveOrgId(session),
+    await db.journalTemplate.findMany({
+      where: { code: { in: codes } },
+      select: { id: true, code: true, bonusAmountKopecks: true },
+    }),
+  );
   const bonusByCode = new Map(
     templates.map((t) => [t.code, t.bonusAmountKopecks])
   );
