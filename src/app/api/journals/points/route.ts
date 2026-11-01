@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { listPersonBuildings, loadBuildingContext } from "@/lib/active-building";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { buildingInScope, isPointScoped } from "@/lib/point-scope";
+import { BUILDING_OUT_OF_SCOPE_ERROR, COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
 import { disabledAfter, planPointJournalToggle } from "@/lib/point-journals";
 
@@ -51,12 +51,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Выберите точку" }, { status: 400 });
     }
     if (!buildingInScope(session.user, buildingId)) {
-      return NextResponse.json({ error: "Это не ваша точка — её ведёт офис" }, { status: 403 });
+      return NextResponse.json({ error: BUILDING_OUT_OF_SCOPE_ERROR }, { status: 403 });
     }
   } else {
     if (buildingId) return NextResponse.json({ error: "Журналы не делятся по точкам" }, { status: 400 });
     if (isPointScoped(session.user)) {
-      return NextResponse.json({ error: "Это общие настройки компании — их меняет офис" }, { status: 403 });
+      return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
     }
   }
 
