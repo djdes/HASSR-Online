@@ -1,7 +1,7 @@
 /**
  * Руководитель точки (фаза 2 «Офис и точки», 2026-10-27): человек,
- * закреплённый только за торговыми точками организации, у которой есть офис
- * (`pointScopeForUser` в building-scope.ts). Он ведёт свои точки и их людей,
+ * закреплённый только за частью торговых точек организации — с офисом или
+ * без него (с 2026-11-01) (`pointScopeForUser` в building-scope.ts). Он ведёт свои точки и их людей,
  * а общее на всю компанию — реквизиты, оплата, должности, права, общие
  * настройки журналов, подключения — дело офиса.
  *
@@ -14,9 +14,9 @@
 
 export type PointScopeActor = { pointScope?: readonly string[] | null };
 
-export const COMPANY_ONLY_API_ERROR = "Это общие настройки компании — их меняет офис";
-export const STAFF_OUT_OF_SCOPE_ERROR = "Этот сотрудник работает не на вашей точке — его ведёт офис";
-export const BUILDING_OUT_OF_SCOPE_ERROR = "Это не ваша точка — её ведёт офис";
+export const COMPANY_ONLY_API_ERROR = "Это общие настройки компании — их меняет руководство компании";
+export const STAFF_OUT_OF_SCOPE_ERROR = "Этот сотрудник работает не на вашей точке — его ведёт руководство компании";
+export const BUILDING_OUT_OF_SCOPE_ERROR = "Это не ваша точка — её ведёт руководство компании";
 
 export function isPointScoped(actor: PointScopeActor | null | undefined): boolean {
   return Array.isArray(actor?.pointScope) && actor.pointScope.length > 0;
