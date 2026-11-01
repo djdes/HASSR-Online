@@ -14,6 +14,7 @@ import {
   type LocalClock,
   verifierNotice,
 } from "@/lib/checklist-assignments";
+import { assignmentInArea, checklistPointArea } from "@/lib/checklist-point-scope";
 
 /**
  * Назначения чек-листов — работа с базой: люди организации и их доступ,
@@ -287,6 +288,8 @@ export async function assignmentForStart(input: {
   templateId: string;
   user: { id: string; role?: string | null; isRoot?: boolean | null; permissionPreset?: string | null };
   now: Date;
+  /** Точки области человека (`visibleObjectBuildingIds`); null — вся организация. */
+  points?: readonly string[] | null;
 }): Promise<{ ok: true; id: string } | { ok: false; status: number; error: string }> {
   const assignment = await db.checklistAssignment.findFirst({
     where: { id: input.assignmentId, organizationId: input.organizationId },
@@ -300,6 +303,12 @@ export async function assignmentForStart(input: {
   const isRecipient = recipientsOf(assignment, ctx).some((person) => person.id === input.user.id);
   if (!isRecipient && !hasCapability(input.user, "admin.full")) {
     return { ok: false, status: 403, error: "Это назначение не для вас" };
+  }
+  // Точка (2026-11-01, «точка видит только своё»): руководитель, который не
+  // получатель, начинает проверку только по назначению своей точки.
+  const area = checklistPointArea({ points: input.points ?? null, buildings: ctx.buildings, people: ctx.people });
+  if (!isRecipient && !assignmentInArea(area, assignment)) {
+    return { ok: false, status: 404, error: "Назначение не найдено" };
   }
   const done = await completedDayKeysByAssignment([assignment], ctx.timeZone, input.now);
   const state = assignmentState(assignment, localClock(input.now, ctx.timeZone), done.get(assignment.id) ?? [], ctx.timeZone);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { checklistInspectionInArea, checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
 import { canReviewInspection } from "@/lib/checklist-results";
 import { hasCapability } from "@/lib/permission-presets";
 import { recordAuditLog } from "@/lib/audit-log";
@@ -19,9 +19,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const userId = auth.session.user.id;
   const inspection = await db.checklistInspection.findFirst({
     where: { id, ...checklistInspectionReadWhere({ organizationId: auth.organizationId, canManage: auth.canManage, userId }) },
-    select: { id: true, status: true, reviewedAt: true, assignmentId: true, assignment: { select: { verifierUserId: true } } },
+    select: { id: true, status: true, reviewedAt: true, createdById: true, assignmentId: true, assignment: { select: { verifierUserId: true } } },
   });
-  if (!inspection) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
+  // Точка (2026-11-01, «точка видит только своё»): проверка другой точки — «не найдена».
+  if (!inspection || !(await checklistInspectionInArea(auth.session, auth.organizationId, inspection))) {
+    return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
+  }
   if (inspection.reviewedAt) return NextResponse.json({ error: "Результат уже принят" }, { status: 409 });
   const allowed = canReviewInspection({
     status: inspection.status,

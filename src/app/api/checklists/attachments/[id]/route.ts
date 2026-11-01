@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { checklistInspectionInArea, checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
 import { checklistByteRange } from "@/lib/custom-checklist-files";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +10,9 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const file = await db.checklistAttachment.findFirst({ where: { id, organizationId: auth.organizationId, OR: [
     { purpose: "reference", ...(auth.canManage ? {} : { OR: [{ templateId: { not: null } }, { createdById: auth.session.user.id }] }) },
     { inspection: checklistInspectionReadWhere({ organizationId: auth.organizationId, canManage: auth.canManage, userId: auth.session.user.id }) },
-  ] } });
-  if (!file) return NextResponse.json({ error: "Файл не найден" }, { status: 404 });
+  ] }, include: { inspection: { select: { createdById: true, assignmentId: true } } } });
+  // Точка (2026-11-01, «точка видит только своё»): файл проверки другой точки — «не найден».
+  if (!file || (file.inspection && !(await checklistInspectionInArea(auth.session, auth.organizationId, file.inspection)))) return NextResponse.json({ error: "Файл не найден" }, { status: 404 });
   const range = checklistByteRange(request.headers.get("range"), file.sizeBytes);
   const headers = { "Content-Type": file.mimeType, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Accept-Ranges": "bytes", "Content-Disposition": `${file.mimeType.startsWith("image/") || file.mimeType.startsWith("video/") || file.mimeType.startsWith("audio/") || file.mimeType === "application/pdf" ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.fileName)}` };
   if (range === "invalid") return new NextResponse(null, { status: 416, headers: { ...headers, "Content-Range": `bytes */${file.sizeBytes}` } });

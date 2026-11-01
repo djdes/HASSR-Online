@@ -4,7 +4,7 @@ import { hasJournalAccess } from "@/lib/journal-acl";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
 import { CHECKLIST_CODE } from "@/lib/custom-checklists";
-import { checklistInspectionReadWhere } from "@/lib/custom-checklists.server";
+import { checklistInspectionInArea, checklistInspectionReadWhere } from "@/lib/custom-checklists.server";
 import { canReviewInspection } from "@/lib/checklist-results";
 import { formatChecklistTimestamp } from "@/lib/custom-checklist-display";
 import { ChecklistInspectionClient } from "@/components/checklists/checklist-inspection-client";
@@ -18,9 +18,10 @@ export default async function ChecklistInspectionPage({ params }: { params: Prom
   // Свои проверки, все — с `journals.manage`, и те, где человек проверяющий по назначению.
   const inspection = await db.checklistInspection.findFirst({
     where: { id, ...checklistInspectionReadWhere({ organizationId: getActiveOrgId(session), canManage: hasCapability(session.user, "journals.manage"), userId: session.user.id }) },
-    select: { id: true, status: true, reviewedAt: true, reviewedByName: true, assignment: { select: { verifierUserId: true } } },
+    select: { id: true, status: true, reviewedAt: true, reviewedByName: true, createdById: true, assignmentId: true, assignment: { select: { verifierUserId: true } } },
   });
-  if (!inspection) notFound();
+  // Точка (2026-11-01, «точка видит только своё»): проверка другой точки — «не найдена».
+  if (!inspection || !(await checklistInspectionInArea(session, getActiveOrgId(session), inspection))) notFound();
   const canReview = canReviewInspection({
     status: inspection.status,
     reviewedAt: inspection.reviewedAt,

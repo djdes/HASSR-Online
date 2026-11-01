@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { checklistInspectionInArea, requireChecklistAccess } from "@/lib/custom-checklists.server";
 import { checklistAttachmentType, CHECKLIST_FILE_MAX_BYTES, CHECKLIST_FILE_PURPOSES, CHECKLIST_FILE_QUOTA_BYTES } from "@/lib/custom-checklist-files";
 import { checklistInstancesSchema } from "@/lib/custom-checklist-rules";
 import { expandChecklistDefinition } from "@/lib/custom-checklist-runtime";
@@ -24,6 +24,9 @@ export async function POST(request: Request) {
   const fileName = (file.name.split(/[\\/]/).pop() || "Файл").replace(/[\x00-\x1f\x7f]/g, "").slice(-180);
   const mimeType = checklistAttachmentType(fileName, bytes, data.purpose);
   if (!mimeType) return NextResponse.json({ error: "Неподдерживаемый или повреждённый файл. Фото: JPG/PNG/WebP; видео: MP4/WebM; аудио: MP3/WAV/OGG/M4A/WebM. До 10 МБ." }, { status: 415 });
+  // Точка (2026-11-01, «точка видит только своё»): к проверке другой точки файл не добавить.
+  const target = data.inspectionId ? await db.checklistInspection.findFirst({ where: { id: data.inspectionId, organizationId: auth.organizationId }, select: { createdById: true, assignmentId: true } }) : null;
+  if (target && !(await checklistInspectionInArea(auth.session, auth.organizationId, target))) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
   const outcome = await db.$transaction(async tx => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`checklist-files:${auth.organizationId}`}))`;
     if (data.inspectionId) {

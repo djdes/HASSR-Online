@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
+import { checklistInspectionInArea, checklistInspectionReadWhere, requireChecklistAccess } from "@/lib/custom-checklists.server";
 import { notifyChecklistVerifier } from "@/lib/checklist-assignments.server";
 import { checklistAnswersSchema, checklistDefinitionSchema } from "@/lib/custom-checklists";
 import { checklistEvidenceSchema, checklistInstancesSchema } from "@/lib/custom-checklist-rules";
@@ -17,7 +17,8 @@ export async function GET(_request: Request, ctx: Ctx) {
   const auth = await requireChecklistAccess(); if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const inspection = await db.checklistInspection.findFirst({ where: { id, ...checklistInspectionReadWhere({ organizationId: auth.organizationId, canManage: auth.canManage, userId: auth.session.user.id }) } });
-  if (!inspection) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
+  // Точка (2026-11-01, «точка видит только своё»): проверка другой точки — «не найдена».
+  if (!inspection || !(await checklistInspectionInArea(auth.session, auth.organizationId, inspection))) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
   const definition = expandChecklistDefinition(checklistDefinitionSchema.parse(inspection.snapshot), checklistInstancesSchema.parse(inspection.categoryInstances ?? {}));
   const result = resolveChecklistResult(definition,checklistAnswersSchema.parse(inspection.answers),inspection.status === "completed"?inspection.result:undefined);
   return NextResponse.json({ inspection, result, score: (result as { score?: unknown }).score }, { headers: { "Cache-Control": "private, no-store" } });
@@ -29,7 +30,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const where = { id, organizationId: auth.organizationId, ...(auth.canManage ? {} : { createdById: auth.session.user.id }) };
   const current = await db.checklistInspection.findFirst({ where });
-  if (!current) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
+  if (!current || !(await checklistInspectionInArea(auth.session, auth.organizationId, current))) return NextResponse.json({ error: "Проверка не найдена" }, { status: 404 });
   if (current.status !== "draft") return NextResponse.json({ error: "Завершённую проверку нельзя изменять" }, { status: 409 });
   const instances = parsed.data.categoryInstances ?? checklistInstancesSchema.parse(current.categoryInstances ?? {});
   let definition;
