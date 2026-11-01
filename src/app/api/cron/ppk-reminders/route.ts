@@ -14,6 +14,7 @@ import {
 } from "@/lib/ppk/records";
 import { buildPpkReminderKeyboard, collectPpkReminders, collectReviewReminders, ppkReminderMessage } from "@/lib/ppk/reminders";
 import { moscowToday } from "@/lib/ppk/plan-done";
+import { escapeHtml } from "@/lib/html-escape";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +32,10 @@ export const dynamic = "force-dynamic";
  */
 
 type OrgPlans = {
+  organizationId: string;
+  /** ППК точки (2026-11-01, «ППК на точку»); null — организации. */
+  buildingId: string | null;
+  pointName: string | null;
   lab: (LabPlanItem & { id: string })[];
   pest: (PestPlanItem & { id: string })[];
   policy: PolicyData | null;
@@ -55,17 +60,30 @@ async function handle(request: Request) {
         block: { in: [...BLOCKS] },
         organization: NOT_DIRECTORY_ORG_WHERE,
       },
-      select: { id: true, organizationId: true, block: true, data: true },
+      select: { id: true, organizationId: true, buildingId: true, building: { select: { name: true } }, block: true, data: true },
     });
 
+    // ППК на точку (2026-11-01): у каждой точки свои сроки и группа —
+    // напоминания отдельно по точкам, получатели — руководители точки и офис.
     const byOrg = new Map<string, OrgPlans>();
     for (const row of records) {
       const parsed = PPK_RECORD_SCHEMAS[row.block as (typeof BLOCKS)[number]].safeParse(row.data);
       if (!parsed.success) continue;
-      let plans = byOrg.get(row.organizationId);
+      const key = `${row.organizationId}:${row.buildingId ?? ""}`;
+      let plans = byOrg.get(key);
       if (!plans) {
-        plans = { lab: [], pest: [], policy: null, versions: [], meetings: [], teamSize: 0 };
-        byOrg.set(row.organizationId, plans);
+        plans = {
+          organizationId: row.organizationId,
+          buildingId: row.buildingId,
+          pointName: row.building?.name ?? null,
+          lab: [],
+          pest: [],
+          policy: null,
+          versions: [],
+          meetings: [],
+          teamSize: 0,
+        };
+        byOrg.set(key, plans);
       }
       if (row.block === "lab-plan") plans.lab.push({ ...(parsed.data as LabPlanItem), id: row.id });
       else if (row.block === "pest-plan") plans.pest.push({ ...(parsed.data as PestPlanItem), id: row.id });
@@ -80,7 +98,8 @@ async function handle(request: Request) {
     let itemsTotal = 0;
     let recipientsTotal = 0;
 
-    for (const [orgId, plans] of byOrg) {
+    for (const plans of byOrg.values()) {
+      const orgId = plans.organizationId;
       try {
         const items = [
           ...collectPpkReminders({ lab: plans.lab, pest: plans.pest, today }),
@@ -96,7 +115,7 @@ async function handle(request: Request) {
         organizations += 1;
         itemsTotal += items.length;
 
-        const recipients = await listOrganizationRecipients(orgId, ["owner", "technologist"], "compliance");
+        const recipients = await listOrganizationRecipients(orgId, ["owner", "technologist"], "compliance", plans.buildingId);
         const withTelegram = recipients.filter((u) => u.telegramChatId);
         recipientsTotal += withTelegram.length;
         if (dryRun) continue;
@@ -109,7 +128,7 @@ async function handle(request: Request) {
         } as const;
         const path = PATHS[items[0].block];
         const miniAppUrl = buildMiniAppUrl(miniBase, path);
-        const html = ppkReminderMessage(items);
+        const html = (plans.pointName ? `<b>${escapeHtml(plans.pointName)}</b>\n` : "") + ppkReminderMessage(items);
         const reply_markup = buildPpkReminderKeyboard(items, miniAppUrl ?? null);
         // Каждому — отдельное сообщение: у кнопок «✅» общий смысл, но ответ идёт по chat id.
         await Promise.allSettled(
@@ -120,7 +139,7 @@ async function handle(request: Request) {
         // Push в приложение — один на организацию, без кнопок.
         await pushToOrganizationRecipients(recipients, html, "compliance", miniAppUrl ?? null);
       } catch (error) {
-        console.error(`[cron/ppk-reminders] org ${orgId}`, error);
+        console.error(`[cron/ppk-reminders] org ${orgId} point ${plans.buildingId ?? "-"}`, error);
       }
     }
 

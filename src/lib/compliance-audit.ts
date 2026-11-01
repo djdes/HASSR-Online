@@ -379,7 +379,8 @@ export async function runComplianceAudit(
   // 13. Производственный контроль: программа, группа ХАССП, критические точки
   try {
     const [statuses, programFile] = await Promise.all([
-      loadPpkStatuses(organizationId),
+      // Проверка соответствия — на всю организацию: ППК уровня организации.
+      loadPpkStatuses({ organizationId, buildingId: null }),
       db.knowledgeDocument.count({ where: { organizationId, kind: "ppk" } }),
     ]);
     checks.push(

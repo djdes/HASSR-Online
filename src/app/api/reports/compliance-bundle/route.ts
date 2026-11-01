@@ -21,6 +21,8 @@ import {
   type RegulatorCapaRow,
 } from "@/lib/regulator-bundle";
 import { recordsAtPointWhere } from "@/lib/point-records";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
+import { ppkDocKindKeys, ppkDocKindOf } from "@/lib/ppk/scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -207,12 +209,16 @@ export async function GET(request: Request) {
     `Итого: включено ${totals.included}, ошибок ${totals.failed}, всего документов ${documents.length}.`
   );
 
-  // Производственный контроль: загруженные ППК и ХАССП-план кладём отдельной папкой.
+  // Производственный контроль: загруженные ППК и ХАССП-план кладём отдельной
+  // папкой — точки из шапки или организации (2026-11-01, «ППК на точку»).
+  const ppkScope = await ppkScopeForSession(session);
   try {
-    const productionDocs = await db.knowledgeDocument.findMany({
-      where: { organizationId, kind: { in: ["ppk", "haccp_plan"] } },
-      select: { kind: true, fileName: true, content: true },
-    });
+    const productionDocs = (
+      await db.knowledgeDocument.findMany({
+        where: { organizationId, kind: { in: ppkDocKindKeys(ppkScope.buildingId) } },
+        select: { kind: true, fileName: true, content: true },
+      })
+    ).map((doc) => ({ ...doc, kind: ppkDocKindOf(doc.kind) }));
     const usedNames = new Set<string>();
     for (const doc of productionDocs) {
       let name = sanitizeForZip(doc.fileName) || doc.kind || "document";
@@ -231,7 +237,7 @@ export async function GET(request: Request) {
   // Собранные из разделов ППК и ХАССП-план — всегда, рядом со своими файлами:
   // проверяющий видит актуальное состояние, даже если файл не загружали.
   try {
-    const bundle = await loadPpkBundle(organizationId);
+    const bundle = await loadPpkBundle(ppkScope);
     const assembled: Array<[string, () => Buffer]> = [
       ["ППК (собрано из разделов).pdf", () => buildPpkProgramPdf(bundle)],
       ["ХАССП-план (собрано из разделов).pdf", () => buildHaccpPlanPdf(bundle)],

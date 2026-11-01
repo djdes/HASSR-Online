@@ -22,6 +22,7 @@ import { formatDayKeyRu } from "@/lib/inspector-qr";
 import { brandPalette } from "@/lib/document-brand";
 import { buildDocumentOrgBlock, documentOrgRows } from "@/lib/document-org-block";
 import { buildingPrintName } from "@/lib/building-scope";
+import { ppkScopeForPoint } from "@/lib/ppk/scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +59,8 @@ export default async function InspectorLandingPage({
   const orgId = access.token.organizationId;
   const [groups, norms, checklists, medBooks, ownVisits] = await Promise.all([
     loadInspectorJournals(access, period.from, period.to),
-    loadInspectionNorms(orgId),
+    // Ссылка на точку — ППК и ХАССП-план этой точки (2026-11-01, «ППК на точку»).
+    ppkScopeForPoint(orgId, access.token.buildingId).then(loadInspectionNorms),
     // Ссылка на точку — чек-листы и медкнижки этой точки.
     loadInspectorChecklistResults(orgId, period.from, period.to, access.token.buildingId),
     loadInspectorMedBookCounts(orgId, undefined, access.token.buildingId),

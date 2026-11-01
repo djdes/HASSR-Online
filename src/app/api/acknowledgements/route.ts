@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
+import { ppkScopeForSession } from "@/lib/ppk/scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
 
   const organizationId = getActiveOrgId(auth.session);
   const userId = auth.session.user.id;
-  const doc = await ackDocForUser(organizationId, userId, parsed.data.docKey);
+  // Политика и положение о группе — ППК точки человека (2026-11-01).
+  const doc = await ackDocForUser(await ppkScopeForSession(auth.session), userId, parsed.data.docKey);
   if (!doc) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
 
   const mark = await db.ppkAcknowledgement.upsert({

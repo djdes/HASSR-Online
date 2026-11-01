@@ -8,6 +8,8 @@ import { PpkBlockHeader } from "@/components/production-control/ppk-block-header
 import { PpkCreateButton } from "@/components/production-control/ppk-ui";
 import { PpkFolder } from "@/components/production-control/ppk-folder";
 import { LabClient } from "./lab-client";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +18,12 @@ export default async function LabPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const [rows, t] = await Promise.all([
     db.ppkRecord.findMany({
-      where: { organizationId, block: "lab-plan" },
+      where: { ...ppkWhere(scope), block: "lab-plan" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),

@@ -11,6 +11,8 @@ import { ackSummaryFor } from "@/lib/ppk/acknowledge.server";
 import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { AckSummary } from "@/components/production-control/ack-summary";
 import { TeamClient } from "./team-client";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +21,16 @@ export default async function TeamPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const [rows, staff, order, t, locale] = await Promise.all([
     db.ppkRecord.findMany({
-      where: { organizationId, block: "team" },
+      where: { ...ppkWhere(scope), block: "team" },
       select: { id: true, data: true, sortOrder: true, updatedAt: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
-    loadPpkStaff(organizationId),
+    loadPpkStaff(scope),
     db.companyOrder.findFirst({
       where: { organizationId, templateCode: "haccp-team" },
       orderBy: [{ issuedAt: "desc" }, { createdAt: "desc" }],
@@ -37,7 +41,7 @@ export default async function TeamPage() {
   ]);
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } });
   const ack = rows.length
-    ? await ackSummaryFor(organizationId, "team-regulation", org?.timezone ?? "Europe/Moscow", await visibleStaffWhere(session))
+    ? await ackSummaryFor(scope, "team-regulation", org?.timezone ?? "Europe/Moscow", await visibleStaffWhere(session))
     : null;
 
   const initial = parsePpkRecords("team", rows).map((row) => ({ ...row, updatedAt: row.updatedAt.toISOString() }));

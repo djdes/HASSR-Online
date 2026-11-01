@@ -10,6 +10,8 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +20,11 @@ export default async function PolicyPrintPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const row = await db.ppkRecord.findFirst({
-    where: { organizationId, block: "policy" },
+    where: { ...ppkWhere(scope), block: "policy" },
     select: { id: true, data: true },
   });
   const t = await getTranslations("productionControl.print");
@@ -42,8 +46,8 @@ export default async function PolicyPrintPage() {
   const [data] = parsePpkRecords("policy", [{ ...row, sortOrder: 0, updatedAt: new Date() }]).map((r) => r.data);
 
   const [org, staff, locale] = await Promise.all([
-    loadPpkPrintOrg(organizationId),
-    loadPpkStaff(organizationId),
+    loadPpkPrintOrg(organizationId, scope.buildingId),
+    loadPpkStaff(scope),
     getLocale(),
   ]);
 

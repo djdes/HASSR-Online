@@ -663,12 +663,20 @@ model KnowledgeDocument {
   /// (процедуры, протоколы лаборатории, хранилище…; список — `src/lib/ppk/folders.ts`).
   /// null — обычный документ базы знаний или документ с `kind`.
   folder         String?
+  /// Точка (2026-11-01, владелец: «ППК на точку»): документы и папки раздела
+  /// «Производственный контроль» точки. null — уровень организации (офис,
+  /// без журналов по точкам) и вся база знаний. Вид документа точки хранится
+  /// как `<kind>@<buildingId>` (src/lib/ppk/scope.ts) — уникальный индекс
+  /// `[organizationId, kind]` остаётся прежним.
+  buildingId     String?
+  building       Building?    @relation(fields: [buildingId], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   @@unique([organizationId, kind])
   @@index([organizationId, createdAt])
   @@index([organizationId, folder])
+  @@index([organizationId, buildingId, folder])
 }
 
 /// Запись блока «Производственного контроля» (ЭППК, 2026-10-16): член группы
@@ -686,11 +694,18 @@ model PpkRecord {
   /// Блок-одиночка (policy, norms): равен `block`, иначе NULL. Уникальность
   /// в паре с organizationId гарантирует одну запись в БД; NULL не конфликтуют.
   singleton      String?
+  /// Точка (2026-11-01, владелец: «ППК на точку»): у каждой торговой точки
+  /// свой ППК. null — ППК уровня организации (офис, без журналов по точкам).
+  /// Одиночный блок точки пишет в `singleton` значение `<block>@<buildingId>`
+  /// (src/lib/ppk/scope.ts) — уникальный индекс остаётся прежним.
+  buildingId     String?
+  building       Building?    @relation(fields: [buildingId], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   @@unique([organizationId, singleton])
   @@index([organizationId, block, sortOrder])
+  @@index([organizationId, buildingId, block, sortOrder])
   @@index([block])
 }
 
@@ -1043,6 +1058,13 @@ model Building {
   linkedServiceCode     String?
   /// Временные назначения сотрудников на эту точку (замена).
   pointAssignments      UserPointAssignment[]
+  /// ППК точки (2026-11-01, «ППК на точку»): записи блоков и документы
+  /// раздела «Производственный контроль». Точку удалили — её ППК тоже.
+  ppkRecords            PpkRecord[]
+  ppkDocuments          KnowledgeDocument[]
+  /// Когда точке скопирован ППК организации (первое открытие ППК точки).
+  /// null — ещё не открывали: при первом открытии точка получит копию.
+  ppkSeededAt           DateTime?
   /// Код журнала бракеража точки (2026-10-28, владелец: «каждая точка имеет
   /// свой уникальный ID журнала бракеража, независимо от организации»).
   /// Мастер-кабинет подключает по нему одну точку, а не всю организацию.

@@ -12,6 +12,8 @@ import type { CcpJournalEntry } from "@/lib/ppk/ccp-monitoring";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { PPK_BUTTON_OUTLINE_CLASS } from "@/components/production-control/ppk-ui";
 import { ControlPointsClient } from "./control-points-client";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,8 @@ export default async function ControlPointsPage({
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
   const { hazard } = await searchParams;
   const focusHazardId = typeof hazard === "string" ? hazard.slice(0, 64) : null;
 
@@ -35,10 +39,10 @@ export default async function ControlPointsPage({
   const now = currentTime();
   const since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const [hazards, points, staff, journals, journalEntries, t] = await Promise.all([
-    db.ppkRecord.findMany({ where: { organizationId, block: "hazards" }, select, orderBy }),
-    db.ppkRecord.findMany({ where: { organizationId, block: "control-points" }, select, orderBy }),
-    loadPpkStaff(organizationId),
-    loadEnabledJournals(organizationId),
+    db.ppkRecord.findMany({ where: { ...ppkWhere(scope), block: "hazards" }, select, orderBy }),
+    db.ppkRecord.findMany({ where: { ...ppkWhere(scope), block: "control-points" }, select, orderBy }),
+    loadPpkStaff(scope),
+    loadEnabledJournals(organizationId, scope.buildingId),
     // Измерения из журнала «Мониторинг ККТ» за 30 дней — для сверки с пределами точек.
     db.journalEntry.findMany({
       where: { organizationId, template: { code: "ccp_monitoring" }, createdAt: { gte: since } },

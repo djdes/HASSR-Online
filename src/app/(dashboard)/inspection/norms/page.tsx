@@ -1,12 +1,13 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { requireAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadInspectionNorms } from "@/lib/inspection-norms.server";
 import { InspectionNormsCard } from "@/components/inspection/inspection-norms-card";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
+import { ppkPageScope } from "@/lib/ppk/access.server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,10 @@ export const dynamic = "force-dynamic";
 export default async function InspectionNormsPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) forbidden();
-  const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): документы точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
-  const [norms, t] = await Promise.all([loadInspectionNorms(organizationId), getTranslations("inspectionDay.pages.norms")]);
+  const [norms, t] = await Promise.all([loadInspectionNorms(scope), getTranslations("inspectionDay.pages.norms")]);
 
   return (
     <div className="space-y-4">

@@ -12,6 +12,8 @@ import { ackSummaryFor } from "@/lib/ppk/acknowledge.server";
 import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { AckSummary } from "@/components/production-control/ack-summary";
 import { PolicyClient } from "./policy-client";
+import { ppkPageScope } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -20,14 +22,16 @@ export default async function PolicyPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
+  // ППК на точку (2026-11-01): ППК точки из шапки или организации.
+  const scope = await ppkPageScope(session);
 
   const [row, org, staff, t] = await Promise.all([
     db.ppkRecord.findFirst({
-      where: { organizationId, block: "policy" },
+      where: { ...ppkWhere(scope), block: "policy" },
       select: { id: true, data: true },
     }),
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, timezone: true } }),
-    loadPpkStaff(organizationId),
+    loadPpkStaff(scope),
     getTranslations("productionControl.policy"),
   ]);
 
@@ -37,7 +41,7 @@ export default async function PolicyPage() {
     : null;
   const qrSvg = publicUrl ? await brandQrSvg(publicUrl) : null;
   const ack = row
-    ? await ackSummaryFor(organizationId, "policy", org?.timezone ?? "Europe/Moscow", await visibleStaffWhere(session))
+    ? await ackSummaryFor(scope, "policy", org?.timezone ?? "Europe/Moscow", await visibleStaffWhere(session))
     : null;
 
   return (

@@ -12,6 +12,7 @@ import { renderOrderPdf } from "@/lib/orders/pdf";
 import { defaultOrderValues, type OrderOrgSnapshot } from "@/lib/orders/render";
 import { loadPdfOrgLogo } from "@/lib/pdf-logo.server";
 import type { PdfLogo } from "@/lib/pdf-logo";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,10 @@ const BLANK_ORG: OrderOrgSnapshot = {
 export async function GET(request: Request) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
+  // Приказы компании с её реквизитами — не руководителю точки (2026-11-01).
+  if (isPointScoped(auth.session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
+  }
   const { organizationId } = auth;
 
   const feature = await checkPlanFeature(organizationId, "typicalPackage", "production-control/package/zip");

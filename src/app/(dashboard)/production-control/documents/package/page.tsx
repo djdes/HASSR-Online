@@ -12,6 +12,7 @@ import { groupedOrderTemplates, ORDER_TEMPLATES } from "@/lib/orders/catalog";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
 import { PpkFolder } from "@/components/production-control/ppk-folder";
 import { PpkIndividualOrder } from "@/components/production-control/ppk-individual-order";
+import { isPointScoped } from "@/lib/point-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +37,16 @@ export default async function Page() {
     }),
   ]);
   const typical = hasFeature(loaded?.state, "typicalPackage");
+  // Типовой пакет — приказы компании с её реквизитами: руководителю точки
+  // закрыт, как и «Приказы» (2026-11-01). Свои файлы пакета точки — ниже.
+  const companyOrders = !isPointScoped(session.user);
   const uploadsClosed = loaded?.state.entitlements.storageBytes === 0;
 
   return (
     <div className="space-y-5">
       <PpkBlockHeader blockKey="package" lead={t("blocks.package.lead")} />
 
+      {companyOrders ? (
       <section
         data-testid={typical ? "ppk-package-typical" : "ppk-package-locked"}
         className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6"
@@ -109,6 +114,7 @@ export default async function Page() {
           ))}
         </div>
       </section>
+      ) : null}
 
       <section className="space-y-3">
         <div>

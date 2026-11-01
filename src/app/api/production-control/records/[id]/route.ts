@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requirePpkAccess } from "@/lib/ppk/access.server";
+import { ppkWhere } from "@/lib/ppk/scope";
 import { checkPpkRefs, checkPpkTeamGroup, ppkValidationError } from "@/lib/ppk/records.server";
 import { PPK_RECORD_SCHEMAS, isPpkRecordBlock } from "@/lib/ppk/records";
 
@@ -11,13 +12,13 @@ export const dynamic = "force-dynamic";
 
 const SELECT = { id: true, data: true, sortOrder: true, updatedAt: true } as const;
 
-/** PATCH { data?, sortOrder? } — правка записи своей организации. */
+/** PATCH { data?, sortOrder? } — правка записи ППК своей точки (или организации). */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
   const { id } = await params;
   const existing = await db.ppkRecord.findFirst({
-    where: { id, organizationId: auth.organizationId },
+    where: { id, ...ppkWhere(auth.scope) },
     select: { id: true, block: true, data: true },
   });
   if (!existing || !isPpkRecordBlock(existing.block)) {
@@ -39,10 +40,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     // Схема блока уже проверила данные; тип в реестре общий, поэтому приводим здесь.
     const value = parsed.data as Record<string, unknown>;
-    const refError = await checkPpkRefs(auth.organizationId, existing.block, value);
+    const refError = await checkPpkRefs(auth.scope, existing.block, value);
     if (refError) return NextResponse.json({ error: refError }, { status: 400 });
     if (existing.block === "team") {
-      const groupError = await checkPpkTeamGroup(auth.organizationId, value, id);
+      const groupError = await checkPpkTeamGroup(auth.scope, value, id);
       if (groupError) return NextResponse.json({ error: groupError }, { status: 409 });
     }
     // Токен политики не меняется при правке текста: его меняет только «Сменить ссылку».
@@ -65,13 +66,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   return NextResponse.json({ record });
 }
 
-/** DELETE — удалить запись своей организации. */
+/** DELETE — удалить запись ППК своей точки (или организации). */
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
   const { id } = await params;
   const existing = await db.ppkRecord.findFirst({
-    where: { id, organizationId: auth.organizationId },
+    where: { id, ...ppkWhere(auth.scope) },
     select: { id: true, block: true },
   });
   if (!existing) {
@@ -81,7 +82,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     // Точки, ссылавшиеся на удалённую опасность, остаются без ссылки: иначе их потом не сохранить.
     await db.$transaction(async (tx) => {
       const points = await tx.ppkRecord.findMany({
-        where: { organizationId: auth.organizationId, block: "control-points" },
+        where: { ...ppkWhere(auth.scope), block: "control-points" },
         select: { id: true, data: true },
       });
       for (const point of points) {
