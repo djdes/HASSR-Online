@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { isOrderTemplateCode } from "@/lib/orders/catalog";
 import {
   createOrder,
@@ -49,6 +50,13 @@ async function requireManagement() {
         { error: "Приказы издаёт руководитель организации" },
         { status: 403 }
       ),
+    };
+  }
+  // Приказы — документы компании: руководителю точки закрыты (2026-11-01).
+  if (isPointScoped(auth.session.user)) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 }),
     };
   }
   return { ok: true as const, session: auth.session };

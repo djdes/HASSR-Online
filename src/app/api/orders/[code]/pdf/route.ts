@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
+import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { clientIp } from "@/lib/client-ip";
 import { journalSampleRateLimiter } from "@/lib/rate-limit";
 import { hasFeature } from "@/lib/billing-period";
@@ -64,6 +65,10 @@ export async function GET(
 
   const url = new URL(request.url);
   const session = await getServerSession(authOptions).catch(() => null);
+  // Приказы компании с её реквизитами — не руководителю точки (2026-11-01).
+  if (session && isPointScoped(session.user)) {
+    return NextResponse.json({ error: COMPANY_ONLY_API_ERROR }, { status: 403 });
+  }
 
   // Залогиненному с типовым пакетом в тарифе — реквизиты, логотип и
   // фирменный цвет его организации.

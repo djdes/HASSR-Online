@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isPointScoped } from "@/lib/point-scope";
 import { getTranslations } from "next-intl/server";
 
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -53,6 +54,8 @@ export default async function OrderPage({
   if (!template) notFound();
 
   const session = await requireAuth();
+  // Приказы компании — руководителю точки закрыты (2026-11-01), как и в proxy.
+  if (isPointScoped(session.user)) redirect("/dashboard");
   const organizationId = getActiveOrgId(session);
   const canManage = hasFullWorkspaceAccess(session.user);
 

@@ -5,10 +5,11 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { getActiveBuildingId } from "@/lib/active-building";
+import { loadBuildingContext } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { CLOSE_DAY_JOURNAL_CODES } from "@/lib/daily-journal-codes";
+import { CLOSE_DAY_POINT_REQUIRED, closeDayNeedsPoint } from "@/lib/close-day-point";
 import { recordAuditLog } from "@/lib/audit-log";
 import { buildDateKeys, toDateKey } from "@/lib/hygiene-document";
 import { resolveDayStart } from "@/lib/today-compliance";
@@ -118,8 +119,15 @@ export async function POST(request: Request) {
   const organizationId = getActiveOrgId(session);
   const blocked = await rejectJournalAutomation(organizationId, "closeDayAutofill");
   if (blocked) return blocked;
-  // Точки: закрываем день и создаём документ для активной точки.
-  const activeBuildingId = await getActiveBuildingId(session);
+  // Точки: закрываем день и создаём документ для активной точки. На уровне
+  // организации (офис или «Вся организация») день закрывался только офису,
+  // хотя кнопка выглядит как «для всех» — владелец 2026-11-01: «требовать
+  // выбрать точку».
+  const buildingContext = await loadBuildingContext(session);
+  if (closeDayNeedsPoint(buildingContext)) {
+    return NextResponse.json({ error: CLOSE_DAY_POINT_REQUIRED }, { status: 400 });
+  }
+  const activeBuildingId = buildingContext.activeBuildingId;
   const orgRow = await db.organization.findUnique({
     where: { id: organizationId },
     select: {

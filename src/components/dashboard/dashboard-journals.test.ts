@@ -94,7 +94,7 @@ test("главная: «Обязательные журналы» — плоск
   assert.match(section, /defaultOpen=\{true\}/);
   assert.doesNotMatch(section, /\bcentered\b/);
   // «Автозаполнить» / «QR-коды» — в панели с поиском, не в <summary>.
-  assert.match(section, /<DashboardJournalsGrid[\s\S]*actions=\{<CloseDayCard \/>\}/);
+  assert.match(section, /<DashboardJournalsGrid[\s\S]*actions=\{<CloseDayCard pointRequired=\{closeDayPointRequired\} \/>\}/);
   assert.doesNotMatch(section.slice(0, section.indexOf("<DashboardJournalsGrid")), /actions=/);
   // Скрипт запоминания стоит выше секций — ловит их при появлении в DOM.
   assert.ok(page.indexOf("<DashboardSectionPersistScript />") < start);

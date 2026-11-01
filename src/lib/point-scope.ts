@@ -84,6 +84,8 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
   "/settings/experimental",
   "/settings/partner",
   "/settings/consultant",
+  // Приказы компании (владелец 2026-11-01: «закрытым») — руководству компании.
+  "/orders",
 ] as const;
 
 /** API тех же страниц: изменения (не GET) руководителю точки закрыты. */
@@ -123,6 +125,9 @@ export const COMPANY_ONLY_API_PREFIXES = [
   "/api/settings/partner",
   "/api/settings/consultant",
   "/api/staff/control-group",
+  // Приказы и закрывающие документы (УПД) — руководству компании (2026-11-01).
+  "/api/orders",
+  "/api/closing-documents",
   "/api/manager-scope",
   // Права людей и должностей, справочник продукции, быстрая настройка — на всю компанию.
   "/api/organizations/permissions",

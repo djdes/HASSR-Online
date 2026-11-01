@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadClosingDocument, refreshClosingDocumentBuyer } from "@/lib/closing-documents/service";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
 import { getServerSession } from "@/lib/server-session";
 
 export const runtime = "nodejs";
@@ -25,7 +26,9 @@ export async function POST(request: Request, ctx: { params: Promise<{ orderId: s
   const existing = await loadClosingDocument(orderId);
   if (!existing) return NextResponse.json({ error: "Документ ещё не выпущен" }, { status: 404 });
   const organizationId = getActiveOrgId(session);
-  const own = existing.organizationId === organizationId && hasFullWorkspaceAccess(session.user);
+  const own = existing.organizationId === organizationId && hasFullWorkspaceAccess(session.user) &&
+    // УПД — документ компании: руководителю точки закрыт (2026-11-01).
+    !isPointScoped(session.user);
   if (!own && !session.user.isRoot) return NextResponse.json({ error: "Не найдено" }, { status: 404 });
 
   const updated = await refreshClosingDocumentBuyer(orderId);
