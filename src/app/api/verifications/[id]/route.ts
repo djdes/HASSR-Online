@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { notifyEmployee } from "@/lib/telegram";
 import { recordAuditLog } from "@/lib/audit-log";
+import { staffOutOfScopeResponse } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +62,10 @@ export async function POST(
   if (claim.organizationId !== getActiveOrgId(session)) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
+  // Руководитель или заведующая точки (2026-11-01) проверяют задачи только
+  // людей своих точек.
+  const outOfScope = await staffOutOfScopeResponse(session, claim.userId);
+  if (outOfScope) return outOfScope;
   // Повторное «Одобрить» — не ошибка и не переписывает, кто и когда
   // проверил первым (дедуп по verifiedAt, П-14).
   if (body.action === "approve" && claim.verificationStatus === "approved") {

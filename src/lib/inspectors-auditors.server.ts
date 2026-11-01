@@ -1,5 +1,11 @@
+import type { Prisma } from "@prisma/client";
+import type { Session } from "next-auth";
+import { loadBuildingContext } from "@/lib/active-building";
+import { buildingWhere, viewedPointId } from "@/lib/building-scope";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { documentVisibleWhere } from "@/lib/document-point-access";
+import { inspectorTokensWhere } from "@/lib/inspector-point";
 import {
   buildInternalInspectors,
   externalInspectorEntry,
@@ -7,6 +13,9 @@ import {
   type InternalInspector,
 } from "@/lib/inspectors-auditors";
 import { JOURNAL_ACCESS_CATALOG } from "@/lib/journal-access-catalog";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
+import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
+import { parsePointScope } from "@/lib/point-scope";
 
 export type InspectorsAuditors = {
   external: ExternalInspector[];
@@ -17,14 +26,50 @@ export type InspectorsAuditors = {
 };
 
 /**
+ * Область списка (2026-11-01, «точка видит только своё»): руководитель точки —
+ * его точки, точка в шапке — только она (и общее). «Вся организация» и
+ * выключенные точки — всё, как раньше.
+ */
+export type InspectorsAuditorsScope = {
+  /** Ссылки проверяющего: руководителю точки — его точек (как «Портал инспектора»), точка в шапке — её и на всю организацию. */
+  tokenWhere: Prisma.InspectorTokenWhereInput;
+  /** Люди списка (`visibleStaffWhere`). */
+  userWhere: Prisma.UserWhereInput;
+  /** Документы доступных точек и точки из шапки; общие — везде. */
+  documentWhere: Prisma.JournalDocumentWhereInput;
+  /** Точки помещений (`visibleObjectBuildingIds`); null — все. */
+  roomBuildingIds: string[] | null;
+};
+
+export async function loadInspectorsAuditorsScope(session: Session): Promise<InspectorsAuditorsScope> {
+  const [context, userWhere, roomBuildingIds] = await Promise.all([
+    loadBuildingContext(session),
+    visibleStaffWhere(session),
+    visibleObjectBuildingIds(session),
+  ]);
+  const viewedPoint = viewedPointId(context);
+  return {
+    tokenWhere: { AND: [inspectorTokensWhere(parsePointScope(session.user.pointScope)), buildingWhere(viewedPoint)] },
+    userWhere,
+    documentWhere: { AND: [documentVisibleWhere(context), buildingWhere(viewedPoint)] },
+    roomBuildingIds,
+  };
+}
+
+/**
  * Общий список «Проверяющие и аудиторы» — источник
  * `GET /api/staff/inspectors-auditors` и страницы `/settings/inspectors`.
  * Хэш токена портала не выбирается вовсе: наружу он не попадёт даже случайно.
+ * `scope` — область человека (`loadInspectorsAuditorsScope`).
  */
-export async function loadInspectorsAuditors(organizationId: string, now = new Date()): Promise<InspectorsAuditors> {
+export async function loadInspectorsAuditors(
+  organizationId: string,
+  scope: InspectorsAuditorsScope,
+  now = new Date(),
+): Promise<InspectorsAuditors> {
   const [tokens, users, organization, documents, rooms] = await Promise.all([
     db.inspectorToken.findMany({
-      where: { organizationId },
+      where: { organizationId, ...scope.tokenWhere },
       orderBy: { createdAt: "desc" },
       take: 200,
       select: {
@@ -46,7 +91,7 @@ export async function loadInspectorsAuditors(organizationId: string, now = new D
       },
     }),
     db.user.findMany({
-      where: { organizationId, archivedAt: null, isRoot: false },
+      where: { organizationId, archivedAt: null, isRoot: false, ...scope.userWhere },
       select: {
         id: true,
         name: true,
@@ -59,11 +104,15 @@ export async function loadInspectorsAuditors(organizationId: string, now = new D
       select: { journalResponsibleUsersJson: true, disabledJournalCodes: true },
     }),
     db.journalDocument.findMany({
-      where: { organizationId, status: "active", verifierUserId: { not: null } },
+      where: { organizationId, status: "active", verifierUserId: { not: null }, ...scope.documentWhere },
       select: { id: true, title: true, verifierUserId: true, template: { select: { code: true } } },
     }),
     db.room.findMany({
-      where: { building: { organizationId }, NOT: { verifierUserIds: { isEmpty: true } } },
+      where: {
+        building: { organizationId },
+        NOT: { verifierUserIds: { isEmpty: true } },
+        ...(scope.roomBuildingIds ? { buildingId: { in: scope.roomBuildingIds } } : {}),
+      },
       select: { id: true, name: true, verifierUserIds: true },
     }),
   ]);

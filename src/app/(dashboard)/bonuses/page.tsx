@@ -5,7 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { orgTodayKey } from "@/lib/timezone";
-import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
+import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { BonusFeedTable } from "@/components/bonuses/bonus-feed-table";
 import { BonusFilters } from "@/components/bonuses/bonus-filters";
@@ -55,8 +55,9 @@ export default async function BonusesPage({
   });
   const filters = resolveFilters(params, org?.timezone ?? undefined);
 
-  // Руководитель точки видит премии и людей только своих точек.
-  const scoped = isPointScoped(session.user);
+  // Руководитель точки видит премии и людей только своих точек, точка в
+  // шапке — только её людей (2026-11-01).
+  const staffWhere = await visibleStaffWhere(session);
   const [bonuses, employees] = await Promise.all([
     db.bonusEntry.findMany({
       where: {
@@ -66,7 +67,7 @@ export default async function BonusesPage({
           lt: filters.toExclusiveDate,
         },
         ...(filters.userId ? { userId: filters.userId } : {}),
-        ...(scoped ? { user: staffScopeWhere(session.user) } : {}),
+        user: staffWhere,
       },
       orderBy: { createdAt: "desc" },
       take: 500,
@@ -85,7 +86,7 @@ export default async function BonusesPage({
       },
     }),
     db.user.findMany({
-      where: { organizationId: orgId, isActive: true, ...staffScopeWhere(session.user) },
+      where: { organizationId: orgId, isActive: true, ...staffWhere },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),

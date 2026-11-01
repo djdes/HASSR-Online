@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { loadInspectorsAuditors } from "@/lib/inspectors-auditors.server";
+import { loadInspectorsAuditors, loadInspectorsAuditorsScope } from "@/lib/inspectors-auditors.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getServerSession } from "@/lib/server-session";
 
@@ -22,7 +22,8 @@ export const dynamic = "force-dynamic";
  * Сборка — `loadInspectorsAuditors` (её же читает страница
  * `/settings/inspectors`).
  *
- * Доступ: руководитель.
+ * Доступ: руководитель. Точка видит только своё (2026-11-01): руководителю
+ * точки — его точки, точка в шапке — её (`loadInspectorsAuditorsScope`).
  */
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -32,6 +33,7 @@ export async function GET() {
   if (!hasFullWorkspaceAccess({ role: session.user.role, isRoot: session.user.isRoot === true })) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
-  const { external, internal, totals } = await loadInspectorsAuditors(getActiveOrgId(session));
+  const scope = await loadInspectorsAuditorsScope(session);
+  const { external, internal, totals } = await loadInspectorsAuditors(getActiveOrgId(session), scope);
   return NextResponse.json({ external, internal, totals });
 }

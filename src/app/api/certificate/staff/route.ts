@@ -5,6 +5,7 @@ import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { registerUnicodeFont } from "@/lib/closing-documents/pdf-font";
+import { loadStaffScopeCheck } from "@/lib/point-scope.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,9 +41,15 @@ export async function GET(request: Request) {
 
   const user = await db.user.findFirst({
     where: { id: userId, organizationId: orgId },
-    select: { name: true, positionTitle: true, role: true },
+    select: { name: true, positionTitle: true, role: true, buildingIds: true },
   });
   if (!user) {
+    return NextResponse.json({ error: "Не найдено" }, { status: 404 });
+  }
+  // Руководитель точки (2026-11-01) — сертификат только людям своих точек:
+  // человек другой точки или всей компании — «не найдено».
+  const inScope = await loadStaffScopeCheck(auth.session);
+  if (!inScope(user.buildingIds)) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   }
 

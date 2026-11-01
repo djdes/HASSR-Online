@@ -5,6 +5,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
+import { loadStaffScopeCheck } from "@/lib/point-scope.server";
 import { getUserPositionLabel } from "@/lib/user-roles";
 
 export const dynamic = "force-dynamic";
@@ -44,9 +45,14 @@ export default async function ByUserReportPage({
       jobPosition: { select: { name: true, categoryKey: true } },
       email: true,
       phone: true,
+      buildingIds: true,
     },
   });
   if (!user) notFound();
+  // Руководитель точки (2026-11-01) — отчёт только по людям своих точек:
+  // человек другой точки или всей компании — «не найдено».
+  const inScope = await loadStaffScopeCheck(session);
+  if (!inScope(user.buildingIds)) notFound();
 
   const now = new Date();
   const since30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

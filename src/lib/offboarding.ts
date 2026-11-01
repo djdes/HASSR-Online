@@ -3,6 +3,7 @@ import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
 import { tasksflowClientFor, TasksFlowError } from "@/lib/tasksflow-client";
 import { pickPrimaryStaff } from "@/lib/user-roles";
 import { placeOfEvent } from "@/lib/place-recipients";
+import { loadWorkerPointScope, personInWorkerScope } from "@/lib/worker-point-scope";
 
 /**
  * Автоматический offboarding (Feature 3.5.4):
@@ -68,7 +69,7 @@ export async function performOffboarding({
   });
 
   // 3. Successor lookup.
-  const candidates = await db.user.findMany({
+  const allCandidates = await db.user.findMany({
     where: {
       organizationId,
       isActive: true,
@@ -81,8 +82,14 @@ export async function performOffboarding({
       name: true,
       role: true,
       jobPositionId: true,
+      buildingIds: true,
     },
   });
+  // Преемник — среди тех, кто работает на точках уволенного (2026-11-01,
+  // «точка видит только своё»): кондитера точки А не заменит кондитер
+  // точки Б. Подходящих нет — без преемника.
+  const pointScope = await loadWorkerPointScope(organizationId, userId);
+  const candidates = allCandidates.filter((c) => personInWorkerScope(pointScope, c.buildingIds));
   // Same jobPosition first.
   let successor = departing.jobPositionId
     ? candidates.find((c) => c.jobPositionId === departing.jobPositionId) ?? null

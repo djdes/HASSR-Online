@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
-import { STAFF_OUT_OF_SCOPE_ERROR, staffInScope } from "@/lib/point-scope";
+import { STAFF_OUT_OF_SCOPE_ERROR } from "@/lib/point-scope";
+import { loadStaffScopeCheck } from "@/lib/point-scope.server";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { planWorkOffBulk } from "@/lib/staff-days-off";
@@ -71,8 +72,10 @@ export async function POST(request: Request) {
   if (users.length !== requestedUserIds.length) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
-  // Руководитель точки ставит выходные только людям своих точек.
-  if (users.some((user) => !staffInScope(session.user, user.buildingIds))) {
+  // Руководитель точки ставит выходные только людям своих точек — не людям
+  // всей компании (офис, без точки, все точки; 2026-11-01).
+  const inScope = await loadStaffScopeCheck(session);
+  if (users.some((user) => !inScope(user.buildingIds))) {
     return NextResponse.json({ error: STAFF_OUT_OF_SCOPE_ERROR }, { status: 403 });
   }
 

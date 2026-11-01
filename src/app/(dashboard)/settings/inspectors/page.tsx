@@ -6,7 +6,7 @@ import { loadMessages } from "@/i18n/messages";
 import { ArrowRight, Link2, QrCode } from "lucide-react";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { loadInspectorsAuditors } from "@/lib/inspectors-auditors.server";
+import { loadInspectorsAuditors, loadInspectorsAuditorsScope } from "@/lib/inspectors-auditors.server";
 import type { ExternalInspectorStatus, InternalRoleKind } from "@/lib/inspectors-auditors";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -47,7 +47,8 @@ export default async function InspectorsPage() {
   const canEditResponsibles = hasCapability(session.user, "admin.full");
 
   const [data, organization, t, locale] = await Promise.all([
-    loadInspectorsAuditors(organizationId),
+    // Точка видит только своё (2026-11-01): ссылки, люди, документы и помещения её точки.
+    loadInspectorsAuditorsScope(session).then((scope) => loadInspectorsAuditors(organizationId, scope)),
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     getTranslations("staffPages.inspectors"),
     getLocale(),
