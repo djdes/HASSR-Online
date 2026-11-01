@@ -1,0 +1,173 @@
+{
+  "password": "Verify-2026!",
+  "orgId": "cmvxs1kcl0000nr7dyinqp4v5",
+  "office": "cmvxs1kdz0001nr7do2wq81m9",
+  "pointA": "cmvxs1ke90002nr7d0d5mr2uy",
+  "pointB": "cmvxs1kec0003nr7dr6kytt9x",
+  "users": {
+    "owner": {
+      "id": "cmvxs1keq0006nr7dc47bc7qx",
+      "email": "iso-owner@verify.local"
+    },
+    "officeMgr": {
+      "id": "cmvxs1kev0007nr7d4q7uuciz",
+      "email": "iso-office@verify.local"
+    },
+    "headA": {
+      "id": "cmvxs1kf20008nr7d3nyw3y70",
+      "email": "iso-head-a@verify.local"
+    },
+    "headB": {
+      "id": "cmvxs1kf70009nr7duqyssqee",
+      "email": "iso-head-b@verify.local"
+    },
+    "cookA": {
+      "id": "cmvxs1kfa000anr7duz2y5phf",
+      "email": "iso-cook-a@verify.local"
+    },
+    "cookB": {
+      "id": "cmvxs1kfc000bnr7dh27kxrrt",
+      "email": "iso-cook-b@verify.local"
+    }
+  },
+  "positions": {
+    "cook": "cmvxs1keg0004nr7dzuctohio",
+    "manager": "cmvxs1kel0005nr7d1fk5v3jd"
+  },
+  "areaA": "cmvxs1kff000cnr7dxkytflqk",
+  "areaB": "cmvxs1kfh000dnr7d1514s21n",
+  "areaShared": "cmvxs1kfj000enr7dnuovspx0",
+  "fridgeA": "cmvxs1kfm000fnr7dzeiswc25",
+  "fridgeB": "cmvxs1kfo000gnr7dgym07dvd",
+  "roomA": "cmvxs1kfs000hnr7deczyqjwl",
+  "roomB": "cmvxs1kfy000inr7dtvzawxqo",
+  "docs": {
+    "hygiene": {
+      "office": "cmvxs1kls000jnr7dfcrhdmsz",
+      "A": "cmvxs1kou001enr7db96maze7",
+      "B": "cmvxs1kqw002onr7d43jgzzx8"
+    },
+    "health_check": {
+      "office": "cmvxs1ksv003ynr7d477ummca",
+      "A": "cmvxs1kuq004tnr7dtmjpna3g",
+      "B": "cmvxs1kwe0063nr7dvru455x6"
+    },
+    "cold_equipment_control": {
+      "office": "cmvxs1ky9007dnr7d28jive19",
+      "A": "cmvxs1kzn007tnr7d9hy229tt",
+      "B": "cmvxs1l1c0089nr7d4g3zppql"
+    },
+    "climate_control": {
+      "office": "cmvxs1l4h008pnr7dwnrqeh6d",
+      "A": "cmvxs1l6b009knr7dwu56qk2l",
+      "B": "cmvxs1l7k00afnr7dyl8yaa9e"
+    },
+    "cleaning": {
+      "office": "cmvxs1l9900banr7d8s8c6dk9",
+      "A": "cmvxs1lah00bbnr7d6gz2b06h",
+      "B": "cmvxs1lbq00bcnr7dlqoul88l"
+    },
+    "general_cleaning": {
+      "office": "cmvxs1lcr00bdnr7dkq5kh0sb",
+      "A": "cmvxs1ldv00benr7d9do66yb0",
+      "B": "cmvxs1let00bfnr7dxklb2nc8"
+    },
+    "perishable_rejection": {
+      "office": "cmvxs1lip00bjnr7dwtt8j1cw",
+      "A": "cmvxs1ljj00bknr7d6ykttzc0",
+      "B": "cmvxs1lkg00blnr7dtwu8ftxo"
+    },
+    "uv_lamp_runtime": {
+      "office": "cmvxs1lru00eanr7d1r25uajg",
+      "A": "cmvxs1lsq00ebnr7dh59toe54",
+      "B": "cmvxs1ltl00ecnr7d3sn5bj45"
+    },
+    "equipment_cleaning": {
+      "office": "cmvxs1loy00e7nr7dfcudjcpf",
+      "A": "cmvxs1lpw00e8nr7d46xaexrd",
+      "B": "cmvxs1lqv00e9nr7dzyriaycw"
+    },
+    "fryer_oil": {
+      "office": "cmvxs1llb00bmnr7d2yhntv37",
+      "A": "cmvxs1lmh00chnr7dzlpy8x3u",
+      "B": "cmvxs1lns00dcnr7d87kzfgyw"
+    },
+    "finished_product": {
+      "office": "cmvxs1lfs00bgnr7dpl4sw2lh",
+      "A": "cmvxs1lgt00bhnr7dvy2xcttm",
+      "B": "cmvxs1lhu00binr7dcrjquvce"
+    }
+  },
+  "created": 33,
+  "org2": {
+    "orgId": "cmvxs1lto00ednr7dt0qejnos",
+    "owner": {
+      "id": "cmvxs1ltr00efnr7d0d88ofdi",
+      "email": "iso2-owner@verify.local"
+    },
+    "area": "cmvxs1ltt00egnr7dg7j7fdx3",
+    "fridge": "cmvxs1ltu00ehnr7dgfoymdys",
+    "docs": {
+      "cold_equipment_control": {
+        "shared": "cmvxs1lv500eynr7dshpwmqm3"
+      },
+      "hygiene": {
+        "shared": "cmvxs1lue00einr7dnqi1i1hj"
+      }
+    },
+    "created": 2
+  },
+  "data": {
+    "A": {
+      "capa": "cmvxs3uqv0000ql7dsagf5ip6",
+      "batch": "cmvxs3ur40001ql7dnqvfi0es",
+      "loss": "cmvxs3ur80002ql7deyr338ma",
+      "supply": "cmvxs3ure0003ql7dwotyiszl",
+      "label": "cmvxs3urm0004ql7dyiezehj4",
+      "printAgent": "cmvxs3urq0005ql7deszvsw58",
+      "printJob": "cmvxs3uru0006ql7d49ukxt4n",
+      "inspector": "cmvxs3us20007ql7dfbicb6ye",
+      "competency": "cmvxs3us60008ql7d9r6jkgum",
+      "shift": "cmvxs3usa0009ql7d8mleefab",
+      "notification": "cmvxs3usg000aql7dpb83e8ky",
+      "obligation": "cmvxs3usk000bql7dg86vdkdc"
+    },
+    "B": {
+      "capa": "cmvxs3usr000cql7dgqg8zmjn",
+      "batch": "cmvxs3ust000dql7dghb2rw1b",
+      "loss": "cmvxs3usu000eql7duqywhgiz",
+      "supply": "cmvxs3usw000fql7d6w1ivkke",
+      "label": "cmvxs3usz000gql7dgl8mkrnm",
+      "printAgent": "cmvxs3ut1000hql7dh8mvfrwr",
+      "printJob": "cmvxs3ut3000iql7d1vjdmeq4",
+      "inspector": "cmvxs3ut5000jql7dw87s7mwq",
+      "competency": "cmvxs3ut6000kql7dl1pmvsad",
+      "shift": "cmvxs3ut8000lql7dnoa0lowb",
+      "notification": "cmvxs3uta000mql7de0za62b3",
+      "obligation": "cmvxs3ute000nql7du72pji7t"
+    }
+  },
+  "inspectorRaw": {
+    "A": "insp-A-cmvxs1kcl0000nr7dyinqp4v5",
+    "B": "insp-B-cmvxs1kcl0000nr7dyinqp4v5"
+  },
+  "agentRaw": {
+    "A": "agent-A-cmvxs1kcl0000nr7dyinqp4v5",
+    "B": "agent-B-cmvxs1kcl0000nr7dyinqp4v5"
+  },
+  "more": {
+    "officeA": {
+      "id": "cmvxsx6xv0000do7dwxffxu2v",
+      "email": "iso-office-a@verify.local"
+    },
+    "externalToken": "iso-ext-cmvxs1kcl0000nr7dyinqp4v5",
+    "webhook": "cmvxsx70b0001do7de1j3wtjg",
+    "checklistTemplate": "cmvxsx70k0002do7dumzg8uow",
+    "assignB": "cmvxsx70x0003do7dvbhqtffr",
+    "assignCookB": "cmvxsx7110004do7dcjpehuf0",
+    "assignA": "cmvxsx7140005do7dyzlblca0",
+    "visitB": "cmvxsx7190006do7dynhv4pa0",
+    "claimB": "cmvxsx71g0007do7dwmywibuv",
+    "sharedDoc": "cmvxt01yf00003d7d6mr8hzaz"
+  }
+}

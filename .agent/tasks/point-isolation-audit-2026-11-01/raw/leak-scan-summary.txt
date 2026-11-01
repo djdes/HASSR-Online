@@ -1,0 +1,60 @@
+# Сканер утечек: отфильтровано (без редиректов, id из самого адреса и слова «Бета» из «Бета-функций»)
+
+До (master 8cf7c43): {"cookA":1,"cookB":1,"headA":23,"officeA":58,"ownerA":58}
+После (все PR ad9c8a0): {"headA":7,"officeA":41,"ownerA":43}
+
+Люди точки А (cookA, headA) и точки Б (cookB) — после:
+headA 200 /production-control/haccp-plan :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+headA 200 /production-control/haccp/control-points :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+headA 200 /production-control/haccp/policy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+headA 200 /production-control/haccp/team :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+headA 200 /production-control/haccp/team/meetings :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+headA 200 /production-control/program :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+headA 200 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: id:точки
+
+Межорганизационные (org2 ← ISO Точки; ownerOrg ← ISO Чужая) — после: 0
+
+Руководство с точкой А (ownerA/officeA) — после (прямые ссылки и разделы «Настройки» на всю компанию — по замыслу):
+ownerA 200 /api/audit :: Повар Бета, Гигиена Бета, id:zawxqo
+ownerA 200 /api/batches/cmvxs3ust000dql7dghb2rw1b :: Партия Бета
+ownerA 200 /api/journal-documents/cmvxs1kqw002onr7d43jgzzx8 :: Повар Бета, Руководитель Бета, Гигиена Бета, id:7kxrrt, id:yssqee
+ownerA 200 /api/organizations/permissions :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /api/settings/audit/export :: Повар Бета, Гигиена Бета, id:zawxqo, id:7kxrrt
+ownerA 200 /api/settings/buildings :: Зал Бета, id:zawxqo
+ownerA 200 /api/settings/master-cabinets/access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /api/settings/organization/export :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, CAPA Бета, Списание Бета, Гигиена Бета, Здоровье Бета, Запись Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee, id:g8zmjn, id:ywhgiz, id:jgzzx8, id:u455x6, id:3zppql, id:8yaa9e, id:oul88l, id:lb2nc8, id:u8ftxo, id:n5bj45, id:riaycw, id:kzfgyw, id:jquvce
+ownerA 200 /api/settings/rpn-appendix :: ШХ Бета, Цех Бета, Повар Бета, Руководитель Бета, CAPA Бета, Навык Бета
+ownerA 200 /api/settings/subscription/transition :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /api/staff/cmvxs1kfc000bnr7dh27kxrrt/qr-pin :: Повар Бета
+ownerA 200 /api/staff/control-group :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /api/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Повар Бета
+ownerA 200 /batches/cmvxs3ust000dql7dghb2rw1b :: Партия Бета
+ownerA 200 /capa/cmvxs3usr000cql7dgqg8zmjn :: CAPA Бета
+ownerA 200 /edo/cmvxs3usw000fql7d6w1ivkke :: НАКЛ-Бета, Поставщик Бета
+ownerA 200 /journals/cold_equipment_control/documents/cmvxs1l1c0089nr7d4g3zppql :: ШХ Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:7kxrrt, id:yssqee
+ownerA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8/verify :: Повар Бета, Руководитель Бета, Гигиена Бета
+ownerA 200 /production-control/haccp-plan :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /production-control/haccp/control-points :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /production-control/haccp/policy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /production-control/haccp/team :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /production-control/haccp/team/meetings :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /production-control/program :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /reports/by-user/cmvxs1kfc000bnr7dh27kxrrt :: Повар Бета
+ownerA 200 /settings/access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/areas :: Цех Бета, id:14s21n
+ownerA 200 /settings/buildings :: Зал Бета, Повар Бета, Руководитель Бета, id:zawxqo, id:7kxrrt, id:yssqee
+ownerA 200 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee
+ownerA 200 /settings/buildings/new :: ШХ Бета, Зал Бета
+ownerA 200 /settings/control-group :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/equipment :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee
+ownerA 200 /settings/integrations/mercury :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/journal-access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/journals :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/master-cabinet :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/permissions :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/position-staff-visibility :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/staff-hierarchy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/users :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+ownerA 200 /settings/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Повар Бета
+ownerA 200 /settings/workload-balance :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee

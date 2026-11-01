@@ -1,0 +1,60 @@
+PASS РТ А: GET /api/settings/organization/export — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/rpn-appendix — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/external-token — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/organizations/permissions — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/staff/control-group — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/subscription/transition — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/master-cabinet — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/badge — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/webhooks — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/settings/webhooks/subscriptions — закрыто (403) или без точки Б — HTTP 403
+PASS РТ А: GET /api/manager-scope — закрыто (403) или без точки Б — HTTP 200
+PASS РТ А: GET /api/integrations/tasksflow/audit — закрыто (403) или без точки Б — HTTP 200
+PASS РТ А: GET /api/integrations/tasksflow/links — закрыто (403) или без точки Б — HTTP 200
+PASS владелец: GET /api/settings/organization/export — доступно — HTTP 200
+PASS владелец: GET /api/settings/external-token — доступно — HTTP 200
+PASS владелец: GET /api/organizations/permissions — доступно — HTTP 200
+PASS владелец: GET /api/staff/control-group — доступно — HTTP 200
+PASS владелец: GET /api/settings/badge — доступно — HTTP 200
+PASS РТ А: PATCH /api/settings/badge (бейдж всей компании) — отказ — HTTP 403
+PASS РТ А: PATCH journal-controls — камера датчика (вся компания) — отказ — HTTP 403
+PASS РТ А: PATCH journal-controls — спецрежим (вся компания) — отказ — HTTP 403
+PASS РТ А: отказ от мастера бракеража — по-прежнему можно — HTTP 200
+INFO РТ А: GET /api/settings/supply/iiko/stores — HTTP 400 (iiko не подключён, не проверяется)
+PASS РТ А: PUT распределения журнала (на всю организацию) — отказ — HTTP 403
+PASS РТ А: PUT бонуса журнала (закрытая страница) — отказ — HTTP 403
+PASS повар А: POST /api/profile/complete (анкета компании) — отказ — HTTP 403 · название: ISO Точки
+PASS РТ А: смена пароля руководителю всей компании (офис + точка А) — отказ — HTTP 403
+PASS РТ А: /reports/by-user/<повар Б> — «не найдено» — HTTP 200
+PASS РТ А: сертификат повара Б — отказ — HTTP 404
+PASS РТ А: вернуть на переделку задачу повара Б — отказ — HTTP 403 · pending
+PASS РТ А: /bonuses — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /competencies — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /team — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /settings/schedule — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: /settings/inspectors — без людей и ссылок точки Б — HTTP 200
+PASS владелец на точке А: /bonuses — без людей и ссылок точки Б — HTTP 200
+PASS владелец на точке А: /competencies — без людей и ссылок точки Б — HTTP 200
+PASS владелец на точке А: /team — без людей и ссылок точки Б — HTTP 200
+PASS владелец на точке А: /settings/schedule — без людей и ссылок точки Б — HTTP 200
+PASS владелец на точке А: /settings/inspectors — без людей и ссылок точки Б — HTTP 200
+PASS РТ А: GET /api/staff/inspectors-auditors — без точки Б — HTTP 200
+PASS владелец на точке А: GET /api/team — без людей точки Б — HTTP 200
+PASS РТ А: /settings/journals — без людей точки Б — HTTP 200
+PASS РТ А: холодильник точки Б через журнал точки А — не меняется — HTTP 404 · ШХ Бета 2…6
+PASS РТ А: чек-лист уборки помещения точки Б через документ А — отказ — HTTP 404 · пунктов: 0
+PASS повар А: подсказки товаров потерь — без списаний точки Б — HTTP 200
+PASS РТ А: /losses/new — без цехов точки Б — HTTP 200
+PASS владелец на точке А: /losses/new — без цехов точки Б — HTTP 200
+PASS повар А: потеря в цех точки Б — отказ — HTTP 404
+PASS РТ А: /checklists/assignments — без людей и точки Б — HTTP 200
+PASS РТ А: GET /api/checklists/assignments — без назначений точки Б — HTTP 200
+PASS РТ А: назначить чек-лист точке Б — отказ — HTTP 403
+PASS РТ А: приостановить назначение точки Б — отказ — HTTP 404 · active=true
+PASS РТ А: своё назначение точки А — можно — HTTP 200
+PASS РТ А: /inspection/visits — без посещений по ссылке точки Б — HTTP 200
+PASS РТ А: GET /api/inspection/visits — без посещений точки Б — HTTP 200
+PASS РТ А: QR-коды гигиены — без документа точки Б — HTTP 200
+PASS РТ А: QR документа гигиены точки Б по id — отказ — HTTP 404
+PASS повар А: печать общего журнала — задание точки А, не общей очереди — HTTP 200 · buildingId=cmvxs1ke90002nr7d0d5mr2uy
+ALL PASS 58

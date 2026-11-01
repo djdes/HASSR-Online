@@ -1,0 +1,60 @@
+PASS владелец: /dashboard открывается — HTTP 200
+PASS владелец: /journals открывается — HTTP 200
+PASS владелец: /journals/points открывается — HTTP 200
+PASS владелец: /journals/hygiene открывается — HTTP 200
+PASS владелец: /journals/cold_equipment_control открывается — HTTP 200
+PASS владелец: /journals/hygiene/documents/cmvxs1kou001enr7db96maze7 открывается — HTTP 200
+PASS владелец: /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 открывается — HTTP 200
+PASS владелец: /settings/journals открывается — HTTP 200
+PASS владелец: /settings/journal-bonuses открывается — HTTP 200
+PASS владелец: /settings/auto-journals открывается — HTTP 200
+PASS владелец: /settings/equipment открывается — HTTP 200
+PASS владелец: /settings/areas открывается — HTTP 200
+PASS владелец: /settings/users открывается — HTTP 200
+PASS владелец: /settings/kiosk открывается — HTTP 200
+PASS владелец: /competencies открывается — HTTP 200
+PASS владелец: /bonuses открывается — HTTP 200
+PASS владелец: /mercury открывается — HTTP 200
+PASS владелец: /inspection открывается — HTTP 200
+PASS владелец: /settings/staff-health открывается — HTTP 200
+PASS владелец: /settings/qr-posters открывается — HTTP 200
+PASS владелец: /settings/inspectors открывается — HTTP 200
+PASS владелец: /settings/schedule открывается — HTTP 200
+PASS владелец: /team открывается — HTTP 200
+PASS владелец: /checklists/assignments открывается — HTTP 200
+PASS владелец: /losses/new открывается — HTTP 200
+PASS владелец: /journals/sets/standard открывается — HTTP 200
+PASS владелец: /settings/organization/branding открывается — HTTP 200
+PASS владелец: /settings/api открывается — HTTP 200
+PASS владелец: /inspection/special-mode открывается — HTTP 200
+PASS владелец: /api/mini/home отвечает — HTTP 200
+PASS владелец: /api/equipment отвечает — HTTP 200
+PASS владелец: /api/areas отвечает — HTTP 200
+PASS владелец: /api/journals/today-status отвечает — HTTP 200
+PASS владелец: /api/team отвечает — HTTP 200
+PASS владелец: /api/checklists/assignments отвечает — HTTP 200
+PASS владелец: /api/staff/inspectors-auditors отвечает — HTTP 200
+PASS владелец: /api/settings/badge отвечает — HTTP 200
+PASS владелец: /api/organizations/permissions отвечает — HTTP 200
+PASS владелец «Вся организация»: оба холодильника
+PASS владелец на точке А: только холодильник А
+PASS повар А: свой документ открывается — HTTP 200
+PASS повар А: документ точки Б — не найден — HTTP 404
+PASS повар А: страница документа точки Б — «не найдено» — HTTP 200
+PASS повар А: нет холодильника точки Б
+PASS РТ А: правка холодильника точки Б — отказ — HTTP 403
+PASS РТ А: увольнение повара Б — отказ — HTTP 403
+PASS РТ А: удалить все документы — отказ — HTTP 403
+PASS РТ А: журнал действий компании — отказ — HTTP 403
+PASS РТ А: документ точки Б — не найден — HTTP 404
+PASS РТ А: свой холодильник правится — HTTP 200
+PASS РТ А: ссылка проверяющего на точку Б — отказ — HTTP 403
+PASS РТ А: ссылка на свою точку — выдана — HTTP 200
+PASS РТ А: партия точки Б — не найдена — HTTP 404
+PASS РТ А: закрыть CAPA точки Б — отказ — HTTP 404
+PASS владелец на точке А: CAPA точки Б в списке нет — HTTP 200
+PASS владелец «Вся организация»: CAPA точки Б в списке есть — HTTP 200
+PASS владелец на точке Б: партия точки Б в списке есть — HTTP 200
+PASS владелец: «Распределение» гигиены сохраняется — HTTP 200 {"ok":true}
+PASS общий шаблон гигиены не изменился — {"fillMode":"per-employee","defaultAssigneeId":null,"bonusAmountKopecks":0}
+ALL PASS 59

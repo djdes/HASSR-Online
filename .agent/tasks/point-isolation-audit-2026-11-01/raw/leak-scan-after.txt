@@ -1,0 +1,297 @@
+E500 cookA /api/max/link
+E500 cookB /api/max/link
+E500 headA /api/ai/haccp-plan
+E500 headA /api/max/link
+E500 officeA /api/ai/haccp-plan
+E500 officeA /api/max/link
+E500 org2 /api/ai/haccp-plan
+E500 org2 /api/max/link
+E500 ownerA /api/ai/haccp-plan
+E500 ownerA /api/max/link
+E500 ownerOrg /api/ai/haccp-plan
+E500 ownerOrg /api/max/link
+INFO маршрутов API 229, страниц 200, запросов 2380
+LEAK cookA 200 /edo/cmvxs3usw000fql7d6w1ivkke :: id:1ivkke
+LEAK cookA 200 /journals/cleaning/documents/cmvxs1lbq00bcnr7dlqoul88l :: id:oul88l
+LEAK cookA 200 /journals/cold_equipment_control/documents/cmvxs1l1c0089nr7d4g3zppql :: id:3zppql
+LEAK cookA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 :: id:jgzzx8
+LEAK cookA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8/verify :: id:jgzzx8
+LEAK cookA 307 /batches/cmvxs3ust000dql7dghb2rw1b :: id:b2rw1b
+LEAK cookA 307 /capa/cmvxs3usr000cql7dgqg8zmjn :: id:g8zmjn
+LEAK cookA 307 /reports/by-user/cmvxs1kfc000bnr7dh27kxrrt :: id:7kxrrt
+LEAK cookA 307 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: id:точки
+LEAK cookA 307 /settings/users/cmvxs1kfc000bnr7dh27kxrrt/access :: id:7kxrrt
+LEAK cookB 200 /edo/cmvxs3ure0003ql7dwotyiszl :: id:tyiszl
+LEAK cookB 200 /journals/cleaning/documents/cmvxs1lah00bbnr7d6gz2b06h :: id:z2b06h
+LEAK cookB 200 /journals/cold_equipment_control/documents/cmvxs1kzn007tnr7d9hy229tt :: id:y229tt
+LEAK cookB 200 /journals/hygiene/documents/cmvxs1kou001enr7db96maze7 :: id:6maze7
+LEAK cookB 200 /journals/hygiene/documents/cmvxs1kou001enr7db96maze7/verify :: id:6maze7
+LEAK cookB 307 /batches/cmvxs3ur40001ql7dnqvfi0es :: id:vfi0es
+LEAK cookB 307 /capa/cmvxs3uqv0000ql7dsagf5ip6 :: id:gf5ip6
+LEAK cookB 307 /reports/by-user/cmvxs1kfa000anr7duz2y5phf :: id:2y5phf
+LEAK cookB 307 /settings/buildings/cmvxs1ke90002nr7d0d5mr2uy :: id:точки
+LEAK cookB 307 /settings/users/cmvxs1kfa000anr7duz2y5phf/access :: id:2y5phf
+LEAK headA 200 /batches/cmvxs3ust000dql7dghb2rw1b :: id:b2rw1b
+LEAK headA 200 /capa/cmvxs3usr000cql7dgqg8zmjn :: id:g8zmjn
+LEAK headA 200 /edo/cmvxs3usw000fql7d6w1ivkke :: id:1ivkke
+LEAK headA 200 /journals/cleaning/documents/cmvxs1lbq00bcnr7dlqoul88l :: id:oul88l
+LEAK headA 200 /journals/cold_equipment_control/documents/cmvxs1l1c0089nr7d4g3zppql :: id:3zppql
+LEAK headA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 :: id:jgzzx8
+LEAK headA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8/verify :: id:jgzzx8
+LEAK headA 200 /production-control/haccp-plan :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK headA 200 /production-control/haccp/control-points :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK headA 200 /production-control/haccp/policy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK headA 200 /production-control/haccp/team :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK headA 200 /production-control/haccp/team/meetings :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK headA 200 /production-control/program :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK headA 200 /reports/by-user/cmvxs1kfc000bnr7dh27kxrrt :: id:7kxrrt
+LEAK headA 200 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: id:точки
+LEAK headA 200 /settings/users/cmvxs1kfc000bnr7dh27kxrrt/access :: id:7kxrrt
+LEAK officeA 200 /api/audit :: Повар Бета, Гигиена Бета, id:zawxqo
+LEAK officeA 200 /api/batches/cmvxs3ust000dql7dghb2rw1b :: Партия Бета, id:b2rw1b
+LEAK officeA 200 /api/journal-documents/cmvxs1kqw002onr7d43jgzzx8 :: Повар Бета, Руководитель Бета, Гигиена Бета, id:7kxrrt, id:yssqee, id:jgzzx8
+LEAK officeA 200 /api/organizations/permissions :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /api/settings/audit/export :: Повар Бета, Гигиена Бета, id:zawxqo, id:7kxrrt
+LEAK officeA 200 /api/settings/buildings :: Зал Бета, id:zawxqo
+LEAK officeA 200 /api/settings/organization/export :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, CAPA Бета, Списание Бета, Гигиена Бета, Здоровье Бета, Запись Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee, id:g8zmjn, id:ywhgiz, id:jgzzx8, id:u455x6, id:3zppql, id:8yaa9e, id:oul88l, id:lb2nc8, id:u8ftxo, id:n5bj45, id:riaycw, id:kzfgyw, id:jquvce
+LEAK officeA 200 /api/settings/rpn-appendix :: ШХ Бета, Цех Бета, Повар Бета, Руководитель Бета, CAPA Бета, Навык Бета
+LEAK officeA 200 /api/settings/subscription/transition :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /api/staff/cmvxs1kfc000bnr7dh27kxrrt/qr-pin :: Повар Бета, id:7kxrrt
+LEAK officeA 200 /api/staff/control-group :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /api/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Повар Бета, id:7kxrrt
+LEAK officeA 200 /batches/cmvxs3ust000dql7dghb2rw1b :: Партия Бета, id:b2rw1b
+LEAK officeA 200 /capa/cmvxs3usr000cql7dgqg8zmjn :: CAPA Бета, id:g8zmjn
+LEAK officeA 200 /edo/cmvxs3usw000fql7d6w1ivkke :: НАКЛ-Бета, Поставщик Бета, id:1ivkke
+LEAK officeA 200 /journals/cleaning/documents/cmvxs1lbq00bcnr7dlqoul88l :: id:oul88l
+LEAK officeA 200 /journals/cold_equipment_control/documents/cmvxs1l1c0089nr7d4g3zppql :: ШХ Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:7kxrrt, id:yssqee, id:3zppql
+LEAK officeA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee, id:jgzzx8
+LEAK officeA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8/verify :: Повар Бета, Руководитель Бета, Гигиена Бета, id:jgzzx8
+LEAK officeA 200 /production-control/haccp-plan :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /production-control/haccp/control-points :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /production-control/haccp/policy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /production-control/haccp/team :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /production-control/haccp/team/meetings :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /production-control/program :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /reports/by-user/cmvxs1kfc000bnr7dh27kxrrt :: Повар Бета, id:7kxrrt
+LEAK officeA 200 /settings/access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/areas :: Цех Бета, id:14s21n
+LEAK officeA 200 /settings/buildings :: Зал Бета, Повар Бета, Руководитель Бета, id:zawxqo, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/buildings/new :: ШХ Бета, Зал Бета
+LEAK officeA 200 /settings/control-group :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/equipment :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/integrations/mercury :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/journal-access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/journals :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/permissions :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/position-staff-visibility :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/staff-hierarchy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/users :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK officeA 200 /settings/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Повар Бета, id:7kxrrt
+LEAK officeA 200 /settings/workload-balance :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK org2 200 /acknowledge :: Бета
+LEAK org2 200 /batches :: Бета
+LEAK org2 200 /batches/cmvxs3ust000dql7dghb2rw1b :: Бета
+LEAK org2 200 /batches/new :: Бета
+LEAK org2 200 /bonuses :: Бета
+LEAK org2 200 /capa :: Бета
+LEAK org2 200 /capa/cmvxs3usr000cql7dgqg8zmjn :: Бета
+LEAK org2 200 /capa/new :: Бета
+LEAK org2 200 /changes :: Бета
+LEAK org2 200 /changes/new :: Бета
+LEAK org2 200 /checklists :: Бета
+LEAK org2 200 /checklists/assignments :: Бета
+LEAK org2 200 /checklists/results :: Бета
+LEAK org2 200 /checklists/templates :: Бета
+LEAK org2 200 /competencies :: Бета
+LEAK org2 200 /control-board :: Бета
+LEAK org2 200 /dashboard :: Бета
+LEAK org2 200 /dashboard/catch-up :: Бета
+LEAK org2 200 /dashboard/compliance-audit :: Бета
+LEAK org2 200 /edo :: Бета
+LEAK org2 200 /edo/cmvxs3usw000fql7d6w1ivkke :: Бета
+LEAK org2 200 /home :: Бета
+LEAK org2 200 /ideas :: Бета
+LEAK org2 200 /inspection :: Бета
+LEAK org2 200 /inspection/experts :: Бета
+LEAK org2 200 /inspection/laws :: Бета
+LEAK org2 200 /inspection/norms :: Бета
+LEAK org2 200 /inspection/special-mode :: Бета
+LEAK org2 200 /inspection/visits :: Бета
+LEAK org2 200 /journals :: Бета
+LEAK org2 200 /journals-progress :: Бета
+LEAK org2 200 /journals/cleaning :: Бета
+LEAK org2 200 /journals/cleaning/documents/cmvxs1lbq00bcnr7dlqoul88l :: Бета
+LEAK org2 200 /journals/cold_equipment_control :: Бета
+LEAK org2 200 /journals/cold_equipment_control/documents/cmvxs1l1c0089nr7d4g3zppql :: Бета
+LEAK org2 200 /journals/hygiene :: Бета
+LEAK org2 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 :: Бета
+LEAK org2 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8/verify :: Бета
+LEAK org2 200 /journals/hygiene/new :: Бета
+LEAK org2 200 /journals/points :: Бета
+LEAK org2 200 /journals/sets/extra :: Бета
+LEAK org2 200 /journals/sets/haccp :: Бета
+LEAK org2 200 /journals/sets/standard :: Бета
+LEAK org2 200 /knowledge :: Бета
+LEAK org2 200 /losses :: Бета
+LEAK org2 200 /losses/new :: Бета
+LEAK org2 200 /mercury :: Бета
+LEAK org2 200 /monitoring :: Бета
+LEAK org2 200 /more :: Бета
+LEAK org2 200 /orders :: Бета
+LEAK org2 200 /plans :: Бета
+LEAK org2 200 /plans/new :: Бета
+LEAK org2 200 /production-control :: Бета
+LEAK org2 200 /production-control/documents/package :: Бета
+LEAK org2 200 /production-control/documents/posters :: Бета
+LEAK org2 200 /production-control/documents/procedures :: Бета
+LEAK org2 200 /production-control/documents/storage :: Бета
+LEAK org2 200 /production-control/haccp-plan :: Бета
+LEAK org2 200 /production-control/haccp/audit :: Бета
+LEAK org2 200 /production-control/haccp/control-points :: Бета
+LEAK org2 200 /production-control/haccp/control-points/worksheets :: Бета
+LEAK org2 200 /production-control/haccp/flowcharts :: Бета
+LEAK org2 200 /production-control/haccp/hazards :: Бета
+LEAK org2 200 /production-control/haccp/policy :: Бета
+LEAK org2 200 /production-control/haccp/policy/print :: Бета
+LEAK org2 200 /production-control/haccp/products :: Бета
+LEAK org2 200 /production-control/haccp/team :: Бета
+LEAK org2 200 /production-control/haccp/team/meetings :: Бета
+LEAK org2 200 /production-control/haccp/team/regulation :: Бета
+LEAK org2 200 /production-control/norms/documents :: Бета
+LEAK org2 200 /production-control/norms/guidelines :: Бета
+LEAK org2 200 /production-control/program :: Бета
+LEAK org2 200 /production-control/sanitation/floor-plans :: Бета
+LEAK org2 200 /production-control/sanitation/lab :: Бета
+LEAK org2 200 /production-control/sanitation/pest-control :: Бета
+LEAK org2 200 /reports :: Бета
+LEAK org2 200 /reports/by-user/cmvxs1kfc000bnr7dh27kxrrt :: Бета
+LEAK org2 200 /sanpin :: Бета
+LEAK org2 200 /settings :: Бета
+LEAK org2 200 /settings/access :: Бета
+LEAK org2 200 /settings/accounting :: Бета
+LEAK org2 200 /settings/api :: Бета
+LEAK org2 200 /settings/appearance :: Бета
+LEAK org2 200 /settings/areas :: Бета
+LEAK org2 200 /settings/audit :: Бета
+LEAK org2 200 /settings/auto-journals :: Бета
+LEAK org2 200 /settings/backup :: Бета
+LEAK org2 200 /settings/balance :: Бета
+LEAK org2 200 /settings/brakerage-commission :: Бета
+LEAK org2 200 /settings/buildings :: Бета
+LEAK org2 200 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: Бета, id:kytt9x
+LEAK org2 200 /settings/buildings/new :: Бета
+LEAK org2 200 /settings/calendar :: Бета
+LEAK org2 200 /settings/compliance :: Бета
+LEAK org2 200 /settings/consultant :: Бета
+LEAK org2 200 /settings/control-group :: Бета
+LEAK org2 200 /settings/equipment :: Бета
+LEAK org2 200 /settings/equipment/qr-sheet :: Бета
+LEAK org2 200 /settings/experimental :: Бета
+LEAK org2 200 /settings/haccp-group :: Бета
+LEAK org2 200 /settings/inspector-portal :: Бета
+LEAK org2 200 /settings/inspectors :: Бета
+LEAK org2 200 /settings/integrations/1c :: Бета
+LEAK org2 200 /settings/integrations/edo :: Бета
+LEAK org2 200 /settings/integrations/iiko :: Бета
+LEAK org2 200 /settings/integrations/max :: Бета
+LEAK org2 200 /settings/integrations/mercury :: Бета
+LEAK org2 200 /settings/integrations/tasksflow :: Бета
+LEAK org2 200 /settings/journal-access :: Бета
+LEAK org2 200 /settings/journal-bonuses :: Бета
+LEAK org2 200 /settings/journal-checklists :: Бета
+LEAK org2 200 /settings/journal-difficulty :: Бета
+LEAK org2 200 /settings/journal-flow :: Бета
+LEAK org2 200 /settings/journal-periods :: Бета
+LEAK org2 200 /settings/journal-pipelines :: Бета
+LEAK org2 200 /settings/journal-responsibles :: Бета
+LEAK org2 200 /settings/journal-task-mode :: Бета
+LEAK org2 200 /settings/journals :: Бета
+LEAK org2 200 /settings/journals-by-position :: Бета
+LEAK org2 200 /settings/journals/hygiene/scope :: Бета
+LEAK org2 200 /settings/kiosk :: Бета
+LEAK org2 200 /settings/master-cabinet :: Бета
+LEAK org2 200 /settings/names :: Бета
+LEAK org2 200 /settings/notifications :: Бета
+LEAK org2 200 /settings/onboarding :: Бета
+LEAK org2 200 /settings/onboarding-template :: Бета
+LEAK org2 200 /settings/onboarding/advanced :: Бета
+LEAK org2 200 /settings/organization :: Бета
+LEAK org2 200 /settings/organization/badge-sign :: Бета
+LEAK org2 200 /settings/organization/branding :: Бета
+LEAK org2 200 /settings/organization/contacts :: Бета
+LEAK org2 200 /settings/organization/documents :: Бета
+LEAK org2 200 /settings/organization/office :: Бета
+LEAK org2 200 /settings/partner :: Бета
+LEAK org2 200 /settings/permissions :: Бета
+LEAK org2 200 /settings/phone :: Бета
+LEAK org2 200 /settings/position-staff-visibility :: Бета
+LEAK org2 200 /settings/positions :: Бета
+LEAK org2 200 /settings/print-agent :: Бета
+LEAK org2 200 /settings/print-agent/labels :: Бета
+LEAK org2 200 /settings/products :: Бета
+LEAK org2 200 /settings/qr-posters :: Бета
+LEAK org2 200 /settings/role-presets :: Бета
+LEAK org2 200 /settings/schedule :: Бета
+LEAK org2 200 /settings/sections/journals :: Бета
+LEAK org2 200 /settings/sections/points :: Бета
+LEAK org2 200 /settings/sections/staff :: Бета
+LEAK org2 200 /settings/security :: Бета
+LEAK org2 200 /settings/services :: Бета
+LEAK org2 200 /settings/staff-health :: Бета
+LEAK org2 200 /settings/staff-hierarchy :: Бета
+LEAK org2 200 /settings/subscription :: Бета
+LEAK org2 200 /settings/task-visibility :: Бета
+LEAK org2 200 /settings/users :: Бета
+LEAK org2 200 /settings/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Бета
+LEAK org2 200 /settings/webhooks :: Бета
+LEAK org2 200 /settings/workload-balance :: Бета
+LEAK org2 200 /staff :: Бета
+LEAK org2 200 /team :: Бета
+LEAK org2 200 /translations :: Бета
+LEAK org2 200 /verifications :: Бета
+LEAK org2 404 /api/mini/_smoke :: Бета
+LEAK ownerA 200 /api/audit :: Повар Бета, Гигиена Бета, id:zawxqo
+LEAK ownerA 200 /api/batches/cmvxs3ust000dql7dghb2rw1b :: Партия Бета, id:b2rw1b
+LEAK ownerA 200 /api/journal-documents/cmvxs1kqw002onr7d43jgzzx8 :: Повар Бета, Руководитель Бета, Гигиена Бета, id:7kxrrt, id:yssqee, id:jgzzx8
+LEAK ownerA 200 /api/organizations/permissions :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /api/settings/audit/export :: Повар Бета, Гигиена Бета, id:zawxqo, id:7kxrrt
+LEAK ownerA 200 /api/settings/buildings :: Зал Бета, id:zawxqo
+LEAK ownerA 200 /api/settings/master-cabinets/access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /api/settings/organization/export :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, CAPA Бета, Списание Бета, Гигиена Бета, Здоровье Бета, Запись Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee, id:g8zmjn, id:ywhgiz, id:jgzzx8, id:u455x6, id:3zppql, id:8yaa9e, id:oul88l, id:lb2nc8, id:u8ftxo, id:n5bj45, id:riaycw, id:kzfgyw, id:jquvce
+LEAK ownerA 200 /api/settings/rpn-appendix :: ШХ Бета, Цех Бета, Повар Бета, Руководитель Бета, CAPA Бета, Навык Бета
+LEAK ownerA 200 /api/settings/subscription/transition :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /api/staff/cmvxs1kfc000bnr7dh27kxrrt/qr-pin :: Повар Бета, id:7kxrrt
+LEAK ownerA 200 /api/staff/control-group :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /api/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Повар Бета, id:7kxrrt
+LEAK ownerA 200 /batches/cmvxs3ust000dql7dghb2rw1b :: Партия Бета, id:b2rw1b
+LEAK ownerA 200 /capa/cmvxs3usr000cql7dgqg8zmjn :: CAPA Бета, id:g8zmjn
+LEAK ownerA 200 /edo/cmvxs3usw000fql7d6w1ivkke :: НАКЛ-Бета, Поставщик Бета, id:1ivkke
+LEAK ownerA 200 /journals/cleaning/documents/cmvxs1lbq00bcnr7dlqoul88l :: id:oul88l
+LEAK ownerA 200 /journals/cold_equipment_control/documents/cmvxs1l1c0089nr7d4g3zppql :: ШХ Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:7kxrrt, id:yssqee, id:3zppql
+LEAK ownerA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8 :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee, id:jgzzx8
+LEAK ownerA 200 /journals/hygiene/documents/cmvxs1kqw002onr7d43jgzzx8/verify :: Повар Бета, Руководитель Бета, Гигиена Бета, id:jgzzx8
+LEAK ownerA 200 /production-control/haccp-plan :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /production-control/haccp/control-points :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /production-control/haccp/policy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /production-control/haccp/team :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /production-control/haccp/team/meetings :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /production-control/program :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /reports/by-user/cmvxs1kfc000bnr7dh27kxrrt :: Повар Бета, id:7kxrrt
+LEAK ownerA 200 /settings/access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/areas :: Цех Бета, id:14s21n
+LEAK ownerA 200 /settings/buildings :: Зал Бета, Повар Бета, Руководитель Бета, id:zawxqo, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/buildings/cmvxs1kec0003nr7dr6kytt9x :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/buildings/new :: ШХ Бета, Зал Бета
+LEAK ownerA 200 /settings/control-group :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/equipment :: ШХ Бета, Цех Бета, Зал Бета, Повар Бета, Руководитель Бета, id:m07dvd, id:14s21n, id:zawxqo, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/integrations/mercury :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/journal-access :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/journals :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/master-cabinet :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/permissions :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/position-staff-visibility :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/staff-hierarchy :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/users :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee
+LEAK ownerA 200 /settings/users/cmvxs1kfc000bnr7dh27kxrrt/access :: Повар Бета, id:7kxrrt
+LEAK ownerA 200 /settings/workload-balance :: Повар Бета, Руководитель Бета, id:7kxrrt, id:yssqee

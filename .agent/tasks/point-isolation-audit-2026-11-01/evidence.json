@@ -1,0 +1,38 @@
+{
+  "task": "point-isolation-audit-2026-11-01",
+  "environment": "локальная копия wesetup_iso (не прод), next build + next start",
+  "before_build": "8cf7c43 (master)",
+  "after_build": "ad9c8a0 (iso-integration = master b4693d0 + 6 веток)",
+  "branches": {
+    "session": "claude/dazzling-pascal-obsf8l-session",
+    "people": "claude/dazzling-pascal-obsf8l-people",
+    "objects": "claude/dazzling-pascal-obsf8l-objects",
+    "checklists": "claude/dazzling-pascal-obsf8l-checklists",
+    "qr": "claude/dazzling-pascal-obsf8l-qr",
+    "branding": "claude/dazzling-pascal-obsf8l-branding",
+    "evidence_and_whats_new": "claude/dazzling-pascal-obsf8l"
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["raw/repro-after.txt", "raw/token-forge-after.txt", "raw/partner-view-after.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/repro-after.txt", "raw/repro2-after.txt", "raw/inspectors-headA-after.png", "raw/competencies-ownerA-after.png"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/repro-after.txt", "raw/repro2-after.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/repro-after.txt", "raw/print-agent-name-after.txt", "raw/qr-hygiene-headA-after.png", "raw/dashboard-orgview-after.png", "raw/sets-orgview-after.png"] },
+    "AC4b": { "status": "PASS", "evidence": ["raw/branding-after.txt", "raw/partner-view-after.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/regress-after.txt", "raw/leak-scan-summary.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["src/lib/whats-new-notes.ts"] }
+  },
+  "checks": {
+    "repro": { "before": "44 FAIL / 14 PASS", "after": "ALL PASS 58" },
+    "repro2": { "before": "6 FAIL / 1 PASS", "after": "ALL PASS 7" },
+    "token_forge": { "before": "2 FAIL / 2 PASS", "after": "ALL PASS 4" },
+    "partner_view": { "before": "2 FAIL", "after": "ALL PASS 2" },
+    "print_agent_name": { "before": "1 FAIL", "after": "ALL PASS 1" },
+    "branding": { "before": "2 FAIL / 4 PASS", "after": "ALL PASS 6" },
+    "regress_previous_wave": { "before": "ALL PASS 59", "after": "ALL PASS 59" },
+    "leak_scan_point_people": { "before": 25, "after": 7, "after_note": "ППК/ХАССП (решение владельца) и id точки в адресе страницы «не найдено»" },
+    "leak_scan_cross_org": { "before": 0, "after": 0 },
+    "typecheck_errors": 0,
+    "test_gate": "pass 5553, fail 0"
+  },
+  "verdict": "PASS"
+}
