@@ -66,11 +66,11 @@ function pointParamOf(value: string | string[] | undefined): string | null {
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { code } = await params;
   const data = await loadPage(code, pointParamOf((await searchParams).point));
-  if (!data) return { title: "Бейдж не найден — WeSetup" };
+  if (!data) return { title: "Бейдж не найден" };
   const { status, point, today } = data;
   const name = point ? `${point.name} — ${status.name}` : status.name;
   return {
-    title: `${name} — электронные журналы ХАССП в WeSetup`,
+    title: { absolute: `${name} — электронные журналы ХАССП в WeSetup` },
     description: today
       ? `${today.sphere.audience}: ${today.sphere.title.toLowerCase()} — отметки журналов и проверки за сегодня.`
       : `Организация ведёт производственный контроль в WeSetup. Заполнено ${status.percent ?? "—"}% журналов за последние ${status.days} дней.`,

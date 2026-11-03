@@ -1,0 +1,71 @@
+{
+  "locale": "uz",
+  "sourceHash": "9c5aa4f2ad08e62d0cbb1a99bc57205177194dda23e170ab92a0f6e1988a3cae",
+  "title": "2026-yilda umumiy ovqatlanish uchun ishlab chiqarish nazorati dasturi (IChND)",
+  "excerpt": "IChND XASSP rejasidan nimasi bilan farq qiladi, SanPiN 2.3/2.4.4282-26 boвЂyicha qaysi boвЂlimlar majburiy hamda jurnallar va laboratoriya surtmalarini unga qanday bogвЂlash kerak.",
+  "tags": [
+    "IChND",
+    "SanPiN",
+    "XASSP"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "Ishlab chiqarish nazorati dasturini (IChND) tekshiruvchi issiq sexga kirishdan oldin birinchilardan boвЂlib soвЂraydi. Aynan shu hujjat asosida nuqtada qaysi jurnallar yuritilishi, laboratoriya sinovlari davriyligi va har bir uchastka uchun kim javobgar ekani tekshiriladi."
+    },
+    {
+      "type": "h2",
+      "text": "IChND va XASSP oвЂrtasidagi farq"
+    },
+    {
+      "type": "p",
+      "text": "TR TS 021/2011 boвЂyicha XASSP rejasi taom tayyorlash zanjirida xavf qayerda tugвЂilishini va qanday kritik chegaralar bilan ushlab turilishini belgilaydi. IChND esa kengroq: xodimlar tibbiy koвЂrigi, maxsus kiyim yuvilishi, deratizatsiya, mikroiqlim, suv sifati, chiqindilarni olib chiqish va laboratoriya tekshiruvlari jadvalini qamrab oladi."
+    },
+    {
+      "type": "h2",
+      "text": "Ishchi dasturning majburiy boвЂlimlari"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Muassasa assortimentiga mos amaldagi sanitariya qoidalari roвЂyxati (SanPiN 2.3/2.4.4282-26 va TR TS 021/2011).",
+        "Buyruq bilan ishlab chiqarish nazorati yuklatilgan masвЂ™ul xodimlar roвЂyxati.",
+        "Nazorat obyektlari, kritik nuqtalar va ularga biriktirilgan hisob jurnallari (gigiyena, haroratlar, kirish nazorati, brakeraj, frityur, UV-lampalar, tozalash).",
+        "Laboratoriya tadqiqotlari jadvali: tayyor taomlar mikrobiologiyasi, qoвЂl va jihozlardan surtmalar, suv tahlili.",
+        "Tibbiy koвЂriklar, shaxsiy tibbiy daftarchalar va gigiyenik oвЂqitish nazorati.",
+        "Xavfli partiyani chaqirib olish va tuzatuvchi harakatlarni (CAPA) qayd etish tartibi."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Internetdan olingan namunadagi mavjud boвЂlmagan sexlarni qoldirmang",
+      "text": "Agar qahvaxona dasturida amalda yoвЂq В«un sexiВ», В«tuxum yuvish xonasiВ» va В«frityurВ» yozilib qolsa, inspektor ularning har biri boвЂyicha sharoit va jurnal talab qiladi. Faqat haqiqiy jarayonlarni kiriting."
+    },
+    {
+      "type": "h2",
+      "text": "Dastur qachon yangilanadi"
+    },
+    {
+      "type": "p",
+      "text": "IChND muddatsiz amal qiladi, biroq assortiment va texnologiya oвЂzgarganda (yetkazib berish, qandolat sexi yoki frityur qoвЂshilganda), oshxona qayta rejalashtirilganda, masвЂ™ullar almashganda yoki 2026-yil 1-sentabrdan SanPiN 2.3/2.4.4282-26 kuchga kirganda qayta koвЂrib chiqiladi."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Kafe ochilishidan oldin dasturni nazorat organida kelishish kerakmi?",
+          "a": "YoвЂq, oldindan kelishish talab etilmaydi: dastur ish boshlanishidan avval tuziladi va tashkilot rahbari yoki YaTT imzosi bilan tasdiqlanadi."
+        },
+        {
+          "q": "IChND va XASSP hujjatlarini bitta toвЂplamga birlashtirish mumkinmi?",
+          "a": "Ha, amalda eng qulay usul shu: dastur sanitariya-gigiyena blokini va XASSP xavflar tahlilini yagona buyruqlar hamda umumiy elektron jurnallar bilan bogвЂlaydi."
+        },
+        {
+          "q": "Tekshiruv kelganda IChND, XASSP-reja va jurnallarni qanday tez yigвЂish mumkin?",
+          "a": "WeSetupвЂ™dagi В«Tekshiruv keldiВ» boвЂlimi tanlangan davr uchun jurnallar, IChND, XASSP-reja, tekshiruvlar jurnali va CAPA yozuvlarini mundarijali bitta PDF qilib chiqarib beradi."
+        }
+      ]
+    }
+  ]
+}

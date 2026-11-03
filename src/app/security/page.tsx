@@ -14,13 +14,36 @@ import {
 } from "lucide-react";
 
 import { DemoRequestButton } from "@/components/public/demo-request-button";
+import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
+import { jsonLdSafeString } from "@/lib/json-ld";
+import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
+import { ogImages, twitterImages } from "@/lib/og-image";
+
+const PAGE_URL = "https://wesetup.ru/security";
+const TITLE = "Безопасность и данные";
+const DESCRIPTION =
+  "Где хранятся журналы WeSetup, как защищены вход и данные, кто что видит, как сделать копию и удалить данные. Серверы в Москве, HTTPS, вход с кодом в Telegram, журнал действий.";
 
 export const metadata: Metadata = {
-  title: "Безопасность и данные — WeSetup",
-  description:
-    "Где хранятся журналы WeSetup, как защищены вход и данные, кто что видит, как сделать копию и удалить данные. Серверы в Москве, HTTPS, вход с кодом в Telegram, журнал действий.",
-  alternates: { canonical: "https://wesetup.ru/security" },
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    siteName: "WeSetup",
+    url: PAGE_URL,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ogImages({ title: TITLE, subtitle: DESCRIPTION, kind: "landing" }),
+  },
+  twitter: {
+    card: DEFAULT_TWITTER_CARD,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: twitterImages({ title: TITLE, subtitle: DESCRIPTION, kind: "landing" }),
+  },
 };
 
 /**
@@ -127,11 +150,27 @@ const DOCUMENTS = [
 ];
 
 export default function SecurityPage() {
+  const pageJsonLd = jsonLdSafeString({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: TITLE,
+    description: DESCRIPTION,
+    url: PAGE_URL,
+    inLanguage: "ru-RU",
+    isPartOf: { "@id": "https://wesetup.ru/#website" },
+  });
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: pageJsonLd }} />
       <PublicHeader />
       <main className="mx-auto max-w-[1100px] space-y-10 px-4 py-12 sm:px-6">
         <header className="max-w-[760px]">
+          <PublicBreadcrumbs
+            tone="light"
+            className="mb-5"
+            items={[{ name: TITLE }]}
+          />
           <span className="inline-flex items-center gap-2 rounded-full bg-[#eef1ff] px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#3848c7]">
             <ShieldCheck className="size-3.5" aria-hidden />
             Безопасность

@@ -1,0 +1,69 @@
+{
+  "locale": "uz",
+  "sourceHash": "0d0b8606f9ebbc1b37aa0d39fd25bcbd4a3b77f04c43a9e63aeba911d80b3ca1",
+  "title": "Umumiy ovqatlanish sovutkichlarida mahsulot qoвЂshnichiligi va saqlash sharoitlari",
+  "excerpt": "Kameralar yetishmaganda xomashyo, yarim tayyor mahsulot va tayyor taomlarni qanday joylashtirish, omborda qanday harorat va namlikni ushlash hamda jarimalardan saqlanish.",
+  "tags": [
+    "Saqlash",
+    "Harorat",
+    "SanPiN"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "Sovutkichdagi +3 В°C ideal harorat ham yuqori tokchada sovutilgan tovuq, uning pastida esa tayyor chizkeyk yoki yuvilgan koвЂkat turgan boвЂlsa, jarimadan qutqarmaydi. Tovar qoвЂshnichiligi qoidalari tayyor taomlarni kondensat tomchilari, oвЂtkir hid va ikkilamchi ifloslanishdan himoya qiladi."
+    },
+    {
+      "type": "h2",
+      "text": "Tovar qoвЂshnichiligining asosiy qoidalari"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Xom mahsulotlar (goвЂsht, parranda, baliq, yuvilmagan sabzavot, tuxum) va isteвЂ™molga tayyor oziq-ovqatlar alohida sovutkichlarda saqlanadi.",
+        "Bitta sovutkich kamerasiga ega kichik nuqtalarda faqat qopqoqli yopiq konteynerlarda va tokchalarni yuqoridan pastga qatвЂ™iy ajratgan holda saqlashga ruxsat beriladi: tayyor taomlar va sut mahsulotlari вЂ” yuqorida, xomashyo va yarim tayyor mahsulotlar вЂ” pastki tokchalarda.",
+        "OвЂtkir hidli mahsulotlar (seld, dudlangan mahsulotlar, ziravorlar) hidni tez tortuvchi sariyogвЂ, qaymoq va qandolatchilik mahsulotlaridan ajratiladi.",
+        "Mahsulotlarni bevosita polga qoвЂyish taqiqlanadi вЂ” poldan kamida 15 sm balandlikdagi taglik va stellajlardan foydalaniladi."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Harorat va namlik boвЂyicha asosiy meвЂ™yorlar"
+    },
+    {
+      "type": "p",
+      "text": "Har doim ishlab chiqaruvchi yorligвЂidagi rejim va TR TS 021/2011 talablari ustuvor hisoblanadi. Odatdagi ishchi zonalar: gastronomiya va tayyorlanmalar sovutkichlari +2вЂ¦+6 В°C, sovutilgan goвЂsht va baliq 0вЂ¦+2 В°C (+4 В°C gacha), muzlatkichlar в€’18 В°C va past, quruq omborxonalar вЂ” +18вЂ¦+20 В°C gacha va nisbiy namlik 70вЂ“75 % dan oshmagan holda."
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Transport karton qutilarini sex sovutkichlariga kiritmang",
+      "text": "Rampadan kelgan gofrokarton qutilar koвЂcha changi va mogвЂor sporalarini olib kiradi. Sex sovutkichlariga joylashdan oldin mahsulot partiya yorligвЂi saqlangan holda toza ishlab chiqarish idishlariga oвЂtkaziladi."
+    },
+    {
+      "type": "h2",
+      "text": "Har kunlik monitoringni avtomatlashtirish"
+    },
+    {
+      "type": "p",
+      "text": "SanPiN 2.3/2.4.4282-26 boвЂyicha har bir sovutkich harorati har kuni (2-ilova), quruq omborlarda esa harorat va namlik (3-ilova) qayd etiladi. WeSetupвЂ™dagi Wi-Fi datchiklar koвЂrsatkichlarni har soatda yozib boradi va nosozlik boвЂlsa rahbarga Telegram orqali xabar beradi."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Muzlatilgan goвЂshtni xona haroratida stolda yoki iliq suvda eritish mumkinmi?",
+          "a": "YoвЂq. Defrostatsiya sovutkich kamerasida +0вЂ¦+6 В°C da panjarali patnislarda yoki maxsus defrosterlarda amalga oshiriladi; erigan xomashyoni qayta muzlatish man etiladi."
+        },
+        {
+          "q": "Ochilgan tunuka konserva qutilarini (tomat, quyultirilgan sut, zaytun) sovutkichda saqlash mumkinmi?",
+          "a": "YoвЂq, tunuka quti ochilgach metall havoda oksidlanadi: mahsulot darhol qopqoqli toza oziq-ovqat idishiga oвЂtkaziladi va ochish yorligвЂi yopishtiriladi."
+        },
+        {
+          "q": "Termometr yoki datchik sovutkichning qayeriga joylashtiriladi?",
+          "a": "Sovutkichning eng В«iliqВ» ishchi nuqtasiga вЂ” bugвЂlatkich oldiga emas, balki eshikka yaqinroq oвЂrta tokchaga joylashtiriladi."
+        }
+      ]
+    }
+  ]
+}

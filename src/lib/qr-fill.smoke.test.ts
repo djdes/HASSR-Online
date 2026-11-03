@@ -32,10 +32,10 @@ test("аудит QR-замера пишет действие journal.qr_fill", (
 });
 
 test("публичные страницы QR закрыты от индексации и баннера cookies", () => {
-  const robots = fs.readFileSync(path.join(process.cwd(), "src/app/robots.ts"), "utf8");
+  const robots = fs.readFileSync(path.join(process.cwd(), "src/lib/robots-txt.ts"), "utf8");
   const cookies = fs.readFileSync(path.join(process.cwd(), "src/components/public/cookie-consent.tsx"), "utf8");
   for (const route of ["/room-fill", "/equipment-fill"]) {
-    assert.ok(robots.includes(`"${route}"`), `robots.ts без ${route}`);
+    assert.ok(robots.includes(`"${route}"`), `robots-txt.ts без ${route}`);
     assert.ok(cookies.includes(`"${route}"`), `cookie-consent без ${route}`);
   }
 });

@@ -5498,7 +5498,8 @@
     "companyTaxIds": "Tax ID (INN) {inn} · KPP {kpp}",
     "companyRegistrationId": "Registration number (OGRN) {ogrn}",
     "securityAndData": "Security and data",
-    "autofillOffer": "Logs that fill themselves"
+    "autofillOffer": "Logs that fill themselves",
+    "sanpin4282": "SanPiN 2.3/2.4.4282-26"
   },
   "landing": {
     "metadata": {
@@ -5918,7 +5919,13 @@
       "brakerazhnyy-zhurnal": "Finished product quality log",
       "zhurnal-uborki": "Cleaning log",
       "temperaturnyy-list-holodilnika": "Refrigerator temperature log",
-      "haccp-dlya-kafe": "HACCP for cafés"
+      "haccp-dlya-kafe": "HACCP for cafés",
+      "zhurnal-generalnyh-uborok": "Deep cleaning schedule log",
+      "zhurnal-vhodnogo-kontrolya": "Raw material receiving log",
+      "zhurnal-frityurnyh-zhirov": "Frying oil quality log",
+      "zhurnal-temperatury-i-vlazhnosti": "Room temperature and humidity log",
+      "zhurnal-medknizhek": "Staff medical book log",
+      "zhurnal-sutochnyh-prob": "48-hour retention sample log"
     },
     "features": {
       "qr": "Fill logs using QR codes",
@@ -17224,7 +17231,14 @@
       "relatedHeading": "Related logs",
       "faqHeading": "Questions and answers",
       "howToTitle": "How to fill in: {title}",
-      "screenshotPending": "The screenshot will be ready after the next automatic capture"
+      "screenshotPending": "The screenshot will be ready after the next automatic capture",
+      "articlesHeading": "Related articles",
+      "toolsHeading": "Tools and resources",
+      "calcJournalsLink": "SanPiN log calculator",
+      "printFormsLink": "Printable forms and samples (PDF/DOCX)",
+      "sanpinGuideLink": "SanPiN 2.3/2.4.4282-26 guide",
+      "autofillFeatureLink": "Scheduled log autofill",
+      "landingGuidePrefix": "Detailed guide: {label}"
     },
     "descriptions": {
       "hygiene": "Keeps people with symptoms of acute respiratory viral infections, gastrointestinal infections or pustular skin lesions away from food handling. Completed for each employee on every shift.",
@@ -18099,7 +18113,7 @@
         "item3": "room temperature log",
         "item4": "food service temperature sensor"
       },
-      "seoIntro": "A warehouse temperature and humidity log is a mandatory SanPiN item for rooms where food is stored: it confirms microclimate monitoring. In WeSetup, sensors take readings every 5–10 minutes, and deviations automatically go to CAPA."
+      "seoIntro": "A warehouse temperature and humidity log is a mandatory SanPiN item for rooms where food is stored: it confirms microclimate monitoring. In WeSetup, sensors take readings once an hour, and deviations automatically go to CAPA."
     },
     "cold_equipment_control": {
       "title": "Refrigerator temperature log: limits and recordkeeping",
@@ -18146,15 +18160,17 @@
       "seoIntro": "Deep cleaning is a plan with dates and areas, not something left until there is time: kitchens, storage areas, dining areas and toilets are cleaned at different frequencies. WeSetup creates a monthly schedule, sends automatic reminders and generates a separate completion report for each area."
     },
     "uv_lamp_runtime": {
-      "title": "UV lamp log — operation and operating hours",
-      "description": "Germicidal UV lamp log: operating hours, replacement date and safety. The 8000-9000 hour service life is counted automatically, with a reminder when it runs out.",
+      "title": "Germicidal UV lamp log — operating hours and replacement",
+      "description": "Germicidal UV lamp and irradiator log: operating hours, tube replacement, room UV disinfection. The 8,000–9,000 h service life is tracked automatically.",
       "keywords": {
-        "item0": "UV lamp log",
-        "item1": "germicidal lamp operation records",
-        "item2": "sample germicidal lamp log",
-        "item3": "UV lamp service life in food service"
+        "item0": "germicidal lamp log",
+        "item1": "bactericidal unit operation log",
+        "item2": "room UV disinfection log",
+        "item3": "UV lamp log",
+        "item4": "germicidal lamp operating hours",
+        "item5": "sample germicidal lamp log"
       },
-      "seoIntro": "Recording germicidal UV lamp operation matters because a lamp can keep visibly glowing long after its service life ends, while its germicidal effect is already gone. WeSetup counts the hours automatically and warns about scheduled replacement; a sample completed log is available to download."
+      "seoIntro": "A germicidal UV lamp log (tracking operating hours for UV irradiators and air recirculators) matters because a tube can keep glowing visibly long after its rated life ends while its disinfecting output is already gone. WeSetup counts operating hours automatically, warns before scheduled replacement, and provides a downloadable sample log."
     },
     "finished_product": {
       "title": "Finished product quality checks: keeping the log",

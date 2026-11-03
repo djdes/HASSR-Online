@@ -43,6 +43,16 @@ import en19 from "./en/xaccp-dlya-restoratorov.json";
 import uz19 from "./uz/xaccp-dlya-restoratorov.json";
 import en20 from "./en/sinxronizatciya-iiko-1c.json";
 import uz20 from "./uz/sinxronizatciya-iiko-1c.json";
+import en21 from "./en/chek-list-priemki-syrya-v-restorane.json";
+import uz21 from "./uz/chek-list-priemki-syrya-v-restorane.json";
+import en22 from "./en/programma-proizvodstvennogo-kontrolya-obshchepit.json";
+import uz22 from "./uz/programma-proizvodstvennogo-kontrolya-obshchepit.json";
+import en23 from "./en/markirovka-produktov-i-zagotovok-na-kuhne.json";
+import uz23 from "./uz/markirovka-produktov-i-zagotovok-na-kuhne.json";
+import en24 from "./en/usloviya-i-sroki-hraneniya-produktov-obshchepit.json";
+import uz24 from "./uz/usloviya-i-sroki-hraneniya-produktov-obshchepit.json";
+import en25 from "./en/obrabotka-yaic-i-sutochnye-proby-sanpin.json";
+import uz25 from "./uz/obrabotka-yaic-i-sutochnye-proby-sanpin.json";
 const catalog: Record<string, Partial<Record<Locale, ArticleTranslationContent>>> = {
   "elektronnyj-vs-bumazhnyj-zhurnal": { en: en0, uz: uz0 },
   "sanpin-2026-chto-izmenilos": { en: en1, uz: uz1 },
@@ -65,6 +75,11 @@ const catalog: Record<string, Partial<Record<Locale, ArticleTranslationContent>>
   "temperatura-xolodilnikov-vitrin": { en: en18, uz: uz18 },
   "xaccp-dlya-restoratorov": { en: en19, uz: uz19 },
   "sinxronizatciya-iiko-1c": { en: en20, uz: uz20 },
+  "chek-list-priemki-syrya-v-restorane": { en: en21, uz: uz21 },
+  "programma-proizvodstvennogo-kontrolya-obshchepit": { en: en22, uz: uz22 },
+  "markirovka-produktov-i-zagotovok-na-kuhne": { en: en23, uz: uz23 },
+  "usloviya-i-sroki-hraneniya-produktov-obshchepit": { en: en24, uz: uz24 },
+  "obrabotka-yaic-i-sutochnye-proby-sanpin": { en: en25, uz: uz25 },
 };
 export function bundledArticleTranslation(slug: string, locale: Locale): ArticleTranslationContent | undefined {
   return Object.hasOwn(catalog, slug) ? catalog[slug][locale] : undefined;
