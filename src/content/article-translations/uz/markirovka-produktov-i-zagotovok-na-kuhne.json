@@ -1,27 +1,27 @@
 {
   "locale": "uz",
   "sourceHash": "b77ad7e83d3b668ba6e425115f5fbb42463a801dc72dc619fbb6ad00c23f0e0c",
-  "title": "SanPiN boвЂyicha oshxonada mahsulotlar, yarim tayyor masalliqlar va inventarni tamgвЂalash",
-  "excerpt": "Gastroreyomkost yorligвЂida nimalar boвЂlishi shart, nega skotchga yozilgan В«chorshanbaВ» tekshiruvdan oвЂtmaydi va taxtakach, pichoq hamda shvabralarni qanday belgilash kerak.",
+  "title": "SanPiN bo‘yicha oshxonada mahsulotlar, yarim tayyor masalliqlar va inventarni tamg‘alash",
+  "excerpt": "Gastroreyomkost yorlig‘ida nimalar bo‘lishi shart, nega skotchga yozilgan «chorshanba» tekshiruvdan o‘tmaydi va taxtakach, pichoq hamda shvabralarni qanday belgilash kerak.",
   "tags": [
-    "TamgвЂalash",
+    "Tamg‘alash",
     "SanPiN",
     "Oshxona"
   ],
   "body": [
     {
       "type": "p",
-      "text": "Sovutkichdagi egasiz va yorliqsiz idishlar umumiy ovqatlanish tekshiruvlaridagi eng koвЂp uchraydigan kamchilikdir. Tayyorlangan soati va tugash muddati koвЂrsatilmagan В«sezar sousi 14.10В» yozuvi tamgвЂasiz mahsulotga tenglashtiriladi va savdodan olinadi."
+      "text": "Sovutkichdagi egasiz va yorliqsiz idishlar umumiy ovqatlanish tekshiruvlaridagi eng ko‘p uchraydigan kamchilikdir. Tayyorlangan soati va tugash muddati ko‘rsatilmagan «sezar sousi 14.10» yozuvi tamg‘asiz mahsulotga tenglashtiriladi va savdodan olinadi."
     },
     {
       "type": "h2",
-      "text": "Oshxonadagi uch turdagi tamgвЂalash"
+      "text": "Oshxonadagi uch turdagi tamg‘alash"
     },
     {
       "type": "ol",
       "items": [
-        "QadogвЂi ochilgan fabrika xomashyosi: ishlab chiqaruvchi yorligвЂi saqlanadi va ichki ochish yorligвЂi yopishtiriladi вЂ” ochilgan sana va soat, saqlash harorati hamda ochilgandan keyingi yaroqlilik muddati.",
-        "Ichki tayyorlanmalar va yarim tayyor mahsulotlar: nomi, tayyorlangan sana va soat, saqlash sharoiti, texnologik karta boвЂyicha tugash sanasi va soati, oshpaz familiyasi yoki kodi.",
+        "Qadog‘i ochilgan fabrika xomashyosi: ishlab chiqaruvchi yorlig‘i saqlanadi va ichki ochish yorlig‘i yopishtiriladi — ochilgan sana va soat, saqlash harorati hamda ochilgandan keyingi yaroqlilik muddati.",
+        "Ichki tayyorlanmalar va yarim tayyor mahsulotlar: nomi, tayyorlangan sana va soat, saqlash sharoiti, texnologik karta bo‘yicha tugash sanasi va soati, oshpaz familiyasi yoki kodi.",
         "Kesish va tozalash inventari: kesishma ifloslanishning oldini oluvchi harfli yoki rangli kodlash tizimi."
       ]
     },
@@ -31,36 +31,36 @@
     },
     {
       "type": "p",
-      "text": "SanPiN 2.3/2.4.4282-26 xom va tayyor mahsulotlar uchun kesish anjomlarini alohida biriktirishni talab qiladi (xom goвЂsht, xom parranda, xom baliq, xom sabzavot, pishgan sabzavot, tayyor gastronomiya, non, koвЂkat). Sex devorida izohi osilgan harfli yoki rangli kodlash qoвЂllaniladi."
+      "text": "SanPiN 2.3/2.4.4282-26 xom va tayyor mahsulotlar uchun kesish anjomlarini alohida biriktirishni talab qiladi (xom go‘sht, xom parranda, xom baliq, xom sabzavot, pishgan sabzavot, tayyor gastronomiya, non, ko‘kat). Sex devorida izohi osilgan harfli yoki rangli kodlash qo‘llaniladi."
     },
     {
       "type": "callout",
       "tone": "warn",
-      "title": "Hojatxona inventari qatвЂ™iy alohida saqlanadi",
-      "text": "Sanuzellar uchun shvabra, chelak va lattalar alohida signal (odatda qizil) rangda tamgвЂalanadi va ishlab chiqarish sexlaridan tashqaridagi maxsus shkafda saqlanadi."
+      "title": "Hojatxona inventari qat’iy alohida saqlanadi",
+      "text": "Sanuzellar uchun shvabra, chelak va lattalar alohida signal (odatda qizil) rangda tamg‘alanadi va ishlab chiqarish sexlaridan tashqaridagi maxsus shkafda saqlanadi."
     },
     {
       "type": "h2",
-      "text": "Yorliq chop etishni muddatlar jurnali bilan bogвЂlash"
+      "text": "Yorliq chop etishni muddatlar jurnali bilan bog‘lash"
     },
     {
       "type": "p",
-      "text": "Yorliqlar В«Setup yordamchisiВ» ilovasi orqali termoprinterda chop etilganda, ishlab chiqarilgan vaqt va tugash soati avtomatik hisoblanadi hamda darhol tamgвЂalash jurnaliga tushadi вЂ” bosh oshpaz bugun muddati tugaydigan barcha pozitsiyalarni ekranda koвЂradi."
+      "text": "Yorliqlar «Setup yordamchisi» ilovasi orqali termoprinterda chop etilganda, ishlab chiqarilgan vaqt va tugash soati avtomatik hisoblanadi hamda darhol tamg‘alash jurnaliga tushadi — bosh oshpaz bugun muddati tugaydigan barcha pozitsiyalarni ekranda ko‘radi."
     },
     {
       "type": "faq",
       "items": [
         {
           "q": "Taxtakachlarga aynan eski ikki harfli qisqartmalarni yozish majburiymi?",
-          "a": "YoвЂq, SanPiN 2.3/2.4.4282-26 qatвЂ™iy harflarni majburlamaydi: nuqtadagi yoвЂriqnomada tasdiqlangan, xodimlarga tushunarli hamda xom va tayyor mahsulot aloqasini istisno etuvchi harfli yoki rangli tizimdan foydalanish mumkin."
+          "a": "Yo‘q, SanPiN 2.3/2.4.4282-26 qat’iy harflarni majburlamaydi: nuqtadagi yo‘riqnomada tasdiqlangan, xodimlarga tushunarli hamda xom va tayyor mahsulot aloqasini istisno etuvchi harfli yoki rangli tizimdan foydalanish mumkin."
         },
         {
-          "q": "Yarim tayyor mahsulotni tekshirib koвЂrib, ustiga yangi muddatli yorliq yopishtirish mumkinmi?",
+          "q": "Yarim tayyor mahsulotni tekshirib ko‘rib, ustiga yangi muddatli yorliq yopishtirish mumkinmi?",
           "a": "Mutlaqo mumkin emas. Belgilangan saqlash muddati tugagach, mahsulot hisobdan chiqarish jurnaliga qayd etilgan holda utilizatsiya qilinadi."
         },
         {
-          "q": "Qopdagi quyma mahsulot konteynerga boвЂshatilganda nima qilinadi?",
-          "a": "Yetkazib beruvchining partiya raqami va yaroqlilik muddati yozilgan fabrika yorligвЂi konteyner choвЂntagiga solib qoвЂyiladi va qayta joylashtirilgan sana yoziladi."
+          "q": "Qopdagi quyma mahsulot konteynerga bo‘shatilganda nima qilinadi?",
+          "a": "Yetkazib beruvchining partiya raqami va yaroqlilik muddati yozilgan fabrika yorlig‘i konteyner cho‘ntagiga solib qo‘yiladi va qayta joylashtirilgan sana yoziladi."
         }
       ]
     }

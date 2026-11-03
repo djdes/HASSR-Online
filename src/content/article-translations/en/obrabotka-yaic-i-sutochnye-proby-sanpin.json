@@ -32,7 +32,7 @@
     },
     {
       "type": "p",
-      "text": "Daily retention samples must be collected from every prepared batch in kindergartens, schools, camps, hospitals, social care facilities, and contracted collective catering. Samples are kept for at least 48 hours after service ends in a dedicated fridge or clearly separated zone at +2 to +6 В°C."
+      "text": "Daily retention samples must be collected from every prepared batch in kindergartens, schools, camps, hospitals, social care facilities, and contracted collective catering. Samples are kept for at least 48 hours after service ends in a dedicated fridge or clearly separated zone at +2 to +6 °C."
     },
     {
       "type": "callout",
@@ -53,7 +53,7 @@
       "items": [
         {
           "q": "Do we need an egg-washing station if our cafe uses pasteurized liquid egg in cartons?",
-          "a": "No. Commercial pasteurized liquid egg requires no shell-washing sinksвЂ”you only verify incoming veterinary certificates, fridge temperature, and opened carton shelf life."
+          "a": "No. Commercial pasteurized liquid egg requires no shell-washing sinks—you only verify incoming veterinary certificates, fridge temperature, and opened carton shelf life."
         },
         {
           "q": "Are sunny-side-up or poached eggs with runny yolks allowed?",

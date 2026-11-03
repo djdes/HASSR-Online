@@ -11,7 +11,7 @@
   "body": [
     {
       "type": "p",
-      "text": "A Production Control Program (PCP) is one of the very first documents an inspector requestsвЂ”before even stepping into the hot kitchen. Inspectors use it to check which logs your venue must maintain, how often lab samples are tested, and who owns each area."
+      "text": "A Production Control Program (PCP) is one of the very first documents an inspector requests—before even stepping into the hot kitchen. Inspectors use it to check which logs your venue must maintain, how often lab samples are tested, and who owns each area."
     },
     {
       "type": "h2",
@@ -19,7 +19,7 @@
     },
     {
       "type": "p",
-      "text": "A HACCP plan under TR CU 021/2011 focuses on food safety hazards along the cooking flow and critical limits that keep them in check. A Production Control Program is broader: it covers overall sanitary complianceвЂ”staff medical exams, workwear laundering, pest control, microclimate, water quality, waste removal, and scheduled laboratory testing."
+      "text": "A HACCP plan under TR CU 021/2011 focuses on food safety hazards along the cooking flow and critical limits that keep them in check. A Production Control Program is broader: it covers overall sanitary compliance—staff medical exams, workwear laundering, pest control, microclimate, water quality, waste removal, and scheduled laboratory testing."
     },
     {
       "type": "h2",
@@ -59,7 +59,7 @@
         },
         {
           "q": "Can PCP and HACCP principles be combined into a single documentation set?",
-          "a": "YesвЂ”in practice that is the cleanest approach: the PCP covers facility sanitation while referencing the HACCP hazard analysis, unified responsibility orders, and shared electronic logs."
+          "a": "Yes—in practice that is the cleanest approach: the PCP covers facility sanitation while referencing the HACCP hazard analysis, unified responsibility orders, and shared electronic logs."
         },
         {
           "q": "How can we export the PCP, HACCP plan, and logs together during an inspection?",

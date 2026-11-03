@@ -1,8 +1,8 @@
 {
   "locale": "uz",
   "sourceHash": "184a6895d3495d4d7de0f11ddcd0ed86417ff80786e0608d781fc224e04733fc",
-  "title": "SanPiN 2.3/2.4.4282-26 boвЂyicha restoran va kafelarda xomashyo qabul qilish chek-listi",
-  "excerpt": "Yetkazib beruvchidan 3 daqiqada nimani tekshirish kerak: kuzov va mahsulot harorati, В«MerkuriyВ» VSD hujjatlari, tamgвЂa, idish va yaroqlilik muddati hamda qachon partiyani qaytarish shart.",
+  "title": "SanPiN 2.3/2.4.4282-26 bo‘yicha restoran va kafelarda xomashyo qabul qilish chek-listi",
+  "excerpt": "Yetkazib beruvchidan 3 daqiqada nimani tekshirish kerak: kuzov va mahsulot harorati, «Merkuriy» VSD hujjatlari, tamg‘a, idish va yaroqlilik muddati hamda qachon partiyani qaytarish shart.",
   "tags": [
     "Qabul nazorati",
     "XASSP",
@@ -11,7 +11,7 @@
   "body": [
     {
       "type": "p",
-      "text": "Xomashyoni qabul qilish oshxonadagi birinchi kritik nazorat nuqtasidir. Agar oshpaz iliq goвЂsht yoki tamgвЂasiz sut mahsuloti uchun yuk xatiga indamay imzo qoвЂysa, oвЂsha soniyadan boshlab partiya uchun javobgarlik yetkazib beruvchidan muassasaga oвЂtadi."
+      "text": "Xomashyoni qabul qilish oshxonadagi birinchi kritik nazorat nuqtasidir. Agar oshpaz iliq go‘sht yoki tamg‘asiz sut mahsuloti uchun yuk xatiga indamay imzo qo‘ysa, o‘sha soniyadan boshlab partiya uchun javobgarlik yetkazib beruvchidan muassasaga o‘tadi."
     },
     {
       "type": "h2",
@@ -21,17 +21,17 @@
       "type": "ol",
       "items": [
         "Transport va haydovchi: toza kuzov, soz refrijerator, ekspeditorning sanitariya kiyimi va tibbiy daftarchasi, xomashyo bilan tayyor mahsulotning alohida tashilishi.",
-        "Hujjatlar: yuk xati, muvofiqlik deklaratsiyalari hamda hayvonlardan olinadigan mahsulotlar uchun В«MerkuriyВ» tizimidagi kiruvchi veterinariya hujjatlari (VSD).",
-        "Idish va tamgвЂalash: shishmagan va qayta muzlatish izlari boвЂlmagan butun quruq qadoq, ishlab chiqaruvchi, tarkib, saqlash sharoiti, ishlab chiqarilgan sana va yaroqlilik muddati aniq koвЂringan yorliq.",
-        "Harorat: sirtni pirometr bilan va qadoqlar orasini zondli termometr bilan oвЂlchash (sovutilgan goвЂsht va baliq вЂ” yorliq boвЂyicha odatda 0вЂ¦+4 В°C; sut mahsulotlari вЂ” +2вЂ¦+6 В°C; muzlatilgan вЂ” в€’18 В°C va past).",
-        "Organoleptika: tabiiy rang, hid, taranglik, shilimshiq, mogвЂor, qalin muz qatlami va begona aralashmalar yoвЂqligi."
+        "Hujjatlar: yuk xati, muvofiqlik deklaratsiyalari hamda hayvonlardan olinadigan mahsulotlar uchun «Merkuriy» tizimidagi kiruvchi veterinariya hujjatlari (VSD).",
+        "Idish va tamg‘alash: shishmagan va qayta muzlatish izlari bo‘lmagan butun quruq qadoq, ishlab chiqaruvchi, tarkib, saqlash sharoiti, ishlab chiqarilgan sana va yaroqlilik muddati aniq ko‘ringan yorliq.",
+        "Harorat: sirtni pirometr bilan va qadoqlar orasini zondli termometr bilan o‘lchash (sovutilgan go‘sht va baliq — yorliq bo‘yicha odatda 0…+4 °C; sut mahsulotlari — +2…+6 °C; muzlatilgan — −18 °C va past).",
+        "Organoleptika: tabiiy rang, hid, taranglik, shilimshiq, mog‘or, qalin muz qatlami va begona aralashmalar yo‘qligi."
       ]
     },
     {
       "type": "callout",
       "tone": "warn",
       "title": "Qadoq yorliqlarini partiya tugaguncha tashlab yubormang",
-      "text": "Yetkazib beruvchining transport qadogвЂidagi yorliqlari partiya toвЂliq ishlatilguncha saqlanadi вЂ” tekshiruvda ular kirish nazorati jurnalidagi yozuv bilan solishtiriladi."
+      "text": "Yetkazib beruvchining transport qadog‘idagi yorliqlari partiya to‘liq ishlatilguncha saqlanadi — tekshiruvda ular kirish nazorati jurnalidagi yozuv bilan solishtiriladi."
     },
     {
       "type": "h2",
@@ -40,35 +40,35 @@
     {
       "type": "ul",
       "items": [
-        "Idishda tamgвЂa yoвЂq yoki ishlab chiqarilgan sana va yaroqlilik muddati oвЂchib ketgan.",
-        "GoвЂsht, parranda, baliq, tuxum yoki sut xomashyosiga В«MerkuriyВ»da kiruvchi VSD mavjud emas.",
-        "Sovutilgan mahsulot harorati yorliqda koвЂrsatilgan chegaradan yuqori.",
-        "Eritib qayta muzlatilganlik belgilari bor: yopishib qolgan boвЂlaklar, paket ichidagi pushti muz.",
+        "Idishda tamg‘a yo‘q yoki ishlab chiqarilgan sana va yaroqlilik muddati o‘chib ketgan.",
+        "Go‘sht, parranda, baliq, tuxum yoki sut xomashyosiga «Merkuriy»da kiruvchi VSD mavjud emas.",
+        "Sovutilgan mahsulot harorati yorliqda ko‘rsatilgan chegaradan yuqori.",
+        "Eritib qayta muzlatilganlik belgilari bor: yopishib qolgan bo‘laklar, paket ichidagi pushti muz.",
         "Konserva qutilari shishgan (bombaj), qadoq yirtilgan yoki tashishda ifloslangan."
       ]
     },
     {
       "type": "h2",
-      "text": "Yuk xatlarini qoвЂlda koвЂchirishga 20 daqiqa sarflamaslik yoвЂli"
+      "text": "Yuk xatlarini qo‘lda ko‘chirishga 20 daqiqa sarflamaslik yo‘li"
     },
     {
       "type": "p",
-      "text": "WeSetupвЂ™da iiko, Diadoc va SabyвЂ™dan kelgan kirim yuk xatlari hamda В«MerkuriyВ»dagi VSD hujjatlari qabul jurnalida qoralama qatorlarni oвЂzi yaratadi. Oshpaz yoki omborchiga faqat haqiqiy haroratni oвЂlchash, qadoq butunligini belgilash va tasdiqlash tugmasini bosish qoladi."
+      "text": "WeSetup’da iiko, Diadoc va Saby’dan kelgan kirim yuk xatlari hamda «Merkuriy»dagi VSD hujjatlari qabul jurnalida qoralama qatorlarni o‘zi yaratadi. Oshpaz yoki omborchiga faqat haqiqiy haroratni o‘lchash, qadoq butunligini belgilash va tasdiqlash tugmasini bosish qoladi."
     },
     {
       "type": "faq",
       "items": [
         {
-          "q": "Mashina kelishidan oldin ofisda В«MerkuriyВ»dagi VSDni oldindan soвЂndirish mumkinmi?",
-          "a": "YoвЂq. VSDni soвЂndirish sifatli partiya miqdor, tamgвЂa va harorat boвЂyicha haqiqatda qabul qilinganini tasdiqlaydi. Oldindan yopib qoвЂyilsa, nuqsonli tovarni qaytarish qiyinlashadi."
+          "q": "Mashina kelishidan oldin ofisda «Merkuriy»dagi VSDni oldindan so‘ndirish mumkinmi?",
+          "a": "Yo‘q. VSDni so‘ndirish sifatli partiya miqdor, tamg‘a va harorat bo‘yicha haqiqatda qabul qilinganini tasdiqlaydi. Oldindan yopib qo‘yilsa, nuqsonli tovarni qaytarish qiyinlashadi."
         },
         {
-          "q": "Kirish nazorati jurnaliga kim imzo qoвЂyishga haqli?",
-          "a": "Rahbar buyrugвЂi bilan biriktirilgan va qabul qoidalari boвЂyicha yoвЂriqnomadan oвЂtgan xodimlar: omborchi, bosh oshpaz, su-shef yoki smena katta oshpazi."
+          "q": "Kirish nazorati jurnaliga kim imzo qo‘yishga haqli?",
+          "a": "Rahbar buyrug‘i bilan biriktirilgan va qabul qoidalari bo‘yicha yo‘riqnomadan o‘tgan xodimlar: omborchi, bosh oshpaz, su-shef yoki smena katta oshpazi."
         },
         {
-          "q": "Turli partiyalarni oвЂlchash orasida termometr zondini nima bilan artish kerak?",
-          "a": "Mikroflorani bir qadoqdan boshqasiga oвЂtkazmaslik uchun metall zond har oвЂlchovdan oldin va keyin spirtli salfetka (kamida 70 % izopropil yoki etil spirti) bilan artiladi."
+          "q": "Turli partiyalarni o‘lchash orasida termometr zondini nima bilan artish kerak?",
+          "a": "Mikroflorani bir qadoqdan boshqasiga o‘tkazmaslik uchun metall zond har o‘lchovdan oldin va keyin spirtli salfetka (kamida 70 % izopropil yoki etil spirti) bilan artiladi."
         }
       ]
     }
