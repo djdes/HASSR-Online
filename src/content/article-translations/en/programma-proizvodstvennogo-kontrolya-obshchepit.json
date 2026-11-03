@@ -1,0 +1,71 @@
+{
+  "locale": "en",
+  "sourceHash": "9c5aa4f2ad08e62d0cbb1a99bc57205177194dda23e170ab92a0f6e1988a3cae",
+  "title": "Production Control Program (PCP) for food service in 2026",
+  "excerpt": "How a Production Control Program differs from a HACCP plan, mandatory sections under SanPiN 2.3/2.4.4282-26 and SP 1.1.1058-01, and linking journals and lab swab schedules.",
+  "tags": [
+    "PCP",
+    "SanPiN",
+    "HACCP"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "A Production Control Program (PCP) is one of the very first documents an inspector requestsвЂ”before even stepping into the hot kitchen. Inspectors use it to check which logs your venue must maintain, how often lab samples are tested, and who owns each area."
+    },
+    {
+      "type": "h2",
+      "text": "How PCP differs from a HACCP plan"
+    },
+    {
+      "type": "p",
+      "text": "A HACCP plan under TR CU 021/2011 focuses on food safety hazards along the cooking flow and critical limits that keep them in check. A Production Control Program is broader: it covers overall sanitary complianceвЂ”staff medical exams, workwear laundering, pest control, microclimate, water quality, waste removal, and scheduled laboratory testing."
+    },
+    {
+      "type": "h2",
+      "text": "Mandatory sections of a working PCP"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "List of applicable sanitary regulations (including SanPiN 2.3/2.4.4282-26 and TR CU 021/2011) matched to the venue's menu.",
+        "Named staff positions assigned production control duties by formal order.",
+        "Controlled facilities, critical points, and their corresponding operational logs (hygiene, temperatures, incoming goods, finished product tasting, fryer oil, UV lamps, cleaning).",
+        "Schedule and scope of lab tests: microbiology of ready dishes, surface and hand swabs, and drinking water.",
+        "Tracking of medical examinations, health books, and hygienic training.",
+        "Procedure for recalling unsafe batches, notifying authorities, and recording corrective actions (CAPA)."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Never copy nonexistent workshops into your PCP",
+      "text": "If a downloaded template for a small coffee shop mentions a pastry workshop, egg-washing room, and deep fryer you do not have, an inspector will demand conditions and logs for each of them. Include only real processes."
+    },
+    {
+      "type": "h2",
+      "text": "When the program must be updated"
+    },
+    {
+      "type": "p",
+      "text": "A PCP has no expiration date, but it must be revised whenever you change menu technology (for example adding delivery, pastry production, or frying), remodel the kitchen, replace responsible managers, or adopt updated regulations such as SanPiN 2.3/2.4.4282-26 effective September 1, 2026."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Does a cafe need pre-approval of its PCP from Rospotrebnadzor before opening?",
+          "a": "No prior approval is required: the program is prepared before operations start and approved directly by the company director or sole proprietor."
+        },
+        {
+          "q": "Can PCP and HACCP principles be combined into a single documentation set?",
+          "a": "YesвЂ”in practice that is the cleanest approach: the PCP covers facility sanitation while referencing the HACCP hazard analysis, unified responsibility orders, and shared electronic logs."
+        },
+        {
+          "q": "How can we export the PCP, HACCP plan, and logs together during an inspection?",
+          "a": "In WeSetup, the Inspection Mode exports a single indexed PDF containing completed logs for the selected period, the PCP, HACCP plan, visitor log, and CAPA records."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "locale": "en",
+  "sourceHash": "0d0b8606f9ebbc1b37aa0d39fd25bcbd4a3b77f04c43a9e63aeba911d80b3ca1",
+  "title": "Food segregation and refrigerator storage rules in food service",
+  "excerpt": "How to arrange raw ingredients, prep items, and ready meals when cold rooms are limited, target warehouse temperatures and humidity, and avoiding Code of Administrative Offences fines.",
+  "tags": [
+    "Storage",
+    "Temperature",
+    "SanPiN"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "Even a textbook +3 В°C reading will not prevent a citation if a tray of raw chilled chicken sits on the top shelf above ready-to-serve cheesecake or washed greens. Food segregation and storage rules protect finished dishes from drip contamination, odor transfer, and spoilage."
+    },
+    {
+      "type": "h2",
+      "text": "Core food segregation rules"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Raw goods (meat, poultry, fish, unwashed produce, shell eggs) and ready-to-eat items belong in separate refrigerators.",
+        "Small venues with a single cold unit may store items together only inside covered containers with strict top-to-bottom shelf zoning: ready meals and dairy on upper shelves, semi-finished items in the middle, and raw goods on the bottom shelf.",
+        "Strongly scented products (herring, smoked meats, spices, pungent cheeses) must be isolated from butter, cream, and pastries that absorb odors.",
+        "Never place food boxes directly on cold-room or dry-store floorsвЂ”use dunnage racks or shelving at least 15 cm off the floor."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Standard temperature benchmarks"
+    },
+    {
+      "type": "p",
+      "text": "Manufacturer label instructions and TR CU 021/2011 always take precedence. Typical operating zones are +2 to +6 В°C for deli and prep fridges, 0 to +2 В°C (up to +4 В°C) for chilled meat and fish, в€’18 В°C or colder for freezers, and up to +18вЂ¦+20 В°C with relative humidity at or below 70вЂ“75% for dry storerooms."
+    },
+    {
+      "type": "callout",
+      "tone": "tip",
+      "title": "Keep shipping cardboard out of kitchen line fridges",
+      "text": "Corrugated shipping boxes carry street dust and mold spores from loading docks. Transfer goods into clean food-grade bins while keeping the supplier batch tag."
+    },
+    {
+      "type": "h2",
+      "text": "Daily monitoring without paperwork fatigue"
+    },
+    {
+      "type": "p",
+      "text": "Under SanPiN 2.3/2.4.4282-26, every refrigerator temperature is logged daily (Appendix 2) and dry storerooms track both temperature and humidity (Appendix 3). Wi-Fi sensors in WeSetup record readings hourly and alert managers on Telegram before a failing compressor ruins inventory."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Can frozen meat be thawed on a prep table at room temperature or in warm water?",
+          "a": "No. Thawing must happen gradually inside a refrigerator at 0 to +6 В°C on drip racks or in dedicated thawing cabinets; refreezing thawed raw material is prohibited."
+        },
+        {
+          "q": "Is it allowed to store opened tin cans of tomatoes, condensed milk, or olives in the fridge?",
+          "a": "NoвЂ”once opened, tin cans oxidize rapidly. Transfer contents immediately into a clean food container with a lid and an opening label."
+        },
+        {
+          "q": "Where inside the refrigerator should the thermometer or sensor sit?",
+          "a": "Place it in the warmest working zoneвЂ”near the door on the middle shelf rather than right against the evaporator fanвЂ”to reflect true product exposure."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,427 @@
+TAP version 13
+# Subtest: страница и ролик «Журналы заполняются сами»
+    # Subtest: датчики: раз в час в журнал, тревога руководителю точки
+    ok 1 - датчики: раз в час в журнал, тревога руководителю точки
+      ---
+      duration_ms: 10.354
+      type: 'test'
+      ...
+    # Subtest: накладные iiko, Диадок, СБИС → строки приёмки; решение за человеком
+    ok 2 - накладные iiko, Диадок, СБИС → строки приёмки; решение за человеком
+      ---
+      duration_ms: 2.5473
+      type: 'test'
+      ...
+    # Subtest: «Меркурий»: ВСД приходят сами, гасит человек
+    ok 3 - «Меркурий»: ВСД приходят сами, гасит человек
+      ---
+      duration_ms: 15.9609
+      type: 'test'
+      ...
+    # Subtest: фото табло, «Премиум» и пробный период — как в тарифах
+    ok 4 - фото табло, «Премиум» и пробный период — как в тарифах
+      ---
+      duration_ms: 4.5297
+      type: 'test'
+      ...
+    # Subtest: этикетки, график смен, документы на месяц — из кода
+    ok 5 - этикетки, график смен, документы на месяц — из кода
+      ---
+      duration_ms: 3.6218
+      type: 'test'
+      ...
+    # Subtest: за человеком остаются температура продукта, органолептика, допуск и подпись — без «типовых цифр»
+    ok 6 - за человеком остаются температура продукта, органолептика, допуск и подпись — без «типовых цифр»
+      ---
+      duration_ms: 0.7005
+      type: 'test'
+      ...
+    # Subtest: ролик: 60 секунд, субтитры из сцен, файлы на месте и в лимите
+    ok 7 - ролик: 60 секунд, субтитры из сцен, файлы на месте и в лимите
+      ---
+      duration_ms: 6.5232
+      type: 'test'
+      ...
+    # Subtest: страница: видео по нажатию, VideoObject, показ за 15 минут, ссылка в подвале и в sitemap
+    ok 8 - страница: видео по нажатию, VideoObject, показ за 15 минут, ссылка в подвале и в sitemap
+      ---
+      duration_ms: 5.2911
+      type: 'test'
+      ...
+    1..8
+ok 1 - страница и ролик «Журналы заполняются сами»
+  ---
+  duration_ms: 58.2406
+  type: 'suite'
+  ...
+# Subtest: страница СанПиН 2.3/2.4.4282-26
+    # Subtest: дата и замена 3590-20 — как в глоссарии
+    ok 1 - дата и замена 3590-20 — как в глоссарии
+      ---
+      duration_ms: 15.1656
+      type: 'test'
+      ...
+    # Subtest: электронная форма — с теми же условиями, что на /blanki
+    ok 2 - электронная форма — с теми же условиями, что на /blanki
+      ---
+      duration_ms: 1.5188
+      type: 'test'
+      ...
+    # Subtest: журналы — из каталога с основанием 4282-26, со ссылками на описание
+    ok 3 - журналы — из каталога с основанием 4282-26, со ссылками на описание
+      ---
+      duration_ms: 10.4644
+      type: 'test'
+      ...
+    # Subtest: «Пришла проверка» — тот же состав, что собирает сводный отчёт
+    ok 4 - «Пришла проверка» — тот же состав, что собирает сводный отчёт
+      ---
+      duration_ms: 2.3252
+      type: 'test'
+      ...
+    # Subtest: ссылки на страницу: глоссарий, электронный журнал, sitemap; разметка FAQ
+    ok 5 - ссылки на страницу: глоссарий, электронный журнал, sitemap; разметка FAQ
+      ---
+      duration_ms: 2.4671
+      type: 'test'
+      ...
+    1..5
+ok 2 - страница СанПиН 2.3/2.4.4282-26
+  ---
+  duration_ms: 49.4026
+  type: 'suite'
+  ...
+# Subtest: страница «Безопасность и данные»
+    # Subtest: хранение в России — как в оферте и согласии
+    ok 1 - хранение в России — как в оферте и согласии
+      ---
+      duration_ms: 12.0886
+      type: 'test'
+      ...
+    # Subtest: шифрование, пароли и вход — как в коде
+    ok 2 - шифрование, пароли и вход — как в коде
+      ---
+      duration_ms: 199.9509
+      type: 'test'
+      ...
+    # Subtest: доступы, журнал действий, копии, оплата и удаление — как в коде
+    ok 3 - доступы, журнал действий, копии, оплата и удаление — как в коде
+      ---
+      duration_ms: 10.6946
+      type: 'test'
+      ...
+    # Subtest: без громких слов: сертификатов, процентов доступности и бэкапов сервера
+    ok 4 - без громких слов: сертификатов, процентов доступности и бэкапов сервера
+      ---
+      duration_ms: 0.5517
+      type: 'test'
+      ...
+    # Subtest: ссылка в подвале и в sitemap
+    ok 5 - ссылка в подвале и в sitemap
+      ---
+      duration_ms: 2.6584
+      type: 'test'
+      ...
+    1..5
+ok 3 - страница «Безопасность и данные»
+  ---
+  duration_ms: 233.3231
+  type: 'suite'
+  ...
+# Subtest: all 45 actual journal detail pages preserve RU content and localize body, metadata, FAQ, HowTo and routes in three locales
+ok 4 - all 45 actual journal detail pages preserve RU content and localize body, metadata, FAQ, HowTo and routes in three locales
+  ---
+  duration_ms: 20104.5744
+  type: 'test'
+  ...
+# Subtest: actual index renders all 45 cards, source ordering, 14 niche and 7 SEO links in three locales
+ok 5 - actual index renders all 45 cards, source ordering, 14 niche and 7 SEO links in three locales
+  ---
+  duration_ms: 14930.2393
+  type: 'test'
+  ...
+# Subtest: source provenance and future unmapped journal/link coverage fail closed
+ok 6 - source provenance and future unmapped journal/link coverage fail closed
+  ---
+  duration_ms: 145.2693
+  type: 'test'
+  ...
+# Subtest: actual index aliases, metadata and sitemap include translated detail routes and preserve unrelated routes
+ok 7 - actual index aliases, metadata and sitemap include translated detail routes and preserve unrelated routes
+  ---
+  duration_ms: 1954.5099
+  type: 'test'
+  ...
+# Subtest: actual server locale resolution prioritizes the explicit index alias without loading personal preferences
+ok 8 - actual server locale resolution prioritizes the explicit index alias without loading personal preferences
+  ---
+  duration_ms: 163.0608
+  type: 'test'
+  ...
+# Subtest: public metadata and feed links are isolated by explicit locale
+ok 9 - public metadata and feed links are isolated by explicit locale
+  ---
+  duration_ms: 2154.6485
+  type: 'test'
+  ...
+# Subtest: all public navigation source IDs have stable translations in every language
+ok 10 - all public navigation source IDs have stable translations in every language
+  ---
+  duration_ms: 235.8888
+  type: 'test'
+  ...
+# Subtest: every seeded article has current complete EN/UZ content and renders its original block structure
+ok 11 - every seeded article has current complete EN/UZ content and renders its original block structure
+  ---
+  duration_ms: 1435.4979
+  type: 'test'
+  ...
+# Subtest: ru: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors
+ok 12 - ru: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors
+  ---
+  duration_ms: 808.0527
+  type: 'test'
+  ...
+# Subtest: en: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors
+ok 13 - en: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors
+  ---
+  duration_ms: 731.8962
+  type: 'test'
+  ...
+# Subtest: uz: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors
+ok 14 - uz: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors
+  ---
+  duration_ms: 552.2623
+  type: 'test'
+  ...
+# Subtest: legacy consent helper defaults remain byte-for-byte compatible for existing callers
+ok 15 - legacy consent helper defaults remain byte-for-byte compatible for existing callers
+  ---
+  duration_ms: 1.0192
+  type: 'test'
+  ...
+# Subtest: late remembered-download feedback renders the current locale without replaying the request
+ok 16 - late remembered-download feedback renders the current locale without replaying the request
+  ---
+  duration_ms: 425.6119
+  type: 'test'
+  ...
+# Subtest: auto-open removes legacy query flags and displays the expired-link notice
+ok 17 - auto-open removes legacy query flags and displays the expired-link notice
+  ---
+  duration_ms: 339.533
+  type: 'test'
+  ...
+# Subtest: consent snapshots preserve visible strings and unknown server codes use a safe fallback
+ok 18 - consent snapshots preserve visible strings and unknown server codes use a safe fallback
+  ---
+  duration_ms: 198.7239
+  type: 'test'
+  ...
+# Subtest: API parser adds optional locale and error codes without changing legacy status/target behavior
+ok 19 - API parser adds optional locale and error codes without changing legacy status/target behavior
+  ---
+  duration_ms: 1328.767
+  type: 'test'
+  ...
+# Subtest: server wrapper keeps the async domain boundary outside the client graph and inherits parent namespaces
+ok 20 - server wrapper keeps the async domain boundary outside the client graph and inherits parent namespaces
+  ---
+  duration_ms: 5.4793
+  type: 'test'
+  ...
+# Subtest: BLOG_RELATED_JOURNALS
+    # Subtest: все коды существуют в каталоге — иначе это битая ссылка
+    ok 1 - все коды существуют в каталоге — иначе это битая ссылка
+      ---
+      duration_ms: 4.0345
+      type: 'test'
+      ...
+    # Subtest: внутри статьи нет повторов
+    ok 2 - внутри статьи нет повторов
+      ---
+      duration_ms: 0.398
+      type: 'test'
+      ...
+    # Subtest: у каждой статьи есть хотя бы одна ссылка
+    ok 3 - у каждой статьи есть хотя бы одна ссылка
+      ---
+      duration_ms: 0.4431
+      type: 'test'
+      ...
+    1..3
+ok 21 - BLOG_RELATED_JOURNALS
+  ---
+  duration_ms: 6.2711
+  type: 'suite'
+  ...
+# Subtest: relatedJournalCodes
+    # Subtest: обрезает список до предела
+    ok 1 - обрезает список до предела
+      ---
+      duration_ms: 0.2589
+      type: 'test'
+      ...
+    # Subtest: возвращает пустой список для незнакомой статьи
+    ok 2 - возвращает пустой список для незнакомой статьи
+      ---
+      duration_ms: 0.2339
+      type: 'test'
+      ...
+    1..2
+ok 22 - relatedJournalCodes
+  ---
+  duration_ms: 0.6962
+  type: 'suite'
+  ...
+# Subtest: catalog terminology exceptions cannot hide the same word in journal messages
+ok 23 - catalog terminology exceptions cannot hide the same word in journal messages
+  ---
+  duration_ms: 2.5891
+  type: 'test'
+  ...
+# Subtest: в текстах для человека нет слова «бланк» — кроме исключений
+ok 24 - в текстах для человека нет слова «бланк» — кроме исключений
+  ---
+  duration_ms: 4.0448
+  type: 'test'
+  ...
+# видимых «бланк»: 63, все в исключениях: 63 (8 файлов)
+# Subtest: исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+ok 25 - исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+  ---
+  duration_ms: 2.1745
+  type: 'test'
+  ...
+# Subtest: журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+ok 26 - журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+  ---
+  duration_ms: 1.2154
+  type: 'test'
+  ...
+# Subtest: сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+ok 27 - сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+  ---
+  duration_ms: 1.8322
+  type: 'test'
+  ...
+# Subtest: тарифы 2026-10: Бесплатный 14 дней, Стандарт, Премиум
+    # Subtest: склонения: именительный и родительный
+    ok 1 - склонения: именительный и родительный
+      ---
+      duration_ms: 1.1822
+      type: 'test'
+      ...
+    # Subtest: фразы собраны из констант
+    ok 2 - фразы собраны из констант
+      ---
+      duration_ms: 67.9562
+      type: 'test'
+      ...
+    # Subtest: значение тарифа → карточка витрины
+    ok 3 - значение тарифа → карточка витрины
+      ---
+      duration_ms: 0.9647
+      type: 'test'
+      ...
+    # Subtest: таблица сравнения не расходится с лимитами: строки-возможности есть только у Премиума
+    ok 4 - таблица сравнения не расходится с лимитами: строки-возможности есть только у Премиума
+      ---
+      duration_ms: 48.4858
+      type: 'test'
+      ...
+    # Subtest: в текстах сайта и бота нет старой модели (1 сотрудник навсегда, до 10, сверх 10)
+    ok 5 - в текстах сайта и бота нет старой модели (1 сотрудник навсегда, до 10, сверх 10)
+      ---
+      duration_ms: 4.3901
+      type: 'test'
+      ...
+    1..5
+ok 28 - тарифы 2026-10: Бесплатный 14 дней, Стандарт, Премиум
+  ---
+  duration_ms: 125.047
+  type: 'suite'
+  ...
+# Subtest: QR-маршрут защищён и аудируется: src/app/api/room-fill/[roomId]/route.ts
+ok 29 - QR-маршрут защищён и аудируется: src/app/api/room-fill/[roomId]/route.ts
+  ---
+  duration_ms: 1.8647
+  type: 'test'
+  ...
+# Subtest: QR-маршрут защищён и аудируется: src/app/api/equipment-fill/[equipmentId]/route.ts
+ok 30 - QR-маршрут защищён и аудируется: src/app/api/equipment-fill/[equipmentId]/route.ts
+  ---
+  duration_ms: 2.8538
+  type: 'test'
+  ...
+# Subtest: аудит QR-замера пишет действие journal.qr_fill
+ok 31 - аудит QR-замера пишет действие journal.qr_fill
+  ---
+  duration_ms: 0.72
+  type: 'test'
+  ...
+# Subtest: публичные страницы QR закрыты от индексации и баннера cookies
+ok 32 - публичные страницы QR закрыты от индексации и баннера cookies
+  ---
+  duration_ms: 1.2541
+  type: 'test'
+  ...
+# Subtest: robots.txt crawl rules
+    # Subtest: renders Yandex Clean-param, Host, and Sitemap directives
+    ok 1 - renders Yandex Clean-param, Host, and Sitemap directives
+      ---
+      duration_ms: 2.4923
+      type: 'test'
+      ...
+    # Subtest: allows every public route in sitemap and social preview endpoints
+    ok 2 - allows every public route in sitemap and social preview endpoints
+      ---
+      duration_ms: 203.2184
+      type: 'test'
+      ...
+    # Subtest: blocks private workspace, admin, API, and tokenized routes
+    ok 3 - blocks private workspace, admin, API, and tokenized routes
+      ---
+      duration_ms: 13.5935
+      type: 'test'
+      ...
+    1..3
+ok 33 - robots.txt crawl rules
+  ---
+  duration_ms: 221.3607
+  type: 'suite'
+  ...
+# Subtest: SEO metadata hygiene
+    # Subtest: no page metadata string title appends '— WeSetup' without { absolute }
+    ok 1 - no page metadata string title appends '— WeSetup' without { absolute }
+      ---
+      duration_ms: 1432.7761
+      type: 'test'
+      ...
+    # Subtest: /register sets noindex, follow like /login
+    ok 2 - /register sets noindex, follow like /login
+      ---
+      duration_ms: 5.0346
+      type: 'test'
+      ...
+    # Subtest: core public landing pages define canonical, openGraph, and twitter metadata
+    ok 3 - core public landing pages define canonical, openGraph, and twitter metadata
+      ---
+      duration_ms: 1.8501
+      type: 'test'
+      ...
+    1..3
+ok 34 - SEO metadata hygiene
+  ---
+  duration_ms: 1441.7463
+  type: 'suite'
+  ...
+1..34
+# tests 60
+# suites 8
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 293398.4093

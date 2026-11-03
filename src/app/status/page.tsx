@@ -3,14 +3,35 @@ import { headers } from "next/headers";
 
 import { LegalArticle } from "@/components/public/legal-article";
 import { UptimeBar } from "@/components/public/uptime-bar";
+import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_CARD, DEFAULT_TWITTER_IMAGES } from "@/lib/meta-defaults";
 import type { UptimeStats } from "@/lib/uptime";
 import { SERVICE_STATE_LABEL, type Announcement, type Incident, type ServiceState } from "@/lib/platform-status";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_URL = "https://wesetup.ru/status";
+const TITLE = "Статус сервиса";
+const DESCRIPTION = "Работает ли WeSetup прямо сейчас: сайт, база данных, Telegram-бот, плановые работы и история инцидентов.";
+
 export const metadata: Metadata = {
-  title: "Статус сервиса — WeSetup",
-  description: "Работает ли WeSetup прямо сейчас: сайт, база данных, Telegram-бот, плановые работы и история инцидентов.",
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: PAGE_URL },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    siteName: "WeSetup",
+    url: PAGE_URL,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [...DEFAULT_OG_IMAGES],
+  },
+  twitter: {
+    card: DEFAULT_TWITTER_CARD,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [...DEFAULT_TWITTER_IMAGES],
+  },
 };
 
 type StatusPayload = {

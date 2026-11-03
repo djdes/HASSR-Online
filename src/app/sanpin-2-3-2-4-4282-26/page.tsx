@@ -3,20 +3,47 @@ import Link from "next/link";
 import { ArrowRight, BookOpenCheck, ClipboardCheck, FileDown, ScrollText } from "lucide-react";
 
 import { DemoRequestButton } from "@/components/public/demo-request-button";
+import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { loadMessages } from "@/i18n/messages";
 import { jsonLdSafeString } from "@/lib/json-ld";
+import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
+import { ogImageUrl, ogImages, twitterImages } from "@/lib/og-image";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 const PAGE_URL = "https://wesetup.ru/sanpin-2-3-2-4-4282-26";
 const SANPIN_CODE = "СанПиН 2.3/2.4.4282-26";
+const TITLE = "СанПиН 2.3/2.4.4282-26 для общепита: журналы и требования";
+const DESCRIPTION =
+  "СанПиН 2.3/2.4.4282-26 действует с 1 сентября 2026 года и заменил 3590-20. Какие журналы по нему ведут, можно ли вести их электронно, где взять печатные формы.";
 
 export const metadata: Metadata = {
-  title: "СанПиН 2.3/2.4.4282-26 для общепита: журналы и требования — WeSetup",
-  description:
-    "СанПиН 2.3/2.4.4282-26 действует с 1 сентября 2026 года и заменил 3590-20. Какие журналы по нему ведут, можно ли вести их электронно, где взять печатные формы.",
+  title: TITLE,
+  description: DESCRIPTION,
+  keywords: [
+    "СанПиН 2.3/2.4.4282-26",
+    "новый СанПиН для общепита 2026",
+    "СанПиН взамен 3590-20",
+    "журналы по СанПиН 2.3/2.4.4282-26",
+    "электронные журналы СанПиН общепит",
+  ],
   alternates: { canonical: PAGE_URL },
+  openGraph: {
+    type: "article",
+    locale: "ru_RU",
+    siteName: "WeSetup",
+    url: PAGE_URL,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ogImages({ title: TITLE, subtitle: DESCRIPTION, kind: "article" }),
+  },
+  twitter: {
+    card: DEFAULT_TWITTER_CARD,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: twitterImages({ title: TITLE, subtitle: DESCRIPTION, kind: "article" }),
+  },
 };
 
 /**
@@ -57,6 +84,28 @@ export default async function SanpinPage() {
       appendix: journal.normative.find((item) => item.title.includes("4282-26"))?.title.startsWith("Приложение") ?? false,
     }));
 
+  const articleJsonLd = jsonLdSafeString({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: TITLE,
+    description: DESCRIPTION,
+    image: [ogImageUrl({ title: TITLE, subtitle: DESCRIPTION, kind: "article" })],
+    url: PAGE_URL,
+    inLanguage: "ru-RU",
+    mainEntityOfPage: PAGE_URL,
+    publisher: {
+      "@type": "Organization",
+      name: "WeSetup",
+      url: "https://wesetup.ru",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://wesetup.ru/icons/icon-512.png",
+        width: 512,
+        height: 512,
+      },
+    },
+  });
+
   const faqJsonLd = jsonLdSafeString({
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -65,10 +114,16 @@ export default async function SanpinPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: articleJsonLd }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqJsonLd }} />
       <PublicHeader />
       <main className="mx-auto max-w-[1000px] space-y-12 px-4 py-12 sm:px-6">
         <header className="max-w-[780px]">
+          <PublicBreadcrumbs
+            tone="light"
+            className="mb-5"
+            items={[{ name: "Журналы", href: "/journals-info" }, { name: SANPIN_CODE }]}
+          />
           <span className="inline-flex items-center gap-2 rounded-full bg-[#eef1ff] px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#3848c7]">
             <ScrollText className="size-3.5" aria-hidden />
             Норматив

@@ -15,26 +15,44 @@ import {
 
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
 import { DemoRequestButton } from "@/components/public/demo-request-button";
+import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
 import { AUTOFILL_VIDEO } from "@/lib/autofill-offer";
 import { jsonLdSafeString } from "@/lib/json-ld";
+import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 const PAGE_URL = "https://wesetup.ru/avtozapolnenie";
-const TITLE = "Журналы, которые заполняются сами — WeSetup";
+const TITLE = "Журналы, которые заполняются сами";
 const DESCRIPTION =
   "Температура приходит с датчиков, приёмка — из накладных iiko, Диадока и СБИС, ветдокументы — из «Меркурия», показания — с фото табло. Сотрудник подтверждает факт, а не переписывает цифры.";
+const POSTER_IMAGE = { url: `https://wesetup.ru${AUTOFILL_VIDEO.poster}`, width: 1920, height: 1080, alt: TITLE };
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
+  keywords: [
+    "автозаполнение журналов ХАССП",
+    "автозаполнение журналов СанПиН",
+    "датчики температуры для холодильников общепит",
+    "интеграция журналов с iiko и Меркурием",
+    "электронные журналы с датчиками",
+  ],
   alternates: { canonical: PAGE_URL },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
     url: PAGE_URL,
+    siteName: "WeSetup",
+    locale: "ru_RU",
     type: "website",
-    images: [{ url: `https://wesetup.ru${AUTOFILL_VIDEO.poster}`, width: 1920, height: 1080 }],
+    images: [POSTER_IMAGE],
+  },
+  twitter: {
+    card: DEFAULT_TWITTER_CARD,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [POSTER_IMAGE.url],
   },
 };
 
@@ -112,9 +130,22 @@ function videoJsonLd(): string {
   });
 }
 
+function pageJsonLd(): string {
+  return jsonLdSafeString({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: TITLE,
+    description: DESCRIPTION,
+    url: PAGE_URL,
+    inLanguage: "ru-RU",
+    isPartOf: { "@id": "https://wesetup.ru/#website" },
+  });
+}
+
 export default function AutofillPage() {
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: pageJsonLd() }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: videoJsonLd() }} />
       <PublicHeader />
 
@@ -122,6 +153,11 @@ export default function AutofillPage() {
         <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b1024] via-[#1a234a] to-[#3848c7] px-5 py-10 text-white sm:px-10 sm:py-14">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
             <div>
+              <PublicBreadcrumbs
+                tone="dark"
+                className="mb-4"
+                items={[{ name: "Автозаполнение журналов" }]}
+              />
               <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[12px] uppercase tracking-[0.18em] text-white/80">
                 Автозаполнение
               </span>

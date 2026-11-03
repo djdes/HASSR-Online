@@ -5498,7 +5498,8 @@
     "companyTaxIds": "Soliq raqami (INN) {inn} · KPP {kpp}",
     "companyRegistrationId": "Ro‘yxatdan o‘tish raqami (OGRN) {ogrn}",
     "securityAndData": "Xavfsizlik va ma’lumotlar",
-    "autofillOffer": "O‘zi to‘ldiriladigan jurnallar"
+    "autofillOffer": "O‘zi to‘ldiriladigan jurnallar",
+    "sanpin4282": "SanPiN 2.3/2.4.4282-26"
   },
   "landing": {
     "metadata": {
@@ -5918,7 +5919,13 @@
       "brakerazhnyy-zhurnal": "Tayyor mahsulot sifatini nazorat qilish jurnali",
       "zhurnal-uborki": "Tozalash jurnali",
       "temperaturnyy-list-holodilnika": "Sovutkich harorati varaqasi",
-      "haccp-dlya-kafe": "Kafelar uchun HACCP"
+      "haccp-dlya-kafe": "Kafelar uchun HACCP",
+      "zhurnal-generalnyh-uborok": "Mukammal tozalash jurnali",
+      "zhurnal-vhodnogo-kontrolya": "Xomashyo kirish nazorati jurnali",
+      "zhurnal-frityurnyh-zhirov": "Frityur yog‘lari hisobi jurnali",
+      "zhurnal-temperatury-i-vlazhnosti": "Harorat va namlik jurnali",
+      "zhurnal-medknizhek": "Tibbiy daftarchalar jurnali",
+      "zhurnal-sutochnyh-prob": "Sutkalik namunalar jurnali"
     },
     "features": {
       "qr": "Jurnallarni QR-kod orqali to‘ldirish",
@@ -17224,7 +17231,14 @@
       "relatedHeading": "O‘xshash jurnallar",
       "faqHeading": "Savollar va javoblar",
       "howToTitle": "Qanday to‘ldiriladi: {title}",
-      "screenshotPending": "Skrinshot keyingi avtomatik ko‘rikdan so‘ng tayyor bo‘ladi"
+      "screenshotPending": "Skrinshot keyingi avtomatik ko‘rikdan so‘ng tayyor bo‘ladi",
+      "articlesHeading": "Mavzuga oid maqolalar",
+      "toolsHeading": "Vositalar va shakllar",
+      "calcJournalsLink": "SanPiN jurnallari kalkulyatori",
+      "printFormsLink": "Bosma shakllar va namunalar (PDF/DOCX)",
+      "sanpinGuideLink": "SanPiN 2.3/2.4.4282-26 sharhi",
+      "autofillFeatureLink": "Jadval bo‘yicha avtomatik to‘ldirish",
+      "landingGuidePrefix": "Batafsil sharh: {label}"
     },
     "descriptions": {
       "hygiene": "O‘tkir respirator virusli infeksiyalar, oshqozon-ichak infeksiyalari yoki teridagi yiringli zararlanish alomatlari bor shaxslarni oziq-ovqat bilan ishlashdan chetlashtiradi. Har bir xodim uchun har smenada yuritiladi.",
@@ -18099,7 +18113,7 @@
         "item3": "xonalar harorati jurnali",
         "item4": "umumiy ovqatlanish uchun harorat datchigi"
       },
-      "seoIntro": "Omborlarda harorat va namlikni qayd etish jurnali oziq-ovqat saqlanadigan xonalar uchun SanPiNning majburiy bandi: u mikroiqlim nazoratini tasdiqlaydi. WeSetup’da datchiklar har 5–10 daqiqada o‘lchov oladi, og‘ishlar esa avtomatik ravishda CAPA’ga yuboriladi."
+      "seoIntro": "Omborlarda harorat va namlikni qayd etish jurnali oziq-ovqat saqlanadigan xonalar uchun SanPiNning majburiy bandi: u mikroiqlim nazoratini tasdiqlaydi. WeSetup’da datchiklar har soatda o‘lchov oladi, og‘ishlar esa avtomatik ravishda CAPA’ga yuboriladi."
     },
     "cold_equipment_control": {
       "title": "Sovutkich harorati jurnali: me’yorlar va yuritish",
@@ -18146,15 +18160,17 @@
       "seoIntro": "Umumiy tozalash «vaqt topilganda» bajariladigan ish emas, sana va hududlari ko‘rsatilgan rejadir: oshxona, ombor, zal va hojatxonalar turli davriylikda tozalanadi. WeSetup bir oylik jadval tuzadi, avtomatik eslatadi va har bir hudud uchun alohida bajarilganlik dalolatnomasini shakllantiradi."
     },
     "uv_lamp_runtime": {
-      "title": "UV-lampalar jurnali — ish va ishlagan vaqt hisobi",
-      "description": "Bakteritsid UV-lampalar ishini qayd etish: ishlagan soat, almashtirish sanasi, xavfsizlik. 8000-9000 soatlik resurs avtomatik hisoblanadi, tugaganda eslatma keladi.",
+      "title": "Bakteritsid jurnal (UV-lampalar) — ishlash soatlari hisobi",
+      "description": "Bakteritsid UV-lampalar va nurlantirgichlar ishini qayd etish jurnali: ishlagan soatlar, almashtirish, xonalarni kvarts bilan zararsizlantirish. 8000–9000 soatlik resurs avtomatik hisoblanadi.",
       "keywords": {
-        "item0": "UV-lampalar jurnali",
-        "item1": "bakteritsid lampalar ishini hisobga olish",
-        "item2": "bakteritsid lampalar jurnali namunasi",
-        "item3": "umumiy ovqatlanishda UV-lampalar resursi"
+        "item0": "bakteritsid jurnal",
+        "item1": "bakteritsid qurilma ishini hisobga olish jurnali",
+        "item2": "xonalarni kvarts bilan zararsizlantirish jurnali",
+        "item3": "UV-lampalar jurnali",
+        "item4": "bakteritsid lampalar ishini hisobga olish",
+        "item5": "bakteritsid lampalar jurnali namunasi"
       },
-      "seoIntro": "Bakteritsid UV-lampalar ishini hisobga olish muhim: resurs tugagandan ancha keyin ham lampa ko‘zga ko‘rinadigan nur chiqarishi mumkin, lekin bakteritsid ta’siri allaqachon yo‘qolgan bo‘ladi. WeSetup soatlarni avtomatik hisoblaydi va rejali almashtirish haqida ogohlantiradi; to‘ldirilgan jurnal namunasini yuklab olish mumkin."
+      "seoIntro": "Bakteritsid jurnal (UV-lampalar va retsirkulyatorlar ishini hisobga olish jurnali) muhim, chunki resurs tugagandan keyin ham lampa ko‘zga ko‘rinadigan nur chiqarishi mumkin, lekin zararsizlantirish ta’siri allaqachon yo‘qolgan bo‘ladi. WeSetup ishlash soatlarini avtomatik hisoblaydi va rejali almashtirish haqida ogohlantiradi, to‘ldirilgan jurnal namunasini esa yuklab olish mumkin."
     },
     "finished_product": {
       "title": "Tayyor mahsulot brakeraji: jurnalni yuritish",

@@ -1,9 +1,14 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpenCheck,
+  Calculator,
   CheckCircle2,
   Download,
+  FileDown,
+  ScrollText,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
@@ -11,32 +16,21 @@ import { jsonLdSafeString } from "@/lib/json-ld";
 import { SEO_LANDINGS, type SeoJournalConfig } from "@/content/seo-landings";
 export { SEO_LANDINGS };
 export type { SeoJournalConfig };
-import {
-  DEFAULT_TWITTER_CARD,
-  } from "@/lib/meta-defaults";
+import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { BlankDownloadButton } from "@/components/public/blank-download";
 
 /**
- * E17 — SEO-лендинги под ключевые поисковые запросы.
- *   /zhurnal-haccp                → «журнал ХАССП скачать»
- *   /zhurnal-zdorovya             → «журнал здоровья сотрудников общепит»
- *   /elektronnyy-zhurnal-sanpin   → «электронный журнал СанПиН»
- *   /brakerazhnyy-zhurnal         → «бракеражный журнал образец»
- *   /zhurnal-uborki               → «журнал уборки помещений скачать»
- *   /temperaturnyy-list-holodilnika → «температурный лист холодильника»
- *   /haccp-dlya-kafe              → «ХАССП для кафе»
- *
- * Все 7 страниц переиспользуют один компонент с разными prop'ами.
+ * Посадочные страницы под коммерческие поисковые запросы по журналам СанПиН и ХАССП.
+ * Каждая страница объединяет описание норматива, состав граф, скачивание образца PDF,
+ * профильные ответы (FAQPage JSON-LD) и навигацию к смежным журналам и калькуляторам.
  */
-
 
 /**
  * Журналы, у которых есть публичный образец. Список повторяет
  * SAMPLE_JOURNAL_CODES из journal-sample-fixtures: импортировать оттуда
- * нельзя — тот модуль тянет за собой jsPDF, а этот компонент рисуется
- * на клиенте.
+ * нельзя — тот модуль тянет за собой jsPDF.
  */
 const SAMPLE_CODES = new Set([
   "hygiene",
@@ -54,14 +48,6 @@ const SAMPLE_CODES = new Set([
   "med_books",
 ]);
 
-/**
- * Образец для кнопки «Скачать заполненный образец». Раньше кнопка была
- * свёрстана, но `downloadHref` никто не заполнял — она просто не
- * показывалась. Теперь журнал выводится из relatedCode: отдельное поле
- * пришлось бы держать в актуальном состоянии руками. Скачивание — после
- * почты (окно «Куда прислать шаблон?»); явный `downloadHref` остаётся
- * обычной ссылкой.
- */
 function sampleCode(c: SeoJournalConfig): string | undefined {
   if (c.downloadHref) return undefined;
   return c.relatedCode && SAMPLE_CODES.has(c.relatedCode) ? c.relatedCode : undefined;
@@ -71,6 +57,7 @@ export function getSeoMetadata(c: SeoJournalConfig) {
   return {
     title: c.metaTitle,
     description: c.metaDescription,
+    ...(c.keywords && c.keywords.length > 0 ? { keywords: [...c.keywords] } : {}),
     alternates: { canonical: `https://wesetup.ru/${c.slug}` },
     openGraph: {
       type: "website",
@@ -92,14 +79,32 @@ export function getSeoMetadata(c: SeoJournalConfig) {
 
 export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
   const c = config;
+  const pageUrl = `https://wesetup.ru/${c.slug}`;
+  const graph: Array<Record<string, unknown>> = [
+    {
+      "@type": "WebPage",
+      "@id": `${pageUrl}#page`,
+      name: c.metaTitle,
+      description: c.metaDescription,
+      url: pageUrl,
+      inLanguage: "ru-RU",
+      isPartOf: { "@id": "https://wesetup.ru/#website" },
+    },
+  ];
+  if (c.faq && c.faq.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${pageUrl}#faq`,
+      mainEntity: c.faq.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      })),
+    });
+  }
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: c.metaTitle,
-    description: c.metaDescription,
-    url: `https://wesetup.ru/${c.slug}`,
-    inLanguage: "ru-RU",
-    isPartOf: { "@id": "https://wesetup.ru/#website" },
+    "@graph": graph,
   };
 
   return (
@@ -161,7 +166,15 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
                 <Download className="size-4" />
                 Скачать заполненный образец
               </BlankDownloadButton>
-            ) : null}
+            ) : (
+              <Link
+                href="/blanki"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
+              >
+                <FileDown className="size-4" />
+                Печатные формы PDF
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -204,10 +217,10 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
 
           <ul className="mt-6 grid gap-2 sm:grid-cols-2">
             {[
-              "Заполнение с планшета или из Telegram-бота — 30 секунд вместо 4 минут",
-              "Автозаполнение «как вчера» — повар не пишет одно и то же каждый день",
+              "Заполнение с телефона, по QR-наклейке или в Telegram-боте за 30 секунд",
+              "Напоминания по сменам и защита от незаметной правки прошлых дней",
               "PDF для проверок Роспотребнадзора — одна кнопка, шапки и подписи на месте",
-              "Бэкапы каждые 6 часов — записи не пропадут, даже если разобьётся планшет",
+              "Выгрузка в PDF и Excel в любой момент и авто-бэкап на ваш Яндекс Диск",
             ].map((b) => (
               <li
                 key={b}
@@ -240,9 +253,74 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
         </div>
       </section>
 
-      {/* RELATED — другие SEO-лендинги под смежные запросы. Cross-linking
-          улучшает crawlability + помогает посетителю найти точное
-          совпадение со своим запросом, если попал не туда. */}
+      {/* FAQ */}
+      {c.faq && c.faq.length > 0 ? (
+        <section className="mx-auto max-w-[1100px] px-4 pb-14 sm:px-6 sm:pb-20">
+          <div className="max-w-[820px]">
+            <h2 className="text-[clamp(1.5rem,1.8vw+1rem,2rem)] font-semibold tracking-[-0.02em]">
+              Вопросы и ответы
+            </h2>
+            <div className="mt-5 space-y-3">
+              {c.faq.map((item) => (
+                <details
+                  key={item.q}
+                  className="group rounded-2xl border border-[#ececf4] bg-white p-5 open:bg-[#fafbff]"
+                >
+                  <summary className="cursor-pointer list-none text-[15px] font-medium text-[#0b1024] transition-colors group-hover:text-[#5566f6]">
+                    {item.q}
+                  </summary>
+                  <p className="mt-3 text-[15px] leading-[1.65] text-[#3c4053]">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* USEFUL TOOLS & HUB LINKS */}
+      <section className="mx-auto max-w-[1100px] px-4 pb-10 sm:px-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Link
+            href="/calc/journals"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40"
+          >
+            <span className="flex items-center gap-2"><Calculator className="size-4 shrink-0 text-[#5566f6]" />Подбор журналов</span>
+            <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+          </Link>
+          <Link
+            href="/calc/fines"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40"
+          >
+            <span className="flex items-center gap-2"><BookOpenCheck className="size-4 shrink-0 text-[#5566f6]" />Калькулятор штрафов</span>
+            <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+          </Link>
+          <Link
+            href="/blanki"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40"
+          >
+            <span className="flex items-center gap-2"><FileDown className="size-4 shrink-0 text-[#5566f6]" />Печатные формы PDF</span>
+            <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+          </Link>
+          <Link
+            href="/prikazy"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40"
+          >
+            <span className="flex items-center gap-2"><ScrollText className="size-4 shrink-0 text-[#5566f6]" />Образцы приказов</span>
+            <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+          </Link>
+          <Link
+            href="/avtozapolnenie"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40"
+          >
+            <span className="flex items-center gap-2"><Sparkles className="size-4 shrink-0 text-[#5566f6]" />Автозаполнение</span>
+            <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+          </Link>
+        </div>
+      </section>
+
+      {/* RELATED — другие SEO-лендинги под смежные запросы */}
       <section className="mx-auto max-w-[1100px] px-4 pb-14 sm:px-6 sm:pb-20">
         <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-6 sm:p-8">
           <div className="mb-5 text-[12px] uppercase tracking-[0.18em] text-[#6f7282]">
@@ -251,7 +329,7 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
           <div className="grid gap-3 sm:grid-cols-2">
             {Object.values(SEO_LANDINGS)
               .filter((s) => s.slug !== c.slug)
-              .slice(0, 6)
+              .slice(0, 8)
               .map((s) => (
                 <Link
                   key={s.slug}
@@ -273,5 +351,3 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
     </div>
   );
 }
-
-

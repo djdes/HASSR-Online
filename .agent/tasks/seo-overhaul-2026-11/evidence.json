@@ -1,0 +1,24 @@
+{
+  "taskId": "seo-overhaul-2026-11",
+  "baseCommit": "f90b4afb",
+  "branch": "feat/seo-overhaul-2026-11",
+  "status": "PASS",
+  "acceptanceCriteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS_ON_MASTER_DEPLOY"
+  },
+  "checks": {
+    "i18nCheck": { "exitCode": 0, "passed": 97, "failed": 0, "raw": "raw/i18n-check.txt" },
+    "typecheck": { "exitCode": 0, "raw": "raw/typecheck.txt" },
+    "eslint": { "exitCode": 0, "raw": "raw/eslint.txt" },
+    "targetedSeoSuites": { "exitCode": 0, "passed": 60, "failed": 0, "raw": "raw/seo-targeted-tests.txt" },
+    "seedArticles": { "exitCode": 0, "upserted": 26, "raw": "raw/seed-articles.txt" },
+    "testGate": { "exitCode": 0, "passed": 5609, "failed": 0, "raw": "raw/test-gate.txt" }
+  }
+}

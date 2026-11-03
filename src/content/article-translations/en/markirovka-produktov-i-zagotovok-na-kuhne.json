@@ -1,0 +1,68 @@
+{
+  "locale": "en",
+  "sourceHash": "b77ad7e83d3b668ba6e425115f5fbb42463a801dc72dc619fbb6ad00c23f0e0c",
+  "title": "Labeling food, prep batches, and cleaning tools in the kitchen under SanPiN",
+  "excerpt": "What belongs on every gastro-pan label, why masking tape reading 'Wednesday' fails inspections, and how to code cutting boards, knives, and mops cleanly.",
+  "tags": [
+    "Labeling",
+    "SanPiN",
+    "Kitchen"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "Unlabeled containers inside reach-in fridges are the single most common citation in food service inspections. A marker scribble saying 'Caesar sauce 14.10' without preparation time and exact expiration hour is treated as unlabeled food and must be discarded."
+    },
+    {
+      "type": "h2",
+      "text": "Three layers of labeling in a food facility"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Opened factory ingredients: keep the original manufacturer label and attach an internal opening label showing opening date and hour, storage temperature, and opened shelf life (which is almost always shorter than sealed shelf life).",
+        "In-house prep and semi-finished items: item name, preparation date and hour, storage conditions, exact expiration date and hour per recipe card, and the cook's name or code.",
+        "Cutting and cleaning equipment: clear letter or color coding by station and food group to prevent cross-contamination."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Coding cutting boards, knives, and mops"
+    },
+    {
+      "type": "p",
+      "text": "SanPiN 2.3/2.4.4282-26 requires separate dedicated cutting tools for raw and ready-to-eat foods (raw meat, raw poultry, raw fish, raw vegetables, cooked vegetables, cold cuts/deli, bread, herbs). Either letter codes or color coding with a posted wall legend is valid."
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Restroom cleaning tools must be stored strictly apart",
+      "text": "Mops, buckets, and cloths for restrooms must carry high-visibility (typically red) coding and stay in a dedicated closet outside food prep areas."
+    },
+    {
+      "type": "h2",
+      "text": "Linking label printing to the shelf-life log"
+    },
+    {
+      "type": "p",
+      "text": "When prep labels are printed on a thermal printer via Setup Helper, production and expiration timestamps are calculated automatically from item rules and logged straight into the labeling journalвЂ”so the chef sees everything expiring today on one screen."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Do we have to paint legacy Russian two-letter codes onto every cutting board?",
+          "a": "NoвЂ”SanPiN 2.3/2.4.4282-26 does not mandate fixed letters: either letter or color coding is accepted as long as the legend is documented on site, understood by staff, and separates raw from ready-to-eat items."
+        },
+        {
+          "q": "Can a prep label be replaced with a new expiration time after tasting the batch?",
+          "a": "Never. Once the established shelf life expires, the semi-finished product must be written off and discarded with an entry in the write-off log."
+        },
+        {
+          "q": "How do we handle bulk dry goods poured from a sack into a bin?",
+          "a": "Clip or place the supplier's original tag showing batch number and expiry date into the bin's label holder and note the transfer date."
+        }
+      ]
+    }
+  ]
+}

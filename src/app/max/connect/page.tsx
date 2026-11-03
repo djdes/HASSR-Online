@@ -5,7 +5,7 @@ import { safeMaxReturnPath } from "@/lib/max/security";
 import { MaxConnectClient } from "@/components/max/max-connect-client";
 
 export const dynamic="force-dynamic";
-export const metadata={title:"Подключить MAX — WeSetup",robots:{index:false,follow:false}};
+export const metadata={title:"Подключить MAX",robots:{index:false,follow:false}};
 export default async function MaxConnectPage({searchParams}:{searchParams:Promise<{next?:string}>}) {
   const next=safeMaxReturnPath((await searchParams).next);
   const session=await getServerSession(authOptions);

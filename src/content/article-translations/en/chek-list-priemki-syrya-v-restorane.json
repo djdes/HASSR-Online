@@ -1,0 +1,76 @@
+{
+  "locale": "en",
+  "sourceHash": "184a6895d3495d4d7de0f11ddcd0ed86417ff80786e0608d781fc224e04733fc",
+  "title": "Raw material receiving checklist for restaurants and cafes under SanPiN 2.3/2.4.4282-26",
+  "excerpt": "What to verify with the delivery driver in 3 minutes: truck and product temperature, Mercury veterinary certificates, labeling, packaging, and shelf lifeвЂ”and when to reject a shipment on the ramp.",
+  "tags": [
+    "Receiving",
+    "HACCP",
+    "SanPiN"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "Raw material receiving is the very first critical control point in any kitchen. Once a cook silently signs a delivery note for warm meat or unlabeled dairy, legal responsibility for that batch shifts from the supplier to the venue the second the signature is placed."
+    },
+    {
+      "type": "h2",
+      "text": "Five steps to inspect every delivery"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Vehicle and driver: clean cargo compartment, working refrigeration unit, clean workwear and valid medical book for the driver, and strict separation of raw materials from ready-to-eat items.",
+        "Documents: delivery note, EAEU declarations of conformity, and incoming electronic veterinary certificates in the Mercury system for animal-origin goods.",
+        "Packaging and labels: intact dry containers without bulging or refreezing marks, and a legible manufacturer label stating composition, storage conditions, production date, and expiry date.",
+        "Temperature: check surface temperature with an infrared thermometer and core/between-pack temperature with a sanitized probe (chilled meat and fish per manufacturer label, typically 0 to +4 В°C; dairy +2 to +6 В°C; frozen goods в€’18 В°C or lower).",
+        "Sensory check: natural color, smell, firmness, and absence of slime, mold, heavy frost crystals, or foreign matter."
+      ]
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Keep supplier crate labels until the batch is used up",
+      "text": "Supplier labels from transport packaging must be retained until the entire batch is consumed or soldвЂ”inspectors match them against entries in the incoming control log for traceability."
+    },
+    {
+      "type": "h2",
+      "text": "When a shipment must be rejected"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Missing supplier label or unreadable production and expiration dates.",
+        "No incoming Mercury veterinary certificate for meat, poultry, fish, eggs, or dairy.",
+        "Chilled product temperature exceeds the limit stated on the manufacturer label.",
+        "Visible signs of thawing and refreezing: clumped pieces or pink ice inside packaging.",
+        "Swollen cans or torn, soiled packaging damaged in transit."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "How to stop spending 20 minutes retyping invoices"
+    },
+    {
+      "type": "p",
+      "text": "In WeSetup, incoming invoices from iiko, Diadoc, and Saby plus veterinary certificates from Mercury automatically create draft rows in the receiving log. The cook or storekeeper only measures temperature, checks packaging integrity, and taps confirmвЂ”or records a return with a defect photo."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Can Mercury veterinary certificates be redeemed in the back office before the truck arrives?",
+          "a": "No. Redeeming a certificate confirms actual physical acceptance of a compliant batch by quantity, label, and temperature. Closing it in advance makes returning defective goods far harder."
+        },
+        {
+          "q": "Who is authorized to sign the incoming control log?",
+          "a": "Employees designated by a manager's orderвЂ”storekeeper, head chef, sous-chef, or shift leadвЂ”who have completed receiving instructions."
+        },
+        {
+          "q": "How should the thermometer probe be sanitized between batches?",
+          "a": "Wipe the metal stem before and after each measurement with an alcohol wipe (at least 70% isopropyl or ethyl alcohol) to prevent cross-contamination between packages."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "locale": "en",
+  "sourceHash": "3bf97b3990514cf5a82151a5543a44089816021cd353f2b4e531ad0091f45a09",
+  "title": "Egg sanitization and 48-hour daily food samples under SanPiN 2.3/2.4.4282-26",
+  "excerpt": "Two high-scrutiny epidemiological controls: washing and disinfecting shell eggs against Salmonella, and collecting and storing 48-hour retention samples.",
+  "tags": [
+    "SanPiN",
+    "Daily samples",
+    "Disinfection"
+  ],
+  "body": [
+    {
+      "type": "p",
+      "text": "During any foodborne illness investigation, public health inspectors head straight to two controls: how shell eggs are handled in the kitchen and whether properly labeled daily retention samples from the past 48 hours are sitting in the sample fridge."
+    },
+    {
+      "type": "h2",
+      "text": "How to organize shell egg sanitization"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Accept only clean table-grade hen eggs free of cracks or leaks, backed by a Mercury veterinary certificate; waterfowl (duck and goose) eggs are prohibited in food service.",
+        "Store unwashed eggs in supplier cartons separately from ready-to-eat foods and dairy.",
+        "Before cooking, wash and disinfect eggs in a designated area using labeled basins and an approved shell disinfectant strictly per manufacturer instructions, followed by a running-water rinse.",
+        "Place sanitized eggs into clean labeled containers ('Clean eggs'). Bakeries and small cafes without space for egg-washing sinks often switch to pasteurized liquid egg products in aseptic cartons."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Who must keep daily retention samples and how to store them"
+    },
+    {
+      "type": "p",
+      "text": "Daily retention samples must be collected from every prepared batch in kindergartens, schools, camps, hospitals, social care facilities, and contracted collective catering. Samples are kept for at least 48 hours after service ends in a dedicated fridge or clearly separated zone at +2 to +6 В°C."
+    },
+    {
+      "type": "callout",
+      "tone": "warn",
+      "title": "Sample weight and sterile jars are checked literally",
+      "text": "Portioned items are retained as a full portion; soups, sides, sauces, salads, and drinks are retained in quantities of at least 100 g using boiled or sterile spoons into sterile lidded glass jars labeled with meal period, dish name, collection time, and cook's name."
+    },
+    {
+      "type": "h2",
+      "text": "Digital logging of collection and disposal"
+    },
+    {
+      "type": "p",
+      "text": "In WeSetup's daily sample log and disinfectant usage log, collection timestamps, disinfectant batches, and 48-hour disposal sign-offs are tracked automatically so shifts never mix up yesterday's and two-day-old jars."
+    },
+    {
+      "type": "faq",
+      "items": [
+        {
+          "q": "Do we need an egg-washing station if our cafe uses pasteurized liquid egg in cartons?",
+          "a": "No. Commercial pasteurized liquid egg requires no shell-washing sinksвЂ”you only verify incoming veterinary certificates, fridge temperature, and opened carton shelf life."
+        },
+        {
+          "q": "Are sunny-side-up or poached eggs with runny yolks allowed?",
+          "a": "In children's, educational, medical, and social institutions, eggs without fully cooked yolks are prohibited; restaurants use sanitized fresh eggs of verified quality or pasteurized egg products per recipe standards."
+        },
+        {
+          "q": "How are Friday retention samples handled in a five-day workplace canteen?",
+          "a": "Friday samples remain in the retention refrigerator until Monday morning (at least 48 hours excluding non-working weekend days until the next shift arrives)."
+        }
+      ]
+    }
+  ]
+}

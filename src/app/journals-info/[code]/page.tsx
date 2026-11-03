@@ -29,6 +29,10 @@ import { localizedHref } from "@/i18n/site-locale";
 import { presentPublicJournalDetail } from "@/i18n/public-journal-detail-presentation";
 import { publicJournalDetailMetadata } from "@/i18n/public-journal-detail-metadata";
 import { publicJournalDetailFaq } from "@/i18n/public-journal-detail-faq";
+import {
+  primarySeoLandingSlugForJournal,
+  relatedBlogArticlesForJournal,
+} from "@/lib/journal-crosslinks";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -55,6 +59,12 @@ export default async function JournalInfoDetailPage({
   if (!detail) notFound();
   const { info, seo, name: journalName, catalogName, related } = detail;
   const t = createTranslator({ locale, messages, namespace: "publicJournalIndex.detailCommon" });
+  const relatedArticles = relatedBlogArticlesForJournal(code, locale);
+  const primaryLandingSlug = locale === "ru" ? primarySeoLandingSlugForJournal(code) : null;
+  const primaryLandingLabel =
+    primaryLandingSlug && Object.hasOwn(messages.publicNavigation.journals, primaryLandingSlug)
+      ? messages.publicNavigation.journals[primaryLandingSlug as keyof typeof messages.publicNavigation.journals]
+      : null;
   const { download, expired } = await searchParams;
   const faq = publicJournalDetailFaq(info, journalName, locale, messages);
   const canonical = `https://wesetup.ru${localizedHref(`/journals-info/${code}`, locale)}`;
@@ -358,6 +368,82 @@ export default async function JournalInfoDetailPage({
                 </ul>
               </div>
             )}
+
+            {relatedArticles.length > 0 && (
+              <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
+                <div className="text-[13px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
+                  {t("articlesHeading")}
+                </div>
+                <ul className="mt-3 space-y-2">
+                  {relatedArticles.map((art) => (
+                    <li key={art.slug}>
+                      <Link
+                        href={`/blog/${art.slug}`}
+                        className="group flex items-start justify-between gap-2 rounded-xl p-2 text-[14px] font-medium leading-[1.45] text-[#0b1024] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
+                      >
+                        <span>{art.title}</span>
+                        <ArrowRight className="mt-0.5 size-4 shrink-0 text-[#9b9fb3] transition-transform group-hover:translate-x-0.5 group-hover:text-[#5566f6]" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="rounded-3xl border border-[#ececf4] bg-white p-6">
+              <div className="text-[13px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
+                {t("toolsHeading")}
+              </div>
+              <ul className="mt-3 space-y-1.5 text-[14px]">
+                {primaryLandingSlug && primaryLandingLabel ? (
+                  <li>
+                    <Link
+                      href={`/${primaryLandingSlug}`}
+                      className="flex items-center justify-between gap-2 rounded-xl p-2 font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
+                    >
+                      <span>{t("landingGuidePrefix", { label: primaryLandingLabel })}</span>
+                      <ArrowRight className="size-4 shrink-0 text-[#5566f6]" />
+                    </Link>
+                  </li>
+                ) : null}
+                <li>
+                  <Link
+                    href="/calc/journals"
+                    className="flex items-center justify-between gap-2 rounded-xl p-2 font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
+                  >
+                    <span>{t("calcJournalsLink")}</span>
+                    <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/blanki"
+                    className="flex items-center justify-between gap-2 rounded-xl p-2 font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
+                  >
+                    <span>{t("printFormsLink")}</span>
+                    <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/sanpin-2-3-2-4-4282-26"
+                    className="flex items-center justify-between gap-2 rounded-xl p-2 font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
+                  >
+                    <span>{t("sanpinGuideLink")}</span>
+                    <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={locale === "ru" ? "/avtozapolnenie" : "/features/autofill"}
+                    className="flex items-center justify-between gap-2 rounded-xl p-2 font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff] hover:text-[#3848c7]"
+                  >
+                    <span>{t("autofillFeatureLink")}</span>
+                    <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </aside>
         </div>
       </section>

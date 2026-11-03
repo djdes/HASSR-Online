@@ -79,6 +79,34 @@ export const BLOG_RELATED_JOURNALS: Record<string, readonly string[]> = {
     "traceability_test",
   ],
   "elektronnyj-vs-bumazhnyj-zhurnal": ["hygiene", "cold_equipment_control"],
+  "chek-list-priemki-syrya-v-restorane": [
+    "incoming_control",
+    "incoming_raw_materials_control",
+    "perishable_rejection",
+    "cold_equipment_control",
+  ],
+  "programma-proizvodstvennogo-kontrolya-obshchepit": [
+    "hygiene",
+    "cold_equipment_control",
+    "finished_product",
+    "audit_plan",
+  ],
+  "markirovka-produktov-i-zagotovok-na-kuhne": [
+    "incoming_control",
+    "inventory_condition",
+    "cleaning",
+    "product_writeoff",
+  ],
+  "usloviya-i-sroki-hraneniya-produktov-obshchepit": [
+    "cold_equipment_control",
+    "climate_control",
+    "perishable_rejection",
+  ],
+  "obrabotka-yaic-i-sutochnye-proby-sanpin": [
+    "daily_samples",
+    "finished_product",
+    "disinfectant_usage",
+  ],
 };
 
 /** Не больше четырёх ссылок в блоке — дальше это перестаёт быть навигацией. */
