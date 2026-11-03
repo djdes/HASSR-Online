@@ -45,14 +45,14 @@
     },
     {
       "type": "p",
-      "text": "When prep labels are printed on a thermal printer via Setup Helper, production and expiration timestamps are calculated automatically from item rules and logged straight into the labeling journalвЂ”so the chef sees everything expiring today on one screen."
+      "text": "When prep labels are printed on a thermal printer via Setup Helper, production and expiration timestamps are calculated automatically from item rules and logged straight into the labeling journal—so the chef sees everything expiring today on one screen."
     },
     {
       "type": "faq",
       "items": [
         {
           "q": "Do we have to paint legacy Russian two-letter codes onto every cutting board?",
-          "a": "NoвЂ”SanPiN 2.3/2.4.4282-26 does not mandate fixed letters: either letter or color coding is accepted as long as the legend is documented on site, understood by staff, and separates raw from ready-to-eat items."
+          "a": "No—SanPiN 2.3/2.4.4282-26 does not mandate fixed letters: either letter or color coding is accepted as long as the legend is documented on site, understood by staff, and separates raw from ready-to-eat items."
         },
         {
           "q": "Can a prep label be replaced with a new expiration time after tasting the batch?",

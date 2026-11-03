@@ -40,21 +40,32 @@ export type RelatedBlogArticleLink = {
 /**
  * Pure static cross-link lookup from a journal catalog code to related blog
  * articles in the active locale (never touches Prisma/DB).
+ * Ranks primary/dedicated matches (earlier position in `codes` and narrower
+ * journal list) ahead of broad multi-journal overview articles.
  */
 export function relatedBlogArticlesForJournal(
   code: string,
   locale: Locale,
-  limit = 4,
+  limit = 5,
 ): RelatedBlogArticleLink[] {
-  const matches: RelatedBlogArticleLink[] = [];
+  const candidates: Array<{
+    slug: string;
+    title: string;
+    rank: number;
+    breadth: number;
+  }> = [];
   for (const [slug, codes] of Object.entries(BLOG_RELATED_JOURNALS)) {
-    if (!codes.includes(code)) continue;
-    const title = locale === "ru" ? RU_ARTICLE_TITLES[slug] : bundledArticleTranslation(slug, locale)?.title;
+    const rank = codes.indexOf(code);
+    if (rank === -1) continue;
+    const title =
+      locale === "ru"
+        ? RU_ARTICLE_TITLES[slug]
+        : bundledArticleTranslation(slug, locale)?.title;
     if (!title) continue;
-    matches.push({ slug, title });
-    if (matches.length >= limit) break;
+    candidates.push({ slug, title, rank, breadth: codes.length });
   }
-  return matches;
+  candidates.sort((a, b) => a.rank - b.rank || a.breadth - b.breadth);
+  return candidates.slice(0, limit).map(({ slug, title }) => ({ slug, title }));
 }
 
 /**

@@ -1,8 +1,8 @@
 {
   "locale": "uz",
   "sourceHash": "3bf97b3990514cf5a82151a5543a44089816021cd353f2b4e531ad0091f45a09",
-  "title": "SanPiN 2.3/2.4.4282-26 boвЂyicha tuxumni zararsizlantirish va sutkalik namunalarni olish",
-  "excerpt": "Epidemiologlar eng qattiq tekshiradigan ikki nuqta: salmonellyozga qarshi tuxum poвЂstlogвЂini yuvish va dezinfeksiyalash hamda sutkalik namunalarni 48 soat saqlash tartibi.",
+  "title": "SanPiN 2.3/2.4.4282-26 bo‘yicha tuxumni zararsizlantirish va sutkalik namunalarni olish",
+  "excerpt": "Epidemiologlar eng qattiq tekshiradigan ikki nuqta: salmonellyozga qarshi tuxum po‘stlog‘ini yuvish va dezinfeksiyalash hamda sutkalik namunalarni 48 soat saqlash tartibi.",
   "tags": [
     "SanPiN",
     "Sutkalik namunalar",
@@ -11,7 +11,7 @@
   "body": [
     {
       "type": "p",
-      "text": "Har qanday ovqatdan zaharlanish holatini tekshirishda mutaxassislar birinchi navbatda ikki uchastkani koвЂradi: oshxonada tovuq tuxumi qanday ishlanmoqda va sovutkichda oxirgi ikki sutka uchun toвЂgвЂri olingan sutkalik namunalar bormi."
+      "text": "Har qanday ovqatdan zaharlanish holatini tekshirishda mutaxassislar birinchi navbatda ikki uchastkani ko‘radi: oshxonada tovuq tuxumi qanday ishlanmoqda va sovutkichda oxirgi ikki sutka uchun to‘g‘ri olingan sutkalik namunalar bormi."
     },
     {
       "type": "h2",
@@ -20,10 +20,10 @@
     {
       "type": "ol",
       "items": [
-        "Faqat darzsiz va sinmagan toza oshxona tuxumini В«MerkuriyВ»dagi VSD hujjati bilan qabul qilish; suvda suzuvchi qushlar (oвЂrdak, gвЂoz) tuxumi umumiy ovqatlanishda taqiqlanadi.",
+        "Faqat darzsiz va sinmagan toza oshxona tuxumini «Merkuriy»dagi VSD hujjati bilan qabul qilish; suvda suzuvchi qushlar (o‘rdak, g‘oz) tuxumi umumiy ovqatlanishda taqiqlanadi.",
         "Ishlov berilmagan tuxumni yetkazib beruvchi qutilarida tayyor mahsulot va gastronomiyadan alohida saqlash.",
-        "Taomga solishdan oldin ajratilgan joyda tamgвЂalangan idishlarda poвЂstloq uchun ruxsat etilgan vosita bilan yoвЂriqnoma boвЂyicha yuvish, dezinfeksiyalash va oqar suvda chayish.",
-        "Tozalangan tuxumni faqat В«Toza tuxumВ» deb belgilangan toza idishga joylash. Yuvish uchastkasi boвЂlmagan kichik qahvaxona va qandolat sexlarida aseptik qadoqdagi pasterizatsiyalangan melanj ishlatish qulay."
+        "Taomga solishdan oldin ajratilgan joyda tamg‘alangan idishlarda po‘stloq uchun ruxsat etilgan vosita bilan yo‘riqnoma bo‘yicha yuvish, dezinfeksiyalash va oqar suvda chayish.",
+        "Tozalangan tuxumni faqat «Toza tuxum» deb belgilangan toza idishga joylash. Yuvish uchastkasi bo‘lmagan kichik qahvaxona va qandolat sexlarida aseptik qadoqdagi pasterizatsiyalangan melanj ishlatish qulay."
       ]
     },
     {
@@ -32,32 +32,32 @@
     },
     {
       "type": "p",
-      "text": "BogвЂcha, maktab, oromgoh, shifoxona, ijtimoiy muassasalar va shartnoma asosidagi jamoaviy ovqatlantirish (keytering, korporativ oshxonalar) oshxonalarida tayyorlangan har bir partiya taomdan sutkalik namuna olinadi. Namuna tarqatish tugagan paytdan boshlab kamida 48 soat davomida +2вЂ¦+6 В°C da alohida sovutkichda saqlanadi."
+      "text": "Bog‘cha, maktab, oromgoh, shifoxona, ijtimoiy muassasalar va shartnoma asosidagi jamoaviy ovqatlantirish (keytering, korporativ oshxonalar) oshxonalarida tayyorlangan har bir partiya taomdan sutkalik namuna olinadi. Namuna tarqatish tugagan paytdan boshlab kamida 48 soat davomida +2…+6 °C da alohida sovutkichda saqlanadi."
     },
     {
       "type": "callout",
       "tone": "warn",
-      "title": "Namuna hajmi va idish sterilligi soвЂzma-soвЂz tekshiriladi",
-      "text": "Porsiyali taomlar toвЂliq 1 porsiya, shoвЂrva, garnir, sous, salat va ichimliklar esa kamida 100 g miqdorida qaynatilgan yoki steril qoshiq bilan qopqoqli steril shisha bankalarga olinadi va yorliq yopishtiriladi."
+      "title": "Namuna hajmi va idish sterilligi so‘zma-so‘z tekshiriladi",
+      "text": "Porsiyali taomlar to‘liq 1 porsiya, sho‘rva, garnir, sous, salat va ichimliklar esa kamida 100 g miqdorida qaynatilgan yoki steril qoshiq bilan qopqoqli steril shisha bankalarga olinadi va yorliq yopishtiriladi."
     },
     {
       "type": "h2",
-      "text": "Olish va yoвЂq qilishning elektron hisobi"
+      "text": "Olish va yo‘q qilishning elektron hisobi"
     },
     {
       "type": "p",
-      "text": "WeSetupвЂ™dagi sutkalik namunalar jurnali va dezvositalar jurnalida namuna olingan vaqt, ishlatilgan eritma hamda 48 soatdan keyin utilizatsiya qilingani qayd etiladi вЂ” smenalar kechagi va oldingi kungi bankalarni adashtirib yubormaydi."
+      "text": "WeSetup’dagi sutkalik namunalar jurnali va dezvositalar jurnalida namuna olingan vaqt, ishlatilgan eritma hamda 48 soatdan keyin utilizatsiya qilingani qayd etiladi — smenalar kechagi va oldingi kungi bankalarni adashtirib yubormaydi."
     },
     {
       "type": "faq",
       "items": [
         {
           "q": "Kafeda tetrapakdagi pasterizatsiyalangan suyuq melanj ishlatilsa, tuxum yuvish joyi kerakmi?",
-          "a": "YoвЂq. Sanoat usulida pasterizatsiyalangan melanj uchun poвЂstloq yuvish vannalari talab etilmaydi вЂ” faqat qabuldagi VSD, saqlash harorati va ochilgan qadoq muddati nazorat qilinadi."
+          "a": "Yo‘q. Sanoat usulida pasterizatsiyalangan melanj uchun po‘stloq yuvish vannalari talab etilmaydi — faqat qabuldagi VSD, saqlash harorati va ochilgan qadoq muddati nazorat qilinadi."
         },
         {
-          "q": "SarigвЂi suyuq qovurilgan tuxum yoki pashot tayyorlash mumkinmi?",
-          "a": "Bolalar, taвЂ™lim, tibbiyot va ijtimoiy muassasalarda sarigвЂi toвЂliq pishmagan tuxumli taomlar taqiqlanadi; restoranlarda esa texnologik kartaga rioya qilgan holda ishlov berilgan sifatli tuxum yoki pasterizatsiyalangan tuxum mahsulotlari ishlatiladi."
+          "q": "Sarig‘i suyuq qovurilgan tuxum yoki pashot tayyorlash mumkinmi?",
+          "a": "Bolalar, ta’lim, tibbiyot va ijtimoiy muassasalarda sarig‘i to‘liq pishmagan tuxumli taomlar taqiqlanadi; restoranlarda esa texnologik kartaga rioya qilgan holda ishlov berilgan sifatli tuxum yoki pasterizatsiyalangan tuxum mahsulotlari ishlatiladi."
         },
         {
           "q": "Besh kunlik oshxonada juma kungi sutkalik namunalar dam olish kunlari nima qilinadi?",
