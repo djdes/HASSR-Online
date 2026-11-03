@@ -33,7 +33,12 @@ env:
   # "engines" mismatches during npm ci.
   NODE_VERSION: "22"
 
-# Гейт и выгрузка архива идут ПАРАЛЛЕЛЬНО, сервер трогаем только после
+# С 2026-11-03 деплой НЕ ждёт гейта: сборка на сервере начинается сразу
+# после выгрузки архива, а type-check и тесты идут параллельно и только
+# сигналят в Telegram, если упали (минус ~4 мин на каждый деплой). Сборка
+# идёт в отдельный каталог — упавший build прод не трогает.
+#
+# Раньше: гейт и выгрузка архива шли ПАРАЛЛЕЛЬНО, сервер трогали только после
 # зелёного гейта. Раньше всё шло одной цепочкой: type-check (1.5 мин) →
 # тесты (4.5 мин: 415 файлов, каждый — свой процесс) → выгрузка → сервер,
 # и деплой занимал 13–15 минут. Тесты делятся на 4 шарда (`--test-shard`):
@@ -274,7 +279,8 @@ jobs:
           target: ${{ env.APP_DIR }}
 
   deploy:
-    needs: [gate, upload]
+    # Без gate: проверки не задерживают выкатку (см. комментарий над jobs).
+    needs: [upload]
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     # 45, а не 30: три SSH-шага в сумме просят до 55 минут в худшем
@@ -930,13 +936,18 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           SHORT_SHA: ${{ github.sha }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
           if [ -z "$BOT_TOKEN" ] || [ -z "$CHAT_ID" ]; then
             echo "[notify] секреты не заданы — пропуск"
             exit 0
           fi
           FIRST_LINE=$(printf '%s' "$COMMIT_MSG" | head -n1 | cut -c1-120)
-          TEXT=$(printf '❌ Деплой wesetup.ru упал\nКоммит %s: %s\nПрод остался на предыдущей версии.\nЛог: %s' "${SHORT_SHA:0:8}" "$FIRST_LINE" "$RUN_URL")
+          if [ "$DEPLOY_RESULT" = "success" ]; then
+            TEXT=$(printf '⚠️ wesetup.ru: коммит выкачен, но проверки (типы/тесты) упали\nКоммит %s: %s\nНужно починить следующим коммитом.\nЛог: %s' "${SHORT_SHA:0:8}" "$FIRST_LINE" "$RUN_URL")
+          else
+            TEXT=$(printf '❌ Деплой wesetup.ru упал\nКоммит %s: %s\nПрод остался на предыдущей версии.\nЛог: %s' "${SHORT_SHA:0:8}" "$FIRST_LINE" "$RUN_URL")
+          fi
           curl -sS --max-time 20 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${CHAT_ID}" \
             --data-urlencode "text=${TEXT}" \
