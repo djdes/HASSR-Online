@@ -1,7 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { MasterCorrectionError, planMasterCorrection, recoverMasterDelivery } from "@/lib/master-brakerage-correction";
-import { masterBrakerageHistoryInputSchema, type MasterBrakerageHistoryBatch, type MasterBrakerageHistoryInput } from "@/lib/master-brakerage-history";
+import { batchReachedObject, masterBrakerageHistoryInputSchema, type MasterBrakerageHistoryBatch, type MasterBrakerageHistoryInput } from "@/lib/master-brakerage-history";
+import { addMasterBrakerageToPool, type MasterBrakerageOrgResult } from "@/lib/master-brakerage";
+import { normalizeTypedTime } from "@/lib/finished-product-bulk";
 import { isPoolObjectInPool } from "@/lib/master-directory";
 
 /** Ключ получателя: объект пула (организация или её точка), у старых выгрузок — организация. */
@@ -72,4 +74,49 @@ export async function correctMasterDistribution(params: {
     await tx.auditLog.create({ data: { organizationId: params.masterOrgId, userId: params.userId, userName: params.userName, action: "master_brakerage.input_edited", entity: "MasterBrakerageBatch", entityId: batch.id, details: { scope: params.scope, organizationIds: ids, date: params.input.date, changedDocuments: changed.length } } });
     return { batch, changed };
   }, { timeout: 30_000 });
+}
+
+/**
+ * Дослать прошлую выгрузку объектам пула, подключённым после неё: те же
+ * строки и дата, что в истории сейчас, — обычной записью в их журналы.
+ * Получившие её раньше объекты пропускаются, итог дописывается в историю.
+ */
+export async function sendMasterBatchToNewObjects(params: { batchId: string; masterOrgId: string; organizationIds: string[] }) {
+  const current = await db.masterBrakerageBatch.findFirst({ where: { id: params.batchId, organizationId: params.masterOrgId } });
+  if (!current) throw new MasterCorrectionError("Выгрузка не найдена.");
+  const input = masterBrakerageHistoryInputSchema.parse(current.input);
+  const recipientsOf = (result: Prisma.JsonValue) => {
+    const saved = result && typeof result === "object" && !Array.isArray(result) ? result as Record<string, Prisma.JsonValue> : {};
+    return { saved, organizations: (Array.isArray(saved.organizations) ? saved.organizations : []) as unknown as MasterBrakerageOrgResult[] };
+  };
+  const fresh = [...new Set(params.organizationIds)].filter(id => !batchReachedObject(recipientsOf(current.result).organizations, id));
+  if (!fresh.length) throw new MasterCorrectionError("Отмеченные пищеблоки уже получили эту выгрузку.");
+  const sent = await addMasterBrakerageToPool({
+    masterOrgId: params.masterOrgId,
+    rows: input.rows,
+    common: { ...input.common, date: input.date, time: normalizeTypedTime(input.common.time) },
+    dryRun: false,
+    organizationIds: fresh,
+  });
+  // Итог — в историю выгрузки: дальнейшие исправления пойдут и в эти пищеблоки.
+  const batch = await db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM "MasterBrakerageBatch" WHERE id = ${current.id} FOR UPDATE`;
+    const latest = await tx.masterBrakerageBatch.findUniqueOrThrow({ where: { id: current.id } });
+    const { saved, organizations } = recipientsOf(latest.result);
+    const merged = [...organizations.filter(org => !sent.organizations.some(next => recipientKey(next) === recipientKey(org))), ...sent.organizations];
+    return tx.masterBrakerageBatch.update({ where: { id: current.id }, data: {
+      updatedAt: new Date(Math.max(Date.now(), latest.updatedAt.getTime() + 1)),
+      result: JSON.parse(JSON.stringify({
+        ...saved,
+        organizations: merged,
+        totals: {
+          added: merged.reduce((sum, org) => sum + org.added, 0),
+          skipped: merged.reduce((sum, org) => sum + (org.skipped ?? 0), 0),
+          organizations: merged.filter(org => org.added > 0).length,
+          failed: merged.filter(org => org.error).length,
+        },
+      })) as Prisma.InputJsonValue,
+    } });
+  });
+  return { batch, organizations: sent.organizations };
 }

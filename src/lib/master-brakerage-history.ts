@@ -20,3 +20,20 @@ export type MasterBrakerageHistoryBatch = {
   /** `targetId` — ключ объекта пула (организация или `<организация>:<точка>`), есть у выгрузок после 2026-10-26. */
   result?: { organizations: Array<{ organizationId: string; buildingId?: string | null; targetId?: string; organizationName: string; documentId: string | null; added: number; skippedNames?: string[]; delivery?: MasterDelivery }> } | null;
 };
+
+type BatchRecipient = NonNullable<MasterBrakerageHistoryBatch["result"]>["organizations"][number] & { skipped?: number };
+
+/** Объект пула уже получил выгрузку (у старых выгрузок без `targetId` — по организации). */
+export function batchReachedObject(recipients: readonly BatchRecipient[], objectId: string): boolean {
+  const organizationId = objectId.split(":")[0];
+  return recipients.some((recipient) =>
+    Boolean(recipient.documentId) &&
+    (recipient.added > 0 || (recipient.skipped ?? 0) > 0) &&
+    (recipient.targetId ? recipient.targetId === objectId : recipient.organizationId === organizationId)
+  );
+}
+
+/** Подключённые объекты, до которых выгрузка не дошла (подключены позже или была ошибка). */
+export function objectsMissingBatch<T extends { id: string }>(objects: readonly T[], recipients: readonly BatchRecipient[]): T[] {
+  return objects.filter((object) => !batchReachedObject(recipients, object.id));
+}
