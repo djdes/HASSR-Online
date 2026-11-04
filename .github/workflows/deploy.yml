@@ -912,6 +912,10 @@ jobs:
 
             echo "=== Deploy complete ==="
 
+      - name: Notify Yandex & Bing via IndexNow
+        continue-on-error: true
+        run: node scripts/submit-indexnow.mjs --non-fatal
+
   # Деплой падал по несколько раз в день (typecheck-гейт), а узнавали
   # об этом случайно — прод оставался на старом коде. Job ниже
   # срабатывает ТОЛЬКО при падении любого job'а выше (гейт, выгрузка,

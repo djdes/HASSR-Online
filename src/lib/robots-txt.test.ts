@@ -10,6 +10,7 @@ import { GLOSSARY } from "@/content/glossary";
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { NICHES } from "@/content/niches";
 import { SEO_LANDINGS } from "@/content/seo-landings";
+import { INDEXNOW_KEY } from "@/lib/indexnow";
 import {
   isAllowedByRobots,
   renderRobotsTxt,
@@ -69,6 +70,7 @@ describe("robots.txt crawl rules", () => {
       "/b/demo-badge",
       "/google192cf36dfa933fa5.html",
       "/yandex_66925265b553c7d1.html",
+      `/${INDEXNOW_KEY}.txt`,
       ...Object.keys(JOURNAL_INFO).flatMap((code) => [
         `/journals-info/${code}`,
         `/en/journals-info/${code}`,
