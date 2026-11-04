@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import ru.wesetup.helper.auth.SessionStore;
 import ru.wesetup.helper.bt.PrinterInfo;
 import ru.wesetup.helper.template.LabelTemplate;
 
@@ -83,9 +82,7 @@ public class PrintHistoryTest {
     }
 
     @Test
-    public void testEditFromHistoryFillsTheForm() throws Exception {
-        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@example.com",
-                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
+    public void testEditFromHistoryFillsTheForm() {
         PrinterInfo printer = new PrinterInfo("DC:0D:30:12:34:56");
         printer.name = "IP-802BT";
         printer.transport = PrinterInfo.TRANSPORT_CLASSIC;
@@ -108,9 +105,7 @@ public class PrintHistoryTest {
     }
 
     @Test
-    public void testTemplatesCanBeViewedWithoutPrinter() throws Exception {
-        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@example.com",
-                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
+    public void testTemplatesCanBeViewedWithoutPrinter() {
         MainActivity main = Robolectric.buildActivity(MainActivity.class).setup().get();
         android.view.View button = main.findViewById(R.id.main_templates);
         assertEquals(android.view.View.VISIBLE, button.getVisibility());

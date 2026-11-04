@@ -1,7 +1,9 @@
 package ru.wesetup.helper;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
@@ -10,10 +12,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
-import android.os.Looper;
-import android.provider.Settings;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Looper;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,10 +43,9 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
-import ru.wesetup.helper.auth.SessionStore;
-import ru.wesetup.helper.catalog.Catalog;
 import ru.wesetup.helper.bt.BtSupport;
 import ru.wesetup.helper.bt.PrinterInfo;
+import ru.wesetup.helper.catalog.Catalog;
 import ru.wesetup.helper.print.LabelRenderer;
 import ru.wesetup.helper.print.MonoBitmap;
 import ru.wesetup.helper.template.Durations;
@@ -54,8 +55,7 @@ import ru.wesetup.helper.template.TemplateValues;
 
 /**
  * Экраны на Robolectric: разметка и тема собираются, переходы и проверки
- * работают, этикетки рисуются настоящим Android Canvas (native graphics).
- * Bluetooth и сеть — тени Robolectric, без реального принтера.
+ * работают без авторизации, этикетки рисуются настоящим Android Canvas.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(application = TestHelperApp.class, sdk = 36)
@@ -71,11 +71,6 @@ public class ScreensTest {
         app = (HelperApp) RuntimeEnvironment.getApplication();
     }
 
-    private void signIn() throws Exception {
-        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@example.com",
-                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
-    }
-
     private PrinterInfo savePrinter() {
         PrinterInfo printer = new PrinterInfo("DC:0D:30:12:34:56");
         printer.name = "IP-802BT";
@@ -86,41 +81,44 @@ public class ScreensTest {
     }
 
     @Test
-    public void testWithoutSessionTheAppAsksToSignIn() {
+    public void testColdStartOpensMainScreenDirectlyWithoutLogin() {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
-        Intent next = shadowOf(activity).getNextStartedActivity();
-        assertNotNull(next);
-        assertEquals(LoginActivity.class.getName(), next.getComponent().getClassName());
-        assertTrue(activity.isFinishing());
+        assertFalse("главный экран открывается сразу без входа", activity.isFinishing());
+        assertNull("редиректа на вход нет", shadowOf(activity).getNextStartedActivity());
+        assertEquals(View.VISIBLE, activity.findViewById(R.id.main_templates).getVisibility());
+        assertEquals(View.VISIBLE, activity.findViewById(R.id.main_empty).getVisibility());
+        assertEquals(0, ((LinearLayout) activity.findViewById(R.id.main_printers)).getChildCount());
+        assertEquals("Печать этикеток маркировки", ((TextView) activity.findViewById(R.id.main_org)).getText().toString());
+        assertEquals("Автономный режим · всё хранится на устройстве",
+                ((TextView) activity.findViewById(R.id.main_status_text)).getText().toString());
+
+        activity.editLabelProfile();
+        androidx.appcompat.app.AlertDialog dialog = (androidx.appcompat.app.AlertDialog) org.robolectric.shadows.ShadowDialog.getLatestDialog();
+        assertNotNull(dialog);
+        ((android.widget.EditText) dialog.findViewById(R.id.profile_org)).setText("Бистро «Север»");
+        ((android.widget.EditText) dialog.findViewById(R.id.profile_site)).setText("sever.bistro");
+        ((android.widget.EditText) dialog.findViewById(R.id.profile_user)).setText("Ольга Иванова");
+        dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick();
+        shadowOf(Looper.getMainLooper()).idle();
+
+        assertEquals("Бистро «Север»", ((TextView) activity.findViewById(R.id.main_org)).getText().toString());
+        assertEquals("Ольга Иванова · sever.bistro", ((TextView) activity.findViewById(R.id.main_user)).getText().toString());
     }
 
     @Test
-    public void testLoginScreenValidatesInputAndShowsServer() {
-        LoginActivity activity = Robolectric.buildActivity(LoginActivity.class).setup().get();
-        assertEquals("Сервер: wesetup.ru", ((TextView) activity.findViewById(R.id.login_server)).getText().toString());
-        activity.findViewById(R.id.login_submit).performClick();
-        TextView error = activity.findViewById(R.id.login_error);
-        assertEquals(View.VISIBLE, error.getVisibility());
-        assertEquals("Введите почту и пароль", error.getText().toString());
+    public void testPrintScreenOpensDirectlyWithoutSession() {
+        Intent intent = new Intent(app, PrintActivity.class);
+        PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
+        assertFalse("экран шаблонов открывается без входа", activity.isFinishing());
+        ChipGroup chips = activity.findViewById(R.id.print_templates);
+        assertEquals(app.templates().all().size(), chips.getChildCount());
     }
 
     @Test
-    public void testRevokedSessionMessageIsShownOnLogin() {
-        Intent intent = new Intent(app, LoginActivity.class)
-                .putExtra(LoginActivity.EXTRA_MESSAGE, app.getString(R.string.login_revoked));
-        LoginActivity activity = Robolectric.buildActivity(LoginActivity.class, intent).setup().get();
-        TextView error = activity.findViewById(R.id.login_error);
-        assertEquals(View.VISIBLE, error.getVisibility());
-        assertTrue(error.getText().toString().contains("отключено"));
-    }
-
-    @Test
-    public void testSavedSessionOpensMainScreenWithPrinterWithoutNetwork() throws Exception {
-        signIn();
+    public void testMainScreenOpensWithPrinterWithoutLogin() {
         savePrinter();
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
-        assertEquals("Кафе «Ромашка»", ((TextView) activity.findViewById(R.id.main_org)).getText().toString());
-        assertEquals("Иван Петров · chef@example.com", ((TextView) activity.findViewById(R.id.main_user)).getText().toString());
+        assertFalse(activity.isFinishing());
         assertEquals("Добавить оборудование", ((MaterialButton) activity.findViewById(R.id.main_add)).getText().toString());
         assertEquals(View.GONE, activity.findViewById(R.id.main_empty).getVisibility());
         LinearLayout printers = activity.findViewById(R.id.main_printers);
@@ -133,19 +131,11 @@ public class ScreensTest {
     }
 
     @Test
-    public void testEmptyMainScreenInvitesToAddEquipment() throws Exception {
-        signIn();
-        MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
-        assertEquals(View.VISIBLE, activity.findViewById(R.id.main_empty).getVisibility());
-        assertEquals(0, ((LinearLayout) activity.findViewById(R.id.main_printers)).getChildCount());
-    }
-
-    @Test
     public void testPrintScreenRendersEveryTemplateWithAndroidCanvas() throws Exception {
-        signIn();
         PrinterInfo printer = savePrinter();
         Intent intent = new Intent(app, PrintActivity.class).putExtra(PrintActivity.EXTRA_ADDRESS, printer.address);
         PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
+        assertFalse(activity.isFinishing());
         ChipGroup chips = activity.findViewById(R.id.print_templates);
         assertEquals(app.templates().all().size(), chips.getChildCount());
         for (int i = 0; i < chips.getChildCount(); i++) {
@@ -177,13 +167,13 @@ public class ScreensTest {
     }
 
     @Test
-    public void testRequiredFieldBlocksPrinting() throws Exception {
-        signIn();
+    public void testRequiredFieldBlocksPrinting() {
         PrinterInfo printer = savePrinter();
         Intent intent = new Intent(app, PrintActivity.class)
                 .putExtra(PrintActivity.EXTRA_ADDRESS, printer.address)
                 .putExtra(PrintActivity.EXTRA_TEMPLATE, "product");
         PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
+        assertFalse(activity.isFinishing());
         ChipGroup chips = activity.findViewById(R.id.print_templates);
         assertEquals("Маркировка продукта", ((Chip) chips.findViewById(chips.getCheckedChipId())).getText().toString());
         LinearLayout fields = activity.findViewById(R.id.print_fields);
@@ -192,14 +182,10 @@ public class ScreensTest {
         ((TextInputEditText) product.findViewById(R.id.field_input)).setText("");
         activity.findViewById(R.id.print_submit).performClick();
         assertEquals("Заполните «Продукт»", String.valueOf(product.getError()));
-        // Ответственный подставлен из входа.
-        TextInputLayout employee = (TextInputLayout) fields.getChildAt(3);
-        assertEquals("Иван Петров", String.valueOf(((TextInputEditText) employee.findViewById(R.id.field_input)).getText()));
     }
 
     @Test
-    public void testScanListsTheAiyinPrinterFirst() throws Exception {
-        signIn();
+    public void testScanListsTheAiyinPrinterFirst() {
         shadowOf(app).grantPermissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT);
         BluetoothAdapter adapter = BtSupport.adapter(app);
         shadowOf(adapter).setEnabled(true);
@@ -221,7 +207,6 @@ public class ScreensTest {
         assertEquals("JBL Flip 5", ((TextView) list.getChildAt(1).findViewById(R.id.device_name)).getText().toString());
     }
 
-    /** Поля шаблона, которым не задали пример, — умолчаниями или первым вариантом. */
     private static void fillFields(TemplateValues values, LabelTemplate template) {
         for (TemplateField field : template.fields) {
             switch (field.type) {
@@ -239,7 +224,6 @@ public class ScreensTest {
         }
     }
 
-    /** Класс устройства Bluetooth: конструктор скрыт в SDK, но есть в Android. */
     private static BluetoothClass bluetoothClass(int value) throws Exception {
         Constructor<BluetoothClass> constructor = BluetoothClass.class.getDeclaredConstructor(int.class);
         constructor.setAccessible(true);
@@ -259,7 +243,6 @@ public class ScreensTest {
 
     @Test
     public void testUnnamedPrinterFoundByBluetoothClassIsShownOthersBehindButton() throws Exception {
-        signIn();
         BluetoothAdapter adapter = bluetoothReady();
         BluetoothDevice speaker = adapter.getRemoteDevice("00:11:22:33:44:55");
         shadowOf(speaker).setName("JBL Flip 5");
@@ -268,7 +251,6 @@ public class ScreensTest {
         shadowOf(adapter).setBondedDevices(bonded);
         ScanActivity activity = Robolectric.buildActivity(ScanActivity.class).setup().get();
 
-        // Классический поиск нашёл два устройства без имени: принтер (Imaging/Printer) и наушники.
         BluetoothDevice printer = adapter.getRemoteDevice("DC:0D:30:12:34:56");
         BluetoothDevice headphones = adapter.getRemoteDevice("66:77:88:99:AA:BB");
         app.sendBroadcast(new Intent(BluetoothDevice.ACTION_FOUND)
@@ -293,14 +275,12 @@ public class ScreensTest {
         showAll.performClick();
         assertEquals(3, visibleRows(list));
         assertEquals("Скрыть устройства без имени", showAll.getText().toString());
-        // Принтер нашёлся — подсказка «не нашёлся?» не нужна даже после конца поиска.
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(41));
         assertEquals(View.GONE, activity.findViewById(R.id.scan_help).getVisibility());
     }
 
     @Test
-    public void testHelpWithBluetoothSettingsAppearsWhenScanEndsWithoutPrinter() throws Exception {
-        signIn();
+    public void testHelpWithBluetoothSettingsAppearsWhenScanEndsWithoutPrinter() {
         BluetoothAdapter adapter = bluetoothReady();
         BluetoothDevice speaker = adapter.getRemoteDevice("00:11:22:33:44:55");
         shadowOf(speaker).setName("JBL Flip 5");
@@ -320,14 +300,12 @@ public class ScreensTest {
         assertNotNull(next);
         assertEquals(Settings.ACTION_BLUETOOTH_SETTINGS, next.getAction());
 
-        // «Искать снова» прячет подсказку до конца нового поиска.
         activity.findViewById(R.id.scan_again).performClick();
         assertEquals(View.GONE, help.getVisibility());
     }
 
     @Test
-    public void testCatalogFromTheSiteSuggestsProductsAndFillsShelfLifeAndStorage() throws Exception {
-        signIn();
+    public void testCatalogSuggestsProductsAndFillsShelfLifeAndStorage() {
         PrinterInfo printer = savePrinter();
         app.catalog().replaceForTest(Catalog.parse("{\"version\":\"v1\","
                 + "\"products\":[{\"name\":\"Котлеты куриные (п/ф)\",\"shelfLifeHours\":36,\"storage\":\"0…+4 °C\"}],"
@@ -337,7 +315,6 @@ public class ScreensTest {
                 .putExtra(PrintActivity.EXTRA_TEMPLATE, "semi-finished");
         PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
         LinearLayout fields = activity.findViewById(R.id.print_fields);
-        // Наименование, изготовлено, срок, хранение, количество, изготовил.
         TextInputLayout product = (TextInputLayout) fields.getChildAt(0);
         View productInput = product.findViewById(R.id.field_input);
         assertTrue("у продукта — список из справочника",
@@ -359,22 +336,19 @@ public class ScreensTest {
         TextInputLayout storage = (TextInputLayout) fields.getChildAt(3);
         assertEquals("0…+4 °C", String.valueOf(((android.widget.EditText) storage.findViewById(R.id.field_input)).getText()));
         assertEquals(activity.getString(R.string.print_catalog_filled), String.valueOf(product.getHelperText()));
-        // Блюдо без срока в справочнике ничего не подставляет.
         activity.applyProduct("Суп гороховый", product);
         assertEquals("0…+4 °C", String.valueOf(((android.widget.EditText) storage.findViewById(R.id.field_input)).getText()));
         app.catalog().clear();
     }
 
     @Test
-    public void testProductionTemplateOffersOptionsAndDateOnlyFields() throws Exception {
-        signIn();
+    public void testProductionTemplateOffersOptionsAndDateOnlyFields() {
         PrinterInfo printer = savePrinter();
         Intent intent = new Intent(app, PrintActivity.class)
                 .putExtra(PrintActivity.EXTRA_ADDRESS, printer.address)
                 .putExtra(PrintActivity.EXTRA_TEMPLATE, "incoming");
         PrintActivity activity = Robolectric.buildActivity(PrintActivity.class, intent).setup().get();
         LinearLayout fields = activity.findViewById(R.id.print_fields);
-        // Продукт, поставщик, партия, поступило, годен до, хранение, принял.
         assertEquals(7, fields.getChildCount());
         TextInputLayout expires = (TextInputLayout) fields.getChildAt(4);
         assertEquals("Годен до (по документам)", expires.getHint().toString());
@@ -385,7 +359,6 @@ public class ScreensTest {
         View storageInput = storage.findViewById(R.id.field_input);
         assertTrue(storageInput instanceof com.google.android.material.textfield.MaterialAutoCompleteTextView);
         assertEquals("+2…+6 °C", String.valueOf(((android.widget.EditText) storageInput).getText()));
-        // Своё значение вписать можно — это подсказки, а не жёсткий список.
         ((android.widget.EditText) storageInput).setText("+1…+3 °C");
         assertEquals("+1…+3 °C", String.valueOf(((android.widget.EditText) storageInput).getText()));
     }

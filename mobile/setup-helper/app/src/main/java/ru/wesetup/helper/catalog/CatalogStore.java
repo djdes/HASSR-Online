@@ -5,22 +5,12 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-
-import ru.wesetup.helper.net.ApiClient;
 
 /**
- * Копия справочников сайта на телефоне (продукты, блюда, поставщики,
- * сотрудники) — подсказки в полях этикеток.
- *
- * <p>Как и фирменная шапка: скачивается при входе, при открытии приложения и
- * когда появляется сеть, и только если на сайте новее; без сети подсказывает
- * последняя копия. Выход из аккаунта её стирает. Сеть — вне блокировки:
- * экран печати читает справочник, пока идёт загрузка.
+ * Локальный справочник подсказок на телефоне (продукты, блюда, поставщики,
+ * сотрудники) — подсказки в полях этикеток без подключения к интернету.
  */
 public final class CatalogStore {
 
@@ -53,38 +43,13 @@ public final class CatalogStore {
         return catalog;
     }
 
-    /** Скачать, если на сайте новее. Вызывать не из главного потока. */
-    public boolean refresh(ApiClient api, String server, String token) throws IOException {
-        String json = api.fetchCatalog(server, token, catalog().version);
-        if (json == null) return false;
-        Catalog parsed;
-        try {
-            parsed = Catalog.parse(json);
-        } catch (IllegalArgumentException e) {
-            throw new IOException(e.getMessage(), e);
-        }
-        synchronized (this) {
-            File temp = new File(file.getParentFile(), "catalog.json.tmp");
-            try (OutputStream out = new FileOutputStream(temp)) {
-                out.write(json.getBytes(StandardCharsets.UTF_8));
-            }
-            //noinspection ResultOfMethodCallIgnored
-            file.delete();
-            if (!temp.renameTo(file)) throw new IOException("Справочник не сохранён");
-            catalog = parsed;
-            loaded = true;
-        }
-        Log.i(TAG, "Справочник обновлён: " + parsed.version);
-        return true;
-    }
-
     /** Подставить справочник без сети — для тестов экранов. */
     public synchronized void replaceForTest(Catalog value) {
         catalog = value;
         loaded = true;
     }
 
-    /** Выход из аккаунта: продукты и сотрудники заведения на телефоне не остаются. */
+    /** Сбросить сохранённую копию справочника. */
     public synchronized void clear() {
         //noinspection ResultOfMethodCallIgnored
         file.delete();

@@ -2,7 +2,9 @@ package ru.wesetup.helper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 import android.app.job.JobScheduler;
 import android.content.pm.PackageInfo;
@@ -20,19 +22,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import ru.wesetup.helper.auth.SessionStore;
-
 /**
- * Вариант для Google Play: самообновления нет совсем — ни разрешения на
- * установку пакетов, ни фонового задания, ни плашки (политика Play).
- * Запускается только в варианте play: {@code testPlayDebugUnitTest}.
+ * Вариант для Google Play: ни самообновления, ни сетевых разрешений, ни экрана
+ * входа — открывается сразу главный экран, все шаблоны доступны офлайн.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(application = TestHelperApp.class, sdk = 36)
 public class PlayFlavorTest {
 
     @Test
-    public void testNoSelfUpdatePermissionsOrJob() throws Exception {
+    public void testNoSelfUpdateOrNetworkPermissionsOrJob() throws Exception {
         assertFalse(BuildConfig.SELF_UPDATE);
         HelperApp app = (HelperApp) RuntimeEnvironment.getApplication();
         PackageInfo info = app.getPackageManager().getPackageInfo(app.getPackageName(), PackageManager.GET_PERMISSIONS);
@@ -41,21 +40,19 @@ public class PlayFlavorTest {
         assertFalse(permissions.contains("android.permission.REQUEST_INSTALL_PACKAGES"));
         assertFalse(permissions.contains("android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"));
         assertFalse(permissions.contains("android.permission.RECEIVE_BOOT_COMPLETED"));
-        // Bluetooth и сеть — на месте.
+        assertFalse(permissions.contains("android.permission.INTERNET"));
+        assertFalse(permissions.contains("android.permission.ACCESS_NETWORK_STATE"));
         assertTrue(permissions.contains("android.permission.BLUETOOTH_CONNECT"));
-        assertTrue(permissions.contains("android.permission.INTERNET"));
 
-        // Ни одного фонового задания: в site-варианте это проверка обновлений.
         JobScheduler scheduler = app.getSystemService(JobScheduler.class);
         assertTrue(scheduler.getAllPendingJobs().isEmpty());
     }
 
     @Test
-    public void testMainScreenHasNoUpdateCard() throws Exception {
-        HelperApp app = (HelperApp) RuntimeEnvironment.getApplication();
-        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@example.com",
-                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
+    public void testMainScreenOpensWithoutSessionAndHasNoUpdateCard() {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
+        assertFalse("главный экран не должен закрываться без сессии", activity.isFinishing());
+        assertNull("редиректа на вход быть не должно", shadowOf(activity).getNextStartedActivity());
         assertEquals(View.GONE, activity.findViewById(R.id.main_update).getVisibility());
     }
 }

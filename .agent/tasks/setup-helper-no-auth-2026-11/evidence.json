@@ -1,0 +1,48 @@
+{
+  "taskId": "setup-helper-no-auth-2026-11",
+  "baseCommit": "e5717b31",
+  "branch": "feat/setup-helper-no-auth",
+  "status": "PASS",
+  "acceptanceCriteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS"
+  },
+  "checks": {
+    "gradleTestsAndBuilds": {
+      "exitCode": 0,
+      "actionableTasks": 179,
+      "rawArtifacts": "raw/build-artifacts.json",
+      "rawPlayManifest": "raw/playRelease-AndroidManifest.xml"
+    },
+    "setupHelperWebTests": {
+      "exitCode": 0,
+      "passed": 3,
+      "failed": 0
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "raw": "raw/typecheck.txt"
+    },
+    "testGate": {
+      "exitCode": 0,
+      "passed": 5618,
+      "failed": 0,
+      "raw": "raw/test-gate.txt"
+    },
+    "liveEmulatorVerification": {
+      "exitCode": 0,
+      "avd": "wesetup_test",
+      "device": "emulator-5554",
+      "package": "ru.wesetup.helper",
+      "versionName": "1.5.0",
+      "versionCode": 8,
+      "rawProof": "raw/emulator-adb-proof.txt",
+      "screenshots": [
+        "raw/emulator-main.png",
+        "raw/emulator-print.png"
+      ]
+    }
+  }
+}

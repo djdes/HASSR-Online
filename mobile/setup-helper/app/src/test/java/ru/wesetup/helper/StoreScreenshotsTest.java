@@ -30,14 +30,12 @@ import java.io.FileOutputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import ru.wesetup.helper.auth.SessionStore;
 import ru.wesetup.helper.bt.PrinterInfo;
 
 /**
- * Скриншоты для карточки Google Play: настоящие экраны приложения,
+ * Скриншоты для карточки Google Play: настоящие экраны приложения без входа,
  * нарисованные Android Canvas в Robolectric, 1080×1920 (9:16). Кладутся в
- * {@code app/build/store-screenshots/}, CI выгружает их артефактом; в
- * карточку — после оформления подписями (store/google-play/).
+ * {@code app/build/store-screenshots/}, CI выгружает их артефактом.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(application = TestHelperApp.class, sdk = 36, qualifiers = "w360dp-h640dp-xxhdpi")
@@ -45,7 +43,6 @@ import ru.wesetup.helper.bt.PrinterInfo;
 public class StoreScreenshotsTest {
 
     private static final long NOW = 1792927800000L; // 25.10.2026 14:30 МСК
-    /** Размер кадра — из экрана Robolectric (qualifiers): телефон 1080×1920, планшеты 1200×1920 и 1600×2560. */
     private int width;
     private int height;
 
@@ -58,11 +55,6 @@ public class StoreScreenshotsTest {
         android.util.DisplayMetrics metrics = app.getResources().getDisplayMetrics();
         width = metrics.widthPixels;
         height = metrics.heightPixels;
-    }
-
-    private void signIn() throws Exception {
-        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@kafe-romashka.ru",
-                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
     }
 
     private PrinterInfo savePrinter() {
@@ -141,14 +133,18 @@ public class StoreScreenshotsTest {
         out = new File("build/store-screenshots/" + device);
         //noinspection ResultOfMethodCallIgnored
         out.mkdirs();
-        LoginActivity login = Robolectric.buildActivity(LoginActivity.class).setup().get();
-        save(screen(login), "1-login.png");
 
-        signIn();
+        // 1. Первый запуск без принтера и без входа: шаблоны доступны сразу.
+        MainActivity cold = Robolectric.buildActivity(MainActivity.class).setup().get();
+        save(screen(cold), "1-start.png");
+
+        // 2. Главный экран с подключённым принтером и локальной подписью заведения.
+        app.labelProfile().save("Кафе «Ромашка»", "wesetup.ru", "Иван Петров");
         PrinterInfo printer = savePrinter();
         MainActivity main = Robolectric.buildActivity(MainActivity.class).setup().get();
         save(screen(main), "2-main.png");
 
+        // 3. Экран печати по шаблону с живым предпросмотром этикетки.
         Intent intent = new Intent(app, PrintActivity.class)
                 .putExtra(PrintActivity.EXTRA_ADDRESS, printer.address)
                 .putExtra(PrintActivity.EXTRA_TEMPLATE, "product");
@@ -157,6 +153,7 @@ public class StoreScreenshotsTest {
         ShadowLooper.idleMainLooper(300, java.util.concurrent.TimeUnit.MILLISECONDS);
         save(screen(print), "3-print.png");
 
+        // 4. История печати — повтор одним нажатием.
         PrintHistory history = new PrintHistory(app);
         history.add(entry("product", "Маркировка продукта", "Борщ украинский", 2, NOW - 3 * 3600_000L));
         history.add(entry("defrost", "Разморозка", "Филе куриное", 1, NOW - 3600_000L));

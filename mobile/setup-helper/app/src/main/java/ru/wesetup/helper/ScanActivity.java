@@ -25,7 +25,7 @@ import ru.wesetup.helper.bt.DeviceScanner;
 import ru.wesetup.helper.bt.FoundDevice;
 import ru.wesetup.helper.bt.PrinterInfo;
 import ru.wesetup.helper.bt.PrinterManager;
-import ru.wesetup.helper.net.HelperEvents;
+
 
 /**
  * «Добавить оборудование»: поиск Bluetooth-устройств телефона и
@@ -192,7 +192,7 @@ public final class ScanActivity extends BaseActivity implements DeviceScanner.Li
                     if (info.name == null) info.name = previous.name;
                 }
                 app.printerStore().save(info);
-                app.sync().enqueue(HelperEvents.printerConnected(info, System.currentTimeMillis()));
+
                 Toast.makeText(ScanActivity.this, R.string.scan_connected, Toast.LENGTH_SHORT).show();
                 finish();
             }

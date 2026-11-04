@@ -1,0 +1,26 @@
+﻿[
+    {
+        "name":  "app-play-debug.apk",
+        "path":  "mobile/setup-helper/app/build/outputs/apk/play/debug/app-play-debug.apk",
+        "bytes":  6619386,
+        "sha256":  "17e8c00855a525f74f3a09bad465d7567b1e9f9e0df32a473de9a5a47f9b9696"
+    },
+    {
+        "name":  "app-site-debug.apk",
+        "path":  "mobile/setup-helper/app/build/outputs/apk/site/debug/app-site-debug.apk",
+        "bytes":  6621042,
+        "sha256":  "c1429b9df3a959863ef2482b5f069503acb960e6de17ccc503d54de6ca8ad7c7"
+    },
+    {
+        "name":  "app-site-release.apk",
+        "path":  "mobile/setup-helper/app/build/outputs/apk/site/release/app-site-release.apk",
+        "bytes":  1980186,
+        "sha256":  "722619d4364efb4e4cef40173284a0ecf3ad595c96b6d2957549e4d3fd78b08c"
+    },
+    {
+        "name":  "app-play-release.aab",
+        "path":  "mobile/setup-helper/app/build/outputs/bundle/playRelease/app-play-release.aab",
+        "bytes":  2660493,
+        "sha256":  "d2d0534b76074ccd7a146e7daf9a4f0ae37201d0d66733dc82f98c675e60682c"
+    }
+]

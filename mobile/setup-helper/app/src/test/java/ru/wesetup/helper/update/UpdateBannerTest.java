@@ -32,7 +32,6 @@ import ru.wesetup.helper.HelperApp;
 import ru.wesetup.helper.MainActivity;
 import ru.wesetup.helper.R;
 import ru.wesetup.helper.TestHelperApp;
-import ru.wesetup.helper.auth.SessionStore;
 
 /** Плашка обновления на главном экране: что написано и куда ведёт кнопка. */
 @RunWith(RobolectricTestRunner.class)
@@ -42,10 +41,8 @@ public class UpdateBannerTest {
     private HelperApp app;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         app = (HelperApp) RuntimeEnvironment.getApplication();
-        app.sessions().save(new SessionStore.Session("token-123", "device-1", "Иван Петров", "chef@example.com",
-                "Кафе «Ромашка»", "https://wesetup.ru", 1L));
     }
 
     /** На сайте — сборка новее установленной, уже скачанная и проверенная. */
@@ -75,6 +72,7 @@ public class UpdateBannerTest {
 
     @Test
     public void testBannerAsksForInstallPermissionOnceThenUpdatesItself() throws Exception {
+        org.junit.Assume.assumeTrue(BuildConfig.SELF_UPDATE);
         downloadedUpdate();
         shadowOf(app.getPackageManager()).setCanRequestPackageInstalls(false);
         ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup();
