@@ -1,0 +1,190 @@
+/* Страница акции по визитке — свечение и движение. Всё движение выключается
+   при prefers-reduced-motion (внизу файла). */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #070b1a;
+  color: #ffffff;
+  isolation: isolate;
+}
+
+/* Ореолы: три размытых пятна медленно дрейфуют. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.blobA,
+.blobB,
+.blobC {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  will-change: transform;
+}
+.blobA {
+  width: 620px;
+  height: 620px;
+  left: -180px;
+  top: -200px;
+  background: #5566f6;
+  opacity: 0.45;
+  animation: driftA 18s ease-in-out infinite alternate;
+}
+.blobB {
+  width: 560px;
+  height: 560px;
+  right: -200px;
+  top: 30%;
+  background: #7a5cff;
+  opacity: 0.35;
+  animation: driftB 22s ease-in-out infinite alternate;
+}
+.blobC {
+  width: 420px;
+  height: 420px;
+  left: 30%;
+  bottom: -220px;
+  background: #3ddca4;
+  opacity: 0.18;
+  animation: driftA 26s ease-in-out infinite alternate-reverse;
+}
+@keyframes driftA {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(120px, 80px, 0) scale(1.15); }
+}
+@keyframes driftB {
+  from { transform: translate3d(0, 0, 0) scale(1.05); }
+  to { transform: translate3d(-140px, -60px, 0) scale(0.95); }
+}
+
+/* Тонкая сетка, тающая к краям. */
+.grid {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at 50% 20%, #000 15%, transparent 70%);
+}
+
+/* Переливающаяся цифра скидки. */
+.shimmer {
+  background: linear-gradient(100deg, #8fa0ff 0%, #a3f7d7 22%, #ffffff 36%, #cabbff 52%, #8fa0ff 70%, #a3f7d7 88%, #ffffff 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+  filter: drop-shadow(0 0 40px rgba(143, 160, 255, 0.45));
+}
+@keyframes shimmer {
+  from { background-position: 0% 50%; }
+  to { background-position: -250% 50%; }
+}
+
+/* Вращающаяся светящаяся рамка (чип промокода, карточка «Премиум»). */
+@property --spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.glowRing {
+  position: relative;
+  isolation: isolate;
+}
+.glowRing::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--spin), #5566f6, #a3f7d7, #cabbff, #7a5cff, #5566f6);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin 5s linear infinite;
+}
+.glowRing::after {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  z-index: -2;
+  border-radius: inherit;
+  background: conic-gradient(from var(--spin), rgba(85, 102, 246, 0.55), rgba(163, 247, 215, 0.35), rgba(202, 187, 255, 0.5), rgba(122, 92, 255, 0.45), rgba(85, 102, 246, 0.55));
+  filter: blur(28px);
+  opacity: 0.55;
+  animation: spin 5s linear infinite;
+}
+@keyframes spin {
+  to { --spin: 360deg; }
+}
+
+/* Блик по кнопке оплаты. */
+.sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  z-index: 1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-18deg);
+  animation: sheen 4.5s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes sheen {
+  0% { left: -60%; }
+  35%, 100% { left: 130%; }
+}
+
+/* Мягкая пульсация бейджа экономии. */
+.pulse {
+  animation: pulse 2.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(163, 247, 215, 0.35); }
+  50% { box-shadow: 0 0 0 8px rgba(163, 247, 215, 0); }
+}
+
+/* Появление блоков при загрузке. */
+.rise {
+  animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.d1 { animation-delay: 80ms; }
+.d2 { animation-delay: 180ms; }
+.d3 { animation-delay: 300ms; }
+.d4 { animation-delay: 420ms; }
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blobA,
+  .blobB,
+  .blobC,
+  .shimmer,
+  .glowRing::before,
+  .glowRing::after,
+  .sheen::after,
+  .pulse,
+  .rise {
+    animation: none !important;
+  }
+  .sheen::after { display: none; }
+}
