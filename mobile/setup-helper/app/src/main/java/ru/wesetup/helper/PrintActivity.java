@@ -102,7 +102,7 @@ public final class PrintActivity extends BaseActivity {
         String address = getIntent().getStringExtra(EXTRA_ADDRESS);
         previewOnly = address == null;
         printer = previewOnly ? previewPrinter() : app.printerStore().get(address);
-        if (printer == null || app.sessions().load() == null) {
+        if (printer == null) {
             finish();
             return;
         }

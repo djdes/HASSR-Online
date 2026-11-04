@@ -16,7 +16,7 @@ Play Console. Русский перевод карточки — `listing-ru.md`
 | Приложение или игра | Приложение |
 | Бесплатное или платное | Бесплатное (платным потом сделать нельзя) |
 | Контактный адрес электронной почты (если спросит) | `support@wesetup.ru` |
-| Заявки | отметить все три галочки: Правила программы для разработчиков; Условия функции подписания приложений в Google Play (ключ выбирается позже, при первом выпуске); Экспортное законодательство США |
+| Заявки | отметить все три галочки: Правила программы для разработчиков; Условия функции подписания приложений в Google Play; Экспортное законодательство США |
 
 ---
 
@@ -37,7 +37,7 @@ Kitchen labels on a Bluetooth printer: templates, use-by dates, print history
 ### Полное описание (до 4000)
 
 ```
-WeSetup Helper prints kitchen and food production labels on a Bluetooth label printer: quickly, with large buttons and without internet. It is part of WeSetup, electronic HACCP food safety logs for restaurants, cafes, canteens and food production.
+WeSetup Helper prints kitchen and food production labels on a Bluetooth label printer — quickly, with large buttons, offline and with no sign-in required.
 
 WHAT YOU CAN PRINT
 • Product label: name, date prepared, use-by date, responsible person
@@ -51,55 +51,28 @@ WHAT YOU CAN PRINT
 • Free text
 
 HOW IT WORKS
-1. Sign in with your venue's WeSetup account.
-2. Tap "Add equipment": the app finds the printer nearby and connects it.
+1. Open the app — no account or registration is required.
+2. Tap "Add equipment": the app finds a Bluetooth label printer nearby and connects it.
 3. Choose a template, fill in the fields and tap "Print". Use-by dates are calculated automatically.
 
 MADE FOR THE KITCHEN
+• Browse all label templates and live previews right away, even without a printer
 • Large template buttons with scroll arrows
-• The preview shows exactly the label the printer will produce
-• Print history: repeat yesterday's label in one tap, or edit it and print again
-• Works offline: labels go straight to the printer
-• Browse all label templates even before you have a printer
+• Exact dot-by-dot preview of the printed label
+• Optional venue header & default staff name stored locally on your device
+• Print history: repeat a recent label in one tap, or edit and print again
+• Works 100% offline: all settings and history stay on your phone
 
 PRINTERS
 Tested with AIYIN IP-802BT (58×40 mm labels). Other Bluetooth label printers that support TSPL commands also work. Label size, gap, print density and rotation are adjustable.
 
 GOOD TO KNOW
 • The app interface is in Russian.
-• A WeSetup account is required. Sign-in is available to venue managers and head chefs.
-• Label texts and print history stay on your phone.
+• No personal data is collected or transmitted.
 
 Support: support@wesetup.ru
 Website: https://wesetup.ru
 ```
-
-### Графика
-
-| Поле | Файл (папка `Графика`) |
-|---|---|
-| Значок приложения | `icon-512.png` |
-| Баннер | `feature-1024x500-en.png` (английский; `feature-1024x500.png` — для русского перевода) |
-| Скриншоты телефона | `Скриншоты/phone/` — все 4 (без русских подписей, для английской карточки) |
-| Скриншоты планшета 7" | `Скриншоты/tablet-7/` — все 4 |
-| Скриншоты планшета 10" | `Скриншоты/tablet-10/` — все 4 |
-| Видео | оставить пустым |
-
-Скриншоты с подписями (`phone-captioned`) — для русского перевода карточки.
-
----
-
-## Экран «Настройки магазина» (Store settings)
-
-| Поле | Значение |
-|---|---|
-| Приложение или игра | Приложение |
-| Категория | Бизнес (Business) |
-| Теги | выбрать из списка: Business, Productivity |
-| Электронная почта | `support@wesetup.ru` |
-| Телефон | `+79996341612` |
-| Сайт | `https://wesetup.ru` |
-| Внешний маркетинг | оставить включённым |
 
 ---
 
@@ -111,27 +84,11 @@ https://wesetup.ru/setup-helper/privacy
 
 ---
 
-## Экран «Доступ к приложению» (App access)
+## Экран «Доступ к приложению» (App access / Учётные данные)
 
-Экран теперь называется «Учётные данные». «В вашем приложении есть закрытые
-разделы?» — «Да» → «Добавить инструкции». Пока приложение в Play, учётную
-запись не удалять, пароль не менять и вход по коду Telegram на ней не
-включать — иначе следующие версии отклонят.
-
-| Поле | Значение |
-|---|---|
-| Название инструкции | `Demo venue account` |
-| Имя пользователя / почта | почта тестовой учётной записи заведения «Test» (управляющий, без кода Telegram) |
-| Пароль | её пароль — у владельца; в этот файл не писать: репозиторий публичный |
-| Другая информация | блок ниже |
-
-```
-Manager account of a demo venue. The interface is in Russian.
-1. Enter the email and password above and tap "Войти" (Sign in).
-2. No printer is needed: on the main screen tap "Посмотреть шаблоны этикеток" (View label templates) to see all templates, fields and the label preview.
-3. Printing needs a Bluetooth TSPL label printer (e.g. AIYIN IP-802BT), added via "Добавить оборудование" (Add equipment).
-No Telegram code is required.
-```
+Выбрать: **«Все функции приложения доступны без специальных прав доступа»**
+(*All functionality in my app is available without any access restrictions*).
+Инструкции и демо-аккаунт не требуются.
 
 ---
 
@@ -151,7 +108,7 @@ No Telegram code is required.
 |---|---|
 | Электронная почта | `support@wesetup.ru` |
 | Категория | последний пункт — All Other App Types («Другие типы приложений») |
-| Все вопросы (насилие, страх, сексуальное содержание, лексика, наркотики, алкоголь, табак, азартные игры, общение пользователей, передача местоположения, цифровые покупки) | Нет |
+| Все вопросы | Нет |
 
 Ожидаемый рейтинг: 3+ / для всех.
 
@@ -166,12 +123,7 @@ No Telegram code is required.
 
 ## Экран «Безопасность данных» (Data safety)
 
-Отметки — по файлу `5. Безопасность данных — ответы.md`. Поля со ссылками:
-
-| Поле | Значение |
-|---|---|
-| Ссылка на удаление аккаунта | `https://wesetup.ru/delete-account` |
-| Политика конфиденциальности (если спросит) | `https://wesetup.ru/setup-helper/privacy` |
+На первый вопрос «Собирает ли ваше приложение какие-либо из обязательных типов пользовательских данных или передаёт их третьим лицам?» ответить **«Нет»** (подробности — в `data-safety.md`).
 
 ---
 
@@ -189,29 +141,13 @@ No Telegram code is required.
 
 ## Экран выпуска (Release)
 
-Файл: `Сборка для загрузки/setup-helper-1.2.1-play.aab`. Название выпуска
-консоль подставит сама (`1.2.1`).
-
-«Что нового в этом выпуске» — вставить целиком (русская часть понадобится,
-если добавите русский перевод карточки; без него оставить только `en-US`):
+«Что нового в этом выпуске»:
 
 ```
 <en-US>
-First Google Play release: print kitchen labels from templates, print history, works offline.
+Standalone release with no sign-in required: kitchen food safety label templates, custom venue header, print history and offline Bluetooth printing.
 </en-US>
 <ru-RU>
-Первая версия в Google Play: печать этикеток по шаблонам для кухни, история печати, работа без интернета.
+Работает сразу без входа и регистрации: шаблоны маркировки кухни, настройка подписи заведения, история печати и офлайн-печать по Bluetooth.
 </ru-RU>
 ```
-
----
-
-## Только для личного аккаунта: закрытое тестирование
-
-Личному аккаунту Google разрешит выпуск для всех только после закрытого
-теста: 12 тестировщиков, 14 дней подряд.
-
-| Поле | Значение |
-|---|---|
-| Название списка тестировщиков | `WeSetup team` |
-| Адрес для отзывов (Feedback URL or email) | `support@wesetup.ru` |

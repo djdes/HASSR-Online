@@ -8,8 +8,8 @@ import { pathToFileURL } from "node:url";
 
 const root = path.resolve(process.argv[2]);
 const shots = [
-  ["1-login.png", "Вход под учётной записью WeSetup вашего заведения"],
-  ["2-main.png", "Принтер подключается за минуту, печать — без интернета"],
+  ["1-start.png", "Работает сразу без регистрации и интернета"],
+  ["2-main.png", "Принтер подключается за минуту по Bluetooth"],
   ["3-print.png", "Шаблон, поля, предпросмотр — и этикетка готова"],
   ["4-history.png", "Вчерашнюю этикетку — повторить одним нажатием"],
 ];
@@ -29,7 +29,6 @@ h1{position:absolute;left:80px;right:80px;top:96px;margin:0;color:#fff;font-fami
 .shot{position:absolute;left:110px;top:430px;width:860px;border-radius:44px;overflow:hidden;box-shadow:0 50px 100px -40px rgba(0,0,0,.8),0 0 0 2px rgba(255,255,255,.15)}
 .shot img{display:block;width:100%}</style></head>
 <body><div id="card"><h1>${caption}</h1><div class="shot"><img src="${img}"></div></div></body></html>`);
-  // Своим файлом, а не setContent: со страницы about:blank Chromium не грузит file:// картинки и шрифты.
   await page.goto(pathToFileURL(html).href, { waitUntil: "load" });
   await page.evaluate(() => document.fonts.ready);
   fs.unlinkSync(html);

@@ -290,6 +290,7 @@ public class UpdaterTest {
 
     @Test
     public void testBackgroundCheckIsScheduledWithNetworkAndSurvivesReboot() {
+        org.junit.Assume.assumeTrue(ru.wesetup.helper.BuildConfig.SELF_UPDATE);
         JobScheduler scheduler = app.getSystemService(JobScheduler.class);
         JobInfo job = null;
         for (JobInfo pending : scheduler.getAllPendingJobs()) {

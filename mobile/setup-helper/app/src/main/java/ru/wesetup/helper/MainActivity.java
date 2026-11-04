@@ -22,16 +22,11 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-import ru.wesetup.helper.auth.SessionStore;
 import ru.wesetup.helper.bt.PrinterInfo;
 import ru.wesetup.helper.bt.PrinterManager;
-import ru.wesetup.helper.net.HelperEvents;
-import ru.wesetup.helper.net.NetworkState;
-import ru.wesetup.helper.net.SyncManager;
 import ru.wesetup.helper.print.LabelSettings;
 import ru.wesetup.helper.print.Tspl;
 import ru.wesetup.helper.template.LabelTemplate;
@@ -39,11 +34,11 @@ import ru.wesetup.helper.update.UpdateInfo;
 import ru.wesetup.helper.update.Updater;
 
 /**
- * Главный экран: кнопка «Добавить оборудование» и подключённые принтеры с
- * пробной этикеткой. Открывается без сети: всё нужное лежит на телефоне.
- * Плашка сверху — про новую версию приложения, если она есть.
+ * Главный экран: открывается сразу без учётной записи и интернета.
+ * Позволяет подключить Bluetooth-принтер, посмотреть шаблоны этикеток,
+ * напечатать пробную или рабочую этикетку и задать локальную подпись.
  */
-public final class MainActivity extends BaseActivity implements SyncManager.Listener, Updater.Listener {
+public final class MainActivity extends BaseActivity implements Updater.Listener {
 
     private HelperApp app;
     private TextView org;
@@ -64,10 +59,6 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = HelperApp.get(this);
-        if (app.sessions().load() == null) {
-            openLogin(null);
-            return;
-        }
         setContentView(R.layout.activity_main);
         Ui.applySystemBarInsets(this, findViewById(R.id.main_root));
 
@@ -95,10 +86,6 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     @Override
     protected void onStart() {
         super.onStart();
-        if (app.sessions().load() == null) return;
-        app.sync().addListener(this);
-        app.sync().requestSync();
-        app.refreshSiteData();
         if (!BuildConfig.SELF_UPDATE) return;
         app.updater().addListener(this);
         // Не чаще раза в 30 минут и только при сети — иначе ни одного запроса.
@@ -108,10 +95,6 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     @Override
     protected void onResume() {
         super.onResume();
-        if (app.sessions().load() == null) {
-            openLogin(null);
-            return;
-        }
         render();
         if (BuildConfig.SELF_UPDATE && app.updater().takeJustUpdated()) {
             Toast.makeText(this, getString(R.string.updated_toast, BuildConfig.VERSION_NAME), Toast.LENGTH_LONG).show();
@@ -121,7 +104,6 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
     @Override
     protected void onStop() {
         super.onStop();
-        app.sync().removeListener(this);
         app.updater().removeListener(this);
     }
 
@@ -130,21 +112,21 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
         if (!isFinishing()) renderUpdate();
     }
 
-    @Override
-    public void onSyncStateChanged() {
-        if (!isFinishing()) renderStatus();
-    }
-
-    @Override
-    public void onSessionRevoked(String message) {
-        openLogin(getString(R.string.login_revoked));
-    }
-
     private void render() {
-        SessionStore.Session session = app.sessions().load();
-        if (session == null) return;
-        org.setText(session.orgName.isEmpty() ? getString(R.string.app_name) : session.orgName);
-        user.setText(session.email.isEmpty() ? session.userName : session.userName + " · " + session.email);
+        LabelProfileStore profile = app.labelProfile();
+        String orgName = profile.orgName();
+        String site = profile.site();
+        String userName = profile.userName();
+        org.setText(orgName.isEmpty() ? getString(R.string.main_standalone_title) : orgName);
+        if (!userName.isEmpty() && !site.isEmpty()) {
+            user.setText(userName + " · " + site);
+        } else if (!userName.isEmpty()) {
+            user.setText(userName);
+        } else if (!site.isEmpty()) {
+            user.setText(site);
+        } else {
+            user.setText(R.string.main_standalone_subtitle);
+        }
         renderStatus();
         renderUpdate();
         renderPrinters();
@@ -256,24 +238,11 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
 
     private void renderStatus() {
         if (statusText == null) return;
-        boolean online = NetworkState.isOnline(this);
-        int count = app.sync().pending();
-        statusIcon.setImageResource(online ? R.drawable.ic_cloud_done : R.drawable.ic_cloud_off);
-        int tint = ContextCompat.getColor(this, online ? R.color.success : R.color.muted);
-        statusIcon.setImageTintList(ColorStateList.valueOf(tint));
-        status.setBackgroundTintList(ColorStateList.valueOf(
-                ContextCompat.getColor(this, online ? R.color.success_soft : R.color.page)));
-        statusText.setText(online ? (count == 0 && !app.printerStore().all().isEmpty()
-                ? getString(R.string.main_synced) : getString(R.string.main_online))
-                : getString(R.string.main_offline));
-        if (count > 0) {
-            pending.setVisibility(View.VISIBLE);
-            String text = getString(R.string.main_pending, count);
-            String error = app.sync().lastError();
-            pending.setText(online && error != null ? text + " — " + error : text);
-        } else {
-            pending.setVisibility(View.GONE);
-        }
+        statusIcon.setImageResource(R.drawable.ic_cloud_done);
+        statusIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.success)));
+        status.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.success_soft)));
+        statusText.setText(R.string.main_status_standalone);
+        pending.setVisibility(View.GONE);
     }
 
     private void renderPrinters() {
@@ -397,7 +366,6 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
                 .setPositiveButton(R.string.printer_remove, (d, w) -> {
                     app.printerStore().remove(printer.address);
                     app.printers().forget(printer.address);
-                    app.sync().enqueue(HelperEvents.printerRemoved(printer, System.currentTimeMillis()));
                     render();
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -444,24 +412,39 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
                 .show();
     }
 
+    /** Диалог локальной подписи этикеток (открывается из меню главного экрана). */
+    void editLabelProfile() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_label_profile, null);
+        LabelProfileStore profile = app.labelProfile();
+        EditText orgInput = view.findViewById(R.id.profile_org);
+        EditText siteInput = view.findViewById(R.id.profile_site);
+        EditText userInput = view.findViewById(R.id.profile_user);
+        orgInput.setText(profile.orgName());
+        siteInput.setText(profile.site());
+        userInput.setText(profile.userName());
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.profile_title)
+                .setView(view)
+                .setPositiveButton(R.string.save, (d, w) -> {
+                    profile.save(textOf(orgInput), textOf(siteInput), textOf(userInput));
+                    render();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenu().add(0, 1, 0, R.string.main_menu_sync);
-        if (BuildConfig.SELF_UPDATE) menu.getMenu().add(0, 3, 1, R.string.main_menu_updates);
-        menu.getMenu().add(0, 2, 2, R.string.main_menu_logout);
-        menu.getMenu().add(0, 4, 3, getString(R.string.main_menu_version, BuildConfig.VERSION_NAME)).setEnabled(false);
+        menu.getMenu().add(0, 1, 0, R.string.main_menu_profile);
+        if (BuildConfig.SELF_UPDATE) menu.getMenu().add(0, 2, 1, R.string.main_menu_updates);
+        menu.getMenu().add(0, 3, 2, getString(R.string.main_menu_version, BuildConfig.VERSION_NAME)).setEnabled(false);
         menu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == 1) {
-                app.sync().requestSync();
-                renderStatus();
-                return true;
-            }
-            if (item.getItemId() == 3) {
-                app.updater().checkAsync(true, this::showCheckResult);
+                editLabelProfile();
                 return true;
             }
             if (item.getItemId() == 2) {
-                confirmLogout();
+                app.updater().checkAsync(true, this::showCheckResult);
                 return true;
             }
             return false;
@@ -469,43 +452,14 @@ public final class MainActivity extends BaseActivity implements SyncManager.List
         menu.show();
     }
 
-    private void confirmLogout() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.main_logout_title)
-                .setMessage(R.string.main_logout_text)
-                .setPositiveButton(R.string.main_menu_logout, (d, w) -> logout())
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
-
-    private void logout() {
-        SessionStore.Session session = app.sessions().load();
-        app.wipeLocalData();
-        if (session != null) {
-            // Отозвать ключ на сервере, если есть сеть; нет — его можно отключить на сайте.
-            app.io().execute(() -> {
-                try {
-                    app.api().logout(session.server, session.token);
-                } catch (IOException ignored) {
-                    // без сети ключ останется до отключения на сайте
-                }
-            });
-        }
-        openLogin(null);
-    }
-
-    private void openLogin(String message) {
-        Intent intent = new Intent(this, LoginActivity.class);
-        if (message != null) intent.putExtra(LoginActivity.EXTRA_MESSAGE, message);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-
     static String formatMm(float value) {
         float rounded = Math.round(value * 10f) / 10f;
         if (rounded == (int) rounded) return String.valueOf((int) rounded);
         return String.format(Locale.ROOT, "%.1f", rounded);
+    }
+
+    private static String textOf(EditText input) {
+        return input.getText() == null ? "" : input.getText().toString();
     }
 
     private static int parseInt(EditText input, int fallback) {

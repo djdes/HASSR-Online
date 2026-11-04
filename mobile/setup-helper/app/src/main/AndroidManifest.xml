@@ -5,9 +5,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Автообновление через сайт: установка своего же APK (человек один раз
-         разрешает «Установку неизвестных приложений»), с Android 12 — без
-         вопроса при каждом обновлении. Фоновая проверка переживает перезагрузку. -->
+    <!-- Автообновление через сайт (только в варианте site): установка своего же APK,
+         с Android 12 — без вопроса при каждом обновлении. В варианте play эти
+         разрешения и сетевые разрешения удаляются (см. src/play/AndroidManifest.xml). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -67,11 +67,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".LoginActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ScanActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
