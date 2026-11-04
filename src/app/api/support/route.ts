@@ -4,8 +4,8 @@ import { db } from "@/lib/db";
 import { requireApiAuth } from "@/lib/auth-helpers";
 import { escapeTelegramHtml as esc } from "@/lib/telegram";
 import {
-  getPlatformAdminEmail,
   notifyPlatformAdmin,
+  sendToPlatformAdminEmails,
 } from "@/lib/platform-admin";
 import { sendFeedbackAdminEmail } from "@/lib/email";
 
@@ -105,12 +105,11 @@ export async function POST(request: Request) {
 
   after(async () => {
     const [tgOk, emailOk] = await Promise.all([
-      notifyPlatformAdmin(adminText, { kind: "support-widget" }),
-      (async () => {
-        const adminEmail = getPlatformAdminEmail();
-        if (!adminEmail) return false;
-        return sendFeedbackAdminEmail({
-          to: adminEmail,
+      // Своё подробное письмо — следом, всем администраторам.
+      notifyPlatformAdmin(adminText, { kind: "support-widget", email: false }),
+      sendToPlatformAdminEmails((to) =>
+        sendFeedbackAdminEmail({
+          to,
           type: "support",
           message: parsed.message,
           userName: user?.name ?? null,
@@ -118,8 +117,8 @@ export async function POST(request: Request) {
           organizationName: orgName,
           phone: user?.phone ?? null,
           submittedAt: report.createdAt,
-        });
-      })(),
+        })
+      ),
     ]);
 
     await db.feedbackReport

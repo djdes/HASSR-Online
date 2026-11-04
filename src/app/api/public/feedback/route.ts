@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { sendFeedbackAdminEmail } from "@/lib/email";
-import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
+import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-admin";
 import { escapeHtml } from "@/lib/html-escape";
 import { clientIp } from "@/lib/client-ip";
 import {
@@ -141,18 +141,18 @@ export async function POST(request: Request) {
       `<a href="${APP_URL}/root/feedback">Открыть панель обращений</a>`,
     ];
 
-    const adminEmail = getPlatformAdminEmail();
     const emailAtts = emailAttachmentPayload(attachments);
     const [telegramOk, emailOk] = await Promise.all([
-      notifyPlatformAdmin(lines.join("\n"), { kind: "feedback" }).catch(
+      // Своё подробное письмо — ниже, всем администраторам.
+      notifyPlatformAdmin(lines.join("\n"), { kind: "feedback", email: false }).catch(
         (error) => {
           console.error("Public feedback telegram failed:", error);
           return false;
         }
       ),
-      adminEmail
-        ? sendFeedbackAdminEmail({
-            to: adminEmail,
+      sendToPlatformAdminEmails((to) =>
+        sendFeedbackAdminEmail({
+            to,
             type: parsed.type,
             message: parsed.message,
             userName: null,
@@ -162,11 +162,11 @@ export async function POST(request: Request) {
             submittedAt: report.createdAt,
             attachmentLinks: emailAtts.links,
             attachments: emailAtts.files,
-          }).catch((error) => {
-            console.error("Public feedback email failed:", error);
-            return false;
           })
-        : Promise.resolve(false),
+      ).catch((error) => {
+        console.error("Public feedback email failed:", error);
+        return false;
+      }),
       // Третьим элементом — деструктуризация выше берёт только первые два.
       sendAttachmentsToPlatformAdmins(
         attachments,

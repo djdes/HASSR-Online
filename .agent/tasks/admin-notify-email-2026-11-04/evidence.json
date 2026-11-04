@@ -1,0 +1,13 @@
+{
+  "task": "admin-notify-email-2026-11-04",
+  "date": "2026-11-04",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "notifyPlatformAdmin → emailPlatformAdmins → getPlatformAdminEmails (env + администраторы, mergeAdminEmails); тест mergeAdminEmails"},
+    "AC2": {"status": "PASS", "proof": "telegramPlatformAdmins → getPlatformAdminRecipientChatIds (env + telegramChatId администраторов, mergeChatIds); тест mergeChatIds"},
+    "AC3": {"status": "PASS", "proof": "email:false + sendToPlatformAdminEmails в feedback, public/feedback, support, bot support, support-threads, demo-request, services/requests, test-notify; sendAttachmentsToPlatformAdmins → все чаты"},
+    "AC4": {"status": "PASS", "proof": "bot support: isPlatformAdminChat → isPlatformAdminChat() из platform-admin (env + администраторы); support.test.ts проходит"},
+    "AC5": {"status": "PASS", "proof": "sendToPlatformAdminEmails ловит ошибку каждого адресата; email и telegram в Promise.all с catch; сбой БД → кеш/пусто, env-чат работает"},
+    "AC6": {"status": "PASS", "proof": "raw/tests.txt; eslint изменённых файлов — 0 ошибок; raw/typecheck-fresh-prisma.txt — 4 ошибки вне задачи (нет пакетов jsqr, modern-screenshot в общем node_modules)"}
+  },
+  "notDone": ["Боевая доставка письма не проверена: на проде один администратор adm…@wesetup.ru — нужен рабочий ящик"]
+}

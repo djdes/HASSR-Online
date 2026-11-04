@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { sendPlatformAdminTestEmail } from "@/lib/email";
 import {
-  getPlatformAdminChatIds,
-  getPlatformAdminEmail,
+  getPlatformAdminEmails,
+  getPlatformAdminRecipientChatIds,
   notifyPlatformAdmin,
+  sendToPlatformAdminEmails,
 } from "@/lib/platform-admin";
 
 /**
@@ -20,8 +21,10 @@ import {
 export async function POST() {
   const session = await requireRoot();
 
-  const chatIds = getPlatformAdminChatIds();
-  const adminEmail = getPlatformAdminEmail();
+  const [chatIds, adminEmails] = await Promise.all([
+    getPlatformAdminRecipientChatIds(),
+    getPlatformAdminEmails(),
+  ]);
   const who = session.user.name ?? session.user.email ?? "ROOT";
   const when = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
 
@@ -32,27 +35,26 @@ export async function POST() {
       "Сюда же будут приходить обращения, регистрации и оплаты.",
       `Запустил: ${who} · ${when}`,
     ].join("\n"),
-    { kind: "test" }
+    // Проверочное письмо — своё, ниже.
+    { kind: "test", email: false }
   ).catch((error) => {
     console.error("[test-notify] telegram failed:", error);
     return false;
   });
 
-  const email = adminEmail
-    ? await sendPlatformAdminTestEmail({
-        to: adminEmail,
-        triggeredBy: who,
-      }).catch((error) => {
-        console.error("[test-notify] email failed:", error);
-        return false;
-      })
-    : false;
+  const email = await sendToPlatformAdminEmails((to) =>
+    sendPlatformAdminTestEmail({ to, triggeredBy: who })
+  ).catch((error) => {
+    console.error("[test-notify] email failed:", error);
+    return false;
+  });
 
   return NextResponse.json({
     ok: true,
     telegram,
     telegramChats: chatIds.length,
     email,
-    emailConfigured: Boolean(adminEmail),
+    emailConfigured: adminEmails.length > 0,
+    emails: adminEmails.length,
   });
 }

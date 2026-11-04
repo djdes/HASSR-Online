@@ -19,7 +19,7 @@ import { renderEmailLayout, sendRawEmail } from "@/lib/email";
 import { demoIcs, isBookableSlot } from "@/lib/demo-slots";
 import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 import { escapeHtml } from "@/lib/html-escape";
-import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
+import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-admin";
 import { demoRequestRateLimiter } from "@/lib/rate-limit";
 import { getServerSession } from "@/lib/server-session";
 import { isEmptySnapshot, readSignupSnapshot } from "@/lib/signup-channel";
@@ -155,19 +155,22 @@ export async function POST(request: Request) {
   const tgOk = await notifyPlatformAdmin(composeDemoAlert(demo, escapeTelegramHtml), {
     kind: "demo_request",
     dedupeKey: `demo:${requestId}`,
+    // Своё письмо с приглашением в календарь — ниже, всем администраторам.
+    email: false,
   }).catch(() => false);
 
   let emailOk = false;
-  const adminEmail = getPlatformAdminEmail();
-  if (adminEmail) {
+  {
     const lines = [`${demo.name}, ${demo.phone}`, organizationName, ...composeDemoComment(demo).split("\n")].filter(
       (line): line is string => Boolean(line),
     );
-    emailOk = await sendRawEmail(
-      adminEmail,
-      slot ? `Показ за 15 минут: ${demoSlotLabel(slot)}, ${demo.name}` : `Показ за 15 минут: ${demo.name}`,
-      `<h2>${escapeHtml(DEMO_SERVICE_TITLE)}</h2><p>${lines.map((line) => escapeHtml(line)).join("<br>")}</p>`,
-      slot ? { attachments: [inviteAttachment(slot, requestId, `Показ WeSetup: ${demo.name}, ${demo.phone}`)] } : undefined,
+    emailOk = await sendToPlatformAdminEmails((to) =>
+      sendRawEmail(
+        to,
+        slot ? `Показ за 15 минут: ${demoSlotLabel(slot)}, ${demo.name}` : `Показ за 15 минут: ${demo.name}`,
+        `<h2>${escapeHtml(DEMO_SERVICE_TITLE)}</h2><p>${lines.map((line) => escapeHtml(line)).join("<br>")}</p>`,
+        slot ? { attachments: [inviteAttachment(slot, requestId, `Показ WeSetup: ${demo.name}, ${demo.phone}`)] } : undefined,
+      ),
     ).catch(() => false);
   }
 

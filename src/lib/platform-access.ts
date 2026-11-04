@@ -264,3 +264,12 @@ export function matchPlatformPreset(sections: readonly PlatformSectionKey[]): Pl
   );
   return preset ? preset.key : null;
 }
+
+/**
+ * «Администратор платформы» для служебных уведомлений: владелец (`isRoot`)
+ * или человек с полным набором разделов (пресет «Администратор»). Им идут
+ * регистрации, оплаты, обращения и сбои — на почту и в Telegram.
+ */
+export function isPlatformAdministrator(user: { isRoot: boolean; platformSections: readonly string[] }): boolean {
+  return user.isRoot || PLATFORM_SECTION_KEYS.every((key) => user.platformSections.includes(key));
+}

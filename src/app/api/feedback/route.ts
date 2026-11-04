@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sendFeedbackAdminEmail, sendFeedbackReceivedEmail } from "@/lib/email";
-import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
+import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-admin";
 import { escapeHtml } from "@/lib/html-escape";
 import { feedbackValidationDescriptor } from "@/lib/feedback-copy";
 import { resolveRequestLocale } from "@/i18n/site-locale";
@@ -163,7 +163,6 @@ export async function POST(request: Request) {
   });
 
   after(async () => {
-    const adminEmail = getPlatformAdminEmail();
     const emailAtts = emailAttachmentPayload(attachments);
     const [telegramOk, emailOk] = await Promise.all([
       notifyPlatformAdmin(
@@ -181,14 +180,15 @@ export async function POST(request: Request) {
           phone,
           pageUrl,
         }),
-        { kind: "feedback" }
+        // Своё подробное письмо — ниже, всем администраторам.
+        { kind: "feedback", email: false }
       ).catch((error) => {
         console.error("Feedback telegram failed:", error);
         return false;
       }),
-      adminEmail
-        ? sendFeedbackAdminEmail({
-            to: adminEmail,
+      sendToPlatformAdminEmails((to) =>
+        sendFeedbackAdminEmail({
+            to,
             type: parsed.type,
             message: parsed.message,
             userName: session.user.name ?? null,
@@ -200,11 +200,11 @@ export async function POST(request: Request) {
             submittedAt: report.createdAt,
             attachmentLinks: emailAtts.links,
             attachments: emailAtts.files,
-          }).catch((error) => {
-            console.error("Feedback email failed:", error);
-            return false;
           })
-        : Promise.resolve(false),
+      ).catch((error) => {
+        console.error("Feedback email failed:", error);
+        return false;
+      }),
       // Дальше — деструктуризация выше берёт только первые два.
       // Скриншот уходит фото с подписью: тикет, текст и страница.
       sendAttachmentsToPlatformAdmins(

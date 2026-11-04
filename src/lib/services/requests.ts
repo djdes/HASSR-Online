@@ -20,8 +20,8 @@ import {
   InsufficientBalanceError,
 } from "@/lib/balance/ledger";
 import {
-  getPlatformAdminEmail,
   notifyPlatformAdmin,
+  sendToPlatformAdminEmails,
 } from "@/lib/platform-admin";
 import { sendRawEmail } from "@/lib/email";
 import { formatServicePrice, isInstantPayable, type PlatformServiceItem } from "./catalog";
@@ -173,19 +173,18 @@ async function notifyAdmin(
   const tgOk = await notifyPlatformAdmin(text, {
     kind: "service",
     dedupeKey: input.requestId,
+    // Своё письмо — ниже, всем администраторам.
+    email: false,
   }).catch(() => false);
 
   let emailOk = false;
-  const adminEmail = getPlatformAdminEmail();
-  if (adminEmail) {
+  {
     const html = `<h2>Заявка на услугу</h2><p>${lines
       .slice(2)
       .map((line) => escapeHtml(line))
       .join("<br>")}</p>`;
-    emailOk = await sendRawEmail(
-      adminEmail,
-      `Заявка на услугу: ${input.service.title}`,
-      html
+    emailOk = await sendToPlatformAdminEmails((to) =>
+      sendRawEmail(to, `Заявка на услугу: ${input.service.title}`, html)
     ).catch(() => false);
   }
 

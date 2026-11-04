@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { renderEmailLayout, sendRawEmail } from "@/lib/email";
+import { getPlatformAdminEmails } from "@/lib/platform-admin";
 import { collectClientHealth } from "@/lib/root-health";
 
 const SETTING_KEY = "root.health.sentAt";
@@ -16,10 +17,11 @@ export function adminEmail(): string | null {
 /**
  * Письмо ROOT «здоровье клиентов»: раз в неделю вместе с недельным
  * дайджестом (тот же крон, слот понедельник 08:00 МСК). `force` — для проверки.
+ * Адресаты — все администраторы платформы (и env), `to` — только он.
  */
 export async function sendRootHealthEmail(input: { now: Date; force?: boolean; to?: string | null }): Promise<{ sent: boolean; reason: string; risky?: number }> {
-  const to = input.to ?? adminEmail();
-  if (!to) return { sent: false, reason: "no-admin-email" };
+  const recipients = input.to ? [input.to] : await getPlatformAdminEmails();
+  if (!recipients.length) return { sent: false, reason: "no-admin-email" };
   if (!input.force) {
     const row = await db.platformSetting.findUnique({ where: { key: SETTING_KEY } });
     const last = row ? new Date(row.value) : null;
@@ -39,7 +41,10 @@ export async function sendRootHealthEmail(input: { now: Date; force?: boolean; t
     "Здоровье клиентов за неделю",
     `<p style="margin:0 0 12px;color:#3f3f46;font-size:14px">Организаций с признаками ухода: <b>${rows.length}</b>. Полный список — <a href="https://wesetup.ru/root/health" style="color:#5566f6">/root/health</a>.</p>${table}`
   );
-  const sent = await sendRawEmail(to, `Здоровье клиентов: ${rows.length} с рисками`, html);
+  const results = await Promise.all(
+    recipients.map((to) => sendRawEmail(to, `Здоровье клиентов: ${rows.length} с рисками`, html).catch(() => false))
+  );
+  const sent = results.some(Boolean);
   if (sent && !input.force) {
     await db.platformSetting.upsert({ where: { key: SETTING_KEY }, create: { key: SETTING_KEY, value: input.now.toISOString() }, update: { value: input.now.toISOString() } });
   }

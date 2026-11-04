@@ -17,8 +17,8 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import {
-  getPlatformAdminChatIds,
-  getPlatformAdminEmail,
+  getPlatformAdminEmails,
+  getPlatformAdminRecipientChatIds,
   maskChatId,
   maskEmail,
 } from "@/lib/platform-admin";
@@ -132,8 +132,13 @@ export default async function RootFeedbackPage({
       }),
     ]);
 
-  const adminChatIds = getPlatformAdminChatIds().map(maskChatId);
-  const adminEmail = getPlatformAdminEmail();
+  // Кому уходят уведомления: env плюс администраторы платформы (почта и привязанный Telegram).
+  const [recipientChatIds, recipientEmails] = await Promise.all([
+    getPlatformAdminRecipientChatIds(),
+    getPlatformAdminEmails(),
+  ]);
+  const adminChatIds = recipientChatIds.map(maskChatId);
+  const adminEmail = recipientEmails.length ? recipientEmails.map(maskEmail).join(", ") : null;
 
   const orgOptions = orgs
     .filter((o) => o.organizationId)
@@ -227,7 +232,7 @@ export default async function RootFeedbackPage({
         </div>
         <TestNotifyButton
           chatIdsMasked={adminChatIds}
-          emailMasked={adminEmail ? maskEmail(adminEmail) : null}
+          emailMasked={adminEmail}
         />
       </div>
 

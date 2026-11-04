@@ -1,0 +1,58 @@
+✔ chat age preserves every historical rounding boundary, invalid and future inputs (6.2519ms)
+✔ timestamp preserves native Russian/English and invalid values (42.3027ms)
+✔ only own known API failures translate and each delivery combination has a complete key (0.765ms)
+[bot:support] Error: db down
+    at Object.createReport (D:\wt\admin-notify\src\lib\bot\handlers\support.test.ts:225:15)
+    at handleSupportText (D:\wt\admin-notify\src\lib\bot\handlers\support.ts:388:31)
+    at async TestContext.<anonymous> (D:\wt\admin-notify\src\lib\bot\handlers\support.test.ts:221:19)
+    at async Test.run (node:internal/test_runner/test:1208:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+✔ текст в личке создаёт обращение, уведомляет админа и подтверждает автору (5.5001ms)
+✔ привязанный пользователь попадает в обращение вместе с организацией (0.6649ms)
+✔ групповые чаты игнорируются — там живут рабочие уведомления (0.2995ms)
+✔ неизвестная команда — подсказка про /help, обращение не создаётся (0.2779ms)
+✔ превышение лимита — молчим, чтобы не отвечать спамеру на каждое сообщение (0.4497ms)
+✔ реплай из админ-чата отправляет ответ по обращению из тега (0.7695ms)
+✔ реплай без тега — просим ответить на сообщение с #fb_ (0.4101ms)
+✔ ответ, не дошедший ни по одному каналу, честно об этом говорит (0.6719ms)
+✔ падение БД не роняет обработчик — пользователь получает понятный ответ (7.0493ms)
+✔ extractFeedbackReportId достаёт id только из тега (0.5122ms)
+✔ telegramDisplayName собирает имя из профиля Telegram (0.3825ms)
+✔ describeSupportSender отмечает непривязанный аккаунт (0.2905ms)
+✔ buildSupportAdminMessage экранирует пользовательский текст (0.5687ms)
+✔ реплай на сообщение чата дописывает ответ оператора в переписку (0.7073ms)
+✔ реплай на обращение по-прежнему идёт в обращения, а не в чат (0.5695ms)
+▶ показ за 15 минут — тексты
+  ✔ сигнал админу: позвонить в течение часа, всё экранировано, источник и кнопка (1.7148ms)
+  ✔ комментарий заявки в ROOT и проверка телефона (0.7626ms)
+✔ показ за 15 минут — тексты (4.3152ms)
+▶ показ за 15 минут — сервер
+  ✔ ловушка заполнена — «ок» без записи; без согласия и с плохим телефоном — 400 (2157.3859ms)
+  ✔ заявка ложится в общий список заявок, лимит свой, уведомления не роняют заявку (1.0218ms)
+  ✔ кнопка стоит на /pricing, на страницах сфер и в финале главной (ru) (1.4956ms)
+✔ показ за 15 минут — сервер (2160.5339ms)
+▶ показ за 15 минут — кнопка на трёх языках
+  ✔ подпись из каталога, у en/uz без кириллицы (920.9421ms)
+✔ показ за 15 минут — кнопка на трёх языках (921.6051ms)
+✔ every /root page and /api/root route is classified explicitly (83.8143ms)
+✔ gates: clients card, billing mutations, owner-only actions, unknown paths (2.4138ms)
+✔ delegated viewer sees only own sections; superadmin sees everything (2.0186ms)
+✔ presets use known sections and are recognised back (2.7702ms)
+✔ isPlatformAdministrator: владелец и пресет «Администратор» — да, частичный доступ — нет (2.2984ms)
+✔ mergeAdminEmails: env + администраторы без дублей, служебные адреса пропускаются (2.3595ms)
+✔ mergeChatIds: env-чат и чат администратора — одно сообщение на чат (0.3706ms)
+✔ adminNotificationEmail: первая строка — тема и заголовок, остальное — тело (1.5963ms)
+✔ adminNotificationEmail: однострочное уведомление и пустой текст (0.554ms)
+✔ telegramHtmlToEmailHtml: только безопасные теги, ссылки — только http(s) (0.6633ms)
+✔ threadKindOf distinguishes org, guest and legacy keys (1.9631ms)
+✔ previewOf flattens whitespace, trims and falls back to attachment mark (0.8292ms)
+✔ shouldAlert fires once per operator reply while unread (0.5932ms)
+✔ ageLabel renders minutes, hours and days (1.9933ms)
+ℹ tests 38
+ℹ suites 3
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4687.0602

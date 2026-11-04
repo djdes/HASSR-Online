@@ -26,7 +26,7 @@ import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 import { notifyManagement } from "@/lib/notifications";
 import { platformOrgId } from "@/lib/partners/partner-hint";
 import { sendPartnerChatMessageEmail } from "@/lib/partners/emails";
-import { getPlatformAdminEmail, notifyPlatformAdmin } from "@/lib/platform-admin";
+import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-admin";
 import {
   emailAttachmentPayload,
   parseStoredAttachments,
@@ -423,7 +423,8 @@ export async function deliverClientMessage(ctx: {
           escape: escapeTelegramHtml,
           appUrl: APP_URL,
         }),
-        { kind: "support-chat-partner" }
+        // Ветку ведёт партнёр — админу без письма, только отметка в Telegram.
+        { kind: "support-chat-partner", email: false }
       ),
     ]);
     return;
@@ -442,17 +443,16 @@ export async function deliverClientMessage(ctx: {
   });
   const emailAtts = emailAttachmentPayload(message.attachments);
   await Promise.all([
-    notifyPlatformAdmin(adminText, { kind: "support-chat" }),
+    // Своё подробное письмо с вложениями — ниже, всем администраторам.
+    notifyPlatformAdmin(adminText, { kind: "support-chat", email: false }),
     sendAttachmentsToPlatformAdmins(
       message.attachments,
       `Вложения к чату #chat_${thread.id}`,
       "support-chat"
     ),
-    (async () => {
-      const adminEmail = getPlatformAdminEmail();
-      if (!adminEmail) return false;
-      return sendFeedbackAdminEmail({
-        to: adminEmail,
+    sendToPlatformAdminEmails((to) =>
+      sendFeedbackAdminEmail({
+        to,
         type: "support",
         message: message.body || "(вложение без текста)",
         userName: message.authorName ?? thread.userName,
@@ -462,8 +462,8 @@ export async function deliverClientMessage(ctx: {
         submittedAt: message.createdAt,
         attachmentLinks: emailAtts.links,
         attachments: emailAtts.files,
-      });
-    })().catch((error) =>
+      })
+    ).catch((error) =>
       console.error("[support-threads] admin email failed:", error)
     ),
   ]);

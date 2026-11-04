@@ -31,7 +31,7 @@ async function main() {
   const bot = getInboundBot();
   if (!bot) throw new Error("Bot is not configured");
   await bot.api.getMe();
-  if (rows.length) await notifyPlatformAdmin("✅ Связь с Telegram восстановлена. Ниже — уведомления, которые не доставились с 30 сентября. На обращения отвечайте свайпом на соответствующее сообщение.", { kind: "recovery-info" });
+  if (rows.length) await notifyPlatformAdmin("✅ Связь с Telegram восстановлена. Ниже — уведомления, которые не доставились с 30 сентября. На обращения отвечайте свайпом на соответствующее сообщение.", { kind: "recovery-info", email: false });
   const result = await recoverAdminTelegramMessages(rows, { chatIds, since }, {
     async claim(row) {
       const claimed = await db.telegramLog.updateMany({

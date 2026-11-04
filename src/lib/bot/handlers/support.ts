@@ -6,9 +6,9 @@ import {
   describeFeedbackReplyChannels,
 } from "@/lib/feedback-reply";
 import {
-  getPlatformAdminChatIds,
-  getPlatformAdminEmail,
+  isPlatformAdminChat as isAdminChat,
   notifyPlatformAdmin,
+  sendToPlatformAdminEmails,
 } from "@/lib/platform-admin";
 import { botSupportRateLimiter } from "@/lib/rate-limit";
 import { extractSupportThreadId } from "@/lib/support-chat";
@@ -140,7 +140,7 @@ type SupportUser = {
 };
 
 export type SupportDeps = {
-  isPlatformAdminChat: (chatId: string) => boolean;
+  isPlatformAdminChat: (chatId: string) => boolean | Promise<boolean>;
   allowMessage: (key: string) => boolean;
   findUserByChatId: (chatId: string) => Promise<SupportUser | null>;
   createReport: (args: {
@@ -180,7 +180,8 @@ export type SupportDeps = {
 function defaultDeps(): SupportDeps {
   return {
     isPlatformAdminChat(chatId) {
-      return getPlatformAdminChatIds().includes(chatId);
+      // env-чаты и администраторы платформы с привязанным Telegram.
+      return isAdminChat(chatId);
     },
     allowMessage(key) {
       return botSupportRateLimiter.consume(key);
@@ -223,7 +224,8 @@ function defaultDeps(): SupportDeps {
       return report;
     },
     async notifyAdminTelegram(text) {
-      return notifyPlatformAdmin(text, { kind: "support" });
+      // Своё подробное письмо — emailAdmin.
+      return notifyPlatformAdmin(text, { kind: "support", email: false });
     },
     async emailAdmin({
       message,
@@ -232,17 +234,17 @@ function defaultDeps(): SupportDeps {
       organizationName,
       submittedAt,
     }) {
-      const to = getPlatformAdminEmail();
-      if (!to) return false;
-      return sendFeedbackAdminEmail({
-        to,
-        type: "support",
-        message,
-        userName,
-        userEmail,
-        organizationName,
-        submittedAt,
-      });
+      return sendToPlatformAdminEmails((to) =>
+        sendFeedbackAdminEmail({
+          to,
+          type: "support",
+          message,
+          userName,
+          userEmail,
+          organizationName,
+          submittedAt,
+        })
+      );
     },
     async markAdminNotified({ reportId, telegram, email }) {
       await db.feedbackReport.update({
@@ -310,7 +312,7 @@ export async function handleSupportText(
   }
 
   // Владелец отвечает свайп-реплаем прямо из своего чата с ботом.
-  if (deps.isPlatformAdminChat(input.chatId) && input.replyToText) {
+  if (input.replyToText && (await deps.isPlatformAdminChat(input.chatId))) {
     // Онлайн-чат проверяем первым: у него свой тег, и реплика должна
     // попасть в переписку, а не завестись отдельным обращением.
     const threadId = extractSupportThreadId(input.replyToText);
