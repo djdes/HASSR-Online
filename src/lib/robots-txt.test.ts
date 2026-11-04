@@ -68,6 +68,7 @@ describe("robots.txt crawl rules", () => {
       "/og/landing/ru",
       "/b/demo-badge",
       "/google192cf36dfa933fa5.html",
+      "/yandex_66925265b553c7d1.html",
       ...Object.keys(JOURNAL_INFO).flatMap((code) => [
         `/journals-info/${code}`,
         `/en/journals-info/${code}`,
@@ -93,6 +94,9 @@ describe("robots.txt crawl rules", () => {
       fs.readFileSync(gscFile, "utf8").trim(),
       "google-site-verification: google192cf36dfa933fa5.html",
     );
+
+    const yandexFile = path.resolve(process.cwd(), "public/yandex_66925265b553c7d1.html");
+    assert.match(fs.readFileSync(yandexFile, "utf8"), /Verification:\s*66925265b553c7d1/);
   });
 
   it("blocks private workspace, admin, API, and tokenized routes", () => {
