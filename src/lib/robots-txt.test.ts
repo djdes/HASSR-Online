@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { describe, it } from "node:test";
 
 import { CITIES } from "@/content/cities";
@@ -65,6 +67,7 @@ describe("robots.txt crawl rules", () => {
       "/og-default",
       "/og/landing/ru",
       "/b/demo-badge",
+      "/google192cf36dfa933fa5.html",
       ...Object.keys(JOURNAL_INFO).flatMap((code) => [
         `/journals-info/${code}`,
         `/en/journals-info/${code}`,
@@ -84,6 +87,12 @@ describe("robots.txt crawl rules", () => {
 
     const blocked = publicPaths.filter((p) => !isAllowedByRobots(p));
     assert.deepEqual(blocked, [], `Public paths blocked by robots.txt: ${blocked.join(", ")}`);
+
+    const gscFile = path.resolve(process.cwd(), "public/google192cf36dfa933fa5.html");
+    assert.equal(
+      fs.readFileSync(gscFile, "utf8").trim(),
+      "google-site-verification: google192cf36dfa933fa5.html",
+    );
   });
 
   it("blocks private workspace, admin, API, and tokenized routes", () => {
