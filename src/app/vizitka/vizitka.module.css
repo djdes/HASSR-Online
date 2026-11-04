@@ -5,7 +5,7 @@
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
-  background: #070b1a;
+  background: #0b1024;
   color: #ffffff;
   isolation: isolate;
 }
@@ -32,7 +32,7 @@
   left: -180px;
   top: -200px;
   background: #5566f6;
-  opacity: 0.45;
+  opacity: 0.32;
   animation: driftA 18s ease-in-out infinite alternate;
 }
 .blobB {
@@ -41,7 +41,7 @@
   right: -200px;
   top: 30%;
   background: #7a5cff;
-  opacity: 0.35;
+  opacity: 0.22;
   animation: driftB 22s ease-in-out infinite alternate;
 }
 .blobC {
@@ -50,7 +50,7 @@
   left: 30%;
   bottom: -220px;
   background: #3ddca4;
-  opacity: 0.18;
+  opacity: 0.1;
   animation: driftA 26s ease-in-out infinite alternate-reverse;
 }
 @keyframes driftA {
@@ -60,6 +60,13 @@
 @keyframes driftB {
   from { transform: translate3d(0, 0, 0) scale(1.05); }
   to { transform: translate3d(-140px, -60px, 0) scale(0.95); }
+}
+
+/* На телефоне экран маленький — ореолы меньше и тише, фон остаётся тёмным, как у сайта. */
+@media (max-width: 640px) {
+  .blobA { width: 320px; height: 320px; left: -140px; top: -120px; opacity: 0.28; filter: blur(90px); }
+  .blobB { width: 300px; height: 300px; right: -160px; top: 40%; opacity: 0.18; filter: blur(90px); }
+  .blobC { display: none; }
 }
 
 /* Тонкая сетка, тающая к краям. */

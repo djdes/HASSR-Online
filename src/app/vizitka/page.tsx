@@ -65,6 +65,8 @@ export default async function VizitkaPromoPage() {
 
   return (
     <div className={styles.page} style={{ fontFamily: "var(--font-sans, Manrope, system-ui, sans-serif)" }}>
+      {/* Фон под строкой браузера и при прокрутке за край — тёмный, как страница (Safari берёт цвет у body). */}
+      <style>{"html,body{background:#0b1024}"}</style>
       <div className={styles.aurora} aria-hidden="true">
         <div className={styles.blobA} />
         <div className={styles.blobB} />
