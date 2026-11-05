@@ -1,0 +1,62 @@
+{
+  "off": {
+    "/inspection:status": 200,
+    "/inspection:mentions": null,
+    "/inspection:catchUpLinks": 0,
+    "/inspection:autofillButton": false,
+    "/settings/organization:status": 200,
+    "/settings/organization:mentions": null,
+    "/settings/organization:catchUpLinks": 0,
+    "/settings/organization:autofillButton": false,
+    "/dashboard:status": 200,
+    "/dashboard:mentions": null,
+    "/dashboard:catchUpLinks": 0,
+    "/dashboard:autofillButton": false,
+    "/inspection:settingsLink": 1,
+    "menu:specialItem": 0,
+    "/dashboard/catch-up:status": 200,
+    "/dashboard/catch-up:notFound": true,
+    "/inspection/special-mode:status": 200,
+    "/inspection/special-mode:notFound": true,
+    "api catch-up GET": 403,
+    "/inspection/settings:status": 200,
+    "/inspection/settings:features": [
+      "autoFill",
+      "autoCreate",
+      "copyYesterday",
+      "closeDayAutofill",
+      "catchUp"
+    ],
+    "/inspection/settings:visible": ""
+  },
+  "catchUp-only": {
+    "/inspection:status": 200,
+    "/inspection:mentions": null,
+    "/inspection:catchUpLinks": 0,
+    "/inspection:autofillButton": false,
+    "/settings/organization:status": 200,
+    "/settings/organization:mentions": null,
+    "/settings/organization:catchUpLinks": 0,
+    "/settings/organization:autofillButton": false,
+    "/dashboard:status": 200,
+    "/dashboard:mentions": null,
+    "/dashboard:catchUpLinks": 1,
+    "/dashboard:autofillButton": false,
+    "/inspection:settingsLink": 1,
+    "menu:specialItem": 0,
+    "/dashboard/catch-up:status": 200,
+    "/dashboard/catch-up:notFound": false,
+    "/inspection/special-mode:status": 200,
+    "/inspection/special-mode:notFound": true,
+    "api catch-up GET": 200,
+    "/inspection/settings:status": 200,
+    "/inspection/settings:features": [
+      "autoFill",
+      "autoCreate",
+      "copyYesterday",
+      "closeDayAutofill",
+      "catchUp"
+    ],
+    "/inspection/settings:visible": "catchUp"
+  }
+}

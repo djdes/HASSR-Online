@@ -1,10 +1,13 @@
 import { db } from "@/lib/db";
 import {
+  ADDED_AUTOMATION_FEATURES,
   automationDisabledError,
   automationOn,
   parseJournalControls,
   readStoredAutomation,
+  resolveAddedFeature,
   resolveLegacyAutomation,
+  type AddedAutomationFeature,
   type AutomationFeature,
   type JournalAutomationControls,
   type JournalControls,
@@ -12,7 +15,7 @@ import {
 import { parseJournalAutomationJson } from "@/lib/journal-automation";
 import { NextResponse } from "next/server";
 
-type Client = Pick<typeof db, "organization" | "building" | "journalDocument">;
+type Client = Pick<typeof db, "organization" | "building" | "journalDocument" | "auditLog">;
 
 /**
  * 403, если эта часть автоматики выключена в спецрежиме организации
@@ -24,7 +27,7 @@ export async function rejectJournalAutomation(organizationId: string, feature: A
   const controls = await getJournalControls(organizationId);
   return features.some((item) => automationOn(controls, item))
     ? null
-    : NextResponse.json({ error: automationDisabledError(features[0]), code: "special_mode", feature: features[0] }, { status: 403 });
+    : NextResponse.json({ error: automationDisabledError(features[0]) }, { status: 403 });
 }
 
 function hasCodes(value: unknown): boolean {
@@ -57,7 +60,36 @@ async function legacyAutomation(client: Client, organizationId: string, legacySp
     usesAutomation = buildings.some(hasAutomation) ||
       Boolean(await client.journalDocument.findFirst({ where: { organizationId, status: "active", autoFill: true }, select: { id: true } }));
   }
-  return resolveLegacyAutomation({ legacySpecialMode, createdAt: org.createdAt, usesAutomation });
+  const automation = resolveLegacyAutomation({ legacySpecialMode, createdAt: org.createdAt, usesAutomation });
+  return withAddedFeatures(client, organizationId, automation, ADDED_AUTOMATION_FEATURES);
+}
+
+/** Пользовалась ли организация этой (позже добавленной) функцией. */
+async function usedAddedFeature(client: Client, organizationId: string, feature: AddedAutomationFeature): Promise<boolean> {
+  switch (feature) {
+    case "catchUp":
+      // «Догнать пропуски» пишет в аудит `journal_entry.copy` с этим `via`.
+      return Boolean(await client.auditLog.findFirst({
+        where: { organizationId, action: "journal_entry.copy", details: { path: ["via"], equals: "dashboard.catch_up" } },
+        select: { id: true },
+      }));
+  }
+}
+
+/** Дополняет выбор галочками, которых в нём ещё не было, — по `resolveAddedFeature`. */
+async function withAddedFeatures(
+  client: Client,
+  organizationId: string,
+  automation: JournalAutomationControls,
+  missing: readonly AddedAutomationFeature[],
+): Promise<JournalAutomationControls> {
+  const next = { ...automation };
+  for (const feature of missing) {
+    next[feature] = automation.enabled
+      ? resolveAddedFeature({ specialModeOn: true, used: await usedAddedFeature(client, organizationId, feature) })
+      : false;
+  }
+  return next;
 }
 
 function settingKey(organizationId: string) {
@@ -73,7 +105,8 @@ function settingKey(organizationId: string) {
  */
 export async function getJournalControls(organizationId: string): Promise<JournalControls> {
   const row = await db.platformSetting.findUnique({ where: { key: settingKey(organizationId) }, select: { value: true } });
-  if (readStoredAutomation(row?.value).automation) return parseJournalControls(row?.value);
+  const stored = readStoredAutomation(row?.value);
+  if (stored.automation && stored.missing.length === 0) return parseJournalControls(row?.value);
   return updateJournalControls(organizationId, {});
 }
 
@@ -85,8 +118,9 @@ export async function updateJournalControls(organizationId: string, patch: Parti
     const row = await tx.platformSetting.findUnique({ where: { key }, select: { value: true } });
     const current = parseJournalControls(row?.value);
     const stored = readStoredAutomation(row?.value);
-    if (stored.automation && Object.keys(patch).length === 0) return current;
-    const automation = patch.automation ?? stored.automation ??
+    if (stored.automation && stored.missing.length === 0 && Object.keys(patch).length === 0) return current;
+    const automation = patch.automation ??
+      (stored.automation ? await withAddedFeatures(tx, organizationId, stored.automation, stored.missing) : null) ??
       (await legacyAutomation(tx, organizationId, stored.legacySpecialMode));
     // Организации нет — ничего не пишем, отвечаем «выключено».
     if (!automation) return current;

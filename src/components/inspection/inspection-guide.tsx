@@ -11,7 +11,6 @@ const STEPS = [
   { n: 2, href: "#qr" },
   { n: 3, href: "/inspection/visits" },
   { n: 4, href: "#archive" },
-  { n: 5, href: "/inspection/special-mode" },
 ] as const;
 const TIPS = [1, 2, 3, 4] as const;
 
@@ -19,10 +18,10 @@ const STEP_LINK =
   "group flex w-full gap-3 rounded-2xl bg-[#fafbff] p-3.5 transition-[background-color,box-shadow] duration-200 hover:bg-[#f5f6ff] hover:shadow-[0_0_0_1px_rgba(85,102,246,0.25)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 lg:flex-col lg:gap-2";
 
 /**
- * «Что делать сейчас» (скан 83: «Инструкции (советы)»): пять шагов на
+ * «Что делать сейчас» (скан 83: «Инструкции (советы)»): четыре шага на
  * момент прихода проверяющего и короткие советы. Шаги QR и архива ведут к
- * блокам ниже на этой странице, журнал посещений и спецрежим — на свои
- * страницы раздела («Открыть →»).
+ * блокам ниже на этой странице, журнал посещений — на свою страницу
+ * раздела («Открыть →»). Шага про спецрежим нет (2026-11-05).
  */
 export async function InspectionGuide() {
   const t = await getTranslations("inspectionDay.guide");
@@ -35,7 +34,7 @@ export async function InspectionGuide() {
       <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("title")}</h2>
       <p className="mt-1 text-[14px] text-[#6f7282]">{t("lead")}</p>
 
-      <ol className="mt-4 grid gap-3 lg:grid-cols-5">
+      <ol className="mt-4 grid gap-3 lg:grid-cols-4">
         {STEPS.map(({ n, href }) => {
           const page = href?.startsWith("/") ?? false;
           const body = (

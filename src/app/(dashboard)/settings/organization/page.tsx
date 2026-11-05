@@ -1,4 +1,3 @@
-import { OrganizationSpecialModeCard } from "@/components/settings/organization-special-mode-card";
 import { forbidden, notFound } from "next/navigation";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
@@ -132,8 +131,6 @@ export default async function OrganizationInfoPage() {
         // Вопрос про логотип и цвет — на «Логотипе и цветах».
         qa={[{ q: t("guide.innQuestion"), a: t("guide.innAnswer") }]}
       />
-
-      <OrganizationSpecialModeCard />
 
       <OrganizationInfoForm
         initial={{

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { verifyTaskFillToken } from "@/lib/task-fill-token";
 import { extractEmployeeId } from "@/lib/tasksflow-adapters/row-key";
 import { getAdapter } from "@/lib/tasksflow-adapters";
+import { automationOn } from "@/lib/journal-controls";
+import { getJournalControls } from "@/lib/journal-controls.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,6 +67,12 @@ export async function GET(
   }
   if (!link) {
     return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
+  }
+
+  // «Заполнить как вчера» — часть «Скопировать вчерашнее» спецрежима
+  // (2026-11-05): без галочки данных нет, и кнопки в форме тоже.
+  if (!automationOn(await getJournalControls(link.integration.organizationId), "copyYesterday")) {
+    return NextResponse.json({ values: null, reason: "not-supported" }, { status: 200 });
   }
 
   const adapter = getAdapter(link.journalCode);

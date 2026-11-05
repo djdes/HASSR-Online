@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { CalendarPlus, Check, Copy, Loader2, Minus, PowerOff, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
+import { CalendarPlus, Check, Copy, History, Loader2, Minus, PowerOff, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 
 import { saveJournalControls, useJournalControls } from "@/components/journals/journal-controls-provider";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const FEATURE_ICONS: Record<AutomationFeature, typeof Wand2> = {
   autoCreate: CalendarPlus,
   copyYesterday: Copy,
   closeDayAutofill: Sparkles,
+  catchUp: History,
 };
 
 type Choice = Record<AutomationFeature, boolean>;
@@ -250,24 +251,5 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
         cancelLabel={t("dialogCancel")}
       />
     </section>
-  );
-}
-
-/**
- * Состояние спецрежима одной пилюлей — для короткого блока на «Что делать
- * сейчас» (переключатель и галочки — на странице «Спецрежим»).
- */
-export function InspectionSpecialModeStatus() {
-  const t = useTranslations("inspectionDay.special");
-  const { controls, loaded } = useJournalControls();
-  if (!loaded) return null;
-  const on = controls.automation.enabled;
-  return (
-    <span
-      className={`rounded-full px-3 py-1 text-[13px] font-medium ${on ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#f5f6ff] text-[#3848c7]"}`}
-      data-special-mode-status={on ? "on" : "off"}
-    >
-      {on ? t("on") : t("off")}
-    </span>
   );
 }

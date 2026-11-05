@@ -8,10 +8,14 @@ export type SensorJournalCode = (typeof SENSOR_JOURNAL_CODES)[number];
  *   • autoFill — автозаполнение журналов (тумблеры в документах, кроны);
  *   • autoCreate — автосоздание документов на новый период;
  *   • copyYesterday — «Скопировать вчерашнее» в документах;
- *   • closeDayAutofill — «Автозаполнить» на главной (закрыть день).
+ *   • closeDayAutofill — «Автозаполнить» на главной (закрыть день);
+ *   • catchUp — «Догнать пропуски» (с 2026-11-05).
+ * С 2026-11-05 вне спецрежима о нём не говорят нигде: под `autoFill` ещё
+ * «Отметить всех «Здоров»», «Заполнить по плану» и типовое заполнение через
+ * ИИ-помощника; под `copyYesterday` — «Заполнить как вчера» в задаче.
  * Фото датчиков в спецрежим не входит — у него своя настройка по журналу.
  */
-export const AUTOMATION_FEATURES = ["autoFill", "autoCreate", "copyYesterday", "closeDayAutofill"] as const;
+export const AUTOMATION_FEATURES = ["autoFill", "autoCreate", "copyYesterday", "closeDayAutofill", "catchUp"] as const;
 export type AutomationFeature = (typeof AUTOMATION_FEATURES)[number];
 export type JournalAutomationControls = { enabled: boolean } & Record<AutomationFeature, boolean>;
 
@@ -23,12 +27,19 @@ export type JournalControls = {
 
 /** Ничего из автоматики не видно и не работает — новая организация. */
 export const AUTOMATION_OFF: Readonly<JournalAutomationControls> = Object.freeze({
-  enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false,
+  enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false, catchUp: false,
 });
 /** Всё как было до 2026-10-28 — организация, которая автоматикой пользовалась. */
 export const AUTOMATION_ALL_ON: Readonly<JournalAutomationControls> = Object.freeze({
-  enabled: true, autoFill: true, autoCreate: true, copyYesterday: true, closeDayAutofill: true,
+  enabled: true, autoFill: true, autoCreate: true, copyYesterday: true, closeDayAutofill: true, catchUp: true,
 });
+
+/**
+ * Галочки, появившиеся после выкладки «наоборот» (2026-10-28): в уже
+ * сохранённом выборе их нет, значение решает {@link resolveAddedFeature}.
+ */
+export const ADDED_AUTOMATION_FEATURES = ["catchUp"] as const satisfies readonly AutomationFeature[];
+export type AddedAutomationFeature = (typeof ADDED_AUTOMATION_FEATURES)[number];
 
 /**
  * Выкладка «спецрежима наоборот». Организация, созданная раньше и уже
@@ -58,7 +69,13 @@ function parseAutomation(raw: unknown): JournalAutomationControls | null {
     autoCreate: source.autoCreate === true,
     copyYesterday: source.copyYesterday === true,
     closeDayAutofill: source.closeDayAutofill === true,
+    catchUp: source.catchUp === true,
   };
+}
+
+function missingAdded(raw: unknown): AddedAutomationFeature[] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  return ADDED_AUTOMATION_FEATURES.filter((feature) => !(feature in raw));
 }
 
 /**
@@ -66,9 +83,15 @@ function parseAutomation(raw: unknown): JournalAutomationControls | null {
  * спецрежима) или ничего — тогда решает {@link resolveLegacyAutomation}.
  * `legacySpecialMode` — прежний флаг «всё скрыто», читается только здесь.
  */
-export function readStoredAutomation(raw: unknown): { automation: JournalAutomationControls | null; legacySpecialMode: boolean } {
+export function readStoredAutomation(raw: unknown): {
+  automation: JournalAutomationControls | null;
+  legacySpecialMode: boolean;
+  /** Галочки, которых в сохранённом выборе ещё нет (появились позже). */
+  missing: AddedAutomationFeature[];
+} {
   const source = toRecord(raw);
-  return { automation: parseAutomation(source.automation), legacySpecialMode: source.specialMode === true };
+  const automation = parseAutomation(source.automation);
+  return { automation, legacySpecialMode: source.specialMode === true, missing: automation ? missingAdded(source.automation) : [] };
 }
 
 /**
@@ -85,6 +108,19 @@ export function resolveLegacyAutomation(input: {
   if (input.legacySpecialMode) return { ...AUTOMATION_OFF };
   const before = input.createdAt instanceof Date && input.createdAt.getTime() < SPECIAL_MODE_INVERSION_CUTOFF.getTime();
   return before && input.usesAutomation ? { ...AUTOMATION_ALL_ON } : { ...AUTOMATION_OFF };
+}
+
+/**
+ * Значение галочки, добавленной позже (2026-11-05, `catchUp`), — для
+ * организации, у которой выбор уже сохранён или только что решён правилом
+ * выше: **включено, только если спецрежим сейчас включён И организация
+ * этой функцией пользовалась** (для «Догнать пропуски» — есть запись аудита
+ * `journal_entry.copy` с `via: dashboard.catch_up`). Иначе выключено: до
+ * 2026-11-05 функция была видна всем, но неработавшим с ней клиентам она
+ * не нужна, а работающие ничего не теряют.
+ */
+export function resolveAddedFeature(input: { specialModeOn: boolean; used: boolean }): boolean {
+  return input.specialModeOn && input.used;
 }
 
 /**
@@ -123,9 +159,19 @@ const FEATURE_TITLES: Record<AutomationFeature, string> = {
   autoCreate: "«Автосоздание документов»",
   copyYesterday: "«Скопировать вчерашнее»",
   closeDayAutofill: "«Автозаполнить» на главной",
+  catchUp: "«Догнать пропуски»",
 };
 
-/** Ответ сервера, когда эта часть автоматики выключена в спецрежиме. */
-export function automationDisabledError(feature: AutomationFeature): string {
-  return `Функция ${FEATURE_TITLES[feature]} выключена. Включить её: «Пришла проверка» → «Спецрежим».`;
+/** Название части автоматики — для журналов сервера и тестов, не для ответа. */
+export function automationFeatureTitle(feature: AutomationFeature): string {
+  return FEATURE_TITLES[feature];
+}
+
+/**
+ * Ответ сервера, когда эта часть автоматики выключена. Нейтральный: ни
+ * названия функции, ни того, где она включается (2026-11-05 — о спецрежиме
+ * вне его самого не говорим).
+ */
+export function automationDisabledError(_feature?: AutomationFeature): string {
+  return "Эта функция недоступна.";
 }

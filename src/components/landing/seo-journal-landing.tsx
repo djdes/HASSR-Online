@@ -314,7 +314,7 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
             href="/avtozapolnenie"
             className="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40"
           >
-            <span className="flex items-center gap-2"><Sparkles className="size-4 shrink-0 text-[#5566f6]" />Автозаполнение</span>
+            <span className="flex items-center gap-2"><Sparkles className="size-4 shrink-0 text-[#5566f6]" />Журналы, которые заполняются сами</span>
             <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
           </Link>
         </div>

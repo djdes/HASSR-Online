@@ -63,9 +63,20 @@ test("every step is well-formed", () => {
 
 test("visibleWalkthroughSteps hides mobile-only steps on desktop", () => {
   const steps = getJournalWalkthrough("climate_control")!;
-  const desktop = visibleWalkthroughSteps(steps, { isMobile: false });
-  const mobile = visibleWalkthroughSteps(steps, { isMobile: true });
+  const desktop = visibleWalkthroughSteps(steps, { isMobile: false, autoFill: true });
+  const mobile = visibleWalkthroughSteps(steps, { isMobile: true, autoFill: true });
   assert.ok(desktop.every((s) => !s.mobileOnly));
   assert.equal(mobile.length, steps.length);
   assert.ok(mobile.length > desktop.length);
+});
+
+test("the autofill step shows only with the special-mode box (2026-11-05)", () => {
+  for (const code of ["hygiene", "climate_control"]) {
+    const steps = getJournalWalkthrough(code)!;
+    assert.ok(steps.some((s) => s.id === "autofill"), code);
+    for (const isMobile of [false, true]) {
+      assert.ok(!visibleWalkthroughSteps(steps, { isMobile }).some((s) => s.id === "autofill"), code);
+      assert.ok(visibleWalkthroughSteps(steps, { isMobile, autoFill: true }).some((s) => s.id === "autofill"), code);
+    }
+  }
 });

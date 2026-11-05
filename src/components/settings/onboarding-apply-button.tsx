@@ -77,7 +77,6 @@ export function OnboardingApplyButton({ orgType, showSeedStaff = false, label }:
         preset: feedbackT(`types.${presetType}`),
         positions: result.positionsCreated,
         access: result.journalAccessRowsCreated,
-        automatic: Array.isArray(autoCodes) ? autoCodes.length : 0,
       };
       toast.success(seed ? feedbackT("successWithStaff", { ...values, staff: result.staffCreated as number }) : feedbackT("success", values));
       router.refresh();

@@ -35,6 +35,8 @@ import { createStaffMember, type CreateStaffResult } from "@/lib/staff-create";
 import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 import { isManagementRole } from "@/lib/user-roles";
 import { orgTodayKey } from "@/lib/timezone";
+import { automationOn } from "@/lib/journal-controls";
+import { getJournalControls } from "@/lib/journal-controls.server";
 import {
   documentInWorkerScope,
   loadManagerPointScope,
@@ -104,10 +106,25 @@ export const assistantFillCellsSchema = z.object({
     .max(62)
     .describe("Даты в формате YYYY-MM-DD внутри периода документа"),
   values: fillValuesSchema.describe(
-    "Что записать: status — статус гигиенического журнала; auto — типовое заполнение по графику (hygiene, health_check); data — только значения, которые пользователь назвал сам"
+    "Что записать: status — статус гигиенического журнала; data — только значения, которые пользователь назвал сам"
   ),
 });
 const fillCellsSchema = assistantFillCellsSchema;
+
+/**
+ * Заполнение, которое делает «типовые» отметки за людей, — часть
+ * «Автозаполнения журналов» спецрежима (2026-11-05): `kind:"auto"` и
+ * «Здоров» больше чем в одной клетке (то же, что «Отметить всех»). Одна
+ * клетка со статусом и значения, названные человеком, — обычная запись.
+ */
+export function fillUsesAutoFill(values: z.infer<typeof fillValuesSchema>, cellCount: number): boolean {
+  return values.kind === "auto" || (values.kind === "status" && values.status === "healthy" && cellCount > 1);
+}
+
+async function autoFillBlocked(orgId: string, input: z.infer<typeof fillCellsSchema>): Promise<boolean> {
+  if (!fillUsesAutoFill(input.values, input.employeeIds.length * input.dates.length)) return false;
+  return !automationOn(await getJournalControls(orgId), "autoFill");
+}
 
 export type ProposedAction =
   | { kind: "add_staff"; input: z.infer<typeof addStaffSchema> }
@@ -185,6 +202,9 @@ export async function prepareAction(
     const input = parsed.data;
     if (input.employeeIds.length * input.dates.length > MAX_CELLS) {
       return { ok: false, error: t("assistantActions.tooManyCells") };
+    }
+    if (await autoFillBlocked(ctx.orgId, input)) {
+      return { ok: false, error: t("assistantActions.unavailable") };
     }
 
     const doc = await db.journalDocument.findFirst({
@@ -485,6 +505,9 @@ async function executeFillCells(
   }
   if (doc.status === "closed") {
     return { ok: false, error: t("assistantActions.documentClosed") };
+  }
+  if (await autoFillBlocked(ctx.orgId, input)) {
+    return { ok: false, error: t("assistantActions.unavailable") };
   }
 
   const templateCode = doc.template?.code ?? "";

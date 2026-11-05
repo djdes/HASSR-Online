@@ -12,11 +12,13 @@ import { PageGuide } from "@/components/ui/page-guide";
 export const dynamic = "force-dynamic";
 
 /**
- * «Спецрежим» раздела «Пришла проверка» (скан 83: «СпецРежим»): специальный
- * режим организации с пояснением, что он выключает и когда его включать.
- * Видят руководство и «проверка задач»; переключает только `admin.full` (как
- * в API), остальным — «попросите руководителя». Короткий блок с якорем
- * `#special-mode` остаётся на «Что делать сейчас» (ссылка из «Реквизитов»).
+ * Специальный режим организации (скан 83: «СпецРежим») — с пояснением, что
+ * он включает и когда. С 2026-11-05 о нём не говорят нигде, кроме этой
+ * страницы: нет пункта меню, шага на «Что делать сейчас» и карточки в
+ * «Реквизитах». Адрес нейтральный — `/inspection/settings`, заголовок
+ * «Настройки раздела»; вход — тихая ссылка внизу «Что делать сейчас».
+ * Видят руководство и «проверка задач» (как раньше); переключает только
+ * `admin.full` (как в API), остальным — «попросите руководителя».
  */
 export default async function InspectionSpecialModePage() {
   const session = await requireAuth();
@@ -29,7 +31,7 @@ export default async function InspectionSpecialModePage() {
       <SectionPageHeader description={t("lead")} />
 
       <PageGuide
-        storageKey="inspection-special-mode"
+        storageKey="inspection-settings"
         title={t("guideTitle")}
         bullets={[t("guide1"), t("guide2"), t("guide3")]}
       />
@@ -37,7 +39,7 @@ export default async function InspectionSpecialModePage() {
       {/* Спецрежим — на всю компанию: руководитель точки только смотрит. */}
       <InspectionSpecialModeCard canManage={hasCapability(session.user, "admin.full") && !isPointScoped(session.user)} />
 
-      <InspectionHowItWorks id="special-mode" title={t("whenTitle")} steps={[t("when1"), t("when2"), t("when3")]} />
+      <InspectionHowItWorks id="when" title={t("whenTitle")} steps={[t("when1"), t("when2"), t("when3")]} />
     </div>
   );
 }

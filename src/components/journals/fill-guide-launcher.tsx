@@ -18,7 +18,7 @@ import {
   type WalkthroughStep,
 } from "@/lib/journal-ui-walkthroughs";
 import { useSeenNotice } from "@/lib/use-seen-notice";
-import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { useAutomationOn, useJournalControls } from "@/components/journals/journal-controls-provider";
 import { FillGuideDialog } from "@/components/journals/fill-guide-dialog";
 import { JournalGuideFab } from "@/components/journals/journal-guide-fab";
 import {
@@ -86,6 +86,7 @@ export function FillGuideLauncher({
   const deferGuide = basePath === "site" && code === "finished_product" &&
     (!loaded || !controls.brakerageSetup.finished_product);
   const narrow = useIsNarrowViewport();
+  const autoFillOn = useAutomationOn("autoFill");
   // Окно открывается у ЛЮБОГО журнала: свои шаги, если есть, иначе общие.
   const steps = useMemo(() => getJournalWalkthroughOrGeneric(code, tWalkthrough), [code, tWalkthrough]);
   const guide = useMemo(() => getJournalDocGuide(code, tDocGuide), [code, tDocGuide]);
@@ -113,8 +114,8 @@ export function FillGuideLauncher({
   );
 
   const visible = useMemo(
-    () => visibleWalkthroughSteps(steps, { isMobile: narrow }),
-    [steps, narrow]
+    () => visibleWalkthroughSteps(steps, { isMobile: narrow, autoFill: autoFillOn }),
+    [steps, narrow, autoFillOn]
   );
   const tourSteps = useMemo<SpotlightStep[]>(
     () =>

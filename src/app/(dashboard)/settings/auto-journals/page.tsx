@@ -1,6 +1,6 @@
 import { getJournalControls } from "@/lib/journal-controls.server";
 import { automationOn } from "@/lib/journal-controls";
-import { forbidden, redirect } from "next/navigation";
+import { forbidden, notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MapPin, Sparkles } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -29,7 +29,7 @@ export default async function AutoJournalsPage() {
   const t = await getTranslations("settingsUi.autoJournalsPage");
   // Страница — про автосоздание; колонка автозаполнения — по своей галочке спецрежима.
   const controls = await getJournalControls(organizationId);
-  if (!automationOn(controls, "autoCreate")) redirect("/inspection/special-mode");
+  if (!automationOn(controls, "autoCreate")) notFound();
   const autoFillAvailable = automationOn(controls, "autoFill");
 
   // Точка из шапки — её автоматика; «Вся организация» — организация.

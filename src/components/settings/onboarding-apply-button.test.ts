@@ -128,7 +128,7 @@ test("actual apply handler preserves payload flags/type/seed and renders complet
     assert.equal(requests[0].init?.method, "POST");
     assert.deepEqual(JSON.parse(String(requests[0].init?.body)), { type: "dairy", updateOrgType: true, seedDemoStaff: seed, applyJournalAccess: true, applyDisabledJournals: false, applyAutoJournals: true });
     const t = createTranslator({ locale, messages, namespace: "settingsManagement.onboardingApply" });
-    const values = { preset: t("types.dairy"), positions: 14, access: 21, automatic: 2 };
+    const values = { preset: t("types.dairy"), positions: 14, access: 21 };
     assert.deepEqual(view.successes, [seed ? t("successWithStaff", { ...values, staff: 3 }) : t("success", values)]);
     assert.equal(view.refreshes, 1);
     assert.equal(view.states[0], false);
@@ -179,7 +179,7 @@ test("type and seed drafts plus pending application survive state-retaining loca
   await pending;
   assert.deepEqual(view.states, [false, false, "bakery"]);
   const t = createTranslator({ locale: "ru", messages: await loadMessages("ru"), namespace: "settingsManagement.onboardingApply" });
-  assert.deepEqual(view.successes, [t("success", { preset: t("types.bakery"), positions: 0, access: 0, automatic: 0 })]);
+  assert.deepEqual(view.successes, [t("success", { preset: t("types.bakery"), positions: 0, access: 0 })]);
 });
 
 test("deferred server and network errors use the current locale while submitted options remain captured", async () => {

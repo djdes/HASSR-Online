@@ -15,6 +15,7 @@ import { resolveDayStart } from "@/lib/today-compliance";
 import { logAudit } from "@/lib/audit";
 import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
 import { readHygieneFormVersion } from "@/lib/hygiene-v2";
+import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,6 +95,9 @@ export async function GET() {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
+  // «Догнать пропуски» — галочка спецрежима (2026-11-05).
+  const disabled = await rejectJournalAutomation(organizationId, "catchUp");
+  if (disabled) return disabled;
 
   // «Сегодня» — в поясе организации, как на дашборде: иначе ночью по
   // Москве последний столбец сетки — вчерашний день.
@@ -275,6 +279,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
+  const disabled = await rejectJournalAutomation(organizationId, "catchUp");
+  if (disabled) return disabled;
   const body = (await request.json().catch(() => ({}))) as PostBody;
   const targets = Array.isArray(body?.targets) ? body.targets : [];
   if (targets.length === 0) {

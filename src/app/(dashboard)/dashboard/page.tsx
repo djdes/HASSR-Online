@@ -21,6 +21,8 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { CloseDayCard } from "@/components/dashboard/close-day-card";
 import { closeDayNeedsPoint } from "@/lib/close-day-point";
+import { automationOn } from "@/lib/journal-controls";
+import { getJournalControls } from "@/lib/journal-controls.server";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { DashboardJournalsGrid } from "@/components/dashboard/dashboard-journals-grid";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
@@ -115,6 +117,8 @@ export default async function DashboardPage({
   const entryAtPoint = journalEntryPointWhere(viewedPoint);
   // «Автозаполнить» на уровне организации просит выбрать точку (2026-11-01).
   const closeDayPointRequired = closeDayNeedsPoint(await loadBuildingContext(session));
+  // «Догнать пропуски» — только при галочке спецрежима (2026-11-05).
+  const catchUpOn = automationOn(await getJournalControls(organizationId), "catchUp");
 
   const now = new Date();
   const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -254,6 +258,7 @@ export default async function DashboardPage({
                 // журналов. Квадрат слева от заголовка владелец просил
                 // убрать, а сами действия нужны.
                 <>
+                {catchUpOn ? (
                 <Link
                   href="/dashboard/catch-up"
                   title={tDash("catchUp")}
@@ -262,6 +267,7 @@ export default async function DashboardPage({
                 >
                   <History className="size-[18px]" />
                 </Link>
+                ) : null}
                 <Link
                   href="/settings/journals"
                   title={tDash("chooseJournals")}

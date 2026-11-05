@@ -13,6 +13,7 @@ import {
   StaffJournalToolbar,
 } from "@/components/journals/staff-journal-toolbar";
 import { JournalAddRow } from "@/components/journals/journal-add-row";
+import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 import {
   DOC_ADD_ROW_IN_SHEET_CLASS,
   DOC_CAPS_TITLE_CLASS,
@@ -506,6 +507,8 @@ export function HygieneDocumentClient({
   const selectedCount = selectedEmployeeIds.length;
   const allSelected = rosterUsers.length > 0 && selectedCount === rosterUsers.length;
   const isActive = status === "active";
+  // «Отметить всех «Здоров»» — часть «Автозаполнения журналов» спецрежима (2026-11-05).
+  const markEveryoneOn = useAutomationOn("autoFill");
   // Новая форма (Приложение №1): строки бланка — из записей дня с QR.
   const v2Employees = useMemo(
     () =>
@@ -1435,7 +1438,7 @@ export function HygieneDocumentClient({
               })}
             emptyLabel={t("document.emptyEmployees")}
             bulkAction={
-              isActive
+              isActive && markEveryoneOn
                 ? {
                     label: t("bulk.markEveryoneCardLabel"),
                     onRun: () => {
