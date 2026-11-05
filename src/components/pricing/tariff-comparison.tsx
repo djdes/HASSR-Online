@@ -14,7 +14,7 @@ import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 import {
   MAX_POINTS,
   needsIndividualOffer,
-  pointsDiscountPercent,
+  pointsEffectiveDiscountPercent,
   TRIAL_DAYS,
   hasPointsDiscount,
   maxYearlySavingsPercent,
@@ -373,7 +373,7 @@ export function TariffComparison({
           const savingsRub = cycle === "year" ? yearlySavingsRub(rates, tier, points) : 0;
           const details = [
             savingsRub > 0 ? t("price.yearSavings", { amount: rub(savingsRub) }) : null,
-            hasPointsDiscount(points) && fullRub > periodRub ? t("price.pointsDiscount", { percent: pointsDiscountPercent(points) }) : null,
+            hasPointsDiscount(points) && fullRub > periodRub ? t("price.pointsDiscount", { percent: pointsEffectiveDiscountPercent(points) }) : null,
           ].filter(Boolean);
           const isAvailable = available[tier][cycle];
           const quote = quotes?.[tier] ?? null;

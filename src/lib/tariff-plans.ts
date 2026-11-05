@@ -150,15 +150,42 @@ export function needsIndividualOffer(points: number): boolean {
   return normalizePoints(points) >= POINTS_INDIVIDUAL_FROM;
 }
 
-/** Множитель цены: N точек × (100 − скидка) %. */
-export function pointsFactor(points: number): number {
+/** Сотые доли «тарифов» по шкале как есть: N × (100 − скидка). */
+function scaledPoints(n: number): number {
+  return n * (100 - pointsDiscountPercent(n));
+}
+
+/**
+ * Множитель цены в сотых долях тарифа, целый. По шкале N × (100 − скидка), но
+ * не дороже следующей ступени: без этого 14 точек (−10 %) стоили бы дороже
+ * 15 (−20 %), а 34 — дороже 35 (решение 2026-11-05: больше точек никогда не
+ * дешевле меньшего числа). Последняя ступень до индивидуального предложения
+ * не ограничивается.
+ */
+function pointsFactorHundredths(points: number): number {
   const n = normalizePoints(points);
-  return (n * (100 - pointsDiscountPercent(n))) / 100;
+  const next = POINTS_DISCOUNT_STEPS.find((step) => step.from > n);
+  const own = scaledPoints(n);
+  return next ? Math.min(own, scaledPoints(next.from)) : own;
+}
+
+/** Множитель цены: N точек со скидкой по шкале (в «тарифах»). */
+export function pointsFactor(points: number): number {
+  return pointsFactorHundredths(points) / 100;
+}
+
+/**
+ * Фактическая скидка за точки в процентах, целая: по шкале, а у числа точек
+ * перед ступенью — больше (цена дотянута до следующей ступени).
+ */
+export function pointsEffectiveDiscountPercent(points: number): number {
+  const n = normalizePoints(points);
+  return Math.round(100 - pointsFactorHundredths(n) / n);
 }
 
 /** Цена полного периода (месяц или год) за N точек, целые рубли. */
 export function planPeriodPriceRub(rates: PlanRates, tier: PaidTier, cycle: BillingCycle, points = 1): number {
-  return Math.round(rates[tier][cycle] * CYCLE_MONTHS[cycle] * pointsFactor(points));
+  return Math.round((rates[tier][cycle] * CYCLE_MONTHS[cycle] * pointsFactorHundredths(points)) / 100);
 }
 
 /** Та же цена без скидки за точки — для зачёркнутой «было». */
@@ -178,8 +205,8 @@ export function planMonthlyRub(rates: PlanRates, tier: PaidTier, cycle: BillingC
  */
 export function planPointMonthlyRub(rates: PlanRates, tier: PaidTier, cycle: BillingCycle, points = 1): number {
   const rate = rates[tier][cycle];
-  const percent = pointsDiscountPercent(points);
-  return percent > 0 ? Math.round((rate * (100 - percent)) / 100) : rate;
+  const n = normalizePoints(points);
+  return Math.round((rate * pointsFactorHundredths(n)) / (n * 100));
 }
 
 /** Выгода годовой оплаты в процентах (Стандарт 3 000 → 1 990 — 34 %). */

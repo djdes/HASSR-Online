@@ -2,7 +2,7 @@ import { formatPhone } from "@/lib/brand-docs/phone";
 import { EMPTY_REQUISITES, type PlatformRequisites } from "@/lib/closing-documents/types";
 import { bundleTotal, HARDWARE_BUNDLES } from "@/lib/hardware-pricing";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
-import { COMPARISON_GROUPS, POINTS_DISCOUNT_LINE, TIER_NAMES, type ComparisonCell } from "@/lib/plan-catalog";
+import { COMPARISON_GROUPS, POINTS_DISCOUNT_LINE, TIER_NAMES, VIP_HOTLINE_HOURS, type ComparisonCell } from "@/lib/plan-catalog";
 import { promotionEndLabel } from "@/lib/promo/promotions";
 import { formalGreeting } from "@/lib/russian-names";
 import {
@@ -94,7 +94,14 @@ export type ProposalDesignInput = {
 };
 
 const NBSP = String.fromCharCode(0xa0);
-const TIERS: readonly [PaidTier, PaidTier] = ["standard", "premium"];
+type TierPair = readonly [PaidTier, PaidTier];
+/**
+ * Два тарифа в «Что входит»: выбранный и соседний. Для «ВИП» — «Премиум»
+ * рядом, иначе — «Стандарт» и «Премиум» (лист рассчитан на две колонки).
+ */
+export function proposalTierPair(plan: PaidTier): TierPair {
+  return plan === "vip" ? ["premium", "vip"] : ["standard", "premium"];
+}
 
 function formatPhoneOrNull(value: string | null | undefined): string | null {
   const text = value?.trim();
@@ -125,8 +132,31 @@ function storageLabel(tier: PaidTier): string {
 }
 
 /** Ряды «Что входит» — подписи образца, значения из каталога тарифов. */
-export function proposalComparisonRows(): Array<{ label: string; cells: [ProposalDesignCell, ProposalDesignCell] }> {
-  const both = (make: (tier: PaidTier) => ProposalDesignCell): [ProposalDesignCell, ProposalDesignCell] => [make(TIERS[0]), make(TIERS[1])];
+export function proposalComparisonRows(
+  tiers: TierPair = proposalTierPair("standard"),
+): Array<{ label: string; cells: [ProposalDesignCell, ProposalDesignCell] }> {
+  const both = (make: (tier: PaidTier) => ProposalDesignCell): [ProposalDesignCell, ProposalDesignCell] => [make(tiers[0]), make(tiers[1])];
+  if (tiers[1] === "vip") {
+    // «Премиум» и «ВИП» различаются сопровождением — его и показываем, общие
+    // ряды сокращены, чтобы таблица осталась той же высоты.
+    return [
+      {
+        label: "Журналы",
+        cells: both((tier) => (cellOf("journals", tier)?.kind === "text" ? { kind: "text", text: `все ${JOURNALS_TOTAL}` } : { kind: "no" })),
+      },
+      { label: "Заполнение с телефона", cells: both((tier) => yesNo("telegram", tier)) },
+      { label: "Сотрудников на одну точку", cells: both((tier) => ({ kind: "text", text: `до ${SEATS_PER_POINT[tier]}` })) },
+      { label: "Место для документов", cells: both((tier) => ({ kind: "text", text: storageLabel(tier) })) },
+      { label: "Подключение датчиков", cells: both((tier) => yesNo("equipmentConnect", tier)) },
+      { label: "Ветсправки в «Меркурии»", cells: both((tier) => yesNo("mercury", tier)) },
+      {
+        label: "Горячая линия",
+        cells: both((tier) => (cellOf("hotline", tier)?.kind === "text" ? { kind: "text", text: `${VIP_HOTLINE_HOURS}${NBSP}ч/мес` } : { kind: "no" })),
+      },
+      { label: "Расширенный банк данных", cells: both((tier) => yesNo("dataBank", tier)) },
+      { label: "Личный консультант", cells: both((tier) => yesNo("consultant", tier)) },
+    ];
+  }
   return [
     {
       label: "Журналы",
@@ -177,7 +207,8 @@ function discountNote(price: ReturnType<typeof computeProposalPrice>, promo: Pro
 
 export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign {
   const { vars } = input;
-  const plan: PaidTier = vars.plan === "premium" ? "premium" : "standard";
+  const plan: PaidTier = vars.plan === "premium" || vars.plan === "vip" ? vars.plan : "standard";
+  const tiers = proposalTierPair(plan);
   const rates = input.rates ?? DEFAULT_PLAN_RATES;
   const planName = TIER_NAMES[plan];
 
@@ -189,7 +220,7 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
 
   const extrasWanted = { ppk: vars.extras?.ppk !== false, equipment: vars.extras?.equipment !== false };
   const extras: ProposalDesign["price"]["extras"] = [];
-  if (plan === "premium" && extrasWanted.equipment) {
+  if (plan !== "standard" && extrasWanted.equipment) {
     extras.push({
       key: "equipment",
       label: "Дополнительно: датчики температуры с установкой",
@@ -206,7 +237,7 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
 
   const note = [
     `Цены за одну точку (один адрес), без НДС. Каждая следующая точка оплачивается так же; скидка на все точки: ${POINTS_DISCOUNT_LINE.replace(/ %/g, `${NBSP}%`)}.`,
-    plan === "premium" ? `Больше ${SEATS_PER_POINT.premium} сотрудников на точку — по договорённости.` : null,
+    plan !== "standard" ? `Больше ${SEATS_PER_POINT[plan]} сотрудников на точку — по договорённости.` : null,
     input.invoiceReady ? "Счёт выставим на любой вариант — выберите удобный." : "Оплата картой на сайте.",
   ]
     .filter(Boolean)
@@ -251,12 +282,12 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
     },
     comparison: {
       title: "Что входит",
-      columns: [TIER_NAMES.standard, TIER_NAMES.premium],
-      current: plan === "standard" ? 0 : 1,
-      rows: proposalComparisonRows(),
+      columns: [TIER_NAMES[tiers[0]], TIER_NAMES[tiers[1]]],
+      current: plan === tiers[0] ? 0 : 1,
+      rows: proposalComparisonRows(tiers),
       priceRow: {
         label: "В месяц при оплате за год",
-        values: [formatProposalRub(planMonthlyRub(rates, "standard", "year")), formatProposalRub(planMonthlyRub(rates, "premium", "year"))],
+        values: [formatProposalRub(planMonthlyRub(rates, tiers[0], "year")), formatProposalRub(planMonthlyRub(rates, tiers[1], "year"))],
       },
     },
     steps: {

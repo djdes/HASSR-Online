@@ -23,6 +23,7 @@ import {
   planPointMonthlyRub,
   planTariffKey,
   pointsDiscountPercent,
+  pointsEffectiveDiscountPercent,
   pointsFactor,
   quotePlanChange,
   resolvePlanTariffKey,
@@ -104,9 +105,13 @@ describe("цены тарифов (владелец, 2026-11-05)", () => {
     assert.equal(pointsFactor(5), 4.75);
     assert.equal(pointsFactor(9), 8.55);
     assert.equal(pointsFactor(10), 9);
-    assert.equal(pointsFactor(14), 12.6);
+    // Перед ступенью цена дотянута до неё: 14 точек не дороже 15, 33–34 — не дороже 35.
+    assert.equal(pointsFactor(13), 11.7);
+    assert.equal(pointsFactor(14), 12);
     assert.equal(pointsFactor(15), 12);
-    assert.equal(pointsFactor(34), 27.2);
+    assert.equal(pointsFactor(32), 25.6);
+    assert.equal(pointsFactor(33), 26.25);
+    assert.equal(pointsFactor(34), 26.25);
     assert.equal(pointsFactor(35), 26.25);
     assert.equal(pointsFactor(49), 36.75);
     assert.equal(planPeriodPriceRub(R, "standard", "month", 2), 5980);
@@ -119,18 +124,46 @@ describe("цены тарифов (владелец, 2026-11-05)", () => {
     assert.equal(planPeriodPriceRub(R, "vip", "month", 35), Math.round(12_990 * 26.25));
   });
 
+  it("больше точек никогда не дешевле меньшего числа (до индивидуального предложения)", () => {
+    for (const tier of ["standard", "premium", "vip"] as const) {
+      for (const cycle of ["month", "year"] as const) {
+        for (let n = 1; n < 50; n += 1) {
+          assert.ok(
+            planPeriodPriceRub(R, tier, cycle, n) <= planPeriodPriceRub(R, tier, cycle, n + 1),
+            `${tier}/${cycle}: ${n} точек не дороже ${n + 1}`,
+          );
+        }
+      }
+    }
+  });
+
+  it("фактическая скидка — по шкале, перед ступенью больше", () => {
+    assert.equal(pointsEffectiveDiscountPercent(1), 0);
+    assert.equal(pointsEffectiveDiscountPercent(5), 5);
+    assert.equal(pointsEffectiveDiscountPercent(10), 10);
+    assert.equal(pointsEffectiveDiscountPercent(13), 10);
+    // 14 точек по цене 15: 1 − 12 / 14 = 14,3 %.
+    assert.equal(pointsEffectiveDiscountPercent(14), 14);
+    assert.equal(pointsEffectiveDiscountPercent(15), 20);
+    assert.equal(pointsEffectiveDiscountPercent(34), 23);
+    assert.equal(pointsEffectiveDiscountPercent(35), 25);
+    assert.equal(pointsEffectiveDiscountPercent(49), 25);
+  });
+
   it("цена одной точки в месяц — со скидкой за точки, целые рубли", () => {
     assert.equal(planPointMonthlyRub(R, "standard", "month", 1), 2990);
     assert.equal(planPointMonthlyRub(R, "standard", "month", 4), 2990);
-    // 14 точек помесячно: 2 990 × 0,9 = 2 691 (итог — 37 674 ₽ в месяц).
-    assert.equal(planPointMonthlyRub(R, "standard", "month", 14), 2691);
-    assert.equal(planPointMonthlyRub(R, "standard", "month", 14) * 14, planPeriodPriceRub(R, "standard", "month", 14));
+    // 10 точек помесячно: 2 990 × 0,9 = 2 691 (итог — 26 910 ₽ в месяц).
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 10), 2691);
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 10) * 10, planPeriodPriceRub(R, "standard", "month", 10));
+    // 14 точек — по цене 15: 2 990 × 12 / 14 = 2 562,9 → 2 563.
+    assert.equal(planPointMonthlyRub(R, "standard", "month", 14), 2563);
     // 1 990 × 0,95 = 1 890,5 → 1 891 (без потери на дробях).
     assert.equal(planPointMonthlyRub(R, "standard", "year", 5), 1891);
-    assert.equal(planPointMonthlyRub(R, "standard", "year", 14), 1791);
+    assert.equal(planPointMonthlyRub(R, "standard", "year", 14), 1706);
     assert.equal(planPointMonthlyRub(R, "standard", "month", 15), 2392);
     assert.equal(planPointMonthlyRub(R, "premium", "year", 3), 3990);
-    assert.equal(planPointMonthlyRub(R, "premium", "month", 14), 4491);
+    assert.equal(planPointMonthlyRub(R, "premium", "month", 14), 4277);
     // 12 990 × 0,75 = 9 742,5 → 9 743.
     assert.equal(planPointMonthlyRub(R, "vip", "month", 35), 9743);
   });

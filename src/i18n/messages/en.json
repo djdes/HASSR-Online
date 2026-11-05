@@ -21840,7 +21840,8 @@
       "bonusLine": "Bonuses: {amount} — {bonus} per client after their payment no. {after}",
       "bonusLater": "The {bonus} bonus per client comes with their payment no. {after} — in the second year",
       "footnote": "Rules version {version}: a share of every subscription payment for {months} months from the client's first payment. Hardware adds another {hardware}% and is not included here.",
-      "heroLink": "Estimate income"
+      "heroLink": "Estimate income",
+      "vip": "VIP"
     }
   },
   "publicPrivacy": {
@@ -30611,7 +30612,8 @@
       "plan": "Tariff",
       "plans": {
         "standard": "Standard",
-        "premium": "Premium"
+        "premium": "Premium",
+        "vip": "VIP"
       },
       "addressee": "Addressee line under the title",
       "addresseeHint": "In Russian dative case: we declined the director’s name automatically — please check.",

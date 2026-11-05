@@ -43,7 +43,7 @@ import { isTopupOrder } from "@/lib/balance/topup-core";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import {
   FREE_MAX_JOURNALS,
-  pointsDiscountPercent,
+  pointsEffectiveDiscountPercent,
   SEATS_PER_POINT,
   TRIAL_DAYS,
   planMonthlyRub,
@@ -816,9 +816,9 @@ export default async function SubscriptionPage({
                     <tr key={points} className="border-t border-[#ececf4]">
                       <td className="py-2 text-[#3c4053]">
                         {t("pointsCount", { count: points })}
-                        {pointsDiscountPercent(points) > 0 ? (
+                        {pointsEffectiveDiscountPercent(points) > 0 ? (
                           <span className="ml-1.5 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-medium text-[#116b2a]">
-                            −{pointsDiscountPercent(points)} %
+                            −{pointsEffectiveDiscountPercent(points)} %
                           </span>
                         ) : null}
                       </td>

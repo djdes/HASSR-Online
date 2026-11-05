@@ -89,7 +89,7 @@ export async function PATCH(
     // `trial` намеренно отсутствует: это legacy-значение бесплатного
     // тарифа, читается как `free`, но новым его не назначаем. `paid` —
     // «Подписка» прежнего тарифа (без новых лимитов).
-    if (!["free", "standard", "premium", "paid", "paused", "cancelled"].includes(plan)) {
+    if (!["free", "standard", "premium", "vip", "paid", "paused", "cancelled"].includes(plan)) {
       return NextResponse.json({ error: "Неизвестный тариф", errorCode: "ORG_PLAN_UNKNOWN" }, { status: 400 });
     }
     data.subscriptionPlan = plan;
@@ -117,7 +117,7 @@ export async function PATCH(
   if (data.subscriptionEnd && isFreePlan(planAfter)) {
     return NextResponse.json(
       {
-        error: "У «Бесплатного» нет оплаченного срока — чтобы задать дату, выберите «Стандарт», «Премиум» или «Подписку (прежний тариф)»",
+        error: "У «Бесплатного» нет оплаченного срока — чтобы задать дату, выберите «Стандарт», «Премиум», «ВИП» или «Подписку (прежний тариф)»",
         errorCode: "ORG_FREE_WITH_END",
       },
       { status: 400 }

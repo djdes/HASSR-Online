@@ -81,3 +81,19 @@ test("price note: points discount scale of 2026-11-05", () => {
   );
   assert.doesNotMatch(design.price.note, /от (тр|пят)[её]?х точек/);
 });
+
+test("ВИП: колонки «Премиум» и «ВИП», ряды сопровождения, та же высота таблицы", () => {
+  const ctx = sampleProposalContext({ rates: { standard: { month: 2990, year: 1990 }, premium: { month: 4990, year: 3990 }, vip: { month: 12990, year: 8990 } } });
+  const standard = buildProposalContent({ sphere: "cafe" }, ctx).design;
+  const vip = buildProposalContent({ sphere: "cafe", plan: "vip" }, ctx).design;
+  assert.equal(vip.planName, "ВИП");
+  assert.equal(plain(vip.price.month.total), "12 990 ₽ в месяц");
+  assert.deepEqual(vip.comparison.columns, ["Премиум", "ВИП"]);
+  assert.equal(vip.comparison.current, 1);
+  assert.deepEqual(vip.comparison.priceRow.values.map(plain), ["3 990 ₽", "8 990 ₽"]);
+  assert.equal(vip.comparison.rows.length, standard.comparison.rows.length);
+  const row = (label: string) => vip.comparison.rows.find((item) => item.label === label)!;
+  assert.deepEqual(row("Горячая линия").cells.map((cell) => cell.kind), ["no", "text"]);
+  assert.deepEqual(row("Личный консультант").cells.map((cell) => cell.kind), ["no", "yes"]);
+  assert.deepEqual(vip.price.extras.map((item) => item.key), ["equipment", "ppk"]);
+});

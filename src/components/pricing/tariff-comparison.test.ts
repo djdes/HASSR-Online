@@ -203,21 +203,21 @@ test("a monthly subscriber with 14 points opens on «per year»: price per point
       const from = html.slice(html.indexOf(`data-testid="tariff-card-${tier}"`));
       return norm(visibleText(from.slice(0, from.indexOf(`data-testid="tariff-action-${tier}"`))));
     };
-    // Крупно — одна точка в месяц, 14 точек — скидка 10 %: 1 990 × 0,9 = 1 791,
-    // 3 990 × 0,9 = 3 591, 8 990 × 0,9 = 8 091.
-    assert.ok(priceOf("standard").includes(norm(rub(1791))), `${locale}: standard per point`);
-    assert.ok(priceOf("premium").includes(norm(rub(3591))), `${locale}: premium per point`);
-    assert.ok(priceOf("vip").includes(norm(rub(8091))), `${locale}: vip per point`);
+    // Крупно — одна точка в месяц. 14 точек стоят как 15 (12 тарифов вместо
+    // 12,6): 1 990 × 12 / 14 = 1 706, 3 990 × 12 / 14 = 3 420, 8 990 × 12 / 14 = 7 706.
+    assert.ok(priceOf("standard").includes(norm(rub(1706))), `${locale}: standard per point`);
+    assert.ok(priceOf("premium").includes(norm(rub(3420))), `${locale}: premium per point`);
+    assert.ok(priceOf("vip").includes(norm(rub(7706))), `${locale}: vip per point`);
     assert.ok(priceOf("standard").includes(norm(t("price.perPointMonth"))), `${locale}: per point suffix`);
     // Мельче — за все 14 точек за год, экономия и скидка за точки.
-    assert.ok(priceOf("standard").includes(norm(t("price.totalYear", { count: 14, amount: rub(300_888) }))), `${locale}: standard total`);
-    assert.ok(priceOf("premium").includes(norm(t("price.totalYear", { count: 14, amount: rub(603_288) }))), `${locale}: premium total`);
-    assert.ok(priceOf("vip").includes(norm(t("price.totalYear", { count: 14, amount: rub(1_359_288) }))), `${locale}: vip total`);
-    // 37 674 × 12 − 300 888 = 151 200.
-    assert.ok(priceOf("standard").includes(norm(t("price.yearSavings", { amount: rub(151_200) }))), `${locale}: savings`);
-    assert.ok(priceOf("standard").includes(norm(t("price.pointsDiscount", { percent: 10 }))), `${locale}: points discount`);
-    // Кнопка — переход на год с зачётом остатка месяца: 300 888 − 37 674 × 15/30.
-    assert.ok(html.includes(t("cta.switchYear", { amount: rub(300_888 - 18_837) })), `${locale}: switch to year`);
+    assert.ok(priceOf("standard").includes(norm(t("price.totalYear", { count: 14, amount: rub(286_560) }))), `${locale}: standard total`);
+    assert.ok(priceOf("premium").includes(norm(t("price.totalYear", { count: 14, amount: rub(574_560) }))), `${locale}: premium total`);
+    assert.ok(priceOf("vip").includes(norm(t("price.totalYear", { count: 14, amount: rub(1_294_560) }))), `${locale}: vip total`);
+    // 35 880 × 12 − 286 560 = 144 000; фактическая скидка 1 − 12 / 14 = 14 %.
+    assert.ok(priceOf("standard").includes(norm(t("price.yearSavings", { amount: rub(144_000) }))), `${locale}: savings`);
+    assert.ok(priceOf("standard").includes(norm(t("price.pointsDiscount", { percent: 14 }))), `${locale}: points discount`);
+    // Кнопка — переход на год с зачётом остатка месяца: 286 560 − 35 880 × 15/30.
+    assert.ok(html.includes(t("cta.switchYear", { amount: rub(286_560 - 17_940) })), `${locale}: switch to year`);
     if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
   }
 });

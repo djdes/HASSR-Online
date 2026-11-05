@@ -54,7 +54,7 @@ export type ProposalVars = {
 };
 
 /** Тариф в КП. */
-export type ProposalPlan = "standard" | "premium";
+export type ProposalPlan = "standard" | "premium" | "vip";
 
 /** «Дополнительно» в таблице стоимости: ППК под заведение и датчики с установкой («Премиум»). */
 export type ProposalExtras = { ppk?: boolean; equipment?: boolean };

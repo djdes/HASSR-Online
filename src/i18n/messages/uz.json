@@ -21840,7 +21840,8 @@
       "bonusLine": "Bonuslar: {amount} — har bir mijoz uchun uning {after}-to‘lovidan keyin {bonus}",
       "bonusLater": "Mijoz uchun {bonus} bonus uning {after}-to‘lovi bilan keladi — ikkinchi yilda",
       "footnote": "{version}-versiya qoidalari: mijozning birinchi to‘lovidan boshlab {months} oy davomida har bir obuna to‘lovidan ulush. Uskunalar uchun yana {hardware} % alohida, bu yerga kirmaydi.",
-      "heroLink": "Daromadni hisoblash"
+      "heroLink": "Daromadni hisoblash",
+      "vip": "VIP"
     }
   },
   "publicPrivacy": {
@@ -30611,7 +30612,8 @@
       "plan": "Tarif",
       "plans": {
         "standard": "Standart",
-        "premium": "Premium"
+        "premium": "Premium",
+        "vip": "VIP"
       },
       "addressee": "Sarlavha ostidagi qabul qiluvchi qatori",
       "addresseeHint": "Rus tilida jo‘nalish kelishigida: rahbarning F.I.Sh.ni avtomatik turladik — tekshiring.",
