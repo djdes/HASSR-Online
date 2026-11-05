@@ -5719,7 +5719,8 @@
       }
     },
     "pricingTitle": "Uchta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz",
-    "brandTagline": "Sizning elektron HACCP tizimingiz"
+    "brandTagline": "Sizning elektron HACCP tizimingiz",
+    "presentationPdf": "Setup taqdimoti — PDF, 7 MB (rus tilida)"
   },
   "landingComponents": {
     "heroEmail": {

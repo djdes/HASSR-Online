@@ -5720,7 +5720,8 @@ export type MessageContract = {
       }
     },
     "pricingTitle": "Три тарифа. Начните бесплатно — {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} без карты",
-    "brandTagline": "Ваш электронный ХАССП"
+    "brandTagline": "Ваш электронный ХАССП",
+    "presentationPdf": "Презентация сетап — PDF, 7 МБ"
   },
   "landingComponents": {
     "heroEmail": {

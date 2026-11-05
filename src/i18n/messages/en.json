@@ -5719,7 +5719,8 @@
       }
     },
     "pricingTitle": "Three plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card",
-    "brandTagline": "Your electronic HACCP"
+    "brandTagline": "Your electronic HACCP",
+    "presentationPdf": "WeSetup presentation — PDF, 7 MB (in Russian)"
   },
   "landingComponents": {
     "heroEmail": {

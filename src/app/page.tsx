@@ -684,6 +684,19 @@ export default async function LandingPage() {
                   рассказывают сами главы ролика, дублировать текстом не надо. */}
               <p className="mt-3 text-[15px] leading-[1.6] text-white/75 sm:text-[16px]">
                 {copy("landing.qrScanDescription")}</p>
+              {/* Правки 05.11.2026: утверждённая презентация — PDF рядом с роликом.
+                  Презентация на русском, поэтому ссылка только на русской главной. */}
+              {locale === "ru" ? (
+                <a
+                  href="/landing/wesetup-presentation.pdf"
+                  target="_blank"
+                  rel="noopener"
+                  className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/40"
+                >
+                  <FileText className="size-4 text-[#8b97ff]" aria-hidden />
+                  {copy("landing.presentationPdf")}
+                </a>
+              ) : null}
             </div>
             <div className="mt-7 sm:mt-9">
               <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene"]}>
