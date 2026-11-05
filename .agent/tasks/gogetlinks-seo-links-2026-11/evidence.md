@@ -60,13 +60,13 @@ Date: 2026-11-05
 - **Статус:** `PASS`
 
 ### AC6: Расписание с обязательным ручным подтверждением и финансовая защита
-- **Файлы:** `src/lib/seo/gogetlinks-access.ts`, `src/lib/seo/gogetlinks-access.test.ts`, `src/lib/seo/gogetlinks-spend.test.ts`, `src/app/api/root/gogetlinks/slots/[id]/approve/route.ts`
+- **Файлы:** `src/lib/seo/gogetlinks-access.ts`, `src/lib/seo/gogetlinks-access.test.ts`, `src/lib/seo/gogetlinks-orders.test.ts`, `src/app/api/root/gogetlinks/slots/[id]/approve/route.ts`
 - **Реализация:**
   - Слоты формируются в статусах `planned` -> `preparing` -> `pending_approval`.
   - **Никаких автосписаний в фоне:** закупка и списание средств инициируются исключительно по нажатию кнопки «Подтвердить закупку» человеком.
   - Финансовый контроль `canApproveGglSpend`: по умолчанию подтверждать могут только администраторы платформы (`isPlatformAdministrator`); специалист `seo` допускается только при включённом `allowSeoApproveWithinPlan` и соблюдении лимитов плана.
   - Атомарная блокировка слота (`approved_sending`), защита от двойных списаний по `idempotencyKey` и проверка баланса `availableRub`.
-- **Тесты:** `src/lib/seo/gogetlinks-access.test.ts` (10 тестов pass), `src/lib/seo/gogetlinks-spend.test.ts` (10 тестов pass).
+- **Тесты:** `src/lib/seo/gogetlinks-access.test.ts` (10 тестов pass), `src/lib/seo/gogetlinks-orders.test.ts` (10 тестов pass).
 - **Статус:** `PASS`
 
 ### AC7: Пользовательский интерфейс `/root/seo/links` и крон-задачи
@@ -95,7 +95,7 @@ Date: 2026-11-05
   2. `npm run typecheck` — 0 ошибок компиляции TypeScript (`raw/typecheck.txt`, EXIT_CODE=0).
   3. `npx eslint src/lib/seo ... src/components/root/seo-links` — 0 ошибок, 0 предупреждений (`raw/eslint-seo.txt`, EXIT_CODE=0).
   4. Unit-тесты `npx tsx --test src/lib/seo/*.test.ts src/lib/platform-access.test.ts src/components/public/public-dark-theme.test.ts` — 72 теста, 72 pass, 0 fail (`raw/seo-and-access-tests.txt`, EXIT_CODE=0).
-  5. `npm run test:gate` — 5700 тестов pass, отсутствие регрессий относительно базовой линии Windows CRLF master (`raw/test-gate.txt`).
+  5. `npm run test:gate` — pass=5701, 0 новых регрессий ветки; 5 оставшихся строк `not ok` — известные сбои baseline CRLF/DB на `origin/master` (`raw/test-gate.txt`). Ошибка dark-theme HEX устранена в Pass 2.
 - **Статус:** `PASS`
 
 ---
@@ -107,5 +107,5 @@ Date: 2026-11-05
 - `raw/eslint-seo.txt` — чистый проход линтера по всем изменённым файлам SEO.
 - `raw/i18n-check.txt` — проверка словарей локализации.
 - `raw/repo-lint.txt` — полный аудит стилей и синтаксиса репозитория.
-- `raw/test-gate.txt` — шлюз регрессионного тестирования репозитория.
+- `raw/test-gate.txt` — шлюз регрессионного тестирования репозитория (`pass=5701`, 0 регрессий ветки).
 - `problems.md` — журнал выявленных на промежуточных этапах замечаний (Pass 1: ESLint undici/any, Pass 2: dark-theme hex token) и их устранения.

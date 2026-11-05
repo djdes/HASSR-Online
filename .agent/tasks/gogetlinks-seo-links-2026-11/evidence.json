@@ -26,7 +26,7 @@
     },
     "AC6": {
       "status": "PASS",
-      "proof": "Расписание GglSchedulePlan и слоты GglPlannedSlot. Закупка ТОЛЬКО по ручному клику «Подтвердить» человека (/api/root/gogetlinks/slots/[id]/approve), никаких автосписаний в кроне. Финансовый гейт canApproveGglSpend (src/lib/seo/gogetlinks-access.ts). Защита от повторных списаний через idempotencyKey и статус approved_sending. Тесты gogetlinks-access.test.ts (10/10) и gogetlinks-spend.test.ts (10/10)."
+      "proof": "Расписание GglSchedulePlan и слоты GglPlannedSlot. Закупка ТОЛЬКО по ручному клику «Подтвердить» человека (/api/root/gogetlinks/slots/[id]/approve), никаких автосписаний в кроне. Финансовый гейт canApproveGglSpend (src/lib/seo/gogetlinks-access.ts). Защита от повторных списаний через idempotencyKey и статус approved_sending. Тесты gogetlinks-access.test.ts (10/10) и gogetlinks-orders.test.ts (10/10)."
     },
     "AC7": {
       "status": "PASS",
@@ -34,7 +34,7 @@
     },
     "AC8": {
       "status": "PASS",
-      "proof": "Полный стек проверок зелёный: npm run i18n:check (97/97 pass, raw/i18n-check.txt), npm run typecheck (0 errors, raw/typecheck.txt), npx eslint по всем модулям SEO (0 errors, 0 warnings, raw/eslint-seo.txt), 72/72 unit-тестов SEO и доступа (raw/seo-and-access-tests.txt), test-gate без регрессий (raw/test-gate.txt)."
+      "proof": "Полный стек проверок зелёный: npm run i18n:check (97/97 pass, raw/i18n-check.txt), npm run typecheck (0 errors, raw/typecheck.txt), npx eslint по всем модулям SEO (0 errors, 0 warnings, raw/eslint-seo.txt), 72/72 unit-тестов SEO и доступа + public-dark-theme (raw/seo-and-access-tests.txt, EXIT_CODE=0), test-gate: pass=5701, 0 регрессий ветки; 5 оставшихся not ok — известные baseline CRLF/DB с origin/master (raw/test-gate.txt)."
     }
   },
   "notDone": []

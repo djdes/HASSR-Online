@@ -3,7 +3,7 @@
 > bash scripts/test-with-baseline.sh
 
 
-=== Test stats: pass=5700, fail=6 ===
+=== Test stats: pass=5701, fail=5 ===
 
 ✗ НОВЫЕ регрессии (нет в baseline):
   - message argument types are generated from the current source catalog
@@ -11,7 +11,6 @@
   - печать: общий журнал — на точку, откуда печатают; одноимённый принтер другой точки не отзывается
   - страница «Безопасность и данные»
   - страница и ролик «Журналы заполняются сами»
-  - цвет текста во вложенных селекторах — токен темы, не HEX
 
 Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
 Если регрессии — почините код.
