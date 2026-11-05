@@ -5768,7 +5768,7 @@
         "label": "Nuqtalar",
         "decrease": "Nuqtani olib tashlash",
         "increase": "Nuqta qo‘shish",
-        "hint": "Nuqta — bitta tashkilot ichidagi alohida jurnallar va xodimlar: kafe, sex, filial. Har biri yana bitta tarif kabi; {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma."
+        "hint": "Nuqta — bitta tashkilot ichidagi alohida jurnallar va xodimlar: kafe, sex, filial. Har biri — yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %."
       },
       "tiers": {
         "free": {
@@ -5777,11 +5777,15 @@
         },
         "standard": {
           "name": "Standart",
-          "tagline": "Har bir nuqtaga 25 kishigacha jamoa va barcha jurnallar"
+          "tagline": "Elektron jurnallar va chek-listlar, har bir nuqtada 25 kishigacha jamoa"
         },
         "premium": {
           "name": "Premium",
-          "tagline": "Avtomatlashtirish: datchik fotosi, uskunalar va namunaviy hujjatlar"
+          "tagline": "HACCP tamoyillariga asoslangan elektron ishlab chiqarish nazorati dasturi, avtomatlashtirish va uskunalar"
+        },
+        "vip": {
+          "name": "VIP",
+          "tagline": "Ishonch telefoni, kengaytirilgan ma’lumotlar banki va shaxsiy maslahatchi"
         }
       },
       "badges": {
@@ -5803,7 +5807,8 @@
       "includes": {
         "free": "Nimalar kiradi:",
         "standard": "«Bepul»dagi hammasi, qo‘shimcha:",
-        "premium": "«Standart»dagi hammasi, qo‘shimcha:"
+        "premium": "«Standart»dagi hammasi, qo‘shimcha:",
+        "vip": "«Premium»dagi hammasi, qo‘shimcha:"
       },
       "features": {
         "trialAll": "{trialDays, number} kun — barcha jurnallar, xodimlar va nuqtalar cheklovsiz",
@@ -5819,7 +5824,12 @@
         "equipmentDelivery": "Ulangan uskunani yetkazib berish — kabinetda buyurtma",
         "typicalPackage": "Namunaviy hujjatlar to‘plami: chop etib to‘ldiring",
         "employeesPremium": "Har bir nuqtaga {count, number} nafargacha xodim, undan ko‘pi — kelishuv bo‘yicha",
-        "mercury": "«Merkuriy» FDAT: kiruvchi VSDlar va qabul jurnalidan so‘ndirish"
+        "mercury": "«Merkuriy» FDAT: kiruvchi VSDlar va qabul jurnalidan so‘ndirish",
+        "checklists": "Smenalar va tekshiruvlar uchun chek-listlar",
+        "ppkElectronic": "HACCP tamoyillariga asoslangan elektron ishlab chiqarish nazorati dasturi",
+        "hotline": "Ishonch telefoni — oyiga {hours, number} soatgacha",
+        "dataBank": "Kengaytirilgan ma’lumotlar banki",
+        "consultant": "Shaxsiy maslahatchi"
       },
       "cta": {
         "startFree": "Bepul boshlash",
@@ -5861,7 +5871,8 @@
         "team": "Jamoa va nuqtalar",
         "journals": "Jurnallar",
         "documents": "Hujjatlar",
-        "equipment": "Uskunalar va avtomatlashtirish"
+        "equipment": "Uskunalar va avtomatlashtirish",
+        "service": "Hamrohlik"
       },
       "rows": {
         "employees": "Xodimlar",
@@ -5877,7 +5888,12 @@
         "equipmentConnect": "Uskuna va IoT-datchiklarni ulash",
         "equipmentDelivery": "Ulangan uskunani yetkazib berish",
         "mercury": "«Merkuriy» FDAT (VetIS)",
-        "haccpPlan": "HACCP rejasi"
+        "haccpPlan": "HACCP rejasi",
+        "checklists": "Chek-listlar",
+        "ppkElectronic": "HACCP tamoyillariga asoslangan elektron ishlab chiqarish nazorati dasturi",
+        "hotline": "Ishonch telefoni",
+        "dataBank": "Kengaytirilgan ma’lumotlar banki",
+        "consultant": "Shaxsiy maslahatchi"
       },
       "cells": {
         "employeesFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
@@ -5891,13 +5907,20 @@
         "storagePremium": "Barcha hujjatlar uchun {gb, number} GB",
         "trialOnly": "Faqat {trialDays, number} kunlik sinov davrida",
         "ppkOnRequest": "Individual, so‘rov bo‘yicha",
-        "employeesPremium": "Har bir nuqtaga {count, number}, undan ko‘pi — kelishuv bo‘yicha"
+        "employeesPremium": "Har bir nuqtaga {count, number}, undan ko‘pi — kelishuv bo‘yicha",
+        "pointsPaidScale": "Tarifda 1 ta; har bir keyingisi — yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %, 50 tadan — individual taklif",
+        "hotlineVip": "Oyiga {hours, number} soatgacha"
       },
       "contactLink": "bog‘lanish",
       "contactSubject": "«Premium» tarifida 40 nafardan ortiq xodim",
       "headcount": {
         "toPremium": "Sizda {count, plural, other {# nafar xodim}} bor, bu tarifda {limit, number} nafargacha — «Premium» mos keladi.",
         "contact": "Sizda {count, plural, other {# nafar xodim}} bor, bu tarifda {limit, number} nafargacha — undan ko‘pi kelishuv bo‘yicha."
+      },
+      "individual": {
+        "title": "50 va undan ortiq nuqta — individual taklif",
+        "text": "Tarmog‘ingiz va shartlaringiz uchun narxni hisoblaymiz. Menejer bilan bog‘laning.",
+        "cta": "Menejer bilan bog‘lanish"
       }
     }
   },
@@ -16993,7 +17016,8 @@
       "paused": "Vaqtincha to‘xtatilgan",
       "cancelled": "Bekor qilingan",
       "standard": "Standart",
-      "premium": "Premium"
+      "premium": "Premium",
+      "vip": "VIP"
     },
     "impersonate": {
       "enter": "{name} nomidan kirish",
@@ -29423,7 +29447,7 @@
       "scheduleCancelled": "O‘tish bekor qilindi",
       "tariffsChoose": "Tarifni tanlang",
       "tariffsChange": "Tarifni o‘zgartirish",
-      "rulePoints": "Narx — nuqta uchun: nuqta — tashkilot ichidagi alohida jurnallar va xodimlar, har biri yana bitta tarif kabi. {from, number} ta nuqtadan boshlab har biriga {percent, number} % chegirma.",
+      "rulePoints": "Narx — nuqta uchun: nuqta — tashkilot ichidagi alohida jurnallar va xodimlar, har biri yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %, 50 tadan — individual taklif.",
       "ruleUpgrade": "Tarif yoki nuqtalar sonini oshirish — darhol: farqni faqat qolgan kunlar uchun to‘laysiz, tugash sanasi o‘zgarmaydi.",
       "ruleSwitch": "Oylik to‘lovdan yillikka o‘tish — darhol: yil narxidan oyning foydalanilmagan qoldig‘i ayriladi.",
       "ruleDowngrade": "Tarifni pasaytirish, kamroq nuqta yoki oylik to‘lovga o‘tish — to‘langan muddat tugagach, hozir to‘lash shart emas.",

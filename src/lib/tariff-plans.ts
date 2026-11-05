@@ -1,7 +1,7 @@
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
 
 /**
- * Тарифы 2026-10: «Бесплатный», «Стандарт», «Премиум»
+ * Тарифы 2026-10 (с 2026-11-05 — ещё «ВИП»): «Бесплатный», «Стандарт», «Премиум», «ВИП»
  * (spec `.agent/tasks/tariffs-v3-2026-10/spec.md`).
  *
  *   • Бесплатный — 14 дней без ограничений с момента активации, без карты.
@@ -12,21 +12,23 @@ import { FREE_MAX_USERS } from "@/lib/plan-limits";
  *     Стандарта, 1 ГБ на все документы, автоввод показаний с фото, подключение
  *     оборудования, доставка подключённого оборудования, типовой пакет
  *     документов, «Меркурий» (spec `.agent/tasks/tariffs-limits-ui-2026-10/`).
+ *   • ВИП (2026-11-05) — всё из Премиума, те же лимиты, плюс горячая линия,
+ *     расширенный банк данных и личный консультант — их ведёт команда вручную.
  *
  * Точка — отдельный адрес со своими журналами и сотрудниками; каждая точка
- * сверх первой стоит как ещё один тариф, от трёх точек — минус 5 % на каждую.
+ * сверх первой стоит как ещё один тариф; скидка за число точек — `POINTS_DISCOUNT_STEPS`.
  * Не хватает мест — следующий тариф, а не новая точка (`seatUpgradeTarget`).
  * Цена за месяц живёт в `PlatformTariff` (правит ROOT), сюда
  * её приносит вызывающий код (`PlanRates`), поэтому модуль чистый: его
  * читают сервер (сумма заказа), клиентские витрины и тесты.
  */
 
-export type PaidTier = "standard" | "premium";
+export type PaidTier = "standard" | "premium" | "vip";
 export type TierId = "free" | PaidTier;
 export type BillingCycle = "month" | "year";
 
-export const PAID_TIERS: readonly PaidTier[] = ["standard", "premium"];
-export const TIER_IDS: readonly TierId[] = ["free", "standard", "premium"];
+export const PAID_TIERS: readonly PaidTier[] = ["standard", "premium", "vip"];
+export const TIER_IDS: readonly TierId[] = ["free", "standard", "premium", "vip"];
 export const BILLING_CYCLES: readonly BillingCycle[] = ["month", "year"];
 
 /** Сколько дней длится бесплатный тариф без ограничений. */
@@ -35,21 +37,35 @@ export const TRIAL_DAYS = 14;
 export const FREE_MAX_JOURNALS = 1;
 export const FREE_MAX_POINTS = 1;
 /** Сотрудников на одну оплаченную точку; у «Премиума» больше — по согласованию. */
-export const SEATS_PER_POINT: Readonly<Record<PaidTier, number>> = { standard: 25, premium: 40 };
+export const SEATS_PER_POINT: Readonly<Record<PaidTier, number>> = { standard: 25, premium: 40, vip: 40 };
 /**
  * Верхняя граница выбора точек на витрине и в заказе — от опечаток, с
  * запасом на крупные сети: заказ не может быть меньше точек в работе.
  */
 export const MAX_POINTS = 500;
-/** С какого числа точек действует скидка и какая. */
-export const POINTS_DISCOUNT_FROM = 3;
-export const POINTS_DISCOUNT_PERCENT = 5;
+/**
+ * Скидка за число точек (владелец, 2026-11-05), на все точки заказа:
+ * 1–4 — по прайсу, 5–9 — −5 %, 10–14 — −10 %, 15–34 — −20 %, 35–49 — −25 %,
+ * от 50 — индивидуальное предложение (витрина зовёт к менеджеру).
+ */
+export const POINTS_DISCOUNT_STEPS: readonly { from: number; percent: number }[] = [
+  { from: 5, percent: 5 },
+  { from: 10, percent: 10 },
+  { from: 15, percent: 20 },
+  { from: 35, percent: 25 },
+];
+/** С какого числа точек действует первая скидка и какая. */
+export const POINTS_DISCOUNT_FROM = POINTS_DISCOUNT_STEPS[0].from;
+export const POINTS_DISCOUNT_PERCENT = POINTS_DISCOUNT_STEPS[0].percent;
+/** С этого числа точек — индивидуальное предложение. */
+export const POINTS_INDIVIDUAL_FROM = 50;
 
 const MB = 1024 * 1024;
 /** Хранилище документов тарифа. */
 export const STORAGE_BYTES: Record<PaidTier, number> = {
   standard: 10 * MB,
   premium: 1024 * MB,
+  vip: 1024 * MB,
 };
 
 /**
@@ -67,10 +83,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Цена тарифа за месяц: помесячно и при оплате за год. */
 export type PlanRates = Record<PaidTier, Record<BillingCycle, number>>;
 
-/** Цены владельца (2026-10). ROOT правит их в `PlatformTariff`. */
+/** Цены владельца (2026-11-05). ROOT правит их в `PlatformTariff`. */
 export const DEFAULT_PLAN_RATES: PlanRates = {
-  standard: { month: 3000, year: 1990 },
-  premium: { month: 5000, year: 3990 },
+  standard: { month: 2990, year: 1990 },
+  premium: { month: 4990, year: 3990 },
+  vip: { month: 12990, year: 8990 },
 };
 
 /** Ключ `PlatformTariff` и `PaymentOrder.tariffKey`: `standard_year`. */
@@ -79,7 +96,7 @@ export function planTariffKey(tier: PaidTier, cycle: BillingCycle): string {
 }
 
 export function isPaidTier(value: unknown): value is PaidTier {
-  return value === "standard" || value === "premium";
+  return value === "standard" || value === "premium" || value === "vip";
 }
 
 export function isBillingCycle(value: unknown): value is BillingCycle {
@@ -115,15 +132,28 @@ export function normalizePoints(value: unknown): number {
   return Math.min(MAX_POINTS, Math.max(1, Math.floor(n)));
 }
 
-/** Скидка за точки действует (3 точки и больше). */
-export function hasPointsDiscount(points: number): boolean {
-  return normalizePoints(points) >= POINTS_DISCOUNT_FROM;
+/** Скидка в процентах за `points` точек (0 — по прайсу). */
+export function pointsDiscountPercent(points: number): number {
+  const n = normalizePoints(points);
+  let percent = 0;
+  for (const step of POINTS_DISCOUNT_STEPS) if (n >= step.from) percent = step.percent;
+  return percent;
 }
 
-/** Множитель цены: 1 → 1, 2 → 2, N ≥ 3 → N × 0,95. */
+/** Скидка за точки действует (5 точек и больше). */
+export function hasPointsDiscount(points: number): boolean {
+  return pointsDiscountPercent(points) > 0;
+}
+
+/** От 50 точек — индивидуальное предложение: витрина зовёт к менеджеру. */
+export function needsIndividualOffer(points: number): boolean {
+  return normalizePoints(points) >= POINTS_INDIVIDUAL_FROM;
+}
+
+/** Множитель цены: N точек × (100 − скидка) %. */
 export function pointsFactor(points: number): number {
   const n = normalizePoints(points);
-  return hasPointsDiscount(n) ? (n * (100 - POINTS_DISCOUNT_PERCENT)) / 100 : n;
+  return (n * (100 - pointsDiscountPercent(n))) / 100;
 }
 
 /** Цена полного периода (месяц или год) за N точек, целые рубли. */
@@ -148,7 +178,8 @@ export function planMonthlyRub(rates: PlanRates, tier: PaidTier, cycle: BillingC
  */
 export function planPointMonthlyRub(rates: PlanRates, tier: PaidTier, cycle: BillingCycle, points = 1): number {
   const rate = rates[tier][cycle];
-  return hasPointsDiscount(points) ? Math.round((rate * (100 - POINTS_DISCOUNT_PERCENT)) / 100) : rate;
+  const percent = pointsDiscountPercent(points);
+  return percent > 0 ? Math.round((rate * (100 - percent)) / 100) : rate;
 }
 
 /** Выгода годовой оплаты в процентах (Стандарт 3 000 → 1 990 — 34 %). */
@@ -265,7 +296,8 @@ export function entitlementsFor(tier: EntitlementTier, points = 1): Entitlements
     case "standard":
       return { tier, seatLimit: seatLimitFor("standard", n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES.standard, features: { ...NO_FEATURES } };
     case "premium":
-      return { tier, seatLimit: seatLimitFor("premium", n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES.premium, features: { ...ALL_FEATURES } };
+    case "vip":
+      return { tier, seatLimit: seatLimitFor(tier, n), pointLimit: n, journalLimit: null, storageBytes: STORAGE_BYTES[tier], features: { ...ALL_FEATURES } };
     case "legacy_paid":
       return { tier, seatLimit: null, pointLimit: null, journalLimit: null, storageBytes: STORAGE_BYTES.premium, features: { ...ALL_FEATURES } };
     case "exempt":
@@ -335,7 +367,7 @@ export type PlanChangeQuote = {
   remainingDays: number;
 };
 
-const TIER_RANK: Record<PaidTier, number> = { standard: 1, premium: 2 };
+const TIER_RANK: Record<PaidTier, number> = { standard: 1, premium: 2, vip: 3 };
 
 export function normalizePlanTarget(target: PlanTarget): PlanTarget {
   return { tier: target.tier, cycle: target.cycle, points: normalizePoints(target.points) };

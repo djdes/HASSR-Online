@@ -37,7 +37,7 @@ import {
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { pluralRu } from "@/lib/plural-ru";
-import { SEATS_PER_POINT } from "@/lib/tariff-plans";
+import { SEATS_PER_POINT, type PaidTier } from "@/lib/tariff-plans";
 
 type ReturnParams = {
   outSum: string;
@@ -85,7 +85,7 @@ export type OrderDiscountView = AppliedDiscount & { label: string };
  * сервером (`quoteCheckout`), здесь только подписи.
  */
 export type OrderPlanView = {
-  tier: "standard" | "premium";
+  tier: PaidTier;
   cycle: "month" | "year";
   points: number;
   kind: "new" | "renew" | "upgrade" | "switch" | "scheduled";

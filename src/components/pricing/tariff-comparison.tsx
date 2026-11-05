@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowRight, Building2, Check, Crown, FileText, Gift, Minus, Plus, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Building2, Check, Crown, FileText, Gem, Gift, Minus, Plus, Sparkles, Users } from "lucide-react";
 
 import { ContactUsDialog, ContactUsTrigger } from "@/components/contact/contact-us-dialog";
 import { PromoPrice } from "@/components/pricing/promo-price";
@@ -13,8 +13,8 @@ import { CARD_POINTS, COMPARISON_GROUPS, type ComparisonCell } from "@/lib/plan-
 import { applyPromotion, type AppliedPromotion } from "@/lib/promo/promotions";
 import {
   MAX_POINTS,
-  POINTS_DISCOUNT_FROM,
-  POINTS_DISCOUNT_PERCENT,
+  needsIndividualOffer,
+  pointsDiscountPercent,
   TRIAL_DAYS,
   hasPointsDiscount,
   maxYearlySavingsPercent,
@@ -98,7 +98,7 @@ type Props = {
   className?: string;
 };
 
-const TIER_ICON: Record<TierId, typeof Gift> = { free: Gift, standard: Users, premium: Crown };
+const TIER_ICON: Record<TierId, typeof Gift> = { free: Gift, standard: Users, premium: Crown, vip: Gem };
 
 export function TariffComparison({
   mode,
@@ -140,7 +140,7 @@ export function TariffComparison({
       : null;
     const quote = (tier: PaidTier): PlanChangeQuote =>
       quotePlanChange({ rates, legacyMonthlyRub: cabinet.legacyMonthlyRub, current, target: { tier, cycle, points }, now });
-    return { standard: quote("standard"), premium: quote("premium") };
+    return { standard: quote("standard"), premium: quote("premium"), vip: quote("vip") };
   }, [cabinet, currentPaid, rates, cycle, points]);
 
   const orderHref = (tier: PaidTier) => {
@@ -150,7 +150,7 @@ export function TariffComparison({
   };
 
   const intro = (tier: TierId) =>
-    tier === "free" ? t("includes.free") : tier === "standard" ? t("includes.standard") : t("includes.premium");
+    t(`includes.${tier}`);
 
   // Пункты карточки; у «Премиума» первый — лимит с короткой ссылкой
   // «связаться» (больше 100 на точку — по согласованию, чат поддержки).
@@ -166,7 +166,7 @@ export function TariffComparison({
             {" · "}
             <ContactSupportButton
               subject={t("contactSubject")}
-              testId="tariff-premium-contact"
+              testId={`tariff-${tier}-contact`}
               className="font-medium text-[#3848c7] underline decoration-[#3848c7]/40 underline-offset-2 hover:decoration-[#3848c7]"
             >
               {t("contactLink")}
@@ -238,7 +238,12 @@ export function TariffComparison({
           data-testid="tariff-points-hint"
           className="order-2 mx-auto max-w-[420px] text-center text-[13px] leading-snug text-[#6f7282] sm:order-none sm:col-span-3 sm:row-start-2"
         >
-          {t("pointsPicker.hint", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}
+          {t("pointsPicker.hint")}
+          {needsIndividualOffer(points) ? (
+            <span data-testid="tariff-individual" className="mt-2 block rounded-xl bg-[#eef1ff] px-3 py-2 font-medium text-[#3848c7]">
+              {t("individual.title")}. {t("individual.text")}
+            </span>
+          ) : null}
         </p>
 
         {/* «Помесячно ◯ За год» не разрывается; на узкой правой колонке на
@@ -310,10 +315,21 @@ export function TariffComparison({
       {/* Строки карточек общие (subgrid): шапка, подзаголовок, цена, кнопка,
           «что входит», список — цены и кнопки трёх тарифов на одной линии при
           любой длине текстов и в любом языке. */}
-      <div className="grid gap-5 lg:grid-cols-3 lg:grid-rows-[repeat(5,auto)_1fr] lg:gap-y-0">
+      <div
+        className={cn(
+          // Четыре тарифа (с 2026-11-05 — «ВИП»): в ряд от xl на сайте и от 2xl в
+          // кабинете (там рядом меню), ниже — по два. Общие строки (subgrid) —
+          // только когда все четыре в одном ряду.
+          "grid gap-5 sm:grid-cols-2",
+          mode === "public"
+            ? "xl:grid-cols-4 xl:grid-rows-[repeat(5,auto)_1fr] xl:gap-y-0"
+            : "2xl:grid-cols-4 2xl:grid-rows-[repeat(5,auto)_1fr] 2xl:gap-y-0",
+        )}
+      >
         {/* Бесплатный */}
         <TierCard
           tier="free"
+          subgrid={mode === "public" ? "xl" : "2xl"}
           name={t("tiers.free.name")}
           tagline={t("tiers.free.tagline", { trialDays: TRIAL_DAYS })}
           badge={
@@ -347,7 +363,7 @@ export function TariffComparison({
           }
         />
 
-        {(["standard", "premium"] as const).map((tier) => {
+        {(["standard", "premium", "vip"] as const).map((tier) => {
           const periodRub = planPeriodPriceRub(rates, tier, cycle, points);
           const fullRub = planPeriodFullRub(rates, tier, cycle, points);
           // Крупно — одна точка в месяц; итог за все точки — строкой ниже,
@@ -357,7 +373,7 @@ export function TariffComparison({
           const savingsRub = cycle === "year" ? yearlySavingsRub(rates, tier, points) : 0;
           const details = [
             savingsRub > 0 ? t("price.yearSavings", { amount: rub(savingsRub) }) : null,
-            hasPointsDiscount(points) && fullRub > periodRub ? t("price.pointsDiscount", { percent: POINTS_DISCOUNT_PERCENT }) : null,
+            hasPointsDiscount(points) && fullRub > periodRub ? t("price.pointsDiscount", { percent: pointsDiscountPercent(points) }) : null,
           ].filter(Boolean);
           const isAvailable = available[tier][cycle];
           const quote = quotes?.[tier] ?? null;
@@ -379,9 +395,10 @@ export function TariffComparison({
             <TierCard
               key={tier}
               tier={tier}
+              subgrid={mode === "public" ? "xl" : "2xl"}
               highlighted={tier === "standard"}
-              name={tier === "standard" ? t("tiers.standard.name") : t("tiers.premium.name")}
-              tagline={tier === "standard" ? t("tiers.standard.tagline") : t("tiers.premium.tagline")}
+              name={t(`tiers.${tier}.name`)}
+              tagline={t(`tiers.${tier}.tagline`)}
               badge={isCurrent ? t("badges.current") : tier === "standard" ? t("badges.popular") : null}
               price={
                 <div className="space-y-1.5">
@@ -426,13 +443,18 @@ export function TariffComparison({
               action={
                 !isAvailable ? (
                   <CtaStatic>{t("cta.unavailable")}</CtaStatic>
+                ) : needsIndividualOffer(points) ? (
+                  // От 50 точек — индивидуальное предложение (владелец, 2026-11-05).
+                  <button type="button" data-testid={`tariff-cta-${tier}`} data-contact-us-trigger onClick={() => setContactOpen(true)} className={ctaClass(tier === "standard" ? "light" : "primary")}>
+                    {t("individual.cta")}
+                  </button>
                 ) : mode === "public" || !quote ? (
                   <CtaLink
                     href={href(orderHref(tier))}
                     variant={tier === "standard" ? "light" : "primary"}
                     testId={`tariff-cta-${tier}`}
                   >
-                    {t("cta.choose", { name: tier === "standard" ? t("tiers.standard.name") : t("tiers.premium.name") })}
+                    {t("cta.choose", { name: t(`tiers.${tier}.name`) })}
                   </CtaLink>
                 ) : quote.kind === "scheduled" ? (
                   scheduledHere ? (
@@ -567,6 +589,7 @@ function TierCard({
   action,
   highlighted = false,
   cardHref,
+  subgrid = "xl",
   ...rest
 }: {
   tier: TierId;
@@ -583,6 +606,8 @@ function TierCard({
   highlighted?: boolean;
   /** Вся карточка ведёт по ссылке (бесплатный тариф на витрине). */
   cardHref?: string;
+  /** С какой ширины карточки стоят в ряд и делят строки (subgrid). */
+  subgrid?: "xl" | "2xl";
   "data-tariff-key"?: string;
 }) {
   const Icon = TIER_ICON[tier];
@@ -608,7 +633,10 @@ function TierCard({
         // `minmax(0,1fr)`: колонка карточки не шире самой карточки — длинная
         // строка (название с плашкой) не растягивает остальные.
         // 1024–1279 px — отступы меньше: в кабинете рядом с меню колонки узкие.
-        "relative flex flex-col rounded-3xl p-5 sm:p-7 lg:row-span-6 lg:grid lg:grid-cols-[minmax(0,1fr)] lg:grid-rows-subgrid lg:gap-y-0 lg:p-5 xl:p-7",
+        "relative flex flex-col rounded-3xl p-5 sm:p-7",
+        subgrid === "xl"
+          ? "xl:row-span-6 xl:grid xl:grid-cols-[minmax(0,1fr)] xl:grid-rows-subgrid xl:gap-y-0 xl:p-6"
+          : "2xl:row-span-6 2xl:grid 2xl:grid-cols-[minmax(0,1fr)] 2xl:grid-rows-subgrid 2xl:gap-y-0 2xl:p-6",
         highlighted
           ? "overflow-hidden bg-[#0b1024] text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)]"
           : "border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]",
@@ -727,7 +755,7 @@ function CtaStatic({ children }: { children: ReactNode }) {
 /** Таблица сравнения: строки — из `COMPARISON_GROUPS`, подписи — из каталога i18n. */
 function ComparisonTable({ onContact }: { onContact: () => void }) {
   const t = useTranslations("landingComponents.tariffs");
-  const tiers: TierId[] = ["free", "standard", "premium"];
+  const tiers: TierId[] = ["free", "standard", "premium", "vip"];
   const cell = (value: ComparisonCell) => {
     if (value.kind === "yes") {
       return (
@@ -757,10 +785,10 @@ function ComparisonTable({ onContact }: { onContact: () => void }) {
     <section data-testid="tariff-table" className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">
       <h3 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("table.title")}</h3>
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-[14px]">
+        <table className="w-full min-w-[760px] border-collapse text-[14px]">
           <thead>
             <tr className="text-left">
-              <th className="w-[34%] pb-3 pr-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]">{t("table.feature")}</th>
+              <th className="w-[28%] pb-3 pr-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]">{t("table.feature")}</th>
               {tiers.map((tier) => (
                 <th key={tier} className="pb-3 pr-3 text-[15px] font-semibold text-[#0b1024]">
                   <span className="inline-flex items-center gap-1.5">
@@ -774,7 +802,7 @@ function ComparisonTable({ onContact }: { onContact: () => void }) {
           {COMPARISON_GROUPS.map((group) => (
             <tbody key={group.key}>
               <tr>
-                <td colSpan={4} className="pb-2 pt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
+                <td colSpan={5} className="pb-2 pt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
                   {t(`groups.${group.key}` as never)}
                 </td>
               </tr>

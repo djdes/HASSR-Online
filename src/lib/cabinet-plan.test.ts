@@ -48,11 +48,18 @@ describe("planTotal — итог по тарифу", () => {
 
   it("акция на сумму периода, скидка навсегда — поверх цены с акцией", () => {
     const t = planTotal({ rates: R, tier: "standard", cycle: "month", points: 2, promotion: PROMO, personal: { kind: "percent", value: 10 } });
-    // 6 000 − 20 % = 4 800; −10 % = 4 320
-    assert.equal(t.withPromotion.priceRub, 4800);
-    assert.equal(t.personalRub, 480);
-    assert.equal(t.finalRub, 4320);
+    // 5 980 − 20 % = 4 784; −10 % (478,4 → 478) = 4 306
+    assert.equal(t.withPromotion.priceRub, 4784);
+    assert.equal(t.personalRub, 478);
+    assert.equal(t.finalRub, 4306);
     assert.equal(t.discounted, true);
+  });
+
+  it("ВИП за год, 1 точка: 107 880 ₽ = 8 990 ₽/мес", () => {
+    const t = planTotal({ rates: R, tier: "vip", cycle: "year", points: 1, promotion: null, personal: null });
+    assert.equal(t.periodRub, 107_880);
+    assert.equal(t.monthlyFinalRub, 8990);
+    assert.equal(t.discounted, false);
   });
 });
 

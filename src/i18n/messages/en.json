@@ -5768,7 +5768,7 @@
         "label": "Locations",
         "decrease": "Remove a location",
         "increase": "Add a location",
-        "hint": "A location is a separate set of logs and employees inside one organisation — a café, a workshop, a branch. Each costs one more plan; from {from, number} locations — {percent, number}% off each."
+        "hint": "A site has its own logs and staff within one organisation: a café, a workshop, a branch. Each is priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%."
       },
       "tiers": {
         "free": {
@@ -5777,11 +5777,15 @@
         },
         "standard": {
           "name": "Standard",
-          "tagline": "A team of up to 25 per location and all logs"
+          "tagline": "Digital logs and checklists, a team of up to 25 people per site"
         },
         "premium": {
           "name": "Premium",
-          "tagline": "Automation: sensor photos, equipment and template documents"
+          "tagline": "Digital HACCP-based production control programme, automation and equipment"
+        },
+        "vip": {
+          "name": "VIP",
+          "tagline": "Hotline, extended data bank and a personal consultant"
         }
       },
       "badges": {
@@ -5803,7 +5807,8 @@
       "includes": {
         "free": "What’s included:",
         "standard": "Everything in Free, plus:",
-        "premium": "Everything in Standard, plus:"
+        "premium": "Everything in Standard, plus:",
+        "vip": "Everything in Premium, plus:"
       },
       "features": {
         "trialAll": "{trialDays, number} days — all logs, employees and locations without limits",
@@ -5819,7 +5824,12 @@
         "equipmentDelivery": "Delivery of pre-connected equipment — order in your account",
         "typicalPackage": "Template document pack: print and fill in",
         "employeesPremium": "Up to {count, number} employees per location, more by arrangement",
-        "mercury": "Mercury (VetIS): incoming vet certificates and clearance from the acceptance journal"
+        "mercury": "Mercury (VetIS): incoming vet certificates and clearance from the acceptance journal",
+        "checklists": "Checklists for shifts and inspections",
+        "ppkElectronic": "Digital HACCP-based production control programme",
+        "hotline": "Hotline — up to {hours, number} hours a month",
+        "dataBank": "Extended data bank",
+        "consultant": "Personal consultant"
       },
       "cta": {
         "startFree": "Start for free",
@@ -5861,7 +5871,8 @@
         "team": "Team and locations",
         "journals": "Logs",
         "documents": "Documents",
-        "equipment": "Equipment and automation"
+        "equipment": "Equipment and automation",
+        "service": "Support"
       },
       "rows": {
         "employees": "Employees",
@@ -5877,7 +5888,12 @@
         "equipmentConnect": "Equipment and IoT sensor connection",
         "equipmentDelivery": "Delivery of connected equipment",
         "mercury": "Mercury (VetIS) integration",
-        "haccpPlan": "HACCP plan"
+        "haccpPlan": "HACCP plan",
+        "checklists": "Checklists",
+        "ppkElectronic": "Digital HACCP-based production control programme",
+        "hotline": "Hotline",
+        "dataBank": "Extended data bank",
+        "consultant": "Personal consultant"
       },
       "cells": {
         "employeesFree": "{trialDays, number} days — unlimited, then {count, number}",
@@ -5891,13 +5907,20 @@
         "storagePremium": "{gb, number} GB for all documents",
         "trialOnly": "Only during the {trialDays, number}-day trial",
         "ppkOnRequest": "Custom, on request",
-        "employeesPremium": "{count, number} per location, more by arrangement"
+        "employeesPremium": "{count, number} per location, more by arrangement",
+        "pointsPaidScale": "1 included; each next one is priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%, from 50 — custom offer",
+        "hotlineVip": "Up to {hours, number} hours a month"
       },
       "contactLink": "contact us",
       "contactSubject": "More than 40 employees on the Premium plan",
       "headcount": {
         "toPremium": "You have {count, plural, one {# employee} other {# employees}}; this plan allows up to {limit, number} — Premium fits.",
         "contact": "You have {count, plural, one {# employee} other {# employees}}; this plan allows up to {limit, number} — more by arrangement."
+      },
+      "individual": {
+        "title": "50 sites or more — a custom offer",
+        "text": "We'll price it for your chain and terms. Contact our manager.",
+        "cta": "Contact a manager"
       }
     }
   },
@@ -16993,7 +17016,8 @@
       "paused": "Paused",
       "cancelled": "Cancelled",
       "standard": "Standard",
-      "premium": "Premium"
+      "premium": "Premium",
+      "vip": "VIP"
     },
     "impersonate": {
       "enter": "Sign in as {name}",
@@ -29423,7 +29447,7 @@
       "scheduleCancelled": "Switch cancelled",
       "tariffsChoose": "Choose a plan",
       "tariffsChange": "Change plan",
-      "rulePoints": "The price is per location: a location is a separate set of logs and employees inside the organisation, and each one costs one more plan. From {from, number} locations — {percent, number}% off each.",
+      "rulePoints": "Priced per site: a site has its own logs and staff within the organisation, each priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%, from 50 — custom offer.",
       "ruleUpgrade": "Upgrading the plan or adding locations applies right away: you pay the difference for the remaining days only, the end date stays the same.",
       "ruleSwitch": "Switching from monthly to yearly billing applies right away: the yearly price minus the unused balance of the month.",
       "ruleDowngrade": "Downgrading, fewer locations or switching to monthly billing apply from the end of the paid term — nothing to pay now.",

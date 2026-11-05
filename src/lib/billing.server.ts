@@ -1697,7 +1697,7 @@ export type BillingOverview = {
   total: number;
   counts: Record<AccountBillingKind, number>;
   /** Оплачено по тарифам. */
-  paidByTier: { standard: number; premium: number; legacy: number };
+  paidByTier: { standard: number; premium: number; vip: number; legacy: number };
   /** Пробный кончается в ближайшие 3 дня. */
   trialEndingSoon: number;
   /** Переведены задачей по грейсу и сейчас на бесплатном. */
@@ -1712,7 +1712,7 @@ export async function collectBillingOverview(now: Date = new Date()): Promise<Bi
   const settings = await readTrialSettings();
   const units = await listBillingUnits();
   const counts = emptyCounts();
-  const paidByTier = { standard: 0, premium: 0, legacy: 0 };
+  const paidByTier = { standard: 0, premium: 0, vip: 0, legacy: 0 };
   let trialEndingSoon = 0;
   const unitByOrg = new Map<string, UnitRow>();
   const stateByUnit = new Map<string, AccountBillingState>();

@@ -277,7 +277,7 @@ describe("лимиты", () => {
     const full = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), planPoints: 2, pointsInUse: 2 }, now);
     const refused = checkPoints(full, 1);
     assert.equal(refused.ok, false);
-    if (!refused.ok) assert.match(refused.message, /скидка 5 %/);
+    if (!refused.ok) assert.match(refused.message, /скидка на все точки: от 5 точек — 5 %/);
   });
 
   it("журналы: на бесплатном включить второй нельзя, выключать можно всегда", () => {

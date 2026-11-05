@@ -21,7 +21,8 @@ import { applyPromotion } from "@/lib/promo/promotions";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
 import { HARDWARE_BUNDLES, bundleTotal } from "@/lib/hardware-pricing";
-import { POINTS_DISCOUNT_FROM, POINTS_DISCOUNT_PERCENT, planMonthlyRub } from "@/lib/tariff-plans";
+import { planMonthlyRub } from "@/lib/tariff-plans";
+import { POINTS_DISCOUNT_LINE } from "@/lib/plan-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -29,7 +30,7 @@ export const revalidate = 0;
 // Числа в описании — из констант тарифов (tariff-plans.ts): при смене
 // модели метаданные меняются вместе с витриной. Цены правит ROOT, поэтому
 // в статических метаданных их нет.
-const PRICING_DESCRIPTION = `Сколько стоит WeSetup: ${FREE_TIER_SHORT} без карты, тарифы «Стандарт» и «Премиум» — помесячно или за год со скидкой, от ${POINTS_DISCOUNT_FROM} точек −${POINTS_DISCOUNT_PERCENT} % на каждую. Оборудование и ППК — индивидуально.`;
+const PRICING_DESCRIPTION = `Сколько стоит WeSetup: ${FREE_TIER_SHORT} без карты, тарифы «Стандарт», «Премиум» и «ВИП» — помесячно или за год со скидкой; скидка за точки: ${POINTS_DISCOUNT_LINE}. Оборудование и ППК — индивидуально.`;
 
 export const metadata = {
   title: "Цены на электронные журналы СанПиН и ХАССП",

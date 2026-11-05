@@ -166,9 +166,11 @@ export function planOrderStillMatches(args: {
   return true;
 }
 
+const PLAN_NAME: Record<PaidTier, string> = { standard: "Стандарт", premium: "Премиум", vip: "ВИП" };
+
 /** «Стандарт — за год, 2 точки» — в описание заказа, чек и УПД. */
 export function planOrderTitle(tier: PaidTier, cycle: BillingCycle, points: number): string {
-  const name = tier === "premium" ? "Премиум" : "Стандарт";
+  const name = PLAN_NAME[tier];
   const period = cycle === "year" ? "за год" : "на месяц";
   const n = normalizePoints(points);
   const pointsPart = n > 1 ? `, ${n} ${pluralRu(n, "точка", "точки", "точек")}` : "";
@@ -182,7 +184,7 @@ export function planOrderTitle(tier: PaidTier, cycle: BillingCycle, points: numb
 export function planTariffTitle(tariffKey: string, points?: number | null): string | null {
   const plan = parsePlanTariffKey(tariffKey);
   if (!plan) return null;
-  const name = plan.tier === "premium" ? "Премиум" : "Стандарт";
+  const name = PLAN_NAME[plan.tier];
   const period = plan.cycle === "year" ? "за год" : "помесячно";
   const n = normalizePoints(points ?? 1);
   const pointsPart = n > 1 ? `, ${n} ${pluralRu(n, "точка", "точки", "точек")}` : "";

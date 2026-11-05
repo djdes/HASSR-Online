@@ -8,7 +8,7 @@ import { SAMPLE_PROMO_LIFETIME, sampleProposalContext } from "./sample";
 const plain = (value: string) => value.replace(/\s/g, " ");
 
 test("prices come from the tariff rates, not from constants in the text", () => {
-  const ctx = sampleProposalContext({ rates: { standard: { month: 3500, year: 2500 }, premium: { month: 6000, year: 4500 } } });
+  const ctx = sampleProposalContext({ rates: { standard: { month: 3500, year: 2500 }, premium: { month: 6000, year: 4500 }, vip: { month: 13000, year: 9000 } } });
   const standard = buildProposalContent({ sphere: "cafe" }, ctx).design;
   assert.equal(standard.planName, "Стандарт");
   assert.equal(plain(standard.price.month.monthly), "3 500 ₽");
@@ -69,5 +69,15 @@ test("greeting, addressee and promo note", () => {
   const promo = buildProposalContent({ sphere: "cafe", promo: SAMPLE_PROMO_LIFETIME }, ctx).design;
   assert.match(plain(promo.price.discountNote ?? ""), /ROMASHKA10: −10 % навсегда/);
   assert.equal(promo.contact.qrCaption, "Промокод ROMASHKA10");
-  assert.equal(plain(promo.price.month.monthly), "2 700 ₽");
+  // 2 990 − 10 % = 2 691.
+  assert.equal(plain(promo.price.month.monthly), "2 691 ₽");
+});
+
+test("price note: points discount scale of 2026-11-05", () => {
+  const design = buildProposalContent({ sphere: "cafe" }, sampleProposalContext()).design;
+  assert.match(
+    plain(design.price.note),
+    /скидка на все точки: от 5 точек — 5 %, от 10 — 10 %, от 15 — 20 %, от 35 — 25 %, от 50 — индивидуальное предложение\./
+  );
+  assert.doesNotMatch(design.price.note, /от (тр|пят)[её]?х точек/);
 });

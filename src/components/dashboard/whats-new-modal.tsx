@@ -56,6 +56,7 @@ import {
   ClipboardCheck,
   Clock3,
   Snowflake,
+  CreditCard,
 } from "lucide-react";
 
 const STORAGE_KEY = WHATS_NEW_LEGACY_KEY;
@@ -101,6 +102,7 @@ function isCategoryNote(
  * нельзя (server→client serialization), поэтому держим mapping здесь.
  */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "Новые тарифы": CreditCard,
   Сотрудники: Users,
   "Проверка, принтер, партии и CAPA — по точке": Building2,
   "Чужая точка закрыта": ShieldCheck,

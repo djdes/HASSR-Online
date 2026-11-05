@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  tier: z.enum(["standard", "premium"]),
+  tier: z.enum(["standard", "premium", "vip"]),
   cycle: z.enum(["month", "year"]),
   points: z.number().int().min(1).max(MAX_POINTS).default(1),
   promoCode: z.string().trim().max(64).nullish().transform((value) => value || null),

@@ -1,5 +1,5 @@
 import { FREE_MAX_USERS, isFreePlan, isInactivePlan } from "@/lib/plan-limits";
-import { employeesGenitiveLabel, employeesLabel } from "@/lib/plan-catalog";
+import { POINTS_DISCOUNT_LINE, employeesGenitiveLabel, employeesLabel } from "@/lib/plan-catalog";
 import { pluralRu } from "@/lib/plural-ru";
 import {
   FREE_MAX_JOURNALS,
@@ -16,6 +16,7 @@ import {
   type Entitlements,
   type PaidTier,
   type PlanFeature,
+  isPaidTier,
 } from "@/lib/tariff-plans";
 import type { PriceWithPromotion } from "@/lib/promo/promotions";
 
@@ -389,7 +390,7 @@ export const FEATURE_LOCKED_CODE = "billing_feature_locked";
 /** Куда вести оплату из кабинета: там и карта, и счёт по безналу. */
 export const BILLING_PAY_HREF = "/settings/subscription";
 
-const TIER_TITLE: Record<PaidTier, string> = { standard: "«Стандарт»", premium: "«Премиум»" };
+const TIER_TITLE: Record<PaidTier, string> = { standard: "«Стандарт»", premium: "«Премиум»", vip: "«ВИП»" };
 
 /** «Перейдите на «Премиум» — до 40 сотрудников на точку». */
 function upgradeOffer(target: PaidTier): string {
@@ -433,7 +434,7 @@ export function paidSeatLimitInviteeMessage(tier: PaidTier): string {
 
 /** Текст отказа по местам для состояния аккаунта. */
 export function seatLimitMessage(state: Pick<AccountBillingState, "tier">, audience: "manager" | "invitee" = "manager"): string {
-  if (state.tier === "standard" || state.tier === "premium") {
+  if (isPaidTier(state.tier)) {
     return audience === "invitee" ? paidSeatLimitInviteeMessage(state.tier) : paidSeatLimitMessage(state.tier);
   }
   return audience === "invitee" ? FREE_LIMIT_INVITEE_MESSAGE : FREE_LIMIT_MESSAGE;
@@ -477,8 +478,8 @@ export function checkPoints(state: AccountBillingState, adding: number): LimitCh
   if (!(adding > 0) || limit === null) return { ok: true };
   if (state.pointsInUse + adding <= limit) return { ok: true };
   const message =
-    state.tier === "standard" || state.tier === "premium"
-      ? `Оплачено точек: ${limit}. Каждая новая точка — как ещё один тариф; от трёх точек — скидка 5 % на каждую. ` +
+    isPaidTier(state.tier)
+      ? `Оплачено точек: ${limit}. Каждая новая точка — как ещё один тариф; скидка на все точки: ${POINTS_DISCOUNT_LINE}. ` +
         "Добавьте точку на странице тарифа."
       : "На бесплатном тарифе — 1 точка. Подключите «Стандарт» или «Премиум», чтобы добавить точки.";
   return { ok: false, limit, current: state.pointsInUse, message };
@@ -715,7 +716,7 @@ export function daysLabel(n: number): string {
 
 /** Тариф в тексте напоминания: «Стандарт», «Премиум» или прежняя «Подписка». */
 export function paidTierTitle(tier: PaidTier | "legacy" | null): string {
-  if (tier === "standard" || tier === "premium") return TIER_TITLE[tier];
+  if (isPaidTier(tier)) return TIER_TITLE[tier];
   return "«Подписка»";
 }
 

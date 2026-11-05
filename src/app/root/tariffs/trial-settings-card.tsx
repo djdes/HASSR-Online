@@ -27,7 +27,7 @@ export type TrialSettingsJson = {
 export type BillingOverviewJson = {
   total: number;
   counts: Record<Kind, number>;
-  paidByTier: { standard: number; premium: number; legacy: number };
+  paidByTier: { standard: number; premium: number; vip: number; legacy: number };
   trialEndingSoon: number;
   autoTransitioned: number;
 };

@@ -3,8 +3,8 @@ import { pluralRu } from "@/lib/plural-ru";
 import {
   FREE_MAX_JOURNALS,
   FREE_MAX_POINTS,
-  POINTS_DISCOUNT_FROM,
-  POINTS_DISCOUNT_PERCENT,
+  POINTS_DISCOUNT_STEPS,
+  POINTS_INDIVIDUAL_FROM,
   SEATS_PER_POINT,
   STORAGE_BYTES,
   TRIAL_DAYS,
@@ -15,6 +15,9 @@ import {
   type PlanRates,
   type TierId,
 } from "@/lib/tariff-plans";
+
+/** Часы горячей линии «ВИП» в месяц — «продумать количество часов» (владелец); пока 10. */
+export const VIP_HOTLINE_HOURS = 10;
 
 /**
  * Копирайт тарифов 2026-10 — единственное место русских фраз про тарифы для
@@ -57,19 +60,26 @@ export const PAID_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT.s
 export const PREMIUM_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT.premium)} на точку, больше — по согласованию`;
 
 /** Скидка за точки одной фразой. */
-export const POINTS_NOTE =
-  `Каждая точка — как ещё один тариф; от ${POINTS_DISCOUNT_FROM} точек — скидка ${POINTS_DISCOUNT_PERCENT} % на каждую.`;
+/** «от 5 точек — 5 %, от 10 — 10 %, от 15 — 20 %, от 35 — 25 %, от 50 — индивидуальное предложение» */
+export const POINTS_DISCOUNT_LINE =
+  POINTS_DISCOUNT_STEPS.map((step, i) => `от ${step.from}${i === 0 ? " точек" : ""} — ${step.percent} %`).join(", ") +
+  `, от ${POINTS_INDIVIDUAL_FROM} — индивидуальное предложение`;
+
+export const POINTS_NOTE = `Каждая точка — как ещё один тариф; скидка на все точки: ${POINTS_DISCOUNT_LINE}.`;
 
 export const TIER_NAMES: Record<TierId, string> = {
   free: "Бесплатный",
   standard: "Стандарт",
   premium: "Премиум",
+  vip: "ВИП",
 };
 
 /** «Стандарт — от 1 990 ₽/мес, Премиум — от 3 990 ₽/мес» (цены при оплате за год). */
 export function pricesFromLine(rates: PlanRates): string {
   const fmt = (n: number) => `${new Intl.NumberFormat("ru-RU").format(n)} ₽`;
-  return `«${TIER_NAMES.standard}» — от ${fmt(planMonthlyRub(rates, "standard", "year"))}/мес, «${TIER_NAMES.premium}» — от ${fmt(planMonthlyRub(rates, "premium", "year"))}/мес`;
+  return (["standard", "premium", "vip"] as const)
+    .map((tier) => `«${TIER_NAMES[tier]}» — от ${fmt(planMonthlyRub(rates, tier, "year"))}/мес`)
+    .join(", ");
 }
 
 /** Какой карточке витрины соответствует значение `subscriptionPlan`. */
@@ -121,14 +131,16 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
           free: text("employeesFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_USERS }),
           standard: text("employeesPaid", { count: SEATS_PER_POINT.standard }),
           premium: text("employeesPremium", { count: SEATS_PER_POINT.premium }),
+          vip: text("employeesPremium", { count: SEATS_PER_POINT.premium }),
         },
       },
       {
         key: "points",
         cells: {
           free: text("pointsFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_POINTS }),
-          standard: text("pointsPaid", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT }),
-          premium: text("pointsPaid", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT }),
+          standard: text("pointsPaidScale"),
+          premium: text("pointsPaidScale"),
+          vip: text("pointsPaidScale"),
         },
       },
     ],
@@ -142,12 +154,17 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
           free: text("journalsFree", { trialDays: TRIAL_DAYS, count: FREE_MAX_JOURNALS }),
           standard: text("journalsAll"),
           premium: text("journalsAll"),
+          vip: text("journalsAll"),
         },
       },
-      { key: "telegram", cells: { free: yes, standard: yes, premium: yes } },
-      { key: "pdf", cells: { free: yes, standard: yes, premium: yes } },
+      // Тарифы 2026-11-05: чек-листы — во всех тарифах, электронная ППК — с «Премиума»
+      // (пока только витрина: в кабинете раздел ППК открыт всем, владелец 2026-11-05).
+      { key: "checklists", cells: { free: yes, standard: yes, premium: yes, vip: yes } },
+      { key: "ppkElectronic", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes, vip: yes } },
+      { key: "telegram", cells: { free: yes, standard: yes, premium: yes, vip: yes } },
+      { key: "pdf", cells: { free: yes, standard: yes, premium: yes, vip: yes } },
       // Входящие ВСД и гашение из журнала приёмки — `mercury` в /mercury и API.
-      { key: "mercury", feature: "mercury", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
+      { key: "mercury", feature: "mercury", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes, vip: yes } },
     ],
   },
   {
@@ -159,23 +176,33 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
           free: text("storageFree", { trialDays: TRIAL_DAYS }),
           standard: text("storageStandard", { mb: Math.round(STORAGE_BYTES.standard / MB) }),
           premium: text("storagePremium", { gb: Math.round(STORAGE_BYTES.premium / (1024 * MB)) }),
+          vip: text("storagePremium", { gb: Math.round(STORAGE_BYTES.premium / (1024 * MB)) }),
         },
       },
-      { key: "ownDocuments", cells: { free: no, standard: yes, premium: yes } },
-      { key: "typicalPackage", feature: "typicalPackage", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
+      { key: "ownDocuments", cells: { free: no, standard: yes, premium: yes, vip: yes } },
+      { key: "typicalPackage", feature: "typicalPackage", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes, vip: yes } },
       // Без цены: «по запросу» открывает окно контактов (владелец, 2026-10-29).
-      { key: "ppkIndividual", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest") } },
+      { key: "ppkIndividual", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest"), vip: text("ppkOnRequest") } },
       // Правки 05.11.2026: строка «План ХАССП» рядом с ППК. Что входит по тарифам,
       // в правках не сказано — как у ППК, «по запросу» (уточнить у владельца).
-      { key: "haccpPlan", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest") } },
+      { key: "haccpPlan", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest"), vip: text("ppkOnRequest") } },
     ],
   },
   {
     key: "equipment",
     rows: [
-      { key: "photoAutofill", feature: "photoAutofill", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
-      { key: "equipmentConnect", feature: "equipmentConnect", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
-      { key: "equipmentDelivery", feature: "equipmentDelivery", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
+      { key: "photoAutofill", feature: "photoAutofill", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes, vip: yes } },
+      { key: "equipmentConnect", feature: "equipmentConnect", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes, vip: yes } },
+      { key: "equipmentDelivery", feature: "equipmentDelivery", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes, vip: yes } },
+    ],
+  },
+  {
+    // Только «ВИП»: ведёт команда вручную (владелец, 2026-11-05).
+    key: "service",
+    rows: [
+      { key: "hotline", cells: { free: no, standard: no, premium: no, vip: text("hotlineVip", { hours: VIP_HOTLINE_HOURS }) } },
+      { key: "dataBank", cells: { free: no, standard: no, premium: no, vip: yes } },
+      { key: "consultant", cells: { free: no, standard: no, premium: no, vip: yes } },
     ],
   },
 ];
@@ -193,18 +220,26 @@ export const CARD_POINTS: Record<TierId, ReadonlyArray<{ key: string; values?: R
   standard: [
     { key: "employees", values: { count: SEATS_PER_POINT.standard } },
     { key: "allJournals" },
+    { key: "checklists" },
     { key: "storageOrders", values: { mb: Math.round(STORAGE_BYTES.standard / MB) } },
     { key: "ownPackage" },
   ],
   premium: [
     // Первым — лимит: «больше — по согласованию» и ссылка «связаться» (витрина).
     { key: "employeesPremium", values: { count: SEATS_PER_POINT.premium } },
+    { key: "ppkElectronic" },
     { key: "storageAll", values: { gb: Math.round(STORAGE_BYTES.premium / (1024 * MB)) } },
     { key: "photoAutofill" },
     { key: "equipmentConnect" },
     { key: "equipmentDelivery" },
     { key: "mercury" },
     { key: "typicalPackage" },
+  ],
+  vip: [
+    { key: "employeesPremium", values: { count: SEATS_PER_POINT.vip } },
+    { key: "hotline", values: { hours: VIP_HOTLINE_HOURS } },
+    { key: "dataBank" },
+    { key: "consultant" },
   ],
 };
 
@@ -213,5 +248,8 @@ export const PAID_TIER_SUMMARY: Record<PaidTier, string> = {
   standard: `${PAID_SEATS_LABEL}, все журналы, 10 МБ на приказы к журналам и свои документы`,
   premium:
     `${PREMIUM_SEATS_LABEL}, всё из «Стандарта», 1 ГБ на все документы, автоввод показаний с фото датчика, ` +
-    "подключение и доставка оборудования, ФГИС «Меркурий», типовой пакет документов",
+    "подключение и доставка оборудования, ФГИС «Меркурий», типовой пакет документов, электронная ППК по принципам ХАССП",
+  vip:
+    `${PREMIUM_SEATS_LABEL}, всё из «Премиума», горячая линия (до ${VIP_HOTLINE_HOURS} часов в месяц), ` +
+    "расширенный банк данных и личный консультант",
 };

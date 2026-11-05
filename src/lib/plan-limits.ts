@@ -41,6 +41,7 @@ const PLAN_LABELS: Record<string, string> = {
   free: "Бесплатный",
   standard: "Стандарт",
   premium: "Премиум",
+  vip: "ВИП",
   paid: "Подписка (прежний тариф)",
   paused: "Приостановлен",
   cancelled: "Отменён",

@@ -10,15 +10,15 @@ const read = (path: string) => readFileSync(new URL(`../../../${path}`, import.m
 const rule = REWARD_TERMS_2026_11;
 
 describe("калькулятор дохода партнёра", () => {
-  it("«Стандарт» помесячно: 12 платежей × 900 ₽ + бонус 3 000 ₽ = 13 800 ₽ с клиента", () => {
+  it("«Стандарт» помесячно: 12 платежей × 897 ₽ + бонус 3 000 ₽ = 13 764 ₽ с клиента", () => {
     const price = planPeriodPriceRub(DEFAULT_PLAN_RATES, "standard", "month", 1);
-    assert.equal(price, 3000);
+    assert.equal(price, 2990);
     const one = partnerFirstYearIncome(rule, { clients: 1, cycle: "month", periodPriceRub: price });
     assert.deepEqual(
       { payments: one.paymentsPerClient, perPayment: one.perPaymentRub, subscription: one.subscriptionRub, bonus: one.bonusRub, total: one.totalRub, later: one.bonusLater },
-      { payments: 12, perPayment: 900, subscription: 10800, bonus: 3000, total: 13800, later: false },
+      { payments: 12, perPayment: 897, subscription: 10764, bonus: 3000, total: 13764, later: false },
     );
-    assert.equal(partnerFirstYearIncome(rule, { clients: 10, cycle: "month", periodPriceRub: price }).totalRub, 138000);
+    assert.equal(partnerFirstYearIncome(rule, { clients: 10, cycle: "month", periodPriceRub: price }).totalRub, 137640);
   });
 
   it("за год: доля с годового платежа сразу, бонус — со вторым платежом, на второй год", () => {
@@ -31,9 +31,13 @@ describe("калькулятор дохода партнёра", () => {
     assert.equal(one.bonusLater, true);
   });
 
-  it("«Премиум» помесячно — 21 000 ₽; старые 20 % дают меньше; ввод зажат в границы", () => {
+  it("«Премиум» помесячно — 20 964 ₽, «ВИП» — 49 764 ₽; старые 20 % дают меньше; ввод зажат в границы", () => {
     const premium = planPeriodPriceRub(DEFAULT_PLAN_RATES, "premium", "month", 1);
-    assert.equal(partnerFirstYearIncome(rule, { clients: 1, cycle: "month", periodPriceRub: premium }).totalRub, 21000);
+    // 4 990 × 30 % = 1 497 ₽ × 12 + 3 000 ₽.
+    assert.equal(partnerFirstYearIncome(rule, { clients: 1, cycle: "month", periodPriceRub: premium }).totalRub, 20964);
+    const vip = planPeriodPriceRub(DEFAULT_PLAN_RATES, "vip", "month", 1);
+    // 12 990 × 30 % = 3 897 ₽ × 12 + 3 000 ₽.
+    assert.equal(partnerFirstYearIncome(rule, { clients: 1, cycle: "month", periodPriceRub: vip }).totalRub, 49764);
     assert.equal(partnerFirstYearIncome(DEFAULT_REWARD_RULE, { clients: 1, cycle: "month", periodPriceRub: 3000 }).totalRub, 10200);
     assert.equal(clampClients("0"), 1);
     assert.equal(clampClients("abc"), 1);

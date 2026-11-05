@@ -2,13 +2,11 @@ import { formatPhone } from "@/lib/brand-docs/phone";
 import { EMPTY_REQUISITES, type PlatformRequisites } from "@/lib/closing-documents/types";
 import { bundleTotal, HARDWARE_BUNDLES } from "@/lib/hardware-pricing";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
-import { COMPARISON_GROUPS, TIER_NAMES, type ComparisonCell } from "@/lib/plan-catalog";
+import { COMPARISON_GROUPS, POINTS_DISCOUNT_LINE, TIER_NAMES, type ComparisonCell } from "@/lib/plan-catalog";
 import { promotionEndLabel } from "@/lib/promo/promotions";
 import { formalGreeting } from "@/lib/russian-names";
 import {
   DEFAULT_PLAN_RATES,
-  POINTS_DISCOUNT_FROM,
-  POINTS_DISCOUNT_PERCENT,
   PPK_INDIVIDUAL_FROM_RUB,
   SEATS_PER_POINT,
   STORAGE_BYTES,
@@ -108,8 +106,6 @@ export function equipmentFromRub(): number {
   return Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
 }
 
-const NUMBER_GENITIVE: Record<number, string> = { 2: "двух", 3: "трёх", 4: "четырёх", 5: "пяти" };
-
 function cellOf(rowKey: string, tier: PaidTier): ComparisonCell | null {
   for (const group of COMPARISON_GROUPS) {
     const row = group.rows.find((item) => item.key === rowKey);
@@ -208,9 +204,8 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
     });
   }
 
-  const from = NUMBER_GENITIVE[POINTS_DISCOUNT_FROM] ?? String(POINTS_DISCOUNT_FROM);
   const note = [
-    `Цены за одну точку (один адрес), без НДС. Каждая следующая точка оплачивается так же, от ${from} точек — скидка ${POINTS_DISCOUNT_PERCENT}${NBSP}% на каждую.`,
+    `Цены за одну точку (один адрес), без НДС. Каждая следующая точка оплачивается так же; скидка на все точки: ${POINTS_DISCOUNT_LINE.replace(/ %/g, `${NBSP}%`)}.`,
     plan === "premium" ? `Больше ${SEATS_PER_POINT.premium} сотрудников на точку — по договорённости.` : null,
     input.invoiceReady ? "Счёт выставим на любой вариант — выберите удобный." : "Оплата картой на сайте.",
   ]

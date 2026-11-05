@@ -25,7 +25,7 @@ export function organizationSphere(type: string, t: ProfileCopy) {
 }
 
 export function organizationPlan(plan: string, t: OrganizationCopy, legacy: LegacyPlanCopy) {
-  if (plan === "free" || plan === "standard" || plan === "premium" || plan === "paid" || plan === "paused" || plan === "cancelled") return t(`plans.${plan}`);
+  if (plan === "free" || plan === "standard" || plan === "premium" || plan === "vip" || plan === "paid" || plan === "paused" || plan === "cancelled") return t(`plans.${plan}`);
   return plan === "trial" || plan === "pro" ? legacy(plan) : plan;
 }
 

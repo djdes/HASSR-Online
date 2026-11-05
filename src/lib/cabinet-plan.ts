@@ -78,6 +78,7 @@ export function tariffName(plan: string | null | undefined): string {
 const PAID_TITLES: Record<PaidTier | "legacy", string> = {
   standard: "Стандарт",
   premium: "Премиум",
+  vip: "ВИП",
   legacy: "Подписка (прежний тариф)",
 };
 

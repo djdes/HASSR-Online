@@ -42,6 +42,7 @@ export const TARIFF_BUNDLE = "bundle";
 const PLAN_TITLES: Record<PaidTier, Record<BillingCycle, string>> = {
   standard: { month: "Стандарт — помесячно", year: "Стандарт — за год" },
   premium: { month: "Премиум — помесячно", year: "Премиум — за год" },
+  vip: { month: "ВИП — помесячно", year: "ВИП — за год" },
 };
 
 /** Тарифы 2026-10 по умолчанию. */
@@ -125,10 +126,12 @@ export function planPricingFrom(tariffs: readonly Tariff[]): PlanPricing {
   const rates: PlanRates = {
     standard: { ...DEFAULT_PLAN_RATES.standard },
     premium: { ...DEFAULT_PLAN_RATES.premium },
+    vip: { ...DEFAULT_PLAN_RATES.vip },
   };
   const available: PlanPricing["available"] = {
     standard: { month: false, year: false },
     premium: { month: false, year: false },
+    vip: { month: false, year: false },
   };
   for (const tariff of tariffs) {
     const plan = parsePlanTariffKey(tariff.key);

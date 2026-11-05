@@ -43,8 +43,7 @@ import { isTopupOrder } from "@/lib/balance/topup-core";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import {
   FREE_MAX_JOURNALS,
-  POINTS_DISCOUNT_FROM,
-  POINTS_DISCOUNT_PERCENT,
+  pointsDiscountPercent,
   SEATS_PER_POINT,
   TRIAL_DAYS,
   planMonthlyRub,
@@ -57,7 +56,7 @@ import {
 } from "@/lib/tariff-plans";
 
 /** Примеры цены за месяц по числу точек (оплата за год). */
-const EXAMPLE_POINTS = [1, 2, 3, 5] as const;
+const EXAMPLE_POINTS = [1, 5, 10, 15, 35] as const;
 
 export default async function SubscriptionPage({
   searchParams,
@@ -124,13 +123,13 @@ export default async function SubscriptionPage({
   // «Стандарт» на большую команду): новых не добавить — предлагаем следующий.
   const overSeats =
     state?.kind === "paid" &&
-    (state.paidTier === "standard" || state.paidTier === "premium") &&
+    (state.paidTier === "standard" || state.paidTier === "premium" || state.paidTier === "vip") &&
     state.seatLimit !== null &&
     state.activeUsers > state.seatLimit
       ? { tier: state.paidTier, used: state.activeUsers, limit: state.seatLimit, cycle: state.planCycle, points: state.planPoints }
       : null;
 
-  const tierName = (tier: PaidTier) => (tier === "standard" ? tt("tiers.standard.name") : tt("tiers.premium.name"));
+  const tierName = (tier: PaidTier) => tt(`tiers.${tier}.name`);
   const cycleLabel = (cycle: BillingCycle) => (cycle === "year" ? t("cycleYear") : t("cycleMonth"));
   const planLine = (target: PlanTarget) =>
     [tierName(target.tier), cycleLabel(target.cycle), t("pointsCount", { count: target.points })].join(" · ");
@@ -202,7 +201,7 @@ export default async function SubscriptionPage({
   // Варианты оплаты сейчас (карта и счёт): тариф × период при текущих
   // точках; понижение сейчас не оплачивается — оно с конца срока.
   const optionPoints = Math.max(pointsInUse, current && current.tier !== "legacy" ? current.points : 1);
-  const options = (["standard", "premium"] as const)
+  const options = (["standard", "premium", "vip"] as const)
     .flatMap((tier) => (["year", "month"] as const).map((cycle) => ({ tier, cycle, points: optionPoints })))
     .filter((target) => pricing.available[target.tier][target.cycle])
     .map((target) => ({
@@ -793,7 +792,7 @@ export default async function SubscriptionPage({
               {t("howCalculated")}
             </h2>
             <ul className="mt-2 max-w-[720px] list-disc space-y-1.5 pl-5 text-[13.5px] leading-relaxed text-[#3c4053]">
-              <li>{t("rulePoints", { from: POINTS_DISCOUNT_FROM, percent: POINTS_DISCOUNT_PERCENT })}</li>
+              <li>{t("rulePoints")}</li>
               <li>{t("ruleSeats", { standard: SEATS_PER_POINT.standard, premium: SEATS_PER_POINT.premium })}</li>
               <li>{t("ruleUpgrade")}</li>
               <li>{t("ruleSwitch")}</li>
@@ -809,6 +808,7 @@ export default async function SubscriptionPage({
                     <th className="pb-2 font-medium">{t("colPoints")}</th>
                     <th className="pb-2 font-medium">{tierName("standard")}</th>
                     <th className="pb-2 font-medium">{tierName("premium")}</th>
+                    <th className="pb-2 font-medium">{tierName("vip")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -816,13 +816,13 @@ export default async function SubscriptionPage({
                     <tr key={points} className="border-t border-[#ececf4]">
                       <td className="py-2 text-[#3c4053]">
                         {t("pointsCount", { count: points })}
-                        {points >= POINTS_DISCOUNT_FROM ? (
+                        {pointsDiscountPercent(points) > 0 ? (
                           <span className="ml-1.5 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-medium text-[#116b2a]">
-                            −{POINTS_DISCOUNT_PERCENT} %
+                            −{pointsDiscountPercent(points)} %
                           </span>
                         ) : null}
                       </td>
-                      {(["standard", "premium"] as const).map((tier) => (
+                      {(["standard", "premium", "vip"] as const).map((tier) => (
                         <td key={tier} className="py-2 tabular-nums text-[#0b1024]">
                           {planMonthlyRub(pricing.rates, tier, "year", points).toLocaleString(locale)} ₽{t("perMonthSuffix")}
                         </td>

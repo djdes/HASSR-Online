@@ -11,7 +11,7 @@ import {
 import { isValidPromoCodeFormat, normalizePromoCode } from "@/lib/promo/rules";
 import type { PlanRates } from "@/lib/tariff-plans";
 
-const RATES: PlanRates = { standard: { month: 2490, year: 1990 }, premium: { month: 4990, year: 3990 } };
+const RATES: PlanRates = { standard: { month: 2490, year: 1990 }, premium: { month: 4990, year: 3990 }, vip: { month: 12990, year: 8990 } };
 const TEN = { kind: "percent" as const, value: 10 };
 
 describe("акция по визитке", () => {

@@ -63,6 +63,7 @@ export function pricesFromRates(rates: PlanRates): { standardFromRub: number; pr
 function paidLabel(state: AccountBillingState): string {
   if (state.paidTier === "standard") return "Стандарт";
   if (state.paidTier === "premium") return "Премиум";
+  if (state.paidTier === "vip") return "ВИП";
   return planLabel("paid");
 }
 

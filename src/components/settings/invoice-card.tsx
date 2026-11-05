@@ -31,7 +31,7 @@ export type InvoiceOption = {
   key: string;
   /** «Стандарт · оплата за год · 1 точка». */
   label: string;
-  tier: "standard" | "premium";
+  tier: "standard" | "premium" | "vip";
   cycle: "month" | "year";
   points: number;
   /** К оплате по виду перехода, без акции и скидки. */
