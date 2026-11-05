@@ -8,16 +8,17 @@
  * - Optional proxy support via undici ProxyAgent(GGL_PROXY_URL)
  * - Session restoration and encrypted persistence with GglAccount.sessionEnc
  * - Single-retry auto-relogin on auth failure via POST https://gogetlinks.net/user/signIn
- * - Strict campaign isolation guard (isWesetup === true) for all writes
+ * - Strict campaign isolation guard (isWesetup === true and siteUrl === wesetup.ru) for all writes
+ * - Windows-1251 form re-encoding for all form-encoded write requests
  */
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { call, type StoredCookie } from "api-anything";
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
-import { parseRubAmount } from "@/lib/seo/gogetlinks-codec";
+import { encodeWin1251Form, isWesetupDomain, parseRubAmount } from "@/lib/seo/gogetlinks-codec";
 
 export interface GglWalletBalance {
   balanceRub: number;
@@ -52,11 +53,7 @@ export class GglCallError extends Error {
 const API_ANYTHING_HOME = process.env.API_ANYTHING_HOME || join(tmpdir(), "wesetup-api-anything");
 process.env.API_ANYTHING_HOME = API_ANYTHING_HOME;
 
-let initialized = false;
-
 export function initApiAnythingHome(): void {
-  if (initialized) return;
-
   const sitesDir = join(API_ANYTHING_HOME, "sites");
   const sessionsDir = join(API_ANYTHING_HOME, "sessions");
   mkdirSync(sitesDir, { recursive: true, mode: 0o700 });
@@ -83,8 +80,6 @@ export function initApiAnythingHome(): void {
       console.warn("[ggl-client] Warning: failed to sync gogetlinks.json to home:", err);
     }
   }
-
-  initialized = true;
 }
 
 function getFetchImpl(): typeof fetch | undefined {
@@ -92,7 +87,6 @@ function getFetchImpl(): typeof fetch | undefined {
   if (!proxyUrl) return undefined;
 
   try {
-    // Dynamic require so undici isn't forced if not needed
     const { ProxyAgent, fetch: undiciFetch } = require("undici");
     const agent = new ProxyAgent(proxyUrl);
     return ((url: any, init: any) =>
@@ -101,6 +95,39 @@ function getFetchImpl(): typeof fetch | undefined {
     console.warn("[ggl-client] Failed to configure proxy agent:", err);
     return undefined;
   }
+}
+
+/**
+ * Wraps a fetch implementation to ensure that any application/x-www-form-urlencoded
+ * POST request targeting gogetlinks is encoded using single-byte windows-1251 percent-encoding.
+ */
+export function createGglFetch(baseFetch: typeof fetch = fetch): typeof fetch {
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    let modifiedInit = init;
+    if (init && init.method && init.method.toUpperCase() === "POST") {
+      const headers = new Headers(init.headers);
+      const contentType = headers.get("content-type") || "";
+      const isAjax = headers.get("x-requested-with") === "XMLHttpRequest";
+
+      if (
+        contentType.includes("application/x-www-form-urlencoded") &&
+        typeof init.body === "string" &&
+        !isAjax
+      ) {
+        const params = new URLSearchParams(init.body);
+        const fields: Record<string, string> = {};
+        for (const [key, val] of params.entries()) {
+          fields[key] = val;
+        }
+        const win1251Body = encodeWin1251Form(fields);
+        modifiedInit = {
+          ...init,
+          body: win1251Body,
+        };
+      }
+    }
+    return baseFetch(input, modifiedInit);
+  };
 }
 
 // In-process serialized promise queue with minIntervalMs
@@ -128,7 +155,8 @@ async function enqueueGgl<T>(fn: () => Promise<T>): Promise<T> {
 
 function parseSetCookies(setCookieHeaders: string[] | string | undefined): StoredCookie[] {
   if (!setCookieHeaders) return [];
-  const rawList = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders];
+  const rawItems = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders];
+  const rawList = rawItems.flatMap((item) => item.split(/,(?=\s*[a-zA-Z0-9_.-]+=)/));
   const cookies: StoredCookie[] = [];
 
   for (const str of rawList) {
@@ -174,7 +202,7 @@ function parseSetCookies(setCookieHeaders: string[] | string | undefined): Store
   return cookies;
 }
 
-function saveLocalSession(cookies: StoredCookie[]): void {
+export function saveLocalSession(cookies: StoredCookie[]): void {
   initApiAnythingHome();
   const sessionsDir = join(API_ANYTHING_HOME, "sessions");
   const file = join(sessionsDir, "gogetlinks.json");
@@ -186,7 +214,7 @@ function saveLocalSession(cookies: StoredCookie[]): void {
   writeFileSync(file, JSON.stringify(data, null, 2), { mode: 0o600 });
 }
 
-function loadLocalSession(): StoredCookie[] {
+export function loadLocalSession(): StoredCookie[] {
   initApiAnythingHome();
   const file = join(API_ANYTHING_HOME, "sessions", "gogetlinks.json");
   if (!existsSync(file)) return [];
@@ -198,29 +226,33 @@ function loadLocalSession(): StoredCookie[] {
   }
 }
 
-async function syncSessionFromDb(): Promise<void> {
+async function syncSessionFromDb(prismaClient?: any): Promise<void> {
   initApiAnythingHome();
   try {
-    const account = await db.gglAccount.findFirst();
+    const client = prismaClient || db;
+    const account = await client.gglAccount.findFirst();
     if (!account || !account.sessionEnc) return;
 
     const decrypted = decryptSecret(account.sessionEnc);
     const parsed = JSON.parse(decrypted);
     const cookies = Array.isArray(parsed) ? parsed : parsed.cookies || [];
-    saveLocalSession(cookies);
+    if (cookies.length > 0) {
+      saveLocalSession(cookies);
+    }
   } catch (err) {
     console.warn("[ggl-client] Warning: could not restore session from DB:", err);
   }
 }
 
-async function persistSessionToDb(cookies: StoredCookie[]): Promise<void> {
+async function persistSessionToDb(cookies: StoredCookie[], prismaClient?: any): Promise<void> {
   try {
-    const account = await db.gglAccount.findFirst();
+    const client = prismaClient || db;
+    const account = await client.gglAccount.findFirst();
     if (!account) return;
 
     const sessionObj = { cookies, values: {}, updatedAt: new Date().toISOString() };
     const encrypted = encryptSecret(JSON.stringify(sessionObj));
-    await db.gglAccount.update({
+    await client.gglAccount.update({
       where: { id: account.id },
       data: {
         sessionEnc: encrypted,
@@ -233,15 +265,22 @@ async function persistSessionToDb(cookies: StoredCookie[]): Promise<void> {
   }
 }
 
-async function attemptRelogin(): Promise<boolean> {
+async function attemptRelogin(opts?: { prismaClient?: any; fetchImpl?: typeof fetch }): Promise<boolean> {
   try {
-    const account = await db.gglAccount.findFirst();
+    const client = opts?.prismaClient || db;
+    const account = await client.gglAccount.findFirst();
     if (!account || !account.email || !account.passwordEnc) return false;
 
     const password = decryptSecret(account.passwordEnc);
-    const { cookies } = await verifyAndLoginGgl(account.email, password);
-    await persistSessionToDb(cookies);
-    return true;
+    // skipBalance: true prevents re-entering callGglRead and deadlock
+    // persistToDb: true ensures DB is updated with fresh cookies immediately
+    const { cookies } = await verifyAndLoginGgl(account.email, password, {
+      prismaClient: client,
+      fetchImpl: opts?.fetchImpl,
+      skipBalance: true,
+      persistToDb: true,
+    });
+    return cookies.length > 0;
   } catch (err) {
     console.error("[ggl-client] Auto-relogin attempt failed:", err);
     return false;
@@ -255,10 +294,16 @@ async function attemptRelogin(): Promise<boolean> {
 export async function verifyAndLoginGgl(
   email: string,
   password: string,
+  opts?: {
+    prismaClient?: any;
+    fetchImpl?: typeof fetch;
+    skipBalance?: boolean;
+    persistToDb?: boolean;
+  },
 ): Promise<{ cookies: StoredCookie[]; balance: GglWalletBalance }> {
   initApiAnythingHome();
 
-  const fetchImpl = getFetchImpl() || fetch;
+  const baseFetch = opts?.fetchImpl || getFetchImpl() || fetch;
   const formBody = new URLSearchParams({
     e_mail: email,
     password: password,
@@ -266,7 +311,7 @@ export async function verifyAndLoginGgl(
     is_ajax: "true",
   }).toString();
 
-  const res = await fetchImpl("https://gogetlinks.net/user/signIn", {
+  const res = await baseFetch("https://gogetlinks.net/user/signIn", {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -300,14 +345,34 @@ export async function verifyAndLoginGgl(
     throw new GglAuthError(`GoGetLinks login failed: ${errorMsg}`);
   }
 
+  // 1. Save local session immediately
   saveLocalSession(cookies);
 
-  // Attempt to fetch current balance
+  // 2. Persist fresh cookies to DB immediately
+  if (opts?.persistToDb !== false) {
+    await persistSessionToDb(cookies, opts?.prismaClient);
+  }
+
+  // 3. Fetch balance directly without going through enqueueGgl / DB sync
   let balance: GglWalletBalance = { balanceRub: 0, availableRub: 0, blockedRub: 0 };
-  try {
-    balance = await callGglRead<GglWalletBalance>("getAccountBalance");
-  } catch (err) {
-    console.warn("[ggl-client] Warning: unable to read initial balance:", err);
+  if (!opts?.skipBalance) {
+    try {
+      const result = await call("gogetlinks", "getAccountBalance", undefined, {
+        maxTier: 1,
+        minIntervalMs: 0,
+        fetchImpl: baseFetch,
+      });
+      if (result.ok && result.data) {
+        const row = Array.isArray(result.data) ? result.data[0] : (result.data as any) || {};
+        balance = {
+          balanceRub: parseRubAmount(row?.balance),
+          availableRub: parseRubAmount(row?.available),
+          blockedRub: parseRubAmount(row?.blocked),
+        };
+      }
+    } catch (err) {
+      console.warn("[ggl-client] Warning: unable to read initial balance:", err);
+    }
   }
 
   return { cookies, balance };
@@ -320,12 +385,20 @@ export async function verifyAndLoginGgl(
 export async function callGglRead<T = unknown>(
   opName: string,
   args?: Record<string, unknown>,
+  opts?: {
+    prismaClient?: any;
+    fetchImpl?: typeof fetch;
+    skipDbSync?: boolean;
+    allowRelogin?: boolean;
+  },
 ): Promise<T> {
   initApiAnythingHome();
-  await syncSessionFromDb();
+  if (opts?.skipDbSync !== true) {
+    await syncSessionFromDb(opts?.prismaClient);
+  }
 
   return enqueueGgl(async () => {
-    const fetchImpl = getFetchImpl();
+    const fetchImpl = opts?.fetchImpl || getFetchImpl();
 
     let result = await call("gogetlinks", opName, args, {
       maxTier: 1,
@@ -333,9 +406,10 @@ export async function callGglRead<T = unknown>(
       fetchImpl,
     });
 
-    // If auth failed, attempt auto-relogin once
-    if (result.class === "auth" || (!result.ok && result.reason?.includes("login"))) {
-      const relogged = await attemptRelogin();
+    // If auth failed and relogin is allowed, attempt auto-relogin once
+    const allowRelogin = opts?.allowRelogin !== false;
+    if (allowRelogin && (result.class === "auth" || (!result.ok && result.reason?.includes("login")))) {
+      const relogged = await attemptRelogin({ prismaClient: opts?.prismaClient, fetchImpl: opts?.fetchImpl });
       if (relogged) {
         result = await call("gogetlinks", opName, args, {
           maxTier: 1,
@@ -355,10 +429,9 @@ export async function callGglRead<T = unknown>(
     // Persist refreshed cookies if any
     const localCookies = loadLocalSession();
     if (localCookies.length > 0) {
-      await persistSessionToDb(localCookies);
+      await persistSessionToDb(localCookies, opts?.prismaClient);
     }
 
-    // Format balance if getAccountBalance
     if (opName === "getAccountBalance") {
       const row = Array.isArray(result.data) ? result.data[0] : (result.data as any) || {};
       const balance: GglWalletBalance = {
@@ -390,7 +463,7 @@ export function assertCampaignIsolation(
 
 /**
  * Execute a write operation against GoGetLinks via api-anything.
- * Strict isolation guard: throws GglIsolationError before touching network if campaignIdForGuard
+ * Strict isolation guard: throws GglIsolationError before touching network if campaignId or siteUrl
  * does not belong to wesetup.ru.
  */
 export async function callGglWrite<T = unknown>(input: {
@@ -399,17 +472,43 @@ export async function callGglWrite<T = unknown>(input: {
   idempotencyKey: string;
   campaignIdForGuard?: string;
   prismaClient?: any;
+  fetchImpl?: typeof fetch;
 }): Promise<{ status: "applied" | "accepted" | "may_have_applied"; data: T }> {
   // 1. ISOLATION GUARD: Must be verified BEFORE touching network
-  if (input.campaignIdForGuard) {
+  // A. Check siteUrl for campaign creation or update
+  if (
+    input.opName === "createOrUpdateCampaign" ||
+    input.args?.siteUrl !== undefined ||
+    input.args?.URL !== undefined
+  ) {
+    const targetSiteUrl = String(input.args?.siteUrl ?? input.args?.URL ?? "");
+    if (!isWesetupDomain(targetSiteUrl)) {
+      throw new GglIsolationError(
+        `Write rejected by isolation guard: target siteUrl "${targetSiteUrl}" is not wesetup.ru`,
+      );
+    }
+  }
+
+  // B. Check campaignId isolation if present in campaignIdForGuard, args.campaignId, or args.comp_id
+  const candidateCampaignId =
+    input.campaignIdForGuard ??
+    (input.args?.campaignId as string | number | undefined) ??
+    (input.args?.comp_id as string | number | undefined);
+
+  if (
+    candidateCampaignId !== undefined &&
+    candidateCampaignId !== null &&
+    String(candidateCampaignId).trim() !== ""
+  ) {
+    const compIdStr = String(candidateCampaignId).trim();
+    const gglCompId = Number(compIdStr);
     let campaign: { isWesetup?: boolean } | null = null;
     try {
-      const gglCompId = Number(input.campaignIdForGuard);
       const client = input.prismaClient || db;
       campaign = await client.gglCampaign.findFirst({
         where: {
           OR: [
-            { id: input.campaignIdForGuard },
+            { id: compIdStr },
             ...(Number.isFinite(gglCompId) && gglCompId > 0 ? [{ gglCampaignId: gglCompId }] : []),
           ],
         },
@@ -417,18 +516,20 @@ export async function callGglWrite<T = unknown>(input: {
     } catch (err: any) {
       if (err instanceof GglIsolationError) throw err;
       throw new GglIsolationError(
-        `Write rejected by isolation guard: unable to verify campaign "${input.campaignIdForGuard}": ${err?.message || String(err)}`,
+        `Write rejected by isolation guard: unable to verify campaign "${compIdStr}": ${err?.message || String(err)}`,
       );
     }
 
-    assertCampaignIsolation(campaign, input.campaignIdForGuard);
+    assertCampaignIsolation(campaign, compIdStr);
   }
 
   initApiAnythingHome();
-  await syncSessionFromDb();
+  await syncSessionFromDb(input.prismaClient);
 
   return enqueueGgl(async () => {
-    const fetchImpl = getFetchImpl();
+    // Wrap fetchImpl with windows-1251 form re-encoder
+    const baseFetch = input.fetchImpl || getFetchImpl() || fetch;
+    const fetchImpl = createGglFetch(baseFetch);
 
     let result = await call("gogetlinks", input.opName, input.args, {
       allowWrites: true,
@@ -440,7 +541,10 @@ export async function callGglWrite<T = unknown>(input: {
 
     // If auth failed, attempt auto-relogin once
     if (result.class === "auth" || (!result.ok && result.reason?.includes("login"))) {
-      const relogged = await attemptRelogin();
+      const relogged = await attemptRelogin({
+        prismaClient: input.prismaClient,
+        fetchImpl: input.fetchImpl,
+      });
       if (relogged) {
         result = await call("gogetlinks", input.opName, input.args, {
           allowWrites: true,
@@ -462,7 +566,7 @@ export async function callGglWrite<T = unknown>(input: {
 
     const localCookies = loadLocalSession();
     if (localCookies.length > 0) {
-      await persistSessionToDb(localCookies);
+      await persistSessionToDb(localCookies, input.prismaClient);
     }
 
     let status: "applied" | "accepted" | "may_have_applied" = "may_have_applied";

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { parseSite } from "api-anything";
+
+process.env.INTEGRATION_KEY_SECRET ||= "test-secret-at-least-16-chars-long";
 import {
   decodeWin1251,
   encodeWin1251Form,
@@ -121,5 +123,201 @@ test("callGglWrite throws GglIsolationError before touching network if campaign 
     },
     GglIsolationError,
   );
+});
+
+test("Fix Round 1: write operations inject parameters into HTTP body using Windows-1251 form encoding", async () => {
+  const { callGglWrite } = await import("@/lib/seo/gogetlinks-client.server");
+  const { encryptSecret } = await import("@/lib/integration-crypto");
+
+  let capturedBody = "";
+  const mockFetch: typeof fetch = async (url, init) => {
+    capturedBody = String(init?.body || "");
+    return new Response(JSON.stringify({ status: "ok" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const validSession = {
+    cookies: [
+      { name: "hash", value: "valid_hash", domain: "gogetlinks.net", path: "/", expires: 2000000000, httpOnly: true, secure: true },
+      { name: "PHPSESSID", value: "valid_sess", domain: "gogetlinks.net", path: "/", expires: 2000000000, httpOnly: true, secure: true },
+    ],
+  };
+
+  const mockDb = {
+    gglCampaign: {
+      findFirst: async () => ({ id: "camp_wesetup", isWesetup: true }),
+    },
+    gglAccount: {
+      findFirst: async () => ({
+        id: "acc_1",
+        email: "test@wesetup.ru",
+        passwordEnc: encryptSecret("pass"),
+        sessionEnc: encryptSecret(JSON.stringify(validSession)),
+      }),
+      update: async () => ({}),
+    },
+  };
+
+  await callGglWrite({
+    opName: "sendThreadMessage",
+    args: { threadKey: "th_9988", text: "Здравствуйте №1 — 850 ₽" },
+    idempotencyKey: `wire-test-${Date.now()}`,
+    campaignIdForGuard: "camp_wesetup",
+    prismaClient: mockDb,
+    fetchImpl: mockFetch,
+  });
+
+  // Verify parameters were not dropped (slots work)
+  assert.match(capturedBody, /threadKey=th_9988/);
+  assert.match(capturedBody, /text=/);
+  // Verify Windows-1251 encoding over the wire without UTF-8 Cyrillic mojibake
+  assert.doesNotMatch(capturedBody, /%D0%[89AB]|%D1%[89AB]/i);
+  assert.match(capturedBody, /%B9/); // № in win1251 is %B9
+  assert.match(capturedBody, /%97/); // — in win1251 is %97
+  assert.match(capturedBody, /%F0%F3%E1/); // руб. in win1251
+});
+
+test("Fix Round 1: isolation guard verifies campaignId in args and blocks non-wesetup siteUrl", async () => {
+  const { callGglWrite, GglIsolationError } = await import("@/lib/seo/gogetlinks-client.server");
+
+  const mockDb = {
+    gglCampaign: {
+      findFirst: async () => null, // campaign not found
+    },
+    gglAccount: {
+      findFirst: async () => null,
+      update: async () => ({}),
+    },
+  };
+
+  // 1. Guard detects args.campaignId without campaignIdForGuard
+  await assert.rejects(
+    async () => {
+      await callGglWrite({
+        opName: "submitLinkOrder",
+        args: { campaignId: "146053", donorSiteId: "1", targetUrl: "https://wesetup.ru", anchor: "тест" },
+        idempotencyKey: "test-args-camp-id",
+        prismaClient: mockDb,
+      });
+    },
+    GglIsolationError,
+  );
+
+  // 2. Guard detects args.comp_id
+  await assert.rejects(
+    async () => {
+      await callGglWrite({
+        opName: "submitLinkOrder",
+        args: { comp_id: "146053", donorSiteId: "1", targetUrl: "https://wesetup.ru", anchor: "тест" },
+        idempotencyKey: "test-args-comp-id",
+        prismaClient: mockDb,
+      });
+    },
+    GglIsolationError,
+  );
+
+  // 3. Guard detects non-wesetup siteUrl in createOrUpdateCampaign
+  await assert.rejects(
+    async () => {
+      await callGglWrite({
+        opName: "createOrUpdateCampaign",
+        args: { name: "Evil", siteUrl: "https://fonmusic.ru" },
+        idempotencyKey: "test-non-wesetup-siteurl",
+        prismaClient: mockDb,
+      });
+    },
+    GglIsolationError,
+  );
+});
+
+test("Fix Round 1: auto-relogin in callGglRead succeeds on expired session without recursion or deadlock", async () => {
+  const { callGglRead } = await import("@/lib/seo/gogetlinks-client.server");
+  const { encryptSecret } = await import("@/lib/integration-crypto");
+
+  let loginAttempts = 0;
+  let readAttempts = 0;
+  const mockFetch: typeof fetch = async (url, init) => {
+    const urlStr = String(url);
+    if (urlStr.includes("/user/signIn")) {
+      loginAttempts++;
+      return new Response(JSON.stringify({ status: "ok" }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "set-cookie": "hash=fresh_hash_123; path=/; domain=gogetlinks.net, PHPSESSID=fresh_sess_456; path=/; domain=gogetlinks.net",
+        },
+      });
+    }
+    if (urlStr.includes("/campaigns")) {
+      readAttempts++;
+      if (readAttempts === 1) {
+        // First read attempt fails with auth class
+        return new Response("<html><body>Пожалуйста, авторизуйтесь</body></html>", {
+          status: 401,
+          headers: { "content-type": "text/html; charset=windows-1251" },
+        });
+      }
+      // Second read attempt succeeds
+      return new Response(
+        `<html><body><table class="finance__table">
+          <tr><td class="balance__all">5 000 Р</td><td class="balance__open">3 000 Р</td><td class="balance__block">2 000 Р</td></tr>
+        </table></body></html>`,
+        {
+          status: 200,
+          headers: { "content-type": "text/html; charset=windows-1251" },
+        },
+      );
+    }
+    return new Response("Not found", { status: 404 });
+  };
+
+  let savedSession: string | null = "stale_session";
+  const mockDb = {
+    gglAccount: {
+      findFirst: async () => ({
+        id: "acc_1",
+        email: "test@wesetup.ru",
+        passwordEnc: encryptSecret("supersecret"),
+        sessionEnc: savedSession
+          ? encryptSecret(
+              JSON.stringify({
+                cookies: [
+                  {
+                    name: "hash",
+                    value: "old",
+                    domain: "gogetlinks.net",
+                    path: "/",
+                    expires: 2000000000,
+                    httpOnly: true,
+                    secure: true,
+                  },
+                ],
+              }),
+            )
+          : null,
+      }),
+      update: async (args: any) => {
+        if (args.data.sessionEnc) savedSession = args.data.sessionEnc;
+        return {};
+      },
+    },
+    gglCampaign: {
+      findFirst: async () => ({ id: "c1", isWesetup: true }),
+    },
+  };
+
+  const balance = await callGglRead<{ balanceRub: number; availableRub: number; blockedRub: number }>(
+    "getAccountBalance",
+    undefined,
+    { prismaClient: mockDb, fetchImpl: mockFetch },
+  );
+
+  assert.equal(balance.balanceRub, 5000);
+  assert.equal(balance.availableRub, 3000);
+  assert.equal(balance.blockedRub, 2000);
+  assert.equal(loginAttempts, 1);
+  assert.equal(readAttempts, 2);
 });
 

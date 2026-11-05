@@ -279,7 +279,26 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "query:campaignId"
+          ]
+        },
+        {
+          "param": "maxPrice",
+          "at": [
+            "query:maxPrice"
+          ]
+        },
+        {
+          "param": "page",
+          "at": [
+            "query:page"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/searchSites"
@@ -293,7 +312,7 @@
         "format": "html",
         "contentType": "text/html; charset=windows-1251",
         "html": {
-          "items": "table tr[id^='site_row_']",
+          "items": "table tr[id^='col_row_']",
           "fields": {
             "siteId": "input.check-box-site-id@value",
             "domain": "td[data-th='Сайт'] a",
@@ -304,7 +323,26 @@
           }
         }
       },
-      "params": [],
+      "params": [
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": false,
+          "example": "149699"
+        },
+        {
+          "name": "maxPrice",
+          "type": "number",
+          "required": false,
+          "example": 1500
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "required": false,
+          "example": 1
+        }
+      ],
       "readOnly": true,
       "minTier": 1,
       "learnedLoggedIn": true,
@@ -321,7 +359,14 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "page",
+          "at": [
+            "query:page"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/articles"
@@ -344,7 +389,14 @@
           }
         }
       },
-      "params": [],
+      "params": [
+        {
+          "name": "page",
+          "type": "number",
+          "required": false,
+          "example": 1
+        }
+      ],
       "readOnly": true,
       "minTier": 1,
       "learnedLoggedIn": true,
@@ -414,7 +466,14 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "onlyUnread",
+          "at": [
+            "query:onlyUnread"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/messages"
@@ -438,7 +497,14 @@
           }
         }
       },
-      "params": [],
+      "params": [
+        {
+          "name": "onlyUnread",
+          "type": "boolean",
+          "required": false,
+          "example": true
+        }
+      ],
       "readOnly": true,
       "minTier": 1,
       "learnedLoggedIn": true,
@@ -509,7 +575,20 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "name",
+          "at": [
+            "form:name"
+          ]
+        },
+        {
+          "param": "siteUrl",
+          "at": [
+            "form:siteUrl"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/campaign"
@@ -553,7 +632,20 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "form:campaignId"
+          ]
+        },
+        {
+          "param": "anchors",
+          "at": [
+            "form:anchors"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/campaign/anchors"
@@ -597,7 +689,26 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "title",
+          "at": [
+            "form:title"
+          ]
+        },
+        {
+          "param": "bodyHtml",
+          "at": [
+            "form:bodyHtml"
+          ]
+        },
+        {
+          "param": "campaignId",
+          "at": [
+            "form:campaignId"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/articles/article"
@@ -622,6 +733,12 @@
           "type": "string",
           "required": true,
           "example": "<p>Текст статьи</p>"
+        },
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": false,
+          "example": "149699"
         }
       ],
       "readOnly": false,
@@ -641,7 +758,38 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "form:campaignId"
+          ]
+        },
+        {
+          "param": "donorSiteId",
+          "at": [
+            "form:donorSiteId"
+          ]
+        },
+        {
+          "param": "targetUrl",
+          "at": [
+            "form:targetUrl"
+          ]
+        },
+        {
+          "param": "anchor",
+          "at": [
+            "form:anchor"
+          ]
+        },
+        {
+          "param": "articleId",
+          "at": [
+            "form:articleId"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/order/submit"
@@ -678,6 +826,12 @@
           "type": "string",
           "required": true,
           "example": "журнал генеральных уборок"
+        },
+        {
+          "name": "articleId",
+          "type": "string",
+          "required": false,
+          "example": "19733"
         }
       ],
       "readOnly": false,
@@ -697,7 +851,20 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "threadKey",
+          "at": [
+            "form:threadKey"
+          ]
+        },
+        {
+          "param": "text",
+          "at": [
+            "form:text"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/privateMessage/send"
@@ -741,7 +908,26 @@
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
         }
       },
-      "slots": [],
+      "slots": [
+        {
+          "param": "reviewId",
+          "at": [
+            "form:reviewId"
+          ]
+        },
+        {
+          "param": "action",
+          "at": [
+            "form:action"
+          ]
+        },
+        {
+          "param": "comment",
+          "at": [
+            "form:comment"
+          ]
+        }
+      ],
       "volatile": [],
       "trigger": {
         "url": "https://gogetlinks.net/reviews/action"
@@ -766,6 +952,12 @@
           "type": "string",
           "required": true,
           "example": "accept"
+        },
+        {
+          "name": "comment",
+          "type": "string",
+          "required": false,
+          "example": "Доработайте анкор"
         }
       ],
       "readOnly": false,
