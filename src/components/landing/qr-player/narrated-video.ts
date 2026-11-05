@@ -8,6 +8,13 @@ import type { NarratedVideo } from "./video-lightbox";
 /** Где лежит отрендеренное видео (`npm run video:render`). */
 export const NARRATED_VIDEO_DIR = "landing/video";
 export const NARRATED_VIDEO_BASENAME = "qr-tour";
+/**
+ * Презентация с голосом Максима (правки 05.11.2026: «заменить на презентацию
+ * с „Максимом“»). Готовый MP4 со стороны, не из `npm run video:render`, поэтому
+ * отдельным файлом: есть он — кнопка «Смотреть видео со звуком» открывает его,
+ * нет — прежний ролик `qr-tour`. Субтитры сняты по таймингам речи.
+ */
+export const PRESENTATION_VIDEO_BASENAME = "presentation";
 
 /**
  * Видео «Как работает QR» с голосом — только на русской главной (озвучка
@@ -16,8 +23,10 @@ export const NARRATED_VIDEO_BASENAME = "qr-tour";
  */
 export function narratedVideoFor(locale: SiteLocale, publicDir = path.join(process.cwd(), "public")): NarratedVideo | null {
   if (locale !== "ru") return null;
-  const base = `${NARRATED_VIDEO_DIR}/${NARRATED_VIDEO_BASENAME}-${locale}`;
-  const has = (extension: string) => existsSync(path.join(publicDir, `${base}.${extension}`));
+  const file = (name: string, extension: string) => path.join(publicDir, `${NARRATED_VIDEO_DIR}/${name}-${locale}.${extension}`);
+  const name = existsSync(file(PRESENTATION_VIDEO_BASENAME, "mp4")) ? PRESENTATION_VIDEO_BASENAME : NARRATED_VIDEO_BASENAME;
+  const base = `${NARRATED_VIDEO_DIR}/${name}-${locale}`;
+  const has = (extension: string) => existsSync(file(name, extension));
   if (!has("mp4")) return null;
   return {
     src: `/${base}.mp4`,

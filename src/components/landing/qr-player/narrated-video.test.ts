@@ -149,6 +149,11 @@ test("кнопка видео — только на русской главно�
       poster: "/landing/video/qr-tour-ru.jpg",
       captions: "/landing/video/qr-tour-ru.vtt",
     });
+    // Презентация с голосом Максима, если лежит, — вместо ролика qr-tour.
+    writeFileSync(path.join(video, "presentation-ru.mp4"), "x");
+    assert.deepEqual(narratedVideoFor("ru", dir), { src: "/landing/video/presentation-ru.mp4" });
+    writeFileSync(path.join(video, "presentation-ru.vtt"), "WEBVTT\n");
+    assert.deepEqual(narratedVideoFor("ru", dir), { src: "/landing/video/presentation-ru.mp4", captions: "/landing/video/presentation-ru.vtt" });
     assert.equal(narratedVideoFor("en", dir), null, "EN — без озвучки");
     assert.equal(narratedVideoFor("uz", dir), null, "UZ — без озвучки");
   } finally {
