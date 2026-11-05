@@ -260,7 +260,9 @@ export async function publishPost(postId: string): Promise<{ ok: boolean; error?
     return { ok: true };
   } catch (error) {
     const message = explainMaxFailure(error);
-    console.error("[max-channel] publish failed", error instanceof MaxApiFailure ? error.status : (error as Error)?.name);
+    // Сетевой сбой (TypeError «fetch failed») — с кодом причины, без токена.
+    const cause = (error as { cause?: { code?: unknown } })?.cause?.code;
+    console.error("[max-channel] publish failed", error instanceof MaxApiFailure ? error.status : (error as Error)?.name, (error as Error)?.message?.slice(0, 200), typeof cause === "string" ? cause : "");
     await db.maxChannelPost.update({ where: { id: postId }, data: { status: "failed", error: message } });
     return { ok: false, error: message };
   }
