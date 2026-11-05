@@ -7,11 +7,15 @@
  * окружения) и передаёт в клиентское окно пропом.
  */
 
-import { HOME_PHONE, homeContacts } from "@/lib/home-page";
+import { homeContacts } from "@/lib/home-page";
 import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 
-/** Телефон — тот же, что на главной кабинета. */
-export const CONTACT_PHONE = HOME_PHONE;
+/**
+ * Телефон отдела продаж (владелец, 2026-11-05) — в окне «Свяжитесь с нами»,
+ * в блоке «Задайте вопрос» на сайте и в письмах о брошенном заказе.
+ * Поддержка на главной кабинета — свой номер, `HOME_PHONE`.
+ */
+export const CONTACT_PHONE = { display: "+7 (495) 109-65-43", tel: "+74951096543" };
 
 /** Почта поддержки. */
 export const CONTACT_EMAIL = SUPPORT_EMAIL;

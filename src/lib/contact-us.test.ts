@@ -5,7 +5,7 @@ import test from "node:test";
 import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl, contactTelegramUrl } from "@/lib/contact-us";
 
 test("окно «Свяжитесь с нами»: телефон и почта WeSetup", () => {
-  assert.deepEqual(CONTACT_PHONE, { display: "8 (925) 305-80-77", tel: "+79253058077" });
+  assert.deepEqual(CONTACT_PHONE, { display: "+7 (495) 109-65-43", tel: "+74951096543" });
   assert.equal(CONTACT_EMAIL, "support@wesetup.ru");
 });
 

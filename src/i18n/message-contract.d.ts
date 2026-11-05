@@ -25244,7 +25244,7 @@ export type MessageContract = {
       "title": "Свяжитесь с нами",
       "lead": "Расскажите, что нужно, — назовём стоимость под ваш объект.",
       "about": "Услуга: {service}",
-      "call": "Позвонить",
+      "call": "Отдел продаж",
       "telegram": "Telegram",
       "telegramHint": "Написать в Telegram",
       "max": "MAX",
