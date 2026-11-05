@@ -12,7 +12,7 @@ import { createHash } from "node:crypto";
 
 export type HelperCatalogProduct = {
   name: string;
-  /** Срок годности в часах (из `Product.shelfLifeDays`) или null. */
+  /** Срок годности в часах (`Product.shelfLifeHours` или `shelfLifeDays` × 24) или null. */
   shelfLifeHours: number | null;
   /** Условия хранения: «+2…+6 °C». */
   storage: string | null;
@@ -35,7 +35,8 @@ export const CATALOG_LIMITS = { products: 3000, dishes: 2000, suppliers: 500, st
 const SHELF_LIFE_DAYS_MAX = 730;
 
 export type CatalogSource = {
-  products: Array<{ name: string; shelfLifeDays: number | null; storageTemp: string | null; supplier: string | null }>;
+  /** `shelfLifeHours` — срок в часах (05.11.2026), если задан в часах; иначе сутки. */
+  products: Array<{ name: string; shelfLifeDays: number | null; shelfLifeHours?: number | null; storageTemp: string | null; supplier: string | null }>;
   /** `config` действующих документов бракеража (готовой и скоропортящейся продукции). */
   documents: Array<{ code: string; config: unknown }>;
   staff: Array<{ name: string }>;
@@ -112,7 +113,10 @@ export function buildHelperCatalog(source: CatalogSource): HelperCatalog {
     if (!name) continue;
     addProduct({
       name,
-      shelfLifeHours: shelfLifeHours(row.shelfLifeDays),
+      shelfLifeHours:
+        row.shelfLifeHours != null && Number.isInteger(row.shelfLifeHours) && row.shelfLifeHours > 0 && row.shelfLifeHours <= SHELF_LIFE_DAYS_MAX * 24
+          ? row.shelfLifeHours
+          : shelfLifeHours(row.shelfLifeDays),
       storage: clean(row.storageTemp, CATALOG_STORAGE_MAX),
       supplier: clean(row.supplier, CATALOG_NAME_MAX),
     });

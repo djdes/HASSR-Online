@@ -22162,7 +22162,7 @@
     "done": "Done",
     "uploadMore": "Upload more",
     "requiredColumns": "Required column: <primary>Наименование</primary> (or <alternates>Название, Товар, Номенклатура</alternates>)",
-    "optionalColumns": "Optional columns: <aliases>Поставщик, Штрих-код, Единица, Категория, Температура хранения, Срок годности</aliases>",
+    "optionalColumns": "Optional columns: <aliases>Вид, Поставщик, Штрих-код, Единица, Категория, Температура хранения, Условия хранения, Срок годности</aliases>",
     "errors": {
       "generic": "Import failed",
       "unauthorized": "You are not signed in",
@@ -22174,7 +22174,9 @@
       "nameColumnRequired": "No product name column was found. Expected: <aliases>\"Наименование\", \"Название\", \"Товар\", \"Номенклатура\"</aliases> or <last>\"Продукт\"</last>",
       "noProducts": "No products with a name were found",
       "failed": "Import failed. Check the file format."
-    }
+    },
+    "kindLabel": "Product type in the file",
+    "kindHint": "For rows without a “Type” column. If the file has a “Вид” column (raw / semi-finished / finished), it is used instead."
   },
   "settingsProducts": {
     "guide": {
@@ -22207,8 +22209,9 @@
       "barcode": "Barcode",
       "unit": "Unit",
       "storage": "Storage",
-      "shelfLife": "Shelf life (days)",
-      "actions": "Actions"
+      "shelfLife": "Shelf life",
+      "actions": "Actions",
+      "kind": "Type"
     },
     "formats": {
       "title": "Supported import formats",
@@ -22229,13 +22232,22 @@
       "barcode": "Barcode",
       "unit": "Unit",
       "category": "Category",
-      "shelf": "Shelf life (days)",
-      "temp": "Storage temperature"
+      "shelf": "Shelf life",
+      "temp": "Temperature range",
+      "kind": "Product type",
+      "shelfUnit": "Shelf life unit",
+      "conditions": "Storage conditions",
+      "serving": "Served as"
     },
     "examples": {
       "name": "Milk 3.2%",
       "supplier": "Supplier Ltd.",
-      "category": "Dairy"
+      "category": "Dairy",
+      "conditions": {
+        "raw": "In a dry ventilated place, away from finished products",
+        "semi": "In a closed labelled container, on the bottom shelf of the fridge",
+        "finished": "On a bain-marie or in a heated display; salads in a chilled display"
+      }
     },
     "errors": {
       "generic": "Error",
@@ -22246,7 +22258,9 @@
       "failed": "Internal server error",
       "idRequired": "ID is missing",
       "notFound": "Product not found",
-      "nameRequiredUpdate": "A name is required"
+      "nameRequiredUpdate": "A name is required",
+      "kindInvalid": "Unknown product type",
+      "shelfLifeInvalid": "Shelf life must be a whole number above zero"
     },
     "delete": {
       "title": "Delete the product from the catalog?",
@@ -22271,6 +22285,53 @@
       "pc": "pcs",
       "bottle": "btl",
       "pack": "pack"
+    },
+    "tabs": {
+      "all": "All",
+      "label": "Product type"
+    },
+    "kinds": {
+      "raw": "Products (raw materials)",
+      "semi": "Semi-finished (own production)",
+      "finished": "Finished products"
+    },
+    "kindsShort": {
+      "raw": "Raw",
+      "semi": "Semi-finished",
+      "finished": "Finished"
+    },
+    "kindHints": {
+      "raw": "Received from a supplier",
+      "semi": "Made in-house for further use",
+      "finished": "Dishes and items for guests"
+    },
+    "emptyKind": {
+      "title": "Nothing in “{kind}” yet",
+      "raw": "Add a product or import the catalog — the type can be chosen during import.",
+      "semi": "Add a semi-finished product: set its shelf life in hours and the storage conditions.",
+      "finished": "Add a dish — it will appear in the “Serving temperature of finished dishes” checklist."
+    },
+    "shelfUnits": {
+      "hours": "hours",
+      "days": "days"
+    },
+    "shelfValue": {
+      "hours": "{count} h",
+      "days": "{count} d"
+    },
+    "hints": {
+      "shelf": "Raw materials usually keep for days, semi-finished products and dishes — for hours.",
+      "serving": "This sets the temperature norm in the “Serving temperature of finished dishes” checklist."
+    },
+    "serving": {
+      "hot": "Hot",
+      "soup": "Soup / hot drink",
+      "cold": "Cold"
+    },
+    "servingNorms": {
+      "hot": "not below +65 °C",
+      "soup": "not below +75 °C",
+      "cold": "not above +14 °C"
     }
   },
   "rootMailingKindFields": {
@@ -25385,7 +25446,8 @@
       "typePhoto": "Photo",
       "typeText": "Text",
       "typeInfo": "Information",
-      "typeSignature": "Signature"
+      "typeSignature": "Signature",
+      "rowsServingDishes": "This is a dish card template. When a check starts, it repeats for every dish: today's dishes from the food quality log and finished products from the product catalog. Change temperature norms in each question's “Violation condition”."
     },
     "checklistEvidenceForm": {
       "proofAlt": "Proof {number, number}",
@@ -25448,7 +25510,13 @@
       "removeInstanceConfirm": "Delete instance {number, number} and its answers?",
       "removeInstance": "Remove no. {number, number}",
       "fileTooBig": "File up to 10 MB",
-      "uploadFailed": "Could not upload the file"
+      "uploadFailed": "Could not upload the file",
+      "dishesCount": "Dishes in this check: {count}",
+      "dishesHint": "The list comes from today's food quality log and the catalog (type “Finished products”). A new dish appeared — refresh the list, entered temperatures are kept.",
+      "dishesRefresh": "Refresh dish list",
+      "dishesAdded": "Dishes added: {count}",
+      "dishesNoNew": "No new dishes — the list is up to date",
+      "dishesRefreshFailed": "Could not refresh the dish list"
     },
     "checklistQuestionSettings": {
       "answerYes": "Yes",
@@ -25522,7 +25590,8 @@
       "chooseAnswer": "Choose an answer",
       "minPhotos": "Minimum photos: {count, number}",
       "photoUploadFailed": "Could not upload the photo",
-      "photoTooBig": "JPG or PNG up to 2 MB is supported"
+      "photoTooBig": "JPG or PNG up to 2 MB is supported",
+      "outOfNorm": "Out of range — it will be recorded as a violation."
     },
     "checklistsClient": {
       "loadFailed": "Could not load checklists",

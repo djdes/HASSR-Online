@@ -1,0 +1,14 @@
+import pw from "file:///D:/www/Wesetup.ru/node_modules/playwright/index.js";
+const { request } = pw;
+const B = "http://localhost:3377"; const id = process.argv[2];
+const ctx = await request.newContext({ baseURL: B });
+await ctx.post("/api/auth/login", { data: { email: "admin@haccp.local", password: "serving123" }, timeout: 600000 });
+const cur = await (await ctx.get(`/api/checklists/inspections/${id}`)).json();
+const stale = await ctx.post(`/api/checklists/inspections/${id}/dishes`, { data: { updatedAt: "2020-01-01T00:00:00.000Z" }, timeout: 600000 });
+console.log("stale", stale.status());
+const r = await ctx.post(`/api/checklists/inspections/${id}/dishes`, { data: { updatedAt: cur.inspection.updatedAt }, timeout: 600000 });
+const body = await r.json();
+console.log("refresh", r.status(), body.added, body.inspection.snapshot.sections[1].categories[0].rows.map((x) => x.title).join(" | "));
+console.log("numbers kept", JSON.stringify(Object.entries(body.inspection.answers).filter(([, v]) => typeof v === "number")));
+const again = await ctx.post(`/api/checklists/inspections/${id}/dishes`, { data: { updatedAt: body.inspection.updatedAt } });
+console.log("again", again.status(), (await again.json()).added);

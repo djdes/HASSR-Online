@@ -33,6 +33,7 @@ const GUARDED: Array<[string, RegExp, number]> = [
   ["src/lib/custom-checklists.server.ts", /visibleObjectBuildingIds\(session\)/, 1],
   ["src/app/api/checklists/inspections/route.ts", /checklistInspectionsInArea\(auth\.session, auth\.organizationId, rows\)/, 1],
   ["src/app/api/checklists/inspections/[id]/route.ts", /checklistInspectionInArea\(auth\.session, auth\.organizationId, (inspection|current)\)/g, 2],
+  ["src/app/api/checklists/inspections/[id]/dishes/route.ts", /checklistInspectionInArea\(auth\.session, auth\.organizationId, current\)/, 1],
   ["src/app/api/checklists/inspections/[id]/review/route.ts", /checklistInspectionInArea\(auth\.session, auth\.organizationId, inspection\)/, 1],
   ["src/app/api/checklists/inspections/[id]/pdf/route.ts", /checklistInspectionAreaRefusal\(id\)/, 1],
   ["src/app/api/checklists/attachments/[id]/route.ts", /checklistInspectionInArea\(auth\.session, auth\.organizationId, file\.inspection\)/, 1],

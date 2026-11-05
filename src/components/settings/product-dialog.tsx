@@ -10,6 +10,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { productEditorUnit, parseProductUnitInput, productErrorKey, type ProductErrorKey } from "@/lib/settings-products-presentation";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ChoicePills } from "@/components/settings/choice-pills";
+import {
+  PRODUCT_KINDS,
+  SERVING_TEMPS,
+  productKindOf,
+  productShelfLife,
+  type ProductKind,
+  type ServingTemp,
+  type ShelfLifeUnit,
+} from "@/lib/product-kinds";
 import {
   Dialog,
   DialogContent,
@@ -25,15 +36,21 @@ interface ProductData {
   barcode: string | null;
   unit: string;
   category: string | null;
+  kind: string;
   storageTemp: string | null;
+  storageConditions: string | null;
   shelfLifeDays: number | null;
+  shelfLifeHours: number | null;
+  servingTemp: string | null;
 }
 
 interface ProductDialogProps {
   product?: ProductData;
+  /** Вид новой позиции — вкладка справочника, с которой открыли диалог. */
+  defaultKind?: ProductKind;
 }
 
-export function ProductDialog({ product }: ProductDialogProps) {
+export function ProductDialog({ product, defaultKind = "raw" }: ProductDialogProps) {
   const router = useRouter();
   const locale = useLocale() as Locale;
   const t = useTranslations("settingsProducts");
@@ -50,8 +67,15 @@ export function ProductDialog({ product }: ProductDialogProps) {
   const [unit, setUnit] = useState(product?.unit ?? "kg");
   const [unitDraft, setUnitDraft] = useState<string | null>(null);
   const [category, setCategory] = useState(product?.category ?? "");
+  const initialShelf = product ? productShelfLife(product) : null;
+  const initialKind = product ? productKindOf(product.kind) : defaultKind;
+  const initialUnit: ShelfLifeUnit = initialShelf?.unit ?? (initialKind === "raw" ? "days" : "hours");
+  const [kind, setKind] = useState<ProductKind>(initialKind);
   const [storageTemp, setStorageTemp] = useState(product?.storageTemp ?? "");
-  const [shelfLifeDays, setShelfLifeDays] = useState(product?.shelfLifeDays?.toString() ?? "");
+  const [storageConditions, setStorageConditions] = useState(product?.storageConditions ?? "");
+  const [shelfValue, setShelfValue] = useState(initialShelf?.value.toString() ?? "");
+  const [shelfUnit, setShelfUnit] = useState<ShelfLifeUnit>(initialUnit);
+  const [servingTemp, setServingTemp] = useState<ServingTemp | null>((product?.servingTemp as ServingTemp | null) ?? null);
 
   function resetForm() {
     setName(product?.name ?? "");
@@ -60,8 +84,12 @@ export function ProductDialog({ product }: ProductDialogProps) {
     setUnit(product?.unit ?? "kg");
     setUnitDraft(null);
     setCategory(product?.category ?? "");
+    setKind(initialKind);
     setStorageTemp(product?.storageTemp ?? "");
-    setShelfLifeDays(product?.shelfLifeDays?.toString() ?? "");
+    setStorageConditions(product?.storageConditions ?? "");
+    setShelfValue(initialShelf?.value.toString() ?? "");
+    setShelfUnit(initialUnit);
+    setServingTemp((product?.servingTemp as ServingTemp | null) ?? null);
     setError(null);
   }
 
@@ -78,8 +106,12 @@ export function ProductDialog({ product }: ProductDialogProps) {
         barcode: barcode || null,
         unit,
         category: category || null,
+        kind,
         storageTemp: storageTemp || null,
-        shelfLifeDays: shelfLifeDays ? Number(shelfLifeDays) : null,
+        storageConditions: storageConditions || null,
+        shelfLifeValue: shelfValue ? Number(shelfValue) : null,
+        shelfLifeUnit: shelfUnit,
+        servingTemp: kind === "finished" ? servingTemp : null,
       };
 
       const response = await fetch("/api/products", {
@@ -123,6 +155,20 @@ export function ProductDialog({ product }: ProductDialogProps) {
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{t(error)}</div>
           )}
           <div className="space-y-2">
+            <Label>{t("fields.kind")}</Label>
+            <ChoicePills
+              className="grid grid-cols-1 sm:grid-cols-3"
+              label={t("fields.kind")}
+              value={kind}
+              onChange={(next) => {
+                setKind(next);
+                // Новая позиция без срока: у блюд и полуфабрикатов срок обычно в часах.
+                if (!shelfValue) setShelfUnit(next === "raw" ? "days" : "hours");
+              }}
+              options={PRODUCT_KINDS.map((value) => ({ value, label: t(`kinds.${value}`), hint: t(`kindHints.${value}`) }))}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="prod-name">{t("fields.name")} <span className="text-destructive">*</span></Label>
             <Input id="prod-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("examples.name")} required />
           </div>
@@ -136,7 +182,7 @@ export function ProductDialog({ product }: ProductDialogProps) {
               <Input id="prod-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="4600000000000" />
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="prod-unit">{t("fields.unit")}</Label>
               {/* В базе единица хранится кодом («kg»), на экране — «кг». */}
@@ -152,15 +198,43 @@ export function ProductDialog({ product }: ProductDialogProps) {
               <Label htmlFor="prod-category">{t("fields.category")}</Label>
               <Input id="prod-category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("examples.category")} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="prod-shelf">{t("fields.shelf")}</Label>
-              <Input id="prod-shelf" type="number" value={shelfLifeDays} onChange={(e) => setShelfLifeDays(e.target.value)} placeholder="30" />
-            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="prod-temp">{t("fields.temp")}</Label>
-            <Input id="prod-temp" value={storageTemp} onChange={(e) => setStorageTemp(e.target.value)} placeholder="+2...+6°C" />
+            <Label htmlFor="prod-shelf">{t("fields.shelf")}</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input id="prod-shelf" className="w-28" type="number" min={1} step={1} inputMode="numeric" value={shelfValue} onChange={(e) => setShelfValue(e.target.value)} placeholder={shelfUnit === "hours" ? "12" : "30"} />
+              <ChoicePills
+                label={t("fields.shelfUnit")}
+                value={shelfUnit}
+                onChange={setShelfUnit}
+                options={[{ value: "hours", label: t("shelfUnits.hours") }, { value: "days", label: t("shelfUnits.days") }]}
+              />
+            </div>
+            <p className="text-[12px] text-[#6f7282]">{t("hints.shelf")}</p>
           </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)] sm:gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="prod-temp">{t("fields.temp")}</Label>
+              <Input id="prod-temp" value={storageTemp} maxLength={100} onChange={(e) => setStorageTemp(e.target.value)} placeholder="+2…+6 °C" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="prod-conditions">{t("fields.conditions")}</Label>
+              <Textarea id="prod-conditions" rows={2} value={storageConditions} maxLength={500} onChange={(e) => setStorageConditions(e.target.value)} placeholder={t(`examples.conditions.${kind}`)} />
+            </div>
+          </div>
+          {kind === "finished" ? (
+            <div className="space-y-2">
+              <Label>{t("fields.serving")}</Label>
+              <ChoicePills
+                className="grid grid-cols-1 sm:grid-cols-3"
+                label={t("fields.serving")}
+                value={servingTemp}
+                onChange={setServingTemp}
+                options={SERVING_TEMPS.map((value) => ({ value, label: t(`serving.${value}`), hint: t(`servingNorms.${value}`) }))}
+              />
+              <p className="text-[12px] text-[#6f7282]">{t("hints.serving")}</p>
+            </div>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => { setOpen(false); setUnitDraft(null); }} disabled={isSubmitting}>{common("cancel")}</Button>
             <Button type="submit" disabled={isSubmitting}>{isSubmitting ? t("form.saving") : isEdit ? common("save") : t("form.create")}</Button>

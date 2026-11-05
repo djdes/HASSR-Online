@@ -7,6 +7,15 @@ export const QUESTION_LABELS: Record<(typeof QUESTION_TYPES)[number], string> = 
   yes_no: "Да / Нет / Не применимо", scale: "Шкала", choice: "Выбор из списка", multi: "Мультивыбор", number: "Число", checkbox: "Чек-бокс", datetime: "Дата и время", photo: "Фото", text: "Текст", info: "Информация", signature: "Подпись",
 };
 const id = z.string().min(1).max(100);
+/**
+ * Источник строк категории (05.11.2026): категория — образец карточки, которая
+ * повторяется для каждой строки из данных. «serving_dishes» — блюда на раздаче
+ * (готовая продукция справочника + сегодняшний бракераж). Список строк сервер
+ * пишет в снимок проверки при старте (`rows`), см. `custom-checklist-rows.ts`.
+ */
+export const CHECKLIST_ROW_SOURCES = ["serving_dishes"] as const;
+export type ChecklistRowSource = (typeof CHECKLIST_ROW_SOURCES)[number];
+const rowSchema = z.object({ key: z.string().regex(/^[a-z0-9]{1,24}$/), title: z.string().trim().min(1).max(200) }).strict();
 const questionSchema = z.object({
   id, title: z.string().trim().min(1).max(300), description: z.string().max(3000).default(""),
   type: z.enum(QUESTION_TYPES), active: z.boolean().default(true), required: z.boolean().default(false),
@@ -37,7 +46,7 @@ const questionSchema = z.object({
 export const checklistDefinitionSchema = z.object({
   description: z.string().max(3000).default(""),
   numbering: z.boolean().optional(),
-  sections: z.array(z.object({ id, title: z.string().trim().min(1).max(200), active: z.boolean().default(true), categories: z.array(z.object({ id, title: z.string().trim().min(1).max(200), active: z.boolean().default(true), repeatable: z.boolean().optional(), questions: z.array(questionSchema).max(100) })).max(30) })).min(1).max(30),
+  sections: z.array(z.object({ id, title: z.string().trim().min(1).max(200), active: z.boolean().default(true), categories: z.array(z.object({ id, title: z.string().trim().min(1).max(200), active: z.boolean().default(true), repeatable: z.boolean().optional(), rowsSource: z.enum(CHECKLIST_ROW_SOURCES).optional(), rows: z.array(rowSchema).max(100).optional(), questions: z.array(questionSchema).max(100) })).max(30) })).min(1).max(30),
 }).superRefine((definition, ctx) => {
   const seen = new Set<string>();
   const precedingQuestions = new Set<string>();
@@ -48,6 +57,12 @@ export const checklistDefinitionSchema = z.object({
     for (const node of [section, ...section.categories]) {
       if (seen.has(node.id)) ctx.addIssue({ code: "custom", message: "Повторяющийся идентификатор" });
       seen.add(node.id);
+    }
+    for (const category of section.categories) {
+      if (category.rowsSource && category.repeatable) ctx.addIssue({ code: "custom", message: "Категория со строками из данных не может быть повторяемой" });
+      if (category.rows && !category.rowsSource) ctx.addIssue({ code: "custom", message: "Строки есть только у категории с источником строк" });
+      if (category.rows && new Set(category.rows.map(row => row.key)).size !== category.rows.length) ctx.addIssue({ code: "custom", message: "Повторяющиеся строки категории" });
+      if (category.rowsSource && category.questions.some(question => question.showIf && !category.questions.some(other => other.id === question.showIf?.questionId))) ctx.addIssue({ code: "custom", message: "Условия в категории со строками из данных ссылаются только на её же вопросы" });
     }
     for (const category of section.categories) for (const question of category.questions) {
       count++;

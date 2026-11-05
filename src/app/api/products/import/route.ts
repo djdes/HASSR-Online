@@ -5,6 +5,14 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import * as XLSX from "xlsx";
+import {
+  DEFAULT_PRODUCT_KIND,
+  isProductKind,
+  looksLikeStorageTemperature,
+  parseProductKindText,
+  parseShelfLifeText,
+  type ProductKind,
+} from "@/lib/product-kinds";
 
 // Hard limit on the uploaded spreadsheet to prevent OOM when parsing into memory.
 const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
@@ -45,15 +53,36 @@ const COLUMN_MAP: Record<string, string> = {
   "группа": "category",
   "category": "category",
   "group": "category",
+  // Kind (05.11.2026): сырьё / полуфабрикат / готовая продукция
+  "вид": "kind",
+  "вид продукции": "kind",
+  "тип": "kind",
+  "тип продукции": "kind",
+  "kind": "kind",
+  "type": "kind",
   // Storage temperature
   "температура хранения": "storageTemp",
-  "условия хранения": "storageTemp",
-  "хранение": "storageTemp",
-  "storage": "storageTemp",
-  // Shelf life
-  "срок годности": "shelfLifeDays",
-  "срок хранения": "shelfLifeDays",
-  "shelf life": "shelfLifeDays",
+  "температурный режим": "storageTemp",
+  "режим хранения": "storageTemp",
+  "storage temperature": "storageTemp",
+  // Storage conditions: слова — в условие, температура без отдельной
+  // колонки режима — в режим (так было до 05.11.2026).
+  "условия хранения": "storageConditions",
+  "хранение": "storageConditions",
+  "storage": "storageConditions",
+  "storage conditions": "storageConditions",
+  // Shelf life: «30» — сутки, «12 ч» / «3 сут» — с единицей
+  "срок годности": "shelfLife",
+  "срок хранения": "shelfLife",
+  "срок годности, сут": "shelfLife",
+  "срок годности, дн": "shelfLife",
+  "срок годности (сутки)": "shelfLife",
+  "срок годности (дни)": "shelfLife",
+  "shelf life": "shelfLife",
+  "срок годности, ч": "shelfLifeHours",
+  "срок годности (часы)": "shelfLifeHours",
+  "срок годности, часов": "shelfLifeHours",
+  "shelf life, h": "shelfLifeHours",
 };
 
 // Unit normalization
@@ -106,6 +135,9 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    // Вид для строк без колонки «Вид» — выбор в диалоге импорта.
+    const kindField = formData.get("kind");
+    const fallbackKind: ProductKind = isProductKind(kindField) ? kindField : DEFAULT_PRODUCT_KIND;
 
     if (!file) {
       return NextResponse.json(
@@ -178,10 +210,14 @@ export async function POST(request: Request) {
       barcode: string | null;
       unit: string;
       category: string | null;
+      kind: ProductKind;
       storageTemp: string | null;
+      storageConditions: string | null;
       shelfLifeDays: number | null;
+      shelfLifeHours: number | null;
       organizationId: string;
     }> = [];
+    const hasTempColumn = Object.values(columnMapping).includes("storageTemp");
 
     let skipped = 0;
 
@@ -198,11 +234,17 @@ export async function POST(request: Request) {
       }
 
       const unitRaw = String(mapped.unit || "kg").trim();
-      const shelfRaw = mapped.shelfLifeDays;
-      let shelfDays: number | null = null;
-      if (shelfRaw != null && shelfRaw !== "") {
-        const parsed = parseInt(String(shelfRaw), 10);
-        if (!isNaN(parsed)) shelfDays = parsed;
+      const shelf =
+        parseShelfLifeText(mapped.shelfLifeHours, true) ?? parseShelfLifeText(mapped.shelfLife);
+      const text = (value: unknown, max: number) => {
+        const cleaned = value == null ? "" : String(value).trim();
+        return cleaned ? cleaned.slice(0, max) : null;
+      };
+      let storageTemp = text(mapped.storageTemp, 100);
+      let storageConditions = text(mapped.storageConditions, 500);
+      if (!hasTempColumn && storageConditions && looksLikeStorageTemperature(storageConditions)) {
+        storageTemp = storageConditions;
+        storageConditions = null;
       }
 
       products.push({
@@ -211,10 +253,11 @@ export async function POST(request: Request) {
         barcode: mapped.barcode ? String(mapped.barcode).trim() : null,
         unit: normalizeUnit(unitRaw),
         category: mapped.category ? String(mapped.category).trim() : null,
-        storageTemp: mapped.storageTemp
-          ? String(mapped.storageTemp).trim()
-          : null,
-        shelfLifeDays: shelfDays,
+        kind: parseProductKindText(mapped.kind) ?? fallbackKind,
+        storageTemp,
+        storageConditions,
+        shelfLifeDays: shelf?.unit === "days" ? shelf.value : null,
+        shelfLifeHours: shelf?.unit === "hours" ? shelf.value : null,
         organizationId: getActiveOrgId(session),
       });
     }

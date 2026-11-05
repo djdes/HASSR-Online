@@ -1,9 +1,10 @@
 /**
  * Типовые шаблоны чек-листов (эскиз руководителя, скан 82, лист 3).
  *
- * Шесть проверок раздела «Чек-листы»: соответствие СанПиН, принципам ХАССП,
+ * Проверки раздела «Чек-листы»: соответствие СанПиН, принципам ХАССП,
  * проверка территориального управляющего, главного технолога, подготовка к
- * проверке Роспотребнадзора и аудит группы ХАССП. Организация получает
+ * проверке Роспотребнадзора, аудит группы ХАССП и (с 05.11.2026) контроль
+ * температуры готовых блюд на раздаче — блюда в нём подгружаются из данных. Организация получает
  * независимую копию в `ChecklistTemplate` и правит её в конструкторе —
  * типовой шаблон от этого не меняется.
  */
@@ -14,6 +15,7 @@ import { HACCP_AUDIT_CHECKLIST } from "./haccp-audit";
 import { HACCP_CHECKLIST } from "./haccp";
 import { ROSPOTREBNADZOR_PREP_CHECKLIST } from "./rospotrebnadzor-prep";
 import { SANPIN_CHECKLIST } from "./sanpin";
+import { SERVING_TEMPERATURE_CHECKLIST } from "./serving-temperature";
 import { TERRITORIAL_MANAGER_CHECKLIST } from "./territorial-manager";
 
 export { TYPICAL_CHECKLIST_KEYS, type TypicalChecklistKey, type TypicalChecklistTemplate } from "./builder";
@@ -26,6 +28,8 @@ export const TYPICAL_CHECKLISTS: readonly TypicalChecklistTemplate[] = [
   CHIEF_TECHNOLOGIST_CHECKLIST,
   ROSPOTREBNADZOR_PREP_CHECKLIST,
   HACCP_AUDIT_CHECKLIST,
+  // 05.11.2026, задача руководителя: блюда подгружаются из бракеража и справочника.
+  SERVING_TEMPERATURE_CHECKLIST,
 ];
 
 export function isTypicalChecklistKey(value: unknown): value is TypicalChecklistKey {

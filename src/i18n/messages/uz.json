@@ -22162,7 +22162,7 @@
     "done": "Tayyor",
     "uploadMore": "Yana yuklash",
     "requiredColumns": "Majburiy ustun: <primary>Наименование</primary> (yoki <alternates>Название, Товар, Номенклатура</alternates>)",
-    "optionalColumns": "Ixtiyoriy ustunlar: <aliases>Поставщик, Штрих-код, Единица, Категория, Температура хранения, Срок годности</aliases>",
+    "optionalColumns": "Ixtiyoriy ustunlar: <aliases>Вид, Поставщик, Штрих-код, Единица, Категория, Температура хранения, Условия хранения, Срок годности</aliases>",
     "errors": {
       "generic": "Importda xatolik yuz berdi",
       "unauthorized": "Tizimga kirmagansiz",
@@ -22174,7 +22174,9 @@
       "nameColumnRequired": "Mahsulot nomi ustuni topilmadi. Kutilgan nomlar: <aliases>\"Наименование\", \"Название\", \"Товар\", \"Номенклатура\"</aliases> yoki <last>\"Продукт\"</last>",
       "noProducts": "Nomi bor mahsulotlar topilmadi",
       "failed": "Importda xatolik yuz berdi. Fayl formatini tekshiring."
-    }
+    },
+    "kindLabel": "Fayldagi mahsulot turi",
+    "kindHint": "«Вид» ustuni bo‘lmagan qatorlar uchun. Faylda «Вид» ustuni bo‘lsa (xomashyo / yarim tayyor / tayyor), o‘sha olinadi."
   },
   "settingsProducts": {
     "guide": {
@@ -22207,8 +22209,9 @@
       "barcode": "Shtrix-kod",
       "unit": "Birlik",
       "storage": "Saqlash",
-      "shelfLife": "Yaroqlilik (kun)",
-      "actions": "Amallar"
+      "shelfLife": "Yaroqlilik muddati",
+      "actions": "Amallar",
+      "kind": "Turi"
     },
     "formats": {
       "title": "Qo‘llab-quvvatlanadigan import formatlari",
@@ -22229,13 +22232,22 @@
       "barcode": "Shtrix-kod",
       "unit": "O‘lchov birligi",
       "category": "Toifa",
-      "shelf": "Yaroqlilik muddati (kun)",
-      "temp": "Saqlash harorati"
+      "shelf": "Yaroqlilik muddati",
+      "temp": "Harorat rejimi",
+      "kind": "Mahsulot turi",
+      "shelfUnit": "Muddat birligi",
+      "conditions": "Saqlash shartlari",
+      "serving": "Qanday beriladi"
     },
     "examples": {
       "name": "3.2% li sut",
       "supplier": "«Yetkazib beruvchi» MChJ",
-      "category": "Sut mahsulotlari"
+      "category": "Sut mahsulotlari",
+      "conditions": {
+        "raw": "Quruq, shamollatiladigan joyda, tayyor mahsulotdan alohida",
+        "semi": "Yopiq, belgilangan idishda, muzlatgichning pastki tokchasida",
+        "finished": "Marmitda yoki issiq vitrinada; salatlar — sovutiladigan vitrinada"
+      }
     },
     "errors": {
       "generic": "Xato",
@@ -22246,7 +22258,9 @@
       "failed": "Serverning ichki xatosi",
       "idRequired": "ID ko‘rsatilmagan",
       "notFound": "Mahsulot topilmadi",
-      "nameRequiredUpdate": "Nom majburiy"
+      "nameRequiredUpdate": "Nom majburiy",
+      "kindInvalid": "Noma’lum mahsulot turi",
+      "shelfLifeInvalid": "Yaroqlilik muddati noldan katta butun son bo‘lishi kerak"
     },
     "delete": {
       "title": "Mahsulot katalogdan o‘chirilsinmi?",
@@ -22271,6 +22285,53 @@
       "pc": "dona",
       "bottle": "flakon",
       "pack": "qadoq"
+    },
+    "tabs": {
+      "all": "Barchasi",
+      "label": "Mahsulot turi"
+    },
+    "kinds": {
+      "raw": "Mahsulotlar (xomashyo)",
+      "semi": "Yarim tayyor mahsulotlar (o‘z ishlab chiqarish)",
+      "finished": "Tayyor mahsulot"
+    },
+    "kindsShort": {
+      "raw": "Xomashyo",
+      "semi": "Yarim tayyor",
+      "finished": "Tayyor"
+    },
+    "kindHints": {
+      "raw": "Yetkazib beruvchidan qabul qilinadi",
+      "semi": "Keyingi ish uchun o‘zingiz tayyorlaysiz",
+      "finished": "Mehmonlar uchun taomlar va mahsulotlar"
+    },
+    "emptyKind": {
+      "title": "«{kind}» bo‘limi hozircha bo‘sh",
+      "raw": "Mahsulot qo‘shing yoki ma’lumotnomani import qiling — turini import paytida tanlash mumkin.",
+      "semi": "Yarim tayyor mahsulot qo‘shing: yaroqlilik muddatini soatlarda va saqlash shartlarini ko‘rsating.",
+      "finished": "Taom qo‘shing — u «Tarqatishdagi tayyor taomlar haroratini nazorat qilish» chek-varag‘ida paydo bo‘ladi."
+    },
+    "shelfUnits": {
+      "hours": "soat",
+      "days": "sutka"
+    },
+    "shelfValue": {
+      "hours": "{count} soat",
+      "days": "{count} sutka"
+    },
+    "hints": {
+      "shelf": "Xomashyo muddati odatda sutkalarda, yarim tayyor mahsulot va taomlarniki — soatlarda.",
+      "serving": "Bundan «Tarqatishdagi tayyor taomlar haroratini nazorat qilish» chek-varag‘idagi harorat me’yori bog‘liq."
+    },
+    "serving": {
+      "hot": "Issiq",
+      "soup": "Birinchi taom / issiq ichimlik",
+      "cold": "Sovuq"
+    },
+    "servingNorms": {
+      "hot": "+65 °C dan past emas",
+      "soup": "+75 °C dan past emas",
+      "cold": "+14 °C dan yuqori emas"
     }
   },
   "rootMailingKindFields": {
@@ -25385,7 +25446,8 @@
       "typePhoto": "Rasm",
       "typeText": "Matn",
       "typeInfo": "Ma’lumot",
-      "typeSignature": "Imzo"
+      "typeSignature": "Imzo",
+      "rowsServingDishes": "Bu taom kartochkasi namunasi. Tekshiruv boshlanganda u har bir taom uchun takrorlanadi: brakeraj jurnalidagi bugungi taomlar va mahsulotlar ma’lumotnomasidagi tayyor mahsulot. Harorat me’yorlari savollarning «Buzilish sharti»da o‘zgartiriladi."
     },
     "checklistEvidenceForm": {
       "proofAlt": "Tasdiq {number, number}",
@@ -25448,7 +25510,13 @@
       "removeInstanceConfirm": "{number, number}-nusxa va uning javoblari o‘chirilsinmi?",
       "removeInstance": "№ {number, number} ni olib tashlash",
       "fileTooBig": "Fayl 10 MB gacha",
-      "uploadFailed": "Faylni yuklab bo‘lmadi"
+      "uploadFailed": "Faylni yuklab bo‘lmadi",
+      "dishesCount": "Tekshiruvdagi taomlar: {count}",
+      "dishesHint": "Ro‘yxat bugungi brakeraj jurnali va ma’lumotnomadan («Tayyor mahsulot» turi) olinadi. Yangi taom paydo bo‘ldi — ro‘yxatni yangilang, kiritilgan haroratlar saqlanadi.",
+      "dishesRefresh": "Taomlar ro‘yxatini yangilash",
+      "dishesAdded": "Qo‘shilgan taomlar: {count}",
+      "dishesNoNew": "Yangi taomlar yo‘q — ro‘yxat dolzarb",
+      "dishesRefreshFailed": "Taomlar ro‘yxatini yangilab bo‘lmadi"
     },
     "checklistQuestionSettings": {
       "answerYes": "Ha",
@@ -25522,7 +25590,8 @@
       "chooseAnswer": "Javobni tanlang",
       "minPhotos": "Rasmlarning minimal soni: {count, number}",
       "photoUploadFailed": "Rasmni yuklab bo‘lmadi",
-      "photoTooBig": "2 MB gacha JPG yoki PNG mos keladi"
+      "photoTooBig": "2 MB gacha JPG yoki PNG mos keladi",
+      "outOfNorm": "Me’yordan tashqari — buzilish sifatida qayd etiladi."
     },
     "checklistsClient": {
       "loadFailed": "Cheklistlarni yuklab bo‘lmadi",

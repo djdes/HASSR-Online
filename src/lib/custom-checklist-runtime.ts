@@ -1,6 +1,7 @@
 import { allChecklistQuestions, checklistScore, validateChecklistAnswers, visibleChecklistQuestions, type ChecklistAnswers, type ChecklistDefinition, type ChecklistQuestion } from "./custom-checklists";
 import { checklistConditionMatches, checklistFileId, checklistHasAnswer, checklistInstancesSchema, type ChecklistEvidence, type ChecklistInstances } from "./custom-checklist-rules";
 import { z } from "zod";
+import { expandChecklistRows } from "./custom-checklist-rows";
 
 export class ChecklistRunError extends Error { name = "ChecklistRunError"; }
 export function expandChecklistDefinition(definition: ChecklistDefinition, instances: ChecklistInstances = {}): ChecklistDefinition {
@@ -11,7 +12,9 @@ export function expandChecklistDefinition(definition: ChecklistDefinition, insta
     if (!categories.some(category => category.id === id && category.repeatable)) throw new ChecklistRunError("Эту категорию нельзя повторять");
     if (new Set(values).size !== values.length) throw new ChecklistRunError("Повторяющиеся экземпляры категории");
   }
-  const result: ChecklistDefinition = { ...definition, sections: definition.sections.map(section => ({ ...section, categories: section.categories.flatMap(category => {
+  // Строки из данных (блюда на раздаче) — до повторяемых категорий: они не пересекаются.
+  const withRows = expandChecklistRows(definition);
+  const result: ChecklistDefinition = { ...withRows, sections: withRows.sections.map(section => ({ ...section, categories: section.categories.flatMap(category => {
     const ids = new Set(category.questions.map(question => question.id));
     return [category, ...(instances[category.id] ?? []).map((instance, index) => ({
       ...category, id: `${category.id}@${instance}`, title: `${category.title} · ${index + 2}`,
