@@ -16,9 +16,32 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { call, type StoredCookie } from "api-anything";
+import { ProxyAgent, fetch as undiciFetch, type RequestInit as UndiciRequestInit } from "undici";
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
 import { encodeWin1251Form, isWesetupDomain, parseRubAmount } from "@/lib/seo/gogetlinks-codec";
+
+interface GglPrismaClientLike {
+  gglAccount: {
+    findFirst: () => Promise<{
+      id: string;
+      email?: string | null;
+      passwordEnc?: string | null;
+      sessionEnc?: string | null;
+    } | null>;
+    update: (args: {
+      where: { id: string };
+      data: { sessionEnc: string; status: string; lastError: string | null };
+    }) => Promise<unknown>;
+  };
+  gglCampaign: {
+    findFirst: (args: { where: Record<string, unknown> }) => Promise<{ isWesetup?: boolean } | null>;
+  };
+}
+
+function resolveClient(prismaClient?: unknown): GglPrismaClientLike {
+  return (prismaClient ?? db) as unknown as GglPrismaClientLike;
+}
 
 export interface GglWalletBalance {
   balanceRub: number;
@@ -87,9 +110,8 @@ function getFetchImpl(): typeof fetch | undefined {
   if (!proxyUrl) return undefined;
 
   try {
-    const { ProxyAgent, fetch: undiciFetch } = require("undici");
     const agent = new ProxyAgent(proxyUrl);
-    return ((url: any, init: any) =>
+    return ((url: string | URL, init?: UndiciRequestInit) =>
       undiciFetch(url, { ...init, dispatcher: agent })) as unknown as typeof fetch;
   } catch (err) {
     console.warn("[ggl-client] Failed to configure proxy agent:", err);
@@ -226,10 +248,10 @@ export function loadLocalSession(): StoredCookie[] {
   }
 }
 
-async function syncSessionFromDb(prismaClient?: any): Promise<void> {
+async function syncSessionFromDb(prismaClient?: unknown): Promise<void> {
   initApiAnythingHome();
   try {
-    const client = prismaClient || db;
+    const client = resolveClient(prismaClient);
     const account = await client.gglAccount.findFirst();
     if (!account || !account.sessionEnc) return;
 
@@ -244,9 +266,9 @@ async function syncSessionFromDb(prismaClient?: any): Promise<void> {
   }
 }
 
-async function persistSessionToDb(cookies: StoredCookie[], prismaClient?: any): Promise<void> {
+async function persistSessionToDb(cookies: StoredCookie[], prismaClient?: unknown): Promise<void> {
   try {
-    const client = prismaClient || db;
+    const client = resolveClient(prismaClient);
     const account = await client.gglAccount.findFirst();
     if (!account) return;
 
@@ -265,9 +287,9 @@ async function persistSessionToDb(cookies: StoredCookie[], prismaClient?: any): 
   }
 }
 
-async function attemptRelogin(opts?: { prismaClient?: any; fetchImpl?: typeof fetch }): Promise<boolean> {
+async function attemptRelogin(opts?: { prismaClient?: unknown; fetchImpl?: typeof fetch }): Promise<boolean> {
   try {
-    const client = opts?.prismaClient || db;
+    const client = resolveClient(opts?.prismaClient);
     const account = await client.gglAccount.findFirst();
     if (!account || !account.email || !account.passwordEnc) return false;
 
@@ -295,7 +317,7 @@ export async function verifyAndLoginGgl(
   email: string,
   password: string,
   opts?: {
-    prismaClient?: any;
+    prismaClient?: unknown;
     fetchImpl?: typeof fetch;
     skipBalance?: boolean;
     persistToDb?: boolean;
@@ -363,11 +385,13 @@ export async function verifyAndLoginGgl(
         fetchImpl: baseFetch,
       });
       if (result.ok && result.data) {
-        const row = Array.isArray(result.data) ? result.data[0] : (result.data as any) || {};
+        const row = (
+          Array.isArray(result.data) ? result.data[0] : result.data
+        ) as Record<string, unknown> | undefined;
         balance = {
-          balanceRub: parseRubAmount(row?.balance),
-          availableRub: parseRubAmount(row?.available),
-          blockedRub: parseRubAmount(row?.blocked),
+          balanceRub: parseRubAmount(row?.balance != null ? String(row.balance) : null),
+          availableRub: parseRubAmount(row?.available != null ? String(row.available) : null),
+          blockedRub: parseRubAmount(row?.blocked != null ? String(row.blocked) : null),
         };
       }
     } catch (err) {
@@ -386,7 +410,7 @@ export async function callGglRead<T = unknown>(
   opName: string,
   args?: Record<string, unknown>,
   opts?: {
-    prismaClient?: any;
+    prismaClient?: unknown;
     fetchImpl?: typeof fetch;
     skipDbSync?: boolean;
     allowRelogin?: boolean;
@@ -433,11 +457,13 @@ export async function callGglRead<T = unknown>(
     }
 
     if (opName === "getAccountBalance") {
-      const row = Array.isArray(result.data) ? result.data[0] : (result.data as any) || {};
+      const row = (
+        Array.isArray(result.data) ? result.data[0] : result.data
+      ) as Record<string, unknown> | undefined;
       const balance: GglWalletBalance = {
-        balanceRub: parseRubAmount(row?.balance),
-        availableRub: parseRubAmount(row?.available),
-        blockedRub: parseRubAmount(row?.blocked),
+        balanceRub: parseRubAmount(row?.balance != null ? String(row.balance) : null),
+        availableRub: parseRubAmount(row?.available != null ? String(row.available) : null),
+        blockedRub: parseRubAmount(row?.blocked != null ? String(row.blocked) : null),
       };
       return balance as T;
     }
@@ -471,7 +497,7 @@ export async function callGglWrite<T = unknown>(input: {
   args: Record<string, unknown>;
   idempotencyKey: string;
   campaignIdForGuard?: string;
-  prismaClient?: any;
+  prismaClient?: unknown;
   fetchImpl?: typeof fetch;
 }): Promise<{ status: "applied" | "accepted" | "may_have_applied"; data: T }> {
   // 1. ISOLATION GUARD: Must be verified BEFORE touching network
@@ -504,7 +530,7 @@ export async function callGglWrite<T = unknown>(input: {
     const gglCompId = Number(compIdStr);
     let campaign: { isWesetup?: boolean } | null = null;
     try {
-      const client = input.prismaClient || db;
+      const client = resolveClient(input.prismaClient);
       campaign = await client.gglCampaign.findFirst({
         where: {
           OR: [
@@ -513,10 +539,11 @@ export async function callGglWrite<T = unknown>(input: {
           ],
         },
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof GglIsolationError) throw err;
+      const errMsg = err instanceof Error ? err.message : String(err);
       throw new GglIsolationError(
-        `Write rejected by isolation guard: unable to verify campaign "${compIdStr}": ${err?.message || String(err)}`,
+        `Write rejected by isolation guard: unable to verify campaign "${compIdStr}": ${errMsg}`,
       );
     }
 

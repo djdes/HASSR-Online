@@ -1,0 +1,1388 @@
+
+> haccp-online@0.1.0 lint
+> eslint
+
+npm.cmd : [BABEL] Note: The code generator has deoptimised the styling of C:\projects\wesetup\src\i18n\message-contract
+.d.ts as it exceeds the max of 500KB.
+At line:2 char:12
++ $lintOut = & npm.cmd run lint 2>&1 | Out-String
++            ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([BABEL] Note: T...e max of 500KB.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+C:\projects\wesetup\prisma\seed-admin.ts
+  29:7  warning  'DEFAULT_NAME' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  33:7  warning  'DEMO_TEAM' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\resources\print-agent\agent.js
+  15:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  16:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  17:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  18:22  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\projects\wesetup\resources\print-agent\setup.js
+  12:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  13:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  14:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  15:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  16:22  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\projects\wesetup\src\app\(dashboard)\capa\[id]\page.tsx
+  70:53  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\projects\wesetup\src\app\(dashboard)\capa\[id]\page.tsx:70:53
+  68 |
+  69 |   const slaDeadline = new Date(ticket.createdAt.getTime() + ticket.slaHours * 60 * 60 * 1000);
+> 70 |   const slaBreached = ticket.status !== "closed" && Date.now() > slaDeadline.getTime();
+     |                                                     ^^^^^^^^^^ Cannot call impure function
+  71 |   const statusInfo = Object.hasOwn(STATUS_INFO, ticket.status) ? STATUS_INFO[ticket.status] : { label: ticket.status, color: "" };
+  72 |
+  73 |   const steps = [  react-hooks/purity
+
+C:\projects\wesetup\src\app\(dashboard)\dashboard\catch-up\catch-up-client.tsx
+  118:6  warning  React Hook useEffect has a missing dependency: 'loadGrid'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\projects\wesetup\src\app\(dashboard)\journals-progress\journals-progress-client.tsx
+  94:6  warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\projects\wesetup\src\app\(dashboard)\journals\[code]\documents\[docId]\page.tsx
+   69:3  warning  'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                      @typescript-eslint/no-unused-vars
+  186:3  warning  'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+  567:9  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\app\(dashboard)\journals\[code]\page.tsx
+    12:31  warning  'redirect' is defined but never used. Allowed unused vars must match /^_/u                                                                                               @typescript-eslint/no-unused-vars
+  1433:15  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\app\(dashboard)\more\page.tsx
+  29:15  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\projects\wesetup\src\app\(dashboard)\more\page.tsx:29:15
+  27 |   const t = await getTranslations("moreUi");
+  28 |   const organizationId = getActiveOrgId(session);
+> 29 |   const now = Date.now();
+     |               ^^^^^^^^^^ Cannot call impure function
+  30 |
+  31 |   // Нарушения и партии — точки из шапки и общие (2026-11-01).
+  32 |   const recordsWhere = pointRecordsWhere(await loadBuildingContext(session));  react-hooks/purity
+  55:9   error    Do not use an `<a>` element to navigate to `/settings/integrations/max/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\haccp-plan\page.tsx
+  32:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\haccp\flowcharts\[id]\page.tsx
+  15:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\haccp\flowcharts\page.tsx
+  19:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\haccp\hazards\page.tsx
+  21:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\haccp\products\page.tsx
+  19:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\haccp\team\meetings\page.tsx
+  22:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\program\page.tsx
+  33:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\sanitation\floor-plans\page.tsx
+  19:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\production-control\sanitation\lab\page.tsx
+  20:9  warning  'organizationId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\settings\equipment\page.tsx
+  417:20  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\projects\wesetup\src\app\(dashboard)\settings\equipment\page.tsx:417:20
+  415 |             const minutesAgo = reading
+  416 |               ? Math.round(
+> 417 |                   (Date.now() - reading.time.getTime()) / 60000
+      |                    ^^^^^^^^^^ Cannot call impure function
+  418 |                 )
+  419 |               : null;
+  420 |             const online =  react-hooks/purity
+
+C:\projects\wesetup\src\app\(dashboard)\settings\integrations\mercury\mercury-settings-client.tsx
+  178:9  error  Do not use an `<a>` element to navigate to `/settings/subscription/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\app\(dashboard)\settings\journal-checklists\[code]\checklist-editor.tsx
+  294:9  warning  'hasPerRoomItems' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\(dashboard)\settings\schedule\page.tsx
+  113:19  error  Do not use an `<a>` element to navigate to `/settings/users/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\app\api\changes\route.ts
+  7:27  warning  'req' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\api\control-board\route.ts
+  168:9  warning  'userById' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\api\cron\compliance\route.ts
+  19:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\api\cron\mini-digest\route.ts
+  19:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\api\integrations\tasksflow\bulk-assign-today\route.ts
+   45:10  warning  'filterSubordinates' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  110:10  warning  'currentMonthBounds' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  119:10  warning  'monthLabel' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\api\journal-documents\route.ts
+   28:3   warning  'getDefaultClimateDocumentConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   71:3   warning  'normalizeSanitationDayConfig' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  125:31  warning  'canWriteJournal' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\api\mini\home\route.ts
+  60:9  warning  'fullAccess' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\app\global-error.tsx
+  141:14  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-html-link-for-pages')
+
+C:\projects\wesetup\src\app\invite\[token]\page.tsx
+  74:42  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\projects\wesetup\src\app\invite\[token]\page.tsx:74:42
+  72 |     } else if (row.usedAt) {
+  73 |       status = "used";
+> 74 |     } else if (row.expiresAt.getTime() < Date.now()) {
+     |                                          ^^^^^^^^^^ Cannot call impure function
+  75 |       status = "expired";
+  76 |     } else {
+  77 |       status = "valid";  react-hooks/purity
+
+C:\projects\wesetup\src\app\mini\_components\mini-theme.tsx
+  198:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+C:\projects\wesetup\src\app\mini\_components\use-main-button.ts
+  52:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\app\mini\_components\use-main-button.ts:52:5
+  50 |     // Вне Telegram объект тоже есть, а кнопки на экране нет: полагаться
+  51 |     // на него значит спрятать свою кнопку и оставить форму без отправки.
+> 52 |     setAvailable(isInsideTelegram() && Boolean(getTelegramWebApp()?.MainButton));
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  53 |   }, []);
+  54 |
+  55 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\app\root\partners\partners-admin-client.tsx
+  500:14  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-html-link-for-pages')
+
+C:\projects\wesetup\src\app\root\timings\page.tsx
+  41:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\projects\wesetup\src\app\root\timings\page.tsx:41:26
+  39 |   await requireRoot();
+  40 |
+> 41 |   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  42 |
+  43 |   const locale = await getSiteLocale();
+  44 |   const copy = await getTranslations({ locale, namespace: "rootOperationsLogs" });  react-hooks/purity
+
+C:\projects\wesetup\src\components\billing\billing-announcement.tsx
+  61:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\billing\billing-announcement.tsx:61:9
+  59 |       if (window.localStorage.getItem(BILLING_ANNOUNCEMENT_LEGACY_KEY) === dayKey) {
+  60 |         document.cookie = announcementCookieString(dayKey);
+> 61 |         setDismissed(true);
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |       }
+  63 |       window.localStorage.removeItem(BILLING_ANNOUNCEMENT_LEGACY_KEY);
+  64 |     } catch {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\billing\billing-transition-gate.tsx
+  202:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\billing\billing-transition-gate.tsx:202:5
+  200 |   const [mounted, setMounted] = useState(false);
+  201 |   useEffect(() => {
+> 202 |     setMounted(true);
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  203 |     lockBodyScroll();
+  204 |     return () => unlockBodyScroll();
+  205 |   }, []);  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx
+  116:14  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:116:14
+  114 |       </span>
+  115 |       <Input
+> 116 |         ref={props.inputRef}
+      |              ^^^^^^^^^^^^^^ Cannot access ref value during render
+  117 |         value={props.item.text}
+  118 |         onChange={(event) => props.onChange(event.target.value)}
+  119 |         onKeyDown={(event) => {                                                                                                                             react-hooks/refs
+  117:16  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:117:16
+  115 |       <Input
+  116 |         ref={props.inputRef}
+> 117 |         value={props.item.text}
+      |                ^^^^^^^^^^^^^^^ Cannot access ref value during render
+  118 |         onChange={(event) => props.onChange(event.target.value)}
+  119 |         onKeyDown={(event) => {
+  120 |           if (event.key === "Enter") {                                                                                                 react-hooks/refs
+  133:22  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:133:22
+  131 |           }
+  132 |         }}
+> 133 |         placeholder={props.placeholder}
+      |                      ^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  134 |         className="h-9 flex-1 rounded-xl border-0 bg-transparent px-2 text-[14px] shadow-none focus-visible:ring-0"
+  135 |       />
+  136 |       {props.onCyclePhoto ? (                                                                                 react-hooks/refs
+  136:8   error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:136:8
+  134 |         className="h-9 flex-1 rounded-xl border-0 bg-transparent px-2 text-[14px] shadow-none focus-visible:ring-0"
+  135 |       />
+> 136 |       {props.onCyclePhoto ? (
+      |        ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  137 |         <button
+  138 |           type="button"
+  139 |           onClick={props.onCyclePhoto}                                                                               react-hooks/refs
+  139:20  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:139:20
+  137 |         <button
+  138 |           type="button"
+> 139 |           onClick={props.onCyclePhoto}
+      |                    ^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  140 |           aria-label={t("requirePhotoStep")}
+  141 |           title={
+  142 |             props.item.requirePhoto === true                                                                                                                 react-hooks/refs
+  142:13  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:142:13
+  140 |           aria-label={t("requirePhotoStep")}
+  141 |           title={
+> 142 |             props.item.requirePhoto === true
+      |             ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  143 |               ? t("photoRequired")
+  144 |               : props.item.requirePhoto === false
+  145 |                 ? t("photoNotRequired")                                                                     react-hooks/refs
+  144:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:144:17
+  142 |             props.item.requirePhoto === true
+  143 |               ? t("photoRequired")
+> 144 |               : props.item.requirePhoto === false
+      |                 ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  145 |                 ? t("photoNotRequired")
+  146 |                 : props.effectiveRequirePhoto
+  147 |                   ? t("inheritOn")                                               react-hooks/refs
+  146:19  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:146:19
+  144 |               : props.item.requirePhoto === false
+  145 |                 ? t("photoNotRequired")
+> 146 |                 : props.effectiveRequirePhoto
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  147 |                   ? t("inheritOn")
+  148 |                   : t("inheritOff")
+  149 |           }                                                                         react-hooks/refs
+  151:13  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:151:13
+  149 |           }
+  150 |           className={`flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
+> 151 |             props.item.requirePhoto === true
+      |             ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  152 |               ? "bg-[#5566f6] text-white"
+  153 |               : props.item.requirePhoto === false
+  154 |                 ? "bg-[#fff4f2] text-[#a13a32]"  react-hooks/refs
+  153:17  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:153:17
+  151 |             props.item.requirePhoto === true
+  152 |               ? "bg-[#5566f6] text-white"
+> 153 |               : props.item.requirePhoto === false
+      |                 ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  154 |                 ? "bg-[#fff4f2] text-[#a13a32]"
+  155 |                 : props.effectiveRequirePhoto
+  156 |                   ? "bg-[#eef1ff] text-[#3848c7]"                 react-hooks/refs
+  155:19  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:155:19
+  153 |               : props.item.requirePhoto === false
+  154 |                 ? "bg-[#fff4f2] text-[#a13a32]"
+> 155 |                 : props.effectiveRequirePhoto
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  156 |                   ? "bg-[#eef1ff] text-[#3848c7]"
+  157 |                   : "text-[#9b9fb3] hover:bg-[#f5f6ff] hover:text-[#5566f6]"
+  158 |           }`}       react-hooks/refs
+  160:12  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:160:12
+  158 |           }`}
+  159 |         >
+> 160 |           {props.item.requirePhoto === false ? (
+      |            ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  161 |             <CameraOff className="size-4" />
+  162 |           ) : (
+  163 |             <Camera className="size-4" />                                                                                                                               react-hooks/refs
+  169:18  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+C:\projects\wesetup\src\components\cleaning\scope-and-schedule-editors.tsx:169:18
+  167 |       <button
+  168 |         type="button"
+> 169 |         onClick={props.onRemove}
+      |                  ^^^^^^^^^^^^^^ Cannot access ref value during render
+  170 |         className="flex size-8 shrink-0 items-center justify-center rounded-xl text-[#9b9fb3] transition-colors hover:bg-[#fff4f2] hover:text-[#a13a32]"
+  171 |         aria-label={t("removeStep")}
+  172 |       >                                       react-hooks/refs
+
+C:\projects\wesetup\src\components\dashboard\dashboard-journals.test.ts
+  51:5  error  Do not pass children as props. Instead, pass them as additional arguments to React.createElement  react/no-children-prop
+  77:5  error  Do not pass children as props. Instead, pass them as additional arguments to React.createElement  react/no-children-prop
+
+C:\projects\wesetup\src\components\dashboard\dashboard-section.tsx
+  237:7  warning  Unused eslint-disable directive (no problems were reported from 'react/no-danger')
+
+C:\projects\wesetup\src\components\dashboard\org-health-widget.tsx
+  50:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\dashboard\org-health-widget.tsx:50:7
+  48 |   useEffect(() => {
+  49 |     if (focusParam === "health") {
+> 50 |       setOpen(true);
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  51 |       // Прокручиваем к виджету
+  52 |       const el = document.querySelector("[data-section=\"health-widget\"]");
+  53 |       el?.scrollIntoView({ behavior: "smooth", block: "start" });  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\dashboard\stale-capa-nag.tsx
+  35:23  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\dashboard\stale-capa-nag.tsx:35:23
+  33 |     try {
+  34 |       const dismissed = sessionStorage.getItem(SESSION_DISMISS_KEY);
+> 35 |       if (!dismissed) setOpen(true);
+     |                       ^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     } catch {
+  37 |       setOpen(true);
+  38 |     }  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\dashboard\whats-new-modal.tsx
+  266:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+C:\projects\wesetup\src\components\journals\acceptance-document-client.tsx
+    14:3  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+    23:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+   163:7  warning  'POSITION_OPTIONS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  2573:9  warning  'pageTitle' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\audit-plan-document-client.tsx
+   28:3  warning  'AUDIT_PLAN_DOCUMENT_TITLE' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  116:9  warning  'roles' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\audit-plan-documents-client.tsx
+  177:9  warning  'roles' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  202:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\audit-plan-documents-client.tsx:202:7
+  200 |   useEffect(() => {
+  201 |     if (!props.open) {
+> 202 |       setState(null);
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  203 |       return;
+  204 |     }
+  205 |     const initial = initialRef.current;  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\audit-protocol-document-client.tsx
+  289:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\audit-protocol-document-client.tsx:289:5
+  287 |     if (previous?.documentId === documentId && previous.serialized === serialized) return;
+  288 |     previousServerConfig.current = { documentId, serialized };
+> 289 |     setConfig(normalizeAuditProtocolConfig(initialConfig));
+      |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  290 |   }, [documentId, initialConfig, configSourceIdentity]);
+  291 |
+  292 |   // Клики «Да/Нет» по разным строкам строились от ОДНОГО снимка config —  react-hooks/set-state-in-effect
+  323:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\audit-protocol-document-client.tsx:323:5
+  321 |
+  322 |   useEffect(() => {
+> 323 |     setDocumentTitle(title || AUDIT_PROTOCOL_DOCUMENT_TITLE);
+      |     ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  324 |     setTitleIsFallback(!title);
+  325 |   }, [title]);
+  326 |                                                                                                                                                                                                                   react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\audit-protocol-documents-client.tsx
+   16:10  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   54:3   warning  'readCreatedDocument' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  127:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\audit-protocol-documents-client.tsx:127:7
+  125 |       // В create-режиме `initial.title` — константа, поэтому автоназвание
+  126 |       // важнее; в edit-режиме хук отключён и вернёт "".
+> 127 |       setState({ ...initial, title: seedTitle() || initial.title });
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  128 |       // Открыли заново — старая ошибка сервера не должна висеть.
+  129 |       resetSubmit();
+  130 |     }  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\audit-report-document-client.tsx
+  182:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\audit-report-document-client.tsx:182:5
+  180 |     if (previous?.documentId === documentId && previous.serialized === serialized) return;
+  181 |     previousServerConfig.current = { documentId, serialized };
+> 182 |     setConfig(normalizeAuditReportConfig(initialConfig));
+      |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  183 |   }, [documentId, initialConfig]);
+  184 |
+  185 |   useEffect(() => {  react-hooks/set-state-in-effect
+  186:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\audit-report-document-client.tsx:186:5
+  184 |
+  185 |   useEffect(() => {
+> 186 |     setDocumentTitle(title || AUDIT_REPORT_DOCUMENT_TITLE);
+      |     ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  187 |     setTitleIsFallback(!title);
+  188 |   }, [title]);
+  189 |                                                                                                                                       react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\audit-report-documents-client.tsx
+  16:10  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\bottom-action-bar.tsx
+  48:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\bottom-action-bar.tsx:48:5
+  46 |   const [miniRoot, setMiniRoot] = useState<HTMLElement | null>(null);
+  47 |   useEffect(() => {
+> 48 |     setMiniRoot(document.getElementById("mini-root"));
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  49 |   }, []);
+  50 |
+  51 |   /**  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\cleaning-document-client.tsx
+    28:3   warning  'WeekdayMaskPicker' is defined but never used. Allowed unused vars must match /^_/u                                                                                                  @typescript-eslint/no-unused-vars
+    37:10  warning  'Textarea' is defined but never used. Allowed unused vars must match /^_/u                                                                                                           @typescript-eslint/no-unused-vars
+    46:3   warning  'createCleaningRoomRow' is defined but never used. Allowed unused vars must match /^_/u                                                                                              @typescript-eslint/no-unused-vars
+    57:3   warning  'CLEANING_ROW_LABELS' is defined but never used. Allowed unused vars must match /^_/u                                                                                                @typescript-eslint/no-unused-vars
+    76:25  warning  'isWeekend' is defined but never used. Allowed unused vars must match /^_/u                                                                                                          @typescript-eslint/no-unused-vars
+    80:3   warning  'WEEKDAY_LABELS_RU' is defined but never used. Allowed unused vars must match /^_/u                                                                                                  @typescript-eslint/no-unused-vars
+    81:3   warning  'WEEKDAY_MASK_ALL' is defined but never used. Allowed unused vars must match /^_/u                                                                                                   @typescript-eslint/no-unused-vars
+    82:3   warning  'WEEKDAY_MASK_NONE' is defined but never used. Allowed unused vars must match /^_/u                                                                                                  @typescript-eslint/no-unused-vars
+    83:3   warning  'WEEKDAY_MASK_WEEKENDS' is defined but never used. Allowed unused vars must match /^_/u                                                                                              @typescript-eslint/no-unused-vars
+    84:3   warning  'WEEKDAY_MASK_WORKDAYS' is defined but never used. Allowed unused vars must match /^_/u                                                                                              @typescript-eslint/no-unused-vars
+    85:3   warning  'describeMask' is defined but never used. Allowed unused vars must match /^_/u                                                                                                       @typescript-eslint/no-unused-vars
+    86:3   warning  'isMaskedWeekday' is defined but never used. Allowed unused vars must match /^_/u                                                                                                    @typescript-eslint/no-unused-vars
+    87:3   warning  'normalizeMask' is defined but never used. Allowed unused vars must match /^_/u                                                                                                      @typescript-eslint/no-unused-vars
+    88:3   warning  'toggleWeekdayBit' is defined but never used. Allowed unused vars must match /^_/u                                                                                                   @typescript-eslint/no-unused-vars
+   746:9   warning  'roleOptions' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                               @typescript-eslint/no-unused-vars
+   783:9   warning  'buildingsRoomMap' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                          @typescript-eslint/no-unused-vars
+   865:9   warning  'userInitialsById' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                          @typescript-eslint/no-unused-vars
+  3927:23  error    Do not use an `<a>` element to navigate to `/settings/buildings/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages             @next/next/no-html-link-for-pages
+  3927:23  error    Do not use an `<a>` element to navigate to `/settings/buildings/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages             @next/next/no-html-link-for-pages
+  4083:13  error    Do not use an `<a>` element to navigate to `/settings/journal-responsibles/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\components\journals\cleaning-documents-client.tsx
+   18:3  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   78:3  warning  'readCreatedDocument' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  244:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\cleaning-documents-client.tsx:244:5
+  242 |   useEffect(() => {
+  243 |     if (!props.open) return;
+> 244 |     setState(buildCreateState(existingTitles));
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  245 |     setTitleError("");
+  246 |   }, [props.open, existingTitles]);
+  247 |  react-hooks/set-state-in-effect
+  352:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\cleaning-documents-client.tsx:352:5
+  350 |   useEffect(() => {
+  351 |     if (!props.open) return;
+> 352 |     setState(props.initialState);
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  353 |   }, [props.initialState, props.open]);
+  354 |
+  355 |   if (!state) return null;        react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\cleaning-ventilation-checklist-document-client.tsx
+   3:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  46:10  warning  'toDateKey' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  89:8   warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\climate-document-client.tsx
+  108:8  warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\disinfectant-documents-client.tsx
+  393:5  warning  React Hook useMemo has missing dependencies: 'defaultConfig.responsibleEmployee', 'defaultConfig.responsibleEmployeeId', and 'defaultConfig.responsibleRole'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\projects\wesetup\src\components\journals\dynamic-form.tsx
+  23:10  warning  'Textarea' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\equipment-cleaning-document-client.tsx
+   3:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   7:25  warning  'Printer' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  47:3   warning  'MobileViewToggle' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  48:3   warning  'MobileViewTableWrapper' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  56:10  warning  'PublishUndoToHeader' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\fill-guide-dialog.tsx
+  72:15  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\fill-guide-dialog.tsx:72:15
+  70 |
+  71 |   useEffect(() => {
+> 72 |     if (open) setTab("steps");
+     |               ^^^^^^ Avoid calling setState() directly within an effect
+  73 |   }, [open]);
+  74 |
+  75 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\glass-control-document-client.tsx
+  5:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\glass-control-documents-client.tsx
+   15:10  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  155:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\glass-control-documents-client.tsx:155:5
+  153 |   useEffect(() => {
+  154 |     if (!props.open) return;
+> 155 |     setState(props.initialState);
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  156 |   }, [props.initialState, props.open]);
+  157 |
+  158 |   return (  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\glass-list-documents-client.tsx
+  162:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\glass-list-documents-client.tsx:162:5
+  160 |     const seeded =
+  161 |       mode === "create" ? titleForPeriod({ dateFrom: initialState.documentDate }) : null;
+> 162 |     setState({ ...initialState, documentName: seeded || initialState.documentName });
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  163 |   }, [initialState, mode, open, resetAutoTitle, titleForPeriod]);
+  164 |
+  165 |   return (  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\incoming-control-documents-client.tsx
+  384:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\incoming-control-documents-client.tsx:384:5
+  382 |   const [settingsDocument, setSettingsDocument] = useState<DocumentItem | null>(null);
+  383 |   useEffect(() => {
+> 384 |     setSettingsDocument((current) => {
+      |     ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  385 |       if (!current) return current;
+  386 |       const incoming = documents.find((document) => document.id === current.id) ?? null;
+  387 |       return JSON.stringify(incoming) === JSON.stringify(current) ? current : incoming;  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\intensive-cooling-document-client.tsx
+    5:30  warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+    6:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   52:3   warning  'formatIntensiveCoolingDate' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   72:8   warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  103:10  warning  'hourOptions' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  107:10  warning  'minuteOptions' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\intensive-cooling-documents-client.tsx
+  17:3  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\journal-controls-provider.tsx
+  30:26  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\journal-controls-provider.tsx:30:26
+  28 |     }
+  29 |   }, [organizationId, orgKind]);
+> 30 |   useEffect(() => { void refresh(); }, [refresh]);
+     |                          ^^^^^^^ Avoid calling setState() directly within an effect
+  31 |   useEffect(() => {
+  32 |     const update = () => { void refresh(); };
+  33 |     window.addEventListener("journal-controls-changed", update);  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\journal-doc-guide.tsx
+  49:19  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\journal-doc-guide.tsx:49:19
+  47 |   // рендерят разное дерево.
+  48 |   const [mounted, setMounted] = useState(false);
+> 49 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  50 |
+  51 |   // Detect /journals/<code>/documents/... and extract code.
+  52 |   const code = useMemo(() => {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\journal-selection-bar.tsx
+  67:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\journal-selection-bar.tsx:67:5
+  65 |   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  66 |   useEffect(() => {
+> 67 |     setPortalTarget(document.body);
+     |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  68 |   }, []);
+  69 |
+  70 |   if ((count <= 0 && !keepWhenEmpty) || !portalTarget) return null;  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\med-book-document-client.tsx
+  305:3  warning  'templateCode' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\metal-impurity-document-client.tsx
+   35:3  warning  'METAL_IMPURITY_PAGE_TITLE' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                @typescript-eslint/no-unused-vars
+   36:3  warning  'METAL_IMPURITY_RESPONSIBLE_POSITIONS' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                     @typescript-eslint/no-unused-vars
+  256:6  warning  React Hook useEffect has a missing dependency: 'users'. Either include it or remove the dependency array. If 'setDraftPosition' needs the current value of 'users', you can also switch to useReducer instead of useState and read 'users' in the reducer  react-hooks/exhaustive-deps
+
+C:\projects\wesetup\src\components\journals\metal-impurity-documents-client.tsx
+   16:3   warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   37:3   warning  'METAL_IMPURITY_RESPONSIBLE_POSITIONS' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   74:3   warning  'readCreatedDocument' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  245:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\metal-impurity-documents-client.tsx:245:7
+  243 |       const seeded =
+  244 |         mode === "create" ? titleForPeriod({ dateFrom: initial.startDate }) : null;
+> 245 |       setState({ ...initial, title: seeded || initial.title });
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  246 |       // Открыли заново — старая ошибка сервера не должна висеть.
+  247 |       resetSubmit();
+  248 |     }                                                    react-hooks/set-state-in-effect
+  254:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\metal-impurity-documents-client.tsx:254:7
+  252 |     if (!open || employeeOptions.length === 0) return;
+  253 |     if (!employeeOptions.some((user) => user.id === state.responsibleEmployeeId)) {
+> 254 |       setState((current) => ({
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  255 |         ...current,
+  256 |         responsibleEmployeeId: employeeOptions[0]?.id || "",
+  257 |         responsibleEmployee: employeeOptions[0]?.name || "",  react-hooks/set-state-in-effect
+  371:18  warning  'resetSubmit' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\pest-control-document-client.tsx
+  3:8  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\pest-control-documents-client.tsx
+   15:10  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  111:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\pest-control-documents-client.tsx:111:5
+  109 |     if (!initial) return;
+  110 |     resetAuto();
+> 111 |     setForm({
+      |     ^^^^^^^ Avoid calling setState() directly within an effect
+  112 |       title: initial.title || seedTitle(),
+  113 |       dateFrom: initial.dateFrom,
+  114 |     });  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\photo-capture.tsx
+  130:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\projects\wesetup\src\components\journals\ppe-issuance-document-client.tsx
+  714:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\ppe-issuance-document-client.tsx:714:5
+  712 |     incomingSeen.current = incomingIdentity;
+  713 |     const next = normalizePpeIssuanceConfig(props.config, props.users);
+> 714 |     setConfig(next);
+      |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  715 |     setTitle(props.title || PPE_ISSUANCE_DOCUMENT_TITLE);
+  716 |     setTitleFallback(props.titleIsFallback ?? !props.title);
+  717 |     setDateFrom(props.dateFrom);  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\ppe-issuance-documents-client.tsx
+  233:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\ppe-issuance-documents-client.tsx:233:7
+  231 |   useEffect(() => {
+  232 |     if (!props.open) {
+> 233 |       setState(null);
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  234 |       return;
+  235 |     }
+  236 |     const initial = initialRef.current;                                                                                                                                                                                                                    react-hooks/set-state-in-effect
+  454:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\ppe-issuance-documents-client.tsx:454:5
+  452 |   const documentsIdentity = ppeSourceIdentity(documents);
+  453 |   useEffect(() => {
+> 454 |     setSettingsTarget(current => current ? documents.find(item => item.id === current.id) ?? null : null);
+      |     ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  455 |     setDeleteTarget(current => current ? documents.find(item => item.id === current.id) ?? null : null);
+  456 |   }, [documents, documentsIdentity]);
+  457 |  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\product-writeoff-document-client.tsx
+  29:3  warning  'getProductWriteoffDocumentListTitle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\product-writeoff-documents-client.tsx
+  15:19  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\sanitary-day-checklist-document-client.tsx
+  523:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\sanitary-day-checklist-document-client.tsx:523:5
+  521 |   useEffect(() => {
+  522 |     if (!props.open) return;
+> 523 |     setZones(props.zones.map((zone) => ({ ...zone })));
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  524 |     setSelected(new Set());
+  525 |     setEditingId(null);
+  526 |     setNewName("");  react-hooks/set-state-in-effect
+  869:10  warning  'saving' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\sanitation-day-documents-client.tsx
+  201:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\sanitation-day-documents-client.tsx:201:5
+  199 |         ? titleForPeriod({ dateFrom: initial.documentDate, year: initial.year })
+  200 |         : null;
+> 201 |     setState(initial ? { ...initial, title: seeded || initial.title } : null);
+      |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  202 |   }, [initial, mode, open, resetAutoTitle, titleForPeriod]);
+  203 |
+  204 |   async function handleSubmit() {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\scan-journal-document-client.tsx
+  42:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\projects\wesetup\src\components\journals\scan-journal-documents-client.tsx
+  16:10  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\staff-journal-toolbar.tsx
+  772:3  warning  'includedEmployeeIds' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\table-context-menu.tsx
+  79:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\table-context-menu.tsx:79:5
+  77 |
+  78 |   useEffect(() => {
+> 79 |     setPortalTarget(document.body);
+     |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  80 |   }, []);
+  81 |
+  82 |   // Сбрасываем замер при переоткрытии в другой точке — иначе меню на долю  react-hooks/set-state-in-effect
+  85:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\table-context-menu.tsx:85:5
+  83 |   // кадра показалось бы на старом месте.
+  84 |   useLayoutEffect(() => {
+> 85 |     setPosition(null);
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  86 |   }, [x, y]);
+  87 |
+  88 |   useLayoutEffect(() => {                react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\today-pending-banner.tsx
+  48:9  warning  'countsAreBounded' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\traceability-document-client.tsx
+   31:10  warning  'DropdownMenu' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   31:24  warning  'DropdownMenuContent' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   31:45  warning  'DropdownMenuItem' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   31:63  warning  'DropdownMenuTrigger' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  734:9   warning  'roleOptions' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\traceability-documents-client.tsx
+   57:3  warning  'readCreatedDocument' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  155:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\traceability-documents-client.tsx:155:7
+  153 |     resetAutoTitle();
+  154 |     if (!initial) {
+> 155 |       setState(null);
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  156 |       return;
+  157 |     }
+  158 |     const seeded = mode === "create" ? titleForPeriod({ dateFrom: initial.dateFrom }) : null;  react-hooks/set-state-in-effect
+  359:5  warning  React Hook useMemo has an unnecessary dependency: 'activeTab'. Either exclude it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+
+C:\projects\wesetup\src\components\journals\tracked-documents-client.tsx
+  16:10  warning  'BookOpenText' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\training-plan-document-client.tsx
+  115:9  warning  'uniqueRoles' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  263:9  warning  'roles' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\training-plan-documents-client.tsx
+  165:9  warning  'roles' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+  189:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\training-plan-documents-client.tsx:189:7
+  187 |   useEffect(() => {
+  188 |     if (!props.open) {
+> 189 |       setState(null);
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  190 |       return;
+  191 |     }
+  192 |     const initial = initialRef.current;  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\journals\uv-lamp-runtime-document-client.tsx
+    80:10  warning  'toDateKey' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+    92:8   warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  1539:15  warning  'result' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\journals\voice-input.tsx
+  82:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\journals\voice-input.tsx:82:7
+  80 |       window.SpeechRecognition || window.webkitSpeechRecognition;
+  81 |     if (!SpeechRecognition) {
+> 82 |       setUnsupported(true);
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  83 |     }
+  84 |   }, [native]);
+  85 |  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\landing\qr-player\player-state.ts
+  35:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\landing\qr-player\player-state.ts:35:5
+  33 |   useEffect(() => {
+  34 |     if (!player) return;
+> 35 |     setPlaying(player.isPlaying());
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     const onPlay = () => setPlaying(true);
+  37 |     const onPause = () => setPlaying(false);
+  38 |     player.addEventListener("play", onPlay);  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\landing\qr-player\qr-player.tsx
+  83:19  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\landing\qr-player\qr-player.tsx:83:19
+  81 |   // статичную подложку с тем же кадром — расхождения разметки нет.
+  82 |   const [mounted, setMounted] = useState(false);
+> 83 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  84 |
+  85 |   // Фото мест подгружаются заранее: к моменту смены главы кадр уже в кеше.
+  86 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\layout\announcement-banner.tsx
+  41:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\layout\announcement-banner.tsx:41:7
+  39 |     if (!announcement) return;
+  40 |     try {
+> 41 |       setDismissed(localStorage.getItem(DISMISS_KEY) === announcement.id);
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |     } catch {
+  43 |       setDismissed(false);
+  44 |     }  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\mailing\kind-fields.tsx
+  26:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  64:78  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  75:8   error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\projects\wesetup\src\components\mailing\kind-fields.tsx:75:8
+  73 |       }
+  74 |     >
+> 75 |       <Fields {...props} />
+     |        ^^^^^^ This component is created during render
+  76 |     </Suspense>
+  77 |   );
+  78 | }
+
+C:\projects\wesetup\src\components\mailing\kind-fields.tsx:66:18
+  64 | export function MailingKindFields({ kind, ...props }: MailingKindFieldsProps<any> & { kind: string }) {
+  65 |   const t = useTranslations("rootMailingKindFields");
+> 66 |   const Fields = fieldsFor(kind);
+     |                  ^^^^^^^^^^^^^^^ The component is created during render here
+  67 |   return (
+  68 |     <Suspense
+  69 |       fallback={  react-hooks/static-components
+
+C:\projects\wesetup\src\components\qr-fill\use-form-draft.ts
+  73:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\qr-fill\use-form-draft.ts:73:7
+  71 |     if (draft && Object.values(draft).some(meaningful)) {
+  72 |       applyRef.current(draft);
+> 73 |       setRestored(true);
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  74 |     }
+  75 |     readyRef.current = true;
+  76 |   }, [key]);  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\settings\audit-log-viewer.tsx
+   96:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  141:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\projects\wesetup\src\components\settings\journal-responsibles-client.tsx
+    27:3   warning  'X' is defined but never used. Allowed unused vars must match /^_/u                                                                                                   @typescript-eslint/no-unused-vars
+  1957:15  error    Do not use an `<a>` element to navigate to `/settings/users/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  2079:29  error    Do not use an `<a>` element to navigate to `/settings/users/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\components\settings\organization-info-form.tsx
+  465:11  error  Do not use an `<a>` element to navigate to `/settings/subscription/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\components\settings\product-import-dialog.tsx
+  124:359  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:372  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:375  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:384  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:387  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:393  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:396  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:409  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:474  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  124:482  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\projects\wesetup\src\components\settings\role-presets-client.tsx
+  118:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\projects\wesetup\src\components\settings\schedule-editor.tsx
+  154:9  warning  'positionById' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\settings\task-visibility-client.tsx
+   79:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  102:40  error    Do not use an `<a>` element to navigate to `/settings/staff-hierarchy/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\components\settings\tasksflow-audit-feed.tsx
+  116:15  error  Do not use an `<a>` element to navigate to `/settings/integrations/tasksflow/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\projects\wesetup\src\components\shared\photo-lightbox.tsx
+  232:9  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\projects\wesetup\src\components\staff\staff-dialogs.tsx
+   847:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\staff\staff-dialogs.tsx:847:7
+  845 |   useEffect(() => {
+  846 |     if (open) {
+> 847 |       setName(employee.name);
+      |       ^^^^^^^ Avoid calling setState() directly within an effect
+  848 |       setPhone(employee.phone ?? "");
+  849 |       setContactEmail(employee.contactEmail ?? "");
+  850 |       setWeeklyDaysOff(normalizeWeeklyDaysOff(employee.weeklyDaysOff));  react-hooks/set-state-in-effect
+  1097:9  warning  The 'onIssued' function makes the dependencies of useEffect Hook (at line 1145) change on every render. Move it inside the useEffect callback. Alternatively, wrap the definition of 'onIssued' in its own useCallback() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+
+C:\projects\wesetup\src\components\staff\staff-qr-invite-dialog.tsx
+  202:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\projects\wesetup\src\components\theme\site-theme.tsx
+  3:1  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+C:\projects\wesetup\src\components\ui\glow-loader.tsx
+  30:9  warning  'frame' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\components\ui\spotlight-tour.tsx
+  166:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\ui\spotlight-tour.tsx:166:5
+  164 |       }
+  165 |     }
+> 166 |     measure();
+      |     ^^^^^^^ Avoid calling setState() directly within an effect
+  167 |     let raf = 0;
+  168 |     const schedule = () => {
+  169 |       cancelAnimationFrame(raf);  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\components\ui\voice-number-input.tsx
+  79:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\components\ui\voice-number-input.tsx:79:5
+  77 |   useEffect(() => {
+  78 |     const ctor = getSpeechCtor();
+> 79 |     setSupported(ctor !== null || nativeSpeech() !== null);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  80 |   }, []);
+  81 |
+  82 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\i18n\public-ui-localization.test.ts
+  14:39  error  Do not pass children as props. Instead, pass them as additional arguments to React.createElement  react/no-children-prop
+
+C:\projects\wesetup\src\lib\document-pdf.ts
+  1646:10  warning  'formatDateTime' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  2867:12  warning  'roomsModeControllerCellValue' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  4013:9   warning  'monthColWidth' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  4057:9   warning  'dateFromStr' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  5083:9   warning  'marginLeft' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  5807:9   warning  'dateFromStr' is assigned a value but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  7134:9   warning  'pageWidth' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\external\dispatch.ts
+  196:10  warning  'monthRange' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\journal-entry-write.ts
+  12:10  warning  'isManagementRole' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\journal-responsible-presets.ts
+  92:7  warning  'MGMT_KEYWORDS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\mailing\queue.ts
+  213:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\projects\wesetup\src\lib\mailing\templates.ts
+  118:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\projects\wesetup\src\lib\pdf-journal-qr.ts
+  160:3   error  Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+  217:3   error  Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+  392:24  error  'options' is never reassigned. Use 'const' instead                                                       prefer-const
+
+C:\projects\wesetup\src\lib\public-api\mcp\handle-message.test.ts
+  51:52   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:106  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\projects\wesetup\src\lib\public-api\rest\openapi.test.ts
+  6:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\projects\wesetup\src\lib\scan-journal-pages.ts
+  5:6  warning  'ScanJournalPageFile' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\audit-report.ts
+  19:8  warning  'AdapterRow' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\cleaning.ts
+  14:15  warning  'TasksFlowIntegration' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\equipment-maintenance.ts
+   10:15  warning  'TasksFlowIntegration' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  249:64  warning  'todayKey' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\glass-list.ts
+   14:8   warning  'GlassListRow' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  111:64  warning  'todayKey' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\hygiene.ts
+  57:7  warning  'CATEGORY' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\metal-impurity.ts
+   91:13  warning  'config' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  155:11  warning  'material' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  156:11  warning  'supplier' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\tasksflow-adapters\ppe-issuance.ts
+  25:53  warning  'rowKeyForEmployee' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\projects\wesetup\src\lib\use-form-draft.ts
+  43:16  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\projects\wesetup\src\lib\use-form-draft.ts:43:16
+  41 |     if (!storageKey) return;
+  42 |     const found = parseDraft(readStorage(storageKey), new Date());
+> 43 |     if (found) setPending(found);
+     |                ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  44 |     else writeStorage(storageKey, null);
+  45 |   }, [storageKey]);
+  46 |  react-hooks/set-state-in-effect
+
+C:\projects\wesetup\src\lib\webhooks\sign.ts
+  8:15  warning  'WebhookEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 258 problems (42 errors, 216 warnings)
+  0 errors and 7 warnings potentially fixable with the `--fix` option.
+
+
+EXIT_CODE=1

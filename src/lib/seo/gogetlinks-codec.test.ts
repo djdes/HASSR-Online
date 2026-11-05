@@ -130,7 +130,7 @@ test("Fix Round 1: write operations inject parameters into HTTP body using Windo
   const { encryptSecret } = await import("@/lib/integration-crypto");
 
   let capturedBody = "";
-  const mockFetch: typeof fetch = async (url, init) => {
+  const mockFetch: typeof fetch = async (_url, init) => {
     capturedBody = String(init?.body || "");
     return new Response(JSON.stringify({ status: "ok" }), {
       status: 200,
@@ -238,7 +238,7 @@ test("Fix Round 1: auto-relogin in callGglRead succeeds on expired session witho
 
   let loginAttempts = 0;
   let readAttempts = 0;
-  const mockFetch: typeof fetch = async (url, init) => {
+  const mockFetch: typeof fetch = async (url, _init) => {
     const urlStr = String(url);
     if (urlStr.includes("/user/signIn")) {
       loginAttempts++;
@@ -298,7 +298,7 @@ test("Fix Round 1: auto-relogin in callGglRead succeeds on expired session witho
             )
           : null,
       }),
-      update: async (args: any) => {
+      update: async (args: { data: { sessionEnc?: string } }) => {
         if (args.data.sessionEnc) savedSession = args.data.sessionEnc;
         return {};
       },
