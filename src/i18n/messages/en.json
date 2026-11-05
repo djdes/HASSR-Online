@@ -2723,6 +2723,7 @@
         "productionControl": "Production control",
         "billing": "Subscriptions",
         "more": "More",
+        "news": "News, articles, expert reviews",
         "inspection": "Inspection visit",
         "office": "Office",
         "monitoring": "Monitoring",
@@ -3163,6 +3164,7 @@
       "inspection_special_mode": "Special mode",
       "production_control": "Production control program",
       "more": "More",
+      "news": "News, articles, expert reviews",
       "knowledge": "Instructions",
       "checklists": "Checklists",
       "checklists_templates": "Checklist templates",
@@ -30243,6 +30245,12 @@
       "ppk": "PCP — how many sections of the production control program are ready."
     },
     "title": "Monitoring"
+  },
+  "newsPage": {
+    "title": "News, articles, expert reviews",
+    "badge": "Section in development",
+    "emptyTitle": "Lots of useful content is coming soon",
+    "emptyText": "Interesting articles, tips, expert opinions and independent advice will appear here — for every user."
   },
   "pointJournals": {
     "lead": "Which journals each outlet keeps. Add or remove a journal — only that outlet changes.",

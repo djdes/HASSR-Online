@@ -66,6 +66,7 @@ const ICON_TONES: Record<string, NavTone> = {
   FolderOpen: "sky",
   Languages: "sky",
   MessageCircle: "sky",
+  Newspaper: "sky",
   PenLine: "sky",
   Plug: "sky",
   Refrigerator: "sky",

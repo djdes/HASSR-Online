@@ -2723,6 +2723,7 @@
         "productionControl": "Ishlab chiqarish nazorati",
         "billing": "Obunalar",
         "more": "Boshqalar",
+        "news": "Yangiliklar, maqolalar, ekspert sharhlari",
         "inspection": "Tekshiruv keldi",
         "office": "Ofis",
         "monitoring": "Monitoring",
@@ -3163,6 +3164,7 @@
       "inspection_special_mode": "Maxsus rejim",
       "production_control": "Ishlab chiqarish nazorati dasturi",
       "more": "Boshqalar",
+      "news": "Yangiliklar, maqolalar, ekspert sharhlari",
       "knowledge": "Yo‘riqnomalar",
       "checklists": "Chek-listlar",
       "checklists_templates": "Chek-list shablonlari",
@@ -30243,6 +30245,12 @@
       "ppk": "IChN — ishlab chiqarish nazorati dasturining qancha bo‘limi tayyor."
     },
     "title": "Monitoring"
+  },
+  "newsPage": {
+    "title": "Yangiliklar, maqolalar, ekspert sharhlari",
+    "badge": "Boʻlim ishlab chiqilmoqda",
+    "emptyTitle": "Tez orada bu yerda koʻp foydali narsalar boʻladi",
+    "emptyText": "Bu yerda qiziqarli maqolalar, maslahatlar, ekspertlar fikri va mustaqil konsultatsiyalar paydo boʻladi — barcha foydalanuvchilar uchun."
   },
   "pointJournals": {
     "lead": "Har bir nuqtada qaysi jurnallar yuritiladi. Jurnal qo‘shing yoki olib tashlang — faqat shu nuqta o‘zgaradi.",
