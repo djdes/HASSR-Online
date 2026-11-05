@@ -1,6 +1,6 @@
 "use client";
 
-import { LOCALES, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/locales";
+import { offeredLocales, LOCALE_NAMES, isLocale, type Locale } from "@/i18n/locales";
 import { createElement, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { confirmAsync } from "@/components/ui/confirm-async";
@@ -37,7 +37,7 @@ export function ExportLanguageChoice({ locale, label, onChange }: {
         className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"
         onChange={(event) => { if (isLocale(event.target.value)) onChange(event.target.value); }}
       >
-        {LOCALES.map((value) => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
+        {offeredLocales(locale).map((value) => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
       </select>
     </label>
   );

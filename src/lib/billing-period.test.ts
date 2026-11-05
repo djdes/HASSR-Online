@@ -229,38 +229,38 @@ describe("лимиты", () => {
     assert.equal(check.ok, false);
     if (!check.ok) {
       assert.match(check.message, /«Стандарт» — до 25 сотрудников на точку/);
-      assert.match(check.message, /Перейдите на «Премиум» — до 100 сотрудников на точку/);
+      assert.match(check.message, /Перейдите на «Премиум» — до 40 сотрудников на точку/);
       assert.doesNotMatch(check.message, /точку на странице|Добавьте точку|добавьте точку/);
       assert.equal(check.nextTier, "premium");
     }
     assert.equal(checkSeats(state({ plan: "standard", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 24 }, now), 1).ok, true);
   });
 
-  it("Премиум — 100 на точку: 101-го нельзя, больше — по согласованию", () => {
+  it("Премиум — 40 на точку: 41-го нельзя, больше — по согласованию", () => {
     const now = msk("2026-11-20T12:00:00");
     const paid = { plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY) };
-    assert.equal(checkSeats(state({ ...paid, activeUsers: 99 }, now), 1).ok, true);
-    const check = checkSeats(state({ ...paid, activeUsers: 100 }, now), 1);
+    assert.equal(checkSeats(state({ ...paid, activeUsers: 39 }, now), 1).ok, true);
+    const check = checkSeats(state({ ...paid, activeUsers: 40 }, now), 1);
     assert.equal(check.ok, false);
     if (!check.ok) {
-      assert.equal(check.limit, 100);
+      assert.equal(check.limit, 40);
       assert.equal(check.nextTier, null);
-      assert.match(check.message, /Больше 100 сотрудников на точку — по согласованию/);
+      assert.match(check.message, /Больше 40 сотрудников на точку — по согласованию/);
       assert.doesNotMatch(check.message, /Добавьте точку|добавьте точку/);
     }
-    // Две точки «Премиума» — 200 мест.
-    assert.equal(checkSeats(state({ ...paid, activeUsers: 150, planPoints: 2 }, now), 1).ok, true);
+    // Две точки «Премиума» — 80 мест.
+    assert.equal(checkSeats(state({ ...paid, activeUsers: 60, planPoints: 2 }, now), 1).ok, true);
   });
 
   it("приглашённому — не «бесплатный тариф» на оплаченном: просьба к руководителю по тарифу", () => {
     const now = msk("2026-11-20T12:00:00");
     const standard = state({ plan: "standard", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 25 }, now);
-    const premium = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 100 }, now);
+    const premium = state({ plan: "premium", subscriptionEnd: new Date(now.getTime() + DAY), activeUsers: 40 }, now);
     assert.match(seatLimitMessage(standard, "invitee"), /перейти на «Премиум»/);
     assert.match(seatLimitMessage(premium, "invitee"), /связаться с поддержкой/);
     // Лимит тарифа назван и приглашённому (страница входа по QR показывает этот текст).
     assert.match(seatLimitMessage(standard, "invitee"), /«Стандарт» — до 25 сотрудников на точку, все места заняты/);
-    assert.match(seatLimitMessage(premium, "invitee"), /«Премиум» — до 100 сотрудников на точку, все места заняты/);
+    assert.match(seatLimitMessage(premium, "invitee"), /«Премиум» — до 40 сотрудников на точку, все места заняты/);
     assert.match(seatLimitMessage(state({}, after), "invitee"), /подключить «Стандарт»/);
   });
 

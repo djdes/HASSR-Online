@@ -24,7 +24,8 @@ export const dynamic = "force-dynamic";
 const APP_URL = process.env.NEXTAUTH_URL || "https://wesetup.ru";
 
 const schema = z.object({
-  type: z.enum(["bug", "suggestion", "partnership"], {
+  // `support` — «Задайте вопрос» на публичных страницах: просят связаться.
+  type: z.enum(["bug", "suggestion", "partnership", "support"], {
     message: "Выберите тип обращения",
   }),
   message: z
@@ -45,6 +46,7 @@ const TYPE_LABELS: Record<string, string> = {
   bug: "🐞 Ошибка",
   suggestion: "💡 Улучшение",
   partnership: "🤝 Сотрудничество",
+  support: "📞 Просят связаться",
 };
 
 /**

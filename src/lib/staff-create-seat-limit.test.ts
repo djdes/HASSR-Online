@@ -31,7 +31,7 @@ test("«Сотрудники → Добавить»: отказ по места�
   for (const [tier, nextTier, limit] of [
     ["free", "standard", 1],
     ["standard", "premium", 25],
-    ["premium", null, 100],
+    ["premium", null, 40],
   ] as const) {
     const staffCreate = load("src/lib/staff-create.ts", {
       "@/lib/db": { db: { jobPosition: { findFirst: async () => ({ id: "pos", categoryKey: "kitchen", name: "Повар" }) } } },
@@ -71,7 +71,7 @@ test("«Сотрудники → Добавить»: отказ по места�
 test("API add_employee: места заняты — 402 с текстом про следующий тариф, прочие отказы — 422", async () => {
   const { z } = require("zod") as typeof import("zod");
   const ctx = { orgId: "org", actor: { id: "manager", role: "manager", isRoot: false, name: "Руководитель" }, locale: "ru" };
-  const seats = "Все места «Стандарта» заняты — 25 сотрудников. Перейдите на «Премиум» — до 100 сотрудников на точку.";
+  const seats = "Все места «Стандарта» заняты — 25 сотрудников. Перейдите на «Премиум» — до 40 сотрудников на точку.";
   for (const [result, status] of [
     [{ ok: false, error: seats, code: "billing_free_limit" }, 402],
     [{ ok: false, error: "Должность не найдена" }, 422],

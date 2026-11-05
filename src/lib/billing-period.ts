@@ -391,7 +391,7 @@ export const BILLING_PAY_HREF = "/settings/subscription";
 
 const TIER_TITLE: Record<PaidTier, string> = { standard: "«Стандарт»", premium: "«Премиум»" };
 
-/** «Перейдите на «Премиум» — до 100 сотрудников на точку». */
+/** «Перейдите на «Премиум» — до 40 сотрудников на точку». */
 function upgradeOffer(target: PaidTier): string {
   return `Перейдите на ${TIER_TITLE[target]} — до ${employeesGenitiveLabel(SEATS_PER_POINT[target])} на точку`;
 }

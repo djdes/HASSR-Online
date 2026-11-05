@@ -9,6 +9,19 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   uz: "O‘zbekcha",
 };
 
+/**
+ * Языки, которые предлагаем выбрать (правки 05.11.2026: «пока только русский
+ * и английский, остальное — в резерв»). Узбекский остаётся в LOCALES: тексты,
+ * адреса /uz и сохранённый выбор продолжают работать, его просто не показываем
+ * в переключателях.
+ */
+export const OFFERED_LOCALES: readonly Locale[] = ["ru", "en"];
+
+/** Языки для переключателя; уже выбранный резервный язык не теряется из списка. */
+export function offeredLocales(current?: Locale | null): Locale[] {
+  return LOCALES.filter((locale) => OFFERED_LOCALES.includes(locale) || locale === current);
+}
+
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
 }

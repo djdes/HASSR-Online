@@ -25,7 +25,7 @@ import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landin
 import { listPublicReviews } from "@/lib/balance/reviews";
 import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
 import { NICHES } from "@/content/niches";
-import { BrandLogo } from "@/components/brand/logo";
+import { BrandWithTagline } from "@/components/brand/brand-with-tagline";
 import {
   HARDWARE_BUNDLES,
   bundleTotal,
@@ -450,7 +450,7 @@ export default async function LandingPage() {
       <div className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <nav className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-5">
           <Link href="/" className="text-[#0b1024]" aria-label={copy("landing.homeLink")}>
-            <BrandLogo height={30} className="sm:[--logo-h:26px]" title="" />
+            <BrandWithTagline tagline={copy("landing.brandTagline")} />
           </Link>
           <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-6">
             <LanguageSwitch />
@@ -656,7 +656,7 @@ export default async function LandingPage() {
             )}
           </div>
 
-          <p className="hero-consultation-note mt-6 max-w-[72ch] text-[13px] leading-[1.6] text-[#6f7282] sm:mx-auto">
+          <p className="hero-consultation-note mt-6 max-w-[72ch] text-[15px] font-medium leading-[1.55] text-[#3c4053] sm:mx-auto sm:text-[16px]">
             {copy("landing.hero.consultationNote")}
           </p>
         </div>

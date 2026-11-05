@@ -5499,7 +5499,8 @@
     "companyRegistrationId": "Registration number (OGRN) {ogrn}",
     "securityAndData": "Security and data",
     "autofillOffer": "Logs that fill themselves",
-    "sanpin4282": "SanPiN 2.3/2.4.4282-26"
+    "sanpin4282": "SanPiN 2.3/2.4.4282-26",
+    "tagline": "Your electronic HACCP"
   },
   "landing": {
     "metadata": {
@@ -5599,7 +5600,7 @@
     },
     "capabilities": {
       "reminders": {
-        "title": "Reminders and alerts",
+        "title": "Reminders and signals",
         "text": "If a log entry is missed or a temperature is out of range, Telegram and email alert the person responsible."
       },
       "autofill": {
@@ -5611,14 +5612,14 @@
         "text": "Export all records for the requested period as a PDF for the inspector in one click."
       },
       "syncIiko1c": {
-        "title": "iiko and 1C",
-        "text": "Supplier and delivery data sync automatically with product quality and incoming goods checks."
+        "title": "Directories from other software",
+        "text": "Import directories from third-party software — staff, suppliers, products and equipment appear without manual entry."
       }
     },
     "heroPoints": {
       "scan": "**Scan a QR code** — and the entry is in the log",
-      "automation": "**Automatic creation** and **automatic completion** of logs",
-      "paper": "**Digital and paper** logs"
+      "automation": "**Electronic production control programme** based on HACCP principles",
+      "paper": "**All documentation** in line with SanPiN and HACCP principles"
     },
     "qrSteps": {
       "equipment": {
@@ -5717,7 +5718,8 @@
         }
       }
     },
-    "pricingTitle": "Three plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card"
+    "pricingTitle": "Three plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card",
+    "brandTagline": "Your electronic HACCP"
   },
   "landingComponents": {
     "heroEmail": {
@@ -5745,7 +5747,8 @@
       "choose": "Choose equipment",
       "calculatorTitle": "Choose your equipment",
       "calculatorDescription": "Choose what you need — the price is recalculated. Already have a tablet or sensors? Untick them and only the Premium plan remains.",
-      "premiumNote": "Temperature sensors and a tablet arrive already linked to your account: readings go into the logs on their own. Delivery and connection come with the Premium plan."
+      "premiumNote": "Temperature sensors and a tablet arrive already linked to your account: readings go into the logs on their own. Delivery and connection come with the Premium plan.",
+      "printerBenefit": "“Setup Helper” printer"
     },
     "testimonials": {
       "title": "What our customers say",
@@ -5830,7 +5833,8 @@
         "newPlan": "Subscribe — {amount}",
         "scheduled": "Switch from {date}",
         "scheduledDone": "Switching from {date}",
-        "cancelSchedule": "Cancel the switch"
+        "cancelSchedule": "Cancel the switch",
+        "tryFree": "Click to try it"
       },
       "explain": {
         "upgrade": "Right away, you pay for {days, plural, one {# remaining day} other {# remaining days}}: a {difference} difference per period. The end date stays the same",
@@ -5842,7 +5846,7 @@
         "switch": "Upgrades apply right away with a charge for the remaining days; downgrades apply from the end of the paid period."
       },
       "ppk": {
-        "title": "Production control programme — made for you",
+        "title": "Production control programme based on HACCP principles",
         "text": "A specialist will develop a programme for your site: control points, lab testing, responsible staff. Available with any plan.",
         "cta": "Order a custom programme"
       },
@@ -5867,11 +5871,12 @@
         "storage": "Document uploads",
         "ownDocuments": "Your own documents in the “Document pack”",
         "typicalPackage": "Template document pack",
-        "ppkIndividual": "Production control programme for your site",
+        "ppkIndividual": "Production control programme based on HACCP principles",
         "photoAutofill": "Readings filled in from a sensor photo",
         "equipmentConnect": "Equipment and IoT sensor connection",
         "equipmentDelivery": "Delivery of connected equipment",
-        "mercury": "Mercury (VetIS) integration"
+        "mercury": "Mercury (VetIS) integration",
+        "haccpPlan": "HACCP plan"
       },
       "cells": {
         "employeesFree": "{trialDays, number} days — unlimited, then {count, number}",
@@ -5888,7 +5893,7 @@
         "employeesPremium": "{count, number} per location, more by arrangement"
       },
       "contactLink": "contact us",
-      "contactSubject": "More than 100 employees on the Premium plan",
+      "contactSubject": "More than 40 employees on the Premium plan",
       "headcount": {
         "toPremium": "You have {count, plural, one {# employee} other {# employees}}; this plan allows up to {limit, number} — Premium fits.",
         "contact": "You have {count, plural, one {# employee} other {# employees}}; this plan allows up to {limit, number} — more by arrangement."
@@ -6357,6 +6362,33 @@
       "attachButton": "Attach a file",
       "attachButtonPaste": "Attach a file (or paste with Ctrl+V)",
       "removeFile": "Remove {fileName}"
+    },
+    "dock": {
+      "launcher": "Ask a question",
+      "launcherAria": "Contacts: ask a question or leave your contact details",
+      "title": "Contacts",
+      "lead": "Call or message us. If you'd rather we reach out, leave your contact below.",
+      "formTitle": "Leave your contact details",
+      "name": "Your name",
+      "namePlaceholder": "For example, Anna",
+      "contact": "Phone, username or email",
+      "contactPlaceholder": "+7 900 000-00-00 or @nick",
+      "channel": "How should we contact you?",
+      "channels": {
+        "call": "Call",
+        "telegram": "Telegram",
+        "max": "MAX",
+        "email": "Email"
+      },
+      "question": "Your question (optional)",
+      "questionPlaceholder": "For example: what does it cost for 3 sites?",
+      "submit": "Contact me",
+      "sending": "Sending…",
+      "sent": "Request received — we'll get back to you during business hours.",
+      "contactRequired": "Enter a phone, username or email so we can reply",
+      "emailInvalid": "To be contacted by email, enter an address such as name@mail.com",
+      "failed": "Couldn't send it. Call us or write in the site chat.",
+      "privacy": "We use your contact only to answer your question."
     }
   },
   "journalInfoTaglines": {

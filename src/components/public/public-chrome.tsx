@@ -3,8 +3,11 @@ import { getSiteLocale } from "@/i18n/site-locale-server";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { PublicSupportWidget } from "@/components/public/public-support-widget";
+import { ContactsDock } from "@/components/public/contacts-dock";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
 import { BrandLogo } from "@/components/brand/logo";
+import { BrandWithTagline } from "@/components/brand/brand-with-tagline";
 import { NICHES } from "@/content/niches";
 import { SEO_LANDINGS } from "@/content/seo-landings";
 import { FEATURES_ORDER } from "@/content/features";
@@ -66,7 +69,7 @@ export async function PublicHeader({
       <PublicThemeScope />
       <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-2.5 sm:px-6 sm:py-5">
         <Link href="/" className="text-[#0b1024]" aria-label={t("homeAria")}>
-          <BrandLogo height={30} className="sm:[--logo-h:26px]" title="" />
+          <BrandWithTagline tagline={t("tagline")} />
         </Link>
         <div className="flex items-center gap-3 sm:gap-5">
           <LanguageSwitch />
@@ -171,6 +174,8 @@ export async function PublicFooter() {
           так он есть на всех публичных страницах и нигде не пересекается
           с виджетом кабинета — там свой, с авторизацией. */}
       <PublicSupportWidget />
+      {/* «Задайте вопрос» — контакты и заявка на связь при прокрутке (правки 05.11.2026). */}
+      <ContactsDock telegramUrl={contactTelegramUrl(process.env)} />
       <div className="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 sm:px-6 sm:py-12 md:gap-10 md:grid-cols-[1.4fr_auto_auto]">
         <div>
           <div className="text-[#0b1024]">

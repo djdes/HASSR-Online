@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale, useMessages, useTranslations } from "next-intl";
 import { journalTitle } from "@/i18n/journal-presentation";
-import { LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/locales";
+import { offeredLocales, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -152,7 +152,7 @@ export function ReportForm({
             <Select value={exportLocale} onValueChange={(value) => setLocaleOverride(value as Locale)}>
               <SelectTrigger id="report-locale" className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {LOCALES.map((value) => <SelectItem key={value} value={value}>{LOCALE_NAMES[value]}</SelectItem>)}
+                {offeredLocales(exportLocale).map((value) => <SelectItem key={value} value={value}>{LOCALE_NAMES[value]}</SelectItem>)}
               </SelectContent>
             </Select>
             <p className="text-[13px] text-muted-foreground">{language("exportHint")}</p>

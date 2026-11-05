@@ -53,7 +53,7 @@ export const FREE_PLAN_NOTE =
 /** «до 25 сотрудников на точку» — «Стандарт». */
 export const PAID_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT.standard)} на точку`;
 
-/** «до 100 сотрудников на точку, больше — по согласованию» — «Премиум». */
+/** «до 40 сотрудников на точку, больше — по согласованию» — «Премиум». */
 export const PREMIUM_SEATS_LABEL = `до ${employeesGenitiveLabel(SEATS_PER_POINT.premium)} на точку, больше — по согласованию`;
 
 /** Скидка за точки одной фразой. */
@@ -165,6 +165,9 @@ export const COMPARISON_GROUPS: readonly ComparisonGroup[] = [
       { key: "typicalPackage", feature: "typicalPackage", cells: { free: text("trialOnly", { trialDays: TRIAL_DAYS }), standard: no, premium: yes } },
       // Без цены: «по запросу» открывает окно контактов (владелец, 2026-10-29).
       { key: "ppkIndividual", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest") } },
+      // Правки 05.11.2026: строка «План ХАССП» рядом с ППК. Что входит по тарифам,
+      // в правках не сказано — как у ППК, «по запросу» (уточнить у владельца).
+      { key: "haccpPlan", cells: { free: text("ppkOnRequest"), standard: text("ppkOnRequest"), premium: text("ppkOnRequest") } },
     ],
   },
   {

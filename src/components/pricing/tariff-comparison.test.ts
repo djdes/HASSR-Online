@@ -67,7 +67,8 @@ test("public pricing renders three columns, points, PPK and the comparison table
     assert.ok(ppkBlock.includes(contact("cta")), `${locale}: PPK contact label`);
     assert.doesNotMatch(visibleText(ppkBlock), /₽|\d[\d\s\u00a0\u202f.,]*000/u, `${locale}: PPK price leaked`);
     assert.ok(html.includes(t("cells.ppkOnRequest")), `${locale}: PPK table cell`);
-    assert.equal(html.match(/data-contact-us-trigger/g)?.length, 4, `${locale}: PPK block + three table cells`);
+    // Блок ППК + по три ячейки «по запросу» у ППК и у «Плана ХАССП» (правки 05.11.2026).
+    assert.equal(html.match(/data-contact-us-trigger/g)?.length, 7, `${locale}: PPK block + six table cells`);
     assert.ok(html.includes("/order?plan=standard&amp;cycle=year&amp;points=1"), `${locale}: order link`);
     if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
   }
@@ -232,7 +233,7 @@ test("trial cabinet offers new subscriptions at full price and marks the trial",
   assert.ok(html.includes("/order?plan=premium&amp;cycle=year&amp;points=2"));
 });
 
-test("v2 layout: period switch, centered points with explanation, Premium 100 seats with contact link and Mercury", async () => {
+test("v2 layout: period switch, centered points with explanation, Premium 40 seats with contact link and Mercury", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
     const t = createTranslator({ locale, messages, namespace: "landingComponents.tariffs" });
@@ -253,15 +254,15 @@ test("v2 layout: period switch, centered points with explanation, Premium 100 se
       assert.ok(html.includes(`data-testid="${id}"`), `${locale}: ${id}`);
     }
     assert.ok(html.includes(t("pointsPicker.hint", { from: 3, percent: 5 })), `${locale}: points explanation`);
-    // «Премиум»: 100 сотрудников на точку и короткая ссылка «связаться».
-    assert.ok(html.includes(t("features.employeesPremium", { count: 100 })), `${locale}: premium seats`);
+    // «Премиум»: 40 сотрудников на точку и короткая ссылка «связаться».
+    assert.ok(html.includes(t("features.employeesPremium", { count: 40 })), `${locale}: premium seats`);
     assert.ok(html.includes('data-testid="tariff-premium-contact"'), `${locale}: contact link`);
     assert.ok(html.includes(t("contactLink")), `${locale}: contact label`);
     assert.ok(html.includes(t("features.employees", { count: 25 })), `${locale}: standard seats`);
     // «Меркурий» — пункт «Премиума» и строка таблицы.
     assert.ok(html.includes(t("features.mercury")), `${locale}: mercury point`);
     assert.ok(html.includes(t("rows.mercury")), `${locale}: mercury row`);
-    assert.ok(html.includes(t("cells.employeesPremium", { count: 100 })), `${locale}: table premium seats`);
+    assert.ok(html.includes(t("cells.employeesPremium", { count: 40 })), `${locale}: table premium seats`);
     // Строки карточек — общая сетка: каждая карточка занимает шесть строк, а её
     // колонка не шире карточки (minmax(0,1fr)) — длинная строка не растягивает остальные.
     assert.equal(html.match(/lg:row-span-6 lg:grid lg:grid-cols-\[minmax\(0,1fr\)\] lg:grid-rows-subgrid/g)?.length, 3, `${locale}: subgrid cards`);
@@ -307,7 +308,7 @@ test("cabinet: a card that the headcount outgrows suggests the next plan, paymen
   assert.ok(forty.includes('data-testid="tariff-cta-standard"'), "Standard stays payable");
 
   const many = await render("ru", createElement(TariffComparison, props(140)));
-  assert.ok(many.includes(t("headcount.contact", { count: 140, limit: 100 })));
+  assert.ok(many.includes(t("headcount.contact", { count: 140, limit: 40 })));
 
   const fits = await render("ru", createElement(TariffComparison, props(20)));
   assert.ok(!fits.includes("tariff-headcount-"), "no note when the team fits");

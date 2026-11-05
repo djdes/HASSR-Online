@@ -29,7 +29,7 @@ export function HardwareStrip({
   const t = useTranslations("landingComponents.equipment");
   const locale = useLocale() as Locale;
   const [open, setOpen] = useState(false);
-  const benefits = [t("sensorBenefit"), t("tabletBenefit"), t("setupBenefit")];
+  const benefits = [t("sensorBenefit"), t("tabletBenefit"), t("printerBenefit"), t("setupBenefit")];
 
   return (
     <section data-testid="hardware-strip" className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">
@@ -41,7 +41,7 @@ export function HardwareStrip({
           <div className="min-w-0">
             <div className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("title")}</div>
             <p className="mt-1 max-w-[620px] text-[14px] leading-[1.55] text-[#6f7282]">{t("premiumNote")}</p>
-            <ul className="mt-3 grid gap-1.5 text-[14px] text-[#3c4053] sm:grid-cols-3 sm:gap-3">
+            <ul className="mt-3 grid gap-1.5 text-[14px] text-[#3c4053] sm:grid-cols-2 sm:gap-x-5 sm:gap-y-2">
               {benefits.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-2">
                   <Check className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />

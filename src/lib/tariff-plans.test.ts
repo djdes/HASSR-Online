@@ -129,10 +129,10 @@ describe("лимиты и возможности", () => {
     assert.equal(Object.values(e.features).some(Boolean), false);
   });
 
-  it("Премиум — 100 сотрудников на точку, 1 ГБ, автоввод с фото, оборудование, типовой пакет, «Меркурий»", () => {
+  it("Премиум — 40 сотрудников на точку, 1 ГБ, автоввод с фото, оборудование, типовой пакет, «Меркурий»", () => {
     const e = entitlementsFor("premium", 1);
-    assert.equal(e.seatLimit, 100);
-    assert.equal(entitlementsFor("premium", 3).seatLimit, 300);
+    assert.equal(e.seatLimit, 40);
+    assert.equal(entitlementsFor("premium", 3).seatLimit, 120);
     assert.equal(e.storageBytes, 1024 * 1024 * 1024);
     assert.deepEqual(e.features, {
       photoAutofill: true,
@@ -168,7 +168,7 @@ describe("лимиты и возможности", () => {
     assert.equal(countPointsInUse([3]), 3);
     assert.equal(countPointsInUse([0, 2, 1]), 4);
     assert.equal(seatLimitFor("standard", 3), 75);
-    assert.equal(seatLimitFor("premium", 2), 200);
+    assert.equal(seatLimitFor("premium", 2), 80);
   });
 });
 

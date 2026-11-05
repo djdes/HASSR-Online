@@ -592,7 +592,7 @@ function Checkout({
             </a>
           ) : (
             <ContactSupportButton
-              subject="Больше 100 сотрудников на точку — тариф «Премиум»"
+              subject={`Больше ${SEATS_PER_POINT.premium} сотрудников на точку — тариф «Премиум»`}
               testId="order-headcount-contact"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#f5f6ff]"
             >

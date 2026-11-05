@@ -331,10 +331,13 @@ export function TariffComparison({
           }
           intro={intro("free")}
           points={cardPoints("free")}
+          // Правки 05.11.2026: на витрине вся карточка — как кнопка «Нажмите,
+          // чтобы попробовать», а не только ссылка внизу.
+          cardHref={mode === "public" ? href(startHref) : undefined}
           action={
             mode === "public" ? (
-              <CtaLink href={href(startHref)} variant="outline" testId="tariff-cta-free">
-                {t("cta.startFree")}
+              <CtaLink href={href(startHref)} variant="soft" testId="tariff-cta-free">
+                {t("cta.tryFree")}
               </CtaLink>
             ) : cabinet?.status === "paid" ? (
               freeAction
@@ -563,6 +566,7 @@ function TierCard({
   warning = null,
   action,
   highlighted = false,
+  cardHref,
   ...rest
 }: {
   tier: TierId;
@@ -577,6 +581,8 @@ function TierCard({
   warning?: string | null;
   action: ReactNode;
   highlighted?: boolean;
+  /** Вся карточка ведёт по ссылке (бесплатный тариф на витрине). */
+  cardHref?: string;
   "data-tariff-key"?: string;
 }) {
   const Icon = TIER_ICON[tier];
@@ -588,6 +594,16 @@ function TierCard({
     <div
       data-testid={`tariff-card-${tier}`}
       data-tariff-key={rest["data-tariff-key"]}
+      // Клавиатура и скринридер идут по кнопке внутри карточки; щелчок по
+      // остальной карточке — тот же переход, что и по кнопке.
+      onClick={
+        cardHref
+          ? (event) => {
+              if ((event.target as HTMLElement).closest("a, button")) return;
+              window.location.assign(cardHref);
+            }
+          : undefined
+      }
       className={cn(
         // `minmax(0,1fr)`: колонка карточки не шире самой карточки — длинная
         // строка (название с плашкой) не растягивает остальные.
@@ -596,6 +612,8 @@ function TierCard({
         highlighted
           ? "overflow-hidden bg-[#0b1024] text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)]"
           : "border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]",
+        cardHref &&
+          "cursor-pointer transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#5566f6]/45 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
       )}
     >
       {highlighted ? (
@@ -661,7 +679,7 @@ function TierCard({
   );
 }
 
-function ctaClass(variant: "primary" | "light" | "outline"): string {
+function ctaClass(variant: "primary" | "light" | "outline" | "soft"): string {
   return cn(
     // min-h, а не h: «Повысить — доплата 1 000 ₽» в узкой колонке кабинета
     // переносится на вторую строку и не должна вылезать за кнопку.
@@ -671,6 +689,7 @@ function ctaClass(variant: "primary" | "light" | "outline"): string {
     // `tariff-cta-light` — белой кнопка остаётся и в тёмной теме (app-theme.css).
     variant === "light" && "tariff-cta-light bg-white text-[#0b1024] hover:bg-white/90",
     variant === "outline" && "border border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+    variant === "soft" && "bg-[#eef1ff] font-semibold text-[#3848c7] hover:bg-[#e2e7ff]",
   );
 }
 
@@ -681,7 +700,7 @@ function CtaLink({
   children,
 }: {
   href: string;
-  variant: "primary" | "light" | "outline";
+  variant: "primary" | "light" | "outline" | "soft";
   testId?: string;
   children: ReactNode;
 }) {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Globe2 } from "lucide-react";
 import { toast } from "sonner";
-import { LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/locales";
+import { offeredLocales, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 
 export function PersonalLanguageSelect() {
   const locale = useLocale();
@@ -37,7 +37,7 @@ export function PersonalLanguageSelect() {
       <Globe2 className="size-4" aria-hidden="true" />
       <span className="sr-only">{t("label")}</span>
       <select value={locale} disabled={saving || refreshing} onChange={(event) => void changeLanguage(event.target.value as Locale)} className="min-h-11 max-w-28 bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]">
-        {LOCALES.map((value) => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
+        {offeredLocales(locale).map((value) => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
       </select>
     </label>
   );

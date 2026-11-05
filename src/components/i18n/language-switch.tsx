@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { localizedHref, publicLocalesForPath, SITE_LOCALE_COOKIE, PENDING_LOCALE_COOKIE, type SiteLocale } from "@/i18n/site-locale";
-import { LOCALE_NAMES } from "@/i18n/locales";
+import { LOCALE_NAMES, OFFERED_LOCALES } from "@/i18n/locales";
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "./site-locale-provider";
 
@@ -29,7 +29,11 @@ export function LanguageSwitch() {
   const t = useTranslations("language");
   const pathname = usePathname();
   const search = useSearchParams()?.toString();
-  const available = pathname ? publicLocalesForPath(pathname) : [];
+  // Резервные языки (сейчас узбекский) не предлагаем, но открытую на нём
+  // страницу не прячем из списка — иначе не видно, на каком языке она.
+  const available = (pathname ? publicLocalesForPath(pathname) : []).filter(
+    (option) => OFFERED_LOCALES.includes(option) || option === locale,
+  );
   if (!pathname || available.length < 2) return null;
   return (
     <DropdownMenu>

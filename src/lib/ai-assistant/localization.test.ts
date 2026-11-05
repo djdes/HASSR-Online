@@ -99,7 +99,7 @@ test("assistant add_staff: a seat refusal names the next plan, inside the WeSetu
   const input = { fullName: "CUSTOM_EMPLOYEE", jobPositionId: "position" };
   for (const locale of ["ru", "en", "uz"] as const) {
     const t = await translatorFor(locale);
-    for (const [nextTier, key, seats] of [["standard", "limitToStandard", 25], ["premium", "limitToPremium", 100], [null, "limitContact", 100]] as const) {
+    for (const [nextTier, key, seats] of [["standard", "limitToStandard", 25], ["premium", "limitToPremium", 40], [null, "limitContact", 40]] as const) {
       const refusal = { ok: false, status: 402, error: "Места заняты", code: "billing_free_limit", limit: 25, tier: "standard", nextTier };
       const { actions, writes } = actionsFixture(refusal);
       const web = await actions.executeProposedAction({ kind: "add_staff", input }, { orgId: "org", actor, locale }, { audit: false });

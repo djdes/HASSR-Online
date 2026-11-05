@@ -8,6 +8,7 @@ import { ArrowRight, Bell, CheckCircle2, CircleDashed, Mail, Send, Users } from 
 import { toast } from "sonner";
 import { RU_PHONE_PLACEHOLDER, formatRuPhoneInput, phoneInputProps } from "@/lib/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { isLocale, offeredLocales } from "@/i18n/locales";
 import {
   FieldRow,
   ORG_INPUT_CLASS,
@@ -43,8 +44,6 @@ const TIMEZONE_OPTIONS = [
   "Asia/Magadan",
   "Asia/Kamchatka",
 ];
-
-const LOCALES = ["ru", "en", "uz"] as const;
 
 const SELECT_CLASS =
   "h-11 w-full rounded-2xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[14px] text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 focus-visible:border-[#5566f6] focus-visible:ring-[#5566f6]/15 aria-[invalid=true]:border-[#e2675b]";
@@ -192,7 +191,7 @@ export function OrganizationContactsForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {LOCALES.map((locale) => (
+              {offeredLocales(isLocale(draft.locale) ? draft.locale : null).map((locale) => (
                 <SelectItem key={locale} value={locale}>
                   {locale === "ru" ? t("form.languageRu") : locale === "en" ? t("form.languageEn") : t("form.languageUz")}
                 </SelectItem>

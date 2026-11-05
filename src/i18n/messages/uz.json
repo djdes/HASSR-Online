@@ -5499,7 +5499,8 @@
     "companyRegistrationId": "Ro‘yxatdan o‘tish raqami (OGRN) {ogrn}",
     "securityAndData": "Xavfsizlik va ma’lumotlar",
     "autofillOffer": "O‘zi to‘ldiriladigan jurnallar",
-    "sanpin4282": "SanPiN 2.3/2.4.4282-26"
+    "sanpin4282": "SanPiN 2.3/2.4.4282-26",
+    "tagline": "Sizning elektron HACCP tizimingiz"
   },
   "landing": {
     "metadata": {
@@ -5599,7 +5600,7 @@
     },
     "capabilities": {
       "reminders": {
-        "title": "Eslatmalar va ogohlantirishlar",
+        "title": "Eslatmalar va signallar",
         "text": "Jurnal yozuvi qoldirib ketilsa yoki harorat me’yordan chiqsa, Telegram va elektron pochta mas’ul xodimga xabar beradi."
       },
       "autofill": {
@@ -5611,14 +5612,14 @@
         "text": "Inspektor uchun kerakli davrdagi barcha yozuvlarni bir bosishda PDF qilib yuklab oling."
       },
       "syncIiko1c": {
-        "title": "iiko va 1C",
-        "text": "Yetkazib beruvchilar va tovarlar haqidagi ma’lumotlar mahsulot sifati hamda kiruvchi nazorat jurnallariga avtomatik tushadi."
+        "title": "Boshqa dasturdan ma’lumotnomalar",
+        "text": "Ma’lumotnomalarni boshqa dasturdan yuklang — xodimlar, yetkazib beruvchilar, mahsulotlar va uskunalar qo‘lda kiritmasdan paydo bo‘ladi."
       }
     },
     "heroPoints": {
       "scan": "**QR-kodni skanerlang** — yozuv jurnalga tushadi",
-      "automation": "Jurnallarni **avtomatik yaratish** va **avtomatik to‘ldirish**",
-      "paper": "**Elektron va qog‘oz** jurnallar"
+      "automation": "HACCP tamoyillariga asoslangan **elektron ishlab chiqarish nazorati dasturi**",
+      "paper": "**Barcha hujjatlar** — SanPiN va HACCP tamoyillariga muvofiq"
     },
     "qrSteps": {
       "equipment": {
@@ -5717,7 +5718,8 @@
         }
       }
     },
-    "pricingTitle": "Uchta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz"
+    "pricingTitle": "Uchta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz",
+    "brandTagline": "Sizning elektron HACCP tizimingiz"
   },
   "landingComponents": {
     "heroEmail": {
@@ -5745,7 +5747,8 @@
       "choose": "Uskunalarni tanlash",
       "calculatorTitle": "Uskunalarni tanlash",
       "calculatorDescription": "Keraklisini tanlang — narx qayta hisoblanadi. Planshet yoki datchiklar bormi? Belgini olib tashlang, faqat «Premium» tarifi qoladi.",
-      "premiumNote": "Harorat datchiklari va planshet hisobingizga ulangan holda keladi: ko‘rsatkichlar jurnallarga o‘zi yoziladi. Yetkazib berish va ulash — «Premium» tarifida."
+      "premiumNote": "Harorat datchiklari va planshet hisobingizga ulangan holda keladi: ko‘rsatkichlar jurnallarga o‘zi yoziladi. Yetkazib berish va ulash — «Premium» tarifida.",
+      "printerBenefit": "«Setup yordamchisi» printeri"
     },
     "testimonials": {
       "title": "Mijozlarimiz fikri",
@@ -5830,7 +5833,8 @@
         "newPlan": "Ulash — {amount}",
         "scheduled": "{date} dan o‘tish",
         "scheduledDone": "{date} dan o‘tiladi",
-        "cancelSchedule": "O‘tishni bekor qilish"
+        "cancelSchedule": "O‘tishni bekor qilish",
+        "tryFree": "Sinab ko‘rish uchun bosing"
       },
       "explain": {
         "upgrade": "Darhol, {days, plural, other {qolgan # kun}} uchun qo‘shimcha to‘lov: davr uchun farq {difference}. Tugash sanasi o‘zgarmaydi",
@@ -5842,7 +5846,7 @@
         "switch": "Tarifni oshirish — darhol, qolgan kunlar uchun qo‘shimcha to‘lov bilan; pasaytirish — to‘langan muddat tugagach."
       },
       "ppk": {
-        "title": "Ishlab chiqarish nazorati dasturi — individual",
+        "title": "HACCP tamoyillariga asoslangan ishlab chiqarish nazorati dasturi",
         "text": "Mutaxassis obyektingiz uchun dastur ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
         "cta": "Individual buyurtma berish"
       },
@@ -5867,11 +5871,12 @@
         "storage": "Hujjat yuklash",
         "ownDocuments": "«Hujjatlar to‘plami»da o‘z hujjatlaringiz",
         "typicalPackage": "Namunaviy hujjatlar to‘plami",
-        "ppkIndividual": "Obyektingiz uchun nazorat dasturi",
+        "ppkIndividual": "HACCP tamoyillariga asoslangan ishlab chiqarish nazorati dasturi",
         "photoAutofill": "Datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish",
         "equipmentConnect": "Uskuna va IoT-datchiklarni ulash",
         "equipmentDelivery": "Ulangan uskunani yetkazib berish",
-        "mercury": "«Merkuriy» FDAT (VetIS)"
+        "mercury": "«Merkuriy» FDAT (VetIS)",
+        "haccpPlan": "HACCP rejasi"
       },
       "cells": {
         "employeesFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
@@ -5888,7 +5893,7 @@
         "employeesPremium": "Har bir nuqtaga {count, number}, undan ko‘pi — kelishuv bo‘yicha"
       },
       "contactLink": "bog‘lanish",
-      "contactSubject": "«Premium» tarifida 100 nafardan ortiq xodim",
+      "contactSubject": "«Premium» tarifida 40 nafardan ortiq xodim",
       "headcount": {
         "toPremium": "Sizda {count, plural, other {# nafar xodim}} bor, bu tarifda {limit, number} nafargacha — «Premium» mos keladi.",
         "contact": "Sizda {count, plural, other {# nafar xodim}} bor, bu tarifda {limit, number} nafargacha — undan ko‘pi kelishuv bo‘yicha."
@@ -6357,6 +6362,33 @@
       "attachButton": "Fayl biriktirish",
       "attachButtonPaste": "Fayl biriktirish (yoki Ctrl+V bilan buferdan joylash)",
       "removeFile": "{fileName} faylini olib tashlash"
+    },
+    "dock": {
+      "launcher": "Savol bering",
+      "launcherAria": "Kontaktlar: savol berish yoki aloqa uchun kontakt qoldirish",
+      "title": "Kontaktlar",
+      "lead": "Bizga qo‘ng‘iroq qiling yoki yozing. O‘zimiz bog‘lanishimizni istasangiz, quyida kontaktingizni qoldiring.",
+      "formTitle": "Aloqa uchun kontakt qoldiring",
+      "name": "Ismingiz",
+      "namePlaceholder": "Masalan, Anna",
+      "contact": "Telefon, nik yoki pochta",
+      "contactPlaceholder": "+998 90 000-00-00 yoki @nick",
+      "channel": "Siz bilan qanday bog‘lanaylik?",
+      "channels": {
+        "call": "Qo‘ng‘iroq",
+        "telegram": "Telegram",
+        "max": "MAX",
+        "email": "Pochta"
+      },
+      "question": "Savolingiz (ixtiyoriy)",
+      "questionPlaceholder": "Masalan: 3 ta nuqta uchun narxi qancha?",
+      "submit": "Bog‘laning",
+      "sending": "Yuborilmoqda…",
+      "sent": "So‘rov qabul qilindi — ish vaqtida bog‘lanamiz.",
+      "contactRequired": "Javob berishimiz uchun telefon, nik yoki pochtani kiriting",
+      "emailInvalid": "Pochta orqali aloqa uchun manzil kiriting, masalan name@mail.uz",
+      "failed": "Yuborib bo‘lmadi. Qo‘ng‘iroq qiling yoki saytdagi chatga yozing.",
+      "privacy": "Kontaktingiz faqat savolingizga javob berish uchun kerak."
     }
   },
   "journalInfoTaglines": {

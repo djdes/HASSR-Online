@@ -3,7 +3,7 @@
 import { Archive, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { isLocale, LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/locales";
+import { isLocale, offeredLocales, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 
 const INPUT = "h-11 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
 
@@ -74,7 +74,7 @@ export function ExportJournalsCard() {
         <label className="flex flex-col gap-1 text-[12px] font-medium text-[#6f7282]">
           {t("card.language")}
           <select value={exportLocale ?? locale} onChange={event => { if (isLocale(event.target.value)) setExportLocale(event.target.value); }} className={INPUT} data-testid="export-language">
-            {LOCALES.map(value => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
+            {offeredLocales(exportLocale ?? locale).map(value => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
           </select>
         </label>
         <button type="button" disabled={busy || !from || !to} onClick={download} className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60" data-testid="export-download">

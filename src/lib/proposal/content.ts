@@ -23,7 +23,7 @@ import { normalizeProposalVars } from "./vars";
  *
  * Правила честности (спека proposal-kp, п. 2):
  *   • числа — только из констант и тарифа (`JOURNALS_TOTAL`,
- *     `TRIAL_DAYS`, `SEATS_PER_POINT` (25 у «Стандарта», 100 у «Премиума»), `PlatformTariff`);
+ *     `TRIAL_DAYS`, `SEATS_PER_POINT` (25 у «Стандарта», 40 у «Премиума»), `PlatformTariff`);
  *   • «обязательные» — только `electronicRequired` сферы, с условием
  *     («при наличии фритюра»); остальное — «рекомендуем»;
  *   • «по счёту для юрлиц» — только если счёт реально выставляется
