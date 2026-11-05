@@ -382,6 +382,7 @@ function ProposalDialog({ t, ctx, base, onClose, onSent }: { t: Translator; ctx:
               options={[
                 { value: "standard", label: t("proposal.plans.standard") },
                 { value: "premium", label: t("proposal.plans.premium") },
+                { value: "vip", label: t("proposal.plans.vip") },
               ]}
             />
           </div>
@@ -398,7 +399,7 @@ function ProposalDialog({ t, ctx, base, onClose, onSent }: { t: Translator; ctx:
             {(
               [
                 ["ppk", t("proposal.extraPpk"), false],
-                ["equipment", t("proposal.extraEquipment"), plan !== "premium"],
+                ["equipment", t("proposal.extraEquipment"), plan === "standard"],
               ] as const
             ).map(([key, label, disabled]) => (
               <label key={key} className={`flex items-center gap-2.5 text-[13.5px] ${disabled ? "text-[#9b9fb3]" : "text-[#0b1024]"}`}>
@@ -544,6 +545,7 @@ function InvoiceDialog({
                   options={[
                     { value: "standard", label: t("proposal.plans.standard") },
                     { value: "premium", label: t("proposal.plans.premium") },
+                    { value: "vip", label: t("proposal.plans.vip") },
                   ]}
                 />
               </div>

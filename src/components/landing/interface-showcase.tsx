@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  Gauge,
   LayoutDashboard,
   Lock,
   QrCode,
@@ -29,10 +30,10 @@ import { usePrefersReducedMotion } from "@/lib/use-media-query";
  * Листать — вкладками, стрелками, клавишами ← → и свайпом.
  *
  * Картинки грузятся лениво и только для текущего экрана и соседей:
- * шесть снимков сразу — лишние полмегабайта на телефоне.
+ * семь снимков сразу — лишние полмегабайта на телефоне.
  */
 
-export type ShowcaseIcon = "dashboard" | "journals" | "grid" | "qr" | "inspection" | "staff" | "checklists";
+export type ShowcaseIcon = "dashboard" | "monitoring" | "journals" | "grid" | "qr" | "inspection" | "staff" | "checklists";
 
 export type ShowcaseSlide = {
   id: string;
@@ -57,6 +58,7 @@ export type ShowcaseLabels = {
 
 const ICONS: Record<ShowcaseIcon, LucideIcon> = {
   dashboard: LayoutDashboard,
+  monitoring: Gauge,
   journals: BookOpenCheck,
   grid: Table2,
   qr: QrCode,

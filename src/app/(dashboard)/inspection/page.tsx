@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowRight, BookOpen, Gauge, Handshake, type LucideIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Gauge, Handshake, Settings2, type LucideIcon } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -14,7 +14,6 @@ import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { InspectionQr } from "@/components/inspection/inspection-qr";
 import { InspectionGuide } from "@/components/inspection/inspection-guide";
-import { InspectionSpecialModeStatus } from "@/components/inspection/inspection-special-mode-card";
 import { ComplianceBundleCard } from "@/components/reports/compliance-bundle-card";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -28,9 +27,9 @@ const OPEN_LINK =
  * «Что делать сейчас» — первый пункт раздела «К вам пришла проверка (или
  * придёт)» (решение владельца 2026-10-16, скан 83, S4 2026-10-18): шаги по
  * порядку и то, что нужно прямо в дверях, — ② QR на экране и ④ архив
- * документов. Журнал посещений (③) и спецрежим (⑤) стали своими пунктами
- * меню: здесь от них — коротко, со ссылкой «Открыть». Якорь `#special-mode`
- * остаётся: на него ведёт ссылка из «Реквизитов».
+ * документов. Журнал посещений (③) стал своим пунктом меню: здесь от него —
+ * коротко, со ссылкой «Открыть». Спецрежим (2026-11-05) нигде не назван:
+ * вход — тихая ссылка «Настройки раздела» в самом низу страницы.
  *
  * Открыт и заведующей: проверка часто приходит, когда она одна на месте.
  * Выпускать QR, смотреть готовность и заказывать услуги — руководству (как на
@@ -154,11 +153,6 @@ export default async function InspectionPage() {
         <ComplianceBundleCard bare />
       </Step>
 
-      {/* `#special-mode` — адрес из «Реквизитов» (organization-special-mode-card). */}
-      <Step id="special-mode" number={5} title={t("special.title")} aside={<InspectionSpecialModeStatus />}>
-        <OpenRow lead={t("now.specialLead")} href="/inspection/special-mode" label={t("guide.open")} />
-      </Step>
-
       <section
         className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6"
         data-inspection-more
@@ -214,6 +208,19 @@ export default async function InspectionPage() {
           </ul>
         )}
       </section>
+
+      {/* Вход в спецрежим — без названия и ярлыков (2026-11-05): права те же,
+          что у этой страницы и у страницы настроек. */}
+      <div className="flex justify-end">
+        <Link
+          href="/inspection/settings"
+          className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 text-[12.5px] text-[#9b9fb3] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          data-inspection-settings-link
+        >
+          <Settings2 className="size-3.5" aria-hidden />
+          {t("now.settingsLink")}
+        </Link>
+      </div>
     </div>
   );
 }

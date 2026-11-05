@@ -12,6 +12,7 @@ import {
   automationOn,
   parseJournalControls,
   readStoredAutomation,
+  resolveAddedFeature,
   resolveLegacyAutomation,
   sensorCameraEnabled,
 } from "./journal-controls";
@@ -47,7 +48,7 @@ test("automation is off (fail-closed) when nothing or garbage is stored", () => 
 });
 
 test("a feature works only when special mode is on AND its box is ticked", () => {
-  const ticked = { autoFill: true, autoCreate: false, copyYesterday: true, closeDayAutofill: false };
+  const ticked = { autoFill: true, autoCreate: false, copyYesterday: true, closeDayAutofill: false, catchUp: false };
   const on = parseJournalControls({ automation: { enabled: true, ...ticked } });
   assert.equal(automationOn(on, "autoFill"), true);
   assert.equal(automationOn(on, "autoCreate"), false);
@@ -63,8 +64,8 @@ test("a feature works only when special mode is on AND its box is ticked", () =>
 });
 
 test("the stored legacy specialMode flag is read only for resolution and never written back", () => {
-  assert.deepEqual(readStoredAutomation({ specialMode: true }), { automation: null, legacySpecialMode: true });
-  assert.deepEqual(readStoredAutomation(JSON.stringify({ specialMode: false })), { automation: null, legacySpecialMode: false });
+  assert.deepEqual(readStoredAutomation({ specialMode: true }), { automation: null, legacySpecialMode: true, missing: [] });
+  assert.deepEqual(readStoredAutomation(JSON.stringify({ specialMode: false })), { automation: null, legacySpecialMode: false, missing: [] });
   const stored = readStoredAutomation({ specialMode: true, automation: { enabled: true, autoFill: true } });
   assert.equal(stored.automation?.enabled, true);
   assert.equal("specialMode" in parseJournalControls({ specialMode: true }), false);
@@ -86,11 +87,29 @@ test("legacy resolution: old special mode → off; old org using automation → 
   assert.equal(AUTOMATION_ALL_ON.autoFill, true);
 });
 
-test("the server error names the feature and where to turn it on", () => {
-  assert.match(automationDisabledError("autoFill"), /Автозаполнение журналов.*выключена.*«Пришла проверка» → «Спецрежим»/);
-  assert.match(automationDisabledError("copyYesterday"), /Скопировать вчерашнее/);
-  assert.match(automationDisabledError("closeDayAutofill"), /«Автозаполнить» на главной/);
-  assert.match(automationDisabledError("autoCreate"), /Автосоздание документов/);
+test("the server refusal is neutral: no feature name, no hint where special mode lives (2026-11-05)", () => {
+  for (const feature of AUTOMATION_FEATURES) {
+    const text = automationDisabledError(feature);
+    assert.equal(text, "Эта функция недоступна.");
+    assert.ok(!/Спецрежим|Пришла проверка|Автозаполн|вчераш/i.test(text), feature);
+  }
+});
+
+test("a box added later (catchUp) is on only if special mode is on AND the org used it (2026-11-05)", () => {
+  assert.ok(AUTOMATION_FEATURES.includes("catchUp"));
+  assert.equal(resolveAddedFeature({ specialModeOn: true, used: true }), true);
+  assert.equal(resolveAddedFeature({ specialModeOn: true, used: false }), false);
+  assert.equal(resolveAddedFeature({ specialModeOn: false, used: true }), false);
+  // A choice saved before the box existed reports it as missing — the server fills it in.
+  const before = { enabled: true, autoFill: true, autoCreate: true, copyYesterday: true, closeDayAutofill: true };
+  assert.deepEqual(readStoredAutomation({ automation: before }).missing, ["catchUp"]);
+  assert.deepEqual(readStoredAutomation({ automation: { ...before, catchUp: false } }).missing, []);
+  // Until then the client sees it off (fail-closed).
+  assert.equal(automationOn(parseJournalControls({ automation: before }), "catchUp"), false);
+  // The server rule lives next to resolveLegacyAutomation and checks the catch-up audit trail.
+  const server = read("src/lib/journal-controls.server.ts");
+  assert.match(server, /action: "journal_entry\.copy", details: \{ path: \["via"\], equals: "dashboard\.catch_up" \}/);
+  assert.match(server, /resolveAddedFeature\(\{ specialModeOn: true, used: await usedAddedFeature/);
 });
 
 test("every automation entry point checks its own box (AC3.2)", () => {
@@ -128,7 +147,23 @@ test("every automation entry point checks its own box (AC3.2)", () => {
     ["src/components/dashboard/close-day-card.tsx", '!automationOn(controls, "closeDayAutofill")'],
     ["src/components/layout/command-palette.tsx", 'useAutomationOn("closeDayAutofill")'],
     ["src/lib/settings-cards.ts", 'requiresAutomation: "autoCreate"'],
+    // 2026-11-05: всё, что «подрисовывает» журналы, — тоже по галочкам.
+    ["src/app/api/journal-documents/[id]/staff/route.ts", 'rejectJournalAutomation(organizationId, "autoFill")'],
+    ["src/app/api/dashboard/catch-up/route.ts", 'rejectJournalAutomation(organizationId, "catchUp")'],
+    ["src/app/(dashboard)/dashboard/catch-up/page.tsx", '"catchUp")) notFound();'],
+    ["src/app/(dashboard)/dashboard/page.tsx", 'automationOn(await getJournalControls(organizationId), "catchUp")'],
+    ["src/components/layout/command-palette.tsx", 'useAutomationOn("catchUp")'],
+    ["src/app/api/task-fill/[taskId]/yesterday-prefill/route.ts", '"copyYesterday")'],
+    ["src/lib/ai-assistant/actions.ts", 'automationOn(await getJournalControls(orgId), "autoFill")'],
+    ["src/app/api/ai/sanpin-chat/route.ts", 'autoFill: automationOn(await getJournalControls(orgId), "autoFill")'],
+    ["src/components/journals/hygiene-document-client.tsx", 'useAutomationOn("autoFill")'],
+    ["src/components/journals/cleaning-document-client.tsx", '...(automationOn(journalControls, "autoFill")'],
+    ["src/components/journals/fill-guide-launcher.tsx", 'useAutomationOn("autoFill")'],
+    ["src/app/(dashboard)/settings/buildings/[id]/page.tsx", 'automationOn(await getJournalControls(orgId), "autoCreate")'],
   ];
+  // Каждое место проверки стоит перед действием, а не после.
+  const staff = read("src/app/api/journal-documents/[id]/staff/route.ts");
+  assert.ok(staff.indexOf('rejectJournalAutomation(organizationId, "autoFill")') < staff.indexOf("applyStaffJournalAutoFill(db"));
   for (const [file, needle] of guards) assert.ok(read(file).includes(needle), `${file}: ${needle}`);
   // Nothing reads the old flag any more.
   for (const file of new Set(guards.map(([file]) => file))) assert.ok(!/\.specialMode\b/.test(read(file)), file);

@@ -61,7 +61,7 @@ function escDeep(value: unknown): unknown {
   return value;
 }
 
-const INSTRUCTION = `Ты — ИИ-помощник в системе WeSetup (электронные журналы СанПиН и ХАССП для пищевых производств в РФ). Отвечаешь на вопросы сотрудников кафе, ресторанов, пекарен, производств: о санитарных нормах, о данных их организации и о странице, на которой они находятся.
+const BASE_INSTRUCTION = `Ты — ИИ-помощник в системе WeSetup (электронные журналы СанПиН и ХАССП для пищевых производств в РФ). Отвечаешь на вопросы сотрудников кафе, ресторанов, пекарен, производств: о санитарных нормах, о данных их организации и о странице, на которой они находятся.
 
 Ключевые нормативы РФ: ТР ТС 021/2011, ТР ТС 022/2011, СанПиН 2.3/2.4.4282-26, СП 2.4.3648-20, ГОСТ Р 51705.1-2001, СанПиН 1.2.3685-21.
 
@@ -77,12 +77,11 @@ const INSTRUCTION = `Ты — ИИ-помощник в системе WeSetup (�
 - add_staff — добавить сотрудника. input: { "fullName": string, "jobPositionId": string (id должности из org_data), "phone"?: string }
 - fill_journal_cells — заполнить ячейки документа-сетки журнала (сотрудник × день). input: { "documentId": string (id документа из org_data или page_context), "employeeIds": string[] (id сотрудников из org_data), "dates": string[] (даты "YYYY-MM-DD" внутри периода документа), "values": одно из:
     { "kind": "status", "status": "healthy"|"day_off"|"sick_leave"|"suspended"|"vacation" } — для гигиенического журнала (hygiene); «всё хорошо» = "healthy";
-    { "kind": "auto" } — типовое заполнение по правилам журнала (hygiene, health_check);
-    { "kind": "data", "data": { плоский объект полей ячейки } } — ТОЛЬКО если пользователь сам явно назвал значения. }
+{{AUTO_KIND}}    { "kind": "data", "data": { плоский объект полей ячейки } } — ТОЛЬКО если пользователь сам явно назвал значения. }
 
 Правила действий:
 - Предлагай действие только когда пользователь явно просит что-то сделать. Вопрос «как заполнить?» — это вопрос, а не команда.
-- НИКОГДА не выдумывай значения измерений (температуры, показания приборов, время замеров). Числа в values.data допустимы только если пользователь сам их назвал. Если значений нет — предложи kind:"auto" (для кадровых журналов) или объясни, что числовые замеры вносятся вручную.
+- НИКОГДА не выдумывай значения измерений (температуры, показания приборов, время замеров). Числа в values.data допустимы только если пользователь сам их назвал. {{NO_VALUES_RULE}}
 - Все id (documentId, employeeIds, jobPositionId) бери только из org_data / page_context. Если нужного сотрудника нет — сначала предложи add_staff, в reply объясни порядок («сначала добавим сотрудника, потом заполню журнал»).
 - Одно действие за один ответ.
 
@@ -92,6 +91,20 @@ const INSTRUCTION = `Ты — ИИ-помощник в системе WeSetup (�
 
 ФОРМАТ ОТВЕТА — строго один JSON-объект, без markdown-обёртки, без текста до или после:
 {"reply": "текст ответа пользователю", "action": {"kind": "...", "input": {...}} | null}`;
+
+/**
+ * Инструкция исполнителю. Типовое заполнение (`kind:"auto"`, «Здоров» сразу
+ * многим) — часть «Автозаполнения журналов» спецрежима: без галочки
+ * помощник о нём не знает и не предлагает (2026-11-05).
+ */
+export function assistantInstruction(autoFill: boolean): string {
+  return BASE_INSTRUCTION
+    .replace("{{AUTO_KIND}}", autoFill ? `    { "kind": "auto" } — типовое заполнение по правилам журнала (hygiene, health_check);
+` : "")
+    .replace("{{NO_VALUES_RULE}}", autoFill
+      ? `Если значений нет — предложи kind:"auto" (для кадровых журналов) или объясни, что числовые замеры вносятся вручную.`
+      : `Если значений нет — объясни, что отметки и замеры вносит человек. Не предлагай отметить «Здоров» сразу нескольким сотрудникам или за несколько дней.`);
+}
 
 export type ChatHistoryItem = { role: "user" | "assistant"; content: string };
 
@@ -250,6 +263,8 @@ export async function buildChatJobText(args: {
   history: ChatHistoryItem[];
   question: string;
   locale?: SiteLocale;
+  /** Галочка «Автозаполнение журналов» спецрежима организации. */
+  autoFill?: boolean;
 }): Promise<string> {
   const scope = await loadManagerPointScope(args.orgId, args.userId);
   const [pageContext, orgData] = await Promise.all([
@@ -265,7 +280,7 @@ export async function buildChatJobText(args: {
   return [
     `type: ${CHAT_JOB_TYPE}`,
     "---",
-    INSTRUCTION,
+    assistantInstruction(args.autoFill === true),
     `response_language: ${assistantResponseLanguage(args.locale)}`,
     "---",
     `<page_context>\n${esc(pageContext)}\n</page_context>`,

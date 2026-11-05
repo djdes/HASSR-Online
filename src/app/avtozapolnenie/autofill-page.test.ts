@@ -54,13 +54,10 @@ describe("страница и ролик «Журналы заполняются
     assert.match(page, /Датчики, автоввод с фото и «Меркурий» — возможности тарифа «Премиум»; первые \{TRIAL_DAYS\} дней/);
   });
 
-  it("этикетки, график смен, документы на месяц — из кода", () => {
+  it("этикетки — из кода; отметки по графику и автосоздание (спецрежим) страница не обещает", () => {
     assert.match(page, /журнал маркировки/);
     assert.match(read("src/lib/label-prints.ts"), /Журнал маркировки \(2026-10-31\): этикетки из «Сетап помощника»/);
-    assert.match(page, /Выходные, отпуска и больничные из графика сами проставляются в гигиеническом журнале/);
-    assert.match(read("src/lib/staff-journal-autofill.ts"), /статус ТОЛЬКО в ГИГИЕНИЧЕСКОМ журнале/);
-    assert.match(page, /Документы на следующий месяц создаются сами/);
-    assert.ok(existsSync(new URL("../api/cron/auto-create-journals/route.ts", import.meta.url)));
+    assert.ok(!/из графика сами проставляются|создаются сами/.test(page));
   });
 
   it("за человеком остаются температура продукта, органолептика, допуск и подпись — без «типовых цифр»", () => {
@@ -75,7 +72,8 @@ describe("страница и ролик «Журналы заполняются
     const vtt = autofillVtt();
     assert.match(vtt, /^WEBVTT\n\n1\n00:00:00\.000 --> 00:00:05\.000\nЖурналы, которые заполняются сами\n/);
     assert.match(vtt, /00:00:55\.000 --> 00:01:00\.000\nЖурналы, которые заполняются сами\nwesetup\.ru\/avtozapolnenie\n$/);
-    assert.equal(readFileSync(publicFile(AUTOFILL_VIDEO.captions), "utf8"), vtt);
+    // В рабочей копии Windows файл может прийти с CRLF — сравниваем текст, не окончания строк.
+    assert.equal(readFileSync(publicFile(AUTOFILL_VIDEO.captions), "utf8").replace(/\r\n/g, "\n"), vtt);
     const mp4 = statSync(publicFile(AUTOFILL_VIDEO.src)).size;
     assert.ok(mp4 > 300 * 1024 && mp4 <= AUTOFILL_VIDEO.maxBytes, `mp4 ${mp4}`);
     assert.ok(statSync(publicFile(AUTOFILL_VIDEO.poster)).size > 20 * 1024);

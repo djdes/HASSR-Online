@@ -14,10 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ChoicePills } from "@/components/settings/choice-pills";
+import { PRODUCT_KINDS, type ProductKind } from "@/lib/product-kinds";
 
-export function ProductImportDialog() {
+export function ProductImportDialog({ defaultKind = "raw" }: { defaultKind?: ProductKind }) {
   const router = useRouter();
   const t = useTranslations("settingsProductImport");
+  const tProducts = useTranslations("settingsProducts");
+  const [kind, setKind] = useState<ProductKind>(defaultKind);
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -39,6 +43,7 @@ export function ProductImportDialog() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("kind", kind);
 
       const res = await fetch("/api/products/import", {
         method: "POST",
@@ -98,6 +103,18 @@ export function ProductImportDialog() {
         />
 
         <div className="space-y-4">
+          {!result && (
+            <div className="space-y-2">
+              <p className="text-[13px] font-medium text-[#0b1024]">{t("kindLabel")}</p>
+              <ChoicePills
+                label={t("kindLabel")}
+                value={kind}
+                onChange={setKind}
+                options={PRODUCT_KINDS.map((value) => ({ value, label: tProducts(`kinds.${value}`) }))}
+              />
+              <p className="text-[12px] text-[#6f7282]">{t("kindHint")}</p>
+            </div>
+          )}
           {!result && (
             <Button
               variant="outline"
@@ -160,7 +177,7 @@ export function ProductImportDialog() {
 
           <div className="text-xs text-muted-foreground space-y-1">
             <p>{t.rich("requiredColumns", { primary: () => <strong data-product-import-raw="primary">Наименование</strong>, alternates: () => <span data-product-import-raw="alternates">Название, Товар, Номенклатура</span> })}</p>
-            <p>{t.rich("optionalColumns", { aliases: () => <span data-product-import-raw="optional">Поставщик, Штрих-код, Единица, Категория, Температура хранения, Срок годности</span> })}</p>
+            <p>{t.rich("optionalColumns", { aliases: () => <span data-product-import-raw="optional">Вид, Поставщик, Штрих-код, Единица, Категория, Температура хранения, Условия хранения, Срок годности</span> })}</p>
           </div>
         </div>
       </DialogContent>

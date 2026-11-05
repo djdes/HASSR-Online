@@ -49,6 +49,7 @@ export type NavSectionKey =
   | "productionControl"
   | "billing"
   | "more"
+  | "news"
   | "inspection";
 
 export type NavActor = {
@@ -519,7 +520,6 @@ const INSPECTION_MENU: NavMenuGroup[] = [
       { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
       { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
       { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
-      { id: "special", icon: "ShieldCheck", href: "/inspection/special-mode", access: fullAccessOr("tasks.verify") },
     ],
   },
 ];
@@ -680,10 +680,21 @@ export const NAV_SECTIONS: NavSection[] = [
     tabs: [{ id: "main", label: "main", href: "/more", access: FULL_ACCESS }],
   },
   {
+    // «Новости, статьи, обзоры экспертов» (руководитель, 2026-11-05): для всех
+    // вошедших — любой роли и набора прав, в том числе руководителю точки.
+    // Пока страница-заглушка «Раздел в разработке»; своего меню нет.
+    key: "news",
+    icon: "Newspaper",
+    tabs: [{ id: "main", label: "main", href: "/news", access: STAFF_PATH }],
+  },
+  {
     key: "inspection",
     icon: "ShieldAlert",
     // Проверяющий часто приходит, когда на месте только заведующая.
     access: fullAccessOr("tasks.verify"),
+    // Спецрежим — без пункта меню и вкладки (2026-11-05): вход тихой
+    // ссылкой «Настройки раздела» внизу «Что делать сейчас».
+    hiddenMatch: ["/inspection/settings"],
     tabs: [
       {
         id: "day",
@@ -833,6 +844,18 @@ export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[
       ...(section.renameHref ? { renameHref: section.renameHref } : {}),
     };
   });
+}
+
+/**
+ * Разделы, ради которых сайдбар не заводят: «Новости» видят все, но повару с
+ * одним рабочим разделом меню слева из-за них не нужно — он открывает их из
+ * «Разделов» мини-приложения (там главное меню целиком).
+ */
+const SIDEBAR_NEUTRAL_SECTIONS: ReadonlySet<NavSectionKey> = new Set(["news"]);
+
+/** Сайдбар нужен, когда рабочих разделов два и больше. */
+export function needsSidebar(sections: readonly { key: NavSectionKey }[]): boolean {
+  return sections.filter((section) => !SIDEBAR_NEUTRAL_SECTIONS.has(section.key)).length >= 2;
 }
 
 /** Главное меню: разделы без видимого родителя, в порядке `NAV_SECTIONS`. */

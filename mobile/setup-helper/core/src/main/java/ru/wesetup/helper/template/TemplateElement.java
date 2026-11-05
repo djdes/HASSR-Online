@@ -59,4 +59,33 @@ public final class TemplateElement {
     public TemplateElement(Type type) {
         this.type = type;
     }
+
+    /** Независимая копия — для редактора макетов и истории «Отменить». */
+    public TemplateElement copy() {
+        TemplateElement c = new TemplateElement(type);
+        c.x = x;
+        c.y = y;
+        c.w = w;
+        c.h = h;
+        c.x2 = x2;
+        c.y2 = y2;
+        c.thickness = thickness;
+        c.fill = fill;
+        c.text = text;
+        c.size = size;
+        c.bold = bold;
+        c.align = align;
+        c.valign = valign;
+        c.maxLines = maxLines;
+        c.fit = fit;
+        c.minScale = minScale;
+        c.invert = invert;
+        c.radius = radius;
+        c.src = src;
+        c.fallbackText = fallbackText;
+        c.inset = inset;
+        c.step = step;
+        c.length = length;
+        return c;
+    }
 }

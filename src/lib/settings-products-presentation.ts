@@ -44,6 +44,8 @@ const ERROR_CODES = {
   PRODUCT_NAME_REQUIRED_CREATE: { key: "errors.nameRequiredCreate", status: 400, methods: ["POST"] },
   PRODUCT_NAME_REQUIRED_UPDATE: { key: "errors.nameRequiredUpdate", status: 400, methods: ["PUT"] },
   PRODUCT_DUPLICATE_NAME: { key: "errors.duplicateName", status: 400, methods: ["POST"] },
+  PRODUCT_KIND_INVALID: { key: "errors.kindInvalid", status: 400, methods: ["POST", "PUT"] },
+  PRODUCT_SHELF_LIFE_INVALID: { key: "errors.shelfLifeInvalid", status: 400, methods: ["POST", "PUT"] },
   PRODUCT_FAILED: { key: "errors.failed", status: 500, methods: ["POST", "PUT", "DELETE"] },
 } as const;
 export type ProductErrorKey = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]["key"];

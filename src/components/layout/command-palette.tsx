@@ -163,8 +163,10 @@ export function CommandPalette() {
     return [...sectionItems, ...cardItems];
   }, [nav]);
   // «Закрыть день» и «Догнать пропуски» — у кого есть «Сегодня».
-  // «Закрыть день» — это «Автозаполнить» на главной: по галочке спецрежима.
+  // «Закрыть день» — это «Автозаполнить» на главной, «Догнать пропуски» —
+  // своя галочка: обе по спецрежиму.
   const closeDayAllowed = useAutomationOn("closeDayAutofill");
+  const catchUpAllowed = useAutomationOn("catchUp");
   const actionItems = useMemo<StaticItem[]>(() => {
     if (!nav.sections.some((section) => section.tabs.some((tab) => tab.href === "/dashboard"))) return [];
     return [
@@ -198,7 +200,7 @@ export function CommandPalette() {
           }
         },
       } satisfies StaticItem] : []),
-      {
+      ...(catchUpAllowed ? [{
         kind: "route",
         label: t("catchUpLabel"),
         hint: t("catchUpHint"),
@@ -206,9 +208,9 @@ export function CommandPalette() {
         tone: navTone("Wand2"),
         href: "/dashboard/catch-up",
         keywords: t("catchUpKeywords").split(","),
-      },
+      } satisfies StaticItem] : []),
     ];
-  }, [nav, t, closeDayAllowed]);
+  }, [nav, t, closeDayAllowed, catchUpAllowed]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

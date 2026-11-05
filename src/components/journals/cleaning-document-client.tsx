@@ -2078,12 +2078,17 @@ export function CleaningDocumentClient(props: Props) {
                             label: t("massFill"),
                             icon: <Sparkles className="size-4 text-[#5566f6]" />,
                             items: [
-                              {
-                                key: "fill-plan",
-                                label: t("fillByPlan"),
-                                title: t("applyCleaningPlanHint"),
-                                onSelect: () => applySchedulePlan("fill-empty"),
-                              },
+                              // «Заполнить по плану» ставит отметки в пустые дни
+                              // всего периода — часть «Автозаполнения журналов»
+                              // спецрежима (2026-11-05).
+                              ...(automationOn(journalControls, "autoFill")
+                                ? [{
+                                    key: "fill-plan",
+                                    label: t("fillByPlan"),
+                                    title: t("applyCleaningPlanHint"),
+                                    onSelect: () => applySchedulePlan("fill-empty"),
+                                  }]
+                                : []),
                               {
                                 key: "mark-holidays",
                                 label: t("markOffDays"),

@@ -271,7 +271,8 @@ test("меню контроль-группы с ролью руководите�
 
 test("меню контроль-группы с линейной ролью: журналы, проверка, команда и день проверки", () => {
   const nav = sections({ role: "cook", permissionPreset: "control_group" });
-  assert.deepEqual(Object.keys(nav).sort(), ["inspection", "journals", "staff"]);
+  // «Новости, статьи, обзоры экспертов» открыты всем.
+  assert.deepEqual(Object.keys(nav).sort(), ["inspection", "journals", "news", "staff"]);
   assert.deepEqual(nav.journals, ["control", "all", "verify"]);
   assert.deepEqual(nav.staff, ["team"]);
   assert.deepEqual(nav.inspection, ["day"]);

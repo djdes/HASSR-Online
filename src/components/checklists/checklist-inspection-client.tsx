@@ -4,7 +4,7 @@ import { formatChecklistTimestamp } from "@/lib/custom-checklist-display";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Printer, Save, CheckCircle2 } from "lucide-react";
+import { Printer, Save, CheckCircle2, RefreshCw, UtensilsCrossed } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { ChecklistQuestionForm } from "./checklist-question-form";
@@ -43,6 +43,23 @@ export function ChecklistInspectionClient({ id }: { id: string }) {
     const warn = (event: BeforeUnloadEvent) => { if (!completed && (uploads>0 || current.current !== saved.current)) event.preventDefault(); };
     window.addEventListener("beforeunload",warn); return () => window.removeEventListener("beforeunload",warn);
   }, [completed,uploads]);
+  // «Обновить список блюд» (05.11.2026): новые блюда бракеража и справочника —
+  // в конец, несохранённые ответы на экране остаются.
+  async function refreshDishes() {
+    if (!inspection || busy || uploads || conflict) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/checklists/inspections/${id}/dishes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ updatedAt: inspection.updatedAt }) });
+      const body = await response.json(); if (!response.ok) { if (response.status === 409) setConflict(true); throw new Error(body.error || t("dishesRefreshFailed")); }
+      if (!body.added) { toast.info(t("dishesNoNew")); return; }
+      const item = body.inspection as Inspection;
+      setInspection(item);
+      setAnswers(previous => ({ ...item.answers, ...previous }));
+      saved.current = JSON.stringify({answers:item.answers,evidence:item.evidence ?? {},categoryInstances:item.categoryInstances ?? {}});
+      toast.success(t("dishesAdded", { count: String(body.added) }));
+    } catch (err) { toast.error(err instanceof Error ? err.message : t("dishesRefreshFailed")); }
+    finally { setBusy(false); }
+  }
   async function save(complete: boolean) {
     if (!inspection || busy || uploads || conflict) return;
     const expanded = expandChecklistDefinition(inspection.snapshot,instances);
@@ -65,11 +82,14 @@ export function ChecklistInspectionClient({ id }: { id: string }) {
   const result = resolveChecklistResult(definition,answers,completed?inspection.result:undefined);
   const score = result.score;
   const repeatable = inspection.snapshot.sections.filter(s => s.active).flatMap(s => s.categories.filter(c => c.active && c.repeatable));
+  const dishCategories = inspection.snapshot.sections.filter(s => s.active).flatMap(s => s.categories.filter(c => c.active && c.rowsSource === "serving_dishes"));
+  const dishCount = dishCategories.reduce((sum, category) => sum + (category.rows?.length ?? 0), 0);
   return <div className="space-y-5"><PageHeader title={inspection.title} description={t("subtitle", { version: inspection.templateVersion, status: completed ? t("statusCompleted") : t("statusDraft") })} actions={<div className="flex flex-wrap gap-2 print:hidden"><Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />{t("print")}</Button><Button variant="outline" asChild><a href={`/api/checklists/inspections/${id}/pdf`} target="_blank" rel="noopener noreferrer">{t("downloadPdf")}</a></Button>{!completed ? <><Button variant="outline" disabled={busy || !!uploads || conflict} onClick={() => void save(false)}><Save className="size-4" />{t("saveDraft")}</Button><Button disabled={busy || !!uploads || conflict} onClick={() => void save(true)}><CheckCircle2 className="size-4" />{t("complete")}</Button></> : null}</div>} />
     <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-sm text-[#3c4053]"><p>{t("startedBy", { name: inspection.createdByName, time: formatChecklistTimestamp(inspection.createdAt) })}</p>{inspection.completedAt ? <p>{t("completedBy", { name: inspection.completedByName ?? "", time: formatChecklistTimestamp(inspection.completedAt) })}</p> : null}<p className="mt-2 font-medium">{t("resultLine", { earned: score.earned, possible: score.possible, percent: score.possible > 0 ? ` (${Math.round(score.earned / score.possible * 100)}%)` : "", zeroed: score.possible > 0 ? "" : result.zeroScore ? t("zeroedSuffix") : "", violations: result.violations.length })}</p>{!completed ? <p className="mt-2 text-xs text-muted-foreground">{t("saveBeforeLeaving")}</p> : null}</div>
     {conflict ? <div role="alert" className="rounded-xl bg-amber-50 p-4"><p>{t("conflictText")}</p><Button variant="outline" onClick={() => { if(window.confirm(t("reloadConfirm"))) void load(); }}>{t("reload")}</Button></div> : null}
     {result.stopped ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><p className="font-medium">{t("criticalTitle")}</p><p>{result.critical.map(item => item.title).join(", ")}</p>{!completed ? <p>{t("criticalHint")}</p> : null}</div> : null}
     {inspection.snapshot.description ? <ChecklistDescription text={inspection.snapshot.description} /> : null}
+    {!completed && dishCategories.length ? <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dfe3ff] bg-[#f5f6ff] p-4 print:hidden"><div className="flex min-w-0 items-start gap-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#5566f6]"><UtensilsCrossed className="size-4" /></span><div className="min-w-0"><p className="text-[14px] font-medium text-[#0b1024]">{t("dishesCount", { count: String(dishCount) })}</p><p className="text-[12.5px] text-[#6f7282]">{t("dishesHint")}</p></div></div><Button variant="outline" disabled={busy || !!uploads || conflict} onClick={() => void refreshDishes()}><RefreshCw className="size-4" />{t("dishesRefresh")}</Button></section> : null}
     {!completed && repeatable.length ? <section className="space-y-3 rounded-2xl border p-4 print:hidden"><h2 className="font-medium">{t("repeatableTitle")}</h2>{repeatable.map(category => <div key={category.id} className="flex flex-wrap items-center gap-2 text-sm"><span>{t("instancesCount", { title: category.title, count: (instances[category.id]?.length ?? 0)+1 })}</span><Button variant="outline" disabled={busy || !!uploads || (instances[category.id]?.length ?? 0) >= 20} onClick={() => {
       const next = {...instances,[category.id]:[...(instances[category.id] ?? []),crypto.randomUUID()]};
       try { expandChecklistDefinition(inspection.snapshot,next); setInstances(next); } catch(error) {toast.error(error instanceof Error ? error.message : t("questionLimit"));}

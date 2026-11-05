@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -308,6 +309,10 @@ function HealthDocumentRow(props: {
 }
 
 export function HealthDocumentsClient(props: Props) {
+  // «Как журнал ведётся сам» — только когда автосоздание и автозаполнение
+  // включены в спецрежиме (2026-11-05): иначе подсказка обещает то, чего нет.
+  const autoCreateOn = useAutomationOn("autoCreate");
+  const autoFillOn = useAutomationOn("autoFill");
   const tList = useTranslations("hygiene.list");
   const tHealth = useTranslations("journalUi.healthList");
   const tNames = useTranslations("journals.names");
@@ -344,7 +349,7 @@ export function HealthDocumentsClient(props: Props) {
 
         <JournalTabs activeTab={props.activeTab} templateCode={props.templateCode} />
 
-        {props.automation ? (
+        {props.automation && autoCreateOn && autoFillOn ? (
           <>
             <PageGuide
               title={tList("automation.title")}

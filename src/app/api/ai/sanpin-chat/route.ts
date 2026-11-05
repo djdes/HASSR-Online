@@ -16,6 +16,8 @@ import {
   verifyAndExecuteAction,
   type ActionActor,
 } from "@/lib/ai-assistant/actions";
+import { automationOn } from "@/lib/journal-controls";
+import { getJournalControls } from "@/lib/journal-controls.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,6 +127,7 @@ export async function POST(request: Request) {
       history,
       question: question.content,
       locale,
+      autoFill: automationOn(await getJournalControls(orgId), "autoFill"),
     });
   } catch (err) {
     console.error("[sanpin-chat] job text build failed", err);

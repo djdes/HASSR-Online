@@ -2475,8 +2475,21 @@ model Product {
   barcode        String?
   unit           String       @default("kg")
   category       String?
+  /// Вид продукции (05.11.2026): "raw" — продукты (сырьё), "semi" —
+  /// полуфабрикаты собственного производства, "finished" — готовая продукция.
+  /// По умолчанию сырьё: справочник служил приёмке и входному контролю.
+  kind           String       @default("raw")
+  /// Температурный режим хранения: «+2…+6 °C».
   storageTemp    String?
+  /// Условие хранения словами: «в закрытой таре, вдали от сырья».
+  storageConditions String?
+  /// Срок годности: в сутках (`shelfLifeDays`) или в часах (`shelfLifeHours`)
+  /// — заполнено одно из двух; у блюд и полуфабрикатов срок обычно в часах.
   shelfLifeDays  Int?
+  shelfLifeHours Int?
+  /// Как подаётся готовая продукция: "hot" | "soup" | "cold" — чек-лист
+  /// «Контроль температуры готовых блюд на раздаче» берёт отсюда норму.
+  servingTemp    String?
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   isActive       Boolean      @default(true)

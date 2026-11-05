@@ -186,7 +186,7 @@ export async function PUT(request: Request) {
   // эта часть автоматики выбрана; выключать — всегда.
   const controls = await getJournalControls(organizationId);
   const blockedFeature = (feature: AutomationFeature) =>
-    NextResponse.json({ error: automationDisabledError(feature), code: "special_mode", feature }, { status: 403 });
+    NextResponse.json({ error: automationDisabledError(feature) }, { status: 403 });
 
   // Новый формат побеждает: он несёт обе половинки. Легаси `codes`
   // трактуем как «только автосоздание», не трогая автозаполнение —

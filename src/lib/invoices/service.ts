@@ -82,6 +82,8 @@ export async function createInvoiceOrder(args: {
   expectedGrossRub?: number | null;
   /** Введённый промокод (или код из ссылки); проверит и посчитает сервер. */
   promoCode?: string | null;
+  /** Счёт из карточки клиента (ROOT): от 50 точек можно — по договорённости. */
+  allowIndividual?: boolean;
 }): Promise<CreateInvoiceResult> {
   const requisites = await readPlatformRequisites();
   if (!invoiceRequisitesReady(requisites)) {
@@ -97,7 +99,7 @@ export async function createInvoiceOrder(args: {
   // кабинете рядом с кнопкой. Счёт фиксирует её на свой срок: оплатят после
   // конца акции — всё равно по сумме счёта.
   const now = new Date();
-  const quote = await quoteCheckout({ organizationId: args.organizationId, target: args.target, now });
+  const quote = await quoteCheckout({ organizationId: args.organizationId, target: args.target, now, allowIndividual: args.allowIndividual });
   if (!quote.ok) return { ok: false, status: quote.status, error: quote.error };
   const offer = quote.offer;
 

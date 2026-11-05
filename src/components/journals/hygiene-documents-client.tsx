@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 import { TOUR } from "@/lib/tour-anchors";
 
 import Link from "next/link";
@@ -340,6 +341,10 @@ function DocumentRow({
 }
 
 export function HygieneDocumentsClient(props: Props) {
+  // «Как журнал ведётся сам» — только когда автосоздание и автозаполнение
+  // включены в спецрежиме (2026-11-05): иначе подсказка обещает то, чего нет.
+  const autoCreateOn = useAutomationOn("autoCreate");
+  const autoFillOn = useAutomationOn("autoFill");
   const {
     activeTab,
     templateCode,
@@ -388,7 +393,7 @@ export function HygieneDocumentsClient(props: Props) {
 
         <JournalTabs activeTab={activeTab} templateCode={templateCode} />
 
-        {props.automation ? (
+        {props.automation && autoCreateOn && autoFillOn ? (
           <>
             <PageGuide
               title={tList("automation.title")}

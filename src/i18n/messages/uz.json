@@ -829,8 +829,6 @@
       "step3Body": "Tekshiruvchi QR orqali tashriflar jurnaliga o‘zi yozuv kiritadi va qaror fotosini biriktiradi. Kiritmagan bo‘lsa — tashriflar jurnalini oching, yozuv qo‘shing va qarorni suratga oling.",
       "step4Title": "Hujjatlarni topshiring",
       "step4Body": "Kerakli davr uchun arxivni yuklab oling: jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi, CAPA va tashriflar jurnali — bitta ZIP faylda.",
-      "step5Title": "Maxsus rejimni tekshiring (ixtiyoriy)",
-      "step5Body": "Maxsus rejim jurnallar avtomatikasini yoqadi. Tekshiruv vaqtida uni o‘chirish mumkin — jurnallarda faqat xodimlarning yozuvlari qoladi.",
       "tipsTitle": "Maslahatlar",
       "tip1": "Tekshiruvchiga hamroh bo‘ling va tekshiruv predmeti bo‘yicha savollarga xotirjam va aniq javob bering.",
       "tip2": "Rejadan tashqari tekshiruvda odatda prokuratura bilan kelishilganlik belgisi bo‘ladi — uni qarorda ko‘ring.",
@@ -922,14 +920,14 @@
     "special": {
       "title": "Maxsus rejim",
       "lead": "Jurnallarda avtomatikani yoqadi — faqat siz belgilaganini. Rejim o‘chiq bo‘lsa, jurnallarda avtomatika yo‘q: yozuvlarni xodimlar o‘zlari kiritadi.",
-      "offState": "Hozir avtomatika yashirilgan: jurnallarda avtomatik to‘ldirish, avtomatik hujjatlar va tezkor tugmalar yo‘q.",
+      "offState": "Hozir avtomatika yashirilgan: jurnallarda avtomatik to‘ldirish, avtomatik hujjatlar, tezkor tugmalar va «O‘tkazib yuborilganlarni to‘ldirish» yo‘q.",
       "onState": "Jurnallarda ko‘rinadi:",
       "noneChosen": "Hech narsa belgilanmagan — jurnallarda avtomatika yo‘q.",
       "change": "O‘zgartirish",
       "features": {
         "autoFill": {
           "title": "Jurnallarni avtomatik to‘ldirish",
-          "hint": "Hujjatlardagi «Avtomatik to‘ldirish» kaliti: belgilar va ko‘rsatkichlar har kuni o‘zi qo‘yiladi."
+          "hint": "Hujjatlardagi «Avtomatik to‘ldirish» kaliti, gigiyenada «Hammasini «Sog‘lom» deb belgilash», tozalashda «Reja bo‘yicha to‘ldirish» va AI yordamchi orqali odatiy to‘ldirish: belgilar va ko‘rsatkichlar o‘zi qo‘yiladi."
         },
         "autoCreate": {
           "title": "Hujjatlarni avtomatik yaratish",
@@ -937,11 +935,15 @@
         },
         "copyYesterday": {
           "title": "«Kechagisini nusxalash»",
-          "hint": "Hujjatdagi tugma: kechagi qatorlarni bugunga ko‘chiradi."
+          "hint": "Hujjatdagi tugma kechagi qatorlarni bugunga ko‘chiradi; xodim vazifasida — «Kechagidek to‘ldirish» tugmasi."
         },
         "closeDayAutofill": {
           "title": "Bosh sahifadagi «Avtomatik to‘ldirish»",
           "hint": "Jurnallar ro‘yxati ustidagi tugma: barcha kundalik jurnallarning bo‘sh kunlarini bugungacha to‘ldiradi."
+        },
+        "catchUp": {
+          "title": "«O‘tkazib yuborilganlarni to‘ldirish»",
+          "hint": "Bosh sahifadagi jurnallar ustidagi belgi va qidiruvdagi band: oxirgi 14 kun jadvali, bo‘sh kunlar eng yaqin to‘ldirilgan kun nusxasi bilan to‘ldiriladi."
         }
       },
       "dialogTitle": "Jurnallarda nimani yoqish kerak",
@@ -973,18 +975,18 @@
     "now": {
       "guideTitle": "«Tekshiruv keldi» bo‘limi qanday tuzilgan",
       "guide1": "Bu yerda — tekshiruvchi kelgandagi qadamlar, ekrandagi QR va hujjatlar arxivi.",
-      "guide2": "Tashriflar jurnali, me’yoriy hujjatlar va maxsus rejim — bo‘lim menyusining alohida bandlari; bu yerda ular qisqacha, «Ochish» havolasi bilan.",
+      "guide2": "Tashriflar jurnali va me’yoriy hujjatlar — bo‘lim menyusining alohida bandlari; bu yerda ular qisqacha, «Ochish» havolasi bilan.",
       "guide3": "Tekshiruv hali kelmagan bo‘lsa — QR ni oldindan chiqaring va varaqni chop eting: tekshiruvchiga faqat kodni skanerlash qoladi.",
       "q1": "Tekshiruvchi QR orqali nimani ko‘radi?",
       "a1": "Jurnallar, ishlab chiqarish nazorati dasturi, HACCP rejasi va me’yoriy hujjatlarni — kirmasdan va faqat ko‘rish uchun. U yozuvlarni o‘zgartira olmaydi.",
       "q2": "Bo‘lim kimga ochiq?",
       "a2": "Rahbariyatga va vazifalarni tekshirish huquqi bor xodimlarga: tekshiruv ko‘pincha joyida faqat mudira bo‘lganda keladi. QR chiqarish, tayyorgarlik va xizmatlar — rahbariyatda.",
       "visitsLead": "Tekshiruvchi QR orqali o‘zi yozuv kiritadi. Kiritmagan bo‘lsa — jurnalni oching va qaror skani bilan yozuv qo‘shing.",
-      "specialLead": "Jurnallar avtomatikasini yoqadi; tekshiruv vaqtida uni o‘chirish mumkin.",
       "moreTitle": "Bo‘limda yana",
       "normsHint": "Ishlab chiqarish nazorati dasturi, HACCP rejasi va SanPiN me’yorlari — tekshiruvchiga nimani ko‘rsatish",
       "readinessHint": "Tekshiruvchi kelguncha nimani tuzatish kerak",
-      "expertsHint": "Tekshiruvdan oldingi audit va mutaxassisning chiqishi"
+      "expertsHint": "Tekshiruvdan oldingi audit va mutaxassisning chiqishi",
+      "settingsLink": "Bo‘lim sozlamalari"
     },
     "pages": {
       "visits": {
@@ -1027,7 +1029,7 @@
         "a1": "Tashkilot rahbariyati. Arizani WeSetup menejeri ko‘radi."
       },
       "special": {
-        "lead": "Jurnallar avtomatikasini belgilar bo‘yicha yoqadi: avtomatik to‘ldirish, hujjatlarni avtomatik yaratish va tezkor tugmalar.",
+        "lead": "Maxsus rejim: jurnallar avtomatikasini belgilar bo‘yicha yoqadi — avtomatik to‘ldirish, hujjatlarni avtomatik yaratish, tezkor tugmalar va «O‘tkazib yuborilganlarni to‘ldirish». Bu sahifadan boshqa hech qayerda u haqida aytilmaydi.",
         "guideTitle": "Bilish muhim",
         "guide1": "Rejim sukut bo‘yicha o‘chiq: jurnallarda faqat xodimlar kiritgan yozuvlar bo‘ladi.",
         "guide2": "Rejim butun tashkilotga — barcha nuqtalarga birdaniga amal qiladi.",
@@ -1301,7 +1303,7 @@
       },
       "undoRedo": {
         "undoAria": "Oxirgi o‘zgartirishni bekor qilish",
-        "undoTitle": "Bekor qilish (Ctrl+Z). Faqat shu varaqdagi sizning tahrirlaringiz bekor qilinadi — avtomatik to‘ldirishga tegilmaydi.",
+        "undoTitle": "Bekor qilish (Ctrl+Z). Faqat shu varaqdagi sizning tahrirlaringiz bekor qilinadi.",
         "redoAria": "Bekor qilingan o‘zgartirishni qaytarish",
         "redoTitle": "Qaytarish (Ctrl+Shift+Z)"
       },
@@ -2723,6 +2725,7 @@
         "productionControl": "Ishlab chiqarish nazorati",
         "billing": "Obunalar",
         "more": "Boshqalar",
+        "news": "Yangiliklar, maqolalar, ekspert sharhlari",
         "inspection": "Tekshiruv keldi",
         "office": "Ofis",
         "monitoring": "Monitoring",
@@ -2928,8 +2931,7 @@
             "experts": "Konsalting",
             "now": "Hozir nima qilish kerak",
             "visits": "Tashriflar jurnali",
-            "readiness": "Tekshiruvga tayyorgarlik",
-            "special": "Maxsus rejim"
+            "readiness": "Tekshiruvga tayyorgarlik"
           }
         },
         "office": {
@@ -3160,9 +3162,9 @@
       "inspection_visits": "Tashriflar jurnali",
       "inspection_norms": "IChN va HACCP rejasi",
       "inspection_experts": "Konsalting",
-      "inspection_special_mode": "Maxsus rejim",
       "production_control": "Ishlab chiqarish nazorati dasturi",
       "more": "Boshqalar",
+      "news": "Yangiliklar, maqolalar, ekspert sharhlari",
       "knowledge": "Yo‘riqnomalar",
       "checklists": "Chek-listlar",
       "checklists_templates": "Chek-list shablonlari",
@@ -3309,7 +3311,8 @@
       "home": "Bosh sahifa",
       "monitoring": "Monitoring",
       "journals_points": "Nuqtalar jurnallari",
-      "inspection_laws": "Me’yoriy hujjatlar"
+      "inspection_laws": "Me’yoriy hujjatlar",
+      "inspection_settings": "Bo‘lim sozlamalari"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",
@@ -4188,7 +4191,7 @@
         "hygiene": {
           "create-document": {
             "title": "Hujjat yarating",
-            "body": "«Hujjat yaratish»ni bosing: 15 kunlik davr va nom avtomatik qo‘yiladi. Ko‘rik o‘tkazuvchini tanlang. Avtomatik yaratish yoqilgan bo‘lsa, hujjat allaqachon ro‘yxatda."
+            "body": "«Hujjat yaratish»ni bosing: 15 kunlik davr va nom avtomatik qo‘yiladi. Ko‘rik o‘tkazuvchini tanlang."
           },
           "open-document": {
             "title": "Hujjatni oching",
@@ -4246,7 +4249,7 @@
           },
           "add-row": {
             "title": "Bugungi qatorni qo‘shing",
-            "body": "Avtomatik to‘ldirish o‘chiq bo‘lsa: «Qator qo‘shish» → sana va kim o‘lchagani."
+            "body": "«Qator qo‘shish» → sana va kim o‘lchagani."
           },
           "measure-input": {
             "title": "Ko‘rsatkichlarni kiriting",
@@ -5604,8 +5607,8 @@
         "text": "Jurnal yozuvi qoldirib ketilsa yoki harorat me’yordan chiqsa, Telegram va elektron pochta mas’ul xodimga xabar beradi."
       },
       "autofill": {
-        "title": "Avtomatik to‘ldirish",
-        "text": "Gigiyena, harorat va tozalash ma’lumotlari ruxsat etilgan joylarda avtomatik kiritiladi."
+        "title": "Ma’lumotlar o‘zi keladi",
+        "text": "Harorat — datchiklar va displey suratidan, qabul — yuk xatlaridan: raqamlarni qayta yozish shart emas."
       },
       "paperless": {
         "title": "Tekshiruv uchun PDF",
@@ -5690,6 +5693,11 @@
           "tab": "Xulosa",
           "title": "Kunlik xulosa",
           "text": "Bugun qaysi jurnallar to‘ldirilgan, nima o‘tkazib yuborilgan va kimga eslatish kerak — kabinetning birinchi ekranida."
+        },
+        "monitoring": {
+          "tab": "Monitoring",
+          "title": "Nuqtalar bo‘yicha bajarilish",
+          "text": "Bugungi jurnallar, chek-listlar va ishlab chiqarish nazorati dasturi — butun kompaniya va har bir nuqta bo‘yicha foizlarda."
         },
         "journals": {
           "tab": "Jurnallar",
@@ -6961,7 +6969,7 @@
       "responsibleSurname": "Mas’ul shaxs",
       "today": "bugun",
       "humidityPercent": "HN, %",
-      "emptyRows": "Hozircha qatorlar yo‘q. Birinchi yozuvni qo‘lda qo‘shing yoki avtomatik to‘ldirishni yoqing.",
+      "emptyRows": "Hozircha qatorlar yo‘q. Birinchi yozuvni qo‘shing.",
       "addRowButton": "Qator qo‘shish",
       "roomDirectoryHint": "Xonalar barcha jurnallar uchun umumiy. Harorat va namlik me’yorlari xona kartasida belgilanadi.",
       "updateRowFailed": "Qatorni yangilab bo‘lmadi",
@@ -8464,7 +8472,7 @@
       "instruction": {
         "title": "Xodimlar sahifasi haqida",
         "intro": "Bu sahifada tashkilot xodimlarini boshqarish mumkin: lavozim va xodim qo‘shish, dam olish kunlari, ta’til, kasallik va ishdan bo‘shash jadvallarini yuritish.",
-        "schedule": "Barcha jadvallar <b>faqat Gigiyena jurnalini avtomatik to‘ldirish uchun</b> ishlatiladi — tegishli kataklarda «V», «Ta’til» yoki «Kasallik» ko‘rsatiladi.",
+        "schedule": "To‘ldirilgan jadvallar <b>Gigiyena jurnalida</b> ishlatiladi — ular bo‘yicha kataklarda «V», «Ta’til» yoki «Kasallik» qo‘yiladi.",
         "archive": "Jurnallardagi mavjud yozuvlarga bog‘langan xodimni o‘chirib bo‘lmaydi. Uni <b>Arxiv</b>ga o‘tkazish mumkin: avvalgi yozuvlar saqlanadi, xodim esa faol ro‘yxatlardan olib tashlanadi."
       },
       "addPeriod": {
@@ -9153,7 +9161,7 @@
           },
           "journals": {
             "title": "Nuqta jurnallari",
-            "body": "O‘z jurnallar to‘plami, avtomatika va komissiya — tugmalar sozlamalarni shu nuqta bilan ochadi."
+            "body": "O‘z jurnallar to‘plami va komissiya — tugmalar sozlamalarni shu nuqta bilan ochadi."
           }
         },
         "qa": {
@@ -9359,7 +9367,7 @@
       },
       "journals": {
         "title": "Nuqta jurnallari",
-        "hint": "Nuqta qaysi jurnallarni yuritadi, qaysilari o‘zi yuritiladi va brakeraj komissiyasida kim bor — har bir nuqtada o‘ziniki.",
+        "hint": "Nuqta qaysi jurnallarni yuritadi va brakeraj komissiyasida kim bor — har bir nuqtada o‘ziniki.",
         "inWork": "{count, plural, other {# ta jurnal}}",
         "inWorkHint": "nuqtada ishlatilmoqda",
         "auto": "{count, plural, other {# ta jurnal}}",
@@ -10354,16 +10362,6 @@
           "contactsHint": "Telefon, buxgalter emaili, vaqt mintaqasi va til"
         }
       },
-      "specialMode": {
-        "title": "Maxsus rejim",
-        "description": "Jurnallar avtomatikasini belgilar bo‘yicha yoqadi: avtomatik to‘ldirish, hujjatlarni avtomatik yaratish va tezkor tugmalar. Sukut bo‘yicha o‘chiq.",
-        "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
-        "movedTitle": "Maxsus rejim — «Tekshiruv keldi» bo‘limida",
-        "movedBody": "Maxsus rejim jurnallarda avtomatikani yoqadi — avtomatik to‘ldirish, avtomatik yaratish va tezkor tugmalar. Kalit va belgilar o‘sha yerda, tekshiruvchi QR kodi yonida.",
-        "movedLink": "Ochish",
-        "statusOn": "Hozir yoqilgan",
-        "statusOff": "Hozir o‘chirilgan"
-      },
       "partnerConversion": {
         "title": "Hamkor kabinetiga o‘tkazish",
         "description": "Bu tashkilotni mijoz uchun boshqarayotgan bo‘lsangiz, uni “{partnerName}” hamkor kabinetingizga o‘tkazing. Obunani tashkilotning o‘zi to‘laydi, siz esa uning to‘lovlaridan mukofot olasiz.",
@@ -10746,8 +10744,8 @@
       "seedStaff": "Sinash uchun namoyish xodimlarini qo‘shish",
       "apply": "Shablonni qo‘llash",
       "applying": "Shablon qo‘llanmoqda…",
-      "success": "«{preset}» shabloni qo‘llandi. Lavozimlar: {positions, number}; jurnallarga kirish ruxsatlari: {access, number}; avtomatik yaratiladigan jurnallar: {automatic, number}.",
-      "successWithStaff": "«{preset}» shabloni qo‘llandi. Lavozimlar: {positions, number}; jurnallarga kirish ruxsatlari: {access, number}; avtomatik yaratiladigan jurnallar: {automatic, number}; qo‘shilgan namoyish xodimlari: {staff, number}.",
+      "success": "«{preset}» shabloni qo‘llandi. Lavozimlar: {positions, number}; jurnallarga kirish ruxsatlari: {access, number}.",
+      "successWithStaff": "«{preset}» shabloni qo‘llandi. Lavozimlar: {positions, number}; jurnallarga kirish ruxsatlari: {access, number}; qo‘shilgan namoyish xodimlari: {staff, number}.",
       "errors": {
         "forbidden": "Shablonni faqat rahbar qo‘llashi mumkin.",
         "invalid": "Tanlangan kompaniya turi va shablon parametrlarini tekshiring.",
@@ -10766,7 +10764,7 @@
         },
         "points": {
           "title": "Nuqta — uning xodimlari va jurnallari",
-          "body": "Oshpazlar, oshxona ishchilari, ofitsiantlar, mudira — o‘z nuqtasi sahifasida: u yerda jurnallar to‘plami, avtomatika va komissiya ham bor."
+          "body": "Oshpazlar, oshxona ishchilari, ofitsiantlar, mudira — o‘z nuqtasi sahifasida: u yerda jurnallar to‘plami va komissiya ham bor."
         },
         "move": {
           "title": "Xodimni qanday o‘tkazish",
@@ -11051,7 +11049,8 @@
     "value": "Qiymat: {value}",
     "staffAdded": "Xodim qo‘shildi: {name} — {position}",
     "cellsFilled": "To‘ldirilgan kataklar: {count, number}{skipped, plural, =0 {} other {, o‘tkazib yuborildi (kun yopilgan): #}}{qr, plural, =0 {} other {, QR orqali belgilash uchun qoldirildi: #}}",
-    "invalidPhone": "Telefon formati noto‘g‘ri. Masalan: +7 985 123-45-67"
+    "invalidPhone": "Telefon formati noto‘g‘ri. Masalan: +7 985 123-45-67",
+    "unavailable": "Bu amal mavjud emas."
   },
   "equipmentCalibration": {
     "pageTitle": "O‘lchov vositalarini qiyoslash jadvali",
@@ -16787,9 +16786,9 @@
       "autofill": {
         "title": "Jurnallarni avtomatik to‘ldirish",
         "tagline": "Odatiy qiymatlar o‘zi kiritiladi — xodim bir xil raqamlarni har smenada qayta yozmay, holatni tasdiqlaydi.",
-        "intro": "Avtomatik to‘ldirishni nozik sozlash mumkin. Smena, dam olish jadvali yoki lavozim kabi aniq vaqtga bog‘liq bo‘lmagan qiymatlarni WeSetup o‘zi kiritadi. Asbob bilan o‘lchanishi yoki ko‘z bilan tekshirilishi kerak bo‘lgan qiymatlar esa ataylab avtomatik to‘ldirilmaydi.",
+        "intro": "Avtomatik to‘ldirishni nozik sozlash mumkin. Sana, smena yoki lavozim kabi aniq vaqtga bog‘liq bo‘lmagan qiymatlarni WeSetup o‘zi kiritadi. Asbob bilan o‘lchanishi yoki ko‘z bilan tekshirilishi kerak bo‘lgan qiymatlar esa ataylab avtomatik to‘ldirilmaydi.",
         "automaticHeading": "Nimalar avtomatik kiritiladi",
-        "automatic1": "Gigiyena jurnalidagi dam olish kuni, ta’til va kasallik belgisi.",
+        "automatic1": "QR shaklida yozuv vaqti va xodimning F.I.Sh. — xodim faqat tasdiqlaydi.",
         "automatic2": "Xodim smenaga qo‘shilganda uning lavozimi.",
         "automatic3": "Jurnal sarlavhasidagi ma’lumotlar: sana, smena raqami, mas’ul shaxs.",
         "automatic4": "Ruxsat etilgan chegara ichidagi harorat o‘lchoviga “me’yoriy holat” belgisi.",
@@ -17295,7 +17294,7 @@
       "calcJournalsLink": "SanPiN jurnallari kalkulyatori",
       "printFormsLink": "Bosma shakllar va namunalar (PDF/DOCX)",
       "sanpinGuideLink": "SanPiN 2.3/2.4.4282-26 sharhi",
-      "autofillFeatureLink": "Jadval bo‘yicha avtomatik to‘ldirish",
+      "autofillFeatureLink": "Datchiklar va hisob tizimlaridan ma’lumotlar",
       "landingGuidePrefix": "Batafsil sharh: {label}"
     },
     "descriptions": {
@@ -18138,7 +18137,7 @@
   "publicJournalDetailSeo": {
     "hygiene": {
       "title": "Gigiyena jurnali — umumiy ovqatlanish uchun namuna",
-      "description": "SanPiN 2.3/2.4.4282-26 bo‘yicha gigiyena jurnali: avtomatik to‘ldirish, ishga ruxsat, harorat tekshiruvi, Rospotrebnadzor uchun PDF. 14 kun bepul.",
+      "description": "SanPiN 2.3/2.4.4282-26 bo‘yicha gigiyena jurnali: ishga ruxsat, harorat tekshiruvi, Rospotrebnadzor uchun PDF. 14 kun bepul.",
       "keywords": {
         "item0": "gigiyena jurnali",
         "item1": "xodimlarni ko‘rikdan o‘tkazish jurnali",
@@ -21840,7 +21839,8 @@
       "bonusLine": "Bonuslar: {amount} — har bir mijoz uchun uning {after}-to‘lovidan keyin {bonus}",
       "bonusLater": "Mijoz uchun {bonus} bonus uning {after}-to‘lovi bilan keladi — ikkinchi yilda",
       "footnote": "{version}-versiya qoidalari: mijozning birinchi to‘lovidan boshlab {months} oy davomida har bir obuna to‘lovidan ulush. Uskunalar uchun yana {hardware} % alohida, bu yerga kirmaydi.",
-      "heroLink": "Daromadni hisoblash"
+      "heroLink": "Daromadni hisoblash",
+      "vip": "VIP"
     }
   },
   "publicPrivacy": {
@@ -22154,7 +22154,7 @@
     "done": "Tayyor",
     "uploadMore": "Yana yuklash",
     "requiredColumns": "Majburiy ustun: <primary>Наименование</primary> (yoki <alternates>Название, Товар, Номенклатура</alternates>)",
-    "optionalColumns": "Ixtiyoriy ustunlar: <aliases>Поставщик, Штрих-код, Единица, Категория, Температура хранения, Срок годности</aliases>",
+    "optionalColumns": "Ixtiyoriy ustunlar: <aliases>Вид, Поставщик, Штрих-код, Единица, Категория, Температура хранения, Условия хранения, Срок годности</aliases>",
     "errors": {
       "generic": "Importda xatolik yuz berdi",
       "unauthorized": "Tizimga kirmagansiz",
@@ -22166,7 +22166,9 @@
       "nameColumnRequired": "Mahsulot nomi ustuni topilmadi. Kutilgan nomlar: <aliases>\"Наименование\", \"Название\", \"Товар\", \"Номенклатура\"</aliases> yoki <last>\"Продукт\"</last>",
       "noProducts": "Nomi bor mahsulotlar topilmadi",
       "failed": "Importda xatolik yuz berdi. Fayl formatini tekshiring."
-    }
+    },
+    "kindLabel": "Fayldagi mahsulot turi",
+    "kindHint": "«Вид» ustuni bo‘lmagan qatorlar uchun. Faylda «Вид» ustuni bo‘lsa (xomashyo / yarim tayyor / tayyor), o‘sha olinadi."
   },
   "settingsProducts": {
     "guide": {
@@ -22199,8 +22201,9 @@
       "barcode": "Shtrix-kod",
       "unit": "Birlik",
       "storage": "Saqlash",
-      "shelfLife": "Yaroqlilik (kun)",
-      "actions": "Amallar"
+      "shelfLife": "Yaroqlilik muddati",
+      "actions": "Amallar",
+      "kind": "Turi"
     },
     "formats": {
       "title": "Qo‘llab-quvvatlanadigan import formatlari",
@@ -22221,13 +22224,22 @@
       "barcode": "Shtrix-kod",
       "unit": "O‘lchov birligi",
       "category": "Toifa",
-      "shelf": "Yaroqlilik muddati (kun)",
-      "temp": "Saqlash harorati"
+      "shelf": "Yaroqlilik muddati",
+      "temp": "Harorat rejimi",
+      "kind": "Mahsulot turi",
+      "shelfUnit": "Muddat birligi",
+      "conditions": "Saqlash shartlari",
+      "serving": "Qanday beriladi"
     },
     "examples": {
       "name": "3.2% li sut",
       "supplier": "«Yetkazib beruvchi» MChJ",
-      "category": "Sut mahsulotlari"
+      "category": "Sut mahsulotlari",
+      "conditions": {
+        "raw": "Quruq, shamollatiladigan joyda, tayyor mahsulotdan alohida",
+        "semi": "Yopiq, belgilangan idishda, muzlatgichning pastki tokchasida",
+        "finished": "Marmitda yoki issiq vitrinada; salatlar — sovutiladigan vitrinada"
+      }
     },
     "errors": {
       "generic": "Xato",
@@ -22238,7 +22250,9 @@
       "failed": "Serverning ichki xatosi",
       "idRequired": "ID ko‘rsatilmagan",
       "notFound": "Mahsulot topilmadi",
-      "nameRequiredUpdate": "Nom majburiy"
+      "nameRequiredUpdate": "Nom majburiy",
+      "kindInvalid": "Noma’lum mahsulot turi",
+      "shelfLifeInvalid": "Yaroqlilik muddati noldan katta butun son bo‘lishi kerak"
     },
     "delete": {
       "title": "Mahsulot katalogdan o‘chirilsinmi?",
@@ -22263,6 +22277,53 @@
       "pc": "dona",
       "bottle": "flakon",
       "pack": "qadoq"
+    },
+    "tabs": {
+      "all": "Barchasi",
+      "label": "Mahsulot turi"
+    },
+    "kinds": {
+      "raw": "Mahsulotlar (xomashyo)",
+      "semi": "Yarim tayyor mahsulotlar (o‘z ishlab chiqarish)",
+      "finished": "Tayyor mahsulot"
+    },
+    "kindsShort": {
+      "raw": "Xomashyo",
+      "semi": "Yarim tayyor",
+      "finished": "Tayyor"
+    },
+    "kindHints": {
+      "raw": "Yetkazib beruvchidan qabul qilinadi",
+      "semi": "Keyingi ish uchun o‘zingiz tayyorlaysiz",
+      "finished": "Mehmonlar uchun taomlar va mahsulotlar"
+    },
+    "emptyKind": {
+      "title": "«{kind}» bo‘limi hozircha bo‘sh",
+      "raw": "Mahsulot qo‘shing yoki ma’lumotnomani import qiling — turini import paytida tanlash mumkin.",
+      "semi": "Yarim tayyor mahsulot qo‘shing: yaroqlilik muddatini soatlarda va saqlash shartlarini ko‘rsating.",
+      "finished": "Taom qo‘shing — u «Tarqatishdagi tayyor taomlar haroratini nazorat qilish» chek-varag‘ida paydo bo‘ladi."
+    },
+    "shelfUnits": {
+      "hours": "soat",
+      "days": "sutka"
+    },
+    "shelfValue": {
+      "hours": "{count} soat",
+      "days": "{count} sutka"
+    },
+    "hints": {
+      "shelf": "Xomashyo muddati odatda sutkalarda, yarim tayyor mahsulot va taomlarniki — soatlarda.",
+      "serving": "Bundan «Tarqatishdagi tayyor taomlar haroratini nazorat qilish» chek-varag‘idagi harorat me’yori bog‘liq."
+    },
+    "serving": {
+      "hot": "Issiq",
+      "soup": "Birinchi taom / issiq ichimlik",
+      "cold": "Sovuq"
+    },
+    "servingNorms": {
+      "hot": "+65 °C dan past emas",
+      "soup": "+75 °C dan past emas",
+      "cold": "+14 °C dan yuqori emas"
     }
   },
   "rootMailingKindFields": {
@@ -25377,7 +25438,8 @@
       "typePhoto": "Rasm",
       "typeText": "Matn",
       "typeInfo": "Ma’lumot",
-      "typeSignature": "Imzo"
+      "typeSignature": "Imzo",
+      "rowsServingDishes": "Bu taom kartochkasi namunasi. Tekshiruv boshlanganda u har bir taom uchun takrorlanadi: brakeraj jurnalidagi bugungi taomlar va mahsulotlar ma’lumotnomasidagi tayyor mahsulot. Harorat me’yorlari savollarning «Buzilish sharti»da o‘zgartiriladi."
     },
     "checklistEvidenceForm": {
       "proofAlt": "Tasdiq {number, number}",
@@ -25440,7 +25502,13 @@
       "removeInstanceConfirm": "{number, number}-nusxa va uning javoblari o‘chirilsinmi?",
       "removeInstance": "№ {number, number} ni olib tashlash",
       "fileTooBig": "Fayl 10 MB gacha",
-      "uploadFailed": "Faylni yuklab bo‘lmadi"
+      "uploadFailed": "Faylni yuklab bo‘lmadi",
+      "dishesCount": "Tekshiruvdagi taomlar: {count}",
+      "dishesHint": "Ro‘yxat bugungi brakeraj jurnali va ma’lumotnomadan («Tayyor mahsulot» turi) olinadi. Yangi taom paydo bo‘ldi — ro‘yxatni yangilang, kiritilgan haroratlar saqlanadi.",
+      "dishesRefresh": "Taomlar ro‘yxatini yangilash",
+      "dishesAdded": "Qo‘shilgan taomlar: {count}",
+      "dishesNoNew": "Yangi taomlar yo‘q — ro‘yxat dolzarb",
+      "dishesRefreshFailed": "Taomlar ro‘yxatini yangilab bo‘lmadi"
     },
     "checklistQuestionSettings": {
       "answerYes": "Ha",
@@ -25514,7 +25582,8 @@
       "chooseAnswer": "Javobni tanlang",
       "minPhotos": "Rasmlarning minimal soni: {count, number}",
       "photoUploadFailed": "Rasmni yuklab bo‘lmadi",
-      "photoTooBig": "2 MB gacha JPG yoki PNG mos keladi"
+      "photoTooBig": "2 MB gacha JPG yoki PNG mos keladi",
+      "outOfNorm": "Me’yordan tashqari — buzilish sifatida qayd etiladi."
     },
     "checklistsClient": {
       "loadFailed": "Cheklistlarni yuklab bo‘lmadi",
@@ -25960,7 +26029,7 @@
     },
     "pausedBanner": {
       "title": "Akkaunt pauzada",
-      "body": "— 100 kundan ortiq yozuvlar bo‘lmagan. Jurnallarni avtomatik to‘ldirish, vazifalar va eslatmalar to‘xtatilgan. Yozuvlar va sozlamalar saqlangan.",
+      "body": "— 100 kundan ortiq yozuvlar bo‘lmagan. Vazifalar va eslatmalar to‘xtatilgan. Yozuvlar va sozlamalar saqlangan.",
       "resume": "Ishni davom ettirish"
     },
     "quickStartCardClient": {
@@ -27438,11 +27507,11 @@
       "enableTitle": "Jurnallarni nuqtalar bo‘yicha alohida yuritilsinmi?",
       "enableDescription": "Allaqachon to‘ldirilganlarga nima bo‘ladi:",
       "enableBullet1": "Allaqachon yaratilgan hujjatlar nuqtaga bog‘lanmagan — ular umumiy bo‘lib qoladi va har bir nuqtada ko‘rinadi",
-      "enableBullet2": "Alohida hujjatlar faqat yangilari uchun paydo bo‘ladi: bugun tunda avtomatik yaratish har bir nuqta uchun bittadan hujjat yaratadi",
+      "enableBullet2": "Alohida hujjatlar faqat yangilari uchun paydo bo‘ladi — har bir nuqta uchun bittadan hujjat",
       "enableBullet3": "Sarlavhada nuqta tanlash paydo bo‘ladi — jurnallar ro‘yxati nuqtalar bo‘yicha bo‘ladi",
       "enable": "Yoqish",
       "disableTitle": "Alohida jurnallar o‘chirilsinmi?",
-      "disableDescription": "Barcha nuqtalar hujjatlari birga ko‘rsatiladi, tungi avtomatik yaratish esa har bir jurnal uchun bitta umumiy hujjatga qaytadi. Nuqtalar uchun allaqachon yaratilgan hujjatlar saqlanadi.",
+      "disableDescription": "Barcha nuqtalar hujjatlari birga ko‘rsatiladi, yangi hujjatlar esa yana har bir jurnal uchun bitta umumiy bo‘ladi. Nuqtalar uchun allaqachon yaratilgan hujjatlar saqlanadi.",
       "disable": "O‘chirish",
       "saveFailed": "Saqlab bo‘lmadi",
       "perPointOn": "Jurnallar nuqtalar bo‘yicha alohida yuritiladi — almashtirgich sarlavhada",
@@ -27591,7 +27660,7 @@
       "readingPhotoRequiredOn": "Foto majburiy: rasmsiz QR orqali haroratni saqlab bo‘lmaydi",
       "readingPhotoOn": "Fotofiksatsiya yoqilgan: QR-formalarda birinchi bo‘lib “Ko‘rsatkichni suratga oling” turadi",
       "healthQrOn": "QR orqali ruxsat yoqilgan: xodimlar o‘zlari belgilanadi, smena oxirida belgilanmaganlar ro‘yxati keladi",
-      "healthQrOff": "QR orqali ruxsat o‘chirilgan: gigiena yana avtomatik to‘ldiriladi",
+      "healthQrOff": "QR orqali ruxsat o‘chirilgan: gigiyena jurnalda belgilanadi",
       "qrAuthSaved": "QR-formalar endi kirishni talab qiladi: yozuvni akkaunt imzolaydi",
       "qrPinSaved": "QR-formalar: ism + PIN. Xodimlarga PIN-kodni ularning kartalarida belgilang",
       "qrPublicSaved": "QR-formalar ochiq: ism ro‘yxatdan tanlanadi",
@@ -27627,7 +27696,7 @@
       "qrDescription": "Xodim jurnal, muzlatkich yoki xona plakatini skanerlaydi va telefondan yozuv kiritadi. Buni kim qilganini qanday tasdiqlashni tanlang. Rejim o‘zgarganda plakatlarni qayta chop etish shart emas.",
       "qrModesLabel": "QR-formalar rejimi",
       "healthQrTitle": "Gigiena jurnali QR-kodi orqali ishga ruxsat",
-      "healthQrBody": "Xodim smena oldidan o‘zi imzolaydi: harorati 37 °C dan yuqori emas, o‘zida va oilasida infeksiya belgilari, o‘tkir respirator kasallik va teridagi yiringli toshmalar yo‘q. Avtomatika endi uning o‘rniga “Sog‘lom” deb belgilamaydi. Smena tugash soatida asosiy jurnallar uchun mas’ullar belgilanmaganlar ro‘yxatini oladi.",
+      "healthQrBody": "Xodim smena oldidan o‘zi imzolaydi: harorati 37 °C dan yuqori emas, o‘zida va oilasida infeksiya belgilari, o‘tkir respirator kasallik va teridagi yiringli toshmalar yo‘q. Smena tugash soatida asosiy jurnallar uchun mas’ullar belgilanmaganlar ro‘yxatini oladi.",
       "healthQrAria": "QR orqali ishga ruxsat",
       "readingPhotoTitle": "Ko‘rsatkichlarni fotofiksatsiya qilish",
       "readingPhotoBody": "Muzlatkich stikeri va ombor plakatida birinchi tugma “Ko‘rsatkichni suratga oling”: termometr yoki displey surati jurnalga qiymat yonida tushadi. {autofill} Suratga olishni xohlamasa — “Qo‘lda kiritish”. O‘chirsangiz — foto tugmalari yo‘qoladi.",
@@ -28506,7 +28575,7 @@
       "phaseJournalsTitle": "Jurnallar",
       "phaseJournalsSubtitle": "Qaysi jurnallarni yuritasiz va ularni kim to‘ldiradi. Pipeline yo‘riqnomalari — xohishga ko‘ra",
       "phaseDocumentsTitle": "Bugungi hujjatlarni yaratamiz",
-      "phaseDocumentsSubtitle": "Bir marta bosish — barcha yoqilgan jurnallar bo‘yicha hujjatlar yaratiladi, mas’ullar va sexlar / uskunalar avtomatik to‘ldiriladi",
+      "phaseDocumentsSubtitle": "Bir marta bosish — barcha yoqilgan jurnallar bo‘yicha hujjatlar mas’ullar, sexlar va uskunalar bilan yaratiladi",
       "phaseTasksflowTitle": "TasksFlow — vazifalarni yuboramiz",
       "phaseTasksflowSubtitle": "Botni ulaymiz, ish rejimini tanlaymiz, xodimlarni bog‘laymiz — va dashboarddagi “Yuborish” tugmasini bosamiz",
       "headingAllDone": "Hammasi tayyor — kompaniya to‘liq quvvatda ishlayapti",
@@ -29943,10 +30012,10 @@
     },
     "resumePausedCard": {
       "resumeFailed": "Ishni tiklab bo‘lmadi",
-      "resumed": "Akkaunt yana faol — avto to‘ldirish va vazifalar yoqildi",
+      "resumed": "Akkaunt yana faol — vazifalar va eslatmalar yoqildi",
       "eyebrow": "Akkaunt pauzada",
-      "title": "100 kun yozuv bo‘lmadi — avtomatika to‘xtatildi",
-      "description": "Akkaunt pauzada bo‘lgan paytda jurnallarni avto to‘ldirish, xodimlarga vazifalar va eslatmalar ishlamaydi. Yozuvlar, hujjatlar va sozlamalar saqlangan. Tugmani bosing — hammasi darhol yoqiladi.",
+      "title": "100 kun yozuv bo‘lmadi — akkaunt pauzada",
+      "description": "Akkaunt pauzada bo‘lgan paytda xodimlarga vazifalar va eslatmalar ishlamaydi. Yozuvlar, hujjatlar va sozlamalar saqlangan. Tugmani bosing — hammasi darhol yoqiladi.",
       "resuming": "Yoqilmoqda…",
       "resume": "Ishni tiklash"
     },
@@ -30237,6 +30306,12 @@
       "ppk": "IChN — ishlab chiqarish nazorati dasturining qancha bo‘limi tayyor."
     },
     "title": "Monitoring"
+  },
+  "newsPage": {
+    "title": "Yangiliklar, maqolalar, ekspert sharhlari",
+    "badge": "Boʻlim ishlab chiqilmoqda",
+    "emptyTitle": "Tez orada bu yerda koʻp foydali narsalar boʻladi",
+    "emptyText": "Bu yerda qiziqarli maqolalar, maslahatlar, ekspertlar fikri va mustaqil konsultatsiyalar paydo boʻladi — barcha foydalanuvchilar uchun."
   },
   "pointJournals": {
     "lead": "Har bir nuqtada qaysi jurnallar yuritiladi. Jurnal qo‘shing yoki olib tashlang — faqat shu nuqta o‘zgaradi.",
@@ -30611,7 +30686,8 @@
       "plan": "Tarif",
       "plans": {
         "standard": "Standart",
-        "premium": "Premium"
+        "premium": "Premium",
+        "vip": "VIP"
       },
       "addressee": "Sarlavha ostidagi qabul qiluvchi qatori",
       "addresseeHint": "Rus tilida jo‘nalish kelishigida: rahbarning F.I.Sh.ni avtomatik turladik — tekshiring.",

@@ -1,0 +1,112 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preSiteDebugBuild UP-TO-DATE
+> Task :app:mergeSiteDebugNativeDebugMetadata NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :app:generateSiteDebugBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileSiteDebug UP-TO-DATE
+> Task :app:checkSiteDebugAarMetadata UP-TO-DATE
+> Task :app:processSiteDebugNavigationResources UP-TO-DATE
+> Task :app:compileSiteDebugNavigationResources UP-TO-DATE
+> Task :app:generateSiteDebugResValues UP-TO-DATE
+> Task :app:mapSiteDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateSiteDebugResources UP-TO-DATE
+> Task :app:mergeSiteDebugResources UP-TO-DATE
+> Task :app:packageSiteDebugResources UP-TO-DATE
+> Task :app:parseSiteDebugLocalResources UP-TO-DATE
+> Task :app:createSiteDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksSiteDebug UP-TO-DATE
+> Task :app:processSiteDebugMainManifest UP-TO-DATE
+> Task :app:processSiteDebugManifest UP-TO-DATE
+> Task :app:processSiteDebugManifestForPackage UP-TO-DATE
+> Task :app:processSiteDebugResources UP-TO-DATE
+> Task :app:compileSiteDebugJavaWithJavac UP-TO-DATE
+> Task :app:mergeSiteDebugShaders UP-TO-DATE
+> Task :app:compileSiteDebugShaders NO-SOURCE
+> Task :app:generateSiteDebugAssets UP-TO-DATE
+> Task :app:mergeSiteDebugAssets UP-TO-DATE
+> Task :app:compressSiteDebugAssets UP-TO-DATE
+> Task :app:checkSiteDebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarSiteDebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexSiteDebug UP-TO-DATE
+> Task :app:mergeLibDexSiteDebug
+> Task :app:dexBuilderSiteDebug
+> Task :app:mergeSiteDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processSiteDebugJavaRes NO-SOURCE
+> Task :app:mergeSiteDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeSiteDebugNativeLibs NO-SOURCE
+> Task :app:stripSiteDebugDebugSymbols NO-SOURCE
+> Task :app:validateSigningSiteDebug UP-TO-DATE
+> Task :app:writeSiteDebugAppMetadata UP-TO-DATE
+> Task :app:writeSiteDebugSigningConfigVersions UP-TO-DATE
+> Task :app:prePlayReleaseBuild UP-TO-DATE
+> Task :app:extractPlayReleaseVersionControlInfo UP-TO-DATE
+> Task :app:mergePlayReleaseShaders UP-TO-DATE
+> Task :app:compilePlayReleaseShaders NO-SOURCE
+> Task :app:generatePlayReleaseAssets UP-TO-DATE
+> Task :app:mergePlayReleaseAssets UP-TO-DATE
+> Task :app:checkPlayReleaseDuplicateClasses UP-TO-DATE
+> Task :app:generatePlayReleaseBuildConfig UP-TO-DATE
+> Task :app:javaPreCompilePlayRelease UP-TO-DATE
+> Task :app:checkPlayReleaseAarMetadata UP-TO-DATE
+> Task :app:processPlayReleaseNavigationResources
+> Task :app:compilePlayReleaseNavigationResources UP-TO-DATE
+> Task :app:generatePlayReleaseResValues UP-TO-DATE
+> Task :app:mapPlayReleaseSourceSetPaths
+> Task :app:generatePlayReleaseResources
+> Task :app:mergeProjectDexSiteDebug
+> Task :app:packagePlayReleaseResources
+> Task :app:createPlayReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksPlayRelease UP-TO-DATE
+> Task :app:processPlayReleaseMainManifest UP-TO-DATE
+> Task :app:processPlayReleaseManifest UP-TO-DATE
+> Task :app:processPlayReleaseManifestForPackage UP-TO-DATE
+> Task :app:mergePlayReleaseArtProfile UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:processPlayReleaseJavaRes NO-SOURCE
+> Task :app:parsePlayReleaseLocalResources
+> Task :app:mergePlayReleaseStartupProfile UP-TO-DATE
+> Task :app:mergePlayReleaseJniLibFolders UP-TO-DATE
+> Task :app:mergePlayReleaseNativeLibs NO-SOURCE
+> Task :app:stripPlayReleaseDebugSymbols NO-SOURCE
+> Task :app:writePlayReleaseAppMetadata UP-TO-DATE
+> Task :app:collectPlayReleaseDependencies UP-TO-DATE
+> Task :app:configurePlayReleaseDependencies UP-TO-DATE
+> Task :app:extractPlayReleaseNativeSymbolTables NO-SOURCE
+> Task :app:parsePlayReleaseIntegrityConfig UP-TO-DATE
+> Task :app:validateSigningPlayRelease UP-TO-DATE
+> Task :app:mergePlayReleaseResources
+> Task :app:mergeSiteDebugJavaResource
+> Task :app:packageSiteDebug
+> Task :app:createSiteDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleSiteDebug
+> Task :app:mergePlayReleaseJavaResource
+> Task :app:processPlayReleaseResources
+
+> Task :app:compilePlayReleaseJavaWithJavac
+D:\wt\helper-layouts\mobile\setup-helper\app\src\main\java\ru\wesetup\helper\PrintActivity.java:184: warning: [deprecation] setChipCornerRadius(float) in Chip has been deprecated
+            chip.setChipCornerRadius(dp(16));
+                ^
+1 warning
+
+> Task :app:mergePlayReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :app:generatePlayReleaseLintVitalReportModel
+> Task :app:expandPlayReleaseArtProfileWildcards
+> Task :app:lintVitalAnalyzePlayRelease
+> Task :app:lintVitalReportPlayRelease
+> Task :app:lintVitalPlayRelease
+> Task :app:minifyPlayReleaseWithR8
+> Task :app:buildPlayReleasePreBundle
+> Task :app:compilePlayReleaseArtProfile
+> Task :app:packagePlayReleaseBundle
+> Task :app:signPlayReleaseBundle
+> Task :app:producePlayReleaseBundleIdeListingFile
+> Task :app:createPlayReleaseBundleListingFileRedirect UP-TO-DATE
+> Task :app:bundlePlayRelease
+
+[Incubating] Problems report is available at: file:///D:/wt/helper-layouts/mobile/setup-helper/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 49s
+82 actionable tasks: 25 executed, 57 up-to-date

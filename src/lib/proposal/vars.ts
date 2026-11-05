@@ -56,7 +56,7 @@ export const GREETING_MAX = 120;
 /** Новые поля КП (2026-10-30) — только заданные, чтобы старые вызовы получали прежний объект. */
 function normalizeDesignVars(vars: ProposalVars): Partial<ProposalVars> {
   const out: Partial<ProposalVars> = {};
-  if (vars.plan === "standard" || vars.plan === "premium") out.plan = vars.plan;
+  if (vars.plan === "standard" || vars.plan === "premium" || vars.plan === "vip") out.plan = vars.plan;
   const addressee = clean(vars.addressee, ADDRESSEE_MAX);
   if (addressee) out.addressee = addressee;
   const greeting = clean(vars.greeting, GREETING_MAX);

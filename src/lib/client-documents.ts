@@ -12,7 +12,7 @@ import { TRIAL_DAYS } from "@/lib/tariff-plans";
 
 /** Поля КП из диалога карточки клиента (общие для PDF и отправки). */
 export const clientProposalSchema = z.object({
-  plan: z.enum(["standard", "premium"]).default("standard"),
+  plan: z.enum(["standard", "premium", "vip"]).default("standard"),
   addressee: z.string().trim().max(200).nullish().transform((value) => value || null),
   greeting: z.string().trim().max(120).nullish().transform((value) => value || null),
   extras: z.object({ ppk: z.boolean().default(true), equipment: z.boolean().default(true) }).default({ ppk: true, equipment: true }),

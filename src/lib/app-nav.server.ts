@@ -11,6 +11,7 @@ import { journalsPointMode } from "@/lib/building-scope";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import {
   deniedNavHrefs,
+  needsSidebar,
   routedAwayNavHrefs,
   visibleNav,
   visibleSettingsCards,
@@ -56,7 +57,7 @@ export type NavModelSearchItem = {
 };
 export type NavModel = {
   sections: NavModelSection[];
-  /** Сайдбар нужен, только когда разделов два и больше. */
+  /** Сайдбар нужен, только когда рабочих разделов два и больше (`needsSidebar`). */
   showSidebar: boolean;
   /** Карточки настроек для ⌘K (пусто/нет — только вкладки). */
   search?: NavModelSearchItem[];
@@ -153,7 +154,7 @@ export async function buildNavModel(input: {
   }));
   return {
     sections,
-    showSidebar: sections.length >= 2,
+    showSidebar: needsSidebar(sections),
     search,
     deniedHrefs: deniedNavHrefs(input.user, input.facts),
     routedAwayHrefs: routedAwayNavHrefs(input.user, input.facts),

@@ -244,6 +244,7 @@ export async function issueClientInvoice(args: {
     email: args.payerEmail || owner?.email || ownerLogin?.email || "",
     target: { tier: args.tier, cycle: args.cycle, points: normalizePoints(args.points) },
     promoCode: args.promoCode,
+    allowIndividual: true,
   });
 }
 

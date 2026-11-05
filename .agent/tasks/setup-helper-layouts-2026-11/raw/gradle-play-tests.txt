@@ -1,0 +1,51 @@
+Starting a Gradle Daemon, 2 stopped Daemons could not be reused, use --status for details
+> Task :core:compileJava
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :app:preBuild UP-TO-DATE
+> Task :app:prePlayDebugBuild UP-TO-DATE
+> Task :app:generatePlayDebugBuildConfig
+> Task :app:javaPreCompilePlayDebug
+> Task :app:checkPlayDebugAarMetadata
+> Task :app:processPlayDebugNavigationResources
+> Task :app:generatePlayDebugResValues
+> Task :app:compilePlayDebugNavigationResources
+> Task :app:mapPlayDebugSourceSetPaths
+> Task :app:generatePlayDebugResources
+> Task :app:packagePlayDebugResources
+> Task :app:createPlayDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksPlayDebug
+> Task :app:parsePlayDebugLocalResources
+> Task :app:processPlayDebugMainManifest
+> Task :app:mergePlayDebugResources
+> Task :app:processPlayDebugManifest
+> Task :app:prePlayDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompilePlayDebugUnitTest
+> Task :app:mergePlayDebugShaders
+> Task :app:compilePlayDebugShaders NO-SOURCE
+> Task :app:generatePlayDebugAssets UP-TO-DATE
+> Task :app:mergePlayDebugAssets
+> Task :app:processPlayDebugUnitTestManifest
+> Task :app:processPlayDebugJavaRes NO-SOURCE
+> Task :app:processPlayDebugUnitTestJavaRes NO-SOURCE
+> Task :app:processPlayDebugManifestForPackage
+> Task :app:processPlayDebugResources
+
+> Task :app:compilePlayDebugJavaWithJavac
+D:\wt\helper-layouts\mobile\setup-helper\app\src\main\java\ru\wesetup\helper\PrintActivity.java:184: warning: [deprecation] setChipCornerRadius(float) in Chip has been deprecated
+            chip.setChipCornerRadius(dp(16));
+                ^
+1 warning
+
+> Task :app:bundlePlayDebugClassesToCompileJar
+> Task :app:bundlePlayDebugClassesToRuntimeJar
+> Task :app:packagePlayDebugUnitTestForUnitTest
+> Task :app:compilePlayDebugUnitTestJavaWithJavac
+> Task :app:generatePlayDebugUnitTestConfig
+> Task :app:testPlayDebugUnitTest
+
+[Incubating] Problems report is available at: file:///D:/wt/helper-layouts/mobile/setup-helper/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 2m 55s
+30 actionable tasks: 30 executed

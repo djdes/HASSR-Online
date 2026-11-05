@@ -132,7 +132,7 @@ export const CAMPAIGNS: CampaignSpec[] = [
           {
             title1: "Гигиенический журнал онлайн",
             title2: "По СанПиН 2.3/2.4.4282-26",
-            text: "Автозаполнение, допуск в один тап, PDF для Роспотребнадзора. 14 дней бесплатно.",
+            text: "Допуск в один тап, PDF для Роспотребнадзора. 14 дней бесплатно.",
             href: u("/journals-info/hygiene", "journals-daily", "hygiene"),
             displayPath: "гигиена/онлайн",
           },

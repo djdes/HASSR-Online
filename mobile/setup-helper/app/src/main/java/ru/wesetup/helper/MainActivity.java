@@ -78,6 +78,7 @@ public final class MainActivity extends BaseActivity implements Updater.Listener
         templatesButton = findViewById(R.id.main_templates);
         // Шаблоны и предпросмотр — и без принтера (например, до его покупки).
         templatesButton.setOnClickListener(v -> startActivity(new Intent(this, PrintActivity.class)));
+        findViewById(R.id.main_layouts).setOnClickListener(v -> startActivity(new Intent(this, LayoutsActivity.class)));
         MaterialButton add = findViewById(R.id.main_add);
         add.setOnClickListener(v -> withBluetooth(true, () -> startActivity(new Intent(this, ScanActivity.class))));
         findViewById(R.id.main_menu).setOnClickListener(this::showMenu);
@@ -435,10 +436,15 @@ public final class MainActivity extends BaseActivity implements Updater.Listener
 
     private void showMenu(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenu().add(0, 4, 0, R.string.main_menu_layouts);
         menu.getMenu().add(0, 1, 0, R.string.main_menu_profile);
         if (BuildConfig.SELF_UPDATE) menu.getMenu().add(0, 2, 1, R.string.main_menu_updates);
         menu.getMenu().add(0, 3, 2, getString(R.string.main_menu_version, BuildConfig.VERSION_NAME)).setEnabled(false);
         menu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 4) {
+                startActivity(new Intent(this, LayoutsActivity.class));
+                return true;
+            }
             if (item.getItemId() == 1) {
                 editLabelProfile();
                 return true;

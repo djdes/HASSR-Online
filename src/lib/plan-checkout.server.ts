@@ -1,3 +1,4 @@
+import { CONTACT_EMAIL, CONTACT_PHONE } from "@/lib/contact-us";
 import { formatMskDate, type AccountBillingState } from "@/lib/billing-period";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { db } from "@/lib/db";
@@ -9,7 +10,9 @@ import {
   CYCLE_DAYS,
   isBillingCycle,
   isPaidTier,
+  needsIndividualOffer,
   normalizePoints,
+  POINTS_INDIVIDUAL_FROM,
   parsePlanTariffKey,
   planTariffKey,
   quotePlanChange,
@@ -56,7 +59,7 @@ export type CheckoutQuote =
       ok: false;
       status: number;
       error: string;
-      code: "unavailable" | "scheduled" | "points" | "account" | "exempt";
+      code: "unavailable" | "scheduled" | "points" | "account" | "exempt" | "individual";
       /** Для scheduled — с какого дня можно перейти. */
       effectiveAt?: string;
     };
@@ -145,6 +148,11 @@ export async function quoteCheckout(args: {
   now: Date;
   /** Плательщик без кабинета организации (гость или сотрудник) — проверка выше. */
   payer?: { email: string; guest: boolean } | null;
+  /**
+   * Счёт выставляет платформа из карточки клиента (ROOT): от 50 точек —
+   * по договорённости с менеджером, отказа «индивидуально» нет.
+   */
+  allowIndividual?: boolean;
 }): Promise<CheckoutQuote> {
   const { now } = args;
   const target = { ...args.target, points: normalizePoints(args.target.points) };
@@ -186,6 +194,18 @@ export async function quoteCheckout(args: {
       status: 409,
       code: "points",
       error: `Сейчас в работе ${pointsLabel(pointsInUse)} — выберите не меньше или сначала удалите лишние точки.`,
+    };
+  }
+
+  // От 50 точек — индивидуальное предложение (решение 2026-11-05): витрина
+  // зовёт к менеджеру, и прямая ссылка на заказ не должна обходить это со
+  // скидкой 25 %. Продление подписки, уже оформленной на 50+ точек, — можно.
+  if (needsIndividualOffer(target.points) && !args.allowIndividual && !(current && needsIndividualOffer(current.points))) {
+    return {
+      ok: false,
+      status: 409,
+      code: "individual",
+      error: `От ${POINTS_INDIVIDUAL_FROM} точек — индивидуальное предложение: посчитаем цену под вашу сеть. Свяжитесь с отделом продаж: ${CONTACT_PHONE.display} или ${CONTACT_EMAIL}.`,
     };
   }
 

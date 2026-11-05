@@ -21,7 +21,8 @@ type SpecVars = {
   sender?: { name: string; phone?: string | null; email?: string | null; telegram?: string | null; position?: string | null } | null;
   // Расширение 2026-10-30 (КП в новом дизайне, отправка из карточки клиента):
   // только необязательные поля — вызовы рассылки и генератора не меняются.
-  plan?: "standard" | "premium" | null;
+  // 2026-11-05: тариф «ВИП» в КП — расширение того же необязательного поля.
+  plan?: "standard" | "premium" | "vip" | null;
   addressee?: string | null;
   greeting?: string | null;
   extras?: { ppk?: boolean; equipment?: boolean } | null;

@@ -14,7 +14,7 @@
  * «критическое нарушение»: комментарий и фото обязательны.
  */
 import type { ChecklistCondition } from "@/lib/custom-checklist-rules";
-import type { ChecklistDefinition, ChecklistQuestion } from "@/lib/custom-checklists";
+import type { ChecklistDefinition, ChecklistQuestion, ChecklistRowSource } from "@/lib/custom-checklists";
 
 export const TYPICAL_CHECKLIST_KEYS = [
   "sanpin",
@@ -23,6 +23,7 @@ export const TYPICAL_CHECKLIST_KEYS = [
   "chief-technologist",
   "rospotrebnadzor-prep",
   "haccp-audit",
+  "serving-temperature",
 ] as const;
 
 export type TypicalChecklistKey = (typeof TYPICAL_CHECKLIST_KEYS)[number];
@@ -42,7 +43,7 @@ export type TypicalChecklistTemplate = {
 export type QuestionDraft = Omit<ChecklistQuestion, "id" | "logic"> & {
   logic?: Array<Omit<NonNullable<ChecklistQuestion["logic"]>[number], "id">>;
 };
-export type CategoryDraft = { title: string; repeatable?: boolean; questions: QuestionDraft[] };
+export type CategoryDraft = { title: string; repeatable?: boolean; rowsSource?: ChecklistRowSource; questions: QuestionDraft[] };
 export type SectionDraft = { title: string; categories: CategoryDraft[] };
 
 type Common = {
@@ -203,6 +204,7 @@ export function buildDefinition(prefix: string, description: string, sections: S
           title: categoryDraft.title,
           active: true,
           ...(categoryDraft.repeatable ? { repeatable: true } : {}),
+          ...(categoryDraft.rowsSource ? { rowsSource: categoryDraft.rowsSource } : {}),
           questions: categoryDraft.questions.map((draft) => {
             questionIndex += 1;
             const id = `${prefix}-q${questionIndex}`;

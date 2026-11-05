@@ -1,4 +1,4 @@
-import { getJournalControls } from "@/lib/journal-controls.server";
+import { getJournalControls, rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { automationOn } from "@/lib/journal-controls";
 import { readBuildingJournalSettings, staffAtBuildingWhere, withBuildingJournalSettings } from "@/lib/building-settings";
 import { NextResponse } from "next/server";
@@ -136,6 +136,10 @@ export async function POST(
   }
 
   if (action === "apply_auto_fill") {
+    // Галочка «Автозаполнение журналов» спецрежима (2026-11-05: раньше
+    // пряталась только кнопка, прямой POST проходил).
+    const disabled = await rejectJournalAutomation(organizationId, "autoFill");
+    if (disabled) return disabled;
     // Общая логика с ежедневным cron'ом (/api/cron/auto-fill-journals):
     // тот же helper, разница только в наборе дат (здесь — весь период
     // документа, в cron — сегодняшний день).

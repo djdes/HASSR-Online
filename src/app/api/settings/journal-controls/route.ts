@@ -16,6 +16,8 @@ const schema = z.object({
     autoCreate: z.boolean(),
     copyYesterday: z.boolean(),
     closeDayAutofill: z.boolean(),
+    // Галочка 2026-11-05: старое окно её не присылает — тогда остаётся прежнее значение.
+    catchUp: z.boolean().optional(),
   }).strict().optional(),
   camera: z.object({ code: z.enum(SENSOR_JOURNAL_CODES), enabled: z.boolean() }).optional(),
   setup: z.object({ code: z.enum(["finished_product", "perishable_rejection"]), decision: z.literal("declined") }).optional(),
@@ -43,7 +45,7 @@ export async function PATCH(request: Request) {
   const before = await getJournalControls(organizationId);
   const { automation, camera, setup } = body.data;
   const controls = await updateJournalControls(organizationId, {
-    ...(automation ? { automation } : {}),
+    ...(automation ? { automation: { ...before.automation, ...automation } } : {}),
     ...(camera ? { sensorCamera: { [camera.code]: camera.enabled } } : {}),
     ...(setup ? { brakerageSetup: { [setup.code]: setup.decision } } : {}),
   });

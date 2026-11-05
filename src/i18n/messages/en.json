@@ -829,8 +829,6 @@
       "step3Body": "The inspector adds an entry to the visit log via the QR code and attaches a photo of the decision. If not — open the visit log, add the entry and photograph the decision.",
       "step4Title": "Hand over the documents",
       "step4Body": "Download the archive for the required period: journals, production control program, HACCP plan, CAPA and the visit log — in one ZIP file.",
-      "step5Title": "Check special mode (optional)",
-      "step5Body": "Special mode turns on journal automation. You can turn it off for the inspection — journals keep only the entries employees make.",
       "tipsTitle": "Tips",
       "tip1": "Accompany the inspector and answer questions within the scope of the inspection — calmly and to the point.",
       "tip2": "An unscheduled inspection usually carries a note of approval by the prosecutor's office — look for it in the decision.",
@@ -922,14 +920,14 @@
     "special": {
       "title": "Special mode",
       "lead": "Turns on journal automation — only the parts you tick. While the mode is off, journals have no automation: employees make all entries themselves.",
-      "offState": "Automation is hidden now: journals have no autofill, no automatic documents and no quick-fill buttons.",
+      "offState": "Automation is hidden now: journals have no autofill, no automatic documents, no quick-fill buttons and no “Catch up on gaps”.",
       "onState": "Shown in journals:",
       "noneChosen": "Nothing is ticked — journals have no automation.",
       "change": "Change",
       "features": {
         "autoFill": {
           "title": "Journal autofill",
-          "hint": "The “Fill in automatically” switch in documents: marks and readings are filled in every day by themselves."
+          "hint": "The “Fill in automatically” switch in documents, “Mark everyone healthy” in the hygiene journal, “Fill by plan” in cleaning and standard filling through the AI assistant: marks and readings are filled in by themselves."
         },
         "autoCreate": {
           "title": "Automatic documents",
@@ -937,11 +935,15 @@
         },
         "copyYesterday": {
           "title": "“Copy yesterday”",
-          "hint": "A button in the document that copies yesterday's rows into today."
+          "hint": "A button in the document copies yesterday's rows into today; in an employee's task — the “Fill in as yesterday” button."
         },
         "closeDayAutofill": {
           "title": "“Autofill” on the home page",
           "hint": "A button above the journal list that fills in the empty days of all daily journals up to today."
+        },
+        "catchUp": {
+          "title": "“Catch up on gaps”",
+          "hint": "An icon above the journals on the home page and an item in search: a grid of the last 14 days where empty days are filled with a copy of the nearest filled day."
         }
       },
       "dialogTitle": "What to turn on in journals",
@@ -973,18 +975,18 @@
     "now": {
       "guideTitle": "How the Inspection visit section works",
       "guide1": "Here: steps for when the inspector arrives, the QR code on screen and the document archive.",
-      "guide2": "The visit log, regulations and special mode are separate items of the section menu; here they are shown briefly, with an “Open” link.",
+      "guide2": "The visit log and regulations are separate items of the section menu; here they are shown briefly, with an “Open” link.",
       "guide3": "Inspection not here yet? Issue the QR code in advance and print the sheet — the inspector will only need to scan it.",
       "q1": "What will the inspector see via the QR code?",
       "a1": "Journals, the production control program, the HACCP plan and the regulations — without signing in, view only. Records cannot be changed.",
       "q2": "Who can open this section?",
       "a2": "Management and employees allowed to verify tasks: an inspection often arrives when only the head chef is on site. Issuing the QR code, readiness and services are for management.",
       "visitsLead": "The inspector adds the entry via the QR code. If not — open the log and add the entry with a scan of the decision.",
-      "specialLead": "Turns on journal automation; you can turn it off for the inspection.",
       "moreTitle": "More in this section",
       "normsHint": "Production control program, HACCP plan and SanPiN rules — what to show the inspector",
       "readinessHint": "What to fix before the inspector arrives",
-      "expertsHint": "Pre-inspection audit and specialist visit"
+      "expertsHint": "Pre-inspection audit and specialist visit",
+      "settingsLink": "Section settings"
     },
     "pages": {
       "visits": {
@@ -1027,7 +1029,7 @@
         "a1": "The organization's management. The request is seen by a WeSetup manager."
       },
       "special": {
-        "lead": "Turns on journal automation item by item: autofill, automatic documents and quick-fill buttons.",
+        "lead": "Special mode: turns on journal automation item by item — autofill, automatic documents, quick-fill buttons and “Catch up on gaps”. It is not mentioned anywhere except this page.",
         "guideTitle": "Good to know",
         "guide1": "The mode is off by default: journals contain only what employees enter.",
         "guide2": "The mode applies to the whole organization — all locations at once.",
@@ -1301,7 +1303,7 @@
       },
       "undoRedo": {
         "undoAria": "Undo last change",
-        "undoTitle": "Undo (Ctrl+Z). Only your edits in this tab are undone; autofill is left untouched.",
+        "undoTitle": "Undo (Ctrl+Z). Only your edits in this tab are undone.",
         "redoAria": "Redo undone change",
         "redoTitle": "Redo (Ctrl+Shift+Z)"
       },
@@ -2723,6 +2725,7 @@
         "productionControl": "Production control",
         "billing": "Subscriptions",
         "more": "More",
+        "news": "News, articles, expert reviews",
         "inspection": "Inspection visit",
         "office": "Office",
         "monitoring": "Monitoring",
@@ -2928,8 +2931,7 @@
             "experts": "Consulting",
             "now": "What to do now",
             "visits": "Visit log",
-            "readiness": "Inspection readiness",
-            "special": "Special mode"
+            "readiness": "Inspection readiness"
           }
         },
         "office": {
@@ -3160,9 +3162,9 @@
       "inspection_visits": "Visit log",
       "inspection_norms": "PCP and HACCP plan",
       "inspection_experts": "Consulting",
-      "inspection_special_mode": "Special mode",
       "production_control": "Production control program",
       "more": "More",
+      "news": "News, articles, expert reviews",
       "knowledge": "Instructions",
       "checklists": "Checklists",
       "checklists_templates": "Checklist templates",
@@ -3309,7 +3311,8 @@
       "home": "Home",
       "monitoring": "Monitoring",
       "journals_points": "Outlet journals",
-      "inspection_laws": "Regulatory documents"
+      "inspection_laws": "Regulatory documents",
+      "inspection_settings": "Section settings"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",
@@ -4188,7 +4191,7 @@
         "hygiene": {
           "create-document": {
             "title": "Create a document",
-            "body": "Click “Create document”: the 15-day period and name are filled in automatically. Select the person conducting the examination. If automatic creation is enabled, the document is already in the list."
+            "body": "Click “Create document”: the 15-day period and name are filled in automatically. Select the person conducting the examination."
           },
           "open-document": {
             "title": "Open the document",
@@ -4246,7 +4249,7 @@
           },
           "add-row": {
             "title": "Add today’s row",
-            "body": "If autofill is off, choose “Add row” and enter the date and who took the readings."
+            "body": "Choose “Add row” and enter the date and who took the readings."
           },
           "measure-input": {
             "title": "Enter the readings",
@@ -5604,8 +5607,8 @@
         "text": "If a log entry is missed or a temperature is out of range, Telegram and email alert the person responsible."
       },
       "autofill": {
-        "title": "Automatic entries",
-        "text": "Hygiene, temperature and cleaning values are filled in automatically where permitted."
+        "title": "Data comes in by itself",
+        "text": "Temperatures come from sensors and display photos, acceptance from invoices: no need to copy numbers by hand."
       },
       "paperless": {
         "title": "Inspection-ready PDFs",
@@ -5690,6 +5693,11 @@
           "tab": "Overview",
           "title": "Today’s overview",
           "text": "Which logs are filled in today, what was missed and who to remind — on the first screen of the workspace."
+        },
+        "monitoring": {
+          "tab": "Monitoring",
+          "title": "Progress by outlet",
+          "text": "Today’s logs, checklists and the production control program as percentages — for the whole company and for each outlet."
         },
         "journals": {
           "tab": "Logs",
@@ -6961,7 +6969,7 @@
       "responsibleSurname": "Person responsible",
       "today": "today",
       "humidityPercent": "AH, %",
-      "emptyRows": "There are no rows yet. Add the first entry manually or turn on automatic filling.",
+      "emptyRows": "There are no rows yet. Add the first entry.",
       "addRowButton": "Add a row",
       "roomDirectoryHint": "Rooms are shared across journals. Set temperature and humidity norms on the room card.",
       "updateRowFailed": "Could not update the row",
@@ -8464,7 +8472,7 @@
       "instruction": {
         "title": "About the Staff page",
         "intro": "Use this page to manage your organization’s staff: add positions and employees, and maintain schedules for days off, vacations, sick leave, and dismissals.",
-        "schedule": "All schedules are used <b>only to fill the Hygiene journal automatically</b> — the corresponding journal cells will show “Off”, “Vacation”, or “Sick leave”.",
+        "schedule": "Filled-in schedules are used <b>in the Hygiene journal</b> — they set “Off”, “Vacation” or “Sick leave” in the journal cells.",
         "archive": "An employee linked to existing journal records cannot be deleted. You can move them to <b>Archive</b>: past records remain, while the employee is removed from active lists."
       },
       "addPeriod": {
@@ -9153,7 +9161,7 @@
           },
           "journals": {
             "title": "Outlet journals",
-            "body": "Its own journal set, automation and commission — the buttons open settings with this outlet already selected."
+            "body": "Its own journal set and commission — the buttons open settings with this outlet already selected."
           }
         },
         "qa": {
@@ -9359,7 +9367,7 @@
       },
       "journals": {
         "title": "Outlet journals",
-        "hint": "Which journals the outlet keeps, which run automatically and who is on the grading commission — each outlet has its own.",
+        "hint": "Which journals the outlet keeps and who is on the grading commission — each outlet has its own.",
         "inWork": "{count, plural, one {# journal} other {# journals}}",
         "inWorkHint": "in use at the outlet",
         "auto": "{count, plural, one {# journal} other {# journals}}",
@@ -10354,16 +10362,6 @@
           "contactsHint": "Phone, accountant email, time zone and language"
         }
       },
-      "specialMode": {
-        "title": "Special mode",
-        "description": "Turns on journal automation item by item: autofill, automatic documents and quick-fill buttons. Off by default.",
-        "saveError": "Could not save changes",
-        "movedTitle": "Special mode is now in “Inspection”",
-        "movedBody": "Special mode turns on journal automation — autofill, automatic documents and quick-fill buttons. The switch and the ticks are there, next to the inspector QR code.",
-        "movedLink": "Open",
-        "statusOn": "Currently on",
-        "statusOff": "Currently off"
-      },
       "partnerConversion": {
         "title": "Move to partner workspace",
         "description": "If you manage this organization for a client, move it to your partner workspace “{partnerName}”. The organization will pay its own subscription, and you will earn rewards from its payments.",
@@ -10746,8 +10744,8 @@
       "seedStaff": "Add demo employees for testing",
       "apply": "Apply template",
       "applying": "Applying template…",
-      "success": "Applied the “{preset}” template. Positions: {positions, number}; journal access grants: {access, number}; journals with automatic creation: {automatic, number}.",
-      "successWithStaff": "Applied the “{preset}” template. Positions: {positions, number}; journal access grants: {access, number}; journals with automatic creation: {automatic, number}; demo employees added: {staff, number}.",
+      "success": "Applied the “{preset}” template. Positions: {positions, number}; journal access grants: {access, number}.",
+      "successWithStaff": "Applied the “{preset}” template. Positions: {positions, number}; journal access grants: {access, number}; demo employees added: {staff, number}.",
       "errors": {
         "forbidden": "Only a manager can apply a template.",
         "invalid": "Check the selected company type and template options.",
@@ -10766,7 +10764,7 @@
         },
         "points": {
           "title": "Outlet — its staff and journals",
-          "body": "Cooks, kitchen workers, waiters, the outlet manager — on their outlet page, together with its journal set, automation and commission."
+          "body": "Cooks, kitchen workers, waiters, the outlet manager — on their outlet page, together with its journal set and commission."
         },
         "move": {
           "title": "How to move a person",
@@ -11051,7 +11049,8 @@
     "value": "Value: {value}",
     "staffAdded": "Employee added: {name} — {position}",
     "cellsFilled": "Cells filled: {count, number}{skipped, plural, =0 {} other {, skipped (day closed): #}}{qr, plural, =0 {} other {, left for QR confirmation: #}}",
-    "invalidPhone": "Invalid phone format. Example: +7 985 123-45-67"
+    "invalidPhone": "Invalid phone format. Example: +7 985 123-45-67",
+    "unavailable": "This action is not available."
   },
   "equipmentCalibration": {
     "pageTitle": "Measuring instrument verification schedule",
@@ -16787,9 +16786,9 @@
       "autofill": {
         "title": "Automatic log filling",
         "tagline": "Routine values are filled in automatically, so staff confirm what happened instead of copying the same figures shift after shift.",
-        "intro": "Autofill is a configurable tool. WeSetup can fill in predictable values that do not depend on the exact moment, such as a shift, days-off schedule, or job title. It deliberately does not fill in readings that must be measured or observed.",
+        "intro": "Autofill is a configurable tool. WeSetup can fill in predictable values that do not depend on the exact moment, such as a date, shift or job title. It deliberately does not fill in readings that must be measured or observed.",
         "automaticHeading": "What can be filled automatically",
-        "automatic1": "Days off, vacation, and sick-leave marks in the hygiene log.",
+        "automatic1": "Entry time and the employee's name in the QR form — the employee only confirms them.",
         "automatic2": "An employee's job title when they are added to a shift.",
         "automatic3": "Reference fields in a log header: date, shift number, and responsible person.",
         "automatic4": "A “normal conditions” mark for temperature readings within the permitted range.",
@@ -17295,7 +17294,7 @@
       "calcJournalsLink": "SanPiN log calculator",
       "printFormsLink": "Printable forms and samples (PDF/DOCX)",
       "sanpinGuideLink": "SanPiN 2.3/2.4.4282-26 guide",
-      "autofillFeatureLink": "Scheduled log autofill",
+      "autofillFeatureLink": "Data from sensors and accounting systems",
       "landingGuidePrefix": "Detailed guide: {label}"
     },
     "descriptions": {
@@ -18138,7 +18137,7 @@
   "publicJournalDetailSeo": {
     "hygiene": {
       "title": "Hygiene log — a sample for food service",
-      "description": "Hygiene log under SanPiN 2.3/2.4.4282-26: automatic filling, work clearance, temperature checks and PDF for Rospotrebnadzor. 14 days free.",
+      "description": "Hygiene log under SanPiN 2.3/2.4.4282-26: work clearance, temperature checks and PDF for Rospotrebnadzor. 14 days free.",
       "keywords": {
         "item0": "hygiene log",
         "item1": "employee examination log",
@@ -21840,7 +21839,8 @@
       "bonusLine": "Bonuses: {amount} — {bonus} per client after their payment no. {after}",
       "bonusLater": "The {bonus} bonus per client comes with their payment no. {after} — in the second year",
       "footnote": "Rules version {version}: a share of every subscription payment for {months} months from the client's first payment. Hardware adds another {hardware}% and is not included here.",
-      "heroLink": "Estimate income"
+      "heroLink": "Estimate income",
+      "vip": "VIP"
     }
   },
   "publicPrivacy": {
@@ -22154,7 +22154,7 @@
     "done": "Done",
     "uploadMore": "Upload more",
     "requiredColumns": "Required column: <primary>Наименование</primary> (or <alternates>Название, Товар, Номенклатура</alternates>)",
-    "optionalColumns": "Optional columns: <aliases>Поставщик, Штрих-код, Единица, Категория, Температура хранения, Срок годности</aliases>",
+    "optionalColumns": "Optional columns: <aliases>Вид, Поставщик, Штрих-код, Единица, Категория, Температура хранения, Условия хранения, Срок годности</aliases>",
     "errors": {
       "generic": "Import failed",
       "unauthorized": "You are not signed in",
@@ -22166,7 +22166,9 @@
       "nameColumnRequired": "No product name column was found. Expected: <aliases>\"Наименование\", \"Название\", \"Товар\", \"Номенклатура\"</aliases> or <last>\"Продукт\"</last>",
       "noProducts": "No products with a name were found",
       "failed": "Import failed. Check the file format."
-    }
+    },
+    "kindLabel": "Product type in the file",
+    "kindHint": "For rows without a “Type” column. If the file has a “Вид” column (raw / semi-finished / finished), it is used instead."
   },
   "settingsProducts": {
     "guide": {
@@ -22199,8 +22201,9 @@
       "barcode": "Barcode",
       "unit": "Unit",
       "storage": "Storage",
-      "shelfLife": "Shelf life (days)",
-      "actions": "Actions"
+      "shelfLife": "Shelf life",
+      "actions": "Actions",
+      "kind": "Type"
     },
     "formats": {
       "title": "Supported import formats",
@@ -22221,13 +22224,22 @@
       "barcode": "Barcode",
       "unit": "Unit",
       "category": "Category",
-      "shelf": "Shelf life (days)",
-      "temp": "Storage temperature"
+      "shelf": "Shelf life",
+      "temp": "Temperature range",
+      "kind": "Product type",
+      "shelfUnit": "Shelf life unit",
+      "conditions": "Storage conditions",
+      "serving": "Served as"
     },
     "examples": {
       "name": "Milk 3.2%",
       "supplier": "Supplier Ltd.",
-      "category": "Dairy"
+      "category": "Dairy",
+      "conditions": {
+        "raw": "In a dry ventilated place, away from finished products",
+        "semi": "In a closed labelled container, on the bottom shelf of the fridge",
+        "finished": "On a bain-marie or in a heated display; salads in a chilled display"
+      }
     },
     "errors": {
       "generic": "Error",
@@ -22238,7 +22250,9 @@
       "failed": "Internal server error",
       "idRequired": "ID is missing",
       "notFound": "Product not found",
-      "nameRequiredUpdate": "A name is required"
+      "nameRequiredUpdate": "A name is required",
+      "kindInvalid": "Unknown product type",
+      "shelfLifeInvalid": "Shelf life must be a whole number above zero"
     },
     "delete": {
       "title": "Delete the product from the catalog?",
@@ -22263,6 +22277,53 @@
       "pc": "pcs",
       "bottle": "btl",
       "pack": "pack"
+    },
+    "tabs": {
+      "all": "All",
+      "label": "Product type"
+    },
+    "kinds": {
+      "raw": "Products (raw materials)",
+      "semi": "Semi-finished (own production)",
+      "finished": "Finished products"
+    },
+    "kindsShort": {
+      "raw": "Raw",
+      "semi": "Semi-finished",
+      "finished": "Finished"
+    },
+    "kindHints": {
+      "raw": "Received from a supplier",
+      "semi": "Made in-house for further use",
+      "finished": "Dishes and items for guests"
+    },
+    "emptyKind": {
+      "title": "Nothing in “{kind}” yet",
+      "raw": "Add a product or import the catalog — the type can be chosen during import.",
+      "semi": "Add a semi-finished product: set its shelf life in hours and the storage conditions.",
+      "finished": "Add a dish — it will appear in the “Serving temperature of finished dishes” checklist."
+    },
+    "shelfUnits": {
+      "hours": "hours",
+      "days": "days"
+    },
+    "shelfValue": {
+      "hours": "{count} h",
+      "days": "{count} d"
+    },
+    "hints": {
+      "shelf": "Raw materials usually keep for days, semi-finished products and dishes — for hours.",
+      "serving": "This sets the temperature norm in the “Serving temperature of finished dishes” checklist."
+    },
+    "serving": {
+      "hot": "Hot",
+      "soup": "Soup / hot drink",
+      "cold": "Cold"
+    },
+    "servingNorms": {
+      "hot": "not below +65 °C",
+      "soup": "not below +75 °C",
+      "cold": "not above +14 °C"
     }
   },
   "rootMailingKindFields": {
@@ -25377,7 +25438,8 @@
       "typePhoto": "Photo",
       "typeText": "Text",
       "typeInfo": "Information",
-      "typeSignature": "Signature"
+      "typeSignature": "Signature",
+      "rowsServingDishes": "This is a dish card template. When a check starts, it repeats for every dish: today's dishes from the food quality log and finished products from the product catalog. Change temperature norms in each question's “Violation condition”."
     },
     "checklistEvidenceForm": {
       "proofAlt": "Proof {number, number}",
@@ -25440,7 +25502,13 @@
       "removeInstanceConfirm": "Delete instance {number, number} and its answers?",
       "removeInstance": "Remove no. {number, number}",
       "fileTooBig": "File up to 10 MB",
-      "uploadFailed": "Could not upload the file"
+      "uploadFailed": "Could not upload the file",
+      "dishesCount": "Dishes in this check: {count}",
+      "dishesHint": "The list comes from today's food quality log and the catalog (type “Finished products”). A new dish appeared — refresh the list, entered temperatures are kept.",
+      "dishesRefresh": "Refresh dish list",
+      "dishesAdded": "Dishes added: {count}",
+      "dishesNoNew": "No new dishes — the list is up to date",
+      "dishesRefreshFailed": "Could not refresh the dish list"
     },
     "checklistQuestionSettings": {
       "answerYes": "Yes",
@@ -25514,7 +25582,8 @@
       "chooseAnswer": "Choose an answer",
       "minPhotos": "Minimum photos: {count, number}",
       "photoUploadFailed": "Could not upload the photo",
-      "photoTooBig": "JPG or PNG up to 2 MB is supported"
+      "photoTooBig": "JPG or PNG up to 2 MB is supported",
+      "outOfNorm": "Out of range — it will be recorded as a violation."
     },
     "checklistsClient": {
       "loadFailed": "Could not load checklists",
@@ -25960,7 +26029,7 @@
     },
     "pausedBanner": {
       "title": "Account paused",
-      "body": "— there have been no entries for over 100 days. Journal autofill, tasks and reminders are stopped. Your entries and settings are preserved.",
+      "body": "— there have been no entries for over 100 days. Tasks and reminders are stopped. Your entries and settings are preserved.",
       "resume": "Resume"
     },
     "quickStartCardClient": {
@@ -27438,11 +27507,11 @@
       "enableTitle": "Keep journals separately by point?",
       "enableDescription": "What will happen to what is already filled in:",
       "enableBullet1": "Existing documents are not tied to a point — they stay shared and will be visible on every point",
-      "enableBullet2": "Separate documents appear only for new ones: tonight auto-creation will make one document for each point",
+      "enableBullet2": "Separate documents appear only for new ones — one document for each point",
       "enableBullet3": "A point selector will appear in the header — journal lists will become per point",
       "enable": "Enable",
       "disableTitle": "Turn off separate journals?",
-      "disableDescription": "Documents of all points will be shown together, and nightly auto-creation will go back to one shared document per journal. Documents already created for points will remain.",
+      "disableDescription": "Documents of all points will be shown together, and new documents will again be one shared document per journal. Documents already created for points will remain.",
       "disable": "Turn off",
       "saveFailed": "Could not save",
       "perPointOn": "Journals are kept separately by point — the switcher is in the header",
@@ -27591,7 +27660,7 @@
       "readingPhotoRequiredOn": "Photo is required: a temperature cannot be saved via QR without a photo",
       "readingPhotoOn": "Photo capture is on: QR forms start with “Take a photo of the reading”",
       "healthQrOn": "QR clearance is on: employees check in themselves, and at the end of the shift you receive a list of those who did not",
-      "healthQrOff": "QR clearance is off: hygiene is filled in automatically again",
+      "healthQrOff": "QR clearance is off: hygiene is marked in the journal",
       "qrAuthSaved": "QR forms now require sign-in: the account signs the entry",
       "qrPinSaved": "QR forms: name + PIN. Set PINs for employees in their cards",
       "qrPublicSaved": "QR forms are open: the name is picked from a list",
@@ -27627,7 +27696,7 @@
       "qrDescription": "An employee scans the poster of a journal, fridge or room and records an entry from their phone. Choose how the person who did it is confirmed. There is no need to reprint posters when you change the mode.",
       "qrModesLabel": "QR form mode",
       "healthQrTitle": "Fit-for-work clearance via the hygiene journal QR",
-      "healthQrBody": "The employee signs before the shift: no temperature above 37 °C, no signs of infection in them or their family, no respiratory illness or pustules on the skin. Automation no longer marks “Healthy” for them. At the shift end hour, those responsible for the main journals receive a list of people who did not check in.",
+      "healthQrBody": "The employee signs before the shift: no temperature above 37 °C, no signs of infection in them or their family, no respiratory illness or pustules on the skin. At the shift end hour, those responsible for the main journals receive a list of people who did not check in.",
       "healthQrAria": "Fit-for-work clearance via QR",
       "readingPhotoTitle": "Reading photo capture",
       "readingPhotoBody": "On the fridge sticker and the storeroom poster the first button is “Take a photo of the reading”: the photo of the thermometer or display goes into the journal next to the value. {autofill} If they do not want to take a photo — “Enter manually”. Turn it off and the photo buttons disappear.",
@@ -28506,7 +28575,7 @@
       "phaseJournalsTitle": "Journals",
       "phaseJournalsSubtitle": "Which journals you keep and who fills them in. Pipeline instructions are optional",
       "phaseDocumentsTitle": "Creating today’s documents",
-      "phaseDocumentsSubtitle": "One click creates documents for all enabled journals, with owners and auto-filled workshops / equipment",
+      "phaseDocumentsSubtitle": "One click creates documents for all enabled journals, with owners, workshops and equipment",
       "phaseTasksflowTitle": "TasksFlow: sending tasks",
       "phaseTasksflowSubtitle": "Connect the bot, choose the working mode, link employees, then press “Send” on the dashboard",
       "headingAllDone": "All set: the company is running at full speed",
@@ -29943,10 +30012,10 @@
     },
     "resumePausedCard": {
       "resumeFailed": "Could not resume operation",
-      "resumed": "The account is active again — auto-fill and tasks are on",
+      "resumed": "The account is active again — tasks and reminders are on",
       "eyebrow": "Account paused",
-      "title": "No entries for 100 days — automation has stopped",
-      "description": "Journal auto-fill, employee tasks and reminders do not work while the account is paused. Entries, documents and settings are preserved. Press the button — everything switches on immediately.",
+      "title": "No entries for 100 days — the account is paused",
+      "description": "Employee tasks and reminders do not work while the account is paused. Entries, documents and settings are preserved. Press the button — everything switches on immediately.",
       "resuming": "Switching on…",
       "resume": "Resume operation"
     },
@@ -30237,6 +30306,12 @@
       "ppk": "PCP — how many sections of the production control program are ready."
     },
     "title": "Monitoring"
+  },
+  "newsPage": {
+    "title": "News, articles, expert reviews",
+    "badge": "Section in development",
+    "emptyTitle": "Lots of useful content is coming soon",
+    "emptyText": "Interesting articles, tips, expert opinions and independent advice will appear here — for every user."
   },
   "pointJournals": {
     "lead": "Which journals each outlet keeps. Add or remove a journal — only that outlet changes.",
@@ -30611,7 +30686,8 @@
       "plan": "Tariff",
       "plans": {
         "standard": "Standard",
-        "premium": "Premium"
+        "premium": "Premium",
+        "vip": "VIP"
       },
       "addressee": "Addressee line under the title",
       "addresseeHint": "In Russian dative case: we declined the director’s name automatically — please check.",

@@ -5,6 +5,11 @@ import { checklistInspectionReadWhere, checklistInspectionsInArea, requireCheckl
 import { assignmentForStart } from "@/lib/checklist-assignments.server";
 import { visibleObjectBuildingIds } from "@/lib/point-objects.server";
 import { recordAuditLog } from "@/lib/audit-log";
+import { checklistDefinitionSchema, type ChecklistAnswers } from "@/lib/custom-checklists";
+import { hasChecklistRowSource } from "@/lib/custom-checklist-rows";
+import { applyServingDishes } from "@/lib/serving-dishes";
+import { loadServingDishes } from "@/lib/serving-dishes.server";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 export async function GET() {
@@ -31,7 +36,18 @@ export async function POST(request: Request) {
     const draft = await db.checklistInspection.findFirst({ where: { organizationId: auth.organizationId, assignmentId, createdById: auth.session.user.id, status: "draft" }, orderBy: { createdAt: "desc" }, select: { id: true } });
     if (draft) return NextResponse.json({ id: draft.id, resumed: true }, { status: 200 });
   }
-  const inspection = await db.checklistInspection.create({ data: { organizationId: auth.organizationId, templateId: template.id, templateVersion: template.version, title: template.title, snapshot: template.definition ?? {}, createdById: auth.session.user.id, createdByName: auth.session.user.name ?? "", assignmentId }, select: { id: true } });
+  // Строки из данных (05.11.2026): блюда на раздаче — сегодняшний бракераж точки
+  // и готовая продукция справочника — ложатся в снимок при старте проверки.
+  let snapshot = (template.definition ?? {}) as Prisma.InputJsonValue;
+  let answers: ChecklistAnswers = {};
+  const definition = checklistDefinitionSchema.safeParse(template.definition);
+  if (definition.success && hasChecklistRowSource(definition.data, "serving_dishes")) {
+    const dishes = await loadServingDishes({ organizationId: auth.organizationId, points: await visibleObjectBuildingIds(auth.session) });
+    const applied = applyServingDishes(definition.data, dishes);
+    snapshot = JSON.parse(JSON.stringify(applied.definition)) as Prisma.InputJsonValue;
+    answers = applied.answers;
+  }
+  const inspection = await db.checklistInspection.create({ data: { organizationId: auth.organizationId, templateId: template.id, templateVersion: template.version, title: template.title, snapshot, answers, createdById: auth.session.user.id, createdByName: auth.session.user.name ?? "", assignmentId }, select: { id: true } });
   await recordAuditLog({ request, session: auth.session, organizationId: auth.organizationId, action: "checklist.inspection_create", entity: "ChecklistInspection", entityId: inspection.id, details: { templateId: template.id, version: template.version, assignmentId } });
   return NextResponse.json(inspection, { status: 201 });
 }

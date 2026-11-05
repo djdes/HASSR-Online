@@ -3,6 +3,8 @@ import { forbidden, notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowRight, MapPin, Plus, QrCode, Thermometer } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
+import { automationOn } from "@/lib/journal-controls";
+import { getJournalControls } from "@/lib/journal-controls.server";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { listOrganizationBuildings, listPersonBuildings } from "@/lib/active-building";
@@ -210,6 +212,9 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
     );
   };
   const journalsInWork = activeTemplates.filter((template) => !disabledCodes.has(template.code)).length;
+  // Плитка «ведутся сами» и кнопка «Автоматика» — только при галочке
+  // «Автосоздание документов» спецрежима (2026-11-05), как сама страница.
+  const automationVisible = automationOn(await getJournalControls(orgId), "autoCreate");
   const automationCount = listAutomationCodes(withBuildingJournalSettings(orgAutomation, buildingAutomation)).filter(
     (row) => row.automation.autoCreate && !disabledCodes.has(row.code),
   ).length;
@@ -419,11 +424,13 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
 
         <PointBlock number={3} testId="journals" title={t("journals.title")} hint={t("journals.hint")}>
           <div className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className={`grid gap-2 ${automationVisible ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
               {(
                 [
                   ["inWork", t("journals.inWork", { count: journalsInWork })],
-                  ["auto", automationCount > 0 ? t("journals.auto", { count: automationCount }) : t("journals.autoOff")],
+                  ...(automationVisible
+                    ? [["auto", automationCount > 0 ? t("journals.auto", { count: automationCount }) : t("journals.autoOff")] as const]
+                    : []),
                   ["commission", commission.length > 0 ? t("journals.commission", { count: commission.length }) : t("journals.commissionNone")],
                 ] as const
               ).map(([key, value]) => (
@@ -442,9 +449,11 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
                   <OpenAtPointButton buildingId={point.id} href="/settings/journals" failedText={t("journals.failed")} testId="set">
                     {t("journals.openSet")}
                   </OpenAtPointButton>
-                  <OpenAtPointButton buildingId={point.id} href="/settings/auto-journals" failedText={t("journals.failed")} testId="auto">
-                    {t("journals.openAuto")}
-                  </OpenAtPointButton>
+                  {automationVisible ? (
+                    <OpenAtPointButton buildingId={point.id} href="/settings/auto-journals" failedText={t("journals.failed")} testId="auto">
+                      {t("journals.openAuto")}
+                    </OpenAtPointButton>
+                  ) : null}
                   <OpenAtPointButton
                     buildingId={point.id}
                     href="/settings/brakerage-commission"

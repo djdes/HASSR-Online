@@ -66,7 +66,7 @@ const WALKTHROUGHS: Record<string, WalkthroughStep[]> = {
       page: "list",
       anchor: TOUR.createDocument,
       title: "Создайте документ",
-      body: "Нажмите «Создать документ»: период на 15 дней и название подставятся сами, выберите, кто проводит осмотр. При включённом автосоздании документ уже в списке.",
+      body: "Нажмите «Создать документ»: период на 15 дней и название подставятся сами, выберите, кто проводит осмотр.",
       forManager: true,
       preview: "button-create",
     },
@@ -184,7 +184,7 @@ const WALKTHROUGHS: Record<string, WalkthroughStep[]> = {
       page: "document",
       anchor: TOUR.addRow,
       title: "Добавьте строку за сегодня",
-      body: "Если автозаполнение выключено: «Добавить строку» → дата и кто измерял.",
+      body: "«Добавить строку» → дата и кто измерял.",
       preview: "button-add-row",
     },
     {
@@ -361,10 +361,14 @@ export function hasJournalWalkthrough(code: string): boolean {
     || (Object.hasOwn(FILLING_GUIDES, code) && FILLING_GUIDES[code].steps.length > 0);
 }
 
-/** Шаги, которые имеет смысл показывать на этом устройстве. */
+/**
+ * Шаги, которые имеет смысл показывать на этом устройстве. Шаг про
+ * автозаполнение — только при галочке спецрежима (`autoFill: true`,
+ * 2026-11-05): без неё о функции подсказка не говорит.
+ */
 export function visibleWalkthroughSteps(
   steps: readonly WalkthroughStep[],
-  { isMobile }: { isMobile: boolean },
+  { isMobile, autoFill = false }: { isMobile: boolean; autoFill?: boolean },
 ): WalkthroughStep[] {
-  return steps.filter((step) => !step.mobileOnly || isMobile);
+  return steps.filter((step) => (!step.mobileOnly || isMobile) && (autoFill || step.id !== "autofill"));
 }

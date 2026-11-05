@@ -53,6 +53,7 @@ function actionsFixture(staffRefusal?: unknown, scope: Scope = null, documentBui
     "@/lib/db": { db }, "@/i18n/translator": { translatorFor }, "@/i18n/messages": { loadMessages },
     "@/lib/plan-limits": limits, "@/i18n/journal-presentation": journalPresentation, "@/i18n/journal-document-presentation": documentPresentation,
     "@/lib/journal-acl": { canWriteJournal: async () => true },
+    "@/lib/journal-controls": { automationOn: () => true }, "@/lib/journal-controls.server": { getJournalControls: async () => ({}) },
     "@/lib/journal-staff-binding": { reconcileEntryStaffFields: (data: unknown) => data },
     "@/lib/journal-entry-write": { ...entryScope, loadEntryWriteContext: async () => ({}), checkEntryWrite: () => ({ allowed: true }), logPastDayOverride: async () => {}, maybeTriggerColdEquipmentCapaDetection() {}, toEntryDayUtc: (value: string) => new Date(`${value}T00:00:00Z`), toPrismaJsonValue: (value: unknown) => value },
     "@/lib/hygiene-document": hygiene, "@/lib/hygiene-v2": { readHygieneFormVersion: () => 1 },
@@ -135,6 +136,7 @@ test("assistant route snapshots session locale for jobs/actions and returns isol
       "@/lib/rate-limit": { aiChatRateLimiter: { consume: () => allowed, remainingMs: () => 500 } },
       "@/lib/mobile-app": { isMobileAppUserAgent: (ua: string | null) => Boolean(ua?.includes("WeSetupApp/")) },
       "@/lib/ai-assistant/pf-client": { enqueueAndWait: async () => { calls.queue++; return queueOk ? { ok: true, text: "reply" } : { ok: false, code: "not_configured", error: "private upstream failure" }; } },
+      "@/lib/journal-controls": { automationOn: () => false }, "@/lib/journal-controls.server": { getJournalControls: async () => ({}) },
       "@/lib/ai-assistant/job-text": { pathnameSchema: z.string(), buildChatJobText: async (args: Record<string, unknown>) => { calls.job = args; return "job"; }, parseAssistantReply: () => ({ reply: "Original response", action: { kind: "add_staff", input: {} } }) },
       "@/lib/ai-assistant/actions": { prepareAction: async (_raw: unknown, context: Record<string, unknown>) => { calls.prepare = context; return { ok: true, preview: { token: "token" } }; }, verifyAndExecuteAction: async (_token: string, context: Record<string, unknown>) => { calls.confirm = context; return { ok: true, summary: "Original summary" }; } },
     });

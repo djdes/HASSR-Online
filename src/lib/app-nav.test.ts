@@ -12,6 +12,7 @@ import {
   routedAwayNavHrefs,
   mainNavSections,
   navAllows,
+  needsSidebar,
   sectionForPath,
   visibleNav,
   visibleSettingsCards,
@@ -92,6 +93,7 @@ const ALL_KEYS = [
   "billing",
   "settings",
   "more",
+  "news",
   "inspection",
 ];
 
@@ -99,15 +101,16 @@ function mainKeys(actor: NavActor, facts: NavFacts = withChecklists): string[] {
   return mainNavSections(visibleNav(actor, facts)).map((section) => section.key);
 }
 
-test("разделы в порядке схемы владельца; главное меню руководителя — четыре раздела и «Пришла проверка»", () => {
+test("разделы в порядке схемы владельца; главное меню руководителя — четыре раздела, «Новости» и «Пришла проверка»", () => {
   assert.deepEqual(
     NAV_SECTIONS.map((section) => section.key),
     ALL_KEYS,
   );
   // Эскиз 2026-10-28, лист 1: Моя компания, Мониторинг, Подписки, Настройки и оформление.
-  assert.deepEqual(mainKeys(owner), ["company", "monitoring", "billing", "settings", "inspection"]);
-  assert.deepEqual(mainKeys(manager), ["company", "monitoring", "billing", "settings", "inspection"]);
-  assert.deepEqual(mainKeys(root), ["company", "monitoring", "billing", "settings", "inspection"]);
+  // «Новости, статьи, обзоры экспертов» (2026-11-05) — перед «Пришла проверка».
+  assert.deepEqual(mainKeys(owner), ["company", "monitoring", "billing", "settings", "news", "inspection"]);
+  assert.deepEqual(mainKeys(manager), ["company", "monitoring", "billing", "settings", "news", "inspection"]);
+  assert.deepEqual(mainKeys(root), ["company", "monitoring", "billing", "settings", "news", "inspection"]);
 });
 
 test("дерево: Моя компания → Офис / Торговые точки → Сотрудники / Журналы / ППК; Мониторинг → Чек-листы", () => {
@@ -124,6 +127,7 @@ test("дерево: Моя компания → Офис / Торговые то
     billing: null,
     settings: null,
     more: "company",
+    news: null,
     inspection: null,
   });
   // Вложенный раздел — пункт меню своего родителя, и только его.
@@ -155,11 +159,11 @@ test("дерево: Моя компания → Офис / Торговые то
 
 test("закрытый родитель поднимает раздел в главное меню — права не меняются", () => {
   // Заведующей «Моя компания» закрыта: «Офис» (права и доступ), «Торговые точки» и «Остальное» — в главном меню.
-  assert.deepEqual(mainKeys(headChef), ["office", "points", "monitoring", "billing", "settings", "more", "inspection"]);
+  assert.deepEqual(mainKeys(headChef), ["office", "points", "monitoring", "billing", "settings", "more", "news", "inspection"]);
   // Повар с доступом к чек-листам: «Мониторинг» закрыт — «Чек-листы» сами по себе.
-  assert.deepEqual(mainKeys(cook), ["checklists"]);
+  assert.deepEqual(mainKeys(cook), ["checklists", "news"]);
   // Линейная роль с пресетом заведующей: «Торговые точки» закрыты — «Сотрудники» и «Журналы» сверху.
-  assert.deepEqual(mainKeys(verifyOnly, noChecklists), ["staff", "journals", "inspection"]);
+  assert.deepEqual(mainKeys(verifyOnly, noChecklists), ["staff", "journals", "news", "inspection"]);
 });
 
 test("у каждого раздела есть иконка и хотя бы одна вкладка, id вкладок не повторяются", () => {
@@ -255,22 +259,45 @@ test("у управляющей «Журналы» начинаются с жу�
   assert.equal(journals.rootHref, "/journals/points");
 });
 
-test("повар и уборщица видят не больше одного раздела — сайдбара у них нет", () => {
-  assert.deepEqual(keys(cook), []);
-  assert.deepEqual(keys(cleaner), []);
-  assert.deepEqual(keys(cook, withChecklists), ["checklists"]);
+test("повар и уборщица видят не больше одного рабочего раздела и «Новости» — сайдбара у них нет", () => {
+  assert.deepEqual(keys(cook), ["news"]);
+  assert.deepEqual(keys(cleaner), ["news"]);
+  assert.deepEqual(keys(cook, withChecklists), ["checklists", "news"]);
+  // «Новости» сайдбар не заводят: повар открывает их из «Разделов» мини-приложения.
+  for (const facts of [noChecklists, withChecklists]) {
+    assert.equal(needsSidebar(visibleNav(cook, facts)), false);
+    assert.equal(needsSidebar(visibleNav(cleaner, facts)), false);
+  }
+  assert.equal(needsSidebar(visibleNav(verifyOnly, noChecklists)), true);
+  assert.equal(needsSidebar(visibleNav(manager, withChecklists)), true);
+});
+
+test("«Новости, статьи, обзоры экспертов» видят все: страница /news без своей проверки", () => {
+  const actors: NavActor[] = [owner, manager, root, headChef, cook, cleaner, verifyOnly, { ...manager, pointScope: ["b-lenina"] }];
+  for (const actor of actors) {
+    for (const facts of [noChecklists, withChecklists]) {
+      const news = visibleNav(actor, facts).find((section) => section.key === "news");
+      assert.equal(news?.rootHref, "/news");
+      assert.equal(news?.parent, undefined);
+      assert.ok(mainNavSections(visibleNav(actor, facts)).some((section) => section.key === "news"));
+    }
+  }
+  assert.equal(sectionForPath("/news")?.section, "news");
+  assert.equal(sectionForPath("/news")?.isTabRoot, true);
+  assert.equal(isStaffRestrictedWebPath("/news"), false);
+  assert.match(readFileSync(pageFileFor("/news") ?? "", "utf8"), /requireAuth\(\)/);
 });
 
 test("пользователь с пресетом заведующей и линейной ролью видит команду, проверку и «Пришла проверка»", () => {
   const sections = visibleNav(verifyOnly, noChecklists);
   assert.deepEqual(
     sections.map((s) => s.key),
-    ["staff", "journals", "inspection"],
+    ["staff", "journals", "news", "inspection"],
   );
   assert.equal(sections[0].rootHref, "/team");
   assert.equal(sections[1].rootHref, "/control-board");
-  assert.equal(sections[2].rootHref, "/inspection");
-  assert.deepEqual(sections[2].tabs.map((tab) => tab.href), ["/inspection"]);
+  assert.equal(sections[3].rootHref, "/inspection");
+  assert.deepEqual(sections[3].tabs.map((tab) => tab.href), ["/inspection"]);
 });
 
 test("«Разрешение менять настройки» (роль owner в сессии) — как руководство", () => {
@@ -513,9 +540,9 @@ function menuShape(key: string): [string | null, string[]][] {
   ]);
 }
 
-test("у каждого раздела, кроме «Остального», своё меню — пункты по эскизам руководителя", () => {
+test("у каждого раздела, кроме «Остального» и «Новостей», своё меню — пункты по эскизам руководителя", () => {
   for (const section of NAV_SECTIONS) {
-    if (section.key === "more") assert.equal(section.menu, undefined);
+    if (section.key === "more" || section.key === "news") assert.equal(section.menu, undefined);
     else assert.ok(section.menu && section.menu.length > 0, section.key);
   }
   // Лист 2: Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Остальное, Реквизиты.
@@ -547,7 +574,7 @@ test("у каждого раздела, кроме «Остального», с�
   // Фото 6-го листа: нормативные документы, ППК и ХАССП, QR для проверяющего, консалтинг.
   assert.deepEqual(menuShape("inspection"), [
     [null, ["laws", "norms", "portal", "experts"]],
-    ["more", ["now", "visits", "readiness", "special"]],
+    ["more", ["now", "visits", "readiness"]],
   ]);
   // «Права и доступ» — одна страница без вкладок; прежние четыре страницы —
   // её подробные редакторы (подсвечивают пункт).
@@ -702,7 +729,7 @@ test("заведующая: пунктов только для admin.full нет
   assert.equal(access?.tabs, undefined);
   assert.equal(access?.href, "/settings/access");
   // «Пришла проверка»: заведующей — всё, кроме «Готовности» (admin.full).
-  assert.deepEqual(visibleItemIds(headChef, "inspection"), ["laws", "norms", "portal", "experts", "now", "visits", "special"]);
+  assert.deepEqual(visibleItemIds(headChef, "inspection"), ["laws", "norms", "portal", "experts", "now", "visits"]);
   assert.deepEqual(visibleItemIds(headChef, "billing"), ["plan", "balance", "services"]);
 });
 
@@ -770,7 +797,7 @@ test("пресет заведующей у линейной роли: в «Со�
   // `/settings/phone` линейной роли закрывает proxy.ts — пункта нет, как не было и карточки.
   assert.deepEqual(visibleItemIds(verifyOnly, "staff", noChecklists), ["team"]);
   // Пресет заведующей у линейной роли: без QR-выпуска, готовности и услуг (их guard — руководство).
-  assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["norms", "now", "visits", "special"]);
+  assert.deepEqual(visibleItemIds(verifyOnly, "inspection", noChecklists), ["norms", "now", "visits"]);
 });
 
 test("«Пришла проверка»: блоки страницы — свои пункты меню, повару раздел закрыт", () => {
@@ -782,20 +809,27 @@ test("«Пришла проверка»: блоки страницы — сво�
     ["/settings/inspector-portal", "portal"],
     ["/dashboard/compliance-audit", "readiness"],
     ["/inspection/experts", "experts"],
-    ["/inspection/special-mode", "special"],
   ]) {
     const place = sectionForPath(path);
     assert.equal(place?.section, "inspection", path);
     assert.equal(place?.menuItemId, id, path);
   }
+  // Спецрежим — без пункта меню и вкладки (2026-11-05): скрытый путь раздела.
+  assert.equal(sectionForPath("/inspection/settings")?.section, "inspection");
+  assert.equal(sectionForPath("/inspection/settings")?.isTabRoot, false);
+  const navHrefs = NAV_SECTIONS.flatMap((section) => [
+    ...section.tabs.map((tab) => tab.href),
+    ...(section.menu ?? []).flatMap((group) => group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)])),
+  ]);
+  assert.ok(!navHrefs.some((href) => href.includes("special") || href.startsWith("/inspection/settings")));
   // «Нормативка» раздела — не пункт ППК: левое меню не переключается.
   assert.notEqual(sectionForPath("/inspection/norms")?.section, "productionControl");
   assert.ok(!keys(cook, withChecklists).includes("inspection"));
   assert.ok(!keys(cleaner, withChecklists).includes("inspection"));
   // «Нормативные документы» раздела — своя страница: левое меню не переключается на ППК.
   assert.equal(sectionForPath("/inspection/laws")?.section, "inspection");
-  // Руководитель видит все восемь пунктов.
-  assert.deepEqual(visibleItemIds(owner, "inspection"), ["laws", "norms", "portal", "experts", "now", "visits", "readiness", "special"]);
+  // Руководитель видит все семь пунктов.
+  assert.deepEqual(visibleItemIds(owner, "inspection"), ["laws", "norms", "portal", "experts", "now", "visits", "readiness"]);
 });
 
 test("статическая модель без динамических сегментов в адресах пунктов", () => {
@@ -830,7 +864,7 @@ test("руководитель точки: без «Моей компании»,
   for (const key of ["company", "office", "billing", "settings"]) assert.equal(keys.includes(key), false, key);
   assert.ok(keys.includes("journals") && keys.includes("staff") && keys.includes("points"));
   // «Торговые точки» — в главном меню, «Сотрудники» и «Журналы» — в их меню.
-  assert.deepEqual(mainKeys(pointManager), ["points", "monitoring", "more", "inspection"]);
+  assert.deepEqual(mainKeys(pointManager), ["points", "monitoring", "more", "news", "inspection"]);
   const items = (key: string) =>
     (sections.find((section) => section.key === key)?.menu ?? []).flatMap((group) => group.items.map((item) => item.id));
   // Сотрудники своей точки — да; должности и права на всю компанию — нет.

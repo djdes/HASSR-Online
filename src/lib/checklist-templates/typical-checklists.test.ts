@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { checklistConditionMatches } from "@/lib/custom-checklist-rules";
 import { evaluateChecklistRun } from "@/lib/custom-checklist-runtime";
+import { hasChecklistRowSource } from "@/lib/custom-checklist-rows";
 import {
   allChecklistQuestions,
   checklistDefinitionSchema,
@@ -61,7 +62,7 @@ function badAnswer(question: ChecklistQuestion): ChecklistAnswers[string] | unde
   }
 }
 
-test("шесть типовых шаблонов в порядке эскиза, ключи и названия уникальны", () => {
+test("типовые шаблоны в порядке эскиза, ключи и названия уникальны", () => {
   assert.deepEqual(TYPICAL_CHECKLISTS.map((t) => t.key), [...TYPICAL_CHECKLIST_KEYS]);
   assert.equal(new Set(TYPICAL_CHECKLISTS.map((t) => t.title)).size, TYPICAL_CHECKLISTS.length);
   for (const key of TYPICAL_CHECKLIST_KEYS) {
@@ -72,7 +73,16 @@ test("шесть типовых шаблонов в порядке эскиза,
   assert.equal(isTypicalChecklistKey(42), false);
 });
 
-for (const template of TYPICAL_CHECKLISTS) {
+// Шаблоны со строками из данных (блюда на раздаче) проверяет свой тест:
+// src/lib/serving-temperature-checklist.test.ts — в них десяток вопросов-образцов.
+const STATIC_TEMPLATES = TYPICAL_CHECKLISTS.filter((template) => !hasChecklistRowSource(template.definition));
+
+test("статичных типовых шаблонов шесть, со строками из данных — контроль температуры на раздаче", () => {
+  assert.equal(STATIC_TEMPLATES.length, 6);
+  assert.deepEqual(TYPICAL_CHECKLISTS.filter((template) => hasChecklistRowSource(template.definition)).map((template) => template.key), ["serving-temperature"]);
+});
+
+for (const template of STATIC_TEMPLATES) {
   test(`«${template.title}» проходит валидацию конструктора и содержит 25–60 вопросов`, () => {
     const parsed = checklistDefinitionSchema.safeParse(template.definition);
     assert.ok(parsed.success, `${template.key}: ${parsed.success ? "" : JSON.stringify(parsed.error.issues.slice(0, 3))}`);

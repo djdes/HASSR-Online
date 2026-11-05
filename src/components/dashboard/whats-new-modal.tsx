@@ -119,7 +119,6 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Памятки по точкам": MapPin,
   "Тарифы: цена за точку": Coins,
   "Торговые точки": MapPin,
-  "Спецрежим: автоматика по галочкам": ShieldCheck,
   "Замена на другой точке": MapPin,
   "Мастер-кабинет: точки по отдельности": MapPin,
   "QR-наклейки по точкам": QrCode,

@@ -34,7 +34,7 @@ export async function loadHelperCatalog(
       where: { organizationId, isActive: true },
       orderBy: { name: "asc" },
       take: 5000,
-      select: { name: true, shelfLifeDays: true, storageTemp: true, supplier: true },
+      select: { name: true, shelfLifeDays: true, shelfLifeHours: true, storageTemp: true, supplier: true },
     }),
     db.journalDocument.findMany({
       where: {

@@ -102,7 +102,7 @@ export function PartnerIncomeCalculator({
           </div>
           <div>
             <div className="mb-1.5 text-[13px] font-medium text-[#6f7282]">{t("tier")}</div>
-            {segmented(tier, [["standard", t("standard")], ["premium", t("premium")]], setTier, t("tier"))}
+            {segmented(tier, [["standard", t("standard")], ["premium", t("premium")], ["vip", t("vip")]], setTier, t("tier"))}
           </div>
           <div>
             <div className="mb-1.5 text-[13px] font-medium text-[#6f7282]">{t("cycle")}</div>

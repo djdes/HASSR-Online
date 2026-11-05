@@ -36,15 +36,16 @@ test("набор у руководства: администратор види�
   );
 });
 
-test("набор у сотрудника: повару — только чек-листы и то по личному доступу", () => {
+test("набор у сотрудника: повару — «Новости» и чек-листы по личному доступу", () => {
   const cook = presetSections("cook", "staff", null);
-  assert.deepEqual(visibleKeys(cook), []);
+  // «Новости, статьи, обзоры экспертов» открыты всем — от набора не зависят.
+  assert.deepEqual(visibleKeys(cook), ["news"]);
   assert.deepEqual(visibleKeys(cook, "depends"), ["checklists"]);
 });
 
 test("контроль-группа у сотрудника: команда, журналы, чек-листы и «Пришла проверка»", () => {
   const control = presetSections("control_group", "staff", null);
-  assert.deepEqual(visibleKeys(control), ["staff", "journals", "checklists", "inspection"]);
+  assert.deepEqual(visibleKeys(control), ["staff", "journals", "checklists", "news", "inspection"]);
   assert.deepEqual(visibleKeys(control, "depends"), []);
 });
 
@@ -75,7 +76,7 @@ function person(over: Partial<AccessPerson>): AccessPerson {
 }
 
 test("разделы человека: чек-листы — по его доступу к журналу, руководство — всё", () => {
-  assert.deepEqual(personSections(person({}), null), []);
+  assert.deepEqual(personSections(person({}), null), ["news"]);
   assert.deepEqual(
     personSections(
       person({
@@ -86,10 +87,10 @@ test("разделы человека: чек-листы — по его дос�
       }),
       null
     ),
-    ["checklists"]
+    ["checklists", "news"]
   );
   // Не перешёл на ACL — видит все журналы, в том числе чек-листы.
-  assert.deepEqual(personSections(person({ checklistAcl: { migrated: false, row: undefined } }), null), ["checklists"]);
+  assert.deepEqual(personSections(person({ checklistAcl: { migrated: false, row: undefined } }), null), ["checklists", "news"]);
   assert.deepEqual(
     personSections(person({ role: "manager", permissionActor: { positionCategoryKey: "management" } }), null),
     NAV_SECTIONS.map((section) => section.key)

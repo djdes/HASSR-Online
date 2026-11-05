@@ -21,6 +21,7 @@ const PLANS = [
   { value: "free", label: "plans.free" },
   { value: "standard", label: "plans.standard" },
   { value: "premium", label: "plans.premium" },
+  { value: "vip", label: "plans.vip" },
   { value: "paid", label: "plans.paid" },
   { value: "paused", label: "plans.paused" },
   { value: "cancelled", label: "plans.cancelled" },
