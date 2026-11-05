@@ -70,7 +70,9 @@ export function defaultCampaign(now: Date = new Date()): string {
  * Ставит UTM на ссылку сайта WeSetup, чтобы переходы из канала было видно
  * в Метрике. Чужие ссылки и уже размеченные не трогаем.
  */
-export function withUtm(rawUrl: string, campaign: string | null | undefined): string {
+export type UtmSource = "max" | "telegram";
+
+export function withUtm(rawUrl: string, campaign: string | null | undefined, source: UtmSource = "max"): string {
   let url: URL;
   try {
     url = new URL(rawUrl);
@@ -79,19 +81,19 @@ export function withUtm(rawUrl: string, campaign: string | null | undefined): st
   }
   if (!SITE_HOSTS.has(url.hostname)) return rawUrl;
   if (url.searchParams.has("utm_source")) return rawUrl;
-  url.searchParams.set("utm_source", "max");
+  url.searchParams.set("utm_source", source);
   url.searchParams.set("utm_medium", "social");
   if (campaign) url.searchParams.set("utm_campaign", campaign);
   return url.toString();
 }
 
 /** UTM на все ссылки сайта в тексте: и голые, и в разметке [текст](ссылка). */
-export function tagSiteLinks(text: string, campaign: string | null | undefined): string {
+export function tagSiteLinks(text: string, campaign: string | null | undefined, source: UtmSource = "max"): string {
   return text.replace(/https?:\/\/(?:www\.)?wesetup\.ru[^\s)\]]*/g, (match) => {
     // Точку/запятую в конце предложения ссылкой не считаем.
     const tail = /[.,!?;:]+$/.exec(match)?.[0] ?? "";
     const core = tail ? match.slice(0, -tail.length) : match;
-    return withUtm(core, campaign) + tail;
+    return withUtm(core, campaign, source) + tail;
   });
 }
 
@@ -129,6 +131,13 @@ export const MAX_POST_STATUS_LABELS: Record<MaxPostStatus, string> = {
   sent: "Опубликован",
   failed: "Ошибка",
   deleted: "Удалён из канала",
+};
+
+export type ChannelPlatform = "max" | "telegram";
+
+export const CHANNEL_PLATFORM_LABELS: Record<ChannelPlatform, string> = {
+  max: "MAX",
+  telegram: "Telegram",
 };
 
 /**

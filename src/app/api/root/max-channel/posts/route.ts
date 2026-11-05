@@ -11,9 +11,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const actionSchema = z.enum(["draft", "schedule", "publish"]);
+const channelIdsSchema = z
+  .array(z.string().min(1))
+  .min(1, "Выберите, куда публиковать")
+  .max(10)
+  .transform((ids) => [...new Set(ids)]);
 
 /**
- * POST /api/root/max-channel/posts — новый пост в канал MAX.
+ * POST /api/root/max-channel/posts — новый пост в один или несколько
+ * каналов (`channelIds`: Telegram и/или MAX; в каждый — своя запись).
  * `action`: draft — сохранить, schedule — на время `scheduledAt`
  * (публикует cron /api/cron/max-channel), publish — сразу.
  */
@@ -23,32 +29,44 @@ export async function POST(request: Request) {
     const raw = (await request.json().catch(() => null)) as Record<string, unknown> | null;
     if (!raw) throw new MaxChannelError("Не удалось прочитать запрос.");
     const action = actionSchema.parse(raw.action ?? "draft");
-    const draft = maxPostDraftSchema.parse(raw);
-    const channel = await db.maxChannel.findUnique({ where: { id: draft.channelId } });
-    if (!channel || channel.removed) throw new MaxChannelError("Канал не найден — добавьте бота в канал заново.");
+    const channelIds = channelIdsSchema.parse(raw.channelIds ?? (raw.channelId ? [raw.channelId] : []));
+    const draft = maxPostDraftSchema.parse({ ...raw, channelId: channelIds[0] });
+    const channels = await db.maxChannel.findMany({ where: { id: { in: channelIds }, removed: false } });
+    if (channels.length !== channelIds.length) throw new MaxChannelError("Канал не найден — подключите его заново.");
     const scheduledAt = draft.scheduledAt ? new Date(draft.scheduledAt) : null;
     if (action === "schedule") {
       if (!scheduledAt) throw new MaxChannelError("Выберите дату и время публикации.");
       if (scheduledAt.getTime() < Date.now() - 60_000) throw new MaxChannelError("Время публикации уже прошло.");
     }
-    const post = await db.maxChannelPost.create({
-      data: {
-        channelId: channel.id,
-        text: draft.text,
-        images: draft.images,
-        buttonText: draft.buttonText?.trim() || null,
-        buttonUrl: draft.buttonUrl?.trim() || null,
-        campaign: draft.campaign?.trim() || null,
-        status: action === "schedule" ? "scheduled" : "draft",
-        scheduledAt: action === "schedule" ? scheduledAt : null,
-        createdById: session.user.id,
-      },
-    });
-    if (action === "publish") {
-      const result = await publishPost(post.id);
-      if (!result.ok) return NextResponse.json({ id: post.id, error: result.error }, { status: 502 });
+    const posts = [];
+    for (const channel of channels) {
+      posts.push(
+        await db.maxChannelPost.create({
+          data: {
+            channelId: channel.id,
+            text: draft.text,
+            images: draft.images,
+            buttonText: draft.buttonText?.trim() || null,
+            buttonUrl: draft.buttonUrl?.trim() || null,
+            campaign: draft.campaign?.trim() || null,
+            status: action === "schedule" ? "scheduled" : "draft",
+            scheduledAt: action === "schedule" ? scheduledAt : null,
+            createdById: session.user.id,
+          },
+        }),
+      );
     }
-    return NextResponse.json({ id: post.id });
+    if (action === "publish") {
+      const failed: string[] = [];
+      for (const post of posts) {
+        const result = await publishPost(post.id);
+        const title = channels.find((channel) => channel.id === post.channelId)?.title ?? "";
+        if (!result.ok) failed.push(`«${title}»: ${result.error}`);
+      }
+      if (failed.length === posts.length) return NextResponse.json({ ids: posts.map((p) => p.id), error: failed.join(" ") }, { status: 502 });
+      return NextResponse.json({ ids: posts.map((p) => p.id), published: posts.length - failed.length, failed });
+    }
+    return NextResponse.json({ ids: posts.map((p) => p.id) });
   } catch (error) {
     return maxChannelFailure(error);
   }

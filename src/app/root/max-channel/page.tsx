@@ -1,22 +1,24 @@
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { channelBotInfo, channelBotToken } from "@/lib/max/channel.server";
+import { telegramBotInfo, telegramChannelBotToken } from "@/lib/max/telegram-channel.server";
 import { MaxChannelClient, type ChannelView, type PostView } from "./max-channel-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = { title: "Канал MAX" };
+export const metadata = { title: "Каналы Telegram и MAX" };
 
 /**
- * ROOT → «Канал MAX»: СММ-посты в канал WeSetup в мессенджере MAX —
+ * ROOT → «Каналы Telegram и MAX»: СММ-посты в каналы WeSetup —
  * сразу, по расписанию (cron /api/cron/max-channel) или черновиком;
  * правка и удаление опубликованного; автоанонс статей блога.
  */
 export default async function RootMaxChannelPage() {
   await requireRoot();
-  const [bot, channels, posts, articles] = await Promise.all([
+  const [bot, telegramBot, channels, posts, articles] = await Promise.all([
     channelBotInfo(),
+    telegramBotInfo(),
     db.maxChannel.findMany({ orderBy: [{ removed: "asc" }, { createdAt: "asc" }] }),
     db.maxChannelPost.findMany({ orderBy: { createdAt: "desc" }, take: 60 }),
     db.article.findMany({
@@ -26,10 +28,12 @@ export default async function RootMaxChannelPage() {
       select: { slug: true, title: true, excerpt: true },
     }),
   ]);
-  const { token, separate } = channelBotToken();
+  const maxToken = channelBotToken();
+  const telegramToken = telegramChannelBotToken();
 
   const channelViews: ChannelView[] = channels.map((channel) => ({
     id: channel.id,
+    platform: channel.platform === "telegram" ? "telegram" : "max",
     chatId: channel.chatId,
     title: channel.title,
     link: channel.link,
@@ -56,9 +60,10 @@ export default async function RootMaxChannelPage() {
 
   return (
     <MaxChannelClient
-      bot={bot}
-      tokenConfigured={Boolean(token)}
-      separateBot={separate}
+      bots={{
+        max: { info: bot, tokenConfigured: Boolean(maxToken.token), separate: maxToken.separate },
+        telegram: { info: telegramBot, tokenConfigured: Boolean(telegramToken.token), separate: telegramToken.separate },
+      }}
       channels={channelViews}
       posts={postViews}
       articles={articles}

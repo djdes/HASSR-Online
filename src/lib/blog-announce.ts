@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 
 /**
- * Автопост новой статьи в Telegram-канал (`TELEGRAM_BLOG_CHANNEL_ID`) и в
- * каналы MAX с включённым автоанонсом (ROOT → «Канал MAX»). Шлём один
+ * Автопост новой статьи в каналы с включённым автоанонсом (ROOT →
+ * «Каналы Telegram и MAX»). Старый `TELEGRAM_BLOG_CHANNEL_ID` работает,
+ * пока Telegram-канал там не подключён. Шлём один
  * раз — когда статья впервые становится опубликованной (`publishedAt` из
  * null в дату не позже сейчас).
  */
@@ -20,6 +21,9 @@ export async function announceArticleIfPublished(input: {
 async function announceToTelegram(article: { slug: string; title: string; excerpt: string }): Promise<boolean> {
   const channel = process.env.TELEGRAM_BLOG_CHANNEL_ID?.trim();
   if (!channel) return false;
+  // Канал подключён в «Каналах Telegram и MAX» — анонс уходит оттуда.
+  const connected = await db.maxChannel.count({ where: { platform: "telegram", removed: false } });
+  if (connected) return false;
   const { sendTelegramMessage, escapeTelegramHtml } = await import("@/lib/telegram");
   const text = [
     `📝 <b>${escapeTelegramHtml(article.title)}</b>`,
@@ -39,8 +43,8 @@ async function announceToTelegram(article: { slug: string; title: string; excerp
 
 async function announceToMax(article: { slug: string; title: string; excerpt: string }): Promise<boolean> {
   try {
-    const { announceArticleToMax } = await import("@/lib/max/channel.server");
-    return (await announceArticleToMax(article)) > 0;
+    const { announceArticleToChannels } = await import("@/lib/max/channel.server");
+    return (await announceArticleToChannels(article)) > 0;
   } catch (error) {
     console.error("[blog-announce] max failed", error instanceof Error ? error.name : "UnknownError");
     return false;

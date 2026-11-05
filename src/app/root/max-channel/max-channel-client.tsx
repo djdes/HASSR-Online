@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Bold,
   CalendarClock,
+  Check,
   CheckCircle2,
   ExternalLink,
   ImagePlus,
@@ -24,17 +25,21 @@ import {
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
+  CHANNEL_PLATFORM_LABELS,
   MAX_POST_IMAGES_LIMIT,
   MAX_POST_STATUS_LABELS,
   MAX_POST_TEMPLATES,
   MAX_POST_TEXT_LIMIT,
   defaultCampaign,
+  type ChannelPlatform,
   type MaxPostStatus,
 } from "@/lib/max/channel-post";
+import { planTelegramPost } from "@/lib/max/telegram-post";
 import { cn } from "@/lib/utils";
 
 export type ChannelView = {
   id: string;
+  platform: ChannelPlatform;
   chatId: string;
   title: string;
   link: string | null;
@@ -60,10 +65,10 @@ export type PostView = {
   createdAt: string;
 };
 
+type BotState = { info: { name: string; username: string } | null; tokenConfigured: boolean; separate: boolean };
+
 type Props = {
-  bot: { name: string; username: string } | null;
-  tokenConfigured: boolean;
-  separateBot: boolean;
+  bots: Record<ChannelPlatform, BotState>;
   channels: ChannelView[];
   posts: PostView[];
   articles: Array<{ slug: string; title: string; excerpt: string }>;
@@ -72,7 +77,8 @@ type Props = {
 type Draft = {
   editingId: string | null;
   editingStatus: MaxPostStatus | null;
-  channelId: string;
+  /** Куда публиковать; при правке — один канал поста. */
+  channelIds: string[];
   text: string;
   images: string[];
   buttonText: string;
@@ -101,11 +107,11 @@ const STATUS_TONE: Record<MaxPostStatus, string> = {
   deleted: "bg-[#f4f4f8] text-[#6f7282]",
 };
 
-function emptyDraft(channelId: string): Draft {
+function emptyDraft(channelIds: string[]): Draft {
   return {
     editingId: null,
     editingStatus: null,
-    channelId,
+    channelIds,
     text: "",
     images: [],
     buttonText: "",
@@ -127,6 +133,46 @@ function formatWhen(iso: string | null): string {
   return new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 }
 
+/** Быстрый выбор времени: ближайшие удобные слоты для постов. */
+function quickTimes(now: Date): Array<{ label: string; value: string }> {
+  const at = (days: number, hour: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + days);
+    date.setHours(hour, 0, 0, 0);
+    return date;
+  };
+  const slots: Array<{ label: string; date: Date }> = [];
+  if (now.getHours() < 17) slots.push({ label: "Сегодня в 18:00", date: at(0, 18) });
+  slots.push({ label: "Завтра в 10:00", date: at(1, 10) });
+  slots.push({ label: "Завтра в 18:00", date: at(1, 18) });
+  const toMonday = (8 - now.getDay()) % 7 || 7;
+  if (toMonday > 1) slots.push({ label: "В понедельник в 10:00", date: at(toMonday, 10) });
+  return slots.map((slot) => ({ label: slot.label, value: toLocalInput(slot.date.toISOString()) }));
+}
+
+function dayLabel(iso: string): string {
+  const date = new Date(iso);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  if (date.toDateString() === today.toDateString()) return "Сегодня";
+  if (date.toDateString() === tomorrow.toDateString()) return "Завтра";
+  return date.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function PlatformBadge({ platform }: { platform: ChannelPlatform }) {
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+        platform === "telegram" ? "bg-[#e8f4fd] text-[#1d6fa5]" : "bg-[#eef1ff] text-[#3848c7]",
+      )}
+    >
+      {CHANNEL_PLATFORM_LABELS[platform]}
+    </span>
+  );
+}
+
 async function callJson(url: string, method: string, body?: unknown): Promise<Record<string, unknown>> {
   const response = await fetch(url, {
     method,
@@ -138,19 +184,31 @@ async function callJson(url: string, method: string, body?: unknown): Promise<Re
   return data;
 }
 
-export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, posts, articles }: Props) {
+export function MaxChannelClient({ bots, channels, posts, articles }: Props) {
   const router = useRouter();
   const usable = channels.filter((channel) => !channel.removed);
-  const defaultChannelId = usable[0]?.id ?? "";
-  const [draft, setDraft] = useState<Draft>(() => emptyDraft(defaultChannelId));
+  const defaultChannelIds = usable.filter((channel) => channel.botIsAdmin).map((channel) => channel.id);
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft(defaultChannelIds));
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<null | { kind: "publish" } | { kind: "delete"; post: PostView }>(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
-  const channelId = draft.channelId || defaultChannelId;
-  const channel = usable.find((item) => item.id === channelId) ?? null;
+  const selected = usable.filter((item) => draft.channelIds.includes(item.id));
+  const selectedNames = selected.map((item) => `«${item.title}» (${CHANNEL_PLATFORM_LABELS[item.platform]})`).join(" и ");
   const editingSent = draft.editingStatus === "sent";
+  const telegramSelected = selected.some((item) => item.platform === "telegram");
+  const telegramSplit = telegramSelected && draft.images.length > 0 && planTelegramPost(draft).mode === "photos-then-text";
+  const scheduled = posts
+    .filter((post) => post.status === "scheduled" && post.scheduledAt)
+    .sort((a, b) => (a.scheduledAt ?? "").localeCompare(b.scheduledAt ?? ""));
+
+  function toggleChannel(id: string) {
+    setDraft((current) => ({
+      ...current,
+      channelIds: current.channelIds.includes(id) ? current.channelIds.filter((item) => item !== id) : [...current.channelIds, id],
+    }));
+  }
 
   function patch(next: Partial<Draft>) {
     setDraft((current) => ({ ...current, ...next }));
@@ -203,7 +261,7 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
   function payload(action?: "draft" | "schedule" | "publish") {
     return {
       ...(action ? { action } : {}),
-      channelId,
+      channelIds: draft.channelIds,
       text: draft.text,
       images: draft.images,
       buttonText: draft.buttonText || null,
@@ -229,18 +287,21 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
           await callJson(`/api/root/max-channel/posts/${draft.editingId}/publish`, "POST");
         }
       } else {
-        await callJson("/api/root/max-channel/posts", "POST", payload(action));
+        const result = await callJson("/api/root/max-channel/posts", "POST", payload(action));
+        const failed = Array.isArray(result.failed) ? (result.failed as string[]) : [];
+        if (failed.length) toast.error(`Не везде получилось. ${failed.join(" ")}`);
       }
+      const where = selected.length > 1 ? "в каналах" : "в канале";
       toast.success(
         editingSent
           ? "Пост изменён в канале"
           : action === "publish"
-            ? "Пост опубликован в канале"
+            ? `Пост опубликован ${where}`
             : action === "schedule"
-              ? `Пост выйдет ${formatWhen(new Date(draft.scheduledAt).toISOString())}`
+              ? `Пост выйдет ${formatWhen(new Date(draft.scheduledAt).toISOString())} ${where}`
               : "Черновик сохранён",
       );
-      setDraft(emptyDraft(channelId));
+      setDraft(emptyDraft(defaultChannelIds));
       router.refresh();
     } catch (error) {
       toast.error((error as Error).message);
@@ -254,7 +315,7 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
     setDraft({
       editingId: post.id,
       editingStatus: post.status,
-      channelId: post.channelId,
+      channelIds: [post.channelId],
       text: post.text,
       images: post.images,
       buttonText: post.buttonText ?? "",
@@ -283,7 +344,7 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
     try {
       const data = await callJson(`/api/root/max-channel/posts/${post.id}`, "DELETE");
       toast.success(data.removedFromChannel ? "Пост удалён из канала" : "Пост удалён");
-      if (draft.editingId === post.id) setDraft(emptyDraft(channelId));
+      if (draft.editingId === post.id) setDraft(emptyDraft(defaultChannelIds));
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
@@ -306,6 +367,20 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
     }
   }
 
+  async function connectTelegram(ref: string) {
+    setBusy("connect-telegram");
+    try {
+      const data = await callJson("/api/root/max-channel/channels", "POST", { platform: "telegram", chatId: ref });
+      if (data.botIsAdmin) toast.success(`Канал «${String(data.title)}» подключён — можно публиковать`);
+      else toast.error(`Канал «${String(data.title)}» найден, но бот в нём не администратор`);
+      router.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function toggleAnnounce(item: ChannelView) {
     setBusy(`announce-${item.id}`);
     try {
@@ -320,25 +395,24 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
   }
 
   const textLength = draft.text.length;
-  const canSubmit = Boolean(channel) && draft.text.trim().length > 0 && textLength <= MAX_POST_TEXT_LIMIT && !busy;
+  const canSubmit = selected.length > 0 && draft.text.trim().length > 0 && textLength <= MAX_POST_TEXT_LIMIT && !busy;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Канал MAX</h1>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">Каналы Telegram и MAX</h1>
         <p className="mt-1 text-[14px] text-[#6f7282]">
-          Посты для продвижения WeSetup в канале мессенджера MAX: сразу, по расписанию или черновиком. Ссылки на wesetup.ru
-          получают UTM-метки — переходы видно в Метрике.
+          Один пост — сразу в оба канала WeSetup: сейчас, к заданному времени или черновиком. Ссылки на wesetup.ru получают
+          UTM-метки — переходы из каждого канала видно в Метрике отдельно.
         </p>
       </div>
 
       <ConnectionCard
-        bot={bot}
-        tokenConfigured={tokenConfigured}
-        separateBot={separateBot}
+        bots={bots}
         channels={channels}
         busy={busy}
         onDiscover={discover}
+        onConnectTelegram={connectTelegram}
         onToggleAnnounce={toggleAnnounce}
       />
 
@@ -349,7 +423,7 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
               {draft.editingId ? (editingSent ? "Правка опубликованного поста" : "Правка поста") : "Новый пост"}
             </div>
             {draft.editingId ? (
-              <button type="button" className={BTN_SMALL} onClick={() => setDraft(emptyDraft(channelId))}>
+              <button type="button" className={BTN_SMALL} onClick={() => setDraft(emptyDraft(defaultChannelIds))}>
                 <X className="size-4" /> Отменить правку
               </button>
             ) : null}
@@ -399,17 +473,42 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
             </div>
           ) : null}
 
-          {usable.length > 1 && !draft.editingId ? (
-            <label className="mb-4 block">
-              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Канал</span>
-              <select className={INPUT} value={channelId} onChange={(event) => patch({ channelId: event.target.value })}>
-                {usable.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {usable.length ? (
+            <div className="mb-4">
+              <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">Куда публиковать</span>
+              <div className="flex flex-wrap gap-2">
+                {(draft.editingId ? selected : usable).map((item) => {
+                  const on = draft.channelIds.includes(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-pressed={on}
+                      disabled={Boolean(draft.editingId)}
+                      onClick={() => toggleChannel(item.id)}
+                      className={cn(
+                        "inline-flex h-10 items-center gap-2 rounded-2xl border px-3 text-[14px] transition-colors duration-150 disabled:cursor-default",
+                        on
+                          ? "border-[#5566f6] bg-[#f5f6ff] text-[#0b1024]"
+                          : "border-[#dcdfed] bg-white text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex size-4 items-center justify-center rounded-md border",
+                          on ? "border-[#5566f6] bg-[#5566f6] text-white" : "border-[#dcdfed] bg-white",
+                        )}
+                      >
+                        {on ? <Check className="size-3" /> : null}
+                      </span>
+                      <PlatformBadge platform={item.platform} />
+                      <span className="max-w-[180px] truncate">{item.title}</span>
+                      {!item.botIsAdmin ? <TriangleAlert className="size-4 text-[#a13a32]" aria-label="Бот не администратор" /> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ) : null}
 
           <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -498,6 +597,19 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
             </span>
           </label>
 
+          {telegramSplit ? (
+            <p className="mt-4 rounded-2xl bg-[#e8f4fd] px-4 py-2.5 text-[13px] leading-[1.5] text-[#1d6fa5]">
+              В Telegram под альбомом нельзя поставить кнопку, а подпись к фото — до 1024 знаков. Поэтому там сначала выйдут
+              картинки, следом — текст с кнопкой. В MAX всё будет одним постом.
+            </p>
+          ) : null}
+          {editingSent && telegramSelected ? (
+            <p className="mt-4 rounded-2xl bg-[#e8f4fd] px-4 py-2.5 text-[13px] leading-[1.5] text-[#1d6fa5]">
+              В Telegram у вышедшего поста меняются текст и кнопка. Картинки заменить нельзя — для этого удалите пост и
+              опубликуйте заново.
+            </p>
+          ) : null}
+
           <div className="mt-6 flex flex-col gap-3 border-t border-[#ececf4] pt-5">
             {editingSent ? (
               <button type="button" className={BTN_PRIMARY} disabled={!canSubmit} onClick={() => void submit("publish")}>
@@ -510,6 +622,21 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
                   {busy === "publish" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
                   Опубликовать сейчас
                 </button>
+                <div className="flex flex-wrap gap-1.5">
+                  {quickTimes(new Date()).map((slot) => (
+                    <button
+                      key={slot.label}
+                      type="button"
+                      onClick={() => patch({ scheduledAt: slot.value })}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-[12px] transition-colors duration-150",
+                        draft.scheduledAt === slot.value ? "bg-[#5566f6] text-white" : "bg-[#f5f6ff] text-[#3848c7] hover:bg-[#eef1ff]",
+                      )}
+                    >
+                      {slot.label}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="datetime-local"
@@ -530,13 +657,15 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
                 </div>
               </>
             )}
-            {!channel ? (
-              <p className="text-[13px] text-[#a13a32]">Публиковать некуда: сначала подключите канал (блок выше).</p>
+            {!selected.length ? (
+              <p className="text-[13px] text-[#a13a32]">
+                {usable.length ? "Отметьте хотя бы один канал выше." : "Публиковать некуда: сначала подключите канал (блок выше)."}
+              </p>
             ) : (
               <p className="text-[12px] text-[#6f7282]">
                 {editingSent
-                  ? "Текст, картинки и кнопка заменятся в уже вышедшем посте — подписчики увидят новую версию."
-                  : `Пост выйдет в канале «${channel.title}» от имени канала. Запланированные публикуются автоматически в выбранную минуту.`}
+                  ? "Пост заменится в уже вышедшем сообщении — подписчики увидят новую версию."
+                  : `Пост выйдет ${selected.length > 1 ? "в каналах" : "в канале"} ${selectedNames} от имени канала. Запланированные публикуются сами в выбранную минуту — страницу можно закрыть.`}
               </p>
             )}
           </div>
@@ -544,12 +673,55 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
           <div className={SECTION_LABEL}>Как увидят подписчики</div>
-          <PostPreview channelTitle={channel?.title ?? "Канал WeSetup"} draft={draft} />
+          <PostPreview channelTitle={selected[0]?.title ?? "Канал WeSetup"} draft={draft} />
         </aside>
       </div>
 
       <section className={CARD}>
-        <div className={SECTION_LABEL}>Посты</div>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <div className={cn(SECTION_LABEL, "mb-0")}>План публикаций</div>
+          <span className="text-[12px] text-[#9b9fb3]">Выходят сами, проверка — раз в минуту</span>
+        </div>
+        {scheduled.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-5 text-center text-[13px] text-[#6f7282]">
+            Запланированных постов нет. Напишите пост выше, выберите время и нажмите «Запланировать».
+          </p>
+        ) : (
+          <ol className="space-y-4">
+            {Array.from(new Set(scheduled.map((post) => dayLabel(post.scheduledAt!)))).map((day) => (
+              <li key={day}>
+                <div className="mb-1.5 text-[13px] font-semibold text-[#0b1024] first-letter:uppercase">{day}</div>
+                <ul className="space-y-1.5">
+                  {scheduled
+                    .filter((post) => dayLabel(post.scheduledAt!) === day)
+                    .map((post) => {
+                      const channelItem = channels.find((item) => item.id === post.channelId);
+                      return (
+                        <li key={post.id}>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(post)}
+                            className="flex w-full items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3 py-2.5 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                          >
+                            <span className="w-12 shrink-0 text-[14px] font-semibold tabular-nums text-[#3848c7]">
+                              {new Date(post.scheduledAt!).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            {channelItem ? <PlatformBadge platform={channelItem.platform} /> : null}
+                            <span className="min-w-0 flex-1 truncate text-[14px] text-[#0b1024]">{firstLineOf(post.text)}</span>
+                            <Pencil className="size-4 shrink-0 text-[#9b9fb3]" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      <section className={CARD}>
+        <div className={SECTION_LABEL}>Все посты</div>
         {posts.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-12 text-center">
             <div className="text-[15px] font-medium text-[#0b1024]">Постов пока нет</div>
@@ -563,8 +735,7 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
               <PostRow
                 key={post.id}
                 post={post}
-                channelTitle={channels.find((item) => item.id === post.channelId)?.title ?? ""}
-                showChannel={channels.length > 1}
+                channel={channels.find((item) => item.id === post.channelId) ?? null}
                 busy={busy}
                 onEdit={() => startEdit(post)}
                 onPublish={() => void publishExisting(post)}
@@ -586,7 +757,7 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
         variant="info"
         icon={Send}
         bullets={[
-          { label: `Пост сразу выйдет в канале «${channel?.title ?? ""}»`, tone: "info" },
+          { label: `Пост сразу выйдет ${selected.length > 1 ? "в каналах" : "в канале"} ${selectedNames}`, tone: "info" },
           { label: "Подписчики получат уведомление" },
           { label: "Потом пост можно исправить или удалить отсюда же" },
         ]}
@@ -606,7 +777,10 @@ export function MaxChannelClient({ bot, tokenConfigured, separateBot, channels, 
         bullets={
           confirm?.kind === "delete" && confirm.post.status === "sent"
             ? [
-                { label: "Пост исчезнет из канала MAX у всех подписчиков", tone: "warn" },
+                {
+                  label: `Пост исчезнет из канала ${CHANNEL_PLATFORM_LABELS[channels.find((item) => item.id === confirm.post.channelId)?.platform ?? "max"]} у всех подписчиков`,
+                  tone: "warn",
+                },
                 { label: "В истории здесь он останется с отметкой «Удалён из канала»" },
               ]
             : [{ label: "Черновик пропадёт без возможности восстановить", tone: "warn" }]
@@ -632,74 +806,170 @@ function FormatButton({ label, onClick, children }: { label: string; onClick: ()
 }
 
 function ConnectionCard({
-  bot,
-  tokenConfigured,
-  separateBot,
+  bots,
   channels,
   busy,
   onDiscover,
+  onConnectTelegram,
   onToggleAnnounce,
 }: {
-  bot: Props["bot"];
-  tokenConfigured: boolean;
-  separateBot: boolean;
+  bots: Props["bots"];
   channels: ChannelView[];
   busy: string | null;
   onDiscover: () => void;
+  onConnectTelegram: (ref: string) => void;
   onToggleAnnounce: (channel: ChannelView) => void;
 }) {
-  const ready = channels.some((channel) => !channel.removed && channel.botIsAdmin);
+  const [telegramRef, setTelegramRef] = useState("@wesetup");
+  const maxBot = bots.max;
+  const tgBot = bots.telegram;
+  const maxChannels = channels.filter((channel) => channel.platform === "max");
+  const tgChannels = channels.filter((channel) => channel.platform === "telegram");
+  const tgReady = tgChannels.some((channel) => !channel.removed && channel.botIsAdmin);
+  const maxReady = maxChannels.some((channel) => !channel.removed && channel.botIsAdmin);
   return (
     <section className={CARD}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_LABEL}>Подключение</div>
-          <div className="flex items-center gap-2 text-[15px] font-medium text-[#0b1024]">
-            {bot ? <CheckCircle2 className="size-5 text-[#116b2a]" /> : <TriangleAlert className="size-5 text-[#a13a32]" />}
-            {bot ? `Бот «${bot.name}»${bot.username ? ` (@${bot.username})` : ""}` : tokenConfigured ? "MAX не принял токен бота" : "Бот MAX не подключён"}
-          </div>
-          <p className="mt-1 text-[13px] text-[#6f7282]">
-            {bot
-              ? separateBot
-                ? "Отдельный бот для канала (MAX_CHANNEL_BOT_TOKEN)."
-                : "Публикует основной бот WeSetup в MAX. Отдельный — переменная MAX_CHANNEL_BOT_TOKEN на сервере."
-              : "Нужен токен бота MAX на сервере: MAX_CHANNEL_BOT_TOKEN (или основной MAX_BOT_TOKEN)."}
-          </p>
-        </div>
-        <button type="button" className={BTN_SMALL} disabled={!bot || busy === "discover"} onClick={onDiscover}>
+        <div className={cn(SECTION_LABEL, "mb-0")}>Подключение</div>
+        <button type="button" className={BTN_SMALL} disabled={busy === "discover"} onClick={onDiscover}>
           {busy === "discover" ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4 text-[#5566f6]" />}
-          Найти канал
+          Обновить каналы
         </button>
       </div>
 
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <PlatformBlock
+          platform="telegram"
+          bot={tgBot}
+          envHint="TELEGRAM_CHANNEL_BOT_TOKEN"
+          fallbackHint="основной бот WeSetup (TELEGRAM_BOT_TOKEN)"
+          channels={tgChannels}
+          busy={busy}
+          onToggleAnnounce={onToggleAnnounce}
+        >
+          {tgBot.info ? (
+            <form
+              className="mt-3 flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                onConnectTelegram(telegramRef);
+              }}
+            >
+              <input
+                className={cn(INPUT, "h-10")}
+                value={telegramRef}
+                aria-label="Канал Telegram"
+                placeholder="@wesetup или t.me/wesetup"
+                onChange={(event) => setTelegramRef(event.target.value)}
+              />
+              <button type="submit" className={cn(BTN_SMALL, "h-10 shrink-0")} disabled={!telegramRef.trim() || busy === "connect-telegram"}>
+                {busy === "connect-telegram" ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4 text-[#5566f6]" />}
+                {tgChannels.length ? "Проверить" : "Подключить"}
+              </button>
+            </form>
+          ) : null}
+          {!tgReady ? (
+            <ol className="mt-3 space-y-1 rounded-2xl bg-[#f5f6ff] px-4 py-3 text-[13px] leading-[1.55] text-[#3c4053]">
+              <li>
+                1. В Telegram откройте канал → «Управление каналом» → «Администраторы» → «Добавить администратора» и найдите
+                бота{tgBot.info?.username ? <b> @{tgBot.info.username}</b> : " (имя появится после подключения токена)"}.
+              </li>
+              <li>2. Оставьте право «Публикация сообщений» (и «Изменение» с «Удалением» — чтобы править посты отсюда).</li>
+              <li>3. Впишите канал выше и нажмите «Подключить».</li>
+            </ol>
+          ) : null}
+        </PlatformBlock>
+
+        <PlatformBlock
+          platform="max"
+          bot={maxBot}
+          envHint="MAX_CHANNEL_BOT_TOKEN"
+          fallbackHint="основной бот WeSetup в MAX (MAX_BOT_TOKEN)"
+          channels={maxChannels}
+          busy={busy}
+          onToggleAnnounce={onToggleAnnounce}
+        >
+          {!maxReady ? (
+            <ol className="mt-3 space-y-1 rounded-2xl bg-[#f5f6ff] px-4 py-3 text-[13px] leading-[1.55] text-[#3c4053]">
+              <li>
+                1. В MAX откройте канал → «Настройки» → «Администраторы» → «Добавить» и найдите бота
+                {maxBot.info?.username ? <b> @{maxBot.info.username}</b> : " (имя появится после подключения токена)"}.
+              </li>
+              <li>2. Разрешите ему публиковать, изменять и удалять сообщения.</li>
+              <li>3. {maxBot.separate ? "Нажмите «Обновить каналы»" : "Канал появится здесь сам через пару секунд — обновите страницу"}.</li>
+            </ol>
+          ) : null}
+        </PlatformBlock>
+      </div>
+    </section>
+  );
+}
+
+function PlatformBlock({
+  platform,
+  bot,
+  envHint,
+  fallbackHint,
+  channels,
+  busy,
+  onToggleAnnounce,
+  children,
+}: {
+  platform: ChannelPlatform;
+  bot: BotState;
+  envHint: string;
+  fallbackHint: string;
+  channels: ChannelView[];
+  busy: string | null;
+  onToggleAnnounce: (channel: ChannelView) => void;
+  children?: ReactNode;
+}) {
+  const name = CHANNEL_PLATFORM_LABELS[platform];
+  return (
+    <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">
+      <div className="flex items-center gap-2">
+        <PlatformBadge platform={platform} />
+        <span className="flex min-w-0 items-center gap-1.5 text-[14px] font-medium text-[#0b1024]">
+          {bot.info ? <CheckCircle2 className="size-4 shrink-0 text-[#116b2a]" /> : <TriangleAlert className="size-4 shrink-0 text-[#a13a32]" />}
+          <span className="truncate">
+            {bot.info
+              ? `Бот «${bot.info.name}»${bot.info.username ? ` (@${bot.info.username})` : ""}`
+              : bot.tokenConfigured
+                ? `${name} не принял токен бота`
+                : `Бот ${name} не подключён`}
+          </span>
+        </span>
+      </div>
+      <p className="mt-1 text-[12px] text-[#6f7282]">
+        {bot.info
+          ? bot.separate
+            ? `Отдельный бот для канала (${envHint}).`
+            : `Публикует ${fallbackHint}. Отдельный — переменная ${envHint} на сервере.`
+          : `Нужен токен бота на сервере: ${envHint}.`}
+      </p>
+
       {channels.length ? (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-3 space-y-2">
           {channels.map((channel) => (
-            <li key={channel.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="truncate text-[14px] font-medium text-[#0b1024]">{channel.title}</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-0.5 text-[12px]",
-                      channel.removed
-                        ? "bg-[#fff4f2] text-[#a13a32]"
-                        : channel.botIsAdmin
-                          ? "bg-[#ecfdf5] text-[#116b2a]"
-                          : "bg-[#fff4f2] text-[#a13a32]",
-                    )}
-                  >
-                    {channel.removed ? "Бот удалён из канала" : channel.botIsAdmin ? "Можно публиковать" : "Бот не администратор"}
-                  </span>
-                </div>
-                {channel.link ? (
-                  <a href={channel.link} target="_blank" rel="noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-[12px] text-[#3848c7] hover:underline">
-                    {channel.link} <ExternalLink className="size-3" />
-                  </a>
-                ) : null}
+            <li key={channel.id} className="rounded-xl border border-[#ececf4] bg-white px-3 py-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="truncate text-[14px] font-medium text-[#0b1024]">{channel.title}</span>
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-[12px]",
+                    !channel.removed && channel.botIsAdmin ? "bg-[#ecfdf5] text-[#116b2a]" : "bg-[#fff4f2] text-[#a13a32]",
+                  )}
+                >
+                  {channel.removed ? "Бот удалён из канала" : channel.botIsAdmin ? "Можно публиковать" : "Бот не администратор"}
+                </span>
               </div>
+              {channel.link ? (
+                <a href={channel.link} target="_blank" rel="noreferrer" className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-[12px] text-[#3848c7] hover:underline">
+                  {channel.link} <ExternalLink className="size-3 shrink-0" />
+                </a>
+              ) : null}
               {!channel.removed ? (
-                <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[#3c4053]">
+                <label className="mt-2 flex cursor-pointer items-center gap-2 text-[13px] text-[#3c4053]">
                   <input
                     type="checkbox"
                     className="size-4 accent-[#5566f6]"
@@ -714,35 +984,25 @@ function ConnectionCard({
           ))}
         </ul>
       ) : null}
-
-      {!ready ? (
-        <ol className="mt-4 space-y-1.5 rounded-2xl bg-[#f5f6ff] px-4 py-3 text-[13px] leading-[1.55] text-[#3c4053]">
-          <li>
-            1. В MAX откройте канал → «Настройки» → «Администраторы» → «Добавить» и найдите бота
-            {bot?.username ? <b> @{bot.username}</b> : " (имя появится после подключения токена)"}.
-          </li>
-          <li>2. Разрешите ему публиковать, изменять и удалять сообщения.</li>
-          <li>
-            3. {separateBot ? "Нажмите «Найти канал»" : "Канал появится здесь сам через пару секунд — обновите страницу или нажмите «Найти канал»"}.
-          </li>
-        </ol>
-      ) : null}
-    </section>
+      {children}
+    </div>
   );
+}
+
+function firstLineOf(text: string): string {
+  return text.split("\n").find((line) => line.trim())?.replace(/\*\*|\*|`|~~/g, "") || "Без текста";
 }
 
 function PostRow({
   post,
-  channelTitle,
-  showChannel,
+  channel,
   busy,
   onEdit,
   onPublish,
   onDelete,
 }: {
   post: PostView;
-  channelTitle: string;
-  showChannel: boolean;
+  channel: ChannelView | null;
   busy: string | null;
   onEdit: () => void;
   onPublish: () => void;
@@ -754,7 +1014,7 @@ function PostRow({
       : post.status === "scheduled"
         ? `выйдет ${formatWhen(post.scheduledAt)}`
         : `создан ${formatWhen(post.createdAt)}`;
-  const firstLine = post.text.split("\n").find((line) => line.trim())?.replace(/\*\*|\*|`/g, "") ?? "";
+  const firstLine = firstLineOf(post.text);
   const canPublish = post.status === "draft" || post.status === "scheduled" || post.status === "failed";
   const canEdit = post.status !== "sending" && post.status !== "deleted";
   return (
@@ -764,16 +1024,20 @@ function PostRow({
           <span className={cn("rounded-full px-2.5 py-0.5 text-[12px]", STATUS_TONE[post.status])}>{MAX_POST_STATUS_LABELS[post.status]}</span>
           <span className="text-[12px] text-[#6f7282]">{when}</span>
           {post.source === "blog" ? <span className="rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#3848c7]">Автоанонс блога</span> : null}
-          {showChannel && channelTitle ? <span className="text-[12px] text-[#9b9fb3]">· {channelTitle}</span> : null}
+          {channel ? (
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-[#9b9fb3]">
+              <PlatformBadge platform={channel.platform} /> {channel.title}
+            </span>
+          ) : null}
         </div>
-        <div className="mt-1 truncate text-[14px] font-medium text-[#0b1024]">{firstLine || "Без текста"}</div>
+        <div className="mt-1 truncate text-[14px] font-medium text-[#0b1024]">{firstLine}</div>
         {post.images.length ? <div className="text-[12px] text-[#9b9fb3]">Картинок: {post.images.length}</div> : null}
         {post.error ? <div className="mt-1 text-[13px] text-[#a13a32]">{post.error}</div> : null}
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         {post.url ? (
           <a href={post.url} target="_blank" rel="noreferrer" className={BTN_SMALL}>
-            <ExternalLink className="size-4 text-[#5566f6]" /> В MAX
+            <ExternalLink className="size-4 text-[#5566f6]" /> {channel?.platform === "telegram" ? "В Telegram" : "В MAX"}
           </a>
         ) : null}
         {canPublish ? (

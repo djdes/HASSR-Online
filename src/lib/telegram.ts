@@ -68,15 +68,16 @@ if (forceIp && !proxyAgent) {
 // grammY uses its own fetch; configure the same scoped transport for all calls.
 const tgFetch = forceIp || proxyAgent ? createTelegramFetch(proxyAgent) : undefined;
 
-const bot = token
-  ? new Bot(token, {
-      client: {
-        ...(apiRoot ? { apiRoot } : {}),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(tgFetch ? { fetch: tgFetch as any } : {}),
-      },
-    })
-  : null;
+/** Те же apiRoot и сетевой транспорт — для других ботов (канал WeSetup). */
+export function telegramClientOptions() {
+  return {
+    ...(apiRoot ? { apiRoot } : {}),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(tgFetch ? { fetch: tgFetch as any } : {}),
+  };
+}
+
+const bot = token ? new Bot(token, { client: telegramClientOptions() }) : null;
 
 /**
  * Escape user-provided text before interpolating into a Telegram HTML message.

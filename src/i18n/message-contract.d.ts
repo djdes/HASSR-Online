@@ -16118,7 +16118,7 @@ export type MessageContract = {
     "timings": "Тайминги",
     "pageLimit": "Ограничитель переходов",
     "yandexDirect": "Яндекс Директ",
-    "maxChannel": "Канал MAX",
+    "maxChannel": "Каналы Telegram и MAX",
     "edo": "ЭДО",
     "team": "Команда и доступы",
     "myMail": "Моя почта",

@@ -5,9 +5,19 @@ import { db } from "@/lib/db";
 import { uploadsDir } from "@/lib/uploads-path";
 import { maxConfig } from "./config";
 import { buildMaxPostBody, parseChannelMembershipUpdate } from "./channel-post";
+import {
+  deleteTelegramMessages,
+  editTelegramPost,
+  inspectTelegramChannel,
+  parseTelegramMessageIds,
+  sendTelegramPost,
+} from "./telegram-channel.server";
+import { normalizeTelegramChannelRef } from "./telegram-post";
 
 /**
- * Публикации в канал MAX (ROOT → «Канал MAX»).
+ * Публикации в каналы WeSetup (ROOT → «Каналы Telegram и MAX»). Здесь —
+ * общий конвейер (черновик → расписание → публикация) и площадка MAX;
+ * отправка в Telegram — `telegram-channel.server.ts`.
  *
  * Бот: `MAX_CHANNEL_BOT_TOKEN`, если задан отдельный, иначе основной
  * бот WeSetup (`MAX_BOT_TOKEN`). Бот должен быть администратором канала.
@@ -17,11 +27,9 @@ import { buildMaxPostBody, parseChannelMembershipUpdate } from "./channel-post";
  * опросом `GET /updates` по кнопке «Найти канал».
  */
 
-export class MaxChannelError extends Error {
-  constructor(message: string, public status = 400) {
-    super(message);
-  }
-}
+import { MaxChannelError } from "./channel-error";
+
+export { MaxChannelError };
 
 export function channelBotToken(): { token: string; separate: boolean } {
   const separate = process.env.MAX_CHANNEL_BOT_TOKEN?.trim() ?? "";
@@ -111,7 +119,20 @@ export async function upsertChannel(chatId: string) {
     botIsAdmin,
     removed: false,
   };
-  return db.maxChannel.upsert({ where: { chatId }, create: { chatId, ...data }, update: data });
+  return db.maxChannel.upsert({ where: { chatId }, create: { chatId, platform: "max", ...data }, update: data });
+}
+
+/** Подключает Telegram-канал по @имени, ссылке t.me или id. */
+export async function connectTelegramChannel(input: string) {
+  const ref = normalizeTelegramChannelRef(input);
+  if (!ref) throw new MaxChannelError("Укажите канал как @wesetup, ссылку t.me/wesetup или id -100….");
+  const info = await inspectTelegramChannel(ref);
+  const data = { title: info.title, link: info.link, botIsAdmin: info.botIsAdmin, removed: false };
+  return db.maxChannel.upsert({
+    where: { chatId: info.chatId },
+    create: { chatId: info.chatId, platform: "telegram", ...data },
+    update: data,
+  });
 }
 
 /**
@@ -158,12 +179,14 @@ export async function discoverChannels(): Promise<{ found: number; refreshed: nu
   }
   // Освежаем названия и права уже известных каналов.
   let refreshed = 0;
-  const known = await db.maxChannel.findMany({ where: { removed: false }, select: { chatId: true } });
+  const known = await db.maxChannel.findMany({ where: { removed: false }, select: { chatId: true, platform: true } });
   for (const channel of known) {
     try {
-      await upsertChannel(channel.chatId);
+      if (channel.platform === "telegram") await connectTelegramChannel(channel.chatId);
+      else await upsertChannel(channel.chatId);
       refreshed += 1;
     } catch (error) {
+      if (channel.platform === "telegram") continue;
       if (error instanceof MaxApiFailure && (error.status === 403 || error.status === 404)) {
         await db.maxChannel.updateMany({ where: { chatId: channel.chatId }, data: { removed: true, botIsAdmin: false } });
       }
@@ -239,6 +262,14 @@ export async function publishPost(postId: string): Promise<{ ok: boolean; error?
   const post = await db.maxChannelPost.findUniqueOrThrow({ where: { id: postId }, include: { channel: true } });
   try {
     if (post.channel.removed) throw new MaxChannelError("Бота удалили из канала — добавьте его снова администратором.");
+    if (post.channel.platform === "telegram") {
+      const sent = await sendTelegramPost(post.channel, post);
+      await db.maxChannelPost.update({
+        where: { id: postId },
+        data: { status: "sent", sentAt: new Date(), messageId: sent.messageIds.join(","), url: sent.url, error: null },
+      });
+      return { ok: true };
+    }
     const body = await messageBody(post);
     const sent = await withAttachmentRetry(() =>
       channelApi<SentMessage>(`/messages?chat_id=${encodeURIComponent(post.channel.chatId)}`, {
@@ -262,16 +293,20 @@ export async function publishPost(postId: string): Promise<{ ok: boolean; error?
     const message = explainMaxFailure(error);
     // Сетевой сбой (TypeError «fetch failed») — с кодом причины, без токена.
     const cause = (error as { cause?: { code?: unknown } })?.cause?.code;
-    console.error("[max-channel] publish failed", error instanceof MaxApiFailure ? error.status : (error as Error)?.name, (error as Error)?.message?.slice(0, 200), typeof cause === "string" ? cause : "");
+    console.error(`[${post.channel.platform}-channel] publish failed`, error instanceof MaxApiFailure ? error.status : (error as Error)?.name, (error as Error)?.message?.slice(0, 200), typeof cause === "string" ? cause : "");
     await db.maxChannelPost.update({ where: { id: postId }, data: { status: "failed", error: message } });
     return { ok: false, error: message };
   }
 }
 
 /** Правка уже опубликованного поста прямо в канале. */
-export async function editPublishedPost(postId: string): Promise<void> {
-  const post = await db.maxChannelPost.findUniqueOrThrow({ where: { id: postId } });
+export async function editPublishedPost(postId: string, previous: { text: string; images: string[] }): Promise<void> {
+  const post = await db.maxChannelPost.findUniqueOrThrow({ where: { id: postId }, include: { channel: true } });
   if (post.status !== "sent" || !post.messageId) throw new MaxChannelError("Пост ещё не опубликован.");
+  if (post.channel.platform === "telegram") {
+    await editTelegramPost(post.channel.chatId, parseTelegramMessageIds(post.messageId), post, previous);
+    return;
+  }
   const body = await messageBody(post);
   await withAttachmentRetry(() =>
     channelApi(`/messages?message_id=${encodeURIComponent(post.messageId!)}`, { method: "PUT", body, timeoutMs: 30_000 }),
@@ -280,8 +315,13 @@ export async function editPublishedPost(postId: string): Promise<void> {
 
 /** Удаляет пост из канала; запись остаётся в истории со статусом «Удалён». */
 export async function deletePublishedPost(postId: string): Promise<void> {
-  const post = await db.maxChannelPost.findUniqueOrThrow({ where: { id: postId } });
+  const post = await db.maxChannelPost.findUniqueOrThrow({ where: { id: postId }, include: { channel: true } });
   if (post.status !== "sent" || !post.messageId) throw new MaxChannelError("Пост ещё не опубликован.");
+  if (post.channel.platform === "telegram") {
+    await deleteTelegramMessages(post.channel.chatId, parseTelegramMessageIds(post.messageId));
+    await db.maxChannelPost.update({ where: { id: postId }, data: { status: "deleted" } });
+    return;
+  }
   try {
     await channelApi(`/messages?message_id=${encodeURIComponent(post.messageId)}`, { method: "DELETE" });
   } catch (error) {
@@ -317,9 +357,8 @@ export async function publishDuePosts(now: Date = new Date()): Promise<{ publish
   return { published, failed };
 }
 
-/** Анонс новой статьи блога во все каналы с включённым автоанонсом. */
-export async function announceArticleToMax(article: { slug: string; title: string; excerpt: string }): Promise<number> {
-  if (!channelBotToken().token) return 0;
+/** Анонс новой статьи блога во все каналы (MAX и Telegram) с включённым автоанонсом. */
+export async function announceArticleToChannels(article: { slug: string; title: string; excerpt: string }): Promise<number> {
   const channels = await db.maxChannel.findMany({ where: { removed: false, announceBlog: true } });
   let sent = 0;
   for (const channel of channels) {

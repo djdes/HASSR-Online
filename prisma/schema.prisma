@@ -137,6 +137,8 @@ model MaxWebhookReceipt {
 /// chat_id канала API MAX отдаёт только событием bot_added — списка чатов нет.
 model MaxChannel {
   id           String           @id @default(cuid())
+  /// Площадка: "max" | "telegram". Таблица общая для обоих каналов.
+  platform     String           @default("max")
   chatId       String           @unique
   title        String
   link         String?

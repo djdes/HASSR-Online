@@ -36,7 +36,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       // Сначала в канал, потом в базу: история должна совпадать с каналом.
       const previous = await db.maxChannelPost.update({ where: { id }, data: fields });
       try {
-        await editPublishedPost(id);
+        await editPublishedPost(id, { text: post.text, images: post.images });
       } catch (error) {
         await db.maxChannelPost.update({
           where: { id },
