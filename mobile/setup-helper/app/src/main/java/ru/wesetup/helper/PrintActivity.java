@@ -2,6 +2,7 @@ package ru.wesetup.helper;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -84,6 +85,8 @@ public final class PrintActivity extends BaseActivity {
     private TextView copiesView;
     private int copies = 1;
     private long openedAt;
+    /** Версия макетов, по которой построена лента: изменилась — перестроить. */
+    private int shownVersion = -1;
 
     private final Map<String, TextInputLayout> textLayouts = new HashMap<>();
     private final Map<String, EditText> textInputs = new HashMap<>();
@@ -134,6 +137,29 @@ public final class PrintActivity extends BaseActivity {
         templatesNext.setOnClickListener(v -> templatesScroll.smoothScrollBy(templatesScroll.getWidth() * 2 / 3, 0));
         templatesScroll.setOnScrollChangeListener((v, x, y, oldX, oldY) -> updateArrows());
 
+        findViewById(R.id.print_edit_layout).setOnClickListener(v -> {
+            if (template == null) return;
+            rememberTexts();
+            startActivity(new Intent(this, LayoutEditorActivity.class)
+                    .putExtra(LayoutEditorActivity.EXTRA_ID, template.id));
+        });
+        LabelTemplate selected = buildChips(getIntent().getStringExtra(EXTRA_TEMPLATE));
+        if (selected != null) select(selected);
+        setCopies(1);
+        final String shown = selected == null ? null : selected.id;
+        templatesScroll.post(() -> {
+            scrollToTemplate(shown, false);
+            updateArrows();
+        });
+    }
+
+    /**
+     * Лента шаблонов из макетов телефона. {@code wanted} — какой выбрать; нет
+     * такого — первый рабочий (не пробная этикетка).
+     */
+    private LabelTemplate buildChips(String wanted) {
+        chips.removeAllViews();
+        shownVersion = app.templates().version();
         List<LabelTemplate> templates = app.templates().all();
         // Выбранный шаблон — заливкой и синей рамкой, остальные — белые.
         int[][] states = {{android.R.attr.state_checked}, {}};
@@ -143,7 +169,7 @@ public final class PrintActivity extends BaseActivity {
                 ContextCompat.getColor(this, R.color.brand), ContextCompat.getColor(this, R.color.border)});
         ColorStateList chipText = new ColorStateList(states, new int[]{
                 ContextCompat.getColor(this, R.color.brand_dark), ContextCompat.getColor(this, R.color.ink)});
-        String initial = getIntent().getStringExtra(EXTRA_TEMPLATE);
+        boolean known = wanted != null && app.templates().byId(wanted) != null;
         LabelTemplate selected = null;
         for (LabelTemplate t : templates) {
             Chip chip = new Chip(this);
@@ -163,7 +189,7 @@ public final class PrintActivity extends BaseActivity {
             chip.setTag(t.id);
             chip.setOnClickListener(v -> select(t));
             chips.addView(chip);
-            boolean pick = initial != null ? t.id.equals(initial) : selected == null && !LabelTemplate.TEST_ID.equals(t.id);
+            boolean pick = known ? t.id.equals(wanted) : selected == null && !LabelTemplate.TEST_ID.equals(t.id);
             if (pick) {
                 selected = t;
                 chip.setChecked(true);
@@ -173,8 +199,19 @@ public final class PrintActivity extends BaseActivity {
             selected = templates.get(0);
             ((Chip) chips.getChildAt(0)).setChecked(true);
         }
+        return selected;
+    }
+
+    /** Макет поменяли в редакторе — лента и поля по новому виду, выбранный остаётся. */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (chips == null || shownVersion == app.templates().version()) return;
+        String current = template == null ? null : template.id;
+        rememberTexts();
+        template = null;
+        LabelTemplate selected = buildChips(current);
         if (selected != null) select(selected);
-        setCopies(1);
         final String shown = selected == null ? null : selected.id;
         templatesScroll.post(() -> {
             scrollToTemplate(shown, false);

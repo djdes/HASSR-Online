@@ -1,0 +1,9 @@
+{
+  "task": "setup-helper-layouts-2026-11",
+  "version": "1.6.0",
+  "versionCode": 9,
+  "acceptance": {"AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS"},
+  "tests": {"core+siteDebug": {"total": 120, "failures": 0}, "playDebug": {"total": 50, "failures": 0}},
+  "builds": ["assembleSiteDebug", "bundlePlayRelease"],
+  "notVerified": ["запуск на реальном телефоне/эмуляторе", "печать на AIYIN IP-802BT"]
+}

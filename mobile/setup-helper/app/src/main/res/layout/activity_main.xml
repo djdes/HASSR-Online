@@ -185,6 +185,18 @@
                 app:icon="@drawable/ic_label"
                 app:iconGravity="textStart" />
 
+            <!-- Макеты этикеток: поменять текст, расположение, поля — прямо на телефоне. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/main_layouts"
+                style="@style/SetupHelper.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="52dp"
+                android:text="@string/main_menu_layouts"
+                app:icon="@drawable/ic_edit"
+                app:iconGravity="textStart" />
+
             <TextView
                 style="@style/SetupHelper.Section"
                 android:layout_width="match_parent"

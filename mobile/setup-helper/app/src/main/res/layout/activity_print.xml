@@ -137,12 +137,33 @@
                     app:iconSize="28dp" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/print_description"
-                style="@style/SetupHelper.Muted"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/print_description"
+                    style="@style/SetupHelper.Muted"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <!-- Поменять этот макет: текст, расположение, поля. -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/print_edit_layout"
+                    style="@style/SetupHelper.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/print_edit_layout"
+                    app:icon="@drawable/ic_edit"
+                    app:iconGravity="textStart" />
+            </LinearLayout>
 
             <TextView
                 style="@style/SetupHelper.Muted"

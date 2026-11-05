@@ -1,0 +1,54 @@
+> Task :core:compileJava
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :core:compileTestJava
+> Task :core:processTestResources NO-SOURCE
+> Task :core:testClasses
+> Task :core:test
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preSiteDebugBuild UP-TO-DATE
+> Task :app:generateSiteDebugBuildConfig
+> Task :app:javaPreCompileSiteDebug
+> Task :app:processSiteDebugNavigationResources
+> Task :app:checkSiteDebugAarMetadata
+> Task :app:compileSiteDebugNavigationResources
+> Task :app:generateSiteDebugResValues
+> Task :app:mapSiteDebugSourceSetPaths
+> Task :app:generateSiteDebugResources
+> Task :app:packageSiteDebugResources
+> Task :app:createSiteDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksSiteDebug
+> Task :app:processSiteDebugMainManifest
+> Task :app:parseSiteDebugLocalResources
+> Task :app:processSiteDebugManifest
+> Task :app:preSiteDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileSiteDebugUnitTest
+> Task :app:mergeSiteDebugShaders
+> Task :app:compileSiteDebugShaders NO-SOURCE
+> Task :app:generateSiteDebugAssets UP-TO-DATE
+> Task :app:mergeSiteDebugAssets
+> Task :app:processSiteDebugUnitTestManifest
+> Task :app:processSiteDebugJavaRes NO-SOURCE
+> Task :app:processSiteDebugUnitTestJavaRes NO-SOURCE
+> Task :app:processSiteDebugManifestForPackage
+> Task :app:mergeSiteDebugResources
+> Task :app:processSiteDebugResources
+
+> Task :app:compileSiteDebugJavaWithJavac
+D:\wt\helper-layouts\mobile\setup-helper\app\src\main\java\ru\wesetup\helper\PrintActivity.java:184: warning: [deprecation] setChipCornerRadius(float) in Chip has been deprecated
+            chip.setChipCornerRadius(dp(16));
+                ^
+1 warning
+
+> Task :app:packageSiteDebugUnitTestForUnitTest
+> Task :app:generateSiteDebugUnitTestConfig
+> Task :app:bundleSiteDebugClassesToCompileJar
+> Task :app:bundleSiteDebugClassesToRuntimeJar
+> Task :app:compileSiteDebugUnitTestJavaWithJavac
+> Task :app:testSiteDebugUnitTest
+
+[Incubating] Problems report is available at: file:///D:/wt/helper-layouts/mobile/setup-helper/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 2m 6s
+32 actionable tasks: 32 executed
