@@ -574,6 +574,157 @@ test("recycleRejectedSlotOrders swaps next alternative donor and returns slot to
   assert.equal(updated[0].status, "pending_approval");
 });
 
+test("recycleRejectedSlotOrders marks slot failed and detaches rejected order when fallback donors are exhausted, freeing committed budget and unblocking mutatePlannedSlot", async () => {
+  // 1. DI path: handles mixed candidates (one with fallback donor, one with empty alternativeDonors)
+  const appliedFallbacks: string[] = [];
+  const markedExhausted: string[] = [];
+  const diRes = await recycleRejectedSlotOrders({
+    findRejectedLinkedSlots: async () => [
+      {
+        slotId: "slot_with_alt",
+        alternativeDonors: [
+          {
+            siteId: 77,
+            domain: "backup-horeca.ru",
+            priceRub: 820,
+            format: "article",
+            metrics: { tf: 15, cf: 20, trust: 6, dailyTraffic: 800 },
+          },
+        ],
+      },
+      {
+        slotId: "slot_exhausted",
+        alternativeDonors: [],
+      },
+    ],
+    applyFallbackDonor: async (slotId) => {
+      appliedFallbacks.push(slotId);
+    },
+    markExhaustedSlot: async (slotId) => {
+      markedExhausted.push(slotId);
+    },
+  });
+
+  assert.deepEqual(diRes.recycledSlotIds, ["slot_with_alt"]);
+  assert.deepEqual(diRes.exhaustedSlotIds, ["slot_exhausted"]);
+  assert.deepEqual(appliedFallbacks, ["slot_with_alt"]);
+  assert.deepEqual(markedExhausted, ["slot_exhausted"]);
+
+  // 2. Default Prisma path + materializePlanSlots budget release + mutatePlannedSlot unlocked
+  let dbSlot: Record<string, unknown> = {
+    id: "slot_exhausted_db",
+    planId: "plan_1time",
+    scheduledDate: "2026-11-04",
+    maxPriceRub: 900,
+    estimatedPriceRub: 880,
+    targetUrl: "/zhurnal-haccp",
+    targetKeyword: "журналы хассп",
+    donorSiteId: 501,
+    donorDomain: "rejected-donor.ru",
+    donorMetricsJson: { tf: 15, cf: 19, trust: 6, dailyTraffic: 600 },
+    placementFormat: "article",
+    anchor: "журналы хассп",
+    anchorKind: "exact",
+    articleId: null,
+    briefText: "ТЗ",
+    alternativeDonorsJson: [],
+    status: "ordered",
+    approvedByUserId: "u_root",
+    approvedByName: "Олег",
+    approvedAt: new Date("2026-11-04T09:00:00Z"),
+    plan: { campaignId: "c_ws", campaign: { id: "c_ws", isWesetup: true } },
+    article: null,
+  };
+  const orderDetachHolder: { detachedSlotId: string | null } = { detachedSlotId: null };
+
+  const defaultRes = await recycleRejectedSlotOrders({
+    prismaClient: {
+      gglPlannedSlot: {
+        findMany: async () => [dbSlot],
+        update: async ({ data }: { data: Record<string, unknown> }) => {
+          dbSlot = { ...dbSlot, ...data };
+          return dbSlot;
+        },
+      },
+      gglOrder: {
+        updateMany: async ({ where }: { where: { plannedSlotId?: string; status?: string } }) => {
+          if (where.status === "rejected") {
+            orderDetachHolder.detachedSlotId = where.plannedSlotId ?? null;
+          }
+          return { count: 1 };
+        },
+      },
+    } as never,
+  });
+
+  assert.deepEqual(defaultRes.recycledSlotIds, []);
+  assert.deepEqual(defaultRes.exhaustedSlotIds, ["slot_exhausted_db"]);
+  assert.equal(
+    orderDetachHolder.detachedSlotId,
+    "slot_exhausted_db",
+    "rejected order plannedSlotId FK must be detached when alternatives are exhausted",
+  );
+  assert.equal(dbSlot.status, "failed", "exhausted slot must transition out of ordered to failed");
+  assert.equal(dbSlot.approvedByUserId, null);
+  assert.match(String(dbSlot.selectionReason ?? ""), /исчерпан|отклонен/i);
+
+  // Freed committed budget allows materializePlanSlots to schedule a replacement slot on a new date
+  const replacementSlots: Array<{ scheduledDate: string; maxPriceRub: number }> = [];
+  const matRes = await materializePlanSlots(new Date("2026-11-05T08:00:00Z"), {
+    loadActivePlans: async () => [
+      {
+        id: "plan_1time",
+        campaignId: "c_ws",
+        isWesetup: true,
+        kind: "one_time",
+        budgetRub: 900,
+        maxPricePerLinkRub: 900,
+        startsAt: new Date("2026-11-01T00:00:00Z"),
+        scheduleDaysOfWeek: [2, 5],
+        existingSlots: [
+          {
+            scheduledDate: String(dbSlot.scheduledDate),
+            maxPriceRub: Number(dbSlot.maxPriceRub),
+            estimatedPriceRub: Number(dbSlot.estimatedPriceRub),
+            status: String(dbSlot.status),
+          },
+        ],
+      },
+    ],
+    createSlot: async (slotData) => {
+      replacementSlots.push({
+        scheduledDate: slotData.scheduledDate,
+        maxPriceRub: slotData.maxPriceRub,
+      });
+      return true;
+    },
+  });
+  assert.equal(matRes.created, 1, "freed budget must allow scheduling a replacement slot");
+  assert.notEqual(replacementSlots[0]?.scheduledDate, "2026-11-04");
+
+  // Admin / SEO specialist is no longer blocked with 409 on mutatePlannedSlot
+  const skippedSlot = await mutatePlannedSlot(
+    { slotId: "slot_exhausted_db", action: "skip", actor: seoActor },
+    {
+      prismaClient: {
+        gglPlannedSlot: {
+          findUnique: async () => dbSlot,
+          update: async ({ data }: { data: Record<string, unknown> }) => {
+            dbSlot = { ...dbSlot, ...data };
+            return dbSlot;
+          },
+        },
+        gglArticle: {
+          update: async () => ({}),
+          create: async () => ({}),
+        },
+      } as never,
+      writeAudit: async () => {},
+    },
+  );
+  assert.equal(skippedSlot.status, "skipped");
+});
+
 test("mutatePlannedSlot supports skip, swap_donor, and update_article while blocking already ordered slots", async () => {
   const audits: Array<{ action: string; entityId: string }> = [];
   let currentSlot: Record<string, unknown> = {

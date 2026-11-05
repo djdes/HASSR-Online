@@ -273,6 +273,7 @@ export interface RecycleDeps {
     nextDonor: AlternativeDonorEntry,
     remainingAlternatives: AlternativeDonorEntry[],
   ) => Promise<void>;
+  markExhaustedSlot?: (slotId: string) => Promise<void>;
 }
 
 export interface ApproveSlotDeps {
@@ -1215,7 +1216,7 @@ export async function prepareUpcomingPlannedSlots(
       const usedDonorDomains = new Set<string>();
       const existingOrders: ExistingBacklinkInput[] = [];
       for (const ord of ordersRaw) {
-        if (ord.status !== "rejected" && ord.status !== "failed") {
+        if (ord.status !== "failed") {
           const d = normalizeDomainName(ord.donorDomain);
           if (d) usedDonorDomains.add(d);
         }
@@ -1470,12 +1471,15 @@ export async function prepareUpcomingPlannedSlots(
 
 /**
  * Recycles slots whose linked `GglOrder` was rejected by the webmaster (`status === "rejected"`):
- * promotes the next fallback donor from `alternativeDonorsJson`, detaches the rejected order's
- * unique `plannedSlotId` link, and returns the slot to `"pending_approval"` for fresh human approval.
+ * - When `alternativeDonorsJson` has a next candidate: detaches the rejected order's unique
+ *   `plannedSlotId` link, promotes the fallback donor, and returns the slot to `"pending_approval"`.
+ * - When `alternativeDonorsJson` is exhausted: detaches the rejected order's `plannedSlotId` link
+ *   and transitions the slot out of `"ordered"` to `"failed"`, freeing committed budget so
+ *   `materializePlanSlots` can schedule a fresh replacement slot and unblocking `mutatePlannedSlot`.
  */
 export async function recycleRejectedSlotOrders(
   deps?: RecycleDeps,
-): Promise<{ recycledSlotIds: string[] }> {
+): Promise<{ recycledSlotIds: string[]; exhaustedSlotIds: string[] }> {
   const client = deps?.prismaClient ?? db;
 
   const findRejectedLinkedSlots =
@@ -1526,18 +1530,45 @@ export async function recycleRejectedSlotOrders(
       });
     });
 
+  const markExhaustedSlot =
+    deps?.markExhaustedSlot ??
+    (deps?.findRejectedLinkedSlots && !deps?.prismaClient
+      ? async () => {}
+      : async (slotId: string) => {
+          await client.gglOrder.updateMany({
+            where: { plannedSlotId: slotId, status: "rejected" },
+            data: { plannedSlotId: null },
+          });
+          await client.gglPlannedSlot.update({
+            where: { id: slotId },
+            data: {
+              status: "failed",
+              selectionReason:
+                "Заявка отклонена вебмастером; резервные доноры слота исчерпаны (бюджет освобождён для нового слота)",
+              approvedByUserId: null,
+              approvedByName: null,
+              approvedAt: null,
+            },
+          });
+        });
+
   const candidates = await findRejectedLinkedSlots();
   const recycledSlotIds: string[] = [];
+  const exhaustedSlotIds: string[] = [];
 
   for (const item of candidates) {
     const nextDonor = item.alternativeDonors[0];
-    if (!nextDonor) continue;
+    if (!nextDonor) {
+      await markExhaustedSlot(item.slotId);
+      exhaustedSlotIds.push(item.slotId);
+      continue;
+    }
     const remaining = item.alternativeDonors.slice(1);
     await applyFallbackDonor(item.slotId, nextDonor, remaining);
     recycledSlotIds.push(item.slotId);
   }
 
-  return { recycledSlotIds };
+  return { recycledSlotIds, exhaustedSlotIds };
 }
 
 async function defaultLookupLiveDonorPrice(args: {
@@ -2466,6 +2497,14 @@ export async function mutatePlannedSlot(
         placementFormat: chosen.format,
         donorMetricsJson: chosen.metrics as unknown as Prisma.InputJsonValue,
         alternativeDonorsJson: rotatedAlternatives as unknown as Prisma.InputJsonValue,
+        ...(slot.status === "failed" && slot.targetUrl && slot.anchor
+          ? {
+              status: "pending_approval",
+              approvedByUserId: null,
+              approvedByName: null,
+              approvedAt: null,
+            }
+          : {}),
       },
     });
 
