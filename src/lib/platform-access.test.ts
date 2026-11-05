@@ -52,6 +52,12 @@ test("gates: clients card, billing mutations, owner-only actions, unknown paths"
   assert.equal(platformGateFor("/root/me"), "self");
   assert.equal(platformGateFor("/root/some-new-page"), "superadmin");
   assert.equal(platformGateFor("/root/blog?x=1"), "content");
+  assert.equal(platformGateFor("/root/seo/links"), "seo");
+  assert.equal(platformGateFor("/api/root/gogetlinks/overview", "GET"), "seo");
+  assert.equal(platformGateFor("/api/root/gogetlinks/account", "GET"), "seo");
+  assert.equal(platformGateFor("/api/root/gogetlinks/account", "POST"), "superadmin");
+  assert.equal(platformGateFor("/api/root/gogetlinks/account", "PUT"), "superadmin");
+  assert.equal(platformGateFor("/api/root/gogetlinks/account", "DELETE"), "superadmin");
   assert.equal(platformGateFor("/dashboard"), null);
   assert.equal(platformGateFor("/rooted"), null);
 });

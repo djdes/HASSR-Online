@@ -47,7 +47,7 @@ export const PLATFORM_SECTIONS: readonly PlatformSection[] = [
   { key: "support", title: "Обратная связь", hint: "Обращения, отзывы, идеи, NPS", home: "/root/feedback" },
   { key: "assistant", title: "Ассистент", hint: "Журнал вопросов и настройки ассистента", home: "/root/assistant" },
   { key: "content", title: "Блог", hint: "Статьи и их переводы", home: "/root/blog" },
-  { key: "seo", title: "SEO и реклама", hint: "Здоровье сайта, позиции, Яндекс Директ", home: "/root/seo" },
+  { key: "seo", title: "SEO и реклама", hint: "Здоровье сайта, позиции, ссылки GoGetLinks, Яндекс Директ", home: "/root/seo" },
   { key: "translations", title: "Переводы", hint: "Каталог переводов и переводчики", home: "/root/translations" },
   { key: "monitoring", title: "Мониторинг", hint: "Статус, журналы, аудит, тайминги, ограничитель", home: "/root/status" },
 ];
@@ -164,6 +164,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/seo-health", gate: "seo" },
   { pattern: "/api/root/topvisor", gate: "seo" },
   { pattern: "/api/root/yandex-direct", gate: "seo" },
+  { pattern: "/api/root/gogetlinks/account", gate: "superadmin", methods: ["POST", "PUT", "DELETE"] },
+  { pattern: "/api/root/gogetlinks", gate: "seo" },
   { pattern: "/root/translations", gate: "translations" },
   { pattern: "/api/root/translators", gate: "translations" },
 
