@@ -52,7 +52,7 @@ describe("калькулятор дохода партнёра", () => {
     assert.match(page, /rates=\{pricing\.rates\}/);
     assert.match(page, /href="#calculator"/);
     const letter = read("docs/partners-30-announcement.md");
-    for (const figure of ["13 800 ₽", "7 164 ₽", "21 000 ₽", "138 000 ₽", "900 ₽", "1 500 ₽"]) {
+    for (const figure of ["13 764 ₽", "7 164 ₽", "20 964 ₽", "137 640 ₽", "897 ₽", "1 497 ₽"]) {
       assert.ok(letter.includes(figure), figure);
     }
   });
