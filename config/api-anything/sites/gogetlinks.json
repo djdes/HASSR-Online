@@ -1,0 +1,969 @@
+{
+  "name": "gogetlinks",
+  "displayName": "GoGetLinks",
+  "baseUrl": "https://gogetlinks.net",
+  "loginCookies": [
+    "hash",
+    "PHPSESSID"
+  ],
+  "operations": [
+    {
+      "name": "listClosedCampaigns",
+      "description": "List closed SEO link-building campaigns in GoGetLinks optimizer cabinet",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/campaigns/index/action/view_closed",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "none",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/campaigns/index/action/view_closed"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/campaigns/index/action/view_closed"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='comp_row_']",
+          "fields": {
+            "campaignUrl": "td[data-th='Кампания'] > .table__td > a@href",
+            "campaignId": "input.check-box-comp-id@value",
+            "name": "td[data-th='Кампания'] > .table__td > a",
+            "domain": "td[data-th='Кампания'] a.text-primary-100",
+            "siteUrl": "td[data-th='Кампания'] a.text-primary-100@href",
+            "statusNote": "td[data-th='Кампания'] span.gray",
+            "qualityControl": "td[data-th='Контроль качества'] a",
+            "spent": "td[data-th='Потрачено'] a",
+            "requestsCount": "td[data-th='Заявки'] .table__td",
+            "linksCount": "td[data-th='Ссылки'] a"
+          }
+        }
+      },
+      "params": [],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:24:09.884Z"
+    },
+    {
+      "name": "listCampaignPaidLinks",
+      "description": "List paid backlinks/reviews for a GoGetLinks campaign by campaignId",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/reviews/paid/in_comp_id/149699",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "none",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "path:3"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/reviews/paid/in_comp_id/{campaignId}"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/reviews/paid/in_comp_id/*"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='col_row_']",
+          "fields": {
+            "rowId": "@id",
+            "publishedUrl": "td[data-th='Сайт'] a@href",
+            "siteCell": "td[data-th='Сайт']",
+            "anchor": "td[data-th='Анкор']",
+            "dailyTraffic": "td[data-th='Трафик в сутки']",
+            "tfCf": "td[data-th='Ссылочная мощь (TF/CF)']",
+            "price": "td[data-th='Цена']",
+            "paidDate": "td[data-th='Дата оплаты']",
+            "targetUrl": "td[data-th='URL']"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": true,
+          "example": "149699"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:25:49.907Z"
+    },
+    {
+      "name": "getAccountBalance",
+      "description": "Fetch current optimizer wallet balance, available funds and blocked funds",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/campaigns",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/campaigns"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/campaigns"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table.finance__table",
+          "fields": {
+            "balance": "td.balance__all",
+            "available": "td.balance__open",
+            "blocked": "td.balance__block"
+          }
+        }
+      },
+      "params": [],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "listActiveCampaigns",
+      "description": "List active SEO link-building campaigns in GoGetLinks optimizer cabinet",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/campaigns",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/campaigns"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/campaigns"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='comp_row_']",
+          "fields": {
+            "campaignUrl": "td[data-th='Кампания'] > .table__td > a@href",
+            "campaignId": "input.check-box-comp-id@value",
+            "name": "td[data-th='Кампания'] > .table__td > a",
+            "domain": "td[data-th='Кампания'] a.text-primary-100",
+            "siteUrl": "td[data-th='Кампания'] a.text-primary-100@href",
+            "statusNote": "td[data-th='Кампания'] span.gray",
+            "qualityControl": "td[data-th='Контроль качества'] a",
+            "spent": "td[data-th='Потрачено'] a",
+            "requestsCount": "td[data-th='Заявки'] .table__td",
+            "linksCount": "td[data-th='Ссылки'] a"
+          }
+        }
+      },
+      "params": [],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "listReviewsByTab",
+      "description": "List reviews by tab status (paid, rejected, check, work)",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/reviews/paid",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "tab",
+          "at": [
+            "path:1"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/reviews/{tab}"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/reviews/*"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='col_row_']",
+          "fields": {
+            "rowId": "@id",
+            "publishedUrl": "td[data-th='Сайт'] a@href",
+            "siteCell": "td[data-th='Сайт']",
+            "anchor": "td[data-th='Анкор']",
+            "dailyTraffic": "td[data-th='Трафик в сутки']",
+            "tfCf": "td[data-th='Ссылочная мощь (TF/CF)']",
+            "price": "td[data-th='Цена']",
+            "paidDate": "td[data-th='Дата оплаты']",
+            "targetUrl": "td[data-th='URL']"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "tab",
+          "type": "string",
+          "required": true,
+          "example": "paid"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "searchDonorSites",
+      "description": "Search donor websites catalog in GoGetLinks",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/searchSites",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "query:campaignId"
+          ]
+        },
+        {
+          "param": "maxPrice",
+          "at": [
+            "query:maxPrice"
+          ]
+        },
+        {
+          "param": "page",
+          "at": [
+            "query:page"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/searchSites"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/searchSites"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='col_row_']",
+          "fields": {
+            "siteId": "input.check-box-site-id@value",
+            "domain": "td[data-th='Сайт'] a",
+            "traffic": "td[data-th='Трафик в сутки']",
+            "tfCf": "td[data-th='TF/CF']",
+            "trust": "td[data-th='Траст']",
+            "price": "td[data-th='Цена']"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": false,
+          "example": "149699"
+        },
+        {
+          "name": "maxPrice",
+          "type": "number",
+          "required": false,
+          "example": 1500
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "required": false,
+          "example": 1
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "listArticles",
+      "description": "List uploaded articles in GoGetLinks cabinet",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/articles",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "page",
+          "at": [
+            "query:page"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/articles"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/articles"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='article_row_']",
+          "fields": {
+            "articleId": "input@value",
+            "title": "td a",
+            "status": "td span.status",
+            "date": "td.date"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "page",
+          "type": "number",
+          "required": false,
+          "example": 1
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "getArticle",
+      "description": "Fetch article review and body text by articleId",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/articles/review/articleId/19733",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "articleId",
+          "at": [
+            "path:3"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/articles/review/articleId/{articleId}"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/articles/review/articleId/*"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "body",
+          "fields": {
+            "title": "h1",
+            "content": ".article-content",
+            "author": ".author"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "articleId",
+          "type": "string",
+          "required": true,
+          "example": "19733"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "listMessageThreads",
+      "description": "List message dialogs with webmasters in GoGetLinks cabinet",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/messages",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "onlyUnread",
+          "at": [
+            "query:onlyUnread"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/messages"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/messages"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr[id^='thread_']",
+          "fields": {
+            "threadKey": "@data-thread",
+            "author": "td.author",
+            "subject": "td.subject",
+            "date": "td.date",
+            "unread": "td.unread"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "onlyUnread",
+          "type": "boolean",
+          "required": false,
+          "example": true
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "getMessageThread",
+      "description": "Fetch thread messages for a specific webmaster dialogue",
+      "request": {
+        "method": "GET",
+        "url": "https://gogetlinks.net/privateMessage/index/id/12345",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "threadKey",
+          "at": [
+            "path:3"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/privateMessage/index/id/{threadKey}"
+      },
+      "match": {
+        "method": "GET",
+        "host": "gogetlinks.net",
+        "path": "/privateMessage/index/id/*"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": "table tr",
+          "fields": {
+            "sender": ".message-author",
+            "text": ".message-text",
+            "date": ".message-date"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "threadKey",
+          "type": "string",
+          "required": true,
+          "example": "12345"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "createOrUpdateCampaign",
+      "description": "Create or update an SEO link campaign in GoGetLinks optimizer cabinet",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/campaign",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "name",
+          "at": [
+            "form:name"
+          ]
+        },
+        {
+          "param": "siteUrl",
+          "at": [
+            "form:siteUrl"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/campaign"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/campaign"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "example": "WeSetup"
+        },
+        {
+          "name": "siteUrl",
+          "type": "string",
+          "required": true,
+          "example": "https://wesetup.ru"
+        }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "upsertCampaignAnchors",
+      "description": "Upload or update anchors list for a GoGetLinks campaign",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/campaign/anchors",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "form:campaignId"
+          ]
+        },
+        {
+          "param": "anchors",
+          "at": [
+            "form:anchors"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/campaign/anchors"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/campaign/anchors"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": true,
+          "example": "149699"
+        },
+        {
+          "name": "anchors",
+          "type": "string",
+          "required": true,
+          "example": "журналы хассп"
+        }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "uploadArticle",
+      "description": "Upload a generated article to GoGetLinks articles storage",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/articles/article",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "title",
+          "at": [
+            "form:title"
+          ]
+        },
+        {
+          "param": "bodyHtml",
+          "at": [
+            "form:bodyHtml"
+          ]
+        },
+        {
+          "param": "campaignId",
+          "at": [
+            "form:campaignId"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/articles/article"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/articles/article"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "example": "Как заполнять журнал бракеража"
+        },
+        {
+          "name": "bodyHtml",
+          "type": "string",
+          "required": true,
+          "example": "<p>Текст статьи</p>"
+        },
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": false,
+          "example": "149699"
+        }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "submitLinkOrder",
+      "description": "Submit a backlink or article placement order to a selected donor website",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/order/submit",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "form:campaignId"
+          ]
+        },
+        {
+          "param": "donorSiteId",
+          "at": [
+            "form:donorSiteId"
+          ]
+        },
+        {
+          "param": "targetUrl",
+          "at": [
+            "form:targetUrl"
+          ]
+        },
+        {
+          "param": "anchor",
+          "at": [
+            "form:anchor"
+          ]
+        },
+        {
+          "param": "articleId",
+          "at": [
+            "form:articleId"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/order/submit"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/order/submit"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        {
+          "name": "campaignId",
+          "type": "string",
+          "required": true,
+          "example": "149699"
+        },
+        {
+          "name": "donorSiteId",
+          "type": "string",
+          "required": true,
+          "example": "12345"
+        },
+        {
+          "name": "targetUrl",
+          "type": "string",
+          "required": true,
+          "example": "https://wesetup.ru/zhurnal-generalnyh-uborok"
+        },
+        {
+          "name": "anchor",
+          "type": "string",
+          "required": true,
+          "example": "журнал генеральных уборок"
+        },
+        {
+          "name": "articleId",
+          "type": "string",
+          "required": false,
+          "example": "19733"
+        }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "sendThreadMessage",
+      "description": "Send a reply message to a webmaster in an active thread",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/privateMessage/send",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "threadKey",
+          "at": [
+            "form:threadKey"
+          ]
+        },
+        {
+          "param": "text",
+          "at": [
+            "form:text"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/privateMessage/send"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/privateMessage/send"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        {
+          "name": "threadKey",
+          "type": "string",
+          "required": true,
+          "example": "12345"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "example": "Добрый день. Прошу скорректировать анкор."
+        }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    },
+    {
+      "name": "reviewPlacementAction",
+      "description": "Accept or request revision for a placed backlink on check",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/reviews/action",
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json, text/javascript, */*; q=0.01",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "reviewId",
+          "at": [
+            "form:reviewId"
+          ]
+        },
+        {
+          "param": "action",
+          "at": [
+            "form:action"
+          ]
+        },
+        {
+          "param": "comment",
+          "at": [
+            "form:comment"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/reviews/action"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/reviews/action"
+      },
+      "response": {
+        "format": "json"
+      },
+      "params": [
+        {
+          "name": "reviewId",
+          "type": "string",
+          "required": true,
+          "example": "6046338"
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "required": true,
+          "example": "accept"
+        },
+        {
+          "name": "comment",
+          "type": "string",
+          "required": false,
+          "example": "Доработайте анкор"
+        }
+      ],
+      "readOnly": false,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-05T08:26:00.000Z"
+    }
+  ]
+}

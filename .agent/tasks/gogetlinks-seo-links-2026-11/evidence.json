@@ -1,0 +1,41 @@
+{
+  "task": "gogetlinks-seo-links-2026-11",
+  "branch": "feat/gogetlinks-seo-links",
+  "base": "7539f198be4d691c224fcc44acb150f5253db178",
+  "date": "2026-11-05",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "proof": "9 моделей PostgreSQL в prisma/schema.prisma (GglAccount, GglCampaign, SeoCompetitorSnapshot, GglArticle, GglOrder, GglThread, GglMessage, GglSchedulePlan, GglPlannedSlot). AES-256-GCM шифрование passwordEnc/sessionEnc через src/lib/integration-crypto.ts. Поля Decimal(12,2) и скалярные ссылки на User. Успешный npx prisma generate и npm run typecheck."
+    },
+    "AC2": {
+      "status": "PASS",
+      "proof": "Спецификация config/api-anything/sites/gogetlinks.json (декодирование windows-1251 -> utf-8, операции чтения и записи) + src/lib/seo/gogetlinks-client.server.ts, gogetlinks-codec.ts, gogetlinks-sync.ts. Тесты src/lib/seo/gogetlinks-codec.test.ts (14/14 pass)."
+    },
+    "AC3": {
+      "status": "PASS",
+      "proof": "Изоляция проектов wesetup.ru (флаг isWesetup, фильтрация по умолчанию, скрытый архив чужих кампаний только для чтения). Прозрачная атрибуция origin (manual_wesetup | scheduled_wesetup | external_ggl), initiatedByName, approvedByName, sentByName. Тесты src/lib/seo/gogetlinks-ui-format.test.ts."
+    },
+    "AC4": {
+      "status": "PASS",
+      "proof": "Двусторонние чаты с вебмастерами в src/components/root/seo-links/ChatsTab.tsx + маршруты /api/root/gogetlinks/threads, /threads/[id]. Проверка и приёмка размещений on_check через /api/root/gogetlinks/orders/[id]/review («Принять» / «На доработку» с обязательным комментарием). Оповещения в Telegram/Email при новых сообщениях и ревью."
+    },
+    "AC5": {
+      "status": "PASS",
+      "proof": "Модель SeoCompetitorSnapshot и OCR Similarweb в /api/root/gogetlinks/similarweb. Алгоритм скоринга посадочных wesetup.ru (позиции 4–30 Topvisor, дефицит ссылок, микс >= 50% brand/url анкоров) и фильтрация доноров в src/lib/seo/gogetlinks-planner.ts (14/14 pass). Подготовка статей через очередь ProjectsFlow ai-prompt-jobs (wesetup_ggl_article)."
+    },
+    "AC6": {
+      "status": "PASS",
+      "proof": "Расписание GglSchedulePlan и слоты GglPlannedSlot. Закупка ТОЛЬКО по ручному клику «Подтвердить» человека (/api/root/gogetlinks/slots/[id]/approve), никаких автосписаний в кроне. Финансовый гейт canApproveGglSpend (src/lib/seo/gogetlinks-access.ts). Защита от повторных списаний через idempotencyKey и статус approved_sending. Тесты gogetlinks-access.test.ts (10/10) и gogetlinks-orders.test.ts (10/10)."
+    },
+    "AC7": {
+      "status": "PASS",
+      "proof": "Раздел /root/seo/links с поднавигацией SeoSubnav (Здоровье / Позиции / Ссылки + бейдж входящих) и 4 вкладками: Планировщик (календарь 30 дней, ArticleDrawer, подтверждение), Закупки (реестр, атрибуция, фильтры), Чаты (двухколоночный мессенджер), Спрос Similarweb и подключение. Крон /api/cron/gogetlinks с проверкой CRON_SECRET и AuditLog. Пройден тест public-dark-theme.test.ts."
+    },
+    "AC8": {
+      "status": "PASS",
+      "proof": "Полный стек проверок зелёный: npm run i18n:check (97/97 pass, raw/i18n-check.txt), npm run typecheck (0 errors, raw/typecheck.txt), npx eslint по всем модулям SEO (0 errors, 0 warnings, raw/eslint-seo.txt), 72/72 unit-тестов SEO и доступа + public-dark-theme (raw/seo-and-access-tests.txt, EXIT_CODE=0), test-gate: pass=5701, 0 регрессий ветки; 5 оставшихся not ok — известные baseline CRLF/DB с origin/master (raw/test-gate.txt)."
+    }
+  },
+  "notDone": []
+}

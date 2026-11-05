@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { Activity, SearchCheck } from "lucide-react";
-
+import { SeoSubnav } from "@/components/root/seo-subnav";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isTopvisorConfigured } from "@/lib/topvisor";
@@ -32,6 +30,27 @@ export default async function RootSeoPositionsPage() {
     ])
   );
 
+  let linksBadgeCount = 0;
+  try {
+    const [unreadThreads, pendingSlots] = await Promise.all([
+      db.gglThread.count({
+        where: {
+          campaign: { isWesetup: true },
+          OR: [{ unreadCount: { gt: 0 } }, { needsReply: true }],
+        },
+      }),
+      db.gglPlannedSlot.count({
+        where: {
+          status: "pending_approval",
+          plan: { campaign: { isWesetup: true } },
+        },
+      }),
+    ]);
+    linksBadgeCount = unreadThreads + pendingSlots;
+  } catch {
+    linksBadgeCount = 0;
+  }
+
   return (
     <div className="space-y-5">
       <div>
@@ -45,19 +64,7 @@ export default async function RootSeoPositionsPage() {
         </p>
       </div>
 
-      <nav className="flex items-center gap-1.5">
-        <Link
-          href="/root/seo"
-          className="inline-flex items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 py-2 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-        >
-          <SearchCheck className="size-4 text-[#5566f6]" />
-          Здоровье
-        </Link>
-        <span className="inline-flex items-center gap-2 rounded-2xl bg-[#eef1ff] px-4 py-2 text-[13.5px] font-medium text-[#3848c7]">
-          <Activity className="size-4" />
-          Позиции
-        </span>
-      </nav>
+      <SeoSubnav active="positions" linksBadgeCount={linksBadgeCount} />
 
       <PositionsClient
         configured={isTopvisorConfigured()}

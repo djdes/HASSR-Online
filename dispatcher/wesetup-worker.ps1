@@ -272,7 +272,8 @@ $KNOWN_TYPES = @(
   'wesetup_period_report',
   'wesetup_capa_suggest',
   'wesetup_weekly_digest',
-  'wesetup_vision_extract'
+  'wesetup_vision_extract',
+  'wesetup_ggl_article'
 )
 
 # Self-contained job: the inputText IS the instruction. Tiny English system

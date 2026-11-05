@@ -5351,3 +5351,243 @@ model EdoDocument {
   @@index([kind, sourceId])
   @@index([createdAt])
 }
+
+
+/// Подключение аккаунта GoGetLinks платформы wesetup.ru (одно на платформу).
+/// Логин, пароль и сессионные куки зашифрованы AES-256-GCM (src/lib/integration-crypto.ts).
+model GglAccount {
+  id                        String    @id @default(cuid())
+  email                     String    @unique
+  passwordEnc               String
+  sessionEnc                String?
+  balanceRub                Decimal   @default(0) @db.Decimal(12, 2)
+  availableRub              Decimal   @default(0) @db.Decimal(12, 2)
+  blockedRub                Decimal   @default(0) @db.Decimal(12, 2)
+  defaultCampaignId         Int?
+  allowSeoApproveWithinPlan Boolean   @default(false)
+  status                    String    @default("unchecked")
+  lastSyncedAt              DateTime?
+  lastError                 String?
+  updatedByUserId           String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+}
+
+/// Кампания в GoGetLinks (наши кампании wesetup.ru и сторонние кампании аккаунта).
+model GglCampaign {
+  id                String            @id @default(cuid())
+  gglCampaignId     Int               @unique
+  name              String
+  domain            String
+  siteUrl           String
+  isWesetup         Boolean           @default(false)
+  state             String
+  spentRub          Decimal           @default(0) @db.Decimal(12, 2)
+  linksCount        Int               @default(0)
+  requestsCount     Int               @default(0)
+  qualityControl    String?
+  statusNote        String?
+  targetAnchorsJson Json?
+  syncedAt          DateTime
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  articles          GglArticle[]
+  orders            GglOrder[]
+  threads           GglThread[]
+  plans             GglSchedulePlan[]
+
+  @@index([isWesetup])
+  @@index([state])
+}
+
+/// Срез спроса и трафика конкурента из Similarweb (импорт агентом или OCR скриншота).
+model SeoCompetitorSnapshot {
+  id              String           @id @default(cuid())
+  domain          String
+  periodLabel     String
+  visitsMonthly   Int
+  organicSharePct Float?
+  paidSharePct    Float?
+  bouncePct       Float?
+  pagesPerVisit   Float?
+  clusters        Json
+  sourceKind      String
+  createdByUserId String?
+  createdAt       DateTime         @default(now())
+  plannedSlots    GglPlannedSlot[]
+
+  @@unique([domain, periodLabel])
+  @@index([domain, createdAt])
+}
+
+/// Статья для размещения в GoGetLinks (/articles).
+model GglArticle {
+  id              String           @id @default(cuid())
+  gglArticleId    Int?             @unique
+  campaignId      String
+  campaign        GglCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  targetUrl       String
+  targetKeyword   String
+  anchor          String
+  anchorKind      String
+  title           String
+  announcement    String
+  bodyHtml        String
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  status          String           @default("draft")
+  createdByUserId String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  orders          GglOrder[]
+  plannedSlots    GglPlannedSlot[]
+
+  @@index([campaignId, status])
+  @@index([status])
+}
+
+/// Заявка или размещённая ссылка в GoGetLinks (единый реестр закупок).
+model GglOrder {
+  id                String          @id @default(cuid())
+  gglReviewId       Int?            @unique
+  campaignId        String
+  campaign          GglCampaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  donorSiteId       Int?
+  donorDomain       String
+  donorDailyTraffic Int?
+  donorTfCf         String?
+  donorTrust        Int?
+  placementFormat   String
+  priceRub          Decimal         @db.Decimal(12, 2)
+  targetUrl         String
+  anchor            String
+  publishedUrl      String?
+  articleId         String?
+  article           GglArticle?     @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  paidAt            DateTime?
+  cancelledAt       DateTime?
+  indexedStatus     String?
+  status            String
+  origin            String
+  initiatedByUserId String?
+  initiatedByName   String?
+  approvedByUserId  String?
+  approvedByName    String?
+  approvedAt        DateTime?
+  plannedSlotId     String?         @unique
+  plannedSlot       GglPlannedSlot? @relation(fields: [plannedSlotId], references: [id], onDelete: SetNull)
+  idempotencyKey    String          @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  threads           GglThread[]
+
+  @@index([campaignId, status])
+  @@index([status, createdAt])
+  @@index([donorDomain])
+}
+
+/// Диалог/переписка с вебмастером в GoGetLinks (/messages, /privateMessage).
+model GglThread {
+  id                 String       @id @default(cuid())
+  gglThreadKey       String       @unique
+  orderId            String?
+  order              GglOrder?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  campaignId         String?
+  campaign           GglCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  donorDomain        String?
+  webmasterLogin     String?
+  subject            String?
+  unreadCount        Int          @default(0)
+  needsReply         Boolean      @default(false)
+  lastMessageAt      DateTime?
+  lastMessagePreview String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  messages           GglMessage[]
+
+  @@index([campaignId, needsReply])
+  @@index([lastMessageAt])
+}
+
+/// Сообщение внутри диалога с вебмастером.
+model GglMessage {
+  id             String    @id @default(cuid())
+  threadId       String
+  thread         GglThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  gglMessageId   String?   @unique
+  direction      String
+  authorLabel    String
+  sentByUserId   String?
+  sentByName     String?
+  body           String
+  deliveryStatus String    @default("synced")
+  idempotencyKey String?   @unique
+  sentAt         DateTime
+  createdAt      DateTime  @default(now())
+
+  @@index([threadId, sentAt])
+}
+
+/// План регулярных закупок ссылок (разовый пакет или ежемесячный бюджет).
+model GglSchedulePlan {
+  id                  String           @id @default(cuid())
+  name                String
+  campaignId          String
+  campaign            GglCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  kind                String
+  budgetRub           Int
+  maxPricePerLinkRub  Int
+  startsAt            DateTime
+  scheduleDaysOfWeek  Json
+  minTfCf             Int              @default(10)
+  minTrust            Int              @default(4)
+  minDailyTraffic     Int              @default(100)
+  allowedFormats      Json
+  anchorMixBrandPct   Int              @default(50)
+  isActive            Boolean          @default(true)
+  createdByUserId     String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  slots               GglPlannedSlot[]
+
+  @@index([campaignId, isActive])
+}
+
+/// Запланированный слот календаря закупки ссылок.
+model GglPlannedSlot {
+  id                    String                 @id @default(cuid())
+  planId                String
+  plan                  GglSchedulePlan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  scheduledDate         String
+  maxPriceRub           Int
+  estimatedPriceRub     Int?
+  targetUrl             String?
+  targetKeyword         String?
+  sourceSnapshotId      String?
+  sourceSnapshot        SeoCompetitorSnapshot? @relation(fields: [sourceSnapshotId], references: [id], onDelete: SetNull)
+  topvisorPosSnapshot   Json?
+  selectionReason       String?
+  donorSiteId           Int?
+  donorDomain           String?
+  donorMetricsJson      Json?
+  placementFormat       String?
+  anchor                String?
+  anchorKind            String?
+  articleId             String?
+  article               GglArticle?            @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  briefText             String?
+  alternativeDonorsJson Json?
+  status                String                 @default("planned")
+  approvedByUserId      String?
+  approvedByName        String?
+  approvedAt            DateTime?
+  idempotencyKey        String                 @unique
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  order                 GglOrder?
+
+  @@index([planId, scheduledDate])
+  @@index([scheduledDate, status])
+  @@index([status])
+}

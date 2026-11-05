@@ -1,0 +1,495 @@
+TAP version 13
+# Subtest: buildAggregateRating
+    # Subtest: меньше трёх оценок — null; без оценки не считается
+    ok 1 - меньше трёх оценок — null; без оценки не считается
+      ---
+      duration_ms: 1.1341
+      type: 'test'
+      ...
+    # Subtest: среднее с одним знаком, до пяти отзывов
+    ok 2 - среднее с одним знаком, до пяти отзывов
+      ---
+      duration_ms: 0.5962
+      type: 'test'
+      ...
+    # Subtest: анонимный отзыв считается в среднем, но без подписи-«человека» в Review
+    ok 3 - анонимный отзыв считается в среднем, но без подписи-«человека» в Review
+      ---
+      duration_ms: 1.0412
+      type: 'test'
+      ...
+    1..3
+ok 1 - buildAggregateRating
+  ---
+  duration_ms: 5.5613
+  type: 'suite'
+  ...
+# Subtest: sumFines
+    # Subtest: складывает диапазоны и помечает приостановление
+    ok 1 - складывает диапазоны и помечает приостановление
+      ---
+      duration_ms: 3.8219
+      type: 'test'
+      ...
+    # Subtest: ничего не выбрано — нули
+    ok 2 - ничего не выбрано — нули
+      ---
+      duration_ms: 0.3746
+      type: 'test'
+      ...
+    # Subtest: у каждой статьи верхняя граница не меньше нижней
+    ok 3 - у каждой статьи верхняя граница не меньше нижней
+      ---
+      duration_ms: 0.3623
+      type: 'test'
+      ...
+    1..3
+ok 2 - sumFines
+  ---
+  duration_ms: 6.0267
+  type: 'suite'
+  ...
+# Subtest: canApproveGglSpend enforces owner/admin by default and optional seo delegation only within plan
+ok 3 - canApproveGglSpend enforces owner/admin by default and optional seo delegation only within plan
+  ---
+  duration_ms: 3.0073
+  type: 'test'
+  ...
+# Subtest: Review Focus \#3: replyToGglThread deduplicates same idempotencyKey and keeps 'sending' on uncertain network outcome
+ok 4 - Review Focus \#3: replyToGglThread deduplicates same idempotencyKey and keeps 'sending' on uncertain network outcome
+  ---
+  duration_ms: 3.2956
+  type: 'test'
+  ...
+# Subtest: replyToGglThread rejects non-wesetup.ru threads before claiming message or touching GoGetLinks
+ok 5 - replyToGglThread rejects non-wesetup.ru threads before claiming message or touching GoGetLinks
+  ---
+  duration_ms: 1.1266
+  type: 'test'
+  ...
+# Subtest: replyToGglThread marks 'synced' on applied/accepted and writes ggl.message.reply audit log
+ok 6 - replyToGglThread marks 'synced' on applied/accepted and writes ggl.message.reply audit log
+  ---
+  duration_ms: 0.9732
+  type: 'test'
+  ...
+# Subtest: replyToGglThread marks 'failed' on explicit not_sent/not_applied GglCallError, but retains 'sending' on timeout error
+ok 7 - replyToGglThread marks 'failed' on explicit not_sent/not_applied GglCallError, but retains 'sending' on timeout error
+  ---
+  duration_ms: 1.7507
+  type: 'test'
+  ...
+# Subtest: replyToGglThread default Prisma claim handles concurrent P2002 unique constraint without throwing 500
+ok 8 - replyToGglThread default Prisma claim handles concurrent P2002 unique constraint without throwing 500
+  ---
+  duration_ms: 0.9085
+  type: 'test'
+  ...
+# Subtest: reviewGglPlacement rejects non-wesetup.ru orders before calling GoGetLinks
+ok 9 - reviewGglPlacement rejects non-wesetup.ru orders before calling GoGetLinks
+  ---
+  duration_ms: 0.7498
+  type: 'test'
+  ...
+# Subtest: reviewGglPlacement enforces comment >= 5 chars on request_revision, updates status on accept/revision, and keeps status on may_have_applied
+ok 10 - reviewGglPlacement enforces comment >= 5 chars on request_revision, updates status on accept/revision, and keeps status on may_have_applied
+  ---
+  duration_ms: 2.9962
+  type: 'test'
+  ...
+# Subtest: routes: GET /threads, GET/POST /threads/[id], and POST /orders/[id]/review validate inputs, await Next.js 16 params, enforce isolation, and serialize Decimal
+ok 11 - routes: GET /threads, GET/POST /threads/[id], and POST /orders/[id]/review validate inputs, await Next.js 16 params, enforce isolation, and serialize Decimal
+  ---
+  duration_ms: 453.3431
+  type: 'test'
+  ...
+# Subtest: Review Focus \#1: redirect to view_closed & admin-locked row without checkbox stay closed with parsed id
+ok 12 - Review Focus \#1: redirect to view_closed & admin-locked row without checkbox stay closed with parsed id
+  ---
+  duration_ms: 1.9114
+  type: 'test'
+  ...
+# Subtest: Review Focus \#2: encodeWin1251Form round-trips Russian Cyrillic, № and ₽ without UTF-8 mojibake
+ok 13 - Review Focus \#2: encodeWin1251Form round-trips Russian Cyrillic, № and ₽ without UTF-8 mojibake
+  ---
+  duration_ms: 1.0374
+  type: 'test'
+  ...
+# Subtest: isWesetupDomain isolates wesetup.ru from other owner domains and parseRubAmount handles decimals
+ok 14 - isWesetupDomain isolates wesetup.ru from other owner domains and parseRubAmount handles decimals
+  ---
+  duration_ms: 0.3904
+  type: 'test'
+  ...
+# Subtest: config/api-anything/sites/gogetlinks.json pins loginCookies and carries zero secrets
+ok 15 - config/api-anything/sites/gogetlinks.json pins loginCookies and carries zero secrets
+  ---
+  duration_ms: 20.8626
+  type: 'test'
+  ...
+# Subtest: parseTfCf and normalizeReviewRow parse donor metrics, dates and statuses
+ok 16 - parseTfCf and normalizeReviewRow parse donor metrics, dates and statuses
+  ---
+  duration_ms: 0.9566
+  type: 'test'
+  ...
+# Subtest: callGglWrite throws GglIsolationError before touching network if campaign does not belong to wesetup
+ok 17 - callGglWrite throws GglIsolationError before touching network if campaign does not belong to wesetup
+  ---
+  duration_ms: 1356.5921
+  type: 'test'
+  ...
+# Subtest: Fix Round 1: write operations inject parameters into HTTP body using Windows-1251 form encoding
+ok 18 - Fix Round 1: write operations inject parameters into HTTP body using Windows-1251 form encoding
+  ---
+  duration_ms: 78.6001
+  type: 'test'
+  ...
+# Subtest: Fix Round 1: isolation guard verifies campaignId in args and blocks non-wesetup siteUrl
+ok 19 - Fix Round 1: isolation guard verifies campaignId in args and blocks non-wesetup siteUrl
+  ---
+  duration_ms: 10.9004
+  type: 'test'
+  ...
+# Subtest: Fix Round 1: auto-relogin in callGglRead succeeds on expired session without recursion or deadlock
+ok 20 - Fix Round 1: auto-relogin in callGglRead succeeds on expired session without recursion or deadlock
+  ---
+  duration_ms: 2628.5111
+  type: 'test'
+  ...
+# [gogetlinks-cron] admin operational alert failed: Error: SMTP connection refused
+#     at notifyAdmins (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.test.ts:272:13)
+#     at runGglCronPass (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.server.ts:443:9)
+#     at async TestContext.<anonymous> (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.test.ts:246:27)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# [gogetlinks-cron] delegated SEO operational alert failed: Error: Telegram 502 Bad Gateway
+#     at notifyDelegatedSeoUsers (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.test.ts:275:13)
+#     at runGglCronPass (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.server.ts:447:9)
+#     at async TestContext.<anonymous> (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.test.ts:246:27)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# [gogetlinks-cron] admin low-balance alert failed: Error: SMTP connection refused
+#     at notifyAdmins (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.test.ts:272:13)
+#     at runGglCronPass (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.server.ts:468:37)
+#     at async TestContext.<anonymous> (C:\\projects\\wesetup\\src\\lib\\seo\\gogetlinks-cron.test.ts:246:27)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: runGglCronPass routes operational alerts to admins + seo specialists, and low-balance alerts ONLY to platform admins
+ok 21 - runGglCronPass routes operational alerts to admins + seo specialists, and low-balance alerts ONLY to platform admins
+  ---
+  duration_ms: 4.0627
+  type: 'test'
+  ...
+# Subtest: runGglCronPass enforces overlap guard (already_running) and resets flag in finally after failure
+ok 22 - runGglCronPass enforces overlap guard (already_running) and resets flag in finally after failure
+  ---
+  duration_ms: 1.6282
+  type: 'test'
+  ...
+# Subtest: runGglCronPass skips cleanly with reason no_account when no GglAccount is configured
+ok 23 - runGglCronPass skips cleanly with reason no_account when no GglAccount is configured
+  ---
+  duration_ms: 0.3183
+  type: 'test'
+  ...
+# Subtest: 24h deduplication suppresses repeated due-today and low-balance alerts, while edge-triggered alerts stay fire-and-forget safe
+ok 24 - 24h deduplication suppresses repeated due-today and low-balance alerts, while edge-triggered alerts stay fire-and-forget safe
+  ---
+  duration_ms: 10.9835
+  type: 'test'
+  ...
+# Subtest: notifyDelegatedSeoSpecialists excludes isRoot and full-section platform admins so admins never get duplicate messages
+ok 25 - notifyDelegatedSeoSpecialists excludes isRoot and full-section platform admins so admins never get duplicate messages
+  ---
+  duration_ms: 2.4041
+  type: 'test'
+  ...
+# Subtest: /api/cron/gogetlinks GET and POST enforce checkCronSecret (401) and return 200 JSON when authorized
+ok 26 - /api/cron/gogetlinks GET and POST enforce checkCronSecret (401) and return 200 JSON when authorized
+  ---
+  duration_ms: 12.8252
+  type: 'test'
+  ...
+# Subtest: Review Focus \#3: concurrent approvePlannedSlot rejects second click with 409 and timeout stays approved_sending
+ok 27 - Review Focus \#3: concurrent approvePlannedSlot rejects second click with 409 and timeout stays approved_sending
+  ---
+  duration_ms: 3.0994
+  type: 'test'
+  ...
+# Subtest: Review Focus \#3 (timeout throw): mid-flight network timeout keeps GglOrder sending & slot approved_sending
+ok 28 - Review Focus \#3 (timeout throw): mid-flight network timeout keeps GglOrder sending & slot approved_sending
+  ---
+  duration_ms: 3.2184
+  type: 'test'
+  ...
+# Subtest: Review Focus \#4: approvePlannedSlot aborts with 0 spend on donor price hike, low balance, or non-wesetup campaign
+ok 29 - Review Focus \#4: approvePlannedSlot aborts with 0 spend on donor price hike, low balance, or non-wesetup campaign
+  ---
+  duration_ms: 1.5651
+  type: 'test'
+  ...
+# Subtest: canApproveGglSpend gates: SEO user blocked on upsertSchedulePlan & createManualGglOrder, and gated by allowSeoApproveWithinPlan on approvePlannedSlot
+ok 30 - canApproveGglSpend gates: SEO user blocked on upsertSchedulePlan & createManualGglOrder, and gated by allowSeoApproveWithinPlan on approvePlannedSlot
+  ---
+  duration_ms: 1.8283
+  type: 'test'
+  ...
+# Subtest: materializePlanSlots & prepareUpcomingPlannedSlots stop strictly at pending_approval with zero submitLinkOrder calls
+ok 31 - materializePlanSlots & prepareUpcomingPlannedSlots stop strictly at pending_approval with zero submitLinkOrder calls
+  ---
+  duration_ms: 10.5795
+  type: 'test'
+  ...
+# Subtest: recycleRejectedSlotOrders swaps next alternative donor and returns slot to pending_approval
+ok 32 - recycleRejectedSlotOrders swaps next alternative donor and returns slot to pending_approval
+  ---
+  duration_ms: 1.4507
+  type: 'test'
+  ...
+# Subtest: recycleRejectedSlotOrders marks slot failed and detaches rejected order when fallback donors are exhausted, freeing committed budget and unblocking mutatePlannedSlot
+ok 33 - recycleRejectedSlotOrders marks slot failed and detaches rejected order when fallback donors are exhausted, freeing committed budget and unblocking mutatePlannedSlot
+  ---
+  duration_ms: 2.0899
+  type: 'test'
+  ...
+# Subtest: mutatePlannedSlot supports skip, swap_donor, and update_article while blocking already ordered slots
+ok 34 - mutatePlannedSlot supports skip, swap_donor, and update_article while blocking already ordered slots
+  ---
+  duration_ms: 3.6544
+  type: 'test'
+  ...
+# Subtest: plans, slots/[id], slots/[id]/approve, and orders API routes await params, validate input, enforce gates and serialize Decimals
+ok 35 - plans, slots/[id], slots/[id]/approve, and orders API routes await params, validate input, enforce gates and serialize Decimals
+  ---
+  duration_ms: 558.2503
+  type: 'test'
+  ...
+# Subtest: upsertSchedulePlan, createManualGglOrder & default recycleRejectedSlotOrders enforce isolation, price/balance guards and detach rejected plannedSlotId
+ok 36 - upsertSchedulePlan, createManualGglOrder & default recycleRejectedSlotOrders enforce isolation, price/balance guards and detach rejected plannedSlotId
+  ---
+  duration_ms: 10.2542
+  type: 'test'
+  ...
+# Subtest: Review Focus \#5: scoreTargetPages handles Topvisor '--' without NaN and boosts positions 4-30 with 0 links
+ok 37 - Review Focus \#5: scoreTargetPages handles Topvisor '--' without NaN and boosts positions 4-30 with 0 links
+  ---
+  duration_ms: 5.6069
+  type: 'test'
+  ...
+# Subtest: Review Focus \#5: selectAnchorForTarget prevents exact-anchor over-optimization and enforces >= 50% brand/URL mix
+ok 38 - Review Focus \#5: selectAnchorForTarget prevents exact-anchor over-optimization and enforces >= 50% brand/URL mix
+  ---
+  duration_ms: 0.6662
+  type: 'test'
+  ...
+# Subtest: selectBestDonorAndAlternatives excludes used domains (1 donor = 1 link) and caps at maxPricePerLinkRub
+ok 39 - selectBestDonorAndAlternatives excludes used domains (1 donor = 1 link) and caps at maxPricePerLinkRub
+  ---
+  duration_ms: 3.1412
+  type: 'test'
+  ...
+# Subtest: computeScheduleDates respects 10 000 ₽ one_time cap and startsAt
+ok 40 - computeScheduleDates respects 10 000 ₽ one_time cap and startsAt
+  ---
+  duration_ms: 2.4551
+  type: 'test'
+  ...
+# Subtest: computeScheduleDates respects 5 000 ₽/мес monthly window cap vs alreadyCommittedRub and resets in next month
+ok 41 - computeScheduleDates respects 5 000 ₽/мес monthly window cap vs alreadyCommittedRub and resets in next month
+  ---
+  duration_ms: 0.5738
+  type: 'test'
+  ...
+# Subtest: dispatcher/wesetup-worker.ps1 registers wesetup_ggl_article and remains strictly ASCII-only
+ok 42 - dispatcher/wesetup-worker.ps1 registers wesetup_ggl_article and remains strictly ASCII-only
+  ---
+  duration_ms: 12.4588
+  type: 'test'
+  ...
+# Subtest: generateGglArticleDraft builds wesetup_ggl_article prompt with <page_context> and SanPiN guardrails, strips fences and enforces exact wesetup.ru anchor
+ok 43 - generateGglArticleDraft builds wesetup_ggl_article prompt with <page_context> and SanPiN guardrails, strips fences and enforces exact wesetup.ru anchor
+  ---
+  duration_ms: 12.4007
+  type: 'test'
+  ...
+# Subtest: extractSimilarwebSnapshotFromImages runs wesetup_vision_extract pipeline and deletes temp images in finally even on error
+ok 44 - extractSimilarwebSnapshotFromImages runs wesetup_vision_extract pipeline and deletes temp images in finally even on error
+  ---
+  duration_ms: 8.1499
+  type: 'test'
+  ...
+# Subtest: GET and POST /api/root/gogetlinks/similarweb upsert snapshot, log ggl.similarweb.import and return scoreTargetPages matrix
+ok 45 - GET and POST /api/root/gogetlinks/similarweb upsert snapshot, log ggl.similarweb.import and return scoreTargetPages matrix
+  ---
+  duration_ms: 637.6112
+  type: 'test'
+  ...
+# Subtest: reconcileSyncedOrder preserves Wesetup human attribution on existing order and marks unknown GGL orders external_ggl
+ok 46 - reconcileSyncedOrder preserves Wesetup human attribution on existing order and marks unknown GGL orders external_ggl
+  ---
+  duration_ms: 1.7681
+  type: 'test'
+  ...
+# Subtest: DEFAULT_SIMILARWEB_SNAPSHOTS covers Jul–Sep 2026 audit domains and ensureDefaultSimilarwebSnapshots is idempotent
+ok 47 - DEFAULT_SIMILARWEB_SNAPSHOTS covers Jul–Sep 2026 audit domains and ensureDefaultSimilarwebSnapshots is idempotent
+  ---
+  duration_ms: 1.4956
+  type: 'test'
+  ...
+# Subtest: syncGglCabinet keeps campaigns 'closed' when listActiveCampaigns redirects to view_closed on zero-active-campaign account
+ok 48 - syncGglCabinet keeps campaigns 'closed' when listActiveCampaigns redirects to view_closed on zero-active-campaign account
+  ---
+  duration_ms: 5.818
+  type: 'test'
+  ...
+# Subtest: syncGglCabinet emits delta IDs strictly for isWesetup === true, reconciles in-flight sending orders, and preserves outbound sentByName within 30 min
+ok 49 - syncGglCabinet emits delta IDs strictly for isWesetup === true, reconciles in-flight sending orders, and preserves outbound sentByName within 30 min
+  ---
+  duration_ms: 7.6948
+  type: 'test'
+  ...
+# Subtest: /api/root/gogetlinks/account GET masks email & strips secrets, and /api/root/gogetlinks/overview filters isWesetup & converts Decimals
+ok 50 - /api/root/gogetlinks/account GET masks email & strips secrets, and /api/root/gogetlinks/overview filters isWesetup & converts Decimals
+  ---
+  duration_ms: 372.8341
+  type: 'test'
+  ...
+# Subtest: /api/root/gogetlinks/account PUT encrypts secrets & logs ggl.account.save, and POST ensures wesetup.ru campaign
+ok 51 - /api/root/gogetlinks/account PUT encrypts secrets & logs ggl.account.save, and POST ensures wesetup.ru campaign
+  ---
+  duration_ms: 49.402
+  type: 'test'
+  ...
+# Subtest: formatOrderAttribution renders transparent Russian labels for manual, scheduled and external GGL orders
+ok 52 - formatOrderAttribution renders transparent Russian labels for manual, scheduled and external GGL orders
+  ---
+  duration_ms: 1.2474
+  type: 'test'
+  ...
+# Subtest: formatSlotStatusBadge maps slot lifecycle statuses to Russian labels and tones
+ok 53 - formatSlotStatusBadge maps slot lifecycle statuses to Russian labels and tones
+  ---
+  duration_ms: 1.0632
+  type: 'test'
+  ...
+# Subtest: formatOrderStatusBadge maps placement statuses to Russian labels and tones
+ok 54 - formatOrderStatusBadge maps placement statuses to Russian labels and tones
+  ---
+  duration_ms: 0.4061
+  type: 'test'
+  ...
+# Subtest: formatRub formats integer and fractional ruble amounts cleanly
+ok 55 - formatRub formats integer and fractional ruble amounts cleanly
+  ---
+  duration_ms: 37.3859
+  type: 'test'
+  ...
+# Subtest: sanitizeArticleHtmlForPreview strips scripts, iframes, inline event handlers and javascript URLs
+ok 56 - sanitizeArticleHtmlForPreview strips scripts, iframes, inline event handlers and javascript URLs
+  ---
+  duration_ms: 2.161
+  type: 'test'
+  ...
+# Subtest: extractFacts
+    # Subtest: вытаскивает title, description, canonical, h1, ссылки без query и служебных
+    ok 1 - вытаскивает title, description, canonical, h1, ссылки без query и служебных
+      ---
+      duration_ms: 3.4619
+      type: 'test'
+      ...
+    1..1
+ok 57 - extractFacts
+  ---
+  duration_ms: 5.1169
+  type: 'suite'
+  ...
+# Subtest: findIssues
+    # Subtest: находит битые ссылки, дубли title, пустые описания и лишние h1
+    ok 1 - находит битые ссылки, дубли title, пустые описания и лишние h1
+      ---
+      duration_ms: 1.1559
+      type: 'test'
+      ...
+    1..1
+ok 58 - findIssues
+  ---
+  duration_ms: 1.3127
+  type: 'suite'
+  ...
+# Subtest: pickJournals
+    # Subtest: кафе: базовый набор, бракераж, холод, входной контроль
+    ok 1 - кафе: базовый набор, бракераж, холод, входной контроль
+      ---
+      duration_ms: 1.3099
+      type: 'test'
+      ...
+    # Subtest: опции добавляют профильные журналы, без дублей
+    ok 2 - опции добавляют профильные журналы, без дублей
+      ---
+      duration_ms: 0.4115
+      type: 'test'
+      ...
+    # Subtest: производство — аудит, прослеживаемость, стекло
+    ok 3 - производство — аудит, прослеживаемость, стекло
+      ---
+      duration_ms: 0.2608
+      type: 'test'
+      ...
+    1..3
+ok 59 - pickJournals
+  ---
+  duration_ms: 4.318
+  type: 'suite'
+  ...
+# Subtest: цвет текста во вложенных селекторах — токен темы, не HEX
+ok 60 - цвет текста во вложенных селекторах — токен темы, не HEX
+  ---
+  duration_ms: 20.7172
+  type: 'test'
+  ...
+# Subtest: текст врезок статьи читается в ночной теме
+ok 61 - текст врезок статьи читается в ночной теме
+  ---
+  duration_ms: 0.8397
+  type: 'test'
+  ...
+# Subtest: светлые произвольные градиенты гаснут в ночной теме
+ok 62 - светлые произвольные градиенты гаснут в ночной теме
+  ---
+  duration_ms: 12.7745
+  type: 'test'
+  ...
+# Subtest: every /root page and /api/root route is classified explicitly
+ok 63 - every /root page and /api/root route is classified explicitly
+  ---
+  duration_ms: 77.6771
+  type: 'test'
+  ...
+# Subtest: gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 64 - gates: clients card, billing mutations, owner-only actions, unknown paths
+  ---
+  duration_ms: 2.516
+  type: 'test'
+  ...
+# Subtest: delegated viewer sees only own sections; superadmin sees everything
+ok 65 - delegated viewer sees only own sections; superadmin sees everything
+  ---
+  duration_ms: 4.6535
+  type: 'test'
+  ...
+# Subtest: presets use known sections and are recognised back
+ok 66 - presets use known sections and are recognised back
+  ---
+  duration_ms: 1.4256
+  type: 'test'
+  ...
+1..66
+# tests 72
+# suites 5
+# pass 72
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15010.8305

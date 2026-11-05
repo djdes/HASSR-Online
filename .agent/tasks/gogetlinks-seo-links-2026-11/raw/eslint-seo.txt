@@ -1,0 +1,2 @@
+ESLint exit code: 0
+0 errors, 0 warnings across all SEO and root components.
