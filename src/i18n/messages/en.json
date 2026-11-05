@@ -5691,6 +5691,11 @@
           "title": "Today’s overview",
           "text": "Which logs are filled in today, what was missed and who to remind — on the first screen of the workspace."
         },
+        "monitoring": {
+          "tab": "Monitoring",
+          "title": "Progress by outlet",
+          "text": "Today’s logs, checklists and the production control program as percentages — for the whole company and for each outlet."
+        },
         "journals": {
           "tab": "Logs",
           "title": "Every log for the site",

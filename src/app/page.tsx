@@ -128,8 +128,9 @@ const CAPABILITIES = [
  * mobile 390×800 при плотности 2×). Порядок — от «что видно каждый день»
  * к «что нужно раз в квартал».
  */
-const SHOWCASE_SLIDES: ReadonlyArray<{ id: "dashboard" | "journals" | "grid" | "qr" | "inspection" | "staff"; icon: ShowcaseIcon; address: string }> = [
+const SHOWCASE_SLIDES: ReadonlyArray<{ id: "dashboard" | "monitoring" | "journals" | "grid" | "qr" | "inspection" | "staff"; icon: ShowcaseIcon; address: string }> = [
   { id: "dashboard", icon: "dashboard", address: "wesetup.ru/dashboard" },
+  { id: "monitoring", icon: "monitoring", address: "wesetup.ru/monitoring" },
   { id: "journals", icon: "journals", address: "wesetup.ru/journals" },
   { id: "grid", icon: "grid", address: "wesetup.ru/journals/cold_equipment_control" },
   { id: "qr", icon: "qr", address: "wesetup.ru/settings/qr-posters" },

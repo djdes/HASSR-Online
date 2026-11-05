@@ -5691,6 +5691,11 @@
           "title": "Kunlik xulosa",
           "text": "Bugun qaysi jurnallar to‘ldirilgan, nima o‘tkazib yuborilgan va kimga eslatish kerak — kabinetning birinchi ekranida."
         },
+        "monitoring": {
+          "tab": "Monitoring",
+          "title": "Nuqtalar bo‘yicha bajarilish",
+          "text": "Bugungi jurnallar, chek-listlar va ishlab chiqarish nazorati dasturi — butun kompaniya va har bir nuqta bo‘yicha foizlarda."
+        },
         "journals": {
           "tab": "Jurnallar",
           "title": "Nuqtaning barcha jurnallari",
