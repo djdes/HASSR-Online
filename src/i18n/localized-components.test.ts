@@ -13,9 +13,10 @@ import { legacyAuthErrorKey } from "./legacy-auth-errors";
 import { translatorFor } from "./translator";
 import { SelectionApplyButton, SelectionEditButton, SelectionRepeatButton, SelectionSignButton } from "../components/journals/selection-edit-button";
 import { ExportLanguageChoice } from "../components/journals/export-language-choice";
-import { LOCALES, LOCALE_NAMES } from "./locales";
+import { LOCALES, LOCALE_NAMES, offeredLocales } from "./locales";
 
-test("export selection defaults to the employee language and offers all three languages", async () => {
+// Узбекский в резерве (правки 05.11.2026): предлагаем ru и en, а уже выбранный uz не пропадает.
+test("export selection defaults to the employee language and offers ru, en and the current language", async () => {
   for (const locale of LOCALES) {
     const messages = await loadMessages(locale);
     const label = messages.journalControls.documentActions.exportLanguage;
@@ -23,7 +24,8 @@ test("export selection defaults to the employee language and offers all three la
     assert.ok(html.includes(label));
     assert.match(html, new RegExp(`<option(?=[^>]*value="${locale}")(?=[^>]*selected="")[^>]*>`));
     assert.equal((html.match(/selected=""/g) ?? []).length, 1);
-    for (const value of LOCALES) assert.ok(html.includes(LOCALE_NAMES[value]));
+    for (const value of offeredLocales(locale)) assert.ok(html.includes(LOCALE_NAMES[value]));
+    if (locale !== "uz") assert.ok(!html.includes(LOCALE_NAMES.uz), `${locale}: reserve language offered`);
   }
 });
 

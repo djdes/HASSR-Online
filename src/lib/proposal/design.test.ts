@@ -39,7 +39,7 @@ test("comparison rows follow the tariff catalog; no forbidden word", () => {
   const row = (label: string) => design.comparison.rows.find((item) => item.label === label)!;
   assert.deepEqual(row("Показания по фото термометра").cells.map((cell) => cell.kind), ["no", "yes"]);
   assert.deepEqual(row("Заполнение с телефона").cells.map((cell) => cell.kind), ["yes", "yes"]);
-  assert.deepEqual(row("Сотрудников на одну точку").cells, [{ kind: "text", text: "до 25" }, { kind: "text", text: "до 100" }]);
+  assert.deepEqual(row("Сотрудников на одну точку").cells, [{ kind: "text", text: "до 25" }, { kind: "text", text: "до 40" }]);
   assert.ok(!JSON.stringify(design).toLowerCase().includes("бланк"));
 });
 
