@@ -30,6 +30,7 @@ import {
   NotebookText,
   Receipt,
   ScrollText,
+  Send,
   SearchCheck,
   Smile,
   Sparkles,
@@ -121,6 +122,7 @@ const NAV: NavEntry[] = [
     icon: NotebookText,
     items: [
       { href: "/root/blog", label: "blog", icon: NotebookText },
+      { href: "/root/max-channel", label: "maxChannel", icon: Send },
       { href: "/root/seo", label: "seo", icon: SearchCheck },
       { href: "/root/yandex-direct", label: "yandexDirect", icon: Megaphone },
       { href: "/root/translations", label: "translations", icon: Languages },

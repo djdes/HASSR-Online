@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { maxConfig } from "@/lib/max/config";
 import { timingSafeEqualStrings } from "@/lib/timing-safe";
 import { handleMaxUpdate } from "@/lib/max/bot";
+import { handleChannelWebhookUpdate } from "@/lib/max/channel.server";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -14,6 +15,8 @@ export async function POST(request:Request) {
   let update:unknown;
   try{update=JSON.parse(text);}catch{return NextResponse.json({ok:false},{status:400});}
   try {
+    // Бота добавили в канал или удалили из него — для публикаций (ROOT → «Канал MAX»).
+    if(await handleChannelWebhookUpdate(update)) return NextResponse.json({ok:true});
     await handleMaxUpdate(update);
     return NextResponse.json({ok:true});
   } catch {

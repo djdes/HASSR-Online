@@ -156,6 +156,9 @@ export const PLATFORM_RULES: readonly Rule[] = [
   // Site.
   { pattern: "/root/blog", gate: "content" },
   { pattern: "/api/root/articles", gate: "content" },
+  // СММ: посты в канал MAX.
+  { pattern: "/root/max-channel", gate: "content" },
+  { pattern: "/api/root/max-channel", gate: "content" },
   { pattern: "/root/seo", gate: "seo" },
   { pattern: "/root/yandex-direct", gate: "seo" },
   { pattern: "/api/root/seo-health", gate: "seo" },

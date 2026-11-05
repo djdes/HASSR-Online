@@ -1,32 +1,48 @@
 import { db } from "@/lib/db";
 
 /**
- * Автопост новой статьи в Telegram-канал. Работает только при заданном
- * `TELEGRAM_BLOG_CHANNEL_ID`; шлём один раз — когда статья впервые
- * становится опубликованной (`publishedAt` из null в дату не позже сейчас).
+ * Автопост новой статьи в Telegram-канал (`TELEGRAM_BLOG_CHANNEL_ID`) и в
+ * каналы MAX с включённым автоанонсом (ROOT → «Канал MAX»). Шлём один
+ * раз — когда статья впервые становится опубликованной (`publishedAt` из
+ * null в дату не позже сейчас).
  */
 export async function announceArticleIfPublished(input: {
   before: { publishedAt: Date | null };
   after: { slug: string; title: string; excerpt: string; publishedAt: Date | null };
 }): Promise<boolean> {
-  const channel = process.env.TELEGRAM_BLOG_CHANNEL_ID?.trim();
-  if (!channel) return false;
   const wasPublic = Boolean(input.before.publishedAt && input.before.publishedAt <= new Date());
   const isPublic = Boolean(input.after.publishedAt && input.after.publishedAt <= new Date());
   if (wasPublic || !isPublic) return false;
+  const [telegram, max] = await Promise.all([announceToTelegram(input.after), announceToMax(input.after)]);
+  return telegram || max;
+}
+
+async function announceToTelegram(article: { slug: string; title: string; excerpt: string }): Promise<boolean> {
+  const channel = process.env.TELEGRAM_BLOG_CHANNEL_ID?.trim();
+  if (!channel) return false;
   const { sendTelegramMessage, escapeTelegramHtml } = await import("@/lib/telegram");
   const text = [
-    `📝 <b>${escapeTelegramHtml(input.after.title)}</b>`,
+    `📝 <b>${escapeTelegramHtml(article.title)}</b>`,
     "",
-    escapeTelegramHtml(input.after.excerpt),
+    escapeTelegramHtml(article.excerpt),
     "",
-    `https://wesetup.ru/blog/${input.after.slug}`,
+    `https://wesetup.ru/blog/${article.slug}`,
   ].join("\n");
   try {
     await sendTelegramMessage(channel, text);
     return true;
   } catch (error) {
     console.error("[blog-announce] failed", error);
+    return false;
+  }
+}
+
+async function announceToMax(article: { slug: string; title: string; excerpt: string }): Promise<boolean> {
+  try {
+    const { announceArticleToMax } = await import("@/lib/max/channel.server");
+    return (await announceArticleToMax(article)) > 0;
+  } catch (error) {
+    console.error("[blog-announce] max failed", error instanceof Error ? error.name : "UnknownError");
     return false;
   }
 }

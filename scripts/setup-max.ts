@@ -15,7 +15,7 @@ async function main() {
   }
   if(cfg.webhookSecret.length<32 || !/^[A-Za-z0-9_-]+$/.test(cfg.webhookSecret)) throw new Error("MAX_WEBHOOK_SECRET must be 32+ letters/digits/underscores/hyphens");
   if(new URL(cfg.siteBase).protocol!=="https:") throw new Error("Webhook requires HTTPS");
-  const subscribed=await maxApi<{success:boolean}>("/subscriptions",{method:"POST",body:{url:webhook,secret:cfg.webhookSecret,update_types:["bot_started","bot_stopped","message_created","message_callback"]}});
+  const subscribed=await maxApi<{success:boolean}>("/subscriptions",{method:"POST",body:{url:webhook,secret:cfg.webhookSecret,update_types:["bot_started","bot_stopped","message_created","message_callback","bot_added","bot_removed"]}});
   if(subscribed.success!==true) throw new Error("MAX did not accept the webhook subscription");
   const commands=[{name:"menu",description:"Главное меню"},{name:"tasks",description:"Мои задачи на сегодня"},{name:"journals",description:"Заполнить журнал"},{name:"help",description:"Как это работает"}];
   const updated=await maxApi<{commands?:Array<{name:string}>}>("/me/commands",{method:"PATCH",body:{commands}});
