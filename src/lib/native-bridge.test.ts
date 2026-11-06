@@ -46,7 +46,7 @@ test("чужие сайты — в браузер, почта и звонки �
   assert.equal(classifyLink("https://t.me/wesetupbot", O, false), "external");
   // Чужой файл тоже не наш: скачивать его с нашими куками незачем.
   assert.equal(classifyLink("https://example.com/file.pdf", O, true), "external");
-  assert.equal(classifyLink("mailto:support@wesetup.ru", O, false), "system");
+  assert.equal(classifyLink("mailto:admin@wesetup.ru", O, false), "system");
   assert.equal(classifyLink("tel:+79990000000", O, false), "system");
   assert.equal(classifyLink("sms:+79990000000", O, false), "system");
   assert.equal(classifyLink("tg://resolve?domain=wesetupbot", O, false), "system");
@@ -67,7 +67,7 @@ test("прочие схемы в приложении заблокированы
     assert.equal(classifyLink(href, O, false), "blocked", href);
   }
   // Белый список не зависит от регистра и пробелов по краям.
-  assert.equal(classifyLink(" MAILTO:support@wesetup.ru", O, false), "system");
+  assert.equal(classifyLink(" MAILTO:admin@wesetup.ru", O, false), "system");
   assert.equal(classifyLink("TG://resolve?domain=wesetupbot", O, false), "system");
 });
 

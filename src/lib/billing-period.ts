@@ -400,7 +400,7 @@ function upgradeOffer(target: PaidTier): string {
 /** У «Премиума» следующего тарифа нет: больше — по согласованию. */
 const PREMIUM_MORE_SEATS =
   `Больше ${employeesGenitiveLabel(SEATS_PER_POINT.premium)} на точку — по согласованию: ` +
-  "напишите нам в чат поддержки или на support@wesetup.ru";
+  "напишите нам в чат поддержки или на admin@wesetup.ru";
 
 /** Текст отказа руководителю на бесплатном тарифе. */
 export const FREE_LIMIT_MESSAGE =

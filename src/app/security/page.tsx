@@ -202,7 +202,7 @@ export default function SecurityPage() {
           <h2 className="text-[18px] font-semibold tracking-[-0.01em]">Документы</h2>
           <p className="mt-2 max-w-[640px] text-[14px] leading-[1.6] text-[#3c4053]">
             Оператор персональных данных — ООО «БФС», реквизиты — внизу страницы. Вопросы об обработке данных —
-            на <a href="mailto:support@wesetup.ru" className="text-[#3848c7] underline underline-offset-2">support@wesetup.ru</a>.
+            на <a href="mailto:admin@wesetup.ru" className="text-[#3848c7] underline underline-offset-2">admin@wesetup.ru</a>.
           </p>
           <ul className="mt-4 flex flex-wrap gap-2">
             {DOCUMENTS.map((doc) => (

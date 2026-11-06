@@ -15,7 +15,7 @@ Play Console. Русский перевод карточки — `listing-ru.md`
 | Язык по умолчанию | Английский (Соединённые Штаты) – en-US (оставить) |
 | Приложение или игра | Приложение |
 | Бесплатное или платное | Бесплатное (платным потом сделать нельзя) |
-| Контактный адрес электронной почты (если спросит) | `support@wesetup.ru` |
+| Контактный адрес электронной почты (если спросит) | `admin@wesetup.ru` |
 | Заявки | отметить все три галочки: Правила программы для разработчиков; Условия функции подписания приложений в Google Play; Экспортное законодательство США |
 
 ---
@@ -70,7 +70,7 @@ GOOD TO KNOW
 • The app interface is in Russian.
 • No personal data is collected or transmitted.
 
-Support: support@wesetup.ru
+Support: admin@wesetup.ru
 Website: https://wesetup.ru
 ```
 
@@ -106,7 +106,7 @@ https://wesetup.ru/setup-helper/privacy
 
 | Поле | Значение |
 |---|---|
-| Электронная почта | `support@wesetup.ru` |
+| Электронная почта | `admin@wesetup.ru` |
 | Категория | последний пункт — All Other App Types («Другие типы приложений») |
 | Все вопросы | Нет |
 

@@ -57,7 +57,7 @@ export default function ConsentPage() {
       </p>
       <p>
         1.2. Контакт по вопросам обработки персональных данных —{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>.
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>.
       </p>
 
       <h2>2. Какие данные обрабатываются</h2>
@@ -136,7 +136,7 @@ export default function ConsentPage() {
       </p>
       <p>
         5.2. Согласие может быть отозвано в любой момент письмом на{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a> с адреса,
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a> с адреса,
         указанного в учётной записи, либо обращением в поддержку в личном
         кабинете.
       </p>
@@ -159,7 +159,7 @@ export default function ConsentPage() {
       </p>
       <p>
         6.2. Обращение направляется на{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>; ответ
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>; ответ
         предоставляется в сроки, установленные законодательством.
       </p>
 

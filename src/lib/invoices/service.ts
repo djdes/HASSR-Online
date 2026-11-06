@@ -378,7 +378,7 @@ export async function createTopupInvoiceOrder(args: {
     return {
       ok: false,
       status: 409,
-      error: `Уже выставлен счёт № ${existing.id} на ${formatPoints(Number(existing.amountRub))}${due}. Оплатите его или напишите на support@wesetup.ru, чтобы отменить`,
+      error: `Уже выставлен счёт № ${existing.id} на ${formatPoints(Number(existing.amountRub))}${due}. Оплатите его или напишите на admin@wesetup.ru, чтобы отменить`,
     };
   }
   const order = await db.paymentOrder.create({

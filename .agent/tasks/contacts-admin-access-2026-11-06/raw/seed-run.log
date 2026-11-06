@@ -1,0 +1,23 @@
+$ seed --dry-run
+[platform-admin:dry-run] alexey@wesetup.ru (Алексей Тестов): — → all 11 sections, granted by Владелец Платформы
+
+real	0m1.837s
+user	0m2.127s
+sys	0m0.282s
+exit=0
+
+$ seed (run 1)
+[platform-admin] alexey@wesetup.ru (Алексей Тестов): — → all 11 sections, granted by Владелец Платформы
+[email/dev] SMTP не настроен — письмо не отправлено на alexey@wesetup.ru.
+[email/dev] Subject: Вам открыт доступ к панели WeSetup
+[email/dev] Body:    Доступ к панели платформы Здравствуйте, Алексей! Вам открыт доступ к панели платформы WeSetup. Роль Администратор Все разделы панели. Вход под клиента, удаление организаций и команда — только у владельца. Разделы Клиенты · Оплаты и тарифы · Продажи · Партнёры · ЭДО · Обратная связь · Ассистент · Блог · SEO и реклама · Переводы · Мониторинг Выдал(а) Владелец Платформы Открыть панель Войдите в WeSetup под alexey@wesetup.ru — панель откроется по кнопке выше или по пункту «Панель платформы» в меню кабинета. &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[platform-admin] granted: 11 sections; notice email=false telegram=false
+
+real	0m1.611s
+user	0m2.053s
+sys	0m0.325s
+exit=0
+
+$ seed (run 2, idempotent)
+[platform-admin] already done
+exit=0

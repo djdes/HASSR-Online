@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { PublicSupportWidget } from "@/components/public/public-support-widget";
 import { ContactsDock } from "@/components/public/contacts-dock";
+import { COMPANY_EMAIL, COMPANY_PHONES } from "@/lib/company-contacts";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
 import { BrandLogo } from "@/components/brand/logo";
@@ -192,20 +193,24 @@ export async function PublicFooter() {
           <div>{t("companyTaxIds", { inn: "5018215599", kpp: "501801001" })}</div>
           <div>{t("companyRegistrationId", { ogrn: "1235000105306" })}</div>
           <div>141065, Московская область, г. Королёв, ул. Ленина, д. 10/6</div>
-          <div className="mt-2">
-            <a
-              href="tel:+79996341612"
-              className="inline-flex min-h-[36px] items-center transition-colors hover:text-[#0b1024]"
-            >
-              +7 (999) 634-16-12
-            </a>
+          {/* Контакты как на визитке: основной номер, мобильный, почта. */}
+          <div className="mt-2 flex flex-col" data-footer-phones>
+            {COMPANY_PHONES.map((phone) => (
+              <a
+                key={phone.tel}
+                href={`tel:${phone.tel}`}
+                className="inline-flex min-h-[36px] items-center tabular-nums transition-colors hover:text-[#0b1024]"
+              >
+                {phone.display}
+              </a>
+            ))}
           </div>
           <div>
             <a
-              href="mailto:support@wesetup.ru"
+              href={`mailto:${COMPANY_EMAIL}`}
               className="inline-flex min-h-[36px] items-center break-all transition-colors hover:text-[#0b1024]"
             >
-              support@wesetup.ru
+              {COMPANY_EMAIL}
             </a>
           </div>
           <div className="mt-2 flex flex-col">

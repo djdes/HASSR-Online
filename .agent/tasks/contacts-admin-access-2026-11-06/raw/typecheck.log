@@ -1,0 +1,8 @@
+
+> haccp-online@0.1.0 typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+
+
+real	4m50.921s
+user	5m16.230s
+sys	0m33.077s

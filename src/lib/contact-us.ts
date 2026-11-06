@@ -7,18 +7,20 @@
  * окружения) и передаёт в клиентское окно пропом.
  */
 
+import { COMPANY_EMAIL, COMPANY_MOBILE, COMPANY_PHONE } from "@/lib/company-contacts";
 import { homeContacts } from "@/lib/home-page";
-import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 
 /**
- * Телефон отдела продаж (владелец, 2026-11-05) — в окне «Свяжитесь с нами»,
+ * Основной телефон (владелец, 2026-11-05) — крупно в окне «Свяжитесь с нами»,
  * в блоке «Задайте вопрос» на сайте и в письмах о брошенном заказе.
- * Поддержка на главной кабинета — свой номер, `HOME_PHONE`.
  */
-export const CONTACT_PHONE = { display: "+7 (495) 109-65-43", tel: "+74951096543" };
+export const CONTACT_PHONE = COMPANY_PHONE;
 
-/** Почта поддержки. */
-export const CONTACT_EMAIL = SUPPORT_EMAIL;
+/** Мобильный — строкой под основным (как на визитке, 2026-11-06). */
+export const CONTACT_MOBILE = COMPANY_MOBILE;
+
+/** Почта для связи. */
+export const CONTACT_EMAIL = COMPANY_EMAIL;
 
 /** Telegram WeSetup, уже открытый на сайте (подвал, лендинг). */
 export const CONTACT_TELEGRAM_FALLBACK = "https://t.me/wesetupbot";

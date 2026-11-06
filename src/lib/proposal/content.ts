@@ -261,7 +261,7 @@ export function requisitesLines(r: PlatformRequisites | null): string[] | null {
 export function fallbackSender(r: PlatformRequisites | null): ProposalSender {
   return {
     name: "Команда WeSetup",
-    email: r?.email?.trim() || "support@wesetup.ru",
+    email: r?.email?.trim() || "admin@wesetup.ru",
     phone: r?.phone?.trim() || null,
     telegram: null,
   };

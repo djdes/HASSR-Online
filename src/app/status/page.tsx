@@ -98,7 +98,7 @@ export default async function StatusPage() {
             {data.build.time ? ` от ${when(data.build.time)}` : ""} · процесс работает {formatUptime(data.uptimeSec)}
           </p>
         ) : (
-          <p className="mt-2 text-[13px] text-[#a13a32]">Не удалось получить данные статуса — это само по себе плохой знак. Напишите на support@wesetup.ru.</p>
+          <p className="mt-2 text-[13px] text-[#a13a32]">Не удалось получить данные статуса — это само по себе плохой знак. Напишите на admin@wesetup.ru.</p>
         )}
 
         {data?.announcement ? (
@@ -150,7 +150,7 @@ export default async function StatusPage() {
 
         <p className="mt-8 text-[13px] leading-relaxed text-[#6f7282]">
           Мониторы могут опрашивать <code className="rounded bg-[#f5f6ff] px-1.5 py-0.5 text-[12px] text-[#3848c7]">/api/status</code>: 200 — всё
-          работает, 503 — база недоступна. Заметили проблему раньше нас — support@wesetup.ru.
+          работает, 503 — база недоступна. Заметили проблему раньше нас — admin@wesetup.ru.
         </p>
       </div>
     </LegalArticle>

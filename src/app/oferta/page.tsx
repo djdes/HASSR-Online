@@ -226,7 +226,7 @@ export default function OfertaPage() {
         5.7. Услуги считаются оказанными надлежащим образом и принятыми
         Заказчиком, если в течение 5 (пяти) рабочих дней с окончания
         расчётного периода Заказчик не направил мотивированных возражений на
-        адрес <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>.
+        адрес <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>.
       </p>
 
       <h2 id="refund">6. Порядок возврата денежных средств</h2>
@@ -246,7 +246,7 @@ export default function OfertaPage() {
       </p>
       <p>
         6.3. Для возврата Заказчик направляет заявление в свободной форме на
-        адрес <a href="mailto:support@wesetup.ru">support@wesetup.ru</a> с
+        адрес <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a> с
         указанием:
       </p>
       <ul>
@@ -310,7 +310,7 @@ export default function OfertaPage() {
         </li>
         <li>
           отвечать на обращения Заказчика, направленные на{" "}
-          <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>, в течение
+          <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>, в течение
           3 (трёх) рабочих дней.
         </li>
       </ul>
@@ -401,7 +401,7 @@ export default function OfertaPage() {
       <p>
         9.2. Заказчик вправе в любой момент отказаться от исполнения договора,
         прекратив использование Сервиса и направив уведомление на{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>. Расчёты
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>. Расчёты
         при отказе производятся по правилам раздела 6.
       </p>
       <p>
@@ -464,7 +464,7 @@ export default function OfertaPage() {
       </p>
       <p>
         12.2. Претензии направляются на{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a> либо по
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a> либо по
         почтовому адресу Исполнителя, указанному в реквизитах.
       </p>
       <p>
@@ -518,7 +518,7 @@ export default function OfertaPage() {
         </li>
         <li>
           письмом на{" "}
-          <a href="mailto:support@wesetup.ru">support@wesetup.ru</a> с
+          <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a> с
           адреса, указанного при оплате;
         </li>
         <li>обращением в поддержку в личном кабинете или в Telegram-боте.</li>

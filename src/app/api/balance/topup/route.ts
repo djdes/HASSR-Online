@@ -124,7 +124,7 @@ export async function POST(request: Request) {
   if (!isConfigured()) {
     console.info(`[balance] topup refused org=${organizationId}: robokassa not configured`);
     return NextResponse.json(
-      { error: "Оплата картой пока не настроена. Выставьте счёт или напишите на support@wesetup.ru" },
+      { error: "Оплата картой пока не настроена. Выставьте счёт или напишите на admin@wesetup.ru" },
       { status: 503 },
     );
   }

@@ -1,3 +1,4 @@
+import { COMPANY_EMAIL, COMPANY_MOBILE, COMPANY_PHONE } from "@/lib/company-contacts";
 import { applyPromotion, type AppliedPromotion } from "./promotions";
 import { discountForPrice } from "./discounts";
 import {
@@ -91,9 +92,9 @@ export function cardVcard(): string {
     "N:;WeSetup;;;",
     "FN:WeSetup — сетап",
     "ORG:WeSetup",
-    "TEL;TYPE=WORK:+74951096543",
-    "TEL;TYPE=CELL:+79253058077",
-    "EMAIL:admin@wesetup.ru",
+    `TEL;TYPE=WORK:${COMPANY_PHONE.tel}`,
+    `TEL;TYPE=CELL:${COMPANY_MOBILE.tel}`,
+    `EMAIL:${COMPANY_EMAIL}`,
     `URL:${CARD_PROMO_URL}`,
     "END:VCARD",
     "",

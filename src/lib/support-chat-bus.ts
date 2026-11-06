@@ -3,12 +3,14 @@
  * открыть его нужно из всплывашки о новом сообщении, из колокольчика и
  * по deep-link'у `?support=chat`. Тот же приём, что в sanpin-chat-bus.
  */
+import { COMPANY_EMAIL } from "@/lib/company-contacts";
+
 export const SUPPORT_CHAT_OPEN_EVENT = "wesetup:support-chat-open";
 /** Клиент прочитал чат — уведомитель может погасить бейдж без ожидания poll'а. */
 export const SUPPORT_CHAT_READ_EVENT = "wesetup:support-chat-read";
 
 /** Почта поддержки — когда виджета чата на странице нет. */
-export const SUPPORT_EMAIL = "support@wesetup.ru";
+export const SUPPORT_EMAIL = COMPANY_EMAIL;
 
 /**
  * Открыть чат поддержки. Виджет, который открылся, гасит событие

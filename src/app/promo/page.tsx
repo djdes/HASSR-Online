@@ -80,7 +80,7 @@ export default async function PromoInvalidPage({
               <ArrowRight className="size-4" />
             </Link>
             <a
-              href="mailto:support@wesetup.ru"
+              href="mailto:admin@wesetup.ru"
               className="inline-flex h-12 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-6 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             >
               Написать в поддержку

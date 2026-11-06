@@ -8,8 +8,7 @@ import { Trash2 } from "lucide-react";
 import { signOutOnThisDevice } from "@/app/mini/_lib/signed-out-mark";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { accountDeletionErrorKey, type AccountDeletionErrorKey } from "@/lib/account-deletion-localization";
-
-const SUPPORT_EMAIL = "support@wesetup.ru";
+import { COMPANY_EMAIL as SUPPORT_EMAIL } from "@/lib/company-contacts";
 
 export function DeleteAccountFlow({
   renderTrigger,

@@ -35,7 +35,7 @@ test("blog aliases preserve slugs and filters while explicit URLs override saved
 });
 
 test("language URLs cannot target private routes, callbacks or other origins", () => {
-  for (const href of ["/api/auth", "/root", "/en/root", "/dashboard", "/payment/", "/invite/token", "https://other.test/", "//other.test/", "/\\other.test/", "mailto:support@wesetup.ru", "#pricing"]) {
+  for (const href of ["/api/auth", "/root", "/en/root", "/dashboard", "/payment/", "/invite/token", "https://other.test/", "//other.test/", "/\\other.test/", "mailto:admin@wesetup.ru", "#pricing"]) {
     assert.equal(localizedHref(href, "en"), href);
   }
   assert.equal(publicLocaleRoute("/en/root"), null);

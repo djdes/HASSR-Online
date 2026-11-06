@@ -1,0 +1,521 @@
+TAP version 13
+# Subtest: API email locale comes from the request cookie or explicit authenticated preference without server render state
+ok 1 - API email locale comes from the request cookie or explicit authenticated preference without server render state
+  ---
+  duration_ms: 29.488751
+  type: 'test'
+  ...
+# Subtest: only explicit supported locale values are accepted
+ok 2 - only explicit supported locale values are accepted
+  ---
+  duration_ms: 0.631266
+  type: 'test'
+  ...
+# Subtest: translated public URLs round-trip without losing queries or hashes
+ok 3 - translated public URLs round-trip without losing queries or hashes
+  ---
+  duration_ms: 0.940956
+  type: 'test'
+  ...
+# Subtest: blog aliases preserve slugs and filters while explicit URLs override saved preferences
+ok 4 - blog aliases preserve slugs and filters while explicit URLs override saved preferences
+  ---
+  duration_ms: 1.46022
+  type: 'test'
+  ...
+# Subtest: language URLs cannot target private routes, callbacks or other origins
+ok 5 - language URLs cannot target private routes, callbacks or other origins
+  ---
+  duration_ms: 0.250834
+  type: 'test'
+  ...
+# Subtest: language alternates use canonical HTTPS URLs
+ok 6 - language alternates use canonical HTTPS URLs
+  ---
+  duration_ms: 0.253314
+  type: 'test'
+  ...
+# Subtest: Uzbek auth aliases round-trip and only advertise existing translated routes
+ok 7 - Uzbek auth aliases round-trip and only advertise existing translated routes
+  ---
+  duration_ms: 0.187389
+  type: 'test'
+  ...
+# Subtest: partners and privacy expose only explicit reciprocal public aliases
+ok 8 - partners and privacy expose only explicit reciprocal public aliases
+  ---
+  duration_ms: 1.071814
+  type: 'test'
+  ...
+# Subtest: брошенные заказы
+    # Subtest: окно 1–72 часа, одно письмо на почту — по самому свежему заказу
+    ok 1 - окно 1–72 часа, одно письмо на почту — по самому свежему заказу
+      ---
+      duration_ms: 2.000635
+      type: 'test'
+      ...
+    # Subtest: не пишем: оплатил позже, уже писали, в стоп-листе
+    ok 2 - не пишем: оплатил позже, уже писали, в стоп-листе
+      ---
+      duration_ms: 0.305279
+      type: 'test'
+      ...
+    # Subtest: письмо: тот же тариф и точки, счёт по ИНН, телефон, всё экранировано
+    ok 3 - письмо: тот же тариф и точки, счёт по ИНН, телефон, всё экранировано
+      ---
+      duration_ms: 30.137018
+      type: 'test'
+      ...
+    # Subtest: счёт гостю — только при заполненных реквизитах WeSetup, как в кабинете
+    ok 4 - счёт гостю — только при заполненных реквизитах WeSetup, как в кабинете
+      ---
+      duration_ms: 0.860281
+      type: 'test'
+      ...
+    # Subtest: крон: каждый час из weekly-digest, отметка после отправки, цели Метрики на оплату
+    ok 5 - крон: каждый час из weekly-digest, отметка после отправки, цели Метрики на оплату
+      ---
+      duration_ms: 0.901459
+      type: 'test'
+      ...
+    1..5
+ok 9 - брошенные заказы
+  ---
+  duration_ms: 35.322653
+  type: 'suite'
+  ...
+# Subtest: сотрудник обезличивается, владелец идёт в удаление компании, ROOT — нельзя
+ok 10 - сотрудник обезличивается, владелец идёт в удаление компании, ROOT — нельзя
+  ---
+  duration_ms: 1.553183
+  type: 'test'
+  ...
+# Subtest: последний руководитель без владельца не оставляет компанию без руководства
+ok 11 - последний руководитель без владельца не оставляет компанию без руководства
+  ---
+  duration_ms: 0.201435
+  type: 'test'
+  ...
+# Subtest: демо-кабинет владельца не удаляется через аккаунт
+ok 12 - демо-кабинет владельца не удаляется через аккаунт
+  ---
+  duration_ms: 0.175745
+  type: 'test'
+  ...
+# Subtest: обезличенные данные не содержат личного и не дают войти
+ok 13 - обезличенные данные не содержат личного и не дают войти
+  ---
+  duration_ms: 0.635067
+  type: 'test'
+  ...
+# Subtest: подтверждение — только слово УДАЛИТЬ
+ok 14 - подтверждение — только слово УДАЛИТЬ
+  ---
+  duration_ms: 0.167231
+  type: 'test'
+  ...
+# Subtest: владелец — аккаунт-подписка, членство owner или legacy-роль owner
+ok 15 - владелец — аккаунт-подписка, членство owner или legacy-роль owner
+  ---
+  duration_ms: 0.121171
+  type: 'test'
+  ...
+# Subtest: контакты как на визитке: 495, мобильный, admin@
+ok 16 - контакты как на визитке: 495, мобильный, admin@
+  ---
+  duration_ms: 1.539713
+  type: 'test'
+  ...
+# Subtest: окно «Свяжитесь с нами», главная, чат и визитка берут один источник
+ok 17 - окно «Свяжитесь с нами», главная, чат и визитка берут один источник
+  ---
+  duration_ms: 0.334061
+  type: 'test'
+  ...
+# Subtest: подвал, реквизиты и политика показывают оба номера; старого 999 нет
+ok 18 - подвал, реквизиты и политика показывают оба номера; старого 999 нет
+  ---
+  duration_ms: 106.970486
+  type: 'test'
+  ...
+# Subtest: окно «Свяжитесь с нами» — мобильный строкой под крупным номером
+ok 19 - окно «Свяжитесь с нами» — мобильный строкой под крупным номером
+  ---
+  duration_ms: 0.3454
+  type: 'test'
+  ...
+# Subtest: почты support@ в сайте и текстах больше нет
+ok 20 - почты support@ в сайте и текстах больше нет
+  ---
+  duration_ms: 39.803649
+  type: 'test'
+  ...
+# Subtest: окно «Свяжитесь с нами»: телефон и почта WeSetup
+ok 21 - окно «Свяжитесь с нами»: телефон и почта WeSetup
+  ---
+  duration_ms: 1.381595
+  type: 'test'
+  ...
+# Subtest: Telegram — отдел продаж из окружения, иначе бот WeSetup
+ok 22 - Telegram — отдел продаж из окружения, иначе бот WeSetup
+  ---
+  duration_ms: 0.483021
+  type: 'test'
+  ...
+# Subtest: MAX в окне — только https://max.ru/… с путём, иначе строки нет
+ok 23 - MAX в окне — только https://max.ru/… с путём, иначе строки нет
+  ---
+  duration_ms: 0.252906
+  type: 'test'
+  ...
+# Subtest: окно показывает MAX только при заданной переменной сборки; тексты на трёх языках
+ok 24 - окно показывает MAX только при заданной переменной сборки; тексты на трёх языках
+  ---
+  duration_ms: 130.785957
+  type: 'test'
+  ...
+# Subtest: post-deploy-check.sh
+    # Subtest: сайт отдаёт выкатанную версию и адреса отвечают — успех
+    ok 1 - сайт отдаёт выкатанную версию и адреса отвечают — успех
+      ---
+      duration_ms: 52.441473
+      type: 'test'
+      ...
+    # Subtest: на сайте другая версия — провал после всех попыток
+    ok 2 - на сайте другая версия — провал после всех попыток
+      ---
+      duration_ms: 22.685919
+      type: 'test'
+      ...
+    # Subtest: версия верная, но страница входа отдаёт 500 — провал
+    ok 3 - версия верная, но страница входа отдаёт 500 — провал
+      ---
+      duration_ms: 55.113688
+      type: 'test'
+      ...
+    # Subtest: страница под лимитом запросов (429) — ждём, а если до конца только 429, сборка работает
+    ok 4 - страница под лимитом запросов (429) — ждём, а если до конца только 429, сборка работает
+      ---
+      duration_ms: 53.342674
+      type: 'test'
+      ...
+    # Subtest: лимит прошёл, а страница отдаёт 500 — провал
+    ok 5 - лимит прошёл, а страница отдаёт 500 — провал
+      ---
+      duration_ms: 2091.85743
+      type: 'test'
+      ...
+    # Subtest: общее время проверки ограничено, даже если попыток много
+    ok 6 - общее время проверки ограничено, даже если попыток много
+      ---
+      duration_ms: 2037.872567
+      type: 'test'
+      ...
+    # Subtest: сайт не отвечает — провал, а не зависание
+    ok 7 - сайт не отвечает — провал, а не зависание
+      ---
+      duration_ms: 19.986174
+      type: 'test'
+      ...
+    1..7
+ok 25 - post-deploy-check.sh
+  ---
+  duration_ms: 4344.620702
+  type: 'suite'
+  ...
+# Subtest: deploy-rollback.sh
+    # Subtest: возвращает предыдущую сборку и .build-sha, перезапускает сайт и проверяет прежнюю версию
+    ok 1 - возвращает предыдущую сборку и .build-sha, перезапускает сайт и проверяет прежнюю версию
+      ---
+      duration_ms: 42.086788
+      type: 'test'
+      ...
+    # Subtest: без .next-previous ничего не трогает и падает
+    ok 2 - без .next-previous ничего не трогает и падает
+      ---
+      duration_ms: 7.20171
+      type: 'test'
+      ...
+    1..2
+ok 26 - deploy-rollback.sh
+  ---
+  duration_ms: 49.720417
+  type: 'suite'
+  ...
+# Subtest: prewarm-routes.sh
+    # Subtest: с ключом деплоя каждый адрес идёт с заголовком прогрева и не упирается в лимит
+    ok 1 - с ключом деплоя каждый адрес идёт с заголовком прогрева и не упирается в лимит
+      ---
+      duration_ms: 482.476191
+      type: 'test'
+      ...
+    # Subtest: без ключа запросы под общим лимитом — в логе видно, сколько адресов не прогрето
+    ok 2 - без ключа запросы под общим лимитом — в логе видно, сколько адресов не прогрето
+      ---
+      duration_ms: 476.008904
+      type: 'test'
+      ...
+    1..2
+ok 27 - prewarm-routes.sh
+  ---
+  duration_ms: 958.874878
+  type: 'suite'
+  ...
+# Subtest: wait-for-port.sh
+    # Subtest: порт отвечает — сразу успех
+    ok 1 - порт отвечает — сразу успех
+      ---
+      duration_ms: 9.362675
+      type: 'test'
+      ...
+    # Subtest: порт не отвечает — ошибка с причиной после всех попыток
+    ok 2 - порт не отвечает — ошибка с причиной после всех попыток
+      ---
+      duration_ms: 16.961526
+      type: 'test'
+      ...
+    1..2
+ok 28 - wait-for-port.sh
+  ---
+  duration_ms: 26.57801
+  type: 'suite'
+  ...
+# Subtest: deploy-tarball.sh и deploy-tree-digest.sh
+    # Subtest: в архиве код со всеми маршрутами журналов, без зависимостей, документации и данных журналов
+    ok 1 - в архиве код со всеми маршрутами журналов, без зависимостей, документации и данных журналов
+      ---
+      duration_ms: 16.582105
+      type: 'test'
+      ...
+    # Subtest: отпечаток не зависит от дат файлов и .build-time, но меняется с содержимым и путями
+    ok 2 - отпечаток не зависит от дат файлов и .build-time, но меняется с содержимым и путями
+      ---
+      duration_ms: 110.973333
+      type: 'test'
+      ...
+    # Subtest: архив без файлов — ошибка, а не отпечаток
+    ok 3 - архив без файлов — ошибка, а не отпечаток
+      ---
+      duration_ms: 20.644898
+      type: 'test'
+      ...
+    1..3
+ok 29 - deploy-tarball.sh и deploy-tree-digest.sh
+  ---
+  duration_ms: 160.848873
+  type: 'suite'
+  ...
+# Subtest: внутренние ссылки не перехватываются
+ok 30 - внутренние ссылки не перехватываются
+  ---
+  duration_ms: 1.434701
+  type: 'test'
+  ...
+# Subtest: файлы открываются через «Поделиться» (Review Focus 4)
+ok 31 - файлы открываются через «Поделиться» (Review Focus 4)
+  ---
+  duration_ms: 0.366299
+  type: 'test'
+  ...
+# Subtest: чужие сайты — в браузер, почта и звонки — в систему
+ok 32 - чужие сайты — в браузер, почта и звонки — в систему
+  ---
+  duration_ms: 0.165301
+  type: 'test'
+  ...
+# Subtest: прочие схемы в приложении заблокированы: не открываем чужие обработчики из ссылок в комментариях и ответах
+ok 33 - прочие схемы в приложении заблокированы: не открываем чужие обработчики из ссылок в комментариях и ответах
+  ---
+  duration_ms: 0.173235
+  type: 'test'
+  ...
+# Subtest: имя файла из Content-Disposition: filename* важнее filename
+ok 34 - имя файла из Content-Disposition: filename* важнее filename
+  ---
+  duration_ms: 0.781077
+  type: 'test'
+  ...
+# Subtest: имя файла: заголовок, затем download, затем адрес; расширение по типу
+ok 35 - имя файла: заголовок, затем download, затем адрес; расширение по типу
+  ---
+  duration_ms: 0.750015
+  type: 'test'
+  ...
+# Subtest: ссылки из системы и уведомлений: та же функция, что у push (push-url.ts)
+ok 36 - ссылки из системы и уведомлений: та же функция, что у push (push-url.ts)
+  ---
+  duration_ms: 0.275792
+  type: 'test'
+  ...
+# Subtest: deepLinkPath: переход только когда адрес другой
+ok 37 - deepLinkPath: переход только когда адрес другой
+  ---
+  duration_ms: 0.472176
+  type: 'test'
+  ...
+# Subtest: лист про уведомления: спросить один раз, «Не сейчас» — ещё раз через неделю
+ok 38 - лист про уведомления: спросить один раз, «Не сейчас» — ещё раз через неделю
+  ---
+  duration_ms: 0.400364
+  type: 'test'
+  ...
+# Subtest: parsePushAskState: мусор в хранилище — как будто не спрашивали
+ok 39 - parsePushAskState: мусор в хранилище — как будто не спрашивали
+  ---
+  duration_ms: 1.082774
+  type: 'test'
+  ...
+# Subtest: строка состояния: светлые значки над тёмной шапкой
+ok 40 - строка состояния: светлые значки над тёмной шапкой
+  ---
+  duration_ms: 0.141855
+  type: 'test'
+  ...
+# Subtest: кнопка «назад» Android
+ok 41 - кнопка «назад» Android
+  ---
+  duration_ms: 0.126065
+  type: 'test'
+  ...
+# Subtest: строка состояния вне оболочки: значки под цвет верха страницы
+ok 42 - строка состояния вне оболочки: значки под цвет верха страницы
+  ---
+  duration_ms: 0.494013
+  type: 'test'
+  ...
+# Subtest: бланк журнала (PDF) в приложении печатается, а не уходит в «Поделиться»
+ok 43 - бланк журнала (PDF) в приложении печатается, а не уходит в «Поделиться»
+  ---
+  duration_ms: 32.481026
+  type: 'test'
+  ...
+# Subtest: оповещаем только о новых разделах: выдача и добавление — да, снятие и то же самое — нет
+ok 44 - оповещаем только о новых разделах: выдача и добавление — да, снятие и то же самое — нет
+  ---
+  duration_ms: 1.574774
+  type: 'test'
+  ...
+# Subtest: роль: пресет по набору разделов, иначе «свой набор»
+ok 45 - роль: пресет по набору разделов, иначе «свой набор»
+  ---
+  duration_ms: 0.288748
+  type: 'test'
+  ...
+# Subtest: письмо о выдаче администратора: роль, разделы, кто выдал, ссылка входа
+ok 46 - письмо о выдаче администратора: роль, разделы, кто выдал, ссылка входа
+  ---
+  duration_ms: 2.277186
+  type: 'test'
+  ...
+# Subtest: добавленные разделы — другая тема; имя и выдавший экранируются
+ok 47 - добавленные разделы — другая тема; имя и выдавший экранируются
+  ---
+  duration_ms: 0.307102
+  type: 'test'
+  ...
+# Subtest: выдача в «Команде и доступах» отправляет оповещение, разовый сид — с ожиданием
+ok 48 - выдача в «Команде и доступах» отправляет оповещение, разовый сид — с ожиданием
+  ---
+  duration_ms: 0.659492
+  type: 'test'
+  ...
+# Subtest: every /root page and /api/root route is classified explicitly
+ok 49 - every /root page and /api/root route is classified explicitly
+  ---
+  duration_ms: 20.223639
+  type: 'test'
+  ...
+# Subtest: gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 50 - gates: clients card, billing mutations, owner-only actions, unknown paths
+  ---
+  duration_ms: 1.344334
+  type: 'test'
+  ...
+# Subtest: delegated viewer sees only own sections; superadmin sees everything
+ok 51 - delegated viewer sees only own sections; superadmin sees everything
+  ---
+  duration_ms: 1.536357
+  type: 'test'
+  ...
+# Subtest: presets use known sections and are recognised back
+ok 52 - presets use known sections and are recognised back
+  ---
+  duration_ms: 0.964122
+  type: 'test'
+  ...
+# Subtest: акция по визитке
+    # Subtest: код уже нормализован и проходит формат
+    ok 1 - код уже нормализован и проходит формат
+      ---
+      duration_ms: 0.950009
+      type: 'test'
+      ...
+    # Subtest: −10 % от годовой цены, в месяц — округлённо
+    ok 2 - −10 % от годовой цены, в месяц — округлённо
+      ---
+      duration_ms: 0.425878
+      type: 'test'
+      ...
+    # Subtest: код считается от цены по ценовой акции
+    ok 3 - код считается от цены по ценовой акции
+      ---
+      duration_ms: 0.270654
+      type: 'test'
+      ...
+    # Subtest: без кода — без скидки
+    ok 4 - без кода — без скидки
+      ---
+      duration_ms: 0.195808
+      type: 'test'
+      ...
+    # Subtest: ссылка оплаты: тариф, период и код — только если он действует
+    ok 5 - ссылка оплаты: тариф, период и код — только если он действует
+      ---
+      duration_ms: 0.260397
+      type: 'test'
+      ...
+    # Subtest: vCard с обоими телефонами и CRLF
+    ok 6 - vCard с обоими телефонами и CRLF
+      ---
+      duration_ms: 0.331843
+      type: 'test'
+      ...
+    1..6
+ok 53 - акция по визитке
+  ---
+  duration_ms: 3.46527
+  type: 'suite'
+  ...
+# Subtest: план настройки: компания → точка → сотрудники → журналы → QR
+ok 54 - план настройки: компания → точка → сотрудники → журналы → QR
+  ---
+  duration_ms: 1.524826
+  type: 'test'
+  ...
+# Subtest: письмо после регистрации (ru): все шаги со ссылками, кнопка, телефон
+ok 55 - письмо после регистрации (ru): все шаги со ссылками, кнопка, телефон
+  ---
+  duration_ms: 465.036862
+  type: 'test'
+  ...
+# Subtest: письмо после регистрации (en): все шаги со ссылками, кнопка, телефон
+ok 56 - письмо после регистрации (en): все шаги со ссылками, кнопка, телефон
+  ---
+  duration_ms: 220.61357
+  type: 'test'
+  ...
+# Subtest: письмо после регистрации (uz): все шаги со ссылками, кнопка, телефон
+ok 57 - письмо после регистрации (uz): все шаги со ссылками, кнопка, телефон
+  ---
+  duration_ms: 233.604164
+  type: 'test'
+  ...
+1..57
+# tests 77
+# suites 7
+# pass 77
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6510.673575

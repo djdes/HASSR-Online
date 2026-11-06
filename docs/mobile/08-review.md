@@ -68,7 +68,7 @@ Deletion erases the employee's contact and sign-in data (e-mail, phone, Telegram
 
 The app is free and has no ads. On either platform it has no purchases, top-ups or payment buttons, and no links to payment of any kind. Companies subscribe to WeSetup directly with us under a business contract, paid on our website, not in the app. The only related screen, "Тариф", is read-only: it shows the company's subscription status (plan name, active until or ended, amounts of past payments) with no purchase, renewal, top-up or payment buttons or links. The app is a companion for that business service and does not sell any digital goods.
 
-Contact: support@wesetup.ru
+Contact: admin@wesetup.ru
 ```
 
 ### Перевод (для вас, вставлять не нужно)

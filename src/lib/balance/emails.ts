@@ -166,7 +166,7 @@ export function buildBalanceTopupEmail(params: BalanceTopupEmailParams): { subje
     <p ${P}>Баллами оплачивается подписка: на странице оплаты они списываются автоматически. Оборудование за баллы не продаём.</p>
     ${params.closingNumber ? `<p ${P}>Закрывающий документ (УПД № ${escapeHtml(params.closingNumber)}) — во вложении и в разделе «Подписка» кабинета.</p>` : ""}
     ${button(`${APP_URL}/settings/balance`, "Открыть баланс и бонусы")}
-    <p ${MUTED}>Вопросы по оплате — support@wesetup.ru.</p>`;
+    <p ${MUTED}>Вопросы по оплате — admin@wesetup.ru.</p>`;
   return { subject, html: renderEmailLayout("Баланс пополнен", body) };
 }
 

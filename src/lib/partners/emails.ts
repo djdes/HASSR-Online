@@ -92,7 +92,7 @@ export async function sendPartnerSuspendedEmail(params: {
       <p style="margin:0 0 6px;font-size:13px;color:#71717a">Комментарий</p>
       <p style="margin:0;color:#18181b;line-height:1.6">${escapeHtml(params.comment)}</p>
     </div>
-    <p ${MUTED}>Вопросы — support@wesetup.ru.</p>`;
+    <p ${MUTED}>Вопросы — admin@wesetup.ru.</p>`;
   return sendRawEmail(params.to, subject, renderEmailLayout("Кабинет приостановлен", body));
 }
 

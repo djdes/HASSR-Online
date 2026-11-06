@@ -36,7 +36,7 @@ wesetup.ru/partners#calculator
 
 Ещё не партнёр? Заявка — на wesetup.ru/partners.
 
-Вопросы — ответом на это письмо или в поддержку: support@wesetup.ru.
+Вопросы — ответом на это письмо или в поддержку: admin@wesetup.ru.
 
 Команда WeSetup
 

@@ -9,6 +9,7 @@ import { loadMessages } from "@/i18n/messages";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
 import { authOptions } from "@/lib/auth";
+import { COMPANY_EMAIL as SUPPORT_EMAIL } from "@/lib/company-contacts";
 import { db } from "@/lib/db";
 import { getServerSession } from "@/lib/server-session";
 
@@ -35,8 +36,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: "#0b1024",
 };
-
-const SUPPORT_EMAIL = "support@wesetup.ru";
 
 export default async function DeleteAccountPage() {
   const locale = await getSiteLocale();
