@@ -288,13 +288,54 @@ $SELF_CONTAINED_SYSTEM = @(
   'Return ONLY the answer in the exact format the instruction requires - no preamble, no code fences, no commentary.'
 ) -join "`n"
 
+# Node's standard Brotli decoder also works on Windows PowerShell 5.1.
+# The helper accepts data on stdin only and bounds decoded bytes and characters.
+function Expand-GglWebmastersJob([string]$text) {
+  $prefix = "type: wesetup_ggl_webmasters`nencoding: brotli-base64-v1`n`n"
+  if (-not $text.StartsWith($prefix)) { return $text }
+  if ($text.Length -gt 49000) { throw 'ggl_payload_too_large' }
+  $info = [Diagnostics.ProcessStartInfo]::new()
+  $info.FileName = (Get-Command node -ErrorAction Stop).Source
+  $decoder = Join-Path $script:Root 'ggl-webmasters-payload.mjs'
+  $info.Arguments = '"' + $decoder + '"'
+  $info.UseShellExecute = $false
+  $info.CreateNoWindow = $true
+  $info.RedirectStandardInput = $true
+  $info.RedirectStandardOutput = $true
+  $info.RedirectStandardError = $true
+  $info.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+  $process = [Diagnostics.Process]::new()
+  $process.StartInfo = $info
+  try {
+    [void]$process.Start()
+    $stdout = $process.StandardOutput.ReadToEndAsync()
+    $stderr = $process.StandardError.ReadToEndAsync()
+    $process.StandardInput.Write($text.Substring($prefix.Length))
+    $process.StandardInput.Close()
+    if (-not $process.WaitForExit(15000)) {
+      $process.Kill()
+      throw 'ggl_payload_decoder_timeout'
+    }
+    $decoded = $stdout.GetAwaiter().GetResult()
+    [void]$stderr.GetAwaiter().GetResult()
+    if ($process.ExitCode -ne 0) { throw 'ggl_payload_invalid' }
+    return $decoded
+  } finally {
+    $process.Dispose()
+  }
+}
+
 function Process-SelfContained($job, [string]$jobType) {
   $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
   [System.IO.File]::WriteAllText($sysFile, $SELF_CONTAINED_SYSTEM, (New-Object System.Text.UTF8Encoding $false))
   try {
     $engine = if ($jobType -eq 'wesetup_ggl_webmasters') { 'ralph' } else { 'claude' }
     if ($engine -eq 'ralph') {
-      $res = Invoke-RalphText ([string]$job.inputText) $script:Cfg.TimeoutSec
+      try { $promptText = Expand-GglWebmastersJob ([string]$job.inputText) } catch {
+        Complete-Job $job.id $false '' 'ralph:invalid_ggl_payload' $null
+        return $false
+      }
+      $res = Invoke-RalphText $promptText $script:Cfg.TimeoutSec
     } else {
       $res = Invoke-Claude ([string]$job.inputText) $script:Cfg.TimeoutSec $sysFile
     }

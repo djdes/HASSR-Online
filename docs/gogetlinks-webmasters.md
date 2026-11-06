@@ -25,6 +25,8 @@
 
 ## Нативный API GoGetLinks и api-anything
 
+Очередь ProjectsFlow принимает до 50 000 символов. Большие задания передаются сжатым Brotli/base64-конвертом `brotli-base64-v1`; продуктовый воркер восстанавливает исходный текст перед Ralph стандартным Node.js-декодером (Node.js уже установлен на BSQL). Данные площадок не обрезаются. Декодер ограничивает размер распаковки и отклоняет повреждённый конверт или другой тип задания. Сначала обновляется воркер из master, затем проверяется полный анализ.
+
 В `config/api-anything/sites/gogetlinks.json` добавлены чтения `listWebmasterApplications(campaignId,page)` и `getWebmasterSiteInfo(siteId)`. Они используют наблюдаемые формы сайта. POST здесь означает фильтрацию таблицы или получение карточки.
 
 Для полной выборки приложение читает POST `/reviews/table` с `action=request`, `in_comp_id`, `page_num`, проверяет `ReviewsRequestData.pageNum/countAll` и уникальность строк. GoGetLinks игнорирует `page_num` в GET; обычное чтение одного URL не доказывает получение всех страниц. Нативный POST `/reviews/request` также проверен для компактной операции api-anything.
