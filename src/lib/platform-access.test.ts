@@ -67,6 +67,10 @@ test("delegated viewer sees only own sections; superadmin sees everything", () =
   assert.deepEqual(seo.sections, ["content", "seo"]);
   assert.equal(canAccessPlatformPath(seo, "/root/blog"), true);
   assert.equal(canAccessPlatformPath(seo, "/api/root/topvisor/positions", "POST"), true);
+  assert.equal(canAccessPlatformPath(seo, "/api/root/gogetlinks/applications", "GET"), true);
+  assert.equal(canAccessPlatformPath(seo, "/api/root/gogetlinks/applications", "POST"), true);
+  assert.equal(canAccessPlatformPath({ superadmin: false, sections: ["support"] }, "/api/root/gogetlinks/applications", "GET"), false);
+  assert.equal(canAccessPlatformPath({ superadmin: false, sections: [] }, "/api/root/gogetlinks/applications", "POST"), false);
   assert.equal(canAccessPlatformPath(seo, "/root"), false);
   assert.equal(canAccessPlatformPath(seo, "/root/team"), false);
   assert.equal(canAccessPlatformPath(seo, "/root/me"), true);

@@ -7,10 +7,12 @@ import {
   ListChecks,
   Loader2,
   MessageSquare,
+  Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SeoSubnav } from "@/components/root/seo-subnav";
 import { ChatsTab } from "@/components/root/seo-links/ChatsTab";
+import { ApplicationsTab } from "@/components/root/seo-links/ApplicationsTab";
 import { DemandAndAccountTab } from "@/components/root/seo-links/DemandAndAccountTab";
 import { OrdersRegistryTab } from "@/components/root/seo-links/OrdersRegistryTab";
 import { PlannerTab } from "@/components/root/seo-links/PlannerTab";
@@ -20,7 +22,7 @@ import type {
   SeoLinksViewerCapabilities,
 } from "@/components/root/seo-links/types";
 
-export type SeoLinksWorkspaceTab = "planner" | "orders" | "chats" | "demand";
+export type SeoLinksWorkspaceTab = "planner" | "orders" | "chats" | "demand" | "applications";
 
 export interface SeoLinksClientProps {
   viewer: SeoLinksViewerCapabilities;
@@ -180,6 +182,7 @@ export function SeoLinksClient({
     icon: typeof CalendarClock;
     badge?: number;
   }> = [
+    { key: "applications", label: "Заявки вебмастеров", icon: Inbox },
     {
       key: "planner",
       label: "Планировщик и слоты",
@@ -279,6 +282,7 @@ export function SeoLinksClient({
         </div>
       ) : (
         <>
+          {activeTab === "applications" ? <ApplicationsTab campaigns={overview?.campaigns ?? []} defaultCampaignId={overview?.account?.defaultCampaignId ?? null} /> : null}
           {activeTab === "planner" ? (
             <PlannerTab
               campaigns={overview?.campaigns ?? []}

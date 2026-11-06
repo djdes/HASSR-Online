@@ -58,6 +58,7 @@ Agent-токен PF подхватывается из `C:\www\ralph\mcp-projects
 | `wesetup_weekly_digest` | Cron еженедельной AI-сводки | Текст для Telegram (HTML `<b>/<i>` можно) |
 | `wesetup_vision_extract` | Кнопка «С фото» (`/api/ai/vision-extract`), этикетка (`/api/ocr/label`), показание дисплея (`/api/ocr/reading`), проверка фото-доказательства (`/api/ai/check-photo`), OCR скриншота Similarweb (`/api/root/gogetlinks/similarweb`) | Строго один JSON, формат — в инструкции задания (см. ниже) |
 | `wesetup_ggl_article` | Генератор статей и ТЗ для GoGetLinks (`src/lib/seo/gogetlinks-article-ai.server.ts`) | Строго один JSON: `{"title", "announcement", "bodyHtml", "metaTitle", "metaDescription", "metaKeywords", "briefText"}` |
+| `wesetup_ggl_webmasters` | Анализ всех входящих заявок GoGetLinks (`/root/seo/links`, вкладка «Заявки вебмастеров»), выполняет текстовый движок Ralph/Codex через продуктовый воркер | JSON `{"summary", "consideredSiteIds", "limitations", "recommendations":[{"siteId", "verdict", "reason"}]}`. Только рекомендации, без покупок; все данные передаёт сайт. |
 
 Задания чата поддержки (без `type:`-префикса, с `prompt_url`/`reply_url`)
 живут отдельно — см. `src/lib/assistant/dispatch.ts`.

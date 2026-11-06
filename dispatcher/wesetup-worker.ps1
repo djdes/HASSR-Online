@@ -54,7 +54,9 @@ param(
   # Same, read from a UTF-8 file (safer for Russian text on the command line).
   [string]$TestPromptFile,
   # Local test of a whole wesetup_vision_extract job text (UTF-8 file).
-  [string]$TestJobFile
+  [string]$TestJobFile,
+  # Read-only Ralph/Codex text test without claiming queue jobs.
+  [string]$TestRalphPromptFile
 )
 
 $ErrorActionPreference = 'Stop'
@@ -273,7 +275,8 @@ $KNOWN_TYPES = @(
   'wesetup_capa_suggest',
   'wesetup_weekly_digest',
   'wesetup_vision_extract',
-  'wesetup_ggl_article'
+  'wesetup_ggl_article',
+  'wesetup_ggl_webmasters'
 )
 
 # Self-contained job: the inputText IS the instruction. Tiny English system
@@ -289,10 +292,15 @@ function Process-SelfContained($job, [string]$jobType) {
   $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
   [System.IO.File]::WriteAllText($sysFile, $SELF_CONTAINED_SYSTEM, (New-Object System.Text.UTF8Encoding $false))
   try {
-    $res = Invoke-Claude ([string]$job.inputText) $script:Cfg.TimeoutSec $sysFile
+    $engine = if ($jobType -eq 'wesetup_ggl_webmasters') { 'ralph' } else { 'claude' }
+    if ($engine -eq 'ralph') {
+      $res = Invoke-RalphText ([string]$job.inputText) $script:Cfg.TimeoutSec
+    } else {
+      $res = Invoke-Claude ([string]$job.inputText) $script:Cfg.TimeoutSec $sysFile
+    }
     if (-not $res.ok) {
-      Log "  ERROR claude: $($res.reason)"
-      Complete-Job $job.id $false '' "claude:$($res.reason)" $null
+      Log "  ERROR ${engine}: $($res.reason)"
+      Complete-Job $job.id $false '' "${engine}:$($res.reason)" $null
       return $false
     }
     $cost = @{ costUsd = $res.costUsd; tokensIn = $res.tokensIn; tokensOut = $res.tokensOut }
@@ -301,6 +309,22 @@ function Process-SelfContained($job, [string]$jobType) {
     return $true
   } finally {
     Remove-Item $sysFile -Force -ErrorAction SilentlyContinue
+  }
+}
+
+# Ralph supervises this worker and supplies its authenticated, tool-free Codex engine.
+# The website submits queue jobs only; model credentials never leave the dispatcher.
+function Invoke-RalphText([string]$promptText, [int]$watchdogSec) {
+  $ralphRoot = if ($env:RALPH_ROOT) { $env:RALPH_ROOT } else { 'C:/www/ralph' }
+  $module = Join-Path $ralphRoot 'llm-client.psm1'
+  if (-not (Test-Path -LiteralPath $module)) {
+    return @{ ok = $false; text = ''; reason = 'ralph_engine_not_found' }
+  }
+  try {
+    Import-Module $module -ErrorAction Stop
+    return Invoke-PfLlmText -Prompt $promptText -Instructions $SELF_CONTAINED_SYSTEM -Tier 'default' -TimeoutSec $watchdogSec
+  } catch {
+    return @{ ok = $false; text = ''; reason = 'ralph_engine_failed' }
   }
 }
 
@@ -673,6 +697,15 @@ function Invoke-Pass {
 }
 
 # ------------------------------ local vision tests ------------------------------
+
+if ($TestRalphPromptFile) {
+  $script:Cfg = Get-Config -Offline
+  $promptText = [System.IO.File]::ReadAllText((Resolve-Path $TestRalphPromptFile).Path, [System.Text.Encoding]::UTF8)
+  $res = Invoke-RalphText $promptText $script:Cfg.TimeoutSec
+  if (-not $res.ok) { Log "Ralph test FAILED: $($res.reason)"; exit 1 }
+  Write-Output $res.text
+  exit 0
+}
 
 if ($TestImage -or $TestJobFile) {
   $script:Cfg = Get-Config -Offline

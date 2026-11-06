@@ -641,6 +641,49 @@ export async function verifyAndLoginGgl(
   return { cookies, balance };
 }
 
+/** Only the two observed data retrieval POSTs; this path cannot accept or purchase a placement. */
+export async function readGglWebmasterSource(
+  input: { kind: "applications"; campaignId: number; page: number } | { kind: "site"; siteId: number },
+  opts?: { prismaClient?: unknown; fetchImpl?: typeof fetch; skipDbSync?: boolean; allowRelogin?: boolean },
+): Promise<string> {
+  const ids = input.kind === "applications" ? [input.campaignId, input.page] : [input.siteId];
+  if (ids.some(id => !Number.isSafeInteger(id) || id <= 0)) throw new GglCallError("Некорректный идентификатор GoGetLinks", "input");
+  initApiAnythingHome();
+  if (!opts?.skipDbSync) await syncSessionFromDb(opts?.prismaClient);
+  return enqueueGgl(async () => {
+    const sourceFetch = createGglFetch(opts?.fetchImpl || getFetchImpl() || fetch);
+    const url = input.kind === "applications" ? "https://gogetlinks.net/reviews/table" : "https://gogetlinks.net/viewSiteInfo";
+    const body = input.kind === "applications"
+      ? new URLSearchParams({ action: "request", in_comp_id: String(input.campaignId), page_num: String(input.page), order: "0", in_site_name: "", searchBeginDate: "", searchEndDate: "" })
+      : new URLSearchParams({ siteId: String(input.siteId), type: "1", isGoogle: "false", quick_filter: "false", hiddenPrice: "false", toBlackList: "false" });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const response = await sourceFetch(url, {
+        method: "POST", redirect: "manual", signal: AbortSignal.timeout(20_000),
+        headers: { cookie: buildCookieHeader(loadLocalSession()), "content-type": "application/x-www-form-urlencoded; charset=UTF-8", "x-requested-with": "XMLHttpRequest", referer: "https://gogetlinks.net/reviews/request" },
+        body: body.toString(),
+      });
+      const contentType = response.headers.get("content-type") ?? "";
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const raw = /json/i.test(contentType) && !/charset=/i.test(contentType)
+        ? new TextDecoder("utf-8").decode(bytes)
+        : decodeModalResponseBuffer(bytes, contentType);
+      const expired = response.status === 401 || REDIRECT_STATUSES.has(response.status) || /<form[^>]*(?:signIn|login)|name=["']password["']/i.test(raw);
+      if (expired) {
+        if (!attempt && opts?.allowRelogin !== false && await attemptRelogin({ prismaClient: opts?.prismaClient, fetchImpl: opts?.fetchImpl })) continue;
+        throw new GglAuthError("Сессия GoGetLinks истекла. Переподключите кабинет");
+      }
+      if (response.status === 429) throw new GglCallError("GoGetLinks ограничил частоту запросов. Повторите позже", "rate");
+      if (!response.ok || REAL_INTERSTITIAL_RE.test(raw)) throw new GglCallError("GoGetLinks не предоставил данные заявок", "blocked");
+      if (input.kind === "site") return raw;
+      let parsed: { success?: boolean; data?: unknown };
+      try { parsed = JSON.parse(raw); } catch { throw new GglCallError("GoGetLinks вернул неверный формат таблицы заявок", "changed"); }
+      if (parsed.success !== true || typeof parsed.data !== "string") throw new GglCallError("GoGetLinks не вернул таблицу входящих заявок", "changed");
+      return parsed.data;
+    }
+    throw new GglAuthError("Не удалось восстановить сессию GoGetLinks");
+  });
+}
+
 function normalizeReadArgs(
   opName: string,
   args?: Record<string, unknown>,
