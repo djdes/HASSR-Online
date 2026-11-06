@@ -1,6 +1,7 @@
 param([string]$PackedFixtureFile, [string]$PlainFixtureFile)
 $ErrorActionPreference = 'Stop'
 $source = Join-Path $PSScriptRoot 'wesetup-worker.ps1'
+$script:Root = $PSScriptRoot
 $tokens = $null; $parseErrors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($source, [ref]$tokens, [ref]$parseErrors)
 if ($parseErrors.Count) { throw 'Worker PowerShell syntax failed' }
@@ -29,20 +30,22 @@ $script:ShouldFailRalph = $true
 if (Process-SelfContained $job 'wesetup_ggl_webmasters') { throw 'Failed Ralph call must fail the queue job' }
 if ($script:Completed.ok -or $script:Completed.error -ne 'ralph:fixture_failed') { throw 'Wrong Ralph failure attribution' }
 function Pack-Fixture([string]$text) {
-  $stream = [IO.MemoryStream]::new()
-  $gzip = [IO.Compression.GZipStream]::new($stream, [IO.Compression.CompressionMode]::Compress, $true)
+  $path = [IO.Path]::GetTempFileName()
   try {
-    $bytes = [Text.Encoding]::UTF8.GetBytes($text)
-    $gzip.Write($bytes, 0, $bytes.Length)
-  } finally { $gzip.Dispose() }
-  try { return "type: wesetup_ggl_webmasters`nencoding: gzip-base64-v1`n`n" + [Convert]::ToBase64String($stream.ToArray()) } finally { $stream.Dispose() }
+    [IO.File]::WriteAllText($path, $text, [Text.UTF8Encoding]::new($false))
+    $code = "process.stdout.write(require('node:zlib').brotliCompressSync(require('node:fs').readFileSync(process.argv[1])).toString('base64'))"
+    $packed = & node -e $code $path
+    if ($LASTEXITCODE -ne 0) { throw 'Fixture compression failed' }
+    return "type: wesetup_ggl_webmasters`nencoding: brotli-base64-v1`n`n" + $packed
+  } finally { Remove-Item -LiteralPath $path }
 }
 $script:ShouldFailRalph = $false
 $script:ExpectedPrompt = "type: wesetup_ggl_webmasters`n" + ('fixture-site-123;' * 6000) + [char]0x0416
 $job.inputText = Pack-Fixture $script:ExpectedPrompt
+if ((Expand-GglWebmastersJob $job.inputText) -cne $script:ExpectedPrompt) { throw 'Compressed fixture did not roundtrip' }
 if (-not (Process-SelfContained $job 'wesetup_ggl_webmasters') -or -not $script:Completed.ok) { throw 'Lossless compressed routing failed' }
 foreach ($invalid in @(
-  "type: wesetup_ggl_webmasters`nencoding: gzip-base64-v1`n`nINVALID!",
+  "type: wesetup_ggl_webmasters`nencoding: brotli-base64-v1`n`nINVALID!",
   (Pack-Fixture 'type: other'),
   (Pack-Fixture ("type: wesetup_ggl_webmasters`n" + ('a' * 190001))),
   (Pack-Fixture ("type: wesetup_ggl_webmasters`n" + ('a' * 800000)))

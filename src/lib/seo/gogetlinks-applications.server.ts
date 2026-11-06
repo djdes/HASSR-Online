@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { gzipSync } from "node:zlib";
+import { brotliCompressSync, constants as zlibConstants } from "node:zlib";
 import { db } from "@/lib/db";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { extractJsonValue } from "@/lib/ai-vision/parse";
@@ -12,7 +12,7 @@ import { z } from "zod";
 import { isWesetupDomain } from "@/lib/seo/gogetlinks-codec";
 
 export const GGL_WEBMASTERS_JOB_TYPE = "wesetup_ggl_webmasters";
-const PACKED_JOB_HEADER = `type: ${GGL_WEBMASTERS_JOB_TYPE}\nencoding: gzip-base64-v1\n\n`;
+const PACKED_JOB_HEADER = `type: ${GGL_WEBMASTERS_JOB_TYPE}\nencoding: brotli-base64-v1\n\n`;
 
 /** ProjectsFlow accepts at most 50,000 characters. Compression preserves every row. */
 export function encodeGglWebmastersJob(prompt: string): string {
@@ -20,7 +20,9 @@ export function encodeGglWebmastersJob(prompt: string): string {
     throw new GglApplicationsError("Некорректный размер или тип задания анализа площадок");
   }
   if (prompt.length <= 49_000) return prompt;
-  const packed = PACKED_JOB_HEADER + gzipSync(Buffer.from(prompt, "utf8")).toString("base64");
+  const packed = PACKED_JOB_HEADER + brotliCompressSync(Buffer.from(prompt, "utf8"), {
+    params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 11 },
+  }).toString("base64");
   if (packed.length > 49_000) throw new GglApplicationsError("Данные всех площадок не помещаются в очередь даже после сжатия; данные не обрезаны");
   return packed;
 }

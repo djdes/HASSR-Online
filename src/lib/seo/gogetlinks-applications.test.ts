@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { gunzipSync } from "node:zlib";
+import { brotliDecompressSync } from "node:zlib";
 import { randomBytes } from "node:crypto";
 import { parseGglApplicationsPage, parseGglSiteCard, safeGglSourceUrl, type GglApplicationsView } from "./gogetlinks-applications";
 import { buildGglWebmastersPrompt, collectGglApplications, encodeGglWebmastersJob, parseGglWebmastersAnalysis } from "./gogetlinks-applications.server";
@@ -12,8 +12,8 @@ test("large all-site jobs fit the real queue limit without losing Unicode data",
   const packed = encodeGglWebmastersJob(prompt);
   assert.ok(prompt.length > 50_000);
   assert.ok(packed.length < 49_000);
-  assert.ok(packed.startsWith("type: wesetup_ggl_webmasters\nencoding: gzip-base64-v1\n\n"));
-  assert.equal(gunzipSync(Buffer.from(packed.split("\n\n")[1], "base64")).toString("utf8"), prompt);
+  assert.ok(packed.startsWith("type: wesetup_ggl_webmasters\nencoding: brotli-base64-v1\n\n"));
+  assert.equal(brotliDecompressSync(Buffer.from(packed.split("\n\n")[1], "base64")).toString("utf8"), prompt);
 });
 
 test("queue encoding rejects oversized, wrong-type and noncompressible jobs instead of truncating", () => {

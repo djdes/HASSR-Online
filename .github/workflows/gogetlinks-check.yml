@@ -9,6 +9,7 @@ on:
       - "src/app/root/seo/links/**"
       - "config/api-anything/sites/gogetlinks.json"
       - "dispatcher/wesetup-worker*"
+      - "dispatcher/ggl-webmasters-payload.mjs"
       - ".github/workflows/gogetlinks-check.yml"
 
 permissions:

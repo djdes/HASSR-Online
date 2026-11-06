@@ -288,30 +288,40 @@ $SELF_CONTAINED_SYSTEM = @(
   'Return ONLY the answer in the exact format the instruction requires - no preamble, no code fences, no commentary.'
 ) -join "`n"
 
-# Only the SEO transport envelope is expanded. Bound bytes before UTF-8 decoding.
+# Node's standard Brotli decoder also works on Windows PowerShell 5.1.
+# The helper accepts data on stdin only and bounds decoded bytes and characters.
 function Expand-GglWebmastersJob([string]$text) {
-  $prefix = "type: wesetup_ggl_webmasters`nencoding: gzip-base64-v1`n`n"
+  $prefix = "type: wesetup_ggl_webmasters`nencoding: brotli-base64-v1`n`n"
   if (-not $text.StartsWith($prefix)) { return $text }
   if ($text.Length -gt 49000) { throw 'ggl_payload_too_large' }
-  $inputStream = $null; $gzip = $null; $output = $null
+  $info = [Diagnostics.ProcessStartInfo]::new()
+  $info.FileName = (Get-Command node -ErrorAction Stop).Source
+  $decoder = Join-Path $script:Root 'ggl-webmasters-payload.mjs'
+  $info.Arguments = '"' + $decoder + '"'
+  $info.UseShellExecute = $false
+  $info.CreateNoWindow = $true
+  $info.RedirectStandardInput = $true
+  $info.RedirectStandardOutput = $true
+  $info.RedirectStandardError = $true
+  $info.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+  $process = [Diagnostics.Process]::new()
+  $process.StartInfo = $info
   try {
-    $bytes = [Convert]::FromBase64String($text.Substring($prefix.Length))
-    $inputStream = [IO.MemoryStream]::new($bytes, $false)
-    $gzip = [IO.Compression.GZipStream]::new($inputStream, [IO.Compression.CompressionMode]::Decompress)
-    $output = [IO.MemoryStream]::new()
-    $buffer = New-Object byte[] 4096
-    while (($count = $gzip.Read($buffer, 0, $buffer.Length)) -gt 0) {
-      if ($output.Length + $count -gt 760000) { throw 'ggl_payload_expansion_limit' }
-      $output.Write($buffer, 0, $count)
+    [void]$process.Start()
+    $stdout = $process.StandardOutput.ReadToEndAsync()
+    $stderr = $process.StandardError.ReadToEndAsync()
+    $process.StandardInput.Write($text.Substring($prefix.Length))
+    $process.StandardInput.Close()
+    if (-not $process.WaitForExit(15000)) {
+      $process.Kill()
+      throw 'ggl_payload_decoder_timeout'
     }
-    $utf8 = [Text.UTF8Encoding]::new($false, $true)
-    $promptText = $utf8.GetString($output.ToArray())
-    if ($promptText.Length -gt 190000 -or -not $promptText.StartsWith("type: wesetup_ggl_webmasters`n")) { throw 'ggl_payload_invalid' }
-    return $promptText
+    $decoded = $stdout.GetAwaiter().GetResult()
+    [void]$stderr.GetAwaiter().GetResult()
+    if ($process.ExitCode -ne 0) { throw 'ggl_payload_invalid' }
+    return $decoded
   } finally {
-    if ($gzip) { $gzip.Dispose() }
-    if ($inputStream) { $inputStream.Dispose() }
-    if ($output) { $output.Dispose() }
+    $process.Dispose()
   }
 }
 
