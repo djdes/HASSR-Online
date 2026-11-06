@@ -1,0 +1,22 @@
+{
+  "taskId": "pricing-model-sweep-2026-11-06",
+  "status": "PASS",
+  "artifacts": {
+    "spec": ".agent/tasks/pricing-model-sweep-2026-11-06/spec.md",
+    "evidence": ".agent/tasks/pricing-model-sweep-2026-11-06/evidence.md",
+    "typecheck": ".agent/tasks/pricing-model-sweep-2026-11-06/raw/typecheck.log",
+    "i18nCheck": ".agent/tasks/pricing-model-sweep-2026-11-06/raw/i18n-check.log",
+    "eslint": ".agent/tasks/pricing-model-sweep-2026-11-06/raw/eslint.log",
+    "testGate": ".agent/tasks/pricing-model-sweep-2026-11-06/raw/test-gate.log",
+    "landingCheck": ".agent/tasks/pricing-model-sweep-2026-11-06/raw/landing-check.json",
+    "landingScreenshot": ".agent/tasks/pricing-model-sweep-2026-11-06/raw/landing-pricing.png"
+  },
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "summary": "Landing says four plans; points hint ends with the 50+ custom offer." },
+    "AC2": { "status": "PASS", "summary": "VIP offer in landing structured data with the yearly from-price." },
+    "AC3": { "status": "PASS", "summary": "Every paid-tier enumeration includes VIP (ru/en/uz and code strings)." },
+    "AC4": { "status": "PASS", "summary": "ROOT tariffs show the VIP paid count." },
+    "AC5": { "status": "PASS", "summary": "Rates and discount scale match the owner's model (test)." },
+    "AC6": { "status": "PASS", "summary": "typecheck, i18n:check, eslint, test:gate green." }
+  }
+}

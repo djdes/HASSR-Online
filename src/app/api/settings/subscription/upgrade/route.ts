@@ -32,7 +32,7 @@ export async function POST() {
   if (result.paymentRequired && !result.upgraded) {
     return NextResponse.json(
       {
-        error: "Тариф «Стандарт» или «Премиум» подключается после оплаты",
+        error: "Тариф «Стандарт», «Премиум» или «ВИП» подключается после оплаты",
         code: BILLING_LIMIT_CODE,
         payUrl: BILLING_PAY_HREF,
         plan: result.plan,

@@ -37,7 +37,8 @@ test("price editor and counters messages keep their arguments", () => {
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = { ru, en, uz }[locale];
     const t = createTranslator({ locale, messages, namespace: "rootTariffs" });
-    assert.ok(t("paidHint", { standard: 0, premium: 2, legacy: 3 }).includes("2"));
+    const paid = t("paidHint", { standard: 0, premium: 2, vip: 5, legacy: 3 });
+    assert.ok(paid.includes("2") && paid.includes("5"));
     assert.ok(t("trialHint", { count: 4 }).includes("4"));
     assert.ok(t("tariffSaved", { title: "Стандарт {custom}" }).includes("Стандарт {custom}"));
     assert.ok(t("yearTotal", { amount: "23 880 ₽" }).includes("23 880 ₽"));

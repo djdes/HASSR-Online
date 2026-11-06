@@ -625,7 +625,7 @@ export function planConversion(snapshot: ConversionSnapshot): ConversionPlan {
   if (stateAfter.kind === "needs_decision") {
     seats.push(
       `Оплаченного срока у организации нет, а бесплатный тариф — на ${employeesGenitiveLabel(stateAfter.seatLimit ?? 1)}. ` +
-        "Чтобы в работе остались все сотрудники, клиенту нужно подключить тариф «Стандарт» или «Премиум».",
+        "Чтобы в работе остались все сотрудники, клиенту нужно подключить тариф «Стандарт», «Премиум» или «ВИП».",
     );
     presentation.seats.push({ key: "seatLimit", params: { limit: stateAfter.seatLimit ?? 1 } });
   }
@@ -814,7 +814,7 @@ export function returnBlockers(snapshot: ReturnSnapshot): Blocker[] {
       presentation: { key: "seat_limit", params: { limit: seat.limit, total: seat.total, organizationName: organization.name } },
       message:
         `В вашем аккаунте бесплатный тариф на ${employeesGenitiveLabel(seat.limit)}, а после возврата активных станет ${seat.total}. ` +
-        `Подключите аккаунту тариф «Стандарт» или «Премиум», затем верните ${quoted(organization.name)}.`,
+        `Подключите аккаунту тариф «Стандарт», «Премиум» или «ВИП», затем верните ${quoted(organization.name)}.`,
     });
   }
   return blockers;

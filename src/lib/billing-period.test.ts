@@ -44,7 +44,7 @@ const LAUNCH = msk("2026-10-26T00:00:00");
 const S: TrialSettings = { ...DEFAULT_TRIAL_SETTINGS, launchedAt: LAUNCH };
 const OLD_ACCOUNT = msk("2026-03-01T10:00:00");
 const TRIAL_END_OLD = new Date(LAUNCH.getTime() + 14 * DAY);
-const PRICES = { standardFromRub: 1990, premiumFromRub: 3990 };
+const PRICES = { standardFromRub: 1990, premiumFromRub: 3990, vipFromRub: 8990 };
 
 function state(input: Partial<AccountBillingInput>, now: Date, settings = S) {
   return computeAccountBilling(
