@@ -282,6 +282,8 @@ export function SeoLinksClient({
           {activeTab === "planner" ? (
             <PlannerTab
               campaigns={overview?.campaigns ?? []}
+              defaultGglCampaignId={overview?.account?.defaultCampaignId ?? null}
+              accountConnected={Boolean(overview?.account)}
               plans={overview?.plans ?? []}
               slots={overview?.slots ?? []}
               viewer={effectiveViewer}

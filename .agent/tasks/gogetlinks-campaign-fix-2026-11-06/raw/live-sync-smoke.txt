@@ -1,0 +1,22 @@
+LIVE SYNC SUMMARY: {
+  "syncedAt": "2026-11-06T08:22:56.471Z",
+  "balanceRub": 8936.06,
+  "availableRub": 8936.06,
+  "blockedRub": 0,
+  "campaignsCount": 7,
+  "ordersCount": 58,
+  "newUnreadThreadIds": [],
+  "newOnCheckOrderIds": [],
+  "newReplacementOrderIds": []
+}
+DEFAULT CAMPAIGN ID: 884931 STATUS: ok LAST ERROR: null
+CAMPAIGNS:
+- #884931 WeSetup электронные журналы ХАССП (wesetup.ru) -> isWesetup=true, state=active, spentRub=0, linksCount=0
+- #4101 mp3mail.ru - клубная музыка почтой (mp3mail.ru) -> isWesetup=false, state=closed, spentRub=71, linksCount=0
+- #146053 Аренда дизельных генераторов (electrorent.ru) -> isWesetup=false, state=closed, spentRub=8423, linksCount=3
+- #149699 YESBEAT.RU (yesbeat.ru) -> isWesetup=false, state=closed, spentRub=39748, linksCount=55
+- #192464 fonmusic (fonmusic.ru) -> isWesetup=false, state=closed, spentRub=2857, linksCount=12
+- #424163 http://foodgin.ru/ (foodgin.ru) -> isWesetup=false, state=closed, spentRub=0, linksCount=0
+- #776782 YesBeat (yesbeat.ru) -> isWesetup=false, state=closed, spentRub=43743, linksCount=20
+TOTAL SYNCED ORDERS: 58
+POST https://gogetlinks.net/campaigns/setOverallCampaignId (campaignId=884931) -> 200 {"success":true}

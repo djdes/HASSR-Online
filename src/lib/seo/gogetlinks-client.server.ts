@@ -3,13 +3,15 @@
  *
  * Implements:
  * - Temporary home directory initialization under os.tmpdir()/wesetup-api-anything
- * - Spec synchronization from config/api-anything/sites/gogetlinks.json
+ * - Spec synchronization from config/api-anything/sites/gogetlinks.json + poisoned tier-state cleanup
  * - In-process serialized request queue with rate limiting (minIntervalMs: 1200)
  * - Optional proxy support via undici ProxyAgent(GGL_PROXY_URL)
  * - Session restoration and encrypted persistence with GglAccount.sessionEnc
  * - Single-retry auto-relogin on auth failure via POST https://gogetlinks.net/user/signIn
  * - Strict campaign isolation guard (isWesetup === true and siteUrl === wesetup.ru) for all writes
- * - Windows-1251 form re-encoding for all form-encoded write requests
+ * - Windows-1251 form re-encoding for non-XHR form-encoded write requests
+ * - Byte-preserving neutralization of passive layout reCAPTCHA SDK tags on HTTP 200 HTML pages
+ * - Empty-tab cross-redirect handling on /reviews/* tabs
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -72,18 +74,91 @@ export class GglCallError extends Error {
   }
 }
 
-// Ensure API_ANYTHING_HOME is set
-const API_ANYTHING_HOME = process.env.API_ANYTHING_HOME || join(tmpdir(), "wesetup-api-anything");
-process.env.API_ANYTHING_HOME = API_ANYTHING_HOME;
+const DEFAULT_WESETUP_CAMPAIGN_BRIEF =
+  "Платформа электронных журналов ХАССП и производственного контроля СанПиН для общепита, пекарен, пищевых производств, школ и отелей — wesetup.ru. Органично впишите ссылку в тематический материал об общепите, пищевой безопасности, ресторанном бизнесе, автоматизации кухни или проверках Роспотребнадзора.";
+
+const REVIEW_TAB_SLUG_MAP: Record<string, string> = {
+  in_progress: "propocal",
+  on_check: "index",
+  needs_replacement: "rejected",
+  paid: "paid",
+};
+
+const REAL_INTERSTITIAL_RE =
+  /Prove your humanity|<title[^>]*>[^<]*(prove your humanity|human verification|just a moment|attention required|are you a (human|robot)|verify you are (a )?human|robot check)/i;
+
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+const EMPTY_REVIEWS_HTML =
+  '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="table_content"><table><tbody><tr><td class="text-center">Пусто</td></tr></tbody></table></div></body></html>';
+
+// Ensure API_ANYTHING_HOME has a default while always respecting dynamic overrides
+const DEFAULT_API_ANYTHING_HOME = join(tmpdir(), "wesetup-api-anything");
+if (!process.env.API_ANYTHING_HOME) {
+  process.env.API_ANYTHING_HOME = DEFAULT_API_ANYTHING_HOME;
+}
+
+function getApiAnythingHome(): string {
+  if (!process.env.API_ANYTHING_HOME) {
+    process.env.API_ANYTHING_HOME = DEFAULT_API_ANYTHING_HOME;
+  }
+  return process.env.API_ANYTHING_HOME;
+}
+
+function sanitizeGglTierState(specUpdated: boolean): void {
+  const statePath = join(getApiAnythingHome(), "state.json");
+  if (!existsSync(statePath)) return;
+  try {
+    const parsed = JSON.parse(readFileSync(statePath, "utf8")) as {
+      tier?: Record<string, number>;
+      stale?: Record<string, unknown>;
+      cool?: Record<string, unknown>;
+      healedAt?: Record<string, number>;
+    };
+    let changed = false;
+
+    // Wesetup runs GoGetLinks strictly at maxTier: 1 on the server; any remembered tier > 1 is a poison pill
+    if (parsed.tier && typeof parsed.tier === "object") {
+      for (const [k, v] of Object.entries(parsed.tier)) {
+        if (k.startsWith("gogetlinks/") && typeof v === "number" && v > 1) {
+          delete parsed.tier[k];
+          changed = true;
+        }
+      }
+    }
+
+    if (specUpdated) {
+      if (parsed.stale && typeof parsed.stale === "object") {
+        for (const k of Object.keys(parsed.stale)) {
+          if (k.startsWith("gogetlinks/")) {
+            delete parsed.stale[k];
+            changed = true;
+          }
+        }
+      }
+      if (parsed.cool && typeof parsed.cool === "object" && "gogetlinks" in parsed.cool) {
+        delete parsed.cool.gogetlinks;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      writeFileSync(statePath, JSON.stringify(parsed, null, 1), { mode: 0o600 });
+    }
+  } catch {
+    // Ignore corrupt hint file
+  }
+}
 
 export function initApiAnythingHome(): void {
-  const sitesDir = join(API_ANYTHING_HOME, "sites");
-  const sessionsDir = join(API_ANYTHING_HOME, "sessions");
+  const homeDir = getApiAnythingHome();
+  const sitesDir = join(homeDir, "sites");
+  const sessionsDir = join(homeDir, "sessions");
   mkdirSync(sitesDir, { recursive: true, mode: 0o700 });
   mkdirSync(sessionsDir, { recursive: true, mode: 0o700 });
 
   // 1. Write config.json
-  const configPath = join(API_ANYTHING_HOME, "config.json");
+  const configPath = join(homeDir, "config.json");
   if (!existsSync(configPath)) {
     writeFileSync(
       configPath,
@@ -95,14 +170,21 @@ export function initApiAnythingHome(): void {
   // 2. Sync config/api-anything/sites/gogetlinks.json -> <home>/sites/gogetlinks.json
   const sourceSpecPath = join(process.cwd(), "config", "api-anything", "sites", "gogetlinks.json");
   const destSpecPath = join(sitesDir, "gogetlinks.json");
+  let specUpdated = false;
   if (existsSync(sourceSpecPath)) {
     try {
       const raw = readFileSync(sourceSpecPath, "utf8");
-      writeFileSync(destSpecPath, raw, { mode: 0o600 });
+      const current = existsSync(destSpecPath) ? readFileSync(destSpecPath, "utf8") : "";
+      if (raw !== current) {
+        writeFileSync(destSpecPath, raw, { mode: 0o600 });
+        specUpdated = true;
+      }
     } catch (err) {
       console.warn("[ggl-client] Warning: failed to sync gogetlinks.json to home:", err);
     }
   }
+
+  sanitizeGglTierState(specUpdated);
 }
 
 function getFetchImpl(): typeof fetch | undefined {
@@ -119,14 +201,93 @@ function getFetchImpl(): typeof fetch | undefined {
   }
 }
 
+function asciiLower(byte: number): number {
+  return byte >= 0x41 && byte <= 0x5a ? byte | 0x20 : byte;
+}
+
+function replaceAsciiCaseInsensitiveInPlace(
+  buf: Uint8Array,
+  needleLowerAscii: string,
+  replacementAscii: string,
+): boolean {
+  if (needleLowerAscii.length !== replacementAscii.length) {
+    throw new Error("Byte-preserving ASCII replacement requires matching lengths");
+  }
+  const len = needleLowerAscii.length;
+  let mutated = false;
+  for (let i = 0; i <= buf.length - len; i++) {
+    let matched = true;
+    for (let j = 0; j < len; j++) {
+      if (asciiLower(buf[i + j]) !== needleLowerAscii.charCodeAt(j)) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) {
+      for (let j = 0; j < len; j++) {
+        buf[i + j] = replacementAscii.charCodeAt(j);
+      }
+      mutated = true;
+      i += len - 1;
+    }
+  }
+  return mutated;
+}
+
+function resolveInputUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
+function extractReviewTabSlug(pathname: string): string | null {
+  const match = /^\/reviews\/([a-z_]+)(?:\/|$)/i.exec(pathname);
+  return match ? match[1].toLowerCase() : null;
+}
+
+function withResponseUrl(response: Response, url: string): Response {
+  if (!url) return response;
+  try {
+    Object.defineProperty(response, "url", { value: url, configurable: true });
+  } catch {
+    // Ignore if environment seals Response.url
+  }
+  return response;
+}
+
+function buildEmptyReviewsResponse(sourceRes: Response, requestedUrl: string): Response {
+  const headers = new Headers();
+  headers.set("content-type", "text/html; charset=utf-8");
+  const setCookies =
+    typeof sourceRes.headers.getSetCookie === "function"
+      ? sourceRes.headers.getSetCookie()
+      : [];
+  for (const cookie of setCookies) {
+    headers.append("set-cookie", cookie);
+  }
+  if (setCookies.length === 0) {
+    const singleCookie = sourceRes.headers.get("set-cookie");
+    if (singleCookie) headers.set("set-cookie", singleCookie);
+  }
+  return withResponseUrl(new Response(EMPTY_REVIEWS_HTML, { status: 200, headers }), requestedUrl);
+}
+
 /**
- * Wraps a fetch implementation to ensure that any application/x-www-form-urlencoded
- * POST request targeting gogetlinks is encoded using single-byte windows-1251 percent-encoding.
+ * Wraps a fetch implementation for GoGetLinks:
+ * 1. Encodes non-XHR application/x-www-form-urlencoded POST requests in single-byte windows-1251.
+ * 2. Converts GoGetLinks empty-tab cross-redirects on /reviews/<tab> (e.g. /reviews/index -> /reviews/request)
+ *    into a clean empty HTML table so zero-item tabs never misclassify another tab's rows.
+ * 3. Neutralizes passive layout reCAPTCHA SDK markers in-place on HTTP 200 HTML pages (<64KB pages like
+ *    /messages and empty /reviews/paid/in_comp_id/*) without touching real interstitial challenges or
+ *    windows-1251 Cyrillic bytes.
  */
 export function createGglFetch(baseFetch: typeof fetch = fetch): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const reqUrl = resolveInputUrl(input);
+    const method = (init?.method || (typeof input === "object" && "method" in input ? input.method : "GET") || "GET").toUpperCase();
+
     let modifiedInit = init;
-    if (init && init.method && init.method.toUpperCase() === "POST") {
+    if (init && method === "POST") {
       const headers = new Headers(init.headers);
       const contentType = headers.get("content-type") || "";
       const isAjax = headers.get("x-requested-with") === "XMLHttpRequest";
@@ -148,7 +309,80 @@ export function createGglFetch(baseFetch: typeof fetch = fetch): typeof fetch {
         };
       }
     }
-    return baseFetch(input, modifiedInit);
+
+    const res = await baseFetch(input, modifiedInit);
+
+    // Handle /reviews/<tab> cross-tab redirect when a review tab has 0 rows
+    if (method === "GET") {
+      let requestedReviewSlug: string | null = null;
+      try {
+        requestedReviewSlug = extractReviewTabSlug(new URL(reqUrl).pathname);
+      } catch {
+        requestedReviewSlug = null;
+      }
+
+      if (requestedReviewSlug) {
+        const location = res.headers.get("location");
+        if (REDIRECT_STATUSES.has(res.status) && location) {
+          try {
+            const targetSlug = extractReviewTabSlug(new URL(location, reqUrl).pathname);
+            if (targetSlug && targetSlug !== requestedReviewSlug) {
+              await res.body?.cancel().catch(() => {});
+              return buildEmptyReviewsResponse(res, reqUrl);
+            }
+          } catch {
+            // Let api-anything handle malformed or non-review redirects
+          }
+        } else if (res.status === 200 && res.url) {
+          try {
+            const finalSlug = extractReviewTabSlug(new URL(res.url).pathname);
+            if (finalSlug && finalSlug !== requestedReviewSlug) {
+              await res.body?.cancel().catch(() => {});
+              return buildEmptyReviewsResponse(res, reqUrl);
+            }
+          } catch {
+            // Ignore URL parse issues
+          }
+        }
+      }
+    }
+
+    // Neutralize passive layout reCAPTCHA SDK script/div on normal HTTP 200 HTML pages
+    if (res.status === 200) {
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (ct.includes("html") || ct === "") {
+        const rawBuf = new Uint8Array(await res.arrayBuffer());
+        const preview = new TextDecoder("latin1").decode(rawBuf.subarray(0, 32_768));
+        const looksLikeHtml = ct.includes("html") || /^\s*<(!doctype|html)/i.test(preview);
+
+        if (looksLikeHtml && !REAL_INTERSTITIAL_RE.test(preview)) {
+          const m1 = replaceAsciiCaseInsensitiveInPlace(
+            rawBuf,
+            "google.com/recaptcha",
+            "google.com/rc_widget",
+          );
+          const m2 = replaceAsciiCaseInsensitiveInPlace(rawBuf, "g-recaptcha", "g_rc_widget");
+          const m3 = replaceAsciiCaseInsensitiveInPlace(rawBuf, "hcaptcha.com", "hc_widget.io");
+          void m1;
+          void m2;
+          void m3;
+        }
+
+        const headers = new Headers(res.headers);
+        headers.delete("content-encoding");
+        headers.delete("content-length");
+        return withResponseUrl(
+          new Response(rawBuf, {
+            status: res.status,
+            statusText: res.statusText,
+            headers,
+          }),
+          res.url || reqUrl,
+        );
+      }
+    }
+
+    return res;
   };
 }
 
@@ -226,7 +460,7 @@ function parseSetCookies(setCookieHeaders: string[] | string | undefined): Store
 
 export function saveLocalSession(cookies: StoredCookie[]): void {
   initApiAnythingHome();
-  const sessionsDir = join(API_ANYTHING_HOME, "sessions");
+  const sessionsDir = join(getApiAnythingHome(), "sessions");
   const file = join(sessionsDir, "gogetlinks.json");
   const data = {
     cookies,
@@ -238,7 +472,7 @@ export function saveLocalSession(cookies: StoredCookie[]): void {
 
 export function loadLocalSession(): StoredCookie[] {
   initApiAnythingHome();
-  const file = join(API_ANYTHING_HOME, "sessions", "gogetlinks.json");
+  const file = join(getApiAnythingHome(), "sessions", "gogetlinks.json");
   if (!existsSync(file)) return [];
   try {
     const parsed = JSON.parse(readFileSync(file, "utf8"));
@@ -246,6 +480,10 @@ export function loadLocalSession(): StoredCookie[] {
   } catch {
     return [];
   }
+}
+
+function buildCookieHeader(cookies: StoredCookie[]): string {
+  return cookies.map((c) => `${c.name}=${c.value}`).join("; ");
 }
 
 async function syncSessionFromDb(prismaClient?: unknown): Promise<void> {
@@ -326,6 +564,7 @@ export async function verifyAndLoginGgl(
   initApiAnythingHome();
 
   const baseFetch = opts?.fetchImpl || getFetchImpl() || fetch;
+  const wrappedFetch = createGglFetch(baseFetch);
   const formBody = new URLSearchParams({
     e_mail: email,
     password: password,
@@ -382,7 +621,7 @@ export async function verifyAndLoginGgl(
       const result = await call("gogetlinks", "getAccountBalance", undefined, {
         maxTier: 1,
         minIntervalMs: 0,
-        fetchImpl: baseFetch,
+        fetchImpl: wrappedFetch,
       });
       if (result.ok && result.data) {
         const row = (
@@ -400,6 +639,19 @@ export async function verifyAndLoginGgl(
   }
 
   return { cookies, balance };
+}
+
+function normalizeReadArgs(
+  opName: string,
+  args?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (opName === "listReviewsByTab" && args && typeof args.tab === "string") {
+    const mappedTab = REVIEW_TAB_SLUG_MAP[args.tab] ?? args.tab;
+    if (mappedTab !== args.tab) {
+      return { ...args, tab: mappedTab };
+    }
+  }
+  return args;
 }
 
 /**
@@ -422,9 +674,11 @@ export async function callGglRead<T = unknown>(
   }
 
   return enqueueGgl(async () => {
-    const fetchImpl = opts?.fetchImpl || getFetchImpl();
+    const baseFetch = opts?.fetchImpl || getFetchImpl() || fetch;
+    const fetchImpl = createGglFetch(baseFetch);
+    const normalizedArgs = normalizeReadArgs(opName, args);
 
-    let result = await call("gogetlinks", opName, args, {
+    let result = await call("gogetlinks", opName, normalizedArgs, {
       maxTier: 1,
       minIntervalMs: MIN_INTERVAL_MS,
       fetchImpl,
@@ -435,7 +689,7 @@ export async function callGglRead<T = unknown>(
     if (allowRelogin && (result.class === "auth" || (!result.ok && result.reason?.includes("login")))) {
       const relogged = await attemptRelogin({ prismaClient: opts?.prismaClient, fetchImpl: opts?.fetchImpl });
       if (relogged) {
-        result = await call("gogetlinks", opName, args, {
+        result = await call("gogetlinks", opName, normalizedArgs, {
           maxTier: 1,
           minIntervalMs: MIN_INTERVAL_MS,
           fetchImpl,
@@ -451,9 +705,11 @@ export async function callGglRead<T = unknown>(
     }
 
     // Persist refreshed cookies if any
-    const localCookies = loadLocalSession();
-    if (localCookies.length > 0) {
-      await persistSessionToDb(localCookies, opts?.prismaClient);
+    if (opts?.skipDbSync !== true) {
+      const localCookies = loadLocalSession();
+      if (localCookies.length > 0) {
+        await persistSessionToDb(localCookies, opts?.prismaClient);
+      }
     }
 
     if (opName === "getAccountBalance") {
@@ -485,6 +741,232 @@ export function assertCampaignIsolation(
       `Write rejected by isolation guard: campaign "${campaignLabel}" does not belong to wesetup.ru`,
     );
   }
+}
+
+function stripModalStopWords(text: string, stopWords: string[]): string {
+  let out = text;
+  for (const word of stopWords) {
+    const trimmed = word.trim();
+    if (!trimmed) continue;
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    out = out.replace(new RegExp(escaped, "gi"), "");
+  }
+  return out.replace(/\s{2,}/g, " ").trim();
+}
+
+function decodeModalResponseBuffer(buf: Uint8Array, contentType: string): string {
+  const charsetMatch = /charset=["']?([\w.:-]+)/i.exec(contentType);
+  const charset = charsetMatch?.[1] || "windows-1251";
+  try {
+    return new TextDecoder(charset).decode(buf);
+  } catch {
+    return new TextDecoder("utf-8").decode(buf);
+  }
+}
+
+/**
+ * Executes GoGetLinks' native 5-step campaign creation modal workflow:
+ * 1) GET /campaign -> extract session token, stopWords, default price brackets
+ * 2) POST /campaign/checkUrl
+ * 3) POST /unchors/change/token/<token>/type/save
+ * 4) POST /campaign/exist/type/find_exists
+ * 5) POST /campaign/save (strictly omitting set_prices_to_all so other campaigns are untouched)
+ *
+ * Returns `null` if the endpoint did not return real GoGetLinks modal HTML (e.g. unit test mocks),
+ * allowing `callGglWrite` to fall back to the `api-anything` `createOrUpdateCampaign` template.
+ */
+async function tryExecuteModalCampaignCreate(
+  args: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+): Promise<{ status: "applied"; data: Record<string, unknown> } | null> {
+  const cookies = loadLocalSession();
+  const cookieHeader = buildCookieHeader(cookies);
+  const commonXhrHeaders: Record<string, string> = {
+    "x-requested-with": "XMLHttpRequest",
+    referer: "https://gogetlinks.net/campaigns",
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    ...(cookieHeader ? { cookie: cookieHeader } : {}),
+  };
+
+  const modalRes = await fetchImpl("https://gogetlinks.net/campaign", {
+    method: "GET",
+    headers: {
+      ...commonXhrHeaders,
+      accept: "text/html, */*; q=0.01",
+    },
+  });
+
+  if (modalRes.status === 401 || modalRes.status === 403) {
+    throw new GglAuthError("GoGetLinks session expired before opening campaign modal");
+  }
+
+  const modalBytes = new Uint8Array(await modalRes.arrayBuffer());
+  const modalHtml = decodeModalResponseBuffer(
+    modalBytes,
+    modalRes.headers.get("content-type") || "",
+  );
+  const tokenMatch = /name=["']token["'][^>]*value=["']([a-f0-9]+)["']/i.exec(modalHtml);
+  if (!tokenMatch) {
+    return null;
+  }
+
+  const token = tokenMatch[1];
+
+  let stopWords: string[] = [];
+  const stopWordsMatch = /var\s+stopWords\s*=\s*(\[[\s\S]*?\]);/i.exec(modalHtml);
+  if (stopWordsMatch) {
+    try {
+      const parsed = JSON.parse(stopWordsMatch[1]);
+      if (Array.isArray(parsed)) {
+        stopWords = parsed.filter((w): w is string => typeof w === "string");
+      }
+    } catch {
+      // Ignore malformed stopWords script snippet
+    }
+  }
+
+  const rawTitle = String(
+    args.name ?? args.title ?? "WeSetup электронные журналы ХАССП",
+  )
+    .replace(/[—–]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+  const compName = stripModalStopWords(rawTitle, stopWords).slice(0, 50) || "WeSetup ХАССП";
+
+  const initialUrl = "https://wesetup.ru";
+  const initialAnchor =
+    stripModalStopWords(
+      String(args.anchor ?? args.initialAnchor ?? "электронные журналы ХАССП"),
+      stopWords,
+    ).slice(0, 200) || "электронные журналы ХАССП";
+  const taskDescription = stripModalStopWords(
+    String(args.task ?? args.description ?? DEFAULT_WESETUP_CAMPAIGN_BRIEF),
+    stopWords,
+  ).slice(0, 800);
+
+  const postHeaders: Record<string, string> = {
+    ...commonXhrHeaders,
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    accept: "application/json, text/javascript, */*; q=0.01",
+    origin: "https://gogetlinks.net",
+  };
+
+  // Step 2: Validate URL
+  const checkRes = await fetchImpl("https://gogetlinks.net/campaign/checkUrl", {
+    method: "POST",
+    headers: postHeaders,
+    body: new URLSearchParams({ URL: initialUrl }).toString(),
+  });
+  const checkText = await checkRes.text();
+  try {
+    const checkJson = JSON.parse(checkText) as { error?: string };
+    if (checkJson.error) {
+      throw new GglCallError(`GoGetLinks checkUrl error: ${checkJson.error}`, "input");
+    }
+  } catch (err) {
+    if (err instanceof GglCallError) throw err;
+  }
+
+  // Step 3: Register initial URL + anchor in modal token state
+  const anchorRes = await fetchImpl(
+    `https://gogetlinks.net/unchors/change/token/${encodeURIComponent(token)}/type/save`,
+    {
+      method: "POST",
+      headers: postHeaders,
+      body: new URLSearchParams({ URL: initialUrl, text: initialAnchor }).toString(),
+    },
+  );
+  const anchorText = await anchorRes.text();
+  try {
+    const anchorJson = JSON.parse(anchorText) as { error?: string };
+    if (anchorJson.error) {
+      throw new GglCallError(`GoGetLinks anchor error: ${anchorJson.error}`, "input");
+    }
+  } catch (err) {
+    if (err instanceof GglCallError) throw err;
+  }
+
+  // Step 4: Trigger find_exists check
+  await fetchImpl("https://gogetlinks.net/campaign/exist/type/find_exists", {
+    method: "POST",
+    headers: postHeaders,
+    body: new URLSearchParams({ url: initialUrl, token }).toString(),
+  }).catch(() => {});
+
+  // Extract default price brackets from modal HTML (falling back to GoGetLinks defaults)
+  const extractPrices = (prefix: "link" | "post" | "paper"): Record<string, string> => {
+    const defaults: Record<string, string> = {
+      "1": "240",
+      "2": "340",
+      "3": "450",
+      "4": "560",
+      "5": "680",
+      "6": "1160",
+    };
+    const re = new RegExp(`name=["']${prefix}\\[(\\d+)\\]["'][^>]*value=["'](\\d+)["']`, "gi");
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(modalHtml)) !== null) {
+      defaults[m[1]] = m[2];
+    }
+    return defaults;
+  };
+
+  const linkPrices = extractPrices("link");
+  const postPrices = extractPrices("post");
+  const paperPrices = extractPrices("paper");
+
+  const saveForm = new URLSearchParams();
+  saveForm.set("comp_id", "");
+  saveForm.set("token", token);
+  saveForm.set("comp_name", compName);
+  saveForm.set("URL_add", "");
+  saveForm.set("text_add", "");
+  saveForm.set("variation_unchor", "yes");
+  saveForm.set("task", taskDescription);
+  saveForm.set("task_main", "");
+  saveForm.set("task_alt", "");
+  saveForm.set("url_mask", "wesetup.ru");
+  saveForm.append("types[]", "1");
+  saveForm.append("types[]", "2");
+  saveForm.append("types[]", "3");
+  for (const tier of ["1", "2", "3", "4", "5", "6"]) {
+    saveForm.set(`link[${tier}]`, linkPrices[tier]);
+    saveForm.set(`post[${tier}]`, postPrices[tier]);
+    saveForm.set(`paper[${tier}]`, paperPrices[tier]);
+  }
+  // Never include set_prices_to_all so existing campaigns are never touched
+  saveForm.set("allow_nofollow", "0");
+  saveForm.set("only_allow_ti_zero", "0");
+  saveForm.set("only_in_yandex", "1");
+  saveForm.set("only_in_google", "0");
+  saveForm.set("is_subdomains", "1");
+  saveForm.set("allow_forums", "0");
+  saveForm.set("allow_profiles", "0");
+  saveForm.set("insurance", "2");
+
+  // Step 5: Save campaign
+  const saveRes = await fetchImpl("https://gogetlinks.net/campaign/save", {
+    method: "POST",
+    headers: postHeaders,
+    body: saveForm.toString(),
+  });
+  const saveText = await saveRes.text();
+  let saveJson: Record<string, unknown> = {};
+  try {
+    saveJson = JSON.parse(saveText) as Record<string, unknown>;
+  } catch {
+    throw new GglCallError(
+      `GoGetLinks campaign/save returned non-JSON response (HTTP ${saveRes.status})`,
+      "drift",
+    );
+  }
+
+  if (typeof saveJson.error === "string" && saveJson.error.trim() !== "") {
+    throw new GglCallError(`GoGetLinks campaign/save error: ${saveJson.error}`, "input");
+  }
+
+  return { status: "applied", data: saveJson };
 }
 
 /**
@@ -554,9 +1036,32 @@ export async function callGglWrite<T = unknown>(input: {
   await syncSessionFromDb(input.prismaClient);
 
   return enqueueGgl(async () => {
-    // Wrap fetchImpl with windows-1251 form re-encoder
     const baseFetch = input.fetchImpl || getFetchImpl() || fetch;
     const fetchImpl = createGglFetch(baseFetch);
+
+    // Real GoGetLinks campaign creation requires the 5-step modal token + anchor flow
+    if (input.opName === "createOrUpdateCampaign" && !candidateCampaignId) {
+      try {
+        const modalCreated = await tryExecuteModalCampaignCreate(input.args, fetchImpl);
+        if (modalCreated) {
+          return { status: modalCreated.status, data: modalCreated.data as T };
+        }
+      } catch (err) {
+        if (err instanceof GglAuthError) {
+          const relogged = await attemptRelogin({
+            prismaClient: input.prismaClient,
+            fetchImpl: input.fetchImpl,
+          });
+          if (relogged) {
+            const retried = await tryExecuteModalCampaignCreate(input.args, fetchImpl);
+            if (retried) {
+              return { status: retried.status, data: retried.data as T };
+            }
+          }
+        }
+        throw err;
+      }
+    }
 
     let result = await call("gogetlinks", input.opName, input.args, {
       allowWrites: true,
@@ -607,5 +1112,29 @@ export async function callGglWrite<T = unknown>(input: {
       status,
       data: result.data as T,
     };
+  });
+}
+
+/**
+ * Permanently selects a `wesetup.ru` campaign as the active overall campaign inside GoGetLinks'
+ * personal cabinet (`POST /campaigns/setOverallCampaignId`), guarded by campaign isolation.
+ */
+export async function pinGglOverallCampaign(
+  gglCampaignId: number,
+  opts?: {
+    prismaClient?: unknown;
+    fetchImpl?: typeof fetch;
+    idempotencyKey?: string;
+  },
+): Promise<void> {
+  if (!Number.isFinite(gglCampaignId) || gglCampaignId <= 0) return;
+  await callGglWrite({
+    opName: "setOverallCampaign",
+    args: { campaignId: String(gglCampaignId) },
+    campaignIdForGuard: String(gglCampaignId),
+    idempotencyKey:
+      opts?.idempotencyKey ?? `pin-overall-${gglCampaignId}-${Math.floor(Date.now() / 10_000)}`,
+    prismaClient: opts?.prismaClient,
+    fetchImpl: opts?.fetchImpl,
   });
 }

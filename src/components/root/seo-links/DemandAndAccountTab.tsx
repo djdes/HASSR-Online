@@ -264,7 +264,7 @@ export function DemandAndAccountTab({
     <div className="space-y-6">
       {/* 1. GoGetLinks Account & Wesetup Campaign Connection Card */}
       <AccountConnectionCard
-        key={`${account?.id ?? "none"}:${account?.lastSyncedAt ?? ""}:${account?.allowSeoApproveWithinPlan ?? false}`}
+        key={`${account?.id ?? "none"}:${account?.lastSyncedAt ?? ""}:${account?.defaultCampaignId ?? ""}:${account?.allowSeoApproveWithinPlan ?? false}`}
         account={account}
         campaigns={campaigns}
         viewer={viewer}
@@ -755,9 +755,11 @@ function AccountConnectionCard({
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [defaultCampaignId, setDefaultCampaignId] = useState<string>(
-    account?.defaultCampaignId ? String(account.defaultCampaignId) : "",
-  );
+  const [defaultCampaignId, setDefaultCampaignId] = useState<string>(() => {
+    if (account?.defaultCampaignId) return String(account.defaultCampaignId);
+    const activeWs = wesetupCampaigns.find((c) => c.state === "active") ?? wesetupCampaigns[0];
+    return activeWs ? String(activeWs.gglCampaignId) : "";
+  });
   const [allowSeoApproveWithinPlan, setAllowSeoApproveWithinPlan] = useState(
     account?.allowSeoApproveWithinPlan ?? false,
   );
@@ -815,7 +817,7 @@ function AccountConnectionCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: "Wesetup — электронные журналы ХАССП",
+          name: "WeSetup электронные журналы ХАССП",
           idempotencyKey: generateClientIdempotencyKey("ensure-wesetup-camp"),
         }),
       });
@@ -892,6 +894,11 @@ function AccountConnectionCard({
                   .join(", ")
               : "Ещё не создана"}
           </div>
+          {account?.defaultCampaignId && wesetupCampaigns.some((c) => c.gglCampaignId === account.defaultCampaignId) ? (
+            <div className="mt-1 inline-flex items-center rounded-full border border-[#bce3c8] bg-[#e9f8ee] px-2 py-0.5 text-[11px] font-medium text-[#116b2a]">
+              Выбрана перманентно (#{account.defaultCampaignId})
+            </div>
+          ) : null}
         </div>
         <div>
           <div className="text-[11.5px] text-[#6f7282]">
@@ -988,7 +995,9 @@ function AccountConnectionCard({
                   ) : (
                     <Rocket className="size-4 text-[#5566f6]" />
                   )}
-                  Создать кампанию wesetup.ru в GoGetLinks
+                  {wesetupCampaigns.some((c) => c.state === "active")
+                    ? "Закрепить кампанию wesetup.ru в GoGetLinks"
+                    : "Создать кампанию wesetup.ru в GoGetLinks"}
                 </button>
               ) : null}
 
