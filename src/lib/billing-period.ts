@@ -481,7 +481,7 @@ export function checkPoints(state: AccountBillingState, adding: number): LimitCh
     isPaidTier(state.tier)
       ? `Оплачено точек: ${limit}. Каждая новая точка — как ещё один тариф; скидка на все точки: ${POINTS_DISCOUNT_LINE}. ` +
         "Добавьте точку на странице тарифа."
-      : "На бесплатном тарифе — 1 точка. Подключите «Стандарт» или «Премиум», чтобы добавить точки.";
+      : "На бесплатном тарифе — 1 точка. Подключите «Стандарт», «Премиум» или «ВИП», чтобы добавить точки.";
   return { ok: false, limit, current: state.pointsInUse, message };
 }
 
@@ -494,7 +494,7 @@ export function checkJournals(state: AccountBillingState, nextEnabled: number, c
     limit,
     current: currentEnabled,
     message:
-      `На бесплатном тарифе — ${limit} журнал. Подключите «Стандарт» или «Премиум», чтобы вести все журналы.`,
+      `На бесплатном тарифе — ${limit} журнал. Подключите «Стандарт», «Премиум» или «ВИП», чтобы вести все журналы.`,
   };
 }
 
@@ -794,11 +794,14 @@ export type TransitionCopy = {
   freeHint: string;
 };
 
-/** «Стандарт — от 1 990 ₽/мес, Премиум — от 3 990 ₽/мес (при оплате за год)». */
-export function paidPlansHint(prices: { standardFromRub: number; premiumFromRub: number }): string {
+/** Цена «от» каждого платного тарифа — за месяц при оплате за год. */
+export type PlanPricesFrom = { standardFromRub: number; premiumFromRub: number; vipFromRub: number };
+
+/** «Стандарт — от 1 990 ₽/мес, Премиум — от 3 990 ₽/мес, ВИП — от 8 990 ₽/мес (при оплате за год)». */
+export function paidPlansHint(prices: PlanPricesFrom): string {
   return (
-    `«Стандарт» — от ${formatPriceRub(prices.standardFromRub)}/мес, «Премиум» — от ${formatPriceRub(prices.premiumFromRub)}/мес ` +
-    "при оплате за год. Все сотрудники и журналы остаются в работе."
+    `«Стандарт» — от ${formatPriceRub(prices.standardFromRub)}/мес, «Премиум» — от ${formatPriceRub(prices.premiumFromRub)}/мес, ` +
+    `«ВИП» — от ${formatPriceRub(prices.vipFromRub)}/мес при оплате за год. Все сотрудники и журналы остаются в работе.`
   );
 }
 
@@ -823,7 +826,7 @@ export function journalsLabel(n: number): string {
  */
 export function transitionCopy(args: {
   state: AccountBillingState;
-  prices: { standardFromRub: number; premiumFromRub: number };
+  prices: PlanPricesFrom;
 }): TransitionCopy {
   const { state } = args;
   const expired = state.reason === "subscription_expired";

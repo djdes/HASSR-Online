@@ -43,6 +43,7 @@ import {
   type AccountBillingKind,
   type AccountBillingState,
   type LimitCheck,
+  type PlanPricesFrom,
   type TransitionAction,
   type TransitionReason,
   type TrialSettings,
@@ -1260,11 +1261,11 @@ async function notifyTransition(args: {
       kind: "billing.silent_free",
       telegramText:
         `ℹ️ «${escapeHtml(orgName)}» теперь на бесплатном тарифе — ${FREE_LIMITS}, как у вас и есть. ` +
-        "Ничего делать не нужно. Когда понадобится команда или все журналы, тариф «Стандарт» или «Премиум» подключается в «Настройки → Тариф».",
+        "Ничего делать не нужно. Когда понадобится команда или все журналы, тариф «Стандарт», «Премиум» или «ВИП» подключается в «Настройки → Тариф».",
       email: {
         subject: `«${orgName}»: вы на бесплатном тарифе`,
         title: "Вы на бесплатном тарифе",
-        html: `<p ${P}>Здравствуйте!</p><p ${P}>Организация <strong>${escapeHtml(orgName)}</strong> теперь на бесплатном тарифе — ${FREE_LIMITS}, как у вас и есть. Ничего делать не нужно.</p><p ${P}>Когда понадобится команда или все журналы, тариф «Стандарт» или «Премиум» подключается в разделе «Настройки → Тариф».</p><a href="${payUrl}" ${BUTTON}>Открыть тариф</a>`,
+        html: `<p ${P}>Здравствуйте!</p><p ${P}>Организация <strong>${escapeHtml(orgName)}</strong> теперь на бесплатном тарифе — ${FREE_LIMITS}, как у вас и есть. Ничего делать не нужно.</p><p ${P}>Когда понадобится команда или все журналы, тариф «Стандарт», «Премиум» или «ВИП» подключается в разделе «Настройки → Тариф».</p><a href="${payUrl}" ${BUTTON}>Открыть тариф</a>`,
       },
       // «Одно информационное уведомление»: Telegram, а без него — письмо.
       emailOnlyWithoutTelegram: true,
@@ -1298,7 +1299,7 @@ async function notifyTransition(args: {
         `<p ${P}>Здравствуйте!</p>` +
         `<p ${P}>${args.result.reason === "subscription_expired" ? "Оплаченная подписка закончилась" : "Пробный период закончился"}, а тариф выбран не был. Организация <strong>${escapeHtml(orgName)}</strong> переведена на бесплатный тариф — ${FREE_LIMITS}.</p>` +
         `<div ${BOX}>В работе: <strong>${escapeHtml(kept)}</strong> и журнал <strong>${escapeHtml(keptJournal)}</strong>.<br>В архив перешли: ${archivedLabel}${journalsOff}. Записи в журналах сохранены.</div>` +
-        `<p ${P}>Вернуть сотрудников и журналы можно после подключения тарифа «Стандарт» или «Премиум».</p>` +
+        `<p ${P}>Вернуть сотрудников и журналы можно после подключения тарифа «Стандарт», «Премиум» или «ВИП».</p>` +
         `<a href="${payUrl}" ${BUTTON}>Выбрать тариф</a>`,
     },
   });
@@ -1307,7 +1308,7 @@ async function notifyTransition(args: {
 async function sendDecisionReminder(
   unit: BillingUnit,
   state: AccountBillingState,
-  prices: { standardFromRub: number; premiumFromRub: number }
+  prices: PlanPricesFrom
 ): Promise<boolean> {
   const { escapeHtml } = await import("@/lib/html-escape");
   if (!state.graceEndsAt) return false;
@@ -1382,7 +1383,7 @@ async function sendPaidEndingReminder(
 async function sendTrialEndingReminder(
   unit: BillingUnit,
   state: AccountBillingState,
-  prices: { standardFromRub: number; premiumFromRub: number }
+  prices: PlanPricesFrom
 ): Promise<boolean> {
   const { escapeHtml } = await import("@/lib/html-escape");
   if (!state.trialEndsAt || state.trialDaysLeft === null) return false;
@@ -1519,10 +1520,14 @@ export type BillingJobReport = {
 };
 
 /** Цены «от» для писем: месячная цена при оплате за год, одна точка. */
-async function pricesFrom(): Promise<{ standardFromRub: number; premiumFromRub: number }> {
+async function pricesFrom(): Promise<PlanPricesFrom> {
   const { readPlanPricing } = await import("@/lib/tariffs");
   const { rates } = await readPlanPricing();
-  return { standardFromRub: planMonthlyRub(rates, "standard", "year"), premiumFromRub: planMonthlyRub(rates, "premium", "year") };
+  return {
+    standardFromRub: planMonthlyRub(rates, "standard", "year"),
+    premiumFromRub: planMonthlyRub(rates, "premium", "year"),
+    vipFromRub: planMonthlyRub(rates, "vip", "year"),
+  };
 }
 
 /**

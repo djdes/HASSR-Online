@@ -57,6 +57,7 @@ import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { SEATS_PER_POINT, STORAGE_BYTES, TRIAL_DAYS, planMonthlyRub } from "@/lib/tariff-plans";
+import { VIP_HOTLINE_HOURS } from "@/lib/plan-catalog";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 
 const MB = 1024 * 1024;
@@ -312,6 +313,7 @@ export default async function LandingPage() {
   ]);
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const premiumFrom = applyPromotion(planMonthlyRub(pricing.rates, "premium", "year"), promotion);
+  const vipFrom = applyPromotion(planMonthlyRub(pricing.rates, "vip", "year"), promotion);
   const heroPricing = copy.rich("landing.pricing.heroPhrase", {
     trialDays: TRIAL_DAYS,
     amount: formatPriceRub(standardFrom.priceRub, locale),
@@ -413,6 +415,15 @@ export default async function LandingPage() {
               name: copy("landingComponents.tariffs.tiers.premium.name"),
               price: premiumFrom,
               description: copy("landing.seo.premiumDescription", { employees: SEATS_PER_POINT.premium, gb: STORAGE_BYTES.premium / (1024 * MB) }),
+            },
+            {
+              name: copy("landingComponents.tariffs.tiers.vip.name"),
+              price: vipFrom,
+              description: copy("landing.seo.vipDescription", {
+                employees: SEATS_PER_POINT.vip,
+                gb: STORAGE_BYTES.vip / (1024 * MB),
+                hotlineHours: VIP_HOTLINE_HOURS,
+              }),
             },
           ].map((tier) => ({
             "@type": "Offer",

@@ -8,6 +8,7 @@ import {
   transitionCopy,
   trialBannerText,
   type AccountBillingState,
+  type PlanPricesFrom,
   type TransitionCopy,
   type TrialSettings,
 } from "@/lib/billing-period";
@@ -34,7 +35,7 @@ export type BillingView = {
   /** Цены тарифов 2026-10 (за месяц) и что продаётся. */
   pricing: PlanPricing;
   /** «от» — цена за месяц при оплате за год, одна точка. */
-  pricesFrom: { standardFromRub: number; premiumFromRub: number };
+  pricesFrom: PlanPricesFrom;
   /** Плашка пробного периода (та же, что была у анонса «бесплатно для всех»). */
   announcement: {
     lead: string;
@@ -55,8 +56,12 @@ export type BillingView = {
   header: { plan: string; label: string | null; note: string | null };
 };
 
-export function pricesFromRates(rates: PlanRates): { standardFromRub: number; premiumFromRub: number } {
-  return { standardFromRub: planMonthlyRub(rates, "standard", "year"), premiumFromRub: planMonthlyRub(rates, "premium", "year") };
+export function pricesFromRates(rates: PlanRates): PlanPricesFrom {
+  return {
+    standardFromRub: planMonthlyRub(rates, "standard", "year"),
+    premiumFromRub: planMonthlyRub(rates, "premium", "year"),
+    vipFromRub: planMonthlyRub(rates, "vip", "year"),
+  };
 }
 
 /** Название оплаченного тарифа: «Премиум», «Стандарт», «Подписка (прежний тариф)». */

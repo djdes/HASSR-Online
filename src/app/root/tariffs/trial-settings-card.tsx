@@ -100,6 +100,7 @@ export function TrialSettingsCard({
       hint: t("paidHint", {
         standard: overview.paidByTier.standard,
         premium: overview.paidByTier.premium,
+        vip: overview.paidByTier.vip,
         legacy: overview.paidByTier.legacy,
       }),
       testId: "billing-count-paid",

@@ -785,7 +785,7 @@
       "upgrade": "Switch to Premium",
       "ownTitle": "Your own documents",
       "ownLead": "Upload your own orders, instructions and regulations — they are stored here and count towards your plan’s storage.",
-      "storageClosed": "Document uploads come with Standard (10 MB) and Premium (1 GB). Files uploaded earlier can still be opened and deleted."
+      "storageClosed": "Document uploads come with Standard (10 MB), Premium and VIP (1 GB). Files uploaded earlier can still be opened and deleted."
     },
     "individual": {
       "title": "A production control programme for your site",
@@ -1067,9 +1067,9 @@
       "payStandard": "Switch to Standard",
       "payPremium": "Move to Premium",
       "pointLimit": "All locations on the plan are in use — {count, plural, one {# location} other {# locations}}. Each new location costs one more plan: add it on the plan page.",
-      "journalLimit": "The free plan includes {count, plural, one {# log} other {# logs}}. Choose Standard or Premium to keep every log.",
+      "journalLimit": "The free plan includes {count, plural, one {# log} other {# logs}}. Choose Standard, Premium or VIP to keep every log.",
       "storageFull": "Your plan’s document storage is full. Delete files you no longer need or switch to Premium — 1 GB for all documents.",
-      "storageClosed": "Document uploads come with Standard and Premium. Files uploaded earlier can still be opened and deleted.",
+      "storageClosed": "Document uploads come with Standard, Premium and VIP. Files uploaded earlier can still be opened and deleted.",
       "featureLocked": "This feature comes with the Premium plan.",
       "unavailable": "Not available on the current plan.",
       "limitToStandard": "All seats on the free plan are taken — {count, plural, one {# employee} other {# employees}}. Move to Standard — up to {seats, number} employees per location.",
@@ -5657,7 +5657,8 @@
       "productDescription": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections.",
       "freeOfferDescription": "All {journalCount, number} {journalCount, plural, one {log} other {logs}} with no limits on employees or locations — {trialDays, number} {trialDays, plural, one {day} other {days}} from activation, no card required",
       "standardDescription": "Up to {employees, number} employees per location, all logs, {mb, number} MB for log orders and your own documents. Price per month when paid yearly.",
-      "premiumDescription": "Up to {employees, number} employees per location, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, Mercury (VetIS), a template document pack. Price per month when paid yearly."
+      "premiumDescription": "Up to {employees, number} employees per location, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, Mercury (VetIS), a template document pack. Price per month when paid yearly.",
+      "vipDescription": "Everything in Premium: up to {employees, number} employees per location, {gb, number} GB for all documents, an electronic production control programme based on HACCP; plus a hotline — up to {hotlineHours, number} hours a month, an extended data bank and a personal consultant. Price per month when paid yearly."
     },
     "journals": {
       "sectionLead": "{journalCount, number} electronic logs for daily sanitation checks and complete HACCP records. Choose your business to see the relevant logs, orders and checklists."
@@ -5726,7 +5727,7 @@
         }
       }
     },
-    "pricingTitle": "Three plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card",
+    "pricingTitle": "Four plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card",
     "brandTagline": "Your electronic HACCP",
     "presentationPdf": "WeSetup presentation — PDF, 7 MB (in Russian)"
   },
@@ -5776,7 +5777,7 @@
         "label": "Locations",
         "decrease": "Remove a location",
         "increase": "Add a location",
-        "hint": "A site has its own logs and staff within one organisation: a café, a workshop, a branch. Each is priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%."
+        "hint": "A site has its own logs and staff within one organisation: a café, a workshop, a branch. Each is priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%, from 50 — a custom offer."
       },
       "tiers": {
         "free": {
@@ -10416,7 +10417,7 @@
           "balanceRetained": "The organization keeps its points balance ({amount}).",
           "accountSeats": "The organization’s employees ({organizationCount, number}) will no longer use seats in your account: {before, number} before, {after, number} after.",
           "organizationSeats": "The organization has {count, plural, one {# employee} other {# employees}}.",
-          "seatLimit": "The organisation has no paid term, and the free plan covers {limit, plural, one {# employee} other {# employees}}. To keep all employees active, the client needs to choose Standard or Premium.",
+          "seatLimit": "The organisation has no paid term, and the free plan covers {limit, plural, one {# employee} other {# employees}}. To keep all employees active, the client needs to choose Standard, Premium or VIP.",
           "rewardIntro": "Current partner rewards:",
           "rewardsByProgram": "Rewards follow the current partner program rules.",
           "subscriptionReward": "{percent, number}% of each subscription payment for the {months, number}-month period, starting with the first payment after transfer.",
@@ -17137,7 +17138,7 @@
       "pointsInvalid": "Locations must be from 1 to 50",
       "noAccount": "The organisation has no account — period, locations and trial cannot be saved",
       "notHeld": "Only a payment awaiting review can be marked as reviewed",
-      "freeWithEnd": "The Free plan has no paid term — to set a date, choose Standard, Premium or Subscription (previous plan)"
+      "freeWithEnd": "The Free plan has no paid term — to set a date, choose Standard, Premium, VIP or Subscription (previous plan)"
     },
     "nav": {
       "label": "Card sections",
@@ -17266,7 +17267,7 @@
     },
     "cta": {
       "title": "Try all logs for free",
-      "description": "Every log without limits for 14 days, no card required. After that — 1 employee and 1 log for free, or the Standard or Premium plan.",
+      "description": "Every log without limits for 14 days, no card required. After that — 1 employee and 1 log for free, or the Standard, Premium or VIP plan.",
       "try": "Try it"
     },
     "detailCommon": {
@@ -20941,7 +20942,7 @@
     "phaseActive": "The plans are live: a {trialDays, number}-day trial, then the transition to paid plans",
     "phaseTransitionOff": "The trial is {trialDays, number} days, but the transition is off: nothing is blocked after the trial",
     "trialExplanation": "New accounts get {trialDays, number} days of every Premium feature with no card; for accounts created before the launch the trial runs from the launch date. After the trial without payment — the free plan: {freeEmployees, plural, one {# employee} other {# employees}} and {freeJournals, plural, one {# log} other {# logs}}; if an account has more, the manager chooses in a dialog, and after the grace period the owner and the most-filled log stay (daily job /api/cron/billing-transition). With the transition off, nothing is blocked after the trial.",
-    "paidHint": "Standard {standard, number} · Premium {premium, number} · previous {legacy, number}",
+    "paidHint": "Standard {standard, number} · Premium {premium, number} · VIP {vip, number} · previous {legacy, number}",
     "trial": "Trial",
     "trialHint": "ending within 3 days: {count, number}",
     "legacyCount": "{count, number, ::group-off} more — the transition is off, everything stays as before."
@@ -25128,7 +25129,7 @@
       "keepRemains": "Staying active: <b>{name}</b>",
       "andMore": "and {count, number} more",
       "archiveList": "Moving to the archive: {employees}{names}. They will not be able to sign in to the dashboard or the app; their journal entries will be kept.",
-      "restoreHint": "You can restore them after paying for the Standard or Premium plan: “Staff” → “Archive”.",
+      "restoreHint": "You can restore them after paying for the Standard, Premium or VIP plan: “Staff” → “Archive”.",
       "paidTerm": "The plan is paid until {date}. If you switch to the free plan, the paid term will not be kept and auto-renewal will be turned off. You can request a refund for unused days by writing to <mail>admin@wesetup.ru</mail> — <offer>clause 6.2 of the offer</offer>.",
       "selfArchived": "You will also be archived and signed out of the dashboard immediately.",
       "noSignIn": "“{name}” has no password or Telegram — no one will be able to sign in to the dashboard. It is better to keep yourself.",
@@ -29497,7 +29498,7 @@
       "statusTitle": "Your plan",
       "trialNote": "Everything in Premium is open — {days, plural, one {# day} other {# days}} left. After that, {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}} stay free, or choose a plan below.",
       "freeNote": "Free: {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}}. To bring back all employees and logs, choose Standard or Premium.",
-      "legacyNote": "The previous plan stays in force until the end of the paid term with no new limits. You can switch to Standard or Premium now — the unused balance will be credited.",
+      "legacyNote": "The previous plan stays in force until the end of the paid term with no new limits. You can switch to Standard, Premium or VIP now — the unused balance will be credited.",
       "cycleYear": "billed yearly",
       "cycleMonth": "billed monthly",
       "pointsCount": "{count, plural, one {# location} other {# locations}}",
@@ -29524,7 +29525,7 @@
       "ruleTrial": "The trial lasts {trialDays, number} days with no card. A plan paid during the trial starts on the payment day.",
       "examplesTitle": "Monthly price when billed yearly",
       "colPoints": "Locations",
-      "ruleSeats": "Employees: Standard — up to {standard, number} per location, Premium — up to {premium, number}, more by arrangement. Out of seats — move to the next plan.",
+      "ruleSeats": "Employees: Standard — up to {standard, number} per location, Premium and VIP — up to {premium, number}, more by arrangement. Out of seats — move to the next plan.",
       "overSeatsPremium": "You have more employees than Standard allows ({used, number} of {limit, number}): new ones cannot be added. Move to Premium — up to {seats, number} employees per location.",
       "overSeatsContact": "You have more employees than Premium allows ({used, number} of {limit, number}): new ones cannot be added. More than {seats, number} per location — by arrangement: contact us.",
       "overSeatsCta": "Move to Premium",

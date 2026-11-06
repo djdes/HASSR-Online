@@ -785,7 +785,7 @@
       "upgrade": "«Premium»ga o‘tish",
       "ownTitle": "O‘z hujjatlaringiz",
       "ownLead": "O‘z buyruqlaringiz, yo‘riqnomalar va reglamentlarni yuklang — ular shu yerda saqlanadi va tarif hajmiga kiradi.",
-      "storageClosed": "Hujjat yuklash — «Standart» (10 MB) va «Premium» (1 GB) tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin."
+      "storageClosed": "Hujjat yuklash — «Standart» (10 MB), «Premium» va «VIP» (1 GB) tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin."
     },
     "individual": {
       "title": "Obyektingiz uchun nazorat dasturi — individual",
@@ -1067,9 +1067,9 @@
       "payStandard": "«Standart»ni ulash",
       "payPremium": "«Premium»ga o‘tish",
       "pointLimit": "Tarifning barcha nuqtalari band — {count, plural, other {# ta nuqta}}. Har bir yangi nuqta — yana bitta tarif kabi: uni tarif sahifasida qo‘shing.",
-      "journalLimit": "Bepul tarifda — {count, plural, other {# ta jurnal}}. Barcha jurnallarni yuritish uchun «Standart» yoki «Premium»ni ulang.",
+      "journalLimit": "Bepul tarifda — {count, plural, other {# ta jurnal}}. Barcha jurnallarni yuritish uchun «Standart», «Premium» yoki «VIP»ni ulang.",
       "storageFull": "Tarifdagi hujjatlar uchun joy tugadi. Keraksiz fayllarni o‘chiring yoki «Premium»ga o‘ting — barcha hujjatlar uchun 1 GB.",
-      "storageClosed": "Hujjat yuklash — «Standart» va «Premium» tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin.",
+      "storageClosed": "Hujjat yuklash — «Standart», «Premium» va «VIP» tariflarida. Avval yuklangan fayllarni ochish va o‘chirish mumkin.",
       "featureLocked": "Bu imkoniyat — «Premium» tarifida.",
       "unavailable": "Joriy tarifda mavjud emas.",
       "limitToStandard": "Bepul tarifning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. «Standart»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
@@ -5657,7 +5657,8 @@
       "productDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang.",
       "freeOfferDescription": "Barcha {journalCount, number} {journalCount, plural, other {ta jurnal}} xodimlar va nuqtalar bo‘yicha cheklovsiz — faollashtirilgandan boshlab {trialDays, number} {trialDays, plural, other {kun}}, karta bog‘lash shart emas",
       "standardDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha jurnallar, jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB. Narx — yillik to‘lovda oyiga.",
-      "premiumDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, «Merkuriy» FDAT, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga."
+      "premiumDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, «Merkuriy» FDAT, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga.",
+      "vipDescription": "«Premium»dagi hammasi: har bir nuqtaga {employees, number} nafargacha xodim, barcha hujjatlar uchun {gb, number} GB, HACCP tamoyillari asosidagi elektron ishlab chiqarish nazorati dasturi; qo‘shimcha ravishda ishonch telefoni — oyiga {hotlineHours, number} soatgacha, kengaytirilgan ma’lumotlar banki va shaxsiy maslahatchi. Narx — yillik to‘lovda oyiga."
     },
     "journals": {
       "sectionLead": "Kundalik sanitariya tekshiruvlari va HACCP yozuvlarining to‘liq to‘plami uchun {journalCount, number} ta elektron jurnal. Mos jurnallar, buyruqlar va tekshiruv ro‘yxatlarini ko‘rish uchun faoliyat sohasini tanlang."
@@ -5726,7 +5727,7 @@
         }
       }
     },
-    "pricingTitle": "Uchta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz",
+    "pricingTitle": "To‘rtta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz",
     "brandTagline": "Sizning elektron HACCP tizimingiz",
     "presentationPdf": "Setup taqdimoti — PDF, 7 MB (rus tilida)"
   },
@@ -5776,7 +5777,7 @@
         "label": "Nuqtalar",
         "decrease": "Nuqtani olib tashlash",
         "increase": "Nuqta qo‘shish",
-        "hint": "Nuqta — bitta tashkilot ichidagi alohida jurnallar va xodimlar: kafe, sex, filial. Har biri — yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %."
+        "hint": "Nuqta — bitta tashkilot ichidagi alohida jurnallar va xodimlar: kafe, sex, filial. Har biri — yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %, 50 tadan — individual taklif."
       },
       "tiers": {
         "free": {
@@ -10416,7 +10417,7 @@
           "balanceRetained": "Tashkilotdagi ballar balansi ({amount}) o‘zida qoladi.",
           "accountSeats": "Tashkilot xodimlari ({organizationCount, number}) hisobingizdagi joylarni band qilmaydi: oldin {before, number} ta, keyin {after, number} ta.",
           "organizationSeats": "Tashkilotda {count, plural, one {# nafar xodim} other {# nafar xodim}} bor.",
-          "seatLimit": "Tashkilotning to‘langan muddati yo‘q, bepul tarif esa — {limit, plural, other {# nafar xodim}}. Barcha xodimlar ishda qolishi uchun mijoz «Standart» yoki «Premium»ni ulashi kerak.",
+          "seatLimit": "Tashkilotning to‘langan muddati yo‘q, bepul tarif esa — {limit, plural, other {# nafar xodim}}. Barcha xodimlar ishda qolishi uchun mijoz «Standart», «Premium» yoki «VIP»ni ulashi kerak.",
           "rewardIntro": "Amaldagi qoidalar bo‘yicha mukofot:",
           "rewardsByProgram": "Mukofotlar hamkorlik dasturining amaldagi qoidalariga muvofiq beriladi.",
           "subscriptionReward": "O‘tkazilgandan keyingi birinchi to‘lovdan boshlab {months, number} oy davomida har bir obuna to‘lovining {percent, number}% i.",
@@ -17137,7 +17138,7 @@
       "pointsInvalid": "Nuqtalar soni — 1 dan 50 gacha",
       "noAccount": "Tashkilotning hisobi yo‘q — davr, nuqtalar va sinovni saqlab bo‘lmaydi",
       "notHeld": "Faqat ko‘rib chiqishni kutayotgan to‘lovni belgilash mumkin",
-      "freeWithEnd": "«Bepul» tarifda to‘langan muddat yo‘q — sanani belgilash uchun «Standart», «Premium» yoki «Obuna (avvalgi tarif)»ni tanlang"
+      "freeWithEnd": "«Bepul» tarifda to‘langan muddat yo‘q — sanani belgilash uchun «Standart», «Premium», «VIP» yoki «Obuna (avvalgi tarif)»ni tanlang"
     },
     "nav": {
       "label": "Karta bo‘limlari",
@@ -17266,7 +17267,7 @@
     },
     "cta": {
       "title": "Barcha jurnallarni bepul sinab ko‘ring",
-      "description": "14 kun barcha jurnallar cheklovsiz va kartasiz. Keyin — bepul 1 xodim va 1 jurnal yoki «Standart» va «Premium» tariflari.",
+      "description": "14 kun barcha jurnallar cheklovsiz va kartasiz. Keyin — bepul 1 xodim va 1 jurnal yoki «Standart», «Premium» yoki «VIP» tarifi.",
       "try": "Sinab ko‘rish"
     },
     "detailCommon": {
@@ -20941,7 +20942,7 @@
     "phaseActive": "Tariflar amalda: {trialDays, number} kunlik sinov, keyin to‘lovga o‘tish",
     "phaseTransitionOff": "Sinov — {trialDays, number} kun, lekin o‘tish o‘chirilgan: sinovdan keyin hech narsa bloklanmaydi",
     "trialExplanation": "Yangi hisoblar kartasiz {trialDays, number} kun «Premium»ning barcha imkoniyatlarini oladi; ishga tushishdan oldin yaratilgan hisoblar uchun sinov ishga tushish sanasidan hisoblanadi. Sinovdan keyin to‘lovsiz — bepul tarif: {freeEmployees, plural, other {# nafar xodim}} va {freeJournals, plural, other {# ta jurnal}}; ko‘prog‘i bo‘lsa, rahbar oynada tanlaydi, imtiyoz muddati o‘tgach esa egasi va eng ko‘p to‘ldiriladigan jurnal qoladi (kunlik vazifa /api/cron/billing-transition). O‘tish o‘chirilgan bo‘lsa, sinovdan keyin hech narsa bloklanmaydi.",
-    "paidHint": "Standart {standard, number} · Premium {premium, number} · avvalgi {legacy, number}",
+    "paidHint": "Standart {standard, number} · Premium {premium, number} · VIP {vip, number} · avvalgi {legacy, number}",
     "trial": "Sinov",
     "trialHint": "3 kun ichida tugaydi: {count, number}",
     "legacyCount": "Yana {count, number, ::group-off} — o‘tish o‘chirilgan, hammasi avvalgidek."
@@ -25128,7 +25129,7 @@
       "keepRemains": "Ishda qoladi: <b>{name}</b>",
       "andMore": "yana {count, number} ta",
       "archiveList": "Arxivga o‘tadi: {employees}{names}. Ular kabinetga va ilovaga kira olmaydi, jurnallardagi yozuvlari saqlanib qoladi.",
-      "restoreHint": "«Standart» yoki «Premium» tarifi to‘langach ularni qaytarish mumkin: «Xodimlar» → «Arxiv».",
+      "restoreHint": "«Standart», «Premium» yoki «VIP» tarifi to‘langach ularni qaytarish mumkin: «Xodimlar» → «Arxiv».",
       "paidTerm": "Tarif {date} gacha to‘langan. Bepul tarifga o‘tilsa, to‘langan muddat saqlanmaydi, avtoyangilash o‘chiriladi. Foydalanilmagan kunlar uchun pulni <mail>admin@wesetup.ru</mail> manziliga ariza orqali qaytarib olish mumkin — <offer>oferta 6.2-band</offer>.",
       "selfArchived": "Siz ham arxivga o‘tasiz va kabinetdan darhol chiqarilasiz.",
       "noSignIn": "«{name}» da parol ham, Telegram ham yo‘q — kabinetga kiradigan hech kim bo‘lmaydi. O‘zingizni qoldirgan ma’qul.",
@@ -29497,7 +29498,7 @@
       "statusTitle": "Sizning tarifingiz",
       "trialNote": "«Premium»dagi hamma narsa ochiq — {days, plural, other {# kun}} qoldi. Keyin bepul {employees, plural, other {# nafar xodim}} va {journals, plural, other {# ta jurnal}} qoladi yoki quyida tarif tanlang.",
       "freeNote": "Bepul: {employees, plural, other {# nafar xodim}} va {journals, plural, other {# ta jurnal}}. Barcha xodimlar va jurnallarni qaytarish uchun «Standart» yoki «Premium»ni ulang.",
-      "legacyNote": "Avvalgi tarif to‘langan muddat oxirigacha yangi cheklovlarsiz amal qiladi. «Standart» yoki «Premium»ga hozir o‘tish mumkin — foydalanilmagan qoldiq hisobga olinadi.",
+      "legacyNote": "Avvalgi tarif to‘langan muddat oxirigacha yangi cheklovlarsiz amal qiladi. «Standart», «Premium» yoki «VIP»ga hozir o‘tish mumkin — foydalanilmagan qoldiq hisobga olinadi.",
       "cycleYear": "yillik to‘lov",
       "cycleMonth": "oylik to‘lov",
       "pointsCount": "{count, plural, other {# ta nuqta}}",
@@ -29524,7 +29525,7 @@
       "ruleTrial": "Sinov davri — kartasiz {trialDays, number} kun. Sinov davrida to‘langan tarif to‘lov kunidan amal qiladi.",
       "examplesTitle": "Yillik to‘lovda oylik narx",
       "colPoints": "Nuqtalar",
-      "ruleSeats": "Xodimlar: «Standart» — har bir nuqtaga {standard, number} nafargacha, «Premium» — {premium, number} nafargacha, undan ko‘pi — kelishuv bo‘yicha. O‘rin yetmasa — keyingi tarifga o‘ting.",
+      "ruleSeats": "Xodimlar: «Standart» — har bir nuqtaga {standard, number} nafargacha, «Premium» va «VIP» — {premium, number} nafargacha, undan ko‘pi — kelishuv bo‘yicha. O‘rin yetmasa — keyingi tarifga o‘ting.",
       "overSeatsPremium": "Xodimlar «Standart» bergandan ko‘p ({limit, number} tadan {used, number}): yangisini qo‘shib bo‘lmaydi. «Premium»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
       "overSeatsContact": "Xodimlar «Premium» bergandan ko‘p ({limit, number} tadan {used, number}): yangisini qo‘shib bo‘lmaydi. Har bir nuqtaga {seats, number} nafardan ortig‘i — kelishuv bo‘yicha: bizga yozing.",
       "overSeatsCta": "«Premium»ga o‘tish",
