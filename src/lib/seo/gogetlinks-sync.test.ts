@@ -886,3 +886,115 @@ test("/api/root/gogetlinks/account PUT encrypts secrets & logs ggl.account.save,
   assert.equal(auditEvents[1]?.action, "ggl.campaign.ensure");
 });
 
+
+test("syncGglCabinet auto-binds active wesetup.ru campaign when defaultCampaignId is null or stale, fetches wesetup paid links last, and pins overall campaign", async () => {
+  const paidFetchOrder: string[] = [];
+  const pinnedIds: number[] = [];
+  let updatedAccountData: Record<string, unknown> | null = null;
+  const campaigns = new Map<number, Record<string, unknown>>();
+
+  const mockDb = {
+    gglAccount: {
+      findFirst: async () => ({
+        id: "acc_pin_test",
+        email: "seo-owner@wesetup.ru",
+        // Stale legacy closed campaign ID should be replaced with active wesetup #884931
+        defaultCampaignId: 149699,
+      }),
+      update: async (args: { data: Record<string, unknown> }) => {
+        updatedAccountData = args.data;
+        return args.data;
+      },
+    },
+    gglCampaign: {
+      upsert: async (args: {
+        where: { gglCampaignId: number };
+        create: Record<string, unknown>;
+        update: Record<string, unknown>;
+      }) => {
+        const gglId = args.where.gglCampaignId;
+        const row = {
+          id: `camp_${gglId}`,
+          ...(campaigns.get(gglId) ?? args.create),
+          ...args.update,
+        };
+        campaigns.set(gglId, row);
+        return row;
+      },
+    },
+    gglOrder: {
+      findMany: async () => [],
+      update: async () => ({ id: "ord_1" }),
+      create: async () => ({ id: "ord_1" }),
+    },
+    gglPlannedSlot: {
+      updateMany: async () => ({ count: 0 }),
+    },
+    gglThread: {
+      findMany: async () => [],
+      upsert: async () => ({ id: "th_1" }),
+      update: async () => ({ id: "th_1" }),
+    },
+    gglMessage: {
+      findMany: async () => [],
+      create: async () => ({ id: "msg_1" }),
+      update: async () => ({ id: "msg_1" }),
+    },
+  };
+
+  await syncGglCabinet({
+    includeThreads: false,
+    prismaClient: mockDb as never,
+    pinOverallCampaign: async (id) => {
+      pinnedIds.push(id);
+    },
+    readGgl: async (opName, args) => {
+      if (opName === "getAccountBalance") {
+        return { balanceRub: 8936.06, availableRub: 8936.06, blockedRub: 0 } as never;
+      }
+      if (opName === "listActiveCampaigns") {
+        return [
+          {
+            campaignId: "884931",
+            name: "WeSetup электронные журналы ХАССП",
+            domain: "wesetup.ru",
+            siteUrl: "https://wesetup.ru",
+            spent: "0 Р",
+            linksCount: "0",
+          },
+        ] as never;
+      }
+      if (opName === "listClosedCampaigns") {
+        return [
+          {
+            campaignId: "149699",
+            name: "YESBEAT.RU",
+            domain: "yesbeat.ru",
+            siteUrl: "https://yesbeat.ru",
+            spent: "39 748 Р",
+            linksCount: "55",
+          },
+          {
+            campaignId: "4101",
+            name: "mp3mail.ru",
+            domain: "mp3mail.ru",
+            siteUrl: "http://mp3mail.ru",
+            spent: "71 Р",
+            linksCount: "0",
+          },
+        ] as never;
+      }
+      if (opName === "listCampaignPaidLinks") {
+        paidFetchOrder.push(String(args?.campaignId));
+        return [] as never;
+      }
+      return [] as never;
+    },
+  });
+
+  assert.ok(updatedAccountData);
+  assert.equal((updatedAccountData as Record<string, unknown>).defaultCampaignId, 884931);
+  // Active wesetup.ru campaign #884931 MUST be fetched last so /reviews #in_comp_id stays selected on wesetup.ru
+  assert.equal(paidFetchOrder.at(-1), "884931");
+  assert.deepEqual(pinnedIds, [884931]);
+});

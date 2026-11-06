@@ -11,6 +11,7 @@ import {
   Play,
   Plus,
   Repeat,
+  Rocket,
   Save,
   ShieldCheck,
   SkipForward,
@@ -45,6 +46,8 @@ import {
 
 export interface PlannerTabProps {
   campaigns: GglCampaignDto[];
+  defaultGglCampaignId?: number | null;
+  accountConnected?: boolean;
   plans: GglSchedulePlanDto[];
   slots: GglPlannedSlotDto[];
   viewer: SeoLinksViewerCapabilities;
@@ -87,6 +90,7 @@ interface PlanEditorProps {
   initialPlan: GglSchedulePlanDto | null;
   wesetupCampaigns: GglCampaignDto[];
   canManagePlans: boolean;
+  canEnsureCampaign: boolean;
   onSaved: () => Promise<void> | void;
 }
 
@@ -94,6 +98,7 @@ function PlanEditorForm({
   initialPlan,
   wesetupCampaigns,
   canManagePlans,
+  canEnsureCampaign,
   onSaved,
 }: PlanEditorProps) {
   const defaultCampaignId =
@@ -103,6 +108,8 @@ function PlanEditorForm({
     initialPlan?.name ?? "Регулярное ссылочное продвижение wesetup.ru",
   );
   const [campaignId, setCampaignId] = useState(defaultCampaignId);
+  const [ensuringCampaign, setEnsuringCampaign] = useState(false);
+  const effectiveCampaignId = campaignId || defaultCampaignId;
   const [kind, setKind] = useState<"one_time" | "monthly">(
     initialPlan?.kind === "one_time" ? "one_time" : "monthly",
   );
@@ -171,11 +178,45 @@ function PlanEditorForm({
     });
   }
 
+  async function handleQuickEnsureCampaign() {
+    if (!canEnsureCampaign) return;
+    setEnsuringCampaign(true);
+    try {
+      const response = await fetch("/api/root/gogetlinks/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "WeSetup электронные журналы ХАССП",
+          idempotencyKey: generateClientIdempotencyKey("planner-ensure-wesetup"),
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        campaign?: { name: string; gglCampaignId: number };
+        error?: string;
+      } | null;
+      if (!response.ok) {
+        throw new Error(
+          data?.error ?? "Не удалось создать или привязать кампанию wesetup.ru",
+        );
+      }
+      toast.success(
+        data?.campaign
+          ? `Кампания ${data.campaign.name} (#${data.campaign.gglCampaignId}) создана и закреплена`
+          : "Кампания wesetup.ru готова и закреплена",
+      );
+      await onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Ошибка создания кампании");
+    } finally {
+      setEnsuringCampaign(false);
+    }
+  }
+
   async function savePlan(overrideActive?: boolean) {
     if (!canManagePlans) return;
-    if (!campaignId) {
+    if (!effectiveCampaignId) {
       toast.error(
-        "Сначала создайте или синхронизируйте кампанию wesetup.ru во вкладке подключения",
+        "Сначала создайте или синхронизируйте кампанию wesetup.ru",
       );
       return;
     }
@@ -201,7 +242,7 @@ function PlanEditorForm({
         body: JSON.stringify({
           ...(initialPlan?.id ? { id: initialPlan.id } : {}),
           name: name.trim(),
-          campaignId,
+          campaignId: effectiveCampaignId,
           kind,
           budgetRub: parsedBudget,
           maxPricePerLinkRub: parsedMaxPrice,
@@ -283,7 +324,7 @@ function PlanEditorForm({
             Кампания wesetup.ru
           </label>
           <select
-            value={campaignId}
+            value={effectiveCampaignId}
             disabled={!canManagePlans || wesetupCampaigns.length === 0}
             onChange={(e) => setCampaignId(e.target.value)}
             className={SEO_INPUT_CLASS}
@@ -298,6 +339,21 @@ function PlanEditorForm({
               ))
             )}
           </select>
+          {wesetupCampaigns.length === 0 && canEnsureCampaign ? (
+            <button
+              type="button"
+              disabled={ensuringCampaign}
+              onClick={() => void handleQuickEnsureCampaign()}
+              className="mt-1.5 inline-flex items-center gap-1.5 text-[12px] font-medium text-[#3848c7] hover:underline disabled:opacity-50"
+            >
+              {ensuringCampaign ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Rocket className="size-3.5" />
+              )}
+              Создать и закрепить кампанию wesetup.ru
+            </button>
+          ) : null}
         </div>
 
         <div>
@@ -522,15 +578,24 @@ function PlanEditorForm({
 
 export function PlannerTab({
   campaigns,
+  defaultGglCampaignId = null,
+  accountConnected = false,
   plans,
   slots,
   viewer,
   onRefresh,
 }: PlannerTabProps) {
-  const wesetupCampaigns = useMemo(
-    () => campaigns.filter((c) => c.isWesetup),
-    [campaigns],
-  );
+  const wesetupCampaigns = useMemo(() => {
+    const filtered = campaigns.filter((c) => c.isWesetup);
+    return [...filtered].sort((a, b) => {
+      const rank = (c: GglCampaignDto): number => {
+        if (defaultGglCampaignId && c.gglCampaignId === defaultGglCampaignId) return 0;
+        if (c.state === "active") return 1;
+        return 2;
+      };
+      return rank(a) - rank(b);
+    });
+  }, [campaigns, defaultGglCampaignId]);
   const campaignById = useMemo(
     () => new Map(campaigns.map((c) => [c.id, c])),
     [campaigns],
@@ -757,12 +822,13 @@ export function PlannerTab({
         <PlanEditorForm
           key={
             selectedPlanId === "new" || !activePlan
-              ? "new-plan"
+              ? `new-plan:${wesetupCampaigns[0]?.id ?? "none"}`
               : `${activePlan.id}:${activePlan.updatedAt ?? ""}`
           }
           initialPlan={selectedPlanId === "new" ? null : activePlan}
           wesetupCampaigns={wesetupCampaigns}
           canManagePlans={viewer.canManagePlans}
+          canEnsureCampaign={Boolean(viewer.isSuperadmin && accountConnected)}
           onSaved={onRefresh}
         />
       </section>

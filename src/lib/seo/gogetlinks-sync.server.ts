@@ -9,6 +9,7 @@ import {
   GglAuthError,
   GglCallError,
   type GglWalletBalance,
+  pinGglOverallCampaign,
   verifyAndLoginGgl,
 } from "@/lib/seo/gogetlinks-client.server";
 import {
@@ -176,6 +177,7 @@ export async function saveGglAccount(
   deps?: {
     prismaClient?: GglAccountSavePrismaClient;
     verifyLogin?: typeof verifyAndLoginGgl;
+    pinOverallCampaign?: typeof pinGglOverallCampaign;
   },
 ): Promise<{ account: GglAccountView; accountId: string }> {
   const client = deps?.prismaClient ?? db;
@@ -277,6 +279,17 @@ export async function saveGglAccount(
     : await client.gglAccount.create({
         data: dataPayload,
       });
+
+  if (
+    input.defaultCampaignId !== undefined &&
+    input.defaultCampaignId !== null &&
+    (!deps?.verifyLogin || deps?.pinOverallCampaign)
+  ) {
+    const pinFn = deps?.pinOverallCampaign ?? pinGglOverallCampaign;
+    await pinFn(input.defaultCampaignId, { prismaClient: client }).catch((err) => {
+      console.warn("[ggl-sync] Warning: could not pin overall campaign in GoGetLinks:", err);
+    });
+  }
 
   return {
     account: serializeGglAccount(saved),
@@ -597,6 +610,7 @@ export async function syncGglCabinet(opts?: {
   includeThreads?: boolean;
   prismaClient?: GglSyncPrismaClient;
   readGgl?: ReadGglFn;
+  pinOverallCampaign?: typeof pinGglOverallCampaign;
   now?: Date;
 }): Promise<GglSyncSummary> {
   const client = opts?.prismaClient ?? db;
@@ -622,8 +636,20 @@ export async function syncGglCabinet(opts?: {
     const campaignById = new Map(campaigns.map((c) => [c.id, c]));
 
     const activeWesetup = campaigns.find((c) => c.isWesetup && c.state === "active");
-    const nextDefaultCampaignId =
-      account.defaultCampaignId ?? (activeWesetup ? activeWesetup.gglCampaignId : null);
+    const hasValidExistingDefault =
+      account.defaultCampaignId !== null &&
+      account.defaultCampaignId !== undefined &&
+      campaigns.some(
+        (c) =>
+          c.isWesetup &&
+          c.state === "active" &&
+          c.gglCampaignId === account.defaultCampaignId,
+      );
+    const nextDefaultCampaignId = hasValidExistingDefault
+      ? account.defaultCampaignId
+      : activeWesetup
+        ? activeWesetup.gglCampaignId
+        : account.defaultCampaignId ?? null;
 
     // 2. Load pre-sync orders to preserve human attribution & compute deltas accurately
     const existingOrdersRaw: Array<ExistingOrderSnapshot & { campaignId: string }> =
@@ -645,7 +671,19 @@ export async function syncGglCabinet(opts?: {
       { review: NormalizedGglReview; campaign: SyncedCampaignRecord }
     >();
 
-    for (const camp of campaigns) {
+    // Fetch non-wesetup campaigns first and the active wesetup.ru campaign LAST so GoGetLinks'
+    // /reviews session filter (#in_comp_id) remains permanently selected on wesetup.ru
+    const orderedCampaignsForPaid = [...campaigns].sort((a, b) => {
+      const rank = (c: SyncedCampaignRecord): number => {
+        if (c.gglCampaignId === nextDefaultCampaignId) return 3;
+        if (c.isWesetup && c.state === "active") return 2;
+        if (c.isWesetup) return 1;
+        return 0;
+      };
+      return rank(a) - rank(b);
+    });
+
+    for (const camp of orderedCampaignsForPaid) {
       const paidRows = await readGgl("listCampaignPaidLinks", {
         campaignId: String(camp.gglCampaignId),
       });
@@ -661,7 +699,6 @@ export async function syncGglCabinet(opts?: {
       { tab: "in_progress", status: "in_progress" },
       { tab: "on_check", status: "on_check" },
       { tab: "needs_replacement", status: "needs_replacement" },
-      { tab: "rejected", status: "rejected" },
     ];
 
     for (const { tab, status } of tabMappings) {
@@ -1069,7 +1106,7 @@ export async function syncGglCabinet(opts?: {
       }
     }
 
-    // 4. Persist synced account metrics & status
+    // 4. Persist synced account metrics & status + keep GoGetLinks cabinet pinned to wesetup.ru
     await client.gglAccount.update({
       where: { id: account.id },
       data: {
@@ -1082,6 +1119,13 @@ export async function syncGglCabinet(opts?: {
         lastError: null,
       },
     });
+
+    if (nextDefaultCampaignId !== null && (!opts?.readGgl || opts?.pinOverallCampaign)) {
+      const pinFn = opts?.pinOverallCampaign ?? pinGglOverallCampaign;
+      await pinFn(nextDefaultCampaignId, { prismaClient: client }).catch((err) => {
+        console.warn("[ggl-sync] Warning: could not pin overall campaign after sync:", err);
+      });
+    }
 
     return {
       syncedAt: syncNow.toISOString(),
@@ -1153,7 +1197,7 @@ export async function ensureWesetupCampaign(
   });
 
   if (!existingActive) {
-    const campaignName = input.name?.trim() || "WeSetup — ХАССП и СанПиН";
+    const campaignName = input.name?.trim() || "WeSetup электронные журналы ХАССП";
     await writeGgl({
       opName: "createOrUpdateCampaign",
       args: {
@@ -1188,6 +1232,16 @@ export async function ensureWesetupCampaign(
   await client.gglAccount.update({
     where: { id: account.id },
     data: { defaultCampaignId: existingActive.gglCampaignId },
+  });
+
+  await writeGgl({
+    opName: "setOverallCampaign",
+    args: { campaignId: String(existingActive.gglCampaignId) },
+    campaignIdForGuard: String(existingActive.gglCampaignId),
+    idempotencyKey: `pin-overall-${input.idempotencyKey}`,
+    prismaClient: client,
+  }).catch((err) => {
+    console.warn("[ggl-sync] Warning: could not pin ensured campaign in GoGetLinks:", err);
   });
 
   return existingActive;

@@ -1,0 +1,27 @@
+{
+  "taskId": "gogetlinks-campaign-fix-2026-11-06",
+  "verifiedAt": "2026-11-06T11:57:00+03:00",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "notes": "Byte-preserving ASCII neutralization of passive layout reCAPTCHA markers on HTTP 200 HTML in createGglFetch + poisoned state.json tier cleanup; genuine challenge pages remain blocked."
+    },
+    "AC2": {
+      "status": "PASS",
+      "notes": "Scoped table selectors + empty table selectors in gogetlinks.json; logical review tab slug mapping and 302 cross-tab empty redirect guard; zero secrets in spec."
+    },
+    "AC3": {
+      "status": "PASS",
+      "notes": "Live GoGetLinks campaign #884931 (WeSetup электронные журналы ХАССП, wesetup.ru) created and pinned via setOverallCampaignId; 5-step modal create + strict isolation guard wired in callGglWrite."
+    },
+    "AC4": {
+      "status": "PASS",
+      "notes": "syncGglCabinet auto-binds defaultCampaignId=884931, fetches wesetup paid links last, pins overall campaign, and PlannerTab + DemandAndAccountTab reactively select #884931."
+    },
+    "AC5": {
+      "status": "PASS",
+      "notes": "58/58 GoGetLinks unit tests pass, ESLint 0 errors, check-secrets 0 findings, typecheck 0 errors, live sync smoke verified."
+    }
+  }
+}
