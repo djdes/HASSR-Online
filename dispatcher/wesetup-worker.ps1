@@ -288,13 +288,44 @@ $SELF_CONTAINED_SYSTEM = @(
   'Return ONLY the answer in the exact format the instruction requires - no preamble, no code fences, no commentary.'
 ) -join "`n"
 
+# Only the SEO transport envelope is expanded. Bound bytes before UTF-8 decoding.
+function Expand-GglWebmastersJob([string]$text) {
+  $prefix = "type: wesetup_ggl_webmasters`nencoding: gzip-base64-v1`n`n"
+  if (-not $text.StartsWith($prefix)) { return $text }
+  if ($text.Length -gt 49000) { throw 'ggl_payload_too_large' }
+  $inputStream = $null; $gzip = $null; $output = $null
+  try {
+    $bytes = [Convert]::FromBase64String($text.Substring($prefix.Length))
+    $inputStream = [IO.MemoryStream]::new($bytes, $false)
+    $gzip = [IO.Compression.GZipStream]::new($inputStream, [IO.Compression.CompressionMode]::Decompress)
+    $output = [IO.MemoryStream]::new()
+    $buffer = New-Object byte[] 4096
+    while (($count = $gzip.Read($buffer, 0, $buffer.Length)) -gt 0) {
+      if ($output.Length + $count -gt 760000) { throw 'ggl_payload_expansion_limit' }
+      $output.Write($buffer, 0, $count)
+    }
+    $utf8 = [Text.UTF8Encoding]::new($false, $true)
+    $promptText = $utf8.GetString($output.ToArray())
+    if ($promptText.Length -gt 190000 -or -not $promptText.StartsWith("type: wesetup_ggl_webmasters`n")) { throw 'ggl_payload_invalid' }
+    return $promptText
+  } finally {
+    if ($gzip) { $gzip.Dispose() }
+    if ($inputStream) { $inputStream.Dispose() }
+    if ($output) { $output.Dispose() }
+  }
+}
+
 function Process-SelfContained($job, [string]$jobType) {
   $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
   [System.IO.File]::WriteAllText($sysFile, $SELF_CONTAINED_SYSTEM, (New-Object System.Text.UTF8Encoding $false))
   try {
     $engine = if ($jobType -eq 'wesetup_ggl_webmasters') { 'ralph' } else { 'claude' }
     if ($engine -eq 'ralph') {
-      $res = Invoke-RalphText ([string]$job.inputText) $script:Cfg.TimeoutSec
+      try { $promptText = Expand-GglWebmastersJob ([string]$job.inputText) } catch {
+        Complete-Job $job.id $false '' 'ralph:invalid_ggl_payload' $null
+        return $false
+      }
+      $res = Invoke-RalphText $promptText $script:Cfg.TimeoutSec
     } else {
       $res = Invoke-Claude ([string]$job.inputText) $script:Cfg.TimeoutSec $sysFile
     }

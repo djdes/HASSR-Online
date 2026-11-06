@@ -44,4 +44,10 @@ Capture the real authenticated site contract before adding operations. Use the i
 
 ## Delivery
 
+## Live queue constraint amendment (frozen before corrective implementation)
+
+The complete live 473-site prompt contains 153,953 characters; the actual ProjectsFlow enqueue endpoint rejects text over 50,000 characters. All 473 cards (6,665 fields, 901 examples) are already cached, and the wallet stayed unchanged. Keep all data: encode large SEO jobs using a versioned gzip/base64 envelope below 50,000 characters, and expand it only in the dedicated SEO worker before Ralph. Do not change ProjectsFlow's validation or other job types.
+
+- AC6: A real all-applicant payload crosses the existing queue within its 50,000-character limit and is restored byte-for-byte before Ralph; reject malformed, oversized or wrong-type compressed data with bounded decompression. Preserve plain short jobs. Test Node-to-PowerShell compatibility and the live complete report. Deliver the corrective change through a separate green master PR, then restart only the owned WeSetup worker through normal process permissions.
+
 For changes to tracked WeSetup application files, use a clean worktree from current origin/master, required checks and a green squash PR to master. The current primary worktree has pre-existing untracked mobile files blocking an update; preserve them. Shared connector/configuration installation is local and must be verified separately from application deployment.

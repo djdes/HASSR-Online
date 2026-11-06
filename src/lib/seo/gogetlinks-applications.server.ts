@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { gzipSync } from "node:zlib";
 import { db } from "@/lib/db";
 import { enqueueAndWait } from "@/lib/ai-assistant/pf-client";
 import { extractJsonValue } from "@/lib/ai-vision/parse";
@@ -11,6 +12,18 @@ import { z } from "zod";
 import { isWesetupDomain } from "@/lib/seo/gogetlinks-codec";
 
 export const GGL_WEBMASTERS_JOB_TYPE = "wesetup_ggl_webmasters";
+const PACKED_JOB_HEADER = `type: ${GGL_WEBMASTERS_JOB_TYPE}\nencoding: gzip-base64-v1\n\n`;
+
+/** ProjectsFlow accepts at most 50,000 characters. Compression preserves every row. */
+export function encodeGglWebmastersJob(prompt: string): string {
+  if (prompt.length > 190_000 || !prompt.startsWith(`type: ${GGL_WEBMASTERS_JOB_TYPE}\n`)) {
+    throw new GglApplicationsError("Некорректный размер или тип задания анализа площадок");
+  }
+  if (prompt.length <= 49_000) return prompt;
+  const packed = PACKED_JOB_HEADER + gzipSync(Buffer.from(prompt, "utf8")).toString("base64");
+  if (packed.length > 49_000) throw new GglApplicationsError("Данные всех площадок не помещаются в очередь даже после сжатия; данные не обрезаны");
+  return packed;
+}
 const CACHE_MS = 30 * 60_000;
 const CARD_MS = 24 * 60 * 60_000;
 const active = new Map<string, Promise<unknown>>();
@@ -184,7 +197,7 @@ export async function analyzeGglWebmasters(campaignId: number, snapshotId: strin
     if (snapshotId !== view.snapshotId) throw new GglApplicationsError("Список заявок обновился. Запустите анализ заново", 409);
     if (!view.snapshot.applications.length) throw new GglApplicationsError("Входящих заявок пока нет");
     const prompt = buildGglWebmastersPrompt(view);
-    const reply = await enqueueAndWait(prompt, { deadlineMs: 100_000 });
+    const reply = await enqueueAndWait(encodeGglWebmastersJob(prompt), { deadlineMs: 100_000 });
     if (!reply.ok) throw new GglApplicationsError(reply.error, reply.code === "timeout" ? 504 : 503);
     const analysis = parseGglWebmastersAnalysis(reply.text, view);
     const current = await getGglApplicationsView(campaignId);
