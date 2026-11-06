@@ -47,7 +47,7 @@ export function UnsubscribeButton({ token, already }: { token: string; already: 
       </button>
       {state === "error" ? (
         <p className="mt-3 text-[13px] text-[#a13a32]">
-          Не получилось. Попробуйте ещё раз или напишите на support@wesetup.ru.
+          Не получилось. Попробуйте ещё раз или напишите на admin@wesetup.ru.
         </p>
       ) : null}
     </div>

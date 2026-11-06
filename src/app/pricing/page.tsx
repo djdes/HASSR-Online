@@ -106,7 +106,7 @@ export default async function PricingPage() {
         />
 
         <p className="text-center text-[13px] leading-[1.6] text-[#6f7282]">
-          {PAYMENT_METHODS_NOTE} {REFUND_NOTE} Заявление на возврат — на support@wesetup.ru,
+          {PAYMENT_METHODS_NOTE} {REFUND_NOTE} Заявление на возврат — на admin@wesetup.ru,
           условия — в{" "}
           <Link href={REFUND_HREF} className="text-[#3848c7]">
             договоре-оферте

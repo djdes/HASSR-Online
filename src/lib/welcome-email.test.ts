@@ -30,7 +30,7 @@ for (const locale of ["ru", "en", "uz"] as const) {
       assert.match(html, new RegExp(`href="[^"]*${step.href}" data-welcome-step="${step.id}"`));
     }
     assert.match(html, new RegExp(`href="[^"]*${WELCOME_SETUP_START_HREF}" data-welcome-start`));
-    assert.ok(html.includes("8 (925) 305-80-77"));
+    assert.ok(html.includes("+7 (925) 305-80-77"));
     // Имя экранируется, плейсхолдеров и сырых ключей каталога нет.
     assert.ok(!html.includes("<script>"));
     assert.ok(!/\{(name|organization|phone|trialDays)\}/.test(html));

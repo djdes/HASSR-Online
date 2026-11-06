@@ -89,7 +89,7 @@ export default function TermsPage() {
       <p>
         2.4. При подозрении на компрометацию доступа Пользователь обязан
         незамедлительно сообщить об этом на{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a> и сменить
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a> и сменить
         пароль.
       </p>
       <p>
@@ -208,7 +208,7 @@ export default function TermsPage() {
       <h2>9. Контакты</h2>
       <p>
         Вопросы по настоящему соглашению —{" "}
-        <a href="mailto:support@wesetup.ru">support@wesetup.ru</a>.
+        <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>.
       </p>
     </LegalArticle>
   );

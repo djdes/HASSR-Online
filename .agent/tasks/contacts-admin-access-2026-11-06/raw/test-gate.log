@@ -1,0 +1,12 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=5752, fail=0 ===
+✓ Все тесты прошли.
+
+real	5m59.798s
+user	13m33.112s
+sys	2m8.454s
+exit=0

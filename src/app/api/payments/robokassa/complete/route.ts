@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     order.completeTokenExpiresAt.getTime() < Date.now()
   ) {
     return NextResponse.json(
-      { error: "Срок действия ссылки истёк. Напишите на support@wesetup.ru" },
+      { error: "Срок действия ссылки истёк. Напишите на admin@wesetup.ru" },
       { status: 410 },
     );
   }

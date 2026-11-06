@@ -184,7 +184,7 @@ POST https://wesetup.ru/api/mcp/wsk_…`}</pre>
             Статус и изменения API
           </div>
           <p className="mt-2 text-[14px] leading-[1.65] text-[#3c4053]">
-            Работает ли сервис — на <Link href="/status" className="text-[#3848c7] underline-offset-2 hover:underline">странице статуса</Link>. Изменения API попадают в <Link href="/whats-new" className="text-[#3848c7] underline-offset-2 hover:underline">«Что нового»</Link> и RSS. Вопросы — support@wesetup.ru.
+            Работает ли сервис — на <Link href="/status" className="text-[#3848c7] underline-offset-2 hover:underline">странице статуса</Link>. Изменения API попадают в <Link href="/whats-new" className="text-[#3848c7] underline-offset-2 hover:underline">«Что нового»</Link> и RSS. Вопросы — admin@wesetup.ru.
           </p>
           <Link href="/register" className="mt-4 inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]">
             Получить ключ

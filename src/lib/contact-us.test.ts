@@ -6,7 +6,7 @@ import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl,
 
 test("окно «Свяжитесь с нами»: телефон и почта WeSetup", () => {
   assert.deepEqual(CONTACT_PHONE, { display: "+7 (495) 109-65-43", tel: "+74951096543" });
-  assert.equal(CONTACT_EMAIL, "support@wesetup.ru");
+  assert.equal(CONTACT_EMAIL, "admin@wesetup.ru");
 });
 
 test("Telegram — отдел продаж из окружения, иначе бот WeSetup", () => {

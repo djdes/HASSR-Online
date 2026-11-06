@@ -338,7 +338,7 @@ export function renderClosingDocumentPdf(
   size(6);
   doc.setTextColor(110, 110, 110);
   doc.text(
-    `Сформировано сервисом WeSetup ${formatRuDate(new Date())}. Документ подписан факсимиле; оригинал с собственноручной подписью или обмен через ЭДО — по запросу на support@wesetup.ru.`,
+    `Сформировано сервисом WeSetup ${formatRuDate(new Date())}. Документ подписан факсимиле; оригинал с собственноручной подписью или обмен через ЭДО — по запросу на admin@wesetup.ru.`,
     MARGIN,
     PAGE_H - 5
   );

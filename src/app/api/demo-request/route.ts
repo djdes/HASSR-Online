@@ -221,7 +221,7 @@ function inviteAttachment(slot: string, requestId: string, summary: string) {
       slot,
       uid: `demo-${requestId}`,
       summary,
-      description: "Показ WeSetup за 15 минут. Позвоним в назначенное время. Поддержка: support@wesetup.ru",
+      description: "Показ WeSetup за 15 минут. Позвоним в назначенное время. Поддержка: admin@wesetup.ru",
     }),
     contentType: "text/calendar; charset=utf-8; method=PUBLISH",
   };

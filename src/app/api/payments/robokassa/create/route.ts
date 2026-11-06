@@ -325,7 +325,7 @@ export async function POST(request: NextRequest) {
   // оплата баллами обязана работать и на стенде без ключей Робокассы.
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Приём оплаты пока не настроен. Напишите на support@wesetup.ru" },
+      { error: "Приём оплаты пока не настроен. Напишите на admin@wesetup.ru" },
       { status: 503 },
     );
   }

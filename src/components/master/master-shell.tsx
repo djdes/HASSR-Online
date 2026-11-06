@@ -186,8 +186,8 @@ export function MasterShell({
             <BrandLogo height={16} title="WeSetup" />
             {t("subtitle")}
           </span>
-          <a href="mailto:support@wesetup.ru" className="transition-colors duration-150 hover:text-[#5566f6]">
-            support@wesetup.ru
+          <a href="mailto:admin@wesetup.ru" className="transition-colors duration-150 hover:text-[#5566f6]">
+            admin@wesetup.ru
           </a>
         </div>
       </footer>

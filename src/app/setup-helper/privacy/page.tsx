@@ -83,8 +83,8 @@ export default function SetupHelperPrivacyPage() {
       <h2>6. Изменения и обратная связь</h2>
       <p>
         Актуальная редакция всегда доступна на этой странице. По любым вопросам обращайтесь на{" "}
-        <a href="mailto:support@wesetup.ru" className={LINK}>
-          support@wesetup.ru
+        <a href="mailto:admin@wesetup.ru" className={LINK}>
+          admin@wesetup.ru
         </a>
         .
       </p>

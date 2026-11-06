@@ -5,6 +5,7 @@ import { loadMessages } from "@/i18n/messages";
 import { localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { LegalArticle, LegalRequisites } from "@/components/public/legal-article";
+import { COMPANY_EMAIL, COMPANY_MOBILE, COMPANY_PHONE } from "@/lib/company-contacts";
 import {
   DEFAULT_OG_IMAGES,
   DEFAULT_TWITTER_CARD,
@@ -78,7 +79,7 @@ export default async function PrivacyPage() {
       <p>{t("clause4_1_3")}</p>
       <p>{t("clause4_1_4")}</p>
       <p>{t("clause4_1_5")}</p>
-      <p>{t.rich("clause4_1_6", { supportLink: (chunks) => <a href="mailto:support@wesetup.ru">{chunks}</a> })}</p>
+      <p>{t.rich("clause4_1_6", { supportLink: (chunks) => <a href={`mailto:${COMPANY_EMAIL}`}>{chunks}</a> })}</p>
       <p>{t("clause4_1_7")}</p>
       <p>{t("clause4_1_8")}</p>
       <p>{t("clause4_1_9")}</p>
@@ -182,7 +183,7 @@ export default async function PrivacyPage() {
       <p>{t("clause12_1_4")}</p>
       <p>{t("clause12_1_5")}</p>
       <p>{t("clause12_1_6")}</p>
-      <p>{t.rich("clause12_2", { strong: (chunks) => <strong>{chunks}</strong>, supportLink: (chunks) => <a href="mailto:support@wesetup.ru">{chunks}</a> })}</p>
+      <p>{t.rich("clause12_2", { strong: (chunks) => <strong>{chunks}</strong>, supportLink: (chunks) => <a href={`mailto:${COMPANY_EMAIL}`}>{chunks}</a> })}</p>
       <p>{t("clause12_3")}</p>
       <p>{t.rich("clause12_4", { strong: (chunks) => <strong>{chunks}</strong> })}</p>
       <p>{t("clause12_5")}</p>
@@ -203,11 +204,16 @@ export default async function PrivacyPage() {
         taxIds: legal("taxIds", { inn: "5018215599", kpp: "501801001" }),
         registrationId: legal("registrationId", { ogrn: "1235000105306" }),
         address: legal("address", { address: "141065, Московская область, г. Королёв, ул. Ленина, д. 10/6" }),
-        telephone: legal.rich("telephone", { phoneLink: (chunks) => <a href="tel:+79996341612" className="text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a> }),
-        email: legal.rich("email", { emailLink: (chunks) => <a href="mailto:support@wesetup.ru" className="break-all text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a> }),
+        telephone: legal.rich("telephone", {
+          office: COMPANY_PHONE.display,
+          mobile: COMPANY_MOBILE.display,
+          officeLink: (chunks) => <a href={`tel:${COMPANY_PHONE.tel}`} className="whitespace-nowrap text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a>,
+          mobileLink: (chunks) => <a href={`tel:${COMPANY_MOBILE.tel}`} className="whitespace-nowrap text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a>,
+        }),
+        email: legal.rich("email", { emailLink: (chunks) => <a href={`mailto:${COMPANY_EMAIL}`} className="break-all text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a> }),
         website: legal.rich("website", { siteLink: (chunks) => <a href="https://wesetup.ru" className="text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a> }),
       }} />
-      <p>{t.rich("clause14_contact", { supportLink: (chunks) => <a href="mailto:support@wesetup.ru">{chunks}</a> })}</p>
+      <p>{t.rich("clause14_contact", { supportLink: (chunks) => <a href={`mailto:${COMPANY_EMAIL}`}>{chunks}</a> })}</p>
     </LegalArticle>
   );
 }

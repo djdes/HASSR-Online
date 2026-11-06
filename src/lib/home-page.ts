@@ -4,6 +4,7 @@
  * слота «Избранного». Модуль без БД и React: его читают страница, API и тесты.
  */
 
+import { COMPANY_MOBILE, COMPANY_PHONES } from "@/lib/company-contacts";
 import { hasCapability } from "@/lib/permission-presets";
 import type { NavModelSection } from "@/lib/app-nav.server";
 
@@ -12,8 +13,11 @@ export const HOME_HREF = "/home";
 /** Сколько слотов «Избранного» на главной. */
 export const HOME_FAVORITES_MAX = 3;
 
-/** Телефон на главной (эскиз). */
-export const HOME_PHONE = { display: "8 (925) 305-80-77", tel: "+79253058077" };
+/** Телефоны на главной: основной и мобильный, как на визитке (2026-11-06). */
+export const HOME_PHONES = COMPANY_PHONES;
+
+/** Телефон в письме после регистрации — мобильный. */
+export const HOME_PHONE = COMPANY_MOBILE;
 
 type HomeActor = { permissionPreset?: string | null; role?: string | null; isRoot?: boolean | null };
 

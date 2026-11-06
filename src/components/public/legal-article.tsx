@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
+import { COMPANY_EMAIL, COMPANY_PHONES } from "@/lib/company-contacts";
 
 /**
  * Обёртка правовых страниц (`/oferta`, `/privacy`).
@@ -97,21 +98,26 @@ export function LegalRequisites({ copy }: { copy?: {
       <div>{copy?.registrationId ?? "ОГРН 1235000105306"}</div>
       <div>{copy?.address ?? "Адрес: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6"}</div>
       <div className="mt-2">{copy ? copy.telephone : <>
-        Телефон:{" "}
-        <a
-          href="tel:+79996341612"
-          className="text-[#3848c7] transition-colors hover:text-[#0b1024]"
-        >
-          +7 (999) 634-16-12
-        </a>
+        Телефоны:{" "}
+        {COMPANY_PHONES.map((phone, index) => (
+          <span key={phone.tel}>
+            {index > 0 ? ", " : null}
+            <a
+              href={`tel:${phone.tel}`}
+              className="whitespace-nowrap text-[#3848c7] transition-colors hover:text-[#0b1024]"
+            >
+              {phone.display}
+            </a>
+          </span>
+        ))}
       </>}</div>
       <div>{copy ? copy.email : <>
         Электронная почта:{" "}
         <a
-          href="mailto:support@wesetup.ru"
+          href={`mailto:${COMPANY_EMAIL}`}
           className="break-all text-[#3848c7] transition-colors hover:text-[#0b1024]"
         >
-          support@wesetup.ru
+          {COMPANY_EMAIL}
         </a>
       </>}</div>
       <div>{copy ? copy.website : <>

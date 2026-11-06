@@ -10,7 +10,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getVisibleOrgBranding } from "@/lib/partners/branding";
 import {
   HOME_FAVORITES_MAX,
-  HOME_PHONE,
+  HOME_PHONES,
   canSeeHomePage,
   favoriteCandidates,
   homeContacts,
@@ -60,11 +60,11 @@ export default async function HomePage() {
   // Кабинет партнёра (white-label): наши продажи и консалтинг не показываем,
   // телефон — партнёра.
   const contacts = homeContacts(process.env).filter((contact) => !branding || contact.id === "support");
-  const phone = branding
+  const phones = branding
     ? branding.supportPhone
-      ? { display: branding.supportPhone, tel: branding.supportPhone.replace(/[^+\d]/g, "") }
-      : null
-    : HOME_PHONE;
+      ? [{ display: branding.supportPhone, tel: branding.supportPhone.replace(/[^+\d]/g, "") }]
+      : []
+    : HOME_PHONES;
   const tagline = t("tagline");
   const taglineFit = taglineLayout(tagline);
 
@@ -215,22 +215,23 @@ export default async function HomePage() {
               );
             })}
           </ul>
-          {phone ? (
+          {phones.map((phone, index) => (
           <a
+            key={phone.tel}
             href={`tel:${phone.tel}`}
-            className="mt-3 flex items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] py-2.5 pr-3 pl-2.5 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            className={`${index === 0 ? "mt-3" : "mt-2"} flex items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] py-2.5 pr-3 pl-2.5 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15`}
             data-home-phone
             data-nav-row
           >
             <NavIconChip name="Phone" className="size-9 rounded-xl" iconClassName="size-4" />
             <span className="min-w-0">
-              <span className="block text-[12px] text-[#6f7282]">{t("phone")}</span>
+              <span className="block text-[12px] text-[#6f7282]">{index === 0 ? t("phone") : t("mobile")}</span>
               <span className="block text-[17px] font-semibold tabular-nums tracking-[-0.01em] text-[#0b1024]">
                 {phone.display}
               </span>
             </span>
           </a>
-          ) : null}
+          ))}
         </aside>
       </div>
     </div>

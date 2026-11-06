@@ -1,0 +1,22 @@
+       email       |                                      platformSections                                      | granted | by_owner 
+-------------------+--------------------------------------------------------------------------------------------+---------+----------
+ alexey@wesetup.ru | {clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring} | t       | t
+(1 row)
+
+        action         | entity |                                                                                      details                                                                                      
+-----------------------+--------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ platform.access.grant | user   | {"after": ["clients", "billing", "sales", "partners", "edo", "support", "assistant", "content", "seo", "translations", "monitoring"], "email": "alexey@wesetup.ru", "before": []}
+(1 row)
+
+              key              
+-------------------------------
+ once:platform-admin:alexey:v1
+(1 row)
+
+ chatId | status |          kind           |                          left                           
+--------+--------+-------------------------+---------------------------------------------------------
+ 100500 | failed | platform.access.granted | 🔑 <b>Вам открыт доступ к панели платформы WeSetup.</b>+
+        |        |                         | Роль: Администратор                                    +
+        |        |                         | Разде
+(1 row)
+

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ArrowUpRight, Mail, MessageCircle, MessagesSquare, Phone, Send } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
+import { CONTACT_EMAIL, CONTACT_MOBILE, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
 import { contactSupport } from "@/lib/support-chat-bus";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
  * окно с крупными контактами. Одно окно на сайт, кабинет и Mini App (П-3):
  * на телефоне `ui/dialog` выезжает листом снизу во всю ширину.
  *
- * Самое крупное — телефон: это то, ради чего окно открыли. Ниже — Telegram,
- * почта и чат на сайте с темой про услугу.
+ * Самое крупное — телефон: это то, ради чего окно открыли. Ниже — мобильный
+ * (как на визитке), Telegram, почта и чат на сайте с темой про услугу.
  */
 
 type ContactUsTarget = {
@@ -55,7 +55,7 @@ function ContactRow({
   );
 }
 
-/** Содержимое окна: крупный телефон, Telegram, почта, чат. */
+/** Содержимое окна: крупный телефон, мобильный, Telegram, почта, чат. */
 export function ContactUsPanel({
   service = null,
   telegramUrl = null,
@@ -98,6 +98,10 @@ export function ContactUsPanel({
             {CONTACT_PHONE.display}
           </span>
         </span>
+      </a>
+
+      <a href={`tel:${CONTACT_MOBILE.tel}`} className={ROW_CLASS} data-contact-mobile>
+        <ContactRow icon={<Phone className="size-5" aria-hidden />} label={CONTACT_MOBILE.display} hint={t("mobileHint")} />
       </a>
 
       <a href={telegram} target="_blank" rel="noopener noreferrer" className={ROW_CLASS} data-contact-telegram>

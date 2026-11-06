@@ -103,7 +103,7 @@ GitHub → **Actions** → **Выпуск приложений** → **Run workf
 - App Store: скриншоты `screenshots/ios/01…06` (iPhone 6,9"), категория Business (+ Productivity), Support и
   Marketing URL — https://wesetup.ru, Privacy Policy — https://wesetup.ru/privacy, **Manually release this version**.
 - Google Play: значок `store-graphics/icon-512.png`, баннер `store-graphics/feature-graphic.png`, скриншоты
-  `screenshots/android/01…06`, почта support@wesetup.ru, сайт https://wesetup.ru, политика https://wesetup.ru/privacy.
+  `screenshots/android/01…06`, почта admin@wesetup.ru, сайт https://wesetup.ru, политика https://wesetup.ru/privacy.
 
 Скриншоты сняты в режиме приложения на демо-компании «Кафе «Демо»» (вымышленные люди и данные) в середине смены.
 Как переснять — `.agent/tasks/pwa-mobile-release-2026-10-31/e2e/shots-take.mts`, затем `node mobile/scripts/store-assets.mjs`.

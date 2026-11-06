@@ -60,7 +60,7 @@ export default async function UnsubscribePage({ params }: { params: Promise<{ to
             </h1>
             <p className="mt-3 text-[15px] leading-[1.6] text-[#3c4053]">
               Возможно, её скопировали не целиком. Откройте ссылку «Отписаться» из письма ещё раз или напишите
-              на <a className="font-medium text-[#3848c7] underline" href="mailto:support@wesetup.ru">support@wesetup.ru</a> —
+              на <a className="font-medium text-[#3848c7] underline" href="mailto:admin@wesetup.ru">admin@wesetup.ru</a> —
               отпишем вручную.
             </p>
           </>

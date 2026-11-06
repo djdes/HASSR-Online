@@ -3591,7 +3591,7 @@
       "methodLabel": "Kirish usuli:",
       "securityNotice": "Agar bu siz bo‘lsangiz, hech narsa qilishingiz shart emas. Agar kirish sizniki bo‘lmasa, xavfsizlik sozlamalarini oching, barcha seanslarni yakunlang va parolni o‘zgartiring.",
       "securityAction": "Xavfsizlik sozlamalarini ochish",
-      "support": "Savollaringiz bormi? support@wesetup.ru manziliga yozing.",
+      "support": "Savollaringiz bormi? admin@wesetup.ru manziliga yozing.",
       "methodPassword": "elektron pochta va parol",
       "methodPhone": "telefon va parol",
       "methodTelegram": "Telegram",
@@ -3617,7 +3617,7 @@
         "topup": "To‘lov maqsadida “№ {invoiceNumber} hisob-fakturasi bo‘yicha to‘lov” deb ko‘rsating. Mablag‘ kelib tushgach, tashkilot balansiga hisob-faktura summasi qo‘shiladi (1 RUB = 1 ball). Ballardan obuna uchun to‘lovda foydalanish mumkin. Balansni to‘ldirishda promo-kodlar va aksiyalar amal qilmaydi.",
         "subscription": "To‘lov maqsadida “№ {invoiceNumber} hisob-fakturasi bo‘yicha to‘lov” deb ko‘rsating. Mablag‘ kelib tushgach, obunangiz avtomatik uzayadi. Yakunlovchi hujjat (UPD) kabinetingizdagi “Sozlamalar → Obuna → To‘lovlar tarixi” bo‘limida paydo bo‘ladi va email orqali ham yuboriladi."
       },
-      "support": "Hisob-faktura bo‘yicha savollar: support@wesetup.ru."
+      "support": "Hisob-faktura bo‘yicha savollar: admin@wesetup.ru."
     },
     "paymentReceipt": {
       "subject": {
@@ -3636,7 +3636,7 @@
       "heldNextStep": "Bu to‘lovni avtomatik qo‘llab bo‘lmadi: buyurtma rasmiylashtirilgandan keyin obuna o‘zgardi yoki summa hisoblangan to‘langan muddat tugadi. To‘lovni bir ish kuni ichida qo‘llaymiz yoki pulni qaytaramiz — hech narsa qilish shart emas.",
       "newClientAction": "Sozlashni yakunlash",
       "renewalAction": "Kabinetga kirish",
-      "support": "To‘lov yoki pulni qaytarish bo‘yicha savollar: support@wesetup.ru.",
+      "support": "To‘lov yoki pulni qaytarish bo‘yicha savollar: admin@wesetup.ru.",
       "pointsOnlyAmount": "ballar bilan to‘landi ({points})",
       "amountWithPoints": "{amount} (+ {points} ball bilan)"
     },
@@ -5562,7 +5562,7 @@
     "faq": {
       "refund": {
         "question": "Xizmat menga mos kelmasa, pulni qaytarib olsam bo‘ladimi?",
-        "answer": "Ha. Obuna uchun to‘lov qilganingizdan keyin 14 kun ichida support@wesetup.ru manziliga murojaat qilsangiz, to‘liq summa savollarsiz va ushlab qolishlarsiz qaytariladi. Qaytarish shartlari oferta shartnomasida belgilangan — bu reklama va’dasi emas, majburiyatdir."
+        "answer": "Ha. Obuna uchun to‘lov qilganingizdan keyin 14 kun ichida admin@wesetup.ru manziliga murojaat qilsangiz, to‘liq summa savollarsiz va ushlab qolishlarsiz qaytariladi. Qaytarish shartlari oferta shartnomasida belgilangan — bu reklama va’dasi emas, majburiyatdir."
       },
       "employeeAccess": {
         "question": "Xodimlarga ilova o‘rnatish yoki parolni eslab qolish kerakmi?",
@@ -7322,7 +7322,7 @@
       "doneBookedBody": "Moskva vaqti bilan {when}. Shu vaqtda {phone} raqamiga qo‘ng‘iroq qilamiz.",
       "addToCalendar": "Taqvimga qo‘shish",
       "calendarSummary": "WeSetup ko‘rsatuvi, 15 daqiqa",
-      "calendarDescription": "Belgilangan vaqtda qo‘ng‘iroq qilamiz. Ko‘chirish uchun — support@wesetup.ru"
+      "calendarDescription": "Belgilangan vaqtda qo‘ng‘iroq qilamiz. Ko‘chirish uchun — admin@wesetup.ru"
     }
   },
   "journalApi": {
@@ -9669,7 +9669,7 @@
         "faqBurnQuestion": "Ballar muddati tugaydimi?",
         "faqBurnAnswer": "Yo‘q. Obunaga sarflamaguningizcha ular balansda turadi.",
         "faqWithdrawQuestion": "Ballarni pul qilib yechib olsa bo‘ladimi?",
-        "faqWithdrawAnswer": "Yo‘q. Ballarni yechib bo‘lmaydi, ulardan obunani to‘lash uchun foydalaniladi. Balansni adashib to‘ldirgan bo‘lsangiz, support@wesetup.ru manziliga yozing.",
+        "faqWithdrawAnswer": "Yo‘q. Ballarni yechib bo‘lmaydi, ulardan obunani to‘lash uchun foydalaniladi. Balansni adashib to‘ldirgan bo‘lsangiz, admin@wesetup.ru manziliga yozing.",
         "faqEquipmentQuestion": "Uskunani ball bilan to‘lash mumkinmi?",
         "faqEquipmentAnswer": "Yo‘q. Obuna va uskuna birgalikda buyurtma qilinganda, ball faqat obunani qoplaydi; uskuna pul bilan to‘lanadi.",
         "faqAutopayQuestion": "Nega avtomatik uzaytirishda ballardan foydalanib bo‘lmaydi?",
@@ -21892,7 +21892,7 @@
     "clause4_1_3": "4.1.3. Mijoz topshirig‘i bilan SanPiN/HACCP elektron jurnallarini yuritish, jumladan jurnal yozuvlarini yaratish, saqlash, ko‘rsatish va eksport qilish.",
     "clause4_1_4": "4.1.4. Telegram Mini App ishlashini ta’minlash: Foydalanuvchini avtorizatsiya qilish, vazifalar haqidagi bildirishnomalar va eslatmalar yuborish.",
     "clause4_1_5": "4.1.5. Xizmatlardan foydalanish uchun to‘lovlarga ishlov berish, jumladan to‘lov amalga oshirilganini, summasini va davrini hisobga olish, yakunlovchi hujjatlarni shakllantirish.",
-    "clause4_1_6": "4.1.6. Foydalanuvchilar va Mijozlarga texnik yordam berish, <supportLink>support@wesetup.ru</supportLink> manziliga yuborilgan murojaatlarga javob berish.",
+    "clause4_1_6": "4.1.6. Foydalanuvchilar va Mijozlarga texnik yordam berish, <supportLink>admin@wesetup.ru</supportLink> manziliga yuborilgan murojaatlarga javob berish.",
     "clause4_1_7": "4.1.7. Xizmatlar sifatini yaxshilash, foydalanuvchi xatti-harakatlarini shaxssizlantirilgan yoki umumlashtirilgan shaklda tahlil qilish, texnik xatolarni bartaraf etish va axborot xavfsizligini ta’minlash.",
     "clause4_1_8": "4.1.8. Foydalanuvchilarni Xizmatlar, tariflar, xizmat ko‘rsatish shartlari va ushbu Siyosatdagi o‘zgarishlar haqida xabardor qilish.",
     "clause4_1_9": "4.1.9. Rossiya Federatsiyasi qonunchiligi talablarini bajarish, jumladan buxgalteriya va soliq hisobini yuritish.",
@@ -21998,7 +21998,7 @@
     "clause12_1_4": "12.1.4. Qonunchilikda nazarda tutilgan hollarda shaxsga doir ma’lumotlarga ishlov berishga e’tiroz bildirish.",
     "clause12_1_5": "12.1.5. Operatorning harakatlari yoki harakatsizligi ustidan shaxsga doir ma’lumotlar subyektlari huquqlarini himoya qilish bo‘yicha vakolatli organga (Роскомнадзор) yoki sudga shikoyat qilish.",
     "clause12_1_6": "12.1.6. O‘z huquqlari va qonuniy manfaatlarini himoya qilish, jumladan sud tartibida zararlarni qoplash va ma’naviy zarar uchun kompensatsiya olish.",
-    "clause12_2": "12.2. <strong>Murojaat qilish tartibi.</strong> O‘z huquqlarini amalga oshirish uchun shaxsga doir ma’lumotlar subyekti <supportLink>support@wesetup.ru</supportLink> elektron pochta manziliga yoki Operatorning pochta manziliga yozma shaklda so‘rov yuboradi: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6.",
+    "clause12_2": "12.2. <strong>Murojaat qilish tartibi.</strong> O‘z huquqlarini amalga oshirish uchun shaxsga doir ma’lumotlar subyekti <supportLink>admin@wesetup.ru</supportLink> elektron pochta manziliga yoki Operatorning pochta manziliga yozma shaklda so‘rov yuboradi: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6.",
     "clause12_3": "12.3. So‘rov quyidagilarni o‘z ichiga olishi kerak: subyektning Operator bilan munosabatini tasdiqlovchi ma’lumotlar (shartnoma raqami, hisobning elektron pochta manzili, ro‘yxatdan o‘tish sanasi) yoki uning ma’lumotlariga ishlov berilayotganini boshqacha tasdiqlovchi ma’lumotlar; subyektning familiyasi, ismi, otasining ismi; asosiy shaxsni tasdiqlovchi hujjat raqami, berilgan sanasi va uni bergan organ haqidagi ma’lumotlar; subyekt yoki uning vakili imzosi. So‘rov elektron hujjat shaklida yuborilishi mumkin.",
     "clause12_4": "12.4. Operator murojaatni ko‘rib chiqadi va so‘rov olingan kundan boshlab <strong>30 (o‘ttiz) kundan oshmagan muddatda</strong> asoslantirilgan javob yuboradi. Muddat subyektga uzaytirish sabablari haqida xabar berilgan holda ko‘pi bilan 5 (besh) ish kuniga uzaytirilishi mumkin.",
     "clause12_5": "12.5. Operator 152-ФЗ 14-moddasi 8-qismi va 20-moddasi 2-qismida bevosita nazarda tutilgan hollarda asoslantirilgan javob yuborib, ma’lumot taqdim etishni yoki talabni bajarishni rad etishi mumkin.",
@@ -22016,15 +22016,15 @@
     "section14": {
       "title": "14. Operator rekvizitlari"
     },
-    "clause14_contact": "Telegram bot: @wesetupbot. Shaxsga doir ma’lumotlarga ishlov berish masalalari bo‘yicha murojaatlar manzili — <supportLink>support@wesetup.ru</supportLink>."
+    "clause14_contact": "Telegram bot: @wesetupbot. Shaxsga doir ma’lumotlarga ishlov berish masalalari bo‘yicha murojaatlar manzili — <supportLink>admin@wesetup.ru</supportLink>."
   },
   "publicLegalRequisites": {
     "heading": "Rekvizitlar",
     "taxIds": "INN {inn} · KPP {kpp}",
     "registrationId": "OGRN {ogrn}",
     "address": "Manzil: {address}",
-    "telephone": "Telefon: <phoneLink>+7 (999) 634-16-12</phoneLink>",
-    "email": "Elektron pochta: <emailLink>support@wesetup.ru</emailLink>",
+    "telephone": "Telefonlar: <officeLink>{office}</officeLink>, <mobileLink>{mobile}</mobileLink>",
+    "email": "Elektron pochta: <emailLink>admin@wesetup.ru</emailLink>",
     "website": "Sayt: <siteLink>wesetup.ru</siteLink>"
   },
   "rootMailingShellAudience": {
@@ -25129,7 +25129,7 @@
       "andMore": "yana {count, number} ta",
       "archiveList": "Arxivga o‘tadi: {employees}{names}. Ular kabinetga va ilovaga kira olmaydi, jurnallardagi yozuvlari saqlanib qoladi.",
       "restoreHint": "«Standart» yoki «Premium» tarifi to‘langach ularni qaytarish mumkin: «Xodimlar» → «Arxiv».",
-      "paidTerm": "Tarif {date} gacha to‘langan. Bepul tarifga o‘tilsa, to‘langan muddat saqlanmaydi, avtoyangilash o‘chiriladi. Foydalanilmagan kunlar uchun pulni <mail>support@wesetup.ru</mail> manziliga ariza orqali qaytarib olish mumkin — <offer>oferta 6.2-band</offer>.",
+      "paidTerm": "Tarif {date} gacha to‘langan. Bepul tarifga o‘tilsa, to‘langan muddat saqlanmaydi, avtoyangilash o‘chiriladi. Foydalanilmagan kunlar uchun pulni <mail>admin@wesetup.ru</mail> manziliga ariza orqali qaytarib olish mumkin — <offer>oferta 6.2-band</offer>.",
       "selfArchived": "Siz ham arxivga o‘tasiz va kabinetdan darhol chiqarilasiz.",
       "noSignIn": "«{name}» da parol ham, Telegram ham yo‘q — kabinetga kiradigan hech kim bo‘lmaydi. O‘zingizni qoldirgan ma’qul.",
       "chooserTitle": "Bepul tarifda kim qoladi",
@@ -25330,6 +25330,7 @@
       "lead": "Nima kerakligini ayting — obyektingiz uchun narxni aytamiz.",
       "about": "Xizmat: {service}",
       "call": "Savdo bo‘limi",
+      "mobileHint": "Mobil raqam",
       "telegram": "Telegram",
       "telegramHint": "Telegram orqali yozish",
       "max": "MAX",
@@ -30262,6 +30263,7 @@
       "consulting": "ekspert bilan tayyorgarlik"
     },
     "phone": "Telefon",
+    "mobile": "Mobil raqam",
     "setupTitle": "Boshlang‘ich sozlash",
     "setupBody": "Kompaniya, nuqtalar, xodimlar va jurnallar — bosqichma-bosqich",
     "favorites": {
@@ -30436,7 +30438,7 @@
       "button": "Panelga ruxsat",
       "buttonHas": "Panel: {role}",
       "ownerBadge": "Ega",
-      "refreshHint": "«Platforma paneli» havolasi sahifa yangilangandan keyin kabinetda paydo bo‘ladi."
+      "refreshHint": "Xodimga xat yuboriladi, Telegram ulangan bo‘lsa — u yerga ham xabar. «Platforma paneli» havolasi sahifa yangilangandan keyin kabinetda paydo bo‘ladi."
     },
     "team": {
       "title": "Jamoa va ruxsatlar",

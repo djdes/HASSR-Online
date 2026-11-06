@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { ArrowRight, BadgeCheck, Check, Download, Phone, Sparkles, Ticket, Wallet, Zap } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/logo";
+import { COMPANY_PHONES } from "@/lib/company-contacts";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { PAYMENT_METHODS_NOTE, REFUND_NOTE } from "@/lib/payment-copy";
 import { CARD_POINTS } from "@/lib/plan-catalog";
@@ -170,14 +171,12 @@ export default async function VizitkaPromoPage() {
           <div>
             <h2 className="text-[22px] font-semibold tracking-[-0.01em]">Остались вопросы — позвоните</h2>
             <div className="mt-3 flex flex-col gap-1.5 text-[17px] font-semibold tabular-nums sm:flex-row sm:gap-6">
-              <a href="tel:+74951096543" className="inline-flex items-center gap-2 rounded-lg hover:text-[#a3f7d7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/40">
-                <Phone className="size-4 text-[#8e9bf8]" aria-hidden="true" />
-                +7 (495) 109-65-43
-              </a>
-              <a href="tel:+79253058077" className="inline-flex items-center gap-2 rounded-lg hover:text-[#a3f7d7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/40">
-                <Phone className="size-4 text-[#8e9bf8]" aria-hidden="true" />
-                +7 (925) 305-80-77
-              </a>
+              {COMPANY_PHONES.map((phone) => (
+                <a key={phone.tel} href={`tel:${phone.tel}`} className="inline-flex items-center gap-2 rounded-lg hover:text-[#a3f7d7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/40">
+                  <Phone className="size-4 text-[#8e9bf8]" aria-hidden="true" />
+                  {phone.display}
+                </a>
+              ))}
             </div>
           </div>
           <a

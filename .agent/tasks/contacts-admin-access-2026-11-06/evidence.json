@@ -1,0 +1,35 @@
+{
+  "taskId": "contacts-admin-access-2026-11-06",
+  "status": "PASS",
+  "artifacts": {
+    "spec": ".agent/tasks/contacts-admin-access-2026-11-06/spec.md",
+    "evidence": ".agent/tasks/contacts-admin-access-2026-11-06/evidence.md",
+    "typecheck": ".agent/tasks/contacts-admin-access-2026-11-06/raw/typecheck.log",
+    "testGate": ".agent/tasks/contacts-admin-access-2026-11-06/raw/test-gate.log",
+    "targetedTests": ".agent/tasks/contacts-admin-access-2026-11-06/raw/targeted-tests.log",
+    "i18nCheck": ".agent/tasks/contacts-admin-access-2026-11-06/raw/i18n-check.log",
+    "eslint": ".agent/tasks/contacts-admin-access-2026-11-06/raw/eslint.log",
+    "siteCheck": ".agent/tasks/contacts-admin-access-2026-11-06/raw/site-check.json",
+    "homeCheck": ".agent/tasks/contacts-admin-access-2026-11-06/raw/home-check.txt",
+    "panelLinkCheck": ".agent/tasks/contacts-admin-access-2026-11-06/raw/panel-link-check.txt",
+    "seedRun": ".agent/tasks/contacts-admin-access-2026-11-06/raw/seed-run.log",
+    "seedDbState": ".agent/tasks/contacts-admin-access-2026-11-06/raw/seed-db-state.txt",
+    "noticeEmail": ".agent/tasks/contacts-admin-access-2026-11-06/raw/notice-email.png",
+    "noticeTelegram": ".agent/tasks/contacts-admin-access-2026-11-06/raw/notice-telegram.txt",
+    "screenshots": [
+      ".agent/tasks/contacts-admin-access-2026-11-06/raw/contact-dialog-mobile.png",
+      ".agent/tasks/contacts-admin-access-2026-11-06/raw/footer-requisites.png",
+      ".agent/tasks/contacts-admin-access-2026-11-06/raw/oferta-requisites.png",
+      ".agent/tasks/contacts-admin-access-2026-11-06/raw/privacy-requisites.png"
+    ]
+  },
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "summary": "One source of contacts: 495, mobile 925, admin@wesetup.ru." },
+    "AC2": { "status": "PASS", "summary": "Public footer and requisites show both phones and admin@; old +7 999 number removed." },
+    "AC3": { "status": "PASS", "summary": "Contact dialog adds the mobile row; cabinet home shows both phones." },
+    "AC4": { "status": "PASS", "summary": "support@wesetup.ru replaced by admin@wesetup.ru across site, texts, i18n, security.txt, store docs." },
+    "AC5": { "status": "PASS", "summary": "Granting panel sections e-mails and Telegrams the person; revoke is silent; link opens the panel." },
+    "AC6": { "status": "PASS", "summary": "One-shot deploy seed grants alexey@wesetup.ru the Administrator role and notifies; idempotent; wired into deploy.yml." },
+    "AC7": { "status": "PASS", "summary": "typecheck, test:gate (5752/0), i18n:check, eslint green." }
+  }
+}

@@ -3591,7 +3591,7 @@
       "methodLabel": "Sign-in method:",
       "securityNotice": "If this was you, no action is needed. If you do not recognize this sign-in, open security settings, end all sessions, and change your password.",
       "securityAction": "Open security settings",
-      "support": "Questions? Contact support@wesetup.ru.",
+      "support": "Questions? Contact admin@wesetup.ru.",
       "methodPassword": "email and password",
       "methodPhone": "phone and password",
       "methodTelegram": "Telegram",
@@ -3617,7 +3617,7 @@
         "topup": "Enter “Payment for invoice No. {invoiceNumber}” as the payment reference. Once the funds arrive, your organization’s balance will be credited with the invoice amount (1 RUB = 1 point). Points can be used to pay for a subscription. Promo codes and offers do not apply to top-ups.",
         "subscription": "Enter “Payment for invoice No. {invoiceNumber}” as the payment reference. Once the funds arrive, your subscription will renew automatically. The closing document (UPD) will appear in your account under “Settings → Subscription → Payment history” and will also be sent by email."
       },
-      "support": "Questions about your invoice? Contact support@wesetup.ru."
+      "support": "Questions about your invoice? Contact admin@wesetup.ru."
     },
     "paymentReceipt": {
       "subject": {
@@ -3636,7 +3636,7 @@
       "heldNextStep": "We could not apply this payment automatically: after the order was placed, the subscription changed or the paid period it was priced from ended. We will apply the payment or refund it within one business day — no action is needed.",
       "newClientAction": "Finish setup",
       "renewalAction": "Go to your account",
-      "support": "Questions about payments or refunds? Contact support@wesetup.ru.",
+      "support": "Questions about payments or refunds? Contact admin@wesetup.ru.",
       "pointsOnlyAmount": "paid with points ({points})",
       "amountWithPoints": "{amount} (+ {points} in points)"
     },
@@ -5562,7 +5562,7 @@
     "faq": {
       "refund": {
         "question": "Can I get a refund if the service is not right for me?",
-        "answer": "Yes. Email support@wesetup.ru within 14 days of paying for your subscription for a full refund, with no questions or deductions. The refund terms are part of our service agreement, not just a promotional promise."
+        "answer": "Yes. Email admin@wesetup.ru within 14 days of paying for your subscription for a full refund, with no questions or deductions. The refund terms are part of our service agreement, not just a promotional promise."
       },
       "employeeAccess": {
         "question": "Do employees need an app or a password?",
@@ -7322,7 +7322,7 @@
       "doneBookedBody": "{when} Moscow time. We will call {phone} then.",
       "addToCalendar": "Add to calendar",
       "calendarSummary": "WeSetup demo in 15 minutes",
-      "calendarDescription": "We will call at the booked time. To reschedule — support@wesetup.ru"
+      "calendarDescription": "We will call at the booked time. To reschedule — admin@wesetup.ru"
     }
   },
   "journalApi": {
@@ -9669,7 +9669,7 @@
         "faqBurnQuestion": "Do points expire?",
         "faqBurnAnswer": "No. They remain in your balance until you spend them on a subscription.",
         "faqWithdrawQuestion": "Can I withdraw points as money?",
-        "faqWithdrawAnswer": "No. Points cannot be withdrawn; they can be used to pay for a subscription. If you added funds by mistake, contact support@wesetup.ru.",
+        "faqWithdrawAnswer": "No. Points cannot be withdrawn; they can be used to pay for a subscription. If you added funds by mistake, contact admin@wesetup.ru.",
         "faqEquipmentQuestion": "Can I pay for equipment with points?",
         "faqEquipmentAnswer": "No. For an order with a subscription and equipment, points cover only the subscription; equipment is paid for with money.",
         "faqAutopayQuestion": "Why can’t I use points for automatic renewal?",
@@ -21892,7 +21892,7 @@
     "clause4_1_3": "4.1.3. Maintaining electronic SanPiN/HACCP logs on the Client's instructions, including creating, storing, displaying and exporting log records.",
     "clause4_1_4": "4.1.4. Enabling Telegram Mini App to operate: authorising the User and sending task notifications and reminders.",
     "clause4_1_5": "4.1.5. Processing payments for the Services, including recording the fact, amount and period of payment and preparing closing documents.",
-    "clause4_1_6": "4.1.6. Providing technical support to Users and Clients and responding to enquiries sent to <supportLink>support@wesetup.ru</supportLink>.",
+    "clause4_1_6": "4.1.6. Providing technical support to Users and Clients and responding to enquiries sent to <supportLink>admin@wesetup.ru</supportLink>.",
     "clause4_1_7": "4.1.7. Improving the Services, analysing user behaviour in anonymised or aggregated form, correcting technical errors and ensuring information security.",
     "clause4_1_8": "4.1.8. Informing Users about changes to the Services, prices, service terms and this Policy.",
     "clause4_1_9": "4.1.9. Complying with Russian Federation legislation, including maintaining accounting and tax records.",
@@ -21998,7 +21998,7 @@
     "clause12_1_4": "12.1.4. Object to the processing of their personal data in cases provided for by law.",
     "clause12_1_5": "12.1.5. Challenge the Operator's actions or omissions before the authorised body protecting personal data subjects' rights (Роскомнадзор) or in court.",
     "clause12_1_6": "12.1.6. Protect their rights and legitimate interests, including compensation for losses and non-pecuniary damage, through the courts.",
-    "clause12_2": "12.2. <strong>How to make an enquiry.</strong> To exercise their rights, the personal data subject sends a request by email to <supportLink>support@wesetup.ru</supportLink> or in writing to the Operator's postal address: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6.",
+    "clause12_2": "12.2. <strong>How to make an enquiry.</strong> To exercise their rights, the personal data subject sends a request by email to <supportLink>admin@wesetup.ru</supportLink> or in writing to the Operator's postal address: 141065, Московская область, г. Королёв, ул. Ленина, д. 10/6.",
     "clause12_3": "12.3. A request must contain: information confirming the subject's relationship with the Operator (agreement number, account email address, registration date), or otherwise confirming that the subject's data is processed; the subject's surname, first name and patronymic; the number of their main identity document, its issue date and issuing authority; and the signature of the subject or their representative. The request may be sent as an electronic document.",
     "clause12_4": "12.4. The Operator reviews the request and sends a reasoned response <strong>within no more than 30 (thirty) days</strong> of receiving it. This period may be extended by no more than 5 (five) working days, with notification to the subject of the reasons for the extension.",
     "clause12_5": "12.5. The Operator may refuse to provide information or fulfil a request in cases expressly provided for by part 8, article 14 and part 2, article 20 of 152-ФЗ, giving a reasoned response.",
@@ -22016,15 +22016,15 @@
     "section14": {
       "title": "14. Operator details"
     },
-    "clause14_contact": "Telegram bot: @wesetupbot. Enquiries concerning personal data processing should be sent to <supportLink>support@wesetup.ru</supportLink>."
+    "clause14_contact": "Telegram bot: @wesetupbot. Enquiries concerning personal data processing should be sent to <supportLink>admin@wesetup.ru</supportLink>."
   },
   "publicLegalRequisites": {
     "heading": "Company details",
     "taxIds": "INN {inn} · KPP {kpp}",
     "registrationId": "OGRN {ogrn}",
     "address": "Address: {address}",
-    "telephone": "Telephone: <phoneLink>+7 (999) 634-16-12</phoneLink>",
-    "email": "Email: <emailLink>support@wesetup.ru</emailLink>",
+    "telephone": "Telephones: <officeLink>{office}</officeLink>, <mobileLink>{mobile}</mobileLink>",
+    "email": "Email: <emailLink>admin@wesetup.ru</emailLink>",
     "website": "Website: <siteLink>wesetup.ru</siteLink>"
   },
   "rootMailingShellAudience": {
@@ -25129,7 +25129,7 @@
       "andMore": "and {count, number} more",
       "archiveList": "Moving to the archive: {employees}{names}. They will not be able to sign in to the dashboard or the app; their journal entries will be kept.",
       "restoreHint": "You can restore them after paying for the Standard or Premium plan: “Staff” → “Archive”.",
-      "paidTerm": "The plan is paid until {date}. If you switch to the free plan, the paid term will not be kept and auto-renewal will be turned off. You can request a refund for unused days by writing to <mail>support@wesetup.ru</mail> — <offer>clause 6.2 of the offer</offer>.",
+      "paidTerm": "The plan is paid until {date}. If you switch to the free plan, the paid term will not be kept and auto-renewal will be turned off. You can request a refund for unused days by writing to <mail>admin@wesetup.ru</mail> — <offer>clause 6.2 of the offer</offer>.",
       "selfArchived": "You will also be archived and signed out of the dashboard immediately.",
       "noSignIn": "“{name}” has no password or Telegram — no one will be able to sign in to the dashboard. It is better to keep yourself.",
       "chooserTitle": "Who stays on the free plan",
@@ -25330,6 +25330,7 @@
       "lead": "Tell us what you need and we will quote a price for your site.",
       "about": "Service: {service}",
       "call": "Sales team",
+      "mobileHint": "Mobile",
       "telegram": "Telegram",
       "telegramHint": "Message us on Telegram",
       "max": "MAX",
@@ -30262,6 +30263,7 @@
       "consulting": "preparation with an expert"
     },
     "phone": "Phone",
+    "mobile": "Mobile",
     "setupTitle": "Initial setup",
     "setupBody": "Company, outlets, staff and journals — step by step",
     "favorites": {
@@ -30436,7 +30438,7 @@
       "button": "Panel access",
       "buttonHas": "Panel: {role}",
       "ownerBadge": "Owner",
-      "refreshHint": "The “Platform panel” link appears in the person's cabinet after a page refresh."
+      "refreshHint": "We e-mail the person, and message them on Telegram if it is linked. The “Platform panel” link appears in their cabinet after a page refresh."
     },
     "team": {
       "title": "Team and access",

@@ -1,8 +1,8 @@
-import type { Session } from "next-auth";
 import { db } from "@/lib/db";
 import { isTechnicalEmail } from "@/lib/technical-email";
 import { mailSenderStatus, type MailSenderStatus } from "@/lib/platform-mail";
 import { normalizePlatformSections, PLATFORM_SECTIONS, type PlatformSectionKey } from "@/lib/platform-access";
+import { notifyPlatformAccessGranted, type PlatformAccessNoticeResult } from "@/lib/platform-access-notice.server";
 
 /** People with access to the platform panel: owners and delegated staff. */
 
@@ -131,8 +131,20 @@ export class TeamError extends Error {
   }
 }
 
-/** Grants (non-empty) or revokes (empty) delegated sections. */
-export async function setPlatformSections(actor: Session, userId: string, requested: unknown): Promise<PlatformMember> {
+/** Who changes access: the session user, or the platform owner in a deploy seed. */
+export type PlatformActor = { user: { id: string; name?: string | null; organizationId: string } };
+
+/**
+ * Grants (non-empty) or revokes (empty) delegated sections. Newly opened
+ * sections are announced to the person by e-mail and Telegram; the API does
+ * not wait for that, a one-off script passes `waitForNotice` to log it.
+ */
+export async function setPlatformSections(
+  actor: PlatformActor,
+  userId: string,
+  requested: unknown,
+  options: { waitForNotice?: boolean } = {},
+): Promise<PlatformMember & { notice?: PlatformAccessNoticeResult }> {
   const sections = normalizePlatformSections(requested);
   const target = await db.user.findUnique({ where: { id: userId }, select: { id: true, isRoot: true, archivedAt: true, platformSections: true, email: true } });
   if (!target || target.archivedAt) throw new TeamError("Пользователь не найден", 404);
@@ -161,5 +173,10 @@ export async function setPlatformSections(actor: Session, userId: string, reques
       },
     })
     .catch((error) => console.error("[platform-team] audit failed", error));
+  const notice = notifyPlatformAccessGranted({ userId, before, after: sections, grantedBy: actor.user.name ?? null }).catch((error) => {
+    console.error("[platform-team] access notice failed", error);
+    return { email: false, telegram: false } satisfies PlatformAccessNoticeResult;
+  });
+  if (options.waitForNotice) return { ...toMember(updated), notice: await notice };
   return toMember(updated);
 }

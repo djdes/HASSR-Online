@@ -40,7 +40,7 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
 
         {/* sm:pr-[104px] — коридор под плавающие кнопки (support + AI-чат
             занимают правые ~123px: `fixed bottom-5 right-5` и `right-[68px]`,
-            размер size-11). Без него «support@wesetup.ru» и «Telegram»
+            размер size-11). Без него «admin@wesetup.ru» и «Telegram»
             перекрывались виджетами, когда футер попадал в нижнюю часть окна. */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:pr-[104px]">
           <Link href="/oferta" className={linkClass}>
@@ -52,8 +52,8 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
           <Link href="/blog" className={linkClass}>
             {t("knowledgeBase")}
           </Link>
-          <a href="mailto:support@wesetup.ru" className={linkClass}>
-            support@wesetup.ru
+          <a href="mailto:admin@wesetup.ru" className={linkClass}>
+            admin@wesetup.ru
           </a>
           <a
             href="https://t.me/wesetupbot"

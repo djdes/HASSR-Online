@@ -1,0 +1,22 @@
+[BABEL] Note: The code generator has deoptimised the styling of /home/user/HASSR-Online/src/i18n/message-contract.d.ts as it exceeds the max of 500KB.
+
+/home/user/HASSR-Online/src/components/billing/billing-transition-gate.tsx
+  202:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/user/HASSR-Online/src/components/billing/billing-transition-gate.tsx:202:5
+  200 |   const [mounted, setMounted] = useState(false);
+  201 |   useEffect(() => {
+> 202 |     setMounted(true);
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  203 |     lockBodyScroll();
+  204 |     return () => unlockBodyScroll();
+  205 |   }, []);  react-hooks/set-state-in-effect
+
+✖ 1 problem (0 errors, 1 warning)
+

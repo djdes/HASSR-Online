@@ -57,7 +57,7 @@ function addressOf(from: string): string {
 
 /** Адрес для `List-Unsubscribe: mailto:` — запросы разбирает поддержка. */
 export function unsubscribeMailto(): string {
-  return env("MAILING_UNSUBSCRIBE_EMAIL") || "support@wesetup.ru";
+  return env("MAILING_UNSUBSCRIBE_EMAIL") || "admin@wesetup.ru";
 }
 
 export function marketingSenderInfo(): MarketingSenderInfo {

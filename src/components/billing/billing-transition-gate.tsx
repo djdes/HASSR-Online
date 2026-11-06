@@ -549,7 +549,7 @@ function Chooser({
               {t.rich("paidTerm", {
                 date: paidUntilLabel,
                 mail: (chunks) => (
-                  <a href="mailto:support@wesetup.ru" className="underline underline-offset-2">
+                  <a href="mailto:admin@wesetup.ru" className="underline underline-offset-2">
                     {chunks}
                   </a>
                 ),
