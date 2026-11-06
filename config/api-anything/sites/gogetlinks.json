@@ -1072,6 +1072,147 @@
       "minTier": 1,
       "learnedLoggedIn": true,
       "learnedAt": "2026-11-06T08:05:00.000Z"
+    },
+    {
+      "name": "listWebmasterApplications",
+      "description": "Read incoming webmaster offers for one campaign, 20 per page. POST is a read-only native filter form. Use page=1,2,...; GET page_num is ignored by the site. These are incoming applications, not paid orders.",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/reviews/request",
+        "headers": {
+          "accept": "text/html, */*; q=0.01",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest"
+        },
+        "body": "action=request&in_comp_id=1&page_num=1&order=0&in_site_name=&searchBeginDate=&searchEndDate="
+      },
+      "slots": [
+        {
+          "param": "campaignId",
+          "at": [
+            "form:in_comp_id"
+          ]
+        },
+        {
+          "param": "page",
+          "at": [
+            "form:page_num"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/reviews/request"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/reviews/request"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": ".view-request-data-row",
+          "fields": {
+            "requestId": "@id",
+            "siteId": ".js-card-site-info@data-id",
+            "campaignId": "input[data-comp-id]@data-comp-id",
+            "domain": ".js-card-site-info a",
+            "siteUrl": ".js-card-site-info a@href",
+            "priceRub": "input[data-price]@data-price",
+            "dailyTraffic": "td[data-th='Трафик в сутки']",
+            "tfCf": "td[data-th^='Ссылочная мощь'] [data-tooltip-body]@data-tooltip-body",
+            "iks": "td[data-th='ИКС']",
+            "trust": "td[data-th='Траст']",
+            "placementType": "td[data-th='Тип обзора']",
+            "badges": "all:.site-link__status [data-tooltip-head]@data-tooltip-head"
+          },
+          "empty": "#table_content td:only-child"
+        }
+      },
+      "params": [
+        {
+          "name": "campaignId",
+          "type": "number",
+          "required": true,
+          "min": 1
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "required": false,
+          "default": 1,
+          "min": 1
+        }
+      ],
+      "links": [
+        {
+          "from": "siteId",
+          "to": {
+            "op": "getWebmasterSiteInfo",
+            "arg": "siteId"
+          }
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
+    },
+    {
+      "name": "getWebmasterSiteInfo",
+      "description": "Read the complete available GoGetLinks card for a siteId returned by listWebmasterApplications: characteristics, thematic category, region, age, traffic sources, indexing, placement speed, outbound links, catalog prices and example placement URLs. Does not accept an offer or spend funds.",
+      "request": {
+        "method": "POST",
+        "url": "https://gogetlinks.net/viewSiteInfo",
+        "headers": {
+          "accept": "text/html, */*; q=0.01",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest"
+        },
+        "body": "siteId=1&type=1&isGoogle=false&quick_filter=false&hiddenPrice=false&toBlackList=false"
+      },
+      "slots": [
+        {
+          "param": "siteId",
+          "at": [
+            "form:siteId"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://gogetlinks.net/reviews/request"
+      },
+      "match": {
+        "method": "POST",
+        "host": "gogetlinks.net",
+        "path": "/viewSiteInfo"
+      },
+      "response": {
+        "format": "html",
+        "contentType": "text/html; charset=windows-1251",
+        "html": {
+          "items": ".site-info",
+          "fields": {
+            "site": ".site-info__header > div",
+            "groups": "all:.site-info__title",
+            "characteristics": "all:.site-info__item",
+            "examples": "all:a[target=\"_blank\"]@href"
+          }
+        }
+      },
+      "params": [
+        {
+          "name": "siteId",
+          "type": "number",
+          "required": true,
+          "min": 1
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true
     }
   ]
 }

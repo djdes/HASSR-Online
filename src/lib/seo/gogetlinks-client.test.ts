@@ -11,8 +11,41 @@ import {
   initApiAnythingHome,
   pinGglOverallCampaign,
   saveLocalSession,
+  readGglWebmasterSource,
 } from "@/lib/seo/gogetlinks-client.server";
 import { decodeWin1251 } from "@/lib/seo/gogetlinks-codec";
+
+test("webmaster reads only POST the observed listing/card endpoints, with scoped filters and no purchase", async () => {
+  const previous = process.env.API_ANYTHING_HOME;
+  process.env.API_ANYTHING_HOME = mkdtempSync(join(tmpdir(), "ggl-webmaster-read-"));
+  const seen: string[] = [];
+  try {
+    saveLocalSession([{ name: "hash", value: "fixture", domain: "gogetlinks.net", path: "/", expires: -1, httpOnly: true, secure: true }]);
+    const fetchImpl: typeof fetch = async (url, init) => {
+      seen.push(String(url));
+      assert.equal(init?.method, "POST");
+      const body = new URLSearchParams(String(init?.body));
+      if (String(url).endsWith("/reviews/table")) {
+        assert.equal(body.get("action"), "request");
+        assert.equal(body.get("in_comp_id"), "77");
+        assert.equal(body.get("page_num"), "2");
+        return Response.json({ success: true, data: "<div>Заявки</div>" });
+      }
+      assert.equal(String(url), "https://gogetlinks.net/viewSiteInfo");
+      assert.equal(body.get("siteId"), "101");
+      assert.equal(body.get("type"), "1");
+      return new Response("<div>Карточка</div>", { headers: { "content-type": "text/html; charset=utf-8" } });
+    };
+    const opts = { fetchImpl, skipDbSync: true, allowRelogin: false };
+    assert.equal(await readGglWebmasterSource({ kind: "applications", campaignId: 77, page: 2 }, opts), "<div>Заявки</div>");
+    assert.equal(await readGglWebmasterSource({ kind: "site", siteId: 101 }, opts), "<div>Карточка</div>");
+    await assert.rejects(() => readGglWebmasterSource({ kind: "site", siteId: -1 }, opts));
+    assert.deepEqual(seen, ["https://gogetlinks.net/reviews/table", "https://gogetlinks.net/viewSiteInfo"]);
+    await assert.rejects(() => readGglWebmasterSource({ kind: "site", siteId: 101 }, { ...opts, fetchImpl: async () => new Response("", { status: 429 }) }), error => error instanceof GglCallError && error.gglClass === "rate");
+  } finally {
+    if (previous === undefined) delete process.env.API_ANYTHING_HOME; else process.env.API_ANYTHING_HOME = previous;
+  }
+});
 
 function encodeWin1251Bytes(text: string): Uint8Array<ArrayBuffer> {
   const decoder = new TextDecoder("windows-1251");
