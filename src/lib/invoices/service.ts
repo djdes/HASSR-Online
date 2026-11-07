@@ -312,15 +312,18 @@ export async function deliverInvoice(orderId: number, organizationName: string):
 
 export async function markInvoicePaid(
   orderId: number,
-  byUserId: string
+  byUserId: string | null,
+  /** Сверка выписки Сбера: кто подтвердил — система, в rawResult — операция банка. */
+  opts?: { rawResult?: Prisma.InputJsonValue; paidAt?: Date }
 ): Promise<{ ok: true; order: PaymentOrder } | { ok: false; status: number; error: string }> {
-  const raw: Prisma.InputJsonValue = { manual: true, by: byUserId, at: new Date().toISOString() };
+  const raw: Prisma.InputJsonValue = opts?.rawResult ?? { manual: true, by: byUserId, at: new Date().toISOString() };
   // pending → paid одним условным апдейтом; у счёта на пополнение в той же
   // транзакции баланс получает сумму счёта (settlePaidOrder, topup-core.ts).
   const settled = await settlePaidOrder({
     orderId,
     paymentMethod: "invoice",
     rawResult: raw,
+    paidAt: opts?.paidAt,
     actorUserId: byUserId,
   });
   if (!settled.claimed) {

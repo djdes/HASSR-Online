@@ -6,6 +6,8 @@ import { readMailSender } from "@/lib/platform-mail.server";
 import { visibleEmail } from "@/lib/platform-team.server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { MailSenderForm } from "./mail-sender-form";
+import { TelegramLinkCard } from "./telegram-link-card";
+import { generateLinkToken } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ export default async function RootMyMailPage() {
   const [t, sender, user] = await Promise.all([
     getTranslations("rootPanel"),
     readMailSender(session.user.id),
-    db.user.findUnique({ where: { id: session.user.id }, select: { name: true, email: true, contactEmail: true, phone: true, positionTitle: true } }),
+    db.user.findUnique({ where: { id: session.user.id }, select: { name: true, email: true, contactEmail: true, phone: true, positionTitle: true, telegramChatId: true } }),
   ]);
   const defaults = {
     fromName: user?.name ?? "",
@@ -23,6 +25,9 @@ export default async function RootMyMailPage() {
     phone: user?.phone ?? "",
     position: user?.positionTitle ?? "",
   };
+  // Ссылка на бота с одноразовым токеном привязки — та же, что в «Настройки → Уведомления».
+  const linkToken = generateLinkToken(session.user.id);
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/, "") || null;
   return (
     <DomainMessagesBoundary namespaces={["rootPanel"]}>
       <div className="mx-auto max-w-[860px] space-y-6">
@@ -35,6 +40,11 @@ export default async function RootMyMailPage() {
             <p className="mt-1 text-[14px] leading-relaxed text-[#6f7282]">{t("me.description")}</p>
           </div>
         </div>
+        <TelegramLinkCard
+          linked={Boolean(user?.telegramChatId)}
+          botLink={botUsername ? `https://t.me/${botUsername}?start=${linkToken}` : null}
+          startCommand={`/start ${linkToken}`}
+        />
         <MailSenderForm initial={sender} defaults={defaults} />
       </div>
     </DomainMessagesBoundary>

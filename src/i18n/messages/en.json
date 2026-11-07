@@ -16144,9 +16144,10 @@
     "maxChannel": "Telegram & MAX channels",
     "edo": "E-documents",
     "team": "Team and access",
-    "myMail": "My mailbox",
-    "myMailHint": "Mailbox your contracts, proposals and invoices are sent from",
-    "accessOwner": "Platform owner — full access"
+    "myMail": "Email & Telegram",
+    "myMailHint": "Work Telegram for support requests and the mailbox for client letters",
+    "accessOwner": "Platform owner — full access",
+    "sberBusiness": "SberBusiness"
   },
   "rootEdo": {
     "metadata": {
@@ -30526,7 +30527,26 @@
       "failed": "Mailbox verification failed",
       "savedOnly": "Settings saved",
       "disabled": "Personal mailbox disabled",
-      "errorGeneric": "Could not save settings"
+      "errorGeneric": "Could not save settings",
+      "telegram": {
+        "title": "Telegram for support requests",
+        "linkedHint": "Linked. Site requests, live support chat and applications arrive here. Swipe-reply to answer the client — the reply goes to their chat on the site.",
+        "unlinkedHint": "Not linked. Requests now arrive only by email and in “Feedback”. Link your work Telegram to get them there too and reply right from the chat.",
+        "linked": "Linked",
+        "unlinked": "Not linked",
+        "connect": "Link Telegram",
+        "step1": "Tap the button — the setap bot opens.",
+        "step2": "Tap “Start” in the bot.",
+        "step3": "Come back and tap “Check”.",
+        "check": "Check",
+        "unlink": "Unlink",
+        "copyCommand": "Or send the bot this command",
+        "copied": "Command copied",
+        "unlinkDone": "Telegram unlinked",
+        "error": "Something went wrong, try again",
+        "inbox": "All requests and chats are in “Feedback”",
+        "noBot": "The bot is not configured on the server: TELEGRAM_BOT_USERNAME is empty."
+      }
     }
   },
   "rootClientContract": {

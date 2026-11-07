@@ -26,7 +26,7 @@ import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 import { notifyManagement } from "@/lib/notifications";
 import { platformOrgId } from "@/lib/partners/partner-hint";
 import { sendPartnerChatMessageEmail } from "@/lib/partners/emails";
-import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-admin";
+import { notifyPlatformAdmin, sendToSupportEmails } from "@/lib/platform-admin";
 import {
   emailAttachmentPayload,
   parseStoredAttachments,
@@ -424,7 +424,7 @@ export async function deliverClientMessage(ctx: {
           appUrl: APP_URL,
         }),
         // Ветку ведёт партнёр — админу без письма, только отметка в Telegram.
-        { kind: "support-chat-partner", email: false }
+        { kind: "support-chat-partner", email: false, audience: "support" }
       ),
     ]);
     return;
@@ -444,13 +444,13 @@ export async function deliverClientMessage(ctx: {
   const emailAtts = emailAttachmentPayload(message.attachments);
   await Promise.all([
     // Своё подробное письмо с вложениями — ниже, всем администраторам.
-    notifyPlatformAdmin(adminText, { kind: "support-chat", email: false }),
+    notifyPlatformAdmin(adminText, { kind: "support-chat", email: false, audience: "support" }),
     sendAttachmentsToPlatformAdmins(
       message.attachments,
       `Вложения к чату #chat_${thread.id}`,
       "support-chat"
     ),
-    sendToPlatformAdminEmails((to) =>
+    sendToSupportEmails((to) =>
       sendFeedbackAdminEmail({
         to,
         type: "support",

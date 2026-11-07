@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sendFeedbackAdminEmail, sendFeedbackReceivedEmail } from "@/lib/email";
-import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-admin";
+import { notifyPlatformAdmin, sendToSupportEmails } from "@/lib/platform-admin";
 import { escapeHtml } from "@/lib/html-escape";
 import { feedbackValidationDescriptor } from "@/lib/feedback-copy";
 import { resolveRequestLocale } from "@/i18n/site-locale";
@@ -181,12 +181,12 @@ export async function POST(request: Request) {
           pageUrl,
         }),
         // Своё подробное письмо — ниже, всем администраторам.
-        { kind: "feedback", email: false }
+        { kind: "feedback", email: false, audience: "support" }
       ).catch((error) => {
         console.error("Feedback telegram failed:", error);
         return false;
       }),
-      sendToPlatformAdminEmails((to) =>
+      sendToSupportEmails((to) =>
         sendFeedbackAdminEmail({
             to,
             type: parsed.type,

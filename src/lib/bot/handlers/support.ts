@@ -8,7 +8,7 @@ import {
 import {
   isPlatformAdminChat as isAdminChat,
   notifyPlatformAdmin,
-  sendToPlatformAdminEmails,
+  sendToSupportEmails,
 } from "@/lib/platform-admin";
 import { botSupportRateLimiter } from "@/lib/rate-limit";
 import { extractSupportThreadId } from "@/lib/support-chat";
@@ -225,7 +225,7 @@ function defaultDeps(): SupportDeps {
     },
     async notifyAdminTelegram(text) {
       // Своё подробное письмо — emailAdmin.
-      return notifyPlatformAdmin(text, { kind: "support", email: false });
+      return notifyPlatformAdmin(text, { kind: "support", email: false, audience: "support" });
     },
     async emailAdmin({
       message,
@@ -234,7 +234,7 @@ function defaultDeps(): SupportDeps {
       organizationName,
       submittedAt,
     }) {
-      return sendToPlatformAdminEmails((to) =>
+      return sendToSupportEmails((to) =>
         sendFeedbackAdminEmail({
           to,
           type: "support",

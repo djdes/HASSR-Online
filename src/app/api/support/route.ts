@@ -5,7 +5,7 @@ import { requireApiAuth } from "@/lib/auth-helpers";
 import { escapeTelegramHtml as esc } from "@/lib/telegram";
 import {
   notifyPlatformAdmin,
-  sendToPlatformAdminEmails,
+  sendToSupportEmails,
 } from "@/lib/platform-admin";
 import { sendFeedbackAdminEmail } from "@/lib/email";
 
@@ -106,8 +106,8 @@ export async function POST(request: Request) {
   after(async () => {
     const [tgOk, emailOk] = await Promise.all([
       // Своё подробное письмо — следом, всем администраторам.
-      notifyPlatformAdmin(adminText, { kind: "support-widget", email: false }),
-      sendToPlatformAdminEmails((to) =>
+      notifyPlatformAdmin(adminText, { kind: "support-widget", email: false, audience: "support" }),
+      sendToSupportEmails((to) =>
         sendFeedbackAdminEmail({
           to,
           type: "support",

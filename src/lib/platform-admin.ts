@@ -54,56 +54,81 @@ export function getPlatformAdminEmail(): string | null {
 
 type PlatformAdministrator = { email: string; telegramChatId: string | null };
 
-let administratorsCache: { at: number; users: PlatformAdministrator[] } | null = null;
+/**
+ * Кому уходит уведомление. `admins` — администраторы платформы (`isRoot` или
+ * пресет «Администратор»). `support` — они же плюс все, кому в панели открыт
+ * раздел «Обратная связь» (менеджер поддержки): обращения с сайта, онлайн-чат,
+ * бот — их работа, а не только администраторов.
+ */
+export type PlatformAudience = "admins" | "support";
+
+type StaffRow = PlatformAdministrator & { isRoot: boolean; platformSections: string[] };
+
+let staffCache: { at: number; rows: StaffRow[] } | null = null;
 const ADMINISTRATORS_CACHE_MS = 60_000;
 
-/**
- * Активные администраторы платформы (`isRoot` или пресет «Администратор» —
- * все разделы панели). Кеш на минуту: уведомлений бывает много подряд
- * (онлайн-чат), а команда меняется редко. Сбой БД — последний известный
- * список (или пустой): уведомление в env-чат всё равно уйдёт.
- */
-export async function getPlatformAdministrators(): Promise<PlatformAdministrator[]> {
-  if (administratorsCache && Date.now() - administratorsCache.at < ADMINISTRATORS_CACHE_MS) {
-    return administratorsCache.users;
-  }
+/** Получатель уведомления по аудитории — чистая функция, проверяется тестом. */
+export function inPlatformAudience(
+  user: { isRoot: boolean; platformSections: readonly string[] },
+  audience: PlatformAudience
+): boolean {
+  if (isPlatformAdministrator(user)) return true;
+  return audience === "support" && user.platformSections.includes("support");
+}
+
+async function loadPlatformStaff(): Promise<StaffRow[]> {
+  if (staffCache && Date.now() - staffCache.at < ADMINISTRATORS_CACHE_MS) return staffCache.rows;
   try {
     const rows = await db.user.findMany({
       where: {
         isActive: true,
         archivedAt: null,
-        OR: [{ isRoot: true }, { platformSections: { hasEvery: [...PLATFORM_SECTION_KEYS] } }],
+        OR: [
+          { isRoot: true },
+          { platformSections: { hasEvery: [...PLATFORM_SECTION_KEYS] } },
+          { platformSections: { has: "support" } },
+        ],
       },
       select: { email: true, telegramChatId: true, isRoot: true, platformSections: true },
       orderBy: { createdAt: "asc" },
     });
-    const users = rows
-      .filter(isPlatformAdministrator)
-      .map((row) => ({ email: row.email, telegramChatId: row.telegramChatId }));
-    administratorsCache = { at: Date.now(), users };
-    return users;
+    staffCache = { at: Date.now(), rows };
+    return rows;
   } catch (error) {
-    console.error("[platform-admin] не удалось получить администраторов платформы:", error);
-    return administratorsCache?.users ?? [];
+    console.error("[platform-admin] не удалось получить команду платформы:", error);
+    return staffCache?.rows ?? [];
   }
 }
 
-/** Все адреса для писем админам: env + почта администраторов платформы. */
-export async function getPlatformAdminEmails(): Promise<string[]> {
-  const users = await getPlatformAdministrators();
+/**
+ * Активные получатели уведомлений платформы (по умолчанию — администраторы:
+ * `isRoot` или пресет «Администратор»). Кеш на минуту: уведомлений бывает
+ * много подряд (онлайн-чат), а команда меняется редко. Сбой БД — последний
+ * известный список (или пустой): уведомление в env-чат всё равно уйдёт.
+ */
+export async function getPlatformAdministrators(audience: PlatformAudience = "admins"): Promise<PlatformAdministrator[]> {
+  const rows = await loadPlatformStaff();
+  return rows
+    .filter((row) => inPlatformAudience(row, audience))
+    .map((row) => ({ email: row.email, telegramChatId: row.telegramChatId }));
+}
+
+/** Все адреса для писем: env + почта получателей аудитории. */
+export async function getPlatformAdminEmails(audience: PlatformAudience = "admins"): Promise<string[]> {
+  const users = await getPlatformAdministrators(audience);
   const env = parseEmailList(process.env.PLATFORM_ADMIN_EMAIL?.trim() || process.env.FEEDBACK_ADMIN_EMAIL);
   return mergeAdminEmails([env, users.map((user) => user.email)]);
 }
 
-/** Все Telegram-чаты админов: env + администраторы с привязанным Telegram. */
-export async function getPlatformAdminRecipientChatIds(): Promise<string[]> {
-  const users = await getPlatformAdministrators();
+/** Все Telegram-чаты: env + получатели аудитории с привязанным Telegram. */
+export async function getPlatformAdminRecipientChatIds(audience: PlatformAudience = "admins"): Promise<string[]> {
+  const users = await getPlatformAdministrators(audience);
   return mergeChatIds([getPlatformAdminChatIds(), users.map((user) => user.telegramChatId)]);
 }
 
-/** Чат админа: ответ из него на обращение уходит клиенту (свайп в боте). */
+/** Чат команды поддержки: ответ из него на обращение уходит клиенту (свайп в боте). */
 export async function isPlatformAdminChat(chatId: string): Promise<boolean> {
-  return (await getPlatformAdminRecipientChatIds()).includes(chatId);
+  return (await getPlatformAdminRecipientChatIds("support")).includes(chatId);
 }
 
 /**
@@ -111,8 +136,11 @@ export async function isPlatformAdminChat(chatId: string): Promise<boolean> {
  * адресату {@link getPlatformAdminEmails}. Сбой одного не мешает другим;
  * true, если ушло хотя бы одно.
  */
-export async function sendToPlatformAdminEmails(send: (to: string) => Promise<boolean>): Promise<boolean> {
-  const emails = await getPlatformAdminEmails();
+export async function sendToPlatformAdminEmails(
+  send: (to: string) => Promise<boolean>,
+  audience: PlatformAudience = "admins"
+): Promise<boolean> {
+  const emails = await getPlatformAdminEmails(audience);
   const results = await Promise.all(
     emails.map((to) =>
       send(to).catch((error: unknown) => {
@@ -125,13 +153,13 @@ export async function sendToPlatformAdminEmails(send: (to: string) => Promise<bo
 }
 
 /** Общее письмо из текста уведомления — тем, у кого нет своего письма. */
-async function emailPlatformAdmins(text: string): Promise<boolean> {
+async function emailPlatformAdmins(text: string, audience: PlatformAudience): Promise<boolean> {
   const mail = adminNotificationEmail(text);
   const html = renderEmailLayout(escapeHtml(mail.title), mail.bodyHtml ? `<div style="color:#3f3f46;font-size:14px;line-height:1.6">${mail.bodyHtml}</div>` : "", null, {
     preheader: mail.title,
     footerHtml: `<p style="margin:6px 0 0;font-size:12px;color:#a1a1aa;text-align:center">Письмо администратору платформы WeSetup. Такое же уведомление приходит в Telegram, если он привязан.</p>`,
   });
-  return sendToPlatformAdminEmails((to) => sendRawEmail(to, mail.subject, html));
+  return sendToPlatformAdminEmails((to) => sendRawEmail(to, mail.subject, html), audience);
 }
 
 /**
@@ -156,7 +184,8 @@ export function maskEmail(email: string): string {
  * Уведомление администраторам платформы: в Telegram — env-чаты и
  * администраторы с привязанным Telegram (`sendTelegramMessage`: TelegramLog
  * и retry на 429), на почту — env-адрес и почта каждого администратора.
- * `email: false` — у события своё подробное письмо (обращения, заявки),
+ * `audience: "support"` — обращения и чаты: ещё и менеджерам с разделом
+ * «Обратная связь». `email: false` — у события своё подробное письмо (обращения, заявки),
  * его вызывающий шлёт сам через {@link sendToPlatformAdminEmails}.
  *
  * `kind` попадает в `TelegramLog.kind` как `admin:<kind>` — по логу видно,
@@ -170,13 +199,13 @@ export function maskEmail(email: string): string {
  */
 export async function notifyPlatformAdmin(
   text: string,
-  opts?: { kind?: string; dedupeKey?: string; email?: boolean }
+  opts?: { kind?: string; dedupeKey?: string; email?: boolean; audience?: PlatformAudience }
 ): Promise<boolean> {
   const [telegram, email] = await Promise.all([
     telegramPlatformAdmins(text, opts),
     opts?.email === false
       ? Promise.resolve(false)
-      : emailPlatformAdmins(text).catch((error: unknown) => {
+      : emailPlatformAdmins(text, opts?.audience ?? "admins").catch((error: unknown) => {
           console.error("[platform-admin] email failed:", error);
           return false;
         }),
@@ -186,9 +215,9 @@ export async function notifyPlatformAdmin(
 
 async function telegramPlatformAdmins(
   text: string,
-  opts?: { kind?: string; dedupeKey?: string }
+  opts?: { kind?: string; dedupeKey?: string; audience?: PlatformAudience }
 ): Promise<boolean> {
-  const chatIds = await getPlatformAdminRecipientChatIds();
+  const chatIds = await getPlatformAdminRecipientChatIds(opts?.audience ?? "admins");
   if (chatIds.length === 0) {
     console.error(
       "[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram"
@@ -211,4 +240,9 @@ async function telegramPlatformAdmins(
   );
 
   return results.some(Boolean);
+}
+
+/** Подробное письмо по обращению — команде поддержки (аудитория `support`). */
+export function sendToSupportEmails(send: (to: string) => Promise<boolean>): Promise<boolean> {
+  return sendToPlatformAdminEmails(send, "support");
 }

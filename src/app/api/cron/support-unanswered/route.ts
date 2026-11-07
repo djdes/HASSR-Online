@@ -79,7 +79,7 @@ async function handle(request: Request) {
         escape: escapeTelegramHtml,
         appUrl: APP_URL,
       }),
-      { kind: "support_unanswered", dedupeKey },
+      { kind: "support_unanswered", dedupeKey, audience: "support" },
     ).catch((error: unknown) => {
       console.error("[support-unanswered] admin ping failed", { thread: thread.id, error });
       return false;

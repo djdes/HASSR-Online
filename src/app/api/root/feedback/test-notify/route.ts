@@ -22,8 +22,8 @@ export async function POST() {
   const session = await requireRoot();
 
   const [chatIds, adminEmails] = await Promise.all([
-    getPlatformAdminRecipientChatIds(),
-    getPlatformAdminEmails(),
+    getPlatformAdminRecipientChatIds("support"),
+    getPlatformAdminEmails("support"),
   ]);
   const who = session.user.name ?? session.user.email ?? "ROOT";
   const when = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
@@ -36,14 +36,15 @@ export async function POST() {
       `Запустил: ${who} · ${when}`,
     ].join("\n"),
     // Проверочное письмо — своё, ниже.
-    { kind: "test", email: false }
+    { kind: "test", email: false, audience: "support" }
   ).catch((error) => {
     console.error("[test-notify] telegram failed:", error);
     return false;
   });
 
-  const email = await sendToPlatformAdminEmails((to) =>
-    sendPlatformAdminTestEmail({ to, triggeredBy: who })
+  const email = await sendToPlatformAdminEmails(
+    (to) => sendPlatformAdminTestEmail({ to, triggeredBy: who }),
+    "support"
   ).catch((error) => {
     console.error("[test-notify] email failed:", error);
     return false;

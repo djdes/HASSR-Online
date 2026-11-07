@@ -5591,3 +5591,26 @@ model GglPlannedSlot {
   @@index([scheduledDate, status])
   @@index([status])
 }
+
+/// Входящие платежи из выписки СберБизнес (р/с БФС), сопоставленные со
+/// счетами WeSetup (src/lib/sber/invoice-payments.server.ts). Храним только
+/// наши: matched — счёт отмечен оплаченным, review — нужен разбор, failed —
+/// сопоставили, но отметить не вышло. Чужие поступления на общий счёт не пишем.
+model SberIncomingPayment {
+  id            String   @id @default(cuid())
+  /// operationId Сбера — повторная сверка того же дня его пропускает.
+  operationId   String   @unique
+  operationDate String
+  amountRub     Decimal  @db.Decimal(12, 2)
+  payerInn      String?
+  payerName     String?
+  purpose       String
+  orderId       Int?
+  /// matched | review | failed
+  status        String
+  note          String?
+  createdAt     DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}

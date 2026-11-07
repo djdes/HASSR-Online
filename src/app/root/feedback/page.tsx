@@ -132,10 +132,10 @@ export default async function RootFeedbackPage({
       }),
     ]);
 
-  // Кому уходят уведомления: env плюс администраторы платформы (почта и привязанный Telegram).
+  // Кому уходят обращения: env, администраторы и менеджеры с разделом «Обратная связь» (почта и привязанный Telegram).
   const [recipientChatIds, recipientEmails] = await Promise.all([
-    getPlatformAdminRecipientChatIds(),
-    getPlatformAdminEmails(),
+    getPlatformAdminRecipientChatIds("support"),
+    getPlatformAdminEmails("support"),
   ]);
   const adminChatIds = recipientChatIds.map(maskChatId);
   const adminEmail = recipientEmails.length ? recipientEmails.map(maskEmail).join(", ") : null;

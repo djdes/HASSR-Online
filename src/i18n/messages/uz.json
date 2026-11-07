@@ -16144,9 +16144,10 @@
     "maxChannel": "Telegram va MAX kanallari",
     "edo": "EHA",
     "team": "Jamoa va ruxsatlar",
-    "myMail": "Mening pochtam",
-    "myMailHint": "Shartnoma, tijorat taklifi va hisoblaringiz shu pochtadan yuboriladi",
-    "accessOwner": "Platforma egasi — to‘liq ruxsat"
+    "myMail": "Pochta va Telegram",
+    "myMailHint": "Murojaatlar uchun ish Telegrami va mijozlarga xatlar pochtasi",
+    "accessOwner": "Platforma egasi — to‘liq ruxsat",
+    "sberBusiness": "SberBiznes"
   },
   "rootEdo": {
     "metadata": {
@@ -30526,7 +30527,26 @@
       "failed": "Pochta tekshiruvdan o‘tmadi",
       "savedOnly": "Sozlamalar saqlandi",
       "disabled": "Shaxsiy pochta o‘chirildi",
-      "errorGeneric": "Sozlamalarni saqlab bo‘lmadi"
+      "errorGeneric": "Sozlamalarni saqlab bo‘lmadi",
+      "telegram": {
+        "title": "Murojaatlar uchun Telegram",
+        "linkedHint": "Ulangan. Saytdagi murojaatlar, onlayn chat va arizalar shu yerga keladi. Mijozga svayp orqali javob bering — javob uning saytdagi chatiga boradi.",
+        "unlinkedHint": "Ulanmagan. Murojaatlar hozir faqat pochtaga va «Fikr-mulohaza» bo‘limiga keladi. Ish Telegramingizni ulang — ular u yerga ham keladi.",
+        "linked": "Ulangan",
+        "unlinked": "Ulanmagan",
+        "connect": "Telegramni ulash",
+        "step1": "Tugmani bosing — setap boti ochiladi.",
+        "step2": "Botda «Start» tugmasini bosing.",
+        "step3": "Bu yerga qayting va «Tekshirish»ni bosing.",
+        "check": "Tekshirish",
+        "unlink": "Uzish",
+        "copyCommand": "Yoki botga buyruq yuboring",
+        "copied": "Buyruq nusxalandi",
+        "unlinkDone": "Telegram uzildi",
+        "error": "Bo‘lmadi, qayta urinib ko‘ring",
+        "inbox": "Barcha murojaatlar va chatlar «Fikr-mulohaza» bo‘limida",
+        "noBot": "Bot serverda sozlanmagan: TELEGRAM_BOT_USERNAME bo‘sh."
+      }
     }
   },
   "rootClientContract": {
