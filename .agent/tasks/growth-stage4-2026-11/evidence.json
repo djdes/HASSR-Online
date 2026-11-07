@@ -2,8 +2,8 @@
   "task": "growth-stage4-2026-11",
   "branch": "claude/serene-mccarthy-rhrl3e",
   "base": "ce5615cc",
-  "mergedMaster": null,
-  "checkedAt": "2026-11-07T22:55Z",
+  "mergedMaster": "b64f138a",
+  "checkedAt": "2026-11-07T23:03Z",
   "acceptance": {
     "AC1": {
       "status": "PASS",
@@ -48,19 +48,24 @@
       ]
     },
     "AC5": {
-      "status": "PENDING_DEPLOY",
+      "status": "PASS",
       "evidence": [
         "raw/eslint.txt",
         "raw/typecheck.txt",
         "raw/test-gate.txt",
         "raw/targeted-tests.txt",
         "raw/before-prod-checks.txt",
-        "e2e/post-deploy-check.sh"
+        "e2e/post-deploy-check.sh",
+        "raw/after-prod-checks.txt",
+        "raw/prod-checklist.json",
+        "raw/prod-checklist-phone.jpg"
       ]
     }
   },
   "notes": [
     "Скриншоты raw/*.jpg игнорируются .gitignore и остались на стенде проверки.",
     "План публикации, календарь .ics и архив роликов с текстами по площадкам отправлены владельцу."
-  ]
+  ],
+  "deployRun": 2190,
+  "prodBuild": "b64f138"
 }
