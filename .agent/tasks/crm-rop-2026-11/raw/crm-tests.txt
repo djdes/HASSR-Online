@@ -1,0 +1,9 @@
+✔ SEO metadata hygiene (84.919946ms)
+ℹ tests 65
+ℹ suites 10
+ℹ pass 65
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25390.044728

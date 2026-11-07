@@ -9,13 +9,25 @@ import { matchPlatformPreset, type PlatformSectionKey } from "@/lib/platform-acc
 import { cn } from "@/lib/utils";
 
 /** «Доступ к панели» for one employee in the client card (owner only). */
-export function PanelAccessButton({ user, sections }: { user: { id: string; name: string }; sections: PlatformSectionKey[] }) {
+export function PanelAccessButton({
+  user,
+  sections,
+  salesHead = false,
+}: {
+  user: { id: string; name: string };
+  sections: PlatformSectionKey[];
+  salesHead?: boolean;
+}) {
   const t = useTranslations("rootPanel");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(sections);
+  const [currentSalesHead, setCurrentSalesHead] = useState(salesHead);
   const preset = matchPlatformPreset(current);
-  const label = current.length ? t("access.buttonHas", { role: preset ? t(`presets.${preset}.title`) : t("presets.custom.title") }) : t("access.button");
+  const role = preset ? t(`presets.${preset}.title`) : t("presets.custom.title");
+  const label = current.length
+    ? t("access.buttonHas", { role: currentSalesHead ? `${role} · ${t("access.salesHeadBadge")}` : role })
+    : t("access.button");
   return (
     <>
       <button
@@ -38,8 +50,10 @@ export function PanelAccessButton({ user, sections }: { user: { id: string; name
           onClose={() => setOpen(false)}
           user={user}
           initialSections={current}
-          onSaved={(next) => {
+          initialSalesHead={currentSalesHead}
+          onSaved={(next, nextSalesHead) => {
             setCurrent(next);
+            setCurrentSalesHead(nextSalesHead);
             router.refresh();
           }}
         />

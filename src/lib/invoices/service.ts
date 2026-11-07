@@ -306,7 +306,7 @@ export async function deliverInvoice(orderId: number, organizationName: string):
       `Сумма: ${Number(order.amountRub).toLocaleString("ru-RU")} ₽ · ${order.description}`,
       `Когда деньги придут — ROOT → организация → «Оплата поступила».`,
     ].join("\n"),
-    { kind: "payment", dedupeKey: `invoice-created:${order.id}` }
+    { kind: "payment", dedupeKey: `invoice-created:${order.id}`, audience: "sales" }
   ).catch((error) => console.error("[invoices] admin notify failed", error));
 }
 
@@ -545,6 +545,6 @@ export async function deliverGuestInvoice(orderId: number): Promise<void> {
       `Сумма: ${Number(order.amountRub).toLocaleString("ru-RU")} ₽ · ${order.description}`,
       `Когда деньги придут — ROOT → «Счета гостей» → «Оплата поступила»: аккаунт заведётся сам, ссылка уйдёт на почту.`,
     ].join("\n"),
-    { kind: "payment", dedupeKey: `invoice-created:${order.id}` },
+    { kind: "payment", dedupeKey: `invoice-created:${order.id}`, audience: "sales" },
   ).catch((error) => console.error("[invoices] guest admin notify failed", error));
 }

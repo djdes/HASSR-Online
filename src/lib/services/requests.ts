@@ -173,6 +173,7 @@ async function notifyAdmin(
   const tgOk = await notifyPlatformAdmin(text, {
     kind: "service",
     dedupeKey: input.requestId,
+    audience: "sales",
     // Своё письмо — ниже, всем администраторам.
     email: false,
   }).catch(() => false);
@@ -184,7 +185,8 @@ async function notifyAdmin(
       .map((line) => escapeHtml(line))
       .join("<br>")}</p>`;
     emailOk = await sendToPlatformAdminEmails((to) =>
-      sendRawEmail(to, `Заявка на услугу: ${input.service.title}`, html)
+      sendRawEmail(to, `Заявка на услугу: ${input.service.title}`, html),
+      "sales"
     ).catch(() => false);
   }
 

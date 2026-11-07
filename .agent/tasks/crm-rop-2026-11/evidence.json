@@ -1,0 +1,31 @@
+{
+  "task": "crm-rop-2026-11",
+  "branch": "claude/peaceful-brown-tgkspp",
+  "base": "ce5615c",
+  "checkedAt": "2026-11-07T23:20Z",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["raw/schema-additive.sql"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/platform-access.test.ts", "src/lib/crm/rop.test.ts", "raw/ui-check.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/crm/mail-filter.test.ts", "src/lib/crm/imap.test.ts", "raw/mail-ingest-check.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/crm/identity.test.ts", "src/lib/crm/state.test.ts", "raw/cycle-check.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/crm/sources.test.ts", "raw/cycle-check.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["src/lib/crm/imap.test.ts", "raw/mail-ingest-check.txt"] },
+    "AC7": { "status": "PASS", "evidence": ["src/lib/crm/reminders.test.ts", "raw/cycle-check.txt", "raw/smtp-sink-cycle.txt"] },
+    "AC8": { "status": "PASS", "evidence": ["src/lib/crm/rop.test.ts", "raw/seed-crm-rop.txt", "raw/screens/09-team-rop-dialog.png"] },
+    "AC9": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/screens"] },
+    "AC10": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt", "raw/eslint.txt", "docs/crm.md"] }
+  },
+  "gates": {
+    "typecheck": "EXIT 0",
+    "testGate": "5822 pass, 0 fail",
+    "i18nCheck": "97 pass",
+    "eslintChanged": "EXIT 0",
+    "crmTargeted": "65/65"
+  },
+  "limitations": ["no live IMAP server in the container: imapflow adapter covered by types and a faked session; sync logic verified against the local DB"],
+  "ownerActions": [
+    "crontab line for /api/cron/crm (every 5 minutes)",
+    "connect admin@wesetup.ru in CRM → Почта и фильтры (Yandex app password)"
+  ]
+}

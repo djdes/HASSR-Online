@@ -16113,6 +16113,7 @@
     "sections": "Bo‘limlar",
     "navigationLabel": "Platforma bo‘limlari",
     "organizations": "Mijozlar",
+    "crm": "CRM",
     "money": "Daromad va savdo",
     "funnel": "Voronka",
     "tariffs": "Tariflar",
@@ -30363,7 +30364,7 @@
       },
       "sales": {
         "title": "Savdo",
-        "hint": "Takliflar, tarqatmalar, xizmatlar va arizalar, promokodlar va aksiyalar"
+        "hint": "CRM, takliflar, tarqatmalar, xizmatlar va arizalar, promokodlar va aksiyalar"
       },
       "partners": {
         "title": "Hamkorlar",
@@ -30405,7 +30406,7 @@
       },
       "sales": {
         "title": "Savdo",
-        "hint": "Mijozlar, takliflar va tarqatmalar, hamkorlar, EHA"
+        "hint": "Mijozlar, CRM, takliflar va tarqatmalar, hamkorlar, EHA"
       },
       "support": {
         "title": "Qo‘llab-quvvatlash",
@@ -30448,7 +30449,11 @@
       "button": "Panelga ruxsat",
       "buttonHas": "Panel: {role}",
       "ownerBadge": "Ega",
-      "refreshHint": "Xodimga xat yuboriladi, Telegram ulangan bo‘lsa — u yerga ham xabar. «Platforma paneli» havolasi sahifa yangilangandan keyin kabinetda paydo bo‘ladi."
+      "refreshHint": "Xodimga xat yuboriladi, Telegram ulangan bo‘lsa — u yerga ham xabar. «Platforma paneli» havolasi sahifa yangilangandan keyin kabinetda paydo bo‘ladi.",
+      "salesHeadTitle": "Savdo bo‘limi rahbari (ROP)",
+      "salesHeadHint": "CRM'dagi barcha arizalar va eslatmalarni oladi: mijoz javob kutmoqda, mijoz jim qoldi, keyingi qadam vaqti keldi. «Savdo» bo‘limi kerak.",
+      "salesHeadBullet": "ROP: barcha arizalar va CRM eslatmalari unga keladi",
+      "salesHeadBadge": "ROP"
     },
     "team": {
       "title": "Jamoa va ruxsatlar",
