@@ -119,17 +119,12 @@ export async function POST(request: Request) {
     select: { id: true, userEmail: true, phone: true },
   });
 
-  // Контакты спрашиваем один раз — на первой реплике. Дальше они уже в
-  // ветке, и переспрашивать в каждом сообщении незачем.
+  // Онлайн-чат (07.11.2026): писать можно и без контакта — ответ увидят в
+  // окне чата на сайте (гость узнаётся по guestId). Телефон или почту виджет
+  // предлагает отдельно; оставили — запоминаем в ветке.
   const given = normalizeContact(parsed.data);
   const email = given.email ?? existing?.userEmail ?? null;
   const phone = given.phone ?? existing?.phone ?? null;
-  if (!email && !phone) {
-    return NextResponse.json(
-      { error: "Оставьте телефон или почту — иначе некуда ответить", code: "missing_contact" },
-      { status: 400 }
-    );
-  }
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ error: "Проверьте адрес почты", code: "invalid_email" }, { status: 400 });
   }

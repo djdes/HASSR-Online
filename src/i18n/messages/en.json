@@ -6386,7 +6386,9 @@
         "invalid_attachments": "The attachments could not be verified. Please attach the files again",
         "message_too_short": "The message is too short"
       },
-      "launcher": "Support"
+      "launcher": "Live chat",
+      "chatContactHint": "Leave a phone or email — we will reply even if you close the site.",
+      "chatContactAction": "Add"
     },
     "attachment": {
       "maxFiles": "{count, plural, one {You can attach up to # file} other {You can attach up to # files}}",

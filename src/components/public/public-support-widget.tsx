@@ -105,7 +105,6 @@ const CONTACT_KEY = "wesetup.support-contact";
 const HAS_THREAD_KEY = "wesetup.support-guest-has-thread";
 const CHAT_POLL_MS = 10_000;
 /** Пульс вокруг пузыря гаснет сам: навязчивая анимация раздражает сильнее, чем зовёт. */
-const ATTENTION_MS = 4_000;
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
 const INPUT_CLASS =
@@ -197,8 +196,6 @@ function SupportWidgetBody() {
   };
   const [open, setOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>("menu");
-  /// Пульс у закрытого пузыря: до первого открытия или пока не истёк таймер.
-  const [attention, setAttention] = useState(true);
 
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -231,12 +228,6 @@ function SupportWidgetBody() {
   // Вложения: чат и обратная связь — раздельные наборы.
   const chatFiles = useAttachmentUploads({ guestId: guestIdState });
   const feedbackFiles = useAttachmentUploads({ guestId: guestIdState });
-
-  useEffect(() => {
-    if (!attention) return;
-    const timer = setTimeout(() => setAttention(false), ATTENTION_MS);
-    return () => clearTimeout(timer);
-  }, [attention]);
 
   // Кто уже переписывался — id гостя нужен сразу, до открытия пузыря:
   // ответ оператора должен прозвучать, даже если виджет ни разу не трогали.
@@ -273,9 +264,12 @@ function SupportWidgetBody() {
     }
   }, []);
 
-  /** Контакт спрашиваем до меню: кто уже оставлял — сразу к кнопкам. */
+  /**
+   * Кнопка «Онлайн-чат» открывает сразу переписку (07.11.2026): писать можно
+   * без контакта, телефон или почту предлагаем строкой над полем ввода —
+   * чтобы ответ дошёл, даже если человек закроет сайт.
+   */
   function openWidget() {
-    setAttention(false);
     if (!guestId.current) guestId.current = readGuestId();
     setGuestIdState(guestId.current);
     let known = saved;
@@ -288,7 +282,7 @@ function SupportWidgetBody() {
       }
     }
     afterContact.current = "menu";
-    setScreen(known ? "menu" : "contact");
+    setScreen("chat");
     setOpen(true);
     return known;
   }
@@ -296,9 +290,7 @@ function SupportWidgetBody() {
   /** Всплывашка «новое сообщение» ведёт сразу в переписку. */
   const openChatRef = useRef<() => void>(() => {});
   openChatRef.current = () => {
-    const known = openWidget();
-    if (known) setScreen("chat");
-    else afterContact.current = "chat";
+    openWidget();
   };
   useEffect(() => {
     const handler = (event: Event) => {
@@ -345,7 +337,16 @@ function SupportWidgetBody() {
     if (window.matchMedia("(pointer: fine)").matches) phoneRef.current?.focus();
   }, [open, screen]);
 
+  /** Из необязательного вопроса о контакте, открытого из чата, — назад в чат. */
+  const contactFromChat = screen === "contact" && afterContact.current === "chat";
+
   function backToMenu() {
+    if (contactFromChat) {
+      restoreContact();
+      afterContact.current = "menu";
+      setScreen("chat");
+      return;
+    }
     if (screen === "contact") restoreContact();
     setSent(false);
     setScreen("menu");
@@ -470,10 +471,6 @@ function SupportWidgetBody() {
     const attachments = chatFiles.readyAttachments;
     // Можно отправить только файл, без текста — «просто скинул скрин».
     if (body.length < 2 && attachments.length === 0) return;
-    if (!hasContact) {
-      requireContact("chat");
-      return;
-    }
     if (chatFiles.uploading) {
       toast.error(t("widget.waitForAttachments"));
       return;
@@ -569,12 +566,6 @@ function SupportWidgetBody() {
           }
       title={t("widget.writeUs")}
         >
-          {attention && incoming.unread === 0 ? (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full bg-[#5566f6] opacity-40 motion-safe:animate-ping"
-            />
-          ) : null}
           <LauncherBadge count={incoming.unread} />
           <MessageCircle className="relative size-5" />
           <span className="relative">{t("widget.launcher")}</span>
@@ -590,7 +581,7 @@ function SupportWidgetBody() {
       <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#eef0f6] px-5 py-4">
         <div className="min-w-0">
           {/* На первом вопросе о контакте возвращаться некуда — меню ещё закрыто. */}
-          {screen !== "menu" && (screen !== "contact" || saved) ? (
+          {screen !== "menu" && (screen !== "contact" || saved || contactFromChat) ? (
             <button
               type="button"
               onClick={backToMenu}
@@ -871,6 +862,18 @@ function SupportWidgetBody() {
           </div>
 
           <div className="shrink-0 border-t border-[#eef0f6] p-3">
+            {!hasContact ? (
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-[#f5f6ff] px-3 py-2 text-[12.5px] leading-snug text-[#3c4053]">
+                <span>{t("widget.chatContactHint")}</span>
+                <button
+                  type="button"
+                  onClick={() => requireContact("chat")}
+                  className="shrink-0 rounded-xl px-2 py-1 font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#eef1ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                >
+                  {t("widget.chatContactAction")}
+                </button>
+              </div>
+            ) : null}
             <AttachmentChips
               uploads={chatFiles.uploads}
               onRemove={chatFiles.remove}

@@ -7,6 +7,7 @@ import { ArrowUpRight, Mail, MessageCircle, MessagesSquare, Phone, Send } from "
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CONTACT_EMAIL, CONTACT_MOBILE, CONTACT_PHONE, CONTACT_TELEGRAM, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
 import { contactSupport } from "@/lib/support-chat-bus";
+import { COMPANY_MAX_URL } from "@/lib/company-contacts";
 import { cn } from "@/lib/utils";
 
 /**
@@ -71,7 +72,7 @@ export function ContactUsPanel({
   const telegram = telegramUrl || CONTACT_TELEGRAM_FALLBACK;
   // MAX рядом с Telegram — страховка на случай ограничений Telegram. Появляется,
   // когда владелец задал адрес канала поддержки в MAX.
-  const max = contactMaxUrl(process.env.NEXT_PUBLIC_WESETUP_MAX_URL);
+  const max = contactMaxUrl(process.env.NEXT_PUBLIC_WESETUP_MAX_URL) ?? COMPANY_MAX_URL;
 
   const openChat = () => {
     if (!onBeforeChat) {

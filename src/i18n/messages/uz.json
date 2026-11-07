@@ -6386,7 +6386,9 @@
         "invalid_attachments": "Biriktirmalar tekshiruvdan o‘tmadi. Fayllarni qayta biriktiring",
         "message_too_short": "Xabar juda qisqa"
       },
-      "launcher": "Yordam"
+      "launcher": "Onlayn chat",
+      "chatContactHint": "Telefon yoki pochta qoldiring — saytni yopsangiz ham javob beramiz.",
+      "chatContactAction": "Qoldirish"
     },
     "attachment": {
       "maxFiles": "{count, plural, other {Ko‘pi bilan # ta fayl biriktirish mumkin}}",

@@ -20,5 +20,8 @@ export const COMPANY_MOBILE: CompanyPhone = { display: "+7 (925) 305-80-77", tel
 /** Telegram поддержки (владелец, 2026-11-07). */
 export const COMPANY_TELEGRAM = { handle: "@wesetup_support", url: "https://t.me/wesetup_support" } as const;
 
+/** MAX поддержки — профиль «СЕТАП» (владелец, 2026-11-07). */
+export const COMPANY_MAX_URL = "https://max.ru/u/f9LHodD0cOJNp7vXtk_iYua3QOXEZu5ZA1jabvUtyP005bYw8IwuWHOu2Xs";
+
 /** Оба номера в порядке показа: основной, затем мобильный. */
 export const COMPANY_PHONES: readonly CompanyPhone[] = [COMPANY_PHONE, COMPANY_MOBILE];
