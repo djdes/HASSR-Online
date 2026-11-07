@@ -1,3 +1,5 @@
+import type { ReviewStats } from "@/lib/review-stats";
+
 import type { ReviewKind } from "./constants";
 import { publicReviewSignature } from "./review-rules";
 
@@ -34,6 +36,8 @@ export type ReviewView = {
   suggestedRewardRub: number;
   rejectReason: string | null;
   showOnLanding: boolean;
+  /** Автор разрешил показать цифры: журналы, записи, с какого месяца в WeSetup. */
+  showStats: boolean;
   createdAt: string;
   moderatedAt: string | null;
 };
@@ -48,6 +52,8 @@ export type PublicReview = {
   mediaKind: "photo" | "video" | null;
   /** Анонимный — без имени и заведения, в разметке для поиска не участвует. */
   anonymous?: boolean;
+  /** Цифры заведения — только если автор разрешил (`showStats`) и записи есть. */
+  stats?: ReviewStats | null;
 };
 
 /** Текст для соцсетей — кнопка «Скопировать» в модерации. */

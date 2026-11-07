@@ -2,13 +2,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
+import { signupChannel } from "@/lib/signup-channel";
 import {
   AUTOFILL_CLIP,
+  AUTOFILL_CLIP_PLATFORMS,
   AUTOFILL_CLIP_SCENES,
   AUTOFILL_FPS,
   AUTOFILL_SCENES,
   autofillClipBasename,
   autofillClipCaption,
+  autofillClipUrl,
   autofillScene,
 } from "@/lib/autofill-offer";
 
@@ -40,12 +43,47 @@ describe("вертикальные ролики «Журналы, которые
     );
   });
 
-  it("текст к публикации — из текстов сцены и адреса концовки", () => {
-    const caption = autofillClipCaption("sensors");
+  it("текст к публикации — из текстов сцены и адреса концовки, по площадке", () => {
     const scene = autofillScene("sensors");
-    assert.ok(caption.startsWith(`${scene.title}. ${scene.sub}\n\n`));
-    assert.match(caption, /https:\/\/wesetup\.ru\/avtozapolnenie/);
+    const vk = autofillClipCaption("sensors", "vk");
+    assert.ok(vk.startsWith(`${scene.title}. ${scene.sub}\n\n`));
+    assert.match(vk, /#ХАССП/);
+    const telegram = autofillClipCaption("sensors", "telegram");
+    assert.ok(telegram.startsWith(`${scene.title}\n\n${scene.sub}\n\n`));
+    assert.match(telegram, /https:\/\/wesetup\.ru\/avtozapolnenie\?utm_source=telegram&utm_medium=clip&utm_campaign=autofill-sensors/);
     assert.equal(autofillScene("outro").sub, "wesetup.ru/avtozapolnenie");
+  });
+
+  it("ссылки с метками: воронка видит VK, Telegram и MAX как свои каналы", () => {
+    for (const platform of AUTOFILL_CLIP_PLATFORMS) {
+      for (const id of AUTOFILL_CLIP_SCENES) {
+        const url = new URL(autofillClipUrl(id, platform));
+        assert.equal(url.pathname, "/avtozapolnenie");
+        const snapshot = {
+          place: "",
+          landing: url.pathname,
+          referrer: "",
+          utmSource: url.searchParams.get("utm_source") ?? "",
+          utmMedium: url.searchParams.get("utm_medium") ?? "",
+          utmCampaign: url.searchParams.get("utm_campaign") ?? "",
+        };
+        assert.equal(signupChannel(snapshot), platform);
+        assert.equal(snapshot.utmCampaign, `autofill-${id}`);
+      }
+    }
+  });
+
+  it("план публикации: даты пн/ср/пт с 9 ноября, тексты — те же, что из кода", () => {
+    const plan = read("docs/clips-publication-plan.md");
+    for (const date of ["пн, 9 ноября", "ср, 11 ноября", "пт, 13 ноября", "пн, 16 ноября", "ср, 18 ноября"]) {
+      assert.ok(plan.includes(date), date);
+    }
+    for (const id of AUTOFILL_CLIP_SCENES) {
+      for (const platform of ["vk", "telegram"] as const) {
+        assert.ok(plan.includes(autofillClipCaption(id, platform)), `${id}/${platform}`);
+      }
+    }
+    assert.match(read("scripts/landing-video/render-clips.ts"), /\$\{basename\}-\$\{platform\}\.txt/);
   });
 
   it("Remotion: композиции по списку сцен, сцена и концовка — из тех же данных", () => {

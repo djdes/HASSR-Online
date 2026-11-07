@@ -16,7 +16,7 @@ const review: ReviewView = {
   mediaUrl: "https://files.invalid/video.mp4", mediaMime: "video/mp4", rating: 5,
   consentPublic: true, anonymous: false, organizationSphere: "Ресторан",
   status: "pending", rewardRub: 0, suggestedRewardRub: 1990,
-  rejectReason: null, showOnLanding: true, createdAt: "2026-10-16T00:30:00Z", moderatedAt: null,
+  rejectReason: null, showOnLanding: true, showStats: false, createdAt: "2026-10-16T00:30:00Z", moderatedAt: null,
 };
 
 test("clipboard preserves raw nonanonymous names, empty signature, content and original RU bytes", () => {

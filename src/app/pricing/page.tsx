@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { ArrowRight } from "lucide-react";
 import { RoiCalculator } from "@/components/landing/roi-calculator";
+import { Testimonials } from "@/components/landing/testimonials";
+import { listPublicReviews } from "@/lib/balance/reviews";
 import { HardwareStrip } from "@/components/landing/hardware-strip";
 import { TariffComparison } from "@/components/pricing/tariff-comparison";
 import { DemoRequestButton } from "@/components/public/demo-request-button";
@@ -63,9 +65,15 @@ export const metadata = {
 export default async function PricingPage() {
   // Витрина с кнопками оплаты — не для приложения (правила магазинов).
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
-  const [pricing, promotion] = await Promise.all([
+  const [pricing, promotion, publicReviews] = await Promise.all([
     readPlanPricing(),
     readActivePromotion().catch(() => null),
+    // Те же отзывы, что на главной: одобренные и разрешённые к публикации,
+    // нет таких — блока нет.
+    listPublicReviews().catch((error) => {
+      console.error("[pricing] Failed to load reviews", error);
+      return [];
+    }),
   ]);
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const hardwareFromRub = Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
@@ -115,6 +123,8 @@ export default async function PricingPage() {
         </p>
 
         <RoiCalculator rates={pricing.rates} promotion={promotion} />
+
+        <Testimonials reviews={publicReviews} locale="ru" sectionClassName="" />
 
         <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-8">
           <h2 className="text-[18px] font-semibold tracking-[-0.01em]">

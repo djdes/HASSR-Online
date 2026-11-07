@@ -5763,7 +5763,11 @@
     "testimonials": {
       "title": "Mijozlarimiz fikri",
       "originalLanguageNote": "Mijozlar fikrlari asl tilida ko‘rsatiladi.",
-      "ratingLabel": "5 balldan {rating, number} ball."
+      "ratingLabel": "5 balldan {rating, number} ball.",
+      "statsLabel": "Muassasaning WeSetup’dagi raqamlari",
+      "statsJournals": "{count, plural, other {# ta jurnal yuritiladi}}",
+      "statsRecords": "{formatted} {count, plural, other {ta yozuv}}",
+      "statsMonths": "WeSetup’da {count, plural, other {# oy}}"
     },
     "tariffs": {
       "toggle": {
@@ -9753,7 +9757,8 @@
         "publishPublic": "Fikr saytda ismingiz va korxonangiz bilan ko‘rsatiladi.",
         "secondReviewBlocked": "Fikringiz tekshiruvda ekan, ikkinchisini yubora olmaysiz.",
         "submitSuccess": "Fikr moderatorga yuborildi",
-        "submitFailed": "Fikrni yuborib bo‘lmadi"
+        "submitFailed": "Fikrni yuborib bo‘lmadi",
+        "showStats": "Sharh yonida WeSetup’da nechta jurnal va yozuv yuritishimizni ko‘rsatish — jurnal nomlari va ulardagi ma’lumotlarsiz."
       },
       "history": {
         "title": "Ballar tarixi",
@@ -21107,7 +21112,21 @@
     "sphereMedical": "Tibbiyot markazi / Shifoxona / Sanatoriy",
     "sphereProduction": "Oziq-ovqat ishlab chiqarish",
     "sphereFitness": "Fitnes markazi / Sport klubi / Hovuz",
-    "sphereBeauty": "Go‘zallik saloni / Barbershop / Manikyur saloni"
+    "sphereBeauty": "Go‘zallik saloni / Barbershop / Manikyur saloni",
+    "showStatsBadge": "saytda raqamlar",
+    "showStatsTip": "Muallif sharh yonida muassasa WeSetup’da nechta jurnal va yozuv yuritishini ko‘rsatishga ruxsat bergan",
+    "candidates": {
+      "title": "Kimdan sharh so‘rash kerak",
+      "description": "Sharhsiz muassasalar: WeSetup’da 21 kundan ortiq, 30 kunda 30 tadan ko‘p yozuv; avval so‘rovda 4–5 qo‘yganlar. Xat bosh rahbarga sharh shakli havolasi va ballar miqdori bilan yuboriladi; qayta — 30 kundan keyin.",
+      "empty": "Mos muassasalar hozircha yo‘q.",
+      "records": "30 kunda {count, plural, other {# ta yozuv}}",
+      "nps": "so‘rov: {score} / {scale, select, 5 {5} other {10}}",
+      "request": "Sharh so‘rash",
+      "sent": "Xat yuborildi",
+      "sentToast": "Xat {email} manziliga yuborildi",
+      "failed": "Xatni yuborib bo‘lmadi",
+      "networkError": "Tarmoq mavjud emas. Qayta urinib ko‘ring"
+    }
   },
   "rootPromoCodes": {
     "page": {
@@ -26521,7 +26540,8 @@
       "improvePlaceholder": "Bir-ikki so‘z — har bir xabarni o‘qiymiz",
       "send": "Yuborish",
       "scoreSaved": "Baho allaqachon saqlangan.",
-      "reviewDone": "Rahmat! Sharh tekshiruvga yuborildi, tasdiqlangach ball beramiz"
+      "reviewDone": "Rahmat! Sharh tekshiruvga yuborildi, tasdiqlangach ball beramiz",
+      "showStatsLabel": "Sharh yonida WeSetup’da nechta jurnal va yozuv yuritishimizni ko‘rsatish — jurnal nomlari va ulardagi ma’lumotlarsiz."
     },
     "organizationSwitcher": {
       "label": "Tashkilotlar",

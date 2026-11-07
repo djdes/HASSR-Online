@@ -38,6 +38,8 @@ const reviewSchema = z.object({
   anonymous: z.boolean().optional(),
   rating: z.number().int().min(1).max(5).nullable().optional(),
   consentPublic: z.boolean(),
+  // Цифры заведения рядом с отзывом — только если автор отметил сам.
+  showStats: z.boolean().optional(),
   attachments: z.unknown().optional(),
   // Суммы и вида в схеме нет намеренно: zod их отбросит, начисление
   // считает одобрение по вложению и флагу anonymous из БД.
@@ -107,6 +109,7 @@ export async function POST(request: Request) {
       text: parsed.text,
       rating: parsed.rating ?? null,
       consentPublic: parsed.consentPublic,
+      showStats: parsed.showStats === true,
       attachment: attachment
         ? { url: attachment.url, mimeType: attachment.mimeType }
         : null,

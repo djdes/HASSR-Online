@@ -5,6 +5,8 @@ import { Star } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
 import { listReviewsForModeration } from "@/lib/balance/reviews";
 import { reviewIdsFromNps } from "@/lib/nps-review";
+import { listReviewCandidates } from "@/lib/review-requests.server";
+import { ReviewRequestCandidates } from "./review-request-candidates";
 import { ReviewsClient } from "./reviews-client";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export async function generateMetadata() {
  * происходит в момент одобрения, поэтому именно здесь платформа решает,
  * сколько заплатить, и может понизить тариф. Отзывы, оставленные из
  * опроса «Посоветуете WeSetup коллегам?», помечены «из опроса».
+ * Над вкладками — «Кого попросить об отзыве» (2026-11-07).
  */
 export default async function RootReviewsPage() {
   await requireRoot();
@@ -34,6 +37,11 @@ export default async function RootReviewsPage() {
     new Set([...pending, ...approved, ...rejected].map((review) => review.organizationId)),
   );
   const fromSurvey = await reviewIdsFromNps(organizationIds).catch(() => new Set<string>());
+  // Кого попросить об отзыве — подсказка; не посчиталось — модерация всё равно открывается.
+  const candidates = await listReviewCandidates().catch((error) => {
+    console.error("[root/reviews] кандидаты на отзыв не посчитались", error);
+    return [];
+  });
 
   const t = await getTranslations("rootReviews");
   return (
@@ -52,6 +60,8 @@ export default async function RootReviewsPage() {
           </p>
         </div>
       </div>
+
+      <ReviewRequestCandidates candidates={candidates} />
 
       <ReviewsClient
         pending={pending}

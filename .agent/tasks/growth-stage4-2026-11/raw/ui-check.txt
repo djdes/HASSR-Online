@@ -1,0 +1,17 @@
+questions: 7
+verdict: Закрыто 4 из 7
+gaps: Гигиенический журнал (сотрудники) — Осмотр сотрудников перед | Журнал бракеража готовой пищевой продукции — Бракераж готовы | Журналы за любой период — одним архивом или PDF, как в разде
+[1.5s] screenshot checklist-result-phone
+demo topic: Чек-лист СанПиН: 4 из 7. Не закрыто: Гигиенический журнал (сотрудники), Журнал бракеража готовой пищевой продукции, показать журналы за период.
+[2.4s] screenshot checklist-demo-dialog-phone
+[4.1s] screenshot review-form-desktop
+[4.3s] review submitted
+candidates: Кафе «Проверка отзывов» 40 записей за 30 дней опрос: 5 из 5 Ирина Кандидатова · stage4-candidate@example.test Попросить 
+[6.1s] screenshot root-review-request-sent
+repeat request: 409 {"error":"Уже просили 07.11.2026 — повторно через 30 дней"}
+[8.5s] screenshot root-review-approved
+/ stats: 6 журналов в работе30 записей | visible: true
+[12.7s] screenshot home-testimonials
+/pricing stats: 6 журналов в работе30 записей | visible: true
+[14.6s] screenshot pricing-testimonials
+EXIT 0

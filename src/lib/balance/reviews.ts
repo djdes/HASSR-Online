@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { hasReviewStats } from "@/lib/review-stats";
+import { loadReviewStats } from "@/lib/review-stats.server";
 
 import { isReviewKind, reviewRewardFor, type ReviewKind } from "./constants";
 import { buildReviewSubmission, publicReviewSignature, reviewSphereLabel } from "./review-rules";
@@ -52,6 +54,7 @@ type ReviewRow = {
   rewardRub: number;
   rejectReason: string | null;
   showOnLanding: boolean;
+  showStats: boolean;
   createdAt: Date;
   moderatedAt: Date | null;
 };
@@ -83,6 +86,7 @@ function toView(row: ReviewRow, organization: OrganizationLabel): ReviewView {
     suggestedRewardRub: reviewRewardFor(kind, anonymous),
     rejectReason: row.rejectReason,
     showOnLanding: row.showOnLanding,
+    showStats: row.showStats === true,
     createdAt: row.createdAt.toISOString(),
     moderatedAt: row.moderatedAt?.toISOString() ?? null,
   };
@@ -118,6 +122,8 @@ export type SubmitReviewInput = {
   text: string;
   rating: number | null;
   consentPublic: boolean;
+  /** Разрешил показать цифры заведения рядом с отзывом (по умолчанию — нет). */
+  showStats?: boolean;
   attachment: { url: string; mimeType: string } | null;
 };
 
@@ -163,6 +169,7 @@ export async function submitReview(input: SubmitReviewInput): Promise<ReviewView
       rating,
       consentPublic: true,
       anonymous,
+      showStats: input.showStats === true,
     },
   });
   console.info(
@@ -308,6 +315,13 @@ export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
   const labels = await organizationLabels(
     rows.filter((row) => row.anonymous).map((row) => row.organizationId),
   );
+  // Цифры — только по согласию автора; не посчитались — отзыв без них.
+  const stats = await loadReviewStats(rows.filter((row) => row.showStats).map((row) => row.organizationId)).catch(
+    (error: unknown) => {
+      console.error("[reviews] цифры к отзывам не посчитались", error);
+      return new Map<string, never>();
+    },
+  );
   return rows.map((row) => {
     const signature = publicReviewSignature({
       anonymous: row.anonymous,
@@ -324,6 +338,7 @@ export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
       mediaUrl: row.mediaUrl,
       mediaKind: row.kind === "photo" ? "photo" : row.kind === "video" ? "video" : null,
       anonymous: row.anonymous,
+      stats: row.showStats && hasReviewStats(stats.get(row.organizationId)) ? stats.get(row.organizationId) : null,
     };
   });
 }

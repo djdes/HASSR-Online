@@ -175,9 +175,39 @@ export function autofillClipBasename(id: AutofillClipSceneId): string {
   return `autofill-clip-${String(AUTOFILL_CLIP_SCENES.indexOf(id) + 1).padStart(2, "0")}-${id}`;
 }
 
-/** Текст к публикации ролика — из текстов той же сцены и концовки. */
-export function autofillClipCaption(id: AutofillClipSceneId): string {
+/**
+ * Площадки для роликов (план публикации, 2026-11-07). `utm_source` — тот,
+ * что воронка распознаёт как свой канал (`signupChannel`: vk, telegram, max).
+ */
+export const AUTOFILL_CLIP_PLATFORMS = ["vk", "telegram", "max"] as const;
+export type AutofillClipPlatform = (typeof AUTOFILL_CLIP_PLATFORMS)[number];
+
+export const AUTOFILL_CLIP_PLATFORM_LABEL: Record<AutofillClipPlatform, string> = {
+  vk: "VK Клипы",
+  telegram: "Telegram-канал",
+  max: "Канал MAX",
+};
+
+/**
+ * Ссылка из ролика на /avtozapolnenie с метками: какая площадка (источник),
+ * что это ролик (носитель), какой ролик (кампания) — регистрации по ней
+ * видны в ROOT → «Воронка» по каналу.
+ */
+export function autofillClipUrl(id: AutofillClipSceneId, platform: AutofillClipPlatform): string {
+  const query = new URLSearchParams({ utm_source: platform, utm_medium: "clip", utm_campaign: `autofill-${id}` });
+  return `https://${autofillScene("outro").sub}?${query.toString()}`;
+}
+
+/**
+ * Текст к публикации ролика — из текстов той же сцены и концовки. VK:
+ * коротко и с хештегами; Telegram и MAX: заголовок, пояснение, ссылка.
+ */
+export function autofillClipCaption(id: AutofillClipSceneId, platform: AutofillClipPlatform): string {
   const scene = autofillScene(id);
-  return `${scene.title}. ${scene.sub}\n\nКак это устроено: https://${autofillScene("outro").sub}\n\n#ХАССП #СанПиН #общепит #WeSetup`;
+  const url = autofillClipUrl(id, platform);
+  if (platform === "vk") {
+    return `${scene.title}. ${scene.sub}\n\nКак это устроено: ${url}\n\n#ХАССП #СанПиН #общепит #WeSetup`;
+  }
+  return `${scene.title}\n\n${scene.sub}\n\nКак это устроено и ролик на минуту: ${url}`;
 }
 
