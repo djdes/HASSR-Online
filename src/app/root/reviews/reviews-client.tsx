@@ -223,6 +223,15 @@ function ReviewCard({ review, fromSurvey, getCurrentCopy }: { review: RootReview
               {t("surveyBadge")}
             </span>
           ) : null}
+          {review.showStats ? (
+            <span
+              className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-medium text-[#116b2a]"
+              title={t("showStatsTip")}
+              data-testid="review-show-stats-badge"
+            >
+              {t("showStatsBadge")}
+            </span>
+          ) : null}
           <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] text-[#3848c7]">
             {reviewKindLabel(review.kind, t)}
           </span>

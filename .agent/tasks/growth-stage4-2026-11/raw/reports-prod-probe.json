@@ -1,0 +1,24 @@
+{
+ "results": [
+  {
+   "attempt": 1,
+   "status": 200,
+   "aiCardInServerHtml": true,
+   "bytes": 1408169
+  },
+  {
+   "attempt": 2,
+   "status": 200,
+   "aiCardInServerHtml": true,
+   "bytes": 1283459
+  },
+  {
+   "attempt": 3,
+   "status": 200,
+   "aiCardInServerHtml": true,
+   "bytes": 1283459
+  }
+ ],
+ "generateButtonsAfterHydration": 1,
+ "browserErrors": []
+}

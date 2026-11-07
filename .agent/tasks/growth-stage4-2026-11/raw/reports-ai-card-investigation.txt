@@ -1,0 +1,12 @@
+# next start (production build of master ce5615cc + stage 4 work in progress), 2026-11-07T22:12Z
+NextIntlClientProvider errors in server log: 0
+AiPeriodReportCard mentions: 0
+
+# next dev (stage 3 stand, 2026-11-01): the error once, on the first (cold) compile of /reports; later loads clean
+502:⨯ Error: Failed to call `useTranslations` because the context from `NextIntlClientProvider` was not found.
+510:    at AiPeriodReportCard (src/components/reports/ai-period-report.tsx:33:28)
+536: GET /reports 200 in 18.6s (compile: 7.6s, proxy.ts: 29ms, render: 11.0s)
+815: GET /reports 200 in 3.7s (compile: 24ms, proxy.ts: 29ms, render: 3.6s)
+1235: GET /reports 200 in 5.6s (compile: 693ms, proxy.ts: 77ms, render: 4.8s)
+1571: GET /reports 200 in 6.1s (compile: 53ms, proxy.ts: 37ms, render: 6.1s)
+1971: GET /reports 200 in 6.3s (compile: 36ms, proxy.ts: 76ms, render: 6.2s)

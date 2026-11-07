@@ -5764,7 +5764,11 @@ export type MessageContract = {
     "testimonials": {
       "title": "Что говорят заведения",
       "originalLanguageNote": "Отзывы клиентов показаны на языке оригинала.",
-      "ratingLabel": "Оценка: {rating, number} из 5."
+      "ratingLabel": "Оценка: {rating, number} из 5.",
+      "statsLabel": "Цифры заведения в WeSetup",
+      "statsJournals": "{count, plural, one {# журнал} few {# журнала} many {# журналов} other {# журнала}} в работе",
+      "statsRecords": "{formatted} {count, plural, one {запись} few {записи} many {записей} other {записи}}",
+      "statsMonths": "{count, plural, one {# месяц} few {# месяца} many {# месяцев} other {# месяца}} в WeSetup"
     },
     "tariffs": {
       "toggle": {
@@ -9754,7 +9758,8 @@ export type MessageContract = {
         "publishPublic": "Отзыв появится на сайте с вашим именем и заведением",
         "secondReviewBlocked": "Пока отзыв на проверке, отправить второй нельзя",
         "submitSuccess": "Отзыв отправлен на проверку",
-        "submitFailed": "Не удалось отправить отзыв"
+        "submitFailed": "Не удалось отправить отзыв",
+        "showStats": "Показать рядом с отзывом, сколько журналов и записей мы ведём в WeSetup — без названий журналов и данных из них."
       },
       "history": {
         "title": "История начислений",
@@ -21109,7 +21114,21 @@ export type MessageContract = {
     "sphereMedical": "Медцентр / Больница / Санаторий",
     "sphereProduction": "Производство",
     "sphereFitness": "Фитнес-центр / Спортклуб / Бассейн",
-    "sphereBeauty": "Салон красоты / Барбершоп / Маникюр"
+    "sphereBeauty": "Салон красоты / Барбершоп / Маникюр",
+    "showStatsBadge": "цифры на сайте",
+    "showStatsTip": "Автор разрешил показать рядом с отзывом, сколько журналов и записей заведение ведёт в WeSetup",
+    "candidates": {
+      "title": "Кого попросить об отзыве",
+      "description": "Заведения без отзыва: в WeSetup больше 21 дня, от 30 записей за 30 дней; сначала поставившие 4–5 в опросе. Письмо уходит главному руководителю со ссылкой на форму отзыва и суммами баллов; повторно — не раньше чем через 30 дней.",
+      "empty": "Подходящих заведений пока нет.",
+      "records": "{count, plural, one {# запись} few {# записи} many {# записей} other {# записи}} за 30 дней",
+      "nps": "опрос: {score} из {scale, select, 5 {5} other {10}}",
+      "request": "Попросить отзыв",
+      "sent": "Письмо отправлено",
+      "sentToast": "Письмо отправлено на {email}",
+      "failed": "Не удалось отправить письмо",
+      "networkError": "Сеть недоступна. Попробуйте ещё раз"
+    }
   },
   "rootPromoCodes": {
     "page": {
@@ -26523,7 +26542,8 @@ export type MessageContract = {
       "improvePlaceholder": "Пара слов — прочитаем каждое сообщение",
       "send": "Отправить",
       "scoreSaved": "Оценка уже сохранена.",
-      "reviewDone": "Спасибо! Отзыв отправлен на проверку, после одобрения начислим баллы"
+      "reviewDone": "Спасибо! Отзыв отправлен на проверку, после одобрения начислим баллы",
+      "showStatsLabel": "Показать рядом с отзывом, сколько журналов и записей мы ведём в WeSetup — без названий журналов и данных из них."
     },
     "organizationSwitcher": {
       "label": "Организации",

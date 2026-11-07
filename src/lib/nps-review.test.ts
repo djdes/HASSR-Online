@@ -47,6 +47,7 @@ function reviewView(input: SubmitReviewInput): ReviewView {
     suggestedRewardRub: 300,
     rejectReason: null,
     showOnLanding: true,
+    showStats: false,
     createdAt: "2026-09-26T10:00:00.000Z",
     moderatedAt: null,
   };
@@ -104,6 +105,8 @@ describe("runNpsReview (POST /api/nps/review)", () => {
         text: TEXT,
         rating: 5,
         consentPublic: true,
+        // Цифры заведения рядом с отзывом — только по отдельной отметке (её в теле нет).
+        showStats: false,
         attachment: null,
       },
     ]);
@@ -116,6 +119,15 @@ describe("runNpsReview (POST /api/nps/review)", () => {
     const four = makeDeps();
     assert.equal((await runNpsReview({ actor, body: { responseId: "r4", text: TEXT, consent: true } }, four.deps)).status, 200);
     assert.equal(four.submitted[0]?.rating, 4);
+  });
+
+  it("отметка «показать цифры заведения» доходит до отзыва только как true", async () => {
+    const { deps, submitted } = makeDeps();
+    await runNpsReview({ actor, body: { responseId: "r5", text: TEXT, consent: true, showStats: true } }, deps);
+    assert.equal(submitted[0]?.showStats, true);
+    const other = makeDeps();
+    await runNpsReview({ actor, body: { responseId: "r5", text: TEXT, consent: true, showStats: "yes" } }, other.deps);
+    assert.equal(other.submitted[0]?.showStats, false);
   });
 
   it("текст по умолчанию годится в отзыв как есть", async () => {

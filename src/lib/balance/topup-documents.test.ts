@@ -118,6 +118,7 @@ function view(partial: Partial<ReviewView>): ReviewView {
     suggestedRewardRub: 300,
     rejectReason: null,
     showOnLanding: true,
+    showStats: false,
     createdAt: "2026-09-30T10:00:00.000Z",
     moderatedAt: null,
     ...partial,

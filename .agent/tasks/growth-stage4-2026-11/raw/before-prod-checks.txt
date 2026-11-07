@@ -1,0 +1,8 @@
+build-info: {"buildId":"ce5615c","buildTime":"2026-11-07T21:57:14Z","fullBuildId":"ce5615cc0740c6e2c71d475c2de8440dbe6c0fca"}
+FAIL /sanpin: чек-лист «Готовы ли вы к проверке?» — 7 вопросов
+FAIL /sanpin: ссылка на чек-лист из шапки, список журналов на месте
+PASS главная и /pricing открываются
+INFO home: одобренных отзывов нет — блока нет
+INFO pricing: одобренных отзывов нет — блока нет
+PASS /root/reviews без входа → 404
+PASS POST /api/root/reviews/request без входа → 404

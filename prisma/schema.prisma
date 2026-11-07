@@ -4282,6 +4282,10 @@ model CustomerReview {
   rewardRub         Int          @default(0)
   rejectReason      String?
   showOnLanding     Boolean      @default(true)
+  /// Автор разрешил показать рядом с отзывом цифры: журналы в работе,
+  /// записи, с какого месяца в WeSetup (src/lib/review-stats.ts). Только
+  /// по согласию; ROOT это поле не меняет.
+  showStats         Boolean      @default(false)
   createdAt         DateTime     @default(now())
   moderatedAt       DateTime?
   moderatedByUserId String?

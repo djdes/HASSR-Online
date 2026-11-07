@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landing/landing-section";
 import type { PublicReview } from "@/lib/balance/review-view";
+import { monthsWithWeSetup, roundRecords, type ReviewStats } from "@/lib/review-stats";
 
 /** Сколько отзывов показываем на главной: одна строка на десктопе. */
 const SHOWN = 3;
@@ -19,13 +20,22 @@ const SHOWN = 3;
  * остальные секции (спека landing-pack-2026-09). Звёзды для выдачи
  * (AggregateRating) по-прежнему считаются по всем одобренным отзывам.
  */
-export function Testimonials({ reviews, locale = "ru" }: { reviews: PublicReview[]; locale?: SiteLocale }) {
+export function Testimonials({
+  reviews,
+  locale = "ru",
+  sectionClassName = LANDING_SECTION_CLASS,
+}: {
+  reviews: PublicReview[];
+  locale?: SiteLocale;
+  /** На /pricing секция стоит в своей колонке — без отступов секции главной. */
+  sectionClassName?: string;
+}) {
   const t = useTranslations("landingComponents.testimonials");
   if (reviews.length === 0) return null;
   const shown = reviews.slice(0, SHOWN);
 
   return (
-    <section className={LANDING_SECTION_CLASS}>
+    <section className={sectionClassName}>
       <LandingSectionHeader title={t("title")} />
       {locale !== "ru" ? <p className="mb-4 text-[13px] text-[#6f7282]">{t("originalLanguageNote")}</p> : null}
       {/* Колонок столько, сколько отзывов: два отзыва в сетке на три
@@ -38,7 +48,7 @@ export function Testimonials({ reviews, locale = "ru" }: { reviews: PublicReview
       >
         {shown.map((review) => (
           <li key={review.id}>
-            <TestimonialCard review={review} />
+            <TestimonialCard review={review} locale={locale} />
           </li>
         ))}
       </ul>
@@ -46,7 +56,7 @@ export function Testimonials({ reviews, locale = "ru" }: { reviews: PublicReview
   );
 }
 
-function TestimonialCard({ review }: { review: PublicReview }) {
+function TestimonialCard({ review, locale }: { review: PublicReview; locale: SiteLocale }) {
   const t = useTranslations("landingComponents.testimonials");
   // Анонимный отзыв: без имени — и без инициалов «АО», которые читались бы
   // как «акционерное общество». Вместо монограммы — нейтральный значок.
@@ -98,6 +108,9 @@ function TestimonialCard({ review }: { review: PublicReview }) {
         {review.quote}
       </blockquote>
 
+      {/* Цифры заведения — только если автор разрешил (showStats). */}
+      {review.stats ? <ReviewStatsLine stats={review.stats} locale={locale} /> : null}
+
       <figcaption className="mt-5 flex items-center gap-3">
         {/* Монограмма — украшение: имя стоит рядом текстом. */}
         <span
@@ -116,3 +129,28 @@ function TestimonialCard({ review }: { review: PublicReview }) {
     </figure>
   );
 }
+
+function ReviewStatsLine({ stats, locale }: { stats: ReviewStats; locale: SiteLocale }) {
+  const t = useTranslations("landingComponents.testimonials");
+  const records = roundRecords(stats.records);
+  const months = monthsWithWeSetup(stats.since);
+  const parts = [
+    stats.journals > 0 ? t("statsJournals", { count: stats.journals }) : null,
+    t("statsRecords", { formatted: `${new Intl.NumberFormat(locale).format(records.value)}${records.plus ? "+" : ""}`, count: records.value }),
+    months > 0 ? t("statsMonths", { count: months }) : null,
+  ].filter((part): part is string => part !== null);
+  return (
+    <ul
+      aria-label={t("statsLabel")}
+      className="mt-4 flex flex-wrap gap-2"
+      data-testid="testimonial-stats"
+    >
+      {parts.map((part) => (
+        <li key={part} className="rounded-full bg-[#eef1ff] px-3 py-1 text-[13px] font-medium text-[#3848c7]">
+          {part}
+        </li>
+      ))}
+    </ul>
+  );
+}
+

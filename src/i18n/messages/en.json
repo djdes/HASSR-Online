@@ -5763,7 +5763,11 @@
     "testimonials": {
       "title": "What our customers say",
       "originalLanguageNote": "Customer reviews are shown in their original language.",
-      "ratingLabel": "Rated {rating, number} out of 5."
+      "ratingLabel": "Rated {rating, number} out of 5.",
+      "statsLabel": "The venue's numbers in WeSetup",
+      "statsJournals": "{count, plural, one {# journal} other {# journals}} in use",
+      "statsRecords": "{formatted} {count, plural, one {record} other {records}}",
+      "statsMonths": "{count, plural, one {# month} other {# months}} with WeSetup"
     },
     "tariffs": {
       "toggle": {
@@ -9753,7 +9757,8 @@
         "publishPublic": "The review will appear with your name and business.",
         "secondReviewBlocked": "You cannot submit another review while this one is under review.",
         "submitSuccess": "Review sent for moderation",
-        "submitFailed": "Could not submit the review"
+        "submitFailed": "Could not submit the review",
+        "showStats": "Show next to the review how many journals and records we keep in WeSetup — without journal names or their data."
       },
       "history": {
         "title": "Points history",
@@ -21108,7 +21113,21 @@
     "sphereMedical": "Medical center / Hospital / Sanatorium",
     "sphereProduction": "Food production",
     "sphereFitness": "Fitness center / Sports club / Pool",
-    "sphereBeauty": "Beauty salon / Barbershop / Nail salon"
+    "sphereBeauty": "Beauty salon / Barbershop / Nail salon",
+    "showStatsBadge": "numbers on site",
+    "showStatsTip": "The author allowed showing how many journals and records the venue keeps in WeSetup next to the review",
+    "candidates": {
+      "title": "Whom to ask for a review",
+      "description": "Venues without a review: over 21 days in WeSetup, 30+ records in 30 days; those who rated 4–5 in the survey first. The email goes to the main manager with a link to the review form and the reward amounts; again no sooner than in 30 days.",
+      "empty": "No suitable venues yet.",
+      "records": "{count, plural, one {# record} other {# records}} in 30 days",
+      "nps": "survey: {score} of {scale, select, 5 {5} other {10}}",
+      "request": "Ask for a review",
+      "sent": "Email sent",
+      "sentToast": "Email sent to {email}",
+      "failed": "Could not send the email",
+      "networkError": "Network unavailable. Try again"
+    }
   },
   "rootPromoCodes": {
     "page": {
@@ -26522,7 +26541,8 @@
       "improvePlaceholder": "A few words — we read every message",
       "send": "Send",
       "scoreSaved": "The rating is already saved.",
-      "reviewDone": "Thank you! The review has been sent for moderation; we will award points once it is approved"
+      "reviewDone": "Thank you! The review has been sent for moderation; we will award points once it is approved",
+      "showStatsLabel": "Show next to the review how many journals and records we keep in WeSetup — without journal names or their data."
     },
     "organizationSwitcher": {
       "label": "Organisations",
