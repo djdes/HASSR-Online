@@ -21,6 +21,7 @@ import {
   WidthType,
   type ITableBordersOptions,
   type ITableCellBorders,
+  type TableVerticalAlign,
 } from "docx";
 import JSZip from "jszip";
 
@@ -105,7 +106,7 @@ const para = (children: Array<TextRun | ImageRun>, options: ParaOptions = {}) =>
     keepNext: options.keepNext,
   });
 
-type CellOptions = { margins?: { top?: number; bottom?: number; left?: number; right?: number }; span?: number; borders?: ITableCellBorders; valign?: (typeof VerticalAlign)[keyof typeof VerticalAlign] };
+type CellOptions = { margins?: { top?: number; bottom?: number; left?: number; right?: number }; span?: number; borders?: ITableCellBorders; valign?: TableVerticalAlign };
 
 const cell = (children: Array<Paragraph | Table>, width: number, options: CellOptions = {}) =>
   new TableCell({
