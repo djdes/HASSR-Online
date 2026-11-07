@@ -5,7 +5,8 @@
  *
  * По ролику на источник данных (`AUTOFILL_CLIP_SCENES` в
  * `src/lib/autofill-offer.ts`): MP4 H.264 1080×1920, 15 с, без звука,
- * обложка JPG и текст к публикации TXT. Файлы — владельцу для публикации:
+ * обложка JPG и тексты к публикации TXT — по площадке (`-vk`, `-telegram`,
+ * `-max`), со ссылкой с метками для воронки. Файлы — владельцу для публикации:
  * на сайт и в репозиторий они не кладутся, поэтому папка по умолчанию —
  * временная (`<tmp>/wesetup-clips`).
  *
@@ -22,6 +23,7 @@ import { renderMedia, renderStill, selectComposition } from "@remotion/renderer"
 
 import {
   AUTOFILL_CLIP,
+  AUTOFILL_CLIP_PLATFORMS,
   AUTOFILL_CLIP_SCENES,
   autofillClipBasename,
   autofillClipCaption,
@@ -111,7 +113,10 @@ async function main() {
       output: path.join(outDir, `${basename}.jpg`),
       browserExecutable,
     });
-    writeFileSync(path.join(outDir, `${basename}.txt`), `${autofillClipCaption(sceneId)}\n`);
+    // Текст к публикации — для каждой площадки свой, со ссылкой с метками (план публикации).
+    for (const platform of AUTOFILL_CLIP_PLATFORMS) {
+      writeFileSync(path.join(outDir, `${basename}-${platform}.txt`), `${autofillClipCaption(sceneId, platform)}\n`);
+    }
     const seconds = composition.durationInFrames / composition.fps;
     console.log(`${basename}.mp4: ${(statSync(mp4).size / 1024 / 1024).toFixed(2)} МБ, ${seconds} с, ${composition.width}×${composition.height}`);
   }

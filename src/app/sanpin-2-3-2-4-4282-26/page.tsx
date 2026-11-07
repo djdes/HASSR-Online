@@ -3,11 +3,13 @@ import Link from "next/link";
 import { ArrowRight, BookOpenCheck, ClipboardCheck, FileDown, ScrollText } from "lucide-react";
 
 import { DemoRequestButton } from "@/components/public/demo-request-button";
+import { SanpinChecklist } from "@/components/public/sanpin-checklist";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { loadMessages } from "@/i18n/messages";
 import { jsonLdSafeString } from "@/lib/json-ld";
+import { SANPIN_CHECKLIST } from "@/lib/sanpin-checklist";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImageUrl, ogImages, twitterImages } from "@/lib/og-image";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
@@ -106,6 +108,14 @@ export default async function SanpinPage() {
     },
   });
 
+  // Чек-лист «Готовы ли вы к проверке»: названия журналов — из того же каталога.
+  const names = messages.journals.names as Record<string, string>;
+  const checklist = SANPIN_CHECKLIST.map((item) => ({
+    ...item,
+    journalName: item.journalCode ? (names[item.journalCode] ?? null) : null,
+    href: item.journalCode ? `/journals-info/${item.journalCode}` : null,
+  }));
+
   const faqJsonLd = jsonLdSafeString({
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -135,6 +145,12 @@ export default async function SanpinPage() {
             Действующие с 1 сентября 2026 года санитарные правила для общепита. Заменили СанПиН 2.3/2.4.3590-20:
             нумерация другая, требования те же.
           </p>
+          <a
+            href="#checklist"
+            className="mt-4 inline-flex items-center gap-2 text-[15px] font-medium text-[#3848c7] underline decoration-[#5566f6]/30 underline-offset-4 hover:decoration-[#5566f6]"
+          >
+            Проверить себя за минуту: 7 вопросов
+          </a>
         </header>
 
         <section className="grid gap-4 md:grid-cols-2">
@@ -154,6 +170,8 @@ export default async function SanpinPage() {
             </p>
           </article>
         </section>
+
+        <SanpinChecklist items={checklist} trialDays={TRIAL_DAYS} />
 
         <section>
           <h2 className="text-[clamp(1.5rem,1.6vw+1rem,2rem)] font-semibold tracking-[-0.02em]">Какие журналы ведут по этому СанПиН</h2>

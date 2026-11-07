@@ -65,6 +65,8 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
   const [emailTouched, setEmailTouched] = useState(false);
   const [message, setMessage] = useState(NPS_RECOMMEND_DEFAULT_MESSAGE);
   const [consent, setConsent] = useState(true);
+  // Цифры заведения рядом с отзывом — отдельное согласие, по умолчанию нет.
+  const [showStats, setShowStats] = useState(false);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<FormError>(null);
   const [pending, setPending] = useState<Pending>(null);
@@ -155,7 +157,7 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
     try {
       const id = await savedResponseId();
       if (!id) return setError({ field: "form", text: t("scoreNotSaved") });
-      const { ok, data } = await requestJson("/api/nps/review", "POST", { responseId: id, text, consent });
+      const { ok, data } = await requestJson("/api/nps/review", "POST", { responseId: id, text, consent, showStats });
       if (!ok) {
         const field = data.field === "message" || data.field === "consent" ? data.field : "form";
         return setError({ field, text: errorText(data, t("sendReviewFailed")) });
@@ -398,6 +400,18 @@ export function NpsBanner({ variant = "site", ask = true, canPreview = false }: 
               {pending === "review" ? t("sending") : t("leaveReview")}
             </button>
           </div>
+          <label className="flex min-w-0 cursor-pointer items-start gap-2.5">
+            <input
+              type="checkbox"
+              checked={showStats}
+              onChange={(event) => setShowStats(event.target.checked)}
+              className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+              data-testid="nps-review-show-stats"
+            />
+            <span className={`text-[13px] leading-[1.5] ${body.className ?? ""}`} style={body.style}>
+              {t("showStatsLabel")}
+            </span>
+          </label>
           {fieldError("consent")}
           {fieldError("form")}
           <p className={`text-[12px] leading-[1.5] ${faint.className ?? ""}`} style={faint.style}>

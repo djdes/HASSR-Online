@@ -23,6 +23,9 @@ import { cn } from "@/lib/utils";
  */
 
 const TRIGGER_VARIANTS = {
+  /** Основная на светлом фоне — когда показ и есть следующий шаг (итог чек-листа). */
+  primary:
+    "h-12 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0] focus-visible:ring-[#5566f6]/25",
   /** Контурная — рядом с основной кнопкой на светлом фоне. */
   outline:
     "h-12 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:ring-[#5566f6]/15",
@@ -45,12 +48,15 @@ export function DemoRequestButton({
   variant = "outline",
   className,
   children,
+  topic,
 }: {
   /** Где стоит кнопка — для Метрики и уведомления: pricing, niche:cafe, home… */
   place: string;
   variant?: keyof typeof TRIGGER_VARIANTS;
   className?: string;
   children?: ReactNode;
+  /** Заранее заполненное «Что важно показать» (например, пробелы из чек-листа СанПиН). */
+  topic?: string;
 }) {
   const t = useTranslations("publicUi.demoRequest");
   const [open, setOpen] = useState(false);
@@ -71,7 +77,7 @@ export function DemoRequestButton({
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="gap-4 rounded-3xl border-[#ececf4] bg-white text-[#0b1024] sm:max-w-[460px]" data-demo-request-dialog>
-          <DemoRequestForm place={place} onClose={() => setOpen(false)} />
+          <DemoRequestForm place={place} initialTopic={topic} onClose={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
@@ -94,7 +100,7 @@ async function fetchDemoSlots(): Promise<DemoSlotDay[]> {
   }
 }
 
-function DemoRequestForm({ place, onClose }: { place: string; onClose: () => void }) {
+function DemoRequestForm({ place, initialTopic, onClose }: { place: string; initialTopic?: string; onClose: () => void }) {
   const t = useTranslations("publicUi.demoRequest");
   const ids = useId();
   const [status, setStatus] = useState<Status>("idle");
@@ -102,7 +108,7 @@ function DemoRequestForm({ place, onClose }: { place: string; onClose: () => voi
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [when, setWhen] = useState<DemoWhen>("today");
-  const [topic, setTopic] = useState("");
+  const [topic, setTopic] = useState(initialTopic ?? "");
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
   const locale = useLocale();

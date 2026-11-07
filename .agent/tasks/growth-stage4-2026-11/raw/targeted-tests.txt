@@ -1,0 +1,41 @@
+ok 1 - clipboard preserves raw nonanonymous names, empty signature, content and original RU bytes
+ok 2 - only explicit anonymous flag changes author; unknown kinds and unproven spheres remain literal
+ok 3 - dates preserve native RU host timezone and invalid text; rewards stay original amounts
+ok 4 - sphere copy requires stable queried origin, with guarded aliases and literal unproved values
+ok 5 - страница СанПиН 2.3/2.4.4282-26
+ok 6 - цвет текста во вложенных селекторах — токен темы, не HEX
+ok 7 - текст врезок статьи читается в ночной теме
+ok 8 - светлые произвольные градиенты гаснут в ночной теме
+ok 9 - top-up receipts and pending invoices retain rubles and ungrouped payment identifiers
+ok 10 - balance, referral, review and top-up sections render in RU, EN, and Uzbek
+ok 11 - Mini App balance hides website-only top-up, referrals, and review rewards
+ok 12 - top-up parser exposes stable validation codes while preserving legacy error strings and bounds
+ok 13 - вертикальные ролики «Журналы, которые заполняются сами»
+ok 14 - закрывающий документ и пополнение
+ok 15 - чек 54-ФЗ для пополнения (уходит, только если чеки включены env)
+ok 16 - текст отзыва для соцсетей
+ok 17 - запись на показ: слоты
+ok 18 - главная — владельцу, управляющей и ROOT; заведующей и повару — нет
+ok 19 - избранное: пункты меню и корни разделов без меню, без пунктов-разделов
+ok 20 - избранное: только разрешённые адреса, без повторов, не больше трёх
+ok 21 - контакты: Telegram из окружения, без него — страницы кабинета
+ok 22 - catalog terminology exceptions cannot hide the same word in journal messages
+ok 23 - в текстах для человека нет слова «бланк» — кроме исключений
+ok 24 - исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+ok 25 - журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+ok 26 - сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+ok 27 - runNpsReview (POST /api/nps/review)
+ok 28 - связь ответа опроса с отзывом
+ok 29 - every /root page and /api/root route is classified explicitly
+ok 30 - gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 31 - delegated viewer sees only own sections; superadmin sees everything
+ok 32 - presets use known sections and are recognised back
+ok 33 - кого попросить об отзыве
+ok 34 - цифры рядом с отзывом
+ok 35 - чек-лист «Готовы ли вы к проверке»
+# tests 70
+# suites 11
+# pass 70
+# fail 0
+# cancelled 0
+# skipped 0

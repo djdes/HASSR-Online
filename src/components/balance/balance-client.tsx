@@ -137,7 +137,12 @@ export function BalanceClient({
         />
       )}
 
-      {inApp ? null : <ReviewSection data={data} mini={mini} onSent={refresh} />}
+      {/* #review — ссылка из письма «Расскажете коллегам о WeSetup?» (ROOT → «Отзывы»). */}
+      {inApp ? null : (
+        <div id="review" className="scroll-mt-24">
+          <ReviewSection data={data} mini={mini} onSent={refresh} />
+        </div>
+      )}
 
       {data.canSeeBalance ? <HistorySection data={data} mini={mini} inApp={inApp} /> : null}
 
@@ -736,6 +741,8 @@ function ReviewForm({
   const [place, setPlace] = useState(data.reviewPrefill.place);
   const [rating, setRating] = useState(5);
   const [consent, setConsent] = useState(true);
+  // Цифры заведения рядом с отзывом — по отдельному согласию, по умолчанию выключено.
+  const [showStats, setShowStats] = useState(false);
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
@@ -774,6 +781,7 @@ function ReviewForm({
           anonymous,
           rating,
           consentPublic: consent,
+          showStats,
           attachments: ready ? [ready] : [],
         }),
       });
@@ -951,6 +959,22 @@ function ReviewForm({
           style={mini ? { color: "var(--mini-text-muted)" } : undefined}
         >
           {anonymous ? t("review.anonymousConsent") : t("review.publicConsent")}
+        </span>
+      </label>
+
+      <label className="flex cursor-pointer items-start gap-2.5">
+        <input
+          type="checkbox"
+          data-testid="review-show-stats"
+          checked={showStats}
+          onChange={(event) => setShowStats(event.target.checked)}
+          className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+        />
+        <span
+          className={mini ? "text-[13px]" : "text-[13px] leading-[1.5] text-[#3c4053]"}
+          style={mini ? { color: "var(--mini-text-muted)" } : undefined}
+        >
+          {t("review.showStats")}
         </span>
       </label>
 

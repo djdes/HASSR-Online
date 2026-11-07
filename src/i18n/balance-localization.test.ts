@@ -45,7 +45,7 @@ const initial: BalanceOverview = {
     authorName: "Anna Example", place: "Cafe Example, Kazan", text: "A review that was returned for edits.",
     kind: "text", mediaUrl: null, mediaMime: null, rating: 4, consentPublic: true, anonymous: false,
     organizationSphere: "cafe", status: "rejected", rewardRub: 0, suggestedRewardRub: 300,
-    rejectReason: rejectedReason, showOnLanding: false, createdAt: "2026-10-01T00:00:00.000Z", moderatedAt: "2026-10-02T00:00:00.000Z",
+    rejectReason: rejectedReason, showOnLanding: false, showStats: false, createdAt: "2026-10-01T00:00:00.000Z", moderatedAt: "2026-10-02T00:00:00.000Z",
   },
 };
 

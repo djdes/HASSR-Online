@@ -1,0 +1,15 @@
+# npm run test:gate on an idle machine, 2026-11-07T22:48Z
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=5783, fail=0 ===
+✓ Все тесты прошли.
+EXIT 0
+
+# the earlier run in parallel with next build (CPU contention): 2 route tests failed; alone they pass 13/13
+✗ НОВЫЕ регрессии (нет в baseline):
+  - src/app/api/inspector/[token]/visits/route.test.ts
+  - src/app/api/invite/[token]/accept/route.test.ts
+

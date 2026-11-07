@@ -78,7 +78,7 @@ function reviewErrorStatus(status: number): 400 | 404 | 409 {
   return status === 404 || status === 409 ? status : 400;
 }
 
-/** Тело `POST /api/nps/review`: `{ responseId, text, consent }`. */
+/** Тело `POST /api/nps/review`: `{ responseId, text, consent, showStats? }`. */
 export async function runNpsReview(input: { actor: { id: string }; body: unknown }, deps: NpsReviewDeps): Promise<NpsReviewResult> {
   const body = isRecord(input.body) ? input.body : {};
   const responseId = typeof body.responseId === "string" ? body.responseId.trim() : "";
@@ -121,6 +121,8 @@ export async function runNpsReview(input: { actor: { id: string }; body: unknown
         text,
         rating: response.score,
         consentPublic: true,
+        // Цифры заведения рядом с отзывом — только по отдельной отметке автора.
+        showStats: body.showStats === true,
         attachment: null,
       });
       await deps.recordAudit({

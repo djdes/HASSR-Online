@@ -1,0 +1,66 @@
+{
+  "task": "growth-stage4-2026-11",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "ce5615cc",
+  "mergedMaster": null,
+  "checkedAt": "2026-11-07T22:55Z",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "note": "dev-only cold-compile artifact; production build clean; no code change",
+      "evidence": [
+        "raw/reports-ai-card-investigation.txt",
+        "raw/reports-prod-probe.json"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/sanpin-checklist.test.ts",
+        "src/app/sanpin-2-3-2-4-4282-26/sanpin-page.test.ts",
+        "raw/ui-check.txt",
+        "raw/checklist-result-phone.jpg",
+        "raw/checklist-demo-dialog-phone.jpg"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/review-requests.test.ts",
+        "src/lib/nps-review.test.ts",
+        "e2e/prepare-local.ts",
+        "e2e/ui-check.cjs",
+        "raw/ui-check.txt",
+        "raw/smtp-sink.txt",
+        "raw/review-form-desktop.jpg",
+        "raw/root-review-request-sent.jpg",
+        "raw/root-review-approved.jpg",
+        "raw/home-testimonials.jpg",
+        "raw/pricing-testimonials.jpg"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "docs/clips-publication-plan.md",
+        "scripts/landing-video/clips-plan.ts",
+        "src/lib/autofill-clips.test.ts"
+      ]
+    },
+    "AC5": {
+      "status": "PENDING_DEPLOY",
+      "evidence": [
+        "raw/eslint.txt",
+        "raw/typecheck.txt",
+        "raw/test-gate.txt",
+        "raw/targeted-tests.txt",
+        "raw/before-prod-checks.txt",
+        "e2e/post-deploy-check.sh"
+      ]
+    }
+  },
+  "notes": [
+    "Скриншоты raw/*.jpg игнорируются .gitignore и остались на стенде проверки.",
+    "План публикации, календарь .ics и архив роликов с текстами по площадкам отправлены владельцу."
+  ]
+}
