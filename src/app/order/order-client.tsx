@@ -25,6 +25,7 @@ import type { AppliedDiscount } from "@/lib/promo/discounts";
 import { PromoPrice } from "@/components/pricing/promo-price";
 import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
 import { PAYMENT_GOALS, reportPaymentSuccess } from "@/lib/payment-goals";
+import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
 import { GuestInvoicePanel } from "./guest-invoice-panel";
 import { continueOrderPath } from "@/lib/abandoned-orders";
 import { ymGoal } from "@/lib/signup-source";
@@ -245,6 +246,10 @@ function Checkout({
 }) {
   const router = useRouter();
   const [email, setEmail] = useState(sessionEmail);
+  // Без входа — «Я не робот» перед заказом (боты заводили заказы на чужие
+  // почты). Вошедшему проверка не нужна: сервер её у него не спрашивает.
+  const guest = !sessionEmail;
+  const challenge = useRegistrationChallenge();
   // По умолчанию выключено — этого требует Робокасса: согласие на
   // автосписание человек даёт сам, а не получает вместе с формой.
   const [recurringConsent, setRecurringConsent] = useState(recurringDefault);
@@ -513,9 +518,12 @@ function Checkout({
           // Сверка, не сумма: сервер считает сам и откажет, если за время
           // на странице цена изменилась (закончилась или началась акция).
           expectedGrossRub: amountAfterPromo,
+          ...(guest ? { captchaToken: challenge.token, website: challenge.website } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
+      // Ответ Google одноразовый: следующая попытка — с новой отметкой.
+      if (guest) challenge.reset();
       if (!res.ok) {
         setError(data.error ?? "Не удалось создать заказ");
         setLoading(false);
@@ -798,6 +806,8 @@ function Checkout({
           }`}
         />
 
+        {guest ? challenge.element : null}
+
         {error ? (
           <p className="mt-3 rounded-2xl bg-[#fff4f2] px-4 py-3 text-[13px] text-[#a13a32]">
             {error}
@@ -845,9 +855,12 @@ function Checkout({
           </label>
         )}
 
+        {guest && !challenge.token ? (
+          <p className="mt-3 text-[12px] text-[#6f7282]">Отметьте «Я не робот» — после этого откроется оплата.</p>
+        ) : null}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || (guest && !challenge.token)}
           className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (

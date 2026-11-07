@@ -105,3 +105,24 @@ export async function verifyRegistrationChallenge(
     return unavailable();
   }
 }
+
+/**
+ * Та же проверка «Я не робот» для заказа без входа (/order: оплата картой и
+ * счёт по ИНН). Ответ — текст ошибки для покупателя или null, если прошёл.
+ *
+ * Если сама проверка недоступна (Google не отвечает, ключи не заданы), заказ
+ * пропускаем: живой покупатель не должен упереться в чужой сбой — для заказа
+ * это хуже, чем редкий бот. Вошедших пользователей проверка не касается.
+ */
+export async function verifyGuestOrderChallenge(
+  body: unknown,
+  dependencies: { env?: Environment; fetch?: typeof fetch } = {},
+): Promise<{ status: 403; error: string } | null> {
+  const result = await verifyRegistrationChallenge(body, dependencies);
+  if (result.ok) return null;
+  if (result.status === 503) {
+    console.warn("[antibot] guest order challenge unavailable — order allowed");
+    return null;
+  }
+  return { status: 403, error: "Отметьте «Я не робот» ещё раз — проверка не пройдена или устарела." };
+}

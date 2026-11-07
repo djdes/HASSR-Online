@@ -18,6 +18,7 @@ import {
   type ReceiptItem,
 } from "@/lib/robokassa";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { verifyGuestOrderChallenge } from "@/lib/registration-antibot";
 import {
   OFFER_REVISION,
   RECURRING_CONSENT_TEXT,
@@ -128,6 +129,13 @@ export async function POST(request: NextRequest) {
 
   if (!target) {
     return NextResponse.json({ error: "Тариф недоступен" }, { status: 400 });
+  }
+
+  // Без входа заказ создаёт кто угодно — боты заводили заказы на чужие почты
+  // (проверка украденных карт). Гость проходит «Я не робот», как при регистрации.
+  if (!session?.user) {
+    const challenge = await verifyGuestOrderChallenge(body);
+    if (challenge) return NextResponse.json({ error: challenge.error, code: "challenge" }, { status: challenge.status });
   }
 
   // Один момент на акцию и сроки промокода: граница акции не должна

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { registrationChallengeConfig, verifyRegistrationChallenge } from "./registration-antibot";
+import { registrationChallengeConfig, verifyGuestOrderChallenge, verifyRegistrationChallenge } from "./registration-antibot";
 
 const env = {
   NODE_ENV: "production",
@@ -122,4 +122,21 @@ test("registration challenge: NEXTAUTH_URL is a trusted hostname fallback and ex
     env: local, fetch: reply({ ...valid, hostname: "evil.example" }),
   });
   assert.equal(result.ok, false);
+});
+
+test("guest order challenge: passes a verified guest, rejects bots and a reused token", async () => {
+  assert.equal(await verifyGuestOrderChallenge(input, { env, fetch: reply(valid) }), null);
+  for (const body of [{}, { captchaToken: "" }, { ...input, website: "https://spam.invalid" }]) {
+    assert.equal((await verifyGuestOrderChallenge(body, { env, fetch: reply(valid) }))?.status, 403);
+  }
+  const reused = await verifyGuestOrderChallenge(input, { env, fetch: reply({ success: false, "error-codes": ["timeout-or-duplicate"] }) });
+  assert.equal(reused?.status, 403);
+  assert.match(reused?.error ?? "", /Я не робот/);
+});
+
+test("guest order challenge: a provider outage never blocks a real buyer", async () => {
+  const down: typeof fetch = async () => { throw new Error("offline"); };
+  assert.equal(await verifyGuestOrderChallenge(input, { env, fetch: down }), null);
+  assert.equal(await verifyGuestOrderChallenge(input, { env, fetch: reply({}, 500) }), null);
+  assert.equal(await verifyGuestOrderChallenge(input, { env: {}, fetch: reply(valid) }), null);
 });

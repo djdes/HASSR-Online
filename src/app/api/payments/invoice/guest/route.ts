@@ -8,6 +8,7 @@ import { refuseMobileAppPayment } from "@/lib/mobile-app-payments";
 import { buildLegalProfile, fetchDadataParty } from "@/lib/org-legal-profile";
 import { parseCheckoutTarget } from "@/lib/plan-checkout.server";
 import { guestInvoiceRateLimiter } from "@/lib/rate-limit";
+import { verifyGuestOrderChallenge } from "@/lib/registration-antibot";
 import { getServerSession } from "@/lib/server-session";
 import { encodePartnerRef, readPartnerRefFromRequest } from "@/lib/partners/referral";
 import { REFERRAL_COOKIE, readCookie } from "@/lib/balance/constants";
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
   const target = parseCheckoutTarget({ plan: body.plan, cycle: body.cycle, points: body.points });
   if (!target) return NextResponse.json({ error: "Тариф недоступен" }, { status: 400 });
+  // Счёт уходит письмом на введённую почту — без проверки это рассылка для ботов.
+  const challenge = await verifyGuestOrderChallenge(body);
+  if (challenge) return NextResponse.json({ error: challenge.error, code: "challenge" }, { status: challenge.status });
 
   const ip = clientIp(request) ?? "unknown";
   if (!guestInvoiceRateLimiter.consume(`guest-invoice:${ip}`)) {
