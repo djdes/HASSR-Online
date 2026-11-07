@@ -967,16 +967,47 @@ function hmacBase64Url(payload: string): string {
     .digest("base64url");
 }
 
-export function generateLinkToken(userId: string): string {
-  const exp = Date.now() + LINK_TOKEN_TTL_MS;
-  const payload = `${userId}:${exp}`;
-  const sig = hmacBase64Url(payload);
-  return Buffer.from(`${payload}:${sig}`).toString("base64url");
+/**
+ * Токен для ссылки `t.me/<бот>?start=<токен>`. Telegram передаёт боту
+ * параметр start только до 64 символов [A-Za-z0-9_-] — длиннее он молча
+ * отбрасывает, и бот видит голый `/start`. Поэтому формат короткий:
+ * `l_<userId>_<exp base36, секунды>_<HMAC, 16 байт base64url>` (~57 символов).
+ */
+const SHORT_LINK_PREFIX = "l_";
+
+export function generateLinkToken(userId: string, ttlMs: number = LINK_TOKEN_TTL_MS): string {
+  const exp = Math.floor((Date.now() + ttlMs) / 1000).toString(36);
+  const sig = hmacBase64Url(`${userId}:${exp}`).slice(0, 22);
+  return `${SHORT_LINK_PREFIX}${userId}_${exp}_${sig}`;
+}
+
+function parseShortLinkToken(token: string): { userId: string } | null {
+  // Подпись — ровно 22 последних символа (в base64url бывает «_»), перед ней «_».
+  const body = token.slice(SHORT_LINK_PREFIX.length);
+  if (body.length < 26 || body[body.length - 23] !== "_") return null;
+  const sig = body.slice(-22);
+  const rest = body.slice(0, -23);
+  const idx = rest.lastIndexOf("_");
+  if (idx <= 0) return null;
+  const userId = rest.slice(0, idx);
+  const expStr = rest.slice(idx + 1);
+  if (!/^[0-9a-z]+$/.test(expStr) || Date.now() > parseInt(expStr, 36) * 1000) return null;
+  const expected = hmacBase64Url(`${userId}:${expStr}`).slice(0, 22);
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? { userId } : null;
 }
 
 export function parseLinkToken(
   token: string
 ): { userId: string } | null {
+  if (token.startsWith(SHORT_LINK_PREFIX)) {
+    try {
+      return parseShortLinkToken(token);
+    } catch {
+      return null;
+    }
+  }
+  // Прежний длинный формат (base64url от `userId:exp:sig`) — для ссылок,
+  // выданных до перехода на короткий; живут они 15 минут.
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf8");
     const idx1 = decoded.indexOf(":");

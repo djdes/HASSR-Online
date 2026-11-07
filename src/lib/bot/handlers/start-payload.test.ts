@@ -39,6 +39,19 @@ test("self-link token is recognised as a link token and not as an invite", () =>
   assert.deepEqual(parseLinkToken(token), { userId: "user_1" });
 });
 
+test("self-link token fits Telegram's 64-char start parameter", () => {
+  // cuid реального пользователя — 25 символов.
+  const token = generateLinkToken("cmtwy9jfx00ux3vtsbfnaofr3");
+
+  assert.ok(token.length <= 64, `длина ${token.length}`);
+  assert.match(token, /^[A-Za-z0-9_-]+$/);
+  assert.deepEqual(parseLinkToken(token), { userId: "cmtwy9jfx00ux3vtsbfnaofr3" });
+});
+
+test("expired self-link token is rejected", () => {
+  assert.equal(parseLinkToken(generateLinkToken("user_1", -1000)), null);
+});
+
 test("garbage payload matches neither", () => {
   assert.equal(stripBotInvitePrefix("привет"), null);
   assert.equal(parseLinkToken("привет"), null);
@@ -47,11 +60,7 @@ test("garbage payload matches neither", () => {
 test("tampered link token is rejected", () => {
   // Подпись HMAC — иначе чужой id в ссылке привязал бы чужой аккаунт.
   const token = generateLinkToken("user_1");
-  const decoded = Buffer.from(token, "base64url").toString("utf8");
-  const forged = Buffer.from(
-    decoded.replace("user_1", "user_2"),
-    "utf8"
-  ).toString("base64url");
-
-  assert.equal(parseLinkToken(forged), null);
+  assert.equal(parseLinkToken(token.replace("user_1", "user_2")), null);
+  // Продлить срок, не зная секрета, тоже нельзя.
+  assert.equal(parseLinkToken(token.replace(/_([0-9a-z]+)_(.{22})$/, "_zzzzzz_$2")), null);
 });
