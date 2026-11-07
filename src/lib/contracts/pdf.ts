@@ -8,6 +8,7 @@ import {
   lineHeight,
   measurePartyRows,
   partyRows,
+  SECTION_SIZE,
   sectionTitle,
   setText,
   signatureLine,
@@ -30,6 +31,7 @@ export type ContractImages = { facsimile: Buffer | null; stamp: Buffer | null };
 export type ContractPdfResult = { bytes: Buffer; pages: number };
 
 const BODY = 9;
+const SECTION_H = lineHeight(SECTION_SIZE, 1.25);
 /** warn-bg / warn-fg дизайн-системы. */
 const VOID_BG = [255, 244, 242] as const;
 const VOID_FG = [161, 58, 50] as const;
@@ -42,24 +44,27 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
   const width = BRAND_PAGE.contentW;
   const brand = brandSeller(seller);
 
-  // ── шапка документа — как в договоре образца 2026-10-30: заголовок по центру,
-  // под ним предмет, ниже город и дата по краям.
-  const cx = x + width / 2;
-  setText(pdf, { size: 16, weight: "semibold", color: C.ink });
-  doc.text(`ДОГОВОР №${NBSP}${document.number}`, cx, flow.y + 6, { align: "center" });
-  flow.gap(9.6);
-  setText(pdf, { size: 12, color: C.ink });
-  doc.text("на оказание услуг по предоставлению доступа к сервису WeSetup", cx, flow.y + 3.6, { align: "center" });
-  flow.gap(10);
-  setText(pdf, { size: 9.5, color: C.muted });
-  doc.text(document.city, x, flow.y + 3.4);
-  doc.text(document.dateLong, x + width, flow.y + 3.4, { align: "right" });
-  flow.gap(8);
+  // ── шапка документа — как в шаблоне 2026-11-07: крупный заголовок слева,
+  // под ним предмет серым, ниже город и дата по краям между тонкими линиями.
+  setText(pdf, { size: 22, weight: "semibold", color: C.ink });
+  doc.text(`Договор №${NBSP}${document.number}`, x, flow.y + 7.4);
+  flow.gap(11.6);
+  setText(pdf, { size: 10.5, color: C.muted });
+  doc.text("на оказание услуг по предоставлению доступа к сервису WeSetup", x, flow.y + 3.4);
+  flow.gap(6.4);
+  doc.setDrawColor(...C.border2);
+  doc.setLineWidth(0.2);
+  doc.line(x, flow.y, x + width, flow.y);
+  setText(pdf, { size: 9.5, color: C.ink2 });
+  doc.text(document.city, x, flow.y + 5.6);
+  doc.text(document.dateLong, x + width, flow.y + 5.6, { align: "right" });
+  doc.line(x, flow.y + 8.6, x + width, flow.y + 8.6);
+  flow.gap(13);
 
   const notice = document.voided
-    ? { label: "АННУЛИРОВАН — договор недействителен", bg: VOID_BG, fg: VOID_FG }
+    ? { label: "Аннулирован — договор недействителен", bg: VOID_BG, fg: VOID_FG }
     : document.draft
-      ? { label: "ПРОЕКТ — номер договора присвоится при выпуске", bg: C.tint2, fg: C.indigoDeep }
+      ? { label: "Проект — номер договора присвоится при выпуске", bg: C.tint2, fg: C.indigoDeep }
       : null;
   if (notice) {
     const w = textWidth(pdf, notice.label, { size: 7.5, weight: "semibold" }) + 8;
@@ -76,10 +81,10 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
   const last = document.sections[document.sections.length - 1];
   for (const section of document.sections) {
     if (section === last) break;
-    flow.ensure(lineHeight(12, 1.25) + 4 + lineHeight(BODY, 1.42) * 2);
+    flow.ensure(SECTION_H + 4 + lineHeight(BODY, 1.42) * 2);
     flow.gap(3.6);
-    sectionTitle(pdf, x, flow.y + 4.2, { title: `${section.num}. ${section.title}` });
-    flow.gap(lineHeight(12, 1.25) + 2.4);
+    sectionTitle(pdf, x, flow.y + 4.2, { num: section.num, title: section.title });
+    flow.gap(SECTION_H + 2.4);
     for (const block of section.blocks) {
       if (block.kind === "clause") flow.paragraph(block.text, { size: BODY, lead: block.num });
       else flow.paragraph(block.text, { size: BODY, indent: 9, marker: block.marker, after: 0.6 });
@@ -95,10 +100,10 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
     measurePartyRows(pdf, { width: colW, labelWidth, rows: document.requisites.buyer, size: 8 }),
   );
   const signatureH = 34;
-  flow.ensure(lineHeight(12, 1.25) + 6 + 9 + rowsH + signatureH);
+  flow.ensure(SECTION_H + 6 + 9 + rowsH + signatureH);
   flow.gap(3.6);
-  sectionTitle(pdf, x, flow.y + 4.2, { title: `${last.num}. ${last.title}` });
-  flow.gap(lineHeight(12, 1.25) + 3);
+  sectionTitle(pdf, x, flow.y + 4.2, { num: last.num, title: last.title });
+  flow.gap(SECTION_H + 3);
 
   const top = flow.y;
   const columns = [
@@ -107,11 +112,13 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
   ];
   let bottom = top;
   for (const column of columns) {
-    doc.setFillColor(...C.ink);
-    doc.roundedRect(column.x, top, colW, 7.2, 2, 2, "F");
-    setText(pdf, { size: 8, weight: "semibold", color: C.white });
-    doc.text(column.title.toUpperCase(), column.x + 3, top + 4.8, { charSpace: 0.35 });
-    const rowsBottom = partyRows(pdf, { x: column.x, y: top + 8.4, width: colW, labelWidth, rows: column.rows, size: 8 });
+    // Подзаголовок стороны — тем же кеглем, что разделы; под ним тёмная тонкая линия, как над таблицами.
+    setText(pdf, { size: SECTION_SIZE, weight: "semibold", color: C.ink });
+    doc.text(column.title, column.x, top + 4.6);
+    doc.setDrawColor(...C.ink);
+    doc.setLineWidth(0.3);
+    doc.line(column.x, top + 7.2, column.x + colW, top + 7.2);
+    const rowsBottom = partyRows(pdf, { x: column.x, y: top + 7.6, width: colW, labelWidth, rows: column.rows, size: 8 });
     bottom = Math.max(bottom, rowsBottom);
   }
   const signTop = bottom + 4;

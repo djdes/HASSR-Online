@@ -12,6 +12,7 @@ import {
   createBrandPdf,
   dataTable,
   decoratePages,
+  hyphenationPoints,
   partyRows,
   sectionTitle,
   signatureBlock,
@@ -57,8 +58,9 @@ test("phone formatting for documents", () => {
 });
 
 test("brand kit: assets ship with the repo, every block renders, header and footer on each page", async () => {
-  assert.ok(brandAsset("wordmark-gradient.png"), "wordmark PNG");
-  assert.ok(brandAsset("icon-nfc.png"), "NFC icon PNG");
+  for (const asset of ["wordmark-polnoch.png", "route-header.png", "route-footer.png", "icon-phone.png", "icon-mail.png", "check.png"] as const) {
+    assert.ok(brandAsset(asset), asset);
+  }
   const pdf = createBrandPdf({ title: "Kit smoke" });
   assert.equal(pdf.brandFont, true, "Manrope is bundled");
   let y = bankGrid(pdf, { y: BRAND_CONTENT_TOP, seller: SELLER }) + 6;
@@ -75,9 +77,22 @@ test("brand kit: assets ship with the repo, every block renders, header and foot
 
   const { text, pages: parsed } = await pdfText(Buffer.from(pdf.doc.output("arraybuffer")));
   assert.equal(parsed, pages);
-  assert.equal((text.match(/Ваш электронный журнал/g) ?? []).length, pages, "letterhead on every page");
-  assert.equal((text.match(/Электронные журналы по принципам ХАССП/g) ?? []).length, pages, "footer on every page");
+  assert.equal((text.match(/Ваш электронный ХАССП/g) ?? []).length, pages, "letterhead on every page");
+  assert.equal((text.match(/Электронные журналы/g) ?? []).length, pages, "footer on every page");
   for (const expected of ["5018215599", "40702810000000000001", "Стоимость", "Доступ к сервису", "Поставщик", "С уважением", `Стр. ${pages} из ${pages}`, "Абзац 70"]) {
     assert.ok(text.includes(expected), `has ${expected}`);
+  }
+});
+
+test("russian hyphenation: syllable boundaries, short words, latin and abbreviations untouched", () => {
+  assert.deepEqual(hyphenationPoints("договор"), [2, 4]);
+  assert.deepEqual(hyphenationPoints("Исполнитель"), [2, 5, 7]);
+  for (const word of ["WeSetup", "ИНН", "СанПиН", "ХАССП", "точка", "2026"]) assert.deepEqual(hyphenationPoints(word), [], word);
+  // «й», «ъ», «ь» не начинают строку, справа остаётся не меньше трёх букв.
+  for (const word of ["подъезда", "большой", "сотрудников", "оборудования"]) {
+    for (const point of hyphenationPoints(word)) {
+      assert.ok(!/[йъь]/i.test(word[point]), `${word}: ${point}`);
+      assert.ok(point >= 2 && word.length - point >= 3, `${word}: ${point}`);
+    }
   }
 });

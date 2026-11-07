@@ -11,12 +11,15 @@ import { registerProposalFonts, type ProposalWeight } from "@/lib/proposal/pdf-f
 import { formatPhone } from "./phone";
 
 /**
- * Фирменный стиль документов WeSetup (jsPDF, A4, мм) — договор, а дальше
- * КП и счёт. Образец — «WeSetup - КП и счета (новый дизайн)» (2026-10-29):
- * тёмная скруглённая карточка-шапка на каждом листе (градиентный «сетап»
- * и «Ваш электронный журнал» слева, реквизиты продавца справа), такая же
- * карточка-подвал, нумерованные заголовки разделов «01  Заголовок  пояснение»,
- * таблицы с тёмной строкой заголовка, сиреневые акценты.
+ * Фирменный стиль документов WeSetup (jsPDF, A4, мм) — договор, КП и счёт.
+ * Образец — шаблоны «WeSetup - шаблоны (без покупателя, новый стиль)»
+ * (брендбук сетап 1.0, правка 2026-11-07): белый бланк — знак «Полночь» и
+ * «Ваш электронный ХАССП» слева, реквизиты продавца справа, под шапкой
+ * фирменный «маршрут» (пунктир, первое кольцо залито); подвал — знак,
+ * маршрут ровно по центру листа и сайт или «Страница N из M» справа.
+ * Один шрифт и пять кеглей (22 / 11,5 / 10,5 / 9,5 / 7,5), никаких
+ * прописных с разрядкой; таблицы без тёмных шапок — тонкие линии, крайние
+ * колонки ровно по краям набора.
  *
  * Реквизиты продавца — всегда параметром (`BrandSeller` из
  * `readPlatformRequisites()`), здесь ничего не захардкожено.
@@ -171,7 +174,15 @@ export function fitText(pdf: BrandPdf, text: string, maxWidth: number, style: Te
 const ASSET_DIR = path.join(process.cwd(), "src", "lib", "brand-docs", "assets");
 const assetCache = new Map<string, Buffer | null>();
 
-export type BrandAssetName = "wordmark-gradient.png" | "icon-nfc.png" | "icon-phone.png" | "icon-mail.png" | "check.png";
+export type BrandAssetName =
+  | "wordmark-gradient.png"
+  | "wordmark-polnoch.png"
+  | "route-header.png"
+  | "route-footer.png"
+  | "icon-nfc.png"
+  | "icon-phone.png"
+  | "icon-mail.png"
+  | "check.png";
 
 export function brandAsset(name: BrandAssetName): Buffer | null {
   if (!assetCache.has(name)) {
@@ -205,29 +216,71 @@ function stroke(pdf: BrandPdf, color: RGB, width: number) {
 
 // ─────────────────────────── шапка и подвал ───────────────────────────
 
-/** Тёмная карточка-шапка текущего листа. */
+/** Подпись под знаком в шапке (брендбук сетап 1.0). */
+export const BRAND_TAGLINE = "Ваш электронный ХАССП";
+/** Подпись рядом со знаком в подвале. */
+export const BRAND_FOOTER_TAGLINE = "Электронные журналы";
+/** Точки маршрута — светлый индиго брендбука. */
+const ROUTE_DOTS = hex("A9B2F6");
+/** Базовая линия подвала, мм. */
+const FOOTER_BASE = BRAND_PAGE.h - 8.9;
+
+/** Пунктир из точек от (x1, y1) до (x2, y2): круглые концы штрихов нулевой длины. */
+function dottedLine(pdf: BrandPdf, x1: number, y1: number, x2: number, y2: number): void {
+  const { doc } = pdf;
+  stroke(pdf, ROUTE_DOTS, 0.32);
+  doc.setLineCap("round");
+  doc.setLineDashPattern([0.001, 0.98], 0);
+  doc.line(x1, y1, x2, y2);
+  doc.setLineDashPattern([], 0);
+  doc.setLineCap("butt");
+}
+
+/** Кольцо маршрута: залитое («вы здесь») или полое. */
+export function routeNode(pdf: BrandPdf, cx: number, cy: number, filled: boolean, r = filled ? 1.06 : 0.95): void {
+  if (filled) {
+    fill(pdf, C.indigo);
+    pdf.doc.circle(cx, cy, r, "F");
+    return;
+  }
+  fill(pdf, C.white);
+  stroke(pdf, C.indigo, 0.37);
+  pdf.doc.circle(cx, cy, r - 0.18, "FD");
+}
+
+/** Фирменный маршрут по горизонтали: первое кольцо залито, последнее — полое, между ними точки. */
+export function routeLine(pdf: BrandPdf, x0: number, x1: number, y: number): void {
+  dottedLine(pdf, x0 + 3.2, y, x1 - 3.2, y);
+  routeNode(pdf, x0 + 1.06, y, true);
+  routeNode(pdf, x1 - 0.95, y, false);
+}
+
+/** Маршрут по вертикали — «Как начать»: кольца в точках `ys`, первое залито. */
+export function routeRail(pdf: BrandPdf, x: number, ys: readonly number[]): void {
+  if (ys.length > 1) dottedLine(pdf, x, ys[0] + 2.4, x, ys[ys.length - 1] - 2.2);
+  ys.forEach((y, index) => routeNode(pdf, x, y, index === 0, index === 0 ? 1.48 : 1.35));
+}
+
+/** Белый бланк текущего листа: знак и подпись слева, реквизиты продавца справа, маршрут под ними. */
 export function letterhead(pdf: BrandPdf, seller: BrandSeller): void {
   const { doc } = pdf;
   const { side, contentW } = BRAND_PAGE;
-  const { top, h, pad, radius } = BRAND_HEADER;
-  fill(pdf, C.ink);
-  doc.roundedRect(side, top, contentW, h, radius, radius, "F");
-
-  const left = side + pad;
-  const right = side + contentW - pad;
-  const drawn = drawPng(pdf, brandAsset("wordmark-gradient.png"), { x: left, y: top + 4.6, w: 31.5, h: 6.4 }, "left");
+  const left = side;
+  const right = side + contentW;
+  const top = 8;
+  const drawn = drawPng(pdf, brandAsset("wordmark-polnoch.png"), { x: left, y: top, w: 30, h: 5.8 }, "left");
   if (!drawn) {
-    setText(pdf, { size: 17, weight: "extrabold", color: C.lilac });
-    doc.text("сетап", left, top + 10.2);
+    setText(pdf, { size: 17, weight: "extrabold", color: C.ink });
+    doc.text("сетап", left, top + 5.2);
   }
-  setText(pdf, { size: 9.5, weight: "semibold", color: C.lilacText });
-  doc.text("Ваш электронный журнал", left, top + 16.6);
+  setText(pdf, { size: 7.5, color: C.muted });
+  doc.text(BRAND_TAGLINE, left, top + 10.7);
 
-  const infoWidth = contentW - 2 * pad - 52;
-  const nameStyle: TextStyle = { size: 9, weight: "semibold", color: C.white };
+  const infoWidth = contentW - 60;
+  const nameStyle: TextStyle = { size: 9.5, weight: "semibold", color: C.ink };
   const name = fitText(pdf, seller.nameShort, infoWidth, nameStyle);
   setText(pdf, nameStyle);
-  doc.text(name, right, top + 6.6, { align: "right" });
+  doc.text(name, right, top + 3.4, { align: "right" });
   const ids = [
     seller.inn ? `ИНН${NBSP}${seller.inn}` : null,
     seller.kpp ? `КПП${NBSP}${seller.kpp}` : null,
@@ -235,46 +288,38 @@ export function letterhead(pdf: BrandPdf, seller: BrandSeller): void {
   ]
     .filter(Boolean)
     .join("  ·  ");
-  const contacts = [seller.phone, seller.email].filter(Boolean).join("  ·  ");
+  const contacts = [seller.phone, seller.email, seller.site].filter(Boolean).join("  ·  ");
   const lines = [ids, seller.address, contacts].filter(Boolean);
-  const style: TextStyle = { size: 7.5, color: C.lav };
+  const style: TextStyle = { size: 7.5, color: C.muted };
   lines.forEach((line, index) => {
     const fitted = fitText(pdf, line, infoWidth, style);
     setText(pdf, style);
-    doc.text(fitted, right, top + 10.8 + index * 3.75, { align: "right" });
+    doc.text(fitted, right, top + 7.8 + index * 4, { align: "right" });
   });
+  routeLine(pdf, left, right, 30.2);
 }
 
-/** Тёмная карточка-подвал текущего листа. */
+/** Подвал текущего листа: знак и подпись слева, маршрут ровно по центру листа, справа — сайт или номер страницы. */
 export function footerCard(
   pdf: BrandPdf,
   seller: BrandSeller,
-  tagline = "Электронные журналы по принципам ХАССП",
-  /** Вторая строка справа; по умолчанию «почта · продавец». */
+  tagline = BRAND_FOOTER_TAGLINE,
+  /** Текст справа; по умолчанию «сайт · продавец». */
   rightLine?: string,
 ): void {
   const { doc } = pdf;
-  const { side, contentW, h: pageH } = BRAND_PAGE;
-  const { bottom, h, pad, radius } = BRAND_FOOTER;
-  const top = pageH - bottom - h;
-  fill(pdf, C.ink);
-  doc.roundedRect(side, top, contentW, h, radius, radius, "F");
-
-  const left = side + pad;
-  const right = side + contentW - pad;
-  setText(pdf, { size: 8.5, weight: "semibold", color: C.white });
-  doc.text(tagline, left, top + 5);
-  setText(pdf, { size: 8.5, weight: "semibold", color: C.lilac });
-  doc.text(seller.site, left, top + 9.3);
-  const siteW = doc.getTextWidth(seller.site);
-  drawPng(pdf, brandAsset("icon-nfc.png"), { x: left + siteW + 1.6, y: top + 6.6, w: 3.2, h: 3.4 }, "left");
-
-  if (seller.phone) {
-    setText(pdf, { size: 8.5, weight: "semibold", color: C.white });
-    doc.text(seller.phone, right, top + 5, { align: "right" });
-  }
-  setText(pdf, { size: 8, color: C.lav });
-  doc.text(rightLine ?? [seller.email, seller.nameShort].filter(Boolean).join("  ·  "), right, top + 9.3, { align: "right" });
+  const { side, contentW, w: pageW } = BRAND_PAGE;
+  const drawn = drawPng(pdf, brandAsset("wordmark-polnoch.png"), { x: side, y: FOOTER_BASE - 2.35, w: 12.5, h: 2.42 }, "left");
+  setText(pdf, { size: 7.5, color: C.muted });
+  doc.text(tagline, side + (drawn ? 15 : 0), FOOTER_BASE);
+  routeLine(pdf, pageW / 2 - 32, pageW / 2 + 32, FOOTER_BASE - 1);
+  // Справа — не шире своей трети: длинное полное наименование не наезжает на маршрут.
+  const room = side + contentW - (pageW / 2 + 32) - 4;
+  const style: TextStyle = { size: 7.5, color: C.muted };
+  const candidates = rightLine ? [rightLine] : [[seller.site, seller.nameShort].filter(Boolean).join("  ·  "), seller.site];
+  const right = candidates.find((item) => textWidth(pdf, item, style) <= room) ?? fitText(pdf, candidates[0], room, style);
+  setText(pdf, style);
+  doc.text(right, side + contentW, FOOTER_BASE, { align: "right" });
 }
 
 export type DecorateOptions = {
@@ -282,7 +327,7 @@ export type DecorateOptions = {
   pageLabel?: ((page: number, total: number) => string) | null;
   /** Подпись слева над подвалом (например, места для инициалов сторон). */
   footnoteLeft?: (page: number, total: number) => string | null;
-  /** «страница N из M» во второй строке подвала справа (как в договоре образца). */
+  /** «Страница N из M» в подвале справа (как в договоре образца). */
   pageInFooter?: boolean;
 };
 
@@ -294,13 +339,8 @@ export function decoratePages(pdf: BrandPdf, seller: BrandSeller, options: Decor
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
     letterhead(pdf, seller);
-    footerCard(
-      pdf,
-      seller,
-      undefined,
-      options.pageInFooter ? [seller.email, `страница${NBSP}${page} из ${total}`].filter(Boolean).join("  ·  ") : undefined,
-    );
-    const fallback = options.pageInFooter ? null : `Стр.${NBSP}${page} из ${total}`;
+    footerCard(pdf, seller, undefined, options.pageInFooter ? `Страница${NBSP}${page} из ${total}` : undefined);
+    const fallback = options.pageInFooter ? null : `Страница${NBSP}${page} из ${total}`;
     const label = options.pageLabel === null ? null : options.pageLabel ? options.pageLabel(page, total) : fallback;
     setText(pdf, { size: 7, color: C.faint });
     if (label) doc.text(label, BRAND_PAGE.side + BRAND_PAGE.contentW, labelY, { align: "right" });
@@ -312,31 +352,33 @@ export function decoratePages(pdf: BrandPdf, seller: BrandSeller, options: Decor
 
 // ───────────────────────────── блоки ─────────────────────────────
 
-/** Надстрочная подпись: «КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ» разрядкой. */
-export function eyebrow(pdf: BrandPdf, text: string, x: number, y: number, color: RGB = C.indigo): void {
-  setText(pdf, { size: 7.5, weight: "semibold", color });
-  pdf.doc.text(text.toUpperCase(), x, y, { charSpace: 0.42 });
+/** Строка над заголовком документа («Коммерческое предложение · тариф …») — серым основным кеглем, без прописных. */
+export function eyebrow(pdf: BrandPdf, text: string, x: number, y: number, color: RGB = C.muted): void {
+  setText(pdf, { size: 9.5, color });
+  pdf.doc.text(text, x, y);
 }
 
-/** «01  Стоимость  за 1 точку, без НДС». y — базовая линия. Возвращает высоту блока. */
+/** Кегль заголовка раздела — тот же, что у «Здравствуйте» в КП и разделов договора. */
+export const SECTION_SIZE = 11.5;
+
+/** «1  Термины» (номер индиго) или просто «Стоимость за одну точку». y — базовая линия. Возвращает высоту блока. */
 export function sectionTitle(pdf: BrandPdf, x: number, y: number, title: { num?: string | number | null; title: string; hint?: string | null }): number {
   const { doc } = pdf;
   let titleX = x;
-  // Образец 2026-10-30 — заголовки без номера; «01» остаётся по желанию.
   if (title.num !== undefined && title.num !== null) {
-    const num = typeof title.num === "number" ? String(title.num).padStart(2, "0") : title.num;
-    setText(pdf, { size: 9, weight: "semibold", color: C.indigo });
+    const num = String(title.num);
+    setText(pdf, { size: SECTION_SIZE, weight: "semibold", color: C.indigo });
     doc.text(num, x, y);
-    titleX = x + Math.max(doc.getTextWidth(num) + 3.2, 7.4);
+    titleX = x + doc.getTextWidth(num) + 2.6;
   }
-  setText(pdf, { size: 12, weight: "semibold", color: C.ink });
+  setText(pdf, { size: SECTION_SIZE, weight: "semibold", color: C.ink });
   doc.text(title.title, titleX, y);
   if (title.hint) {
     const hintX = titleX + doc.getTextWidth(title.title) + 3;
-    setText(pdf, { size: 8.5, color: C.muted });
+    setText(pdf, { size: 9.5, color: C.muted });
     doc.text(title.hint, hintX, y);
   }
-  return lineHeight(12, 1.25);
+  return lineHeight(SECTION_SIZE, 1.25);
 }
 
 export type DataTableOptions = {
@@ -352,14 +394,17 @@ export type DataTableOptions = {
 };
 
 /**
- * Таблица с тёмной строкой заголовка (jspdf-autotable). Шрифты — Manrope
- * «normal» всех начертаний: синтетического bold у jsPDF нет. Переносит
- * строки на следующий лист в пределах области набора. Возвращает низ таблицы.
+ * Таблица «по-современному» (jspdf-autotable): шапка — мелкие серые подписи
+ * над тёмной тонкой линией, строки — тонкие светлые линии; текст первой
+ * колонки — ровно по левому краю набора, последней — по правому. Шрифты —
+ * Manrope «normal» всех начертаний: синтетического bold у jsPDF нет.
+ * Переносит строки на следующий лист в пределах области набора. Возвращает низ таблицы.
  */
 export function dataTable(pdf: BrandPdf, options: DataTableOptions): number {
   const x = options.x ?? BRAND_PAGE.side;
   const width = options.width ?? BRAND_PAGE.contentW;
   const size = options.fontSize ?? 8.5;
+  const pad = 2.6;
   autoTable(pdf.doc, {
     startY: options.startY,
     margin: { left: x, right: BRAND_PAGE.w - x - width, top: BRAND_CONTENT_TOP, bottom: BRAND_PAGE.h - BRAND_CONTENT_BOTTOM },
@@ -372,23 +417,32 @@ export function dataTable(pdf: BrandPdf, options: DataTableOptions): number {
       fontStyle: "normal",
       fontSize: size,
       textColor: [...C.ink] as [number, number, number],
-      cellPadding: { top: 2, bottom: 2, left: 2.6, right: 2.6 },
+      cellPadding: { top: 2.2, bottom: 2.2, left: pad, right: pad },
       lineColor: [...C.border] as [number, number, number],
       lineWidth: { bottom: 0.2 },
       valign: "middle",
       overflow: "linebreak",
     },
     headStyles: {
-      font: pdf.faces.semibold.family,
+      font: pdf.faces.regular.family,
       fontStyle: "normal",
-      fontSize: size - 0.5,
-      fillColor: [...C.ink] as [number, number, number],
-      textColor: [...C.white] as [number, number, number],
-      cellPadding: { top: 2.6, bottom: 2.6, left: 2.6, right: 2.6 },
-      lineWidth: 0,
+      fontSize: 7.5,
+      textColor: [...C.muted] as [number, number, number],
+      cellPadding: { top: 1.4, bottom: 1.8, left: pad, right: pad },
+      lineColor: [...C.ink] as [number, number, number],
+      lineWidth: { bottom: 0.3 },
+      valign: "bottom",
     },
-    alternateRowStyles: options.zebra === false ? undefined : { fillColor: [...C.soft] as [number, number, number] },
+    alternateRowStyles: options.zebra === true ? { fillColor: [...C.soft] as [number, number, number] } : undefined,
     columnStyles: options.columnStyles,
+    didParseCell: (data) => {
+      // Крайние колонки — без внешнего поля: текст стоит на краях набора, как заголовки над таблицей.
+      const last = data.table.columns.length - 1;
+      if (data.column.index !== 0 && data.column.index !== last) return;
+      const padding = data.cell.styles.cellPadding;
+      const box = typeof padding === "number" ? { top: padding, bottom: padding, left: padding, right: padding } : { top: 2.2, bottom: 2.2, left: pad, right: pad, ...padding };
+      data.cell.styles.cellPadding = { ...box, ...(data.column.index === 0 ? { left: 0 } : {}), ...(data.column.index === last ? { right: 0 } : {}) };
+    },
   });
   return (pdf.doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 }
@@ -457,7 +511,7 @@ export function bankGrid(pdf: BrandPdf, options: { y: number; seller: BrandSelle
   const col1 = x + 102; // конец «банк / ИНН / получатель»
   const col2 = col1 + 18; // конец «БИК / Сч. №»
   const half = x + 51; // ИНН | КПП
-  stroke(pdf, C.grid, 0.2);
+  stroke(pdf, C.border2, 0.2);
   doc.rect(x, y, w, rowH * 4.4);
   doc.line(col1, y, col1, y + rowH * 4.4);
   doc.line(col2, y, col2, y + rowH * 4.4);
@@ -472,14 +526,14 @@ export function bankGrid(pdf: BrandPdf, options: { y: number; seller: BrandSelle
     doc.text(text, cx + 2.4, cy);
   };
   cell(seller.bank.name || "—", x, y + 5, { size: 8.5, weight: "semibold" });
-  cell("Банк получателя", x, y + 10.4, { size: 6.5, color: C.muted });
+  cell("Банк получателя", x, y + 10.4, { size: 7.5, color: C.muted });
   cell(`ИНН ${seller.inn || "—"}`, x, y + rowH * 2 + 4.9, { size: 8.5 });
   cell(`КПП ${seller.kpp || "—"}`, half, y + rowH * 2 + 4.9, { size: 8.5 });
   cell(seller.nameShort || "—", x, y + rowH * 3 + 5, { size: 8.5, weight: "semibold" });
-  cell("Получатель", x, y + rowH * 3 + 9.6, { size: 6.5, color: C.muted });
-  cell("БИК", col1, y + 4.9, { size: 8.5, color: C.ink2 });
-  cell("Сч. №", col1, y + rowH + 4.9, { size: 8.5, color: C.ink2 });
-  cell("Сч. №", col1, y + rowH * 2 + 4.9, { size: 8.5, color: C.ink2 });
+  cell("Получатель", x, y + rowH * 3 + 9.6, { size: 7.5, color: C.muted });
+  cell("БИК", col1, y + 4.9, { size: 8.5, color: C.muted });
+  cell("Сч. №", col1, y + rowH + 4.9, { size: 8.5, color: C.muted });
+  cell("Сч. №", col1, y + rowH * 2 + 4.9, { size: 8.5, color: C.muted });
   cell(seller.bank.bik || "—", col2, y + 4.9, { size: 8.5 });
   cell(seller.bank.corrAccount || "—", col2, y + rowH + 4.9, { size: 8.5 });
   cell(seller.bank.account || "—", col2, y + rowH * 2 + 4.9, { size: 8.5, weight: "semibold" });
@@ -507,18 +561,18 @@ export function signatureLine(
   const { doc } = pdf;
   const { x, width } = options;
   let y = options.y;
-  setText(pdf, { size: 8.5, color: C.ink2 });
+  setText(pdf, { size: 9.5, color: C.muted });
   const postLines = doc.splitTextToSize(options.post, width) as string[];
   doc.text(postLines, x, y + 3);
-  y += postLines.length * lineHeight(8.5, 1.3) + 9;
+  y += postLines.length * lineHeight(9.5, 1.3) + 9;
   const lineW = Math.min(36, width * 0.45);
   stroke(pdf, C.faint, 0.25);
   doc.line(x, y, x + lineW, y);
-  setText(pdf, { size: 9, weight: "semibold", color: C.ink });
-  doc.text(`/ ${options.name}`, x + lineW + 2, y - 0.6);
-  setText(pdf, { size: 6.5, color: C.faint });
-  doc.text("подпись", x + lineW / 2, y + 3, { align: "center" });
-  if (options.stampLabel !== false) doc.text("М.П.", x + 2, y + 9);
+  setText(pdf, { size: 9.5, color: C.ink });
+  doc.text(options.name, x + lineW + 2.4, y - 0.6);
+  setText(pdf, { size: 7.5, color: C.faint });
+  doc.text("подпись", x + lineW / 2, y + 3.2, { align: "center" });
+  if (options.stampLabel !== false) doc.text("М. П.", x, y + 9);
   if (options.stamp) drawPng(pdf, options.stamp, { x: x + 8, y: y - 13, w: 31, h: 31 });
   if (options.facsimile) drawPng(pdf, options.facsimile, { x: x + 1, y: y - 10, w: lineW - 2, h: 11 });
   return y + 11;
@@ -542,17 +596,13 @@ export function signatureBlock(
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
-  fill(pdf, C.ink);
-  stroke(pdf, hex("7C8BF8"), 0.5);
-  doc.circle(x + 5.8, y + 5.8, 5.6, "FD");
-  setText(pdf, { size: 10, weight: "semibold", color: C.white });
-  doc.text(initials || "WS", x + 5.8, y + 7.3, { align: "center" });
+  avatar(pdf, x + 5.8, y + 5.8, 5.6, initials || "WS");
   const tx = x + 15;
-  setText(pdf, { size: 9, color: C.muted });
+  setText(pdf, { size: 9.5, color: C.muted });
   doc.text("С уважением,", tx, y + 3);
-  setText(pdf, { size: 12.5, weight: "semibold", color: C.ink });
+  setText(pdf, { size: SECTION_SIZE, weight: "semibold", color: C.ink });
   doc.text(sender.name, tx, y + 9);
-  setText(pdf, { size: 8.5, color: C.muted });
+  setText(pdf, { size: 9.5, color: C.muted });
   doc.text([sender.post, sender.orgShort].filter(Boolean).join(" "), tx, y + 13.4);
   stroke(pdf, C.faint, 0.25);
   doc.line(tx, y + 22, tx + 34, y + 22);
@@ -591,6 +641,32 @@ export function drawQr(
   return { module: cell, modules: n };
 }
 
+/** Кружок с инициалами: светлый индиго, буквы — тёмный индиго (как аватар на сайте). */
+export function avatar(pdf: BrandPdf, cx: number, cy: number, r: number, initials: string): void {
+  fill(pdf, C.tint2);
+  pdf.doc.circle(cx, cy, r, "F");
+  setText(pdf, { size: r * 1.9, weight: "semibold", color: C.indigoDeep });
+  pdf.doc.text(initials, cx, cy + r * 1.9 * PT * 0.36, { align: "center" });
+}
+
+/**
+ * QR в мягкой рамке (как в шаблонах): белое поле, тонкая светлая обводка,
+ * скругление. `box` — внешняя рамка; возвращает сторону модуля и рамку самого кода.
+ */
+export function drawFramedQr(
+  pdf: BrandPdf,
+  text: string,
+  box: { x: number; y: number; size: number },
+  options: { ecc?: "L" | "M" | "Q" | "H" } = {},
+): { module: number; modules: number; code: { x: number; y: number; size: number } } {
+  const pad = box.size * 0.075;
+  fill(pdf, C.white);
+  stroke(pdf, C.border2, 0.3);
+  pdf.doc.roundedRect(box.x, box.y, box.size, box.size, box.size * 0.11, box.size * 0.11, "FD");
+  const code = { x: box.x + pad, y: box.y + pad, size: box.size - 2 * pad };
+  return { ...drawQr(pdf, text, code, options), code };
+}
+
 /** Галочка в светлом кружке (PNG образца) — «есть» в таблице сравнения; jsPDF кладёт картинку в файл один раз. */
 export function checkBadge(pdf: BrandPdf, cx: number, cy: number, size = 3.4): void {
   drawPng(pdf, brandAsset("check.png"), { x: cx - size / 2, y: cy - size / 2, w: size, h: size });
@@ -604,6 +680,41 @@ export function contactIcon(pdf: BrandPdf, kind: "phone" | "mail", x: number, y:
 // ───────────────────────────── поток текста ─────────────────────────────
 
 type Word = { text: string; width: number };
+
+// ───────────────────────────── переносы ─────────────────────────────
+
+const RU_VOWEL = /[аеёиоуыэюя]/i;
+const RU_CONSONANT = /[бвгджзклмнпрстфхцчшщ]/i;
+const RU_SIGN = /[йъь]/i;
+const RU_LETTER = /[а-яё]/i;
+
+/**
+ * Места переноса в русском слове — правила П. Христова (как в простых
+ * переносчиках): после «й/ъ/ь» перед двумя буквами, между гласными, между
+ * согласными на стыке слогов. Осторожно: слева не меньше двух букв, справа —
+ * не меньше трёх; слова с цифрами, латиницей и аббревиатуры не переносим.
+ */
+export function hyphenationPoints(word: string): number[] {
+  // Аббревиатуры и слова с заглавными внутри («СанПиН», «ХАССП») не переносим.
+  if (word.length < 6 || !/^[а-яё]+$/i.test(word) || /[А-ЯЁ]/.test(word.slice(1))) return [];
+  const is = (re: RegExp, index: number) => index >= 0 && index < word.length && re.test(word[index]);
+  const points: number[] = [];
+  for (let p = 2; p <= word.length - 3; p += 1) {
+    const v = (i: number) => is(RU_VOWEL, i);
+    const c = (i: number) => is(RU_CONSONANT, i);
+    const any = (i: number) => is(RU_LETTER, i);
+    const ok =
+      (is(RU_SIGN, p - 1) && any(p) && any(p + 1)) ||
+      (v(p - 1) && v(p) && any(p + 1)) ||
+      (v(p - 2) && c(p - 1) && c(p) && v(p + 1)) ||
+      (c(p - 2) && v(p - 1) && c(p) && v(p + 1)) ||
+      (v(p - 2) && c(p - 1) && c(p) && c(p + 1) && v(p + 2)) ||
+      (v(p - 3) && c(p - 2) && c(p - 1) && c(p) && c(p + 1) && v(p + 2));
+    // «й», «ъ», «ь» не отрываются от предыдущей буквы.
+    if (ok && !is(RU_SIGN, p)) points.push(p);
+  }
+  return points;
+}
 
 /**
  * Поток набора: абзацы с выключкой по ширине (вручную — word spacing jsPDF
@@ -650,20 +761,56 @@ export class BrandFlow {
       .map((word) => ({ text: word, width: this.pdf.doc.getTextWidth(word) }));
   }
 
-  /** Разбивка на строки; первая строка может быть короче (после номера пункта). */
+  /**
+   * Слово, которое не влезло в строку, — с переносом: самая длинная часть
+   * «слог-», что помещается в остаток строки. Знаки препинания вокруг слова
+   * остаются при своих половинах. Нет подходящего места — null.
+   */
+  private hyphenate(word: Word, room: number): [Word, Word] | null {
+    const match = /^([^а-яё]*)([а-яё]+)([^а-яё]*)$/i.exec(word.text);
+    if (!match) return null;
+    const [, before, core, after] = match;
+    const points = hyphenationPoints(core);
+    for (let index = points.length - 1; index >= 0; index -= 1) {
+      const head = `${before}${core.slice(0, points[index])}-`;
+      const headWidth = this.pdf.doc.getTextWidth(head);
+      if (headWidth > room) continue;
+      const tail = `${core.slice(points[index])}${after}`;
+      return [
+        { text: head, width: headWidth },
+        { text: tail, width: this.pdf.doc.getTextWidth(tail) },
+      ];
+    }
+    return null;
+  }
+
+  /**
+   * Разбивка на строки; первая строка может быть короче (после номера пункта).
+   * Слово, не влезшее в строку, переносится по слогам (не больше двух строк
+   * подряд с переносом) — строки по ширине не растягиваются пробелами.
+   */
   layout(text: string, style: TextStyle, width: number, firstLineWidth = width): Word[][] {
     setText(this.pdf, style);
     const space = this.pdf.doc.getTextWidth(" ");
     const lines: Word[][] = [];
     let current: Word[] = [];
     let currentWidth = 0;
+    let hyphenStreak = 0;
     for (const word of this.words(text, style)) {
       const limit = lines.length === 0 ? firstLineWidth : width;
       const next = current.length ? currentWidth + space + word.width : word.width;
       if (current.length && next > limit) {
+        const split = hyphenStreak < 2 ? this.hyphenate(word, limit - currentWidth - space) : null;
+        if (split) {
+          current.push(split[0]);
+          hyphenStreak += 1;
+        } else {
+          hyphenStreak = 0;
+        }
         lines.push(current);
-        current = [word];
-        currentWidth = word.width;
+        const rest = split ? split[1] : word;
+        current = [rest];
+        currentWidth = rest.width;
       } else {
         current.push(word);
         currentWidth = next;
@@ -698,7 +845,7 @@ export class BrandFlow {
   ): void {
     const size = options.size ?? 9;
     const style: TextStyle = { size, weight: options.weight ?? "regular", color: options.color ?? C.ink2 };
-    const leadStyle: TextStyle = { size, weight: "semibold", color: C.ink };
+    const leadStyle: TextStyle = { size, weight: "semibold", color: C.indigoDeep };
     const lh = lineHeight(size, options.lh ?? 1.42);
     const indent = options.indent ?? 0;
     const x = this.x + indent;
