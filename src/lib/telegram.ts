@@ -981,7 +981,9 @@ export function generateLinkToken(userId: string, ttlMs: number = LINK_TOKEN_TTL
   return `${SHORT_LINK_PREFIX}${userId}_${exp}_${sig}`;
 }
 
-function parseShortLinkToken(token: string): { userId: string } | null {
+type ParsedLinkToken = { userId: string; expMs: number };
+
+function parseShortLinkToken(token: string): ParsedLinkToken | null {
   // Подпись — ровно 22 последних символа (в base64url бывает «_»), перед ней «_».
   const body = token.slice(SHORT_LINK_PREFIX.length);
   if (body.length < 26 || body[body.length - 23] !== "_") return null;
@@ -991,14 +993,19 @@ function parseShortLinkToken(token: string): { userId: string } | null {
   if (idx <= 0) return null;
   const userId = rest.slice(0, idx);
   const expStr = rest.slice(idx + 1);
-  if (!/^[0-9a-z]+$/.test(expStr) || Date.now() > parseInt(expStr, 36) * 1000) return null;
+  const expMs = parseInt(expStr, 36) * 1000;
+  if (!/^[0-9a-z]+$/.test(expStr) || Date.now() > expMs) return null;
   const expected = hmacBase64Url(`${userId}:${expStr}`).slice(0, 22);
-  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? { userId } : null;
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)) ? { userId, expMs } : null;
 }
 
-export function parseLinkToken(
-  token: string
-): { userId: string } | null {
+/** Проверка подписи и срока. Одноразовость — `claimLinkToken`. */
+export function parseLinkToken(token: string): { userId: string } | null {
+  const parsed = parseLinkTokenWithExpiry(token);
+  return parsed ? { userId: parsed.userId } : null;
+}
+
+function parseLinkTokenWithExpiry(token: string): ParsedLinkToken | null {
   if (token.startsWith(SHORT_LINK_PREFIX)) {
     try {
       return parseShortLinkToken(token);
@@ -1028,10 +1035,39 @@ export function parseLinkToken(
     if (sigBuf.length !== expectedBuf.length) return null;
     if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) return null;
 
-    return { userId };
+    return { userId, expMs: exp };
   } catch {
     return null;
   }
+}
+
+/**
+ * Погасить ссылку привязки: она одноразовая. «used» — по ней уже привязали
+ * другой Telegram или другой аккаунт. Повторное нажатие тем же чатом —
+ * «ok», чтобы двойной тап не пугал ошибкой.
+ */
+export async function claimLinkToken(
+  token: string,
+  chatId: string,
+): Promise<{ status: "ok"; userId: string } | { status: "invalid" | "used" }> {
+  const parsed = parseLinkTokenWithExpiry(token);
+  if (!parsed) return { status: "invalid" };
+  const { db } = await import("./db");
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  try {
+    await db.telegramLinkTokenUse.create({
+      data: { tokenHash, userId: parsed.userId, chatId, expiresAt: new Date(parsed.expMs) },
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code !== "P2002") throw error;
+    const prev = await db.telegramLinkTokenUse.findUnique({ where: { tokenHash } });
+    if (prev?.chatId === chatId && prev.userId === parsed.userId) return { status: "ok", userId: parsed.userId };
+    return { status: "used" };
+  }
+  await db.telegramLinkTokenUse
+    .deleteMany({ where: { expiresAt: { lt: new Date() } } })
+    .catch((error) => console.error("[telegram] link token cleanup failed", error));
+  return { status: "ok", userId: parsed.userId };
 }
 
 /** Конец тихих часов для пользователя (по его настройкам и поясу организации), null — не тихо. */

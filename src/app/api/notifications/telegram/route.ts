@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import {
+  claimLinkToken,
   notifyEmployee,
   parseLinkToken,
   sendTelegramMessage,
@@ -69,6 +70,16 @@ export async function POST(request: Request) {
         await sendTelegramMessage(
           chatId,
           "Пользователь не найден. Проверьте ссылку привязки."
+        );
+        return NextResponse.json({ ok: true });
+      }
+
+      // Ссылка одноразовая (как в обработчике бота).
+      const claim = await claimLinkToken(token, chatId);
+      if (claim.status !== "ok") {
+        await sendTelegramMessage(
+          chatId,
+          "Эта ссылка привязки уже использована. Получите новую в настройках WeSetup."
         );
         return NextResponse.json({ ok: true });
       }

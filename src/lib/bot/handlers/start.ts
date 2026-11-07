@@ -15,7 +15,7 @@ import {
 } from "@/lib/bot/start-response";
 import { db } from "@/lib/db";
 import { telegramConsultantFooter } from "@/lib/partners/branding";
-import { parseLinkToken } from "@/lib/telegram";
+import { claimLinkToken, parseLinkToken } from "@/lib/telegram";
 import { getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { buildTelegramWebAppKeyboard } from "@/lib/telegram-web-app";
 import { resolveLocale, type Locale } from "@/i18n/locales";
@@ -214,6 +214,14 @@ async function handleSelfLinkToken(
   });
   if (collision) {
     await replyStartError(ctx, "alreadyLinkedSelf", await localeForUserId(collision.id));
+    return true;
+  }
+
+  // Ссылка одноразовая: случайный повторный переход с другого Telegram не
+  // должен перепривязать аккаунт.
+  const claim = await claimLinkToken(payload, chatId);
+  if (claim.status !== "ok") {
+    await replyStartError(ctx, "linkUsed", await localeForChat(chatId));
     return true;
   }
 

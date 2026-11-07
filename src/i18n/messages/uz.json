@@ -15420,6 +15420,7 @@
       },
       "errors": {
         "accountNotFound": "Hisob topilmadi. Sozlamalar → Bildirishnomalar bo‘limida yangi havola yarating.",
+        "linkUsed": "Bu ulash havolasi allaqachon ishlatilgan. Kabinetda yangisini oling: Sozlamalar → Bildirishnomalar → Telegramni ulash.",
         "alreadyLinkedSelf": "Bu Telegram boshqa xodim hisobiga ulangan. O‘sha hisobdan /stop buyrug‘i bilan uzing yoki boshqa Telegram hisobidan foydalaning.",
         "cannotIdentify": "Telegram hisobingizni aniqlab bo‘lmadi.",
         "unrecognizedLink": "Havola aniqlanmadi. Kabinetdagi Sozlamalar → Bildirishnomalar bo‘limida «Telegram’ni ulash»ni tanlang yoki rahbaringizdan taklif so‘rang.",

@@ -15420,6 +15420,7 @@
       },
       "errors": {
         "accountNotFound": "Account not found. Create a new link under Settings → Notifications.",
+        "linkUsed": "This link has already been used. Get a new one in the dashboard: Settings → Notifications → Link Telegram.",
         "alreadyLinkedSelf": "This Telegram account is already linked to another employee. Send /stop from that account to unlink it, or use a different Telegram account.",
         "cannotIdentify": "Could not identify your Telegram account.",
         "unrecognizedLink": "This link was not recognized. Open Settings → Notifications in your workspace and choose “Link Telegram”, or ask your manager for an invitation.",

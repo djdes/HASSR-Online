@@ -1806,6 +1806,20 @@ model FormFillTiming {
   @@index([organizationId, createdAt])
 }
 
+/// Использованные ссылки привязки Telegram (`generateLinkToken`): ссылка
+/// одноразовая — второй переход по ней не перепривязывает аккаунт.
+/// Строки старше срока ссылки удаляются при следующей привязке.
+model TelegramLinkTokenUse {
+  /// sha256 от токена.
+  tokenHash String   @id
+  userId    String
+  chatId    String
+  expiresAt DateTime
+  usedAt    DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model BotInviteToken {
   id             String       @id @default(cuid())
   organizationId String
