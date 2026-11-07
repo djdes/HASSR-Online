@@ -6385,7 +6385,8 @@
         "rate_limited": "Too many requests. Please try again in 10 minutes",
         "invalid_attachments": "The attachments could not be verified. Please attach the files again",
         "message_too_short": "The message is too short"
-      }
+      },
+      "launcher": "Support"
     },
     "attachment": {
       "maxFiles": "{count, plural, one {You can attach up to # file} other {You can attach up to # files}}",
@@ -6397,8 +6398,8 @@
       "removeFile": "Remove {fileName}"
     },
     "dock": {
-      "launcher": "Ask a question",
-      "launcherAria": "Contacts: ask a question or leave your contact details",
+      "launcher": "Contacts",
+      "launcherAria": "Contacts: phone, Telegram, MAX, email or leave your contact details",
       "title": "Contacts",
       "lead": "Call or message us. If you'd rather we reach out, leave your contact below.",
       "formTitle": "Leave your contact details",
@@ -25330,10 +25331,10 @@
       "title": "Contact us",
       "lead": "Tell us what you need and we will quote a price for your site.",
       "about": "Service: {service}",
-      "call": "Sales team",
+      "call": "Support and sales",
       "mobileHint": "Mobile",
       "telegram": "Telegram",
-      "telegramHint": "Message us on Telegram",
+      "telegramHint": "Support on Telegram",
       "max": "MAX",
       "maxHint": "We reply in the MAX messenger",
       "emailHint": "Write to us",
@@ -25341,7 +25342,9 @@
       "chatHint": "We will reply right here in the chat",
       "subjectService": "Service price: {service}",
       "subjectGeneral": "Question about service prices",
-      "priceNote": "We will quote a price for your site"
+      "priceNote": "We will quote a price for your site",
+      "titleGeneral": "Contacts",
+      "leadGeneral": "Call or message us — we will answer your questions and help with setup."
     }
   },
   "checklistsUi": {
@@ -26466,7 +26469,9 @@
       "helpAria": "Help and tips",
       "sheetTitle": "Help",
       "sheetSubtitle": "Ask a question, contact support or read the instructions",
-      "actionAriaUnread": "{label} · new messages: {count, number}"
+      "actionAriaUnread": "{label} · new messages: {count, number}",
+      "contacts": "Contacts",
+      "contactsHint": "Phone, Telegram, MAX and email"
     },
     "kioskSessionGuard": {
       "employee": "Employee",

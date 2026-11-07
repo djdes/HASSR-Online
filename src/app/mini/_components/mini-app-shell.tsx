@@ -9,6 +9,8 @@ import { DeletionBanner } from "@/components/layout/deletion-banner";
 import { NpsBanner } from "@/components/layout/nps-banner";
 import { LiveConnectionIndicator } from "@/components/live/live-connection-indicator";
 import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
+import { ContactsFabAction } from "@/components/contact/contacts-fab-action";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { FabDockProvider } from "@/components/layout/fab-dock";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { Toaster } from "@/components/ui/sonner";
@@ -204,6 +206,7 @@ export async function MiniAppShell({
           {/* Жест «назад» от левого края — только внутри Telegram. */}
           <EdgeBack homeHref={homeHref} />
           {authed ? <SanpinChatWidget bottomOffset={96} /> : null}
+          {authed ? <ContactsFabAction telegramUrl={contactTelegramUrl(process.env)} /> : null}
           </FabDockProvider>
         </div>
       </MiniThemeProvider>

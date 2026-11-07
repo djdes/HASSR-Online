@@ -6385,7 +6385,8 @@
         "rate_limited": "So‘rovlar juda ko‘p. 10 daqiqadan keyin qayta urinib ko‘ring",
         "invalid_attachments": "Biriktirmalar tekshiruvdan o‘tmadi. Fayllarni qayta biriktiring",
         "message_too_short": "Xabar juda qisqa"
-      }
+      },
+      "launcher": "Yordam"
     },
     "attachment": {
       "maxFiles": "{count, plural, other {Ko‘pi bilan # ta fayl biriktirish mumkin}}",
@@ -6397,8 +6398,8 @@
       "removeFile": "{fileName} faylini olib tashlash"
     },
     "dock": {
-      "launcher": "Savol bering",
-      "launcherAria": "Kontaktlar: savol berish yoki aloqa uchun kontakt qoldirish",
+      "launcher": "Kontaktlar",
+      "launcherAria": "Kontaktlar: telefon, Telegram, MAX, pochta yoki aloqa uchun kontakt qoldirish",
       "title": "Kontaktlar",
       "lead": "Bizga qo‘ng‘iroq qiling yoki yozing. O‘zimiz bog‘lanishimizni istasangiz, quyida kontaktingizni qoldiring.",
       "formTitle": "Aloqa uchun kontakt qoldiring",
@@ -25330,10 +25331,10 @@
       "title": "Biz bilan bog‘laning",
       "lead": "Nima kerakligini ayting — obyektingiz uchun narxni aytamiz.",
       "about": "Xizmat: {service}",
-      "call": "Savdo bo‘limi",
+      "call": "Yordam va savdo",
       "mobileHint": "Mobil raqam",
       "telegram": "Telegram",
-      "telegramHint": "Telegram orqali yozish",
+      "telegramHint": "Telegramda yordam",
       "max": "MAX",
       "maxHint": "MAX messenjerida javob beramiz",
       "emailHint": "Xat yozish",
@@ -25341,7 +25342,9 @@
       "chatHint": "Shu yerning o‘zida, chat oynasida javob beramiz",
       "subjectService": "Xizmat narxi: {service}",
       "subjectGeneral": "Xizmatlar narxi bo‘yicha savol",
-      "priceNote": "Obyektingiz uchun narxni aytamiz"
+      "priceNote": "Obyektingiz uchun narxni aytamiz",
+      "titleGeneral": "Kontaktlar",
+      "leadGeneral": "Qo‘ng‘iroq qiling yoki yozing — savollarga javob beramiz va sozlashda yordam beramiz."
     }
   },
   "checklistsUi": {
@@ -26466,7 +26469,9 @@
       "helpAria": "Yordam va maslahatlar",
       "sheetTitle": "Yordam",
       "sheetSubtitle": "Savol berish, qo‘llab-quvvatlashga yozish yoki yo‘riqnomani ko‘rish",
-      "actionAriaUnread": "{label} · yangi xabarlar: {count, number}"
+      "actionAriaUnread": "{label} · yangi xabarlar: {count, number}",
+      "contacts": "Kontaktlar",
+      "contactsHint": "Telefon, Telegram, MAX va pochta"
     },
     "kioskSessionGuard": {
       "employee": "Xodim",

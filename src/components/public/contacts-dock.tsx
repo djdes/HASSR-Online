@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Loader2, MessageSquareText, Send } from "lucide-react";
+import { Loader2, Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { ContactUsPanel } from "@/components/contact/contact-us-dialog";
@@ -10,12 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { cn } from "@/lib/utils";
 
 /**
- * «Задайте вопрос» на каждой публичной странице (правки 05.11.2026: блок
- * «Контакты» / «Оставьте контакт для связи» при прокрутке).
- *
- * Кнопка появляется, когда человек прокрутил первый экран: на первом экране
- * у него уже есть главный призыв, вторая кнопка там только мешает. Стоит
- * слева внизу — справа пузырь чата поддержки.
+ * «Контакты» на каждой публичной странице (правки 05.11.2026; с 07.11 —
+ * всегда на экране): справа внизу две кнопки — «Контакты» над «Поддержкой»
+ * (чат, `PublicSupportWidget`), в любой момент можно позвонить или написать.
  *
  * В окне — те же крупные контакты, что и в «Свяжитесь с нами», и под ними
  * форма: контакт и удобный способ связи. Заявка уходит обычным обращением с
@@ -23,7 +21,6 @@ import { cn } from "@/lib/utils";
  * в Telegram и на почту.
  */
 
-const SHOW_AFTER_PX = 480;
 const CHANNELS = ["call", "telegram", "max", "email"] as const;
 type Channel = (typeof CHANNELS)[number];
 const CHANNEL_LABEL_RU: Record<Channel, string> = { call: "звонок", telegram: "Telegram", max: "MAX", email: "почта" };
@@ -34,8 +31,13 @@ const INPUT_CLASS =
 
 export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
   const t = useTranslations("publicSupport.dock");
-  const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
+  // На сервере и при гидрации — null, после — портал в body.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [channel, setChannel] = useState<Channel>("call");
@@ -43,13 +45,6 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
   const [company, setCompany] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    const update = () => setVisible(window.scrollY > SHOW_AFTER_PX);
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,24 +99,26 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
     }
   }
 
+  // Кнопка — порталом в body: у футера лендинга при появлении стоит
+  // transform, и `position: fixed` внутри него уезжал бы в низ страницы
+  // (так же сделано у `PublicSupportWidget`).
+  const launcher = (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-label={t("launcherAria")}
+      data-contacts-dock
+      className="fixed bottom-[84px] right-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#0b1024] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(11,16,36,0.55)] ring-1 ring-white/15 transition-colors duration-200 hover:bg-[#1a2148] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 motion-reduce:transition-none print:hidden"
+      style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <Phone className="size-[18px] text-[#8e9bf8]" aria-hidden />
+      {t("launcher")}
+    </button>
+  );
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={t("launcherAria")}
-        tabIndex={visible ? 0 : -1}
-        aria-hidden={visible ? undefined : true}
-        data-contacts-dock
-        className={cn(
-          "fixed bottom-5 left-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#0b1024] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(11,16,36,0.55)] ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-200 hover:bg-[#1a2148] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 motion-reduce:transition-none",
-          visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0",
-        )}
-        style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <MessageSquareText className="size-[18px] text-[#8e9bf8]" aria-hidden />
-        {t("launcher")}
-      </button>
+      {mounted ? createPortal(launcher, document.body) : null}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[480px]">

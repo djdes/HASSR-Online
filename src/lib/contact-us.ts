@@ -7,7 +7,7 @@
  * окружения) и передаёт в клиентское окно пропом.
  */
 
-import { COMPANY_EMAIL, COMPANY_MOBILE, COMPANY_PHONE } from "@/lib/company-contacts";
+import { COMPANY_EMAIL, COMPANY_MOBILE, COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
 import { homeContacts } from "@/lib/home-page";
 
 /**
@@ -22,12 +22,15 @@ export const CONTACT_MOBILE = COMPANY_MOBILE;
 /** Почта для связи. */
 export const CONTACT_EMAIL = COMPANY_EMAIL;
 
-/** Telegram WeSetup, уже открытый на сайте (подвал, лендинг). */
-export const CONTACT_TELEGRAM_FALLBACK = "https://t.me/wesetupbot";
+/** Telegram поддержки — @wesetup_support (владелец, 2026-11-07). */
+export const CONTACT_TELEGRAM = COMPANY_TELEGRAM;
+
+/** Адрес Telegram в окне, если отдельный Telegram продаж не задан. */
+export const CONTACT_TELEGRAM_FALLBACK: string = COMPANY_TELEGRAM.url;
 
 /**
  * Telegram отдела продаж (`WESETUP_TG_SALES_URL`, только `https://t.me/...`),
- * пока его нет — бот WeSetup.
+ * пока его нет — Telegram поддержки @wesetup_support.
  */
 export function contactTelegramUrl(env: Record<string, string | undefined>): string {
   const sales = homeContacts(env).find((contact) => contact.id === "sales");

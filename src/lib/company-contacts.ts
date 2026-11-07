@@ -17,5 +17,8 @@ export const COMPANY_PHONE: CompanyPhone = { display: "+7 (495) 109-65-43", tel:
 /** Мобильный номер. */
 export const COMPANY_MOBILE: CompanyPhone = { display: "+7 (925) 305-80-77", tel: "+79253058077" };
 
+/** Telegram поддержки (владелец, 2026-11-07). */
+export const COMPANY_TELEGRAM = { handle: "@wesetup_support", url: "https://t.me/wesetup_support" } as const;
+
 /** Оба номера в порядке показа: основной, затем мобильный. */
 export const COMPANY_PHONES: readonly CompanyPhone[] = [COMPANY_PHONE, COMPANY_MOBILE];

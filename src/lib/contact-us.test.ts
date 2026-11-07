@@ -9,9 +9,9 @@ test("окно «Свяжитесь с нами»: телефон и почта 
   assert.equal(CONTACT_EMAIL, "admin@wesetup.ru");
 });
 
-test("Telegram — отдел продаж из окружения, иначе бот WeSetup", () => {
+test("Telegram — отдел продаж из окружения, иначе поддержка @wesetup_support", () => {
   assert.equal(contactTelegramUrl({}), CONTACT_TELEGRAM_FALLBACK);
-  assert.equal(CONTACT_TELEGRAM_FALLBACK, "https://t.me/wesetupbot");
+  assert.equal(CONTACT_TELEGRAM_FALLBACK, "https://t.me/wesetup_support");
   assert.equal(contactTelegramUrl({ WESETUP_TG_SALES_URL: "https://t.me/wesetup_sales" }), "https://t.me/wesetup_sales");
   // Не Telegram и не https — не ссылка в окне.
   assert.equal(contactTelegramUrl({ WESETUP_TG_SALES_URL: "javascript:alert(1)" }), CONTACT_TELEGRAM_FALLBACK);

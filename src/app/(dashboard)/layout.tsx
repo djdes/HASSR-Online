@@ -27,6 +27,8 @@ import {
 } from "@/components/theme/site-theme";
 import { SanpinChatWidget } from "@/components/ai/sanpin-chat-widget";
 import { SupportWidget } from "@/components/support/support-widget";
+import { ContactsFabAction } from "@/components/contact/contacts-fab-action";
+import { contactTelegramUrl } from "@/lib/contact-us";
 import { BugReportLauncher } from "@/components/support/bug-report-launcher";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { UrgentJournalHotkey } from "@/components/layout/urgent-journal-hotkey";
@@ -642,6 +644,8 @@ export default async function DashboardLayout({
               Права на действия режутся на сервере (ACL, «своя строка /
               сегодня»), поэтому виджет безопасен и для рядовых ролей. */}
           <SanpinChatWidget />
+          {/* «Контакты» — телефон, Telegram, MAX и почта в доке справа внизу (07.11.2026). */}
+          <ContactsFabAction telegramUrl={contactTelegramUrl(process.env)} />
           {/* «Сообщить о проблеме» — ярлык с жуком у правого края, для
               любого авторизованного: скриншот страницы, файлы и текст
               уходят обращением-ошибкой (`/api/feedback`). */}

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ArrowUpRight, Mail, MessageCircle, MessagesSquare, Phone, Send } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CONTACT_EMAIL, CONTACT_MOBILE, CONTACT_PHONE, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
+import { CONTACT_EMAIL, CONTACT_MOBILE, CONTACT_PHONE, CONTACT_TELEGRAM, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
 import { contactSupport } from "@/lib/support-chat-bus";
 import { cn } from "@/lib/utils";
 
@@ -105,7 +105,11 @@ export function ContactUsPanel({
       </a>
 
       <a href={telegram} target="_blank" rel="noopener noreferrer" className={ROW_CLASS} data-contact-telegram>
-        <ContactRow icon={<Send className="size-5" aria-hidden />} label={t("telegram")} hint={t("telegramHint")} />
+        <ContactRow
+          icon={<Send className="size-5" aria-hidden />}
+          label={telegram === CONTACT_TELEGRAM.url ? CONTACT_TELEGRAM.handle : t("telegram")}
+          hint={t("telegramHint")}
+        />
       </a>
 
       {max ? (
@@ -135,17 +139,20 @@ export function ContactUsDialog({
   onOpenChange,
   service = null,
   telegramUrl = null,
+  general = false,
 }: ContactUsTarget & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Просто «Контакты» (док кабинета), без разговора о цене услуги. */
+  general?: boolean;
 }) {
   const t = useTranslations("sharedUi.contactUs");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-4 rounded-3xl border-[#ececf4] bg-white text-[#0b1024] sm:max-w-[440px]" data-contact-us-dialog>
         <DialogHeader className="text-left">
-          <DialogTitle className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">{t("title")}</DialogTitle>
-          <DialogDescription className="text-[14px] leading-[1.55] text-[#3c4053]">{t("lead")}</DialogDescription>
+          <DialogTitle className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">{general ? t("titleGeneral") : t("title")}</DialogTitle>
+          <DialogDescription className="text-[14px] leading-[1.55] text-[#3c4053]">{general ? t("leadGeneral") : t("lead")}</DialogDescription>
           {service ? (
             <span className="inline-flex w-fit max-w-full rounded-xl bg-[#f5f6ff] px-3 py-1.5 text-[12.5px] font-medium leading-snug text-[#3848c7]">
               {t("about", { service })}
