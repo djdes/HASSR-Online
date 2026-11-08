@@ -1,0 +1,116 @@
+{
+  "task": "today-speed-2026-11",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "e976a119",
+  "pr": 149,
+  "mergedMaster": "0aaba7f4",
+  "checkedAt": "2026-11-08T18:26Z",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/recent-journals.ts",
+        "src/lib/today-speed.test.ts",
+        "src/components/today/recent-journal-recorder.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/dashboard/dashboard-journals-grid.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/day-deadline.ts",
+        "src/lib/today-speed.test.ts",
+        "src/components/today/today-status.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "note": "Значок установленного приложения (navigator.setAppBadge) в браузере без установки не проверяется",
+      "evidence": [
+        "src/components/today/today-status.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/journal-search.ts",
+        "src/lib/journal-search.test.ts",
+        "src/components/layout/command-palette.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/dashboard/dashboard-journals-grid.tsx",
+        "e2e/prepare-filled.ts",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/dashboard/today-print/page.tsx",
+        "src/lib/today-print.ts",
+        "src/lib/today-speed.test.ts",
+        "raw/today-check.txt",
+        "raw/after-prod-checks.txt"
+      ]
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/today/back-to-top.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/today/share-journal-button.tsx",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/hotkeys.ts",
+        "src/components/today/hotkeys-help.tsx",
+        "src/components/today/use-slash-focus.ts",
+        "src/lib/today-speed.test.ts",
+        "raw/today-check.txt"
+      ]
+    },
+    "AC11": {
+      "status": "PASS",
+      "note": "Проверок CI на PR #149 не было: ни один workflow не следит за изменёнными путями; ворота прогнаны локально",
+      "evidence": [
+        "raw/typecheck.txt",
+        "raw/test-gate.txt",
+        "raw/i18n-check.txt",
+        "raw/eslint.txt",
+        "raw/targeted-tests.txt",
+        "raw/next-build.txt",
+        "raw/before-prod-checks.txt",
+        "raw/after-prod-checks.txt",
+        "e2e/post-deploy-check.sh"
+      ]
+    }
+  },
+  "notes": [
+    "Скриншоты проверки остались на стенде, в репозиторий их не кладём.",
+    "Схема базы не меняется; новые данные устройства — localStorage (недавние журналы, «скрыть заполненные»).",
+    "Дерево squash-коммита 0aaba7f4 совпадает с проверенной веткой 8c1b967b."
+  ],
+  "deployRun": 2197,
+  "prodBuild": "0aaba7f"
+}
