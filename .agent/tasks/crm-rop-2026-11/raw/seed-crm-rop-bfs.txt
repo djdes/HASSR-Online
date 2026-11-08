@@ -1,0 +1,23 @@
+## ambiguous: owner + 3 managers with Telegram (> 3)
+bfs fixture ready { extra: 3 }
+[crm-rop] alexey@wesetup.ru: already done
+[crm-rop] компания «БФС», Telegram подключён: совпало больше 3 (cmw7extxa0000757dralylbru bos…@bfs.local.test, cmw7extxl0002757difm7ogbc man…@bfs.local.test, cmw7extxp0003757d2hegflqf man…@bfs.local.test, cmw7extxv0004757dbqjfaarh man…@bfs.local.test) — не выдаём, назначьте в /root/team
+boss@bfs.local.test|f
+cook@bfs.local.test|f
+manager0@bfs.local.test|f
+manager1@bfs.local.test|f
+manager2@bfs.local.test|f
+once:crm-rop:alexey:v1
+## single: managers removed
+[crm-rop:dry-run] alexey@wesetup.ru: already done
+[crm-rop:dry-run] компания «БФС», Telegram подключён: cmw7extxa0000757dralylbru bos…@bfs.local.test → РОП, разделы — → sales
+[crm-rop] alexey@wesetup.ru: already done
+[crm-rop] компания «БФС», Telegram подключён: cmw7extxa0000757dralylbru bos…@bfs.local.test → РОП, разделы — → sales
+[crm-rop] компания «БФС», Telegram подключён: готово, salesHead=true
+boss@bfs.local.test|t|sales
+cook@bfs.local.test|f|
+once:crm-rop:alexey:v1
+once:crm-rop:bfs:v1
+## repeat
+[crm-rop] alexey@wesetup.ru: already done
+[crm-rop] компания «БФС», Telegram подключён: already done

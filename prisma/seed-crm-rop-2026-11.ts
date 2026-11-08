@@ -1,75 +1,136 @@
 /**
- * One-shot: роль РОП (CRM) для alexey@wesetup.ru (владелец, 2026-11-07:
- * «добавь возможность выдать роль РОП … Сейчас РОП alexey@wesetup.ru»).
+ * One-shot: роль РОП (CRM).
+ *
+ * 1. alexey@wesetup.ru (владелец, 2026-11-07: «добавь возможность выдать роль
+ *    РОП … Сейчас РОП alexey@wesetup.ru»).
+ * 2. Владелец/руководитель компании «БФС» с подключённым Telegram (владелец,
+ *    2026-11-08: «назначь ропа так же где компания бфс и подключен телеграм на
+ *    оповещения»). Компания — по названию или полному юр. названию
+ *    организации, где человек работает или состоит участником. Совпало больше
+ *    трёх человек — ничего не выдаём (неоднозначно), выдать можно в /root/team.
  *
  * Выдача идёт тем же путём, что переключатель «РОП» в «Команде и доступах»
  * (`setPlatformSections` с `salesHead: true`): раздел «Продажи» добавляется,
  * если его нет, остальные разделы не трогаем; аудит и оповещение человеку.
+ * Владельцу платформы (`isRoot`) разделы не нужны — ставим только флаг РОП.
  *
- * Однократно: после выдачи пишем PlatformSetting `once:crm-rop:alexey:v1` —
- * дальше ролью управляет владелец в /root/team, снятую роль следующий деплой
- * не вернёт. Пока пользователя нет — маркер не пишем, шаг повторится.
+ * Однократно, своя отметка на каждую цель (`once:crm-rop:<цель>:v1` в
+ * PlatformSetting) — дальше ролью управляет владелец в /root/team, снятую
+ * роль следующий деплой не вернёт. Пока подходящего пользователя нет — отметку
+ * не пишем, шаг повторится. Репозиторий публичный: в лог деплоя — только id и
+ * маска почты.
  *
  * Запуск: npx tsx prisma/seed-crm-rop-2026-11.ts [--dry-run]
  * На деплое — см. .github/workflows/deploy.yml.
  */
 import "dotenv/config";
 
+import type { Prisma } from "@prisma/client";
+
 import { db } from "../src/lib/db";
+import { notifySalesHeadGranted } from "../src/lib/crm/sales-head-notice.server";
 import { normalizePlatformSections } from "../src/lib/platform-access";
+import { maskEmail } from "../src/lib/platform-admin";
 import { setPlatformSections } from "../src/lib/platform-team.server";
 
-const ONCE_KEY = "once:crm-rop:alexey:v1";
 const ROP_EMAIL = "alexey@wesetup.ru";
 const DRY_RUN = process.argv.includes("--dry-run");
+const TAG = DRY_RUN ? "[crm-rop:dry-run]" : "[crm-rop]";
+
+/** Организация «БФС»: по названию или полному юридическому названию. */
+const BFS_NAMES = ["БФС", "BFS"];
+const bfsOrganization: Prisma.OrganizationWhereInput = {
+  OR: BFS_NAMES.flatMap((name) => [
+    { name: { contains: name, mode: "insensitive" as const } },
+    { legalFullName: { contains: name, mode: "insensitive" as const } },
+  ]),
+};
+
+type Target = { onceKey: string; label: string; where: Prisma.UserWhereInput; max: number };
+
+const TARGETS: Target[] = [
+  {
+    onceKey: "once:crm-rop:alexey:v1",
+    label: ROP_EMAIL,
+    where: { email: { equals: ROP_EMAIL, mode: "insensitive" } },
+    max: 1,
+  },
+  {
+    onceKey: "once:crm-rop:bfs:v1",
+    label: "компания «БФС», Telegram подключён",
+    where: {
+      telegramChatId: { not: null },
+      AND: [
+        { OR: [{ isRoot: true }, { role: { in: ["owner", "manager"] } }] },
+        { OR: [{ organization: bfsOrganization }, { organizationMemberships: { some: { organization: bfsOrganization } } }] },
+      ],
+    },
+    max: 3,
+  },
+];
+
+const USER_SELECT = { id: true, email: true, name: true, isRoot: true, isActive: true, platformSections: true, platformSalesHead: true } as const;
+
+async function grant(target: Target, owner: { id: string; name: string; organizationId: string } | null): Promise<boolean> {
+  const users = await db.user.findMany({
+    where: { ...target.where, archivedAt: null, isActive: true },
+    orderBy: { createdAt: "asc" },
+    take: target.max + 1,
+    select: USER_SELECT,
+  });
+  const who = (user: { id: string; email: string }) => `${user.id} ${maskEmail(user.email)}`;
+  if (!users.length) {
+    console.log(`${TAG} ${target.label}: никого — повторим на следующем деплое`);
+    return false;
+  }
+  if (users.length > target.max) {
+    console.log(`${TAG} ${target.label}: совпало больше ${target.max} (${users.map(who).join(", ")}) — не выдаём, назначьте в /root/team`);
+    return false;
+  }
+  for (const user of users) {
+    if (user.platformSalesHead) {
+      console.log(`${TAG} ${target.label}: ${who(user)} уже РОП`);
+      continue;
+    }
+    if (user.isRoot) {
+      // У владельца платформы разделы не выдаются — только флаг РОП.
+      console.log(`${TAG} ${target.label}: ${who(user)} — владелец платформы, ставим флаг РОП`);
+      if (DRY_RUN) continue;
+      await db.user.update({ where: { id: user.id }, data: { platformSalesHead: true } });
+      await db.auditLog
+        .create({ data: { organizationId: owner?.organizationId ?? "platform", userId: owner?.id ?? null, userName: "seed", action: "platform.access.update", entity: "user", entityId: user.id, details: { salesHead: true, salesHeadBefore: false, via: target.onceKey } } })
+        .catch(() => undefined);
+      await notifySalesHeadGranted({ userId: user.id, grantedBy: null }).catch(() => false);
+      continue;
+    }
+    if (!owner) {
+      console.log(`${TAG} ${target.label}: владелец платформы не найден — повторим на следующем деплое`);
+      return false;
+    }
+    const current = normalizePlatformSections(user.platformSections);
+    const sections = current.includes("sales") ? current : [...current, "sales" as const];
+    console.log(`${TAG} ${target.label}: ${who(user)} → РОП, разделы ${current.join(",") || "—"} → ${sections.join(",")}`);
+    if (DRY_RUN) continue;
+    const member = await setPlatformSections({ user: owner }, user.id, sections, { salesHead: true, waitForNotice: true });
+    console.log(`${TAG} ${target.label}: готово, salesHead=${member.salesHead}`);
+  }
+  return true;
+}
 
 async function main() {
-  const tag = DRY_RUN ? "[crm-rop:dry-run]" : "[crm-rop]";
-  if (await db.platformSetting.findUnique({ where: { key: ONCE_KEY } })) {
-    console.log(`${tag} already done`);
-    return;
-  }
-
-  const target = await db.user.findFirst({
-    where: { email: { equals: ROP_EMAIL, mode: "insensitive" }, archivedAt: null },
-    select: { id: true, name: true, isRoot: true, isActive: true, platformSections: true, platformSalesHead: true },
-  });
-  if (!target) {
-    console.log(`${tag} ${ROP_EMAIL} not found — will retry next deploy`);
-    return;
-  }
-  if (!target.isActive) {
-    console.log(`${tag} ${ROP_EMAIL} is deactivated — will retry next deploy`);
-    return;
-  }
-
-  if (target.isRoot) {
-    // У владельца платформы разделы не выдаются — только сам флаг РОП.
-    console.log(`${tag} ${ROP_EMAIL} is the platform owner — setting the ROP flag only`);
-    if (DRY_RUN) return;
-    await db.user.update({ where: { id: target.id }, data: { platformSalesHead: true } });
-    await db.platformSetting.create({ data: { key: ONCE_KEY, value: new Date().toISOString() } });
-    return;
-  }
-
   const owner = await db.user.findFirst({
     where: { isRoot: true, archivedAt: null },
     orderBy: { createdAt: "asc" },
     select: { id: true, name: true, organizationId: true },
   });
-  if (!owner) {
-    console.log(`${tag} platform owner not found — will retry next deploy`);
-    return;
+  for (const target of TARGETS) {
+    if (await db.platformSetting.findUnique({ where: { key: target.onceKey } })) {
+      console.log(`${TAG} ${target.label}: already done`);
+      continue;
+    }
+    const done = await grant(target, owner);
+    if (done && !DRY_RUN) await db.platformSetting.create({ data: { key: target.onceKey, value: new Date().toISOString() } });
   }
-
-  const current = normalizePlatformSections(target.platformSections);
-  const sections = current.includes("sales") ? current : [...current, "sales"];
-  console.log(`${tag} ${ROP_EMAIL} (${target.name}): ROP ${target.platformSalesHead ? "already" : "→ on"}, sections ${current.join(",") || "—"} → ${sections.join(",")}`);
-  if (DRY_RUN) return;
-
-  const member = await setPlatformSections({ user: owner }, target.id, sections, { salesHead: true, waitForNotice: true });
-  await db.platformSetting.create({ data: { key: ONCE_KEY, value: new Date().toISOString() } });
-  console.log(`${tag} done: salesHead=${member.salesHead}, ${member.sections.length} sections`);
 }
 
 main()

@@ -30473,7 +30473,9 @@
       "salesHeadTitle": "Head of sales",
       "salesHeadHint": "Receives every inquiry and CRM reminder: a client awaits a reply, a client went quiet, a next step is due. Requires the “Sales” section.",
       "salesHeadBullet": "Head of sales: every inquiry and CRM reminder goes to them",
-      "salesHeadBadge": "Head of sales"
+      "salesHeadBadge": "Head of sales",
+      "salesHeadMake": "Make head of sales",
+      "salesHeadRemove": "Remove head of sales"
     },
     "team": {
       "title": "Team and access",

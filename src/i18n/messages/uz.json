@@ -30473,7 +30473,9 @@
       "salesHeadTitle": "Savdo bo‘limi rahbari (ROP)",
       "salesHeadHint": "CRM'dagi barcha arizalar va eslatmalarni oladi: mijoz javob kutmoqda, mijoz jim qoldi, keyingi qadam vaqti keldi. «Savdo» bo‘limi kerak.",
       "salesHeadBullet": "ROP: barcha arizalar va CRM eslatmalari unga keladi",
-      "salesHeadBadge": "ROP"
+      "salesHeadBadge": "ROP",
+      "salesHeadMake": "ROP qilish",
+      "salesHeadRemove": "ROPni olib tashlash"
     },
     "team": {
       "title": "Jamoa va ruxsatlar",

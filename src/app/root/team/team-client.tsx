@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Crown, Loader2, Mail, Phone, Search, ShieldCheck, TrendingUp, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 import { PlatformAccessDialog } from "@/components/root/platform-access-dialog";
 import { PLATFORM_PRESETS, PLATFORM_SECTIONS, matchPlatformPreset, type PlatformSectionKey } from "@/lib/platform-access";
 import type { MailSenderStatus } from "@/lib/platform-mail";
@@ -91,6 +92,28 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
       ];
     });
     setCandidates((current) => current?.map((item) => (item.id === userId ? { ...item, sections, salesHead } : item)) ?? null);
+  }
+
+  const [ownerBusy, setOwnerBusy] = useState<string | null>(null);
+
+  /** Владельцу разделы не выдаются, а РОП — можно (и себе): заявки и напоминания CRM. */
+  async function toggleOwnerSalesHead(member: PlatformMember) {
+    setOwnerBusy(member.id);
+    try {
+      const response = await fetch(`/api/root/team/${encodeURIComponent(member.id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sections: [], salesHead: !member.salesHead }),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) throw new Error(data?.error ?? t("access.failed"));
+      setMembers((current) => current.map((item) => (item.id === member.id ? { ...item, salesHead: !member.salesHead } : item)));
+      toast.success(t("access.saved", { name: member.name }));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("access.failed"));
+    } finally {
+      setOwnerBusy(null);
+    }
   }
 
   const staffCount = useMemo(() => members.filter((member) => !member.owner).length, [members]);
@@ -208,7 +231,18 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                     <Mail className="mr-1 inline size-3.5" />
                     {t(`team.mailStatus.${member.mail}`)}
                   </span>
-                  {member.owner ? null : (
+                  {member.owner ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleOwnerSalesHead(member)}
+                      disabled={ownerBusy === member.id}
+                      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
+                      data-owner-sales-head={member.id}
+                    >
+                      <TrendingUp className="size-4 text-[#5566f6]" />
+                      {member.salesHead ? t("access.salesHeadRemove") : t("access.salesHeadMake")}
+                    </button>
+                  ) : (
                     <button
                       type="button"
                       onClick={() => setEditing({ id: member.id, name: member.name, sections: member.sections, salesHead: member.salesHead, member })}

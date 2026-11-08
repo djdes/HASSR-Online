@@ -163,7 +163,30 @@ export async function setPlatformSections(
     select: { id: true, isRoot: true, archivedAt: true, platformSections: true, platformSalesHead: true, email: true },
   });
   if (!target || target.archivedAt) throw new TeamError("Пользователь не найден", 404);
-  if (target.isRoot) throw new TeamError("У владельца платформы и так открыто всё");
+  if (target.isRoot) {
+    // Владельцу разделы не нужны (открыто всё), но РОП — отдельная роль: её
+    // владелец может включить и себе, чтобы получать заявки и напоминания CRM.
+    if (options.salesHead === undefined) throw new TeamError("У владельца платформы и так открыто всё");
+    const updated = await db.user.update({ where: { id: userId }, data: { platformSalesHead: options.salesHead }, select: memberSelect });
+    await db.auditLog
+      .create({
+        data: {
+          organizationId: actor.user.organizationId,
+          userId: actor.user.id,
+          userName: actor.user.name ?? null,
+          action: "platform.access.update",
+          entity: "user",
+          entityId: userId,
+          details: { email: target.email, salesHeadBefore: target.platformSalesHead, salesHead: options.salesHead },
+        },
+      })
+      .catch((error) => console.error("[platform-team] audit failed", error));
+    if (options.salesHead && !target.platformSalesHead) {
+      const headNotice = notifySalesHeadGranted({ userId, grantedBy: target.id === actor.user.id ? null : (actor.user.name ?? null) }).catch(() => false);
+      if (options.waitForNotice) await headNotice;
+    }
+    return toMember(updated);
+  }
   if (target.id === actor.user.id) throw new TeamError("Свой доступ менять нельзя");
   const salesHead = sections.length ? (options.salesHead ?? target.platformSalesHead) : false;
   if (salesHead && !sections.includes("sales")) throw new TeamError("РОП работает в разделе «Продажи» — отметьте его");

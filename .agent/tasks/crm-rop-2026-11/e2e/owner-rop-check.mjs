@@ -1,0 +1,21 @@
+// «Сделать РОП» у владельца платформы в «Команде и доступах» (локально, :3000).
+import { chromium } from "playwright";
+const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const errors = [];
+page.on("pageerror", (e) => errors.push(e.message));
+await page.goto("http://localhost:3000/login", { waitUntil: "networkidle" });
+await page.fill('input[placeholder="name@company.com"]', "owner@wesetup.local.test");
+await page.fill('input[type="password"]', "LocalRoot-2026!");
+await page.click('button[type="submit"]');
+await page.waitForURL((u) => !u.pathname.startsWith("/login"));
+await page.goto("http://localhost:3000/root/team", { waitUntil: "networkidle" });
+const button = page.locator("[data-owner-sales-head]");
+console.log("owner button:", (await button.textContent())?.trim());
+await button.click();
+await page.waitForSelector("text=Доступ сохранён");
+await page.waitForTimeout(500);
+console.log("after click:", (await button.textContent())?.trim(), "| badges:", await page.locator("[data-sales-head-badge]").count());
+await page.screenshot({ path: ".agent/tasks/crm-rop-2026-11/raw/screens/14-team-owner-rop.png", fullPage: false });
+console.log("errors:", errors.length);
+await browser.close();

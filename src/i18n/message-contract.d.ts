@@ -30474,7 +30474,9 @@ export type MessageContract = {
       "salesHeadTitle": "РОП — руководитель отдела продаж",
       "salesHeadHint": "Получает все заявки и напоминания CRM: клиент ждёт ответа, клиент молчит, наступил следующий шаг. Нужен раздел «Продажи».",
       "salesHeadBullet": "РОП: все заявки и напоминания CRM придут ему",
-      "salesHeadBadge": "РОП"
+      "salesHeadBadge": "РОП",
+      "salesHeadMake": "Сделать РОП",
+      "salesHeadRemove": "Снять РОП"
     },
     "team": {
       "title": "Команда и доступы",
