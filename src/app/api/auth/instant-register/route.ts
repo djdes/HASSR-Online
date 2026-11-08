@@ -310,6 +310,6 @@ async function notifyOwner(email: string, source: SignupSourceSnapshot): Promise
     ]
       .filter(Boolean)
       .join("\n"),
-    { kind: "registration" },
+    { kind: "registration", audience: "sales" },
   );
 }

@@ -1,0 +1,4 @@
+owner button: Сделать РОП
+after click: Снять РОП | badges: 3
+errors: 0
+owner@wesetup.local.test|t|

@@ -1321,6 +1321,9 @@ model User {
   platformSections            String[]                 @default([])
   platformGrantedAt           DateTime?
   platformGrantedById         String?
+  // РОП — руководитель отдела продаж (CRM, src/lib/crm): ему идут все заявки
+  // и напоминания об ответах. Требует раздел «Продажи» в platformSections.
+  platformSalesHead           Boolean                  @default(false)
   platformMailSender          PlatformMailSender?
   // False until the owner has explicitly edited this user's journal ACL in
   // /settings/users. While false, `hasJournalAccess` grants all journals —
@@ -5631,4 +5634,138 @@ model SberIncomingPayment {
 
   @@index([orderId])
   @@index([createdAt])
+}
+
+/// CRM платформы (src/lib/crm, /root/crm): человек или компания, с кем идёт
+/// переписка — лид или клиент. Обращения из всех каналов (формы сайта, чат,
+/// бот, почта IMAP, ручной ввод из мессенджеров) склеиваются сюда по email,
+/// телефону, Telegram chat id и пользователю платформы.
+model CrmContact {
+  id               String           @id @default(cuid())
+  name             String?
+  company          String?
+  /// В нижнем регистре.
+  email            String?
+  phone            String?
+  /// Последние 10 цифр телефона — ключ склейки.
+  phoneKey         String?
+  telegramChatId   String?
+  /// Пользователь и организация платформы, если узнали по почте/телефону.
+  userId           String?
+  organizationId   String?
+  /// new | in_work | won | lost | spam
+  stage            String           @default("new")
+  /// Ответственный — пользователь панели с разделом «Продажи».
+  ownerId          String?
+  /// Канал первого обращения (см. CRM_CHANNELS).
+  source           String
+  lastInboundAt    DateTime?
+  lastOutboundAt   DateTime?
+  lastActivityAt   DateTime         @default(now())
+  /// С какого входящего ждём нашего ответа; null — ответ не ждётся.
+  awaitingSince    DateTime?
+  /// Канал этого входящего: у онлайн-чата свой быстрый сигнал поддержке.
+  awaitingChannel  String?
+  /// Следующий шаг: когда напомнить и что сделать.
+  nextActionAt     DateTime?
+  nextActionNote   String?
+  note             String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  interactions     CrmInteraction[]
+
+  @@index([email])
+  @@index([phoneKey])
+  @@index([telegramChatId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([awaitingSince])
+  @@index([nextActionAt])
+  @@index([stage, lastActivityAt])
+  @@index([ownerId])
+  @@index([lastActivityAt])
+}
+
+/// Запись ленты CRM: входящее/исходящее сообщение, заметка или событие.
+/// `externalKey` делает сбор идемпотентным: одно письмо, одна реплика чата,
+/// одна заявка — одна строка, сколько бы раз ни прошёл сбор.
+model CrmInteraction {
+  id             String      @id @default(cuid())
+  contactId      String?
+  contact        CrmContact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// email | chat | feedback | telegram | demo | service | invoice | signup |
+  /// blank | partner | whatsapp | vk | max | phone | call | other | note | resolved
+  channel        String
+  /// in | out | note | event
+  direction      String
+  subject        String?
+  body           String
+  /// "email:<message-id>", "chat:<id>", "service:<id>", "crm:<cuid>" …
+  externalKey    String      @unique
+  /// Ссылка на точечный инструмент панели (чат, заявка, счёт).
+  href           String?
+  /// Адрес отправителя письма — для отсеянного, где контакта нет.
+  fromAddress    String?
+  fromName       String?
+  /// Отсеяно фильтром почты (код причины); null — принято.
+  filteredReason String?
+  authorUserId   String?
+  authorName     String?
+  occurredAt     DateTime
+  createdAt      DateTime    @default(now())
+
+  @@index([contactId, occurredAt])
+  @@index([filteredReason, occurredAt])
+  @@index([occurredAt])
+}
+
+/// Почтовый ящик, который CRM читает по IMAP (рабочая почта, личная почта
+/// РОП). Пароль — AES-256-GCM (src/lib/integration-crypto.ts), в API не уходит.
+model CrmMailbox {
+  id               String    @id @default(cuid())
+  label            String
+  host             String
+  port             Int       @default(993)
+  secure           Boolean   @default(true)
+  username         String
+  passwordEnc      String
+  inboxFolder      String    @default("INBOX")
+  /// Папка отправленных: наши ответы снимают «ждёт ответа». null — не читаем.
+  sentFolder       String?
+  enabled          Boolean   @default(true)
+  inboxUidValidity String?
+  inboxLastUid     Int       @default(0)
+  sentUidValidity  String?
+  sentLastUid      Int       @default(0)
+  lastSyncAt       DateTime?
+  lastError        String?
+  createdById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+/// Правило отсева почты: адрес (`ivan@site.ru`) или домен (`@site.ru`).
+/// block — всегда в «Отсеяно», allow — всегда принимать.
+model CrmSenderRule {
+  id          String   @id @default(cuid())
+  pattern     String   @unique
+  /// block | allow
+  action      String
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+/// Отправленные напоминания CRM. Строка создаётся ДО отправки
+/// (уникальный dedupeKey) — так два одновременных прогона не шлют дважды.
+model CrmReminderLog {
+  id         String   @id @default(cuid())
+  dedupeKey  String   @unique
+  contactId  String?
+  /// unanswered | escalation | silent | next_action | new_mail | digest
+  kind       String
+  recipients Int      @default(0)
+  sentAt     DateTime @default(now())
+
+  @@index([contactId])
 }

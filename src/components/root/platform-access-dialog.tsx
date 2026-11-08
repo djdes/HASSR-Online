@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, ShieldCheck } from "lucide-react";
+import { Check, ShieldCheck, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -17,35 +17,53 @@ import { cn } from "@/lib/utils";
 /**
  * Grant / change / revoke platform panel sections for one person
  * (owner only). Used on «Команда и доступы» and in the client card.
+ * The «РОП» switch (head of sales, CRM) needs the «Продажи» section:
+ * switching it on ticks the section, unticking the section switches it off.
  */
 export function PlatformAccessDialog({
   open,
   onClose,
   user,
   initialSections,
+  initialSalesHead = false,
   onSaved,
 }: {
   open: boolean;
   onClose: () => void;
   user: { id: string; name: string };
   initialSections: readonly PlatformSectionKey[];
-  onSaved: (sections: PlatformSectionKey[]) => void;
+  initialSalesHead?: boolean;
+  onSaved: (sections: PlatformSectionKey[], salesHead: boolean) => void;
 }) {
   const t = useTranslations("rootPanel");
   const [sections, setSections] = useState<PlatformSectionKey[]>([...initialSections]);
+  const [salesHead, setSalesHead] = useState(initialSalesHead);
   const [revokeOpen, setRevokeOpen] = useState(false);
   const hadAccess = initialSections.length > 0;
   const preset = matchPlatformPreset(sections);
 
   function toggle(key: PlatformSectionKey) {
+    if (key === "sales" && sections.includes("sales")) setSalesHead(false);
     setSections((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]));
   }
 
+  function applyPreset(next: readonly PlatformSectionKey[]) {
+    if (!next.includes("sales")) setSalesHead(false);
+    setSections([...next]);
+  }
+
+  function toggleSalesHead() {
+    const next = !salesHead;
+    setSalesHead(next);
+    if (next) setSections((current) => (current.includes("sales") ? current : [...current, "sales"]));
+  }
+
   async function save(next: PlatformSectionKey[]) {
+    const nextSalesHead = next.length > 0 && salesHead && next.includes("sales");
     const response = await fetch(`/api/root/team/${encodeURIComponent(user.id)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sections: next }),
+      body: JSON.stringify({ sections: next, salesHead: nextSalesHead }),
     });
     const data = (await response.json().catch(() => null)) as { error?: string } | null;
     if (!response.ok) {
@@ -55,7 +73,7 @@ export function PlatformAccessDialog({
     toast.success(next.length ? t("access.saved", { name: user.name }) : t("access.revoked", { name: user.name }), {
       description: next.length && !hadAccess ? t("access.refreshHint") : undefined,
     });
-    onSaved(next);
+    onSaved(next, nextSalesHead);
     onClose();
   }
 
@@ -78,6 +96,7 @@ export function PlatformAccessDialog({
             ? [
                 { label: t("access.willSee", { sections: ordered.map((section) => t(`sections.${section.key}.title`)).join(", ") }) },
                 ...(home ? [{ label: t("access.lands", { section: t(`sections.${home.key}.title`) }), tone: "info" as const }] : []),
+                ...(salesHead ? [{ label: t("access.salesHeadBullet"), tone: "info" as const }] : []),
                 { label: t("access.ownerOnly"), tone: "warn" as const },
               ]
             : [{ label: t("access.nothing"), tone: "warn" as const }]
@@ -93,7 +112,7 @@ export function PlatformAccessDialog({
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => setSections([...item.sections])}
+                    onClick={() => applyPreset(item.sections)}
                     aria-pressed={active}
                     data-preset={item.key}
                     className={cn(
@@ -143,6 +162,22 @@ export function PlatformAccessDialog({
               })}
             </div>
           </div>
+          <label
+            className={cn(
+              "flex cursor-pointer items-start gap-3 rounded-2xl border px-3.5 py-3 transition-colors duration-150",
+              salesHead ? "border-[#5566f6] bg-[#f5f6ff]" : "border-[#ececf4] hover:border-[#5566f6]/40 hover:bg-[#fafbff]",
+            )}
+            data-sales-head-toggle
+          >
+            <input type="checkbox" checked={salesHead} onChange={toggleSalesHead} className="mt-0.5 size-4 accent-[#5566f6]" data-sales-head />
+            <span className="min-w-0">
+              <span className="flex items-center gap-1.5 text-[14px] font-medium text-[#0b1024]">
+                <TrendingUp className="size-4 text-[#5566f6]" />
+                {t("access.salesHeadTitle")}
+              </span>
+              <span className="mt-0.5 block text-[12px] leading-snug text-[#6f7282]">{t("access.salesHeadHint")}</span>
+            </span>
+          </label>
           {hadAccess ? (
             <button
               type="button"

@@ -16142,6 +16142,7 @@
     "sections": "Sections",
     "navigationLabel": "Platform sections",
     "organizations": "Clients",
+    "crm": "CRM",
     "money": "Revenue and sales",
     "funnel": "Funnel",
     "tariffs": "Plans",
@@ -30407,7 +30408,7 @@
       },
       "sales": {
         "title": "Sales",
-        "hint": "Proposals, mailings, services and requests, promo codes and promotions"
+        "hint": "CRM, proposals, mailings, services and requests, promo codes and promotions"
       },
       "partners": {
         "title": "Partners",
@@ -30449,7 +30450,7 @@
       },
       "sales": {
         "title": "Sales",
-        "hint": "Clients, proposals and mailings, partners, e-documents"
+        "hint": "Clients, CRM, proposals and mailings, partners, e-documents"
       },
       "support": {
         "title": "Support",
@@ -30492,7 +30493,13 @@
       "button": "Panel access",
       "buttonHas": "Panel: {role}",
       "ownerBadge": "Owner",
-      "refreshHint": "We e-mail the person, and message them on Telegram if it is linked. The “Platform panel” link appears in their cabinet after a page refresh."
+      "refreshHint": "We e-mail the person, and message them on Telegram if it is linked. The “Platform panel” link appears in their cabinet after a page refresh.",
+      "salesHeadTitle": "Head of sales",
+      "salesHeadHint": "Receives every inquiry and CRM reminder: a client awaits a reply, a client went quiet, a next step is due. Requires the “Sales” section.",
+      "salesHeadBullet": "Head of sales: every inquiry and CRM reminder goes to them",
+      "salesHeadBadge": "Head of sales",
+      "salesHeadMake": "Make head of sales",
+      "salesHeadRemove": "Remove head of sales"
     },
     "team": {
       "title": "Team and access",

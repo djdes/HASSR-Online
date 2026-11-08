@@ -41,7 +41,7 @@ export type PlatformSection = {
 export const PLATFORM_SECTIONS: readonly PlatformSection[] = [
   { key: "clients", title: "Клиенты", hint: "Список клиентов, карточка, контакты, договор и КП", home: "/root" },
   { key: "billing", title: "Оплаты и тарифы", hint: "Тарифы, счета, отметка оплаты, баллы, реквизиты", home: "/root/tariffs" },
-  { key: "sales", title: "Продажи", hint: "КП, рассылки, услуги и заявки, промокоды и акции", home: "/root/proposals" },
+  { key: "sales", title: "Продажи", hint: "CRM, КП, рассылки, услуги и заявки, промокоды и акции", home: "/root/crm" },
   { key: "partners", title: "Партнёры", hint: "Заявки партнёров, клиенты, выплаты", home: "/root/partners" },
   { key: "edo", title: "ЭДО", hint: "Отправка договоров, счетов и УПД через Saby", home: "/root/edo" },
   { key: "support", title: "Обратная связь", hint: "Обращения, отзывы, идеи, NPS", home: "/root/feedback" },
@@ -68,7 +68,7 @@ export const PLATFORM_PRESETS: readonly PlatformPreset[] = [
     hint: "Все разделы панели. Вход под клиента, удаление организаций и команда — только у владельца.",
     sections: PLATFORM_SECTION_KEYS,
   },
-  { key: "sales", title: "Продажи", hint: "Клиенты, КП и рассылки, партнёры, ЭДО", sections: ["clients", "sales", "partners", "edo"] },
+  { key: "sales", title: "Продажи", hint: "Клиенты, CRM, КП и рассылки, партнёры, ЭДО", sections: ["clients", "sales", "partners", "edo"] },
   { key: "support", title: "Поддержка", hint: "Клиенты, обращения и отзывы, ассистент", sections: ["clients", "support", "assistant"] },
   { key: "seo", title: "SEO и контент", hint: "Блог, SEO и реклама, переводы", sections: ["content", "seo", "translations"] },
   { key: "finance", title: "Бухгалтерия", hint: "Клиенты, оплаты и тарифы, ЭДО", sections: ["clients", "billing", "edo"] },
@@ -119,7 +119,10 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/billing-period", gate: "billing" },
   { pattern: "/api/root/lifetime-discounts", gate: "billing" },
 
-  // Sales.
+  // Sales. CRM — all inquiries in one place; mailbox credentials — owner only.
+  { pattern: "/root/crm", gate: "sales" },
+  { pattern: "/api/root/crm", gate: "sales" },
+  { pattern: "/api/root/crm/mailboxes", gate: "superadmin", methods: ["POST", "PUT", "DELETE"] },
   { pattern: "/root/proposals", gate: "sales" },
   { pattern: "/root/mailing", gate: "sales" },
   { pattern: "/root/services", gate: "sales" },

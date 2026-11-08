@@ -1,0 +1,10 @@
+folder: fetched=3 next={"uidValidity":"42","lastUid":3}
+ingest: created=3 contactsCreated=1; repeat created=0 skipped=3
+  email:grill-1@grill-house.ru → accepted contact=yes new=true
+  email:auto-7@supplier.ru → auto_reply contact=no new=false
+  email:news-3@marketing-tool.io → newsletter contact=no new=false
+new-mail alerts (working hours): 1; repeat: 0
+restore: contact=true filteredReason=null allowRule=allow
+pavel: {"stage":"new","source":"email","awaitingSince":"2026-11-07T23:11:42.000Z","awaitingChannel":"email"}
+--- sink
+FROM=noreply@wesetup.ru TO=alexey@wesetup.ru SUBJECT=CRM: Новое обращение на почту — Павел <pavel@grill-house.ru> MESSAGE-ID=<7d0eefbb-786c-894f-5b4b-481bafe3c3b0@wesetup.ru>

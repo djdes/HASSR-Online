@@ -1,0 +1,14 @@
+## dry-run
+[crm-rop:dry-run] alexey@wesetup.ru (Алексей): ROP → on, sections clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring → clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring
+## run
+[crm-rop] alexey@wesetup.ru (Алексей): ROP → on, sections clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring → clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring
+[email/dev] SMTP не настроен — письмо не отправлено на alexey@wesetup.ru.
+[email/dev] Subject: Вы — РОП в CRM WeSetup
+[email/dev] Body:    Вы — РОП в CRM WeSetup Вы — РОП в CRM WeSetup (назначил: Администратор). Теперь вам приходят все заявки (показ, услуги, счета, партнёры, регистрации, письма на рабочую почту) и напоминания: клиент ждёт ответа, клиент молчит, наступил следующий шаг. Каждое утро в 9:00 — сводка. Ответственного по клиенту можно назначить в его карточке — первые напоминания пойдут ему, эскалации — вам. Открыть CRM &copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.
+[crm-rop] done: salesHead=true, 11 sections
+## repeat
+[crm-rop] already done
+## db
+sales@wesetup.local.test|f|clients,sales,partners,edo
+alexey@wesetup.ru|t|clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring
+platform.access.update|{"after": ["clients", "billing", "sales", "partners", "edo", "support", "assistant", "content", "seo", "translations", "monitoring"], "email": "alexey@wesetup.ru", "before": ["clients", "billing", "sales", "partners", "edo", "support", "assistant", "content", "seo", "translations", "monitoring"], "salesHead": true, "salesHeadBefore": false}

@@ -1,0 +1,34 @@
+logged in → /home
+summary tiles: Ждут ответа4дольше 4 часов — 2 | Шаги на сегодня0звонки, КП, встречи | Молчат после ответа03+ дня без ответа клиента | Новых за сутки6всего контактов: 6
+nav has CRM: 1
+screenshot 01-summary-desktop.png
+sync toast: CRM обновленаНовых записей: 0 · почта не подключена · напоминаний: 0
+awaiting rows: 4
+screenshot 02-contacts-awaiting.png
+search «Анна» rows: 1
+card items before: 3, awaiting banner: 1
+screenshot 03-card-before.png
+owner set: Мария (продажи)
+next step saved
+note saved
+email sent toast: Ответственный назначен
+card items after: 5, awaiting banner: 0
+screenshot 04-card-after-actions.png
+resolved → awaiting banner: 0
+stage → in_work
+screenshot 05-add-lead-dialog.png
+manual lead → /root/crm/contacts/cmw70o7a6000qrb7d7zsventl, awaiting banner: 1
+screenshot 06-manual-lead-card.png
+rules listed: 1
+screenshot 07-mail-add-mailbox.png
+screenshot 08-mail-page.png
+ROP badges on team: 1
+sales unticked → ROP checked: false
+ROP ticked → sales re-checked: true
+screenshot 09-team-rop-dialog.png
+10-summary-phone: horizontal overflow 0px
+11-contacts-phone: horizontal overflow 0px
+12-card-phone: horizontal overflow 0px
+console errors: 0
+filtered items: 1 rules: 2
+errors: 0

@@ -1,0 +1,5 @@
+FROM=noreply@wesetup.ru TO=alexey@wesetup.ru SUBJECT=CRM: Клиент ждёт ответа 37 ч — Ольга Смирнова MESSAGE-ID=<06dd04f3-0bfd-e8ee-6002-1ba0409089c3@wesetup.ru>
+FROM=noreply@wesetup.ru TO=alexey@wesetup.ru SUBJECT=CRM: Клиент ждёт ответа 32 ч — Иван Петров · Кафе «Ромашка» MESSAGE-ID=<286f38e7-9bde-9c11-4ced-0599ba9db5a0@wesetup.ru>
+FROM=noreply@wesetup.ru TO=alexey@wesetup.ru SUBJECT=CRM: Клиент ждёт ответа 5 дн — Дмитрий MESSAGE-ID=<21b2d5b2-4bcf-4b46-d9d6-d9bc4bc84d7b@wesetup.ru>
+FROM=noreply@wesetup.ru TO=alexey@wesetup.ru SUBJECT=CRM: Клиент ждёт ответа 32 ч — Анна MESSAGE-ID=<48afe9e4-8a83-8263-5675-897f9f830983@wesetup.ru>
+FROM=noreply@wesetup.ru TO=alexey@wesetup.ru SUBJECT=CRM: сводка на 9 ноября MESSAGE-ID=<faf2186f-94e5-0bb9-c7b4-f89ca3824a38@wesetup.ru>

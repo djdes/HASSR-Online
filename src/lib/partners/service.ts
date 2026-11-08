@@ -336,7 +336,7 @@ export async function applyForPartnership(
     ]
       .filter(Boolean)
       .join("\n"),
-    { kind: "partner_application" },
+    { kind: "partner_application", audience: "sales" },
   ).catch((err) => console.error("partner application admin notify failed", err));
 
   return { partnerId: result.id, slug: result.slug, status: "pending" };
