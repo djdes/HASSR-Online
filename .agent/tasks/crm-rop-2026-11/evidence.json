@@ -2,7 +2,7 @@
   "task": "crm-rop-2026-11",
   "branch": "claude/peaceful-brown-tgkspp",
   "base": "ce5615c",
-  "checkedAt": "2026-11-07T23:20Z",
+  "checkedAt": "2026-11-08T06:30Z",
   "verdict": "PASS",
   "acceptance": {
     "AC1": {
@@ -84,8 +84,8 @@
     }
   },
   "gates": {
-    "typecheck": "EXIT 0",
-    "testGate": "5822 pass, 0 fail",
+    "typecheck": "EXIT 0 (merged with master 5ca92cc)",
+    "testGate": "5870 pass, 0 fail (merged with master 5ca92cc)",
     "i18nCheck": "97 pass",
     "eslintChanged": "EXIT 0",
     "crmTargeted": "65/65"

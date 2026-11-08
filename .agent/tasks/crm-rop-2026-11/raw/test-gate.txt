@@ -3,5 +3,5 @@
 > bash scripts/test-with-baseline.sh
 
 
-=== Test stats: pass=5822, fail=0 ===
+=== Test stats: pass=5870, fail=0 ===
 ✓ Все тесты прошли.
