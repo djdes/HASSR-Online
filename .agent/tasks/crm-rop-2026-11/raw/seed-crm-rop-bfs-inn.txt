@@ -1,0 +1,13 @@
+bfs inn/egrul fixture ready
+[crm-rop] alexey@wesetup.ru: already done
+[crm-rop] компания «БФС», Telegram подключён: cmw7fsvp80000c77dp6p7bsjk inn…@bfs.local.test → РОП, разделы — → sales
+[crm-rop] компания «БФС», Telegram подключён: готово, salesHead=true
+[crm-rop] компания «БФС», Telegram подключён: cmw7fsvpd0001c77dduc7pie1 egr…@bfs.local.test → РОП, разделы — → sales
+[crm-rop] компания «БФС», Telegram подключён: готово, salesHead=true
+egrul-manager@bfs.local.test|t
+inn-owner@bfs.local.test|t
+notg@bfs.local.test|f
+other@other.local.test|f
+## repeat
+[crm-rop] alexey@wesetup.ru: already done
+[crm-rop] компания «БФС», Telegram подключён: already done

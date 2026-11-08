@@ -39,3 +39,15 @@ imapflow проверен типами и подменённой сессией,
 Новые таблицы `CrmContact`, `CrmInteraction`, `CrmMailbox`, `CrmSenderRule`, `CrmReminderLog` и
 колонка `User.platformSalesHead` (по умолчанию false) — `apply-safe-schema`. Однократный сид
 делает alexey@wesetup.ru РОП и шлёт ему письмо/Telegram. Зависимости: `imapflow`, `mailparser`.
+
+## Прод (деплой №2194, коммит f49b34b, 2026-11-08 06:12 UTC)
+
+- Схема: 24 аддитивные операции применены (`Additive schema changes committed`).
+- Сид: alexey@wesetup.ru → РОП, оповещение в Telegram ушло (`tg-send outcome=sent`).
+- «БФС»: `никого — повторим на следующем деплое` — организация называется не «БФС»,
+  а «БФС» — юрлицо (ООО «БФС», ИНН 5018215599). Исправлено: поиск по ИНН и снимку
+  ЕГРЮЛ (`raw/seed-crm-rop-bfs-inn.txt`: по ИНН и по ЕГРЮЛ — РОП; без Telegram и чужая
+  организация — нет). Отметка `once:crm-rop:bfs:v1` на проде не записана, следующий
+  деплой выдаст роль.
+- Крон: `[crm-cron] установлен: каждые 5 минут → …/app/scripts/cron-crm.sh`.
+- Проверка сборки: `сайт отдаёт f49b34b, адреса отвечают: / /login`.

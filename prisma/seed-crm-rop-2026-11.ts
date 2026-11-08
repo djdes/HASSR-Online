@@ -5,8 +5,8 @@
  *    РОП … Сейчас РОП alexey@wesetup.ru»).
  * 2. Владелец/руководитель компании «БФС» с подключённым Telegram (владелец,
  *    2026-11-08: «назначь ропа так же где компания бфс и подключен телеграм на
- *    оповещения»). Компания — по названию или полному юр. названию
- *    организации, где человек работает или состоит участником. Совпало больше
+ *    оповещения»). Компания — по ИНН ООО «БФС», названию, юр. названию или
+ *    снимку ЕГРЮЛ организации, где человек работает или состоит участником. Совпало больше
  *    трёх человек — ничего не выдаём (неоднозначно), выдать можно в /root/team.
  *
  * Выдача идёт тем же путём, что переключатель «РОП» в «Команде и доступах»
@@ -37,13 +37,24 @@ const ROP_EMAIL = "alexey@wesetup.ru";
 const DRY_RUN = process.argv.includes("--dry-run");
 const TAG = DRY_RUN ? "[crm-rop:dry-run]" : "[crm-rop]";
 
-/** Организация «БФС»: по названию или полному юридическому названию. */
+/**
+ * Организация «БФС» — ООО «БФС», юрлицо WeSetup (ИНН 5018215599, см. оферту):
+ * по ИНН, названию, полному юр. названию или названию из снимка ЕГРЮЛ. Первый
+ * деплой искал только по названию и не нашёл: у организации своё имя, а «БФС»
+ * — в реквизитах.
+ */
+const BFS_INN = "5018215599";
 const BFS_NAMES = ["БФС", "BFS"];
 const bfsOrganization: Prisma.OrganizationWhereInput = {
-  OR: BFS_NAMES.flatMap((name) => [
-    { name: { contains: name, mode: "insensitive" as const } },
-    { legalFullName: { contains: name, mode: "insensitive" as const } },
-  ]),
+  OR: [
+    { inn: BFS_INN },
+    ...BFS_NAMES.flatMap((name) => [
+      { name: { contains: name, mode: "insensitive" as const } },
+      { legalFullName: { contains: name, mode: "insensitive" as const } },
+      { legalProfileJson: { path: ["nameShort"], string_contains: name } },
+      { legalProfileJson: { path: ["nameFull"], string_contains: name } },
+    ]),
+  ],
 };
 
 type Target = { onceKey: string; label: string; where: Prisma.UserWhereInput; max: number };
