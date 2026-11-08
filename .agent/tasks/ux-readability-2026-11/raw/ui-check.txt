@@ -1,0 +1,40 @@
+PASS AC1 по умолчанию атрибуты <html> — {"data-view-text":"normal","data-view-contrast":"auto","data-view-motion":"auto","data-view-hints":"on"}
+PASS AC1 обычный: 13px и заголовок 26px — {"base13":"13px","baseH1":"26px"}
+[1.9s] screenshot desktop-dashboard-normal
+[2.4s] screenshot ac2-profile-menu-desktop
+PASS AC2 меню профиля: размер сменился сразу, без перезагрузки — {"data-view-text":"xlarge","data-view-contrast":"auto","data-view-motion":"auto","data-view-hints":"on"}
+PASS AC1 очень крупный: 13px → 16.9px, заголовок 26px → 29.9px — {"xl13":"16.9px","xlH1":"29.9px"}
+PASS AC1 кука устройства — t:xlarge|c:auto|m:auto|h:on
+PASS AC1 первый кадр с сервера уже крупный
+[3.6s] screenshot desktop-dashboard-xlarge
+PASS AC1 печать не меняется: 13px — 13px
+PASS AC1 крупный: 13px → 14.95px, заголовок → 28.08px — {"l13":"14.95px","lH1":"28.08px"}
+[5.4s] screenshot ac2-readability-dialog-desktop
+PASS AC3 высокий контраст: подписи темнее — {"before":{"faint":"rgb(155, 159, 179)","muted":"rgb(111, 114, 130)"},"after":{"faint":"rgb(74, 78, 98)","muted":"rgb(60, 64, 83)","flag":true}}
+PASS AC4 без анимации: флаг и мгновенные переходы — {"flag":true,"duration":"1e-05s"}
+PASS AC5 пояснения выключены — подзаголовок скрыт — none
+[6.4s] screenshot desktop-dashboard-large-hc-nohints
+PASS AC3 тёмная тема: подписи светлее — {"theme":"dark","muted":"#d6d8e8","faint":"#cccee0"}
+[7.5s] screenshot desktop-dashboard-dark-hc
+PASS AC5 «Скрыть пояснения везде» — {"hints":"off","visibleHints":0,"toast":true}
+[8.8s] screenshot ac5-hints-hidden-journals
+[9.9s] screenshot ac10-skip-link
+PASS AC10 Tab → «Перейти к содержимому» видна, Enter → main — {"skip":{"testid":"skip-to-content","text":"Перейти к содержимому","top":12,"left":12},"mainFocused":"main-content"}
+PASS AC10 элемент без своего фокуса — рамка бренда с клавиатуры — {"tag":"A","text":"Тарифы","outline":"solid 2px rgb(85, 102, 246)"}
+PASS AC9 числовые поля с min ≥ 0 — с inputmode — [{"min":"0","step":null,"inputmode":"numeric"}]
+PASS AC6 плашка пробного периода ≤ 12 слов — {"text":"Пробный период: ещё 8 дней, по 15 ноября включительно. Тарифы","words":10,"height":52}
+PASS AC1 телефон, очень крупный, /dashboard: без горизонтальной прокрутки — {"overflow":0,"width":412,"attr":"xlarge"}
+[13.5s] screenshot phone-xlarge_dashboard
+PASS AC1 телефон, очень крупный, /journals: без горизонтальной прокрутки — {"overflow":0,"width":412,"attr":"xlarge"}
+[15.4s] screenshot phone-xlarge_journals
+PASS AC1 телефон, очень крупный, /settings/journals: без горизонтальной прокрутки — {"overflow":0,"width":412,"attr":"xlarge"}
+[17.2s] screenshot phone-xlarge_settings_journals
+[19.0s] screenshot ac2-profile-sheet-phone
+PASS AC2 лист профиля на телефоне: размер текста
+[20.1s] screenshot ac2-readability-dialog-phone
+PASS AC2 телефон: окно «Удобство чтения» из листа профиля
+[21.6s] screenshot ac2-mini-profile-readability
+PASS AC2 профиль мини-приложения: «Удобство чтения» — {"url":"/mini/me"}
+PASS AC4 лендинг без анимации: нижняя секция видна без прокрутки — {"count":8,"lastOpacity":"1","lastFilter":"none","still":true}
+
+Итого: 24 PASS, 0 FAIL

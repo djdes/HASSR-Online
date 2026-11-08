@@ -22,6 +22,7 @@ import {
   JOURNAL_ITEM_CLASS,
   JOURNAL_LIST_CLASS,
   JOURNAL_TOOLBAR_CLASS,
+  splitTodayJournals,
 } from "@/components/dashboard/dashboard-journals-layout";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 
@@ -175,6 +176,12 @@ export function DashboardJournalsGrid({
     [disabledItems, normalizedQuery],
   );
 
+  // «Сначала то, что осталось»: незаполненные сверху, заполненные — ниже.
+  const todayGroups = useMemo(
+    () => splitTodayJournals(foundItems, { searching: Boolean(normalizedQuery) }),
+    [foundItems, normalizedQuery],
+  );
+
   const totalCount = items.length + paperItems.length + disabledItems.length;
   const foundCount = foundItems.length + foundPaper.length + foundDisabled.length;
 
@@ -203,11 +210,16 @@ export function DashboardJournalsGrid({
 
   return (
     <div className="space-y-5">
-      {/* Панель: на телефоне кнопки строкой и поиск под ними, на
-          компьютере — поиск слева, кнопки справа, одной строкой. */}
+      {/* Панель: поиск слева, кнопки справа — одной строкой, если
+          помещаются. Две кнопки («Автозаполнить» и «QR-коды») на телефоне —
+          своей строкой во всю ширину над поиском, как раньше. */}
       <div className={JOURNAL_TOOLBAR_CLASS}>
-        {actions ? <div className="lg:order-3 lg:ml-auto">{actions}</div> : null}
-        <div className="relative w-full lg:order-1 lg:max-w-[420px]">
+        {actions ? (
+          <div className="order-2 shrink-0 has-[[data-journals-actions]]:order-none has-[[data-journals-actions]]:basis-full sm:has-[[data-journals-actions]]:basis-auto lg:order-3 lg:ml-auto lg:has-[[data-journals-actions]]:order-3">
+            {actions}
+          </div>
+        ) : null}
+        <div className="relative order-1 min-w-[200px] flex-1 lg:max-w-[420px]">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
           <input
             value={query}
@@ -228,7 +240,7 @@ export function DashboardJournalsGrid({
           ) : null}
         </div>
         {normalizedQuery ? (
-          <div className="text-[13px] text-[#6f7282] lg:order-2 lg:whitespace-nowrap">
+          <div className="order-3 basis-full text-[13px] text-[#6f7282] lg:order-2 lg:basis-auto lg:whitespace-nowrap">
             {t("found", { found: foundCount, total: totalCount })}
           </div>
         ) : null}
@@ -243,9 +255,9 @@ export function DashboardJournalsGrid({
         </div>
       ) : null}
 
-      {foundItems.length > 0 ? (
-        <ul role="list" className={JOURNAL_LIST_CLASS} data-journal-list="">
-          {foundItems.map((item) => (
+      {todayGroups.todo.length > 0 ? (
+        <ul role="list" className={JOURNAL_LIST_CLASS} data-journal-list="" data-journal-group="todo">
+          {todayGroups.todo.map((item) => (
             <li key={item.id} className={JOURNAL_ITEM_CLASS}>
               <DashboardJournalRow
                 code={item.code}
@@ -257,6 +269,26 @@ export function DashboardJournalsGrid({
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {/* Заполненные сегодня — ниже незаполненных: сверху то, что осталось. */}
+      {todayGroups.done.length > 0 ? (
+        <section className="space-y-2" data-filled-group="">
+          <h3 className={GROUP_TITLE_CLASS}>{t("filledToday", { count: todayGroups.done.length })}</h3>
+          <ul role="list" className={JOURNAL_LIST_CLASS} data-journal-list="" data-journal-group="done">
+            {todayGroups.done.map((item) => (
+              <li key={item.id} className={JOURNAL_ITEM_CLASS}>
+                <DashboardJournalRow
+                  code={item.code}
+                  name={item.name}
+                  officialName={item.officialName}
+                  filled={item.filled}
+                  thumb={thumbFor(item, samples)}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {/* Бумажные журналы: те же строки с превью бланка, без отметки —

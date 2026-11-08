@@ -1,0 +1,200 @@
+/*
+ * «Удобство чтения» (Настройки → Оформление): размер текста, высокий
+ * контраст, без анимации, пояснения на страницах. Атрибуты на <html> ставит
+ * корневой layout по куке устройства `wesetup-view` (src/lib/view-prefs.ts),
+ * флаги «как в системе» — скрипт до гидрации.
+ */
+
+/* ── Размер текста ─────────────────────────────────────────────────────
+ * Кегли и интервалы при сборке обёрнуты в
+ * `calc(<кегль> * var(--app-text-scale, 1))` (postcss-plugins/text-scale.cjs):
+ * основной текст (< 20px) — `--app-text-scale`, заголовки (20–31px) —
+ * `--app-heading-scale`. Значения совпадают с TEXT_SCALE в view-prefs.ts
+ * (проверяет тест). */
+:root[data-view-text="large"] {
+  --app-text-scale: 1.15;
+  --app-heading-scale: 1.08;
+}
+:root[data-view-text="xlarge"] {
+  --app-text-scale: 1.3;
+  --app-heading-scale: 1.15;
+}
+
+/* Текст без своего класса кегля (публичные страницы) — тоже растёт. 1rem —
+   размер шрифта браузера: увеличенный в самом браузере сохраняется. */
+body {
+  font-size: 1rem;
+}
+
+/* Бумага не меняется: печатный журнал — тот же лист при любом размере. */
+@media print {
+  :root[data-view-text] {
+    --app-text-scale: 1 !important;
+    --app-heading-scale: 1 !important;
+  }
+}
+
+/* ── Высокий контраст ──────────────────────────────────────────────────
+ * Светлая тема: вторичный текст — по той же карте, что тёмная тема
+ * (globals.css, «Text colors»): серые подписи `#6f7282`-группы → #3c4053
+ * (10,2:1 на белом), бледные `#9b9fb3`-группы → #4a4e62 (8,2:1). На тёмных
+ * подложках светлой темы (`bg-[#0b1024]` и родня) подписи светлые — их не
+ * трогаем. Тёмную тему эти правила не трогают вовсе: там подписи идут через
+ * переменные `--app-text-*`, и поднимаем сами переменные (ниже). */
+:root[data-view-hc]
+  :is(
+    .text-\[\#6f7282\],
+    .text-\[\#6e7080\],
+    .text-\[\#6e7387\],
+    .text-\[\#73738a\],
+    .text-\[\#7a7c8e\],
+    .text-\[\#5b6170\],
+    .text-\[\#5b6075\],
+    .text-\[\#8a8f9c\]
+  ):not(
+    :where(
+      [class~="bg-[#0b1024]"], [class~="bg-[#0b1024]"] *,
+      [class~="bg-[#141821]"], [class~="bg-[#141821]"] *,
+      [class~="bg-[#05070f]"], [class~="bg-[#05070f]"] *,
+      [class~="bg-[#1c2240]"], [class~="bg-[#1c2240]"] *,
+      [class~="bg-[#0d1330]"], [class~="bg-[#0d1330]"] *,
+      .app-shell[data-app-theme="dark"] *,
+      body[data-app-theme="dark"] *,
+      body:has(.app-shell[data-app-theme="dark"]) *
+    )
+  ) {
+  color: #3c4053;
+}
+:root[data-view-hc]
+  :is(.text-\[\#9b9fb3\], .text-\[\#8a8ea4\], .text-\[\#a0a3b8\], .text-\[\#b0b3c5\]):not(
+    :where(
+      [class~="bg-[#0b1024]"], [class~="bg-[#0b1024]"] *,
+      [class~="bg-[#141821]"], [class~="bg-[#141821]"] *,
+      [class~="bg-[#05070f]"], [class~="bg-[#05070f]"] *,
+      [class~="bg-[#1c2240]"], [class~="bg-[#1c2240]"] *,
+      [class~="bg-[#0d1330]"], [class~="bg-[#0d1330]"] *,
+      .app-shell[data-app-theme="dark"] *,
+      body[data-app-theme="dark"] *,
+      body:has(.app-shell[data-app-theme="dark"]) *
+    )
+  ) {
+  color: #4a4e62;
+}
+
+/* Подсказка в пустом поле и рамка поля — заметнее (рамка ≥ 3:1 на белом).
+   Только светлая тема: в тёмной свои цвета полей. */
+:root[data-view-hc]
+  :is(input, textarea):not(:where(.app-shell[data-app-theme="dark"] *, body[data-app-theme="dark"] *, body:has(.app-shell[data-app-theme="dark"]) *))::placeholder {
+  color: #6f7282;
+  opacity: 1;
+}
+:root[data-view-hc]
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="hidden"]),
+    textarea,
+    select,
+    [data-slot="select-trigger"]
+  ):not(:where(.app-shell[data-app-theme="dark"] *, body[data-app-theme="dark"] *, body:has(.app-shell[data-app-theme="dark"]) *)) {
+  border-color: #8a8ea4;
+}
+
+/* Тёмная тема: вторичный текст светлее — не ниже 7:1 на карточке
+   (`--app-surface` #3a3757). Переменные живут на оболочке и на body
+   (порталы: окна, меню). */
+:root[data-view-hc]
+  :is(.app-shell[data-app-theme="dark"], body[data-app-theme="dark"], body:has(.app-shell[data-app-theme="dark"])) {
+  --app-text-secondary: #e0e2ee;
+  --app-text-muted: #d6d8e8;
+  --app-text-faint: #cccee0;
+}
+
+/* ── Без анимации ──────────────────────────────────────────────────────
+ * Выбор человека или «Уменьшить движение» системы (флаг ставит скрипт).
+ * Переходы и анимации мгновенные; вращение «загрузки» оставляем — оно
+ * говорит, что идёт работа. */
+:root[data-view-still],
+:root[data-view-still] *,
+:root[data-view-still] *::before,
+:root[data-view-still] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+:root[data-view-still] .animate-spin {
+  animation-duration: 1s !important;
+  animation-iteration-count: infinite !important;
+}
+/* Лендинг: секции проявляются при прокрутке (landing-motion.tsx) — без
+   анимации видны сразу, без размытия и сдвига. Класс `landing-motion-ready`
+   стоит на самом <html>, поэтому селектор составной, без пробела. */
+:root[data-view-still].landing-motion-ready .landing-page > section:not(.landing-hero),
+:root[data-view-still].landing-motion-ready .landing-page footer {
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+/* ── Пояснения на страницах ───────────────────────────────────────────
+ * Выключены — подзаголовки PageHeader и «Как это работает» (PageGuide)
+ * не показываем. Помечены атрибутом `data-page-hint`. */
+:root[data-view-hints="off"] [data-page-hint] {
+  display: none !important;
+}
+
+/* ── Фокус с клавиатуры ───────────────────────────────────────────────
+ * Ссылка или кнопка, у которой фокус спрятан (`outline-none` без своего
+ * кольца), с клавиатуры получает рамку бренда. Свои кольца
+ * (`focus-visible:ring-*`, `focus:ring-*`), компоненты ui/ (`data-slot`) и
+ * пункты меню (`data-nav-row`) не трогаем. Поля ввода — тоже: у них фокус
+ * виден по рамке и курсору, а `:focus-visible` у поля срабатывает и от мыши. */
+:is(
+    a[href],
+    button,
+    summary,
+    [role="button"],
+    [role="link"],
+    [role="tab"],
+    [role="switch"],
+    [role="checkbox"],
+    [role="radio"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible:not(
+    [data-slot],
+    [data-nav-row],
+    input,
+    textarea,
+    select,
+    [class*="focus-visible:ring"],
+    [class*="focus:ring"],
+    [class*="focus-visible:outline-["],
+    [class*="focus-visible:shadow"]
+  ) {
+  outline: 2px solid #5566f6;
+  outline-offset: 2px;
+}
+
+/* «Перейти к содержимому» — видна только в фокусе с клавиатуры. */
+.skip-to-content {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 200;
+  transform: translateY(-200%);
+  border-radius: 14px;
+  background: #0b1024;
+  color: #ffffff;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px -12px rgba(11, 16, 36, 0.55);
+}
+.skip-to-content:focus,
+.skip-to-content:focus-visible {
+  transform: none;
+  outline: 3px solid #7cf5c0;
+  outline-offset: 2px;
+}

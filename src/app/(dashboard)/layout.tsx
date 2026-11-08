@@ -31,6 +31,8 @@ import { ContactsFabAction } from "@/components/contact/contacts-fab-action";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { BugReportLauncher } from "@/components/support/bug-report-launcher";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { SkipToContent } from "@/components/layout/skip-to-content";
+import { MAIN_CONTENT_ID } from "@/lib/view-prefs";
 import { UrgentJournalHotkey } from "@/components/layout/urgent-journal-hotkey";
 import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
 import { AnnouncementBanner } from "@/components/layout/announcement-banner";
@@ -453,6 +455,9 @@ export default async function DashboardLayout({
           {/* Первым ребёнком: скрипт видит уже открытую оболочку и красит её
               в тему устройства до первого кадра. */}
           <SiteThemeBootstrap />
+          {/* «Перейти к содержимому» — первая остановка Tab (клавиатура,
+              экранный диктор). */}
+          <SkipToContent />
           {/* Док плавающих кнопок: AI-помощник, поддержка и «Как
               заполнять» регистрируются в нём вместо собственных круглых
               кнопок. На телефоне их было три, и они закрывали правый
@@ -583,7 +588,7 @@ export default async function DashboardLayout({
               <main> (снаружи коробки), из-за чего левая граница контента
               оказывалась на 24px левее левой границы шапки. Единственное
               место, где задаётся горизонтальная геометрия страницы. */}
-          <main className="flex-1 py-4 md:py-6">
+          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 py-4 outline-none md:py-6">
             <div className="mx-auto w-full max-w-[1800px] px-4 md:px-8">
               {/* Провайдер оборачивает и навигацию, и контент: страницы
                   уточняют крошки через <PageCrumbs>, а рисует их PageNav. */}

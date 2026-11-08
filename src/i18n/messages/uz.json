@@ -1140,6 +1140,30 @@
     },
     "form": {
       "emailLabel": "Elektron pochta"
+    },
+    "viewPrefs": {
+      "title": "O‘qish qulayligi",
+      "textSize": "Matn o‘lchami",
+      "sizes": {
+        "normal": "Oddiy",
+        "large": "Katta",
+        "xlarge": "Juda katta"
+      },
+      "contrast": "Yuqori kontrast",
+      "contrastHint": "Izohlar to‘qroq va aniqroq. Telefon yoki kompyuterda shunday sozlangan bo‘lsa, o‘zi yoqiladi.",
+      "motion": "Animatsiyasiz",
+      "motionHint": "Oynalar va menyular harakatsiz ochiladi. Qurilma sozlamasiga ham amal qiladi.",
+      "hints": "Sahifalardagi izohlar",
+      "hintsHint": "Sarlavha ostidagi matnlar va «Bu qanday ishlaydi» bloklari.",
+      "more": "Kontrast, animatsiya, izohlar",
+      "hideHintsEverywhere": "Izohlarni hamma joyda yashirish",
+      "hintsHidden": "Izohlar yashirildi. Qaytarish — profil menyusida: «O‘qish qulayligi».",
+      "skipToContent": "Asosiy qismga o‘tish",
+      "deviceNote": "Shu qurilma sozlamalari."
+    },
+    "moreText": {
+      "more": "Batafsil",
+      "less": "Yig‘ish"
     }
   },
   "language": {
@@ -1357,9 +1381,9 @@
         "alt": "Rasm {index, number}"
       },
       "index": {
-        "description": "SanPiN va HACCP elektron jurnallari — to‘ldirish yoki chop etish uchun oching.",
+        "description": "To‘ldirish yoki chop etish uchun oching.",
         "configureSet": "To‘plamni sozlash",
-        "noAttentionToday": "Bugun e’tibor talab qilmaydi: {filled, number} / {total, number}",
+        "noAttentionToday": "Bugun joyida: {filled, number} / {total, number}",
         "guideTitle": "Jurnallar bilan qanday ishlash kerak",
         "greenTickTitle": "Yashil belgi",
         "greenTickBody": "jurnal bugun to‘ldirilgan — tekshiruvdan o‘tadi. Kulrang — hali to‘ldirilmagan.",
@@ -2963,9 +2987,9 @@
       "logoFailed": "Logotipni yuklab bo‘lmadi",
       "inn": "STIR {inn}",
       "leads": {
-        "journalsSetup": "Qaysi jurnallarni yuritasiz, ularni kim to‘ldiradi va vazifalar qanday taqsimlanadi — keraklisini oching.",
-        "staffHealth": "Tibbiy daftarchalar muddati va xodimlarni o‘qitish: kimga tez orada uzaytirish kerak va kim hali yo‘riqnomadan o‘tmagan.",
-        "today": "Bugun to‘ldirilishi kerak bo‘lgan jurnallar. Yozuv qo‘shish uchun jurnalni bosing."
+        "journalsSetup": "Qaysi jurnallar, kim to‘ldiradi va vazifalar qanday taqsimlanadi.",
+        "staffHealth": "Kimga tibbiy daftarchani uzaytirish kerak va kim yo‘riqnomadan o‘tmagan.",
+        "today": "Bugun nimani to‘ldirish kerak"
       },
       "backToMain": "Asosiy menyu",
       "sectionMenuAria": "Boʻlim menyusi",
@@ -8282,7 +8306,7 @@
     },
     "page": {
       "title": "Xodimlar",
-      "description": "Lavozimlar va jadvallar vazifalarni taqsimlaydi hamda Gigiyena jurnalini to‘ldirishga yordam beradi.",
+      "description": "Lavozimlar va jadvallar — vazifalar va Gigiyena jurnali uchun.",
       "daysMarked": "Belgilandi: {count, number} {count, plural, one {kun} other {kun}}",
       "archivedOne": "Xodim arxivga o‘tkazildi",
       "archiveCount": "{count, number} {count, plural, one {nafar xodimni} other {nafar xodimni}} arxivga o‘tkazasizmi?",
@@ -8341,7 +8365,7 @@
       "printTitle": "A4, albom yo‘nalishida",
       "print": "Chop etish",
       "position": "Lavozim",
-      "noPositions": "Hozircha lavozimlar yo‘q. Birinchisini qo‘shish uchun «Lavozim»ni tanlang.",
+      "noPositions": "Hozircha lavozimlar yo‘q.",
       "addToPosition": "«{position}» lavozimiga qo‘shish",
       "editPosition": "Lavozimni tahrirlash",
       "expandPosition": "Lavozimni ochish",
@@ -8349,12 +8373,12 @@
       "self": "(siz)",
       "editEmployee": "Xodimni tahrirlash",
       "addEmployee": "Qo‘shish",
-      "guideNewMonth": "<strong>Har oy uchun yangi jadval yaratish shart emas.</strong> Jadval xodimlarning haftalik dam olish kunlari — qatoridagi Du–Yak tugmalari asosida tuziladi. Oyni strelkalar bilan almashtiring, jadval avtomatik to‘ladi. O‘rinbosarlik, dam olish va qo‘shimcha smenalarni katakni bosib belgilang; bu belgi haftalik qoidani faqat shu kunga almashtiradi.",
-      "guideWorkOff": "Xodim haftalik dam olish kunida kundalik vazifa va eslatmalarni olmaydi, Gigiyena jurnalida esa kun <strong>«D»</strong> belgisi bilan yopiladi. O‘rinbosarlikka chiqsa, vazifalar ilovada mavjud bo‘ladi.",
+      "guideNewMonth": "<strong>Jadval o‘zi tuziladi</strong> — istalgan oy uchun haftalik dam olish kunlari (Du–Yak tugmalari) asosida. O‘rinbosarlik yoki dam olishni katakni bosib belgilang.",
+      "guideWorkOff": "Dam olish kunida vazifa va eslatma yo‘q, Gigiyena jurnalida — <strong>«D»</strong>.",
       "guideVacation": "Ta’til kunida Gigiyena jurnalida kun <strong>«Ta’t»</strong> belgisi bilan yopiladi. Telegram eslatmalari yuborilmaydi va nazorat panelida xodim vazifani bajarmagan deb hisoblanmaydi. O‘rinbosarlikka chiqishi mumkinligi uchun vazifalar ilovada qoladi.",
       "guideSickLeave": "Kasallik ta’tilida Gigiyena jurnalida kun <strong>«K/t»</strong> belgisi bilan yopiladi. Telegram eslatmalari yuborilmaydi va nazorat panelida xodim vazifani bajarmagan deb hisoblanmaydi. Erta qaytishi mumkinligi uchun vazifalar ilovada qoladi.",
       "guideDismissal": "Ko‘rsatilgan sanada xodim <strong>«Arxiv»</strong>ga o‘tadi: ijrochilar ro‘yxati va yangi jurnal qatorlaridan yo‘qoladi, vazifa va eslatmalarni olmaydi. Avval to‘ldirilgan qaydlar tekshiruv uchun saqlanadi.",
-      "iikoFill": "Dam olish kunlarini iiko’dan to‘ldirish",
+      "iikoFill": "Dam olish kunlari iiko’dan",
       "noEmployeesForSchedule": "Jadvalni boshqarish uchun kamida bitta xodim qo‘shing.",
       "employeeName": "Xodimning ism-familiyasi",
       "positionLabel": "Lavozim",
@@ -8364,8 +8388,8 @@
       "dayOff": "Dam olish kuni",
       "workingDay": "Ish kuni",
       "checkedDay": "D",
-      "weekendLegend": "Shanba va yakshanba och sariq rangda ajratilgan.",
-      "tapInstructions": "Dam olish kunlarini belgilash uchun kataklarni bosing. Xira belgi haftalik qoida bo‘yicha dam olish kunini bildiradi; uni bosish shu kun uchun istisno qo‘yadi.",
+      "weekendLegend": "Shanba va yakshanba — och sariq.",
+      "tapInstructions": "Xira belgi — haftalik dam olish kuni; uni bosish shu kun uchun istisno qiladi.",
       "mouseInstructions": "Bir nechta kunni belgilash uchun sichqoncha tugmasini bosib, olib boring. Shift+bosish to‘rtburchak tanlaydi. Xira belgi haftalik dam olish qoidasini bildiradi; uni bosish istisno qo‘yadi.",
       "vacationDates": "Ta’til sanalari",
       "sickLeaveDates": "Kasallik ta’tili sanalari",
@@ -10145,7 +10169,7 @@
     "organizationProfile": {
       "page": {
         "title": "Tashkilot profili",
-        "description": "Nom, STIR, soha, reyestr ma’lumotlari, smenalar va obuna. Hujjatlar uchun ma’lumotlar, logotip va kontaktlar — menyuning qo‘shni bandlarida."
+        "description": "Nom, STIR, smenalar va obuna."
       },
       "guide": {
         "title": "Tashkilot rekvizitlariga nimalarni kiritish kerak",
@@ -10207,7 +10231,7 @@
         "innRequired": "STIRni kiriting (10 yoki 12 ta raqam)",
         "organizationNotFound": "Tashkilot topilmadi",
         "basicTitle": "Tashkilot rekvizitlari",
-        "basicSubtitle": "Chop etiladigan jurnallar sarlavhasi va yetkazib beruvchilar bilan shartnomalarda ishlatiladi",
+        "basicSubtitle": "Jurnal sarlavhasi va shartnomalar uchun",
         "organizationName": "Tashkilot nomi",
         "organizationNameHint": "Yuridik yoki tijoriy nom",
         "organizationNamePlaceholder": "Novvoyxona MChJ",
@@ -10216,13 +10240,13 @@
         "journalHeaderPreview": "Jurnal sarlavhasida: {name}",
         "useFromRegistry": "Reyestrdagi nomni ishlatish: {name}",
         "sphere": "Faoliyat sohasi",
-        "sphereHint": "Jurnal to‘plami va bosqichma-bosqich yo‘riqnomalarni belgilaydi",
+        "sphereHint": "Jurnallar to‘plamini belgilaydi",
         "ownership": "Tashkilot turi",
         "ownershipHint": "Xususiy, tarmoqli yoki davlat tashkiloti",
         "locations": "Manzillar",
         "locationsHint": "Ro‘yxatdan o‘tishda ko‘rsatilgan",
         "inn": "STIR",
-        "innHint": "Yuridik shaxs uchun 10 ta, yakka tartibdagi tadbirkor uchun 12 ta raqam. Reyestr nom va manzilni shu raqam bo‘yicha to‘ldiradi.",
+        "innHint": "Yuridik shaxs — 10 ta, YaTT — 12 ta raqam; nom va manzil o‘zi to‘ladi.",
         "find": "Topish",
         "findByInn": "STIR bo‘yicha nom va manzilni topish (DaData / reyestr)",
         "address": "Manzil",
@@ -10231,7 +10255,7 @@
         "phone": "Telefon",
         "phoneHint": "Inspektorlar va yetkazib beruvchilar uchun aloqa raqami",
         "registryTitle": "Yuridik shaxslar reyestri ma’lumotlari",
-        "registrySubtitle": "STIR bo‘yicha reyestrdan ma’lumot. «Hujjatlar uchun ma’lumotlar»dagi bo‘sh maydonlar shu yerdan olinadi.",
+        "registrySubtitle": "STIR bo‘yicha reyestr ma’lumotlari",
         "docsTitle": "Hujjatlar uchun ma’lumotlar",
         "docsSubtitle": "Jurnallar sarlavhasi, ishlab chiqarish nazorati hujjatlari, buyruqlar va inspektor portali uchun yagona rekvizitlar bloki. Bo‘sh maydon reyestrdan olinadi.",
         "legalFullName": "To‘liq nomi",
@@ -10274,20 +10298,20 @@
         "preview": "Ko‘rish",
         "currentLogoPreview": "Joriy logotip ko‘rinishi",
         "shiftsTitle": "Smenalar va jurnal qoidalari",
-        "shiftsSubtitle": "Jurnal kuni qachon yopilishi va o‘tgan yozuvlarni kim tahrirlashi mumkinligi",
+        "shiftsSubtitle": "Kun qachon yopiladi va o‘tgan yozuvlarni kim tuzatadi",
         "shiftEndHour": "Smena tugash vaqti",
-        "shiftEndHourHint": "Shu vaqtdan keyin to‘ldirilmagan jurnallarni tekshirishda kun o‘tgan hisoblanadi. Oraliq: 0–23.",
+        "shiftEndHourHint": "Shu soatdan keyin kun o‘tgan hisoblanadi (0–23).",
         "lockPastDays": "O‘tgan kunlardagi yozuvlarni tahrirlashni taqiqlash",
-        "lockPastDaysHint": "Yoqilganda, kechagi yozuvlarni faqat administrator tahrirlay oladi. SanPiN buni tavsiya qiladi.",
+        "lockPastDaysHint": "Kechagi yozuvlarni faqat administrator o‘zgartira oladi.",
         "adminJournalEdit": "Tugallangan vazifalarni faqat administrator tahrirlay oladi",
-        "adminJournalEditHint": "Xodim yuborgandan keyin xato topilsa, o‘zgarishni administrator tasdiqlashi kerak.",
+        "adminJournalEditHint": "Yuborilgandan keyingi tuzatishlar administrator tasdig‘i bilan.",
         "subscriptionTitle": "Obuna",
         "subscriptionSubtitle": "Faqat ko‘rish uchun. Obunani «Obuna» sahifasida boshqaring.",
         "plan": "Tarif",
         "activeUntil": "Amal qilish muddati",
         "createdAt": "Yaratilgan",
         "manageSubscription": "Obunani boshqarish →",
-        "registryEmpty": "Rekvizitlar, rahbar, faoliyat kodlari va statistikani yuklash uchun STIRni kiriting va Topish tugmasini bosing.",
+        "registryEmpty": "STIRni kiriting va Topish tugmasini bosing.",
         "refreshRegistry": "Reyestrdan yangilash",
         "registryUpdatedAt": "Yangilandi: {date}",
         "legalNameTitle": "Nom reyestr ma’lumotlari bilan almashtirilsinmi?",
@@ -10457,7 +10481,7 @@
         "disabled": "O‘chirilgan",
         "enable": "Belgini yoqish",
         "disable": "Belgini o‘chirish",
-        "description": "Belgini saytingiz, menyu yoki ijtimoiy tarmoqlaringizga qo‘shing. Mehmonlar HACCP jurnallari elektron yuritilishini va so‘nggi 30 kunda ularning qanchasi to‘ldirilganini ko‘radi. Bosilganda xodimlar ismi va yozuvlarsiz holat sahifasi ochiladi.",
+        "description": "Sayt va ijtimoiy tarmoqlar uchun belgi: mehmonlar jurnallar yuritilishini va 30 kunda qanchasi to‘ldirilganini ko‘radi. Ism va yozuvlarsiz.",
         "previewSite": "tashkilotingiz sayti",
         "menuContacts": "Menyu · Kontaktlar",
         "imageAlt": "WeSetup belgisi: elektron HACCP jurnallari",
@@ -10473,7 +10497,7 @@
         "regenerate": "Qayta yaratish",
         "enableAndCopy": "Belgini yoqish va kodni nusxalash",
         "enabling": "Yoqilmoqda…",
-        "disabledNotice": "Belgi o‘chiq bo‘lsa, havola va kod ishlamaydi. Yoqilganda tashkilot nomi va jurnallar to‘ldirilish foizi ko‘rsatilgan sahifa ochiladi. Sizning qaroringizsiz belgi yoqilmaydi.",
+        "disabledNotice": "Belgi o‘chiq bo‘lsa, havola va kod ishlamaydi.",
         "regenerateTitle": "Belgi kodi qayta yaratiladimi?",
         "regenerateDescription": "Eski havola va HTML-kod ishlamay qoladi. Saytdagi rasmni almashtirish kerak bo‘ladi.",
         "regenerateNewCode": "Yangi kod darhol paydo bo‘ladi",
@@ -10496,7 +10520,7 @@
         "todayPoints": "Har bir nuqtaning o‘z qaydlari va taomlari bilan alohida sahifasi bor — lavhadagi QR nuqta sahifasiga olib boradi.",
         "todayNeedsBadge": "Blok belgi yoqilganda paydo bo‘ladi.",
         "signTitle": "Zal uchun lavha",
-        "signDescription": "Sahifaga QR-kodli A4 varaq — kirish joyiga, kassa yoniga yoki axborot stendiga osib qo‘ying.",
+        "signDescription": "QR-kodli A4 varaq — kirish yoki kassa yoniga osib qo‘ying.",
         "signPoint": "Nuqta",
         "signAllPoints": "Butun tashkilot",
         "signOpen": "Lavhani chop etish uchun ochish",
@@ -10507,7 +10531,7 @@
       },
       "deletion": {
         "title": "Tashkilotni o‘chirish",
-        "description": "Barcha jurnallar, hujjatlar, xodimlar va sozlamalar so‘rovdan 30 kun o‘tib butunlay o‘chiriladi. Shu muddatgacha tashkilotdagi hamma ko‘radigan banner orqali o‘chirishni bekor qilish mumkin. O‘chirishdan oldin Sozlamalar → Zaxira nusxasi bo‘limidan jurnallar arxivini yuklab oling.",
+        "description": "Hammasi so‘rovdan 30 kun o‘tib butunlay o‘chiriladi; ungacha bekor qilish mumkin. Avval arxivni yuklab oling: Sozlamalar → Zaxira nusxasi.",
         "alreadyScheduled": "O‘chirish allaqachon rejalashtirilgan. Uni sahifa yuqorisidagi banner orqali bekor qiling.",
         "schedule": "O‘chirishni rejalashtirish",
         "confirmTitle": "Tashkilot 30 kundan keyin o‘chirilsinmi?",
@@ -25134,7 +25158,7 @@
     },
     "billingAnnouncement": {
       "perMonth": "/oy",
-      "details": "Batafsil",
+      "details": "Tariflar",
       "hideUntilTomorrow": "Ertagacha yashirish"
     },
     "billingTransitionGate": {
@@ -25918,13 +25942,13 @@
       "journalSettings": "Jurnallar sozlamalari",
       "allDone": "hammasi ✓",
       "pendingReview": "yozuv tekshiruvni kutmoqda",
-      "liveFeedTitle": "Real vaqtdagi to‘ldirishlar lentasi",
-      "liveFeedSubtitle": "Bugun kim nimani to‘ldirdi — har 15 soniyada yangilanadi.",
+      "liveFeedTitle": "To‘ldirishlar lentasi",
+      "liveFeedSubtitle": "Har 15 soniyada yangilanadi",
       "recentEntries": "So‘nggi yozuvlar",
-      "last48h": "48 soat ichida bajarilgan — {count, plural, one {# ta yozuv} other {# ta yozuv}}",
+      "last48h": "48 soatda — {count, plural, one {# ta yozuv} other {# ta yozuv}}",
       "allJournals": "Barcha jurnallar",
       "noEntries": "Hozircha yozuvlar yo‘q",
-      "noEntriesHint": "Kimdir birinchi yozuvni kiritishi bilan u shu yerda paydo bo‘ladi.",
+      "noEntriesHint": "Yangi yozuvlar shu yerda paydo bo‘ladi.",
       "colWhen": "Qachon",
       "colJournal": "Jurnal",
       "colDetails": "Tafsilotlar",
@@ -25981,7 +26005,8 @@
       "disabledHint": "boshqaruv panelida va xodimlarga ko‘rsatilmaydi",
       "disabledEnableHint": " — jurnal baribir kerak bo‘lsa, yoqing",
       "enabling": "Yoqilmoqda…",
-      "enable": "Yoqish"
+      "enable": "Yoqish",
+      "filledToday": "Bugun to‘ldirilgan · {count, number}"
     },
     "impersonationBanner": {
       "stopFailed": "Ko‘rish rejimidan chiqib bo‘lmadi",
@@ -26043,7 +26068,7 @@
       "titleOk": "Sozlamalarni tekshirish — hammasi joyida",
       "ready": "{total, number} tadan {ok, number} tasi tayyor",
       "clickRow": "o‘tish uchun qatorni bosing",
-      "clickExpand": "ochish uchun bosing"
+      "clickExpand": "ochish"
     },
     "partnerAccessBanner": {
       "exitClientFailed": "Mijoz kabinetidan chiqib bo‘lmadi",
@@ -26118,7 +26143,7 @@
       "knowledgeTitle": "Bilimlar bazasi — hujjatlar",
       "knowledgeHint": "Skanerlar, yo‘riqnomalar, jadvallar va arxivlar",
       "checklistsTitle": "Chek-listlar konstruktori",
-      "checklistsHint": "Tekshiruv shablonlari va natijalar jurnali"
+      "checklistsHint": "Tekshiruv shablonlari va natijalari"
     },
     "whatsNewModal": {
       "title": "WeSetup da nima yangi",
@@ -28647,7 +28672,6 @@
       "allEnabled": "Barcha jurnallar yoqilgan",
       "enabledToast": "{enabled, number} ta jurnal {total, number} tadan yoqilgan",
       "zoomTitle": "Jurnal sahifasini kattalashtirish",
-      "zoom": "Kattalashtirish",
       "toggleAria": "“{name}” jurnalini yuritish",
       "requiredConditional": "Yuqoridagi shartda majburiy — agar sizga tegishli bo‘lsa, yoqing",
       "requiredForSphere": "Sohangiz uchun majburiy — yoqing",
@@ -28690,7 +28714,7 @@
       "nothingFound": "Hech narsa topilmadi",
       "nothingFoundHint": "Boshqa so‘zni sinab ko‘ring — qidiruv jurnalning nomi, tavsifi va kodi bo‘yicha, o‘chirilganlarni ham qo‘shib amalga oshiriladi.",
       "groupRequired": "Majburiy",
-      "groupRequiredHint": "elektron — yashil, qog‘oz — sariq, oxirida",
+      "groupRequiredHint": "yashil — elektron, sariq — qog‘oz",
       "groupRecommended": "“{sphere}” sohasi uchun tavsiya etamiz",
       "groupRest": "Boshqa jurnallar",
       "disableRest": "Majburiylardan tashqari hammasini o‘chirish",
@@ -29218,7 +29242,7 @@
       "wrongCode": "Kod noto‘g‘ri",
       "verified": "Pochta tasdiqlandi",
       "title": "Pochtani tasdiqlang",
-      "description": "Biz {email} manziliga olti xonali kod yuboramiz. Hech narsa bloklanmagan — tasdiqlash biz siz bilan bog‘lana olishimiz uchun kerak.",
+      "description": "{email} manziliga olti xonali kod yuboramiz.",
       "confirm": "Tasdiqlash",
       "sendCode": "Kodni yuborish"
     },

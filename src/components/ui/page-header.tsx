@@ -47,7 +47,9 @@ export function PageHeader({
           {title}
         </h1>
         {description ? (
-          <p className="mt-1.5 max-w-[720px] text-[14px] leading-[1.55] text-[#6f7282]">
+          // `data-page-hint`: пояснение — его прячет «Пояснения на страницах:
+          // выкл.» (Удобство чтения, view-prefs.css).
+          <p data-page-hint="" className="mt-1.5 max-w-[720px] text-[14px] leading-[1.55] text-[#6f7282]">
             {description}
           </p>
         ) : null}

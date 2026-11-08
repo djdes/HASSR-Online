@@ -2,7 +2,10 @@
 
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, HelpCircle, X } from "lucide-react";
+import { ChevronDown, EyeOff, HelpCircle, X } from "lucide-react";
+import { toast } from "sonner";
+
+import { useViewPrefs } from "@/components/view-prefs/view-prefs-provider";
 
 /**
  * Универсальный help-блок для каждой страницы. Рендерит «Как это
@@ -28,6 +31,8 @@ export type PageGuideProps = {
 
 export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageGuideProps) {
   const t = useTranslations("common.pageGuide");
+  const tView = useTranslations("common.viewPrefs");
+  const { update: updateViewPrefs } = useViewPrefs();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -48,6 +53,7 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
     return (
       <button
         type="button"
+        data-page-hint=""
         onClick={() => {
           setDismissed(false);
           setOpen(true);
@@ -68,7 +74,8 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
     // карточки переезжает внутрь кнопки и раскрытого текста, поэтому
     // нажать можно в любом месте плашки, а не только по строке в 20px.
     // Плашка при этом не растёт: 48px кнопки вместо 16 + 20 + 16.
-    <div className="rounded-3xl border border-[#dcdfed] bg-[#f5f6ff] p-4 text-[13px] text-[#3c4053] touch:p-0">
+    // `data-page-hint`: блок прячет «Пояснения на страницах: выкл.».
+    <div data-page-hint="" data-page-guide="" className="rounded-3xl border border-[#dcdfed] bg-[#f5f6ff] p-4 text-[13px] text-[#3c4053] touch:p-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -132,14 +139,30 @@ export function PageGuide({ title, bullets, qa = [], storageKey, footer }: PageG
             </div>
           ) : null}
 
-          <button
-            type="button"
-            onClick={dismiss}
-            className="inline-flex items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2.5 py-1 text-[11px] text-[#6f7282] hover:bg-[#fafbff]"
-          >
-            <X className="size-3" />
-            {t("dismiss")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={dismiss}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2.5 py-1 text-[11px] text-[#6f7282] hover:bg-[#fafbff]"
+            >
+              <X className="size-3" />
+              {t("dismiss")}
+            </button>
+            {/* Все пояснения разом — подзаголовки и такие блоки на всех
+                страницах (Удобство чтения → «Пояснения на страницах»). */}
+            <button
+              type="button"
+              data-testid="hide-hints-everywhere"
+              onClick={() => {
+                updateViewPrefs({ hints: "off" });
+                toast.success(tView("hintsHidden"));
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#dcdfed] bg-white px-2.5 py-1 text-[11px] text-[#6f7282] hover:bg-[#fafbff]"
+            >
+              <EyeOff className="size-3" />
+              {tView("hideHintsEverywhere")}
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

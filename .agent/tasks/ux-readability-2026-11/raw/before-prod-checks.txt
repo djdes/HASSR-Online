@@ -1,0 +1,14 @@
+build-info: {"buildId":"a7d5df5","buildTime":"2026-11-07T23:05:08Z","fullBuildId":"a7d5df5590a3d555855fa4a97739d7afb4ab47ba"}
+FAIL без куки: атрибуты <html>
+html: <html lang="ru">
+FAIL кука: data-view-text
+FAIL кука: data-view-hc
+FAIL кука: data-view-still
+FAIL кука: data-view-hints
+FAIL скрипт до гидрации
+css: scale=0 view-prefs-files=0
+FAIL CSS: --app-text-scale
+FAIL CSS: view-prefs.css
+PASS главная 200
+PASS главная с кукой 200
+Итого: 2 PASS, 8 FAIL

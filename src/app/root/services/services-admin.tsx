@@ -153,7 +153,7 @@ function ServiceRow({
             {t("priceLabel")}
           </span>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
             value={service.priceRub ?? ""}
             onChange={(event) =>
@@ -206,7 +206,7 @@ function ServiceRow({
             {t("sort")}
           </span>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
             value={service.sort}
             onChange={(event) => onChange({ sort: Number(event.target.value) })}

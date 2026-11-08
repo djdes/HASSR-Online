@@ -1140,6 +1140,30 @@
     },
     "form": {
       "emailLabel": "Email"
+    },
+    "viewPrefs": {
+      "title": "Readability",
+      "textSize": "Text size",
+      "sizes": {
+        "normal": "Normal",
+        "large": "Large",
+        "xlarge": "Extra large"
+      },
+      "contrast": "High contrast",
+      "contrastHint": "Darker, sharper secondary text. Turns on by itself if your phone or computer asks for it.",
+      "motion": "Reduce motion",
+      "motionHint": "Dialogs and menus open without movement. Also follows your device setting.",
+      "hints": "Page explanations",
+      "hintsHint": "Subtitles and “How it works” blocks.",
+      "more": "Contrast, motion, explanations",
+      "hideHintsEverywhere": "Hide explanations everywhere",
+      "hintsHidden": "Explanations hidden. Bring them back in the profile menu: “Readability”.",
+      "skipToContent": "Skip to content",
+      "deviceNote": "Settings for this device."
+    },
+    "moreText": {
+      "more": "More",
+      "less": "Less"
     }
   },
   "language": {
@@ -1357,9 +1381,9 @@
         "alt": "Photo {index, number}"
       },
       "index": {
-        "description": "Electronic SanPiN and HACCP journals — open one to fill it in or print it.",
+        "description": "Open one to fill in or print.",
         "configureSet": "Configure set",
-        "noAttentionToday": "Need no attention today: {filled, number} of {total, number}",
+        "noAttentionToday": "On track today: {filled, number} of {total, number}",
         "guideTitle": "How to work with journals",
         "greenTickTitle": "Green tick",
         "greenTickBody": "the journal has been filled in today — the inspection will pass. Grey — not filled in yet.",
@@ -2963,9 +2987,9 @@
       "logoFailed": "Couldn't upload the logo",
       "inn": "TIN {inn}",
       "leads": {
-        "journalsSetup": "Which journals you keep, who fills them in and how tasks are assigned — open the setting you need.",
-        "staffHealth": "Medical book deadlines and staff training: who needs a renewal soon and who has not been briefed yet.",
-        "today": "Journals to fill in today. Tap a journal to add an entry."
+        "journalsSetup": "Which journals you keep, who fills them in and how tasks are assigned.",
+        "staffHealth": "Who needs a medical book renewal and who has not been briefed.",
+        "today": "What to fill in today"
       },
       "backToMain": "Main menu",
       "sectionMenuAria": "Section menu",
@@ -8282,7 +8306,7 @@
     },
     "page": {
       "title": "Employees",
-      "description": "Positions and schedules determine task assignments and fill in the Hygiene Log.",
+      "description": "Positions and schedules drive tasks and the Hygiene Log.",
       "daysMarked": "Marked: {count, number} {count, plural, one {day} other {days}}",
       "archivedOne": "Employee moved to the archive",
       "archiveCount": "Archive {count, number} {count, plural, one {employee} other {employees}}?",
@@ -8341,7 +8365,7 @@
       "printTitle": "A4 landscape page",
       "print": "Print",
       "position": "Position",
-      "noPositions": "No positions yet. Select “Position” to add the first one.",
+      "noPositions": "No positions yet.",
       "addToPosition": "Add to “{position}”",
       "editPosition": "Edit position",
       "expandPosition": "Expand position",
@@ -8349,12 +8373,12 @@
       "self": "(you)",
       "editEmployee": "Edit employee",
       "addEmployee": "Add",
-      "guideNewMonth": "<strong>You do not need to create a new month.</strong> The schedule is built for any month from each employee’s weekly days off—the Mon–Sun chips in their row. Use the arrows to change the month; the schedule is filled in automatically. Cover shifts, days off, and extra shifts can be marked in a cell and override the weekly rule for that day only.",
-      "guideWorkOff": "On a regular day off, the employee receives no daily tasks or reminders, and the Hygiene Log marks the day with <strong>“O”</strong>. Tasks remain available in the app if the employee covers a shift.",
+      "guideNewMonth": "<strong>The schedule builds itself</strong> for any month from weekly days off (the Mon–Sun chips). Tap a cell to mark a cover shift or day off.",
+      "guideWorkOff": "No tasks or reminders on a day off; the Hygiene Log shows <strong>“O”</strong>.",
       "guideVacation": "During vacation, the Hygiene Log marks the day with <strong>“Vac”</strong>. Telegram reminders are paused, and the employee is not counted as having missed tasks on the monitoring panel. Tasks remain available in the app in case they cover a shift.",
       "guideSickLeave": "During sick leave, the Hygiene Log marks the day with <strong>“S/L”</strong>. Telegram reminders are paused, and the employee is not counted as having missed tasks on the monitoring panel. Tasks remain available in the app if they return early.",
       "guideDismissal": "On the specified date, the employee moves to the <strong>“Archive”</strong>: they disappear from assignee lists and new journal rows and stop receiving tasks and reminders. Existing records remain available for inspection.",
-      "iikoFill": "Fill days off from iiko",
+      "iikoFill": "Days off from iiko",
       "noEmployeesForSchedule": "Add at least one employee to manage the schedule.",
       "employeeName": "Employee name",
       "positionLabel": "Position",
@@ -8364,8 +8388,8 @@
       "dayOff": "Day off",
       "workingDay": "Working day",
       "checkedDay": "O",
-      "weekendLegend": "Saturday and Sunday are highlighted in pale yellow.",
-      "tapInstructions": "Tap cells to mark days off. A translucent check means the weekly rule marks this as a day off; tapping it creates an exception for that date.",
+      "weekendLegend": "Saturday and Sunday are pale yellow.",
+      "tapInstructions": "A faint check is a weekly day off; tapping it makes an exception for that day.",
       "mouseInstructions": "Click and drag to mark several days. Shift-click selects a rectangle. A translucent check means the weekly rule marks a day off; clicking it creates an exception for that date.",
       "vacationDates": "Vacation dates",
       "sickLeaveDates": "Sick-leave dates",
@@ -10145,7 +10169,7 @@
     "organizationProfile": {
       "page": {
         "title": "Organization profile",
-        "description": "Name, tax ID, sector, registry data, shifts and subscription. Document details, logo and contacts are in the neighbouring menu items."
+        "description": "Name, tax ID, shifts and subscription."
       },
       "guide": {
         "title": "What to add to the organization profile",
@@ -10207,7 +10231,7 @@
         "innRequired": "Enter a tax ID (10 or 12 digits)",
         "organizationNotFound": "Organization not found",
         "basicTitle": "Organization details",
-        "basicSubtitle": "Used in printed journal headers and supplier agreements",
+        "basicSubtitle": "For journal headers and agreements",
         "organizationName": "Organization name",
         "organizationNameHint": "Legal or business name",
         "organizationNamePlaceholder": "Bakery LLC",
@@ -10216,13 +10240,13 @@
         "journalHeaderPreview": "Journal header: {name}",
         "useFromRegistry": "Use registry name: {name}",
         "sphere": "Sector",
-        "sphereHint": "Determines journal sets and step-by-step instructions",
+        "sphereHint": "Sets your journal list",
         "ownership": "Organization type",
         "ownershipHint": "Privately owned, chain, or government-owned establishment",
         "locations": "Locations",
         "locationsHint": "Provided during registration",
         "inn": "Tax ID",
-        "innHint": "10 digits for a legal entity or 12 for a sole proprietor. The registry can fill in the name and address from this number.",
+        "innHint": "10 digits for a company, 12 for a sole proprietor; name and address fill in automatically.",
         "find": "Find",
         "findByInn": "Find the name and address by tax ID (DaData / company registry)",
         "address": "Address",
@@ -10231,7 +10255,7 @@
         "phone": "Phone",
         "phoneHint": "Contact number for inspectors and suppliers",
         "registryTitle": "Company registry data",
-        "registrySubtitle": "Registry reference by tax ID. Empty fields in “Details for documents” are taken from here.",
+        "registrySubtitle": "Registry data by tax ID",
         "docsTitle": "Details for documents",
         "docsSubtitle": "One block of company details for journal headers, production control documents, orders and the inspector portal. Empty fields come from the company registry.",
         "legalFullName": "Full legal name",
@@ -10274,20 +10298,20 @@
         "preview": "Preview",
         "currentLogoPreview": "Current logo preview",
         "shiftsTitle": "Shifts and journal rules",
-        "shiftsSubtitle": "When a journal day closes and who can edit past entries",
+        "shiftsSubtitle": "When the day closes and who edits past entries",
         "shiftEndHour": "Shift end hour",
-        "shiftEndHourHint": "After this hour, the day counts as past when checking for unfilled journals. Range: 0–23.",
+        "shiftEndHourHint": "After this hour the day counts as past (0–23).",
         "lockPastDays": "Prevent editing entries from past days",
-        "lockPastDaysHint": "When enabled, only an administrator can edit yesterday’s entries. Recommended by SanPiN.",
+        "lockPastDaysHint": "Only an administrator can edit yesterday’s entries.",
         "adminJournalEdit": "Only an administrator can edit completed tasks",
-        "adminJournalEditHint": "If a staff member finds an error after submitting, an administrator must approve the change.",
+        "adminJournalEditHint": "Changes after submitting need administrator approval.",
         "subscriptionTitle": "Subscription",
         "subscriptionSubtitle": "View only. Manage it on the Subscription page.",
         "plan": "Plan",
         "activeUntil": "Active until",
         "createdAt": "Created",
         "manageSubscription": "Manage subscription →",
-        "registryEmpty": "Enter a tax ID and select Find to load registry details, management, business activity codes, and statistics.",
+        "registryEmpty": "Enter a tax ID and select Find.",
         "refreshRegistry": "Refresh from registry",
         "registryUpdatedAt": "Updated {date}",
         "legalNameTitle": "Replace the name with registry data?",
@@ -10457,7 +10481,7 @@
         "disabled": "Disabled",
         "enable": "Enable badge",
         "disable": "Disable badge",
-        "description": "Add this badge to your website, menu, or social media. Guests can see that HACCP journals are completed electronically and how many were filled in over the last 30 days. It opens a status page without staff names or journal entries.",
+        "description": "A badge for your website and social media: guests see that journals are kept and how many were filled in over 30 days. No names or entries.",
         "previewSite": "your business website",
         "menuContacts": "Menu · Contacts",
         "imageAlt": "WeSetup badge: electronic HACCP journals",
@@ -10473,7 +10497,7 @@
         "regenerate": "Regenerate",
         "enableAndCopy": "Enable and copy code",
         "enabling": "Enabling…",
-        "disabledNotice": "The link and code do not work while the badge is off. Enabling it publishes a page with your organization name and journal completion percentage. We will not enable it without your decision.",
+        "disabledNotice": "The link and code do not work while the badge is off.",
         "regenerateTitle": "Regenerate the badge code?",
         "regenerateDescription": "The old link and HTML code will stop working. Replace the image on your website.",
         "regenerateNewCode": "The new code will be available immediately",
@@ -10496,7 +10520,7 @@
         "todayPoints": "Each location has its own page with its own records and dishes — the QR code on the sign leads to the location page.",
         "todayNeedsBadge": "The block appears once the badge is on.",
         "signTitle": "Sign for the hall",
-        "signDescription": "An A4 sheet with a QR code to the page — hang it at the entrance, by the checkout or on the notice board.",
+        "signDescription": "An A4 sheet with a QR code — hang it at the entrance or checkout.",
         "signPoint": "Location",
         "signAllPoints": "Whole organization",
         "signOpen": "Open the sign for printing",
@@ -10507,7 +10531,7 @@
       },
       "deletion": {
         "title": "Delete organization",
-        "description": "All journals, documents, staff, and settings will be permanently deleted 30 days after the request. You can cancel deletion before then using the banner shown to everyone in the organization. Export a journal archive from Settings → Backup before deleting.",
+        "description": "Everything is permanently deleted 30 days after the request; you can cancel before then. Export an archive first: Settings → Backup.",
         "alreadyScheduled": "Deletion is already scheduled. Cancel it from the banner at the top of the page.",
         "schedule": "Schedule deletion",
         "confirmTitle": "Delete the organization in 30 days?",
@@ -25134,7 +25158,7 @@
     },
     "billingAnnouncement": {
       "perMonth": "/mo",
-      "details": "Details",
+      "details": "Plans",
       "hideUntilTomorrow": "Hide until tomorrow"
     },
     "billingTransitionGate": {
@@ -25918,13 +25942,13 @@
       "journalSettings": "Journal settings",
       "allDone": "all ✓",
       "pendingReview": "entries awaiting review",
-      "liveFeedTitle": "Live filling feed",
-      "liveFeedSubtitle": "Who filled in what today — refreshes every 15 seconds.",
+      "liveFeedTitle": "Live feed",
+      "liveFeedSubtitle": "Refreshes every 15 seconds",
       "recentEntries": "Recent entries",
-      "last48h": "What was done in 48 hours — {count, plural, one {# entry} other {# entries}}",
+      "last48h": "In 48 hours — {count, plural, one {# entry} other {# entries}}",
       "allJournals": "All journals",
       "noEntries": "No entries yet",
-      "noEntriesHint": "As soon as someone adds the first entry, it will appear here.",
+      "noEntriesHint": "New entries will appear here.",
       "colWhen": "When",
       "colJournal": "Journal",
       "colDetails": "Details",
@@ -25981,7 +26005,8 @@
       "disabledHint": "not shown on the dashboard or to staff",
       "disabledEnableHint": " — enable it if you do need the journal",
       "enabling": "Enabling…",
-      "enable": "Enable"
+      "enable": "Enable",
+      "filledToday": "Filled in today · {count, number}"
     },
     "impersonationBanner": {
       "stopFailed": "Failed to exit the view",
@@ -26043,7 +26068,7 @@
       "titleOk": "Settings check — all in order",
       "ready": "{ok, number} of {total, number} ready",
       "clickRow": "click a row to go there",
-      "clickExpand": "click to expand"
+      "clickExpand": "expand"
     },
     "partnerAccessBanner": {
       "exitClientFailed": "Failed to leave the client cabinet",
@@ -26118,7 +26143,7 @@
       "knowledgeTitle": "Knowledge base — documentation",
       "knowledgeHint": "Scans, instructions, tables and archives",
       "checklistsTitle": "Checklist builder",
-      "checklistsHint": "Inspection templates and results log"
+      "checklistsHint": "Inspection templates and results"
     },
     "whatsNewModal": {
       "title": "What’s new in WeSetup",
@@ -28647,7 +28672,6 @@
       "allEnabled": "All journals are on",
       "enabledToast": "{enabled, number} of {total, number} journals are on",
       "zoomTitle": "Enlarge the journal page",
-      "zoom": "Enlarge",
       "toggleAria": "Keep the journal “{name}”",
       "requiredConditional": "Required under the condition above: turn it on if it applies to you",
       "requiredForSphere": "Required for your sector: turn it on",
@@ -28690,7 +28714,7 @@
       "nothingFound": "Nothing found",
       "nothingFoundHint": "Try another word. The search covers the name, description and code of the journal, including disabled ones.",
       "groupRequired": "Required",
-      "groupRequiredHint": "electronic ones are green, paper ones are yellow, at the end",
+      "groupRequiredHint": "green — electronic, yellow — paper",
       "groupRecommended": "Recommended for the sector “{sphere}”",
       "groupRest": "Other journals",
       "disableRest": "Turn off all except required",
@@ -29218,7 +29242,7 @@
       "wrongCode": "Wrong code",
       "verified": "Email confirmed",
       "title": "Confirm your email",
-      "description": "We will send six digits to {email}. Nothing is blocked — the confirmation lets us reach you.",
+      "description": "We will send a six-digit code to {email}.",
       "confirm": "Confirm",
       "sendCode": "Send code"
     },

@@ -145,7 +145,7 @@ export function JournalPeriodsClient({ initial }: { initial: Item[] }) {
                     {isDays ? (
                       <input
                         aria-label={t("daysForJournal", { journal: displayName(r) })}
-                        type="number"
+                        type="number" inputMode="decimal"
                         min={1}
                         max={31}
                         value={r.days ?? ""}

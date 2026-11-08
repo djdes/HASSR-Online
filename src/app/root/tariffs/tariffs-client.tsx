@@ -139,7 +139,7 @@ function TariffRow({
         </Field>
         <Field label={plan ? t("priceMonthly") : t("price")}>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={1}
             max={1000000}
             value={tariff.priceRub}
@@ -149,7 +149,7 @@ function TariffRow({
         </Field>
         <Field label={t("periodDays")}>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={1}
             max={366}
             value={tariff.periodDays}
