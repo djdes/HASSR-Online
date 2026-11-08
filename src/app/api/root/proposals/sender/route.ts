@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Укажите имя отправителя").max(120),
+  position: z.string().trim().max(120).nullable().optional(),
   phone: z.string().trim().max(120).nullable().optional(),
   email: z.string().trim().max(120).nullable().optional(),
   telegram: z.string().trim().max(120).nullable().optional(),

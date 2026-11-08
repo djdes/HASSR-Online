@@ -199,26 +199,28 @@ export async function notifyNewMail(ingested: readonly IngestedItem[], now = new
 }
 
 /** Цифры для сводки и экрана CRM. */
-export async function loadDigestData(now = new Date()) {
+export async function loadDigestData(now = new Date(), scope: Prisma.CrmContactWhereInput = {}) {
   const day = 24 * 60 * 60 * 1000;
   const dayStart = new Date(now.getTime() - day);
   // Конец текущих суток по Москве (UTC+3): «шаги на сегодня».
   const moscowMidnight = new Date(`${moscowDateKey(now)}T00:00:00+03:00`);
   const endOfDay = new Date(moscowMidnight.getTime() + day);
   const active = { stage: { notIn: [...QUIET_STAGES] } };
+  // Охват «свои» (менеджер): только его контакты и свободные — `scope` из queries.server.
+  const scoped = (where: Prisma.CrmContactWhereInput): Prisma.CrmContactWhereInput => ({ AND: [scope, where] });
   const [awaiting, overdue, newContacts, nextToday, nextOverdue, silent, filtered] = await Promise.all([
-    db.crmContact.count({ where: { ...active, awaitingSince: { not: null } } }),
-    db.crmContact.count({ where: { ...active, awaitingSince: { lte: new Date(now.getTime() - CRM_ESCALATION_MS) } } }),
-    db.crmContact.groupBy({ by: ["source"], where: { createdAt: { gte: dayStart }, stage: { not: "spam" } }, _count: { _all: true } }),
-    db.crmContact.count({ where: { ...active, nextActionAt: { gt: now, lt: endOfDay } } }),
-    db.crmContact.count({ where: { ...active, nextActionAt: { lte: now } } }),
+    db.crmContact.count({ where: scoped({ ...active, awaitingSince: { not: null } }) }),
+    db.crmContact.count({ where: scoped({ ...active, awaitingSince: { lte: new Date(now.getTime() - CRM_ESCALATION_MS) } }) }),
+    db.crmContact.groupBy({ by: ["source"], where: scoped({ createdAt: { gte: dayStart }, stage: { not: "spam" } }), _count: { _all: true } }),
+    db.crmContact.count({ where: scoped({ ...active, nextActionAt: { gt: now, lt: endOfDay } }) }),
+    db.crmContact.count({ where: scoped({ ...active, nextActionAt: { lte: now } }) }),
     db.crmContact.count({
-      where: {
+      where: scoped({
         stage: { in: ["new", "in_work"] },
         awaitingSince: null,
         nextActionAt: null,
         lastOutboundAt: { lte: new Date(now.getTime() - CRM_SILENT_AFTER_MS), gte: new Date(now.getTime() - CRM_SILENT_GIVE_UP_MS) },
-      },
+      }),
     }),
     db.crmInteraction.count({ where: { filteredReason: { not: null }, createdAt: { gte: dayStart } } }),
   ]);

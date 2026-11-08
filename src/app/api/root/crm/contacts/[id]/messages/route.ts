@@ -15,7 +15,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = contactMessageSchema.safeParse(await readJson(request));
   if (!parsed.success) return badRequest(parsed.error.issues);
   try {
-    const result = await addContactMessage(id, parsed.data, crmActor(session));
+    const result = await addContactMessage(id, parsed.data, await crmActor(session));
     return result.ok ? NextResponse.json(result) : NextResponse.json({ error: result.error }, { status: 422 });
   } catch (error) {
     return crmErrorResponse(error);

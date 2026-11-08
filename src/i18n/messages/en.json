@@ -30435,6 +30435,10 @@
   },
   "rootPanel": {
     "sections": {
+      "crm": {
+        "title": "CRM",
+        "hint": "Inquiries and leads, correspondence, reminders, mail"
+      },
       "clients": {
         "title": "Clients",
         "hint": "Client list, client card, contacts, contract and proposal"
@@ -30445,7 +30449,7 @@
       },
       "sales": {
         "title": "Sales",
-        "hint": "CRM, proposals, mailings, services and requests, promo codes and promotions"
+        "hint": "Proposals, mailings, services and requests, promo codes and promotions"
       },
       "partners": {
         "title": "Partners",
@@ -30536,7 +30540,19 @@
       "salesHeadBullet": "Head of sales: every inquiry and CRM reminder goes to them",
       "salesHeadBadge": "Head of sales",
       "salesHeadMake": "Make head of sales",
-      "salesHeadRemove": "Remove head of sales"
+      "salesHeadRemove": "Remove head of sales",
+      "roleLabel": "Role",
+      "customRole": "Custom set",
+      "customRoleHint": "Sections and head of sales set by hand, sees all clients",
+      "loadingRoles": "Loading roles…",
+      "scopeOwnBadge": "own",
+      "scopeOwnBullet": "Sees only clients assigned to them, their own and unassigned CRM leads",
+      "titleLabel": "Title in proposal and email signatures",
+      "titlePlaceholder": "For example, Commercial Director",
+      "titleHint": "Empty — the title from “My mail” or from the role",
+      "ownerSettings": "Signature and head of sales",
+      "ownerSettingsTitle": "Platform owner: {name}",
+      "ownerSettingsBody": "The owner needs no sections — everything is open. Here: the title in proposal and email signatures and the head-of-sales role: inquiries, CRM reminders and the morning digest."
     },
     "team": {
       "title": "Team and access",
@@ -30638,6 +30654,40 @@
         "inbox": "All requests and chats are in “Feedback”",
         "noBot": "The bot is not configured on the server: TELEGRAM_BOT_USERNAME is empty."
       }
+    },
+    "accountManager": {
+      "label": "Account manager",
+      "none": "Not assigned",
+      "saved": "Client assigned to the manager",
+      "cleared": "Client unassigned",
+      "movedLeads": "CRM leads handed over: {count}",
+      "failed": "Could not save the manager"
+    },
+    "roles": {
+      "title": "Roles",
+      "hint": "A role is a set of panel sections, a data scope (all clients or only their own) and the head-of-sales flag. Change a role and its people’s access changes at once.",
+      "add": "New role",
+      "edit": "Edit",
+      "delete": "Delete role",
+      "deleteTitle": "Delete the role “{name}”?",
+      "deleteBody": "The role has no people, deleting it changes nobody’s access.",
+      "system": "built-in",
+      "members": "{count, plural, =0 {no people} one {# person} other {# people}}",
+      "scopeAll": "All clients and leads",
+      "scopeOwn": "Only their own clients and leads",
+      "scopeOwnHint": "Assigned clients, their own leads and unassigned ones they can take. Other people’s cards are closed.",
+      "scopeAllHint": "Sees all clients and leads and can assign them to managers.",
+      "scopeLabel": "Data scope",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "signatureLabel": "Title in signatures",
+      "signaturePlaceholder": "Empty — the role name",
+      "salesHeadToggle": "Head of sales: every inquiry, escalation and the morning CRM digest",
+      "saved": "Role saved: {name}",
+      "deleted": "Role deleted",
+      "failed": "Could not save the role",
+      "formTitleNew": "New role",
+      "formTitleEdit": "Role “{name}”"
     }
   },
   "rootClientContract": {

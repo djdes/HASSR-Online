@@ -110,6 +110,10 @@ export async function resolveCrmContact(
   if (!options.create || !or.length) return null;
   const platformUser = !userId || !identity.organizationId ? await findPlatformUser(email, key) : null;
   const organizationId = identity.organizationId ?? platformUser?.organizationId ?? null;
+  // Клиент закреплён за менеджером — его новый контакт сразу его.
+  const accountManagerId = organizationId
+    ? ((await db.organization.findUnique({ where: { id: organizationId }, select: { accountManagerId: true } }))?.accountManagerId ?? null)
+    : null;
   const created = await db.crmContact.create({
     data: {
       name: identity.name?.trim().slice(0, 200) || platformUser?.name || null,
@@ -122,6 +126,7 @@ export async function resolveCrmContact(
       organizationId,
       // Пишет в поддержку пользователь платформы — это клиент, а не лид.
       stage: organizationId && SUPPORT_CHANNELS.has(options.source) ? "won" : "new",
+      ownerId: accountManagerId,
       source: options.source,
       lastActivityAt: options.occurredAt,
     },

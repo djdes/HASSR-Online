@@ -30,6 +30,8 @@ export const PLATFORM_ORG_ID = process.env.PLATFORM_ORG_ID || "platform";
 
 const senderSchema = z.object({
   name: z.string().trim().max(120),
+  /** Должность под именем в подписи КП. */
+  position: z.string().trim().max(120).nullable().optional(),
   phone: z.string().trim().max(120).nullable().optional(),
   email: z.string().trim().max(120).nullable().optional(),
   telegram: z.string().trim().max(120).nullable().optional(),

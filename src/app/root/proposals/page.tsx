@@ -1,4 +1,5 @@
 import { requireRoot } from "@/lib/auth-helpers";
+import { staffSender } from "@/lib/client-documents.server";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { fallbackSender } from "@/lib/proposal/content";
 import { readDefaultProposalSender } from "@/lib/proposal/context.server";
@@ -16,11 +17,14 @@ export const dynamic = "force-dynamic";
  */
 export default async function RootProposalsPage() {
   const session = await requireRoot();
-  const [savedSender, promoOptions, requisites] = await Promise.all([
+  const [savedSender, promoOptions, requisites, mine] = await Promise.all([
     readDefaultProposalSender(),
     listProposalPromoOptions(),
     readPlatformRequisites().catch(() => null),
+    // Подпись того, кто открыл генератор: имя, должность (личная → «Моя почта» → роль), телефон, почта.
+    staffSender(session.user.id).catch(() => null),
   ]);
+  const mySender = mine ? { name: mine.name, position: mine.position, phone: mine.phone, email: mine.email, telegram: null } : null;
   return (
     <div className="space-y-5">
       <div>
@@ -35,6 +39,7 @@ export default async function RootProposalsPage() {
         spheres={PROPOSAL_SPHERES}
         promoOptions={promoOptions}
         savedSender={savedSender}
+        mySender={mySender}
         fallbackSender={fallbackSender(requisites)}
         rootEmail={session.user.email ?? null}
       />

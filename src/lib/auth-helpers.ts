@@ -101,10 +101,16 @@ export async function requireRoot() {
   const path = requestHeaders.get(PARTNER_HEADER_PATH);
   const method = requestHeaders.get(PARTNER_HEADER_METHOD) ?? "GET";
   if (!path) notFound();
-  const { canAccessPlatformPath, hasPlatformPanel, platformHomeHref } = await import("@/lib/platform-access");
-  const { platformViewerForSession } = await import("@/lib/platform-access.server");
+  const { canAccessPlatformPath, hasPlatformPanel, platformHomeHref, scopedTargetOf } = await import("@/lib/platform-access");
+  const { isTargetInOwnScope, platformViewerForSession } = await import("@/lib/platform-access.server");
   const viewer = await platformViewerForSession(session);
-  if (canAccessPlatformPath(viewer, path, method)) return session;
+  if (canAccessPlatformPath(viewer, path, method)) {
+    // Роль «свои клиенты»: чужой клиент или лид по прямой ссылке — 404,
+    // одна проверка на все страницы и API карточки (счета, КП, договор…).
+    const target = viewer.scope === "own" ? scopedTargetOf(path) : null;
+    if (target && !(await isTargetInOwnScope(session.user.id, target))) notFound();
+    return session;
+  }
   // The panel's front page without the «Клиенты» section: go to their own.
   if (path === "/root" && hasPlatformPanel(viewer)) redirect(platformHomeHref(viewer));
   notFound();

@@ -25,7 +25,8 @@ type Claims = {
   r?: string;
   p?: { c: string; k: "p" | "f"; v: number; l?: 1; e?: string };
   u?: string;
-  d?: { n: string; p?: string; e?: string; t?: string };
+  /** Отправитель: имя, телефон, почта, Telegram, должность (o). */
+  d?: { n: string; p?: string; e?: string; t?: string; o?: string };
 };
 
 function secret(): string {
@@ -56,6 +57,8 @@ function toClaims(vars: ProposalVars): Claims {
     if (v.sender.phone) claims.d.p = v.sender.phone;
     if (v.sender.email) claims.d.e = v.sender.email;
     if (v.sender.telegram) claims.d.t = v.sender.telegram;
+    // Должность в подписи (коммерческий директор, РОП…) — иначе ссылка на PDF и веб-версию её теряла.
+    if (v.sender.position) claims.d.o = v.sender.position;
   }
   return claims;
 }
@@ -77,7 +80,7 @@ function fromClaims(claims: Claims): ProposalVars {
       : null,
     ctaUrl: claims.u ?? null,
     sender: claims.d
-      ? { name: claims.d.n, phone: claims.d.p ?? null, email: claims.d.e ?? null, telegram: claims.d.t ?? null }
+      ? { name: claims.d.n, phone: claims.d.p ?? null, email: claims.d.e ?? null, telegram: claims.d.t ?? null, ...(claims.d.o ? { position: claims.d.o } : {}) }
       : null,
   });
 }

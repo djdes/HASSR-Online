@@ -51,7 +51,7 @@ function mskDayEnd(date: string): string | null {
 
 function senderEquals(a: ProposalSender | null, b: ProposalSender | null): boolean {
   const norm = (s: ProposalSender | null) =>
-    JSON.stringify([s?.name ?? "", s?.phone ?? "", s?.email ?? "", s?.telegram ?? ""].map((v) => v.trim()));
+    JSON.stringify([s?.name ?? "", s?.position ?? "", s?.phone ?? "", s?.email ?? "", s?.telegram ?? ""].map((v) => v.trim()));
   return norm(a) === norm(b);
 }
 
@@ -59,12 +59,15 @@ export function ProposalsClient({
   spheres,
   promoOptions,
   savedSender,
+  mySender = null,
   fallbackSender,
   rootEmail,
 }: {
   spheres: Array<{ sphere: OrgSphere; label: string }>;
   promoOptions: PromoOption[];
   savedSender: ProposalSender | null;
+  /** Подпись того, кто открыл генератор (должность — из личной, «Моей почты» или роли). */
+  mySender?: ProposalSender | null;
   fallbackSender: ProposalSender;
   rootEmail: string | null;
 }) {
@@ -77,9 +80,11 @@ export function ProposalsClient({
   const [personalCode, setPersonalCode] = useState({ value: "10", days: "14" });
   const [manual, setManual] = useState({ code: "", kind: "percent" as "percent" | "fixed", value: "10", lifetime: true, endsAt: "" });
   const [defaultSender, setDefaultSender] = useState<ProposalSender | null>(savedSender);
-  const initialSender = savedSender ?? fallbackSender;
+  // КП подписывает тот, кто его делает: своя подпись с должностью, иначе общий отправитель.
+  const initialSender = mySender ?? savedSender ?? fallbackSender;
   const [sender, setSender] = useState({
     name: initialSender.name,
+    position: initialSender.position ?? "",
     phone: initialSender.phone ?? "",
     email: initialSender.email ?? "",
     telegram: initialSender.telegram ? `@${initialSender.telegram}` : "",
@@ -120,6 +125,7 @@ export function ProposalsClient({
       sender: sender.name.trim()
         ? {
             name: sender.name.trim(),
+            position: sender.position.trim() || null,
             phone: sender.phone.trim() || null,
             email: sender.email.trim() || null,
             telegram: sender.telegram.trim() || null,
@@ -240,6 +246,7 @@ export function ProposalsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: sender.name,
+          position: sender.position || null,
           phone: sender.phone || null,
           email: sender.email || null,
           telegram: sender.telegram || null,
@@ -449,8 +456,16 @@ export function ProposalsClient({
               className={INPUT}
               value={sender.name}
               maxLength={120}
-              placeholder="Имя и должность"
+              placeholder="Имя"
               onChange={(event) => setSender((prev) => ({ ...prev, name: event.target.value }))}
+            />
+            <input
+              className={INPUT}
+              value={sender.position}
+              maxLength={120}
+              placeholder="Должность: Коммерческий директор"
+              data-testid="kp-sender-position"
+              onChange={(event) => setSender((prev) => ({ ...prev, position: event.target.value }))}
             />
             <input
               className={INPUT}

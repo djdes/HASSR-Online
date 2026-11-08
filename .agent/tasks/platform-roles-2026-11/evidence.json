@@ -1,0 +1,18 @@
+{
+  "task": "platform-roles-2026-11",
+  "branch": "claude/peaceful-brown-tgkspp",
+  "base": "e976a11",
+  "checkedAt": "2026-11-08T07:40Z",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["raw/schema-additive.sql"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/platform-roles.test.ts", "raw/ui-check.txt", "raw/screens/01-team-roles.png", "raw/screens/02-role-form.png"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/platform-access.test.ts", "src/lib/crm/rop.test.ts", "raw/seed-platform-roles.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/screens/05-manager-clients.png", "raw/screens/06-manager-crm.png", "src/lib/platform-roles.test.ts"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/screens/04-client-manager.png"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/kp-signature-check.txt", "raw/screens/08-director-proposal.png", "src/lib/proposal/token.test.ts"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/seed-platform-roles.txt"] },
+    "AC8": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt", "raw/eslint.txt"] }
+  },
+  "gates": { "typecheck": "EXIT 0", "testGate": "5882 pass, 0 fail", "i18nCheck": "97 pass", "eslintChanged": "EXIT 0" }
+}

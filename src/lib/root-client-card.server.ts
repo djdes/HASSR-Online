@@ -35,6 +35,9 @@ export type ClientPerson = {
   platformSections: PlatformSectionKey[];
   /** РОП (CRM): ему идут все заявки и напоминания. */
   platformSalesHead: boolean;
+  platformRoleId: string | null;
+  platformRoleTitle: string | null;
+  platformTitle: string | null;
 };
 
 export type ClientCompanyContacts = {
@@ -99,6 +102,9 @@ export async function loadClientContacts(organizationId: string): Promise<Client
           journalAccessMigrated: true,
           platformSections: true,
           platformSalesHead: true,
+          platformRoleId: true,
+          platformTitle: true,
+          platformRole: { select: { title: true } },
         },
       },
     },
@@ -136,6 +142,9 @@ export async function loadClientContacts(organizationId: string): Promise<Client
       journalAccessMigrated: user.journalAccessMigrated,
       platformSections: normalizePlatformSections(user.platformSections),
       platformSalesHead: user.platformSalesHead,
+      platformRoleId: user.platformRoleId,
+      platformRoleTitle: user.platformRole?.title ?? null,
+      platformTitle: user.platformTitle,
     };
   });
   // Owner first, then people with a phone, then the rest; archived last.

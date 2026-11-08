@@ -30435,6 +30435,10 @@
   },
   "rootPanel": {
     "sections": {
+      "crm": {
+        "title": "CRM",
+        "hint": "Murojaatlar va lidlar, yozishmalar, eslatmalar, pochta"
+      },
       "clients": {
         "title": "Mijozlar",
         "hint": "Mijozlar ro‘yxati, karta, kontaktlar, shartnoma va taklif"
@@ -30445,7 +30449,7 @@
       },
       "sales": {
         "title": "Savdo",
-        "hint": "CRM, takliflar, tarqatmalar, xizmatlar va arizalar, promokodlar va aksiyalar"
+        "hint": "Takliflar, tarqatmalar, xizmatlar va arizalar, promokodlar va aksiyalar"
       },
       "partners": {
         "title": "Hamkorlar",
@@ -30536,7 +30540,19 @@
       "salesHeadBullet": "ROP: barcha arizalar va CRM eslatmalari unga keladi",
       "salesHeadBadge": "ROP",
       "salesHeadMake": "ROP qilish",
-      "salesHeadRemove": "ROPni olib tashlash"
+      "salesHeadRemove": "ROPni olib tashlash",
+      "roleLabel": "Rol",
+      "customRole": "O‘z to‘plami",
+      "customRoleHint": "Bo‘limlar va ROP qo‘lda, barcha mijozlarni ko‘radi",
+      "loadingRoles": "Rollar yuklanmoqda…",
+      "scopeOwnBadge": "o‘ziniki",
+      "scopeOwnBullet": "Faqat unga biriktirilgan mijozlarni, o‘z va bo‘sh CRM lidlarini ko‘radi",
+      "titleLabel": "Taklif va xatlardagi imzo lavozimi",
+      "titlePlaceholder": "Masalan, Tijorat direktori",
+      "titleHint": "Bo‘sh — «Mening pochtam»dagi yoki roldagi lavozim",
+      "ownerSettings": "Imzo va ROP",
+      "ownerSettingsTitle": "Platforma egasi: {name}",
+      "ownerSettingsBody": "Egaga bo‘limlar kerak emas — hammasi ochiq. Bu yerda — taklif va xatlardagi imzo lavozimi hamda ROP roli: arizalar, CRM eslatmalari va ertalabki hisobot."
     },
     "team": {
       "title": "Jamoa va ruxsatlar",
@@ -30638,6 +30654,40 @@
         "inbox": "Barcha murojaatlar va chatlar «Fikr-mulohaza» bo‘limida",
         "noBot": "Bot serverda sozlanmagan: TELEGRAM_BOT_USERNAME bo‘sh."
       }
+    },
+    "accountManager": {
+      "label": "Mas'ul menejer",
+      "none": "Biriktirilmagan",
+      "saved": "Mijoz menejerga biriktirildi",
+      "cleared": "Mijoz bo‘shatildi",
+      "movedLeads": "CRM lidlari topshirildi: {count}",
+      "failed": "Menejerni saqlab bo‘lmadi"
+    },
+    "roles": {
+      "title": "Rollar",
+      "hint": "Rol — panel bo‘limlari, ma'lumot qamrovi (barcha mijozlar yoki faqat o‘ziniki) va ROP. Rolni o‘zgartirsangiz, uning odamlari ruxsati darhol o‘zgaradi.",
+      "add": "Yangi rol",
+      "edit": "O‘zgartirish",
+      "delete": "Rolni o‘chirish",
+      "deleteTitle": "«{name}» roli o‘chirilsinmi?",
+      "deleteBody": "Rolda odamlar yo‘q, o‘chirish hech kimning ruxsatini o‘zgartirmaydi.",
+      "system": "o‘rnatilgan",
+      "members": "{count, plural, =0 {odam yo‘q} other {# kishi}}",
+      "scopeAll": "Barcha mijozlar va lidlar",
+      "scopeOwn": "Faqat o‘z mijozlari va lidlari",
+      "scopeOwnHint": "Biriktirilgan mijozlar, o‘z lidlari va bo‘sh lidlar — ularni olish mumkin. Boshqalarning kartalari yopiq.",
+      "scopeAllHint": "Barcha mijozlar va lidlarni ko‘radi, ularni menejerlarga biriktira oladi.",
+      "scopeLabel": "Ma'lumot qamrovi",
+      "nameLabel": "Nomi",
+      "descriptionLabel": "Tavsif",
+      "signatureLabel": "Imzodagi lavozim",
+      "signaturePlaceholder": "Bo‘sh — rol nomi",
+      "salesHeadToggle": "ROP: barcha arizalar, eskalatsiyalar va ertalabki CRM hisoboti",
+      "saved": "Rol saqlandi: {name}",
+      "deleted": "Rol o‘chirildi",
+      "failed": "Rolni saqlab bo‘lmadi",
+      "formTitleNew": "Yangi rol",
+      "formTitleEdit": "«{name}» roli"
     }
   },
   "rootClientContract": {

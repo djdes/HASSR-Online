@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const parsed = manualLeadSchema.safeParse(await readJson(request));
   if (!parsed.success) return badRequest(parsed.error.issues);
   try {
-    const id = await createManualLead(parsed.data, crmActor(session));
+    const id = await createManualLead(parsed.data, await crmActor(session));
     return NextResponse.json({ id });
   } catch (error) {
     return crmErrorResponse(error);
