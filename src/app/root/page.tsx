@@ -2,6 +2,7 @@ import { Building2 } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
 import { getAllOrgMetrics } from "@/lib/org-metrics";
 import { platformViewerForSession } from "@/lib/platform-access.server";
+import { assignedOrganizationIds } from "@/lib/account-manager.server";
 import { MetricsTable } from "./metrics-table";
 import { SeedDemoButton } from "./seed-demo-button";
 import { getTranslations } from "next-intl/server";
@@ -32,7 +33,10 @@ export default async function RootMetricsPage() {
   // Один момент времени на весь рендер: окна 7/14/30 дней и подписи
   // «N дн назад» считаются от него.
   const refDate = new Date();
-  const metrics = await getAllOrgMetrics(PLATFORM_ORG_ID, refDate);
+  const allMetrics = await getAllOrgMetrics(PLATFORM_ORG_ID, refDate);
+  // Роль «свои клиенты» (менеджер): только закреплённые за ним организации.
+  const mine = viewer.scope === "own" ? await assignedOrganizationIds(session.user.id) : null;
+  const metrics = mine ? allMetrics.filter((row) => mine.has(row.organizationId)) : allMetrics;
   const sorted = [...metrics].sort((a, b) => b.actualMrrRub - a.actualMrrRub);
 
   const now = refDate.getTime();

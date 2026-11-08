@@ -6,6 +6,7 @@ import { CRM_FILTER_REASONS } from "@/lib/crm/constants";
 import type { ContactMessageInput, ContactPatch, ManualLeadInput } from "@/lib/crm/forms";
 import { normalizeEmail, normalizeRulePattern, phoneKey } from "@/lib/crm/identity";
 import { ingestCrmItems, recomputeCrmContact, resolveCrmContact } from "@/lib/crm/ingest.server";
+import { staffSender } from "@/lib/client-documents.server";
 import { readMailSender, sendStaffEmail } from "@/lib/platform-mail.server";
 import { sendTelegramMessage } from "@/lib/telegram";
 
@@ -21,7 +22,13 @@ export class CrmActionError extends Error {
   }
 }
 
-export type CrmActor = { id: string; name: string | null; organizationId: string };
+export type CrmActor = {
+  id: string;
+  name: string | null;
+  organizationId: string;
+  /** Охват «свои» (менеджер): назначает только себя, правила почты не трогает. */
+  own?: boolean;
+};
 
 async function audit(actor: CrmActor, action: string, entityId: string, details: Record<string, unknown>) {
   await db.auditLog
@@ -35,6 +42,12 @@ export async function createManualLead(input: ManualLeadInput, actor: CrmActor):
   const identity = { email: input.email || null, phone: input.phone ?? null, name: input.name ?? null, company: input.company ?? null };
   const contact = await resolveCrmContact(identity, { create: true, source: input.channel, occurredAt: now });
   if (!contact) throw new CrmActionError("Нужен телефон или почта");
+  if (actor.own && !contact.created) {
+    const existing = await db.crmContact.findUnique({ where: { id: contact.id }, select: { ownerId: true } });
+    if (existing?.ownerId && existing.ownerId !== actor.id) {
+      throw new CrmActionError("Этот клиент уже закреплён за другим менеджером — обратитесь к РОП", 409);
+    }
+  }
   await ingestCrmItems([
     {
       contactId: contact.id,
@@ -54,18 +67,26 @@ export async function createManualLead(input: ManualLeadInput, actor: CrmActor):
   return contact.id;
 }
 
-/** Ответственный — только тот, кто видит CRM: владелец, раздел «Продажи» или РОП. */
+/** Ответственный — только тот, кто видит CRM: владелец, раздел «CRM» или РОП. */
 async function assertOwner(ownerId: string) {
   const user = await db.user.findFirst({
-    where: { id: ownerId, isActive: true, archivedAt: null, OR: [{ isRoot: true }, { platformSections: { has: "sales" } }, { platformSalesHead: true }] },
+    where: { id: ownerId, isActive: true, archivedAt: null, OR: [{ isRoot: true }, { platformSections: { has: "crm" } }, { platformSalesHead: true }] },
     select: { id: true },
   });
-  if (!user) throw new CrmActionError("Ответственным можно назначить только сотрудника с разделом «Продажи»");
+  if (!user) throw new CrmActionError("Ответственным можно назначить только сотрудника с разделом «CRM»");
 }
 
 export async function updateCrmContact(id: string, patch: ContactPatch, actor: CrmActor): Promise<void> {
-  const contact = await db.crmContact.findUnique({ where: { id }, select: { id: true, email: true, stage: true } });
+  const contact = await db.crmContact.findUnique({ where: { id }, select: { id: true, email: true, stage: true, ownerId: true } });
   if (!contact) throw new CrmActionError("Контакт не найден", 404);
+  if (actor.own) {
+    // Менеджер: взять свободного себе или отпустить своего; распределяет РОП.
+    if (patch.ownerId !== undefined && patch.ownerId !== null && patch.ownerId !== actor.id) {
+      throw new CrmActionError("Назначить другого менеджера может РОП", 403);
+    }
+    if (patch.ownerId === null && contact.ownerId !== actor.id) throw new CrmActionError("Это не ваш клиент", 403);
+    if (patch.blockSender) throw new CrmActionError("Стоп-лист почты ведёт РОП — отметьте стадию «Спам»", 403);
+  }
   if (patch.ownerId) await assertOwner(patch.ownerId);
   const data: Record<string, unknown> = {};
   if (patch.stage !== undefined) data.stage = patch.stage;
@@ -100,11 +121,15 @@ function textToHtml(text: string): string {
     .join("");
 }
 
-/** Подпись из «Моей почты»: подпись целиком или имя, должность, телефон. */
+/**
+ * Подпись письма: своя подпись из «Моей почты» целиком; иначе имя, должность
+ * (личная → «Моя почта» → роль — как в КП) и телефон.
+ */
 async function signatureFor(actor: CrmActor): Promise<string> {
-  const sender = await readMailSender(actor.id).catch(() => null);
-  if (sender?.signature.trim()) return sender.signature.trim();
-  return [sender?.fromName || actor.name, sender?.position, sender?.phone, "WeSetup — электронные журналы ХАССП"].filter(Boolean).join("\n");
+  const mailbox = await readMailSender(actor.id).catch(() => null);
+  if (mailbox?.signature.trim()) return mailbox.signature.trim();
+  const sender = await staffSender(actor.id).catch(() => null);
+  return [sender?.name || actor.name, sender?.position, sender?.phone, "WeSetup — электронные журналы ХАССП"].filter(Boolean).join("\n");
 }
 
 export type MessageResult = { ok: true; via?: string; note?: string } | { ok: false; error: string };

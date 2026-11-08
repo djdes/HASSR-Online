@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const parsed = senderRuleSchema.safeParse(await readJson(request));
   if (!parsed.success) return badRequest(parsed.error.issues);
   try {
-    await addSenderRule(parsed.data, crmActor(session));
+    await addSenderRule(parsed.data, await crmActor(session));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return crmErrorResponse(error);

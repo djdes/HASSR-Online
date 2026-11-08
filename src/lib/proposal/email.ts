@@ -167,6 +167,7 @@ ${para(row.text, "font-size:14px;line-height:21px;margin-top:2px")}
   const senderBlock = content.sender
     ? `<tr><td class="kp-card kp-px" bgcolor="${C.card}" style="background:${C.card};padding:0 40px 28px">
 <p class="kp-text-strong" style="margin:0;font-family:${FONT};font-size:15px;line-height:22px;font-weight:700;color:${C.ink}">${e(content.sender.name)}</p>
+${content.sender.position ? `<p class="kp-text" style="margin:0 0 4px;font-family:${FONT};font-size:14px;line-height:20px;color:${C.body}">${e(content.sender.position)}</p>` : ""}
 ${content.sender.lines
   .map(
     (line) =>
@@ -327,6 +328,7 @@ function renderProposalEmailText(
   lines.push("", content.offer.howToEmail, `${content.offer.ctaLabel}: ${links.cta}`, content.offer.payment, "");
   if (content.sender) {
     lines.push(content.sender.name);
+    if (content.sender.position) lines.push(content.sender.position);
     for (const line of content.sender.lines) lines.push(`${line.label}: ${line.value}`);
     lines.push("");
   }

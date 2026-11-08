@@ -39,6 +39,13 @@ describe("подписанный токен КП", () => {
     });
   });
 
+  it("должность отправителя переживает токен — PDF и веб-версия подписаны «Коммерческий директор»", () => {
+    const check = verifyProposalToken(signProposalToken({ ...vars, sender: { ...vars.sender!, position: "Коммерческий директор" } }));
+    assert.equal(check.ok, true);
+    if (!check.ok) return;
+    assert.equal(check.vars.sender?.position, "Коммерческий директор");
+  });
+
   it("срок промокода переживает токен", () => {
     const endsAt = new Date("2026-10-31T21:00:00.000Z");
     const check = verifyProposalToken(signProposalToken({ sphere: "hotel", promo: { code: "OKT10", kind: "fixed", value: 500, lifetime: false, endsAt } }));

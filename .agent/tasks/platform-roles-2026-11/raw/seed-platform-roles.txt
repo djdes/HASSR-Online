@@ -1,0 +1,42 @@
+## dry-run
+[platform-roles:dry-run] roles in DB: 0 (built-ins are created on a real run)
+[platform-roles:dry-run] crm section → cmw70636u00018z7dz120t47q sal…@wesetup.local.test
+[platform-roles:dry-run] crm section → cmw70636b00008z7dnptfupk2 ale…@wesetup.ru
+[platform-roles:dry-run] crm section → cmw7fsvp80000c77dp6p7bsjk inn…@bfs.local.test
+[platform-roles:dry-run] crm section → cmw7fsvpd0001c77dduc7pie1 egr…@bfs.local.test
+[platform-roles:dry-run] crm section added: 4
+[platform-roles:dry-run] no built-in roles yet — will link on the next run
+[platform-roles:dry-run] commercial director: role not found — will retry next deploy
+## run
+[platform-roles] built-in roles created: 9
+[platform-roles] crm section → cmw70636u00018z7dz120t47q sal…@wesetup.local.test
+[platform-roles] crm section → cmw70636b00008z7dnptfupk2 ale…@wesetup.ru
+[platform-roles] crm section → cmw7fsvp80000c77dp6p7bsjk inn…@bfs.local.test
+[platform-roles] crm section → cmw7fsvpd0001c77dduc7pie1 egr…@bfs.local.test
+[platform-roles] crm section added: 4
+[platform-roles] role «Продажи» → cmw70636u00018z7dz120t47q sal…@wesetup.local.test
+[platform-roles] role «Коммерческий директор» → cmw70636b00008z7dnptfupk2 ale…@wesetup.ru
+[platform-roles] linked to roles: 2 of 4
+[platform-roles] commercial director → cmw70636b00008z7dnptfupk2 ale…@wesetup.ru
+[platform-roles] commercial director: role=Коммерческий директор title=Коммерческий директор salesHead=true sections=12
+## repeat
+[platform-roles] built-in roles created: 0
+[platform-roles] once:platform-roles:crm-section:v1: already done
+[platform-roles] once:platform-roles:link:v1: already done
+[platform-roles] once:platform-roles:alexey-cd:v1: already done
+## users
+alexey@wesetup.ru|Коммерческий директор|Коммерческий директор|t|crm,clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring
+egrul-manager@bfs.local.test|||t|crm,sales
+inn-owner@bfs.local.test|||t|crm,sales
+owner@wesetup.local.test|||t|
+sales@wesetup.local.test|Продажи||f|crm,clients,sales,partners,edo
+## roles
+admin|Администратор|all|f|crm,clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring
+commercial_director|Коммерческий директор|all|t|crm,clients,billing,sales,partners,edo,support,assistant,content,seo,translations,monitoring
+sales_head|РОП|all|t|crm,clients,sales,partners,edo
+sales_manager|Менеджер по продажам|own|f|crm,clients,sales
+sales|Продажи|all|f|crm,clients,sales,partners,edo
+support|Поддержка|all|f|clients,support,assistant
+seo|SEO и контент|all|f|content,seo,translations
+finance|Бухгалтерия|all|f|clients,billing,edo
+analyst|Аналитика|all|f|clients,monitoring

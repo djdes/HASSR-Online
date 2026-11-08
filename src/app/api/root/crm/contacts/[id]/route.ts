@@ -15,7 +15,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = contactPatchSchema.safeParse(await readJson(request));
   if (!parsed.success) return badRequest(parsed.error.issues);
   try {
-    await updateCrmContact(id, parsed.data, crmActor(session));
+    await updateCrmContact(id, parsed.data, await crmActor(session));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return crmErrorResponse(error);

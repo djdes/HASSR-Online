@@ -12,6 +12,7 @@
  */
 
 export const PLATFORM_SECTION_KEYS = [
+  "crm",
   "clients",
   "billing",
   "sales",
@@ -39,9 +40,10 @@ export type PlatformSection = {
 };
 
 export const PLATFORM_SECTIONS: readonly PlatformSection[] = [
+  { key: "crm", title: "CRM", hint: "Обращения и лиды, переписка, напоминания, почта", home: "/root/crm" },
   { key: "clients", title: "Клиенты", hint: "Список клиентов, карточка, контакты, договор и КП", home: "/root" },
   { key: "billing", title: "Оплаты и тарифы", hint: "Тарифы, счета, отметка оплаты, баллы, реквизиты", home: "/root/tariffs" },
-  { key: "sales", title: "Продажи", hint: "CRM, КП, рассылки, услуги и заявки, промокоды и акции", home: "/root/crm" },
+  { key: "sales", title: "Продажи", hint: "КП, рассылки, услуги и заявки, промокоды и акции", home: "/root/proposals" },
   { key: "partners", title: "Партнёры", hint: "Заявки партнёров, клиенты, выплаты", home: "/root/partners" },
   { key: "edo", title: "ЭДО", hint: "Отправка договоров, счетов и УПД через Saby", home: "/root/edo" },
   { key: "support", title: "Обратная связь", hint: "Обращения, отзывы, идеи, NPS", home: "/root/feedback" },
@@ -68,7 +70,7 @@ export const PLATFORM_PRESETS: readonly PlatformPreset[] = [
     hint: "Все разделы панели. Вход под клиента, удаление организаций и команда — только у владельца.",
     sections: PLATFORM_SECTION_KEYS,
   },
-  { key: "sales", title: "Продажи", hint: "Клиенты, CRM, КП и рассылки, партнёры, ЭДО", sections: ["clients", "sales", "partners", "edo"] },
+  { key: "sales", title: "Продажи", hint: "CRM, клиенты, КП и рассылки, партнёры, ЭДО", sections: ["crm", "clients", "sales", "partners", "edo"] },
   { key: "support", title: "Поддержка", hint: "Клиенты, обращения и отзывы, ассистент", sections: ["clients", "support", "assistant"] },
   { key: "seo", title: "SEO и контент", hint: "Блог, SEO и реклама, переводы", sections: ["content", "seo", "translations"] },
   { key: "finance", title: "Бухгалтерия", hint: "Клиенты, оплаты и тарифы, ЭДО", sections: ["clients", "billing", "edo"] },
@@ -79,6 +81,11 @@ type Rule = {
   /** Path pattern; `*` matches exactly one segment. */
   pattern: string;
   gate: PlatformGate;
+  /**
+   * Shows every client or lead at once (inbox, health, funnel) or reassigns
+   * them: a person whose role sees only their own clients («свои») is refused.
+   */
+  allScope?: true;
   /** Match the path itself only, not its children. */
   exact?: boolean;
   /** Restrict to these HTTP methods (upper case). */
@@ -95,9 +102,11 @@ export const PLATFORM_RULES: readonly Rule[] = [
   // Clients: the list, the card, contacts, contracts.
   { pattern: "/root", gate: "clients", exact: true },
   { pattern: "/root/organizations", gate: "clients" },
-  { pattern: "/root/health", gate: "clients" },
+  { pattern: "/root/health", gate: "clients", allScope: true },
   // Воронка регистраций — про клиентов: продажи и аналитика её видят.
-  { pattern: "/root/funnel", gate: "clients" },
+  { pattern: "/root/funnel", gate: "clients", allScope: true },
+  // Закрепить клиента за менеджером — тот, кто видит всех (РОП, директор).
+  { pattern: "/api/root/organizations/*/manager", gate: "clients", allScope: true },
   { pattern: "/api/root/organizations", gate: "clients" },
   { pattern: "/api/root/organizations/*", gate: "billing", methods: ["PATCH", "PUT"] },
   { pattern: "/api/root/organizations/*", gate: "superadmin", methods: ["DELETE"] },
@@ -119,10 +128,18 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/billing-period", gate: "billing" },
   { pattern: "/api/root/lifetime-discounts", gate: "billing" },
 
-  // Sales. CRM — all inquiries in one place; mailbox credentials — owner only.
-  { pattern: "/root/crm", gate: "sales" },
-  { pattern: "/api/root/crm", gate: "sales" },
+  // CRM — all inquiries in one place. The company inbox, its filters and
+  // mailbox settings are not «own clients»: whole-team scope only; mailbox
+  // credentials — owner only.
+  { pattern: "/root/crm", gate: "crm" },
+  { pattern: "/api/root/crm", gate: "crm" },
+  { pattern: "/root/crm/mail", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/mailboxes", gate: "crm", allScope: true },
   { pattern: "/api/root/crm/mailboxes", gate: "superadmin", methods: ["POST", "PUT", "DELETE"] },
+  { pattern: "/api/root/crm/filtered", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/rules", gate: "crm", allScope: true },
+
+  // Sales.
   { pattern: "/root/proposals", gate: "sales" },
   { pattern: "/root/mailing", gate: "sales" },
   { pattern: "/root/services", gate: "sales" },
@@ -236,10 +253,19 @@ export function normalizePlatformSections(value: unknown): PlatformSectionKey[] 
   return PLATFORM_SECTION_KEYS.filter((key) => wanted.has(key));
 }
 
+/** Охват данных роли: все клиенты и лиды или только закреплённые (+ свободные лиды). */
+export type PlatformScope = "all" | "own";
+
+export function normalizePlatformScope(value: unknown): PlatformScope {
+  return value === "own" ? "own" : "all";
+}
+
 export type PlatformViewer = {
   /** `User.isRoot`: everything, including team, impersonation, deletion. */
   superadmin: boolean;
   sections: readonly PlatformSectionKey[];
+  /** Охват из роли; нет роли («свой набор») или владелец — «all». */
+  scope?: PlatformScope;
 };
 
 export function hasPlatformPanel(viewer: PlatformViewer): boolean {
@@ -256,7 +282,21 @@ export function canAccessPlatformPath(viewer: PlatformViewer, path: string, meth
   if (viewer.superadmin) return true;
   if (gate === "superadmin") return false;
   if (gate === "self") return viewer.sections.length > 0;
-  return viewer.sections.includes(gate);
+  if (!viewer.sections.includes(gate)) return false;
+  if (viewer.scope === "own" && matchPlatformRule(path, method)?.allScope) return false;
+  return true;
+}
+
+/** Что в адресе — конкретный клиент или лид: для охвата «свои» его надо проверить. */
+export type ScopedTarget = { kind: "organization" | "contact"; id: string };
+
+export function scopedTargetOf(path: string): ScopedTarget | null {
+  const parts = segments(path);
+  const rest = parts[0] === "api" ? parts.slice(2) : parts.slice(1);
+  if (!(parts[0] === "root" || (parts[0] === "api" && parts[1] === "root"))) return null;
+  if (rest[0] === "organizations" && rest[1]) return { kind: "organization", id: rest[1] };
+  if (rest[0] === "crm" && rest[1] === "contacts" && rest[2]) return { kind: "contact", id: rest[2] };
+  return null;
 }
 
 /** Landing page for a delegated user: the first section they have. */

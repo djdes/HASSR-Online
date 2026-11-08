@@ -1,0 +1,24 @@
+roles listed: 9
+alexey row: Алексей РОП Коммерческий директор alexey@wesetup.ru Ещё не заходил Коммерческий директор CRM Клиенты Оплаты и тарифы Продажи Партнёры ЭДО Обратная связь Ассисте
+after create: 10 roles
+after delete: 9 roles
+maria row: Мария (продажи) свои sales@wesetup.local.test Ещё не заходил Менеджер по продажам CRM Клиенты Продажи Не подключена Изменить
+db maria: Менеджер по продажам|crm,clients,sales|false
+db owner: -|true
+toast: Клиент закреплён за менеджером Лидов CRM передано: 1
+db cafe manager: t, Иван owner → sales@wesetup.local.test
+manager clients list: 1 rows; has Ромашка: true; has Кофейня владельца: false
+manager /root/organizations/fixture-cafe → 200
+manager /root/organizations/fixture-bfs-inn → 404
+manager /root/crm/mail → 404
+manager /root/health → 404
+manager foreign lead /root/crm/contacts/cmw70o7a6000qrb7d7zsventl → 404
+manager PATCH foreign lead → 404
+manager CRM rows: office@supplier.ru, Павел, Ольга Смирнова, Анна, Иван Петров, chef@kafe-ugolok.ru, buh@pekarnya-hleb.ru, Дмитрий
+take free lead → Дмитрий owner: sales@wesetup.local.test
+manager reassign to someone else → 403
+manager PUT client manager → 404
+director КП sender: Алексей / Коммерческий директор
+director КП preview mentions «Коммерческий директор»: false
+director /root/crm/mail → 200
+page errors: 0

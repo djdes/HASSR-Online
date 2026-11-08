@@ -4,6 +4,7 @@ import { Building2, Search } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
 import { CRM_STAGES, isCrmStage } from "@/lib/crm/constants";
 import { listCrmContacts } from "@/lib/crm/queries.server";
+import { platformViewerForSession } from "@/lib/platform-access.server";
 import { cn } from "@/lib/utils";
 import { CARD, ChannelBadge, CrmHeader, INPUT, StageBadge } from "../crm-ui";
 import { channelLabel, displayName, formatAgo, formatDue } from "../crm-format";
@@ -42,7 +43,8 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
   const params = await searchParams;
   const now = new Date();
   const queue = QUEUES.some((item) => item.key === params.queue) ? params.queue! : "all";
-  const list = await listCrmContacts({ ...params, queue, page: Number(params.page) || 1 }, session.user.id, now);
+  const viewer = await platformViewerForSession(session);
+  const list = await listCrmContacts({ ...params, queue, page: Number(params.page) || 1 }, session.user.id, now, viewer.scope === "own");
 
   return (
     <div className="space-y-6" data-crm-contacts>
@@ -75,7 +77,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
             Мои
           </Link>
           <Link href={hrefWith(params, { owner: params.owner === "none" ? undefined : "none" })} className={cn(CHIP, params.owner === "none" ? CHIP_ON : CHIP_OFF)}>
-            Без ответственного
+            {viewer.scope === "own" ? "Свободные" : "Без ответственного"}
           </Link>
           <span className="mx-1 w-px shrink-0 bg-[#ececf4]" />
           {CRM_STAGES.map((stage) => (

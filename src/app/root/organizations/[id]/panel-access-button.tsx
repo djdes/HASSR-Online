@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
-import { PlatformAccessDialog } from "@/components/root/platform-access-dialog";
+import { PlatformAccessDialog, type AccessSaved } from "@/components/root/platform-access-dialog";
 import { matchPlatformPreset, type PlatformSectionKey } from "@/lib/platform-access";
 import { cn } from "@/lib/utils";
 
@@ -13,20 +13,25 @@ export function PanelAccessButton({
   user,
   sections,
   salesHead = false,
+  roleId = null,
+  roleTitle = null,
+  title = null,
 }: {
   user: { id: string; name: string };
   sections: PlatformSectionKey[];
   salesHead?: boolean;
+  roleId?: string | null;
+  roleTitle?: string | null;
+  title?: string | null;
 }) {
   const t = useTranslations("rootPanel");
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState(sections);
-  const [currentSalesHead, setCurrentSalesHead] = useState(salesHead);
-  const preset = matchPlatformPreset(current);
-  const role = preset ? t(`presets.${preset}.title`) : t("presets.custom.title");
-  const label = current.length
-    ? t("access.buttonHas", { role: currentSalesHead ? `${role} · ${t("access.salesHeadBadge")}` : role })
+  const [current, setCurrent] = useState<AccessSaved>({ sections, salesHead, roleId, roleTitle, scope: "all", title });
+  const preset = matchPlatformPreset(current.sections);
+  const role = current.roleTitle ?? (preset ? t(`presets.${preset}.title`) : t("presets.custom.title"));
+  const label = current.sections.length
+    ? t("access.buttonHas", { role: current.salesHead && !current.roleTitle ? `${role} · ${t("access.salesHeadBadge")}` : role })
     : t("access.button");
   return (
     <>
@@ -36,7 +41,7 @@ export function PanelAccessButton({
         data-panel-access={user.id}
         className={cn(
           "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[12.5px] font-medium transition-colors duration-150",
-          current.length
+          current.sections.length
             ? "bg-[#eef1ff] text-[#3848c7] hover:bg-[#e2e7ff]"
             : "border border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
         )}
@@ -49,11 +54,12 @@ export function PanelAccessButton({
           open
           onClose={() => setOpen(false)}
           user={user}
-          initialSections={current}
-          initialSalesHead={currentSalesHead}
-          onSaved={(next, nextSalesHead) => {
+          initialSections={current.sections}
+          initialSalesHead={current.salesHead}
+          initialRoleId={current.roleId}
+          initialTitle={current.title}
+          onSaved={(next) => {
             setCurrent(next);
-            setCurrentSalesHead(nextSalesHead);
             router.refresh();
           }}
         />
