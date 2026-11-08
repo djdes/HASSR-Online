@@ -43,6 +43,9 @@ describe("CRM: роль РОП и доступ к разделу", () => {
     assert.match(seed, /onceKey: "once:crm-rop:alexey:v1"/);
     assert.match(seed, /onceKey: "once:crm-rop:bfs:v1"/);
     assert.match(seed, /const BFS_NAMES = \["БФС", "BFS"\];/);
+    assert.match(seed, /const BFS_INN = "5018215599";/, "ИНН ООО «БФС» — как в оферте");
+    assert.match(read("src/app/oferta/page.tsx"), /ИНН 5018215599/);
+    assert.match(seed, /legalProfileJson: \{ path: \["nameShort"\], string_contains: name \}/);
     assert.match(seed, /telegramChatId: \{ not: null \}/);
     assert.match(seed, /role: \{ in: \["owner", "manager"\] \}/);
     assert.match(seed, /users\.length > target\.max/, "неоднозначное совпадение — ничего не выдаём");
