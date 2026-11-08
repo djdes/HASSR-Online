@@ -564,7 +564,7 @@ function InvoiceDialog({
             </Field>
             <Field label={t("invoice.points")}>
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 min={1}
                 max={500}
                 value={points}

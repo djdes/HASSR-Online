@@ -176,7 +176,7 @@ export function OrgSettingsForm({
             <span className="block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
               {t("subscription.points")}</span>
             <input
-              type="number"
+              type="number" inputMode="decimal"
               min={1}
               max={MAX_POINTS}
               value={points}

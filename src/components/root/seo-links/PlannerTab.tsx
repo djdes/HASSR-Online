@@ -378,7 +378,7 @@ function PlanEditorForm({
             {kind === "monthly" ? "Бюджет в месяц (₽)" : "Общий бюджет пакета (₽)"}
           </label>
           <input
-            type="number"
+            type="number" inputMode="numeric"
             min={100}
             step={500}
             value={budgetRub}
@@ -393,7 +393,7 @@ function PlanEditorForm({
             Потолок цены ссылки (₽)
           </label>
           <input
-            type="number"
+            type="number" inputMode="numeric"
             min={100}
             step={50}
             value={maxPricePerLinkRub}
@@ -421,7 +421,7 @@ function PlanEditorForm({
             Безанкор / бренд в анкор-листе (%)
           </label>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
             max={100}
             value={anchorMixBrandPct}
@@ -464,7 +464,7 @@ function PlanEditorForm({
             Мин. TF/CF донора
           </label>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
             max={100}
             value={minTfCf}
@@ -479,7 +479,7 @@ function PlanEditorForm({
             Мин. Траст GGL
           </label>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
             max={100}
             value={minTrust}
@@ -494,7 +494,7 @@ function PlanEditorForm({
             Мин. трафик/сутки
           </label>
           <input
-            type="number"
+            type="number" inputMode="numeric"
             min={0}
             step={50}
             value={minDailyTraffic}

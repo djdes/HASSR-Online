@@ -637,7 +637,7 @@ function DraftRow({
                 <CalendarDays className="size-4 text-[#9b9fb3]" />
                 <span className="text-[12.5px] text-[#6f7282]">{t("monthDay")}</span>
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   min={1}
                   max={31}
                   value={d.monthDay ?? ""}

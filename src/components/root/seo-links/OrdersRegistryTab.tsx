@@ -725,7 +725,7 @@ function ManualOrderModal({
               ID площадки-донора (siteId)
             </label>
             <input
-              type="number"
+              type="number" inputMode="decimal"
               required
               min={1}
               value={donorSiteId}
@@ -773,7 +773,7 @@ function ManualOrderModal({
               Потолок цены (₽)
             </label>
             <input
-              type="number"
+              type="number" inputMode="decimal"
               required
               min={50}
               value={maxPriceRub}

@@ -187,7 +187,8 @@ export function DashboardSection({
               {titleAction}
             </div>
             {subtitle ? (
-              <p className="mt-0.5 text-[12px] leading-snug text-[#6f7282] sm:text-[13px]">
+              // Пояснение — прячется при «Пояснения на страницах: выкл.».
+              <p data-page-hint="" className="mt-0.5 text-[12px] leading-snug text-[#6f7282] sm:text-[13px]">
                 {subtitle}
               </p>
             ) : null}

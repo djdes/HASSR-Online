@@ -20,6 +20,7 @@ import {
 } from "@/components/theme/theme-tiles";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
 import { NavIconChip } from "@/components/layout/nav-icons";
+import { TextSizeGroup } from "@/components/view-prefs/text-size";
 import { cn } from "@/lib/utils";
 import { CabinetPlanCardView } from "@/components/layout/cabinet-plan-card";
 import type { CabinetPlanCard } from "@/lib/cabinet-plan";
@@ -65,6 +66,7 @@ export function ProfileSheet({
   isRoot,
   platformPanel = isRoot,
   onLogout,
+  onOpenReadability,
 }: {
   open: boolean;
   onClose: () => void;
@@ -90,9 +92,12 @@ export function ProfileSheet({
   isRoot: boolean;
   /** Ссылка на панель платформы (владелец или сотрудник с разделами). */
   platformPanel?: boolean;
+  /** Открыть окно «Удобство чтения» (контраст, анимация, пояснения). */
+  onOpenReadability: () => void;
   onLogout: () => void;
 }) {
   const t = useTranslations("navigation");
+  const tView = useTranslations("common.viewPrefs");
   const inApp = useInsideMobileApp();
   const openMaster = useOpenMasterCabinet();
   return (
@@ -221,6 +226,22 @@ export function ProfileSheet({
           Лист при выборе не закрывается — видно, как перекрасился экран. */}
       <div className={SHEET_GROUP_LABEL_CLASS}>{t("profile.theme")}</div>
       <ThemeTiles className="px-2 pb-1 pt-1" />
+      {/* Размер текста — в одно нажатие; контраст, анимация и пояснения —
+          окном «Удобство чтения» (его открывает шапка). */}
+      <div className={SHEET_GROUP_LABEL_CLASS}>{tView("textSize")}</div>
+      <div className="px-2 pb-1 pt-1" data-testid="profile-readability">
+        <TextSizeGroup size="compact" />
+        <button
+          type="button"
+          onClick={onOpenReadability}
+          data-testid="open-readability"
+          data-nav-row
+          className="mt-1 inline-flex items-center gap-2 rounded-xl px-2 py-2 text-[13px] font-medium text-[var(--app-indigo-deep)] transition-colors hover:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        >
+          <NavIconChip name="Eye" className="size-6 rounded-[7px]" iconClassName="size-3.5" />
+          {tView("more")}
+        </button>
+      </div>
       <div className="px-2 py-2"><PersonalLanguageSelect /></div>
       {canEditBranding ? (
         <Link

@@ -761,10 +761,14 @@ export function paidReminderCopy(args: {
 }
 
 export type TrialBanner = {
-  /** «Пробный период: осталось 5 дней — по 8 ноября включительно.» */
+  /** «Пробный период: ещё 5 дней, по 8 ноября включительно.» */
   lead: string;
-  /** «Все возможности Премиума открыты. Выберите тариф, чтобы…» */
-  tail: string;
+  /**
+   * Что будет после пробного — только в последние дни (`urgent`). В обычные
+   * дни плашка — одна строка и ссылка «Тарифы»: тридцать слов про тарифы
+   * каждый день занимали полэкрана телефона над журналами (07.11.2026).
+   */
+  tail: string | null;
   urgent: boolean;
 };
 
@@ -772,11 +776,12 @@ export type TrialBanner = {
 export function trialBannerText(state: Pick<AccountBillingState, "trialEndsAt" | "trialDaysLeft">): TrialBanner | null {
   if (!state.trialEndsAt || state.trialDaysLeft === null) return null;
   const left = state.trialDaysLeft;
-  const lead = `Пробный период: осталось ${daysLabel(left)} — по ${formatMskDay(lastDayBefore(state.trialEndsAt))} включительно.`;
-  const tail =
-    "Все журналы и возможности «Премиума» открыты без ограничений. Выберите тариф, чтобы после пробного ничего не выключилось: " +
-    "на бесплатном останутся 1 сотрудник и 1 журнал.";
-  return { lead, tail, urgent: left <= TRIAL_REMINDER_DAYS };
+  const urgent = left <= TRIAL_REMINDER_DAYS;
+  const lead = `Пробный период: ещё ${daysLabel(left)}, по ${formatMskDay(lastDayBefore(state.trialEndsAt))} включительно.`;
+  const tail = urgent
+    ? "Выберите тариф, чтобы ничего не выключилось: на бесплатном останутся 1 сотрудник и 1 журнал."
+    : null;
+  return { lead, tail, urgent };
 }
 
 /** Показывать ли плашку пробного периода. */

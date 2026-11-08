@@ -47,11 +47,9 @@ function DashboardSkeleton() {
         </div>
         <div className="space-y-5 pt-3 sm:pt-4">
           <div className={JOURNAL_TOOLBAR_CLASS}>
-            <div className="grid grid-cols-2 gap-2 sm:flex lg:order-3 lg:ml-auto">
-              <Skeleton className="h-11 rounded-2xl sm:w-[180px]" />
-              <Skeleton className="h-11 rounded-2xl sm:w-[180px]" />
-            </div>
-            <Skeleton className="h-12 w-full rounded-2xl lg:order-1 lg:max-w-[420px]" />
+            {/* Как в списке: поиск и «QR-коды» одной строкой. */}
+            <Skeleton className="order-2 h-11 w-[130px] shrink-0 rounded-2xl lg:order-3 lg:ml-auto lg:w-[180px]" />
+            <Skeleton className="order-1 h-12 min-w-[200px] flex-1 rounded-2xl lg:max-w-[420px]" />
           </div>
           <div className={JOURNAL_LIST_CLASS}>
             {Array.from({ length: 9 }).map((_, index) => (

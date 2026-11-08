@@ -1,0 +1,11 @@
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/journal-checklists/[code]/checklist-editor.tsx
+  294:9  warning  'hasPerRoomItems' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/components/dashboard/dashboard-section.tsx
+  238:7  warning  Unused eslint-disable directive (no problems were reported from 'react/no-danger')
+
+✖ 2 problems (0 errors, 2 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+EXIT 0

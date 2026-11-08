@@ -413,7 +413,7 @@ export function OrganizationInfoForm({
           hint={t("form.shiftEndHourHint")}
         >
           <input
-            type="number"
+            type="number" inputMode="numeric"
             min={0}
             max={23}
             value={form.shiftEndHour}
@@ -462,12 +462,12 @@ export function OrganizationInfoForm({
           />
         </div>
         <div className="mt-3">
-          <a
+          <Link
             href="/settings/subscription"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border-0 bg-[#5566f6]/[0.04] px-3 text-[14px] font-semibold text-[#5566f6] hover:bg-[#5566f6]/[0.09]"
           >
             {t("form.manageSubscription")}
-          </a>
+          </Link>
         </div>
       </FormSection>
 

@@ -44,6 +44,7 @@ import { FeedbackDialog } from "@/components/layout/feedback-dialog";
 import { PasskeySettings } from "@/components/auth/passkey-settings";
 import { BRANDING_SETTINGS_HREF } from "@/components/theme/theme-tiles";
 import { MiniThemeTiles } from "../_components/mini-theme-tiles";
+import { ReadabilityControls } from "@/components/view-prefs/readability-controls";
 import { signOutOnThisDevice } from "../_lib/signed-out-mark";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { BillingAnnouncement } from "@/components/billing/billing-announcement";
@@ -102,6 +103,7 @@ export function MiniMeClient({
   telegramLinked?: boolean;
 }) {
   const t = useTranslations("miniProfile");
+  const tView = useTranslations("common.viewPrefs");
   const { data: session, status } = useSession();
   const [busy, setBusy] = useState<"none" | "signout" | "unlink">("none");
   const [error, setError] = useState<"unlinkFailed" | "signOutFailed" | "unauthorized" | null>(null);
@@ -369,6 +371,18 @@ export function MiniMeClient({
             {t("theme.branding")}
           </Link>
         ) : null}
+      </section>
+
+      {/* «Удобство чтения» — размер текста, контраст, анимация, пояснения:
+          те же контролы, что на сайте; настройка этого телефона. */}
+      <section className="mini-card p-4" data-testid="mini-readability">
+        <h2
+          className="mb-3 text-[17px] font-semibold"
+          style={{ color: "var(--mini-text)" }}
+        >
+          {tView("title")}
+        </h2>
+        <ReadabilityControls size="touch" />
       </section>
 
       {/* Строки — как пункты списка QR-страниц: плитка иконки, название

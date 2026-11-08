@@ -1,4 +1,6 @@
 import { headers } from "next/headers";
+import { SkipToContent } from "@/components/layout/skip-to-content";
+import { MAIN_CONTENT_ID } from "@/lib/view-prefs";
 import Script from "next/script";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { Suspense, type ReactNode } from "react";
@@ -143,6 +145,7 @@ export async function MiniAppShell({
               шапке, а не круглыми кнопками поверх правого края содержимого. */}
           <FabDockProvider slotId="mini-fab-slot">
           <JournalUndoProvider>
+            <SkipToContent />
             <MiniTopBar
               homeHref={homeHref}
               partnerHint={partnerHint}
@@ -152,7 +155,9 @@ export async function MiniAppShell({
             {/* Безопасные зоны iPhone: сверху notch, снизу
                 home-indicator плюс высота нижнего меню. */}
             <main
-              className="mx-auto flex w-full max-w-lg flex-col px-4"
+              id={MAIN_CONTENT_ID}
+              tabIndex={-1}
+              className="mx-auto flex w-full max-w-lg flex-col px-4 outline-none"
               style={{
                 minHeight: "calc(100dvh - var(--mini-topbar-h, 56px))",
                 // Безопасное поле сверху уже в шапке — здесь только

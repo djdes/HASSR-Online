@@ -52,6 +52,8 @@ import {
 import { CreateOrganizationDialog } from "@/components/layout/create-organization-dialog";
 import { CreateDemoDialog } from "@/components/layout/create-demo-dialog";
 import { CreateMasterCabinetDialog } from "@/components/master/create-master-cabinet-dialog";
+import { TextSizeMenu } from "@/components/view-prefs/text-size";
+import { ReadabilityDialog } from "@/components/view-prefs/readability-dialog";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
@@ -168,6 +170,7 @@ export function Header({
   canEditTranslations = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
+  const tView = useTranslations("common.viewPrefs");
   const pathname = usePathname();
   const headerUndo = useHeaderUndo();
   const nav = useAppNav();
@@ -182,6 +185,14 @@ export function Header({
   // нужно закрыть — иначе оно останется висеть под оверлеем.
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [createDialog, setCreateDialog] = useState<CreateDialogKind | null>(null);
+  // «Удобство чтения» (контраст, анимация, пояснения) — окно вне меню, как
+  // окна создания: открыть может любой сотрудник.
+  const [readabilityOpen, setReadabilityOpen] = useState(false);
+  const openReadability = () => {
+    setProfileMenuOpen(false);
+    setProfileSheetOpen(false);
+    setReadabilityOpen(true);
+  };
   const openCreateDialog = (kind: CreateDialogKind) => {
     setProfileMenuOpen(false);
     setCreateDialog(kind);
@@ -220,7 +231,10 @@ export function Header({
           липкие панели журналов (`top-[72px]`). Горизонтальная геометрия
           ДОЛЖНА совпадать с контейнером контента ((dashboard)/layout.tsx):
           max-w-[1800px] + px-4 md:px-8. */}
-      <div className="mx-auto grid h-[55px] w-full max-w-[1800px] grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)] items-center gap-2 px-4 sm:h-[72px] md:gap-4 md:px-8">
+      {/* Телефон: края по содержимому, середина сжимается — раньше правый
+          край (MAX, колокольчик, профиль) не помещался в свою половину и
+          заезжал на «+ Добавить точку», а с крупным текстом — ещё сильнее. */}
+      <div className="mx-auto grid h-[55px] w-full max-w-[1800px] grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)] items-center gap-2 px-4 max-sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:h-[72px] md:gap-4 md:px-8">
         <div className="flex min-w-0 items-center gap-2">
           {hasMenu ? (
             <Button
@@ -519,6 +533,27 @@ export function Header({
 
               <DropdownMenuSeparator className="my-0" />
 
+              {/* Размер текста — всем, в одно нажатие: человеку, который
+                  плохо видит, не искать настройку. Остальное (контраст,
+                  анимация, пояснения) — окном «Удобство чтения». */}
+              <div className="px-2 pb-2 pt-1.5" data-testid="profile-readability">
+                <div className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9b9fb3]">
+                  {tView("textSize")}
+                </div>
+                <TextSizeMenu />
+                <DropdownMenuItem
+                  className="mt-1 w-fit gap-1.5 px-2 py-1.5 text-[13px]"
+                  data-nav-row
+                  data-testid="open-readability"
+                  onSelect={openReadability}
+                >
+                  <NavIconChip name="Eye" className="size-6 rounded-[7px]" iconClassName="size-3.5" />
+                  <span className="font-medium text-[var(--app-indigo-deep)]">{tView("more")}</span>
+                </DropdownMenuItem>
+              </div>
+
+              <DropdownMenuSeparator className="my-0" />
+
               <div className="p-1">
                 <DropdownMenuItem
                   onClick={handleLogout}
@@ -571,7 +606,10 @@ export function Header({
         isRoot={isRoot}
         platformPanel={platformPanel}
         onLogout={handleLogout}
+        onOpenReadability={openReadability}
       />
+
+      <ReadabilityDialog open={readabilityOpen} onOpenChange={setReadabilityOpen} />
 
       {createDialog === "demo" ? (
         <CreateDemoDialog

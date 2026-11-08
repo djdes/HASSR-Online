@@ -1,16 +1,21 @@
 import * as React from "react"
 
+import { numberInputMode } from "@/lib/number-input-mode"
 import { cn } from "@/lib/utils"
 
 /**
  * Телефон в кабинете (< 640px): высота не ниже 48px — правило «крупнее на
  * телефоне» в app-theme.css; шрифт 16px даёт `text-base` (`md:text-sm` —
  * только с 768px), иначе iOS приближает экран при нажатии.
+ *
+ * Числовое поле само зовёт цифровую клавиатуру телефона (`inputMode`), если
+ * минус не нужен — см. `numberInputMode`. Свой `inputMode` важнее.
  */
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({ className, type, inputMode, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
+      inputMode={inputMode ?? (type === "number" ? numberInputMode({ min: props.min, step: props.step }) : undefined)}
       data-slot="input"
       className={cn(
         "h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30",
