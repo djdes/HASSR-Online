@@ -1,4 +1,5 @@
 import { JournalDocGuideOverlay } from "@/components/journals/journal-doc-guide";
+import { RecentJournalRecorder } from "@/components/today/recent-journal-recorder";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import type { MessageNamespace } from "@/i18n/messages";
 
@@ -72,6 +73,8 @@ export default async function JournalCodeLayout({ children, params }: { children
        объёма бланка и вместе с вертикальными паддингами выдавливала
        лишний пустой лист. Белая подложка нужна только экрану. */
     <DomainMessagesBoundary namespaces={["journalFields", "journalForm", "journalWidgets", "hygiene", "reports", "journalDocGuides", "journalFillingGuides", "journalUi", ...journalMessages]}>
+    {/* «Недавно открывали» на «Сегодня»: запоминаем журнал на устройстве. */}
+    <RecentJournalRecorder code={code} />
     <div className="relative left-1/2 -my-4 min-h-[calc(100vh-140px)] w-[calc(100vw-var(--app-sidebar-w,0px))] -translate-x-1/2 bg-white py-4 md:-my-6 md:py-6 print:min-h-0 print:py-0 md:print:py-0">
       {/* 1800px — раздел журналов идёт во всю ширину экрана (R1).
           Широкие таблицы журналов скроллятся внутри собственного

@@ -1164,6 +1164,19 @@
     "moreText": {
       "more": "Batafsil",
       "less": "Yig‘ish"
+    },
+    "quickActions": {
+      "share": "Ulashish",
+      "shareCopied": "Havola nusxalandi",
+      "shareFailed": "Havolani nusxalab bo‘lmadi",
+      "toTop": "Yuqoriga",
+      "hotkeysTitle": "Tezkor tugmalar",
+      "hotkeys": {
+        "palette": "Bo‘limlar va jurnallar bo‘yicha qidiruv",
+        "search": "Sahifadagi jurnallarni qidirish",
+        "urgent": "Shoshilinch jurnal",
+        "help": "Ushbu yordam"
+      }
     }
   },
   "language": {
@@ -26229,6 +26242,30 @@
       "namingNote": "Xodimlar umumiy; kimga qaysi nuqtadan vazifalar kelishi — xodim kartochkasida.",
       "later": "Keyinroq",
       "save": "Saqlash"
+    },
+    "todaySpeed": {
+      "recentTitle": "Yaqinda ochilgan",
+      "next": "Keyingisi: {name}",
+      "nextAria": "Keyingi to‘ldirilmagan jurnal: {name}",
+      "leftHM": "Kun tugashiga {hours} soat {minutes} daqiqa",
+      "leftM": "Kun tugashiga {minutes} daqiqa",
+      "closed": "Kun {time} da yopildi",
+      "remaining": "{count, plural, other {# ta jurnal qoldi}}",
+      "allDone": "Hammasi to‘ldirilgan",
+      "hideFilled": "Yashirish",
+      "showFilled": "Ko‘rsatish",
+      "printToday": "Chop etish varag‘i",
+      "printTodayHint": "Bugun nimani to‘ldirish kerak — oshxona uchun A4 varaq"
+    },
+    "todayPrint": {
+      "title": "Bugun nimani to‘ldirish kerak",
+      "back": "«Bugun»ga qaytish",
+      "print": "Chop etish",
+      "empty": "Hammasi to‘ldirilgan — chop etadigan narsa yo‘q.",
+      "done": "Tayyor",
+      "journal": "Jurnal",
+      "who": "Kim",
+      "time": "Vaqt"
     }
   },
   "ideasUi": {

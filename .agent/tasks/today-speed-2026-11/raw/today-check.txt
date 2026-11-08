@@ -1,0 +1,17 @@
+PASS AC9 «Поделиться»: адрес журнала в буфере — {"clip":"http://localhost:3022/journals/fryer_oil","toast":true}
+PASS AC1 «Недавно открывали»: свежий первым — ["fryer_oil","hygiene"]
+PASS AC2 «Дальше: …» — первый незаполненный — {"next":"/journals/product_writeoff","firstRow":"/journals/product_writeoff","text":"Дальше: Акт забраковки"}
+PASS AC3 «До конца дня» — {"text":"До конца дня 3 ч 50 мин · осталось 45 журналов","tone":"calm"}
+PASS AC4 счётчик во вкладке «(N) …» — (45) Электронные журналы СанПиН и ХАССП онлайн — WeSetup
+PASS AC10 «/» — фокус в поиск журналов — journal-search
+PASS AC5 «ububty» (= «гигиен») находит «Гигиенический журнал» — ["Гигиенический журнал (сотрудники)"]
+PASS AC10 «?» — окно горячих клавиш
+PASS AC10 «/» на «Журналах» — journal-search
+PASS AC4 на других страницах заголовок без счётчика — Электронные журналы СанПиН и ХАССП онлайн — WeSetup
+PASS AC6 «Скрыть заполненные» — прячет и помнит на устройстве — {"hidden":true,"hiddenAfterReload":true}
+PASS AC7 лист: столько строк, сколько незаполненных; при печати без шапки и кнопки — {"rows":45,"unfilledCount":45,"printView":{"header":"none","button":"none"}}
+PASS AC2 телефон: «Дальше» у нижнего края экрана — {"visible":true,"bottomGap":36}
+PASS AC8 «Наверх»: появляется после прокрутки и возвращает наверх — {"shown":true,"scrollY":0}
+PASS AC7 лист без входа — страница входа — /login
+
+Итого: 15 PASS, 0 FAIL

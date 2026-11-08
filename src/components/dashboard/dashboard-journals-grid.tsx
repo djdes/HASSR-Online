@@ -1,13 +1,15 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Eye, Search, X } from "lucide-react";
+import { ArrowRight, Eye, Printer, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
+import { RECENT_JOURNALS_KEY, parseRecentJournals, pickRecentJournals } from "@/lib/recent-journals";
+import { useSlashFocus } from "@/components/today/use-slash-focus";
 import { customJournalName } from "@/lib/custom-names";
 import { sortJournalsByName } from "@/lib/journal-sort";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
@@ -72,6 +74,9 @@ export type DashboardDisabledItem = {
   description?: string | null;
 };
 
+/** «Скрыть заполненные» на этом устройстве. */
+const HIDE_FILLED_KEY = "wesetup-today-hide-filled";
+
 const GROUP_TITLE_CLASS =
   "text-[12px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]";
 
@@ -111,6 +116,33 @@ export function DashboardJournalsGrid({
   actions?: React.ReactNode;
 }) {
   const t = useTranslations("dashboardUi.dashboardJournalsGrid");
+  const tSpeed = useTranslations("dashboardUi.todaySpeed");
+  const searchRef = useRef<HTMLInputElement>(null);
+  // «Недавно открывали» и «Скрыть заполненные» — настройки устройства
+  // (localStorage), читаем после гидрации.
+  const [recent, setRecent] = useState<string[]>([]);
+  const [hideFilled, setHideFilled] = useState(false);
+  useEffect(() => {
+    try {
+      setRecent(parseRecentJournals(window.localStorage.getItem(RECENT_JOURNALS_KEY)));
+      setHideFilled(window.localStorage.getItem(HIDE_FILLED_KEY) === "1");
+    } catch {
+      /* хранилище недоступно — без недавних, заполненные видны */
+    }
+  }, []);
+  // «/» — сразу в поиск журналов.
+  useSlashFocus(searchRef);
+  function toggleHideFilled() {
+    setHideFilled((value) => {
+      const next = !value;
+      try {
+        window.localStorage.setItem(HIDE_FILLED_KEY, next ? "1" : "0");
+      } catch {
+        /* без хранилища — до перезагрузки */
+      }
+      return next;
+    });
+  }
   const router = useRouter();
   const tariffLimit = useTariffLimitToast();
   const [query, setQuery] = useState("");
@@ -181,6 +213,11 @@ export function DashboardJournalsGrid({
     () => splitTodayJournals(foundItems, { searching: Boolean(normalizedQuery) }),
     [foundItems, normalizedQuery],
   );
+  // Следующий незаполненный — в порядке списка; при поиске — не показываем.
+  const unfilledItems = useMemo(() => items.filter((item) => !item.filled), [items]);
+  const nextItem = normalizedQuery ? null : (todayGroups.todo.find((item) => !item.filled) ?? null);
+  const recentItems = useMemo(() => pickRecentJournals(recent, items), [recent, items]);
+  const printHref = `/dashboard/today-print?codes=${encodeURIComponent(unfilledItems.map((item) => item.code).join(","))}`;
 
   const totalCount = items.length + paperItems.length + disabledItems.length;
   const foundCount = foundItems.length + foundPaper.length + foundDisabled.length;
@@ -222,6 +259,8 @@ export function DashboardJournalsGrid({
         <div className="relative order-1 min-w-[200px] flex-1 lg:max-w-[420px]">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
           <input
+            ref={searchRef}
+            data-testid="journal-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("searchPlaceholder")}
@@ -245,6 +284,49 @@ export function DashboardJournalsGrid({
           </div>
         ) : null}
       </div>
+
+      {/* Недавно открытые на этом устройстве журналы — в одно касание. */}
+      {!normalizedQuery && recentItems.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2" data-testid="recent-journals">
+          <span className={GROUP_TITLE_CLASS}>{tSpeed("recentTitle")}</span>
+          {recentItems.map((item) => (
+            <Link
+              key={item.id}
+              href={`/journals/${item.code}`}
+              data-recent-journal={item.code}
+              className="inline-flex max-w-full items-center rounded-full border border-[#dcdfed] bg-white px-3.5 py-1.5 text-[13.5px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            >
+              <span className="truncate">{item.name}</span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
+
+      {/* Компьютер: «Дальше: <журнал>» и лист на печать — над списком. */}
+      {!normalizedQuery && unfilledItems.length > 0 ? (
+        <div className="hidden flex-wrap items-center gap-2 md:flex">
+          {nextItem ? (
+            <Link
+              href={`/journals/${nextItem.code}`}
+              data-testid="today-next"
+              aria-label={tSpeed("nextAria", { name: nextItem.name })}
+              className="inline-flex max-w-full items-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25"
+            >
+              <span className="truncate">{tSpeed("next", { name: nextItem.name })}</span>
+              <ArrowRight className="size-4 shrink-0" aria-hidden />
+            </Link>
+          ) : null}
+          <Link
+            href={printHref}
+            data-testid="today-print-link"
+            title={tSpeed("printTodayHint")}
+            className="inline-flex items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          >
+            <Printer className="size-4 text-[#5566f6]" aria-hidden />
+            {tSpeed("printToday")}
+          </Link>
+        </div>
+      ) : null}
 
       {normalizedQuery && foundCount === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
@@ -271,10 +353,45 @@ export function DashboardJournalsGrid({
         </ul>
       ) : null}
 
+      {/* Телефон: «Дальше: <журнал>» закреплён у нижнего края экрана; справа
+          оставлено место доку плавающих кнопок, под списком — запас высоты,
+          чтобы кнопка не закрывала последнюю строку. (`sticky` не работает:
+          секция «Обязательные журналы» обрезает содержимое.) */}
+      {nextItem ? <div aria-hidden className="h-16 md:hidden" /> : null}
+      {nextItem ? (
+        <div
+          className="fixed left-4 right-[92px] z-30 md:hidden print:hidden"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+          data-testid="today-next-sticky"
+        >
+          <Link
+            href={`/journals/${nextItem.code}`}
+            aria-label={tSpeed("nextAria", { name: nextItem.name })}
+            className="inline-flex max-w-full items-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-3 text-[15px] font-medium text-white shadow-[0_12px_32px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
+          >
+            <span className="truncate">{tSpeed("next", { name: nextItem.name })}</span>
+            <ArrowRight className="size-4 shrink-0" aria-hidden />
+          </Link>
+        </div>
+      ) : null}
+
       {/* Заполненные сегодня — ниже незаполненных: сверху то, что осталось. */}
       {todayGroups.done.length > 0 ? (
-        <section className="space-y-2" data-filled-group="">
-          <h3 className={GROUP_TITLE_CLASS}>{t("filledToday", { count: todayGroups.done.length })}</h3>
+        <section className="space-y-2" data-filled-group="" data-hidden={hideFilled ? "" : undefined}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h3 className={GROUP_TITLE_CLASS}>{t("filledToday", { count: todayGroups.done.length })}</h3>
+            {/* Заполненные можно свернуть: на кухне важен только остаток. */}
+            <button
+              type="button"
+              onClick={toggleHideFilled}
+              aria-expanded={!hideFilled}
+              data-testid="toggle-filled"
+              className="text-[13px] font-medium text-[#5566f6] underline-offset-2 hover:underline touch:min-h-0"
+            >
+              {hideFilled ? tSpeed("showFilled") : tSpeed("hideFilled")}
+            </button>
+          </div>
+          {hideFilled ? null : (
           <ul role="list" className={JOURNAL_LIST_CLASS} data-journal-list="" data-journal-group="done">
             {todayGroups.done.map((item) => (
               <li key={item.id} className={JOURNAL_ITEM_CLASS}>
@@ -288,6 +405,7 @@ export function DashboardJournalsGrid({
               </li>
             ))}
           </ul>
+          )}
         </section>
       ) : null}
 

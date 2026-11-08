@@ -1165,6 +1165,19 @@ export type MessageContract = {
     "moreText": {
       "more": "Подробнее",
       "less": "Свернуть"
+    },
+    "quickActions": {
+      "share": "Поделиться",
+      "shareCopied": "Ссылка скопирована",
+      "shareFailed": "Не удалось скопировать ссылку",
+      "toTop": "Наверх",
+      "hotkeysTitle": "Горячие клавиши",
+      "hotkeys": {
+        "palette": "Поиск по разделам и журналам",
+        "search": "Поиск журналов на странице",
+        "urgent": "Срочный журнал",
+        "help": "Эта подсказка"
+      }
     }
   },
   "language": {
@@ -26230,6 +26243,30 @@ export type MessageContract = {
       "namingNote": "Сотрудники общие; кому с какой точки приходят задачи — в карточке сотрудника.",
       "later": "Позже",
       "save": "Сохранить"
+    },
+    "todaySpeed": {
+      "recentTitle": "Недавно открывали",
+      "next": "Дальше: {name}",
+      "nextAria": "Следующий незаполненный журнал: {name}",
+      "leftHM": "До конца дня {hours} ч {minutes} мин",
+      "leftM": "До конца дня {minutes} мин",
+      "closed": "День закрыт в {time}",
+      "remaining": "{count, plural, one {остался # журнал} few {осталось # журнала} many {осталось # журналов} other {осталось # журнала}}",
+      "allDone": "Всё заполнено",
+      "hideFilled": "Скрыть",
+      "showFilled": "Показать",
+      "printToday": "Лист на печать",
+      "printTodayHint": "Что заполнить сегодня — лист A4 для кухни"
+    },
+    "todayPrint": {
+      "title": "Что заполнить сегодня",
+      "back": "К «Сегодня»",
+      "print": "Распечатать",
+      "empty": "Всё заполнено — печатать нечего.",
+      "done": "Готово",
+      "journal": "Журнал",
+      "who": "Кто",
+      "time": "Время"
     }
   },
   "ideasUi": {

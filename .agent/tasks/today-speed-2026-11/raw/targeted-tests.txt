@@ -1,0 +1,141 @@
+TAP version 13
+# Subtest: normalize: lower case, ё → е, collapsed spaces, trimmed
+ok 1 - normalize: lower case, ё → е, collapsed spaces, trimmed
+  ---
+  duration_ms: 1.279445
+  type: 'test'
+  ...
+# Subtest: normalize is idempotent
+ok 2 - normalize is idempotent
+  ---
+  duration_ms: 0.208761
+  type: 'test'
+  ...
+# Subtest: empty query matches everything
+ok 3 - empty query matches everything
+  ---
+  duration_ms: 1.779671
+  type: 'test'
+  ...
+# Subtest: ё and е are the same letter in both directions
+ok 4 - ё and е are the same letter in both directions
+  ---
+  duration_ms: 0.295577
+  type: 'test'
+  ...
+# Subtest: every query word must match, in any order
+ok 5 - every query word must match, in any order
+  ---
+  duration_ms: 0.334634
+  type: 'test'
+  ...
+# Subtest: query is re-normalized defensively (callers may pass raw input)
+ok 6 - query is re-normalized defensively (callers may pass raw input)
+  ---
+  duration_ms: 0.138593
+  type: 'test'
+  ...
+# Subtest: null / undefined fields are ignored
+ok 7 - null / undefined fields are ignored
+  ---
+  duration_ms: 0.199413
+  type: 'test'
+  ...
+# Subtest: неверная раскладка: «ububtyf» находит гигиенический, «рнпшуту» — код hygiene
+ok 8 - неверная раскладка: «ububtyf» находит гигиенический, «рнпшуту» — код hygiene
+  ---
+  duration_ms: 0.257312
+  type: 'test'
+  ...
+# Subtest: «До конца дня»
+    # Subtest: по умолчанию (0) — до полуночи в часовом поясе организации
+    ok 1 - по умолчанию (0) — до полуночи в часовом поясе организации
+      ---
+      duration_ms: 31.103832
+      type: 'test'
+      ...
+    # Subtest: 23:00 — граница того же дня; меньше часа — срочно; после — закрыт
+    ok 2 - 23:00 — граница того же дня; меньше часа — срочно; после — закрыт
+      ---
+      duration_ms: 0.585832
+      type: 'test'
+      ...
+    # Subtest: другой часовой пояс и мусор в часе
+    ok 3 - другой часовой пояс и мусор в часе
+      ---
+      duration_ms: 0.924843
+      type: 'test'
+      ...
+    1..3
+ok 9 - «До конца дня»
+  ---
+  duration_ms: 33.651397
+  type: 'suite'
+  ...
+# Subtest: «Недавно открывали»
+    # Subtest: свежие первыми, без повторов, не больше лимита
+    ok 1 - свежие первыми, без повторов, не больше лимита
+      ---
+      duration_ms: 0.817054
+      type: 'test'
+      ...
+    # Subtest: мусор в хранилище — пустой список; чужие коды отбрасываются
+    ok 2 - мусор в хранилище — пустой список; чужие коды отбрасываются
+      ---
+      duration_ms: 0.323073
+      type: 'test'
+      ...
+    # Subtest: на «Сегодня» — только журналы из списка, до 4, в порядке недавности
+    ok 3 - на «Сегодня» — только журналы из списка, до 4, в порядке недавности
+      ---
+      duration_ms: 0.448585
+      type: 'test'
+      ...
+    1..3
+ok 10 - «Недавно открывали»
+  ---
+  duration_ms: 1.894243
+  type: 'suite'
+  ...
+# Subtest: Лист «Что заполнить сегодня»
+    # Subtest: только коды журналов, без повторов, порядок сохранён, лимит
+    ok 1 - только коды журналов, без повторов, порядок сохранён, лимит
+      ---
+      duration_ms: 0.481752
+      type: 'test'
+      ...
+    1..1
+ok 11 - Лист «Что заполнить сегодня»
+  ---
+  duration_ms: 0.787636
+  type: 'suite'
+  ...
+# Subtest: Горячие клавиши
+    # Subtest: в полях ввода одиночные клавиши не перехватываются
+    ok 1 - в полях ввода одиночные клавиши не перехватываются
+      ---
+      duration_ms: 0.419164
+      type: 'test'
+      ...
+    # Subtest: в окне «?» — палитра, поиск, срочный журнал и сама подсказка
+    ok 2 - в окне «?» — палитра, поиск, срочный журнал и сама подсказка
+      ---
+      duration_ms: 0.359491
+      type: 'test'
+      ...
+    1..2
+ok 12 - Горячие клавиши
+  ---
+  duration_ms: 1.057128
+  type: 'suite'
+  ...
+1..12
+# tests 17
+# suites 4
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 328.262676
+EXIT 0
