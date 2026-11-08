@@ -1996,7 +1996,7 @@ export function FinishedProductDocumentClient({
                 <label key={key} className="flex items-center gap-2 text-[13px] text-[#6f7282]">
                   {label}
                   <input
-                    type="number"
+                    type="number" inputMode="decimal"
                     min={0}
                     max={FINISHED_PRODUCT_TIME_MINUTES_MAX}
                     value={config.timeDefaults[key]}

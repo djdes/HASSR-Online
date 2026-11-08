@@ -358,7 +358,7 @@ export function DemandAndAccountTab({
                   Визитов / мес
                 </label>
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   required
                   min={0}
                   value={manualVisits}
@@ -371,7 +371,7 @@ export function DemandAndAccountTab({
                   Органика (%)
                 </label>
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   min={0}
                   max={100}
                   step="0.1"
@@ -385,7 +385,7 @@ export function DemandAndAccountTab({
                   Платный поиск (%)
                 </label>
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   min={0}
                   max={100}
                   step="0.1"
@@ -439,7 +439,7 @@ export function DemandAndAccountTab({
                     className={`${SEO_INPUT_CLASS} sm:col-span-4`}
                   />
                   <input
-                    type="number"
+                    type="number" inputMode="decimal"
                     min={0}
                     max={100}
                     step="0.1"

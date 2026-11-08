@@ -354,7 +354,7 @@ function ArticleEditor({
             <label className="flex flex-col gap-1 text-[13px]">
               <span className="font-medium text-[#0b1024]">Время, мин</span>
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 min={1}
                 value={readMinutes}
                 onChange={(e) => setReadMinutes(Number(e.target.value))}

@@ -368,10 +368,22 @@ describe("тексты", () => {
     const s = state({}, now);
     assert.equal(shouldShowTrialBanner(s), true);
     const banner = trialBannerText(s);
-    assert.match(banner?.lead ?? "", /осталось 5 дней — по 8 ноября включительно/);
+    assert.match(banner?.lead ?? "", /ещё 5 дней, по 8 ноября включительно/);
     assert.equal(banner?.urgent, false);
     assert.equal(trialBannerText(state({}, new Date(TRIAL_END_OLD.getTime() - DAY)))?.urgent, true);
     assert.equal(shouldShowTrialBanner(state({}, new Date(TRIAL_END_OLD.getTime() + DAY))), false);
+  });
+
+  it("плашка пробного короткая: в обычные дни одна строка, «что выключится» — в последние дни", () => {
+    const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
+    const calm = trialBannerText(state({}, new Date(TRIAL_END_OLD.getTime() - 5 * DAY + 60_000)));
+    assert.equal(calm?.tail, null);
+    // Строка плюс ссылка «Тарифы» — не больше 12 слов.
+    assert.ok(words(calm?.lead ?? "") + 1 <= 12, calm?.lead);
+    const urgent = trialBannerText(state({}, new Date(TRIAL_END_OLD.getTime() - DAY)));
+    assert.equal(urgent?.urgent, true);
+    assert.match(urgent?.tail ?? "", /1 сотрудник и 1 журнал/);
+    assert.doesNotMatch(urgent?.tail ?? "", /Премиума/);
   });
 
   it("окно честное: не платившим — «Пробный период закончился», цифры сотрудников и журналов", () => {

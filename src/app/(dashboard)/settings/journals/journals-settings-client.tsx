@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreText } from "@/components/ui/more-text";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -409,6 +410,7 @@ export function JournalsSettingsClient({
         type="button"
         onClick={() => setLightbox({ url: src, name })}
         title={t("zoomTitle")}
+        aria-label={t("zoomTitle")}
         className="group/preview relative block w-full overflow-hidden border-b border-[#ececf4] bg-white"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -423,15 +425,17 @@ export function JournalsSettingsClient({
           className="aspect-[1228/862] w-full object-cover object-top transition-transform duration-200 group-hover/preview:scale-[1.03]"
         />
         <span className="absolute inset-0 flex items-center justify-center bg-[#0b1024]/0 opacity-0 transition-all duration-200 group-hover/preview:bg-[#0b1024]/35 group-hover/preview:opacity-100 focus-visible:opacity-100">
-          <span className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white/95 px-3.5 text-[12px] font-medium text-[#0b1024] shadow-[0_8px_24px_-12px_rgba(11,16,36,0.6)]">
+          {/* Лупа без подписи: подпись «Увеличить» повторялась у каждого
+              из полусотни журналов; название кнопки — в aria-label. */}
+          <span className="inline-flex size-11 items-center justify-center rounded-full bg-white/95 shadow-[0_8px_24px_-12px_rgba(11,16,36,0.6)]">
             <ZoomIn
+              aria-hidden
               className={
                 accent === "green"
-                  ? "size-4 text-[#136b2a]"
-                  : "size-4 text-[#b45309]"
+                  ? "size-5 text-[#136b2a]"
+                  : "size-5 text-[#b45309]"
               }
             />
-            {t("zoom")}
           </span>
         </span>
       </button>
@@ -631,14 +635,16 @@ export function JournalsSettingsClient({
             </button>
           </div>
 
+          {/* Основание — первое предложение и «Подробнее»: раньше текст
+              обрезался на третьей строке посреди фразы. */}
           <div
-            className="line-clamp-3 text-[11px] leading-snug text-[#6f7282]"
+            className="text-[11px] leading-snug text-[#6f7282]"
             title={t("paperCardHint", {
               why: journal.why,
               fine: journal.fineHint,
             })}
           >
-            {journal.why}
+            <MoreText text={journal.why} />
           </div>
 
           <div className="mt-auto flex flex-wrap items-center gap-1 pt-1">
@@ -846,17 +852,23 @@ export function JournalsSettingsClient({
                     : ""}
                 </span>
               </div>
+              {/* Вступление длинное (закон разрешает электронный вид, штрафы):
+                  видно первое предложение, остальное — по «Подробнее». */}
               <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-[#6f7282]">
-                {rules.intro}{" "}
-                <a
-                  href={rules.introLaw.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-[#5566f6] hover:underline"
-                >
-                  {rules.introLaw.label}
-                  <ExternalLink className="size-3" />
-                </a>
+                <MoreText
+                  text={rules.intro}
+                  after={
+                    <a
+                      href={rules.introLaw.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-medium text-[#5566f6] hover:underline"
+                    >
+                      {rules.introLaw.label}
+                      <ExternalLink className="size-3" />
+                    </a>
+                  }
+                />
               </p>
             </div>
           </div>

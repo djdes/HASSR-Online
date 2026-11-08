@@ -289,7 +289,7 @@ function CustomColumnEditor({
       {custom.type === "rating" ? (
         <label className="flex items-center gap-2 text-[12.5px] text-[#6f7282]">
           {t("columnSettings.maximum")}<input
-            type="number"
+            type="number" inputMode="decimal"
             min={JOURNAL_RATING_MAX_MIN}
             max={JOURNAL_RATING_MAX_MAX}
             value={custom.ratingMax ?? JOURNAL_RATING_MAX_DEFAULT}

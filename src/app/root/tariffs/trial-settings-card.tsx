@@ -162,7 +162,7 @@ export function TrialSettingsCard({
         </Field>
         <Field label={t("grace")}>
           <input
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
             max={60}
             value={graceDays}

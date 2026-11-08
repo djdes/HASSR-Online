@@ -1,0 +1,96 @@
+{
+  "phone": {
+    "/dashboard": {
+      "url": "/dashboard",
+      "words": 557,
+      "wordsWithoutJournalLists": 53,
+      "firstJournalRowTop": 437,
+      "trialBannerHeight": 75,
+      "trialBannerWords": 10,
+      "scrollWidthOverflow": 0
+    },
+    "/journals": {
+      "url": "/journals",
+      "words": 337,
+      "wordsWithoutJournalLists": 337,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": 75,
+      "trialBannerWords": 10,
+      "scrollWidthOverflow": 0
+    },
+    "/settings/organization": {
+      "url": "/settings/organization",
+      "words": 412,
+      "wordsWithoutJournalLists": 412,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": null,
+      "trialBannerWords": null,
+      "scrollWidthOverflow": 0
+    },
+    "/staff": {
+      "url": "/settings/users",
+      "words": 236,
+      "wordsWithoutJournalLists": 236,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": null,
+      "trialBannerWords": null,
+      "scrollWidthOverflow": 0
+    },
+    "/settings/journals": {
+      "url": "/settings/journals",
+      "words": 660,
+      "wordsWithoutJournalLists": 660,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": null,
+      "trialBannerWords": null,
+      "scrollWidthOverflow": 0
+    }
+  },
+  "desktop": {
+    "/dashboard": {
+      "url": "/dashboard",
+      "words": 557,
+      "wordsWithoutJournalLists": 53,
+      "firstJournalRowTop": 426,
+      "trialBannerHeight": 52,
+      "trialBannerWords": 10,
+      "scrollWidthOverflow": 0
+    },
+    "/journals": {
+      "url": "/journals",
+      "words": 337,
+      "wordsWithoutJournalLists": 337,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": 52,
+      "trialBannerWords": 10,
+      "scrollWidthOverflow": 0
+    },
+    "/settings/organization": {
+      "url": "/settings/organization",
+      "words": 412,
+      "wordsWithoutJournalLists": 412,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": null,
+      "trialBannerWords": null,
+      "scrollWidthOverflow": 0
+    },
+    "/staff": {
+      "url": "/settings/users",
+      "words": 250,
+      "wordsWithoutJournalLists": 250,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": null,
+      "trialBannerWords": null,
+      "scrollWidthOverflow": 0
+    },
+    "/settings/journals": {
+      "url": "/settings/journals",
+      "words": 660,
+      "wordsWithoutJournalLists": 660,
+      "firstJournalRowTop": null,
+      "trialBannerHeight": null,
+      "trialBannerWords": null,
+      "scrollWidthOverflow": 0
+    }
+  }
+}

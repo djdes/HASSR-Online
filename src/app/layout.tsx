@@ -12,9 +12,13 @@ import { NativeStatusBar } from "@/app/mini/_components/native-status-bar";
 import "./globals.css";
 import "./app-theme.css";
 import "./public-theme.css";
+import "./view-prefs.css";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
+import { readViewPrefs } from "@/lib/view-prefs.server";
+import { viewPrefsBootstrapCode, viewPrefsHtmlAttributes } from "@/lib/view-prefs";
+import { ViewPrefsProvider } from "@/components/view-prefs/view-prefs-provider";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -87,9 +91,15 @@ export default async function RootLayout({
 }>) {
   const locale = await getSiteLocale();
   const messages = pickMessages(await loadMessages(locale), ["common", "language", "journals", "auth", "navigation", "journalControls", "notifications", "landingComponents", "publicSupport", "publicUi", "errorSurface", "loadingSurfaces", "layoutUi", "sharedUi"]);
+  // «Удобство чтения» этого устройства (размер текста, контраст, анимация,
+  // пояснения) — атрибуты на <html> с первого кадра, без мигания.
+  const viewPrefs = await readViewPrefs();
   return (
-    <html lang={locale}>
+    // suppressHydrationWarning: скрипт ниже до гидрации ставит флаги «как в
+    // системе» (высокий контраст, без анимации) по настройкам устройства.
+    <html lang={locale} {...viewPrefsHtmlAttributes(viewPrefs)} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: viewPrefsBootstrapCode() }} />
         {/* Иконки вкладки и домашнего экрана берёт App Router из
             src/app/icon.png и src/app/apple-icon.png — ручные <link>
             здесь дублировали бы их и расходились при замене. */}
@@ -108,6 +118,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <SiteLocaleProvider locale={locale} messages={messages}>
+        <ViewPrefsProvider initial={viewPrefs}>
         <ScrollToTop />
         {/* Приложение WeSetup: значки строки состояния под цвет шапки на
             страницах вне оболочки (QR, удаление аккаунта, политика). */}
@@ -117,6 +128,7 @@ export default async function RootLayout({
         <BuildVersionWatcher />
         <YandexMetrika />
         <CookieConsent />
+        </ViewPrefsProvider>
         </SiteLocaleProvider>
       </body>
     </html>

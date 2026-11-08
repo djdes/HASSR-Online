@@ -20,9 +20,11 @@ export function LandingMotion() {
       )
     );
 
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    // «Без анимации» в Удобстве чтения (флаг на <html>) — как системное
+    // «Уменьшить движение»: секции видны сразу.
+    const reduceMotion =
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      root.hasAttribute("data-view-still");
 
     for (const target of targets) {
       target.dataset.inview =
