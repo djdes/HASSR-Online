@@ -1,0 +1,7 @@
+build-info: {"buildId":"0f52bed","buildTime":"2026-11-08T16:37:54Z","fullBuildId":"0f52bedd46b5990fb8f60571e8e6acb269474e32"}
+PASS /login 200
+PASS / 200
+today-print без входа: 307 https://wesetup.ru/login
+PASS лист без входа → вход
+FAIL нет quickActions в HTML /login
+Итого: 3 PASS, 1 FAIL
