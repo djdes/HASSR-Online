@@ -1,0 +1,7 @@
+default {"attrs":{"data-view-text":"normal","data-view-contrast":"auto","data-view-motion":"auto","data-view-hints":"on"},"sample":{"cls":"text-[14px]","size":"14px"}}
+PASS прод /login без куки: обычные атрибуты — {"data-view-text":"normal","data-view-contrast":"auto","data-view-motion":"auto","data-view-hints":"on"}
+xlarge-hc {"attrs":{"data-view-text":"xlarge","data-view-contrast":"high","data-view-motion":"reduce","data-view-hints":"on","data-view-hc":"","data-view-still":""},"sample":{"cls":"text-[14px]","size":"18.2px"}}
+PASS прод /login «Очень крупный»: кегль ×1,3 — {"base":{"cls":"text-[14px]","size":"14px"},"now":{"cls":"text-[14px]","size":"18.2px"}}
+PASS прод: высокий контраст и без анимации по куке — {"data-view-text":"xlarge","data-view-contrast":"high","data-view-motion":"reduce","data-view-hints":"on","data-view-hc":"","data-view-still":""}
+PASS прод: главная без анимации — нижняя секция видна сразу — {"count":7,"lastOpacity":"1","lastFilter":"none"}
+Итого: 4 PASS, 0 FAIL

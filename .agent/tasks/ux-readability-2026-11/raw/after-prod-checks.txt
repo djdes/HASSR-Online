@@ -1,0 +1,14 @@
+build-info: {"buildId":"11d6122","buildTime":"2026-11-08T00:31:44Z","fullBuildId":"11d6122f4ab560ae49f9b0562630bc02aaabcde4"}
+PASS без куки: обычный текст, пояснения видны
+html: <html lang="ru" data-view-text="xlarge" data-view-contrast="high" data-view-motion="reduce" data-view-hints="off" data-view-hc="" data-view-still="">
+PASS кука: очень крупный текст с первого кадра
+PASS кука: высокий контраст
+PASS кука: без анимации
+PASS кука: пояснения скрыты
+PASS скрипт «как в системе» до гидрации
+css: scale=68 view-prefs-files=1
+PASS CSS: кегли умножаются на --app-text-scale
+PASS CSS: правила «Удобства чтения»
+PASS главная 200
+PASS главная с кукой 200
+Итого: 10 PASS, 0 FAIL
