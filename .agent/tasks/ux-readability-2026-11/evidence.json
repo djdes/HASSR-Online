@@ -1,0 +1,118 @@
+{
+  "task": "ux-readability-2026-11",
+  "branch": "claude/serene-mccarthy-rhrl3e",
+  "base": "a7d5df55",
+  "pr": 144,
+  "mergedMaster": "11d6122f",
+  "checkedAt": "2026-11-08T00:45Z",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "postcss-plugins/text-scale.cjs",
+        "src/lib/text-scale-plugin.test.ts",
+        "src/lib/view-prefs.test.ts",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/view-prefs/text-size.tsx",
+        "src/components/view-prefs/readability-dialog.tsx",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/view-prefs.css",
+        "src/lib/view-prefs.test.ts",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/view-prefs.css",
+        "src/components/public/landing-motion.tsx",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/ui/page-header.tsx",
+        "src/components/ui/page-guide.tsx",
+        "src/lib/view-prefs.test.ts",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/billing-period.ts",
+        "src/lib/billing-period.test.ts",
+        "raw/ui-check.txt",
+        "raw/after-text-metrics.json"
+      ]
+    },
+    "AC7": {
+      "status": "PASS",
+      "note": "5 экранов на телефоне 2139 → 1698 слов (−20,6%); «Сегодня» вне списков 101 → 53; первая строка журналов 693 → 437px",
+      "evidence": [
+        "e2e/text-metrics.cjs",
+        "raw/baseline-text-metrics.json",
+        "raw/after-text-metrics.json",
+        "src/lib/first-sentence.test.ts"
+      ]
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/dashboard/today-journal-groups.test.ts",
+        "e2e/prepare-filled.ts",
+        "raw/ac8-check.txt"
+      ]
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/number-input-mode.ts",
+        "src/lib/number-input-mode.test.ts",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/layout/skip-to-content.tsx",
+        "src/lib/view-prefs.test.ts",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC11": {
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.txt",
+        "raw/test-gate.txt",
+        "raw/i18n-check.txt",
+        "raw/eslint.txt",
+        "raw/targeted-tests.txt",
+        "raw/next-build.txt",
+        "raw/before-prod-checks.txt",
+        "raw/after-prod-checks.txt",
+        "raw/prod-browser-check.txt",
+        "raw/prod-css-files.txt",
+        "e2e/post-deploy-check.sh",
+        "e2e/prod-browser-check.cjs"
+      ]
+    }
+  },
+  "notes": [
+    "Скриншоты (*.png) игнорируются .gitignore и остались на стенде проверки.",
+    "deploy.yml: postcss.config.mjs и postcss-plugins/ входят в отпечаток холодной сборки."
+  ],
+  "deployRun": 2192,
+  "prodBuild": "11d6122"
+}

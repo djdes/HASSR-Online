@@ -1,12 +1,13 @@
 # Evidence: удобство чтения и меньше «воды» — 10 улучшений UX/UI (07–08.11.2026)
 
-Ветка `claude/serene-mccarthy-rhrl3e` от master `a7d5df55`, PR #144. Проверка — на текущем коде:
+Ветка `claude/serene-mccarthy-rhrl3e` от master `a7d5df55`, PR #144. Влито в master squash-коммитом `11d6122f`.
+Прод на нём с 08.11.2026 ~00:40 UTC (выкладка №2192, холодная сборка). Проверка — на текущем коде:
 
 - production-сборка (`next build --webpack` с чистым кешем + `next start`) на локальном стенде:
   PostgreSQL 16, база `wesetup_e2e`, демо-данные «Демо-кухня WESETUP», управляющий stage3-e2e-manager;
 - браузер Playwright: Pixel 7 и 1440×900.
 
-Итог: **все AC — PASS** (прод — в разделе ниже).
+Итог: **все AC — PASS**, в том числе на проде (раздел ниже).
 
 | AC | Статус | Доказательство |
 | --- | --- | --- |
@@ -20,7 +21,7 @@
 | AC8 Сначала то, что осталось | PASS | `splitTodayJournals`, тест `today-journal-groups.test.ts`. Браузер (`raw/ac8-check.txt`): запись «Журнала уборки» сегодня (`e2e/prepare-filled.ts`, после проверки убрана) → группа «Заполнено сегодня · 1» ниже незаполненных, незаполненные по алфавиту, при поиске — один список |
 | AC9 Цифровая клавиатура | PASS | `numberInputMode` + `Input` (тест `number-input-mode.test.ts`, вместе с проверкой исходников: у каждого `<input type="number" min>` есть `inputMode`). 25 самодельных полей получили `inputMode`; поля без `min` (возможен минус) не тронуты. Браузер: час конца смены — `inputmode="numeric"` |
 | AC10 Переход и фокус | PASS | Первый Tab — «Перейти к содержимому» (видна в 12px от угла), Enter → `document.activeElement.id === "main-content"`. Элемент без своего фокуса («Тарифы») — `outline: solid 2px rgb(85,102,246)` |
-| AC11 Ворота | PASS | `npm run typecheck` — EXIT 0 (`raw/typecheck.txt`); `npm run test:gate` — 5815/5815 (`raw/test-gate.txt`); `npm run i18n:check` — 97/97 (`raw/i18n-check.txt`); eslint 49 изменённых файлов — 0 ошибок, 2 старых предупреждения (`raw/eslint.txt`); целевые тесты 79/79 (`raw/targeted-tests.txt`); `next build` — успешно (`raw/next-build.txt`). Прод — ниже |
+| AC11 Ворота | PASS | `npm run typecheck` — EXIT 0 (`raw/typecheck.txt`); `npm run test:gate` — 5815/5815 (`raw/test-gate.txt`); `npm run i18n:check` — 97/97 (`raw/i18n-check.txt`); eslint 49 изменённых файлов — 0 ошибок, 2 старых предупреждения (`raw/eslint.txt`); целевые тесты 79/79 (`raw/targeted-tests.txt`); `next build` — успешно (`raw/next-build.txt`). CI PR #144 («Typecheck, tests and Ralph routing») — success; master не двигался (`a7d5df55`), влито squash `11d6122f`; выкладка №2192 — `/api/build-info` → `11d6122`. Прод — ниже |
 
 ## Что нашла проверка и что исправлено до слияния
 
@@ -39,3 +40,25 @@
 - **Ошибка процесса.** Проверка типов, запущенная параллельно со сборкой, исчерпала память, и сборку убило (EXIT 137). Повторная сборка — отдельно, успешно.
 
 Скриншоты (`*.png`) по правилу `.gitignore` в репозиторий не попадают и остались на стенде.
+
+## После выкладки (прод, 08.11.2026 ~00:40 UTC)
+
+**`e2e/post-deploy-check.sh`** — без входа и без записей.
+
+- До выкладки (сборка `a7d5df5`) 8 проверок из 10 падали: атрибутов и CSS ещё не было (`raw/before-prod-checks.txt`).
+- После — **10 из 10 PASS** (`raw/after-prod-checks.txt`):
+  - без куки `<html data-view-text="normal" … data-view-hints="on">`;
+  - с кукой `t:xlarge|c:high|m:reduce|h:off` сервер сразу рисует `data-view-text="xlarge"`, `data-view-hc`, `data-view-still`, `data-view-hints="off"`;
+  - скрипт «как в системе» на месте;
+  - CSS сайта: кегли умножаются на `--app-text-scale` (68 объявлений), правила «Удобства чтения» есть;
+  - главная открывается (200).
+
+**`e2e/prod-browser-check.cjs`** — браузер без входа, без отправки форм: **4 из 4 PASS** (`raw/prod-browser-check.txt`).
+
+- /login, Pixel 7: `text-[14px]` 14px → 18,2px при «Очень крупном».
+- Контраст и «без анимации» включаются по куке.
+- Главная: нижняя секция видна сразу, без размытия.
+
+**Холодная сборка на проде:** файл правил «крупнее на телефоне» (`d8632f7ee5ee57b0.css`, тот же хеш, что в локальной сборке с чистым кешем) — с множителем (`raw/prod-css-files.txt`).
+
+**Кабинет на проде** (меню профиля, «Сегодня», мини-приложение) под чужой учётной записью не открывали — он проверен на стенде на той же сборке.
