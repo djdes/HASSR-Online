@@ -1164,6 +1164,19 @@
     "moreText": {
       "more": "More",
       "less": "Less"
+    },
+    "quickActions": {
+      "share": "Share",
+      "shareCopied": "Link copied",
+      "shareFailed": "Could not copy the link",
+      "toTop": "Back to top",
+      "hotkeysTitle": "Keyboard shortcuts",
+      "hotkeys": {
+        "palette": "Search sections and journals",
+        "search": "Search journals on the page",
+        "urgent": "Urgent journal",
+        "help": "This help"
+      }
     }
   },
   "language": {
@@ -26229,6 +26242,30 @@
       "namingNote": "Staff are shared; which location a person receives tasks from is set in the employee card.",
       "later": "Later",
       "save": "Save"
+    },
+    "todaySpeed": {
+      "recentTitle": "Recently opened",
+      "next": "Next: {name}",
+      "nextAria": "Next unfilled journal: {name}",
+      "leftHM": "Day ends in {hours} h {minutes} min",
+      "leftM": "Day ends in {minutes} min",
+      "closed": "Day closed at {time}",
+      "remaining": "{count, plural, one {# journal left} other {# journals left}}",
+      "allDone": "All filled in",
+      "hideFilled": "Hide",
+      "showFilled": "Show",
+      "printToday": "Print sheet",
+      "printTodayHint": "What to fill in today — an A4 sheet for the kitchen"
+    },
+    "todayPrint": {
+      "title": "What to fill in today",
+      "back": "Back to Today",
+      "print": "Print",
+      "empty": "Everything is filled in — nothing to print.",
+      "done": "Done",
+      "journal": "Journal",
+      "who": "Who",
+      "time": "Time"
     }
   },
   "ideasUi": {

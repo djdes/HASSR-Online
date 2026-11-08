@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useRef, useState } from "react";
+import { useSlashFocus } from "@/components/today/use-slash-focus";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -156,6 +157,9 @@ export function JournalsBrowser({
   canToggle = false,
 }: JournalsBrowserProps) {
   const ui = useTranslations("journals.ui.browser");
+  // «/» — сразу в поиск журналов.
+  const searchRef = useRef<HTMLInputElement>(null);
+  useSlashFocus(searchRef);
   const router = useRouter();
   // Свои названия организации («Настройки → Названия»): карточки и
   // подтверждения показывают своё, поиск ищет и по официальному.
@@ -290,6 +294,8 @@ export function JournalsBrowser({
         <div className="relative w-full lg:max-w-[420px]">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
           <input
+            ref={searchRef}
+            data-testid="journal-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={ui("searchPlaceholder")}

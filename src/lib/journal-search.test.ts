@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
+import { journalMatchesQuery, normalizeJournalSearch, switchKeyboardLayout } from "@/lib/journal-search";
 
 test("normalize: lower case, ё → е, collapsed spaces, trimmed", () => {
   assert.equal(normalizeJournalSearch("  Журнал   УЧЁТА  "), "журнал учета");
@@ -43,4 +43,16 @@ test("query is re-normalized defensively (callers may pass raw input)", () => {
 test("null / undefined fields are ignored", () => {
   assert.equal(journalMatchesQuery([null, undefined, "Бракераж"], "бракераж"), true);
   assert.equal(journalMatchesQuery([null, undefined], "бракераж"), false);
+});
+
+test("неверная раскладка: «ububtyf» находит гигиенический, «рнпшуту» — код hygiene", () => {
+  assert.equal(switchKeyboardLayout("ububtyf"), "гигиена");
+  assert.equal(switchKeyboardLayout("рнпшуту"), "hygiene");
+  assert.equal(switchKeyboardLayout("123 ,."), "123 бю");
+  assert.equal(journalMatchesQuery(["Гигиенический журнал (сотрудники)", "hygiene"], "ububtybx"), true);
+  assert.equal(journalMatchesQuery(["Гигиенический журнал (сотрудники)", "hygiene"], "рнп"), true);
+  // Два слова в английской раскладке: «журнал уборки» → «;ehyfk e,jhrb».
+  assert.equal(journalMatchesQuery(["Журнал уборки", "cleaning"], ";ehyfk e,jhrb"), true);
+  // Как набрано совпадения нет и в другой раскладке тоже — не находит.
+  assert.equal(journalMatchesQuery(["Журнал уборки", "cleaning"], "qqqq"), false);
 });

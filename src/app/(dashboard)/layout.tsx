@@ -32,6 +32,8 @@ import { contactTelegramUrl } from "@/lib/contact-us";
 import { BugReportLauncher } from "@/components/support/bug-report-launcher";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { SkipToContent } from "@/components/layout/skip-to-content";
+import { BackToTop } from "@/components/today/back-to-top";
+import { HotkeysHelp } from "@/components/today/hotkeys-help";
 import { MAIN_CONTENT_ID } from "@/lib/view-prefs";
 import { UrgentJournalHotkey } from "@/components/layout/urgent-journal-hotkey";
 import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
@@ -701,6 +703,9 @@ export default async function DashboardLayout({
               mode={whatsNewState}
             />
           ) : null}
+          {/* «Наверх» на телефоне и «?» — список горячих клавиш (08.11.2026). */}
+          <BackToTop />
+          <HotkeysHelp />
           {/* ⌘K — палитра-навигатор. Один глобальный listener на keydown,
               ноль cost когда не открыт. Доступна всем кто видит dashboard. */}
           <CommandPalette />

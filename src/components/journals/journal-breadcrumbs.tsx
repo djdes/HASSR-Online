@@ -3,6 +3,7 @@
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { useTranslations } from "next-intl";
 import { PageBackLink } from "@/components/layout/page-nav";
+import { ShareJournalButton } from "@/components/today/share-journal-button";
 import { useCustomNames, useJournalDisplayName } from "@/components/shared/custom-names-provider";
 import {
   journalSwitcherOptions,
@@ -124,6 +125,8 @@ export function JournalPageCrumbs({
     <div className="flex min-w-0 items-center gap-3 print:hidden">
       <PageBackLink fallbackHref={backHref} />
       <Breadcrumbs items={items} className={`min-w-0 flex-1 ${className}`.trim()} />
+      {/* «Поделиться» — ссылка на этот журнал повару или коллеге. */}
+      <ShareJournalButton title={journalLabel ?? undefined} />
     </div>
   );
 }

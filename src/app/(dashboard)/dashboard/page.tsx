@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { TodayStatus, TodayTabBadge } from "@/components/today/today-status";
+import { dayDeadline } from "@/lib/day-deadline";
 import { PpkTodayCard } from "@/components/production-control/ppk-today-card";
 import { loadPpkTodaySummary } from "@/lib/ppk/today.server";
 import { LiveRefresh } from "@/components/live/live-refresh";
@@ -155,6 +157,9 @@ export default async function DashboardPage({
         disabledPaperJournalIds: true,
         type: true,
         subscriptionPlan: true,
+        // «До конца дня»: час конца смены в часовом поясе организации.
+        timezone: true,
+        shiftEndHour: true,
       },
     }),
     // Плашка «Производственный контроль»: сбой загрузки её скрывает, главная не ломается.
@@ -215,12 +220,28 @@ export default async function DashboardPage({
   // журналов берут их сами, из CustomNamesProvider).
   const customNames = await getOrgCustomNames(organizationId);
   const tLeads = await getTranslations("navigation.shell.leads");
+  // Граница дня для «До конца дня» — на сервере, остаток считает клиент.
+  const deadline = dayDeadline({ timezone: org?.timezone, shiftEndHour: org?.shiftEndHour, now });
   return (
     <div className="space-y-5">
       {/* Видимый заголовок «Сегодня» (название пункта меню) и что здесь
           делать — раньше экран начинался сразу с подзаголовка «Обязательные
           журналы», и было непонятно, где ты. */}
-      <SectionPageHeader description={tLeads("today")} />
+      <SectionPageHeader
+        description={tLeads("today")}
+        actions={
+          complianceItems.length > 0 ? (
+            <TodayStatus
+              deadlineIso={deadline.deadline.toISOString()}
+              closeLabel={deadline.label}
+              unfilled={unfilledCount}
+              rollsOverAtDeadline={deadline.label === "00:00"}
+            />
+          ) : null
+        }
+      />
+      {/* Число незаполненных — во вкладке браузера и на значке приложения. */}
+      <TodayTabBadge unfilled={unfilledCount} />
       {/* «Журналы → Сегодня» (меню кабинета 2026-10-16): только то, что
           нужно сделать сегодня. Остальные блоки бывшей главной переехали
           в свои разделы: медкнижки и обучение — «Сотрудники», датчики и

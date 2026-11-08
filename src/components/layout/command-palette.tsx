@@ -1,4 +1,5 @@
 "use client";
+import { switchKeyboardLayout } from "@/lib/journal-search";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -79,13 +80,18 @@ const KIND_TONE: Record<Hit["kind"], NavTone> = {
   equipment: navTone("Boxes"),
 };
 
-function fuzzyMatch(item: StaticItem, q: string): boolean {
-  const lq = q.toLowerCase();
+function matchesText(item: StaticItem, lq: string): boolean {
   if (item.label.toLowerCase().includes(lq)) return true;
   if (item.href && item.href.toLowerCase().includes(lq)) return true;
   if (item.hint && item.hint.toLowerCase().includes(lq)) return true;
   if (item.keywords?.some((k) => k.toLowerCase().includes(lq))) return true;
   return false;
+}
+
+/** Как набрано, а если не нашлось — в другой раскладке («ystcnbnm» → «настройки»…). */
+function fuzzyMatch(item: StaticItem, q: string): boolean {
+  const lq = q.toLowerCase();
+  return matchesText(item, lq) || matchesText(item, switchKeyboardLayout(lq));
 }
 
 export function CommandPalette() {
