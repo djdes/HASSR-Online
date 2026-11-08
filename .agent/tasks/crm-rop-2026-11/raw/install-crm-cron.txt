@@ -1,0 +1,15 @@
+## 1: empty crontab
+[crm-cron] установлен: каждые 5 минут → /home/user/HASSR-Online/scripts/cron-crm.sh
+2-59/5 * * * * /bin/bash /home/user/HASSR-Online/scripts/cron-crm.sh >> $HOME/wesetup-cron-crm.log 2>&1 # wesetup-crm-cron
+## 2: repeat
+[crm-cron] уже установлен
+## 3: existing manual crm line + other cron
+[crm-cron] установлен: каждые 5 минут → /home/user/HASSR-Online/scripts/cron-crm.sh
+0-59/5 * * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://wesetup.ru/api/cron/support-unanswered
+2-59/5 * * * * /bin/bash /home/user/HASSR-Online/scripts/cron-crm.sh >> $HOME/wesetup-cron-crm.log 2>&1 # wesetup-crm-cron
+## ok secret
+exit 0
+## wrong secret
+curl: (22) The requested URL returned error: 401
+2026-11-08T05:48:00+00:00 [crm-cron] http://127.0.0.1:3000/api/cron/crm не ответил
+exit 1

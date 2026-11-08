@@ -163,6 +163,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       registrationIp: null,
       journalAccessMigrated: user.journalAccessMigrated,
       platformSections: [],
+      platformSalesHead: false,
     }));
   const owner = contacts?.owner ?? null;
   const requisites = contacts?.requisites ?? null;
@@ -526,7 +527,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   {person.lastLoginAt ? organizationDate(new Date(person.lastLoginAt), locale) : t("people.never")}
                 </div>
                 <div className="md:text-right">
-                  {viewer.superadmin && !person.isRoot ? <PanelAccessButton user={{ id: person.id, name: person.name }} sections={person.platformSections} /> : null}
+                  {viewer.superadmin && !person.isRoot ? <PanelAccessButton user={{ id: person.id, name: person.name }} sections={person.platformSections} salesHead={person.platformSalesHead} /> : null}
                   {person.isRoot ? (
                     <span className="inline-flex items-center gap-1 text-[12px] text-[#3848c7]">
                       <ShieldCheck className="size-3.5" />

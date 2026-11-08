@@ -155,6 +155,7 @@ export async function POST(request: Request) {
   const tgOk = await notifyPlatformAdmin(composeDemoAlert(demo, escapeTelegramHtml), {
     kind: "demo_request",
     dedupeKey: `demo:${requestId}`,
+    audience: "sales",
     // Своё письмо с приглашением в календарь — ниже, всем администраторам.
     email: false,
   }).catch(() => false);
@@ -171,6 +172,7 @@ export async function POST(request: Request) {
         `<h2>${escapeHtml(DEMO_SERVICE_TITLE)}</h2><p>${lines.map((line) => escapeHtml(line)).join("<br>")}</p>`,
         slot ? { attachments: [inviteAttachment(slot, requestId, `Показ WeSetup: ${demo.name}, ${demo.phone}`)] } : undefined,
       ),
+      "sales",
     ).catch(() => false);
   }
 

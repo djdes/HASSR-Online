@@ -237,7 +237,7 @@ export async function POST(request: Request) {
       email,
       escape: escapeTelegramHtml,
     }),
-    { kind: "profile_completed", dedupeKey: `profile_completed:${organizationId}` },
+    { kind: "profile_completed", dedupeKey: `profile_completed:${organizationId}`, audience: "sales" },
   ).catch((error) => console.error("[profile/complete] admin alert failed", error));
 
   // Точки: анкета показывает шаг «Назовите точки» — отдаём созданные.

@@ -1,0 +1,15 @@
+import { chromium } from "playwright";
+const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const errors = [];
+page.on("pageerror", (e) => errors.push(e.message));
+await page.goto("http://localhost:3000/login", { waitUntil: "networkidle" });
+await page.fill('input[placeholder="name@company.com"]', "owner@wesetup.local.test");
+await page.fill('input[type="password"]', "LocalRoot-2026!");
+await page.click('button[type="submit"]');
+await page.waitForURL((u) => !u.pathname.startsWith("/login"));
+await page.goto("http://localhost:3000/root/crm/mail", { waitUntil: "networkidle" });
+console.log("filtered items:", await page.locator("[data-crm-filtered-item]").count(), "rules:", await page.locator("[data-crm-rules] li").count());
+await page.screenshot({ path: ".agent/tasks/crm-rop-2026-11/raw/screens/13-mail-filtered.png", fullPage: true });
+console.log("errors:", errors.length);
+await browser.close();

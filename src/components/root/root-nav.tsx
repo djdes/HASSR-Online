@@ -19,6 +19,7 @@ import {
   Gauge,
   Handshake,
   HeartPulse,
+  Inbox,
   Languages,
   LayoutDashboard,
   Lightbulb,
@@ -63,8 +64,8 @@ import { canAccessPlatformPath, type PlatformViewer } from "@/lib/platform-acces
  *
  * Разделов девятнадцать, и одной строкой они не помещались: подписи
  * сжимались до переноса, а последние пункты уезжали за край экрана.
- * Поэтому верхний уровень — шесть элементов: «Организации» прямой
- * ссылкой (туда заходят чаще всего) и четыре смысловые группы.
+ * Поэтому верхний уровень — шесть элементов: «Организации» и «CRM»
+ * прямыми ссылками (туда заходят чаще всего) и четыре смысловые группы.
  *
  * Группы раскрываются наведением и фокусом с клавиатуры — приём тот же,
  * что в шапке кабинета: обёртка `group/nav` покрывает и кнопку, и панель,
@@ -85,6 +86,8 @@ function isGroup(entry: NavEntry): entry is NavGroup {
 
 const NAV: NavEntry[] = [
   { href: "/root", label: "organizations", icon: LayoutDashboard, exact: true },
+  // CRM — рабочее место продаж: все обращения, почта, напоминания.
+  { href: "/root/crm", label: "crm", icon: Inbox },
   {
     key: "money",
     label: "money",

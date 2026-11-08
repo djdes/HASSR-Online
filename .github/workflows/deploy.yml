@@ -766,6 +766,8 @@ jobs:
               set +o pipefail
               echo "=== Панель платформы: роль «Администратор» для alexey@wesetup.ru + оповещение (one-shot, PlatformSetting-guard) ==="
               timeout 180 npx tsx prisma/seed-platform-admin-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-platform-admin-2026-11 failed — deploy continues"
+              echo "=== CRM: роль РОП для alexey@wesetup.ru и «БФС» + оповещение (one-shot, PlatformSetting-guard) ==="
+              timeout 180 npx tsx prisma/seed-crm-rop-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-crm-rop-2026-11 failed — deploy continues"
               # Legacy business-data backfills require a separate reviewed run.
               # A normal code release must not rewrite customer journal records.
               if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
@@ -914,6 +916,11 @@ jobs:
             # Держали её до этого момента для отката, если проверка выше
             # не пройдёт.
             rm -rf .next-previous .next-failed 2>/dev/null || true
+
+            echo "=== CRM: крон /api/cron/crm раз в 5 минут (crontab, идемпотентно) ==="
+            # Строку ставит и обновляет сам деплой (docs/crm.md): сбой — не повод
+            # ронять выкатку, CRM работает и по кнопке «Обновить сейчас».
+            bash scripts/install-crm-cron.sh 2>&1 | tail -3 || echo "[warn] install-crm-cron failed — deploy continues"
 
             echo "=== Deploy complete ==="
 

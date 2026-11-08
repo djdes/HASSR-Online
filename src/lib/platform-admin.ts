@@ -58,21 +58,24 @@ type PlatformAdministrator = { email: string; telegramChatId: string | null };
  * Кому уходит уведомление. `admins` — администраторы платформы (`isRoot` или
  * пресет «Администратор»). `support` — они же плюс все, кому в панели открыт
  * раздел «Обратная связь» (менеджер поддержки): обращения с сайта, онлайн-чат,
- * бот — их работа, а не только администраторов.
+ * бот — их работа, а не только администраторов. `sales` — администраторы и
+ * РОП (`platformSalesHead`): заявки — показ, услуги, счета, партнёры,
+ * регистрации — идут руководителю продаж, даже если он не администратор.
  */
-export type PlatformAudience = "admins" | "support";
+export type PlatformAudience = "admins" | "support" | "sales";
 
-type StaffRow = PlatformAdministrator & { isRoot: boolean; platformSections: string[] };
+type StaffRow = PlatformAdministrator & { isRoot: boolean; platformSections: string[]; platformSalesHead?: boolean };
 
 let staffCache: { at: number; rows: StaffRow[] } | null = null;
 const ADMINISTRATORS_CACHE_MS = 60_000;
 
 /** Получатель уведомления по аудитории — чистая функция, проверяется тестом. */
 export function inPlatformAudience(
-  user: { isRoot: boolean; platformSections: readonly string[] },
+  user: { isRoot: boolean; platformSections: readonly string[]; platformSalesHead?: boolean },
   audience: PlatformAudience
 ): boolean {
   if (isPlatformAdministrator(user)) return true;
+  if (audience === "sales") return user.platformSalesHead === true;
   return audience === "support" && user.platformSections.includes("support");
 }
 
@@ -87,9 +90,10 @@ async function loadPlatformStaff(): Promise<StaffRow[]> {
           { isRoot: true },
           { platformSections: { hasEvery: [...PLATFORM_SECTION_KEYS] } },
           { platformSections: { has: "support" } },
+          { platformSalesHead: true },
         ],
       },
-      select: { email: true, telegramChatId: true, isRoot: true, platformSections: true },
+      select: { email: true, telegramChatId: true, isRoot: true, platformSections: true, platformSalesHead: true },
       orderBy: { createdAt: "asc" },
     });
     staffCache = { at: Date.now(), rows };

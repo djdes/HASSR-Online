@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Crown, Loader2, Mail, Phone, Search, ShieldCheck, UserPlus } from "lucide-react";
+import { Crown, Loader2, Mail, Phone, Search, ShieldCheck, TrendingUp, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 import { PlatformAccessDialog } from "@/components/root/platform-access-dialog";
 import { PLATFORM_PRESETS, PLATFORM_SECTIONS, matchPlatformPreset, type PlatformSectionKey } from "@/lib/platform-access";
 import type { MailSenderStatus } from "@/lib/platform-mail";
@@ -24,7 +25,14 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<TeamCandidate[] | null>(null);
   const [searching, setSearching] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; name: string; sections: PlatformSectionKey[]; member?: PlatformMember; candidate?: TeamCandidate } | null>(null);
+  const [editing, setEditing] = useState<{
+    id: string;
+    name: string;
+    sections: PlatformSectionKey[];
+    salesHead: boolean;
+    member?: PlatformMember;
+    candidate?: TeamCandidate;
+  } | null>(null);
 
   // Debounced search: people appear as you type, no extra button.
   useEffect(() => {
@@ -58,11 +66,11 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
     return preset ? t(`presets.${preset}.title`) : t("presets.custom.title");
   }
 
-  function applySaved(userId: string, sections: PlatformSectionKey[]) {
+  function applySaved(userId: string, sections: PlatformSectionKey[], salesHead: boolean) {
     setMembers((current) => {
       const existing = current.find((member) => member.id === userId);
       if (!sections.length) return current.filter((member) => member.id !== userId || member.owner);
-      if (existing) return current.map((member) => (member.id === userId ? { ...member, sections, grantedAt: new Date().toISOString() } : member));
+      if (existing) return current.map((member) => (member.id === userId ? { ...member, sections, salesHead, grantedAt: new Date().toISOString() } : member));
       const candidate = editing?.candidate;
       if (!candidate) return current;
       return [
@@ -76,13 +84,36 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
           organizationName: candidate.organizationName,
           owner: false,
           sections,
+          salesHead,
           grantedAt: new Date().toISOString(),
           mail: "none",
           lastLoginAt: null,
         },
       ];
     });
-    setCandidates((current) => current?.map((item) => (item.id === userId ? { ...item, sections } : item)) ?? null);
+    setCandidates((current) => current?.map((item) => (item.id === userId ? { ...item, sections, salesHead } : item)) ?? null);
+  }
+
+  const [ownerBusy, setOwnerBusy] = useState<string | null>(null);
+
+  /** Владельцу разделы не выдаются, а РОП — можно (и себе): заявки и напоминания CRM. */
+  async function toggleOwnerSalesHead(member: PlatformMember) {
+    setOwnerBusy(member.id);
+    try {
+      const response = await fetch(`/api/root/team/${encodeURIComponent(member.id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sections: [], salesHead: !member.salesHead }),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) throw new Error(data?.error ?? t("access.failed"));
+      setMembers((current) => current.map((item) => (item.id === member.id ? { ...item, salesHead: !member.salesHead } : item)));
+      toast.success(t("access.saved", { name: member.name }));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("access.failed"));
+    } finally {
+      setOwnerBusy(null);
+    }
   }
 
   const staffCount = useMemo(() => members.filter((member) => !member.owner).length, [members]);
@@ -128,7 +159,7 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setEditing({ id: candidate.id, name: candidate.name, sections: candidate.sections, candidate })}
+                        onClick={() => setEditing({ id: candidate.id, name: candidate.name, sections: candidate.sections, salesHead: candidate.salesHead, candidate })}
                         className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
                       >
                         <ShieldCheck className="size-4" />
@@ -156,6 +187,12 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[14.5px] font-medium text-[#0b1024]">{member.name}</span>
                     {member.owner ? <Crown className="size-4 shrink-0 text-[#d4a017]" aria-label={t("access.ownerBadge")} /> : null}
+                    {member.salesHead ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11.5px] font-medium text-[#3848c7]" data-sales-head-badge>
+                        <TrendingUp className="size-3" />
+                        {t("access.salesHeadBadge")}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-[#6f7282]">
                     {member.email ? (
@@ -194,10 +231,21 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                     <Mail className="mr-1 inline size-3.5" />
                     {t(`team.mailStatus.${member.mail}`)}
                   </span>
-                  {member.owner ? null : (
+                  {member.owner ? (
                     <button
                       type="button"
-                      onClick={() => setEditing({ id: member.id, name: member.name, sections: member.sections, member })}
+                      onClick={() => toggleOwnerSalesHead(member)}
+                      disabled={ownerBusy === member.id}
+                      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
+                      data-owner-sales-head={member.id}
+                    >
+                      <TrendingUp className="size-4 text-[#5566f6]" />
+                      {member.salesHead ? t("access.salesHeadRemove") : t("access.salesHeadMake")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ id: member.id, name: member.name, sections: member.sections, salesHead: member.salesHead, member })}
                       className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                     >
                       {t("team.edit")}
@@ -233,7 +281,8 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
           onClose={() => setEditing(null)}
           user={{ id: editing.id, name: editing.name }}
           initialSections={editing.sections}
-          onSaved={(sections) => applySaved(editing.id, sections)}
+          initialSalesHead={editing.salesHead}
+          onSaved={(sections, salesHead) => applySaved(editing.id, sections, salesHead)}
         />
       ) : null}
     </div>

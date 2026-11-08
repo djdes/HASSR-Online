@@ -169,6 +169,8 @@ export type StaffEmail = {
   html: string;
   text?: string;
   attachments?: EmailAttachment[];
+  /** Свой Message-ID (`<id@wesetup.ru>`): CRM узнаёт по нему письмо в «Отправленных». */
+  messageId?: string;
 };
 
 export type StaffEmailResult =
@@ -200,6 +202,7 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
         subject: message.subject,
         html: message.html,
         text: message.text,
+        messageId: message.messageId,
         attachments: message.attachments?.map((item) => ({ filename: item.filename, content: item.content, path: item.path, contentType: item.contentType })),
       });
       return { ok: true, via: "personal", from };

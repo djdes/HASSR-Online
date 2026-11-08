@@ -1,0 +1,23 @@
+[crm] прогон (manual): без ошибок
+run 1 sources: [{"source":"service","rows":2,"created":2},{"source":"feedback","rows":2,"created":3},{"source":"feedback-reply","rows":1,"created":0},{"source":"chat","rows":3,"created":3},{"source":"invoice","rows":1,"created":1},{"source":"signup","rows":1,"created":1},{"source":"blank","rows":1,"created":1},{"source":"partner","rows":0,"created":0}]
+run 1 errors: []
+[crm] прогон (manual): без ошибок
+run 2 sources: [{"source":"service","rows":0,"created":0},{"source":"feedback","rows":0,"created":0},{"source":"feedback-reply","rows":0,"created":0},{"source":"chat","rows":0,"created":0},{"source":"invoice","rows":0,"created":0},{"source":"signup","rows":0,"created":0},{"source":"blank","rows":0,"created":0},{"source":"partner","rows":0,"created":0}]
+run 2 created total: 0
+contacts:
+  Ольга Смирнова | olga@stolovaya-12.ru | 9031112233 | stage=new | source=demo | org=— | awaiting=demo | items=1
+  Иван Петров | ivan@romashka-cafe.ru | 9123456789 | stage=new | source=service | org=fixture-cafe | awaiting=service | items=4
+  Дмитрий | — | 9215550011 | stage=new | source=telegram | org=— | awaiting=telegram | items=1
+  Анна | anna@bistro-anna.ru | 9990001122 | stage=new | source=chat | org=— | awaiting=chat | items=3
+  — | buh@pekarnya-hleb.ru | — | stage=new | source=invoice | org=— | awaiting=no | items=1
+  — | chef@kafe-ugolok.ru | — | stage=new | source=blank | org=— | awaiting=no | items=1
+duplicate externalKeys: 0
+reminders at 2026-11-09T06:30:00.000Z run1: {"planned":4,"sent":4} run2: {"planned":4,"sent":0}
+digest run1 delivered: true run2 delivered: false
+reminder log rows: 5
+  escalation crm:escalation:cmw70nt0z0000ok7dxlw4f8mz:2026-11-07T17:56:32.188Z
+  escalation crm:escalation:cmw70nt1b0002ok7dtj7h7q32:2026-11-07T22:14:32.188Z
+  escalation crm:escalation:cmw70nt200004ok7dm4b0if75:2026-11-04T14:56:32.200Z
+  escalation crm:escalation:cmw70nt2w0008ok7dhb4itw7r:2026-11-07T22:44:32.216Z
+  digest crm:digest:2026-11-09
+reminders at night: {"planned":0,"sent":0}
