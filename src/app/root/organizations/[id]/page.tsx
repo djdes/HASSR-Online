@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { isRequisitesComplete } from "@/lib/closing-documents/types";
 import { platformViewerForSession } from "@/lib/platform-access.server";
-import { canUsePlatformSection } from "@/lib/platform-access";
+import { canAccessPlatformPath, canUsePlatformSection } from "@/lib/platform-access";
 import { loadClientContacts, type ClientPerson } from "@/lib/root-client-card.server";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
@@ -21,6 +21,8 @@ import { HeldOrderActions } from "./held-order-actions";
 import { InvoiceActions } from "./invoice-actions";
 import { CopyButton } from "./copy-button";
 import { PanelAccessButton } from "./panel-access-button";
+import { AccountManagerControl } from "./account-manager-control";
+import { loadAccountManagerView } from "@/lib/account-manager.server";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 import { ClientDocumentsSection } from "@/components/root/client-documents-section";
 import { EdoSendButton } from "@/components/root/edo-send-button";
@@ -91,6 +93,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const canBill = canUsePlatformSection(viewer, "billing");
   // «В ЭДО» (Saby) — у кого есть раздел ЭДО.
   const canEdo = canUsePlatformSection(viewer, "edo");
+  // Ответственный менеджер: закрепляет тот, кто видит всех клиентов (РОП, директор, админ).
+  const canAssignManager = canAccessPlatformPath(viewer, `/api/root/organizations/${org.id}/manager`, "PUT");
+  const { current: accountManager, options: managerOptions } = await loadAccountManagerView(org.accountManagerId, canAssignManager);
 
   // История оплат и сумма за всё время. Считаем только проведённые платежи.
   const payments = await db.paymentOrder.findMany({
@@ -164,6 +169,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       journalAccessMigrated: user.journalAccessMigrated,
       platformSections: [],
       platformSalesHead: false,
+      platformRoleId: null,
+      platformRoleTitle: null,
+      platformTitle: null,
     }));
   const owner = contacts?.owner ?? null;
   const requisites = contacts?.requisites ?? null;
@@ -193,6 +201,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               <span>{organizationSphere(org.type, profile)}</span>
               {org.inn ? <span>· {t("requisites.inn")} {org.inn}</span> : null}
               <span>· {t("page.since", { date: organizationDate(org.createdAt, locale, true) })}</span>
+            </div>
+            <div className="mt-3">
+              <AccountManagerControl organizationId={org.id} current={accountManager} options={managerOptions} canAssign={canAssignManager} />
             </div>
           </div>
           {viewer.superadmin ? (
@@ -527,7 +538,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   {person.lastLoginAt ? organizationDate(new Date(person.lastLoginAt), locale) : t("people.never")}
                 </div>
                 <div className="md:text-right">
-                  {viewer.superadmin && !person.isRoot ? <PanelAccessButton user={{ id: person.id, name: person.name }} sections={person.platformSections} salesHead={person.platformSalesHead} /> : null}
+                  {viewer.superadmin && !person.isRoot ? <PanelAccessButton
+                      user={{ id: person.id, name: person.name }}
+                      sections={person.platformSections}
+                      salesHead={person.platformSalesHead}
+                      roleId={person.platformRoleId}
+                      roleTitle={person.platformRoleTitle}
+                      title={person.platformTitle}
+                    /> : null}
                   {person.isRoot ? (
                     <span className="inline-flex items-center gap-1 text-[12px] text-[#3848c7]">
                       <ShieldCheck className="size-3.5" />

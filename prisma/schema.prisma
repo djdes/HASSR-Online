@@ -352,6 +352,9 @@ model Organization {
   /// QR-коды: значок или логотип организации в центре вместо знака WeSetup.
   qrCenterLogo                   Boolean                        @default(true)
   yookassaShopId                 String?
+  /// Ответственный менеджер платформы (продажи/сопровождение): менеджер с
+  /// охватом «свои» видит в панели только закреплённых за ним клиентов.
+  accountManagerId               String?
   createdAt                      DateTime                       @default(now())
   updatedAt                      DateTime                       @updatedAt
   /// Per-organisation bearer token for POST /api/external/entries. When set,
@@ -1324,6 +1327,14 @@ model User {
   // РОП — руководитель отдела продаж (CRM, src/lib/crm): ему идут все заявки
   // и напоминания об ответах. Требует раздел «Продажи» в platformSections.
   platformSalesHead           Boolean                  @default(false)
+  // Роль в панели (PlatformRole, настраивает владелец в /root/team). Разделы
+  // и РОП из роли копируются в platformSections / platformSalesHead; null —
+  // «свой набор». Охват данных («все» / «свои клиенты и лиды») — из роли.
+  platformRoleId              String?
+  platformRole                PlatformRole?            @relation(fields: [platformRoleId], references: [id], onDelete: SetNull)
+  // Личная должность в подписи КП и писем клиентам (задаёт владелец):
+  // важнее «Моей почты» и должности из роли.
+  platformTitle               String?
   platformMailSender          PlatformMailSender?
   // False until the owner has explicitly edited this user's journal ACL in
   // /settings/users. While false, `hasJournalAccess` grants all journals —
@@ -5768,4 +5779,30 @@ model CrmReminderLog {
   sentAt     DateTime @default(now())
 
   @@index([contactId])
+}
+
+/// Роль в панели платформы (/root/team, настраивает владелец): разделы,
+/// охват данных, РОП и должность в подписи. Разделы и РОП копируются людям
+/// роли (`User.platformSections` / `platformSalesHead`) — проверки доступа
+/// читают их, как раньше. Встроенные (`system`) создаёт сид, удалить их нельзя.
+model PlatformRole {
+  id             String   @id @default(cuid())
+  /// Стабильный ключ: "admin", "commercial_director", "sales_head", "sales_manager", …
+  key            String   @unique
+  title          String
+  description    String?
+  sections       String[] @default([])
+  /// all — все клиенты и лиды; own — закреплённые за человеком + свободные лиды
+  scope          String   @default("all")
+  /// РОП: все заявки, эскалации и утренняя сводка CRM
+  salesHead      Boolean  @default(false)
+  /// Должность в подписи КП и писем; пусто — название роли
+  signatureTitle String?
+  sort           Int      @default(0)
+  system         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  users          User[]
+
+  @@index([sort])
 }

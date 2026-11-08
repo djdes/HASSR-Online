@@ -20,7 +20,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function CrmContactPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRoot();
   const { id } = await params;
-  const [card, viewer] = await Promise.all([loadCrmContact(id), platformViewerForSession(session)]);
+  const viewer = await platformViewerForSession(session);
+  const own = viewer.scope === "own";
+  const card = await loadCrmContact(id, { userId: session.user.id, own });
   if (!card) notFound();
   const can = (href: string) => canAccessPlatformPath(viewer, href);
   return (
@@ -32,11 +34,15 @@ export default async function CrmContactPage({ params }: { params: Promise<{ id:
       <ContactCardClient
         card={card}
         viewerId={session.user.id}
+        ownScope={own}
         links={{
           feedback: can("/root/feedback"),
           proposals: can("/root/proposals"),
           invoices: can("/root/invoices"),
-          organization: card.organization ? can(`/root/organizations/${card.organization.id}`) : false,
+          // Менеджеру («свои») — карточка только своего клиента, чужая ответит 404.
+          organization: card.organization
+            ? can(`/root/organizations/${card.organization.id}`) && (!own || card.organization.accountManagerId === session.user.id)
+            : false,
           mailSettings: can("/root/me"),
         }}
         nowIso={new Date().toISOString()}

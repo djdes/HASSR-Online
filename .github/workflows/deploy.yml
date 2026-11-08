@@ -768,6 +768,8 @@ jobs:
               timeout 180 npx tsx prisma/seed-platform-admin-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-platform-admin-2026-11 failed — deploy continues"
               echo "=== CRM: роль РОП для alexey@wesetup.ru и «БФС» + оповещение (one-shot, PlatformSetting-guard) ==="
               timeout 180 npx tsx prisma/seed-crm-rop-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-crm-rop-2026-11 failed — deploy continues"
+              echo "=== Роли панели: встроенные роли, раздел CRM, привязка наборов, коммерческий директор (one-shot, PlatformSetting-guard) ==="
+              timeout 180 npx tsx prisma/seed-platform-roles-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-platform-roles-2026-11 failed — deploy continues"
               # Legacy business-data backfills require a separate reviewed run.
               # A normal code release must not rewrite customer journal records.
               if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then

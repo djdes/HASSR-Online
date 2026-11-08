@@ -81,32 +81,45 @@ async function toRows(rows: RowSource[]): Promise<CrmContactRow[]> {
   });
 }
 
+/**
+ * Кто смотрит: охват «свои» (менеджер) — его контакты и свободные (без
+ * ответственного, их можно «Взять себе»); иначе — все.
+ */
+export type CrmViewerScope = { userId: string; own: boolean };
+
+export function crmContactScope(scope: CrmViewerScope | undefined): Prisma.CrmContactWhereInput {
+  return scope?.own ? { OR: [{ ownerId: scope.userId }, { ownerId: null }] } : {};
+}
+
 function endOfMoscowDay(now: Date): Date {
   return new Date(new Date(`${moscowDateKey(now)}T00:00:00+03:00`).getTime() + DAY);
 }
 
-export async function loadCrmSummary(now = new Date()) {
+export async function loadCrmSummary(now = new Date(), scope?: CrmViewerScope) {
   const active = { stage: { notIn: [...QUIET_STAGES] } };
   const since30 = new Date(now.getTime() - 30 * DAY);
+  const mine = crmContactScope(scope);
+  const inScope = (where: Prisma.CrmContactWhereInput): Prisma.CrmContactWhereInput => ({ AND: [mine, where] });
+  const interactionScope: Prisma.CrmInteractionWhereInput = scope?.own ? { contact: mine } : {};
   const [digest, awaiting, nextSteps, recent, channels, stages, mailboxes, cron, total] = await Promise.all([
-    loadDigestData(now),
-    db.crmContact.findMany({ where: { ...active, awaitingSince: { not: null } }, orderBy: { awaitingSince: "asc" }, take: 8, select: ROW_SELECT }),
-    db.crmContact.findMany({ where: { ...active, nextActionAt: { lt: endOfMoscowDay(now) } }, orderBy: { nextActionAt: "asc" }, take: 8, select: ROW_SELECT }),
+    loadDigestData(now, mine),
+    db.crmContact.findMany({ where: inScope({ ...active, awaitingSince: { not: null } }), orderBy: { awaitingSince: "asc" }, take: 8, select: ROW_SELECT }),
+    db.crmContact.findMany({ where: inScope({ ...active, nextActionAt: { lt: endOfMoscowDay(now) } }), orderBy: { nextActionAt: "asc" }, take: 8, select: ROW_SELECT }),
     db.crmInteraction.findMany({
-      where: { filteredReason: null, direction: { in: ["in", "event"] }, contactId: { not: null } },
+      where: { ...interactionScope, filteredReason: null, direction: { in: ["in", "event"] }, contactId: { not: null } },
       orderBy: { occurredAt: "desc" },
       take: 8,
       select: { id: true, channel: true, direction: true, subject: true, body: true, occurredAt: true, contact: { select: { id: true, name: true, company: true, email: true, phone: true } } },
     }),
     db.crmInteraction.groupBy({
       by: ["channel"],
-      where: { filteredReason: null, direction: { in: ["in", "event"] }, occurredAt: { gte: since30 } },
+      where: { ...interactionScope, filteredReason: null, direction: { in: ["in", "event"] }, occurredAt: { gte: since30 } },
       _count: { _all: true },
     }),
-    db.crmContact.groupBy({ by: ["stage"], _count: { _all: true } }),
-    listMailboxes(),
+    db.crmContact.groupBy({ by: ["stage"], where: mine, _count: { _all: true } }),
+    scope?.own ? Promise.resolve([]) : listMailboxes(),
     db.cronRunState.findUnique({ where: { job: "crm" } }),
-    db.crmContact.count(),
+    db.crmContact.count({ where: mine }),
   ]);
   return {
     digest,
@@ -137,9 +150,9 @@ export type ContactFilters = { q?: string; queue?: string; stage?: string; chann
 
 const PAGE_SIZE = 50;
 
-export async function listCrmContacts(filters: ContactFilters, viewerId: string, now = new Date()) {
+export async function listCrmContacts(filters: ContactFilters, viewerId: string, now = new Date(), own = false) {
   const where: Prisma.CrmContactWhereInput = {};
-  const and: Prisma.CrmContactWhereInput[] = [];
+  const and: Prisma.CrmContactWhereInput[] = [crmContactScope({ userId: viewerId, own })];
   const q = filters.q?.trim();
   if (q) {
     const digits = q.replace(/\D/g, "");
@@ -189,25 +202,29 @@ export async function listCrmContacts(filters: ContactFilters, viewerId: string,
   return { rows: await toRows(rows), total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
-/** Кого можно назначить ответственным: владелец платформы, раздел «Продажи», РОП. */
-export async function listCrmOwners() {
+/** Кого можно назначить ответственным: владелец платформы, раздел «CRM», РОП. Менеджер («свои») — только себя. */
+export async function listCrmOwners(scope?: CrmViewerScope) {
   const users = await db.user.findMany({
-    where: { isActive: true, archivedAt: null, OR: [{ isRoot: true }, { platformSections: { has: "sales" } }, { platformSalesHead: true }] },
+    where: {
+      isActive: true,
+      archivedAt: null,
+      ...(scope?.own ? { id: scope.userId } : { OR: [{ isRoot: true }, { platformSections: { has: "crm" } }, { platformSalesHead: true }] }),
+    },
     orderBy: [{ platformSalesHead: "desc" }, { name: "asc" }],
     select: { id: true, name: true, platformSalesHead: true },
   });
   return users.map((user) => ({ id: user.id, name: user.name, salesHead: user.platformSalesHead }));
 }
 
-export async function loadCrmContact(id: string) {
+export async function loadCrmContact(id: string, scope?: CrmViewerScope) {
   const contact = await db.crmContact.findUnique({ where: { id } });
   if (!contact) return null;
   const [interactions, organization, owners, platformUser] = await Promise.all([
     db.crmInteraction.findMany({ where: { contactId: id }, orderBy: { occurredAt: "desc" }, take: 300 }),
     contact.organizationId
-      ? db.organization.findUnique({ where: { id: contact.organizationId }, select: { id: true, name: true, subscriptionPlan: true, createdAt: true } })
+      ? db.organization.findUnique({ where: { id: contact.organizationId }, select: { id: true, name: true, subscriptionPlan: true, createdAt: true, accountManagerId: true } })
       : null,
-    listCrmOwners(),
+    listCrmOwners(scope),
     contact.userId ? db.user.findUnique({ where: { id: contact.userId }, select: { id: true, name: true, email: true, phone: true } }) : null,
   ]);
   return {
@@ -231,7 +248,15 @@ export async function loadCrmContact(id: string) {
       authorName: item.authorName,
       occurredAt: item.occurredAt.toISOString(),
     })),
-    organization: organization ? { id: organization.id, name: organization.name, plan: organization.subscriptionPlan, createdAt: organization.createdAt.toISOString() } : null,
+    organization: organization
+      ? {
+          id: organization.id,
+          name: organization.name,
+          plan: organization.subscriptionPlan,
+          createdAt: organization.createdAt.toISOString(),
+          accountManagerId: organization.accountManagerId,
+        }
+      : null,
     platformUser,
     owners,
   };

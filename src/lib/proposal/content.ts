@@ -132,7 +132,8 @@ export type ProposalContent = {
     /** Подпись под QR: промокод или короткий адрес. */
     qrCaption: string;
   };
-  sender: { title: string; name: string; lines: ProposalContactLine[] } | null;
+  /** `position` — должность под именем («Коммерческий директор»), только если задана. */
+  sender: { title: string; name: string; position?: string; lines: ProposalContactLine[] } | null;
   /** Реквизиты строками (как на /root/requisites) или null, если не заполнены. */
   requisites: string[] | null;
   site: string;
@@ -384,7 +385,12 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
 
   const senderData = vars.sender ?? ctx.defaultSender ?? fallbackSender(ctx.requisites);
   const sender = senderData
-    ? { title: "Контакты", name: senderData.name, lines: contactLines(senderData) }
+    ? {
+        title: "Контакты",
+        name: senderData.name,
+        ...(senderData.position?.trim() ? { position: senderData.position.trim() } : {}),
+        lines: contactLines(senderData),
+      }
     : null;
 
   const addressee = [vars.companyName, vars.recipientName].filter(Boolean).join(" · ") || null;

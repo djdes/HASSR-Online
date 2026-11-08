@@ -108,7 +108,9 @@ function ContactLine({ row, right, rightTone }: { row: CrmContactRow; right: str
 export default async function CrmSummaryPage() {
   const session = await requireRoot();
   const now = new Date();
-  const [summary, viewer, heads] = await Promise.all([loadCrmSummary(now), platformViewerForSession(session), listSalesHeads()]);
+  const viewer = await platformViewerForSession(session);
+  const own = viewer.scope === "own";
+  const [summary, heads] = await Promise.all([loadCrmSummary(now, { userId: session.user.id, own }), listSalesHeads()]);
   const { digest } = summary;
   const tools = TOOLS.filter((tool) => canAccessPlatformPath(viewer, tool.href));
   const maxChannel = Math.max(1, ...summary.channels.map((item) => item.count));
@@ -300,6 +302,15 @@ export default async function CrmSummaryPage() {
               </Link>
             ))}
           </div>
+          {own ? (
+            <div className={cn(CARD, "h-fit space-y-2 p-4 sm:p-5")} data-crm-status>
+              <div className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">Ваши клиенты</div>
+              <p className="text-[13.5px] leading-snug text-[#3c4053]">
+                Видны ваши контакты и свободные лиды без ответственного — откройте свободный и нажмите «Взять себе». Клиентов за вами закрепляет РОП
+                {heads.length ? ` (${heads.map((head) => head.name).join(", ")})` : ""}.
+              </p>
+            </div>
+          ) : (
           <div className={cn(CARD, "h-fit space-y-4 p-4 sm:p-5")} data-crm-status>
             <div>
               <div className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">РОП</div>
@@ -349,6 +360,7 @@ export default async function CrmSummaryPage() {
               Москве. Стадия «Клиент» — человек уже пользуется платформой.
             </p>
           </div>
+          )}
         </div>
       </section>
     </div>

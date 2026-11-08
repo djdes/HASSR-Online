@@ -17,7 +17,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = Body.safeParse((await readJson(request)) ?? {});
   if (!parsed.success) return badRequest(parsed.error.issues);
   try {
-    const contactId = await restoreFilteredMail(id, parsed.data.allowSender, crmActor(session));
+    const contactId = await restoreFilteredMail(id, parsed.data.allowSender, await crmActor(session));
     return NextResponse.json({ contactId });
   } catch (error) {
     return crmErrorResponse(error);

@@ -256,6 +256,7 @@ function ProposalView({ content, qrSvg, pdfHref }: { content: ProposalContent; q
             {content.sender ? (
               <div>
                 <p className="font-semibold text-[#0b1024]">{content.sender.name}</p>
+                {content.sender.position ? <p className="text-[#3c4053]">{content.sender.position}</p> : null}
                 <ul className="mt-1 space-y-0.5 text-[#3c4053]">
                   {content.sender.lines.map((line) => (
                     <li key={line.kind}>

@@ -40,7 +40,20 @@ const DIRECTION_TONE: Record<string, string> = {
   event: "border-[#ececf4] bg-white",
 };
 
-export function ContactCardClient({ card, viewerId, links, nowIso }: { card: CrmContactCard; viewerId: string; links: Links; nowIso: string }) {
+export function ContactCardClient({
+  card,
+  viewerId,
+  ownScope = false,
+  links,
+  nowIso,
+}: {
+  card: CrmContactCard;
+  viewerId: string;
+  /** Менеджер с охватом «свои»: назначать может только себя («Взять себе»). */
+  ownScope?: boolean;
+  links: Links;
+  nowIso: string;
+}) {
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const { contact, interactions, organization, owners } = card;
@@ -333,6 +346,17 @@ export function ContactCardClient({ card, viewerId, links, nowIso }: { card: Crm
         </section>
 
         <section className={cn(CARD, "space-y-3 p-4 sm:p-5")} aria-label="Ответственный и следующий шаг">
+          {ownScope && !contact.ownerId ? (
+            <button
+              type="button"
+              disabled={saving !== null}
+              onClick={() => patch({ ownerId: viewerId }, "owner", "Клиент закреплён за вами")}
+              className={cn(PRIMARY_BUTTON, "w-full")}
+              data-crm-take
+            >
+              Взять себе
+            </button>
+          ) : null}
           <label className="block">
             <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">Ответственный</span>
             <select
@@ -342,7 +366,7 @@ export function ContactCardClient({ card, viewerId, links, nowIso }: { card: Crm
               className={cn(INPUT, "mt-1.5")}
               data-crm-owner
             >
-              <option value="">Не назначен — напоминания РОП</option>
+              <option value="">{ownScope ? "Не назначен — свободный лид" : "Не назначен — напоминания РОП"}</option>
               {owners.map((owner) => (
                 <option key={owner.id} value={owner.id}>
                   {owner.name}
@@ -405,7 +429,7 @@ export function ContactCardClient({ card, viewerId, links, nowIso }: { card: Crm
           </section>
         ) : null}
 
-        <button type="button" onClick={() => setSpamOpen(true)} className="inline-flex items-center gap-1.5 text-[13px] text-[#a13a32] hover:underline" data-crm-spam>
+        <button type="button" onClick={() => setSpamOpen(true)} className="inline-flex items-center gap-1.5 text-[13px] text-[#a13a32] hover:underline" data-crm-spam hidden={ownScope}>
           <Ban className="size-4" /> Это спам
         </button>
       </aside>

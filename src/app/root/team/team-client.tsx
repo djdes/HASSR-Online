@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Crown, Loader2, Mail, Phone, Search, ShieldCheck, TrendingUp, UserPlus } from "lucide-react";
-import { toast } from "sonner";
-import { PlatformAccessDialog } from "@/components/root/platform-access-dialog";
-import { PLATFORM_PRESETS, PLATFORM_SECTIONS, matchPlatformPreset, type PlatformSectionKey } from "@/lib/platform-access";
+import { Crown, Loader2, Mail, Phone, Search, ShieldCheck, TrendingUp, UserPlus, UserRound } from "lucide-react";
+import { PlatformAccessDialog, type AccessSaved } from "@/components/root/platform-access-dialog";
+import { PLATFORM_SECTIONS, matchPlatformPreset, type PlatformSectionKey } from "@/lib/platform-access";
 import type { MailSenderStatus } from "@/lib/platform-mail";
+import type { RoleView } from "@/lib/platform-roles";
 import type { PlatformMember, TeamCandidate } from "@/lib/platform-team.server";
 import { cn } from "@/lib/utils";
+import { OwnerSettingsDialog } from "./owner-settings-dialog";
+import { RolesPanel } from "./roles-panel";
 
 const MAIL_TONE: Record<MailSenderStatus, string> = {
   none: "bg-[#f5f6ff] text-[#6f7282]",
@@ -18,10 +20,12 @@ const MAIL_TONE: Record<MailSenderStatus, string> = {
   error: "bg-[#fff4f2] text-[#a13a32]",
 };
 
-export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[] }) {
+export function TeamClient({ initialMembers, initialRoles }: { initialMembers: PlatformMember[]; initialRoles: RoleView[] }) {
   const t = useTranslations("rootPanel");
   const locale = useLocale();
   const [members, setMembers] = useState(initialMembers);
+  const [roles, setRoles] = useState(initialRoles);
+  const [ownerEditing, setOwnerEditing] = useState<PlatformMember | null>(null);
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<TeamCandidate[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -30,6 +34,8 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
     name: string;
     sections: PlatformSectionKey[];
     salesHead: boolean;
+    roleId: string | null;
+    title: string | null;
     member?: PlatformMember;
     candidate?: TeamCandidate;
   } | null>(null);
@@ -60,17 +66,37 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
     };
   }, [query]);
 
-  function roleLabel(sections: readonly PlatformSectionKey[], owner: boolean) {
+  /** Роль из «Ролей»; без роли — прежний набор по разделам или «Свой набор». */
+  function roleLabel(sections: readonly PlatformSectionKey[], owner: boolean, roleId: string | null = null) {
     if (owner) return t("access.ownerBadge");
+    const role = roleId ? roles.find((item) => item.id === roleId) : null;
+    if (role) return role.title;
     const preset = matchPlatformPreset(sections);
     return preset ? t(`presets.${preset}.title`) : t("presets.custom.title");
   }
 
-  function applySaved(userId: string, sections: PlatformSectionKey[], salesHead: boolean) {
+  /** После выдачи доступа счётчики людей у ролей поменялись — перечитываем. */
+  async function refreshRoles() {
+    try {
+      const response = await fetch("/api/root/team/roles");
+      const data = (await response.json()) as { roles?: RoleView[] };
+      if (data.roles) setRoles(data.roles);
+    } catch {
+      /* счётчики обновятся при следующем открытии */
+    }
+  }
+
+  function applySaved(userId: string, saved: AccessSaved) {
+    const { sections, salesHead, roleId, roleTitle, scope, title } = saved;
+    void refreshRoles();
     setMembers((current) => {
       const existing = current.find((member) => member.id === userId);
       if (!sections.length) return current.filter((member) => member.id !== userId || member.owner);
-      if (existing) return current.map((member) => (member.id === userId ? { ...member, sections, salesHead, grantedAt: new Date().toISOString() } : member));
+      if (existing) {
+        return current.map((member) =>
+          member.id === userId ? { ...member, sections, salesHead, roleId, roleTitle, scope, title, grantedAt: new Date().toISOString() } : member,
+        );
+      }
       const candidate = editing?.candidate;
       if (!candidate) return current;
       return [
@@ -85,35 +111,17 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
           owner: false,
           sections,
           salesHead,
+          roleId,
+          roleTitle,
+          scope,
+          title,
           grantedAt: new Date().toISOString(),
           mail: "none",
           lastLoginAt: null,
         },
       ];
     });
-    setCandidates((current) => current?.map((item) => (item.id === userId ? { ...item, sections, salesHead } : item)) ?? null);
-  }
-
-  const [ownerBusy, setOwnerBusy] = useState<string | null>(null);
-
-  /** Владельцу разделы не выдаются, а РОП — можно (и себе): заявки и напоминания CRM. */
-  async function toggleOwnerSalesHead(member: PlatformMember) {
-    setOwnerBusy(member.id);
-    try {
-      const response = await fetch(`/api/root/team/${encodeURIComponent(member.id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sections: [], salesHead: !member.salesHead }),
-      });
-      const data = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (!response.ok) throw new Error(data?.error ?? t("access.failed"));
-      setMembers((current) => current.map((item) => (item.id === member.id ? { ...item, salesHead: !member.salesHead } : item)));
-      toast.success(t("access.saved", { name: member.name }));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("access.failed"));
-    } finally {
-      setOwnerBusy(null);
-    }
+    setCandidates((current) => current?.map((item) => (item.id === userId ? { ...item, sections, salesHead, roleId, title } : item)) ?? null);
   }
 
   const staffCount = useMemo(() => members.filter((member) => !member.owner).length, [members]);
@@ -159,11 +167,21 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setEditing({ id: candidate.id, name: candidate.name, sections: candidate.sections, salesHead: candidate.salesHead, candidate })}
+                        onClick={() =>
+                          setEditing({
+                            id: candidate.id,
+                            name: candidate.name,
+                            sections: candidate.sections,
+                            salesHead: candidate.salesHead,
+                            roleId: candidate.roleId,
+                            title: candidate.title,
+                            candidate,
+                          })
+                        }
                         className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
                       >
                         <ShieldCheck className="size-4" />
-                        {candidate.sections.length ? t("access.buttonHas", { role: roleLabel(candidate.sections, false) }) : t("access.button")}
+                        {candidate.sections.length ? t("access.buttonHas", { role: roleLabel(candidate.sections, false, candidate.roleId) }) : t("access.button")}
                       </button>
                     )}
                   </li>
@@ -193,7 +211,14 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                         {t("access.salesHeadBadge")}
                       </span>
                     ) : null}
+                    {member.scope === "own" ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11.5px] font-medium text-[#7a4a00]" data-scope-own-badge>
+                        <UserRound className="size-3" />
+                        {t("access.scopeOwnBadge")}
+                      </span>
+                    ) : null}
                   </div>
+                  {member.title ? <div className="mt-0.5 truncate text-[12.5px] text-[#3c4053]" data-member-title>{member.title}</div> : null}
                   <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-[#6f7282]">
                     {member.email ? (
                       <a href={`mailto:${member.email}`} className="inline-flex items-center gap-1 hover:text-[#3848c7]">
@@ -213,7 +238,7 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[13.5px] font-medium text-[#3848c7]">{roleLabel(member.sections, member.owner)}</div>
+                  <div className="text-[13.5px] font-medium text-[#3848c7]">{member.roleTitle ?? roleLabel(member.sections, member.owner, member.roleId)}</div>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {member.owner ? (
                       <span className="rounded-full bg-[#f5f6ff] px-2 py-0.5 text-[11.5px] text-[#3848c7]">{t("team.allSections")}</span>
@@ -234,18 +259,19 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
                   {member.owner ? (
                     <button
                       type="button"
-                      onClick={() => toggleOwnerSalesHead(member)}
-                      disabled={ownerBusy === member.id}
-                      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60"
-                      data-owner-sales-head={member.id}
+                      onClick={() => setOwnerEditing(member)}
+                      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                      data-owner-settings={member.id}
                     >
                       <TrendingUp className="size-4 text-[#5566f6]" />
-                      {member.salesHead ? t("access.salesHeadRemove") : t("access.salesHeadMake")}
+                      {t("access.ownerSettings")}
                     </button>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setEditing({ id: member.id, name: member.name, sections: member.sections, salesHead: member.salesHead, member })}
+                      onClick={() =>
+                        setEditing({ id: member.id, name: member.name, sections: member.sections, salesHead: member.salesHead, roleId: member.roleId, title: member.title, member })
+                      }
                       className="inline-flex h-9 items-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                     >
                       {t("team.edit")}
@@ -259,20 +285,7 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
         </section>
       </div>
 
-      <aside className="h-fit rounded-3xl border border-[#ececf4] bg-[#fafbff] p-5 lg:sticky lg:top-6">
-        <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">{t("team.rolesTitle")}</div>
-        <ul className="mt-3 space-y-3">
-          {PLATFORM_PRESETS.map((preset) => (
-            <li key={preset.key}>
-              <div className="text-[14px] font-medium text-[#0b1024]">{t(`presets.${preset.key}.title`)}</div>
-              <div className="text-[12.5px] leading-snug text-[#6f7282]">
-                {preset.key === "admin" ? t(`presets.admin.hint`) : preset.sections.map((key) => t(`sections.${key}.title`)).join(" · ")}
-              </div>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 border-t border-[#ececf4] pt-3 text-[12px] leading-snug text-[#6f7282]">{t("access.ownerOnly")}</p>
-      </aside>
+      <RolesPanel roles={roles} onChange={setRoles} />
 
       {editing ? (
         <PlatformAccessDialog
@@ -282,7 +295,17 @@ export function TeamClient({ initialMembers }: { initialMembers: PlatformMember[
           user={{ id: editing.id, name: editing.name }}
           initialSections={editing.sections}
           initialSalesHead={editing.salesHead}
-          onSaved={(sections, salesHead) => applySaved(editing.id, sections, salesHead)}
+          initialRoleId={editing.roleId}
+          initialTitle={editing.title}
+          onSaved={(saved) => applySaved(editing.id, saved)}
+        />
+      ) : null}
+      {ownerEditing ? (
+        <OwnerSettingsDialog
+          key={ownerEditing.id}
+          member={ownerEditing}
+          onClose={() => setOwnerEditing(null)}
+          onSaved={(salesHead, title) => setMembers((current) => current.map((item) => (item.id === ownerEditing.id ? { ...item, salesHead, title } : item)))}
         />
       ) : null}
     </div>

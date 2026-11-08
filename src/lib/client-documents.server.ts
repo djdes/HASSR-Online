@@ -1,3 +1,4 @@
+import { signaturePosition } from "@/lib/platform-roles";
 import type { Session } from "next-auth";
 
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
@@ -46,16 +47,33 @@ export type StaffSender = Required<Pick<ProposalSender, "name">> & {
   personalMailbox: boolean;
 };
 
-/** Подпись КП: настройки «Моей почты» сотрудника, иначе его профиль. */
+/** Подпись КП и писем: настройки «Моей почты» сотрудника, его должность и роль в панели, иначе профиль. */
 export async function staffSender(userId: string): Promise<StaffSender> {
   const [mailbox, user] = await Promise.all([
     db.platformMailSender.findUnique({ where: { userId } }),
-    db.user.findUnique({ where: { id: userId }, select: { name: true, email: true, contactEmail: true, phone: true, positionTitle: true } }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        email: true,
+        contactEmail: true,
+        phone: true,
+        positionTitle: true,
+        platformTitle: true,
+        platformRole: { select: { title: true, signatureTitle: true } },
+      },
+    }),
   ]);
   const login = user?.email && !isTechnicalEmail(user.email) ? user.email : null;
   return {
     name: mailbox?.fromName?.trim() || user?.name || "Команда WeSetup",
-    position: mailbox?.position?.trim() || user?.positionTitle?.trim() || null,
+    // Личная должность (задал владелец) → «Моя почта» → роль → должность в кабинете.
+    position: signaturePosition({
+      platformTitle: user?.platformTitle,
+      mailboxPosition: mailbox?.position,
+      role: user?.platformRole ?? null,
+      positionTitle: user?.positionTitle,
+    }),
     phone: mailbox?.phone?.trim() || user?.phone?.trim() || null,
     email: mailbox?.fromEmail?.trim() || user?.contactEmail?.trim() || login,
     personalMailbox: Boolean(mailbox?.enabled && mailbox.verifiedAt),

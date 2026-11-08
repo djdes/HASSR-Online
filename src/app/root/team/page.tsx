@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { UsersRound } from "lucide-react";
 import { requireSuperRoot } from "@/lib/auth-helpers";
 import { listPlatformTeam } from "@/lib/platform-team.server";
+import { listPlatformRoles } from "@/lib/platform-roles.server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { TeamClient } from "./team-client";
 
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 /** «Команда и доступы» — who may open the platform panel (owner only). */
 export default async function RootTeamPage() {
   await requireSuperRoot();
-  const [t, members] = await Promise.all([getTranslations("rootPanel"), listPlatformTeam()]);
+  const [t, members, roles] = await Promise.all([getTranslations("rootPanel"), listPlatformTeam(), listPlatformRoles()]);
   return (
     <DomainMessagesBoundary namespaces={["rootPanel"]}>
       <div className="space-y-6">
@@ -23,7 +24,7 @@ export default async function RootTeamPage() {
             <p className="mt-1 max-w-[720px] text-[14px] leading-relaxed text-[#6f7282]">{t("team.description")}</p>
           </div>
         </div>
-        <TeamClient initialMembers={members} />
+        <TeamClient initialMembers={members} initialRoles={roles} />
       </div>
     </DomainMessagesBoundary>
   );

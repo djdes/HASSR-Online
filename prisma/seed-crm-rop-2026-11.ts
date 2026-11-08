@@ -10,7 +10,7 @@
  *    трёх человек — ничего не выдаём (неоднозначно), выдать можно в /root/team.
  *
  * Выдача идёт тем же путём, что переключатель «РОП» в «Команде и доступах»
- * (`setPlatformSections` с `salesHead: true`): раздел «Продажи» добавляется,
+ * (`setPlatformSections` с `salesHead: true`): раздел «CRM» добавляется,
  * если его нет, остальные разделы не трогаем; аудит и оповещение человеку.
  * Владельцу платформы (`isRoot`) разделы не нужны — ставим только флаг РОП.
  *
@@ -30,6 +30,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "../src/lib/db";
 import { notifySalesHeadGranted } from "../src/lib/crm/sales-head-notice.server";
 import { normalizePlatformSections } from "../src/lib/platform-access";
+import { platformOrgId } from "../src/lib/partners/partner-hint";
 import { maskEmail } from "../src/lib/platform-admin";
 import { setPlatformSections } from "../src/lib/platform-team.server";
 
@@ -73,7 +74,15 @@ const TARGETS: Target[] = [
       telegramChatId: { not: null },
       AND: [
         { OR: [{ isRoot: true }, { role: { in: ["owner", "manager"] } }] },
-        { OR: [{ organization: bfsOrganization }, { organizationMemberships: { some: { organization: bfsOrganization } } }] },
+        {
+          OR: [
+            { organization: bfsOrganization },
+            { organizationMemberships: { some: { organization: bfsOrganization } } },
+            // Платформа WeSetup — это и есть ООО «БФС»: её владелец и команда
+            // панели (у кого уже есть разделы), а не любой аккаунт в ней.
+            { organizationId: platformOrgId(), OR: [{ isRoot: true }, { platformSections: { isEmpty: false } }] },
+          ],
+        },
       ],
     },
     max: 3,
@@ -119,7 +128,8 @@ async function grant(target: Target, owner: { id: string; name: string; organiza
       return false;
     }
     const current = normalizePlatformSections(user.platformSections);
-    const sections = current.includes("sales") ? current : [...current, "sales" as const];
+    // РОП работает в CRM (раздел «CRM», 2026-11-08).
+    const sections = current.includes("crm") ? current : [...current, "crm" as const];
     console.log(`${TAG} ${target.label}: ${who(user)} → РОП, разделы ${current.join(",") || "—"} → ${sections.join(",")}`);
     if (DRY_RUN) continue;
     const member = await setPlatformSections({ user: owner }, user.id, sections, { salesHead: true, waitForNotice: true });

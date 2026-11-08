@@ -21,20 +21,28 @@ describe("CRM: роль РОП и доступ к разделу", () => {
     assert.equal(inPlatformAudience(rop, "support"), false);
   });
 
-  it("CRM — раздел «Продажи»; ящики меняет только владелец; продажи начинают с CRM", () => {
-    const sales = { superadmin: false, sections: ["sales"] as const };
+  it("CRM — свой раздел «CRM»; почта, фильтры и ящики — только охват «все»; ящики меняет владелец", () => {
+    const crm = { superadmin: false, sections: ["crm"] as const };
     for (const path of ["/root/crm", "/root/crm/contacts", "/root/crm/contacts/abc", "/root/crm/mail", "/api/root/crm/sync", "/api/root/crm/contacts/abc/messages"]) {
-      assert.equal(platformGateFor(path), "sales", path);
-      assert.equal(canAccessPlatformPath(sales, path, "POST"), true, path);
+      assert.equal(platformGateFor(path), "crm", path);
+      assert.equal(canAccessPlatformPath(crm, path, "POST"), true, path);
     }
-    assert.equal(canAccessPlatformPath(sales, "/api/root/crm/mailboxes", "GET"), true);
+    assert.equal(canAccessPlatformPath(crm, "/api/root/crm/mailboxes", "GET"), true);
     for (const method of ["POST", "PUT", "DELETE"]) {
-      assert.equal(canAccessPlatformPath(sales, "/api/root/crm/mailboxes", method), false, method);
-      assert.equal(canAccessPlatformPath(sales, "/api/root/crm/mailboxes/mb1/test", method), false, method);
+      assert.equal(canAccessPlatformPath(crm, "/api/root/crm/mailboxes", method), false, method);
+      assert.equal(canAccessPlatformPath(crm, "/api/root/crm/mailboxes/mb1/test", method), false, method);
       assert.equal(canAccessPlatformPath({ superadmin: true, sections: [] }, "/api/root/crm/mailboxes/mb1", method), true, method);
     }
+    assert.equal(canAccessPlatformPath({ superadmin: false, sections: ["sales"] }, "/root/crm"), false, "КП и рассылки без CRM");
     assert.equal(canAccessPlatformPath({ superadmin: false, sections: ["support"] }, "/root/crm"), false);
-    assert.equal(platformHomeHref(sales), "/root/crm");
+    assert.equal(platformHomeHref(crm), "/root/crm");
+    const manager = { superadmin: false, sections: ["crm", "clients", "sales"] as const, scope: "own" as const };
+    for (const path of ["/root/crm/mail", "/api/root/crm/filtered/x", "/api/root/crm/rules", "/api/root/crm/mailboxes", "/root/health", "/root/funnel", "/api/root/organizations/o1/manager"]) {
+      assert.equal(canAccessPlatformPath(manager, path, path.endsWith("manager") ? "PUT" : "GET"), false, `менеджеру закрыто: ${path}`);
+    }
+    for (const path of ["/root/crm", "/root/crm/contacts", "/root", "/root/organizations/o1", "/root/proposals"]) {
+      assert.equal(canAccessPlatformPath(manager, path), true, `менеджеру открыто: ${path}`);
+    }
   });
 
   it("РОП: alexey@wesetup.ru и «БФС» с Telegram — однократный сид в деплое после выдачи админа", () => {
@@ -73,17 +81,19 @@ describe("CRM: роль РОП и доступ к разделу", () => {
     assert.match(read("src/app/api/cron/crm/route.ts"), /status: result\.ok \? 200 : 500/);
   });
 
-  it("владелец платформы может включить РОП себе: разделы не трогаются", () => {
+  it("владелец платформы может включить РОП и должность себе: разделы и роль не трогаются", () => {
     const team = read("src/lib/platform-team.server.ts");
-    assert.match(team, /if \(target\.isRoot\) \{\n[\s\S]*?if \(options\.salesHead === undefined\) throw new TeamError/);
-    assert.ok(team.indexOf("if (target.isRoot) {") < team.indexOf('throw new TeamError("Свой доступ менять нельзя")'), "себе — только РОП");
-    assert.match(read("src/app/root/team/team-client.tsx"), /body: JSON\.stringify\(\{ sections: \[\], salesHead: !member\.salesHead \}\)/);
+    assert.match(team, /if \(target\.isRoot\) \{[\s\S]*?if \(options\.roleId\) throw new TeamError[\s\S]*?if \(options\.salesHead === undefined && title === undefined\) throw new TeamError/);
+    assert.ok(team.indexOf("if (target.isRoot) {") < team.indexOf('throw new TeamError("Свой доступ менять нельзя")'), "себе — только РОП и должность");
+    assert.match(read("src/app/root/team/owner-settings-dialog.tsx"), /body: JSON\.stringify\(\{ sections: \[\], salesHead, title: title\.trim\(\) \|\| null \}\)/);
   });
 
-  it("РОП требует раздел «Продажи», снятие доступа снимает РОП", () => {
+  it("РОП требует раздел «CRM»; роль задаёт разделы и РОП; снятие доступа снимает роль и РОП", () => {
     const team = read("src/lib/platform-team.server.ts");
-    assert.match(team, /const salesHead = sections\.length \? \(options\.salesHead \?\? target\.platformSalesHead\) : false;/);
-    assert.match(team, /if \(salesHead && !sections\.includes\("sales"\)\) throw new TeamError/);
+    assert.match(team, /const sections = role \? normalizePlatformSections\(role\.sections\) : normalizePlatformSections\(requested\);/);
+    assert.match(team, /const salesHead = sections\.length \? \(role \? role\.salesHead : \(options\.salesHead \?\? target\.platformSalesHead\)\) : false;/);
+    assert.match(team, /if \(salesHead && !sections\.includes\("crm"\)\) throw new TeamError/);
+    assert.match(team, /platformRoleId: sections\.length \? \(role\?\.id \?\? null\) : null,/);
     assert.match(read("src/app/api/root/team/[userId]/route.ts"), /salesHead: z\.boolean\(\)\.optional\(\)/);
   });
 

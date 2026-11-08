@@ -12,7 +12,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const session = await requireRoot();
   const { id } = await params;
   try {
-    await deleteSenderRule(id, crmActor(session));
+    await deleteSenderRule(id, await crmActor(session));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return crmErrorResponse(error);

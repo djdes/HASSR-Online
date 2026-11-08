@@ -3,11 +3,14 @@ import type { Session } from "next-auth";
 
 import { CrmActionError, type CrmActor } from "@/lib/crm/actions.server";
 import { MailboxError } from "@/lib/crm/mailbox.server";
+import { platformViewerForSession } from "@/lib/platform-access.server";
 
 /** Общее для API CRM: кто действует и как отвечать на ошибки. */
 
-export function crmActor(session: Session): CrmActor {
-  return { id: session.user.id, name: session.user.name ?? null, organizationId: session.user.organizationId };
+/** Кто действует; охват роли («свои») — из той же проверки, что и доступ (`platformViewerForSession`). */
+export async function crmActor(session: Session): Promise<CrmActor> {
+  const viewer = await platformViewerForSession(session);
+  return { id: session.user.id, name: session.user.name ?? null, organizationId: session.user.organizationId, own: viewer.scope === "own" };
 }
 
 export async function readJson(request: Request): Promise<unknown> {
