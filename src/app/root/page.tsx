@@ -2,7 +2,7 @@ import { Building2 } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
 import { getAllOrgMetrics } from "@/lib/org-metrics";
 import { platformViewerForSession } from "@/lib/platform-access.server";
-import { canEnterClientCabinets } from "@/lib/platform-access";
+import { canEnterClientCabinets, canUsePlatformSection } from "@/lib/platform-access";
 import { assignedOrganizationIds } from "@/lib/account-manager.server";
 import { MetricsTable } from "./metrics-table";
 import { SeedDemoButton } from "./seed-demo-button";
@@ -52,7 +52,8 @@ export default async function RootMetricsPage() {
   const totalBalance = clients.reduce((s, m) => s + m.balanceRub, 0);
 
   return (
-    <DomainMessagesBoundary namespaces={["rootMetrics", "settingsManagement", "journals"]}>
+    // rootOrganizationManagement — окно «Пополнить баланс» (то же, что в карточке клиента).
+    <DomainMessagesBoundary namespaces={["rootMetrics", "settingsManagement", "journals", "rootOrganizationManagement"]}>
       <div className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -79,7 +80,15 @@ export default async function RootMetricsPage() {
           <StatCard label={t("stats.balance")} value={t("format.rubles", { amount: totalBalance })} hint={t("stats.liabilities")} />
         </div>
 
-        <MetricsTable rows={sorted} now={now} sourceJournalNames={sourceMessages.journals.names} canManage={canEnterClientCabinets(viewer)} canDelete={viewer.superadmin} />
+        {/* Владелец и администратор видят одно и то же: «Войти», «Пополнить», удаление. */}
+        <MetricsTable
+          rows={sorted}
+          now={now}
+          sourceJournalNames={sourceMessages.journals.names}
+          canManage={canEnterClientCabinets(viewer)}
+          canDelete={viewer.superadmin}
+          canTopUp={canUsePlatformSection(viewer, "billing")}
+        />
       </div>
     </DomainMessagesBoundary>
   );

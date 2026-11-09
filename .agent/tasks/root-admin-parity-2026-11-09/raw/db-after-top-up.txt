@@ -1,0 +1,4 @@
+500|manual_adjust|Компенсация за простой
+impersonate.start|Алексей|{"organizationName": "Кафе «Тест»"}
+balance.credit|Алексей|{"amount": 500, "comment": "Компенсация за простой"}
+impersonate.start|Алексей|{"organizationName": "Кафе «Тест»"}

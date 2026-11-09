@@ -403,6 +403,31 @@ export function canEnterClientCabinets(viewer: PlatformViewer): boolean {
 }
 
 /**
+ * То же по записи человека из БД — одна проверка для панели и для claim
+ * «Войти» в сессии (`auth.ts`): разделы считаются как в панели, с
+ * «Переводами» переводчика (`effectivePlatformSections`), охват — из роли.
+ * Раньше сессия смотрела на сырые `platformSections`, и администратор,
+ * которому «Переводы» даны флажком переводчика, видел «Войти», но после
+ * входа оказывался в своей организации.
+ */
+export function canEnterClientCabinetsAsUser(user: {
+  isRoot?: boolean | null;
+  platformSections?: unknown;
+  canEditTranslations?: boolean | null;
+  isActive?: boolean | null;
+  archivedAt?: Date | null;
+  platformRole?: { scope?: unknown } | null;
+}): boolean {
+  if (user.isRoot === true) return true;
+  if (user.isActive === false || user.archivedAt) return false;
+  return canEnterClientCabinets({
+    superadmin: false,
+    sections: effectivePlatformSections(user),
+    scope: normalizePlatformScope(user.platformRole?.scope),
+  });
+}
+
+/**
  * То же по JWT-токену (proxy, перевыпуск cookie): `actingAsOrganizationId`
  * действует только у владельца и администратора. Разделы в токене
  * перечитываются из БД на каждом обновлении сессии.

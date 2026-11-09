@@ -16746,7 +16746,7 @@
       "sortLabel": "Sort by",
       "sort": {
         "mrr": "Highest MRR",
-        "newest": "Newest",
+        "newest": "Newest sign-ups",
         "active": "Most active",
         "sleeping": "Idle longest",
         "name": "Name"
@@ -16756,9 +16756,9 @@
         "contact": "Contact",
         "plan": "Plan",
         "activity": "Activity",
-        "money": "MRR"
+        "money": "MRR",
+        "registered": "Registered"
       },
-      "since": "since {date}",
       "until": "until {date}",
       "points": "{count, plural, one {# location} other {# locations}}",
       "noContact": "No contacts",
@@ -16766,7 +16766,8 @@
       "balance": "points {amount}",
       "showMore": "Show {count, number} more",
       "shown": "Shown {shown, number} of {total, number}",
-      "open": "Open card"
+      "open": "Open card",
+      "registered": "Registered {date}"
     }
   },
   "publicFeatures": {
@@ -17000,7 +17001,7 @@
       "created": "{type} · created {date}",
       "inn": " · INN {inn}",
       "backToClients": "All clients",
-      "since": "Client since {date}",
+      "since": "Registered {date}",
       "lastActivity": "Last activity: {value}"
     },
     "stats": {
@@ -17095,7 +17096,7 @@
       "referredCount": "Organizations referred",
       "transactions": "Transactions",
       "empty": "There have been no points transactions.",
-      "adjustment": "Manual adjustment",
+      "adjustment": "Top up or deduct points",
       "credit": "Credit",
       "debit": "Deduct",
       "amountLabel": "Adjustment amount in points",
@@ -17112,7 +17113,14 @@
       "successCredit": "Balance: {balance, number} ₽ (+{amount, number} ₽)",
       "successDebit": "Balance: {balance, number} ₽ (−{amount, number} ₽)",
       "failed": "Could not change the balance",
-      "network": "Network unavailable. Please try again"
+      "network": "Network unavailable. Please try again",
+      "adjustmentHint": "Credits and deductions appear in the customer's balance history and in the audit log.",
+      "topUp": "Top up",
+      "topUpLong": "Top up balance",
+      "topUpAria": "Top up the balance of “{name}”",
+      "topUpTitle": "Top up or deduct points",
+      "topUpDescription": "“{name}”. Current balance: {balance, number} ₽.",
+      "after": "The balance will be {amount, number} ₽"
     },
     "kinds": {
       "referral_reward": "Referral reward",
@@ -17249,9 +17257,11 @@
       "status": "Status",
       "ownerBadge": "Owner",
       "archived": "Archived",
-      "never": "Never",
+      "never": "Never signed in",
       "panel": "Panel",
-      "withContacts": "{count, plural, one {# with contacts} other {# with contacts}}"
+      "withContacts": "{count, plural, one {# with contacts} other {# with contacts}}",
+      "registered": "Registered {date}",
+      "lastLoginAt": "Signed in {date}"
     },
     "security": {
       "title": "Owner sign-ins",

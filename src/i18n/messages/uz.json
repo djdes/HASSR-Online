@@ -16746,7 +16746,7 @@
       "sortLabel": "Avval",
       "sort": {
         "mrr": "Ko‘proq to‘laydi",
-        "newest": "Yangilar",
+        "newest": "Yangi ro‘yxatdan o‘tganlar",
         "active": "Faollar",
         "sleeping": "Uzoq kirmaganlar",
         "name": "Nomi bo‘yicha"
@@ -16756,9 +16756,9 @@
         "contact": "Kontakt",
         "plan": "Tarif",
         "activity": "Faollik",
-        "money": "MRR"
+        "money": "MRR",
+        "registered": "Ro‘yxatdan o‘tgan"
       },
-      "since": "{date} dan",
       "until": "{date} gacha",
       "points": "{count, plural, other {# nuqta}}",
       "noContact": "Kontakt yo‘q",
@@ -16766,7 +16766,8 @@
       "balance": "ballar {amount}",
       "showMore": "Yana {count, number} ta ko‘rsatish",
       "shown": "{total, number} dan {shown, number} ko‘rsatildi",
-      "open": "Kartani ochish"
+      "open": "Kartani ochish",
+      "registered": "Ro‘yxatdan o‘tgan: {date}"
     }
   },
   "publicFeatures": {
@@ -17000,7 +17001,7 @@
       "created": "{type} · {date} sanasida yaratilgan",
       "inn": " · STIR (INN) {inn}",
       "backToClients": "Barcha mijozlar",
-      "since": "{date} dan mijoz",
+      "since": "Ro‘yxatdan o‘tgan: {date}",
       "lastActivity": "Oxirgi faollik: {value}"
     },
     "stats": {
@@ -17095,7 +17096,7 @@
       "referredCount": "Taklif qilingan tashkilotlar",
       "transactions": "Operatsiyalar",
       "empty": "Ballar bo‘yicha operatsiyalar bo‘lmagan.",
-      "adjustment": "Qo‘lda tuzatish",
+      "adjustment": "Ball qo‘shish yoki yechish",
       "credit": "Ball qo‘shish",
       "debit": "Ball yechish",
       "amountLabel": "Tuzatish summasi, ballarda",
@@ -17112,7 +17113,14 @@
       "successCredit": "Balans: {balance, number} ₽ (+{amount, number} ₽)",
       "successDebit": "Balans: {balance, number} ₽ (−{amount, number} ₽)",
       "failed": "Balansni o‘zgartirib bo‘lmadi",
-      "network": "Tarmoq mavjud emas. Qayta urinib ko‘ring"
+      "network": "Tarmoq mavjud emas. Qayta urinib ko‘ring",
+      "adjustmentHint": "Qo‘shish yoki yechish mijozning balans tarixida ko‘rinadi va amallar jurnaliga yoziladi.",
+      "topUp": "To‘ldirish",
+      "topUpLong": "Balansni to‘ldirish",
+      "topUpAria": "«{name}» balansini to‘ldirish",
+      "topUpTitle": "Ball qo‘shish yoki yechish",
+      "topUpDescription": "«{name}». Hozir balansda {balance, number} ₽.",
+      "after": "Balans {amount, number} ₽ bo‘ladi"
     },
     "kinds": {
       "referral_reward": "Taklif uchun mukofot",
@@ -17251,7 +17259,9 @@
       "archived": "Arxivda",
       "never": "Kirmagan",
       "panel": "Panel",
-      "withContacts": "{count, plural, other {# ta kontakti bor}}"
+      "withContacts": "{count, plural, other {# ta kontakti bor}}",
+      "registered": "Ro‘yxatdan o‘tgan: {date}",
+      "lastLoginAt": "Kirgan: {date}"
     },
     "security": {
       "title": "Eganing kirishlari",

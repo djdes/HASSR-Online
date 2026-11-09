@@ -10,7 +10,7 @@ import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { parsePointScope } from "@/lib/point-scope";
-import { effectivePlatformSections, isPlatformAdministrator } from "@/lib/platform-access";
+import { canEnterClientCabinetsAsUser, effectivePlatformSections } from "@/lib/platform-access";
 import { twoFactorRequired } from "@/lib/two-factor";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
@@ -331,16 +331,17 @@ export const authOptions: NextAuthOptions = {
           const admin = await db.user
             .findUnique({
               where: { id: session.user.id },
-              select: { platformSections: true, isActive: true, archivedAt: true, platformRole: { select: { scope: true } } },
+              select: {
+                platformSections: true,
+                canEditTranslations: true,
+                isActive: true,
+                archivedAt: true,
+                platformRole: { select: { scope: true } },
+              },
             })
             .catch(() => null);
-          if (
-            !admin ||
-            !admin.isActive ||
-            admin.archivedAt ||
-            admin.platformRole?.scope === "own" ||
-            !isPlatformAdministrator({ isRoot: false, platformSections: admin.platformSections })
-          ) {
+          // Та же проверка, что и у кнопки «Войти» в панели.
+          if (!admin || !canEnterClientCabinetsAsUser(admin)) {
             session.user.actingAsOrganizationId = null;
           }
         }

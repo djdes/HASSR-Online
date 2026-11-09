@@ -41,7 +41,7 @@ test("actual ROOT metrics page gates reads, retains one now anchor and original 
       if (id === "@/lib/org-metrics") return { getAllOrgMetrics: async (platform: string, date: Date) => { assert.equal(platform, "fixture-platform"); assert.deepEqual(events, ["guard"]); events.push("metrics"); anchor = date; return rows; } };
       if (id === "next-intl/server") return { getTranslations: async () => createTranslator({ locale, messages, namespace: "rootMetrics" }) };
       if (id === "@/i18n/site-locale-server") return { getSiteLocale: async () => locale };
-      if (id === "@/components/i18n/domain-messages-boundary") return { DomainMessagesBoundary: ({ namespaces, children }: { namespaces: string[]; children: ReactNode }) => { assert.deepEqual(JSON.parse(JSON.stringify(namespaces)), ["rootMetrics", "settingsManagement", "journals"]); return children; } };
+      if (id === "@/components/i18n/domain-messages-boundary") return { DomainMessagesBoundary: ({ namespaces, children }: { namespaces: string[]; children: ReactNode }) => { assert.deepEqual(JSON.parse(JSON.stringify(namespaces)), ["rootMetrics", "settingsManagement", "journals", "rootOrganizationManagement"]); return children; } };
       if (id === "./metrics-table") return { MetricsTable: (props: Parameters<typeof MetricsTable>[0]) => { assert.equal(props.now, anchor?.getTime()); assert.equal(props.rows[0].organizationId, "org-a"); return createElement(MetricsTable, props); } };
       if (id.startsWith("./")) return require(`@/app/root/${id.slice(2)}`);
       if (id === "@/lib/db") throw Error("Live DB forbidden");
@@ -112,4 +112,30 @@ test("демо-организации — только во вкладке «Д�
   assert.equal(inSegment(demo, "new", now), false);
   assert.equal(inSegment(demo, "demo", now), true);
   assert.equal(inSegment(rows[0], "all", now), true);
+});
+
+test("список клиентов: дата регистрации подписана колонкой, «Пополнить» и «Войти» — у кого есть права, на компьютере и телефоне", async () => {
+  const sourceNames = (await loadMessages("ru")).journals.names;
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    const list = messages.rootMetrics.list;
+    const balance = messages.rootOrganizationManagement.balance;
+    const registered = metricsDate(rows[0].createdAt, locale, undefined, true);
+    // Администратор (как владелец): «Войти», «Пополнить», удаление.
+    const html = await render(locale, createElement(MetricsTable, { rows, now, sourceJournalNames: sourceNames, canManage: true, canDelete: true, canTopUp: true }));
+    assert.ok(html.includes(list.columns.registered), "колонка «Регистрация»");
+    assert.ok(html.includes(registered), "дата регистрации");
+    const mobileRegistered = createTranslator({ locale, messages, namespace: "rootMetrics" })("list.registered", { date: registered });
+    assert.ok(html.includes(mobileRegistered), "подпись на телефоне");
+    // Кнопка «Пополнить» — в строке (под баллами) и в карточке телефона: по две на клиента.
+    assert.equal(html.split(`data-balance-top-up="org-a"`).length - 1, 2);
+    assert.ok(html.includes(balance.topUp));
+    // «Войти» — в строке и в карточке телефона.
+    assert.equal(html.split(messages.rootMetrics.actions.enter).length - 1, rows.length * 2);
+    // Без раздела «Оплаты» и без «Войти» — ни «Пополнить», ни «Войти».
+    const readOnly = await render(locale, createElement(MetricsTable, { rows, now, sourceJournalNames: sourceNames, canManage: false }));
+    assert.ok(!readOnly.includes("data-balance-top-up"));
+    assert.ok(!readOnly.includes(messages.rootMetrics.actions.enter));
+    assert.ok(readOnly.includes(list.columns.registered));
+  }
 });

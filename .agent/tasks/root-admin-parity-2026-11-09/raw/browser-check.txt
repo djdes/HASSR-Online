@@ -1,0 +1,16 @@
+login alexey@local.test: 200
+header access label: Администратор
+columns: ["КЛИЕНТ","КОНТАКТ","ТАРИФ","РЕГИСТРАЦИЯ","АКТИВНОСТЬ","MRR","ДЕЙСТВИЯ"]
+cafe registered cell: "05.10.2026\n1 мес назад"
+cafe row has Войти: 1
+cafe row has Пополнить: 1
+after line: Баланс станет 500 ₽
+cafe row after top-up: "(1 990)\nбаллы 500\nПополнить"
+card actions: "Войти как Кафе «Тест»\nПополнить баланс\nУдалить организацию"
+card header has «Регистрация»: true
+person dates: "Не заходил\nРегистрация 05.10.2026"
+top-up buttons on card: 2
+session after enter: actingAs=org-cafe role=owner
+phone card text: "Кафе «Тест»\nЧастное · Ресторан\n(1 990)\nбаллы 500\nАндрей\ncafe-owner@local.test\nБесплатный\n0 за 7 дн\n· никогда\n· Регистрация 05.10.2026\nВойти\nПополнить"
+phone desktop table display: none
+phone horizontal overflow: false

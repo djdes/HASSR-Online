@@ -10,15 +10,18 @@ import type { OrgMetrics } from "@/lib/org-metrics";
 import { normalizeOwnership, normalizeSphere } from "@/lib/org-profile";
 import { ActivityDrawer } from "./activity-drawer";
 import { OrgRowActions } from "@/app/root/organizations/org-row-actions";
+import { BalanceTopUpButton } from "@/app/root/organizations/[id]/balance-top-up";
 import { cn } from "@/lib/utils";
 
 /**
  * Список клиентов платформы (переделан 2026-10-29: «скролл снизу где-то,
  * непонятная логика, убрать лишние колонки»).
  *
- * Пять колонок, которые помещаются в экран без горизонтальной прокрутки:
- * клиент, контакт, тариф, активность, деньги. IP, сфера и ИНН — второй
- * строкой или в карточке клиента. Быстрые фильтры сверху вместо сортировки
+ * Колонки, которые помещаются в экран без горизонтальной прокрутки:
+ * клиент, контакт, тариф, регистрация, активность, деньги. IP, сфера и ИНН —
+ * второй строкой или в карточке клиента. Дата регистрации — своей колонкой
+ * с подписью (владелец, 2026-11-09: «нету отображения даты регистраций»;
+ * серый хвост «с …» никто не узнавал), «Пополнить» — под баллами. Быстрые фильтры сверху вместо сортировки
  * по пятнадцати колонкам; на телефоне — карточки. Всё считается на клиенте:
  * организации приходят одним запросом.
  */
@@ -102,6 +105,7 @@ export function MetricsTable({
   sourceJournalNames,
   canManage = true,
   canDelete = canManage,
+  canTopUp = false,
 }: {
   rows: OrgMetrics[];
   /// Момент отрисовки приходит с сервера: Date.now() в рендере расходится
@@ -112,6 +116,8 @@ export function MetricsTable({
   canManage?: boolean;
   /** Корзина в строке — только владельцу; «Войти» — по canManage. */
   canDelete?: boolean;
+  /** «Пополнить» баллы клиента — у кого раздел «Оплаты и тарифы». */
+  canTopUp?: boolean;
 }) {
   const t = useTranslations("rootMetrics");
   const profile = useTranslations("settingsManagement.organizationProfile.form");
@@ -140,6 +146,7 @@ export function MetricsTable({
       .join(" · ");
   const lastActivity = (m: OrgMetrics) =>
     m.lastEntryAt ? formatMetricsRelative(new Date(m.lastEntryAt), now, t) : t("table.never");
+  const registeredOn = (m: OrgMetrics) => metricsDate(m.createdAt, locale, undefined, true);
 
   return (
     <section className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]" data-clients-list>
@@ -206,14 +213,18 @@ export function MetricsTable({
         <div className="px-5 py-14 text-center text-[14px] text-[#6f7282]">{rows.length === 0 ? t("table.noOrganizations") : t("table.noResults")}</div>
       ) : (
         <>
-          {/* Desktop: five columns that fit the screen — no horizontal scroll. */}
-          <table className="hidden w-full table-fixed text-[14px] lg:table">
+          {/* Desktop: columns that fit the screen — no horizontal scroll.
+              `ds-no-scroll`: the global phone rule for wide tables
+              (globals.css, `display: block`) beat `hidden`, and phones showed
+              this table above the cards. */}
+          <table className="ds-no-scroll hidden w-full table-fixed text-[14px] lg:table">
             <colgroup>
               <col />
-              <col className="w-[22%]" />
+              <col className="w-[20%]" />
+              <col className="w-[11%]" />
+              <col className="w-[108px]" />
               <col className="w-[12%]" />
-              <col className="w-[13%]" />
-              <col className="w-[110px]" />
+              <col className={canTopUp ? "w-[124px]" : "w-[110px]"} />
               <col className={canManage ? "w-[150px]" : "w-[40px]"} />
             </colgroup>
             <thead className="sticky top-0 z-10 bg-[#fafbff] text-[11.5px] uppercase tracking-[0.12em] text-[#6f7282]">
@@ -221,6 +232,7 @@ export function MetricsTable({
                 <th className="px-5 py-3 text-left font-medium">{t("list.columns.client")}</th>
                 <th className="px-3 py-3 text-left font-medium">{t("list.columns.contact")}</th>
                 <th className="px-3 py-3 text-left font-medium">{t("list.columns.plan")}</th>
+                <th className="px-3 py-3 text-left font-medium">{t("list.columns.registered")}</th>
                 <th className="px-3 py-3 text-left font-medium">{t("list.columns.activity")}</th>
                 <th className="px-3 py-3 text-right font-medium">{t("list.columns.money")}</th>
                 <th className="px-3 py-3">
@@ -243,6 +255,10 @@ export function MetricsTable({
                       <div className="mt-1 text-[12px] text-[#9b9fb3]">{t("list.until", { date: metricsDate(m.subscriptionEnd, locale, undefined, true) })}</div>
                     ) : null}
                   </td>
+                  <td className="px-3 py-3" data-client-registered>
+                    <div className="tabular-nums text-[#0b1024]">{registeredOn(m)}</div>
+                    <div className="mt-0.5 text-[12px] text-[#9b9fb3]">{formatMetricsRelative(new Date(m.createdAt), now, t)}</div>
+                  </td>
                   <td className="px-3 py-3">
                     <button
                       type="button"
@@ -259,6 +275,11 @@ export function MetricsTable({
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums">
                     <MoneyCell m={m} />
+                    {canTopUp ? (
+                      <div>
+                        <BalanceTopUpButton organizationId={m.organizationId} organizationName={m.organizationName} balanceRub={m.balanceRub} size="link" />
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-3 py-3 text-right">
                     {canManage ? (
@@ -293,7 +314,15 @@ export function MetricsTable({
                     {t("list.entries7d", { count: formatNumber(locale, m.entries7d) })}
                   </button>
                   <span className={isSleeping(m, now) ? "text-[#a13a32]" : undefined}>· {lastActivity(m)}</span>
+                  <span data-client-registered>· {t("list.registered", { date: registeredOn(m) })}</span>
                 </div>
+                {/* Те же действия, что в строке на компьютере. */}
+                {canManage || canTopUp ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    {canManage ? <OrgRowActions organizationId={m.organizationId} organizationName={m.organizationName} usersCount={m.activeUsers} copy={t} canDelete={canDelete} /> : null}
+                    {canTopUp ? <BalanceTopUpButton organizationId={m.organizationId} organizationName={m.organizationName} balanceRub={m.balanceRub} size="row" /> : null}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -346,7 +375,7 @@ function ClientCell({ m, sphere }: { m: OrgMetrics; sphere: string }) {
         ) : null}
       </div>
       <div className="mt-0.5 truncate text-[12px] text-[#9b9fb3]">
-        {[m.inn ? `${t("columns.inn")} ${m.inn}` : null, sphere || null, t("list.since", { date: metricsDate(m.createdAt, locale, undefined, true) })].filter(Boolean).join(" · ")}
+        {[m.inn ? `${t("columns.inn")} ${m.inn}` : null, sphere || null].filter(Boolean).join(" · ")}
       </div>
     </div>
   );
