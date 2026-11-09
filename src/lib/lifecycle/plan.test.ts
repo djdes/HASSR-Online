@@ -63,6 +63,8 @@ test("после пробного и при просрочке оплаты — 
   assert.equal(lost?.stage, "trial_lost");
   assert.equal(lost?.task?.kind, "lost_reason");
   assert.equal(planLifecycle(trial({ kind: "needs_decision", reason: "trial_ended" }), S, msk("2026-11-25 06:15")), null);
+  // Пробный кончился до запуска сценария — задач по старым аккаунтам нет.
+  assert.equal(planLifecycle(trial({ kind: "needs_decision", reason: "trial_ended", trialEndsAt: msk("2026-11-07 00:00") }), S, msk("2026-11-09 06:15")), null);
 
   const end = msk("2026-12-01 00:00");
   const overdue = planLifecycle(trial({ kind: "needs_decision", reason: "subscription_expired", trialEndsAt: null, subscriptionEnd: end }), S, msk("2026-12-01 06:15"));

@@ -41,6 +41,13 @@ export type LifecycleSettings = {
 
 export const LIFECYCLE_SETTING_KEY = "crm.lifecycle";
 
+/**
+ * Запуск сценария. События раньше — не наши: у ~150 старых аккаунтов пробный
+ * кончился одной датой при выкладке тарифов, и «узнать причину» по каждому
+ * завалило бы менеджера задачами о давно решённом.
+ */
+export const LIFECYCLE_LAUNCHED_AT = new Date("2026-11-09T00:00:00+03:00");
+
 export const DEFAULT_LIFECYCLE_SETTINGS: LifecycleSettings = {
   enabled: true,
   assigneeId: null,
@@ -166,7 +173,7 @@ export function planLifecycle(facts: LifecycleFacts, settings: LifecycleSettings
   // Пробный кончился без оплаты (3 дня после конца) — узнать причину у живых.
   if ((facts.kind === "needs_decision" || facts.kind === "free") && facts.reason !== "subscription_expired" && facts.trialEndsAt) {
     const since = now.getTime() - facts.trialEndsAt.getTime();
-    if (since < 0 || since > 3 * DAY_MS || !active) return null;
+    if (since < 0 || since > 3 * DAY_MS || !active || facts.trialEndsAt < LIFECYCLE_LAUNCHED_AT) return null;
     return {
       stage: "trial_lost",
       key: `lc:${facts.key}:trial:${facts.trialEndsAt.toISOString()}:lost`,
@@ -180,7 +187,7 @@ export function planLifecycle(facts: LifecycleFacts, settings: LifecycleSettings
   // Оплата просрочена: срок прошёл, новой оплаты нет (14 дней после срока).
   if (facts.kind === "needs_decision" && facts.reason === "subscription_expired" && facts.subscriptionEnd) {
     const since = now.getTime() - facts.subscriptionEnd.getTime();
-    if (since < 0 || since > 14 * DAY_MS) return null;
+    if (since < 0 || since > 14 * DAY_MS || facts.subscriptionEnd < LIFECYCLE_LAUNCHED_AT) return null;
     return {
       stage: "payment_overdue",
       key: `lc:${facts.key}:paid:${facts.subscriptionEnd.toISOString()}:overdue`,
