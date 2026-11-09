@@ -15,8 +15,12 @@ function listText(values: number[]): string {
   return values.join(", ");
 }
 
-function parseList(text: string): number[] {
-  return [...new Set(text.split(/[^0-9]+/).filter(Boolean).map(Number).filter((n) => n >= 1 && n <= 90))].sort((a, b) => b - a);
+/** «4, 2» → [4, 2]; неверное (0, 120, буквы) — null: сохранять нечего, покажем ошибку. */
+function parseList(text: string): number[] | null {
+  const parts = text.split(/[\s,;]+/).filter(Boolean);
+  const numbers = parts.map(Number);
+  if (!parts.length || numbers.some((n) => !Number.isInteger(n) || n < 1 || n > 90)) return null;
+  return [...new Set(numbers)].sort((a, b) => b - a);
 }
 
 function Toggle({ checked, onChange, title, hint, name }: { checked: boolean; onChange: (value: boolean) => void; title: string; hint: string; name: string }) {
@@ -44,12 +48,19 @@ export function AutomationClient({ initial, people }: { initial: LifecycleSettin
   const [running, setRunning] = useState(false);
 
   async function save() {
+    const trialStages = parseList(texts.trial);
+    const renewalYearStages = parseList(texts.year);
+    const renewalMonthStages = parseList(texts.month);
+    if (!trialStages || !renewalYearStages || !renewalMonthStages) {
+      toast.error("Ступени — целые числа дней от 1 до 90 через запятую, например «4, 2»");
+      return;
+    }
     setSaving(true);
     const body: LifecycleSettings = {
       ...settings,
-      trialStages: parseList(texts.trial),
-      renewalYearStages: parseList(texts.year),
-      renewalMonthStages: parseList(texts.month),
+      trialStages,
+      renewalYearStages,
+      renewalMonthStages,
       holidays: texts.holidays.split(/\s+/).filter(Boolean),
     };
     const response = await fetch("/api/root/crm/automation", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

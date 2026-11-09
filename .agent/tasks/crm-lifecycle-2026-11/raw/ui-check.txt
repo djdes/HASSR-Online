@@ -1,7 +1,7 @@
 summary task tiles: Задачи на сегодня 11 звонки и письма по автоворонке Скидки на согласовании 0 спец-КП сверх лимита Сделки в работе 14 пробные и продления Срок оплаты за 7 дней 8 пробный или оплата кончаются
 funnel registered: Кофейня «Не продлили» e2e, Цех полуфабрикатов e2e, Кафе «Ромашка», Кофейня владельца, Тестовая точка, Чужое кафе
 funnel contract_signed: —
-funnel message_sent: Бистро «Грейс» e2e, «Шаурма Экспресс» e2e, ИП Петров e2e, Кафе «Ромашка» e2e, Столовая комбината e2e, Пекарня «Хлеб» e2e, Ресторан «Оплатили» e2e, Сеть «Вкусно рядом» e2e
+funnel message_sent: Бистро «Грейс» e2e, «Шаурма Экспресс» e2e, ИП Петров e2e, Кафе «Ромашка» e2e, Столовая комбината e2e, Ресторан «Оплатили» e2e, Пекарня «Хлеб» e2e, Сеть «Вкусно рядом» e2e
 funnel called: —
 funnel won: —
 funnel lost: —
@@ -10,19 +10,19 @@ db petrov deal: called|true
 db pekarnya: lost|Не нужно сейчас, вернутся весной; open tasks: 0
 alexey tasks open: 9
 db romashka after call: deal called, follow-up: Перезвонить: Пробный Кафе «Ромашка» e2e до 13 ноября: позвонить, предложить тариф
-offer toast: КП отправлено, код ROMASHKA10. Ушло с общего адреса noreply@wesetup.ru
+offer toast: КП отправлено, код ROMASHKA10, счёт № 59. Ушло с общего адреса noreply@wesetup.ru
 db romashka promo: ROMASHKA10|10|lc-romashka
-db romashka deal: called|10|24
+db romashka deal: called|10|59
 maria funnel cards: Кафе «Ромашка», Столовая комбината e2e
 maria /root/crm/automation → 404
 maria PATCH foreign deal → 404
 maria offer prefill discount: 25, tier: premium
 maria offer toast: Скидка 25 % больше вашего лимита — отправили на согласование: Алексей
-approval task: Согласовать скидку 25 % для «Столовая комбината e2e»
+approval task: Согласовать скидку 25 %: «Столовая комбината e2e»
 approve toast: Скидка 20 % согласована — менеджеру ушла задача
-maria offer task: Скидка 20 % согласована: отправить КП «Столовая комбината e2e»
+maria offer task: Скидка 20 % согласована — отправить КП: «Столовая комбината e2e»
 maria approved prefill: 20 / owner@lc-stolovaya.ru
-maria sent toast: КП отправлено, код STOLOVAYAKOMBI20, счёт № 27. Ушло с общего адреса noreply@wesetup.ru
+maria sent toast: КП отправлено, код STOLOVAYAKOMBI20, счёт № 60. Ушло с общего адреса noreply@wesetup.ru
 db stolovaya: message_sent|20|114912; promo STOLOVAYAKOMBI20 20%
 forecast items: messages 8, tasks 12
 settings saved: {"enabled":true,"clientMessages":true,"attachInvoice":true,"invoiceCycle":"year","trialStages":[4,2],"renewalYearStages"…
@@ -30,8 +30,8 @@ contact pipeline: Сделка и задачи воронка Новая зад�
 role discount badges: скидка до 25 %,скидка до 15 %,скидка до 10 %
 phone page horizontal overflow: 0px
 phone tasks overflow: 0px
-sink: #005 FROM=noreply@wesetup.ru TO=owner@lc-romashka.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Кафе «Ромашка» e2e: пробный период до 13 ноября — что изменится FILES=Счёт-24.pdf
-      #006 FROM=noreply@wesetup.ru TO=owner@lc-stolovaya.ru REPLY-TO=sales@wesetup.local.test SUBJECT=«Столовая комбината e2e»: пробный период до 13 ноября — что изменится FILES=Счёт-25.pdf
-      #008 FROM=noreply@wesetup.ru TO=owner@lc-paid.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Ресторан «Оплатили» e2e: пробный период до 13 ноября — что изменится FILES=Счёт-26.pdf
-      #014 FROM=noreply@wesetup.ru TO=owner@lc-stolovaya.ru REPLY-TO=sales@wesetup.local.test SUBJECT=Столовая комбината e2e: журналы СанПиН с телефона FILES=Счёт-27.pdf
+sink: #087 FROM=noreply@wesetup.ru TO=owner@lc-stolovaya.ru REPLY-TO=sales@wesetup.local.test SUBJECT=«Столовая комбината e2e»: пробный период до 13 ноября — что изменится FILES=Счёт-57.pdf
+      #088 FROM=noreply@wesetup.ru TO=owner@lc-paid.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Ресторан «Оплатили» e2e: пробный период до 13 ноября — что изменится FILES=Счёт-58.pdf
+      #092 FROM=noreply@wesetup.ru TO=owner@lc-romashka.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Кафе «Ромашка» e2e: спецпредложение — «Стандарт» со скидкой 10 % FILES=Счёт-59.pdf
+      #095 FROM=noreply@wesetup.ru TO=owner@lc-stolovaya.ru REPLY-TO=sales@wesetup.local.test SUBJECT=«Столовая комбината e2e»: спецпредложение — «Премиум» со скидкой 20 % FILES=Счёт-60.pdf
 page errors: 0

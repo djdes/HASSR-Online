@@ -181,12 +181,13 @@ export async function loadTasks(filters: TaskFilters, scope: CrmViewerScope) {
 }
 
 /** Сделки и задачи контакта — панель в карточке. */
-export async function loadContactPipeline(contactId: string, organizationId: string | null) {
+export async function loadContactPipeline(contactId: string, organizationId: string | null, scope?: CrmViewerScope) {
   const or: Prisma.CrmDealWhereInput[] = [{ contactId }];
   if (organizationId) or.push({ organizationId });
-  const deals = await db.crmDeal.findMany({ where: { OR: or }, orderBy: { createdAt: "desc" }, take: 6 });
+  // Менеджеру («свои») — только свои и свободные сделки и задачи.
+  const deals = await db.crmDeal.findMany({ where: { AND: [{ OR: or }, dealScope(scope)] }, orderBy: { createdAt: "desc" }, take: 6 });
   const tasks = await db.crmTask.findMany({
-    where: { OR: [{ contactId }, ...(deals.length ? [{ dealId: { in: deals.map((deal) => deal.id) } }] : [])] },
+    where: { AND: [{ OR: [{ contactId }, ...(deals.length ? [{ dealId: { in: deals.map((deal) => deal.id) } }] : [])] }, taskScope(scope)] },
     orderBy: [{ status: "asc" }, { dueAt: "asc" }],
     take: 40,
   });

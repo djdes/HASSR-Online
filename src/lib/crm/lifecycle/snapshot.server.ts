@@ -100,7 +100,11 @@ export async function loadLifecycleSnapshots(now: Date, onlyUnitKeys?: ReadonlyS
 
   // Кому автоворонка нужна сейчас: открытая сделка, счёт, оплата картой — или по состоянию тарифа.
   const [openDeals, pendingOrders] = await Promise.all([
-    db.crmDeal.findMany({ where: { stage: { notIn: ["won", "lost"] } }, select: { unitKey: true } }),
+    // Открытые сделки и недавний «Отказ» (оплатят позже — сделка станет «Оплачено»).
+    db.crmDeal.findMany({
+      where: { OR: [{ stage: { notIn: ["won", "lost"] } }, { stage: "lost", lostAt: { gte: new Date(now.getTime() - 90 * DAY_MS) } }] },
+      select: { unitKey: true },
+    }),
     db.paymentOrder.findMany({
       where: {
         organizationId: { in: allOrgIds },
@@ -167,10 +171,10 @@ export async function loadLifecycleSnapshots(now: Date, onlyUnitKeys?: ReadonlyS
   return relevant.map(({ unit, state }) => {
     const ownerRow =
       (unit.ownerUserId && ownerById.get(unit.ownerUserId)) || fallbackManagers.find((user) => user.organizationId === unit.organizationId) || null;
-    const owner: OwnerInfo | null = ownerRow
-      ? { userId: ownerRow.id, name: ownerRow.name, email: workEmail(ownerRow), phone: ownerRow.phone?.trim() || null, telegramChatId: ownerRow.telegramChatId }
-      : null;
     const home = homeById.get(unit.organizationId);
+    const owner: OwnerInfo | null = ownerRow
+      ? { userId: ownerRow.id, name: ownerRow.name, email: workEmail(ownerRow), phone: ownerRow.phone?.trim() || home?.phone?.trim() || null, telegramChatId: ownerRow.telegramChatId }
+      : null;
     const merged = unit.scopeOrgIds.reduce(
       (acc, id) => {
         const row = usage.get(id);

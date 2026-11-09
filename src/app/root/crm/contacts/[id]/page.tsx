@@ -28,7 +28,7 @@ export default async function CrmContactPage({ params }: { params: Promise<{ id:
   if (!card) notFound();
   const can = (href: string) => canAccessPlatformPath(viewer, href);
   const scope = { userId: session.user.id, own };
-  const [pipeline, owners] = await Promise.all([loadContactPipeline(card.contact.id, card.contact.organizationId ?? null), listCrmOwners(scope)]);
+  const [pipeline, owners] = await Promise.all([loadContactPipeline(card.contact.id, card.contact.organizationId ?? null, scope), listCrmOwners(scope)]);
   const nowIso = new Date().toISOString();
   return (
     <div className="space-y-4" data-crm-contact={card.contact.id}>

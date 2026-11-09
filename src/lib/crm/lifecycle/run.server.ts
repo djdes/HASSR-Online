@@ -131,7 +131,7 @@ async function event(contactId: string | null, key: string, body: string, now: D
   );
 }
 
-type DealRow = { id: string; stage: string; stageManual: boolean; ownerId: string | null; invoiceOrderId: number | null; messageSentAt: Date | null };
+type DealRow = { id: string; stage: string; stageManual: boolean; ownerId: string | null; invoiceOrderId: number | null; messageSentAt: Date | null; offerJson?: Prisma.JsonValue };
 
 type UnitContext = {
   row: SnapshotRow;
@@ -197,7 +197,7 @@ async function sendMessage(ctx: UnitContext, message: MessagePlan, now: Date, dr
     orgName: row.unit.organizationName,
     recipientName: owner.name?.trim() || null,
     invoice: invoice ? { number: String(invoice.id), amountRub: invoice.amountRub, dueDay: mskDay(new Date(invoice.dueAt.getTime() - 1)) } : null,
-    innMissing: !row.unit.hasInn && (message.segment === "team" || message.segment === "solo" || message.dealKind === "renewal"),
+    innMissing: message.innHint,
     manager,
     links: { pay: `${app}/settings/subscription`, pricing: `${app}/pricing`, organization: `${app}/settings/organization` },
     graceDays: row.graceDays,
@@ -213,7 +213,7 @@ async function sendMessage(ctx: UnitContext, message: MessagePlan, now: Date, dr
     });
     if (ok) delivered += 1;
   }
-  if (owner.telegramChatId) {
+  if (owner.telegramChatId && message.telegram) {
     try {
       const { notifyEmployee } = await import("@/lib/telegram");
       await notifyEmployee(owner.userId, rendered.telegram, { label: "Оплатить", miniAppUrl: "/settings/subscription" }, { delivery: { organizationId: row.unit.organizationId, kind: "crm:lifecycle" } });
@@ -277,6 +277,10 @@ async function createTask(ctx: UnitContext, task: TaskPlan, sentKeys: ReadonlySe
     result.tasks.superseded += superseded.count;
   }
   const assigneeId = deal?.ownerId ?? ctx.assigneeId;
+  if (task.scenario === "invoice_expired" && task.invoice) {
+    // Счёт истёк — задача «счёт не оплачен» по нему больше не нужна.
+    await db.crmTask.updateMany({ where: { dedupeKey: `lc:task:invoice_unpaid:${task.invoice.id}`, status: "open" }, data: { status: "cancelled", result: "superseded", completedAt: now } });
+  }
   try {
     const created = await db.crmTask.create({
       data: {
@@ -331,6 +335,12 @@ async function executeUnit(
     contactOwnerId: contact?.ownerId,
     defaultAssigneeId: settings.defaultAssigneeId,
   });
+  // Контакт клиента — за ответственным: иначе он «свободный лид» и менеджеру с
+  // охватом «свои» видна чужая сделка в карточке.
+  if (contact && !contact.ownerId && assigneeId) {
+    await db.crmContact.update({ where: { id: contact.id }, data: { ownerId: assigneeId } }).catch(() => undefined);
+    contact.ownerId = assigneeId;
+  }
   const ctx: UnitContext = { row, contactId: contact?.id ?? null, assigneeId, deals: dealRows };
   const org = row.unit.organizationName;
 
@@ -354,6 +364,15 @@ async function executeUnit(
         await settle(logId, delivered);
       }
     }
+  }
+  for (const reopened of plan.reopened) {
+    const deal = dealRows.get(reopened.dealKey);
+    if (!deal) continue;
+    result.log.push(`↺ ${org}: ${reopened.reason}`);
+    if (dryRun) continue;
+    await db.crmDeal.update({ where: { id: deal.id }, data: { stage: "registered", stageManual: false, wonAt: null, lostAt: null, lostReason: null } });
+    deal.stage = "registered";
+    await event(ctx.contactId, `lc:reopen:${deal.id}:${now.getTime()}`, `Сделка снова в работе: ${reopened.reason}.`, now, "Сделка");
   }
   for (const lost of plan.lost) {
     const deal = dealRows.get(lost.dealKey);
@@ -397,12 +416,14 @@ async function executeUnit(
         }
       }
     } else if (!dryRun && isOpenStage(currentDeal.stage)) {
+      // Отправленное спец-КП (`sent`) и его сумма не затираются пересчётом рекомендации.
+      const sent = (currentDeal.offerJson as { sent?: { amountRub?: number } } | null | undefined)?.sent;
       await db.crmDeal.update({
         where: { id: currentDeal.id },
         data: {
           periodEnd: plan.deal.periodEnd,
-          offerJson: offer as unknown as Prisma.InputJsonValue,
-          amountRub: offer.amountRub,
+          offerJson: { ...offer, ...(sent ? { sent } : {}) } as unknown as Prisma.InputJsonValue,
+          ...(sent ? {} : { amountRub: offer.amountRub }),
           ...(ctx.contactId ? { contactId: ctx.contactId } : {}),
           ...(currentDeal.ownerId ? {} : assigneeId ? { ownerId: assigneeId } : {}),
         },
@@ -525,7 +546,7 @@ export async function runLifecycle(options: { now?: Date; force?: boolean; dryRu
       const dealRows = new Map<string, DealRow>(
         (dealsByUnit.get(row.unit.unitKey) ?? []).map((deal) => [
           deal.dedupeKey,
-          { id: deal.id, stage: deal.stage, stageManual: deal.stageManual, ownerId: deal.ownerId, invoiceOrderId: deal.invoiceOrderId, messageSentAt: deal.messageSentAt },
+          { id: deal.id, stage: deal.stage, stageManual: deal.stageManual, ownerId: deal.ownerId, invoiceOrderId: deal.invoiceOrderId, messageSentAt: deal.messageSentAt, offerJson: deal.offerJson },
         ]),
       );
       createdTaskIds.push(...(await executeUnit(row, dealRows, plan, staff, settings, now, dryRun, result)));

@@ -482,7 +482,18 @@ export function DealStageSelect({ dealId, stage, compact = false }: { dealId: st
         {saving ? <Loader2 className="size-3.5 animate-spin text-[#6f7282]" /> : null}
       </span>
       {pending === "lost" ? (
-        <ConfirmDialog open onClose={() => setPending(null)} onConfirm={() => move("lost", reason || "Отказ клиента")} title="Отказ" variant="danger" icon={XCircle} confirmLabel="В отказ">
+        <ConfirmDialog
+          open
+          onClose={() => {
+            setPending(null);
+            setReason("");
+          }}
+          onConfirm={() => move("lost", reason || "Отказ клиента")}
+          title="Отказ"
+          variant="danger"
+          icon={XCircle}
+          confirmLabel="В отказ"
+        >
           <input className={INPUT} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Причина: дорого, не нужно сейчас, выбрали другое…" data-deal-lost-reason />
           <p className="mt-2 text-[12.5px] text-[#6f7282]">Письма автоворонки и задачи по сделке остановятся. Оплатят позже — сделка сама станет «Оплачено».</p>
         </ConfirmDialog>

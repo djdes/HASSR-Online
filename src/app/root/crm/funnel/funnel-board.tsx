@@ -55,7 +55,8 @@ export function FunnelBoard({ cards, nowIso }: { cards: FunnelCard[]; nowIso: st
   const stageOf = (card: FunnelCard) => local[card.id] ?? card.stage;
   const columns = DEAL_STAGES.map((stage) => {
     const list = cards.filter((card) => stageOf(card) === stage);
-    const sum = list.reduce((total, card) => total + (card.offer?.sent ? Math.round(((card.offer.amountRub ?? 0) * (100 - card.offer.sent.discountPercent)) / 100) : (card.amountRub ?? 0)), 0);
+    // Та же сумма, что на карточках: после спец-КП — со скидкой.
+    const sum = list.reduce((total, card) => total + (card.amountRub ?? 0), 0);
     return { stage, list, sum };
   });
 
@@ -191,7 +192,10 @@ export function FunnelBoard({ cards, nowIso }: { cards: FunnelCard[]; nowIso: st
       {lost ? (
         <ConfirmDialog
           open
-          onClose={() => setLost(null)}
+          onClose={() => {
+            setLost(null);
+            setReason("");
+          }}
           onConfirm={async () => {
             await move(lost.id, "lost", reason || "Отказ клиента");
             setLost(null);

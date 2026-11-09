@@ -246,9 +246,10 @@ describe("автоворонка: пробный период", () => {
     assert.equal(t4.messages[0].attachInvoice, false);
     assert.ok(t4.tasks.some((task) => task.scenario === "trial"));
     assert.ok(!t4.tasks.some((task) => task.scenario === "activation"), "после ступени активация уже не ставится");
-    const t2 = planLifecycle(input(idle, atMsk("2026-11-13", 12)));
+    const t4Done = new Set(t4.tasks.map((task) => task.key));
+    const t2 = planLifecycle(input(idle, atMsk("2026-11-13", 12), { done: t4Done }));
     assert.equal(t2.messages.length, 1);
-    assert.equal(t2.tasks.filter((task) => task.scenario === "trial").length, 0);
+    assert.equal(t2.tasks.filter((task) => task.scenario === "trial").length, 0, "задача «не начали» — одна на период");
   });
 
   it("в пределах бесплатного: короткое письмо, задач нет", () => {
@@ -258,10 +259,10 @@ describe("автоворонка: пробный период", () => {
     assert.equal(plan.tasks.length, 0);
   });
 
-  it("один человек: задача только за 4 дня", () => {
+  it("один человек — «работает»: задачи и за 4, и за 2 дня", () => {
     const solo = unit({ usage: usage({ activeUsers: 1 }) });
-    assert.ok(planLifecycle(input(solo, atMsk("2026-11-12", 12))).tasks.some((t) => t.scenario === "trial"));
-    assert.ok(!planLifecycle(input(solo, atMsk("2026-11-13", 12))).tasks.some((t) => t.scenario === "trial"));
+    assert.ok(planLifecycle(input(solo, atMsk("2026-11-12", 12))).tasks.some((t) => t.scenario === "trial" && t.stage === 4));
+    assert.ok(planLifecycle(input(solo, atMsk("2026-11-13", 12))).tasks.some((t) => t.scenario === "trial" && t.stage === 2));
   });
 
   it("100+ сотрудников — супер-скидка на согласование, если лимит меньше", () => {
@@ -388,6 +389,12 @@ describe("автоворонка: грейс, оплата, отказ", () => {
     const plan = planLifecycle(input(paid, atMsk("2026-11-14", 12), { deals: [deal({ stage: "called" })] }));
     assert.deepEqual(plan.won.map((w) => w.dealKey), ["trial:acc1"]);
     assert.equal(plan.deal, null);
+  });
+
+  it("оплатили после «Отказа» — сделка «Оплачено»", () => {
+    const paid = unit({}, { kind: "paid", paidTier: "standard", planCycle: "year", paidUntil: new Date(TRIAL_END.getTime() + 365 * DAY), subscriptionEnd: new Date(TRIAL_END.getTime() + 365 * DAY) });
+    const plan = planLifecycle(input(paid, atMsk("2026-11-20", 12), { deals: [deal({ stage: "lost", stageManual: true })] }));
+    assert.deepEqual(plan.won.map((w) => w.reason), ["Оплатили после отказа"]);
   });
 
   it("ушли на бесплатный — «Отказ» и задача «вернуть» через 3 рабочих дня; в пределах бесплатного — без задачи", () => {

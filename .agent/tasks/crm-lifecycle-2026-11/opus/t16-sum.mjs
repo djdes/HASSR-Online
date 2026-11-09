@@ -1,0 +1,15 @@
+import { login, sql, close, BASE, OUT } from "./lib.mjs";
+const alexey = await login("alexey");
+const deal = sql(`select id from "CrmDeal" where "organizationId"='lc-year'`);
+const r = await alexey.api("POST", "/api/root/crm/offers", { dealId: deal, tier: "premium", cycle: "year", points: 3, discountPercent: 10, toEmail: "owner@lc-year.ru", attachInvoice: false });
+console.log("offer", r.status, JSON.stringify(r.data));
+console.log("db:", sql(`select stage||' amountRub='||"amountRub"||' offer.amountRub='||("offerJson"->>'amountRub')||' sent='||("offerJson"->'sent')::text from "CrmDeal" where id='${deal}'`));
+const p = alexey.page;
+await p.goto(`${BASE}/root/crm/funnel?kind=renewal`, { waitUntil: "networkidle" });
+const card = p.locator('[data-funnel-card="Сеть «Вкусно рядом» e2e"]');
+const col = await card.evaluate((el) => el.closest("[data-funnel-column]").getAttribute("data-funnel-column"));
+console.log("column", col, "| card text:", (await card.innerText()).replace(/\s+/g, " ").slice(0, 200));
+console.log("column header:", (await p.locator(`[data-funnel-column="${col}"] header`).innerText()).replace(/\s+/g, " "));
+console.log("cards in column:", await p.locator(`[data-funnel-column="${col}"] [data-funnel-card]`).count());
+await p.screenshot({ path: `${OUT}/ui-07-sum-mismatch.png`, fullPage: true });
+await close();

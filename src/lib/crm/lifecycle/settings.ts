@@ -60,8 +60,8 @@ export const DEFAULT_LIFECYCLE_SETTINGS: LifecycleSettings = {
 };
 
 const stages = z
-  .array(z.number().int().min(1).max(90))
-  .max(8)
+  .array(z.number().int().min(1, "Ступень — от 1 до 90 дней").max(90, "Ступень — от 1 до 90 дней"))
+  .max(8, "Не больше 8 ступеней")
   .transform((list) => [...new Set(list)].sort((a, b) => b - a));
 
 export const lifecycleSettingsSchema = z.object({
@@ -76,13 +76,23 @@ export const lifecycleSettingsSchema = z.object({
   graceLastStage: z.number().int().min(1).max(30),
   winbackAfterWorkingDays: z.number().int().min(1).max(30),
   discountLadder: z
-    .array(z.object({ minUsers: z.number().int().min(1).max(100_000), percent: z.number().int().min(1).max(90) }))
-    .max(10)
-    .transform((list) => [...list].sort((a, b) => b.minUsers - a.minUsers)),
+    .array(z.object({ minUsers: z.number().int().min(1, "Сотрудников — от 1").max(100_000), percent: z.number().int().min(1, "Скидка — от 1 до 90 %").max(90, "Скидка — от 1 до 90 %") }))
+    .max(10, "Не больше 10 ступеней")
+    .transform((list) => [...list].sort((a, b) => b.minUsers - a.minUsers))
+    .refine((list) => new Set(list.map((step) => step.minUsers)).size === list.length, "Ступени лестницы — с разным числом сотрудников")
+    .refine((list) => list.every((step, index) => index === 0 || step.percent <= list[index - 1].percent), "Чем больше сотрудников, тем больше скидка — проверьте лестницу"),
   defaultAssigneeId: z.string().min(1).max(64).nullable(),
   holidays: z
-    .array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Дата — ГГГГ-ММ-ДД"))
-    .max(60),
+    .array(
+      z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, "Дата — ГГГГ-ММ-ДД")
+        .refine((value) => {
+          const date = new Date(`${value}T00:00:00Z`);
+          return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+        }, "Такой даты нет"),
+    )
+    .max(60, "Не больше 60 дат"),
 });
 
 /** Сохранённое значение → настройки; битое поле — значение по умолчанию. */

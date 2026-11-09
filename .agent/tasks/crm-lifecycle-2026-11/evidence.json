@@ -1,0 +1,17 @@
+{
+  "task": "crm-lifecycle-2026-11",
+  "pr": "djdes/HASSR-Online#152",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/schema-additive.sql"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/lifecycle-tests.txt", "raw/simulation.md", "src/lib/crm/lifecycle/planner.test.ts", "src/lib/crm/lifecycle/opus-review.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/timeline.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/ui-check.txt", "opus/t1-scope.mjs", "opus/t18-freetask.mjs"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/ui-check.txt", "opus/t2-approval.mjs", "opus/t3-offers.mjs", "opus/t21-approve-higher.mjs"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/screens/02-funnel.png", "raw/screens/08-phone-funnel.png"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/screens/06-automation.png"] },
+    "AC8": { "status": "PASS", "evidence": ["raw/timeline.txt", "raw/ui-check.txt", "raw/screens/"] },
+    "AC9": { "status": "PASS", "evidence": ["npm run typecheck EXIT 0", "eslint clean", "pre-commit/pre-push hooks"] }
+  },
+  "reviews": { "opusLogic": "12 confirmed bugs fixed, 21 regression tests", "opusExploratory": "13 bugs (6 high, 7 medium) fixed, rechecked with the same scripts" }
+}

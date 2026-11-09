@@ -35,7 +35,7 @@ export default async function CrmAutomationPage() {
       <CrmHeader
         active="/root/crm/automation"
         title="Автоворонка"
-        description="Кому и когда писать, какие задачи ставить: пробный — за 4 и 2 дня письмо с расчётом по данным аккаунта и счётом, менеджеру — звонок и спец-КП со скидкой; грейс — последний шанс; продление — заранее, с счётом на следующий период. Ниже — прогноз на неделю, если никто не оплатит."
+        description="Кому и когда писать, какие задачи ставить: пробный — за 4 и 2 дня письмо с расчётом по данным аккаунта и счётом, менеджеру — звонок и спец-КП со скидкой; грейс — последний шанс; продление — заранее, со счётом на следующий период. Ниже — прогноз на неделю, если никто не оплатит."
       />
       <AutomationClient initial={settings} people={owners.map((owner) => ({ id: owner.id, name: owner.name }))} />
       <section className="space-y-3" data-automation-forecast>
@@ -47,7 +47,7 @@ export default async function CrmAutomationPage() {
         ) : null}
         {[...byDay.entries()].map(([day, items]) => (
           <div key={day} className={CARD}>
-            <div className="border-b border-[#eef0f6] px-4 py-2.5 text-[14px] font-semibold capitalize text-[#0b1024] sm:px-5">{day}</div>
+            <div className="border-b border-[#eef0f6] px-4 py-2.5 text-[14px] font-semibold text-[#0b1024] sm:px-5">{day.charAt(0).toUpperCase() + day.slice(1)}</div>
             <ul className="divide-y divide-[#eef0f6]">
               {items.map((item, index) => (
                 <li key={`${item.at}-${index}`} className="flex items-start gap-3 px-4 py-2.5 sm:px-5" data-forecast-item={item.kind}>

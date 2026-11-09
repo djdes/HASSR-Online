@@ -41,7 +41,9 @@ export default async function CrmTasksPage({ searchParams }: { searchParams: Pro
   const viewer = await platformViewerForSession(session);
   const own = viewer.scope === "own";
   const params = await searchParams;
-  const who = own ? "me" : (one(params.who) ?? "me");
+  // Менеджер («свои») видит свои и свободные — выбор «Мои» / «Без ответственного».
+  const requested = one(params.who) ?? "me";
+  const who = own ? (requested === "none" ? "none" : "me") : requested;
   const kind = one(params.kind) ?? "all";
   const [tasks, owners] = await Promise.all([loadTasks({ who, kind }, { userId: session.user.id, own }), listCrmOwners({ userId: session.user.id, own })]);
   const now = new Date();
@@ -72,15 +74,13 @@ export default async function CrmTasksPage({ searchParams }: { searchParams: Pro
           Мои
         </Link>
         {!own ? (
-          <>
-            <Link className={chip(who === "all")} href={link({ who: "all" })}>
-              Все
-            </Link>
-            <Link className={chip(who === "none")} href={link({ who: "none" })}>
-              Без ответственного
-            </Link>
-          </>
+          <Link className={chip(who === "all")} href={link({ who: "all" })}>
+            Все
+          </Link>
         ) : null}
+        <Link className={chip(who === "none")} href={link({ who: "none" })}>
+          Без ответственного
+        </Link>
         <span className="mx-1 h-5 w-px bg-[#ececf4]" />
         <Link className={chip(kind === "all")} href={link({ kind: "all" })}>
           Все виды

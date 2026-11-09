@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 
+const PLATFORM_ORG_ID = () => process.env.PLATFORM_ORG_ID || "platform";
+
 /**
  * Люди панели для автоворонки: кто ответственный по умолчанию, у кого какой
  * лимит скидки, кто согласует скидку сверх лимита.
@@ -24,7 +26,9 @@ export const ROOT_DISCOUNT_LIMIT = 100;
 
 export async function loadPlatformStaff(): Promise<StaffPerson[]> {
   const rows = await db.user.findMany({
-    where: { isActive: true, archivedAt: null, OR: [{ isRoot: true }, { platformSections: { isEmpty: false } }] },
+    // Только команда платформы: у клиентских пользователей разделов панели нет,
+    // но и случайно выданный раздел не делает человека получателем задач CRM.
+    where: { isActive: true, archivedAt: null, OR: [{ isRoot: true }, { organizationId: PLATFORM_ORG_ID(), platformSections: { isEmpty: false } }] },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

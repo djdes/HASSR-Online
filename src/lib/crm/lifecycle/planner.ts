@@ -15,7 +15,7 @@
  * - письма клиенту — в рабочее время, задачи — со сроком на день ступени.
  */
 
-import type { BillingCycle, PaidTier, PlanRates } from "@/lib/tariff-plans";
+import { isPaidTier, planMonthlyRub, planPeriodPriceRub, type BillingCycle, type PaidTier, type PlanRates } from "@/lib/tariff-plans";
 
 import {
   CLIENT_SEND_HOURS,
@@ -156,7 +156,17 @@ export type MessagePlan = {
   offer: OfferSnapshot;
   /** Новый клиент или продление — для текста. */
   dealKind: DealKind;
+  /** Переход на оплату включён: можно писать, что отключится. */
+  enforcement: boolean;
+  /** Счёт хотели бы приложить, но у организации нет ИНН — подсказать указать. */
+  innHint: boolean;
+  /** Дублировать в Telegram (ступени ≤ 4 дней и «последний шанс»). */
+  telegram: boolean;
+  /** Что оплачено сейчас (продление): тариф, период, точки и цена продления. */
+  paidPlan: PaidPlan | null;
 };
+
+export type PaidPlan = { tier: PaidTier | "legacy"; cycle: BillingCycle; points: number; amountRub: number | null; monthlyRub: number | null };
 
 export type TaskPlan = {
   key: string;
@@ -188,12 +198,14 @@ export type LifecyclePlan = {
   stageChanges: { dealKey: string; to: DealStage; reason: string }[];
   won: { dealKey: string; reason: string }[];
   lost: { dealKey: string; reason: string }[];
+  /** Сделки, закрытые автоматикой, снова в работе (ROOT продлил пробный, возврат оплаты). */
+  reopened: { dealKey: string; reason: string }[];
   messages: MessagePlan[];
   tasks: TaskPlan[];
 };
 
 export function emptyPlan(): LifecyclePlan {
-  return { deal: null, stageChanges: [], won: [], lost: [], messages: [], tasks: [] };
+  return { deal: null, stageChanges: [], won: [], lost: [], reopened: [], messages: [], tasks: [] };
 }
 
 export function messageKey(scenario: string, stage: number, unitKey: string, lastDay: DayKey): string {
@@ -280,7 +292,15 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
   if (b.kind === "exempt" || b.inactive) return plan;
   const calendar: WorkCalendar = { holidays: settings.holidays };
   const today = mskDay(now);
-  const current = currentDealFor(unit, now, settings, calendar);
+  let current = currentDealFor(unit, now, settings, calendar);
+  // Срок продления сдвинули на день-два (правка ROOT) — это та же сделка, а не новая.
+  if (current?.kind === "renewal" && current.periodEnd) {
+    const end = current.periodEnd.getTime();
+    const near = input.deals.find(
+      (deal) => deal.kind === "renewal" && deal.dedupeKey !== current?.key && isOpenStage(deal.stage) && deal.periodEnd !== null && Math.abs(deal.periodEnd.getTime() - end) <= 3 * DAY_MS,
+    );
+    if (near) current = { ...current, key: near.dedupeKey };
+  }
 
   // 1. Закрыть сделки прошлых периодов: оплатили — «Оплачено», ушли на бесплатный — «Отказ».
   for (const deal of input.deals) {
@@ -350,7 +370,13 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
   }
   const existing = input.deals.find((deal) => deal.dedupeKey === current.key) ?? null;
   plan.deal = { key: current.key, kind: current.kind, periodEnd: current.periodEnd, offer, exists: Boolean(existing) };
-  const dealState = existing ?? { stage: "registered", stageManual: false };
+  let dealState: { stage: string; stageManual: boolean } = existing ?? { stage: "registered", stageManual: false };
+  // Закрыла автоматика, а период снова в работе (ROOT продлил пробный, вернули оплату) —
+  // сделка открывается заново. Закрытое руками («Отказ» клиента) остаётся закрытым.
+  if (existing && !isOpenStage(existing.stage) && !existing.stageManual) {
+    plan.reopened.push({ dealKey: existing.dedupeKey, reason: existing.stage === "won" ? "Оплата больше не действует" : "Период снова в работе" });
+    dealState = { stage: "registered", stageManual: false };
+  }
   if (unit.contractSignedAt) {
     const to = advanceStage(dealState, "contract_signed");
     if (to) plan.stageChanges.push({ dealKey: current.key, to, reason: "Договор подписан в ЭДО" });
@@ -361,19 +387,26 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
 
   const segment = offer.segment;
   const approval = { needed: needsApproval(offer.discountPercent, input.assigneeLimit), limit: input.assigneeLimit };
-  const canSend = settings.clientMessages && unit.enforcement && (unit.owner.email || unit.owner.telegram) && isClientSendTime(now, calendar);
+  const canSend = settings.clientMessages && (unit.owner.email || unit.owner.telegram) && isClientSendTime(now, calendar);
   const base = { dealKey: current.key, offer, segment, invoice: null, card: null, approval, dealKind: current.kind };
   const noApproval = { needed: false, limit: input.assigneeLimit };
   const pushTask = (task: Omit<TaskPlan, keyof typeof base> & Partial<typeof base>) => {
     if (done.has(task.key)) return;
     plan.tasks.push({ ...base, ...task });
   };
-  const pushMessage = (message: MessagePlan) => {
+  const invoiceWanted = (seg: Segment) => seg === "team" || seg === "solo" || current.kind === "renewal";
+  const pushMessage = (message: Omit<MessagePlan, "enforcement" | "innHint" | "telegram" | "paidPlan"> & { paidPlan?: PaidPlan | null }) => {
     if (!canSend || done.has(message.key)) return;
-    plan.messages.push(message);
+    plan.messages.push({
+      ...message,
+      paidPlan: message.paidPlan ?? null,
+      enforcement: unit.enforcement,
+      innHint: settings.attachInvoice && !unit.hasInn && invoiceWanted(message.segment),
+      telegram: message.scenario === "grace_last" || message.stage <= 4,
+    });
   };
   const invoiceTarget: InvoiceTarget = { tier: offer.tier, cycle: offer.cycle, points: offer.points };
-  const wantsInvoice = (seg: Segment) => settings.attachInvoice && unit.hasInn && (seg === "team" || seg === "solo" || current.kind === "renewal");
+  const wantsInvoice = (seg: Segment) => settings.attachInvoice && unit.hasInn && invoiceWanted(seg);
 
   // 3. Пробный период.
   if (b.kind === "free_period" && b.trialEndsAt) {
@@ -439,10 +472,13 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
       });
       const taskStages = settings.trialStages.filter((n) => n <= settings.taskStageMax);
       const firstTaskStage = taskStages.length ? Math.max(...taskStages) : null;
-      const taskHere = stage.stage <= settings.taskStageMax && segment !== "fits_free" && (segment === "team" || stage.stage === firstTaskStage);
+      // Работающим (команда или один человек) — задача на каждой ступени; «не начал» —
+      // одна задача на период: ключ первой ступени, поэтому пропущенная «за 4 дня»
+      // ставится на следующей ступени, а сделанная не повторяется.
+      const taskHere = stage.stage <= settings.taskStageMax && segment !== "fits_free";
       if (taskHere) {
         pushTask({
-          key: taskKey("trial", stage.stage, `${unit.unitKey}:${lastDay}`),
+          key: taskKey("trial", segment === "idle" ? (firstTaskStage ?? stage.stage) : stage.stage, `${unit.unitKey}:${lastDay}`),
           scenario: "trial",
           stage: stage.stage,
           kind: unit.owner.phone ? "call" : "message",
@@ -461,10 +497,19 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
   if (b.kind === "needs_decision" && b.graceEndsAt && current.periodEnd) {
     const lastDay = lastDayOf(current.periodEnd);
     const graceLastDay = lastDayOf(b.graceEndsAt);
+    const graceEnd = b.graceEndsAt;
     const startDay = workingDayOnOrAfter(addDays(lastDay, 1), calendar);
+    // «Последний шанс» — не раньше начала грейса (самого момента конца срока), иначе
+    // грейс через праздники (31 декабря → 11 января) прошёл бы без предупреждения.
+    const endDay = mskDay(current.periodEnd);
     let lastStageDay = workingDayOnOrBefore(addDays(graceLastDay, -settings.graceLastStage), calendar);
-    if (lastStageDay < startDay) lastStageDay = startDay;
-    const lastFire = atMsk(lastStageDay, CLIENT_SEND_HOURS.start);
+    if (lastStageDay < endDay) lastStageDay = endDay;
+    const lastFire = new Date(Math.max(atMsk(lastStageDay, CLIENT_SEND_HOURS.start).getTime(), current.periodEnd.getTime()));
+    // Срок задачи — не позже автоперехода.
+    const graceDue = (day: DayKey) => {
+      const due = dueOn(day, now, calendar);
+      return due.getTime() > graceEnd.getTime() ? now : due;
+    };
     const worthCalling = segment === "team" || segment === "solo" || current.kind === "renewal";
     const ref = `${unit.unitKey}:${lastDay}`;
     if (today <= graceLastDay && now.getTime() >= lastFire.getTime()) {
@@ -491,7 +536,7 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
           scenario: "grace_last",
           stage: null,
           kind: unit.owner.phone ? "call" : "message",
-          dueAt: dueOn(lastStageDay, now, calendar),
+          dueAt: graceDue(lastStageDay),
           supersede: true,
           lastDay,
           daysLeft: diffDays(today, graceLastDay),
@@ -505,7 +550,7 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
         scenario: "grace_start",
         stage: null,
         kind: unit.owner.phone ? "call" : "message",
-        dueAt: dueOn(startDay, now, calendar),
+        dueAt: graceDue(startDay),
         supersede: true,
         lastDay,
         daysLeft: diffDays(today, graceLastDay),
@@ -523,6 +568,12 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
     if (stage) {
       const daysLeft = diffDays(today, lastDay);
       const mKey = messageKey("renewal", stage.stage, unit.unitKey, lastDay);
+      // Счёт на продление — ровно на оплаченный тариф, период и точки: иначе касса
+      // посчитает его доплатой за переход и срок не продлится. Точек в работе больше
+      // оплаченных или прежняя «Подписка» — без счёта, решает менеджер.
+      const renewTier = isPaidTier(b.paidTier) && unit.usage.pointsInUse <= b.planPoints ? b.paidTier : null;
+      const renewTarget: InvoiceTarget | null = renewTier ? { tier: renewTier, cycle: b.planCycle, points: b.planPoints } : null;
+      const attach = wantsInvoice(segment) && renewTarget !== null;
       pushMessage({
         key: mKey,
         dealKey: current.key,
@@ -532,10 +583,17 @@ export function planLifecycle(input: PlanInput): LifecyclePlan {
         lastDay,
         daysLeft,
         graceLastDay: null,
-        attachInvoice: wantsInvoice(segment),
-        invoiceTarget: wantsInvoice(segment) ? invoiceTarget : null,
+        attachInvoice: attach,
+        invoiceTarget: attach ? renewTarget : null,
         offer,
         dealKind: current.kind,
+        paidPlan: {
+          tier: isPaidTier(b.paidTier) ? b.paidTier : "legacy",
+          cycle: b.planCycle,
+          points: b.planPoints,
+          amountRub: renewTier ? planPeriodPriceRub(input.rates, renewTier, b.planCycle, b.planPoints) : null,
+          monthlyRub: renewTier ? planMonthlyRub(input.rates, renewTier, b.planCycle, b.planPoints) : null,
+        },
       });
       if (stage.stage <= settings.taskStageMax && stage.stage > 1) {
         pushTask({

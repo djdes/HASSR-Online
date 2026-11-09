@@ -30,11 +30,18 @@ export const points = (n: number) => `${n} ${pluralRu(n, "точка", "точк
 export const entries = (n: number) => `${n} ${pluralRu(n, "запись", "записи", "записей")}`;
 export const days = (n: number) => `${n} ${pluralRu(n, "день", "дня", "дней")}`;
 
-/** «через 4 дня — 20 ноября последний день», «завтра — последний день», «сегодня последний день». */
+/** После «заканчивается»: «сегодня, 20 ноября», «завтра, 20 ноября», «через 4 дня — 20 ноября (пятница) последний день». */
 export function leftPhrase(daysLeft: number, lastDay: DayKey): string {
-  if (daysLeft <= 0) return `сегодня, ${dayLabel(lastDay)}, последний день`;
-  if (daysLeft === 1) return `завтра, ${dayLabel(lastDay)}, последний день`;
+  if (daysLeft <= 0) return `сегодня, ${dayLabel(lastDay)}`;
+  if (daysLeft === 1) return `завтра, ${dayLabel(lastDay)}`;
   return `через ${days(daysLeft)} — ${dayLabel(lastDay)} (${weekdayLabel(lastDay)}) последний день`;
+}
+
+/** ««Стандарт», 2 точки, помесячно» — что оплачено; прежний тариф — «Подписка». */
+export function paidPlanLabel(plan: { tier: string; cycle: string; points: number }): string {
+  const tier = plan.tier in TIER_NAMES ? TIER_NAMES[plan.tier as keyof typeof TIER_NAMES] : "«Подписка»";
+  const pointsPart = plan.points > 1 ? `, ${points(plan.points)}` : "";
+  return `${tier}${pointsPart}, ${plan.cycle === "year" ? "оплата за год" : "помесячно"}`;
 }
 
 export type ManagerSignature = { name: string; position: string | null; phone: string | null; email: string | null };
@@ -174,13 +181,17 @@ export function renderClientMessage(message: MessagePlan, ctx: MessageContext): 
         `⏳ Пробный период ${q} заканчивается ${when}. Не успели попробовать? Ответьте менеджеру — продлим пробный и поможем настроить.`,
       );
     }
-    const short = message.stage <= 2;
+    const short = message.daysLeft <= 2;
+    const after =
+      ctx.graceDays > 0
+        ? `Если не подключить тариф, после ${dayLabel(message.lastDay)} будет ${days(ctx.graceDays)} на решение, а затем на бесплатном тарифе останется 1 сотрудник и 1 журнал`
+        : `Если не подключить тариф, после ${dayLabel(message.lastDay)} на бесплатном тарифе останется 1 сотрудник и 1 журнал`;
     const blocks = [
       para(hello(ctx)),
       para(`Пробный период WeSetup для ${q} заканчивается ${when}.`),
       box(`Сейчас у вас: ${usageLine(offer)}.`),
       para(
-        `Если не подключить тариф, после ${dayLabel(message.lastDay)} будет ${days(ctx.graceDays)} на решение, а затем на бесплатном тарифе останется 1 сотрудник и 1 журнал` +
+        after +
           (turnsOff ? `: ${turnsOff}` : "") +
           ". Записи сохранятся, всё вернётся после оплаты.",
         short ? WARN : P,
@@ -225,14 +236,23 @@ export function renderClientMessage(message: MessagePlan, ctx: MessageContext): 
 
   // Продление.
   const when = leftPhrase(message.daysLeft, message.lastDay);
-  const pointsPart = offer.points > 1 ? `, ${points(offer.points)}` : "";
-  const current = `${TIER_NAMES[offer.tier]}${pointsPart}, ${offer.cycle === "year" ? "оплата за год" : "помесячно"}`;
-  const early = message.stage >= 7;
+  const paid = message.paidPlan ?? { tier: offer.tier, cycle: offer.cycle, points: offer.points, amountRub: offer.amountRub, monthlyRub: offer.monthlyRub };
+  const current = paidPlanLabel(paid);
+  const legacy = !(paid.tier in TIER_NAMES);
+  const renewLine = legacy
+    ? `Тариф «Подписка» больше не продаётся — для продления выберите новый: подходит ${offerLine(offer)}.`
+    : `Продление: ${current}${paid.amountRub ? ` — ${rub(paid.amountRub)}${paid.cycle === "year" && paid.monthlyRub ? ` (${rub(paid.monthlyRub)}/мес)` : ""}` : ""}.`;
+  // Рекомендация отличается от оплаченного (датчики, больше сотрудников) — подсказка, не счёт.
+  const upgrade =
+    !legacy && offer.tier !== paid.tier && offer.reasons.length
+      ? para(`Под вашу команду лучше подойдёт ${TIER_NAMES[offer.tier]}: ${offer.reasons.join("; ")}. Ответьте на письмо — пересчитаем.`)
+      : { html: "", text: "" };
+  const early = message.daysLeft >= 7;
   const switchYear =
-    offer.cycle === "month" && offer.yearSavingRub > 0
+    paid.cycle === "month" && offer.yearSavingRub > 0
       ? box(`Перейдите на оплату за год — выйдет на ${rub(offer.yearSavingRub)} дешевле, чем 12 помесячных оплат, и счёт один раз в год.`)
       : { html: "", text: "" };
-  const lastDayNotice = message.stage <= 1;
+  const lastDayNotice = message.daysLeft <= 1;
   return compose(
     lastDayNotice
       ? `${q}: ${message.daysLeft <= 0 ? "сегодня" : "завтра"} последний оплаченный день`
@@ -243,18 +263,83 @@ export function renderClientMessage(message: MessagePlan, ctx: MessageContext): 
       para(hello(ctx)),
       para(`Оплаченный период ${q} (${current}) заканчивается ${when}.`),
       early ? para("Напоминаем заранее, чтобы счёт успели провести и доступ команды не прервался. Новый период прибавится к текущему — оплаченные дни не пропадут.") : para(ADVANCE),
-      box(`Продление: ${offerLine(offer)}.`),
+      box(renewLine),
+      upgrade,
       switchYear,
       invoiceBlock(ctx),
-      ctx.graceDays > 0 && !early
+      message.enforcement && ctx.graceDays > 0 && !early
         ? para(`Если не продлить, после окончания будет ${days(ctx.graceDays)} на оплату, потом в работе останутся владелец и один журнал${turnsOff ? `: ${turnsOff}` : ""}.`)
         : { html: "", text: "" },
       buttons(ctx, false),
       reply,
       sig,
     ],
-    `${lastDayNotice ? "⚠️" : "⏳"} Оплата ${q} заканчивается ${when}. Продление: ${offerLine(offer)}.${ctx.invoice ? ` Счёт № ${ctx.invoice.number} отправили на почту.` : ""}`,
+    `${lastDayNotice ? "⚠️" : "⏳"} Оплата ${q} заканчивается ${when}. ${renewLine}${ctx.invoice ? ` Счёт № ${ctx.invoice.number} отправили на почту.` : ""}`,
   );
+}
+
+// ---------------------------------------------------------------- спец-КП
+
+export type OfferEmailInput = {
+  orgName: string;
+  recipientName: string | null;
+  tier: "standard" | "premium" | "vip";
+  cycle: "month" | "year";
+  points: number;
+  fullRub: number;
+  discountPercent: number;
+  discountedRub: number;
+  code: string | null;
+  codeEndsDay: DayKey | null;
+  lifetime: boolean;
+  invoice: { number: string; amountRub: number } | null;
+  links: { pay: string; web: string; pdf: string };
+  note: string;
+  manager: ManagerSignature | null;
+};
+
+/**
+ * Письмо спец-КП: ровно тот тариф, период и точки, что выбрал менеджер, цена
+ * до и после скидки, код (в ссылке оплаты он уже подставлен), счёт и ссылки
+ * на КП. Общий шаблон генератора КП тут не годится — он рекламный («Стандарт»,
+ * 14 дней бесплатно), а клиент уже на пробном.
+ */
+export function renderOfferEmail(input: OfferEmailInput): RenderedMessage {
+  const q = quoted(input.orgName);
+  const pointsPart = input.points > 1 ? ` на ${points(input.points)}` : "";
+  const period = input.cycle === "year" ? "оплата за год" : "оплата за месяц";
+  const plan = `${TIER_NAMES[input.tier]}${pointsPart}, ${period}`;
+  const priceText = input.discountPercent
+    ? `${plan}: ${rub(input.fullRub)} → ${rub(input.discountedRub)} (скидка ${input.discountPercent} %)${input.cycle === "year" ? ` — ${rub(Math.round(input.discountedRub / 12))}/мес` : ""}`
+    : `${plan}: ${rub(input.fullRub)}${input.cycle === "year" ? ` — ${rub(Math.round(input.fullRub / 12))}/мес` : ""}`;
+  const codeText = input.code
+    ? `Промокод ${input.code}${input.codeEndsDay ? ` действует до ${dayLabel(input.codeEndsDay)}` : ""}${input.lifetime ? ", скидка сохранится на все продления" : ", скидка — на эту оплату"}. В ссылке «Оплатить» он уже подставлен.`
+    : null;
+  const html =
+    `<p ${P}>${esc(hello({ recipientName: input.recipientName } as MessageContext))}</p>` +
+    (input.note ? `<p ${P}>${esc(input.note).replace(/\n/g, "<br>")}</p>` : `<p ${P}>Подготовили для ${esc(q)} предложение по тарифу.</p>`) +
+    `<div ${BOX}><strong>${esc(priceText)}</strong></div>` +
+    (codeText ? `<p ${P}>${esc(codeText)}</p>` : "") +
+    (input.invoice ? `<p ${P}><strong>${esc(`Счёт № ${input.invoice.number} на ${rub(input.invoice.amountRub)} — во вложении.`)}</strong></p>` : "") +
+    `<p ${P}>${esc(ADVANCE)}</p>` +
+    `<p style="margin:0 0 6px"><a href="${input.links.pay}" ${BUTTON}>Оплатить</a><a href="${input.links.web}" ${GHOST}>Коммерческое предложение</a></p>` +
+    `<p style="margin:0 0 14px;color:#6f7282;font-size:13px">PDF: <a href="${input.links.pdf}" style="color:#3848c7">скачать</a></p>` +
+    signature(input.manager).html;
+  const text = [
+    hello({ recipientName: input.recipientName } as MessageContext),
+    input.note || `Подготовили для ${q} предложение по тарифу.`,
+    priceText,
+    codeText,
+    input.invoice ? `Счёт № ${input.invoice.number} на ${rub(input.invoice.amountRub)} — во вложении.` : null,
+    ADVANCE,
+    `Оплатить: ${input.links.pay}`,
+    `Коммерческое предложение: ${input.links.web}`,
+    signature(input.manager).text,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const subject = input.discountPercent ? `${q}: спецпредложение — ${TIER_NAMES[input.tier]} со скидкой ${input.discountPercent} %` : `${q}: предложение по тарифу ${TIER_NAMES[input.tier]}`;
+  return { subject, html, text, telegram: `${subject}. ${priceText}` };
 }
 
 // ---------------------------------------------------------------- задачи

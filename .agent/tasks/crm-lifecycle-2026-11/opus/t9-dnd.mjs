@@ -1,0 +1,18 @@
+import { login, close, BASE, OUT } from "./lib.mjs";
+const alexey = await login("alexey", { width: 2200, height: 1100 });
+const p = alexey.page;
+await p.goto(`${BASE}/root/crm/funnel`, { waitUntil: "networkidle" });
+const box = await p.locator('[data-funnel-column="lost"]').boundingBox();
+console.log("lost column box", JSON.stringify(box), "viewport", JSON.stringify(p.viewportSize()));
+await p.locator('[data-funnel-card="Сеть «Вкусно рядом» e2e"]').dragTo(p.locator('[data-funnel-column="lost"]'));
+await p.waitForTimeout(1500);
+console.log("lost dialog (wide viewport):", await p.locator("[data-funnel-lost-reason]").count());
+await p.screenshot({ path: `${OUT}/ui-05-dnd-lost-wide.png` });
+if (await p.locator("[data-funnel-lost-reason]").count()) await p.keyboard.press("Escape");
+const alexey2 = await login("alexey");
+const q = alexey2.page;
+await q.goto(`${BASE}/root/crm/funnel`, { waitUntil: "networkidle" });
+const box2 = await q.locator('[data-funnel-column="lost"]').boundingBox();
+const scroller = await q.locator("[data-crm-funnel]").evaluate((el) => ({ sw: el.scrollWidth, cw: el.clientWidth }));
+console.log("1600px: lost column box", JSON.stringify(box2), "scroller", JSON.stringify(scroller));
+await close();

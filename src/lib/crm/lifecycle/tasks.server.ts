@@ -9,7 +9,7 @@ import { atMsk, isWorkingDay, mskDay, mskHour, workingDaysBetween } from "./cale
 import { TASK_RESULTS, TASK_RESULT_LABELS, type CompleteTaskInput, type DealPatch, type ManualTaskInput } from "./forms";
 import { loadPlatformStaff } from "./people.server";
 import { notifyAssignees } from "./run.server";
-import { advanceStage, DEAL_STAGE_SHORT, isOpenStage, type DealStage } from "./stages";
+import { advanceStage, DEAL_STAGE_SHORT, type DealStage } from "./stages";
 
 /**
  * Задачи и сделки CRM — действия людей: закрыть задачу с итогом, перенести,
@@ -69,10 +69,24 @@ const RESULT_STAGE: Partial<Record<keyof typeof TASK_RESULTS, DealStage>> = {
   offer_sent: "message_sent",
 };
 
+/** Время в прошлом (с запасом 5 минут) — отказ: «перезвонить вчера» не задача. */
+function assertFuture(iso: string | null | undefined, what: string) {
+  if (iso && new Date(iso).getTime() < Date.now() - 5 * 60 * 1000) throw new CrmActionError(`${what} — в прошлом. Выберите время позже`);
+}
+
+/** Менеджер с охватом «свои» не трогает чужую сделку, даже через свободную задачу. */
+async function assertOwnDeal(actor: CrmActor, dealId: string | null) {
+  if (!actor.own || !dealId) return;
+  const deal = await db.crmDeal.findUnique({ where: { id: dealId }, select: { ownerId: true } });
+  assertOwn(actor, deal?.ownerId ?? null, "Сделка");
+}
+
 export async function completeTask(taskId: string, input: CompleteTaskInput, actor: CrmActor): Promise<{ followUpId: string | null }> {
   const task = await db.crmTask.findUnique({ where: { id: taskId } });
   if (!task) throw new CrmActionError("Задача не найдена", 404);
   assertOwn(actor, task.assigneeId, "Задача");
+  await assertOwnDeal(actor, task.dealId);
+  assertFuture(input.followUpAt, "Перезвон");
   if (task.status !== "open") throw new CrmActionError("Задача уже закрыта", 409);
   if (task.kind === "approval") throw new CrmActionError("Согласование закрывается кнопками «Согласовать» / «Отклонить»");
   const now = new Date();
@@ -94,7 +108,7 @@ export async function completeTask(taskId: string, input: CompleteTaskInput, act
         organizationId: task.organizationId,
         assigneeId: task.assigneeId ?? actor.id,
         kind: "call",
-        title: `Перезвонить: ${task.title}`.slice(0, 200),
+        title: `Перезвонить: ${task.title.replace(/^(Перезвонить: )+/, "")}`.slice(0, 200),
         body: `${label}${input.note ? `: ${input.note}` : ""}\n\n${task.body}`.slice(0, 4000),
         dueAt: new Date(input.followUpAt),
         scenario: "manual",
@@ -113,6 +127,7 @@ export async function patchTask(taskId: string, patch: { dueAt?: string; assigne
   if (!task) throw new CrmActionError("Задача не найдена", 404);
   assertOwn(actor, task.assigneeId, "Задача");
   if (task.status !== "open") throw new CrmActionError("Задача уже закрыта", 409);
+  assertFuture(patch.dueAt, "Новый срок");
   const data: Prisma.CrmTaskUpdateInput = {};
   if (patch.dueAt) data.dueAt = new Date(patch.dueAt);
   if (patch.assigneeId !== undefined) {
@@ -129,10 +144,13 @@ export async function createManualTask(input: ManualTaskInput, actor: CrmActor):
   let organizationId: string | null = null;
   let contactId = input.contactId ?? null;
   let dealId = input.dealId ?? null;
+  assertFuture(input.dueAt, "Срок");
+  let dealContactId: string | null = null;
   if (dealId) {
     const deal = await db.crmDeal.findUnique({ where: { id: dealId }, select: { ownerId: true, contactId: true, organizationId: true } });
     if (!deal) throw new CrmActionError("Сделка не найдена", 404);
     assertOwn(actor, deal.ownerId, "Сделка");
+    dealContactId = deal.contactId;
     contactId = contactId ?? deal.contactId;
     organizationId = deal.organizationId;
   }
@@ -140,8 +158,15 @@ export async function createManualTask(input: ManualTaskInput, actor: CrmActor):
     const contact = await db.crmContact.findUnique({ where: { id: contactId }, select: { ownerId: true, organizationId: true } });
     if (!contact) throw new CrmActionError("Контакт не найден", 404);
     assertOwn(actor, contact.ownerId, "Контакт");
+    if (dealId && dealContactId !== contactId && contact.organizationId !== organizationId) throw new CrmActionError("Сделка и контакт — разных клиентов");
     organizationId = organizationId ?? contact.organizationId;
-    if (!dealId) dealId = (await db.crmDeal.findFirst({ where: { contactId, stage: { notIn: ["won", "lost"] } }, orderBy: { createdAt: "desc" }, select: { id: true } }))?.id ?? null;
+    if (!dealId) {
+      const deal = await db.crmDeal.findFirst({ where: { contactId, stage: { notIn: ["won", "lost"] } }, orderBy: { createdAt: "desc" }, select: { id: true, ownerId: true } });
+      if (deal) {
+        assertOwn(actor, deal.ownerId, "Сделка");
+        dealId = deal.id;
+      }
+    }
   }
   const assigneeId = input.assigneeId === undefined ? actor.id : input.assigneeId;
   await assertAssignable(actor, assigneeId);
@@ -163,22 +188,31 @@ export async function patchDeal(dealId: string, patch: DealPatch, actor: CrmActo
   const notes: string[] = [];
   if (patch.stage && patch.stage !== deal.stage) {
     data.stage = patch.stage;
-    data.stageManual = isOpenStage(patch.stage);
+    // Колонку поставил человек — автоматика её не трогает (кроме оплаты после отказа).
+    data.stageManual = true;
     if (patch.stage === "won") Object.assign(data, { wonAt: now, lostAt: null, lostReason: null });
     else if (patch.stage === "lost") Object.assign(data, { lostAt: now, lostReason: patch.lostReason || "Отказ клиента" });
     else Object.assign(data, { wonAt: null, lostAt: null, lostReason: null });
     notes.push(`Сделка → «${DEAL_STAGE_SHORT[patch.stage]}»${patch.stage === "lost" && patch.lostReason ? `: ${patch.lostReason}` : ""}`);
-    if (patch.stage === "lost") {
-      await db.crmTask.updateMany({ where: { dealId, status: "open", kind: { not: "approval" } }, data: { status: "cancelled", result: "obsolete", completedAt: now } });
+    if (patch.stage === "lost" || patch.stage === "won") {
+      await db.crmTask.updateMany({
+        where: { dealId, status: "open", kind: { not: "approval" } },
+        data: { status: patch.stage === "won" ? "done" : "cancelled", result: patch.stage === "won" ? "paid" : "obsolete", completedAt: now },
+      });
     }
   }
   if (patch.contractSigned !== undefined) {
     data.contractSignedAt = patch.contractSigned ? now : null;
     notes.push(patch.contractSigned ? "Договор подписан (отмечено вручную)" : "Отметка «договор подписан» снята");
-    if (patch.contractSigned && !patch.stage) {
+    if (!patch.stage) {
       const current = await db.crmDeal.findUnique({ where: { id: dealId }, select: { stage: true, stageManual: true } });
-      const next = current ? advanceStage(current, "contract_signed") : null;
-      if (next) data.stage = next;
+      if (patch.contractSigned) {
+        const next = current ? advanceStage(current, "contract_signed") : null;
+        if (next) data.stage = next;
+      } else if (current?.stage === "contract_signed" && !current.stageManual) {
+        // Сняли отметку — карточка возвращается в «Зарегистрировался».
+        data.stage = "registered";
+      }
     }
   }
   if (patch.ownerId !== undefined) {
@@ -230,23 +264,23 @@ export async function runTaskReminders(now = new Date()): Promise<{ daily: numbe
       if (delivered) daily += 1;
     }
   }
+  // Эскалация РОП: по разу на задачу (ключ на задачу), но одним сообщением на РОП за прогон.
   const heads = staff.filter((person) => person.salesHead);
+  const fresh: { task: (typeof tasks)[number]; logId: string }[] = [];
   for (const task of tasks) {
     if (workingDaysBetween(mskDay(task.dueAt), today) < 1) continue;
-    const recipients = heads.filter((head) => head.id !== task.assigneeId);
-    if (!recipients.length) continue;
-    const key = `lc:escalate:${task.id}`;
-    const logId = await claim(key, "lifecycle_escalation", null);
-    if (!logId) continue;
-    const assignee = staff.find((person) => person.id === task.assigneeId)?.name ?? "без ответственного";
-    const delivered = await deliver(
-      recipients.map((person) => ({ id: person.id, email: person.contactEmail || person.email, telegramChatId: person.telegramChatId })),
-      { subject: "Просрочена задача CRM", text: `⏰ Просрочена задача CRM (${assignee}):\n${task.title}\n${APP_URL()}/root/crm/tasks` },
-      "lifecycle_escalation",
-      key,
-    );
-    await settle(logId, delivered);
-    if (delivered) escalated += 1;
+    if (!heads.some((head) => head.id !== task.assigneeId)) continue;
+    const logId = await claim(`lc:escalate:${task.id}`, "lifecycle_escalation", null);
+    if (logId) fresh.push({ task, logId });
   }
+  for (const head of heads) {
+    const mine = fresh.filter((item) => item.task.assigneeId !== head.id);
+    if (!mine.length) continue;
+    const lines = mine.slice(0, 15).map(({ task }) => `• ${task.title} — ${staff.find((person) => person.id === task.assigneeId)?.name ?? "без ответственного"}`);
+    const text = `⏰ Просрочены задачи CRM (${mine.length}):\n${lines.join("\n")}${mine.length > 15 ? `\n…и ещё ${mine.length - 15}` : ""}\n${APP_URL()}/root/crm/tasks?who=all`;
+    const delivered = await deliver([{ id: head.id, email: head.contactEmail || head.email, telegramChatId: head.telegramChatId }], { subject: `Просрочены задачи CRM: ${mine.length}`, text }, "lifecycle_escalation", `lc:escalate-batch:${head.id}:${now.getTime()}`);
+    if (delivered) escalated += mine.length;
+  }
+  for (const item of fresh) await settle(item.logId, 1);
   return { daily, escalated };
 }
