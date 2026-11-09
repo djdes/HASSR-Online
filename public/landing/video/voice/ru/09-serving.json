@@ -1,0 +1,108 @@
+{
+  "id": "serving",
+  "text": "Горячие блюда на раздаче — по чек-листу. Температура в начале раздачи и через час, отклонение видно сразу.",
+  "say": "Горячие блюда на раздаче — по чек-листу. Температура в начале раздачи и через час, отклонение видно сразу.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
+  "settings": {
+    "stability": 0.75,
+    "similarity_boost": 0.85,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 9002,
+  "fingerprint": "dd0f3fe6a166be87",
+  "characters": 106,
+  "audioSeconds": 7.497,
+  "speechStart": 0,
+  "speechEnd": 7.43,
+  "words": [
+    {
+      "text": "Горячие",
+      "start": 0,
+      "end": 0.499
+    },
+    {
+      "text": "блюда",
+      "start": 0.557,
+      "end": 0.824
+    },
+    {
+      "text": "на",
+      "start": 0.871,
+      "end": 0.929
+    },
+    {
+      "text": "раздаче",
+      "start": 0.964,
+      "end": 1.556
+    },
+    {
+      "text": "—",
+      "start": 1.579,
+      "end": 1.625
+    },
+    {
+      "text": "по",
+      "start": 1.649,
+      "end": 1.718
+    },
+    {
+      "text": "чек-листу.",
+      "start": 1.788,
+      "end": 2.508
+    },
+    {
+      "text": "Температура",
+      "start": 2.752,
+      "end": 3.39
+    },
+    {
+      "text": "в",
+      "start": 3.413,
+      "end": 3.448
+    },
+    {
+      "text": "начале",
+      "start": 3.506,
+      "end": 3.866
+    },
+    {
+      "text": "раздачи",
+      "start": 3.913,
+      "end": 4.447
+    },
+    {
+      "text": "и",
+      "start": 4.516,
+      "end": 4.563
+    },
+    {
+      "text": "через",
+      "start": 4.644,
+      "end": 4.899
+    },
+    {
+      "text": "час,",
+      "start": 4.981,
+      "end": 5.433
+    },
+    {
+      "text": "отклонение",
+      "start": 5.492,
+      "end": 6.153
+    },
+    {
+      "text": "видно",
+      "start": 6.2,
+      "end": 6.478
+    },
+    {
+      "text": "сразу.",
+      "start": 6.536,
+      "end": 7.43
+    }
+  ],
+  "voiceName": "Maxim (calm)"
+}

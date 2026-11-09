@@ -18,7 +18,6 @@ import {
 import { CHAPTERS, FPS } from "@/components/landing/qr-player/chapters";
 import {
   CONTACTS_SECONDS,
-  buildTimeline,
   holdProgress,
   sceneLocalFor,
   timelineCues,
@@ -31,8 +30,17 @@ import { SceneAssets, SceneFrame, STAGE_BACKGROUND, type SceneDay } from "@/comp
 import { pickMessages, type Messages } from "@/i18n/messages";
 import ru from "@/i18n/messages/ru.json";
 
-import narration from "./narration.ru.json";
-import intro from "../public/landing/video/voice/ru/00-intro.json";
+import narration from "./narration.extended.ru.json";
+import { buildExtTimeline, type ExtPart } from "./ext/timeline";
+import { ShowcaseScene } from "./ext/showcase";
+import { SHOWCASES, SHOWCASE_IDS } from "./ext/showcases";
+import intro from "../public/landing/video/voice/ru/00-intro-ext.json";
+import serving from "../public/landing/video/voice/ru/09-serving.json";
+import acceptance from "../public/landing/video/voice/ru/10-acceptance.json";
+import points from "../public/landing/video/voice/ru/11-points.json";
+import ppk from "../public/landing/video/voice/ru/12-ppk.json";
+import inspection from "../public/landing/video/voice/ru/13-inspection.json";
+import reports from "../public/landing/video/voice/ru/14-reports.json";
 import fridge from "../public/landing/video/voice/ru/01-fridge.json";
 import locker from "../public/landing/video/voice/ru/02-locker.json";
 import uv from "../public/landing/video/voice/ru/03-uv.json";
@@ -58,8 +66,14 @@ export const VIDEO = { width: 1920, height: 1080, fps: FPS } as const;
 /** Контакты в ролике: номер — в углу всего ролика и крупно в конце (по нему нас находят в MAX и Telegram). */
 export const CONTACTS = { phone: "+7 925 305-80-77", email: "admin@wesetup.ru" } as const;
 const CONTACTS_FRAMES = Math.round(CONTACTS_SECONDS * FPS);
-export const TRACKS: VoiceTrack[] = [intro, fridge, locker, uv, forgot, sensor, outro, outroTagline];
-export const TIMELINE = buildTimeline(TRACKS);
+const BY_ID: Record<string, VoiceTrack> = { intro, fridge, locker, uv, serving, acceptance, sensor, forgot, points, ppk, inspection, reports, outro, outroTagline };
+/** Порядок глав — как в сценарии (`narration.ru.json`). */
+export const TRACKS: VoiceTrack[] = narration.segments.map((segment) => {
+  const track = BY_ID[segment.id];
+  if (!track) throw new Error(`Нет озвучки куска ${segment.id}`);
+  return track;
+});
+export const TIMELINE = buildExtTimeline(TRACKS, SHOWCASE_IDS);
 export const CUES: Cue[] = timelineCues(TIMELINE);
 
 const FILES = Object.fromEntries(narration.segments.map((segment) => [segment.id, segment.file]));
@@ -104,7 +118,7 @@ export const QrTourNarrated: React.FC<QrTourProps> = ({ qr, today }) => {
           {TIMELINE.parts.map((part) => (
             <Sequence key={part.id} from={part.from} durationInFrames={part.durationInFrames} name={part.id}>
               {part.kind === "intro" ? <IntroCard part={part} /> : null}
-              {part.kind === "chapter" ? <ChapterPart part={part} qr={qr} today={today} /> : null}
+              {part.kind === "chapter" ? <ChapterPart part={part as ExtPart} qr={qr} today={today} /> : null}
               {part.kind === "outro" ? <OutroCard part={part} /> : null}
               {part.voices.map((voice) => (
                 <Sequence key={voice.track.id} from={voice.offset} name={`голос ${voice.track.id}`}>
@@ -235,7 +249,7 @@ function IntroCard({ part }: { part: TimelinePart }) {
           part={part}
           frame={frame}
           from={second}
-          words={["Смотрите,", "как", "это", "работает", "на", "кухне"]}
+          words={part.voice.words.slice(second).map((word) => word.text.replace(/\.$/, ""))}
           style={{ marginTop: 28, fontSize: 38, fontWeight: 500, color: "rgba(255,255,255,0.74)" }}
         />
       </AbsoluteFill>
@@ -394,8 +408,17 @@ function CornerPhone() {
  * Главы
  * ------------------------------------------------------------------- */
 
-function ChapterPart({ part, qr, today }: { part: TimelinePart; qr: QrMatrix; today: SceneDay }) {
+function ChapterPart({ part, qr, today }: { part: ExtPart; qr: QrMatrix; today: SceneDay }) {
   const frame = useCurrentFrame();
+  const showcase = part.showcase ? SHOWCASES[part.showcase] : undefined;
+  if (showcase) {
+    return (
+      <AbsoluteFill style={{ background: STAGE_BACKGROUND }}>
+        <ShowcaseScene part={part} showcase={showcase} />
+        <ChapterChip frame={frame} number={part.number ?? 1} label={showcase.chip} accent={showcase.accent} accentSoft={showcase.accentSoft} />
+      </AbsoluteFill>
+    );
+  }
   const chapterIndex = part.chapterIndex ?? 0;
   const chapter = CHAPTERS[chapterIndex];
   const local = sceneLocalFor(frame, part.durationInFrames);
@@ -405,13 +428,25 @@ function ChapterPart({ part, qr, today }: { part: TimelinePart; qr: QrMatrix; to
   const fadeIn = chapterIndex === 0 ? interpolate(frame, [0, 12], [0, 1], clamp) : 1;
   // Название главы — титр на первые секунды: дальше сцена сама показывает
   // уведомления в правом верхнем углу.
-  const chip = interpolate(frame, [8, 22, 128, 144], [0, 1, 1, 0], { ...clamp, easing: Easing.inOut(Easing.cubic) });
   const label = (ru.qrScene.chapters as Record<string, string>)[`${chapter.id}Chip`];
   return (
     <AbsoluteFill style={{ opacity: fadeIn, background: STAGE_BACKGROUND }}>
       <AbsoluteFill className="@container" style={{ transform: `scale(${(1 + 0.045 * hold).toFixed(4)})` }}>
         <SceneFrame frame={chapter.from + local} fridgeTemp={4} bodyTemp={36.6} today={today} qr={qr} />
       </AbsoluteFill>
+      <ChapterChip frame={frame} number={part.number ?? chapterIndex + 1} label={label} accent={chapter.accent} accentSoft={chapter.accentSoft} />
+    </AbsoluteFill>
+  );
+}
+
+/** Номер и название главы — как вкладка над роликом на главной. Справа сверху: слева в кадре телефон. */
+function ChapterChip({ frame, number, label, accent, accentSoft }: { frame: number; number: number; label: string; accent: string; accentSoft: string }) {
+  // Титр на первые секунды: дальше сцена сама показывает уведомления в правом верхнем углу.
+  const chip = interpolate(frame, [8, 22, 128, 144], [0, 1, 1, 0], { ...clamp, easing: Easing.inOut(Easing.cubic) });
+  const chapter = { accent, accentSoft };
+  const chapterIndex = number - 1;
+  return (
+    <>
       {/* Номер и название главы — как вкладка над роликом на главной.
           Справа сверху: слева в кадре телефон со строкой состояния. */}
       <div
@@ -452,7 +487,7 @@ function ChapterPart({ part, qr, today }: { part: TimelinePart; qr: QrMatrix; to
         </span>
         {label}
       </div>
-    </AbsoluteFill>
+    </>
   );
 }
 

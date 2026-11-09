@@ -69,7 +69,8 @@ if (!KEY) {
   console.error("Нет ELEVENLABS_API_KEY (окружение или --env <путь к .env>).");
   process.exit(1);
 }
-const narration = JSON.parse(readFileSync(path.join(ROOT, "remotion/narration.ru.json"), "utf8"));
+// Расширенный ролик-презентация: --narration remotion/narration.extended.ru.json.
+const narration = JSON.parse(readFileSync(path.join(ROOT, typeof opts.narration === "string" ? opts.narration : "remotion/narration.ru.json"), "utf8"));
 const MODEL = narration.model;
 /**
  * Голос Максима: чистый спокойный тон без «воздуха» — stability 0.75,

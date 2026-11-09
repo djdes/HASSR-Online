@@ -30,15 +30,17 @@ import { bundle } from "@remotion/bundler";
 import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 
 import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
-import { buildTimeline, timelineCues, toVtt, type VoiceTrack } from "@/components/landing/qr-player/narrated-timeline";
+import { timelineCues, toVtt, type VoiceTrack } from "@/components/landing/qr-player/narrated-timeline";
+import { buildExtTimeline } from "../../remotion/ext/timeline";
+import { SHOWCASE_IDS } from "../../remotion/ext/showcases";
 import { FORMAT_LOCALES } from "@/i18n/locales";
 
 import { webpackOverride } from "../../remotion/webpack-override";
 
 const ROOT = process.cwd();
 const OUT_DIR = path.join(ROOT, "public/landing/video");
-const BASENAME = "qr-tour-ru";
-const MAX_BYTES = 15 * 1024 * 1024;
+const BASENAME = "presentation-extended-ru";
+const MAX_BYTES = 40 * 1024 * 1024;
 const CRF = Number(process.env.VIDEO_CRF ?? 28);
 
 type Narration = { segments: { id: string; file: string }[] };
@@ -58,11 +60,11 @@ function option(name: string): string | undefined {
 }
 
 async function main() {
-  const narration = JSON.parse(readFileSync(path.join(ROOT, "remotion/narration.ru.json"), "utf8")) as Narration;
+  const narration = JSON.parse(readFileSync(path.join(ROOT, "remotion/narration.extended.ru.json"), "utf8")) as Narration;
   const tracks = narration.segments.map(
     (segment) => JSON.parse(readFileSync(path.join(OUT_DIR, "voice/ru", `${segment.file}.json`), "utf8")) as VoiceTrack,
   );
-  const timeline = buildTimeline(tracks);
+  const timeline = buildExtTimeline(tracks, SHOWCASE_IDS);
   const cues = timelineCues(timeline);
   writeFileSync(path.join(OUT_DIR, `${BASENAME}.vtt`), toVtt(cues));
   console.log(`Субтитры: ${cues.length} реплик, видео ${(timeline.durationInFrames / 30).toFixed(1)} с`);
@@ -112,6 +114,7 @@ async function main() {
     imageFormat: "jpeg",
     jpegQuality: 92,
     outputLocation: mp4,
+    timeoutInMilliseconds: 180000,
     ...(frames ? { frameRange: frames } : {}),
     browserExecutable,
     onProgress: ({ progress }) => {

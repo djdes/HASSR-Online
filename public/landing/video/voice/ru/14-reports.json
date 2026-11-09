@@ -1,0 +1,93 @@
+{
+  "id": "reports",
+  "text": "Сводка дня — в Телеграм и MAX, отчёты и выгрузки — в пару кликов.",
+  "say": "Сводка дня — в Телеграм и Макс, отчёты и выгрузки — в пару кликов.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
+  "settings": {
+    "stability": 0.75,
+    "similarity_boost": 0.85,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 9002,
+  "fingerprint": "f9a798d02ca3a809",
+  "characters": 66,
+  "audioSeconds": 4.702,
+  "speechStart": 0,
+  "speechEnd": 4.644,
+  "words": [
+    {
+      "text": "Сводка",
+      "start": 0,
+      "end": 0.441
+    },
+    {
+      "text": "дня",
+      "start": 0.476,
+      "end": 0.708
+    },
+    {
+      "text": "—",
+      "start": 0.743,
+      "end": 0.789
+    },
+    {
+      "text": "в",
+      "start": 0.836,
+      "end": 0.859
+    },
+    {
+      "text": "Телеграм",
+      "start": 0.917,
+      "end": 1.405
+    },
+    {
+      "text": "и",
+      "start": 1.498,
+      "end": 1.556
+    },
+    {
+      "text": "MAX,",
+      "start": 1.637,
+      "end": 2.043
+    },
+    {
+      "text": "отчёты",
+      "start": 2.067,
+      "end": 2.554
+    },
+    {
+      "text": "и",
+      "start": 2.624,
+      "end": 2.659
+    },
+    {
+      "text": "выгрузки",
+      "start": 2.717,
+      "end": 3.274
+    },
+    {
+      "text": "—",
+      "start": 3.297,
+      "end": 3.344
+    },
+    {
+      "text": "в",
+      "start": 3.367,
+      "end": 3.425
+    },
+    {
+      "text": "пару",
+      "start": 3.495,
+      "end": 3.738
+    },
+    {
+      "text": "кликов.",
+      "start": 3.773,
+      "end": 4.644
+    }
+  ],
+  "voiceName": "Maxim (calm)"
+}

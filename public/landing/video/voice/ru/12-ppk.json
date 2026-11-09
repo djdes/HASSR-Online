@@ -1,0 +1,88 @@
+{
+  "id": "ppk",
+  "text": "Программа производственного контроля и ХАССП-план — в электронном виде, у каждой точки свои.",
+  "say": "Программа производственного контроля и Хассп-план — в электронном виде, у каждой точки свои.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
+  "settings": {
+    "stability": 0.75,
+    "similarity_boost": 0.85,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 9002,
+  "fingerprint": "985ae7b8a0b4c8bc",
+  "characters": 92,
+  "audioSeconds": 6.06,
+  "speechStart": 0,
+  "speechEnd": 5.991,
+  "words": [
+    {
+      "text": "Программа",
+      "start": 0,
+      "end": 0.511
+    },
+    {
+      "text": "производственного",
+      "start": 0.557,
+      "end": 1.324
+    },
+    {
+      "text": "контроля",
+      "start": 1.393,
+      "end": 1.904
+    },
+    {
+      "text": "и",
+      "start": 1.974,
+      "end": 2.02
+    },
+    {
+      "text": "ХАССП-план",
+      "start": 2.101,
+      "end": 2.786
+    },
+    {
+      "text": "—",
+      "start": 2.902,
+      "end": 2.972
+    },
+    {
+      "text": "в",
+      "start": 3.146,
+      "end": 3.17
+    },
+    {
+      "text": "электронном",
+      "start": 3.216,
+      "end": 3.75
+    },
+    {
+      "text": "виде,",
+      "start": 3.82,
+      "end": 4.191
+    },
+    {
+      "text": "у",
+      "start": 4.261,
+      "end": 4.307
+    },
+    {
+      "text": "каждой",
+      "start": 4.377,
+      "end": 4.69
+    },
+    {
+      "text": "точки",
+      "start": 4.737,
+      "end": 5.074
+    },
+    {
+      "text": "свои.",
+      "start": 5.143,
+      "end": 5.991
+    }
+  ],
+  "voiceName": "Maxim (calm)"
+}

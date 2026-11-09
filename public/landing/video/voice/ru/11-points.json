@@ -1,0 +1,93 @@
+{
+  "id": "points",
+  "text": "Несколько точек — одна компания. Каждая точка видит только своё, офис — всю сеть.",
+  "say": "Несколько точек — одна компания. Каждая точка видит только своё, офис — всю сеть.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
+  "settings": {
+    "stability": 0.75,
+    "similarity_boost": 0.85,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 9002,
+  "fingerprint": "bc43d352a7311973",
+  "characters": 81,
+  "audioSeconds": 6.06,
+  "speechStart": 0,
+  "speechEnd": 5.991,
+  "words": [
+    {
+      "text": "Несколько",
+      "start": 0,
+      "end": 0.476
+    },
+    {
+      "text": "точек",
+      "start": 0.522,
+      "end": 0.882
+    },
+    {
+      "text": "—",
+      "start": 0.94,
+      "end": 0.987
+    },
+    {
+      "text": "одна",
+      "start": 1.01,
+      "end": 1.289
+    },
+    {
+      "text": "компания.",
+      "start": 1.358,
+      "end": 2.078
+    },
+    {
+      "text": "Каждая",
+      "start": 2.322,
+      "end": 2.705
+    },
+    {
+      "text": "точка",
+      "start": 2.752,
+      "end": 3.077
+    },
+    {
+      "text": "видит",
+      "start": 3.111,
+      "end": 3.355
+    },
+    {
+      "text": "только",
+      "start": 3.379,
+      "end": 3.657
+    },
+    {
+      "text": "своё,",
+      "start": 3.704,
+      "end": 4.249
+    },
+    {
+      "text": "офис",
+      "start": 4.458,
+      "end": 4.841
+    },
+    {
+      "text": "—",
+      "start": 4.899,
+      "end": 4.946
+    },
+    {
+      "text": "всю",
+      "start": 4.969,
+      "end": 5.236
+    },
+    {
+      "text": "сеть.",
+      "start": 5.294,
+      "end": 5.991
+    }
+  ],
+  "voiceName": "Maxim (calm)"
+}

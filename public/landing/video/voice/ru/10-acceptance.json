@@ -1,0 +1,88 @@
+{
+  "id": "acceptance",
+  "text": "Накладная из ЭДО или iiko сама превращается в строки журнала приёмки нужной точки.",
+  "say": "Накладная из Э-Дэ-О или Айко сама превращается в строки журнала приёмки нужной точки.",
+  "model": "eleven_multilingual_v2",
+  "voiceId": "HcaxAsrhw4ByUo4CBCBN",
+  "settings": {
+    "stability": 0.75,
+    "similarity_boost": 0.85,
+    "style": 0,
+    "use_speaker_boost": true,
+    "speed": 1
+  },
+  "seed": 9002,
+  "fingerprint": "1361f06ccec7e4bf",
+  "characters": 85,
+  "audioSeconds": 6.557,
+  "speechStart": 0,
+  "speechEnd": 6.502,
+  "words": [
+    {
+      "text": "Накладная",
+      "start": 0,
+      "end": 0.697
+    },
+    {
+      "text": "из",
+      "start": 0.766,
+      "end": 0.917
+    },
+    {
+      "text": "ЭДО",
+      "start": 1.01,
+      "end": 1.614
+    },
+    {
+      "text": "или",
+      "start": 1.73,
+      "end": 1.95
+    },
+    {
+      "text": "iiko",
+      "start": 2.032,
+      "end": 2.45
+    },
+    {
+      "text": "сама",
+      "start": 2.659,
+      "end": 2.949
+    },
+    {
+      "text": "превращается",
+      "start": 2.995,
+      "end": 3.68
+    },
+    {
+      "text": "в",
+      "start": 3.715,
+      "end": 3.738
+    },
+    {
+      "text": "строки",
+      "start": 3.785,
+      "end": 4.145
+    },
+    {
+      "text": "журнала",
+      "start": 4.203,
+      "end": 4.679
+    },
+    {
+      "text": "приёмки",
+      "start": 4.737,
+      "end": 5.213
+    },
+    {
+      "text": "нужной",
+      "start": 5.259,
+      "end": 5.573
+    },
+    {
+      "text": "точки.",
+      "start": 5.631,
+      "end": 6.502
+    }
+  ],
+  "voiceName": "Maxim (calm)"
+}
