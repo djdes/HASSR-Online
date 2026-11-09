@@ -1,24 +1,30 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
-import { deleteDemoOrganization } from "@/lib/demo-organization";
+import {
+  purgeLegacyDemoOrganizations,
+  reinstallSharedDemoOrganization,
+} from "@/lib/demo-organization";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 /**
  * GET/POST /api/cron/purge-demo-orgs
  *
- * Удаляет демо-организации, у которых вышел срок (`demoExpiresAt` в
- * прошлом). Cascade по Organization сносит сотрудников, документы и
- * записи. За один прогон — не больше BATCH штук: удаление одной
- * организации с записями за неделю занимает секунды, и мы не хотим
- * держать cron минуту, если демо накопилось много.
+ * Раз в сутки переустанавливает общую демо-организацию: прежняя удаляется
+ * (cascade сносит сотрудников, документы, записи и членства гостей), новая
+ * ставится под тем же id со свежими данными за последние дни.
  *
- * Страховка без cron: `createDemoOrganization` сам удаляет протухшее
- * демо аккаунта перед созданием нового.
+ * Заодно удаляет демо прежней схемы — свои на каждый аккаунт. За один
+ * прогон — не больше BATCH штук: удаление одной занимает секунды.
  *
- * INFRA NEXT: cron 03:20 ежедневно.
+ * Адрес прежний (расписание живёт вне репозитория). Страховка без cron:
+ * `ensureSharedDemoOrganization` ставит демо заново при первом входе после
+ * срока.
+ *
+ * INFRA: cron 03:20 ежедневно.
  */
 const BATCH = 20;
 
@@ -26,47 +32,66 @@ async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
 
-  const now = new Date();
-  const expired = await db.organization.findMany({
-    where: { isDemo: true, demoExpiresAt: { lt: now } },
-    select: { id: true, name: true, accountId: true },
-    orderBy: { demoExpiresAt: "asc" },
-    take: BATCH,
-  });
-
   // AuditLog требует organizationId — пишем в platform-org, чтобы запись
   // была видна ROOT'у на /root/audit. Если platform-org нет — пропускаем.
   const platformOrgId = (process.env.PLATFORM_ORG_ID ?? "").trim();
-  const deleted: Array<{ id: string; name: string }> = [];
 
-  for (const org of expired) {
-    try {
-      const counts = await deleteDemoOrganization(org.id);
-      deleted.push({ id: org.id, name: org.name });
-      if (platformOrgId) {
-        await db.auditLog.create({
+  const legacy = await purgeLegacyDemoOrganizations({ take: BATCH });
+  if (platformOrgId) {
+    for (const org of legacy.deleted) {
+      await db.auditLog
+        .create({
           data: {
             organizationId: platformOrgId,
             action: "org.demo.expired",
             entity: "organization",
             entityId: org.id,
-            details: { name: org.name, accountId: org.accountId, ...counts },
+            details: {
+              name: org.name,
+              accountId: org.accountId,
+              staff: org.staff,
+              documents: org.documents,
+              entries: org.entries,
+            },
           },
-        });
-      }
-    } catch (error) {
-      // Одно упавшее демо не должно останавливать остальные — их
-      // подберёт следующий прогон.
-      console.error("[purge-demo-orgs] failed", org.id, error);
+        })
+        .catch(() => {});
     }
   }
 
-  return NextResponse.json({
-    ok: true,
-    deleted: deleted.length,
-    failed: expired.length - deleted.length,
-    cutoff: now.toISOString(),
-  });
+  let reinstalled: { organizationId: string; durationMs: number } | null = null;
+  let error: string | null = null;
+  try {
+    const result = await reinstallSharedDemoOrganization();
+    reinstalled = { organizationId: result.organizationId, durationMs: result.durationMs };
+    if (platformOrgId) {
+      await db.auditLog
+        .create({
+          data: {
+            organizationId: platformOrgId,
+            action: "org.demo.reinstalled",
+            entity: "organization",
+            entityId: result.organizationId,
+            details: { trigger: "cron", name: result.name, ...result.seed, durationMs: result.durationMs },
+          },
+        })
+        .catch(() => {});
+    }
+  } catch (cause) {
+    console.error("[purge-demo-orgs] reinstall failed", cause);
+    error = cause instanceof Error ? cause.message : "reinstall failed";
+  }
+
+  return NextResponse.json(
+    {
+      ok: error === null,
+      reinstalled,
+      legacyDeleted: legacy.deleted.length,
+      legacyFailed: legacy.failed,
+      ...(error ? { error } : {}),
+    },
+    { status: error ? 500 : 200 },
+  );
 }
 
 export const GET = handle;

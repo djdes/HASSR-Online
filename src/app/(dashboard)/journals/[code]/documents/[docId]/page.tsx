@@ -219,7 +219,8 @@ import { isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 import { orgTodayKey } from "@/lib/timezone";
 import { TodayKeyProvider } from "@/lib/today-key-context";
 import { readHygieneFormVersion } from "@/lib/hygiene-v2";
-import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { canSeeDocumentPoint, findPointMismatch } from "@/lib/document-point-access";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
 export const dynamic = "force-dynamic";
 
 type TrackedFieldOption = {
@@ -454,6 +455,12 @@ async function JournalDocumentBody({
     !(await canSeeDocumentPoint(session, document.buildingId))
   ) {
     notFound();
+  }
+
+  // В шапке выбрана другая точка — вместо документа ошибка и переход (2026-11-09).
+  const mismatch = await findPointMismatch(session, document.buildingId);
+  if (mismatch) {
+    return <PointMismatchNotice kind="document" mismatch={mismatch} listHref={`/journals/${resolvedCode}`} />;
   }
 
   // Оборудование документа точки — цеха этой точки и общие (без точки).

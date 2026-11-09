@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import { Check, Loader2, Plus, Settings, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
-import { DEMO_ORG_TTL_DAYS } from "@/lib/demo-organization.shared";
 import type { AccessibleOrganization } from "@/lib/organization-access";
 import { switchOrganizationAndOpen } from "@/lib/switch-organization";
 import { useContentTransition } from "@/components/layout/content-transition";
@@ -200,12 +199,12 @@ export function OrganizationSwitcher({
       ) : null}
 
       {/* Второй вход в демо — для тех, кто в анкете нажал просто «Готово».
-          Сфера и последствия подтверждаются в модалке, а не создаются молча. */}
+          Демо общая: что данные там временные, подтверждается в модалке. */}
       {canOpenCreate && !hasDemo ? (
         <button
           type="button"
           onClick={() => onOpenCreate?.("demo")}
-          title={t("demoTitle", { days: DEMO_ORG_TTL_DAYS })}
+          title={t("demoTitle")}
           className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[14px] text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
         >
           <Sparkles className="size-5 shrink-0" />

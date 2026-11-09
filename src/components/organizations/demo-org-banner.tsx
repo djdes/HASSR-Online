@@ -2,37 +2,31 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, FlaskConical, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, FlaskConical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { demoDaysLeft } from "@/lib/demo-organization.shared";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 
 /**
  * Полоса «вы в демо» над контентом.
  *
  * Не закрывается: человек должен всегда видеть, что журналы, сотрудники
- * и compliance перед ним — тестовые, и что они исчезнут. Две кнопки —
- * ровно два выхода из песочницы: вернуться в свою организацию (демо
- * остаётся до срока) или удалить демо прямо сейчас.
+ * и compliance перед ним — тестовые, общие для всех гостей и что раз в
+ * сутки демо ставится заново. Выход один — вернуться в свою организацию;
+ * удалить общую демо гость не может.
  *
- * `?welcome-demo=1` — первый показ сразу после создания: баннер тот же,
+ * `?welcome-demo=1` — первый показ сразу после входа: баннер тот же,
  * плюс тост, чтобы переключение не осталось незамеченным.
  */
 export function DemoOrgBanner({
   organizationName,
-  demoExpiresAt,
+  nextResetAt,
   homeOrganizationId,
-  staffCount,
-  documentsCount,
 }: {
   organizationName: string;
-  /** ISO — из server component дату сериализуем строкой. */
-  demoExpiresAt: string | null;
+  /** Когда демо переустановится. ISO — из server component дату сериализуем строкой. */
+  nextResetAt: string | null;
   homeOrganizationId: string;
-  staffCount: number;
-  documentsCount: number;
 }) {
   const router = useRouter();
   const t = useTranslations("organizationsUi");
@@ -41,7 +35,6 @@ export function DemoOrgBanner({
   const welcome = searchParams.get("welcome-demo") === "1";
 
   const [leaving, setLeaving] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const welcomed = useRef(false);
 
   useEffect(() => {
@@ -54,11 +47,17 @@ export function DemoOrgBanner({
     router.replace("/dashboard");
   }, [welcome, router, t]);
 
-  const expires = demoExpiresAt ? new Date(demoExpiresAt) : null;
-  const daysLeft = expires ? demoDaysLeft(expires, new Date()) : null;
-  const expiresLabel = expires
-    ? expires.toLocaleDateString(FORMAT_LOCALES[locale], { day: "numeric", month: "long" })
-    : null;
+  const reset = nextResetAt ? new Date(nextResetAt) : null;
+  // Срок в прошлом (cron не отработал) — без даты: демо обновится при входе.
+  const resetLabel =
+    reset && reset.getTime() > Date.now()
+      ? reset.toLocaleString(FORMAT_LOCALES[locale], {
+          day: "numeric",
+          month: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
 
   async function leave() {
     setLeaving(true);
@@ -80,25 +79,6 @@ export function DemoOrgBanner({
     }
   }
 
-  async function remove() {
-    const res = await fetch("/api/organizations/demo", { method: "DELETE" });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      toast.error(data?.error ?? t("demoOrgBanner.deleteFailed"));
-      return;
-    }
-    toast.success(
-      t("demoOrgBanner.deleted", {
-        staff: t("demoOrgBanner.staffCount", { count: Number(data.staff) }),
-        documents: t("demoOrgBanner.documentsCount", { count: Number(data.documents) }),
-        entries: t("demoOrgBanner.entriesCount", { count: Number(data.entries) }),
-      }),
-    );
-    setConfirmOpen(false);
-    router.push("/dashboard");
-    router.refresh();
-  }
-
   return (
     <div className="mx-auto w-full max-w-[1800px] px-4 pt-4 md:px-8">
       <div
@@ -115,8 +95,8 @@ export function DemoOrgBanner({
                 {t("demoOrgBanner.title", { name: organizationName })}
               </div>
               <p className="mt-0.5 text-[13px] leading-[1.5] text-[#6f7282]">
-                {daysLeft !== null && expiresLabel
-                  ? t("demoOrgBanner.expiresIn", { days: t("demoOrgBanner.daysCount", { count: daysLeft }), date: expiresLabel })
+                {resetLabel
+                  ? t("demoOrgBanner.expiresIn", { date: resetLabel })
                   : t("demoOrgBanner.expiresDefault")}
                 {" · "}
                 {t("demoOrgBanner.homeSafe")}
@@ -138,32 +118,10 @@ export function DemoOrgBanner({
               )}
               {t("demoOrgBanner.backToMine")}
             </button>
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#a13a32] transition-colors duration-150 hover:border-[#a13a32]/40 hover:bg-[#fff4f2]"
-            >
-              <Trash2 className="size-4" />
-              {t("demoOrgBanner.deleteDemo")}
-            </button>
           </div>
         </div>
       </div>
 
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={remove}
-        variant="danger"
-        title={t("demoOrgBanner.confirmTitle")}
-        description={t("demoOrgBanner.confirmDescription", { name: organizationName })}
-        bullets={[
-          { label: t("demoOrgBanner.staffTotal", { count: staffCount }), tone: "warn" },
-          { label: t("demoOrgBanner.documentsTotal", { count: documentsCount }), tone: "warn" },
-          { label: t("demoOrgBanner.homeSafeBullet"), tone: "info" },
-        ]}
-        confirmLabel={t("demoOrgBanner.deleteDemo")}
-      />
     </div>
   );
 }

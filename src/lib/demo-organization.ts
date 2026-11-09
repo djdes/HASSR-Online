@@ -10,9 +10,12 @@ import { normalizeSphere, sphereToPreset } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
 import { createOrganization } from "@/lib/create-organization";
 import {
-  DEMO_ORG_TTL_DAYS,
-  demoExpiresAtFrom,
+  DEMO_HISTORY_DAYS,
+  SHARED_DEMO_ORG_ID,
+  SHARED_DEMO_SPHERE,
+  demoNextResetAt,
   demoOrgName,
+  isDemoOverdue,
 } from "@/lib/demo-organization.shared";
 import { getDemoRoster, type DemoPerson } from "@/lib/demo-organization-roster";
 import {
@@ -79,22 +82,22 @@ import {
 } from "@/lib/disinfectant-document";
 
 export {
-  DEMO_ORG_TTL_DAYS,
-  demoDaysLeft,
-  demoExpiresAtFrom,
+  DEMO_HISTORY_DAYS,
+  SHARED_DEMO_ORG_ID,
+  demoNextResetAt,
   demoOrgName,
+  isDemoOverdue,
 } from "@/lib/demo-organization.shared";
 
 /**
  * Демо-организация — песочница «как это выглядит, когда уже работает».
  *
- * Два входа с одним заселением:
- *   • ROOT: `POST /api/root/seed-demo-org` — своя org + owner-пользователь,
- *     живёт пока ROOT не удалит.
- *   • Владелец аккаунта: «Создать демо-организацию» в анкете после
- *     регистрации и в меню профиля (`POST /api/organizations/demo`) —
- *     вторая организация того же аккаунта с `isDemo=true`, удаляется по
- *     кнопке или cron'ом `purge-demo-orgs` через DEMO_ORG_TTL_DAYS.
+ * Одна общая на всю платформу (2026-11-09): организация с постоянным id
+ * `SHARED_DEMO_ORG_ID`, без аккаунта. Раз в сутки удаляется и ставится
+ * заново со свежими данными — cron `purge-demo-orgs`, а если он не
+ * отработал, то при первом входе после срока. Владелец аккаунта входит в
+ * неё по членству (`POST /api/organizations/demo`); своя демо на каждый
+ * аккаунт больше не создаётся, оставшиеся удаляет тот же cron.
  *
  * Что внутри (см. `demo-organization-roster.ts`):
  *   • команда с настоящими ФИО и разными должностями — управляющий,
@@ -165,9 +168,9 @@ export async function seedDemoOrganizationData(input: {
   organizationId: string;
   /** Сфера или legacy-тип — прогоняется через sphereToPreset(). */
   sphere: string;
-  /** Кто «создал» документы. */
-  createdById: string;
-  /** Дополнительные люди в гигиеническом ростере (ROOT добавляет своего owner'а). */
+  /** Кто «создал» документы; по умолчанию — управляющий из ростера. */
+  createdById?: string;
+  /** Дополнительные люди в гигиеническом ростере. */
   extraEmployees?: Array<{ id: string; name: string }>;
   daysOfHistory?: number;
 }): Promise<SeedDemoResult> {
@@ -175,7 +178,7 @@ export async function seedDemoOrganizationData(input: {
   const orgType = sphereToPreset(input.sphere);
   const preset = getOnboardingPreset(orgType);
   const roster = getDemoRoster(orgType);
-  const days = Math.max(2, input.daysOfHistory ?? DEMO_ORG_TTL_DAYS);
+  const days = Math.max(2, input.daysOfHistory ?? DEMO_HISTORY_DAYS);
   const emailSlug = `demo-${orgId.slice(-8).toLowerCase()}`;
 
   const now = new Date();
@@ -486,7 +489,7 @@ export async function seedDemoOrganizationData(input: {
         verifier: hasVerifierColumn(journal)
           ? paperJournalInstructor(journal, paperCtx).name
           : null,
-        createdById: input.createdById,
+        createdById: input.createdById ?? manager.id,
       },
     });
     documentsCreated += 1;
@@ -1023,64 +1026,12 @@ function buildDisinfectantConfig(
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Жизненный цикл демо для аккаунта.
+// Жизненный цикл общей демо.
 // ────────────────────────────────────────────────────────────────────
-
-/**
- * Демо для аккаунта владельца. Одно на аккаунт: живое — возвращаем как
- * есть; протухшее (cron ещё не дошёл) — удаляем и создаём заново.
- */
-export async function createDemoOrganization(input: {
-  accountId: string;
-  ownerUserId: string;
-  sphere: string;
-}): Promise<{ organizationId: string; created: boolean; seed: SeedDemoResult | null }> {
-  const now = new Date();
-  const existing = await db.organization.findFirst({
-    where: { accountId: input.accountId, isDemo: true },
-    select: { id: true, demoExpiresAt: true },
-  });
-  if (existing) {
-    if (!existing.demoExpiresAt || existing.demoExpiresAt > now) {
-      return { organizationId: existing.id, created: false, seed: null };
-    }
-    await deleteDemoOrganization(existing.id);
-  }
-
-  const { organizationId } = await createOrganization({
-    name: demoOrgName(input.sphere),
-    sphere: input.sphere,
-    accountId: input.accountId,
-    ownerUserId: input.ownerUserId,
-  });
-
-  const preset = getOnboardingPreset(sphereToPreset(input.sphere));
-  await db.organization.update({
-    where: { id: organizationId },
-    data: {
-      isDemo: true,
-      demoExpiresAt: demoExpiresAtFrom(now),
-      // Ежедневные журналы продолжают заводиться cron'ом, как у ROOT-демо.
-      autoJournalCodes: computeAutoJournalCodes(preset) as never,
-      // createOrganization включает только «обязательные по закону» для
-      // сферы; демо должно показать весь набор пресета, иначе половина
-      // заполненных журналов спрятана за «выключено».
-      disabledJournalCodes: computeDisabledJournalCodes(preset) as never,
-    },
-  });
-
-  const seed = await seedDemoOrganizationData({
-    organizationId,
-    sphere: input.sphere,
-    createdById: input.ownerUserId,
-  });
-
-  return { organizationId, created: true, seed };
-}
 
 export type DeleteDemoResult = { staff: number; documents: number; entries: number };
 
-/** Счётчики для тоста «Удалено: …» — без удаления. */
+/** Счётчики удаляемого — для аудита. */
 export async function countDemoOrganization(organizationId: string): Promise<DeleteDemoResult> {
   const [staff, documents, entries] = await Promise.all([
     db.user.count({ where: { organizationId } }),
@@ -1101,4 +1052,148 @@ export async function deleteDemoOrganization(organizationId: string): Promise<De
   // по подставленному id: Prisma бросит P2025, а не снесёт данные.
   await db.organization.delete({ where: { id: organizationId, isDemo: true } });
   return counts;
+}
+
+export type InstallDemoResult = {
+  organizationId: string;
+  name: string;
+  /** Что было в демо до переустановки; null — демо не существовала. */
+  removed: DeleteDemoResult | null;
+  seed: SeedDemoResult;
+  durationMs: number;
+};
+
+/**
+ * Одна переустановка на процесс: вход в просроченную демо и cron не должны
+ * ставить её дважды одновременно.
+ */
+let installing: Promise<InstallDemoResult> | null = null;
+
+/**
+ * Переустановить общую демо: удалить прежнюю и поставить заново под тем же
+ * id со свежими данными. Членства удаляются вместе с организацией — гости
+ * возвращаются в свои организации и входят в демо заново.
+ */
+export function reinstallSharedDemoOrganization(): Promise<InstallDemoResult> {
+  if (!installing) {
+    installing = installSharedDemo().finally(() => {
+      installing = null;
+    });
+  }
+  return installing;
+}
+
+async function installSharedDemo(): Promise<InstallDemoResult> {
+  const t0 = Date.now();
+  const existing = await db.organization.findUnique({
+    where: { id: SHARED_DEMO_ORG_ID },
+    select: { isDemo: true },
+  });
+  // Организация с этим id, но не демо — чужие данные: не трогаем.
+  if (existing && !existing.isDemo) {
+    throw new Error(`Organization "${SHARED_DEMO_ORG_ID}" exists and is not a demo`);
+  }
+  const removed = existing ? await deleteDemoOrganization(SHARED_DEMO_ORG_ID) : null;
+
+  const sphere = SHARED_DEMO_SPHERE;
+  const name = demoOrgName(sphere);
+  const preset = getOnboardingPreset(sphereToPreset(sphere));
+  await createOrganization({
+    id: SHARED_DEMO_ORG_ID,
+    name,
+    sphere,
+    accountId: null,
+    ownerUserId: null,
+    demo: {
+      // Срок выставляем сразу: параллельный вход видит свежую демо и не
+      // запускает вторую установку, пока идёт заселение.
+      expiresAt: demoNextResetAt(new Date()),
+      // Ежедневные журналы продолжают заводиться cron'ом.
+      autoJournalCodes: computeAutoJournalCodes(preset),
+      // createOrganization включает только «обязательные по закону» для
+      // сферы; демо должно показать весь набор пресета, иначе половина
+      // заполненных журналов спрятана за «выключено».
+      disabledJournalCodes: computeDisabledJournalCodes(preset),
+    },
+  });
+
+  const seed = await seedDemoOrganizationData({ organizationId: SHARED_DEMO_ORG_ID, sphere });
+  return { organizationId: SHARED_DEMO_ORG_ID, name, removed, seed, durationMs: Date.now() - t0 };
+}
+
+/**
+ * Общая демо, готовая ко входу: нет её или вышел срок (cron не отработал) —
+ * ставим заново, иначе отдаём как есть.
+ */
+export async function ensureSharedDemoOrganization(
+  now: Date = new Date(),
+): Promise<{ organizationId: string; installed: InstallDemoResult | null }> {
+  const existing = await db.organization.findUnique({
+    where: { id: SHARED_DEMO_ORG_ID },
+    select: { isDemo: true, demoExpiresAt: true },
+  });
+  if (existing?.isDemo && !isDemoOverdue(existing.demoExpiresAt, now)) {
+    return { organizationId: SHARED_DEMO_ORG_ID, installed: null };
+  }
+  try {
+    return { organizationId: SHARED_DEMO_ORG_ID, installed: await reinstallSharedDemoOrganization() };
+  } catch (error) {
+    // Другой процесс поставил демо в тот же момент (P2002 на id) — она есть.
+    const fresh = await db.organization.findUnique({
+      where: { id: SHARED_DEMO_ORG_ID },
+      select: { isDemo: true, demoExpiresAt: true },
+    });
+    if (fresh?.isDemo && !isDemoOverdue(fresh.demoExpiresAt, now)) {
+      return { organizationId: SHARED_DEMO_ORG_ID, installed: null };
+    }
+    throw error;
+  }
+}
+
+/** Вход в общую демо: членство гостя. Организацию не создаёт. */
+export async function joinSharedDemoOrganization(userId: string): Promise<void> {
+  await db.organizationMember.upsert({
+    where: { userId_organizationId: { userId, organizationId: SHARED_DEMO_ORG_ID } },
+    create: { userId, organizationId: SHARED_DEMO_ORG_ID, role: "manager" },
+    update: {},
+  });
+}
+
+/**
+ * Прежние демо — свои на каждый аккаунт (до 2026-11-09) и ROOT-песочницы с
+ * флагом `isDemo`. Удаляем не больше `take` за раз: удаление одной занимает
+ * секунды. `accountId` — только демо этого аккаунта.
+ */
+export async function purgeLegacyDemoOrganizations(options: {
+  take: number;
+  accountId?: string;
+}): Promise<{ deleted: Array<{ id: string; name: string; accountId: string | null } & DeleteDemoResult>; failed: number }> {
+  const legacy = await db.organization.findMany({
+    where: {
+      isDemo: true,
+      id: { not: SHARED_DEMO_ORG_ID },
+      ...(options.accountId ? { accountId: options.accountId } : {}),
+    },
+    select: { id: true, name: true, accountId: true },
+    orderBy: { createdAt: "asc" },
+    take: options.take,
+  });
+  const deleted: Array<{ id: string; name: string; accountId: string | null } & DeleteDemoResult> = [];
+  let failed = 0;
+  for (const org of legacy) {
+    try {
+      // Кто работал в этой демо, возвращается в домашнюю организацию.
+      await db.user.updateMany({
+        where: { lastActiveOrganizationId: org.id },
+        data: { lastActiveOrganizationId: null },
+      });
+      deleted.push({ ...org, ...(await deleteDemoOrganization(org.id)) });
+    } catch (error) {
+      // Одна упавшая демо не останавливает остальные — их подберёт
+      // следующий прогон.
+      failed += 1;
+      console.error("[demo] legacy purge failed", org.id, error);
+    }
+  }
+  return { deleted, failed };
 }

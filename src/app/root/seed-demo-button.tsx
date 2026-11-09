@@ -8,10 +8,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 /**
- * Кнопка для ROOT'а — одним кликом создаёт демо-организацию с
- * полностью наполненной историей за 7 дней. Используется чтобы
- * показать новому покупателю «как выглядит реальная компания» вместо
- * пустого дашборда trial-org'и.
+ * Кнопка для ROOT'а — переустановить общую демо-организацию сейчас, со
+ * свежей историей за 7 дней: перед показом покупателю или когда гости её
+ * испортили. Новых организаций не создаёт — демо одна.
  */
 export function SeedDemoButton() {
   const t = useTranslations("rootMetrics");
@@ -26,7 +25,7 @@ export function SeedDemoButton() {
       const response = await fetch("/api/root/seed-demo-org", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "restaurant", daysOfHistory: 7 }),
+        body: JSON.stringify({}),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {

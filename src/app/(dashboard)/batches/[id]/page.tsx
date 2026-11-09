@@ -19,6 +19,8 @@ import {
 import { BatchStatusActions } from "@/components/batches/batch-status-actions";
 import { loadBuildingContext } from "@/lib/active-building";
 import { pointRecordVisible } from "@/lib/point-records";
+import { findPointMismatch } from "@/lib/document-point-access";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
 
 const STATUS_VARIANTS: Record<BatchStatus, "default" | "secondary" | "outline" | "destructive"> = {
   received: "secondary",
@@ -57,6 +59,9 @@ export default async function BatchDetailPage({
   ) {
     notFound();
   }
+  // В шапке выбрана другая точка — ошибка и переход вместо партии (2026-11-09).
+  const mismatch = await findPointMismatch(session, batch.buildingId);
+  if (mismatch) return <PointMismatchNotice kind="batch" mismatch={mismatch} listHref="/batches" />;
 
   const unitCode = batchUnitCode(batch.unit);
   const displayUnit = unitCode ? t(`units.${unitCode}`) : batch.unit;
