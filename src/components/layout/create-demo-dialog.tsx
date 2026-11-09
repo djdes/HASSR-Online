@@ -6,28 +6,18 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { FlaskConical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { ORG_SPHERES } from "@/lib/org-profile";
-import { DEMO_ORG_TTL_DAYS, demoOrgName } from "@/lib/demo-organization.shared";
+import { DEMO_HISTORY_DAYS } from "@/lib/demo-organization.shared";
 
 /**
- * Модалка «Создать демо-организацию?».
+ * Модалка «Открыть демо-организацию?».
  *
- * Отдельная от CreateOrganizationDialog: там человек придумывает название
- * и решает, что копировать, здесь — только подтверждает и при желании
- * меняет сферу. Сфера по умолчанию — как у текущей точки, чтобы песочница
- * была похожа на своё заведение, но кафе может захотеть глянуть, как
- * выглядит производство.
+ * Демо одна на всю платформу и переустанавливается раз в сутки, поэтому
+ * здесь человек ничего не создаёт и не настраивает — только подтверждает
+ * вход и узнаёт, что данные там общие и временные.
  */
-export function CreateDemoDialog({
-  currentSphere,
-  onClose,
-}: {
-  currentSphere: string;
-  onClose: () => void;
-}) {
+export function CreateDemoDialog({ onClose }: { onClose: () => void }) {
   const t = useTranslations("layoutUi.createDemoDialog");
   const router = useRouter();
-  const [sphere, setSphere] = useState(currentSphere);
   const [creating, setCreating] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -35,11 +25,7 @@ export function CreateDemoDialog({
     if (creating) return;
     setCreating(true);
     try {
-      const response = await fetch("/api/organizations/demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sphere }),
-      });
+      const response = await fetch("/api/organizations/demo", { method: "POST" });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error ?? t("createFailed"));
       toast.success(t("ready"));
@@ -73,38 +59,15 @@ export function CreateDemoDialog({
               {t("title")}
             </h2>
             <p className="mt-1 text-[13px] leading-[1.55] text-[#6f7282]">
-              {t("description", { name: demoOrgName(sphere), days: DEMO_ORG_TTL_DAYS })}
+              {t("description", { days: DEMO_HISTORY_DAYS })}
             </p>
           </div>
         </div>
 
-        <label className="mt-4 block">
-          <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-            {t("sphereLabel")}
-          </span>
-          <select
-            value={sphere}
-            onChange={(event) => setSphere(event.target.value)}
-            disabled={creating}
-            className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          >
-            {ORG_SPHERES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <span className="mt-1.5 block text-[12px] text-[#9b9fb3]">
-            {sphere === currentSphere
-              ? t("sameSphere")
-              : t("otherSphere")}
-          </span>
-        </label>
-
-        <ul className="mt-3 space-y-1 rounded-2xl bg-[#f5f6ff] p-3 text-[13px] leading-snug text-[#3c4053]">
+        <ul className="mt-4 space-y-1 rounded-2xl bg-[#f5f6ff] p-3 text-[13px] leading-snug text-[#3c4053]">
           <li>{t("noteUnchanged")}</li>
           <li>{t("noteSwitch")}</li>
-          <li>{t("noteDelete", { days: DEMO_ORG_TTL_DAYS })}</li>
+          <li>{t("noteDelete")}</li>
         </ul>
 
         <div className="mt-4 flex justify-end gap-2">

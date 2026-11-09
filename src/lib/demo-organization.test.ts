@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  DEMO_ORG_TTL_DAYS,
-  demoDaysLeft,
-  demoExpiresAtFrom,
+  DEMO_HISTORY_DAYS,
+  SHARED_DEMO_ORG_ID,
+  demoNextResetAt,
   demoOrgName,
+  isDemoOverdue,
 } from "@/lib/demo-organization.shared";
 import { getDemoRoster } from "@/lib/demo-organization-roster";
 import { getOnboardingPreset } from "@/lib/onboarding-presets";
@@ -51,24 +52,24 @@ describe("demoOrgName", () => {
   });
 });
 
-describe("demoExpiresAtFrom / demoDaysLeft", () => {
+describe("общая демо: переустановка раз в сутки", () => {
   const now = new Date("2026-09-02T10:00:00Z");
 
-  it("срок жизни — ровно DEMO_ORG_TTL_DAYS дней", () => {
-    const expires = demoExpiresAtFrom(now);
-    assert.equal(DEMO_ORG_TTL_DAYS, 7);
-    assert.equal(expires.toISOString(), "2026-09-09T10:00:00.000Z");
+  it("id постоянный, история — DEMO_HISTORY_DAYS дней", () => {
+    assert.equal(SHARED_DEMO_ORG_ID, "demo");
+    assert.equal(DEMO_HISTORY_DAYS, 7);
   });
 
-  it("дней осталось — округление вверх, в момент создания = TTL", () => {
-    const expires = demoExpiresAtFrom(now);
-    assert.equal(demoDaysLeft(expires, now), 7);
-    assert.equal(demoDaysLeft(expires, new Date("2026-09-08T09:00:00Z")), 2);
-    assert.equal(demoDaysLeft(expires, new Date("2026-09-09T09:59:00Z")), 1);
+  it("следующая переустановка — через сутки после установки", () => {
+    assert.equal(demoNextResetAt(now).toISOString(), "2026-09-03T10:00:00.000Z");
   });
 
-  it("после истечения — 0, не отрицательное", () => {
-    const expires = demoExpiresAtFrom(now);
-    assert.equal(demoDaysLeft(expires, new Date("2026-09-20T00:00:00Z")), 0);
+  it("просрочена, когда срок вышел или не записан", () => {
+    const due = demoNextResetAt(now);
+    assert.equal(isDemoOverdue(due, now), false);
+    assert.equal(isDemoOverdue(due, new Date("2026-09-03T09:59:59Z")), false);
+    assert.equal(isDemoOverdue(due, due), true);
+    assert.equal(isDemoOverdue(due, new Date("2026-09-05T00:00:00Z")), true);
+    assert.equal(isDemoOverdue(null, now), true);
   });
 });
