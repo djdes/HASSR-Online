@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { QrCode, Wand2 } from "lucide-react";
+import { BookOpenText, QrCode, Wand2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LinkPendingSpinner } from "@/components/ui/link-pending";
 import { toast } from "sonner";
@@ -17,8 +17,11 @@ import {
   type AutofillResult,
 } from "@/lib/journals-autofill";
 
+/** Памятка по заполнению журналов — лист А4, `/dashboard/journals-memo`. */
+const MEMO_HREF = "/dashboard/journals-memo";
+
 /**
- * Две кнопки карточки «Обязательные журналы» на главной (решение
+ * Кнопки карточки «Обязательные журналы» на главной (решение
  * владельца 2026-09-25):
  *
  *   • «Автозаполнить» — шторка (на телефоне лист снизу, на компьютере
@@ -27,6 +30,8 @@ import {
  *     дозаполняет пустые дни всех ежедневных журналов по сегодня по
  *     прошлому заполнению (без него — по настройкам журнала и реальным
  *     сотрудникам). Уже введённое не перезаписывается. Итог — тостом.
+ *   • «Памятка» (09.11.2026) — между ними: лист А4 «как часто заполнять
+ *     каждый журнал», `/dashboard/journals-memo`.
  *   • «QR-коды» — раздел печати QR `/settings/qr-posters`.
  *
  * На уровне организации (офис или «Вся организация», режим точек) день
@@ -75,11 +80,25 @@ export function CloseDayCard({ pointRequired = false }: { pointRequired?: boolea
 
   const busy = submitting || pending;
 
-  if (!automationOn(controls, "closeDayAutofill")) return <Link href="/settings/qr-posters" className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]"><QrCode className="size-4" />{t("qrCodes")}</Link>;
+  if (!automationOn(controls, "closeDayAutofill")) {
+    const quiet = "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] text-[#3848c7]";
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Link href={MEMO_HREF} data-memo-link="" aria-label={t("memoAria")} title={t("memoAria")} className={quiet}>
+          <BookOpenText className="size-4" />
+          {t("memo")}
+        </Link>
+        <Link href="/settings/qr-posters" className={quiet}>
+          <QrCode className="size-4" />
+          {t("qrCodes")}
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div
-      className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto"
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:flex sm:w-auto"
       data-journals-actions=""
     >
       <button
@@ -89,15 +108,29 @@ export function CloseDayCard({ pointRequired = false }: { pointRequired?: boolea
         title={pointRequired ? t("pointRequired") : undefined}
         data-autofill-open=""
         data-point-required={pointRequired ? "" : undefined}
-        className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:opacity-60 sm:min-w-[180px]"
+        className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-3 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:opacity-60 sm:min-w-[180px] sm:px-5"
       >
-        <Wand2 className="size-4" />
+        {/* На самых узких телефонах (< 380px) трём кнопкам тесно — без иконки. */}
+        <Wand2 className="size-4 max-[379px]:hidden" />
         {busy ? t("filling") : t("autofill")}
       </button>
+      {/* Памятка по заполнению — между двумя кнопками (владелец, 09.11.2026).
+          На телефоне — квадрат с иконкой, чтобы три кнопки встали в строку. */}
+      <Link
+        href={MEMO_HREF}
+        data-memo-link=""
+        aria-label={t("memoAria")}
+        title={t("memoAria")}
+        className="inline-flex size-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:w-auto sm:px-5"
+      >
+        <BookOpenText className="size-4 text-[#5566f6]" />
+        <span className="hidden sm:inline">{t("memo")}</span>
+        <LinkPendingSpinner />
+      </Link>
       <Link
         href="/settings/qr-posters"
         data-qr-link=""
-        className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:min-w-[180px]"
+        className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:min-w-[180px] sm:px-5"
       >
         <QrCode className="size-4 text-[#5566f6]" />
         {t("qrCodes")}

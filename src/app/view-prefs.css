@@ -198,3 +198,9 @@ body {
   outline: 3px solid #7cf5c0;
   outline-offset: 2px;
 }
+/* На бумаге ссылки быть не должно: position: fixed печатается на листе. */
+@media print {
+  .skip-to-content {
+    display: none !important;
+  }
+}

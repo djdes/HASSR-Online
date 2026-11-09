@@ -1,0 +1,13 @@
+{
+  "task": "journals-memo-2026-11-09",
+  "branch": "claude/affectionate-newton-7hw7ae",
+  "base": "b1747297",
+  "checkedAt": "2026-11-09",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/components/dashboard/close-day-card.tsx", "raw/today-desktop.png", "raw/today-phone-360.png"] },
+    "AC2": { "status": "PASS", "evidence": ["src/app/(dashboard)/dashboard/journals-memo/page.tsx", "raw/memo-desktop.png", "raw/memo-phone-360.png"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/journals-memo.ts", "raw/memo-a4.pdf", "raw/memo-a4-preview-1.png"] },
+    "AC4": { "status": "PASS", "evidence": ["src/i18n/messages/ru.json", "src/i18n/messages/en.json", "src/i18n/messages/uz.json", "raw/i18n-check.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/eslint.txt", "src/lib/journals-memo.test.ts"] }
+  }
+}
