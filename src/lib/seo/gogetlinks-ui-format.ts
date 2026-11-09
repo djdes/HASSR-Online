@@ -99,6 +99,7 @@ export function formatOrderStatusBadge(status: string): FormattedStatusBadge {
 export function formatAccountStatusBadge(status: string | null | undefined): FormattedStatusBadge {
   switch (status) {
     case "ok":
+    case "active":
       return { label: "Подключено", badgeTone: "emerald" };
     case "auth_error":
       return { label: "Ошибка входа", badgeTone: "rose" };

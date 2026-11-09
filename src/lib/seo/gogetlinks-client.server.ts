@@ -391,12 +391,12 @@ let queuePromise: Promise<unknown> = Promise.resolve();
 let lastCallTime = 0;
 const MIN_INTERVAL_MS = 1200;
 
-async function enqueueGgl<T>(fn: () => Promise<T>): Promise<T> {
+async function enqueueGgl<T>(fn: () => Promise<T>, minIntervalMs = MIN_INTERVAL_MS): Promise<T> {
   const nextCall = queuePromise.then(async () => {
     const now = Date.now();
     const elapsed = now - lastCallTime;
-    if (elapsed < MIN_INTERVAL_MS) {
-      await new Promise((r) => setTimeout(r, MIN_INTERVAL_MS - elapsed));
+    if (elapsed < minIntervalMs) {
+      await new Promise((r) => setTimeout(r, minIntervalMs - elapsed));
     }
     try {
       return await fn();
@@ -516,7 +516,7 @@ async function persistSessionToDb(cookies: StoredCookie[], prismaClient?: unknow
       where: { id: account.id },
       data: {
         sessionEnc: encrypted,
-        status: "active",
+        status: "ok",
         lastError: null,
       },
     });
@@ -657,9 +657,13 @@ export async function readGglWebmasterSource(
       ? new URLSearchParams({ action: "request", in_comp_id: String(input.campaignId), page_num: String(input.page), order: "0", in_site_name: "", searchBeginDate: "", searchEndDate: "" })
       : new URLSearchParams({ siteId: String(input.siteId), type: "1", isGoogle: "false", quick_filter: "false", hiddenPrice: "false", toBlackList: "false" });
     for (let attempt = 0; attempt < 2; attempt++) {
+      const baseCookie = buildCookieHeader(loadLocalSession());
+      const cookieHeader = input.kind === "applications" && !/(?:^|;\s*)in_page=/.test(baseCookie)
+        ? (baseCookie ? `${baseCookie}; in_page=5000` : "in_page=5000")
+        : baseCookie;
       const response = await sourceFetch(url, {
         method: "POST", redirect: "manual", signal: AbortSignal.timeout(20_000),
-        headers: { cookie: buildCookieHeader(loadLocalSession()), "content-type": "application/x-www-form-urlencoded; charset=UTF-8", "x-requested-with": "XMLHttpRequest", referer: "https://gogetlinks.net/reviews/request" },
+        headers: { cookie: cookieHeader, "content-type": "application/x-www-form-urlencoded; charset=UTF-8", "x-requested-with": "XMLHttpRequest", referer: "https://gogetlinks.net/reviews/request" },
         body: body.toString(),
       });
       const contentType = response.headers.get("content-type") ?? "";
@@ -681,7 +685,7 @@ export async function readGglWebmasterSource(
       return parsed.data;
     }
     throw new GglAuthError("Не удалось восстановить сессию GoGetLinks");
-  });
+  }, 300);
 }
 
 function normalizeReadArgs(

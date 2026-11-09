@@ -16,7 +16,7 @@ const PACKED_JOB_HEADER = `type: ${GGL_WEBMASTERS_JOB_TYPE}\nencoding: brotli-ba
 
 /** ProjectsFlow accepts at most 50,000 characters. Compression preserves every row. */
 export function encodeGglWebmastersJob(prompt: string): string {
-  if (prompt.length > 190_000 || !prompt.startsWith(`type: ${GGL_WEBMASTERS_JOB_TYPE}\n`)) {
+  if (prompt.length > 650_000 || !prompt.startsWith(`type: ${GGL_WEBMASTERS_JOB_TYPE}\n`)) {
     throw new GglApplicationsError("Некорректный размер или тип задания анализа площадок");
   }
   if (prompt.length <= 49_000) return prompt;
@@ -139,10 +139,12 @@ export async function loadGglApplicationCards(campaignId: number, snapshotId: st
         result = { siteId, card: null, error: "Карточка недоступна в GoGetLinks. Можно повторить загрузку отдельно.", attemptedAt: new Date().toISOString() };
       }
       await saveCache(cardKey(scope, siteId), result);
-      await db.platformSetting.deleteMany({ where: { key: `${scope.prefix}:analysis:${snapshotId}` } });
       return result;
     });
     results.push(result);
+  }
+  if (results.length > 0) {
+    await db.platformSetting.deleteMany({ where: { key: `${scope.prefix}:analysis:${snapshotId}` } });
   }
   return results;
 }
@@ -169,13 +171,13 @@ export function buildGglWebmastersPrompt(view: GglApplicationsView): string {
     "Рассмотри каждую строку; в recommendations выведи до 30 наиболее полезных решений: лучшие площадки для покупки первыми, затем сомнительные/невыгодные для сравнения. Для каждой причины приведи конкретные наблюдаемые показатели и тематическую пригодность. Если достойных нет, скажи прямо. Не предлагай немедленную оплату. consideredSiteIds должен покрывать весь переданный список, даже площадки вне короткого списка.",
     JSON.stringify({ snapshotId: view.snapshotId, fetchedAt: view.snapshot.fetchedAt, rows: applicants.length, columns: header, applicants }),
   ].join("\n\n");
-  if (prompt.length > 190_000) throw new GglApplicationsError("Список слишком велик для одного задания диспетчеру; данные не обрезаны");
+  if (prompt.length > 650_000) throw new GglApplicationsError("Список слишком велик для одного задания диспетчеру; данные не обрезаны");
   return prompt;
 }
 
 const analysisSchema = z.object({
   summary: z.string().trim().min(1).max(8000),
-  consideredSiteIds: z.array(z.number().int().positive()).max(2000),
+  consideredSiteIds: z.array(z.number().int().positive()).max(5000),
   limitations: z.array(z.string().max(1500)).max(30),
   recommendations: z.array(z.object({ siteId: z.number().int().positive(), verdict: z.enum(["recommended", "consider", "avoid"]), reason: z.string().trim().min(1).max(2000) })).max(30),
 });

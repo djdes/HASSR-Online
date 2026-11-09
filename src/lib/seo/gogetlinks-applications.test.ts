@@ -18,7 +18,7 @@ test("large all-site jobs fit the real queue limit without losing Unicode data",
 
 test("queue encoding rejects oversized, wrong-type and noncompressible jobs instead of truncating", () => {
   assert.throws(() => encodeGglWebmastersJob("type: other\n"), /тип/);
-  assert.throws(() => encodeGglWebmastersJob(`type: wesetup_ggl_webmasters\n${"a".repeat(190_000)}`), /размер/);
+  assert.throws(() => encodeGglWebmastersJob(`type: wesetup_ggl_webmasters\n${"a".repeat(650_000)}`), /размер/);
   assert.throws(() => encodeGglWebmastersJob(`type: wesetup_ggl_webmasters\n${randomBytes(60000).toString("base64")}`), /не помещаются/);
 });
 
@@ -33,6 +33,8 @@ function page(num = 1, siteId = 101, total = 1, lastPage = num) {
 }
 
 test("incoming applications use source price, distinct TF/CF and unknown metrics", () => {
+  const zeroPage = parseGglApplicationsPage(page(0, 101, 1508, 1), 77);
+  assert.equal(zeroPage.page, 1);
   const parsed = parseGglApplicationsPage(page(), 77);
   assert.equal(parsed.applications.length, 1);
   const row = parsed.applications[0];
