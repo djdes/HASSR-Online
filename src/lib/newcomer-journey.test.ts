@@ -98,6 +98,6 @@ describe("письма первых шагов: тексты", () => {
     assert.match(server, /replyTo: SUPPORT_EMAIL/);
     const cron = read("src/app/api/cron/billing-transition/route.ts");
     assert.match(cron, /const journey = await runNewcomerJourney\(\{ dryRun \}\)\.catch/);
-    assert.match(cron, /NextResponse\.json\(\{ \.\.\.report, journey \}\)/);
+    assert.match(cron, /NextResponse\.json\(\{ \.\.\.report, journey(, lifecycle)? \}\)/);
   });
 });
