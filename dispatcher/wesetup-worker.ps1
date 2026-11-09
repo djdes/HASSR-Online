@@ -66,7 +66,12 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 function Log([string]$m) {
   $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-  Write-Host "[$ts] $m"
+  try {
+    [Console]::Out.WriteLine("[$ts] $m")
+    [Console]::Out.Flush()
+  } catch {
+    Write-Host "[$ts] $m"
+  }
 }
 
 # ------------------------------ config ------------------------------
@@ -716,6 +721,10 @@ function Process-Job($job) {
 # ------------------------------ loop ------------------------------
 
 function Invoke-Pass {
+  try {
+    $cfgFile = Read-JsonFile (Join-Path $script:Root 'config.json')
+    if ($cfgFile -and $cfgFile.TimeoutSec) { $script:Cfg.TimeoutSec = [int]$cfgFile.TimeoutSec }
+  } catch {}
   try {
     $resp = Invoke-Pf 'GET' '/agent/pending-ai-prompt-jobs?limit=20' $null
   } catch {

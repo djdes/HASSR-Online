@@ -26,8 +26,8 @@ export function encodeGglWebmastersJob(prompt: string): string {
   if (packed.length > 49_000) throw new GglApplicationsError("Данные всех площадок не помещаются в очередь даже после сжатия; данные не обрезаны");
   return packed;
 }
-const CACHE_MS = 30 * 60_000;
-const CARD_MS = 24 * 60 * 60_000;
+const CACHE_MS = 12 * 60 * 60_000;
+const CARD_MS = 30 * 24 * 60 * 60_000;
 const active = new Map<string, Promise<unknown>>();
 
 export class GglApplicationsError extends Error {
@@ -90,7 +90,14 @@ export async function resolveGglApplicationsScope(campaignId?: number) {
 type Scope = Awaited<ReturnType<typeof resolveGglApplicationsScope>>;
 const cardKey = (scope: Scope, siteId: number) => `${scope.prefix}:site:${siteId}`;
 export function gglApplicationsSnapshotId(snapshot: GglApplicationsSnapshot) {
-  return createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
+  const stable = {
+    version: snapshot.version,
+    campaignId: snapshot.campaignId,
+    sourceTotal: snapshot.sourceTotal,
+    complete: snapshot.complete,
+    applications: snapshot.applications,
+  };
+  return createHash("sha256").update(JSON.stringify(stable)).digest("hex");
 }
 
 export async function getCachedWesetupApplicationsCount(campaignId?: number): Promise<number> {
@@ -110,8 +117,8 @@ export async function getGglApplicationsView(campaignId?: number, refresh = fals
   const scope = await resolveGglApplicationsScope(campaignId);
   const key = `${scope.prefix}:list`;
   let snapshot = await readCache<GglApplicationsSnapshot>(key);
-  if (refresh || !snapshot || snapshot.version !== 1 || Date.now() - Date.parse(snapshot.fetchedAt) > CACHE_MS) {
-    snapshot = await singleFlight(key, async () => {
+  const refreshSnapshot = () =>
+    singleFlight(key, async () => {
       const value = await collectGglApplications(scope.campaign.gglCampaignId);
       await saveCache(key, value);
       await db.gglCampaign.update({
@@ -120,6 +127,10 @@ export async function getGglApplicationsView(campaignId?: number, refresh = fals
       }).catch(() => null);
       return value;
     });
+  if (refresh || !snapshot || snapshot.version !== 1) {
+    snapshot = await refreshSnapshot();
+  } else if (Date.now() - Date.parse(snapshot.fetchedAt) > CACHE_MS) {
+    void refreshSnapshot().catch(() => null);
   }
   const siteIds = [...new Set(snapshot.applications.map(x => x.siteId))];
   const records = await db.platformSetting.findMany({ where: { key: { in: siteIds.map(id => cardKey(scope, id)) } } });
@@ -144,22 +155,24 @@ export async function loadGglApplicationCards(campaignId: number, snapshotId: st
   const attempted = new Set(view.cards.map(x => x.siteId));
   const next = [...new Set(siteIds ?? [...available].filter(id => !attempted.has(id)))].slice(0, 20);
   const results: GglSiteCardResult[] = [];
-  for (const siteId of next) {
-    const result = await singleFlight(cardKey(scope, siteId), async () => {
-      let result: GglSiteCardResult;
-      const source = await readGglWebmasterSource({ kind: "site", siteId });
-      try {
-        const card = parseGglSiteCard(source, siteId);
-        if (card.domain !== view.snapshot.applications.find(x => x.siteId === siteId)?.domain) throw new Error("Домен карточки не совпадает с заявкой");
-        result = { siteId, card, error: null, attemptedAt: card.fetchedAt };
-      } catch {
-        result = { siteId, card: null, error: "Карточка недоступна в GoGetLinks. Можно повторить загрузку отдельно.", attemptedAt: new Date().toISOString() };
-      }
-      await saveCache(cardKey(scope, siteId), result);
-      return result;
-    });
-    results.push(result);
-  }
+  const loaded = await Promise.all(
+    next.map(siteId =>
+      singleFlight(cardKey(scope, siteId), async () => {
+        let result: GglSiteCardResult;
+        try {
+          const source = await readGglWebmasterSource({ kind: "site", siteId });
+          const card = parseGglSiteCard(source, siteId);
+          if (card.domain !== view.snapshot.applications.find(x => x.siteId === siteId)?.domain) throw new Error("Домен карточки не совпадает с заявкой");
+          result = { siteId, card, error: null, attemptedAt: card.fetchedAt };
+        } catch {
+          result = { siteId, card: null, error: "Карточка недоступна в GoGetLinks. Можно повторить загрузку отдельно.", attemptedAt: new Date().toISOString() };
+        }
+        await saveCache(cardKey(scope, siteId), result);
+        return result;
+      }),
+    ),
+  );
+  results.push(...loaded);
   if (results.length > 0) {
     await db.platformSetting.deleteMany({ where: { key: `${scope.prefix}:analysis:${snapshotId}` } });
   }
@@ -173,6 +186,22 @@ export function buildGglWebmastersPrompt(view: GglApplicationsView): string {
   const labels = ["Тематика", "Регион", "Возраст сайта", "Индексация (%)", "Скорость размещения", "Ссылочность", "SimilarWeb", "Google Analytics"];
   const header = ["siteId", "domain", "type", "offeredRub", "dailyTraffic", "TF", "CF", "IKS", "trust", "topic", "region", "age", "indexingPct", "speed", "outboundLinks", "Similarweb", "GoogleAnalytics", "catalogPrices", "example1", "otherCharacteristics", "cardError"];
   const isLargeBatch = view.snapshot.applications.length > 50;
+  const detailedSiteIds = new Set<number>();
+  if (isLargeBatch) {
+    const scoreApp = (a: GglApplicationsSnapshot["applications"][number]) => {
+      const c = cards.get(a.siteId);
+      const topic = (gglCardValue(c?.card ?? null, "Тематика") ?? "").toLowerCase();
+      const topicBonus = /бизнес|производств|медицин|здоров|кулинар|дом|промышлен|торгов|ресторан|пищ|общепит|правов|закон|сми/i.test(topic) ? 45 : 0;
+      const trustScore = (a.trust ?? 0) * 8;
+      const tfCfScore = (a.tf ?? 0) * 1.2 + (a.cf ?? 0) * 0.5;
+      const trafficScore = Math.min(40, Math.log10(Math.max(1, a.dailyTraffic ?? 1)) * 10);
+      const pricePenalty = (a.priceRub ?? 1500) / 120;
+      return topicBonus + trustScore + tfCfScore + trafficScore - pricePenalty;
+    };
+    const ranked = [...view.snapshot.applications].sort((a, b) => scoreApp(b) - scoreApp(a));
+    for (const a of ranked.slice(0, 90)) detailedSiteIds.add(a.siteId);
+    for (const a of ranked.slice(-25)) detailedSiteIds.add(a.siteId);
+  }
   const buildForMode = (mode: "full" | "compact1" | "compact2") => {
     const applicants = view.snapshot.applications.map(a => {
       const c = cards.get(a.siteId)!;
@@ -182,22 +211,19 @@ export function buildGglWebmastersPrompt(view: GglApplicationsView): string {
           c.card?.fields.filter(x => x.group === "Стоимость размещения").map(x => [x.label, x.value]) ?? [], c.card?.examples[0] ?? null,
           c.card?.fields.filter(x => x.group !== "Стоимость размещения" && ![...labels, "ИКС", "GoGetLinks траст", "Ссылочная мощь (TF/CF)"].includes(x.label)).map(x => [x.label, x.value]) ?? [], c.error];
       }
-      const trimVal = (v: string | null, max = 48) => (v ? v.slice(0, max) : null);
-      const labelVals = mode === "compact1"
-        ? labels.map(label => trimVal(gglCardValue(c.card, label), 48))
-        : [trimVal(gglCardValue(c.card, "Тематика"), 40), trimVal(gglCardValue(c.card, "Регион"), 24), null, trimVal(gglCardValue(c.card, "Индексация (%)"), 12), null, trimVal(gglCardValue(c.card, "Ссылочность"), 16), null, null];
-      const catalogPrices = mode === "compact1"
-        ? (c.card?.fields.filter(x => x.group === "Стоимость размещения").map(x => x.value.replace(/[^\d]/g, "")).filter(Boolean).join("/") || null)
-        : null;
-      const exampleInfo = c.card?.examples.length ? c.card.examples.length : null;
-      const otherInfo = mode === "compact1"
-        ? (c.card?.fields.filter(x => x.group !== "Стоимость размещения" && ![...labels, "ИКС", "GoGetLinks траст", "Ссылочная мощь (TF/CF)"].includes(x.label)).slice(0, 2).map(x => `${x.label.slice(0, 12)}:${x.value.slice(0, 24)}`).join(";") || null)
-        : null;
-      return [a.siteId, a.domain, a.placementType, a.priceRub, a.dailyTraffic, a.tf, a.cf, a.iks, a.trust,
-        ...labelVals, catalogPrices, exampleInfo, otherInfo, c.error];
+      const trimVal = (v: string | null, max = 40) => (v ? v.slice(0, max) : null);
+      if (mode === "compact1" && detailedSiteIds.has(a.siteId)) {
+        const labelVals = labels.map(label => trimVal(gglCardValue(c.card, label), 40));
+        const catalogPrices = c.card?.fields.filter(x => x.group === "Стоимость размещения").map(x => x.value.replace(/[^\d]/g, "")).filter(Boolean).join("/") || null;
+        const exampleInfo = c.card?.examples.length ? c.card.examples.length : null;
+        return [a.siteId, a.domain, a.placementType, a.priceRub, a.dailyTraffic, a.tf, a.cf, a.iks, a.trust,
+          ...labelVals, catalogPrices, exampleInfo, null, c.error];
+      }
+      const topic = trimVal(gglCardValue(c.card, "Тематика"), 32);
+      return [a.siteId, a.domain, a.placementType, a.priceRub, a.dailyTraffic, a.tf, a.cf, a.iks, a.trust, topic, c.error];
     });
     const schemaInstruction = isLargeBatch
-      ? "Верни строго JSON: {\"summary\":string,\"consideredCount\":number,\"limitations\":[string],\"recommendations\":[{\"siteId\":number,\"verdict\":\"recommended\"|\"consider\"|\"avoid\",\"reason\":string}]}. В consideredCount укажи точное число рассмотренных площадок (rows)."
+      ? "Верни строго JSON: {\"summary\":string,\"consideredCount\":number,\"limitations\":[string],\"recommendations\":[{\"siteId\":number,\"verdict\":\"recommended\"|\"consider\"|\"avoid\",\"reason\":string}]}. В consideredCount укажи точное число рассмотренных уникальных площадок."
       : "Верни строго JSON: {\"summary\":string,\"consideredSiteIds\":[все уникальные siteId из данных],\"limitations\":[string],\"recommendations\":[{\"siteId\":number,\"verdict\":\"recommended\"|\"consider\"|\"avoid\",\"reason\":string}]}.";
     return [
       `type: ${GGL_WEBMASTERS_JOB_TYPE}`,
@@ -270,17 +296,31 @@ export function parseGglWebmastersAnalysis(text: string, view: GglApplicationsVi
 
 export async function analyzeGglWebmasters(campaignId: number, snapshotId: string) {
   const scope = await resolveGglApplicationsScope(campaignId);
-  return singleFlight(`${scope.prefix}:analyze:${snapshotId}`, async () => {
-    const view = await getGglApplicationsView(campaignId);
-    if (snapshotId !== view.snapshotId) throw new GglApplicationsError("Список заявок обновился. Запустите анализ заново", 409);
-    if (!view.snapshot.applications.length) throw new GglApplicationsError("Входящих заявок пока нет");
-    const prompt = buildGglWebmastersPrompt(view);
+  const view = await getGglApplicationsView(campaignId);
+  const effectiveSnapshotId = view.snapshotId || snapshotId;
+  const cachedAnalysis = await readCache<GglWebmasterAnalysis>(`${scope.prefix}:analysis:${effectiveSnapshotId}`);
+  if (cachedAnalysis) return cachedAnalysis;
+  return singleFlight(`${scope.prefix}:analyze:${effectiveSnapshotId}`, async () => {
+    const latestView = await getGglApplicationsView(campaignId);
+    if (!latestView.snapshot.applications.length) throw new GglApplicationsError("Входящих заявок пока нет");
+    const existingCardMap = new Map(latestView.cards.map(c => [c.siteId, c]));
+    const completeCards: GglSiteCardResult[] = [... new Set(latestView.snapshot.applications.map(a => a.siteId))].map(siteId =>
+      existingCardMap.get(siteId) ?? {
+        siteId,
+        card: null,
+        error: "Карточка ещё не загружена (оценка по метрикам таблицы)",
+        attemptedAt: latestView.snapshot.fetchedAt,
+      },
+    );
+    const viewForPrompt: GglApplicationsView = {
+      ...latestView,
+      cards: completeCards,
+    };
+    const prompt = buildGglWebmastersPrompt(viewForPrompt);
     const reply = await enqueueAndWait(encodeGglWebmastersJob(prompt), { deadlineMs: 240_000 });
     if (!reply.ok) throw new GglApplicationsError(reply.error, reply.code === "timeout" ? 504 : 503);
-    const analysis = parseGglWebmastersAnalysis(reply.text, view);
-    const current = await getGglApplicationsView(campaignId);
-    if (current.snapshotId !== snapshotId || JSON.stringify(current.cards) !== JSON.stringify(view.cards)) throw new GglApplicationsError("Данные площадок обновились во время анализа. Повторите запрос", 409);
-    await saveCache(`${scope.prefix}:analysis:${snapshotId}`, analysis);
+    const analysis = parseGglWebmastersAnalysis(reply.text, viewForPrompt);
+    await saveCache(`${scope.prefix}:analysis:${latestView.snapshotId}`, analysis);
     return analysis;
   });
 }
