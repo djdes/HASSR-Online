@@ -5769,6 +5769,46 @@ model CrmSenderRule {
 
 /// Отправленные напоминания CRM. Строка создаётся ДО отправки
 /// (уникальный dedupeKey) — так два одновременных прогона не шлют дважды.
+/// Задача CRM (2026-11-09): кому, что и к какому сроку. Ставит сценарий
+/// «пробный и оплата» (`src/lib/lifecycle`) или человек. Ссылки — простыми id,
+/// без связей: задача переживает удаление организации и контакта.
+model CrmTask {
+  id              String    @id @default(cuid())
+  /// call | approve_discount | payment_overdue | lost_reason | manual
+  kind            String
+  title           String
+  note            String?
+  organizationId  String?
+  contactId       String?
+  /// Исполнитель; null — РОП (общая очередь).
+  assigneeId      String?
+  dueAt           DateTime
+  /// open | waiting (ждёт согласования) | done | cancelled
+  status          String    @default("open")
+  /// Чем закончилось: «договорились», «нет ответа», причина отказа.
+  result          String?
+  /// Ключ сценария: одна задача на событие, сколько бы раз ни прошёл крон.
+  dedupeKey       String?   @unique
+  /// Предложенная скидка, % (КП со скидкой, согласование).
+  discountPercent Int?
+  /// Для approve_discount и ждущего звонка: pending | approved | rejected.
+  approvalStatus  String?
+  /// Задача-согласование, которой ждёт звонок.
+  approvalTaskId  String?
+  decidedById     String?
+  decidedAt       DateTime?
+  createdById     String?
+  closedById      String?
+  closedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status, dueAt])
+  @@index([assigneeId, status])
+  @@index([organizationId])
+  @@index([contactId])
+}
+
 model CrmReminderLog {
   id         String   @id @default(cuid())
   dedupeKey  String   @unique

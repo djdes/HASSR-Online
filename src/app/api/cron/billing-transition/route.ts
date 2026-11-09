@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { checkCronSecret } from "@/lib/cron-auth";
 import { runBillingTransitionJob } from "@/lib/billing.server";
+import { runLifecycleJob } from "@/lib/lifecycle/job.server";
 import { runNewcomerJourney } from "@/lib/newcomer-journey.server";
 
 export const runtime = "nodejs";
@@ -19,7 +20,11 @@ export const dynamic = "force-dynamic";
  *     аккаунта и самый заполняемый журнал, остальные сотрудники в архив,
  *     остальные журналы выключаются, уведомление в Telegram и на почту.
  *
- * Здесь же — письма первых шагов новичкам (`runNewcomerJourney`, до трёх
+ * Здесь же — сценарий «пробный и оплата» (`runLifecycleJob`, 2026-11-09):
+ * письма со счётом за 4 и 2 рабочих дня до конца пробного, счёт на продление
+ * тем, кто платит по счёту, задачи менеджеру в CRM.
+ *
+ * И письма первых шагов новичкам (`runNewcomerJourney`, до трёх
  * писем на организацию за 2–14 дни): у этой задачи уже есть расписание.
  *
  * С выключенным переходом лимиты не применяет. Реально оплаченные аккаунты
@@ -38,7 +43,11 @@ async function handle(request: Request) {
     console.error("[billing-transition] newcomer journey failed", error);
     return null;
   });
-  return NextResponse.json({ ...report, journey });
+  const lifecycle = await runLifecycleJob({ dryRun }).catch((error: unknown) => {
+    console.error("[billing-transition] lifecycle failed", error);
+    return null;
+  });
+  return NextResponse.json({ ...report, journey, lifecycle });
 }
 
 export const GET = handle;

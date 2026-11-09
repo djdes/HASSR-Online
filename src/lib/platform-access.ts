@@ -138,6 +138,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/crm/mailboxes", gate: "superadmin", methods: ["POST", "PUT", "DELETE"] },
   { pattern: "/api/root/crm/filtered", gate: "crm", allScope: true },
   { pattern: "/api/root/crm/rules", gate: "crm", allScope: true },
+  // Настройки сценария «пробный и оплата»: кому задачи, кто согласует скидку.
+  { pattern: "/api/root/crm/tasks/settings", gate: "crm", allScope: true },
 
   // Sales.
   { pattern: "/root/proposals", gate: "sales" },

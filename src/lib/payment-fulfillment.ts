@@ -651,5 +651,19 @@ export async function completePaidOrder(order: {
     console.error(`referral reward failed for order ${order.id}`, error);
   }
 
+  // Клиент заплатил — задачи «позвонить по оплате» в CRM больше не нужны.
+  try {
+    if (organizationId) {
+      const { closeLifecycleTasksOnPayment } = await import("@/lib/crm/tasks.server");
+      const org = await db.organization.findUnique({ where: { id: organizationId }, select: { accountId: true } });
+      const scope = org?.accountId
+        ? (await db.organization.findMany({ where: { accountId: org.accountId }, select: { id: true } })).map((row) => row.id)
+        : [organizationId];
+      await closeLifecycleTasksOnPayment(scope);
+    }
+  } catch (error) {
+    console.error(`crm tasks close failed for order ${order.id}`, error);
+  }
+
   return { organizationId, isNewClient };
 }

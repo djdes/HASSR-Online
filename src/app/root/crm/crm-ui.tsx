@@ -8,6 +8,7 @@ import {
   Handshake,
   Inbox,
   LayoutDashboard,
+  ListChecks,
   type LucideIcon,
   Mail,
   MessageCircle,
@@ -28,6 +29,7 @@ import { STAGE_TONE, channelLabel, stageLabel } from "./crm-format";
 const TABS = [
   { href: "/root/crm", label: "Сводка", icon: LayoutDashboard, exact: true },
   { href: "/root/crm/contacts", label: "Контакты и переписка", icon: Inbox },
+  { href: "/root/crm/tasks", label: "Задачи", icon: ListChecks },
   { href: "/root/crm/mail", label: "Почта и фильтры", icon: Mail },
 ];
 

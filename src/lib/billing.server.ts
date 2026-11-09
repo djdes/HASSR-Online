@@ -1558,6 +1558,11 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
   const prices = await pricesFrom();
   const units = await listBillingUnits();
   report.scanned = units.length;
+  // С 2026-11-09 о конце пробного пишет сценарий «пробный и оплата»
+  // (`src/lib/lifecycle`): за 4 и 2 рабочих дня, со счётом. Старое
+  // напоминание за 3 дня — только когда сценарий выключен.
+  const { readLifecycleSettings } = await import("@/lib/crm/tasks.server");
+  const lifecycleOn = (await readLifecycleSettings()).enabled;
   for (const unit of units) {
     const state = stateForUnit(unit, settings, now);
     const action = decideTransitionAction(state, unit.plan);
@@ -1565,6 +1570,10 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     let outcome = "planned";
     try {
       if (action === "remind_trial_end") {
+        if (lifecycleOn) {
+          outcome = "trial reminder — lifecycle scenario";
+          continue;
+        }
         const since = state.trialEndsAt ? new Date(state.trialEndsAt.getTime() - (TRIAL_REMINDER_DAYS + 1) * DAY_MS) : now;
         const already = await db.auditLog.findFirst({
           where: { organizationId: { in: unit.scopeOrgIds }, action: AUDIT_ACTIONS.trialReminder, createdAt: { gte: since } },
