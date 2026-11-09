@@ -28,7 +28,7 @@ export default async function RootSeoLinksPage() {
   const session = await requireRoot();
   const viewer = await platformViewerForSession(session);
 
-  const isSuperadmin = viewer.superadmin || session.user.isRoot === true;
+  const isSuperadmin = viewer.superadmin;
   const platformSections = isSuperadmin
     ? [...PLATFORM_SECTION_KEYS]
     : [...viewer.sections];

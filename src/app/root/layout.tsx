@@ -39,8 +39,8 @@ export default async function RootAreaLayout({
   const panel = await getTranslations("rootPanel");
   const viewer = await platformViewerForSession(session);
   // Кто вошёл: владелец платформы или сотрудник с выданными разделами.
-  const presetKey = viewer.superadmin ? null : matchPlatformPreset(viewer.sections);
-  const accessLabel = viewer.superadmin
+  const presetKey = viewer.owner ? null : matchPlatformPreset(viewer.sections);
+  const accessLabel = viewer.owner
     ? t("accessOwner")
     : presetKey
       ? panel(`presets.${presetKey}.title`)

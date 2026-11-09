@@ -294,8 +294,14 @@ export function normalizePlatformScope(value: unknown): PlatformScope {
 }
 
 export type PlatformViewer = {
-  /** `User.isRoot`: everything, including team, impersonation, deletion. */
+  /**
+   * Everything, including team, impersonation, deletion: the owner
+   * (`User.isRoot`) and a platform administrator — every section with the
+   * «all clients» scope (owner's request 2026-11-09: «всё как у владельца»).
+   */
   superadmin: boolean;
+  /** Only `User.isRoot` — for the «Владелец платформы» label. */
+  owner?: boolean;
   sections: readonly PlatformSectionKey[];
   /** Охват из роли; нет роли («свой набор») или владелец — «all». */
   scope?: PlatformScope;

@@ -116,10 +116,16 @@ export async function requireRoot() {
   notFound();
 }
 
-/** Owner-only actions inside the panel (team, impersonation, deletion). */
+/**
+ * Owner-level actions inside the panel (team, impersonation, deletion):
+ * the owner and a platform administrator (every section, all clients).
+ */
 export async function requireSuperRoot() {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user.isRoot) notFound();
+  if (!session) notFound();
+  if (session.user.isRoot) return session;
+  const { platformViewerForSession } = await import("@/lib/platform-access.server");
+  if (!(await platformViewerForSession(session)).superadmin) notFound();
   return session;
 }
 

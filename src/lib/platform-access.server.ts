@@ -1,7 +1,7 @@
 import { cache } from "react";
 import type { Session } from "next-auth";
 import { db } from "@/lib/db";
-import { effectivePlatformSections, normalizePlatformScope, type PlatformViewer, type ScopedTarget } from "@/lib/platform-access";
+import { canEnterClientCabinets, effectivePlatformSections, normalizePlatformScope, type PlatformViewer, type ScopedTarget } from "@/lib/platform-access";
 
 /**
  * Fresh platform access of a signed-in person. Superadmin comes from the
@@ -10,17 +10,19 @@ import { effectivePlatformSections, normalizePlatformScope, type PlatformViewer,
  * from the DB on every request, so a revoked section closes at once.
  */
 export const loadPlatformViewer = cache(async (userId: string, isRoot: boolean): Promise<PlatformViewer> => {
-  if (isRoot) return { superadmin: true, sections: [], scope: "all" };
+  if (isRoot) return { superadmin: true, owner: true, sections: [], scope: "all" };
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { platformSections: true, canEditTranslations: true, isActive: true, archivedAt: true, platformRole: { select: { scope: true } } },
   });
   if (!user || !user.isActive || user.archivedAt) return { superadmin: false, sections: [], scope: "all" };
-  return {
+  const delegated: PlatformViewer = {
     superadmin: false,
     sections: effectivePlatformSections(user),
     scope: normalizePlatformScope(user.platformRole?.scope),
   };
+  // Администратор платформы (все разделы, все клиенты) — как владелец.
+  return canEnterClientCabinets(delegated) ? { ...delegated, superadmin: true } : delegated;
 });
 
 export function platformViewerForSession(session: Session): Promise<PlatformViewer> {

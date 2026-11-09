@@ -1,3 +1,4 @@
+import { platformViewerForSession } from "@/lib/platform-access.server";
 import { getTranslations } from "next-intl/server";
 
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -17,7 +18,8 @@ export const dynamic = "force-dynamic";
  */
 export default async function RootTranslationsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await requireRoot();
-  const owner = session.user.isRoot === true;
+  // Владелец и администратор платформы — назначают переводчиков.
+  const owner = (await platformViewerForSession(session)).superadmin;
   const [t, categories, translators] = await Promise.all([
     getTranslations("translationEditor"),
     listCategoryStats(),

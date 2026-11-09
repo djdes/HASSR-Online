@@ -258,7 +258,9 @@ export async function proxy(req: NextRequest) {
     // Superadmin — everything; delegated staff — their sections only
     // (src/lib/platform-access.ts). requireRoot() re-checks against the DB.
     const viewer = {
-      superadmin: token?.isRoot === true,
+      // Администратор платформы (все разделы) — как владелец; охват роли
+      // и активность requireRoot()/requireSuperRoot() перепроверяют по БД.
+      superadmin: token?.isRoot === true || (token ? canImpersonateFromToken(token) : false),
       sections: normalizePlatformSections(token?.platformSections),
     };
     if (token && !viewer.superadmin && pathname === "/root" && hasPlatformPanel(viewer) && !canAccessPlatformPath(viewer, pathname)) {

@@ -1,3 +1,4 @@
+import { platformViewerForSession } from "@/lib/platform-access.server";
 import { NextResponse } from "next/server";
 import { InputFile } from "grammy";
 import fs from "node:fs";
@@ -26,8 +27,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.isRoot) {
-    return NextResponse.json({ error: "Нужны ROOT-права" }, { status: 403 });
+  // Владелец и администратор платформы.
+  if (!session?.user || !(await platformViewerForSession(session)).superadmin) {
+    return NextResponse.json({ error: "Нужны права администратора платформы" }, { status: 403 });
   }
   const bot = getInboundBot();
   if (!bot) {
