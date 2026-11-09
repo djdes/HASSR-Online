@@ -35,6 +35,11 @@ model Account {
   trialEndsAt        DateTime?
   /// Понижение тарифа с конца оплаченного срока: { tier, cycle, points, at }.
   scheduledPlanJson  Json?
+  /// Автопродление с баланса (владелец, 2026-11-09): в конце срока тариф
+  /// оплачивается с внутреннего баланса, если там хватает. Карта не списывается.
+  autoRenew          Boolean        @default(true)
+  /// Когда руководитель последний раз включал/выключал автопродление.
+  autoRenewChangedAt DateTime?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   organizations      Organization[]
@@ -4238,12 +4243,14 @@ model BalanceTransaction {
   organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// + начисление, − списание.
   amount                 Int
-  /// referral_reward | review_reward | order_spend | order_release | manual_adjust | topup
+  /// referral_reward | review_reward | order_spend | order_release | manual_adjust | topup | subscription_charge
   kind                   String
   description            String
   /// Идемпотентность одной колонкой (NULL для manual_adjust):
   /// "order_spend:123", "order_release:123", "referral_reward:<orgId>",
-  /// "review_reward:<reviewId>", "topup:123" (пополнение деньгами).
+  /// "review_reward:<reviewId>", "topup:123" (пополнение деньгами),
+  /// "payment_in:123"/"payment_out:123" (оплата тарифа через баланс),
+  /// "autorenew:<accountId>:<конец срока>" (автопродление с баланса).
   dedupeKey              String?      @unique
   paymentOrderId         Int?
   referredOrganizationId String?

@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 import { POINTS_HOLD_HOURS, pointsToSpend } from "./constants";
-import { applyBalanceChange } from "./ledger";
+import { applyBalanceChange, DuplicateBalanceChangeError, InsufficientBalanceError } from "./ledger";
 
 /**
  * Оформление заказа со списанием баллов.
@@ -270,4 +270,87 @@ export async function expireStalePointOrders(
     }
   }
   return { expired, releasedRub };
+}
+
+export type BalanceOrderInput = Omit<
+  CreateOrderWithPointsInput,
+  "usePoints" | "bundleConfig" | "recurringConsent" | "partnerSlug" | "referrerOrganizationId" | "isTest" | "subscriptionRub"
+> & {
+  organizationId: string;
+  /**
+   * Ключ строки списания (`autorenew:<аккаунт>:<конец срока>`): одно
+   * списание на срок — второй параллельный запуск откатится по unique.
+   */
+  spendDedupeKey: string;
+};
+
+export type BalanceOrderResult =
+  | { status: "paid"; id: number; amountRub: number }
+  | { status: "short"; balanceRub: number }
+  | { status: "already" };
+
+/**
+ * Заказ тарифа, оплаченный целиком с баланса (автопродление). Одна
+ * транзакция: хватает ли баланса → заказ сразу `paid` → строка
+ * «Оплата тарифа» (`subscription_charge`). Не хватает — заказа нет вовсе
+ * (в отличие от оформления, где остаток платят картой). Чужие незакрытые
+ * холды не трогаем: человек может прямо сейчас платить в другой вкладке.
+ * Продление подписки — `completePaidOrder` после коммита.
+ */
+export async function createOrderPaidFromBalance(input: BalanceOrderInput): Promise<BalanceOrderResult> {
+  const gross = Math.max(0, Math.round(input.grossRub));
+  try {
+    return await db.$transaction(async (tx): Promise<BalanceOrderResult> => {
+      const org = await tx.organization.findUnique({ where: { id: input.organizationId }, select: { balanceRub: true } });
+      const balanceRub = org?.balanceRub ?? 0;
+      if (gross <= 0 || balanceRub < gross) return { status: "short", balanceRub };
+      const order = await tx.paymentOrder.create({
+        data: {
+          email: input.email,
+          tariffKey: input.tariffKey,
+          amountRub: 0,
+          description: input.description,
+          isTest: false,
+          organizationId: input.organizationId,
+          userId: input.userId ?? undefined,
+          pointsSpent: gross,
+          promoCode: input.promoCode ?? undefined,
+          discountRub: input.discountRub ?? 0,
+          lifetimeDiscountId: input.lifetimeDiscountId ?? undefined,
+          baseRub: input.baseRub ?? undefined,
+          promotionId: input.promotionId ?? undefined,
+          promotionPercent: input.promotionPercent ?? undefined,
+          promotionDiscountRub: input.promotionDiscountRub ?? 0,
+          points: input.points ?? undefined,
+          changeKind: input.changeKind ?? undefined,
+          creditRub: input.creditRub ?? 0,
+          periodEndsAt: input.periodEndsAt ?? undefined,
+          basePlanJson: input.basePlanJson ?? undefined,
+          status: "paid",
+          paidAt: new Date(),
+          rawResult: { paidBy: "balance", autoRenew: true, pointsSpent: gross },
+        },
+        select: { id: true },
+      });
+      await applyBalanceChange(tx, {
+        organizationId: input.organizationId,
+        amount: -gross,
+        kind: "subscription_charge",
+        description: `Оплата тарифа с баланса: ${input.description}, заказ №${order.id}`,
+        dedupeKey: input.spendDedupeKey,
+        paymentOrderId: order.id,
+        actorUserId: input.userId,
+      });
+      return { status: "paid", id: order.id, amountRub: gross };
+    });
+  } catch (error) {
+    // Баланс успели потратить между чтением и списанием — как «не хватает».
+    if (error instanceof InsufficientBalanceError) {
+      const org = await db.organization.findUnique({ where: { id: input.organizationId }, select: { balanceRub: true } });
+      return { status: "short", balanceRub: org?.balanceRub ?? 0 };
+    }
+    // Этот срок уже продлили (параллельный запуск задачи) — заказ откатился.
+    if (error instanceof DuplicateBalanceChangeError) return { status: "already" };
+    throw error;
+  }
 }

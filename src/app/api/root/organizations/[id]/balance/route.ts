@@ -114,6 +114,13 @@ export async function POST(
     data: { amount: parsed.amount, comment: parsed.comment },
   });
 
+  // Начислили, а срок на исходе и автопродление включено — продлеваем сразу
+  // (best-effort: сбой только в лог, начисление уже проведено).
+  if (credited) {
+    const { tryAutoRenewForOrganization } = await import("@/lib/balance/auto-renew.server");
+    await tryAutoRenewForOrganization(organization.id);
+  }
+
   const updated = await db.organization.findUnique({
     where: { id: organization.id },
     select: { balanceRub: true },

@@ -3673,8 +3673,8 @@
       "newClientAction": "Finish setup",
       "renewalAction": "Go to your account",
       "support": "Questions about payments or refunds? Contact admin@wesetup.ru.",
-      "pointsOnlyAmount": "paid with points ({points})",
-      "amountWithPoints": "{amount} (+ {points} in points)"
+      "pointsOnlyAmount": "paid from the balance ({points})",
+      "amountWithPoints": "{amount} (+ {points} from the balance)"
     },
     "alerts": {
       "deviation": {
@@ -9797,14 +9797,17 @@
         "showStats": "Show next to the review how many journals and records we keep in WeSetup — without journal names or their data."
       },
       "history": {
-        "title": "Points history",
+        "title": "Balance details",
         "empty": "Nothing here yet.",
         "emptyWithNextSteps": "Nothing here yet. Invite a colleague, leave a review, or add funds to earn your first points.",
-        "subtitle": "Each points transaction shows its date, reason, and balance afterward.",
+        "subtitle": "Credit: money added to the balance (top-ups, card and invoice payments, bonuses, refunds). Debit: charges (plan, services). Balance: after each operation.",
         "date": "Date",
         "operation": "Transaction",
-        "amount": "Amount",
-        "total": "Balance"
+        "total": "Balance",
+        "credit": "Credit (in)",
+        "debit": "Debit (out)",
+        "creditTotal": "Added: {amount}",
+        "debitTotal": "Charged: {amount}"
       }
     },
     "balanceTopup": {
@@ -17130,6 +17133,7 @@
       "service_spend": "Service payment",
       "manual_adjust": "Adjustment",
       "topup": "Top-up",
+      "subscription_charge": "Plan payment",
       "unknown": "Transaction"
     },
     "orders": {
@@ -30286,6 +30290,24 @@
       "label": "Point",
       "all": "All",
       "none": "No point"
+    },
+    "autoRenewCard": {
+      "title": "Auto-renewal from balance",
+      "switchOn": "On",
+      "switchOff": "Off",
+      "onCovered": "On {date} we will deduct {price} from the balance and the subscription will renew itself. Balance: {balance}.",
+      "onShort": "On {date} we need to deduct {price}, but the balance is {balance}: {short} short. Top up the balance and the subscription will renew itself.",
+      "onNoPrice": "At the end of the term the plan is paid from the balance. Charge date: {date}.",
+      "off": "Off: the subscription ends on {date}; renew it manually by card or invoice.",
+      "scheduled": "A plan change is scheduled: it starts after {date} once paid; the current plan will not auto-renew.",
+      "how": "Like a mobile operator: card or invoice payments go to the balance, and a day before the term ends the plan is paid from the balance. The card is never charged. Every top-up and charge is in the balance details.",
+      "topUp": "Top up balance",
+      "payNow": "Pay for the next period",
+      "detail": "Balance details",
+      "enabledToast": "Auto-renewal is on",
+      "disabledToast": "Auto-renewal is off",
+      "renewedNow": "Auto-renewal is on: the subscription has already been renewed from the balance",
+      "failed": "Could not change auto-renewal"
     }
   },
   "teamUi": {

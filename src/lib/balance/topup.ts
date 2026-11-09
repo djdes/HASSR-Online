@@ -306,5 +306,11 @@ export async function completeTopupOrder(
   console.info(
     `[balance] topup completed order=${order.id} org=${organizationId} rub=${amountRub} balance=${balanceRub}`,
   );
+  // Как у оператора: пополнили, а срок на исходе (или кончился, пока идёт
+  // грейс) и автопродление включено — продлеваем сразу, не дожидаясь утра.
+  if (!order.isTest) {
+    const { tryAutoRenewForOrganization } = await import("./auto-renew.server");
+    await tryAutoRenewForOrganization(organizationId);
+  }
   return { organizationId, isNewClient: false };
 }

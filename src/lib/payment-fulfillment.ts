@@ -613,6 +613,18 @@ export async function completePaidOrder(order: {
     const result = await fulfillPaidOrder(order);
     organizationId = result.organizationId;
     isNewClient = result.isNewClient;
+    // Деньги за тариф проходят через баланс: «+N пополнение» и «−N оплата
+    // тарифа» в детализации (как у мобильного оператора). Заказ на разборе —
+    // после «Применено» у ROOT. Сбой строк не отменяет оплату: подписка уже
+    // продлена, повтор допишет их (ключи не дадут задвоить).
+    if (!result.held) {
+      try {
+        const { recordPaymentThroughBalance } = await import("@/lib/balance/payment-ledger");
+        await recordPaymentThroughBalance(order.id);
+      } catch (error) {
+        console.error(`[balance] payment pass-through failed for order ${order.id}`, error);
+      }
+    }
     await notifyAboutPayment({ order, result });
   } catch (error) {
     // Заказ уже помечен оплаченным — откатывать статус нельзя, иначе
