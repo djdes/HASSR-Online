@@ -39,15 +39,17 @@ export default async function RootMetricsPage() {
   const mine = viewer.scope === "own" ? await assignedOrganizationIds(session.user.id) : null;
   const metrics = mine ? allMetrics.filter((row) => mine.has(row.organizationId)) : allMetrics;
   const sorted = [...metrics].sort((a, b) => b.actualMrrRub - a.actualMrrRub);
+  // Цифры — по настоящим клиентам: демо-организации не клиенты (они во вкладке «Демо»).
+  const clients = sorted.filter((m) => !m.isDemo);
 
   const now = refDate.getTime();
-  const totalActualMrr = sorted.reduce((s, m) => s + m.actualMrrRub, 0);
-  const totalPotentialMrr = sorted.reduce((s, m) => s + m.potentialMrrRub, 0);
-  const activeOrgs = sorted.filter((m) => m.entries7d > 0).length;
-  const payingOrgs = sorted.filter((m) => m.actualMrrRub > 0).length;
-  const newOrgs = sorted.filter((m) => now - new Date(m.createdAt).getTime() <= 7 * DAY_MS).length;
+  const totalActualMrr = clients.reduce((s, m) => s + m.actualMrrRub, 0);
+  const totalPotentialMrr = clients.reduce((s, m) => s + m.potentialMrrRub, 0);
+  const activeOrgs = clients.filter((m) => m.entries7d > 0).length;
+  const payingOrgs = clients.filter((m) => m.actualMrrRub > 0).length;
+  const newOrgs = clients.filter((m) => now - new Date(m.createdAt).getTime() <= 7 * DAY_MS).length;
   // Баллы на балансах — обязательство платформы: уменьшат будущие поступления.
-  const totalBalance = sorted.reduce((s, m) => s + m.balanceRub, 0);
+  const totalBalance = clients.reduce((s, m) => s + m.balanceRub, 0);
 
   return (
     <DomainMessagesBoundary namespaces={["rootMetrics", "settingsManagement", "journals"]}>
@@ -66,8 +68,8 @@ export default async function RootMetricsPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label={t("stats.clients")} value={formatNumber(locale, sorted.length)} hint={t("stats.newWeek", { count: newOrgs })} />
-          <StatCard label={t("stats.active7d")} value={formatNumber(locale, activeOrgs)} hint={t("stats.ofTotal", { count: sorted.length })} />
+          <StatCard label={t("stats.clients")} value={formatNumber(locale, clients.length)} hint={t("stats.newWeek", { count: newOrgs })} />
+          <StatCard label={t("stats.active7d")} value={formatNumber(locale, activeOrgs)} hint={t("stats.ofTotal", { count: clients.length })} />
           <StatCard
             label={t("stats.paying")}
             value={formatNumber(locale, payingOrgs)}

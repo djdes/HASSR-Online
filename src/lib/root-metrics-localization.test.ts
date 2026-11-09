@@ -12,7 +12,7 @@ import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared
 import { createTranslator } from "use-intl/core";
 import { loadMessages } from "@/i18n/messages";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
-import { MetricsTable } from "@/app/root/metrics-table";
+import { MetricsTable, inSegment } from "@/app/root/metrics-table";
 import { OrgRowActions } from "@/app/root/organizations/org-row-actions";
 import { formatMetricsRelative, metricsDate, metricsJournalName, metricsPlanLabel } from "@/app/root/metrics-presentation";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
@@ -21,7 +21,7 @@ import type { OrgMetrics } from "@/lib/org-metrics";
 
 const now = new Date("2026-10-15T12:30:00.000Z").getTime();
 const rows: OrgMetrics[] = [
-  { organizationId: "org-a", organizationName: "Customer A <&>", ownerEmail: "owner@example.test", ownerName: "Owner Person", ownerPhone: "+7 900 111-22-33", ownerContactEmail: "owner@example.test", orgPhone: null, ownerRegistrationIp: "9.9.9.9", ownerLastLoginIp: "10.0.0.2", ownerLastLoginAt: "2026-10-14T23:30:00.000Z", type: "restaurant", ownershipKind: "private", locationsCount: 2, inn: "1234567890", isDemo: true, demoExpiresAt: "2026-10-16T23:30:00.000Z", documentsCount: 12, subscriptionPlan: "paid", subscriptionEnd: null, createdAt: "2026-10-01T23:30:00.000Z", activeUsers: 14, entries7d: 1234, entries30d: 2345, weeklyTrendPct: 20, lastEntryAt: "2026-10-15T10:30:00.000Z", potentialMrrRub: 2390, actualMrrRub: 2390, balanceRub: 400 },
+  { organizationId: "org-a", organizationName: "Customer A <&>", ownerEmail: "owner@example.test", ownerName: "Owner Person", ownerPhone: "+7 900 111-22-33", ownerContactEmail: "owner@example.test", orgPhone: null, ownerRegistrationIp: "9.9.9.9", ownerLastLoginIp: "10.0.0.2", ownerLastLoginAt: "2026-10-14T23:30:00.000Z", type: "restaurant", ownershipKind: "private", locationsCount: 2, inn: "1234567890", isDemo: false, demoExpiresAt: null, documentsCount: 12, subscriptionPlan: "paid", subscriptionEnd: null, createdAt: "2026-10-01T23:30:00.000Z", activeUsers: 14, entries7d: 1234, entries30d: 2345, weeklyTrendPct: 20, lastEntryAt: "2026-10-15T10:30:00.000Z", potentialMrrRub: 2390, actualMrrRub: 2390, balanceRub: 400 },
   { organizationId: "org-b", organizationName: "Customer B", ownerEmail: null, ownerName: null, ownerPhone: null, ownerContactEmail: null, orgPhone: null, ownerRegistrationIp: null, ownerLastLoginIp: null, ownerLastLoginAt: null, type: "meat", ownershipKind: null, locationsCount: 1, inn: null, isDemo: false, demoExpiresAt: null, isDirectory: true, documentsCount: 0, subscriptionPlan: "Customer plan", subscriptionEnd: null, createdAt: "2026-09-01T00:00:00.000Z", activeUsers: 1, entries7d: 0, entries30d: 0, weeklyTrendPct: null, lastEntryAt: null, potentialMrrRub: 0, actualMrrRub: 0, balanceRub: 0 },
 ];
 const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {} };
@@ -104,4 +104,12 @@ test("date/relative presentation preserves timezone basis, 24-hour/30-day thresh
       }
     }
   } finally { if (previousTz === undefined) delete process.env.TZ; else process.env.TZ = previousTz; }
+});
+
+test("демо-организации — только во вкладке «Демо»: в «Все» и «Новых» их выдуманные сотрудники не дублируют людей", () => {
+  const demo = { ...rows[0], organizationId: "demo", isDemo: true, actualMrrRub: 0, createdAt: new Date(now - 1000).toISOString() };
+  assert.equal(inSegment(demo, "all", now), false);
+  assert.equal(inSegment(demo, "new", now), false);
+  assert.equal(inSegment(demo, "demo", now), true);
+  assert.equal(inSegment(rows[0], "all", now), true);
 });

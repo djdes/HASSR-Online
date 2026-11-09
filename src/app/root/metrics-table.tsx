@@ -43,14 +43,17 @@ export function isSleeping(m: OrgMetrics, now: number): boolean {
 
 export function inSegment(m: OrgMetrics, segment: ClientSegment, now: number): boolean {
   switch (segment) {
+    // Демо-организации — показ продукта с выдуманными сотрудниками: в общем
+    // списке они дублировали одних и тех же людей («Соколова Ирина
+    // Владимировна» в каждом демо). Видны только во вкладке «Демо».
     case "all":
-      return true;
+      return !m.isDemo;
     case "paying":
       return m.actualMrrRub > 0;
     case "notPaying":
       return m.actualMrrRub === 0 && !m.isDemo;
     case "new":
-      return now - new Date(m.createdAt).getTime() <= 7 * DAY_MS;
+      return !m.isDemo && now - new Date(m.createdAt).getTime() <= 7 * DAY_MS;
     case "sleeping":
       return isSleeping(m, now);
     case "demo":
