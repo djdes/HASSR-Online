@@ -85,7 +85,9 @@ export function parseGglApplicationsPage(html: string, campaignId: number) {
   const pageMatch = /ReviewsRequestData\.pageNum\s*=\s*(\d+)/.exec(html);
   if (!totalMatch || !pageMatch) throw new Error("GoGetLinks не вернул счётчик или номер страницы заявок");
   const total = Number(totalMatch[1]);
-  const page = Number(pageMatch[1]);
+  const rawPage = Number(pageMatch[1]);
+  const currentSpan = Number(text(root.querySelector(".pagination__item_current")?.text));
+  const page = rawPage === 0 ? (Number.isSafeInteger(currentSpan) && currentSpan > 0 ? currentSpan : 1) : rawPage;
   const applications: GglApplication[] = [];
   for (const row of root.querySelectorAll(".view-request-data-row")) {
     const check = row.querySelector("input[data-comp-id][data-price]");

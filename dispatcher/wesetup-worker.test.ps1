@@ -47,8 +47,8 @@ if (-not (Process-SelfContained $job 'wesetup_ggl_webmasters') -or -not $script:
 foreach ($invalid in @(
   "type: wesetup_ggl_webmasters`nencoding: brotli-base64-v1`n`nINVALID!",
   (Pack-Fixture 'type: other'),
-  (Pack-Fixture ("type: wesetup_ggl_webmasters`n" + ('a' * 190001))),
-  (Pack-Fixture ("type: wesetup_ggl_webmasters`n" + ('a' * 800000)))
+  (Pack-Fixture ("type: wesetup_ggl_webmasters`n" + ('a' * 650001))),
+  (Pack-Fixture ("type: wesetup_ggl_webmasters`n" + ('a' * 2700000)))
 )) {
   $job.inputText = $invalid
   if (Process-SelfContained $job 'wesetup_ggl_webmasters') { throw 'Invalid payload reached the model' }
