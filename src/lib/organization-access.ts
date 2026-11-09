@@ -11,7 +11,7 @@ export type AccessibleOrganization = {
   name: string;
   role: "owner" | "manager" | "home";
   isHome: boolean;
-  /** Демо-песочница аккаунта: в списке идёт последней и помечена пилюлей. */
+  /** Общая демо-организация: в списке идёт последней и помечена пилюлей. */
   isDemo: boolean;
   /**
    * `directory` — мастер-кабинет справочников: в меню профиля он не в

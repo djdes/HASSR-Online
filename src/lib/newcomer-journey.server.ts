@@ -74,12 +74,9 @@ export async function runNewcomerJourney(options: { now?: Date; dryRun?: boolean
       const [hasEntries, activeUsers, demo, clientMessage] = await Promise.all([
         organizationHasEntries(org.id),
         db.user.count({ where: { organizationId: org.id, isActive: true, archivedAt: null, isRoot: false } }),
-        org.accountId
-          ? db.organization.findFirst({
-              where: { accountId: org.accountId, isDemo: true, demoExpiresAt: { gt: now } },
-              select: { demoExpiresAt: true },
-            })
-          : Promise.resolve(null),
+        // Демо общая и не удаляется (2026-11-09): письма «демо скоро
+        // удалится» больше нет, шаг `demo_expiring` не наступает.
+        Promise.resolve<{ demoExpiresAt: Date } | null>(null),
         db.supportMessage.findFirst({
           where: { thread: { key: orgThreadKey(org.id) }, author: "client", createdAt: { gte: new Date(now.getTime() - DAY_MS) } },
           select: { id: true },

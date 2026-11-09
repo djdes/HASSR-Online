@@ -13,7 +13,8 @@ import { documentStatusLegend } from "@/lib/crumb-menu";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { getViewedPointId } from "@/lib/active-building";
-import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { canSeeDocumentPoint, findPointMismatch } from "@/lib/document-point-access";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,11 @@ export default async function VerifyDocumentPage({
   }
   // Руководитель другой точки документ не проверяет (2026-11-01).
   if (!isVerifier && !(await canSeeDocumentPoint(session, doc.buildingId))) notFound();
+  // В шапке выбрана другая точка — ошибка и переход вместо проверки (2026-11-09).
+  const mismatch = await findPointMismatch(session, doc.buildingId);
+  if (mismatch) {
+    return <PointMismatchNotice kind="document" mismatch={mismatch} listHref={`/journals/${code}`} />;
+  }
 
   const entries = await db.journalDocumentEntry.findMany({
     where: { documentId: docId },

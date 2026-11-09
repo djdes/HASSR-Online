@@ -11,7 +11,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { getJournalCrumbMenu } from "@/lib/journal-crumb-menu";
 import { getCrumbOrganizationName } from "@/lib/crumb-organization";
-import { canSeeDocumentPoint, journalEntryPointId } from "@/lib/document-point-access";
+import { canSeeDocumentPoint, findPointMismatch, journalEntryPointId } from "@/lib/document-point-access";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
 
 function formatValue(
   value: unknown,
@@ -134,6 +135,11 @@ export default async function EntryDetailPage({
     !(await canSeeDocumentPoint(session, journalEntryPointId(entry)))
   ) {
     notFound();
+  }
+  // В шапке выбрана другая точка — ошибка и переход вместо записи (2026-11-09).
+  const mismatch = await findPointMismatch(session, journalEntryPointId(entry));
+  if (mismatch) {
+    return <PointMismatchNotice kind="entry" mismatch={mismatch} listHref={`/journals/${resolvedCode}`} />;
   }
 
   const data = (entry.data && typeof entry.data === "object" && !Array.isArray(entry.data))

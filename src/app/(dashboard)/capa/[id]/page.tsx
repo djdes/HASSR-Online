@@ -16,6 +16,8 @@ import {
 import { CapaWorkflow } from "@/components/capa/capa-workflow";
 import { loadBuildingContext } from "@/lib/active-building";
 import { pointRecordVisible } from "@/lib/point-records";
+import { findPointMismatch } from "@/lib/document-point-access";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
 
 
 export default async function CapaDetailPage({
@@ -65,6 +67,9 @@ export default async function CapaDetailPage({
   ) {
     notFound();
   }
+  // В шапке выбрана другая точка — ошибка и переход вместо карточки (2026-11-09).
+  const mismatch = await findPointMismatch(session, ticket.buildingId);
+  if (mismatch) return <PointMismatchNotice kind="capa" mismatch={mismatch} listHref="/capa" />;
 
   const slaDeadline = new Date(ticket.createdAt.getTime() + ticket.slaHours * 60 * 60 * 1000);
   const slaBreached = ticket.status !== "closed" && Date.now() > slaDeadline.getTime();

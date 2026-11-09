@@ -203,16 +203,9 @@ export default async function DashboardLayout({
         locationsCount: true,
         inn: true,
         address: true,
-        // Демо-организация: баннер «данные тестовые» + счётчики для
-        // диалога удаления.
+        // Демо-организация: баннер «данные тестовые» и срок переустановки.
         isDemo: true,
         demoExpiresAt: true,
-        _count: {
-          select: {
-            users: { where: { isActive: true } },
-            journalDocuments: true,
-          },
-        },
       },
     }),
       listAccessibleOrganizations(session.user.id),
@@ -567,17 +560,15 @@ export default async function DashboardLayout({
               organizationName={brandedOrg?.name ?? tLayout("fallbackOrganization")}
             />
           </Suspense>
-          {/* Песочница: постоянная полоса «данные тестовые» с выходом
-              в свою организацию и удалением. Только владельцу аккаунта —
-              у него и кнопки, и домашняя организация, куда возвращаться. */}
+          {/* Общая демо: постоянная полоса «данные тестовые» с выходом в
+              свою организацию. Только владельцу аккаунта — у него есть
+              домашняя организация, куда возвращаться. */}
           {brandedOrg?.isDemo && ownedAccount && !isImpersonating(session) ? (
             <Suspense fallback={null}>
               <DemoOrgBanner
                 organizationName={brandedOrg.name}
-                demoExpiresAt={brandedOrg.demoExpiresAt?.toISOString() ?? null}
+                nextResetAt={brandedOrg.demoExpiresAt?.toISOString() ?? null}
                 homeOrganizationId={session.user.organizationId}
-                staffCount={brandedOrg._count.users}
-                documentsCount={brandedOrg._count.journalDocuments}
               />
             </Suspense>
           ) : null}
@@ -784,12 +775,6 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
             legalProfileJson: true,
             isDemo: true,
             demoExpiresAt: true,
-            _count: {
-              select: {
-                users: { where: { isActive: true } },
-                journalDocuments: true,
-              },
-            },
           },
         })
         .catch(() => null),
@@ -873,10 +858,8 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 <Suspense fallback={null}>
                   <DemoOrgBanner
                     organizationName={orgRow.name}
-                    demoExpiresAt={orgRow.demoExpiresAt?.toISOString() ?? null}
+                    nextResetAt={orgRow.demoExpiresAt?.toISOString() ?? null}
                     homeOrganizationId={session.user.organizationId}
-                    staffCount={orgRow._count.users}
-                    documentsCount={orgRow._count.journalDocuments}
                   />
                 </Suspense>
               ) : null}
