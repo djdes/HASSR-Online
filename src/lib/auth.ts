@@ -10,7 +10,7 @@ import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { parsePointScope } from "@/lib/point-scope";
-import { canImpersonateFromToken, effectivePlatformSections, isPlatformAdministrator } from "@/lib/platform-access";
+import { effectivePlatformSections, isPlatformAdministrator } from "@/lib/platform-access";
 import { twoFactorRequired } from "@/lib/two-factor";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
@@ -280,7 +280,9 @@ export const authOptions: NextAuthOptions = {
       // client calls `update({ actingAsOrganizationId: ... })`. NextAuth v4
       // routes that through the jwt callback with trigger === "update".
       if (trigger === "update" && session && typeof session === "object") {
-        if ("actingAsOrganizationId" in session && canImpersonateFromToken(token)) {
+        // Только владелец: администратор входит через /api/root/impersonate,
+        // где проверка прав и запись в аудит, а не через update() клиента.
+        if ("actingAsOrganizationId" in session && token.isRoot) {
           const next = session.actingAsOrganizationId;
           token.actingAsOrganizationId =
             typeof next === "string" && next.length > 0 ? next : null;
