@@ -25418,7 +25418,12 @@
       "consulting": "Expert services",
       "consultingHint": "Inspection prep, production control, HACCP",
       "consultingTelegramHint": "Consultant on Telegram",
-      "subjectConsulting": "Consulting"
+      "subjectConsulting": "Consulting",
+      "groupsShort": {
+        "support": "Support",
+        "sales": "Sales",
+        "consulting": "Consulting"
+      }
     }
   },
   "checklistsUi": {

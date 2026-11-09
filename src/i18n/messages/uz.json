@@ -25418,7 +25418,12 @@
       "consulting": "Ekspert xizmatlari",
       "consultingHint": "Tekshiruvga tayyorgarlik, HACCP",
       "consultingTelegramHint": "Telegramda maslahatchi",
-      "subjectConsulting": "Konsalting"
+      "subjectConsulting": "Konsalting",
+      "groupsShort": {
+        "support": "Yordam",
+        "sales": "Savdo",
+        "consulting": "Konsalting"
+      }
     }
   },
   "checklistsUi": {

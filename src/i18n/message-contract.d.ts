@@ -25419,7 +25419,12 @@ export type MessageContract = {
       "consulting": "Услуги экспертов",
       "consultingHint": "Подготовка к проверке, ППК, ХАССП",
       "consultingTelegramHint": "Консультант в Telegram",
-      "subjectConsulting": "Консалтинг"
+      "subjectConsulting": "Консалтинг",
+      "groupsShort": {
+        "support": "Поддержка",
+        "sales": "Продажи",
+        "consulting": "Консалтинг"
+      }
     }
   },
   "checklistsUi": {

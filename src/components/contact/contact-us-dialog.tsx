@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowUpRight, GraduationCap, LifeBuoy, Mail, MessageCircle, MessagesSquare, Phone, Send } from "lucide-react";
@@ -36,6 +36,9 @@ const ROW_CLASS =
 const ROW_CLASS_COMPACT =
   "group flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-3 py-2.5 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
+/** Узкая колонка (главная кабинета): строки компактнее, без стрелки. */
+const CompactRows = createContext(false);
+
 function ContactRow({
   icon,
   label,
@@ -45,6 +48,19 @@ function ContactRow({
   label: string;
   hint: string;
 }) {
+  const compact = useContext(CompactRows);
+  if (compact) {
+    // Адрес или номер — одной строкой: «@wesetup_support» не рвётся посередине.
+    return (
+      <>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#3848c7] [&_svg]:size-[18px]">{icon}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14.5px] font-semibold leading-tight text-[#0b1024]" title={label}>{label}</span>
+          <span className="mt-0.5 block truncate text-[12.5px] leading-snug text-[#6f7282]" title={hint}>{hint}</span>
+        </span>
+      </>
+    );
+  }
   return (
     <>
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#3848c7]">{icon}</span>
@@ -125,6 +141,7 @@ export function ContactUsPanel({
   );
 
   return (
+    <CompactRows.Provider value={compact}>
     <div className={cn("space-y-3", className)} data-contact-us-panel>
       <div role="tablist" aria-label={t("groupsLabel")} className="grid grid-cols-3 gap-1 rounded-2xl bg-[#f5f6ff] p-1">
         {GROUPS.map((id) => {
@@ -139,18 +156,18 @@ export function ContactUsPanel({
               onClick={() => setGroup(id)}
               data-contact-group={id}
               className={cn(
-                "flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-center text-[12.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                "flex min-h-[52px] flex-col items-center justify-center gap-1 whitespace-nowrap rounded-xl px-1 py-1.5 text-center text-[12.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
                 active ? "bg-white text-[#3848c7] shadow-[0_4px_14px_-8px_rgba(85,102,246,0.55)]" : "text-[#6f7282] hover:bg-white/60 hover:text-[#0b1024]",
               )}
             >
               <Icon className={cn("size-4", active ? "text-[#5566f6]" : "text-[#9b9fb3]")} aria-hidden />
-              {t(`groups.${id}`)}
+              {compact ? t(`groupsShort.${id}`) : t(`groups.${id}`)}
             </button>
           );
         })}
       </div>
 
-      <p className="px-1 text-[13px] leading-snug text-[#6f7282]">{t(`groupLeads.${group}`)}</p>
+      <p className={cn("px-1 leading-snug text-[#6f7282]", compact ? "text-[12.5px]" : "text-[13px]")}>{t(`groupLeads.${group}`)}</p>
 
       <div role="tabpanel" className="space-y-2.5" data-contact-group-panel={group}>
         {group === "support" ? (
@@ -218,6 +235,7 @@ export function ContactUsPanel({
         ) : null}
       </div>
     </div>
+    </CompactRows.Provider>
   );
 }
 
