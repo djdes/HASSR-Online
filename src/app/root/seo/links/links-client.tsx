@@ -50,6 +50,7 @@ export function SeoLinksClient({
   const [syncing, setSyncing] = useState(false);
   const [focusedThreadId, setFocusedThreadId] = useState<string | null>(null);
   const [didApplyInitialTabRule, setDidApplyInitialTabRule] = useState(false);
+  const [liveApplicationsCount, setLiveApplicationsCount] = useState<number | null>(null);
 
   const loadOverview = useCallback(
     async (otherProjectsFlag = includeOtherProjects) => {
@@ -97,6 +98,34 @@ export function SeoLinksClient({
       cancelled = true;
     };
   }, [includeOtherProjects, loadOverview]);
+
+  useEffect(() => {
+    if (!overview?.account) return;
+    if ((overview.metrics.counts.webmasterApplications ?? 0) > 0 || liveApplicationsCount !== null) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/root/gogetlinks/applications", { cache: "no-store" });
+        const data = (await res.json().catch(() => null)) as {
+          snapshot?: { sourceTotal?: number; applications?: unknown[] };
+        } | null;
+        if (!cancelled && res.ok && data?.snapshot) {
+          const total = Math.max(
+            data.snapshot.sourceTotal ?? 0,
+            Array.isArray(data.snapshot.applications) ? data.snapshot.applications.length : 0,
+          );
+          setLiveApplicationsCount(total);
+        }
+      } catch {
+        // Ignore background pre-warm errors
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [overview?.account, overview?.metrics.counts.webmasterApplications, liveApplicationsCount]);
 
   async function handleSyncNow() {
     setSyncing(true);
@@ -172,8 +201,13 @@ export function SeoLinksClient({
   ]);
 
   const counts = overview?.metrics.counts;
+  const webmasterApplicationsCount =
+    liveApplicationsCount ?? counts?.webmasterApplications ?? 0;
+  const unreadMessagesCount = counts?.unreadThreads ?? 0;
+  const webmasterNotificationsCount =
+    webmasterApplicationsCount + unreadMessagesCount;
   const liveBadgeCount = counts
-    ? counts.unreadThreads + counts.pendingApprovalSlots
+    ? webmasterNotificationsCount + counts.pendingApprovalSlots
     : initialBadgeCount;
 
   const tabs: Array<{
@@ -181,8 +215,20 @@ export function SeoLinksClient({
     label: string;
     icon: typeof CalendarClock;
     badge?: number;
+    badgeLabel?: string;
+    badgeTitle?: string;
   }> = [
-    { key: "applications", label: "Заявки вебмастеров", icon: Inbox },
+    {
+      key: "applications",
+      label: "Заявки вебмастеров",
+      icon: Inbox,
+      badge: webmasterNotificationsCount,
+      badgeLabel:
+        unreadMessagesCount > 0 && webmasterApplicationsCount > 0
+          ? `${webmasterApplicationsCount.toLocaleString("ru-RU")} · 💬 ${unreadMessagesCount}`
+          : webmasterNotificationsCount.toLocaleString("ru-RU"),
+      badgeTitle: `Заявок от вебмастеров: ${webmasterApplicationsCount.toLocaleString("ru-RU")} · непрочитанных сообщений: ${unreadMessagesCount}`,
+    },
     {
       key: "planner",
       label: "Планировщик и слоты",
@@ -223,7 +269,17 @@ export function SeoLinksClient({
 
       <SeoLinksHeaderMetrics
         account={overview?.account ?? null}
-        metrics={overview?.metrics ?? null}
+        metrics={
+          overview?.metrics
+            ? {
+                ...overview.metrics,
+                counts: {
+                  ...overview.metrics.counts,
+                  webmasterApplications: webmasterApplicationsCount,
+                },
+              }
+            : null
+        }
         syncing={syncing}
         onSyncNow={() => void handleSyncNow()}
         includeOtherProjects={includeOtherProjects}
@@ -261,13 +317,14 @@ export function SeoLinksClient({
               {tab.label}
               {tab.badge && tab.badge > 0 ? (
                 <span
-                  className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ${
+                  title={tab.badgeTitle}
+                  className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none tabular-nums ${
                     isActive
                       ? "bg-white text-[#3848c7]"
                       : "bg-[#eef1ff] text-[#3848c7]"
                   }`}
                 >
-                  {tab.badge}
+                  {tab.badgeLabel ?? tab.badge.toLocaleString("ru-RU")}
                 </span>
               ) : null}
             </button>
@@ -282,7 +339,13 @@ export function SeoLinksClient({
         </div>
       ) : (
         <>
-          {activeTab === "applications" ? <ApplicationsTab campaigns={overview?.campaigns ?? []} defaultCampaignId={overview?.account?.defaultCampaignId ?? null} /> : null}
+          {activeTab === "applications" ? (
+            <ApplicationsTab
+              campaigns={overview?.campaigns ?? []}
+              defaultCampaignId={overview?.account?.defaultCampaignId ?? null}
+              onCountChange={setLiveApplicationsCount}
+            />
+          ) : null}
           {activeTab === "planner" ? (
             <PlannerTab
               campaigns={overview?.campaigns ?? []}

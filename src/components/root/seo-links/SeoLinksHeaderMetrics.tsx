@@ -27,7 +27,7 @@ export interface SeoLinksHeaderMetricsProps {
   onSyncNow: () => void;
   includeOtherProjects: boolean;
   onToggleIncludeOtherProjects: (next: boolean) => void;
-  onOpenTab: (tab: "planner" | "orders" | "chats" | "demand") => void;
+  onOpenTab: (tab: "applications" | "planner" | "orders" | "chats" | "demand") => void;
 }
 
 export function SeoLinksHeaderMetrics({
@@ -54,6 +54,7 @@ export function SeoLinksHeaderMetrics({
     unreadThreads: 0,
     pendingApprovalSlots: 0,
     otherProjectsCampaignsCount: 0,
+    webmasterApplications: 0,
   };
 
   const hasEnoughFor7Days = availableRub >= next7DaysPendingRub;
@@ -234,28 +235,53 @@ export function SeoLinksHeaderMetrics({
           )}
         </button>
 
-        {/* 4. Webmaster unread messages */}
-        <button
-          type="button"
-          onClick={() => onOpenTab("chats")}
-          className="rounded-3xl border border-[#ececf4] bg-white p-4 text-left shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-colors hover:border-[#5566f6]/40"
-        >
+        {/* 4. Webmaster applications & unread messages */}
+        <div className="rounded-3xl border border-[#ececf4] bg-white p-4 text-left shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           <div className="flex items-center justify-between gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-            <span>Сообщения вебмастеров</span>
+            <span>Вебмастера и сообщения</span>
             <MessageSquare className="size-4 text-[#5566f6]" />
           </div>
-          <div className="mt-2 text-[24px] font-semibold tracking-tight text-[#0b1024]">
-            {counts.unreadThreads}
+          <div className="mt-2 flex flex-wrap items-baseline gap-3">
+            <button
+              type="button"
+              onClick={() => onOpenTab("applications")}
+              className="text-left transition-opacity hover:opacity-80"
+            >
+              <div className="text-[24px] font-semibold tracking-tight text-[#3848c7]">
+                {(counts.webmasterApplications ?? 0).toLocaleString("ru-RU")}
+              </div>
+              <div className="text-[11.5px] text-[#6f7282]">заявок пришло</div>
+            </button>
+            <div className="h-7 w-px bg-[#ececf4]" />
+            <button
+              type="button"
+              onClick={() => onOpenTab("chats")}
+              className="text-left transition-opacity hover:opacity-80"
+            >
+              <div className="text-[24px] font-semibold tracking-tight text-[#0b1024]">
+                {counts.unreadThreads}
+              </div>
+              <div className="text-[11.5px] text-[#6f7282]">сообщений</div>
+            </button>
           </div>
-          <div className="mt-1 text-[12px] text-[#6f7282]">
-            {counts.unreadThreads > 0
-              ? "Есть непрочитанные или ожидающие ответа диалоги"
-              : "Все диалоги по wesetup.ru обработаны"}
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] font-medium text-[#3848c7]">
+            <button
+              type="button"
+              onClick={() => onOpenTab("applications")}
+              className="hover:underline"
+            >
+              Заявки →
+            </button>
+            <span className="text-[#dcdfed]">·</span>
+            <button
+              type="button"
+              onClick={() => onOpenTab("chats")}
+              className="hover:underline"
+            >
+              Мессенджер →
+            </button>
           </div>
-          <div className="mt-2 text-[12px] font-medium text-[#3848c7]">
-            Открыть мессенджер →
-          </div>
-        </button>
+        </div>
       </div>
     </div>
   );

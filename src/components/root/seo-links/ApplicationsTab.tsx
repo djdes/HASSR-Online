@@ -23,7 +23,15 @@ async function api<T>(body?: unknown, campaignId?: number): Promise<T> {
   return data as T;
 }
 
-export function ApplicationsTab({ campaigns, defaultCampaignId }: { campaigns: GglCampaignDto[]; defaultCampaignId: number | null }) {
+export function ApplicationsTab({
+  campaigns,
+  defaultCampaignId,
+  onCountChange,
+}: {
+  campaigns: GglCampaignDto[];
+  defaultCampaignId: number | null;
+  onCountChange?: (count: number) => void;
+}) {
   const [campaignId, setCampaignId] = useState<number | undefined>(defaultCampaignId ?? undefined);
   const [view, setView] = useState<GglApplicationsView | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +48,11 @@ export function ApplicationsTab({ campaigns, defaultCampaignId }: { campaigns: G
     setLoading(true); setError(null);
     try {
       const value = await api<GglApplicationsView>(refresh ? { action: "refresh", campaignId } : undefined, campaignId);
-      if (mounted.current) { setView(value); setPage(1); }
+      if (mounted.current) {
+        setView(value);
+        setPage(1);
+        onCountChange?.(Math.max(value.snapshot.sourceTotal ?? 0, value.snapshot.applications.length));
+      }
     } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Ошибка загрузки"); }
     finally { if (mounted.current) setLoading(false); }
   }, [campaignId]);

@@ -262,6 +262,7 @@ export interface GglOverviewMetrics {
     unreadThreads: number;
     pendingApprovalSlots: number;
     otherProjectsCampaignsCount: number;
+    webmasterApplications: number;
   };
 }
 

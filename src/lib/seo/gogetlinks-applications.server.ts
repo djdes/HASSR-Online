@@ -93,6 +93,19 @@ export function gglApplicationsSnapshotId(snapshot: GglApplicationsSnapshot) {
   return createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
 }
 
+export async function getCachedWesetupApplicationsCount(campaignId?: number): Promise<number> {
+  try {
+    const scope = await resolveGglApplicationsScope(campaignId);
+    const snapshot = await readCache<GglApplicationsSnapshot>(`${scope.prefix}:list`);
+    if (snapshot && snapshot.version === 1) {
+      return Math.max(snapshot.sourceTotal ?? 0, snapshot.applications?.length ?? 0);
+    }
+    return scope.campaign.requestsCount ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 export async function getGglApplicationsView(campaignId?: number, refresh = false): Promise<GglApplicationsView> {
   const scope = await resolveGglApplicationsScope(campaignId);
   const key = `${scope.prefix}:list`;
@@ -101,6 +114,10 @@ export async function getGglApplicationsView(campaignId?: number, refresh = fals
     snapshot = await singleFlight(key, async () => {
       const value = await collectGglApplications(scope.campaign.gglCampaignId);
       await saveCache(key, value);
+      await db.gglCampaign.update({
+        where: { id: scope.campaign.id },
+        data: { requestsCount: Math.max(value.sourceTotal, value.applications.length) },
+      }).catch(() => null);
       return value;
     });
   }
