@@ -10,6 +10,7 @@ import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { parsePointScope } from "@/lib/point-scope";
+import { effectivePlatformSections } from "@/lib/platform-access";
 import { twoFactorRequired } from "@/lib/two-factor";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
@@ -240,12 +241,13 @@ export const authOptions: NextAuthOptions = {
           const { db } = await import("@/lib/db");
           const flags = await db.user.findUnique({
             where: { id: String(token.id) },
-            select: { canManageSettings: true, organizationId: true, buildingIds: true, platformSections: true },
+            select: { canManageSettings: true, organizationId: true, buildingIds: true, platformSections: true, canEditTranslations: true },
           });
           token.canManageSettings = flags?.canManageSettings === true;
-          // Разделы панели платформы (/root), выданные владельцем: proxy читает
-          // только токен, поэтому кладём их сюда; requireRoot() сверяет с БД.
-          token.platformSections = flags?.platformSections ?? [];
+          // Разделы панели платформы (/root), выданные владельцем, и «Переводы»
+          // переводчика: proxy читает только токен, поэтому кладём их сюда;
+          // requireRoot() сверяет с БД.
+          token.platformSections = flags ? effectivePlatformSections(flags) : [];
           // Домашняя организация сменилась (организацию слили в точку
           // другой — OrganizationMerge): токен переезжает следом, без
           // перевхода. Прежняя организация больше не активна.

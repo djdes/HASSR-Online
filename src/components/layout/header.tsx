@@ -12,9 +12,7 @@ import { Handshake, Loader2, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navTone } from "@/lib/nav-tones";
 import { NavIconChip } from "@/components/layout/nav-icons";
-
-/** Staff with platform sections enter the panel through a token refresh. */
-const PLATFORM_PANEL_ENTRY = "/api/me/platform-panel";
+import { PLATFORM_PANEL_ENTRY } from "@/lib/platform-access";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -137,8 +135,6 @@ type HeaderProps = {
    * ссылка «Логотип и цвета».
    */
   canEditBranding?: boolean;
-  /** ROOT или переводчик (`canEditTranslations`) — пункт «Переводы интерфейса». */
-  canEditTranslations?: boolean;
 };
 
 /**
@@ -167,7 +163,6 @@ export function Header({
   partnerHint = null,
   whiteLabel = false,
   canEditBranding = false,
-  canEditTranslations = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
   const tView = useTranslations("common.viewPrefs");
@@ -486,15 +481,7 @@ export function Header({
                   </DropdownMenuItem>
                 ) : null}
 
-                {canEditTranslations ? (
-                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
-                    <Link href={isRoot ? "/root/translations" : "/translations"} data-testid="profile-translations">
-                      <NavIconChip name="Languages" className={MENU_CHIP} iconClassName="size-4" />
-                      {t("profile.translations")}
-                    </Link>
-                  </DropdownMenuItem>
-                ) : null}
-
+                {/* Переводы интерфейса — вкладка панели (2026-11-09). */}
                 {platformPanel ? (
                   <DropdownMenuItem asChild className="md:hidden" data-nav-row>
                     <Link href={isRoot ? "/root" : PLATFORM_PANEL_ENTRY} prefetch={false}>
@@ -602,7 +589,6 @@ export function Header({
         canManagePlan={canManagePlan}
         fullAccess={fullAccess}
         canEditBranding={canEditBranding}
-        canEditTranslations={canEditTranslations}
         isRoot={isRoot}
         platformPanel={platformPanel}
         onLogout={handleLogout}

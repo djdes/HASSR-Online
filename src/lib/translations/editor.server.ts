@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { flattenMessages } from "@/i18n/catalog-validation";
 import { LOCALES, type Locale } from "@/i18n/locales";
 import { loadBaseMessages } from "@/i18n/messages";
+import { canUseTranslationEditor } from "@/lib/platform-access";
 import { isStaleOverride, looksUntranslated, placeholderNames, validateOverride, type FlatCatalog, type OverrideValidation } from "./catalog";
 import { buildCategories, type TranslationCategorySummary } from "./categories";
 import { invalidateTranslationOverrides } from "./overrides.server";
@@ -13,28 +14,28 @@ import { historyItemsFromAudit, isAutoCandidate, matchesFilter, type Translation
 export type TranslationActor = { id: string; name: string; organizationId: string; isRoot: boolean };
 
 /**
- * Редактор открыт ROOT и переводчику (`User.canEditTranslations`).
- * Право читаем из БД на каждый запрос: снятое право действует сразу,
- * без перевыпуска JWT.
+ * Редактор открыт владельцу, переводчику (`User.canEditTranslations`) и
+ * всем, у кого в панели есть вкладка «Переводы» (2026-11-09: вкладка
+ * открывалась, а строки отвечали 403). Право читаем из БД на каждый
+ * запрос: снятое право действует сразу, без перевыпуска JWT.
  */
 export async function getTranslationActor(): Promise<TranslationActor | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, organizationId: true, isRoot: true, canEditTranslations: true, isActive: true, archivedAt: true },
+    select: { id: true, name: true, organizationId: true, isRoot: true, canEditTranslations: true, platformSections: true, isActive: true, archivedAt: true },
   });
-  if (!user || !user.isActive || user.archivedAt) return null;
-  if (!user.isRoot && !user.canEditTranslations) return null;
+  if (!user || !canUseTranslationEditor(user)) return null;
   return { id: user.id, name: user.name, organizationId: user.organizationId, isRoot: user.isRoot };
 }
 
 export async function canEditTranslations(userId: string): Promise<boolean> {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { isRoot: true, canEditTranslations: true, isActive: true, archivedAt: true },
+    select: { isRoot: true, canEditTranslations: true, platformSections: true, isActive: true, archivedAt: true },
   });
-  return Boolean(user && user.isActive && !user.archivedAt && (user.isRoot || user.canEditTranslations));
+  return Boolean(user && canUseTranslationEditor(user));
 }
 
 type BaseCatalogs = {

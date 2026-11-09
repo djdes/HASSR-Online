@@ -675,8 +675,7 @@ export const NAV_SECTIONS: NavSection[] = [
     access: FULL_ACCESS,
     // Своего меню нет: раздел — одна страница с карточками (`settings-cards.ts`).
     // Партии, потери, изменения, премии — карточки «Остального» (2026-10-28).
-    // `/translations` — редактор переводов (2026-10-24): вход из меню профиля.
-    hiddenMatch: ["/translations", "/settings/integrations/max"],
+    hiddenMatch: ["/settings/integrations/max"],
     tabs: [{ id: "main", label: "main", href: "/more", access: FULL_ACCESS }],
   },
   {

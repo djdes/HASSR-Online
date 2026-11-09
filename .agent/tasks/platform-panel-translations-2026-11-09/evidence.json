@@ -1,0 +1,38 @@
+{
+  "taskId": "platform-panel-translations-2026-11-09",
+  "status": "PASS",
+  "base": "9bd55f45",
+  "artifacts": {
+    "spec": ".agent/tasks/platform-panel-translations-2026-11-09/spec.md",
+    "evidence": ".agent/tasks/platform-panel-translations-2026-11-09/evidence.md",
+    "localhostSweep": ".agent/tasks/platform-panel-translations-2026-11-09/raw/localhost-sweep.md",
+    "redUnitTests": ".agent/tasks/platform-panel-translations-2026-11-09/raw/red-unit-tests.txt",
+    "targetedTests": ".agent/tasks/platform-panel-translations-2026-11-09/raw/targeted-tests.txt",
+    "typecheck": ".agent/tasks/platform-panel-translations-2026-11-09/raw/typecheck.txt",
+    "testGate": ".agent/tasks/platform-panel-translations-2026-11-09/raw/test-gate.txt",
+    "i18nCheck": ".agent/tasks/platform-panel-translations-2026-11-09/raw/i18n-check.txt",
+    "eslint": ".agent/tasks/platform-panel-translations-2026-11-09/raw/eslint.txt",
+    "e2eBefore": ".agent/tasks/platform-panel-translations-2026-11-09/raw/e2e-before.txt",
+    "e2eAfter": ".agent/tasks/platform-panel-translations-2026-11-09/raw/e2e-after.txt",
+    "e2eJson": [
+      ".agent/tasks/platform-panel-translations-2026-11-09/raw/panel-check-before.json",
+      ".agent/tasks/platform-panel-translations-2026-11-09/raw/panel-check-after.json"
+    ],
+    "liveSmoke": ".agent/tasks/platform-panel-translations-2026-11-09/raw/verify-live.txt",
+    "e2eScripts": [
+      ".agent/tasks/platform-panel-translations-2026-11-09/e2e/fixtures.ts",
+      ".agent/tasks/platform-panel-translations-2026-11-09/e2e/panel-check.mjs"
+    ]
+  },
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "summary": "Panel entry answers relative Location only (login with next, /dashboard, first allowed tab or allowed ?next=); no localhost with nginx-like headers." },
+    "AC2": { "status": "PASS", "summary": "Guard test forbids NextResponse.redirect/Response.redirect in src/app and src/lib (kiosk allow-listed); failed before the fix on platform-panel only; sweep documented." },
+    "AC3": { "status": "PASS", "summary": "«Переводы интерфейса» removed from desktop menu, phone sheet and mini app profile; unused ru/en/uz strings removed, contract regenerated." },
+    "AC4": { "status": "PASS", "summary": "«Панель платформы» shown to owner, role/section holders and translators in cabinet menu and mini app; hidden for clients." },
+    "AC5": { "status": "PASS", "summary": "Translator lands on «Переводы» with that tab only; roles see only their tabs; effective sections in token, viewer, entry and menus." },
+    "AC6": { "status": "PASS", "summary": "Translation editor API allows owner, translator flag and «Переводы» section; others 403 (was 403 for section holders)." },
+    "AC7": { "status": "PASS", "summary": "/api/root/translators is owner-only; translators block shown to the owner only; description points to the panel (ru/en/uz)." },
+    "AC8": { "status": "PASS", "summary": "/translations → 307 relative to the panel entry with next=/root/translations." },
+    "AC9": { "status": "PASS", "summary": "Unit tests red→green, typecheck EXIT 0, test:gate 5899 pass / 0 fail, i18n:check 97/97, eslint clean; e2e 34/86 failing before → 99/99 after." }
+  }
+}

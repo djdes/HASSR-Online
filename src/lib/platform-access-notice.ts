@@ -1,5 +1,6 @@
 import { escapeHtml } from "@/lib/html-escape";
 import {
+  PLATFORM_PANEL_ENTRY,
   PLATFORM_PRESETS,
   PLATFORM_SECTIONS,
   matchPlatformPreset,
@@ -15,7 +16,7 @@ import {
  */
 
 /** Вход в панель: обновляет разделы в сессии и открывает первый доступный. */
-export const PLATFORM_PANEL_ENTRY = "/api/me/platform-panel";
+export { PLATFORM_PANEL_ENTRY };
 
 /** Разделы, которые изменение открыло впервые. Пусто — сообщать не о чем. */
 export function addedPlatformSections(before: unknown, after: unknown): PlatformSectionKey[] {

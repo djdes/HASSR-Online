@@ -50,7 +50,7 @@ export const PLATFORM_SECTIONS: readonly PlatformSection[] = [
   { key: "assistant", title: "Ассистент", hint: "Журнал вопросов и настройки ассистента", home: "/root/assistant" },
   { key: "content", title: "Блог", hint: "Статьи и их переводы", home: "/root/blog" },
   { key: "seo", title: "SEO и реклама", hint: "Здоровье сайта, позиции, ссылки GoGetLinks, Яндекс Директ", home: "/root/seo" },
-  { key: "translations", title: "Переводы", hint: "Каталог переводов и переводчики", home: "/root/translations" },
+  { key: "translations", title: "Переводы", hint: "Каталог переводов ru / en / uz", home: "/root/translations" },
   { key: "monitoring", title: "Мониторинг", hint: "Статус, журналы, аудит, тайминги, ограничитель", home: "/root/status" },
 ];
 
@@ -189,7 +189,6 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/gogetlinks/account", gate: "superadmin", methods: ["POST", "PUT", "DELETE"] },
   { pattern: "/api/root/gogetlinks", gate: "seo" },
   { pattern: "/root/translations", gate: "translations" },
-  { pattern: "/api/root/translators", gate: "translations" },
 
   // Platform health.
   { pattern: "/root/status", gate: "monitoring" },
@@ -203,6 +202,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   // Owner only: who has access, impersonation, bot setup.
   { pattern: "/root/team", gate: "superadmin" },
   { pattern: "/api/root/team", gate: "superadmin" },
+  // Назначить переводчика = открыть ему вкладку «Переводы» панели (2026-11-09).
+  { pattern: "/api/root/translators", gate: "superadmin" },
   { pattern: "/api/root/impersonate", gate: "superadmin" },
   { pattern: "/api/root/telegram", gate: "superadmin" },
 
@@ -251,6 +252,31 @@ export function normalizePlatformSections(value: unknown): PlatformSectionKey[] 
   if (!Array.isArray(value)) return [];
   const wanted = new Set(value.filter((item): item is string => typeof item === "string"));
   return PLATFORM_SECTION_KEYS.filter((key) => wanted.has(key));
+}
+
+/**
+ * Разделы, которые у человека есть на деле: выданные владельцем плюс
+ * «Переводы» у переводчика (`User.canEditTranslations`) — переводы
+ * интерфейса живут вкладкой панели (владелец, 2026-11-09).
+ */
+export function effectivePlatformSections(user: { platformSections?: unknown; canEditTranslations?: boolean | null }): PlatformSectionKey[] {
+  const granted = normalizePlatformSections(user.platformSections);
+  return user.canEditTranslations === true ? normalizePlatformSections([...granted, "translations"]) : granted;
+}
+
+/**
+ * Редактор переводов интерфейса: владелец, переводчик или человек с
+ * разделом «Переводы»; выключенным и архивным — нет.
+ */
+export function canUseTranslationEditor(user: {
+  isRoot: boolean;
+  canEditTranslations: boolean;
+  platformSections: unknown;
+  isActive: boolean;
+  archivedAt: Date | null;
+}): boolean {
+  if (!user.isActive || user.archivedAt) return false;
+  return user.isRoot || effectivePlatformSections(user).includes("translations");
 }
 
 /** Охват данных роли: все клиенты и лиды или только закреплённые (+ свободные лиды). */
@@ -304,6 +330,32 @@ export function platformHomeHref(viewer: PlatformViewer): string {
   if (viewer.superadmin) return "/root";
   const first = PLATFORM_SECTIONS.find((section) => viewer.sections.includes(section.key));
   return first ? first.home : "/root/me";
+}
+
+/**
+ * Вход в панель из кабинета, мини-приложения и письма о доступе: обновляет
+ * разделы в сессии и открывает вкладку (`src/app/api/me/platform-panel`).
+ */
+export const PLATFORM_PANEL_ENTRY = "/api/me/platform-panel";
+
+/** Ссылка на вход в панель; `next` — вкладка, которую открыть, если она человеку доступна. */
+export function platformEntryHref(next?: string | null): string {
+  return next ? `${PLATFORM_PANEL_ENTRY}?next=${encodeURIComponent(next)}` : PLATFORM_PANEL_ENTRY;
+}
+
+/** Страница панели (`/root…`): не API, не чужой адрес, без `.` и `..` в пути. */
+function isPanelPage(path: string): boolean {
+  if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return false;
+  const parts = segments(path);
+  return parts[0] === "root" && parts.every((part) => !/^(?:\.|%2e){1,2}$/i.test(part));
+}
+
+/**
+ * Куда ведёт вход в панель: на `next`, если это страница панели, которую
+ * человеку можно открыть, иначе — на его первую вкладку.
+ */
+export function platformEntryTarget(viewer: PlatformViewer, next?: string | null): string {
+  return next && isPanelPage(next) && canAccessPlatformPath(viewer, next) ? next : platformHomeHref(viewer);
 }
 
 /** Preset whose sections equal the given set, else null («Свой набор»). */

@@ -22,6 +22,7 @@ import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabine
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { TextSizeGroup } from "@/components/view-prefs/text-size";
 import { cn } from "@/lib/utils";
+import { PLATFORM_PANEL_ENTRY } from "@/lib/platform-access";
 import { CabinetPlanCardView } from "@/components/layout/cabinet-plan-card";
 import type { CabinetPlanCard } from "@/lib/cabinet-plan";
 import type { AccessibleOrganization } from "@/lib/organization-access";
@@ -62,7 +63,6 @@ export function ProfileSheet({
   canManagePlan,
   fullAccess,
   canEditBranding,
-  canEditTranslations = false,
   isRoot,
   platformPanel = isRoot,
   onLogout,
@@ -87,10 +87,11 @@ export function ProfileSheet({
   fullAccess: boolean;
   /** Может открыть настройки организации (логотип и цвет) — `admin.full`. */
   canEditBranding: boolean;
-  /** ROOT или переводчик — пункт «Переводы интерфейса». */
-  canEditTranslations?: boolean;
   isRoot: boolean;
-  /** Ссылка на панель платформы (владелец или сотрудник с разделами). */
+  /**
+   * Ссылка на панель платформы: владелец, сотрудник с разделами или
+   * переводчик — переводы интерфейса стали вкладкой панели (2026-11-09).
+   */
   platformPanel?: boolean;
   /** Открыть окно «Удобство чтения» (контраст, анимация, пояснения). */
   onOpenReadability: () => void;
@@ -208,15 +209,8 @@ export function ProfileSheet({
         </Link>
       ) : null}
 
-      {canEditTranslations ? (
-        <Link href={isRoot ? "/root/translations" : "/translations"} onClick={onClose} className={CHIP_ROW} data-nav-row>
-          <NavIconChip name="Languages" className={CHIP} iconClassName={CHIP_ICON} />
-          <span className="min-w-0 flex-1">{t("profile.translations")}</span>
-        </Link>
-      ) : null}
-
       {platformPanel ? (
-        <Link href={isRoot ? "/root" : "/api/me/platform-panel"} prefetch={false} onClick={onClose} className={CHIP_ROW} data-nav-row>
+        <Link href={isRoot ? "/root" : PLATFORM_PANEL_ENTRY} prefetch={false} onClick={onClose} className={CHIP_ROW} data-nav-row>
           <NavIconChip name="ShieldCheck" className={CHIP} iconClassName={CHIP_ICON} />
           <span className="min-w-0 flex-1">{t("header.platformPanel")}</span>
         </Link>

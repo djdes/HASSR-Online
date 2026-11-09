@@ -1,0 +1,5 @@
+# live smoke 2026-11-09T06:09:41Z, next dev :3000, headers as nginx sends them
+/api/me/platform-panel -> HTTP/1.1 307 Temporary Redirect location: /login?next=%2Fapi%2Fme%2Fplatform-panel 
+/api/me/platform-panel?next=/root/translations -> HTTP/1.1 307 Temporary Redirect location: /login?next=%2Fapi%2Fme%2Fplatform-panel%3Fnext%3D%252Froot%252Ftranslations 
+/api/me/platform-panel?next=//evil.com/root -> HTTP/1.1 307 Temporary Redirect location: /login?next=%2Fapi%2Fme%2Fplatform-panel%3Fnext%3D%252F%252Fevil.com%252Froot 
+/translations -> HTTP/1.1 307 Temporary Redirect location: /api/me/platform-panel?next=%2Froot%2Ftranslations 

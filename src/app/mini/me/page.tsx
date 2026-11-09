@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { loadBillingView } from "@/lib/billing-view.server";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
+import { effectivePlatformSections } from "@/lib/platform-access";
 
 import { MiniMeClient } from "./me-client";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -28,6 +29,8 @@ export default async function MiniMePage() {
             phone: true,
             positionTitle: true,
             telegramChatId: true,
+            // «Панель платформы»: разделы владельца и «Переводы» переводчика.
+            platformSections: true,
             canEditTranslations: true,
             // Должность почти всегда задана справочником, а не строкой:
             // раньше читали только `positionTitle`, и у всех, кого
@@ -65,7 +68,7 @@ export default async function MiniMePage() {
       }
       phone={profile?.phone ?? null}
       telegramLinked={Boolean(profile?.telegramChatId)}
-      canEditTranslations={session?.user?.isRoot === true || profile?.canEditTranslations === true}
+      platformPanel={session?.user?.isRoot === true || (profile ? effectivePlatformSections(profile).length > 0 : false)}
     />
     </DomainMessagesBoundary>
   );

@@ -10,17 +10,24 @@ import { parseTranslationView } from "@/lib/translations/view";
 
 export const dynamic = "force-dynamic";
 
-/** Переводы интерфейса: редактор каталогов ru/en/uz и список переводчиков. */
+/**
+ * Переводы интерфейса: редактор каталогов ru/en/uz и список переводчиков.
+ * Переводчики — только у владельца: назначить переводчика значит открыть
+ * ему вкладку панели (2026-11-09).
+ */
 export default async function RootTranslationsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  await requireRoot();
+  const session = await requireRoot();
+  const owner = session.user.isRoot === true;
   const [t, categories, translators] = await Promise.all([
     getTranslations("translationEditor"),
     listCategoryStats(),
-    db.user.findMany({
-      where: { canEditTranslations: true },
-      select: { id: true, name: true, email: true, organization: { select: { name: true } } },
-      orderBy: { email: "asc" },
-    }),
+    owner
+      ? db.user.findMany({
+          where: { canEditTranslations: true },
+          select: { id: true, name: true, email: true, organization: { select: { name: true } } },
+          orderBy: { email: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
   const initialView = parseTranslationView(await searchParams, { known: new Set(categories.map((item) => item.id)), fallback: categories[0]?.id ?? "all" });
   return (
@@ -31,7 +38,7 @@ export default async function RootTranslationsPage({ searchParams }: { searchPar
           {/* На телефоне описание прячем: строки должны быть в первом экране. */}
           <p className="mt-1 hidden max-w-[760px] text-[14px] leading-relaxed text-[#6f7282] sm:block">{t("description")}</p>
         </div>
-        <TranslatorsPanel initial={translators} />
+        {owner ? <TranslatorsPanel initial={translators} /> : null}
         <TranslationEditor initialCategories={categories} initialView={initialView} />
       </div>
     </DomainMessagesBoundary>

@@ -44,6 +44,7 @@ import { NPS_HIDDEN } from "@/lib/nps";
 import { npsVisibilityFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
+import { effectivePlatformSections } from "@/lib/platform-access";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
 import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
@@ -171,10 +172,11 @@ export default async function DashboardLayout({
         name: true,
         phone: true,
         legalVersion: true,
-        canEditTranslations: true,
         // Разделы панели платформы — из БД, а не из токена: доступ могли
-        // выдать после входа (ссылка в шапке обновит токен сама).
+        // выдать после входа (ссылка в шапке обновит токен сама). Переводчик
+        // тоже входит в панель: «Переводы» — её вкладка.
         platformSections: true,
+        canEditTranslations: true,
       },
     }),
     // H1 — white-label: читаем brandColor для override основного
@@ -534,7 +536,7 @@ export default async function DashboardLayout({
             organizationIdentity={orgIdentity}
             userRole={session.user.role ?? ""}
             isRoot={session.user.isRoot === true}
-            platformPanel={session.user.isRoot === true || (profile?.platformSections?.length ?? 0) > 0}
+            platformPanel={session.user.isRoot === true || (profile ? effectivePlatformSections(profile).length > 0 : false)}
             balanceRub={balanceRub}
             cabinetPlan={cabinetPlan}
             ownCabinet={!isImpersonating(session) && !partnerAccess}
@@ -554,7 +556,6 @@ export default async function DashboardLayout({
             partnerHint={partnerHint}
             whiteLabel={Boolean(consultant)}
             canEditBranding={hasCapability(session.user, "admin.full")}
-            canEditTranslations={session.user.isRoot === true || profile?.canEditTranslations === true}
           />
           </DomainMessagesBoundary>
           {/* Быстрый старт только что созданной точки. Живёт в layout'е,
