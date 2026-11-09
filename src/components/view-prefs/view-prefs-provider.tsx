@@ -47,6 +47,7 @@ export function applyViewPrefsToDocument(prefs: ViewPrefs) {
   root.setAttribute("data-view-contrast", prefs.contrast);
   root.setAttribute("data-view-motion", prefs.motion);
   root.setAttribute("data-view-hints", prefs.hints);
+  root.setAttribute("data-view-nav", prefs.navLayout);
   const flags = effectiveViewFlags(prefs, systemFlags());
   root.toggleAttribute(HIGH_CONTRAST_ATTR, flags.highContrast);
   root.toggleAttribute(STILL_ATTR, flags.still);
@@ -70,6 +71,7 @@ function readDocumentViewPrefs(): ViewPrefs {
       `c:${root.getAttribute("data-view-contrast") ?? ""}`,
       `m:${root.getAttribute("data-view-motion") ?? ""}`,
       `h:${root.getAttribute("data-view-hints") ?? ""}`,
+      `n:${root.getAttribute("data-view-nav") ?? ""}`,
     ].join("|"),
   );
 }

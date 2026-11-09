@@ -3006,6 +3006,11 @@
       },
       "backToMain": "Asosiy menyu",
       "sectionMenuAria": "Boʻlim menyusi",
+      "navLayout": {
+        "label": "Menyu koʻrinishi",
+        "classic": "Standart",
+        "new": "Yangi"
+      },
       "placeAria": "Menyuda qayerdasiz",
       "status": {
         "done": "Toʻldirilgan",

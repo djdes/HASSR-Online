@@ -1,0 +1,16 @@
+{
+  "task": "nav-template-new-2026-11",
+  "branch": "claude/gifted-wozniak-iqmp4r",
+  "base": "b1747297",
+  "checkedAt": "2026-11-09",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/view-prefs.ts", "src/lib/view-prefs.test.ts", "raw/ui-check.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/components/layout/nav-layout-switch.tsx", "raw/ui-check.txt", "raw/screens/01-classic-journals.png", "raw/screens/08-classic-again.png"] },
+    "AC3": { "status": "PASS", "evidence": ["src/components/layout/app-sidebar-accordion.tsx", "raw/ui-check.txt", "raw/screens/02-new-journals.png", "raw/screens/05-new-monitoring.png"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/nav-layout.ts", "src/lib/nav-layout.test.ts", "src/components/layout/section-top-menu.tsx", "raw/ui-check.txt", "raw/screens/03-new-journals-panel.png", "raw/screens/04-new-organization-tabs.png"] },
+    "AC5": { "status": "PASS", "evidence": ["src/components/layout/page-nav.tsx", "src/components/layout/section-frame.tsx", "raw/ui-check.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/screens/01-classic-journals.png", "raw/screens/07-new-phone.png"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/lint.txt"] }
+  },
+  "notChecked": ["high contrast visually", "production build"]
+}

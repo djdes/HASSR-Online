@@ -38,11 +38,20 @@ export type MotionMode = (typeof MOTION_MODES)[number];
 export const HINTS_MODES = ["on", "off"] as const;
 export type HintsMode = (typeof HINTS_MODES)[number];
 
+/**
+ * Шаблон меню кабинета на компьютере: `classic` — стандартный (меню раздела
+ * сменяет главное), `new` — два уровня слева, остальные — строкой над
+ * страницей (`lib/nav-layout.ts`). Переключатель — внизу меню слева.
+ */
+export const NAV_LAYOUTS = ["classic", "new"] as const;
+export type NavLayout = (typeof NAV_LAYOUTS)[number];
+
 export type ViewPrefs = {
   textSize: TextSize;
   contrast: ContrastMode;
   motion: MotionMode;
   hints: HintsMode;
+  navLayout: NavLayout;
 };
 
 export const DEFAULT_VIEW_PREFS: ViewPrefs = {
@@ -50,6 +59,7 @@ export const DEFAULT_VIEW_PREFS: ViewPrefs = {
   contrast: "auto",
   motion: "auto",
   hints: "on",
+  navLayout: "classic",
 };
 
 /**
@@ -63,7 +73,7 @@ export const TEXT_SCALE: Record<TextSize, { text: number; heading: number }> = {
   xlarge: { text: 1.3, heading: 1.15 },
 };
 
-const KEYS = { textSize: "t", contrast: "c", motion: "m", hints: "h" } as const;
+const KEYS = { textSize: "t", contrast: "c", motion: "m", hints: "h", navLayout: "n" } as const;
 
 function pick<T extends string>(allowed: readonly T[], value: string | undefined, fallback: T): T {
   return value !== undefined && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
@@ -87,16 +97,18 @@ export function parseViewPrefs(raw: string | null | undefined): ViewPrefs {
     contrast: pick(CONTRAST_MODES, values.get(KEYS.contrast), DEFAULT_VIEW_PREFS.contrast),
     motion: pick(MOTION_MODES, values.get(KEYS.motion), DEFAULT_VIEW_PREFS.motion),
     hints: pick(HINTS_MODES, values.get(KEYS.hints), DEFAULT_VIEW_PREFS.hints),
+    navLayout: pick(NAV_LAYOUTS, values.get(KEYS.navLayout), DEFAULT_VIEW_PREFS.navLayout),
   };
 }
 
-/** Настройки → значение куки: `t:large|c:auto|m:auto|h:on`. */
+/** Настройки → значение куки: `t:large|c:auto|m:auto|h:on|n:classic`. */
 export function serializeViewPrefs(prefs: ViewPrefs): string {
   return [
     `${KEYS.textSize}:${prefs.textSize}`,
     `${KEYS.contrast}:${prefs.contrast}`,
     `${KEYS.motion}:${prefs.motion}`,
     `${KEYS.hints}:${prefs.hints}`,
+    `${KEYS.navLayout}:${prefs.navLayout}`,
   ].join("|");
 }
 
@@ -111,7 +123,8 @@ export function isDefaultViewPrefs(prefs: ViewPrefs): boolean {
     prefs.textSize === DEFAULT_VIEW_PREFS.textSize &&
     prefs.contrast === DEFAULT_VIEW_PREFS.contrast &&
     prefs.motion === DEFAULT_VIEW_PREFS.motion &&
-    prefs.hints === DEFAULT_VIEW_PREFS.hints
+    prefs.hints === DEFAULT_VIEW_PREFS.hints &&
+    prefs.navLayout === DEFAULT_VIEW_PREFS.navLayout
   );
 }
 
@@ -146,6 +159,7 @@ export function viewPrefsHtmlAttributes(prefs: ViewPrefs): Record<string, string
     "data-view-contrast": prefs.contrast,
     "data-view-motion": prefs.motion,
     "data-view-hints": prefs.hints,
+    "data-view-nav": prefs.navLayout,
   };
   if (flags.highContrast) attributes[HIGH_CONTRAST_ATTR] = "";
   if (flags.still) attributes[STILL_ATTR] = "";
