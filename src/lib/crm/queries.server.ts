@@ -220,7 +220,12 @@ export async function loadCrmContact(id: string, scope?: CrmViewerScope) {
   const contact = await db.crmContact.findUnique({ where: { id } });
   if (!contact) return null;
   const [interactions, organization, owners, platformUser] = await Promise.all([
-    db.crmInteraction.findMany({ where: { contactId: id }, orderBy: { occurredAt: "desc" }, take: 300 }),
+    db.crmInteraction.findMany({
+      where: { contactId: id },
+      orderBy: { occurredAt: "desc" },
+      take: 300,
+      include: { call: { select: { id: true, audioStatus: true, durationSec: true, transcript: true, transcriptStatus: true } } },
+    }),
     contact.organizationId
       ? db.organization.findUnique({ where: { id: contact.organizationId }, select: { id: true, name: true, subscriptionPlan: true, createdAt: true, accountManagerId: true } })
       : null,
@@ -247,6 +252,17 @@ export async function loadCrmContact(id: string, scope?: CrmViewerScope) {
       href: item.href,
       authorName: item.authorName,
       occurredAt: item.occurredAt.toISOString(),
+      call: item.call
+        ? {
+            id: item.call.id,
+            /** Плеер — только когда копия записи уже у нас. */
+            audio: item.call.audioStatus === "ready",
+            audioStatus: item.call.audioStatus,
+            durationSec: item.call.durationSec,
+            transcript: item.call.transcript,
+            transcriptStatus: item.call.transcriptStatus,
+          }
+        : null,
     })),
     organization: organization
       ? {

@@ -255,6 +255,7 @@ export function ContactCardClient({
                   </div>
                   {item.subject && item.channel === "email" ? <div className="mt-1 text-[13.5px] font-medium text-[#0b1024]">{item.subject}</div> : null}
                   <p className="mt-1 whitespace-pre-line break-words text-[13.5px] leading-relaxed text-[#0b1024]">{item.body}</p>
+                  {item.call ? <CallRecording contactId={contact.id} call={item.call} /> : null}
                   {item.href ? (
                     <Link href={item.href} className="mt-1.5 inline-flex items-center gap-1 text-[12.5px] text-[#3848c7] hover:underline">
                       Открыть в инструменте <ExternalLink className="size-3" />
@@ -481,6 +482,45 @@ export function ContactCardClient({
         confirmLabel="Это спам"
         cancelLabel="Отмена"
       />
+    </div>
+  );
+}
+
+type CallInfo = NonNullable<CrmContactCard["interactions"][number]["call"]>;
+
+const TRANSCRIPT_STATUS: Record<string, string> = {
+  pending: "Расшифровка появится через несколько минут.",
+  failed: "Расшифровать запись не получилось.",
+  skipped: "Разговор слишком короткий — без расшифровки.",
+};
+
+/** Запись звонка из телефонии: плеер и расшифровка. */
+function CallRecording({ contactId, call }: { contactId: string; call: CallInfo }) {
+  if (call.audioStatus === "none") return null;
+  return (
+    <div className="mt-2 space-y-2" data-crm-call={call.id}>
+      {call.audio ? (
+        <audio
+          controls
+          preload="none"
+          src={`/api/root/crm/contacts/${encodeURIComponent(contactId)}/calls/${encodeURIComponent(call.id)}`}
+          className="h-10 w-full max-w-md"
+        >
+          Браузер не умеет проигрывать запись.
+        </audio>
+      ) : (
+        <p className="text-[12.5px] text-[#6f7282]">
+          {call.audioStatus === "failed" ? "Запись не удалось забрать из Телфина." : "Запись загружается из Телфина…"}
+        </p>
+      )}
+      {call.transcript ? (
+        <details className="rounded-xl border border-[#ececf4] bg-white/70 px-3 py-2">
+          <summary className="cursor-pointer select-none text-[12.5px] font-medium text-[#3848c7]">Расшифровка разговора</summary>
+          <p className="mt-1.5 whitespace-pre-line break-words text-[13px] leading-relaxed text-[#0b1024]">{call.transcript}</p>
+        </details>
+      ) : call.audio && TRANSCRIPT_STATUS[call.transcriptStatus] ? (
+        <p className="text-[12.5px] text-[#6f7282]">{TRANSCRIPT_STATUS[call.transcriptStatus]}</p>
+      ) : null}
     </div>
   );
 }

@@ -37,6 +37,8 @@ export const CRM_CHANNEL_LABELS: Record<string, string> = {
   max: "MAX",
   phone: "Телефон",
   call: "Звонок",
+  missed_call: "Пропущенный звонок",
+  call_attempt: "Не дозвонились",
   note: "Заметка",
   resolved: "Ответ не нужен",
   other: "Другое",

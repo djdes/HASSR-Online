@@ -11,8 +11,8 @@ import { awaitingChannel, computeContactState } from "@/lib/crm/state";
  * действия в карточке, поэтому правила одинаковы для всех каналов.
  */
 
-/** Каналы поддержки: пишет уже пользователь платформы, а не лид. */
-const SUPPORT_CHANNELS = new Set(["chat", "feedback", "telegram"]);
+/** Каналы поддержки и звонки: если это пользователь платформы — он клиент, а не лид. */
+const SUPPORT_CHANNELS = new Set(["chat", "feedback", "telegram", "call", "missed_call", "call_attempt"]);
 
 export type IngestedItem = { item: CrmIngestItem; contactId: string | null; isNewContact: boolean };
 
@@ -51,17 +51,33 @@ const MATCH_SELECT = {
   organizationId: true,
 } as const;
 
-/** Пользователь платформы с этой почтой или телефоном — чтобы показать организацию. */
+/**
+ * Пользователь платформы с этой почтой или телефоном — чтобы показать организацию.
+ * Телефон сравниваем по последним 10 цифрам: в старых профилях он записан
+ * как ввели («8 (993) 917-32-79»), а звонок приходит как «+79939173279».
+ */
 async function findPlatformUser(email: string | null, key: string | null) {
-  const or: Prisma.UserWhereInput[] = [];
-  if (email) or.push({ email: { equals: email, mode: "insensitive" } }, { contactEmail: { equals: email, mode: "insensitive" } });
-  if (key) or.push({ phone: { endsWith: key } });
-  if (!or.length) return null;
-  return db.user.findFirst({
-    where: { OR: or, archivedAt: null, isRoot: false },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, organizationId: true, name: true, organization: { select: { name: true } } },
-  });
+  const select = { id: true, organizationId: true, name: true, organization: { select: { name: true } } } as const;
+  if (email) {
+    const byEmail = await db.user.findFirst({
+      where: {
+        OR: [{ email: { equals: email, mode: "insensitive" } }, { contactEmail: { equals: email, mode: "insensitive" } }],
+        archivedAt: null,
+        isRoot: false,
+      },
+      orderBy: { createdAt: "asc" },
+      select,
+    });
+    if (byEmail) return byEmail;
+  }
+  if (!key) return null;
+  const rows = await db.$queryRaw<{ id: string }[]>`
+    SELECT id FROM "User"
+    WHERE "archivedAt" IS NULL AND "isRoot" = false AND phone IS NOT NULL
+      AND right(regexp_replace(phone, '[^0-9]', '', 'g'), 10) = ${key}
+    ORDER BY "createdAt" ASC
+    LIMIT 1`;
+  return rows[0] ? db.user.findUnique({ where: { id: rows[0].id }, select }) : null;
 }
 
 /**
@@ -102,6 +118,16 @@ export async function resolveCrmContact(
       if (!found.organizationId && identity.organizationId) patch.organizationId = identity.organizationId;
       if (!found.name && identity.name?.trim()) patch.name = identity.name.trim().slice(0, 200);
       if (!found.company && identity.company?.trim()) patch.company = identity.company.trim().slice(0, 300);
+      // Контакт ещё не узнан (например, первым был звонок) — ищем пользователя платформы по почте и телефону.
+      if (!found.userId && !userId && !found.organizationId && !identity.organizationId) {
+        const platformUser = await findPlatformUser(email ?? found.email, key ?? found.phoneKey);
+        if (platformUser) {
+          patch.userId = platformUser.id;
+          patch.organizationId = platformUser.organizationId;
+          if (!found.name && !patch.name && platformUser.name) patch.name = platformUser.name;
+          if (!found.company && !patch.company) patch.company = platformUser.organization.name;
+        }
+      }
       if (Object.keys(patch).length) await db.crmContact.update({ where: { id: found.id }, data: patch });
       return { id: found.id, created: false };
     }

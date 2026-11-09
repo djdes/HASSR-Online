@@ -13,9 +13,12 @@ export type ContactState = {
   awaitingSince: Date | null;
 };
 
-/** Ответом считается наше сообщение и отметка «Ответ не нужен». */
+/**
+ * Ответом считается наше сообщение, отметка «Ответ не нужен» и состоявшийся
+ * разговор по телефону — даже входящий: клиенту уже ответили голосом.
+ */
 export function isAnswer(item: { direction: string; channel: string }): boolean {
-  return item.direction === "out" || item.channel === "resolved";
+  return item.direction === "out" || item.channel === "resolved" || item.channel === "call";
 }
 
 export function computeContactState(items: readonly StateInteraction[]): ContactState {
