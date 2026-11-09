@@ -335,9 +335,9 @@ model Organization {
   inactivityWarnedStage          Int?
   inactivityWarnedForActivityAt  DateTime?
   inactivityResumedAt            DateTime?
-  /// Демо-организация: создана кнопкой «Посмотреть на демо-данных» после
-  /// регистрации (одна на аккаунт). Живёт до demoExpiresAt, потом её
-  /// удаляет cron purge-demo-orgs. Сотрудники демо не считаются в тарифе.
+  /// Демо-организация: одна общая на платформу (id "demo"), гости входят в
+  /// неё по членству. demoExpiresAt — когда её пора переустановить; раз в
+  /// сутки это делает cron purge-demo-orgs. Сотрудники демо не в тарифе.
   isDemo                         Boolean                        @default(false)
   demoExpiresAt                  DateTime?
   locale                         String                         @default("ru")

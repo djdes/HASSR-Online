@@ -3025,6 +3025,29 @@
         "hintPoint": "You work at your outlet — journals of all outlets are visible to company management.",
         "failed": "Couldn't select the whole company"
       },
+      "pointMismatch": {
+        "title": {
+          "document": "Document of another outlet",
+          "entry": "Entry of another outlet",
+          "batch": "Batch of another outlet",
+          "capa": "Violation of another outlet",
+          "supply": "Delivery note of another outlet"
+        },
+        "body": {
+          "document": "This document belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
+          "entry": "This entry belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
+          "batch": "This batch belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
+          "capa": "This violation belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
+          "supply": "This delivery note belongs to the outlet “{point}”, but “{selected}” is selected in the header."
+        },
+        "bodyUnknown": "This page belongs to another outlet, but “{selected}” is selected in the header.",
+        "back": "Back",
+        "switchTo": "Switch to “{point}”",
+        "toList": "List for “{selected}”",
+        "hintSwitch": "After switching to “{point}” the page opens right here.",
+        "hintNoSwitch": "To open the page, select its outlet in the header.",
+        "failed": "Couldn't switch the outlet"
+      },
       "access": {
         "forbiddenTitle": "You don't have access to this section",
         "forbiddenBody": "This section is closed for your role. If you need it for your work, ask your manager to grant access.",
@@ -10433,7 +10456,7 @@
           "not_partner": "An active partner workspace is required.",
           "not_owner": "Only the organization owner who pays for it can move it.",
           "foreign_mode": "You are in someone else’s workspace. Switch to your own organization.",
-          "demo": "Demo organizations are removed automatically and cannot be moved.",
+          "demo": "The demo organization is shared and refreshed automatically, so it cannot be moved.",
           "directory": "The master directory workspace cannot be moved.",
           "platform": "The platform service organization cannot be moved.",
           "deletion_requested": "Deletion is pending. Cancel it from this page before moving the organization.",
@@ -16717,9 +16740,9 @@
       "cellKind": "Table journal: employee × day cell"
     },
     "seed": {
-      "create": "Create demo restaurant",
-      "failed": "Could not create the demo",
-      "success": "Demo “{name}” created. Positions: {positions, number}, employees: {staff, number}, entries: {entries, number} ({seconds, number} s)"
+      "create": "Refresh the demo organisation",
+      "failed": "Could not refresh the demo",
+      "success": "Demo “{name}” reinstalled. Positions: {positions, number}, employees: {staff, number}, entries: {entries, number} ({seconds, number} s)"
     },
     "actions": {
       "enter": "Enter",
@@ -20920,7 +20943,7 @@
       "partnerContext": "You are currently in a client workspace. Return to your own workspace to delete the account.",
       "accountNotFound": "Account not found.",
       "platformAdmin": "Platform administrator accounts can only be deleted manually.",
-      "demoOrganization": "This is a demo workspace. It is deleted with all its data automatically, so no action is needed.",
+      "demoOrganization": "This is a demo workspace. It is refreshed with all its data automatically, so no action is needed.",
       "lastManager": "You are the only active manager in this company. Assign another manager in Staff, or contact <supportAddress>{email}</supportAddress>; then your account can be deleted.",
       "ownerMustDeleteOrganization": "You own this company. Delete the company first; your account will be deleted with it."
     }
@@ -26230,7 +26253,7 @@
       "namingSaved": "Locations named — they are already in the header and the menu",
       "savedWithPassword": "Done. Details saved, the login password has been emailed to you",
       "saved": "Done. Organisation details saved",
-      "demoFailed": "Failed to create the demo",
+      "demoFailed": "Failed to open the demo",
       "demoReady": "Demo organisation is ready",
       "titleNaming": "Name your locations",
       "titleCreated": "Account created!",
@@ -26544,20 +26567,17 @@
       "footerToggle": "⌘K / Ctrl+K — open/close"
     },
     "createDemoDialog": {
-      "createFailed": "Could not create the demo",
+      "createFailed": "Could not open the demo",
       "ready": "The demo organisation is ready",
       "error": "Error",
-      "title": "Create a demo organisation?",
-      "description": "A separate test organisation “{name}” will appear, with a team and journals filled in for the last {days, plural, one {# day} other {# days}} — with deviations and corrective actions, just like real life.",
-      "sphereLabel": "Demo sector",
-      "sameSphere": "Same as your organisation. Want to see another one? Change it.",
-      "otherSphere": "Different from yours — the demo will show the set of journals for this sector.",
+      "title": "Open the demo organisation?",
+      "description": "It is a shared test organisation with a team and journals filled in for the last {days, plural, one {# day} other {# days}} — with deviations and corrective actions, just like real life.",
       "noteUnchanged": "· Your organisation will not change — the demo lives separately.",
-      "noteSwitch": "· Switch between them in the profile menu.",
-      "noteDelete": "· It will be deleted with the “Delete demo” button or automatically after {days, plural, one {# day} other {# days}}.",
+      "noteSwitch": "· The demo is shared: other visitors see what you change there. Do not enter real data.",
+      "noteDelete": "· Once a day the demo is reinstalled with fresh data — changes are not kept.",
       "no": "No",
-      "preparing": "Preparing the demo…",
-      "confirm": "Yes, create"
+      "preparing": "Opening the demo…",
+      "confirm": "Yes, open"
     },
     "createOrganizationDialog": {
       "createFailed": "Could not create",
@@ -26648,8 +26668,8 @@
       "settingsAria": "Settings of {name}",
       "settingsTitle": "Organisation settings",
       "addOrganization": "Add an organisation",
-      "demoTitle": "A separate test organisation with staff and filled-in journals. It will be deleted after {days, plural, one {# day} other {# days}} or with a button.",
-      "createDemo": "Create a demo organisation"
+      "demoTitle": "A shared test organisation with staff and filled-in journals. It is refreshed once a day.",
+      "createDemo": "Open the demo organisation"
     },
     "urgentJournalHotkey": {
       "failed": "Could not determine the urgent journal",
@@ -27285,27 +27305,15 @@
   "organizationsUi": {
     "demoOrgBanner": {
       "welcomeTitle": "You are in the demo organisation",
-      "welcomeDescription": "The employees and journals here are test data. You can go back to your own organisation in one click.",
+      "welcomeDescription": "The employees and journals here are test data shared by all visitors. You can go back to your own organisation in one click.",
       "switchFailed": "Couldn’t switch",
       "returned": "You are back in your own organisation",
       "error": "Error",
-      "deleteFailed": "Couldn’t delete the demo",
-      "deleted": "Demo deleted: {staff}, {documents}, {entries}",
-      "staffCount": "{count, plural, one {# employee} other {# employees}}",
-      "documentsCount": "{count, plural, one {# document} other {# documents}}",
-      "entriesCount": "{count, plural, one {# entry} other {# entries}}",
-      "daysCount": "{count, plural, one {# day} other {# days}}",
       "title": "Demo organisation “{name}” — test data",
-      "expiresIn": "Will be deleted automatically in {days} ({date})",
-      "expiresDefault": "Will be deleted automatically in 7 days",
+      "expiresIn": "The demo is shared: other visitors see your changes. Next refresh: {date}",
+      "expiresDefault": "The demo is shared: other visitors see your changes. It is refreshed once a day",
       "homeSafe": "your own organisation won’t be affected.",
-      "backToMine": "Back to my organisation",
-      "deleteDemo": "Delete demo",
-      "confirmTitle": "Delete the demo organisation?",
-      "confirmDescription": "“{name}” will disappear together with all its contents. You can create a demo again from the profile menu.",
-      "staffTotal": "Employees: {count, number}",
-      "documentsTotal": "Journal documents: {count, number}",
-      "homeSafeBullet": "Your own organisation won’t be affected"
+      "backToMine": "Back to my organisation"
     },
     "welcomeOrgBanner": {
       "hide": "Hide tip",
