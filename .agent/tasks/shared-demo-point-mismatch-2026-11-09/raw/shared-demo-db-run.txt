@@ -1,0 +1,14 @@
+installed {
+  positionsCreated: 12,
+  staffCreated: 12,
+  documentsCreated: 39,
+  entriesCreated: 160
+} 1706 ms
+reinstalled {
+  positionsCreated: 12,
+  staffCreated: 12,
+  documentsCreated: 39,
+  entriesCreated: 160
+} removed { staff: 12, documents: 34, entries: 540 } 1239 ms
+PASS shared demo
+db-run exit 0

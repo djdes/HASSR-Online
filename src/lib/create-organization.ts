@@ -22,10 +22,14 @@ import { orgLogoAssetOwner } from "@/lib/org-logo-file";
 export type CreateOrganizationInput = {
   name: string;
   sphere: OrgSphere | string;
-  /** Аккаунт, которому принадлежит организация. */
-  accountId: string;
-  /** Кто становится владельцем — получает OrganizationMember(role="owner"). */
-  ownerUserId: string;
+  /** Аккаунт, которому принадлежит организация; null — общая демо, она ничья. */
+  accountId: string | null;
+  /** Кто становится владельцем — получает OrganizationMember(role="owner"); null — никто. */
+  ownerUserId: string | null;
+  /** Свой id вместо cuid — только у общей демо (`SHARED_DEMO_ORG_ID`). */
+  id?: string;
+  /** Общая демо: флаг, срок переустановки и набор журналов пресета. */
+  demo?: { expiresAt: Date; autoJournalCodes: string[]; disabledJournalCodes: string[] };
   /** Организация-донор: копируем должности и набор журналов. */
   copyFromOrganizationId?: string | null;
 };
@@ -56,6 +60,7 @@ export async function createOrganization(
 
   const organization = await db.organization.create({
     data: {
+      ...(input.id ? { id: input.id } : {}),
       name: input.name.trim(),
       type: sphere,
       accountId: input.accountId,
@@ -77,11 +82,19 @@ export async function createOrganization(
             logoUrl: orgLogoAssetOwner(donor.logoUrl) ? null : donor.logoUrl,
           }
         : {}),
+      ...(input.demo
+        ? {
+            isDemo: true,
+            demoExpiresAt: input.demo.expiresAt,
+            autoJournalCodes: input.demo.autoJournalCodes as never,
+            disabledJournalCodes: input.demo.disabledJournalCodes as never,
+          }
+        : {}),
     },
     select: { id: true },
   });
 
-  await db.organizationMember.upsert({
+  if (input.ownerUserId) await db.organizationMember.upsert({
     where: {
       userId_organizationId: {
         userId: input.ownerUserId,

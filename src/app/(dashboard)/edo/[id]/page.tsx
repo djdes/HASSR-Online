@@ -10,6 +10,8 @@ import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { readSupplyItems } from "@/lib/supply/documents.server";
 import { loadSupplyPointAccess } from "@/lib/supply/point-access.server";
+import { findPointMismatch } from "@/lib/document-point-access";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
 import { orgTodayKey } from "@/lib/timezone";
 
 import { AcceptanceForm } from "./acceptance-form";
@@ -40,6 +42,9 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
   ]);
   if (!doc) notFound();
+  // В шапке выбрана другая точка — ошибка и переход вместо накладной (2026-11-09).
+  const mismatch = await findPointMismatch(session, doc.buildingId);
+  if (mismatch) return <PointMismatchNotice kind="supply" mismatch={mismatch} listHref="/edo" />;
   // Точка по умолчанию: точка накладной, иначе торговая точка из шапки; иначе
   // ничего — человек выбирает сам (раньше молча брался офис или первая точка).
   const defaultPointId = access.enabled ? (doc.buildingId ?? access.viewedPointId ?? null) : null;

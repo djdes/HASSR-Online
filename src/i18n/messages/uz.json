@@ -3030,6 +3030,29 @@
         "hintPoint": "Siz o‘z nuqtangizda ishlaysiz — barcha nuqtalar jurnallarini kompaniya rahbariyati ko‘radi.",
         "failed": "Butun tashkilotni tanlab bo‘lmadi"
       },
+      "pointMismatch": {
+        "title": {
+          "document": "Boshqa nuqtaning hujjati",
+          "entry": "Boshqa nuqtaning yozuvi",
+          "batch": "Boshqa nuqtaning partiyasi",
+          "capa": "Boshqa nuqtaning qoidabuzarligi",
+          "supply": "Boshqa nuqtaning yuk xati"
+        },
+        "body": {
+          "document": "Bu hujjat «{point}» nuqtasiga tegishli, sarlavhada esa «{selected}» tanlangan.",
+          "entry": "Bu yozuv «{point}» nuqtasiga tegishli, sarlavhada esa «{selected}» tanlangan.",
+          "batch": "Bu partiya «{point}» nuqtasiga tegishli, sarlavhada esa «{selected}» tanlangan.",
+          "capa": "Bu qoidabuzarlik «{point}» nuqtasiga tegishli, sarlavhada esa «{selected}» tanlangan.",
+          "supply": "Bu yuk xati «{point}» nuqtasiga tegishli, sarlavhada esa «{selected}» tanlangan."
+        },
+        "bodyUnknown": "Bu sahifa boshqa nuqtaga tegishli, sarlavhada esa «{selected}» tanlangan.",
+        "back": "Orqaga",
+        "switchTo": "«{point}» nuqtasiga o‘tish",
+        "toList": "«{selected}» nuqtasi ro‘yxati",
+        "hintSwitch": "«{point}» nuqtasiga o‘tgach, sahifa shu yerda ochiladi.",
+        "hintNoSwitch": "Sahifani ochish uchun sarlavhada uning nuqtasini tanlang.",
+        "failed": "Nuqtani almashtirib bo‘lmadi"
+      },
       "access": {
         "forbiddenTitle": "Bu bo‘limga kirish huquqingiz yo‘q",
         "forbiddenBody": "Bu bo‘lim sizning rolingiz uchun yopiq. Agar u ishingiz uchun kerak bo‘lsa, rahbaringizdan ruxsat berishni so‘rang.",
@@ -10435,7 +10458,7 @@
           "not_partner": "Faol hamkor kabineti kerak.",
           "not_owner": "Tashkilotni faqat uning obunasini to‘laydigan egasi o‘tkaza oladi.",
           "foreign_mode": "Hozir boshqa kabinetdasiz. O‘z tashkilotingizga o‘ting.",
-          "demo": "Namoyish tashkiloti avtomatik o‘chiriladi va uni o‘tkazib bo‘lmaydi.",
+          "demo": "Demo tashkilot umumiy va o‘zi yangilanadi, uni o‘tkazib bo‘lmaydi.",
           "directory": "Ma’lumotnomalar master-kabinetini o‘tkazib bo‘lmaydi.",
           "platform": "Platformaning xizmat tashkilotini o‘tkazib bo‘lmaydi.",
           "deletion_requested": "Tashkilotni o‘chirish kutilmoqda. Avval bu sahifada o‘chirishni bekor qiling.",
@@ -16719,9 +16742,9 @@
       "cellKind": "Jadval jurnali: xodim × kun katagi"
     },
     "seed": {
-      "create": "Demo restoran yaratish",
-      "failed": "Demo yaratib bo‘lmadi",
-      "success": "«{name}» demosi yaratildi. Lavozimlar: {positions, number}, xodimlar: {staff, number}, yozuvlar: {entries, number} ({seconds, number} s)"
+      "create": "Demo tashkilotni yangilash",
+      "failed": "Demoni yangilab bo‘lmadi",
+      "success": "«{name}» demosi qayta o‘rnatildi. Lavozimlar: {positions, number}, xodimlar: {staff, number}, yozuvlar: {entries, number} ({seconds, number} s)"
     },
     "actions": {
       "enter": "Kirish",
@@ -20911,7 +20934,7 @@
       "partnerContext": "Hozir mijoz kabinetidasiz. Hisobni o‘chirish uchun o‘z kabinetingizga qayting.",
       "accountNotFound": "Hisob topilmadi.",
       "platformAdmin": "Platforma administratorining hisobini faqat qo‘lda o‘chirish mumkin.",
-      "demoOrganization": "Bu demo kabinet. U barcha ma’lumotlari bilan avtomatik o‘chiriladi, qo‘shimcha amal kerak emas.",
+      "demoOrganization": "Bu demo kabinet. U barcha ma’lumotlari bilan o‘zi yangilanadi, qo‘shimcha amal kerak emas.",
       "lastManager": "Siz kompaniyadagi yagona faol rahbarsiz. Xodimlar bo‘limida boshqa rahbar tayinlang yoki <supportAddress>{email}</supportAddress> manziliga yozing; shundan keyin hisobni o‘chirish mumkin.",
       "ownerMustDeleteOrganization": "Siz kompaniya egasisiz. Avval kompaniyani o‘chiring; hisobingiz u bilan birga o‘chiriladi."
     }
@@ -26221,7 +26244,7 @@
       "namingSaved": "Nuqtalar nomlandi — ular sarlavha va menyuda allaqachon ko‘rinadi",
       "savedWithPassword": "Tayyor. Ma’lumotlar saqlandi, kirish paroli pochtangizga yuborildi",
       "saved": "Tayyor. Tashkilot ma’lumotlari saqlandi",
-      "demoFailed": "Demo yaratib bo‘lmadi",
+      "demoFailed": "Demoni ochib bo‘lmadi",
       "demoReady": "Demo tashkilot tayyor",
       "titleNaming": "Nuqtalarni nomlang",
       "titleCreated": "Akkaunt yaratildi!",
@@ -26535,20 +26558,17 @@
       "footerToggle": "⌘K / Ctrl+K — ochish/yopish"
     },
     "createDemoDialog": {
-      "createFailed": "Demoni yaratib bo‘lmadi",
+      "createFailed": "Demoni ochib bo‘lmadi",
       "ready": "Demo tashkilot tayyor",
       "error": "Xatolik",
-      "title": "Demo tashkilot yaratilsinmi?",
-      "description": "“{name}” nomli alohida sinov tashkiloti paydo bo‘ladi: jamoa va oxirgi {days, plural, one {# kun} other {# kun}} uchun to‘ldirilgan jurnallar bilan — real hayotdagidek og‘ishlar va tuzatuvchi harakatlar bilan.",
-      "sphereLabel": "Demo sohasi",
-      "sameSphere": "Tashkilotingiznikidek. Boshqasini ko‘rmoqchimisiz — o‘zgartiring.",
-      "otherSphere": "Sizniki bilan farq qiladi — demo shu soha jurnallari to‘plamini ko‘rsatadi.",
+      "title": "Demo tashkilot ochilsinmi?",
+      "description": "Bu umumiy sinov tashkiloti: jamoa va oxirgi {days, plural, one {# kun} other {# kun}} uchun to‘ldirilgan jurnallar bilan — real hayotdagidek og‘ishlar va tuzatuvchi harakatlar bilan.",
       "noteUnchanged": "· Tashkilotingiz o‘zgarmaydi — demo alohida mavjud bo‘ladi.",
-      "noteSwitch": "· Ular orasida almashish — profil menyusida.",
-      "noteDelete": "· “Demoni o‘chirish” tugmasi bilan yoki {days, plural, one {# kun} other {# kun}}dan keyin o‘zi o‘chadi.",
+      "noteSwitch": "· Demo umumiy: u yerdagi o‘zgarishlaringizni boshqa mehmonlar ham ko‘radi. Haqiqiy ma’lumot kiritmang.",
+      "noteDelete": "· Demo kuniga bir marta yangi ma’lumotlar bilan qayta o‘rnatiladi — o‘zgarishlar saqlanmaydi.",
       "no": "Yo‘q",
-      "preparing": "Demo tayyorlanmoqda…",
-      "confirm": "Ha, yaratish"
+      "preparing": "Demo ochilmoqda…",
+      "confirm": "Ha, ochish"
     },
     "createOrganizationDialog": {
       "createFailed": "Yaratib bo‘lmadi",
@@ -26639,8 +26659,8 @@
       "settingsAria": "{name} sozlamalari",
       "settingsTitle": "Tashkilot sozlamalari",
       "addOrganization": "Tashkilot qo‘shish",
-      "demoTitle": "Xodimlar va to‘ldirilgan jurnallar bilan alohida sinov tashkiloti. {days, plural, one {# kun} other {# kun}}dan keyin yoki tugma orqali o‘chiriladi.",
-      "createDemo": "Demo tashkilot yaratish"
+      "demoTitle": "Xodimlar va to‘ldirilgan jurnallar bilan umumiy sinov tashkiloti. Kuniga bir marta yangilanadi.",
+      "createDemo": "Demo tashkilotni ochish"
     },
     "urgentJournalHotkey": {
       "failed": "Shoshilinch jurnalni aniqlab bo‘lmadi",
@@ -27276,27 +27296,15 @@
   "organizationsUi": {
     "demoOrgBanner": {
       "welcomeTitle": "Siz demo tashkilotdasiz",
-      "welcomeDescription": "Bu yerdagi xodimlar va jurnallar sinov uchun. O‘z tashkilotingizga bir bosishda qaytishingiz mumkin.",
+      "welcomeDescription": "Bu yerdagi xodimlar va jurnallar sinov uchun va barcha mehmonlar uchun umumiy. O‘z tashkilotingizga bir bosishda qaytishingiz mumkin.",
       "switchFailed": "O‘tib bo‘lmadi",
       "returned": "Siz o‘z tashkilotingizga qaytdingiz",
       "error": "Xatolik",
-      "deleteFailed": "Demoni o‘chirib bo‘lmadi",
-      "deleted": "Demo o‘chirildi: {staff}, {documents}, {entries}",
-      "staffCount": "{count, plural, one {# xodim} other {# xodim}}",
-      "documentsCount": "{count, plural, one {# hujjat} other {# hujjat}}",
-      "entriesCount": "{count, plural, one {# yozuv} other {# yozuv}}",
-      "daysCount": "{count, plural, one {# kun} other {# kun}}",
       "title": "“{name}” demo tashkiloti — ma’lumotlar sinov uchun",
-      "expiresIn": "{days} dan keyin avtomatik o‘chiriladi ({date})",
-      "expiresDefault": "7 kundan keyin avtomatik o‘chiriladi",
+      "expiresIn": "Demo umumiy: o‘zgarishlarni boshqa mehmonlar ham ko‘radi. Keyingi yangilanish: {date}",
+      "expiresDefault": "Demo umumiy: o‘zgarishlarni boshqa mehmonlar ham ko‘radi. Kuniga bir marta yangilanadi",
       "homeSafe": "sizning tashkilotingizga zarar yetmaydi.",
-      "backToMine": "Mening tashkilotimga qaytish",
-      "deleteDemo": "Demoni o‘chirish",
-      "confirmTitle": "Demo tashkilot o‘chirilsinmi?",
-      "confirmDescription": "“{name}” barcha mazmuni bilan yo‘qoladi. Demoni profil menyusidan qayta yaratish mumkin.",
-      "staffTotal": "Xodimlar: {count, number}",
-      "documentsTotal": "Jurnal hujjatlari: {count, number}",
-      "homeSafeBullet": "Sizning tashkilotingizga zarar yetmaydi"
+      "backToMine": "Mening tashkilotimga qaytish"
     },
     "welcomeOrgBanner": {
       "hide": "Maslahatni yashirish",

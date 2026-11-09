@@ -7,6 +7,7 @@ import {
   documentPointVisible,
   documentVisibleWhere,
   journalEntryPointId,
+  pointMismatch,
   visibleBuildingTargets,
 } from "@/lib/document-point-access";
 
@@ -82,5 +83,59 @@ test("страница документа, проверка и печать пр
     "src/app/api/journals/cleaning/documents/[id]/room-scopes/route.ts",
   ]) {
     assert.ok(readFileSync(join(process.cwd(), file), "utf8").includes("canSeeDocumentPoint("), file);
+  }
+});
+
+// Шапка: что выбрано. `resolveActiveBuilding` даёт те же поля.
+const header = (active: typeof A, organizationView = false, buildings = [A, B]) => ({
+  enabled: true,
+  organizationView,
+  activeBuildingId: active.id,
+  activeBuilding: active,
+  buildings,
+});
+
+test("объект точки А при выбранной в шапке точке Б — расхождение с переходом на А", () => {
+  assert.deepEqual(pointMismatch(header(B), "point-a"), {
+    pointId: "point-a",
+    pointName: "Точка А",
+    selectedName: "Точка Б",
+    canSwitch: true,
+  });
+});
+
+test("та же точка, общий объект, «Вся организация» и выключенные точки — расхождения нет", () => {
+  assert.equal(pointMismatch(header(A), "point-a"), null);
+  assert.equal(pointMismatch(header(B), null), null);
+  assert.equal(pointMismatch(header(B), undefined), null);
+  // Офис или пункт «Вся организация»: документы пишутся в активную точку, но человек смотрит на всю компанию.
+  assert.equal(pointMismatch(header(B, true), "point-a"), null);
+  assert.equal(
+    pointMismatch({ enabled: false, organizationView: true, activeBuildingId: null, activeBuilding: null, buildings: [] }, "point-a"),
+    null,
+  );
+});
+
+test("точка объекта недоступна человеку — расхождение без перехода на неё", () => {
+  assert.deepEqual(pointMismatch(header(B, false, [B]), "point-a"), {
+    pointId: "point-a",
+    pointName: null,
+    selectedName: "Точка Б",
+    canSwitch: false,
+  });
+});
+
+test("страницы объектов точки показывают расхождение с шапкой", () => {
+  for (const file of [
+    "src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx",
+    "src/app/(dashboard)/journals/[code]/documents/[docId]/layout.tsx",
+    "src/app/(dashboard)/journals/[code]/documents/[docId]/verify/page.tsx",
+    "src/app/(dashboard)/journals/[code]/[entryId]/page.tsx",
+    "src/app/(dashboard)/settings/journals/paper/[id]/documents/[docId]/page.tsx",
+    "src/app/(dashboard)/batches/[id]/page.tsx",
+    "src/app/(dashboard)/capa/[id]/page.tsx",
+    "src/app/(dashboard)/edo/[id]/page.tsx",
+  ]) {
+    assert.ok(readFileSync(join(process.cwd(), file), "utf8").includes("findPointMismatch("), file);
   }
 });

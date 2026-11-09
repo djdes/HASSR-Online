@@ -472,7 +472,7 @@ function CompleteProfileModal({
   }
 
   /**
-   * Анкета сохраняется в СВОЮ организацию до создания демо — иначе
+   * Анкета сохраняется в СВОЮ организацию до входа в общую демо — иначе
    * `/api/profile/complete` (пишет в активную org) переименовал бы демо,
    * а анкета всплыла бы внутри песочницы ещё раз.
    */
@@ -481,11 +481,7 @@ function CompleteProfileModal({
     setDemoLoading(true);
     try {
       if (!(await saveProfile())) return;
-      const res = await fetch("/api/organizations/demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sphere }),
-      });
+      const res = await fetch("/api/organizations/demo", { method: "POST" });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         throw new Error(data?.error || tn("demoFailed"));

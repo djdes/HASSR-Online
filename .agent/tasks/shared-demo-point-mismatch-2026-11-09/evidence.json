@@ -1,0 +1,15 @@
+{
+  "task": "shared-demo-point-mismatch-2026-11-09",
+  "verifiedAt": "2026-11-09",
+  "criteria": {
+    "AC1": { "status": "PASS", "proof": ["raw/shared-demo-db-run.txt", "raw/demo-ui.js"] },
+    "AC2": { "status": "PASS", "proof": ["raw/shared-demo-db-run.txt"] },
+    "AC3": { "status": "PASS", "proof": ["raw/shared-demo-db-run.txt"] },
+    "AC4": { "status": "PASS", "proof": ["raw/demo-banner.png"] },
+    "AC5": { "status": "PASS", "proof": ["raw/shared-demo-db-run.txt"] },
+    "AC6": { "status": "PASS", "proof": ["raw/point-ui.js", "raw/point-mismatch.png"] },
+    "AC7": { "status": "PASS", "proof": ["src/lib/document-point-access.test.ts"] },
+    "AC8": { "status": "PASS", "proof": ["raw/typecheck.txt", "raw/i18n-check.txt", "raw/test-gate.txt"] }
+  },
+  "notVerified": ["daily cron over HTTP", "Mini App shell", "en/uz wording"]
+}

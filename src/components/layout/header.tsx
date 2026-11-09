@@ -598,10 +598,7 @@ export function Header({
       <ReadabilityDialog open={readabilityOpen} onOpenChange={setReadabilityOpen} />
 
       {createDialog === "demo" ? (
-        <CreateDemoDialog
-          currentSphere={organizationSphere}
-          onClose={() => setCreateDialog(null)}
-        />
+        <CreateDemoDialog onClose={() => setCreateDialog(null)} />
       ) : null}
       {createDialog === "master-cabinet" ? (
         <CreateMasterCabinetDialog onClose={() => setCreateDialog(null)} />

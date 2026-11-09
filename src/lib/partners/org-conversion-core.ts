@@ -438,7 +438,7 @@ export function conversionBlockers(snapshot: ConversionSnapshot): Blocker[] {
     blockers.push({ code: "platform", message: "Служебную организацию платформы перевести нельзя." });
   }
   if (organization.isDemo) {
-    blockers.push({ code: "demo", message: "Демо-организацию перевести нельзя — она удаляется сама." });
+    blockers.push({ code: "demo", message: "Демо-организацию перевести нельзя — она общая и обновляется сама." });
   }
   if (organization.kind === "directory") {
     blockers.push({ code: "directory", message: "Мастер-кабинет справочников перевести нельзя." });
