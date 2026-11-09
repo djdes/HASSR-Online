@@ -7,9 +7,14 @@ import {
   PLATFORM_SECTIONS,
   PLATFORM_SECTION_KEYS,
   canAccessPlatformPath,
+  canUseTranslationEditor,
+  effectivePlatformSections,
+  hasPlatformPanel,
   matchPlatformPreset,
   matchPlatformRule,
   normalizePlatformSections,
+  platformEntryHref,
+  platformEntryTarget,
   platformGateFor,
   platformHomeHref,
 } from "@/lib/platform-access";
@@ -96,4 +101,79 @@ test("presets use known sections and are recognised back", () => {
   for (const section of PLATFORM_SECTIONS) {
     assert.equal(canAccessPlatformPath({ superadmin: false, sections: [section.key] }, section.home), true, section.home);
   }
+});
+
+// Переводы — вкладка панели (владелец, 2026-11-09): право переводчика = раздел «Переводы».
+test("a translator gets the «Переводы» section on top of the granted ones", () => {
+  assert.deepEqual(effectivePlatformSections({ platformSections: [], canEditTranslations: true }), ["translations"]);
+  assert.deepEqual(
+    effectivePlatformSections({ platformSections: ["sales", "crm", "clients"], canEditTranslations: true }),
+    ["crm", "clients", "sales", "translations"],
+  );
+  assert.deepEqual(effectivePlatformSections({ platformSections: ["translations"], canEditTranslations: true }), ["translations"]);
+  assert.deepEqual(effectivePlatformSections({ platformSections: ["seo", "bogus"], canEditTranslations: false }), ["seo"]);
+  assert.deepEqual(effectivePlatformSections({ platformSections: null, canEditTranslations: null }), []);
+  assert.deepEqual(effectivePlatformSections({ platformSections: ["seo"] }), ["seo"]);
+});
+
+test("a translator alone opens the panel on «Переводы» and nothing else", () => {
+  const translator = { superadmin: false, sections: effectivePlatformSections({ platformSections: [], canEditTranslations: true }) };
+  assert.equal(hasPlatformPanel(translator), true);
+  assert.equal(platformHomeHref(translator), "/root/translations");
+  assert.equal(canAccessPlatformPath(translator, "/root/translations"), true);
+  assert.equal(canAccessPlatformPath(translator, "/root"), false);
+  assert.equal(canAccessPlatformPath(translator, "/root/crm"), false);
+  assert.equal(canAccessPlatformPath(translator, "/root/blog"), false);
+  assert.equal(canAccessPlatformPath(translator, "/root/team"), false);
+});
+
+test("appointing translators is the owner's: it hands out panel access", () => {
+  assert.equal(platformGateFor("/api/root/translators"), "superadmin");
+  assert.equal(platformGateFor("/api/root/translators", "POST"), "superadmin");
+  assert.equal(platformGateFor("/root/translations"), "translations");
+  const seo = { superadmin: false, sections: normalizePlatformSections(["content", "seo", "translations"]) };
+  assert.equal(canAccessPlatformPath(seo, "/root/translations"), true);
+  assert.equal(canAccessPlatformPath(seo, "/api/root/translators", "POST"), false);
+  assert.equal(canAccessPlatformPath({ superadmin: true, sections: [] }, "/api/root/translators", "POST"), true);
+});
+
+test("the panel entry link can carry the tab to open", () => {
+  assert.equal(platformEntryHref(), "/api/me/platform-panel");
+  assert.equal(platformEntryHref(null), "/api/me/platform-panel");
+  assert.equal(platformEntryHref("/root/translations"), "/api/me/platform-panel?next=%2Froot%2Ftranslations");
+});
+
+test("the panel entry opens `next` only when it is a panel page the person may open", () => {
+  const translator = { superadmin: false, sections: ["translations" as const] };
+  const admin = { superadmin: false, sections: [...PLATFORM_SECTION_KEYS] };
+  const manager = { superadmin: false, sections: normalizePlatformSections(["crm", "clients", "sales"]), scope: "own" as const };
+  const owner = { superadmin: true, sections: [] };
+
+  assert.equal(platformEntryTarget(translator, null), "/root/translations");
+  assert.equal(platformEntryTarget(admin, null), "/root/crm");
+  assert.equal(platformEntryTarget(owner, undefined), "/root");
+
+  assert.equal(platformEntryTarget(admin, "/root/translations"), "/root/translations");
+  assert.equal(platformEntryTarget(admin, "/root/blog?tab=drafts"), "/root/blog?tab=drafts");
+  assert.equal(platformEntryTarget(owner, "/root/team"), "/root/team");
+  // Not theirs — their first tab instead of a 404.
+  assert.equal(platformEntryTarget(manager, "/root/translations"), "/root/crm");
+  assert.equal(platformEntryTarget(manager, "/root/health"), "/root/crm");
+  assert.equal(platformEntryTarget(admin, "/root/team"), "/root/crm");
+  // Only panel pages: no API, no other site paths, no foreign or tricky addresses.
+  for (const next of ["/api/root/translators", "/dashboard", "//evil.com/root", "https://evil.com/root", "/root/../dashboard", "/root/%2E%2e/dashboard", "/root\\..\\x", "root/blog", ""]) {
+    assert.equal(platformEntryTarget(owner, next), "/root", next);
+  }
+});
+
+test("translation editor: owner, translator or the «Переводы» section; never disabled or archived people", () => {
+  const person = { isRoot: false, canEditTranslations: false, platformSections: [] as string[], isActive: true, archivedAt: null as Date | null };
+  assert.equal(canUseTranslationEditor({ ...person, isRoot: true }), true);
+  assert.equal(canUseTranslationEditor({ ...person, canEditTranslations: true }), true);
+  assert.equal(canUseTranslationEditor({ ...person, platformSections: ["content", "seo", "translations"] }), true);
+  assert.equal(canUseTranslationEditor({ ...person, platformSections: [...PLATFORM_SECTION_KEYS] }), true);
+  assert.equal(canUseTranslationEditor({ ...person, platformSections: ["crm", "clients", "sales"] }), false);
+  assert.equal(canUseTranslationEditor(person), false);
+  assert.equal(canUseTranslationEditor({ ...person, canEditTranslations: true, isActive: false }), false);
+  assert.equal(canUseTranslationEditor({ ...person, platformSections: ["translations"], archivedAt: new Date("2026-11-01") }), false);
 });

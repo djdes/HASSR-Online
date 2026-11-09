@@ -1,0 +1,86 @@
+FAIL [AC1] logged out: entry Location is relative and returns to the panel after login — 307 https://localhost:3000/login
+FAIL [AC3] alexey: no «Переводы интерфейса» in the phone profile menu — item present
+PASS [AC4] alexey: «Панель платформы» in the phone profile menu shown — shown
+FAIL [AC1] alexey: entry Location relative (Host wesetup.ru, https) — 307 https://localhost:3000/root/crm
+PASS [AC5] alexey: «Панель платформы» opens /root/crm — /root/crm
+PASS [AC5] alexey: tab /root/translations shown — /root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/roo
+PASS [AC5] alexey: tab /root/crm shown — /root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedbac
+PASS [AC5] alexey: tab /root/team hidden — /root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedb
+PASS [AC6] alexey: translation editor API → 200 — 200
+FAIL [AC7] alexey: translators API closed — 200
+FAIL [AC8] alexey: /translations → entry with next=/root/translations — 200 null
+FAIL [AC8] alexey: opening /translations lands on /root/translations — /translations
+FAIL [AC3] alexey: no «Переводы интерфейса» in the mini app profile — row present
+FAIL [AC4] alexey: «Панель платформы» in the mini app profile shown — hidden
+FAIL [AC3] alexey: no «Переводы интерфейса» in the desktop profile menu — item present
+PASS [AC4] alexey: header panel button → entry — /api/me/platform-panel
+PASS [AC3] admin: no «Переводы интерфейса» in the phone profile menu — absent
+PASS [AC4] admin: «Панель платформы» in the phone profile menu shown — shown
+FAIL [AC1] admin: entry Location relative (Host wesetup.ru, https) — 307 https://localhost:3000/root/crm
+PASS [AC5] admin: «Панель платформы» opens /root/crm — /root/crm
+PASS [AC5] admin: tab /root/translations shown — /root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root
+PASS [AC5] admin: tab /root/team hidden — /root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedba
+FAIL [AC6] admin: translation editor API → 200 — 403
+FAIL [AC7] admin: translators API closed — 200
+FAIL [AC8] admin: /translations → entry with next=/root/translations — 200 null
+FAIL [AC8] admin: opening /translations lands on /root/translations — /translations
+PASS [AC3] admin: no «Переводы интерфейса» in the mini app profile — absent
+FAIL [AC4] admin: «Панель платформы» in the mini app profile shown — hidden
+PASS [AC3] admin: no «Переводы интерфейса» in the desktop profile menu — absent
+PASS [AC4] admin: header panel button → entry — /api/me/platform-panel
+PASS [AC3] seo: no «Переводы интерфейса» in the phone profile menu — absent
+PASS [AC4] seo: «Панель платформы» in the phone profile menu shown — shown
+FAIL [AC1] seo: entry Location relative (Host wesetup.ru, https) — 307 https://localhost:3000/root/blog
+PASS [AC5] seo: «Панель платформы» opens /root/blog — /root/blog
+PASS [AC5] seo: tab /root/translations shown — /root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct
+PASS [AC5] seo: tab /root/blog shown — /root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct
+PASS [AC5] seo: tab /root/seo shown — /root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct
+PASS [AC5] seo: tab /root/crm hidden — /root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct
+PASS [AC5] seo: tab /root hidden — /root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct
+PASS [AC5] seo: tab /root/team hidden — /root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct
+FAIL [AC6] seo: translation editor API → 200 — 403
+FAIL [AC7] seo: translators API closed — 200
+FAIL [AC8] seo: /translations → entry with next=/root/translations — 200 null
+FAIL [AC8] seo: opening /translations lands on /root/translations — /translations
+PASS [AC3] seo: no «Переводы интерфейса» in the mini app profile — absent
+FAIL [AC4] seo: «Панель платформы» in the mini app profile shown — hidden
+PASS [AC3] seo: no «Переводы интерфейса» in the desktop profile menu — absent
+PASS [AC4] seo: header panel button → entry — /api/me/platform-panel
+PASS [AC3] manager: no «Переводы интерфейса» in the phone profile menu — absent
+PASS [AC4] manager: «Панель платформы» in the phone profile menu shown — shown
+FAIL [AC1] manager: entry Location relative (Host wesetup.ru, https) — 307 https://localhost:3000/root/crm
+PASS [AC5] manager: «Панель платформы» opens /root/crm — /root/crm
+PASS [AC5] manager: tab /root/crm shown — /root,/root/blank-downloads,/root/crm,/root/mailing,/root/promo-codes,/root/promotions,/root/proposals,/root/service-requests,
+PASS [AC5] manager: tab /root/translations hidden — /root,/root/blank-downloads,/root/crm,/root/mailing,/root/promo-codes,/root/promotions,/root/proposals,/root/service
+PASS [AC5] manager: tab /root/team hidden — /root,/root/blank-downloads,/root/crm,/root/mailing,/root/promo-codes,/root/promotions,/root/proposals,/root/service-request
+PASS [AC6] manager: translation editor API → 403 — 403
+PASS [AC7] manager: translators API closed — 404
+FAIL [AC8] manager: /translations → entry with next=/root/translations — 200 null
+FAIL [AC8] manager: opening /translations lands on /root/crm — /translations
+PASS [AC3] manager: no «Переводы интерфейса» in the mini app profile — absent
+FAIL [AC4] manager: «Панель платформы» in the mini app profile shown — hidden
+PASS [AC3] manager: no «Переводы интерфейса» in the desktop profile menu — absent
+PASS [AC4] manager: header panel button → entry — /api/me/platform-panel
+FAIL [AC3] translator: no «Переводы интерфейса» in the phone profile menu — item present
+FAIL [AC4] translator: «Панель платформы» in the phone profile menu shown — hidden
+FAIL [AC1] translator: entry Location relative (Host wesetup.ru, https) — 307 https://localhost:3000/dashboard
+FAIL [ERR] translator — locator.click: Timeout 30000ms exceeded.
+PASS [AC3] ivan: no «Переводы интерфейса» in the phone profile menu — absent
+PASS [AC4] ivan: «Панель платформы» in the phone profile menu hidden — hidden
+FAIL [AC1] ivan: entry Location relative (Host wesetup.ru, https) — 307 https://localhost:3000/dashboard
+PASS [AC6] ivan: translation editor API → 403 — 403
+PASS [AC7] ivan: translators API closed — 404
+FAIL [AC8] ivan: /translations → entry with next=/root/translations — 200 null
+PASS [AC3] ivan: no «Переводы интерфейса» in the mini app profile — absent
+PASS [AC4] ivan: «Панель платформы» in the mini app profile hidden — hidden
+PASS [AC3] ivan: no «Переводы интерфейса» in the desktop profile menu — absent
+PASS [AC4] ivan: header panel button absent — null
+FAIL [AC3] owner: no «Переводы интерфейса» in the desktop profile menu — item present
+PASS [AC4] owner: header panel button → /root — /root
+PASS [AC5] owner: panel shows «Переводы» and «Команда» — 34 tabs
+PASS [AC7] owner: «Переводчики» block on the tab — 1 blocks
+FAIL [AC7] owner: block says translators open «Переводы» in the panel — Переводчики / 
+PASS [AC7] owner: translators API open — 200
+PASS [AC6] owner: translation editor API → 200 — 200
+PASS [AC1] email link while logged out opens the login page — /login
+FAIL [AC1] after login the translator lands on «Переводы» — /home

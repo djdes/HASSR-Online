@@ -3067,7 +3067,6 @@
       "backOfficeTitle": "Alohida back-ofis kabineti: tanlangan obyektlar uchun menyu va xomashyo"
     },
     "profile": {
-      "translations": "Interfeys tarjimalari",
       "organizationSwitcher": "Ushbu kabinetdagi tashkilotlar",
       "otherCabinets": "Boshqa kabinetlar",
       "createMasterCabinet": "Ma’lumotnoma kabinetini yaratish",
@@ -20570,8 +20569,6 @@
       "platform": "Platforma boshqaruvi",
       "sections": "Barcha bo‘limlar",
       "sectionsHint": "jurnallar, hisobotlar, sozlamalar",
-      "translations": "Interfeys tarjimalari",
-      "translationsHint": "ru / en / uz matnlarini tahrirlash",
       "feedback": "Fikr-mulohaza",
       "feedbackHint": "muammo yoki taklif",
       "fullSite": "Saytning to‘liq versiyasini ochish",
@@ -23868,7 +23865,7 @@
     },
     "translators": {
       "title": "Tarjimonlar",
-      "description": "Tarjimalarni kim tahrirlashi mumkin. Tarjimon muharrirni kabinetdagi profil menyusidan ochadi.",
+      "description": "Tarjimalarni kim tahrirlashi mumkin. Tarjimon ularni platforma boshqaruvida ochadi: kabinet menyusidagi «Platforma boshqaruvi» bandi, «Tarjimalar» bo‘limi.",
       "emailPlaceholder": "Foydalanuvchi pochtasi",
       "grant": "Ruxsat berish",
       "revoke": "Ruxsatni olish",
@@ -30477,7 +30474,7 @@
       },
       "translations": {
         "title": "Tarjimalar",
-        "hint": "Tarjimalar katalogi va tarjimonlar"
+        "hint": "Tarjimalar katalogi: ru / en / uz"
       },
       "monitoring": {
         "title": "Monitoring",

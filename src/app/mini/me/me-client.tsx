@@ -14,6 +14,7 @@ import { MarketingEmailToggle } from "@/components/settings/marketing-email-togg
 
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
+import { PLATFORM_PANEL_ENTRY } from "@/lib/platform-access";
 import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getUserRoleLabel } from "@/lib/user-roles";
 import {
@@ -28,7 +29,6 @@ import {
   ShieldCheck,
   Trash2,
   Unlink,
-  Languages,
   LayoutGrid,
   MonitorSmartphone,
   type LucideIcon,
@@ -77,10 +77,13 @@ export function MiniMeClient({
   telegramLinked = false,
   billingAnnouncement = null,
   billingStaffNotice = false,
-  canEditTranslations = false,
+  platformPanel = false,
 }: {
-  /** ROOT или переводчик (`User.canEditTranslations`) — строка «Переводы интерфейса». */
-  canEditTranslations?: boolean;
+  /**
+   * Строка «Панель платформы»: владелец, человек с разделами или переводчик
+   * (переводы интерфейса — вкладка панели, 2026-11-09).
+   */
+  platformPanel?: boolean;
   /** Руководитель выбирает тариф после бесплатного периода. */
   billingStaffNotice?: boolean;
   /** Анонс бесплатного периода (тексты — с сервера). */
@@ -424,14 +427,9 @@ export function MiniMeClient({
             </Link>
           </>
         ) : null}
-        {u.isRoot ? (
-          <Link href="/root" className="mini-item mini-press">
-          <ProfileRow icon={ShieldCheck} label={t("rows.platform")} />
-          </Link>
-        ) : null}
-        {canEditTranslations ? (
-          <Link href={u.isRoot ? "/root/translations" : "/translations"} className="mini-item mini-press" data-testid="profile-translations">
-            <ProfileRow icon={Languages} label={t("rows.translations")} hint={t("rows.translationsHint")} />
+        {platformPanel ? (
+          <Link href={u.isRoot ? "/root" : PLATFORM_PANEL_ENTRY} prefetch={false} className="mini-item mini-press">
+            <ProfileRow icon={ShieldCheck} label={t("rows.platform")} />
           </Link>
         ) : null}
         {/* Все разделы кабинета — теми же правами, что на сайте. Вкладка

@@ -3067,7 +3067,6 @@
       "backOfficeTitle": "Separate back-office workspace: menus and ingredients for selected locations"
     },
     "profile": {
-      "translations": "Interface translations",
       "organizationSwitcher": "Organizations in this workspace",
       "otherCabinets": "Other workspaces",
       "createMasterCabinet": "Create reference workspace",
@@ -20570,8 +20569,6 @@
       "platform": "Platform console",
       "sections": "All sections",
       "sectionsHint": "journals, reports, settings",
-      "translations": "Interface translations",
-      "translationsHint": "edit ru / en / uz texts",
       "feedback": "Feedback",
       "feedbackHint": "a problem or idea",
       "fullSite": "Open the full website",
@@ -23868,7 +23865,7 @@
     },
     "translators": {
       "title": "Translators",
-      "description": "Who may edit translations. A translator opens the editor from the profile menu in the workspace.",
+      "description": "Who may edit translations. A translator opens them in the platform console: «Platform console» in the workspace menu, the «Translations» tab.",
       "emailPlaceholder": "User email",
       "grant": "Grant access",
       "revoke": "Revoke access",
@@ -30477,7 +30474,7 @@
       },
       "translations": {
         "title": "Translations",
-        "hint": "Translation catalog and translators"
+        "hint": "Translation catalog: ru / en / uz"
       },
       "monitoring": {
         "title": "Monitoring",

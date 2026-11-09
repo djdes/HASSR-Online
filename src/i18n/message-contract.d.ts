@@ -3068,7 +3068,6 @@ export type MessageContract = {
       "backOfficeTitle": "Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов"
     },
     "profile": {
-      "translations": "Переводы интерфейса",
       "organizationSwitcher": "Организации этого кабинета",
       "otherCabinets": "Другие кабинеты",
       "createMasterCabinet": "Создать мастер-кабинет",
@@ -20571,8 +20570,6 @@ export type MessageContract = {
       "platform": "Панель платформы",
       "sections": "Все разделы",
       "sectionsHint": "журналы, отчёты, настройки",
-      "translations": "Переводы интерфейса",
-      "translationsHint": "правка текстов ru / en / uz",
       "feedback": "Обратная связь",
       "feedbackHint": "ошибка или идея",
       "fullSite": "Открыть полную версию сайта",
@@ -23869,7 +23866,7 @@ export type MessageContract = {
     },
     "translators": {
       "title": "Переводчики",
-      "description": "Кому можно править переводы. Переводчик открывает редактор из меню профиля в кабинете.",
+      "description": "Кому можно править переводы. Переводчик открывает их в панели платформы: пункт «Панель платформы» в меню кабинета, вкладка «Переводы».",
       "emailPlaceholder": "Почта пользователя",
       "grant": "Дать доступ",
       "revoke": "Снять доступ",
@@ -30478,7 +30475,7 @@ export type MessageContract = {
       },
       "translations": {
         "title": "Переводы",
-        "hint": "Каталог переводов и переводчики"
+        "hint": "Каталог переводов ru / en / uz"
       },
       "monitoring": {
         "title": "Мониторинг",

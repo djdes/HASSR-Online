@@ -1,0 +1,527 @@
+{
+  "summary": {
+    "label": "before",
+    "total": 86,
+    "passed": 52,
+    "failed": 34,
+    "pageErrors": []
+  },
+  "results": [
+    {
+      "ac": "AC1",
+      "name": "logged out: entry Location is relative and returns to the panel after login",
+      "ok": false,
+      "detail": "307 https://localhost:3000/login"
+    },
+    {
+      "ac": "AC3",
+      "name": "alexey: no «Переводы интерфейса» in the phone profile menu",
+      "ok": false,
+      "detail": "item present"
+    },
+    {
+      "ac": "AC4",
+      "name": "alexey: «Панель платформы» in the phone profile menu shown",
+      "ok": true,
+      "detail": "shown"
+    },
+    {
+      "ac": "AC1",
+      "name": "alexey: entry Location relative (Host wesetup.ru, https)",
+      "ok": false,
+      "detail": "307 https://localhost:3000/root/crm"
+    },
+    {
+      "ac": "AC5",
+      "name": "alexey: «Панель платформы» opens /root/crm",
+      "ok": true,
+      "detail": "/root/crm"
+    },
+    {
+      "ac": "AC5",
+      "name": "alexey: tab /root/translations shown",
+      "ok": true,
+      "detail": "/root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedback,/root/funnel,/root/health,/root/ideas,/root/invoices,/root/mailing,/root/max-channel,/root/nps,/root/page-limit,/root/partners,/root/promo-codes,/root/promotions,/root/proposals,/root/requisites,/root/reviews,/root/sber,/root/seo,/root/service-requests,/root/services,/root/status,/root/tariffs,/root/telegram-logs,/root/timings,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "alexey: tab /root/crm shown",
+      "ok": true,
+      "detail": "/root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedback,/root/funnel,/root/health,/root/ideas,/root/invoices,/root/mailing,/root/max-channel,/root/nps,/root/page-limit,/root/partners,/root/promo-codes,/root/promotions,/root/proposals,/root/requisites,/root/reviews,/root/sber,/root/seo,/root/service-requests,/root/services,/root/status,/root/tariffs,/root/telegram-logs,/root/timings,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "alexey: tab /root/team hidden",
+      "ok": true,
+      "detail": "/root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedback,/root/funnel,/root/health,/root/ideas,/root/invoices,/root/mailing,/root/max-channel,/root/nps,/root/page-limit,/root/partners,/root/promo-codes,/root/promotions,/root/proposals,/root/requisites,/root/reviews,/root/sber,/root/seo,/root/service-requests,/root/services,/root/status,/root/tariffs,/root/telegram-logs,/root/timings,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC6",
+      "name": "alexey: translation editor API → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "ac": "AC7",
+      "name": "alexey: translators API closed",
+      "ok": false,
+      "detail": "200"
+    },
+    {
+      "ac": "AC8",
+      "name": "alexey: /translations → entry with next=/root/translations",
+      "ok": false,
+      "detail": "200 null"
+    },
+    {
+      "ac": "AC8",
+      "name": "alexey: opening /translations lands on /root/translations",
+      "ok": false,
+      "detail": "/translations"
+    },
+    {
+      "ac": "AC3",
+      "name": "alexey: no «Переводы интерфейса» in the mini app profile",
+      "ok": false,
+      "detail": "row present"
+    },
+    {
+      "ac": "AC4",
+      "name": "alexey: «Панель платформы» in the mini app profile shown",
+      "ok": false,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC3",
+      "name": "alexey: no «Переводы интерфейса» in the desktop profile menu",
+      "ok": false,
+      "detail": "item present"
+    },
+    {
+      "ac": "AC4",
+      "name": "alexey: header panel button → entry",
+      "ok": true,
+      "detail": "/api/me/platform-panel"
+    },
+    {
+      "ac": "AC3",
+      "name": "admin: no «Переводы интерфейса» in the phone profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "admin: «Панель платформы» in the phone profile menu shown",
+      "ok": true,
+      "detail": "shown"
+    },
+    {
+      "ac": "AC1",
+      "name": "admin: entry Location relative (Host wesetup.ru, https)",
+      "ok": false,
+      "detail": "307 https://localhost:3000/root/crm"
+    },
+    {
+      "ac": "AC5",
+      "name": "admin: «Панель платформы» opens /root/crm",
+      "ok": true,
+      "detail": "/root/crm"
+    },
+    {
+      "ac": "AC5",
+      "name": "admin: tab /root/translations shown",
+      "ok": true,
+      "detail": "/root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedback,/root/funnel,/root/health,/root/ideas,/root/invoices,/root/mailing,/root/max-channel,/root/nps,/root/page-limit,/root/partners,/root/promo-codes,/root/promotions,/root/proposals,/root/requisites,/root/reviews,/root/sber,/root/seo,/root/service-requests,/root/services,/root/status,/root/tariffs,/root/telegram-logs,/root/timings,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "admin: tab /root/team hidden",
+      "ok": true,
+      "detail": "/root,/root/assistant,/root/audit,/root/audit-impersonations,/root/blank-downloads,/root/blog,/root/crm,/root/edo,/root/feedback,/root/funnel,/root/health,/root/ideas,/root/invoices,/root/mailing,/root/max-channel,/root/nps,/root/page-limit,/root/partners,/root/promo-codes,/root/promotions,/root/proposals,/root/requisites,/root/reviews,/root/sber,/root/seo,/root/service-requests,/root/services,/root/status,/root/tariffs,/root/telegram-logs,/root/timings,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC6",
+      "name": "admin: translation editor API → 200",
+      "ok": false,
+      "detail": "403"
+    },
+    {
+      "ac": "AC7",
+      "name": "admin: translators API closed",
+      "ok": false,
+      "detail": "200"
+    },
+    {
+      "ac": "AC8",
+      "name": "admin: /translations → entry with next=/root/translations",
+      "ok": false,
+      "detail": "200 null"
+    },
+    {
+      "ac": "AC8",
+      "name": "admin: opening /translations lands on /root/translations",
+      "ok": false,
+      "detail": "/translations"
+    },
+    {
+      "ac": "AC3",
+      "name": "admin: no «Переводы интерфейса» in the mini app profile",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "admin: «Панель платформы» in the mini app profile shown",
+      "ok": false,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC3",
+      "name": "admin: no «Переводы интерфейса» in the desktop profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "admin: header panel button → entry",
+      "ok": true,
+      "detail": "/api/me/platform-panel"
+    },
+    {
+      "ac": "AC3",
+      "name": "seo: no «Переводы интерфейса» in the phone profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "seo: «Панель платформы» in the phone profile menu shown",
+      "ok": true,
+      "detail": "shown"
+    },
+    {
+      "ac": "AC1",
+      "name": "seo: entry Location relative (Host wesetup.ru, https)",
+      "ok": false,
+      "detail": "307 https://localhost:3000/root/blog"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: «Панель платформы» opens /root/blog",
+      "ok": true,
+      "detail": "/root/blog"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: tab /root/translations shown",
+      "ok": true,
+      "detail": "/root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: tab /root/blog shown",
+      "ok": true,
+      "detail": "/root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: tab /root/seo shown",
+      "ok": true,
+      "detail": "/root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: tab /root/crm hidden",
+      "ok": true,
+      "detail": "/root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: tab /root hidden",
+      "ok": true,
+      "detail": "/root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC5",
+      "name": "seo: tab /root/team hidden",
+      "ok": true,
+      "detail": "/root/blog,/root/max-channel,/root/seo,/root/translations,/root/yandex-direct"
+    },
+    {
+      "ac": "AC6",
+      "name": "seo: translation editor API → 200",
+      "ok": false,
+      "detail": "403"
+    },
+    {
+      "ac": "AC7",
+      "name": "seo: translators API closed",
+      "ok": false,
+      "detail": "200"
+    },
+    {
+      "ac": "AC8",
+      "name": "seo: /translations → entry with next=/root/translations",
+      "ok": false,
+      "detail": "200 null"
+    },
+    {
+      "ac": "AC8",
+      "name": "seo: opening /translations lands on /root/translations",
+      "ok": false,
+      "detail": "/translations"
+    },
+    {
+      "ac": "AC3",
+      "name": "seo: no «Переводы интерфейса» in the mini app profile",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "seo: «Панель платформы» in the mini app profile shown",
+      "ok": false,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC3",
+      "name": "seo: no «Переводы интерфейса» in the desktop profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "seo: header panel button → entry",
+      "ok": true,
+      "detail": "/api/me/platform-panel"
+    },
+    {
+      "ac": "AC3",
+      "name": "manager: no «Переводы интерфейса» in the phone profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "manager: «Панель платформы» in the phone profile menu shown",
+      "ok": true,
+      "detail": "shown"
+    },
+    {
+      "ac": "AC1",
+      "name": "manager: entry Location relative (Host wesetup.ru, https)",
+      "ok": false,
+      "detail": "307 https://localhost:3000/root/crm"
+    },
+    {
+      "ac": "AC5",
+      "name": "manager: «Панель платформы» opens /root/crm",
+      "ok": true,
+      "detail": "/root/crm"
+    },
+    {
+      "ac": "AC5",
+      "name": "manager: tab /root/crm shown",
+      "ok": true,
+      "detail": "/root,/root/blank-downloads,/root/crm,/root/mailing,/root/promo-codes,/root/promotions,/root/proposals,/root/service-requests,/root/services"
+    },
+    {
+      "ac": "AC5",
+      "name": "manager: tab /root/translations hidden",
+      "ok": true,
+      "detail": "/root,/root/blank-downloads,/root/crm,/root/mailing,/root/promo-codes,/root/promotions,/root/proposals,/root/service-requests,/root/services"
+    },
+    {
+      "ac": "AC5",
+      "name": "manager: tab /root/team hidden",
+      "ok": true,
+      "detail": "/root,/root/blank-downloads,/root/crm,/root/mailing,/root/promo-codes,/root/promotions,/root/proposals,/root/service-requests,/root/services"
+    },
+    {
+      "ac": "AC6",
+      "name": "manager: translation editor API → 403",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "ac": "AC7",
+      "name": "manager: translators API closed",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "ac": "AC8",
+      "name": "manager: /translations → entry with next=/root/translations",
+      "ok": false,
+      "detail": "200 null"
+    },
+    {
+      "ac": "AC8",
+      "name": "manager: opening /translations lands on /root/crm",
+      "ok": false,
+      "detail": "/translations"
+    },
+    {
+      "ac": "AC3",
+      "name": "manager: no «Переводы интерфейса» in the mini app profile",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "manager: «Панель платформы» in the mini app profile shown",
+      "ok": false,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC3",
+      "name": "manager: no «Переводы интерфейса» in the desktop profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "manager: header panel button → entry",
+      "ok": true,
+      "detail": "/api/me/platform-panel"
+    },
+    {
+      "ac": "AC3",
+      "name": "translator: no «Переводы интерфейса» in the phone profile menu",
+      "ok": false,
+      "detail": "item present"
+    },
+    {
+      "ac": "AC4",
+      "name": "translator: «Панель платформы» in the phone profile menu shown",
+      "ok": false,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC1",
+      "name": "translator: entry Location relative (Host wesetup.ru, https)",
+      "ok": false,
+      "detail": "307 https://localhost:3000/dashboard"
+    },
+    {
+      "ac": "ERR",
+      "name": "translator",
+      "ok": false,
+      "detail": "locator.click: Timeout 30000ms exceeded."
+    },
+    {
+      "ac": "AC3",
+      "name": "ivan: no «Переводы интерфейса» in the phone profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "ivan: «Панель платформы» in the phone profile menu hidden",
+      "ok": true,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC1",
+      "name": "ivan: entry Location relative (Host wesetup.ru, https)",
+      "ok": false,
+      "detail": "307 https://localhost:3000/dashboard"
+    },
+    {
+      "ac": "AC6",
+      "name": "ivan: translation editor API → 403",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "ac": "AC7",
+      "name": "ivan: translators API closed",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "ac": "AC8",
+      "name": "ivan: /translations → entry with next=/root/translations",
+      "ok": false,
+      "detail": "200 null"
+    },
+    {
+      "ac": "AC3",
+      "name": "ivan: no «Переводы интерфейса» in the mini app profile",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "ivan: «Панель платформы» in the mini app profile hidden",
+      "ok": true,
+      "detail": "hidden"
+    },
+    {
+      "ac": "AC3",
+      "name": "ivan: no «Переводы интерфейса» in the desktop profile menu",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "ac": "AC4",
+      "name": "ivan: header panel button absent",
+      "ok": true,
+      "detail": "null"
+    },
+    {
+      "ac": "AC3",
+      "name": "owner: no «Переводы интерфейса» in the desktop profile menu",
+      "ok": false,
+      "detail": "item present"
+    },
+    {
+      "ac": "AC4",
+      "name": "owner: header panel button → /root",
+      "ok": true,
+      "detail": "/root"
+    },
+    {
+      "ac": "AC5",
+      "name": "owner: panel shows «Переводы» and «Команда»",
+      "ok": true,
+      "detail": "34 tabs"
+    },
+    {
+      "ac": "AC7",
+      "name": "owner: «Переводчики» block on the tab",
+      "ok": true,
+      "detail": "1 blocks"
+    },
+    {
+      "ac": "AC7",
+      "name": "owner: block says translators open «Переводы» in the panel",
+      "ok": false,
+      "detail": "Переводчики / "
+    },
+    {
+      "ac": "AC7",
+      "name": "owner: translators API open",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "ac": "AC6",
+      "name": "owner: translation editor API → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "ac": "AC1",
+      "name": "email link while logged out opens the login page",
+      "ok": true,
+      "detail": "/login"
+    },
+    {
+      "ac": "AC1",
+      "name": "after login the translator lands on «Переводы»",
+      "ok": false,
+      "detail": "/home"
+    }
+  ]
+}

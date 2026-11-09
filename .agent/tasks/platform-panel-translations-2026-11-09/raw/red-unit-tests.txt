@@ -1,0 +1,33 @@
+ok 1 - every /root page and /api/root route is classified explicitly
+ok 2 - gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 3 - delegated viewer sees only own sections; superadmin sees everything
+ok 4 - presets use known sections and are recognised back
+not ok 5 - a translator gets the «Переводы» section on top of the granted ones
+  error: '(0 , import_platform_access.effectivePlatformSections) is not a function'
+not ok 6 - a translator alone opens the panel on «Переводы» and nothing else
+  error: '(0 , import_platform_access.effectivePlatformSections) is not a function'
+not ok 7 - appointing translators is the owner's: it hands out panel access
+  error: |-
+not ok 8 - the panel entry link can carry the tab to open
+  error: '(0 , import_platform_access.platformEntryHref) is not a function'
+not ok 9 - the panel entry opens `next` only when it is a panel page the person may open
+  error: '(0 , import_platform_access.platformEntryTarget) is not a function'
+not ok 10 - translation editor: owner, translator or the «Переводы» section; never disabled or archived people
+  error: '(0 , import_platform_access.canUseTranslationEditor) is not a function'
+    ok 1 - пропускает обычный путь с параметрами
+    ok 2 - режет протокол-относительный адрес — это уход на чужой домен
+    ok 3 - режет абсолютные адреса и мусор
+ok 11 - safeInternalPath
+    ok 1 - отдаёт 307 и относительный Location
+    ok 2 - умеет 308 для постоянного переезда
+    ok 3 - не отдаёт абсолютный адрес даже если его попросили
+    ok 4 - на ответе можно ставить cookie — партнёрская метка едет с редиректом
+ok 12 - relativeRedirect
+    not ok 1 - never send an absolute Location built from the request
+      error: |-
+        +   'src/app/api/me/platform-panel/route.ts'
+not ok 13 - redirects from route handlers and server code
+  error: '1 subtest failed'
+# tests 18
+# pass 11
+# fail 7
