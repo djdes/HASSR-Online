@@ -270,6 +270,12 @@ export async function runLifecycleJob(options: { now?: Date; dryRun?: boolean } 
       facts.pendingInvoice = await hasPendingInvoice(unit.scopeOrgIds, now);
       const plan = planLifecycle(facts, settings, now);
       if (!plan) continue;
+      // «Узнать причину» — продолжение разговора: только тем, кому сценарий
+      // уже писал перед концом пробного (старые аккаунты без писем не трогаем).
+      if (plan.stage === "trial_lost" && facts.trialEndsAt) {
+        const warned = await db.crmReminderLog.count({ where: { dedupeKey: { startsWith: `lc:${unit.key}:trial:${facts.trialEndsAt.toISOString()}:trial_` } } });
+        if (!warned) continue;
+      }
       stage = plan.stage;
       report.planned += 1;
       if (dryRun) {
