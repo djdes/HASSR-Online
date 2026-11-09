@@ -255,8 +255,8 @@ function groqDispatcher(): ProxyAgent | undefined {
   return groqAgent.agent;
 }
 
-/** Расшифровка одного mp3 через Groq Whisper. */
-export async function transcribeCallAudio(bytes: Buffer, fileName: string): Promise<string> {
+/** Расшифровка аудио через Groq Whisper: mp3 звонка, ogg голосового из Telegram. */
+export async function transcribeCallAudio(bytes: Buffer, fileName: string, type = "audio/mpeg"): Promise<string> {
   const key = process.env.GROQ_API_KEY?.trim();
   if (!key) throw new Error("нет GROQ_API_KEY");
   const form = new UndiciFormData();
@@ -264,7 +264,7 @@ export async function transcribeCallAudio(bytes: Buffer, fileName: string): Prom
   form.set("language", "ru");
   form.set("response_format", "json");
   form.set("temperature", "0");
-  form.set("file", new Blob([new Uint8Array(bytes)], { type: "audio/mpeg" }), fileName);
+  form.set("file", new Blob([new Uint8Array(bytes)], { type }), fileName);
   const response = await undiciFetch(GROQ_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "User-Agent": USER_AGENT },

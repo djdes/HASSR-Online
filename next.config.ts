@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   // тянет свой worker динамическим import'ом по относительному пути, а
   // @napi-rs/canvas — нативный бинарник. Внутри серверного бандла ни то,
   // ни другое не работает — оставляем их обычными node_modules.
-  serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas", "api-anything"],
+  serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas", "api-anything", "telegram"],
   experimental: {
     // Proxy (src/proxy.ts) буферизует тело запроса и по умолчанию
     // обрезает его на 10 МБ. Скан приказа к журналу — до 10 МБ
