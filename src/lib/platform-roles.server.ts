@@ -21,6 +21,7 @@ function toView(row: RoleRow): RoleView {
     scope: normalizePlatformScope(row.scope),
     salesHead: row.salesHead,
     signatureTitle: row.signatureTitle,
+    discountLimit: row.discountLimit ?? 0,
     system: row.system,
     members: row._count?.users ?? 0,
   };
@@ -32,6 +33,20 @@ export async function listPlatformRoles(): Promise<RoleView[]> {
     include: { _count: { select: { users: { where: { archivedAt: null } } } } },
   });
   return rows.map(toView);
+}
+
+/**
+ * Лимиты скидки встроенных ролей, созданных до появления лимита (колонка
+ * пустая): коммерческий директор 25 %, РОП 15 %, менеджер 10 %. Заданное
+ * владельцем не трогаем. Возвращает число обновлённых ролей.
+ */
+export async function fillBuiltinDiscountLimits(): Promise<number> {
+  let updated = 0;
+  for (const role of BUILTIN_ROLES) {
+    const result = await db.platformRole.updateMany({ where: { key: role.key, discountLimit: null }, data: { discountLimit: role.discountLimit } });
+    updated += result.count;
+  }
+  return updated;
 }
 
 /** Встроенные роли — создать недостающие (правки владельца не трогаем). */
@@ -49,6 +64,7 @@ export async function ensureBuiltinRoles(): Promise<number> {
         scope: role.scope,
         salesHead: role.salesHead,
         signatureTitle: role.signatureTitle,
+        discountLimit: role.discountLimit,
         sort: role.sort,
         system: true,
       },
@@ -68,6 +84,7 @@ function cleanInput(input: RoleInput) {
     scope: input.scope,
     salesHead: input.salesHead,
     signatureTitle: input.signatureTitle?.trim() || null,
+    discountLimit: input.discountLimit ?? 0,
   };
 }
 

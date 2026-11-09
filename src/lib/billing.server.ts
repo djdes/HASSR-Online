@@ -667,7 +667,9 @@ export async function checkPlanFeature(organizationId: string, feature: PlanFeat
  */
 export async function hasPendingInvoice(orgIds: string[], now: Date = new Date()): Promise<boolean> {
   if (orgIds.length === 0) return false;
-  const count = await db.paymentOrder.count({
+  const rows = await db.paymentOrder.findMany({
+    take: 50,
+    select: { id: true, paymentMethod: true, status: true },
     where: {
       organizationId: { in: orgIds },
       // Счёт на пополнение баланса — не решение «платим за подписку».
@@ -682,7 +684,13 @@ export async function hasPendingInvoice(orgIds: string[], now: Date = new Date()
       ],
     },
   });
-  return count > 0;
+  if (rows.length === 0) return false;
+  const invoiceIds = rows.filter((row) => row.paymentMethod === "invoice" && row.status === "pending").map((row) => row.id);
+  if (invoiceIds.length < rows.length) return true;
+  // Счёт, который автоворонка CRM приложила к письму сама (ключ `lc:invoice:<id>`),
+  // — не решение клиента «платим»: окно и автопереход его не ждут.
+  const auto = await db.crmReminderLog.count({ where: { dedupeKey: { in: invoiceIds.map((id) => `lc:invoice:${id}`) } } });
+  return auto < invoiceIds.length;
 }
 
 // ------------------------------------------------------------- transition
@@ -1558,11 +1566,20 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
   const prices = await pricesFrom();
   const units = await listBillingUnits();
   report.scanned = units.length;
+  // Письма «пробный заканчивается» и «оплата заканчивается» шлёт автоворонка
+  // CRM (src/lib/crm/lifecycle): у неё расчёт по данным аккаунта и счёт во
+  // вложении. Пока она включена, свои напоминания задача не шлёт — иначе два письма.
+  const { lifecycleOwnsBillingReminders } = await import("@/lib/crm/lifecycle/settings.server");
+  const lifecycleOwns = await lifecycleOwnsBillingReminders().catch(() => false);
   for (const unit of units) {
     const state = stateForUnit(unit, settings, now);
     const action = decideTransitionAction(state, unit.plan);
     if (action === "none") continue;
     let outcome = "planned";
+    if (lifecycleOwns && (action === "remind_trial_end" || action === "remind_paid_end")) {
+      report.results.push({ unit: unit.key, organizationId: unit.organizationId, action, activeUsers: state.activeUsers, outcome: "crm lifecycle sends it" });
+      continue;
+    }
     try {
       if (action === "remind_trial_end") {
         const since = state.trialEndsAt ? new Date(state.trialEndsAt.getTime() - (TRIAL_REMINDER_DAYS + 1) * DAY_MS) : now;

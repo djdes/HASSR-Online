@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { db } from "@/lib/db";
+import { markContactActivity } from "@/lib/crm/lifecycle/tasks.server";
 import { escapeHtml } from "@/lib/html-escape";
 import { CRM_FILTER_REASONS } from "@/lib/crm/constants";
 import type { ContactMessageInput, ContactPatch, ManualLeadInput } from "@/lib/crm/forms";
@@ -156,6 +157,7 @@ export async function addContactMessage(id: string, input: ContactMessageInput, 
     await ingestCrmItems([
       { ...base, externalKey: `email-out:${messageId}:${contact.email}`, channel: "email", direction: "out", subject: input.subject ?? null, body: input.body },
     ]);
+    await markContactActivity(id, "message_sent").catch((error) => console.error("[crm] сделка: письмо", error));
     return {
       ok: true,
       via: result.via,
@@ -169,6 +171,7 @@ export async function addContactMessage(id: string, input: ContactMessageInput, 
     const sent = await sendTelegramMessage(contact.telegramChatId, escapeHtml(input.body), { delivery: { kind: "crm:client_message", dedupeKey: key } }).catch(() => false);
     if (!sent) return { ok: false, error: "Telegram не доставил сообщение — возможно, клиент остановил бота" };
     await ingestCrmItems([{ ...base, externalKey: key, channel: "telegram", direction: "out", body: input.body }]);
+    await markContactActivity(id, "message_sent").catch((error) => console.error("[crm] сделка: Telegram", error));
     return { ok: true, via: "telegram" };
   }
 
@@ -178,6 +181,7 @@ export async function addContactMessage(id: string, input: ContactMessageInput, 
     resolved: { channel: "resolved", direction: "note" as const, subject: "Ответ не нужен" },
   }[input.kind];
   await ingestCrmItems([{ ...base, externalKey: `crm:${randomUUID()}`, channel: map.channel, direction: map.direction, subject: map.subject, body: input.body || "Ответ клиенту не требуется" }]);
+  if (input.kind === "call") await markContactActivity(id, "called").catch((error) => console.error("[crm] сделка: звонок", error));
   return { ok: true };
 }
 

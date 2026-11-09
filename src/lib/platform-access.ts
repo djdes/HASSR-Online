@@ -138,6 +138,9 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/crm/mailboxes", gate: "superadmin", methods: ["POST", "PUT", "DELETE"] },
   { pattern: "/api/root/crm/filtered", gate: "crm", allScope: true },
   { pattern: "/api/root/crm/rules", gate: "crm", allScope: true },
+  // Автоворонка: настройки и прогноз — РОП и все, у кого охват «все».
+  { pattern: "/root/crm/automation", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/automation", gate: "crm", allScope: true },
 
   // Sales.
   { pattern: "/root/proposals", gate: "sales" },

@@ -50,6 +50,7 @@ export default async function CrmContactsPage({ searchParams }: { searchParams: 
     <div className="space-y-6" data-crm-contacts>
       <CrmHeader
         active="/root/crm/contacts"
+        own={viewer.scope === "own"}
         title="Контакты и переписка"
         description="Каждый человек — одна карточка со всей перепиской: почта, чат, бот, заявки, звонки и заметки. Клиент, который ждёт ответа, — сверху очереди «Ждут ответа»."
         actions={

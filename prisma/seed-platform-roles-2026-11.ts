@@ -13,6 +13,8 @@
  *    (доступ тот же; дальше им управляет роль). Остальные — «свой набор».
  * 4. `once:platform-roles:alexey-cd:v1` — alexey@wesetup.ru: роль
  *    «Коммерческий директор», должность в подписи «Коммерческий директор».
+ * 5. Лимиты скидки встроенных ролей (пустые → 25 / 15 / 10 %) — каждый запуск,
+ *    только незаполненные.
  *
  * Запуск: npx tsx prisma/seed-platform-roles-2026-11.ts [--dry-run]
  * На деплое — см. .github/workflows/deploy.yml. В лог — только id и маска почты.
@@ -22,7 +24,7 @@ import "dotenv/config";
 import { db } from "../src/lib/db";
 import { normalizePlatformSections } from "../src/lib/platform-access";
 import { maskEmail } from "../src/lib/platform-admin";
-import { ensureBuiltinRoles } from "../src/lib/platform-roles.server";
+import { ensureBuiltinRoles, fillBuiltinDiscountLimits } from "../src/lib/platform-roles.server";
 import { setPlatformSections } from "../src/lib/platform-team.server";
 
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -49,6 +51,8 @@ async function main() {
     console.log(`${TAG} roles in DB: ${missing} (built-ins are created on a real run)`);
   } else {
     console.log(`${TAG} built-in roles created: ${await ensureBuiltinRoles()}`);
+    // Лимиты скидки спец-КП (автоворонка CRM, 2026-11-09): только пустые, правки владельца не трогаем.
+    console.log(`${TAG} discount limits filled: ${await fillBuiltinDiscountLimits()}`);
   }
 
   await once("once:platform-roles:crm-section:v1", async () => {

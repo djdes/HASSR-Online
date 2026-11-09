@@ -27,6 +27,8 @@ type Claims = {
   u?: string;
   /** Отправитель: имя, телефон, почта, Telegram, должность (o). */
   d?: { n: string; p?: string; e?: string; t?: string; o?: string };
+  /** Тариф КП, если не «Стандарт» (спец-КП CRM: «Премиум», «ВИП»). */
+  t?: "premium" | "vip";
 };
 
 function secret(): string {
@@ -52,6 +54,7 @@ function toClaims(vars: ProposalVars): Claims {
     if (v.promo.endsAt) claims.p.e = v.promo.endsAt.toISOString();
   }
   if (v.ctaUrl) claims.u = v.ctaUrl;
+  if (v.plan === "premium" || v.plan === "vip") claims.t = v.plan;
   if (v.sender) {
     claims.d = { n: v.sender.name };
     if (v.sender.phone) claims.d.p = v.sender.phone;
@@ -79,6 +82,7 @@ function fromClaims(claims: Claims): ProposalVars {
         }
       : null,
     ctaUrl: claims.u ?? null,
+    ...(claims.t === "premium" || claims.t === "vip" ? { plan: claims.t } : {}),
     sender: claims.d
       ? { name: claims.d.n, phone: claims.d.p ?? null, email: claims.d.e ?? null, telegram: claims.d.t ?? null, ...(claims.d.o ? { position: claims.d.o } : {}) }
       : null,

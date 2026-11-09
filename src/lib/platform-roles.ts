@@ -17,6 +17,8 @@ export type BuiltinRole = {
   scope: PlatformScope;
   salesHead: boolean;
   signatureTitle: string | null;
+  /** Скидка спец-КП без согласования, %. */
+  discountLimit: number;
   sort: number;
 };
 
@@ -34,6 +36,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: false,
     signatureTitle: null,
+    discountLimit: 0,
     sort: 10,
   },
   {
@@ -44,6 +47,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: true,
     signatureTitle: "Коммерческий директор",
+    discountLimit: 25,
     sort: 20,
   },
   {
@@ -54,6 +58,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: true,
     signatureTitle: "Руководитель отдела продаж",
+    discountLimit: 15,
     sort: 30,
   },
   {
@@ -64,6 +69,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "own",
     salesHead: false,
     signatureTitle: "Менеджер по работе с клиентами",
+    discountLimit: 10,
     sort: 40,
   },
   {
@@ -74,6 +80,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: false,
     signatureTitle: "Менеджер по работе с клиентами",
+    discountLimit: 0,
     sort: 50,
   },
   {
@@ -84,6 +91,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: false,
     signatureTitle: "Служба поддержки",
+    discountLimit: 0,
     sort: 60,
   },
   {
@@ -94,6 +102,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: false,
     signatureTitle: null,
+    discountLimit: 0,
     sort: 70,
   },
   {
@@ -104,6 +113,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: false,
     signatureTitle: "Бухгалтерия",
+    discountLimit: 0,
     sort: 80,
   },
   {
@@ -114,6 +124,7 @@ export const BUILTIN_ROLES: readonly BuiltinRole[] = [
     scope: "all",
     salesHead: false,
     signatureTitle: null,
+    discountLimit: 0,
     sort: 90,
   },
 ];
@@ -125,6 +136,7 @@ export const roleInputSchema = z.object({
   scope: z.enum(["all", "own"]),
   salesHead: z.boolean(),
   signatureTitle: z.string().trim().max(120).optional().nullable(),
+  discountLimit: z.number().int().min(0, "Лимит скидки — от 0 до 90 %").max(90, "Лимит скидки — от 0 до 90 %").optional().nullable(),
 });
 
 export type RoleInput = z.infer<typeof roleInputSchema>;
@@ -138,6 +150,8 @@ export type RoleView = {
   scope: PlatformScope;
   salesHead: boolean;
   signatureTitle: string | null;
+  /** Скидка без согласования, %. */
+  discountLimit: number;
   system: boolean;
   members: number;
 };

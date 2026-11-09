@@ -30687,7 +30687,10 @@
       "deleted": "Rol o‘chirildi",
       "failed": "Rolni saqlab bo‘lmadi",
       "formTitleNew": "Yangi rol",
-      "formTitleEdit": "«{name}» roli"
+      "formTitleEdit": "«{name}» roli",
+      "discountLabel": "Kelishuvsiz chegirma, %",
+      "discountHint": "Undan ko‘p bo‘lsa, maxsus taklif limiti yuqori xodimga kelishuvga yuboriladi",
+      "discountBadge": "chegirma {percent} % gacha"
     }
   },
   "rootClientContract": {

@@ -7,7 +7,9 @@ import {
   FileDown,
   Handshake,
   Inbox,
+  Kanban,
   LayoutDashboard,
+  ListTodo,
   type LucideIcon,
   Mail,
   MessageCircle,
@@ -18,6 +20,7 @@ import {
   Send,
   Sparkles,
   UserPlus,
+  Workflow,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -27,11 +30,27 @@ import { STAGE_TONE, channelLabel, stageLabel } from "./crm-format";
 
 const TABS = [
   { href: "/root/crm", label: "Сводка", icon: LayoutDashboard, exact: true },
+  { href: "/root/crm/funnel", label: "Воронка", icon: Kanban },
+  { href: "/root/crm/tasks", label: "Задачи", icon: ListTodo },
   { href: "/root/crm/contacts", label: "Контакты и переписка", icon: Inbox },
-  { href: "/root/crm/mail", label: "Почта и фильтры", icon: Mail },
+  { href: "/root/crm/automation", label: "Автоворонка", icon: Workflow, allScope: true },
+  { href: "/root/crm/mail", label: "Почта и фильтры", icon: Mail, allScope: true },
 ];
 
-export function CrmHeader({ active, title, description, actions }: { active: string; title: string; description: string; actions?: React.ReactNode }) {
+export function CrmHeader({
+  active,
+  title,
+  description,
+  actions,
+  own = false,
+}: {
+  active: string;
+  title: string;
+  description: string;
+  actions?: React.ReactNode;
+  /** Охват «свои»: вкладки только для «всех» (автоворонка, почта) скрыты. */
+  own?: boolean;
+}) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -42,7 +61,7 @@ export function CrmHeader({ active, title, description, actions }: { active: str
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
       <nav aria-label="Разделы CRM" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
-        {TABS.map((tab) => {
+        {TABS.filter((tab) => !(own && tab.allScope)).map((tab) => {
           const current = tab.exact ? active === tab.href : active.startsWith(tab.href);
           return (
             <Link

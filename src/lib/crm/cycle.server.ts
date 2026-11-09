@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { syncAllMailboxes, type MailboxSyncResult } from "@/lib/crm/mailbox.server";
 import { notifyNewMail, runCrmDigest, runCrmReminders } from "@/lib/crm/notify.server";
 import { syncCrmSources, type SourceSyncResult } from "@/lib/crm/sources.server";
+import { runLifecycle, type LifecycleRunResult } from "@/lib/crm/lifecycle/run.server";
+import { runTaskReminders } from "@/lib/crm/lifecycle/tasks.server";
 import { recordCronRun } from "@/lib/platform-alerts";
 
 /**
@@ -18,6 +20,9 @@ export type CrmCycleResult = {
   newMailAlerts: number;
   reminders: { planned: number; sent: number };
   digest: boolean;
+  /** Автоворонка: сделки, письма клиентам, задачи (не чаще раза в 15 минут). */
+  lifecycle: Pick<LifecycleRunResult, "skipped" | "scanned" | "deals" | "messages" | "tasks"> | null;
+  taskReminders: { daily: number; escalated: number };
   errors: string[];
   durationMs: number;
 };
@@ -44,6 +49,9 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
   const newMailAlerts = await step("письма РОП", () => notifyNewMail(mail.ingested, now), 0);
   const reminders = await step("напоминания", () => runCrmReminders(now), { planned: 0, sent: 0 });
   const digest = await step("сводка", () => runCrmDigest(now), false);
+  const lifecycle = await step("автоворонка", () => runLifecycle({ now, force: trigger === "manual" }), null);
+  const taskReminders = await step("задачи", () => runTaskReminders(now), { daily: 0, escalated: 0 });
+  if (lifecycle) for (const error of lifecycle.errors) errors.push(`автоворонка: ${error}`);
 
   for (const source of sources) if (source.error) errors.push(`${source.source}: ${source.error}`);
   for (const mailbox of mail.results) if (mailbox.error) errors.push(`${mailbox.label}: ${mailbox.error}`);
@@ -56,6 +64,8 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
     newMailAlerts,
     reminders,
     digest,
+    lifecycle: lifecycle ? { skipped: lifecycle.skipped, scanned: lifecycle.scanned, deals: lifecycle.deals, messages: lifecycle.messages, tasks: lifecycle.tasks } : null,
+    taskReminders,
     errors,
     durationMs: Date.now() - started,
   };

@@ -22,6 +22,13 @@ const vars: ProposalVars = {
 };
 
 describe("подписанный токен КП", () => {
+  it("тариф спец-КП («Премиум») доходит до веб-версии и PDF, «Стандарт» в ссылку не пишется", () => {
+    const premium = verifyProposalToken(signProposalToken({ ...vars, plan: "premium" }));
+    assert.equal(premium.ok && premium.vars.plan, "premium");
+    const standard = verifyProposalToken(signProposalToken({ ...vars, plan: "standard" }));
+    assert.equal(standard.ok && standard.vars.plan, undefined);
+  });
+
   it("подпись и проверка: переменные возвращаются нормализованными", () => {
     const token = signProposalToken(vars);
     const check = verifyProposalToken(token);

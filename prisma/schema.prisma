@@ -5798,6 +5798,9 @@ model PlatformRole {
   salesHead      Boolean  @default(false)
   /// Должность в подписи КП и писем; пусто — название роли
   signatureTitle String?
+  /// Скидка без согласования, %: больше — задача «Согласовать скидку».
+  /// null — 0. Владелец платформы (ROOT) — без ограничения.
+  discountLimit  Int?
   sort           Int      @default(0)
   system         Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -5805,4 +5808,94 @@ model PlatformRole {
   users          User[]
 
   @@index([sort])
+}
+
+/// Сделка воронки CRM (/root/crm/funnel): один «период решения» аккаунта
+/// биллинга — пробный → первая оплата (`trial`) или оплаченный срок →
+/// продление (`renewal`). Создаёт и двигает автоворонка
+/// (src/lib/crm/lifecycle), менеджер переносит руками.
+model CrmDeal {
+  id               String    @id @default(cuid())
+  /// trial | renewal
+  kind             String
+  /// `trial:<unit>` | `renewal:<unit>:<ГГГГ-ММ-ДД конца срока>` — одна сделка на период.
+  dedupeKey        String    @unique
+  /// Единица биллинга: id аккаунта или `org:<id>`.
+  unitKey          String
+  /// Домашняя организация владельца аккаунта.
+  organizationId   String
+  /// Контакт CRM владельца — переписка в карточке.
+  contactId        String?
+  /// Ответственный менеджер.
+  ownerId          String?
+  /// registered | contract_signed | message_sent | called | won | lost
+  stage            String    @default("registered")
+  /// Колонку поставил человек: автоматика дальше двигает только в won/lost.
+  stageManual      Boolean   @default(false)
+  /// Конец пробного / оплаченного срока, ради которого сделка.
+  periodEnd        DateTime?
+  /// Рекомендация: { tier, cycle, points, discountPercent, amountRub, segment, … }.
+  offerJson        Json?
+  amountRub        Int?
+  contractSignedAt DateTime?
+  messageSentAt    DateTime?
+  calledAt         DateTime?
+  /// Последний счёт на подписку по сделке (PaymentOrder.id).
+  invoiceOrderId   Int?
+  wonAt            DateTime?
+  lostAt           DateTime?
+  lostReason       String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  tasks            CrmTask[]
+
+  @@index([stage, periodEnd])
+  @@index([unitKey])
+  @@index([organizationId])
+  @@index([ownerId])
+  @@index([contactId])
+}
+
+/// Задача CRM ответственному: позвонить, написать, отправить КП, согласовать
+/// скидку. Автоворонка ставит их по сценариям (`scenario`, `dedupeKey`),
+/// менеджер — руками.
+model CrmTask {
+  id             String    @id @default(cuid())
+  dealId         String?
+  deal           CrmDeal?  @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contactId      String?
+  organizationId String?
+  assigneeId     String?
+  /// call | message | offer | approval | invoice | custom
+  kind           String
+  title          String
+  /// Контекст и рекомендация: что видно по аккаунту и что предложить.
+  body           String
+  dueAt          DateTime
+  /// open | done | cancelled
+  status         String    @default("open")
+  /// reached | no_answer | messaged | offer_sent | promised | declined |
+  /// approved | rejected | paid | superseded | obsolete | done
+  result         String?
+  resultNote     String?
+  /// Сценарий автоворонки (trial_t4, grace_last, …) или manual / approval / offer.
+  scenario       String
+  /// Ключ автоворонки — одна задача на сценарий и период.
+  dedupeKey      String?   @unique
+  /// Предложение: { tier, cycle, points, discountPercent, validDays, … } —
+  /// у согласования и «отправить КП».
+  payloadJson    Json?
+  createdById    String?
+  completedById  String?
+  completedAt    DateTime?
+  /// Ответственному сообщили о новой задаче.
+  notifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([assigneeId, status, dueAt])
+  @@index([status, dueAt])
+  @@index([dealId])
+  @@index([contactId])
+  @@index([organizationId])
 }

@@ -18,9 +18,10 @@ type Draft = {
   scope: PlatformScope;
   salesHead: boolean;
   signatureTitle: string;
+  discountLimit: number;
 };
 
-const EMPTY: Draft = { id: null, title: "", description: "", sections: ["crm", "clients"], scope: "own", salesHead: false, signatureTitle: "" };
+const EMPTY: Draft = { id: null, title: "", description: "", sections: ["crm", "clients"], scope: "own", salesHead: false, signatureTitle: "", discountLimit: 0 };
 
 const INPUT =
   "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] text-[#0b1024] outline-none transition-colors placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15";
@@ -44,6 +45,7 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
       scope: role.scope,
       salesHead: role.salesHead,
       signatureTitle: role.signatureTitle ?? "",
+      discountLimit: role.discountLimit ?? 0,
     });
   }
 
@@ -71,6 +73,7 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
         scope: draft.scope,
         salesHead: draft.salesHead,
         signatureTitle: draft.signatureTitle || null,
+        discountLimit: draft.discountLimit,
       }),
     });
     const data = (await response.json().catch(() => null)) as { role?: RoleView; error?: string } | null;
@@ -122,6 +125,11 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
                     <span className="inline-flex items-center gap-0.5 rounded-full bg-[#eef1ff] px-1.5 text-[11px] font-medium text-[#3848c7]">
                       <TrendingUp className="size-3" />
                       {t("access.salesHeadBadge")}
+                    </span>
+                  ) : null}
+                  {role.discountLimit > 0 ? (
+                    <span className="inline-flex items-center rounded-full bg-[#ecfdf3] px-1.5 text-[11px] font-medium text-[#136c3a]" data-role-discount>
+                      {t("roles.discountBadge", { percent: String(role.discountLimit) })}
                     </span>
                   ) : null}
                   {role.scope === "own" ? (
@@ -181,7 +189,21 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
                   maxLength={120}
                 />
               </label>
-              <label className="block text-[13px] text-[#3c4053] sm:col-span-2">
+              <label className="block text-[13px] text-[#3c4053]">
+                {t("roles.discountLabel")}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={90}
+                  value={draft.discountLimit}
+                  onChange={(event) => setDraft({ ...draft, discountLimit: Math.max(0, Math.min(90, Math.floor(Number(event.target.value) || 0))) })}
+                  className={cn(INPUT, "mt-1")}
+                  data-role-discount-limit
+                />
+                <span className="mt-1 block text-[12px] leading-snug text-[#6f7282]">{t("roles.discountHint")}</span>
+              </label>
+              <label className="block text-[13px] text-[#3c4053]">
                 {t("roles.descriptionLabel")}
                 <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} className={cn(INPUT, "mt-1")} maxLength={300} />
               </label>

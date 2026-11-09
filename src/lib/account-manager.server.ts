@@ -68,6 +68,13 @@ export async function setAccountManager(
         data: { ownerId: managerId },
       });
       movedLeads = moved.count;
+      // Открытые сделки и задачи CRM этого клиента — новому менеджеру.
+      const prior = { OR: [{ ownerId: null }, ...(previous && previous !== managerId ? [{ ownerId: previous }] : [])] };
+      await tx.crmDeal.updateMany({ where: { organizationId, stage: { notIn: ["won", "lost"] }, ...prior }, data: { ownerId: managerId } });
+      await tx.crmTask.updateMany({
+        where: { organizationId, status: "open", kind: { not: "approval" }, OR: [{ assigneeId: null }, ...(previous && previous !== managerId ? [{ assigneeId: previous }] : [])] },
+        data: { assigneeId: managerId, notifiedAt: null },
+      });
     }
   });
   await db.auditLog

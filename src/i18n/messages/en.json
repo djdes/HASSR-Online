@@ -30687,7 +30687,10 @@
       "deleted": "Role deleted",
       "failed": "Could not save the role",
       "formTitleNew": "New role",
-      "formTitleEdit": "Role “{name}”"
+      "formTitleEdit": "Role “{name}”",
+      "discountLabel": "Discount without approval, %",
+      "discountHint": "Above it, a special offer goes for approval to someone with a higher limit",
+      "discountBadge": "discount up to {percent}%"
     }
   },
   "rootClientContract": {

@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { requireRoot } from "@/lib/auth-helpers";
-import { loadCrmContact } from "@/lib/crm/queries.server";
+import { loadContactPipeline } from "@/lib/crm/lifecycle/queries.server";
+import { listCrmOwners, loadCrmContact } from "@/lib/crm/queries.server";
 import { canAccessPlatformPath } from "@/lib/platform-access";
 import { platformViewerForSession } from "@/lib/platform-access.server";
 import { displayName } from "../../crm-format";
 import { ContactCardClient } from "./contact-card-client";
+import { PipelinePanel } from "./pipeline-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,9 @@ export default async function CrmContactPage({ params }: { params: Promise<{ id:
   const card = await loadCrmContact(id, { userId: session.user.id, own });
   if (!card) notFound();
   const can = (href: string) => canAccessPlatformPath(viewer, href);
+  const scope = { userId: session.user.id, own };
+  const [pipeline, owners] = await Promise.all([loadContactPipeline(card.contact.id, card.contact.organizationId ?? null), listCrmOwners(scope)]);
+  const nowIso = new Date().toISOString();
   return (
     <div className="space-y-4" data-crm-contact={card.contact.id}>
       <Link href="/root/crm/contacts" className="inline-flex items-center gap-1.5 text-[13px] text-[#3848c7] hover:underline">
@@ -45,7 +50,16 @@ export default async function CrmContactPage({ params }: { params: Promise<{ id:
             : false,
           mailSettings: can("/root/me"),
         }}
-        nowIso={new Date().toISOString()}
+        nowIso={nowIso}
+      />
+      <PipelinePanel
+        pipeline={pipeline}
+        contactId={card.contact.id}
+        contactEmail={card.contact.email}
+        people={owners.map((owner) => ({ id: owner.id, name: owner.name }))}
+        viewerId={session.user.id}
+        own={own}
+        nowIso={nowIso}
       />
     </div>
   );
