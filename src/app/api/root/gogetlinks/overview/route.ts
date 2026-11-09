@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { decimalToNumber, serializeGglAccount } from "@/lib/seo/gogetlinks-sync.server";
+import { getCachedWesetupApplicationsCount } from "@/lib/seo/gogetlinks-applications.server";
 import { ensureDefaultSimilarwebSnapshots } from "@/lib/seo/similarweb-seed";
 
 export const runtime = "nodejs";
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
     slotsRaw,
     articlesRaw,
     similarwebRaw,
+    cachedWebmasterApplicationsCount,
   ] = await Promise.all([
     db.gglAccount.findFirst({ orderBy: { createdAt: "asc" } }),
     db.gglCampaign.findMany({
@@ -119,6 +121,7 @@ export async function GET(request: Request) {
     db.seoCompetitorSnapshot.findMany({
       orderBy: [{ createdAt: "desc" }, { domain: "asc" }],
     }),
+    getCachedWesetupApplicationsCount(),
   ]);
 
   const account = accountRow ? serializeGglAccount(accountRow) : null;
@@ -338,6 +341,11 @@ export async function GET(request: Request) {
         unreadThreads: wesetupThreads.filter((t) => t.unreadCount > 0 || t.needsReply).length,
         pendingApprovalSlots: slots.filter((s) => s.status === "pending_approval").length,
         otherProjectsCampaignsCount,
+        webmasterApplications:
+          cachedWebmasterApplicationsCount ||
+          campaigns
+            .filter((c) => c.isWesetup)
+            .reduce((sum, c) => sum + (c.requestsCount ?? 0), 0),
       },
     },
   });

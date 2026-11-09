@@ -7,6 +7,7 @@ import {
 } from "@/lib/platform-access";
 import { platformViewerForSession } from "@/lib/platform-access.server";
 import { canApproveGglSpend } from "@/lib/seo/gogetlinks-access";
+import { getCachedWesetupApplicationsCount } from "@/lib/seo/gogetlinks-applications.server";
 
 import { SeoLinksClient } from "./links-client";
 
@@ -41,9 +42,10 @@ export default async function RootSeoLinksPage() {
   let accountConnected = false;
   let unreadThreads = 0;
   let pendingSlots = 0;
+  let webmasterApplications = 0;
 
   try {
-    const [account, unreadCount, pendingCount] = await Promise.all([
+    const [account, unreadCount, pendingCount, applicationsCount] = await Promise.all([
       db.gglAccount.findFirst({
         orderBy: { createdAt: "asc" },
         select: { id: true, allowSeoApproveWithinPlan: true },
@@ -60,11 +62,13 @@ export default async function RootSeoLinksPage() {
           plan: { campaign: { isWesetup: true } },
         },
       }),
+      getCachedWesetupApplicationsCount(),
     ]);
     accountConnected = Boolean(account);
     allowSeoApproveWithinPlan = Boolean(account?.allowSeoApproveWithinPlan);
     unreadThreads = unreadCount;
     pendingSlots = pendingCount;
+    webmasterApplications = applicationsCount;
   } catch {
     accountConnected = false;
     allowSeoApproveWithinPlan = false;
@@ -89,7 +93,7 @@ export default async function RootSeoLinksPage() {
   return (
     <SeoLinksClient
       viewer={viewerCapabilities}
-      initialBadgeCount={unreadThreads + pendingSlots}
+      initialBadgeCount={webmasterApplications + unreadThreads + pendingSlots}
       initialHasPendingSlots={pendingSlots > 0}
       initialAccountConnected={accountConnected}
       initialAllowSeoApprove={allowSeoApproveWithinPlan}

@@ -22,9 +22,9 @@ export function SeoSubnav({ active, linksBadgeCount = 0 }: SeoSubnavProps) {
           ? "bg-[#3848c7] text-white"
           : "bg-[#5566f6] text-white"
       }`}
-      title="Непрочитанные диалоги с вебмастерами + готовые к подтверждению слоты"
+      title="Входящие заявки вебмастеров, непрочитанные сообщения и слоты к подтверждению"
     >
-      {linksBadgeCount > 99 ? "99+" : linksBadgeCount}
+      {linksBadgeCount.toLocaleString("ru-RU")}
     </span>
   ) : null;
 
