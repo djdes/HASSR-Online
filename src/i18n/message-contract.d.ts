@@ -25390,7 +25390,7 @@ export type MessageContract = {
       "title": "Свяжитесь с нами",
       "lead": "Расскажите, что нужно, — назовём стоимость под ваш объект.",
       "about": "Услуга: {service}",
-      "call": "Поддержка и продажи",
+      "call": "Отдел продаж",
       "mobileHint": "Мобильный",
       "telegram": "Telegram",
       "telegramHint": "Поддержка в Telegram",
@@ -25403,7 +25403,23 @@ export type MessageContract = {
       "subjectGeneral": "Вопрос о стоимости услуг",
       "priceNote": "Стоимость назовём под ваш объект",
       "titleGeneral": "Контакты",
-      "leadGeneral": "Позвоните или напишите — ответим на вопросы и поможем с настройкой."
+      "leadGeneral": "Выберите, кому написать: поддержка — в мессенджерах, чате и на почте, отдел продаж — по телефону.",
+      "groupsLabel": "Кому написать",
+      "groups": {
+        "support": "Поддержка",
+        "sales": "Отдел продаж",
+        "consulting": "Консалтинг"
+      },
+      "groupLeads": {
+        "support": "Вопросы по работе сервиса — в Telegram, MAX, чате на сайте или на почту.",
+        "sales": "Тарифы, оплата, счёт и договор — позвоните нам.",
+        "consulting": "Подготовка к проверке, ППК и документы ХАССП — с экспертом."
+      },
+      "salesTelegramHint": "Отдел продаж в Telegram",
+      "consulting": "Услуги экспертов",
+      "consultingHint": "Подготовка к проверке, ППК, ХАССП",
+      "consultingTelegramHint": "Консультант в Telegram",
+      "subjectConsulting": "Консалтинг"
     }
   },
   "checklistsUi": {

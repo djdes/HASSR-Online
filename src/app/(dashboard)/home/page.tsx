@@ -20,6 +20,7 @@ import type { NavTone } from "@/lib/nav-tones";
 import { TAGLINE_VIEW_WIDTH, taglineLayout } from "@/lib/wordmark-tagline";
 import { BrandLogo, WORDMARK_INK, WORDMARK_RATIO } from "@/components/brand/logo";
 import { HomeFavorites } from "@/components/home/home-favorites";
+import { ContactUsPanel } from "@/components/contact/contact-us-dialog";
 import { NavIconChip, ToneChip } from "@/components/layout/nav-icons";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,9 @@ const CONTACT_TONES: Record<HomeContact["id"], NavTone> = {
 
 /**
  * Главная кабинета руководителя (эскиз 2026-10-28, лист 1): крупный знак
- * «сетап» и «Ваш электронный ХАССП», справа контакты (поддержка, отдел
- * продаж, консалтинг, телефон), внизу «Начальная настройка» и три слота
+ * «сетап» и «Ваш электронный ХАССП», справа контакты — вкладки «Поддержка /
+ * Отдел продаж / Консалтинг» (2026-11-09: телефоны только у продаж,
+ * поддержка — Telegram, MAX, чат и почта), внизу «Начальная настройка» и три слота
  * «Избранного». Сюда руководитель попадает после входа и регистрации, сюда
  * же ведёт логотип в меню. Остальным — прежняя домашняя.
  *
@@ -58,8 +60,11 @@ export default async function HomePage() {
   // Страница, которая пропала из меню человека, из слота просто уходит.
   const pinned = (user?.homeFavorites ?? []).filter((href) => byHref.has(href)).slice(0, HOME_FAVORITES_MAX);
   // Кабинет партнёра (white-label): наши продажи и консалтинг не показываем,
-  // телефон — партнёра.
-  const contacts = homeContacts(process.env).filter((contact) => !branding || contact.id === "support");
+  // телефон — партнёра. У нас — вкладки контактов, как в окне «Контакты».
+  const allContacts = homeContacts(process.env);
+  const contacts = allContacts.filter((contact) => contact.id === "support");
+  const salesContact = allContacts.find((contact) => contact.id === "sales");
+  const consultingContact = allContacts.find((contact) => contact.id === "consulting");
   const phones = branding
     ? branding.supportPhone
       ? [{ display: branding.supportPhone, tel: branding.supportPhone.replace(/[^+\d]/g, "") }]
@@ -180,58 +185,70 @@ export default async function HomePage() {
           data-home-contacts
         >
           <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("contactsTitle")}</div>
-          <ul className="space-y-1">
-            {contacts.map((contact) => {
-              const body = (
-                <>
-                  <ToneChip
-                    tone={CONTACT_TONES[contact.id]}
-                    icon={contact.external ? Send : MessageCircle}
-                    className="size-9 rounded-xl"
-                    iconClassName="size-4"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-[14.5px] font-medium text-[#0b1024]">{t(`contacts.${contact.id}`)}</span>
-                    <span className="block text-[12.5px] text-[#6f7282]">
-                      {contact.external ? t("via.telegram") : t(`via.${contact.id}`)}
+          {branding ? (
+            <>
+            <ul className="space-y-1">
+              {contacts.map((contact) => {
+                const body = (
+                  <>
+                    <ToneChip
+                      tone={CONTACT_TONES[contact.id]}
+                      icon={contact.external ? Send : MessageCircle}
+                      className="size-9 rounded-xl"
+                      iconClassName="size-4"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-[14.5px] font-medium text-[#0b1024]">{t(`contacts.${contact.id}`)}</span>
+                      <span className="block text-[12.5px] text-[#6f7282]">
+                        {contact.external ? t("via.telegram") : t(`via.${contact.id}`)}
+                      </span>
                     </span>
-                  </span>
-                </>
-              );
-              const className =
-                "flex items-center gap-3 rounded-2xl px-2 py-2 transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
-              return (
-                <li key={contact.id}>
-                  {contact.external ? (
-                    <a href={contact.href} target="_blank" rel="noopener noreferrer" className={className} data-home-contact={contact.id} data-nav-row>
-                      {body}
-                    </a>
-                  ) : (
-                    <Link href={contact.href} className={className} data-home-contact={contact.id} data-nav-row>
-                      {body}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          {phones.map((phone, index) => (
-          <a
-            key={phone.tel}
-            href={`tel:${phone.tel}`}
-            className={`${index === 0 ? "mt-3" : "mt-2"} flex items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] py-2.5 pr-3 pl-2.5 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15`}
-            data-home-phone
-            data-nav-row
-          >
-            <NavIconChip name="Phone" className="size-9 rounded-xl" iconClassName="size-4" />
-            <span className="min-w-0">
-              <span className="block text-[12px] text-[#6f7282]">{index === 0 ? t("phone") : t("mobile")}</span>
-              <span className="block text-[17px] font-semibold tabular-nums tracking-[-0.01em] text-[#0b1024]">
-                {phone.display}
+                  </>
+                );
+                const className =
+                  "flex items-center gap-3 rounded-2xl px-2 py-2 transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+                return (
+                  <li key={contact.id}>
+                    {contact.external ? (
+                      <a href={contact.href} target="_blank" rel="noopener noreferrer" className={className} data-home-contact={contact.id} data-nav-row>
+                        {body}
+                      </a>
+                    ) : (
+                      <Link href={contact.href} className={className} data-home-contact={contact.id} data-nav-row>
+                        {body}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            {phones.map((phone, index) => (
+            <a
+              key={phone.tel}
+              href={`tel:${phone.tel}`}
+              className={`${index === 0 ? "mt-3" : "mt-2"} flex items-center gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] py-2.5 pr-3 pl-2.5 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15`}
+              data-home-phone
+              data-nav-row
+            >
+              <NavIconChip name="Phone" className="size-9 rounded-xl" iconClassName="size-4" />
+              <span className="min-w-0">
+                <span className="block text-[12px] text-[#6f7282]">{index === 0 ? t("phone") : t("mobile")}</span>
+                <span className="block text-[17px] font-semibold tabular-nums tracking-[-0.01em] text-[#0b1024]">
+                  {phone.display}
+                </span>
               </span>
-            </span>
-          </a>
-          ))}
+            </a>
+            ))}
+            </>
+          ) : (
+            <ContactUsPanel
+              compact
+              defaultGroup="support"
+              telegramUrl={salesContact?.external ? salesContact.href : null}
+              consultingUrl={consultingContact?.external ? consultingContact.href : null}
+              consultingHref="/inspection/experts"
+            />
+          )}
         </aside>
       </div>
     </div>

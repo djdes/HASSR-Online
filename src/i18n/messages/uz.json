@@ -25389,7 +25389,7 @@
       "title": "Biz bilan bog‘laning",
       "lead": "Nima kerakligini ayting — obyektingiz uchun narxni aytamiz.",
       "about": "Xizmat: {service}",
-      "call": "Yordam va savdo",
+      "call": "Savdo bo‘limi",
       "mobileHint": "Mobil raqam",
       "telegram": "Telegram",
       "telegramHint": "Telegramda yordam",
@@ -25402,7 +25402,23 @@
       "subjectGeneral": "Xizmatlar narxi bo‘yicha savol",
       "priceNote": "Obyektingiz uchun narxni aytamiz",
       "titleGeneral": "Kontaktlar",
-      "leadGeneral": "Qo‘ng‘iroq qiling yoki yozing — savollarga javob beramiz va sozlashda yordam beramiz."
+      "leadGeneral": "Kimga yozishni tanlang: yordam — messenjer, chat va pochtada, savdo bo‘limi — telefonda.",
+      "groupsLabel": "Kimga yozish",
+      "groups": {
+        "support": "Yordam",
+        "sales": "Savdo bo‘limi",
+        "consulting": "Konsalting"
+      },
+      "groupLeads": {
+        "support": "Xizmat bo‘yicha savollar — Telegram, MAX, saytdagi chat yoki pochta orqali.",
+        "sales": "Tariflar, to‘lov, hisob va shartnoma — bizga qo‘ng‘iroq qiling.",
+        "consulting": "Tekshiruvga tayyorgarlik, ishlab chiqarish nazorati va HACCP hujjatlari — ekspert bilan."
+      },
+      "salesTelegramHint": "Telegramda savdo bo‘limi",
+      "consulting": "Ekspert xizmatlari",
+      "consultingHint": "Tekshiruvga tayyorgarlik, HACCP",
+      "consultingTelegramHint": "Telegramda maslahatchi",
+      "subjectConsulting": "Konsalting"
     }
   },
   "checklistsUi": {

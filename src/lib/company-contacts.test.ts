@@ -54,13 +54,20 @@ test("подвал, реквизиты и политика показывают 
   }
 });
 
-test("окно «Свяжитесь с нами» — мобильный строкой под крупным номером", () => {
+test("окно «Контакты»: телефоны — только во вкладке «Отдел продаж», в «Поддержке» — Telegram, MAX, чат и почта", () => {
   const dialog = src("components/contact/contact-us-dialog.tsx");
-  const big = dialog.indexOf("data-contact-phone");
-  const mobile = dialog.indexOf("data-contact-mobile");
-  const telegram = dialog.indexOf("data-contact-telegram");
-  assert.ok(big > 0 && mobile > big && telegram > mobile);
-  assert.match(dialog, /href=\{`tel:\$\{CONTACT_MOBILE\.tel\}`\}/);
+  const support = dialog.indexOf(`{group === "support" ? (`);
+  const sales = dialog.indexOf(`{group === "sales" ? (`);
+  const consulting = dialog.indexOf(`{group === "consulting" ? (`);
+  assert.ok(support > 0 && sales > support && consulting > sales);
+  const supportPart = dialog.slice(support, sales);
+  const salesPart = dialog.slice(sales, consulting);
+  for (const marker of ["data-contact-telegram", "data-contact-max", "{chat}", "{email}"]) assert.ok(supportPart.includes(marker), marker);
+  assert.ok(!/tel:/.test(supportPart) && !/tel:/.test(dialog.slice(consulting)), "телефоны только у продаж");
+  assert.ok(salesPart.indexOf("data-contact-phone") < salesPart.indexOf("data-contact-mobile"));
+  assert.match(salesPart, /href=\{`tel:\$\{CONTACT_MOBILE\.tel\}`\}/);
+  // Главная кабинета — та же панель с вкладками.
+  assert.match(src("app/(dashboard)/home/page.tsx"), /<ContactUsPanel\s+compact\s+defaultGroup="support"/);
 });
 
 test("почты support@ в сайте и текстах больше нет", () => {

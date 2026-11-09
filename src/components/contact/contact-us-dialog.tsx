@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowUpRight, Mail, MessageCircle, MessagesSquare, Phone, Send } from "lucide-react";
+import { ArrowUpRight, GraduationCap, LifeBuoy, Mail, MessageCircle, MessagesSquare, Phone, Send } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CONTACT_EMAIL, CONTACT_MOBILE, CONTACT_PHONE, CONTACT_TELEGRAM, CONTACT_TELEGRAM_FALLBACK, contactMaxUrl } from "@/lib/contact-us";
+import { CONTACT_EMAIL, CONTACT_MOBILE, CONTACT_PHONE, CONTACT_TELEGRAM, contactMaxUrl } from "@/lib/contact-us";
 import { contactSupport } from "@/lib/support-chat-bus";
 import { COMPANY_MAX_URL } from "@/lib/company-contacts";
 import { cn } from "@/lib/utils";
@@ -15,8 +16,8 @@ import { cn } from "@/lib/utils";
  * окно с крупными контактами. Одно окно на сайт, кабинет и Mini App (П-3):
  * на телефоне `ui/dialog` выезжает листом снизу во всю ширину.
  *
- * Самое крупное — телефон: это то, ради чего окно открыли. Ниже — мобильный
- * (как на визитке), Telegram, почта и чат на сайте с темой про услугу.
+ * С 2026-11-09 контакты разложены по вкладкам «Поддержка / Отдел продаж /
+ * Консалтинг» (`ContactUsPanel`): телефоны — только у продаж.
  */
 
 type ContactUsTarget = {
@@ -31,6 +32,9 @@ const CHAT_AFTER_CLOSE_MS = 200;
 
 const ROW_CLASS =
   "group flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-3 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+/** Узкая колонка главной: строки пониже. */
+const ROW_CLASS_COMPACT =
+  "group flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-3 py-2.5 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 function ContactRow({
   icon,
@@ -56,23 +60,49 @@ function ContactRow({
   );
 }
 
-/** Содержимое окна: крупный телефон, мобильный, Telegram, почта, чат. */
+/** Вкладки контактов: поддержка, отдел продаж, консалтинг (владелец, 2026-11-09). */
+export type ContactGroup = "support" | "sales" | "consulting";
+const GROUPS: readonly ContactGroup[] = ["support", "sales", "consulting"];
+const GROUP_ICONS = { support: LifeBuoy, sales: Phone, consulting: GraduationCap } as const;
+
+/**
+ * Содержимое окна — три вкладки (владелец, 2026-11-09: «номера телефонов —
+ * только отдел продаж; поддержка — Telegram, MAX, чат и почта»):
+ *   • Поддержка — Telegram @wesetup_support, MAX, чат на сайте, почта;
+ *   • Отдел продаж — основной телефон крупно, мобильный, Telegram продаж (если задан);
+ *   • Консалтинг — эксперты (страница или Telegram консультанта), чат и почта с темой.
+ * Открыта сразу: вопрос о цене услуги — продажи, иначе — поддержка.
+ */
 export function ContactUsPanel({
   service = null,
   telegramUrl = null,
+  consultingUrl = null,
+  consultingHref = "/uslugi",
+  defaultGroup,
+  compact = false,
   onBeforeChat,
   className,
 }: ContactUsTarget & {
+  /** Telegram консультанта (`WESETUP_TG_CONSULTING_URL`), если задан. */
+  consultingUrl?: string | null;
+  /** Страница консалтинга внутри сайта. */
+  consultingHref?: string;
+  defaultGroup?: ContactGroup;
+  /** Узкая колонка (главная кабинета): телефон без крупной плашки. */
+  compact?: boolean;
   /** Закрыть окно, в котором лежит панель, до открытия чата. */
   onBeforeChat?: () => void;
   className?: string;
 }) {
   const t = useTranslations("sharedUi.contactUs");
-  const subject = service ? t("subjectService", { service }) : t("subjectGeneral");
-  const telegram = telegramUrl || CONTACT_TELEGRAM_FALLBACK;
-  // MAX рядом с Telegram — страховка на случай ограничений Telegram. Появляется,
-  // когда владелец задал адрес канала поддержки в MAX.
+  const [group, setGroup] = useState<ContactGroup>(defaultGroup ?? (service ? "sales" : "support"));
+  const subject =
+    group === "consulting" ? t("subjectConsulting") : service ? t("subjectService", { service }) : t("subjectGeneral");
+  // Telegram продаж — только когда он отдельный, не поддержка.
+  const salesTelegram = telegramUrl && telegramUrl !== CONTACT_TELEGRAM.url ? telegramUrl : null;
+  // MAX поддержки: адрес из переменной сборки, иначе профиль «СЕТАП».
   const max = contactMaxUrl(process.env.NEXT_PUBLIC_WESETUP_MAX_URL) ?? COMPANY_MAX_URL;
+  const rowClass = compact ? ROW_CLASS_COMPACT : ROW_CLASS;
 
   const openChat = () => {
     if (!onBeforeChat) {
@@ -83,53 +113,110 @@ export function ContactUsPanel({
     window.setTimeout(() => contactSupport(subject), CHAT_AFTER_CLOSE_MS);
   };
 
+  const email = (
+    <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`} className={rowClass} data-contact-email>
+      <ContactRow icon={<Mail className="size-5" aria-hidden />} label={CONTACT_EMAIL} hint={t("emailHint")} />
+    </a>
+  );
+  const chat = (
+    <button type="button" onClick={openChat} className={rowClass} data-contact-chat>
+      <ContactRow icon={<MessageCircle className="size-5" aria-hidden />} label={t("chat")} hint={t("chatHint")} />
+    </button>
+  );
+
   return (
-    <div className={cn("space-y-2.5", className)} data-contact-us-panel>
-      <a
-        href={`tel:${CONTACT_PHONE.tel}`}
-        data-contact-phone
-        className="flex items-center gap-4 rounded-3xl bg-[#5566f6] px-5 py-4 text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25"
-      >
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
-          <Phone className="size-6" aria-hidden />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[13px] font-medium text-white/80">{t("call")}</span>
-          <span className="block whitespace-nowrap text-[24px] font-semibold leading-tight tracking-[-0.02em] tabular-nums sm:text-[28px]">
-            {CONTACT_PHONE.display}
-          </span>
-        </span>
-      </a>
+    <div className={cn("space-y-3", className)} data-contact-us-panel>
+      <div role="tablist" aria-label={t("groupsLabel")} className="grid grid-cols-3 gap-1 rounded-2xl bg-[#f5f6ff] p-1">
+        {GROUPS.map((id) => {
+          const Icon = GROUP_ICONS[id];
+          const active = id === group;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setGroup(id)}
+              data-contact-group={id}
+              className={cn(
+                "flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-center text-[12.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                active ? "bg-white text-[#3848c7] shadow-[0_4px_14px_-8px_rgba(85,102,246,0.55)]" : "text-[#6f7282] hover:bg-white/60 hover:text-[#0b1024]",
+              )}
+            >
+              <Icon className={cn("size-4", active ? "text-[#5566f6]" : "text-[#9b9fb3]")} aria-hidden />
+              {t(`groups.${id}`)}
+            </button>
+          );
+        })}
+      </div>
 
-      <a href={`tel:${CONTACT_MOBILE.tel}`} className={ROW_CLASS} data-contact-mobile>
-        <ContactRow icon={<Phone className="size-5" aria-hidden />} label={CONTACT_MOBILE.display} hint={t("mobileHint")} />
-      </a>
+      <p className="px-1 text-[13px] leading-snug text-[#6f7282]">{t(`groupLeads.${group}`)}</p>
 
-      <a href={telegram} target="_blank" rel="noopener noreferrer" className={ROW_CLASS} data-contact-telegram>
-        <ContactRow
-          icon={<Send className="size-5" aria-hidden />}
-          label={telegram === CONTACT_TELEGRAM.url ? CONTACT_TELEGRAM.handle : t("telegram")}
-          hint={t("telegramHint")}
-        />
-      </a>
+      <div role="tabpanel" className="space-y-2.5" data-contact-group-panel={group}>
+        {group === "support" ? (
+          <>
+            <a href={CONTACT_TELEGRAM.url} target="_blank" rel="noopener noreferrer" className={rowClass} data-contact-telegram>
+              <ContactRow icon={<Send className="size-5" aria-hidden />} label={CONTACT_TELEGRAM.handle} hint={t("telegramHint")} />
+            </a>
+            {max ? (
+              <a href={max} target="_blank" rel="noopener noreferrer" className={rowClass} data-contact-max>
+                <ContactRow icon={<MessagesSquare className="size-5" aria-hidden />} label={t("max")} hint={t("maxHint")} />
+              </a>
+            ) : null}
+            {chat}
+            {email}
+          </>
+        ) : null}
 
-      {max ? (
-        <a href={max} target="_blank" rel="noopener noreferrer" className={ROW_CLASS} data-contact-max>
-          <ContactRow icon={<MessagesSquare className="size-5" aria-hidden />} label={t("max")} hint={t("maxHint")} />
-        </a>
-      ) : null}
+        {group === "sales" ? (
+          <>
+            {compact ? (
+              <a href={`tel:${CONTACT_PHONE.tel}`} className={rowClass} data-contact-phone>
+                <ContactRow icon={<Phone className="size-5" aria-hidden />} label={CONTACT_PHONE.display} hint={t("call")} />
+              </a>
+            ) : (
+              <a
+                href={`tel:${CONTACT_PHONE.tel}`}
+                data-contact-phone
+                className="flex items-center gap-4 rounded-3xl bg-[#5566f6] px-5 py-4 text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25"
+              >
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+                  <Phone className="size-6" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-medium text-white/80">{t("call")}</span>
+                  <span className="block whitespace-nowrap text-[24px] font-semibold leading-tight tracking-[-0.02em] tabular-nums sm:text-[28px]">
+                    {CONTACT_PHONE.display}
+                  </span>
+                </span>
+              </a>
+            )}
+            <a href={`tel:${CONTACT_MOBILE.tel}`} className={rowClass} data-contact-mobile>
+              <ContactRow icon={<Phone className="size-5" aria-hidden />} label={CONTACT_MOBILE.display} hint={t("mobileHint")} />
+            </a>
+            {salesTelegram ? (
+              <a href={salesTelegram} target="_blank" rel="noopener noreferrer" className={rowClass} data-contact-sales-telegram>
+                <ContactRow icon={<Send className="size-5" aria-hidden />} label={t("telegram")} hint={t("salesTelegramHint")} />
+              </a>
+            ) : null}
+          </>
+        ) : null}
 
-      <a
-        href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`}
-        className={ROW_CLASS}
-        data-contact-email
-      >
-        <ContactRow icon={<Mail className="size-5" aria-hidden />} label={CONTACT_EMAIL} hint={t("emailHint")} />
-      </a>
-
-      <button type="button" onClick={openChat} className={ROW_CLASS} data-contact-chat>
-        <ContactRow icon={<MessageCircle className="size-5" aria-hidden />} label={t("chat")} hint={t("chatHint")} />
-      </button>
+        {group === "consulting" ? (
+          <>
+            {consultingUrl ? (
+              <a href={consultingUrl} target="_blank" rel="noopener noreferrer" className={rowClass} data-contact-consulting-telegram>
+                <ContactRow icon={<Send className="size-5" aria-hidden />} label={t("telegram")} hint={t("consultingTelegramHint")} />
+              </a>
+            ) : null}
+            <Link href={consultingHref} className={rowClass} data-contact-consulting>
+              <ContactRow icon={<GraduationCap className="size-5" aria-hidden />} label={t("consulting")} hint={t("consultingHint")} />
+            </Link>
+            {chat}
+            {email}
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

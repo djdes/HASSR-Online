@@ -25389,7 +25389,7 @@
       "title": "Contact us",
       "lead": "Tell us what you need and we will quote a price for your site.",
       "about": "Service: {service}",
-      "call": "Support and sales",
+      "call": "Sales",
       "mobileHint": "Mobile",
       "telegram": "Telegram",
       "telegramHint": "Support on Telegram",
@@ -25402,7 +25402,23 @@
       "subjectGeneral": "Question about service prices",
       "priceNote": "We will quote a price for your site",
       "titleGeneral": "Contacts",
-      "leadGeneral": "Call or message us — we will answer your questions and help with setup."
+      "leadGeneral": "Choose who to contact: support via messengers, chat and email, sales by phone.",
+      "groupsLabel": "Who to contact",
+      "groups": {
+        "support": "Support",
+        "sales": "Sales",
+        "consulting": "Consulting"
+      },
+      "groupLeads": {
+        "support": "Questions about the service — Telegram, MAX, site chat or email.",
+        "sales": "Plans, payment, invoices and contracts — give us a call.",
+        "consulting": "Inspection prep, production control and HACCP documents — with an expert."
+      },
+      "salesTelegramHint": "Sales on Telegram",
+      "consulting": "Expert services",
+      "consultingHint": "Inspection prep, production control, HACCP",
+      "consultingTelegramHint": "Consultant on Telegram",
+      "subjectConsulting": "Consulting"
     }
   },
   "checklistsUi": {
