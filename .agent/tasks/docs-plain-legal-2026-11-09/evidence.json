@@ -1,0 +1,10 @@
+{
+  "task": "docs-plain-legal-2026-11-09",
+  "verdict": "PASS",
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS" },
+  "checks": {
+    "typecheck": "ok",
+    "test:gate": { "pass": 5912, "fail": 0 },
+    "i18n:check": { "pass": 97, "fail": 0 }
+  }
+}

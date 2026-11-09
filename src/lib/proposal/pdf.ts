@@ -29,7 +29,7 @@ import type { ProposalDesign, ProposalDesignCell } from "./design";
  * новый стиль)» (брендбук сетап 1.0, правка 2026-11-07): белый бланк кита
  * `brand-docs`, строка «Коммерческое предложение · тариф» с датой справа,
  * крупный заголовок слева, «Стоимость за одну точку» тонкими линиями, «Что
- * входит» и «Как начать» (маршрут) рядом, подпись отправителя и QR в рамке.
+ * входит» и «Порядок подключения» (маршрут) рядом, подпись отправителя и QR в рамке.
  * Без прописных с разрядкой; текст абзацев — по ширине; крайние колонки
  * таблиц стоят ровно по краям набора.
  *
@@ -301,7 +301,7 @@ function comparisonTable(ctx: Ctx, x: number, y: number, width: number): number 
   return cursor - y;
 }
 
-/** «Как начать» — фирменный маршрут: пунктир с кольцами, первое кольцо залито. */
+/** «Порядок подключения» — фирменный маршрут: пунктир с кольцами, первое кольцо залито. */
 function timeline(ctx: Ctx, x: number, y: number, width: number): number {
   const { d } = ctx;
   const step = rowH(ctx, 14);
@@ -324,7 +324,7 @@ function timeline(ctx: Ctx, x: number, y: number, width: number): number {
   return nodes[nodes.length - 1] - y + step * 0.75;
 }
 
-/** Подпись отправителя, «Есть вопросы?» с контактами и QR в рамке — три колонки от одной тонкой линии. */
+/** Подпись отправителя, контакты и QR в рамке — три колонки от одной тонкой линии. */
 function signatureRow(ctx: Ctx, y: number): { h: number; qr: { box: PdfBox; module: number } } {
   const { d } = ctx;
   const cols = [13.5, 62, 56];

@@ -50,7 +50,7 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
   doc.text(`Договор №${NBSP}${document.number}`, x, flow.y + 7.4);
   flow.gap(11.6);
   setText(pdf, { size: 10.5, color: C.muted });
-  doc.text("на оказание услуг по предоставлению доступа к сервису WeSetup", x, flow.y + 3.4);
+  doc.text(document.subtitle, x, flow.y + 3.4);
   flow.gap(6.4);
   doc.setDrawColor(...C.border2);
   doc.setLineWidth(0.2);
