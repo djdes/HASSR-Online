@@ -29,7 +29,11 @@ export const PLATFORM_SECTION_KEYS = [
 export type PlatformSectionKey = (typeof PLATFORM_SECTION_KEYS)[number];
 
 /** Who may open a path: a section, only the superadmin, or any panel user. */
-export type PlatformGate = PlatformSectionKey | "superadmin" | "self";
+/**
+ * `administrator` — owner or a person with every section (preset
+ * «Администратор»): entering a client's cabinet («Войти»).
+ */
+export type PlatformGate = PlatformSectionKey | "superadmin" | "administrator" | "self";
 
 export type PlatformSection = {
   key: PlatformSectionKey;
@@ -206,7 +210,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/team", gate: "superadmin" },
   // Назначить переводчика = открыть ему вкладку «Переводы» панели (2026-11-09).
   { pattern: "/api/root/translators", gate: "superadmin" },
-  { pattern: "/api/root/impersonate", gate: "superadmin" },
+  // «Войти» в кабинет клиента — владелец и администратор (2026-11-09).
+  { pattern: "/api/root/impersonate", gate: "administrator" },
   { pattern: "/api/root/telegram", gate: "superadmin" },
 
   // Personal settings (own sending mailbox) — every panel user.
@@ -309,6 +314,7 @@ export function canAccessPlatformPath(viewer: PlatformViewer, path: string, meth
   if (gate === null) return false;
   if (viewer.superadmin) return true;
   if (gate === "superadmin") return false;
+  if (gate === "administrator") return canEnterClientCabinets(viewer);
   if (gate === "self") return viewer.sections.length > 0;
   if (!viewer.sections.includes(gate)) return false;
   if (viewer.scope === "own" && matchPlatformRule(path, method)?.allScope) return false;
@@ -375,5 +381,26 @@ export function matchPlatformPreset(sections: readonly PlatformSectionKey[]): Pl
  * регистрации, оплаты, обращения и сбои — на почту и в Telegram.
  */
 export function isPlatformAdministrator(user: { isRoot: boolean; platformSections: readonly string[] }): boolean {
-  return user.isRoot || PLATFORM_SECTION_KEYS.every((key) => user.platformSections.includes(key));
+  return user.isRoot || isFullSectionSet(user.platformSections);
+}
+
+function isFullSectionSet(sections: readonly string[]): boolean {
+  return PLATFORM_SECTION_KEYS.every((key) => sections.includes(key));
+}
+
+/**
+ * Кнопка «Войти» в кабинет клиента: владелец или администратор платформы
+ * (все разделы и охват «все клиенты» — с охватом «свои» в чужой кабинет не пускаем).
+ */
+export function canEnterClientCabinets(viewer: PlatformViewer): boolean {
+  return viewer.superadmin || (isFullSectionSet(viewer.sections) && viewer.scope !== "own");
+}
+
+/**
+ * То же по JWT-токену (proxy, перевыпуск cookie): `actingAsOrganizationId`
+ * действует только у владельца и администратора. Разделы в токене
+ * перечитываются из БД на каждом обновлении сессии.
+ */
+export function canImpersonateFromToken(token: { isRoot?: unknown; platformSections?: unknown }): boolean {
+  return token.isRoot === true || isFullSectionSet(normalizePlatformSections(token.platformSections));
 }

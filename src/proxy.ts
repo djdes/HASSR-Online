@@ -9,7 +9,7 @@ import {
   isStaffRestrictedWebPath,
 } from "@/lib/role-access";
 import { evaluateDirectoryRequest } from "@/lib/master-directory-access";
-import { canAccessPlatformPath, hasPlatformPanel, normalizePlatformSections, platformHomeHref } from "@/lib/platform-access";
+import { canAccessPlatformPath, canImpersonateFromToken, hasPlatformPanel, normalizePlatformSections, platformHomeHref } from "@/lib/platform-access";
 import { evaluatePointScopeRequest } from "@/lib/point-scope";
 import { deniedRedirectLocation } from "@/lib/denied-notice";
 import {
@@ -321,7 +321,15 @@ export async function proxy(req: NextRequest) {
     // В кабинете клиента партнёр работает как руководство независимо
     // от своей роли в домашней организации.
     // «Разрешение менять настройки» — как руководство (2026-09-22).
-    role: claim || token.canManageSettings === true ? "owner" : typeof token.role === "string" ? token.role : null,
+    // Администратор платформы, вошедший в кабинет клиента («Войти»), — тоже.
+    role:
+      claim ||
+      token.canManageSettings === true ||
+      (typeof token.actingAsOrganizationId === "string" && token.actingAsOrganizationId && canImpersonateFromToken(token))
+        ? "owner"
+        : typeof token.role === "string"
+          ? token.role
+          : null,
     isRoot: token.isRoot === true,
   };
   if (hasFullWorkspaceAccess(actor) || canAccessWebPath(actor, pathname)) {

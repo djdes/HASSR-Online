@@ -8,6 +8,8 @@
  * такой сессии.
  */
 
+import { canImpersonateFromToken } from "@/lib/platform-access";
+
 export type OrgKind = "regular" | "directory";
 
 export const DIRECTORY_ONLY_API_ERROR = "Доступно только в мастер-кабинете";
@@ -16,14 +18,15 @@ export function parseOrgKind(value: unknown): OrgKind {
   return value === "directory" ? "directory" : "regular";
 }
 
-/** Организация, в которой сессия работает: ROOT «Войти как» → переключённая → домашняя. */
+/** Организация, в которой сессия работает: «Войти» владельца/администратора → переключённая → домашняя. */
 export function tokenActiveOrgId(token: {
   isRoot?: unknown;
+  platformSections?: unknown;
   actingAsOrganizationId?: unknown;
   activeOrganizationId?: unknown;
   organizationId?: unknown;
 }): string | null {
-  if (token.isRoot === true && typeof token.actingAsOrganizationId === "string" && token.actingAsOrganizationId) {
+  if (canImpersonateFromToken(token) && typeof token.actingAsOrganizationId === "string" && token.actingAsOrganizationId) {
     return token.actingAsOrganizationId;
   }
   if (typeof token.activeOrganizationId === "string" && token.activeOrganizationId) {

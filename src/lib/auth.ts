@@ -10,7 +10,7 @@ import { verifyTelegramInitData } from "@/lib/telegram-init-data";
 import { telegramSignInMessageFor } from "@/lib/telegram-auth-messages";
 import { sessionCookieName } from "@/lib/auth-cookies";
 import { parsePointScope } from "@/lib/point-scope";
-import { effectivePlatformSections } from "@/lib/platform-access";
+import { canImpersonateFromToken, effectivePlatformSections, isPlatformAdministrator } from "@/lib/platform-access";
 import { twoFactorRequired } from "@/lib/two-factor";
 
 /** User-Agent из мешка заголовков NextAuth (настоящего Request здесь нет). */
@@ -260,6 +260,7 @@ export const authOptions: NextAuthOptions = {
           // партнёр видят всё.
           const home =
             token.isRoot !== true &&
+            !token.actingAsOrganizationId &&
             !token.partnerAccess &&
             (!token.activeOrganizationId || token.activeOrganizationId === token.organizationId);
           const { computePointScope } = await import("@/lib/point-scope.server");
@@ -279,7 +280,7 @@ export const authOptions: NextAuthOptions = {
       // client calls `update({ actingAsOrganizationId: ... })`. NextAuth v4
       // routes that through the jwt callback with trigger === "update".
       if (trigger === "update" && session && typeof session === "object") {
-        if ("actingAsOrganizationId" in session && token.isRoot) {
+        if ("actingAsOrganizationId" in session && canImpersonateFromToken(token)) {
           const next = session.actingAsOrganizationId;
           token.actingAsOrganizationId =
             typeof next === "string" && next.length > 0 ? next : null;
@@ -321,6 +322,26 @@ export const authOptions: NextAuthOptions = {
             : null;
         session.user.partnerAccess = null;
         session.user.orgPresetOverrides = null;
+        // «Войти» в кабинет клиента — владельцу и администратору платформы
+        // (все разделы панели). Администратора перепроверяем по БД на каждом
+        // запросе: сняли разделы — claim гаснет сразу, без перевхода.
+        if (session.user.actingAsOrganizationId && !session.user.isRoot) {
+          const admin = await db.user
+            .findUnique({
+              where: { id: session.user.id },
+              select: { platformSections: true, isActive: true, archivedAt: true, platformRole: { select: { scope: true } } },
+            })
+            .catch(() => null);
+          if (
+            !admin ||
+            !admin.isActive ||
+            admin.archivedAt ||
+            admin.platformRole?.scope === "own" ||
+            !isPlatformAdministrator({ isRoot: false, platformSections: admin.platformSections })
+          ) {
+            session.user.actingAsOrganizationId = null;
+          }
+        }
         session.user.kioskDeviceId =
           token.kiosk === true && typeof token.deviceId === "string" ? token.deviceId : null;
         session.user.canManageSettings = token.canManageSettings === true;
@@ -390,7 +411,6 @@ export const authOptions: NextAuthOptions = {
             }
           }
           const activeOrgId =
-            session.user.isRoot &&
             typeof session.user.actingAsOrganizationId === "string" &&
             session.user.actingAsOrganizationId.length > 0
               ? session.user.actingAsOrganizationId
@@ -430,6 +450,7 @@ export const authOptions: NextAuthOptions = {
               // читает те же точки из токена (выдаются при входе).
               const home =
                 !session.user.isRoot &&
+                !session.user.actingAsOrganizationId &&
                 !session.user.partnerAccess &&
                 (!session.user.activeOrganizationId ||
                   session.user.activeOrganizationId === session.user.organizationId);
@@ -440,6 +461,12 @@ export const authOptions: NextAuthOptions = {
           // В кабинете клиента партнёр видит всё как руководитель;
           // запись при level=view режут middleware и getServerSession.
           if (session.user.partnerAccess) {
+            session.user.permissionPreset = "admin";
+          }
+          // Администратор платформы в кабинете клиента — как руководитель
+          // (владелец там и так всё видит через isRoot).
+          if (session.user.actingAsOrganizationId && !session.user.isRoot) {
+            session.user.role = "owner";
             session.user.permissionPreset = "admin";
           }
         } catch {

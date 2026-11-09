@@ -3,6 +3,8 @@ import { rewriteSessionClaims } from "@/lib/session-token";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { canEnterClientCabinets, canImpersonateFromToken } from "@/lib/platform-access";
+import { platformViewerForSession } from "@/lib/platform-access.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +26,8 @@ async function rewriteSessionToken(
   next: string | null,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   return rewriteSessionClaims({ actingAsOrganizationId: next }, (token) =>
-    token.isRoot === true ? null : "Только ROOT может impersonate",
+    // Выход (null) — всегда; вход — владельцу и администратору платформы.
+    next === null || canImpersonateFromToken(token) ? null : "Вход в кабинет клиента — только владельцу и администратору",
   );
 }
 
@@ -39,7 +42,8 @@ async function rewriteSessionToken(
  */
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.isRoot) {
+  // Владелец или администратор платформы (все разделы) — права из БД.
+  if (!session?.user || !canEnterClientCabinets(await platformViewerForSession(session))) {
     return NextResponse.json({ error: "Not found", errorCode: "ROOT_NOT_FOUND" }, { status: 404 });
   }
 
@@ -87,7 +91,8 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.isRoot) {
+  // Выйти из кабинета клиента может любой, у кого вход включён.
+  if (!session?.user) {
     return NextResponse.json({ error: "Not found", errorCode: "ROOT_NOT_FOUND" }, { status: 404 });
   }
   const target = session.user.actingAsOrganizationId;

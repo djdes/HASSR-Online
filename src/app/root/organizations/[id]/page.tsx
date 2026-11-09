@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { isRequisitesComplete } from "@/lib/closing-documents/types";
 import { platformViewerForSession } from "@/lib/platform-access.server";
-import { canAccessPlatformPath, canUsePlatformSection } from "@/lib/platform-access";
+import { canAccessPlatformPath, canEnterClientCabinets, canUsePlatformSection } from "@/lib/platform-access";
 import { loadClientContacts, type ClientPerson } from "@/lib/root-client-card.server";
 import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
@@ -206,10 +206,10 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               <AccountManagerControl organizationId={org.id} current={accountManager} options={managerOptions} canAssign={canAssignManager} />
             </div>
           </div>
-          {viewer.superadmin ? (
+          {canEnterClientCabinets(viewer) ? (
             <div className="flex flex-wrap items-center gap-2">
               <ImpersonateButton organizationId={org.id} organizationName={org.name} />
-              <DeleteOrgButton organizationId={org.id} organizationName={org.name} />
+              {viewer.superadmin ? <DeleteOrgButton organizationId={org.id} organizationName={org.name} /> : null}
             </div>
           ) : null}
         </div>

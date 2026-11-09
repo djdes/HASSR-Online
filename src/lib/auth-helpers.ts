@@ -136,7 +136,8 @@ export async function requireSuperRoot() {
  */
 export function getActiveOrgId(session: Session): string {
   if (
-    session.user.isRoot &&
+    // «Войти» владельца или администратора платформы. Кому claim не
+    // положен, его гасит session-callback (lib/auth.ts).
     typeof session.user.actingAsOrganizationId === "string" &&
     session.user.actingAsOrganizationId.length > 0
   ) {
@@ -160,7 +161,6 @@ export function getActiveOrgId(session: Session): string {
  */
 export function isImpersonating(session: Session): boolean {
   return (
-    session.user.isRoot === true &&
     typeof session.user.actingAsOrganizationId === "string" &&
     session.user.actingAsOrganizationId.length > 0
   );

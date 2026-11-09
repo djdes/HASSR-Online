@@ -98,6 +98,7 @@ export function MetricsTable({
   now,
   sourceJournalNames,
   canManage = true,
+  canDelete = canManage,
 }: {
   rows: OrgMetrics[];
   /// Момент отрисовки приходит с сервера: Date.now() в рендере расходится
@@ -106,6 +107,8 @@ export function MetricsTable({
   sourceJournalNames: JournalSourceNames;
   /** «Войти» и «Удалить» — только владельцу платформы. */
   canManage?: boolean;
+  /** Корзина в строке — только владельцу; «Войти» — по canManage. */
+  canDelete?: boolean;
 }) {
   const t = useTranslations("rootMetrics");
   const profile = useTranslations("settingsManagement.organizationProfile.form");
@@ -256,7 +259,7 @@ export function MetricsTable({
                   </td>
                   <td className="px-3 py-3 text-right">
                     {canManage ? (
-                      <OrgRowActions organizationId={m.organizationId} organizationName={m.organizationName} usersCount={m.activeUsers} copy={t} />
+                      <OrgRowActions organizationId={m.organizationId} organizationName={m.organizationName} usersCount={m.activeUsers} copy={t} canDelete={canDelete} />
                     ) : (
                       <Link href={`/root/organizations/${m.organizationId}`} aria-label={t("list.open")} className="inline-flex text-[#9b9fb3] hover:text-[#3848c7]">
                         <ChevronRight className="size-4" />

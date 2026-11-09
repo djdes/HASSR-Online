@@ -19,6 +19,7 @@ export function OrgRowActions({
   usersCount,
   documentsCount,
   copy,
+  canDelete = true,
 }: {
   organizationId: string;
   organizationName: string;
@@ -27,6 +28,8 @@ export function OrgRowActions({
   documentsCount?: number;
   /** Only callers with the ROOT metrics message boundary opt in. */
   copy?: RootMetricsCopy;
+  /** Удаление организаций — только владелец платформы. */
+  canDelete?: boolean;
 }) {
   const currentCopy = useRef(copy);
   currentCopy.current = copy;
@@ -68,14 +71,16 @@ export function OrgRowActions({
           )}
           {copy ? copy("actions.enter") : "Войти"}
         </button>
-        <OrgDeleteButton
-          organizationId={organizationId}
-          organizationName={organizationName}
-          usersCount={usersCount}
-          documentsCount={documentsCount}
-          disabled={busy !== null}
-          copy={copy}
-        />
+        {canDelete ? (
+          <OrgDeleteButton
+            organizationId={organizationId}
+            organizationName={organizationName}
+            usersCount={usersCount}
+            documentsCount={documentsCount}
+            disabled={busy !== null}
+            copy={copy}
+          />
+        ) : null}
       </div>
 
     </>

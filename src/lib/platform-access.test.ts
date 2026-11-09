@@ -7,6 +7,8 @@ import {
   PLATFORM_SECTIONS,
   PLATFORM_SECTION_KEYS,
   canAccessPlatformPath,
+  canEnterClientCabinets,
+  canImpersonateFromToken,
   canUseTranslationEditor,
   effectivePlatformSections,
   hasPlatformPanel,
@@ -52,7 +54,7 @@ test("gates: clients card, billing mutations, owner-only actions, unknown paths"
   assert.equal(platformGateFor("/api/root/organizations/org-1", "PATCH"), "billing");
   assert.equal(platformGateFor("/api/root/organizations/org-1", "DELETE"), "superadmin");
   assert.equal(platformGateFor("/api/root/organizations/org-1/balance", "POST"), "billing");
-  assert.equal(platformGateFor("/api/root/impersonate", "POST"), "superadmin");
+  assert.equal(platformGateFor("/api/root/impersonate", "POST"), "administrator");
   assert.equal(platformGateFor("/root/team"), "superadmin");
   assert.equal(platformGateFor("/root/me"), "self");
   assert.equal(platformGateFor("/root/some-new-page"), "superadmin");
@@ -176,4 +178,22 @@ test("translation editor: owner, translator or the «Переводы» section;
   assert.equal(canUseTranslationEditor(person), false);
   assert.equal(canUseTranslationEditor({ ...person, canEditTranslations: true, isActive: false }), false);
   assert.equal(canUseTranslationEditor({ ...person, platformSections: ["translations"], archivedAt: new Date("2026-11-01") }), false);
+});
+
+test("«Войти» в кабинет клиента: владелец и администратор, не частичный набор", () => {
+  const admin = { superadmin: false, sections: PLATFORM_SECTION_KEYS };
+  const support = { superadmin: false, sections: ["clients", "support", "assistant"] as const };
+  assert.equal(canEnterClientCabinets({ superadmin: true, sections: [] }), true);
+  assert.equal(canEnterClientCabinets(admin), true);
+  assert.equal(canEnterClientCabinets(support), false);
+  assert.equal(canEnterClientCabinets({ ...admin, scope: "own" }), false);
+  assert.equal(canAccessPlatformPath(admin, "/api/root/impersonate", "POST"), true);
+  assert.equal(canAccessPlatformPath(support, "/api/root/impersonate", "POST"), false);
+  // Удаление организаций и команда — по-прежнему только владелец.
+  assert.equal(canAccessPlatformPath(admin, "/api/root/organizations/org-1", "DELETE"), false);
+  assert.equal(canAccessPlatformPath(admin, "/root/team"), false);
+  assert.equal(canImpersonateFromToken({ isRoot: true }), true);
+  assert.equal(canImpersonateFromToken({ platformSections: [...PLATFORM_SECTION_KEYS] }), true);
+  assert.equal(canImpersonateFromToken({ platformSections: ["clients", "support"] }), false);
+  assert.equal(canImpersonateFromToken({}), false);
 });
