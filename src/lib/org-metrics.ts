@@ -37,8 +37,8 @@ export type OrgMetrics = {
   /// Сколько точек заявила организация при регистрации.
   locationsCount: number;
   inn: string | null;
-  /// Демо-песочница владельца аккаунта: данные тестовые, MRR не считаем,
-  /// удалится в demoExpiresAt (cron purge-demo-orgs).
+  /// Общая демо-организация: данные тестовые, MRR не считаем,
+  /// переустановится в demoExpiresAt (cron purge-demo-orgs).
   isDemo: boolean;
   demoExpiresAt: string | null;
   /// Мастер-кабинет справочников пула (Organization.kind="directory") —

@@ -10,7 +10,7 @@ PostgreSQL 16, `prisma db push`, `seed.ts`, тестовая организац�
 | AC2 Лист-памятка | PASS | `/dashboard/journals-memo`: 46 строк по алфавиту, слева название, справа периодичность; шапка — слева организация (логотип или название), справа знак WeSetup; `raw/memo-desktop.png`, `raw/memo-phone-360.png` (прокрутки вбок нет). |
 | AC3 Один лист А4 | PASS | PDF из Chromium по правилам печати страницы: полный каталог (46 журналов) — 1 страница, `raw/memo-a4.pdf`, `raw/memo-a4-preview-1.png`. На бумаге нет меню, шапки кабинета, кнопок и ссылки «Перейти к содержимому». |
 | AC4 Языки | PASS | Подписи в ru/en/uz, `npm run i18n:check` — exit 0, `raw/i18n-check.txt`. |
-| AC5 Проверки | PASS | `npm run typecheck` — exit 0 (`raw/typecheck.txt`); `npm run test:gate` — 5912 pass, 0 fail (`raw/test-gate.txt`); eslint по изменённым файлам — чисто (`raw/eslint.txt`); `src/lib/journals-memo.test.ts`. |
+| AC5 Проверки | PASS | `npm run typecheck` — exit 0 (`raw/typecheck.txt`); `npm run test:gate` — 5916 pass, 0 fail (`raw/test-gate.txt`); eslint по изменённым файлам — чисто (`raw/eslint.txt`); `src/lib/journals-memo.test.ts`. |
 
 ## Найдено по дороге
 

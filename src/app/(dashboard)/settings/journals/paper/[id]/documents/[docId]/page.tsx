@@ -9,6 +9,8 @@ import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
 import { paperDocumentVisibleWhere } from "@/lib/paper-journal-point";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 import { PageCrumbs } from "@/components/layout/page-nav";
+import { PointMismatchNotice } from "@/components/layout/point-mismatch-notice";
+import { findPointMismatch } from "@/lib/document-point-access";
 import { PaperJournalEditor } from "../../paper-journal-editor";
 import { PaperDocumentHeader } from "./paper-document-header";
 
@@ -48,6 +50,11 @@ export default async function PaperDocumentPage({
     }),
   ]);
   if (!document) notFound();
+  // В шапке выбрана другая точка — ошибка и переход вместо документа (2026-11-09).
+  const mismatch = await findPointMismatch(session, document.buildingId);
+  if (mismatch) {
+    return <PointMismatchNotice kind="document" mismatch={mismatch} listHref={`/settings/journals/paper/${journal.id}`} />;
+  }
   // Люди для подсказок ФИО — сотрудники точки документа (и без точек), как
   // строки электронного документа точки.
   const staffAtPoint = pointRowsWhere(await documentRowsPointId(organizationId, document.buildingId)).staff;

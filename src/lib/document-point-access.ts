@@ -1,6 +1,6 @@
 import type { Session } from "next-auth";
 import { loadBuildingContext } from "@/lib/active-building";
-import type { BuildingContext } from "@/lib/building-scope";
+import { viewedPointId, type BuildingContext } from "@/lib/building-scope";
 
 /**
  * Документ точки открывается только тем, кому эта точка доступна
@@ -48,6 +48,52 @@ export async function canSeeDocumentPoint(
 ): Promise<boolean> {
   if (!documentBuildingId) return true;
   return documentPointVisible(await loadBuildingContext(session), documentBuildingId);
+}
+
+export type PointMismatch = {
+  /** Точка объекта (документа, записи, партии). */
+  pointId: string;
+  /** Её название; null — точки нет среди доступных человеку. */
+  pointName: string | null;
+  /** Торговая точка, выбранная в шапке. */
+  selectedName: string;
+  /** Точку объекта можно выбрать в шапке — она доступна человеку. */
+  canSwitch: boolean;
+};
+
+/**
+ * Объект одной точки открыт, а в шапке выбрана другая (владелец, 2026-11-09:
+ * «открыл журнал, переключил точку — журнал остался тем же, должна быть
+ * ошибка»). Расхождение — только когда точки включены, у объекта есть точка,
+ * человек смотрит на торговую точку (`viewedPointId`) и она другая. Общий
+ * объект, выключенные точки и «Вся организация» (офис) — расхождения нет.
+ * Доступ к точке объекта проверяют до этого (`documentPointVisible`): здесь
+ * только подсказка экрана, запись в API не закрывается.
+ */
+export function pointMismatch(
+  context: Pick<BuildingContext, "enabled" | "organizationView" | "activeBuildingId" | "activeBuilding" | "buildings">,
+  objectBuildingId: string | null | undefined,
+): PointMismatch | null {
+  if (!objectBuildingId) return null;
+  const viewed = viewedPointId(context);
+  if (!viewed || viewed === objectBuildingId) return null;
+  const point = context.buildings.find((building) => building.id === objectBuildingId) ?? null;
+  return {
+    pointId: objectBuildingId,
+    pointName: point?.name ?? null,
+    selectedName:
+      context.activeBuilding?.name ?? context.buildings.find((building) => building.id === viewed)?.name ?? "",
+    canSwitch: point !== null,
+  };
+}
+
+/** То же для сессии запроса; общий объект — без чтения контекста. */
+export async function findPointMismatch(
+  session: Session,
+  objectBuildingId: string | null | undefined,
+): Promise<PointMismatch | null> {
+  if (!objectBuildingId) return null;
+  return pointMismatch(await loadBuildingContext(session), objectBuildingId);
 }
 
 /**

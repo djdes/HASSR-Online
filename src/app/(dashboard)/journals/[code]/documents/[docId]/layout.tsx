@@ -1,6 +1,6 @@
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { getViewedPointId } from "@/lib/active-building";
-import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { canSeeDocumentPoint, findPointMismatch } from "@/lib/document-point-access";
 import { db } from "@/lib/db";
 import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import {
@@ -73,7 +73,10 @@ export default async function JournalDocumentLayout({
   const showCrumbs =
     Boolean(document) &&
     document?.organizationId === activeOrgId &&
-    (await canSeeDocumentPoint(session, document.buildingId));
+    (await canSeeDocumentPoint(session, document.buildingId)) &&
+    // В шапке выбрана другая точка: страница покажет ошибку, а крошки с
+    // соседними документами точки документа только путали бы (2026-11-09).
+    !(await findPointMismatch(session, document.buildingId));
 
   // Оба списка нужны прямо здесь: из бланка уходят и в соседний журнал,
   // и в соседний документ этого же журнала.
