@@ -14,11 +14,29 @@ const TITLE = "Политика конфиденциальности прило�
 const DESCRIPTION =
   "Политика конфиденциальности Android-приложения «Сетап помощник» для автономной печати этикеток на Bluetooth-принтер.";
 
+import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
+import { ogImages, twitterImages } from "@/lib/og-image";
+
+const OG_IMAGE = { title: TITLE, subtitle: DESCRIPTION, kind: "page" as const, locale: "ru" as const };
+
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "https://wesetup.ru/setup-helper/privacy" },
-  openGraph: { type: "website", siteName: "WeSetup", url: "https://wesetup.ru/setup-helper/privacy", title: TITLE, description: DESCRIPTION },
+  openGraph: {
+    type: "website",
+    siteName: "WeSetup",
+    url: "https://wesetup.ru/setup-helper/privacy",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ogImages(OG_IMAGE),
+  },
+  twitter: {
+    card: DEFAULT_TWITTER_CARD,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: twitterImages(OG_IMAGE),
+  },
 };
 
 const LINK = "text-[#3848c7] underline underline-offset-2 transition-colors hover:text-[#0b1024]";

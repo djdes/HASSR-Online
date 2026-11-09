@@ -77,10 +77,58 @@ export const SAMPLE_USERS = [
 ];
 
 export const SAMPLE_AREAS = [
-  { id: "sample-area-1", name: "Горячий цех" },
-  { id: "sample-area-2", name: "Холодный цех" },
-  { id: "sample-area-3", name: "Моечная" },
-  { id: "sample-area-4", name: "Склад сухих продуктов" },
+  {
+    id: "sample-area-1",
+    name: "Горячий цех",
+    detergent: "Ника-Супер 1,0 %, Део-Хлор 0,05 %",
+    currentScope: [
+      "Производственные столы, плиты и пароконвектомат",
+      "Раковины, полы и сливные трапы",
+    ],
+    generalScope: [
+      "Стены на всю высоту, вытяжные зонты и жироуловители",
+      "Пространство за тепловым оборудованием, двери и светильники",
+    ],
+  },
+  {
+    id: "sample-area-2",
+    name: "Холодный цех",
+    detergent: "Прогресс 0,5 %, Аламинол 1,0 %",
+    currentScope: [
+      "Разделочные столы, слайсер и холодильные столы",
+      "Бактерицидный облучатель и пол",
+    ],
+    generalScope: [
+      "Стены, потолок и вентиляционные решётки",
+      "Холодильные камеры снаружи, уплотнители и стеллажи",
+    ],
+  },
+  {
+    id: "sample-area-3",
+    name: "Моечная",
+    detergent: "Ника-Экстра М 1,0 %, Хлорамин Б 0,5 %",
+    currentScope: [
+      "Моечные ванны и посудомоечная машина",
+      "Столы приёмки посуды, жироуловитель и пол",
+    ],
+    generalScope: [
+      "Стены, кафель и решётки вентиляции",
+      "Пространство под моечными ваннами и инвентарь",
+    ],
+  },
+  {
+    id: "sample-area-4",
+    name: "Склад сухих продуктов",
+    detergent: "Прогресс 0,5 %, Ника-Экстра М 0,5 %",
+    currentScope: [
+      "Полы, проходы между стеллажами и подтоварники",
+      "Входная дверь и ручки",
+    ],
+    generalScope: [
+      "Стеллажи и полки полностью, стены",
+      "Плафоны освещения и вентиляционные каналы",
+    ],
+  },
 ];
 
 export const SAMPLE_EQUIPMENT = [
@@ -437,6 +485,41 @@ export function buildJournalSampleInput(
       id: `sample-row-${code}-${index + 1}`,
       values,
     }));
+  }
+  if (code === "cleaning") {
+    const dateKeys = sampleDateKeys();
+    const matrix: Record<string, Record<string, string>> = {};
+    for (const area of SAMPLE_AREAS) {
+      const row: Record<string, string> = {};
+      for (const dateKey of dateKeys) {
+        const dow = new Date(`${dateKey}T00:00:00Z`).getUTCDay();
+        const isFriday = dow === 5;
+        const isWeekend = dow === 0 || dow === 6;
+        if (isFriday) {
+          row[dateKey] = "G";
+        } else if (isWeekend && area.id === "sample-area-4") {
+          row[dateKey] = "/";
+        } else {
+          row[dateKey] = "T";
+        }
+      }
+      matrix[area.id] = row;
+    }
+    const cleaningSigRow: Record<string, string> = {};
+    const controlSigRow: Record<string, string> = {};
+    dateKeys.forEach((dateKey, idx) => {
+      cleaningSigRow[dateKey] =
+        idx % 2 === 0 ? `uid:${SAMPLE_USERS[4].id}` : `uid:${SAMPLE_USERS[2].id}`;
+      controlSigRow[dateKey] = `uid:${SAMPLE_USERS[0].id}`;
+    });
+    matrix.__cleaning_signature__ = cleaningSigRow;
+    matrix.__control_signature__ = controlSigRow;
+    config.cleaningMode = "rooms";
+    config.selectedRoomIds = SAMPLE_AREAS.map((a) => a.id);
+    config.selectedCleanerUserIds = [SAMPLE_USERS[4].id, SAMPLE_USERS[2].id];
+    config.controlUserId = SAMPLE_USERS[0].id;
+    config.matrix = matrix;
+    config.marks = matrix;
   }
   const document = sampleDocument(code, title, config);
 

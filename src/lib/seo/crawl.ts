@@ -28,7 +28,12 @@ async function fetchPage(publicUrl: string): Promise<{ status: number; html: str
   const started = Date.now();
   try {
     const res = await fetch(`${localBase()}${u.pathname}${u.search}`, {
-      headers: { Host: u.host, "User-Agent": "WeSetup-SEO-Health/1.0", Accept: "text/html" },
+      headers: {
+        Host: u.host,
+        "User-Agent": "WeSetup-SEO-Health/1.0",
+        Accept: "text/html",
+        ...(process.env.DEPLOY_WARM_TOKEN ? { "x-deploy-warm": process.env.DEPLOY_WARM_TOKEN } : {}),
+      },
       redirect: "manual",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -68,7 +73,15 @@ export async function runSeoHealth(urls: string[], options: { force?: boolean } 
     const links = [...linkSet].slice(0, 400);
     const statuses = await mapLimit(links, CONCURRENCY, async (path) => {
       try {
-        const res = await fetch(`${localBase()}${path}`, { method: "HEAD", headers: { Host: "wesetup.ru" }, redirect: "manual", signal: AbortSignal.timeout(TIMEOUT_MS) });
+        const res = await fetch(`${localBase()}${path}`, {
+          method: "HEAD",
+          headers: {
+            Host: "wesetup.ru",
+            ...(process.env.DEPLOY_WARM_TOKEN ? { "x-deploy-warm": process.env.DEPLOY_WARM_TOKEN } : {}),
+          },
+          redirect: "manual",
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
         return [path, res.status] as const;
       } catch {
         return [path, 0] as const;

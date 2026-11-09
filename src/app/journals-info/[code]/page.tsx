@@ -304,6 +304,36 @@ export default async function JournalInfoDetailPage({
               </ul>
             </div>
 
+            {/* HOW TO FILL STEP-BY-STEP */}
+            {guide && guide.steps.length > 0 && (
+              <div className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">
+                <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#3848c7]">
+                  <BookOpenCheck className="size-4" />
+                  {t("howToTitle", { title: journalName })}
+                </h2>
+                <p className="mt-3 text-[15px] leading-[1.6] text-[#3c4053]">
+                  {guide.summary}
+                </p>
+                <ol className="mt-4 space-y-3 text-[15px] leading-[1.6] text-[#3c4053]">
+                  {guide.steps.map((step, index) => (
+                    <li
+                      key={index}
+                      id={`step-${index + 1}`}
+                      className="flex gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3.5"
+                    >
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#5566f6] text-[12px] font-semibold text-white">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <div className="font-semibold text-[#0b1024]">{step.title}</div>
+                        <div className="mt-1 text-[14px] text-[#3c4053]">{step.detail}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
             {/* TIPS */}
             {info.tips.length > 0 && (
               <div className="rounded-3xl border border-[#c8f0d5] bg-[#ecfdf5] p-5 sm:p-7">

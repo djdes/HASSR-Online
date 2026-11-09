@@ -45,9 +45,13 @@ export function unwrap<T>(body: unknown): T {
   const errors = envelope.errors;
   if (Array.isArray(errors) && errors.length > 0) {
     const first = errors[0] ?? {};
+    const cleanMessage = (first.string || "Неизвестная ошибка Topvisor")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
     throw new TopvisorError(
       typeof first.code === "number" ? first.code : 0,
-      first.string || "Неизвестная ошибка Topvisor"
+      cleanMessage
     );
   }
   return (envelope.result ?? null) as T;
