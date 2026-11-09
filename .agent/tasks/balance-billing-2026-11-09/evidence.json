@@ -1,0 +1,15 @@
+{
+  "task": "balance-billing-2026-11-09",
+  "branch": "claude/confident-faraday-3pbaul",
+  "base": "c48666a3",
+  "checkedAt": "2026-11-09",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/balance/payment-ledger.ts", "src/lib/balance/payment-ledger.test.ts", "raw/card-payment.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/balance/auto-renew-core.ts", "src/lib/balance/auto-renew.server.ts", "src/lib/balance/auto-renew-core.test.ts", "raw/job-run-1.txt", "raw/job-run-2.txt", "raw/topup-renew.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["src/components/settings/auto-renew-card.tsx", "src/app/api/settings/auto-renew/route.ts", "raw/browser-check.txt", "raw/02-auto-renew-on.png", "raw/03-auto-renew-off.png"] },
+    "AC4": { "status": "PASS", "evidence": ["src/components/balance/balance-client.tsx", "src/lib/balance/constants.ts", "raw/browser-check.txt", "raw/01-balance-detail.png", "raw/04-phone-balance-detail.png"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/balance/auto-renew.server.ts", "src/lib/billing.server.ts", "raw/job-run-1.txt"], "note": "SMTP not configured locally: emails composed, not delivered" },
+    "AC6": { "status": "PASS", "evidence": ["src/app/oferta/page.tsx"], "note": "LEGAL_VERSION not bumped: owner decides whether to re-ask all managers" },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.log", "raw/test-gate.log", "raw/i18n-check.log", "raw/eslint.log", "raw/focused-tests.log"] }
+  }
+}

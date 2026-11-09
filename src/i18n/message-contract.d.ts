@@ -9805,8 +9805,8 @@ export type MessageContract = {
         "date": "Дата",
         "operation": "Операция",
         "total": "Остаток",
-        "credit": "Кредит (поступило)",
-        "debit": "Дебет (списано)",
+        "credit": "Кредит",
+        "debit": "Дебет",
         "creditTotal": "Поступило: {amount}",
         "debitTotal": "Списано: {amount}"
       }
@@ -17039,7 +17039,7 @@ export type MessageContract = {
       "amount": "Сумма",
       "documents": "Документы",
       "topup": "пополнение баланса",
-      "pointsSpent": "баллами −{amount, number}",
+      "pointsSpent": "с баланса −{amount, number}",
       "promotion": "акция −{percent, number} % (−{amount, number} ₽)",
       "promo": "{code} −{amount, number} ₽",
       "closingPdf": "УПД (PDF)"
@@ -29602,7 +29602,7 @@ export type MessageContract = {
       "colAmount": "Сумма",
       "colDocuments": "Документы",
       "testBadge": "тест",
-      "pointsSpent": "баллами −{points}",
+      "pointsSpent": "с баланса −{points}",
       "invoicePdf": "Счёт (PDF)",
       "howCalculated": "Как считается стоимость",
       "perMonthSuffix": "/мес",

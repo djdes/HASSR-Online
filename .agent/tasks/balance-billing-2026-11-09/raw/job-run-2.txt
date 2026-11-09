@@ -1,0 +1,12 @@
+job: autoRenewed=0 autoRenewShort=0 failed=0
+   -2990 [subscription_charge] Оплата тарифа с баланса: Тариф «Стандарт» на месяц (продление; автопродление с баланса), заказ №1
+   +3000 [manual_adjust] Тестовое пополнение (проверка)
+   +500 [manual_adjust] Компенсация за простой
+   balance=510 ledgerSum=510 subscriptionEnd=2026-12-11T02:30:42.690Z
+   -14970 [subscription_charge] Оплата тарифа: Тариф «Премиум» на месяц, 3 точки, заказ №2
+   +14970 [topup] Пополнение картой, заказ №2
+   balance=10000 ledgerSum=0 subscriptionEnd=2026-12-11T02:30:42.730Z
+   audit billing.auto-renew.short org-dk {"priceRub":14970,"paidUntil":"2026-11-11T02:30:42.730Z","balanceRub":10000}
+   audit billing.auto-renew org-cafe {"orderId":1,"priceRub":2990,"paidUntil":"2026-11-11T02:30:42.690Z","newPaidUntil":"2026-12-11T02:30:42.690Z","balanceAfterRub":510}
+   bell billing.auto-renew-short org-dk: Не хватает 4 970 ₽ на продление подписки
+   bell billing.auto-renewed org-cafe: Подписка продлена с баланса: −2 990 ₽

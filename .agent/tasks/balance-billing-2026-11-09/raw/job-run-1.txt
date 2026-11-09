@@ -1,0 +1,52 @@
+  organizationId: 'org-dk',
+  kind: 'billing.auto_renew_short',
+  owner: 'cmw9fwhbe0000zh7d2b2vl6qw',
+  telegram: false,
+  email: false
+}
+  organizationId: 'org-cafe',
+  accountId: 'cmw9pu9eb0000e47dhjamo7ja',
+  orderId: 1,
+  plan: 'standard',
+  cycle: 'month',
+  points: 1,
+  changeKind: 'renew',
+  subscriptionEnd: '2026-12-11T02:30:42.690Z'
+}
+  organizationId: 'org-cafe',
+  kind: 'billing.auto_renewed',
+  owner: 'cmw9fwhbm0001zh7dny6x3p76',
+  telegram: false,
+  email: false
+}
+  account: 'cmw9pu9eb0000e47dhjamo7ja',
+  payer: 'org-cafe',
+  orderId: 1,
+  priceRub: 2990,
+  paidUntil: '2026-12-11T02:30:42.690Z'
+}
+  dryRun: false,
+  scanned: 2,
+  trialReminded: 0,
+  paidReminded: 0,
+  autoRenewed: 1,
+  autoRenewShort: 1,
+  silentFree: 0,
+  reminded: 0,
+  autoFree: 0,
+  failed: 0
+}
+job: autoRenewed=1 autoRenewShort=1 failed=0
+   org-dk: auto_renew → auto-renew short: 14970 ₽, balance 10000 ₽ (notified)
+   org-cafe: auto_renew → auto-renewed from balance: order #1, 2990 ₽
+cafe ledger:
+   -2990 [subscription_charge] Оплата тарифа с баланса: Тариф «Стандарт» на месяц (продление; автопродление с баланса), заказ №1
+   +3000 [manual_adjust] Тестовое пополнение (проверка)
+   +500 [manual_adjust] Компенсация за простой
+   balance=510 ledgerSum=510 subscriptionEnd=2026-12-11T02:30:42.690Z
+dk ledger:
+   balance=10000 ledgerSum=null subscriptionEnd=2026-11-11T02:30:42.730Z
+   audit billing.auto-renew.short org-dk {"priceRub":14970,"paidUntil":"2026-11-11T02:30:42.730Z","balanceRub":10000}
+   audit billing.auto-renew org-cafe {"orderId":1,"priceRub":2990,"paidUntil":"2026-11-11T02:30:42.690Z","newPaidUntil":"2026-12-11T02:30:42.690Z","balanceAfterRub":510}
+   bell billing.auto-renew-short org-dk: Не хватает 4 970 ₽ на продление подписки
+   bell billing.auto-renewed org-cafe: Подписка продлена с баланса: −2 990 ₽

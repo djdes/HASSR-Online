@@ -9804,8 +9804,8 @@
         "date": "Date",
         "operation": "Transaction",
         "total": "Balance",
-        "credit": "Credit (in)",
-        "debit": "Debit (out)",
+        "credit": "Credit",
+        "debit": "Debit",
         "creditTotal": "Added: {amount}",
         "debitTotal": "Charged: {amount}"
       }
@@ -17038,7 +17038,7 @@
       "amount": "Amount",
       "documents": "Documents",
       "topup": "balance top-up",
-      "pointsSpent": "points −{amount, number}",
+      "pointsSpent": "from balance −{amount, number}",
       "promotion": "promotion −{percent, number}% (−{amount, number} ₽)",
       "promo": "{code} −{amount, number} ₽",
       "closingPdf": "Universal transfer document (PDF)"
@@ -29601,7 +29601,7 @@
       "colAmount": "Amount",
       "colDocuments": "Documents",
       "testBadge": "test",
-      "pointsSpent": "by points −{points}",
+      "pointsSpent": "from balance −{points}",
       "invoicePdf": "Invoice (PDF)",
       "howCalculated": "How the price is calculated",
       "perMonthSuffix": "/month",

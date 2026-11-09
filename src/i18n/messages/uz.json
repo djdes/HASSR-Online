@@ -9804,8 +9804,8 @@
         "date": "Sana",
         "operation": "Amaliyot",
         "total": "Qoldiq",
-        "credit": "Kredit (tushdi)",
-        "debit": "Debet (yechildi)",
+        "credit": "Kredit",
+        "debit": "Debet",
         "creditTotal": "Tushdi: {amount}",
         "debitTotal": "Yechildi: {amount}"
       }
@@ -17038,7 +17038,7 @@
       "amount": "Summa",
       "documents": "Hujjatlar",
       "topup": "balansni to‘ldirish",
-      "pointsSpent": "ballar bilan −{amount, number}",
+      "pointsSpent": "balansdan −{amount, number}",
       "promotion": "aksiya −{percent, number}% (−{amount, number} ₽)",
       "promo": "{code} −{amount, number} ₽",
       "closingPdf": "Universal topshirish hujjati (PDF)"
@@ -29601,7 +29601,7 @@
       "colAmount": "Summa",
       "colDocuments": "Hujjatlar",
       "testBadge": "test",
-      "pointsSpent": "ballar bilan −{points}",
+      "pointsSpent": "balansdan −{points}",
       "invoicePdf": "Hisob-faktura (PDF)",
       "howCalculated": "Narx qanday hisoblanadi",
       "perMonthSuffix": "/oy",
