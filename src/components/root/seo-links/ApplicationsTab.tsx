@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { CheckCircle2, ExternalLink, FileText, Loader2, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -9,11 +9,38 @@ import type { GglApplication, GglApplicationsView, GglSiteCardResult, GglWebmast
 import type { GglCampaignDto } from "./types";
 
 const endpoint = "/api/root/gogetlinks/applications";
+const ordersEndpoint = "/api/root/gogetlinks/orders";
 const PAGE_CHUNK = 40;
 const button = "inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#0b1024] hover:bg-[#f5f6ff] disabled:opacity-50";
 const input = "h-10 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none";
 const metric = (n: number | null) => (n === null ? "—" : n.toLocaleString("ru-RU"));
 const verdicts = { recommended: "Рекомендует", consider: "Рассмотреть", avoid: "Не рекомендует" };
+
+const TARGET_PRESETS = [
+  { url: "https://wesetup.ru/journals-info", label: "Каталог электронных журналов ХАССП (/journals-info)", defaultAnchor: "электронные журналы ХАССП" },
+  { url: "https://wesetup.ru/", label: "Главная WeSetup — ХАССП и СанПиН (/)", defaultAnchor: "wesetup.ru" },
+  { url: "https://wesetup.ru/sanpin-2-3-2-4-4282-26", label: "СанПиН 2.3/2.4.4282-26 для общепита (/sanpin-2-3-2-4-4282-26)", defaultAnchor: "журналы по СанПиН для общепита" },
+  { url: "https://wesetup.ru/calc/journals", label: "Подбор комплекта журналов ХАССП (/calc/journals)", defaultAnchor: "перечень журналов ХАССП для общепита" },
+  { url: "https://wesetup.ru/zhurnal-temperaturnogo-rezhima-holodilnogo-oborudovaniya", label: "Журнал температурного режима холодильников", defaultAnchor: "журнал учета температурного режима холодильного оборудования" },
+  { url: "https://wesetup.ru/gigienicheskiy-zhurnal-sotrudnikov", label: "Гигиенический журнал сотрудников", defaultAnchor: "гигиенический журнал сотрудников общепита" },
+];
+
+interface GeneratedDraft {
+  title: string;
+  announcement: string;
+  bodyHtml: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  briefText: string;
+}
+
+function resolvePlacementFormat(placementType: string): "article" | "note" | "context" {
+  const lower = placementType.toLowerCase();
+  if (lower.includes("контекст")) return "context";
+  if (lower.includes("замет")) return "note";
+  return "article";
+}
 
 async function api<T>(body?: unknown, campaignId?: number): Promise<T> {
   const response = await fetch(
@@ -39,10 +66,12 @@ export function ApplicationsTab({
   campaigns,
   defaultCampaignId,
   onCountChange,
+  onOrderCreated,
 }: {
   campaigns: GglCampaignDto[];
   defaultCampaignId: number | null;
   onCountChange?: (count: number) => void;
+  onOrderCreated?: () => void;
 }) {
   const [campaignId, setCampaignId] = useState<number | undefined>(defaultCampaignId ?? undefined);
   const [view, setView] = useState<GglApplicationsView | null>(null);
@@ -54,6 +83,11 @@ export function ApplicationsTab({
   const [sort, setSort] = useState("recommendations");
   const [visibleCount, setVisibleCount] = useState(PAGE_CHUNK);
   const [selected, setSelected] = useState<GglApplication | null>(null);
+  const [targetUrl, setTargetUrl] = useState(TARGET_PRESETS[0].url);
+  const [anchor, setAnchor] = useState(TARGET_PRESETS[0].defaultAnchor);
+  const [draft, setDraft] = useState<GeneratedDraft | null>(null);
+  const [drafting, setDrafting] = useState(false);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
   const mounted = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -141,6 +175,7 @@ export function ApplicationsTab({
 
   async function openCard(application: GglApplication) {
     setSelected(application);
+    setDraft(null);
     if (!view || cardMap.get(application.siteId)?.card) return;
     setBusy(true);
     try {
@@ -155,6 +190,95 @@ export function ApplicationsTab({
       toast.error(e instanceof Error ? e.message : "Не удалось загрузить карточку");
     } finally {
       if (mounted.current) setBusy(false);
+    }
+  }
+
+  async function handleGenerateDraft() {
+    if (!selected) return;
+    const cleanAnchor = anchor.trim();
+    if (!cleanAnchor) {
+      toast.error("Укажите текст анкора");
+      return;
+    }
+    setDrafting(true);
+    try {
+      const format = resolvePlacementFormat(selected.placementType) === "article" ? "article" : "note";
+      const topicField = cardMap.get(selected.siteId)?.card?.fields.find(f => f.label === "Тематика")?.value;
+      const recReason = recommendations.get(selected.siteId)?.reason;
+      const topicHint = [topicField, recReason].filter(Boolean).join(". ").slice(0, 450) || undefined;
+      const result = await api<{ draft: GeneratedDraft }>({
+        action: "draft",
+        donorDomain: selected.domain,
+        targetUrl,
+        anchor: cleanAnchor,
+        placementFormat: format,
+        topicHint,
+      });
+      if (mounted.current) {
+        setDraft(result.draft);
+        toast.success(format === "article" ? "Черновик статьи готов — проверьте текст перед отправкой" : "ТЗ для вебмастера готово");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось сгенерировать материал");
+    } finally {
+      if (mounted.current) setDrafting(false);
+    }
+  }
+
+  async function handleSubmitOrder() {
+    if (!selected) return;
+    const placementFormat = resolvePlacementFormat(selected.placementType);
+    const cleanAnchor = anchor.trim();
+    if (!cleanAnchor) {
+      toast.error("Укажите текст анкора");
+      return;
+    }
+    if (placementFormat === "article" && (!draft?.title.trim() || !draft?.bodyHtml.trim())) {
+      toast.error("Сначала сгенерируйте или заполните заголовок и текст статьи");
+      return;
+    }
+    setSubmittingOrder(true);
+    try {
+      const activeCampaign = campaigns.find(c => c.gglCampaignId === (view?.campaignId ?? campaignId)) ?? campaigns.find(c => c.isWesetup);
+      const response = await fetch(ordersEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId: activeCampaign?.id,
+          donorSiteId: selected.siteId,
+          donorDomain: selected.domain,
+          placementFormat,
+          maxPriceRub: selected.priceRub ?? 1200,
+          targetUrl,
+          anchor: cleanAnchor,
+          anchorKind: cleanAnchor.toLowerCase().includes("wesetup") ? "url_brand" : "exact",
+          articleDraft:
+            placementFormat === "article" && draft
+              ? {
+                  title: draft.title.trim(),
+                  announcement: draft.announcement.trim(),
+                  bodyHtml: draft.bodyHtml.trim(),
+                  metaTitle: draft.metaTitle.trim(),
+                  metaDescription: draft.metaDescription.trim(),
+                  metaKeywords: draft.metaKeywords.trim(),
+                }
+              : null,
+          briefText: draft?.briefText?.trim() || `Размещение ссылки ${targetUrl} с анкором «${cleanAnchor}» без атрибута nofollow.`,
+          idempotencyKey: `app-${selected.id}-${selected.siteId}-${targetUrl}-${cleanAnchor}`.slice(0, 150),
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        throw new Error(data?.error ?? `Ошибка отправки заявки (${response.status})`);
+      }
+      toast.success(`Заявка на ${selected.domain} отправлена вебмастеру в GoGetLinks`);
+      setSelected(null);
+      setDraft(null);
+      onOrderCreated?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось отправить заявку");
+    } finally {
+      if (mounted.current) setSubmittingOrder(false);
     }
   }
 
@@ -176,7 +300,6 @@ export function ApplicationsTab({
     } catch (e) {
       const status = (e as { status?: number })?.status;
       if (mounted.current && (!status || status === 502 || status === 504)) {
-        // Reverse proxy cut the connection at 60s while server singleFlight continues running: poll for completion
         const pollDeadline = Date.now() + 180_000;
         while (mounted.current && Date.now() < pollDeadline) {
           setProgress("Диспетчер завершает расчёт рекомендаций по всем площадкам…");
@@ -205,6 +328,7 @@ export function ApplicationsTab({
   const cardResult = selected ? cardMap.get(selected.siteId) : null;
   const card = cardResult?.card;
   const selectedRecommendation = selected ? recommendations.get(selected.siteId) : null;
+  const selectedFormat = selected ? resolvePlacementFormat(selected.placementType) : "article";
 
   return (
     <div className="space-y-4">
@@ -244,7 +368,7 @@ export function ApplicationsTab({
         </button>
       </div>
       <p className="text-[13px] leading-relaxed text-[#6f7282]">
-        Входящие предложения вебмастеров до покупки. Список подгружается по мере прокрутки, карточки сайтов — при клике по домену, а анализ всех площадок запускается сразу по всем заявкам без ожидания.
+        Входящие предложения вебмастеров до покупки. Нажмите на выбранный домен, чтобы проверить примеры размещения, сгенерировать статью ИИ под площадку и отправить заявку.
       </p>
       {progress ? (
         <p role="status" className="rounded-2xl bg-[#eef1ff] px-4 py-3 text-[13px] text-[#3848c7]">
@@ -359,7 +483,7 @@ export function ApplicationsTab({
                         <td className="px-4 py-3">{metric(a.trust)}</td>
                         <td className="max-w-[310px] px-4 py-3">
                           {r ? (
-                            <>
+                            <div className="space-y-1.5">
                               <span
                                 className={`font-medium ${
                                   r.verdict === "recommended" ? "text-[#116b2a]" : r.verdict === "avoid" ? "text-[#a13a32]" : "text-[#3848c7]"
@@ -367,8 +491,18 @@ export function ApplicationsTab({
                               >
                                 {verdicts[r.verdict]}
                               </span>
-                              <p className="mt-1 text-[12px] leading-relaxed text-[#6f7282]">{r.reason}</p>
-                            </>
+                              <p className="text-[12px] leading-relaxed text-[#6f7282]">{r.reason}</p>
+                              {r.verdict !== "avoid" ? (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => void openCard(a)}
+                                  className="inline-flex items-center gap-1 text-[12px] font-medium text-[#5566f6] hover:underline"
+                                >
+                                  Подготовить статью и заказать →
+                                </button>
+                              ) : null}
+                            </div>
                           ) : (
                             <span className="text-[#9b9fb3]">{view.analysis ? "Вне короткого списка" : "Анализ не выполнен"}</span>
                           )}
@@ -400,13 +534,16 @@ export function ApplicationsTab({
       <Dialog
         open={!!selected}
         onOpenChange={open => {
-          if (!open) setSelected(null);
+          if (!open) {
+            setSelected(null);
+            setDraft(null);
+          }
         }}
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl border-[#ececf4] bg-white sm:max-w-[760px]">
           <DialogHeader>
             <DialogTitle className="text-[#0b1024]">{selected?.domain}</DialogTitle>
-            <DialogDescription>Характеристики площадки и примеры размещения из GoGetLinks.</DialogDescription>
+            <DialogDescription>Характеристики площадки, примеры и оформление размещения в GoGetLinks.</DialogDescription>
           </DialogHeader>
           {selected ? (
             <div className="space-y-4">
@@ -424,6 +561,136 @@ export function ApplicationsTab({
                   {verdicts[selectedRecommendation.verdict]}: {selectedRecommendation.reason}
                 </p>
               ) : null}
+
+              <section className="space-y-3 rounded-2xl border border-[#dcdfed] bg-[#f8f9ff] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-[14px] font-semibold text-[#0b1024]">Оформление размещения</h3>
+                  <span className="text-[12px] text-[#6f7282]">
+                    Списание только после нажатия «Отправить заявку»
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <select
+                    aria-label="Посадочная страница wesetup.ru"
+                    value={targetUrl}
+                    disabled={drafting || submittingOrder}
+                    onChange={e => {
+                      const nextUrl = e.target.value;
+                      setTargetUrl(nextUrl);
+                      const preset = TARGET_PRESETS.find(p => p.url === nextUrl);
+                      if (preset) setAnchor(preset.defaultAnchor);
+                    }}
+                    className={cn(input, "w-full")}
+                  >
+                    {TARGET_PRESETS.map(p => (
+                      <option key={p.url} value={p.url}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    aria-label="Анкор ссылки"
+                    value={anchor}
+                    disabled={drafting || submittingOrder}
+                    onChange={e => setAnchor(e.target.value)}
+                    placeholder="Анкор ссылки (например, электронные журналы ХАССП)"
+                    className={cn(input, "w-full")}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={drafting || submittingOrder}
+                    onClick={() => void handleGenerateDraft()}
+                    className={cn(button, "border-[#5566f6] bg-white text-[#3848c7] hover:bg-[#eef1ff]")}
+                  >
+                    {drafting ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                    {selectedFormat === "article" ? "Сгенерировать статью ИИ" : "Сгенерировать ТЗ ИИ"}
+                  </button>
+                  {!draft && selectedFormat === "article" ? (
+                    <button
+                      type="button"
+                      disabled={drafting || submittingOrder}
+                      onClick={() =>
+                        setDraft({
+                          title: "",
+                          announcement: "",
+                          bodyHtml: `<p>Практический материал для ${selected.domain} со ссылкой <a href="${targetUrl}">${anchor}</a>.</p>`,
+                          metaTitle: "",
+                          metaDescription: "",
+                          metaKeywords: anchor,
+                          briefText: "Просьба разместить статью с индексируемой ссылкой без атрибута nofollow.",
+                        })
+                      }
+                      className={button}
+                    >
+                      <FileText className="size-4" />
+                      Заполнить вручную
+                    </button>
+                  ) : null}
+                </div>
+                {draft ? (
+                  <div className="space-y-2.5 pt-1">
+                    {selectedFormat === "article" ? (
+                      <>
+                        <input
+                          aria-label="Заголовок статьи"
+                          value={draft.title}
+                          disabled={submittingOrder}
+                          onChange={e => setDraft({ ...draft, title: e.target.value })}
+                          placeholder="Заголовок статьи"
+                          className={cn(input, "w-full font-medium")}
+                        />
+                        <textarea
+                          aria-label="HTML-текст статьи"
+                          rows={8}
+                          value={draft.bodyHtml}
+                          disabled={submittingOrder}
+                          onChange={e => setDraft({ ...draft, bodyHtml: e.target.value })}
+                          placeholder="HTML-текст статьи со встроенной ссылкой <a href=&quot;...&quot;>анкор</a>"
+                          className="w-full rounded-2xl border border-[#dcdfed] bg-white p-3 font-mono text-[12.5px] leading-relaxed text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                        />
+                      </>
+                    ) : null}
+                    <input
+                      aria-label="Комментарий и ТЗ вебмастеру"
+                      value={draft.briefText}
+                      disabled={submittingOrder}
+                      onChange={e => setDraft({ ...draft, briefText: e.target.value })}
+                      placeholder="Комментарий и ТЗ для вебмастера"
+                      className={cn(input, "w-full")}
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <span className="inline-flex items-center gap-1.5 text-[12px] text-[#116b2a]">
+                        <CheckCircle2 className="size-4" />
+                        Ссылка: {targetUrl} · анкор «{anchor}»
+                      </span>
+                      <button
+                        type="button"
+                        disabled={submittingOrder || drafting}
+                        onClick={() => void handleSubmitOrder()}
+                        className={cn(button, "border-[#5566f6] bg-[#5566f6] text-white hover:bg-[#4a5bf0]")}
+                      >
+                        {submittingOrder ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                        Отправить заявку вебмастеру · {metric(selected.priceRub)} ₽
+                      </button>
+                    </div>
+                  </div>
+                ) : selectedFormat !== "article" ? (
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      disabled={submittingOrder || drafting}
+                      onClick={() => void handleSubmitOrder()}
+                      className={cn(button, "border-[#5566f6] bg-[#5566f6] text-white hover:bg-[#4a5bf0]")}
+                    >
+                      {submittingOrder ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                      Отправить заявку вебмастеру · {metric(selected.priceRub)} ₽
+                    </button>
+                  </div>
+                ) : null}
+              </section>
+
               {busy && !card ? (
                 <p role="status" className="text-[13px] text-[#6f7282]">
                   Загружаем полную карточку…

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireRoot } from "@/lib/auth-helpers";
 import { GglAuthError, GglCallError } from "@/lib/seo/gogetlinks-client.server";
 import { analyzeGglWebmasters, getGglApplicationsView, GglApplicationsError, loadGglApplicationCards } from "@/lib/seo/gogetlinks-applications.server";
+import { generateGglArticleDraft, GglAiError } from "@/lib/seo/gogetlinks-article-ai.server";
+import { buildDefaultCandidateSitePages, normalizeWesetupPath } from "@/lib/seo/gogetlinks-planner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,10 +14,19 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("refresh"), campaignId: z.number().int().positive().optional() }).strict(),
   z.object({ action: z.literal("cards"), campaignId: z.number().int().positive(), snapshotId: z.string().regex(/^[a-f0-9]{64}$/), siteIds: z.array(z.number().int().positive()).min(1).max(20).optional() }).strict(),
   z.object({ action: z.literal("analyze"), campaignId: z.number().int().positive(), snapshotId: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+  z.object({
+    action: z.literal("draft"),
+    donorDomain: z.string().trim().min(2).max(200),
+    targetUrl: z.string().trim().min(1).max(400),
+    anchor: z.string().trim().min(1).max(200),
+    placementFormat: z.enum(["article", "note"]).default("article"),
+    topicHint: z.string().trim().max(500).optional(),
+  }).strict(),
 ]);
 
 function failure(error: unknown) {
   if (error instanceof GglApplicationsError) return NextResponse.json({ error: error.message }, { status: error.status });
+  if (error instanceof GglAiError) return NextResponse.json({ error: error.message }, { status: error.status });
   if (error instanceof GglAuthError) return NextResponse.json({ error: error.message }, { status: 422 });
   if (error instanceof GglCallError) return NextResponse.json({ error: error.message }, { status: error.gglClass === "rate" ? 429 : 502 });
   console.error("[ggl-applications]", error instanceof Error ? error.name : "UnknownError");
@@ -31,7 +42,7 @@ export async function GET(request: Request) {
   catch (error) { return failure(error); }
 }
 
-/** All actions only retrieve/cache data or ask the dispatcher for an advisory report. */
+/** All actions only retrieve/cache data or ask the dispatcher for an advisory report / article draft. */
 export async function POST(request: Request) {
   await requireRoot();
   const parsed = schema.safeParse(await request.json().catch(() => null));
@@ -40,6 +51,22 @@ export async function POST(request: Request) {
   try {
     if (data.action === "refresh") return NextResponse.json(await getGglApplicationsView(data.campaignId, true));
     if (data.action === "cards") return NextResponse.json({ cards: await loadGglApplicationCards(data.campaignId, data.snapshotId, data.siteIds) });
+    if (data.action === "draft") {
+      const normPath = normalizeWesetupPath(data.targetUrl) ?? "/journals-info";
+      const pageMeta = buildDefaultCandidateSitePages().find((p) => p.url === normPath);
+      const facts = [...(pageMeta?.facts ?? [])];
+      if (data.topicHint) facts.push(`Контекст площадки-донора (${data.donorDomain}): ${data.topicHint}`);
+      const draft = await generateGglArticleDraft({
+        donorDomain: data.donorDomain,
+        targetUrl: data.targetUrl,
+        targetPageTitle: pageMeta?.title ?? "Электронные журналы ХАССП и СанПиН WeSetup",
+        targetPageFacts: facts,
+        targetKeyword: data.anchor,
+        anchor: data.anchor,
+        placementFormat: data.placementFormat,
+      });
+      return NextResponse.json({ draft });
+    }
     return NextResponse.json({ analysis: await analyzeGglWebmasters(data.campaignId, data.snapshotId) });
   } catch (error) { return failure(error); }
 }

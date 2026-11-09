@@ -344,6 +344,10 @@ export function SeoLinksClient({
               campaigns={overview?.campaigns ?? []}
               defaultCampaignId={overview?.account?.defaultCampaignId ?? null}
               onCountChange={setLiveApplicationsCount}
+              onOrderCreated={() => {
+                void loadOverview(includeOtherProjects);
+                setActiveTab("orders");
+              }}
             />
           ) : null}
           {activeTab === "planner" ? (
