@@ -1,0 +1,75 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Отобрано 67 связанных тестовых файлов для 14 изменённых файлов:
+  • src/app/root/mailing/mailing-presentation.test.ts
+  • src/app/root/mailing/mailing-shell-audience.test.ts
+  • src/app/root/promotions/promotion-presentation.test.ts
+  • src/app/root/reviews/review-presentation.test.ts
+  • src/app/root/services/service-presentation.test.ts
+  • src/app/root/tariffs/tariff-presentation.test.ts
+  • src/components/dashboard/dashboard-journals.test.ts
+  • src/components/journals/document-toolbar-row.test.ts
+  • src/components/landing/qr-player/qr-player.test.ts
+  • src/i18n/access-matrix-localization.test.ts
+  • src/i18n/balance-localization.test.ts
+  • src/i18n/calendar-date.test.ts
+  • src/i18n/catalog-source.test.ts
+  • src/i18n/catalog-validation.test.ts
+  • src/i18n/control-periodicity-presentation.test.ts
+  • src/i18n/dashboard-namespaces.test.ts
+  • src/i18n/email-localization.test.ts
+  • src/i18n/error-surface.test.ts
+  • src/i18n/feature-pages-localization.test.ts
+  • src/i18n/feature-presentation.test.ts
+  • src/i18n/journal-column-templates-localization.test.ts
+  • src/i18n/journal-document-presentation.test.ts
+  • src/i18n/journal-header-localization.test.ts
+  • src/i18n/journal-namespace-localization.test.ts
+  • src/i18n/journal-presentation.test.ts
+  • src/i18n/loading-surface.test.ts
+  • src/i18n/locales.test.ts
+  • src/i18n/localized-components.test.ts
+  • src/i18n/message-contract.test.ts
+  • src/i18n/namespace-bindings.test.ts
+  • src/i18n/notification-messages.test.ts
+  • src/i18n/organization-profile-localization.test.ts
+  • src/i18n/pricing-messages.test.ts
+  • src/i18n/promotion-deadline.test.ts
+  • src/i18n/public-journal-detail-localization.test.ts
+  • src/i18n/public-journal-index-localization.test.ts
+  • src/i18n/public-metadata.test.ts
+  • src/i18n/public-ui-localization.test.ts
+  • src/i18n/qr-scene-localization.test.ts
+  • src/i18n/report-localization.test.ts
+  • src/i18n/settings-hub-localization.test.ts
+  • src/i18n/site-locale.test.ts
+  • src/i18n/translation-preparation.test.ts
+  • src/lib/audit-traceability-pdf-presentation.test.ts
+  • src/lib/bot/handlers/owner-stats-localization.test.ts
+  • src/lib/bot/handlers/owner-stats-operations-localization.test.ts
+  • src/lib/bot/start-response.test.ts
+  • src/lib/hygiene-health-pdf-presentation.test.ts
+  • src/lib/journals-memo.test.ts
+  • src/lib/mailing/kind-fields-presentation.test.ts
+  • src/lib/offline/devices.test.ts
+  • src/lib/offline/offline-logic.test.ts
+  • src/lib/offline/qr-url.test.ts
+  • src/lib/offline/refresh.test.ts
+  • src/lib/offline/sync-policy.test.ts
+  • src/lib/personnel-maintenance-pdf-presentation.test.ts
+  • src/lib/plan-catalog.test.ts
+  • src/lib/report-export.test.ts
+  • src/lib/root-operations-logs-presentation.test.ts
+  • src/lib/sanitation-pest-pdf-presentation.test.ts
+  • src/lib/scan-journal-presentation.test.ts
+  • src/lib/settings-products-presentation.test.ts
+  • src/lib/specialized-hygiene-glass-pdf-presentation.test.ts
+  • src/lib/task-fill-schema-presentation.test.ts
+  • src/lib/tracked-uv-pdf-presentation.test.ts
+  • src/lib/translations/translations.test.ts
+  • src/lib/whats-new-seen.test.ts
+
+=== Targeted test stats (67 files, 27.4s): pass=289, fail=0 ===
+✓ Все затронутые тесты прошли.
