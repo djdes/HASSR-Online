@@ -6905,7 +6905,11 @@
       "seatLimit": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan yuqoriroq tarifga o‘tishni so‘rang va qayta urinib ko‘ring.",
       "seatLimitStandard": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan «Standart»ni ulashni so‘rang va qayta urinib ko‘ring.",
       "seatLimitPremium": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan «Premium»ga o‘tishni so‘rang va qayta urinib ko‘ring.",
-      "seatLimitContact": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan WeSetup qo‘llab-quvvatlash xizmatiga murojaat qilishni so‘rang va qayta urinib ko‘ring."
+      "seatLimitContact": "Hisobni faollashtirib bo‘lmadi: tarifning barcha o‘rinlari band ({activeUsers, number} / {limit, number}). Rahbardan WeSetup qo‘llab-quvvatlash xizmatiga murojaat qilishni so‘rang va qayta urinib ko‘ring.",
+      "setPlaceholder": "Parol (kamida 6 ta belgi)",
+      "confirmPlaceholder": "Parolni qayta kiriting",
+      "show": "Parolni ko‘rsatish",
+      "hide": "Parolni yashirish"
     },
     "welcomeTitle": "Xush kelibsiz, <strong>{name}</strong>!",
     "invitedToOrganization": "Siz <strong>{organization}</strong> tashkilotiga taklif qilindingiz. Tizimga kirish uchun parol o‘rnating.",
@@ -6918,7 +6922,20 @@
       "hiddenDataNote": "Kabinetda ovqatlanish korxonalarining jurnallari va xodimlari ko‘rsatilmaydi — faqat shu ikki ro‘yxat mavjud."
     },
     "loginEmail": "Kirish uchun elektron pochta:",
-    "submitLoading": "Saqlanmoqda…"
+    "submitLoading": "Saqlanmoqda…",
+    "reset": {
+      "title": "Yangi parol",
+      "description": "<strong>{email}</strong> manzili orqali tizimga kirish uchun yangi parol o‘ylab toping.",
+      "setPlaceholder": "Yangi parol (kamida 6 ta belgi)",
+      "confirmPlaceholder": "Yangi parolni qayta kiriting",
+      "submit": "Parolni saqlash va tizimga kirish",
+      "expiredTitle": "Parolni tiklash havolasi muddati tugagan",
+      "expiredMessage": "Bu havolaning amal qilish muddati tugadi. Kirish sahifasida yangi havola so‘rang.",
+      "usedTitle": "Havola allaqachon ishlatilgan",
+      "usedMessage": "Bu havola orqali parol allaqachon o‘zgartirilgan. Yangi parol bilan kiring yoki qayta tiklashni so‘rang.",
+      "missingTitle": "Havola yaroqsiz",
+      "missingMessage": "Xatdagi havolani tekshiring yoki parolni tiklashni qayta so‘rang."
+    }
   },
   "climate": {
     "ui": {

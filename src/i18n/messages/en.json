@@ -6905,7 +6905,11 @@
       "seatLimit": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to move to a higher plan and try again.",
       "seatLimitStandard": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to switch to Standard and try again.",
       "seatLimitPremium": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to move to Premium and try again.",
-      "seatLimitContact": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to contact WeSetup support and try again."
+      "seatLimitContact": "Your account could not be activated: all seats on the plan are taken ({activeUsers, number} of {limit, number}). Ask your manager to contact WeSetup support and try again.",
+      "setPlaceholder": "Password (at least 6 characters)",
+      "confirmPlaceholder": "Repeat password",
+      "show": "Show password",
+      "hide": "Hide password"
     },
     "welcomeTitle": "Welcome, <strong>{name}</strong>!",
     "invitedToOrganization": "You have been invited to <strong>{organization}</strong>. Set a password to sign in.",
@@ -6918,7 +6922,20 @@
       "hiddenDataNote": "Facility logs and staff are not shown in this workspace; only these two lists are available."
     },
     "loginEmail": "Sign-in email:",
-    "submitLoading": "Saving…"
+    "submitLoading": "Saving…",
+    "reset": {
+      "title": "New password",
+      "description": "Create a new password to sign in as <strong>{email}</strong>.",
+      "setPlaceholder": "New password (at least 6 characters)",
+      "confirmPlaceholder": "Repeat new password",
+      "submit": "Save password and sign in",
+      "expiredTitle": "Password reset link expired",
+      "expiredMessage": "This reset link has expired. Request a new link on the sign-in page.",
+      "usedTitle": "Link already used",
+      "usedMessage": "This link has already been used to change the password. Sign in with your new password or request a new reset link.",
+      "missingTitle": "Invalid link",
+      "missingMessage": "Check the link from the email or request a password reset again."
+    }
   },
   "climate": {
     "ui": {
