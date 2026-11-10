@@ -2,12 +2,14 @@ import { NextResponse, after } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit-log";
 import {
+  BLANK_CONSENT_SOURCE,
   BLANK_DOWNLOAD_AUDIT_ACTION,
   BLANK_FORMAT_LABEL,
   blankConsentRows,
   blankPagePath,
   blankRegisterHref,
   buildBlankDownloadAdminText,
+  shouldNotifyBlankDownloadAdmin,
   type BlankFormat,
   type BlankTarget,
 } from "@/lib/blank-download";
@@ -190,23 +192,48 @@ export async function POST(request: Request) {
   if (!emailed) console.warn("[blank-download] email skipped: daily letters limit", { consentId });
 
   after(async () => {
-    await notifyPlatformAdmin(
-      buildBlankDownloadAdminText({
-        title: info.title,
-        format,
-        email,
-        company,
-        escape: escapeTelegramHtml,
-      }),
-      {
-        kind: "blank_download",
-        dedupeKey: `blank_download:${consentId}`,
-        email: false,
-        audience: "sales",
-      },
-    ).catch((error) => {
+    try {
+      const dedupeKey = `blank_download:${email}`;
+      const [previousDownloadsCount, alreadyNotifiedCount] = await Promise.all([
+        db.legalConsent.count({
+          where: {
+            source: BLANK_CONSENT_SOURCE,
+            id: { not: consentId },
+            createdAt: { lte: consentCreatedAt },
+            OR: [
+              { email: { equals: email, mode: "insensitive" } },
+              ...(platformClient?.userId ? [{ userId: platformClient.userId }] : []),
+            ],
+          },
+        }),
+        db.telegramLog.count({
+          where: {
+            kind: "admin:blank_download",
+            dedupeKey,
+            status: { in: ["sent", "queued", "deferred"] },
+          },
+        }),
+      ]);
+      if (shouldNotifyBlankDownloadAdmin(previousDownloadsCount + alreadyNotifiedCount)) {
+        await notifyPlatformAdmin(
+          buildBlankDownloadAdminText({
+            title: info.title,
+            format,
+            email,
+            company,
+            escape: escapeTelegramHtml,
+          }),
+          {
+            kind: "blank_download",
+            dedupeKey,
+            email: false,
+            audience: "sales",
+          },
+        );
+      }
+    } catch (error) {
       console.error("[blank-download] admin telegram notify failed", error);
-    });
+    }
 
     if (!emailed) return;
     const files = [format, ...info.formats.filter((other) => other !== format)].map((fileFormat) => ({

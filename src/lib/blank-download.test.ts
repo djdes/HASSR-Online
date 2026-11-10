@@ -22,6 +22,7 @@ import {
   normalizeBlankEmail,
   parseBlankTargetKey,
   readRememberedBlankEmail,
+  shouldNotifyBlankDownloadAdmin,
 } from "@/lib/blank-download";
 import { BLANK_LIMITS, createBlankDownloadLimiter } from "@/lib/blank-download-limits";
 import { parseBlankDownloadRequest } from "@/lib/blank-download-targets";
@@ -264,4 +265,8 @@ test("уведомление в Telegram-бот при скачивании ша
       "Почта: user@example.com",
     ].join("\n"),
   );
+
+  assert.equal(shouldNotifyBlankDownloadAdmin(0), true, "первое скачивание пользователя — шлём уведомление");
+  assert.equal(shouldNotifyBlankDownloadAdmin(1), false, "повторное скачивание — не спамим в чат");
+  assert.equal(shouldNotifyBlankDownloadAdmin(5), false);
 });

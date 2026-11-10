@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   TopvisorError,
   buildMatrix,
+  mapLogicalRegionsToProject,
   parsePosition,
   parsePositionKey,
   summarize,
@@ -162,5 +163,37 @@ describe("summarize", () => {
       outside: 0,
       tracked: 0,
     });
+  });
+});
+
+describe("mapLogicalRegionsToProject", () => {
+  it("сопоставляет слоты 1/5/2/7 с реальными region.index проекта в Topvisor", () => {
+    const searchers = [
+      {
+        key: 0,
+        name: "Яндекс",
+        enabled: 1,
+        regions: [
+          { index: "11", key: 225, areaName: "Россия", enabled: 1 },
+          { index: "12", key: 213, areaName: "Москва", enabled: 1 },
+        ],
+      },
+      {
+        key: 1,
+        name: "Google",
+        enabled: 1,
+        regions: [
+          { index: "13", key: 225, areaName: "Россия", enabled: 1 },
+          { index: "14", key: 213, areaName: "Москва", enabled: 1 },
+        ],
+      },
+    ];
+
+    assert.deepEqual(mapLogicalRegionsToProject([1, 5], searchers), [12, 11]);
+    assert.deepEqual(mapLogicalRegionsToProject([2, 7], searchers), [14, 13]);
+  });
+
+  it("возвращает исходные индексы, если ответ searchers пуст", () => {
+    assert.deepEqual(mapLogicalRegionsToProject([1, 5], null), [1, 5]);
   });
 });
