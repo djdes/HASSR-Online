@@ -80,7 +80,7 @@ describe("Dependabot не предлагает проверенные и отл�
 
   it("остальные отложенные пакеты тоже в ignore", () => {
     const root = block("npm", "/");
-    for (const name of ["undici", "docx", "api-anything", "remotion", "@remotion/*", "eslint"]) {
+    for (const name of ["undici", "docx", "api-anything", "remotion", "@remotion/*", "eslint", "nodemailer"]) {
       assert.ok(ignored(root, name), `${name} не в ignore`);
     }
     assert.ok(ignored(block("npm", "/mobile"), "typescript"), "typescript в /mobile не в ignore");
