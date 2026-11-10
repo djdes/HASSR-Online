@@ -18,7 +18,7 @@ import { resolveColumns } from "@/lib/journal-columns";
 
 const users = [{ id: "employee-1", name: "O‘tkir", role: "cook" }];
 const config = normalizePerishableRejectionConfig({ rows: [{ id: "original-row", productName: "Custom O‘rik", arrivalDate: "2026-10-15", arrivalTime: "23:30", productionDate: "2026-10-14", manufacturer: "Original manufacturer", supplier: "Original supplier", packaging: "Custom package", quantity: "20 кг", documentNumber: "CERT-001", organolepticResult: "poor_quality", storageCondition: "minus18", expiryDate: "2026-10-16", expiryTime: "11:30", responsiblePerson: "Имя, Своя должность", note: "Original note", signatures: [{ userId: "signer", name: "Original signer", role: "Председатель", signedAt: "2026-10-15T07:00:00Z", method: "session" }] }], productLists: [{ id: "list-1", name: "Original list", items: ["Original item"] }], manufacturers: ["Original manufacturer"], suppliers: ["Original supplier"], showNote: true });
-const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 async function render(locale: Locale, children: ReactNode) {
   return renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router, children: createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children }) }) })).replaceAll("&#x27;", "'");
 }

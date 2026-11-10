@@ -14,7 +14,7 @@ import { EquipmentCalibrationDocumentsClient } from "./equipment-calibration-doc
 import { calibrationDate, calibrationDocumentTitle, calibrationErrorKey, calibrationPositionLabel, checkCalibrationResponse } from "./equipment-calibration-presentation";
 import { calculateNextCalibrationDate, EQUIPMENT_CALIBRATION_DOCUMENT_TITLE, normalizeEquipmentCalibrationConfig } from "@/lib/equipment-calibration-document";
 
-const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 const config = normalizeEquipmentCalibrationConfig({ year: 2026, documentDate: "2026-02-03", approveRole: "Управляющий", approveEmployeeId: "employee-1", approveEmployee: "O‘tkir", rows: [{ id: "row-1", sourceEquipmentId: "equipment-1", equipmentName: "Stored Scale", equipmentNumber: "SN-01", location: "Kitchen A", purpose: "Custom purpose", measurementRange: "20...500 kg", calibrationInterval: 12, lastCalibrationDate: "2025-02-03", note: "Custom note" }] });
 const users = [{ id: "employee-1", name: "O‘tkir", role: "manager" }];
 

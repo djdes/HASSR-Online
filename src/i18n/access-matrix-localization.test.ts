@@ -12,7 +12,7 @@ import { JournalsByPositionMatrix } from "@/components/settings/journals-by-posi
 import { loadMessages } from "@/i18n/messages";
 import { validateCatalog } from "@/i18n/catalog-validation";
 
-const router = { back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
 const ru = JSON.parse(readFileSync("src/i18n/messages/ru.json", "utf8"));
 
 test("access matrix messages match and both matrix UIs render in RU, EN, and Uzbek", async () => {

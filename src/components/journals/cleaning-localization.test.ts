@@ -19,7 +19,7 @@ import { buildDocumentAutoTitle } from "@/lib/journal-document-title";
 import { loadMessages } from "@/i18n/messages";
 
 const router = {
-  back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {},
+  bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {},
 };
 
 test("cleaning journal empty list renders localized empty state for RU, EN, and Uzbek", async () => {
