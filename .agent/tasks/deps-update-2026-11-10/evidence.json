@@ -1,0 +1,43 @@
+{
+  "task": "deps-update-2026-11-10",
+  "spec": "spec.md",
+  "verdict": "PASS_WITH_POSTPONED",
+  "verdict_note": "Every step that shipped passed AC1-AC4. Step 6 (Next 16.4.5 + React 19.3.1) failed AC4 and was reverted (problems.md P1); it is postponed, not shipped.",
+  "final_master": "15f045a79292daf8164f3ae8fd4d45f7fe220470",
+  "production_build": "15f045a",
+  "steps": [
+    {"step": "1", "what": "mobile: store listing rebuild + Capacitor 8.6 (#133)", "pr": 166, "result": "PASS"},
+    {"step": "2", "what": "mobile: @capacitor/assets 4 (#135)", "pr": 167, "result": "PASS"},
+    {"step": "2", "what": "mobile: TypeScript 7 (#137)", "pr": null, "result": "REJECTED", "reason": "ts.transpileModule undefined in TS 7; cap config fails"},
+    {"step": "3", "what": "site: eslint 10 (#139)", "pr": null, "result": "REJECTED", "reason": "config cannot load eslint-plugin-react under eslint 10"},
+    {"step": "4a", "what": "site: server libraries", "pr": 169, "result": "PASS", "evidence": "raw/step4a-*"},
+    {"step": "4b", "what": "site: UI libraries", "pr": 171, "result": "PASS", "evidence": "raw/step4b-*"},
+    {"step": "5", "what": "site: Prisma 7.10.1", "pr": 175, "result": "PASS", "evidence": "raw/step5-*"},
+    {"step": "6", "what": "site: Next 16.4.5 + React 19.3.1", "pr": 179, "result": "FAIL_AC4_REVERTED", "revert_pr": 182,
+     "evidence": ["problems.md", "raw/step6-rollback.md", "raw/step6-build-memory.md"],
+     "reason": "next build OOM on server (default heap ~4.13 GB); 16.4.5 needs ~5.1 GB heap, 16.1.6 ~4.19 GB unconstrained"},
+    {"step": "7", "what": "site: lucide-react 1.68 (#140)", "pr": 184, "result": "PASS", "evidence": "raw/step7-*"},
+    {"step": "7c", "what": "site: Tailwind CSS 4.3.5 (from #183)", "pr": 187, "result": "PASS", "evidence": "raw/step7c-*"},
+    {"step": "8", "what": "CI: actions/checkout v7 + setup-node v7 (#134, #136)", "pr": 189, "result": "PASS", "evidence": "raw/step8-actions.md", "deploy_run": 42840946757}
+  ],
+  "kept_versions": {
+    "next": "16.1.6 (step 6)",
+    "react": "19.2.3 (step 6)",
+    "eslint-config-next": "16.1.6 (16.4.5: +77 React Compiler lint errors)",
+    "undici": "8.1.0 (8.12 breaks Telegram proxy path, telegram-health test)",
+    "docx": "9.7.1 (9.15 adds colour to Word styles, print-colors test)",
+    "remotion": "4.0.528 (promo video only)",
+    "api-anything": "0.3.2 (0.x; GoGetLinks integration not verifiable end-to-end)",
+    "eslint": "9 (step 3)",
+    "typescript (mobile)": "5.9.3 (step 2)"
+  },
+  "final_checks": {
+    "ci_full_suite_on_site_code": {"run": 42836467453, "sha": "bae93c8f", "full_tests": "4/4 shards green"},
+    "last_deploy": {"run": 42840946757, "sha": "15f045a7", "conclusion": "success"},
+    "prod_probes": {"/": 200, "/login": 200, "/pricing": 200, "/journals-info": 200, "/blog": 200, "/api/build-info": 200}
+  },
+  "observations": [
+    "Current master on Next 16.1.6 peaks at ~4.19 GB heap unconstrained, at the edge of the server default; future growth may OOM deploys.",
+    "From this sandbox ~3-5% of HTTPS connections to wesetup.ru stall in the TLS handshake; seen before steps 7-8; control host 0 failures."
+  ]
+}
