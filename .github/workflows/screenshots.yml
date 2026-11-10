@@ -48,7 +48,7 @@ jobs:
           du -sh public/screenshots
 
       - name: Upload screenshots as CI artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wesetup-screenshots-${{ github.run_id }}
           path: public/screenshots
