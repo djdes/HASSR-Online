@@ -1,0 +1,23 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=6080, fail=0
+eslint: errors 41 warnings 220 (эталон master: errors 41 warnings 220)
+build+start: started after 2s, build 7_qk3mZTalPdnWzPknCds, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+
+Step 3 (#196): dotenv 17.4.1 -> 18.0.9 (2026-10-22). c12 (Prisma config loader) and @dotenvx/dotenvx keep
+their own nested dotenv 17.4.2.
+Breaking changes in 18.0.0 checked against the repo: preloading (`node -r dotenv/config`) removed — not used
+anywhere (package.json, workflows, scripts, PM2 commands); .env.vault removed — not used; injection message
+moved to stderr — deploy pipes 2>&1. `import "dotenv/config"` still supported (quiet by default since 18.0.4).
+The site bundle does not use dotenv (Next loads .env itself).
+Runtime checks with DATABASE_URL absent from the shell env (so it must come from .env):
+- require("dotenv").config({quiet:true}) (apply-safe-schema.cjs style) -> DATABASE_URL loaded
+- tsx `import "dotenv/config"` (seeds, telegram-poller) -> DATABASE_URL, NEXTAUTH_SECRET loaded, stderr empty
+- dotenv.config({path:".env", override:false}) -> 5 keys parsed, no error
+- npx prisma validate / prisma db push (prisma.config.ts imports dotenv/config) -> valid, in sync
+- node scripts/apply-safe-schema.cjs --dry-run -> connected, schemaStatements 0
