@@ -1,0 +1,10 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=5955, fail=0
+eslint: errors 41 warnings 218 (эталон: errors 41 warnings 218)
+build+start: started after 1s
+smoke: exit 0
+smoke vs baseline: РАЗЛИЧИЯ: 8 строк
+page errors: 0 страниц с JS-ошибками
