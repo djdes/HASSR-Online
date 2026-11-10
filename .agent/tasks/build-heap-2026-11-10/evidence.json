@@ -1,0 +1,16 @@
+{
+  "task": "build-heap-2026-11-10",
+  "spec": "spec.md",
+  "verdict": "PASS",
+  "pr": 191,
+  "master": "8113e7236079ac62fb04e6dc91da6627bb82a776",
+  "deploy_run": 42851578995,
+  "acceptance": {
+    "AC1": {"result": "PASS", "log_line": "[build] NODE_OPTIONS=--max-old-space-size=8192", "compile": "Compiled successfully in 3.8min"},
+    "AC2": {"result": "PASS", "dependabot_runs": [42851591848, 42851591252, 42851591207], "group_pr_after_change": 194,
+            "group_contents": {"next": "16.1.7", "react": "19.2.9", "react-dom": "19.2.9", "eslint-config-next": "16.1.7", "docx": "9.7.2", "lucide-react": "1.70.0"}},
+    "AC3": {"result": "PASS", "test": "src/lib/deploy-build-memory.test.ts", "pass": 5, "related_tests_pass": 44},
+    "AC4": {"result": "PASS", "typecheck": "clean", "prod_probes": {"/": 200, "/login": 200, "/pricing": 200, "/api/build-info": 200}}
+  },
+  "open_dependabot_prs_for_owner": [192, 193, 194, 195, 196]
+}
