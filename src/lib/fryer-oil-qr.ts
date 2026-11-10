@@ -48,12 +48,14 @@ export async function saveFryerQrEntry(params: {
   input: FryerQrInput;
   dayKey: string;
   timezone: string;
+  /** Момент записи; запись без связи передаёт время устройства. */
+  at?: Date;
 }): Promise<
   | { ok: true; entryId: string; time: string }
   | { ok: false; status: number; error: string; errorCode: "needStart" | "rowChanged" | "saveError" }
 > {
   const { target, equipment, employee, input, dayKey } = params;
-  const time = nowInZone(params.timezone);
+  const time = params.at ? nowInZone(params.timezone, params.at) : nowInZone(params.timezone);
   const row = target.row;
   if (input.phase === "end" && row.kind !== "existing") {
     return { ok: false, status: 409, error: "Сначала отметьте начало жарки", errorCode: "needStart" };

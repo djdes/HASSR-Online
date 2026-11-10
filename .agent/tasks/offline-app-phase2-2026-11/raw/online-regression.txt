@@ -1,0 +1,13 @@
+PASS  QR sticker page opens without a session — status 200
+PASS  online QR reading is accepted as before — status 200 {"ok":true,"touched":1,"humidityTouched":0,"outOfRange":false}
+PASS  an Idempotency-Key without offline headers changes nothing — status 200
+PASS  journal QR page opens without a session — status 200
+PASS  online journal QR record is accepted as before — status 200
+PASS  online PIN check still refuses a wrong PIN — status 401
+PASS  public page / — status 200
+PASS  public page /login — status 200
+PASS  public page /mini/login — status 200
+PASS  public page /pricing — status 200
+PASS  cabinet page /dashboard — status 200
+PASS  cabinet page /journals — status 200
+PASS  cabinet page /mini/me — status 200

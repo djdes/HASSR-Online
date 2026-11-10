@@ -1,75 +1,96 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { CloudOff, ChevronRight } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { CloudOff, RefreshCw } from "lucide-react";
 
+import { refreshOfflineData } from "@/lib/offline/refresh";
 import { getOfflineValue, listOfflineQueue, readStoredPack, subscribeOfflineStore } from "@/lib/offline/store";
 import { canDeliverOfflineItem } from "@/lib/offline/sync-policy";
 import { OFFLINE_APP_PATH } from "@/lib/offline/types";
 
 import { OFFLINE_SHELL_STATE_KEY, type OfflineShellState } from "./offline-sync-agent";
 
-type State = { ready: boolean; reason: string | null; savedAt: number | null; waiting: number };
+type State = { reason: "reasonNoWorker" | "reasonNoPack" | "reasonNoShell" | null; savedAt: number | null; waiting: number };
 
-function formatStamp(at: number): string {
-  return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(at));
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Profile line: is this device ready to work with no network, and how fresh its data is. */
+/** Profile line: is this device ready to work with no network, how fresh its data is, and a button to refresh it. */
 export function OfflineReadyStatus() {
   const { data: session } = useSession();
   const userId = session?.user?.id ?? null;
+  const t = useTranslations("offlineApp.status");
+  const locale = useLocale();
   const [state, setState] = useState<State | null>(null);
+  const [now, setNow] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    const [stored, shell, queue] = await Promise.all([
+      readStoredPack(),
+      getOfflineValue<OfflineShellState>(OFFLINE_SHELL_STATE_KEY),
+      listOfflineQueue(),
+    ]);
+    const hasPack = Boolean(stored && stored.userId === userId);
+    const hasWorker = typeof navigator !== "undefined" && "serviceWorker" in navigator;
+    setNow(Date.now());
+    setState({
+      reason: !hasWorker ? "reasonNoWorker" : !hasPack ? "reasonNoPack" : !shell?.ok ? "reasonNoShell" : null,
+      savedAt: hasPack ? stored!.savedAt : null,
+      waiting: queue.filter((item) => canDeliverOfflineItem(item.ownerUserId, userId)).length,
+    });
+  }, [userId]);
 
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const [stored, shell, queue] = await Promise.all([
-        readStoredPack(),
-        getOfflineValue<OfflineShellState>(OFFLINE_SHELL_STATE_KEY),
-        listOfflineQueue(),
-      ]);
-      if (cancelled) return;
-      const hasPack = Boolean(stored && stored.userId === userId);
-      const hasWorker = typeof navigator !== "undefined" && "serviceWorker" in navigator;
-      const reason = !hasWorker
-        ? "браузер не умеет хранить страницы"
-        : !hasPack
-          ? "данные ещё скачиваются"
-          : !shell?.ok
-            ? "экран ещё сохраняется"
-            : null;
-      setState({
-        ready: reason === null,
-        reason,
-        savedAt: hasPack ? stored!.savedAt : null,
-        waiting: queue.filter((item) => canDeliverOfflineItem(item.ownerUserId, userId)).length,
-      });
-    }
-    void load();
+    // Reading the device store is asynchronous anyway — start it after the effect, not inside it.
+    const first = window.setTimeout(() => void load(), 0);
     const unsubscribe = subscribeOfflineStore(() => void load());
     const timer = window.setInterval(() => void load(), 15_000);
     return () => {
-      cancelled = true;
+      window.clearTimeout(first);
       unsubscribe();
       window.clearInterval(timer);
     };
-  }, [userId]);
+  }, [load]);
 
-  if (!state) return null;
+  if (!state || !userId) return null;
+  const stamp = state.savedAt
+    ? new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(state.savedAt))
+    : null;
+  const stale = Boolean(state.savedAt && now && now - state.savedAt > DAY_MS);
+
   return (
-    <Link href={OFFLINE_APP_PATH} prefetch={false} className="mini-item mini-press" data-testid="offline-ready-status">
+    <div className="mini-item" data-testid="offline-ready-status">
       <CloudOff className="size-5 shrink-0" aria-hidden />
-      <span className="min-w-0 flex-1">
-        <span className="block">{state.ready ? "Готово к работе без связи" : `Без связи пока не готово: ${state.reason}`}</span>
+      <Link href={OFFLINE_APP_PATH} prefetch={false} className="min-w-0 flex-1" aria-label={t("openScreen")}>
+        <span className="block">{state.reason ? t("notReady", { reason: t(state.reason) }) : t("ready")}</span>
         <span className="mini-item-hint block">
-          {state.savedAt ? `Данные от ${formatStamp(state.savedAt)}` : "Данных на устройстве нет"}
-          {state.waiting > 0 ? ` · ждёт отправки: ${state.waiting}` : ""}
+          {stamp ? t("dataFrom", { time: stamp }) : t("noData")}
+          {stale ? ` (${t("stale")})` : ""}
+          {state.waiting > 0 ? ` · ${t("waiting", { count: String(state.waiting) })}` : ""}
         </span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 opacity-60" aria-hidden />
-    </Link>
+      </Link>
+      <button
+        type="button"
+        className="mini-press flex size-11 shrink-0 items-center justify-center rounded-xl"
+        aria-label={refreshing ? t("refreshing") : t("refresh")}
+        title={refreshing ? t("refreshing") : t("refresh")}
+        disabled={refreshing}
+        data-testid="offline-refresh"
+        onClick={() => {
+          setRefreshing(true);
+          void refreshOfflineData(userId, { force: true })
+            .catch(() => "failed")
+            .finally(() => {
+              setRefreshing(false);
+              void load();
+            });
+        }}
+      >
+        <RefreshCw className={`size-5 ${refreshing ? "animate-spin" : ""}`} aria-hidden />
+      </button>
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { hasPaidPlan } from "@/lib/plan-limits.server";
-import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
+import { normalizeQrFillMode, type QrFillActorResult, type QrFillMode } from "@/lib/qr-fill-actor";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { readObjectPassCookie, resolveObjectActor, type QrObjectKind } from "@/lib/qr-object-pass";
@@ -110,18 +110,26 @@ export async function authorizeQrReadingPhoto(input: {
   pass?: string | null;
   /** User-Agent запроса; не передан — берём из заголовков текущего запроса. */
   userAgent?: string | null;
+  /**
+   * Снимок к записи без связи: автор уже подтверждён на устройстве
+   * (`resolveOfflineObjectActor` в обработчике) — PIN и пропуск не нужны.
+   * `null` — обычный запрос, автор определяется как раньше.
+   */
+  resolveActor?: (object: { organizationId: string; mode: QrFillMode }) => Promise<QrFillActorResult | null>;
 }): Promise<QrReadingPhotoAuth> {
   const object = await loadObject(input.kind, input.objectId, input.token);
   if (!object) return { ok: false, status: 401, error: "QR-наклейка не подходит", errorCode: "equipmentFill.errors.invalidSticker" };
 
-  const actor = await resolveObjectActor({
-    mode: object.mode,
-    organizationId: object.organizationId,
-    employeeId: input.employeeId,
-    pin: input.pin,
-    pass: input.pass,
-    cookiePass: await readObjectPassCookie(object.organizationId),
-  });
+  const actor =
+    (await input.resolveActor?.({ organizationId: object.organizationId, mode: object.mode })) ??
+    (await resolveObjectActor({
+      mode: object.mode,
+      organizationId: object.organizationId,
+      employeeId: input.employeeId,
+      pin: input.pin,
+      pass: input.pass,
+      cookiePass: await readObjectPassCookie(object.organizationId),
+    }));
   if (!actor.ok) return { ok: false, status: actor.status, error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams };
 
   const employee = await db.user.findFirst({

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { APP_BUNDLE_ID, buildAssetLinks, parseCertFingerprints } from "@/lib/app-links";
+import { APP_BUNDLE_ID, androidCertFingerprints, buildAssetLinks } from "@/lib/app-links";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
  * «связей нет», ссылки просто открываются в браузере.
  */
 export function GET() {
-  const prints = parseCertFingerprints(process.env.ANDROID_CERT_SHA256);
-  const body = prints.length === 0 ? [] : buildAssetLinks(APP_BUNDLE_ID, prints);
-  return NextResponse.json(body);
+  // Ключ загрузки зашит в коде: список не бывает пустым, даже если переменная на сервере не задана.
+  return NextResponse.json(buildAssetLinks(APP_BUNDLE_ID, androidCertFingerprints(process.env.ANDROID_CERT_SHA256)));
 }

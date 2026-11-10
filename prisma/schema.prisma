@@ -626,6 +626,7 @@ model Organization {
   staffPairTokens                StaffPairToken[]
   webPushSubscriptions           WebPushSubscription[]
   mobileDevices                  MobileDevice[]
+  offlineDevices                  OfflineDevice[]
   paperJournalDocuments          PaperJournalDocument[]
   printAgents                    PrintAgent[]
   printJobs                      PrintJob[]
@@ -1406,6 +1407,7 @@ model User {
   staffPairToken              StaffPairToken?
   webPushSubscriptions        WebPushSubscription[]
   mobileDevices               MobileDevice[]
+  offlineDevices               OfflineDevice[]
   workOffDays                 StaffWorkOffDay[]
   vacations                   StaffVacation[]
   sickLeaves                  StaffSickLeave[]
@@ -4679,6 +4681,39 @@ model MobileDevice {
 
   @@index([userId])
   @@index([organizationId])
+}
+
+/// Устройство, готовое работать без связи (2026-11): планшет или телефон,
+/// на который скачаны данные для заполнения журналов без интернета. Строку
+/// ведёт само устройство отчётом `/api/offline/heartbeat`, пока оно в сети:
+/// когда выходило на связь, насколько свежи его данные, сколько записей
+/// ждёт отправки и не принято. По ней руководитель видит, какие устройства
+/// давно молчат («Настройки → Работа без связи»).
+model OfflineDevice {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Случайный идентификатор, который устройство придумало само и хранит у себя.
+  deviceKey       String
+  /// «Приложение WeSetup 1.1.0 (Android)», «Chrome (Android)».
+  label           String
+  /// Когда устройство скачало данные для работы без связи.
+  packAt          DateTime?
+  /// По последнему отчёту: записей ждёт отправки / не принято (отказ, расхождение).
+  pendingCount    Int          @default(0)
+  stuckCount      Int          @default(0)
+  /// Сколько записей, сделанных без связи, устройство доставило за всё время.
+  deliveredCount  Int          @default(0)
+  lastSeenAt      DateTime     @default(now())
+  /// Когда о непринятых записях / о молчании устройства уже уведомили.
+  stuckNotifiedAt DateTime?
+  staleNotifiedAt DateTime?
+  createdAt       DateTime     @default(now())
+
+  @@unique([userId, deviceKey])
+  @@index([organizationId, lastSeenAt])
 }
 
 /// Закрывающий документ (УПД) по оплаченному заказу — снимок реквизитов

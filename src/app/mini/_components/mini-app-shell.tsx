@@ -108,7 +108,7 @@ export async function MiniAppShell({
   }
   const tAnnouncement = await getTranslations("common.announcementBanner");
   return (
-    <DomainMessagesBoundary namespaces={["miniOffline", "miniAppUpdates"]}>
+    <DomainMessagesBoundary namespaces={["miniOffline", "miniAppUpdates", "offlineApp"]}>
       {/* В приложении WeSetup Telegram нет: скрипт с telegram.org только
           задерживал бы запуск (до него страница не оживает). */}
       {needsTelegramSdk(userAgent) ? (

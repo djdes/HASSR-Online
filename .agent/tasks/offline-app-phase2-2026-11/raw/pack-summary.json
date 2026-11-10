@@ -1,0 +1,362 @@
+{
+  "objects": [
+    {
+      "name": "Холодильный шкаф Бар 1",
+      "kind": "equipment",
+      "fill": "temperature",
+      "photo": "optional",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Термогигрометр Testo Hot",
+      "kind": "equipment",
+      "fill": "temperature",
+      "photo": "optional",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Фритюрница 8л",
+      "kind": "equipment",
+      "fill": "fryer",
+      "photo": "off",
+      "today": {
+        "done": false,
+        "summary": ""
+      },
+      "fryer": {
+        "fatTypes": 5,
+        "productTypes": 16,
+        "phase": "start"
+      }
+    },
+    {
+      "name": "УФ-лампа бактерицидная 1",
+      "kind": "equipment",
+      "fill": "uv",
+      "photo": "off",
+      "today": {
+        "done": true,
+        "summary": "сегодня включали"
+      }
+    },
+    {
+      "name": "Морозильный ларь Frostor",
+      "kind": "equipment",
+      "fill": "temperature",
+      "photo": "optional",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Термогигрометр Testo Cold",
+      "kind": "equipment",
+      "fill": "temperature",
+      "photo": "optional",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Холодильник Polair 1",
+      "kind": "equipment",
+      "fill": "temperature",
+      "photo": "optional",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Холодильник Polair 2",
+      "kind": "equipment",
+      "fill": "temperature",
+      "photo": "optional",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Зал для гостей",
+      "kind": "room",
+      "fill": "climate",
+      "photo": "off",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    },
+    {
+      "name": "Сухой склад",
+      "kind": "room",
+      "fill": "climate",
+      "photo": "off",
+      "today": {
+        "done": false,
+        "summary": "сегодня замера ещё нет"
+      }
+    }
+  ],
+  "journals": [
+    {
+      "code": "product_writeoff",
+      "append": true,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "hygiene",
+      "append": false,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "general_cleaning",
+      "append": false,
+      "documents": [
+        {
+          "rows": 2,
+          "perEmployee": false,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "finished_product",
+      "append": true,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "perishable_rejection",
+      "append": true,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "equipment_cleaning",
+      "append": false,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "incoming_control",
+      "append": true,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "cleaning",
+      "append": false,
+      "documents": [
+        {
+          "rows": 2,
+          "perEmployee": false,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "disinfectant_usage",
+      "append": false,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "fryer_oil",
+      "append": false,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 0
+        }
+      ]
+    },
+    {
+      "code": "cleaning_ventilation_checklist",
+      "append": false,
+      "documents": [
+        {
+          "rows": 0,
+          "perEmployee": true,
+          "todayCount": 1
+        }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "code": "hygiene",
+      "tasks": 1
+    },
+    {
+      "code": "health_check",
+      "tasks": 1
+    },
+    {
+      "code": "cold_equipment_control",
+      "tasks": 12
+    },
+    {
+      "code": "climate_control",
+      "tasks": 4
+    },
+    {
+      "code": "cleaning",
+      "tasks": 2
+    },
+    {
+      "code": "incoming_control",
+      "tasks": 1
+    },
+    {
+      "code": "finished_product",
+      "tasks": 3
+    },
+    {
+      "code": "disinfectant_usage",
+      "tasks": 1
+    },
+    {
+      "code": "fryer_oil",
+      "tasks": 1
+    },
+    {
+      "code": "accident_journal",
+      "tasks": 1
+    },
+    {
+      "code": "complaint_register",
+      "tasks": 1
+    },
+    {
+      "code": "breakdown_history",
+      "tasks": 1
+    },
+    {
+      "code": "ppe_issuance",
+      "tasks": 1
+    },
+    {
+      "code": "glass_items_list",
+      "tasks": 1
+    },
+    {
+      "code": "glass_control",
+      "tasks": 1
+    },
+    {
+      "code": "metal_impurity",
+      "tasks": 1
+    },
+    {
+      "code": "perishable_rejection",
+      "tasks": 1
+    },
+    {
+      "code": "product_writeoff",
+      "tasks": 1
+    },
+    {
+      "code": "traceability_test",
+      "tasks": 1
+    },
+    {
+      "code": "general_cleaning",
+      "tasks": 1
+    },
+    {
+      "code": "sanitation_day_control",
+      "tasks": 1
+    },
+    {
+      "code": "sanitary_day_control",
+      "tasks": 1
+    },
+    {
+      "code": "pest_control",
+      "tasks": 1
+    },
+    {
+      "code": "intensive_cooling",
+      "tasks": 1
+    },
+    {
+      "code": "uv_lamp_runtime",
+      "tasks": 1
+    },
+    {
+      "code": "equipment_maintenance",
+      "tasks": 1
+    },
+    {
+      "code": "equipment_calibration",
+      "tasks": 1
+    },
+    {
+      "code": "equipment_cleaning",
+      "tasks": 1
+    },
+    {
+      "code": "audit_plan",
+      "tasks": 1
+    },
+    {
+      "code": "audit_protocol",
+      "tasks": 1
+    },
+    {
+      "code": "audit_report",
+      "tasks": 1
+    },
+    {
+      "code": "training_plan",
+      "tasks": 1
+    }
+  ]
+}

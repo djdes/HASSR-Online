@@ -30,6 +30,7 @@ import { offlineAuditMark, readOfflineEnvelope, type OfflineEnvelope } from "@/l
 import { loadRowDayValues } from "@/lib/offline/history.server";
 import { mergeOfflineValues, type OfflineValues } from "@/lib/offline/merge";
 import { acquireRowLock, rowLockKey } from "@/lib/offline/row-lock";
+import { loadStoredRowValues } from "@/lib/offline/stored-values.server";
 import { QR_POINT_DENIED, employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
@@ -345,7 +346,11 @@ async function submitJournalFillLocked(input: JournalFillSubmitInput, releases: 
     releases.push(await acquireRowLock(rowLockKey(documentId, input.rowKey, todayKey)));
     // «Что сейчас в журнале» — последняя запись этой строки за этот день, сделанная
     // через формы (QR, приложение, бот): её значения и сравниваем с правкой.
-    const theirs: OfflineValues = (await loadRowDayValues({ organizationId: orgId, documentId, rowKey: input.rowKey, dateKey: todayKey })) ?? {};
+    // Для гигиены, здоровья и чек-листа уборки значения читаются из самой записи журнала —
+    // так видна и правка, внесённая в таблице кабинета (`lib/offline/stored-values.ts`).
+    const stored = await loadStoredRowValues({ code, documentId, rowKey: input.rowKey, dateKey: todayKey, fieldKeys: schema.fields.map((field) => field.key) });
+    const theirs: OfflineValues =
+      stored !== undefined ? (stored ?? {}) : ((await loadRowDayValues({ organizationId: orgId, documentId, rowKey: input.rowKey, dateKey: todayKey })) ?? {});
     const merge = mergeOfflineValues({ base: (input.offlineBase ?? {}) as OfflineValues, mine: values, theirs, force: input.offlineForce === true });
     values = { ...values, ...merge.merged };
     conflicts = merge.conflicts.map((conflict) => ({
