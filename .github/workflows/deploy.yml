@@ -63,13 +63,12 @@ jobs:
           exit 1
 
   gate:
-    name: ${{ matrix.check == 'typecheck' && 'Type-check' || format('Tests {0}', matrix.check) }}
+    name: Type-check & Targeted tests
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      matrix:
-        check: [typecheck, 1/4, 2/4, 3/4, 4/4]
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
 
     steps:
       - name: Checkout code
@@ -85,14 +84,7 @@ jobs:
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
         run: node scripts/test-changed.mjs --ci-plan
 
-      - name: Skip shard when targeted mode is active
-        if: matrix.check != 'typecheck' && steps.plan.outputs.mode != 'full'
-        run: |
-          echo "Режим тестов: ${{ steps.plan.outputs.mode }} (файлов тестов: ${{ steps.plan.outputs.count }})."
-          echo "Таргетированные тесты выполняются в джобе Type-check без запуска 4 полных шардов."
-
       - name: Setup Node.js
-        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -103,11 +95,9 @@ jobs:
           # равно идёт на сервере, эти 20 секунд не решают ничего.
 
       - name: Install dependencies
-        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         run: npm ci
 
       - name: Prepare CI env for build
-        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         run: |
           if [ -n "${{ secrets.DATABASE_URL }}" ]; then
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
@@ -116,32 +106,61 @@ jobs:
           fi
 
       - name: Generate Prisma client for CI build
-        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         run: npx prisma generate
 
-      # CI gate: type-check + tests (baseline-aware). Любая НОВАЯ регрессия
-      # в тестах блокирует deploy. Легаси fails из tests/.legacy-failures.txt
-      # разрешены — это рабочие точки для постепенного устранения.
-      # См. docs/superpowers/specs/01-architecture.md.
+      # CI gate: type-check + tests (baseline-aware). В одноразовой ВМ CI не пишем
+      # .tsbuildinfo (--incremental экономит время только локально, где файл
+      # сохраняется между запусками, а на чистом раннере его сериализация тратит ~1.5 мин).
       - name: Type-check
-        if: matrix.check == 'typecheck'
-        # Проект перерос стандартные ~2 ГБ кучи Node: tsc падал с
-        # «JavaScript heap out of memory» (2026-09-22). У раннера 7 ГБ.
-        env:
-          NODE_OPTIONS: --max-old-space-size=6144
-        run: npm run typecheck
+        run: node --max-old-space-size=6144 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
 
       - name: Targeted tests (changed files & reverse imports)
-        if: matrix.check == 'typecheck' && steps.plan.outputs.mode == 'changed'
+        if: steps.plan.outputs.mode == 'changed'
         env:
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
         run: npm run test:changed
 
+  # Полный прогон всех 4 шардов запускается ТОЛЬКО при mode == 'full'
+  # (изменения package.json, prisma/schema.prisma, базовых файлов авторизации/БД,
+  # >25 файлов кода, тег [full-tests] или ручной workflow_dispatch).
+  # На обычных коммитах эта джоба полностью пропускается и не создаёт 4 рана шардов.
+  gate-full:
+    name: Full Tests ${{ matrix.shard }}
+    needs: [gate]
+    if: github.ref == 'refs/heads/master' && needs.gate.outputs.mode == 'full'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare CI env for build
+        run: |
+          if [ -n "${{ secrets.DATABASE_URL }}" ]; then
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          else
+            echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres" >> .env
+          fi
+
+      - name: Generate Prisma client for CI build
+        run: npx prisma generate
+
       - name: Tests (full sharded baseline gate)
-        if: matrix.check != 'typecheck' && steps.plan.outputs.mode == 'full'
         env:
           TEST_FULL: "1"
-          TEST_SHARD: ${{ matrix.check }}
+          TEST_SHARD: ${{ matrix.shard }}
         run: npm run test:gate
 
   # Выгрузка ничего не меняет на сервере: кладёт deploy.tar и копию .env.
@@ -410,17 +429,50 @@ jobs:
               cp -an public/uploads/. "$UPLOADS_STORE"/ 2>/dev/null || true
             fi
 
-            echo "=== Cleaning stale source (keeps .env, node_modules, tarball) ==="
-            # Source dirs below are fully owned by the repo — nuke them before
-            # extraction so renamed/deleted files (e.g. src/app/(mini) moved
-            # to src/app/mini) don't leave orphans that collide with the new
-            # tree and break Next.js route resolution.
-            rm -rf src scripts prisma public .github docs .agent journals tmp-source-journals
-
-            echo "=== Extracting tarball ==="
-            # Backup .env if it exists
+            echo "=== Incremental source sync (preserves mtime/inode for unchanged files) ==="
+            # Раньше здесь было `rm -rf src scripts prisma public ... && tar xf deploy.tar`.
+            # Это пересоздавало все ~4 500 файлов с новыми inode и mtime на КАЖДОМ деплое,
+            # из-за чего Webpack терял timestamp-кэш по всему дереву и пересобирал проект
+            # по 7–8 минут даже после правки 6 строк в одном файле.
+            # Теперь распаковываем во временный каталог `.deploy-extract` и синхронизируем
+            # через `rsync -rlpc --delete` (по контрольным суммам): перезаписываются ТОЛЬКО
+            # реально изменившиеся файлы, удалённые в git файлы удаляются (`--delete`),
+            # а у 99.9% неизменённых файлов сохраняются старые mtime и inode для мгновенного
+            # попадания в кэш Webpack.
             [ -f .env ] && cp .env .env.bak || true
-            tar xf deploy.tar && rm deploy.tar
+            rm -rf .deploy-extract
+            mkdir -p .deploy-extract
+            tar xf deploy.tar -C .deploy-extract && rm -f deploy.tar
+            if command -v rsync >/dev/null 2>&1; then
+              rsync -rlpc --delete \
+                --exclude='.env' \
+                --exclude='.env.bak' \
+                --exclude='.env.local' \
+                --exclude='node_modules' \
+                --exclude='.next' \
+                --exclude='.next-build' \
+                --exclude='.next-previous' \
+                --exclude='.next-failed' \
+                --exclude='.next.cache-backup' \
+                --exclude='public/uploads' \
+                --exclude='.i18n-messages-hash' \
+                --exclude='.npm-lock-installed' \
+                --exclude='.deps-changed' \
+                --exclude='.prisma-seed-hash' \
+                --exclude='.build-sha' \
+                --exclude='.build.log' \
+                --exclude='.build.done' \
+                --exclude='.build.failed' \
+                --exclude='.build.exit' \
+                --exclude='.build-rebuild.log' \
+                --exclude='.deploy-extract' \
+                --exclude='deploy.tar' \
+                .deploy-extract/ ./
+            else
+              rm -rf src scripts prisma public .github docs .agent journals tmp-source-journals
+              cp -a .deploy-extract/. ./
+            fi
+            rm -rf .deploy-extract
 
             echo "=== Re-linking user uploads ==="
             mkdir -p public
@@ -459,8 +511,17 @@ jobs:
             fi
             echo "$I18N_HASH" > "$I18N_STAMP"
             if [ -d .next/cache ]; then
-              cp -r .next/cache .next.cache-backup
-              echo "[cache] скопирован ($(du -sh .next.cache-backup | cut -f1))"
+              # Чистим устаревшие .pack-файлы webpack старше 3 дней, чтобы кэш
+              # не раздувался до 3.5+ ГБ и не тормозил Finalizing page optimization.
+              find .next/cache/webpack -type f -name '*.pack*' -mtime +3 -delete 2>/dev/null || true
+              CACHE_MB=$(du -sm .next/cache/webpack 2>/dev/null | cut -f1 || echo 0)
+              if [ "${CACHE_MB:-0}" -gt 1800 ]; then
+                echo "[cache] webpack-кэш разросся до ${CACHE_MB} МБ (>1800 МБ) — очищаем старые паки"
+                rm -rf .next/cache/webpack 2>/dev/null || true
+              fi
+              # Hardlink-копия (`cp -al`) работает за ~0.05 сек без копирования гигабайтов по диску.
+              cp -al .next/cache .next.cache-backup 2>/dev/null || cp -r .next/cache .next.cache-backup
+              echo "[cache] подготовлен ($(du -sh .next.cache-backup | cut -f1))"
             else
               echo "[cache] отсутствует — следующая сборка холодная"
             fi
@@ -762,7 +823,7 @@ jobs:
             cd ${{ env.APP_DIR }}
             export GITHUB_SHA="${{ github.sha }}"
 
-            echo "=== Pushing schema to DB ==="
+            echo "=== Pushing schema to DB & Seeding ==="
             # prisma db push зависит от `dotenv/config` в prisma.config.ts.
             # В node_modules он есть, но иногда резолвер prisma его не
             # находит если запустить `npx` без предварительной подгрузки
@@ -770,72 +831,79 @@ jobs:
             if [ -f .env ]; then
               set -a; . ./.env; set +a
             fi
-            # Статус берём у самого push, а не у tail: пайп возвращает
-            # код последней команды, и упавший push проходил незамеченным.
-            # Дальше на нём падали сиды (клиент ждёт колонок, которых нет),
-            # и до перезапуска PM2 деплой не доходил — без внятной причины
-            # в логе.
-            # Apply reviewed additive changes only; preserve custom partial
-            # indexes and stop rather than accepting destructive schema drift.
-            set -o pipefail
-            if ! node scripts/apply-safe-schema.cjs 2>&1 | tail -15; then
-              echo "[FATAL] безопасное обновление схемы не применилось — деплой остановлен"
-              exit 1
-            fi
-            set +o pipefail
-
-            echo "=== Seeding journal templates ==="
-            if [ -f .env ]; then
-              set -o pipefail
-              npx tsx prisma/seed.ts 2>&1 | tail -20
-              echo "=== Seeding blog articles (idempotent, public content only) ==="
-              npx tsx prisma/seed-articles.ts 2>&1 | tail -5
-              set +o pipefail
-              echo "=== Панель платформы: роль «Администратор» для alexey@wesetup.ru + оповещение (one-shot, PlatformSetting-guard) ==="
-              timeout 180 npx tsx prisma/seed-platform-admin-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-platform-admin-2026-11 failed — deploy continues"
-              echo "=== CRM: роль РОП для alexey@wesetup.ru и «БФС» + оповещение (one-shot, PlatformSetting-guard) ==="
-              timeout 180 npx tsx prisma/seed-crm-rop-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-crm-rop-2026-11 failed — deploy continues"
-              echo "=== Роли панели: встроенные роли, раздел CRM, привязка наборов, коммерческий директор (one-shot, PlatformSetting-guard) ==="
-              timeout 180 npx tsx prisma/seed-platform-roles-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-platform-roles-2026-11 failed — deploy continues"
-              # Legacy business-data backfills require a separate reviewed run.
-              # A normal code release must not rewrite customer journal records.
-              if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
-              echo "=== Seeding job positions (idempotent) ==="
-              npx tsx prisma/seed-job-positions.ts 2>&1 | tail -5
-              echo "=== Seeding journal fill modes + cleanup (idempotent) ==="
-              npx tsx prisma/seed-journal-fill-modes.ts 2>&1 | tail -5
-              echo "=== Running bot wizard tests ==="
-              npx tsx scripts/test-bot-wizard.ts 2>&1 | tail -40 || echo "[warn] bot wizard tests failed — deploy continues"
-              echo "=== Seeding demo-screenshots org (idempotent) ==="
-              npx tsx prisma/seed-demo-screenshots.ts 2>&1 | tail -5
-              echo "=== Seeding production calendar RU (idempotent) ==="
-              npx tsx prisma/seed-production-calendar.ts 2>&1 | tail -5
-              echo "=== Mirroring Rooms → Areas (idempotent backfill) ==="
-              npx tsx prisma/seed-mirror-rooms-to-areas.ts 2>&1 | tail -5
-              echo "=== Cleanup default-positions (one-shot for orgs that got 18 defaults from old seed) ==="
-              npx tsx prisma/seed-cleanup-default-positions.ts 2>&1 | tail -5
-              echo "=== Rename climate_control title to «… на складах» (idempotent) ==="
-              npx tsx prisma/seed-rename-climate-title.ts 2>&1 | tail -5
-              echo "=== Rename hygiene title to «Гигиенический журнал (сотрудники)» (idempotent) ==="
-              npx tsx prisma/seed-rename-hygiene-title.ts 2>&1 | tail -5
-              echo "=== Disable broken TF integrations (idempotent — disable rows whose key can't decrypt) ==="
-              npx tsx scripts/disable-broken-tf-integrations.ts 2>&1 | tail -10
-              echo "=== Cleaning unification: backfill scope/days from JournalDocument.config.rooms[] → Room ==="
-              npx tsx prisma/seed-cleaning-unification.ts 2>&1 | tail -10
-              echo "=== Журнал здоровья: выключаем у организаций, которые его не ведут (one-shot, PlatformSetting-guard) ==="
-              npx tsx prisma/seed-disable-health-check.ts 2>&1 | tail -10 || echo "[warn] seed-disable-health-check failed — deploy continues"
-              echo "=== Новые журналы сентября 2026: выключаем у существующих организаций (one-shot, PlatformSetting-guard) ==="
-              npx tsx prisma/seed-disable-new-journals-2026-09.ts 2>&1 | tail -10 || echo "[warn] seed-disable-new-journals-2026-09 failed — deploy continues"
-              echo "=== Новые журналы сентября 2026, вторая волна (инвентарь, стерилизация, отходы Б, допуск партии): выключаем у существующих организаций (one-shot, PlatformSetting-guard) ==="
-              npx tsx prisma/seed-disable-new-journals-2026-09b.ts 2>&1 | tail -10 || echo "[warn] seed-disable-new-journals-2026-09b failed — deploy continues"
-              echo "=== Шапка «УТВЕРЖДАЮ»: должность и ФИО одного человека + помещения в пустых графиках ген. уборок (one-shot, PlatformSetting-guard) ==="
-              npx tsx prisma/seed-fix-approver-mismatch.ts --dry-run 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch dry-run failed"
-              npx tsx prisma/seed-fix-approver-mismatch.ts 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch failed — deploy continues"
-              else
-                echo "Legacy customer-data backfills skipped (explicit opt-in required)"
-              fi
+            PRISMA_STAMP=".prisma-seed-hash"
+            PRISMA_HASH=$( { find prisma -type f 2>/dev/null; ls scripts/apply-safe-schema.cjs 2>/dev/null; } | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
+            if [ -f "$PRISMA_STAMP" ] && [ "$(cat "$PRISMA_STAMP")" = "$PRISMA_HASH" ] && [ "${RUN_LEGACY_DATA_SEEDS:-0}" != "1" ]; then
+              echo "[prisma] файлы prisma/ и apply-safe-schema.cjs не менялись — пропускаем db push и сиды"
             else
-              echo ".env not found, skip seed"
+              # Статус берём у самого push, а не у tail: пайп возвращает
+              # код последней команды, и упавший push проходил незамеченным.
+              # Дальше на нём падали сиды (клиент ждёт колонок, которых нет),
+              # и до перезапуска PM2 деплой не доходил — без внятной причины
+              # в логе.
+              # Apply reviewed additive changes only; preserve custom partial
+              # indexes and stop rather than accepting destructive schema drift.
+              set -o pipefail
+              if ! node scripts/apply-safe-schema.cjs 2>&1 | tail -15; then
+                echo "[FATAL] безопасное обновление схемы не применилось — деплой остановлен"
+                exit 1
+              fi
+              set +o pipefail
+
+              echo "=== Seeding journal templates ==="
+              if [ -f .env ]; then
+                set -o pipefail
+                npx tsx prisma/seed.ts 2>&1 | tail -20
+                echo "=== Seeding blog articles (idempotent, public content only) ==="
+                npx tsx prisma/seed-articles.ts 2>&1 | tail -5
+                set +o pipefail
+                echo "=== Панель платформы: роль «Администратор» для alexey@wesetup.ru + оповещение (one-shot, PlatformSetting-guard) ==="
+                timeout 180 npx tsx prisma/seed-platform-admin-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-platform-admin-2026-11 failed — deploy continues"
+                echo "=== CRM: роль РОП для alexey@wesetup.ru и «БФС» + оповещение (one-shot, PlatformSetting-guard) ==="
+                timeout 180 npx tsx prisma/seed-crm-rop-2026-11.ts 2>&1 | tail -10 || echo "[warn] seed-crm-rop-2026-11 failed — deploy continues"
+                echo "=== Роли панели: встроенные роли, раздел CRM, привязка наборов, коммерческий директор (one-shot, PlatformSetting-guard) ==="
+                timeout 180 npx tsx prisma/seed-platform-roles-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-platform-roles-2026-11 failed — deploy continues"
+                # Legacy business-data backfills require a separate reviewed run.
+                # A normal code release must not rewrite customer journal records.
+                if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
+                echo "=== Seeding job positions (idempotent) ==="
+                npx tsx prisma/seed-job-positions.ts 2>&1 | tail -5
+                echo "=== Seeding journal fill modes + cleanup (idempotent) ==="
+                npx tsx prisma/seed-journal-fill-modes.ts 2>&1 | tail -5
+                echo "=== Running bot wizard tests ==="
+                npx tsx scripts/test-bot-wizard.ts 2>&1 | tail -40 || echo "[warn] bot wizard tests failed — deploy continues"
+                echo "=== Seeding demo-screenshots org (idempotent) ==="
+                npx tsx prisma/seed-demo-screenshots.ts 2>&1 | tail -5
+                echo "=== Seeding production calendar RU (idempotent) ==="
+                npx tsx prisma/seed-production-calendar.ts 2>&1 | tail -5
+                echo "=== Mirroring Rooms → Areas (idempotent backfill) ==="
+                npx tsx prisma/seed-mirror-rooms-to-areas.ts 2>&1 | tail -5
+                echo "=== Cleanup default-positions (one-shot for orgs that got 18 defaults from old seed) ==="
+                npx tsx prisma/seed-cleanup-default-positions.ts 2>&1 | tail -5
+                echo "=== Rename climate_control title to «… на складах» (idempotent) ==="
+                npx tsx prisma/seed-rename-climate-title.ts 2>&1 | tail -5
+                echo "=== Rename hygiene title to «Гигиенический журнал (сотрудники)» (idempotent) ==="
+                npx tsx prisma/seed-rename-hygiene-title.ts 2>&1 | tail -5
+                echo "=== Disable broken TF integrations (idempotent — disable rows whose key can't decrypt) ==="
+                npx tsx scripts/disable-broken-tf-integrations.ts 2>&1 | tail -10
+                echo "=== Cleaning unification: backfill scope/days from JournalDocument.config.rooms[] → Room ==="
+                npx tsx prisma/seed-cleaning-unification.ts 2>&1 | tail -10
+                echo "=== Журнал здоровья: выключаем у организаций, которые его не ведут (one-shot, PlatformSetting-guard) ==="
+                npx tsx prisma/seed-disable-health-check.ts 2>&1 | tail -10 || echo "[warn] seed-disable-health-check failed — deploy continues"
+                echo "=== Новые журналы сентября 2026: выключаем у существующих организаций (one-shot, PlatformSetting-guard) ==="
+                npx tsx prisma/seed-disable-new-journals-2026-09.ts 2>&1 | tail -10 || echo "[warn] seed-disable-new-journals-2026-09 failed — deploy continues"
+                echo "=== Новые журналы сентября 2026, вторая волна (инвентарь, стерилизация, отходы Б, допуск партии): выключаем у существующих организаций (one-shot, PlatformSetting-guard) ==="
+                npx tsx prisma/seed-disable-new-journals-2026-09b.ts 2>&1 | tail -10 || echo "[warn] seed-disable-new-journals-2026-09b failed — deploy continues"
+                echo "=== Шапка «УТВЕРЖДАЮ»: должность и ФИО одного человека + помещения в пустых графиках ген. уборок (one-shot, PlatformSetting-guard) ==="
+                npx tsx prisma/seed-fix-approver-mismatch.ts --dry-run 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch dry-run failed"
+                npx tsx prisma/seed-fix-approver-mismatch.ts 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch failed — deploy continues"
+                else
+                  echo "Legacy customer-data backfills skipped (explicit opt-in required)"
+                fi
+              else
+                echo ".env not found, skip seed"
+              fi
+              echo "$PRISMA_HASH" > "$PRISMA_STAMP"
             fi
 
             echo "=== Переключение на новую сборку ==="
@@ -968,8 +1036,8 @@ jobs:
   # Если секретов нет — шаг молча пропускается, деплой это не ломает.
   notify-failure:
     name: Notify Telegram on failure
-    needs: [gate, upload, deploy]
-    if: failure()
+    needs: [gate, gate-full, upload, deploy]
+    if: always() && (needs['gate'].result == 'failure' || needs['gate-full'].result == 'failure' || needs['upload'].result == 'failure' || needs['deploy'].result == 'failure')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
