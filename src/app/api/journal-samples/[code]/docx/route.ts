@@ -52,12 +52,16 @@ export async function GET(
   }
 
   try {
-    const { buffer, fileName } = await renderJournalDocumentDocx(await localizedJournalSampleInput(code, locale), code, {
-      footer: {
-        qrUrl: blankQrUrl(journalPdfQrOrigin(), { target, email: check.email }).url,
-        lines: await sampleFooterLines(locale),
+    const { buffer, fileName } = await renderJournalDocumentDocx(
+      await localizedJournalSampleInput(code, locale, { blank: true, company: check.company }),
+      code,
+      {
+        footer: {
+          qrUrl: blankQrUrl(journalPdfQrOrigin(), { target, email: check.email }).url,
+          lines: await sampleFooterLines(locale),
+        },
       },
-    });
+    );
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

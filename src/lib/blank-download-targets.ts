@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  normalizeBlankCompany,
   normalizeBlankEmail,
   type BlankFormat,
   type BlankTarget,
@@ -35,6 +36,7 @@ export function describeBlankTarget(target: BlankTarget): BlankTargetInfo | null
 
 const bodySchema = z.object({
   email: z.string().max(400),
+  company: z.string().max(300).optional(),
   code: z.string().max(64).optional(),
   paperId: z.string().max(64).optional(),
   format: z.enum(["pdf", "docx"]),
@@ -52,6 +54,8 @@ const bodySchema = z.object({
 
 export type BlankDownloadRequest = {
   email: string;
+  /** Название компании пользователя для подстановки в шапку бланка (если ввели). */
+  company?: string;
   info: BlankTargetInfo;
   format: BlankFormat;
   /** Отмечена галка согласия на письма — записать отдельное согласие. */
@@ -107,10 +111,17 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       needConsent: true,
     };
   }
+  const company = typeof normalizeBlankCompany === "function"
+    ? normalizeBlankCompany(data.company)
+    : typeof data.company === "string"
+      ? data.company.replace(/\s+/g, " ").trim().slice(0, 160) || null
+      : null;
+
   return {
     ok: true,
     value: {
       email,
+      ...(company ? { company } : {}),
       info,
       format: data.format,
       marketing: data.marketing === true,

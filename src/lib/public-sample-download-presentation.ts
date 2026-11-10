@@ -5,7 +5,11 @@ import { translatorFor } from "@/i18n/translator";
 import type { Messages } from "@/i18n/messages";
 import type { BlankFormat, BlankTarget } from "@/lib/blank-download";
 import { blankDownloadDenied, type BlankDownloadCheck } from "@/lib/blank-download-token";
-import { buildJournalSampleInput, type SampleJournalCode } from "@/lib/journal-sample-fixtures";
+import {
+  buildJournalBlankInput,
+  buildJournalSampleInput,
+  type SampleJournalCode,
+} from "@/lib/journal-sample-fixtures";
 
 type SampleError = "invalidLocale" | "notFound" | "pdfOnly" | "tooMany" | "buildFailed" | "expired" | "required";
 
@@ -24,8 +28,14 @@ export async function sampleDownloadError(locale: Locale, key: SampleError, stat
 }
 
 /** This boundary owns generated samples only; saved titles/config/values never enter it. */
-export async function localizedJournalSampleInput(code: SampleJournalCode, locale: Locale) {
-  const input = buildJournalSampleInput(code);
+export async function localizedJournalSampleInput(
+  code: SampleJournalCode,
+  locale: Locale,
+  options: { blank?: boolean; company?: string | null } = {},
+) {
+  const input = options.blank
+    ? buildJournalBlankInput(code, { company: options.company })
+    : buildJournalSampleInput(code);
   if (locale === "ru") return { ...input, locale };
   const t = await translatorFor(locale);
   const title = t(`journals.names.${code as keyof Messages["journals"]["names"]}`);

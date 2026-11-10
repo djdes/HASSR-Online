@@ -36,10 +36,12 @@ export async function GET(
   const search = new URL(request.url).searchParams;
   const inline = search.get("inline") === "1";
   let email: string | null = null;
+  let company: string | undefined;
   if (!inline) {
     const check = verifyBlankDownloadToken(search.get("t"), { target, format: "pdf" });
     if (!check.ok) return blankDownloadDenied(request, target, "pdf", check.reason);
     email = check.email;
+    company = check.company;
   }
 
   const ip = clientIp(request) ?? "unknown";
@@ -53,7 +55,11 @@ export async function GET(
   try {
     const buffer = renderPaperJournalPdf({
       journal,
-      organization: SAMPLE_ORGANIZATION,
+      organization: company
+        ? { name: company, inn: null, address: null }
+        : inline
+          ? SAMPLE_ORGANIZATION
+          : { name: "Организация", inn: null, address: null },
       rows: [],
       blankRows: 18,
       qr: blankPdfQr(journalPdfQrOrigin(), { target, email }),

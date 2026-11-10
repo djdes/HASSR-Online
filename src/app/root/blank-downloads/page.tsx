@@ -21,7 +21,7 @@ export async function generateMetadata() {
 const LIMIT = 300;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type Details = { code?: string; paperId?: string; title?: string; format?: BlankFormat };
+type Details = { code?: string; paperId?: string; title?: string; format?: BlankFormat; company?: string };
 
 function readDetails(value: unknown): Details {
   return value && typeof value === "object" ? (value as Details) : {};
@@ -122,6 +122,9 @@ export default async function RootBlankDownloadsPage() {
                 >
                   {consent.email}
                 </a>
+                {detail.company ? (
+                  <div className="mt-1 text-[13px] font-medium text-[#3848c7]">{detail.company}</div>
+                ) : null}
                 <div className="mt-1.5 text-[14px] text-[#3c4053]">{detail.title ?? "—"}</div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] tabular-nums text-[#6f7282]">
                   <span>
@@ -172,6 +175,9 @@ export default async function RootBlankDownloadsPage() {
                       >
                         {consent.email}
                       </a>
+                      {detail.company ? (
+                        <div className="mt-0.5 text-[12.5px] text-[#3848c7]">{detail.company}</div>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-[#0b1024]">{detail.title ?? "—"}</div>

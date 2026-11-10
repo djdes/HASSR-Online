@@ -17364,9 +17364,9 @@
       "breadcrumb": "Logs",
       "aboutHeading": "What this log is for",
       "screenHeading": "How it looks in the system",
-      "sampleHeading": "What a completed log looks like",
-      "sampleDescription": "The same file the service provides to an inspector. The data is fictional: the organization “Ромашка” and five employees.",
-      "sampleAria": "Sample completed log",
+      "sampleHeading": "Ready-to-print log template",
+      "sampleDescription": "Click “Download PDF” and enter your company name to have it placed directly into the template header.",
+      "sampleAria": "Ready-to-print log template",
       "pdfFallback": "Your browser cannot display the PDF on this page. Open the file using the button above.",
       "sampleHelp": "Browse here or download the file to print it.",
       "fieldsHeading": "What gets recorded",
@@ -19619,6 +19619,9 @@
       "label": "Email address",
       "placeholder": "you@company.ru",
       "domainMissing": "This email domain does not exist. Check the address; the email will not be delivered."
+    },
+    "company": {
+      "placeholder": "Company name for the log header (optional)"
     },
     "consent": {
       "statement": "I give <consent>consent to the processing of my personal data</consent> and have read the <privacy>Privacy Policy</privacy>.",

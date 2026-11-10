@@ -20,13 +20,23 @@ import {
 const HYGIENE = { kind: "code", code: "hygiene" } as const;
 const NOW = Date.parse("2026-09-25T10:00:00Z");
 
-test("токен: подпись сходится, внутри почта; срок — 7 дней", () => {
+test("токен: подпись сходится, внутри почта и название компании; срок — 7 дней", () => {
   const token = signBlankDownloadToken({ email: "zav@example.com", target: HYGIENE, format: "pdf" }, NOW);
   const check = verifyBlankDownloadToken(token, { target: HYGIENE, format: "pdf" }, NOW + 1000);
   assert.equal(check.ok, true);
   if (check.ok) {
     assert.equal(check.email, "zav@example.com");
+    assert.equal(check.company, undefined);
     assert.equal(check.expiresAt.getTime(), Math.floor((NOW + BLANK_DOWNLOAD_TTL_MS) / 1000) * 1000);
+  }
+  const withCompany = signBlankDownloadToken(
+    { email: "zav@example.com", company: "  ООО «Вкус»  ", target: HYGIENE, format: "pdf" },
+    NOW,
+  );
+  const checkWithCompany = verifyBlankDownloadToken(withCompany, { target: HYGIENE, format: "pdf" }, NOW + 1000);
+  assert.equal(checkWithCompany.ok, true);
+  if (checkWithCompany.ok) {
+    assert.equal(checkWithCompany.company, "ООО «Вкус»");
   }
   assert.equal(BLANK_DOWNLOAD_TTL_MS, 7 * 24 * 60 * 60 * 1000);
   const expired = verifyBlankDownloadToken(token, { target: HYGIENE, format: "pdf" }, NOW + BLANK_DOWNLOAD_TTL_MS + 1000);
