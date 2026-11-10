@@ -38,7 +38,7 @@ function fixture(locale: Locale, extra: Record<string, unknown> = {}) {
   const owned = new Set([
     "src/app/journals-info/page.tsx", "src/app/en/journals-info/page.tsx", "src/app/uz/journals-info/page.tsx",
     "src/i18n/site-locale.ts", "src/i18n/public-journal-detail-codes.ts", "src/i18n/public-journal-index-metadata.ts", "src/i18n/public-journal-index-presentation.ts",
-    "src/components/i18n/localized-link.tsx",
+    "src/components/i18n/localized-link.tsx", "src/app/journals-info/journals-info-catalog.tsx", "src/lib/journal-search.ts",
   ]);
   const mocks: Record<string, unknown> = {
     "@/i18n/site-locale-server": { getSiteLocale: async () => locale },
