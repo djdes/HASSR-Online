@@ -49,8 +49,9 @@ const CLEANING_PREVIEW_ROOMS = [
 function CleaningWebInterfacePreview() {
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_16px_40px_-24px_rgba(11,16,36,0.18)]"
+      className=" pointer-events-none overflow-hidden rounded-2xl border border-[#ececf4] bg-white select-none shadow-[0_16px_40px_-24px_rgba(11,16,36,0.18)]"
       data-testid="journal-ui-preview-cleaning"
+      aria-hidden="true"
     >
       {/* Top Browser / App Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ececf4] bg-[#fafbff] px-4 py-2.5 text-[12px] text-[#6f7282]">
@@ -67,7 +68,7 @@ function CleaningWebInterfacePreview() {
             <span className="size-1.5 rounded-full bg-[#16a34a]" />
             Смена заполнена · 4 из 4 зон
           </span>
-          <span className="hidden rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[11px] font-medium text-[#3848c7] sm:inline-block">
+          <span className="hidden rounded-full bg-[#f1f2f8] px-2.5 py-0.5 text-[11px] font-medium text-[#6f7282] sm:inline-block">
             СанПиН 2.3/2.4.4282-26
           </span>
         </div>
@@ -75,28 +76,18 @@ function CleaningWebInterfacePreview() {
 
       {/* App Workspace */}
       <div className="bg-[#f7f8fc] p-3 sm:p-5">
-        {/* Action Header inside Cabinet */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e6e8f4] bg-white px-4 py-3 shadow-xs">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[15px] font-semibold text-[#0b1024] sm:text-[16px]">
-                Журнал учёта текущих и генеральных уборок
-              </span>
-              <span className="rounded-md bg-[#f0f2ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
-                Апрель 2026
-              </span>
-            </div>
-            <div className="mt-0.5 text-[12px] text-[#6f7282]">
-              Клик по ячейке переключает отметку: <strong className="font-semibold text-[#0b1024]">Т</strong> — текущая, <strong className="font-semibold text-[#3848c7]">Г</strong> — генеральная, <strong className="font-semibold text-[#6f7282]">/-/</strong> — выходной цеха
-            </div>
-          </div>
+        {/* Header inside Cabinet (no fake clickable buttons) */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#e6e8f4] bg-white px-4 py-3 shadow-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-[#fafbff] px-3 text-[12px] font-medium text-[#0b1024]">
-              Настройки зон (4)
+            <span className="text-[15px] font-semibold text-[#0b1024] sm:text-[16px]">
+              Журнал учёта текущих и генеральных уборок
             </span>
-            <span className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3.5 text-[12px] font-medium text-white shadow-[0_6px_18px_-6px_rgba(85,102,246,0.65)]">
-              ✓ Заполнить за сегодня
+            <span className="rounded-md bg-[#f1f2f8] px-2 py-0.5 text-[11px] font-medium text-[#3c4053]">
+              Апрель 2026
             </span>
+          </div>
+          <div className="text-[12px] text-[#6f7282]">
+            ООО «Ромашка» · 4 помещения
           </div>
         </div>
 
@@ -226,23 +217,22 @@ function CleaningWebInterfacePreview() {
         </div>
 
         {/* Bottom status bar inside interface */}
-        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-[#6f7282]">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-xs bg-[#ecfdf5] ring-1 ring-[#bbf7d0]" />
-              Т — текущая уборка
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-xs bg-[#5566f6]" />
-              Г — генеральная уборка (по пятницам)
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-xs bg-[#f3f4f8] ring-1 ring-[#dcdfed]" />
-              Выходной или праздник
-            </span>
-          </div>
-          <span className="text-[#3848c7]">
-            Печать в PDF для Роспотребнадзора — в 1 клик
+        <div className="mt-2.5 flex flex-wrap items-center gap-3 px-1 text-[11px] text-[#6f7282]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-xs bg-[#ecfdf5] ring-1 ring-[#bbf7d0]" />
+            Т — текущая уборка
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-xs bg-[#5566f6]" />
+            Г — генеральная уборка
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-xs bg-[#f1f2f8] ring-1 ring-[#dcdfed]" />
+            /-/ — уборка не проводилась
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-xs bg-[#f3f4f8] ring-1 ring-[#dcdfed]" />
+            Выходной или праздник
           </span>
         </div>
       </div>
