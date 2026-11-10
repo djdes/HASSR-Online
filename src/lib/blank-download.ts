@@ -60,6 +60,8 @@ export type BlankConsentRow = {
   source: string;
   ipAddress: string | null;
   userAgent: string | null;
+  userId?: string;
+  organizationId?: string;
 };
 
 /**
@@ -73,6 +75,8 @@ export function blankConsentRows(params: {
   marketing: boolean;
   ipAddress: string | null;
   userAgent: string | null;
+  userId?: string | null;
+  organizationId?: string | null;
   /** Optional localized display snapshots; omission preserves the historic Russian contract. */
   statementText?: string;
   marketingStatementText?: string;
@@ -82,6 +86,8 @@ export function blankConsentRows(params: {
     version: params.version,
     ipAddress: params.ipAddress,
     userAgent: params.userAgent,
+    ...(params.userId ? { userId: params.userId } : {}),
+    ...(params.organizationId ? { organizationId: params.organizationId } : {}),
   };
   const rows: BlankConsentRow[] = [{
     ...base,
