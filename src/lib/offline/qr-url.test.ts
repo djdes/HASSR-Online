@@ -17,7 +17,7 @@ test("journal poster, hub, document and point posters share one address shape", 
   const journal = parseOfflineQr("https://wesetup.ru/journal-fill/org1/hygiene?token=abc&view=all");
   assert.deepEqual(journal, {
     ok: true,
-    target: { kind: "journal", orgId: "org1", code: "hygiene", hub: false, token: "abc", shortSig: null },
+    target: { kind: "journal", orgId: "org1", code: "hygiene", hub: false, token: "abc", shortSig: null, buildingId: null, documentId: null },
   });
   const hub = parseOfflineQr("https://wesetup.ru/journal-fill/org1/all?token=abc");
   assert.equal(hub.ok && hub.target.kind === "journal" && hub.target.hub, true);
@@ -27,7 +27,7 @@ test("short QR from a printed journal header", () => {
   const parsed = parseOfflineQr("https://wesetup.ru/qj/org1/cleaning/Ab3_x");
   assert.deepEqual(parsed, {
     ok: true,
-    target: { kind: "journal", orgId: "org1", code: "cleaning", hub: false, token: null, shortSig: "Ab3_x" },
+    target: { kind: "journal", orgId: "org1", code: "cleaning", hub: false, token: null, shortSig: "Ab3_x", buildingId: null, documentId: null },
   });
 });
 
@@ -57,4 +57,23 @@ test("ids made of names (Cyrillic, spaces) are accepted as the site encodes them
   const parsed = parseOfflineQr(`https://wesetup.ru/equipment-fill/${encodeURIComponent(id)}?token=t`);
   assert.deepEqual(parsed, { ok: true, target: { kind: "equipment", equipmentId: id, token: "t" } });
   assert.deepEqual(parseOfflineQr("https://wesetup.ru/equipment-fill/a%2Fb?token=t"), { ok: false, reason: "bad-id" });
+});
+
+test("плакат точки: точка и документ читаются из токена, как на странице с интернетом", async () => {
+  const { readJournalQrScope } = await import("./qr-url");
+  const point = parseOfflineQr("https://wesetup.ru/journal-fill/org1/hygiene?token=journal:org1:hygiene:b~bld68.1700000000000.sig");
+  assert.ok(point.ok && point.target.kind === "journal");
+  assert.equal(point.target.buildingId, "bld68");
+  assert.equal(point.target.documentId, null);
+
+  const hub = parseOfflineQr("https://wesetup.ru/journal-fill/org1/all?token=journal:org1:all:b~bld68.1700000000000.sig");
+  assert.ok(hub.ok && hub.target.kind === "journal" && hub.target.hub);
+  assert.equal(hub.target.buildingId, "bld68");
+
+  assert.deepEqual(readJournalQrScope("journal:org1:hygiene:doc7:2026-11-15.1.sig", "org1", "hygiene"), { buildingId: null, documentId: "doc7" });
+  assert.deepEqual(readJournalQrScope("journal:org1:hygiene.1.sig", "org1", "hygiene"), { buildingId: null, documentId: null });
+  // Чужая организация или другой журнал в токене — точку из него не берём.
+  assert.deepEqual(readJournalQrScope("journal:org2:hygiene:b~x.1.sig", "org1", "hygiene"), { buildingId: null, documentId: null });
+  assert.deepEqual(readJournalQrScope("journal:org1:cleaning:b~x.1.sig", "org1", "hygiene"), { buildingId: null, documentId: null });
+  assert.deepEqual(readJournalQrScope(null, "org1", "hygiene"), { buildingId: null, documentId: null });
 });

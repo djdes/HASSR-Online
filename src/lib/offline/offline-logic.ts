@@ -39,6 +39,46 @@ export function resolveOfflineQr(pack: OfflinePack, target: OfflineQrTarget): Of
   return object ? { kind: "object", object } : { kind: "missing", what: "object" };
 }
 
+/** The point exists in the saved data; an unknown id (points switched off, a deleted point) means "no filter", as on the server. */
+export function offlinePoint(pack: OfflinePack, pointId: string | null | undefined) {
+  return pointId ? ((pack.points ?? []).find((point) => point.id === pointId) ?? null) : null;
+}
+
+/** Documents a QR of the point opens: of this point and shared ones — the rule of `scopeDocumentsToBuilding`. */
+export function offlinePointDocuments(pack: OfflinePack, journal: OfflinePackJournal, pointId: string | null | undefined, documentId?: string | null): OfflinePackDocument[] {
+  const own = documentId ? journal.documents.filter((document) => document.id === documentId) : [];
+  if (own.length > 0) return own;
+  const point = offlinePoint(pack, pointId);
+  if (!point) return journal.documents;
+  return journal.documents.filter((document) => document.buildingId === null || document.buildingId === point.id);
+}
+
+/**
+ * Who may sign a document opened through a point: a document of a point has
+ * its own staff; a shared document opened by a point's QR — the staff of that point.
+ */
+export function offlineDocumentSignerIds(pack: OfflinePack, document: OfflinePackDocument, pointId: string | null | undefined): string[] {
+  const point = document.buildingId ? null : offlinePoint(pack, pointId);
+  if (!point) return document.employeeIds;
+  const staff = new Set(point.employeeIds);
+  return document.employeeIds.filter((id) => staff.has(id));
+}
+
+/** The saved data as one point sees it: its journals, documents and objects. Without a point — everything. */
+export function scopeOfflinePack(pack: OfflinePack, pointId: string | null | undefined): OfflinePack {
+  const point = offlinePoint(pack, pointId);
+  if (!point) return pack;
+  const disabled = new Set(point.disabledCodes);
+  return {
+    ...pack,
+    journals: pack.journals
+      .filter((journal) => !disabled.has(journal.code))
+      .map((journal) => ({ ...journal, documents: offlinePointDocuments(pack, journal, point.id) }))
+      .filter((journal) => journal.documents.length > 0),
+    objects: pack.objects.filter((object) => object.buildingId === null || object.buildingId === point.id),
+  };
+}
+
 export type OfflineSignerStep =
   /** May sign right away. */
   | { step: "ready"; auth: OfflineAuthKind }
