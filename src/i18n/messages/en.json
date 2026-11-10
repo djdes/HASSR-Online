@@ -26044,7 +26044,9 @@
       "before": "Before",
       "after": "After",
       "illustrationCaption": "Empty rows for today will be filled; anything already entered stays as it was.",
-      "pointRequired": "Select an outlet in the header: autofill closes the day for one outlet, not the whole company."
+      "pointRequired": "Select an outlet in the header: autofill closes the day for one outlet, not the whole company.",
+      "memo": "Guide",
+      "memoAria": "Journal filling guide"
     },
     "consultantCard": {
       "title": "Your consultant",
@@ -26326,6 +26328,15 @@
       "journal": "Journal",
       "who": "Who",
       "time": "Time"
+    },
+    "journalsMemo": {
+      "title": "Journal filling guide",
+      "lead": "How often to fill in each journal.",
+      "back": "Back to Today",
+      "print": "Print",
+      "journal": "Journal",
+      "howOften": "How often to fill in",
+      "empty": "No journals selected — turn them on in Settings → Journals."
     }
   },
   "ideasUi": {

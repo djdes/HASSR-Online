@@ -26044,7 +26044,9 @@
       "before": "Avval",
       "after": "Keyin",
       "illustrationCaption": "Bugungi bo‘sh qatorlar to‘ldiriladi, kiritilgan ma’lumotlar o‘zgarishsiz qoladi.",
-      "pointRequired": "Sarlavhada nuqtani tanlang: avtoto‘ldirish kunni butun tashkilot uchun emas, bitta nuqta uchun yopadi."
+      "pointRequired": "Sarlavhada nuqtani tanlang: avtoto‘ldirish kunni butun tashkilot uchun emas, bitta nuqta uchun yopadi.",
+      "memo": "Eslatma",
+      "memoAria": "Jurnallarni to‘ldirish bo‘yicha eslatma"
     },
     "consultantCard": {
       "title": "Sizning maslahatchingiz",
@@ -26326,6 +26328,15 @@
       "journal": "Jurnal",
       "who": "Kim",
       "time": "Vaqt"
+    },
+    "journalsMemo": {
+      "title": "Jurnallarni to‘ldirish bo‘yicha eslatma",
+      "lead": "Har bir jurnal qanchalik tez-tez to‘ldiriladi.",
+      "back": "«Bugun»ga qaytish",
+      "print": "Chop etish",
+      "journal": "Jurnal",
+      "howOften": "Qanchalik tez-tez to‘ldiriladi",
+      "empty": "Jurnallar tanlanmagan — ularni «Sozlamalar → Jurnallar»da yoqing."
     }
   },
   "ideasUi": {
