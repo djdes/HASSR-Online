@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { checkCronSecret } from "@/lib/cron-auth";
+import { runAutopostTick } from "@/lib/channel-autopost/service.server";
 import { publishDuePosts } from "@/lib/max/channel.server";
 
 export const runtime = "nodejs";
@@ -8,7 +9,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET/POST /api/cron/max-channel — публикует запланированные посты в
- * канал MAX (ROOT → «Канал MAX»). Повторный запуск безопасен: пост
+ * каналы Telegram и MAX (ROOT → «Каналы Telegram и MAX») и готовит
+ * автопосты дня (src/lib/channel-autopost). Повторный запуск безопасен: пост
  * захватывается статусом «sending» и уходит один раз.
  *
  * Crontab (раз в минуту):
@@ -18,7 +20,14 @@ async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
   try {
-    return NextResponse.json({ ok: true, ...(await publishDuePosts()) });
+    const published = await publishDuePosts();
+    // Автопосты дня: подготовка текста и фото через шлюз ProjectsFlow.
+    // Сбой здесь не мешает публикации уже запланированного.
+    const autopost = await runAutopostTick().catch((error) => {
+      console.error("[autopost] tick failed", error instanceof Error ? error.message.slice(0, 200) : "UnknownError");
+      return { active: -1 };
+    });
+    return NextResponse.json({ ok: true, ...published, autopost });
   } catch (error) {
     console.error("[max-channel] cron pass failed", error instanceof Error ? error.name : "UnknownError");
     return NextResponse.json({ ok: false, error: "pass failed" }, { status: 500 });
