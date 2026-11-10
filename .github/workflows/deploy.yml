@@ -72,7 +72,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Глубина 10 коммитов нужна, чтобы scripts/test-changed.mjs видел
           # базовый коммит пуша (github.event.before) до установки npm-зависимостей.
@@ -136,7 +136,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -176,7 +176,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Write build-time only (sha записывается на проде до build)
         run: |
@@ -378,7 +378,7 @@ jobs:
 
       # Скрипт ожидания порта — из репозитория, остальное этому job'у не нужно.
       - name: Checkout deploy scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           sparse-checkout: scripts
 
