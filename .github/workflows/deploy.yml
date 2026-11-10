@@ -454,8 +454,10 @@ jobs:
                 --exclude='.next-previous' \
                 --exclude='.next-failed' \
                 --exclude='.next.cache-backup' \
+                --exclude='.worktrees' \
                 --exclude='public/uploads' \
                 --exclude='.i18n-messages-hash' \
+                --exclude='.postcss-config-hash' \
                 --exclude='.npm-lock-installed' \
                 --exclude='.deps-changed' \
                 --exclude='.prisma-seed-hash' \
@@ -497,28 +499,33 @@ jobs:
             # работающей сборки. Стоит немного места и одну операцию —
             # против минут неработающего сайта.
             rm -rf .next.cache-backup 2>/dev/null || true
-            # Тексты (src/i18n/messages) поменялись — кеш не берём: 20.10
-            # сборка 2dfcc33a взяла из него старую копию ru.json для одного
-            # из слоёв, и на страницах вместо текстов показались ключи.
-            # То же с обработкой CSS (postcss.config.mjs, postcss-plugins/):
-            # кеш webpack хранит готовый CSS неизменённых файлов, и новый
-            # плагин («Размер текста», 07.11.2026) до них бы не дошёл.
-            I18N_STAMP=".i18n-messages-hash"
-            I18N_HASH=$( { find src/i18n/messages -type f -name '*.json'; find postcss-plugins -type f 2>/dev/null; ls postcss.config.mjs 2>/dev/null; } | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
-            if [ -f "$I18N_STAMP" ] && [ "$(cat "$I18N_STAMP")" != "$I18N_HASH" ]; then
-              echo "[cache] тексты или обработка CSS изменились — сборка холодная"
+            # Если менялась конфигурация PostCSS (postcss.config.mjs, postcss-plugins/),
+            # сбрасываем кэш целиком, чтобы новые плагины применились ко всем CSS-файлам.
+            POSTCSS_STAMP=".postcss-config-hash"
+            POSTCSS_HASH=$( { find postcss-plugins -type f 2>/dev/null; ls postcss.config.mjs 2>/dev/null; } | sort | xargs -r sha256sum | sha256sum | cut -d' ' -f1)
+            if [ -f "$POSTCSS_STAMP" ] && [ "$(cat "$POSTCSS_STAMP")" != "$POSTCSS_HASH" ]; then
+              echo "[cache] обработка CSS (postcss) изменилась — сборка холодная"
               rm -rf .next/cache 2>/dev/null || true
             fi
+            echo "$POSTCSS_HASH" > "$POSTCSS_STAMP"
+
+            # Если поменялись переводы (src/i18n/messages/*.json), НЕ удаляем весь 3.5 ГБ
+            # кэш `.next/cache` (раньше это вызывало 10-минутную холодную сборку на каждом
+            # UI-коммите!), а точечно обновляем mtime у JSON-словарей и импортирующих их
+            # модулей — тогда Webpack пересобирает только слои с текстами за секунды.
+            I18N_STAMP=".i18n-messages-hash"
+            I18N_HASH=$(find src/i18n/messages -type f -name '*.json' | sort | xargs sha256sum | sha256sum | cut -d' ' -f1)
+            if [ -f "$I18N_STAMP" ] && [ "$(cat "$I18N_STAMP")" != "$I18N_HASH" ]; then
+              echo "[cache] тексты src/i18n/messages изменились — точечно инвалидируем модули i18n (сохраняя тёплый кэш Webpack)"
+              find src/i18n -type f -exec touch -c {} + 2>/dev/null || true
+              grep -rl "i18n/messages" src/ 2>/dev/null | xargs -r touch -c 2>/dev/null || true
+            fi
             echo "$I18N_HASH" > "$I18N_STAMP"
+
             if [ -d .next/cache ]; then
-              # Чистим устаревшие .pack-файлы webpack старше 3 дней, чтобы кэш
-              # не раздувался до 3.5+ ГБ и не тормозил Finalizing page optimization.
-              find .next/cache/webpack -type f -name '*.pack*' -mtime +3 -delete 2>/dev/null || true
-              CACHE_MB=$(du -sm .next/cache/webpack 2>/dev/null | cut -f1 || echo 0)
-              if [ "${CACHE_MB:-0}" -gt 1800 ]; then
-                echo "[cache] webpack-кэш разросся до ${CACHE_MB} МБ (>1800 МБ) — очищаем старые паки"
-                rm -rf .next/cache/webpack 2>/dev/null || true
-              fi
+              # Чистим только совсем старые осиротевшие .pack-файлы старше 14 дней
+              # (не удаляя рабочий кэш webpack, который для 392 роутов весит ~2.5–3.6 ГБ).
+              find .next/cache/webpack -type f -name '*.pack*' -mtime +14 -delete 2>/dev/null || true
               # Hardlink-копия (`cp -al`) работает за ~0.05 сек без копирования гигабайтов по диску.
               cp -al .next/cache .next.cache-backup 2>/dev/null || cp -r .next/cache .next.cache-backup
               echo "[cache] подготовлен ($(du -sh .next.cache-backup | cut -f1))"
