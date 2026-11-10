@@ -1,0 +1,16 @@
+{
+  "task": "deps-followup-2026-11-10",
+  "spec": "spec.md",
+  "verdict": "PASS",
+  "verdict_note": "Steps 1, 2, 3, 5 shipped and verified on production; step 4 (nodemailer 10) rejected by the spec's own rule (fails clean npm ci), not shipped.",
+  "steps": [
+    {"step": 1, "dependabot": 194, "pr": 200, "deploy_run": 42901552252, "result": "PASS"},
+    {"step": 2, "dependabot": 192, "pr": 201, "deploy_run": 42903387057, "result": "PASS"},
+    {"step": 3, "dependabot": 196, "pr": 202, "deploy_run": 42906836032, "result": "PASS", "poller_check_run": 42908688386},
+    {"step": 4, "dependabot": 195, "pr": 203, "deploy_run": 42908688386, "result": "REJECTED", "reason": "npm ci ERESOLVE: next-auth 4.24.15 peer nodemailer ^7.0.7"},
+    {"step": 5, "dependabot": 193, "pr": 207, "deploy_run": 42910346307, "result": "PASS"}
+  ],
+  "final": {"master": "dfce7790242d264e37753321e0e50f836fe4cc87", "production_build": "dfce779",
+            "prod_probes": {"/": 200, "/login": 200, "/pricing": 200, "/journals-info": 200, "/blog": 200, "/api/build-info": 200}},
+  "new_dependabot_prs_for_owner": [204, 205, 206]
+}
