@@ -32,7 +32,7 @@ export const revalidate = 0;
 // Числа в описании — из констант тарифов (tariff-plans.ts): при смене
 // модели метаданные меняются вместе с витриной. Цены правит ROOT, поэтому
 // в статических метаданных их нет.
-const PRICING_DESCRIPTION = `Сколько стоит WeSetup: ${FREE_TIER_SHORT} без карты, тарифы «Стандарт», «Премиум» и «ВИП» — помесячно или за год со скидкой; скидка за точки: ${POINTS_DISCOUNT_LINE}. Оборудование и ППК — индивидуально.`;
+const PRICING_DESCRIPTION = `Тарифы WeSetup: ${FREE_TIER_SHORT} без карты, планы «Стандарт», «Премиум» и «ВИП» помесячно или за год со скидкой, скидки на сеть точек и расчёт окупаемости.`;
 
 export const metadata = {
   title: "Цены на электронные журналы СанПиН и ХАССП",
@@ -78,8 +78,29 @@ export default async function PricingPage() {
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const hardwareFromRub = Math.min(...HARDWARE_BUNDLES.map(bundleTotal));
 
+  const pricingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Цены на электронные журналы СанПиН и ХАССП — WeSetup",
+    description: PRICING_DESCRIPTION,
+    url: "https://wesetup.ru/pricing",
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Главная", item: "https://wesetup.ru/" },
+        { "@type": "ListItem", position: 2, name: "Тарифы и цены", item: "https://wesetup.ru/pricing" },
+      ],
+    },
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(pricingJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <PublicHeader />
       <main className="mx-auto max-w-[1100px] space-y-8 px-4 py-12 sm:px-6">
         <div>

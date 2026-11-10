@@ -1,4 +1,5 @@
 import RegisterClient from "./register-client";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { siteLanguageAlternates, localizedHref } from "@/i18n/site-locale";
 import { translatorFor } from "@/i18n/translator";
@@ -89,5 +90,9 @@ export default async function RegisterPage({
       `[promo] register page: promo=${code ?? "-"} (${status ? (status.ok ? "ok" : status.reason) : "none"}) sphere=${sphere ?? "-"}`
     );
   }
-  return <RegisterClient promo={promo} sphere={sphere} />;
+  return (
+    <DomainMessagesBoundary namespaces={["journals"]}>
+      <RegisterClient promo={promo} sphere={sphere} />
+    </DomainMessagesBoundary>
+  );
 }

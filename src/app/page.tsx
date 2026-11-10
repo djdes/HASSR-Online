@@ -711,7 +711,7 @@ export default async function LandingPage() {
               ) : null}
             </div>
             <div className="mt-7 sm:mt-9">
-              <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene"]}>
+              <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene", "journals"]}>
                 <QrPlayer qr={qrMatrix} today={sceneToday} video={narratedVideo} />
               </DomainMessagesBoundary>
             </div>

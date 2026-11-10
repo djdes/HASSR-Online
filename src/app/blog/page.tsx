@@ -135,8 +135,23 @@ export default async function BlogListPage({
     return qs ? `${blogHref}?${qs}` : blogHref;
   }
 
+  const blogJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: t("blogChrome.list.metaTitle"),
+    description: t("blogChrome.list.metaDescription"),
+    url: `https://wesetup.ru${blogHref}`,
+    inLanguage: locale,
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <PublicHeader activeSection="blog" />
 
       {/* HERO */}

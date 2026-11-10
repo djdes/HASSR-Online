@@ -11,4 +11,9 @@ export const DASHBOARD_SITE_NAMESPACES = [
   "billingUi",
   "organizationsUi",
   "cleaningUi",
+  "journals",
+  "navigation",
+  "journalControls",
+  "notifications",
 ] as const satisfies readonly MessageNamespace[];
+

@@ -28,6 +28,7 @@ function getBuildTime(): string {
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  poweredByHeader: false,
   // Штатная нормализация трейлинг-слеша срабатывает ДО middleware и
   // отвечает редиректом 308. Робокасса шлёт уведомление об оплате
   // POST'ом на `https://wesetup.ru/payment/` (адрес зафиксирован в
@@ -259,8 +260,12 @@ const nextConfig: NextConfig = {
         //
         // `api/kp/qr/` — QR в письме с КП: картинка зависит только от адреса,
         // маршрут ставит `public, immutable` — почтовые прокси её кэшируют.
+        // Для страниц сайта Cache-Control выставляет `src/proxy.ts`
+        // (публичный кэш для анонимных посетителей маркетинговых страниц,
+        // `no-store` для кабинета, входа и сессий). Здесь закрываем `no-store`
+        // все API-ручки кроме публичных/неизменяемых превью.
         source:
-          "/((?!_next/static|_next/image|api/journal-samples|api/journal-previews|api/kp/qr/|journal-samples/|brand/|icons/|uploads/|favicon\\.ico|manifest\\.json|sw\\.js|robots\\.txt|sitemap\\.xml|screenshots/|b/[a-z0-9]+/badge\\.svg|og/image|og-default|blog/feed\\.xml|whats-new/feed\\.xml).*)",
+          "/api/((?!journal-samples|journal-previews|kp/qr/).*)",
         headers: [
           {
             key: "Cache-Control",

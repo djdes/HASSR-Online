@@ -23,7 +23,7 @@ import { TRIAL_DAYS } from "@/lib/tariff-plans";
 const PAGE_URL = "https://wesetup.ru/avtozapolnenie";
 const TITLE = "Журналы, которые заполняются сами";
 const DESCRIPTION =
-  "Температура приходит с датчиков, приёмка — из накладных iiko, Диадока и СБИС, ветдокументы — из «Меркурия», показания — с фото табло. Сотрудник подтверждает факт, а не переписывает цифры.";
+  "Температура с Wi-Fi датчиков, приёмка из iiko, Диадока и СБИС, ВСД из «Меркурия», показания по фото табло. Сотрудник подтверждает факт, а не вводит цифры.";
 const POSTER_IMAGE = { url: `https://wesetup.ru${AUTOFILL_VIDEO.poster}`, width: 1920, height: 1080, alt: TITLE };
 
 export const metadata: Metadata = {

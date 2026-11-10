@@ -15,7 +15,8 @@ test("English document keeps its explicit route and receives a trusted locale", 
   assert.equal(response.headers.get("x-middleware-next"), "1");
   assert.equal(response.headers.get("x-middleware-request-x-wesetup-site-locale"), "en");
   assert.match(response.headers.get("set-cookie") ?? "", /wesetup.site-locale=en/);
-  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+  assert.match(response.headers.get("cache-control") ?? "", /public.*s-maxage=60/);
+  assert.equal(response.headers.get("pragma"), null);
 });
 
 test("caller-supplied locale headers cannot change the locale of the requested URL", async () => {
@@ -23,12 +24,17 @@ test("caller-supplied locale headers cannot change the locale of the requested U
     const response = await request(path, { "x-wesetup-site-locale": "en" });
     assert.equal(response.headers.get("x-middleware-request-x-wesetup-site-locale"), "ru", path);
   }
+  const loginRes = await request("/login");
+  assert.match(loginRes.headers.get("cache-control") ?? "", /no-store/);
 });
 
 test("English prefix never rewrites protected routes or callbacks", async () => {
   for (const path of ["/en/root", "/en/dashboard", "/en/api/root/users", "/en/payment"]) {
     const response = await request(path);
     assert.equal(response.headers.get("x-middleware-rewrite"), null, path);
+    if (!path.includes("/api/")) {
+      assert.match(response.headers.get("cache-control") ?? "", /no-store/, path);
+    }
   }
   assert.equal((await request("/root")).status, 404);
 });
@@ -65,7 +71,7 @@ test("partners and privacy trust their six explicit URLs without rewriting navig
       assert.equal(response.headers.get("location"), null);
       assert.equal(response.headers.get("x-middleware-request-x-wesetup-site-locale"), locale);
       assert.match(response.headers.get("set-cookie") ?? "", new RegExp(`wesetup.site-locale=${locale}`));
-      assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+      assert.match(response.headers.get("cache-control") ?? "", /public.*s-maxage=60/);
       const prefetched = await request(path, { "sec-fetch-dest": "empty" });
       assert.equal(prefetched.headers.get("set-cookie"), null);
       assert.equal(prefetched.headers.get("x-middleware-request-x-wesetup-site-locale"), locale);

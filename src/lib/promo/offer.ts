@@ -20,14 +20,30 @@ import {
  * считает и не присылает — только показывает то, что посчитал сервер.
  */
 
+const PROMOTION_CACHE_TTL_MS = 30_000;
+let promotionCache: { value: AppliedPromotion | null; expiresAt: number } | null = null;
+
+/** Сброс кэша действующей акции после изменений в `/root/promotions`. */
+export function invalidatePromotionCache(): void {
+  promotionCache = null;
+}
+
 /** Действующая акция (или null). Окна пересекаются — берём наибольший процент. */
 export async function readActivePromotion(now: Date = new Date()): Promise<AppliedPromotion | null> {
+  const isCurrentTime = Math.abs(now.getTime() - Date.now()) < 5_000;
+  if (isCurrentTime && promotionCache && promotionCache.expiresAt > Date.now()) {
+    return promotionCache.value;
+  }
   const rows = await db.pricePromotion.findMany({
     where: { active: true, startsAt: { lte: now }, endsAt: { gt: now } },
     select: { id: true, title: true, percent: true, startsAt: true, endsAt: true, active: true },
   });
   const best = pickActivePromotion(rows, now);
-  return best ? toAppliedPromotion(best) : null;
+  const value = best ? toAppliedPromotion(best) : null;
+  if (isCurrentTime) {
+    promotionCache = { value, expiresAt: Date.now() + PROMOTION_CACHE_TTL_MS };
+  }
+  return value;
 }
 
 function toOffer(

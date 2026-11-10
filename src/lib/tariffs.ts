@@ -67,23 +67,41 @@ const DEFAULT_TARIFFS: Tariff[] = [...PLAN_TARIFF_DEFAULTS, ...LEGACY_DEFAULTS];
 
 const ORDER = [{ sort: "asc" as const }, { key: "asc" as const }];
 
+const TARIFFS_CACHE_TTL_MS = 60_000;
+let tariffsCache: { rows: Tariff[]; expiresAt: number } | null = null;
+
+/** Сброс кэша тарифов сразу после правки в `/root/tariffs`. */
+export function invalidateTariffsCache(): void {
+  tariffsCache = null;
+}
+
 /**
  * Все тарифы, отсортированные для вывода. Пустую таблицу засевает, в
  * непустую досевает тарифы 2026-10. `createMany({ skipDuplicates })`
  * делает вызов безопасным при гонке параллельных запросов после деплоя.
  */
 export async function readTariffs(): Promise<Tariff[]> {
+  const now = Date.now();
+  if (tariffsCache && tariffsCache.expiresAt > now) {
+    return tariffsCache.rows.map((t) => ({ ...t }));
+  }
   const rows = await db.platformTariff.findMany({ orderBy: ORDER });
   const present = new Set(rows.map((row) => row.key));
   const missing = (rows.length === 0 ? DEFAULT_TARIFFS : PLAN_TARIFF_DEFAULTS).filter((t) => !present.has(t.key));
-  if (missing.length === 0) return rows.map(toTariff);
+  if (missing.length === 0) {
+    const mapped = rows.map(toTariff);
+    tariffsCache = { rows: mapped, expiresAt: Date.now() + TARIFFS_CACHE_TTL_MS };
+    return mapped.map((t) => ({ ...t }));
+  }
 
   await db.platformTariff.createMany({ data: missing, skipDuplicates: true });
   if (rows.length > 0) {
     console.info("[billing] seeded tariffs 2026-10", { keys: missing.map((t) => t.key) });
   }
   const seeded = await db.platformTariff.findMany({ orderBy: ORDER });
-  return seeded.map(toTariff);
+  const mapped = seeded.map(toTariff);
+  tariffsCache = { rows: mapped, expiresAt: Date.now() + TARIFFS_CACHE_TTL_MS };
+  return mapped.map((t) => ({ ...t }));
 }
 
 /**

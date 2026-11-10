@@ -24,8 +24,29 @@ export default async function JournalsInfoListPage() {
   const t = createTranslator({ locale, messages, namespace: "publicJournalIndex" });
   const { grouped, count, niches, seo } = presentPublicJournalIndex(messages);
 
+  const canonicalPath = locale === "ru" ? "/journals-info" : `/${locale}/journals-info`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: t("hero.title", { count }),
+    description: t("hero.description"),
+    url: `https://wesetup.ru${canonicalPath}`,
+    inLanguage: locale,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "WeSetup",
+      url: "https://wesetup.ru",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <PublicHeader activeSection="journals-info" />
 
       {/* HERO */}
@@ -89,7 +110,9 @@ export default async function JournalsInfoListPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={`/journal-samples/${j.code}.webp`}
-                      alt=""
+                      alt={j.name}
+                      width={1228}
+                      height={862}
                       loading="lazy"
                       className="mb-4 aspect-[1228/862] w-full rounded-xl border border-[#ececf4] bg-white object-cover object-top"
                     />

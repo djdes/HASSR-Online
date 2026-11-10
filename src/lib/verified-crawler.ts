@@ -9,13 +9,14 @@ import { isIPv6 } from "node:net";
  * requests whose user-agent names a crawler ever reach DNS.
  */
 
-export type CrawlerFamily = "google" | "yandex" | "bing";
+export type CrawlerFamily = "google" | "yandex" | "bing" | "apple";
 
 const CLAIMS: [CrawlerFamily, RegExp][] = [
   ["google", /Googlebot|Google-InspectionTool|GoogleOther|AdsBot-Google|Mediapartners-Google|Storebot-Google|APIs-Google/i],
   // Bot tokens only: the Yandex apps people browse with («YandexSearch», «YaBrowser») stay ordinary clients.
   ["yandex", /\bYandex[A-Za-z]*Bot\b|YandexImages|YandexMetrika|YandexWebmaster|YandexFavicons|YandexPagesChecker|YandexVideo|YandexMedia/],
   ["bing", /bingbot|BingPreview|msnbot|adidxbot/i],
+  ["apple", /\bApplebot\b/i],
 ];
 
 const DOMAINS: Record<CrawlerFamily, string[]> = {
@@ -23,7 +24,11 @@ const DOMAINS: Record<CrawlerFamily, string[]> = {
   google: [".googlebot.com", ".google.com"],
   yandex: [".yandex.ru", ".yandex.net", ".yandex.com"],
   bing: [".search.msn.com"],
+  apple: [".applebot.apple.com"],
 };
+
+const AI_SEARCH_CRAWLER_PATTERN =
+  /\b(?:OAI-SearchBot|ChatGPT-User|GPTBot|Claude-SearchBot|ClaudeBot|Claude-User|PerplexityBot|Perplexity-User|Google-Extended|DuckDuckBot|Amazonbot|Meta-ExternalAgent|YouBot|PhindBot)\b/i;
 
 const POSITIVE_TTL = 24 * 60 * 60_000;
 const NEGATIVE_TTL = 60 * 60_000;
@@ -37,6 +42,15 @@ export function claimedCrawler(userAgent: string | null): CrawlerFamily | null {
   if (!userAgent) return null;
   for (const [family, pattern] of CLAIMS) if (pattern.test(userAgent)) return family;
   return null;
+}
+
+/**
+ * Recognised AI search and answer-engine crawlers (ChatGPT Search, Claude,
+ * Perplexity, DuckDuckGo, etc.) that operate from cloud IP ranges without
+ * brand reverse-DNS PTR records.
+ */
+export function isAiSearchCrawler(userAgent: string | null): boolean {
+  return Boolean(userAgent && AI_SEARCH_CRAWLER_PATTERN.test(userAgent));
 }
 
 export type CrawlerResolver = {

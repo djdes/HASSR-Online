@@ -228,6 +228,7 @@ export async function approveReview(input: {
       console.info(
         `[balance] review approved id=${review.id} org=${review.organizationId} kind=${kind} anonymous=${review.anonymous} reward=${rewardRub} by=${input.actorUserId}`,
       );
+      invalidatePublicReviewsCache();
       return { rewardRub, organizationId: review.organizationId, anonymous: review.anonymous, kind };
     });
   } catch (error) {
@@ -253,9 +254,17 @@ export async function rejectReview(input: {
     },
   });
   if (claimed.count > 0) {
+    invalidatePublicReviewsCache();
     console.info(`[balance] review rejected id=${input.id} by=${input.actorUserId}`);
   }
   return claimed.count > 0;
+}
+
+const PUBLIC_REVIEWS_CACHE_TTL_MS = 60_000;
+const publicReviewsCache = new Map<number, { rows: PublicReview[]; expiresAt: number }>();
+
+export function invalidatePublicReviewsCache(): void {
+  publicReviewsCache.clear();
 }
 
 export async function setReviewOnLanding(id: string, show: boolean): Promise<void> {
@@ -263,6 +272,7 @@ export async function setReviewOnLanding(id: string, show: boolean): Promise<voi
     where: { id },
     data: { showOnLanding: show },
   });
+  invalidatePublicReviewsCache();
 }
 
 export async function getReview(id: string): Promise<ReviewView | null> {
@@ -307,6 +317,10 @@ export async function listReviewsForModeration(
  * организации, если она известна (publicReviewSignature).
  */
 export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
+  const cached = publicReviewsCache.get(limit);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.rows;
+  }
   const rows = await db.customerReview.findMany({
     where: { status: "approved", showOnLanding: true, consentPublic: true },
     orderBy: { createdAt: "desc" },
@@ -322,7 +336,7 @@ export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
       return new Map<string, never>();
     },
   );
-  return rows.map((row) => {
+  const result = rows.map((row) => {
     const signature = publicReviewSignature({
       anonymous: row.anonymous,
       authorName: row.authorName,
@@ -341,4 +355,6 @@ export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
       stats: row.showStats && hasReviewStats(stats.get(row.organizationId)) ? stats.get(row.organizationId) : null,
     };
   });
+  publicReviewsCache.set(limit, { rows: result, expiresAt: Date.now() + PUBLIC_REVIEWS_CACHE_TTL_MS });
+  return result;
 }

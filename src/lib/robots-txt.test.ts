@@ -13,6 +13,7 @@ import { SEO_LANDINGS } from "@/content/seo-landings";
 import { INDEXNOW_KEY } from "@/lib/indexnow";
 import {
   isAllowedByRobots,
+  isPublicCacheablePage,
   renderRobotsTxt,
   ROBOTS_CLEAN_PARAMS,
 } from "@/lib/robots-txt";
@@ -32,6 +33,7 @@ describe("robots.txt crawl rules", () => {
       "/",
       "/en",
       "/uz",
+      "/llms.txt",
       "/sanpin-2-3-2-4-4282-26",
       "/avtozapolnenie",
       "/security",
@@ -149,4 +151,64 @@ describe("robots.txt crawl rules", () => {
     const leaked = privatePaths.filter((p) => isAllowedByRobots(p));
     assert.deepEqual(leaked, [], `Private paths allowed by robots.txt: ${leaked.join(", ")}`);
   });
+
+  it("marks only public marketing and content pages as cacheable", () => {
+    for (const cacheable of [
+      "/",
+      "/en",
+      "/uz",
+      "/pricing",
+      "/blog",
+      "/en/blog/article-slug",
+      "/journals-info",
+      "/journals-info/hygiene",
+      "/en/journals-info/hygiene",
+      "/features",
+      "/features/ai-autofill",
+      "/partners",
+      "/en/partners",
+      "/privacy",
+      "/uz/privacy",
+      "/blanki",
+      "/prikazy",
+      "/uslugi",
+      "/avtozapolnenie",
+      "/sanpin-2-3-2-4-4282-26",
+      "/dlya-kafe",
+      "/zhurnal-haccp",
+      "/v/moskva",
+      "/compare/excel",
+      "/glossary/haccp",
+      "/calc/fines",
+    ]) {
+      assert.equal(isPublicCacheablePage(cacheable), true, cacheable);
+    }
+
+    for (const nonCacheable of [
+      "/login",
+      "/en/login",
+      "/register",
+      "/en/register",
+      "/delete-account",
+      "/en/delete-account",
+      "/kiosk/123",
+      "/payment",
+      "/en/root",
+      "/en/dashboard",
+      "/en/payment",
+      "/dashboard",
+      "/journals",
+      "/settings",
+      "/root",
+      "/master",
+      "/mini",
+      "/api/status",
+      "/order/tok-123",
+      "/kp/tok-123",
+      "/q/short",
+    ]) {
+      assert.equal(isPublicCacheablePage(nonCacheable), false, nonCacheable);
+    }
+  });
 });
+
