@@ -1,0 +1,7 @@
+test:changed: exit 0 — pass=6048, fail=0
+i18n:check: exit 0
+build+start (heap 4096): started after 2s, build ZgJbSfFofhiTW3YCHPRFN, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+(re-check on master cfeca54a + lucide 1.68, after master moved twice)
