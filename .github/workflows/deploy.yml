@@ -465,6 +465,7 @@ jobs:
                 --exclude='.npm-lock-installed' \
                 --exclude='.deps-changed' \
                 --exclude='.prisma-seed-hash' \
+                --exclude='.prisma-client-hash' \
                 --exclude='.build-sha' \
                 --exclude='.build.log' \
                 --exclude='.build.done' \
@@ -573,7 +574,14 @@ jobs:
             fi
 
             echo "=== Generating Prisma client ==="
-            npx prisma generate 2>&1 | tail -5
+            PRISMA_CLIENT_STAMP=".prisma-client-hash"
+            PRISMA_CLIENT_HASH=$(sha256sum prisma/schema.prisma package-lock.json 2>/dev/null | sha256sum | cut -d' ' -f1)
+            if [ -f node_modules/.prisma/client/index.js ] && [ -f "$PRISMA_CLIENT_STAMP" ] && [ "$(cat "$PRISMA_CLIENT_STAMP")" = "$PRISMA_CLIENT_HASH" ]; then
+              echo "[prisma] schema.prisma и package-lock не менялись — пропускаем prisma generate (сохраняем mtime для кэша Webpack)"
+            else
+              npx prisma generate 2>&1 | tail -5
+              echo "$PRISMA_CLIENT_HASH" > "$PRISMA_CLIENT_STAMP"
+            fi
 
             echo "=== Writing .build-sha до build (для NEXT_PUBLIC_BUILD_ID) ==="
             echo "$GITHUB_SHA" > .build-sha
@@ -617,6 +625,10 @@ jobs:
             # pm2 перезапускается в шаге 3 из другой оболочки.
             # Замеры: .agent/tasks/deps-update-2026-11-10/raw/step6-build-memory.md
             export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"
+            # Клиент Prisma уже актуализирован в шаге 1/3; пропускаем prebuild (`prisma generate`)
+            # при вызове `npm run build`, чтобы не перезаписывать mtime в `node_modules/.prisma/client`
+            # прямо перед инкрементальной сборкой Webpack.
+            export npm_config_ignore_scripts=true
             echo "[build] NODE_OPTIONS=$NODE_OPTIONS"
 
             echo "=== Restoring build cache (инкрементальная сборка) ==="
