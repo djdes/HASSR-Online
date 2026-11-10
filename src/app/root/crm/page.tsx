@@ -11,7 +11,9 @@ import {
   Handshake,
   Hourglass,
   Inbox,
+  KanbanSquare,
   LayoutDashboard,
+  ListChecks,
   type LucideIcon,
   Mail,
   MailCheck,
@@ -21,12 +23,16 @@ import {
   TrendingUp,
   UserPlus,
   UsersRound,
+  Workflow,
+  BadgePercent,
 } from "lucide-react";
 
 import { requireRoot } from "@/lib/auth-helpers";
 import { CRM_STAGES } from "@/lib/crm/constants";
 import { listSalesHeads } from "@/lib/crm/notify.server";
 import { loadCrmSummary, type CrmContactRow } from "@/lib/crm/queries.server";
+import { countCrmTasks } from "@/lib/crm/tasks.server";
+import { countDeals } from "@/lib/lifecycle/deals.server";
 import { canAccessPlatformPath } from "@/lib/platform-access";
 import { platformViewerForSession } from "@/lib/platform-access.server";
 import { cn } from "@/lib/utils";
@@ -41,6 +47,9 @@ export const metadata = { title: "CRM" };
 type Tool = { href: string; label: string; hint: string; icon: LucideIcon };
 
 const TOOLS: Tool[] = [
+  { href: "/root/crm/funnel", label: "Воронка продаж", hint: "Пробные и продления по колонкам: договор, письмо, звонок, оплата", icon: KanbanSquare },
+  { href: "/root/crm/tasks", label: "Задачи", hint: "Звонки, согласования скидок, просроченные оплаты", icon: ListChecks },
+  { href: "/root/crm/automation", label: "Автоворонка", hint: "Письма и задачи сценария «пробный и оплата», прогноз на неделю", icon: Workflow },
   { href: "/root/crm/contacts", label: "Контакты и переписка", hint: "Вся переписка с человеком по всем каналам", icon: Inbox },
   { href: "/root/feedback", label: "Онлайн-чат и обращения", hint: "Ответить в чате поддержки и на обращения с сайта", icon: MessageSquareText },
   { href: "/root/service-requests", label: "Заявки и показы", hint: "Услуги и «Покажите за 15 минут»", icon: ClipboardList },
@@ -110,7 +119,13 @@ export default async function CrmSummaryPage() {
   const now = new Date();
   const viewer = await platformViewerForSession(session);
   const own = viewer.scope === "own";
-  const [summary, heads] = await Promise.all([loadCrmSummary(now, { userId: session.user.id, own }), listSalesHeads()]);
+  const scope = own ? session.user.id : null;
+  const [summary, heads, tasks, deals] = await Promise.all([
+    loadCrmSummary(now, { userId: session.user.id, own }),
+    listSalesHeads(),
+    countCrmTasks({ ownScopeId: scope, now }).catch(() => ({ today: 0, overdue: 0, approvals: 0 })),
+    countDeals({ ownScopeId: scope, now }).catch(() => ({ open: 0, dueSoon: 0 })),
+  ]);
   const { digest } = summary;
   const tools = TOOLS.filter((tool) => canAccessPlatformPath(viewer, tool.href));
   const maxChannel = Math.max(1, ...summary.channels.map((item) => item.count));
@@ -161,6 +176,39 @@ export default async function CrmSummaryPage() {
             icon={TrendingUp}
           />
           <Tile href="/root/crm/contacts?queue=leads" label="Новых за сутки" value={digest.newLeads} sub={`всего контактов: ${summary.total}`} tone="calm" icon={UserPlus} />
+        </div>
+      </section>
+
+      <section className="space-y-3" aria-labelledby="crm-sales">
+        <h2 id="crm-sales" className={ZONE_TITLE}>
+          Продажи и оплаты
+        </h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-crm-sales-tiles>
+          <Tile
+            href="/root/crm/tasks"
+            label="Задачи на сегодня"
+            value={tasks.today + tasks.overdue}
+            sub={tasks.overdue ? `просрочено — ${tasks.overdue}` : tasks.today ? "звонки и КП" : "на сегодня всё"}
+            tone={tasks.overdue ? "alert" : tasks.today ? "warn" : "calm"}
+            icon={ListChecks}
+          />
+          <Tile
+            href="/root/crm/tasks?kind=approve_discount"
+            label="Скидки на согласовании"
+            value={tasks.approvals}
+            sub={tasks.approvals ? "менеджер ждёт решения" : "ничего не ждёт"}
+            tone={tasks.approvals ? "warn" : "calm"}
+            icon={BadgePercent}
+          />
+          <Tile href="/root/crm/funnel" label="Сделки в работе" value={deals.open} sub="пробные и продления" tone="calm" icon={KanbanSquare} />
+          <Tile
+            href="/root/crm/funnel?soon=1"
+            label="Срок за 7 дней"
+            value={deals.dueSoon}
+            sub={deals.dueSoon ? "пробный или оплата кончаются" : "ближайшая неделя спокойная"}
+            tone={deals.dueSoon ? "warn" : "calm"}
+            icon={CalendarClock}
+          />
         </div>
       </section>
 

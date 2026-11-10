@@ -668,10 +668,21 @@ export async function checkPlanFeature(organizationId: string, feature: PlanFeat
  * уже принято, деньги идут днями — окно не давит, автопереход ждёт.
  * Так же — оплата, которая ждёт ручного разбора (`heldAt`): деньги уже
  * получены, переводить аккаунт на бесплатный до разбора нельзя.
+ *
+ * Счёт, который сценарий CRM приложил к письму сам (ключ `lc:invoice:<id>`
+ * в `CrmReminderLog`), — не решение клиента: окно и автопереход его не
+ * ждут (2026-11-10). Сценарию же важно, что счёт уже есть, — второй он
+ * не выставляет: `includeAutomatic`.
  */
-export async function hasPendingInvoice(orgIds: string[], now: Date = new Date()): Promise<boolean> {
+export async function hasPendingInvoice(
+  orgIds: string[],
+  now: Date = new Date(),
+  options: { includeAutomatic?: boolean } = {}
+): Promise<boolean> {
   if (orgIds.length === 0) return false;
-  const count = await db.paymentOrder.count({
+  const rows = await db.paymentOrder.findMany({
+    take: 50,
+    select: { id: true, paymentMethod: true, status: true },
     where: {
       organizationId: { in: orgIds },
       // Счёт на пополнение баланса — не решение «платим за подписку».
@@ -686,8 +697,16 @@ export async function hasPendingInvoice(orgIds: string[], now: Date = new Date()
       ],
     },
   });
-  return count > 0;
+  if (rows.length === 0) return false;
+  if (options.includeAutomatic) return true;
+  const invoiceIds = rows.filter((row) => row.paymentMethod === "invoice" && row.status === "pending").map((row) => row.id);
+  if (invoiceIds.length < rows.length) return true;
+  const automatic = await db.crmReminderLog.count({ where: { dedupeKey: { in: invoiceIds.map((id) => `${AUTOMATIC_INVOICE_PREFIX}${id}`) } } });
+  return automatic < invoiceIds.length;
 }
+
+/** Ключ «счёт выставил сценарий CRM, не клиент» в `CrmReminderLog`. */
+export const AUTOMATIC_INVOICE_PREFIX = "lc:invoice:";
 
 // ------------------------------------------------------------- transition
 

@@ -1,0 +1,13 @@
+fixtures: 12 клиентов, D0=2026-11-10
+  lc-romashka: trial_first: письмо+счёт, звонок 10 %
+  lc-stolovaya: trial_first: согласование 20 % → звонок ждёт
+  lc-pekarnya: trial_idle: письмо «продлим пробный», без задачи
+  lc-solo: trial_first: звонок без скидки (1 человек, ведёт)
+  lc-quiet: trial_first: письмо, без задачи (30 человек, но за неделю пусто)
+  lc-vtoroe: trial_second: письмо, срочный звонок
+  lc-lost: trial_lost: «узнать причину» (писали до конца)
+  lc-grace: grace_last: письмо+счёт, «последний шанс»
+  lc-year: renewal_early: письмо «оплатите заранее» + счёт на год
+  lc-expired: payment_overdue: задача
+  lc-invoice: invoice_ahead: счёт на продление по безналу
+  lc-paid: trial_first, потом оплата: задачи закрыты, сделка «Оплачено»

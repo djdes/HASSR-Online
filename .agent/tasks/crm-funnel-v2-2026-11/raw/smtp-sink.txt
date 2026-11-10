@@ -1,0 +1,25 @@
+#111 FROM=noreply@wesetup.ru TO=owner@lc-year.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Сеть «Вкусно рядом» e2e: годовой тариф заканчивается 4 декабря — продлите заранее FILES=Счёт-54.pdf
+#112 FROM=noreply@wesetup.ru TO=owner@lc-invoice.ru REPLY-TO= SUBJECT=Счёт № 55 на оплату WeSetup FILES=Invoice-55.pdf
+#113 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=WeSetup · 🧾 Выставлен счёт №55 FILES=
+#114 FROM=noreply@wesetup.ru TO=owner@wesetup.local.test REPLY-TO= SUBJECT=WeSetup · 🧾 Выставлен счёт №55 FILES=
+#115 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Оплата не пришла: Кофейня «Не продлили» e2e — оплачено было по 8 ноября FILES=
+#116 FROM=noreply@wesetup.ru TO=owner@lc-grace.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Бистро «Грейс» e2e: последние дни, чтобы сохранить команду и журналы FILES=Счёт-56.pdf
+#117 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Последний шанс: Бистро «Грейс» e2e — отсрочка до 11 ноября FILES=
+#118 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Узнать, почему Бар «Ушли» e2e не оплатил после пробного FILES=
+#119 FROM=noreply@wesetup.ru TO=owner@lc-vtoroe.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Кофейня «Второе касание» e2e: осталось 2 рабочих дня пробного периода FILES=Счёт-57.pdf
+#120 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Срочно: позвонить Кофейня «Второе касание» e2e — пробный до 11 ноября FILES=
+#121 FROM=noreply@wesetup.ru TO=owner@lc-paid.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Ресторан «Оплатили» e2e: пробный период заканчивается 15 ноября FILES=Счёт-58.pdf
+#122 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Позвонить Ресторан «Оплатили» e2e — пробный до 15 ноября FILES=
+#123 FROM=noreply@wesetup.ru TO=owner@lc-romashka.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Кафе «Ромашка» e2e: пробный период заканчивается 15 ноября FILES=Счёт-59.pdf
+#124 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Позвонить Кафе «Ромашка» e2e — пробный до 15 ноября FILES=
+#125 FROM=noreply@wesetup.ru TO=owner@lc-stolovaya.ru REPLY-TO=sales@wesetup.local.test SUBJECT=«Столовая комбината e2e»: пробный период заканчивается 15 ноября FILES=Счёт-60.pdf
+#126 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Нужно согласование: Согласовать скидку 20 % для «Столовая комбината e2e» (120 сотрудников) FILES=
+#127 FROM=noreply@wesetup.ru TO=owner@lc-solo.ru REPLY-TO=alexey@wesetup.ru SUBJECT=«ИП Петров e2e»: пробный период заканчивается 15 ноября FILES=
+#128 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Новая задача: Позвонить «ИП Петров e2e» — пробный до 15 ноября FILES=
+#129 FROM=noreply@wesetup.ru TO=owner@lc-quiet.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Кулинария «Тишина» e2e: пробный период заканчивается 15 ноября FILES=Счёт-61.pdf
+#130 FROM=noreply@wesetup.ru TO=owner@lc-pekarnya.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Пекарня «Хлеб» e2e: продлим пробный период и поможем начать FILES=
+#131 FROM=noreply@wesetup.ru TO=owner@lc-romashka.ru REPLY-TO=sales@wesetup.local.test SUBJECT=Кафе «Ромашка» e2e: спецпредложение — «Стандарт» со скидкой 10 % FILES=Счёт-62.pdf
+#132 FROM=noreply@wesetup.ru TO=alexey@wesetup.ru REPLY-TO= SUBJECT=Нужно согласование: Согласовать скидку 20 %: «Столовая комбината e2e» FILES=
+#133 FROM=noreply@wesetup.ru TO=sales@wesetup.local.test REPLY-TO= SUBJECT=Новая задача: Скидка 15 % согласована — отправить КП: «Столовая комбината e2e» FILES=
+#134 FROM=noreply@wesetup.ru TO=owner@lc-stolovaya.ru REPLY-TO=sales@wesetup.local.test SUBJECT=«Столовая комбината e2e»: спецпредложение — «Стандарт» со скидкой 15 % FILES=Счёт-63.pdf
+#135 FROM=noreply@wesetup.ru TO=owner@lc-vtoroe.ru REPLY-TO=alexey@wesetup.ru SUBJECT=Кофейня «Второе касание» e2e: спецпредложение — «Стандарт» со скидкой 10 % FILES=

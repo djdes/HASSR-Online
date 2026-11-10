@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { normalizePlatformScope, normalizePlatformSections } from "@/lib/platform-access";
+import { ROLE_DISCOUNT_DEFAULTS } from "@/lib/lifecycle/staff";
 import { BUILTIN_ROLES, roleKeyFrom, validateRoleShape, type RoleInput, type RoleView } from "@/lib/platform-roles";
 import { TeamError, type PlatformActor } from "@/lib/platform-team.server";
 
@@ -21,6 +22,8 @@ function toView(row: RoleRow): RoleView {
     scope: normalizePlatformScope(row.scope),
     salesHead: row.salesHead,
     signatureTitle: row.signatureTitle,
+    discountLimit: row.discountLimit,
+    defaultDiscount: ROLE_DISCOUNT_DEFAULTS[row.key] ?? 0,
     system: row.system,
     members: row._count?.users ?? 0,
   };
@@ -68,6 +71,7 @@ function cleanInput(input: RoleInput) {
     scope: input.scope,
     salesHead: input.salesHead,
     signatureTitle: input.signatureTitle?.trim() || null,
+    discountLimit: typeof input.discountLimit === "number" ? input.discountLimit : null,
   };
 }
 

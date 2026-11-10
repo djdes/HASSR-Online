@@ -2,13 +2,15 @@ import { db } from "@/lib/db";
 import { syncAllMailboxes, type MailboxSyncResult } from "@/lib/crm/mailbox.server";
 import { notifyNewMail, runCrmDigest, runCrmReminders } from "@/lib/crm/notify.server";
 import { syncCrmSources, type SourceSyncResult } from "@/lib/crm/sources.server";
+import { syncDeals, type DealSyncResult } from "@/lib/lifecycle/deals.server";
 import { syncTelegramUser, type TelegramUserSyncResult } from "@/lib/crm/telegram-user.server";
 import { syncTelphinCalls, type TelphinSyncResult } from "@/lib/crm/telphin.server";
 import { recordCronRun } from "@/lib/platform-alerts";
 
 /**
  * Один прогон CRM (крон раз в 5 минут и кнопка «Обновить сейчас»):
- * обращения из таблиц сайта → звонки Телфина → рабочий Telegram → почта IMAP → напоминания → утренняя сводка.
+ * обращения из таблиц сайта → звонки Телфина → рабочий Telegram → почта IMAP → напоминания → утренняя сводка
+ * → сделки воронки (регистрации, договоры, оплаты).
  * Шаги независимы: сбой почты не останавливает напоминания.
  */
 
@@ -22,6 +24,7 @@ export type CrmCycleResult = {
   newMailAlerts: number;
   reminders: { planned: number; sent: number };
   digest: boolean;
+  deals: DealSyncResult | null;
   errors: string[];
   durationMs: number;
 };
@@ -51,6 +54,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
   const newMailAlerts = await step("письма РОП", () => notifyNewMail(mail.ingested, now), 0);
   const reminders = await step("напоминания", () => runCrmReminders(now), { planned: 0, sent: 0 });
   const digest = await step("сводка", () => runCrmDigest(now), false);
+  const deals = await step("воронка", () => syncDeals(now), null);
 
   for (const source of sources) if (source.error) errors.push(`${source.source}: ${source.error}`);
   for (const error of calls?.errors ?? []) errors.push(`звонки: ${error}`);
@@ -67,6 +71,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
     newMailAlerts,
     reminders,
     digest,
+    deals,
     errors,
     durationMs: Date.now() - started,
   };

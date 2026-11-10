@@ -30796,7 +30796,11 @@
       "deleted": "Rol o‘chirildi",
       "failed": "Rolni saqlab bo‘lmadi",
       "formTitleNew": "Yangi rol",
-      "formTitleEdit": "«{name}» roli"
+      "formTitleEdit": "«{name}» roli",
+      "discountLabel": "Kelishuvsiz TT chegirmasi, %",
+      "discountPlaceholder": "Boʻsh — {percent} %",
+      "discountHint": "Kattaroq chegirma limiti yetadigan xodimga kelishuvga yuboriladi.",
+      "discountBadge": "{percent} % gacha chegirma"
     }
   },
   "rootClientContract": {

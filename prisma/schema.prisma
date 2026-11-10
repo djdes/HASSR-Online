@@ -5893,7 +5893,7 @@ model CrmSenderRule {
 /// без связей: задача переживает удаление организации и контакта.
 model CrmTask {
   id              String    @id @default(cuid())
-  /// call | approve_discount | payment_overdue | lost_reason | manual
+  /// call | approve_discount | offer | payment_overdue | last_chance | lost_reason | winback | manual
   kind            String
   title           String
   note            String?
@@ -5919,6 +5919,14 @@ model CrmTask {
   createdById     String?
   closedById      String?
   closedAt        DateTime?
+  /// Итог звонка (2026-11-10): reached | no_answer | callback | promised | declined.
+  outcome         String?
+  /// Сделка воронки, по которой задача (сценарий ставит сам).
+  dealId          String?
+  deal            CrmDeal?  @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  /// Условия спец-КП на согласовании и в задаче «Отправить КП»:
+  /// { tier, cycle, points, percent, requestedById, note }.
+  terms           Json?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -5926,6 +5934,49 @@ model CrmTask {
   @@index([assigneeId, status])
   @@index([organizationId])
   @@index([contactId])
+  @@index([dealId])
+}
+
+/// Сделка воронки продаж CRM (2026-11-10): один период решения аккаунта —
+/// пробный или продление оплаты. Двигает сценарий «пробный и оплата»
+/// (`src/lib/lifecycle/deals.server.ts`), менеджер — перетаскиванием.
+model CrmDeal {
+  id               String    @id @default(cuid())
+  /// trial | renewal
+  kind             String
+  /// `trial:<unit>:<конец пробного>` | `renewal:<unit>:<конец оплаты>` — одна сделка на период.
+  dedupeKey        String    @unique
+  /// Единица биллинга: id аккаунта или `org:<id>`.
+  unitKey          String
+  /// Домашняя организация аккаунта.
+  organizationId   String
+  /// Контакт CRM владельца — переписка в карточке.
+  contactId        String?
+  /// Ответственный менеджер; null — общая очередь РОП.
+  ownerId          String?
+  /// registered | contract_signed | message_sent | called | won | lost
+  stage            String    @default("registered")
+  /// Колонку поставил человек: автоматика дальше двигает только в won / lost.
+  stageManual      Boolean   @default(false)
+  /// Конец пробного или оплаченного срока, ради которого сделка.
+  periodEnd        DateTime?
+  /// Предложение: { tier, cycle, points, monthRub, yearRub, seats }.
+  offerJson        Json?
+  amountRub        Int?
+  contractSignedAt DateTime?
+  messageSentAt    DateTime?
+  calledAt         DateTime?
+  wonAt            DateTime?
+  lostAt           DateTime?
+  lostReason       String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  tasks            CrmTask[]
+
+  @@index([stage, periodEnd])
+  @@index([unitKey])
+  @@index([organizationId])
+  @@index([ownerId])
 }
 
 model CrmReminderLog {
@@ -5957,6 +6008,9 @@ model PlatformRole {
   salesHead      Boolean  @default(false)
   /// Должность в подписи КП и писем; пусто — название роли
   signatureTitle String?
+  /// Скидка в спец-КП без согласования, %; пусто — по ключу встроенной роли
+  /// (коммерческий директор 25, РОП 15, менеджер 10, остальные 0).
+  discountLimit  Int?
   sort           Int      @default(0)
   system         Boolean  @default(false)
   createdAt      DateTime @default(now())

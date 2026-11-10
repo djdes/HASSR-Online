@@ -30797,7 +30797,11 @@ export type MessageContract = {
       "deleted": "Роль удалена",
       "failed": "Не удалось сохранить роль",
       "formTitleNew": "Новая роль",
-      "formTitleEdit": "Роль «{name}»"
+      "formTitleEdit": "Роль «{name}»",
+      "discountLabel": "Скидка в КП без согласования, %",
+      "discountPlaceholder": "Пусто — {percent} %",
+      "discountHint": "Больше — КП уйдёт на согласование тому, чей лимит покрывает.",
+      "discountBadge": "скидка до {percent} %"
     }
   },
   "rootClientContract": {
