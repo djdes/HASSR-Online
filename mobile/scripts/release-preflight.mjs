@@ -87,16 +87,19 @@ export function checkRelease({ root = mobileRoot, platform, env = process.env } 
     if (!existsSync(path.join(root, "android/app/upload.jks"))) {
       errors.push("Нет ключа загрузки android/app/upload.jks (секрет ANDROID_KEYSTORE_BASE64)");
     }
-    const firebase = json("android/app/google-services.json");
-    const client = firebase.client?.find((c) => c.client_info?.android_client_info?.package_name === APP_ID);
-    if (
-      !client ||
-      !firebase.project_info?.project_id ||
-      !firebase.project_info?.project_number ||
-      !client.client_info?.mobilesdk_app_id ||
-      !client.api_key?.some((k) => k.current_key)
-    ) {
-      errors.push(`google-services.json (Firebase Android) не для ${APP_ID} или неполный — без него не будет push`);
+    const hasFirebaseFile = existsSync(path.join(root, "android/app/google-services.json"));
+    if (hasFirebaseFile || env.ALLOW_NO_FIREBASE !== "1") {
+      const firebase = json("android/app/google-services.json");
+      const client = firebase.client?.find((c) => c.client_info?.android_client_info?.package_name === APP_ID);
+      if (
+        !client ||
+        !firebase.project_info?.project_id ||
+        !firebase.project_info?.project_number ||
+        !client.client_info?.mobilesdk_app_id ||
+        !client.api_key?.some((k) => k.current_key)
+      ) {
+        errors.push(`google-services.json (Firebase Android) не для ${APP_ID} или неполный — без него не будет push`);
+      }
     }
   } else {
     requireEnv(["APPLE_TEAM_ID", "ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"]);

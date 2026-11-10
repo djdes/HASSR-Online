@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-31",
+  "checkedAt": "2026-11-10",
   "assets": [
     {
       "file": "screenshots/ios/01-control-board.png",
@@ -109,9 +109,9 @@
       "file": "store-graphics/icon-512.png",
       "width": 512,
       "height": 512,
-      "pngColorType": 6,
-      "bytes": 55250,
-      "sha256": "5aebe342433939291bf24c79b92b09a97062081159dc5453ddb7f4fc438a66a7"
+      "pngColorType": 2,
+      "bytes": 51612,
+      "sha256": "594372a253fb773f8dfe39caad9e7c644c1445541c00c05e961d83889bd3e95e"
     }
   ]
 }

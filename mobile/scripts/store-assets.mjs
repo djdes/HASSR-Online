@@ -25,7 +25,7 @@ export const STORE_RULES = {
   "screenshots/android": { width: 1080, height: 1920, min: 2, max: 8, alpha: false },
 };
 export const GRAPHICS_RULES = {
-  "store-graphics/icon-512.png": { width: 512, height: 512 },
+  "store-graphics/icon-512.png": { width: 512, height: 512, alpha: false },
   "store-graphics/feature-graphic.png": { width: 1024, height: 500, alpha: false },
 };
 

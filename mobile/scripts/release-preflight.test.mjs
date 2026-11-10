@@ -116,6 +116,14 @@ test("без Firebase или с Firebase чужого приложения push 
   assert.ok(checkRelease(i).some((e) => e.includes("Firebase iOS")));
 });
 
+test("ALLOW_NO_FIREBASE=1 разрешает сборку Android без файла google-services.json (для RuStore и сайта)", (t) => {
+  const f = fixture(t);
+  rmSync(path.join(f.root, "android/app/google-services.json"));
+  assert.ok(checkRelease(f).some((e) => e.includes("google-services.json")));
+  f.env.ALLOW_NO_FIREBASE = "1";
+  assert.deepEqual(checkRelease(f), []);
+});
+
 test("неверные номер сборки, версия и битый конфиг отклоняются", (t) => {
   for (const value of ["0", "-1", "1.2", "2100000001", "x"]) {
     const f = fixture(t);
