@@ -115,12 +115,14 @@ echo "==> Extracting + restoring .env"
 $DRY_RUN "${PLINK[@]}" "cd $DEPLOY_APP_DIR && rm -rf src scripts prisma public .github docs .agent journals tmp-source-journals && tar xf deploy.tar && rm deploy.tar && [ -f .env.bak ] && cp .env.bak .env || true"
 
 echo "==> Installing deps + building on prod host"
+# NODE_OPTIONS: сборке нужна куча больше стандартных ~4.1 ГБ — 8 ГБ, как в
+# deploy.yml (шаг 2/3); замеры в .agent/tasks/deps-update-2026-11-10/raw/step6-build-memory.md.
 # Verifies client-reference-manifest.js файлы на месте после build —
 # Next.js 16 иногда собирается «успешно», но без manifest-ов, и SSR
 # отдаёт страницы которые не гидрируются на мобильных (на ПК часто
 # работают из кэша). Если меньше 5 manifest-ов — ребилдим один раз и
 # фейлим если опять.
-$DRY_RUN "${PLINK[@]}" "cd $DEPLOY_APP_DIR && [ -s ~/.nvm/nvm.sh ] && . ~/.nvm/nvm.sh || true; rm -rf node_modules .next node_modules/.cache 2>/dev/null || true; sleep 1; rm -rf node_modules .next 2>/dev/null || true; npm ci --no-audit --no-fund 2>&1 | tail -5 || (echo 'retry after deep clean' && rm -rf node_modules ~/.npm/_cacache && npm ci --no-audit --no-fund 2>&1 | tail -5); npx prisma generate 2>&1 | tail -5 && npm run build 2>&1 | tail -10 && verify() { local M=\$(find .next/server/app -name '*client-reference-manifest.js' 2>/dev/null | wc -l); if [ \"\$M\" -lt \"5\" ]; then echo \"[fail] only \$M manifests\"; return 1; fi; if [ ! -f .next/server/app/_not-found/page_client-reference-manifest.js ]; then echo \"[fail] _not-found manifest missing\"; return 1; fi; echo \"[ok] \$M manifests + _not-found present\"; return 0; } && if ! verify; then echo \"[warn] rebuild\"; rm -rf .next; npm run build 2>&1 | tail -10; if ! verify; then echo \"[fail] manifests still bad after rebuild\" && exit 1; fi; fi"
+$DRY_RUN "${PLINK[@]}" "cd $DEPLOY_APP_DIR && [ -s ~/.nvm/nvm.sh ] && . ~/.nvm/nvm.sh || true; export NODE_OPTIONS=--max-old-space-size=8192; rm -rf node_modules .next node_modules/.cache 2>/dev/null || true; sleep 1; rm -rf node_modules .next 2>/dev/null || true; npm ci --no-audit --no-fund 2>&1 | tail -5 || (echo 'retry after deep clean' && rm -rf node_modules ~/.npm/_cacache && npm ci --no-audit --no-fund 2>&1 | tail -5); npx prisma generate 2>&1 | tail -5 && npm run build 2>&1 | tail -10 && verify() { local M=\$(find .next/server/app -name '*client-reference-manifest.js' 2>/dev/null | wc -l); if [ \"\$M\" -lt \"5\" ]; then echo \"[fail] only \$M manifests\"; return 1; fi; if [ ! -f .next/server/app/_not-found/page_client-reference-manifest.js ]; then echo \"[fail] _not-found manifest missing\"; return 1; fi; echo \"[ok] \$M manifests + _not-found present\"; return 0; } && if ! verify; then echo \"[warn] rebuild\"; rm -rf .next; npm run build 2>&1 | tail -10; if ! verify; then echo \"[fail] manifests still bad after rebuild\" && exit 1; fi; fi"
 
 echo "==> Running prisma db push + seeds"
 $DRY_RUN "${PLINK[@]}" "cd $DEPLOY_APP_DIR && [ -s ~/.nvm/nvm.sh ] && . ~/.nvm/nvm.sh || true; [ -f .env ] && (set -a && . ./.env && set +a); npx prisma db push 2>&1 | tail -5 && npx tsx prisma/seed.ts 2>&1 | tail -5"
