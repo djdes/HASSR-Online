@@ -1,0 +1,14 @@
+owner_dashboard.png	0.133%	bbox=(893, 283, 1234, 299)
+owner_journals.png	0.000%	bbox=None
+owner_journals_hygiene.png	0.000%	bbox=None
+owner_reports.png	0.000%	bbox=None
+owner_settings_balance.png	0.000%	bbox=None
+owner_settings_subscription.png	0.000%	bbox=None
+owner_settings_users.png	0.000%	bbox=None
+public_.png	0.000%	bbox=None
+public_login.png	0.000%	bbox=None
+public_order_plan_standard_cycle_month_points_1.png	0.071%	bbox=(481, 263, 599, 277)
+public_pricing.png	0.000%	bbox=None
+root_root.png	0.000%	bbox=None
+root_root_crm.png	0.000%	bbox=None
+root_root_organizations_org_cafe.png	0.000%	bbox=None
