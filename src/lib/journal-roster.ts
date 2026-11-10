@@ -150,6 +150,60 @@ export function rankRosterForSlot<T extends RosterUser>(
   return null;
 }
 
+/**
+ * Руководящая должность для автоподбора ответственного (тикет 57187T,
+ * решение владельца 2026-11-10): 1 — шеф, заведующий, управляющий и прочее
+ * руководство; 2 — «хотя бы» старший или бригадир; null — рядовая.
+ */
+const LEADER_KEYWORDS = ["шеф", "завед", "управляющ", "руковод", "директор", "начальник"] as const;
+const SENIOR_KEYWORDS = ["старш", "бригадир"] as const;
+
+export function leadershipTier(user: RosterUser): 1 | 2 | null {
+  const position = positionOf(user);
+  if (LEADER_KEYWORDS.some((keyword) => position.includes(keyword))) return 1;
+  if (isRosterManagement(user)) return 1;
+  if (SENIOR_KEYWORDS.some((keyword) => position.includes(keyword))) return 2;
+  return null;
+}
+
+/**
+ * Автоподбор на слот, который никто не настроил (создание документа,
+ * каскад ответственных). В отличие от `rankRosterForSlot` не берёт «первого
+ * по алфавиту»: раньше так один и тот же человек с фамилией на «А» вставал
+ * ответственным во множество журналов.
+ *
+ *   • `leader` (главный слот журнала и проверяющие) — только руководящая
+ *     должность: сначала ступень 1, потом 2; внутри ступени первым тот, чья
+ *     должность подходит слову слота. Никого — null («не назначен»).
+ *   • остальные слоты исполнителей — только должность по словам слота.
+ *
+ * Порядок `users` значим: у точки её сотрудники идут первыми.
+ * Исполнителей не дублируем (`used`), проверяющий может совпадать.
+ */
+export function pickRosterForUnsetSlot<T extends RosterUser>(
+  users: readonly T[],
+  slot: RosterSlot & { leader: boolean },
+  used?: ReadonlySet<string>
+): T | null {
+  const roster = filterRoster(users);
+  if (roster.length === 0) return null;
+  const keywords = (slot.positionKeywords ?? []).map((keyword) => keyword.toLowerCase()).filter(Boolean);
+  const matchesSlot = (user: T) => {
+    const position = positionOf(user);
+    return position.length > 0 && keywords.some((keyword) => position.includes(keyword));
+  };
+  const isFree = (user: T) => slot.kind === "verifier" || !used || !used.has(user.id);
+
+  if (!slot.leader) return roster.find((user) => matchesSlot(user) && isFree(user)) ?? null;
+
+  for (const tier of [1, 2] as const) {
+    const leaders = roster.filter((user) => leadershipTier(user) === tier && isFree(user));
+    const pick = leaders.find(matchesSlot) ?? leaders[0];
+    if (pick) return pick;
+  }
+  return null;
+}
+
 export const RESPONSIBLE_NOT_IN_ORG_ERROR = {
   error: "Сотрудник не найден в организации",
   code: "responsible-not-in-org",

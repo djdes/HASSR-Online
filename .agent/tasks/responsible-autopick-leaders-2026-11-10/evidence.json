@@ -1,0 +1,14 @@
+{
+  "task": "responsible-autopick-leaders-2026-11-10",
+  "ticket": "57187T",
+  "branch": "claude/affectionate-newton-7hw7ae",
+  "base": "dbb2f17a",
+  "checkedAt": "2026-11-10",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/journal-roster.ts", "src/lib/journal-roster.test.ts", "raw/prefill-db-run.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/journal-roster.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/journal-responsibles-cascade.ts", "src/lib/journal-responsibles-point-first.test.ts"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/test-gate.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/eslint.txt"] }
+  }
+}
