@@ -20,7 +20,11 @@ const cook = { id: "cook", name: "Борис Повар", role: "cook" };
 
 test("первым управляющим не становится аккаунт «имя = почта» и ROOT", () => {
   assert.equal(pickPrimaryManager([placeholderOwner, root, head, cook])?.id, "head");
-  assert.equal(pickPrimaryManager([placeholderOwner, cook])?.id, "cook");
+  // Управляющего нет — никого (тикет 57187T): рядовой «первый по списку»
+  // раньше вставал ответственным во множество журналов.
+  assert.equal(pickPrimaryManager([placeholderOwner, cook]), null);
+  // Где без человека нельзя технически (автор записи датчика) — явный флаг.
+  assert.equal(pickPrimaryManager([placeholderOwner, cook], { fallbackToFirst: true })?.id, "cook");
 });
 
 test("заглушка остаётся, только если больше некого", () => {

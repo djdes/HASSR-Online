@@ -11,3 +11,13 @@
 | AC5 Проверки | PASS | `npm run typecheck` — exit 0 (`raw/typecheck.txt`); `npm run test:gate` — exit 0 (`raw/test-gate.txt`); eslint по изменённым файлам — чисто (`raw/eslint.txt`). |
 
 Не проверялось: данные организации из тикета (доступа к прод-базе нет) — причина установлена по коду.
+
+## Дополнение: похожие места (AC6–AC7)
+
+| AC | Итог | Чем подтверждено |
+|----|------|------------------|
+| AC6 Общий выбор по роли | PASS | `src/lib/user-roles.ts`; `user-roles.test.ts`, `no-arbitrary-default-person.test.ts`; `sensor-point.ts`, `offboarding.ts` — явный `fallbackToFirst`. |
+| AC7 Построители журналов | PASS | `cleaning-document.ts`, `acceptance-document.ts`, `metal-impurity-document.ts`, `product-writeoff-document.ts`, `audit-plan-document.ts`, `journals/[code]/page.tsx`, `equipment-cleaning-document-client.tsx`; тесты `no-arbitrary-default-person.test.ts`, `acceptance-document.test.ts`, `acceptance-source.test.ts`. Полный прогон — `raw/test-gate-full.txt`. |
+
+Обновлены три теста, закреплявших прежнее поведение («рядовой первым»): `user-roles.test.ts`,
+`acceptance-document.test.ts`, `acceptance-source.test.ts`.

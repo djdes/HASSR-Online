@@ -100,7 +100,7 @@ export async function performOffboarding({
   }
   // Fallback: pick by general staff priority.
   if (!successor) {
-    successor = pickPrimaryStaff(candidates);
+    successor = pickPrimaryStaff(candidates, { fallbackToFirst: true });
   }
 
   // 4. Reassign TF tasks. Только для активного интегратора.

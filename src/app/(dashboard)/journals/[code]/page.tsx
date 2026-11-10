@@ -1707,7 +1707,8 @@ export default async function JournalDocumentsPage({
         templateCode={resolvedCode}
         templateName={(configuredTemplateName = scanConfig?.title) || template.name}
         defaultResponsibleTitle={scanConfig?.defaultResponsibleTitle || null}
-        defaultResponsibleUserId={pickPrimaryManager(pointUsers)?.id || null}
+        // Не угадываем: сервер возьмёт «Ответственных за журналы» (тикет 57187T).
+        defaultResponsibleUserId={null}
         documents={documents.map((document) => {
           let storedTitle: unknown, configuredTitle: unknown, configuredDateLabel: unknown;
           let storedResponsibleTitle: unknown, configuredResponsibleTitle: unknown;

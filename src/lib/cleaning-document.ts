@@ -3,7 +3,6 @@ import { getCalendarDayKind } from "@/lib/production-calendar-data";
 import {
   getUserRoleLabel,
   pickPrimaryManager,
-  pickPrimaryStaff,
 } from "@/lib/user-roles";
 
 export const CLEANING_DOCUMENT_TEMPLATE_CODE = "cleaning";
@@ -605,15 +604,18 @@ function buildDefaultRooms(areas?: AreaLike[]): CleaningRoomItem[] {
   });
 }
 
-function getPrimaryCleaningUser(users?: UserLike[]) {
-  if (!users || users.length === 0) return null;
-  return pickPrimaryStaff(users);
+function getPrimaryCleaningUser(_users?: UserLike[]): UserLike | null {
+  // Исполнителя уборки по умолчанию не угадываем (тикет 57187T): раньше им
+  // становился первый по алфавиту повар. Его ставят «Ответственные за
+  // журналы» (слот по должности) или человек в документе.
+  return null;
 }
 
 function getPrimaryControlUser(users?: UserLike[], excludeUserId?: string | null) {
   if (!users || users.length === 0) return null;
   const availableUsers = users.filter((user) => user.id !== excludeUserId);
-  return pickPrimaryManager(availableUsers) || availableUsers[0] || users[0];
+  // Контроль — только руководство; «первого по списку» не ставим.
+  return pickPrimaryManager(availableUsers);
 }
 
 function getRoleTitle(role: string, fallback: string) {
@@ -2002,12 +2004,9 @@ export function normalizeCleaningEntryData(value: unknown): CleaningEntryData {
 }
 
 export function getDefaultCleaningResponsibleIds(users: Array<{ id: string; role: string }>) {
-  const responsibleCleaningUserId = pickPrimaryStaff(users)?.id || null;
-
-  const responsibleControlUserId =
-    pickPrimaryManager(users.filter((user) => user.id !== responsibleCleaningUserId))?.id ||
-    users.find((user) => user.id !== responsibleCleaningUserId)?.id ||
-    responsibleCleaningUserId;
+  // Исполнителя не угадываем, контроль — только руководство (тикет 57187T).
+  const responsibleCleaningUserId: string | null = null;
+  const responsibleControlUserId = pickPrimaryManager(users)?.id || null;
 
   return {
     responsibleCleaningUserId,

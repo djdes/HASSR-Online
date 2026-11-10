@@ -1,4 +1,4 @@
-import { getUserDisplayTitle } from "@/lib/user-roles";
+import { getUserDisplayTitle, isManagementRole } from "@/lib/user-roles";
 
 export const PRODUCT_WRITEOFF_TEMPLATE_CODE = "product_writeoff";
 export const PRODUCT_WRITEOFF_DOCUMENT_TITLE = "Акт забраковки";
@@ -211,7 +211,8 @@ export function buildProductWriteoffConfigFromData(params: {
   const { users, products, batches, referenceDate = new Date() } = params;
   const config = getDefaultProductWriteoffConfig(referenceDate);
 
-  const commissionUsers = users.slice(0, 2);
+  // Комиссия по умолчанию — руководство, а не первые двое по списку (57187T).
+  const commissionUsers = users.filter((user) => isManagementRole(user.role)).slice(0, 2);
   config.commissionMembers = commissionUsers.map((user) =>
     createProductWriteoffCommissionMember({
       // Должность самого человека из справочника, а не выдуманная пара
