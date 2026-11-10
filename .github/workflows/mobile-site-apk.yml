@@ -2,7 +2,11 @@
 #
 # Собирает тот же APK, что «Выпуск приложений» (ключ загрузки, боевой Firebase,
 # проверка перед выпуском в Gradle), и кладёт его в выпуск GitHub с постоянной
-# меткой `wesetup-app-latest`, файл `wesetup.apk`. Сайт отдаёт его по адресу
+# меткой. Пока секретов подписи в GitHub нет, собирается ТЕСТОВАЯ сборка (как
+# отладочный APK в «Проверке приложений»): ключ одноразовый, поэтому ссылки с
+# QR из системной камеры включаются на устройстве вручную, а перед установкой
+# подписанной версии тестовую надо удалить. В названии выпуска это написано.
+# Метка выпуска — `wesetup-app-latest`, файл `wesetup.apk`. Сайт отдаёт его по адресу
 # https://wesetup.ru/download/android (перенаправление на этот файл).
 #
 # Запуск: изменить `mobile/site-apk.json` в master (поднять `build`) — или вручную,
@@ -28,15 +32,17 @@ permissions:
 
 jobs:
   publish:
-    name: Подписанный APK → выпуск GitHub
+    name: APK → выпуск GitHub
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     defaults:
       run:
         working-directory: mobile
     steps:
-      # Все ли секреты на месте — списком, значения в лог не попадают.
+      # Все ли секреты на месте — списком, значения в лог не попадают. Нет хотя
+      # бы одного — дальше идёт тестовая сборка, а не подписанная.
       - name: Секреты на месте
+        id: secrets
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -50,10 +56,12 @@ jobs:
             if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
           done
           if [ -n "$missing" ]; then
-            echo "::error::Нет секретов GitHub для подписанного APK:$missing (Settings → Secrets and variables → Actions; docs/mobile/secrets.md)"
-            exit 1
+            echo "::warning::Нет секретов GitHub для подписанного APK:$missing (Settings → Secrets and variables → Actions; docs/mobile/secrets.md). Собирается тестовая сборка."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Секреты Android на месте"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "Секреты Android на месте"
 
       - uses: actions/checkout@v7
 
@@ -85,6 +93,7 @@ jobs:
           echo "APP_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
 
       - name: Ключ подписи и Firebase
+        if: steps.secrets.outputs.signed == 'true'
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -95,6 +104,7 @@ jobs:
       - run: npx cap sync android
 
       - name: Подписанный APK
+        if: steps.secrets.outputs.signed == 'true'
         working-directory: mobile/android
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -114,6 +124,23 @@ jobs:
           cp "$apk" "$RUNNER_TEMP/wesetup.apk"
           sha256sum "$RUNNER_TEMP/wesetup.apk" | cut -d' ' -f1 > "$RUNNER_TEMP/wesetup.apk.sha256"
 
+      # Без секретов: та же сборка, что «Android — отладочный APK» в «Проверке
+      # приложений», с номером сборки из файла.
+      - name: Тестовый APK (без секретов подписи)
+        if: steps.secrets.outputs.signed != 'true'
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug -PversionCode="$BUILD_NUMBER" --no-daemon
+          apk=app/build/outputs/apk/debug/app-debug.apk
+          tools=$(dirname "$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)")
+          "$tools/apksigner" verify "$apk"
+          badging=$("$tools/aapt2" dump badging "$apk" | head -1)
+          echo "$badging"
+          echo "$badging" | grep -q "name='ru.wesetup.app' versionCode='$BUILD_NUMBER'"
+          cp "$apk" "$RUNNER_TEMP/wesetup.apk"
+          sha256sum "$RUNNER_TEMP/wesetup.apk" | cut -d' ' -f1 > "$RUNNER_TEMP/wesetup.apk.sha256"
+
       - name: Убрать ключ с раннера
         if: always()
         run: rm -f android/app/upload.jks android/app/google-services.json
@@ -123,15 +150,23 @@ jobs:
       - name: Выпуск GitHub
         env:
           GH_TOKEN: ${{ github.token }}
+          SIGNED: ${{ steps.secrets.outputs.signed }}
         working-directory: .
         run: |
           tag=wesetup-app-latest
           sha=$(cat "$RUNNER_TEMP/wesetup.apk.sha256")
+          if [ "$SIGNED" = "true" ]; then
+            kind="WeSetup для Android"
+            about="Подписанный APK приложения WeSetup."
+          else
+            kind="WeSetup для Android — тестовая сборка"
+            about="Тестовая сборка приложения WeSetup (ключ одноразовый). Ссылки с QR из системной камеры включаются вручную: Настройки → Приложения → WeSetup → «Открывать по умолчанию» → «Добавить ссылку» → wesetup.ru. Перед установкой подписанной версии эту сборку нужно удалить."
+          fi
           gh release delete "$tag" --cleanup-tag --yes 2>/dev/null || true
           gh release create "$tag" "$RUNNER_TEMP/wesetup.apk" \
             --target "$GITHUB_SHA" \
-            --title "WeSetup для Android $APP_VERSION (сборка $BUILD_NUMBER)" \
-            --notes "Подписанный APK приложения WeSetup. Скачать: https://wesetup.ru/download/android
+            --title "$kind $APP_VERSION (сборка $BUILD_NUMBER)" \
+            --notes "$about Скачать: https://wesetup.ru/download/android
 
           SHA-256: \`$sha\`"
           echo "Файл: https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/wesetup.apk"
