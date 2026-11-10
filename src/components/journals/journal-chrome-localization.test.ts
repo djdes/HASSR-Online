@@ -16,7 +16,7 @@ import { JournalQrPointButton } from "./journal-list-actions";
 import { FillGuideLauncher } from "./fill-guide-launcher";
 import { JournalDocGuideBody } from "./journal-doc-guide-body";
 
-const router = { back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
 
 test("journal shared controls render translated visible and accessible copy using runtime namespaces", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {

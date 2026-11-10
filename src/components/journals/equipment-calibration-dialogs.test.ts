@@ -16,7 +16,7 @@ import { getDefaultEquipmentCalibrationConfig } from "@/lib/equipment-calibratio
 import { EquipmentDirectoryField } from "./equipment-directory-field";
 
 const require = createRequire(import.meta.url);
-const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 // SSR has no portal host. Only the dialog visibility/portal adapter is replaced;
 // production form JSX, hooks, controls, localization and field values are retained.
 const inlineDialog = ({ children }: { children?: ReactNode }) => createElement("div", null, children);

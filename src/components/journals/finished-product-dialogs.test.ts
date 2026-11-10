@@ -16,7 +16,7 @@ import { normalizeFinishedProductDocumentConfig } from "@/lib/finished-product-d
 import { JournalCustomCell } from "./journal-custom-cell";
 import { FinishedProductGradeCell } from "./finished-product-grade-cell";
 const require = createRequire(import.meta.url);
-const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 const inline = ({ children }: { children?: ReactNode }) => createElement("div", null, children);
 // SSR cannot mount Radix portals. Keep production JSX and hooks, replacing only
 // portal visibility. Optional initial-state fixtures exercise otherwise hidden steps.

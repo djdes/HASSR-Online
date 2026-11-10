@@ -1,0 +1,65 @@
+/
+  HTTP/1.1 200 OK
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+/login
+  HTTP/1.1 200 OK
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+/dashboard
+  HTTP/1.1 307 Temporary Redirect
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+  location: /login
+/root
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  HTTP/1.1 404 Not Found
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+/api/health
+  Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+  HTTP/1.1 200 OK
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+/robots.txt
+  HTTP/1.1 200 OK
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  cache-control: public, max-age=3600, s-maxage=3600
+STATIC_CSS
+  Cache-Control: public, max-age=31536000, immutable
+  HTTP/1.1 200 OK
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+/journals-info
+  HTTP/1.1 200 OK
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+/settings
+  HTTP/1.1 307 Temporary Redirect
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  cache-control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0
+  location: /login

@@ -1,0 +1,15 @@
+Скриншоты 1280×900: master (Next 16.1.6) / шаг 6 (Next 16.4.5), доля пикселей с разницей > 24
+owner_dashboard.png                                    0.01%
+owner_journals.png                                     0.00%
+owner_journals_hygiene.png                             0.00%
+owner_reports.png                                      0.00%
+owner_settings_balance.png                             0.00%
+owner_settings_subscription.png                        0.00%
+owner_settings_users.png                               0.00%
+public_.png                                            0.00%
+public_login.png                                       0.00%
+public_order_plan_standard_cycle_month_points_1.png    0.00%
+public_pricing.png                                     0.00%
+root_root.png                                          0.02%
+root_root_crm.png                                      0.00%
+root_root_organizations_org_cafe.png                   0.00%

@@ -37,7 +37,7 @@ const confirm = load<typeof import("@/components/ui/confirm-dialog")>("src/compo
 async function render(locale: Locale, children: React.ReactNode, refresh = () => {}) {
   const messages = await loadMessages(locale);
   return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, {
-    value: { back() {}, forward() {}, push() {}, replace() {}, prefetch() {}, refresh },
+    value: { bfcacheId: "test", back() {}, forward() {}, push() {}, replace() {}, prefetch() {}, refresh },
     children: React.createElement(NextIntlClientProvider, { locale, messages: { printAgent: messages.printAgent, journalControls: messages.journalControls }, timeZone: "UTC", onError: error => { throw error; }, children }),
   })).replaceAll("&#x27;", "'");
 }

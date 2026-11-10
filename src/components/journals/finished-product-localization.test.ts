@@ -18,7 +18,7 @@ import { normalizeFinishedProductDocumentConfig, FINISHED_PRODUCT_DOCUMENT_TITLE
 import { resolveColumns } from "@/lib/journal-columns";
 import { unsignedRows, formatRowSignatures, normalizeRowSignatures } from "@/lib/brakerage-commission";
 
-const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 const users = [{ id: "employee-1", name: "O‘tkir", role: "cook" }];
 const config = normalizeFinishedProductDocumentConfig({ rows: [{ id: "row-1", productName: "Custom O‘tkir dish", productionDateTime: "2026-10-15 10:00", rejectionTime: "2026-10-15 10:05", releaseAllowed: "yes", releasePermissionTime: "2026-10-15 10:10", organoleptic: "Отлично", portionWeight: "200/10", note: "User original note" }], footerNote: "Custom footer", commissionMembers: [] });
 async function render(locale: Locale, children: ReactNode) {

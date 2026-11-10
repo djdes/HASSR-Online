@@ -50,7 +50,7 @@ async function fixture(input: Options = {}) {
   const metadata = await page.generateMetadata(props);
   assert.equal(calls.filter(call => call === "rollover").length, 0, "metadata must never create period documents");
   const tree = await page.default(props);
-  const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {} };
+  const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {} };
   return { html: renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router, children: tree })), metadata, calls };
 }
 

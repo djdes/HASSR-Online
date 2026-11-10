@@ -9,7 +9,7 @@ import { loadMessages } from "@/i18n/messages";
 import type { Locale } from "@/i18n/locales";
 import { OrganizationBrand } from "./organization-brand";
 
-const router = { back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
 
 async function render(locale: Locale, props: Partial<ComponentProps<typeof OrganizationBrand>>) {
   const messages = await loadMessages(locale);

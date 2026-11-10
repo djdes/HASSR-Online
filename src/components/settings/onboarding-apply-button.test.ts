@@ -62,7 +62,7 @@ function fixture(fetcher: typeof fetch = async () => { throw new Error("Unexpect
     async render(locale: Locale, props: Props) {
       cursor = 0; refCursor = 0; nodes.length = 0; effects.length = 0;
       const messages = await loadMessages(locale);
-      const router = { back() {}, forward() {}, push() {}, replace() {}, prefetch() {}, refresh() { refreshes++; } };
+      const router = { bfcacheId: "test", back() {}, forward() {}, push() {}, replace() {}, prefetch() {}, refresh() { refreshes++; } };
       const html = renderToStaticMarkup(React.createElement(AppRouterContext.Provider, {
         value: router, children: React.createElement(NextIntlClientProvider, {
           locale, messages: { settingsManagement: messages.settingsManagement }, timeZone: "UTC", onError: error => { throw error; },

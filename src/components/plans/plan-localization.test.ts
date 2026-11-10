@@ -11,7 +11,7 @@ import { loadMessages } from "@/i18n/messages";
 import type { MessageContract } from "@/i18n/message-contract";
 import { localDayKey } from "@/lib/entry-defaults";
 
-const router: AppRouterInstance = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router: AppRouterInstance = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 
 test("production plan form renders all locales with local date and accessible controls", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {
