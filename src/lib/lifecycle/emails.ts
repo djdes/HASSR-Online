@@ -241,7 +241,7 @@ export function composeGraceLastEmail(input: GraceLastEmailInput): ComposedNotic
     box(`Если не оплатить, аккаунт перейдёт на бесплатный тариф — ${employeesLabel(input.freeUsers)} и ${journalsLabel(input.freeJournals)}${losses ? `: ${losses}` : ""}. Записи сохранятся, но вести журналы командой будет нельзя.`, WARN),
     para(offerText(input)),
     input.invoice
-      ? para(`Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — во вложении. Пришлите платёжку в ответ на письмо, и мы не будем отключать команду, пока идут деньги.`)
+      ? para(`Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — во вложении. Платёж по счёту идёт 1–3 рабочих дня, поэтому лучше оплатить сегодня. Не успеете — записи сохранятся, а команду и журналы можно будет вернуть после оплаты.`)
       : {
           html: `<p ${P}>Нужен счёт? Укажите ИНН на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a> — он сформируется сразу. Картой — мгновенно.</p>`,
           text: `Нужен счёт? Укажите ИНН на странице тарифа — он сформируется сразу. Картой — мгновенно: ${input.requisitesUrl}`,

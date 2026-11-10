@@ -33,7 +33,7 @@ import {
 } from "./emails";
 import { loadPlatformStaff, managerSignature } from "./people.server";
 import { LIFECYCLE_STAGE_LABELS, planLifecycle, taskKey, type LifecycleFacts, type LifecyclePlan, type LifecycleSettings } from "./plan";
-import { approverFor, pickAssignee, type StaffPerson } from "./staff";
+import { approverFor, limitOf, pickAssignee, type StaffPerson } from "./staff";
 
 /**
  * Ежедневный прогон сценария «пробный и оплата» (2026-11-09, доработан
@@ -108,15 +108,24 @@ async function priceOf(organizationId: string, target: PlanTarget, now: Date): P
   return quote && quote.ok ? quote.offer.priceRub : null;
 }
 
-/** Счёт на тариф (если у организации есть ИНН и реквизиты исполнителя заполнены). */
-async function issueInvoice(unit: Unit, target: PlanTarget, owner: { userId: string; email: string }, automatic: boolean) {
+/**
+ * Счёт на тариф (если у организации есть ИНН и реквизиты исполнителя заполнены).
+ * Свой неоплаченный счёт клиента сценарий не трогает: новый счёт закрыл бы его
+ * (`createInvoiceOrder` отменяет прежние), а бухгалтерия, может быть, уже платит.
+ */
+async function issueInvoice(unit: Unit, target: PlanTarget, owner: { userId: string; email: string }, automatic: boolean, now: Date) {
+  if (await hasPendingInvoice(unit.scopeOrgIds, now)) {
+    console.info("[lifecycle] invoice skipped — client has own pending invoice", { unit: unit.key });
+    return null;
+  }
   const result = await createInvoiceOrder({ organizationId: unit.organizationId, userId: owner.userId, email: owner.email, target, allowIndividual: true });
   if (!result.ok) {
     console.info("[lifecycle] invoice skipped", { unit: unit.key, error: result.error });
     return null;
   }
   // Счёт к письму сценария — не решение клиента «платим» (`hasPendingInvoice`).
-  if (automatic) await claim(`${AUTOMATIC_INVOICE_PREFIX}${result.order.id}`, "lifecycle.invoice").catch(() => null);
+  // Помечаем только новый: вернувшийся прежний счёт — чей-то ещё.
+  if (automatic && result.created) await claim(`${AUTOMATIC_INVOICE_PREFIX}${result.order.id}`, "lifecycle.invoice").catch(() => null);
   return result.order;
 }
 
@@ -171,7 +180,7 @@ async function clientMessage(unit: Unit, state: State, plan: LifecyclePlan, fact
   }
 
   const target = invoiceTarget(unit, state, plan, facts, settings);
-  const order = plan.invoice && owner.email ? await issueInvoice(unit, target, { userId: owner.userId, email: owner.email }, true) : null;
+  const order = plan.invoice && owner.email ? await issueInvoice(unit, target, { userId: owner.userId, email: owner.email }, true, now) : null;
   const rendered = order ? await renderInvoice(order.id).catch(() => null) : null;
   const invoice = order && rendered ? { number: String(order.id), amountRub: Number(order.amountRub), dueLabel: formatMskDay(order.invoiceDueAt ?? new Date(now.getTime() + 7 * DAY_MS)), cycle: target.cycle } : null;
   const attach = order && rendered ? { id: order.id, pdf: rendered.pdf } : null;
@@ -301,8 +310,32 @@ async function createTasks(unit: Unit, plan: LifecyclePlan, facts: LifecycleFact
   }
 
   let created = 0;
+  // Согласование — только если скидка выше лимита ответственного (у директора 25 % — сам решает).
+  const needsApproval = plan.task.needsApproval && (plan.task.discountPercent ?? 0) > limitOf(ctx.staff, ctx.managerId);
   if (plan.task.kind === "call") await supersedeOpenCalls(unit.scopeOrgIds, task.dedupeKey ?? "");
-  if (plan.task.kind === "call" && plan.task.needsApproval && plan.task.discountPercent) {
+  // По этому пробному скидку уже решили (на первом касании) — второй раз не спрашиваем.
+  const decided =
+    plan.task.kind === "call" && needsApproval && facts.trialEndsAt
+      ? await db.crmTask.findFirst({
+          where: {
+            organizationId: { in: unit.scopeOrgIds },
+            kind: "approve_discount",
+            approvalStatus: { in: ["approved", "rejected"] },
+            dedupeKey: { startsWith: `lc:${unit.key}:trial:${facts.trialEndsAt.toISOString()}:` },
+          },
+          orderBy: { decidedAt: "desc" },
+          select: { approvalStatus: true, discountPercent: true },
+        })
+      : null;
+  if (decided) {
+    const approved = decided.approvalStatus === "approved";
+    task = {
+      ...task,
+      approvalStatus: approved ? "approved" : "rejected",
+      discountPercent: approved ? decided.discountPercent : null,
+      note: `${task.note}\n${approved ? `Скидку ${decided.discountPercent} % уже согласовали.` : "Особую скидку не согласовали — предложите обычные условия."}`,
+    };
+  } else if (plan.task.kind === "call" && needsApproval && plan.task.discountPercent) {
     // Особая скидка большому клиенту — сначала решение; звонок ждёт.
     let approval = await db.crmTask.findFirst({ where: { organizationId: { in: unit.scopeOrgIds }, kind: "approve_discount", approvalStatus: "pending" }, select: { id: true } });
     if (!approval) {
@@ -489,7 +522,7 @@ export async function runLifecycleJob(options: { now?: Date; dryRun?: boolean } 
             // Продление по счёту: тот же тариф, период и точки.
             const owner = await ownerContact(unit.organizationId);
             const tier = state.paidTier && state.paidTier !== "legacy" ? (state.paidTier as PaidTier) : null;
-            const order = owner?.email && tier ? await issueInvoice(unit, { tier, cycle: state.planCycle, points: state.planPoints }, { userId: owner.userId, email: owner.email }, false) : null;
+            const order = owner?.email && tier ? await issueInvoice(unit, { tier, cycle: state.planCycle, points: state.planPoints }, { userId: owner.userId, email: owner.email }, false, now) : null;
             if (order) {
               await deliverInvoice(order.id, unit.organizationName);
               report.invoices += 1;

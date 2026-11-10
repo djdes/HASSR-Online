@@ -11,7 +11,7 @@ filter unassigned: 200, cards 0
 filter kind=last_chance: 200, cards 1
 offer price line: 23 880 ₽ за год
 funnel: 200
-funnel columns: registered=2, contract_signed=0, message_sent=6, called=2, won=1, lost=1
+funnel columns: registered=1, contract_signed=0, message_sent=6, called=2, won=1, lost=1
 pekarnya column after move: 1
 automation: 200
 forecast items: 23

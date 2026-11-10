@@ -7,8 +7,9 @@
     "typecheck": "PASS (npm run typecheck, exit 0)",
     "eslint": "PASS (changed src files, exit 0)",
     "unitTests": "PASS (lifecycle: plan 9, emails 5, staff 4, deals 2, offer 3)",
-    "testGate": "full suite via pre-commit hook (schema changed → mode=full)"
+    "testGate": "PASS full suite in pre-commit: pass=6080 fail=0"
   },
-  "live": { "run": "12 planned, 9 emails, 8 invoices, 9 tasks, 0 failed; rerun 0/0/0", "scenarios": "17/17 PASS", "ui": "0 page errors, overflowX 0 at 390px, manager automation 404" },
+  "live": { "run": "12 planned, 9 emails, 8 invoices, 9 tasks, 0 failed; rerun 0/0/0", "scenarios": "21/21 PASS", "ui": "0 page errors, overflowX 0 at 390px, manager automation 404" },
+  "review": "fresh reviewer: 10 findings, all confirmed ones fixed and covered by scenarios 12-21",
   "acceptance": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS", "AC8": "PASS", "AC9": "PASS", "AC10": "PENDING_DEPLOY" }
 }

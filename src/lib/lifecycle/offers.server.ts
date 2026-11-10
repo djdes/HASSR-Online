@@ -62,7 +62,8 @@ async function pointsInUse(organizationId: string): Promise<number> {
   return unit?.pointsInUse ?? 1;
 }
 
-export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { organizationId: string }): Promise<OfferResult> {
+export async function sendSpecialOffer(request: OfferInput, actor: TaskActor & { organizationId: string }): Promise<OfferResult> {
+  let input = request;
   const org = await db.organization.findUnique({ where: { id: input.organizationId }, select: { id: true, name: true, type: true, inn: true, accountManagerId: true } });
   if (!org) throw new CrmTaskError("Организация не найдена", 404);
   if (actor.own && org.accountManagerId && org.accountManagerId !== actor.id) throw new CrmTaskError("Организация не найдена", 404);
@@ -81,7 +82,12 @@ export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { o
       if (task.assigneeId !== actor.id) throw new CrmTaskError("Согласованное КП отправляет тот, кто просил согласование", 403);
       const mismatch = termsMismatch(terms, input);
       if (mismatch) throw new CrmTaskError(mismatch);
+      // Согласовано целиком: «на все продления» и срок кода — как в заявке, не из запроса.
+      input = { ...input, lifetime: terms.lifetime === true, validDays: Math.min(input.validDays, typeof terms.validDays === "number" ? terms.validDays : input.validDays) };
       ceiling = Math.max(ceiling, terms.percent);
+    } else if (task.approvalStatus === "approved" && task.discountPercent && task.assigneeId === actor.id) {
+      // Звонок сценария, по которому скидку уже согласовали (крупный клиент) — её и можно дать.
+      ceiling = Math.max(ceiling, task.discountPercent);
     }
     originTask = { id: task.id, dealId: task.dealId };
   }
@@ -140,15 +146,17 @@ export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { o
     return { ok: true, status: "approval", approverName: approver.name, taskId: task.id };
   }
 
-  // Двойной запрос — второй КП не уходит.
-  if (!(await lock(`lc:offer-lock:${org.id}:${Math.floor(Date.now() / OFFER_LOCK_MS)}`))) throw new CrmTaskError("КП этой организации только что отправлено — проверьте ленту", 409);
+  // Двойной запрос — второй КП не уходит: недавний замок или тот же двухминутный интервал.
+  const recent = await db.crmReminderLog.count({ where: { dedupeKey: { startsWith: `lc:offer-lock:${org.id}:` }, sentAt: { gt: new Date(Date.now() - OFFER_LOCK_MS) } } });
+  const lockKey = `lc:offer-lock:${org.id}:${Math.floor(Date.now() / OFFER_LOCK_MS)}`;
+  if (recent || !(await lock(lockKey))) throw new CrmTaskError("КП этой организации только что отправлено — проверьте ленту", 409);
 
   // Код скидки: персональный на организацию, одно использование, срок N дней.
-  // Прежние коды CRM этой организации гасятся — действует последнее предложение.
+  // Прежние коды CRM этой организации гасятся после отправки — действует последнее предложение.
   let code: string | null = null;
+  let codeId: string | null = null;
   const endsAt = promoEndsAfterDays(new Date(), input.validDays);
   const campaignId = `crm-org:${org.id}`;
-  await db.promoCode.updateMany({ where: { campaignId, active: true }, data: { active: false } });
   if (input.discountPercent > 0) {
     const created = await createPersonalPromoCodes([{ key: "crm-offer", email: null, organizationId: org.id, companyName: org.name }], {
       kind: "percent",
@@ -159,6 +167,7 @@ export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { o
       campaignId,
     });
     code = created.get("crm-offer")?.code ?? null;
+    codeId = created.get("crm-offer")?.id ?? null;
     if (!code) throw new CrmTaskError("Код скидки не создан — попробуйте ещё раз", 500);
   }
 
@@ -182,14 +191,17 @@ export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { o
   let invoiceError: string | undefined;
   if (input.attachInvoice) {
     const owner = await db.user.findFirst({ where: { organizationId: org.id, isActive: true, archivedAt: null, isRoot: false, role: { in: ["owner", "manager"] } }, orderBy: { createdAt: "asc" }, select: { id: true } });
+    const { hasPendingInvoice } = await import("@/lib/billing.server");
     if (!org.inn?.trim()) invoiceError = "у организации не указан ИНН";
+    // Свой неоплаченный счёт клиента не закрываем новым: бухгалтерия могла его уже оплатить.
+    else if (await hasPendingInvoice([org.id])) invoiceError = "у клиента уже есть неоплаченный счёт — новый не выставлен";
     else if (owner) {
       const created = await createInvoiceOrder({ organizationId: org.id, userId: owner.id, email: input.toEmail, target: { tier: input.tier, cycle: input.cycle, points: input.points }, promoCode: code, allowIndividual: true });
       if (created.ok) {
         const rendered = await renderInvoice(created.order.id);
         if (rendered) invoice = { id: created.order.id, amountRub: Number(created.order.amountRub), pdf: rendered.pdf };
-        // Счёт из КП — не решение клиента «платим»: автопереход его не ждёт.
-        await db.crmReminderLog.create({ data: { dedupeKey: `lc:invoice:${created.order.id}`, kind: "lifecycle.invoice" } }).catch(() => null);
+        // Счёт из КП — не решение клиента «платим»: автопереход его не ждёт (только новый счёт).
+        if (created.created) await db.crmReminderLog.create({ data: { dedupeKey: `lc:invoice:${created.order.id}`, kind: "lifecycle.invoice" } }).catch(() => null);
       } else invoiceError = created.error;
     }
   }
@@ -224,7 +236,13 @@ export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { o
     messageId: `<${messageId}>`,
     attachments: invoice ? [{ filename: invoiceFilename(String(invoice.id)).utf8, content: invoice.pdf, contentType: "application/pdf" }] : undefined,
   });
-  if (!sent.ok) throw new CrmTaskError(sent.error, 502);
+  if (!sent.ok) {
+    // Письмо не ушло — новый код не нужен, прежний у клиента продолжает действовать.
+    if (codeId) await db.promoCode.update({ where: { id: codeId }, data: { active: false } }).catch(() => undefined);
+    await db.crmReminderLog.deleteMany({ where: { dedupeKey: lockKey } }).catch(() => undefined);
+    throw new CrmTaskError(sent.error, 502);
+  }
+  await db.promoCode.updateMany({ where: { campaignId, active: true, ...(codeId ? { id: { not: codeId } } : {}) }, data: { active: false } });
 
   const now = new Date();
   await ingestCrmItems([
@@ -272,13 +290,15 @@ export async function sendSpecialOffer(input: OfferInput, actor: TaskActor & { o
 export async function offerDefaults(organizationId: string, actor: TaskActor, taskId: string | null) {
   const { loadBillingUnit } = await import("@/lib/billing.server");
   const [org, unit, staff, pricing, settings] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { id: true, name: true, inn: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { id: true, name: true, inn: true, accountManagerId: true } }),
     loadBillingUnit(organizationId).catch(() => null),
     loadPlatformStaff(),
     readPlanPricing(),
     readLifecycleSettings(),
   ]);
   if (!org) return null;
+  // Охват «свои»: чужой клиент — как будто его нет.
+  if (actor.own && org.accountManagerId && org.accountManagerId !== actor.id) return null;
   const owner = await db.user.findFirst({ where: { organizationId, isActive: true, archivedAt: null, isRoot: false, role: { in: ["owner", "manager"] } }, orderBy: { createdAt: "asc" }, select: { email: true, contactEmail: true } });
   const { isTechnicalEmail } = await import("@/lib/technical-email");
   const toEmail = [owner?.contactEmail, owner?.email].find((value) => value && value.includes("@") && !isTechnicalEmail(value)) ?? "";
@@ -286,7 +306,9 @@ export async function offerDefaults(organizationId: string, actor: TaskActor, ta
   const points = Math.max(1, unit?.pointsInUse ?? 1);
   const { tierForHeadcount } = await import("@/lib/tariff-plans");
   const { suggestedDiscount } = await import("./plan");
-  const task = taskId ? await db.crmTask.findUnique({ where: { id: taskId }, select: { kind: true, approvalStatus: true, terms: true, discountPercent: true } }) : null;
+  const found = taskId ? await db.crmTask.findUnique({ where: { id: taskId }, select: { kind: true, approvalStatus: true, terms: true, discountPercent: true, organizationId: true, assigneeId: true } }) : null;
+  // Задача — только этой организации и (для охвата «свои») своя или общая.
+  const task = found && found.organizationId === organizationId && !(actor.own && found.assigneeId && found.assigneeId !== actor.id) ? found : null;
   const terms = task?.kind === "offer" && task.approvalStatus === "approved" ? ((task.terms ?? null) as Terms | null) : null;
   return {
     organizationId,

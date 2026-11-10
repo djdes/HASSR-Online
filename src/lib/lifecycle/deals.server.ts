@@ -10,8 +10,8 @@ import { pickAssignee } from "./staff";
 /**
  * Сделки воронки CRM (2026-11-10). Сделка — один период решения аккаунта:
  * пробный (с регистрации до конца пробного и отсрочки) или продление (за
- * 30 дней до конца годовой оплаты, за 7 — помесячной; продлилось с баланса —
- * сделка сразу «Оплачено»). `syncDeals` идёт в цикле CRM раз в 5 минут:
+ * 30 дней до конца годовой оплаты, за 7 — помесячной без автопродления; не
+ * продлилось — сделка появится в отсрочке). `syncDeals` идёт в цикле CRM раз в 5 минут:
  * заводит сделки, ставит «Договор подписан» по ЭДО, закрывает «Оплачено»
  * и «Отказ». «Сообщение отправлено» и «Был прозвон» ставят сценарий,
  * спец-КП и итог задачи (`advanceDealFor`).
@@ -27,7 +27,8 @@ type DealRow = { id: string; kind: string; unitKey: string; stage: string; stage
 
 async function move(deal: DealRow, target: DealStage, extra: Prisma.CrmDealUpdateInput = {}): Promise<boolean> {
   const next = autoAdvance(deal, target);
-  if (!next && !Object.keys(extra).length) return false;
+  // Закрытую сделку («Оплачено», «Отказ») трогает только оплата — без «хвостов» вроде причины отказа.
+  if (!next && (isClosedStage(deal.stage) || !Object.keys(extra).length)) return false;
   const now = new Date();
   await db.crmDeal.update({
     where: { id: deal.id },
@@ -110,7 +111,8 @@ export async function syncDeals(now: Date = new Date()): Promise<DealSyncResult>
   if (!settings.enabled) return result;
   const orgIds = units.flatMap((unit) => unit.scopeOrgIds);
   const [deals, orgs, contacts, contracts] = await Promise.all([
-    db.crmDeal.findMany({ where: { unitKey: { in: units.map((unit) => unit.key) } }, orderBy: { periodEnd: "asc" } }),
+    // Открытые и закрытые за 30 дней; более старую сделку того же периода найдёт `dedupeKey` (P2002).
+    db.crmDeal.findMany({ where: { OR: [{ stage: { notIn: ["won", "lost"] } }, { updatedAt: { gte: new Date(now.getTime() - 30 * DAY_MS) } }] }, orderBy: { periodEnd: "asc" } }),
     db.organization.findMany({ where: { id: { in: orgIds } }, select: { id: true, accountManagerId: true } }),
     db.crmContact.findMany({ where: { organizationId: { in: orgIds } }, orderBy: { lastActivityAt: "desc" }, select: { id: true, organizationId: true } }),
     db.edoDocument.findMany({ where: { organizationId: { in: orgIds }, kind: "contract", stateCode: 7, deletedAt: null }, select: { organizationId: true, updatedAt: true } }),
@@ -169,7 +171,10 @@ export async function syncDeals(now: Date = new Date()): Promise<DealSyncResult>
         if (state.reason === "subscription_expired" && unit.subscriptionEnd) await ensure(unit, "renewal", unit.subscriptionEnd, state.activeUsers);
         else if (state.trialEndsAt) await ensure(unit, "trial", state.trialEndsAt, state.activeUsers);
       }
-      if (state.kind === "paid" && state.paidUntil && !unit.inactive && state.paidUntil.getTime() - now.getTime() <= RENEWAL_WINDOW_DAYS[state.planCycle === "year" ? "year" : "month"] * DAY_MS) {
+      // Продление: годовым — всегда (решение раз в год), помесячным — только без автопродления
+      // с баланса; не продлилось — сделка появится в отсрочке.
+      const yearly = state.planCycle === "year";
+      if (state.kind === "paid" && state.paidUntil && !unit.inactive && (yearly || !unit.autoRenew) && state.paidUntil.getTime() - now.getTime() <= RENEWAL_WINDOW_DAYS[yearly ? "year" : "month"] * DAY_MS) {
         await ensure(unit, "renewal", state.paidUntil, state.activeUsers);
       }
 

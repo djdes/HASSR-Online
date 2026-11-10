@@ -85,7 +85,7 @@ export type NewTask = {
   status?: "open" | "waiting";
   dedupeKey?: string | null;
   discountPercent?: number | null;
-  approvalStatus?: "pending" | null;
+  approvalStatus?: "pending" | "approved" | "rejected" | null;
   approvalTaskId?: string | null;
   createdById?: string | null;
   dealId?: string | null;
@@ -350,7 +350,8 @@ export async function closeLifecycleTasksOnPayment(organizationIds: string[]): P
 export async function supersedeOpenCalls(organizationIds: string[], keepKey: string): Promise<void> {
   if (!organizationIds.length) return;
   await db.crmTask.updateMany({
-    where: { organizationId: { in: organizationIds }, kind: "call", status: { in: ["open", "waiting"] }, dedupeKey: { startsWith: "lc:", not: keepKey } },
+    // Перезвон, который назначил менеджер (`lc:followup:`), — его решение, не заменяем.
+    where: { organizationId: { in: organizationIds }, kind: "call", status: { in: ["open", "waiting"] }, dedupeKey: { startsWith: "lc:", not: keepKey }, NOT: { dedupeKey: { startsWith: "lc:followup:" } } },
     data: { status: "cancelled", result: "Заменена повторной задачей", closedAt: new Date() },
   });
 }

@@ -14,7 +14,8 @@ import assert from "node:assert/strict";
 import { hasPendingInvoice } from "../../../../src/lib/billing.server";
 import { closeCrmTask, closeLifecycleTasksOnPayment, decideDiscount } from "../../../../src/lib/crm/tasks.server";
 import { db } from "../../../../src/lib/db";
-import { sendSpecialOffer } from "../../../../src/lib/lifecycle/offers.server";
+import { runLifecycleJob } from "../../../../src/lib/lifecycle/job.server";
+import { offerDefaults, sendSpecialOffer } from "../../../../src/lib/lifecycle/offers.server";
 
 if (!/127\.0\.0\.1|localhost/.test(process.env.DATABASE_URL ?? "")) {
   console.error("scenarios: only for a local database");
@@ -89,12 +90,40 @@ async function main() {
   await check("Повторное решение по тому же согласованию — 409", () => rejects(decideDiscount(approvalId, actor(owner, { superadmin: true }), { approve: false, percent: null, comment: null }), /уже принято/));
   await check("Из задачи «Отправить КП» другие условия — отказ", () => rejects(sendSpecialOffer(offer("lc-stolovaya", { points: 3, discountPercent: 15, cycle: "month", taskId: offerTaskId }), actor(sales)), /Согласовано на «Стандарт», 3 точ\., за год/));
   await check("Чужую задачу «Отправить КП» не отправить", () => rejects(sendSpecialOffer(offer("lc-stolovaya", { points: 3, discountPercent: 15, taskId: offerTaskId }), actor(alexey)), /тот, кто просил/));
-  await check("Отправить КП на согласованных условиях — уходит, задача закрыта", async () => {
-    const result = await sendSpecialOffer(offer("lc-stolovaya", { points: 3, discountPercent: 15, taskId: offerTaskId }), actor(sales));
+  await check("Отправить КП на согласованных условиях — уходит, задача закрыта; «на все продления» из запроса не проходит", async () => {
+    const result = await sendSpecialOffer(offer("lc-stolovaya", { points: 3, discountPercent: 15, taskId: offerTaskId, lifetime: true, validDays: 60 }), actor(sales));
     assert.equal(result.status, "sent");
     const task = await db.crmTask.findUniqueOrThrow({ where: { id: offerTaskId } });
     assert.equal(task.status, "done");
-    return `код ${result.status === "sent" ? result.code : "—"}`;
+    const promo = await db.promoCode.findFirstOrThrow({ where: { code: result.status === "sent" ? result.code! : "" } });
+    assert.equal(promo.lifetime, false);
+    assert.ok(promo.endsAt && promo.endsAt.getTime() < Date.now() + 8 * 24 * 3_600_000);
+    const active = await db.promoCode.count({ where: { campaignId: "crm-org:lc-stolovaya", active: true } });
+    assert.equal(active, 1);
+    return `код ${result.status === "sent" ? result.code : "—"}: lifetime=false, срок ≤ 7 дней, активный код один`;
+  });
+
+  await check("Свой неоплаченный счёт клиента КП не закрывает", async () => {
+    const owner = await db.user.findUniqueOrThrow({ where: { email: "owner@lc-vtoroe.ru" }, select: { id: true } });
+    const own = await db.paymentOrder.create({
+      data: { email: "owner@lc-vtoroe.ru", tariffKey: "standard_year", amountRub: 23880, description: "«Стандарт» за год (счёт клиента)", status: "pending", organizationId: "lc-vtoroe", userId: owner.id, paymentMethod: "invoice", invoiceDueAt: new Date(Date.now() + 5 * 24 * 3_600_000), points: 1, changeKind: "new" },
+    });
+    const result = await sendSpecialOffer(offer("lc-vtoroe", { points: 1, discountPercent: 10 }), actor(alexey));
+    assert.equal(result.status, "sent");
+    assert.match(result.status === "sent" ? (result.invoiceError ?? "") : "", /уже есть неоплаченный счёт/);
+    const after = await db.paymentOrder.findUniqueOrThrow({ where: { id: own.id } });
+    assert.equal(after.status, "pending");
+    assert.equal(await hasPendingInvoice(["lc-vtoroe"]), true);
+    return "счёт клиента остался, новый не выставлен";
+  });
+
+  await check("Охват «свои»: форма КП по чужому клиенту не открывается", async () => {
+    await db.organization.update({ where: { id: "lc-quiet" }, data: { accountManagerId: alexey.id } });
+    const own = await offerDefaults("lc-quiet", actor(sales, { own: true }), null);
+    assert.equal(own, null);
+    const mine = await offerDefaults("lc-stolovaya", actor(sales, { own: true }), null);
+    assert.ok(mine);
+    return "чужой — null, свой — форма";
   });
 
   await check("Звонок закрыт «Обещали оплатить» со следующим шагом — сделка «Был прозвон», задача «Перезвонить»", async () => {
@@ -142,6 +171,23 @@ async function main() {
     const deal = await db.crmDeal.findFirstOrThrow({ where: { organizationId: "lc-paid" } });
     assert.equal(deal.stage, "won");
     return `закрыто задач: ${closed}`;
+  });
+
+  await check("Повторный прогон сценария не отменяет перезвон, назначенный менеджером", async () => {
+    await runLifecycleJob();
+    const follow = await db.crmTask.findFirstOrThrow({ where: { organizationId: "lc-vtoroe", dedupeKey: { startsWith: "lc:followup:" } } });
+    assert.equal(follow.status, "open");
+    return follow.title;
+  });
+
+  await check("Закрытая сделка «Оплачено» не получает причину отказа от задачи", async () => {
+    const deal = await db.crmDeal.findFirstOrThrow({ where: { organizationId: "lc-paid" } });
+    const task = await db.crmTask.create({ data: { kind: "manual", title: "Уточнить реквизиты", organizationId: "lc-paid", dealId: deal.id, assigneeId: alexey.id, dueAt: new Date() } });
+    await closeCrmTask(task.id, actor(alexey), { status: "done", result: "Передумали", outcome: "declined", nextDueAt: null });
+    const after = await db.crmDeal.findUniqueOrThrow({ where: { id: deal.id } });
+    assert.equal(after.stage, "won");
+    assert.equal(after.lostReason, null);
+    return "сделка осталась «Оплачено»";
   });
 
   for (const row of results) console.log(`${row.ok ? "PASS" : "FAIL"} ${row.name} — ${row.detail}`);
