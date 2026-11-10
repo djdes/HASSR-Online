@@ -68,6 +68,8 @@ const pack = (mode: OfflinePack["organization"]["qrFillMode"] = "public"): Offli
   objects: [
     { kind: "equipment", id: "eq1", name: "Холодильник №2", place: "Кухня", buildingId: null, token: "t", fill: "temperature", temperature: { min: 2, max: 6 }, humidity: null, photo: "optional", employeeIds: ["u1"], today: null },
   ],
+  point: null,
+  points: [],
 });
 
 const qr = (text: string) => {
@@ -209,4 +211,56 @@ test("today summary counts fillable objects and journals", () => {
   assert.deepEqual(offlineTodaySummary(base, []), { done: 0, total: 2 });
   const withUnsupported = { ...base, objects: [...base.objects, { ...base.objects[0], id: "x", fill: "unsupported" as const }] };
   assert.deepEqual(offlineTodaySummary(withUnsupported, [queued({ temp: 5 }, null)]), { done: 1, total: 2 });
+});
+
+test("QR точки: документы и сотрудники этой точки, а не точки, выбранной в кабинете", async () => {
+  const { offlineDocumentSignerIds, offlinePointDocuments, scopeOfflinePack } = await import("./offline-logic");
+  const doc = (id: string, buildingId: string | null, employeeIds: string[]): OfflinePackDocument => ({ ...document, id, buildingId, building: buildingId, employeeIds });
+  const office = doc("doc-office", "office", ["admin"]);
+  const garden = doc("doc-garden", "garden", ["cook1", "cook2"]);
+  const shared = doc("doc-shared", null, ["admin", "cook1", "cook2"]);
+  const base = pack();
+  const data: OfflinePack = {
+    ...base,
+    journals: [
+      { code: "hygiene", name: "Гигиена", append: false, token: "t", documents: [office, garden, shared] },
+      { code: "fryer_oil", name: "Фритюр", append: true, token: "t", documents: [doc("doc-fryer", "office", ["admin"])] },
+    ],
+    objects: [
+      { kind: "equipment", id: "fridge-office", name: "Офис", place: null, buildingId: "office", token: "t", fill: "temperature", temperature: null, humidity: null, photo: "off", employeeIds: ["admin"] },
+      { kind: "equipment", id: "fridge-garden", name: "Сад", place: null, buildingId: "garden", token: "t", fill: "temperature", temperature: null, humidity: null, photo: "off", employeeIds: ["cook1"] },
+    ],
+    point: { id: "office", name: "Офис" },
+    points: [
+      { id: "office", name: "Офис", employeeIds: ["admin"], disabledCodes: [] },
+      { id: "garden", name: "Д/с №68", employeeIds: ["cook1", "cook2"], disabledCodes: ["fryer_oil"] },
+    ],
+  };
+  const hygiene = data.journals[0];
+
+  // Плакат детского сада на планшете, где в кабинете выбран «Офис».
+  assert.deepEqual(offlinePointDocuments(data, hygiene, "garden").map((item) => item.id), ["doc-garden", "doc-shared"]);
+  assert.deepEqual(offlineDocumentSignerIds(data, garden, "garden"), ["cook1", "cook2"]);
+  // Общий документ, открытый плакатом точки, — сотрудники этой точки.
+  assert.deepEqual(offlineDocumentSignerIds(data, shared, "garden"), ["cook1", "cook2"]);
+  assert.deepEqual(offlineDocumentSignerIds(data, shared, null), ["admin", "cook1", "cook2"]);
+  // QR без точки и точка, которой нет в данных, — все документы, как на сервере.
+  assert.equal(offlinePointDocuments(data, hygiene, null).length, 3);
+  assert.equal(offlinePointDocuments(data, hygiene, "deleted-point").length, 3);
+  // Дополнительный QR одного документа.
+  assert.deepEqual(offlinePointDocuments(data, hygiene, null, "doc-garden").map((item) => item.id), ["doc-garden"]);
+  // Наклейка объекта другой точки находится в данных.
+  const sticker = parseOfflineQr("https://wesetup.ru/equipment-fill/fridge-garden?token=x");
+  assert.ok(sticker.ok);
+  assert.equal(resolveOfflineQr(data, sticker.target).kind, "object");
+
+  // Главный экран точки: её журналы и объекты; выключенный на точке журнал скрыт.
+  const gardenHome = scopeOfflinePack(data, "garden");
+  assert.deepEqual(gardenHome.journals.map((item) => item.code), ["hygiene"]);
+  assert.deepEqual(gardenHome.objects.map((item) => item.id), ["fridge-garden"]);
+  assert.deepEqual(scopeOfflinePack(data, "office").journals.map((item) => item.code), ["hygiene", "fryer_oil"]);
+  assert.equal(scopeOfflinePack(data, null), data);
+  // Данные, сохранённые до этой версии (без списка точек), не ломают экран.
+  const old = { ...data, points: undefined } as unknown as OfflinePack;
+  assert.equal(scopeOfflinePack(old, "garden"), old);
 });

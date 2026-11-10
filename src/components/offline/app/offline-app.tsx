@@ -9,6 +9,9 @@ import { getNativeBridge } from "@/lib/native-bridge";
 import {
   journalTodayMark,
   objectTodayMark,
+  offlineDocumentSignerIds,
+  offlinePoint,
+  offlinePointDocuments,
   offlineEditableDays,
   offlineRowKey,
   offlineRowState,
@@ -16,6 +19,7 @@ import {
   queuedRowEdit,
   rangeText,
   resolveOfflineQr,
+  scopeOfflinePack,
   summarizeValues,
   type OfflineTodayState,
 } from "@/lib/offline/offline-logic";
@@ -48,7 +52,8 @@ import { JournalRowForm, ObjectForm, SignerPicker, ui, type ObjectSubmit, type O
 type View =
   | { name: "home" }
   | { name: "queue" }
-  | { name: "journal"; code: string }
+  /** `pointId` and `documentId` come from the scanned QR (or the point shown on the home screen). */
+  | { name: "journal"; code: string; pointId?: string | null; documentId?: string | null }
   | { name: "object"; kind: "equipment" | "room"; id: string }
   | { name: "notice"; title: string; text: string }
   | { name: "done"; title: string; text: string; sent: boolean };
@@ -58,6 +63,17 @@ type T = ReturnType<typeof useTranslations<"offlineApp">>;
 /** Same key as the cabinet bridge: the launch link is consumed once per app start. */
 const LAUNCH_URL_DONE_KEY = "wesetup.app.launch-url-done";
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** Point the home screen shows on this device; "" — every point. */
+const HOME_POINT_KEY = "wesetup.offline.home-point";
+
+function readHomePoint(): string | null | undefined {
+  try {
+    const value = window.localStorage.getItem(HOME_POINT_KEY);
+    return value === null ? undefined : value || null;
+  } catch {
+    return undefined;
+  }
+}
 
 function useStamp(): (at: number | string) => string {
   const locale = useLocale();
@@ -109,6 +125,18 @@ export function OfflineApp() {
 
   const pack = stored?.pack ?? null;
   const view = stack[stack.length - 1];
+  // Point of the home screen: chosen on this device, else the one chosen in the cabinet when the data was saved.
+  const [chosenPoint, setChosenPoint] = useState<string | null | undefined>(() => (typeof window === "undefined" ? undefined : readHomePoint()));
+  const homePointId = pack ? (offlinePoint(pack, chosenPoint === undefined ? pack.point?.id : chosenPoint)?.id ?? null) : null;
+  const homePack = useMemo(() => (pack ? scopeOfflinePack(pack, homePointId) : null), [pack, homePointId]);
+  const chooseHomePoint = useCallback((pointId: string | null) => {
+    setChosenPoint(pointId);
+    try {
+      window.localStorage.setItem(HOME_POINT_KEY, pointId ?? "");
+    } catch {
+      // The choice then lives until the screen is closed.
+    }
+  }, []);
   const push = useCallback((next: View) => setStack((prev) => [...prev, next]), []);
   const back = useCallback(() => setStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev)), []);
   const home = useCallback(() => setStack([{ name: "home" }]), []);
@@ -139,13 +167,22 @@ export function OfflineApp() {
       }
       const resolved = resolveOfflineQr(pack, parsed.target);
       if (resolved.kind === "object") setStack([{ name: "home" }, { name: "object", kind: resolved.object.kind, id: resolved.object.id }]);
-      else if (resolved.kind === "journal") setStack([{ name: "home" }, { name: "journal", code: resolved.journal.code }]);
-      else if (resolved.kind === "hub") home();
+      else if (resolved.kind === "journal") {
+        if (parsed.target.kind !== "journal") return false;
+        // The poster decides the point and the document — not the point chosen in the cabinet.
+        // A short QR of a printed journal (`/qj/<point>/...`) names the point in the address itself.
+        const pointId = parsed.target.buildingId ?? (parsed.target.shortSig ? (offlinePoint(pack, parsed.target.orgId)?.id ?? null) : null);
+        setStack([{ name: "home" }, { name: "journal", code: resolved.journal.code, pointId, documentId: parsed.target.documentId }]);
+      } else if (resolved.kind === "hub") {
+        // «Все журналы» of a point: the home screen of that point.
+        if (parsed.target.kind === "journal" && offlinePoint(pack, parsed.target.buildingId)) chooseHomePoint(parsed.target.buildingId);
+        home();
+      }
       else if (resolved.kind === "foreign-org") setStack([{ name: "home" }, { name: "notice", title: t("notice.foreignOrgTitle"), text: t("notice.foreignOrgText") }]);
       else setStack([{ name: "home" }, { name: "notice", title: resolved.what === "object" ? t("notice.noObjectTitle") : t("notice.noJournalTitle"), text: t("notice.missingText") }]);
       return true;
     },
-    [pack, push, home, t]
+    [pack, push, home, t, chooseHomePoint]
   );
 
   // Entry: `#u=<address that failed to open>` from the service worker or the app bridge,
@@ -281,7 +318,9 @@ export function OfflineApp() {
     );
   }
 
-  const journal = view.name === "journal" ? pack.journals.find((item) => item.code === view.code) ?? null : null;
+  const fullJournal = view.name === "journal" ? pack.journals.find((item) => item.code === view.code) ?? null : null;
+  const journalDocuments = view.name === "journal" && fullJournal ? offlinePointDocuments(pack, fullJournal, view.pointId, view.documentId) : [];
+  const journal = fullJournal && journalDocuments.length > 0 ? { ...fullJournal, documents: journalDocuments } : null;
   const object = view.name === "object" ? pack.objects.find((item) => item.kind === view.kind && item.id === view.id) ?? null : null;
   const notice = (title: string) => (
     <Notice title={title} text={t("notice.missingText")} onHome={home} />
@@ -315,10 +354,10 @@ export function OfflineApp() {
       ) : null}
 
       {view.name === "home" ? (
-        <Home pack={pack} savedAt={stored!.savedAt} queue={myQueue} foreignCount={foreignCount} tasks={tasks} online={online} onScan={() => setScanning(true)} onOpen={push} onRefreshed={reload} />
+        <Home pack={homePack ?? pack} points={pack.points ?? []} pointId={homePointId} onPoint={chooseHomePoint} savedAt={stored!.savedAt} queue={myQueue} foreignCount={foreignCount} tasks={tasks} online={online} onScan={() => setScanning(true)} onOpen={(next) => push(next.name === "journal" ? { ...next, pointId: homePointId } : next)} onRefreshed={reload} />
       ) : null}
 
-      {view.name === "journal" ? journal ? <JournalFlow key={journal.code} pack={pack} journal={journal} queue={myQueue} onSave={saveRecord} /> : notice(t("notice.noJournalTitle")) : null}
+      {view.name === "journal" ? journal ? <JournalFlow key={`${journal.code}:${view.pointId ?? ""}:${view.documentId ?? ""}`} pack={pack} journal={journal} pointId={view.pointId ?? null} queue={myQueue} onSave={saveRecord} /> : notice(t("notice.noJournalTitle")) : null}
 
       {view.name === "object" ? object ? <ObjectFlow key={object.id} pack={pack} object={object} queue={myQueue} onSave={saveRecord} /> : notice(t("notice.noObjectTitle")) : null}
 
@@ -395,6 +434,9 @@ function TodayBadge({ state }: { state: OfflineTodayState }) {
 
 function Home({
   pack,
+  points,
+  pointId,
+  onPoint,
   savedAt,
   queue,
   foreignCount,
@@ -404,7 +446,11 @@ function Home({
   onOpen,
   onRefreshed,
 }: {
+  /** Already narrowed to the point shown. */
   pack: OfflinePack;
+  points: OfflinePack["points"];
+  pointId: string | null;
+  onPoint: (pointId: string | null) => void;
   savedAt: number;
   queue: OfflineQueueItem[];
   foreignCount: number;
@@ -443,6 +489,24 @@ function Home({
           {t("home.stamp", { time: stamp(savedAt) })}
         </p>
         {stale ? <p className={`${ui.warn} mt-3`} data-testid="offline-stale">{t("home.staleDay")}</p> : null}
+        {points.length > 1 ? (
+          <label className="mt-4 block text-[13px] text-[#6f7282]">
+            {t("home.point")}
+            <select
+              className="mt-1 block h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[16px] text-[#0b1024]"
+              value={pointId ?? ""}
+              onChange={(event) => onPoint(event.target.value || null)}
+              data-testid="offline-point"
+            >
+              <option value="">{t("home.allPoints")}</option>
+              {points.map((point) => (
+                <option key={point.id} value={point.id}>
+                  {point.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <p className="mt-3 text-[15px] font-medium text-[#0b1024]" data-testid="offline-summary">
           {t("home.summary", { done: String(summary.done), total: String(summary.total) })}
         </p>
@@ -650,7 +714,7 @@ function SignerLine({ signer, onChange }: { signer: OfflineSigner; onChange: () 
   );
 }
 
-function JournalFlow({ pack, journal, queue, onSave }: { pack: OfflinePack; journal: OfflinePackJournal; queue: OfflineQueueItem[]; onSave: SaveRecord }) {
+function JournalFlow({ pack, journal, pointId, queue, onSave }: { pack: OfflinePack; journal: OfflinePackJournal; pointId: string | null; queue: OfflineQueueItem[]; onSave: SaveRecord }) {
   const t = useTranslations("offlineApp");
   const [documentId, setDocumentId] = useState<string | null>(journal.documents.length === 1 ? journal.documents[0].id : null);
   const [rowKey, setRowKey] = useState<string | null>(null);
@@ -714,7 +778,7 @@ function JournalFlow({ pack, journal, queue, onSave }: { pack: OfflinePack; jour
     return (
       <div className={ui.card}>
         {heading}
-        <SignerPicker pack={pack} allowedIds={document.employeeIds} onReady={setSigner} />
+        <SignerPicker pack={pack} allowedIds={offlineDocumentSignerIds(pack, document, pointId)} onReady={setSigner} />
       </div>
     );
   }
