@@ -3118,7 +3118,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
   });
 
   autoTable(doc, {
-    startY: cleaningTitleY + 6,
+    startY: cleaningTitleY + 5,
     head: matrixHead,
     body: matrixRows,
     // D-аудит: строку помещения нельзя рвать между страницами — при
@@ -3130,7 +3130,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
       // Узкие дневные колонки (месяц целиком) — мельче кегль, иначе
       // двузначное число дня переносилось по цифрам: «1» / «0».
       fontSize: dayWidth < 9 ? 7 : 8,
-      cellPadding: 1.8,
+      cellPadding: 1.5,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
       textColor: [0, 0, 0],
@@ -3177,19 +3177,19 @@ function drawCleaningPdf(doc: jsPDF, params: {
   doc.setFontSize(legendFontSize);
   // Цветовая легенда дней + «Условные обозначения» — одним блоком над
   // нижним полем листа (у длинной таблицы блок уходил за край листа).
-  const dayLegendBaseline = placeTextBlock(doc, afterMatrixY + 6, 15 + Math.max(0, legendLineCount - 1) * 4.8);
+  const dayLegendBaseline = placeTextBlock(doc, afterMatrixY + 5, 11 + Math.max(0, legendLineCount - 1) * 4.2);
   // Строка цветовой легенды дней — как `CleaningDayColorLegend` на экране.
   const dayLegendY = drawDayColorLegend(doc, PDF_SHEET_MARGIN, dayLegendBaseline);
   doc.setFont("JournalUnicode", "italic");
-  const legendY = dayLegendY + 6;
+  const legendY = dayLegendY + 2;
   doc.text("Условные обозначения:", PDF_SHEET_MARGIN, legendY);
   const afterLegendY = renderWrappedTextBlock(
     doc,
     legendLines,
     PDF_SHEET_MARGIN,
-    legendY + 5,
+    legendY + 4.2,
     legendWidth,
-    4.8
+    4.2
   );
   doc.setFont("JournalUnicode", "normal");
 
@@ -3225,8 +3225,10 @@ function drawCleaningPdf(doc: jsPDF, params: {
 
   // Минимум под шапку сводной + две строки: иначе начинаем с новой
   // страницы, чтобы внизу листа не висела строка-сирота.
+  // renderWrappedTextBlock уже прибавил lineHeight после последней строки,
+  // поэтому дополнительный +6 давал двойной разрыв перед таблицей.
   const SUMMARY_MIN_BLOCK = 24;
-  let summaryStartY = afterLegendY + 6;
+  let summaryStartY = afterLegendY;
   if (summaryStartY + SUMMARY_MIN_BLOCK > contentBottom(doc)) {
     doc.addPage("a4", "landscape");
     summaryStartY = activePageHeaderHeight ? continuationContentTop() : PDF_SHEET_MARGIN;
@@ -3244,7 +3246,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
     styles: {
       font: "JournalUnicode",
       fontSize: 8,
-      cellPadding: 1.8,
+      cellPadding: 1.5,
       lineColor: [0, 0, 0],
       lineWidth: 0.2,
       textColor: [0, 0, 0],

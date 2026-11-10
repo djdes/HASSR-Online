@@ -1,0 +1,2 @@
+-- prisma migrate diff (Prisma 7.10.1) против базы, поднятой Prisma 7.4.2 по схеме master 4fc9a809:
+-- This is an empty migration.
