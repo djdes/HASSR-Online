@@ -1,12 +1,13 @@
 import Link from "@/components/i18n/localized-link";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
-import { ArrowRight, BookOpenCheck, Building2, FileDown, Layers, Search } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Building2, FileDown, Search } from "lucide-react";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { createTranslator } from "use-intl/core";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { loadMessages } from "@/i18n/messages";
 import { publicJournalIndexMetadata } from "@/i18n/public-journal-index-metadata";
 import { presentPublicJournalIndex } from "@/i18n/public-journal-index-presentation";
+import { JournalsInfoCatalog } from "./journals-info-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,7 +23,26 @@ export default async function JournalsInfoListPage() {
   const locale = await getSiteLocale();
   const messages = await loadMessages(locale);
   const t = createTranslator({ locale, messages, namespace: "publicJournalIndex" });
+  const tBrowser = createTranslator({ locale, messages, namespace: "journals.ui.browser" });
+  const tCommon = createTranslator({ locale, messages, namespace: "common" });
   const { grouped, count, niches, seo } = presentPublicJournalIndex(messages);
+
+  const groupCountLabels: Record<number, string> = {};
+  for (let i = 0; i <= count; i += 1) {
+    groupCountLabels[i] = t("cards.groupCount", { count: i });
+  }
+
+  const catalogGroups = grouped.map((group) => ({
+    category: group.category,
+    label: group.label,
+    items: group.items.map((j) => ({
+      code: j.code,
+      name: j.name,
+      tagline: j.tagline,
+      why: j.why,
+      hasSample: SAMPLE_CODES.has(j.code),
+    })),
+  }));
 
   const canonicalPath = locale === "ru" ? "/journals-info" : `/${locale}/journals-info`;
   const jsonLd = {
@@ -80,62 +100,17 @@ export default async function JournalsInfoListPage() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-16">
-        {grouped.map((group) => (
-          <div key={group.category} className="mb-14">
-            <div className="flex flex-wrap items-center gap-3">
-              <Layers className="size-5 text-[#3848c7]" />
-              <h2 className="text-[24px] font-semibold tracking-tight">
-                {group.label}
-              </h2>
-              <span className="text-[14px] text-[#6f7282]">
-                {t("cards.groupCount", { count: group.items.length })}
-              </span>
-            </div>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {group.items.map((j) => (
-                <Link
-                  key={j.code}
-                  href={`/journals-info/${j.code}`}
-                  title={j.name}
-                  className="group flex min-w-0 flex-col rounded-2xl border border-[#ececf4] bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/40 hover:shadow-[0_16px_40px_-24px_rgba(85,102,246,0.35)]"
-                >
-                  {/* Превью первой страницы образца. Одним взглядом
-                      понятно, что это за бланк — по названию и коду
-                      человек этого не понимает. Картинки лежат в
-                      public/journal-samples и пересобираются скриптом
-                      render-journal-sample-thumbs.ts. */}
-                  {SAMPLE_CODES.has(j.code) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={`/journal-samples/${j.code}.webp`}
-                      alt={j.name}
-                      width={1228}
-                      height={862}
-                      loading="lazy"
-                      className="mb-4 aspect-[1228/862] w-full rounded-xl border border-[#ececf4] bg-white object-cover object-top"
-                    />
-                  ) : null}
-                  <div className="break-all text-[11px] font-medium uppercase tracking-[0.14em] text-[#6f7282]">
-                    {j.code}
-                  </div>
-                  <div className="mt-1 text-[17px] font-semibold leading-snug group-hover:text-[#3848c7]">
-                    {j.tagline}
-                  </div>
-                  <p className="mt-2 line-clamp-3 text-[13px] leading-[1.55] text-[#6f7282]">
-                    {j.why}
-                  </p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7]">
-                    {t("cards.more")}
-                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
-      </section>
+      {/* SEARCH + CATEGORIES */}
+      <JournalsInfoCatalog
+        groups={catalogGroups}
+        groupCountLabels={groupCountLabels}
+        moreLabel={t("cards.more")}
+        searchPlaceholder={tCommon("search")}
+        searchAria={tBrowser("searchAria")}
+        clearSearchLabel={tBrowser("clearSearch")}
+        emptyTitle={tBrowser("emptyTitle")}
+        emptyHint={tBrowser("emptyHint")}
+      />
 
       {/* PIVOT: niche-лендинги + SEO-страницы. /journals-info — это
           каталог по нормативам; этот блок даёт второй вход тем, кто

@@ -56,3 +56,27 @@ test("неверная раскладка: «ububtyf» находит гигие
   // Как набрано совпадения нет и в другой раскладке тоже — не находит.
   assert.equal(journalMatchesQuery(["Журнал уборки", "cleaning"], "qqqq"), false);
 });
+
+test("нечёткий поиск с опечатками и пропуском слогов: «темпоура» находит «Температура»", () => {
+  const climateFields = [
+    "Журнал учёта температуры и влажности в складских помещениях",
+    "Температура и влажность в помещениях хранения и производства.",
+    "climate_control",
+  ];
+  assert.equal(journalMatchesQuery(climateFields, "темпоура"), true);
+  assert.equal(journalMatchesQuery(climateFields, "темпиратура"), true);
+  assert.equal(journalMatchesQuery(climateFields, "учет темпоура"), true);
+  // То же слово с опечаткой в английской раскладке («ntvgjehf» → «темпоура»)
+  assert.equal(journalMatchesQuery(climateFields, "ntvgjehf"), true);
+
+  // Опечатки и падежные окончания в других частых запросах
+  assert.equal(journalMatchesQuery(["Гигиенический журнал (сотрудники)", "hygiene"], "гигиена"), true);
+  assert.equal(journalMatchesQuery(["Гигиенический журнал (сотрудники)", "hygiene"], "гигена"), true);
+  assert.equal(journalMatchesQuery(["Журнал бракеража готовой продукции", "finished_product"], "бракираж"), true);
+  assert.equal(journalMatchesQuery(["Температурный режим холодильного оборудования", "cold_equipment_control"], "холодилник"), true);
+  assert.equal(journalMatchesQuery(["Учёт использования фритюрных жиров", "fryer_oil"], "фритюрнца"), true);
+
+  // Посторонние слова по-прежнему не дают ложных срабатываний
+  assert.equal(journalMatchesQuery(climateFields, "абракадабра"), false);
+  assert.equal(journalMatchesQuery(climateFields, "стерилизация"), false);
+});
