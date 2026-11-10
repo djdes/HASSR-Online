@@ -164,6 +164,17 @@ public class StoreScreenshotsTest {
         Dialog dialog = ShadowDialog.getLatestDialog();
         assertNotNull(dialog);
         save(withDialog(printScreen, dialog), "4-history.png");
+
+        // 5. Список макетов этикеток с живыми превью.
+        LayoutsActivity layouts = Robolectric.buildActivity(LayoutsActivity.class).setup().get();
+        save(screen(layouts), "5-layouts.png");
+
+        // 6. Визуальный редактор макета этикетки прямо на телефоне.
+        Intent editorIntent = new Intent(app, LayoutEditorActivity.class)
+                .putExtra(LayoutEditorActivity.EXTRA_ID, "product");
+        LayoutEditorActivity editor = Robolectric.buildActivity(LayoutEditorActivity.class, editorIntent).setup().get();
+        ShadowLooper.idleMainLooper(300, java.util.concurrent.TimeUnit.MILLISECONDS);
+        save(screen(editor), "6-editor.png");
     }
 
     private static PrintHistory.Entry entry(String template, String title, String product, int copies, long at) {

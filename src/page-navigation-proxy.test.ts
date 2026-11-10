@@ -340,6 +340,27 @@ test("a user-agent naming a search crawler gets no exemption without DNS proof",
   assert.ok(takePageLimitStats().some((bucket) => bucket.client === "fake-crawler" && bucket.outcome === "limited"));
 });
 
+test("AI search crawlers can navigate public pages without 429 errors, while private routes stay limited", async () => {
+  await withEnv({ NEXTAUTH_SECRET: "ai-crawler-fixture-not-a-credential" }, async () => {
+    takePageLimitStats();
+    const oaiBot = client({
+      "user-agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
+    });
+    for (let i = 0; i < browser.burst * 2; i++) {
+      const response = await oaiBot(`/blog?page=${i}`);
+      assert.equal(response.status, 200);
+      assert.equal(visitorCookieOf(response), undefined);
+      assert.match(response.headers.get("cache-control") ?? "", /public.*s-maxage=60/);
+    }
+    assert.ok(takePageLimitStats().every((bucket) => bucket.client === "crawler" && bucket.outcome === "passed"));
+    // Private workspace routes are not exempted for AI crawler user-agents.
+    const privateAiBot = client({
+      "user-agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2; +https://openai.com/gptbot",
+    });
+    await exhaust(privateAiBot, "/journals", browser.burst);
+  });
+});
+
 test("statistics count pages and 429 by coarse dimensions, never addresses or paths", async () => {
   takePageLimitStats();
   const request = client();
@@ -354,3 +375,4 @@ test("statistics count pages and 429 by coarse dimensions, never addresses or pa
   ]);
   assert.doesNotMatch(JSON.stringify(buckets), /192\.0\.2|secret|token|abc/);
 });
+

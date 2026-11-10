@@ -118,7 +118,7 @@ export function parseCertFingerprints(raw: string | null | undefined): string[] 
  * список, и Android не открывал ссылки с QR в приложении ни у одной сборки.
  */
 export const ANDROID_UPLOAD_CERT_SHA256 =
-  "8C:28:3E:01:28:7C:9A:D3:4B:1D:32:8F:5E:4F:2D:D0:6B:49:CF:91:54:4C:B8:DE:6D:65:5D:21:F9:6A:60:2D";
+  "F6:B0:8A:6D:42:D2:1D:F8:55:26:A2:19:91:24:1E:98:C9:B6:64:03:29:9F:E3:98:98:29:B6:E5:1C:4C:F2:89";
 
 /**
  * Отпечатки для `assetlinks.json`: ключ загрузки всегда, плюс то, что задано

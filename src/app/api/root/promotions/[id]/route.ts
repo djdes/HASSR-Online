@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { invalidatePromotionCache } from "@/lib/promo/offer";
 import {
   describePromotion,
   describePromotionChange,
@@ -60,6 +61,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       ...(parsed.data.active !== undefined ? { active: parsed.data.active } : {}),
     },
   });
+  invalidatePromotionCache();
   const summary = describePromotionChange(before, row);
   const action =
     before.active !== row.active && summary === (row.active ? "включена" : "выключена")
@@ -103,6 +105,7 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ id: stri
   const row = await db.pricePromotion.findUnique({ where: { id } });
   if (!row) return NextResponse.json({ error: "Акция не найдена" }, { status: 404 });
   await db.pricePromotion.delete({ where: { id } });
+  invalidatePromotionCache();
   const summary = describePromotion(row);
   console.info(`[promo] promotion deleted ${row.id} «${row.title}» ${summary} by ${session.user.email ?? session.user.id}`);
   await recordAuditLog({

@@ -61,8 +61,24 @@ export default async function FeaturesIndexPage() {
   const t = createTranslator({ locale, messages, namespace: "publicFeatures.index" });
   const features = FEATURES_ORDER.filter(isFeatureSlug).map(slug => presentFeature(slug, messages));
 
+  const featuresUrl = `https://wesetup.ru${locale === "ru" ? "/features" : `/${locale}/features`}`;
+  const featuresJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: t("title"),
+    description: t("intro"),
+    url: featuresUrl,
+    inLanguage: locale,
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(featuresJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <PublicHeader />
 
       {/* HERO */}

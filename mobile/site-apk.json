@@ -1,4 +1,4 @@
 {
-  "build": 2,
+  "build": 3,
   "about": "Номер сборки (versionCode) APK, который раздаётся по ссылке https://wesetup.ru/download/android. Поднимите build на 1 и слейте в master — workflow «APK на сайт» соберёт и опубликует новый подписанный APK. Номер должен только расти: Android не ставит сборку с меньшим номером поверх большей."
 }

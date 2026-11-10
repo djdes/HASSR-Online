@@ -63,8 +63,8 @@ jobs:
           SETUP_HELPER_KEYSTORE_PASSWORD: ${{ secrets.SETUP_HELPER_KEYSTORE_PASSWORD }}
           SETUP_HELPER_KEY_ALIAS: ${{ secrets.SETUP_HELPER_KEY_ALIAS }}
           SETUP_HELPER_KEY_PASSWORD: ${{ secrets.SETUP_HELPER_KEY_PASSWORD }}
-        # site — APK для сайта, play — AAB для Google Play (ключ загрузки = ключ выпуска).
-        run: ./gradlew assembleSiteDebug assembleSiteRelease bundlePlayRelease --no-daemon
+        # site — APK для сайта, play — APK и AAB для RuStore и Google Play (ключ загрузки = ключ выпуска).
+        run: ./gradlew assembleSiteDebug assembleSiteRelease assemblePlayRelease bundlePlayRelease --no-daemon
 
       # Выпуск по кнопке (workflow_dispatch, publish=true): publishRelease
       # сверяет подпись и номер сборки и пишет APK + version.json; их коммитят
@@ -100,6 +100,14 @@ jobs:
           path: mobile/setup-helper/app/build/outputs/apk/site/release/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      # Google Play / RuStore: подписанный ключом выпуска APK без самообновления и сетевых разрешений.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: setup-helper-play-apk-${{ github.run_number }}
+          path: mobile/setup-helper/app/build/outputs/apk/play/release/*.apk
+          if-no-files-found: error
+          retention-days: 30
 
       # Google Play: подписанный ключом загрузки AAB — его загружают в Play Console.
       - uses: actions/upload-artifact@v7

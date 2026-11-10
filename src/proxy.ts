@@ -3,6 +3,7 @@ import { decode } from "next-auth/jwt";
 import { applyVisitorCookie, pageNavigationGuard } from "@/lib/page-navigation-guard";
 import { publicLocaleRoute, SITE_LOCALE_COOKIE, SITE_LOCALE_HEADER } from "@/i18n/site-locale";
 import { pickSessionCookie } from "@/lib/auth-cookies";
+import { isPublicCacheablePage } from "@/lib/robots-txt";
 import {
   canAccessWebPath,
   hasFullWorkspaceAccess,
@@ -90,7 +91,8 @@ async function withRequestContext(
   markMiniShell(req, res);
   // Страницы кабинета не кэшируем (раньше это делал отдельный корневой
   // middleware.ts, который в dev перекрывал этот файл целиком — и guard
-  // партнёра там не работал).
+  // партнёра там не работал). Для публичных маркетинговых и SEO-страниц
+  // анонимным посетителям разрешаем короткий публичный кэш и bfcache.
   const { pathname } = req.nextUrl;
   // `/og/*` и `/og-default` — картинки для соцсетей без расширения в пути:
   // маршруты сами ставят публичный кэш, иначе превью генерировалось бы
@@ -103,9 +105,15 @@ async function withRequestContext(
     !isPublicImageRoute &&
     !pathname.includes(".");
   if (isAppPage) {
-    res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-    res.headers.set("Pragma", "no-cache");
-    res.headers.set("Expires", "0");
+    const hasSessionCookie = Boolean(pickSessionCookie((name) => req.cookies.get(name)?.value)?.value);
+    const isMini = isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value) || isMobileAppUserAgent(userAgent);
+    if (!verifiedUserId && !hasSessionCookie && !isMini && isPublicCacheablePage(pathname)) {
+      res.headers.set("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
+    } else {
+      res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+      res.headers.set("Pragma", "no-cache");
+      res.headers.set("Expires", "0");
+    }
   }
   return res;
 }

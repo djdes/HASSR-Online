@@ -4,7 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { recordPageLimit, platformOf, sectionOf, type PageLimitClient, type PageLimitSubject } from "./page-limit-stats";
 import { createPageNavigationLimiter, hasAutomationUserAgent, PAGE_NAVIGATION_LIMITS, pageLimitMode, type PageLimitDecision } from "./page-navigation-limit";
 import { issueVisitorToken, verifiedVisitorId, VISITOR_COOKIE, VISITOR_COOKIE_MAX_AGE } from "./page-visitor";
-import { claimedCrawler, createCrawlerVerifier } from "./verified-crawler";
+import { isPublicCacheablePage } from "./robots-txt";
+import { claimedCrawler, createCrawlerVerifier, isAiSearchCrawler } from "./verified-crawler";
 
 import { publicLocaleRoute } from "@/i18n/site-locale";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
@@ -148,7 +149,8 @@ export async function pageNavigationGuard(req: NextRequest, verifiedUserId?: unk
   const ip = trustedClientIp(req.headers);
   const userId = verifiedUser(verifiedUserId);
   const crawler = userId ? null : claimedCrawler(userAgent);
-  const verifiedCrawler = Boolean(crawler && ip && await crawlers.verify(ip, crawler));
+  const aiCrawler = !userId && !crawler && isAiSearchCrawler(userAgent) && isPublicCacheablePage(req.nextUrl.pathname);
+  const verifiedCrawler = Boolean(aiCrawler || (crawler && ip && await crawlers.verify(ip, crawler)));
   const client: PageLimitClient = verifiedCrawler ? "crawler" : crawler ? "fake-crawler" : isMobileAppUserAgent(userAgent) ? "app" : automated ? "automation" : "browser";
 
   let subject: PageLimitSubject;

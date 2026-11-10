@@ -16,6 +16,8 @@ import "./view-prefs.css";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
+import { PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
+import { isPublicCacheablePage } from "@/lib/robots-txt";
 import { readViewPrefs } from "@/lib/view-prefs.server";
 import { viewPrefsBootstrapCode, viewPrefsHtmlAttributes } from "@/lib/view-prefs";
 import { ViewPrefsProvider } from "@/components/view-prefs/view-prefs-provider";
@@ -61,15 +63,6 @@ export async function generateMetadata(): Promise<Metadata> {
 const BASE_VIEWPORT: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Владелец дважды просил убрать самопроизвольное увеличение на
-  // iPhone. Причину (поля меньше 16px) починили, но Safari умеет
-  // зумить и по двойному тапу, поэтому фиксируем масштаб.
-  //
-  // `userScalable: false` НЕ ставим: iOS всё равно оставляет ручной
-  // pinch-zoom при одном лишь maximumScale, и слабовидящий человек
-  // сможет увеличить текст пальцами. Полный запрет отрезал бы его от
-  // сайта совсем.
-  maximumScale: 1,
 };
 
 /**
@@ -81,8 +74,29 @@ const BASE_VIEWPORT: Viewport = {
  */
 export async function generateViewport(): Promise<Viewport> {
   const inApp = isMobileAppUserAgent((await headers()).get("user-agent"));
-  return inApp ? { ...BASE_VIEWPORT, viewportFit: "cover" } : BASE_VIEWPORT;
+  return inApp ? { ...BASE_VIEWPORT, maximumScale: 1, viewportFit: "cover" } : BASE_VIEWPORT;
 }
+
+const PUBLIC_ROOT_NAMESPACES = [
+  "common",
+  "language",
+  "auth",
+  "landingComponents",
+  "publicSupport",
+  "publicUi",
+  "errorSurface",
+  "loadingSurfaces",
+  "layoutUi",
+  "sharedUi",
+] as const;
+
+const APP_ROOT_NAMESPACES = [
+  ...PUBLIC_ROOT_NAMESPACES,
+  "journals",
+  "navigation",
+  "journalControls",
+  "notifications",
+] as const;
 
 export default async function RootLayout({
   children,
@@ -90,7 +104,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getSiteLocale();
-  const messages = pickMessages(await loadMessages(locale), ["common", "language", "journals", "auth", "navigation", "journalControls", "notifications", "landingComponents", "publicSupport", "publicUi", "errorSurface", "loadingSurfaces", "layoutUi", "sharedUi"]);
+  const reqHeaders = await headers();
+  const requestPath = reqHeaders.get(PARTNER_HEADER_PATH);
+  const rootNamespaces =
+    requestPath && isPublicCacheablePage(requestPath)
+      ? PUBLIC_ROOT_NAMESPACES
+      : APP_ROOT_NAMESPACES;
+  const messages = pickMessages(await loadMessages(locale), rootNamespaces);
   // «Удобство чтения» этого устройства (размер текста, контраст, анимация,
   // пояснения) — атрибуты на <html> с первого кадра, без мигания.
   const viewPrefs = await readViewPrefs();

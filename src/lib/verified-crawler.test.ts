@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { claimedCrawler, createCrawlerVerifier, type CrawlerResolver } from "./verified-crawler";
+import { claimedCrawler, createCrawlerVerifier, isAiSearchCrawler, type CrawlerResolver } from "./verified-crawler";
 
 function resolver(reverse: Record<string, string[]>, forward: Record<string, string[]>, calls: string[] = []): CrawlerResolver {
   return {
@@ -21,18 +21,38 @@ test("only crawler tokens count as a claim, not apps people browse with", () => 
   assert.equal(claimedCrawler("Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)"), "yandex");
   assert.equal(claimedCrawler("Mozilla/5.0 (compatible; YandexRenderResourcesBot/1.0)"), "yandex");
   assert.equal(claimedCrawler("Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"), "bing");
+  assert.equal(claimedCrawler("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)"), "apple");
   for (const ua of [null, "Mozilla/5.0 Chrome/130 YaBrowser/24.1", "Mozilla/5.0 YandexSearch/23.10 Mobile", "curl/8", "Mozilla/5.0 Chrome/130"]) {
     assert.equal(claimedCrawler(ua), null, String(ua));
   }
 });
 
+test("recognised AI search and answer-engine crawlers are identified by token", () => {
+  for (const ua of [
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2; +https://openai.com/gptbot",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-SearchBot/1.0; +searchbot@anthropic.com)",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
+    "Mozilla/5.0 (compatible; DuckDuckBot-Https/1.1; https://duckduckgo.com/duckduckbot)",
+    "Mozilla/5.0 (compatible; Google-Extended/1.0)",
+  ]) {
+    assert.equal(isAiSearchCrawler(ua), true, ua);
+  }
+  for (const ua of [null, "Mozilla/5.0 Chrome/130", "curl/8", "Mozilla/5.0 (compatible; Googlebot/2.1)"]) {
+    assert.equal(isAiSearchCrawler(ua), false, String(ua));
+  }
+});
+
 test("a crawler is verified by reverse DNS under its domain and the same address forward", async () => {
   const verify = createCrawlerVerifier(resolver(
-    { "66.249.66.1": ["crawl-66-249-66-1.googlebot.com"], "5.255.231.1": ["5-255-231-1.spider.yandex.com."], "203.0.113.9": ["crawl.googlebot.com.evil.example"], "203.0.113.10": ["fake.googlebot.com"] },
-    { "crawl-66-249-66-1.googlebot.com": ["66.249.66.1"], "5-255-231-1.spider.yandex.com": ["5.255.231.1"], "fake.googlebot.com": ["66.249.66.2"] },
+    { "66.249.66.1": ["crawl-66-249-66-1.googlebot.com"], "5.255.231.1": ["5-255-231-1.spider.yandex.com."], "17.241.75.1": ["17-241-75-1.applebot.apple.com."], "203.0.113.9": ["crawl.googlebot.com.evil.example"], "203.0.113.10": ["fake.googlebot.com"] },
+    { "crawl-66-249-66-1.googlebot.com": ["66.249.66.1"], "5-255-231-1.spider.yandex.com": ["5.255.231.1"], "17-241-75-1.applebot.apple.com": ["17.241.75.1"], "fake.googlebot.com": ["66.249.66.2"] },
   ));
   assert.equal(await verify.verify("66.249.66.1", "google"), true);
   assert.equal(await verify.verify("5.255.231.1", "yandex"), true);
+  assert.equal(await verify.verify("17.241.75.1", "apple"), true);
   assert.equal(await verify.verify("66.249.66.1", "yandex"), false, "the domain must belong to the claimed engine");
   assert.equal(await verify.verify("203.0.113.9", "google"), false, "a suffix in the middle is not the domain");
   assert.equal(await verify.verify("203.0.113.10", "google"), false, "the forward lookup must return the same address");

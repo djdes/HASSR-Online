@@ -19,6 +19,9 @@ gradle.taskGraph.whenReady { graph ->
         def check = providers.exec {
             workingDir = rootProject.projectDir.parentFile
             environment('BUILD_NUMBER', appVersionCode.toString())
+            if (System.getenv('ALLOW_NO_FIREBASE')) {
+                environment('ALLOW_NO_FIREBASE', System.getenv('ALLOW_NO_FIREBASE'))
+            }
             commandLine('node', 'scripts/release-preflight.mjs', '--platform', 'android')
             ignoreExitValue = true
         }

@@ -17,8 +17,9 @@ export const LISTING_JSON = path.resolve(here, "../../docs/mobile/listing-values
 /** Все поля карточек: заголовок, текст, длина в единицах лимита, лимит. */
 export function parseStoreListing(md) {
   const fields = [];
+  const normalized = md.replace(/\r\n/g, "\n");
   const re = /^### (.+?) \(до (\d+)( байт UTF-8)?\)\s*$[\s\S]*?^```text\n([\s\S]*?)\n```/gm;
-  for (const m of md.matchAll(re)) {
+  for (const m of normalized.matchAll(re)) {
     const [, title, limit, bytes, text] = m;
     const unit = bytes ? "bytes" : "chars";
     const size = unit === "bytes" ? Buffer.byteLength(text, "utf8") : [...text].length;

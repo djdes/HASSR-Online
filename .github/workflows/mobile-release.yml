@@ -72,7 +72,7 @@ jobs:
           TRACK: ${{ inputs.track }}
         working-directory: .
         run: |
-          required="ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD GOOGLE_SERVICES_JSON_BASE64"
+          required="ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD"
           if [ "$TRACK" = "internal" ]; then required="$required GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"; fi
           missing=""
           for name in $required; do
@@ -81,6 +81,10 @@ jobs:
           if [ -n "$missing" ]; then
             echo "::error::Нет секретов GitHub для выпуска Android:$missing (Settings → Secrets and variables → Actions; docs/mobile/secrets.md)"
             exit 1
+          fi
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::warning::Нет GOOGLE_SERVICES_JSON_BASE64 — сборка будет подписана боевым ключом без Firebase Push."
+            echo "ALLOW_NO_FIREBASE=1" >> "$GITHUB_ENV"
           fi
           echo "Секреты Android на месте"
 
@@ -110,7 +114,9 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
-          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+          fi
 
       - run: npx cap sync android
 

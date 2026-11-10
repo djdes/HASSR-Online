@@ -1,3 +1,5 @@
+import { publicLocaleRoute } from "@/i18n/site-locale";
+
 /**
  * Configuration and serializer for `/robots.txt`.
  *
@@ -152,3 +154,42 @@ export function isAllowedByRobots(urlOrPath: string): boolean {
   }
   return longestDisallow <= longestAllow ? longestDisallow === -1 : false;
 }
+
+const NON_CACHEABLE_PUBLIC_PREFIXES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/delete-account",
+  "/kiosk",
+  "/payment",
+  "/b/",
+];
+
+/**
+ * Public marketing and SEO pages that can be cached for anonymous visitors
+ * and crawled freely by AI / search bots. Private workspace, admin, auth,
+ * API, and tokenized routes always return `false`.
+ */
+export function isPublicCacheablePage(pathname: string): boolean {
+  if (!pathname.startsWith("/") || pathname.startsWith("/api/") || pathname === "/api") {
+    return false;
+  }
+  const localized = publicLocaleRoute(pathname);
+  if (/^\/(en|uz)(?:\/|$)/.test(pathname) && !localized) {
+    return false;
+  }
+  const basePath = localized ? localized.pathname : pathname;
+  if (
+    NON_CACHEABLE_PUBLIC_PREFIXES.some(
+      (prefix) =>
+        basePath === prefix ||
+        basePath.startsWith(prefix.endsWith("/") ? prefix : `${prefix}/`),
+    )
+  ) {
+    return false;
+  }
+  return isAllowedByRobots(basePath);
+}
+

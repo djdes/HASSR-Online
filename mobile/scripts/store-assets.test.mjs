@@ -39,7 +39,7 @@ test("значок и баннер Google Play нужного размера", (
 test("тексты карточек укладываются в лимиты магазинов", () => {
   const { fields } = listingValues();
   const headings = fields.map((f) => f.heading);
-  for (const name of ["Название App Store", "Подзаголовок App Store", "Ключевые слова App Store", "Описание App Store", "Краткое описание Google Play", "Полное описание Google Play"]) {
+  for (const name of ["Название App Store", "Подзаголовок App Store", "Ключевые слова App Store", "Описание App Store", "Краткое описание Google Play", "Полное описание Google Play", "Название RuStore", "Краткое описание RuStore", "Полное описание RuStore", "Комментарий для модератора RuStore"]) {
     assert.ok(headings.some((h) => h.startsWith(name)), `нет поля «${name}»`);
   }
   for (const f of fields) assert.ok(f.size <= f.limit, `${f.heading}: ${f.size} из ${f.limit}`);
@@ -50,9 +50,10 @@ test("тексты карточек укладываются в лимиты м�
   assert.ok(headings.some((h) => h.includes(`версии ${version}`)), `нет «Что нового в версии ${version}»`);
 });
 
-test("описания App Store и Google Play одинаковые, listing-values.json собран из store-listing.md", () => {
+test("описания App Store, Google Play и RuStore одинаковые, listing-values.json собран из store-listing.md", () => {
   const { fields } = listingValues();
   const text = (prefix) => fields.find((f) => f.heading.startsWith(prefix))?.text;
   assert.equal(text("Описание App Store"), text("Полное описание Google Play"));
+  assert.equal(text("Описание App Store"), text("Полное описание RuStore"));
   assert.deepEqual(JSON.parse(readFileSync(LISTING_JSON, "utf8")), listingValues());
 });

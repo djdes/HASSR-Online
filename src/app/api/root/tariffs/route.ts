@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { readTariffs } from "@/lib/tariffs";
+import { invalidateTariffsCache, readTariffs } from "@/lib/tariffs";
 import { parsePlanTariffKey } from "@/lib/tariff-plans";
 
 export const runtime = "nodejs";
@@ -108,5 +108,6 @@ export async function PATCH(request: Request) {
   }
 
   const tariff = await db.platformTariff.update({ where: { key }, data });
+  invalidateTariffsCache();
   return NextResponse.json({ tariff });
 }

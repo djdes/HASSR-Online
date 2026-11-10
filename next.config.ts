@@ -28,6 +28,7 @@ function getBuildTime(): string {
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  poweredByHeader: false,
   // Штатная нормализация трейлинг-слеша срабатывает ДО middleware и
   // отвечает редиректом 308. Робокасса шлёт уведомление об оплате
   // POST'ом на `https://wesetup.ru/payment/` (адрес зафиксирован в
@@ -41,6 +42,13 @@ const nextConfig: NextConfig = {
   // @napi-rs/canvas — нативный бинарник. Внутри серверного бандла ни то,
   // ни другое не работает — оставляем их обычными node_modules.
   serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas", "api-anything", "telegram"],
+  // Приложение работает через `next start` прямо из каталога с `node_modules`
+  // (не standalone и не serverless), поэтому трассировка десятков тысяч файлов
+  // `node_modules/**` через `@vercel/nft` на шаге `Collecting build traces`
+  // не нужна и раньше впустую тратила ~2 минуты на каждом деплое.
+  outputFileTracingExcludes: {
+    "*": ["node_modules/**"],
+  },
   experimental: {
     // Proxy (src/proxy.ts) буферизует тело запроса и по умолчанию
     // обрезает его на 10 МБ. Скан приказа к журналу — до 10 МБ
@@ -50,6 +58,17 @@ const nextConfig: NextConfig = {
     // `forbidden()` в guard'ах страниц кабинета: «Нет доступа» рисуется
     // внутри макета (`(dashboard)/forbidden.tsx`) вместо тихого редиректа.
     authInterrupts: true,
+    // `next-intl/plugin` добавляет обёртку `config.webpack`, из-за чего Next.js
+    // по умолчанию выключает `webpackBuildWorker` и крутит все 3 компилятора
+    // (`server`, `edge-server`, `client`) в одном процессе — их кучи складывались
+    // до 4,19+ ГБ (на грани OOM 4,1 ГБ) и вызывали пробуксовку GC.
+    // Выносим компиляции в отдельные воркеры (память освобождается сразу после
+    // каждого компилятора), включаем оптимизации памяти Webpack и параллельную
+    // сборку серверных бандлов/трейсов.
+    webpackBuildWorker: true,
+    webpackMemoryOptimizations: true,
+    parallelServerCompiles: true,
+    parallelServerBuildTraces: true,
   },
   typescript: {
     // Temporary deploy unblocker: unrelated dashboard pages still carry legacy Next build type errors.
@@ -241,8 +260,12 @@ const nextConfig: NextConfig = {
         //
         // `api/kp/qr/` — QR в письме с КП: картинка зависит только от адреса,
         // маршрут ставит `public, immutable` — почтовые прокси её кэшируют.
+        // Для страниц сайта Cache-Control выставляет `src/proxy.ts`
+        // (публичный кэш для анонимных посетителей маркетинговых страниц,
+        // `no-store` для кабинета, входа и сессий). Здесь закрываем `no-store`
+        // все API-ручки кроме публичных/неизменяемых превью.
         source:
-          "/((?!_next/static|_next/image|api/journal-samples|api/journal-previews|api/kp/qr/|journal-samples/|brand/|icons/|uploads/|favicon\\.ico|manifest\\.json|sw\\.js|robots\\.txt|sitemap\\.xml|screenshots/|b/[a-z0-9]+/badge\\.svg|og/image|og-default|blog/feed\\.xml|whats-new/feed\\.xml).*)",
+          "/api/((?!journal-samples|journal-previews|kp/qr/).*)",
         headers: [
           {
             key: "Cache-Control",
