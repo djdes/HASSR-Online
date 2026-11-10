@@ -64,7 +64,8 @@ import outroTagline from "../public/landing/video/voice/ru/08-outro-tagline.json
 
 export const VIDEO = { width: 1920, height: 1080, fps: FPS } as const;
 /** Контакты в ролике: номер — в углу всего ролика и крупно в конце (по нему нас находят в MAX и Telegram). */
-export const CONTACTS = { phone: "+7 925 305-80-77", email: "admin@wesetup.ru" } as const;
+/** Контакты в ролике (10.11.2026: в конце — основной номер поддержки и продаж 495). */
+export const CONTACTS = { phone: "+7 (495) 109-65-43", telegram: "@wesetup_support", email: "admin@wesetup.ru" } as const;
 const CONTACTS_FRAMES = Math.round(CONTACTS_SECONDS * FPS);
 const BY_ID: Record<string, VoiceTrack> = { intro, fridge, locker, uv, serving, acceptance, sensor, forgot, points, ppk, inspection, reports, outro, outroTagline };
 /** Порядок глав — как в сценарии (`narration.ru.json`). */
@@ -329,7 +330,7 @@ function OutroCard({ part }: { part: TimelinePart }) {
 }
 
 /* ---------------------------------------------------------------------
- * Контакты: по номеру нас находят в MAX и Telegram, ниже — почта.
+ * Контакты: основной номер поддержки и продаж, Telegram поддержки и почта.
  * Строки проявляются по очереди, как титры.
  * ------------------------------------------------------------------- */
 
@@ -352,17 +353,22 @@ function ContactsCard({ frame, at }: { frame: number; at: number }) {
         }}
       >
         <div style={{ ...reveal(frame, at + 6), fontSize: 34, fontWeight: 500, color: "rgba(255,255,255,0.76)" }}>
-          Найдите нас в <span style={ACCENT_TEXT}>MAX</span> и <span style={ACCENT_TEXT}>Telegram</span> по номеру
+          Поддержка и продажи — <span style={ACCENT_TEXT}>звоните</span>
         </div>
         <div style={{ ...reveal(frame, at + 12), display: "flex", alignItems: "center", gap: 26 }}>
-          <Img src={staticFile("landing/video/messengers/max.png")} style={{ ...icon, borderRadius: 26 }} />
-          <Img src={staticFile("landing/video/messengers/telegram.svg")} style={icon} />
+          <span style={{ ...icon, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 30, background: "#5566f6", boxShadow: "0 18px 40px -16px rgba(85,102,246,0.8)" }}>
+            <Phone size={54} strokeWidth={2.2} color="#ffffff" />
+          </span>
           <div style={{ marginLeft: 14, fontSize: 96, fontWeight: 700, letterSpacing: "-0.01em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
             {CONTACTS.phone}
           </div>
         </div>
-        <div style={{ ...reveal(frame, at + 18), display: "flex", alignItems: "center", gap: 18, fontSize: 52, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>
-          <Mail size={46} strokeWidth={2} color="#aab4ff" />
+        <div style={{ ...reveal(frame, at + 16), display: "flex", alignItems: "center", gap: 18, fontSize: 46, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>
+          <Img src={staticFile("landing/video/messengers/telegram.svg")} style={{ display: "block", width: 52, height: 52 }} />
+          {CONTACTS.telegram}
+        </div>
+        <div style={{ ...reveal(frame, at + 20), display: "flex", alignItems: "center", gap: 18, fontSize: 46, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>
+          <Mail size={42} strokeWidth={2} color="#aab4ff" />
           {CONTACTS.email}
         </div>
       </div>

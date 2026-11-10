@@ -314,7 +314,7 @@ test("рендер: пакеты Remotion 4.0.528 только в devDependencie
   assert.doesNotMatch(code, /QrSticker|₽|тариф|купи|попроб|бесплатн/i, "финал без QR, цен и призывов");
 });
 
-test("в конце — контакты: MAX и Telegram по номеру, почта; номер в углу всего ролика", () => {
+test("в конце — контакты: номер поддержки 495, Telegram поддержки, почта; номер в углу всего ролика", () => {
   const outro = timeline.parts[timeline.parts.length - 1];
   const tagline = outro.voices[outro.voices.length - 1];
   const tail = outro.durationInFrames / FPS - (tagline.offset / FPS + tagline.track.speechEnd);
@@ -323,7 +323,8 @@ test("в конце — контакты: MAX и Telegram по номеру, п�
   assert.ok(timeline.durationInFrames <= 60 * FPS, `${(timeline.durationInFrames / FPS).toFixed(1)} с`);
 
   const tour = read("remotion/tour.tsx");
-  assert.match(tour, /phone: "\+7 925 305-80-77"/);
+  assert.match(tour, /phone: "\+7 \(495\) 109-65-43"/);
+  assert.match(tour, /telegram: "@wesetup_support"/);
   assert.match(tour, /email: "admin@wesetup\.ru"/);
   assert.match(tour, /<ContactsCard /, "финальный экран контактов");
   assert.match(tour, /<CornerPhone /, "номер в правом нижнем углу");
