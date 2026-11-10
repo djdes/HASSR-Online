@@ -20,8 +20,19 @@ export class CodexGatewayError extends Error {
   }
 }
 
-const base = () => (process.env.CODEX_GATEWAY_URL?.trim() || "https://projectsflow.ru/api").replace(/\/+$/, "");
-const token = () => process.env.CODEX_GATEWAY_TOKEN?.trim() ?? "";
+/** База API: CODEX_GATEWAY_URL, иначе PROJECTSFLOW_API_URL, иначе прод. */
+function base(): string {
+  const raw = (process.env.CODEX_GATEWAY_URL?.trim() || process.env.PROJECTSFLOW_API_URL?.trim() || "https://projectsflow.ru/api").replace(/\/+$/, "");
+  // PROJECTSFLOW_API_URL может быть без «/api» — шлюз живёт под /api.
+  return /\/api$/.test(raw) ? raw : `${raw}/api`;
+}
+
+/**
+ * Токен агента ProjectsFlow (scope account). Отдельный CODEX_GATEWAY_TOKEN,
+ * иначе общий PROJECTSFLOW_AGENT_TOKEN, уже заданный для интеграции
+ * WeSetup ↔ ProjectsFlow (им же ходит остальной код).
+ */
+const token = () => process.env.CODEX_GATEWAY_TOKEN?.trim() || process.env.PROJECTSFLOW_AGENT_TOKEN?.trim() || "";
 
 export function codexGatewayConfigured(): boolean {
   return token().length > 0;
