@@ -44,6 +44,12 @@ updates:
       # eslint 10: плагины конфигурации ещё не совместимы.
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
+      # nodemailer 8+: next-auth 4 требует peer nodemailer ^7 — `npm ci` на сервере падает с ERESOLVE.
+      # Снять вместе с переходом на next-auth 5.
+      - dependency-name: "nodemailer"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/nodemailer"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: "/mobile"
     schedule: { interval: monthly }
