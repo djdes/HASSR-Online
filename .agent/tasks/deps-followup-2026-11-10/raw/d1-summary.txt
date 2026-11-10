@@ -1,0 +1,18 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=6080, fail=0
+eslint: errors 41 warnings 220 (эталон master: errors 41 warnings 220)
+build+start: started after 2s, build 2B69cFCrRASKvC8GJOw78, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+
+Step 1 (#194): next 16.1.6->16.1.7, react/react-dom 19.2.3->19.2.9, eslint-config-next 16.1.7 (patches),
+docx 9.7.1->9.7.2 (patch; its own nested nanoid 6.0.2), lucide-react 1.68->1.70 (minor, 2026-11-06).
+Baseline = fresh master 7c6bc911 on the same machine (lint 41/220, smoke, 14 screenshots, headers).
+Build with NODE_OPTIONS=--max-old-space-size=8192 (server value since #191).
+Headers: identical to master. Screenshots: 12/14 pixel-identical; owner_dashboard and /order differ only
+in date/time text (baseline before local midnight: "До конца дня 24 мин" -> "23 ч 57 мин",
+"до 10 декабря" -> "до 11 декабря").
