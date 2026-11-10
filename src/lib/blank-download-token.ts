@@ -6,6 +6,7 @@ import {
   blankFilePath,
   blankPagePath,
   blankTargetKey,
+  normalizeBlankCompany,
   normalizeBlankEmail,
   type BlankFormat,
   type BlankTarget,
@@ -41,29 +42,31 @@ export function deriveBlankKey(purpose: "download" | "qr"): Buffer {
   return crypto.createHmac("sha256", serverSecret()).update(`wesetup:blank-${purpose}:v1`).digest();
 }
 
-type Claims = { v: 1; e: string; t: string; f: BlankFormat; x: number };
+type Claims = { v: 1; e: string; t: string; f: BlankFormat; x: number; c?: string };
 
 function sign(body: string): string {
   return crypto.createHmac("sha256", deriveBlankKey("download")).update(body).digest("base64url");
 }
 
 export function signBlankDownloadToken(
-  params: { email: string; target: BlankTarget; format: BlankFormat },
+  params: { email: string; target: BlankTarget; format: BlankFormat; company?: string | null },
   now: number = Date.now(),
 ): string {
+  const company = normalizeBlankCompany(params.company);
   const claims: Claims = {
     v: 1,
     e: params.email,
     t: blankTargetKey(params.target),
     f: params.format,
     x: Math.floor((now + BLANK_DOWNLOAD_TTL_MS) / 1000),
+    ...(company ? { c: company } : {}),
   };
   const body = Buffer.from(JSON.stringify(claims), "utf8").toString("base64url");
   return `${body}.${sign(body)}`;
 }
 
 export type BlankDownloadCheck =
-  | { ok: true; email: string; expiresAt: Date }
+  | { ok: true; email: string; company?: string; expiresAt: Date }
   | { ok: false; reason: "missing" | "bad-format" | "bad-sig" | "expired" | "mismatch" };
 
 function sameString(a: string, b: string): boolean {
@@ -98,7 +101,13 @@ export function verifyBlankDownloadToken(
     return { ok: false, reason: "mismatch" };
   }
   if (claims.x * 1000 < now) return { ok: false, reason: "expired" };
-  return { ok: true, email, expiresAt: new Date(claims.x * 1000) };
+  const company = normalizeBlankCompany(claims.c);
+  return {
+    ok: true,
+    email,
+    ...(company ? { company } : {}),
+    expiresAt: new Date(claims.x * 1000),
+  };
 }
 
 /** Относительная ссылка на файл с токеном. */

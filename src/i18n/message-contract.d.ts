@@ -17157,7 +17157,17 @@ export type MessageContract = {
       "topUpAria": "Пополнить баланс «{name}»",
       "topUpTitle": "Пополнить или списать баллы",
       "topUpDescription": "«{name}». Сейчас на балансе {balance, number} ₽.",
-      "after": "Баланс станет {amount, number} ₽"
+      "after": "Баланс станет {amount, number} ₽",
+      "methodLabel": "Откуда деньги",
+      "methodAdjust": "Корректировка",
+      "methodCash": "Наличные",
+      "methodTransfer": "Безнал",
+      "methodCard": "Карта",
+      "methodTopupNotice": "В истории клиента: «{prefix}: {comment}» — как пополнение деньгами",
+      "transferHint": "Переводы на р/с из выписки Сбера зачисляются сами по ИНН — вручную только те, что пришли на разбор",
+      "prefixCash": "Пополнение наличными",
+      "prefixTransfer": "Пополнение безналичным переводом",
+      "prefixCard": "Пополнение картой"
     },
     "kinds": {
       "referral_reward": "Приглашённый друг",
@@ -17370,9 +17380,9 @@ export type MessageContract = {
       "breadcrumb": "Журналы",
       "aboutHeading": "Что это за журнал",
       "screenHeading": "Как это выглядит в системе",
-      "sampleHeading": "Так выглядит заполненный журнал",
-      "sampleDescription": "Тот же файл, который сервис выдаёт инспектору. Данные вымышленные — организация «Ромашка» и пять сотрудников.",
-      "sampleAria": "Образец заполненного журнала",
+      "sampleHeading": "Готовый шаблон журнала для печати",
+      "sampleDescription": "Нажмите «Скачать PDF» и укажите название вашей организации — оно сразу подставится в шапку бланка.",
+      "sampleAria": "Готовый шаблон журнала",
       "pdfFallback": "Браузер не показывает PDF на странице — откройте файл кнопкой выше.",
       "sampleHelp": "Пролистайте прямо здесь или скачайте, чтобы распечатать.",
       "fieldsHeading": "Что заполняется",
@@ -19625,6 +19635,9 @@ export type MessageContract = {
       "label": "Электронная почта",
       "placeholder": "you@company.ru",
       "domainMissing": "Такого домена не существует — проверьте адрес. Письмо на него не дойдёт."
+    },
+    "company": {
+      "placeholder": "Название компании или ИП (в шапку журнала)"
     },
     "consent": {
       "statement": "Даю <consent>согласие на обработку персональных данных</consent> и ознакомлен с <privacy>политикой конфиденциальности</privacy>",

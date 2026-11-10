@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 
 import { Api, TelegramClient } from "telegram";
+import { Logger, LogLevel } from "telegram/extensions/Logger";
 import { StringSession } from "telegram/sessions";
 
 import { db } from "@/lib/db";
@@ -69,9 +70,9 @@ export function createTelegramClient(session: string, credentials: { apiId: numb
     deviceModel: "WeSetup CRM",
     appVersion: "1.0",
     systemVersion: "server",
+    baseLogger: new Logger(LogLevel.ERROR),
     ...(proxy ? { proxy } : {}),
   });
-  client.setLogLevel("error" as never);
   return client;
 }
 

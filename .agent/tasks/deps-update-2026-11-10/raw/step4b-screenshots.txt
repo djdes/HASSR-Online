@@ -1,0 +1,16 @@
+Скриншоты 1280×900: до (master) / после (шаг 4б), доля пикселей с разницей > 24
+owner_dashboard.png                                    0.21%
+owner_journals.png                                     0.07%
+owner_journals_hygiene.png                             0.06%
+owner_reports.png                                      0.06%
+owner_settings_balance.png                             0.06%
+owner_settings_subscription.png                        0.38%
+owner_settings_users.png                               0.07%
+public_.png                                            1.79%
+public_login.png                                       0.00%
+public_order_plan_standard_cycle_month_points_1.png    7.21%
+public_pricing.png                                     3.01%
+root_root.png                                          0.00%
+root_root_crm.png                                      0.00%
+root_root_organizations_org_cafe.png                   0.00%
+Отличия — живые элементы (капча, плашка cookie, счётчик уведомлений, кнопки поддержки); вёрстка совпадает.

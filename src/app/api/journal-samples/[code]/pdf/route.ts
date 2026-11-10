@@ -50,11 +50,14 @@ export async function GET(
   // ?inline=1 — для встроенного просмотра на странице журнала:
   // attachment заставил бы браузер скачать файл вместо показа.
   const inline = search.get("inline") === "1";
+  const blank = search.get("blank") === "1" || !inline;
   let email: string | null = null;
+  let company: string | undefined;
   if (!inline) {
     const check = verifyBlankDownloadToken(search.get("t"), { target, format: "pdf" });
     if (!check.ok) return sampleDownloadDenied(request, target, "pdf", check.reason, locale);
     email = check.email;
+    company = check.company;
   }
 
   const ip = clientIp(request) ?? "unknown";
@@ -65,7 +68,7 @@ export async function GET(
   try {
     // QR на /qb — в шапке каждой страницы, строка копирайта — внизу.
     const { buffer, fileName } = renderJournalDocumentPdf({
-      ...await localizedJournalSampleInput(code, locale),
+      ...await localizedJournalSampleInput(code, locale, { blank, company }),
       qr: { ...blankPdfQr(journalPdfQrOrigin(), { target, email }), locale, footer: (await sampleFooterLines(locale)).join(" · ") },
     });
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Coins, Minus, Plus } from "lucide-react";
+import { Banknote, Coins, CreditCard, Landmark, Minus, Plus, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { organizationError } from "./organization-presentation";
@@ -13,6 +13,17 @@ const TRIGGER_STYLES = {
   row: "inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
   regular: "inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
 } as const;
+
+type Method = "adjust" | "cash" | "transfer" | "card";
+
+const METHODS = [
+  { value: "adjust", icon: SlidersHorizontal, label: "balance.methodAdjust" },
+  { value: "cash", icon: Banknote, label: "balance.methodCash" },
+  { value: "transfer", icon: Landmark, label: "balance.methodTransfer" },
+  { value: "card", icon: CreditCard, label: "balance.methodCard" },
+] as const;
+
+const METHOD_PREFIX = { cash: "balance.prefixCash", transfer: "balance.prefixTransfer", card: "balance.prefixCard" } as const;
 
 /**
  * «Пополнить баланс» клиента — одно окно для списка клиентов, шапки и блока
@@ -42,6 +53,10 @@ export function BalanceTopUpButton({
   const [sign, setSign] = useState<1 | -1>(1);
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");
+  // Откуда деньги: корректировка баллов или живые деньги мимо кассы
+  // (наличные, перевод, карта в терминале) — тогда строка «Пополнение».
+  const [method, setMethod] = useState<Method>("adjust");
+  const topup = sign > 0 && method !== "adjust";
 
   const parsedAmount = Number.parseInt(amount, 10);
   const valid = Number.isFinite(parsedAmount) && parsedAmount > 0 && comment.trim().length >= 3;
@@ -52,6 +67,7 @@ export function BalanceTopUpButton({
     setSign(1);
     setAmount("");
     setComment("");
+    setMethod("adjust");
   }
 
   async function submit() {
@@ -59,7 +75,7 @@ export function BalanceTopUpButton({
       const response = await fetch(`/api/root/organizations/${organizationId}/balance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: delta, comment: comment.trim() }),
+        body: JSON.stringify({ amount: delta, comment: comment.trim(), method: topup ? method : "adjust" }),
       });
       const body = (await response.json().catch(() => ({}))) as { balanceRub?: number };
       if (!response.ok) {
@@ -100,7 +116,17 @@ export function BalanceTopUpButton({
         title={t("balance.topUpTitle")}
         description={t("balance.topUpDescription", { name: organizationName, balance: balanceRub })}
         bullets={[
-          ...(comment.trim().length >= 3 ? [{ label: t("balance.commentNotice", { comment: comment.trim() }) }] : []),
+          ...(comment.trim().length >= 3
+            ? [
+                {
+                  label:
+                    topup
+                      ? t("balance.methodTopupNotice", { prefix: t(METHOD_PREFIX[method]), comment: comment.trim() })
+                      : t("balance.commentNotice", { comment: comment.trim() }),
+                },
+              ]
+            : []),
+          ...(topup && method === "transfer" ? [{ label: t("balance.transferHint"), tone: "warn" as const }] : []),
           { label: t("balance.auditNotice"), tone: "info" as const },
           ...(sign < 0 ? [{ label: t("balance.debitNotice"), tone: "warn" as const }] : []),
         ]}
@@ -134,6 +160,30 @@ export function BalanceTopUpButton({
               {t("balance.debit")}
             </button>
           </div>
+          {sign > 0 ? (
+            <div role="radiogroup" aria-label={t("balance.methodLabel")} className="space-y-1.5" data-balance-method>
+              <div className="text-[12.5px] font-medium text-[#6f7282]">{t("balance.methodLabel")}</div>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                {METHODS.map(({ value, icon: Icon, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={method === value}
+                    onClick={() => setMethod(value)}
+                    className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border px-2 text-[13px] font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 ${
+                      method === value
+                        ? "border-[#5566f6] bg-[#f5f6ff] text-[#3848c7]"
+                        : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                    }`}
+                  >
+                    <Icon className="size-4" />
+                    {t(label)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <input
             aria-label={t("balance.amountLabel")}
             inputMode="numeric"

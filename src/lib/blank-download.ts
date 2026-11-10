@@ -116,12 +116,21 @@ const EMAIL_MAX = 200;
 // Та же проверка, что у мгновенной регистрации (instant-register).
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+export const BLANK_COMPANY_MAX = 160;
+
 /** Почта в каноническом виде или `null`, если это не адрес. */
 export function normalizeBlankEmail(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const email = raw.trim().toLowerCase();
   if (!email || email.length > EMAIL_MAX || !EMAIL_RE.test(email)) return null;
   return email;
+}
+
+/** Название организации для шапки бланка или `null`, если не указано. */
+export function normalizeBlankCompany(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const company = raw.replace(/\s+/g, " ").trim().slice(0, BLANK_COMPANY_MAX);
+  return company || null;
 }
 
 /** Стабильный ключ цели: `code:hygiene`, `paper:ot_intro`. */
@@ -199,7 +208,7 @@ export function blankSignupPlace(journal: string | null | undefined): string {
 }
 
 /** Что браузер помнит после первого скачивания. */
-export type RememberedBlankEmail = { email: string; consentVersion: string };
+export type RememberedBlankEmail = { email: string; consentVersion: string; company?: string };
 
 export function readRememberedBlankEmail(raw: string | null | undefined): RememberedBlankEmail | null {
   if (!raw) return null;
@@ -207,7 +216,12 @@ export function readRememberedBlankEmail(raw: string | null | undefined): Rememb
     const value = JSON.parse(raw) as Partial<RememberedBlankEmail>;
     const email = normalizeBlankEmail(value.email);
     if (!email || typeof value.consentVersion !== "string" || !value.consentVersion) return null;
-    return { email, consentVersion: value.consentVersion.slice(0, 32) };
+    const company = normalizeBlankCompany(value.company);
+    return {
+      email,
+      consentVersion: value.consentVersion.slice(0, 32),
+      ...(company ? { company } : {}),
+    };
   } catch {
     return null;
   }

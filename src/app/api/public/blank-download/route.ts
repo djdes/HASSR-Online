@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       { status: parsed.status },
     );
   }
-  const { email, info, format, marketing, locale } = parsed.value;
+  const { email, company, info, format, marketing, locale } = parsed.value;
 
   const ip = clientIp(request) ?? "unknown";
   const limited = blankDownloadLimiter.consume(ip, email);
@@ -141,6 +141,7 @@ export async function POST(request: Request) {
     entityId: consentId,
     details: {
       email,
+      ...(company ? { company } : {}),
       format,
       title: info.title,
       ...(target.kind === "code" ? { code: target.code } : { paperId: target.paperId }),
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
 
   const now = Date.now();
   const hrefFor = (fileFormat: BlankFormat) =>
-    blankDownloadHref(target, fileFormat, signBlankDownloadToken({ email, target, format: fileFormat }, now), locale);
+    blankDownloadHref(target, fileFormat, signBlankDownloadToken({ email, company, target, format: fileFormat }, now), locale);
   const url = hrefFor(format);
 
   // Лимит писем проверяем до ответа — окно честно скажет, ушла ли копия.

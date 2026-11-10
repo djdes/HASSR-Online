@@ -16,6 +16,7 @@ import { markClosingDocumentEmailed, prepareClosingDocumentEmail } from "@/lib/c
 
 import { sendBalanceTopupEmail } from "./emails";
 import { applyBalanceChange, getBalance } from "./ledger";
+import { hasStatementCreditForOrder } from "./statement-credit";
 import {
   TOPUP_TARIFF_KEY,
   isTopupOrder,
@@ -70,7 +71,10 @@ function settleTx(tx: Prisma.TransactionClient): SettleTx {
       tx.paymentOrder.findUnique({ where: { id: orderId }, select: ORDER_SNAPSHOT_SELECT }),
     async hasCredit(dedupeKey) {
       const row = await tx.balanceTransaction.findUnique({ where: { dedupeKey }, select: { id: true } });
-      return row !== null;
+      if (row !== null) return true;
+      // Деньги по этому счёту уже пришли на баланс из выписки банка.
+      const orderId = Number(/^topup:(\d+)$/.exec(dedupeKey)?.[1]);
+      return Number.isSafeInteger(orderId) && orderId > 0 ? hasStatementCreditForOrder(tx, orderId) : false;
     },
     async credit(entry) {
       await applyBalanceChange(tx, { ...entry, kind: "topup" });

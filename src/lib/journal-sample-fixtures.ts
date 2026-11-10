@@ -549,3 +549,49 @@ export function buildJournalSampleInput(
     rooms: SAMPLE_AREAS,
   };
 }
+
+/**
+ * Незаполненный шаблон журнала для предпросмотра на сайте и скачивания:
+ * сохраняет структуру, колонки и помещения, но очищает тестовые отметки
+ * и реквизиты «ООО Ромашка». Если передано `company`, подставляет его в
+ * шапку организации.
+ */
+export function buildJournalBlankInput(
+  code: SampleJournalCode,
+  options: { company?: string | null } = {},
+): JournalDocumentPdfInput {
+  const companyName = (options.company ?? "").replace(/\s+/g, " ").trim();
+  const base = buildJournalSampleInput(code);
+  const rawConfig =
+    base.document.config && typeof base.document.config === "object"
+      ? { ...(base.document.config as Record<string, unknown>) }
+      : {};
+
+  if (code === "cleaning") {
+    rawConfig.matrix = {};
+    rawConfig.marks = {};
+    rawConfig.selectedCleanerUserIds = [];
+    rawConfig.controlUserId = null;
+    rawConfig.cleaningResponsibles = [];
+    rawConfig.controlResponsibles = [];
+  } else if (Array.isArray(rawConfig.rows)) {
+    rawConfig.rows = [];
+  }
+
+  return {
+    ...base,
+    document: {
+      ...base.document,
+      config: rawConfig as unknown as never,
+      entries: [],
+      organization: {
+        name: companyName || "Организация",
+        journalShortName: companyName || null,
+        legalProfileJson: null,
+        inn: null,
+        address: null,
+        phone: null,
+      },
+    } as unknown as JournalDocumentPdfInput["document"],
+  };
+}

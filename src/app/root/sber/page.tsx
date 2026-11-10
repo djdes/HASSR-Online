@@ -48,6 +48,16 @@ function Row({ label, value, tone, hint }: { label: string; value: React.ReactNo
   );
 }
 
+/** Итог по поступлению: SberIncomingPayment.status. */
+const STATUS_VIEW: Record<string, { label: string; tone: "ok" | "warn" | "bad" }> = {
+  matched: { label: "оплачен счёт", tone: "ok" },
+  credited: { label: "на балансе", tone: "ok" },
+  already: { label: "счёт отмечен вручную", tone: "ok" },
+  crediting: { label: "зачисляется", tone: "warn" },
+  review: { label: "на разбор", tone: "warn" },
+  failed: { label: "не зачислен", tone: "bad" },
+};
+
 function certRow(status: SberAdminStatus, now: number) {
   const api = status.api && "connected" in status.api ? status.api : null;
   // Сертификат, которым реально ходит WeSetup (копия .p12 ScanFlow на сервере).
@@ -149,7 +159,7 @@ export default async function RootSberPage() {
             <Row label="Когда" value={`${fmt(last.at)} · ${last.trigger === "manual" ? "вручную" : "по расписанию"}`} />
             <Row label="Результат" value={last.ok ? "выписка получена" : "ошибка"} tone={last.ok ? "ok" : "bad"} hint={last.error ?? undefined} />
             {last.ok ? (
-              <Row label="За дни" value={`${last.days.join(", ")} · входящих ${last.incoming}, распознано ${last.matched}, на разбор ${last.review}`} />
+              <Row label="За дни" value={`${last.days.join(", ")} · входящих ${last.incoming}, оплачено счетов ${last.matched}, на баланс ${last.credited ?? 0}, на разбор ${last.review}`} />
             ) : null}
           </>
         ) : (
@@ -158,11 +168,11 @@ export default async function RootSberPage() {
       </section>
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 md:p-7">
-        <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Распознанные платежи</div>
+        <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Поступления</div>
         {status.recent.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-10 text-center">
             <div className="text-[15px] font-medium text-[#0b1024]">Пока нет</div>
-            <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">Здесь появятся оплаты по нашим счетам из выписки и платежи, которые нужно разобрать вручную.</p>
+            <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] text-[#6f7282]">Здесь появятся оплаты по нашим счетам, поступления, зачисленные на баланс по ИНН плательщика, и платежи, которые нужно разобрать вручную.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -172,7 +182,7 @@ export default async function RootSberPage() {
                   <th className="py-2 pr-3 font-medium">Дата</th>
                   <th className="py-2 pr-3 font-medium">Плательщик</th>
                   <th className="py-2 pr-3 font-medium">Сумма</th>
-                  <th className="py-2 pr-3 font-medium">Счёт</th>
+                  <th className="py-2 pr-3 font-medium">Заказ</th>
                   <th className="py-2 font-medium">Итог</th>
                 </tr>
               </thead>
@@ -187,9 +197,7 @@ export default async function RootSberPage() {
                     <td className="py-2.5 pr-3 tabular-nums">{row.amountRub.toLocaleString("ru-RU")} ₽</td>
                     <td className="py-2.5 pr-3 tabular-nums">{row.orderId ? `№${row.orderId}` : "—"}</td>
                     <td className="py-2.5">
-                      <Pill tone={row.status === "matched" ? "ok" : row.status === "review" ? "warn" : "bad"}>
-                        {row.status === "matched" ? "оплачен" : row.status === "review" ? "на разбор" : "не отмечен"}
-                      </Pill>
+                      <Pill tone={STATUS_VIEW[row.status]?.tone ?? "bad"}>{STATUS_VIEW[row.status]?.label ?? "не отмечен"}</Pill>
                       {row.note ? <div className="mt-1 text-[12px] text-[#6f7282]">{row.note}</div> : null}
                     </td>
                   </tr>

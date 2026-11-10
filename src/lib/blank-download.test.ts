@@ -17,6 +17,7 @@ import {
   blankRegisterHref,
   blankSignupPlace,
   blankTargetKey,
+  normalizeBlankCompany,
   normalizeBlankEmail,
   parseBlankTargetKey,
   readRememberedBlankEmail,
@@ -113,11 +114,21 @@ test("ключ цели и отметка источника регистрац�
   assert.equal(blankSignupPlace(null), "blank");
 });
 
-test("запомненная почта: только валидная пара «почта + редакция»", () => {
+test("запомненная почта: только валидная пара «почта + редакция» (плюс опциональная компания)", () => {
   assert.deepEqual(readRememberedBlankEmail(JSON.stringify({ email: "A@Example.com", consentVersion: "2026-09-22" })), {
     email: "a@example.com",
     consentVersion: "2026-09-22",
   });
+  assert.deepEqual(
+    readRememberedBlankEmail(JSON.stringify({ email: "A@Example.com", consentVersion: "2026-09-22", company: "  ООО «Вкус»  " })),
+    {
+      email: "a@example.com",
+      consentVersion: "2026-09-22",
+      company: "ООО «Вкус»",
+    },
+  );
+  assert.equal(normalizeBlankCompany("   ИП   Иванов А.А.  "), "ИП Иванов А.А.");
+  assert.equal(normalizeBlankCompany("   "), null);
   assert.equal(readRememberedBlankEmail(JSON.stringify({ email: "a@example.com" })), null);
   assert.equal(readRememberedBlankEmail("{broken"), null);
   assert.equal(readRememberedBlankEmail(null), null);

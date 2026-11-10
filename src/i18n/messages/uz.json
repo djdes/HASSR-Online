@@ -17156,7 +17156,17 @@
       "topUpAria": "«{name}» balansini to‘ldirish",
       "topUpTitle": "Ball qo‘shish yoki yechish",
       "topUpDescription": "«{name}». Hozir balansda {balance, number} ₽.",
-      "after": "Balans {amount, number} ₽ bo‘ladi"
+      "after": "Balans {amount, number} ₽ bo‘ladi",
+      "methodLabel": "Pul manbai",
+      "methodAdjust": "Tuzatish",
+      "methodCash": "Naqd pul",
+      "methodTransfer": "Bank o‘tkazmasi",
+      "methodCard": "Karta",
+      "methodTopupNotice": "Mijoz tarixida: «{prefix}: {comment}» — pul bilan to‘ldirish sifatida",
+      "transferHint": "Sber ko‘chirmasidagi o‘tkazmalar STIR bo‘yicha avtomatik o‘tkaziladi — qo‘lda faqat tekshiruvga yuborilganlarini kiriting",
+      "prefixCash": "Naqd pul bilan to‘ldirish",
+      "prefixTransfer": "Bank o‘tkazmasi bilan to‘ldirish",
+      "prefixCard": "Karta bilan to‘ldirish"
     },
     "kinds": {
       "referral_reward": "Taklif uchun mukofot",
@@ -17369,9 +17379,9 @@
       "breadcrumb": "Jurnallar",
       "aboutHeading": "Bu qanday jurnal",
       "screenHeading": "Tizimda qanday ko‘rinadi",
-      "sampleHeading": "To‘ldirilgan jurnal shunday ko‘rinadi",
-      "sampleDescription": "Servis inspektorga beradigan faylning o‘zi. Ma’lumotlar uydirma: «Ромашка» tashkiloti va besh xodim.",
-      "sampleAria": "To‘ldirilgan jurnal namunasi",
+      "sampleHeading": "Chop etish uchun tayyor jurnal shabloni",
+      "sampleDescription": "«PDF formatida yuklab olish» tugmasini bosing va tashkilotingiz nomini kiriting — u darhol blanka sarlavhasiga qo‘yiladi.",
+      "sampleAria": "Tayyor jurnal shabloni",
       "pdfFallback": "Brauzer sahifada PDFni ko‘rsata olmayapti. Faylni yuqoridagi tugma orqali oching.",
       "sampleHelp": "Shu yerda varaqlang yoki chop etish uchun yuklab oling.",
       "fieldsHeading": "Nimalar to‘ldiriladi",
@@ -19624,6 +19634,9 @@
       "label": "Elektron pochta",
       "placeholder": "you@company.ru",
       "domainMissing": "Bunday email domeni mavjud emas. Manzilni tekshiring, xat yetkazilmaydi."
+    },
+    "company": {
+      "placeholder": "Tashkilot nomi (jurnal sarlavhasi uchun)"
     },
     "consent": {
       "statement": "<consent>Shaxsiy ma'lumotlarimni qayta ishlashga roziman</consent> va <privacy>Maxfiylik siyosati</privacy> bilan tanishdim.",

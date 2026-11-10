@@ -106,6 +106,7 @@ type RequestResult =
 
 async function requestDownload(params: {
   email: string;
+  company?: string;
   target: BlankTarget;
   format: BlankFormat;
   locale: string;
@@ -113,12 +114,14 @@ async function requestDownload(params: {
   /** Отмечена галка «Присылать полезные материалы и новости». */
   marketing?: boolean;
 }): Promise<RequestResult> {
+  const company = (params.company ?? params.remembered?.company ?? "").trim();
   try {
     const res = await fetch("/api/public/blank-download", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: params.email,
+        ...(company ? { company } : {}),
         ...(params.target.kind === "code" ? { code: params.target.code } : { paperId: params.target.paperId }),
         format: params.format,
         locale: params.locale,
@@ -164,6 +167,7 @@ export function BlankDownloadClient({
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("form");
   const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
   const [error, setError] = useState<ReturnType<typeof blankDownloadErrorKey> | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [showExpired, setShowExpired] = useState(false);
@@ -173,8 +177,9 @@ export function BlankDownloadClient({
   const goal = { place, format };
   const formatLabel = t(`format.${format}`);
 
-  function openForm(prefill: string, message: ReturnType<typeof blankDownloadErrorKey> | null) {
+  function openForm(prefill: string, message: ReturnType<typeof blankDownloadErrorKey> | null, prefillCompany = "") {
     setEmail(prefill);
+    setCompany(prefillCompany);
     setError(message);
     setPhase("form");
     setNotice(null);
@@ -184,14 +189,14 @@ export function BlankDownloadClient({
   async function quickDownload(saved: RememberedBlankEmail) {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     setNotice({ state: "sending", email: saved.email, emailed: true });
-    const result = await requestDownload({ email: saved.email, target, format, locale, remembered: saved });
+    const result = await requestDownload({ email: saved.email, company: saved.company, target, format, locale, remembered: saved });
     if (!result.ok) {
       // Редакция документов сменилась или сервер отказал — спрашиваем в окне.
       if (result.needConsent) remember(null);
-      openForm(saved.email, result.errorKey);
+      openForm(saved.email, result.errorKey, saved.company ?? "");
       return;
     }
-    remember({ email: saved.email, consentVersion: result.consentVersion });
+    remember({ email: saved.email, consentVersion: result.consentVersion, ...(saved.company ? { company: saved.company } : {}) });
     triggerDownload(result.url);
     ymGoal("blank_download_done", { ...goal, remembered: "1" });
     setFileUrl(result.url);
@@ -239,19 +244,32 @@ export function BlankDownloadClient({
     [],
   );
 
-  async function submit(value: string, marketing: boolean) {
+  async function submit(value: string, marketing: boolean, companyValue = "") {
+    const cleanCompany = companyValue.trim();
     setError(null);
     setPhase("sending");
-    const result = await requestDownload({ email: value, target, format, locale, marketing });
+    const result = await requestDownload({
+      email: value,
+      ...(cleanCompany ? { company: cleanCompany } : {}),
+      target,
+      format,
+      locale,
+      marketing,
+    });
     if (!result.ok) {
       setError(result.errorKey);
       setPhase("form");
       return;
     }
-    remember({ email: value, consentVersion: result.consentVersion });
+    remember({
+      email: value,
+      consentVersion: result.consentVersion,
+      ...(cleanCompany ? { company: cleanCompany } : {}),
+    });
     triggerDownload(result.url);
     ymGoal("blank_download_done", marketing ? { ...goal, marketing: "1" } : goal);
     setEmail(value);
+    setCompany(cleanCompany);
     setFileUrl(result.url);
     setEmailed(result.emailed);
     setShowExpired(false);
@@ -259,8 +277,9 @@ export function BlankDownloadClient({
   }
 
   function changeEmail() {
+    const saved = readRemembered();
     remember(null);
-    openForm("", null);
+    openForm("", null, saved?.company ?? company);
   }
 
   return (
@@ -294,6 +313,7 @@ export function BlankDownloadClient({
               title={title}
               formatLabel={formatLabel}
               initialEmail={email}
+              initialCompany={company}
               error={error}
               expired={showExpired}
               sending={phase === "sending"}
@@ -342,6 +362,7 @@ function FormView({
   title,
   formatLabel,
   initialEmail,
+  initialCompany = "",
   error,
   expired,
   sending,
@@ -350,13 +371,15 @@ function FormView({
   title: string;
   formatLabel: string;
   initialEmail: string;
+  initialCompany?: string;
   error: ReturnType<typeof blankDownloadErrorKey> | null;
   expired: boolean;
   sending: boolean;
-  onSubmit: (email: string, marketing: boolean) => void;
+  onSubmit: (email: string, marketing: boolean, company: string) => void;
 }) {
   const t = useTranslations("publicBlankDownload");
   const field = useEmailField(initialEmail);
+  const [company, setCompany] = useState(initialCompany);
   const [consent, setConsent] = useState(false);
   // Согласие на письма — необязательное и по умолчанию снято: на
   // скачивание не влияет (спека landing-pack-2026-09).
@@ -375,7 +398,7 @@ function FormView({
       return;
     }
     setLocalError(null);
-    onSubmit(field.value.trim().toLowerCase(), marketing);
+    onSubmit(field.value.trim().toLowerCase(), marketing, company);
   }
 
   const shownError = localError ?? error;
@@ -398,39 +421,52 @@ function FormView({
       ) : null}
 
       <form onSubmit={submit} noValidate>
-        <label htmlFor="blank-download-email" className="mb-1.5 block text-[13px] font-medium text-[#0b1024]">
-          {t("email.label")}
-        </label>
-        <div className="relative">
-          <Mail
-            aria-hidden="true"
-            className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#9b9fb3]"
-          />
+        <div className="space-y-2.5">
+          <div className="relative">
+            <Mail
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#9b9fb3]"
+            />
+            <input
+              id="blank-download-email"
+              type="email"
+              value={field.value}
+              onChange={(event) => field.setValue(event.target.value)}
+              placeholder={t("email.label")}
+              aria-label={t("email.label")}
+              autoComplete="email"
+              inputMode="email"
+              autoFocus
+              // 16px: иначе iOS Safari зумит страницу при фокусе в поле.
+              className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            />
+          </div>
+          {domainMissing ? (
+            <p className="text-[13px] leading-[1.5] text-[#a13a32]">
+              {t("email.domainMissing")}
+            </p>
+          ) : (
+            <EmailHint
+              check={field.check}
+              touched={field.touched}
+              domainState={field.domainState}
+              onApply={field.applySuggestion}
+            />
+          )}
+
           <input
-            id="blank-download-email"
-            type="email"
-            value={field.value}
-            onChange={(event) => field.setValue(event.target.value)}
-            placeholder={t("email.placeholder")}
-            autoComplete="email"
-            inputMode="email"
-            autoFocus
-            // 16px: иначе iOS Safari зумит страницу при фокусе в поле.
-            className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            id="blank-download-company"
+            data-testid="blank-download-company"
+            type="text"
+            maxLength={160}
+            value={company}
+            onChange={(event) => setCompany(event.target.value)}
+            placeholder={t("company.placeholder")}
+            aria-label={t("company.placeholder")}
+            autoComplete="organization"
+            className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
         </div>
-        {domainMissing ? (
-          <p className="mt-2.5 text-[13px] leading-[1.5] text-[#a13a32]">
-            {t("email.domainMissing")}
-          </p>
-        ) : (
-          <EmailHint
-            check={field.check}
-            touched={field.touched}
-            domainState={field.domainState}
-            onApply={field.applySuggestion}
-          />
-        )}
 
         <label
           className={cn(
