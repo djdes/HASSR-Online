@@ -15,6 +15,7 @@
  * делают и приложение ведёт себя как раньше. Ни одна из них не бросает.
  */
 
+import { clearOfflinePack } from "@/lib/offline/store";
 import {
   buildMiniAppAuthBootstrapPath,
   sanitizeMiniAppRedirectPath,
@@ -148,6 +149,9 @@ export async function signOutOnThisDevice(deps: {
     throw new Error(`logout failed: HTTP ${response.status}`);
   }
   markSignedOut(deps.storage === undefined ? browserMarkStorage() : deps.storage);
+  // Данные для работы без связи (сотрудники, журналы, формы) — личные данные
+  // аккаунта: с выходом они покидают устройство. Неотправленные записи остаются.
+  await clearOfflinePack().catch(() => undefined);
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {

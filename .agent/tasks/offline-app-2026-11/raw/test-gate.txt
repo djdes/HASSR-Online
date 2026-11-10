@@ -1,0 +1,6 @@
+> bash scripts/test-with-baseline.sh
+
+
+=== Test stats: pass=6002, fail=0 ===
+✓ Все тесты прошли.
+test:gate exit 0

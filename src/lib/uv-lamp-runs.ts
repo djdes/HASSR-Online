@@ -247,8 +247,10 @@ export async function toggleLamp(params: {
   lamp: { id: string; name: string; areaName: string };
   employee: { id: string; name: string };
   action: "on" | "off";
+  /** Момент действия; запись без связи передаёт время устройства. */
+  now?: Date;
 }): Promise<LampToggleResult> {
-  const now = new Date();
+  const now = params.now ?? new Date();
   const current = await db.equipment.findUnique({
     where: { id: params.lamp.id },
     select: { runningSince: true, runningUserId: true, lampLifetimeHours: true, lampUsedHours: true, lampWarnLevel: true },

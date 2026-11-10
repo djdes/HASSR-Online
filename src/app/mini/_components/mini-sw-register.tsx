@@ -4,33 +4,10 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
-import { isInsideMobileApp } from "@/lib/mobile-app";
+import { appMarkerCookieString, appMarkerFromUserAgent } from "@/lib/offline/app-marker";
 import { MINI_SW_SCOPE_PATH } from "@/lib/service-worker-scope";
 
 const MINI_SW_URL = "/mini-sw.js";
-
-/** Снять все регистрации, чей скрипт — воркер кабинета (`/mini-sw.js`). */
-async function unregisterMiniServiceWorkers(): Promise<void> {
-  try {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(
-      registrations
-        .filter((registration) => {
-          const worker =
-            registration.active ?? registration.waiting ?? registration.installing;
-          if (!worker) return false;
-          try {
-            return new URL(worker.scriptURL).pathname === MINI_SW_URL;
-          } catch {
-            return false;
-          }
-        })
-        .map((registration) => registration.unregister()),
-    );
-  } catch (error) {
-    console.warn("[mini-sw] не удалось снять регистрацию в приложении", error);
-  }
-}
 
 /**
  * Один раз за сессию вкладки разрешаем тихо применить обновление. Если
@@ -79,17 +56,20 @@ export function MiniServiceWorkerRegister() {
     // На http (кроме localhost) регистрация всё равно упадёт.
     if (!window.isSecureContext) return;
 
-    // В приложении WeSetup воркер не нужен и вреден: Android WebView
-    // приписывает `WeSetupApp/…` к User-Agent запросов самой страницы, но
-    // не к запросам из service worker'а. Страница, пришедшая через воркер,
-    // попала бы на сервер без метки приложения — и тот показал бы её как
-    // браузеру (оплата, без проверки версии, без viewport-fit). Экран
-    // «нет сети» у приложения свой. Поэтому не регистрируем, а оставшуюся
-    // от прежних версий регистрацию снимаем — без перезагрузки: со
-    // следующей загрузки страницы воркер уже не участвует.
-    if (isInsideMobileApp()) {
-      void unregisterMiniServiceWorkers();
-      return;
+    // В приложении WeSetup воркер нужен: он хранит экран работы без связи.
+    // Android WebView приписывает `WeSetupApp/…` к User-Agent запросов самой
+    // страницы, но не к запросам из service worker'а — страница, пришедшая
+    // через воркер, выглядела бы для сервера как из браузера (оплата, без
+    // проверки версии, без viewport-fit). Поэтому до регистрации оставляем
+    // метку приложения в куке; сервер восстанавливает по ней User-Agent
+    // (`lib/offline/app-marker.ts`, `proxy.ts`).
+    const marker = appMarkerFromUserAgent(navigator.userAgent);
+    if (marker) {
+      try {
+        document.cookie = appMarkerCookieString(marker, window.location.protocol === "https:");
+      } catch {
+        // Куки запрещены — воркер всё равно полезен, просто без метки.
+      }
     }
 
     let cancelled = false;

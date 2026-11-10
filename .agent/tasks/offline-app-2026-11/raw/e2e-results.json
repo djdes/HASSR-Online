@@ -1,0 +1,277 @@
+[
+  {
+    "name": "login",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 offline screen HTML carries no personal data",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1/AC4 pack and offline screen are saved on the device",
+    "ok": true,
+    "detail": "journals 10, objects 8"
+  },
+  {
+    "name": "AC15 pack holds a PIN verifier, not the PIN or the database hash",
+    "ok": true,
+    "detail": "iterations 150000"
+  },
+  {
+    "name": "AC3 only the impersonal offline screen is cached, no cabinet pages",
+    "ok": true,
+    "detail": "/mini-offline"
+  },
+  {
+    "name": "AC13 profile shows readiness",
+    "ok": true,
+    "detail": "Готово к работе без связи Данные от 10.11, 07:11"
+  },
+  {
+    "name": "AC2 app start without network opens the offline screen",
+    "ok": true,
+    "detail": "http://localhost:3000/mini-offline"
+  },
+  {
+    "name": "AC2 data stamp and lists are shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC13 offline badge",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 /mini/today without network → offline screen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 /mini without network → offline screen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 fridge QR without network opens this fridge",
+    "ok": true,
+    "detail": "Холодильный шкаф Бар 1"
+  },
+  {
+    "name": "AC6/AC8 fridge reading is saved on the device",
+    "ok": true,
+    "detail": "Сохранено на устройстве Холодильный шкаф Бар 1: +5 °C · Крылов Денис Сергеевич. Запись отправится сама, когда появится и"
+  },
+  {
+    "name": "AC15 employee with a PIN is asked for it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC15 wrong PIN is refused without network",
+    "ok": true,
+    "detail": "Неверный ПИН. Осталось попыток: 4."
+  },
+  {
+    "name": "AC15 right PIN opens the form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 out-of-norm reading asks what was done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC8 second reading saved",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 unknown object is reported",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 QR of another organization is refused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 journal QR opens that journal",
+    "ok": true,
+    "detail": "Журнал бракеража готовой пищевой продукции"
+  },
+  {
+    "name": "AC7 finished-product brakerage saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC7 required fields are enforced offline",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC7 perishable brakerage saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC17 past days are offered",
+    "ok": true,
+    "detail": "10 days"
+  },
+  {
+    "name": "AC7 hygiene saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC17 unsent record of this device is shown in the form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC17 past-day record saved without network",
+    "ok": true,
+    "detail": "2026-11-08"
+  },
+  {
+    "name": "AC7 cleaning steps are shown",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC7 general cleaning saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC8 queue survives reopening the app",
+    "ok": true,
+    "detail": "7 records"
+  },
+  {
+    "name": "AC8 queue holds author, device account and device time, and no PIN",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "test setup: one reading is dated yesterday 23:30",
+    "ok": true,
+    "detail": "2026-11-09T20:30:00.000Z"
+  },
+  {
+    "name": "AC9 queue is delivered when the network is back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC9 repeated delivery is answered from the first one",
+    "ok": true,
+    "detail": "status 200"
+  },
+  {
+    "name": "AC10 a record from the future is refused",
+    "ok": true,
+    "detail": "status 422"
+  },
+  {
+    "name": "AC10 a record older than 31 days is refused",
+    "ok": true,
+    "detail": "status 422"
+  },
+  {
+    "name": "AC12 offline headers without a signed-in device are refused",
+    "ok": true,
+    "detail": "status 401"
+  },
+  {
+    "name": "AC16 a changed PIN keeps the record out of the journal",
+    "ok": true,
+    "detail": "status 409"
+  },
+  {
+    "name": "AC17 pack history holds the saved past-day values",
+    "ok": true,
+    "detail": "{\"infection\":false,\"temperature\":false,\"respiratorySkin\":true}"
+  },
+  {
+    "name": "AC17 saved past-day values are shown in the form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "merge setup: another device changed the row",
+    "ok": true,
+    "detail": "status 200"
+  },
+  {
+    "name": "AC18 non-overlapping edits merge without a conflict",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "AC18 two devices syncing the same row at the same instant both keep their edits",
+    "ok": true,
+    "detail": "{\"proc_ventilation\":false,\"proc_disinfection\":true,\"proc_wet_cleaning\":true}"
+  },
+  {
+    "name": "AC18 merged row holds both edits",
+    "ok": true,
+    "detail": "{\"infection\":true,\"temperature\":true,\"respiratorySkin\":false}"
+  },
+  {
+    "name": "merge setup: two devices wrote the row",
+    "ok": true,
+    "detail": "200 200"
+  },
+  {
+    "name": "AC18 a field changed differently on both sides is reported; the journal keeps its value",
+    "ok": true,
+    "detail": "[{\"key\":\"quantity\",\"mine\":\"3\",\"theirs\":\"2\",\"label\":\"Количество\"}]"
+  },
+  {
+    "name": "AC18 the non-conflicting field of the same record is still written",
+    "ok": true,
+    "detail": "{\"unit\":\"kg\",\"quantity\":\"2\",\"expiryDate\":\"2027-01-01\",\"disinfectantName\":\"Хлорамин Б\"}"
+  },
+  {
+    "name": "AC18 «Записать моё» writes the device value",
+    "ok": true,
+    "detail": "{\"unit\":\"kg\",\"quantity\":\"3\",\"expiryDate\":\"2027-01-01\",\"disinfectantName\":\"Хлорамин Б\"}"
+  },
+  {
+    "name": "AC3 the app is recognised by the cookie when the User-Agent suffix is missing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC3 inside the app the worker is registered and the marker cookie is set",
+    "ok": true,
+    "detail": "workers 1, cookie true"
+  },
+  {
+    "name": "AC6 app cold start by a sticker link without network opens that object",
+    "ok": true,
+    "detail": "Холодильный шкаф Бар 1"
+  },
+  {
+    "name": "AC6 a link from the system camera (appUrlOpen) opens the UV lamp form",
+    "ok": true,
+    "detail": "УФ-лампа бактерицидная 1"
+  },
+  {
+    "name": "AC6 UV lamp: «Я включил / Я выключил»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC9 UV lamp switch-on made without network is delivered",
+    "ok": true,
+    "detail": ""
+  }
+]

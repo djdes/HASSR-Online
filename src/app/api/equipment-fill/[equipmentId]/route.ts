@@ -8,6 +8,8 @@ import {
   subjectKeyForEquipment,
 } from "@/lib/temperature-deviations";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
+import { resolveOfflineObjectActor, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import {
   normalizeColdEquipmentEntryData,
   COLD_EQUIPMENT_STATUS_SHORT,
@@ -39,7 +41,6 @@ import { clientIp } from "@/lib/client-ip";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
   qrFillRateKey,
@@ -103,6 +104,13 @@ function toPrismaJsonValue(
 
 export async function POST(
   request: Request,
+  ctx: { params: Promise<{ equipmentId: string }> }
+) {
+  return withOfflineIdempotency(request, "cold_equipment_control", () => handlePost(request, ctx));
+}
+
+async function handlePost(
+  request: Request,
   { params }: { params: Promise<{ equipmentId: string }> }
 ) {
   const equipmentId = decodeRouteParam((await params).equipmentId);
@@ -158,14 +166,22 @@ export async function POST(
   const organizationId = equipment.area.organizationId;
 
   // Режим QR-форм организации: список / PIN / только после входа.
-  const actor = await resolveObjectActor({
-    mode: normalizeQrFillMode(equipment.area.organization.qrFillMode),
-    organizationId,
-    employeeId: parsed.employeeId,
-    pin: parsed.pin,
-    pass: parsed.pass,
-    cookiePass: await readObjectPassCookie(organizationId),
-  });
+  // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и
+  // время берутся из неё; обычный запрос — как раньше.
+  const mode = normalizeQrFillMode(equipment.area.organization.qrFillMode);
+  const offlineActor = await resolveOfflineObjectActor(request, { mode, organizationId, employeeId: parsed.employeeId, timeZone: equipment.area.organization.timezone });
+  const actor = offlineActor
+    ? offlineActor.actor
+    : await resolveObjectActor({
+        mode,
+        organizationId,
+        employeeId: parsed.employeeId,
+        pin: parsed.pin,
+        pass: parsed.pass,
+        cookiePass: await readObjectPassCookie(organizationId),
+      });
+  const now = offlineActor?.now ?? new Date();
+  const offline = offlineActor?.offline ?? null;
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
   }
@@ -224,7 +240,6 @@ export async function POST(
     );
   }
 
-  const now = new Date();
   // «Сегодня» — в зоне организации: на проде процесс живёт в UTC, и ночной
   // замер до 03:00 МСК уходил во вчерашнюю строку.
   const timezone = equipment.area.organization.timezone || "Europe/Moscow";
@@ -448,6 +463,7 @@ export async function POST(
     humidity,
     outOfRange: isOutOfRange || humidityOutOfRange,
     ...(Object.keys(auditValues).length > 0 ? { values: auditValues } : {}),
+    ...(offline ? { offline } : {}),
   });
   if (photo && touched > 0) {
     console.info(`[reading-photo] attached equipment=${equipment.id} docs=${touched} org=${organizationId} user=${employee.id}`);

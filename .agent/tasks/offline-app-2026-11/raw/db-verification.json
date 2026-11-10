@@ -1,0 +1,189 @@
+{
+  "checks": [
+    {
+      "name": "AC10 a reading made yesterday 23:30 lies in yesterday's row, not in the sync day",
+      "ok": true,
+      "detail": "2026-11-09: {\"temperatures\":{\"cold-equipment-c8351de5-eee5-475d-99ce-ca0c62338836\":5},\"responsibleTitle\":null}"
+    },
+    {
+      "name": "AC16 a reading confirmed by PIN offline is signed by that employee",
+      "ok": true,
+      "detail": "2026-11-10: {\"corrections\":{\"cold-equipment-c8351de5-eee5-475d-99ce-ca0c62338836\":\"Закрыли дверь, проверим через 30 минут\"},\"temperatures\":{\"cold-equipment-c8351de5-eee5-475d-99ce-ca0c62338836\":12},\"responsibleTi"
+    },
+    {
+      "name": "AC10 audit log marks records made without network (when made, when received, how the author was confirmed)",
+      "ok": true,
+      "detail": "17 of 17 audit rows"
+    },
+    {
+      "name": "AC10 audit keeps the device time and the journal day of the moved record",
+      "ok": true,
+      "detail": "{\"by\":\"Крылов Денис Сергеевич (QR)\",\"kind\":\"equipment\",\"dateKey\":\"2026-11-09\",\"recordedAt\":\"2026-11-09T20:30:00.000Z\",\"syncedAt\":\"2026-11-10T07:11:34.269Z\",\"auth\":\"self\"}"
+    },
+    {
+      "name": "AC16 audit shows the PIN was checked on the device",
+      "ok": true,
+      "detail": "{\"by\":\"Волкова Анна Дмитриевна (QR)\",\"kind\":\"equipment\",\"dateKey\":\"2026-11-10\",\"recordedAt\":\"2026-11-10T07:11:31.156Z\",\"syncedAt\":\"2026-11-10T07:11:34.353Z\",\"auth\":\"pin\"}"
+    },
+    {
+      "name": "AC17 a past-day record is written to that day",
+      "ok": true,
+      "detail": "{\"by\":\"Крылов Денис Сергеевич (QR)\",\"kind\":\"journal\",\"dateKey\":\"2026-11-08\",\"recordedAt\":\"2026-11-10T07:11:33.142Z\",\"syncedAt\":\"2026-11-10T07:11:34.729Z\",\"auth\":\"self\"}"
+    },
+    {
+      "name": "AC7 brakerage row made without network is in the journal",
+      "ok": true,
+      "detail": "finished_product document config"
+    }
+  ],
+  "coldEntries": [
+    {
+      "employeeId": "cmwa9h2kf00014m7dcrso31wz",
+      "day": "2026-11-09",
+      "data": "{\"temperatures\":{\"cold-equipment-c8351de5-eee5-475d-99ce-ca0c62338836\":5},\"responsibleTitle\":null}"
+    },
+    {
+      "employeeId": "cmwa9h2kt00044m7dzix65i6s",
+      "day": "2026-11-10",
+      "data": "{\"corrections\":{\"cold-equipment-c8351de5-eee5-475d-99ce-ca0c62338836\":\"Закрыли дверь, проверим через 30 минут\"},\"temperatures\":{\"cold-equipment-c8351de5-eee5-475d-99ce-ca0c62338836\":12},\"responsibleTitle\":null}"
+    }
+  ],
+  "offlineAudit": [
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "equipment",
+      "dateKey": "2026-11-09",
+      "recordedAt": "2026-11-09T20:30:00.000Z",
+      "syncedAt": "2026-11-10T07:11:34.269Z",
+      "auth": "self"
+    },
+    {
+      "by": "Волкова Анна Дмитриевна (QR)",
+      "kind": "equipment",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:31.156Z",
+      "syncedAt": "2026-11-10T07:11:34.353Z",
+      "auth": "pin"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:31.897Z",
+      "syncedAt": "2026-11-10T07:11:34.509Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:32.207Z",
+      "syncedAt": "2026-11-10T07:11:34.567Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:32.675Z",
+      "syncedAt": "2026-11-10T07:11:34.660Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-08",
+      "recordedAt": "2026-11-10T07:11:33.142Z",
+      "syncedAt": "2026-11-10T07:11:34.729Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:33.587Z",
+      "syncedAt": "2026-11-10T07:11:34.790Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-08",
+      "recordedAt": "2026-11-10T07:11:39.308Z",
+      "syncedAt": "2026-11-10T07:11:39.370Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-08",
+      "recordedAt": "2026-11-10T07:11:39.258Z",
+      "syncedAt": "2026-11-10T07:11:39.443Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:40.696Z",
+      "syncedAt": "2026-11-10T07:11:40.757Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:40.763Z",
+      "syncedAt": "2026-11-10T07:11:40.810Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:40.763Z",
+      "syncedAt": "2026-11-10T07:11:40.818Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:41.544Z",
+      "syncedAt": "2026-11-10T07:11:41.585Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:41.593Z",
+      "syncedAt": "2026-11-10T07:11:41.628Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:41.633Z",
+      "syncedAt": "2026-11-10T07:11:41.670Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "journal",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:42.000Z",
+      "syncedAt": "2026-11-10T07:11:42.032Z",
+      "auth": "self"
+    },
+    {
+      "by": "Крылов Денис Сергеевич (QR)",
+      "kind": "equipment",
+      "dateKey": "2026-11-10",
+      "recordedAt": "2026-11-10T07:11:46.202Z",
+      "syncedAt": "2026-11-10T07:11:46.317Z",
+      "auth": "self"
+    }
+  ]
+}

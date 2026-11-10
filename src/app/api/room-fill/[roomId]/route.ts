@@ -28,6 +28,7 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
+import { resolveOfflineObjectActor, withOfflineIdempotency } from "@/lib/offline/envelope.server";
 import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import {
@@ -83,6 +84,13 @@ const bodySchema = z
 
 export async function POST(
   request: Request,
+  ctx: { params: Promise<{ roomId: string }> }
+) {
+  return withOfflineIdempotency(request, "climate_control", () => handlePost(request, ctx));
+}
+
+async function handlePost(
+  request: Request,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   const roomId = decodeRouteParam((await params).roomId);
@@ -135,14 +143,22 @@ export async function POST(
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
 
-  const actor = await resolveObjectActor({
-    mode: normalizeQrFillMode(room.building.organization.qrFillMode),
-    organizationId,
-    employeeId: body.employeeId,
-    pin: body.pin,
-    pass: body.pass,
-    cookiePass: await readObjectPassCookie(organizationId),
-  });
+  // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и
+  // время берутся из неё; обычный запрос — как раньше.
+  const mode = normalizeQrFillMode(room.building.organization.qrFillMode);
+  const offlineActor = await resolveOfflineObjectActor(request, { mode, organizationId, employeeId: body.employeeId, timeZone: timezone });
+  const actor = offlineActor
+    ? offlineActor.actor
+    : await resolveObjectActor({
+        mode,
+        organizationId,
+        employeeId: body.employeeId,
+        pin: body.pin,
+        pass: body.pass,
+        cookiePass: await readObjectPassCookie(organizationId),
+      });
+  const now = offlineActor?.now ?? new Date();
+  const offline = offlineActor?.offline ?? null;
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, ...(actor.errorParams ? { errorParams: actor.errorParams } : {}) }, { status: actor.status });
   }
@@ -193,7 +209,6 @@ export async function POST(
     );
   }
 
-  const now = new Date();
   const dateKey = orgTodayKey(timezone, now);
   const day = new Date(`${dateKey}T00:00:00.000Z`);
 
@@ -332,6 +347,7 @@ export async function POST(
     humidity: body.humidity,
     outOfRange: temperatureOutOfRange || humidityOutOfRange,
     ...(photoAttached ? { values: { photo } } : {}),
+    ...(offline ? { offline } : {}),
   });
   if (photoAttached) {
     console.info(`[reading-photo] attached room=${room.id} doc=${document.id} slot=${slot} org=${organizationId} user=${employee.id}`);

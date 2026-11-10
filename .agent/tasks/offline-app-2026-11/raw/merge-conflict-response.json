@@ -1,0 +1,13 @@
+{
+  "mode": "updated",
+  "documentTitle": "Журнал учета дезинфицирующих средств",
+  "employeeName": "Крылов Денис Сергеевич",
+  "conflicts": [
+    {
+      "key": "quantity",
+      "mine": "3",
+      "theirs": "2",
+      "label": "Количество"
+    }
+  ]
+}

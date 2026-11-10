@@ -26,6 +26,10 @@ export async function recordQrFillAudit(input: {
   values?: Record<string, unknown>;
   /** Запись пришла из бота мессенджера, а не со страницы QR. */
   channel?: "max";
+  /** Строка журнала (журнальные QR) — по ней собирается история значений строки для работы без связи. */
+  rowKey?: string;
+  /** Запись сделана без связи и доставлена позже: когда сделана, когда получена, как подтверждён автор. */
+  offline?: { recordedAt: string; syncedAt: string; auth: string; deviceUserId: string; pastDayEdit?: boolean } | null;
 }): Promise<void> {
   await recordAuditLog({
     request: input.request,
@@ -51,6 +55,8 @@ export async function recordQrFillAudit(input: {
       ...(input.authMode ? { authMode: input.authMode } : {}),
       ...(input.channel ? { channel: input.channel } : {}),
       ...(input.values ? { values: input.values } : {}),
+      ...(input.rowKey ? { rowKey: input.rowKey } : {}),
+      ...(input.offline ? { offline: input.offline } : {}),
     },
   });
 }

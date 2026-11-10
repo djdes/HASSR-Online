@@ -1,0 +1,292 @@
+TAP version 13
+# Subtest: marker is taken from the app User-Agent only
+ok 1 - marker is taken from the app User-Agent only
+  ---
+  duration_ms: 3.79812
+  type: 'test'
+  ...
+# Subtest: a service worker request without the suffix is recognised by the cookie
+ok 2 - a service worker request without the suffix is recognised by the cookie
+  ---
+  duration_ms: 0.859399
+  type: 'test'
+  ...
+# Subtest: the real User-Agent wins and garbage in the cookie is ignored
+ok 3 - the real User-Agent wins and garbage in the cookie is ignored
+  ---
+  duration_ms: 2.477646
+  type: 'test'
+  ...
+# Subtest: latest submission of a row and day wins, field by field
+ok 4 - latest submission of a row and day wins, field by field
+  ---
+  duration_ms: 1.508341
+  type: 'test'
+  ...
+# Subtest: rows, days and documents do not mix; foreign audit rows are skipped
+ok 5 - rows, days and documents do not mix; foreign audit rows are skipped
+  ---
+  duration_ms: 0.481998
+  type: 'test'
+  ...
+# Subtest: changes that do not overlap are both kept
+ok 6 - changes that do not overlap are both kept
+  ---
+  duration_ms: 1.586391
+  type: 'test'
+  ...
+# Subtest: the same edit on both sides is not a conflict
+ok 7 - the same edit on both sides is not a conflict
+  ---
+  duration_ms: 0.182022
+  type: 'test'
+  ...
+# Subtest: different edits of one field: journal keeps the server value, the rest merges
+ok 8 - different edits of one field: journal keeps the server value, the rest merges
+  ---
+  duration_ms: 0.221892
+  type: 'test'
+  ...
+# Subtest: a record appeared on the server while the device was offline
+ok 9 - a record appeared on the server while the device was offline
+  ---
+  duration_ms: 0.406805
+  type: 'test'
+  ...
+# Subtest: force writes the device values
+ok 10 - force writes the device values
+  ---
+  duration_ms: 0.139382
+  type: 'test'
+  ...
+# Subtest: empty values compare equal, numbers compare by value
+ok 11 - empty values compare equal, numbers compare by value
+  ---
+  duration_ms: 0.103305
+  type: 'test'
+  ...
+# Subtest: a scanned fridge sticker opens that fridge; an unknown one is reported
+ok 12 - a scanned fridge sticker opens that fridge; an unknown one is reported
+  ---
+  duration_ms: 2.094142
+  type: 'test'
+  ...
+# Subtest: journal posters: own journal, hub, another organization, short QR
+ok 13 - journal posters: own journal, hub, another organization, short QR
+  ---
+  duration_ms: 0.483163
+  type: 'test'
+  ...
+# Subtest: who may sign without network
+ok 14 - who may sign without network
+  ---
+  duration_ms: 0.7328
+  type: 'test'
+  ...
+# Subtest: signer list: allowed only, own account first, 'auth' mode shows only it
+ok 15 - signer list: allowed only, own account first, 'auth' mode shows only it
+  ---
+  duration_ms: 0.239736
+  type: 'test'
+  ...
+# Subtest: editable days stay inside the document period and the 31-day window
+ok 16 - editable days stay inside the document period and the 31-day window
+  ---
+  duration_ms: 0.791244
+  type: 'test'
+  ...
+# Subtest: row form starts from saved values, an unsent edit on top, defaults for an empty day
+ok 17 - row form starts from saved values, an unsent edit on top, defaults for an empty day
+  ---
+  duration_ms: 0.72334
+  type: 'test'
+  ...
+# Subtest: norms, typed numbers and summaries
+ok 18 - norms, typed numbers and summaries
+  ---
+  duration_ms: 0.66361
+  type: 'test'
+  ...
+# Subtest: right PIN passes, wrong PIN and malformed input fail
+ok 19 - right PIN passes, wrong PIN and malformed input fail
+  ---
+  duration_ms: 9.463871
+  type: 'test'
+  ...
+# Subtest: the verifier does not contain the PIN and differs per issue
+ok 20 - the verifier does not contain the PIN and differs per issue
+  ---
+  duration_ms: 2.302806
+  type: 'test'
+  ...
+# Subtest: a tampered verifier never passes
+ok 21 - a tampered verifier never passes
+  ---
+  duration_ms: 1.307429
+  type: 'test'
+  ...
+# Subtest: five wrong PINs lock for 15 minutes, a right one resets
+ok 22 - five wrong PINs lock for 15 minutes, a right one resets
+  ---
+  duration_ms: 0.948467
+  type: 'test'
+  ...
+# Subtest: equipment sticker
+ok 23 - equipment sticker
+  ---
+  duration_ms: 1.816936
+  type: 'test'
+  ...
+# Subtest: room sticker, www host, extra params and url-encoded id
+ok 24 - room sticker, www host, extra params and url-encoded id
+  ---
+  duration_ms: 0.263124
+  type: 'test'
+  ...
+# Subtest: journal poster, hub, document and point posters share one address shape
+ok 25 - journal poster, hub, document and point posters share one address shape
+  ---
+  duration_ms: 0.678334
+  type: 'test'
+  ...
+# Subtest: short QR from a printed journal header
+ok 26 - short QR from a printed journal header
+  ---
+  duration_ms: 0.19363
+  type: 'test'
+  ...
+# Subtest: bare path from the service worker fallback
+ok 27 - bare path from the service worker fallback
+  ---
+  duration_ms: 0.171302
+  type: 'test'
+  ...
+# Subtest: own host passed by the page is accepted, others are not
+ok 28 - own host passed by the page is accepted, others are not
+  ---
+  duration_ms: 0.178757
+  type: 'test'
+  ...
+# Subtest: garbage, other schemes and unknown paths are not ours
+ok 29 - garbage, other schemes and unknown paths are not ours
+  ---
+  duration_ms: 0.332257
+  type: 'test'
+  ...
+# Subtest: ids made of names (Cyrillic, spaces) are accepted as the site encodes them
+ok 30 - ids made of names (Cyrillic, spaces) are accepted as the site encodes them
+  ---
+  duration_ms: 0.235741
+  type: 'test'
+  ...
+# Subtest: record lands on the day it was made in the organization time zone, not the sync day
+ok 31 - record lands on the day it was made in the organization time zone, not the sync day
+  ---
+  duration_ms: 16.20082
+  type: 'test'
+  ...
+# Subtest: future beyond 10 minutes is refused, a small clock drift is fine
+ok 32 - future beyond 10 minutes is refused, a small clock drift is fine
+  ---
+  duration_ms: 0.920566
+  type: 'test'
+  ...
+# Subtest: 31 days are accepted, older is refused
+ok 33 - 31 days are accepted, older is refused
+  ---
+  duration_ms: 0.341049
+  type: 'test'
+  ...
+# Subtest: missing or broken time
+ok 34 - missing or broken time
+  ---
+  duration_ms: 0.134152
+  type: 'test'
+  ...
+# Subtest: past-day edit keeps the edited day
+ok 35 - past-day edit keeps the edited day
+  ---
+  duration_ms: 1.066096
+  type: 'test'
+  ...
+# Subtest: recent days list
+ok 36 - recent days list
+  ---
+  duration_ms: 0.238857
+  type: 'test'
+  ...
+# Subtest: the second request for the same row waits for the first
+ok 37 - the second request for the same row waits for the first
+  ---
+  duration_ms: 8.203241
+  type: 'test'
+  ...
+# Subtest: different rows do not wait for each other; release is idempotent
+ok 38 - different rows do not wait for each other; release is idempotent
+  ---
+  duration_ms: 0.307353
+  type: 'test'
+  ...
+# Subtest: three requests run strictly one after another
+ok 39 - three requests run strictly one after another
+  ---
+  duration_ms: 15.910669
+  type: 'test'
+  ...
+# Subtest: accepted record leaves the queue
+ok 40 - accepted record leaves the queue
+  ---
+  duration_ms: 1.68104
+  type: 'test'
+  ...
+# Subtest: accepted with conflicts stays for the person to decide
+ok 41 - accepted with conflicts stays for the person to decide
+  ---
+  duration_ms: 0.26269
+  type: 'test'
+  ...
+# Subtest: no network, server trouble and missing sign-in are retried, not refused
+ok 42 - no network, server trouble and missing sign-in are retried, not refused
+  ---
+  duration_ms: 0.177514
+  type: 'test'
+  ...
+# Subtest: a refusal keeps the record visible with its reason
+ok 43 - a refusal keeps the record visible with its reason
+  ---
+  duration_ms: 0.236625
+  type: 'test'
+  ...
+# Subtest: PIN refusals ask for the PIN again
+ok 44 - PIN refusals ask for the PIN again
+  ---
+  duration_ms: 0.154625
+  type: 'test'
+  ...
+# Subtest: records are delivered only under the account they were made with
+ok 45 - records are delivered only under the account they were made with
+  ---
+  duration_ms: 0.101153
+  type: 'test'
+  ...
+# Subtest: retry delay grows and is capped
+ok 46 - retry delay grows and is capped
+  ---
+  duration_ms: 0.09833
+  type: 'test'
+  ...
+# Subtest: a server that keeps failing is not retried forever
+ok 47 - a server that keeps failing is not retried forever
+  ---
+  duration_ms: 0.224933
+  type: 'test'
+  ...
+1..47
+# tests 47
+# suites 0
+# pass 47
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1005.258695

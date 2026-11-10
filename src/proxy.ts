@@ -20,6 +20,7 @@ import {
   miniShellSignInHref,
 } from "@/lib/mini-shell-cookie";
 import { appColdStartRedirect, appLoginHref, isMobileAppUserAgent } from "@/lib/mobile-app";
+import { APP_MARKER_COOKIE, userAgentWithAppMarker } from "@/lib/offline/app-marker";
 import {
   evaluatePartnerRequest,
   parsePartnerAccessClaim,
@@ -36,6 +37,16 @@ import {
  * Прокидываем в обработчики метод/путь запроса и id партнёра. Клиентские
  * значения этих заголовков всегда затираются — им доверяет getServerSession.
  */
+/**
+ * User-Agent запроса с меткой приложения WeSetup. Страница, которую в
+ * приложении запросил service worker, приходит без приписки `WeSetupApp/…`
+ * (Android WebView добавляет её только к запросам самой страницы) — тогда
+ * метку берём из куки, которую ставит страница (`lib/offline/app-marker.ts`).
+ */
+function requestUserAgent(req: NextRequest): string | null {
+  return userAgentWithAppMarker(req.headers.get("user-agent"), req.cookies.get(APP_MARKER_COOKIE)?.value);
+}
+
 async function withRequestContext(
   req: NextRequest,
   claim: PartnerAccessClaim | null,
@@ -48,6 +59,9 @@ async function withRequestContext(
   // Never trust a locale header supplied by the client. Only explicitly
   // translated public paths can select English; private routes stay unchanged.
   headers.set(SITE_LOCALE_HEADER, localized?.locale ?? "ru");
+  // Обработчики и layout читают User-Agent сами — отдаём им уже с меткой приложения.
+  const userAgent = requestUserAgent(req);
+  if (userAgent) headers.set("user-agent", userAgent);
   for (const name of PARTNER_REQUEST_HEADERS) headers.delete(name);
   headers.set(PARTNER_HEADER_METHOD, req.method);
   headers.set(PARTNER_HEADER_PATH, req.nextUrl.pathname);
@@ -57,7 +71,7 @@ async function withRequestContext(
   // только до следующего запроса, а layout читает её уже сейчас.
   // Подкладываем её и в сам запрос — первый же экран будет в оболочке.
   if (
-    isMobileAppUserAgent(req.headers.get("user-agent")) &&
+    isMobileAppUserAgent(requestUserAgent(req)) &&
     !isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value)
   ) {
     const cookie = headers.get("cookie");
@@ -113,7 +127,7 @@ async function withRequestContext(
  */
 function markMiniShell(req: NextRequest, res: NextResponse): void {
   const { pathname } = req.nextUrl;
-  if (!isMiniPath(pathname) && !isMobileAppUserAgent(req.headers.get("user-agent"))) {
+  if (!isMiniPath(pathname) && !isMobileAppUserAgent(requestUserAgent(req))) {
     return;
   }
   if (isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value)) return;
@@ -208,12 +222,12 @@ export async function proxy(req: NextRequest) {
   // когда куки ещё нет.
   const miniShell =
     isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value) ||
-    isMobileAppUserAgent(req.headers.get("user-agent"));
+    isMobileAppUserAgent(requestUserAgent(req));
 
   if (!rawToken) {
     // Первый запуск приложения без входа — сразу на вход, без «Открываем кабинет…».
     const coldStart = appColdStartRedirect({
-      userAgent: req.headers.get("user-agent"),
+      userAgent: requestUserAgent(req),
       pathname,
       search: req.nextUrl.search,
       hasSession: false,
@@ -223,7 +237,7 @@ export async function proxy(req: NextRequest) {
     // вход»): у приложения свой вход — по телефону или почте, с тем же
     // возвратом. Вход сайта — только по почте, сотрудник с телефоном там
     // застревал.
-    if (pathname === "/login" && isMobileAppUserAgent(req.headers.get("user-agent"))) {
+    if (pathname === "/login" && isMobileAppUserAgent(requestUserAgent(req))) {
       return NextResponse.redirect(
         new URL(
           appLoginHref(

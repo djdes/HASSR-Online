@@ -26,6 +26,10 @@ import { findTaskEmployee } from "@/lib/journal-roster-db";
 import { appendFinishedProductRows } from "@/lib/tasksflow-adapters/finished-product";
 import { appendPerishableRows } from "@/lib/tasksflow-adapters/perishable-rejection";
 import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
+import { offlineAuditMark, readOfflineEnvelope, type OfflineEnvelope } from "@/lib/offline/envelope.server";
+import { loadRowDayValues } from "@/lib/offline/history.server";
+import { mergeOfflineValues, type OfflineValues } from "@/lib/offline/merge";
+import { acquireRowLock, rowLockKey } from "@/lib/offline/row-lock";
 import { QR_POINT_DENIED, employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
@@ -84,11 +88,31 @@ export type JournalFillSubmitInput = {
    * на этого пользователя, а не на общий адрес вебхука.
    */
   messenger?: { channel: "max"; userKey: string };
+  /**
+   * Запись без связи, журнал «строка в день»: значения, которые устройство
+   * видело при скачивании пакета. По ним правка сливается с тем, что сейчас
+   * в журнале (`lib/offline/merge.ts`).
+   */
+  offlineBase?: Record<string, unknown> | null;
+  /** «Записать моё»: человек посмотрел на расхождение и выбрал своё значение. */
+  offlineForce?: boolean;
 };
 
+/** Поле, изменённое и на устройстве, и в журнале по-разному: в журнале осталось серверное. */
+export type JournalFillConflict = { key: string; label: string; mine: unknown; theirs: unknown };
+
 export type JournalFillSubmitResult =
-  | { ok: false; status: number; error: string; badKeys?: string[] }
-  | { ok: true; mode: "appended" | "updated"; documentTitle: string; employeeName: string; employeeId: string; count: number };
+  | { ok: false; status: number; error: string; badKeys?: string[]; /** Причина отказа записи без связи. */ code?: string }
+  | {
+      ok: true;
+      mode: "appended" | "updated";
+      documentTitle: string;
+      employeeName: string;
+      employeeId: string;
+      count: number;
+      /** Запись без связи: поля, где в журнале осталось серверное значение. */
+      conflicts: JournalFillConflict[];
+    };
 
 /** Текст 410 для дополнительного QR после конца периода документа. */
 export const JOURNAL_FILL_TOKEN_EXPIRED_ERROR =
@@ -132,6 +156,16 @@ export async function journalFillTokenAllowsDocument(params: {
 }
 
 export async function submitJournalFill(input: JournalFillSubmitInput): Promise<JournalFillSubmitResult> {
+  // Блокировки строк, взятые на время слияния записи без связи, — снимаются на любом выходе.
+  const releases: Array<() => void> = [];
+  try {
+    return await submitJournalFillLocked(input, releases);
+  } finally {
+    for (const release of releases) release();
+  }
+}
+
+async function submitJournalFillLocked(input: JournalFillSubmitInput, releases: Array<() => void>): Promise<JournalFillSubmitResult> {
   const { request, orgId, code } = input;
   const rateKey = input.messenger
     ? `${input.messenger.channel}:${input.messenger.userKey}:journal:${input.documentId}`
@@ -148,9 +182,24 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   const blocked = journalFillCodeBlock(code, org.disabledJournalCodes);
   if (blocked) return { ok: false, ...blocked };
   const mode = normalizeQrFillMode(org.qrFillMode);
-  const todayKey = todayKeyFor(org.timezone);
+  const realTodayKey = todayKeyFor(org.timezone);
   // Срок — до поиска документа и до `ensureQrPeriodDocuments`.
-  if (journalFillTokenExpired(check, todayKey)) return { ok: false, status: 410, error: JOURNAL_FILL_TOKEN_EXPIRED_ERROR };
+  if (journalFillTokenExpired(check, realTodayKey)) return { ok: false, status: 410, error: JOURNAL_FILL_TOKEN_EXPIRED_ERROR };
+  // Запись без связи (заголовки `x-offline-*` + сессия устройства): день
+  // записи и автор — из неё, а не из момента доставки.
+  let offline: OfflineEnvelope | null = null;
+  if (!input.messenger) {
+    const envelope = await readOfflineEnvelope(request, {
+      organizationId: orgId,
+      employeeId: input.employeeId,
+      timeZone: org.timezone,
+      mode,
+      includeCommission: isCommissionJournalCode(code),
+    });
+    if (envelope && !envelope.ok) return { ok: false, status: envelope.status, error: envelope.error, code: envelope.code };
+    offline = envelope?.envelope ?? null;
+  }
+  const todayKey = offline?.dateKey ?? realTodayKey;
   if (!(await journalFillTokenAllowsDocument({ check, orgId, code, documentId: input.documentId }))) {
     return { ok: false, status: 403, error: "Этот QR-код открывает другой документ — отсканируйте QR-код заново." };
   }
@@ -160,6 +209,11 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   if (!document && check.validUntil !== null) {
     // QR со сроком не переходит в новый период: документ закрыт или удалён.
     return { ok: false, status: 409, error: "Документ этого QR-кода больше не активен — отсканируйте основной QR-код журнала." };
+  }
+  if (!document && todayKey !== realTodayKey) {
+    // Запись без связи за прошлый день: документ того периода закрыт или
+    // удалён — новый период задним числом не открываем.
+    return { ok: false, status: 409, error: "Документ журнала за этот день закрыт или удалён — запись не принята.", code: "offline-no-document" };
   }
   if (!document) {
     // Форму открыли 30-го, «Сохранить» нажали 1-го: пишем в документ нового
@@ -193,13 +247,14 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
 
   const actor = await resolveQrFillActor({
     // Мессенджер: личность уже подтверждена привязкой — как PIN-пропуск.
-    mode: input.messenger ? "public" : mode,
+    // Запись без связи: автор подтверждён на устройстве (`readOfflineEnvelope`).
+    mode: input.messenger ? "public" : (offline?.actorMode ?? mode),
     organizationId: orgId,
     employeeId: input.employeeId,
     pin: input.pin,
     // PIN уже подтверждён отдельным шагом ДО формы — второй раз не спрашиваем
     // (раньше в public-режиме сотрудника с PIN спрашивали повторно).
-    pinVerified: input.pinVerified === true || Boolean(input.messenger),
+    pinVerified: input.pinVerified === true || Boolean(input.messenger) || Boolean(offline),
     // Сторонняя комиссия — только у бракеража готовой продукции.
     includeCommission: isCommissionJournalCode(code),
   });
@@ -234,7 +289,8 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     }
   }
 
-  const schema = await loadJournalFillForm(code, documentId, input.rowKey);
+  // Без связи форму берём за день записи: её значения по умолчанию — то, что сейчас в журнале.
+  const schema = await loadJournalFillForm(code, documentId, input.rowKey, offline ? todayKey : undefined);
   // «Выключено / Нет показания» и «Обслуживание»/«Ремонт» снимают обязательность с
   // числового поля — вместо цифры в журнал идёт прочерк с пометкой или «обсл»/«рем»,
   // а не выдуманный ноль.
@@ -280,6 +336,22 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
       }
       throw error;
     }
+  }
+  // Слияние правки без связи с тем, что уже в журнале (только «строка в день»).
+  let conflicts: JournalFillConflict[] = [];
+  if (offline && schema && !isShared) {
+    // Чтение → сравнение → запись одной строки — по одному запросу за раз: иначе два
+    // устройства, вышедшие в сеть одновременно, затёрли бы правки друг друга.
+    releases.push(await acquireRowLock(rowLockKey(documentId, input.rowKey, todayKey)));
+    // «Что сейчас в журнале» — последняя запись этой строки за этот день, сделанная
+    // через формы (QR, приложение, бот): её значения и сравниваем с правкой.
+    const theirs: OfflineValues = (await loadRowDayValues({ organizationId: orgId, documentId, rowKey: input.rowKey, dateKey: todayKey })) ?? {};
+    const merge = mergeOfflineValues({ base: (input.offlineBase ?? {}) as OfflineValues, mine: values, theirs, force: input.offlineForce === true });
+    values = { ...values, ...merge.merged };
+    conflicts = merge.conflicts.map((conflict) => ({
+      ...conflict,
+      label: cleanLabel(schema.fields.find((field) => field.key === conflict.key)?.label ?? conflict.key),
+    }));
   }
   const correction = input.correction?.trim() ?? "";
   const adapterValues: Record<string, string | number | boolean | null> = {
@@ -377,6 +449,9 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     dateKey: todayKey,
     authMode: input.messenger ? "auth" : mode,
     channel: input.messenger?.channel,
+    offline: offline ? offlineAuditMark(offline) : null,
+    // Строчные журналы пишут каждый раз новую строку — истории строки у них нет.
+    ...(isShared ? {} : { rowKey: input.rowKey }),
     // «обсл»/«рем» — в аудите тем же словом, что в журнале.
     values:
       statusKeys.size > 0
@@ -393,5 +468,5 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
     }
   }
 
-  return { ok: true, mode: isShared ? "appended" : "updated", documentTitle: document.title, employeeName: actor.employee.name, employeeId: actor.employee.id, count };
+  return { ok: true, mode: isShared ? "appended" : "updated", documentTitle: document.title, employeeName: actor.employee.name, employeeId: actor.employee.id, count, conflicts };
 }
