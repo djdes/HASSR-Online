@@ -1,5 +1,6 @@
 "use client";
 
+import { OFFLINE_APP_PATH } from "@/lib/offline/types";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -98,7 +99,15 @@ function currentPath(): string {
 
 function goToAppLink(url: string | null | undefined) {
   const target = deepLinkPath(url, currentPath(), [window.location.host]);
-  if (target) window.location.assign(target);
+  if (!target) return;
+  // Без сети страница QR-наклейки не откроется (она вне области воркера
+  // кабинета) — ведём на экран работы без связи и отдаём ему адрес: по нему
+  // он узнает, что сканировали.
+  if (navigator.onLine === false) {
+    window.location.assign(`${OFFLINE_APP_PATH}#u=${encodeURIComponent(target)}`);
+    return;
+  }
+  window.location.assign(target);
 }
 
 /**

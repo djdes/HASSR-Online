@@ -30,6 +30,7 @@ import { NativeAppBridge } from "./native-app-bridge";
 import { MiniTelegramRuntime, MiniTopBar } from "./mini-shell";
 import { MiniThemeBootstrap, MiniThemeProvider } from "./mini-theme";
 import { OfflineIndicator } from "./offline-indicator";
+import { OfflineSyncAgent } from "@/components/offline/offline-sync-agent";
 import { RefreshProvider } from "./refresh-provider";
 
 // Сообщения — сразу под шапкой приложения. Android-приложение отдаёт вырез
@@ -206,6 +207,8 @@ export async function MiniAppShell({
             />
           </div>
           <OfflineIndicator />
+          {/* Работа без связи: скачивает данные и экран на устройство, отправляет записи. */}
+          <OfflineSyncAgent />
           {authed ? <LiveConnectionIndicator variant="mini" /> : null}
           <MiniNav items={navItems} />
           {/* Жест «назад» от левого края — только внутри Telegram. */}

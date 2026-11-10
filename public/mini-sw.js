@@ -22,6 +22,17 @@
 
 const CACHE = "wesetup-mini-static-v1";
 
+/**
+ * Работа без связи (2026-11). Вторая вещь, которую хранит воркер, — экран
+ * `/mini-offline`: страница одна на всех, в её HTML нет ни имени, ни
+ * организации (данные человека лежат в IndexedDB и стираются при выходе),
+ * поэтому правило «авторизованный HTML не кешируется» она не нарушает.
+ * Когда навигация падает из-за сети, воркер ведёт на этот экран и передаёт
+ * ему адрес, который не открылся, — по нему экран узнаёт QR-наклейку.
+ */
+const OFFLINE_CACHE = "wesetup-mini-offline-v1";
+const OFFLINE_APP_PATH = "/mini-offline";
+
 /** Наши ли это кеши — чтобы чистить только своё. */
 function isOurCache(name) {
   return name.startsWith("wesetup-mini-");
@@ -37,7 +48,9 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => isOurCache(k) && k !== CACHE).map((k) => caches.delete(k)),
+        keys
+          .filter((k) => isOurCache(k) && k !== CACHE && k !== OFFLINE_CACHE)
+          .map((k) => caches.delete(k)),
       );
       await self.clients.claim();
     })(),
@@ -50,7 +63,114 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+  // «Сохрани экран работы без связи» — шлёт кабинет, когда сеть есть.
+  if (event.data && event.data.type === "PRECACHE_OFFLINE") {
+    const source = event.source;
+    event.waitUntil(
+      precacheOfflineApp().then(
+        () => source && source.postMessage({ type: "OFFLINE_APP_READY", ok: true }),
+        (error) =>
+          source &&
+          source.postMessage({ type: "OFFLINE_APP_READY", ok: false, error: String((error && error.message) || error) }),
+      ),
+    );
+  }
 });
+
+/* ------------------------------------------------------------------
+ * Экран работы без связи
+ * ---------------------------------------------------------------- */
+
+/** Адреса статики сборки, упомянутые в тексте (HTML страницы, CSS). */
+function offlineAssetUrls(text) {
+  const found = new Set();
+  const pattern = /\/_next\/static\/[A-Za-z0-9_\-.~%@()\[\]\/]+?\.(?:js|css|woff2|woff|ttf|png|svg|jpg|jpeg|webp|ico)/g;
+  for (const match of text.matchAll(pattern)) found.add(match[0]);
+  return found;
+}
+
+/** `url(...)` из CSS относительно адреса самого файла — шрифты лежат рядом. */
+function cssAssetUrls(css, cssPath) {
+  const found = new Set();
+  for (const match of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
+    const raw = match[1];
+    if (raw.startsWith("data:")) continue;
+    try {
+      const resolved = new URL(raw, new URL(cssPath, self.location.origin));
+      if (resolved.origin === self.location.origin && resolved.pathname.startsWith("/_next/static/")) {
+        found.add(resolved.pathname);
+      }
+    } catch {
+      // Кривой адрес в CSS — не наша забота.
+    }
+  }
+  return found;
+}
+
+/**
+ * Скачивает экран и всё, что ему нужно для запуска. HTML кладётся
+ * последним: прежняя копия работает, пока новая не скачана целиком, —
+ * иначе после выката сайта человек остался бы с HTML, чьих скриптов нет.
+ */
+async function precacheOfflineApp() {
+  const response = await fetch(OFFLINE_APP_PATH, { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok || response.redirected) throw new Error("offline screen unavailable: " + response.status);
+  const html = await response.text();
+
+  const staticCache = await caches.open(CACHE);
+  const queue = Array.from(offlineAssetUrls(html));
+  const seen = new Set(queue);
+  while (queue.length > 0) {
+    const path = queue.shift();
+    let asset = await staticCache.match(path);
+    if (!asset) {
+      const fetched = await fetch(path, { credentials: "same-origin" });
+      if (!fetched.ok || fetched.status !== 200) throw new Error("asset failed: " + path);
+      await staticCache.put(path, fetched.clone());
+      asset = fetched;
+    }
+    if (path.endsWith(".css")) {
+      const css = await asset.clone().text();
+      for (const next of [...offlineAssetUrls(css), ...cssAssetUrls(css, path)]) {
+        if (!seen.has(next)) {
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+    }
+  }
+
+  const offlineCache = await caches.open(OFFLINE_CACHE);
+  await offlineCache.put(
+    OFFLINE_APP_PATH,
+    new Response(html, {
+      status: 200,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    }),
+  );
+}
+
+/** Ответ на навигацию, которая не дошла до сети. */
+async function offlineNavigationResponse(url) {
+  const offlineCache = await caches.open(OFFLINE_CACHE);
+  const screen = await offlineCache.match(OFFLINE_APP_PATH);
+  if (screen) {
+    if (url.pathname === OFFLINE_APP_PATH) return screen;
+    // Адрес, который не открылся, — в якоре: по нему экран узнаёт, что
+    // сканировали (холодильник, помещение, журнал).
+    return Response.redirect(
+      OFFLINE_APP_PATH + "#u=" + encodeURIComponent(url.pathname + url.search),
+      302,
+    );
+  }
+  return new Response(OFFLINE_HTML, {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
+}
 
 /* ------------------------------------------------------------------
  * Push-уведомления
@@ -227,22 +347,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Навигации — всегда из сети. Кеш здесь означал бы чужую смену на
-  // экране. Оффлайн отдаём заглушку, чтобы вместо неё не появился
+  // экране. Без сети ведём на экран работы без связи (он обезличен), а
+  // если он ещё не сохранён на устройстве — отдаём заглушку, чтобы вместо неё не появился
   // системный «динозавр» — из установленного приложения он выглядит как
   // «приложение сломалось».
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(
-        () =>
-          new Response(OFFLINE_HTML, {
-            status: 503,
-            headers: {
-              "Content-Type": "text/html; charset=utf-8",
-              "Cache-Control": "no-store",
-            },
-          }),
-      ),
-    );
+    event.respondWith(fetch(request).catch(() => offlineNavigationResponse(url)));
     return;
   }
 

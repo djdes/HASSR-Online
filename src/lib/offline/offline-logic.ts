@@ -1,0 +1,187 @@
+/**
+ * Decisions of the offline screen that do not need React or the network:
+ * what a scanned QR opens, who may sign, what a form starts with and what
+ * goes into the queue. Pure — covered by tests.
+ */
+import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
+
+import { normalizeOfflineValue, type OfflineValues } from "./merge";
+import type { OfflineQrTarget } from "./qr-url";
+import { recentDateKeys } from "./record-time";
+import type {
+  OfflineAuthKind,
+  OfflinePack,
+  OfflinePackDocument,
+  OfflinePackEmployee,
+  OfflinePackJournal,
+  OfflinePackObject,
+  OfflineQueueItem,
+} from "./types";
+
+export type OfflineQrResolution =
+  | { kind: "object"; object: OfflinePackObject }
+  | { kind: "journal"; journal: OfflinePackJournal }
+  | { kind: "hub" }
+  | { kind: "foreign-org" }
+  | { kind: "missing"; what: "object" | "journal" };
+
+/** What a scanned sticker or poster opens with the data saved on this device. */
+export function resolveOfflineQr(pack: OfflinePack, target: OfflineQrTarget): OfflineQrResolution {
+  if (target.kind === "journal") {
+    // The first segment of `/qj/...` may be a point id instead of the organization — then only the code decides.
+    if (target.shortSig === null && target.orgId !== pack.organization.id) return { kind: "foreign-org" };
+    if (target.hub) return { kind: "hub" };
+    const journal = pack.journals.find((item) => item.code === target.code);
+    return journal ? { kind: "journal", journal } : { kind: "missing", what: "journal" };
+  }
+  const id = target.kind === "equipment" ? target.equipmentId : target.roomId;
+  const object = pack.objects.find((item) => item.kind === target.kind && item.id === id);
+  return object ? { kind: "object", object } : { kind: "missing", what: "object" };
+}
+
+export type OfflineSignerStep =
+  /** May sign right away. */
+  | { step: "ready"; auth: OfflineAuthKind }
+  /** Must enter the PIN first. */
+  | { step: "pin" }
+  /** Cannot sign without network; `reason` is shown as is. */
+  | { step: "denied"; reason: string };
+
+/** How an employee is confirmed on the device, mirroring the online QR rules. */
+export function offlineSignerStep(pack: OfflinePack, employee: OfflinePackEmployee, pinPassed: boolean): OfflineSignerStep {
+  // The account signed in on the device is itself — no PIN, as on the QR page for a signed-in person.
+  if (employee.id === pack.user.id) return { step: "ready", auth: "self" };
+  const mode = pack.organization.qrFillMode;
+  if (mode === "auth") {
+    return { step: "denied", reason: "В организации записи только после входа — без связи записать можно от имени вошедшего сотрудника." };
+  }
+  if (!employee.hasPin) {
+    return mode === "pin"
+      ? { step: "denied", reason: "У сотрудника не задан ПИН. Попросите руководителя выдать его — это делается с интернетом." }
+      : { step: "ready", auth: "list" };
+  }
+  if (!employee.pin || !employee.pinFp) {
+    return { step: "denied", reason: "ПИН этого сотрудника нельзя проверить без связи. Попросите руководителя выдать ПИН заново — после этого он заработает и без сети." };
+  }
+  return pinPassed ? { step: "ready", auth: "pin" } : { step: "pin" };
+}
+
+/** Employees to offer in "Кто вы?": the allowed ones, the signed-in account first. */
+export function offlineSigners(pack: OfflinePack, allowedIds: readonly string[]): OfflinePackEmployee[] {
+  const allowed = new Set(allowedIds);
+  const list = pack.employees.filter((employee) => allowed.has(employee.id));
+  if (pack.organization.qrFillMode === "auth") return list.filter((employee) => employee.id === pack.user.id);
+  return [...list].sort((a, b) => Number(b.id === pack.user.id) - Number(a.id === pack.user.id));
+}
+
+export function offlineRowKey(document: OfflinePackDocument, rowKey: string | null, employeeId: string): string {
+  return document.perEmployee ? `employee-${employeeId}` : (rowKey ?? "");
+}
+
+/** Days a row can be opened for: today back to 31 days, inside the document period, newest first. */
+export function offlineEditableDays(document: OfflinePackDocument, todayKey: string): string[] {
+  return recentDateKeys(todayKey).filter((day) => day >= document.dateFrom && day <= document.dateTo);
+}
+
+export function formDefaults(schema: TaskFormSchema): OfflineValues {
+  const out: OfflineValues = {};
+  for (const field of schema.fields) {
+    if (field.type === "photo" || field.type === "signature") continue;
+    out[field.key] = normalizeOfflineValue((field as { defaultValue?: unknown }).defaultValue);
+  }
+  return out;
+}
+
+const journalTargetKey = (item: Pick<OfflineQueueItem, "target">) =>
+  item.target.kind === "journal" ? `${item.target.documentId}|${item.target.rowKey}|${item.target.day ?? ""}` : null;
+
+/** Unsent edit of the same row and day made on this device, if any. */
+export function queuedRowEdit(queue: readonly OfflineQueueItem[], documentId: string, rowKey: string, day: string | null): OfflineQueueItem | null {
+  const key = `${documentId}|${rowKey}|${day ?? ""}`;
+  const matches = queue.filter((item) => journalTargetKey(item) === key && item.status !== "rejected");
+  return matches.length > 0 ? matches[matches.length - 1] : null;
+}
+
+export type OfflineRowState = {
+  /** What the form shows when opened. */
+  values: OfflineValues;
+  /** What the journal held when the pack was downloaded — sent as the merge base. */
+  base: OfflineValues;
+  /** The row already has a saved or queued record for that day. */
+  filled: boolean;
+  /** The values come from an unsent record of this device. */
+  unsent: boolean;
+};
+
+/**
+ * Starting point of a "one row per day" form. `day` is null for today.
+ * Saved values come from the pack history; an unsent record of this device
+ * is shown on top so the person sees their own latest edit.
+ */
+export function offlineRowState(params: {
+  document: OfflinePackDocument;
+  schema: TaskFormSchema;
+  rowKey: string;
+  day: string | null;
+  todayKey: string;
+  queue: readonly OfflineQueueItem[];
+}): OfflineRowState {
+  const dayKey = params.day ?? params.todayKey;
+  const saved = params.document.history[params.rowKey]?.[dayKey] ?? null;
+  const queued = queuedRowEdit(params.queue, params.document.id, params.rowKey, params.day);
+  const queuedValues = queued ? ((queued.body.values ?? {}) as OfflineValues) : null;
+  const defaults = formDefaults(params.schema);
+  // A filled row is shown as saved: defaults would silently "pre-answer" fields that were left empty.
+  const values = queuedValues ? { ...(saved ?? {}), ...queuedValues } : saved ? { ...saved } : defaults;
+  return { values, base: saved ?? {}, filled: Boolean(saved || queued), unsent: Boolean(queued) };
+}
+
+export type OfflineRange = { min?: number | null; max?: number | null } | null | undefined;
+
+export function isOutOfRange(value: unknown, range: OfflineRange): boolean {
+  if (!range) return false;
+  const number = typeof value === "number" ? value : Number(String(value ?? "").replace(",", "."));
+  if (value === null || value === undefined || String(value).trim() === "" || Number.isNaN(number)) return false;
+  return (typeof range.min === "number" && number < range.min) || (typeof range.max === "number" && number > range.max);
+}
+
+export function rangeText(range: OfflineRange, unit: string): string | null {
+  if (!range) return null;
+  const sign = (value: number) => (unit === "°C" && value > 0 ? `+${value}` : String(value));
+  const { min, max } = range;
+  if (typeof min === "number" && typeof max === "number") return `${sign(min)}…${sign(max)} ${unit}`;
+  if (typeof min === "number") return `от ${sign(min)} ${unit}`;
+  if (typeof max === "number") return `до ${sign(max)} ${unit}`;
+  return null;
+}
+
+/** Number typed by a person («4,5») → number, or null when empty / not a number. */
+export function parseTypedNumber(raw: string): number | null {
+  const text = raw.trim().replace(",", ".").replace(/^\+/, "");
+  if (text === "" || !/^-?\d+(\.\d+)?$/.test(text)) return null;
+  return Number(text);
+}
+
+export function fieldsNeedingCorrection(schema: TaskFormSchema, values: OfflineValues): TaskFormField[] {
+  return schema.fields.filter((field) => field.type === "number" && isOutOfRange(values[field.key], field.normalRange));
+}
+
+/** Short value summary for the queue list: «Температура 4 · Чисто: да». */
+export function summarizeValues(schema: TaskFormSchema | null, values: OfflineValues, limit: number = 3): string {
+  if (!schema) return "";
+  const parts: string[] = [];
+  for (const field of schema.fields) {
+    const value = values[field.key];
+    if (value === null || value === undefined || value === "" || field.type === "photo" || field.type === "signature") continue;
+    const label = field.label.replace(/\s*\(.*?\)\s*$/, "");
+    if (field.type === "boolean") {
+      if (value === true) parts.push(label);
+    } else if (field.type === "select") {
+      parts.push(field.options.find((option) => option.value === value)?.label ?? String(value));
+    } else {
+      parts.push(`${label}: ${value}${field.type === "number" && field.unit ? ` ${field.unit}` : ""}`);
+    }
+    if (parts.length >= limit) break;
+  }
+  return parts.join(" · ");
+}

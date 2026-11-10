@@ -28,7 +28,7 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
+import { resolveObjectActorWithOffline, withOfflineIdempotency } from "@/lib/offline/envelope.server";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
@@ -83,6 +83,13 @@ const bodySchema = z
 
 export async function POST(
   request: Request,
+  ctx: { params: Promise<{ roomId: string }> }
+) {
+  return withOfflineIdempotency(request, "climate_control", () => handlePost(request, ctx));
+}
+
+async function handlePost(
+  request: Request,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   const roomId = decodeRouteParam((await params).roomId);
@@ -135,13 +142,15 @@ export async function POST(
   const organizationId = room.building.organizationId;
   const timezone = room.building.organization.timezone || "Europe/Moscow";
 
-  const actor = await resolveObjectActor({
+  // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и
+  // время берутся из неё; обычный запрос — как раньше.
+  const { actor, now, offline } = await resolveObjectActorWithOffline(request, {
     mode: normalizeQrFillMode(room.building.organization.qrFillMode),
     organizationId,
     employeeId: body.employeeId,
     pin: body.pin,
     pass: body.pass,
-    cookiePass: await readObjectPassCookie(organizationId),
+    timeZone: timezone,
   });
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, ...(actor.errorParams ? { errorParams: actor.errorParams } : {}) }, { status: actor.status });
@@ -193,7 +202,6 @@ export async function POST(
     );
   }
 
-  const now = new Date();
   const dateKey = orgTodayKey(timezone, now);
   const day = new Date(`${dateKey}T00:00:00.000Z`);
 
@@ -332,6 +340,7 @@ export async function POST(
     humidity: body.humidity,
     outOfRange: temperatureOutOfRange || humidityOutOfRange,
     ...(photoAttached ? { values: { photo } } : {}),
+    offline,
   });
   if (photoAttached) {
     console.info(`[reading-photo] attached room=${room.id} doc=${document.id} slot=${slot} org=${organizationId} user=${employee.id}`);

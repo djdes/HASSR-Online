@@ -18,6 +18,7 @@ import { JOURNAL_FILL_TOKEN_EXPIRED_ERROR, journalFillTokenAllowsDocument, submi
 import { ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
 import { journalFillHints } from "@/lib/journal-fill-hints";
+import { isOfflineRequest, withOfflineIdempotency } from "@/lib/offline/envelope.server";
 import { isNameSuggestionScope } from "@/lib/name-suggestions";
 import { listNameSuggestions } from "@/lib/name-suggestions-db";
 
@@ -111,9 +112,19 @@ const bodySchema = z.object({
   values: z.record(z.string(), z.unknown()).default({}),
   pin: z.string().max(12).optional(),
   openedAt: z.number().optional(),
+  /** «Что сделали» при отклонении от нормы. */
+  correction: z.string().trim().max(300).optional(),
+  /** Запись без связи: значения, которые видело устройство (для слияния), и «Записать моё». */
+  base: z.record(z.string(), z.unknown()).optional(),
+  force: z.boolean().optional(),
 });
 
-export async function POST(request: Request, { params }: { params: Promise<{ orgId: string; code: string }> }) {
+export async function POST(request: Request, ctx: { params: Promise<{ orgId: string; code: string }> }) {
+  const { code } = await ctx.params;
+  return withOfflineIdempotency(request, code, () => handlePost(request, ctx));
+}
+
+async function handlePost(request: Request, { params }: { params: Promise<{ orgId: string; code: string }> }) {
   const { orgId, code } = await params;
   let body: z.infer<typeof bodySchema>;
   try {
@@ -133,7 +144,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ org
     values: body.values,
     pin: body.pin,
     openedAt: body.openedAt ?? null,
+    correction: body.correction ?? null,
+    // Слияние — только для записи без связи: обычный запрос эти поля не использует.
+    offlineBase: isOfflineRequest(request) ? body.base ?? {} : null,
+    offlineForce: isOfflineRequest(request) && body.force === true,
   });
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
-  return NextResponse.json({ mode: result.mode, documentTitle: result.documentTitle, employeeName: result.employeeName });
+  if (!result.ok) return NextResponse.json({ error: result.error, ...(result.code ? { code: result.code } : {}) }, { status: result.status });
+  return NextResponse.json({
+    mode: result.mode,
+    documentTitle: result.documentTitle,
+    employeeName: result.employeeName,
+    ...(result.conflicts.length > 0 ? { conflicts: result.conflicts } : {}),
+  });
 }

@@ -46,6 +46,7 @@ import { BRANDING_SETTINGS_HREF } from "@/components/theme/theme-tiles";
 import { MiniThemeTiles } from "../_components/mini-theme-tiles";
 import { ReadabilityControls } from "@/components/view-prefs/readability-controls";
 import { signOutOnThisDevice } from "../_lib/signed-out-mark";
+import { OfflineReadyStatus } from "@/components/offline/offline-ready-status";
 import { signOutAndOpen } from "@/lib/sign-out";
 import { BillingAnnouncement } from "@/components/billing/billing-announcement";
 import type { BillingPrice } from "@/lib/billing-period";
@@ -442,6 +443,8 @@ export function MiniMeClient({
             hint={t("rows.sectionsHint")}
           />
         </Link>
+        {/* Работа без связи: готово ли устройство и насколько свежи данные. */}
+        <OfflineReadyStatus />
         {/* Обратная связь — паритет с сайтом (П-3): на сайте форма живёт
             в шапке, в Mini App шапки нет, поэтому она стоит карточкой в
             профиле. Форма и эндпоинт те же, что на сайте. */}
