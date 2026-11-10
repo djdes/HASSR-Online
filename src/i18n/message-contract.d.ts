@@ -17152,7 +17152,17 @@ export type MessageContract = {
       "topUpAria": "Пополнить баланс «{name}»",
       "topUpTitle": "Пополнить или списать баллы",
       "topUpDescription": "«{name}». Сейчас на балансе {balance, number} ₽.",
-      "after": "Баланс станет {amount, number} ₽"
+      "after": "Баланс станет {amount, number} ₽",
+      "methodLabel": "Откуда деньги",
+      "methodAdjust": "Корректировка",
+      "methodCash": "Наличные",
+      "methodTransfer": "Безнал",
+      "methodCard": "Карта",
+      "methodTopupNotice": "В истории клиента: «{prefix}: {comment}» — как пополнение деньгами",
+      "transferHint": "Переводы на р/с из выписки Сбера зачисляются сами по ИНН — вручную только те, что пришли на разбор",
+      "prefixCash": "Пополнение наличными",
+      "prefixTransfer": "Пополнение безналичным переводом",
+      "prefixCard": "Пополнение картой"
     },
     "kinds": {
       "referral_reward": "Приглашённый друг",

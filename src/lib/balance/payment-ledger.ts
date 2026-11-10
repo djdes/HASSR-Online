@@ -121,7 +121,11 @@ export async function recordPassThrough(ledger: PassThroughLedger, order: PassTh
  * «Применено» или следующий вызов) — ключи не дадут задвоить.
  */
 export async function recordPaymentThroughBalance(orderId: number): Promise<PassThroughResult> {
-  const [{ db }, { applyBalanceChange }] = await Promise.all([import("@/lib/db"), import("./ledger")]);
+  const [{ db }, { applyBalanceChange }, { hasStatementCreditForOrder }] = await Promise.all([
+    import("@/lib/db"),
+    import("./ledger"),
+    import("./statement-credit"),
+  ]);
   const result = await db.$transaction(async (tx) => {
     const order = await tx.paymentOrder.findUnique({
       where: { id: orderId },
@@ -143,7 +147,10 @@ export async function recordPaymentThroughBalance(orderId: number): Promise<Pass
       {
         async has(dedupeKey) {
           const row = await tx.balanceTransaction.findUnique({ where: { dedupeKey }, select: { id: true } });
-          return row !== null;
+          if (row !== null) return true;
+          // Деньги по этому счёту уже пришли на баланс из выписки банка —
+          // поступление не повторяем, остаётся списание за тариф.
+          return dedupeKey === paymentInDedupeKey(order.id) && hasStatementCreditForOrder(tx, order.id);
         },
         async apply(entry) {
           await applyBalanceChange(tx, entry);

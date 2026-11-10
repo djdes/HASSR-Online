@@ -17151,7 +17151,17 @@
       "topUpAria": "Top up the balance of “{name}”",
       "topUpTitle": "Top up or deduct points",
       "topUpDescription": "“{name}”. Current balance: {balance, number} ₽.",
-      "after": "The balance will be {amount, number} ₽"
+      "after": "The balance will be {amount, number} ₽",
+      "methodLabel": "Source of funds",
+      "methodAdjust": "Adjustment",
+      "methodCash": "Cash",
+      "methodTransfer": "Bank transfer",
+      "methodCard": "Card",
+      "methodTopupNotice": "In the customer's history: “{prefix}: {comment}” — as a money top-up",
+      "transferHint": "Transfers in the Sber statement are credited automatically by TIN — credit manually only those sent for review",
+      "prefixCash": "Cash top-up",
+      "prefixTransfer": "Bank transfer top-up",
+      "prefixCard": "Card top-up"
     },
     "kinds": {
       "referral_reward": "Referral reward",

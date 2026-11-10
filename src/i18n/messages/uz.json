@@ -17151,7 +17151,17 @@
       "topUpAria": "«{name}» balansini to‘ldirish",
       "topUpTitle": "Ball qo‘shish yoki yechish",
       "topUpDescription": "«{name}». Hozir balansda {balance, number} ₽.",
-      "after": "Balans {amount, number} ₽ bo‘ladi"
+      "after": "Balans {amount, number} ₽ bo‘ladi",
+      "methodLabel": "Pul manbai",
+      "methodAdjust": "Tuzatish",
+      "methodCash": "Naqd pul",
+      "methodTransfer": "Bank o‘tkazmasi",
+      "methodCard": "Karta",
+      "methodTopupNotice": "Mijoz tarixida: «{prefix}: {comment}» — pul bilan to‘ldirish sifatida",
+      "transferHint": "Sber ko‘chirmasidagi o‘tkazmalar STIR bo‘yicha avtomatik o‘tkaziladi — qo‘lda faqat tekshiruvga yuborilganlarini kiriting",
+      "prefixCash": "Naqd pul bilan to‘ldirish",
+      "prefixTransfer": "Bank o‘tkazmasi bilan to‘ldirish",
+      "prefixCard": "Karta bilan to‘ldirish"
     },
     "kinds": {
       "referral_reward": "Taklif uchun mukofot",

@@ -24,6 +24,8 @@ export interface OpenInvoice {
   amountRub: number;
   /** ИНН покупателя: организации или гостя из `buyerJson`. */
   buyerInn: string | null;
+  /** Организация счёта (у гостевого — нет). */
+  organizationId?: string | null;
 }
 
 export type InvoiceMatch =

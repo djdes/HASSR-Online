@@ -58,6 +58,7 @@ import {
   Snowflake,
   CreditCard,
   Newspaper,
+  Wallet,
 } from "lucide-react";
 
 const STORAGE_KEY = WHATS_NEW_LEGACY_KEY;
@@ -114,6 +115,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Интеграции по точкам": Handshake,
   "Журналы точки — только своё": MapPin,
   "Счёт на оплату в новом оформлении": FileText,
+  "Оплата переводом — сразу на баланс": Wallet,
   "Смена точки и закрытые разделы": PanelLeft,
   "Услуги: цена по запросу": Handshake,
   "Фильтр по точкам": MapPin,

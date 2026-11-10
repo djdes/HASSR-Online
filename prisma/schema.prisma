@@ -5645,12 +5645,20 @@ model SberIncomingPayment {
   payerName     String?
   purpose       String
   orderId       Int?
-  /// matched | review | failed
+  /// Кому зачислено на баланс (status credited), src/lib/sber/balance-credit.ts.
+  /// orderId тогда — заказ-пополнение, созданный под это поступление.
+  organizationId String?
+  /// Открытый счёт, на который платёж похож, но сумма не та: деньги уже на
+  /// балансе, «Оплата поступила» по нему не зачисляет их второй раз.
+  reviewOrderId Int?
+  /// matched | crediting | credited | already | review | failed
   status        String
   note          String?
   createdAt     DateTime @default(now())
 
   @@index([orderId])
+  @@index([organizationId])
+  @@index([reviewOrderId])
   @@index([createdAt])
 }
 

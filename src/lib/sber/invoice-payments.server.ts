@@ -8,6 +8,10 @@
  * путём, что кнопка ROOT «Оплата поступила» (`markInvoicePaid`): подписка
  * подключается, гостю создаётся аккаунт, приходит письмо с УПД.
  * Спорные платежи не отмечаем — уходят администраторам на разбор.
+ *
+ * Остальные входящие от клиентов (без нашего счёта или с другой суммой)
+ * с 2026-11-10 зачисляются на баланс организации с ИНН плательщика —
+ * `balance-credit.ts` / `balance-credit.server.ts`.
  */
 import type { Prisma } from "@prisma/client";
 
@@ -17,6 +21,8 @@ import { markInvoicePaid } from "@/lib/invoices/service";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
 
+import { decideStatementCredit } from "./balance-credit";
+import { applyStatementCredit, loadPayerOrganizations, loadRecentManuallyPaidInvoices } from "./balance-credit.server";
 import { fetchStatementPage, readClientCertInfo, SberApiError } from "./fintech";
 import { matchIncomingPayment, type OpenInvoice } from "./invoice-match";
 import {
@@ -43,8 +49,12 @@ export type SberSyncResult = {
   days: string[];
   incoming: number;
   matched: number;
+  /** Зачислено на баланс без распознанного счёта (по ИНН плательщика). */
+  credited?: number;
   review: number;
   trigger: "cron" | "manual";
+  /** Пробный прогон: что было бы сделано, без записи. */
+  plan?: Array<{ operationId: string; date: string; amountRub: number; payer: string; action: string }>;
 };
 
 /** Дата по Москве, YYYY-MM-DD: выписку Сбер отдаёт по банковскому дню. */
@@ -71,7 +81,7 @@ async function loadOpenInvoices(): Promise<OpenInvoice[]> {
   return rows.map((row) => {
     const guestInn = row.buyerJson && typeof row.buyerJson === "object" ? digitsOnly((row.buyerJson as Record<string, unknown>).inn) : "";
     const inn = (row.organizationId ? innByOrg.get(row.organizationId) : guestInn) || "";
-    return { id: row.id, amountRub: Number(row.amountRub), buyerInn: inn || null };
+    return { id: row.id, amountRub: Number(row.amountRub), buyerInn: inn || null, organizationId: row.organizationId };
   });
 }
 
@@ -114,12 +124,26 @@ function describeError(error: unknown): string {
  * безопасна: распознанные операции пропускаются по operationId, а
  * `markInvoicePaid` переводит счёт в «оплачен» одним условным апдейтом.
  */
-export async function syncSberInvoicePayments(opts: { days?: number; now?: Date; trigger?: "cron" | "manual" } = {}): Promise<SberSyncResult> {
+export async function syncSberInvoicePayments(
+  opts: { days?: number; now?: Date; trigger?: "cron" | "manual"; dryRun?: boolean } = {}
+): Promise<SberSyncResult> {
   const now = opts.now ?? new Date();
   const days = statementDays(now, Math.min(Math.max(opts.days ?? 3, 1), 14));
-  const result: SberSyncResult = { at: now.toISOString(), ok: false, error: null, days, incoming: 0, matched: 0, review: 0, trigger: opts.trigger ?? "cron" };
+  const result: SberSyncResult = {
+    at: now.toISOString(),
+    ok: false,
+    error: null,
+    days,
+    incoming: 0,
+    matched: 0,
+    credited: 0,
+    review: 0,
+    trigger: opts.trigger ?? "cron",
+    ...(opts.dryRun ? { plan: [] } : {}),
+  };
 
   const finish = async () => {
+    if (opts.dryRun) return result;
     await saveLastSync(result).catch((error) => console.error("[sber-sync] не сохранил итог:", error));
     return result;
   };
@@ -180,15 +204,70 @@ export async function syncSberInvoicePayments(opts: { days?: number; now?: Date;
   );
   const fresh = incoming.filter((tx) => !known.has(tx.operationId));
   if (fresh.length > 0) {
-    const invoices = await loadOpenInvoices();
+    const [invoices, organizations, recentPaidInvoices] = await Promise.all([
+      loadOpenInvoices(),
+      loadPayerOrganizations(fresh.map((tx) => tx.payerInn ?? "")),
+      loadRecentManuallyPaidInvoices(now),
+    ]);
+    const ownInn = digitsOnly(requisites.inn) || null;
     for (const tx of fresh) {
       const match = matchIncomingPayment(tx, invoices);
-      if (match.kind === "none") continue;
-      await handleMatch(tx, match, result).catch((error) => console.error("[sber-sync] платёж не обработан:", tx.operationId, error));
+      const payer = [tx.payerName, tx.payerInn ? `ИНН ${tx.payerInn}` : null].filter(Boolean).join(", ") || "—";
       if (match.kind === "paid") {
+        result.plan?.push({ operationId: tx.operationId, date: tx.date, amountRub: tx.amountRub, payer, action: `оплата счёта №${match.orderId}` });
+        if (!opts.dryRun) {
+          await handleMatch(tx, match, result).catch((error) => console.error("[sber-sync] платёж не обработан:", tx.operationId, error));
+        }
         // Оплаченный счёт больше не открыт: второй платёж на ту же сумму не должен его «найти».
         const idx = invoices.findIndex((inv) => inv.id === match.orderId);
         if (idx >= 0) invoices.splice(idx, 1);
+        continue;
+      }
+
+      // Не оплата нашего счёта (или сумма не та) — всё равно деньги клиента:
+      // зачисляем на баланс организации с ИНН плательщика.
+      const reviewInvoice = match.kind === "review" ? invoices.find((inv) => inv.id === match.orderId) ?? null : null;
+      const decision = decideStatementCredit(
+        {
+          date: tx.date,
+          amountRub: tx.amountRub,
+          payerInn: tx.payerInn,
+          reviewInvoice: reviewInvoice ? { id: reviewInvoice.id, organizationId: reviewInvoice.organizationId ?? null } : null,
+        },
+        { ownInn, organizations, recentPaidInvoices }
+      );
+      if (decision.kind === "skip") {
+        result.plan?.push({ operationId: tx.operationId, date: tx.date, amountRub: tx.amountRub, payer, action: match.kind === "review" ? `разбор: ${match.reason}` : `пропуск (${decision.reason})` });
+        if (match.kind === "review" && !opts.dryRun) {
+          await handleMatch(tx, match, result).catch((error) => console.error("[sber-sync] платёж не обработан:", tx.operationId, error));
+        }
+        continue;
+      }
+      if (decision.kind === "already-paid") {
+        // Тот же счёт не должен «съесть» ещё один платёж на ту же сумму.
+        const idx = recentPaidInvoices.findIndex((inv) => inv.id === decision.orderId);
+        if (idx >= 0) recentPaidInvoices.splice(idx, 1);
+      }
+      const org = decision.kind === "credit" ? organizations.find((o) => o.id === decision.organizationId) : null;
+      result.plan?.push({
+        operationId: tx.operationId,
+        date: tx.date,
+        amountRub: tx.amountRub,
+        payer,
+        action:
+          decision.kind === "credit"
+            ? `на баланс «${org?.name ?? decision.organizationId}» ${decision.amount} ₽${decision.orderId ? ` (похоже на счёт №${decision.orderId})` : ""}`
+            : decision.kind === "already-paid"
+              ? `уже оплачен счёт №${decision.orderId} вручную`
+              : `разбор: ИНН у ${decision.organizationIds.length} организаций`,
+      });
+      if (opts.dryRun) continue;
+      try {
+        const outcome = await applyStatementCredit(tx, decision, match.kind === "review" ? { orderId: match.orderId, reason: match.reason } : null);
+        if (outcome === "credited") result.credited = (result.credited ?? 0) + 1;
+        if (outcome === "review") result.review += 1;
+      } catch (error) {
+        console.error("[sber-sync] поступление не зачислено:", tx.operationId, error);
       }
     }
   }

@@ -26,7 +26,20 @@ const bodySchema = z.object({
     .refine((value) => value !== 0, "Сумма не может быть нулевой")
     .refine((value) => Math.abs(value) <= 1_000_000, "Слишком большая сумма"),
   comment: z.string().trim().min(3, "Напишите, за что").max(300),
+  /**
+   * Откуда деньги. `adjust` — корректировка баллов (бонус, исправление);
+   * остальное — живые деньги клиента мимо кассы и выписки: строка
+   * «Пополнение» в истории баланса (владелец, 2026-11-10: поступления
+   * зачисляются на баланс при любом способе оплаты).
+   */
+  method: z.enum(["adjust", "cash", "transfer", "card"]).default("adjust"),
 });
+
+const METHOD_PREFIX: Record<"cash" | "transfer" | "card", string> = {
+  cash: "Пополнение наличными",
+  transfer: "Пополнение безналичным переводом",
+  card: "Пополнение картой",
+};
 
 export async function POST(
   request: Request,
@@ -48,6 +61,15 @@ export async function POST(
     return NextResponse.json({ error: "Не удалось прочитать запрос", errorCode: "ORG_BALANCE_READ_FAILED" }, { status: 400 });
   }
 
+  if (parsed.method !== "adjust" && parsed.amount < 0) {
+    return NextResponse.json(
+      { error: "Пополнение — только начисление. Чтобы списать, выберите «Корректировка»", errorCode: "ORG_BALANCE_INVALID" },
+      { status: 400 },
+    );
+  }
+  const isTopup = parsed.method !== "adjust";
+  const description = parsed.method === "adjust" ? parsed.comment : `${METHOD_PREFIX[parsed.method]}: ${parsed.comment}`;
+
   const organization = await db.organization.findUnique({
     where: { id },
     select: { id: true, name: true, balanceRub: true },
@@ -60,8 +82,8 @@ export async function POST(
     await creditBalance({
       organizationId: organization.id,
       amount: parsed.amount,
-      kind: "manual_adjust",
-      description: parsed.comment,
+      kind: isTopup ? "topup" : "manual_adjust",
+      description,
       actorUserId: session.user.id,
     });
   } catch (error) {
@@ -82,10 +104,10 @@ export async function POST(
     organizationId: organization.id,
     session,
     request,
-    action: parsed.amount > 0 ? "balance.credit" : "balance.debit",
+    action: isTopup ? "balance.topup.manual" : parsed.amount > 0 ? "balance.credit" : "balance.debit",
     entity: "Organization",
     entityId: organization.id,
-    details: { amount: parsed.amount, comment: parsed.comment },
+    details: { amount: parsed.amount, comment: parsed.comment, method: parsed.method },
   });
 
   // Человек должен узнать о баллах сразу, а не когда сам откроет
@@ -101,17 +123,19 @@ export async function POST(
     kind: credited ? "balance.credited" : "balance.debited",
     // Каждое начисление — отдельное уведомление, а не слияние в одно.
     dedupeKey: `balance.${credited ? "credited" : "debited"}:${Date.now()}`,
-    title: credited
-      ? `Начислено ${formatPoints(parsed.amount)}`
-      : `Списано ${formatPoints(Math.abs(parsed.amount))}`,
+    title: isTopup
+      ? `Баланс пополнен на ${formatPoints(parsed.amount)}`
+      : credited
+        ? `Начислено ${formatPoints(parsed.amount)}`
+        : `Списано ${formatPoints(Math.abs(parsed.amount))}`,
     linkHref: "/settings/balance",
     linkLabel: "Открыть баланс",
-    items: [{ id: "comment", label: parsed.comment }],
+    items: [{ id: "comment", label: description }],
   }).catch((error) => console.error("[balance] notify failed", error));
 
   publishToOrganization(organization.id, {
     type: "balance",
-    data: { amount: parsed.amount, comment: parsed.comment },
+    data: { amount: parsed.amount, comment: description },
   });
 
   // Начислили, а срок на исходе и автопродление включено — продлеваем сразу
