@@ -44,7 +44,7 @@
     "prepare": "if [ -d .git ]; then chmod +x .husky/pre-commit .husky/pre-push 2>/dev/null || true; git config core.hooksPath .husky 2>/dev/null || true; fi"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^1.6.0",
     "@auth/prisma-adapter": "^2.11.3",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
