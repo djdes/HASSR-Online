@@ -72,6 +72,8 @@ type Props = {
   channels: ChannelView[];
   posts: PostView[];
   articles: Array<{ slug: string; title: string; excerpt: string }>;
+  /** Блок «Автопосты» — рисует страница (autoposts-panel.tsx). */
+  autoposts?: ReactNode;
 };
 
 type Draft = {
@@ -184,7 +186,7 @@ async function callJson(url: string, method: string, body?: unknown): Promise<Re
   return data;
 }
 
-export function MaxChannelClient({ bots, channels, posts, articles }: Props) {
+export function MaxChannelClient({ bots, channels, posts, articles, autoposts }: Props) {
   const router = useRouter();
   const usable = channels.filter((channel) => !channel.removed);
   const defaultChannelIds = usable.filter((channel) => channel.botIsAdmin).map((channel) => channel.id);
@@ -415,6 +417,8 @@ export function MaxChannelClient({ bots, channels, posts, articles }: Props) {
         onConnectTelegram={connectTelegram}
         onToggleAnnounce={toggleAnnounce}
       />
+
+      {autoposts}
 
       <div ref={composerRef} className="grid scroll-mt-6 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section className={CARD}>
@@ -1024,6 +1028,7 @@ function PostRow({
           <span className={cn("rounded-full px-2.5 py-0.5 text-[12px]", STATUS_TONE[post.status])}>{MAX_POST_STATUS_LABELS[post.status]}</span>
           <span className="text-[12px] text-[#6f7282]">{when}</span>
           {post.source === "blog" ? <span className="rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#3848c7]">Автоанонс блога</span> : null}
+          {post.source === "auto" ? <span className="rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] text-[#3848c7]">Автопост ИИ</span> : null}
           {channel ? (
             <span className="inline-flex items-center gap-1.5 text-[12px] text-[#9b9fb3]">
               <PlatformBadge platform={channel.platform} /> {channel.title}

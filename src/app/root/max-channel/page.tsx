@@ -2,6 +2,9 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { channelBotInfo, channelBotToken } from "@/lib/max/channel.server";
 import { telegramBotInfo, telegramChannelBotToken } from "@/lib/max/telegram-channel.server";
+import { loadAutopostViews, readAutopostSettings } from "@/lib/channel-autopost/service.server";
+import { codexGatewayConfigured } from "@/lib/codex-gateway";
+import { AutopostsPanel } from "./autoposts-panel";
 import { MaxChannelClient, type ChannelView, type PostView } from "./max-channel-client";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +19,7 @@ export const metadata = { title: "Каналы Telegram и MAX" };
  */
 export default async function RootMaxChannelPage() {
   await requireRoot();
-  const [bot, telegramBot, channels, posts, articles] = await Promise.all([
+  const [bot, telegramBot, channels, posts, articles, autopostSettings, autopostItems] = await Promise.all([
     channelBotInfo(),
     telegramBotInfo(),
     db.maxChannel.findMany({ orderBy: [{ removed: "asc" }, { createdAt: "asc" }] }),
@@ -27,6 +30,8 @@ export default async function RootMaxChannelPage() {
       take: 30,
       select: { slug: true, title: true, excerpt: true },
     }),
+    readAutopostSettings(),
+    loadAutopostViews(),
   ]);
   const maxToken = channelBotToken();
   const telegramToken = telegramChannelBotToken();
@@ -67,6 +72,9 @@ export default async function RootMaxChannelPage() {
       channels={channelViews}
       posts={postViews}
       articles={articles}
+      autoposts={
+        <AutopostsPanel initialItems={autopostItems} initialSettings={autopostSettings} gatewayConfigured={codexGatewayConfigured()} />
+      }
     />
   );
 }
