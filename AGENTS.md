@@ -216,21 +216,27 @@ npx tsx prisma/seed-job-positions.ts
 npx tsx scripts/telegram-poller.ts   # Run bot poller locally
 npm run test:bot         # Run bot wizard smoke tests
 
-# Checks (the git hooks run them too)
-npm run typecheck        # tsc --noEmit (tsconfig.typecheck.json)
-npm test                 # node --test via tsx over src/**/*.test.ts
-npm run test:gate        # npm test gated by the baseline tests/.legacy-failures.txt
-# One file: npx tsx --test src/lib/role-access.test.ts
+# Checks (fast targeted mode by default — seconds, not 15 minutes)
+npm run typecheck        # incremental tsc --noEmit (tsconfig.typecheck.json + tsconfig.typecheck.tsbuildinfo)
+npm run test:changed     # targeted tests for changed files + 1-hop reverse imports (~3–15s)
+npm run test:gate        # runs test:changed by default; auto-escalates to full suite on core changes or >25 files
+npm run test:gate:full   # forces full 904+ file suite (TEST_FULL=1, ~12–15 min locally)
+npm run verify           # pre-push check: typecheck + test:changed (VERIFY_FULL=1 for full suite)
+npm test                 # raw full suite via tsx over src/**/*.test.ts (do NOT use for routine fixes)
+# One file: node --import tsx --test src/lib/role-access.test.ts
 ```
 
 ## Testing Strategy
 
-- **Unit tests**: Co-located as `*.test.ts` under `src/`. Node.js built-in `node:test` / `assert`, run through tsx.
-- **Git hooks**: pre-commit runs the secrets check, `typecheck` and `test:gate` when `.ts/.tsx` files are staged; pre-push runs `typecheck` and `test:gate`. Do not bypass them with `--no-verify`; a new failing test must be fixed, not skipped.
+- **Unit tests**: Co-located as `*.test.ts` under `src/` (including `.server.ts` / `.client.tsx` sibling mapping to `*.test.ts`). Node.js built-in `node:test` / `assert`, run through `tsx`.
+- **Smart targeted gate (`scripts/test-changed.mjs`, `npm run test:changed` / `npm run test:gate`)**:
+  - For normal fixes and features (≤ 25 changed code files and no core files touched), `npm run test:changed` and `npm run test:gate` inspect `git diff`, select changed `*.test.ts`, co-located `*.test.ts` (stripping `.server`/`.client`), and 1-hop reverse-import tests across `src/`, completing in **3–15 seconds** instead of 15 minutes.
+  - **Auto-escalation to full suite (`mode=full`)**: Automatically runs all 904+ test files when `TEST_FULL=1` / `--full` is passed, `[full-tests]` is in the commit message, `> 25` code files changed, or core files are modified (`package-lock.json`, `prisma/schema.prisma`, `tsconfig*.json`, `tests/.legacy-failures.txt`, `src/lib/db.ts`, `src/lib/auth.ts`, `src/lib/auth-helpers.ts`, `src/lib/permissions.ts`, `src/lib/user-roles.ts`, `src/lib/journal-acl.ts`).
+- **Git hooks**: `pre-commit` runs `scripts/check-secrets.sh` and `scripts/test-related.sh` (`node scripts/test-changed.mjs --staged`, seconds); `pre-push` is a fast no-op (`exit 0`). Do not bypass hooks with `--no-verify`; a failing test must be fixed, not skipped.
 - **Smoke tests**: `scripts/test-bot-wizard.ts` validates the Telegram bot registration wizard end-to-end.
 - **Screenshot capture**: `scripts/capture-screenshots.ts` for visual regression evidence.
-- **CI**: the deploy workflow runs `npm run typecheck` (fails the deploy) and `test:bot` (warn-only).
-- **Production verification**: HTTP probes against `127.0.0.1:3002`, PM2 status checks, `.build-sha` / `.build-time` verification.
+- **CI (`.github/workflows/deploy.yml`)**: `gate` runs `node scripts/test-changed.mjs --ci-plan` immediately after checkout. On normal pushes (`mode=changed` or `mode=none`), the `Type-check` job runs `npm run typecheck` + `npm run test:changed` in one pass while the 4 test shards (`1/4..4/4`) skip `npm ci` and finish in ~10s. Full 4-shard execution runs automatically only when `mode=full`.
+- **Production verification**: HTTP probes against `127.0.0.1:3002` (`scripts/post-deploy-check.sh`), automatic rollback on failure (`scripts/deploy-rollback.sh`), PM2 status checks, `.build-sha` / `.build-time` verification.
 
 ## Code Style Guidelines
 
@@ -251,14 +257,17 @@ npm run test:gate        # npm test gated by the baseline tests/.legacy-failures
 File: `.github/workflows/deploy.yml`
 Trigger: push to `master` or manual `workflow_dispatch` on `master` (runs on any other branch or tag are rejected).
 
-Steps:
-1. Checkout, install Node.js 22, `npm ci`
-2. Write `.build-sha` and `.build-time` markers
-3. Create `deploy.tar` (excludes `node_modules`, `.next`, `.git`, images, tarballs)
-4. SCP tarball to production server
-5. On server: extract, restore `.env`, clean-install `npm ci`, `prisma generate`, `npm run build`, `prisma db push`
-6. Run seeds (`seed.ts`, `seed-job-positions.ts`, `seed-articles.ts`, `test-bot-wizard.ts`, `seed-demo-screenshots.ts`)
-7. Restart PM2 processes: `haccp-online` (web) + `haccp-telegram-poller` (bot)
+Architecture & Steps:
+1. **Parallel start**: `upload` and `gate` start simultaneously on push to `master`. `deploy` depends only on `upload` (`needs: [upload]`), so production deployment is not delayed by test runners. If either `gate` or `deploy` fails, `notify-failure` sends an alert to Telegram.
+2. **Smart CI Gate (`gate`)**:
+   - Runs `node scripts/test-changed.mjs --ci-plan` right after checkout (before `npm ci`).
+   - **Normal push (`mode=changed` / `mode=none`)**: Shards `1/4..4/4` skip `npm ci` and exit in ~10s. The `Type-check` job installs dependencies once, runs `npm run typecheck`, and runs `npm run test:changed` (taking a few seconds).
+   - **Core / large push (`mode=full`)**: Triggered when core files (`package-lock.json`, `prisma/schema.prisma`, `src/lib/db.ts`, `src/lib/auth*`, `tsconfig*.json`), `> 25` code files, `[full-tests]` commit tag, or manual `workflow_dispatch` are used — all 4 shards `1/4..4/4` run the full test suite in parallel.
+3. **Upload (`upload`)**: Production server pulls the commit tarball directly from GitHub and verifies its content digest against Actions (falling back to SCP if needed).
+4. **Zero-downtime Server Deploy (`deploy`, 3 SSH steps)**:
+   - Step 1/3 (`setup`): Preserves `public/uploads` symlink, backs up `.next/cache`, runs `npm ci` only if `package-lock.json` changed, runs `prisma generate`, writes `.build-sha`.
+   - Step 2/3 (`build + verify`): Builds into isolated `.next-build` while the live site keeps serving from `.next`, verifies all client-reference manifests, and copies old static chunks so open tabs don't hit `ChunkLoadError`.
+   - Step 3/3 (`db push + seeds + pm2 restart + prewarm`): Applies safe schema changes (`scripts/apply-safe-schema.cjs`), runs idempotent seeds, atomically swaps `.next-build` → `.next`, restarts PM2 (`haccp-online` + `haccp-telegram-poller`), prewarms routes (`scripts/prewarm-routes.sh`), and verifies health (`scripts/post-deploy-check.sh`) with automatic rollback to `.next-previous` on failure.
 
 ### Production deploy rules (master only)
 
@@ -315,8 +324,17 @@ Critical env vars (see `.env.shared` for template):
 ## Conventions for AI Agents
 
 - **«В прод»** from the owner means: merge the task's PR into `master` (squash) without asking again; the push to `master` deploys it.
-- **Always deliver to `master`, without conflicts.** Finished work goes to production through `master` every time; do not leave it on a side branch. Before merging: `git fetch origin master`, merge `origin/master` into the task branch (never rebase or force-push a branch someone else uses), resolve any conflicts there (regenerate lockfiles, Prisma client and `i18n:types` output with the repo tools, never by hand), rerun `npm run typecheck` and `npm run test:gate`, push, and only then merge the PR into `master` (squash). Merge only a PR that is mergeable and green; never merge with unresolved conflicts, never skip or disable a failing test. The owner's standing permission covers this merge, so do not ask again. Mention in the PR what the deploy changes (for example a new nullable column applied by `prisma db push`).
+- **Единое правило быстрой проверки для всех агентов (никаких 15-минутных полных прогонов на обычных задачах):**
+  - **По умолчанию** перед коммитом, пушем и мерджем в `master` всегда запускай `npm run typecheck` и `npm run test:changed` (или `npm run test:gate` / `npm run verify`, которые теперь по умолчанию вызывают `scripts/test-changed.mjs`). Это прогоняет только затронутые тесты и обратные импорты за **5–20 секунд**.
+  - **Запрещено** запускать полный `npm test` или `npm run test:gate:full` (904+ файлов, 15 минут) на мелких фиксах и обычных задачах. Полный прогон включается автоматически самим `test-changed.mjs` только при изменении ядра (`package-lock.json`, `prisma/schema.prisma`, `src/lib/db.ts`, `src/lib/auth*`, `tsconfig*.json`) или при `> 25` изменённых файлах кода (либо принудительно через `[full-tests]` в сообщении коммита / `npm run test:gate:full`).
+- **Always deliver to `master`, without conflicts.** Finished work goes to production through `master` every time; do not leave it on a side branch. Before merging: `git fetch origin master`, merge `origin/master` into the task branch (never rebase or force-push a branch someone else uses), resolve any conflicts there (regenerate lockfiles, Prisma client and `i18n:types` output with the repo tools, never by hand), rerun `npm run typecheck` and `npm run test:gate` (targeted gate with auto-escalation), push, and only then merge the PR into `master` (squash). Merge only a PR that is mergeable and green; never merge with unresolved conflicts, never skip or disable a failing test. The owner's standing permission covers this merge, so do not ask again. Mention in the PR what the deploy changes (for example a new nullable column applied by `prisma db push`).
 - Visible UI follows the project design system (`design-system` skill, `.claude/skills/design-system`): every screen must look like one product.
 - For non-trivial refactors, `karpathy-guidelines` is the coding discipline to follow; for a new feature that touches existing code, lock the scope first (a frozen spec, see the proof loop above).
 - The `.cursorrules` file in repo root repeats the key coding rules for Cursor.
 - The local `CLAUDE.md` (not in git) holds operational notes: production probes, SSH access (the password stays in the local `.env`), architecture principles. Refer to it for deployment commands and troubleshooting.
+
+
+## Работа с Git: обязательный `git fetch` и актуализация коммитов и веток
+
+- **Перед началом любой работы в git-репозитории (и в начале сессии):** обязательно выполняй `git fetch --all --prune`, проверяй статус веток и свежие коммиты (`git status -sb`, `git branch -vv`, `git log --oneline -n 5 HEAD..origin/master`) и актуализируй локальную ветку (`git pull --rebase --autostash origin master`), чтобы никогда не работать поверх устаревшей ревизии и не создавать конфликтов с удалёнными коммитами и CI/CD.
+- **Новые ветки** создавай только от актуального состояния `origin/master`.

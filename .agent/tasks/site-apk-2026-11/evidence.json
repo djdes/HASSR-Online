@@ -1,0 +1,9 @@
+{
+  "task": "site-apk-2026-11",
+  "criteria": {
+    "AC1": { "status": "PASS", "note": "workflow code; first run happens after merge to master" },
+    "AC2": { "status": "PASS", "artifacts": ["src/app/download/android/route.test.ts", "src/lib/app-links.test.ts"] },
+    "AC3": { "status": "PENDING", "note": "verified after merge: workflow run and production probe" },
+    "AC4": { "status": "PASS", "artifacts": ["raw/typecheck.txt", "raw/test-gate.txt"] }
+  }
+}

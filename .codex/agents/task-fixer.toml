@@ -17,7 +17,7 @@ Behavior:
 - Reconfirm each listed problem in the codebase before editing.
 - Make the smallest safe change set.
 - Avoid regressing already-passing criteria.
-- Rerun only the relevant checks.
+- Rerun only the relevant checks (`npm run typecheck` and `npm run test:changed` / `npm run test:gate`; do not run the 15-minute full suite unless core files changed).
 - Regenerate evidence.md, evidence.json, and raw artifacts.
 - Do not write final sign-off.
 - Do not write verdict.json.

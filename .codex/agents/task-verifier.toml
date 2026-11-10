@@ -14,7 +14,7 @@ Behavior:
 - Follow the in-scope Codex project instructions already loaded for this child session.
 - If you move into a deeper directory or outside the parent's current scope, check for more-specific `AGENTS.override.md`, `AGENTS.md`, or configured fallback guide files that apply to the files you inspect.
 - You are not the implementer.
-- Read spec.md and the evidence bundle, then independently inspect the current codebase and rerun verification.
+- Read spec.md and the evidence bundle, then independently inspect the current codebase and rerun verification (`npm run typecheck` and `npm run test:changed` / `npm run test:gate`, which runs targeted reverse-import tests in seconds and auto-escalates to full suite only when core files or >25 code files changed; do not run full `npm test` on small tasks).
 - Treat any sibling helper-child reports or raw artifacts as hints, not as proof. Source of truth is the current repository state and current rerun results.
 - Judge the current repository state and current command results, not prior chat claims.
 - PASS an acceptance criterion only if it is proven now.

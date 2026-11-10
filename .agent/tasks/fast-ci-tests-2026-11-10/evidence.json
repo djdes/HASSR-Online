@@ -1,0 +1,44 @@
+{
+  "task": "fast-ci-tests-2026-11-10",
+  "branch": "feat/fast-ci-tests",
+  "base": "8738309e",
+  "checkedAt": "2026-11-10",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "scripts/test-changed.mjs",
+        "src/lib/ci/test-changed.test.ts",
+        "raw/test-changed.txt"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "package.json",
+        "scripts/test-with-baseline.sh",
+        "scripts/verify-before-push.sh",
+        "scripts/test-related.sh",
+        "raw/test-changed.txt",
+        "raw/typecheck.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        ".github/workflows/deploy.yml",
+        "scripts/test-changed.mjs"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "AGENTS.md",
+        ".cursorrules",
+        ".codex/agents/task-builder.toml",
+        ".codex/agents/task-verifier.toml",
+        ".codex/agents/task-fixer.toml"
+      ]
+    }
+  }
+}

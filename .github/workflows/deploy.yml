@@ -74,8 +74,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Глубина 10 коммитов нужна, чтобы scripts/test-changed.mjs видел
+          # базовый коммит пуша (github.event.before) до установки npm-зависимостей.
+          fetch-depth: 10
+
+      - name: Determine test scope (changed vs full)
+        id: plan
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: node scripts/test-changed.mjs --ci-plan
+
+      - name: Skip shard when targeted mode is active
+        if: matrix.check != 'typecheck' && steps.plan.outputs.mode != 'full'
+        run: |
+          echo "Режим тестов: ${{ steps.plan.outputs.mode }} (файлов тестов: ${{ steps.plan.outputs.count }})."
+          echo "Таргетированные тесты выполняются в джобе Type-check без запуска 4 полных шардов."
 
       - name: Setup Node.js
+        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -86,9 +103,11 @@ jobs:
           # равно идёт на сервере, эти 20 секунд не решают ничего.
 
       - name: Install dependencies
+        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         run: npm ci
 
       - name: Prepare CI env for build
+        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         run: |
           if [ -n "${{ secrets.DATABASE_URL }}" ]; then
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
@@ -97,6 +116,7 @@ jobs:
           fi
 
       - name: Generate Prisma client for CI build
+        if: matrix.check == 'typecheck' || steps.plan.outputs.mode == 'full'
         run: npx prisma generate
 
       # CI gate: type-check + tests (baseline-aware). Любая НОВАЯ регрессия
@@ -111,9 +131,16 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=6144
         run: npm run typecheck
 
-      - name: Tests (baseline gate)
-        if: matrix.check != 'typecheck'
+      - name: Targeted tests (changed files & reverse imports)
+        if: matrix.check == 'typecheck' && steps.plan.outputs.mode == 'changed'
         env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: npm run test:changed
+
+      - name: Tests (full sharded baseline gate)
+        if: matrix.check != 'typecheck' && steps.plan.outputs.mode == 'full'
+        env:
+          TEST_FULL: "1"
           TEST_SHARD: ${{ matrix.check }}
         run: npm run test:gate
 
