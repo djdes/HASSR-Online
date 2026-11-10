@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { sectionForPath } from "@/lib/app-nav";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
+import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
 
 /**
  * Вкладки раздела над основным окном: «Сегодня · Все журналы · Проверка ·
@@ -45,6 +46,10 @@ export function useSectionPlace() {
 export function SectionTabs({ className }: { className?: string }) {
   const t = useTranslations("navigation.shell");
   const { section, atRoot, menuItem, depth, activeHref } = useSectionPlace();
+  // Шаблон «Новый»: на компьютере вкладки пункта второго уровня стоят строкой
+  // над страницей (`SectionTopMenu`) — здесь их не повторяем.
+  const isNew = useNewNavLayout();
+  const inTopMenu = useNewNavPlace().entriesAreTabs && isNew;
   // В разделе с меню — вкладки текущего пункта (только на самом пункте);
   // в остальных разделах — вкладки раздела на их корнях.
   const tabs = section?.menu
@@ -95,7 +100,7 @@ export function SectionTabs({ className }: { className?: string }) {
     <nav
       aria-label={t("tabsAria")}
       data-section-tabs={section?.key}
-      className={cn("mb-5 min-w-0 border-b border-[#ececf4] print:hidden max-sm:mb-4", className)}
+      className={cn("mb-5 min-w-0 border-b border-[#ececf4] print:hidden max-sm:mb-4", inTopMenu && "lg:hidden", className)}
     >
       <div
         ref={scroller}

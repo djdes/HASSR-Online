@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { isJournalCodeSubtree } from "@/components/layout/page-nav";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useAppNav } from "@/components/layout/app-nav-context";
+import { useNewNavLayout } from "@/components/layout/nav-layout-switch";
 import { AccessDenied, AccessShellProvider } from "@/components/layout/access-denied";
 import { useContentPending } from "@/components/layout/content-transition";
 import { DeniedNotice } from "@/components/layout/denied-notice";
@@ -47,6 +48,9 @@ export function SectionFrame({
   const { deniedHrefs } = useAppNav();
   const pathname = usePathname() || "/";
   const pending = useContentPending();
+  // Шаблон «Новый»: на компьютере над страницей — крошки (`PageNav`), ссылка
+  // «‹ пункт» там не нужна.
+  const crumbsOnDesktop = useNewNavLayout() && shell === "site";
   const denied = isNavHrefDenied(pathname, deniedHrefs);
   const showBack = Boolean(menuItem) && depth === "deep" && !isJournalCodeSubtree(pathname) && !denied;
 
@@ -61,6 +65,7 @@ export function SectionFrame({
           className={cn(
             "mb-3 inline-flex items-center gap-1 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] print:hidden",
             "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+            crumbsOnDesktop && "lg:hidden",
           )}
         >
           <ChevronLeft className="size-4" />

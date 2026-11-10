@@ -9,7 +9,9 @@ import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
 import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
+import { AppSidebarAccordion } from "@/components/layout/app-sidebar-accordion";
 import { NavIconChip } from "@/components/layout/nav-icons";
+import { NavLayoutSwitch, useNewNavLayout } from "@/components/layout/nav-layout-switch";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
   NavBadge,
@@ -58,21 +60,31 @@ const SIDEBAR_ITEM_IDLE = "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024
  * Две панели лежат на ленте шириной 200%: главное меню и меню раздела, вход и
  * выход из главного меню — сдвиг ленты. Раздел без меню («Остальное») —
  * пункт меню родителя.
+ *
+ * Шаблон «Новый» (переключатель «Вид меню» внизу, 2026-11-09) — другое меню
+ * целиком: `AppSidebarAccordion`.
  */
-export function AppSidebar({
-  logoUrl,
-  organizationName,
-  identity,
-  homeHref,
-  canEditBranding = false,
-}: {
+type AppSidebarProps = {
   logoUrl: string | null;
   organizationName: string;
   /** Под логотипом: краткое название и ИНН (эскиз: «Юр. наименование (сокр.)»). */
   identity: SidebarOrgIdentity;
   homeHref: string;
   canEditBranding?: boolean;
-}) {
+};
+
+export function AppSidebar(props: AppSidebarProps) {
+  const isNew = useNewNavLayout();
+  return isNew ? <AppSidebarAccordion {...props} /> : <ClassicSidebar {...props} />;
+}
+
+function ClassicSidebar({
+  logoUrl,
+  organizationName,
+  identity,
+  homeHref,
+  canEditBranding = false,
+}: AppSidebarProps) {
   const t = useTranslations("navigation.shell");
   const { sections } = useAppNav();
   const pathname = usePathname() || "/";
@@ -211,6 +223,7 @@ export function AppSidebar({
         className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col border-r border-[#ececf4] bg-white lg:flex print:hidden"
       >
         {mainPane}
+        <NavLayoutSwitch />
       </aside>
     );
   }
@@ -232,11 +245,11 @@ export function AppSidebar({
       data-sidebar-mode={showSection ? "section" : "main"}
       data-sidebar-section={showSection ? menuSection.key : undefined}
       aria-label={t("sidebarAria")}
-      className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 overflow-hidden border-r border-[#ececf4] bg-white lg:block print:hidden"
+      className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col overflow-hidden border-r border-[#ececf4] bg-white lg:flex print:hidden"
     >
       <div
         className={cn(
-          "flex h-full w-[200%] transition-transform duration-200 motion-reduce:transition-none",
+          "flex min-h-0 w-[200%] flex-1 transition-transform duration-200 motion-reduce:transition-none",
           showSection ? "-translate-x-1/2" : "translate-x-0",
         )}
       >
@@ -307,6 +320,7 @@ export function AppSidebar({
           </div>
         </div>
       </div>
+      <NavLayoutSwitch />
     </aside>
   );
 }

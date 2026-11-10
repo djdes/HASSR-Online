@@ -41,10 +41,17 @@ describe("Удобство чтения: кука устройства", () => {
   });
 
   it("запись и чтение — туда и обратно, в том числе закодированная кука", () => {
-    const prefs = { textSize: "xlarge", contrast: "high", motion: "reduce", hints: "off" } as const;
+    const prefs = { textSize: "xlarge", contrast: "high", motion: "reduce", hints: "off", navLayout: "new" } as const;
     assert.deepEqual(parseViewPrefs(serializeViewPrefs(prefs)), prefs);
     assert.deepEqual(parseViewPrefs(encodeURIComponent(serializeViewPrefs(prefs))), prefs);
-    assert.match(viewPrefsCookieString(prefs), /^wesetup-view=t:xlarge\|c:high\|m:reduce\|h:off; Path=\/; Max-Age=\d+; SameSite=Lax$/);
+    assert.match(viewPrefsCookieString(prefs), /^wesetup-view=t:xlarge\|c:high\|m:reduce\|h:off\|n:new; Path=\/; Max-Age=\d+; SameSite=Lax$/);
+  });
+
+  it("шаблон меню: по умолчанию стандартный, «Новый» — отдельным ключом, чужое значение — стандартный", () => {
+    assert.equal(DEFAULT_VIEW_PREFS.navLayout, "classic");
+    assert.equal(parseViewPrefs("n:new").navLayout, "new");
+    assert.equal(parseViewPrefs("t:large|n:fancy").navLayout, "classic");
+    assert.equal(isDefaultViewPrefs({ ...DEFAULT_VIEW_PREFS, navLayout: "new" }), false);
   });
 
   it("мусор и чужие значения — по умолчанию, по одному полю", () => {
@@ -65,12 +72,14 @@ describe("Удобство чтения: кука устройства", () => {
       "data-view-contrast": "auto",
       "data-view-motion": "auto",
       "data-view-hints": "on",
+      "data-view-nav": "classic",
     });
-    const attrs = viewPrefsHtmlAttributes({ textSize: "large", contrast: "high", motion: "reduce", hints: "off" });
+    const attrs = viewPrefsHtmlAttributes({ textSize: "large", contrast: "high", motion: "reduce", hints: "off", navLayout: "new" });
     assert.equal(attrs["data-view-text"], "large");
     assert.equal(attrs[HIGH_CONTRAST_ATTR], "");
     assert.equal(attrs[STILL_ATTR], "");
     assert.equal(attrs["data-view-hints"], "off");
+    assert.equal(attrs["data-view-nav"], "new");
   });
 
   it("скрипт до гидрации досчитывает «как в системе» по matchMedia", () => {

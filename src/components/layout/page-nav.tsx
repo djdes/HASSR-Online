@@ -11,6 +11,8 @@ import { customSectionNameByHref } from "@/lib/custom-names";
 import { sectionForPath } from "@/lib/app-nav";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { useSectionPlace } from "@/components/layout/section-tabs";
+import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
+import { cn } from "@/lib/utils";
 
 /**
  * Единая навигация страницы кабинета: «← Назад» + хлебные крошки.
@@ -130,6 +132,8 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   // Раздел меню: первое звено цепочки и граница списка соседей.
   const { section, atRoot } = useSectionPlace();
   const sectionKey = sectionForPath(pathname)?.section ?? null;
+  const isNew = useNewNavLayout();
+  const place = useNewNavPlace();
 
   // Каждое звено раскрывается в соседей по уровню: из «Здания и
   // помещения» — сразу в «Оборудование», не возвращаясь в список
@@ -186,11 +190,38 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   const parentHref =
     [...crumbs].reverse().find((crumb) => crumb.href)?.href ?? "/dashboard";
 
+  // Шаблон «Новый» (только компьютер): цепочка по меню — «раздел › вложенные
+  // разделы › пункт › вкладка», глубже — хвост страницы (`PageCrumbs`, иначе
+  // её заголовок). Звенья, повторяющие цепочку, из хвоста убираются.
+  // Страницы журнала рисуют крошки сами.
+  let newCrumbs: Crumb[] | null = null;
+  if (isNew && place.trail.length > 0 && !isJournalCodeSubtree(pathname)) {
+    const norm = (value: string) => value.trim().toLowerCase();
+    const labels = new Set(place.trail.map((crumb) => norm(crumb.label)));
+    const hrefs = new Set(place.trail.map((crumb) => crumb.href));
+    const tail = place.deep
+      ? (override?.items ?? autoCrumbs.slice(-1)).filter(
+          (crumb) => !labels.has(norm(crumb.label)) && !(crumb.href && hrefs.has(crumb.href)),
+        )
+      : [];
+    const chain: Crumb[] = [...place.trail.map((crumb) => ({ label: crumb.label, href: crumb.href })), ...tail];
+    // Последнее звено — «вы здесь»: ссылкой остаётся, только когда страница
+    // глубже цепочки и своего названия у неё нет.
+    if (tail.length > 0 || !place.deep) chain[chain.length - 1] = { ...chain[chain.length - 1], href: undefined };
+    newCrumbs = chain;
+  }
+  const newNav = newCrumbs ? (
+    <div className="mb-5 hidden min-w-0 items-center gap-3 lg:flex print:hidden" data-new-nav-crumbs>
+      <PageBackLink fallbackHref={[...newCrumbs].reverse().find((crumb) => crumb.href)?.href ?? "/dashboard"} />
+      <Breadcrumbs items={newCrumbs} className="min-w-0 flex-1" />
+    </div>
+  ) : null;
+
   // На корне раздела вместо крошек — вкладки (`SectionTabs`): цепочка из
   // одного звена ничего не объясняет. Журналы рисуют крошки сами. В разделе
   // с меню крошек нет совсем: где человек, показывает меню слева, а на
   // глубоких страницах — ссылка «назад» (`SectionFrame`).
-  if (atRoot || section?.menu || pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return null;
+  if (atRoot || section?.menu || pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return newNav;
 
   // Кнопка и крошки — одной строкой. Раньше они стояли друг под другом в
   // 6px и одинаковым серым: читались как две строки одного текста, а не
@@ -198,9 +229,12 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   // На телефоне строка выше (кнопки 48px — app-theme.css), поэтому отступ
   // под ней 12px, а не 20: иначе выигрыш от тонкой шапки съедался.
   return (
-    <div className="mb-5 flex min-w-0 items-center gap-3 print:hidden max-sm:mb-3">
-      <PageBackLink fallbackHref={parentHref} />
-      <Breadcrumbs items={crumbs} className="min-w-0 flex-1" />
-    </div>
+    <>
+      {newNav}
+      <div className={cn("mb-5 flex min-w-0 items-center gap-3 print:hidden max-sm:mb-3", newNav && "lg:hidden")}>
+        <PageBackLink fallbackHref={parentHref} />
+        <Breadcrumbs items={crumbs} className="min-w-0 flex-1" />
+      </div>
+    </>
   );
 }

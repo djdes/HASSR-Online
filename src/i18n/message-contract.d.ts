@@ -3007,6 +3007,11 @@ export type MessageContract = {
       },
       "backToMain": "Главное меню",
       "sectionMenuAria": "Меню раздела",
+      "navLayout": {
+        "label": "Вид меню",
+        "classic": "Стандартный",
+        "new": "Новый"
+      },
       "placeAria": "Где вы в меню",
       "status": {
         "done": "Заполнен",

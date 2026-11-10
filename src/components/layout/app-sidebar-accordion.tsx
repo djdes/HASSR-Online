@@ -1,0 +1,186 @@
+"use client";
+
+import { useState, type MouseEvent } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
+import { mainNavSections, type NavSectionKey } from "@/lib/app-nav";
+import type { NavModelSection } from "@/lib/app-nav.server";
+import { navTone } from "@/lib/nav-tones";
+import { cn } from "@/lib/utils";
+import { useAppNav } from "@/components/layout/app-nav-context";
+import { NavIconChip } from "@/components/layout/nav-icons";
+import { NavLayoutSwitch, useNewNavPlace } from "@/components/layout/nav-layout-switch";
+import { OrganizationBrand } from "@/components/layout/organization-brand";
+import { NavBadge } from "@/components/layout/section-menu-list";
+import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
+
+// Строка раздела — как в стандартном меню: плашка 32px, свой тон.
+const ROW =
+  "relative flex min-h-11 items-center gap-2.5 rounded-2xl py-1.5 pr-2.5 pl-1.5 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+// Пункт раскрытого списка — ниже и с плашкой поменьше: второй уровень.
+const SUB_ROW =
+  "relative flex min-h-10 items-center gap-2.5 rounded-xl py-1 pr-2.5 pl-1.5 text-[14px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+const ROW_ACTIVE = "bg-[var(--tone-row)] font-semibold text-[var(--tone-ink)]";
+const ROW_IDLE = "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]";
+
+/**
+ * Меню слева в шаблоне «Новый» (владелец, 2026-11-09): только два уровня.
+ * Разделы главного меню, под разделом — раскрывающийся список его пунктов.
+ * Раскрыт раздел, в котором человек находится; нажатие на другой раздел
+ * открывает его корень и его список, нажатие на раскрытый — сворачивает.
+ * Всё, что глубже, — строка над страницей (`SectionTopMenu`). Внизу —
+ * «Пришла проверка» и переключатель «Вид меню».
+ */
+export function AppSidebarAccordion({
+  logoUrl,
+  organizationName,
+  identity,
+  homeHref,
+  canEditBranding = false,
+}: {
+  logoUrl: string | null;
+  organizationName: string;
+  identity: SidebarOrgIdentity;
+  homeHref: string;
+  canEditBranding?: boolean;
+}) {
+  const t = useTranslations("navigation.shell");
+  const { sections } = useAppNav();
+  const pathname = usePathname() || "/";
+  const place = useNewNavPlace();
+  const mainSections = mainNavSections(sections);
+  const main = mainSections.filter((section) => section.key !== "inspection");
+  const inspection = mainSections.find((section) => section.key === "inspection");
+
+  // Какой список раскрыт, помним вместе с путём: сменилась страница — снова
+  // раскрыт раздел текущей страницы.
+  const [manual, setManual] = useState<{ path: string; key: NavSectionKey | null } | null>(null);
+  if (manual && manual.path !== pathname) setManual(null);
+  const openKey = manual ? manual.key : place.top;
+
+  const onSection = (section: NavModelSection) => (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!section.menu) return;
+    // Открытие в новой вкладке — меню здесь не трогаем.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    if (openKey === section.key) {
+      event.preventDefault();
+      setManual({ path: pathname, key: null });
+    } else {
+      // Раздел, в котором человек уже стоит, только раскрывается; другой —
+      // раскрывается сразу и открывает свой корень.
+      if (place.top === section.key) event.preventDefault();
+      setManual({ path: pathname, key: section.key });
+    }
+  };
+
+  const renderSection = (section: NavModelSection, action = false) => {
+    const active = place.top === section.key;
+    const open = Boolean(section.menu) && openKey === section.key;
+    return (
+      <div key={section.key}>
+        <Link
+          href={section.rootHref}
+          onClick={onSection(section)}
+          aria-current={active ? (section.menu ? "true" : "page") : undefined}
+          aria-expanded={section.menu ? open : undefined}
+          data-nav-section={section.key}
+          data-nav-action={action ? "" : undefined}
+          data-tone={navTone(section.icon)}
+          data-nav-row
+          data-nav-bar
+          data-active={active ? "" : undefined}
+          className={cn(
+            ROW,
+            "group",
+            action && !active
+              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
+              : active
+                ? ROW_ACTIVE
+                : ROW_IDLE,
+          )}
+        >
+          <NavIconChip name={section.icon} className="size-8 rounded-[10px]" iconClassName="size-[18px]" />
+          <span className="min-w-0 flex-1">{section.label}</span>
+          {section.menu ? (
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none",
+                open ? "rotate-180 text-[var(--tone,#5566f6)]" : "text-[#9b9fb3]",
+              )}
+            />
+          ) : null}
+        </Link>
+        {open && section.menu ? (
+          <div
+            data-nav-sublist={section.key}
+            className="mt-1 mb-2 rounded-2xl border border-[#ececf4] bg-white p-1.5"
+          >
+            {section.menu.map((group, index) => (
+              <div key={group.label ?? `group-${index}`}>
+                {group.label ? (
+                  <div className="px-2.5 pt-2.5 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6f7282]">
+                    {group.label}
+                  </div>
+                ) : null}
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const itemActive = active && place.secondId === item.id;
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        aria-current={itemActive ? (item.section ? "true" : "page") : undefined}
+                        data-menu-item={item.id}
+                        data-menu-section={item.section}
+                        data-tone={navTone(item.icon)}
+                        data-nav-row
+                        data-active={itemActive ? "" : undefined}
+                        className={cn(SUB_ROW, "group", itemActive ? ROW_ACTIVE : ROW_IDLE)}
+                      >
+                        <NavIconChip name={item.icon} className="size-7 rounded-[9px]" iconClassName="size-4" />
+                        <span className="min-w-0 flex-1">{item.label}</span>
+                        {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  return (
+    <aside
+      data-app-sidebar
+      data-sidebar-layout="new"
+      aria-label={t("sidebarAria")}
+      className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col border-r border-[#ececf4] bg-white lg:flex print:hidden"
+    >
+      <div className="shrink-0 border-b border-[#ececf4] px-5 pt-5 pb-4" data-sidebar-logo>
+        <OrganizationBrand
+          logoUrl={logoUrl}
+          name={organizationName}
+          identity={identity}
+          homeHref={homeHref}
+          canEditBranding={canEditBranding}
+          large
+        />
+      </div>
+      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">
+        <div className="space-y-1">{main.map((section) => renderSection(section))}</div>
+        {inspection ? (
+          <div className="mt-auto pt-3">
+            <div className="border-t border-[#ececf4] pt-3">{renderSection(inspection, true)}</div>
+          </div>
+        ) : null}
+      </nav>
+      <NavLayoutSwitch />
+    </aside>
+  );
+}
