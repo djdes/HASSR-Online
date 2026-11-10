@@ -64,9 +64,11 @@ Telegram (библиотека GramJS, `src/lib/crm/telegram-user*.ts`). Пос�
   переписка менеджера в одной карточке) и телефону, если он виден.
 - **Как**: входящее / «Мы» (подпись — имя аккаунта); вложения — «[Фото]», «[Файл: …]»; голосовые до
   5 минут расшифровываются тем же Whisper, до 10 за прогон.
-- **Вход** (на сервере, один раз; код придёт в рабочий Telegram):
-  `npx tsx scripts/telegram-user-login.ts send-code +7…`, затем `sign-in <код> [пароль 2FA]`,
-  проверка — `check`. Сессия — файл `TG_USER_SESSION_FILE` (права 600): это полный доступ к
+- **Вход** (один раз; код придёт в рабочий Telegram): `npx tsx scripts/telegram-user-login.ts start +7…`
+  ждёт код, во втором окне — `code <код>` (и `password <пароль>`, если 2FA), проверка — `check`.
+  Код принимает то же подключение, что его запросило: иначе Telegram отвечает PHONE_CODE_EXPIRED.
+  Код не пересылать через Telegram — попав в сообщение, он аннулируется. Сессия переносится
+  между машинами файлом. Сессия — файл `TG_USER_SESSION_FILE` (права 600): это полный доступ к
   аккаунту, в git и чаты не попадает. Выйти — «Устройства» в Telegram → «WeSetup CRM».
 - **Окружение**: `TG_API_ID`, `TG_API_HASH` (my.telegram.org → API development tools, с рабочего
   номера), `TG_USER_SESSION_FILE`, `TG_USER_IGNORE`, `TG_USER_PROXY_URL` (только SOCKS; по умолчанию
