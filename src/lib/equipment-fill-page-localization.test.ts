@@ -43,7 +43,7 @@ async function fixture(input: { uv?: boolean; fryer?: boolean; fryerNoDocument?:
     return require(id);
   }});
   const tree=await (mod.exports as {default:(props:unknown)=>Promise<ReactNode>}).default({params:Promise.resolve({equipmentId:"equipment"}),searchParams:Promise.resolve({token:"fixture-token"})});
-  const router={bfcacheId:"test",back(){},forward(){},refresh(){},push(){},replace(){},prefetch:async()=>{}};
+  const router={back(){},forward(){},refresh(){},push(){},replace(){},prefetch:async()=>{}};
   return {html:renderToStaticMarkup(createElement(AppRouterContext.Provider,{value:router,children:tree})),calls};
 }
 

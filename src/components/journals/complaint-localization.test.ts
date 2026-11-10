@@ -29,7 +29,7 @@ const config = { rows: [row], defaultResponsibleUserId: "original-person", defau
 const props = { documentId: "original-document", title: COMPLAINT_REGISTER_TITLE, organizationName: "Original organization", dateFrom: "2026-01-01", dateTo: "2026-12-31", status: "active", initialConfig: config, users: [] };
 
 async function render(locale: Locale, child: React.ReactNode, navigate: (url: string) => void = () => {}) {
-  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
+  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
 }
 
 test("complaint list/detail active closed empty and expanded mobile cards render three locales with literal customer data", async () => {

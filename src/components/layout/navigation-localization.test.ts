@@ -14,7 +14,7 @@ import { JournalPageCrumbs } from "@/components/journals/journal-breadcrumbs";
 import { MiniTopBar, titleForPath, titleForSitePath } from "@/app/mini/_components/mini-shell";
 import { PageNav } from "./page-nav";
 
-const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
 
 async function renderNavigation(locale: Locale, pathname: string, child: ReactNode, custom = false) {
   const messages = await loadMessages(locale);

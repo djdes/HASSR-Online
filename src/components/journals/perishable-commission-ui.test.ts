@@ -36,7 +36,7 @@ const rows = [
 const enabled = normalizePerishableRejectionConfig({ rows, commissionMembers: [member], commissionEnabled: true });
 const legacy = normalizePerishableRejectionConfig({ rows, commissionMembers: [member] });
 const users = [{ id: "u1", name: "Лебедева Марина Олеговна", role: "technologist" }];
-const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 
 async function render(locale: Locale, children: ReactNode) {
   return renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router, children: createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children }) }) })).replaceAll("&#x27;", "'");

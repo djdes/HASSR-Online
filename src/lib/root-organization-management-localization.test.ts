@@ -35,7 +35,7 @@ async function messages(locale: Locale) {
   const canonical = await loadMessages(locale);
   return prepared ? { ...canonical, ...JSON.parse(readFileSync(path.resolve(prepared, "..", locale + ".json"), "utf8")) } : canonical;
 }
-const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {} };
+const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {} };
 async function render(locale: Locale, children: ReactNode) {
   return renderToStaticMarkup(createElement(NextIntlClientProvider, { locale, timeZone: "UTC", messages: await messages(locale), onError: e => { throw e; }, children: createElement(AppRouterContext.Provider, { value: router, children }) }));
 }

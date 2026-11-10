@@ -20,7 +20,7 @@ import type { PerishableRejectionDocumentClient } from "./perishable-rejection-d
 const require = createRequire(import.meta.url);
 type Node = { type: unknown; props: Record<string, unknown> };
 const inline = ({ children }: { children?: React.ReactNode }) => React.createElement("div", null, children);
-const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 const messages = (locale: Locale) => loadMessages(locale);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function text(value: unknown): string { if (Array.isArray(value)) return value.map(text).join(""); return typeof value === "string" ? value : ""; }

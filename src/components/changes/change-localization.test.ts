@@ -10,7 +10,7 @@ import { CHANGE_TYPES, CHANGE_STATUSES, changeErrorKey, readChangeFormData } fro
 import { loadMessages } from "@/i18n/messages";
 import type { MessageContract } from "@/i18n/message-contract";
 
-const router: AppRouterInstance = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router: AppRouterInstance = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 
 test("change request form renders real catalogs in RU/EN/UZ", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {
