@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { BLANK_CONSENT_SOURCE, BLANK_DOWNLOAD_AUDIT_ACTION } from "@/lib/blank-download";
+import { syncPdfLeadsBackfill } from "@/lib/blank-download-lead.server";
 import { CRM_CURSOR_OVERLAP_MS, CRM_SOURCES_BACKFILL_MS } from "@/lib/crm/constants";
 import { ingestCrmItems } from "@/lib/crm/ingest.server";
 import {
@@ -154,13 +155,22 @@ const SOURCES: Record<string, SourceLoader> = {
         where: { action: BLANK_DOWNLOAD_AUDIT_ACTION, entityId: { in: consents.map((row) => row.id) } },
         select: { entityId: true, details: true },
       });
-      const titles = new Map(
+      const metaById = new Map(
         audits.map((audit) => {
           const details = audit.details && typeof audit.details === "object" ? (audit.details as Record<string, unknown>) : {};
-          return [audit.entityId, typeof details.title === "string" ? details.title : null] as const;
+          return [
+            audit.entityId,
+            {
+              title: typeof details.title === "string" ? details.title : null,
+              company: typeof details.company === "string" ? details.company.trim() || null : null,
+            },
+          ] as const;
         }),
       );
-      return consents.map((row) => ({ ...row, title: titles.get(row.id) ?? null }));
+      return consents.map((row) => {
+        const meta = metaById.get(row.id);
+        return { ...row, title: meta?.title ?? null, company: meta?.company ?? null };
+      });
     },
     (row) => row.createdAt,
     (row) => [mapBlankDownload(row)],
@@ -229,5 +239,8 @@ export async function syncCrmSources(now = new Date()): Promise<SourceSyncResult
       results.push({ source, rows: 0, created: 0, error: error instanceof Error ? error.message.slice(0, 300) : String(error) });
     }
   }
+  await syncPdfLeadsBackfill(now).catch((error) => {
+    console.error("[crm] синхронизация PDF-лидов не завершилась", error);
+  });
   return results;
 }

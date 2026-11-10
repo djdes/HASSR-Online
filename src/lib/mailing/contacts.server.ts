@@ -1,6 +1,7 @@
 import type { MarketingContact, Prisma } from "@prisma/client";
 
 import { recordAuditLog } from "@/lib/audit-log";
+import { ensurePdfLeadsSynced } from "@/lib/blank-download-lead.server";
 import { db } from "@/lib/db";
 import { checkEmail } from "@/lib/email-validation";
 import { ORG_SPHERES } from "@/lib/org-profile";
@@ -189,6 +190,7 @@ export async function listContacts(
   filters: ContactFilters,
   options: { offset?: number; limit?: number; idsOnly?: boolean } = {}
 ): Promise<{ total: number; rows: ContactDto[]; ids?: string[]; sources: string[]; tags: string[] }> {
+  await ensurePdfLeadsSynced();
   const where = contactWhere(filters) as Prisma.MarketingContactWhereInput;
   const [total, sourceRows, tagRows] = await Promise.all([
     db.marketingContact.count({ where }),

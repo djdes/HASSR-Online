@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { normalizeEmail, phoneKey } from "@/lib/crm/identity";
 import type { CrmIdentity, CrmIngestItem } from "@/lib/crm/sources";
 import { awaitingChannel, computeContactState } from "@/lib/crm/state";
+import { DEFAULT_ORG_NAME } from "@/lib/org-profile";
 
 /**
  * Запись в CRM: склейка контакта, лента, пересчёт состояния. Всё сводится
@@ -117,7 +118,13 @@ export async function resolveCrmContact(
       if (!found.userId && userId) patch.userId = userId;
       if (!found.organizationId && identity.organizationId) patch.organizationId = identity.organizationId;
       if (!found.name && identity.name?.trim()) patch.name = identity.name.trim().slice(0, 200);
-      if (!found.company && identity.company?.trim()) patch.company = identity.company.trim().slice(0, 300);
+      if (
+        (!found.company || found.company === DEFAULT_ORG_NAME) &&
+        identity.company?.trim() &&
+        identity.company.trim() !== DEFAULT_ORG_NAME
+      ) {
+        patch.company = identity.company.trim().slice(0, 300);
+      }
       // Контакт ещё не узнан (например, первым был звонок) — ищем пользователя платформы по почте и телефону.
       if (!found.userId && !userId && !found.organizationId && !identity.organizationId) {
         const platformUser = await findPlatformUser(email ?? found.email, key ?? found.phoneKey);

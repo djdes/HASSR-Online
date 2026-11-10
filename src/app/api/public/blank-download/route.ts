@@ -11,6 +11,11 @@ import {
   type BlankFormat,
   type BlankTarget,
 } from "@/lib/blank-download";
+import {
+  ensurePlatformOrganization,
+  findPlatformClientByEmail,
+  recordBlankDownloadLead,
+} from "@/lib/blank-download-lead.server";
 import { blankDownloadLimiter } from "@/lib/blank-download-limits";
 import { parseBlankDownloadRequest } from "@/lib/blank-download-targets";
 import {
@@ -106,7 +111,10 @@ export async function POST(request: Request) {
     );
   }
 
+  const platformClient = await findPlatformClientByEmail(email).catch(() => null);
+
   let consentId: string;
+  let consentCreatedAt: Date;
   let marketingConsentId: string | null = null;
   let t: Awaited<ReturnType<typeof translatorFor>>;
   try {
@@ -122,13 +130,16 @@ export async function POST(request: Request) {
       marketing,
       ipAddress: ip === "unknown" ? null : ip,
       userAgent: request.headers.get("user-agent")?.slice(0, 400) ?? null,
+      userId: platformClient?.userId,
+      organizationId: platformClient?.organizationId,
       statementText: blankConsentSnapshot(consentRichMessage),
       marketingStatementText: blankMarketingConsentSnapshot(marketingRichMessage),
     });
     const created = await db.$transaction(
-      rows.map((data) => db.legalConsent.create({ data, select: { id: true } })),
+      rows.map((data) => db.legalConsent.create({ data, select: { id: true, createdAt: true } })),
     );
     consentId = created[0].id;
+    consentCreatedAt = created[0].createdAt;
     marketingConsentId = created[1]?.id ?? null;
   } catch (error) {
     console.error("[blank-download] consent record failed", error);
@@ -136,6 +147,9 @@ export async function POST(request: Request) {
   }
 
   const target = info.target;
+  await ensurePlatformOrganization(PLATFORM_ORG_ID).catch((error) => {
+    console.error("[blank-download] platform org ensure failed", error);
+  });
   await recordAuditLog({
     request,
     organizationId: PLATFORM_ORG_ID,
@@ -151,6 +165,19 @@ export async function POST(request: Request) {
       marketing: marketingConsentId !== null,
       ...(marketingConsentId ? { marketingConsentId } : {}),
     },
+  });
+
+  await recordBlankDownloadLead({
+    consentId,
+    createdAt: consentCreatedAt,
+    email,
+    company,
+    target,
+    title: info.title,
+    marketing: marketingConsentId !== null,
+    platformClient,
+  }).catch((error) => {
+    console.error("[blank-download] lead sync failed", error);
   });
 
   const now = Date.now();

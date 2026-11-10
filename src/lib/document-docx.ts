@@ -138,7 +138,16 @@ function employeeGrid(input: JournalDocumentPdfInput, t: DocxText, status: Statu
     ],
   });
 
-  const rows = input.users.map(
+  const roster =
+    input.users.length > 0
+      ? input.users
+      : Array.from({ length: 7 }, (_, index) => ({
+          id: `blank-employee-${index + 1}`,
+          name: "",
+          positionTitle: "",
+        }));
+
+  const rows = roster.map(
     (user) =>
       new TableRow({
         children: [

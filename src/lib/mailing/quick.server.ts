@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ensurePdfLeadsSynced } from "@/lib/blank-download-lead.server";
 
 import { loadAudienceUsers, planRecipients, type AudienceSelection, type PlanStats } from "./audience.server";
 import { clientBases, clientSegment, contactBaseId, contactBaseSource, type MailingBase } from "./bases";
@@ -48,12 +49,14 @@ async function contactBases(): Promise<MailingBase[]> {
 
 /** Все базы с числами: сегменты клиентов, потом загруженные (свежие сверху). */
 export async function listMailingBases(now: Date = new Date()): Promise<MailingBase[]> {
+  await ensurePdfLeadsSynced(now);
   const [users, contacts] = await Promise.all([loadAudienceUsers(now), contactBases()]);
   return [...clientBases(users, now), ...contacts];
 }
 
 /** id баз → выбор получателей (пользователи и контакты), без повторов. */
 async function resolveBases(baseIds: string[], now: Date): Promise<AudienceSelection> {
+  await ensurePdfLeadsSynced(now);
   const segments = baseIds.map((id) => clientSegment(id)).filter((s) => s !== null);
   const sources = baseIds.map((id) => contactBaseSource(id)).filter((s): s is string => s !== null);
   const [users, contacts] = await Promise.all([

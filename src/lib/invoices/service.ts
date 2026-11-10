@@ -6,6 +6,7 @@ import { TOPUP_TARIFF_KEY, isTopupOrder, topupOrderDescription } from "@/lib/bal
 import { buildBuyerSnapshot, buildSellerSnapshot } from "@/lib/closing-documents/build";
 import { readLegalImage, readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { db } from "@/lib/db";
+import { recordGuestInvoiceLead } from "@/lib/blank-download-lead.server";
 import { sendInvoiceEmail } from "@/lib/email";
 import { resolveLocale } from "@/i18n/locales";
 import type { LegalProfile } from "@/lib/org-legal-profile";
@@ -478,7 +479,18 @@ export async function createGuestInvoiceOrder(args: {
     },
     orderBy: { createdAt: "desc" },
   });
-  if (existing) return { ok: true, order: existing, created: false };
+  if (existing) {
+    await recordGuestInvoiceLead({
+      orderId: existing.id,
+      email: existing.email,
+      amountRub: Number(existing.amountRub),
+      description: existing.description,
+      organizationId: existing.organizationId,
+      buyerJson: existing.buyerJson,
+      createdAt: existing.createdAt,
+    }).catch((error) => console.error("[invoices] guest lead sync failed", error));
+    return { ok: true, order: existing, created: false };
+  }
 
   const note = orderDiscountNote({
     promotion: offer.promotion,
@@ -517,6 +529,15 @@ export async function createGuestInvoiceOrder(args: {
       buyerJson: args.buyer as unknown as Prisma.InputJsonValue,
     },
   });
+  await recordGuestInvoiceLead({
+    orderId: order.id,
+    email: order.email,
+    amountRub: Number(order.amountRub),
+    description: order.description,
+    organizationId: order.organizationId,
+    buyerJson: order.buyerJson,
+    createdAt: order.createdAt,
+  }).catch((error) => console.error("[invoices] guest lead sync failed", error));
   console.info(`[invoices] guest invoice #${order.id}: inn ${args.buyer.inn}, ${amounts.grossRub} ₽`);
   return { ok: true, order, created: true };
 }

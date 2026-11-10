@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { ensurePdfLeadsSynced } from "@/lib/blank-download-lead.server";
 import { CRM_ESCALATION_MS, QUIET_STAGES, isCrmStage } from "@/lib/crm/constants";
 import { listMailboxes } from "@/lib/crm/mailbox.server";
 import { loadDigestData } from "@/lib/crm/notify.server";
@@ -96,6 +97,7 @@ function endOfMoscowDay(now: Date): Date {
 }
 
 export async function loadCrmSummary(now = new Date(), scope?: CrmViewerScope) {
+  await ensurePdfLeadsSynced(now);
   const active = { stage: { notIn: [...QUIET_STAGES] } };
   const since30 = new Date(now.getTime() - 30 * DAY);
   const mine = crmContactScope(scope);
@@ -151,6 +153,7 @@ export type ContactFilters = { q?: string; queue?: string; stage?: string; chann
 const PAGE_SIZE = 50;
 
 export async function listCrmContacts(filters: ContactFilters, viewerId: string, now = new Date(), own = false) {
+  await ensurePdfLeadsSynced(now);
   const where: Prisma.CrmContactWhereInput = {};
   const and: Prisma.CrmContactWhereInput[] = [crmContactScope({ userId: viewerId, own })];
   const q = filters.q?.trim();
@@ -217,6 +220,7 @@ export async function listCrmOwners(scope?: CrmViewerScope) {
 }
 
 export async function loadCrmContact(id: string, scope?: CrmViewerScope) {
+  await ensurePdfLeadsSynced();
   const contact = await db.crmContact.findUnique({ where: { id } });
   if (!contact) return null;
   const [interactions, organization, owners, platformUser] = await Promise.all([

@@ -563,9 +563,18 @@ export function buildJournalBlankInput(
   const companyName = (options.company ?? "").replace(/\s+/g, " ").trim();
   const base = buildJournalSampleInput(code);
   const rawConfig =
-    base.document.config && typeof base.document.config === "object"
-      ? { ...(base.document.config as Record<string, unknown>) }
-      : {};
+    code === "cleaning"
+      ? base.document.config && typeof base.document.config === "object"
+        ? { ...(base.document.config as Record<string, unknown>) }
+        : {}
+      : getDefaultConfigForJournal(code, {
+          areas: SAMPLE_AREAS,
+          equipment: SAMPLE_EQUIPMENT,
+          users: [],
+          products: [],
+          organizationName: companyName || "Организация",
+          isDemo: false,
+        });
 
   if (code === "cleaning") {
     rawConfig.matrix = {};
@@ -580,10 +589,13 @@ export function buildJournalBlankInput(
 
   return {
     ...base,
+    users: [],
     document: {
       ...base.document,
       config: rawConfig as unknown as never,
       entries: [],
+      responsibleUserId: null,
+      responsibleTitle: null,
       organization: {
         name: companyName || "Организация",
         journalShortName: companyName || null,

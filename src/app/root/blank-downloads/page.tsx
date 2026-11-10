@@ -8,7 +8,9 @@ import {
   BLANK_MARKETING_CONSENT_SOURCE,
   type BlankFormat,
 } from "@/lib/blank-download";
+import { ensurePdfLeadsSynced } from "@/lib/blank-download-lead.server";
 import { db } from "@/lib/db";
+import { platformOrgId } from "@/lib/partners/partner-hint";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -46,6 +48,7 @@ function thirtyDaysAgo(): Date {
  */
 export default async function RootBlankDownloadsPage() {
   await requireRoot();
+  await ensurePdfLeadsSynced();
   const t = await getTranslations("rootBlankDownloads");
   const locale = await getSiteLocale();
 
@@ -62,7 +65,7 @@ export default async function RootBlankDownloadsPage() {
   ]);
 
   const ids = consents.map((consent) => consent.id);
-  const emails = [...new Set(consents.map((consent) => consent.email))];
+  const emails = [...new Set(consents.map((consent) => consent.email.trim().toLowerCase()))];
   const [details, users, marketing] = await Promise.all([
     ids.length
       ? db.auditLog.findMany({
@@ -71,7 +74,18 @@ export default async function RootBlankDownloadsPage() {
         })
       : Promise.resolve([]),
     emails.length
-      ? db.user.findMany({ where: { email: { in: emails } }, select: { email: true } })
+      ? db.user.findMany({
+          where: {
+            archivedAt: null,
+            isRoot: false,
+            organization: { isDemo: false, id: { not: platformOrgId() } },
+            OR: [
+              { email: { in: emails, mode: "insensitive" } },
+              { contactEmail: { in: emails, mode: "insensitive" } },
+            ],
+          },
+          select: { email: true, contactEmail: true },
+        })
       : Promise.resolve([]),
     emails.length
       ? db.legalConsent.findMany({
@@ -82,8 +96,14 @@ export default async function RootBlankDownloadsPage() {
       : Promise.resolve([]),
   ]);
   const detailsById = new Map(details.map((row) => [row.entityId, readDetails(row.details)]));
-  const withAccount = new Set(users.map((user) => user.email));
-  const withMarketing = new Set(marketing.map((row) => row.email));
+  const withAccount = new Set(
+    users.flatMap((user) =>
+      [user.email, user.contactEmail]
+        .filter((value): value is string => Boolean(value))
+        .map((value) => value.trim().toLowerCase()),
+    ),
+  );
+  const withMarketing = new Set(marketing.map((row) => row.email.trim().toLowerCase()));
 
   return (
     <div className="mx-auto max-w-[1100px]">
@@ -114,6 +134,7 @@ export default async function RootBlankDownloadsPage() {
         <ul className="mt-6 space-y-2 sm:hidden" data-testid="blank-downloads-list">
           {consents.map((consent) => {
             const detail = detailsById.get(consent.id) ?? {};
+            const emailKey = consent.email.trim().toLowerCase();
             return (
               <li key={consent.id} className="rounded-2xl border border-[#ececf4] bg-white p-4">
                 <a
@@ -130,17 +151,17 @@ export default async function RootBlankDownloadsPage() {
                   <span>
                     {detail.format ? blankFormatLabel(detail.format) : "—"} · {formatBlankDownloadDate(consent.createdAt, locale)}
                   </span>
-                  {withAccount.has(consent.email) ? (
+                  {withAccount.has(emailKey) ? (
                     <span className="rounded-full bg-[#ecfdf5] px-2.5 py-0.5 text-[12px] text-[#116b2a]">{t("accountExistsMobile")}</span>
                   ) : null}
                   <span
                     className={
-                      withMarketing.has(consent.email)
+                      withMarketing.has(emailKey)
                         ? "rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[12px] text-[#3848c7]"
                         : "text-[12px] text-[#9b9fb3]"
                     }
                   >
-                    {withMarketing.has(consent.email) ? t("marketingYesMobile") : t("marketingNoMobile")}
+                    {withMarketing.has(emailKey) ? t("marketingYesMobile") : t("marketingNoMobile")}
                   </span>
                 </div>
               </li>
@@ -162,6 +183,7 @@ export default async function RootBlankDownloadsPage() {
             <tbody>
               {consents.map((consent) => {
                 const detail = detailsById.get(consent.id) ?? {};
+                const emailKey = consent.email.trim().toLowerCase();
                 const code = detail.code ?? (detail.paperId ? t("paper", { paperId: detail.paperId }) : null);
                 return (
                   <tr key={consent.id} className="border-t border-[#ececf4] align-top">
@@ -187,14 +209,14 @@ export default async function RootBlankDownloadsPage() {
                       {detail.format ? blankFormatLabel(detail.format) : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      {withAccount.has(consent.email) ? (
+                      {withAccount.has(emailKey) ? (
                         <span className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] text-[#116b2a]">{t("exists")}</span>
                       ) : (
                         <span className="text-[13px] text-[#9b9fb3]">{t("no")}</span>
                       )}
                     </td>
                     <td className="px-4 py-3" data-testid="blank-download-marketing-cell">
-                      {withMarketing.has(consent.email) ? (
+                      {withMarketing.has(emailKey) ? (
                         <span className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-[12px] text-[#3848c7]">{t("yes")}</span>
                       ) : (
                         <span className="text-[13px] text-[#9b9fb3]">{t("no")}</span>
