@@ -1,0 +1,38 @@
+deals sync: {"created":11,"moved":1,"won":0,"lost":0}
+run 1: {"planned":12,"emails":9,"invoices":8,"tasks":9,"failed":0}
+  cmwb4lvfq01zl3u7dhvab6vfz renewal_early: email+invoice
+  cmwb4lvjx02rn3u7d9etoufjk invoice_ahead: invoice #55
+  cmwb4lvjd02qd3u7dpdwjxmds payment_overdue: tasks +1
+  cmwb4lveh01w03u7dxub26pac grace_last: email+invoice, tasks +1
+  cmwb4lvdy01up3u7d3saqotw8 trial_lost: tasks +1
+  cmwb4lvdd01sr3u7dfqrvi1kt trial_second: email+invoice, tasks +1
+  cmwb4lvkt02w63u7dabrrvl7g trial_first: email+invoice, tasks +1
+  cmwb4lv0e00013u7d2pttfb9e trial_first: email+invoice, tasks +1
+  cmwb4lv3q00943u7d6tka23e5 trial_first: email+invoice, tasks +2
+  cmwb4lvc101qo3u7d4e5xfpjm trial_first: email, tasks +1
+  cmwb4lvcn01rk3u7duzt2dvxv trial_first: email+invoice
+  cmwb4lvbo01qk3u7d08bgv23x trial_first: email
+run 2: {"planned":10,"emails":0,"invoices":0,"tasks":0,"failed":0}
+tasks: 9
+  [payment_overdue/open] Оплата не пришла: Кофейня «Не продлили» e2e — оплачено было по 8 ноября · deal=да · скидка=—
+  [last_chance/open] Последний шанс: Бистро «Грейс» e2e — отсрочка до 11 ноября · deal=да · скидка=—
+  [lost_reason/open] Узнать, почему Бар «Ушли» e2e не оплатил после пробного · deal=да · скидка=—
+  [call/open] Срочно: позвонить Кофейня «Второе касание» e2e — пробный до 11 ноября · deal=да · скидка=—
+  [call/open] Позвонить Ресторан «Оплатили» e2e — пробный до 15 ноября · deal=да · скидка=10
+  [call/open] Позвонить Кафе «Ромашка» e2e — пробный до 15 ноября · deal=да · скидка=10
+  [approve_discount/open/pending] Согласовать скидку 20 % для «Столовая комбината e2e» (120 сотрудников) · deal=да · скидка=20
+  [call/waiting] Позвонить «Столовая комбината e2e» — пробный до 15 ноября · deal=да · скидка=20
+  [call/open] Позвонить «ИП Петров e2e» — пробный до 15 ноября · deal=да · скидка=—
+deals: 11
+  lc-grace trial: message_sent · письмо
+  lc-expired renewal: registered
+  lc-lost trial: registered
+  lc-vtoroe trial: message_sent · письмо
+  lc-solo trial: message_sent · письмо
+  lc-pekarnya trial: message_sent · письмо
+  lc-quiet trial: message_sent · письмо
+  lc-paid trial: message_sent · письмо
+  lc-romashka trial: message_sent · договор · письмо
+  lc-stolovaya trial: message_sent · письмо
+  lc-year renewal: message_sent · письмо
+automatic invoices marked: 7

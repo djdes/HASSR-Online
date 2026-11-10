@@ -1,0 +1,27 @@
+summary: 200
+summary sales tiles: 4
+tasks: 200
+tasks cards: 7, call buttons: 7, mail buttons: 7, offer buttons: 5
+raw links in task text: 0
+follow-up suggested: true
+close toast: Задача закрыта, следующий шаг — в задачах
+follow-up task visible: 1
+approvals pending: 1
+filter unassigned: 200, cards 0
+filter kind=last_chance: 200, cards 1
+offer price line: 23 880 ₽ за год
+funnel: 200
+funnel columns: registered=1, contract_signed=0, message_sent=6, called=2, won=1, lost=1
+pekarnya column after move: 1
+automation: 200
+forecast items: 23
+team: 200
+role discount badges: 4
+manager tasks: 200, cards 1
+manager funnel: 200, cards 1
+manager automation (expect 404): 404
+phone tasks overflowX: 0
+phone first card height: 438px, actions below text: true
+phone funnel overflowX: 0
+phone summary overflowX: 0
+page errors: 0
