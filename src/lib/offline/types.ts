@@ -32,7 +32,7 @@ export type OfflineRejectCode =
 /** Refusals that a fresh PIN entry (online) can fix. */
 export const OFFLINE_PIN_REJECT_CODES: readonly string[] = ["offline-pin-changed", "offline-pin-required"];
 
-export const OFFLINE_PACK_VERSION = 1;
+export const OFFLINE_PACK_VERSION = 2;
 /** The cabinet refreshes the pack on open, but not more often than this. */
 export const OFFLINE_PACK_MIN_REFRESH_MS = 15 * 60 * 1000;
 /** Path of the offline screen; starts with `/mini` so the cabinet service worker (scope `/mini`) serves it. */
@@ -117,8 +117,21 @@ export type OfflinePack = {
   organization: { id: string; name: string; timeZone: string; qrFillMode: "public" | "pin" | "auth" };
   todayKey: string;
   employees: OfflinePackEmployee[];
+  /** Journals and objects of every point of the organization: the scanned QR decides the point, not the cabinet. */
   journals: OfflinePackJournal[];
   objects: OfflinePackObject[];
+  /** Point chosen in the cabinet when the pack was made — what the home screen shows first. */
+  point: { id: string; name: string } | null;
+  /** Points of the organization: who works there and which journals are switched off there. */
+  points: OfflinePackPoint[];
+};
+
+export type OfflinePackPoint = {
+  id: string;
+  name: string;
+  /** Staff of the point (people with no point work everywhere) — the roster of a shared document opened by this point's QR. */
+  employeeIds: string[];
+  disabledCodes: string[];
 };
 
 export type OfflineQueueTarget =

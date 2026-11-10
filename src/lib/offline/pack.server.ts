@@ -6,7 +6,7 @@ import { buildingTargets } from "@/lib/building-targets";
 import { DEFAULT_CLIMATE_HUMIDITY, DEFAULT_CLIMATE_TEMPERATURE, normalizeClimateRoomNorms } from "@/lib/climate-document";
 import { parseCustomNames } from "@/lib/custom-names";
 import { db } from "@/lib/db";
-import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
 import { resolveEquipmentFillTargets, resolveFryerFillTarget } from "@/lib/equipment-fill-targets";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { decryptSecret, isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
@@ -19,7 +19,6 @@ import {
   loadJournalFillForm,
   loadOrganizationForFill,
   normalizeQrFillMode,
-  scopeDocumentsToBuilding,
   todayKeyFor,
 } from "@/lib/journal-fill";
 import { journalFillHints } from "@/lib/journal-fill-hints";
@@ -49,6 +48,7 @@ import {
   type OfflinePackEmployee,
   type OfflinePackJournal,
   type OfflinePackObject,
+  type OfflinePackPoint,
   type OfflinePhotoMode,
 } from "./types";
 
@@ -149,8 +149,27 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
     return scopeCache.get(key)!;
   };
 
+  // --- points ---------------------------------------------------------------
+  // A point may keep its own list of switched-off journals; a journal is left out
+  // only when it is off everywhere, and each point then hides what is off there.
+  const points: OfflinePackPoint[] = [];
+  for (const buildingId of orgTargets) {
+    if (!buildingId) continue;
+    const scope = await pointScope(buildingId);
+    if (!scope) continue;
+    points.push({
+      id: buildingId,
+      name: scope.buildingName,
+      employeeIds: rosterUsers.filter((user) => worksAtQrPoint(scope, user.buildingIds)).map((user) => user.id),
+      disabledCodes: [...(await getDisabledJournalCodes(organizationId, buildingId))],
+    });
+  }
+  const activePoint = points.find((point) => point.id === activeBuildingId) ?? null;
+  const disabledAt = (buildingId: string | null): readonly string[] => points.find((point) => point.id === buildingId)?.disabledCodes ?? disabledCodes;
+  const offEverywhere = points.length === 0 ? disabledCodes : [...new Set(points.flatMap((point) => point.disabledCodes))].filter((code) => points.every((point) => point.disabledCodes.includes(code)));
+
   // --- journals -----------------------------------------------------------
-  const hub = await listHubJournals(organizationId, disabledCodes, todayKey, { names: parseCustomNames(org.customNamesJson) });
+  const hub = await listHubJournals(organizationId, offEverywhere, todayKey, { names: parseCustomNames(org.customNamesJson) });
   const templates = await db.journalTemplate.findMany({ where: { code: { in: hub.map((item) => item.code) } }, select: { code: true, taskScope: true } });
   const scopeByCode = new Map(templates.map((template) => [template.code, template.taskScope]));
 
@@ -158,7 +177,8 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
   for (const item of hub) {
     const adapter = getAdapter(item.code);
     if (!adapter?.getTaskForm) continue;
-    const docs = scopeDocumentsToBuilding(await listJournalFillDocuments(organizationId, item.code, todayKey), activeBuildingId, orgTargets);
+    // Every point: the device is shared, and the scanned QR — not the point chosen in the cabinet — decides whose journal it is.
+    const docs = (await listJournalFillDocuments(organizationId, item.code, todayKey)).filter((doc) => !disabledAt(doc.buildingId).includes(item.code));
     if (docs.length === 0) continue;
     const adapterDocs = await adapter.listDocumentsForOrg(organizationId).catch(() => []);
     const append = scopeByCode.get(item.code) === "shared" || journalFillHints(item.code).append === true;
@@ -240,12 +260,10 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
     const scope = await pointScope(buildingId);
     return rosterUsers.filter((user) => worksAtQrPoint(scope, user.buildingIds) && canFillObject(fillerUserIds, user)).map((user) => user.id);
   };
-  const inPoint = (buildingId: string | null) => !activeBuildingId || !orgTargets.includes(activeBuildingId) || buildingId === null || buildingId === activeBuildingId;
   const day = new Date(`${todayKey}T00:00:00.000Z`);
 
-  const coldEnabled = !disabledCodes.includes("cold_equipment_control");
-  const uvEnabled = !disabledCodes.includes("uv_lamp_runtime");
-  const climateEnabled = !disabledCodes.includes("climate_control");
+  const enabledAt = (code: string, buildingId: string | null) => !disabledAt(buildingId).includes(code);
+  const climateEnabled = points.length === 0 ? enabledAt("climate_control", null) : !offEverywhere.includes("climate_control");
   const [coldPhoto, climatePhoto] = await Promise.all([
     getReadingPhotoSettings(organizationId, "cold_equipment_control").catch(() => null),
     getReadingPhotoSettings(organizationId, "climate_control").catch(() => null),
@@ -254,7 +272,7 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
   // Что уже заполнено сегодня по объектам — те же данные, что показывает QR журнала с интернетом.
   const todayByObject = new Map<string, { done: boolean; summary: string }>();
   for (const code of ["cold_equipment_control", "climate_control", "uv_lamp_runtime"]) {
-    if (disabledCodes.includes(code)) continue;
+    if (offEverywhere.includes(code)) continue;
     const groups = await loadObjectJournalStatus({ organizationId, code, todayKey, timezone: timeZone }).catch(() => []);
     for (const group of groups) for (const item of group.items) todayByObject.set(item.id, { done: item.state === "done", summary: item.summary });
   }
@@ -265,7 +283,6 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
     select: { id: true, name: true, type: true, tempMin: true, tempMax: true, fillerUserIds: true, area: { select: { id: true, name: true, buildingId: true } } },
   });
   for (const item of equipment) {
-    if (!inPoint(item.area.buildingId)) continue;
     const base = {
       kind: "equipment" as const,
       id: item.id,
@@ -278,11 +295,11 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
       today: todayByObject.get(item.id) ?? null,
     };
     if (isUvLampEquipment(item)) {
-      if (uvEnabled) objects.push({ ...base, fill: "uv", temperature: null, photo: "off" });
+      if (enabledAt("uv_lamp_runtime", item.area.buildingId)) objects.push({ ...base, fill: "uv", temperature: null, photo: "off" });
       continue;
     }
     if (isFryerEquipmentType(item.type)) {
-      if (disabledCodes.includes("fryer_oil")) continue;
+      if (!enabledAt("fryer_oil", item.area.buildingId)) continue;
       const target = await resolveFryerFillTarget({ equipment: { id: item.id, name: item.name, buildingId: item.area.buildingId }, organizationId, day }).catch(() => null);
       if (!target) {
         objects.push({ ...base, fill: "unsupported", unsupportedReason: "Фритюрница сегодня не входит ни в один журнал учёта фритюрных жиров", temperature: null, photo: "off" });
@@ -306,7 +323,7 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
       });
       continue;
     }
-    if (!coldEnabled) continue;
+    if (!enabledAt("cold_equipment_control", item.area.buildingId)) continue;
     const targets = await resolveEquipmentFillTargets({ equipment: { id: item.id, areaId: item.area.id, areaName: item.area.name }, organizationId, day }).catch(() => null);
     if (!targets?.hasActiveDocument) continue;
     const humidity = targets.climate?.row.humidity.enabled ? { min: targets.climate.row.humidity.min, max: targets.climate.row.humidity.max } : null;
@@ -326,7 +343,7 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
       select: { id: true, name: true, climateNorms: true, buildingId: true, fillerUserIds: true, building: { select: { name: true } } },
     });
     for (const room of rooms) {
-      if (!inPoint(room.buildingId)) continue;
+      if (!enabledAt("climate_control", room.buildingId)) continue;
       const norms = normalizeClimateRoomNorms(room.climateNorms);
       const temperature = norms?.temperature ?? DEFAULT_CLIMATE_TEMPERATURE;
       const humidity = norms?.humidity ?? DEFAULT_CLIMATE_HUMIDITY;
@@ -356,5 +373,7 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
     employees,
     journals,
     objects,
+    point: activePoint ? { id: activePoint.id, name: activePoint.name } : null,
+    points,
   };
 }

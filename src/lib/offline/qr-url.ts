@@ -18,6 +18,10 @@ export type OfflineQrTarget =
       token: string | null;
       /** Short signature of `/qj/...` links (no token in the address). */
       shortSig: string | null;
+      /** Point of the poster (`b~<id>` in the token): its documents and its staff. */
+      buildingId: string | null;
+      /** Document of an extra QR made for one document. */
+      documentId: string | null;
     };
 
 export type OfflineQrParse =
@@ -28,6 +32,24 @@ export const OFFLINE_QR_HUB_CODE = "all";
 
 /** Hosts whose links are ours. The current page host is always accepted too. */
 const OWN_HOSTS = new Set(["wesetup.ru", "www.wesetup.ru"]);
+
+/**
+ * What the token of a journal QR says besides the journal: the point of the
+ * poster or the document of an extra QR. The token is
+ * `journal:<org>:<code>[:b~<point> | :<document>[:<last day>]].<issued>.<signature>`;
+ * the signature cannot be checked on the device (the server checks it when the
+ * record is delivered), the subject is only read to pick the same documents and
+ * people the page with the network would show.
+ */
+export function readJournalQrScope(token: string | null, orgId: string, code: string): { buildingId: string | null; documentId: string | null } {
+  const none = { buildingId: null, documentId: null };
+  const subject = (token ?? "").split(".")[0] ?? "";
+  if (!subject.startsWith("journal:")) return none;
+  const [tokenOrg, tokenCode, third] = subject.slice("journal:".length).split(":");
+  if (tokenOrg !== orgId || tokenCode !== code || !third) return none;
+  if (third.startsWith("b~")) return third.length > 2 ? { buildingId: third.slice(2), documentId: null } : none;
+  return { buildingId: null, documentId: third };
+}
 
 function decodeSegment(raw: string): string | null {
   try {
@@ -85,7 +107,7 @@ export function parseOfflineQr(raw: string | null | undefined, extraHosts: reado
     if (!orgId || !code || (section === "qj" && !shortSig)) return { ok: false, reason: "bad-id" };
     return {
       ok: true,
-      target: { kind: "journal", orgId, code, hub: code === OFFLINE_QR_HUB_CODE, token, shortSig },
+      target: { kind: "journal", orgId, code, hub: code === OFFLINE_QR_HUB_CODE, token, shortSig, ...readJournalQrScope(token, orgId, code) },
     };
   }
 

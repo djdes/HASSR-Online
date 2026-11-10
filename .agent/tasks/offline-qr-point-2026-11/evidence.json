@@ -1,0 +1,27 @@
+{
+  "task": "offline-qr-point-2026-11",
+  "criteria": {
+    "AC1": {
+      "status": "PASS"
+    },
+    "AC2": {
+      "status": "PASS"
+    },
+    "AC3": {
+      "status": "PASS"
+    },
+    "AC4": {
+      "status": "PASS"
+    },
+    "AC5": {
+      "status": "PASS"
+    },
+    "AC6": {
+      "status": "PASS"
+    }
+  },
+  "notVerified": [
+    "real Android tablet",
+    "short /qj/<point> QR and point hub transition in a browser"
+  ]
+}
