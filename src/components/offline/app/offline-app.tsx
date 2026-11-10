@@ -468,42 +468,6 @@ function Home({
         ) : null}
       </div>
 
-      {myTasks && myTasks.groups.length > 0 ? (
-        <section data-testid="offline-tasks">
-          <h2 className="mb-1 px-1 text-[15px] font-semibold text-[#0b1024]">{t("home.tasks")}</h2>
-          <p className="mb-2 px-1 text-[13px] text-[#6f7282]">
-            {t("home.tasksStamp", { time: stamp(myTasks.savedAt) })}. {t("home.tasksNote")}
-          </p>
-          <div className="space-y-2">
-            {myTasks.groups.map((group) => {
-              const openable = pack.journals.some((journal) => journal.code === group.code);
-              return (
-                <div key={group.code} className="rounded-2xl border border-[#ececf4] bg-white px-4 py-3">
-                  <button type="button" className="flex w-full items-center gap-3 text-left disabled:cursor-default" disabled={!openable} onClick={() => onOpen({ name: "journal", code: group.code })} data-task-group={group.code}>
-                    <ClipboardList className="size-5 shrink-0 text-[#5566f6]" aria-hidden />
-                    <span className="min-w-0 flex-1 text-[16px] font-medium leading-snug text-[#0b1024]">{group.label}</span>
-                    {openable ? <ChevronRight className="size-4 shrink-0 text-[#9b9fb3]" aria-hidden /> : null}
-                  </button>
-                  <ul className="mt-2 space-y-1">
-                    {group.tasks.map((task) => (
-                      <li key={task.key} className="flex items-baseline justify-between gap-3 text-[14px]">
-                        <span className="min-w-0 text-[#0b1024]">
-                          {task.label}
-                          {task.sublabel ? <span className="text-[#6f7282]"> · {task.sublabel}</span> : null}
-                        </span>
-                        <span className="shrink-0 text-[13px] text-[#6f7282]">
-                          {task.state === "taken" ? (task.by ? t("task.taken", { name: task.by }) : t("task.takenNoName")) : t(`task.${task.state}`)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
       {pack.objects.length > 0 ? (
         <section>
           <h2 className="mb-2 px-1 text-[15px] font-semibold text-[#0b1024]">{t("home.objects")}</h2>
@@ -549,6 +513,45 @@ function Home({
           </div>
         )}
       </section>
+
+      {myTasks && myTasks.groups.length > 0 ? (
+        // Collapsed and last: the list can be long, and it is for looking, not for filling.
+        <details className="rounded-3xl border border-[#ececf4] bg-white px-4 py-3" data-testid="offline-tasks">
+          <summary className="cursor-pointer list-none text-[15px] font-semibold text-[#0b1024]">
+            {t("home.tasks")} · {myTasks.groups.reduce((sum, group) => sum + group.tasks.length, 0)}
+          </summary>
+          <p className="mb-2 mt-2 text-[13px] text-[#6f7282]">
+            {t("home.tasksStamp", { time: stamp(myTasks.savedAt) })}. {t("home.tasksNote")}
+          </p>
+          <div className="space-y-2">
+            {myTasks.groups.map((group) => {
+              const openable = pack.journals.some((journal) => journal.code === group.code);
+              return (
+                <div key={group.code} className="rounded-2xl border border-[#ececf4] bg-white px-4 py-3">
+                  <button type="button" className="flex w-full items-center gap-3 text-left disabled:cursor-default" disabled={!openable} onClick={() => onOpen({ name: "journal", code: group.code })} data-task-group={group.code}>
+                    <ClipboardList className="size-5 shrink-0 text-[#5566f6]" aria-hidden />
+                    <span className="min-w-0 flex-1 text-[16px] font-medium leading-snug text-[#0b1024]">{group.label}</span>
+                    {openable ? <ChevronRight className="size-4 shrink-0 text-[#9b9fb3]" aria-hidden /> : null}
+                  </button>
+                  <ul className="mt-2 space-y-1">
+                    {group.tasks.map((task) => (
+                      <li key={task.key} className="flex items-baseline justify-between gap-3 text-[14px]">
+                        <span className="min-w-0 text-[#0b1024]">
+                          {task.label}
+                          {task.sublabel ? <span className="text-[#6f7282]"> · {task.sublabel}</span> : null}
+                        </span>
+                        <span className="shrink-0 text-[13px] text-[#6f7282]">
+                          {task.state === "taken" ? (task.by ? t("task.taken", { name: task.by }) : t("task.takenNoName")) : t(`task.${task.state}`)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

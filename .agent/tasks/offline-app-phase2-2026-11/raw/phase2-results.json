@@ -1,0 +1,182 @@
+[
+  {
+    "name": "login",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "device is ready: pack, offline screen and today's tasks are saved",
+    "ok": true,
+    "detail": "journals 11, objects 10"
+  },
+  {
+    "name": "AC5 pack: fryer can be filled offline, with fat and product lists",
+    "ok": true,
+    "detail": "{\"fatTypes\":[\"Подсолнечное масло\",\"Пальмовое масло\",\"Соевое масло\",\"Рапсовое масло\",\"Кокосовое масло\"],\"productTypes\":[\""
+  },
+  {
+    "name": "AC6 pack: rooms (climate) and the daily cleaning journal with rows are there",
+    "ok": true,
+    "detail": "room Зал для гостей, cleaning rows 2"
+  },
+  {
+    "name": "AC1 pack: photo mode of readings comes from the organization setting",
+    "ok": true,
+    "detail": "optional"
+  },
+  {
+    "name": "AC10 the device reported itself to the server",
+    "ok": true,
+    "detail": "Chrome (Android)|0|0|t"
+  },
+  {
+    "name": "AC7 «Обновить данные» in the profile downloads fresh data",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC12 offline screen texts in ru",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC12 offline screen texts in en",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC12 offline screen texts in uz",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC8 home shows today's summary",
+    "ok": true,
+    "detail": "Сегодня заполнено: 2 из 21"
+  },
+  {
+    "name": "AC9 today's tasks are shown read-only (or there are none today)",
+    "ok": true,
+    "detail": "32 groups"
+  },
+  {
+    "name": "AC1 an oversized photo is refused on the device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 a file that is not a picture is refused on the device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 fridge reading with a photo is saved on the device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 the photo waits in the queue with the record",
+    "ok": true,
+    "detail": "{\"photos\":{\"reading\":70},\"photo\":\"offline-photo:reading\"}"
+  },
+  {
+    "name": "AC6 room climate is saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC5 fryer form opens on «Начало жарки»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC5 fryer start is saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC5 after a queued start the form offers «Окончание жарки»",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC5 fryer end is saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC6 daily cleaning is saved without network",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC8 filled objects and journals are marked on the home screen",
+    "ok": true,
+    "detail": "Сегодня заполнено: 2 из 21 → Сегодня заполнено: 6 из 21"
+  },
+  {
+    "name": "all records made without network are delivered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 the fridge reading is in the journal with its photo",
+    "ok": true,
+    "detail": "{\"temperatures\": {\"cold-equipment-c174a6f8-a3d3-4c07-8f19-763a39695242\": 5}, \"readingPhotos\": {\"cold-equipment-c174a6f8-a3d3-4c07-8f19-763a39695242\": \"/uploads/readings/e5cf2e668643cb8b41044c3a035ddee"
+  },
+  {
+    "name": "AC6 the room climate reading is in the journal",
+    "ok": true,
+    "detail": "{\"measurements\": {\"room-cmwafwvsq0002du7d9znozijc\": {\"10:00\": {\"humidity\": 50, \"temperature\": 21}}}}"
+  },
+  {
+    "name": "AC5 the fryer row has both the start and the end",
+    "ok": true,
+    "detail": "{\"endHour\": 12, \"fatType\": \"Подсолнечное масло\", \"endMinute\": 8, \"startDate\": \"2026-11-10\", \"startHour\": 12, \"disposedKg\": 1, \"qualityEnd\": 5, \"carryoverKg\": 2.5, \"productType\": \"Продукция во фритюре (в ассортименте)\", \"startMinute\": 8, \"qualityStart\": 5, \"equ"
+  },
+  {
+    "name": "AC6 the daily cleaning record reached the journal",
+    "ok": true,
+    "detail": "audit rows 1"
+  },
+  {
+    "name": "AC5 fryer end without a start is refused by the server",
+    "ok": true,
+    "detail": "status 409"
+  },
+  {
+    "name": "AC4 offline history shows the value edited in the cabinet table",
+    "ok": true,
+    "detail": "{\"infection\":false,\"temperature\":true,\"respiratorySkin\":true}"
+  },
+  {
+    "name": "AC4 the cabinet edit is not overwritten by a device with older data; the device's own change is written",
+    "ok": true,
+    "detail": "{\"infection\": false, \"temperature\": true, \"respiratorySkin\": false}"
+  },
+  {
+    "name": "AC11 records not accepted → one notification per device a day",
+    "ok": true,
+    "detail": "{\"ok\":true,\"notifiedStuck\":true} {\"ok\":true,\"notifiedStuck\":false}, notifications 0 → 1"
+  },
+  {
+    "name": "AC11 heartbeat is refused without a session and with garbage",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC10 the manager's page lists devices and offline records",
+    "ok": true,
+    "detail": "devices: Устройство Кто вошёл На связи Данные от Ждёт / не ушло Состояние Chrome (Android) Крылов Денис Сергеевич 10.11, 12:08 10; records 7"
+  },
+  {
+    "name": "AC10 the manager's page is closed to line staff and to guests",
+    "ok": true,
+    "detail": "cook 307"
+  },
+  {
+    "name": "AC13 assetlinks.json is not empty: the upload key fingerprint is always there",
+    "ok": true,
+    "detail": ""
+  }
+]

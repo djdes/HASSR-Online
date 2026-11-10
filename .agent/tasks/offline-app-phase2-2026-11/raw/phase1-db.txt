@@ -1,0 +1,7 @@
+PASS  AC10 a reading made yesterday 23:30 lies in yesterday's row, not in the sync day — 2026-11-09: {"temperatures":{"cold-equipment-9b190bc0-65f9-483e-b14f-d684a63df851":5},"responsibleTitle":null}
+PASS  AC16 a reading confirmed by PIN offline is signed by that employee — 2026-11-10: {"corrections":{"cold-equipment-9b190bc0-65f9-483e-b14f-d684a63df851":"Закрыли дверь, проверим через 30 минут"},"temperatures":{"cold-equipment-9b190bc0-65f9-483e-b14f-d684a63df851":12},"responsibleTi
+PASS  AC10 audit log marks records made without network (when made, when received, how the author was confirmed) — 17 of 17 audit rows
+PASS  AC10 audit keeps the device time and the journal day of the moved record — {"by":"Крылов Денис Сергеевич (QR)","kind":"equipment","dateKey":"2026-11-09","recordedAt":"2026-11-09T20:30:00.000Z","syncedAt":"2026-11-10T09:09:04.477Z","auth":"self"}
+PASS  AC16 audit shows the PIN was checked on the device — {"by":"Волкова Анна Дмитриевна (QR)","kind":"equipment","dateKey":"2026-11-10","recordedAt":"2026-11-10T09:09:01.180Z","syncedAt":"2026-11-10T09:09:04.548Z","auth":"pin"}
+PASS  AC17 a past-day record is written to that day — {"by":"Крылов Денис Сергеевич (QR)","kind":"journal","dateKey":"2026-11-08","recordedAt":"2026-11-10T09:09:03.313Z","syncedAt":"2026-11-10T09:09:04.918Z","auth":"self"}
+PASS  AC7 brakerage row made without network is in the journal — finished_product document config

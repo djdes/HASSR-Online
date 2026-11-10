@@ -1,0 +1,4 @@
+PASS  only the tablet that works offline and is silent for a day is reported — reported 1
+PASS  management gets the notification — 4 notification(s): Устройство не выходило на связь больше суток
+PASS  the same silence is not reported twice — reported 0
+PASS  a new silence after coming back is reported again

@@ -1,0 +1,18 @@
+{
+  "deviceBase": {
+    "temperature": true,
+    "infection": true,
+    "respiratorySkin": true
+  },
+  "cabinetEdit": {
+    "infection": false
+  },
+  "deviceEdit": {
+    "respiratorySkin": false
+  },
+  "journalAfter": {
+    "infection": false,
+    "temperature": true,
+    "respiratorySkin": false
+  }
+}

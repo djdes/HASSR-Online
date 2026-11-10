@@ -1,0 +1,106 @@
+{
+  "task": "offline-app-phase2-2026-11",
+  "verified_at": "2026-11-10",
+  "environment": "local production build, PostgreSQL 16, demo org with rooms, Chromium via Playwright (Pixel 7 profile)",
+  "overall": "PASS in browser except AC13 (the signed APK is built by the owner); real Android device not verified",
+  "commands": {
+    "typecheck": {
+      "exit": 0
+    },
+    "test:gate": {
+      "pass": 6023,
+      "fail": 0
+    },
+    "i18n:check": {
+      "exit": 0
+    },
+    "offline unit tests": {
+      "pass": 67,
+      "fail": 0
+    },
+    "e2e/phase2.e2e.mjs": {
+      "pass": 36,
+      "fail": 0
+    },
+    "e2e/silent-device.ts": {
+      "pass": 4,
+      "fail": 0
+    },
+    "phase 1 offline.e2e.mjs": {
+      "pass": 55,
+      "fail": 0
+    },
+    "phase 1 verify-db.ts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "phase 1 signout.e2e.mjs": {
+      "pass": 8,
+      "fail": 0
+    },
+    "online-regression.mjs": {
+      "pass": 13,
+      "fail": 0
+    },
+    "e2e/photos.e2e.mjs": {
+      "pass": 7,
+      "fail": 0
+    }
+  },
+  "criteria": {
+    "AC1": {
+      "status": "PASS"
+    },
+    "AC2": {
+      "status": "PASS",
+      "note": "no journal emits a photo field today; the field was added to the form on the device for the test, and the server has nowhere to keep such links yet"
+    },
+    "AC3": {
+      "status": "PASS"
+    },
+    "AC4": {
+      "status": "PASS",
+      "note": "hygiene end to end; health and checklist by unit tests; other journals still use the form audit trail"
+    },
+    "AC5": {
+      "status": "PASS"
+    },
+    "AC6": {
+      "status": "PASS"
+    },
+    "AC7": {
+      "status": "PASS",
+      "note": "the 'older than a day' warning was not reproduced in the browser"
+    },
+    "AC8": {
+      "status": "PASS"
+    },
+    "AC9": {
+      "status": "PASS"
+    },
+    "AC10": {
+      "status": "PASS"
+    },
+    "AC11": {
+      "status": "PASS",
+      "note": "bell notification verified; push delivery not verified"
+    },
+    "AC12": {
+      "status": "PASS",
+      "note": "device label and notification titles stay Russian"
+    },
+    "AC13": {
+      "status": "PARTIAL",
+      "note": "workflow dispatch is not permitted from this environment; assetlinks fixed and instruction written; the signed APK itself is not built"
+    },
+    "AC14": {
+      "status": "PASS"
+    }
+  },
+  "not_verified": [
+    "real Android tablet",
+    "photo links of form fields stored in a journal row (no such fields exist yet)",
+    "push delivery",
+    "signed APK and Android domain verification"
+  ]
+}
