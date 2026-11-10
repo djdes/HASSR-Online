@@ -233,6 +233,15 @@ export function readRememberedBlankEmail(raw: string | null | undefined): Rememb
   }
 }
 
+/**
+ * Отправлять ли уведомление в Telegram о скачивании шаблона: только на первое
+ * скачивание пользователя (по почте или userId), чтобы пакетное скачивание
+ * нескольких журналов одним человеком не спамило чат продаж.
+ */
+export function shouldNotifyBlankDownloadAdmin(previousDownloadsCount: number): boolean {
+  return previousDownloadsCount === 0;
+}
+
 /** Текст уведомления в Telegram-бот при скачивании шаблона журнала. */
 export function buildBlankDownloadAdminText(params: {
   title: string;
