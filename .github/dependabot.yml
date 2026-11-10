@@ -1,4 +1,9 @@
 # Ежемесячные сгруппированные обновления: минимум шума, максимум закрытых уязвимостей.
+#
+# ignore — обновления, которые проверены 10.11.2026 и ломают сайт или проверки
+# (.agent/tasks/deps-update-2026-11-10/evidence.md). Патч-версии Next и React
+# (исправления безопасности 16.1.x / 19.2.x) по-прежнему предлагаются. Снять
+# правило — после ручной проверки новой версии по тому же порядку.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -8,6 +13,37 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Next 16.4 + React 19.3: откатывали (#182); новые версии Next — только вручную,
+      # с замером памяти сборки и проверкой страниц.
+      - dependency-name: "next"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # 16.4 приносит правила React Compiler: +77 ошибок линтера.
+      - dependency-name: "eslint-config-next"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # 8.12: Telegram-бот перестаёт ходить через прокси (telegram-health.test).
+      - dependency-name: "undici"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # 9.15: в стили Word добавляется цвет, печатные журналы должны быть без цвета (print-colors.test).
+      - dependency-name: "docx"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # Только промо-видео, на сайт не влияет; версии закреплены точно.
+      - dependency-name: "remotion"
+      - dependency-name: "@remotion/*"
+      # 0.x: минорная версия ломает API, интеграцию GoGetLinks отсюда целиком не проверить.
+      - dependency-name: "api-anything"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # eslint 10: плагины конфигурации ещё не совместимы.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: "/mobile"
     schedule: { interval: monthly }
@@ -15,6 +51,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 7: нет ts.transpileModule, `cap config` падает.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule: { interval: monthly }

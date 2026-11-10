@@ -609,6 +609,16 @@ jobs:
             export NEXT_DIST_DIR=.next-build
             BUILD_DIR=.next-build
 
+            # Память для сборки. Куча Node по умолчанию на сервере ~4.1 ГБ,
+            # а сборке нужно ~4.2 ГБ (Next 16.1.6) и ~5.1 ГБ (Next 16.4.5):
+            # 10.11.2026 два деплоя упали с «JavaScript heap out of memory».
+            # 8 ГБ — с запасом; пик RSS сборки ~8–10 ГБ при ~36 ГБ свободной
+            # памяти на сервере. Действует только на сборку в этом шаге:
+            # pm2 перезапускается в шаге 3 из другой оболочки.
+            # Замеры: .agent/tasks/deps-update-2026-11-10/raw/step6-build-memory.md
+            export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"
+            echo "[build] NODE_OPTIONS=$NODE_OPTIONS"
+
             echo "=== Restoring build cache (инкрементальная сборка) ==="
             # Без кеша Next собирает всё заново: 2.7 минуты вместо
             # примерно минуты. Кеш адресуется по содержимому — устаревшие
