@@ -29,6 +29,8 @@ import { readPlanPricing } from "@/lib/tariffs";
 import { BILLING_TEST_MODE, FREE_MAX_USERS, isFreePlan } from "@/lib/plan-limits";
 import { RecurringCard } from "@/components/settings/recurring-card";
 import { RenewalCard } from "@/components/settings/renewal-card";
+import { AutoRenewCard } from "@/components/settings/auto-renew-card";
+import { previewForUnit } from "@/lib/balance/auto-renew.server";
 import { RECURRING_CHARGES_LIVE } from "@/lib/recurring-consent";
 import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { PromoBadge } from "@/components/pricing/promo-price";
@@ -289,6 +291,24 @@ export default async function SubscriptionPage({
   const lifetimeAtNextCharge =
     lifetime && !(lifetime.expiresAt && nextChargeAt && new Date(lifetime.expiresAt) <= nextChargeAt) ? lifetime : null;
   const recurringRub = lifetimeAtNextCharge ? renewRub - discountForPrice(lifetimeAtNextCharge, renewRub) : renewRub;
+
+  const renewHref =
+    current && current.tier !== "legacy" && !scheduled
+      ? orderHref({ tier: current.tier, cycle: current.cycle, points: current.points })
+      : "#tariffs";
+  // Автопродление с баланса — у платного тарифа с периодом (не прежняя
+  // «Подписка»), не в приложении (там без оплаты).
+  const autoRenewPreview =
+    kind === "paid" && billing && !billing.unit.exempt && !isDemo && !inMobileApp
+      ? await previewForUnit(billing.unit, now).catch((error) => {
+          console.error("[billing] auto-renew preview failed", error);
+          return null;
+        })
+      : null;
+  const autoRenew =
+    autoRenewPreview && autoRenewPreview.renewable && (autoRenewPreview.blockedReason === null || autoRenewPreview.blockedReason === "scheduled")
+      ? autoRenewPreview
+      : null;
 
   const discountFirst = codeSource === "query" || Boolean(lifetime);
   const discountCard =
@@ -645,17 +665,24 @@ export default async function SubscriptionPage({
         />
       ) : null}
 
-      {/* Пока автосписаний нет — честная карточка «Продление»: дата,
-          напоминания за 7, 3 и 1 день, оплата следующего периода заранее. */}
-      {!RECURRING_CHARGES_LIVE && kind === "paid" && nextChargeAt ? (
-        <RenewalCard
-          paidUntil={nextChargeAt.toISOString()}
-          renewHref={
-            current && current.tier !== "legacy" && !scheduled
-              ? orderHref({ tier: current.tier, cycle: current.cycle, points: current.points })
-              : "#tariffs"
-          }
+      {/* Автопродление с баланса (как у мобильного оператора): переключатель,
+          сколько и когда спишем, хватает ли. Без него (прежняя «Подписка»,
+          приложение) — честная карточка «Продление»: дата, напоминания за
+          7, 3 и 1 день, оплата следующего периода заранее. */}
+      {autoRenew ? (
+        <AutoRenewCard
+          enabled={autoRenew.enabled}
+          canToggle={!isImpersonating(session) && !session.user.partnerAccess}
+          priceRub={autoRenew.priceRub}
+          balanceRub={autoRenew.balanceRub}
+          shortRub={autoRenew.shortRub}
+          chargeDay={autoRenew.chargeDay}
+          paidUntil={autoRenew.paidUntil}
+          blocked={autoRenew.blockedReason === "scheduled" ? "scheduled" : null}
+          renewHref={renewHref}
         />
+      ) : !RECURRING_CHARGES_LIVE && kind === "paid" && nextChargeAt ? (
+        <RenewalCard paidUntil={nextChargeAt.toISOString()} renewHref={renewHref} />
       ) : null}
 
       {/* Отключить автопродление можно всегда (оферта) — карточка есть и у

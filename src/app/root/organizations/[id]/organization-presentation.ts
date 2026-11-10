@@ -41,7 +41,7 @@ export function organizationOrderStatus(order: { status: string; paymentMethod?:
 }
 
 export function organizationKind(kind: string, t: OrganizationCopy) {
-  const known = { referral_reward: "kinds.referral_reward", review_reward: "kinds.review_reward", order_spend: "kinds.order_spend", order_release: "kinds.order_release", service_spend: "kinds.service_spend", manual_adjust: "kinds.manual_adjust", topup: "kinds.topup" } as const;
+  const known = { referral_reward: "kinds.referral_reward", review_reward: "kinds.review_reward", order_spend: "kinds.order_spend", order_release: "kinds.order_release", service_spend: "kinds.service_spend", manual_adjust: "kinds.manual_adjust", topup: "kinds.topup", subscription_charge: "kinds.subscription_charge" } as const;
   return Object.hasOwn(known, kind) ? t(known[kind as keyof typeof known]) : t("kinds.unknown");
 }
 

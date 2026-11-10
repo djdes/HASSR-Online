@@ -3696,8 +3696,8 @@
       "newClientAction": "Sozlashni yakunlash",
       "renewalAction": "Kabinetga kirish",
       "support": "To‘lov yoki pulni qaytarish bo‘yicha savollar: admin@wesetup.ru.",
-      "pointsOnlyAmount": "ballar bilan to‘landi ({points})",
-      "amountWithPoints": "{amount} (+ {points} ball bilan)"
+      "pointsOnlyAmount": "balansdan to‘landi ({points})",
+      "amountWithPoints": "{amount} (+ {points} balansdan)"
     },
     "alerts": {
       "deviation": {
@@ -9820,14 +9820,17 @@
         "showStats": "Sharh yonida WeSetup’da nechta jurnal va yozuv yuritishimizni ko‘rsatish — jurnal nomlari va ulardagi ma’lumotlarsiz."
       },
       "history": {
-        "title": "Ballar tarixi",
+        "title": "Balans tafsiloti",
         "empty": "Hozircha bo‘sh.",
         "emptyWithNextSteps": "Hozircha bo‘sh. Hamkasbingizni taklif qiling, fikr qoldiring yoki balansni to‘ldiring — birinchi ballaringiz shu yerda ko‘rinadi.",
-        "subtitle": "Har bir ball harakati sanasi, sababi va undan keyingi qoldiq bilan ko‘rsatiladi.",
+        "subtitle": "Kredit — balansga tushumlar (to‘ldirish, karta va hisob orqali to‘lovlar, bonuslar, qaytarishlar). Debet — yechimlar (tarif, xizmatlar to‘lovi). Qoldiq — har bir amaldan keyin.",
         "date": "Sana",
         "operation": "Amaliyot",
-        "amount": "Summa",
-        "total": "Jami"
+        "total": "Qoldiq",
+        "credit": "Kredit",
+        "debit": "Debet",
+        "creditTotal": "Tushdi: {amount}",
+        "debitTotal": "Yechildi: {amount}"
       }
     },
     "balanceTopup": {
@@ -16769,7 +16772,7 @@
       "sortLabel": "Avval",
       "sort": {
         "mrr": "Ko‘proq to‘laydi",
-        "newest": "Yangilar",
+        "newest": "Yangi ro‘yxatdan o‘tganlar",
         "active": "Faollar",
         "sleeping": "Uzoq kirmaganlar",
         "name": "Nomi bo‘yicha"
@@ -16779,9 +16782,9 @@
         "contact": "Kontakt",
         "plan": "Tarif",
         "activity": "Faollik",
-        "money": "MRR"
+        "money": "MRR",
+        "registered": "Ro‘yxatdan o‘tgan"
       },
-      "since": "{date} dan",
       "until": "{date} gacha",
       "points": "{count, plural, other {# nuqta}}",
       "noContact": "Kontakt yo‘q",
@@ -16789,7 +16792,8 @@
       "balance": "ballar {amount}",
       "showMore": "Yana {count, number} ta ko‘rsatish",
       "shown": "{total, number} dan {shown, number} ko‘rsatildi",
-      "open": "Kartani ochish"
+      "open": "Kartani ochish",
+      "registered": "Ro‘yxatdan o‘tgan: {date}"
     }
   },
   "publicFeatures": {
@@ -17023,7 +17027,7 @@
       "created": "{type} · {date} sanasida yaratilgan",
       "inn": " · STIR (INN) {inn}",
       "backToClients": "Barcha mijozlar",
-      "since": "{date} dan mijoz",
+      "since": "Ro‘yxatdan o‘tgan: {date}",
       "lastActivity": "Oxirgi faollik: {value}"
     },
     "stats": {
@@ -17057,7 +17061,7 @@
       "amount": "Summa",
       "documents": "Hujjatlar",
       "topup": "balansni to‘ldirish",
-      "pointsSpent": "ballar bilan −{amount, number}",
+      "pointsSpent": "balansdan −{amount, number}",
       "promotion": "aksiya −{percent, number}% (−{amount, number} ₽)",
       "promo": "{code} −{amount, number} ₽",
       "closingPdf": "Universal topshirish hujjati (PDF)"
@@ -17118,7 +17122,7 @@
       "referredCount": "Taklif qilingan tashkilotlar",
       "transactions": "Operatsiyalar",
       "empty": "Ballar bo‘yicha operatsiyalar bo‘lmagan.",
-      "adjustment": "Qo‘lda tuzatish",
+      "adjustment": "Ball qo‘shish yoki yechish",
       "credit": "Ball qo‘shish",
       "debit": "Ball yechish",
       "amountLabel": "Tuzatish summasi, ballarda",
@@ -17135,7 +17139,14 @@
       "successCredit": "Balans: {balance, number} ₽ (+{amount, number} ₽)",
       "successDebit": "Balans: {balance, number} ₽ (−{amount, number} ₽)",
       "failed": "Balansni o‘zgartirib bo‘lmadi",
-      "network": "Tarmoq mavjud emas. Qayta urinib ko‘ring"
+      "network": "Tarmoq mavjud emas. Qayta urinib ko‘ring",
+      "adjustmentHint": "Qo‘shish yoki yechish mijozning balans tarixida ko‘rinadi va amallar jurnaliga yoziladi.",
+      "topUp": "To‘ldirish",
+      "topUpLong": "Balansni to‘ldirish",
+      "topUpAria": "«{name}» balansini to‘ldirish",
+      "topUpTitle": "Ball qo‘shish yoki yechish",
+      "topUpDescription": "«{name}». Hozir balansda {balance, number} ₽.",
+      "after": "Balans {amount, number} ₽ bo‘ladi"
     },
     "kinds": {
       "referral_reward": "Taklif uchun mukofot",
@@ -17145,6 +17156,7 @@
       "service_spend": "Xizmat to‘lovi",
       "manual_adjust": "Tuzatish",
       "topup": "To‘ldirish",
+      "subscription_charge": "Tarif to‘lovi",
       "unknown": "Operatsiya"
     },
     "orders": {
@@ -17274,7 +17286,9 @@
       "archived": "Arxivda",
       "never": "Kirmagan",
       "panel": "Panel",
-      "withContacts": "{count, plural, other {# ta kontakti bor}}"
+      "withContacts": "{count, plural, other {# ta kontakti bor}}",
+      "registered": "Ro‘yxatdan o‘tgan: {date}",
+      "lastLoginAt": "Kirgan: {date}"
     },
     "security": {
       "title": "Eganing kirishlari",
@@ -29595,7 +29609,7 @@
       "colAmount": "Summa",
       "colDocuments": "Hujjatlar",
       "testBadge": "test",
-      "pointsSpent": "ballar bilan −{points}",
+      "pointsSpent": "balansdan −{points}",
       "invoicePdf": "Hisob-faktura (PDF)",
       "howCalculated": "Narx qanday hisoblanadi",
       "perMonthSuffix": "/oy",
@@ -30284,6 +30298,24 @@
       "label": "Nuqta",
       "all": "Hammasi",
       "none": "Nuqtasiz"
+    },
+    "autoRenewCard": {
+      "title": "Balansdan avtomatik uzaytirish",
+      "switchOn": "Yoqilgan",
+      "switchOff": "O‘chirilgan",
+      "onCovered": "{date} balansdan {price} yechamiz — obuna o‘zi uzayadi. Balansda {balance}.",
+      "onShort": "{date} {price} yechish kerak, balansda esa {balance} — {short} yetmaydi. Balansni to‘ldiring, obuna o‘zi uzayadi.",
+      "onNoPrice": "Muddat oxirida tarif balansdan to‘lanadi. Yechish sanasi: {date}.",
+      "off": "O‘chirilgan: obuna {date} tugaydi, uni karta yoki hisob orqali qo‘lda uzaytiring.",
+      "scheduled": "Tarif almashtirish rejalashtirilgan: {date} dan keyin to‘lov bilan boshlanadi; joriy tarif avtomatik uzaytirilmaydi.",
+      "how": "Mobil operatordagidek: karta yoki hisob orqali to‘lov balansga tushadi, muddat tugashidan bir kun oldin tarif balansdan to‘lanadi. Kartadan pul yechilmaydi. Har bir to‘ldirish va yechish balans tafsilotida.",
+      "topUp": "Balansni to‘ldirish",
+      "payNow": "Keyingi davr uchun to‘lash",
+      "detail": "Balans tafsiloti",
+      "enabledToast": "Avtomatik uzaytirish yoqildi",
+      "disabledToast": "Avtomatik uzaytirish o‘chirildi",
+      "renewedNow": "Avtomatik uzaytirish yoqildi — obuna balansdan uzaytirildi",
+      "failed": "Avtomatik uzaytirishni o‘zgartirib bo‘lmadi"
     }
   },
   "teamUi": {

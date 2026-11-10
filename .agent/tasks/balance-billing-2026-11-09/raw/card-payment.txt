@@ -1,0 +1,7 @@
+card order #2: renew, 14970 ₽
+settled claimed=true
+repeat pass-through: already
+dk ledger after card payment:
+   -14970 [subscription_charge] Оплата тарифа: Тариф «Премиум» на месяц, 3 точки, заказ №2
+   +14970 [topup] Пополнение картой, заказ №2
+   balance=10000 ledgerSum=0 subscriptionEnd=2026-12-11T02:30:42.730Z

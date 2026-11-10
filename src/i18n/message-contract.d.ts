@@ -3697,8 +3697,8 @@ export type MessageContract = {
       "newClientAction": "Завершить настройку",
       "renewalAction": "Войти в кабинет",
       "support": "Вопросы по оплате и возврату — admin@wesetup.ru.",
-      "pointsOnlyAmount": "оплачено баллами ({points})",
-      "amountWithPoints": "{amount} (+ {points} баллами)"
+      "pointsOnlyAmount": "оплачено с баланса ({points})",
+      "amountWithPoints": "{amount} (+ {points} с баланса)"
     },
     "alerts": {
       "deviation": {
@@ -9821,14 +9821,17 @@ export type MessageContract = {
         "showStats": "Показать рядом с отзывом, сколько журналов и записей мы ведём в WeSetup — без названий журналов и данных из них."
       },
       "history": {
-        "title": "История начислений",
+        "title": "Детализация баланса",
         "empty": "Пока пусто.",
         "emptyWithNextSteps": "Пока пусто. Пригласите коллегу, оставьте отзыв или пополните баланс — первые баллы появятся здесь.",
-        "subtitle": "Каждое движение баллов — с датой, причиной и остатком после операции.",
+        "subtitle": "Кредит — поступления на баланс (пополнения, оплаты картой и по счёту, бонусы, возвраты). Дебет — списания (оплата тарифа, услуг). Остаток — после каждой операции.",
         "date": "Дата",
         "operation": "Операция",
-        "amount": "Сумма",
-        "total": "Итог"
+        "total": "Остаток",
+        "credit": "Кредит",
+        "debit": "Дебет",
+        "creditTotal": "Поступило: {amount}",
+        "debitTotal": "Списано: {amount}"
       }
     },
     "balanceTopup": {
@@ -16770,7 +16773,7 @@ export type MessageContract = {
       "sortLabel": "Сначала",
       "sort": {
         "mrr": "Больше платят",
-        "newest": "Новые",
+        "newest": "Новые регистрации",
         "active": "Активные",
         "sleeping": "Давно не заходили",
         "name": "По названию"
@@ -16780,9 +16783,9 @@ export type MessageContract = {
         "contact": "Контакт",
         "plan": "Тариф",
         "activity": "Активность",
-        "money": "MRR"
+        "money": "MRR",
+        "registered": "Регистрация"
       },
-      "since": "с {date}",
       "until": "до {date}",
       "points": "{count, plural, one {# точка} few {# точки} many {# точек} other {# точки}}",
       "noContact": "Нет контактов",
@@ -16790,7 +16793,8 @@ export type MessageContract = {
       "balance": "баллы {amount}",
       "showMore": "Показать ещё {count, number}",
       "shown": "Показано {shown, number} из {total, number}",
-      "open": "Открыть карточку"
+      "open": "Открыть карточку",
+      "registered": "Регистрация {date}"
     }
   },
   "publicFeatures": {
@@ -17024,7 +17028,7 @@ export type MessageContract = {
       "created": "{type} · создана {date}",
       "inn": " · ИНН {inn}",
       "backToClients": "Все клиенты",
-      "since": "Клиент с {date}",
+      "since": "Регистрация {date}",
       "lastActivity": "Последняя активность: {value}"
     },
     "stats": {
@@ -17058,7 +17062,7 @@ export type MessageContract = {
       "amount": "Сумма",
       "documents": "Документы",
       "topup": "пополнение баланса",
-      "pointsSpent": "баллами −{amount, number}",
+      "pointsSpent": "с баланса −{amount, number}",
       "promotion": "акция −{percent, number} % (−{amount, number} ₽)",
       "promo": "{code} −{amount, number} ₽",
       "closingPdf": "УПД (PDF)"
@@ -17119,7 +17123,7 @@ export type MessageContract = {
       "referredCount": "Привела",
       "transactions": "Движений",
       "empty": "Движений по баллам не было.",
-      "adjustment": "Ручная корректировка",
+      "adjustment": "Пополнить или списать баллы",
       "credit": "Начислить",
       "debit": "Списать",
       "amountLabel": "Сумма корректировки в баллах",
@@ -17136,7 +17140,14 @@ export type MessageContract = {
       "successCredit": "Баланс: {balance, number} ₽ (+{amount, number} ₽)",
       "successDebit": "Баланс: {balance, number} ₽ (−{amount, number} ₽)",
       "failed": "Не удалось изменить баланс",
-      "network": "Сеть недоступна. Попробуйте ещё раз"
+      "network": "Сеть недоступна. Попробуйте ещё раз",
+      "adjustmentHint": "Начисление или списание видно клиенту в истории баланса и попадает в журнал действий.",
+      "topUp": "Пополнить",
+      "topUpLong": "Пополнить баланс",
+      "topUpAria": "Пополнить баланс «{name}»",
+      "topUpTitle": "Пополнить или списать баллы",
+      "topUpDescription": "«{name}». Сейчас на балансе {balance, number} ₽.",
+      "after": "Баланс станет {amount, number} ₽"
     },
     "kinds": {
       "referral_reward": "Приглашённый друг",
@@ -17146,6 +17157,7 @@ export type MessageContract = {
       "service_spend": "Оплата услуги",
       "manual_adjust": "Корректировка",
       "topup": "Пополнение",
+      "subscription_charge": "Оплата тарифа",
       "unknown": "Операция"
     },
     "orders": {
@@ -17275,7 +17287,9 @@ export type MessageContract = {
       "archived": "В архиве",
       "never": "Не заходил",
       "panel": "Панель",
-      "withContacts": "{count, plural, one {# с контактами} few {# с контактами} many {# с контактами} other {# с контактами}}"
+      "withContacts": "{count, plural, one {# с контактами} few {# с контактами} many {# с контактами} other {# с контактами}}",
+      "registered": "Регистрация {date}",
+      "lastLoginAt": "Вход {date}"
     },
     "security": {
       "title": "Входы владельца",
@@ -29596,7 +29610,7 @@ export type MessageContract = {
       "colAmount": "Сумма",
       "colDocuments": "Документы",
       "testBadge": "тест",
-      "pointsSpent": "баллами −{points}",
+      "pointsSpent": "с баланса −{points}",
       "invoicePdf": "Счёт (PDF)",
       "howCalculated": "Как считается стоимость",
       "perMonthSuffix": "/мес",
@@ -30285,6 +30299,24 @@ export type MessageContract = {
       "label": "Точка",
       "all": "Все",
       "none": "Без точки"
+    },
+    "autoRenewCard": {
+      "title": "Автопродление с баланса",
+      "switchOn": "Включено",
+      "switchOff": "Выключено",
+      "onCovered": "{date} спишем {price} с баланса — подписка продлится сама. На балансе {balance}.",
+      "onShort": "{date} нужно списать {price}, а на балансе {balance} — не хватает {short}. Пополните баланс, и подписка продлится сама.",
+      "onNoPrice": "В конце срока тариф оплатится с баланса. Списание — {date}.",
+      "off": "Выключено: подписка закончится {date}, продлите её вручную картой или по счёту.",
+      "scheduled": "Запланирована смена тарифа — она начнётся после {date} с оплаты; автопродление текущего тарифа не сработает.",
+      "how": "Как у мобильного оператора: оплата картой или по счёту зачисляется на баланс, а за сутки до конца срока тариф оплачивается с баланса. Карта не списывается. Каждое пополнение и списание — в детализации баланса.",
+      "topUp": "Пополнить баланс",
+      "payNow": "Оплатить следующий период",
+      "detail": "Детализация баланса",
+      "enabledToast": "Автопродление включено",
+      "disabledToast": "Автопродление выключено",
+      "renewedNow": "Автопродление включено — подписка уже продлена с баланса",
+      "failed": "Не удалось изменить автопродление"
     }
   },
   "teamUi": {

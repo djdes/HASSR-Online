@@ -1,0 +1,6 @@
+after top-up: {"status":"renewed","orderId":3,"priceRub":14970,"payerOrganizationId":"org-dk","paidUntil":"2026-12-10T16:31:20.749Z"}
+dk ledger:
+   -14970 [subscription_charge] Оплата тарифа с баланса: Тариф «Премиум» на месяц, 3 точки (автопродление с баланса), заказ №3
+   +6000 [topup] Пополнение картой (проверка)
+   -14970 [subscription_charge] Оплата тарифа: Тариф «Премиум» на месяц, 3 точки, заказ №2
+   balance=1030 ledgerSum=-8970 subscriptionEnd=2026-12-10T16:31:20.749Z

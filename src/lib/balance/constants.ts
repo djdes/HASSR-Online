@@ -77,7 +77,9 @@ export type BalanceTransactionKind =
   | "order_release"
   | "service_spend"
   | "manual_adjust"
-  | "topup";
+  | "topup"
+  /** Списание за тариф: оплата картой/счётом проходит через баланс, автопродление. */
+  | "subscription_charge";
 
 /** Подписи видов транзакций для истории в кабинете и у ROOT. */
 export const TRANSACTION_KIND_LABELS: Record<BalanceTransactionKind, string> = {
@@ -88,6 +90,7 @@ export const TRANSACTION_KIND_LABELS: Record<BalanceTransactionKind, string> = {
   service_spend: "Оплата услуги",
   manual_adjust: "Корректировка",
   topup: "Пополнение",
+  subscription_charge: "Оплата тарифа",
 };
 
 export function transactionKindLabel(kind: string): string {
@@ -210,4 +213,41 @@ export function readCookie(request: Request, name: string): string | null {
     }
   }
   return null;
+}
+
+export type BalanceDetailRow<T extends { amount: number }> = {
+  transaction: T;
+  /** Поступило (кредит баланса): пополнение, бонус, возврат. */
+  credit: number;
+  /** Списано (дебет баланса): оплата тарифа, услуги, корректировка в минус. */
+  debit: number;
+  /** Остаток после операции. */
+  after: number;
+};
+
+/**
+ * Детализация баланса «как у оператора»: кредит и дебет отдельными
+ * колонками и остаток после каждой операции. Строки — от новых к старым,
+ * поэтому остаток строки = текущий баланс минус всё, что было после неё.
+ */
+export function balanceDetail<T extends { amount: number }>(
+  transactions: readonly T[],
+  balanceRub: number,
+): { rows: BalanceDetailRow<T>[]; creditTotal: number; debitTotal: number } {
+  let later = 0;
+  const rows = transactions.map((transaction) => {
+    const row = {
+      transaction,
+      credit: transaction.amount > 0 ? transaction.amount : 0,
+      debit: transaction.amount < 0 ? -transaction.amount : 0,
+      after: balanceRub - later,
+    };
+    later += transaction.amount;
+    return row;
+  });
+  return {
+    rows,
+    creditTotal: rows.reduce((sum, row) => sum + row.credit, 0),
+    debitTotal: rows.reduce((sum, row) => sum + row.debit, 0),
+  };
 }

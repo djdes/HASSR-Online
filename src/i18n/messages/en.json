@@ -3696,8 +3696,8 @@
       "newClientAction": "Finish setup",
       "renewalAction": "Go to your account",
       "support": "Questions about payments or refunds? Contact admin@wesetup.ru.",
-      "pointsOnlyAmount": "paid with points ({points})",
-      "amountWithPoints": "{amount} (+ {points} in points)"
+      "pointsOnlyAmount": "paid from the balance ({points})",
+      "amountWithPoints": "{amount} (+ {points} from the balance)"
     },
     "alerts": {
       "deviation": {
@@ -9820,14 +9820,17 @@
         "showStats": "Show next to the review how many journals and records we keep in WeSetup — without journal names or their data."
       },
       "history": {
-        "title": "Points history",
+        "title": "Balance details",
         "empty": "Nothing here yet.",
         "emptyWithNextSteps": "Nothing here yet. Invite a colleague, leave a review, or add funds to earn your first points.",
-        "subtitle": "Each points transaction shows its date, reason, and balance afterward.",
+        "subtitle": "Credit: money added to the balance (top-ups, card and invoice payments, bonuses, refunds). Debit: charges (plan, services). Balance: after each operation.",
         "date": "Date",
         "operation": "Transaction",
-        "amount": "Amount",
-        "total": "Balance"
+        "total": "Balance",
+        "credit": "Credit",
+        "debit": "Debit",
+        "creditTotal": "Added: {amount}",
+        "debitTotal": "Charged: {amount}"
       }
     },
     "balanceTopup": {
@@ -16769,7 +16772,7 @@
       "sortLabel": "Sort by",
       "sort": {
         "mrr": "Highest MRR",
-        "newest": "Newest",
+        "newest": "Newest sign-ups",
         "active": "Most active",
         "sleeping": "Idle longest",
         "name": "Name"
@@ -16779,9 +16782,9 @@
         "contact": "Contact",
         "plan": "Plan",
         "activity": "Activity",
-        "money": "MRR"
+        "money": "MRR",
+        "registered": "Registered"
       },
-      "since": "since {date}",
       "until": "until {date}",
       "points": "{count, plural, one {# location} other {# locations}}",
       "noContact": "No contacts",
@@ -16789,7 +16792,8 @@
       "balance": "points {amount}",
       "showMore": "Show {count, number} more",
       "shown": "Shown {shown, number} of {total, number}",
-      "open": "Open card"
+      "open": "Open card",
+      "registered": "Registered {date}"
     }
   },
   "publicFeatures": {
@@ -17023,7 +17027,7 @@
       "created": "{type} · created {date}",
       "inn": " · INN {inn}",
       "backToClients": "All clients",
-      "since": "Client since {date}",
+      "since": "Registered {date}",
       "lastActivity": "Last activity: {value}"
     },
     "stats": {
@@ -17057,7 +17061,7 @@
       "amount": "Amount",
       "documents": "Documents",
       "topup": "balance top-up",
-      "pointsSpent": "points −{amount, number}",
+      "pointsSpent": "from balance −{amount, number}",
       "promotion": "promotion −{percent, number}% (−{amount, number} ₽)",
       "promo": "{code} −{amount, number} ₽",
       "closingPdf": "Universal transfer document (PDF)"
@@ -17118,7 +17122,7 @@
       "referredCount": "Organizations referred",
       "transactions": "Transactions",
       "empty": "There have been no points transactions.",
-      "adjustment": "Manual adjustment",
+      "adjustment": "Top up or deduct points",
       "credit": "Credit",
       "debit": "Deduct",
       "amountLabel": "Adjustment amount in points",
@@ -17135,7 +17139,14 @@
       "successCredit": "Balance: {balance, number} ₽ (+{amount, number} ₽)",
       "successDebit": "Balance: {balance, number} ₽ (−{amount, number} ₽)",
       "failed": "Could not change the balance",
-      "network": "Network unavailable. Please try again"
+      "network": "Network unavailable. Please try again",
+      "adjustmentHint": "Credits and deductions appear in the customer's balance history and in the audit log.",
+      "topUp": "Top up",
+      "topUpLong": "Top up balance",
+      "topUpAria": "Top up the balance of “{name}”",
+      "topUpTitle": "Top up or deduct points",
+      "topUpDescription": "“{name}”. Current balance: {balance, number} ₽.",
+      "after": "The balance will be {amount, number} ₽"
     },
     "kinds": {
       "referral_reward": "Referral reward",
@@ -17145,6 +17156,7 @@
       "service_spend": "Service payment",
       "manual_adjust": "Adjustment",
       "topup": "Top-up",
+      "subscription_charge": "Plan payment",
       "unknown": "Transaction"
     },
     "orders": {
@@ -17272,9 +17284,11 @@
       "status": "Status",
       "ownerBadge": "Owner",
       "archived": "Archived",
-      "never": "Never",
+      "never": "Never signed in",
       "panel": "Panel",
-      "withContacts": "{count, plural, one {# with contacts} other {# with contacts}}"
+      "withContacts": "{count, plural, one {# with contacts} other {# with contacts}}",
+      "registered": "Registered {date}",
+      "lastLoginAt": "Signed in {date}"
     },
     "security": {
       "title": "Owner sign-ins",
@@ -29595,7 +29609,7 @@
       "colAmount": "Amount",
       "colDocuments": "Documents",
       "testBadge": "test",
-      "pointsSpent": "by points −{points}",
+      "pointsSpent": "from balance −{points}",
       "invoicePdf": "Invoice (PDF)",
       "howCalculated": "How the price is calculated",
       "perMonthSuffix": "/month",
@@ -30284,6 +30298,24 @@
       "label": "Point",
       "all": "All",
       "none": "No point"
+    },
+    "autoRenewCard": {
+      "title": "Auto-renewal from balance",
+      "switchOn": "On",
+      "switchOff": "Off",
+      "onCovered": "On {date} we will deduct {price} from the balance and the subscription will renew itself. Balance: {balance}.",
+      "onShort": "On {date} we need to deduct {price}, but the balance is {balance}: {short} short. Top up the balance and the subscription will renew itself.",
+      "onNoPrice": "At the end of the term the plan is paid from the balance. Charge date: {date}.",
+      "off": "Off: the subscription ends on {date}; renew it manually by card or invoice.",
+      "scheduled": "A plan change is scheduled: it starts after {date} once paid; the current plan will not auto-renew.",
+      "how": "Like a mobile operator: card or invoice payments go to the balance, and a day before the term ends the plan is paid from the balance. The card is never charged. Every top-up and charge is in the balance details.",
+      "topUp": "Top up balance",
+      "payNow": "Pay for the next period",
+      "detail": "Balance details",
+      "enabledToast": "Auto-renewal is on",
+      "disabledToast": "Auto-renewal is off",
+      "renewedNow": "Auto-renewal is on: the subscription has already been renewed from the balance",
+      "failed": "Could not change auto-renewal"
     }
   },
   "teamUi": {

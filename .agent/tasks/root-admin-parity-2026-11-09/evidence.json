@@ -1,0 +1,62 @@
+{
+  "task": "root-admin-parity-2026-11-09",
+  "branch": "claude/confident-faraday-3pbaul",
+  "base": "b1747297",
+  "checkedAt": "2026-11-09",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/root/metrics-table.tsx",
+        "src/lib/root-metrics-localization.test.ts",
+        "raw/browser-check.txt",
+        "raw/01-clients-admin.png",
+        "raw/07-phone-clients.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/root/organizations/[id]/page.tsx",
+        "src/lib/root-organization-management-localization.test.ts",
+        "raw/browser-check.txt",
+        "raw/04-client-card.png"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/root/organizations/[id]/balance-top-up.tsx",
+        "src/app/root/organizations/[id]/balance-card.tsx",
+        "src/app/root/metrics-table.tsx",
+        "raw/browser-check.txt",
+        "raw/db-after-top-up.txt",
+        "raw/02-top-up-dialog.png",
+        "raw/03-after-top-up.png",
+        "raw/05-client-card-balance.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/platform-access.ts",
+        "src/lib/auth.ts",
+        "src/lib/platform-access.test.ts",
+        "raw/session-ab.txt",
+        "raw/browser-check.txt",
+        "raw/06-impersonated-dashboard.png"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.log",
+        "raw/test-gate.log",
+        "raw/i18n-check.log",
+        "raw/eslint.log",
+        "raw/focused-tests.log"
+      ],
+      "note": "Merge into master happens after the PR is opened; the deploy workflow verifies production."
+    }
+  }
+}

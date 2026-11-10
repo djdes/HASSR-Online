@@ -17,6 +17,7 @@ import { ImpersonateButton } from "./impersonate-button";
 import { DeleteOrgButton } from "./delete-org-button";
 import { OrgSettingsForm } from "./org-settings-form";
 import { BalanceCard } from "./balance-card";
+import { BalanceTopUpButton } from "./balance-top-up";
 import { HeldOrderActions } from "./held-order-actions";
 import { InvoiceActions } from "./invoice-actions";
 import { CopyButton } from "./copy-button";
@@ -38,8 +39,9 @@ const SECTION_TITLE = "text-[17px] font-semibold tracking-[-0.01em] text-[#0b102
  * Карточка клиента в панели платформы (переделана 2026-10-29): сверху —
  * как связаться (телефоны и почты владельца, компании, сотрудников) и
  * реквизиты, затем документы, подписка и оплаты, сотрудники и входы.
- * Деньги меняет только тот, у кого раздел «Оплаты и тарифы»; войти под
- * клиента и удалить организацию — только владелец платформы.
+ * Деньги меняет только тот, у кого раздел «Оплаты и тарифы» («Пополнить
+ * баланс» — в шапке и в блоке баллов); войти под клиента и удалить
+ * организацию — владелец и администратор платформы (все разделы).
  */
 export default async function OrganizationDetailPage({ params }: PageProps) {
   const session = await requireRoot();
@@ -206,9 +208,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               <AccountManagerControl organizationId={org.id} current={accountManager} options={managerOptions} canAssign={canAssignManager} />
             </div>
           </div>
-          {canEnterClientCabinets(viewer) ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <ImpersonateButton organizationId={org.id} organizationName={org.name} />
+          {/* Действия над клиентом — одинаковые у владельца и администратора:
+              войти в кабинет, пополнить баланс, удалить. */}
+          {canEnterClientCabinets(viewer) || canBill ? (
+            <div className="flex flex-wrap items-center gap-2" data-client-actions>
+              {canEnterClientCabinets(viewer) ? <ImpersonateButton organizationId={org.id} organizationName={org.name} /> : null}
+              {canBill ? <BalanceTopUpButton organizationId={org.id} organizationName={org.name} balanceRub={org.balanceRub} size="regular" /> : null}
               {viewer.superadmin ? <DeleteOrgButton organizationId={org.id} organizationName={org.name} /> : null}
             </div>
           ) : null}
@@ -534,8 +539,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                     </div>
                   ) : null}
                 </div>
-                <div className="text-[12.5px] text-[#6f7282]">
-                  {person.lastLoginAt ? organizationDate(new Date(person.lastLoginAt), locale) : t("people.never")}
+                <div className="text-[12.5px] text-[#6f7282]" data-person-dates>
+                  <div>{person.lastLoginAt ? t("people.lastLoginAt", { date: organizationDate(new Date(person.lastLoginAt), locale) }) : t("people.never")}</div>
+                  <div className="text-[#9b9fb3]">{t("people.registered", { date: organizationDate(new Date(person.createdAt), locale, true) })}</div>
                 </div>
                 <div className="md:text-right">
                   {viewer.superadmin && !person.isRoot ? <PanelAccessButton

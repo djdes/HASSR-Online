@@ -56,6 +56,15 @@ test("actual organization page retains ROOT gate, tenant reads, totals, custom v
     const html = await render(locale, await Page(context()));
     for (const literal of ["Customer &lt;&amp;&gt;", "Custom sphere", "Custom role", "Customer plan", "Customer employee", "Customer referrer", "001234", "a@example.test"]) assert.ok(html.includes(literal), literal);
     assert.ok(calls.some(c => JSON.stringify(c) === JSON.stringify({ where: { organizationId: "org-a", status: "active" } })));
+    // «Пополнить баланс» — в шапке рядом с «Войти» и в блоке баллов; одно и то же окно.
+    const copy = createTranslator({ locale, messages: catalogs, namespace: "rootOrganizationManagement" });
+    assert.equal(html.split('data-balance-top-up="org-a"').length - 1, 2);
+    assert.ok(html.includes(copy("balance.topUpLong")));
+    assert.ok(html.includes(copy("balance.adjustment")));
+    // Дата регистрации — подписана: в шапке и у сотрудников.
+    const registered = new Date("2026-10-15T23:30:00Z").toLocaleDateString(FORMAT_LOCALES[locale]);
+    assert.ok(html.includes(copy("page.since", { date: registered })), "регистрация организации");
+    assert.ok(html.includes(copy("people.registered", { date: registered })), "регистрация сотрудника");
     if (!empty) { assert.ok(html.includes("Оригинальный комментарий клиента")); assert.ok(html.includes('/api/closing-documents/101/pdf')); assert.ok(html.includes('/api/payments/invoice/102/pdf')); assert.ok(html.includes("CUSTOMER")); }
     calls.length = 0; denied = true; await assert.rejects(Page(context()), /ROOT_DENIED/); assert.deepEqual(calls, ["guard"]);
     denied = false; missing = true; calls.length = 0; await assert.rejects(Page(context()), /NOT_FOUND/); assert.equal(calls.length, 2);

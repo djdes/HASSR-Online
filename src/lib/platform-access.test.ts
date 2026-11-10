@@ -8,6 +8,7 @@ import {
   PLATFORM_SECTION_KEYS,
   canAccessPlatformPath,
   canEnterClientCabinets,
+  canEnterClientCabinetsAsUser,
   canImpersonateFromToken,
   canUseTranslationEditor,
   effectivePlatformSections,
@@ -196,4 +197,22 @@ test("«Войти» в кабинет клиента: владелец и ад�
   assert.equal(canImpersonateFromToken({ platformSections: [...PLATFORM_SECTION_KEYS] }), true);
   assert.equal(canImpersonateFromToken({ platformSections: ["clients", "support"] }), false);
   assert.equal(canImpersonateFromToken({}), false);
+});
+
+test("«Войти» по записи из БД: разделы как в панели (с «Переводами» переводчика), охват и активность", () => {
+  const withoutTranslations = PLATFORM_SECTION_KEYS.filter((key) => key !== "translations");
+  const base = { isRoot: false, isActive: true, archivedAt: null, platformRole: null };
+  // Владелец — всегда.
+  assert.equal(canEnterClientCabinetsAsUser({ isRoot: true }), true);
+  // Администратор: все разделы.
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: [...PLATFORM_SECTION_KEYS] }), true);
+  // «Переводы» даны флажком переводчика — тоже администратор (как в панели и в токене).
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: withoutTranslations, canEditTranslations: true }), true);
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: withoutTranslations, canEditTranslations: false }), false);
+  // Охват «свои», неполный набор, выключенный и архивный — нет.
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: [...PLATFORM_SECTION_KEYS], platformRole: { scope: "own" } }), false);
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: [...PLATFORM_SECTION_KEYS], platformRole: { scope: "all" } }), true);
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: ["clients", "billing"] }), false);
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: [...PLATFORM_SECTION_KEYS], isActive: false }), false);
+  assert.equal(canEnterClientCabinetsAsUser({ ...base, platformSections: [...PLATFORM_SECTION_KEYS], archivedAt: new Date() }), false);
 });

@@ -26,6 +26,7 @@ import {
   REVIEW_TEXT_MIN_LENGTH,
   TOPUP_MAX_RUB,
   TOPUP_MIN_RUB,
+  balanceDetail,
   formatPoints,
   reviewKindFromMime,
   reviewRewardFor,
@@ -1074,28 +1075,56 @@ function HistorySection({
     );
   }
 
-  // Остаток после каждой операции. Список отсортирован от новых к
-  // старым, поэтому «итог» строки — текущий баланс минус всё, что
-  // случилось после неё. Считаем без накопителя: мутировать переменную
-  // в рендере нельзя (react-hooks/immutability).
-  const rows = data.transactions.map((transaction, index) => ({
-    transaction,
-    after:
-      data.balanceRub -
-      data.transactions
-        .slice(0, index)
-        .reduce((sum, later) => sum + later.amount, 0),
-  }));
+  // Детализация «как у оператора»: кредит (поступило) и дебет (списано)
+  // отдельными колонками, остаток после каждой операции, итоги сверху.
+  const detail = balanceDetail(data.transactions, data.balanceRub);
+  const muted = mini ? { color: "var(--mini-text-muted)" } : undefined;
 
   return (
+    <div id="history" className="scroll-mt-24" data-balance-detail>
     <Section
       mini={mini}
       icon={<Coins className={mini ? "size-5" : "size-5 text-[#3848c7]"} />}
       title={t("history.title")}
       subtitle={t("history.subtitle")}
     >
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[420px] text-[13.5px]">
+      <div className="mb-3 flex flex-wrap gap-2 text-[13px]" data-balance-totals>
+        <span className="rounded-full bg-[#ecfdf5] px-3 py-1 font-medium tabular-nums text-[#116b2a]">
+          {t("history.creditTotal", { amount: formatPoints(detail.creditTotal) })}
+        </span>
+        <span className="rounded-full bg-[#fff4f2] px-3 py-1 font-medium tabular-nums text-[#a13a32]">
+          {t("history.debitTotal", { amount: formatPoints(detail.debitTotal) })}
+        </span>
+      </div>
+      {/* Телефон: карточки — сумма рядом с операцией, без прокрутки вбок. */}
+      <ul className="sm:hidden" data-balance-detail-list>
+        {detail.rows.map(({ transaction, credit, debit, after }) => (
+          <li
+            key={transaction.id}
+            className={mini ? "py-3" : "border-t border-[#f2f3f8] py-3 first:border-t-0"}
+            style={mini ? { borderTop: "1px solid var(--mini-divider)" } : undefined}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className="min-w-0 text-[13.5px] leading-snug" style={mini ? { color: "var(--mini-text)" } : undefined}>
+                {transaction.description}
+              </span>
+              <span className={`shrink-0 tabular-nums text-[14px] font-semibold ${credit > 0 ? "text-[#116b2a]" : "text-[#a13a32]"}`}>
+                {credit > 0 ? `+${formatPoints(credit)}` : `−${formatPoints(debit)}`}
+              </span>
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3 text-[12px] text-[#9b9fb3]" style={muted}>
+              <span>
+                {new Date(transaction.createdAt).toLocaleDateString(locale)} · {credit > 0 ? t("history.credit") : t("history.debit")}
+              </span>
+              <span className="tabular-nums">
+                {t("history.total")}: {formatPoints(after)}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto sm:block">
+        <table className="ds-no-scroll w-full min-w-[600px] text-[13.5px]">
           <thead>
             <tr
               className={
@@ -1105,45 +1134,39 @@ function HistorySection({
               }
               style={mini ? { color: "var(--mini-text-faint)" } : undefined}
             >
-              <th className="pb-2 font-medium">{t("history.date")}</th>
-              <th className="pb-2 font-medium">{t("history.operation")}</th>
-              <th className="pb-2 text-right font-medium">{t("history.amount")}</th>
-              <th className="pb-2 text-right font-medium">{t("history.total")}</th>
+              <th className="pb-2 pr-4 font-medium">{t("history.date")}</th>
+              <th className="pb-2 pr-4 font-medium">{t("history.operation")}</th>
+              <th className="whitespace-nowrap pb-2 pl-3 text-right font-medium">{t("history.credit")}</th>
+              <th className="whitespace-nowrap pb-2 pl-3 text-right font-medium">{t("history.debit")}</th>
+              <th className="whitespace-nowrap pb-2 pl-3 text-right font-medium">{t("history.total")}</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ transaction, after }) => (
+            {detail.rows.map(({ transaction, credit, debit, after }) => (
               <tr
                 key={transaction.id}
                 className={mini ? "" : "border-t border-[#f2f3f8]"}
                 style={
                   mini ? { borderTop: "1px solid var(--mini-divider)" } : undefined
                 }
+                data-balance-row={credit > 0 ? "credit" : "debit"}
               >
-                <td
-                  className="py-2.5 whitespace-nowrap"
-                  style={mini ? { color: "var(--mini-text-muted)" } : undefined}
-                >
+                <td className="py-2.5 pr-4 whitespace-nowrap align-top" style={muted}>
                   {new Date(transaction.createdAt).toLocaleDateString(locale)}
                 </td>
                 <td
-                  className="py-2.5"
+                  className="py-2.5 pr-4 align-top"
                   style={mini ? { color: "var(--mini-text)" } : undefined}
                 >
                   {transaction.description}
                 </td>
-                <td
-                  className={`py-2.5 text-right tabular-nums font-medium ${
-                    transaction.amount > 0 ? "text-[#116b2a]" : "text-[#a13a32]"
-                  }`}
-                >
-                  {transaction.amount > 0 ? "+" : "−"}
-                  {formatPoints(Math.abs(transaction.amount))}
+                <td className="whitespace-nowrap py-2.5 pl-3 text-right align-top tabular-nums font-medium text-[#116b2a]">
+                  {credit > 0 ? `+${formatPoints(credit)}` : ""}
                 </td>
-                <td
-                  className="py-2.5 text-right tabular-nums"
-                  style={mini ? { color: "var(--mini-text-muted)" } : undefined}
-                >
+                <td className="whitespace-nowrap py-2.5 pl-3 text-right align-top tabular-nums font-medium text-[#a13a32]">
+                  {debit > 0 ? `−${formatPoints(debit)}` : ""}
+                </td>
+                <td className="whitespace-nowrap py-2.5 pl-3 text-right align-top tabular-nums" style={muted}>
                   {formatPoints(after)}
                 </td>
               </tr>
@@ -1152,5 +1175,6 @@ function HistorySection({
         </table>
       </div>
     </Section>
+    </div>
   );
 }

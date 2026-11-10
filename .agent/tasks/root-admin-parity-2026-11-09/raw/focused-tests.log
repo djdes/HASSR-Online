@@ -1,0 +1,185 @@
+TAP version 13
+# Subtest: catalog terminology exceptions cannot hide the same word in journal messages
+ok 1 - catalog terminology exceptions cannot hide the same word in journal messages
+  ---
+  duration_ms: 1.21587
+  type: 'test'
+  ...
+# Subtest: в текстах для человека нет слова «бланк» — кроме исключений
+ok 2 - в текстах для человека нет слова «бланк» — кроме исключений
+  ---
+  duration_ms: 1.429867
+  type: 'test'
+  ...
+# видимых «бланк»: 62, все в исключениях: 62 (8 файлов)
+# Subtest: исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+ok 3 - исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+  ---
+  duration_ms: 0.564479
+  type: 'test'
+  ...
+# Subtest: журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+ok 4 - журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+  ---
+  duration_ms: 0.347216
+  type: 'test'
+  ...
+# Subtest: сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+ok 5 - сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+  ---
+  duration_ms: 0.978416
+  type: 'test'
+  ...
+# Subtest: every /root page and /api/root route is classified explicitly
+ok 6 - every /root page and /api/root route is classified explicitly
+  ---
+  duration_ms: 41.000669
+  type: 'test'
+  ...
+# Subtest: gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 7 - gates: clients card, billing mutations, owner-only actions, unknown paths
+  ---
+  duration_ms: 1.602268
+  type: 'test'
+  ...
+# Subtest: delegated viewer sees only own sections; superadmin sees everything
+ok 8 - delegated viewer sees only own sections; superadmin sees everything
+  ---
+  duration_ms: 1.201755
+  type: 'test'
+  ...
+# Subtest: presets use known sections and are recognised back
+ok 9 - presets use known sections and are recognised back
+  ---
+  duration_ms: 1.179207
+  type: 'test'
+  ...
+# Subtest: a translator gets the «Переводы» section on top of the granted ones
+ok 10 - a translator gets the «Переводы» section on top of the granted ones
+  ---
+  duration_ms: 0.260745
+  type: 'test'
+  ...
+# Subtest: a translator alone opens the panel on «Переводы» and nothing else
+ok 11 - a translator alone opens the panel on «Переводы» and nothing else
+  ---
+  duration_ms: 4.868425
+  type: 'test'
+  ...
+# Subtest: appointing translators is the owner's: it hands out panel access
+ok 12 - appointing translators is the owner's: it hands out panel access
+  ---
+  duration_ms: 0.620405
+  type: 'test'
+  ...
+# Subtest: the panel entry link can carry the tab to open
+ok 13 - the panel entry link can carry the tab to open
+  ---
+  duration_ms: 0.154716
+  type: 'test'
+  ...
+# Subtest: the panel entry opens `next` only when it is a panel page the person may open
+ok 14 - the panel entry opens `next` only when it is a panel page the person may open
+  ---
+  duration_ms: 1.005454
+  type: 'test'
+  ...
+# Subtest: translation editor: owner, translator or the «Переводы» section; never disabled or archived people
+ok 15 - translation editor: owner, translator or the «Переводы» section; never disabled or archived people
+  ---
+  duration_ms: 0.427725
+  type: 'test'
+  ...
+# Subtest: «Войти» в кабинет клиента: владелец и администратор, не частичный набор
+ok 16 - «Войти» в кабинет клиента: владелец и администратор, не частичный набор
+  ---
+  duration_ms: 0.558115
+  type: 'test'
+  ...
+# Subtest: «Войти» по записи из БД: разделы как в панели (с «Переводами» переводчика), охват и активность
+ok 17 - «Войти» по записи из БД: разделы как в панели (с «Переводами» переводчика), охват и активность
+  ---
+  duration_ms: 0.217807
+  type: 'test'
+  ...
+# Subtest: actual ROOT metrics page gates reads, retains one now anchor and original totals/pricing/customer values
+ok 18 - actual ROOT metrics page gates reads, retains one now anchor and original totals/pricing/customer values
+  ---
+  duration_ms: 1438.438626
+  type: 'test'
+  ...
+# Subtest: actual metrics table renders empty/populated/missing values in all locales and legacy row actions keep RU defaults
+ok 19 - actual metrics table renders empty/populated/missing values in all locales and legacy row actions keep RU defaults
+  ---
+  duration_ms: 184.916845
+  type: 'test'
+  ...
+# Subtest: journal presentation localizes only recognized sources and preserves custom/unknown template and plan values
+ok 20 - journal presentation localizes only recognized sources and preserves custom/unknown template and plan values
+  ---
+  duration_ms: 7.286122
+  type: 'test'
+  ...
+# Subtest: date/relative presentation preserves timezone basis, 24-hour/30-day thresholds and shared now
+ok 21 - date/relative presentation preserves timezone basis, 24-hour/30-day thresholds and shared now
+  ---
+  duration_ms: 23.000153
+  type: 'test'
+  ...
+# Subtest: демо-организации — только во вкладке «Демо»: в «Все» и «Новых» их выдуманные сотрудники не дублируют людей
+ok 22 - демо-организации — только во вкладке «Демо»: в «Все» и «Новых» их выдуманные сотрудники не дублируют людей
+  ---
+  duration_ms: 0.511834
+  type: 'test'
+  ...
+# Subtest: список клиентов: дата регистрации подписана колонкой, «Пополнить» и «Войти» — у кого есть права, на компьютере и телефоне
+ok 23 - список клиентов: дата регистрации подписана колонкой, «Пополнить» и «Войти» — у кого есть права, на компьютере и телефоне
+  ---
+  duration_ms: 180.689484
+  type: 'test'
+  ...
+# Subtest: actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+ok 24 - actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+  ---
+  duration_ms: 2476.16781
+  type: 'test'
+  ...
+# Subtest: actual presenters preserve unknown values, role aliases, order distinctions, currency and unsafe descriptor rejection
+ok 25 - actual presenters preserve unknown values, role aliases, order distinctions, currency and unsafe descriptor rejection
+  ---
+  duration_ms: 111.356925
+  type: 'test'
+  ...
+# Subtest: actual PATCH/DELETE descriptors retain legacy statuses, fields, tenant mutations and audit values
+ok 26 - actual PATCH/DELETE descriptors retain legacy statuses, fields, tenant mutations and audit values
+  ---
+  duration_ms: 52.542528
+  type: 'test'
+  ...
+# Subtest: actual balance route descriptors preserve validation, ledger/audit data and notification side effects
+ok 27 - actual balance route descriptors preserve validation, ledger/audit data and notification side effects
+  ---
+  duration_ms: 122.570751
+  type: 'test'
+  ...
+# Subtest: actual invoice routes retain identifiers, statuses and audit output with additive descriptors
+ok 28 - actual invoice routes retain identifiers, statuses and audit output with additive descriptors
+  ---
+  duration_ms: 12.417828
+  type: 'test'
+  ...
+# Subtest: actual impersonation keeps guard, audit/customer values and session claims while hiding rewrite details in descriptors
+ok 29 - actual impersonation keeps guard, audit/customer values and session claims while hiding rewrite details in descriptors
+  ---
+  duration_ms: 11.918775
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32856.177441

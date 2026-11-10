@@ -244,6 +244,8 @@ export type BillingUnit = {
   enabledJournals: number;
   /** Точек в работе: Σ max(1, зданий). */
   pointsInUse: number;
+  /** Автопродление с баланса (`Account.autoRenew`); без аккаунта — нет. */
+  autoRenew: boolean;
 };
 
 function maxDate(dates: Array<Date | null | undefined>): Date | null {
@@ -263,6 +265,7 @@ const ACCOUNT_SELECT = {
   planPoints: true,
   trialEndsAt: true,
   scheduledPlanJson: true,
+  autoRenew: true,
   createdAt: true,
 } as const;
 
@@ -328,6 +331,7 @@ export async function loadBillingUnit(organizationId: string): Promise<BillingUn
     scheduledPlan: parseScheduledPlan(org.account?.scheduledPlanJson),
     enabledJournals: Math.max(0, ...scopeOrgs.map((o) => enabledJournalCount(codes, o.disabledJournalCodes))),
     pointsInUse: countPointsInUse(scopeOrgs.map((o) => o._count.buildings)),
+    autoRenew: org.account?.autoRenew ?? false,
   };
 }
 
@@ -1183,7 +1187,7 @@ export async function ownerContact(organizationId: string): Promise<OwnerContact
   return manager ? pick(manager) : null;
 }
 
-async function sendOwnerNotice(args: {
+export async function sendOwnerNotice(args: {
   organizationId: string;
   kind: string;
   telegramText: string;
@@ -1360,24 +1364,51 @@ async function sendPaidEndingReminder(
     graceDays: settings.graceDays,
     transitionEnabled: settings.transitionEnabled,
   });
-  const payUrl = `${APP_URL}${BILLING_PAY_HREF}`;
+  // Автопродление с баланса включено: вместо «продлите заранее» — сколько и
+  // когда спишем и хватает ли на балансе (иначе — «пополните»).
+  const autoLine = unit.autoRenew ? await autoRenewReminderFor(unit) : null;
+  const covered = autoLine?.covered === true;
+  const renewText = autoLine ? autoLine.text : copy.renew;
+  const payUrl = `${APP_URL}${autoLine && !covered ? "/settings/balance" : BILLING_PAY_HREF}`;
+  const buttonLabel = autoLine ? (covered ? "Открыть тариф" : "Пополнить баланс") : "Продлить";
   await sendOwnerNotice({
     organizationId: unit.organizationId,
     kind: "billing.paid_reminder",
-    buttonLabel: "Продлить",
-    telegramText: ["⏳ " + copy.head, copy.renew, copy.after].filter(Boolean).join(" "),
+    buttonLabel,
+    telegramText: ["⏳ " + copy.head, renewText, covered ? "" : copy.after].filter(Boolean).join(" "),
     email: {
-      subject: `«${unit.organizationName}»: оплата заканчивается ${lastDay}`,
-      title: "Оплата заканчивается",
+      subject: covered
+        ? `«${unit.organizationName}»: ${lastDay} продлим подписку с баланса`
+        : `«${unit.organizationName}»: оплата заканчивается ${lastDay}`,
+      title: covered ? "Подписка продлится сама" : "Оплата заканчивается",
       html:
         `<p ${P}>Здравствуйте!</p>` +
         `<p ${P}>${copy.head}</p>` +
-        `<div ${BOX}>${copy.renew}</div>` +
-        (copy.after ? `<p ${P}>${copy.after}</p>` : "") +
-        `<a href="${payUrl}" ${BUTTON}>Продлить</a>`,
+        `<div ${BOX}>${escapeHtml(renewText)}</div>` +
+        (copy.after && !covered ? `<p ${P}>${copy.after}</p>` : "") +
+        `<a href="${payUrl}" ${BUTTON}>${buttonLabel}</a>`,
     },
   });
   return true;
+}
+
+/** Строка автопродления для напоминания; null — тариф сам не продлится (смена тарифа, прежняя подписка…). */
+async function autoRenewReminderFor(unit: BillingUnit): Promise<{ text: string; covered: boolean } | null> {
+  try {
+    const [{ previewForUnit }, { autoRenewReminderLine }] = await Promise.all([
+      import("@/lib/balance/auto-renew.server"),
+      import("@/lib/balance/auto-renew-core"),
+    ]);
+    const preview = await previewForUnit(unit, new Date());
+    if (preview.blockedReason || preview.priceRub === null || !preview.chargeDay) return null;
+    return {
+      text: autoRenewReminderLine({ priceRub: preview.priceRub, balanceRub: preview.balanceRub, chargeDayLabel: preview.chargeDay }),
+      covered: preview.shortRub === 0,
+    };
+  } catch (error) {
+    console.error("[billing] auto-renew reminder preview failed", { unit: unit.key, error });
+    return null;
+  }
 }
 
 async function sendTrialEndingReminder(
@@ -1472,6 +1503,7 @@ export async function listBillingUnits(): Promise<UnitRow[]> {
         scheduledPlan: parseScheduledPlan(org.account?.scheduledPlanJson),
         enabledJournals: journalsHere,
         pointsInUse: pointsHere,
+        autoRenew: org.account?.autoRenew ?? false,
       });
       continue;
     }
@@ -1512,11 +1544,15 @@ export type BillingJobReport = {
   trialReminded: number;
   /** Напоминания о конце оплаченного срока (7, 3, 1 день). */
   paidReminded: number;
+  /** Продлено с баланса (в dryRun — продлилось бы). */
+  autoRenewed: number;
+  /** Автопродление включено, но на балансе не хватает. */
+  autoRenewShort: number;
   silentFree: number;
   reminded: number;
   autoFree: number;
   failed: number;
-  results: Array<{ unit: string; organizationId: string; action: TransitionAction; activeUsers: number; outcome: string }>;
+  results: Array<{ unit: string; organizationId: string; action: TransitionAction | "auto_renew"; activeUsers: number; outcome: string }>;
 };
 
 /** Цены «от» для писем: месячная цена при оплате за год, одна точка. */
@@ -1548,6 +1584,8 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     scanned: 0,
     trialReminded: 0,
     paidReminded: 0,
+    autoRenewed: 0,
+    autoRenewShort: 0,
     silentFree: 0,
     reminded: 0,
     autoFree: 0,
@@ -1563,8 +1601,37 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
   // напоминание за 3 дня — только когда сценарий выключен.
   const { readLifecycleSettings } = await import("@/lib/crm/tasks.server");
   const lifecycleOn = (await readLifecycleSettings()).enabled;
+  const { runAutoRenewForUnit } = await import("@/lib/balance/auto-renew.server");
   for (const unit of units) {
     const state = stateForUnit(unit, settings, now);
+    // Автопродление с баланса — раньше напоминаний и перехода на бесплатный:
+    // продлили — у аккаунта новый срок, остальное ему не нужно.
+    const renewal = await runAutoRenewForUnit(unit, state, now, { dryRun }).catch(
+      (error): { status: "failed"; error: string } => ({ status: "failed", error: error instanceof Error ? error.message : String(error) }),
+    );
+    if (renewal.status !== "skipped") {
+      const outcome =
+        renewal.status === "renewed"
+          ? `auto-renewed from balance: order #${renewal.orderId}, ${renewal.priceRub} ₽`
+          : renewal.status === "would-renew"
+            ? `would auto-renew from balance: ${renewal.priceRub} ₽`
+            : renewal.status === "short"
+              ? `auto-renew short: ${renewal.priceRub} ₽, balance ${renewal.balanceRub} ₽${renewal.notified ? " (notified)" : ""}`
+              : renewal.status === "already"
+                ? "auto-renew already done"
+                : `auto-renew error: ${renewal.error}`;
+      if (renewal.status === "renewed" || renewal.status === "would-renew") report.autoRenewed += 1;
+      if (renewal.status === "short") report.autoRenewShort += 1;
+      if (renewal.status === "failed") {
+        report.failed += 1;
+        console.error("[billing] job: auto-renew failed", { unit: unit.key, error: renewal.error });
+      }
+      report.results.push({ unit: unit.key, organizationId: unit.organizationId, action: "auto_renew", activeUsers: state.activeUsers, outcome });
+      // Продлено (или уже) — срок новый; «не хватает» уже отправлено сегодня —
+      // напоминание о конце срока в тот же день было бы вторым письмом.
+      if (renewal.status === "renewed" || renewal.status === "would-renew" || renewal.status === "already") continue;
+      if (renewal.status === "short" && renewal.notified) continue;
+    }
     const action = decideTransitionAction(state, unit.plan);
     if (action === "none") continue;
     let outcome = "planned";
@@ -1697,6 +1764,8 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     scanned: report.scanned,
     trialReminded: report.trialReminded,
     paidReminded: report.paidReminded,
+    autoRenewed: report.autoRenewed,
+    autoRenewShort: report.autoRenewShort,
     silentFree: report.silentFree,
     reminded: report.reminded,
     autoFree: report.autoFree,

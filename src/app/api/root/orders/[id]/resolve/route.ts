@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requireRoot } from "@/lib/auth-helpers";
 import { returnRefundedOrderPoints } from "@/lib/balance/checkout";
+import { recordPaymentThroughBalance } from "@/lib/balance/payment-ledger";
 import { accrueReferralReward } from "@/lib/balance/referral";
 import { db } from "@/lib/db";
 import { markOrderRefunded } from "@/lib/partners/accruals";
@@ -66,6 +67,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     // идемпотентны и best-effort: тариф уже применён руками).
     await bindLifetimeDiscountForOrder(orderId, order.organizationId);
     await accrueReferralReward(orderId).catch((error) => console.error("[billing] held order referral reward failed", { orderId, error }));
+    // Тариф применён — деньги заказа проходят через баланс, как у обычной оплаты.
+    await recordPaymentThroughBalance(orderId).catch((error) => console.error("[billing] held order pass-through failed", { orderId, error }));
   }
 
   await recordAuditLog({
