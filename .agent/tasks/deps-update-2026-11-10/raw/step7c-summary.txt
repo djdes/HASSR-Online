@@ -1,0 +1,24 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=6048, fail=0
+eslint: errors 41 warnings 219 (эталон: errors 41 warnings 218)
+build+start: started after 2s, build KdUzbFtuyNQdEWiuI9RAk, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+
+Notes (Tailwind 4.2.1 -> 4.3.5, from Dependabot #183; the rest of #183 = packages already rejected):
+- Lock: tailwindcss, @tailwindcss/postcss/node/oxide 4.3.5 (+ nested lightningcss 1.33.0, magic-string),
+  shared build-tool bumps within semver: postcss 8.5.8->8.5.32, enhanced-resolve 5.20->5.26.1, jiti 2.6.1->2.7.0,
+  nanoid 3.3.11->3.3.20, tapable 2.3.0->2.3.3, source-map-js 1.2.1->1.2.2, @jridgewell/sourcemap-codec 1.5.5->1.6.0.
+- Build ran with NODE_OPTIONS=--max-old-space-size=4096 (server-like heap) and passed.
+- Compiled CSS diff (514034 -> 511626 bytes): equivalent rewrites only — calc(var(--spacing)*0|1) -> 0|var(--spacing),
+  group-*/peer-* variants as :is(:where(.group):hover .x) (same specificity), rotate:none->0deg,
+  rounded-full radius 3.4e38px->2147483647px, scrollbar arbitrary classes reordered, new print:[scrollbar-width:none]
+  (print only); default font fallback list changed but the project sets --font-sans (Geist), so it does not apply;
+  stray false-positive classes .start/.end/.-end no longer generated — no element uses them as a class.
+- Screenshots (step7c-screenshots.txt, before = master dc436841 same machine, noise run = identical):
+  12/14 pixel-identical; owner_dashboard and root_root differ only in time text ("До конца дня 7 ч 18 мин" -> "6 ч 42 мин",
+  "21 ч назад" -> "22 ч назад").
