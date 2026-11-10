@@ -43,6 +43,8 @@ function allText(content: ProposalContent): string {
     .join("\n");
 }
 
+const plainText = (text: string) => text.replace(/\u00a0/g, " ");
+
 describe("тексты КП — честность по правилам сфер", () => {
   it("PROPOSAL_SPHERES — все сферы анкеты", () => {
     assert.deepEqual(
@@ -157,8 +159,20 @@ describe("тексты КП — честность по правилам сфе�
   it("оплата по счёту — только если счёт реально выставляется", () => {
     const withInvoice = buildProposalContent({ sphere: "cafe" }, sampleProposalContext({ invoiceReady: true }));
     const cardOnly = buildProposalContent({ sphere: "cafe" }, sampleProposalContext({ invoiceReady: false }));
-    assert.equal(withInvoice.offer.payment, "Оплата картой или по счёту для юрлиц.");
-    assert.equal(cardOnly.offer.payment, "Оплата картой на сайте.");
+    assert.equal(plainText(withInvoice.offer.payment), "Условия оплаты: 100 % предоплата — по счёту или банковской картой.");
+    assert.equal(plainText(cardOnly.offer.payment), "Условия оплаты: 100 % предоплата банковской картой на сайте.");
+  });
+
+  it("деловой текст: без рекламных оборотов", () => {
+    const fluff = /без (банковской )?карты|карта не (нужна|требуется)|спасибо за интерес|больше не нужны|выгоднее|спокойно|попробовать бесплатно|специальное предложение/i;
+    for (const sphere of SPHERES) {
+      for (const invoiceReady of [true, false]) {
+        const content = buildProposalContent({ sphere, companyName: "Кафе «Ромашка»" }, sampleProposalContext({ invoiceReady }));
+        const text = [content.lead, content.offer.title, content.offer.payment, content.offer.ctaLabel, ...content.offer.rows.flatMap((row) => [row.title, row.text]), JSON.stringify(content.design)].join(" ");
+        assert.equal(fluff.test(text), false, `${sphere}: ${text.match(fluff)?.[0]}`);
+        assert.match(plainText(JSON.stringify(content.design)), /100 % предоплата/);
+      }
+    }
   });
 
   it("без промокода и акции пояснений к цене нет", () => {

@@ -6,7 +6,7 @@ import { contractDateLong, personName, postAsTitle, postInSentence, shortPersonN
 import { contractFileName, draftContractNumber, formatContractNumber, parseContractNumber } from "./numbering";
 import { cleanRecipientList, contractRecipientSuggestions } from "./recipients";
 import { buyerChecklist, buyerFromOrganization, buyerKind, defaultContractParams, sellerChecklist } from "./snapshot";
-import { BLANK, buildContractDocument, buyerDisplayName, contractPlainText, CONTRACT_TEMPLATE_VERSION } from "./template";
+import { BLANK, buildContractDocument, buyerDisplayName, contractEndDate, contractPlainText, CONTRACT_TEMPLATE_VERSION } from "./template";
 import type { ContractSnapshot } from "./types";
 import { standardFontsDir, workerFileUrl } from "@/lib/journal-preview/render";
 
@@ -101,7 +101,10 @@ test("legal entity contract: both parties filled, caps normalized, no holes", ()
   assert.equal(n(document.dateLong), "«29» октября 2026 г.");
   // Сумм в договоре нет — цена только по тарифу и счетам.
   assert.doesNotMatch(text, /\d\s?(₽|руб\.)/);
-  assert.match(text, /Арбитражном суде Московской области/);
+  assert.match(text, /арбитражным судом по месту нахождения Исполнителя/);
+  assert.match(text, /100 % предоплаты/);
+  assert.match(text, /действует до «29» октября 2027 г\./);
+  assert.equal(document.subtitle, "на оказание услуг по предоставлению доступа к сервису электронных журналов WeSetup");
   assert.match(text, /ч\. 3 ст\. 6 Федерального закона/);
 });
 
@@ -167,11 +170,40 @@ test("every clause and section reference points to an existing clause", () => {
   const text = n(contractPlainText(document));
   const clauseRefs = [...text.matchAll(/п\. (\d+\.\d+)/g)].map((match) => match[1]);
   const sectionRefs = [...text.matchAll(/разд\. (\d+)/g)].map((match) => match[1]);
-  assert.ok(clauseRefs.length > 10, "references are present");
+  assert.ok(clauseRefs.length > 0 && sectionRefs.length > 0, "references are present");
   for (const ref of clauseRefs) assert.ok(clauses.has(ref), `п. ${ref} exists`);
   for (const ref of sectionRefs) assert.ok(sections.has(ref), `разд. ${ref} exists`);
+  assert.equal(document.sections.length, 11);
+  assert.deepEqual(document.sections.map((section) => section.title), [
+    "Предмет договора",
+    "Права и обязанности сторон",
+    "Стоимость услуг и порядок расчётов",
+    "Срок действия договора",
+    "Ответственность сторон",
+    "Конфиденциальность и персональные данные",
+    "Интеллектуальная собственность",
+    "Обстоятельства непреодолимой силы",
+    "Разрешение споров",
+    "Прочие условия",
+    "Реквизиты и подписи сторон",
+  ]);
+});
+
+test("a contract issued with the previous template keeps its own text", () => {
+  const document = buildContractDocument({ ...LEGAL, templateVersion: "2026-10-29" });
+  const text = n(contractPlainText(document));
+  assertNoHoles(text);
   assert.equal(document.sections.length, 16);
   assert.equal(document.sections[15].title, "Адреса, реквизиты и подписи сторон");
+  assert.match(text, /Арбитражном суде Московской области/);
+  assert.equal(document.templateVersion, "2026-10-29");
+  const clauses = new Set(document.sections.flatMap((section) => section.blocks.filter((block) => block.kind === "clause").map((block) => block.num.replace(/\.$/, ""))));
+  for (const match of text.matchAll(/п\. (\d+\.\d+)/g)) assert.ok(clauses.has(match[1]), `п. ${match[1]} exists`);
+});
+
+test("contract end date: same day next year, 29 February falls back to the 28th", () => {
+  assert.equal(contractEndDate("2026-10-29"), "2027-10-29");
+  assert.equal(contractEndDate("2028-02-29"), "2029-02-28");
 });
 
 test("contract numbers: WS-YYYY/NNNN, parse round trip, file names", () => {

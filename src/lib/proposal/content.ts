@@ -289,10 +289,10 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
   const legal = copy.food
     ? "СанПиН 2.3/2.4.4282-26 прямо разрешает вести их в электронном виде."
     : copy.sphere === "beauty"
-      ? "Вести их можно в электронном виде и распечатать к проверке."
-      : "Все записи — в одном кабинете, журнал к проверке распечатывается в любой момент.";
+      ? "Журналы ведутся в электронном виде и распечатываются для проверки."
+      : "Записи хранятся в одном кабинете; журнал распечатывается для проверки.";
   const greeting = vars.recipientName ? `${vars.recipientName}, здравствуйте! ` : "";
-  const lead = `${greeting}Предлагаем перевести журналы ${copy.your} на телефон: без бумажных тетрадей и переписывания перед проверкой. ${legal}`;
+  const lead = `${greeting}Предлагаем вести журналы ${copy.your} в электронном виде в сервисе WeSetup. ${legal}`;
 
   const stepsNote = `Так же с телефона — ${proposalAlsoPhone(copy.sphere).text} и остальные журналы: у каждого свой QR-плакат. Не заполнили — руководителю придёт напоминание в Telegram и на почту. Проверяющему — журналы по форме СанПиН на печать или QR для просмотра без входа.`;
 
@@ -310,7 +310,7 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
     unit: "",
     oldPrice: null,
     badge: null,
-    text: `Без карты: все журналы, сотрудники и точки. Дальше бесплатно — ${FREE_AFTER_TRIAL_LABEL}, или тариф «Стандарт» / «Премиум».`,
+    text: `Пробный период: все журналы, сотрудники и точки. Дальше бесплатно — ${FREE_AFTER_TRIAL_LABEL}, либо тариф «Стандарт» или «Премиум».`,
   };
 
   let badge: string | null = null;
@@ -377,11 +377,13 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
       copy.sphere === "other" ? "откроется регистрация на wesetup.ru." : `откроется страница для ${copy.forWhom}: подробности и регистрация.`;
     howTo = `Отсканируйте QR — ${where}`;
     howToEmail = `Нажмите кнопку — ${where}`;
-    ctaLabel = "Попробовать бесплатно";
+    ctaLabel = "Зарегистрироваться";
     qrCaption = displayUrl(cta.url);
   }
 
-  const payment = ctx.invoiceReady ? "Оплата картой или по счёту для юрлиц." : "Оплата картой на сайте.";
+  const payment = ctx.invoiceReady
+    ? `Условия оплаты: 100${NBSP}% предоплата — по счёту или банковской картой.`
+    : `Условия оплаты: 100${NBSP}% предоплата банковской картой на сайте.`;
 
   const senderData = vars.sender ?? ctx.defaultSender ?? fallbackSender(ctx.requisites);
   const sender = senderData
@@ -428,7 +430,7 @@ export function buildProposalContent(input: ProposalVars, ctx: ProposalContext):
     journalsMore,
     journalsTotal: `Всего в каталоге — ${JOURNALS_TOTAL_LABEL}: любой включается в настройках.`,
     offer: {
-      title: "Специальное предложение",
+      title: "Стоимость",
       rows: [free, team],
       notes,
       howTo,

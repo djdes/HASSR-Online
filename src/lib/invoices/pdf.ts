@@ -1,38 +1,22 @@
-import {
-  BRAND_COLORS as C,
-  BRAND_CONTENT_BOTTOM,
-  BRAND_CONTENT_TOP,
-  BRAND_PAGE,
-  PT,
-  brandSeller,
-  createBrandPdf,
-  dataTable,
-  decoratePages,
-  drawFramedQr,
-  drawPng,
-  fitText,
-  setText,
-  type BrandPdf,
-  type BrandSeller,
-  type TextStyle,
-} from "@/lib/brand-docs/pdf-kit";
+import autoTable from "jspdf-autotable";
+
+import { PT, brandAsset, createBrandPdf, drawPng, drawQr, fitText, setText, type BrandPdf, type BrandSeller, type RGB, type TextStyle } from "@/lib/brand-docs/pdf-kit";
 
 import { shortPersonName } from "@/lib/contracts/format";
 
 import { INVOICE_AFTER_PAYMENT, TOPUP_INVOICE_LINE_TITLE, amountInWords, formatRuDate, type InvoiceDraft } from "./build";
 
 /**
- * «Счёт на оплату» в стиле шаблонов «WeSetup - шаблоны (без покупателя,
- * новый стиль)» (2026-11-07): белый бланк кита, сетка реквизитов банка
- * тонкими светлыми линиями с назначением платежа и платёжным QR в рамке
- * (ГОСТ Р 56042-2014: приложение банка подставит реквизиты, сумму и
- * назначение), крупный заголовок с датой строкой ниже, поставщик/покупатель/
- * основание через тонкие линии, таблица строк без тёмной шапки, итоги под
- * «Ценой» и «Суммой», сумма прописью, подписи руководителя и бухгалтера —
- * строки подписи одной длины друг под другом, с факсимиле и печатью.
+ * «Счёт на оплату» обычной формы (образец владельца, 2026-11-09): как счёт
+ * из учётной программы — чёрные линии, сетка реквизитов банка с назначением
+ * платежа и платёжным QR (ГОСТ Р 56042-2014) справа, заголовок с номером и
+ * датой над жирной чертой, поставщик / покупатель / основание, таблица
+ * строк в рамке, итоги, сумма прописью, подписи руководителя и бухгалтера
+ * с факсимиле и печатью. От фирменного стиля — только логотип вверху.
  *
  * Номер и суммы — из черновика (`buildInvoiceDraft`, номер = заказ), без базы.
  */
+
 export type InvoiceImages = { facsimile: Buffer | null; stamp: Buffer | null };
 
 export type InvoiceRenderOptions = {
@@ -40,8 +24,10 @@ export type InvoiceRenderOptions = {
   brand?: BrandSeller | null;
 };
 
-const X = BRAND_PAGE.side;
-const W = BRAND_PAGE.contentW;
+const X = 15;
+const W = 180;
+const PAGE_TOP = 12;
+const PAGE_BOTTOM = 297 - 14;
 const NBSP = String.fromCharCode(0xa0);
 const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
@@ -88,8 +74,14 @@ export function invoicePaymentPayload(draft: InvoiceDraft): string | null {
   ].join("|");
 }
 
+const K: RGB = [0, 0, 0];
+const THIN = 0.25;
+const THICK = 0.6;
+const TEXT = 9;
+const LABEL = 6.5;
+
 function txt(pdf: BrandPdf, value: string | string[], x: number, y: number, st: TextStyle, align: "left" | "right" | "center" = "left") {
-  setText(pdf, st);
+  setText(pdf, { color: K, ...st });
   pdf.doc.text(value, x, y, { align });
 }
 
@@ -98,210 +90,197 @@ function wrap(pdf: BrandPdf, value: string, width: number, st: TextStyle): strin
   return pdf.doc.splitTextToSize(value, width) as string[];
 }
 
-const lh = (size: number, k = 1.4) => size * PT * k;
+const lh = (size: number, k = 1.35) => size * PT * k;
 
-/** Сетка «банк получателя / ИНН / получатель / назначение платежа». Возвращает низ. */
+function rule(pdf: BrandPdf, x1: number, y1: number, x2: number, y2: number, width = THIN) {
+  pdf.doc.setDrawColor(...K);
+  pdf.doc.setLineWidth(width);
+  pdf.doc.line(x1, y1, x2, y2);
+}
+
+/** Сетка «банк получателя / БИК / счёт / ИНН / КПП / получатель / назначение платежа». Возвращает низ. */
 function bankGrid(pdf: BrandPdf, draft: InvoiceDraft, recipient: string, x: number, y: number, width: number): number {
-  const { doc } = pdf;
   const bank = draft.seller.bank ?? { name: "", bik: "", account: "", corrAccount: "" };
-  const c = [36, 36, 16.5];
-  const xs = [x, x + c[0], x + c[0] + c[1], x + c[0] + c[1] + c[2], x + width];
-  const r = 7.6;
-  const value: TextStyle = { size: 9.5 };
-  const label: TextStyle = { size: 7.5, color: C.muted };
-  const purpose = wrap(pdf, `${invoicePurpose(draft)}.`, width - 5, value);
-  const purposeH = Math.max(r * 1.4, purpose.length * lh(9.5) + 6.4);
-  const bottom = y + r * 2 + r + r * 1.4 + purposeH;
+  const r = 6.4;
+  const valueW = 50;
+  const labelW = 15;
+  const x2 = x + width - valueW - labelW;
+  const x3 = x + width - valueW;
+  const xm = x + (x2 - x) / 2;
+  const value: TextStyle = { size: TEXT };
+  const label: TextStyle = { size: LABEL };
+  const purpose = wrap(pdf, invoicePurpose(draft), width - 4, value);
+  const purposeH = purpose.length * lh(TEXT) + 6.2;
+  const gridBottom = y + r * 5;
+  const bottom = gridBottom + purposeH;
 
-  // Назначение платежа — на светлом фоне, как в шаблоне.
-  doc.setFillColor(...C.soft);
-  doc.rect(x, y + r * 3 + r * 1.4, width, purposeH, "F");
-  doc.setDrawColor(...C.border2);
-  doc.setLineWidth(0.2);
-  doc.rect(x, y, width, bottom - y);
-  // Вертикали верхних рядов и горизонтали.
-  doc.line(xs[2], y, xs[2], y + r * 2 + r + r * 1.4);
-  doc.line(xs[3], y, xs[3], y + r * 2 + r + r * 1.4);
-  doc.line(xs[1], y + r * 2, xs[1], y + r * 3);
-  doc.line(xs[2], y + r, xs[4], y + r);
-  doc.line(x, y + r * 2, xs[4], y + r * 2);
-  doc.line(x, y + r * 3, xs[2], y + r * 3);
-  doc.line(x, y + r * 3 + r * 1.4, xs[4], y + r * 3 + r * 1.4);
+  pdf.doc.setDrawColor(...K);
+  pdf.doc.setLineWidth(THIN);
+  pdf.doc.rect(x, y, width, bottom - y);
+  rule(pdf, x2, y, x2, gridBottom);
+  rule(pdf, x3, y, x3, gridBottom);
+  rule(pdf, x2, y + r, x + width, y + r);
+  rule(pdf, x, y + r * 2, x + width, y + r * 2);
+  rule(pdf, x, y + r * 3, x2, y + r * 3);
+  rule(pdf, xm, y + r * 2, xm, y + r * 3);
+  rule(pdf, x, gridBottom, x + width, gridBottom);
 
-  const bankName = bank.name || "—";
-  txt(pdf, wrap(pdf, bankName, xs[2] - x - 5, value)[0] ?? bankName, x + 2.5, y + 5, value);
-  txt(pdf, "Банк получателя", x + 2.5, y + 10.6, label);
-  txt(pdf, "БИК", xs[2] + 2.5, y + 5, { ...value, color: C.muted });
-  txt(pdf, bank.bik || "—", xs[3] + 2.5, y + 5, value);
-  txt(pdf, "Сч. №", xs[2] + 2.5, y + r + 5, { ...value, color: C.muted });
-  txt(pdf, bank.corrAccount || "—", xs[3] + 2.5, y + r + 5, value);
-  txt(pdf, `ИНН${NBSP}${draft.seller.inn ?? "—"}`, x + 2.5, y + r * 2 + 5, value);
-  txt(pdf, `КПП${NBSP}${draft.seller.kpp ?? "—"}`, xs[1] + 2.5, y + r * 2 + 5, value);
-  txt(pdf, "Сч. №", xs[2] + 2.5, y + r * 2 + 5, { ...value, color: C.muted });
-  txt(pdf, bank.account || "—", xs[3] + 2.5, y + r * 2 + 5, { size: 9.5, weight: "semibold" });
-  txt(pdf, fitText(pdf, recipient, xs[2] - x - 5, value), x + 2.5, y + r * 3 + 4.8, value);
-  txt(pdf, "Получатель", x + 2.5, y + r * 3 + 9, label);
-  const py = y + r * 3 + r * 1.4;
-  txt(pdf, purpose, x + 2.5, py + 5, value);
-  txt(pdf, "Назначение платежа", x + 2.5, py + purposeH - 2.2, label);
+  txt(pdf, fitText(pdf, bank.name || "—", x2 - x - 4, value), x + 2, y + 4.4, value);
+  txt(pdf, "Банк получателя", x + 2, y + r * 2 - 1.4, label);
+  txt(pdf, "БИК", x2 + 2, y + 4.4, value);
+  txt(pdf, bank.bik || "—", x3 + 2, y + 4.4, value);
+  txt(pdf, "Сч. №", x2 + 2, y + r + 4.4, value);
+  txt(pdf, bank.corrAccount || "—", x3 + 2, y + r + 4.4, value);
+  txt(pdf, `ИНН${NBSP}${NBSP}${draft.seller.inn ?? "—"}`, x + 2, y + r * 2 + 4.4, value);
+  txt(pdf, `КПП${NBSP}${NBSP}${draft.seller.kpp ?? "—"}`, xm + 2, y + r * 2 + 4.4, value);
+  txt(pdf, "Сч. №", x2 + 2, y + r * 2 + 4.4, value);
+  txt(pdf, bank.account || "—", x3 + 2, y + r * 2 + 4.4, value);
+  txt(pdf, fitText(pdf, recipient, x2 - x - 4, value), x + 2, y + r * 3 + 4.4, value);
+  txt(pdf, "Получатель", x + 2, gridBottom - 1.4, label);
+  txt(pdf, purpose, x + 2, gridBottom + 4.2, value);
+  txt(pdf, "Назначение платежа", x + 2, bottom - 1.4, label);
   return bottom;
 }
 
 export function renderInvoicePdf(draft: InvoiceDraft, images: InvoiceImages, options: InvoiceRenderOptions = {}): Buffer {
   const pdf = createBrandPdf({ title: `Счёт на оплату № ${draft.number}`, subject: "Счёт на оплату WeSetup" });
   const { doc } = pdf;
-  const brand =
-    options.brand ??
-    brandSeller({
-      nameShort: draft.seller.name,
-      nameFull: draft.seller.name,
-      inn: draft.seller.inn ?? "",
-      kpp: draft.seller.kpp ?? "",
-      ogrn: draft.seller.ogrn ?? "",
-      address: draft.seller.address ?? "",
-      phone: "",
-      email: "",
-      head: draft.seller.head ?? { post: "", name: "" },
-      bank: draft.seller.bank ?? { name: "", bik: "", account: "", corrAccount: "" },
-    });
-  let y = BRAND_CONTENT_TOP - 1.5;
+  let y = PAGE_TOP;
   const ensure = (height: number) => {
-    if (y + height > BRAND_CONTENT_BOTTOM) {
+    if (y + height > PAGE_BOTTOM) {
       doc.addPage();
-      y = BRAND_CONTENT_TOP;
+      y = PAGE_TOP;
     }
   };
 
-  // ── согласие с договором — мелкой строкой по левому краю
-  txt(pdf, `Оплата этого счёта означает согласие с условиями ${invoiceAgreementPhrase(draft.basis)}.`, X, y + 2.6, { size: 7.5, color: C.muted });
-  y += 6.4;
+  // ── логотип
+  const logo = drawPng(pdf, brandAsset("wordmark-polnoch.png"), { x: X, y, w: 34, h: 6.6 }, "left");
+  if (!logo) txt(pdf, "WeSetup", X, y + 5.4, { size: 15, weight: "extrabold" });
+  y += 12;
+
+  // ── оплата = согласие с договором
+  const agreement = wrap(pdf, `Оплата настоящего счёта означает согласие с условиями ${invoiceAgreementPhrase(draft.basis)}.`, W, { size: 7.5 });
+  txt(pdf, agreement, X + W / 2, y, { size: 7.5 }, "center");
+  y += agreement.length * lh(7.5) + 1.6;
 
   // ── реквизиты банка и платёжный QR справа
-  // QR — во всю ширину своей колонки, правый край ровно по краю набора; подпись — по центру под ним.
   const payload = invoicePaymentPayload(draft);
-  const qrColumn = payload ? 42 : 0;
-  const gridBottom = bankGrid(pdf, draft, brand.nameShort || draft.seller.name, X, y, W - qrColumn);
+  const qrSize = 32;
+  const qrColumn = payload ? qrSize + 6 : 0;
+  const recipient = options.brand?.nameShort || draft.seller.name;
+  const gridBottom = bankGrid(pdf, draft, recipient, X, y, W - qrColumn);
   let qrBottom = gridBottom;
   if (payload) {
-    const size = qrColumn - 4;
-    const qx = X + W - size;
-    drawFramedQr(pdf, payload, { x: qx, y, size }, { ecc: "M" });
-    const caption = wrap(pdf, "Отсканируйте в приложении банка — реквизиты и сумма подставятся сами.", size, { size: 7.5 });
-    txt(pdf, caption, qx + size / 2, y + size + 4, { size: 7.5, color: C.muted }, "center");
-    qrBottom = y + size + 4 + caption.length * lh(7.5, 1.3);
+    const qx = X + W - qrSize;
+    drawQr(pdf, payload, { x: qx, y, size: qrSize }, { ecc: "M", color: K });
+    const caption = wrap(pdf, "QR-код для оплаты в приложении банка", qrSize, { size: LABEL });
+    txt(pdf, caption, qx + qrSize / 2, y + qrSize + 3.4, { size: LABEL }, "center");
+    qrBottom = y + qrSize + 3.4 + caption.length * lh(LABEL);
   }
-  y = Math.max(gridBottom, qrBottom) + 12;
+  y = Math.max(gridBottom, qrBottom) + 10;
 
-  // ── заголовок: номер крупно, дата строкой ниже
-  txt(pdf, `Счёт на оплату № ${draft.number}`, X, y, { size: 22, weight: "semibold" });
-  y += 7.4;
-  txt(pdf, `от ${longDate(draft.issuedAt)}`, X, y, { size: 10.5, color: C.muted });
-  y += 6;
+  // ── заголовок над жирной чертой
+  txt(pdf, `Счёт на оплату № ${draft.number} от ${longDate(draft.issuedAt)}`, X, y, { size: 14, weight: "semibold" });
+  y += 2.6;
+  rule(pdf, X, y, X + W, y, THICK);
+  y += 2.4;
 
   // ── стороны и основание
   const partyLine = (p: InvoiceDraft["seller"], phone?: string | null) =>
     [p.name, p.inn ? `ИНН${NBSP}${p.inn}` : null, p.kpp ? `КПП${NBSP}${p.kpp}` : null, p.address, phone ? `тел. ${phone}` : null].filter(Boolean).join(", ");
-  const hairline = (color = C.border) => {
-    doc.setDrawColor(...color);
-    doc.setLineWidth(0.2);
-    doc.line(X, y, X + W, y);
-  };
-  hairline(C.border2);
+  const labelW = 25;
   for (const [label, value] of [
-    ["Поставщик:", partyLine(draft.seller, brand.phone || null)],
+    ["Поставщик:", partyLine(draft.seller, options.brand?.phone || null)],
     ["Покупатель:", partyLine(draft.buyer)],
     ["Основание:", draft.basis],
   ] as const) {
-    const rows = wrap(pdf, value, W - 34, { size: 9.5 });
-    y += 2.2 + lh(9.5) * 0.78;
-    txt(pdf, label, X, y, { size: 9.5, color: C.muted });
-    txt(pdf, rows, X + 34, y, { size: 9.5 });
-    y += (rows.length - 1) * lh(9.5) + lh(9.5) * 0.22 + 2.2;
-    hairline();
+    const strong: TextStyle = { size: TEXT, weight: "semibold" };
+    const rows = wrap(pdf, value, W - labelW, strong);
+    y += lh(TEXT);
+    txt(pdf, label, X, y, { size: TEXT });
+    txt(pdf, rows, X + labelW, y, strong);
+    y += (rows.length - 1) * lh(TEXT) + 1.4;
   }
-  y += 6;
+  y += 3;
 
-  // ── строки
-  y = dataTable(pdf, {
+  // ── строки — таблица в рамке
+  const cell = { lineColor: [0, 0, 0] as [number, number, number], lineWidth: THIN, textColor: [0, 0, 0] as [number, number, number] };
+  autoTable(doc, {
     startY: y,
-    zebra: false,
-    fontSize: 9.5,
-    head: [[
-      "№",
-      "Наименование услуги",
-      { content: "Кол-во", styles: { halign: "center" } },
-      { content: "Ед.", styles: { halign: "center" } },
-      { content: "Цена", styles: { halign: "right" } },
-      { content: "Сумма", styles: { halign: "right" } },
-    ]],
+    margin: { left: X, right: 210 - X - W, top: PAGE_TOP, bottom: 297 - PAGE_BOTTOM },
+    tableWidth: W,
+    theme: "grid",
+    tableLineColor: [0, 0, 0],
+    tableLineWidth: 0.4,
+    styles: { font: pdf.faces.regular.family, fontStyle: "normal", fontSize: TEXT, cellPadding: 1.4, valign: "middle", overflow: "linebreak", ...cell },
+    headStyles: { font: pdf.faces.semibold.family, fontStyle: "normal", fontSize: TEXT, halign: "center", fillColor: [255, 255, 255], ...cell },
+    head: [["№", "Наименование товаров, работ, услуг", "Коли-\nчество", "Ед. изм.", "Цена", "Сумма"]],
     body: draft.lines.map((line, index) => [String(index + 1), line.title, String(line.qty), line.unit, money(line.priceRub), money(line.sumRub)]),
     columnStyles: {
-      0: { cellWidth: 9, halign: "left", textColor: [...C.muted] as [number, number, number] },
-      1: { cellWidth: 90 },
+      0: { cellWidth: 9, halign: "center" },
+      1: { cellWidth: 92 },
       2: { cellWidth: 16, halign: "center" },
-      3: { cellWidth: 18, halign: "center" },
-      4: { cellWidth: 26, halign: "right" },
-      5: { cellWidth: 27, halign: "right" },
+      3: { cellWidth: 17, halign: "center" },
+      4: { cellWidth: 23, halign: "right" },
+      5: { cellWidth: 23, halign: "right" },
     },
   });
-  y += 4;
+  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
-  // ── итоги — под колонками «Цена» и «Сумма»: подписи по правому краю «Цены», суммы — по правому краю набора
-  ensure(40);
-  const sumW = 27;
-  const priceRight = X + W - sumW - 2.6;
-  const labelX = priceRight - 48;
-  const totalRow = (label: string, value: string, big = false) => {
-    const h = big ? 10 : 6.4;
-    if (big) {
-      doc.setDrawColor(...C.ink);
-      doc.setLineWidth(0.3);
-      doc.line(labelX, y + 1.2, X + W, y + 1.2);
-    }
-    const base = y + h / 2 + (big ? 2.2 : 1.2);
-    txt(pdf, label, priceRight, base, big ? { size: 11.5, weight: "semibold" } : { size: 9.5, color: C.muted }, "right");
-    txt(pdf, value, X + W, base, big ? { size: 11.5, weight: "semibold", color: C.indigoDeep } : { size: 9.5, weight: "semibold" }, "right");
-    y += h;
-  };
-  totalRow("Итого:", money(draft.totalRub));
-  totalRow("Без налога (НДС):", "—");
-  totalRow("Всего к оплате:", money(draft.totalRub), true);
+  // ── итоги под «Ценой» и «Суммой»
+  ensure(46);
+  const strongStyle: TextStyle = { size: TEXT, weight: "semibold" };
+  for (const [label, value] of [
+    ["Итого:", money(draft.totalRub)],
+    ["Без налога (НДС):", "—"],
+    ["Всего к оплате:", money(draft.totalRub)],
+  ] as const) {
+    y += lh(TEXT, 1.5);
+    txt(pdf, label, X + W - 23 - 1.4, y, strongStyle, "right");
+    txt(pdf, value, X + W - 1.4, y, strongStyle, "right");
+  }
   y += 7;
 
-  txt(pdf, `Всего наименований ${draft.lines.length}, на сумму ${money(draft.totalRub)} руб.`, X, y, { size: 9.5 });
-  y += lh(9.5, 1.5);
+  txt(pdf, `Всего наименований ${draft.lines.length}, на сумму ${money(draft.totalRub)} руб.`, X, y, { size: TEXT });
+  y += lh(TEXT, 1.45);
   const words = amountInWords(draft.totalRub);
-  const wordsRows = wrap(pdf, `${words.charAt(0).toUpperCase()}${words.slice(1)}, без налога (НДС).`, W, { size: 9.5, weight: "semibold" });
-  txt(pdf, wordsRows, X, y, { size: 9.5, weight: "semibold" });
-  y += wordsRows.length * lh(9.5) + 3;
+  const wordsRows = wrap(pdf, `${words.charAt(0).toUpperCase()}${words.slice(1)}, без налога (НДС).`, W, strongStyle);
+  txt(pdf, wordsRows, X, y, strongStyle);
+  y += wordsRows.length * lh(TEXT) + 2.4;
 
-  const note = wrap(
+  // ── условия оплаты
+  const terms = wrap(
     pdf,
-    `Счёт действителен до ${formatRuDate(draft.dueAt)}. В назначении платежа укажите «Оплата по счёту № ${draft.number}». ${draft.afterPayment ?? INVOICE_AFTER_PAYMENT.subscription} НДС не облагается — продавец применяет УСН.`,
+    `Условия оплаты: 100${NBSP}% предоплата. Счёт действителен до ${formatRuDate(draft.dueAt)}. ${draft.afterPayment ?? INVOICE_AFTER_PAYMENT.subscription}`,
     W,
-    { size: 7.5, color: C.muted },
+    { size: 8 },
   );
-  ensure(note.length * lh(7.5) + 40);
-  txt(pdf, note, X, y, { size: 7.5, color: C.muted });
-  y += note.length * lh(7.5) + 16;
+  ensure(terms.length * lh(8) + 40);
+  txt(pdf, terms, X, y, { size: 8 });
+  y += terms.length * lh(8) + 1;
+  rule(pdf, X, y, X + W, y, THICK);
+  y += 16;
 
-  // ── подписи: должности в одной колонке, строки подписи одной длины друг под другом, расшифровка за ними
+  // ── подписи: должность, линия, расшифровка; факсимиле на линии, печать рядом
   const headName = shortPersonName(draft.seller.head?.name) ?? "";
-  const lineX = X + 42;
+  const lineX = X + 40;
   const signature = (label: string, name: string) => {
-    txt(pdf, label, X, y, { size: 9.5, color: C.muted });
-    doc.setDrawColor(...C.faint);
-    doc.setLineWidth(0.25);
-    doc.line(lineX, y + 0.6, lineX + 42, y + 0.6);
-    if (name) txt(pdf, name, lineX + 45, y, { size: 9.5 });
-    drawPng(pdf, images.facsimile, { x: lineX + 4, y: y - 7, w: 34, h: 9 });
+    txt(pdf, label, X, y, { size: TEXT });
+    rule(pdf, lineX, y + 0.6, lineX + 48, y + 0.6);
+    if (name) txt(pdf, name, lineX + 51, y, strongStyle);
+    drawPng(pdf, images.facsimile, { x: lineX + 7, y: y - 7, w: 34, h: 9 });
   };
   signature("Руководитель", headName);
-  drawPng(pdf, images.stamp, { x: lineX + 74, y: y - 14, w: 34, h: 34 });
+  drawPng(pdf, images.stamp, { x: lineX + 82, y: y - 14, w: 34, h: 34 });
   y += 13;
   signature("Главный бухгалтер", headName);
-  if (images.stamp) txt(pdf, "М. П.", lineX + 91, y + 12, { size: 7.5, color: C.faint }, "center");
+  if (images.stamp) txt(pdf, "М. П.", lineX + 99, y + 12, { size: LABEL }, "center");
 
-  decoratePages(pdf, brand, { pageLabel: doc.getNumberOfPages() > 1 ? undefined : null });
+  // ── подпись листа
+  const total = doc.getNumberOfPages();
+  for (let page = 1; page <= total; page += 1) {
+    doc.setPage(page);
+    txt(pdf, `Счёт на оплату № ${draft.number} от ${formatRuDate(draft.issuedAt)}, страница ${page} из ${total}`, X + W, 297 - 8, { size: LABEL }, "right");
+  }
   return Buffer.from(doc.output("arraybuffer"));
 }

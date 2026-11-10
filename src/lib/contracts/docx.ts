@@ -250,7 +250,7 @@ export async function renderContractDocx(document: ContractDocument, sellerSnaps
   const J = AlignmentType.JUSTIFIED;
   const body: Array<Paragraph | Table> = [
     para([run(`${document.title} № ${document.number}`, { size: SIZE.title, sb: true })], { line: 240 }),
-    para([run("на доступ к сервису электронных журналов WeSetup и сопутствующие услуги", { size: SIZE.lead, color: C.muted })], { before: 110, line: 250 }),
+    para([run(document.subtitle, { size: SIZE.lead, color: C.muted })], { before: 110, line: 250 }),
     table(
       [
         new TableRow({

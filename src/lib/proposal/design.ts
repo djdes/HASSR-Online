@@ -230,15 +230,15 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
   if (extrasWanted.ppk) {
     extras.push({
       key: "ppk",
-      label: "Дополнительно: программа производственного контроля под ваше заведение",
+      label: "Дополнительно: разработка программы производственного контроля",
       price: `от ${formatProposalRub(input.ppkFromRub ?? PPK_INDIVIDUAL_FROM_RUB)}`,
     });
   }
 
   const note = [
     `Цены за одну точку (один адрес), без НДС. Каждая следующая точка оплачивается так же; скидка на все точки: ${POINTS_DISCOUNT_LINE.replace(/ %/g, `${NBSP}%`)}.`,
-    plan !== "standard" ? `Больше ${SEATS_PER_POINT[plan]} сотрудников на точку — по договорённости.` : null,
-    input.invoiceReady ? "Счёт выставим на любой вариант — выберите удобный." : "Оплата картой на сайте.",
+    plan !== "standard" ? `Более ${SEATS_PER_POINT[plan]} сотрудников на точку — по согласованию.` : null,
+    input.invoiceReady ? `Условия оплаты: 100${NBSP}% предоплата по счёту.` : `Условия оплаты: 100${NBSP}% предоплата банковской картой на сайте.`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -258,20 +258,20 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
     addressee: vars.addressee?.trim() || null,
     greeting,
     lead: [
-      "Спасибо за интерес к WeSetup! Сотрудники заполняют журналы с телефона, а вы видите всё в одном месте.",
-      "Бумажные тетради больше не нужны.",
+      "Предлагаем заключить договор на предоставление доступа к сервису WeSetup для ведения журналов СанПиН и ХАССП в электронном виде.",
+      "Стоимость, состав тарифа и порядок подключения приведены ниже.",
     ],
     price: {
       title: "Стоимость за одну точку",
-      columns: ["Как платить", "В месяц", "Экономия", "К оплате"],
+      columns: ["Период оплаты", "В месяц", "Экономия", "К оплате"],
       month: {
-        label: "Каждый месяц",
+        label: "Оплата за месяц",
         monthly: formatProposalRub(month.priceRub),
         saving: "—",
         total: `${formatProposalRub(month.priceRub)} в${NBSP}месяц`,
       },
       year: {
-        label: "Сразу за год — выгоднее",
+        label: "Оплата за год",
         monthly: formatProposalRub(Math.round(year.priceRub / 12)),
         saving: savingRub > 0 ? formatProposalRub(savingRub) : "—",
         total: `${formatProposalRub(year.priceRub)} за${NBSP}год`,
@@ -291,21 +291,21 @@ export function buildProposalDesign(input: ProposalDesignInput): ProposalDesign 
       },
     },
     steps: {
-      title: "Как начать",
+      title: "Порядок подключения",
       items: [
-        { title: "Пробуете бесплатно", text: `${TRIAL_DAYS}${NBSP}дней, без банковской карты.` },
-        { title: "Подключаете сотрудников", text: "Заполняют журналы с телефона." },
-        { title: input.invoiceReady ? "Оплачиваете по счёту" : "Оплачиваете картой", text: "Каждый месяц или сразу за год." },
-        { title: "Спокойно проходите проверку", text: "Журналы всегда готовы к печати." },
+        { title: "Пробный период", text: `${TRIAL_DAYS}${NBSP}дней бесплатно.` },
+        { title: "Договор", text: "Подписание по ЭДО или сканами." },
+        { title: input.invoiceReady ? "Оплата по счёту" : "Оплата банковской картой", text: `100${NBSP}% предоплата за месяц или за год.` },
+        { title: "Доступ к сервису", text: "1 рабочий день после оплаты." },
       ],
     },
     sender: { displayName, initials: initials(displayName), position, signature: senderSignature(sender.name) },
     contact: {
-      lines: ["Есть вопросы?", "Поможем подключиться."],
+      lines: ["Контакты", "Договор, счёт, подключение:"],
       phone: formatPhoneOrNull(sender.phone) ?? formatPhoneOrNull(input.sellerPhone),
       email: sender.email?.trim() || input.sellerEmail,
       qrUrl: input.ctaUrl,
-      qrCaption: input.promoCode ? `Промокод ${input.promoCode}` : "Попробовать бесплатно",
+      qrCaption: input.promoCode ? `Промокод ${input.promoCode}` : "Регистрация в сервисе",
     },
     disclaimer: `Предложение не является публичной офертой. Цены на ${input.dateLabel}${NBSP}г., подробнее — wesetup.ru/pricing.`,
     seller: input.requisites ?? { ...EMPTY_REQUISITES, nameShort: "WeSetup" },

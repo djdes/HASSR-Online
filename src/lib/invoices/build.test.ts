@@ -106,7 +106,7 @@ describe("buildInvoiceLines", () => {
       seller,
       buyer,
     });
-    assert.match(subscription.afterPayment ?? "", /подписка продлевается автоматически/);
+    assert.match(subscription.afterPayment ?? "", /Доступ к сервису предоставляется \(продлевается\) после поступления оплаты/);
     const topup = buildInvoiceDraft({
       order: { id: 30, createdAt, amountRub: 300000, bundleConfig: null },
       tariff: null,
@@ -116,7 +116,7 @@ describe("buildInvoiceLines", () => {
     });
     assert.equal(topup.totalRub, 300000);
     assert.match(topup.afterPayment ?? "", /баланс организации пополняется на сумму счёта \(1 ₽ = 1 балл\)/);
-    assert.doesNotMatch(topup.afterPayment ?? "", /подписка продлевается/);
+    assert.doesNotMatch(topup.afterPayment ?? "", /Доступ к сервису предоставляется/);
   });
 });
 
