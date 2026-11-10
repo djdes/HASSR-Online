@@ -8,6 +8,9 @@ import {
   APP_LINK_PATHS,
   buildAppleAppSiteAssociation,
   buildAssetLinks,
+  ANDROID_APK_FILE,
+  ANDROID_APK_RELEASE_TAG,
+  ANDROID_APK_URL,
   ANDROID_UPLOAD_CERT_SHA256,
   androidCertFingerprints,
   parseCertFingerprints,
@@ -136,4 +139,14 @@ test("assetlinks никогда не пуст: ключ загрузки ест�
   assert.match(ANDROID_UPLOAD_CERT_SHA256, /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
   const [statement] = buildAssetLinks("ru.wesetup.app", androidCertFingerprints(""));
   assert.deepEqual(statement.target.sha256_cert_fingerprints, [ANDROID_UPLOAD_CERT_SHA256]);
+});
+
+test("ссылка на APK с сайта совпадает с тем, что публикует workflow «APK на сайт»", () => {
+  const workflow = readFileSync(new URL("../../.github/workflows/mobile-site-apk.yml", import.meta.url), "utf8");
+  assert.ok(workflow.includes(`tag=${ANDROID_APK_RELEASE_TAG}`), "метка выпуска в workflow и в коде сайта должна совпадать");
+  assert.ok(workflow.includes(`$RUNNER_TEMP/${ANDROID_APK_FILE}`), "имя файла в workflow и в коде сайта должно совпадать");
+  assert.equal(ANDROID_APK_URL, "https://github.com/djdes/HASSR-Online/releases/download/wesetup-app-latest/wesetup.apk");
+  // Номер сборки — положительное целое: Gradle и Android другого не примут.
+  const { build } = JSON.parse(readFileSync(new URL("../../mobile/site-apk.json", import.meta.url), "utf8")) as { build: unknown };
+  assert.ok(Number.isInteger(build) && (build as number) > 0);
 });

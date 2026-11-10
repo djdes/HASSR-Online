@@ -1,0 +1,137 @@
+# Подписанный APK приложения WeSetup по ссылке с сайта.
+#
+# Собирает тот же APK, что «Выпуск приложений» (ключ загрузки, боевой Firebase,
+# проверка перед выпуском в Gradle), и кладёт его в выпуск GitHub с постоянной
+# меткой `wesetup-app-latest`, файл `wesetup.apk`. Сайт отдаёт его по адресу
+# https://wesetup.ru/download/android (перенаправление на этот файл).
+#
+# Запуск: изменить `mobile/site-apk.json` в master (поднять `build`) — или вручную,
+# Actions → «APK на сайт» → Run workflow. Отдельный от «Выпуска приложений»
+# файл: там запуск только вручную и вместе с iOS, а ссылка на сайте должна
+# обновляться обычным слиянием в master.
+name: APK на сайт
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "mobile/site-apk.json"
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-site-apk
+  cancel-in-progress: false
+
+permissions:
+  # Создать выпуск GitHub и его метку.
+  contents: write
+
+jobs:
+  publish:
+    name: Подписанный APK → выпуск GitHub
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      # Все ли секреты на месте — списком, значения в лог не попадают.
+      - name: Секреты на месте
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        working-directory: .
+        run: |
+          missing=""
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD GOOGLE_SERVICES_JSON_BASE64; do
+            if [ -z "$(printenv "$name")" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Нет секретов GitHub для подписанного APK:$missing (Settings → Secrets and variables → Actions; docs/mobile/secrets.md)"
+            exit 1
+          fi
+          echo "Секреты Android на месте"
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            mobile/android/*.gradle*
+            mobile/android/**/gradle-wrapper.properties
+
+      - run: npm ci
+      - run: npm run test:release
+
+      # Номер сборки (versionCode) — из файла в репозитории: его поднимают руками,
+      # и Android ставит новую сборку поверх прежней без удаления.
+      - name: Номер сборки
+        run: |
+          build=$(node -p "require('./site-apk.json').build")
+          echo "$build" | grep -Eq '^[1-9][0-9]{0,8}$' || { echo "::error::mobile/site-apk.json: build — целое число больше нуля"; exit 1; }
+          echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
+          echo "APP_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+
+      - name: Ключ подписи и Firebase
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.jks
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+
+      - run: npx cap sync android
+
+      - name: Подписанный APK
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          # Перед сборкой Gradle сам запускает release-preflight (app/build.gradle).
+          ./gradlew assembleRelease -PversionCode="$BUILD_NUMBER" --no-daemon
+          apk=app/build/outputs/apk/release/app-release.apk
+          tools=$(dirname "$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)")
+          "$tools/apksigner" verify --verbose --print-certs "$apk"
+          # В файле тот пакет, номер и версия, которые заявлены.
+          badging=$("$tools/aapt2" dump badging "$apk" | head -1)
+          echo "$badging"
+          echo "$badging" | grep -q "name='ru.wesetup.app' versionCode='$BUILD_NUMBER' versionName='$APP_VERSION'"
+          cp "$apk" "$RUNNER_TEMP/wesetup.apk"
+          sha256sum "$RUNNER_TEMP/wesetup.apk" | cut -d' ' -f1 > "$RUNNER_TEMP/wesetup.apk.sha256"
+
+      - name: Убрать ключ с раннера
+        if: always()
+        run: rm -f android/app/upload.jks android/app/google-services.json
+
+      # Постоянная метка: адрес файла не меняется от выпуска к выпуску, и сайт
+      # ведёт на него одной ссылкой. Прежний выпуск с этой меткой заменяется.
+      - name: Выпуск GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: .
+        run: |
+          tag=wesetup-app-latest
+          sha=$(cat "$RUNNER_TEMP/wesetup.apk.sha256")
+          gh release delete "$tag" --cleanup-tag --yes 2>/dev/null || true
+          gh release create "$tag" "$RUNNER_TEMP/wesetup.apk" \
+            --target "$GITHUB_SHA" \
+            --title "WeSetup для Android $APP_VERSION (сборка $BUILD_NUMBER)" \
+            --notes "Подписанный APK приложения WeSetup. Скачать: https://wesetup.ru/download/android
+
+          SHA-256: \`$sha\`"
+          echo "Файл: https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/wesetup.apk"
