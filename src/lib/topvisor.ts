@@ -153,6 +153,194 @@ function idFilter(ids: number[]) {
 // Регионы живут в `topvisor-regions.ts` — этот модуль читает секреты и
 // ходит в сеть, поэтому клиентским компонентам его импортировать нельзя.
 
+type RawProjectRegion = {
+  index?: number | string;
+  key?: number | string;
+  id?: number | string;
+  name?: string;
+  areaName?: string;
+  enabled?: number | string | boolean;
+};
+
+type RawProjectSearcher = {
+  key?: number | string;
+  searcher?: number | string;
+  searcher_key?: number | string;
+  name?: string;
+  enabled?: number | string | boolean;
+  regions?: RawProjectRegion[] | null;
+};
+
+type RawProjectWithRegions = {
+  id?: number | string;
+  searchers?: RawProjectSearcher[] | null;
+};
+
+const LOGICAL_REGION_SLOTS: Record<
+  number,
+  { searcher: "yandex" | "google"; regionKey: number; namePattern: RegExp }
+> = {
+  1: { searcher: "yandex", regionKey: 213, namePattern: /москв|moscow/i },
+  5: { searcher: "yandex", regionKey: 225, namePattern: /росси|russia/i },
+  2: { searcher: "google", regionKey: 213, namePattern: /москв|moscow/i },
+  7: { searcher: "google", regionKey: 225, namePattern: /росси|russia/i },
+};
+
+function detectSearcherKind(
+  searcher: RawProjectSearcher
+): "yandex" | "google" | null {
+  const rawKey =
+    searcher.key ?? searcher.searcher_key ?? searcher.searcher ?? null;
+  const numKey = rawKey !== null && rawKey !== "" ? Number(rawKey) : NaN;
+  if (numKey === 0) return "yandex";
+  if (numKey === 1) return "google";
+  const name = (searcher.name ?? "").trim();
+  if (/yandex|яндекс/i.test(name)) return "yandex";
+  if (/google/i.test(name)) return "google";
+  return null;
+}
+
+/**
+ * Сопоставляет логические слоты из `topvisor-regions.ts` (1, 5, 2, 7)
+ * с реальными `region.index` проекта в Topvisor из `get/projects_2/projects`
+ * (`show_searchers_and_regions: 2`). Если в проекте регионы были
+ * пересозданы или идут в другом порядке, их внутренние `index`
+ * отличаются от зашитых констант, из-за чего `checker/price` возвращает 0 ₽,
+ * а `checker/go` падает с ошибкой «Укажите поисковые системы и регионы».
+ */
+export function mapLogicalRegionsToProject(
+  requestedIndexes: number[],
+  searchersRaw: unknown
+): number[] {
+  if (!Array.isArray(searchersRaw) || searchersRaw.length === 0) {
+    return requestedIndexes;
+  }
+
+  const entries: Array<{
+    index: number;
+    searcherKind: "yandex" | "google" | null;
+    regionKey: number | null;
+    regionName: string;
+    enabled: boolean;
+  }> = [];
+
+  for (const item of searchersRaw as RawProjectSearcher[]) {
+    if (!item || typeof item !== "object") continue;
+    const searcherKind = detectSearcherKind(item);
+    const searcherEnabled =
+      item.enabled === undefined ||
+      item.enabled === 1 ||
+      item.enabled === "1" ||
+      item.enabled === true;
+
+    for (const region of item.regions ?? []) {
+      if (!region || typeof region !== "object") continue;
+      const idx = Number(region.index);
+      if (!Number.isFinite(idx) || idx <= 0) continue;
+      const rawKey = region.key ?? region.id ?? null;
+      const numKey = rawKey !== null && rawKey !== "" ? Number(rawKey) : NaN;
+      const regionEnabled =
+        searcherEnabled &&
+        (region.enabled === undefined ||
+          region.enabled === 1 ||
+          region.enabled === "1" ||
+          region.enabled === true);
+      entries.push({
+        index: idx,
+        searcherKind,
+        regionKey: Number.isFinite(numKey) ? numKey : null,
+        regionName: `${region.name ?? ""} ${region.areaName ?? ""}`.trim(),
+        enabled: regionEnabled,
+      });
+    }
+  }
+
+  if (entries.length === 0) return requestedIndexes;
+
+  const resolved: number[] = [];
+  for (const requested of requestedIndexes) {
+    const slot = LOGICAL_REGION_SLOTS[requested];
+    if (slot) {
+      const match =
+        entries.find(
+          (e) =>
+            e.enabled &&
+            e.searcherKind === slot.searcher &&
+            (e.regionKey === slot.regionKey ||
+              slot.namePattern.test(e.regionName))
+        ) ??
+        entries.find(
+          (e) =>
+            e.searcherKind === slot.searcher &&
+            (e.regionKey === slot.regionKey ||
+              slot.namePattern.test(e.regionName))
+        );
+      if (match) {
+        resolved.push(match.index);
+        continue;
+      }
+    }
+
+    const direct = entries.find((e) => e.index === requested);
+    if (direct) {
+      resolved.push(direct.index);
+    }
+  }
+
+  if (resolved.length > 0) {
+    return [...new Set(resolved)];
+  }
+
+  const enabledYandex = entries
+    .filter((e) => e.enabled && e.searcherKind === "yandex")
+    .map((e) => e.index);
+  if (enabledYandex.length > 0) {
+    return [...new Set(enabledYandex)];
+  }
+
+  const allEnabled = entries.filter((e) => e.enabled).map((e) => e.index);
+  return allEnabled.length > 0 ? [...new Set(allEnabled)] : requestedIndexes;
+}
+
+let cachedSearchers: {
+  projectId: number;
+  expiresAt: number;
+  data: unknown;
+} | null = null;
+
+async function resolveProjectRegionIndexes(
+  requestedIndexes: number[]
+): Promise<number[]> {
+  const { projectId } = config();
+  const now = Date.now();
+  if (
+    !cachedSearchers ||
+    cachedSearchers.projectId !== projectId ||
+    cachedSearchers.expiresAt < now
+  ) {
+    try {
+      const projects = await tvRequest<RawProjectWithRegions[]>(
+        "get/projects_2/projects",
+        {
+          filters: idFilter([projectId]),
+          show_searchers_and_regions: 2,
+        }
+      );
+      const project = Array.isArray(projects)
+        ? (projects.find((p) => Number(p?.id) === projectId) ?? projects[0])
+        : null;
+      cachedSearchers = {
+        projectId,
+        expiresAt: now + 60_000,
+        data: project?.searchers ?? null,
+      };
+    } catch {
+      return requestedIndexes;
+    }
+  }
+  return mapLogicalRegionsToProject(requestedIndexes, cachedSearchers.data);
+}
+
 // ─────────────────────────── семантика ───────────────────────────
 
 export type TopvisorGroup = { id: number; name: string };
@@ -391,9 +579,11 @@ export async function getPositionsHistory(input: {
   dateTo: string;
 }): Promise<PositionMatrix> {
   const { projectId } = config();
+  const resolved = await resolveProjectRegionIndexes([input.regionIndex]);
+  const targetRegion = resolved[0] ?? input.regionIndex;
   const raw = await tvRequest<unknown>("get/positions_2/history", {
     project_id: projectId,
-    regions_indexes: [input.regionIndex],
+    regions_indexes: [targetRegion],
     date1: input.dateFrom,
     date2: input.dateTo,
     positions_fields: ["position", "relevant_url"],
@@ -405,31 +595,77 @@ export async function getPositionsHistory(input: {
 
 // ─────────────────────────── съём позиций ───────────────────────────
 
+function extractCheckerPrice(
+  result: { pricesByUsers?: Record<string, { price?: number }> | null } | null,
+  userId: string
+): number {
+  const byUser = result?.pricesByUsers?.[userId]?.price;
+  if (typeof byUser === "number" && byUser > 0) return byUser;
+  for (const entry of Object.values(result?.pricesByUsers ?? {})) {
+    if (typeof entry?.price === "number" && entry.price > 0) {
+      return entry.price;
+    }
+  }
+  return typeof byUser === "number" ? byUser : 0;
+}
+
 /**
  * Цена съёма до его запуска — чтобы кнопка показывала сумму, а не
  * списывала деньги молча. 0,09 ₽ за пару «фраза × регион».
  */
 export async function getCheckerPrice(regionIndexes: number[]): Promise<number> {
   const { projectId, userId } = config();
+  const resolved = await resolveProjectRegionIndexes(regionIndexes);
   const result = await tvRequest<{
     pricesByUsers?: Record<string, { price?: number }>;
   }>("get/positions_2/checker/price", {
     filters: idFilter([projectId]),
-    regions_indexes: regionIndexes,
+    regions_indexes: resolved,
   });
-  const price = result?.pricesByUsers?.[userId]?.price;
-  return typeof price === "number" ? price : 0;
+  const price = extractCheckerPrice(result, userId);
+  if (price > 0) return price;
+
+  // Подстраховка: если фильтр по regions_indexes дал 0 ₽ при включённых
+  // регионах в проекте, спрашиваем цену по всем активным регионам проекта.
+  const fallback = await tvRequest<{
+    pricesByUsers?: Record<string, { price?: number }>;
+  }>("get/positions_2/checker/price", {
+    filters: idFilter([projectId]),
+  });
+  return extractCheckerPrice(fallback, userId);
+}
+
+function hasQueuedProjects(
+  result: { projectsIds?: unknown; projectIds?: unknown } | null
+): boolean {
+  const list = result?.projectsIds ?? result?.projectIds;
+  return Array.isArray(list) && list.length > 0;
 }
 
 /** Ставит проверку позиций в очередь. Тратит деньги — вызывать только явно. */
 export async function runChecker(regionIndexes: number[]): Promise<boolean> {
   const { projectId } = config();
-  const result = await tvRequest<{ projectIds?: number[] }>(
-    "edit/positions_2/checker/go",
-    {
+  const resolved = await resolveProjectRegionIndexes(regionIndexes);
+  try {
+    const result = await tvRequest<{
+      projectsIds?: number[];
+      projectIds?: number[];
+    }>("edit/positions_2/checker/go", {
       filters: idFilter([projectId]),
-      regions_indexes: regionIndexes,
-    }
-  );
-  return Array.isArray(result?.projectIds) && result.projectIds.length > 0;
+      regions_indexes: resolved,
+    });
+    if (hasQueuedProjects(result)) return true;
+  } catch (error) {
+    // Если конкретные region_index не совпали с активными регионами проекта,
+    // запускаем проверку по всем включённым в проекте регионам без фильтра.
+    if (!(error instanceof TopvisorError)) throw error;
+  }
+
+  const fallback = await tvRequest<{
+    projectsIds?: number[];
+    projectIds?: number[];
+  }>("edit/positions_2/checker/go", {
+    filters: idFilter([projectId]),
+  });
+  return hasQueuedProjects(fallback);
 }
