@@ -22,16 +22,16 @@ PASS  AC5 fryer end is saved without network
 PASS  AC6 daily cleaning is saved without network
 PASS  AC8 filled objects and journals are marked on the home screen — Сегодня заполнено: 2 из 21 → Сегодня заполнено: 6 из 21
 PASS  all records made without network are delivered
-PASS  AC1 the fridge reading is in the journal with its photo — {"temperatures": {"cold-equipment-c174a6f8-a3d3-4c07-8f19-763a39695242": 5}, "readingPhotos": {"cold-equipment-c174a6f8-a3d3-4c07-8f19-763a39695242": "/uploads/readings/e5cf2e668643cb8b41044c3a035ddee
+PASS  AC1 the fridge reading is in the journal with its photo — {"temperatures": {"cold-equipment-00d07fb5-de7d-4487-b759-b19e806cbedf": 5}, "readingPhotos": {"cold-equipment-00d07fb5-de7d-4487-b759-b19e806cbedf": "/uploads/readings/1a682e88ccebdaf744c4619c4bb5f69
 PASS  AC6 the room climate reading is in the journal — {"measurements": {"room-cmwafwvsq0002du7d9znozijc": {"10:00": {"humidity": 50, "temperature": 21}}}}
-PASS  AC5 the fryer row has both the start and the end — {"endHour": 12, "fatType": "Подсолнечное масло", "endMinute": 8, "startDate": "2026-11-10", "startHour": 12, "disposedKg": 1, "qualityEnd": 5, "carryoverKg": 2.5, "productType": "Продукция во фритюре (в ассортименте)", "startMinute": 8, "qualityStart": 5, "equ
+PASS  AC5 the fryer row has both the start and the end — {"endHour": 12, "fatType": "Подсолнечное масло", "endMinute": 38, "startDate": "2026-11-10", "startHour": 12, "disposedKg": 1, "qualityEnd": 5, "carryoverKg": 2.5, "productType": "Продукция во фритюре (в ассортименте)", "startMinute": 38, "qualityStart": 5, "e
 PASS  AC6 the daily cleaning record reached the journal — audit rows 1
 PASS  AC5 fryer end without a start is refused by the server — status 409
 PASS  AC4 offline history shows the value edited in the cabinet table — {"infection":false,"temperature":true,"respiratorySkin":true}
 PASS  AC4 the cabinet edit is not overwritten by a device with older data; the device's own change is written — {"infection": false, "temperature": true, "respiratorySkin": false}
 PASS  AC11 records not accepted → one notification per device a day — {"ok":true,"notifiedStuck":true} {"ok":true,"notifiedStuck":false}, notifications 0 → 1
 PASS  AC11 heartbeat is refused without a session and with garbage
-PASS  AC10 the manager's page lists devices and offline records — devices: Устройство Кто вошёл На связи Данные от Ждёт / не ушло Состояние Chrome (Android) Крылов Денис Сергеевич 10.11, 12:08 10; records 7
+PASS  AC10 the manager's page lists devices and offline records — devices: Устройство Кто вошёл На связи Данные от Ждёт / не ушло Состояние Chrome (Android) Крылов Денис Сергеевич 10.11, 12:38 10; records 7
 PASS  AC10 the manager's page is closed to line staff and to guests — cook 307
 PASS  AC13 assetlinks.json is not empty: the upload key fingerprint is always there
 

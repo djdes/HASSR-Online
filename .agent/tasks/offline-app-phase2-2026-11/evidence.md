@@ -9,10 +9,13 @@
 
 ## Команды и результаты
 
+Все цифры — после вливания master `701cca30` (обновление библиотек интерфейса и др.): зависимости переустановлены,
+сборка и сценарии пройдены заново на объединённом коде.
+
 | Проверка | Команда | Результат | Файл |
 |---|---|---|---|
 | Типы | `npm run typecheck` | exit 0 | `raw/typecheck.txt` |
-| Все тесты | `npm run test:gate` | pass=6023, fail=0 | `raw/test-gate.txt` |
+| Все тесты | `npm run test:gate` | pass=6030, fail=0 | `raw/test-gate.txt` |
 | Переводы | `npm run i18n:check` | exit 0 | `raw/i18n-check.txt` |
 | Тесты офлайн-модулей | `npx tsx --test src/lib/offline/*.test.ts` | 67 из 67 | `raw/offline-unit-tests.txt` |
 | Сценарий второго этапа | `node e2e/phase2.e2e.mjs` | 36 из 36 | `raw/phase2-output.txt`, `raw/phase2-results.json` |
@@ -40,7 +43,7 @@
 | AC11 уведомления | PASS (push не проверялся) | phase2 «AC11 …» ×2: одно уведомление о непринятых записях на устройство в сутки, отказ без сессии; `silent-device.txt` (4 проверки). Проверялось появление записи в колокольчике; доставка push на телефон — нет |
 | AC12 языки | PASS | phase2 «AC12 …» ×3 (ru, en, uz); `i18n:check`. Подпись устройства («Приложение WeSetup …») и заголовки уведомлений — на русском |
 | AC13 подписанный APK | ЧАСТИЧНО | Запустить workflow из этой среды нельзя (403). Сделано: `assetlinks.json` больше не пуст — phase2 «AC13 …», `app-links.test.ts`; инструкция в `mobile/README.md`. **Сам подписанный APK не собран** — это делает владелец |
-| AC14 ничего не сломано | PASS | typecheck, test:gate 6023/0, i18n:check, регрессия первого этапа 55/55, online-regression 13/13 |
+| AC14 ничего не сломано | PASS | typecheck, test:gate 6030/0, i18n:check, регрессия первого этапа 55/55, online-regression 13/13 |
 
 ## Что не проверено
 
@@ -50,6 +53,9 @@
 - Подписанный APK и проверка домена Android после выката нового `assetlinks.json`.
 
 ## Изменения в тестах, сделанные намеренно
+
+- `src/i18n/messages/ru.json`, `publicJournalIndex.detailCommon.sampleDescription`: «в шапку бланка» → «в шапку журнала».
+  Строка пришла из master (коммит 79083577) и роняла там `no-blank-word.test.ts`; исправлена по подсказке теста.
 
 - `src/lib/navigation-localization.test.ts`: число страниц с заголовками 153 → 154 (новая «Настройки → Работа без связи»).
 - `.agent/tasks/offline-app-2026-11/e2e/signout.e2e.mjs`: ждёт сохранения офлайн-экрана перед отключением сети (была гонка).

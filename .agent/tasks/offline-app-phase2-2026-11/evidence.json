@@ -8,7 +8,7 @@
       "exit": 0
     },
     "test:gate": {
-      "pass": 6023,
+      "pass": 6030,
       "fail": 0
     },
     "i18n:check": {
@@ -102,5 +102,6 @@
     "photo links of form fields stored in a journal row (no such fields exist yet)",
     "push delivery",
     "signed APK and Android domain verification"
-  ]
+  ],
+  "verified_on": "branch merged with master 701cca30"
 }
