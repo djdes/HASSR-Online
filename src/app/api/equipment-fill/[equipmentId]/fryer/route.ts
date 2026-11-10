@@ -11,6 +11,7 @@ import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint
 import { OBJECT_FILLER_DENIED, canFillObject } from "@/lib/object-fillers";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
 import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
+import { resolveOfflineObjectActor, withOfflineIdempotency } from "@/lib/offline/envelope.server";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
@@ -26,7 +27,11 @@ export const dynamic = "force-dynamic";
  * оценка в конце, остаток и утилизация. Строка — в журнал учёта
  * фритюрных жиров, в строку этой фритюрницы за сегодня.
  */
-export async function POST(request: Request, { params }: { params: Promise<{ equipmentId: string }> }) {
+export async function POST(request: Request, ctx: { params: Promise<{ equipmentId: string }> }) {
+  return withOfflineIdempotency(request, "fryer_oil", () => handlePost(request, ctx));
+}
+
+async function handlePost(request: Request, { params }: { params: Promise<{ equipmentId: string }> }) {
   const equipmentId = decodeRouteParam((await params).equipmentId);
   if (!qrFillRateLimiter.consume(qrFillRateKey(clientIp(request), "equipment", equipmentId))) {
     return NextResponse.json({ error: QR_FILL_RATE_LIMIT_ERROR, errorCode: "equipmentFill.errors.rateLimit" }, { status: 429 });
@@ -63,14 +68,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
   const timezone = fryer.area.organization.timezone || "Europe/Moscow";
   const mode = normalizeQrFillMode(fryer.area.organization.qrFillMode);
 
-  const actor = await resolveObjectActor({
-    mode,
-    organizationId,
-    employeeId,
-    pin: typeof body?.pin === "string" ? body.pin : null,
-    pass: typeof body?.pass === "string" ? body.pass : null,
-    cookiePass: await readObjectPassCookie(organizationId),
-  });
+  // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и
+  // время берутся из неё; обычный запрос — как раньше.
+  const offlineActor = await resolveOfflineObjectActor(request, { mode, organizationId, employeeId, timeZone: timezone });
+  const actor = offlineActor
+    ? offlineActor.actor
+    : await resolveObjectActor({
+        mode,
+        organizationId,
+        employeeId,
+        pin: typeof body?.pin === "string" ? body.pin : null,
+        pass: typeof body?.pass === "string" ? body.pass : null,
+        cookiePass: await readObjectPassCookie(organizationId),
+      });
+  const at = offlineActor?.now;
+  const offline = offlineActor?.offline ?? null;
   if (!actor.ok) return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
 
   // Сотрудник этой организации; «Кто заполняет» — как у остальных наклеек.
@@ -89,7 +101,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     return NextResponse.json({ error: OBJECT_FILLER_DENIED, errorCode: "equipmentFill.errors.objectDenied" }, { status: 403 });
   }
 
-  const dayKey = orgTodayKey(timezone);
+  const dayKey = at ? orgTodayKey(timezone, at) : orgTodayKey(timezone);
   const target = await resolveFryerFillTarget({
     equipment: { id: fryer.id, name: fryer.name, buildingId: fryer.area.buildingId },
     organizationId,
@@ -109,6 +121,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     input: parsed.input,
     dayKey,
     timezone,
+    ...(at ? { at } : {}),
   });
   if (!saved.ok) return NextResponse.json({ error: saved.error, errorCode: `equipmentFill.fryer.${saved.errorCode}` }, { status: saved.status });
 
@@ -123,6 +136,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ equ
     dateKey: dayKey,
     authMode: mode,
     values: { fryerPhase: parsed.input.phase, quality: parsed.input.quality },
+    ...(offline ? { offline } : {}),
   }).catch(() => null);
 
   return NextResponse.json({ ok: true, phase: parsed.input.phase, time: saved.time, documentId: target.documentId });

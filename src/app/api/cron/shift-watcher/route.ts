@@ -7,6 +7,7 @@ import {
   notifyOrganization,
   escapeTelegramHtml as esc,
 } from "@/lib/telegram";
+import { notifySilentOfflineDevices } from "@/lib/offline/devices.server";
 import { placeOfEvent } from "@/lib/place-recipients";
 
 export const runtime = "nodejs";
@@ -38,6 +39,13 @@ async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
   const now = new Date();
+  // Работа без связи (2026-11): устройство, с которого приходят записи без
+  // интернета, молчит больше суток — руководству одно уведомление. Живёт
+  // здесь, чтобы не заводить на сервере ещё одно расписание.
+  await notifySilentOfflineDevices(now).catch((error) => {
+    console.error("[shift-watcher] offline devices check failed", error);
+    return 0;
+  });
   const currentDayStart = new Date(now);
   currentDayStart.setUTCHours(0, 0, 0, 0);
 

@@ -90,6 +90,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "settings_integrations_1c", href: "/settings/integrations/1c", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_webhooks", href: "/settings/webhooks", icon: "Webhook", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_calendar", href: "/settings/calendar", icon: "CalendarDays", section: "more", group: "connections", access: FULL_ACCESS },
+  { id: "settings_offline", href: "/settings/offline", icon: "TabletSmartphone", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_backup", href: "/settings/backup", icon: "CloudUpload", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_accounting", href: "/settings/accounting", icon: "FileSpreadsheet", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_api", href: "/settings/api", icon: "KeyRound", section: "more", group: "connections", access: FULL_ACCESS },

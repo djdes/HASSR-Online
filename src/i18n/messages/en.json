@@ -3376,7 +3376,8 @@
       "monitoring": "Monitoring",
       "journals_points": "Outlet journals",
       "inspection_laws": "Regulatory documents",
-      "inspection_settings": "Section settings"
+      "inspection_settings": "Section settings",
+      "settings_offline": "Offline work"
     },
     "breadcrumbs": {
       "neighbors": "Related sections",
@@ -10206,6 +10207,10 @@
         "bonuses": {
           "title": "Work bonuses",
           "description": "Employee points and bonuses"
+        },
+        "settings_offline": {
+          "title": "Offline work",
+          "description": "Devices where journals are filled in without the internet, and records made offline"
         }
       }
     },
@@ -31254,5 +31259,283 @@
     "departmentsSave": "Save mapping",
     "departmentsSaved": "Mapping saved — applies on the next run",
     "departmentsUnmapped": "Not mapped: {count}. Employees of these departments have no point yet."
+  },
+  "offlineApp": {
+    "shell": {
+      "opening": "Opening…",
+      "online": "Online",
+      "offline": "Offline",
+      "back": "Back",
+      "toList": "Back to journals",
+      "openCabinet": "Open the cabinet",
+      "bannerSending": "Sending records…",
+      "bannerPending": "You are back online. Waiting to be sent: {count}",
+      "bannerBack": "You are back online — you can return to the cabinet."
+    },
+    "noPack": {
+      "title": "No internet connection",
+      "text": "This device has no data for offline work yet. Open the app once with internet and sign in — after that journals will open without a connection.",
+      "retry": "Try again"
+    },
+    "notice": {
+      "notOurQrTitle": "This is not a WeSetup QR code",
+      "notOurQrText": "Point the camera at an object sticker or a journal poster.",
+      "foreignOrgTitle": "QR code of another organization",
+      "foreignOrgText": "This device holds the data of another organization — this code will not open here.",
+      "noObjectTitle": "This object is not in the saved data",
+      "noJournalTitle": "This journal is not in the saved data",
+      "missingText": "It will appear after the app is opened with internet. For now pick a journal or an object from the list."
+    },
+    "done": {
+      "sentTitle": "Saved to the journal",
+      "savedTitle": "Saved on the device",
+      "sentText": "{label} · {name}",
+      "savedText": "{label} · {name}. The record will be sent by itself when the internet is back — with the time {time}.",
+      "scanNext": "Scan the next QR"
+    },
+    "home": {
+      "title": "Working offline",
+      "stamp": "Data as of {time}. Records are kept on the device and go to the journal when the internet is back — with the time they were made.",
+      "staleDay": "The data is more than a day old. Refresh it when the internet is back: new objects, employees and colleagues' records appear after a refresh.",
+      "refresh": "Refresh data",
+      "refreshing": "Refreshing…",
+      "refreshFailed": "Could not refresh — check the internet and that you are signed in.",
+      "scan": "Scan QR",
+      "queuePending": "Waiting to be sent: {count}",
+      "queueStuck": "not sent: {count}",
+      "queueForeign": "of another account: {count}",
+      "summary": "Filled today: {done} of {total}",
+      "objects": "Equipment and rooms",
+      "journals": "Journals",
+      "noJournals": "The saved data has no journals with an active document for today.",
+      "tasks": "Tasks for today",
+      "tasksStamp": "As of {time}",
+      "tasksNote": "Taking, finishing or handing over a task needs the internet."
+    },
+    "task": {
+      "available": "free",
+      "mine": "yours",
+      "taken": "taken: {name}",
+      "takenNoName": "taken",
+      "completed": "done"
+    },
+    "mark": {
+      "done": "filled",
+      "queued": "waiting to be sent",
+      "count": "records today: {count}",
+      "rows": "rows today: {done} of {total}"
+    },
+    "object": {
+      "uv": "UV lamp: switched on / off",
+      "fryer": "Fryer: start and end of frying",
+      "onlineOnly": "internet only",
+      "temperature": "temperature",
+      "unsupported": "This object cannot be filled offline.",
+      "fryerNoJournal": "This fryer is not in any frying oil journal today — it cannot be filled."
+    },
+    "signer": {
+      "who": "Who are you?",
+      "you": "signed in",
+      "none": "The saved data has no employees who may fill this. Open the app with internet to refresh the data.",
+      "other": "Choose another employee",
+      "notMe": "This is not me",
+      "line": "Filled by: {name}",
+      "deniedAuth": "This organization allows records only after sign-in — offline you can record as the signed-in employee.",
+      "deniedNoPin": "This employee has no PIN. Ask a manager to issue one — it needs the internet.",
+      "deniedCantVerify": "This employee's PIN cannot be checked offline. Ask a manager to issue the PIN again — then it will work without a connection."
+    },
+    "pin": {
+      "hint": "Enter your PIN — it is checked on the device, without the internet.",
+      "label": "PIN",
+      "entered": "Digits entered: {count}",
+      "erase": "Erase a digit",
+      "checking": "Checking…",
+      "continue": "Continue",
+      "locked": "The PIN is locked after wrong attempts. Try again in {minutes} min.",
+      "wrong": "Wrong PIN. Attempts left: {attempts}.",
+      "lockedNow": "Wrong PIN 5 times — locked for 15 minutes."
+    },
+    "form": {
+      "save": "Save",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "saveFailed": "Could not save on the device. Check that site data storage is not blocked in the settings.",
+      "enterNumber": "“{label}”: enter a number",
+      "check": "Check: {fields}",
+      "checkValues": "Check the values you entered",
+      "select": "Choose…",
+      "norm": "Norm: {range}",
+      "offNorm": "Out of norm: {fields}. Write what you did.",
+      "whatDone": "What you did",
+      "signatureLater": "{label}: the signature is added in the cabinet when the internet is back.",
+      "signatureRequired": "This record requires a signature ({fields}) — it cannot be made offline. Fill it in when the internet is back.",
+      "required": "required"
+    },
+    "photo": {
+      "add": "Take a photo",
+      "addMore": "Another photo",
+      "remove": "Remove the photo",
+      "reading": "Photo of the reading",
+      "readingRequired": "Photo of the reading — required",
+      "readingNeeded": "Take a photo of the reading — the record is not accepted without it.",
+      "fieldNeeded": "“{label}”: take a photo",
+      "tooBig": "The photo is larger than {mb} MB — take it again.",
+      "notImage": "A JPG, PNG or WEBP image is needed.",
+      "kept": "The photo is kept on the device and will be sent with the record.",
+      "attached": "photos: {count}"
+    },
+    "reading": {
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "humidityOptional": "Humidity (optional)",
+      "service": "Maintenance",
+      "repair": "Repair",
+      "offNorm": "The reading is out of norm. Write what you did — the record is not accepted without it.",
+      "errTempNumber": "Temperature: enter a number, for example 4.5",
+      "errHumNumber": "Humidity: enter a number",
+      "errTempRange": "Temperature: check the value",
+      "errHumRange": "Humidity: from 0 to 100 %",
+      "errEnterTemp": "Enter the temperature",
+      "errEnterAny": "Enter the temperature or the humidity",
+      "errCorrection": "The reading is out of norm — write what you did"
+    },
+    "uv": {
+      "hint": "The switch-on and switch-off time is taken from the device clock.",
+      "on": "I switched it on",
+      "off": "I switched it off",
+      "summaryOn": "Switched on",
+      "summaryOff": "Switched off"
+    },
+    "fryer": {
+      "start": "Start of frying",
+      "end": "End of frying",
+      "phaseHint": "The time is taken from the device clock. The end is accepted only after the start.",
+      "fat": "Oil",
+      "product": "Product",
+      "quality": "Oil quality score",
+      "carryover": "Oil left, kg",
+      "disposed": "Disposed, kg",
+      "errFat": "Choose the oil",
+      "errProduct": "Choose the product",
+      "errKg": "Kilograms: enter a number from 0 to 1000",
+      "summaryStart": "start of frying, score {quality}",
+      "summaryEnd": "end of frying, score {quality}"
+    },
+    "journal": {
+      "pickDocument": "Choose a document",
+      "what": "What are we filling in?",
+      "filledToday": "filled today",
+      "day": "Record day",
+      "today": "Today, {date}",
+      "dayFilled": "{day} — filled",
+      "rowUnsent": "Your record that has not been sent yet is shown. You can correct it.",
+      "rowSaved": "There is already a record for this day — you can view and correct it.",
+      "noForm": "The form of this row is not in the saved data. It will appear after the app is opened with internet.",
+      "forDay": "for {date}"
+    },
+    "queue": {
+      "title": "Offline records",
+      "empty": "All records have been sent.",
+      "online": "You are online — records are being sent.",
+      "offline": "Records will be sent by themselves when the internet is back.",
+      "foreign": "{count} more were made under another account — they will be sent after that account signs in on this device.",
+      "sendNow": "Send now",
+      "sending": "Sending…",
+      "waiting": "Waiting to be sent",
+      "rejected": "Not sent: {reason}",
+      "rejectedUnknown": "the server did not accept the record",
+      "enterPin": "Enter the current PIN",
+      "pinPlaceholder": "Employee PIN",
+      "checkAndSend": "Check and send",
+      "noPin": "The employee has no PIN that can be checked right now. Contact a manager.",
+      "wrongPin": "Wrong PIN",
+      "retry": "Retry",
+      "delete": "Delete the record",
+      "keep": "Keep",
+      "deleteForever": "Delete forever",
+      "conflictIntro": "The record was accepted, but these fields had already been changed differently in the journal — the journal value was kept:",
+      "conflictLine": "{label}: in the journal “{theirs}”, yours “{mine}”",
+      "keepTheirs": "Keep the journal value",
+      "takeMine": "Write mine",
+      "valueEmpty": "empty",
+      "valueYes": "yes",
+      "valueNo": "no"
+    },
+    "reject": {
+      "offline-login": "Sign in to the cabinet on this device — records will be sent after that.",
+      "offline-other-org": "The record was made in another organization — sign in with its account.",
+      "offline-time-future": "The record time is in the future — check the date and time on the device.",
+      "offline-time-too-old": "The record is older than 31 days — enter it through a manager.",
+      "offline-time-bad-day": "The record day is wrong.",
+      "offline-time-bad-time": "The record has no time — make it again.",
+      "offline-employee": "The employee no longer works in the organization — the record was not accepted.",
+      "offline-pin-changed": "The employee's PIN was changed or revoked — enter the current PIN and the record will be sent.",
+      "offline-pin-required": "The employee has been given a PIN — enter it and the record will be sent.",
+      "offline-not-self": "The record is signed by another employee without a PIN — it cannot be accepted.",
+      "offline-no-document": "The journal document for this day is closed or deleted — the record was not accepted.",
+      "offline-server-error": "The server does not accept the record. Try later or show it to a manager.",
+      "offline-photo-lost": "The photo is lost — make the record again with a photo.",
+      "offline-photo-rejected": "The server did not accept the photo — make the record again with another photo."
+    },
+    "scanner": {
+      "title": "Point at the QR code",
+      "close": "Close the scanner",
+      "dialog": "QR scanner",
+      "hint": "A sticker on a fridge, a room, a lamp or a journal poster.",
+      "cameraError": "Could not start the camera. Allow the app to use the camera in the device settings or pick the object from the list."
+    },
+    "status": {
+      "ready": "Ready to work offline",
+      "notReady": "Not ready for offline work yet: {reason}",
+      "reasonNoWorker": "the browser cannot keep pages",
+      "reasonNoPack": "the data is still downloading",
+      "reasonNoShell": "the screen is still being saved",
+      "dataFrom": "Data as of {time}",
+      "noData": "No data on the device",
+      "stale": "more than a day old",
+      "waiting": "waiting to be sent: {count}",
+      "refresh": "Refresh data",
+      "refreshing": "Refreshing…",
+      "openScreen": "Open the offline screen"
+    },
+    "toast": {
+      "sent": "Offline records sent: {count}",
+      "stuck": "Records not sent: {count}",
+      "stuckHint": "Open the list and decide what to do with them.",
+      "open": "Open"
+    },
+    "manager": {
+      "title": "Offline work",
+      "description": "Devices where journals are filled in without the internet, and records made offline over the last month.",
+      "devices": "Devices",
+      "noDevices": "No device is ready for offline work yet. It will appear here after an employee opens the cabinet in the app with internet.",
+      "colDevice": "Device",
+      "colUser": "Signed in",
+      "colSeen": "Last seen",
+      "colData": "Data as of",
+      "colWaiting": "Waiting / not sent",
+      "colState": "State",
+      "stateOk": "fine",
+      "stateWaiting": "has unsent records",
+      "stateStuck": "has records not accepted",
+      "stateSilent": "silent for more than a day",
+      "records": "Records made offline",
+      "noRecords": "There were no offline records over the last month.",
+      "colWho": "Who",
+      "colWhat": "What",
+      "colMade": "Made",
+      "colReceived": "Received",
+      "colDelay": "Delay",
+      "colAuth": "Author confirmed by",
+      "authPin": "PIN on the device",
+      "authList": "picked from the list",
+      "authSelf": "the signed-in account",
+      "pastDay": "for {day}",
+      "delayMinutes": "{count} min",
+      "delayHours": "{count} h",
+      "delayDays": "{count} d",
+      "never": "—",
+      "shownLimit": "The latest {count} records are shown."
+    }
   }
 }

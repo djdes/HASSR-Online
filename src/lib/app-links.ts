@@ -108,3 +108,23 @@ export function parseCertFingerprints(raw: string | null | undefined): string[] 
   }
   return out;
 }
+
+/**
+ * SHA-256 отпечаток сертификата ключа загрузки (`upload.jks`) — им подписаны
+ * сборки из workflow «Выпуск приложений» (`app-release.apk`, AAB). Отпечаток
+ * сертификата не секрет (он записан в `docs/mobile/secrets.md` и виден в
+ * любом APK), поэтому он зашит здесь: без него, пока на сервере не задана
+ * `ANDROID_CERT_SHA256`, `/.well-known/assetlinks.json` отдавал пустой
+ * список, и Android не открывал ссылки с QR в приложении ни у одной сборки.
+ */
+export const ANDROID_UPLOAD_CERT_SHA256 =
+  "8C:28:3E:01:28:7C:9A:D3:4B:1D:32:8F:5E:4F:2D:D0:6B:49:CF:91:54:4C:B8:DE:6D:65:5D:21:F9:6A:60:2D";
+
+/**
+ * Отпечатки для `assetlinks.json`: ключ загрузки всегда, плюс то, что задано
+ * на сервере в `ANDROID_CERT_SHA256` (ключ подписи приложения из Play Console —
+ * он появляется после первой публикации и нужен сборкам, скачанным из Google Play).
+ */
+export function androidCertFingerprints(raw: string | null | undefined): string[] {
+  return parseCertFingerprints([raw ?? "", ANDROID_UPLOAD_CERT_SHA256].join(","));
+}

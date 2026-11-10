@@ -68,6 +68,8 @@ export type OfflinePackDocument = {
   employeeIds: string[];
   /** Saved values of the last 31 days: `rowKey → day → values` ("one row per day" journals only). */
   history: Record<string, Record<string, OfflineValues>>;
+  /** Records made today through forms when the pack was made (append journals: rows added today). */
+  todayCount: number;
 };
 
 export type OfflinePackJournal = {
@@ -80,7 +82,10 @@ export type OfflinePackJournal = {
   documents: OfflinePackDocument[];
 };
 
-export type OfflineObjectFill = "temperature" | "climate" | "uv" | "unsupported";
+export type OfflineObjectFill = "temperature" | "climate" | "uv" | "fryer" | "unsupported";
+
+/** Photo of the reading: not offered, offered, or required by the organization. */
+export type OfflinePhotoMode = "off" | "optional" | "required";
 
 export type OfflinePackObject = {
   kind: "equipment" | "room";
@@ -95,8 +100,12 @@ export type OfflinePackObject = {
   unsupportedReason?: string;
   temperature: { min: number | null; max: number | null } | null;
   humidity: { min: number | null; max: number | null } | null;
-  /** The organization requires a photo of the reading — impossible without network. */
-  photoRequired: boolean;
+  /** Photo of the reading (fridges, rooms): the organization's «Фотофиксация показаний» setting. */
+  photo: OfflinePhotoMode;
+  /** Fryer sticker: lists for «Начало жарки» and the phase the journal expected when the pack was made. */
+  fryer?: { fatTypes: string[]; productTypes: string[]; fatType: string; productType: string; phase: "start" | "end" } | null;
+  /** State for today when the pack was made: filled or not, and a short summary («+4 °C · Иванов»). */
+  today?: { done: boolean; summary: string } | null;
   /** Employees who may fill this object (its point and "who fills" list). */
   employeeIds: string[];
 };
@@ -114,7 +123,7 @@ export type OfflinePack = {
 
 export type OfflineQueueTarget =
   | { kind: "journal"; code: string; documentId: string; rowKey: string; day: string | null }
-  | { kind: "equipment" | "room"; objectId: string; action: "temperature" | "climate" | "uv-on" | "uv-off" };
+  | { kind: "equipment" | "room"; objectId: string; action: "temperature" | "climate" | "uv-on" | "uv-off" | "fryer-start" | "fryer-end" };
 
 export type OfflineQueueStatus = "pending" | "rejected" | "conflict";
 
@@ -144,6 +153,34 @@ export type OfflineQueueItem = {
   lastError: string | null;
   lastCode: string | null;
   conflicts?: Array<{ key: string; label: string; mine: unknown; theirs: unknown }>;
+  /**
+   * Photos taken without network, by slot: `reading` — photo of a fridge or
+   * room reading; `field:<key>#<n>` — a photo of a journal form field. They
+   * are uploaded before the record, and the record gets the links.
+   */
+  photos?: Record<string, Blob>;
+  /** Links of the photos already uploaded during delivery — a retry does not upload them twice. */
+  photoUrls?: Record<string, string>;
+};
+
+/** Slot of the photo of a fridge or room reading. */
+export const OFFLINE_READING_PHOTO_SLOT = "reading";
+/** Slot of the n-th photo of a journal form field. */
+export const offlineFieldPhotoSlot = (fieldKey: string, index: number): string => `field:${fieldKey}#${index}`;
+export const OFFLINE_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+export const OFFLINE_PHOTO_TYPES: readonly string[] = ["image/jpeg", "image/png", "image/webp"];
+export const OFFLINE_FIELD_PHOTO_LIMIT = 3;
+
+/** Today's tasks of the signed-in employee as they were when the device last saw the network (view only). */
+export type OfflineTasksSnapshot = {
+  userId: string;
+  savedAt: number;
+  dateKey: string;
+  groups: Array<{
+    code: string;
+    label: string;
+    tasks: Array<{ key: string; label: string; sublabel: string | null; state: "available" | "mine" | "taken" | "completed"; by: string | null }>;
+  }>;
 };
 
 export type OfflineSyncSummary = { sent: number; rejected: number; conflicts: number; pending: number; foreign: number };

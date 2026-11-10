@@ -7,7 +7,7 @@ import { DEFAULT_CLIMATE_HUMIDITY, DEFAULT_CLIMATE_TEMPERATURE, normalizeClimate
 import { parseCustomNames } from "@/lib/custom-names";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
-import { resolveEquipmentFillTargets } from "@/lib/equipment-fill-targets";
+import { resolveEquipmentFillTargets, resolveFryerFillTarget } from "@/lib/equipment-fill-targets";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { decryptSecret, isIntegrationCryptoConfigured } from "@/lib/integration-crypto";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
@@ -28,6 +28,8 @@ import { canFillObject } from "@/lib/object-fillers";
 import { mintQrFillToken } from "@/lib/qr-fill-token";
 import { qrPinFingerprint } from "@/lib/qr-pin-pass";
 import { loadQrPointScope, worksAtQrPoint, type QrPointScope } from "@/lib/qr-point-roster";
+import { loadObjectJournalStatus } from "@/lib/qr-object-journal-status";
+import type { ReadingPhotoSettings } from "@/lib/reading-photo-fixation";
 import { getReadingPhotoSettings } from "@/lib/reading-photo-fixation.server";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { rowKeyForEmployee } from "@/lib/tasksflow-adapters/row-key";
@@ -37,6 +39,8 @@ import { isUvLampEquipment } from "@/lib/uv-lamp";
 
 import { historyToPlain } from "./history";
 import { loadFillHistory } from "./history.server";
+import type { OfflineValues } from "./merge";
+import { loadStoredHistory } from "./stored-values.server";
 import { makeOfflinePinVerifier, type OfflinePinVerifier } from "./pin-verifier";
 import {
   OFFLINE_PACK_VERSION,
@@ -45,6 +49,7 @@ import {
   type OfflinePackEmployee,
   type OfflinePackJournal,
   type OfflinePackObject,
+  type OfflinePhotoMode,
 } from "./types";
 
 /**
@@ -82,6 +87,14 @@ async function inBatches<T, R>(items: readonly T[], size: number, run: (item: T)
     out.push(...(await Promise.all(items.slice(index, index + size).map(run))));
   }
   return out;
+}
+
+const photoMode = (settings: ReadingPhotoSettings | null): OfflinePhotoMode => (!settings?.enabled ? "off" : settings.required ? "required" : "optional");
+
+/** Fat and product lists with the last used value first, as the online sticker page offers them. */
+function withLast(list: readonly string[], last: string | null | undefined): string[] {
+  const value = last?.trim();
+  return value && !list.includes(value) ? [value, ...list] : [...list];
 }
 
 type RosterUser = {
@@ -150,6 +163,19 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
     const adapterDocs = await adapter.listDocumentsForOrg(organizationId).catch(() => []);
     const append = scopeByCode.get(item.code) === "shared" || journalFillHints(item.code).append === true;
     const history = append ? new Map() : await loadFillHistory(organizationId, docs.map((doc) => doc.id), now);
+    // Сколько записей сделано сегодня через формы — для отметки «заполнено сегодня» на главном экране.
+    const todayRows = await db.auditLog.groupBy({
+      by: ["entityId"],
+      where: {
+        organizationId,
+        action: "journal.qr_fill",
+        entity: "JournalDocument",
+        entityId: { in: docs.map((doc) => doc.id) },
+        details: { path: ["dateKey"], equals: todayKey },
+      },
+      _count: { _all: true },
+    });
+    const todayCountByDoc = new Map(todayRows.map((row) => [row.entityId, row._count._all]));
     const includeCommission = isCommissionJournalCode(item.code);
 
     const documents: OfflinePackDocument[] = [];
@@ -165,6 +191,18 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
         if (form) forms[rowKey] = form;
       });
       if (Object.keys(forms).length === 0) continue;
+      // История строк: записи форм (аудит), а поверх — то, что реально лежит в журнале
+      // (гигиена, здоровье, чек-лист уборки): так видны и правки из таблицы кабинета.
+      const docHistory: Map<string, Map<string, OfflineValues>> = new Map(history.get(doc.id) ?? []);
+      if (!append) {
+        const stored = await loadStoredHistory({
+          code: item.code,
+          documentId: doc.id,
+          fieldKeysByRow: new Map(Object.entries(forms).map(([rowKey, form]) => [rowKey, form.fields.map((field) => field.key)])),
+          todayKey,
+        });
+        for (const [rowKey, days] of stored) docHistory.set(rowKey, new Map([...(docHistory.get(rowKey) ?? []), ...days]));
+      }
       documents.push({
         id: doc.id,
         title: doc.title,
@@ -180,7 +218,10 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
               .map((row) => ({ rowKey: row.rowKey, label: row.label, ...(row.sublabel ? { sublabel: row.sublabel } : {}), responsibleUserId: row.responsibleUserId })),
         forms,
         employeeIds: allowed,
-        history: historyToPlain(history.get(doc.id)),
+        history: historyToPlain(docHistory),
+        todayCount: append
+          ? (todayCountByDoc.get(doc.id) ?? 0)
+          : Array.from(docHistory.values()).filter((days) => days.has(todayKey)).length,
       });
     }
     if (documents.length === 0) continue;
@@ -210,6 +251,14 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
     getReadingPhotoSettings(organizationId, "climate_control").catch(() => null),
   ]);
 
+  // Что уже заполнено сегодня по объектам — те же данные, что показывает QR журнала с интернетом.
+  const todayByObject = new Map<string, { done: boolean; summary: string }>();
+  for (const code of ["cold_equipment_control", "climate_control", "uv_lamp_runtime"]) {
+    if (disabledCodes.includes(code)) continue;
+    const groups = await loadObjectJournalStatus({ organizationId, code, todayKey, timezone: timeZone }).catch(() => []);
+    for (const group of groups) for (const item of group.items) todayByObject.set(item.id, { done: item.state === "done", summary: item.summary });
+  }
+
   const equipment = await db.equipment.findMany({
     where: { area: { organizationId } },
     orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
@@ -226,13 +275,35 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
       token: mintQrFillToken("equipment", item.id),
       humidity: null,
       employeeIds: await fillersFor(item.area.buildingId, item.fillerUserIds),
+      today: todayByObject.get(item.id) ?? null,
     };
     if (isUvLampEquipment(item)) {
-      if (uvEnabled) objects.push({ ...base, fill: "uv", temperature: null, photoRequired: false });
+      if (uvEnabled) objects.push({ ...base, fill: "uv", temperature: null, photo: "off" });
       continue;
     }
     if (isFryerEquipmentType(item.type)) {
-      objects.push({ ...base, fill: "unsupported", unsupportedReason: "Фритюрница заполняется только с интернетом", temperature: null, photoRequired: false });
+      if (disabledCodes.includes("fryer_oil")) continue;
+      const target = await resolveFryerFillTarget({ equipment: { id: item.id, name: item.name, buildingId: item.area.buildingId }, organizationId, day }).catch(() => null);
+      if (!target) {
+        objects.push({ ...base, fill: "unsupported", unsupportedReason: "Фритюрница сегодня не входит ни в один журнал учёта фритюрных жиров", temperature: null, photo: "off" });
+        continue;
+      }
+      const fatTypes = withLast(target.config.lists.fatTypes, target.last?.fatType);
+      const productTypes = withLast(target.config.lists.productTypes, target.last?.productType);
+      objects.push({
+        ...base,
+        fill: "fryer",
+        temperature: null,
+        photo: "off",
+        fryer: {
+          fatTypes,
+          productTypes,
+          fatType: target.last?.fatType || fatTypes[0] || "",
+          productType: target.last?.productType || productTypes[0] || "",
+          phase: target.phase,
+        },
+        today: { done: target.phase === "end", summary: target.phase === "end" ? "жарка начата" : "" },
+      });
       continue;
     }
     if (!coldEnabled) continue;
@@ -244,7 +315,7 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
       fill: "temperature",
       temperature: { min: item.tempMin, max: item.tempMax },
       humidity,
-      photoRequired: coldPhoto?.required === true,
+      photo: photoMode(coldPhoto),
     });
   }
 
@@ -269,7 +340,8 @@ export async function buildOfflinePack(session: Session): Promise<OfflinePack | 
         fill: "climate",
         temperature: temperature.enabled ? { min: temperature.min, max: temperature.max } : null,
         humidity: humidity.enabled ? { min: humidity.min, max: humidity.max } : null,
-        photoRequired: climatePhoto?.required === true,
+        photo: photoMode(climatePhoto),
+        today: todayByObject.get(room.id) ?? null,
         employeeIds: await fillersFor(room.buildingId, room.fillerUserIds),
       });
     }

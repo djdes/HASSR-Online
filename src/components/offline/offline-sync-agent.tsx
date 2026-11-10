@@ -4,9 +4,12 @@ import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
-import { readStoredPack, saveOfflinePack, setOfflineValue, isOfflineStoreAvailable } from "@/lib/offline/store";
+import { useTranslations } from "next-intl";
+
+import { noteDeliveredRecords, refreshOfflineData, sendOfflineHeartbeat } from "@/lib/offline/refresh";
+import { setOfflineValue, isOfflineStoreAvailable } from "@/lib/offline/store";
 import { flushOfflineQueue } from "@/lib/offline/sync";
-import { OFFLINE_APP_PATH, OFFLINE_PACK_MIN_REFRESH_MS, OFFLINE_PACK_VERSION, type OfflinePack } from "@/lib/offline/types";
+import { OFFLINE_APP_PATH } from "@/lib/offline/types";
 
 /** Device-side state of the cached offline screen, read by the status line in the profile. */
 export const OFFLINE_SHELL_STATE_KEY = "shell";
@@ -21,26 +24,17 @@ export function OfflineSyncAgent() {
   const { data: session } = useSession();
   const userId = session?.user?.id ?? null;
   const shellAsked = useRef(false);
+  const t = useTranslations("offlineApp.toast");
+  // The tick lives in an effect keyed by the account only — texts are read through a ref.
+  const copyRef = useRef(t);
+  useEffect(() => {
+    copyRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     if (!userId || !isOfflineStoreAvailable()) return;
     let cancelled = false;
     let running = false;
-
-    async function refreshPack() {
-      const stored = await readStoredPack();
-      const fresh =
-        stored &&
-        stored.userId === userId &&
-        stored.pack.version === OFFLINE_PACK_VERSION &&
-        Date.now() - stored.savedAt < OFFLINE_PACK_MIN_REFRESH_MS;
-      if (fresh) return;
-      const response = await fetch("/api/offline/pack", { credentials: "same-origin", cache: "no-store" });
-      if (!response.ok) return;
-      const pack = (await response.json()) as OfflinePack;
-      // The session may have changed while the request was in flight.
-      if (!cancelled && pack?.user?.id === userId) await saveOfflinePack(pack);
-    }
 
     async function askShell() {
       if (shellAsked.current || !("serviceWorker" in navigator)) return;
@@ -54,17 +48,21 @@ export function OfflineSyncAgent() {
       if (running || cancelled || navigator.onLine === false) return;
       running = true;
       try {
-        await refreshPack().catch(() => undefined);
+        await refreshOfflineData(userId!).catch(() => undefined);
         await askShell().catch(() => undefined);
         const summary = await flushOfflineQueue(userId);
+        await noteDeliveredRecords(summary.sent).catch(() => undefined);
+        // The device reports itself: the manager's list and "device is silent" notices are built from it.
+        await sendOfflineHeartbeat(userId!).catch(() => undefined);
         if (cancelled) return;
-        if (summary.sent > 0) toast.success(`Записи без связи отправлены: ${summary.sent}`);
+        const copy = copyRef.current;
+        if (summary.sent > 0) toast.success(copy("sent", { count: String(summary.sent) }));
         const stuck = summary.rejected + summary.conflicts;
         if (stuck > 0) {
-          toast.warning(`Не ушло записей: ${stuck}`, {
+          toast.warning(copy("stuck", { count: String(stuck) }), {
             id: "offline-stuck",
-            description: "Откройте список и решите, что с ними делать.",
-            action: { label: "Открыть", onClick: () => window.location.assign(`${OFFLINE_APP_PATH}#queue`) },
+            description: copy("stuckHint"),
+            action: { label: copy("open"), onClick: () => window.location.assign(`${OFFLINE_APP_PATH}#queue`) },
           });
         }
       } finally {
