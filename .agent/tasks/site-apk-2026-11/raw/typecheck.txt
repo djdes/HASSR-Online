@@ -2,27 +2,3 @@
 > haccp-online@0.1.0 typecheck
 > node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck --incremental --tsBuildInfoFile tsconfig.typecheck.tsbuildinfo -p tsconfig.typecheck.json
 
-src/app/(dashboard)/settings/print-agent/label-printers.test.ts(58,14): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/app/(dashboard)/settings/print-agent/print-agent-settings.test.ts(40,14): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/batches/batch-localization.test.ts(15,3): error TS2353: Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/capa/capa-localization.test.ts(20,37): error TS2353: Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/changes/change-localization.test.ts(13,37): error TS2353: Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/competencies/competency-localization.test.ts(13,37): error TS2353: Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/journals/accident-localization.test.ts(31,89): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/journals/breakdown-history-localization.test.ts(32,89): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/journals/complaint-localization.test.ts(32,89): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/journals/generic-register-localization.test.ts(38,89): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/losses/loss-localization.test.ts(14,37): error TS2353: Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
-src/components/plans/plan-localization.test.ts(14,37): error TS2353: Object literal may only specify known properties, and 'bfcacheId' does not exist in type 'AppRouterInstance'.
