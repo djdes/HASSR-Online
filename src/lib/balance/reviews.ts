@@ -336,7 +336,7 @@ export async function listPublicReviews(limit = 12): Promise<PublicReview[]> {
       return new Map<string, never>();
     },
   );
-  const result = rows.map((row): PublicReview => {
+  const result: PublicReview[] = rows.map((row) => {
     const signature = publicReviewSignature({
       anonymous: row.anonymous,
       authorName: row.authorName,
