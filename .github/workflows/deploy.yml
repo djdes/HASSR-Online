@@ -72,7 +72,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Глубина 10 коммитов нужна, чтобы scripts/test-changed.mjs видел
           # базовый коммит пуша (github.event.before) до установки npm-зависимостей.
@@ -85,7 +85,7 @@ jobs:
         run: node scripts/test-changed.mjs --ci-plan
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           # Кеш npm намеренно ОТКЛЮЧЁН. Он экономил ~20 секунд на шаге
@@ -93,6 +93,9 @@ jobs:
           # три прогона накопилось 848 МБ, и хранилище Actions
           # тарифицируется даже у публичных репозиториев. Сборка всё
           # равно идёт на сервере, эти 20 секунд не решают ничего.
+          # setup-node v5+ сам включает кеш, если в package.json появится
+          # поле packageManager — явно запрещаем.
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm ci
@@ -136,12 +139,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm ci
@@ -176,7 +180,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Write build-time only (sha записывается на проде до build)
         run: |
@@ -378,7 +382,7 @@ jobs:
 
       # Скрипт ожидания порта — из репозитория, остальное этому job'у не нужно.
       - name: Checkout deploy scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           sparse-checkout: scripts
 
