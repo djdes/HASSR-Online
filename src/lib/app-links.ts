@@ -128,3 +128,12 @@ export const ANDROID_UPLOAD_CERT_SHA256 =
 export function androidCertFingerprints(raw: string | null | undefined): string[] {
   return parseCertFingerprints([raw ?? "", ANDROID_UPLOAD_CERT_SHA256].join(","));
 }
+
+/**
+ * Подписанный APK для установки по ссылке (не из магазина). Метка и имя файла
+ * те же, что в `.github/workflows/mobile-site-apk.yml`; расхождение ловит
+ * `app-links.test.ts`. Сайт отдаёт его по адресу `/download/android`.
+ */
+export const ANDROID_APK_RELEASE_TAG = "wesetup-app-latest";
+export const ANDROID_APK_FILE = "wesetup.apk";
+export const ANDROID_APK_URL = `https://github.com/djdes/HASSR-Online/releases/download/${ANDROID_APK_RELEASE_TAG}/${ANDROID_APK_FILE}`;

@@ -60,6 +60,7 @@ describe("relativeRedirect", () => {
  */
 const ABSOLUTE_REDIRECT_ALLOWED: Record<string, string> = {
   "src/app/api/kiosk/claim/[token]/route.ts": "origin from NEXTAUTH_URL (resolveQrPosterOrigin)",
+  "src/app/download/android/route.ts": "fixed external address of the APK file (ANDROID_APK_URL), not built from the request",
 };
 
 function sourceFiles(dir: string): string[] {
