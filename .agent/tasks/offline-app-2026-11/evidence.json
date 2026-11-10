@@ -32,9 +32,9 @@
       "fail": 0
     },
     "mobile test:release": {
-      "pass": 12,
-      "fail": 1,
-      "note": "the failing listing-values test also fails on master without these changes"
+      "pass": 13,
+      "fail": 0,
+      "note": "after merging master 69c84c4c"
     }
   },
   "criteria": {

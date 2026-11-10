@@ -18,7 +18,7 @@ Android в среде нет; это проверка владельца (AC19, 
 | База после сценария | `npx tsx e2e/verify-db.ts` | 7 из 7 | `raw/db-verification.txt`, `.json` |
 | Выход, истёкшая сессия, другой аккаунт | `node e2e/signout.e2e.mjs` | 8 из 8 | `raw/signout-e2e.txt` |
 | Обычная работа с сетью | `node e2e/online-regression.mjs` | 13 из 13 | `raw/online-regression.txt` |
-| Тесты выпуска приложения | `cd mobile && npm run test:release` | 12 из 13; падение «listing-values.json собран из store-listing.md» есть и на master без этих правок | — |
+| Тесты выпуска приложения | `cd mobile && npm run test:release` | 13 из 13 (после вливания master 69c84c4c; до него один тест карточек магазина падал и на master) | — |
 
 Подготовка демо: `e2e/reset-demo.sh` → `e2e/setup-demo.mjs` → `e2e/set-pin.ts`.
 
