@@ -48,6 +48,10 @@ export async function POST(request: Request) {
     );
   }
 
+  // Клиент сам выбрал «оплатить по счёту»: даже если вернулся счёт, который
+  // выставил сценарий CRM, теперь это его решение — окно и автопереход ждут.
+  await db.crmReminderLog.deleteMany({ where: { dedupeKey: `lc:invoice:${result.order.id}` } }).catch(() => undefined);
+
   if (result.created) {
     const org = await db.organization.findUnique({ where: { id: organizationId }, select: { name: true } });
     after(() =>

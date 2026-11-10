@@ -125,6 +125,8 @@ export const roleInputSchema = z.object({
   scope: z.enum(["all", "own"]),
   salesHead: z.boolean(),
   signatureTitle: z.string().trim().max(120).optional().nullable(),
+  /** Скидка в спец-КП без согласования, %; пусто — по умолчанию роли. */
+  discountLimit: z.number().int().min(0, "Скидка — от 0 до 90 %").max(90, "Скидка — от 0 до 90 %").optional().nullable(),
 });
 
 export type RoleInput = z.infer<typeof roleInputSchema>;
@@ -138,6 +140,10 @@ export type RoleView = {
   scope: PlatformScope;
   salesHead: boolean;
   signatureTitle: string | null;
+  /** Свой лимит скидки; null — по умолчанию роли (`defaultDiscount`). */
+  discountLimit: number | null;
+  /** Лимит по умолчанию для встроенной роли (коммерческий директор 25, РОП 15, менеджер 10). */
+  defaultDiscount: number;
   system: boolean;
   members: number;
 };

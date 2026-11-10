@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Pencil, Plus, ShieldCheck, Trash2, TrendingUp, UserRound } from "lucide-react";
+import { BadgePercent, Pencil, Plus, ShieldCheck, Trash2, TrendingUp, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -18,9 +18,12 @@ type Draft = {
   scope: PlatformScope;
   salesHead: boolean;
   signatureTitle: string;
+  /** Лимит скидки строкой: пусто — по умолчанию роли. */
+  discountLimit: string;
+  defaultDiscount: number;
 };
 
-const EMPTY: Draft = { id: null, title: "", description: "", sections: ["crm", "clients"], scope: "own", salesHead: false, signatureTitle: "" };
+const EMPTY: Draft = { id: null, title: "", description: "", sections: ["crm", "clients"], scope: "own", salesHead: false, signatureTitle: "", discountLimit: "", defaultDiscount: 0 };
 
 const INPUT =
   "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] text-[#0b1024] outline-none transition-colors placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15";
@@ -44,6 +47,8 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
       scope: role.scope,
       salesHead: role.salesHead,
       signatureTitle: role.signatureTitle ?? "",
+      discountLimit: role.discountLimit === null ? "" : String(role.discountLimit),
+      defaultDiscount: role.defaultDiscount,
     });
   }
 
@@ -71,6 +76,7 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
         scope: draft.scope,
         salesHead: draft.salesHead,
         signatureTitle: draft.signatureTitle || null,
+        discountLimit: draft.discountLimit === "" ? null : Math.min(90, Number(draft.discountLimit) || 0),
       }),
     });
     const data = (await response.json().catch(() => null)) as { role?: RoleView; error?: string } | null;
@@ -130,6 +136,12 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
                       {t("access.scopeOwnBadge")}
                     </span>
                   ) : null}
+                  {(role.discountLimit ?? role.defaultDiscount) > 0 ? (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-[#eef8f0] px-1.5 text-[11px] font-medium text-[#116b2a]" data-role-discount-badge>
+                      <BadgePercent className="size-3" />
+                      {t("roles.discountBadge", { percent: String(role.discountLimit ?? role.defaultDiscount) })}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
                   {role.sections.length === PLATFORM_SECTIONS.length ? t("team.allSections") : role.sections.map((key) => t(`sections.${key}.title`)).join(" · ")}
@@ -181,7 +193,19 @@ export function RolesPanel({ roles, onChange }: { roles: RoleView[]; onChange: (
                   maxLength={120}
                 />
               </label>
-              <label className="block text-[13px] text-[#3c4053] sm:col-span-2">
+              <label className="block text-[13px] text-[#3c4053]">
+                {t("roles.discountLabel")}
+                <input
+                  value={draft.discountLimit}
+                  onChange={(event) => setDraft({ ...draft, discountLimit: event.target.value.replace(/\D/g, "").slice(0, 2) })}
+                  placeholder={t("roles.discountPlaceholder", { percent: String(draft.defaultDiscount) })}
+                  className={cn(INPUT, "mt-1")}
+                  inputMode="numeric"
+                  data-role-discount
+                />
+                <span className="mt-1 block text-[12px] text-[#9b9fb3]">{t("roles.discountHint")}</span>
+              </label>
+              <label className="block text-[13px] text-[#3c4053]">
                 {t("roles.descriptionLabel")}
                 <input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} className={cn(INPUT, "mt-1")} maxLength={300} />
               </label>
