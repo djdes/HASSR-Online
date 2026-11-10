@@ -1,0 +1,20 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=6040, fail=0
+eslint: errors 41 warnings 219 (эталон: errors 41 warnings 218)
+build+start: started after 2s, build v5BT0d2GXdGBZ-VdyeKZj, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+
+Notes:
+- lucide-react 0.576.0 -> 1.68.0 (Dependabot #140). 1.71.0 was published the same day (2026-11-10), so the
+  6-day-old 1.68.0 was taken. Lock diff: only node_modules/lucide-react (+ optional peer @types/react).
+- Build ran with NODE_OPTIONS=--max-old-space-size=4096 (server-like heap) and passed.
+- eslint +1 warning is src/lib/ci/test-changed.test.ts (unused buildReverseImportGraph) from #178,
+  not from this step: same diff vs step5 and step6c baselines, lint does not use lucide types.
+- Screenshots (step7-screenshots.txt, before = master lucide 0.576, after = lucide 1.68): changed pixels
+  are redrawn outlines of the same icons (calendar-check, circle-check, calendar-clock) in the menu and
+  lists; root_root differences are seed dates of the local DB. Same noise level as master vs master.
