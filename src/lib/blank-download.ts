@@ -60,7 +60,6 @@ export type BlankConsentRow = {
   source: string;
   ipAddress: string | null;
   userAgent: string | null;
-  /** Set only when the email belongs to a platform client. */
   userId?: string;
   organizationId?: string;
 };
@@ -76,7 +75,6 @@ export function blankConsentRows(params: {
   marketing: boolean;
   ipAddress: string | null;
   userAgent: string | null;
-  /** Platform client that owns the email, if any; omitted keys keep the historic row shape. */
   userId?: string | null;
   organizationId?: string | null;
   /** Optional localized display snapshots; omission preserves the historic Russian contract. */

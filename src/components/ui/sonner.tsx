@@ -1,17 +1,17 @@
 "use client"
 
 import {
-  CircleCheckIcon,
+  CheckCircle2Icon,
   InfoIcon,
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { useSiteTheme } from "@/components/theme/site-theme"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const { theme } = useSiteTheme()
 
   return (
     <Sonner
@@ -23,18 +23,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position="top-center"
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CheckCircle2Icon className="size-[18px] stroke-[2.2]" />,
+        info: <InfoIcon className="size-[18px] stroke-[2.2]" />,
+        warning: <TriangleAlertIcon className="size-[18px] stroke-[2.2]" />,
+        error: <OctagonXIcon className="size-[18px] stroke-[2.2]" />,
+        loading: <Loader2Icon className="size-[18px] animate-spin stroke-[2.2]" />,
       }}
       style={
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "18px",
+          "--width": "400px",
         } as React.CSSProperties
       }
       {...props}

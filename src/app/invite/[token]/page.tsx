@@ -19,21 +19,29 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-type PageProps = { params: Promise<{ token: string }> };
+type PageProps = {
+  params: Promise<{ token: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
 
 /**
- * Public landing page for email invite links. Validates the raw token
- * server-side by hashing + lookup, then passes the status down to a
- * client component that shows either the set-password form or a rejection
+ * Public landing page for email invite and password reset links. Validates
+ * the raw token server-side by hashing + lookup, then passes the status down
+ * to a client component that shows either the set-password form or a rejection
  * explanation. No session required.
  */
-export default async function InviteAcceptPage({ params }: PageProps) {
-  const { token } = await params;
-  const raw = (token || "").trim();
-  const [session, cookieStore] = await Promise.all([
+export default async function InviteAcceptPage({ params, searchParams }: PageProps) {
+  const [{ token }, resolvedSearch, session, cookieStore] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve({} as Record<string, string | string[] | undefined>),
     getServerSession(authOptions),
     cookies(),
   ]);
+  const raw = (token || "").trim();
+  const resetParam = Array.isArray(resolvedSearch.reset)
+    ? resolvedSearch.reset[0]
+    : resolvedSearch.reset;
+  let isReset = resetParam === "1";
 
   let status: "valid" | "expired" | "used" | "not_found" = "not_found";
   let invite: { userId: string; expiresAt: Date } | null = null;
@@ -56,6 +64,7 @@ export default async function InviteAcceptPage({ params }: PageProps) {
           select: {
             name: true,
             email: true,
+            isActive: true,
             lastActiveOrganizationId: true,
             locale: true,
             organization: { select: { id: true, name: true, kind: true, locale: true } },
@@ -67,6 +76,9 @@ export default async function InviteAcceptPage({ params }: PageProps) {
         },
       },
     });
+    if (row?.user.isActive) {
+      isReset = true;
+    }
     if (!row) {
       status = "not_found";
     } else if (row.usedAt) {
@@ -114,12 +126,23 @@ export default async function InviteAcceptPage({ params }: PageProps) {
 
   return (
     <SiteLocaleProvider locale={locale} messages={messages}>
-      <div lang={locale} className="flex min-h-screen items-center justify-center bg-[#f4f5fb] px-4">
+      <div
+        lang={locale}
+        className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#f6f7fc] px-4 py-12"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.4]"
+          style={{
+            backgroundImage: "radial-gradient(#d9dceb 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+          }}
+        />
         <InviteAcceptClient
           status={status}
           token={raw}
           invite={invite}
           user={user}
+          isReset={isReset}
         />
       </div>
     </SiteLocaleProvider>
