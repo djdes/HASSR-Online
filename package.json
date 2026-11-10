@@ -74,7 +74,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.9",
     "jszip": "^3.10.2",
-    "lucide-react": "^1.68.0",
+    "lucide-react": "^1.70.0",
     "mailparser": "^3.14.2",
     "modern-screenshot": "^4.7.0",
     "mysql2": "3.24.6",
