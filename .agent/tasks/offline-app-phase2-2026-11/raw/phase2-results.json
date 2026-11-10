@@ -122,7 +122,7 @@
   {
     "name": "AC1 the fridge reading is in the journal with its photo",
     "ok": true,
-    "detail": "{\"temperatures\": {\"cold-equipment-00d07fb5-de7d-4487-b759-b19e806cbedf\": 5}, \"readingPhotos\": {\"cold-equipment-00d07fb5-de7d-4487-b759-b19e806cbedf\": \"/uploads/readings/1a682e88ccebdaf744c4619c4bb5f69"
+    "detail": "{\"temperatures\": {\"cold-equipment-7ebcde7c-fdd9-4139-a7da-708351199ab7\": 5}, \"readingPhotos\": {\"cold-equipment-7ebcde7c-fdd9-4139-a7da-708351199ab7\": \"/uploads/readings/e03f5505641a393a566cfa777776935"
   },
   {
     "name": "AC6 the room climate reading is in the journal",
@@ -132,7 +132,7 @@
   {
     "name": "AC5 the fryer row has both the start and the end",
     "ok": true,
-    "detail": "{\"endHour\": 12, \"fatType\": \"Подсолнечное масло\", \"endMinute\": 38, \"startDate\": \"2026-11-10\", \"startHour\": 12, \"disposedKg\": 1, \"qualityEnd\": 5, \"carryoverKg\": 2.5, \"productType\": \"Продукция во фритюре (в ассортименте)\", \"startMinute\": 38, \"qualityStart\": 5, \"e"
+    "detail": "{\"endHour\": 13, \"fatType\": \"Подсолнечное масло\", \"endMinute\": 14, \"startDate\": \"2026-11-10\", \"startHour\": 13, \"disposedKg\": 1, \"qualityEnd\": 5, \"carryoverKg\": 2.5, \"productType\": \"Продукция во фритюре (в ассортименте)\", \"startMinute\": 14, \"qualityStart\": 5, \"e"
   },
   {
     "name": "AC6 the daily cleaning record reached the journal",
@@ -167,7 +167,7 @@
   {
     "name": "AC10 the manager's page lists devices and offline records",
     "ok": true,
-    "detail": "devices: Устройство Кто вошёл На связи Данные от Ждёт / не ушло Состояние Chrome (Android) Крылов Денис Сергеевич 10.11, 12:38 10; records 7"
+    "detail": "devices: Устройство Кто вошёл На связи Данные от Ждёт / не ушло Состояние Chrome (Android) Крылов Денис Сергеевич 10.11, 13:14 10; records 7"
   },
   {
     "name": "AC10 the manager's page is closed to line staff and to guests",

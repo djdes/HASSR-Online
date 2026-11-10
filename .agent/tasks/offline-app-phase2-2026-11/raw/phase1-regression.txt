@@ -3,7 +3,7 @@ PASS  AC1 offline screen HTML carries no personal data
 PASS  AC1/AC4 pack and offline screen are saved on the device — journals 11, objects 10
 PASS  AC15 pack holds a PIN verifier, not the PIN or the database hash — iterations 150000
 PASS  AC3 only the impersonal offline screen is cached, no cabinet pages — /mini-offline
-PASS  AC13 profile shows readiness — Готово к работе без связи Данные от 10.11, 09:40
+PASS  AC13 profile shows readiness — Готово к работе без связи Данные от 10.11, 10:15
 PASS  AC2 app start without network opens the offline screen — http://localhost:3000/mini-offline
 PASS  AC2 data stamp and lists are shown
 PASS  AC13 offline badge
