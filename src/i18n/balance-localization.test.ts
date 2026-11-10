@@ -13,7 +13,7 @@ import type { BalanceOverview } from "@/lib/balance/overview";
 import { createTranslator } from "use-intl/core";
 
 const router = {
-  bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {},
+  back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {},
 };
 
 test("top-up receipts and pending invoices retain rubles and ungrouped payment identifiers", async () => {

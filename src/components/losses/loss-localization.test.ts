@@ -11,7 +11,7 @@ import { loadMessages } from "@/i18n/messages";
 import type { MessageContract } from "@/i18n/message-contract";
 import { formatNumber } from "@/i18n/locales";
 
-const router: AppRouterInstance = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router: AppRouterInstance = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 
 test("loss form renders localized fields with and without production areas", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {

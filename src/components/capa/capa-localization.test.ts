@@ -17,7 +17,7 @@ import { loadMessages } from "@/i18n/messages";
 import type { MessageContract } from "@/i18n/message-contract";
 import { resolveExportLocale } from "@/i18n/export-locale";
 
-const router: AppRouterInstance = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+const router: AppRouterInstance = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
 
 test("CAPA form, detector and all workflow stages render real RU/EN/UZ messages", async () => {
   for (const locale of ["ru", "en", "uz"] as const) {

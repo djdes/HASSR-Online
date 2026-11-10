@@ -28,7 +28,7 @@ const row = createAccidentRow({ id: "original-row", accidentDate: "2026-10-15", 
 const props = { documentId: "original-document", title: ACCIDENT_DOCUMENT_TITLE, organizationName: "Original organization", dateFrom: "2026-10-01", status: "active", config: { rows: [row] } };
 
 async function render(locale: Locale, child: React.ReactNode, navigate: (url: string) => void = () => {}) {
-  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
+  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
 }
 
 function fixture(fetcher: typeof fetch = async () => Response.json({ document: { id: "created-id" } })) {

@@ -12,7 +12,7 @@ import { loadMessages } from "@/i18n/messages";
 import type { MessageContract } from "@/i18n/message-contract";
 
 const router: AppRouterInstance = {
-  bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {},
+  back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {},
 };
 
 test("batch form and every actionable status render localized UI with persisted field values", async () => {

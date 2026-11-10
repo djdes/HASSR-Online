@@ -35,7 +35,7 @@ function sample(journal: RegisterJournalDefinition) {
   return { row, config, props, period };
 }
 async function render(locale: Locale, child: React.ReactNode, navigate: (url: string) => void = () => {}) {
-  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
+  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
 }
 
 test("all ten register families render actual active/closed empty/populated list/detail/cards in three locales", async () => {

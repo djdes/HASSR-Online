@@ -29,7 +29,7 @@ const row = createBreakdownRow({ id: "original-row", startDate: "2026-10-15", st
 const props = { documentId: "original-document", title: BREAKDOWN_HISTORY_DOCUMENT_TITLE, organizationName: "Original organization", dateFrom: "2026-10-01", status: "active", config: { rows: [row] }, equipmentDirectory: directory };
 
 async function render(locale: Locale, child: React.ReactNode, navigate: (url: string) => void = () => {}) {
-  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
+  return renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { back() {}, forward() {}, refresh() {}, push: navigate, replace() {}, prefetch() {} }, children: React.createElement(SearchParamsContext.Provider, { value: new URLSearchParams(), children: React.createElement(NextIntlClientProvider, { locale, messages: await loadMessages(locale), timeZone: "UTC", onError: error => { throw error; }, children: child }) }) })).replaceAll("&#x27;", "'");
 }
 
 test("breakdown active/closed/empty list and detail render all locales preserving equipment and customer data", async () => {

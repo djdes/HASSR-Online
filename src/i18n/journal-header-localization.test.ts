@@ -12,7 +12,7 @@ import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { loadMessages } from "./messages";
 
 test("editable journal headers localize accessible actions and preserve customer text for every role", async () => {
-  const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
+  const router = { back() {}, forward() {}, refresh() {}, hmrRefresh() {}, push() {}, replace() {}, prefetch() {} };
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
     for (const canEdit of [true, false]) {
@@ -53,7 +53,7 @@ test("editable journal headers localize accessible actions and preserve customer
 
 test("real document header shows translated default title/periodicity and exports with the selected personal locale", async () => {
   function Title() { return createElement("h1", null, useDocumentDisplayTitle("Журнал уборки — октябрь 2026")); }
-  const router = { bfcacheId: "test", back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
+  const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch() {} };
   for (const locale of ["ru", "en", "uz"] as const) {
     const messages = await loadMessages(locale);
     const html = renderToStaticMarkup(createElement(AppRouterContext.Provider, {
