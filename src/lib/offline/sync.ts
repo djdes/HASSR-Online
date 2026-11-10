@@ -29,12 +29,15 @@ async function deliver(item: OfflineQueueItem): Promise<void> {
   if (item.target.kind === "journal" && item.target.day) headers[OFFLINE_DAY_HEADER] = item.target.day;
 
   let decision;
+  // The server itself failed (5xx) — counted separately from "no network" and "sign in".
+  let serverError = false;
   try {
     const response = await fetch(item.url, { method: "POST", headers, body: JSON.stringify(item.body), credentials: "same-origin" });
     const body = (await response.json().catch(() => null)) as Record<string, unknown> | null;
     // Sticker endpoints name the reason `errorCode`, the journal endpoint — `code`.
     const code = body?.code ?? body?.errorCode;
-    decision = decideOfflineDelivery({ kind: "http", status: response.status, body: body ? { ...body, code } : null });
+    serverError = response.status >= 500;
+    decision = decideOfflineDelivery({ kind: "http", status: response.status, body: body ? { ...body, code } : null }, item.serverFailures ?? 0);
   } catch {
     decision = decideOfflineDelivery({ kind: "network" });
   }
@@ -53,6 +56,8 @@ async function deliver(item: OfflineQueueItem): Promise<void> {
       ...item,
       status: "pending",
       attempts,
+      // Server errors so far; a network failure in between neither resets nor adds to it.
+      serverFailures: (item.serverFailures ?? 0) + (serverError ? 1 : 0),
       nextAttemptAt: Date.now() + offlineRetryDelayMs(attempts),
       lastError: decision.error,
       lastCode: decision.code,
@@ -95,7 +100,7 @@ export function flushOfflineQueue(currentUserId: string | null): Promise<Offline
 
 /** «Повторить»: clear the delay and the refusal, try again on the next flush. */
 export async function retryOfflineItem(item: OfflineQueueItem, patch: Partial<OfflineQueueItem> = {}): Promise<void> {
-  await putOfflineQueueItem({ ...item, ...patch, status: "pending", nextAttemptAt: Date.now(), lastError: null, lastCode: null });
+  await putOfflineQueueItem({ ...item, ...patch, status: "pending", serverFailures: 0, nextAttemptAt: Date.now(), lastError: null, lastCode: null });
 }
 
 /**
@@ -111,6 +116,7 @@ export async function forceOfflineItem(item: OfflineQueueItem): Promise<void> {
     body: { ...item.body, force: true },
     status: "pending",
     attempts: 0,
+    serverFailures: 0,
     nextAttemptAt: Date.now(),
     conflicts: undefined,
     lastError: null,

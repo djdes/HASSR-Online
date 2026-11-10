@@ -51,3 +51,10 @@ test("garbage, other schemes and unknown paths are not ours", () => {
   assert.deepEqual(parseOfflineQr("https://wesetup.ru/equipment-fill/%E0%A4%A"), { ok: false, reason: "bad-id" });
   assert.deepEqual(parseOfflineQr("https://wesetup.ru/journal-fill/org1"), { ok: false, reason: "unknown-path" });
 });
+
+test("ids made of names (Cyrillic, spaces) are accepted as the site encodes them", () => {
+  const id = "cm1org-Бар-Холодильный шкаф Бар 1";
+  const parsed = parseOfflineQr(`https://wesetup.ru/equipment-fill/${encodeURIComponent(id)}?token=t`);
+  assert.deepEqual(parsed, { ok: true, target: { kind: "equipment", equipmentId: id, token: "t" } });
+  assert.deepEqual(parseOfflineQr("https://wesetup.ru/equipment-fill/a%2Fb?token=t"), { ok: false, reason: "bad-id" });
+});

@@ -38,7 +38,17 @@ function parseConflicts(raw: unknown): NonNullable<OfflineQueueItem["conflicts"]
     .filter((item) => item.key !== "");
 }
 
-export function decideOfflineDelivery(result: OfflineDeliveryResult): OfflineDeliveryDecision {
+/**
+ * How many times in a row the server may answer "try later" before the record is shown
+ * as not delivered. Without a limit a request the server can never accept (it keeps
+ * answering 500) would be retried forever while the person believes it is on its way.
+ */
+export const OFFLINE_MAX_SERVER_RETRIES = 5;
+
+/**
+ * @param attempts delivery attempts made before this one
+ */
+export function decideOfflineDelivery(result: OfflineDeliveryResult, attempts: number = 0): OfflineDeliveryDecision {
   if (result.kind === "network") return { kind: "retry", error: null, code: null };
   const { status, body } = result;
   const error = typeof body?.error === "string" && body.error.trim() ? body.error.trim() : null;
@@ -51,7 +61,13 @@ export function decideOfflineDelivery(result: OfflineDeliveryResult): OfflineDel
   // Not signed in: the record waits for the account, it is not refused.
   if (code === "offline-login") return { kind: "retry", error: error ?? "Войдите в кабинет — запись отправится после входа", code };
   // Too many requests, a duplicate still in flight, server errors — the same request can succeed later.
-  if (status === 429 || status === 408 || status >= 500 || code === "offline-in-flight") return { kind: "retry", error, code };
+  if (status === 429 || status === 408 || status >= 500 || code === "offline-in-flight") {
+    // No network and "sign in" never count: those are not the server refusing the record.
+    if (status >= 500 && attempts + 1 >= OFFLINE_MAX_SERVER_RETRIES) {
+      return { kind: "rejected", error: error ?? `Сервер не принимает запись (${status})`, code: code ?? "offline-server-error" };
+    }
+    return { kind: "retry", error, code };
+  }
   return { kind: "rejected", error: error ?? `Сервер не принял запись (${status})`, code };
 }
 

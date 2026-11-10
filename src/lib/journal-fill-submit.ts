@@ -29,6 +29,7 @@ import { normalizeQrFillMode, resolveQrFillActor } from "@/lib/qr-fill-actor";
 import { offlineAuditMark, readOfflineEnvelope, type OfflineEnvelope } from "@/lib/offline/envelope.server";
 import { loadRowDayValues } from "@/lib/offline/history.server";
 import { mergeOfflineValues, type OfflineValues } from "@/lib/offline/merge";
+import { acquireRowLock, rowLockKey } from "@/lib/offline/row-lock";
 import { QR_POINT_DENIED, employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
@@ -155,6 +156,16 @@ export async function journalFillTokenAllowsDocument(params: {
 }
 
 export async function submitJournalFill(input: JournalFillSubmitInput): Promise<JournalFillSubmitResult> {
+  // Блокировки строк, взятые на время слияния записи без связи, — снимаются на любом выходе.
+  const releases: Array<() => void> = [];
+  try {
+    return await submitJournalFillLocked(input, releases);
+  } finally {
+    for (const release of releases) release();
+  }
+}
+
+async function submitJournalFillLocked(input: JournalFillSubmitInput, releases: Array<() => void>): Promise<JournalFillSubmitResult> {
   const { request, orgId, code } = input;
   const rateKey = input.messenger
     ? `${input.messenger.channel}:${input.messenger.userKey}:journal:${input.documentId}`
@@ -329,6 +340,9 @@ export async function submitJournalFill(input: JournalFillSubmitInput): Promise<
   // Слияние правки без связи с тем, что уже в журнале (только «строка в день»).
   let conflicts: JournalFillConflict[] = [];
   if (offline && schema && !isShared) {
+    // Чтение → сравнение → запись одной строки — по одному запросу за раз: иначе два
+    // устройства, вышедшие в сеть одновременно, затёрли бы правки друг друга.
+    releases.push(await acquireRowLock(rowLockKey(documentId, input.rowKey, todayKey)));
     // «Что сейчас в журнале» — последняя запись этой строки за этот день, сделанная
     // через формы (QR, приложение, бот): её значения и сравниваем с правкой.
     const theirs: OfflineValues = (await loadRowDayValues({ organizationId: orgId, documentId, rowKey: input.rowKey, dateKey: todayKey })) ?? {};

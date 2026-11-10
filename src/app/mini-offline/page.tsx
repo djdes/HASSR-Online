@@ -12,7 +12,7 @@ import { OfflineApp } from "@/components/offline/app/offline-app";
  * scope `/mini`, and a scope matches by prefix.
  */
 export const metadata: Metadata = {
-  title: "Работа без связи — WeSetup",
+  title: "Работа без связи",
   robots: { index: false, follow: false },
 };
 

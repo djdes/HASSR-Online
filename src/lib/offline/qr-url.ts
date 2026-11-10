@@ -32,8 +32,10 @@ const OWN_HOSTS = new Set(["wesetup.ru", "www.wesetup.ru"]);
 function decodeSegment(raw: string): string | null {
   try {
     const value = decodeURIComponent(raw).trim();
-    // Ids are cuid-like / template codes; a slash or control char means garbage.
-    if (!value || value.length > 200 || /[\s/\\]/.test(value)) return null;
+    // Ids are usually cuid-like, but older objects carry ids made of names
+    // («…-Бар-Холодильный шкаф 1»), so letters and spaces are allowed. A slash
+    // or a control character still means garbage.
+    if (!value || value.length > 300 || /[/\\\u0000-\u001f]/.test(value)) return null;
     return value;
   } catch {
     return null;

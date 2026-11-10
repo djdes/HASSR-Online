@@ -1,0 +1,113 @@
+{
+  "task": "offline-app-2026-11",
+  "verified_at": "2026-11-10",
+  "environment": "local production build (next build --webpack + next start), PostgreSQL 16, demo org, Chromium via Playwright (Pixel 7 profile)",
+  "overall": "PASS in browser; real Android device not verified (owner's check)",
+  "commands": {
+    "typecheck": {
+      "exit": 0
+    },
+    "test:gate": {
+      "pass": 6002,
+      "fail": 0
+    },
+    "offline unit tests": {
+      "pass": 47,
+      "fail": 0
+    },
+    "e2e/offline.e2e.mjs": {
+      "pass": 55,
+      "fail": 0
+    },
+    "e2e/verify-db.ts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "e2e/signout.e2e.mjs": {
+      "pass": 8,
+      "fail": 0
+    },
+    "e2e/online-regression.mjs": {
+      "pass": 13,
+      "fail": 0
+    },
+    "mobile test:release": {
+      "pass": 12,
+      "fail": 1,
+      "note": "the failing listing-values test also fails on master without these changes"
+    }
+  },
+  "criteria": {
+    "AC1": {
+      "status": "PASS"
+    },
+    "AC2": {
+      "status": "PASS",
+      "note": "browser; /journals/<code> is outside the worker scope — spec amendment 1"
+    },
+    "AC3": {
+      "status": "PASS"
+    },
+    "AC4": {
+      "status": "PASS",
+      "note": "spec amendment 4"
+    },
+    "AC5": {
+      "status": "PASS"
+    },
+    "AC6": {
+      "status": "PASS",
+      "note": "browser with a simulated app bridge; fryer excluded — amendment 3"
+    },
+    "AC7": {
+      "status": "PASS",
+      "note": "Russian only, daily cleaning not exercised — amendments 6, 7"
+    },
+    "AC8": {
+      "status": "PASS",
+      "note": "no photos — amendment 2"
+    },
+    "AC9": {
+      "status": "PASS"
+    },
+    "AC10": {
+      "status": "PASS"
+    },
+    "AC11": {
+      "status": "PASS"
+    },
+    "AC12": {
+      "status": "PASS"
+    },
+    "AC13": {
+      "status": "PASS"
+    },
+    "AC14": {
+      "status": "PASS"
+    },
+    "AC15": {
+      "status": "PASS"
+    },
+    "AC16": {
+      "status": "PASS"
+    },
+    "AC17": {
+      "status": "PASS",
+      "note": "amendment 5"
+    },
+    "AC18": {
+      "status": "PASS",
+      "note": "amendment 5"
+    },
+    "AC19": {
+      "status": "PENDING",
+      "note": "APK is built by CI; device check is the owner's"
+    }
+  },
+  "not_verified": [
+    "real Android tablet (WebView service worker, system camera links)",
+    "daily cleaning journal (no rooms in demo)",
+    "room climate form (no rooms in demo)",
+    "multi-process server"
+  ]
+}

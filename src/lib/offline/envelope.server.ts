@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { claimIdempotency, journalIdempotencyKey, prismaIdempotencyStore } from "@/lib/idempotency";
 import { ORG_ROSTER_WHERE, ORG_SIGNER_WHERE } from "@/lib/journal-roster";
 import { resolveQrFillActor, type QrFillActorResult, type QrFillMode } from "@/lib/qr-fill-actor";
-import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import { qrPinFingerprint } from "@/lib/qr-pin-pass";
 import { getServerSession } from "@/lib/server-session";
 
@@ -132,33 +131,22 @@ export function offlineAuditMark(envelope: OfflineEnvelope, now: Date = new Date
 }
 
 /**
- * Drop-in for `resolveObjectActor` on sticker endpoints (equipment, room,
- * UV lamp): online — the same call as before and the current time;
- * offline — the envelope decides the actor and the time of the record.
+ * Sticker endpoints (equipment, room, UV lamp): who made the record and when,
+ * if it was made without network. `null` — an ordinary online request: the
+ * endpoint resolves the actor itself exactly as before.
  */
-export async function resolveObjectActorWithOffline(
+export async function resolveOfflineObjectActor(
   request: Request,
   params: {
     mode: QrFillMode;
     organizationId: string;
     employeeId: string;
-    pin?: string | null;
-    pass?: string | null;
     timeZone: string | null | undefined;
   }
-): Promise<{ actor: QrFillActorResult; now: Date; offline: ReturnType<typeof offlineAuditMark> | null }> {
+): Promise<{ actor: QrFillActorResult; now: Date; offline: ReturnType<typeof offlineAuditMark> | null } | null> {
+  if (!isOfflineRequest(request)) return null;
   const offline = await readOfflineEnvelope(request, params);
-  if (!offline) {
-    const actor = await resolveObjectActor({
-      mode: params.mode,
-      organizationId: params.organizationId,
-      employeeId: params.employeeId,
-      pin: params.pin,
-      pass: params.pass,
-      cookiePass: await readObjectPassCookie(params.organizationId),
-    });
-    return { actor, now: new Date(), offline: null };
-  }
+  if (!offline) return null;
   if (!offline.ok) {
     return { actor: { ok: false, status: offline.status, error: offline.error, errorCode: offline.code }, now: new Date(), offline: null };
   }

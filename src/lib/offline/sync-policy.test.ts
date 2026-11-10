@@ -53,3 +53,16 @@ test("retry delay grows and is capped", () => {
   assert.equal(offlineRetryDelayMs(3), 60_000);
   assert.equal(offlineRetryDelayMs(99), 15 * 60_000);
 });
+
+test("a server that keeps failing is not retried forever", () => {
+  const body = { error: "Не удалось записать в журнал" };
+  assert.equal(decideOfflineDelivery({ kind: "http", status: 500, body }, 3).kind, "retry");
+  assert.deepEqual(decideOfflineDelivery({ kind: "http", status: 500, body }, 4), {
+    kind: "rejected",
+    error: "Не удалось записать в журнал",
+    code: "offline-server-error",
+  });
+  // No network and a busy server never turn into a refusal.
+  assert.equal(decideOfflineDelivery({ kind: "network" }, 50).kind, "retry");
+  assert.equal(decideOfflineDelivery({ kind: "http", status: 429, body: null }, 50).kind, "retry");
+});

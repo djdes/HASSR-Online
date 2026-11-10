@@ -1,0 +1,136 @@
+{
+  "organization": {
+    "id": "cmwa9h2jr00004m7djdtfqumi",
+    "name": "Тестовая организация HACCP Demo",
+    "timeZone": "Europe/Moscow",
+    "qrFillMode": "public"
+  },
+  "user": {
+    "id": "cmwa9h2kf00014m7dcrso31wz",
+    "name": "Крылов Денис Сергеевич"
+  },
+  "employees": 23,
+  "employeesWithPin": 1,
+  "journals": [
+    {
+      "code": "product_writeoff",
+      "name": "Акт забраковки",
+      "append": true,
+      "documents": 1
+    },
+    {
+      "code": "hygiene",
+      "name": "Гигиенический журнал (сотрудники) — отметка перед сменой",
+      "append": false,
+      "documents": 1
+    },
+    {
+      "code": "general_cleaning",
+      "name": "График и учет генеральных уборок",
+      "append": false,
+      "documents": 1
+    },
+    {
+      "code": "finished_product",
+      "name": "Журнал бракеража готовой пищевой продукции",
+      "append": true,
+      "documents": 1
+    },
+    {
+      "code": "perishable_rejection",
+      "name": "Журнал бракеража скоропортящейся пищевой продукции",
+      "append": true,
+      "documents": 1
+    },
+    {
+      "code": "equipment_cleaning",
+      "name": "Журнал мойки и дезинфекции оборудования",
+      "append": false,
+      "documents": 1
+    },
+    {
+      "code": "incoming_control",
+      "name": "Журнал приемки и входного контроля продукции",
+      "append": true,
+      "documents": 1
+    },
+    {
+      "code": "disinfectant_usage",
+      "name": "Журнал учета дезинфицирующих средств",
+      "append": false,
+      "documents": 1
+    },
+    {
+      "code": "fryer_oil",
+      "name": "Журнал учета использования фритюрных жиров",
+      "append": false,
+      "documents": 1
+    },
+    {
+      "code": "cleaning_ventilation_checklist",
+      "name": "Чек-лист уборки и проветривания помещений",
+      "append": false,
+      "documents": 1
+    }
+  ],
+  "objects": [
+    {
+      "name": "Холодильный шкаф Бар 1",
+      "fill": "temperature",
+      "temperature": {
+        "min": 2,
+        "max": 6
+      }
+    },
+    {
+      "name": "Термогигрометр Testo Hot",
+      "fill": "temperature",
+      "temperature": {
+        "min": 18,
+        "max": 25
+      }
+    },
+    {
+      "name": "Фритюрница 8л",
+      "fill": "unsupported",
+      "temperature": null
+    },
+    {
+      "name": "УФ-лампа бактерицидная 1",
+      "fill": "uv",
+      "temperature": null
+    },
+    {
+      "name": "Морозильный ларь Frostor",
+      "fill": "temperature",
+      "temperature": {
+        "min": -22,
+        "max": -18
+      }
+    },
+    {
+      "name": "Термогигрометр Testo Cold",
+      "fill": "temperature",
+      "temperature": {
+        "min": 2,
+        "max": 8
+      }
+    },
+    {
+      "name": "Холодильник Polair 1",
+      "fill": "temperature",
+      "temperature": {
+        "min": 2,
+        "max": 4
+      }
+    },
+    {
+      "name": "Холодильник Polair 2",
+      "fill": "temperature",
+      "temperature": {
+        "min": 2,
+        "max": 4
+      }
+    }
+  ]
+}

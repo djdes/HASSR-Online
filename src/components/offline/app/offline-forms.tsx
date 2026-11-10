@@ -318,6 +318,20 @@ export function JournalRowForm({
     >
       {schema.intro ? <p className={ui.hint}>{schema.intro}</p> : null}
       {schema.notice ? <p className={ui.info}>{schema.notice}</p> : null}
+      {/* Пошаговая инструкция журнала (уборка, обслуживание) — как на QR-странице: список над формой. */}
+      {schema.pipeline && schema.pipeline.length > 0 ? (
+        <ol className="space-y-2" data-testid="offline-steps">
+          {schema.pipeline.map((step, index) => (
+            <li key={step.id} className="flex gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[14px] font-semibold text-[#3848c7]">{index + 1}</span>
+              <span className="min-w-0 text-[15px] leading-snug text-[#0b1024]">
+                {step.title}
+                {step.detail ? <span className="mt-0.5 block text-[13px] text-[#6f7282]">{step.detail}</span> : null}
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : null}
       {schema.fields.map((field) => (
         <FieldInput key={field.key} field={field} value={draft[field.key]} onChange={(value) => setDraft((prev) => ({ ...prev, [field.key]: value }))} />
       ))}

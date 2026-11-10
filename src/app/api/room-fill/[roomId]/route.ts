@@ -28,7 +28,8 @@ import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { ensureQrPeriodDocuments, qrRolloverMessage } from "@/lib/journal-qr-rollover";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { resolveObjectActorWithOffline, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { resolveOfflineObjectActor, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import { verifyQrFillTokenFor } from "@/lib/qr-fill-token";
 import {
   QR_FILL_RATE_LIMIT_ERROR,
@@ -144,14 +145,20 @@ async function handlePost(
 
   // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и
   // время берутся из неё; обычный запрос — как раньше.
-  const { actor, now, offline } = await resolveObjectActorWithOffline(request, {
-    mode: normalizeQrFillMode(room.building.organization.qrFillMode),
-    organizationId,
-    employeeId: body.employeeId,
-    pin: body.pin,
-    pass: body.pass,
-    timeZone: timezone,
-  });
+  const mode = normalizeQrFillMode(room.building.organization.qrFillMode);
+  const offlineActor = await resolveOfflineObjectActor(request, { mode, organizationId, employeeId: body.employeeId, timeZone: timezone });
+  const actor = offlineActor
+    ? offlineActor.actor
+    : await resolveObjectActor({
+        mode,
+        organizationId,
+        employeeId: body.employeeId,
+        pin: body.pin,
+        pass: body.pass,
+        cookiePass: await readObjectPassCookie(organizationId),
+      });
+  const now = offlineActor?.now ?? new Date();
+  const offline = offlineActor?.offline ?? null;
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, ...(actor.errorParams ? { errorParams: actor.errorParams } : {}) }, { status: actor.status });
   }
@@ -340,7 +347,7 @@ async function handlePost(
     humidity: body.humidity,
     outOfRange: temperatureOutOfRange || humidityOutOfRange,
     ...(photoAttached ? { values: { photo } } : {}),
-    offline,
+    ...(offline ? { offline } : {}),
   });
   if (photoAttached) {
     console.info(`[reading-photo] attached room=${room.id} doc=${document.id} slot=${slot} org=${organizationId} user=${employee.id}`);

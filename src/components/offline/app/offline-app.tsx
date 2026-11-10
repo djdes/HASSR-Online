@@ -31,7 +31,6 @@ import { flushOfflineQueue, forceOfflineItem, retryOfflineItem } from "@/lib/off
 import { canDeliverOfflineItem, needsPinReentry } from "@/lib/offline/sync-policy";
 import type {
   OfflinePack,
-  OfflinePackDocument,
   OfflinePackJournal,
   OfflinePackObject,
   OfflineQueueItem,
@@ -132,31 +131,41 @@ export function OfflineApp() {
     [pack, push, home]
   );
 
-  // Entry: `#u=<address that failed to open>` from the service worker, `#queue` from the cabinet toast.
-  const entryHandled = useRef(false);
+  // Entry: `#u=<address that failed to open>` from the service worker or the app bridge,
+  // `#queue` from the cabinet toast. Also on a hash change: a link scanned while this
+  // screen is already open changes only the anchor, without a new page load.
   useEffect(() => {
-    if (!pack || entryHandled.current) return;
-    entryHandled.current = true;
-    const hash = window.location.hash.replace(/^#/, "");
-    if (hash === "queue") {
-      setStack([{ name: "home" }, { name: "queue" }]);
-    } else if (hash.startsWith("u=")) {
-      let address: string | null = null;
+    if (!pack) return;
+    const consume = () => {
+      const hash = window.location.hash.replace(/^#/, "");
+      if (!hash) return;
+      if (hash === "queue") {
+        setStack([{ name: "home" }, { name: "queue" }]);
+      } else if (hash.startsWith("u=")) {
+        let address: string | null = null;
+        try {
+          address = decodeURIComponent(hash.slice(2));
+        } catch {
+          address = null;
+        }
+        if (address && address.startsWith("/") && !address.startsWith("//")) {
+          entryUrl.current = address;
+          openAddress(address, { silent: true });
+        }
+      }
+      // Drop the anchor so a reload does not reopen the same sticker. The method is taken
+      // from the prototype on purpose: Next patches `history.replaceState` on the instance
+      // and treats the call as a navigation — with no network it then fails to refetch the
+      // page and reloads it, which throws the person back to the list.
       try {
-        address = decodeURIComponent(hash.slice(2));
+        History.prototype.replaceState.call(window.history, window.history.state, "", window.location.pathname);
       } catch {
-        address = null;
+        // History is unavailable — the anchor simply stays.
       }
-      if (address && address.startsWith("/") && !address.startsWith("//")) {
-        entryUrl.current = address;
-        openAddress(address, { silent: true });
-      }
-    }
-    try {
-      window.history.replaceState(null, "", window.location.pathname);
-    } catch {
-      // History is unavailable — the hash simply stays.
-    }
+    };
+    consume();
+    window.addEventListener("hashchange", consume);
+    return () => window.removeEventListener("hashchange", consume);
   }, [pack, openAddress]);
 
   // WeSetup app: links from the system camera arrive as events, not as navigations.
@@ -376,7 +385,9 @@ function Home({
   onOpen: (view: View) => void;
 }) {
   const stuck = queue.filter((item) => item.status !== "pending").length;
-  const stale = Date.now() - savedAt > 7 * 24 * 60 * 60 * 1000;
+  // The moment the screen was opened is enough: «старше недели» does not need a ticking clock.
+  const [openedAt] = useState(() => Date.now());
+  const stale = openedAt - savedAt > 7 * 24 * 60 * 60 * 1000;
   return (
     <div className="space-y-5">
       <div className={ui.card}>
@@ -826,7 +837,9 @@ function DeleteButton({ onDelete }: { onDelete: () => Promise<void> }) {
 function Scanner({ onClose, onResult }: { onClose: () => void; onResult: (text: string) => void }) {
   const [error, setError] = useState<string | null>(null);
   const resultRef = useRef(onResult);
-  resultRef.current = onResult;
+  useEffect(() => {
+    resultRef.current = onResult;
+  }, [onResult]);
 
   useEffect(() => {
     let stopped = false;

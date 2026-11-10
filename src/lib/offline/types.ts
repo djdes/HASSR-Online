@@ -138,6 +138,8 @@ export type OfflineQueueItem = {
   sublabel: string;
   status: OfflineQueueStatus;
   attempts: number;
+  /** Server "try later" answers in a row (5xx); after a few the record is shown as not delivered. */
+  serverFailures?: number;
   nextAttemptAt: number;
   lastError: string | null;
   lastCode: string | null;

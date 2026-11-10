@@ -35,6 +35,10 @@
     }
     h1 { margin: 0 0 10px; font-size: 22px; line-height: 1.25; font-weight: 700; }
     p { margin: 0 0 28px; font-size: 16px; line-height: 1.45; color: rgba(255, 255, 255, 0.72); }
+    button.secondary {
+      margin-top: 12px; background: rgba(255,255,255,.08); color: #ffffff;
+      border: 1px solid rgba(255,255,255,.16); box-shadow: none;
+    }
     button {
       appearance: none; border: 0; cursor: pointer;
       width: 100%; min-height: 52px; border-radius: 16px;
@@ -66,11 +70,28 @@
     <h1>Нет связи с интернетом</h1>
     <p>Проверьте Wi-Fi или мобильный интернет</p>
     <button id="retry" type="button">Повторить</button>
+    <button id="work-offline" class="secondary" type="button">Работать без связи</button>
   </main>
   <script>
     // Сайт не открылся: ждём нажатия «Повторить» (или возврата сети) и снова
     // открываем стартовый адрес приложения.
     var START_URL = "https://wesetup.ru/mini?src=app";
+    // Экран работы без связи: его хранит на устройстве service worker сайта.
+    // Сюда попадают, когда не открылась страница вне его области (страница
+    // кабинета, QR-наклейка), — тогда один раз за запуск приложения пробуем
+    // открыть его. Если его на устройстве ещё нет, загрузка снова упадёт
+    // сюда, и человек увидит обычный экран «Нет связи».
+    var OFFLINE_URL = "https://wesetup.ru/mini-offline";
+    var OFFLINE_TRIED_KEY = "wesetup.offline-screen-tried";
+    function offlineTried() {
+      try { return window.sessionStorage.getItem(OFFLINE_TRIED_KEY) === "1"; } catch (e) { return true; }
+    }
+    function markOfflineTried() {
+      try { window.sessionStorage.setItem(OFFLINE_TRIED_KEY, "1"); return true; } catch (e) { return false; }
+    }
+    if (navigator.onLine === false && !offlineTried() && markOfflineTried()) {
+      location.replace(OFFLINE_URL);
+    }
     var button = document.getElementById("retry");
     function retry() {
       button.disabled = true;
@@ -78,7 +99,18 @@
       location.href = START_URL;
     }
     button.addEventListener("click", retry);
-    window.addEventListener("online", retry);
+    window.addEventListener("online", function () {
+      // Сеть вернулась — в следующий раз без неё экран работы без связи пробуем снова.
+      try { window.sessionStorage.removeItem(OFFLINE_TRIED_KEY); } catch (e) {}
+      retry();
+    });
+    var offlineButton = document.getElementById("work-offline");
+    if (offlineButton) {
+      offlineButton.addEventListener("click", function () {
+        markOfflineTried();
+        location.href = OFFLINE_URL;
+      });
+    }
 
     // Событие «online» приходит, только если телефон был совсем без сети.
     // Если сеть была, а сайт не открылся (Wi-Fi без интернета, сбой DNS при

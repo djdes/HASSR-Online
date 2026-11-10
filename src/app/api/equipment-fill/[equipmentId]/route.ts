@@ -8,7 +8,8 @@ import {
   subjectKeyForEquipment,
 } from "@/lib/temperature-deviations";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
-import { resolveObjectActorWithOffline, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { resolveOfflineObjectActor, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import {
   normalizeColdEquipmentEntryData,
   COLD_EQUIPMENT_STATUS_SHORT,
@@ -167,14 +168,20 @@ async function handlePost(
   // Режим QR-форм организации: список / PIN / только после входа.
   // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и
   // время берутся из неё; обычный запрос — как раньше.
-  const { actor, now, offline } = await resolveObjectActorWithOffline(request, {
-    mode: normalizeQrFillMode(equipment.area.organization.qrFillMode),
-    organizationId,
-    employeeId: parsed.employeeId,
-    pin: parsed.pin,
-    pass: parsed.pass,
-    timeZone: equipment.area.organization.timezone,
-  });
+  const mode = normalizeQrFillMode(equipment.area.organization.qrFillMode);
+  const offlineActor = await resolveOfflineObjectActor(request, { mode, organizationId, employeeId: parsed.employeeId, timeZone: equipment.area.organization.timezone });
+  const actor = offlineActor
+    ? offlineActor.actor
+    : await resolveObjectActor({
+        mode,
+        organizationId,
+        employeeId: parsed.employeeId,
+        pin: parsed.pin,
+        pass: parsed.pass,
+        cookiePass: await readObjectPassCookie(organizationId),
+      });
+  const now = offlineActor?.now ?? new Date();
+  const offline = offlineActor?.offline ?? null;
   if (!actor.ok) {
     return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
   }
@@ -456,7 +463,7 @@ async function handlePost(
     humidity,
     outOfRange: isOutOfRange || humidityOutOfRange,
     ...(Object.keys(auditValues).length > 0 ? { values: auditValues } : {}),
-    offline,
+    ...(offline ? { offline } : {}),
   });
   if (photo && touched > 0) {
     console.info(`[reading-photo] attached equipment=${equipment.id} docs=${touched} org=${organizationId} user=${employee.id}`);

@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { verifyEquipmentQrToken } from "@/lib/equipment-qr-token";
 import { OBJECT_FILLER_DENIED } from "@/lib/object-fillers";
 import { normalizeQrFillMode } from "@/lib/qr-fill-actor";
-import { resolveObjectActorWithOffline, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { resolveOfflineObjectActor, withOfflineIdempotency } from "@/lib/offline/envelope.server";
+import { readObjectPassCookie, resolveObjectActor } from "@/lib/qr-object-pass";
 import { QR_POINT_DENIED, QR_POINT_DENIED_CODE, loadQrPointScope, worksAtQrPoint } from "@/lib/qr-point-roster";
 import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/lib/qr-fill-audit";
 import { qrFillRateLimiter } from "@/lib/rate-limit";
@@ -61,21 +62,27 @@ async function handlePost(request: Request, { params }: { params: Promise<{ equi
   const mode = normalizeQrFillMode(lamp.area.organization.qrFillMode);
 
   // Запись без связи: автор и момент включения/выключения — из неё.
-  const { actor, now, offline } = await resolveObjectActorWithOffline(request, {
-    mode,
-    organizationId,
-    employeeId,
-    pin: typeof body?.pin === "string" ? body.pin : null,
-    pass: typeof body?.pass === "string" ? body.pass : null,
-    timeZone,
-  });
+  const offlineActor = await resolveOfflineObjectActor(request, { mode, organizationId, employeeId, timeZone });
+  const actor = offlineActor
+    ? offlineActor.actor
+    : await resolveObjectActor({
+        mode,
+        organizationId,
+        employeeId,
+        pin: typeof body?.pin === "string" ? body.pin : null,
+        pass: typeof body?.pass === "string" ? body.pass : null,
+        cookiePass: await readObjectPassCookie(organizationId),
+      });
+  // Обычный запрос — текущий момент, как раньше; запись без связи — время устройства.
+  const now = offlineActor?.now;
+  const offline = offlineActor?.offline ?? null;
   if (!actor.ok) return NextResponse.json({ error: actor.error, errorCode: actor.errorCode, errorParams: actor.errorParams }, { status: actor.status });
 
   // Только люди из списка журнала (закреплённые за лампой / ответственные журнала).
   const doc = await ensureUvDocumentForLamp({
     organizationId,
     lamp: { id: lamp.id, name: lamp.name, areaName: lamp.area.name, lampLifetimeHours: lamp.lampLifetimeHours },
-    todayKey: orgTodayKey(timeZone, now),
+    todayKey: now ? orgTodayKey(timeZone, now) : orgTodayKey(timeZone),
   });
   // Точка цеха лампы: записывают только её сотрудники — и руководство тоже.
   const pointScope = await loadQrPointScope(organizationId, lamp.area.buildingId);
@@ -92,7 +99,7 @@ async function handlePost(request: Request, { params }: { params: Promise<{ equi
     lamp: { id: lamp.id, name: lamp.name, areaName: lamp.area.name },
     employee: { id: actor.employee.id, name: actor.employee.name },
     action,
-    now,
+    ...(now ? { now } : {}),
   });
   if (!result.ok) return NextResponse.json({ error: result.error, errorCode: result.errorCode, errorParams: result.errorParams }, { status: result.status });
 
@@ -104,9 +111,9 @@ async function handlePost(request: Request, { params }: { params: Promise<{ equi
     objectName: lamp.name,
     employee: { id: actor.employee.id, name: actor.employee.name },
     documentIds: doc ? [doc.id] : [],
-    dateKey: orgTodayKey(timeZone, now),
+    dateKey: now ? orgTodayKey(timeZone, now) : orgTodayKey(timeZone),
     authMode: mode,
-    offline,
+    ...(offline ? { offline } : {}),
     values: { uvAction: action, ...(result.action === "off" ? { hours: result.hours } : {}) },
   }).catch(() => null);
 
