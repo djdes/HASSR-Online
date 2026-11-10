@@ -1,0 +1,8 @@
+PASS  pack of the signed-in account is on the device — cmwa9h2kf00014m7dcrso31wz
+PASS  AC12 with an expired session the record waits, it is neither lost nor refused — [{"owner":"cmwa9h2kf00014m7dcrso31wz","status":"pending","attempts":1}]
+PASS  AC12 the offline screen still opens for the last signed-in account without a session
+PASS  another account gets its own pack — cmwa9h2kl00024m7d78ccpjeo
+PASS  AC12 a record of the previous account is not delivered by another account — [{"owner":"cmwa9h2kf00014m7dcrso31wz","status":"pending","attempts":1}]
+PASS  AC12 sign-out wipes the offline pack — null
+PASS  AC12 unsent records survive sign-out — [{"owner":"cmwa9h2kf00014m7dcrso31wz","status":"pending","attempts":1}]
+PASS  AC12 after the author signs in again the record is delivered — []

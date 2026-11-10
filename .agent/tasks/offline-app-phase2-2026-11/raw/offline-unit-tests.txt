@@ -1,0 +1,412 @@
+TAP version 13
+# Subtest: marker is taken from the app User-Agent only
+ok 1 - marker is taken from the app User-Agent only
+  ---
+  duration_ms: 1.500168
+  type: 'test'
+  ...
+# Subtest: a service worker request without the suffix is recognised by the cookie
+ok 2 - a service worker request without the suffix is recognised by the cookie
+  ---
+  duration_ms: 1.086178
+  type: 'test'
+  ...
+# Subtest: the real User-Agent wins and garbage in the cookie is ignored
+ok 3 - the real User-Agent wins and garbage in the cookie is ignored
+  ---
+  duration_ms: 0.344563
+  type: 'test'
+  ...
+# Subtest: heartbeat is validated and clamped
+ok 4 - heartbeat is validated and clamped
+  ---
+  duration_ms: 2.430323
+  type: 'test'
+  ...
+# Subtest: device label
+ok 5 - device label
+  ---
+  duration_ms: 0.818192
+  type: 'test'
+  ...
+# Subtest: refused records: told once a day while there are any
+ok 6 - refused records: told once a day while there are any
+  ---
+  duration_ms: 0.211016
+  type: 'test'
+  ...
+# Subtest: silent device: only one that really works offline, once per silence, not forever
+ok 7 - silent device: only one that really works offline, once per silence, not forever
+  ---
+  duration_ms: 0.231945
+  type: 'test'
+  ...
+# Subtest: device state for the manager's list
+ok 8 - device state for the manager's list
+  ---
+  duration_ms: 0.222576
+  type: 'test'
+  ...
+# Subtest: latest submission of a row and day wins, field by field
+ok 9 - latest submission of a row and day wins, field by field
+  ---
+  duration_ms: 2.334082
+  type: 'test'
+  ...
+# Subtest: rows, days and documents do not mix; foreign audit rows are skipped
+ok 10 - rows, days and documents do not mix; foreign audit rows are skipped
+  ---
+  duration_ms: 0.65243
+  type: 'test'
+  ...
+# Subtest: changes that do not overlap are both kept
+ok 11 - changes that do not overlap are both kept
+  ---
+  duration_ms: 1.624823
+  type: 'test'
+  ...
+# Subtest: the same edit on both sides is not a conflict
+ok 12 - the same edit on both sides is not a conflict
+  ---
+  duration_ms: 0.350122
+  type: 'test'
+  ...
+# Subtest: different edits of one field: journal keeps the server value, the rest merges
+ok 13 - different edits of one field: journal keeps the server value, the rest merges
+  ---
+  duration_ms: 0.334727
+  type: 'test'
+  ...
+# Subtest: a record appeared on the server while the device was offline
+ok 14 - a record appeared on the server while the device was offline
+  ---
+  duration_ms: 0.353919
+  type: 'test'
+  ...
+# Subtest: force writes the device values
+ok 15 - force writes the device values
+  ---
+  duration_ms: 0.175459
+  type: 'test'
+  ...
+# Subtest: empty values compare equal, numbers compare by value
+ok 16 - empty values compare equal, numbers compare by value
+  ---
+  duration_ms: 0.235695
+  type: 'test'
+  ...
+# Subtest: a scanned fridge sticker opens that fridge; an unknown one is reported
+ok 17 - a scanned fridge sticker opens that fridge; an unknown one is reported
+  ---
+  duration_ms: 2.271765
+  type: 'test'
+  ...
+# Subtest: journal posters: own journal, hub, another organization, short QR
+ok 18 - journal posters: own journal, hub, another organization, short QR
+  ---
+  duration_ms: 0.435601
+  type: 'test'
+  ...
+# Subtest: who may sign without network
+ok 19 - who may sign without network
+  ---
+  duration_ms: 0.465381
+  type: 'test'
+  ...
+# Subtest: signer list: allowed only, own account first, 'auth' mode shows only it
+ok 20 - signer list: allowed only, own account first, 'auth' mode shows only it
+  ---
+  duration_ms: 0.222545
+  type: 'test'
+  ...
+# Subtest: editable days stay inside the document period and the 31-day window
+ok 21 - editable days stay inside the document period and the 31-day window
+  ---
+  duration_ms: 0.551412
+  type: 'test'
+  ...
+# Subtest: row form starts from saved values, an unsent edit on top, defaults for an empty day
+ok 22 - row form starts from saved values, an unsent edit on top, defaults for an empty day
+  ---
+  duration_ms: 0.595686
+  type: 'test'
+  ...
+# Subtest: norms, typed numbers and summaries
+ok 23 - norms, typed numbers and summaries
+  ---
+  duration_ms: 0.597148
+  type: 'test'
+  ...
+# Subtest: today marks: objects
+ok 24 - today marks: objects
+  ---
+  duration_ms: 0.240785
+  type: 'test'
+  ...
+# Subtest: today marks: journals with rows, per-employee and append journals
+ok 25 - today marks: journals with rows, per-employee and append journals
+  ---
+  duration_ms: 0.763497
+  type: 'test'
+  ...
+# Subtest: today summary counts fillable objects and journals
+ok 26 - today summary counts fillable objects and journals
+  ---
+  duration_ms: 0.571001
+  type: 'test'
+  ...
+# Subtest: only records made without network are listed, newest first, with the delay
+ok 27 - only records made without network are listed, newest first, with the delay
+  ---
+  duration_ms: 2.55312
+  type: 'test'
+  ...
+# Subtest: slots are found anywhere in the body, joined lists included
+ok 28 - slots are found anywhere in the body, joined lists included
+  ---
+  duration_ms: 2.379902
+  type: 'test'
+  ...
+# Subtest: markers become links; other values are untouched
+ok 29 - markers become links; other values are untouched
+  ---
+  duration_ms: 0.623482
+  type: 'test'
+  ...
+# Subtest: a marker without a link is left as is, so it is visible that the photo is missing
+ok 30 - a marker without a link is left as is, so it is visible that the photo is missing
+  ---
+  duration_ms: 0.20246
+  type: 'test'
+  ...
+# Subtest: right PIN passes, wrong PIN and malformed input fail
+ok 31 - right PIN passes, wrong PIN and malformed input fail
+  ---
+  duration_ms: 13.561665
+  type: 'test'
+  ...
+# Subtest: the verifier does not contain the PIN and differs per issue
+ok 32 - the verifier does not contain the PIN and differs per issue
+  ---
+  duration_ms: 3.147422
+  type: 'test'
+  ...
+# Subtest: a tampered verifier never passes
+ok 33 - a tampered verifier never passes
+  ---
+  duration_ms: 5.725954
+  type: 'test'
+  ...
+# Subtest: five wrong PINs lock for 15 minutes, a right one resets
+ok 34 - five wrong PINs lock for 15 minutes, a right one resets
+  ---
+  duration_ms: 1.333901
+  type: 'test'
+  ...
+# Subtest: equipment sticker
+ok 35 - equipment sticker
+  ---
+  duration_ms: 2.63394
+  type: 'test'
+  ...
+# Subtest: room sticker, www host, extra params and url-encoded id
+ok 36 - room sticker, www host, extra params and url-encoded id
+  ---
+  duration_ms: 0.303266
+  type: 'test'
+  ...
+# Subtest: journal poster, hub, document and point posters share one address shape
+ok 37 - journal poster, hub, document and point posters share one address shape
+  ---
+  duration_ms: 0.336701
+  type: 'test'
+  ...
+# Subtest: short QR from a printed journal header
+ok 38 - short QR from a printed journal header
+  ---
+  duration_ms: 0.147653
+  type: 'test'
+  ...
+# Subtest: bare path from the service worker fallback
+ok 39 - bare path from the service worker fallback
+  ---
+  duration_ms: 0.120941
+  type: 'test'
+  ...
+# Subtest: own host passed by the page is accepted, others are not
+ok 40 - own host passed by the page is accepted, others are not
+  ---
+  duration_ms: 0.158014
+  type: 'test'
+  ...
+# Subtest: garbage, other schemes and unknown paths are not ours
+ok 41 - garbage, other schemes and unknown paths are not ours
+  ---
+  duration_ms: 0.354191
+  type: 'test'
+  ...
+# Subtest: ids made of names (Cyrillic, spaces) are accepted as the site encodes them
+ok 42 - ids made of names (Cyrillic, spaces) are accepted as the site encodes them
+  ---
+  duration_ms: 0.295445
+  type: 'test'
+  ...
+# Subtest: record lands on the day it was made in the organization time zone, not the sync day
+ok 43 - record lands on the day it was made in the organization time zone, not the sync day
+  ---
+  duration_ms: 18.394628
+  type: 'test'
+  ...
+# Subtest: future beyond 10 minutes is refused, a small clock drift is fine
+ok 44 - future beyond 10 minutes is refused, a small clock drift is fine
+  ---
+  duration_ms: 1.423405
+  type: 'test'
+  ...
+# Subtest: 31 days are accepted, older is refused
+ok 45 - 31 days are accepted, older is refused
+  ---
+  duration_ms: 0.531595
+  type: 'test'
+  ...
+# Subtest: missing or broken time
+ok 46 - missing or broken time
+  ---
+  duration_ms: 0.28434
+  type: 'test'
+  ...
+# Subtest: past-day edit keeps the edited day
+ok 47 - past-day edit keeps the edited day
+  ---
+  duration_ms: 1.398019
+  type: 'test'
+  ...
+# Subtest: recent days list
+ok 48 - recent days list
+  ---
+  duration_ms: 0.242858
+  type: 'test'
+  ...
+# Subtest: today's tasks are trimmed to what the offline screen shows
+ok 49 - today's tasks are trimmed to what the offline screen shows
+  ---
+  duration_ms: 2.370577
+  type: 'test'
+  ...
+# Subtest: an empty answer gives an empty list, not an error
+ok 50 - an empty answer gives an empty list, not an error
+  ---
+  duration_ms: 0.268912
+  type: 'test'
+  ...
+# Subtest: the second request for the same row waits for the first
+ok 51 - the second request for the same row waits for the first
+  ---
+  duration_ms: 7.345189
+  type: 'test'
+  ...
+# Subtest: different rows do not wait for each other; release is idempotent
+ok 52 - different rows do not wait for each other; release is idempotent
+  ---
+  duration_ms: 0.366823
+  type: 'test'
+  ...
+# Subtest: three requests run strictly one after another
+ok 53 - three requests run strictly one after another
+  ---
+  duration_ms: 19.314651
+  type: 'test'
+  ...
+# Subtest: hygiene, new form: the three signed statements
+ok 54 - hygiene, new form: the three signed statements
+  ---
+  duration_ms: 1.822903
+  type: 'test'
+  ...
+# Subtest: hygiene, old form: status and temperature flag
+ok 55 - hygiene, old form: status and temperature flag
+  ---
+  duration_ms: 0.267441
+  type: 'test'
+  ...
+# Subtest: health check
+ok 56 - health check
+  ---
+  duration_ms: 0.554671
+  type: 'test'
+  ...
+# Subtest: cleaning and ventilation checklist: done procedures are the present ones
+ok 57 - cleaning and ventilation checklist: done procedures are the present ones
+  ---
+  duration_ms: 0.199706
+  type: 'test'
+  ...
+# Subtest: other journals and broken data are not read
+ok 58 - other journals and broken data are not read
+  ---
+  duration_ms: 0.167362
+  type: 'test'
+  ...
+# Subtest: row key of an employee
+ok 59 - row key of an employee
+  ---
+  duration_ms: 0.37175
+  type: 'test'
+  ...
+# Subtest: accepted record leaves the queue
+ok 60 - accepted record leaves the queue
+  ---
+  duration_ms: 1.840707
+  type: 'test'
+  ...
+# Subtest: accepted with conflicts stays for the person to decide
+ok 61 - accepted with conflicts stays for the person to decide
+  ---
+  duration_ms: 0.776371
+  type: 'test'
+  ...
+# Subtest: no network, server trouble and missing sign-in are retried, not refused
+ok 62 - no network, server trouble and missing sign-in are retried, not refused
+  ---
+  duration_ms: 0.250108
+  type: 'test'
+  ...
+# Subtest: a refusal keeps the record visible with its reason
+ok 63 - a refusal keeps the record visible with its reason
+  ---
+  duration_ms: 0.402805
+  type: 'test'
+  ...
+# Subtest: PIN refusals ask for the PIN again
+ok 64 - PIN refusals ask for the PIN again
+  ---
+  duration_ms: 0.161872
+  type: 'test'
+  ...
+# Subtest: records are delivered only under the account they were made with
+ok 65 - records are delivered only under the account they were made with
+  ---
+  duration_ms: 0.138769
+  type: 'test'
+  ...
+# Subtest: retry delay grows and is capped
+ok 66 - retry delay grows and is capped
+  ---
+  duration_ms: 0.107673
+  type: 'test'
+  ...
+# Subtest: a server that keeps failing is not retried forever
+ok 67 - a server that keeps failing is not retried forever
+  ---
+  duration_ms: 0.414081
+  type: 'test'
+  ...
+1..67
+# tests 67
+# suites 0
+# pass 67
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1787.894706

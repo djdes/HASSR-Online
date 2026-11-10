@@ -1,0 +1,7 @@
+PASS  device is ready
+PASS  AC2 a required photo field asks for a photo instead of blocking the form
+PASS  AC2 two photos of the field wait in the queue as markers — "offline-photo:field:labelPhoto#0,offline-photo:field:labelPhoto#1"
+PASS  AC2 the record with photo fields is delivered after its photos are uploaded — [["Холодильный шкаф Бар 1: e2e-photo-fake-0000000001","rejected","Нужен снимок JPG, PNG или WEBP"],["Холодильный шкаф Бар 1: e2e-photo-lost-0000000001","rejected","Фото потеряно — запишите заново со снимком"]]
+PASS  AC3 a record whose photo is lost stays in «Не ушло» with the reason — {"id":"e2e-photo-lost-0000000001","label":"Холодильный шкаф Бар 1: e2e-photo-lost-0000000001","status":"rejected","lastCode":"offline-photo-lost","lastError":"Фото потеряно — запишите заново со снимком","photoUrls":{},"values":null,"photo":"offline-photo:reading"}
+PASS  AC3 a record whose photo the server refuses stays in «Не ушло» with the reason — {"id":"e2e-photo-fake-0000000001","label":"Холодильный шкаф Бар 1: e2e-photo-fake-0000000001","status":"rejected","lastCode":"offline-photo-rejected","lastError":"Нужен снимок JPG, PNG или WEBP","photoUrls":{},"values":null,"photo":"offline-photo:reading"}
+PASS  the cabinet still answers after the run

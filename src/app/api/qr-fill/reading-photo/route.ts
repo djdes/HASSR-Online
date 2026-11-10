@@ -8,6 +8,8 @@ import { qrFillRateLimiter, readingPhotoRateLimiter } from "@/lib/rate-limit";
 import { READING_PHOTO_DISABLED_CODE, READING_PHOTO_FIXATION_TEXT } from "@/lib/reading-photo-fixation";
 import { READING_PHOTO_MAX_BYTES, saveReadingPhoto } from "@/lib/reading-photo-store";
 
+import { isOfflineRequest, resolveOfflineObjectActor } from "@/lib/offline/envelope.server";
+import type { QrFillMode } from "@/lib/qr-fill-actor";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -63,6 +65,13 @@ export async function POST(request: Request) {
     employeeId,
     pin: text(form, "pin", 12) || null,
     pass: text(form, "pass", 300) || null,
+    // Снимок к записи без связи (заголовки `x-offline-*` + сессия устройства).
+    ...(isOfflineRequest(request)
+      ? {
+          resolveActor: async (object: { organizationId: string; mode: QrFillMode }) =>
+            (await resolveOfflineObjectActor(request, { mode: object.mode, organizationId: object.organizationId, employeeId, timeZone: null }))?.actor ?? null,
+        }
+      : {}),
   });
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error, errorCode: auth.errorCode, errorParams: auth.errorParams }, { status: auth.status });

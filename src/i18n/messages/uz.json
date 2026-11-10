@@ -3376,7 +3376,8 @@
       "monitoring": "Monitoring",
       "journals_points": "Nuqtalar jurnallari",
       "inspection_laws": "Me’yoriy hujjatlar",
-      "inspection_settings": "Bo‘lim sozlamalari"
+      "inspection_settings": "Bo‘lim sozlamalari",
+      "settings_offline": "Aloqasiz ishlash"
     },
     "breadcrumbs": {
       "neighbors": "Qo‘shni bo‘limlar",
@@ -10206,6 +10207,10 @@
         "bonuses": {
           "title": "Ish uchun mukofotlar",
           "description": "Xodimlarning ballari va mukofotlari"
+        },
+        "settings_offline": {
+          "title": "Aloqasiz ishlash",
+          "description": "Jurnallar internetsiz toʻldiriladigan qurilmalar va aloqasiz qilingan yozuvlar"
         }
       }
     },
@@ -31267,5 +31272,283 @@
     "departmentsSave": "Moslikni saqlash",
     "departmentsSaved": "Moslik saqlandi — keyingi ishga tushirishda qo‘llanadi",
     "departmentsUnmapped": "Moslanmagan: {count}. Bu bo‘limlar xodimlari hozircha nuqtasiz."
+  },
+  "offlineApp": {
+    "shell": {
+      "opening": "Ochilmoqda…",
+      "online": "Tarmoq bor",
+      "offline": "Aloqasiz",
+      "back": "Orqaga",
+      "toList": "Jurnallar roʻyxatiga",
+      "openCabinet": "Kabinetni ochish",
+      "bannerSending": "Yozuvlar yuborilmoqda…",
+      "bannerPending": "Internet paydo boʻldi. Yuborilishini kutmoqda: {count}",
+      "bannerBack": "Internet paydo boʻldi — kabinetga qaytish mumkin."
+    },
+    "noPack": {
+      "title": "Internetga ulanish yoʻq",
+      "text": "Bu qurilmada aloqasiz ishlash uchun maʼlumotlar hali yoʻq. Ilovani bir marta internet bilan oching va kiring — shundan soʻng jurnallar tarmoqsiz ham ochiladi.",
+      "retry": "Qayta urinish"
+    },
+    "notice": {
+      "notOurQrTitle": "Bu WeSetup QR-kodi emas",
+      "notOurQrText": "Kamerani obyekt stikeriga yoki jurnal plakatiga qarating.",
+      "foreignOrgTitle": "Boshqa tashkilotning QR-kodi",
+      "foreignOrgText": "Bu qurilmada boshqa tashkilot maʼlumotlari saqlangan — bu kod bu yerda ochilmaydi.",
+      "noObjectTitle": "Bu obyekt saqlangan maʼlumotlarda yoʻq",
+      "noJournalTitle": "Bu jurnal saqlangan maʼlumotlarda yoʻq",
+      "missingText": "U ilova internet bilan ochilgandan keyin paydo boʻladi. Hozircha roʻyxatdan jurnal yoki obyektni tanlang."
+    },
+    "done": {
+      "sentTitle": "Jurnalga yozildi",
+      "savedTitle": "Qurilmada saqlandi",
+      "sentText": "{label} · {name}",
+      "savedText": "{label} · {name}. Internet paydo boʻlganda yozuv oʻzi yuboriladi — vaqti {time}.",
+      "scanNext": "Keyingi QR-ni skanerlash"
+    },
+    "home": {
+      "title": "Aloqasiz ishlayapmiz",
+      "stamp": "Maʼlumotlar {time} holatiga. Yozuvlar qurilmada saqlanadi va internet paydo boʻlganda jurnalga ketadi — qilingan vaqti bilan.",
+      "staleDay": "Maʼlumotlar bir sutkadan eski. Internet paydo boʻlganda yangilang: yangi obyektlar, xodimlar va hamkasblar yozuvlari yangilanishdan keyin koʻrinadi.",
+      "refresh": "Maʼlumotlarni yangilash",
+      "refreshing": "Yangilanmoqda…",
+      "refreshFailed": "Yangilab boʻlmadi — internet va kabinetga kirishni tekshiring.",
+      "scan": "QR-ni skanerlash",
+      "queuePending": "Yuborilishini kutmoqda: {count}",
+      "queueStuck": "ketmadi: {count}",
+      "queueForeign": "boshqa akkauntniki: {count}",
+      "summary": "Bugun toʻldirildi: {total} tadan {done} ta",
+      "objects": "Jihozlar va xonalar",
+      "journals": "Jurnallar",
+      "noJournals": "Saqlangan maʼlumotlarda bugun uchun faol hujjatli jurnallar yoʻq.",
+      "tasks": "Bugungi vazifalar",
+      "tasksStamp": "{time} holatiga",
+      "tasksNote": "Vazifani olish, tugatish yoki topshirish faqat internet bilan mumkin."
+    },
+    "task": {
+      "available": "boʻsh",
+      "mine": "sizniki",
+      "taken": "olingan: {name}",
+      "takenNoName": "olingan",
+      "completed": "bajarildi"
+    },
+    "mark": {
+      "done": "toʻldirilgan",
+      "queued": "yuborilishini kutmoqda",
+      "count": "bugun yozuvlar: {count}",
+      "rows": "bugun qatorlar: {total} tadan {done} ta"
+    },
+    "object": {
+      "uv": "UB-lampa: yoqdim / oʻchirdim",
+      "fryer": "Fritür: qovurish boshlanishi va tugashi",
+      "onlineOnly": "faqat internet bilan",
+      "temperature": "harorat",
+      "unsupported": "Bu obyektni aloqasiz toʻldirib boʻlmaydi.",
+      "fryerNoJournal": "Bu fritür bugun hech bir fritür yogʻi jurnaliga kirmaydi — toʻldirib boʻlmaydi."
+    },
+    "signer": {
+      "who": "Siz kimsiz?",
+      "you": "siz kirgansiz",
+      "none": "Saqlangan maʼlumotlarda buni toʻldira oladigan xodimlar yoʻq. Maʼlumotlarni yangilash uchun ilovani internet bilan oching.",
+      "other": "Boshqa xodimni tanlash",
+      "notMe": "Bu men emasman",
+      "line": "Yozmoqda: {name}",
+      "deniedAuth": "Tashkilotda yozuvlar faqat kirgandan keyin — aloqasiz faqat kirgan xodim nomidan yozish mumkin.",
+      "deniedNoPin": "Xodimga PIN berilmagan. Rahbardan berishini soʻrang — bu internet bilan qilinadi.",
+      "deniedCantVerify": "Bu xodimning PIN-ini aloqasiz tekshirib boʻlmaydi. Rahbardan PIN-ni qayta berishini soʻrang — shundan soʻng u tarmoqsiz ham ishlaydi."
+    },
+    "pin": {
+      "hint": "PIN-ingizni kiriting — u qurilmada, internetsiz tekshiriladi.",
+      "label": "PIN",
+      "entered": "Kiritilgan raqamlar: {count}",
+      "erase": "Raqamni oʻchirish",
+      "checking": "Tekshirilmoqda…",
+      "continue": "Davom etish",
+      "locked": "PIN xatolardan keyin bloklangan. {minutes} daqiqadan keyin urinib koʻring.",
+      "wrong": "PIN notoʻgʻri. Qolgan urinishlar: {attempts}.",
+      "lockedNow": "PIN 5 marta notoʻgʻri — 15 daqiqaga bloklandi."
+    },
+    "form": {
+      "save": "Saqlash",
+      "saveChanges": "Oʻzgarishlarni saqlash",
+      "saving": "Saqlanmoqda…",
+      "saveFailed": "Qurilmada saqlab boʻlmadi. Sozlamalarda sayt maʼlumotlarini saqlash taqiqlanmaganini tekshiring.",
+      "enterNumber": "“{label}”: son kiriting",
+      "check": "Tekshiring: {fields}",
+      "checkValues": "Kiritilgan qiymatlarni tekshiring",
+      "select": "Tanlang…",
+      "norm": "Meʼyor: {range}",
+      "offNorm": "Meʼyordan tashqari: {fields}. Nima qilganingizni yozing.",
+      "whatDone": "Nima qilindi",
+      "signatureLater": "{label}: imzo internet paydo boʻlganda kabinetda qoʻyiladi.",
+      "signatureRequired": "Bu yozuv uchun imzo majburiy ({fields}) — aloqasiz qilib boʻlmaydi. Internet paydo boʻlganda toʻldiring.",
+      "required": "majburiy"
+    },
+    "photo": {
+      "add": "Suratga olish",
+      "addMore": "Yana surat",
+      "remove": "Suratni olib tashlash",
+      "reading": "Koʻrsatkich surati",
+      "readingRequired": "Koʻrsatkich surati — majburiy",
+      "readingNeeded": "Koʻrsatkichni suratga oling — usiz yozuv qabul qilinmaydi.",
+      "fieldNeeded": "“{label}”: suratga oling",
+      "tooBig": "Surat {mb} MB dan katta — qayta oling.",
+      "notImage": "JPG, PNG yoki WEBP surat kerak.",
+      "kept": "Surat qurilmada saqlanadi va yozuv bilan birga ketadi.",
+      "attached": "suratlar: {count}"
+    },
+    "reading": {
+      "temperature": "Harorat",
+      "humidity": "Namlik",
+      "humidityOptional": "Namlik (ixtiyoriy)",
+      "service": "Xizmat koʻrsatish",
+      "repair": "Taʼmirlash",
+      "offNorm": "Koʻrsatkich meʼyordan tashqari. Nima qilganingizni yozing — usiz yozuv qabul qilinmaydi.",
+      "errTempNumber": "Harorat: son kiriting, masalan 4,5",
+      "errHumNumber": "Namlik: son kiriting",
+      "errTempRange": "Harorat: qiymatni tekshiring",
+      "errHumRange": "Namlik: 0 dan 100 % gacha",
+      "errEnterTemp": "Haroratni kiriting",
+      "errEnterAny": "Harorat yoki namlikni kiriting",
+      "errCorrection": "Koʻrsatkich meʼyordan tashqari — nima qilganingizni yozing"
+    },
+    "uv": {
+      "hint": "Yoqish va oʻchirish vaqti qurilma soati boʻyicha yoziladi.",
+      "on": "Men yoqdim",
+      "off": "Men oʻchirdim",
+      "summaryOn": "Yoqdi",
+      "summaryOff": "Oʻchirdi"
+    },
+    "fryer": {
+      "start": "Qovurish boshlanishi",
+      "end": "Qovurish tugashi",
+      "phaseHint": "Vaqt qurilma soati boʻyicha yoziladi. Tugash faqat boshlanishdan keyin qabul qilinadi.",
+      "fat": "Yogʻ",
+      "product": "Mahsulot",
+      "quality": "Yogʻ sifati bahosi",
+      "carryover": "Qolgan yogʻ, kg",
+      "disposed": "Utilizatsiya qilindi, kg",
+      "errFat": "Yogʻni tanlang",
+      "errProduct": "Mahsulotni tanlang",
+      "errKg": "Kilogramm: 0 dan 1000 gacha son kiriting",
+      "summaryStart": "qovurish boshlanishi, baho {quality}",
+      "summaryEnd": "qovurish tugashi, baho {quality}"
+    },
+    "journal": {
+      "pickDocument": "Hujjatni tanlang",
+      "what": "Nimani toʻldiramiz?",
+      "filledToday": "bugun toʻldirilgan",
+      "day": "Yozuv kuni",
+      "today": "Bugun, {date}",
+      "dayFilled": "{day} — toʻldirilgan",
+      "rowUnsent": "Hali yuborilmagan yozuvingiz koʻrsatilgan. Uni tuzatish mumkin.",
+      "rowSaved": "Bu kun uchun yozuv allaqachon bor — uni koʻrish va tuzatish mumkin.",
+      "noForm": "Bu qator shakli saqlangan maʼlumotlarda yoʻq. U internet bilan kirgandan keyin paydo boʻladi.",
+      "forDay": "{date} uchun"
+    },
+    "queue": {
+      "title": "Aloqasiz yozuvlar",
+      "empty": "Barcha yozuvlar yuborildi.",
+      "online": "Internet bor — yozuvlar yuborilmoqda.",
+      "offline": "Internet paydo boʻlganda yozuvlar oʻzi ketadi.",
+      "foreign": "Yana {count} tasi boshqa akkaunt ostida qilingan — ular oʻsha akkaunt shu qurilmada kirgandan keyin ketadi.",
+      "sendNow": "Hozir yuborish",
+      "sending": "Yuborilmoqda…",
+      "waiting": "Yuborilishini kutmoqda",
+      "rejected": "Ketmadi: {reason}",
+      "rejectedUnknown": "server yozuvni qabul qilmadi",
+      "enterPin": "Amaldagi PIN-ni kiritish",
+      "pinPlaceholder": "Xodim PIN-i",
+      "checkAndSend": "Tekshirish va yuborish",
+      "noPin": "Xodimda hozir tekshirish mumkin boʻlgan PIN yoʻq. Rahbarga murojaat qiling.",
+      "wrongPin": "PIN notoʻgʻri",
+      "retry": "Qayta urinish",
+      "delete": "Yozuvni oʻchirish",
+      "keep": "Qoldirish",
+      "deleteForever": "Butunlay oʻchirish",
+      "conflictIntro": "Yozuv qabul qilindi, lekin bu maydonlar jurnalda allaqachon boshqacha oʻzgartirilgan — jurnaldagi qiymat qoldi:",
+      "conflictLine": "{label}: jurnalda “{theirs}”, sizda “{mine}”",
+      "keepTheirs": "Jurnaldagidek qoldirish",
+      "takeMine": "Meniki yozilsin",
+      "valueEmpty": "boʻsh",
+      "valueYes": "ha",
+      "valueNo": "yoʻq"
+    },
+    "reject": {
+      "offline-login": "Shu qurilmada kabinetga kiring — yozuvlar kirgandan keyin yuboriladi.",
+      "offline-other-org": "Yozuv boshqa tashkilotda qilingan — oʻsha akkaunt bilan kiring.",
+      "offline-time-future": "Yozuv vaqti kelajakda — qurilmadagi sana va vaqtni tekshiring.",
+      "offline-time-too-old": "Yozuv 31 kundan eski — uni rahbar orqali kiriting.",
+      "offline-time-bad-day": "Yozuv kuni notoʻgʻri koʻrsatilgan.",
+      "offline-time-bad-time": "Yozuvda vaqt yoʻq — qayta yozing.",
+      "offline-employee": "Xodim endi tashkilotda ishlamaydi — yozuv qabul qilinmadi.",
+      "offline-pin-changed": "Xodim PIN-i oʻzgartirilgan yoki bekor qilingan — amaldagi PIN-ni kiriting, yozuv ketadi.",
+      "offline-pin-required": "Xodimga PIN berilgan — uni kiriting, yozuv ketadi.",
+      "offline-not-self": "Yozuv boshqa xodim tomonidan PIN-siz imzolangan — uni qabul qilib boʻlmaydi.",
+      "offline-no-document": "Bu kun uchun jurnal hujjati yopilgan yoki oʻchirilgan — yozuv qabul qilinmadi.",
+      "offline-server-error": "Server yozuvni qabul qilmayapti. Keyinroq urinib koʻring yoki rahbarga koʻrsating.",
+      "offline-photo-lost": "Surat yoʻqolgan — surat bilan qayta yozing.",
+      "offline-photo-rejected": "Server suratni qabul qilmadi — boshqa surat bilan qayta yozing."
+    },
+    "scanner": {
+      "title": "QR-kodga qarating",
+      "close": "Skanerni yopish",
+      "dialog": "QR skaneri",
+      "hint": "Muzlatgich, xona, lampadagi stiker yoki jurnal plakati.",
+      "cameraError": "Kamerani yoqib boʻlmadi. Qurilma sozlamalarida ilovaga kameradan foydalanishga ruxsat bering yoki obyektni roʻyxatdan tanlang."
+    },
+    "status": {
+      "ready": "Aloqasiz ishlashga tayyor",
+      "notReady": "Aloqasiz ishlashga hali tayyor emas: {reason}",
+      "reasonNoWorker": "brauzer sahifalarni saqlay olmaydi",
+      "reasonNoPack": "maʼlumotlar hali yuklanmoqda",
+      "reasonNoShell": "ekran hali saqlanmoqda",
+      "dataFrom": "Maʼlumotlar {time} holatiga",
+      "noData": "Qurilmada maʼlumot yoʻq",
+      "stale": "bir sutkadan eski",
+      "waiting": "yuborilishini kutmoqda: {count}",
+      "refresh": "Maʼlumotlarni yangilash",
+      "refreshing": "Yangilanmoqda…",
+      "openScreen": "Aloqasiz ekranni ochish"
+    },
+    "toast": {
+      "sent": "Aloqasiz yozuvlar yuborildi: {count}",
+      "stuck": "Ketmagan yozuvlar: {count}",
+      "stuckHint": "Roʻyxatni oching va ular bilan nima qilishni hal qiling.",
+      "open": "Ochish"
+    },
+    "manager": {
+      "title": "Aloqasiz ishlash",
+      "description": "Jurnallar internetsiz toʻldiriladigan qurilmalar va oxirgi oy ichida aloqasiz qilingan yozuvlar.",
+      "devices": "Qurilmalar",
+      "noDevices": "Hali hech bir qurilma aloqasiz ishlashga tayyor emas. Xodim ilovada kabinetni internet bilan ochgandan keyin u shu yerda paydo boʻladi.",
+      "colDevice": "Qurilma",
+      "colUser": "Kim kirgan",
+      "colSeen": "Aloqada",
+      "colData": "Maʼlumotlar",
+      "colWaiting": "Kutmoqda / ketmadi",
+      "colState": "Holat",
+      "stateOk": "joyida",
+      "stateWaiting": "yuborilmaganlar bor",
+      "stateStuck": "qabul qilinmagan yozuvlar bor",
+      "stateSilent": "bir sutkadan ortiq aloqada emas",
+      "records": "Aloqasiz qilingan yozuvlar",
+      "noRecords": "Oxirgi oyda aloqasiz yozuvlar boʻlmagan.",
+      "colWho": "Kim",
+      "colWhat": "Nima",
+      "colMade": "Qilingan",
+      "colReceived": "Qabul qilingan",
+      "colDelay": "Kechikish",
+      "colAuth": "Muallif tasdiqlangan",
+      "authPin": "qurilmadagi PIN",
+      "authList": "roʻyxatdan tanlash",
+      "authSelf": "kirgan akkaunt",
+      "pastDay": "{day} uchun",
+      "delayMinutes": "{count} daq",
+      "delayHours": "{count} soat",
+      "delayDays": "{count} kun",
+      "never": "—",
+      "shownLimit": "Oxirgi {count} ta yozuv koʻrsatilgan."
+    }
   }
 }

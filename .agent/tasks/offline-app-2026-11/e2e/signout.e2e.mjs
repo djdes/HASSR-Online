@@ -23,7 +23,8 @@ const store = () =>
       const open = indexedDB.open("wesetup-offline-app");
       open.onsuccess = () => {
         const tx = open.result.transaction(["kv", "queue"], "readonly");
-        const out = { packUser: null, queue: [] };
+        const out = { packUser: null, shell: false, queue: [] };
+        tx.objectStore("kv").get("shell").onsuccess = (event) => (out.shell = event.target.result?.ok === true);
         tx.objectStore("kv").get("pack").onsuccess = (event) => (out.packUser = event.target.result?.userId ?? null);
         tx.objectStore("queue").getAll().onsuccess = (event) => (out.queue = event.target.result.map((item) => ({ owner: item.ownerUserId, status: item.status, attempts: item.attempts })));
         tx.oncomplete = () => resolve(out);
@@ -43,6 +44,8 @@ await login("admin@haccp.local");
 await page.goto("/mini", { waitUntil: "domcontentloaded" });
 const first = await waitPack({ not: null });
 check("pack of the signed-in account is on the device", first.packUser, String(first.packUser));
+// The offline screen itself must be saved too before the network goes away.
+for (let attempt = 0; attempt < 240 && !(await store().catch(() => null))?.shell; attempt++) await page.waitForTimeout(500);
 
 // A record made without network by this account.
 await context.setOffline(true);

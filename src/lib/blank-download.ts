@@ -226,3 +226,20 @@ export function readRememberedBlankEmail(raw: string | null | undefined): Rememb
     return null;
   }
 }
+
+/** Текст уведомления в Telegram-бот при скачивании шаблона журнала. */
+export function buildBlankDownloadAdminText(params: {
+  title: string;
+  format: BlankFormat;
+  email: string;
+  company?: string | null;
+  escape: (value: string) => string;
+}): string {
+  const esc = params.escape;
+  return [
+    "📥 Скачивание шаблона журнала",
+    `Журнал: ${esc(params.title)} (${esc(BLANK_FORMAT_LABEL[params.format])})`,
+    `Почта: ${esc(params.email)}`,
+    ...(params.company ? [`Организация: ${esc(params.company)}`] : []),
+  ].join("\n");
+}

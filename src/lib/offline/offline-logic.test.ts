@@ -4,6 +4,9 @@ import { test } from "node:test";
 import type { TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 
 import {
+  journalTodayMark,
+  objectTodayMark,
+  offlineTodaySummary,
   fieldsNeedingCorrection,
   isOutOfRange,
   offlineEditableDays,
@@ -51,6 +54,7 @@ const document: OfflinePackDocument = {
   forms: { r1: schema },
   employeeIds: ["u1", "u2"],
   history: { r1: { "2026-11-05": { temp: 4, clean: true, note: null } } },
+  todayCount: 0,
 };
 
 const pack = (mode: OfflinePack["organization"]["qrFillMode"] = "public"): OfflinePack => ({
@@ -62,7 +66,7 @@ const pack = (mode: OfflinePack["organization"]["qrFillMode"] = "public"): Offli
   employees: [employee("u2"), employee("u1"), employee("u3", { hasPin: true, pin: verifier, pinFp: "fp3" }), employee("u4", { hasPin: true })],
   journals: [{ code: "cleaning", name: "Уборка", append: false, token: "tok", documents: [document] }],
   objects: [
-    { kind: "equipment", id: "eq1", name: "Холодильник №2", place: "Кухня", buildingId: null, token: "t", fill: "temperature", temperature: { min: 2, max: 6 }, humidity: null, photoRequired: false, employeeIds: ["u1"] },
+    { kind: "equipment", id: "eq1", name: "Холодильник №2", place: "Кухня", buildingId: null, token: "t", fill: "temperature", temperature: { min: 2, max: 6 }, humidity: null, photo: "optional", employeeIds: ["u1"], today: null },
   ],
 });
 
@@ -172,4 +176,37 @@ test("norms, typed numbers and summaries", () => {
   assert.equal(parseTypedNumber(""), null);
   assert.deepEqual(fieldsNeedingCorrection(schema, { temp: 9 }).map((field) => field.key), ["temp"]);
   assert.equal(summarizeValues(schema, { temp: 4, clean: true, note: "ок" }), "Температура: 4 °C · Чисто · Примечание: ок");
+});
+
+test("today marks: objects", () => {
+  const fridge = pack().objects[0];
+  assert.deepEqual(objectTodayMark(fridge, []), { state: "todo", summary: null });
+  assert.deepEqual(objectTodayMark({ ...fridge, today: { done: true, summary: "+4 °C · Анна" } }, []), { state: "done", summary: "+4 °C · Анна" });
+  const reading: OfflineQueueItem = { ...queued({}, null), target: { kind: "equipment", objectId: "eq1", action: "temperature" } };
+  assert.equal(objectTodayMark(fridge, [reading]).state, "queued");
+  // A refused record does not make the fridge look filled.
+  assert.equal(objectTodayMark(fridge, [{ ...reading, status: "rejected" }]).state, "todo");
+});
+
+test("today marks: journals with rows, per-employee and append journals", () => {
+  const rows = pack().journals[0];
+  assert.deepEqual(journalTodayMark(rows, [], "2026-11-10"), { state: "todo", rows: { done: 0, total: 1 }, count: 0 });
+  assert.deepEqual(journalTodayMark(rows, [], "2026-11-05"), { state: "done", rows: { done: 1, total: 1 }, count: 0 });
+  assert.deepEqual(journalTodayMark(rows, [queued({ temp: 5 }, null)], "2026-11-10"), { state: "queued", rows: { done: 1, total: 1 }, count: 0 });
+  // A past-day edit in the queue says nothing about today.
+  assert.equal(journalTodayMark(rows, [queued({ temp: 5 }, "2026-11-05")], "2026-11-10").state, "todo");
+
+  const perEmployee = { ...rows, documents: [{ ...document, perEmployee: true, rows: [], history: { "employee-u1": { "2026-11-10": { a: 1 } }, "employee-u2": { "2026-11-09": { a: 1 } } } }] };
+  assert.deepEqual(journalTodayMark(perEmployee, [], "2026-11-10"), { state: "done", rows: null, count: 1 });
+
+  const append = { ...rows, append: true, documents: [{ ...document, history: {}, todayCount: 2 }] };
+  assert.deepEqual(journalTodayMark(append, [queued({}, null)], "2026-11-10"), { state: "queued", rows: null, count: 3 });
+  assert.deepEqual(journalTodayMark({ ...append, documents: [{ ...document, history: {}, todayCount: 0 }] }, [], "2026-11-10"), { state: "todo", rows: null, count: 0 });
+});
+
+test("today summary counts fillable objects and journals", () => {
+  const base = pack();
+  assert.deepEqual(offlineTodaySummary(base, []), { done: 0, total: 2 });
+  const withUnsupported = { ...base, objects: [...base.objects, { ...base.objects[0], id: "x", fill: "unsupported" as const }] };
+  assert.deepEqual(offlineTodaySummary(withUnsupported, [queued({ temp: 5 }, null)]), { done: 1, total: 2 });
 });

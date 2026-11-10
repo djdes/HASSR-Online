@@ -8,6 +8,8 @@ import {
   APP_LINK_PATHS,
   buildAppleAppSiteAssociation,
   buildAssetLinks,
+  ANDROID_UPLOAD_CERT_SHA256,
+  androidCertFingerprints,
   parseCertFingerprints,
 } from "@/lib/app-links";
 
@@ -122,4 +124,16 @@ test("QR, вход и кабинет открываются в приложен�
     assert.ok(!iosOpensInApp(p), `iOS: ${p} должен остаться в браузере`);
     assert.ok(!androidOpensInApp(data, p), `Android: ${p} должен остаться в браузере`);
   }
+});
+
+test("assetlinks никогда не пуст: ключ загрузки есть всегда, ключ из Play Console добавляется", () => {
+  // Пустая переменная на сервере — ровно то, из-за чего ссылки с QR не открывались в приложении.
+  assert.deepEqual(androidCertFingerprints(undefined), [ANDROID_UPLOAD_CERT_SHA256]);
+  assert.deepEqual(androidCertFingerprints(""), [ANDROID_UPLOAD_CERT_SHA256]);
+  assert.deepEqual(androidCertFingerprints("aa:bb"), ["AA:BB", ANDROID_UPLOAD_CERT_SHA256]);
+  // Ключ загрузки, заданный и на сервере, не дублируется.
+  assert.deepEqual(androidCertFingerprints(ANDROID_UPLOAD_CERT_SHA256.toLowerCase()), [ANDROID_UPLOAD_CERT_SHA256]);
+  assert.match(ANDROID_UPLOAD_CERT_SHA256, /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
+  const [statement] = buildAssetLinks("ru.wesetup.app", androidCertFingerprints(""));
+  assert.deepEqual(statement.target.sha256_cert_fingerprints, [ANDROID_UPLOAD_CERT_SHA256]);
 });

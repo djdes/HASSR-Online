@@ -44,8 +44,8 @@ export type OfflineSignerStep =
   | { step: "ready"; auth: OfflineAuthKind }
   /** Must enter the PIN first. */
   | { step: "pin" }
-  /** Cannot sign without network; `reason` is shown as is. */
-  | { step: "denied"; reason: string };
+  /** Cannot sign without network; `reason` is the key of the text to show (`offlineApp.signer.*`). */
+  | { step: "denied"; reason: "deniedAuth" | "deniedNoPin" | "deniedCantVerify" };
 
 /** How an employee is confirmed on the device, mirroring the online QR rules. */
 export function offlineSignerStep(pack: OfflinePack, employee: OfflinePackEmployee, pinPassed: boolean): OfflineSignerStep {
@@ -53,15 +53,15 @@ export function offlineSignerStep(pack: OfflinePack, employee: OfflinePackEmploy
   if (employee.id === pack.user.id) return { step: "ready", auth: "self" };
   const mode = pack.organization.qrFillMode;
   if (mode === "auth") {
-    return { step: "denied", reason: "В организации записи только после входа — без связи записать можно от имени вошедшего сотрудника." };
+    return { step: "denied", reason: "deniedAuth" };
   }
   if (!employee.hasPin) {
     return mode === "pin"
-      ? { step: "denied", reason: "У сотрудника не задан ПИН. Попросите руководителя выдать его — это делается с интернетом." }
+      ? { step: "denied", reason: "deniedNoPin" }
       : { step: "ready", auth: "list" };
   }
   if (!employee.pin || !employee.pinFp) {
-    return { step: "denied", reason: "ПИН этого сотрудника нельзя проверить без связи. Попросите руководителя выдать ПИН заново — после этого он заработает и без сети." };
+    return { step: "denied", reason: "deniedCantVerify" };
   }
   return pinPassed ? { step: "ready", auth: "pin" } : { step: "pin" };
 }
@@ -184,4 +184,68 @@ export function summarizeValues(schema: TaskFormSchema | null, values: OfflineVa
     if (parts.length >= limit) break;
   }
   return parts.join(" · ");
+}
+
+/* ------------------------------------------------------------------
+ * «Что заполнено сегодня» on the home screen
+ * ---------------------------------------------------------------- */
+
+export type OfflineTodayState = "done" | "queued" | "todo";
+
+const countsToday = (item: OfflineQueueItem) => item.status !== "rejected" && (item.target.kind !== "journal" || item.target.day === null);
+
+/** A sticker object today: filled (by the pack), waiting on this device, or not yet. */
+export function objectTodayMark(object: OfflinePackObject, queue: readonly OfflineQueueItem[]): { state: OfflineTodayState; summary: string | null } {
+  const queued = queue.some((item) => countsToday(item) && item.target.kind === object.kind && item.target.objectId === object.id);
+  if (queued) return { state: "queued", summary: null };
+  return object.today?.done ? { state: "done", summary: object.today.summary || null } : { state: "todo", summary: null };
+}
+
+export type OfflineJournalMark = {
+  state: OfflineTodayState;
+  /** Rows filled today out of the rows of the journal; `null` for journals without a fixed list of rows. */
+  rows: { done: number; total: number } | null;
+  /** Records made today (journals where every record is a new row, and per-employee journals). */
+  count: number;
+};
+
+export function journalTodayMark(journal: OfflinePackJournal, queue: readonly OfflineQueueItem[], todayKey: string): OfflineJournalMark {
+  const queuedToday = queue.filter((item) => countsToday(item) && item.target.kind === "journal" && item.target.code === journal.code);
+  const queuedRows = new Set(queuedToday.map((item) => (item.target.kind === "journal" ? `${item.target.documentId}|${item.target.rowKey}` : "")));
+  let total = 0;
+  let done = 0;
+  let count = 0;
+  let fixedRows = false;
+  for (const document of journal.documents) {
+    if (journal.append) {
+      count += document.todayCount;
+      continue;
+    }
+    const filled = new Set(Object.entries(document.history).filter(([, days]) => Boolean(days[todayKey])).map(([rowKey]) => rowKey));
+    for (const key of queuedRows) if (key.startsWith(`${document.id}|`)) filled.add(key.slice(document.id.length + 1));
+    if (document.perEmployee) {
+      count += filled.size;
+    } else {
+      fixedRows = true;
+      total += document.rows.length;
+      done += document.rows.filter((row) => filled.has(row.rowKey)).length;
+    }
+  }
+  if (journal.append) count += queuedToday.length;
+  const any = fixedRows ? done > 0 : count > 0;
+  const complete = fixedRows ? total > 0 && done >= total : count > 0;
+  return {
+    // A journal with rows is "done" only when every row is filled; partly filled stays "todo" with its counter.
+    state: queuedToday.length > 0 && any ? "queued" : complete ? "done" : "todo",
+    rows: fixedRows ? { done, total } : null,
+    count,
+  };
+}
+
+/** «Сегодня заполнено: N из M» — objects that can be filled offline plus journals. */
+export function offlineTodaySummary(pack: OfflinePack, queue: readonly OfflineQueueItem[]): { done: number; total: number } {
+  const objects = pack.objects.filter((object) => object.fill !== "unsupported");
+  const doneObjects = objects.filter((object) => objectTodayMark(object, queue).state !== "todo").length;
+  const doneJournals = pack.journals.filter((journal) => journalTodayMark(journal, queue, pack.todayKey).state !== "todo").length;
+  return { done: doneObjects + doneJournals, total: objects.length + pack.journals.length };
 }

@@ -1,0 +1,57 @@
+PASS  login
+PASS  AC1 offline screen HTML carries no personal data
+PASS  AC1/AC4 pack and offline screen are saved on the device — journals 11, objects 10
+PASS  AC15 pack holds a PIN verifier, not the PIN or the database hash — iterations 150000
+PASS  AC3 only the impersonal offline screen is cached, no cabinet pages — /mini-offline
+PASS  AC13 profile shows readiness — Готово к работе без связи Данные от 10.11, 10:15
+PASS  AC2 app start without network opens the offline screen — http://localhost:3000/mini-offline
+PASS  AC2 data stamp and lists are shown
+PASS  AC13 offline badge
+PASS  AC2 /mini/today without network → offline screen
+PASS  AC2 /mini without network → offline screen
+PASS  AC6 fridge QR without network opens this fridge — Холодильный шкаф Бар 1
+PASS  AC6/AC8 fridge reading is saved on the device — Сохранено на устройстве Холодильный шкаф Бар 1: +5 °C · Крылов Денис Сергеевич. Запись отправится сама, когда появится и
+PASS  AC15 employee with a PIN is asked for it
+PASS  AC15 wrong PIN is refused without network — Неверный ПИН. Осталось попыток: 4.
+PASS  AC15 right PIN opens the form
+PASS  AC6 out-of-norm reading asks what was done
+PASS  AC8 second reading saved
+PASS  AC6 unknown object is reported
+PASS  AC6 QR of another organization is refused
+PASS  AC6 journal QR opens that journal — Журнал бракеража готовой пищевой продукции
+PASS  AC7 finished-product brakerage saved without network
+PASS  AC7 required fields are enforced offline
+PASS  AC7 perishable brakerage saved without network
+PASS  AC17 past days are offered — 10 days
+PASS  AC7 hygiene saved without network
+PASS  AC17 unsent record of this device is shown in the form
+PASS  AC17 past-day record saved without network — 2026-11-08
+PASS  AC7 cleaning steps are shown
+PASS  AC7 general cleaning saved without network
+PASS  AC8 queue survives reopening the app — 7 records
+PASS  AC8 queue holds author, device account and device time, and no PIN
+PASS  test setup: one reading is dated yesterday 23:30 — 2026-11-09T20:30:00.000Z
+PASS  AC9 queue is delivered when the network is back
+PASS  AC9 repeated delivery is answered from the first one — status 200
+PASS  AC10 a record from the future is refused — status 422
+PASS  AC10 a record older than 31 days is refused — status 422
+PASS  AC12 offline headers without a signed-in device are refused — status 401
+PASS  AC16 a changed PIN keeps the record out of the journal — status 409
+PASS  AC17 pack history holds the saved past-day values — {"infection":false,"temperature":false,"respiratorySkin":true}
+PASS  AC17 saved past-day values are shown in the form
+PASS  merge setup: another device changed the row — status 200
+PASS  AC18 non-overlapping edits merge without a conflict — []
+PASS  AC18 two devices syncing the same row at the same instant both keep their edits — {"proc_disinfection":true,"proc_ventilation":false,"proc_wet_cleaning":true}
+PASS  AC18 merged row holds both edits — {"infection":true,"temperature":true,"respiratorySkin":false}
+PASS  merge setup: two devices wrote the row — 200 200
+PASS  AC18 a field changed differently on both sides is reported; the journal keeps its value — [{"key":"quantity","mine":"3","theirs":"2","label":"Количество"}]
+PASS  AC18 the non-conflicting field of the same record is still written — {"unit":"kg","quantity":"2","expiryDate":"2027-01-01","disinfectantName":"Хлорамин Б"}
+PASS  AC18 «Записать моё» writes the device value — {"unit":"kg","quantity":"3","expiryDate":"2027-01-01","disinfectantName":"Хлорамин Б"}
+PASS  AC3 the app is recognised by the cookie when the User-Agent suffix is missing
+PASS  AC3 inside the app the worker is registered and the marker cookie is set — workers 1, cookie true
+PASS  AC6 app cold start by a sticker link without network opens that object — Холодильный шкаф Бар 1
+PASS  AC6 a link from the system camera (appUrlOpen) opens the UV lamp form — УФ-лампа бактерицидная 1
+PASS  AC6 UV lamp: «Я включил / Я выключил»
+PASS  AC9 UV lamp switch-on made without network is delivered
+
+55 of 55 checks passed
