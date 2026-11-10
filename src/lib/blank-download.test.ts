@@ -17,6 +17,7 @@ import {
   blankRegisterHref,
   blankSignupPlace,
   blankTargetKey,
+  buildBlankDownloadAdminText,
   normalizeBlankCompany,
   normalizeBlankEmail,
   parseBlankTargetKey,
@@ -229,4 +230,38 @@ test("лимиты: 30 в час с адреса, 50 в сутки на почт
   const sent = Array.from({ length: 12 }, () => letters.consumeEmail("victim@example.com"));
   assert.deepEqual(sent.filter(Boolean).length, 10, "одиннадцатое и дальше письмо в сутки не уходит");
   assert.equal(letters.consumeEmail("another@example.com"), true);
+});
+
+test("уведомление в Telegram-бот при скачивании шаблона: журнал, формат, почта и организация", () => {
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  assert.equal(
+    buildBlankDownloadAdminText({
+      title: "Журнал учёта уборки",
+      format: "pdf",
+      email: "chef@example.com",
+      company: 'ООО <Ромашка & Ко>',
+      escape: esc,
+    }),
+    [
+      "📥 Скачивание шаблона журнала",
+      "Журнал: Журнал учёта уборки (PDF)",
+      "Почта: chef@example.com",
+      "Организация: ООО &lt;Ромашка &amp; Ко&gt;",
+    ].join("\n"),
+  );
+
+  assert.equal(
+    buildBlankDownloadAdminText({
+      title: "Гигиенический журнал (сотрудники)",
+      format: "docx",
+      email: "user@example.com",
+      company: null,
+      escape: esc,
+    }),
+    [
+      "📥 Скачивание шаблона журнала",
+      "Журнал: Гигиенический журнал (сотрудники) (Word)",
+      "Почта: user@example.com",
+    ].join("\n"),
+  );
 });

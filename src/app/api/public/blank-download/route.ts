@@ -7,6 +7,7 @@ import {
   blankConsentRows,
   blankPagePath,
   blankRegisterHref,
+  buildBlankDownloadAdminText,
   type BlankFormat,
   type BlankTarget,
 } from "@/lib/blank-download";
@@ -22,6 +23,8 @@ import { db } from "@/lib/db";
 import { sendBlankDownloadEmail } from "@/lib/email";
 import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { domainAcceptsMail } from "@/lib/mail-domain";
+import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { escapeTelegramHtml } from "@/lib/telegram";
 import { translatorFor } from "@/i18n/translator";
 import { loadMessages } from "@/i18n/messages";
 import { localizedHref } from "@/i18n/site-locale";
@@ -160,6 +163,24 @@ export async function POST(request: Request) {
   if (!emailed) console.warn("[blank-download] email skipped: daily letters limit", { consentId });
 
   after(async () => {
+    await notifyPlatformAdmin(
+      buildBlankDownloadAdminText({
+        title: info.title,
+        format,
+        email,
+        company,
+        escape: escapeTelegramHtml,
+      }),
+      {
+        kind: "blank_download",
+        dedupeKey: `blank_download:${consentId}`,
+        email: false,
+        audience: "sales",
+      },
+    ).catch((error) => {
+      console.error("[blank-download] admin telegram notify failed", error);
+    });
+
     if (!emailed) return;
     const files = [format, ...info.formats.filter((other) => other !== format)].map((fileFormat) => ({
       label: t("publicBlankDownload.email.fileLabel", { format: BLANK_FORMAT_LABEL[fileFormat] }),
