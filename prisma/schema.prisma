@@ -5724,10 +5724,49 @@ model CrmInteraction {
   authorName     String?
   occurredAt     DateTime
   createdAt      DateTime    @default(now())
+  /// Звонок из телефонии: запись и расшифровка.
+  call           CrmCallRecording?
 
   @@index([contactId, occurredAt])
   @@index([filteredReason, occurredAt])
   @@index([occurredAt])
+}
+
+/// Звонок из телефонии (Телфин) к записи ленты CRM: копия mp3 у нас и расшифровка.
+model CrmCallRecording {
+  id                 String         @id @default(cuid())
+  interactionId      String         @unique
+  interaction        CrmInteraction @relation(fields: [interactionId], references: [id], onDelete: Cascade)
+  provider           String         @default("telphin")
+  callUuid           String
+  /// Ключ записи у провайдера; null — звонок без записи.
+  recordUuid         String?        @unique
+  /// in | out
+  flow               String
+  /// Итог у провайдера: bridged | answered | not answered | busy …
+  result             String
+  clientNumber       String?
+  extension          String?
+  employeeName       String?
+  /// Длительность разговора, секунды.
+  durationSec        Int            @default(0)
+  /// Путь внутри каталога загрузок: crm-calls/2026/11/<recordUuid>.mp3
+  filePath           String?
+  fileSize           Int?
+  /// none (записи нет) | pending | ready | failed
+  audioStatus        String         @default("none")
+  audioAttempts      Int            @default(0)
+  transcript         String?
+  /// none | pending | done | failed | skipped
+  transcriptStatus   String         @default("none")
+  transcriptAttempts Int            @default(0)
+  lastError          String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([audioStatus])
+  @@index([transcriptStatus])
+  @@index([callUuid])
 }
 
 /// Почтовый ящик, который CRM читает по IMAP (рабочая почта, личная почта

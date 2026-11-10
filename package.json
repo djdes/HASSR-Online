@@ -95,6 +95,7 @@
     "remotion": "4.0.528",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "telegram": "2.26.22",
     "undici": "^8.1.0",
     "use-intl": "4.14.9",
     "vaul": "^1.1.2",

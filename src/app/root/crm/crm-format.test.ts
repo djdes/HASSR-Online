@@ -16,6 +16,7 @@ describe("CRM: подача на экране", () => {
   it("канал и тема без повтора", () => {
     assert.equal(itemHeadline("signup", "Регистрация"), "Регистрация");
     assert.equal(itemHeadline("blank", "Скачал(а) шаблон журнала"), "Скачал(а) шаблон журнала");
+    assert.equal(itemHeadline("call", "Исходящий звонок"), "Исходящий звонок");
     assert.equal(itemHeadline("demo", "Показ WeSetup за 15 минут"), "Показ WeSetup за 15 минут");
     assert.equal(itemHeadline("invoice", "Счёт по ИНН № 42"), "Счёт по ИНН № 42");
     assert.equal(itemHeadline("feedback", "Вопрос в поддержку"), "Обращение с сайта · Вопрос в поддержку");

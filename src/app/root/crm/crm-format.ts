@@ -63,7 +63,8 @@ export function itemHeadline(channel: string, subject: string | null | undefined
   const topic = subject?.trim();
   if (!topic) return label;
   const word = (value: string) => value.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, " ").trim().split(" ")[0] ?? "";
-  return word(topic) === word(label) ? topic : `${label} · ${topic}`;
+  // «Звонок · Исходящий звонок» — тоже повтор: тема уже называет канал.
+  return word(topic) === word(label) || topic.toLowerCase().includes(label.toLowerCase()) ? topic : `${label} · ${topic}`;
 }
 
 export function displayName(contact: { name: string | null; company: string | null; email: string | null; phone: string | null }): string {
