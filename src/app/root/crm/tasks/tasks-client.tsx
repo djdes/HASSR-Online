@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ListPlus, Loader2, ShieldCheck, ShieldX, X } from "lucide-react";
+import { Check, ListPlus, ShieldCheck, ShieldX, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import type { LifecycleSettings } from "@/lib/lifecycle/plan";
+import { TASK_OUTCOME_KEYS, TASK_OUTCOMES, outcomeNeedsFollowUp, outcomeSuggestsFollowUp, type TaskOutcome } from "@/lib/lifecycle/task-outcomes";
+import { cn } from "@/lib/utils";
 import { INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, TEXTAREA } from "../crm-ui";
 
 type Person = { id: string; name: string };
@@ -14,10 +15,10 @@ type TaskView = { id: string; kind: string; status: string; discountPercent: num
 type Action = "done" | "cancel" | "approve" | "reject";
 
 const ACTION_COPY: Record<Action, { title: string; description: string; confirm: string; placeholder: string; variant: "default" | "danger" | "info" }> = {
-  done: { title: "Задача выполнена", description: "Напишите итог — он останется в истории клиента.", confirm: "Отметить выполненной", placeholder: "Договорились оплатить до пятницы…", variant: "default" },
+  done: { title: "Чем закончилось?", description: "Итог останется в истории клиента и передвинет сделку в воронке.", confirm: "Закрыть задачу", placeholder: "Директор согласует в пятницу…", variant: "default" },
   cancel: { title: "Отменить задачу", description: "Задача уйдёт в закрытые. Напишите, почему — например, клиент уже ответил в чате.", confirm: "Отменить задачу", placeholder: "Клиент оплатил картой…", variant: "danger" },
-  approve: { title: "Согласовать скидку", description: "Менеджеру сразу придёт задача позвонить клиенту со скидкой из решения.", confirm: "Согласовать", placeholder: "Комментарий для менеджера (необязательно)", variant: "info" },
-  reject: { title: "Отказать в скидке", description: "Менеджер позвонит с обычной скидкой. Напишите почему — он передаст клиенту.", confirm: "Отказать", placeholder: "Клиент на 120 человек — достаточно 15 %", variant: "danger" },
+  approve: { title: "Согласовать скидку", description: "Менеджеру сразу придёт задача со скидкой из решения. Согласовать можно не больше запрошенного и в пределах вашего лимита.", confirm: "Согласовать", placeholder: "Комментарий для менеджера (необязательно)", variant: "info" },
+  reject: { title: "Отказать в скидке", description: "Менеджер предложит обычные условия. Напишите почему — он передаст клиенту.", confirm: "Отказать", placeholder: "Клиент на 120 человек — достаточно 15 %", variant: "danger" },
 };
 
 async function send(url: string, method: string, body: unknown): Promise<boolean> {
@@ -30,13 +31,29 @@ async function send(url: string, method: string, body: unknown): Promise<boolean
   return true;
 }
 
-/** Кнопки задачи: выполнено / отменить, у согласования — согласовать / отказать. */
+/** «2026-11-11» и «11:00» — следующий рабочий день по Москве (для подсказки следующего шага). */
+function nextWorkdayMsk(): { date: string; time: string } {
+  const now = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  while (day.getUTCDay() === 0 || day.getUTCDay() === 6) day.setUTCDate(day.getUTCDate() + 1);
+  return { date: day.toISOString().slice(0, 10), time: "11:00" };
+}
+
+/** Кнопки задачи: закрыть с итогом / отменить, у согласования — согласовать / отказать. */
 export function TaskActions({ task }: { task: TaskView }) {
   const router = useRouter();
   const [action, setAction] = useState<Action | null>(null);
   const [result, setResult] = useState("");
   const [percent, setPercent] = useState(String(task.discountPercent ?? 0));
+  const [outcome, setOutcome] = useState<TaskOutcome | null>(null);
+  const [next, setNext] = useState<{ on: boolean; date: string; time: string }>({ on: false, date: "", time: "11:00" });
   const approval = task.kind === "approve_discount" && task.approvalPending;
+
+  function pick(value: TaskOutcome) {
+    setOutcome(value);
+    if (outcomeSuggestsFollowUp(value) && !next.on) setNext({ on: true, ...nextWorkdayMsk() });
+    if (value === "declined" || value === "reached") setNext((current) => ({ ...current, on: value === "reached" ? current.on : false }));
+  }
 
   async function confirm() {
     if (!action) return;
@@ -44,24 +61,39 @@ export function TaskActions({ task }: { task: TaskView }) {
       action,
       result: result.trim() || null,
       percent: action === "approve" ? Math.round(Number(percent) || 0) : null,
+      outcome: action === "done" ? outcome : null,
+      nextDueAt: action === "done" && next.on && next.date ? `${next.date}T${next.time || "11:00"}:00+03:00` : null,
     });
     if (!ok) return;
-    toast.success(action === "approve" ? "Скидка согласована — менеджеру ушла задача" : action === "reject" ? "Отказ записан — менеджер позвонит с обычной скидкой" : action === "done" ? "Задача выполнена" : "Задача отменена");
+    toast.success(
+      action === "approve"
+        ? "Скидка согласована — менеджеру ушла задача"
+        : action === "reject"
+          ? "Отказ записан — менеджер предложит обычные условия"
+          : action === "done"
+            ? next.on
+              ? "Задача закрыта, следующий шаг — в задачах"
+              : "Задача закрыта"
+            : "Задача отменена",
+    );
     setAction(null);
     setResult("");
+    setOutcome(null);
+    setNext({ on: false, date: "", time: "11:00" });
     router.refresh();
   }
 
   const copy = action ? ACTION_COPY[action] : null;
+  const needsDate = action === "done" && outcome !== null && outcomeNeedsFollowUp(outcome) && !(next.on && next.date);
   return (
-    <div className="flex shrink-0 flex-wrap gap-2">
+    <>
       {approval ? (
         <>
-          <button type="button" onClick={() => setAction("approve")} className={PRIMARY_BUTTON} data-crm-task-approve>
+          <button type="button" onClick={() => setAction("approve")} className={cn(PRIMARY_BUTTON, "h-9 px-3 text-[13px]")} data-crm-task-approve>
             <ShieldCheck className="size-4" />
             Согласовать
           </button>
-          <button type="button" onClick={() => setAction("reject")} className={SECONDARY_BUTTON}>
+          <button type="button" onClick={() => setAction("reject")} className={cn(SECONDARY_BUTTON, "h-9 px-3 text-[13px]")}>
             <ShieldX className="size-4" />
             Отказать
           </button>
@@ -69,14 +101,13 @@ export function TaskActions({ task }: { task: TaskView }) {
       ) : (
         <>
           {task.status === "open" ? (
-            <button type="button" onClick={() => setAction("done")} className={PRIMARY_BUTTON} data-crm-task-done>
+            <button type="button" onClick={() => setAction("done")} className={cn(PRIMARY_BUTTON, "h-9 px-3 text-[13px]")} data-crm-task-done>
               <Check className="size-4" />
-              Выполнено
+              Итог
             </button>
           ) : null}
-          <button type="button" onClick={() => setAction("cancel")} className={SECONDARY_BUTTON}>
+          <button type="button" onClick={() => setAction("cancel")} className={cn(SECONDARY_BUTTON, "h-9 px-3 text-[13px]")} aria-label="Отменить задачу" title="Отменить задачу">
             <X className="size-4" />
-            Отменить
           </button>
         </>
       )}
@@ -90,8 +121,29 @@ export function TaskActions({ task }: { task: TaskView }) {
           confirmLabel={copy.confirm}
           cancelLabel="Назад"
           variant={copy.variant}
+          confirmDisabled={(action === "done" && !outcome && !result.trim()) || needsDate}
         >
           <div className="space-y-3">
+            {action === "done" ? (
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Итог" data-crm-task-outcomes>
+                {TASK_OUTCOME_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={outcome === key}
+                    onClick={() => pick(key)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-[13px] transition-colors",
+                      outcome === key ? "border-[#5566f6] bg-[#eef1ff] font-medium text-[#3848c7]" : "border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#5566f6]/40",
+                    )}
+                    data-crm-outcome={key}
+                  >
+                    {TASK_OUTCOMES[key]}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {action === "approve" ? (
               <label className="block text-[13px] text-[#3c4053]">
                 Скидка, %
@@ -99,13 +151,34 @@ export function TaskActions({ task }: { task: TaskView }) {
               </label>
             ) : null}
             <label className="block text-[13px] text-[#3c4053]">
-              {action === "done" ? "Итог" : "Комментарий"}
-              <textarea value={result} onChange={(event) => setResult(event.target.value)} className={`${TEXTAREA} mt-1`} placeholder={copy.placeholder} name="result" />
+              {action === "done" ? (outcome === "declined" ? "Причина отказа" : "Комментарий") : "Комментарий"}
+              <textarea value={result} onChange={(event) => setResult(event.target.value)} className={`${TEXTAREA} mt-1 min-h-[80px]`} placeholder={copy.placeholder} name="result" />
             </label>
+            {action === "done" && outcome !== "declined" ? (
+              <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3">
+                <label className="flex items-center gap-2 text-[13.5px] text-[#0b1024]">
+                  <input
+                    type="checkbox"
+                    checked={next.on}
+                    onChange={(event) => setNext(event.target.checked ? { on: true, ...(next.date ? { date: next.date, time: next.time } : nextWorkdayMsk()) } : { ...next, on: false })}
+                    className="size-4 accent-[#5566f6]"
+                    data-crm-next-step
+                  />
+                  Следующий шаг — задача «Перезвонить»
+                </label>
+                {next.on ? (
+                  <div className="mt-2 grid grid-cols-[1fr_104px] gap-2">
+                    <input type="date" value={next.date} onChange={(event) => setNext({ ...next, date: event.target.value })} className={INPUT} name="nextDate" aria-label="Дата" />
+                    <input type="time" value={next.time} onChange={(event) => setNext({ ...next, time: event.target.value })} className={INPUT} name="nextTime" aria-label="Время" />
+                  </div>
+                ) : null}
+                {needsDate ? <p className="mt-2 text-[12.5px] text-[#a13a32]">Когда перезвонить? Укажите дату.</p> : null}
+              </div>
+            ) : null}
           </div>
         </ConfirmDialog>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -181,98 +254,5 @@ export function NewTaskButton({ people, me, tomorrow }: { people: Person[]; me: 
         </div>
       </ConfirmDialog>
     </>
-  );
-}
-
-/** Настройки сценария: кому задачи, кто согласует, пороги и скидки. */
-export function LifecycleSettingsForm({ settings, people }: { settings: LifecycleSettings; people: Person[] }) {
-  const router = useRouter();
-  const [form, setForm] = useState(settings);
-  const [busy, setBusy] = useState(false);
-  const num = (key: "approvalSeats" | "trialFirstWorkdays" | "trialSecondWorkdays" | "invoiceAheadWorkdays" | "activeMinUsers") => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((current) => ({ ...current, [key]: Number(event.target.value.replace(/\D/g, "")) || 0 }));
-  const band = (index: number, key: "minSeats" | "percent") => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((current) => ({ ...current, discounts: current.discounts.map((item, i) => (i === index ? { ...item, [key]: Number(event.target.value.replace(/\D/g, "")) || 0 } : item)) }));
-
-  async function save() {
-    setBusy(true);
-    const ok = await send("/api/root/crm/tasks/settings", "PUT", form);
-    setBusy(false);
-    if (!ok) return;
-    toast.success("Настройки сохранены — применятся завтра утром");
-    router.refresh();
-  }
-
-  const field = "block text-[13px] text-[#3c4053]";
-  return (
-    <div className="mt-5 space-y-5">
-      <label className="flex items-center gap-3 text-[14px] text-[#0b1024]">
-        <input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} className="size-4 accent-[#5566f6]" />
-        Сценарий включён: письма со счётом и задачи ставятся сами
-      </label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className={field}>
-          Кому задачи по умолчанию
-          <select value={form.assigneeId ?? ""} onChange={(event) => setForm({ ...form, assigneeId: event.target.value || null })} className={`${INPUT} mt-1`}>
-            <option value="">РОП (общая очередь)</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={field}>
-          Кто согласует особую скидку
-          <select value={form.approverId ?? ""} onChange={(event) => setForm({ ...form, approverId: event.target.value || null })} className={`${INPUT} mt-1`}>
-            <option value="">РОП, без него — владелец платформы</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <label className={field}>
-          Первое письмо, раб. дней
-          <input value={form.trialFirstWorkdays} onChange={num("trialFirstWorkdays")} className={`${INPUT} mt-1`} inputMode="numeric" />
-        </label>
-        <label className={field}>
-          Второе письмо, раб. дней
-          <input value={form.trialSecondWorkdays} onChange={num("trialSecondWorkdays")} className={`${INPUT} mt-1`} inputMode="numeric" />
-        </label>
-        <label className={field}>
-          Счёт на продление, раб. дней
-          <input value={form.invoiceAheadWorkdays} onChange={num("invoiceAheadWorkdays")} className={`${INPUT} mt-1`} inputMode="numeric" />
-        </label>
-        <label className={field}>
-          Согласование от, сотрудников
-          <input value={form.approvalSeats} onChange={num("approvalSeats")} className={`${INPUT} mt-1`} inputMode="numeric" />
-        </label>
-        <label className={field}>
-          «Живой» аккаунт от, сотрудников
-          <input value={form.activeMinUsers} onChange={num("activeMinUsers")} className={`${INPUT} mt-1`} inputMode="numeric" />
-        </label>
-      </div>
-      <div>
-        <div className="text-[13px] text-[#3c4053]">Скидка в КП по числу сотрудников</div>
-        <div className="mt-2 flex flex-wrap gap-3">
-          {form.discounts.map((item, index) => (
-            <div key={index} className="flex items-center gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3 py-2 text-[13px] text-[#3c4053]">
-              от
-              <input value={item.minSeats} onChange={band(index, "minSeats")} className={`${INPUT} h-9 w-20`} inputMode="numeric" aria-label="Сотрудников от" />
-              чел. —
-              <input value={item.percent} onChange={band(index, "percent")} className={`${INPUT} h-9 w-16`} inputMode="numeric" aria-label="Скидка, %" />%
-            </div>
-          ))}
-        </div>
-      </div>
-      <button type="button" onClick={save} disabled={busy} className={PRIMARY_BUTTON} data-crm-lifecycle-save>
-        {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-        Сохранить настройки
-      </button>
-    </div>
   );
 }

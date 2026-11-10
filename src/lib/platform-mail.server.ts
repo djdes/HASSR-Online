@@ -221,7 +221,7 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
   }
   const replyTo = row?.replyTo || row?.fromEmail || user?.contactEmail || user?.email || null;
   const results = await Promise.all(
-    recipients.map((to) => sendRawEmail(to, message.subject, message.html, { replyTo, attachments: message.attachments })),
+    recipients.map((to) => sendRawEmail(to, message.subject, message.html, { replyTo, attachments: message.attachments, text: message.text })),
   );
   if (results.some((sent) => !sent)) return { ok: false, error: "Письмо не ушло через общую почту — попробуйте ещё раз" };
   return { ok: true, via: "system", from: "noreply@wesetup.ru", fallbackReason };

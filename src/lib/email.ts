@@ -89,6 +89,8 @@ type EmailTransport = {
     attachments?: EmailAttachment[];
     /** Куда уйдёт ответ получателя (например, рекомендующему коллеге). */
     replyTo?: string;
+    /** Простой текст рядом с HTML (почтовые клиенты без HTML, антиспам). */
+    text?: string;
   }): Promise<void>;
 };
 
@@ -107,12 +109,13 @@ function getTransport(): EmailTransport {
   const smtp = createSmtpTransport();
   cachedTransport = {
     name: "smtp",
-    async deliver({ to, subject, html, attachments, replyTo }) {
+    async deliver({ to, subject, html, attachments, replyTo, text }) {
       await smtp.sendMail({
         from: FROM,
         to,
         subject,
         html,
+        ...(text ? { text } : {}),
         ...(replyTo ? { replyTo } : {}),
         ...(attachments && attachments.length > 0 ? { attachments } : {}),
       });
@@ -261,7 +264,7 @@ export async function sendRawEmail(
   to: string,
   subject: string,
   html: string,
-  options?: { replyTo?: string | null; attachments?: EmailAttachment[] }
+  options?: { replyTo?: string | null; attachments?: EmailAttachment[]; text?: string | null }
 ): Promise<boolean> {
   return sendEmail(to, subject, html, options?.attachments, options);
 }
@@ -298,9 +301,10 @@ async function sendEmail(
   subject: string,
   html: string,
   attachments?: EmailAttachment[],
-  options?: { replyTo?: string | null }
+  options?: { replyTo?: string | null; text?: string | null }
 ): Promise<boolean> {
   const replyTo = options?.replyTo?.trim() || undefined;
+  const text = options?.text?.trim() || undefined;
   if (!isSmtpConfigured()) {
     const stripped = html
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
@@ -316,7 +320,7 @@ async function sendEmail(
     return false;
   }
   try {
-    await getTransport().deliver({ to, subject, html, attachments, replyTo });
+    await getTransport().deliver({ to, subject, html, attachments, replyTo, text });
     return true;
   } catch (error) {
     console.error("Email send error:", error);
