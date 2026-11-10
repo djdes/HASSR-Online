@@ -2824,7 +2824,8 @@ export type MessageContract = {
         "addHint": "Откроется мастер: название и адрес, помещения, оборудование",
         "open": "Открыть точку",
         "captionOffice": "Организация",
-        "organization": "Вся организация"
+        "organization": "Вся организация",
+        "companySection": "Раздел общий для всей компании — в шапке выбрано: {name}"
       },
       "sidebarAria": "Разделы кабинета",
       "tabsAria": "Подразделы",

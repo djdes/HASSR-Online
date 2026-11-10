@@ -2823,7 +2823,8 @@
         "addHint": "Opens the wizard: name and address, rooms, equipment",
         "open": "Open outlet",
         "captionOffice": "Company",
-        "organization": "Whole company"
+        "organization": "Whole company",
+        "companySection": "This section covers the whole company — now showing: {name}"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",

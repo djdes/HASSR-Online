@@ -1,0 +1,121 @@
+[
+ {
+  "label": "1. после входа: главная",
+  "path": "/home",
+  "header": {
+   "kind": "switch",
+   "caption": "Организация",
+   "title": "Офис"
+  },
+  "toasts": [],
+  "unavailable": 0
+ },
+ {
+  "label": "2. на главной выбрали «Школа №8»",
+  "path": "/settings/buildings/cmwb65yzx0001b17dqvwm1f1h",
+  "header": {
+   "kind": "switch",
+   "caption": "Точка",
+   "title": "Школа №8"
+  },
+  "toasts": [
+   "Точка: Школа №8"
+  ],
+  "unavailable": 0
+ },
+ {
+  "label": "3. снова главная (нейтральна)",
+  "path": "/home",
+  "header": {
+   "kind": "switch",
+   "caption": "Точка",
+   "title": "Школа №8"
+  },
+  "toasts": [],
+  "unavailable": 0
+ },
+ {
+  "label": "4. меню «Подписки» при выбранной точке",
+  "path": "/settings/subscription",
+  "header": {
+   "kind": "switch",
+   "caption": "Организация",
+   "title": "Офис"
+  },
+  "toasts": [
+   "Раздел общий для всей компании — в шапке выбрано: Офис"
+  ],
+  "unavailable": 0
+ },
+ {
+  "label": "5. на «Сегодня» выбрали «Лицей №2» — остаёмся",
+  "path": "/dashboard",
+  "header": {
+   "kind": "switch",
+   "caption": "Точка",
+   "title": "Лицей №2"
+  },
+  "toasts": [
+   "Точка: Лицей №2"
+  ],
+  "unavailable": 0
+ },
+ {
+  "label": "6. «Все журналы» по прямой ссылке при точке",
+  "path": "/journals",
+  "header": {
+   "kind": "switch",
+   "caption": "Организация",
+   "title": "Офис"
+  },
+  "toasts": [],
+  "unavailable": 0
+ },
+ {
+  "label": "7. из списка открыли вторую точку",
+  "path": "/settings/buildings/cmwb65z000002b17dvsh32gr1",
+  "header": {
+   "kind": "switch",
+   "caption": "Точка",
+   "title": "Детский сад №68"
+  },
+  "toasts": [
+   "Точка: Детский сад №68"
+  ],
+  "unavailable": 0
+ },
+ {
+  "label": "8. на странице точки выбрали другую точку",
+  "path": "/settings/buildings/cmwb65yzx0001b17dqvwm1f1h",
+  "header": {
+   "kind": "switch",
+   "caption": "Точка",
+   "title": "Школа №8"
+  },
+  "toasts": [
+   "Точка: Школа №8"
+  ],
+  "unavailable": 0
+ },
+ {
+  "label": "9. на странице точки выбрали «Офис»",
+  "path": "/settings/buildings",
+  "header": {
+   "kind": "switch",
+   "caption": "Организация",
+   "title": "Офис"
+  },
+  "toasts": [
+   "Точка: Офис"
+  ],
+  "unavailable": 0
+ },
+ {
+  "label": "10. вкладка с фильтром по точкам",
+  "path": "/settings/users",
+  "header": null,
+  "toasts": [],
+  "unavailable": 0
+ }
+]
+phone home {"kind":"switch","caption":"Организация","title":"Офис"} scrollX 0

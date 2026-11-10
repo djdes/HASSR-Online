@@ -27,7 +27,9 @@ const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:rin
  * Центр шапки — текущая торговая точка (эскиз руководителя: слева логотип и
  * название компании, в центре «наименование торговой точки / текущего
  * объекта»). Над названием тихая подпись «Точка», чтобы было видно, где
- * компания, а где точка. Что показать, решает `resolveHeaderPoint`:
+ * компания, а где точка. Переключатель виден на всех страницах, в разделах
+ * всей компании он стоит на офисе (`point-section-sync.ts`, 2026-11-10).
+ * Что показать, решает `resolveHeaderPoint`:
  *   • точек две и больше и журналы по точкам — переключатель в одно касание;
  *   • одна точка — её название (совпадает с компанией — адрес);
  *   • точек несколько, журналы общие — «Точки · Все: N», без переключения;
@@ -48,10 +50,10 @@ export function CurrentPointSwitcher({
   const t = useTranslations("navigation.shell.point");
   const narrow = useIsNarrowViewport();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const { switchTo, busyId } = useSwitchBuilding();
-  // Главная, реквизиты, мастер-кабинет, офис, подписки, оформление и список
-  // всех точек — про всю компанию: выбор точки там ничего не меняет.
-  const hidden = headerPointHidden(usePathname());
+  const { switchTo, busyId } = useSwitchBuilding({ canManagePoints: Boolean(manageHref) });
+  // Переключатель на виду везде, кроме вкладок со своим фильтром по точкам;
+  // подписи без переключения в разделах всей компании не показываем.
+  const hidden = headerPointHidden(usePathname(), point.kind);
 
   const titleOf = (option: HeaderPointOption) => {
     const title = option.title;
@@ -145,7 +147,7 @@ export function CurrentPointSwitcher({
               if ((event.target as HTMLElement).closest("button,a")) setSheetOpen(false);
             }}
           >
-            <LocationSwitcherList buildings={listBuildings} activeBuildingId={active.id} />
+            <LocationSwitcherList buildings={listBuildings} activeBuildingId={active.id} canManagePoints={Boolean(manageHref)} />
             {manageHref ? (
               <Link
                 href={manageHref}

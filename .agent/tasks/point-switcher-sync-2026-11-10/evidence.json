@@ -1,0 +1,13 @@
+{
+  "task": "point-switcher-sync-2026-11-10",
+  "branch": "claude/affectionate-newton-7hw7ae",
+  "checkedAt": "2026-11-10",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/header-point.ts", "src/lib/header-point.test.ts", "raw/browser-scenarios.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/components/layout/point-section-sync.tsx", "raw/browser-scenarios.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/point-section-sync.ts", "raw/browser-scenarios.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["src/components/layout/location-switcher.tsx", "raw/browser-scenarios.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/point-section-sync.test.ts"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt", "raw/eslint.txt"] }
+  }
+}
