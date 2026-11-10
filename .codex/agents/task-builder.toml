@@ -21,7 +21,7 @@ In BUILD mode:
 - Read .agent/tasks/<TASK_ID>/spec.md and repo guidance files if present.
 - Implement against the frozen spec.
 - Make the smallest safe change set.
-- Run focused checks as needed.
+- Run focused checks as needed (`npm run typecheck` and `npm run test:changed` / `npm run test:gate`, which runs targeted reverse-import tests in seconds; never run the 15-minute `npm test` / `npm run test:gate:full` unless core files or >25 code files changed).
 - Keep unrelated files untouched.
 - Do not write verdict.json or problems.md.
 - Do not claim final PASS.

@@ -38,3 +38,9 @@ cp .env.shared .env && npm install && npx prisma generate && npx prisma db push 
 Commit only the files you changed (`git add <specific files>`), with a Russian commit message.
 Deployment runs from GitHub Actions on every push to `master` (`.github/workflows/deploy.yml`); see AGENTS.md -> Deployment.
 Production gets only code from `origin/master`. Never deploy a branch, a tag, an old run (Re-run) or a local or uncommitted tree; see AGENTS.md -> "Production deploy rules".
+
+## Testing & Fast Gate (Mandatory for all agents)
+- Before pushing or merging to `master`, run `npm run typecheck` and `npm run test:changed` (or `npm run test:gate` / `npm run verify`).
+- `npm run test:changed` (`scripts/test-changed.mjs`) runs ONLY changed tests, co-located tests (including `.server.ts`/`.client.tsx` siblings), and 1-hop reverse-import tests in **5–15 seconds**.
+- Do NOT run full `npm test` or `npm run test:gate:full` (904+ files, ~15 min) for small fixes or normal tasks. `test-changed.mjs` automatically escalates to the full suite when core files (`package-lock.json`, `prisma/schema.prisma`, `src/lib/db.ts`, `src/lib/auth*`, `tsconfig*.json`) or `> 25` code files are modified (or when `[full-tests]` is in the commit message).
+- In GitHub Actions (`.github/workflows/deploy.yml`), `deploy` starts right after `upload` without waiting for `gate`, and `gate` uses `test-changed.mjs --ci-plan` so normal pushes run targeted tests inside the `Type-check` job and skip the 4 full test shards.

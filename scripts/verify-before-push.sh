@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
-# Проверка перед push — ровно то, что делает CI, и в том же порядке.
-#
-# Появился после деплоя, который упал на Type-check: локально я смотрел
-# вывод через `head`, и ошибки из src/ не попали в первые строки — в
-# master уехал код, который не собирается. Здесь вывод не обрезается, а
-# ошибки из сгенерированных типов `.next` отфильтрованы: в CI этой папки
-# нет, и её ошибки — шум, из-за которого настоящие теряются.
+# Быстрая проверка перед push: инкрементальный typecheck + таргетированные тесты
+# по графу импортов (scripts/test-changed.mjs, с авто-эскалацией до полного
+# набора при изменении ядра или >25 файлов).
+# Для принудительного полного прогона всех 904 файлов: VERIFY_FULL=1 npm run verify
 set -uo pipefail
 
 fail=0
 
 echo "=== Type-check ==="
-tsc_out="$(npx tsc --noEmit --skipLibCheck 2>&1 || true)"
+tsc_out="$(npm run typecheck 2>&1 || true)"
 src_errors="$(printf '%s\n' "$tsc_out" | grep -E '^src/.*error TS' || true)"
 if [ -n "$src_errors" ]; then
   printf '%s\n' "$src_errors"
@@ -22,11 +19,11 @@ else
 fi
 
 echo
-echo "=== Tests ==="
-if npm run test:gate 2>&1 | tail -3; then
-  :
+echo "=== Tests (targeted gate) ==="
+if [ "${VERIFY_FULL:-0}" = "1" ]; then
+  TEST_FULL=1 bash scripts/test-with-baseline.sh || fail=1
 else
-  fail=1
+  node scripts/test-changed.mjs || fail=1
 fi
 
 echo

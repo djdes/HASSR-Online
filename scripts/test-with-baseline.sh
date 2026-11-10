@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# Runs npm run test:ci и сравнивает с baseline в tests/.legacy-failures.txt.
-# Exit 0 if:
-#   - 0 fails (победа), или
-#   - все fails именно те что в baseline (никаких новых)
-# Exit 1 if появился НОВЫЙ fail (регрессия).
+# Runs unit tests and compares failures against the baseline in tests/.legacy-failures.txt.
 #
-# Используется в pre-commit + CI.
+# By default (when TEST_FULL!=1 and TEST_SHARD is not set), delegates to
+# `node scripts/test-changed.mjs` so local `npm run test:gate` runs ONLY the
+# tests affected by changed files (seconds instead of 15 minutes), while
+# automatically escalating to TEST_FULL=1 if core files or >25 files changed.
+#
+# To force the full 904-file test suite:
+#   TEST_FULL=1 npm run test:gate   (or `npm run test:gate:full`)
 
 set -uo pipefail
+
+if [ "${TEST_FULL:-0}" != "1" ] && [ -z "${TEST_SHARD:-}" ]; then
+  exec node scripts/test-changed.mjs "$@"
+fi
 
 BASELINE="tests/.legacy-failures.txt"
 
@@ -29,8 +35,6 @@ else
 fi
 
 # Извлекаем список fail'ов (имена после "not ok N - ")
-ACTUAL_FAILS=$(echo "$OUTPUT" | grep -E '^# Subtest:' -A 0 || true)
-# Альтернативно из TAP: not ok строки
 ACTUAL_FAILS=$(echo "$OUTPUT" | grep -E '^not ok' | sed -E 's/^not ok [0-9]+ - //' | sort -u)
 PASS_COUNT=$(echo "$OUTPUT" | grep -E '^# pass ' | tail -1 | awk '{print $3}')
 FAIL_COUNT=$(echo "$OUTPUT" | grep -E '^# fail ' | tail -1 | awk '{print $3}')
@@ -51,7 +55,6 @@ fi
 
 # Считаем сколько fail'ов есть в baseline
 EXPECTED_LINES=$(grep -v '^#' "$BASELINE" 2>/dev/null | grep -v '^$' || true)
-EXPECTED_COUNT=$(echo "$EXPECTED_LINES" | grep -c . || echo 0)
 
 # Какие из ACTUAL_FAILS НЕТ в baseline (= новые регрессии)?
 NEW_FAILS=$(comm -23 <(echo "$ACTUAL_FAILS") <(echo "$EXPECTED_LINES" | sort -u) || true)
