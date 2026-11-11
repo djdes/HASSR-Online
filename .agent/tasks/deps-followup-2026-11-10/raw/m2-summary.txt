@@ -1,0 +1,19 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=6098, fail=0
+eslint: errors 41 warnings 220 (эталон master: errors 41 warnings 220)
+build+start: started after 2s, build dsj1fqjGpIWmiUMZ9rDEW, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+
+Step A (Dependabot #204, #205) — packages removed instead of upgraded:
+- @anthropic-ai/sdk ^0.78.0: not imported anywhere (src, scripts, prisma, dispatcher); the site never calls a
+  model directly (AI dispatcher queue, docs/ai-dispatcher.md); .agent/tasks/photo-recognize-2026-09 already
+  marked it "unused, remove in a separate dependency change". Removes json-schema-to-ts and ts-algebra too.
+- @types/bcryptjs ^2.4.6: bcryptjs 3.0.3 ships its own types (umd/index.d.ts); @types/bcryptjs 3.0.0 (the
+  Dependabot target) is a deprecated stub. typecheck passes on the package's own types.
+Lock: exactly 4 entries removed. Checks on master 77e4e2e8 (with #199) + this change: npm ci, typecheck,
+i18n:check, full suite 6098/0, eslint 41/220 = master, build (8 GB heap), smoke = master, no JS errors.
