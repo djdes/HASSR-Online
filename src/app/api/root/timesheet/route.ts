@@ -3,7 +3,15 @@ import { z } from "zod";
 
 import { requireRoot } from "@/lib/auth-helpers";
 import { isMonthKey } from "@/lib/staff-timesheet";
-import { TimesheetError, addTimesheetPayment, deleteTimesheetPayment, setPersonRate, setTimesheetCell } from "@/lib/staff-timesheet.server";
+import {
+  TimesheetError,
+  addTimesheetPayment,
+  addTimesheetTransfer,
+  deleteTimesheetPayment,
+  fillTimesheetWeekdays,
+  setPersonRate,
+  setTimesheetCell,
+} from "@/lib/staff-timesheet.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,9 +31,23 @@ const schema = z.discriminatedUnion("action", [
     note: z.string().max(300).nullish(),
   }),
   z.object({ action: z.literal("unpay"), paymentId: z.string().min(1) }),
+  z.object({
+    action: z.literal("transfer"),
+    personId: z.string().min(1),
+    amountRub: z.number().int().positive().max(10_000_000),
+    paidAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    note: z.string().max(300).nullish(),
+  }),
+  z.object({
+    action: z.literal("fill"),
+    personId: z.string().min(1),
+    month,
+    hours: z.number().min(0.25).max(24).multipleOf(0.25),
+    lastDay: z.number().int().min(1).max(31),
+  }),
 ]);
 
-/** POST /api/root/timesheet — табель: ячейка, ставка, отметка выплаты, удаление выплаты (только владелец платформы). */
+/** POST /api/root/timesheet — табель: ячейка, ставка, выплата, перевод на общий долг, «заполнить будни», удаление выплаты (только владелец платформы). */
 export async function POST(request: Request) {
   const session = await requireRoot();
   const parsed = schema.safeParse(await request.json().catch(() => null));
@@ -50,6 +72,21 @@ export async function POST(request: Request) {
       });
     }
     if (body.action === "unpay") await deleteTimesheetPayment(body.paymentId);
+    if (body.action === "transfer") {
+      const parts = await addTimesheetTransfer({
+        personId: body.personId,
+        amountRub: body.amountRub,
+        paidAt: new Date(`${body.paidAt}T12:00:00+03:00`),
+        date: body.paidAt,
+        note: body.note ?? null,
+        createdById: session.user.id,
+      });
+      return NextResponse.json({ ok: true, parts });
+    }
+    if (body.action === "fill") {
+      const values = await fillTimesheetWeekdays({ personId: body.personId, month: body.month, hours: body.hours, lastDay: body.lastDay });
+      return NextResponse.json({ ok: true, values });
+    }
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof TimesheetError) return NextResponse.json({ error: error.message }, { status: error.status });
