@@ -18,7 +18,7 @@ import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 // Дерево меню (владелец, 2026-11-11: «меню как в документации, чуть
 // крупнее»): строки без плашек, уровни — отступом слева, тусклая маленькая
-// стрелка раскрытия справа. На первых двух уровнях — тонкая серая иконка.
+// стрелка раскрытия справа. У каждого пункта — тонкая серая иконка.
 // Выбран только лист — мягкая заливка бренда.
 const TREE_ROW =
   "relative flex min-h-11 items-center justify-between gap-2 rounded-[10px] py-2 pr-3 text-[16px] leading-snug transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
@@ -27,10 +27,11 @@ const TREE_IDLE = "text-[#2a2c3a] hover:bg-[#f1f1f5] hover:text-[#0b1024]";
 const TREE_IDLE_DEEP = "text-[#4a4d5e] hover:bg-[#f1f1f5] hover:text-[#0b1024]";
 const TREE_ACTIVE = "bg-[#ececef] font-medium text-[#111114]";
 /**
- * Отступ строки по уровню: 14px у раздела, 36px у второго уровня; с третьего
- * иконок нет — текст встаёт под текст родителя (62px), дальше +18px.
+ * Отступ строки по уровню: иконка у каждого уровня (владелец, 2026-11-11:
+ * «пунктов много, без иконок теряется»), шаг 18px — иконка ребёнка стоит
+ * под текстом родителя чуть левее, длинные названия не переносятся.
  */
-const indent = (depth: number) => ({ paddingLeft: `${depth <= 2 ? 14 + (depth - 1) * 22 : 62 + (depth - 3) * 18}px` });
+const indent = (depth: number) => ({ paddingLeft: `${12 + (depth - 1) * 18}px` });
 
 function TreeChevron({ open }: { open: boolean }) {
   return (
@@ -104,15 +105,8 @@ export function NavAccordion({
 
   const renderItems = (section: NavModelSection, depth: number): ReactNode =>
     section.menu?.map((group, index) => (
+      // Подписей групп нет (владелец, 2026-11-11): меньше текста в меню.
       <div key={group.label ?? `group-${index}`} className="space-y-0.5">
-        {group.label ? (
-          <div
-            style={indent(depth)}
-            className="pt-2.5 pb-1 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-[#7a7d8c]"
-          >
-            {group.label}
-          </div>
-        ) : null}
         {group.items.map((item) => renderItem(section, item, depth))}
       </div>
     ));
@@ -142,7 +136,7 @@ export function NavAccordion({
           style={indent(depth)}
           className={cn(TREE_ROW, touch && TREE_ROW_TOUCH, "text-[15.5px]", active ? TREE_ACTIVE : TREE_IDLE_DEEP)}
         >
-          {depth <= 2 ? <TreeIcon name={item.icon} active={active} /> : null}
+          <TreeIcon name={item.icon} active={active} />
           <span className="min-w-0 flex-1">{item.label}</span>
           {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
           {hasKids ? <TreeChevron open={open} /> : null}
@@ -162,6 +156,7 @@ export function NavAccordion({
                   style={indent(depth + 1)}
                   className={cn(TREE_ROW, touch && TREE_ROW_TOUCH, "text-[15px]", tabActive ? TREE_ACTIVE : TREE_IDLE_DEEP)}
                 >
+                  <TreeIcon name={item.icon} active={tabActive} />
                   <span className="min-w-0 flex-1">{tab.label}</span>
                 </Link>
               );

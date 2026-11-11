@@ -26127,7 +26127,8 @@
       "disabledEnableHint": " — jurnal baribir kerak bo‘lsa, yoqing",
       "enabling": "Yoqilmoqda…",
       "enable": "Yoqish",
-      "filledToday": "Bugun to‘ldirilgan · {count, number}"
+      "filledToday": "Bugun to‘ldirilgan · {count, number}",
+      "searchPlaceholderShort": "Jurnalni topish"
     },
     "impersonationBanner": {
       "stopFailed": "Ko‘rish rejimidan chiqib bo‘lmadi",

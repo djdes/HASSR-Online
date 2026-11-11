@@ -26128,7 +26128,8 @@ export type MessageContract = {
       "disabledEnableHint": " — включите, если журнал всё-таки нужен",
       "enabling": "Включаю…",
       "enable": "Включить",
-      "filledToday": "Заполнено сегодня · {count, number}"
+      "filledToday": "Заполнено сегодня · {count, number}",
+      "searchPlaceholderShort": "Найти журнал"
     },
     "impersonationBanner": {
       "stopFailed": "Не удалось выйти из просмотра",
