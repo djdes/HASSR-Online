@@ -15,8 +15,10 @@ test("ответственный за приёмку по умолчанию —
   const owner = { id: "owner", name: "boss@mail.ru", role: "owner" };
   const manager = { id: "mgr", name: "Анна Управляющая", role: "manager" };
   const cook = { id: "cook", name: "Борис Повар", role: "cook" };
-  assert.equal(getAcceptanceDocumentDefaultConfig([owner, manager, cook]).defaultResponsibleUserId, "cook");
+  // Тикет 57187T: только руководящая должность, рядовой «первый по списку» не встаёт.
+  assert.equal(getAcceptanceDocumentDefaultConfig([owner, manager, cook]).defaultResponsibleUserId, "mgr");
   assert.equal(getAcceptanceDocumentDefaultConfig([owner, manager]).defaultResponsibleUserId, "mgr");
+  assert.equal(getAcceptanceDocumentDefaultConfig([cook]).defaultResponsibleUserId, null);
   assert.equal(getAcceptanceDocumentDefaultConfig([]).defaultResponsibleUserId, null);
 });
 

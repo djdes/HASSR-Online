@@ -1,0 +1,23 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Отобрано 15 связанных тестовых файлов для 4 изменённых файлов:
+  • src/lib/acceptance-document.test.ts
+  • src/lib/journal-automation-staff.test.ts
+  • src/lib/journal-fill.test.ts
+  • src/lib/journal-obligations.test.ts
+  • src/lib/journal-repair.test.ts
+  • src/lib/journal-responsibles-doc-patchers.test.ts
+  • src/lib/journal-responsibles-point-first.test.ts
+  • src/lib/journal-roster.test.ts
+  • src/lib/journal-staff-binding.test.ts
+  • src/lib/ppk/acknowledge.test.ts
+  • src/lib/qr-reading-photo.test.ts
+  • src/lib/staff-journal-autofill.test.ts
+  • src/lib/tasksflow-adapters/cold-equipment.test.ts
+  • src/lib/tasksflow-adapters/hygiene.test.ts
+  • src/lib/user-roles.test.ts
+
+=== Targeted test stats (15 files, 2.6s): pass=101, fail=0 ===
+✓ Все затронутые тесты прошли.

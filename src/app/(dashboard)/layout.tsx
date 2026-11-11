@@ -6,7 +6,7 @@ import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/l
 import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
 import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
 import { resolveHeaderPoint } from "@/lib/header-point";
-import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
+import { ORGANIZATION_VIEW_ID, isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { syncOrganizationPointDocumentsSoon } from "@/lib/point-document-rows-sync";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
 import { Header } from "@/components/layout/header";
@@ -74,6 +74,7 @@ import { SectionTabs } from "@/components/layout/section-tabs";
 import { SectionTopMenu } from "@/components/layout/section-top-menu";
 import { SectionFrame } from "@/components/layout/section-frame";
 import { ContentTransitionProvider } from "@/components/layout/content-transition";
+import { PointSectionSync } from "@/components/layout/point-section-sync";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
 import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
@@ -270,6 +271,23 @@ export default async function DashboardLayout({
     headerPoint.kind === "switch" && headerPoint.options[0]?.id === ORGANIZATION_VIEW_ID
       ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...buildingContext.buildings]
       : buildingContext.buildings;
+
+  // Точка в шапке и раздел согласованы (`PointSectionSync`, 2026-11-10):
+  // куда переключать в разделах всей компании и какие точки можно выбрать.
+  const pointSync =
+    headerPoint.kind === "switch"
+      ? {
+          viewedPointId: viewedPointId(buildingContext),
+          canViewOrganization: buildingContext.canViewOrganization,
+          organizationTarget: (() => {
+            const office = switcherBuildings.find((building) => isOfficeBuilding(building));
+            return office && buildingContext.canViewOrganization ? { id: office.id, name: office.name } : null;
+          })(),
+          points: switcherBuildings
+            .filter((building) => !isOfficeBuilding(building))
+            .map((building) => ({ id: building.id, name: building.name })),
+        }
+      : null;
 
   // Тариф живёт на аккаунте: у сети из трёх кафе один договор. Пока
   // организация не привязана к аккаунту — тариф самой организации.
@@ -522,6 +540,7 @@ export default async function DashboardLayout({
               документа — иначе они друг друга не видят. */}
           <JournalUndoProvider>
           <DomainMessagesBoundary namespaces={["masterCabinetUi"]}>
+          {pointSync ? <PointSectionSync {...pointSync} /> : null}
           <Header
             userName={session.user.name ?? tLayout("fallbackUser")}
             userEmail={session.user.email ?? ""}

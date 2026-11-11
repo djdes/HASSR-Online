@@ -2823,7 +2823,8 @@
         "addHint": "Qadam-baqadam qo‘shish ochiladi: nomi va manzil, xonalar, uskunalar",
         "open": "Nuqtani ochish",
         "captionOffice": "Tashkilot",
-        "organization": "Butun tashkilot"
+        "organization": "Butun tashkilot",
+        "companySection": "Bu bo‘lim butun kompaniyaga tegishli — tanlandi: {name}"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",

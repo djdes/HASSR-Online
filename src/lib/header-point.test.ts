@@ -210,3 +210,16 @@ test("Mini App: в верхней панели «Вся организация»
   assert.equal(miniLocationLabel({ enabled: false, organizationView: true, activeBuilding: null }, "Вся организация"), null);
   assert.equal(miniLocationLabel(null, "Вся организация"), null);
 });
+
+test("переключатель (kind: switch) виден и в разделах всей компании, и на главной", () => {
+  for (const path of ["/home", "/settings/organization", "/settings/organization/office", "/settings/subscription", "/settings/appearance", "/settings/buildings", "/dashboard"]) {
+    assert.ok(!headerPointHidden(path, "switch"), path);
+  }
+  // Свой фильтр по точкам на странице — переключатель в шапке его не дублирует.
+  for (const path of ["/settings/users", "/settings/areas", "/settings/equipment", "/journals/points"]) {
+    assert.ok(headerPointHidden(path, "switch"), path);
+  }
+  // Подписи без переключения в разделах компании по-прежнему прячутся.
+  assert.ok(headerPointHidden("/home", "single"));
+  assert.ok(headerPointHidden("/settings/subscription", "all"));
+});
