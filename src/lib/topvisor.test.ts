@@ -199,6 +199,22 @@ describe("mapLogicalRegionsToProject", () => {
   it("возвращает исходные индексы, если ответ searchers пуст", () => {
     assert.deepEqual(mapLogicalRegionsToProject([1, 5], null), [1, 5]);
   });
+
+  it("не подменяет Яндекс на Google, если в проекте пока есть только Google", () => {
+    const onlyGoogle = [
+      {
+        key: 1,
+        name: "Google",
+        enabled: 1,
+        regions: [
+          { index: "2", key: 213, areaName: "Москва", enabled: 1 },
+          { index: "7", key: 225, areaName: "Россия", enabled: 1 },
+        ],
+      },
+    ];
+    assert.deepEqual(mapLogicalRegionsToProject([1, 5], onlyGoogle), []);
+    assert.deepEqual(mapLogicalRegionsToProject([2, 7], onlyGoogle), [2, 7]);
+  });
 });
 
 describe("parseProjectCheckerProgress", () => {

@@ -189,12 +189,37 @@ export type TopvisorCheckStatus = {
 
 const LOGICAL_REGION_SLOTS: Record<
   number,
-  { searcher: "yandex" | "google"; regionKey: number; namePattern: RegExp }
+  {
+    searcher: "yandex" | "google";
+    searcherKey: 0 | 1;
+    regionKey: number;
+    namePattern: RegExp;
+  }
 > = {
-  1: { searcher: "yandex", regionKey: 213, namePattern: /москв|moscow/i },
-  5: { searcher: "yandex", regionKey: 225, namePattern: /росси|russia/i },
-  2: { searcher: "google", regionKey: 213, namePattern: /москв|moscow/i },
-  7: { searcher: "google", regionKey: 225, namePattern: /росси|russia/i },
+  1: {
+    searcher: "yandex",
+    searcherKey: 0,
+    regionKey: 213,
+    namePattern: /москв|moscow/i,
+  },
+  5: {
+    searcher: "yandex",
+    searcherKey: 0,
+    regionKey: 225,
+    namePattern: /росси|russia/i,
+  },
+  2: {
+    searcher: "google",
+    searcherKey: 1,
+    regionKey: 213,
+    namePattern: /москв|moscow/i,
+  },
+  7: {
+    searcher: "google",
+    searcherKey: 1,
+    regionKey: 225,
+    namePattern: /росси|russia/i,
+  },
 };
 
 function detectSearcherKind(
@@ -211,30 +236,24 @@ function detectSearcherKind(
   return null;
 }
 
-/**
- * Сопоставляет логические слоты из `topvisor-regions.ts` (1, 5, 2, 7)
- * с реальными `region.index` проекта в Topvisor из `get/projects_2/projects`
- * (`show_searchers_and_regions: 2`). Если в проекте регионы были
- * пересозданы или идут в другом порядке, их внутренние `index`
- * отличаются от зашитых констант, из-за чего `checker/price` возвращает 0 ₽,
- * а `checker/go` падает с ошибкой «Укажите поисковые системы и регионы».
- */
-export function mapLogicalRegionsToProject(
-  requestedIndexes: number[],
+export type ParsedSearcherRegionEntry = {
+  index: number;
+  searcherKind: "yandex" | "google" | null;
+  searcherEnabled: boolean;
+  regionKey: number | null;
+  regionName: string;
+  regionEnabled: boolean;
+  enabled: boolean;
+};
+
+export function parseProjectSearcherRegions(
   searchersRaw: unknown
-): number[] {
+): ParsedSearcherRegionEntry[] {
   if (!Array.isArray(searchersRaw) || searchersRaw.length === 0) {
-    return requestedIndexes;
+    return [];
   }
 
-  const entries: Array<{
-    index: number;
-    searcherKind: "yandex" | "google" | null;
-    regionKey: number | null;
-    regionName: string;
-    enabled: boolean;
-  }> = [];
-
+  const entries: ParsedSearcherRegionEntry[] = [];
   for (const item of searchersRaw as RawProjectSearcher[]) {
     if (!item || typeof item !== "object") continue;
     const searcherKind = detectSearcherKind(item);
@@ -251,22 +270,40 @@ export function mapLogicalRegionsToProject(
       const rawKey = region.key ?? region.id ?? null;
       const numKey = rawKey !== null && rawKey !== "" ? Number(rawKey) : NaN;
       const regionEnabled =
-        searcherEnabled &&
-        (region.enabled === undefined ||
-          region.enabled === 1 ||
-          region.enabled === "1" ||
-          region.enabled === true);
+        region.enabled === undefined ||
+        region.enabled === 1 ||
+        region.enabled === "1" ||
+        region.enabled === true;
       entries.push({
         index: idx,
         searcherKind,
+        searcherEnabled,
         regionKey: Number.isFinite(numKey) ? numKey : null,
         regionName: `${region.name ?? ""} ${region.areaName ?? ""}`.trim(),
-        enabled: regionEnabled,
+        regionEnabled,
+        enabled: searcherEnabled && regionEnabled,
       });
     }
   }
+  return entries;
+}
 
-  if (entries.length === 0) return requestedIndexes;
+/**
+ * Сопоставляет логические слоты из `topvisor-regions.ts` (1, 5, 2, 7)
+ * с реальными `region.index` проекта в Topvisor из `get/projects_2/projects`
+ * (`show_searchers_and_regions: 2`).
+ *
+ * ВАЖНО: Никогда не подменяет Яндекс на Google (и наоборот). Если запрошен
+ * слот из LOGICAL_REGION_SLOTS, ищем ТОЛЬКО регион соответствующего поисковика.
+ */
+export function mapLogicalRegionsToProject(
+  requestedIndexes: number[],
+  searchersRaw: unknown
+): number[] {
+  const entries = parseProjectSearcherRegions(searchersRaw);
+  if (entries.length === 0) {
+    return requestedIndexes;
+  }
 
   const resolved: number[] = [];
   for (const requested of requestedIndexes) {
@@ -288,8 +325,8 @@ export function mapLogicalRegionsToProject(
         );
       if (match) {
         resolved.push(match.index);
-        continue;
       }
+      continue;
     }
 
     const direct = entries.find((e) => e.index === requested);
@@ -298,19 +335,7 @@ export function mapLogicalRegionsToProject(
     }
   }
 
-  if (resolved.length > 0) {
-    return [...new Set(resolved)];
-  }
-
-  const enabledYandex = entries
-    .filter((e) => e.enabled && e.searcherKind === "yandex")
-    .map((e) => e.index);
-  if (enabledYandex.length > 0) {
-    return [...new Set(enabledYandex)];
-  }
-
-  const allEnabled = entries.filter((e) => e.enabled).map((e) => e.index);
-  return allEnabled.length > 0 ? [...new Set(allEnabled)] : requestedIndexes;
+  return [...new Set(resolved)];
 }
 
 let cachedSearchers: {
@@ -319,37 +344,125 @@ let cachedSearchers: {
   data: unknown;
 } | null = null;
 
-async function resolveProjectRegionIndexes(
-  requestedIndexes: number[]
-): Promise<number[]> {
-  const { projectId } = config();
+async function fetchProjectSearchersRaw(
+  projectId: number,
+  forceRefresh = false
+): Promise<unknown> {
   const now = Date.now();
   if (
-    !cachedSearchers ||
-    cachedSearchers.projectId !== projectId ||
-    cachedSearchers.expiresAt < now
+    !forceRefresh &&
+    cachedSearchers &&
+    cachedSearchers.projectId === projectId &&
+    cachedSearchers.expiresAt >= now
   ) {
-    try {
-      const projects = await tvRequest<RawProjectWithRegions[]>(
-        "get/projects_2/projects",
-        {
-          filters: idFilter([projectId]),
-          show_searchers_and_regions: 2,
-        }
+    return cachedSearchers.data;
+  }
+
+  const projects = await tvRequest<RawProjectWithRegions[]>(
+    "get/projects_2/projects",
+    {
+      filters: idFilter([projectId]),
+      show_searchers_and_regions: 2,
+    }
+  );
+  const project = Array.isArray(projects)
+    ? (projects.find((p) => Number(p?.id) === projectId) ?? projects[0])
+    : null;
+  const data = project?.searchers ?? null;
+  cachedSearchers = {
+    projectId,
+    expiresAt: now + 60_000,
+    data,
+  };
+  return data;
+}
+
+/**
+ * Гарантирует, что запрошенные логические регионы (например Яндекс · Москва [213]
+ * и Яндекс · Россия [225]) добавлены и включены в проекте Topvisor, и возвращает
+ * их реальные `region.index`.
+ */
+async function resolveProjectRegionIndexes(
+  requestedIndexes: number[],
+  options: { autoProvision?: boolean } = {}
+): Promise<number[]> {
+  const { projectId } = config();
+  let searchersRaw: unknown;
+  try {
+    searchersRaw = await fetchProjectSearchersRaw(projectId);
+  } catch {
+    return requestedIndexes;
+  }
+
+  if (options.autoProvision) {
+    const entries = parseProjectSearcherRegions(searchersRaw);
+    const searchersList = Array.isArray(searchersRaw)
+      ? (searchersRaw as RawProjectSearcher[])
+      : [];
+    let mutated = false;
+
+    for (const requested of requestedIndexes) {
+      const slot = LOGICAL_REGION_SLOTS[requested];
+      if (!slot) continue;
+
+      const hasSearcher = searchersList.some(
+        (s) => detectSearcherKind(s) === slot.searcher
       );
-      const project = Array.isArray(projects)
-        ? (projects.find((p) => Number(p?.id) === projectId) ?? projects[0])
-        : null;
-      cachedSearchers = {
-        projectId,
-        expiresAt: now + 60_000,
-        data: project?.searchers ?? null,
-      };
-    } catch {
-      return requestedIndexes;
+      if (!hasSearcher) {
+        await tvRequest("add/positions_2/searchers", {
+          project_id: projectId,
+          searcher_key: slot.searcherKey,
+        }).catch(() => null);
+        mutated = true;
+      }
+
+      const existingRegion = entries.find(
+        (e) =>
+          e.searcherKind === slot.searcher &&
+          (e.regionKey === slot.regionKey ||
+            slot.namePattern.test(e.regionName))
+      );
+
+      if (!existingRegion) {
+        await tvRequest("add/positions_2/searchers_regions", {
+          project_id: projectId,
+          searcher_key: slot.searcherKey,
+          region_key: slot.regionKey,
+          region_lang: "ru",
+          region_device: 0,
+          region_depth: 1,
+        }).catch(() => null);
+        mutated = true;
+      } else {
+        if (!existingRegion.searcherEnabled) {
+          await tvRequest("edit/positions_2/searchers/enabled", {
+            project_id: projectId,
+            searcher_key: slot.searcherKey,
+            enabled: 1,
+          }).catch(() => null);
+          mutated = true;
+        }
+        if (!existingRegion.regionEnabled) {
+          await tvRequest("edit/positions_2/searchers_regions", {
+            project_id: projectId,
+            region_index: existingRegion.index,
+            enabled: 1,
+          }).catch(() => null);
+          mutated = true;
+        }
+      }
+    }
+
+    if (mutated) {
+      try {
+        searchersRaw = await fetchProjectSearchersRaw(projectId, true);
+      } catch {
+        // ignore
+      }
     }
   }
-  return mapLogicalRegionsToProject(requestedIndexes, cachedSearchers.data);
+
+  return mapLogicalRegionsToProject(requestedIndexes, searchersRaw);
 }
 
 // ─────────────────────────── семантика ───────────────────────────
@@ -590,7 +703,9 @@ export async function getPositionsHistory(input: {
   dateTo: string;
 }): Promise<PositionMatrix> {
   const { projectId } = config();
-  const resolved = await resolveProjectRegionIndexes([input.regionIndex]);
+  const resolved = await resolveProjectRegionIndexes([input.regionIndex], {
+    autoProvision: true,
+  });
   const targetRegion = resolved[0] ?? input.regionIndex;
   const raw = await tvRequest<unknown>("get/positions_2/history", {
     project_id: projectId,
@@ -626,24 +741,22 @@ function extractCheckerPrice(
  */
 export async function getCheckerPrice(regionIndexes: number[]): Promise<number> {
   const { projectId, userId } = config();
-  const resolved = await resolveProjectRegionIndexes(regionIndexes);
+  const resolved = await resolveProjectRegionIndexes(regionIndexes, {
+    autoProvision: true,
+  });
+  if (resolved.length === 0) {
+    throw new TopvisorError(
+      0,
+      "Выбранные поисковые системы и регионы не найдены в проекте Topvisor"
+    );
+  }
   const result = await tvRequest<{
     pricesByUsers?: Record<string, { price?: number }>;
   }>("get/positions_2/checker/price", {
     filters: idFilter([projectId]),
     regions_indexes: resolved,
   });
-  const price = extractCheckerPrice(result, userId);
-  if (price > 0) return price;
-
-  // Подстраховка: если фильтр по regions_indexes дал 0 ₽ при включённых
-  // регионах в проекте, спрашиваем цену по всем активным регионам проекта.
-  const fallback = await tvRequest<{
-    pricesByUsers?: Record<string, { price?: number }>;
-  }>("get/positions_2/checker/price", {
-    filters: idFilter([projectId]),
-  });
-  return extractCheckerPrice(fallback, userId);
+  return extractCheckerPrice(result, userId);
 }
 
 function hasQueuedProjects(
@@ -656,29 +769,23 @@ function hasQueuedProjects(
 /** Ставит проверку позиций в очередь. Тратит деньги — вызывать только явно. */
 export async function runChecker(regionIndexes: number[]): Promise<boolean> {
   const { projectId } = config();
-  const resolved = await resolveProjectRegionIndexes(regionIndexes);
-  try {
-    const result = await tvRequest<{
-      projectsIds?: number[];
-      projectIds?: number[];
-    }>("edit/positions_2/checker/go", {
-      filters: idFilter([projectId]),
-      regions_indexes: resolved,
-    });
-    if (hasQueuedProjects(result)) return true;
-  } catch (error) {
-    // Если конкретные region_index не совпали с активными регионами проекта,
-    // запускаем проверку по всем включённым в проекте регионам без фильтра.
-    if (!(error instanceof TopvisorError)) throw error;
+  const resolved = await resolveProjectRegionIndexes(regionIndexes, {
+    autoProvision: true,
+  });
+  if (resolved.length === 0) {
+    throw new TopvisorError(
+      0,
+      "Выбранные поисковые системы и регионы не найдены в проекте Topvisor"
+    );
   }
-
-  const fallback = await tvRequest<{
+  const result = await tvRequest<{
     projectsIds?: number[];
     projectIds?: number[];
   }>("edit/positions_2/checker/go", {
     filters: idFilter([projectId]),
+    regions_indexes: resolved,
   });
-  return hasQueuedProjects(fallback);
+  return hasQueuedProjects(result);
 }
 
 export function parseProjectCheckerProgress(project: unknown): {

@@ -67,6 +67,18 @@ function shortPath(url: string | null): string {
   }
 }
 
+type CheckScope = "yandex" | "google" | "all";
+
+const CHECK_SCOPE_REGIONS: Record<CheckScope, number[]> = {
+  yandex: TOPVISOR_REGIONS.filter((r) => r.searcher === "Яндекс").map(
+    (r) => r.index
+  ),
+  google: TOPVISOR_REGIONS.filter((r) => r.searcher === "Google").map(
+    (r) => r.index
+  ),
+  all: TOPVISOR_REGIONS.map((r) => r.index),
+};
+
 export function PositionsClient({ configured, articleBySlug }: Props) {
   // Тип задан явно: DEFAULT_REGIONS выведен из `as const` и сузился бы
   // до литералов 1 | 5, а в селекторе доступны все четыре региона.
@@ -79,12 +91,14 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
   const [query, setQuery] = useState("");
 
   const [checkOpen, setCheckOpen] = useState(false);
+  const [checkScope, setCheckScope] = useState<CheckScope>("yandex");
   const [price, setPrice] = useState<number | null>(null);
   const [pricing, setPricing] = useState(false);
   const [activeCheck, setActiveCheck] = useState<TopvisorCheckStatus | null>(null);
   const wasCheckingRef = useRef(false);
 
   const checking = Boolean(activeCheck?.checking);
+  const checkRegions = CHECK_SCOPE_REGIONS[checkScope];
 
   const load = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -133,13 +147,12 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
     return () => window.clearInterval(timer);
   }, [configured, checking, load]);
 
-  /** Цену спрашиваем до открытия диалога: сумма должна быть в тексте. */
-  async function askCheck() {
-    if (checking) return;
+  const fetchScopePrice = useCallback(async (scope: CheckScope) => {
+    const regions = CHECK_SCOPE_REGIONS[scope];
     setPricing(true);
     try {
       const response = await fetch(
-        `/api/root/topvisor/checker?regions=${DEFAULT_REGIONS.join(",")}`,
+        `/api/root/topvisor/checker?regions=${regions.join(",")}`,
         { cache: "no-store" }
       );
       const data = await response.json().catch(() => null);
@@ -147,16 +160,36 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
       if (data?.activeCheck?.checking) {
         setActiveCheck(data.activeCheck);
         wasCheckingRef.current = true;
+        setCheckOpen(false);
         toast.info("Съём позиций уже выполняется");
-        return;
+        return false;
       }
       setPrice(typeof data.price === "number" ? data.price : null);
-      setCheckOpen(true);
+      return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Ошибка");
+      return false;
     } finally {
       setPricing(false);
     }
+  }, []);
+
+  /** Цену спрашиваем до открытия диалога: сумма должна быть в тексте. */
+  async function askCheck() {
+    if (checking) return;
+    const selectedRegion = TOPVISOR_REGIONS.find((r) => r.index === regionIndex);
+    const defaultScope: CheckScope =
+      selectedRegion?.searcher === "Google" ? "google" : "yandex";
+    setCheckScope(defaultScope);
+    const ok = await fetchScopePrice(defaultScope);
+    if (ok) {
+      setCheckOpen(true);
+    }
+  }
+
+  async function handleChangeScope(nextScope: CheckScope) {
+    setCheckScope(nextScope);
+    await fetchScopePrice(nextScope);
   }
 
   async function runCheck() {
@@ -167,7 +200,7 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
     const response = await fetch("/api/root/topvisor/checker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ regions: DEFAULT_REGIONS }),
+      body: JSON.stringify({ regions: checkRegions }),
     });
     const data = await response.json().catch(() => null);
     if (response.status === 409 && data?.activeCheck) {
@@ -435,24 +468,55 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
         open={checkOpen}
         onClose={() => setCheckOpen(false)}
         onConfirm={runCheck}
-        confirmDisabled={checking}
+        confirmDisabled={checking || pricing}
         variant="warn"
         title="Снять позиции сейчас?"
         description={
-          price != null
-            ? `Спишется ${price} ₽ с баланса Topvisor.`
-            : "Цену узнать не удалось — проверьте баланс в панели Topvisor."
+          pricing
+            ? "Пересчитываем стоимость съёма…"
+            : price != null
+              ? `Спишется ${price} ₽ с баланса Topvisor.`
+              : "Цену узнать не удалось — проверьте баланс в панели Topvisor."
         }
         bullets={[
           {
-            label: `Регионы: ${DEFAULT_REGIONS.map(regionLabel).join(", ")}`,
+            label: `Регионы: ${checkRegions.map(regionLabel).join(", ")}`,
             tone: "info",
           },
           { label: "Деньги списываются сразу при запуске", tone: "warn" },
           { label: "Результат появится в матрице через несколько минут" },
         ]}
         confirmLabel="Снять"
-      />
+      >
+        <div className="space-y-1.5">
+          <div className="text-[12px] font-medium text-[#6f7282]">
+            Поисковая система для съёма
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-1">
+            {(
+              [
+                { id: "yandex", label: "Яндекс" },
+                { id: "google", label: "Google" },
+                { id: "all", label: "Яндекс + Google" },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                disabled={pricing}
+                onClick={() => void handleChangeScope(option.id)}
+                className={`rounded-xl px-2.5 py-2 text-[12.5px] font-medium transition-colors ${
+                  checkScope === option.id
+                    ? "bg-[#5566f6] text-white shadow-sm"
+                    : "text-[#3c4053] hover:bg-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </ConfirmDialog>
     </div>
   );
 }
