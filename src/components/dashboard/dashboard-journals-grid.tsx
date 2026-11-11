@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Eye, Printer, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import { RECENT_JOURNALS_KEY, parseRecentJournals, pickRecentJournals } from "@/lib/recent-journals";
@@ -117,6 +118,7 @@ export function DashboardJournalsGrid({
 }) {
   const t = useTranslations("dashboardUi.dashboardJournalsGrid");
   const tSpeed = useTranslations("dashboardUi.todaySpeed");
+  const newDesign = useNewDesign();
   const searchRef = useRef<HTMLInputElement>(null);
   // «Недавно открывали» и «Скрыть заполненные» — настройки устройства
   // (localStorage), читаем после гидрации.
@@ -251,6 +253,18 @@ export function DashboardJournalsGrid({
           помещаются. Две кнопки («Автозаполнить» и «QR-коды») на телефоне —
           своей строкой во всю ширину над поиском, как раньше. */}
       <div className={JOURNAL_TOOLBAR_CLASS}>
+        {/* «Новая» тема: лист на печать — в ряду кнопок справа. */}
+        {newDesign && unfilledItems.length > 0 ? (
+          <Link
+            href={printHref}
+            data-testid="today-print-link"
+            title={tSpeed("printTodayHint")}
+            className="order-2 hidden h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdde3] bg-white px-4 text-[14px] font-medium text-[#111114] transition-colors hover:bg-[#f1f1f4] md:inline-flex lg:order-4"
+          >
+            <Printer className="size-4 text-[#5f6170]" aria-hidden />
+            {tSpeed("printToday")}
+          </Link>
+        ) : null}
         {actions ? (
           <div className="order-2 shrink-0 has-[[data-journals-actions]]:order-none has-[[data-journals-actions]]:basis-full sm:has-[[data-journals-actions]]:basis-auto lg:order-3 lg:ml-auto lg:has-[[data-journals-actions]]:order-3">
             {actions}
@@ -263,7 +277,7 @@ export function DashboardJournalsGrid({
             data-testid="journal-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("searchPlaceholder")}
+            placeholder={newDesign ? t("searchPlaceholderShort") : t("searchPlaceholder")}
             aria-label={t("searchLabel")}
             className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-11 text-[15px] text-[#0b1024] placeholder:truncate placeholder:text-[#c1c5d6] max-sm:text-[14px] shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
           />
@@ -287,7 +301,7 @@ export function DashboardJournalsGrid({
 
       {/* Недавно открытые на этом устройстве журналы — в одно касание. */}
       {!normalizedQuery && recentItems.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2" data-testid="recent-journals">
+        <div className="flex flex-wrap items-center gap-2 newd:hidden" data-testid="recent-journals">
           <span className={GROUP_TITLE_CLASS}>{tSpeed("recentTitle")}</span>
           {recentItems.map((item) => (
             <Link
@@ -302,9 +316,10 @@ export function DashboardJournalsGrid({
         </div>
       ) : null}
 
-      {/* Компьютер: «Дальше: <журнал>» и лист на печать — над списком. */}
+      {/* Компьютер: «Дальше: <журнал>» и лист на печать — над списком. В
+          «Новой» теме этой строки нет: лист на печать — в ряду кнопок справа. */}
       {!normalizedQuery && unfilledItems.length > 0 ? (
-        <div className="hidden flex-wrap items-center gap-2 md:flex">
+        <div className="hidden flex-wrap items-center gap-2 md:flex newd:md:hidden">
           {nextItem ? (
             <Link
               href={`/journals/${nextItem.code}`}
@@ -357,10 +372,10 @@ export function DashboardJournalsGrid({
           оставлено место доку плавающих кнопок, под списком — запас высоты,
           чтобы кнопка не закрывала последнюю строку. (`sticky` не работает:
           секция «Обязательные журналы» обрезает содержимое.) */}
-      {nextItem ? <div aria-hidden className="h-16 md:hidden" /> : null}
+      {nextItem ? <div aria-hidden className="h-16 md:hidden newd:hidden" /> : null}
       {nextItem ? (
         <div
-          className="fixed left-4 right-[92px] z-30 md:hidden print:hidden"
+          className="fixed left-4 right-[92px] z-30 md:hidden print:hidden newd:hidden"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
           data-testid="today-next-sticky"
         >

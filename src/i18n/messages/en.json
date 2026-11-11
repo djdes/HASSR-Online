@@ -26127,7 +26127,8 @@
       "disabledEnableHint": " — enable it if you do need the journal",
       "enabling": "Enabling…",
       "enable": "Enable",
-      "filledToday": "Filled in today · {count, number}"
+      "filledToday": "Filled in today · {count, number}",
+      "searchPlaceholderShort": "Find a journal"
     },
     "impersonationBanner": {
       "stopFailed": "Failed to exit the view",

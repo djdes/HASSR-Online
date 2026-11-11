@@ -89,7 +89,7 @@ export function DashboardSection({
 
   const badgeEl = badge ? (
     <span
-      className={`ml-1.5 inline-flex translate-y-[-1px] items-center rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold tabular-nums ${TONE_CLS[badge.tone ?? "default"]}`}
+      className={`ml-1.5 inline-flex translate-y-[-1px] items-center rounded-full px-2 py-0.5 align-middle text-[11px] font-semibold tabular-nums newd:hidden ${TONE_CLS[badge.tone ?? "default"]}`}
     >
       {badge.text}
     </span>
