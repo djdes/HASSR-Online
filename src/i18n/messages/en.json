@@ -2824,7 +2824,7 @@
         "open": "Open outlet",
         "captionOffice": "Company",
         "organization": "Whole company",
-        "companySection": "This section covers the whole company — now showing: {name}",
+        "companySection": "Company-wide section — now showing {name}",
         "returnTo": "Back to {name}"
       },
       "sidebarAria": "Cabinet sections",
@@ -3071,7 +3071,8 @@
         "dismiss": "Got it"
       },
       "contentLoading": "Updating the page…",
-      "listLoading": "Loading the list…"
+      "listLoading": "Loading the list…",
+      "topMenuMore": "More"
     },
     "header": {
       "staff": "Staff",

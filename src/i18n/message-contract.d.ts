@@ -2762,7 +2762,7 @@ export type MessageContract = {
         "checklists": "Чек-листы",
         "productionControl": "Производственный контроль",
         "billing": "Подписки",
-        "more": "Остальное",
+        "more": "Ещё",
         "news": "Новости, статьи, обзоры экспертов",
         "inspection": "К Вам пришла проверка",
         "office": "Офис",
@@ -2825,7 +2825,7 @@ export type MessageContract = {
         "open": "Открыть точку",
         "captionOffice": "Организация",
         "organization": "Вся организация",
-        "companySection": "Раздел общий для всей компании — в шапке выбрано: {name}",
+        "companySection": "Общий раздел — выбрано «{name}»",
         "returnTo": "Вернуться на «{name}»"
       },
       "sidebarAria": "Разделы кабинета",
@@ -2839,7 +2839,7 @@ export type MessageContract = {
             "office": "Офис",
             "points": "Торговые точки",
             "master": "Мастер-кабинет",
-            "more": "Остальное",
+            "more": "Ещё",
             "organization": "Реквизиты"
           },
           "tabs": {
@@ -3072,7 +3072,8 @@ export type MessageContract = {
         "dismiss": "Понятно"
       },
       "contentLoading": "Обновляем страницу…",
-      "listLoading": "Загружаем список…"
+      "listLoading": "Загружаем список…",
+      "topMenuMore": "Ещё"
     },
     "header": {
       "staff": "Сотрудники",
@@ -3230,7 +3231,7 @@ export type MessageContract = {
       "inspection_norms": "ППК и план ХАССП",
       "inspection_experts": "Консалтинг",
       "production_control": "Программа производственного контроля",
-      "more": "Остальное",
+      "more": "Ещё",
       "news": "Новости, статьи, обзоры экспертов",
       "knowledge": "Инструкции",
       "checklists": "Чек-листы",

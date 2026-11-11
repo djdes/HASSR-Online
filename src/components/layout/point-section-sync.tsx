@@ -27,6 +27,29 @@ function writeReturnPoint(pointId: string | null) {
   }
 }
 
+const SYNC_TOAST_MS = 5000;
+
+/** Длинное название точки в кнопке — с многоточием: кнопка остаётся в одну строку. */
+function shortName(name: string): string {
+  return name.length > 26 ? `${name.slice(0, 25).trimEnd()}…` : name;
+}
+
+/** Кольцо, убывающее за время жизни подсказки (`globals.css`, `toast-countdown`). */
+function ToastCountdown({ ms }: { ms: number }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className="size-[18px] -rotate-90"
+      aria-hidden
+      data-toast-countdown
+      style={{ "--toast-life": `${ms}ms` } as React.CSSProperties}
+    >
+      <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2.2" opacity="0.18" />
+      <circle data-ring cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" pathLength={100} />
+    </svg>
+  );
+}
+
 /** Ручной выбор в переключателе отменяет «вернуть точку по „назад“». */
 export function forgetReturnPoint() {
   writeReturnPoint(null);
@@ -134,11 +157,14 @@ export function PointSectionSync({
           writeReturnPoint(fromPointId);
           const fromName = nameOf(fromPointId);
           toast.info(t("companySection", { name: targetName }), {
-            duration: 8000,
+            // Короткая подсказка с кольцом-отсчётом: не загораживает страницу
+            // дольше, чем нужно, чтобы успеть нажать «вернуться».
+            duration: SYNC_TOAST_MS,
+            icon: <ToastCountdown ms={SYNC_TOAST_MS} />,
             action:
               fromPointId && fromName
                 ? {
-                    label: t("returnTo", { name: fromName }),
+                    label: t("returnTo", { name: shortName(fromName) }),
                     onClick: () => {
                       forgetReturnPoint();
                       refreshAfter(

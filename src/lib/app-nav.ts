@@ -295,16 +295,13 @@ function ppkMenu(): NavMenuGroup[] {
  * Подписки, Настройки и оформление) и «Пришла проверка» внизу.
  */
 const COMPANY_MENU: NavMenuGroup[] = [
-  // Лист 2: Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Остальное, Реквизиты.
+  // Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним
+  // и тихим (владелец, 2026-11-11): там всё, что нужно редко.
   {
     label: null,
     sections: ["office", "points"],
-    items: [{ id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS, badge: "pro" }],
-  },
-  {
-    label: null,
-    sections: ["more"],
     items: [
+      { id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS, badge: "pro" },
       {
         // Реквизиты, блок сведений «в любом документе» и контакты — вкладки одного пункта.
         id: "organization",
@@ -319,6 +316,7 @@ const COMPANY_MENU: NavMenuGroup[] = [
       },
     ],
   },
+  { label: null, sections: ["more"], items: [] },
 ];
 
 /**

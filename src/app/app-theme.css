@@ -1815,6 +1815,30 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-
     0 0 0 5px var(--tone-glow);
   animation: nav-chip-pop 0.42s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
+/* Меню «Новый» (владелец, 2026-11-11: «иконки минималистичнее, сейчас
+   грязно»): плашка плоская — мягкая подложка и иконка в цвет пункта, без
+   градиента, блика, «стопки», кольца и качания. Цвет по-прежнему узнаётся. */
+[data-sidebar-layout="new"] [data-nav-chip],
+.app-shell [data-sidebar-layout="new"] [data-nav-chip] {
+  color: var(--tone);
+  background-color: var(--tone-row);
+  background-image: none;
+  box-shadow: none;
+  translate: none;
+  scale: none;
+  rotate: none;
+  animation: none;
+}
+[data-sidebar-layout="new"] [data-nav-row][data-active] [data-nav-chip] {
+  color: var(--tone-ink, var(--tone));
+  background-color: transparent;
+  box-shadow: none;
+  animation: none;
+}
+[data-sidebar-layout="new"] [data-nav-row]:hover [data-nav-chip] > svg {
+  animation: none;
+}
+
 /* Полоска слева у выбранного пункта сайдбара (строка — `relative`,
    отступ меню — 12px, полоска ложится на край сайдбара). */
 [data-nav-row][data-nav-bar][data-active]::before {

@@ -545,10 +545,10 @@ test("у каждого раздела, кроме «Остального» и �
     if (section.key === "more" || section.key === "news") assert.equal(section.menu, undefined);
     else assert.ok(section.menu && section.menu.length > 0, section.key);
   }
-  // Лист 2: Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Остальное, Реквизиты.
+  // Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним (2026-11-11).
   assert.deepEqual(menuShape("company"), [
-    [null, ["office", "points", "master"]],
-    [null, ["more", "organization"]],
+    [null, ["office", "points", "master", "organization"]],
+    [null, ["more"]],
   ]);
   // Лист 3: Сотрудники офиса; Права, доступ.
   assert.deepEqual(menuShape("office"), [[null, ["office", "access"]]]);
@@ -785,7 +785,7 @@ test("«Моя компания»: реквизиты с вкладками, м�
   for (const tab of requisites?.tabs ?? []) assert.deepEqual(tab.access, { kind: "anyOf", capabilities: ["admin.full"] }, tab.id);
   assert.equal(sectionForPath("/settings/organization")?.menuItemId, "organization");
   assert.equal(sectionForPath("/settings/organization/documents")?.menuItemId, "organization");
-  assert.deepEqual(visibleItemIds(manager, "company"), ["office", "points", "master", "more", "organization"]);
+  assert.deepEqual(visibleItemIds(manager, "company"), ["office", "points", "master", "organization", "more"]);
   assert.deepEqual(visibleItemIds(manager, "settings"), ["appearance", "branding", "names", "onboarding", "template"]);
   // Заведующей «Моей компании» нет; в «Настройках» — только названия разделов.
   assert.deepEqual(visibleItemIds(headChef, "company"), []);

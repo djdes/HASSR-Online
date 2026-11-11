@@ -2824,7 +2824,7 @@
         "open": "Nuqtani ochish",
         "captionOffice": "Tashkilot",
         "organization": "Butun tashkilot",
-        "companySection": "Bu bo‘lim butun kompaniyaga tegishli — tanlandi: {name}",
+        "companySection": "Umumiy bo‘lim — tanlandi: {name}",
         "returnTo": "«{name}»ga qaytish"
       },
       "sidebarAria": "Kabinet bo‘limlari",
@@ -3071,7 +3071,8 @@
         "dismiss": "Tushunarli"
       },
       "contentLoading": "Sahifa yangilanmoqda…",
-      "listLoading": "Ro‘yxat yuklanmoqda…"
+      "listLoading": "Ro‘yxat yuklanmoqda…",
+      "topMenuMore": "Yana"
     },
     "header": {
       "staff": "Xodimlar",

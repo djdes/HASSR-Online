@@ -39,7 +39,13 @@ export function CurrentPointSwitcher({
   point,
   buildings,
   manageHref,
+  bar = false,
 }: {
+  /**
+   * Полоса во всю ширину под шапкой — на телефоне (2026-11-11): в середине
+   * шапки между бургером и значками название точки сжималось до одной буквы.
+   */
+  bar?: boolean;
   point: HeaderPoint;
   /** Точки для переключения (`kind: "switch"`). */
   buildings: BuildingOption[];
@@ -63,10 +69,20 @@ export function CurrentPointSwitcher({
     option.address ? `${titleOf(option)}, ${option.address}` : titleOf(option);
 
   if (point.kind === "none" || hidden) return null;
+  const BASE = bar ? BAR_BASE : INLINE_BASE;
+  // Полоса живёт в своей строке под шапкой: рамку и отступы даёт обёртка.
+  const wrap = (node: React.ReactNode) =>
+    bar ? (
+      <div className="border-b border-[#ececf4] bg-white px-4 py-2 sm:hidden print:hidden" data-point-bar>
+        {node}
+      </div>
+    ) : (
+      node
+    );
 
   if (point.kind === "add") {
     // Сразу мастер «+ Добавить точку» (как в меню раздела), а не список точек.
-    return (
+    return wrap(
       <Link
         href="/settings/buildings/new"
         title={t("addHint")}
@@ -78,7 +94,7 @@ export function CurrentPointSwitcher({
       >
         <Plus className="size-4 shrink-0" aria-hidden />
         <span className="truncate">{t("add")}</span>
-      </Link>
+      </Link>,
     );
   }
 
@@ -87,10 +103,10 @@ export function CurrentPointSwitcher({
     const title = point.kind === "all" ? t("all", { count: String(point.count) }) : titleOf(point.point);
     const hint = point.kind === "all" ? point.options.map(titleOf).join(" · ") : hintOf(point.point);
     const office = point.kind === "single" && point.point.office === true;
-    return (
+    return wrap(
       <span className={BASE} data-current-point={point.kind} title={hint}>
         <PointLabel caption={office ? t("captionOffice") : caption} title={title} office={office} />
-      </span>
+      </span>,
     );
   }
 
@@ -128,7 +144,7 @@ export function CurrentPointSwitcher({
   );
 
   if (narrow) {
-    return (
+    return wrap(
       <>
         <button
           type="button"
@@ -159,9 +175,11 @@ export function CurrentPointSwitcher({
             ) : null}
           </div>
         </BottomSheet>
-      </>
+      </>,
     );
   }
+  // Полоса — только для телефона; на компьютере её место в середине шапки.
+  if (bar) return null;
 
   return (
     <DropdownMenu>
@@ -227,8 +245,11 @@ export function CurrentPointSwitcher({
   );
 }
 
-const BASE =
+const INLINE_BASE =
   "inline-flex h-11 min-w-0 max-w-[min(40vw,420px)] items-center gap-2 rounded-2xl px-3 text-left max-sm:max-w-[min(52vw,240px)] max-sm:px-2";
+/** Полоса на телефоне: во всю ширину, название слева, стрелка справа. */
+const BAR_BASE =
+  "flex h-12 w-full min-w-0 items-center gap-2.5 rounded-2xl border border-[#e3e6f3] bg-[#fafbff] px-3 text-left [&>svg:last-child]:ml-auto";
 
 /** Иконка точки, тихая подпись «Точка» («Организация» у офиса) и название — две строки. */
 function PointLabel({ caption, title, office = false }: { caption: string; title: string; office?: boolean }) {

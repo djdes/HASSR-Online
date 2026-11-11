@@ -1,8 +1,9 @@
 "use client";
 
+import { Fragment } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, Loader2, MapPin } from "lucide-react";
+import { Building2, Check, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
@@ -103,30 +104,45 @@ export function LocationSwitcherList({
       maxHeightClassName="max-h-[min(52vh,440px)] supports-[height:100dvh]:max-h-[min(52dvh,440px)]"
       className="mb-1 border-b border-[#ececf4] pb-2"
     >
-      {buildings.map((building) => {
+      {buildings.map((building, index) => {
         const isActive = building.id === activeId;
+        const office = isOfficeBuilding(building);
+        const Icon = office ? Building2 : Store;
         return (
-          <button
-            key={building.id}
-            type="button"
-            data-location-option={building.id}
-            data-active-option={isActive ? "" : undefined}
-            onClick={() => void switchTo(building, activeId)}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium transition-colors",
-              isActive ? "bg-[#f5f6ff] text-[#5566f6]" : "text-[#3c4053] hover:bg-[#fafbff]",
-            )}
-          >
-            <MapPin
-              className={cn("size-5 shrink-0", isActive ? "text-[#5566f6]" : "text-[#6f7282]")}
-            />
-            <span className="min-w-0 flex-1 truncate">{building.name}</span>
-            {busyId === building.id ? (
-              <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" />
-            ) : isActive ? (
-              <Check className="size-4 shrink-0 text-[#5566f6]" />
-            ) : null}
-          </button>
+          <Fragment key={building.id}>
+            <button
+              type="button"
+              data-location-option={building.id}
+              data-active-option={isActive ? "" : undefined}
+              onClick={() => void switchTo(building, activeId)}
+              className={cn(
+                "flex min-h-[52px] w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-[15.5px] font-medium transition-colors",
+                isActive ? "bg-[#f1f3ff] text-[#3848c7]" : "text-[#0b1024] hover:bg-[#fafbff] active:bg-[#f1f3ff]",
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-flex size-9 shrink-0 items-center justify-center rounded-xl",
+                  isActive ? "bg-white text-[#5566f6]" : "bg-[#f4f5fb] text-[#6f7282]",
+                )}
+              >
+                <Icon className="size-[18px]" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">{building.name}</span>
+                {building.address ? (
+                  <span className="block truncate text-[12.5px] font-normal text-[#9b9fb3]">{building.address}</span>
+                ) : null}
+              </span>
+              {busyId === building.id ? (
+                <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" />
+              ) : isActive ? (
+                <Check className="size-4 shrink-0 text-[#5566f6]" />
+              ) : null}
+            </button>
+            {/* Офис — первым, под ним черта: дальше торговые точки. */}
+            {office && index < buildings.length - 1 ? <div className="mx-3 my-1 border-t border-[#ececf4]" /> : null}
+          </Fragment>
         );
       })}
     </ScrollList>
