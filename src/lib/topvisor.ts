@@ -173,7 +173,18 @@ type RawProjectSearcher = {
 
 type RawProjectWithRegions = {
   id?: number | string;
+  pos_status?: number | string | null;
+  status_positions?: string | number | null;
+  percent_of_parse?: number | string | null;
   searchers?: RawProjectSearcher[] | null;
+};
+
+export type TopvisorCheckStatus = {
+  checking: boolean;
+  startedAt: string;
+  price: number | null;
+  percent: number | null;
+  baselineDates: string[];
 };
 
 const LOGICAL_REGION_SLOTS: Record<
@@ -669,3 +680,198 @@ export async function runChecker(regionIndexes: number[]): Promise<boolean> {
   });
   return hasQueuedProjects(fallback);
 }
+
+export function parseProjectCheckerProgress(project: unknown): {
+  active: boolean | null;
+  percent: number | null;
+} {
+  if (!project || typeof project !== "object") {
+    return { active: null, percent: null };
+  }
+  const raw = project as RawProjectWithRegions;
+  const rawPercent = raw.percent_of_parse;
+  const numPercent =
+    rawPercent !== undefined && rawPercent !== null && rawPercent !== ""
+      ? Number(rawPercent)
+      : NaN;
+  const percent =
+    Number.isFinite(numPercent) && numPercent >= 0 && numPercent <= 100
+      ? Math.round(numPercent)
+      : null;
+
+  const posStatus = raw.pos_status ?? raw.status_positions;
+  if (posStatus !== undefined && posStatus !== null && posStatus !== "") {
+    const strStatus = String(posStatus).trim().toLowerCase();
+    const numStatus = Number(strStatus);
+    if (Number.isFinite(numStatus)) {
+      // В Topvisor pos_status > 0 и < 100 (обычно 1..9) означает активную проверку / очередь
+      const active = numStatus > 0 && (percent === null || percent < 100);
+      return { active, percent };
+    }
+    if (
+      strStatus === "1" ||
+      strStatus === "queue" ||
+      strStatus === "checking" ||
+      strStatus === "process" ||
+      strStatus === "going"
+    ) {
+      return { active: true, percent };
+    }
+    if (strStatus === "0" || strStatus === "done" || strStatus === "ready") {
+      return { active: false, percent };
+    }
+  }
+
+  if (percent !== null) {
+    return { active: percent > 0 && percent < 100, percent };
+  }
+
+  return { active: null, percent: null };
+}
+
+/**
+ * Пробует узнать у Topvisor статус съёма через get/projects_2/projects
+ * с pos_status: 1. Безопасно возвращает { active: null, percent: null },
+ * если поле не поддержано или запрос не удался.
+ */
+export async function fetchProjectCheckerProgress(): Promise<{
+  active: boolean | null;
+  percent: number | null;
+}> {
+  try {
+    const { projectId } = config();
+    const projects = await tvRequest<RawProjectWithRegions[]>(
+      "get/projects_2/projects",
+      {
+        filters: idFilter([projectId]),
+        pos_status: 1,
+      }
+    );
+    const project = Array.isArray(projects)
+      ? (projects.find((p) => Number(p?.id) === projectId) ?? projects[0])
+      : null;
+    return parseProjectCheckerProgress(project);
+  } catch {
+    return { active: null, percent: null };
+  }
+}
+
+/** Максимальное время жизни блокировки съёма, если Topvisor не ответил явно (15 минут). */
+export const CHECKER_STATE_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * В первые 25 секунд после запуска Topvisor может ещё не выставить pos_status = 1,
+ * поэтому не сбрасываем состояние мгновенно по pos_status = 0.
+ */
+const CHECKER_GRACE_PERIOD_MS = 25 * 1000;
+
+export type StoredTopvisorCheckState = {
+  startedAt: string;
+  price: number | null;
+  regions: number[];
+  baselineDates: string[];
+  baselineFilledCount: number;
+};
+
+export function parseStoredCheckState(
+  raw: string | null | undefined
+): StoredTopvisorCheckState | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<StoredTopvisorCheckState>;
+    if (!parsed || typeof parsed.startedAt !== "string") return null;
+    const startedMs = new Date(parsed.startedAt).getTime();
+    if (!Number.isFinite(startedMs)) return null;
+    return {
+      startedAt: parsed.startedAt,
+      price: typeof parsed.price === "number" ? parsed.price : null,
+      regions: Array.isArray(parsed.regions)
+        ? parsed.regions.map(Number).filter(Number.isFinite)
+        : [],
+      baselineDates: Array.isArray(parsed.baselineDates)
+        ? parsed.baselineDates.filter((d): d is string => typeof d === "string")
+        : [],
+      baselineFilledCount:
+        typeof parsed.baselineFilledCount === "number"
+          ? parsed.baselineFilledCount
+          : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function countFilledPositionsOnLatestDate(matrix: PositionMatrix): number {
+  const newest = matrix.dates[0];
+  if (!newest) return 0;
+  let count = 0;
+  for (const row of matrix.rows) {
+    if (row.byDate[newest] !== undefined) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+/**
+ * Определяет, продолжается ли ещё съём позиций.
+ * Возвращает null, если съём завершён или истёк таймаут.
+ */
+export function evaluateActiveCheckStatus(input: {
+  stored: StoredTopvisorCheckState | null;
+  nowMs?: number;
+  remoteProgress?: { active: boolean | null; percent: number | null };
+  matrix?: PositionMatrix | null;
+}): TopvisorCheckStatus | null {
+  const { stored, nowMs = Date.now(), remoteProgress, matrix } = input;
+
+  // Если Topvisor прямо сообщает, что сейчас идёт парсинг, даже без локальной записи:
+  if (!stored) {
+    if (remoteProgress?.active === true) {
+      return {
+        checking: true,
+        startedAt: new Date(nowMs).toISOString(),
+        price: null,
+        percent: remoteProgress.percent,
+        baselineDates: [],
+      };
+    }
+    return null;
+  }
+
+  const startedMs = new Date(stored.startedAt).getTime();
+  const elapsedMs = nowMs - startedMs;
+  if (!Number.isFinite(startedMs) || elapsedMs > CHECKER_STATE_TTL_MS) {
+    return null;
+  }
+
+  // Если Topvisor явно ответил, что проверка завершена (и прошёл стартовый grace-период):
+  if (remoteProgress?.active === false && elapsedMs > CHECKER_GRACE_PERIOD_MS) {
+    return null;
+  }
+
+  // Если у нас есть свежая матрица и Topvisor не говорит, что ещё парсит:
+  if (matrix && remoteProgress?.active !== true && elapsedMs > CHECKER_GRACE_PERIOD_MS) {
+    const baselineSet = new Set(stored.baselineDates);
+    const hasNewDate = matrix.dates.some((d) => !baselineSet.has(d));
+    const currentFilled = countFilledPositionsOnLatestDate(matrix);
+    const hasMoreFilled =
+      matrix.dates.length > 0 &&
+      matrix.dates[0] === stored.baselineDates[0] &&
+      currentFilled > stored.baselineFilledCount;
+
+    if (hasNewDate || hasMoreFilled) {
+      return null;
+    }
+  }
+
+  return {
+    checking: true,
+    startedAt: stored.startedAt,
+    price: stored.price,
+    percent: remoteProgress?.percent ?? null,
+    baselineDates: stored.baselineDates,
+  };
+}
+
+

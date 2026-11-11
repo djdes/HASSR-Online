@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Loader2, Play, RefreshCw, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,7 +11,11 @@ import {
   regionLabel,
 } from "@/lib/topvisor-regions";
 // Только типы — они стираются при компиляции и в бандл не попадают.
-import type { PositionMatrix, PositionSummary } from "@/lib/topvisor";
+import type {
+  PositionMatrix,
+  PositionSummary,
+  TopvisorCheckStatus,
+} from "@/lib/topvisor";
 
 type ArticleInfo = { title: string; published: boolean };
 
@@ -77,40 +81,75 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
   const [checkOpen, setCheckOpen] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
   const [pricing, setPricing] = useState(false);
+  const [activeCheck, setActiveCheck] = useState<TopvisorCheckStatus | null>(null);
+  const wasCheckingRef = useRef(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `/api/root/topvisor/positions?region=${regionIndex}&days=${days}`
-      );
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Не удалось загрузить позиции");
-      setMatrix(data.matrix ?? null);
-      setSummary(data.summary ?? null);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ошибка загрузки");
-      setMatrix(null);
-      setSummary(null);
-    } finally {
-      setLoading(false);
-      setLoaded(true);
-    }
-  }, [regionIndex, days]);
+  const checking = Boolean(activeCheck?.checking);
+
+  const load = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/root/topvisor/positions?region=${regionIndex}&days=${days}`,
+          { cache: "no-store" }
+        );
+        const data = await response.json().catch(() => null);
+        if (!response.ok)
+          throw new Error(data?.error ?? "Не удалось загрузить позиции");
+        setMatrix(data.matrix ?? null);
+        setSummary(data.summary ?? null);
+        const nextCheck: TopvisorCheckStatus | null = data.activeCheck ?? null;
+        setActiveCheck(nextCheck);
+        if (wasCheckingRef.current && !nextCheck) {
+          wasCheckingRef.current = false;
+          toast.success("Съём позиций завершён, матрица обновлена");
+        } else if (nextCheck?.checking) {
+          wasCheckingRef.current = true;
+        }
+      } catch (error) {
+        if (!options?.silent) {
+          toast.error(error instanceof Error ? error.message : "Ошибка загрузки");
+          setMatrix(null);
+          setSummary(null);
+        }
+      } finally {
+        if (!options?.silent) setLoading(false);
+        setLoaded(true);
+      }
+    },
+    [regionIndex, days]
+  );
 
   useEffect(() => {
     if (configured) void load();
   }, [configured, load]);
 
+  useEffect(() => {
+    if (!configured || !checking) return;
+    const timer = window.setInterval(() => {
+      void load({ silent: true });
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [configured, checking, load]);
+
   /** Цену спрашиваем до открытия диалога: сумма должна быть в тексте. */
   async function askCheck() {
+    if (checking) return;
     setPricing(true);
     try {
       const response = await fetch(
-        `/api/root/topvisor/checker?regions=${DEFAULT_REGIONS.join(",")}`
+        `/api/root/topvisor/checker?regions=${DEFAULT_REGIONS.join(",")}`,
+        { cache: "no-store" }
       );
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error ?? "Не удалось узнать цену");
+      if (data?.activeCheck?.checking) {
+        setActiveCheck(data.activeCheck);
+        wasCheckingRef.current = true;
+        toast.info("Съём позиций уже выполняется");
+        return;
+      }
       setPrice(typeof data.price === "number" ? data.price : null);
       setCheckOpen(true);
     } catch (error) {
@@ -121,16 +160,37 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
   }
 
   async function runCheck() {
+    if (checking) {
+      setCheckOpen(false);
+      return;
+    }
     const response = await fetch("/api/root/topvisor/checker", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ regions: DEFAULT_REGIONS }),
     });
     const data = await response.json().catch(() => null);
+    if (response.status === 409 && data?.activeCheck) {
+      setActiveCheck(data.activeCheck);
+      wasCheckingRef.current = true;
+      setCheckOpen(false);
+      toast.info(data?.error ?? "Съём позиций уже выполняется");
+      return;
+    }
     if (!response.ok || !data?.queued) {
       toast.error(data?.error ?? "Съём не запустился");
       return;
     }
+    const nextCheck: TopvisorCheckStatus = data.activeCheck ?? {
+      checking: true,
+      startedAt: new Date().toISOString(),
+      price: typeof data.price === "number" ? data.price : price,
+      percent: null,
+      baselineDates: matrix?.dates ?? [],
+    };
+    setActiveCheck(nextCheck);
+    wasCheckingRef.current = true;
+    setCheckOpen(false);
     toast.success(
       `Съём запущен, спишется ${data.price} ₽. Результат появится через несколько минут.`
     );
@@ -226,18 +286,42 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
           <button
             type="button"
             onClick={() => void askCheck()}
-            disabled={pricing}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
+            disabled={pricing || checking}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pricing ? (
+            {pricing || checking ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <Play className="size-4" />
             )}
-            Снять позиции
+            {checking
+              ? activeCheck?.percent != null
+                ? `Идёт съём (${activeCheck.percent}%)…`
+                : "Идёт съём позиций…"
+              : "Снять позиции"}
           </button>
         </div>
       </div>
+
+      {checking && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#d8defd] bg-[#f5f6ff] px-4 py-3 text-[13.5px] text-[#0b1024]"
+        >
+          <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" />
+          <div className="min-w-0 flex-1">
+            <span className="font-medium text-[#3848c7]">
+              Идёт съём позиций в Topvisor
+              {activeCheck?.percent != null ? ` · ${activeCheck.percent}%` : ""}
+            </span>
+            <span className="ml-2 text-[#6f7282]">
+              Обычно занимает 1–3 минуты. Таблица обновится автоматически, можно
+              переключать вкладки или перезагружать страницу.
+            </span>
+          </div>
+        </div>
+      )}
 
       {summary && (
         <div className="flex flex-wrap items-center gap-2">
@@ -251,13 +335,28 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
 
       {noData ? (
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-14 text-center">
-          <div className="text-[15px] font-medium text-[#0b1024]">
-            Съёмов ещё не было
-          </div>
-          <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-relaxed text-[#6f7282]">
-            Фразы в Topvisor есть, но позиции по ним ни разу не снимали. Нажмите
-            «Снять позиции» — сумма к списанию покажется до подтверждения.
-          </p>
+          {checking ? (
+            <>
+              <Loader2 className="mx-auto mb-3 size-6 animate-spin text-[#5566f6]" />
+              <div className="text-[15px] font-medium text-[#0b1024]">
+                Съём позиций выполняется…
+              </div>
+              <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-relaxed text-[#6f7282]">
+                Запрос отправлен в Topvisor. Как только поисковики отдадут
+                результаты, таблица появится здесь автоматически.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-[15px] font-medium text-[#0b1024]">
+                Съёмов ещё не было
+              </div>
+              <p className="mx-auto mt-1.5 max-w-[420px] text-[13px] leading-relaxed text-[#6f7282]">
+                Фразы в Topvisor есть, но позиции по ним ни разу не снимали. Нажмите
+                «Снять позиции» — сумма к списанию покажется до подтверждения.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
@@ -336,6 +435,7 @@ export function PositionsClient({ configured, articleBySlug }: Props) {
         open={checkOpen}
         onClose={() => setCheckOpen(false)}
         onConfirm={runCheck}
+        confirmDisabled={checking}
         variant="warn"
         title="Снять позиции сейчас?"
         description={

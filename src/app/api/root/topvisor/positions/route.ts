@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { requireRoot } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 import {
   TopvisorError,
+  evaluateActiveCheckStatus,
+  fetchProjectCheckerProgress,
   getPositionsHistory,
   isTopvisorConfigured,
+  parseStoredCheckState,
   summarize,
 } from "@/lib/topvisor";
 
@@ -14,6 +18,7 @@ export const dynamic = "force-dynamic";
 /** Максимум окна — чтобы случайный ?days=100000 не тянул годы истории. */
 const MAX_DAYS = 180;
 const DEFAULT_DAYS = 30;
+const CHECKER_STATE_KEY = "seo.topvisor.activeCheck";
 
 function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -55,17 +60,39 @@ export async function GET(request: Request) {
   const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
 
   try {
-    const matrix = await getPositionsHistory({
-      regionIndex,
-      dateFrom: isoDate(from),
-      dateTo: isoDate(to),
+    const [matrix, storedRow, remoteProgress] = await Promise.all([
+      getPositionsHistory({
+        regionIndex,
+        dateFrom: isoDate(from),
+        dateTo: isoDate(to),
+      }),
+      db.platformSetting
+        .findUnique({ where: { key: CHECKER_STATE_KEY } })
+        .catch(() => null),
+      fetchProjectCheckerProgress(),
+    ]);
+
+    const stored = parseStoredCheckState(storedRow?.value);
+    const activeCheck = evaluateActiveCheckStatus({
+      stored,
+      remoteProgress,
+      matrix,
     });
+
+    if (!activeCheck && stored) {
+      await db.platformSetting
+        .deleteMany({ where: { key: CHECKER_STATE_KEY } })
+        .catch(() => null);
+    }
+
     return NextResponse.json({
       configured: true,
       regionIndex,
       days,
       matrix,
       summary: summarize(matrix),
+      checking: Boolean(activeCheck),
+      activeCheck,
     });
   } catch (error) {
     if (error instanceof TopvisorError) {
@@ -77,3 +104,4 @@ export async function GET(request: Request) {
     throw error;
   }
 }
+

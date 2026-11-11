@@ -4,9 +4,12 @@ import { describe, it } from "node:test";
 import {
   TopvisorError,
   buildMatrix,
+  evaluateActiveCheckStatus,
   mapLogicalRegionsToProject,
   parsePosition,
   parsePositionKey,
+  parseProjectCheckerProgress,
+  parseStoredCheckState,
   summarize,
   unwrap,
 } from "@/lib/topvisor";
@@ -197,3 +200,77 @@ describe("mapLogicalRegionsToProject", () => {
     assert.deepEqual(mapLogicalRegionsToProject([1, 5], null), [1, 5]);
   });
 });
+
+describe("parseProjectCheckerProgress", () => {
+  it("распознаёт активный съём по pos_status и percent_of_parse", () => {
+    assert.deepEqual(
+      parseProjectCheckerProgress({ pos_status: 2, percent_of_parse: "45" }),
+      { active: true, percent: 45 }
+    );
+    assert.deepEqual(
+      parseProjectCheckerProgress({ pos_status: 0, percent_of_parse: 100 }),
+      { active: false, percent: 100 }
+    );
+  });
+
+  it("безопасно обрабатывает пустой ответ", () => {
+    assert.deepEqual(parseProjectCheckerProgress(null), {
+      active: null,
+      percent: null,
+    });
+  });
+});
+
+describe("evaluateActiveCheckStatus", () => {
+  it("удерживает статус активного съёма после запуска и сбрасывает при появлении новой даты в матрице", () => {
+    const startedMs = 1_700_000_000_000;
+    const stored = parseStoredCheckState(
+      JSON.stringify({
+        startedAt: new Date(startedMs).toISOString(),
+        price: 35.46,
+        regions: [1, 5],
+        baselineDates: ["2026-09-07"],
+        baselineFilledCount: 1,
+      })
+    );
+    assert.ok(stored);
+
+    // Сразу после запуска съём считается активным даже при pos_status = 0 (grace period)
+    const activeEarly = evaluateActiveCheckStatus({
+      stored,
+      nowMs: startedMs + 5_000,
+      remoteProgress: { active: false, percent: 0 },
+    });
+    assert.equal(activeEarly?.checking, true);
+    assert.equal(activeEarly?.price, 35.46);
+
+    // Когда в матрице появилась новая дата (2026-09-09) и прошёл grace period — съём завершён
+    const matrixWithNewDate = buildMatrix(RAW);
+    const finished = evaluateActiveCheckStatus({
+      stored,
+      nowMs: startedMs + 60_000,
+      remoteProgress: { active: null, percent: null },
+      matrix: matrixWithNewDate,
+    });
+    assert.equal(finished, null);
+  });
+
+  it("сбрасывает блокировку по истечении 15-минутного таймаута", () => {
+    const startedMs = 1_700_000_000_000;
+    const stored = parseStoredCheckState(
+      JSON.stringify({
+        startedAt: new Date(startedMs).toISOString(),
+        price: 35.46,
+        regions: [1, 5],
+        baselineDates: [],
+        baselineFilledCount: 0,
+      })
+    );
+    const expired = evaluateActiveCheckStatus({
+      stored,
+      nowMs: startedMs + 16 * 60 * 1000,
+    });
+    assert.equal(expired, null);
+  });
+});
+
