@@ -9,6 +9,7 @@ import {
   type SettingsCardSection,
 } from "@/lib/settings-cards";
 import { NavIconChip } from "@/components/layout/nav-icons";
+import { NavBadge } from "@/components/layout/section-menu-list";
 import { LinkPendingOverlay } from "@/components/ui/link-pending";
 import { automationOn, type JournalControls } from "@/lib/journal-controls";
 
@@ -33,6 +34,7 @@ export async function SettingsCardGrid({
 }) {
   const tCards = await getTranslations("settingsManagement.home.cards");
   const tGroups = await getTranslations("navigation.shell.groups");
+  const tShell = await getTranslations("navigation.shell");
   const groups = settingsCardGroups(section)
     .map((group) => ({
       group,
@@ -71,7 +73,10 @@ export async function SettingsCardGrid({
                     <NavIconChip name={card.icon} className="size-10 rounded-xl" iconClassName="size-5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[15px] font-semibold text-[#0b1024]">{title}</div>
+                        <div className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
+                          <span className="min-w-0">{title}</span>
+                          {card.pro ? <NavBadge>{tShell("badges.pro")}</NavBadge> : null}
+                        </div>
                         <ArrowRight className="size-4 shrink-0 text-[#c7ccea] transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-[#5566f6]" />
                       </div>
                       <div className="mt-1 text-[13px] leading-[1.5] text-[#6f7282]">

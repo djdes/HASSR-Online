@@ -150,6 +150,7 @@ export function SectionTopMenu() {
                   >
                     <Link href={entry.href} aria-current={entry.active ? "page" : undefined}>
                       {entry.label}
+                      {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -191,6 +192,7 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
           className={cn(ENTRY, "group", entry.active ? ENTRY_ACTIVE : ENTRY_IDLE)}
         >
           <span className={ENTRY_LABEL}>{entry.label}</span>
+          {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
           <ChevronDown
             aria-hidden
             className="size-3.5 shrink-0 text-[#9b9fb3] transition-transform duration-150 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
@@ -205,7 +207,10 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
         {ownRow ? (
           <>
             <DropdownMenuItem asChild className="font-semibold text-[#0b1024] focus:bg-[#f5f6ff]">
-              <Link href={entry.href}>{entry.label}</Link>
+              <Link href={entry.href}>
+                {entry.label}
+                {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="my-1" />
           </>
@@ -226,6 +231,7 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
                   >
                     <Link href={link.href} aria-current={link.active ? (link.tabs.length > 0 ? "true" : "page") : undefined}>
                       {link.label}
+                      {link.badge ? <NavBadge>{link.badge}</NavBadge> : null}
                     </Link>
                   </DropdownMenuItem>
                   {link.tabs.map((tab) => (
