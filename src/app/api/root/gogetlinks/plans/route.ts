@@ -106,7 +106,7 @@ export async function POST(request: Request) {
       ? await materializePlanSlots().catch(() => ({ created: 0 }))
       : { created: 0 };
     if (plan.isActive) {
-      void prepareUpcomingPlannedSlots().catch((err) => {
+      void prepareUpcomingPlannedSlots({ windowDays: 35 }).catch((err) => {
         console.warn("[ggl-plans] background slot preparation error:", err);
       });
     }

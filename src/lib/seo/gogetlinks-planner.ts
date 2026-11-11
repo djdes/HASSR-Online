@@ -562,9 +562,17 @@ export function selectBestDonorAndAlternatives(
   const qualified: SelectedDonorCandidate[] = [];
   const seenCandidateDomains = new Set<string>();
 
+  const OFF_TOPIC_DOMAIN_RE =
+    /(tabak|vape|smoke|2prishi|prishi|sochinyaka|pesni|gitara|zodiak|goroskop|anekdot|prikol|igry|tabsgame|gameobzor|crypto|tocrypto|poiskmonet|millioner-otvet|zootaxi)/i;
+  const TIER1_THEMATIC_RE =
+    /(resttrade|posuda|horeca|food|obshchepit|sanpin|haccp|jbio|farmnet|labparts|doccentr|souzprom|industry|diabetic|med)/i;
+  const TIER2_MEDIA_B2B_RE =
+    /(news|vkyrse|astrakhan|viarum|analitik|itznanie|press|reportnet|cultmoscow|ruspl|dailybest|1npf|digital|techno|neurotech|f1-it|komputer|providers)/i;
+
   for (const candidate of candidates) {
     const normDomain = normalizeDomainName(candidate.domain);
     if (!normDomain || normDomain === "wesetup.ru") continue;
+    if (OFF_TOPIC_DOMAIN_RE.test(normDomain)) continue;
     if (normalizedUsed.has(normDomain) || seenCandidateDomains.has(normDomain)) continue;
 
     if (requireBothIndexed && (!candidate.indexedYandex || !candidate.indexedGoogle)) {
@@ -602,9 +610,16 @@ export function selectBestDonorAndAlternatives(
       ? (candidate.priceArticleRub as number)
       : (candidate.priceNoteRub as number);
 
+    const thematicMultiplier = TIER1_THEMATIC_RE.test(normDomain)
+      ? 2.4
+      : TIER2_MEDIA_B2B_RE.test(normDomain)
+        ? 1.8
+        : 1.0;
+
     const valueScore =
       Math.round(
-        (((dailyTraffic / 100 + tf + cf + trust * 3) / selectedPriceRub) * 10_000),
+        ((((dailyTraffic / 100 + tf + cf + trust * 3) * thematicMultiplier) / selectedPriceRub) *
+          10_000),
       ) / 10_000;
 
     seenCandidateDomains.add(normDomain);
