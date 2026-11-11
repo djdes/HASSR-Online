@@ -106,11 +106,12 @@ test("real raw/plan-list/summary-source/directory differences still trigger actu
     assert.notEqual(revision(first), revision(next)); guard.refresh(next);
     assert.equal(guard.snapshot().writes, 1); assert.equal(guard.snapshot().normalizations, 1); assert.deepEqual(guard.snapshot().config, next.config);
   }
-  const changedDirectory = [{ id: "different-cook", name: "RAW/Other", role: "cook" }];
+  // A default responsible is only ever a leader, so the changed directory brings a different manager.
+  const changedDirectory = [{ id: "different-manager", name: "RAW/Other", role: "manager" }];
   const next = propsFor(raw, changedDirectory);
   assert.notEqual(first.config.defaultResponsibleUserId, next.config.defaultResponsibleUserId);
   assert.notEqual(first.sourceIdentity, next.sourceIdentity);
-  const guard = actualGuard(first); guard.refresh(next); assert.equal(guard.snapshot().config.defaultResponsibleUserId, "different-cook"); assert.equal(guard.snapshot().writes, 1);
+  const guard = actualGuard(first); guard.refresh(next); assert.equal(guard.snapshot().config.defaultResponsibleUserId, "different-manager"); assert.equal(guard.snapshot().writes, 1);
   const renamed = propsFor(raw, users.map(user => ({ ...user, name: user.name + " Changed" })));
   assert.notEqual(first.sourceIdentity, renamed.sourceIdentity); const renameGuard = actualGuard(first); renameGuard.refresh(renamed); assert.equal(renameGuard.snapshot().writes, 1);
   const summary = captureAcceptanceSummarySource(raw), config = normalizeAcceptanceDocumentConfig(raw, users);

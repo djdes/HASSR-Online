@@ -75,5 +75,6 @@ export function pickPointSigner<T extends { role?: string | null; buildingIds?: 
   buildingId: string | null,
 ): T | null {
   const local = users.filter((user) => worksAtBuilding(user, buildingId));
-  return pickPrimaryManager(local.length > 0 ? local : [...users]);
+  // Запись датчика без автора сохранить нельзя — здесь «первый» допустим.
+  return pickPrimaryManager(local.length > 0 ? local : [...users], { fallbackToFirst: true });
 }

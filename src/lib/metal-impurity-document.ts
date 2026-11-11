@@ -151,7 +151,6 @@ export function getDefaultMetalImpurityConfig(params?: {
       : null) ||
     getUsersForRoleLabel(params?.users || [], responsiblePosition)[0] ||
     manager ||
-    params?.users?.[0] ||
     null;
   // Без реального сотрудника оставляем пусто — «Иванов И.И.» в бланке
   // выглядит как настоящая подпись несуществующего человека.

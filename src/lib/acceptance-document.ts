@@ -1,6 +1,6 @@
 ﻿import { getUserRoleLabel } from "@/lib/user-roles";
 
-import { rankRosterForSlot } from "@/lib/journal-roster";
+import { pickRosterForUnsetSlot } from "@/lib/journal-roster";
 export const ACCEPTANCE_DOCUMENT_TEMPLATE_CODE = "incoming_control";
 export const RAW_MATERIAL_ACCEPTANCE_TEMPLATE_CODE =
   "incoming_raw_materials_control";
@@ -355,8 +355,8 @@ export function getAcceptanceDocumentDefaultConfig(
   users: AcceptanceUser[]
 ): AcceptanceDocumentConfig {
   // Первого по списку не подставляем: это случайный человек. Правила
-  // ростера: без ROOT и аккаунтов-заглушек («имя = почта»), линейный
-  // персонал раньше руководства. Никого нет — ответственный не назначен.
+  // ростера: без ROOT и аккаунтов-заглушек («имя = почта»), только
+  // руководящая должность. Никого нет — ответственный не назначен.
   const defaultResponsibleUserId = pickAcceptanceResponsibleUser(users)?.id || null;
 
   return {
@@ -377,9 +377,11 @@ export function getAcceptanceDocumentDefaultConfig(
  * оказывался аккаунт мгновенной регистрации, названный почтой.
  */
 function pickAcceptanceResponsibleUser(users: AcceptanceUser[]): AcceptanceUser | null {
-  const ranked = rankRosterForSlot(
+  // Только руководящая должность (шеф, заведующий… старший, бригадир) —
+  // рядового «первого по списку» не ставим (тикет 57187T).
+  const ranked = pickRosterForUnsetSlot(
     users.map((user) => ({ ...user, name: user.name ?? "" })),
-    { kind: "filler" }
+    { kind: "filler", leader: true }
   );
   return ranked ? users.find((user) => user.id === ranked.id) ?? null : null;
 }

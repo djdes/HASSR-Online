@@ -57,7 +57,7 @@ import { PublishUndoToHeader } from "@/components/journals/journal-undo-slot";
 import { useJournalUndo } from "@/lib/journal-undo";
 import { PositionNativeOptions } from "@/components/shared/position-select";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
-import { rankRosterForSlot } from "@/lib/journal-roster";
+import { pickRosterForUnsetSlot } from "@/lib/journal-roster";
 import { useTodayKey } from "@/lib/use-today-key";
 import { EquipmentDirectoryField } from "@/components/journals/equipment-directory-field";
 import type { EquipmentDirectoryOption } from "@/lib/equipment-directory-link";
@@ -263,7 +263,7 @@ export function EquipmentCleaningDocumentClient({
     // правилам ростера (без аккаунтов-заглушек «имя = почта»). Раньше —
     // первый в списке и владелец.
     const washer = users.find((user) => user.id === viewerId) || null;
-    const controller = rankRosterForSlot(users, { kind: "verifier" });
+    const controller = pickRosterForUnsetSlot(users, { kind: "verifier", leader: true });
 
     setDraft({
       id: null,

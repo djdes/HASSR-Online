@@ -1,9 +1,11 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import type { BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
+import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
 import { cn } from "@/lib/utils";
 import { useContentTransition } from "@/components/layout/content-transition";
 import { ScrollList } from "@/components/ui/scroll-list";
@@ -25,12 +27,28 @@ import { ScrollList } from "@/components/ui/scroll-list";
  * тост «Точка: …» — после того, как данные точки уже на экране.
  */
 
-export function useSwitchBuilding() {
+export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
   const t = useTranslations("navigation.shell.point");
+  const router = useRouter();
+  const pathname = usePathname();
   const { refreshAfter, pendingTag, isPending } = useContentTransition();
 
   function switchTo(building: BuildingOption, activeBuildingId: string | null) {
-    if (building.id === activeBuildingId || isPending) return;
+    if (isPending) return;
+    // Выбор ведёт в раздел, который у выбранного есть (2026-11-10): точка,
+    // выбранная на главной или в разделе всей компании, открывает свою
+    // страницу; офис, выбранный на странице точки, — список точек.
+    const href = hrefAfterPointSwitch({
+      pathname,
+      target: { id: building.id, office: isOfficeBuilding(building) },
+      canManagePoints: options.canManagePoints === true,
+    });
+    if (building.id === activeBuildingId) {
+      // Точка уже выбрана: менять нечего, но её раздел открываем — нажатие
+      // на главной не должно оставаться без ответа.
+      if (href) router.push(href);
+      return;
+    }
     refreshAfter(
       building.id,
       async () => {
@@ -42,6 +60,8 @@ export function useSwitchBuilding() {
           });
           const data = await response.json().catch(() => null);
           if (!response.ok) throw new Error(data?.error ?? t("failed"));
+          // Переход — после записи выбора: новая страница соберётся уже для него.
+          if (href) router.push(href);
           return true;
         } catch (error) {
           toast.error(error instanceof Error ? error.message : t("failed"));
@@ -64,11 +84,14 @@ export function useSwitchBuilding() {
 export function LocationSwitcherList({
   buildings,
   activeBuildingId,
+  canManagePoints,
 }: {
   buildings: BuildingOption[];
   activeBuildingId: string | null;
+  /** Есть доступ к страницам точек — выбор точки может открыть её страницу. */
+  canManagePoints?: boolean;
 }) {
-  const { switchTo, busyId } = useSwitchBuilding();
+  const { switchTo, busyId } = useSwitchBuilding({ canManagePoints });
   if (buildings.length < 2) return null;
   const activeId = activeBuildingId ?? buildings[0]?.id ?? null;
 

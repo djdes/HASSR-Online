@@ -290,7 +290,7 @@ function isDefaultPickExcluded(user: { role?: string | null }): boolean {
 
 export function pickUserByRolePriority<
   T extends { role?: string | null }
->(users: T[], roles: readonly UserRole[]): T | null {
+>(users: T[], roles: readonly UserRole[], options: { fallbackToFirst?: boolean } = {}): T | null {
   // Раньше первым «управляющим» оказывался аккаунт мгновенной регистрации,
   // названный почтой, — и он вставал ответственным журнала. Заглушки и ROOT
   // берём, только если больше некого.
@@ -303,7 +303,11 @@ export function pickUserByRolePriority<
     }
   }
 
-  return pool[0] || null;
+  // Никого с подходящей ролью — никого (тикет 57187T): раньше сюда вставал
+  // первый по списку, и один и тот же рядовой сотрудник оказывался
+  // ответственным во множестве журналов. «Первого» берут только там, где
+  // без человека нельзя технически (`fallbackToFirst`).
+  return options.fallbackToFirst ? pool[0] || null : null;
 }
 
 export function isManagerRole(role: string | null | undefined): boolean {
@@ -321,13 +325,15 @@ export function getDbRoleValuesWithLegacy(
 }
 
 export function pickPrimaryManager<T extends { role?: string | null }>(
-  users: T[]
+  users: T[],
+  options: { fallbackToFirst?: boolean } = {}
 ): T | null {
-  return pickUserByRolePriority(users, ["manager", "head_chef"]);
+  return pickUserByRolePriority(users, ["manager", "head_chef"], options);
 }
 
 export function pickPrimaryStaff<T extends { role?: string | null }>(
-  users: T[]
+  users: T[],
+  options: { fallbackToFirst?: boolean } = {}
 ): T | null {
-  return pickUserByRolePriority(users, ["cook", "waiter", "head_chef", "manager"]);
+  return pickUserByRolePriority(users, ["cook", "waiter", "head_chef", "manager"], options);
 }

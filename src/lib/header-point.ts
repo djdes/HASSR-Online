@@ -1,6 +1,7 @@
-import { sectionForPath, type NavSectionKey } from "@/lib/app-nav";
+import { sectionForPath } from "@/lib/app-nav";
 import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingContext, type BuildingOption } from "@/lib/building-scope";
 import { HOME_HREF } from "@/lib/home-page";
+import { COMPANY_WIDE_SECTIONS, normalizePath } from "@/lib/point-section-sync";
 
 /**
  * Что стоит в центре шапки кабинета (эскиз руководителя 2026-10-18: слева —
@@ -123,14 +124,7 @@ export function resolveHeaderPoint(input: {
   };
 }
 
-/**
- * Разделы про всю компанию (сканы 98–99, 2026-10-28: «именно тут это не
- * нужно»): реквизиты, мастер-кабинет, офис, подписки, оформление. Выбор
- * точки на этих страницах ничего не меняет — переключатель только путает.
- */
-const COMPANY_WIDE_SECTIONS: ReadonlySet<NavSectionKey> = new Set(["company", "office", "billing", "settings"]);
-
-/** Страницы без своего раздела в списке выше: главная и список всех точек. */
+/** Страницы без своего раздела: главная и список всех точек — про всю компанию. */
 const COMPANY_WIDE_PATHS: ReadonlySet<string> = new Set([HOME_HREF, "/settings/buildings"]);
 
 /**
@@ -146,12 +140,20 @@ const PLACE_FILTER_PATHS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Прятать ли точку в центре шапки на этом пути. На страницах точки
- * (журналы, QR, ППК) она остаётся; на вкладках с фильтром по точкам — нет.
+ * Прятать ли точку в центре шапки на этом пути.
+ *
+ * Переключатель (`kind: "switch"`) — на виду везде (владелец, 2026-11-10:
+ * после входа руководитель должен видеть его сверху): в разделах всей
+ * компании он показывает офис, а выбор точки ведёт в её раздел
+ * (`point-section-sync.ts`). Исключение — вкладки со своим фильтром по
+ * точкам. Подписи без переключения («одна точка», «Точки · Все: N») в
+ * разделах всей компании по-прежнему не нужны (сканы 98–99, 2026-10-28).
  */
-export function headerPointHidden(pathname: string | null | undefined): boolean {
-  const path = (pathname || "/").split(/[?#]/)[0].replace(/(.)\/+$/, "$1");
-  if (COMPANY_WIDE_PATHS.has(path) || PLACE_FILTER_PATHS.has(path)) return true;
+export function headerPointHidden(pathname: string | null | undefined, kind?: HeaderPoint["kind"]): boolean {
+  const path = normalizePath(pathname);
+  if (PLACE_FILTER_PATHS.has(path)) return true;
+  if (kind === "switch") return false;
+  if (COMPANY_WIDE_PATHS.has(path)) return true;
   const owner = sectionForPath(path);
   return owner !== null && COMPANY_WIDE_SECTIONS.has(owner.section);
 }

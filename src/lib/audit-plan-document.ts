@@ -68,7 +68,6 @@ function pickAuditors(users: UserLike[]) {
   const primary = pickPrimaryManager(users);
   const secondary =
     users.find((user) => normalizeUserRole(user.role) === "head_chef") ||
-    users.find((user) => user.name !== primary?.name) ||
     primary;
 
   return [primary, secondary].filter((item): item is UserLike => item !== null);

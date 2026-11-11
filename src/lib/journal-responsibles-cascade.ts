@@ -20,7 +20,7 @@ import {
 } from "@/lib/journal-default-configs";
 import {
   ORG_ROSTER_WHERE,
-  rankRosterForSlot,
+  pickRosterForUnsetSlot,
   type RosterUser,
 } from "@/lib/journal-roster";
 import { getUserDisplayTitle } from "@/lib/user-roles";
@@ -38,6 +38,13 @@ import {
 
 /** Точка авто-подбора: её id и точки организации (висящие id удалённых точек не режут людей). */
 type RosterPoint = { id: string; orgBuildingIds: readonly string[] } | null;
+
+/** Сначала те, у кого точка указана явно; порядок внутри групп сохраняется. */
+export function pointStaffFirst<T extends { buildingIds?: readonly string[] | null }>(users: readonly T[], pointId: string): T[] {
+  const own = users.filter((user) => (user.buildingIds ?? []).includes(pointId));
+  const everywhere = users.filter((user) => !(user.buildingIds ?? []).includes(pointId));
+  return [...own, ...everywhere];
+}
 
 /**
  * Ростер для авто-подбора слотов (опционально — только выбранные должности).
@@ -66,7 +73,10 @@ async function loadSlotRoster(
     },
     orderBy: { name: "asc" },
   });
-  const users = point ? all.filter((user) => worksAtBuilding(point.orgBuildingIds, user.buildingIds ?? [], point.id)) : all;
+  const atPoint = point ? all.filter((user) => worksAtBuilding(point.orgBuildingIds, user.buildingIds ?? [], point.id)) : all;
+  // Свои люди точки — раньше тех, кто «работает везде» (тикет 57187T): иначе
+  // сотрудник без точки с фамилией на «А» обгонял их на каждой точке.
+  const users = point ? pointStaffFirst(atPoint, point.id) : atPoint;
   return users.map((user) => ({
     id: user.id,
     name: user.name,
@@ -223,12 +233,13 @@ function autoPickSlots(journalCode: string, slotUsers: SlotUserMap, roster: Rost
   const usedUserIds = new Set<string>(Object.values(next).filter((v): v is string => Boolean(v)));
   for (const slot of schema.slots) {
     if (next[slot.id]) continue;
-    // Общее правило ростера: подходящая должность → персонал/руководство
-    // по типу слота; ROOT и аккаунты-заглушки — никогда не раньше людей.
+    // Главный слот и проверяющие — только руководящая должность, остальные
+    // — только должность слота; «первого по алфавиту» не ставим (57187T).
+    // ROOT и аккаунты-заглушки — никогда не раньше людей.
     // Проверяющий может совпадать с исполнителем.
-    const pick = rankRosterForSlot(
+    const pick = pickRosterForUnsetSlot(
       roster,
-      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords },
+      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords, leader: isLeaderSlot(journalCode, slot) },
       usedUserIds
     );
     if (pick) {
@@ -237,6 +248,11 @@ function autoPickSlots(journalCode: string, slotUsers: SlotUserMap, roster: Rost
     }
   }
   return next;
+}
+
+/** Главный слот журнала (ответственный документа) и проверяющие. */
+function isLeaderSlot(journalCode: string, slot: { id: string; kind?: "filler" | "verifier"; rank?: "management" }): boolean {
+  return slot.id === getPrimarySlotId(journalCode) || rankKindForSlot(slot) === "verifier";
 }
 
 function needsAutoPick(journalCode: string, slotUsers: SlotUserMap): boolean {
@@ -656,15 +672,16 @@ export async function prefillResponsiblesForNewDocument(input: {
     : [];
   for (const slot of schema.slots) {
     if (slots[slot.id]) continue;
-    // C3 аудита журналов: если по ключевым словам должности не нашёлся
-    // НИКТО (у сотрудников ещё не проставлен jobPosition), берём остальной
-    // ростер — иначе бланк уходил инспектору без ФИО. Но не «по алфавиту»:
-    // исполнитель — сначала линейный персонал, проверяющий — сначала
-    // руководство; ROOT и аккаунт «имя = почта» не выбираются, пока есть
-    // живые сотрудники. Проверяющий может совпадать с исполнителем.
-    const pick = rankRosterForSlot(
+    // Тикет 57187T (2026-11-10): главный слот и проверяющие — только
+    // руководящая должность (шеф, заведующий… или хотя бы старший,
+    // бригадир), остальные слоты — только должность слота. Никого
+    // подходящего — слот пустой: раньше сюда вставал первый по алфавиту
+    // рядовой сотрудник, один и тот же во множестве журналов. ROOT и
+    // аккаунт «имя = почта» не выбираются, пока есть живые сотрудники.
+    // Проверяющий может совпадать с исполнителем.
+    const pick = pickRosterForUnsetSlot(
       prefillRoster,
-      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords },
+      { kind: rankKindForSlot(slot), positionKeywords: slot.positionKeywords, leader: isLeaderSlot(journalCode, slot) },
       usedIds
     );
     if (pick) {
