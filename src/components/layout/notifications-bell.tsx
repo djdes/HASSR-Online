@@ -1,4 +1,7 @@
 "use client";
+import { navTone } from "@/lib/nav-tones";
+import { cn } from "@/lib/utils";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -96,8 +99,10 @@ const SUPPORT_CHAT_HREF = "/dashboard?support=chat";
 
 // Янтарная подложка (тон иконки Bell, `lib/nav-tones.ts`); подъём при
 // наведении и покачивание колокольчика — `[data-tone-button]` в app-theme.css.
-const TRIGGER_CLASS =
-  "relative inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10";
+const TRIGGER_CLASS = "relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg";
+/** «Новая» тема: светлая кнопка с рамкой, голубой колокольчик. */
+const TRIGGER_CLASS_NEW =
+  "relative inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#2f80c9] transition-colors duration-150 hover:bg-[#f1f1f4] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10";
 
 /**
  * `triggerClassName` — добавка к кнопке-колокольчику. Шапка сайта
@@ -105,6 +110,7 @@ const TRIGGER_CLASS =
  * приложение его не передаёт и остаётся со своими размерами.
  */
 export function NotificationsBell({ triggerClassName }: { triggerClassName?: string } = {}) {
+  const newDesign = useNewDesign();
   const locale = useLocale();
   const t = useTranslations("notifications.ui");
   const [open, setOpen] = useState(false);
@@ -383,10 +389,12 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
         type="button"
         aria-label={t("title")}
         onClick={() => (open ? closePanel() : openPanel())}
+        data-tone={newDesign ? undefined : navTone("Bell")}
+        data-tone-button={newDesign ? undefined : true}
         data-bell
-        className={triggerClassName ? `${TRIGGER_CLASS} ${triggerClassName}` : TRIGGER_CLASS}
+        className={cn(newDesign ? TRIGGER_CLASS_NEW : TRIGGER_CLASS, triggerClassName)}
       >
-        <Bell className="size-[18px] stroke-[1.75] text-[#2f80c9]" />
+        <Bell className={newDesign ? "size-[18px] stroke-[1.75]" : "size-5"} />
         {headerCount > 0 && (
           <span className="absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-semibold text-white">
             {headerCount > 99 ? "99+" : headerCount}

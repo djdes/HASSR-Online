@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { NavAccordion } from "@/components/layout/app-sidebar-accordion";
+import { ClassicNavAccordion } from "@/components/layout/app-sidebar-accordion-classic";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { OrganizationMark } from "@/components/layout/organization-brand";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
@@ -40,6 +42,7 @@ export function MobileNavSheet({
   };
 }) {
   const t = useTranslations("navigation.shell");
+  const newDesign = useNewDesign();
   const close = onClose;
 
   return (
@@ -65,7 +68,7 @@ export function MobileNavSheet({
         >
           <OrganizationMark logoUrl={brand.logoUrl} name={brand.name} />
         </Link>
-        <NavAccordion touch />
+        {newDesign ? <NavAccordion touch /> : <ClassicNavAccordion touch />}
         <div className="mt-2 border-t border-[#ececf4] pt-2">
           <button
             type="button"

@@ -147,7 +147,7 @@ export default async function HomePage() {
             data-nav-row
             data-motion
             style={{ "--nav-i": 0 } as CSSProperties}
-            className="group col-span-2 flex min-h-[148px] flex-col justify-between rounded-3xl bg-[#111114] p-5 text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_18px_40px_-14px_rgba(85,102,246,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1"
+            className="group col-span-2 flex min-h-[148px] flex-col justify-between rounded-3xl bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#7a5cff)] p-5 newd:bg-[#111114] newd:bg-none text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_18px_40px_-14px_rgba(85,102,246,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1"
           >
             <span
               data-motion

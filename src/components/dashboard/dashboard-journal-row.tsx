@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Check, ChevronRight, Clock3, FileText, Printer } from "lucide-react";
+import { Check, ChevronRight, Clock3, FileText, PenLine, Printer } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -88,11 +88,19 @@ export function JournalStatusMark({
       data-journal-mark={filled ? "filled" : "open"}
       className={cn(
         "flex size-[22px] shrink-0 items-center justify-center rounded-full",
-        filled ? "bg-[#16a34a] text-white" : "bg-[#d97706] text-white",
+        filled ? "bg-[#16a34a] text-white" : "bg-[#d97706] text-white newd:bg-[#7c5cf5]",
         className,
       )}
     >
-      {filled ? <Check className="size-3.5" strokeWidth={3} /> : <Clock3 className="size-3.5" strokeWidth={2.75} />}
+      {filled ? (
+        <Check className="size-3.5" strokeWidth={3} />
+      ) : (
+        <>
+          {/* «Новая» тема: «заполнить» — фиолетовый карандаш вместо часов. */}
+          <Clock3 className="size-3.5 newd:hidden" strokeWidth={2.75} />
+          <PenLine className="hidden size-3 newd:block" strokeWidth={2.5} />
+        </>
+      )}
     </span>
   );
 }

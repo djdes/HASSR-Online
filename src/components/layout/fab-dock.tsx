@@ -14,6 +14,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { MessageCircle, Sparkles, X } from "lucide-react";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
 import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
@@ -135,6 +136,7 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
   const narrow = useIsNarrowViewport();
   const [sheetRequested, setSheetRequested] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const newDesign = useNewDesign();
   // Слот живёт в шапке, которая монтируется рядом с доком, — ищем его
   // после отрисовки, а не во время неё.
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -199,7 +201,11 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
   // «Контакты». Одно действие — сразу оно; несколько — на компьютере
   // карточка над кнопкой, на телефоне — лист снизу. Поддержка, помощник и
   // «Как заполнять» вызываются из этого списка.
-  const single = actions.length === 1 ? actions[0] : null;
+  if (newDesign) {
+  // Кнопка сразу открывает «Контакты» (владелец, 2026-11-11); нет их — одно
+  // действие или карточка со списком.
+  const contacts = actions.find((action) => action.id === "contacts");
+  const single = contacts ?? (actions.length === 1 ? actions[0] : null);
   return (
     <>
       {createPortal(
@@ -218,10 +224,8 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
             aria-expanded={single ? undefined : narrow ? sheetOpen : panelOpen}
             aria-label={
               unread > 0
-                ? t("helpAriaUnread", { count: unread })
-                : single
-                  ? single.label
-                  : t("helpAria")
+                ? t("actionAriaUnread", { label: t("contacts"), count: unread })
+                : t("contacts")
             }
             className="relative flex size-[52px] items-center justify-center rounded-full bg-[#111114] text-white shadow-[0_10px_30px_-12px_rgba(17,17,20,0.55)] ring-4 ring-white/70 transition-[background-color,transform] duration-150 hover:bg-[#2c2d36] active:scale-95 focus-visible:outline-none focus-visible:ring-[#111114]/20"
           >
@@ -233,6 +237,56 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
             ) : null}
           </button>
         </div>,
+        document.body,
+      )}
+
+      <FabSheet
+        open={sheetOpen}
+        onClose={() => setSheetRequested(false)}
+        actions={actions}
+      />
+    </>
+  );
+  }
+
+  // Компьютер и одиночная кнопка на телефоне — привычный ряд в углу.
+  if (!narrow || actions.length === 1) {
+    return createPortal(
+      <div className="fixed bottom-5 right-5 z-30 flex flex-row-reverse items-center gap-2 print:hidden">
+        {actions.map((action) => (
+          <FabButton key={action.id} action={action} onSelect={action.onSelect} />
+        ))}
+      </div>,
+      document.body,
+    );
+  }
+
+  return (
+    <>
+      {createPortal(
+        <button
+          type="button"
+          onClick={() => setSheetRequested(true)}
+          aria-label={
+            unread > 0 ? t("helpAriaUnread", { count: unread }) : t("helpAria")
+          }
+          // Полупрозрачная «таблетка» с размытием, как в приложениях:
+          // сплошная фиолетовая кнопка перебивала контент под собой.
+          // Цвета в токенах — в тёмной общее правило перекрасило бы
+          // `bg-white/70` в непрозрачный фон.
+          style={{
+            background: "var(--app-fab-bg)",
+            borderColor: "var(--app-fab-border)",
+          }}
+          className="fixed bottom-5 right-5 z-30 flex size-12 items-center justify-center rounded-full border text-[#5566f6] shadow-[0_10px_30px_-12px_rgba(11,16,36,0.35)] backdrop-blur-md transition-transform duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 print:hidden"
+        >
+          <Sparkles className="size-5" />
+          {unread > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[11px] font-semibold leading-[18px] text-white ring-2 ring-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          ) : null}
+        </button>,
         document.body,
       )}
 
@@ -271,14 +325,11 @@ function FabPanel({ actions, onClose }: { actions: FabAction[]; onClose: () => v
     <div
       ref={ref}
       role="dialog"
-      aria-label={t("sheetTitle")}
+      aria-label={t("contacts")}
       className="absolute right-0 bottom-[64px] w-[340px] rounded-2xl border border-[#e7e7ec] bg-white p-3 shadow-[0_18px_48px_-16px_rgba(17,17,20,0.28)]"
     >
       <div className="flex items-start justify-between gap-3 px-2 pt-1 pb-2">
-        <div className="min-w-0">
-          <div className="text-[16px] font-semibold text-[#111114]">{t("sheetTitle")}</div>
-          <div className="text-[13px] leading-snug text-[#6a6c7a]">{t("sheetSubtitle")}</div>
-        </div>
+        <div className="min-w-0 text-[16px] font-semibold text-[#111114]">{t("contacts")}</div>
         <button
           type="button"
           onClick={onClose}
@@ -352,7 +403,7 @@ function FabSheet({
             }}
             className={SHEET_ROW_CLASS}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#f1f1f4] text-[#111114]">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
               <Icon className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
@@ -372,5 +423,50 @@ function FabSheet({
         );
       })}
     </BottomSheet>
+  );
+}
+
+function FabButton({
+  action,
+  onSelect,
+}: {
+  action: FabAction;
+  onSelect: () => void;
+}) {
+  const t = useTranslations("layoutUi.fabDock");
+  const Icon = action.icon;
+  const brand = action.tone === "brand";
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-label={
+        action.badge
+          ? t("actionAriaUnread", { label: action.label, count: action.badge })
+          : action.label
+      }
+      style={{
+        background: "var(--app-fab-bg)",
+        borderColor: "var(--app-fab-border)",
+      }}
+      className={`group relative flex size-11 items-center justify-center rounded-full border backdrop-blur-md transition-all duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 ${
+        brand
+          ? "text-[#5566f6] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.45)]"
+          : "text-[#5566f6] shadow-[0_10px_24px_-12px_rgba(11,16,36,0.3)]"
+      }`}
+    >
+      <Icon className="size-4" />
+      {action.badge ? (
+        <span className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[11px] font-semibold leading-[18px] text-white ring-2 ring-white">
+          {action.badge > 9 ? "9+" : action.badge}
+        </span>
+      ) : null}
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-[calc(100%+8px)] right-0 whitespace-nowrap rounded-lg bg-[#0b1024] px-2.5 py-1.5 text-[12.5px] font-medium text-white opacity-0 shadow-[0_8px_24px_-8px_rgba(11,16,36,0.45)] transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+      >
+        {action.label}
+      </span>
+    </button>
   );
 }

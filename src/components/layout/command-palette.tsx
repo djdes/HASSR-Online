@@ -426,7 +426,7 @@ export function CommandPalette() {
         aria-label={t("field")}
         style={panelStyle}
         className={`absolute flex max-h-[min(78vh,760px)] flex-col ${
-          anchor ? "" : "inset-x-3 top-3"
+          anchor ? "" : "inset-x-3 top-3 sm:inset-x-auto sm:left-1/2 sm:top-[10vh] sm:w-[640px] sm:-translate-x-1/2"
         }`}
         onClick={(e) => e.stopPropagation()}
       >

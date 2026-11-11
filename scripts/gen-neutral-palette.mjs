@@ -108,8 +108,9 @@ const MEDIA = {
   "max-lg": "(width < 64rem)",
 };
 
+// Only the «Новая» design (`data-view-design="new"`, lib/view-prefs.ts).
 const SCOPE =
-  'html:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root))';
+  'html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root))';
 
 const hexes = Object.keys(MAP).join("|");
 const props = Object.keys(PROPS)
@@ -254,9 +255,23 @@ const tokens = `${SCOPE} .app-shell, ${SCOPE} body {
 // галочки»): check marks outside buttons/checkboxes are blue; green
 // «done» checks keep their colour.
 const accents = `${SCOPE} :is(.lucide-check, .lucide-circle-check, .lucide-circle-check-big, .lucide-check-check):not(:is(button, a, [role="button"], [role="checkbox"], [data-state]) *):not([class*="#116b2a"]):not([class*="#136b2a"]):not([class*="green"]):not([class*="emerald"]):not([class*="text-white"]) { color: #2f80c9; }`;
+// Button variants of the «Новая» design (src/components/ui/button.tsx keeps
+// its classic classes): outline is white with a grey border, secondary grey.
+const OUTLINE = '[data-slot="button"][data-variant="outline"].bg-\\[\\#5566f6\\]\\/\\[0\\.04\\]';
+const SECONDARY = '[data-slot="button"][data-variant="secondary"].bg-\\[\\#5566f6\\]\\/\\[0\\.04\\]';
+const buttons = [
+  `${SCOPE} ${OUTLINE} { background-color: #ffffff; color: #111114; border: 1px solid #dcdde3; }`,
+  `${SCOPE} ${OUTLINE}:is(:hover, [aria-pressed="true"], [data-state="open"]) { background-color: #f1f1f4; }`,
+  `${SCOPE} ${SECONDARY} { background-color: #ececef; color: #111114; }`,
+  `${SCOPE} ${SECONDARY}:hover { background-color: #e2e2e7; }`,
+  `${SCOPE} [data-slot="button"][data-variant="ghost"]:hover { background-color: #f1f1f4; }`,
+  // Soft bottom shadow under white bordered blocks (owner, 2026-11-11).
+  `${SCOPE} main :is(.rounded-xl, .rounded-2xl, .rounded-3xl, [class*="rounded-[1"]).border:is(.bg-white, .bg-card) { box-shadow: 0 1px 2px rgba(17,17,20,0.04), 0 3px 8px -4px rgba(17,17,20,0.10); }`,
+].join("\n");
 const body = [
   tokens,
   accents,
+  buttons,
   ...plain,
   ...[...byMedia.entries()].map(([media, lines]) => `@media ${media} {\n${lines.join("\n")}\n}`),
 ].join("\n");

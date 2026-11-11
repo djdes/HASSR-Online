@@ -167,7 +167,7 @@ export function ContactUsPanel({
         })}
       </div>
 
-      <p className={cn("px-1 leading-snug text-[#6f7282]", compact ? "text-[12.5px]" : "text-[13px]")}>{t(`groupLeads.${group}`)}</p>
+      <p className={cn("px-1 leading-snug text-[#6f7282] newd:hidden", compact ? "text-[12.5px]" : "text-[13px]")}>{t(`groupLeads.${group}`)}</p>
 
       <div role="tabpanel" className="space-y-2.5" data-contact-group-panel={group}>
         {group === "support" ? (
@@ -258,7 +258,7 @@ export function ContactUsDialog({
       <DialogContent className="gap-4 rounded-3xl border-[#ececf4] bg-white text-[#0b1024] sm:max-w-[440px]" data-contact-us-dialog>
         <DialogHeader className="text-left">
           <DialogTitle className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024]">{general ? t("titleGeneral") : t("title")}</DialogTitle>
-          <DialogDescription className="text-[14px] leading-[1.55] text-[#3c4053]">{general ? t("leadGeneral") : t("lead")}</DialogDescription>
+          <DialogDescription className="text-[14px] leading-[1.55] text-[#3c4053] newd:sr-only">{general ? t("leadGeneral") : t("lead")}</DialogDescription>
           {service ? (
             <span className="inline-flex w-fit max-w-full rounded-xl bg-[#f5f6ff] px-3 py-1.5 text-[12.5px] font-medium leading-snug text-[#3848c7]">
               {t("about", { service })}

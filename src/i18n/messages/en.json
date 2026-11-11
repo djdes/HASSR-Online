@@ -1121,7 +1121,8 @@
       "mode": {
         "light": "Light",
         "dark": "Dark",
-        "system": "Use device setting"
+        "system": "Use device setting",
+        "new": "New"
       },
       "restoreAuto": "Turn it back on",
       "autoScheduleActive": "The theme currently changes by time of day. Choose a theme to turn off scheduled changes.",
@@ -26674,10 +26675,10 @@
       "cancel": "Cancel deletion"
     },
     "fabDock": {
-      "helpAriaUnread": "Contacts · new messages: {count, number}",
-      "helpAria": "Contacts",
-      "sheetTitle": "Contacts",
-      "sheetSubtitle": "Phone, messengers, support and assistant",
+      "helpAriaUnread": "Help · new messages: {count, number}",
+      "helpAria": "Help and tips",
+      "sheetTitle": "Help",
+      "sheetSubtitle": "Ask a question, contact support or read the instructions",
       "actionAriaUnread": "{label} · new messages: {count, number}",
       "contacts": "Contacts",
       "contactsHint": "Phone, Telegram, MAX and email",

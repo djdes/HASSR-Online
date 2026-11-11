@@ -12,6 +12,7 @@ import { customSectionNameByHref } from "@/lib/custom-names";
 import { sectionForPath } from "@/lib/app-nav";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { useSectionPlace } from "@/components/layout/section-tabs";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
 import { cn } from "@/lib/utils";
 
@@ -135,6 +136,7 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   const { section, atRoot } = useSectionPlace();
   const sectionKey = sectionForPath(pathname)?.section ?? null;
   const isNew = useNewNavLayout();
+  const newDesign = useNewDesign();
   const place = useNewNavPlace();
 
   // Каждое звено раскрывается в соседей по уровню: из «Здания и
@@ -212,9 +214,15 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     if (tail.length > 0 || !place.deep) chain[chain.length - 1] = { ...chain[chain.length - 1], href: undefined };
     newCrumbs = chain;
   }
-  // Крошки как в документации (владелец, 2026-11-11): серые ссылки через «›»
-  // прямо над заголовком страницы, текущая страница — чёрным.
-  const newNav = newCrumbs ? (
+  // Прежний дизайн — кнопка «назад» и крошки-пилюли. «Новая» тема — крошки
+  // как в документации (владелец, 2026-11-11): серые ссылки через «›» прямо
+  // над заголовком страницы, текущая страница — чёрным.
+  const newNav = newCrumbs && !newDesign ? (
+    <div className="mb-5 hidden min-w-0 items-center gap-3 lg:flex print:hidden" data-new-nav-crumbs>
+      <PageBackLink fallbackHref={[...newCrumbs].reverse().find((crumb) => crumb.href)?.href ?? "/dashboard"} />
+      <Breadcrumbs items={newCrumbs} className="min-w-0 flex-1" />
+    </div>
+  ) : newCrumbs ? (
     <nav
       aria-label={tGuide("breadcrumbs")}
       className="mb-3 hidden min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] text-[#5f6170] lg:flex print:hidden"

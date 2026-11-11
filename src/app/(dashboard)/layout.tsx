@@ -74,6 +74,7 @@ import { SectionTabs } from "@/components/layout/section-tabs";
 import { SectionFrame } from "@/components/layout/section-frame";
 import { ContentTransitionProvider } from "@/components/layout/content-transition";
 import { PointSectionSync } from "@/components/layout/point-section-sync";
+import { SectionTopMenu } from "@/components/layout/section-top-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
 import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
@@ -574,6 +575,9 @@ export default async function DashboardLayout({
             canEditBranding={hasCapability(session.user, "admin.full")}
           />
           </DomainMessagesBoundary>
+          {/* Шаблон меню «Новый» (компьютер), прежний дизайн: третий уровень
+              меню — строкой под шапкой. В «Новой» теме уровни — в дереве. */}
+          <SectionTopMenu />
           {/* Быстрый старт только что созданной точки. Живёт в layout'е,
               а не на странице дашборда: баннер сам решает показываться
               по `?welcome-org=1`, и дашборд о нём знать не обязан. */}

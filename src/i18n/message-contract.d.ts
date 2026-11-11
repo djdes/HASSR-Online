@@ -1122,7 +1122,8 @@ export type MessageContract = {
       "mode": {
         "light": "Светлая",
         "dark": "Тёмная",
-        "system": "Как на устройстве"
+        "system": "Как на устройстве",
+        "new": "Новая"
       },
       "restoreAuto": "Включить снова",
       "autoScheduleActive": "Сейчас тема меняется по времени суток. Выберите вариант — смена по времени выключится.",
@@ -26675,10 +26676,10 @@ export type MessageContract = {
       "cancel": "Отменить удаление"
     },
     "fabDock": {
-      "helpAriaUnread": "Контакты · новых сообщений: {count, number}",
-      "helpAria": "Контакты",
-      "sheetTitle": "Контакты",
-      "sheetSubtitle": "Телефон, мессенджеры, поддержка и помощник",
+      "helpAriaUnread": "Помощь · новых сообщений: {count, number}",
+      "helpAria": "Помощь и подсказки",
+      "sheetTitle": "Помощь",
+      "sheetSubtitle": "Спросить, написать в поддержку или посмотреть инструкцию",
       "actionAriaUnread": "{label} · новых сообщений: {count, number}",
       "contacts": "Контакты",
       "contactsHint": "Телефон, Telegram, MAX и почта",

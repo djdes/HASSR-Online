@@ -10,6 +10,8 @@ import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { AppSidebarAccordion } from "@/components/layout/app-sidebar-accordion";
+import { ClassicSidebarAccordion } from "@/components/layout/app-sidebar-accordion-classic";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { useNewNavLayout } from "@/components/layout/nav-layout-switch";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
@@ -75,7 +77,10 @@ type AppSidebarProps = {
 
 export function AppSidebar(props: AppSidebarProps) {
   const isNew = useNewNavLayout();
-  return isNew ? <AppSidebarAccordion {...props} /> : <ClassicSidebar {...props} />;
+  const newDesign = useNewDesign();
+  if (!isNew) return <ClassicSidebar {...props} />;
+  // «Новая» тема — дерево меню; прежний дизайн — два уровня.
+  return newDesign ? <AppSidebarAccordion {...props} /> : <ClassicSidebarAccordion {...props} />;
 }
 
 function ClassicSidebar({

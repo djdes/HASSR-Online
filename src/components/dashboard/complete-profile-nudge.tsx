@@ -17,6 +17,7 @@ import {
   UserRoundPen,
   X,
 } from "lucide-react";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { TasksFlowPromoHint } from "@/components/tasksflow/tasksflow-promo-hint";
 import {
@@ -112,6 +113,7 @@ export function CompleteProfileNudge({
   email: string;
   initial?: CompleteProfileInitial;
 }) {
+  const newDesign = useNewDesign();
   const tn = useTranslations("dashboardUi.completeProfileNudge");
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome") === "1";
@@ -150,6 +152,7 @@ export function CompleteProfileNudge({
       {!hidden ? (
         // print:hidden — на печати плашка сдвигала лист памятки, и подвал
         // уходил на второй лист (2026-10-29).
+        newDesign ? (
         <div className="flex items-center justify-center gap-2.5 bg-[#dcebf8] px-4 py-1.5 text-[#1d3a57] print:hidden md:px-6">
           {/* Информационная полоса (владелец, 2026-11-11): голубая, узкая,
               со значком «i», как у oxylabs. */}
@@ -185,6 +188,41 @@ export function CompleteProfileNudge({
             <X className="size-4" />
           </button>
         </div>
+        ) : (
+        <div className="flex items-center gap-3 bg-[#5566f6] px-4 py-2.5 text-white print:hidden md:px-6">
+          <Sparkles className="size-4 shrink-0" />
+          <p className="hidden min-w-0 flex-1 text-[13px] leading-[1.45] sm:block">
+            <span className="font-medium">{tn("bannerTitle")}</span>{" "}
+            <span className="text-white/85">
+              {tn("bannerBodyLong")}
+            </span>
+          </p>
+          {/* На узком экране — короче: без «и PDF для проверок», чтобы
+              уместиться в одну-две строки и не толкать кнопку с крестиком
+              на отдельную строку. */}
+          <p className="line-clamp-2 min-w-0 flex-1 text-[13px] leading-[1.45] sm:hidden">
+            <span className="font-medium">{tn("bannerTitle")}</span>{" "}
+            <span className="text-white/85">
+              {tn("bannerBodyShort")}
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="shrink-0 rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-white/25"
+          >
+            {tn("finish")}
+          </button>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label={tn("hideUntilNextLogin")}
+            className="shrink-0 rounded-lg p-1 text-white/70 transition-colors hover:text-white"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+        )
       ) : null}
 
       {open ? (

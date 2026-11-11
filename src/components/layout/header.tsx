@@ -8,7 +8,9 @@ import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Handshake, Loader2, Menu, Search, ShieldCheck } from "lucide-react";
+import { Handshake, Loader2, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
+import { NewProfileMenu } from "@/components/layout/new-profile-menu";
 import { openCommandPalette } from "@/components/layout/command-palette";
 import { cn } from "@/lib/utils";
 import { navTone } from "@/lib/nav-tones";
@@ -166,6 +168,7 @@ export function Header({
   canEditBranding = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
+  const newDesign = useNewDesign();
   const tSearch = useTranslations("layoutUi.commandPalette");
   const tView = useTranslations("common.viewPrefs");
   const pathname = usePathname();
@@ -280,14 +283,21 @@ export function Header({
 
         <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-1.5 md:gap-2">
           {whiteLabel ? null : (
-            <span className="mr-2 hidden items-center text-[#111114] sm:inline-flex" data-brand-mark>
-              <BrandLogo height={22} title={t("shell.brand")} />
+            <span
+              className={cn(
+                "hidden sm:inline-flex",
+                newDesign ? "mr-2 items-center text-[#111114]" : "mr-1 text-[#0b1024] opacity-70",
+              )}
+              data-brand-mark
+            >
+              <BrandLogo height={newDesign ? 22 : 16} title={t("shell.brand")} />
             </span>
           )}
           <OfflineIndicator />
           <LiveConnectionIndicator />
-          {/* Глобальный поиск (Ctrl+K): разделы, сотрудники, журналы,
-              документы, оборудование, помещения, продукты. */}
+          {/* «Новая» тема — глобальный поиск (Ctrl+K): разделы, сотрудники,
+              журналы, документы, оборудование, помещения, продукты. */}
+          {newDesign ? (
           <button
             type="button"
             onClick={openCommandPalette}
@@ -303,6 +313,7 @@ export function Header({
               <kbd className="rounded-md border border-[#e7e7ec] px-1.5 font-mono text-[11.5px] leading-5 text-[#6a6c7a]">K</kbd>
             </span>
           </button>
+          ) : null}
           <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
@@ -339,7 +350,19 @@ export function Header({
             </Link>
           ) : null}
 
-          {/* Выход — в меню пользователя (аватар), отдельной кнопки нет. */}
+          {/* Выход — нейтральный, краснеет только при наведении. В «Новой»
+              теме — только в меню пользователя (аватар). */}
+          {newDesign ? null : (
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label={t("header.logout")}
+            title={t("header.logout")}
+            className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 md:inline-flex hover:bg-[#fff4f2] hover:text-[#d2453d]"
+          >
+            <LogOut className="size-5" />
+          </button>
+          )}
 
           {narrowViewport ? (
             <Button
@@ -350,11 +373,40 @@ export function Header({
               aria-label={t("header.profile")}
             >
               <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                <AvatarFallback data-avatar-gradient className="bg-[#111114] text-[13px] font-bold text-white">
+                <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white newd:bg-[#111114] newd:bg-none">
                   {getInitials(userName)}
                 </AvatarFallback>
               </Avatar>
             </Button>
+          ) : newDesign ? (
+            <NewProfileMenu
+              open={profileMenuOpen}
+              onOpenChange={setProfileMenuOpen}
+              userName={userName}
+              userEmail={userEmail}
+              initials={getInitials(userName)}
+              onReadability={openReadability}
+              onLogout={handleLogout}
+              organizations={
+                <OrganizationSwitcher
+                  organizations={organizations}
+                  activeId={activeOrganizationId}
+                  canCreate={canCreateOrganization}
+                  onOpenCreate={openCreateDialog}
+                  showSettings={fullAccess}
+                  onNavigate={() => setProfileMenuOpen(false)}
+                  label={t("profile.organizationSwitcher")}
+                />
+              }
+              plan={
+                <CabinetPlanCardView
+                  card={cabinetPlan}
+                  ownCabinet={ownCabinet}
+                  variant="menu"
+                  onNavigate={() => setProfileMenuOpen(false)}
+                />
+              }
+            />
           ) : (
           <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
             <DropdownMenuTrigger asChild>
@@ -367,7 +419,7 @@ export function Header({
                     согласован с остальными контролами шапки — size-10
                     (на телефоне size-11, как все кнопки шапки). */}
                 <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                  <AvatarFallback data-avatar-gradient className="bg-[#111114] text-[13px] font-bold text-white">
+                  <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white newd:bg-[#111114] newd:bg-none">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>

@@ -7,6 +7,7 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 import { useSiteTheme, type ThemeMode } from "./site-theme";
+import { useViewPrefs } from "@/components/view-prefs/view-prefs-provider";
 import {
   THEME_PREVIEW_PALETTES,
   THEME_TILES,
@@ -124,16 +125,55 @@ export function ThemeTiles({
   autoNote?: boolean;
   className?: string;
 }) {
-  const choice = useThemeTileChoice(useSiteTheme());
+  const siteTheme = useSiteTheme();
+  const choice = useThemeTileChoice(siteTheme);
+  const design = useDesignChoice(siteTheme.setMode);
   return (
-    <ThemeTileGroup
-      value={choice.selected}
-      onChange={choice.choose}
-      note={autoNote ? choice.note : null}
-      size={size}
-      className={className}
-    />
+    <div className={className}>
+      <ThemeTileGroup
+        value={design.isNew ? null : choice.selected}
+        onChange={(mode) => {
+          design.leaveNew();
+          choice.choose(mode);
+        }}
+        note={autoNote ? choice.note : null}
+        size={size}
+      />
+      {/* «Новая» тема — дизайн кабинета (владелец, 2026-11-11). */}
+      <div className={cn("mt-2.5 grid grid-cols-3", size === "compact" ? "gap-2" : "gap-2.5")}>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={design.isNew}
+          data-theme-tile="new"
+          data-testid="theme-tile-new"
+          onClick={design.chooseNew}
+          className="group/tile flex min-w-0 cursor-pointer flex-col gap-2 rounded-2xl text-left outline-none"
+        >
+          <NewDesignFace checked={design.isNew} size={size} />
+        </button>
+      </div>
+    </div>
   );
+}
+
+/**
+ * «Новая» тема: выбрать её — светлая тема плюс дизайн `new`
+ * (`lib/view-prefs.ts`); выбрать обычную карточку — прежний дизайн.
+ */
+export function useDesignChoice(setMode: (mode: ThemeMode) => void) {
+  const { prefs, update } = useViewPrefs();
+  const isNew = prefs.design === "new";
+  return {
+    isNew,
+    chooseNew: () => {
+      setMode("light");
+      update({ design: "new" });
+    },
+    leaveNew: () => {
+      if (isNew) update({ design: "classic" });
+    },
+  };
 }
 
 /**
@@ -244,8 +284,10 @@ export function ThemeTileGroup({
  */
 export function ThemeTilesMenu({ className }: { className?: string }) {
   const t = useTranslations("common.theme");
+  const siteTheme = useSiteTheme();
   const { selected, autoBySchedule, autoTurnedOff, choose, restoreAuto } =
-    useThemeTileChoice(useSiteTheme());
+    useThemeTileChoice(siteTheme);
+  const design = useDesignChoice(siteTheme.setMode);
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>, current: ThemeMode) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -261,12 +303,19 @@ export function ThemeTilesMenu({ className }: { className?: string }) {
   return (
     <div className={className} data-testid="theme-tiles">
       <DropdownMenuPrimitive.RadioGroup
-        value={selected ?? ""}
+        value={design.isNew ? "new" : (selected ?? "")}
         onValueChange={(value) => {
-          if (isThemeMode(value)) choose(value);
+          if (value === "new") {
+            design.chooseNew();
+            return;
+          }
+          if (isThemeMode(value)) {
+            design.leaveNew();
+            choose(value);
+          }
         }}
         aria-label={t("theme")}
-        className="grid grid-cols-3 gap-1"
+        className="grid grid-cols-4 gap-1"
       >
         {THEME_TILES.map((tile) => (
           <DropdownMenuPrimitive.RadioItem
@@ -279,9 +328,19 @@ export function ThemeTilesMenu({ className }: { className?: string }) {
             onKeyDown={(event) => onKeyDown(event, tile.mode)}
             className="group/tile flex min-w-0 cursor-pointer select-none flex-col gap-1.5 rounded-xl p-1 outline-none transition-colors duration-150 data-[highlighted]:bg-[var(--app-tint-indigo)]"
           >
-            <ThemeTileFace tile={tile} checked={selected === tile.mode} size="compact" />
+            <ThemeTileFace tile={tile} checked={!design.isNew && selected === tile.mode} size="compact" />
           </DropdownMenuPrimitive.RadioItem>
         ))}
+        <DropdownMenuPrimitive.RadioItem
+          value="new"
+          textValue={t("mode.new")}
+          data-theme-tile="new"
+          data-testid="theme-tile-new"
+          onSelect={(event) => event.preventDefault()}
+          className="group/tile flex min-w-0 cursor-pointer select-none flex-col gap-1.5 rounded-xl p-1 outline-none transition-colors duration-150 data-[highlighted]:bg-[var(--app-tint-indigo)]"
+        >
+          <NewDesignFace checked={design.isNew} size="compact" />
+        </DropdownMenuPrimitive.RadioItem>
       </DropdownMenuPrimitive.RadioGroup>
       <div aria-live="polite" className="px-1">
         <AutoScheduleNote
@@ -394,6 +453,44 @@ function ThemeTileFace({
         )}
       >
         {t(`mode.${tile.mode}`)}
+      </span>
+    </>
+  );
+}
+
+/** Карточка «Новая»: светло-серый кабинет, белое меню, чёрная кнопка. */
+function NewDesignFace({ checked, size }: { checked: boolean; size: ThemeTileSize }) {
+  const t = useTranslations("common.theme");
+  return (
+    <>
+      <span
+        className={cn(
+          "relative block aspect-[10/7] w-full overflow-hidden border-2 transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
+          size === "compact" ? "rounded-xl" : "rounded-2xl",
+          checked
+            ? "border-[#111114] shadow-[0_0_0_3px_rgba(17,17,20,0.12)]"
+            : "border-[var(--app-border-strong)] group-hover/tile:border-[#111114]/50 group-data-[highlighted]/tile:border-[#111114]/50",
+          "group-focus-visible/tile:ring-4 group-focus-visible/tile:ring-[#111114]/15"
+        )}
+      >
+        <span aria-hidden className="absolute inset-0 flex bg-[#fafafb]">
+          <span className="m-[8%] w-[26%] rounded-[3px] border border-[#e7e7ec] bg-white" />
+          <span className="flex flex-1 flex-col gap-[9%] py-[12%] pr-[9%]">
+            <span className="h-[13%] w-[62%] rounded-[2px] bg-[#111114]" />
+            <span className="h-[9%] w-[85%] rounded-[2px] bg-[#dcdde3]" />
+            <span className="h-[9%] w-[70%] rounded-[2px] bg-[#dcdde3]" />
+            <span className="mt-auto h-[16%] w-[42%] rounded-[3px] bg-[#111114]" />
+          </span>
+        </span>
+      </span>
+      <span
+        className={cn(
+          "block text-center leading-tight",
+          TILE_LABEL_SIZE[size],
+          checked ? "font-semibold text-[#111114]" : "font-medium text-[var(--app-text-secondary)]"
+        )}
+      >
+        {t("mode.new")}
       </span>
     </>
   );

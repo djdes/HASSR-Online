@@ -1121,7 +1121,8 @@
       "mode": {
         "light": "Och rangli",
         "dark": "To‘q rangli",
-        "system": "Qurilma sozlamasidan foydalanish"
+        "system": "Qurilma sozlamasidan foydalanish",
+        "new": "Yangi"
       },
       "restoreAuto": "Qayta yoqish",
       "autoScheduleActive": "Mavzu hozir kun vaqtiga qarab o‘zgaradi. Rejadagi o‘zgarishni o‘chirish uchun mavzuni tanlang.",
@@ -26674,10 +26675,10 @@
       "cancel": "O‘chirishni bekor qilish"
     },
     "fabDock": {
-      "helpAriaUnread": "Kontaktlar · yangi xabarlar: {count, number}",
-      "helpAria": "Kontaktlar",
-      "sheetTitle": "Kontaktlar",
-      "sheetSubtitle": "Telefon, messenjerlar, yordam va yordamchi",
+      "helpAriaUnread": "Yordam · yangi xabarlar: {count, number}",
+      "helpAria": "Yordam va maslahatlar",
+      "sheetTitle": "Yordam",
+      "sheetSubtitle": "Savol berish, qo‘llab-quvvatlashga yozish yoki yo‘riqnomani ko‘rish",
       "actionAriaUnread": "{label} · yangi xabarlar: {count, number}",
       "contacts": "Kontaktlar",
       "contactsHint": "Telefon, Telegram, MAX va pochta",

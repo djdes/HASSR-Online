@@ -12,6 +12,7 @@ import {
   History,
   Inbox,
   ListChecks,
+  SlidersHorizontal,
   Sparkles,
   User as UserIcon,
   Wifi,
@@ -275,26 +276,28 @@ export default async function DashboardPage({
               flat
               defaultOpen={true}
               titleAside={
-                // Светлые кнопки с цветной рамкой (акценты сайта): голубая —
-                // догнать пропуски, розовая — какие журналы включены.
+                // Тихие иконки без рамки: догнать пропуски и выбрать набор
+                // журналов. «Новая» тема — светлые кнопки с цветной рамкой:
+                // голубая — догнать пропуски, розовая — какие журналы включены.
                 <>
                 {catchUpOn ? (
                 <Link
                   href="/dashboard/catch-up"
                   title={tDash("catchUp")}
                   aria-label={tDash("catchUp")}
-                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#b6d6f0] bg-white text-[#2f80c9] transition-colors duration-150 hover:bg-[#eef6fd] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2f80c9]/15"
+                  className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 newd:rounded-[10px] newd:border newd:border-[#b6d6f0] newd:bg-white newd:text-[#2f80c9] newd:hover:bg-[#eef6fd]"
                 >
-                  <History className="size-[18px] stroke-[1.75]" />
+                  <History className="size-[18px] newd:stroke-[1.75]" />
                 </Link>
                 ) : null}
                 <Link
                   href="/settings/journals"
                   title={tDash("chooseJournals")}
                   aria-label={tDash("journalSettings")}
-                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#f2c1d9] bg-white text-[#d6408a] transition-colors duration-150 hover:bg-[#fdf2f7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#d6408a]/15"
+                  className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 newd:rounded-[10px] newd:border newd:border-[#f2c1d9] newd:bg-white newd:text-[#d6408a] newd:hover:bg-[#fdf2f7]"
                 >
-                  <ListChecks className="size-[18px] stroke-[1.75]" />
+                  <SlidersHorizontal className="size-[18px] newd:hidden" />
+                  <ListChecks className="hidden size-[18px] stroke-[1.75] newd:block" />
                 </Link>
                 </>
               }

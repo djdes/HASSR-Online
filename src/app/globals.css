@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *, [data-app-theme="dark"], [data-app-theme="dark"] *));
 
+/* `newd:` — «Новая» тема (дизайн кабинета, `data-view-design="new"` на <html>,
+   `lib/view-prefs.ts`). `:is` (а не `:where`) — чтобы утилита варианта
+   перебивала обычную того же свойства. */
+@custom-variant newd (&:is([data-view-design="new"] *));
+
 /* `touch:` — телефон (< 640px, как `max-sm:`) в кабинете: содержимое
    страницы (`main`) и всплывающие слои кабинета (окна, листы, меню —
    порталы в <body>; свой портал без роли окна — с меткой

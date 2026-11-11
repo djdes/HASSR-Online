@@ -41,10 +41,10 @@ describe("Удобство чтения: кука устройства", () => {
   });
 
   it("запись и чтение — туда и обратно, в том числе закодированная кука", () => {
-    const prefs = { textSize: "xlarge", contrast: "high", motion: "reduce", hints: "off", navLayout: "new" } as const;
+    const prefs = { textSize: "xlarge", contrast: "high", motion: "reduce", hints: "off", navLayout: "new", design: "classic" } as const;
     assert.deepEqual(parseViewPrefs(serializeViewPrefs(prefs)), prefs);
     assert.deepEqual(parseViewPrefs(encodeURIComponent(serializeViewPrefs(prefs))), prefs);
-    assert.match(viewPrefsCookieString(prefs), /^wesetup-view=t:xlarge\|c:high\|m:reduce\|h:off\|n:new; Path=\/; Max-Age=\d+; SameSite=Lax$/);
+    assert.match(viewPrefsCookieString(prefs), /^wesetup-view=t:xlarge\|c:high\|m:reduce\|h:off\|n:new\|d:classic; Path=\/; Max-Age=\d+; SameSite=Lax$/);
   });
 
   it("шаблон меню: у всех «Новый», сохранённый «стандартный» больше не действует", () => {
@@ -73,13 +73,22 @@ describe("Удобство чтения: кука устройства", () => {
       "data-view-motion": "auto",
       "data-view-hints": "on",
       "data-view-nav": "new",
+      "data-view-design": "classic",
     });
-    const attrs = viewPrefsHtmlAttributes({ textSize: "large", contrast: "high", motion: "reduce", hints: "off", navLayout: "new" });
+    const attrs = viewPrefsHtmlAttributes({ textSize: "large", contrast: "high", motion: "reduce", hints: "off", navLayout: "new", design: "classic" });
     assert.equal(attrs["data-view-text"], "large");
     assert.equal(attrs[HIGH_CONTRAST_ATTR], "");
     assert.equal(attrs[STILL_ATTR], "");
     assert.equal(attrs["data-view-hints"], "off");
     assert.equal(attrs["data-view-nav"], "new");
+  });
+
+  it("«Новая» тема: d:new в куке, по умолчанию прежний дизайн", () => {
+    assert.equal(DEFAULT_VIEW_PREFS.design, "classic");
+    assert.equal(parseViewPrefs("d:new").design, "new");
+    assert.equal(parseViewPrefs("d:weird").design, "classic");
+    assert.match(serializeViewPrefs({ ...DEFAULT_VIEW_PREFS, design: "new" }), /d:new/);
+    assert.equal(viewPrefsHtmlAttributes({ ...DEFAULT_VIEW_PREFS, design: "new" })["data-view-design"], "new");
   });
 
   it("скрипт до гидрации досчитывает «как в системе» по matchMedia", () => {
