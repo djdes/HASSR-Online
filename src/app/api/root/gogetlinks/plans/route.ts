@@ -10,6 +10,7 @@ import {
 import {
   GglOrderError,
   materializePlanSlots,
+  prepareUpcomingPlannedSlots,
   resolveGglActorFromSession,
   serializePlannedSlot,
   serializeSchedulePlan,
@@ -104,6 +105,11 @@ export async function POST(request: Request) {
     const materialized = plan.isActive
       ? await materializePlanSlots().catch(() => ({ created: 0 }))
       : { created: 0 };
+    if (plan.isActive) {
+      void prepareUpcomingPlannedSlots().catch((err) => {
+        console.warn("[ggl-plans] background slot preparation error:", err);
+      });
+    }
 
     return NextResponse.json({
       plan: serializeSchedulePlan(plan),

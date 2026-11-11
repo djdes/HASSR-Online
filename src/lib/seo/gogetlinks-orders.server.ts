@@ -1264,19 +1264,75 @@ export async function prepareUpcomingPlannedSlots(
   const searchCatalogDonors =
     deps?.searchCatalogDonors ??
     (async (gglCampaignId: number, maxPriceRub: number): Promise<DonorCandidate[]> => {
-      const raw = await callGglRead("searchDonorSites", {
-        campaignId: String(gglCampaignId),
-        maxPrice: maxPriceRub,
-        page: 1,
-      });
-      if (!Array.isArray(raw)) return [];
-      const parsed: DonorCandidate[] = [];
-      for (const item of raw) {
-        if (!item || typeof item !== "object") continue;
-        const cand = normalizeDonorCatalogRow(item as Record<string, unknown>);
-        if (cand) parsed.push(cand);
+      const bySiteId = new Map<number, DonorCandidate>();
+
+      // 1. Read incoming webmaster applications from cached GglApplicationsSnapshot (1,500+ real offers)
+      try {
+        const snapRows = await db.platformSetting.findMany({
+          where: { key: { endsWith: `:${gglCampaignId}:list` } },
+          select: { value: true },
+        });
+        for (const row of snapRows) {
+          const parsedSnap = JSON.parse(row.value) as {
+            applications?: Array<{
+              siteId: number;
+              domain: string;
+              placementType?: string;
+              priceRub: number | null;
+              dailyTraffic: number | null;
+              tf: number | null;
+              cf: number | null;
+              trust: number | null;
+            }>;
+          };
+          for (const app of parsedSnap.applications ?? []) {
+            const cleanDomain = normalizeDomainName(app.domain);
+            const price = app.priceRub ?? null;
+            if (!cleanDomain || !app.siteId || price === null || price <= 0 || price > maxPriceRub) {
+              continue;
+            }
+            const lowerType = String(app.placementType ?? "").toLowerCase();
+            const isNote = lowerType.includes("замет") || lowerType.includes("контекст");
+            const prev = bySiteId.get(app.siteId);
+            bySiteId.set(app.siteId, {
+              siteId: app.siteId,
+              domain: cleanDomain,
+              priceArticleRub: isNote ? (prev?.priceArticleRub ?? null) : price,
+              priceNoteRub: isNote ? price : (prev?.priceNoteRub ?? null),
+              tf: app.tf ?? prev?.tf ?? 0,
+              cf: app.cf ?? prev?.cf ?? 0,
+              trust: app.trust ?? prev?.trust ?? 0,
+              dailyTraffic: app.dailyTraffic ?? prev?.dailyTraffic ?? 0,
+              indexedYandex: true,
+              indexedGoogle: true,
+            });
+          }
+        }
+      } catch {
+        // Fallback to catalog search if snapshot cache is unavailable
       }
-      return parsed;
+
+      // 2. Also query GoGetLinks catalog search
+      try {
+        const raw = await callGglRead("searchDonorSites", {
+          campaignId: String(gglCampaignId),
+          maxPrice: maxPriceRub,
+          page: 1,
+        });
+        if (Array.isArray(raw)) {
+          for (const item of raw) {
+            if (!item || typeof item !== "object") continue;
+            const cand = normalizeDonorCatalogRow(item as Record<string, unknown>);
+            if (cand && !bySiteId.has(cand.siteId)) {
+              bySiteId.set(cand.siteId, cand);
+            }
+          }
+        }
+      } catch {
+        // If catalog call fails, rely on incoming webmaster applications
+      }
+
+      return [...bySiteId.values()];
     });
 
   const generateDraft = deps?.generateDraft ?? ((inp) => generateGglArticleDraft(inp));
@@ -1578,6 +1634,36 @@ async function defaultLookupLiveDonorPrice(args: {
   placementFormat: "article" | "note" | "context";
   maxPriceRub: number;
 }): Promise<number | null> {
+  const targetDomain = normalizeDomainName(args.donorDomain);
+
+  // 1. Check incoming webmaster applications snapshot first
+  try {
+    const snapRows = await db.platformSetting.findMany({
+      where: { key: { endsWith: `:${args.gglCampaignId}:list` } },
+      select: { value: true },
+    });
+    for (const row of snapRows) {
+      const parsedSnap = JSON.parse(row.value) as {
+        applications?: Array<{
+          siteId: number;
+          domain: string;
+          priceRub: number | null;
+        }>;
+      };
+      for (const app of parsedSnap.applications ?? []) {
+        if (
+          app.siteId === args.donorSiteId ||
+          (targetDomain && normalizeDomainName(app.domain) === targetDomain)
+        ) {
+          if (app.priceRub && app.priceRub > 0) return app.priceRub;
+        }
+      }
+    }
+  } catch {
+    // Ignore snapshot read error and continue to catalog search
+  }
+
+  // 2. Fallback to GoGetLinks catalog search
   const raw = await callGglRead("searchDonorSites", {
     campaignId: String(args.gglCampaignId),
     maxPrice: Math.max(args.maxPriceRub * 3, 5000),
@@ -1585,7 +1671,6 @@ async function defaultLookupLiveDonorPrice(args: {
   });
   if (!Array.isArray(raw)) return null;
 
-  const targetDomain = normalizeDomainName(args.donorDomain);
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
     const cand = normalizeDonorCatalogRow(item as Record<string, unknown>);
