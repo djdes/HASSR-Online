@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { hrefAfterPointSwitch, isCompanyWidePath, pointPageId, pointSyncAction, type PointSyncState } from "@/lib/point-section-sync";
+import { hrefAfterPointSwitch, isCompanyWidePath, pointPageId, pointReturnTarget, pointSyncAction, type PointSyncState } from "@/lib/point-section-sync";
 
 const base: PointSyncState = {
   pathname: "/dashboard",
@@ -87,4 +87,21 @@ test("после автосмены правило успокаивается: �
   assert.equal(pointSyncAction(afterOrg), null);
   // Страница точки → точка выбрана → больше ничего.
   assert.equal(pointSyncAction({ ...base, pathname: "/settings/buildings/p2", viewedPointId: "p2" }), null);
+});
+
+test("«назад» из раздела компании возвращает и точку, с которой пришли", () => {
+  const back = { pathname: "/dashboard", viewedPointId: null, returnPointId: "p1", viaHistory: true, pointIds: ["p1", "p2"] };
+  assert.equal(pointReturnTarget(back), "p1");
+  // Переход по меню дальше — осознанный: точку не возвращаем.
+  assert.equal(pointReturnTarget({ ...back, viaHistory: false }), null);
+  // Вернулись на другую страницу компании или главную без запомненной точки — нечего возвращать.
+  assert.equal(pointReturnTarget({ ...back, pathname: "/settings/subscription" }), null);
+  assert.equal(pointReturnTarget({ ...back, returnPointId: null }), null);
+  // Точка уже выбрана или стала недоступной.
+  assert.equal(pointReturnTarget({ ...back, viewedPointId: "p2" }), null);
+  assert.equal(pointReturnTarget({ ...back, returnPointId: "gone" }), null);
+  // Страница точки сама выбирает свою точку.
+  assert.equal(pointReturnTarget({ ...back, pathname: "/settings/buildings/p2" }), null);
+  // Главная нейтральна — возвращаем точку и на ней.
+  assert.equal(pointReturnTarget({ ...back, pathname: "/home" }), "p1");
 });

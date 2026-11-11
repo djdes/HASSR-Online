@@ -1,0 +1,8 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Эскалация до полного прогона: Затронут ядровый файл (src/lib/user-roles.ts)
+
+=== Test stats: pass=6099, fail=0 ===
+✓ Все тесты прошли.

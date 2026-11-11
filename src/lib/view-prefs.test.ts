@@ -47,11 +47,11 @@ describe("Удобство чтения: кука устройства", () => {
     assert.match(viewPrefsCookieString(prefs), /^wesetup-view=t:xlarge\|c:high\|m:reduce\|h:off\|n:new; Path=\/; Max-Age=\d+; SameSite=Lax$/);
   });
 
-  it("шаблон меню: по умолчанию стандартный, «Новый» — отдельным ключом, чужое значение — стандартный", () => {
-    assert.equal(DEFAULT_VIEW_PREFS.navLayout, "classic");
+  it("шаблон меню: у всех «Новый», сохранённый «стандартный» больше не действует", () => {
+    assert.equal(DEFAULT_VIEW_PREFS.navLayout, "new");
     assert.equal(parseViewPrefs("n:new").navLayout, "new");
-    assert.equal(parseViewPrefs("t:large|n:fancy").navLayout, "classic");
-    assert.equal(isDefaultViewPrefs({ ...DEFAULT_VIEW_PREFS, navLayout: "new" }), false);
+    assert.equal(parseViewPrefs("n:classic").navLayout, "new");
+    assert.equal(parseViewPrefs("t:large|n:fancy").navLayout, "new");
   });
 
   it("мусор и чужие значения — по умолчанию, по одному полю", () => {
@@ -72,7 +72,7 @@ describe("Удобство чтения: кука устройства", () => {
       "data-view-contrast": "auto",
       "data-view-motion": "auto",
       "data-view-hints": "on",
-      "data-view-nav": "classic",
+      "data-view-nav": "new",
     });
     const attrs = viewPrefsHtmlAttributes({ textSize: "large", contrast: "high", motion: "reduce", hints: "off", navLayout: "new" });
     assert.equal(attrs["data-view-text"], "large");

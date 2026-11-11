@@ -11,7 +11,7 @@ import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { NavIconChip } from "@/components/layout/nav-icons";
-import { NavLayoutSwitch, useNewNavPlace } from "@/components/layout/nav-layout-switch";
+import { useNewNavPlace } from "@/components/layout/nav-layout-switch";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
@@ -180,7 +180,6 @@ export function AppSidebarAccordion({
           </div>
         ) : null}
       </nav>
-      <NavLayoutSwitch />
     </aside>
   );
 }

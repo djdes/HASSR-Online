@@ -325,7 +325,9 @@ export default async function DashboardPage({
 
           {pendingApproval > 0 && (
             <AlertPill
-              href="/journals"
+              // На точке «Все журналы» — страница всей организации: записи
+              // на проверке смотрят в «Проверке записей» (2026-11-11).
+              href={viewedPoint ? "/verifications" : "/journals"}
               tone="indigo"
               icon={AlertTriangle}
               value={pendingApproval}
@@ -362,6 +364,8 @@ export default async function DashboardPage({
               </p>
             </div>
           </div>
+          {/* «Все журналы» — про всю организацию: на точке ссылки нет. */}
+          {viewedPoint ? null : (
           <Link
             href="/journals"
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-medium text-[#5566f6] transition-colors hover:bg-[#f5f6ff]"
@@ -369,6 +373,7 @@ export default async function DashboardPage({
             {tDash("allJournals")}
             <ArrowRight className="size-4" />
           </Link>
+          )}
         </div>
 
         {recentEntries.length === 0 ? (
