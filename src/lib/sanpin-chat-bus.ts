@@ -9,7 +9,8 @@
 
 export const SANPIN_CHAT_OPEN_EVENT = "wesetup:sanpin-chat-open";
 
-export function openSanpinChat() {
+/** Открыть чат; `question` — подставить в поле ввода (поиск «Спросить помощника»). */
+export function openSanpinChat(question?: string) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event(SANPIN_CHAT_OPEN_EVENT));
+  window.dispatchEvent(new CustomEvent(SANPIN_CHAT_OPEN_EVENT, { detail: { question } }));
 }

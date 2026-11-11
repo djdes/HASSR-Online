@@ -166,6 +166,7 @@ export function Header({
   canEditBranding = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
+  const tSearch = useTranslations("layoutUi.commandPalette");
   const tView = useTranslations("common.viewPrefs");
   const pathname = usePathname();
   const headerUndo = useHeaderUndo();
@@ -293,9 +294,14 @@ export function Header({
             aria-label={t("header.search")}
             title={t("header.searchTitle")}
             data-header-search
-            className="hidden size-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10 sm:inline-flex"
+            className="hidden size-10 shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10 sm:inline-flex 2xl:w-[260px] 2xl:justify-start 2xl:px-3"
           >
-            <Search className="size-[18px] stroke-[1.75]" aria-hidden />
+            <Search className="size-[18px] shrink-0 stroke-[1.75]" aria-hidden />
+            <span className="hidden flex-1 text-left text-[14.5px] text-[#9a9ca8] 2xl:inline">{tSearch("field")}</span>
+            <span className="hidden gap-1 2xl:flex" aria-hidden>
+              <kbd className="rounded-md border border-[#e7e7ec] px-1.5 font-mono text-[11.5px] leading-5 text-[#6a6c7a]">Ctrl</kbd>
+              <kbd className="rounded-md border border-[#e7e7ec] px-1.5 font-mono text-[11.5px] leading-5 text-[#6a6c7a]">K</kbd>
+            </span>
           </button>
           <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />

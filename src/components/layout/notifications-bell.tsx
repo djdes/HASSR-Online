@@ -386,7 +386,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
         data-bell
         className={triggerClassName ? `${TRIGGER_CLASS} ${triggerClassName}` : TRIGGER_CLASS}
       >
-        <Bell className="size-[18px] stroke-[1.75]" />
+        <Bell className="size-[18px] stroke-[1.75] text-[#2f80c9]" />
         {headerCount > 0 && (
           <span className="absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-semibold text-white">
             {headerCount > 99 ? "99+" : headerCount}

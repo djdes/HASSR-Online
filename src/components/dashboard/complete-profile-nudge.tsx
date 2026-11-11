@@ -12,6 +12,7 @@ import {
   Loader2,
   RefreshCw,
   Search,
+  Info,
   Sparkles,
   UserRoundPen,
   X,
@@ -149,11 +150,13 @@ export function CompleteProfileNudge({
       {!hidden ? (
         // print:hidden — на печати плашка сдвигала лист памятки, и подвал
         // уходил на второй лист (2026-10-29).
-        <div className="flex items-center gap-3 bg-[#5566f6] px-4 py-2.5 text-white print:hidden md:px-6">
-          <Sparkles className="size-4 shrink-0" />
-          <p className="hidden min-w-0 flex-1 text-[13px] leading-[1.45] sm:block">
+        <div className="flex items-center justify-center gap-2.5 bg-[#dcebf8] px-4 py-1.5 text-[#1d3a57] print:hidden md:px-6">
+          {/* Информационная полоса (владелец, 2026-11-11): голубая, узкая,
+              со значком «i», как у oxylabs. */}
+          <Info className="size-4 shrink-0 stroke-[1.75] text-[#2f6fa8]" aria-hidden />
+          <p className="hidden min-w-0 text-[13.5px] leading-[1.45] sm:block">
             <span className="font-medium">{tn("bannerTitle")}</span>{" "}
-            <span className="text-white/85">
+            <span className="text-[#2f4b66]">
               {tn("bannerBodyLong")}
             </span>
           </p>
@@ -162,14 +165,14 @@ export function CompleteProfileNudge({
               на отдельную строку. */}
           <p className="line-clamp-2 min-w-0 flex-1 text-[13px] leading-[1.45] sm:hidden">
             <span className="font-medium">{tn("bannerTitle")}</span>{" "}
-            <span className="text-white/85">
+            <span className="text-[#2f4b66]">
               {tn("bannerBodyShort")}
             </span>
           </p>
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="shrink-0 rounded-xl bg-white/15 px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-white/25"
+            className="shrink-0 rounded-lg px-2 py-0.5 text-[13.5px] font-medium text-[#1d3a57] underline underline-offset-2 transition-colors hover:bg-[#c9dff2]"
           >
             {tn("finish")}
           </button>
@@ -177,7 +180,7 @@ export function CompleteProfileNudge({
             type="button"
             onClick={dismiss}
             aria-label={tn("hideUntilNextLogin")}
-            className="shrink-0 rounded-lg p-1 text-white/70 transition-colors hover:text-white"
+            className="shrink-0 rounded-lg p-1 text-[#2f6fa8] transition-colors hover:bg-[#c9dff2] hover:text-[#1d3a57]"
           >
             <X className="size-4" />
           </button>

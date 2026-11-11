@@ -120,6 +120,8 @@ const TOKEN = new RegExp(
   "gi",
 );
 
+const SHADOW = /(?<![\w\[\]:/-])((?:[a-z0-9-]+(?:\[[^\]\s"'\x60]+\])?(?:\/[a-z0-9_-]+)?:)*)shadow-\[([^\]\s"'\x60]*rgba\(85,102,246,[0-9.]+\)[^\]\s"'\x60]*)\](?![\w\[-])/g;
+
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
@@ -196,6 +198,18 @@ for (const file of walk(SRC)) {
     rules.set(key, { ...rule, decl });
     found = true;
   }
+  // Indigo glows under buttons (`shadow-[…rgba(85,102,246,0.55)]`) → soft grey.
+  for (const m of text.matchAll(SHADOW)) {
+    const [whole, variantChain, value] = m;
+    const variants = variantChain ? variantChain.slice(0, -1).split(":") : [];
+    const rule = buildRule(variants, whole);
+    if (!rule) continue;
+    const shadow = value
+      .replace(/_/g, " ")
+      .replace(/rgba\(85,\s*102,\s*246,\s*([0-9.]+)\)/g, (_, a) => `rgba(17,17,20,${+(Number(a) * 0.45).toFixed(3)})`);
+    rules.set(`${rule.media ?? ""}|${rule.selector}`, { ...rule, decl: `box-shadow: ${shadow}` });
+    found = true;
+  }
   if (found) files += 1;
 }
 
@@ -236,8 +250,13 @@ const tokens = `${SCOPE} .app-shell, ${SCOPE} body {
   --app-text-faint: #9a9ca8;
   --app-skeleton-base: #ededf0;
 }`;
+// Accents (owner, 2026-11-11: «разнообразить — розовые и синие иконки,
+// галочки»): check marks outside buttons/checkboxes are blue; green
+// «done» checks keep their colour.
+const accents = `${SCOPE} :is(.lucide-check, .lucide-circle-check, .lucide-circle-check-big, .lucide-check-check):not(:is(button, a, [role="button"], [role="checkbox"], [data-state]) *):not([class*="#116b2a"]):not([class*="#136b2a"]):not([class*="green"]):not([class*="emerald"]):not([class*="text-white"]) { color: #2f80c9; }`;
 const body = [
   tokens,
+  accents,
   ...plain,
   ...[...byMedia.entries()].map(([media, lines]) => `@media ${media} {\n${lines.join("\n")}\n}`),
 ].join("\n");

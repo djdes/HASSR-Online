@@ -26627,7 +26627,15 @@
       "footerNav": "↑↓ навигация · Enter выбрать",
       "footerToggle": "⌘K / Ctrl+K — открыть/закрыть",
       "kindArea": "Помещения",
-      "kindProduct": "Продукты"
+      "kindProduct": "Продукты",
+      "results": "{count, plural, one {# результат} few {# результата} many {# результатов} other {# результата}}",
+      "filter": "Фильтр",
+      "filterAll": "Всё",
+      "askAssistant": "Спросить ИИ-помощника «{query}»",
+      "navigate": "Навигация",
+      "close": "Закрыть",
+      "clear": "Очистить",
+      "field": "Поиск…"
     },
     "createDemoDialog": {
       "createFailed": "Не удалось открыть демо",

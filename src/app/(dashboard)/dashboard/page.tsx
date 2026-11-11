@@ -275,15 +275,15 @@ export default async function DashboardPage({
               flat
               defaultOpen={true}
               titleAside={
-                // Светлые кнопки с рамкой (как «Пришла проверка»): догнать
-                // пропуски и выбрать, какие журналы включены.
+                // Светлые кнопки с цветной рамкой (акценты сайта): голубая —
+                // догнать пропуски, розовая — какие журналы включены.
                 <>
                 {catchUpOn ? (
                 <Link
                   href="/dashboard/catch-up"
                   title={tDash("catchUp")}
                   aria-label={tDash("catchUp")}
-                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10"
+                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#b6d6f0] bg-white text-[#2f80c9] transition-colors duration-150 hover:bg-[#eef6fd] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2f80c9]/15"
                 >
                   <History className="size-[18px] stroke-[1.75]" />
                 </Link>
@@ -292,7 +292,7 @@ export default async function DashboardPage({
                   href="/settings/journals"
                   title={tDash("chooseJournals")}
                   aria-label={tDash("journalSettings")}
-                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10"
+                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#f2c1d9] bg-white text-[#d6408a] transition-colors duration-150 hover:bg-[#fdf2f7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#d6408a]/15"
                 >
                   <ListChecks className="size-[18px] stroke-[1.75]" />
                 </Link>

@@ -26627,7 +26627,15 @@
       "footerNav": "↑↓ navigatsiya · Enter tanlash",
       "footerToggle": "⌘K / Ctrl+K — ochish/yopish",
       "kindArea": "Xonalar",
-      "kindProduct": "Mahsulotlar"
+      "kindProduct": "Mahsulotlar",
+      "results": "{count, plural, other {# ta natija}}",
+      "filter": "Filtr",
+      "filterAll": "Hammasi",
+      "askAssistant": "AI yordamchidan so‘rash: «{query}»",
+      "navigate": "Harakat",
+      "close": "Yopish",
+      "clear": "Tozalash",
+      "field": "Qidiruv…"
     },
     "createDemoDialog": {
       "createFailed": "Demoni ochib bo‘lmadi",

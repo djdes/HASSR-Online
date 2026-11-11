@@ -7,17 +7,21 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   ArrowDownToLine,
-  ArrowRight,
   Boxes,
-  DoorOpen,
+  ChevronRight,
   ClipboardList,
+  CornerDownLeft,
+  DoorOpen,
   FileSpreadsheet,
   Loader2,
   Package,
   Search,
+  Sparkles,
   User,
   Wand2,
+  XCircle,
 } from "lucide-react";
+import { openSanpinChat } from "@/lib/sanpin-chat-bus";
 import { toast } from "sonner";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { navIcon } from "@/components/layout/nav-icons";
@@ -62,8 +66,11 @@ type Hit = {
 };
 
 type FlatItem =
-  | (StaticItem & { source: "static" })
-  | (Hit & { source: "live" });
+  | (StaticItem & { source: "static"; group?: string })
+  | (Hit & { source: "live"; group?: string });
+
+type FilterKey = "all" | "sections" | Hit["kind"];
+const FILTER_KINDS = ["user", "template", "document", "equipment", "area", "product"] as const;
 
 // Разделы для поиска — из меню кабинета (`lib/app-nav.ts`): ровно то,
 // что человек откроет, со своими названиями организации. Раньше здесь
@@ -108,6 +115,10 @@ export function CommandPalette() {
   const [hits, setHits] = useState<Hit[]>([]);
   const [searching, setSearching] = useState(false);
   const [actionRunning, setActionRunning] = useState<number | null>(null);
+  // Фильтр по виду результата: всё, разделы и действия, или один вид данных.
+  const [filter, setFilter] = useState<FilterKey>("all");
+  // Где стоит поле поиска в шапке: панель открывается прямо под ним.
+  const [anchor, setAnchor] = useState<{ top: number; right: number; width: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const reqIdRef = useRef(0);
   const nav = useAppNav();
@@ -247,6 +258,14 @@ export function CommandPalette() {
       setQuery("");
       setActiveIdx(0);
       setHits([]);
+      setFilter("all");
+      const field = document.querySelector<HTMLElement>("[data-header-search]");
+      const rect = field && field.offsetParent !== null ? field.getBoundingClientRect() : null;
+      setAnchor(
+        rect && window.innerWidth >= 640
+          ? { top: rect.top, right: window.innerWidth - rect.right, width: rect.width }
+          : null,
+      );
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -334,8 +353,14 @@ export function CommandPalette() {
         items: arr.map((h) => ({ ...h, source: "live" as const })),
       });
     }
-    return blocks;
-  }, [query, hits, routeItems, actionItems, kindLabel, t]);
+    return blocks
+      .filter((block) => {
+        if (filter === "all") return true;
+        if (filter === "sections") return block.title === t("groupActions") || block.title === t("groupSections");
+        return block.title === kindLabel[filter];
+      })
+      .map((block) => ({ ...block, items: block.items.map((item) => ({ ...item, group: block.title })) }));
+  }, [query, hits, routeItems, actionItems, kindLabel, t, filter]);
 
   const flatItems = useMemo<FlatItem[]>(() => {
     return sections.flatMap((s) => s.items);
@@ -368,27 +393,61 @@ export function CommandPalette() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       pick(activeIdx);
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") {
+      e.preventDefault();
+      askAssistant();
     }
+  }
+
+  function askAssistant() {
+    const q = query.trim();
+    if (q.length < 2) return;
+    setOpen(false);
+    openSanpinChat(q);
   }
 
   if (!open) return null;
 
+  const q = query.trim();
+  // Панель под полем в шапке (компьютер) или сверху во всю ширину (телефон).
+  const panelStyle = anchor
+    ? {
+        top: anchor.top,
+        right: anchor.right,
+        width: Math.min(Math.max(anchor.width, 620), window.innerWidth - 32),
+      }
+    : undefined;
   let runningIdx = -1;
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-start justify-center bg-black/40 p-4 pt-[10vh]"
-      onClick={() => setOpen(false)}
-    >
+    <div className="fixed inset-0 z-[70]" onClick={() => setOpen(false)}>
       <BodyScrollLock />
       <div
-        className="w-full max-w-xl rounded-2xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-20px_rgba(11,16,36,0.55)]"
+        role="dialog"
+        aria-label={t("field")}
+        style={panelStyle}
+        className={`absolute flex max-h-[min(78vh,760px)] flex-col ${
+          anchor ? "" : "inset-x-3 top-3"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-[#ececf4] px-4 py-3">
-          {searching ? (
-            <Loader2 className="size-4 animate-spin text-[#5566f6]" />
+        {/* Поле — на месте поля в шапке, с рамкой фокуса. */}
+        <div className="flex h-12 shrink-0 items-center gap-2.5 rounded-[12px] border-2 border-[#111114] bg-white px-3 shadow-[0_0_0_4px_rgba(17,17,20,0.08)]">
+          {q.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              aria-label={t("clear")}
+              className="flex size-6 shrink-0 items-center justify-center rounded-full text-[#5f6170] hover:bg-[#f1f1f4] hover:text-[#111114]"
+            >
+              <XCircle className="size-[18px] stroke-[1.75]" aria-hidden />
+            </button>
+          ) : searching ? (
+            <Loader2 className="size-[18px] shrink-0 animate-spin text-[#5f6170]" />
           ) : (
-            <Search className="size-4 text-[#9b9fb3]" />
+            <Search className="size-[18px] shrink-0 text-[#5f6170]" />
           )}
           <input
             ref={inputRef}
@@ -400,80 +459,119 @@ export function CommandPalette() {
             }}
             onKeyDown={onKeyDown}
             placeholder={t("placeholder")}
-            className="flex-1 bg-transparent text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-[16px] text-[#111114] placeholder:text-[#9a9ca8] focus:outline-none"
           />
-          <kbd className="rounded-md border border-[#ececf4] bg-[#fafbff] px-1.5 py-0.5 text-[11px] text-[#6f7282]">
-            Esc
-          </kbd>
+          {q.length >= 2 && !searching ? (
+            <span className="shrink-0 text-[14px] text-[#6a6c7a]">{t("results", { count: flatItems.length })}</span>
+          ) : null}
         </div>
-        <div className="max-h-[60vh] overflow-y-auto p-2">
-          {flatItems.length === 0 ? (
-            <div className="rounded-xl px-3 py-6 text-center text-[13px] text-[#9b9fb3]">
-              {query.trim().length < 2
-                ? t("startTyping")
-                : searching
-                  ? t("searching")
-                  : t("nothingFound")}
-            </div>
-          ) : (
-            sections.map((section) => (
-              <div key={section.title} className="mb-1 last:mb-0">
-                <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">
-                  {section.title}
-                </div>
-                <ul>
-                  {section.items.map((item) => {
-                    runningIdx += 1;
-                    const i = runningIdx;
-                    const isRunning = actionRunning === i;
-                    const icon = isRunning
-                      ? Loader2
-                      : item.source === "static"
-                        ? item.icon
-                        : KIND_ICON[item.kind];
-                    const isActive = i === activeIdx;
-                    // Нейтральная строка: серая плашка с иконкой, выбранная
-                    // строка — серый фон (владелец, 2026-11-11).
-                    return (
-                      <li
-                        key={`${section.title}-${i}`}
-                        onClick={() => pick(i)}
-                        onMouseEnter={() => setActiveIdx(i)}
-                        data-active={isActive ? "" : undefined}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 ${
-                          isActive ? "bg-[#f1f1f4]" : "hover:bg-[#f4f4f6]"
-                        }`}
-                      >
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48]">
-                          {createElement(icon, {
-                            className: isRunning ? "size-4 animate-spin" : "size-4 stroke-[1.75]",
-                            "aria-hidden": true,
-                          })}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className={`text-[14px] text-[#111114] ${isActive ? "font-medium" : ""}`}>
-                            {item.label}
-                          </div>
-                          {item.hint ? (
-                            <div className="mt-0.5 truncate text-[11px] text-[#9b9fb3]">
-                              {item.hint}
-                            </div>
-                          ) : null}
-                        </div>
-                        <ArrowRight
-                          className={`size-4 shrink-0 ${isActive ? "text-[#111114]" : "text-[#9b9fb3]"}`}
-                        />
-                      </li>
-                    );
-                  })}
-                </ul>
+
+        {/* Результаты */}
+        <div className="mt-2 flex min-h-0 flex-col overflow-hidden rounded-[16px] border border-[#e7e7ec] bg-white shadow-[0_24px_60px_-20px_rgba(17,17,20,0.35)]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            {flatItems.length === 0 ? (
+              <div className="px-3 py-8 text-center text-[14px] text-[#6a6c7a]">
+                {q.length < 2 ? t("startTyping") : searching ? t("searching") : t("nothingFound")}
               </div>
-            ))
-          )}
-        </div>
-        <div className="flex items-center justify-between border-t border-[#ececf4] bg-[#fafbff] px-4 py-2 text-[11px] text-[#9b9fb3]">
-          <span>{t("footerNav")}</span>
-          <span>{t("footerToggle")}</span>
+            ) : (
+              <ul className="space-y-0.5">
+                {flatItems.map((item) => {
+                  runningIdx += 1;
+                  const i = runningIdx;
+                  const isRunning = actionRunning === i;
+                  const icon = isRunning
+                    ? Loader2
+                    : item.source === "static"
+                      ? item.icon
+                      : KIND_ICON[item.kind];
+                  const isActive = i === activeIdx;
+                  return (
+                    <li
+                      key={`${item.group}-${i}`}
+                      onClick={() => pick(i)}
+                      onMouseEnter={() => setActiveIdx(i)}
+                      data-active={isActive ? "" : undefined}
+                      className={`flex cursor-pointer items-center gap-3 rounded-[12px] px-3 py-2.5 ${
+                        isActive ? "bg-[#f1f1f4]" : ""
+                      }`}
+                    >
+                      {createElement(icon, {
+                        className: `size-5 shrink-0 self-center stroke-[1.6] text-[#5f6170] ${isRunning ? "animate-spin" : ""}`,
+                        "aria-hidden": true,
+                      })}
+                      <div className="min-w-0 flex-1">
+                        {item.group ? (
+                          <div className="flex items-center gap-1.5 truncate text-[12.5px] text-[#6a6c7a]">
+                            {item.group}
+                          </div>
+                        ) : null}
+                        <div className="truncate text-[16px] font-medium leading-snug text-[#111114]">{item.label}</div>
+                        {item.hint ? (
+                          <div className="truncate text-[13.5px] text-[#6a6c7a]">{item.hint}</div>
+                        ) : null}
+                      </div>
+                      {isActive ? (
+                        <span
+                          aria-hidden
+                          className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-[#111114] text-white"
+                        >
+                          <CornerDownLeft className="size-4" />
+                        </span>
+                      ) : (
+                        <ChevronRight className="size-4 shrink-0 text-[#9a9ca8]" aria-hidden />
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          {q.length >= 2 ? (
+            <button
+              type="button"
+              onClick={askAssistant}
+              className="flex shrink-0 items-center gap-3 border-t border-[#e7e7ec] px-5 py-3 text-left text-[15px] text-[#111114] hover:bg-[#f4f4f6]"
+            >
+              <Sparkles className="size-5 shrink-0 stroke-[1.6] text-[#5f6170]" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">{t("askAssistant", { query: q })}</span>
+              <span className="flex gap-1">
+                <kbd className="rounded-md border border-[#dcdde3] px-1.5 py-0.5 font-mono text-[12px] text-[#5f6170]">Ctrl</kbd>
+                <kbd className="rounded-md border border-[#dcdde3] px-1.5 py-0.5 font-mono text-[12px] text-[#5f6170]">I</kbd>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-[#9a9ca8]" aria-hidden />
+            </button>
+          ) : null}
+
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#e7e7ec] bg-[#fafafb] px-5 py-2.5 text-[14px] text-[#5f6170]">
+            <label className="flex items-center gap-2">
+              <span>{t("filter")}</span>
+              <select
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value as FilterKey);
+                  setActiveIdx(0);
+                  inputRef.current?.focus();
+                }}
+                className="cursor-pointer rounded-md bg-transparent py-0.5 pr-1 font-medium text-[#111114] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111114]/15"
+              >
+                <option value="all">{t("filterAll")}</option>
+                <option value="sections">{t("groupSections")}</option>
+                {FILTER_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kindLabel[kind]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span className="flex items-center gap-2">
+              <kbd className="rounded-md border border-[#dcdde3] bg-white px-1.5 py-0.5 text-[12px]">↑</kbd>
+              <kbd className="rounded-md border border-[#dcdde3] bg-white px-1.5 py-0.5 text-[12px]">↓</kbd>
+              <span>{t("navigate")}</span>
+              <kbd className="ml-2 rounded-md border border-[#dcdde3] bg-white px-1.5 py-0.5 text-[12px]">Esc</kbd>
+              <span>{t("close")}</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -26627,7 +26627,15 @@
       "footerNav": "↑↓ navigate · Enter select",
       "footerToggle": "⌘K / Ctrl+K — open/close",
       "kindArea": "Rooms",
-      "kindProduct": "Products"
+      "kindProduct": "Products",
+      "results": "{count, plural, one {# result} other {# results}}",
+      "filter": "Filter",
+      "filterAll": "Everything",
+      "askAssistant": "Ask the AI assistant “{query}”",
+      "navigate": "Navigate",
+      "close": "Close",
+      "clear": "Clear",
+      "field": "Search…"
     },
     "createDemoDialog": {
       "createFailed": "Could not open the demo",
