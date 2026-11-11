@@ -10,6 +10,7 @@ import {
   type JournalSwitcherMenu,
 } from "@/lib/crumb-menu";
 import { customSectionName } from "@/lib/custom-names";
+import { useAppNav } from "@/components/layout/app-nav-context";
 
 /**
  * Хлебные крошки раздела журналов:
@@ -84,10 +85,17 @@ export function JournalPageCrumbs({
   const displayedName = useJournalDisplayName(journalCode ?? "", journalName ?? "");
   const journalLabel = journalName ? displayedName : journalName;
 
+  // Выбрана торговая точка — «Все журналы» (`/journals`) про всю организацию:
+  // звено «Журналы» и запасной «назад» ведут в «Сегодня» точки (корень раздела
+  // в режиме точки), иначе нажатие выбрасывало бы человека в офис (2026-11-11).
+  const journalsRoot = useAppNav().sections.find((section) => section.key === "journals")?.rootHref;
+  const journalsHref = journalsRoot === "/dashboard" || journalsRoot === "/control-board" ? journalsRoot : "/journals";
+  const fallbackBackHref = backHref === "/journals" ? journalsHref : backHref;
+
   const items: JournalCrumb[] = [
     {
       label: customSectionName(customNames, "journals") ?? t("journals"),
-      href: "/journals",
+      href: journalsHref,
       // Двухуровневое, как «Проекты» в ProjectsFlow: журнал → его
       // документы. Отсюда можно попасть сразу в нужный бланк, не
       // открывая сперва журнал.
@@ -123,7 +131,7 @@ export function JournalPageCrumbs({
   // подмешиваем тут, а не в layout'е раздела.
   return (
     <div className="flex min-w-0 items-center gap-3 print:hidden">
-      <PageBackLink fallbackHref={backHref} />
+      <PageBackLink fallbackHref={fallbackBackHref} />
       <Breadcrumbs items={items} className={`min-w-0 flex-1 ${className}`.trim()} />
       {/* «Поделиться» — ссылка на этот журнал повару или коллеге. */}
       <ShareJournalButton title={journalLabel ?? undefined} />

@@ -1,0 +1,14 @@
+{
+  "task": "nav-new-default-2026-11-11",
+  "branch": "claude/affectionate-newton-7hw7ae",
+  "checkedAt": "2026-11-11",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/view-prefs.ts", "raw/browser-final.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/point-section-sync.ts", "raw/browser-final.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["src/components/layout/point-section-sync.tsx", "raw/browser-final.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/browser-final.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["src/components/journals/journal-breadcrumbs.tsx", "raw/crawl.json"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/browser-final.txt"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt"] }
+  }
+}

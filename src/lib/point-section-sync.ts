@@ -97,3 +97,26 @@ export function hrefAfterPointSwitch(input: {
   }
   return null;
 }
+
+/**
+ * «Назад» после автосмены на офис (2026-11-11): человек с точки зашёл в раздел
+ * всей компании — выбор стал офисом, — и вернулся назад (стрелка страницы или
+ * кнопка браузера). Возвращаем и точку, с которой он пришёл: иначе «назад»
+ * приводит на ту же страницу, но уже про всю организацию. Только по истории:
+ * переход по меню дальше — осознанный, точку не трогаем.
+ */
+export function pointReturnTarget(input: {
+  pathname: string | null | undefined;
+  /** Торговая точка в шапке сейчас; null — офис / вся организация. */
+  viewedPointId: string | null;
+  /** Точка, с которой человека увела автосмена; null — возвращать нечего. */
+  returnPointId: string | null;
+  /** Страница открыта переходом по истории («назад» / «вперёд»). */
+  viaHistory: boolean;
+  pointIds: readonly string[];
+}): string | null {
+  if (!input.viaHistory || !input.returnPointId || input.viewedPointId !== null) return null;
+  if (!input.pointIds.includes(input.returnPointId)) return null;
+  if (isCompanyWidePath(input.pathname) || pointPageId(input.pathname)) return null;
+  return input.returnPointId;
+}

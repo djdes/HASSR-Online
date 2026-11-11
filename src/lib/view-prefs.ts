@@ -41,7 +41,9 @@ export type HintsMode = (typeof HINTS_MODES)[number];
 /**
  * Шаблон меню кабинета на компьютере: `classic` — стандартный (меню раздела
  * сменяет главное), `new` — два уровня слева, остальные — строкой над
- * страницей (`lib/nav-layout.ts`). Переключатель — внизу меню слева.
+ * страницей (`lib/nav-layout.ts`). С 2026-11-11 (владелец) у всех — `new`:
+ * переключатель внизу меню убран, сохранённый на устройстве «стандартный»
+ * больше не действует.
  */
 export const NAV_LAYOUTS = ["classic", "new"] as const;
 export type NavLayout = (typeof NAV_LAYOUTS)[number];
@@ -59,7 +61,7 @@ export const DEFAULT_VIEW_PREFS: ViewPrefs = {
   contrast: "auto",
   motion: "auto",
   hints: "on",
-  navLayout: "classic",
+  navLayout: "new",
 };
 
 /**
@@ -97,7 +99,8 @@ export function parseViewPrefs(raw: string | null | undefined): ViewPrefs {
     contrast: pick(CONTRAST_MODES, values.get(KEYS.contrast), DEFAULT_VIEW_PREFS.contrast),
     motion: pick(MOTION_MODES, values.get(KEYS.motion), DEFAULT_VIEW_PREFS.motion),
     hints: pick(HINTS_MODES, values.get(KEYS.hints), DEFAULT_VIEW_PREFS.hints),
-    navLayout: pick(NAV_LAYOUTS, values.get(KEYS.navLayout), DEFAULT_VIEW_PREFS.navLayout),
+    // Выбора больше нет: старое «n:classic» в куке не возвращает прежнее меню.
+    navLayout: DEFAULT_VIEW_PREFS.navLayout,
   };
 }
 

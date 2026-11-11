@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { AppSidebarAccordion } from "@/components/layout/app-sidebar-accordion";
 import { NavIconChip } from "@/components/layout/nav-icons";
-import { NavLayoutSwitch, useNewNavLayout } from "@/components/layout/nav-layout-switch";
+import { useNewNavLayout } from "@/components/layout/nav-layout-switch";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import {
   NavBadge,
@@ -223,7 +223,6 @@ function ClassicSidebar({
         className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col border-r border-[#ececf4] bg-white lg:flex print:hidden"
       >
         {mainPane}
-        <NavLayoutSwitch />
       </aside>
     );
   }
@@ -320,7 +319,6 @@ function ClassicSidebar({
           </div>
         </div>
       </div>
-      <NavLayoutSwitch />
     </aside>
   );
 }

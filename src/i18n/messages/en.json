@@ -2824,7 +2824,8 @@
         "open": "Open outlet",
         "captionOffice": "Company",
         "organization": "Whole company",
-        "companySection": "This section covers the whole company — now showing: {name}"
+        "companySection": "This section covers the whole company — now showing: {name}",
+        "returnTo": "Back to {name}"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
