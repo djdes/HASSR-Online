@@ -8,6 +8,7 @@ import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
 import { cn } from "@/lib/utils";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { forgetReturnPoint } from "@/components/layout/point-section-sync";
 import { ScrollList } from "@/components/ui/scroll-list";
 
 /**
@@ -43,6 +44,8 @@ export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
       target: { id: building.id, office: isOfficeBuilding(building) },
       canManagePoints: options.canManagePoints === true,
     });
+    // Человек выбрал сам — «вернуть точку по „назад“» больше не нужно.
+    forgetReturnPoint();
     if (building.id === activeBuildingId) {
       // Точка уже выбрана: менять нечего, но её раздел открываем — нажатие
       // на главной не должно оставаться без ответа.

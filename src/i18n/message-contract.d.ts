@@ -2825,7 +2825,8 @@ export type MessageContract = {
         "open": "Открыть точку",
         "captionOffice": "Организация",
         "organization": "Вся организация",
-        "companySection": "Раздел общий для всей компании — в шапке выбрано: {name}"
+        "companySection": "Раздел общий для всей компании — в шапке выбрано: {name}",
+        "returnTo": "Вернуться на «{name}»"
       },
       "sidebarAria": "Разделы кабинета",
       "tabsAria": "Подразделы",

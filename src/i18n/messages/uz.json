@@ -2824,7 +2824,8 @@
         "open": "Nuqtani ochish",
         "captionOffice": "Tashkilot",
         "organization": "Butun tashkilot",
-        "companySection": "Bu bo‘lim butun kompaniyaga tegishli — tanlandi: {name}"
+        "companySection": "Bu bo‘lim butun kompaniyaga tegishli — tanlandi: {name}",
+        "returnTo": "«{name}»ga qaytish"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
