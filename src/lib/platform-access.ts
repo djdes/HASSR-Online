@@ -126,6 +126,9 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/root/invoices", gate: "billing" },
   { pattern: "/root/sber", gate: "billing" },
   { pattern: "/api/root/sber", gate: "billing" },
+  // Табель и выплаты сотрудникам платформы — только владелец.
+  { pattern: "/root/timesheet", gate: "superadmin" },
+  { pattern: "/api/root/timesheet", gate: "superadmin" },
   { pattern: "/api/root/tariffs", gate: "billing" },
   { pattern: "/api/root/legal-requisites", gate: "billing" },
   { pattern: "/api/root/orders", gate: "billing" },

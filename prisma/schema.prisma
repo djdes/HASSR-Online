@@ -6019,3 +6019,48 @@ model PlatformRole {
 
   @@index([sort])
 }
+
+/// Табель сотрудников платформы (/root/timesheet, 2026-11-11) — по образцу
+/// DocsFlow: часы по дням, ставка за час, премия или штраф за период и
+/// отметки о выплатах. Месяц делится на два периода: 1–15 (аванс) и 16–конец.
+model StaffTimesheetPerson {
+  id          String   @id @default(cuid())
+  name        String
+  /// Пользователь панели, если это сотрудник с доступом (Алексей).
+  userId      String?
+  /// Ставка за час, ₽.
+  ratePerHour Int
+  active      Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Месяц табеля: values — { "1".."31": часы числом или статус «О»/«Б»/«В»;
+/// "p1"/"p2": премия (+) или штраф (−) за период, ₽ }.
+model StaffTimesheetMonth {
+  id        String   @id @default(cuid())
+  personId  String
+  /// «2026-11».
+  month     String
+  values    Json     @default("{}")
+  updatedAt DateTime @updatedAt
+
+  @@unique([personId, month])
+}
+
+/// Выплата по табелю: за какой месяц и период, сколько и когда.
+model StaffTimesheetPayment {
+  id          String   @id @default(cuid())
+  personId    String
+  month       String
+  /// advance — за 1–15, final — за 16–конец месяца.
+  part        String
+  amountRub   Int
+  paidAt      DateTime
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([personId, month])
+}
