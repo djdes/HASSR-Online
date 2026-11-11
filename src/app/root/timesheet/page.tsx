@@ -34,7 +34,7 @@ export default async function TimesheetPage({ searchParams }: { searchParams: Pr
           </p>
         </div>
       </div>
-      <TimesheetBoard month={month} today={monthKey(now) === month ? Number(new Date(now.getTime() + 3 * 3600000).toISOString().slice(8, 10)) : null} todayDate={new Date(now.getTime() + 3 * 3600000).toISOString().slice(0, 10)} people={people} />
+      <TimesheetBoard key={month} month={month} today={monthKey(now) === month ? Number(new Date(now.getTime() + 3 * 3600000).toISOString().slice(8, 10)) : null} todayDate={new Date(now.getTime() + 3 * 3600000).toISOString().slice(0, 10)} people={people} />
     </div>
   );
 }
