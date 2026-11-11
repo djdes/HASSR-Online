@@ -1,6 +1,6 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { listOrganizationBuildings } from "@/lib/active-building";
+import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
 import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
 import { positionSuggestionOptionsFor } from "@/lib/sphere-positions";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { StaffPageClient } from "@/components/staff/staff-page-client";
 import { StaffPlaceFilter } from "@/components/staff/staff-place-filter";
-import { isOfficeBuilding } from "@/lib/building-scope";
+import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { buildingInScope, isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 import { PinRequestsPanel } from "@/components/staff/pin-requests-panel";
 import { listPendingQrPinRequests } from "@/lib/qr-pin-requests";
@@ -138,21 +138,23 @@ export default async function StaffPage({
   const staffBuildings = (await listOrganizationBuildings(orgId)).filter((building) =>
     buildingInScope(session.user, building.id),
   );
-  const [assignments, todayKey] = await Promise.all([
+  const [assignments, todayKey, buildingContext] = await Promise.all([
     loadActiveAssignments(orgId),
     organizationTodayKey(orgId),
+    loadBuildingContext(session),
   ]);
 
-  // «Где работает» (2026-10-26): офис, точка или без места. Точку здесь
-  // выбирают только в этом фильтре — переключатель в шапке на странице скрыт
-  // (2026-10-29, партнёр: «один список»), без выбора в адресе — «Все».
+  // «Где работает» (2026-10-26): офис, точка или без места. С 2026-11-11
+  // фильтр согласован с точкой в шапке (владелец: «должны быть сотрудники по
+  // выбранной точке»): без выбора в адресе — точка из шапки, офис или «Вся
+  // организация» в шапке — «Все»; выбор точки в фильтре переключает шапку.
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? null;
   const showPlaceFilter = organization?.perLocationJournals === true && staffBuildings.length >= 2;
   const place = resolvePlaceFilter({
     requested: placeFilterParam(query.place),
     places: staffBuildings.map((building) => building.id),
     hasNone: true,
-    headerPointId: null,
+    headerPointId: showPlaceFilter ? viewedPointId(buildingContext) : null,
   });
   // Новый сотрудник по умолчанию — в место из фильтра (раньше — в точку из
   // шапки, даже если ниже выбрана другая); «Все» и «Без места» — без места.

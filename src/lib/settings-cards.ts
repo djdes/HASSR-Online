@@ -36,6 +36,8 @@ export type SettingsCard = {
   match?: string[];
   /** Карточка видна, только если эта часть автоматики выбрана в спецрежиме. */
   requiresAutomation?: AutomationFeature;
+  /** Возможность тарифа PRO — метка «PRO» на карточке (как у пунктов меню). */
+  pro?: true;
 };
 
 const STAFF_PATH: NavAccess = { kind: "staffPath" };
@@ -71,7 +73,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "capa", href: "/capa", icon: "AlertTriangle", section: "more", group: "work", access: STAFF_PATH },
   { id: "reports", href: "/reports", icon: "FileText", section: "more", group: "work", access: FULL_ACCESS },
   { id: "ideas", href: "/ideas", icon: "Lightbulb", section: "more", group: "work", access: FULL_ACCESS },
-  { id: "mercury", href: "/mercury", icon: "Plug", section: "more", group: "work", access: STAFF_PATH },
+  { id: "mercury", href: "/mercury", icon: "Plug", section: "more", group: "work", access: STAFF_PATH, pro: true },
   { id: "edo", href: "/edo", icon: "FileText", section: "more", group: "work", access: FULL_ACCESS },
   // Страницы без места в новом меню (владелец, 2026-10-28: «всё, что пока не
   // распределили, — в „Остальное“, потом разнесём по назначению»).
@@ -84,7 +86,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   // ---- Остальное: подключения -----------------------------------------
   { id: "settings_notifications", href: "/settings/notifications", icon: "Bell", section: "more", group: "connections", access: STAFF_PATH },
   { id: "settings_integrations_tasksflow", href: "/settings/integrations/tasksflow", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
-  { id: "settings_integrations_mercury", href: "/settings/integrations/mercury", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
+  { id: "settings_integrations_mercury", href: "/settings/integrations/mercury", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS, pro: true },
   { id: "settings_integrations_edo", href: "/settings/integrations/edo", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_integrations_iiko", href: "/settings/integrations/iiko", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_integrations_1c", href: "/settings/integrations/1c", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },

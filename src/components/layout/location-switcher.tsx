@@ -10,6 +10,7 @@ import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
 import { cn } from "@/lib/utils";
 import { useContentTransition } from "@/components/layout/content-transition";
 import { forgetReturnPoint } from "@/components/layout/point-section-sync";
+import { showPointSwitchToast, shortPointName } from "@/components/layout/point-switch-toast";
 import { ScrollList } from "@/components/ui/scroll-list";
 
 /**
@@ -35,7 +36,28 @@ export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
   const pathname = usePathname();
   const { refreshAfter, pendingTag, isPending } = useContentTransition();
 
-  function switchTo(building: BuildingOption, activeBuildingId: string | null) {
+  async function postBuilding(buildingId: string): Promise<boolean> {
+    try {
+      const response = await fetch("/api/me/active-building", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buildingId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error ?? t("failed"));
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("failed"));
+      return false;
+    }
+  }
+
+  /**
+   * `previous` — что было выбрано до нажатия: тост предложит вернуться к нему
+   * (владелец, 2026-11-11: короткий тост с отсчётом и «вернуться» — и при
+   * ручной смене, как при автосмене).
+   */
+  function switchTo(building: BuildingOption, activeBuildingId: string | null, previous?: BuildingOption | null) {
     if (isPending) return;
     // Выбор ведёт в раздел, который у выбранного есть (2026-11-10): точка,
     // выбранная на главной или в разделе всей компании, открывает свою
@@ -44,6 +66,7 @@ export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
       pathname,
       target: { id: building.id, office: isOfficeBuilding(building) },
       canManagePoints: options.canManagePoints === true,
+      hasPlaceParam: new URLSearchParams(window.location.search).has("place"),
     });
     // Человек выбрал сам — «вернуть точку по „назад“» больше не нужно.
     forgetReturnPoint();
@@ -53,26 +76,36 @@ export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
       if (href) router.push(href);
       return;
     }
+    // Откуда ушли — чтобы «вернуться» привело и на ту же страницу.
+    const fromHref = `${pathname}${window.location.search}`;
+    const back =
+      previous && previous.id !== building.id
+        ? {
+            label: t("returnTo", { name: shortPointName(previous.name) }),
+            onClick: () => {
+              forgetReturnPoint();
+              refreshAfter(
+                previous.id,
+                async () => {
+                  const ok = await postBuilding(previous.id);
+                  // Выбор увёл на другую страницу — вернуть и её.
+                  if (ok && href) router.push(fromHref);
+                  return ok;
+                },
+                () => showPointSwitchToast(t("switched", { name: previous.name })),
+              );
+            },
+          }
+        : null;
     refreshAfter(
       building.id,
       async () => {
-        try {
-          const response = await fetch("/api/me/active-building", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ buildingId: building.id }),
-          });
-          const data = await response.json().catch(() => null);
-          if (!response.ok) throw new Error(data?.error ?? t("failed"));
-          // Переход — после записи выбора: новая страница соберётся уже для него.
-          if (href) router.push(href);
-          return true;
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : t("failed"));
-          return false;
-        }
+        const ok = await postBuilding(building.id);
+        // Переход — после записи выбора: новая страница соберётся уже для него.
+        if (ok && href) router.push(href);
+        return ok;
       },
-      () => toast.success(t("switched", { name: building.name })),
+      () => showPointSwitchToast(t("switched", { name: building.name }), back),
     );
   }
 
@@ -114,7 +147,7 @@ export function LocationSwitcherList({
               type="button"
               data-location-option={building.id}
               data-active-option={isActive ? "" : undefined}
-              onClick={() => void switchTo(building, activeId)}
+              onClick={() => void switchTo(building, activeId, buildings.find((item) => item.id === activeId) ?? null)}
               className={cn(
                 "flex min-h-[52px] w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-[15.5px] font-medium transition-colors",
                 isActive ? "bg-[#f1f3ff] text-[#3848c7]" : "text-[#0b1024] hover:bg-[#fafbff] active:bg-[#f1f3ff]",

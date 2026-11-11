@@ -105,3 +105,37 @@ test("«назад» из раздела компании возвращает �
   // Главная нейтральна — возвращаем точку и на ней.
   assert.equal(pointReturnTarget({ ...back, pathname: "/home" }), "p1");
 });
+
+test("фильтр «Где работает» и шапка согласованы: точка в фильтре — она же в шапке", () => {
+  const users = { ...base, pathname: "/settings/users" };
+  // Без выбора в адресе — ничего: список сам встаёт на точку из шапки.
+  assert.equal(pointSyncAction(users), null);
+  // Выбрали другую точку в фильтре — шапка за ней.
+  assert.deepEqual(pointSyncAction({ ...users, placeParam: "p2" }), { kind: "place", targetId: "p2" });
+  // Та же точка — ничего.
+  assert.equal(pointSyncAction({ ...users, placeParam: "p1" }), null);
+  // «Все» и офис — в шапке вся организация; уже там — ничего.
+  assert.deepEqual(pointSyncAction({ ...users, placeParam: "all" }), { kind: "place", targetId: "office" });
+  assert.deepEqual(pointSyncAction({ ...users, placeParam: "office" }), { kind: "place", targetId: "office" });
+  assert.equal(pointSyncAction({ ...users, viewedPointId: null, placeParam: "all" }), null);
+  // «Без места» и чужие id шапку не трогают; не руководству «Все» не переключает.
+  assert.equal(pointSyncAction({ ...users, placeParam: "none" }), null);
+  assert.equal(pointSyncAction({ ...users, placeParam: "zzz" }), null);
+  assert.equal(pointSyncAction({ ...users, canViewOrganization: false, placeParam: "all" }), null);
+  // На других страницах `place` ничего не значит.
+  assert.equal(pointSyncAction({ ...base, pathname: "/journals/hygiene", placeParam: "p2" }), null);
+  for (const path of ["/settings/areas", "/settings/equipment/"]) {
+    assert.deepEqual(pointSyncAction({ ...base, pathname: path, placeParam: "p2" }), { kind: "place", targetId: "p2" });
+  }
+});
+
+test("выбор в шапке на вкладке с фильтром сбрасывает `?place=`", () => {
+  for (const target of [{ id: "p2", office: false }, { id: "office", office: true }]) {
+    assert.equal(
+      hrefAfterPointSwitch({ pathname: "/settings/users", target, canManagePoints: true, hasPlaceParam: true }),
+      "/settings/users",
+    );
+    // Фильтра в адресе нет — остаёмся на странице, она перерисуется для точки.
+    assert.equal(hrefAfterPointSwitch({ pathname: "/settings/users", target, canManagePoints: true }), null);
+  }
+});

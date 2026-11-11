@@ -46,8 +46,8 @@ export function useSectionPlace() {
 export function SectionTabs({ className }: { className?: string }) {
   const t = useTranslations("navigation.shell");
   const { section, atRoot, menuItem, depth, activeHref } = useSectionPlace();
-  // Шаблон «Новый»: на компьютере вкладки пункта второго уровня стоят строкой
-  // над страницей (`SectionTopMenu`) — здесь их не повторяем.
+  // Шаблон «Новый»: вкладки пункта раскрываются в дереве меню слева
+  // (`NavAccordion`) — здесь их не повторяем.
   const isNew = useNewNavLayout();
   const inTopMenu = useNewNavPlace().entriesAreTabs && isNew;
   // В разделе с меню — вкладки текущего пункта (только на самом пункте);

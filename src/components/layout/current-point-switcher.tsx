@@ -209,7 +209,7 @@ export function CurrentPointSwitcher({
             <Fragment key={option.id}>
             <DropdownMenuItem
               onSelect={() => {
-                if (building) void switchTo(building, active.id);
+                if (building) void switchTo(building, active.id, buildingOf(active));
               }}
               className={cn("items-start", isActive && MENU_ITEM_ACTIVE_CLASS)}
               data-point-option={option.id}

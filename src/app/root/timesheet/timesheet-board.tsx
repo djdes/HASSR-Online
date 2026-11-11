@@ -99,6 +99,13 @@ function EditableCell({ value, onSave, className, placeholder, align = "center" 
 export function TimesheetBoard({ month, today, todayDate, people }: { month: string; today: number | null; todayDate: string; people: TimesheetPersonRow[] }) {
   const router = useRouter();
   const [rows, setRows] = useState(people);
+  // Новые данные с сервера (другой месяц, `router.refresh()` после выплаты) —
+  // в таблицу: иначе `useState` держал первый загруженный месяц.
+  const [source, setSource] = useState(people);
+  if (source !== people) {
+    setSource(people);
+    setRows(people);
+  }
   const [paying, setPaying] = useState<{ personId: string; name: string; part: PaymentPart; amount: string; date: string; note: string } | null>(null);
   const [removing, setRemoving] = useState<{ id: string; label: string } | null>(null);
   const dim = daysInMonth(month);

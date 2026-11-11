@@ -19,6 +19,19 @@ export const COMPANY_WIDE_SECTIONS: ReadonlySet<NavSectionKey> = new Set(["compa
 const COMPANY_WIDE_PAGES: ReadonlySet<string> = new Set(["/settings/buildings", "/journals", "/journals/points"]);
 
 const POINTS_LIST_HREF = "/settings/buildings";
+
+/**
+ * Вкладки со своим фильтром по местам над списком (`PlaceFilterChips`,
+ * `?place=`). С 2026-11-11 (владелец: «зашёл в сотрудники — выбор сверху
+ * пропал, не понимаю, где я») переключатель в шапке на них виден, а фильтр с
+ * ним согласован: без `?place=` список — по точке из шапки, выбор точки в
+ * фильтре переключает и шапку. «Журналы точек» — страница всей организации:
+ * там шапка стоит на офисе, а фильтр — сам по себе.
+ */
+export const PLACE_FILTER_PATHS: ReadonlySet<string> = new Set(["/settings/users", "/settings/areas", "/settings/equipment"]);
+
+/** Значение `place`, которое означает «все места». */
+const PLACE_ALL = "all";
 const POINT_PAGE = /^\/settings\/buildings\/([^/]+)$/;
 
 export function normalizePath(pathname: string | null | undefined): string {
@@ -50,19 +63,35 @@ export type PointSyncState = {
   organizationTargetId: string | null;
   /** Торговые точки, которые человек может выбрать в шапке. */
   pointIds: readonly string[];
+  /** `?place=` вкладки с фильтром по местам (`PLACE_FILTER_PATHS`); null — нет. */
+  placeParam?: string | null;
 };
 
 export type PointSyncAction =
   /** Раздел всей компании, а выбрана торговая точка — переключить на офис. */
   | { kind: "organization"; targetId: string }
   /** Открыта страница точки, а в шапке другое — переключить на неё. */
-  | { kind: "point"; targetId: string };
+  | { kind: "point"; targetId: string }
+  /** В фильтре мест выбрана точка (или «Все»), а в шапке другое — шапку за ним. */
+  | { kind: "place"; targetId: string };
 
 /** Что шапка должна сделать сама, открыв эту страницу; null — ничего. */
 export function pointSyncAction(state: PointSyncState): PointSyncAction | null {
   const pageId = pointPageId(state.pathname);
   if (pageId) {
     return pageId !== state.viewedPointId && state.pointIds.includes(pageId) ? { kind: "point", targetId: pageId } : null;
+  }
+  const place = state.placeParam ?? null;
+  if (place && PLACE_FILTER_PATHS.has(normalizePath(state.pathname))) {
+    if (state.pointIds.includes(place)) {
+      return place !== state.viewedPointId ? { kind: "place", targetId: place } : null;
+    }
+    // «Все» или офис в фильтре — в шапке вся организация.
+    const wholeOrganization = place === PLACE_ALL || place === state.organizationTargetId;
+    if (wholeOrganization && state.viewedPointId !== null && state.canViewOrganization && state.organizationTargetId) {
+      return { kind: "place", targetId: state.organizationTargetId };
+    }
+    return null;
   }
   if (
     isCompanyWidePath(state.pathname) &&
@@ -87,9 +116,14 @@ export function hrefAfterPointSwitch(input: {
   target: { id: string; office: boolean };
   /** Есть доступ к страницам точек (`/settings/buildings`). */
   canManagePoints: boolean;
+  /** В адресе выбран фильтр мест (`?place=`). */
+  hasPlaceParam?: boolean;
 }): string | null {
   const path = normalizePath(input.pathname);
   const pageId = pointPageId(path);
+  // Вкладка с фильтром мест: выбор в шапке сбрасывает `?place=` — список
+  // встаёт на выбранную точку, а фильтр не тянет шапку обратно.
+  if (input.hasPlaceParam && PLACE_FILTER_PATHS.has(path)) return path;
   if (input.target.office) return pageId ? (input.canManagePoints ? POINTS_LIST_HREF : "/dashboard") : null;
   if (pageId === input.target.id) return null;
   if (pageId || path === HOME_HREF || isCompanyWidePath(path)) {
