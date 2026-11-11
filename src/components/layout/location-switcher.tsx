@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, Check, Loader2, Store } from "lucide-react";
+import { Building2, Check, Loader2, Search, Store } from "lucide-react";
+import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import { toast } from "sonner";
 import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
@@ -129,15 +130,26 @@ export function LocationSwitcherList({
   canManagePoints?: boolean;
 }) {
   const { switchTo, busyId } = useSwitchBuilding({ canManagePoints });
+  const tPoint = useTranslations("navigation.shell.point");
+  const [query, setQuery] = useState("");
   if (buildings.length < 2) return null;
   const activeId = activeBuildingId ?? buildings[0]?.id ?? null;
+  // Быстрый поиск (владелец, 2026-11-11): по названию и адресу, «ё» = «е».
+  const normalized = normalizeJournalSearch(query);
+  const shown = normalized
+    ? buildings.filter((building) => journalMatchesQuery([building.name, building.address], normalized))
+    : buildings;
 
   return (
+    <>
+    {buildings.length > POINT_SEARCH_MIN ? (
+      <PointSearchField value={query} onChange={setQuery} placeholder={tPoint("search")} className="mb-2" />
+    ) : null}
     <ScrollList
       maxHeightClassName="max-h-[min(52vh,440px)] supports-[height:100dvh]:max-h-[min(52dvh,440px)]"
       className="mb-1 border-b border-[#ececf4] pb-2"
     >
-      {buildings.map((building, index) => {
+      {shown.map((building, index) => {
         const isActive = building.id === activeId;
         const office = isOfficeBuilding(building);
         const Icon = office ? Building2 : Store;
@@ -153,10 +165,11 @@ export function LocationSwitcherList({
                 isActive ? "bg-[#f1f3ff] text-[#3848c7]" : "text-[#0b1024] hover:bg-[#fafbff] active:bg-[#f1f3ff]",
               )}
             >
+              {/* Плашка иконки одинаковая у всех строк — ряд ровный. */}
               <span
                 className={cn(
-                  "inline-flex size-9 shrink-0 items-center justify-center rounded-xl",
-                  isActive ? "bg-white text-[#5566f6]" : "bg-[#f4f5fb] text-[#6f7282]",
+                  "inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#ececf4] bg-white",
+                  isActive ? "text-[#5566f6]" : "text-[#6f7282]",
                 )}
               >
                 <Icon className="size-[18px]" aria-hidden />
@@ -174,10 +187,47 @@ export function LocationSwitcherList({
               ) : null}
             </button>
             {/* Офис — первым, под ним черта: дальше торговые точки. */}
-            {office && index < buildings.length - 1 ? <div className="mx-3 my-1 border-t border-[#ececf4]" /> : null}
+            {office && index < shown.length - 1 ? <div className="mx-3 my-1 border-t border-[#ececf4]" /> : null}
           </Fragment>
         );
       })}
     </ScrollList>
+    {shown.length === 0 ? (
+      <p className="px-3 py-4 text-center text-[14px] text-[#6f7282]">{tPoint("nothingFound")}</p>
+    ) : null}
+    </>
+  );
+}
+
+/** Сколько точек, чтобы показать поиск. */
+export const POINT_SEARCH_MIN = 4;
+
+/** Поле быстрого поиска по торговым точкам (лист на телефоне и меню в шапке). */
+export function PointSearchField({
+  value,
+  onChange,
+  placeholder,
+  className,
+  onKeyDown,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className?: string;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <label className={cn("relative block", className)}>
+      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9b9fb3]" aria-hidden />
+      <input
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className="h-11 w-full rounded-xl border border-[#dcdfed] bg-white pr-3 pl-9 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+      />
+    </label>
   );
 }

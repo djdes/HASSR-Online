@@ -63,10 +63,10 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
       event.stopPropagation();
       setManual({ path: pathname, key: null });
     } else if (touch) {
-      // Телефон: нажатие на раздел только раскрывает его пункты — лист не
-      // закрывается, пока человек не выбрал, куда идти.
-      event.preventDefault();
-      // Только раскрыли список: лист меню на телефоне от этого не закрывается.
+      // Телефон (владелец, 2026-11-11): страница раздела грузится в фоне, а
+      // лист не закрывается и раскрывает пункты — видно, что внутри. Раздел,
+      // где человек уже стоит, только раскрывается.
+      if (place.top === section.key) event.preventDefault();
       event.stopPropagation();
       setManual({ path: pathname, key: section.key });
     } else {

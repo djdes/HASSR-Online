@@ -94,8 +94,13 @@ export function NavAccordion({
       event.preventDefault();
       event.stopPropagation();
       setManual({ path: pathname, key: null });
-    } else if (touch || place.top === section.key) {
+    } else if (place.top === section.key) {
       event.preventDefault();
+      event.stopPropagation();
+      setManual({ path: pathname, key: section.key });
+    } else if (touch) {
+      // Телефон (владелец, 2026-11-11): страница раздела грузится в фоне, а
+      // лист остаётся и раскрывает пункты — видно, что внутри.
       event.stopPropagation();
       setManual({ path: pathname, key: section.key });
     } else {
@@ -127,6 +132,11 @@ export function NavAccordion({
       <div key={item.id}>
         <Link
           href={item.href}
+          onClick={(event) => {
+            // Телефон: пункт с вложенными — страница в фоне, лист открыт и
+            // раскрывает следующий уровень; лист закрывает только конечный пункт.
+            if (touch && hasKids) event.stopPropagation();
+          }}
           aria-current={active ? "page" : open ? "true" : undefined}
           aria-expanded={hasKids ? open : undefined}
           data-menu-item={item.id}

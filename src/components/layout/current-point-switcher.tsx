@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MENU_ITEM_ACTIVE_CLASS } from "@/components/ui/menu-styles";
 import { ScrollList } from "@/components/ui/scroll-list";
-import { LocationSwitcherList, useSwitchBuilding } from "@/components/layout/location-switcher";
+import { LocationSwitcherList, POINT_SEARCH_MIN, PointSearchField, useSwitchBuilding } from "@/components/layout/location-switcher";
+import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
@@ -56,6 +57,7 @@ export function CurrentPointSwitcher({
   const t = useTranslations("navigation.shell.point");
   const narrow = useIsNarrowViewport();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const { switchTo, busyId } = useSwitchBuilding({ canManagePoints: Boolean(manageHref) });
   // Переключатель на виду везде, кроме вкладок со своим фильтром по точкам;
   // подписи без переключения в разделах всей компании не показываем.
@@ -181,6 +183,11 @@ export function CurrentPointSwitcher({
   // Полоса — только для телефона; на компьютере её место в середине шапки.
   if (bar) return null;
 
+  const normalizedQuery = normalizeJournalSearch(query);
+  const shownOptions = normalizedQuery
+    ? options.filter((option) => journalMatchesQuery([titleOf(option), option.address], normalizedQuery))
+    : options;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -195,23 +202,39 @@ export function CurrentPointSwitcher({
           {body}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-[300px]">
+      <DropdownMenuContent align="center" className="w-[340px] p-2">
+        {/* Быстрый поиск (владелец, 2026-11-11): по названию и адресу. Клавиши
+            в поле не уходят меню — иначе оно перехватывает ввод для перехода по пунктам. */}
+        {options.length > POINT_SEARCH_MIN ? (
+          <PointSearchField
+            value={query}
+            onChange={setQuery}
+            placeholder={t("search")}
+            className="mb-1.5"
+            onKeyDown={(event) => {
+              if (event.key !== "Escape") event.stopPropagation();
+            }}
+          />
+        ) : null}
         {/* Много точек — список ограничен по высоте, справа полоса прокрутки;
             «Управление точками» под ним всегда на виду. */}
         <ScrollList maxHeightClassName="max-h-[min(360px,55vh)]">
-        {options.map((option, index) => {
+        {shownOptions.length === 0 ? (
+          <div className="px-3 py-4 text-center text-[13.5px] text-[#6f7282]">{t("nothingFound")}</div>
+        ) : null}
+        {shownOptions.map((option, index) => {
           const isActive = option.id === active.id;
           const building = buildingOf(option);
           const Icon = option.office ? Building2 : Store;
           // Офис — первым, под ним черта: дальше торговые точки.
-          const divider = option.office && index < options.length - 1;
+          const divider = option.office && index < shownOptions.length - 1;
           return (
             <Fragment key={option.id}>
             <DropdownMenuItem
               onSelect={() => {
                 if (building) void switchTo(building, active.id, buildingOf(active));
               }}
-              className={cn("items-start", isActive && MENU_ITEM_ACTIVE_CLASS)}
+              className={cn("items-start gap-2.5 px-2.5 py-2", isActive && MENU_ITEM_ACTIVE_CLASS)}
               data-point-option={option.id}
               data-active-option={isActive ? "" : undefined}
             >
