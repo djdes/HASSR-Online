@@ -3072,7 +3072,11 @@
       },
       "contentLoading": "Sahifa yangilanmoqda…",
       "listLoading": "Ro‘yxat yuklanmoqda…",
-      "topMenuMore": "Yana"
+      "topMenuMore": "Yana",
+      "collapseMenu": "Menyuni yig‘ish",
+      "expandMenu": "Menyuni ochish",
+      "scrollUp": "Menyuni yuqoriga aylantirish",
+      "scrollDown": "Menyuni pastga aylantirish"
     },
     "header": {
       "staff": "Xodimlar",

@@ -2020,3 +2020,30 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
 .app-shell[data-partner-accent] :is([data-home-setup], [data-avatar-gradient]) {
   background-image: none;
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────
+ * Кнопки: чёрные (владелец, 2026-11-11). Самописные кнопки и ссылки-кнопки
+ * с фиолетовой заливкой `bg-[#5566f6]` в светлой теме — чёрные, на hover —
+ * графит. Фиолетовая подложка вторичных кнопок `bg-[#5566f6]/[0.04]` —
+ * серая, текст чёрный. Только интерактивные элементы: полосы прогресса,
+ * точки и метки остаются цветом бренда. Тёмная тема и цвет партнёра
+ * (`data-partner-accent`) — своими правилами выше.
+ * ───────────────────────────────────────────────────────────────────── */
+.app-shell:not([data-app-theme="dark"]):not([data-partner-accent]) :is(button, a[href], [role="button"]).bg-\[\#5566f6\],
+body:not(:has(.app-shell[data-app-theme="dark"])) :is([role="dialog"], [role="alertdialog"]) :is(button, a[href]).bg-\[\#5566f6\] {
+  background-color: #111114;
+}
+.app-shell:not([data-app-theme="dark"]):not([data-partner-accent]) :is(button, a[href], [role="button"]).bg-\[\#5566f6\]:hover,
+body:not(:has(.app-shell[data-app-theme="dark"])) :is([role="dialog"], [role="alertdialog"]) :is(button, a[href]).bg-\[\#5566f6\]:hover {
+  background-color: #2c2d36;
+}
+.app-shell:not([data-app-theme="dark"]):not([data-partner-accent]) :is(button, a[href], [role="button"]).bg-\[\#5566f6\]\/\[0\.04\],
+body:not(:has(.app-shell[data-app-theme="dark"])) :is([role="dialog"], [role="alertdialog"]) :is(button, a[href]).bg-\[\#5566f6\]\/\[0\.04\] {
+  background-color: #ececef;
+  color: #111114;
+}
+.app-shell:not([data-app-theme="dark"]):not([data-partner-accent]) :is(button, a[href], [role="button"]).bg-\[\#5566f6\]\/\[0\.04\]:hover,
+body:not(:has(.app-shell[data-app-theme="dark"])) :is([role="dialog"], [role="alertdialog"]) :is(button, a[href]).bg-\[\#5566f6\]\/\[0\.04\]:hover {
+  background-color: #e2e2e7;
+}

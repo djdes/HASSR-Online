@@ -3072,7 +3072,11 @@
       },
       "contentLoading": "Updating the page…",
       "listLoading": "Loading the list…",
-      "topMenuMore": "More"
+      "topMenuMore": "More",
+      "collapseMenu": "Collapse menu",
+      "expandMenu": "Expand menu",
+      "scrollUp": "Scroll menu up",
+      "scrollDown": "Scroll menu down"
     },
     "header": {
       "staff": "Staff",

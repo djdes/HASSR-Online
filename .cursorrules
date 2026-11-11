@@ -44,3 +44,5 @@ Production gets only code from `origin/master`. Never deploy a branch, a tag, an
 - `npm run test:changed` (`scripts/test-changed.mjs`) runs ONLY changed tests, co-located tests (including `.server.ts`/`.client.tsx` siblings), and 1-hop reverse-import tests in **5–15 seconds**.
 - Do NOT run full `npm test` or `npm run test:gate:full` (904+ files, ~15 min) for small fixes or normal tasks. `test-changed.mjs` automatically escalates to the full suite when core files (`package-lock.json`, `prisma/schema.prisma`, `src/lib/db.ts`, `src/lib/auth*`, `tsconfig*.json`) or `> 25` code files are modified (or when `[full-tests]` is in the commit message).
 - In GitHub Actions (`.github/workflows/deploy.yml`), `deploy` starts right after `upload` without waiting for `gate`, and `gate` uses `test-changed.mjs --ci-plan` so normal pushes run targeted tests inside the `Type-check` job and skip the 4 full test shards.
+
+- UI texts: change every visible string via translations in all locales at once (src/i18n/messages/{ru,en,uz}.json), then run `npm run i18n:types`. No hard-coded Russian strings in components.

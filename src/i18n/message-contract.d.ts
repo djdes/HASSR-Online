@@ -2764,7 +2764,7 @@ export type MessageContract = {
         "billing": "Подписки",
         "more": "Ещё",
         "news": "Новости, статьи, обзоры экспертов",
-        "inspection": "К Вам пришла проверка",
+        "inspection": "Пришла проверка",
         "office": "Офис",
         "monitoring": "Мониторинг",
         "settings": "Настройки и оформление"
@@ -3073,7 +3073,11 @@ export type MessageContract = {
       },
       "contentLoading": "Обновляем страницу…",
       "listLoading": "Загружаем список…",
-      "topMenuMore": "Ещё"
+      "topMenuMore": "Ещё",
+      "collapseMenu": "Свернуть меню",
+      "expandMenu": "Развернуть меню",
+      "scrollUp": "Прокрутить меню вверх",
+      "scrollDown": "Прокрутить меню вниз"
     },
     "header": {
       "staff": "Сотрудники",
