@@ -1,5 +1,6 @@
 import { SEO_LANDINGS } from "@/content/seo-landings";
 import { ACTIVE_JOURNAL_TEMPLATES } from "@/lib/journal-catalog";
+import { isPublicCacheablePage } from "@/lib/robots-txt";
 
 export type GglAnchorKind = "exact" | "diluted" | "url_brand";
 export type GglSchedulableFormat = "article" | "note";
@@ -148,6 +149,56 @@ export function normalizeWesetupPath(rawUrl: string | null | undefined): string 
   return withoutTrailing || "/";
 }
 
+/**
+ * Maps authenticated `(dashboard)` cabinet paths to their public SEO landing equivalents.
+ * Purchasing external backlinks to post-registration workspace routes (`/sanpin`, `/journals`,
+ * `/dashboard`, `/production-control`, `/orders`, etc.) is strictly forbidden because those
+ * routes redirect anonymous users to `/login` and are disallowed in `robots.txt`.
+ */
+export const PRIVATE_WORKSPACE_TO_PUBLIC_SEO_MAP: Readonly<Record<string, string>> = {
+  "/sanpin": "/sanpin-2-3-2-4-4282-26",
+  "/haccp": "/zhurnal-haccp",
+  "/journals": "/journals-info",
+  "/journals-progress": "/journals-info",
+  "/production-control": "/zhurnal-haccp",
+  "/orders": "/prikazy",
+  "/inspection": "/sanpin-2-3-2-4-4282-26",
+  "/checklists": "/journals-info",
+};
+
+/**
+ * Returns `true` ONLY when `rawUrl` points to a public, unauthenticated, `robots.txt`-allowed
+ * SEO page on `wesetup.ru`. Returns `false` for all post-registration workspace routes
+ * (`/sanpin`, `/journals`, `/dashboard`, `/settings`, `/production-control`, `/login`, `/register`, etc.).
+ */
+export function isPublicSeoTargetAllowed(rawUrl: string | null | undefined): boolean {
+  const norm = normalizeWesetupPath(rawUrl);
+  if (!norm) return false;
+  return isPublicCacheablePage(norm);
+}
+
+/**
+ * Resolves a candidate or cluster path to an allowed public SEO path:
+ * - Remaps known authenticated `(dashboard)` paths (`/sanpin` -> `/sanpin-2-3-2-4-4282-26`,
+ *   `/journals/<code>` -> `/journals-info/<code>`, `/orders` -> `/prikazy`).
+ * - Rejects (`null`) any remaining route that is behind login/registration or blocked in `robots.txt`.
+ */
+export function resolvePublicSeoTargetPath(rawUrl: string | null | undefined): string | null {
+  const norm = normalizeWesetupPath(rawUrl);
+  if (!norm) return null;
+  const directRemap = PRIVATE_WORKSPACE_TO_PUBLIC_SEO_MAP[norm];
+  if (directRemap) return directRemap;
+  if (norm.startsWith("/journals/")) {
+    const sub = norm.slice("/journals/".length).split("/")[0]?.trim();
+    if (sub && sub !== "points" && sub !== "sets" && sub !== "traceability") {
+      const publicInfoPath = `/journals-info/${sub}`;
+      if (isPublicCacheablePage(publicInfoPath)) return publicInfoPath;
+    }
+    return "/journals-info";
+  }
+  return isPublicCacheablePage(norm) ? norm : null;
+}
+
 export function toCanonicalWesetupUrl(rawUrl: string): string {
   const normalizedPath = normalizeWesetupPath(rawUrl) ?? "/";
   return normalizedPath === "/"
@@ -196,7 +247,7 @@ export function buildDefaultCandidateSitePages(
   const byPath = new Map<string, CandidateSitePage>();
 
   const register = (page: CandidateSitePage) => {
-    const norm = normalizeWesetupPath(page.url);
+    const norm = resolvePublicSeoTargetPath(page.url);
     if (!norm || byPath.has(norm)) return;
     byPath.set(norm, {
       url: norm,
@@ -226,7 +277,7 @@ export function buildDefaultCandidateSitePages(
       "Полный каталог электронных журналов ХАССП и СанПиН 2.3/2.4.4282-26 в WeSetup с печатью PDF для Роспотребнадзора.",
       "Поддержка заполнения со смартфона, по QR-коду оборудования и в Telegram.",
     ],
-    keywords: ["хассп журналы и их заполнение", "электронные журналы хассп"],
+    keywords: ["хассп журналы и их заполнение", "электронные журналы хассп", "журналы для общепита"],
   });
 
   register({
@@ -236,7 +287,7 @@ export function buildDefaultCandidateSitePages(
       "Разбор актуальных санитарных правил для предприятий общественного питания и перечень обязательных журналов.",
       "Разрешено ведение журналов в электронном виде при идентификации ответственного сотрудника.",
     ],
-    keywords: ["санпин", "санпин 2.3/2.4.4282-26"],
+    keywords: ["санпин", "санпин для общепита", "санпин 2.3/2.4.4282-26", "санпин 2.3/2.4.3590-20"],
   });
 
   register({
@@ -246,6 +297,24 @@ export function buildDefaultCandidateSitePages(
       "Онлайн-калькулятор обязательного перечня журналов для кафе, ресторана, пекарни, столовой и пищевого цеха.",
     ],
     keywords: ["журналы по хассп для пищевого производства", "какие журналы нужны для кафе"],
+  });
+
+  register({
+    url: "/uslugi",
+    title: "Разработка и внедрение ХАССП и ППК для общепита и пищевого производства",
+    facts: [
+      "Подготовка полного пакета документов ХАССП, программы производственного контроля (ППК) и настройка электронных журналов под ключ.",
+    ],
+    keywords: ["разработка хассп для общепита", "внедрение хассп", "программа производственного контроля общепит"],
+  });
+
+  register({
+    url: "/prikazy",
+    title: "Обязательные приказы по ХАССП и СанПиН для общепита",
+    facts: [
+      "Генератор и образцы приказов о создании группы ХАССП, бракеражной комиссии и назначении ответственных лиц.",
+    ],
+    keywords: ["приказы по хассп для общепита", "приказ о создании бракеражной комиссии"],
   });
 
   for (const journal of ACTIVE_JOURNAL_TEMPLATES) {
@@ -277,33 +346,33 @@ export function scoreTargetPages(input: {
 
   if (input.candidatePages.length > 0) {
     for (const page of input.candidatePages) {
-      const norm = normalizeWesetupPath(page.url);
+      const norm = resolvePublicSeoTargetPath(page.url);
       if (!norm || seenUrls.has(norm)) continue;
       seenUrls.add(norm);
       pagesToScore.push({ ...page, url: norm });
     }
   } else {
     for (const cluster of input.clusters) {
-      const norm = normalizeWesetupPath(cluster.mappedTargetUrl);
+      const norm = resolvePublicSeoTargetPath(cluster.mappedTargetUrl);
       if (!norm || seenUrls.has(norm)) continue;
       seenUrls.add(norm);
       pagesToScore.push({ url: norm, title: cluster.phrase || norm });
     }
   }
 
-  // Group active existing orders by normalized target path
+  // Group active existing orders by normalized public target path
   const linksCountByUrl = new Map<string, number>();
   for (const order of input.existingOrders) {
     if (order.status && INACTIVE_ORDER_STATUSES.has(order.status)) continue;
-    const norm = normalizeWesetupPath(order.targetUrl);
+    const norm = resolvePublicSeoTargetPath(order.targetUrl);
     if (!norm) continue;
     linksCountByUrl.set(norm, (linksCountByUrl.get(norm) ?? 0) + 1);
   }
 
-  // Group Similarweb clusters by normalized mappedTargetUrl
+  // Group Similarweb clusters by normalized public mappedTargetUrl
   const clustersByUrl = new Map<string, CompetitorClusterInput[]>();
   for (const cluster of input.clusters) {
-    const norm = normalizeWesetupPath(cluster.mappedTargetUrl);
+    const norm = resolvePublicSeoTargetPath(cluster.mappedTargetUrl);
     if (!norm) continue;
     const bucket = clustersByUrl.get(norm) ?? [];
     bucket.push(cluster);

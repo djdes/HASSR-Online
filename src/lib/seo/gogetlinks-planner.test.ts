@@ -6,6 +6,8 @@ import vm from "node:vm";
 import ts from "typescript";
 import {
   computeScheduleDates,
+  isPublicSeoTargetAllowed,
+  resolvePublicSeoTargetPath,
   scoreTargetPages,
   selectAnchorForTarget,
   selectBestDonorAndAlternatives,
@@ -621,3 +623,49 @@ test("GET and POST /api/root/gogetlinks/similarweb upsert snapshot, log ggl.simi
   assert.equal(auditEvents.length, 2);
   assert.equal(auditEvents[1].action, "ggl.similarweb.import");
 });
+
+test("isPublicSeoTargetAllowed and resolvePublicSeoTargetPath strictly block post-registration routes and remap to public SEO pages", async () => {
+  // Post-registration cabinet routes must be rejected by isPublicSeoTargetAllowed
+  assert.equal(isPublicSeoTargetAllowed("/sanpin"), false);
+  assert.equal(isPublicSeoTargetAllowed("https://wesetup.ru/sanpin"), false);
+  assert.equal(isPublicSeoTargetAllowed("/journals"), false);
+  assert.equal(isPublicSeoTargetAllowed("/journals/hygiene"), false);
+  assert.equal(isPublicSeoTargetAllowed("/dashboard"), false);
+  assert.equal(isPublicSeoTargetAllowed("/production-control"), false);
+  assert.equal(isPublicSeoTargetAllowed("/orders"), false);
+  assert.equal(isPublicSeoTargetAllowed("/login"), false);
+  assert.equal(isPublicSeoTargetAllowed("/register"), false);
+
+  // Public SEO pages must be allowed
+  assert.equal(isPublicSeoTargetAllowed("/"), true);
+  assert.equal(isPublicSeoTargetAllowed("/sanpin-2-3-2-4-4282-26"), true);
+  assert.equal(isPublicSeoTargetAllowed("/elektronnyy-zhurnal-sanpin"), true);
+  assert.equal(isPublicSeoTargetAllowed("/zhurnal-haccp"), true);
+  assert.equal(isPublicSeoTargetAllowed("/journals-info"), true);
+  assert.equal(isPublicSeoTargetAllowed("/journals-info/hygiene"), true);
+  assert.equal(isPublicSeoTargetAllowed("/prikazy"), true);
+
+  // resolvePublicSeoTargetPath remaps known private cabinet routes to public SEO pages
+  assert.equal(resolvePublicSeoTargetPath("/sanpin"), "/sanpin-2-3-2-4-4282-26");
+  assert.equal(resolvePublicSeoTargetPath("/journals"), "/journals-info");
+  assert.equal(resolvePublicSeoTargetPath("/journals/hygiene"), "/journals-info/hygiene");
+  assert.equal(resolvePublicSeoTargetPath("/orders"), "/prikazy");
+  assert.equal(resolvePublicSeoTargetPath("/dashboard"), null);
+  assert.equal(resolvePublicSeoTargetPath("/login"), null);
+
+  // generateGglArticleDraft must reject post-registration URLs immediately
+  await assert.rejects(
+    () =>
+      generateGglArticleDraft({
+        donorDomain: "resttrade.ru",
+        targetUrl: "https://wesetup.ru/sanpin",
+        targetPageTitle: "СанПиН",
+        targetPageFacts: [],
+        targetKeyword: "санпин для общепита",
+        anchor: "wesetup.ru",
+        placementFormat: "article",
+      }),
+    /после регистрации|личного кабинета/i,
+  );
+});
+

@@ -27,8 +27,10 @@ import {
   type ExistingBacklinkInput,
   type GglAnchorKind,
   type GglSchedulableFormat,
+  isPublicSeoTargetAllowed,
   normalizeDomainName,
   normalizeWesetupPath,
+  resolvePublicSeoTargetPath,
   scoreTargetPages,
   selectAnchorForTarget,
   selectBestDonorAndAlternatives,
@@ -1842,6 +1844,14 @@ export async function approvePlannedSlot(
     );
   }
 
+  // Pre-send Guard 1b: Forbid post-registration (dashboard) or robots.txt-disallowed URLs
+  const resolvedSlotPath = resolvePublicSeoTargetPath(claimedSlot.targetUrl);
+  if (!resolvedSlotPath || !isPublicSeoTargetAllowed(claimedSlot.targetUrl)) {
+    const msg = `Запрещено закупать ссылки на страницу «${claimedSlot.targetUrl}»: она находится за регистрацией (в личном кабинете) или закрыта в robots.txt`;
+    await revertSlotToPending(claimedSlot.id, msg);
+    throw new GglOrderError(422, msg);
+  }
+
   // Pre-send Guard 2: Live donor price <= slot.maxPriceRub
   const fetchLiveDonorPrice =
     deps?.fetchLiveDonorPrice ??
@@ -2162,6 +2172,12 @@ export async function createManualGglOrder(
   const targetPath = normalizeWesetupPath(input.targetUrl);
   if (!targetPath) {
     throw new GglIsolationError("Целевой URL закупки должен принадлежать домену wesetup.ru");
+  }
+  if (!isPublicSeoTargetAllowed(targetPath)) {
+    throw new GglOrderError(
+      422,
+      `Запрещено закупать ссылки на страницу «${targetPath}»: она находится за регистрацией (в личном кабинете) или закрыта в robots.txt`,
+    );
   }
   const canonicalTarget = toCanonicalWesetupUrl(targetPath);
 
