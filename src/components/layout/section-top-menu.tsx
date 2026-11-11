@@ -1,8 +1,9 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Ellipsis } from "lucide-react";
 import type { NewNavEntry } from "@/lib/nav-layout";
 import { cn } from "@/lib/utils";
 import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
@@ -15,15 +16,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Компактнее (владелец, 2026-11-11): строка должна умещаться на экране —
+// мельче кегль и поля, длинное название («Программа производственного
+// контроля») обрезается многоточием, полное — во всплывающей подсказке.
 const ENTRY =
-  "inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-[14.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "inline-flex h-10 min-w-0 shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 text-[13.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+const ENTRY_LABEL = "max-w-[190px] truncate 2xl:max-w-none";
+/** Запас ширины под кнопку «Ещё» (иконка, подпись, поля). */
+const MORE_WIDTH = 84;
 const ENTRY_ACTIVE = "border-[#5566f6] font-semibold text-[#0b1024]";
 const ENTRY_IDLE = "border-transparent font-medium text-[#6f7282] hover:border-[#dcdfed] hover:text-[#0b1024]";
 const PANEL_LINK_ACTIVE = "bg-[#f5f6ff] font-semibold text-[#3848c7]";
 
 /**
- * Строка над страницей в шаблоне «Новый» (только компьютер): третий уровень
- * меню. Слева — два уровня (`AppSidebarAccordion`), здесь — пункты вложенного
+ * Строка над страницей в шаблоне «Новый»: третий уровень меню. На компьютере
+ * — одна строка, лишнее уходит в «Ещё»; на телефоне — прокручивается вбок. Слева — два уровня (`AppSidebarAccordion`), здесь — пункты вложенного
  * раздела или вкладки пункта. У пункта с продолжением — стрелка и выпадающая
  * панель: следующий уровень, под пунктом — его вкладки. Что показывать,
  * считает `buildNewNav` (`lib/nav-layout.ts`).
@@ -32,32 +39,134 @@ export function SectionTopMenu() {
   const t = useTranslations("navigation.shell");
   const isNew = useNewNavLayout();
   const place = useNewNavPlace();
-  if (!isNew || place.entries.length === 0) return null;
+  const entries = place.entries;
+  const rowRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  // Сколько пунктов помещается в одну строку; остальные — под «Ещё».
+  const [fit, setFit] = useState<number | null>(null);
+  const entriesKey = entries.map((entry) => `${entry.id}:${entry.label}`).join("|");
+
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const measure = measureRef.current;
+    if (!row || !measure) return;
+    const compute = () => {
+      const widths = [...measure.children].map((child) => (child as HTMLElement).offsetWidth);
+      const available = row.clientWidth;
+      const total = widths.reduce((sum, width) => sum + width, 0);
+      if (total <= available) {
+        setFit(null);
+        return;
+      }
+      // Место под кнопку «Ещё» держим всегда, когда что-то не влезло.
+      let used = MORE_WIDTH;
+      let count = 0;
+      for (const width of widths) {
+        if (used + width > available) break;
+        used += width;
+        count += 1;
+      }
+      setFit(Math.max(1, count));
+    };
+    compute();
+    const observer = new ResizeObserver(compute);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [entriesKey]);
+
+  if (!isNew || entries.length === 0) return null;
+
+  // Выбранный пункт всегда на виду: не поместился — встаёт последним видимым.
+  let visible = entries;
+  let hidden: NewNavEntry[] = [];
+  if (fit !== null && fit < entries.length) {
+    visible = entries.slice(0, fit);
+    hidden = entries.slice(fit);
+    const activeHidden = hidden.findIndex((entry) => entry.active);
+    if (activeHidden >= 0) {
+      const [active] = hidden.splice(activeHidden, 1);
+      const swapped = visible.pop();
+      visible.push(active);
+      if (swapped) hidden.unshift(swapped);
+    }
+  }
+
+  const renderEntry = (entry: NewNavEntry) =>
+    entry.panel ? (
+      <PanelEntry key={entry.id} entry={entry} />
+    ) : (
+      <Link
+        key={entry.id}
+        href={entry.href}
+        aria-current={entry.active ? "page" : undefined}
+        data-top-menu-item={entry.id}
+        title={entry.label}
+        className={cn(ENTRY, entry.active ? ENTRY_ACTIVE : ENTRY_IDLE)}
+      >
+        <span className={ENTRY_LABEL}>{entry.label}</span>
+        {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
+      </Link>
+    );
 
   return (
     <nav
       aria-label={t("sectionMenuAria")}
       data-section-top-menu
-      className="hidden border-b border-[#ececf4] bg-white lg:block print:hidden"
+      className="relative border-b border-[#ececf4] bg-white print:hidden"
     >
-      {/* Длинная строка переносится: ни один пункт не прячется за краем. */}
-      <div className="mx-auto flex w-full max-w-[1800px] flex-wrap items-stretch gap-x-1 px-8">
-        {place.entries.map((entry) =>
-          entry.panel ? (
-            <PanelEntry key={entry.id} entry={entry} />
-          ) : (
-            <Link
-              key={entry.id}
-              href={entry.href}
-              aria-current={entry.active ? "page" : undefined}
-              data-top-menu-item={entry.id}
-              className={cn(ENTRY, entry.active ? ENTRY_ACTIVE : ENTRY_IDLE)}
-            >
-              {entry.label}
+      {/* Телефон и планшет: та же строка, прокручивается вбок — все пункты
+          подряд, без «Ещё» (2026-11-11). */}
+      <div
+        className="flex flex-nowrap items-stretch overflow-x-auto overscroll-x-contain px-2 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
+        data-top-menu-strip
+      >
+        {entries.map(renderEntry)}
+      </div>
+      {/* Одна строка: что не поместилось по ширине — в «Ещё» справа, а не
+          вторым рядом (владелец, 2026-11-11). */}
+      <div className="mx-auto hidden w-full max-w-[1800px] px-5 lg:block">
+        <div ref={rowRef} className="flex w-full flex-nowrap items-stretch overflow-hidden" data-top-menu-row>
+          {visible.map(renderEntry)}
+          {hidden.length > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  data-top-menu-more
+                  aria-label={t("topMenuMore")}
+                  title={t("topMenuMore")}
+                  className={cn(ENTRY, ENTRY_IDLE, "ml-auto gap-1.5")}
+                >
+                  <Ellipsis className="size-4" aria-hidden />
+                  {t("topMenuMore")}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72 p-2" data-top-menu-more-panel>
+                {hidden.map((entry) => (
+                  <DropdownMenuItem
+                    key={entry.id}
+                    asChild
+                    className={cn("focus:bg-[#f5f6ff]", entry.active && PANEL_LINK_ACTIVE)}
+                  >
+                    <Link href={entry.href} aria-current={entry.active ? "page" : undefined}>
+                      {entry.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
+        {/* Невидимая копия для замера ширины пунктов. */}
+        <div ref={measureRef} aria-hidden className="pointer-events-none invisible absolute left-0 top-0 flex h-0 flex-nowrap overflow-hidden" data-top-menu-measure>
+          {entries.map((entry) => (
+            <span key={entry.id} className={cn(ENTRY, entry.active ? ENTRY_ACTIVE : ENTRY_IDLE)}>
+              <span className={ENTRY_LABEL}>{entry.label}</span>
+              {entry.panel ? <ChevronDown className="size-3.5 shrink-0" /> : null}
               {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
-            </Link>
-          ),
-        )}
+            </span>
+          ))}
+        </div>
       </div>
     </nav>
   );
@@ -78,12 +187,13 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
           type="button"
           aria-current={entry.active ? "true" : undefined}
           data-top-menu-item={entry.id}
+          title={entry.label}
           className={cn(ENTRY, "group", entry.active ? ENTRY_ACTIVE : ENTRY_IDLE)}
         >
-          {entry.label}
+          <span className={ENTRY_LABEL}>{entry.label}</span>
           <ChevronDown
             aria-hidden
-            className="size-4 shrink-0 text-[#9b9fb3] transition-transform duration-150 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+            className="size-3.5 shrink-0 text-[#9b9fb3] transition-transform duration-150 group-data-[state=open]:rotate-180 motion-reduce:transition-none"
           />
         </button>
       </DropdownMenuTrigger>

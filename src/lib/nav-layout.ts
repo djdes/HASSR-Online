@@ -129,3 +129,17 @@ export function buildNewNav(sections: readonly NavModelSection[], pathname: stri
     deep: cleanPath(here) !== clean,
   };
 }
+
+/**
+ * Куда ведёт раздел главного меню. «Моя компания» открывает первую строчку
+ * своего меню — «Офис» (владелец, 2026-11-11), а не «Реквизиты»; остальные
+ * разделы — свой корень.
+ */
+export function sectionEntryHref(section: {
+  key: string;
+  rootHref: string;
+  menu?: ReadonlyArray<{ items: ReadonlyArray<{ href: string }> }>;
+}): string {
+  if (section.key !== "company") return section.rootHref;
+  return section.menu?.[0]?.items[0]?.href ?? section.rootHref;
+}

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { visibleNav, type NavActor, type NavFacts } from "./app-nav";
 import type { NavModelSection } from "./app-nav.server";
-import { buildNewNav } from "./nav-layout";
+import { buildNewNav, sectionEntryHref } from "./nav-layout";
 
 const owner: NavActor = { role: "owner", permissionPreset: "admin" };
 // Заведующая: «Моя компания» ей закрыта, «Торговые точки» стоят в главном меню.
@@ -145,4 +145,15 @@ test("каждая ссылка строки и панели — адрес из
       }
     }
   }
+});
+
+test("«Моя компания» открывает первую строчку своего меню — «Офис»; остальные разделы — свой корень", () => {
+  const company = {
+    key: "company",
+    rootHref: "/settings/organization",
+    menu: [{ items: [{ href: "/settings/organization/office" }, { href: "/settings/buildings" }] }, { items: [{ href: "/more" }] }],
+  };
+  assert.equal(sectionEntryHref(company), "/settings/organization/office");
+  assert.equal(sectionEntryHref({ ...company, menu: [] }), "/settings/organization");
+  assert.equal(sectionEntryHref({ key: "billing", rootHref: "/settings/subscription", menu: [{ items: [{ href: "/settings/balance" }] }] }), "/settings/subscription");
 });

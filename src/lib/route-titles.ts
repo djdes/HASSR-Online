@@ -308,7 +308,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/production-control/norms/guidelines": "Методические рекомендации",
   "/production-control/norms/documents": "Нормативные документы",
   "/production-control/documents/posters": "Плакаты для производства",
-  "/more": "Остальное",
+  "/more": "Ещё",
   "/news": "Новости, статьи, обзоры экспертов",
   "/knowledge": "Инструкции",
   "/acknowledge": "Документы для ознакомления",

@@ -221,6 +221,7 @@ export function Header({
   const hasMenu = nav.showSidebar;
 
   return (
+    <>
     <header className="sticky top-0 z-30 border-b bg-white print:hidden">
       {/* Высота шапки — 72px (на телефоне 56px с рамкой): от неё отсчитаны
           липкие панели журналов (`top-[72px]`). Горизонтальная геометрия
@@ -265,7 +266,8 @@ export function Header({
           ) : null}
         </div>
 
-        <div className="flex min-w-0 justify-center">
+        {/* Телефон: точка — отдельной полосой под шапкой (ниже), здесь её нет. */}
+        <div className="flex min-w-0 justify-center max-sm:hidden">
           <CurrentPointSwitcher
             point={currentPoint.point}
             buildings={currentPoint.buildings}
@@ -614,5 +616,15 @@ export function Header({
         />
       ) : null}
     </header>
+      {/* Телефон: выбор точки — полосой во всю ширину сразу под шапкой. Не
+          липкая: уезжает с прокруткой и не сдвигает липкие панели журналов. */}
+      <CurrentPointSwitcher
+        bar
+        point={currentPoint.point}
+        buildings={currentPoint.buildings}
+        activeBuildingId={currentPoint.activeBuildingId}
+        manageHref={currentPoint.manageHref}
+      />
+    </>
   );
 }

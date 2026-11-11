@@ -190,7 +190,11 @@
  * ════════════════════════════════════════════════════════════════════ */
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
   align-items: flex-start !important;
-  gap: 12px !important;
+  /* Длинная кнопка уходит на свою строку под текстом: раньше она не
+     сжималась и оставляла тексту ноль ширины — он вставал столбиком по
+     одной букве (2026-11-11). */
+  flex-wrap: wrap;
+  gap: 8px 12px !important;
   padding: 14px 16px !important;
   border-radius: 18px !important;
   backdrop-filter: blur(12px);
@@ -222,7 +226,7 @@
   flex-direction: column;
   gap: 3px;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 1 1 180px;
   padding-top: 1px;
 }
 
@@ -304,6 +308,34 @@
   background: #5566f6 !important;
   color: #ffffff !important;
   transition: background-color 150ms ease;
+  /* Справа; длинная подпись — на своей строке и с многоточием. */
+  margin-left: auto !important;
+  max-width: 100%;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Кольцо-отсчёт вместо значка: видно, когда сообщение уйдёт само. Время —
+   `--toast-life` на самом кольце; под курсором отсчёт стоит, как и таймер. */
+[data-toast-countdown] circle[data-ring] {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  animation: toast-countdown var(--toast-life, 5000ms) linear forwards;
+}
+[data-sonner-toaster]:hover [data-toast-countdown] circle[data-ring] {
+  animation-play-state: paused;
+}
+@keyframes toast-countdown {
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-toast-countdown] circle[data-ring] {
+    animation: none;
+  }
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button]:hover {

@@ -1,0 +1,15 @@
+{
+  "task": "nav-polish-2026-11-11",
+  "branch": "claude/affectionate-newton-7hw7ae",
+  "checkedAt": "2026-11-11",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/app/globals.css", "src/components/layout/point-section-sync.tsx"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/nav-layout.ts", "src/lib/nav-layout.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/app-nav.ts", "src/lib/app-nav.test.ts"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/point-section-sync.test.ts"] },
+    "AC5": { "status": "PASS", "evidence": ["src/app/app-theme.css"] },
+    "AC6": { "status": "PASS", "evidence": ["src/components/layout/section-top-menu.tsx"] },
+    "AC7": { "status": "PASS", "evidence": ["src/components/layout/mobile-nav-sheet.tsx", "src/components/layout/current-point-switcher.tsx"] },
+    "AC8": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/i18n-check.txt", "raw/test-gate.txt"] }
+  }
+}

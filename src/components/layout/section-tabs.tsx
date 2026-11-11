@@ -100,7 +100,7 @@ export function SectionTabs({ className }: { className?: string }) {
     <nav
       aria-label={t("tabsAria")}
       data-section-tabs={section?.key}
-      className={cn("mb-5 min-w-0 border-b border-[#ececf4] print:hidden max-sm:mb-4", inTopMenu && "lg:hidden", className)}
+      className={cn("mb-5 min-w-0 border-b border-[#ececf4] print:hidden max-sm:mb-4", inTopMenu && "hidden", className)}
     >
       <div
         ref={scroller}
