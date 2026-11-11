@@ -1,43 +1,50 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronDown, Component } from "lucide-react";
-import { mainNavSections, type NavSectionKey } from "@/lib/app-nav";
-import type { NavModelSection } from "@/lib/app-nav.server";
-import { navTone } from "@/lib/nav-tones";
+import { ChevronDown } from "lucide-react";
+import { mainNavSections, navSectionPath, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
+import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
-import { NavIconChip } from "@/components/layout/nav-icons";
 import { useNewNavPlace } from "@/components/layout/nav-layout-switch";
 import { sectionEntryHref } from "@/lib/nav-layout";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
-// Строка раздела — как в стандартном меню: плашка 32px, свой тон.
-const ROW =
-  "relative flex min-h-11 items-center gap-2.5 rounded-2xl py-1.5 pr-2.5 pl-1.5 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
-// Пункт раскрытого списка — ниже и с плашкой поменьше: второй уровень.
-const SUB_ROW =
-  "relative flex min-h-10 items-center gap-2.5 rounded-xl py-1 pr-2.5 pl-1.5 text-[14px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
-// Вес шрифта у выбранного не меняется: жирная «Мастер-кабинет» рядом с «PRO»
-// переносилась на вторую строку.
-// Телефон: строка под палец — выше и крупнее.
-const ROW_TOUCH = "min-h-[52px] text-[16px]";
-const SUB_ROW_TOUCH = "min-h-12 text-[15.5px]";
-const ROW_ACTIVE = "bg-[var(--tone-row)] text-[var(--tone-ink)]";
-// «Ещё» — тихий пункт в конце списка: серый, без своего цвета.
-const ROW_QUIET = "text-[#6f7282] hover:bg-[#f4f5fb] hover:text-[#3c4053]";
-const ROW_QUIET_ACTIVE = "bg-[#f1f2f8] text-[#0b1024]";
-const ROW_IDLE = "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024]";
+// Дерево меню (владелец, 2026-11-11: «меню как в документации, без иконок,
+// чуть крупнее»): строки без плашек, уровни — отступом слева, стрелка
+// раскрытия справа. Выбран только лист — мягкая заливка бренда.
+const TREE_ROW =
+  "relative flex min-h-11 items-center justify-between gap-2 rounded-[10px] py-2 pr-3 text-[16px] leading-snug transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+const TREE_ROW_TOUCH = "min-h-[52px] text-[16.5px]";
+const TREE_IDLE = "text-[#2a2c3a] hover:bg-[#f1f1f5] hover:text-[#0b1024]";
+const TREE_IDLE_DEEP = "text-[#4a4d5e] hover:bg-[#f1f1f5] hover:text-[#0b1024]";
+const TREE_ACTIVE = "bg-[#eef0fe] font-medium text-[#3343cf]";
+/** Отступ строки по уровню: 14px у раздела, +22px на каждый уровень. */
+const indent = (depth: number) => ({ paddingLeft: `${14 + (depth - 1) * 22}px` });
+
+function TreeChevron({ open }: { open: boolean }) {
+  return (
+    <ChevronDown
+      aria-hidden
+      className={cn(
+        "size-4 shrink-0 text-[#8a8d9c] transition-transform duration-150 motion-reduce:transition-none",
+        open ? "" : "-rotate-90",
+      )}
+    />
+  );
+}
 
 /**
- * Список меню в два уровня — общий для сайдбара на компьютере и листа меню на
- * телефоне (владелец, 2026-11-11: «в мобильной версии должен быть новый
- * дизайн»). `touch` — строки выше и кегль крупнее, под палец.
+ * Меню деревом — общее для сайдбара на компьютере и листа меню на телефоне
+ * (`touch` — строки выше, под палец). Уровни: раздел главного меню → его
+ * пункты → пункты вложенного раздела (или вкладки пункта) → следующий
+ * вложенный раздел. Раскрыта ветка текущей страницы; раздел главного меню
+ * можно свернуть и раскрыть нажатием.
  */
 export function NavAccordion({ touch = false }: { touch?: boolean }) {
   const { sections } = useAppNav();
@@ -47,131 +54,134 @@ export function NavAccordion({ touch = false }: { touch?: boolean }) {
   const main = mainSections.filter((section) => section.key !== "inspection");
   const inspection = mainSections.find((section) => section.key === "inspection");
 
-  // Какой список раскрыт, помним вместе с путём: сменилась страница — снова
-  // раскрыт раздел текущей страницы.
+  const owner = sectionForPath(pathname);
+  const chainKeys = new Set(owner ? navSectionPath(sections, owner.section).map((section) => section.key) : []);
+  const cleanPath = pathname.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  const tabHref = owner?.menuTabHref ?? cleanPath;
+  const byKey = new Map(sections.map((section) => [section.key, section]));
+
   const [manual, setManual] = useState<{ path: string; key: NavSectionKey | null } | null>(null);
   if (manual && manual.path !== pathname) setManual(null);
   const openKey = manual ? manual.key : place.top;
 
   const onSection = (section: NavModelSection) => (event: MouseEvent<HTMLAnchorElement>) => {
     if (!section.menu) return;
-    // Открытие в новой вкладке — меню здесь не трогаем.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     if (openKey === section.key) {
       event.preventDefault();
-      // Только раскрыли список: лист меню на телефоне от этого не закрывается.
       event.stopPropagation();
       setManual({ path: pathname, key: null });
-    } else if (touch) {
-      // Телефон: нажатие на раздел только раскрывает его пункты — лист не
-      // закрывается, пока человек не выбрал, куда идти.
+    } else if (touch || place.top === section.key) {
       event.preventDefault();
-      // Только раскрыли список: лист меню на телефоне от этого не закрывается.
       event.stopPropagation();
       setManual({ path: pathname, key: section.key });
     } else {
-      // Раздел, в котором человек уже стоит, только раскрывается; другой —
-      // раскрывается сразу и открывает свой корень.
-      if (place.top === section.key) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
       setManual({ path: pathname, key: section.key });
     }
   };
 
+  const renderItems = (section: NavModelSection, depth: number): ReactNode =>
+    section.menu?.map((group, index) => (
+      <div key={group.label ?? `group-${index}`} className="space-y-0.5">
+        {group.label ? (
+          <div
+            style={indent(depth)}
+            className="pt-2.5 pb-1 text-[11.5px] font-semibold uppercase tracking-[0.1em] text-[#7a7d8c]"
+          >
+            {group.label}
+          </div>
+        ) : null}
+        {group.items.map((item) => renderItem(section, item, depth))}
+      </div>
+    ));
+
+  const renderItem = (section: NavModelSection, item: NavModelMenuItem, depth: number): ReactNode => {
+    const child = item.section ? byKey.get(item.section) : undefined;
+    const isCurrentItem = owner?.section === section.key && owner?.menuItemId === item.id && !item.section;
+    const tabs = !child && item.tabs && item.tabs.length > 1 ? item.tabs : [];
+    const hasKids = Boolean(child?.menu) || tabs.length > 0;
+    const open = child ? chainKeys.has(child.key) : isCurrentItem && tabs.length > 0;
+    // Корень вложенного раздела (своего пункта у страницы нет) — выбран сам раздел.
+    const atChildRoot =
+      Boolean(child) &&
+      owner?.section === child?.key &&
+      !child?.menu?.some((group) => group.items.some((entry) => entry.id === owner?.menuItemId));
+    const active = (isCurrentItem && tabs.length === 0) || atChildRoot;
+    return (
+      <div key={item.id}>
+        <Link
+          href={item.href}
+          aria-current={active ? "page" : open ? "true" : undefined}
+          aria-expanded={hasKids ? open : undefined}
+          data-menu-item={item.id}
+          data-menu-section={item.section}
+          data-nav-tree-row
+          data-active={active ? "" : undefined}
+          style={indent(depth)}
+          className={cn(TREE_ROW, touch && TREE_ROW_TOUCH, "text-[15.5px]", active ? TREE_ACTIVE : TREE_IDLE_DEEP)}
+        >
+          <span className="min-w-0 flex-1">{item.label}</span>
+          {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
+          {hasKids ? <TreeChevron open={open} /> : null}
+        </Link>
+        {open && child ? <div className="mt-0.5 space-y-0.5">{renderItems(child, depth + 1)}</div> : null}
+        {open && tabs.length > 0 ? (
+          <div className="mt-0.5 space-y-0.5">
+            {tabs.map((tab) => {
+              const tabActive = tab.href === tabHref;
+              return (
+                <Link
+                  key={tab.id}
+                  href={tab.href}
+                  aria-current={tabActive ? "page" : undefined}
+                  data-nav-tree-row
+                  data-active={tabActive ? "" : undefined}
+                  style={indent(depth + 1)}
+                  className={cn(TREE_ROW, touch && TREE_ROW_TOUCH, "text-[15px]", tabActive ? TREE_ACTIVE : TREE_IDLE_DEEP)}
+                >
+                  <span className="min-w-0 flex-1">{tab.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   const renderSection = (section: NavModelSection, action = false) => {
-    const active = place.top === section.key;
+    const inside = place.top === section.key;
     const open = Boolean(section.menu) && openKey === section.key;
+    const active = inside && !section.menu;
     return (
       <div key={section.key}>
         <Link
           href={sectionEntryHref(section)}
           onClick={onSection(section)}
-          aria-current={active ? (section.menu ? "true" : "page") : undefined}
+          aria-current={inside ? (section.menu ? "true" : "page") : undefined}
           aria-expanded={section.menu ? open : undefined}
           data-nav-section={section.key}
           data-nav-action={action ? "" : undefined}
-          data-tone={navTone(section.icon)}
-          data-nav-row
-          data-nav-bar
+          data-nav-tree-row
           data-active={active ? "" : undefined}
+          style={indent(1)}
           className={cn(
-            ROW,
-            touch && ROW_TOUCH,
-            "group",
+            TREE_ROW,
+            touch && TREE_ROW_TOUCH,
+            "font-medium",
             action && !active
-              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
+              ? "border border-[#dcdfed] bg-white text-[#0b1024] hover:bg-[#f5f6ff]"
               : active
-                ? ROW_ACTIVE
-                : ROW_IDLE,
+                ? TREE_ACTIVE
+                : TREE_IDLE,
           )}
         >
-          <NavIconChip name={section.icon} className="size-8 rounded-[10px]" iconClassName="size-[18px]" />
           <span className="min-w-0 flex-1">{section.label}</span>
-          {section.menu ? (
-            <ChevronDown
-              aria-hidden
-              className={cn(
-                "size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none",
-                open ? "rotate-180 text-[var(--tone,#5566f6)]" : "text-[#9b9fb3]",
-              )}
-            />
-          ) : null}
+          {section.menu ? <TreeChevron open={open} /> : null}
         </Link>
         {open && section.menu ? (
-          <div
-            data-nav-sublist={section.key}
-            className="mt-1 mb-2 rounded-2xl border border-[#ececf4] bg-white p-1.5"
-          >
-            {section.menu.map((group, index) => (
-              <div key={group.label ?? `group-${index}`}>
-                {group.label ? (
-                  <div className="px-2.5 pt-2.5 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6f7282]">
-                    {group.label}
-                  </div>
-                ) : null}
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const itemActive = active && place.secondId === item.id;
-                    const quiet = item.section === "more";
-                    return (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        aria-current={itemActive ? (item.section ? "true" : "page") : undefined}
-                        data-menu-item={item.id}
-                        data-menu-section={item.section}
-                        data-menu-quiet={quiet ? "" : undefined}
-                        data-tone={quiet ? undefined : navTone(item.icon)}
-                        data-nav-row
-                        data-active={itemActive ? "" : undefined}
-                        className={cn(
-                          SUB_ROW,
-                          touch && SUB_ROW_TOUCH,
-                          "group",
-                          quiet
-                            ? cn("mt-1 border-t border-[#ececf4] rounded-t-none pt-1.5", itemActive ? ROW_QUIET_ACTIVE : ROW_QUIET)
-                            : itemActive
-                              ? ROW_ACTIVE
-                              : ROW_IDLE,
-                        )}
-                      >
-                        {quiet ? (
-                          <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center rounded-[9px] bg-[#f1f2f8] text-[#6f7282]">
-                            <Component className="size-4" />
-                          </span>
-                        ) : (
-                          <NavIconChip name={item.icon} className="size-7 rounded-[9px]" iconClassName="size-4" />
-                        )}
-                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                        {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+          <div data-nav-sublist={section.key} className="mt-0.5 mb-1.5 space-y-0.5">
+            {renderItems(section, 2)}
           </div>
         ) : null}
       </div>
@@ -180,7 +190,7 @@ export function NavAccordion({ touch = false }: { touch?: boolean }) {
 
   return (
     <>
-      <div className="space-y-1">{main.map((section) => renderSection(section))}</div>
+      <div className="space-y-0.5">{main.map((section) => renderSection(section))}</div>
       {inspection ? (
         <div className={touch ? "pt-3" : "mt-auto pt-3"}>
           <div className="border-t border-[#ececf4] pt-3">{renderSection(inspection, true)}</div>
@@ -191,13 +201,9 @@ export function NavAccordion({ touch = false }: { touch?: boolean }) {
 }
 
 /**
- * Меню слева в шаблоне «Новый» (владелец, 2026-11-09): только два уровня.
- * Разделы главного меню, под разделом — раскрывающийся список его пунктов.
- * Раскрыт раздел, в котором человек находится; нажатие на другой раздел
- * открывает его корень и его список, нажатие на раскрытый — сворачивает.
- * Всё, что глубже, — строка над страницей (`SectionTopMenu`). Внизу —
- * «Пришла проверка». Иконки — плоские, в цвет пункта, без градиента и колец
- * (2026-11-11: «минималистичнее»); правила — `app-theme.css`.
+ * Меню слева в шаблоне «Новый»: белая карточка на сером фоне страницы, в
+ * ней логотип и дерево меню (`NavAccordion`) до четырёх уровней, без иконок
+ * (владелец, 2026-11-11). Внизу — «Пришла проверка».
  */
 export function AppSidebarAccordion({
   logoUrl,
@@ -218,21 +224,23 @@ export function AppSidebarAccordion({
       data-app-sidebar
       data-sidebar-layout="new"
       aria-label={t("sidebarAria")}
-      className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col border-r border-[#ececf4] bg-white lg:flex print:hidden"
+      className="sticky top-0 z-20 hidden h-screen w-[300px] shrink-0 p-3 pr-0 lg:flex print:hidden"
     >
-      <div className="shrink-0 border-b border-[#ececf4] px-5 pt-5 pb-4" data-sidebar-logo>
-        <OrganizationBrand
-          logoUrl={logoUrl}
-          name={organizationName}
-          identity={identity}
-          homeHref={homeHref}
-          canEditBranding={canEditBranding}
-          large
-        />
+      <div className="flex min-h-0 w-full flex-col rounded-2xl border border-[#eeeef2] bg-white shadow-[0_1px_3px_rgba(17,17,20,0.04)]">
+        <div className="shrink-0 border-b border-[#eeeef2] px-5 pt-5 pb-4" data-sidebar-logo>
+          <OrganizationBrand
+            logoUrl={logoUrl}
+            name={organizationName}
+            identity={identity}
+            homeHref={homeHref}
+            canEditBranding={canEditBranding}
+            large
+          />
+        </div>
+        <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3">
+          <NavAccordion />
+        </nav>
       </div>
-      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">
-        <NavAccordion />
-      </nav>
     </aside>
   );
 }

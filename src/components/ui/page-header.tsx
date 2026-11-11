@@ -43,13 +43,13 @@ export function PageHeader({
             {eyebrow}
           </div>
         ) : null}
-        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024] [text-wrap:balance]">
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024] [text-wrap:balance] lg:text-[36px] lg:font-bold lg:leading-[1.15] lg:tracking-[-0.025em]">
           {title}
         </h1>
         {description ? (
           // `data-page-hint`: пояснение — его прячет «Пояснения на страницах:
           // выкл.» (Удобство чтения, view-prefs.css).
-          <p data-page-hint="" className="mt-1.5 max-w-[720px] text-[14px] leading-[1.55] text-[#6f7282]">
+          <p data-page-hint="" className="mt-1.5 max-w-[720px] text-[14px] leading-[1.55] text-[#6f7282] lg:mt-2.5 lg:text-[17px]">
             {description}
           </p>
         ) : null}

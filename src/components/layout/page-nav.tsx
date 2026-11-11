@@ -4,7 +4,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/locales";
-import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { getRouteTitle, getSiblingRoutes } from "@/lib/route-titles";
 import { customSectionNameByHref } from "@/lib/custom-names";
@@ -124,6 +125,7 @@ export function isJournalCodeSubtree(pathname: string): boolean {
 export function PageNav({ organizationName }: { organizationName: string }) {
   const tRoutes = useTranslations("navigation.routes");
   const tCrumbs = useTranslations("navigation.breadcrumbs");
+  const tGuide = useTranslations("journalControls.guidePage");
   const locale = useLocale() as Locale;
   const pathname = usePathname() || "/";
   const { override } = useContext(BreadcrumbContext);
@@ -210,11 +212,31 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     if (tail.length > 0 || !place.deep) chain[chain.length - 1] = { ...chain[chain.length - 1], href: undefined };
     newCrumbs = chain;
   }
+  // Крошки как в документации (владелец, 2026-11-11): строка ссылок цвета
+  // бренда через «›» прямо над заголовком страницы, без пилюль и кнопки.
   const newNav = newCrumbs ? (
-    <div className="mb-5 hidden min-w-0 items-center gap-3 lg:flex print:hidden" data-new-nav-crumbs>
-      <PageBackLink fallbackHref={[...newCrumbs].reverse().find((crumb) => crumb.href)?.href ?? "/dashboard"} />
-      <Breadcrumbs items={newCrumbs} className="min-w-0 flex-1" />
-    </div>
+    <nav
+      aria-label={tGuide("breadcrumbs")}
+      className="mb-3 hidden min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] text-[#3343cf] lg:flex print:hidden"
+      data-new-nav-crumbs
+    >
+      {newCrumbs.map((crumb, index) => (
+        <span key={`${crumb.label}-${index}`} className="inline-flex min-w-0 items-center gap-2">
+          {index > 0 ? (
+            <ChevronRight aria-hidden className="size-3.5 shrink-0 text-[#9a9ca8]" />
+          ) : null}
+          {crumb.href ? (
+            <Link href={crumb.href} className="truncate hover:text-[#5566f6] hover:underline">
+              {crumb.label}
+            </Link>
+          ) : (
+            <span aria-current="page" className="truncate">
+              {crumb.label}
+            </span>
+          )}
+        </span>
+      ))}
+    </nav>
   ) : null;
 
   // На корне раздела вместо крошек — вкладки (`SectionTabs`): цепочка из
