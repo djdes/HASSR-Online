@@ -1,0 +1,20 @@
+npm ci: exit 0
+prisma generate: exit 0
+typecheck: exit 0
+i18n:check: exit 0
+test:gate: exit 0 — pass=6099, fail=0
+eslint: errors 41 warnings 220 (эталон master: errors 41 warnings 220)
+build+start: started after 2s, build exY8I4aiiLEKx-COFL_4H, css 200
+smoke: exit 0
+smoke vs baseline: совпадает
+page errors: 0 страниц с JS-ошибками
+
+Step B (Dependabot #206): shadcn 3.8.5 -> 4.23.0 (2026-10-27), devDependency — the CLI for adding UI
+components (`npx shadcn add`), not imported by the site (only mentioned in comments).
+Lock: 9 added, 53 removed, 14 changed — all dev-only except browser data used by build tools:
+caniuse-lite 1.0.30001776 -> 1.0.30001823, baseline-browser-mapping 2.10.0 -> 2.11.35.
+CLI check: `npx shadcn --version` 4.23.0; `npx shadcn info` reads components.json (new-york, radix, rsc,
+lucide, alias @); no files changed.
+Baseline = fresh build of master 49698221 (with #199, #209, #210) on the same machine.
+Compiled CSS: byte-identical (515012 bytes, same md5). Screenshots: 13/14 pixel-identical, owner_dashboard
+differs only in the clock text. Full suite 6099/0, eslint 41/220 = master, smoke = master, no JS errors.
