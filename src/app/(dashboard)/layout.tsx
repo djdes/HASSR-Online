@@ -540,7 +540,11 @@ export default async function DashboardLayout({
               документа — иначе они друг друга не видят. */}
           <JournalUndoProvider>
           <DomainMessagesBoundary namespaces={["masterCabinetUi"]}>
-          {pointSync ? <PointSectionSync {...pointSync} /> : null}
+          {pointSync ? (
+            <Suspense fallback={null}>
+              <PointSectionSync {...pointSync} />
+            </Suspense>
+          ) : null}
           <Header
             userName={session.user.name ?? tLayout("fallbackUser")}
             userEmail={session.user.email ?? ""}
@@ -729,7 +733,9 @@ export default async function DashboardLayout({
           </AppNavProvider>
           </FabDockProvider>
         </div>
-        <Toaster />
+        {/* Под шапкой и по центру контента (2026-11-11): тост о смене точки
+            не закрывает сам переключатель (`dashboard-toaster` в globals.css). */}
+        <Toaster className="toaster group dashboard-toaster" offset={{ top: 84 }} mobileOffset={{ top: 128 }} />
       </SiteThemeProvider>
       </CustomNamesProvider>
     </AuthSessionProvider>

@@ -13,7 +13,7 @@ import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
-import { isOfficeBuilding } from "@/lib/building-scope";
+import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
@@ -63,8 +63,8 @@ export default async function AreasSettingsPage({
     requested: showPlaceFilter ? placeFilterParam(query.place) : null,
     places: scope.buildings.map((building) => building.id),
     hasNone: scope.loose.length > 0,
-    // Переключатель в шапке здесь скрыт — точку выбирают только в фильтре.
-    headerPointId: null,
+    // Без выбора в адресе — точка из шапки (2026-11-11): фильтр с ней согласован.
+    headerPointId: showPlaceFilter ? viewedPointId(buildingContext) : null,
   });
   const placePointId = place && place !== PLACE_NONE ? place : null;
   const groups = groupByBuilding(scope.items, (area) => area.buildingId, scope.buildings, {

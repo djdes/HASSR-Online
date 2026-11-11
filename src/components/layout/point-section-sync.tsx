@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { isCompanyWidePath, pointReturnTarget, pointSyncAction } from "@/lib/point-section-sync";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { showPointSwitchToast, shortPointName } from "@/components/layout/point-switch-toast";
 
 /** Точка, с которой человека увела автосмена на офис, — до конца вкладки. */
 const RETURN_KEY = "wesetup.point-return";
@@ -25,29 +26,6 @@ function writeReturnPoint(pointId: string | null) {
   } catch {
     /* хранилище недоступно — «назад» просто не вернёт точку */
   }
-}
-
-const SYNC_TOAST_MS = 5000;
-
-/** Длинное название точки в кнопке — с многоточием: кнопка остаётся в одну строку. */
-function shortName(name: string): string {
-  return name.length > 26 ? `${name.slice(0, 25).trimEnd()}…` : name;
-}
-
-/** Кольцо, убывающее за время жизни подсказки (`globals.css`, `toast-countdown`). */
-function ToastCountdown({ ms }: { ms: number }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      className="size-[18px] -rotate-90"
-      aria-hidden
-      data-toast-countdown
-      style={{ "--toast-life": `${ms}ms` } as React.CSSProperties}
-    >
-      <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2.2" opacity="0.18" />
-      <circle data-ring cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" pathLength={100} />
-    </svg>
-  );
 }
 
 /** Ручной выбор в переключателе отменяет «вернуть точку по „назад“». */
@@ -101,6 +79,8 @@ export function PointSectionSync({
   const t = useTranslations("navigation.shell.point");
   const router = useRouter();
   const pathname = usePathname();
+  // Фильтр мест на вкладках сотрудников, цехов и оборудования ведёт и шапку.
+  const placeParam = useSearchParams()?.get("place") ?? null;
   const { refreshAfter, isPending } = useContentTransition();
   const attempted = useRef<string | null>(null);
   // Переход по истории: событие приходит раньше, чем меняется адрес.
@@ -122,9 +102,11 @@ export function PointSectionSync({
     canViewOrganization,
     organizationTargetId: organizationTarget?.id ?? null,
     pointIds,
+    placeParam,
   });
   const pointsKey = pointIds.join(",");
-  const nameOf = (id: string | null) => points.find((point) => point.id === id)?.name ?? "";
+  const nameOf = (id: string | null) =>
+    id === organizationTarget?.id ? organizationTarget.name : (points.find((point) => point.id === id)?.name ?? "");
 
   useEffect(() => {
     if (isPending) return;
@@ -139,50 +121,59 @@ export function PointSectionSync({
     const ids = pointsKey ? pointsKey.split(",") : [];
 
     if (action) {
-      const key = `${pathname}→${action.targetId}`;
+      const key = `${pathname}?${placeParam ?? ""}→${action.targetId}`;
       if (attempted.current === key) return;
       attempted.current = key;
       const fromPointId = viewedPointId;
-      const targetName = action.kind === "organization" ? (organizationTarget?.name ?? "") : nameOf(action.targetId);
+      const targetName = nameOf(action.targetId);
       refreshAfter(
         action.targetId,
         () => postActiveBuilding(action.targetId, t("failed")),
         () => {
-          if (action.kind === "point") {
+          if (action.kind !== "organization") {
             forgetReturnPoint();
-            toast.success(t("switched", { name: targetName }));
+            // Страница точки сама держит точку в шапке — возвращать некуда.
+            // Фильтр мест — вернуть прежний выбор фильтра (и с ним шапку).
+            const fromId = fromPointId ?? organizationTarget?.id ?? null;
+            const fromName = nameOf(fromId);
+            showPointSwitchToast(
+              t("switched", { name: targetName }),
+              action.kind === "place" && fromId && fromName
+                ? {
+                    label: t("returnTo", { name: shortPointName(fromName) }),
+                    // Прежний выбор фильтра — он и шапку вернёт.
+                    onClick: () => router.push(`${pathname}?place=${encodeURIComponent(fromPointId ?? "all")}`, { scroll: false }),
+                  }
+                : null,
+            );
             return;
           }
           // Запоминаем, откуда увели: «назад» и кнопка в тосте вернут точку.
           writeReturnPoint(fromPointId);
           const fromName = nameOf(fromPointId);
-          toast.info(t("companySection", { name: targetName }), {
-            // Короткая подсказка с кольцом-отсчётом: не загораживает страницу
-            // дольше, чем нужно, чтобы успеть нажать «вернуться».
-            duration: SYNC_TOAST_MS,
-            icon: <ToastCountdown ms={SYNC_TOAST_MS} />,
-            action:
-              fromPointId && fromName
-                ? {
-                    label: t("returnTo", { name: shortName(fromName) }),
-                    onClick: () => {
-                      forgetReturnPoint();
-                      refreshAfter(
-                        fromPointId,
-                        async () => {
-                          const ok = await postActiveBuilding(fromPointId, t("failed"));
-                          if (!ok) return false;
-                          // Туда, откуда пришли; по прямой ссылке — страница точки.
-                          if (window.history.length > 1) router.back();
-                          else router.push(`/settings/buildings/${fromPointId}`);
-                          return true;
-                        },
-                        () => toast.success(t("switched", { name: fromName })),
-                      );
-                    },
-                  }
-                : undefined,
-          });
+          showPointSwitchToast(
+            t("companySection", { name: targetName }),
+            fromPointId && fromName
+              ? {
+                  label: t("returnTo", { name: shortPointName(fromName) }),
+                  onClick: () => {
+                    forgetReturnPoint();
+                    refreshAfter(
+                      fromPointId,
+                      async () => {
+                        const ok = await postActiveBuilding(fromPointId, t("failed"));
+                        if (!ok) return false;
+                        // Туда, откуда пришли; по прямой ссылке — страница точки.
+                        if (window.history.length > 1) router.back();
+                        else router.push(`/settings/buildings/${fromPointId}`);
+                        return true;
+                      },
+                      () => showPointSwitchToast(t("switched", { name: fromName })),
+                    );
+                  },
+                }
+              : null,
+          );
         },
       );
       return;
@@ -195,13 +186,13 @@ export function PointSectionSync({
     if (restore) {
       forgetReturnPoint();
       const name = nameOf(restore);
-      refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => toast.success(t("switched", { name })));
+      refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => showPointSwitchToast(t("switched", { name })));
       return;
     }
     // Ушли дальше по меню на страницу точки/журналов — работаем в офисе осознанно.
     if (!cameByHistory && !isCompanyWidePath(pathname)) forgetReturnPoint();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- names come from `points`, keyed by pointsKey
-  }, [action?.kind, action?.targetId, pathname, viewedPointId, pointsKey, isPending, refreshAfter, router, t]);
+  }, [action?.kind, action?.targetId, pathname, placeParam, viewedPointId, pointsKey, isPending, refreshAfter, router, t]);
 
   return null;
 }

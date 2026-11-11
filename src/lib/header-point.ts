@@ -128,30 +128,18 @@ export function resolveHeaderPoint(input: {
 const COMPANY_WIDE_PATHS: ReadonlySet<string> = new Set([HOME_HREF, "/settings/buildings"]);
 
 /**
- * Вкладки со своим фильтром по точкам над списком (`PlaceFilterChips`,
- * 2026-10-29, партнёр: «нужен один список — или сверху, или снизу»): точку
- * там выбирают только в фильтре, переключатель в шапке его не дублирует.
- */
-const PLACE_FILTER_PATHS: ReadonlySet<string> = new Set([
-  "/settings/users",
-  "/settings/areas",
-  "/settings/equipment",
-  "/journals/points",
-]);
-
-/**
  * Прятать ли точку в центре шапки на этом пути.
  *
  * Переключатель (`kind: "switch"`) — на виду везде (владелец, 2026-11-10:
  * после входа руководитель должен видеть его сверху): в разделах всей
  * компании он показывает офис, а выбор точки ведёт в её раздел
- * (`point-section-sync.ts`). Исключение — вкладки со своим фильтром по
- * точкам. Подписи без переключения («одна точка», «Точки · Все: N») в
+ * (`point-section-sync.ts`). С 2026-11-11 — и на вкладках с фильтром по
+ * местам (сотрудники, цеха, оборудование): фильтр согласован с шапкой
+ * (`PLACE_FILTER_PATHS`). Подписи без переключения («одна точка», «Точки · Все: N») в
  * разделах всей компании по-прежнему не нужны (сканы 98–99, 2026-10-28).
  */
 export function headerPointHidden(pathname: string | null | undefined, kind?: HeaderPoint["kind"]): boolean {
   const path = normalizePath(pathname);
-  if (PLACE_FILTER_PATHS.has(path)) return true;
   if (kind === "switch") return false;
   if (COMPANY_WIDE_PATHS.has(path)) return true;
   const owner = sectionForPath(path);

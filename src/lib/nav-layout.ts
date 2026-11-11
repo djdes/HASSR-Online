@@ -16,7 +16,7 @@ import type { NavModelMenuItem, NavModelSection, NavModelTab } from "@/lib/app-n
 
 export type NewNavLink = { id: string; href: string; label: string; active: boolean };
 /** Пункт выпадающей панели; под ним — его вкладки (следующий уровень). */
-export type NewNavPanelLink = NewNavLink & { tabs: NewNavLink[] };
+export type NewNavPanelLink = NewNavLink & { tabs: NewNavLink[]; badge?: string };
 export type NewNavPanelGroup = { label: string | null; links: NewNavPanelLink[] };
 /** Пункт строки над страницей; `panel` — выпадающее подменю. */
 export type NewNavEntry = NewNavLink & { badge?: string; panel?: NewNavPanelGroup[] };
@@ -92,7 +92,14 @@ export function buildNewNav(sections: readonly NavModelSection[], pathname: stri
             const linkActive = link.section
               ? chain[3]?.key === link.section
               : active && current.key === child.key && item?.id === link.id;
-            return { id: link.id, href: link.href, label: link.label, active: linkActive, tabs: tabLinks(link, linkActive) };
+            return {
+              id: link.id,
+              href: link.href,
+              label: link.label,
+              active: linkActive,
+              tabs: tabLinks(link, linkActive),
+              ...(link.badge ? { badge: link.badge } : {}),
+            };
           }),
         }));
         return { ...base, active, panel };

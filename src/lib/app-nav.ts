@@ -203,6 +203,8 @@ export type NavSection = {
   renameHref?: "/journals" | "/settings/users";
   /** Раздел целиком про всю компанию — руководителю точки не показываем. */
   companyOnly?: boolean;
+  /** Метка у пункта раздела в меню родителя («PRO» — возможность тарифа PRO). */
+  badge?: NavMenuItem["badge"];
 };
 
 export type VisibleNavTab = {
@@ -622,6 +624,8 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: "FileCheck2",
     parent: "points",
     access: FULL_ACCESS,
+    // Электронная ППК — возможность максимального тарифа (владелец, 2026-11-11).
+    badge: "pro",
     // Вкладка одна — корень раздела; навигация внутри — меню раздела слева.
     tabs: [{ id: "program", label: "program", href: PPK_OVERVIEW_HREF, access: FULL_ACCESS }],
     menu: ppkMenu(),
@@ -822,6 +826,7 @@ export function visibleNav(actor: NavActor, facts: NavFacts): VisibleNavSection[
         href: child.tabs[0].href,
         section: childKey,
         ...(menuOf(childKey).length > 0 ? { hasMenu: true } : {}),
+        ...(child.section.badge ? { badge: child.section.badge } : {}),
       };
     });
     menus.set(key, menu);

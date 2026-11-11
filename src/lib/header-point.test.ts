@@ -156,9 +156,10 @@ test("на страницах точки переключатель остаёт
   }
 });
 
-test("на вкладках с фильтром по точкам переключатель в шапке скрыт — один выбор точки", () => {
+test("на вкладках с фильтром по местам точка в шапке видна — фильтр с ней согласован", () => {
   for (const path of ["/settings/users", "/settings/areas", "/settings/equipment/", "/journals/points"]) {
-    assert.ok(headerPointHidden(path), path);
+    assert.ok(!headerPointHidden(path), path);
+    assert.ok(!headerPointHidden(path, "switch"), path);
   }
 });
 
@@ -215,9 +216,9 @@ test("переключатель (kind: switch) виден и в раздела�
   for (const path of ["/home", "/settings/organization", "/settings/organization/office", "/settings/subscription", "/settings/appearance", "/settings/buildings", "/dashboard"]) {
     assert.ok(!headerPointHidden(path, "switch"), path);
   }
-  // Свой фильтр по точкам на странице — переключатель в шапке его не дублирует.
+  // Вкладки со своим фильтром по местам — переключатель тоже на виду (2026-11-11).
   for (const path of ["/settings/users", "/settings/areas", "/settings/equipment", "/journals/points"]) {
-    assert.ok(headerPointHidden(path, "switch"), path);
+    assert.ok(!headerPointHidden(path, "switch"), path);
   }
   // Подписи без переключения в разделах компании по-прежнему прячутся.
   assert.ok(headerPointHidden("/home", "single"));
