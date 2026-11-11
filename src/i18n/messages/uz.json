@@ -3099,7 +3099,9 @@
       "partnerTitle": "Hamkor kabineti · {brand}",
       "logoutFailed": "Tizimdan chiqib bo‘lmadi. Ulanishni tekshirib, qayta urinib ko‘ring.",
       "masterCabinetTitle": "Ma’lumotnoma kabineti: umumiy ovqatlanish uchun menyu va xomashyo",
-      "backOfficeTitle": "Alohida back-ofis kabineti: tanlangan obyektlar uchun menyu va xomashyo"
+      "backOfficeTitle": "Alohida back-ofis kabineti: tanlangan obyektlar uchun menyu va xomashyo",
+      "search": "Qidiruv",
+      "searchTitle": "Kabinet bo‘yicha qidiruv — Ctrl+K"
     },
     "profile": {
       "organizationSwitcher": "Ushbu kabinetdagi tashkilotlar",
@@ -26623,7 +26625,9 @@
       "searching": "Qidirilmoqda…",
       "nothingFound": "Hech narsa topilmadi",
       "footerNav": "↑↓ navigatsiya · Enter tanlash",
-      "footerToggle": "⌘K / Ctrl+K — ochish/yopish"
+      "footerToggle": "⌘K / Ctrl+K — ochish/yopish",
+      "kindArea": "Xonalar",
+      "kindProduct": "Mahsulotlar"
     },
     "createDemoDialog": {
       "createFailed": "Demoni ochib bo‘lmadi",

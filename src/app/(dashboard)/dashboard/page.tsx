@@ -11,7 +11,7 @@ import {
   ArrowRight,
   History,
   Inbox,
-  SlidersHorizontal,
+  ListChecks,
   Sparkles,
   User as UserIcon,
   Wifi,
@@ -275,27 +275,26 @@ export default async function DashboardPage({
               flat
               defaultOpen={true}
               titleAside={
-                // Тихие иконки без рамки: догнать пропуски и выбрать набор
-                // журналов. Квадрат слева от заголовка владелец просил
-                // убрать, а сами действия нужны.
+                // Светлые кнопки с рамкой (как «Пришла проверка»): догнать
+                // пропуски и выбрать, какие журналы включены.
                 <>
                 {catchUpOn ? (
                 <Link
                   href="/dashboard/catch-up"
                   title={tDash("catchUp")}
                   aria-label={tDash("catchUp")}
-                  className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10"
                 >
-                  <History className="size-[18px]" />
+                  <History className="size-[18px] stroke-[1.75]" />
                 </Link>
                 ) : null}
                 <Link
                   href="/settings/journals"
                   title={tDash("chooseJournals")}
                   aria-label={tDash("journalSettings")}
-                  className="inline-flex size-10 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  className="inline-flex size-10 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10"
                 >
-                  <SlidersHorizontal className="size-[18px]" />
+                  <ListChecks className="size-[18px] stroke-[1.75]" />
                 </Link>
                 </>
               }

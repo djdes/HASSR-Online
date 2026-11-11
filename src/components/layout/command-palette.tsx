@@ -2,23 +2,25 @@
 import { switchKeyboardLayout } from "@/lib/journal-search";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   ArrowDownToLine,
   ArrowRight,
   Boxes,
+  DoorOpen,
   ClipboardList,
   FileSpreadsheet,
   Loader2,
+  Package,
   Search,
   User,
   Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppNav } from "@/components/layout/app-nav-context";
-import { ToneChip, navIcon } from "@/components/layout/nav-icons";
+import { navIcon } from "@/components/layout/nav-icons";
 import { navTone, type NavTone } from "@/lib/nav-tones";
 import { useAutomationOn } from "@/components/journals/journal-controls-provider";
 
@@ -53,7 +55,7 @@ type StaticItem = {
 };
 
 type Hit = {
-  kind: "user" | "template" | "document" | "equipment";
+  kind: "user" | "template" | "document" | "equipment" | "area" | "product";
   label: string;
   hint?: string;
   href: string;
@@ -71,14 +73,10 @@ const KIND_ICON = {
   template: ClipboardList,
   document: FileSpreadsheet,
   equipment: Boxes,
+  area: DoorOpen,
+  product: Package,
 } as const;
 
-const KIND_TONE: Record<Hit["kind"], NavTone> = {
-  user: navTone("User"),
-  template: navTone("ClipboardList"),
-  document: navTone("FileSpreadsheet"),
-  equipment: navTone("Boxes"),
-};
 
 function matchesText(item: StaticItem, lq: string): boolean {
   if (item.label.toLowerCase().includes(lq)) return true;
@@ -92,6 +90,13 @@ function matchesText(item: StaticItem, lq: string): boolean {
 function fuzzyMatch(item: StaticItem, q: string): boolean {
   const lq = q.toLowerCase();
   return matchesText(item, lq) || matchesText(item, switchKeyboardLayout(lq));
+}
+
+const OPEN_EVENT = "wesetup:open-command-palette";
+
+/** Открыть поиск по кабинету (кнопка в шапке). */
+export function openCommandPalette() {
+  window.dispatchEvent(new Event(OPEN_EVENT));
 }
 
 export function CommandPalette() {
@@ -227,8 +232,14 @@ export function CommandPalette() {
         setOpen(false);
       }
     }
+    // Кнопка поиска в шапке открывает палитру событием (`openCommandPalette`).
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(OPEN_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_EVENT, onOpen);
+    };
   }, []);
 
   useEffect(() => {
@@ -277,6 +288,8 @@ export function CommandPalette() {
       template: t("kindTemplate"),
       document: t("kindDocument"),
       equipment: t("kindEquipment"),
+      area: t("kindArea"),
+      product: t("kindProduct"),
     }),
     [t]
   );
@@ -313,7 +326,7 @@ export function CommandPalette() {
         items: filteredRoutes.map((r) => ({ ...r, source: "static" as const })),
       });
     }
-    for (const kind of ["user", "template", "document", "equipment"] as const) {
+    for (const kind of ["user", "template", "document", "equipment", "area", "product"] as const) {
       const arr = liveByKind.get(kind);
       if (!arr || arr.length === 0) continue;
       blocks.push({
@@ -418,38 +431,27 @@ export function CommandPalette() {
                       : item.source === "static"
                         ? item.icon
                         : KIND_ICON[item.kind];
-                    const tone = item.source === "static" ? item.tone : KIND_TONE[item.kind];
                     const isActive = i === activeIdx;
-                    // Строка в цвете своей страницы, как пункт меню: плашка
-                    // тона, выбранная строка — фон и текст тона, кольцо.
+                    // Нейтральная строка: серая плашка с иконкой, выбранная
+                    // строка — серый фон (владелец, 2026-11-11).
                     return (
                       <li
                         key={`${section.title}-${i}`}
                         onClick={() => pick(i)}
                         onMouseEnter={() => setActiveIdx(i)}
-                        data-tone={tone}
-                        data-nav-row
                         data-active={isActive ? "" : undefined}
                         className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 ${
-                          isActive
-                            ? "bg-[var(--tone-row)]"
-                            : "hover:bg-[#fafbff]"
+                          isActive ? "bg-[#f1f1f4]" : "hover:bg-[#f4f4f6]"
                         }`}
                       >
-                        <ToneChip
-                          tone={tone}
-                          icon={icon}
-                          className="size-8 rounded-xl"
-                          iconClassName={isRunning ? "size-4 animate-spin" : "size-4"}
-                        />
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48]">
+                          {createElement(icon, {
+                            className: isRunning ? "size-4 animate-spin" : "size-4 stroke-[1.75]",
+                            "aria-hidden": true,
+                          })}
+                        </span>
                         <div className="min-w-0 flex-1">
-                          <div
-                            className={`text-[14px] ${
-                              isActive
-                                ? "font-semibold text-[var(--tone-ink)]"
-                                : "text-[#0b1024]"
-                            }`}
-                          >
+                          <div className={`text-[14px] text-[#111114] ${isActive ? "font-medium" : ""}`}>
                             {item.label}
                           </div>
                           {item.hint ? (
@@ -459,7 +461,7 @@ export function CommandPalette() {
                           ) : null}
                         </div>
                         <ArrowRight
-                          className={`size-4 shrink-0 ${isActive ? "text-[var(--tone)]" : "text-[#9b9fb3]"}`}
+                          className={`size-4 shrink-0 ${isActive ? "text-[#111114]" : "text-[#9b9fb3]"}`}
                         />
                       </li>
                     );

@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Bell, X } from "lucide-react";
 import { toast } from "sonner";
-import { navTone } from "@/lib/nav-tones";
 import { openSupportChat } from "@/lib/support-chat-bus";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useLiveEvents } from "@/lib/use-live-events";
@@ -97,7 +96,8 @@ const SUPPORT_CHAT_HREF = "/dashboard?support=chat";
 
 // Янтарная подложка (тон иконки Bell, `lib/nav-tones.ts`); подъём при
 // наведении и покачивание колокольчика — `[data-tone-button]` в app-theme.css.
-const TRIGGER_CLASS = "relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg";
+const TRIGGER_CLASS =
+  "relative inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10";
 
 /**
  * `triggerClassName` — добавка к кнопке-колокольчику. Шапка сайта
@@ -383,12 +383,10 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
         type="button"
         aria-label={t("title")}
         onClick={() => (open ? closePanel() : openPanel())}
-        data-tone={navTone("Bell")}
-        data-tone-button
         data-bell
         className={triggerClassName ? `${TRIGGER_CLASS} ${triggerClassName}` : TRIGGER_CLASS}
       >
-        <Bell className="size-5" />
+        <Bell className="size-[18px] stroke-[1.75]" />
         {headerCount > 0 && (
           <span className="absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-semibold text-white">
             {headerCount > 99 ? "99+" : headerCount}

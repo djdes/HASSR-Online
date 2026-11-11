@@ -1417,12 +1417,9 @@ function CategoryColumn(props: {
 }) {
   const t = useTranslations("staffManagement.page");
   const substituteBadge = useSubstituteBadgeText();
-  const headerAccentClass =
-    props.categoryKey === "management"
-      ? "bg-[#fff8eb] text-[#b25f00]"
-      : props.categoryKey === "commission"
-        ? "bg-[#ecfdf5] text-[#116b2a]"
-        : "bg-[#eef1ff] text-[#5566f6]";
+  // Колонки одного вида (владелец, 2026-11-11): плашка и счётчик серые у
+  // всех категорий — цвет не должен намекать, что «Руководство» важнее.
+  const headerAccentClass = "bg-[#ececef] text-[#3c3d48]";
   const totalEmployees = props.positions.reduce(
     (sum, p) => sum + (props.employeesByPosition.get(p.id)?.length ?? 0),
     0

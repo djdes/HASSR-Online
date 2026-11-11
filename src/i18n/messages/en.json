@@ -3099,7 +3099,9 @@
       "partnerTitle": "Partner workspace · {brand}",
       "logoutFailed": "Could not sign out. Check your connection and try again.",
       "masterCabinetTitle": "Reference workspace: menus and ingredients for food service",
-      "backOfficeTitle": "Separate back-office workspace: menus and ingredients for selected locations"
+      "backOfficeTitle": "Separate back-office workspace: menus and ingredients for selected locations",
+      "search": "Search",
+      "searchTitle": "Search the workspace — Ctrl+K"
     },
     "profile": {
       "organizationSwitcher": "Organizations in this workspace",
@@ -26623,7 +26625,9 @@
       "searching": "Searching…",
       "nothingFound": "Nothing found",
       "footerNav": "↑↓ navigate · Enter select",
-      "footerToggle": "⌘K / Ctrl+K — open/close"
+      "footerToggle": "⌘K / Ctrl+K — open/close",
+      "kindArea": "Rooms",
+      "kindProduct": "Products"
     },
     "createDemoDialog": {
       "createFailed": "Could not open the demo",

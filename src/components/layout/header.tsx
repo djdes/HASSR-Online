@@ -8,7 +8,8 @@ import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Handshake, Loader2, LogOut, Menu, ShieldCheck } from "lucide-react";
+import { Handshake, Loader2, Menu, Search, ShieldCheck } from "lucide-react";
+import { openCommandPalette } from "@/components/layout/command-palette";
 import { cn } from "@/lib/utils";
 import { navTone } from "@/lib/nav-tones";
 import { NavIconChip } from "@/components/layout/nav-icons";
@@ -278,12 +279,24 @@ export function Header({
 
         <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-1.5 md:gap-2">
           {whiteLabel ? null : (
-            <span className="mr-1 hidden text-[#0b1024] opacity-70 sm:inline-flex" data-brand-mark>
-              <BrandLogo height={16} title={t("shell.brand")} />
+            <span className="mr-2 hidden items-center text-[#111114] sm:inline-flex" data-brand-mark>
+              <BrandLogo height={22} title={t("shell.brand")} />
             </span>
           )}
           <OfflineIndicator />
           <LiveConnectionIndicator />
+          {/* Глобальный поиск (Ctrl+K): разделы, сотрудники, журналы,
+              документы, оборудование, помещения, продукты. */}
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label={t("header.search")}
+            title={t("header.searchTitle")}
+            data-header-search
+            className="hidden size-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10 sm:inline-flex"
+          >
+            <Search className="size-[18px] stroke-[1.75]" aria-hidden />
+          </button>
           <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
@@ -320,16 +333,7 @@ export function Header({
             </Link>
           ) : null}
 
-          {/* Выход — нейтральный, краснеет только при наведении. */}
-          <button
-            type="button"
-            onClick={handleLogout}
-            aria-label={t("header.logout")}
-            title={t("header.logout")}
-            className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 md:inline-flex hover:bg-[#fff4f2] hover:text-[#d2453d]"
-          >
-            <LogOut className="size-5" />
-          </button>
+          {/* Выход — в меню пользователя (аватар), отдельной кнопки нет. */}
 
           {narrowViewport ? (
             <Button

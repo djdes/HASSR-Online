@@ -3099,7 +3099,9 @@
       "partnerTitle": "Партнёрский кабинет · {brand}",
       "logoutFailed": "Не удалось выйти. Проверьте связь и попробуйте ещё раз.",
       "masterCabinetTitle": "Мастер-кабинет справочников: меню и сырьё для пищеблоков",
-      "backOfficeTitle": "Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов"
+      "backOfficeTitle": "Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов",
+      "search": "Поиск",
+      "searchTitle": "Поиск по кабинету — Ctrl+K"
     },
     "profile": {
       "organizationSwitcher": "Организации этого кабинета",
@@ -26623,7 +26625,9 @@
       "searching": "Ищу…",
       "nothingFound": "Ничего не нашлось",
       "footerNav": "↑↓ навигация · Enter выбрать",
-      "footerToggle": "⌘K / Ctrl+K — открыть/закрыть"
+      "footerToggle": "⌘K / Ctrl+K — открыть/закрыть",
+      "kindArea": "Помещения",
+      "kindProduct": "Продукты"
     },
     "createDemoDialog": {
       "createFailed": "Не удалось открыть демо",

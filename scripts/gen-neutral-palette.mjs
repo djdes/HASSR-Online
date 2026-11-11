@@ -35,6 +35,35 @@ const MAP = {
   "eef0fe": [236, 236, 239],
   "e8ebff": [236, 236, 239],
   "dfe3ff": [220, 221, 227], // pale border → grey border
+  // Other indigo/violet accents.
+  "5563ff": [17, 17, 20],
+  "4554ff": [17, 17, 20],
+  "4b57ff": [17, 17, 20],
+  "5863f8": [17, 17, 20],
+  "7a5cff": [17, 17, 20],
+  "1f3a8a": [17, 17, 20],
+  // Bluish greys of the old palette → neutral greys (owner, 2026-11-11:
+  // «руководство на голубом или фиолетовом цвете странновато»).
+  "0b1024": [17, 17, 20], // text
+  "141821": [17, 17, 20],
+  "3c4053": [60, 61, 72],
+  "5b6170": [90, 92, 102],
+  "6f7282": [106, 108, 122],
+  "73738a": [106, 108, 122],
+  "7a7c8e": [116, 117, 127],
+  "9b9fb3": [154, 156, 168],
+  "c7ccea": [207, 208, 214], // borders
+  "c8cbe0": [207, 208, 214],
+  "d8dae6": [216, 217, 222],
+  "dcdfed": [220, 221, 227],
+  "dfe1ec": [220, 221, 227],
+  "ececf4": [231, 231, 236],
+  "eef0f6": [237, 237, 240], // surfaces
+  "f1f2f8": [241, 241, 244],
+  "f2f3f8": [242, 242, 244],
+  "f3f4fb": [243, 243, 245],
+  "f4f5fb": [244, 244, 246],
+  "fafbff": [250, 250, 251],
 };
 
 const PROPS = {
@@ -201,6 +230,11 @@ const tokens = `${SCOPE} .app-shell, ${SCOPE} body {
   --app-soft-surface: #fafafb;
   --app-border: #ececef;
   --app-border-strong: #dcdde3;
+  --app-text: #111114;
+  --app-text-secondary: #3c3d48;
+  --app-text-muted: #6a6c7a;
+  --app-text-faint: #9a9ca8;
+  --app-skeleton-base: #ededf0;
 }`;
 const body = [
   tokens,
