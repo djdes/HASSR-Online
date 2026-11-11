@@ -64,7 +64,7 @@ export function TodayStatus({
       data-tone={tone}
       role="status"
       className={cn(
-        "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13.5px] font-medium tabular-nums",
+        "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13.5px] font-medium tabular-nums newd:hidden",
         tone === "done" && "bg-[#ecfdf5] text-[#116b2a]",
         tone === "warn" && "bg-[#fff4f2] text-[#a13a32]",
         tone === "calm" && "bg-[#f5f6ff] text-[#3848c7]",

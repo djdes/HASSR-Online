@@ -48,12 +48,23 @@ export type HintsMode = (typeof HINTS_MODES)[number];
 export const NAV_LAYOUTS = ["classic", "new"] as const;
 export type NavLayout = (typeof NAV_LAYOUTS)[number];
 
+/**
+ * Дизайн кабинета (владелец, 2026-11-11): `classic` — прежний, `new` — «Новая»
+ * тема (меню-дерево, чёрно-серая палитра, поиск в шапке). Выбирается в меню
+ * темы рядом со «Светлая / Тёмная». CSS читает `data-view-design` на `<html>`
+ * (`neutral-palette.css`, вариант Tailwind `newd:`), компоненты —
+ * `useNewDesign()`.
+ */
+export const DESIGNS = ["classic", "new"] as const;
+export type Design = (typeof DESIGNS)[number];
+
 export type ViewPrefs = {
   textSize: TextSize;
   contrast: ContrastMode;
   motion: MotionMode;
   hints: HintsMode;
   navLayout: NavLayout;
+  design: Design;
 };
 
 export const DEFAULT_VIEW_PREFS: ViewPrefs = {
@@ -62,6 +73,7 @@ export const DEFAULT_VIEW_PREFS: ViewPrefs = {
   motion: "auto",
   hints: "on",
   navLayout: "new",
+  design: "classic",
 };
 
 /**
@@ -75,7 +87,7 @@ export const TEXT_SCALE: Record<TextSize, { text: number; heading: number }> = {
   xlarge: { text: 1.3, heading: 1.15 },
 };
 
-const KEYS = { textSize: "t", contrast: "c", motion: "m", hints: "h", navLayout: "n" } as const;
+const KEYS = { textSize: "t", contrast: "c", motion: "m", hints: "h", navLayout: "n", design: "d" } as const;
 
 function pick<T extends string>(allowed: readonly T[], value: string | undefined, fallback: T): T {
   return value !== undefined && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
@@ -101,6 +113,7 @@ export function parseViewPrefs(raw: string | null | undefined): ViewPrefs {
     hints: pick(HINTS_MODES, values.get(KEYS.hints), DEFAULT_VIEW_PREFS.hints),
     // Выбора больше нет: старое «n:classic» в куке не возвращает прежнее меню.
     navLayout: DEFAULT_VIEW_PREFS.navLayout,
+    design: pick(DESIGNS, values.get(KEYS.design), DEFAULT_VIEW_PREFS.design),
   };
 }
 
@@ -112,6 +125,7 @@ export function serializeViewPrefs(prefs: ViewPrefs): string {
     `${KEYS.motion}:${prefs.motion}`,
     `${KEYS.hints}:${prefs.hints}`,
     `${KEYS.navLayout}:${prefs.navLayout}`,
+    `${KEYS.design}:${prefs.design}`,
   ].join("|");
 }
 
@@ -127,7 +141,8 @@ export function isDefaultViewPrefs(prefs: ViewPrefs): boolean {
     prefs.contrast === DEFAULT_VIEW_PREFS.contrast &&
     prefs.motion === DEFAULT_VIEW_PREFS.motion &&
     prefs.hints === DEFAULT_VIEW_PREFS.hints &&
-    prefs.navLayout === DEFAULT_VIEW_PREFS.navLayout
+    prefs.navLayout === DEFAULT_VIEW_PREFS.navLayout &&
+    prefs.design === DEFAULT_VIEW_PREFS.design
   );
 }
 
@@ -163,6 +178,7 @@ export function viewPrefsHtmlAttributes(prefs: ViewPrefs): Record<string, string
     "data-view-motion": prefs.motion,
     "data-view-hints": prefs.hints,
     "data-view-nav": prefs.navLayout,
+    "data-view-design": prefs.design,
   };
   if (flags.highContrast) attributes[HIGH_CONTRAST_ATTR] = "";
   if (flags.still) attributes[STILL_ATTR] = "";

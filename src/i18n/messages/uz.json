@@ -1121,7 +1121,8 @@
       "mode": {
         "light": "Och rangli",
         "dark": "To‘q rangli",
-        "system": "Qurilma sozlamasidan foydalanish"
+        "system": "Qurilma sozlamasidan foydalanish",
+        "new": "Yangi"
       },
       "restoreAuto": "Qayta yoqish",
       "autoScheduleActive": "Mavzu hozir kun vaqtiga qarab o‘zgaradi. Rejadagi o‘zgarishni o‘chirish uchun mavzuni tanlang.",
@@ -3072,7 +3073,11 @@
       },
       "contentLoading": "Sahifa yangilanmoqda…",
       "listLoading": "Ro‘yxat yuklanmoqda…",
-      "topMenuMore": "Yana"
+      "topMenuMore": "Yana",
+      "collapseMenu": "Menyuni yig‘ish",
+      "expandMenu": "Menyuni ochish",
+      "scrollUp": "Menyuni yuqoriga aylantirish",
+      "scrollDown": "Menyuni pastga aylantirish"
     },
     "header": {
       "staff": "Xodimlar",
@@ -3095,7 +3100,9 @@
       "partnerTitle": "Hamkor kabineti · {brand}",
       "logoutFailed": "Tizimdan chiqib bo‘lmadi. Ulanishni tekshirib, qayta urinib ko‘ring.",
       "masterCabinetTitle": "Ma’lumotnoma kabineti: umumiy ovqatlanish uchun menyu va xomashyo",
-      "backOfficeTitle": "Alohida back-ofis kabineti: tanlangan obyektlar uchun menyu va xomashyo"
+      "backOfficeTitle": "Alohida back-ofis kabineti: tanlangan obyektlar uchun menyu va xomashyo",
+      "search": "Qidiruv",
+      "searchTitle": "Kabinet bo‘yicha qidiruv — Ctrl+K"
     },
     "profile": {
       "organizationSwitcher": "Ushbu kabinetdagi tashkilotlar",
@@ -26619,7 +26626,17 @@
       "searching": "Qidirilmoqda…",
       "nothingFound": "Hech narsa topilmadi",
       "footerNav": "↑↓ navigatsiya · Enter tanlash",
-      "footerToggle": "⌘K / Ctrl+K — ochish/yopish"
+      "footerToggle": "⌘K / Ctrl+K — ochish/yopish",
+      "kindArea": "Xonalar",
+      "kindProduct": "Mahsulotlar",
+      "results": "{count, plural, other {# ta natija}}",
+      "filter": "Filtr",
+      "filterAll": "Hammasi",
+      "askAssistant": "AI yordamchidan so‘rash: «{query}»",
+      "navigate": "Harakat",
+      "close": "Yopish",
+      "clear": "Tozalash",
+      "field": "Qidiruv…"
     },
     "createDemoDialog": {
       "createFailed": "Demoni ochib bo‘lmadi",
@@ -26664,7 +26681,8 @@
       "sheetSubtitle": "Savol berish, qo‘llab-quvvatlashga yozish yoki yo‘riqnomani ko‘rish",
       "actionAriaUnread": "{label} · yangi xabarlar: {count, number}",
       "contacts": "Kontaktlar",
-      "contactsHint": "Telefon, Telegram, MAX va pochta"
+      "contactsHint": "Telefon, Telegram, MAX va pochta",
+      "close": "Yopish"
     },
     "kioskSessionGuard": {
       "employee": "Xodim",

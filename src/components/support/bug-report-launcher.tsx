@@ -258,7 +258,7 @@ export function BugReportLauncher() {
         disabled={capturing}
         aria-label={t("trigger")}
         title={t("trigger")}
-        className="group fixed right-0 top-[58%] z-30 flex h-10 items-center gap-2 rounded-l-xl border border-r-0 border-[#ececf4] bg-white pl-2 pr-1.5 text-[#5566f6] shadow-[0_10px_24px_-12px_rgba(11,16,36,0.35)] transition-all hover:pl-3 hover:text-[#3848c7] disabled:cursor-wait print:hidden sm:h-11 sm:pl-2.5"
+        className="group fixed right-0 top-[58%] z-30 flex h-10 items-center gap-2 rounded-l-xl border border-r-0 border-[#ececf4] bg-white pl-2 pr-1.5 text-[#5566f6] shadow-[0_10px_24px_-12px_rgba(11,16,36,0.35)] transition-all hover:pl-3 hover:text-[#3848c7] newd:bg-white/70 newd:text-[#b6b8c2] newd:opacity-60 newd:shadow-none newd:hover:text-[#5f6170] newd:hover:opacity-100 newd:focus-visible:opacity-100 disabled:cursor-wait print:hidden sm:h-11 sm:pl-2.5"
       >
         {capturing ? (
           <Loader2 className="size-4 animate-spin sm:size-5" />

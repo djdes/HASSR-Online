@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, Ellipsis } from "lucide-react";
 import type { NewNavEntry } from "@/lib/nav-layout";
 import { cn } from "@/lib/utils";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import {
@@ -38,6 +39,7 @@ const PANEL_LINK_ACTIVE = "bg-[#f5f6ff] font-semibold text-[#3848c7]";
 export function SectionTopMenu() {
   const t = useTranslations("navigation.shell");
   const isNew = useNewNavLayout();
+  const newDesign = useNewDesign();
   const place = useNewNavPlace();
   const entries = place.entries;
   const rowRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,8 @@ export function SectionTopMenu() {
     return () => observer.disconnect();
   }, [entriesKey]);
 
-  if (!isNew || entries.length === 0) return null;
+  // «Новая» тема: все уровни — в дереве меню слева, строка не нужна.
+  if (!isNew || newDesign || entries.length === 0) return null;
 
   // Выбранный пункт всегда на виду: не поместился — встаёт последним видимым.
   let visible = entries;

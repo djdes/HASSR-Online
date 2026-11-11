@@ -48,6 +48,7 @@ export function applyViewPrefsToDocument(prefs: ViewPrefs) {
   root.setAttribute("data-view-motion", prefs.motion);
   root.setAttribute("data-view-hints", prefs.hints);
   root.setAttribute("data-view-nav", prefs.navLayout);
+  root.setAttribute("data-view-design", prefs.design);
   const flags = effectiveViewFlags(prefs, systemFlags());
   root.toggleAttribute(HIGH_CONTRAST_ATTR, flags.highContrast);
   root.toggleAttribute(STILL_ATTR, flags.still);
@@ -72,6 +73,7 @@ function readDocumentViewPrefs(): ViewPrefs {
       `m:${root.getAttribute("data-view-motion") ?? ""}`,
       `h:${root.getAttribute("data-view-hints") ?? ""}`,
       `n:${root.getAttribute("data-view-nav") ?? ""}`,
+      `d:${root.getAttribute("data-view-design") ?? ""}`,
     ].join("|"),
   );
 }
@@ -87,6 +89,11 @@ export function ViewPrefsProvider({ initial, children }: { initial: ViewPrefs; c
   }, []);
   const value = useMemo(() => ({ prefs, update }), [prefs, update]);
   return <ViewPrefsContext.Provider value={value}>{children}</ViewPrefsContext.Provider>;
+}
+
+/** Включена ли «Новая» тема (дизайн кабинета). */
+export function useNewDesign(): boolean {
+  return useViewPrefs().prefs.design === "new";
 }
 
 /** Настройки «Удобства чтения» и их смена. */

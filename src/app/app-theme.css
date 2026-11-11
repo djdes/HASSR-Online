@@ -2020,3 +2020,4 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
 .app-shell[data-partner-accent] :is([data-home-setup], [data-avatar-gradient]) {
   background-image: none;
 }
+

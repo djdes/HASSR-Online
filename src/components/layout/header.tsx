@@ -8,7 +8,10 @@ import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Handshake, Loader2, LogOut, Menu, ShieldCheck } from "lucide-react";
+import { Handshake, Loader2, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
+import { NewProfileMenu } from "@/components/layout/new-profile-menu";
+import { openCommandPalette } from "@/components/layout/command-palette";
 import { cn } from "@/lib/utils";
 import { navTone } from "@/lib/nav-tones";
 import { NavIconChip } from "@/components/layout/nav-icons";
@@ -165,6 +168,8 @@ export function Header({
   canEditBranding = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
+  const newDesign = useNewDesign();
+  const tSearch = useTranslations("layoutUi.commandPalette");
   const tView = useTranslations("common.viewPrefs");
   const pathname = usePathname();
   const headerUndo = useHeaderUndo();
@@ -278,12 +283,37 @@ export function Header({
 
         <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-1.5 md:gap-2">
           {whiteLabel ? null : (
-            <span className="mr-1 hidden text-[#0b1024] opacity-70 sm:inline-flex" data-brand-mark>
-              <BrandLogo height={16} title={t("shell.brand")} />
+            <span
+              className={cn(
+                "hidden sm:inline-flex",
+                newDesign ? "mr-2 items-center text-[#111114]" : "mr-1 text-[#0b1024] opacity-70",
+              )}
+              data-brand-mark
+            >
+              <BrandLogo height={newDesign ? 22 : 16} title={t("shell.brand")} />
             </span>
           )}
           <OfflineIndicator />
           <LiveConnectionIndicator />
+          {/* «Новая» тема — глобальный поиск (Ctrl+K): разделы, сотрудники,
+              журналы, документы, оборудование, помещения, продукты. */}
+          {newDesign ? (
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label={t("header.search")}
+            title={t("header.searchTitle")}
+            data-header-search
+            className="hidden size-10 shrink-0 items-center justify-center gap-2 rounded-[10px] border border-[#e7e7ec] bg-white text-[#3c3d48] transition-colors duration-150 hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10 sm:inline-flex 2xl:w-[260px] 2xl:justify-start 2xl:px-3"
+          >
+            <Search className="size-[18px] shrink-0 stroke-[1.75]" aria-hidden />
+            <span className="hidden flex-1 text-left text-[14.5px] text-[#9a9ca8] 2xl:inline">{tSearch("field")}</span>
+            <span className="hidden gap-1 2xl:flex" aria-hidden>
+              <kbd className="rounded-md border border-[#e7e7ec] px-1.5 font-mono text-[11.5px] leading-5 text-[#6a6c7a]">Ctrl</kbd>
+              <kbd className="rounded-md border border-[#e7e7ec] px-1.5 font-mono text-[11.5px] leading-5 text-[#6a6c7a]">K</kbd>
+            </span>
+          </button>
+          ) : null}
           <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
@@ -320,7 +350,9 @@ export function Header({
             </Link>
           ) : null}
 
-          {/* Выход — нейтральный, краснеет только при наведении. */}
+          {/* Выход — нейтральный, краснеет только при наведении. В «Новой»
+              теме — только в меню пользователя (аватар). */}
+          {newDesign ? null : (
           <button
             type="button"
             onClick={handleLogout}
@@ -330,6 +362,7 @@ export function Header({
           >
             <LogOut className="size-5" />
           </button>
+          )}
 
           {narrowViewport ? (
             <Button
@@ -340,11 +373,40 @@ export function Header({
               aria-label={t("header.profile")}
             >
               <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white">
+                <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white newd:bg-[#111114] newd:bg-none">
                   {getInitials(userName)}
                 </AvatarFallback>
               </Avatar>
             </Button>
+          ) : newDesign ? (
+            <NewProfileMenu
+              open={profileMenuOpen}
+              onOpenChange={setProfileMenuOpen}
+              userName={userName}
+              userEmail={userEmail}
+              initials={getInitials(userName)}
+              onReadability={openReadability}
+              onLogout={handleLogout}
+              organizations={
+                <OrganizationSwitcher
+                  organizations={organizations}
+                  activeId={activeOrganizationId}
+                  canCreate={canCreateOrganization}
+                  onOpenCreate={openCreateDialog}
+                  showSettings={fullAccess}
+                  onNavigate={() => setProfileMenuOpen(false)}
+                  label={t("profile.organizationSwitcher")}
+                />
+              }
+              plan={
+                <CabinetPlanCardView
+                  card={cabinetPlan}
+                  ownCabinet={ownCabinet}
+                  variant="menu"
+                  onNavigate={() => setProfileMenuOpen(false)}
+                />
+              }
+            />
           ) : (
           <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
             <DropdownMenuTrigger asChild>
@@ -357,7 +419,7 @@ export function Header({
                     согласован с остальными контролами шапки — size-10
                     (на телефоне size-11, как все кнопки шапки). */}
                 <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                  <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white">
+                  <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white newd:bg-[#111114] newd:bg-none">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>

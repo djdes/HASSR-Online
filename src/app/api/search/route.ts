@@ -47,7 +47,7 @@ export const dynamic = "force-dynamic";
  */
 
 type Hit = {
-  kind: "user" | "template" | "document" | "equipment";
+  kind: "user" | "template" | "document" | "equipment" | "area" | "product";
   label: string;
   hint?: string;
   href: string;
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
   // знает, что «Г» и «г» одна буква, и «гигиенический» не находил ничего.
   const customNames = await getOrgCustomNames(organizationId);
 
-  const [users, templates, documents, equipment] = await Promise.all([
+  const [users, templates, documents, equipment, areas, products] = await Promise.all([
     // Сотрудники только management-ролям; обычным юзерам список
     // коллег скрыт по умолчанию.
     isMgr
@@ -177,6 +177,35 @@ export async function GET(request: Request) {
       take: LIMIT_PER_KIND,
       orderBy: { name: "asc" },
     }),
+    // Помещения и продукты — справочники руководителя.
+    isMgr
+      ? db.area.findMany({
+          where: {
+            organizationId,
+            name: { contains: q, mode: "insensitive" },
+            ...(visiblePoints ? { OR: [{ buildingId: null }, { buildingId: { in: visiblePoints } }] } : {}),
+          },
+          select: { id: true, name: true, building: { select: { name: true } } },
+          take: LIMIT_PER_KIND,
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+    isMgr
+      ? db.product.findMany({
+          where: {
+            organizationId,
+            isActive: true,
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { supplier: { contains: q, mode: "insensitive" } },
+              { barcode: { contains: q, mode: "insensitive" } },
+            ],
+          },
+          select: { id: true, name: true, supplier: true, category: true },
+          take: LIMIT_PER_KIND,
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
 
   const hits: Hit[] = [];
@@ -227,6 +256,23 @@ export async function GET(request: Request) {
       label: e.name,
       hint,
       href: `/settings/equipment#equipment-${e.id}`,
+    });
+  }
+
+  for (const a of areas) {
+    hits.push({
+      kind: "area",
+      label: a.name,
+      hint: a.building?.name ?? undefined,
+      href: `/settings/areas#area-${a.id}`,
+    });
+  }
+  for (const p of products) {
+    hits.push({
+      kind: "product",
+      label: p.name,
+      hint: [p.category, p.supplier].filter(Boolean).join(" · ") || undefined,
+      href: "/settings/products",
     });
   }
 

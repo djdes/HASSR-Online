@@ -1122,7 +1122,8 @@ export type MessageContract = {
       "mode": {
         "light": "Светлая",
         "dark": "Тёмная",
-        "system": "Как на устройстве"
+        "system": "Как на устройстве",
+        "new": "Новая"
       },
       "restoreAuto": "Включить снова",
       "autoScheduleActive": "Сейчас тема меняется по времени суток. Выберите вариант — смена по времени выключится.",
@@ -2764,7 +2765,7 @@ export type MessageContract = {
         "billing": "Подписки",
         "more": "Ещё",
         "news": "Новости, статьи, обзоры экспертов",
-        "inspection": "К Вам пришла проверка",
+        "inspection": "Пришла проверка",
         "office": "Офис",
         "monitoring": "Мониторинг",
         "settings": "Настройки и оформление"
@@ -3073,7 +3074,11 @@ export type MessageContract = {
       },
       "contentLoading": "Обновляем страницу…",
       "listLoading": "Загружаем список…",
-      "topMenuMore": "Ещё"
+      "topMenuMore": "Ещё",
+      "collapseMenu": "Свернуть меню",
+      "expandMenu": "Развернуть меню",
+      "scrollUp": "Прокрутить меню вверх",
+      "scrollDown": "Прокрутить меню вниз"
     },
     "header": {
       "staff": "Сотрудники",
@@ -3096,7 +3101,9 @@ export type MessageContract = {
       "partnerTitle": "Партнёрский кабинет · {brand}",
       "logoutFailed": "Не удалось выйти. Проверьте связь и попробуйте ещё раз.",
       "masterCabinetTitle": "Мастер-кабинет справочников: меню и сырьё для пищеблоков",
-      "backOfficeTitle": "Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов"
+      "backOfficeTitle": "Отдельный кабинет бэк-офиса: меню и сырьё для отмеченных объектов",
+      "search": "Поиск",
+      "searchTitle": "Поиск по кабинету — Ctrl+K"
     },
     "profile": {
       "organizationSwitcher": "Организации этого кабинета",
@@ -26620,7 +26627,17 @@ export type MessageContract = {
       "searching": "Ищу…",
       "nothingFound": "Ничего не нашлось",
       "footerNav": "↑↓ навигация · Enter выбрать",
-      "footerToggle": "⌘K / Ctrl+K — открыть/закрыть"
+      "footerToggle": "⌘K / Ctrl+K — открыть/закрыть",
+      "kindArea": "Помещения",
+      "kindProduct": "Продукты",
+      "results": "{count, plural, one {# результат} few {# результата} many {# результатов} other {# результата}}",
+      "filter": "Фильтр",
+      "filterAll": "Всё",
+      "askAssistant": "Спросить ИИ-помощника «{query}»",
+      "navigate": "Навигация",
+      "close": "Закрыть",
+      "clear": "Очистить",
+      "field": "Поиск…"
     },
     "createDemoDialog": {
       "createFailed": "Не удалось открыть демо",
@@ -26665,7 +26682,8 @@ export type MessageContract = {
       "sheetSubtitle": "Спросить, написать в поддержку или посмотреть инструкцию",
       "actionAriaUnread": "{label} · новых сообщений: {count, number}",
       "contacts": "Контакты",
-      "contactsHint": "Телефон, Telegram, MAX и почта"
+      "contactsHint": "Телефон, Telegram, MAX и почта",
+      "close": "Закрыть"
     },
     "kioskSessionGuard": {
       "employee": "Сотрудник",

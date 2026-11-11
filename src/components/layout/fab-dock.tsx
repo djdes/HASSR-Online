@@ -13,7 +13,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Sparkles } from "lucide-react";
+import { MessageCircle, Sparkles, X } from "lucide-react";
+import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
 import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
@@ -134,6 +135,8 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
   const t = useTranslations("layoutUi.fabDock");
   const narrow = useIsNarrowViewport();
   const [sheetRequested, setSheetRequested] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const newDesign = useNewDesign();
   // Слот живёт в шапке, которая монтируется рядом с доком, — ищем его
   // после отрисовки, а не во время неё.
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -194,6 +197,58 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
     );
   }
 
+  // Кабинет (владелец, 2026-11-11): одна чёрная кнопка справа снизу —
+  // «Контакты». Одно действие — сразу оно; несколько — на компьютере
+  // карточка над кнопкой, на телефоне — лист снизу. Поддержка, помощник и
+  // «Как заполнять» вызываются из этого списка.
+  if (newDesign) {
+  // Кнопка сразу открывает «Контакты» (владелец, 2026-11-11); нет их — одно
+  // действие или карточка со списком.
+  const contacts = actions.find((action) => action.id === "contacts");
+  const single = contacts ?? (actions.length === 1 ? actions[0] : null);
+  return (
+    <>
+      {createPortal(
+        <div className="fixed right-5 bottom-5 z-30 print:hidden">
+          {panelOpen && !narrow && !single ? (
+            <FabPanel actions={actions} onClose={() => setPanelOpen(false)} />
+          ) : null}
+          <button
+            type="button"
+            data-fab-contacts
+            onClick={() => {
+              if (single) single.onSelect();
+              else if (narrow) setSheetRequested(true);
+              else setPanelOpen((value) => !value);
+            }}
+            aria-expanded={single ? undefined : narrow ? sheetOpen : panelOpen}
+            aria-label={
+              unread > 0
+                ? t("actionAriaUnread", { label: t("contacts"), count: unread })
+                : t("contacts")
+            }
+            className="relative flex size-[52px] items-center justify-center rounded-full bg-[#111114] text-white shadow-[0_10px_30px_-12px_rgba(17,17,20,0.55)] ring-4 ring-white/70 transition-[background-color,transform] duration-150 hover:bg-[#2c2d36] active:scale-95 focus-visible:outline-none focus-visible:ring-[#111114]/20"
+          >
+            <MessageCircle className="size-[22px] stroke-[1.75]" aria-hidden />
+            {unread > 0 ? (
+              <span className="absolute -top-0.5 -right-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[11px] font-semibold leading-[18px] text-white ring-2 ring-white">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            ) : null}
+          </button>
+        </div>,
+        document.body,
+      )}
+
+      <FabSheet
+        open={sheetOpen}
+        onClose={() => setSheetRequested(false)}
+        actions={actions}
+      />
+    </>
+  );
+  }
+
   // Компьютер и одиночная кнопка на телефоне — привычный ряд в углу.
   if (!narrow || actions.length === 1) {
     return createPortal(
@@ -241,6 +296,81 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
         actions={actions}
       />
     </>
+  );
+}
+
+/** Карточка «Контакты» над кнопкой (компьютер). */
+function FabPanel({ actions, onClose }: { actions: FabAction[]; onClose: () => void }) {
+  const t = useTranslations("layoutUi.fabDock");
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!ref.current || !target) return;
+      if (ref.current.contains(target)) return;
+      if ((target as Element).closest?.("[data-fab-contacts]")) return;
+      onClose();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-label={t("contacts")}
+      className="absolute right-0 bottom-[64px] w-[340px] rounded-2xl border border-[#e7e7ec] bg-white p-3 shadow-[0_18px_48px_-16px_rgba(17,17,20,0.28)]"
+    >
+      <div className="flex items-start justify-between gap-3 px-2 pt-1 pb-2">
+        <div className="min-w-0 text-[16px] font-semibold text-[#111114]">{t("contacts")}</div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t("close")}
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#6a6c7a] hover:bg-[#f1f1f4] hover:text-[#111114]"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </div>
+      <div className="space-y-0.5">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.id}
+              type="button"
+              onClick={() => {
+                onClose();
+                action.onSelect();
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-[#f1f1f4] focus-visible:bg-[#f1f1f4] focus-visible:outline-none"
+            >
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-[#f1f1f4] text-[#111114]">
+                <Icon className="size-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14.5px] font-medium text-[#111114]">{action.label}</span>
+                {action.hint ? (
+                  <span className="block truncate text-[12.5px] text-[#6a6c7a]">{action.hint}</span>
+                ) : null}
+              </span>
+              {action.badge ? (
+                <span className="shrink-0 rounded-full bg-[#ff6b5a] px-2 text-[11px] font-semibold leading-5 text-white">
+                  {action.badge > 9 ? "9+" : action.badge}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

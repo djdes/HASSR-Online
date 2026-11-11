@@ -1121,7 +1121,8 @@
       "mode": {
         "light": "Light",
         "dark": "Dark",
-        "system": "Use device setting"
+        "system": "Use device setting",
+        "new": "New"
       },
       "restoreAuto": "Turn it back on",
       "autoScheduleActive": "The theme currently changes by time of day. Choose a theme to turn off scheduled changes.",
@@ -3072,7 +3073,11 @@
       },
       "contentLoading": "Updating the page…",
       "listLoading": "Loading the list…",
-      "topMenuMore": "More"
+      "topMenuMore": "More",
+      "collapseMenu": "Collapse menu",
+      "expandMenu": "Expand menu",
+      "scrollUp": "Scroll menu up",
+      "scrollDown": "Scroll menu down"
     },
     "header": {
       "staff": "Staff",
@@ -3095,7 +3100,9 @@
       "partnerTitle": "Partner workspace · {brand}",
       "logoutFailed": "Could not sign out. Check your connection and try again.",
       "masterCabinetTitle": "Reference workspace: menus and ingredients for food service",
-      "backOfficeTitle": "Separate back-office workspace: menus and ingredients for selected locations"
+      "backOfficeTitle": "Separate back-office workspace: menus and ingredients for selected locations",
+      "search": "Search",
+      "searchTitle": "Search the workspace — Ctrl+K"
     },
     "profile": {
       "organizationSwitcher": "Organizations in this workspace",
@@ -26619,7 +26626,17 @@
       "searching": "Searching…",
       "nothingFound": "Nothing found",
       "footerNav": "↑↓ navigate · Enter select",
-      "footerToggle": "⌘K / Ctrl+K — open/close"
+      "footerToggle": "⌘K / Ctrl+K — open/close",
+      "kindArea": "Rooms",
+      "kindProduct": "Products",
+      "results": "{count, plural, one {# result} other {# results}}",
+      "filter": "Filter",
+      "filterAll": "Everything",
+      "askAssistant": "Ask the AI assistant “{query}”",
+      "navigate": "Navigate",
+      "close": "Close",
+      "clear": "Clear",
+      "field": "Search…"
     },
     "createDemoDialog": {
       "createFailed": "Could not open the demo",
@@ -26664,7 +26681,8 @@
       "sheetSubtitle": "Ask a question, contact support or read the instructions",
       "actionAriaUnread": "{label} · new messages: {count, number}",
       "contacts": "Contacts",
-      "contactsHint": "Phone, Telegram, MAX and email"
+      "contactsHint": "Phone, Telegram, MAX and email",
+      "close": "Close"
     },
     "kioskSessionGuard": {
       "employee": "Employee",

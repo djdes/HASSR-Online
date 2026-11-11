@@ -84,7 +84,11 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
 
   // Поддержка открывает этот же чат своим пунктом меню — см. sanpin-chat-bus.
   useEffect(() => {
-    const onOpen = () => setOpen(true);
+    const onOpen = (event: Event) => {
+      const question = (event as CustomEvent<{ question?: string } | null>).detail?.question;
+      if (question) setInput(question);
+      setOpen(true);
+    };
     window.addEventListener(SANPIN_CHAT_OPEN_EVENT, onOpen);
     primeNotificationSound();
     return () => window.removeEventListener(SANPIN_CHAT_OPEN_EVENT, onOpen);
