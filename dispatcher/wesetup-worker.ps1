@@ -331,52 +331,46 @@ function Expand-GglWebmastersJob([string]$text) {
 }
 
 function Process-SelfContained($job, [string]$jobType) {
-  $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
-  [System.IO.File]::WriteAllText($sysFile, $SELF_CONTAINED_SYSTEM, (New-Object System.Text.UTF8Encoding $false))
-  try {
-    $engine = if ($jobType -eq 'wesetup_ggl_webmasters') { 'ralph' } else { 'claude' }
-    if ($engine -eq 'ralph') {
-      try { $promptText = Expand-GglWebmastersJob ([string]$job.inputText) } catch {
-        Complete-Job $job.id $false '' 'ralph:invalid_ggl_payload' $null
-        return $false
-      }
-      $res = Invoke-RalphText $promptText $script:Cfg.TimeoutSec
-    } else {
-      $res = Invoke-Claude ([string]$job.inputText) $script:Cfg.TimeoutSec $sysFile
-    }
-    if (-not $res.ok) {
-      Log "  ERROR ${engine}: $($res.reason)"
-      Complete-Job $job.id $false '' "${engine}:$($res.reason)" $null
-      return $false
-    }
-    $cost = @{ costUsd = $res.costUsd; tokensIn = $res.tokensIn; tokensOut = $res.tokensOut }
-    Complete-Job $job.id $true $res.text '' $cost
-    Log "  Done ($jobType, $($res.text.Length) chars)"
-    return $true
-  } finally {
-    Remove-Item $sysFile -Force -ErrorAction SilentlyContinue
+  try { $promptText = Expand-GglWebmastersJob ([string]$job.inputText) } catch {
+    Complete-Job $job.id $false '' 'ralph:invalid_ggl_payload' $null
+    return $false
   }
+  $res = Invoke-RalphText $promptText $script:Cfg.TimeoutSec
+  if (-not $res.ok) {
+    Log "  ERROR ralph: $($res.reason)"
+    Complete-Job $job.id $false '' "ralph:$($res.reason)" $null
+    return $false
+  }
+  $cost = @{ costUsd = $res.costUsd; tokensIn = $res.tokensIn; tokensOut = $res.tokensOut }
+  Complete-Job $job.id $true $res.text '' $cost
+  Log "  Done ($jobType, $($res.text.Length) chars)"
+  return $true
 }
 
 # Ralph supervises this worker and supplies its authenticated, tool-free Codex engine.
 # The website submits queue jobs only; model credentials never leave the dispatcher.
-function Invoke-RalphText([string]$promptText, [int]$watchdogSec) {
+function Invoke-RalphText([string]$promptText, [int]$watchdogSec, [string]$instructions) {
   $ralphRoot = if ($env:RALPH_ROOT) { $env:RALPH_ROOT } else { 'C:/www/ralph' }
   $module = Join-Path $ralphRoot 'llm-client.psm1'
   if (-not (Test-Path -LiteralPath $module)) {
     return @{ ok = $false; text = ''; reason = 'ralph_engine_not_found' }
   }
+  if (-not $env:PF_CODEX_EXE) {
+    $bundledCodex = Join-Path $ralphRoot '.runtime\codex-bin\bin\codex.exe'
+    if (Test-Path -LiteralPath $bundledCodex) { $env:PF_CODEX_EXE = $bundledCodex }
+  }
+  $sys = if ($instructions) { $instructions } else { $SELF_CONTAINED_SYSTEM }
   try {
     Import-Module $module -ErrorAction Stop
-    return Invoke-PfLlmText -Prompt $promptText -Instructions $SELF_CONTAINED_SYSTEM -Tier 'default' -TimeoutSec $watchdogSec
+    return Invoke-PfLlmText -Prompt $promptText -Instructions $sys -Tier 'default' -TimeoutSec $watchdogSec
   } catch {
     return @{ ok = $false; text = ''; reason = 'ralph_engine_failed' }
   }
 }
 
 # Support-chat turn (src/lib/assistant/dispatch.ts): fetch rules + context
-# from the site, ask claude, POST the answer to reply_url with the one-shot
-# bearer token, then complete the PF job.
+# from the site, ask ralph (with claude fallback), POST the answer to reply_url
+# with the one-shot bearer token, then complete the PF job.
 function Process-SupportChat($job, $meta) {
   $token = $meta['token']
   $replyUrl = $meta['reply_url']
@@ -392,7 +386,7 @@ function Process-SupportChat($job, $meta) {
   $rules = ''; $context = ''
   try {
     # The job text points at ?mode=agent (rules for a tool-using session).
-    # This worker calls claude WITHOUT tools, so it needs the worker rules:
+    # This worker calls the LLM WITHOUT tools, so it needs the worker rules:
     # context comes pre-fetched, the answer is plain text.
     $promptUrl = ([string]$meta['prompt_url']) -replace 'mode=agent', 'mode=worker'
     if ($promptUrl -notmatch 'mode=worker') {
@@ -407,43 +401,48 @@ function Process-SupportChat($job, $meta) {
     return $false
   }
 
-  $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
-  [System.IO.File]::WriteAllText($sysFile, $rules, (New-Object System.Text.UTF8Encoding $false))
-  try {
-    # The job text already contains the user question; the org snapshot
-    # rides along as tagged JSON data.
-    $prompt = @(
-      '<workspace_context>',
-      $context,
-      '</workspace_context>',
-      '',
-      [string]$job.inputText
-    ) -join "`n"
+  # The job text already contains the user question; the org snapshot
+  # rides along as tagged JSON data.
+  $prompt = @(
+    '<workspace_context>',
+    $context,
+    '</workspace_context>',
+    '',
+    [string]$job.inputText
+  ) -join "`n"
 
-    $res = Invoke-Claude $prompt $script:Cfg.TimeoutSec $sysFile
-    if (-not ($res.ok -and $res.text)) {
-      Log "  ERROR claude: $($res.reason)"
-      try { Post-Site $replyUrl $token @{ text = 'error'; error = "claude:$($res.reason)" } | Out-Null } catch {}
-      Complete-Job $job.id $false '' "claude:$($res.reason)" $null
-      return $false
-    }
-
-    $answer = $res.text
-    if ($answer.Length -gt 7900) { $answer = $answer.Substring(0, 7900) }
+  $engine = 'ralph'
+  $res = Invoke-RalphText $prompt $script:Cfg.TimeoutSec $rules
+  if ($res.reason -eq 'ralph_engine_not_found') {
+    $engine = 'claude'
+    $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
+    [System.IO.File]::WriteAllText($sysFile, $rules, (New-Object System.Text.UTF8Encoding $false))
     try {
-      Post-Site $replyUrl $token @{ text = $answer } | Out-Null
-    } catch {
-      Log "  ERROR reply POST: $($_.Exception.Message)"
-      Complete-Job $job.id $false '' 'reply_post_failed' $null
-      return $false
+      $res = Invoke-Claude $prompt $script:Cfg.TimeoutSec $sysFile
+    } finally {
+      Remove-Item $sysFile -Force -ErrorAction SilentlyContinue
     }
-    $cost = @{ costUsd = $res.costUsd; tokensIn = $res.tokensIn; tokensOut = $res.tokensOut }
-    Complete-Job $job.id $true 'replied' '' $cost
-    Log '  Reply delivered, job completed'
-    return $true
-  } finally {
-    Remove-Item $sysFile -Force -ErrorAction SilentlyContinue
   }
+  if (-not ($res.ok -and $res.text)) {
+    Log "  ERROR ${engine}: $($res.reason)"
+    try { Post-Site $replyUrl $token @{ text = 'error'; error = "${engine}:$($res.reason)" } | Out-Null } catch {}
+    Complete-Job $job.id $false '' "${engine}:$($res.reason)" $null
+    return $false
+  }
+
+  $answer = $res.text
+  if ($answer.Length -gt 7900) { $answer = $answer.Substring(0, 7900) }
+  try {
+    Post-Site $replyUrl $token @{ text = $answer } | Out-Null
+  } catch {
+    Log "  ERROR reply POST: $($_.Exception.Message)"
+    Complete-Job $job.id $false '' 'reply_post_failed' $null
+    return $false
+  }
+  $cost = @{ costUsd = $res.costUsd; tokensIn = $res.tokensIn; tokensOut = $res.tokensOut }
+  Complete-Job $job.id $true 'replied' '' $cost
+  Log '  Reply delivered, job completed'
+  return $true
 }
 
 # ------------------------------ vision (photo recognition) ------------------------------
@@ -641,14 +640,64 @@ function Invoke-ClaudeStream([string]$messageLine, [int]$watchdogSec, [string]$s
   }
 }
 
+function Invoke-RalphVision($images, [string]$instruction, [int]$watchdogSec) {
+  $ralphRoot = if ($env:RALPH_ROOT) { $env:RALPH_ROOT } else { 'C:/www/ralph' }
+  $codexModule = Join-Path $ralphRoot 'codex-engine.psm1'
+  if (-not (Test-Path -LiteralPath $codexModule)) {
+    return @{ ok = $false; text = ''; reason = 'ralph_engine_not_found' }
+  }
+  if (-not $env:PF_CODEX_EXE) {
+    $bundledCodex = Join-Path $ralphRoot '.runtime\codex-bin\bin\codex.exe'
+    if (Test-Path -LiteralPath $bundledCodex) { $env:PF_CODEX_EXE = $bundledCodex }
+  }
+  $tempFiles = New-Object System.Collections.Generic.List[string]
+  try {
+    Import-Module $codexModule -ErrorAction Stop
+    $extra = New-Object System.Collections.Generic.List[string]
+    foreach ($img in $images) {
+      $ext = switch ($img.mediaType) {
+        'image/png'  { '.png' }
+        'image/webp' { '.webp' }
+        default      { '.jpg' }
+      }
+      $tmpImg = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-vision-{0}{1}" -f ([guid]::NewGuid().ToString('N')), $ext)
+      [System.IO.File]::WriteAllBytes($tmpImg, [byte[]]$img.bytes)
+      $tempFiles.Add($tmpImg)
+      $extra.Add('--image')
+      $extra.Add($tmpImg)
+    }
+    $prompt = @(
+      '<system_instructions>',
+      $VISION_SYSTEM,
+      '</system_instructions>',
+      '',
+      [string]$instruction
+    ) -join "`n"
+    $run = New-CodexTextRun -Prompt $prompt -Tier 'default' -ExtraArgs $extra.ToArray()
+    $res = Invoke-CodexText -Run $run -TimeoutSec $watchdogSec
+    if (-not $res.ok) {
+      return @{ ok = $false; text = ''; reason = [string]$res.reason }
+    }
+    return @{ ok = $true; text = ([string]$res.text).Trim(); reason = ''; costUsd = $res.costUsd; tokensIn = $res.tokensIn; tokensOut = $res.tokensOut }
+  } catch {
+    return @{ ok = $false; text = ''; reason = "ralph_vision_failed:$($_.Exception.Message)" }
+  } finally {
+    foreach ($f in $tempFiles) {
+      Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue
+    }
+  }
+}
+
 # Images (in memory) + instruction -> model answer.
 function Invoke-VisionOnImages($images, [string]$instruction) {
+  $total = 0
+  foreach ($img in $images) { $total += ([byte[]]$img.bytes).Length }
+  Log ("  vision: {0} image(s), {1} KB, model '{2}'" -f $images.Count, [int]($total / 1024), $script:Cfg.Model)
+  $res = Invoke-RalphVision $images $instruction $script:Cfg.TimeoutSec
+  if ($res.reason -ne 'ralph_engine_not_found') { return $res }
   $sysFile = Join-Path ([System.IO.Path]::GetTempPath()) ("wesetup-vision-sys-{0}.txt" -f ([guid]::NewGuid().ToString('N')))
   [System.IO.File]::WriteAllText($sysFile, $VISION_SYSTEM, (New-Object System.Text.UTF8Encoding $false))
   try {
-    $total = 0
-    foreach ($img in $images) { $total += ([byte[]]$img.bytes).Length }
-    Log ("  vision: {0} image(s), {1} KB, model '{2}'" -f $images.Count, [int]($total / 1024), $script:Cfg.Model)
     $message = New-VisionMessage $images $instruction
     return Invoke-ClaudeStream $message $script:Cfg.TimeoutSec $sysFile
   } finally {

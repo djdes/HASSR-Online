@@ -26,9 +26,17 @@ function Complete-Job($id, $ok, $text, $errorMessage, $cost) { $script:Completed
 $job = @{ id = 'fixture'; inputText = 'fixture prompt' }
 if (-not (Process-SelfContained $job 'wesetup_ggl_webmasters')) { throw 'SEO worker failed' }
 if (-not $script:Completed.ok -or $script:Completed.text -ne '{"summary":"fixture"}') { throw 'Queue completion contract failed' }
+$articleJob = @{ id = 'fixture-article'; inputText = "type: wesetup_ggl_article`nfixture article prompt" }
+$script:ExpectedPrompt = $articleJob.inputText
+if (-not (Process-SelfContained $articleJob 'wesetup_ggl_article')) { throw 'GGL article worker failed' }
+if (-not $script:Completed.ok -or $script:Completed.id -ne 'fixture-article' -or $script:Completed.text -ne '{"summary":"fixture"}') { throw 'GGL article completion contract failed' }
+$script:ExpectedPrompt = 'fixture prompt'
 $script:ShouldFailRalph = $true
 if (Process-SelfContained $job 'wesetup_ggl_webmasters') { throw 'Failed Ralph call must fail the queue job' }
 if ($script:Completed.ok -or $script:Completed.error -ne 'ralph:fixture_failed') { throw 'Wrong Ralph failure attribution' }
+$script:ExpectedPrompt = $articleJob.inputText
+if (Process-SelfContained $articleJob 'wesetup_ggl_article') { throw 'Failed Ralph article call must fail the queue job' }
+if ($script:Completed.ok -or $script:Completed.error -ne 'ralph:fixture_failed') { throw 'Wrong Ralph article failure attribution' }
 function Pack-Fixture([string]$text) {
   $path = [IO.Path]::GetTempFileName()
   try {
