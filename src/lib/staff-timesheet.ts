@@ -114,3 +114,103 @@ export function formatHours(hours: number): string {
 export function formatRub(value: number): string {
   return `${Math.round(value).toLocaleString("ru-RU").replace(/\s/g, " ")} ₽`;
 }
+
+/* ── Долг и переводы (2026-11-11) ─────────────────────────────────────── */
+
+/** Период табеля в общем счёте: начислено и выплачено по нему. */
+export type LedgerPeriod = { month: string; part: PaymentPart; due: number; paid: number };
+
+/**
+ * Все периоды человека по порядку (старые первыми): из месяцев табеля и
+ * выплат. Периоды без начисления и без выплат не попадают.
+ */
+export function buildLedger(
+  months: readonly { month: string; values: TimesheetValues }[],
+  payments: readonly { month: string; part: PaymentPart; amountRub: number }[],
+  ratePerHour: number,
+): LedgerPeriod[] {
+  const byKey = new Map<string, LedgerPeriod>();
+  const at = (month: string, part: PaymentPart) => {
+    const key = `${month}:${part}`;
+    let period = byKey.get(key);
+    if (!period) {
+      period = { month, part, due: 0, paid: 0 };
+      byKey.set(key, period);
+    }
+    return period;
+  };
+  for (const { month, values } of months) {
+    const totals = computeMonth(values, ratePerHour, month);
+    at(month, "advance").due += totals.period1.due;
+    at(month, "final").due += totals.period2.due;
+  }
+  for (const payment of payments) at(payment.month, payment.part).paid += payment.amountRub;
+  return [...byKey.values()]
+    .filter((period) => period.due !== 0 || period.paid !== 0)
+    .sort((a, b) => (a.month === b.month ? (a.part === "advance" ? -1 : 1) : a.month < b.month ? -1 : 1));
+}
+
+/** Общий счёт: начислено и выплачено за всё время; `debt` > 0 — долг, < 0 — переплата. */
+export function ledgerBalance(periods: readonly LedgerPeriod[]): { due: number; paid: number; debt: number } {
+  const due = periods.reduce((sum, period) => sum + period.due, 0);
+  const paid = periods.reduce((sum, period) => sum + period.paid, 0);
+  return { due, paid, debt: due - paid };
+}
+
+/**
+ * Периоды, по которым ещё не доплачено, — старые первыми. Переплата по
+ * одному периоду гасит самые старые долги: сумма `left` всегда равна
+ * общему долгу (`ledgerBalance`).
+ */
+export function unpaidPeriods(periods: readonly LedgerPeriod[]): (LedgerPeriod & { left: number })[] {
+  let credit = periods.reduce((sum, period) => sum + Math.max(0, period.paid - period.due), 0);
+  const result: (LedgerPeriod & { left: number })[] = [];
+  for (const period of periods) {
+    let left = period.due - period.paid;
+    if (left <= 0) continue;
+    const offset = Math.min(credit, left);
+    credit -= offset;
+    left -= offset;
+    if (left > 0) result.push({ ...period, left });
+  }
+  return result;
+}
+
+/**
+ * Перевод любой суммы: гасит самые старые долги первыми, частично — тоже.
+ * Что больше долга — `excess` (аванс в счёт текущего периода).
+ */
+export function allocateTransfer(
+  periods: readonly LedgerPeriod[],
+  amount: number,
+): { parts: { month: string; part: PaymentPart; amountRub: number }[]; excess: number } {
+  let rest = Math.max(0, Math.round(amount));
+  const parts: { month: string; part: PaymentPart; amountRub: number }[] = [];
+  for (const period of unpaidPeriods(periods)) {
+    if (rest <= 0) break;
+    const take = Math.min(rest, period.left);
+    parts.push({ month: period.month, part: period.part, amountRub: take });
+    rest -= take;
+  }
+  return { parts, excess: rest };
+}
+
+/** Период, к которому относится дата «2026-11-20»: 1–15 — аванс, дальше — расчёт. */
+export function periodOfDate(date: string): { month: string; part: PaymentPart } {
+  return { month: date.slice(0, 7), part: Number(date.slice(8, 10)) <= PERIOD1_LAST_DAY ? "advance" : "final" };
+}
+
+/**
+ * «Заполнить будни»: пустые будни с 1-го по `lastDay` — `hours` часов.
+ * Заполненные дни и выходные не трогаем.
+ */
+export function fillWeekdays(values: TimesheetValues, month: string, hours: number, lastDay: number): TimesheetValues {
+  const next: TimesheetValues = { ...values };
+  const last = Math.min(lastDay, daysInMonth(month));
+  for (let day = 1; day <= last; day += 1) {
+    const wd = weekday(month, day);
+    if (wd === 0 || wd === 6 || next[String(day)] !== undefined) continue;
+    next[String(day)] = hours;
+  }
+  return next;
+}

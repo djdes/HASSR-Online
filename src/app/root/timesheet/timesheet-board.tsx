@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Trash2, Wallet } from "lucide-react";
+import { ArrowRightLeft, ChevronLeft, ChevronRight, Trash2, Wallet, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -11,12 +11,15 @@ import {
   PART_LABELS,
   PERIOD1_LAST_DAY,
   TIMESHEET_STATUSES,
+  allocateTransfer,
   computeMonth,
   daysInMonth,
   formatHours,
   formatRub,
+  ledgerBalance,
   remaining,
   shiftMonth,
+  unpaidPeriods,
   weekday,
   type PaymentPart,
   type TimesheetValues,
@@ -32,15 +35,25 @@ const INPUT =
 const PRIMARY =
   "inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] disabled:opacity-50";
 
-async function post(body: unknown): Promise<{ ok: boolean; values?: TimesheetValues; error?: string }> {
+type TransferPart = { month: string; part: PaymentPart; amountRub: number };
+
+async function post(body: unknown): Promise<{ ok: boolean; values?: TimesheetValues; parts?: TransferPart[]; error?: string }> {
   const response = await fetch("/api/root/timesheet", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  const data = (await response.json().catch(() => null)) as { values?: TimesheetValues; error?: string } | null;
+  const data = (await response.json().catch(() => null)) as { values?: TimesheetValues; parts?: TransferPart[]; error?: string } | null;
   if (!response.ok) {
     toast.error(data?.error ?? "Не получилось — попробуйте ещё раз");
     return { ok: false };
   }
-  return { ok: true, values: data?.values };
+  return { ok: true, values: data?.values, parts: data?.parts };
 }
+
+/** «Ноябрь 2026 · аванс» — подпись периода в общем долге. */
+function periodTitle(month: string, part: PaymentPart): string {
+  return `${monthTitle(month)} · ${part === "advance" ? "аванс" : "расчёт"}`;
+}
+
+/** Часы для «Заполнить будни». */
+const FILL_HOURS = 8;
 
 function monthTitle(month: string): string {
   const [y, m] = month.split("-").map(Number);
@@ -108,6 +121,12 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
   }
   const [paying, setPaying] = useState<{ personId: string; name: string; part: PaymentPart; amount: string; date: string; note: string } | null>(null);
   const [removing, setRemoving] = useState<{ id: string; label: string } | null>(null);
+  // Перевод на общий долг: сумма любая, гасит старые периоды первыми.
+  const [transfer, setTransfer] = useState<{ personId: string; name: string; amount: string; date: string; note: string } | null>(null);
+  const [filling, setFilling] = useState<string | null>(null);
+  const currentMonth = todayDate.slice(0, 7);
+  // До какого дня «Заполнить будни»: текущий месяц — по сегодня, прошлый — весь, будущий — нечего.
+  const fillLastDay = month < currentMonth ? daysInMonth(month) : month === currentMonth ? Number(todayDate.slice(8, 10)) : 0;
   const dim = daysInMonth(month);
   const days = Array.from({ length: dim }, (_, i) => i + 1);
 
@@ -140,6 +159,29 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
     router.refresh();
   }
 
+  async function sendTransfer() {
+    if (!transfer) return;
+    const amount = Number(transfer.amount.replace(/\s/g, ""));
+    const result = await post({ action: "transfer", personId: transfer.personId, amountRub: amount, paidAt: transfer.date, note: transfer.note || null });
+    if (!result.ok) return;
+    const parts = result.parts ?? [];
+    toast.success(
+      `Перевод ${formatRub(amount)} зачтён` + (parts.length ? `: ${parts.map((part) => `${periodTitle(part.month, part.part).toLowerCase()} — ${formatRub(part.amountRub)}`).join(", ")}` : ""),
+    );
+    setTransfer(null);
+    router.refresh();
+  }
+
+  async function fillWeek(personId: string) {
+    setFilling(personId);
+    const result = await post({ action: "fill", personId, month, hours: FILL_HOURS, lastDay: fillLastDay });
+    setFilling(null);
+    if (result.ok && result.values) {
+      setValues(personId, result.values);
+      router.refresh();
+    }
+  }
+
   async function unpay() {
     if (!removing) return;
     const result = await post({ action: "unpay", paymentId: removing.id });
@@ -162,6 +204,53 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
 
   return (
     <div className="space-y-6">
+      {rows.map((row) => {
+        const balance = ledgerBalance(row.ledger);
+        const open = unpaidPeriods(row.ledger);
+        return (
+          <section key={`debt-${row.id}`} className={cn(CARD, "p-5 sm:p-6")} data-timesheet-debt={row.name}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]">{row.name} · общий долг</div>
+                <div className={cn("mt-1 text-[30px] font-semibold tabular-nums tracking-[-0.02em]", balance.debt > 0 ? "text-[#a13a32]" : "text-[#116b2a]")}>
+                  {balance.debt > 0 ? formatRub(balance.debt) : balance.debt < 0 ? `Переплата ${formatRub(-balance.debt)}` : "Долга нет"}
+                </div>
+                <div className="mt-1 text-[13px] text-[#6f7282]">
+                  За всё время начислено {formatRub(balance.due)}, выплачено {formatRub(balance.paid)}
+                </div>
+              </div>
+              <button
+                type="button"
+                className={PRIMARY}
+                onClick={() => setTransfer({ personId: row.id, name: row.name, amount: balance.debt > 0 ? String(balance.debt) : "", date: todayDate, note: "" })}
+                data-timesheet-transfer
+              >
+                <ArrowRightLeft className="size-4" />
+                Внести перевод
+              </button>
+            </div>
+            {open.length ? (
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {open.map((period) => (
+                  <li key={`${period.month}-${period.part}`}>
+                    <Link
+                      href={`/root/timesheet?m=${period.month}`}
+                      className={cn(
+                        "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-[13px] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+                        period.month === month ? "border-[#5566f6]/40 bg-[#f5f6ff]" : "border-[#ececf4] bg-[#fafbff]",
+                      )}
+                    >
+                      <span className="text-[#3c4053]">{periodTitle(period.month, period.part)}</span>
+                      <span className="font-semibold tabular-nums text-[#a13a32]">{formatRub(period.left)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        );
+      })}
+
       <div className="flex flex-wrap items-center gap-2">
         <Link href={`/root/timesheet?m=${shiftMonth(month, -1)}`} aria-label="Предыдущий месяц" className="flex size-10 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]">
           <ChevronLeft className="size-4" />
@@ -178,6 +267,10 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
             <tr>
               <th className="sticky left-0 z-10 min-w-[170px] border-b border-r border-[#ececf4] bg-white px-4 py-1.5 text-left text-[12px] font-medium text-[#6f7282]">Сотрудник · ₽/час</th>
               {days.map(dayHead)}
+              <th className="min-w-14 border-b border-l-2 border-[#ececf4] border-l-[#dcdfed] bg-[#fafbff] px-2 py-1.5 text-center text-[11px] font-medium text-[#6f7282]">1–15</th>
+              <th className="min-w-14 border-b border-[#ececf4] bg-[#fafbff] px-2 py-1.5 text-center text-[11px] font-medium text-[#6f7282]">16–{dim}</th>
+              <th className="min-w-14 border-b border-[#ececf4] bg-[#fafbff] px-2 py-1.5 text-center text-[11px] font-medium text-[#6f7282]">Часы</th>
+              <th className="min-w-24 border-b border-[#ececf4] bg-[#fafbff] px-3 py-1.5 text-right text-[11px] font-medium text-[#6f7282]">К выплате</th>
             </tr>
           </thead>
           <tbody>
@@ -185,15 +278,31 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
               <tr key={row.id}>
                 <th className="sticky left-0 z-10 border-r border-[#ececf4] bg-white px-4 py-1 text-left font-normal">
                   <div className="text-[14px] font-medium text-[#0b1024]">{row.name}</div>
-                  <div className="w-24">
-                    <EditableCell value={String(row.ratePerHour)} onSave={(raw) => saveRate(row.id, raw)} align="right" className="justify-start text-[#6f7282]" />
+                  <div className="flex items-center gap-1">
+                    <div className="w-24">
+                      <EditableCell value={String(row.ratePerHour)} onSave={(raw) => saveRate(row.id, raw)} align="right" className="justify-start text-[#6f7282]" />
+                    </div>
+                    {fillLastDay > 0 ? (
+                      <button
+                        type="button"
+                        disabled={filling === row.id}
+                        onClick={() => void fillWeek(row.id)}
+                        title={`Пустые будни ${month === currentMonth ? "по сегодня" : "месяца"} — по ${FILL_HOURS} ч; заполненное не трогается`}
+                        aria-label="Заполнить будни"
+                        className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[12px] text-[#3848c7] transition-colors hover:bg-[#eef1ff] disabled:opacity-50"
+                        data-timesheet-fill
+                      >
+                        <WandSparkles className="size-3.5" />
+                        Будни по {FILL_HOURS}
+                      </button>
+                    ) : null}
                   </div>
                 </th>
                 {days.map((day) => {
                   const v = row.values[String(day)];
                   const wd = weekday(month, day);
                   return (
-                    <td key={day} className={cn("border-[#ececf4] p-0.5", (wd === 0 || wd === 6) && "bg-[#f5f6ff]", day === PERIOD1_LAST_DAY + 1 && "border-l-2 border-l-[#dcdfed]")}>
+                    <td key={day} className={cn("border-[#ececf4] p-0.5", (wd === 0 || wd === 6) && "bg-[#f5f6ff]", day === today && "bg-[#eef1ff]", day === PERIOD1_LAST_DAY + 1 && "border-l-2 border-l-[#dcdfed]")}>
                       <EditableCell
                         value={v === undefined ? "" : typeof v === "number" ? formatHours(v) : v}
                         onSave={(raw) => saveCell(row.id, String(day), raw)}
@@ -202,13 +311,24 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
                     </td>
                   );
                 })}
+                {(() => {
+                  const t = computeMonth(row.values, row.ratePerHour, month);
+                  return (
+                    <>
+                      <td className="border-l-2 border-[#ececf4] border-l-[#dcdfed] bg-[#fafbff] px-2 text-center tabular-nums text-[#3c4053]">{formatHours(t.period1.hours)}</td>
+                      <td className="bg-[#fafbff] px-2 text-center tabular-nums text-[#3c4053]">{formatHours(t.period2.hours)}</td>
+                      <td className="bg-[#fafbff] px-2 text-center font-semibold tabular-nums text-[#0b1024]">{formatHours(t.hours)}</td>
+                      <td className="bg-[#fafbff] px-3 text-right font-semibold tabular-nums text-[#0b1024]">{formatRub(t.due)}</td>
+                    </>
+                  );
+                })()}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <p className="-mt-3 text-[12.5px] text-[#6f7282]">
-        Нажмите на день, впишите часы и нажмите Enter. Статусы: {Object.entries(TIMESHEET_STATUSES).map(([k, v]) => `${k} — ${v.toLowerCase()}`).join(", ")}. Пусто — стереть.
+        Нажмите на день, впишите часы и нажмите Enter. «Будни по {FILL_HOURS}» заполняет пустые будни, вписанное не меняет. Статусы: {Object.entries(TIMESHEET_STATUSES).map(([k, v]) => `${k} — ${v.toLowerCase()}`).join(", ")}. Пусто — стереть.
       </p>
 
       {rows.map((row) => {
@@ -317,6 +437,73 @@ export function TimesheetBoard({ month, today, todayDate, people }: { month: str
           </div>
         </ConfirmDialog>
       ) : null}
+
+      {transfer
+        ? (() => {
+            const row = rows.find((item) => item.id === transfer.personId);
+            const amount = Number(transfer.amount.replace(/\s/g, ""));
+            const plan = row ? allocateTransfer(row.ledger, amount) : { parts: [], excess: 0 };
+            return (
+              <ConfirmDialog
+                open
+                onClose={() => setTransfer(null)}
+                onConfirm={sendTransfer}
+                title={`Перевод: ${transfer.name}`}
+                description="Любая сумма, хоть часть долга: она закрывает самые старые периоды первыми. Сумма подставлена — весь долг."
+                icon={ArrowRightLeft}
+                confirmLabel="Зачесть перевод"
+                cancelLabel="Отмена"
+                confirmDisabled={!(amount > 0) || !transfer.date}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-[13px] text-[#3c4053]">
+                    Сумма перевода, ₽
+                    <input
+                      autoFocus
+                      value={transfer.amount}
+                      onChange={(event) => setTransfer({ ...transfer, amount: event.target.value.replace(/[^\d]/g, "") })}
+                      className={`${INPUT} mt-1`}
+                      inputMode="numeric"
+                      data-timesheet-transfer-amount
+                    />
+                  </label>
+                  <label className="block text-[13px] text-[#3c4053]">
+                    Дата перевода
+                    <input type="date" value={transfer.date} onChange={(event) => setTransfer({ ...transfer, date: event.target.value })} className={`${INPUT} mt-1`} />
+                  </label>
+                  <label className="block text-[13px] text-[#3c4053] sm:col-span-2">
+                    Комментарий
+                    <input value={transfer.note} onChange={(event) => setTransfer({ ...transfer, note: event.target.value })} className={`${INPUT} mt-1`} placeholder="Перевод на карту, наличными…" />
+                  </label>
+                </div>
+                {amount > 0 ? (
+                  <div className="mt-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3 text-[13px]" data-timesheet-transfer-plan>
+                    <div className="mb-1.5 font-medium text-[#0b1024]">Куда пойдут деньги</div>
+                    <ul className="space-y-1">
+                      {plan.parts.map((part) => (
+                        <li key={`${part.month}-${part.part}`} className="flex justify-between gap-3">
+                          <span className="text-[#3c4053]">{periodTitle(part.month, part.part)}</span>
+                          <span className="font-semibold tabular-nums">{formatRub(part.amountRub)}</span>
+                        </li>
+                      ))}
+                      {plan.excess > 0 ? (
+                        <li className="flex justify-between gap-3">
+                          <span className="text-[#3c4053]">Сверх долга — вперёд, за период даты перевода</span>
+                          <span className="font-semibold tabular-nums text-[#116b2a]">{formatRub(plan.excess)}</span>
+                        </li>
+                      ) : null}
+                    </ul>
+                    {row && plan.excess === 0 ? (
+                      <div className="mt-2 text-[#6f7282]">
+                        Останется долга: <span className="font-semibold text-[#a13a32]">{formatRub(Math.max(0, ledgerBalance(row.ledger).debt - amount))}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </ConfirmDialog>
+            );
+          })()
+        : null}
 
       {removing ? (
         <ConfirmDialog
