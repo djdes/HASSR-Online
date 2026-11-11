@@ -148,11 +148,51 @@ const TARGET_PRESETS: Array<{
   {
     url: "https://wesetup.ru/calc/journals",
     label: "Подбор комплекта журналов ХАССП (/calc/journals)",
-    defaultAnchor: "перечень журналов ХАССП для общепита",
+    defaultAnchor: "какие журналы нужны в кафе",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "калькулятор журналов WeSetup" },
       { kind: "Контекстный (30%)", value: "подобрать комплект санитарных журналов" },
-      { kind: "Точный (20%)", value: "перечень журналов ХАССП для общепита" },
+      { kind: "Точный ВЧ (20%)", value: "какие журналы нужны в кафе" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/blog/obyazatelnyie-zhurnaly-dlya-obshchepita",
+    label: "ВЧ Хаб: Обязательные журналы для общепита (/blog/obyazatelnyie-zhurnaly-dlya-obshchepita)",
+    defaultAnchor: "какие журналы нужны для общепита",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "в разборе WeSetup" },
+      { kind: "Контекстный (30%)", value: "полный перечень журналов для общепита" },
+      { kind: "Точный ВЧ (20%)", value: "какие журналы нужны в кафе" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/blog/proverka-rospotrebnadzora-chek-list",
+    label: "ВЧ Хаб: Что проверяет Роспотребнадзор в кафе (/blog/proverka-rospotrebnadzora-chek-list)",
+    defaultAnchor: "что проверяет роспотребнадзор в кафе",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "чек-лист проверки Роспотребнадзора" },
+      { kind: "Точный ВЧ (20%)", value: "что проверяет роспотребнадзор в кафе" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/blog/sanpin-2026-chto-izmenilos",
+    label: "ВЧ Хаб: Новый СанПиН для общепита 2026 (/blog/sanpin-2026-chto-izmenilos)",
+    defaultAnchor: "санпин 2026 что изменилось",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "на портале WeSetup" },
+      { kind: "Контекстный (30%)", value: "новые санитарные правила для общепита" },
+      { kind: "Точный ВЧ (20%)", value: "санпин 2.3/2.4.4282-26" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/haccp-dlya-kafe",
+    label: "ВЧ Посадочная: ХАССП для кафе и ресторанов (/haccp-dlya-kafe)",
+    defaultAnchor: "хассп для кафе",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "разработка и ведение ХАССП в общепите" },
+      { kind: "Точный ВЧ (20%)", value: "хассп для кафе" },
     ],
   },
 ];

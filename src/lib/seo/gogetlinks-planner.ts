@@ -375,10 +375,21 @@ export function scoreTargetPages(input: {
     const extraClustersBonus = Math.min(20, Math.max(0, matchedClusters.length - 1) * 6);
     const demandScore = primaryShare * channelMultiplier * domainMultiplier + extraClustersBonus;
 
-    // 2. Topvisor position bonus (positions 4..30 = prime push-to-TOP-3 zone)
+    // 2. Topvisor position bonus (prioritizes high-frequency pages outside TOP-30 or unranked AND 4..30 push zone)
     const effectivePos = bestYandexPos ?? bestGooglePos;
     let positionScore = 0;
     let inPushZone = false;
+    const isHighVolumeHubOrBlog =
+      page.url.startsWith("/blog/") ||
+      page.url === "/journals-info" ||
+      page.url === "/sanpin-2-3-2-4-4282-26" ||
+      page.url === "/calc/journals" ||
+      page.url === "/brakerazhnyy-zhurnal" ||
+      page.url === "/zhurnal-haccp" ||
+      page.url === "/zhurnal-generalnyh-uborok" ||
+      page.url === "/temperaturnyy-list-holodilnika" ||
+      page.url === "/zhurnal-temperatury-i-vlazhnosti";
+
     if (effectivePos !== null) {
       if (effectivePos >= 4 && effectivePos <= 10) {
         positionScore = 65;
@@ -386,15 +397,16 @@ export function scoreTargetPages(input: {
       } else if (effectivePos >= 11 && effectivePos <= 30) {
         positionScore = 50;
         inPushZone = true;
-      } else if (effectivePos >= 31 && effectivePos <= 50) {
-        positionScore = 20;
+      } else if (effectivePos >= 31) {
+        positionScore = isHighVolumeHubOrBlog ? 58 : 35;
+        inPushZone = isHighVolumeHubOrBlog;
       } else if (effectivePos >= 1 && effectivePos <= 3) {
         positionScore = 8;
       } else {
         positionScore = 10;
       }
-    } else if (primaryShare > 0) {
-      positionScore = 12;
+    } else if (primaryShare > 0 || isHighVolumeHubOrBlog) {
+      positionScore = isHighVolumeHubOrBlog ? 48 : 22;
     }
 
     // 3. Backlink deficit bonus (0 links gets strongest boost)
@@ -414,7 +426,7 @@ export function scoreTargetPages(input: {
 
     const priorityTier: ScoredTargetPage["priorityTier"] = inPushZone
       ? "push_top3"
-      : existingLinksCount === 0 && primaryShare > 0
+      : existingLinksCount === 0 && (primaryShare > 0 || isHighVolumeHubOrBlog)
         ? "zero_links"
         : primaryShare > 0 || effectivePos !== null
           ? "growth"
