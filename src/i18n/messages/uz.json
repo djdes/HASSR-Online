@@ -26662,13 +26662,14 @@
       "cancel": "O‘chirishni bekor qilish"
     },
     "fabDock": {
-      "helpAriaUnread": "Yordam · yangi xabarlar: {count, number}",
-      "helpAria": "Yordam va maslahatlar",
-      "sheetTitle": "Yordam",
-      "sheetSubtitle": "Savol berish, qo‘llab-quvvatlashga yozish yoki yo‘riqnomani ko‘rish",
+      "helpAriaUnread": "Kontaktlar · yangi xabarlar: {count, number}",
+      "helpAria": "Kontaktlar",
+      "sheetTitle": "Kontaktlar",
+      "sheetSubtitle": "Telefon, messenjerlar, yordam va yordamchi",
       "actionAriaUnread": "{label} · yangi xabarlar: {count, number}",
       "contacts": "Kontaktlar",
-      "contactsHint": "Telefon, Telegram, MAX va pochta"
+      "contactsHint": "Telefon, Telegram, MAX va pochta",
+      "close": "Yopish"
     },
     "kioskSessionGuard": {
       "employee": "Xodim",

@@ -41,7 +41,8 @@
     "qa:smoke:prod": "bash .agent/smoke-prod.sh",
     "qa:complete-tasks": "bash .agent/complete-all.sh",
     "qa:fill-remaining": "bash .agent/fill-remaining.sh",
-    "prepare": "if [ -d .git ]; then chmod +x .husky/pre-commit .husky/pre-push 2>/dev/null || true; git config core.hooksPath .husky 2>/dev/null || true; fi"
+    "prepare": "if [ -d .git ]; then chmod +x .husky/pre-commit .husky/pre-push 2>/dev/null || true; git config core.hooksPath .husky 2>/dev/null || true; fi",
+    "palette:neutral": "node scripts/gen-neutral-palette.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

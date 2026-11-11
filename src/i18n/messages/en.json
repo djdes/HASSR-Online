@@ -26662,13 +26662,14 @@
       "cancel": "Cancel deletion"
     },
     "fabDock": {
-      "helpAriaUnread": "Help · new messages: {count, number}",
-      "helpAria": "Help and tips",
-      "sheetTitle": "Help",
-      "sheetSubtitle": "Ask a question, contact support or read the instructions",
+      "helpAriaUnread": "Contacts · new messages: {count, number}",
+      "helpAria": "Contacts",
+      "sheetTitle": "Contacts",
+      "sheetSubtitle": "Phone, messengers, support and assistant",
       "actionAriaUnread": "{label} · new messages: {count, number}",
       "contacts": "Contacts",
-      "contactsHint": "Phone, Telegram, MAX and email"
+      "contactsHint": "Phone, Telegram, MAX and email",
+      "close": "Close"
     },
     "kioskSessionGuard": {
       "employee": "Employee",

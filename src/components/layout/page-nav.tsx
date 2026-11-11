@@ -212,12 +212,12 @@ export function PageNav({ organizationName }: { organizationName: string }) {
     if (tail.length > 0 || !place.deep) chain[chain.length - 1] = { ...chain[chain.length - 1], href: undefined };
     newCrumbs = chain;
   }
-  // Крошки как в документации (владелец, 2026-11-11): строка ссылок цвета
-  // бренда через «›» прямо над заголовком страницы, без пилюль и кнопки.
+  // Крошки как в документации (владелец, 2026-11-11): серые ссылки через «›»
+  // прямо над заголовком страницы, текущая страница — чёрным.
   const newNav = newCrumbs ? (
     <nav
       aria-label={tGuide("breadcrumbs")}
-      className="mb-3 hidden min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] text-[#3343cf] lg:flex print:hidden"
+      className="mb-3 hidden min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] text-[#5f6170] lg:flex print:hidden"
       data-new-nav-crumbs
     >
       {newCrumbs.map((crumb, index) => (
@@ -226,11 +226,11 @@ export function PageNav({ organizationName }: { organizationName: string }) {
             <ChevronRight aria-hidden className="size-3.5 shrink-0 text-[#9a9ca8]" />
           ) : null}
           {crumb.href ? (
-            <Link href={crumb.href} className="truncate hover:text-[#5566f6] hover:underline">
+            <Link href={crumb.href} className="truncate transition-colors hover:text-[#111114] hover:underline">
               {crumb.label}
             </Link>
           ) : (
-            <span aria-current="page" className="truncate">
+            <span aria-current="page" className="truncate font-medium text-[#111114]">
               {crumb.label}
             </span>
           )}

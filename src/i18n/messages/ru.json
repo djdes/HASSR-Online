@@ -26662,13 +26662,14 @@
       "cancel": "Отменить удаление"
     },
     "fabDock": {
-      "helpAriaUnread": "Помощь · новых сообщений: {count, number}",
-      "helpAria": "Помощь и подсказки",
-      "sheetTitle": "Помощь",
-      "sheetSubtitle": "Спросить, написать в поддержку или посмотреть инструкцию",
+      "helpAriaUnread": "Контакты · новых сообщений: {count, number}",
+      "helpAria": "Контакты",
+      "sheetTitle": "Контакты",
+      "sheetSubtitle": "Телефон, мессенджеры, поддержка и помощник",
       "actionAriaUnread": "{label} · новых сообщений: {count, number}",
       "contacts": "Контакты",
-      "contactsHint": "Телефон, Telegram, MAX и почта"
+      "contactsHint": "Телефон, Telegram, MAX и почта",
+      "close": "Закрыть"
     },
     "kioskSessionGuard": {
       "employee": "Сотрудник",

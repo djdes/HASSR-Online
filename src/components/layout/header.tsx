@@ -340,7 +340,7 @@ export function Header({
               aria-label={t("header.profile")}
             >
               <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white">
+                <AvatarFallback data-avatar-gradient className="bg-[#111114] text-[13px] font-bold text-white">
                   {getInitials(userName)}
                 </AvatarFallback>
               </Avatar>
@@ -357,7 +357,7 @@ export function Header({
                     согласован с остальными контролами шапки — size-10
                     (на телефоне size-11, как все кнопки шапки). */}
                 <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                  <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white">
+                  <AvatarFallback data-avatar-gradient className="bg-[#111114] text-[13px] font-bold text-white">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>

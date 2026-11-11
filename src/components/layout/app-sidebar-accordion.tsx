@@ -25,7 +25,7 @@ const TREE_ROW =
 const TREE_ROW_TOUCH = "min-h-[52px] text-[16.5px]";
 const TREE_IDLE = "text-[#2a2c3a] hover:bg-[#f1f1f5] hover:text-[#0b1024]";
 const TREE_IDLE_DEEP = "text-[#4a4d5e] hover:bg-[#f1f1f5] hover:text-[#0b1024]";
-const TREE_ACTIVE = "bg-[#eef0fe] font-medium text-[#3343cf]";
+const TREE_ACTIVE = "bg-[#ececef] font-medium text-[#111114]";
 /**
  * Отступ строки по уровню: 14px у раздела, 36px у второго уровня; с третьего
  * иконок нет — текст встаёт под текст родителя (62px), дальше +18px.
@@ -49,7 +49,7 @@ function TreeIcon({ name, active }: { name: string; active: boolean }) {
   return (
     <NavIcon
       name={name}
-      className={cn("size-[18px] shrink-0 stroke-[1.6]", active ? "text-[#3343cf]" : "text-[#7a7d8c]")}
+      className={cn("size-[18px] shrink-0 stroke-[1.6]", active ? "text-[#111114]" : "text-[#7a7d8c]")}
     />
   );
 }
@@ -369,7 +369,7 @@ function CollapsedRail({ onExpand }: { onExpand: () => void }) {
               data-nav-section={section.key}
               className={cn(
                 "flex size-10 shrink-0 items-center justify-center rounded-[10px] transition-colors hover:bg-[#f1f1f4]",
-                active ? "bg-[#eef0fe] text-[#3343cf]" : "text-[#5f6170]",
+                active ? "bg-[#ececef] text-[#111114]" : "text-[#5f6170]",
               )}
             >
               <NavIcon name={section.icon} className="size-5 stroke-[1.6]" />
