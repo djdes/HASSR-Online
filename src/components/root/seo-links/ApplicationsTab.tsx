@@ -16,20 +16,145 @@ const input = "h-10 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px
 const metric = (n: number | null) => (n === null ? "—" : n.toLocaleString("ru-RU"));
 const verdicts = { recommended: "Рекомендует", consider: "Рассмотреть", avoid: "Не рекомендует" };
 
-const TARGET_PRESETS = [
-  { url: "https://wesetup.ru/journals-info", label: "Каталог электронных журналов ХАССП (/journals-info)", defaultAnchor: "электронные журналы ХАССП" },
-  { url: "https://wesetup.ru/", label: "Главная WeSetup — ХАССП и СанПиН (/)", defaultAnchor: "wesetup.ru" },
-  { url: "https://wesetup.ru/zhurnal-haccp", label: "Журналы ХАССП для общепита (/zhurnal-haccp)", defaultAnchor: "журналы ХАССП" },
-  { url: "https://wesetup.ru/brakerazhnyy-zhurnal", label: "Бракеражный журнал готовой продукции (/brakerazhnyy-zhurnal)", defaultAnchor: "бракеражный журнал готовой продукции" },
-  { url: "https://wesetup.ru/zhurnal-zdorovya", label: "Гигиенический журнал сотрудников (/zhurnal-zdorovya)", defaultAnchor: "гигиенический журнал сотрудников" },
-  { url: "https://wesetup.ru/temperaturnyy-list-holodilnika", label: "Журнал температурного режима холодильников (/temperaturnyy-list-holodilnika)", defaultAnchor: "журнал учета температурного режима холодильного оборудования" },
-  { url: "https://wesetup.ru/zhurnal-temperatury-i-vlazhnosti", label: "Журнал температуры и влажности (/zhurnal-temperatury-i-vlazhnosti)", defaultAnchor: "журнал учета температурного режима и влажности" },
-  { url: "https://wesetup.ru/zhurnal-generalnyh-uborok", label: "Журнал генеральных уборок (/zhurnal-generalnyh-uborok)", defaultAnchor: "журнал проведения генеральных уборок" },
-  { url: "https://wesetup.ru/journals-info/uv_lamp_runtime", label: "Бактерицидный журнал (/journals-info/uv_lamp_runtime)", defaultAnchor: "бактерицидный журнал" },
-  { url: "https://wesetup.ru/zhurnal-vhodnogo-kontrolya", label: "Журнал входного контроля сырья (/zhurnal-vhodnogo-kontrolya)", defaultAnchor: "журнал входного контроля сырья" },
-  { url: "https://wesetup.ru/zhurnal-frityurnyh-zhirov", label: "Журнал учёта фритюрных жиров (/zhurnal-frityurnyh-zhirov)", defaultAnchor: "журнал учета фритюрных жиров" },
-  { url: "https://wesetup.ru/sanpin-2-3-2-4-4282-26", label: "СанПиН 2.3/2.4.4282-26 для общепита (/sanpin-2-3-2-4-4282-26)", defaultAnchor: "журналы по СанПиН для общепита" },
-  { url: "https://wesetup.ru/calc/journals", label: "Подбор комплекта журналов ХАССП (/calc/journals)", defaultAnchor: "перечень журналов ХАССП для общепита" },
+const UNIFIED_BRIEF_TEXT =
+  "Больше 80 сайтов в работе — аккуратно размещаете и заношу площадку в Белый Список. Очень важно аккуратное размещение: ссылку вставить в середине или конце предложения без nofollow/noindex/sponsored, сохранить индексацию страницы.";
+
+const TARGET_PRESETS: Array<{
+  url: string;
+  label: string;
+  defaultAnchor: string;
+  anchorOptions: Array<{ kind: string; value: string }>;
+}> = [
+  {
+    url: "https://wesetup.ru/journals-info",
+    label: "Каталог электронных журналов ХАССП (/journals-info)",
+    defaultAnchor: "электронные журналы ХАССП",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "в системе электронных журналов" },
+      { kind: "Точный (20%)", value: "электронные журналы ХАССП" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/",
+    label: "Главная WeSetup — ХАССП и СанПиН (/)",
+    defaultAnchor: "wesetup.ru",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Бренд (30%)", value: "WeSetup" },
+      { kind: "Контекстный (20%)", value: "на платформе WeSetup" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/zhurnal-haccp",
+    label: "Журналы ХАССП для общепита (/zhurnal-haccp)",
+    defaultAnchor: "журналы ХАССП",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "на сайте wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "перечень обязательных журналов" },
+      { kind: "Точный (20%)", value: "журналы ХАССП" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/brakerazhnyy-zhurnal",
+    label: "Бракеражный журнал готовой продукции (/brakerazhnyy-zhurnal)",
+    defaultAnchor: "бракеражный журнал готовой продукции",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "в сервисе WeSetup" },
+      { kind: "Контекстный (30%)", value: "в электронном бракеражном журнале" },
+      { kind: "Точный (20%)", value: "бракеражный журнал готовой продукции" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/zhurnal-zdorovya",
+    label: "Гигиенический журнал сотрудников (/zhurnal-zdorovya)",
+    defaultAnchor: "гигиенический журнал сотрудников",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "осмотр персонала перед сменой" },
+      { kind: "Точный (20%)", value: "гигиенический журнал сотрудников" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/temperaturnyy-list-holodilnika",
+    label: "Журнал температурного режима холодильников (/temperaturnyy-list-holodilnika)",
+    defaultAnchor: "журнал учета температурного режима холодильного оборудования",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "в системе WeSetup" },
+      { kind: "Контекстный (30%)", value: "контроль температуры холодильников" },
+      { kind: "Точный (20%)", value: "журнал учета температурного режима холодильного оборудования" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/zhurnal-temperatury-i-vlazhnosti",
+    label: "Журнал температуры и влажности (/zhurnal-temperatury-i-vlazhnosti)",
+    defaultAnchor: "журнал учета температурного режима",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "фиксация микроклимата на складе" },
+      { kind: "Точный (20%)", value: "журнал учета температурного режима" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/zhurnal-generalnyh-uborok",
+    label: "Журнал генеральных уборок (/zhurnal-generalnyh-uborok)",
+    defaultAnchor: "журнал проведения генеральных уборок",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "на платформе WeSetup" },
+      { kind: "Контекстный (30%)", value: "график и учёт санитарной обработки" },
+      { kind: "Точный (20%)", value: "журнал проведения генеральных уборок" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/journals-info/uv_lamp_runtime",
+    label: "Бактерицидный журнал (/journals-info/uv_lamp_runtime)",
+    defaultAnchor: "бактерицидный журнал",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "учёт часов работы облучателей" },
+      { kind: "Точный (20%)", value: "бактерицидный журнал" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/zhurnal-vhodnogo-kontrolya",
+    label: "Журнал входного контроля сырья (/zhurnal-vhodnogo-kontrolya)",
+    defaultAnchor: "журнал входного контроля сырья",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "в сервисе WeSetup" },
+      { kind: "Контекстный (30%)", value: "приёмка продуктов и проверка маркировки" },
+      { kind: "Точный (20%)", value: "журнал входного контроля сырья" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/zhurnal-frityurnyh-zhirov",
+    label: "Журнал учёта фритюрных жиров (/zhurnal-frityurnyh-zhirov)",
+    defaultAnchor: "журнал учета фритюрных жиров",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "контроль замены фритюрного масла" },
+      { kind: "Точный (20%)", value: "журнал учета фритюрных жиров" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/sanpin-2-3-2-4-4282-26",
+    label: "СанПиН 2.3/2.4.4282-26 для общепита (/sanpin-2-3-2-4-4282-26)",
+    defaultAnchor: "журналы по СанПиН для общепита",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
+      { kind: "Контекстный (30%)", value: "требования нового СанПиН для общепита" },
+      { kind: "Точный (20%)", value: "журналы по СанПиН для общепита" },
+    ],
+  },
+  {
+    url: "https://wesetup.ru/calc/journals",
+    label: "Подбор комплекта журналов ХАССП (/calc/journals)",
+    defaultAnchor: "перечень журналов ХАССП для общепита",
+    anchorOptions: [
+      { kind: "Бренд/URL (50%)", value: "калькулятор журналов WeSetup" },
+      { kind: "Контекстный (30%)", value: "подобрать комплект санитарных журналов" },
+      { kind: "Точный (20%)", value: "перечень журналов ХАССП для общепита" },
+    ],
+  },
 ];
 
 interface GeneratedDraft {
@@ -604,6 +729,31 @@ export function ApplicationsTab({
                     className={cn(input, "w-full")}
                   />
                 </div>
+                {(() => {
+                  const activePreset = TARGET_PRESETS.find(p => p.url === targetUrl);
+                  if (!activePreset?.anchorOptions.length) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
+                      <span className="text-[#6f7282]">Регламент анкоров:</span>
+                      {activePreset.anchorOptions.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          disabled={drafting || submittingOrder}
+                          onClick={() => setAnchor(opt.value)}
+                          className={cn(
+                            "rounded-xl border px-2.5 py-1 transition-colors",
+                            anchor === opt.value
+                              ? "border-[#5566f6] bg-[#eef1ff] font-medium text-[#3848c7]"
+                              : "border-[#dcdfed] bg-white text-[#0b1024] hover:bg-[#f5f6ff]",
+                          )}
+                        >
+                          <span className="text-[#6f7282]">{opt.kind}:</span> «{opt.value}»
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -622,11 +772,11 @@ export function ApplicationsTab({
                         setDraft({
                           title: "",
                           announcement: "",
-                          bodyHtml: `<p>Практический материал для ${selected.domain} со ссылкой <a href="${targetUrl}">${anchor}</a>.</p>`,
+                          bodyHtml: `<p>Практический материал для ${selected.domain}, в котором органично размещена ссылка <a href="${targetUrl}">${anchor}</a>.</p>`,
                           metaTitle: "",
                           metaDescription: "",
                           metaKeywords: anchor,
-                          briefText: "Просьба разместить статью с индексируемой ссылкой без атрибута nofollow.",
+                          briefText: UNIFIED_BRIEF_TEXT,
                         })
                       }
                       className={button}

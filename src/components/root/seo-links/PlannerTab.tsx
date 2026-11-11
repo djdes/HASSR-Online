@@ -125,10 +125,10 @@ function PlanEditorForm({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>(
     normalizePlanDays(initialPlan?.scheduleDaysOfWeek),
   );
-  const [minTfCf, setMinTfCf] = useState(String(initialPlan?.minTfCf ?? 10));
-  const [minTrust, setMinTrust] = useState(String(initialPlan?.minTrust ?? 4));
+  const [minTfCf, setMinTfCf] = useState(String(initialPlan?.minTfCf ?? 25));
+  const [minTrust, setMinTrust] = useState(String(initialPlan?.minTrust ?? 7));
   const [minDailyTraffic, setMinDailyTraffic] = useState(
-    String(initialPlan?.minDailyTraffic ?? 150),
+    String(initialPlan?.minDailyTraffic ?? 1000),
   );
   const [allowedFormats, setAllowedFormats] = useState<GglSchedulableFormat[]>(
     normalizePlanFormats(initialPlan?.allowedFormats),
@@ -139,20 +139,39 @@ function PlanEditorForm({
   const [isActive, setIsActive] = useState(initialPlan?.isActive ?? true);
   const [saving, setSaving] = useState(false);
 
-  function applyPreset(preset: "wave_10k" | "monthly_5k") {
+  function applyPreset(preset: "yesbeat_benchmark" | "wave_10k" | "monthly_5k") {
     if (!canManagePlans) return;
-    if (preset === "wave_10k") {
+    if (preset === "yesbeat_benchmark") {
+      setName("Регламент YesBeat · Траст 8–10 · СМИ и Бизнес");
+      setKind("monthly");
+      setBudgetRub("10000");
+      setMaxPricePerLinkRub("2500");
+      setMinTfCf("25");
+      setMinTrust("8");
+      setMinDailyTraffic("1000");
+      setAnchorMixBrandPct("60");
+      setDaysOfWeek([2, 4]);
+      setIsActive(true);
+    } else if (preset === "wave_10k") {
       setName("Стартовая волна wesetup.ru · 10 000 ₽");
       setKind("one_time");
       setBudgetRub("10000");
-      setMaxPricePerLinkRub("1250");
+      setMaxPricePerLinkRub("1500");
+      setMinTfCf("20");
+      setMinTrust("7");
+      setMinDailyTraffic("500");
+      setAnchorMixBrandPct("60");
       setDaysOfWeek([1, 3, 5]);
       setIsActive(true);
     } else {
       setName("Ежемесячный план wesetup.ru · 5 000 ₽/мес");
       setKind("monthly");
       setBudgetRub("5000");
-      setMaxPricePerLinkRub("1250");
+      setMaxPricePerLinkRub("1500");
+      setMinTfCf("20");
+      setMinTrust("7");
+      setMinDailyTraffic("500");
+      setAnchorMixBrandPct("60");
       setDaysOfWeek([2, 5]);
       setIsActive(true);
     }
@@ -288,6 +307,13 @@ function PlanEditorForm({
       {canManagePlans && !initialPlan ? (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[12.5px] text-[#6f7282]">Быстрые шаблоны:</span>
+          <button
+            type="button"
+            onClick={() => applyPreset("yesbeat_benchmark")}
+            className={SEO_BTN_SM_CLASS}
+          >
+            Эталон YesBeat (Траст 8–10 · СМИ)
+          </button>
           <button
             type="button"
             onClick={() => applyPreset("wave_10k")}

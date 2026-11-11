@@ -212,6 +212,9 @@ function resolveFactsForPage(targetPath: string, providedFacts: string[]): strin
   return match?.facts ? [...match.facts] : [];
 }
 
+export const GGL_UNIFIED_BRIEF_TEXT =
+  "Больше 80 сайтов в работе — аккуратно размещаете и заношу площадку в Белый Список. Очень важно аккуратное размещение: ссылку вставить в середине или конце предложения без nofollow/noindex/sponsored, сохранить индексацию страницы.";
+
 function buildArticleJobInstruction(input: {
   donorDomain: string;
   canonicalUrl: string;
@@ -239,15 +242,18 @@ function buildArticleJobInstruction(input: {
   const formatSpecificRules =
     input.placementFormat === "article"
       ? [
-          `Напиши экспертную отраслевую статью на русском языке (объём bodyHtml: 2200–4200 знаков) для публикации на площадке ${input.donorDomain}.`,
-          "Разметка bodyHtml: только чистые теги <h2>, <h3>, <p>, <ul>, <li> и ровно одна ссылка <a>.",
-          `Внутри одного из содержательных абзацев <p> в bodyHtml ОБЯЗАТЕЛЬНО встрой точную ссылку без изменения URL и анкора: <a href="${input.canonicalUrl}">${escapeHtml(input.anchor)}</a>.`,
-          "В поле briefText укажи короткий комментарий для вебмастера (1–2 предложения: тематика материала и просьба сохранить ссылку без nofollow).",
+          `Напиши экспертную отраслевую статью на русском языке (объём bodyHtml: 2500–3500 знаков) для публикации на площадке ${input.donorDomain} по единому SEO-регламенту WeSetup (эталон кампаний #776782 и #149699).`,
+          "Разметка bodyHtml: только чистые теги <h2>, <h3>, <p>, <ul>, <ol>, <li> и ровно одна ссылка <a>.",
+          "Обязательная структура статьи в bodyHtml: вводный абзац <p>, далее 2–3 смысловых подзаголовка <h2>, минимум один маркированный или нумерованный список (<ul><li>...</li></ul> или <ol><li>...</li></ol>) с конкретными шагами контроля или требованиями СанПиН/ХАССП.",
+          `Правило размещения ссылки: внутри одного из центральных содержательных абзацев <p> в bodyHtml ОБЯЗАТЕЛЬНО встрой точную ссылку без изменения URL и анкора: <a href="${input.canonicalUrl}">${escapeHtml(input.anchor)}</a>. Ссылка должна стоять СТРОГО в середине или в конце предложения (НИКОГДА не начинай предложение или абзац со ссылки).`,
+          `Околоссылочное окружение (LSI): в том же или соседнем предложении с ссылкой органично употреби целевой ключ (${input.targetKeyword}) в прямой или склоняемой форме и профильные маркеры ниши (общепит, кафе, ресторан, пищеблок, ХАССП, СанПиН, проверка Роспотребнадзора).`,
+          `Заголовок статьи (title и metaTitle) должен быть информативным, естественным для редакции ${input.donorDomain} и содержать основной ключ темы.`,
+          `В поле briefText укажи единый комментарий для вебмастера: «${GGL_UNIFIED_BRIEF_TEXT}» (при необходимости добавь 1 короткое предложение по теме статьи).`,
         ]
       : [
-          `Подготовь подробное задание (briefText) и околоссылочный абзац (bodyHtml) для формата «Заметка» на площадке ${input.donorDomain}.`,
-          `В briefText опиши вебмастеру тему заметки и требование органично поставить ссылку <a href="${input.canonicalUrl}">${escapeHtml(input.anchor)}</a>.`,
-          `В bodyHtml дай готовый пример абзаца <p> со встроенной ссылкой <a href="${input.canonicalUrl}">${escapeHtml(input.anchor)}</a>.`,
+          `Подготовь подробное задание (briefText) и околоссылочный абзац (bodyHtml) для формата «Заметка» на площадке ${input.donorDomain} по единому SEO-регламенту WeSetup (эталон #149699).`,
+          `В briefText включи обязательный регламент для вебмастера: «${GGL_UNIFIED_BRIEF_TEXT} Тема заметки: ${input.targetPageTitle}. Пожалуйста, органично впишите ссылку <a href="${input.canonicalUrl}">${escapeHtml(input.anchor)}</a> в середине или конце предложения в тематическом абзаце про общепит / ХАССП / СанПиН.»`,
+          `В bodyHtml дай готовый эталонный абзац <p> (350–600 знаков) со встроенной в середине или конце предложения ссылкой <a href="${input.canonicalUrl}">${escapeHtml(input.anchor)}</a> и упоминанием ключа (${input.targetKeyword}) в соседнем предложении.`,
         ];
 
   return [
@@ -349,7 +355,7 @@ export async function generateGglArticleDraft(
     metaDescription:
       validated.data.metaDescription || validated.data.announcement.slice(0, 220),
     metaKeywords: validated.data.metaKeywords || input.targetKeyword.trim(),
-    briefText: validated.data.briefText,
+    briefText: validated.data.briefText || GGL_UNIFIED_BRIEF_TEXT,
   };
 }
 
