@@ -80,7 +80,7 @@ test("formatReportValue: даты, массивы, булевы", () => {
   assert.equal(formatReportValue(null), "");
 });
 
-test("вся организация с журналами по точкам: колонка «Точка» у каждой строки", () => {
+test("вся организация с журналами по точкам: колонка «Торговая точка» у каждой строки", () => {
   const table = buildReportTable({
     fields: [{ key: "temperature", label: "Температура, °C", type: "number" }],
     documentEntries: [
@@ -89,7 +89,7 @@ test("вся организация с журналами по точкам: к�
     ],
     timeZone: "Europe/Moscow",
   });
-  assert.deepEqual(table.headers, ["Дата", "Точка", "Сотрудник", "Температура, °C"]);
+  assert.deepEqual(table.headers, ["Дата", "Торговая точка", "Сотрудник", "Температура, °C"]);
   assert.deepEqual(table.rows, [
     ["01.10.2026", "Точка А", "Анна", "4"],
     ["01.10.2026", "Точка Б", "Борис", "5"],
