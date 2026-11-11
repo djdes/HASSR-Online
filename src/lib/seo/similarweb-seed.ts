@@ -62,7 +62,7 @@ export const DEFAULT_SIMILARWEB_SNAPSHOTS: readonly SimilarwebSnapshotSeed[] = [
         phrase: "бракеражный журнал готовой продукции",
         trafficSharePct: 17.61,
         channel: "paid",
-        mappedTargetUrl: "/zhurnal-brakerazha-gotovoy-produkcii",
+        mappedTargetUrl: "/brakerazhnyy-zhurnal",
         notes: "Высококоммерческий платный запрос",
       },
       {

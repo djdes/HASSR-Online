@@ -19,10 +19,17 @@ const verdicts = { recommended: "Рекомендует", consider: "Рассм�
 const TARGET_PRESETS = [
   { url: "https://wesetup.ru/journals-info", label: "Каталог электронных журналов ХАССП (/journals-info)", defaultAnchor: "электронные журналы ХАССП" },
   { url: "https://wesetup.ru/", label: "Главная WeSetup — ХАССП и СанПиН (/)", defaultAnchor: "wesetup.ru" },
+  { url: "https://wesetup.ru/zhurnal-haccp", label: "Журналы ХАССП для общепита (/zhurnal-haccp)", defaultAnchor: "журналы ХАССП" },
+  { url: "https://wesetup.ru/brakerazhnyy-zhurnal", label: "Бракеражный журнал готовой продукции (/brakerazhnyy-zhurnal)", defaultAnchor: "бракеражный журнал готовой продукции" },
+  { url: "https://wesetup.ru/zhurnal-zdorovya", label: "Гигиенический журнал сотрудников (/zhurnal-zdorovya)", defaultAnchor: "гигиенический журнал сотрудников" },
+  { url: "https://wesetup.ru/temperaturnyy-list-holodilnika", label: "Журнал температурного режима холодильников (/temperaturnyy-list-holodilnika)", defaultAnchor: "журнал учета температурного режима холодильного оборудования" },
+  { url: "https://wesetup.ru/zhurnal-temperatury-i-vlazhnosti", label: "Журнал температуры и влажности (/zhurnal-temperatury-i-vlazhnosti)", defaultAnchor: "журнал учета температурного режима и влажности" },
+  { url: "https://wesetup.ru/zhurnal-generalnyh-uborok", label: "Журнал генеральных уборок (/zhurnal-generalnyh-uborok)", defaultAnchor: "журнал проведения генеральных уборок" },
+  { url: "https://wesetup.ru/journals-info/uv_lamp_runtime", label: "Бактерицидный журнал (/journals-info/uv_lamp_runtime)", defaultAnchor: "бактерицидный журнал" },
+  { url: "https://wesetup.ru/zhurnal-vhodnogo-kontrolya", label: "Журнал входного контроля сырья (/zhurnal-vhodnogo-kontrolya)", defaultAnchor: "журнал входного контроля сырья" },
+  { url: "https://wesetup.ru/zhurnal-frityurnyh-zhirov", label: "Журнал учёта фритюрных жиров (/zhurnal-frityurnyh-zhirov)", defaultAnchor: "журнал учета фритюрных жиров" },
   { url: "https://wesetup.ru/sanpin-2-3-2-4-4282-26", label: "СанПиН 2.3/2.4.4282-26 для общепита (/sanpin-2-3-2-4-4282-26)", defaultAnchor: "журналы по СанПиН для общепита" },
   { url: "https://wesetup.ru/calc/journals", label: "Подбор комплекта журналов ХАССП (/calc/journals)", defaultAnchor: "перечень журналов ХАССП для общепита" },
-  { url: "https://wesetup.ru/zhurnal-temperaturnogo-rezhima-holodilnogo-oborudovaniya", label: "Журнал температурного режима холодильников", defaultAnchor: "журнал учета температурного режима холодильного оборудования" },
-  { url: "https://wesetup.ru/gigienicheskiy-zhurnal-sotrudnikov", label: "Гигиенический журнал сотрудников", defaultAnchor: "гигиенический журнал сотрудников общепита" },
 ];
 
 interface GeneratedDraft {
