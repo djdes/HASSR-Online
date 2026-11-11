@@ -16248,7 +16248,8 @@ export type MessageContract = {
     "myMail": "Почта и Telegram",
     "myMailHint": "Рабочий Telegram для обращений и почта для писем клиентам",
     "accessOwner": "Владелец платформы — доступ ко всему",
-    "sberBusiness": "СберБизнес"
+    "sberBusiness": "СберБизнес",
+    "timesheet": "Табель"
   },
   "rootEdo": {
     "metadata": {
