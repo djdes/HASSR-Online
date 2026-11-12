@@ -63,6 +63,8 @@ export function InvoiceActions({
     <span className="inline-flex flex-wrap items-center gap-1.5">
       <a href={`/api/payments/invoice/${orderId}/pdf`} className={small}>
         {t("invoice.pdf")}</a>
+      <a href={`/api/payments/invoice/${orderId}/pdf?plain=1`} className={small}>
+        {t("invoice.pdfPlain")}</a>
       {pending ? (
         <>
           <button type="button" onClick={() => setConfirm("paid")} disabled={busy} className={`${small} border-[#5566f6]/40 text-[#3848c7]`}>

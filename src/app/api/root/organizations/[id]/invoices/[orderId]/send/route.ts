@@ -13,6 +13,8 @@ const schema = z.object({
   to: z.array(z.string().trim().max(254)).min(1, "Укажите хотя бы один адрес почты").max(10, "Не больше 10 адресов"),
   subject: z.string().trim().max(200).nullish(),
   message: z.string().trim().max(4000).nullish(),
+  /** Приложить счёт без факсимиле и печати. */
+  plain: z.boolean().optional(),
 });
 
 /** POST — отправить счёт письмом с личной почты сотрудника (PDF во вложении). */
@@ -32,6 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     subject: parsed.data.subject ?? null,
     message: parsed.data.message ?? null,
     senderUserId: session.user.id,
+    plain: parsed.data.plain === true,
   });
   if (!sent.ok) return NextResponse.json({ error: sent.error }, { status: sent.status });
   const { result } = sent;

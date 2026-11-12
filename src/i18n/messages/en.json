@@ -17289,7 +17289,8 @@
       "paidTopup": "Invoice No. {orderId} paid — balance topped up, email sent",
       "paidSubscription": "Invoice No. {orderId} paid — subscription extended, email sent",
       "cancelled": "Invoice No. {orderId} cancelled",
-      "failed": "Could not complete the invoice action"
+      "failed": "Could not complete the invoice action",
+      "pdfPlain": "PDF without stamp"
     },
     "held": {
       "applied": "Plan applied",
@@ -31174,7 +31175,9 @@
       "sendTitle": "Send invoice No. {number}",
       "sendDescription": "The email goes out with the PDF attached — the invoice has a QR code for paying from a banking app.",
       "sent": "Invoice sent: {emails}",
-      "failed": "Could not send the invoice"
+      "failed": "Could not send the invoice",
+      "plain": "Without facsimile and stamp",
+      "plainHint": "Download and email — the invoice without the BFS signature and stamp, to sign by hand."
     },
     "recipients": {
       "label": "To",

@@ -223,7 +223,8 @@ export async function createInvoiceOrder(args: {
   return { ok: true, order, created: true };
 }
 
-export async function renderInvoice(orderId: number): Promise<{ order: PaymentOrder; pdf: Buffer } | null> {
+/** `plain` — без факсимиле и печати (распечатать и подписать от руки, 12.11.2026). */
+export async function renderInvoice(orderId: number, options: { plain?: boolean } = {}): Promise<{ order: PaymentOrder; pdf: Buffer } | null> {
   const order = await db.paymentOrder.findUnique({ where: { id: orderId } });
   if (!order || order.paymentMethod !== "invoice") return null;
   // Счёт гостя (/order без регистрации): покупатель — снимок из заказа.
@@ -260,8 +261,8 @@ export async function renderInvoice(orderId: number): Promise<{ order: PaymentOr
     purpose: topup ? "topup" : "subscription",
   });
   const [facsimile, stamp, contract] = await Promise.all([
-    readLegalImage("facsimile", requisites),
-    readLegalImage("stamp", requisites),
+    options.plain ? Promise.resolve(null) : readLegalImage("facsimile", requisites),
+    options.plain ? Promise.resolve(null) : readLegalImage("stamp", requisites),
     // Есть выпущенный договор с клиентом — счёт выставлен по нему, а не по оферте.
     // У гостя договора нет: счёт — по оферте.
     guestBuyer || !order.organizationId

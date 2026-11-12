@@ -17289,7 +17289,8 @@
       "paidTopup": "{orderId}-sonli hisob to‘landi — balans to‘ldirildi, xat yuborildi",
       "paidSubscription": "{orderId}-sonli hisob to‘landi — obuna uzaytirildi, xat yuborildi",
       "cancelled": "{orderId}-sonli hisob bekor qilindi",
-      "failed": "Hisob bo‘yicha amalni bajarib bo‘lmadi"
+      "failed": "Hisob bo‘yicha amalni bajarib bo‘lmadi",
+      "pdfPlain": "Muhrsiz PDF"
     },
     "held": {
       "applied": "Tarif qo‘llandi",
@@ -31174,7 +31175,9 @@
       "sendTitle": "{number}-son hisobni yuborish",
       "sendDescription": "Xat PDF ilova bilan yuboriladi — hisobda bank ilovasidan toʻlash uchun QR bor.",
       "sent": "Hisob yuborildi: {emails}",
-      "failed": "Hisobni yuborib boʻlmadi"
+      "failed": "Hisobni yuborib boʻlmadi",
+      "plain": "Faksimile va muhrsiz",
+      "plainHint": "Yuklab olish va xat — BFS imzosi va muhrisiz hisob, qo'lda imzolash uchun."
     },
     "recipients": {
       "label": "Kimga",

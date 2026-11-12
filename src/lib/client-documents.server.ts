@@ -273,8 +273,10 @@ export async function sendClientInvoice(args: {
   subject: string | null;
   message: string | null;
   senderUserId: string;
+  /** Без факсимиле и печати в приложенном PDF. */
+  plain?: boolean;
 }): Promise<{ ok: false; status: number; error: string } | { ok: true; result: StaffEmailResult; fileName: string }> {
-  const rendered = await renderInvoice(args.orderId);
+  const rendered = await renderInvoice(args.orderId, { plain: args.plain });
   if (!rendered || rendered.order.organizationId !== args.organizationId) return { ok: false, status: 404, error: "Счёт не найден" };
   const { order, pdf } = rendered;
   if (order.status === "cancelled") return { ok: false, status: 409, error: "Счёт отменён — выставьте новый" };

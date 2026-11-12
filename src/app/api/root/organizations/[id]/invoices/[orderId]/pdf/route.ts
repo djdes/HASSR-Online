@@ -12,14 +12,17 @@ export const dynamic = "force-dynamic";
  * `/api/payments/invoice/[id]/pdf` доступ только у владельца организации и
  * суперадмина, а счёт из карточки выставляет и бухгалтерия.
  */
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string; orderId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string; orderId: string }> }) {
   await requireRoot();
   const { id, orderId } = await params;
   const order = Number(orderId);
   if (!Number.isInteger(order) || order <= 0) return NextResponse.json({ error: "Счёт не найден" }, { status: 404 });
-  const rendered = await renderInvoice(order);
+  // `?plain=1` — без факсимиле и печати.
+  const plain = new URL(request.url).searchParams.get("plain") === "1";
+  const rendered = await renderInvoice(order, { plain });
   if (!rendered || rendered.order.organizationId !== id) return NextResponse.json({ error: "Счёт не найден" }, { status: 404 });
-  const name = invoiceFilename(String(order));
+  const base = invoiceFilename(String(order));
+  const name = plain ? { ascii: base.ascii.replace(/\.pdf$/, "-bez-pechati.pdf"), utf8: base.utf8.replace(/\.pdf$/, " без печати.pdf") } : base;
   return new Response(new Uint8Array(rendered.pdf), {
     headers: {
       "Content-Type": "application/pdf",

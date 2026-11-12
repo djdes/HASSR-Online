@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** GET — PDF счёта: своя организация с полным доступом или ROOT. */
-export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   const { id: raw } = await ctx.params;
@@ -31,9 +31,12 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   if (!own && !session.user.isRoot) return NextResponse.json({ error: "Не найдено" }, { status: 404 });
   if (order.status === "cancelled") return NextResponse.json({ error: "Счёт отменён" }, { status: 410 });
 
-  const rendered = await renderInvoice(orderId);
+  // `?plain=1` — без факсимиле и печати (распечатать и подписать от руки).
+  const plain = new URL(request.url).searchParams.get("plain") === "1";
+  const rendered = await renderInvoice(orderId, { plain });
   if (!rendered) return NextResponse.json({ error: "Не найдено" }, { status: 404 });
-  const name = invoiceFilename(String(orderId));
+  const base = invoiceFilename(String(orderId));
+  const name = plain ? { ascii: base.ascii.replace(/\.pdf$/, "-bez-pechati.pdf"), utf8: base.utf8.replace(/\.pdf$/, " без печати.pdf") } : base;
   return new NextResponse(new Uint8Array(rendered.pdf), {
     status: 200,
     headers: {

@@ -468,6 +468,8 @@ function InvoiceDialog({
   const recipients = useRecipients(ctx.recipients);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  // Без факсимиле и печати — для подписи от руки (12.11.2026): и скачивание, и письмо.
+  const [plain, setPlain] = useState(false);
   const estimate = planPeriodPriceRub(ctx.invoice.rates, tier, cycle, points);
 
   async function issue() {
@@ -505,7 +507,7 @@ function InvoiceDialog({
       const response = await fetch(`${base}/invoices/${issued.orderId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to, subject, message }),
+        body: JSON.stringify({ to, subject, message, plain }),
       });
       const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; sentTo?: string[]; via?: "personal" | "system"; from?: string | null; fallbackReason?: string | null } | null;
       if (response.ok && data?.ok) {
@@ -606,7 +608,14 @@ function InvoiceDialog({
         <p className="rounded-2xl bg-[#ecfdf5] px-3.5 py-2.5 text-[13px] text-[#116b2a]">
           {t("invoice.ready", { number: String(issued.orderId), amount: rub.format(issued.amountRub) })}
         </p>
-        <a href={issued.pdfUrl} className={OUTLINE} data-testid="invoice-pdf">
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5 transition-colors duration-150 hover:border-[#5566f6]/40">
+          <input type="checkbox" checked={plain} onChange={(event) => setPlain(event.target.checked)} className="mt-0.5 size-4 accent-[#5566f6]" data-testid="invoice-plain" />
+          <span>
+            <span className="block text-[14px] font-medium text-[#0b1024]">{t("invoice.plain")}</span>
+            <span className="block text-[12.5px] text-[#6f7282]">{t("invoice.plainHint")}</span>
+          </span>
+        </label>
+        <a href={plain ? `${issued.pdfUrl}${issued.pdfUrl.includes("?") ? "&" : "?"}plain=1` : issued.pdfUrl} className={OUTLINE} data-testid="invoice-pdf">
           <Download className="size-4 text-[#5566f6]" />
           {t("download")}
         </a>
