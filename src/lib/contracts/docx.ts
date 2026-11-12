@@ -6,6 +6,7 @@ import {
   BorderStyle,
   Document,
   Footer,
+  Header,
   ImageRun,
   LineRuleType,
   Packer,
@@ -24,7 +25,7 @@ import {
 } from "docx";
 import JSZip from "jszip";
 
-import { BRAND_FOOTER_TAGLINE, brandAsset, brandSeller, type BrandAssetName, type BrandSeller } from "@/lib/brand-docs/pdf-kit";
+import { BRAND_FOOTER_TAGLINE, BRAND_TAGLINE, brandAsset, brandSeller, type BrandAssetName, type BrandSeller } from "@/lib/brand-docs/pdf-kit";
 
 import type { ContractAppendix, ContractDocument, RequisiteRow, SignatureSide } from "./template";
 import type { ContractSeller } from "./types";
@@ -135,6 +136,40 @@ function image(name: BrandAssetName, widthCm: number | null, alt: string): Image
   const width = widthCm === null ? w / 6 : px(widthCm);
   const height = widthCm === null ? h / 6 : px((widthCm * h) / w);
   return new ImageRun({ type: "png", data, transformation: { width, height }, altText: { name: alt, title: alt, description: alt } });
+}
+
+/** Шапка как в PDF: знак и подпись слева, реквизиты продавца справа чёрным основным кеглем (как в счёте), маршрут под ними. */
+function header(seller: BrandSeller): Header {
+  const widths = [cm(7), W - cm(7)];
+  const ids = [seller.inn && `ИНН ${seller.inn}`, seller.kpp && `КПП ${seller.kpp}`, seller.ogrn && `${seller.ogrn.length === 15 ? "ОГРНИП" : "ОГРН"} ${seller.ogrn}`]
+    .filter(Boolean)
+    .join(", ");
+  const contacts = [seller.phone && `тел. ${seller.phone}`, seller.email, seller.site].filter(Boolean).join(", ");
+  const wordmark = image("wordmark-polnoch.png", 3.4, "сетап");
+  const route = image("route-header.png", null, "");
+  const right = { align: AlignmentType.RIGHT, line: 240 } as const;
+  return new Header({
+    children: [
+      table(
+        [
+          new TableRow({
+            children: [
+              cell([para(wordmark ? [wordmark] : [run("сетап", { size: 16, sb: true })]), para([run(BRAND_TAGLINE, { size: 8.5 })], { before: 90, line: 240 })], widths[0]),
+              cell(
+                [
+                  para([run(seller.nameShort, { size: 9.5, sb: true })], right),
+                  ...[ids, seller.address, contacts].filter(Boolean).map((line, index) => para([run(line, { size: 8.5 })], { ...right, before: index === 0 ? 40 : 20 })),
+                ],
+                widths[1],
+              ),
+            ],
+          }),
+        ],
+        widths,
+      ),
+      para(route ? [route] : [], { before: 150, line: 240 }),
+    ],
+  });
 }
 
 /** Подвал: знак слева, маршрут ровно по центру листа, «Страница N из M» справа. */
@@ -343,9 +378,10 @@ export async function renderContractDocx(document: ContractDocument, sellerSnaps
         properties: {
           page: {
             size: { width: PAGE_W, height: 16838 },
-            margin: { top: cm(1.7), bottom: cm(1.7), left: SIDE, right: SIDE, header: cm(0.8), footer: cm(0.75) },
+            margin: { top: cm(3.4), bottom: cm(1.7), left: SIDE, right: SIDE, header: cm(0.8), footer: cm(0.75) },
           },
         },
+        headers: { default: header(seller) },
         footers: { default: footer() },
         children: body,
       },

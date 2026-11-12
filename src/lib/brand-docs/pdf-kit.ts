@@ -263,40 +263,43 @@ export function routeRail(pdf: BrandPdf, x: number, ys: readonly number[]): void
   ys.forEach((y, index) => routeNode(pdf, x, y, index === 0, index === 0 ? 1.48 : 1.35));
 }
 
-/** Белый бланк текущего листа: знак и подпись слева, реквизиты продавца справа, маршрут под ними. */
+/**
+ * Белый бланк текущего листа: знак и подпись слева, реквизиты продавца справа, маршрут под ними.
+ * Знак и шрифт — как в счёте (12.11.2026): чёрный текст основного кегля, без бледно-серого.
+ */
 export function letterhead(pdf: BrandPdf, seller: BrandSeller): void {
   const { doc } = pdf;
   const { side, contentW } = BRAND_PAGE;
   const left = side;
   const right = side + contentW;
-  const top = 8;
-  const drawn = drawPng(pdf, brandAsset("wordmark-polnoch.png"), { x: left, y: top, w: 30, h: 5.8 }, "left");
+  const top = 7;
+  const drawn = drawPng(pdf, brandAsset("wordmark-polnoch.png"), { x: left, y: top, w: 34, h: 6.6 }, "left");
   if (!drawn) {
     setText(pdf, { size: 17, weight: "extrabold", color: C.ink });
-    doc.text("сетап", left, top + 5.2);
+    doc.text("сетап", left, top + 5.6);
   }
-  setText(pdf, { size: 7.5, color: C.muted });
-  doc.text(BRAND_TAGLINE, left, top + 10.7);
+  setText(pdf, { size: 8.5, color: C.ink });
+  doc.text(BRAND_TAGLINE, left, top + 12);
 
   const infoWidth = contentW - 60;
   const nameStyle: TextStyle = { size: 9.5, weight: "semibold", color: C.ink };
   const name = fitText(pdf, seller.nameShort, infoWidth, nameStyle);
   setText(pdf, nameStyle);
-  doc.text(name, right, top + 3.4, { align: "right" });
+  doc.text(name, right, top + 3.6, { align: "right" });
   const ids = [
     seller.inn ? `ИНН${NBSP}${seller.inn}` : null,
     seller.kpp ? `КПП${NBSP}${seller.kpp}` : null,
     seller.ogrn ? `${seller.ogrn.length === 15 ? "ОГРНИП" : "ОГРН"}${NBSP}${seller.ogrn}` : null,
   ]
     .filter(Boolean)
-    .join("  ·  ");
-  const contacts = [seller.phone, seller.email, seller.site].filter(Boolean).join("  ·  ");
+    .join(", ");
+  const contacts = [seller.phone ? `тел.${NBSP}${seller.phone}` : null, seller.email, seller.site].filter(Boolean).join(", ");
   const lines = [ids, seller.address, contacts].filter(Boolean);
-  const style: TextStyle = { size: 7.5, color: C.muted };
+  const style: TextStyle = { size: 8.5, color: C.ink };
   lines.forEach((line, index) => {
     const fitted = fitText(pdf, line, infoWidth, style);
     setText(pdf, style);
-    doc.text(fitted, right, top + 7.8 + index * 4, { align: "right" });
+    doc.text(fitted, right, top + 8.3 + index * 4.1, { align: "right" });
   });
   routeLine(pdf, left, right, 30.2);
 }

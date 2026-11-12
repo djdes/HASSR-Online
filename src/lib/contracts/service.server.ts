@@ -8,7 +8,7 @@ import { isValidInn } from "@/lib/inn";
 
 import { applyBuyerInput, buyerInputFrom, type ContractBuyerInput } from "./buyer-form";
 import { BLANK_SHORT, clean, parseContractDate, todayInMoscow } from "./format";
-import { formatContractNumber } from "./numbering";
+import { formatContractNumber, pickContractSeq } from "./numbering";
 import { clampDiscount, defaultContractPricing } from "./pricing";
 import { contractRecipientSuggestions, normalizeEmail } from "./recipients";
 import {
@@ -50,7 +50,8 @@ export class ContractError extends Error {
       | "buyer_inn"
       | "bad_date"
       | "voided"
-      | "no_recipients",
+      | "no_recipients"
+      | "contract_numbers_exhausted",
     readonly status: number,
     message: string,
   ) {
@@ -309,18 +310,20 @@ const isUniqueViolation = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 
 /**
- * Выпуск: номер «WS-ГГГГ/NNNN» — следующий в году договора. Два ROOT,
- * нажавшие «Выпустить» одновременно, получат разные номера: уникальность
- * держит база (`@@unique([year, seq])`), при конфликте берём следующий.
+ * Выпуск: номер «ГГГГ/NNNN» — случайный свободный в году договора, чтобы
+ * по номеру нельзя было понять, сколько у нас договоров. Два ROOT, нажавшие
+ * «Выпустить» одновременно, получат разные номера: уникальность держит база
+ * (`@@unique([year, seq])`), при конфликте выбираем заново.
  */
 export async function issueClientContract(organizationId: string, input: ContractIssueInput, userId: string | null) {
   const draft = await buildContractSnapshot(organizationId, input, null);
   const year = parseContractDate(input.date)!.year;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
     try {
       return await db.$transaction(async (tx) => {
-        const max = await tx.clientContract.aggregate({ where: { year }, _max: { seq: true } });
-        const seq = (max._max.seq ?? 0) + 1;
+        const taken = new Set((await tx.clientContract.findMany({ where: { year }, select: { seq: true } })).map((row) => row.seq));
+        const seq = pickContractSeq(taken);
+        if (seq === null) throw new ContractError("contract_numbers_exhausted", 409, "Свободные номера договоров на этот год закончились");
         return tx.clientContract.create({
           data: {
             organizationId,
@@ -339,7 +342,7 @@ export async function issueClientContract(organizationId: string, input: Contrac
         });
       });
     } catch (error) {
-      if (isUniqueViolation(error) && attempt < 4) continue;
+      if (isUniqueViolation(error) && attempt < 9) continue;
       throw error;
     }
   }

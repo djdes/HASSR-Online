@@ -1,8 +1,25 @@
 /**
- * Номер договора: `2026/0001` — год договора и порядковый номер в этом
- * году. Номер выдаётся в транзакции (`service.server.ts`): уникальность
- * держат `@@unique([year, seq])` и `number @unique`.
+ * Номер договора: `2026/4827` — год договора и случайный номер в этом году
+ * (с 12.11.2026: порядковый «0001» выдавал, сколько у нас договоров).
+ * Уникальность держат `@@unique([year, seq])` и `number @unique`; занятый
+ * номер `issueClientContract` перевыбирает.
  */
+
+/** Диапазон случайной части: четыре цифры без ведущего нуля. */
+export const CONTRACT_SEQ_MIN = 1000;
+export const CONTRACT_SEQ_MAX = 9999;
+
+/** Случайная часть номера, не из `taken` (уже выданные в этом году). null — свободных нет. */
+export function pickContractSeq(taken: ReadonlySet<number>, random: () => number = Math.random): number | null {
+  const span = CONTRACT_SEQ_MAX - CONTRACT_SEQ_MIN + 1;
+  if (taken.size >= span) return null;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const seq = CONTRACT_SEQ_MIN + Math.floor(random() * span);
+    if (!taken.has(seq)) return seq;
+  }
+  for (let seq = CONTRACT_SEQ_MIN; seq <= CONTRACT_SEQ_MAX; seq += 1) if (!taken.has(seq)) return seq;
+  return null;
+}
 
 export function formatContractNumber(year: number, seq: number): string {
   if (!Number.isInteger(year) || year < 2000 || year > 9999) throw new Error(`Bad contract year: ${year}`);

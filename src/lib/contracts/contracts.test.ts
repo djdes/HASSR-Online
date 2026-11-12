@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { renderContractPdf } from "./pdf";
 import { contractDateLong, personName, postAsTitle, postInSentence, shortPersonName } from "./format";
-import { contractFileName, draftContractNumber, formatContractNumber, parseContractNumber } from "./numbering";
+import { CONTRACT_SEQ_MAX, CONTRACT_SEQ_MIN, contractFileName, draftContractNumber, formatContractNumber, parseContractNumber, pickContractSeq } from "./numbering";
 import { cleanRecipientList, contractRecipientSuggestions } from "./recipients";
 import { buyerChecklist, buyerFromOrganization, buyerKind, defaultContractParams, sellerChecklist } from "./snapshot";
 import { BLANK, buildContractDocument, buyerDisplayName, contractEndDate, contractPlainText, CONTRACT_TEMPLATE_VERSION } from "./template";
@@ -216,6 +216,22 @@ test("contract numbers: YYYY/NNNN, parse round trip (incl. legacy WS-), file nam
   assert.throws(() => formatContractNumber(2026, 0));
   assert.throws(() => formatContractNumber(26, 1));
   assert.deepEqual(contractFileName("2026/0001", "pdf"), { ascii: "Contract-2026-0001.pdf", utf8: "Договор-2026-0001.pdf" });
+});
+
+test("contract numbers are random four digits, never reused within a year", () => {
+  const taken = new Set<number>();
+  for (let i = 0; i < 200; i += 1) {
+    const seq = pickContractSeq(taken)!;
+    assert.ok(seq >= CONTRACT_SEQ_MIN && seq <= CONTRACT_SEQ_MAX);
+    assert.ok(!taken.has(seq));
+    taken.add(seq);
+  }
+  // Не подряд: среди первых номеров нет «0001, 0002…».
+  assert.ok(!taken.has(1) && taken.size === 200);
+  // Случайный генератор всё время попадает в занятый — берём первый свободный.
+  assert.equal(pickContractSeq(new Set([5000]), () => 4000 / 9000), CONTRACT_SEQ_MIN);
+  const all = new Set(Array.from({ length: CONTRACT_SEQ_MAX - CONTRACT_SEQ_MIN + 1 }, (_, i) => CONTRACT_SEQ_MIN + i));
+  assert.equal(pickContractSeq(all), null);
 });
 
 test("recipient suggestions skip technical and invalid emails, dedupe, keep order", () => {

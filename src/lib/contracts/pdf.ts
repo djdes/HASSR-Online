@@ -2,7 +2,6 @@ import {
   BRAND_COLORS as C,
   BRAND_PAGE,
   BrandFlow,
-  BRAND_PLAIN_TOP,
   brandSeller,
   createBrandPdf,
   dataTable,
@@ -41,9 +40,9 @@ const VOID_FG = [161, 58, 50] as const;
 export function renderContractPdf(document: ContractDocument, seller: ContractSeller, images: ContractImages): ContractPdfResult {
   const pdf = createBrandPdf({ title: `${document.title} № ${document.number}`, subject: "Договор оказания услуг WeSetup" });
   const { doc } = pdf;
-  // Договор — formal-документ без «стильной» брендовой шапки: текст идёт
-  // от верхнего поля, фирменный блок остаётся только в реквизитах и подвале.
-  const flow = new BrandFlow(pdf, { top: BRAND_PLAIN_TOP });
+  // Шапка с реквизитами продавца — та же, что у КП, чёрным шрифтом счёта
+  // (12.11.2026 убирали, в тот же день вернули исправленной).
+  const flow = new BrandFlow(pdf);
   const x = BRAND_PAGE.side;
   const width = BRAND_PAGE.contentW;
   const brand = brandSeller(seller);
@@ -179,7 +178,6 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
 
   // «страница N из M» — в подвале, как в образце; над подвалом — только отметка аннулирования.
   const pages = decoratePages(pdf, brand, {
-    letterhead: false,
     pageInFooter: true,
     pageLabel: document.voided ? () => `АННУЛИРОВАН  ·  ${document.runningTitle}` : null,
   });
