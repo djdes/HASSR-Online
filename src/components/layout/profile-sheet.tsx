@@ -198,6 +198,12 @@ export function ProfileSheet({
           </span>
         ) : null}
       </Link>
+      {inApp ? null : (
+        <Link href="/baza-znaniy" onClick={onClose} className={CHIP_ROW} data-nav-row data-testid="profile-knowledge-base">
+          <NavIconChip name="BookOpen" className={CHIP} iconClassName={CHIP_ICON} />
+          <span className="min-w-0 flex-1">{t("profile.knowledgeBase")}</span>
+        </Link>
+      )}
 
       {/* Тариф меняют из карточки «Мой кабинет». В приложении WeSetup
           ссылки там нет (правила магазинов) — страница тарифа для

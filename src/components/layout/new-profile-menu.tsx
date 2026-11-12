@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, Eye, LogOut, Monitor, Moon, Sparkles, Sun } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, ChevronDown, Eye, LogOut, Monitor, Moon, Sparkles, Sun } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -101,6 +102,12 @@ export function NewProfileMenu({
         </div>
         <DropdownMenuSeparator className="my-0" />
         <div className="p-1">
+          <DropdownMenuItem asChild className="gap-2.5 rounded-lg px-3 py-2 text-[14.5px]">
+            <Link href="/baza-znaniy" data-testid="profile-knowledge-base">
+              <BookOpen className="size-4 stroke-[1.75] text-[#5f6170]" aria-hidden />
+              {t("profile.knowledgeBase")}
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={onReadability} className="gap-2.5 rounded-lg px-3 py-2 text-[14.5px]">
             <Eye className="size-4 stroke-[1.75] text-[#5f6170]" aria-hidden />
             {tView("more")}

@@ -7,6 +7,7 @@ import { SEO_LANDINGS } from "@/components/landing/seo-journal-landing";
 import { CITY_ORDER } from "@/content/cities";
 import { COMPARISON_ORDER } from "@/content/comparisons";
 import { GLOSSARY } from "@/content/glossary";
+import { KB_ARTICLES } from "@/content/kb/articles";
 import { publicLocaleRoute, publicLocalesForPath, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
 import { articleLanguageAlternates } from "@/lib/article-language-alternates";
 import { articleLastModified, newestArticleDate, publishedArticleWhere } from "@/lib/article-visibility";
@@ -123,6 +124,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const contentPages: MetadataRoute.Sitemap = [
     { url: `${SITE}/glossary`, changeFrequency: "monthly", priority: 0.7 },
     ...GLOSSARY.map((t) => ({ url: `${SITE}/glossary/${t.slug}`, changeFrequency: "yearly" as const, priority: 0.5 })),
+    { url: `${SITE}/baza-znaniy`, changeFrequency: "monthly", priority: 0.7 },
+    ...KB_ARTICLES.map((a) => ({ url: `${SITE}/baza-znaniy/${a.slug}`, changeFrequency: "monthly" as const, priority: 0.5 })),
     { url: `${SITE}/compare`, changeFrequency: "monthly", priority: 0.7 },
     ...COMPARISON_ORDER.map((slug) => ({ url: `${SITE}/compare/${slug}`, changeFrequency: "monthly" as const, priority: 0.75 })),
     { url: `${SITE}/calc/journals`, changeFrequency: "monthly", priority: 0.75 },

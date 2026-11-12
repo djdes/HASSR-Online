@@ -3143,7 +3143,8 @@
       "plan": "Tarif",
       "theme": "Mavzu",
       "branding": "Brend uslubi",
-      "changeOrganization": "Tashkilotni almashtirish"
+      "changeOrganization": "Tashkilotni almashtirish",
+      "knowledgeBase": "Bilimlar bazasi"
     },
     "groups": {
       "work": {
@@ -5631,7 +5632,8 @@
     "securityAndData": "Xavfsizlik va ma’lumotlar",
     "autofillOffer": "O‘zi to‘ldiriladigan jurnallar",
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
-    "tagline": "Sizning elektron HACCP tizimingiz"
+    "tagline": "Sizning elektron HACCP tizimingiz",
+    "knowledgeBase": "Bilimlar bazasi"
   },
   "landing": {
     "metadata": {
@@ -5857,7 +5859,8 @@
     },
     "pricingTitle": "To‘rtta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz",
     "brandTagline": "Sizning elektron HACCP tizimingiz",
-    "presentationPdf": "Setup taqdimoti — PDF, 7 MB (rus tilida)"
+    "presentationPdf": "Setup taqdimoti — PDF, 7 MB (rus tilida)",
+    "knowledgeBaseLink": "Bilimlar bazasi"
   },
   "landingComponents": {
     "heroEmail": {

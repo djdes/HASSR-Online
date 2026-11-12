@@ -35,7 +35,7 @@ import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-
 export async function PublicHeader({
   activeSection,
 }: {
-  activeSection?: "blog" | "journals-info" | "home";
+  activeSection?: "blog" | "journals-info" | "home" | "knowledge-base";
 }) {
   const locale = await getSiteLocale();
   const t = await getTranslations({ locale, namespace: "publicChrome" });
@@ -76,6 +76,7 @@ export async function PublicHeader({
           <LanguageSwitch />
           {link("journals-info", t("journals"), "/journals-info")}
           {link("blog", t("blog"), "/blog")}
+          {link("knowledge-base", t("knowledgeBase"), "/baza-znaniy")}
           {session ? (
             <PublicHeaderAuthed
               userName={session.user.name ?? t("userFallback")}
@@ -249,6 +250,7 @@ export async function PublicFooter() {
         <div className="flex flex-col flex-wrap text-[13px] text-[#6f7282] md:items-end">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3] md:text-right">
             {t("sections")}</div>
+          <Link href="/baza-znaniy" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("knowledgeBase")}</Link>
           <Link href="/avtozapolnenie" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("autofillOffer")}</Link>
           <Link href="/sanpin-2-3-2-4-4282-26" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("sanpin4282")}</Link>
           <Link href="/blog" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("blog")}</Link>

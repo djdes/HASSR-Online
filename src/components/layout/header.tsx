@@ -534,6 +534,16 @@ export function Header({
                     ) : null}
                   </Link>
                 </DropdownMenuItem>
+                {/* База знаний — публичная, с ценами; в приложении (правила
+                    магазинов) пункта нет. */}
+                {inApp ? null : (
+                  <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
+                    <Link href="/baza-znaniy" data-testid="profile-knowledge-base">
+                      <NavIconChip name="BookOpen" className={MENU_CHIP} iconClassName="size-4" />
+                      {t("profile.knowledgeBase")}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {canManagePlan && inApp ? (
                   <DropdownMenuItem asChild className="focus:bg-[#f5f6ff]" data-nav-row>
                     <Link href="/settings/subscription">

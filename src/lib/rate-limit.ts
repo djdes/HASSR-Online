@@ -287,3 +287,17 @@ export const publicApiRateLimiter = createRateLimiter({
   tokensPerInterval: 120,
   intervalMs: 60_000,
 });
+
+/**
+ * «Спросить у ИИ» в публичной базе знаний (`/api/kb/ask`): без входа,
+ * поэтому по IP — 6 вопросов за 10 минут, и общий потолок на инстанс,
+ * чтобы бот не выжег очередь Codex-шлюза.
+ */
+export const kbAskRateLimiter = createRateLimiter({
+  tokensPerInterval: 6,
+  intervalMs: 10 * 60 * 1000,
+});
+export const kbAskGlobalRateLimiter = createRateLimiter({
+  tokensPerInterval: 120,
+  intervalMs: 60 * 60 * 1000,
+});

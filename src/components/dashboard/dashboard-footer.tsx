@@ -49,7 +49,7 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
           <Link href="/privacy" className={linkClass}>
             {t("privacy")}
           </Link>
-          <Link href="/blog" className={linkClass}>
+          <Link href="/baza-znaniy" className={linkClass}>
             {t("knowledgeBase")}
           </Link>
           <a href="mailto:admin@wesetup.ru" className={linkClass}>

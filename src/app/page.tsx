@@ -476,6 +476,11 @@ export default async function LandingPage() {
               className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
               {copy("landing.blogLink")}</Link>
+            <Link
+              href="/baza-znaniy"
+              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
+            >
+              {copy("landing.knowledgeBaseLink")}</Link>
             {/* «Сколько это стоит» спрашивают раньше всего остального —
                 пункт стоит рядом с входом, а не в подвале. Якорь, а не
                 отдельная страница: тарифы тут же, ниже по этой же. */}

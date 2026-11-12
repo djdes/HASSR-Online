@@ -3144,7 +3144,8 @@ export type MessageContract = {
       "plan": "Тариф",
       "theme": "Тема",
       "branding": "Фирменный стиль",
-      "changeOrganization": "Сменить организацию"
+      "changeOrganization": "Сменить организацию",
+      "knowledgeBase": "База знаний"
     },
     "groups": {
       "work": {
@@ -5632,7 +5633,8 @@ export type MessageContract = {
     "securityAndData": "Безопасность и данные",
     "autofillOffer": "Журналы заполняются сами",
     "sanpin4282": "СанПиН 2.3/2.4.4282-26",
-    "tagline": "Ваш электронный ХАССП"
+    "tagline": "Ваш электронный ХАССП",
+    "knowledgeBase": "База знаний"
   },
   "landing": {
     "metadata": {
@@ -5858,7 +5860,8 @@ export type MessageContract = {
     },
     "pricingTitle": "Четыре тарифа. Начните бесплатно — {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} без карты",
     "brandTagline": "Ваш электронный ХАССП",
-    "presentationPdf": "Презентация сетап — PDF, 7 МБ"
+    "presentationPdf": "Презентация сетап — PDF, 7 МБ",
+    "knowledgeBaseLink": "База знаний"
   },
   "landingComponents": {
     "heroEmail": {

@@ -3143,7 +3143,8 @@
       "plan": "Plan",
       "theme": "Theme",
       "branding": "Brand style",
-      "changeOrganization": "Switch organization"
+      "changeOrganization": "Switch organization",
+      "knowledgeBase": "Knowledge base"
     },
     "groups": {
       "work": {
@@ -5631,7 +5632,8 @@
     "securityAndData": "Security and data",
     "autofillOffer": "Logs that fill themselves",
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
-    "tagline": "Your electronic HACCP"
+    "tagline": "Your electronic HACCP",
+    "knowledgeBase": "Knowledge base"
   },
   "landing": {
     "metadata": {
@@ -5857,7 +5859,8 @@
     },
     "pricingTitle": "Four plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card",
     "brandTagline": "Your electronic HACCP",
-    "presentationPdf": "WeSetup presentation — PDF, 7 MB (in Russian)"
+    "presentationPdf": "WeSetup presentation — PDF, 7 MB (in Russian)",
+    "knowledgeBaseLink": "Knowledge base"
   },
   "landingComponents": {
     "heroEmail": {
