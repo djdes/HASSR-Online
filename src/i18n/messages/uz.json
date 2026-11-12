@@ -10887,13 +10887,16 @@
         }
       },
       "disabled": {
-        "title": "Ofis nuqtalar bilan birga paydo bo‘ladi",
-        "body": "Jurnallar nuqtalar bo‘yicha alohida yuritilganda bu yerda kompaniya ofisini ajratish mumkin.",
+        "title": "Avval savdo nuqtasini qo‘shing",
+        "body": "Kompaniyada kamida bitta savdo nuqtasi bo‘lsa, ofisni ajratish mumkin. Uni qo‘shing — bu yerda ofis xodimlari va jurnallari paydo bo‘ladi.",
         "link": "Savdo nuqtalarini ochish"
       },
       "create": {
         "title": "Ofisni ajrating",
         "body": "Ofis — kompaniya rahbarlari joyi: ular barcha nuqtalarni ko‘radi, lekin nuqtalar jurnali va vazifalariga qo‘shilmaydi. Nuqta xodimlariga ta’sir qilmaydi.",
+        "split": "Ofis va savdo nuqtalari jurnallari alohida yuritiladi.",
+        "switcher": "Sarlavhada «Ofis / savdo nuqtasi» almashtirgichi paydo bo‘ladi.",
+        "existing": "Allaqachon to‘ldirilgan hujjatlar umumiy bo‘lib qoladi va hamma joyda ko‘rinadi.",
         "button": "Ofisni ajratish",
         "done": "Ofis ajratildi",
         "failed": "Ofisni ajratib bo‘lmadi"
