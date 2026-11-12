@@ -42,6 +42,16 @@ export const contractIssueSchema = z.object({
     })
     .nullish()
     .transform((value) => value ?? null),
+  /** Согласованный тариф: Приложение № 1. Цены берёт сервер. */
+  pricing: z
+    .object({
+      tier: z.enum(["standard", "premium", "vip"]),
+      cycle: z.enum(["month", "year"]),
+      points: z.coerce.number().int("Количество точек — целое число").min(1, "Хотя бы одна точка").max(500),
+      discountPercent: z.coerce.number().min(0, "Скидка не может быть отрицательной").max(100, "Скидка не больше 100 %"),
+    })
+    .nullish()
+    .transform((value) => value ?? null),
   /** Текст договора в редакции под клиента. */
   customSections: z
     .array(

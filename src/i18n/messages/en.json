@@ -31000,6 +31000,26 @@
       "hint": "Each line is a separate clause, numbers are added automatically. Start a sub-item with “а) ”. If you removed or added sections, check references like “п. 3.2” and “разд. 11”.",
       "requisitesNote": "“Details and signatures of the parties” always comes last.",
       "edited": "edited"
+    },
+    "pricing": {
+      "title": "Plan in the contract",
+      "hint": "Goes into Appendix 1 “Cost of services”. The price list of all plans is Appendix 2.",
+      "tier": "Plan",
+      "cycle": "Term",
+      "points": "Locations",
+      "discount": "Discount, %",
+      "discountHint": "On top of the multi-location discount.",
+      "tiers": {
+        "standard": "Standard",
+        "premium": "Premium",
+        "vip": "VIP"
+      },
+      "cycles": {
+        "month": "1 month",
+        "year": "12 months"
+      },
+      "total": "Total for the term: {total} ₽",
+      "saving": "discount {discount} ₽ off {full} ₽"
     }
   },
   "rootClientDocuments": {

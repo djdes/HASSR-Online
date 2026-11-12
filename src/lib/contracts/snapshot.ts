@@ -7,7 +7,7 @@
  * плюс тип лица (ИП / юрлицо) из снимка или длины ИНН.
  */
 
-import { formatPhone } from "@/lib/brand-docs/phone";
+import { COMPANY_EMAIL, COMPANY_PHONE } from "@/lib/company-contacts";
 import type { PlatformRequisites } from "@/lib/closing-documents/types";
 import {
   buildDocumentOrgBlock,
@@ -40,8 +40,10 @@ export function sellerFromRequisites(r: PlatformRequisites): ContractSeller {
     },
     head: { post: r.head.post.trim(), name: r.head.name.trim() },
     vatMode: "none",
-    email: r.email.trim(),
-    phone: formatPhone(r.phone),
+    // Контакты в договоре — общие контакты WeSetup (admin@, основной номер 495),
+    // а не служебный ящик из «Реквизитов» (владелец, 2026-11-12).
+    email: COMPANY_EMAIL,
+    phone: COMPANY_PHONE.display,
     site: SELLER_SITE,
   };
 }
