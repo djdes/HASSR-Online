@@ -227,7 +227,7 @@ function layout(title: string, body: string, brand?: EmailBrand | null, extras?:
     ${body}
   </td></tr>
   <tr><td style="padding:16px 32px;background:#fafafa;border-top:1px solid #e4e4e7">
-    ${extras?.locale ? "" : `<p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center">&copy; 2026 WeSetup. Электронные журналы СанПиН и ХАССП.${brand ? " Работает на платформе WeSetup." : ""}</p>`}${footer}
+    ${extras?.locale ? "" : `<p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center">&copy; 2026 WeSetup. Ваш электронный ХАССП.${brand ? " Работает на платформе WeSetup." : ""}</p>`}${footer}
   </td></tr>
 </table>
 </td></tr>

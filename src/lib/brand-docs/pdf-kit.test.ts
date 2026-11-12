@@ -77,8 +77,9 @@ test("brand kit: assets ship with the repo, every block renders, header and foot
 
   const { text, pages: parsed } = await pdfText(Buffer.from(pdf.doc.output("arraybuffer")));
   assert.equal(parsed, pages);
-  assert.equal((text.match(/Ваш электронный ХАССП/g) ?? []).length, pages, "letterhead on every page");
-  assert.equal((text.match(/Электронные журналы/g) ?? []).length, pages, "footer on every page");
+  // «Ваш электронный ХАССП» — и в шапке, и в подвале каждой страницы (12.11.2026: «у нас везде так»).
+  assert.equal((text.match(/Ваш электронный ХАССП/g) ?? []).length, pages * 2, "letterhead and footer on every page");
+  assert.ok(!text.includes("Электронные журналы"), "no old footer tagline");
   for (const expected of ["5018215599", "40702810000000000001", "Стоимость", "Доступ к сервису", "Поставщик", "С уважением", `Стр. ${pages} из ${pages}`, "Абзац 70"]) {
     assert.ok(text.includes(expected), `has ${expected}`);
   }

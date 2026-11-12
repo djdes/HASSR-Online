@@ -221,7 +221,7 @@ function stroke(pdf: BrandPdf, color: RGB, width: number) {
 /** Подпись под знаком в шапке (брендбук сетап 1.0). */
 export const BRAND_TAGLINE = "Ваш электронный ХАССП";
 /** Подпись рядом со знаком в подвале. */
-export const BRAND_FOOTER_TAGLINE = "Электронные журналы";
+export const BRAND_FOOTER_TAGLINE = BRAND_TAGLINE;
 /** Точки маршрута — светлый индиго брендбука. */
 const ROUTE_DOTS = hex("A9B2F6");
 /** Базовая линия подвала, мм. */
