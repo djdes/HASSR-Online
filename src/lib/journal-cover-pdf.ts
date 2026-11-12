@@ -92,7 +92,8 @@ export function drawJournalCover(doc: jsPDF, params: JournalCoverParams): void {
   const mark = setapLogo();
   if (mark) {
     // Свой alias: у drawPdfLogo он общий («org-logo»), и знак подменился бы логотипом организации.
-    const drawn = fitPdfLogo(mark, 30, 7);
+    // Знак скромнее логотипа организации (замечание владельца 12.11: «чуть мельче»).
+    const drawn = fitPdfLogo(mark, 24, 5.5);
     doc.addImage(mark.data, "PNG", width - margin - drawn.w, margin - 5, drawn.w, drawn.h, "setap-mark", "FAST");
     doc.setFont(params.fontName, "normal");
     doc.setFontSize(7.5);
@@ -122,14 +123,17 @@ export function drawJournalCover(doc: jsPDF, params: JournalCoverParams): void {
   // «В соответствии с Приложением N … к СанПиН» — справа.
   const blockX = width - margin - 85;
   const blockCenter = blockX + 42.5;
+  // Мельче и к правому краю (замечание владельца 12.11).
   doc.setFont(params.fontName, "normal");
-  doc.setFontSize(11);
+  doc.setFontSize(9);
   if (params.cover.appendix) {
-    const top = Math.max(y + 6, 44);
-    doc.text("В соответствии с", blockCenter, top, { align: "center" });
-    doc.text(params.cover.appendix, blockCenter, top + 6, { align: "center" });
-    doc.text(SANPIN, blockCenter, top + 12, { align: "center" });
+    const top = Math.max(y + 6, 42);
+    const right = width - margin;
+    doc.text("В соответствии с", right, top, { align: "right" });
+    doc.text(params.cover.appendix, right, top + 4.6, { align: "right" });
+    doc.text(SANPIN, right, top + 9.2, { align: "right" });
   }
+  doc.setFontSize(11);
 
   // Крупное название — по центру листа.
   const titleSize = params.cover.lines.length > 2 ? 26 : 32;
