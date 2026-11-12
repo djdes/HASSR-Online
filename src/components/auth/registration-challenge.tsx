@@ -1,189 +1,77 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useSiteLocale } from "@/components/i18n/site-locale-provider";
-import type { SiteLocale } from "@/i18n/site-locale";
-
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-type Recaptcha = {
-  render: (container: HTMLElement, options: {
-    sitekey: string;
-    size: "compact";
-    theme: "light" | "dark";
-    callback: (token: string) => void;
-    "expired-callback": () => void;
-    "error-callback": () => void;
-  }) => number;
-  reset: (id: number) => void;
-};
+import { CHALLENGE_MAX_AGE_MS, CHALLENGE_MIN_AGE_MS } from "@/lib/registration-challenge-timing";
 
-declare global {
-  interface Window { grecaptcha?: Recaptcha; wesetupRecaptchaReady?: () => void }
+/**
+ * Невидимая проверка от ботов (спека invisible-antibot-2026-11): форма тихо
+ * берёт у сервера подписанную отметку времени и прячет поле-ловушка
+ * `website`. Человек ничего не отмечает и не ждёт: к моменту отправки 1,5 с
+ * уже прошли, а если нет — `getToken()` сам дождётся остатка.
+ */
+type Stamp = { token: string; receivedAt: number };
+
+const ENDPOINT = "/api/auth/registration-challenge";
+// Обновляем отметку заранее, чтобы сервер не отклонил её как устаревшую.
+const REFRESH_AFTER_MS = CHALLENGE_MAX_AGE_MS / 2;
+// Небольшой запас поверх минимума: сервер считает возраст от момента выдачи.
+const MIN_WAIT_MS = CHALLENGE_MIN_AGE_MS + 150;
+
+async function fetchStamp(): Promise<Stamp> {
+  const response = await fetch(ENDPOINT, { cache: "no-store" });
+  if (!response.ok) throw new Error("Challenge unavailable");
+  const data: unknown = await response.json();
+  if (!data || typeof data !== "object" || !("token" in data) ||
+      typeof data.token !== "string" || !data.token) {
+    throw new Error("Invalid challenge");
+  }
+  return { token: data.token, receivedAt: Date.now() };
 }
 
-/** Высота compact-виджета reCAPTCHA v2 (164×144) — резервируется до его прихода. */
-export const CHALLENGE_RESERVED_CLASS = "min-h-[144px]";
-
-let scriptPromise: Promise<Recaptcha> | undefined;
-
-function loadRecaptcha(locale: SiteLocale): Promise<Recaptcha> {
-  if (window.grecaptcha?.render) return Promise.resolve(window.grecaptcha);
-  if (scriptPromise) return scriptPromise;
-  scriptPromise = new Promise<Recaptcha>((resolve, reject) => {
-    const script = document.createElement("script");
-    const fail = () => {
-      clearTimeout(timer);
-      delete window.wesetupRecaptchaReady;
-      script.remove();
-      reject(new Error("Challenge script unavailable"));
-    };
-    const timer = setTimeout(fail, 15_000);
-    script.src = `https://www.recaptcha.net/recaptcha/api.js?render=explicit&onload=wesetupRecaptchaReady&hl=${locale}`;
-    script.async = true;
-    window.wesetupRecaptchaReady = () => {
-      clearTimeout(timer);
-      delete window.wesetupRecaptchaReady;
-      if (window.grecaptcha?.render) resolve(window.grecaptcha);
-      else fail();
-    };
-    script.onerror = fail;
-    document.head.appendChild(script);
-  }).catch((error: unknown) => {
-    scriptPromise = undefined;
-    throw error;
-  });
-  return scriptPromise;
-}
-
-function RegistrationChallenge({ onToken, onRetry, tone }: {
-  onToken: (token: string) => void;
-  onRetry: () => void;
-  tone: "light" | "dark";
-}) {
+export function useRegistrationChallenge() {
   const t = useTranslations("auth.challenge");
-  const locale = useSiteLocale();
-  const container = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [website, setWebsite] = useState("");
+  const id = useId();
+  const pending = useRef<Promise<Stamp> | null>(null);
+
+  const load = useCallback(() => {
+    const promise = fetchStamp();
+    pending.current = promise;
+    promise.catch(() => {
+      if (pending.current === promise) pending.current = null;
+    });
+    return promise;
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    let api: Recaptcha | undefined;
-    let widgetId: number | undefined;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
-    const fail = () => {
-      if (!active) return;
-      onToken("");
-      setLoading(false);
-      setError(true);
-    };
+    if (!pending.current) load().catch(() => { /* retried on submit */ });
+  }, [load]);
 
-    async function init() {
-      try {
-        const response = await fetch("/api/auth/registration-challenge", {
-          cache: "no-store", signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("Challenge configuration unavailable");
-        const config: unknown = await response.json();
-        if (!config || typeof config !== "object" || !("siteKey" in config) ||
-            typeof config.siteKey !== "string" || !config.siteKey) {
-          throw new Error("Invalid challenge configuration");
-        }
-        clearTimeout(timeout);
-        if (!active) return;
-        api = await loadRecaptcha(locale);
-        if (!active || !container.current) return;
-        widgetId = api.render(container.current, {
-          sitekey: config.siteKey,
-          size: "compact",
-          theme: tone,
-          callback: (token) => {
-            if (!active) return;
-            setError(false);
-            onToken(token);
-          },
-          "expired-callback": () => {
-            if (!active) return;
-            onToken("");
-            if (widgetId !== undefined) api?.reset(widgetId);
-          },
-          "error-callback": fail,
-        });
-        setLoading(false);
-      } catch {
-        fail();
-      } finally {
-        clearTimeout(timeout);
-      }
+  /** Токен для отправки; бросает ошибку, только если сервер недоступен. */
+  const getToken = useCallback(async () => {
+    let stamp: Stamp;
+    try {
+      stamp = await (pending.current ?? load());
+    } catch {
+      stamp = await load();
     }
-    void init();
-    return () => {
-      active = false;
-      clearTimeout(timeout);
-      controller.abort();
-      // v2 exposes reset, not destroy. React removes the widget container;
-      // late provider callbacks are ignored through the active flag above.
-      if (widgetId !== undefined) {
-        try { api?.reset(widgetId); } catch { /* The iframe may already be detached. */ }
-      }
-    };
-  }, [onToken, tone, locale]);
+    if (Date.now() - stamp.receivedAt > REFRESH_AFTER_MS) stamp = await load();
+    const wait = stamp.receivedAt + MIN_WAIT_MS - Date.now();
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    return stamp.token;
+  }, [load]);
 
-  return (
-    <div className="mt-3 w-full min-w-0" data-registration-challenge>
-      {/* Место под compact-виджет (164×144) держим с первой отрисовки: виджет
-          приходит через секунды, и без этого форма вырастала на 124 px и
-          сдвигала первый экран (CLS 0,17 на телефоне). Надпись «загружается»
-          лежит поверх зарезервированного места и не влияет на высоту. */}
-      <div className={error ? "" : `relative ${CHALLENGE_RESERVED_CLASS}`}>
-        <div ref={container} />
-        {loading && (
-          <p
-            role="status"
-            className={
-              "absolute left-0 top-0 flex h-[144px] w-[164px] items-center justify-center rounded-[6px] border border-dashed px-3 text-center text-[13px] leading-snug " +
-              (tone === "dark" ? "border-white/25 text-white/70" : "border-[#dcdfed] text-[#6f7282]")
-            }
-          >
-            {t("loading")}</p>
-        )}
-      </div>
-      {error && (
-        <div role="alert" className={"text-[13px] " + (tone === "dark" ? "text-[#ffb4ab]" : "text-[#a13a32]")}>
-          {t("failed")}<button type="button" onClick={onRetry} className="ml-2 underline underline-offset-4">
-            {t("retry")}</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Independent tokens per form; any completed submission retires its token. */
-export function useRegistrationChallenge(tone: "light" | "dark" = "light") {
-  const t = useTranslations("auth.challenge");
-  const [token, setToken] = useState("");
-  const [website, setWebsite] = useState("");
-  const [revision, setRevision] = useState(0);
-  const id = useId();
-  const reset = useCallback(() => {
-    setToken("");
-    setRevision((value) => value + 1);
-  }, []);
   return {
-    token,
     website,
-    reset,
+    getToken,
     element: (
-      <>
-        <div aria-hidden="true" className="hidden">
-          <label htmlFor={id}>{t("websiteLabel")}</label>
-          <input id={id} name="website" type="text" autoComplete="off" tabIndex={-1}
-            value={website} onChange={(event) => setWebsite(event.target.value)} />
-        </div>
-        <RegistrationChallenge key={revision} tone={tone} onToken={setToken} onRetry={reset} />
-      </>
+      <div aria-hidden="true" className="hidden">
+        <label htmlFor={id}>{t("websiteLabel")}</label>
+        <input id={id} name="website" type="text" autoComplete="off" tabIndex={-1}
+          value={website} onChange={(event) => setWebsite(event.target.value)} />
+      </div>
     ),
   };
 }

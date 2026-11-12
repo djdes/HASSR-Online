@@ -56,7 +56,7 @@ export function HeroEmailStart({
   const locale = useSiteLocale();
   const router = useRouter();
   const field = useEmailField();
-  const challenge = useRegistrationChallenge(tone);
+  const challenge = useRegistrationChallenge();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -76,7 +76,7 @@ export function HeroEmailStart({
     field.setTouched(true);
     // Кнопка и так заблокирована при неверном адресе — это страховка на
     // случай отправки формы клавишей Enter.
-    if (loading || !field.valid || !challenge.token) return;
+    if (loading || !field.valid) return;
     if (!consent) {
       setConsentMissing(true);
       setError(t("consentRequired"));
@@ -100,7 +100,7 @@ export function HeroEmailStart({
           source: readSignupSource(place),
           consent: true,
           consentPlace: "landing",
-          captchaToken: challenge.token,
+          captchaToken: await challenge.getToken(),
           website: challenge.website,
         }),
       });
@@ -138,7 +138,6 @@ export function HeroEmailStart({
       ymGoal("signup_error", { ...goalParams, code: "network" });
       setError(t("networkError"));
     } finally {
-      challenge.reset();
       setLoading(false);
     }
   }
@@ -189,7 +188,7 @@ export function HeroEmailStart({
         </div>
         <button
           type="submit"
-          disabled={loading || !field.valid || !challenge.token}
+          disabled={loading || !field.valid}
           className={
             "group inline-flex h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:h-[60px] sm:px-7 " +
             (layout === "stack" ? "w-full " : "") +

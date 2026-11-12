@@ -490,6 +490,7 @@ const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
   via: {
     // Журнал включён (journal.enable, lib/blank-signup.ts).
     "blank-qr-signup": "регистрация по QR со скачанного шаблона",
+    "blank-download-signup": "быстрая регистрация при скачивании шаблона",
     "blank-qr": "«Включить журнал» после QR со скачанного шаблона",
     "journal-page": "кнопка «Включить журнал»",
     "journal-set": "кнопка «Включить весь набор»",

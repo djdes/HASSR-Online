@@ -47,7 +47,7 @@ export function GuestInvoicePanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<Done | null>(null);
-  // Счёт без входа — только после «Я не робот» (боты рассылали бы счета).
+  // Счёт без входа — только после невидимой проверки от ботов (боты рассылали бы счета).
   const challenge = useRegistrationChallenge();
 
   useEffect(() => {
@@ -94,13 +94,11 @@ export function GuestInvoicePanel({
           points: plan.points,
           promoCode: promoCode ?? undefined,
           expectedGrossRub,
-          captchaToken: challenge.token,
+          captchaToken: await challenge.getToken(),
           website: challenge.website,
         }),
       });
       const data = (await response.json().catch(() => ({}))) as Partial<Done> & { error?: string; code?: string };
-      // Ответ Google одноразовый: следующая попытка — с новой отметкой.
-      challenge.reset();
       if (!response.ok) {
         if (data.code === "name-required") setNeedName(true);
         setError(data.error ?? "Не удалось выставить счёт. Попробуйте ещё раз или позвоните нам");
@@ -190,7 +188,7 @@ export function GuestInvoicePanel({
               {error ? <p role="alert" className="mt-3 rounded-2xl bg-[#fff4f2] px-4 py-2.5 text-[13.5px] text-[#a13a32]">{error}</p> : null}
               <button
                 type="submit"
-                disabled={busy || !plan || !challenge.token}
+                disabled={busy || !plan}
                 className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#5566f6] bg-white px-5 text-[15px] font-medium text-[#3848c7] transition-colors hover:bg-[#f5f6ff] disabled:opacity-60"
               >
                 {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FileText className="size-4" aria-hidden />}

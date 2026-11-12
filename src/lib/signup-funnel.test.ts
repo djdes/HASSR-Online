@@ -117,7 +117,9 @@ describe("воронка по неделям и каналам", () => {
   it("регистрация пишет источник, страница — только для раздела «Клиенты» и есть в меню", () => {
     const register = read("src/app/api/auth/instant-register/route.ts");
     assert.match(register, /readSignupSnapshot\(/);
-    assert.match(register, /isEmptySnapshot\(source\) \? \{\} : \{ signupSourceJson: source \}/);
+    assert.match(register, /createInstantAccount\(\{[\s\S]*?source,/);
+    const account = read("src/lib/instant-account.server.ts");
+    assert.match(account, /isEmptySnapshot\(input\.source\) \? \{\} : \{ signupSourceJson: input\.source \}/);
     assert.match(read("prisma/schema.prisma"), /signupSourceJson\s+Json\?/);
     assert.equal(matchPlatformRule("/root/funnel")?.gate, "clients");
     assert.match(read("src/app/root/funnel/page.tsx"), /await requireRoot\(\);/);

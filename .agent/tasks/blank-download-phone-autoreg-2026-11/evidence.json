@@ -1,0 +1,27 @@
+{
+  "task": "blank-download-phone-autoreg-2026-11",
+  "verdict": "PASS",
+  "checkedAt": "2026-11-12",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS"
+  },
+  "commands": {
+    "typecheck": "only pre-existing error in src/app/api/root/gogetlinks/plans/route.ts:109 (present on master)",
+    "eslint": "clean on changed files",
+    "test:changed": "escalated to full suite: pass=6144 fail=0",
+    "affected tests after copy fix": "81/81"
+  },
+  "raw": [
+    "raw/form-mobile.png",
+    "raw/done-created-mobile.png",
+    "raw/form-desktop.png",
+    "raw/done-exists-desktop.png"
+  ]
+}

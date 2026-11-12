@@ -1,20 +1,31 @@
-const VALIDATE_URL = "https://www.recaptcha.net/recaptcha/api/siteverify";
-const TIMEOUT_MS = 8_000;
-// Google's public v2 keys always pass verification and must never protect signup.
-const TEST_KEYS = new Set([
-  "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
-  "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
-]);
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+
+/**
+ * Невидимая проверка от ботов для регистрации, формы на главной и заказа
+ * без входа (спека invisible-antibot-2026-11). Человек ничего не отмечает:
+ *   • `website` — скрытое поле-ловушка, человек его не видит и не заполняет;
+ *   • `captchaToken` — подписанная сервером отметка времени, которую форма
+ *     тихо получает при открытии (`GET /api/auth/registration-challenge`).
+ *     Сервер примет её не раньше чем через 1,5 с после выдачи (бот, который
+ *     сразу шлёт форму, не проходит) и не позже 12 часов.
+ * Ключ подписи — `REGISTRATION_CHALLENGE_SECRET`, иначе `NEXTAUTH_SECRET`.
+ * Сторонних сервисов (Google и т. п.) нет — проверка не зависит от их
+ * доступности в РФ. Частоту по-прежнему ограничивают лимиты по IP.
+ */
+import { CHALLENGE_MAX_AGE_MS, CHALLENGE_MIN_AGE_MS } from "./registration-challenge-timing";
+
+export { CHALLENGE_MAX_AGE_MS, CHALLENGE_MIN_AGE_MS };
+const VERSION = "v1";
 
 type Environment = Record<string, string | undefined>;
-type Configuration = { siteKey: string; secretKey: string; hosts: string[] };
 type Failure = { ok: false; status: 403 | 503; error: string };
 type Result = { ok: true } | Failure;
+type Dependencies = { env?: Environment; now?: number };
 
 const rejected = (): Failure => ({
   ok: false,
   status: 403,
-  error: "Проверка не пройдена или устарела. Пройдите её ещё раз.",
+  error: "Не получилось отправить форму. Обновите страницу и попробуйте ещё раз.",
 });
 const unavailable = (): Failure => ({
   ok: false,
@@ -22,101 +33,62 @@ const unavailable = (): Failure => ({
   error: "Проверка перед регистрацией временно недоступна. Попробуйте позже.",
 });
 
-function configuration(env: Environment): Configuration | null {
-  const siteKey = env.RECAPTCHA_SITE_KEY?.trim();
-  const secretKey = env.RECAPTCHA_SECRET_KEY?.trim();
-  if (!siteKey || !secretKey || TEST_KEYS.has(siteKey) || TEST_KEYS.has(secretKey)) {
-    return null;
-  }
-  let hosts = (env.RECAPTCHA_HOSTNAMES ?? "")
-    .split(",").map((host) => host.trim().toLowerCase()).filter(Boolean);
-  if (!hosts.length) {
-    try {
-      hosts = [new URL(env.NEXTAUTH_URL ?? "").hostname.toLowerCase()];
-    } catch {
-      return null;
-    }
-  }
-  // reCAPTCHA reports the hostname without a scheme, path or port.
-  // Never derive this allowlist from attacker-controlled request headers.
-  if (hosts.some((host) => !/^[a-z0-9.-]+$/.test(host))) return null;
-  return { siteKey, secretKey, hosts };
+function signingKey(env: Environment): Buffer | null {
+  const secret = (env.REGISTRATION_CHALLENGE_SECRET ?? env.NEXTAUTH_SECRET ?? "").trim();
+  if (secret.length < 16) return null;
+  // Отдельный ключ от NEXTAUTH_SECRET: подпись формы не годится ни для чего другого.
+  return createHmac("sha256", secret).update("wesetup:registration-challenge").digest();
 }
 
-export function registrationChallengeConfig(env: Environment = process.env) {
-  const config = configuration(env);
-  return config ? { siteKey: config.siteKey } : null;
+function sign(key: Buffer, payload: string): string {
+  return createHmac("sha256", key).update(payload).digest("base64url");
+}
+
+/** Токен для формы; null — ключ подписи не настроен. */
+export function issueRegistrationChallenge(dependencies: Dependencies = {}): { token: string } | null {
+  const key = signingKey(dependencies.env ?? process.env);
+  if (!key) return null;
+  const payload = `${VERSION}.${dependencies.now ?? Date.now()}.${randomBytes(9).toString("base64url")}`;
+  return { token: `${payload}.${sign(key, payload)}` };
 }
 
 /** Required before any registration side effects. There is no dev bypass. */
 export async function verifyRegistrationChallenge(
   body: unknown,
-  dependencies: { env?: Environment; fetch?: typeof fetch } = {},
+  dependencies: Dependencies = {},
 ): Promise<Result> {
   if (!body || typeof body !== "object" || Array.isArray(body)) return rejected();
   const input = body as Record<string, unknown>;
   // Optional for older API clients; if present, it must be an empty string.
   if (input.website !== undefined && input.website !== "") return rejected();
   const token = input.captchaToken;
-  if (typeof token !== "string" || !token.trim() || token.length > 8192) {
-    return rejected();
-  }
-  const config = configuration(dependencies.env ?? process.env);
-  if (!config) return unavailable();
+  if (typeof token !== "string" || !token || token.length > 256) return rejected();
+  const key = signingKey(dependencies.env ?? process.env);
+  if (!key) return unavailable();
 
-  try {
-    const response = await (dependencies.fetch ?? fetch)(VALIDATE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ secret: config.secretKey, response: token }).toString(),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      cache: "no-store",
-      redirect: "error",
-    });
-    if (!response.ok) return unavailable();
-    const result: unknown = await response.json();
-    if (!result || typeof result !== "object" || Array.isArray(result)) return unavailable();
-    const data = result as Record<string, unknown>;
-    if (data.success === false) {
-      const errors = data["error-codes"];
-      if (Array.isArray(errors) && errors.some((code) =>
-        code === "missing-input-secret" || code === "invalid-input-secret" || code === "bad-request")) {
-        return unavailable();
-      }
-      return rejected();
-    }
-    if (data.success !== true || typeof data.hostname !== "string" || !data.hostname) {
-      return unavailable();
-    }
-    // This integration is v2 Checkbox only. In particular, never accept the
-    // legacy API's quota fallback (success=true with a score and error codes).
-    if (data.score !== undefined || data.action !== undefined ||
-        (data["error-codes"] !== undefined &&
-          (!Array.isArray(data["error-codes"]) || data["error-codes"].length > 0))) {
-      return unavailable();
-    }
-    if (!config.hosts.includes(data.hostname.toLowerCase())) {
-      return rejected();
-    }
-    // The provider rejects expired and already redeemed tokens (including races).
-    return { ok: true };
-  } catch {
-    // Never log tokens, secrets, or the provider's raw response.
-    return unavailable();
-  }
+  const parts = token.split(".");
+  if (parts.length !== 4 || parts[0] !== VERSION || !/^\d{1,15}$/.test(parts[1])) return rejected();
+  const expected = Buffer.from(sign(key, parts.slice(0, 3).join(".")));
+  const actual = Buffer.from(parts[3]);
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return rejected();
+
+  const age = (dependencies.now ?? Date.now()) - Number(parts[1]);
+  // The same server issues and checks the stamp, so there is no clock skew.
+  if (age < CHALLENGE_MIN_AGE_MS || age > CHALLENGE_MAX_AGE_MS) return rejected();
+  return { ok: true };
 }
 
 /**
- * Та же проверка «Я не робот» для заказа без входа (/order: оплата картой и
+ * Та же невидимая проверка для заказа без входа (/order: оплата картой и
  * счёт по ИНН). Ответ — текст ошибки для покупателя или null, если прошёл.
  *
- * Если сама проверка недоступна (Google не отвечает, ключи не заданы), заказ
- * пропускаем: живой покупатель не должен упереться в чужой сбой — для заказа
- * это хуже, чем редкий бот. Вошедших пользователей проверка не касается.
+ * Если сама проверка недоступна (ключ подписи не задан), заказ пропускаем:
+ * живой покупатель не должен упереться в сбой настройки. Вошедших
+ * пользователей проверка не касается.
  */
 export async function verifyGuestOrderChallenge(
   body: unknown,
-  dependencies: { env?: Environment; fetch?: typeof fetch } = {},
+  dependencies: Dependencies = {},
 ): Promise<{ status: 403; error: string } | null> {
   const result = await verifyRegistrationChallenge(body, dependencies);
   if (result.ok) return null;
@@ -124,5 +96,5 @@ export async function verifyGuestOrderChallenge(
     console.warn("[antibot] guest order challenge unavailable — order allowed");
     return null;
   }
-  return { status: 403, error: "Отметьте «Я не робот» ещё раз — проверка не пройдена или устарела." };
+  return { status: 403, error: "Не получилось отправить заказ. Обновите страницу и попробуйте ещё раз." };
 }

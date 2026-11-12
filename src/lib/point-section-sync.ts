@@ -133,11 +133,13 @@ export function hrefAfterPointSwitch(input: {
 }
 
 /**
- * «Назад» после автосмены на офис (2026-11-11): человек с точки зашёл в раздел
- * всей компании — выбор стал офисом, — и вернулся назад (стрелка страницы или
- * кнопка браузера). Возвращаем и точку, с которой он пришёл: иначе «назад»
- * приводит на ту же страницу, но уже про всю организацию. Только по истории:
- * переход по меню дальше — осознанный, точку не трогаем.
+ * Возврат точки после автосмены на офис. Человек с точки зашёл в раздел всей
+ * компании — выбор сам стал офисом, — и ушёл оттуда на страницу, где точка
+ * имеет смысл: возвращаем точку, с которой он пришёл. Сначала (2026-11-11)
+ * только по «назад», с 12.11.2026 — и по меню: иначе выбор тихо оставался
+ * офисом, и QR-плакаты, отчёты и журналы шли на всю организацию («переодически
+ * слетает выбранная точка»). Офис остаётся, только если его выбрали в шапке
+ * сами — ручной выбор забывает точку возврата (`forgetReturnPoint`).
  */
 export function pointReturnTarget(input: {
   pathname: string | null | undefined;
@@ -145,11 +147,9 @@ export function pointReturnTarget(input: {
   viewedPointId: string | null;
   /** Точка, с которой человека увела автосмена; null — возвращать нечего. */
   returnPointId: string | null;
-  /** Страница открыта переходом по истории («назад» / «вперёд»). */
-  viaHistory: boolean;
   pointIds: readonly string[];
 }): string | null {
-  if (!input.viaHistory || !input.returnPointId || input.viewedPointId !== null) return null;
+  if (!input.returnPointId || input.viewedPointId !== null) return null;
   if (!input.pointIds.includes(input.returnPointId)) return null;
   if (isCompanyWidePath(input.pathname) || pointPageId(input.pathname)) return null;
   return input.returnPointId;

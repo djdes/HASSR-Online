@@ -9,6 +9,7 @@
  */
 
 import type { Locale } from "@/i18n/locales";
+import { formatPhone, normalizePhone } from "@/lib/phone";
 
 export type BlankFormat = "pdf" | "docx";
 
@@ -40,6 +41,14 @@ export const BLANK_CONSENT_TEXT = BLANK_CONSENT_PARTS.map((part) => part.text).j
 
 /** `source` основного согласия в LegalConsent — оно же учёт скачиваний. */
 export const BLANK_CONSENT_SOURCE = "blank-download";
+
+/**
+ * `source` согласия с офертой и соглашением, когда кабинет создан галкой
+ * «Быстрая регистрация» в окне скачивания (спека
+ * blank-download-phone-autoreg-2026-11). Не путать с `BLANK_CONSENT_SOURCE`:
+ * по тому считаются скачивания.
+ */
+export const BLANK_REGISTER_CONSENT_SOURCE = "blank-register";
 
 /**
  * Необязательная галка «присылать материалы» в том же окне (спека
@@ -124,6 +133,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export const BLANK_COMPANY_MAX = 160;
 
+/**
+ * Телефон в окне скачивания: необязательный, для отправки шаблона в
+ * Telegram, MAX или СМС. Канонический вид — как у регистрации (`+7…`).
+ */
+const PHONE_DIGITS_MIN = 10;
+const PHONE_DIGITS_MAX = 15;
+
 /** Почта в каноническом виде или `null`, если это не адрес. */
 export function normalizeBlankEmail(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -137,6 +153,61 @@ export function normalizeBlankCompany(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const company = raw.replace(/\s+/g, " ").trim().slice(0, BLANK_COMPANY_MAX);
   return company || null;
+}
+
+/**
+ * Телефон в каноническом виде (`+79851234567`), `null` — если поле пустое.
+ * `undefined` — введено что-то, что номером не является (окно покажет
+ * ошибку, сервер отклонит запрос): пустое и неверное различаем, чтобы
+ * необязательное поле не отвергало пустой ввод.
+ */
+export function normalizeBlankPhone(raw: unknown): string | null | undefined {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== "string") return undefined;
+  // Кроме цифр — только то, чем номер оформляют: плюс, пробелы, скобки, дефисы.
+  if (/[^\d\s()+\-.]/.test(raw)) return undefined;
+  const digits = raw.replace(/\D+/g, "");
+  // Только подставленный префикс «+7 » — поле по сути пустое.
+  if (digits === "" || digits === "7") return null;
+  if (digits.length < PHONE_DIGITS_MIN || digits.length > PHONE_DIGITS_MAX) return undefined;
+  const phone = normalizePhone(raw);
+  if (!phone) return undefined;
+  // Российский номер — ровно 10 цифр после +7.
+  if (phone.startsWith("+7") && phone.length !== 12) return undefined;
+  return phone;
+}
+
+/** Номер для людей: `+7 985 123-45-67`. */
+export function displayBlankPhone(phone: string): string {
+  return formatPhone(phone);
+}
+
+/**
+ * Простая проверка от ботов, которую человек не видит (спека
+ * blank-download-phone-autoreg-2026-11):
+ *   • `website` — скрытое поле-ловушка, как у регистрации; человек его не
+ *     видит и не заполняет;
+ *   • `elapsedMs` — сколько окно было открыто до отправки. Почту, галку
+ *     согласия и кнопку человек не успевает пройти быстрее 1,5 с.
+ * Скачивание по запомненной почте окна не показывает — время не меряем.
+ */
+export const BLANK_BOT_MIN_ELAPSED_MS = 1500;
+
+export type BlankBotVerdict = "ok" | "honeypot" | "too_fast";
+
+export function blankBotVerdict(params: {
+  website?: unknown;
+  elapsedMs?: unknown;
+  remembered?: boolean;
+}): BlankBotVerdict {
+  if (typeof params.website === "string" && params.website.trim() !== "") return "honeypot";
+  if (params.website !== undefined && typeof params.website !== "string") return "honeypot";
+  if (params.remembered) return "ok";
+  const elapsed = params.elapsedMs;
+  if (typeof elapsed !== "number" || !Number.isFinite(elapsed) || elapsed < BLANK_BOT_MIN_ELAPSED_MS) {
+    return "too_fast";
+  }
+  return "ok";
 }
 
 /** Стабильный ключ цели: `code:hygiene`, `paper:ot_intro`. */
@@ -214,7 +285,7 @@ export function blankSignupPlace(journal: string | null | undefined): string {
 }
 
 /** Что браузер помнит после первого скачивания. */
-export type RememberedBlankEmail = { email: string; consentVersion: string; company?: string };
+export type RememberedBlankEmail = { email: string; consentVersion: string; company?: string; phone?: string };
 
 export function readRememberedBlankEmail(raw: string | null | undefined): RememberedBlankEmail | null {
   if (!raw) return null;
@@ -223,10 +294,12 @@ export function readRememberedBlankEmail(raw: string | null | undefined): Rememb
     const email = normalizeBlankEmail(value.email);
     if (!email || typeof value.consentVersion !== "string" || !value.consentVersion) return null;
     const company = normalizeBlankCompany(value.company);
+    const phone = normalizeBlankPhone(value.phone);
     return {
       email,
       consentVersion: value.consentVersion.slice(0, 32),
       ...(company ? { company } : {}),
+      ...(phone ? { phone } : {}),
     };
   } catch {
     return null;
@@ -236,10 +309,12 @@ export function readRememberedBlankEmail(raw: string | null | undefined): Rememb
 /**
  * Отправлять ли уведомление в Telegram о скачивании шаблона: только на первое
  * скачивание пользователя (по почте или userId), чтобы пакетное скачивание
- * нескольких журналов одним человеком не спамило чат продаж.
+ * нескольких журналов одним человеком не спамило чат продаж. Кабинет,
+ * созданный галкой «Быстрая регистрация», — повод написать всегда: продажи
+ * должны узнать о новом клиенте, даже если шаблоны он качал и раньше.
  */
-export function shouldNotifyBlankDownloadAdmin(previousDownloadsCount: number): boolean {
-  return previousDownloadsCount === 0;
+export function shouldNotifyBlankDownloadAdmin(previousDownloadsCount: number, accountCreated = false): boolean {
+  return accountCreated || previousDownloadsCount === 0;
 }
 
 /** Текст уведомления в Telegram-бот при скачивании шаблона журнала. */
@@ -247,7 +322,11 @@ export function buildBlankDownloadAdminText(params: {
   title: string;
   format: BlankFormat;
   email: string;
+  /** Телефон из окна (канонический `+7…`) — сразу после почты. */
+  phone?: string | null;
   company?: string | null;
+  /** Кабинет создан галкой «Быстрая регистрация». */
+  accountCreated?: boolean;
   escape: (value: string) => string;
 }): string {
   const esc = params.escape;
@@ -255,6 +334,8 @@ export function buildBlankDownloadAdminText(params: {
     "📥 Скачивание шаблона журнала",
     `Журнал: ${esc(params.title)} (${esc(BLANK_FORMAT_LABEL[params.format])})`,
     `Почта: ${esc(params.email)}`,
+    ...(params.phone ? [`Телефон: ${esc(displayBlankPhone(params.phone))}`] : []),
     ...(params.company ? [`Организация: ${esc(params.company)}`] : []),
+    ...(params.accountCreated ? ["✅ Быстрая регистрация: кабинет создан, доступ отправлен на почту"] : []),
   ].join("\n");
 }

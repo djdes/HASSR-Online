@@ -2673,9 +2673,6 @@ export type MessageContract = {
       "consentSentence": "Я принимаю <offer>оферту</offer> и <terms>пользовательское соглашение</terms>, ознакомлен с <privacy>политикой конфиденциальности</privacy> и даю <consent>согласие на обработку персональных данных</consent>."
     },
     "challenge": {
-      "loading": "Загружаем проверку…",
-      "failed": "Не удалось пройти проверку. Попробуйте ещё раз.",
-      "retry": "Повторить проверку",
       "websiteLabel": "Ваш сайт"
     },
     "metadata": {
@@ -2725,6 +2722,32 @@ export type MessageContract = {
       "applySuggestion": "Исправить на {suggestion}",
       "domainMissing": "Такого почтового домена не существует. Проверьте адрес: письмо со ссылкой для входа туда не дойдёт.",
       "domainChecking": "Проверяем домен…"
+    },
+    "badges": {
+      "title": "Журналы по требованиям пищевой безопасности",
+      "haccp": {
+        "top": "АНАЛИЗ РИСКОВ",
+        "bottom": "КРИТИЧЕСКИЕ ТОЧКИ",
+        "center": "ХАССП"
+      },
+      "sanpin": {
+        "top": "САНИТАРНЫЕ ПРАВИЛА",
+        "bottom": "2.3/2.4.3590-20",
+        "center": "СанПиН"
+      },
+      "trts": {
+        "top": "БЕЗОПАСНОСТЬ ПИЩЕВОЙ",
+        "bottom": "ПРОДУКЦИИ",
+        "center": "ТР ТС"
+      },
+      "food": {
+        "top": "ПИЩЕВОЕ ПРОИЗВОДСТВО",
+        "bottom": "ОБЩЕПИТ · ТОРГОВЛЯ"
+      },
+      "forms": "Формы журналов — по ХАССП и СанПиН",
+      "catering": "Общепит",
+      "production": "Пищевые цеха",
+      "retail": "Склады и торговля"
     }
   },
   "journalDescriptions": {
@@ -3600,9 +3623,32 @@ export type MessageContract = {
       "title": "Аккаунт создан",
       "greeting": "Здравствуйте!",
       "createdNotice": "Аккаунт создан, вы уже вошли в кабинет. Сохраните данные для входа с других устройств:",
+      "blankCreatedNotice": "Вы скачали шаблон с галкой «Быстрая регистрация» — кабинет уже создан. Войдите по кнопке без пароля или с этими данными:",
       "loginLabel": "Логин:",
       "passwordLabel": "Пароль:",
       "openCabinetAction": "Открыть кабинет",
+      "autoLoginAction": "Войти в кабинет",
+      "autoLoginNotice": "Кнопка входит без пароля и работает один раз в течение {days, number} {days, plural, one {дня} few {дней} many {дней} other {дня}}. Потом — вход по логину и паролю.",
+      "benefitsTitle": "Что даёт WeSetup",
+      "benefits": {
+        "qr": {
+          "title": "Журналы с телефона",
+          "text": "сотрудник сканирует QR-код у оборудования, и запись встаёт в журнал по форме СанПиН и ХАССП."
+        },
+        "reminders": {
+          "title": "Напоминания",
+          "text": "если запись пропущена или температура вне нормы, ответственному придёт сообщение в Telegram и на почту."
+        },
+        "autofill": {
+          "title": "Данные приходят сами",
+          "text": "температура с датчиков и фото табло, приёмка из накладных."
+        },
+        "inspection": {
+          "title": "PDF для проверки",
+          "text": "все записи за нужный период для инспектора в один клик."
+        }
+      },
+      "trial": "{trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} — все журналы без ограничений и без карты.",
       "nextSteps": "Пароль можно сменить в настройках профиля. В кабинете осталось заполнить данные организации — они попадут в шапку журналов и PDF для проверок."
     },
     "welcome": {
@@ -19675,9 +19721,18 @@ export type MessageContract = {
     "company": {
       "placeholder": "Название компании или ИП (в шапку журнала)"
     },
+    "phone": {
+      "label": "Телефон",
+      "channels": "Пришлём шаблон в Telegram, MAX или СМС",
+      "invalid": "Проверьте номер телефона."
+    },
     "consent": {
       "statement": "Даю <consent>согласие на обработку персональных данных</consent> и ознакомлен с <privacy>политикой конфиденциальности</privacy>",
       "required": "Отметьте согласие — без него шаблон не отправить."
+    },
+    "register": {
+      "statement": "<lead>Быстрая регистрация</lead> — полный доступ к WeSetup на {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}}",
+      "terms": "Принимаю <offer>оферту</offer> и <terms>соглашение</terms>"
     },
     "marketing": {
       "statement": "<lead>Присылать полезные материалы и новости WeSetup</lead>. <note>Согласие можно отозвать в любой момент.</note>"
@@ -19685,7 +19740,7 @@ export type MessageContract = {
     "form": {
       "sending": "Готовим шаблон…",
       "submit": "Скачать {format}",
-      "registrationNotRequired": "Регистрация не нужна."
+      "websiteLabel": "Ваш сайт"
     },
     "done": {
       "heading": "Шаблон скачивается",
@@ -19696,7 +19751,12 @@ export type MessageContract = {
       "paperlessTitle": "«{title}» можно не печатать",
       "paperlessBody": "В WeSetup журнал заполняют с телефона по QR — так же, как на шаблоне. С напоминаниями, если смена забыла отметиться.",
       "paperlessAction": "Вести с телефона бесплатно",
-      "emailWrong": "Не та почта?"
+      "emailWrong": "Не та почта?",
+      "accountCreatedTitle": "Кабинет WeSetup готов",
+      "accountCreatedBody": "Логин, пароль и ссылка для входа — в письме на <email>{address}</email>.",
+      "accountExistsTitle": "У вас уже есть кабинет WeSetup",
+      "accountExistsBody": "Войдите — «{title}» можно вести с телефона.",
+      "signIn": "Войти"
     },
     "notice": {
       "sending": "Готовим шаблон…",
@@ -19710,6 +19770,8 @@ export type MessageContract = {
       "consentRequired": "Отметьте согласие на обработку персональных данных.",
       "invalidRequest": "Не удалось подготовить шаблон. Попробуйте ещё раз.",
       "invalidEmail": "Укажите корректный адрес электронной почты.",
+      "invalidPhone": "Проверьте номер телефона.",
+      "tooFast": "Не получилось отправить форму. Обновите страницу и попробуйте ещё раз.",
       "targetRequired": "Не выбран шаблон для скачивания.",
       "targetNotFound": "Такого шаблона нет.",
       "formatUnsupported": "Этот шаблон доступен только в PDF.",

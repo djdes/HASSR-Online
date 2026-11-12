@@ -2672,9 +2672,6 @@
       "consentSentence": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>, have read the <privacy>Privacy Policy</privacy>, and give my <consent>consent to the processing of personal data</consent>."
     },
     "challenge": {
-      "loading": "Loading verification…",
-      "failed": "Verification failed. Please try again.",
-      "retry": "Try verification again",
       "websiteLabel": "Your website"
     },
     "metadata": {
@@ -2724,6 +2721,32 @@
       "applySuggestion": "Use {suggestion}",
       "domainMissing": "This email domain does not appear to exist. Check the address; a sign-in email will not reach it.",
       "domainChecking": "Checking the domain…"
+    },
+    "badges": {
+      "title": "Logs built on food safety requirements",
+      "haccp": {
+        "top": "HAZARD ANALYSIS",
+        "bottom": "CRITICAL CONTROL POINTS",
+        "center": "HACCP"
+      },
+      "sanpin": {
+        "top": "SANITARY RULES",
+        "bottom": "2.3/2.4.3590-20",
+        "center": "SanPiN"
+      },
+      "trts": {
+        "top": "FOOD PRODUCT SAFETY",
+        "bottom": "CU TECH. REGULATION",
+        "center": "TR CU"
+      },
+      "food": {
+        "top": "FOOD PRODUCTION",
+        "bottom": "CATERING · RETAIL"
+      },
+      "forms": "Log forms follow HACCP and SanPiN",
+      "catering": "Catering",
+      "production": "Food production",
+      "retail": "Warehouses and retail"
     }
   },
   "journalDescriptions": {
@@ -3599,9 +3622,32 @@
       "title": "Account created",
       "greeting": "Hello!",
       "createdNotice": "Your account is ready and you’re signed in. Save these details to sign in on other devices:",
+      "blankCreatedNotice": "You downloaded a template with “Quick sign-up” checked, so your workspace is ready. Sign in with the button, no password needed, or use these details:",
       "loginLabel": "Email:",
       "passwordLabel": "Password:",
       "openCabinetAction": "Open workspace",
+      "autoLoginAction": "Sign in to your workspace",
+      "autoLoginNotice": "The button signs you in without a password and works once within {days, number} {days, plural, one {day} other {days}}. After that, sign in with your email and password.",
+      "benefitsTitle": "What WeSetup gives you",
+      "benefits": {
+        "qr": {
+          "title": "Logs on a phone",
+          "text": "staff scan the QR code on the equipment and the entry goes into the log in the SanPiN and HACCP format."
+        },
+        "reminders": {
+          "title": "Reminders",
+          "text": "if an entry is missed or a temperature is out of range, the person responsible gets a Telegram message and an email."
+        },
+        "autofill": {
+          "title": "Data comes in by itself",
+          "text": "temperatures from sensors and display photos, acceptance from invoices."
+        },
+        "inspection": {
+          "title": "Inspection-ready PDFs",
+          "text": "all records for the requested period for the inspector in one click."
+        }
+      },
+      "trial": "{trialDays, number} {trialDays, plural, one {day} other {days}} — all logs without limits and no card required.",
       "nextSteps": "You can change your password in your profile settings. Add your organization details in the workspace so they appear on log headers and inspection PDFs."
     },
     "welcome": {
@@ -19674,9 +19720,18 @@
     "company": {
       "placeholder": "Company name for the log header (optional)"
     },
+    "phone": {
+      "label": "Phone",
+      "channels": "We’ll send the template via Telegram, MAX or SMS",
+      "invalid": "Check the phone number."
+    },
     "consent": {
       "statement": "I give <consent>consent to the processing of my personal data</consent> and have read the <privacy>Privacy Policy</privacy>.",
       "required": "Please check the consent box. We cannot send the template without it."
+    },
+    "register": {
+      "statement": "<lead>Quick sign-up</lead> — full access to WeSetup for {trialDays, number} {trialDays, plural, one {day} other {days}}",
+      "terms": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>"
     },
     "marketing": {
       "statement": "<lead>Send me useful materials and WeSetup news</lead>. <note>I can withdraw my consent at any time.</note>"
@@ -19684,7 +19739,7 @@
     "form": {
       "sending": "Preparing your template…",
       "submit": "Download {format}",
-      "registrationNotRequired": "Registration is not required."
+      "websiteLabel": "Your website"
     },
     "done": {
       "heading": "Your template is downloading",
@@ -19695,7 +19750,12 @@
       "paperlessTitle": "You can use “{title}” without printing it",
       "paperlessBody": "With WeSetup, staff fill in the log on a phone using a QR code, just as they would use this template. Reminders help when a shift forgets to record a check.",
       "paperlessAction": "Use it on your phone for free",
-      "emailWrong": "Wrong email address?"
+      "emailWrong": "Wrong email address?",
+      "accountCreatedTitle": "Your WeSetup workspace is ready",
+      "accountCreatedBody": "Your login, password and sign-in link are in the email sent to <email>{address}</email>.",
+      "accountExistsTitle": "You already have a WeSetup workspace",
+      "accountExistsBody": "Sign in to keep “{title}” on your phone.",
+      "signIn": "Sign in"
     },
     "notice": {
       "sending": "Preparing your template…",
@@ -19709,6 +19769,8 @@
       "consentRequired": "Please consent to the processing of your personal data.",
       "invalidRequest": "We could not prepare the template. Please try again.",
       "invalidEmail": "Enter a valid email address.",
+      "invalidPhone": "Check the phone number.",
+      "tooFast": "We could not send the form. Refresh the page and try again.",
       "targetRequired": "No template was selected for download.",
       "targetNotFound": "This template was not found.",
       "formatUnsupported": "This template is available as a PDF only.",

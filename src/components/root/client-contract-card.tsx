@@ -608,6 +608,7 @@ function PricingEditor({
           <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t("pricing.points")}</span>
           <input
             type="number"
+            inputMode="numeric"
             min={1}
             max={500}
             value={value.points}
@@ -620,6 +621,7 @@ function PricingEditor({
           <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t("pricing.discount")}</span>
           <input
             type="number"
+            inputMode="decimal"
             min={0}
             max={100}
             step="0.5"

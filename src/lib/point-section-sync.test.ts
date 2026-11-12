@@ -89,11 +89,12 @@ test("после автосмены правило успокаивается: �
   assert.equal(pointSyncAction({ ...base, pathname: "/settings/buildings/p2", viewedPointId: "p2" }), null);
 });
 
-test("«назад» из раздела компании возвращает и точку, с которой пришли", () => {
-  const back = { pathname: "/dashboard", viewedPointId: null, returnPointId: "p1", viaHistory: true, pointIds: ["p1", "p2"] };
+test("ушли из раздела компании — точка, с которой пришли, возвращается", () => {
+  const back = { pathname: "/dashboard", viewedPointId: null, returnPointId: "p1", pointIds: ["p1", "p2"] };
   assert.equal(pointReturnTarget(back), "p1");
-  // Переход по меню дальше — осознанный: точку не возвращаем.
-  assert.equal(pointReturnTarget({ ...back, viaHistory: false }), null);
+  // И по меню, а не только «назад» (12.11.2026: после «Подписок» QR-плакаты печатались на всю
+  // организацию — точка тихо оставалась офисом). Офис остаётся, только если его выбрали в шапке сами.
+  assert.equal(pointReturnTarget({ ...back, pathname: "/settings/qr-posters" }), "p1");
   // Вернулись на другую страницу компании или главную без запомненной точки — нечего возвращать.
   assert.equal(pointReturnTarget({ ...back, pathname: "/settings/subscription" }), null);
   assert.equal(pointReturnTarget({ ...back, returnPointId: null }), null);
