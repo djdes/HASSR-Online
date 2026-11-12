@@ -31038,7 +31038,7 @@
     },
     "requisites": {
       "title": "Shartnomadagi mijoz rekvizitlari",
-      "hint": "O‘zgarishlar faqat shu shartnomaga tushadi — mijoz kartochkasi o‘zgarmaydi. Bo‘sh maydon — qo‘lda to‘ldirish uchun chiziq.",
+      "hint": "Tuzatishlar o'zi saqlanadi va faqat shartnomaga tushadi — mijoz kartochkasi o'zgarmaydi. Bo'sh maydon — qo'lda to'ldirish uchun chiziq.",
       "reset": "Mijoz ma’lumotlarini qaytarish",
       "nameFull": "To‘liq nomi",
       "nameFullIndividual": "Nomi: YaTT va to‘liq FIO",
@@ -31055,7 +31055,12 @@
       "bankBik": "BIK",
       "bankAccount": "Hisob raqami",
       "bankCorrAccount": "Korr. hisob",
-      "optionalNote": "Telefon va haqiqiy manzil faqat to‘ldirilgan bo‘lsa shartnomaga tushadi."
+      "optionalNote": "Telefon va haqiqiy manzil faqat to‘ldirilgan bo‘lsa shartnomaga tushadi.",
+      "draft": {
+        "saving": "Saqlanmoqda…",
+        "saved": "Saqlandi — ma'lumotlar qayta yuklashdan keyin ham qoladi",
+        "error": "Saqlab bo'lmadi — aloqani tekshiring; tuzatishlar hozircha faqat shu sahifada"
+      }
     },
     "text": {
       "title": "Shartnoma matni",

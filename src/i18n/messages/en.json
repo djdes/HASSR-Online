@@ -31038,7 +31038,7 @@
     },
     "requisites": {
       "title": "Client details in the contract",
-      "hint": "Changes go into this contract only — the client card stays the same. An empty field becomes a line to fill in by hand.",
+      "hint": "Edits save automatically and go only into the contract — the client card does not change. An empty field becomes a line to fill in by hand.",
       "reset": "Restore client data",
       "nameFull": "Full name",
       "nameFullIndividual": "Name: sole trader and full name",
@@ -31055,7 +31055,12 @@
       "bankBik": "BIC",
       "bankAccount": "Settlement account",
       "bankCorrAccount": "Correspondent account",
-      "optionalNote": "Phone and actual address appear in the contract only when filled in."
+      "optionalNote": "Phone and actual address appear in the contract only when filled in.",
+      "draft": {
+        "saving": "Saving…",
+        "saved": "Saved — the data stays after reloading",
+        "error": "Could not save — check the connection; the edits are only on this page for now"
+      }
     },
     "text": {
       "title": "Contract text",

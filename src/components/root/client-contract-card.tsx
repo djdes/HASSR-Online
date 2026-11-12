@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -130,12 +130,52 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
   const locale = useLocale();
   const [ctx, setCtx] = useState(initial);
   const [form, setForm] = useState<ContractIssueInput & { buyer: ContractBuyerInput; pricing: ContractPricingInput }>(initial.defaults);
-  const [textDraft, setTextDraft] = useState<TextDraft | null>(null);
+  const [textDraft, setTextDraft] = useState<TextDraft | null>(() =>
+    initial.draftText ? initial.draftText.map((section) => ({ id: ++draftSeq, title: section.title, text: section.text })) : null,
+  );
   const [busy, setBusy] = useState<null | "preview" | "previewDocx" | "issue" | "refresh">(null);
   const [sendTarget, setSendTarget] = useState<ContractListItem | null>(null);
   const [voidTarget, setVoidTarget] = useState<ContractListItem | null>(null);
   const [voiding, setVoiding] = useState(false);
   const base = `/api/root/organizations/${ctx.organizationId}/contracts`;
+
+  // Автосохранение формы (12.11.2026): реквизиты, тариф и свой текст не теряются
+  // после перезагрузки — черновик в `Organization.contractDraftJson`.
+  const [draftState, setDraftState] = useState<"idle" | "saving" | "saved" | "error">(initial.draftSaved ? "saved" : "idle");
+  const draftBody = useMemo(
+    () => JSON.stringify({ form, text: textDraft ? textDraft.map(({ title, text }) => ({ title, text })) : null }),
+    [form, textDraft],
+  );
+  const savedBody = useRef(draftBody);
+  const latestBody = useRef(draftBody);
+  latestBody.current = draftBody;
+  useEffect(() => {
+    if (draftBody === savedBody.current) return;
+    setDraftState("saving");
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`${base}/draft`, { method: "POST", headers: { "Content-Type": "application/json" }, body: draftBody });
+        if (response.ok) savedBody.current = draftBody;
+        setDraftState(response.ok ? "saved" : "error");
+      } catch {
+        setDraftState("error");
+      }
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [draftBody, base]);
+  // Закрыли вкладку раньше, чем сработал таймер, — дописываем последнее.
+  useEffect(() => {
+    const flush = () => {
+      if (latestBody.current === savedBody.current) return;
+      try {
+        navigator.sendBeacon(`${base}/draft`, new Blob([latestBody.current], { type: "application/json" }));
+      } catch {
+        /* без beacon — остаётся сохранённое по таймеру */
+      }
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [base]);
   const individual = buyerKindFromInput(form.buyer.inn, ctx.buyer.kind) === "individual";
 
   // Чек-лист клиента — по тому, что сейчас в форме (реквизиты правятся тут же).
@@ -389,7 +429,8 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
           value={form.buyer}
           individual={individual}
           onChange={updateBuyer}
-          onReset={() => setForm((prev) => ({ ...prev, buyer: ctx.defaults.buyer }))}
+          onReset={() => setForm((prev) => ({ ...prev, buyer: ctx.clientBuyer }))}
+          draftState={draftState}
         />
 
         <ContractTextEditor
@@ -656,12 +697,14 @@ function BuyerRequisitesEditor({
   individual,
   onChange,
   onReset,
+  draftState,
 }: {
   t: Translator;
   value: ContractBuyerInput;
   individual: boolean;
   onChange: (key: keyof ContractBuyerInput, value: string) => void;
   onReset: () => void;
+  draftState: "idle" | "saving" | "saved" | "error";
 }) {
   return (
     <div className="mt-5 rounded-2xl border border-[#ececf4] bg-white p-4" data-testid="contract-buyer-requisites">
@@ -669,6 +712,15 @@ function BuyerRequisitesEditor({
         <div className="min-w-0">
           <div className="text-[14px] font-semibold text-[#0b1024]">{t("requisites.title")}</div>
           <p className="mt-0.5 max-w-[640px] text-[12.5px] text-[#6f7282]">{t("requisites.hint")}</p>
+          {draftState === "idle" ? null : (
+            <p
+              className={`mt-1 text-[12px] font-medium ${draftState === "error" ? "text-[#a13a32]" : draftState === "saved" ? "text-[#116b2a]" : "text-[#6f7282]"}`}
+              data-testid="contract-draft-state"
+              aria-live="polite"
+            >
+              {t(`requisites.draft.${draftState}`)}
+            </p>
+          )}
         </div>
         <button type="button" onClick={onReset} className={SMALL}>
           <RotateCcw className="size-3.5 text-[#5566f6]" />

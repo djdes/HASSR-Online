@@ -7,6 +7,7 @@ import { DOCUMENT_ORG_SELECT } from "@/lib/document-org-block";
 import { isValidInn } from "@/lib/inn";
 
 import { applyBuyerInput, buyerInputFrom, type ContractBuyerInput } from "./buyer-form";
+import { mergeContractDraft, type ContractDraftText } from "./draft";
 import { BLANK_SHORT, clean, parseContractDate, todayInMoscow } from "./format";
 import { formatContractNumber, pickContractSeq } from "./numbering";
 import { clampDiscount, defaultContractPricing } from "./pricing";
@@ -91,6 +92,7 @@ const ORG_SELECT = {
   id: true,
   accountantEmail: true,
   legalProfileUpdatedAt: true,
+  contractDraftJson: true,
   account: { select: { owner: { select: { id: true, name: true, email: true, contactEmail: true } } } },
 } as const;
 
@@ -143,6 +145,12 @@ export type ContractContext = {
   planRates: ContractPricing["rates"];
   /** Стандартный текст (без раздела реквизитов) — исходник редактора «свой текст». */
   templateSections: ContractCustomSection[];
+  /** Текст договора из черновика (если его правили и не выпустили). */
+  draftText: ContractDraftText | null;
+  /** Форма подставлена из сохранённого черновика. */
+  draftSaved: boolean;
+  /** Реквизиты из карточки клиента — для «Вернуть данные клиента» (черновик их не трогает). */
+  clientBuyer: ContractBuyerInput;
   recipients: ContractRecipient[];
   contracts: ContractListItem[];
   templateVersion: string;
@@ -175,6 +183,21 @@ export async function listClientContracts(organizationId: string): Promise<Contr
 }
 
 /** Всё для карточки на странице организации: готовность, значения формы, получатели, история. */
+/** Значения формы: из карточки, поверх — сохранённый черновик. */
+function draftDefaults(raw: unknown, defaults: ContractContext["defaults"]): Pick<ContractContext, "defaults" | "draftText" | "draftSaved"> {
+  const merged = mergeContractDraft(defaults, raw);
+  return { defaults: merged.form, draftText: merged.text, draftSaved: merged.saved };
+}
+
+/** Сохранить черновик формы (как есть) или стереть (`null`). */
+export async function saveContractDraft(organizationId: string, draft: { form: unknown; text: unknown } | null): Promise<void> {
+  await db.organization.update({
+    where: { id: organizationId },
+    data: { contractDraftJson: draft === null ? Prisma.DbNull : (draft as Prisma.InputJsonValue) },
+    select: { id: true },
+  });
+}
+
 export async function loadContractContext(organizationId: string): Promise<ContractContext> {
   const [org, requisites, planPricing] = await Promise.all([loadOrg(organizationId), readPlatformRequisites(), readPlanPricing()]);
   const owner = await ownerOf(org);
@@ -206,7 +229,7 @@ export async function loadContractContext(organizationId: string): Promise<Contr
       profileUpdatedAt: org.legalProfileUpdatedAt?.toISOString() ?? null,
       canRefreshRegistry: Boolean(buyer.inn && isValidInn(buyer.inn)),
     },
-    defaults: {
+    ...draftDefaults(org.contractDraftJson, {
       date: todayInMoscow(),
       city: defaultContractCity(seller),
       signerName: params.signerName,
@@ -217,7 +240,8 @@ export async function loadContractContext(organizationId: string): Promise<Contr
       buyer: buyerInputFrom(buyer),
       customSections: null,
       pricing: { tier: "premium", cycle: "month", points: 1, discountPercent: 0 },
-    },
+    }),
+    clientBuyer: buyerInputFrom(buyer),
     planRates: planPricing.rates,
     templateSections: contractTemplateSections(seller, todayInMoscow(), true),
     recipients,
