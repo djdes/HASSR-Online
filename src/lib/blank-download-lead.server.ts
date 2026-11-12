@@ -202,6 +202,8 @@ export async function recordBlankDownloadLead(params: {
   consentId: string;
   createdAt: Date;
   email: string;
+  /** Телефон из окна скачивания (канонический `+7…`). */
+  phone?: string | null;
   company?: string | null;
   target: BlankTarget;
   title: string | null;
@@ -224,6 +226,7 @@ export async function recordBlankDownloadLead(params: {
     createdAt: params.createdAt,
     title: params.title,
     company,
+    phone: params.phone ?? null,
   });
 
   const settled = await Promise.allSettled([
@@ -231,6 +234,7 @@ export async function recordBlankDownloadLead(params: {
     upsertPdfLeadMarketingContact({
       email: params.email,
       company,
+      phone: params.phone ?? null,
       marketingConsent: params.marketing,
       source: BLANK_MAILING_SOURCE,
       basis: BLANK_MAILING_BASIS_CONSENT,

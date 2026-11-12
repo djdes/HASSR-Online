@@ -27,7 +27,7 @@ describe("страница «Безопасность и данные»", () => 
     assert.match(page, /AES-256-GCM/);
     assert.match(read("src/lib/integration-crypto.ts"), /const ALGORITHM = "aes-256-gcm";/);
     assert.match(page, /хэши \(bcrypt\)/);
-    assert.match(read("src/app/api/auth/instant-register/route.ts"), /bcrypt\.hash\(password, 12\)/);
+    assert.match(read("src/lib/instant-account.server.ts"), /bcrypt\.hash\(password, 12\)/);
     assert.match(page, /кодом в\s+Telegram/);
     assert.match(read("src/app/api/security/two-factor/route.ts"), /twoFactorTelegram: body\.enabled/);
     assert.match(page, new RegExp(`«Настройки → ${ru.settingsManagement.security.title}»`));

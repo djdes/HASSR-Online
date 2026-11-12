@@ -242,7 +242,7 @@ describe("blank-download-lead: сохранение контактов при з
     );
     assert.match(blankRoute, /await\s+ensurePlatformOrganization\(/);
     assert.match(blankRoute, /await\s+recordBlankDownloadLead\(/);
-    assert.match(blankRoute, /shouldNotifyBlankDownloadAdmin\(previousDownloadsCount\s*\+\s*alreadyNotifiedCount\)/);
+    assert.match(blankRoute, /shouldNotifyBlankDownloadAdmin\(previousDownloadsCount\s*\+\s*alreadyNotifiedCount,\s*accountCreated\)/);
     assert.match(blankRoute, /const\s+dedupeKey\s*=\s*`blank_download:\$\{email\}`/);
 
     const invoiceService = readFileSync(

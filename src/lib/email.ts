@@ -394,31 +394,80 @@ export async function sendInviteEmail(params: {
   return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", t("email.inviteWithPassword.title"), body, brand));
 }
 /**
- * Письмо после мгновенной регистрации с лендинга.
+ * Преимущества платформы в письме после быстрой регистрации — коротко, по
+ * одному предложению: что человек получает в первые дни пробного срока.
+ * Порядок — как на лендинге (QR → напоминания → автозаполнение → PDF).
+ */
+export const ACCOUNT_BENEFITS = ["qr", "reminders", "autofill", "inspection"] as const;
+
+/**
+ * Письмо после быстрой регистрации — общее для всех мест, где кабинет
+ * заводится «по почте»: лендинг (`via: "landing"`, человек уже вошёл) и
+ * галка «Быстрая регистрация» в окне скачивания шаблона (`via: "blank"`,
+ * вход — по одноразовой ссылке `autoLoginUrl`).
  *
  * Пароль генерируется за пользователя и существует только здесь — в
  * интерфейсе он нигде не показывается, поэтому письмо критично: без
  * него человек не сможет войти со второго устройства. Отправляется
- * fire-and-forget, вход при этом уже произошёл.
+ * fire-and-forget, регистрация от него не зависит.
+ *
+ * Сборка отделена от отправки ради тестов: письмо проверяется целиком,
+ * без SMTP.
  */
+export async function renderAccountPasswordEmail(params: {
+  to: string;
+  password: string;
+  locale?: Locale;
+  brand?: EmailBrand | null;
+  via?: "landing" | "blank";
+  /** Одноразовая ссылка входа без пароля (`/api/auth/magic/<токен>`). */
+  autoLoginUrl?: string | null;
+  /** Сколько дней работает ссылка входа — в подписи под кнопкой. */
+  autoLoginDays?: number;
+}): Promise<{ subject: string; html: string }> {
+  const { to, password } = params;
+  const locale = params.locale ?? "ru";
+  const t = await translatorFor(locale);
+  const subject = t("email.accountPassword.subject");
+  const autoLoginUrl = params.autoLoginUrl?.trim() || null;
+  const notice = params.via === "blank"
+    ? t("email.accountPassword.blankCreatedNotice")
+    : t("email.accountPassword.createdNotice");
+  const action = autoLoginUrl
+    ? `<a href="${escapeHtml(autoLoginUrl)}" data-auto-login style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:600;font-size:15px">${escapeHtml(t("email.accountPassword.autoLoginAction"))}</a>` +
+      `<p style="margin:10px 0 0;color:#71717a;font-size:12.5px;line-height:1.5">${escapeHtml(t("email.accountPassword.autoLoginNotice", { days: params.autoLoginDays ?? 7 }))}</p>`
+    : `<a href="${escapeHtml(APP_URL + "/dashboard")}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.accountPassword.openCabinetAction")}</a>`;
+  const benefits = ACCOUNT_BENEFITS.map((id) => `<tr>
+      <td width="22" valign="top" style="padding:0 0 10px;width:22px;color:#5566f6;font-size:15px;line-height:1.5">&#10003;</td>
+      <td valign="top" style="padding:0 0 10px;font-size:14px;line-height:1.5;color:#3c4053"><strong style="color:#0b1024">${escapeHtml(t(`email.accountPassword.benefits.${id}.title`))}</strong> — ${escapeHtml(t(`email.accountPassword.benefits.${id}.text`))}</td>
+    </tr>`).join("");
+  const body = [
+    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.accountPassword.greeting")}</p>`,
+    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${escapeHtml(notice)}</p>`,
+    `<div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px"><p style="margin:0 0 4px;color:#18181b"><strong>${t("email.accountPassword.loginLabel")}</strong> ${escapeHtml(to)}</p><p style="margin:0;color:#18181b"><strong>${t("email.accountPassword.passwordLabel")}</strong> <span style="font-family:monospace;font-size:16px;letter-spacing:1px">${escapeHtml(password)}</span></p></div>`,
+    action,
+    `<div data-account-benefits style="background:#fafbff;border:1px solid #ececf4;border-radius:16px;padding:20px 20px 10px;margin:28px 0 0">`,
+    `<p style="margin:0 0 14px;font-size:16px;font-weight:600;color:#0b1024">${escapeHtml(t("email.accountPassword.benefitsTitle"))}</p>`,
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${benefits}</table>`,
+    `<p style="margin:4px 0 10px;font-size:14px;line-height:1.5;color:#0b1024;font-weight:600">${escapeHtml(t("email.accountPassword.trial", { trialDays: TRIAL_DAYS }))}</p>`,
+    `</div>`,
+    `<p style="margin:24px 0 0;color:#71717a;font-size:13px">${t("email.accountPassword.nextSteps")}</p>`,
+  ].join("");
+  return { subject, html: localizedLayout(t, locale, t("email.accountPassword.title"), body, params.brand) };
+}
+
 export async function sendAccountPasswordEmail(params: {
   to: string;
   password: string;
   organizationId?: string | null;
   locale?: Locale;
+  via?: "landing" | "blank";
+  autoLoginUrl?: string | null;
+  autoLoginDays?: number;
 }) {
-  const { to, password, organizationId } = params;
-  const t = await translatorFor(params.locale ?? "ru");
-  const brand = await emailBrandForOrganization(organizationId);
-  const subject = t("email.accountPassword.subject");
-  const body = [
-    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.accountPassword.greeting")}</p>`,
-    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.accountPassword.createdNotice")}</p>`,
-    `<div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px"><p style="margin:0 0 4px;color:#18181b"><strong>${t("email.accountPassword.loginLabel")}</strong> ${escapeHtml(to)}</p><p style="margin:0;color:#18181b"><strong>${t("email.accountPassword.passwordLabel")}</strong> <span style="font-family:monospace;font-size:16px;letter-spacing:1px">${escapeHtml(password)}</span></p></div>`,
-    `<a href="${escapeHtml(APP_URL + "/dashboard")}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.accountPassword.openCabinetAction")}</a>`,
-    `<p style="margin:24px 0 0;color:#71717a;font-size:13px">${t("email.accountPassword.nextSteps")}</p>`,
-  ].join("");
-  return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", t("email.accountPassword.title"), body, brand));
+  const brand = await emailBrandForOrganization(params.organizationId);
+  const { subject, html } = await renderAccountPasswordEmail({ ...params, brand });
+  return sendEmail(params.to, subject, html);
 }
 
 /**
@@ -986,6 +1035,11 @@ export async function buildBlankDownloadEmail(params: {
   registerUrl: string;
   expiresDays: number;
   locale?: Locale;
+  /**
+   * Кабинет уже создан галкой «Быстрая регистрация» — доступ ушёл отдельным
+   * письмом, звать в регистрацию незачем: блок «можно не печатать» не нужен.
+   */
+  accountCreated?: boolean;
 }): Promise<{ subject: string; html: string }> {
   const { journalTitle, files, pageUrl, registerUrl, expiresDays } = params;
   const locale = params.locale ?? "ru";
@@ -1000,11 +1054,11 @@ export async function buildBlankDownloadEmail(params: {
     <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.blankDownload.greeting")}</p>
     <p style="margin:0 0 20px;color:#3f3f46;line-height:1.6">${t("email.blankDownload.downloadNotice", { journalTitle: escapeHtml(journalTitle), expiresDays })}</p>
     ${main ? `<a href="${escapeHtml(main.url)}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${escapeHtml(main.label)}</a><p style="margin:12px 0 0;color:#a1a1aa;font-size:12px;line-height:1.5;word-break:break-all">${t("email.blankDownload.fallbackLinkNotice")} ${escapeHtml(main.url)}</p>` : ""}${moreHtml}${pageHtml}
-    <div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:24px 0 0">
+    ${params.accountCreated ? "" : `<div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:24px 0 0">
       <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#18181b">${t("email.blankDownload.paperlessTitle")}</p>
       <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">${t("email.blankDownload.paperlessBody", { freeTier: t("email.blankDownload.freeTier", { count: TRIAL_DAYS }) })}</p>
       <a href="${escapeHtml(registerUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">${t("email.blankDownload.startUsingAction")}</a>
-    </div>
+    </div>`}
     <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">${t("email.blankDownload.disclaimer")}</p>`;
   return { subject, html: localizedLayout(t, locale, subject, body) };
 }

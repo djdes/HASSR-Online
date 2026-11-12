@@ -11,7 +11,8 @@ export const LEGAL_VERSION = "2026-09-30";
 export const LEGAL_CONSENT_TEXT =
   "Принимаю условия оферты и пользовательского соглашения, ознакомлен с политикой конфиденциальности и даю согласие на обработку персональных данных";
 
-export type LegalConsentSource = "register" | "landing" | "update-modal";
+/** `blank-register` — галка «Быстрая регистрация» в окне скачивания шаблона. */
+export type LegalConsentSource = "register" | "landing" | "update-modal" | "blank-register";
 
 export async function recordLegalConsent(params: {
   request: Request;

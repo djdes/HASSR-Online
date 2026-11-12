@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server";
-import { isEmptySnapshot, readSignupSnapshot, type SignupSourceSnapshot } from "@/lib/signup-channel";
-import bcrypt from "bcryptjs";
-import crypto from "node:crypto";
+import { readSignupSnapshot, type SignupSourceSnapshot } from "@/lib/signup-channel";
 import { db } from "@/lib/db";
 import { recordLegalConsent } from "@/lib/legal-consent";
 import { issueSession } from "@/lib/issue-session";
 import { sendAccountPasswordEmail } from "@/lib/email";
-import { attachAccountForNewOrganization } from "@/lib/create-organization";
 import { escapeTelegramHtml } from "@/lib/telegram";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 import { domainAcceptsMail } from "@/lib/mail-domain";
-import { DEFAULT_ORG_NAME, ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
-import {
-  JOURNAL_ENABLE_AUDIT_ACTION,
-  blankSignupJournal,
-  signupDisabledJournalCodes,
-} from "@/lib/blank-signup";
-import { defaultJournalAutomationJson } from "@/lib/journal-automation";
+import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
+import { blankSignupJournal } from "@/lib/blank-signup";
+import { createInstantAccount, isDuplicateAccountError } from "@/lib/instant-account.server";
 import {
   attachOrganizationByRef,
   readPartnerRefFromRequest,
@@ -41,20 +34,8 @@ export const dynamic = "force-dynamic";
  * плодил бы пустые организации и рассылал письма живым людям.
  */
 
-/** Без похожих символов: 0/O, 1/l/I — пароль диктуют по телефону. */
-const PASSWORD_ALPHABET =
-  "23456789abcdefghjkmnpqrstuvwxyzACDEFHJKLMNPRTUVWXY";
-const PASSWORD_LENGTH = 12;
-// Название-заглушка живёт в org-profile: по нему кабинет понимает,
-// что анкета ещё не заполнена (см. (dashboard)/layout.tsx).
-
-function generatePassword(): string {
-  let out = "";
-  for (let i = 0; i < PASSWORD_LENGTH; i++) {
-    out += PASSWORD_ALPHABET[crypto.randomInt(PASSWORD_ALPHABET.length)];
-  }
-  return out;
-}
+// Пароль, организация-заглушка и аккаунт тарифа — lib/instant-account.server.ts
+// (общий с галкой «Быстрая регистрация» в окне скачивания шаблона).
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -88,10 +69,7 @@ export async function POST(request: Request) {
   // Пришли по QR со скачанного шаблона (/qb): этот журнал у новой
   // организации включаем сразу — после регистрации он открывается готовым
   // к заполнению, а не экраном «Этот журнал отключён» (lib/blank-signup.ts).
-  const signupJournals = signupDisabledJournalCodes(
-    blankSignupJournal((body as { blankJournal?: unknown } | null)?.blankJournal),
-    sphere ?? "other",
-  );
+  const blankJournal = blankSignupJournal((body as { blankJournal?: unknown } | null)?.blankJournal);
 
   // Мусор отсекаем ДО расхода лимита, чтобы бот пустыми запросами не
   // выжигал квоту живому пользователю с того же IP (общий офисный NAT).
@@ -146,84 +124,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ exists: true });
   }
 
-  const password = generatePassword();
-  const passwordHash = await bcrypt.hash(password, 12);
-
   let created;
   try {
-    created = await db.$transaction(async (tx) => {
-      const organization = await tx.organization.create({
-        data: {
-          locale,
-          // Нейтральная заглушка: почта в названии протекала
-          // в шапку кабинета, PDF-выгрузки и селектор организаций.
-          // Настоящее название человек задаёт в анкете после входа.
-          name: DEFAULT_ORG_NAME,
-          type: sphere ?? "other",
-          // Сразу минимальный набор журналов, а не весь каталог: иначе до
-          // анкеты дашборд встречает человека счётчиком «0 из N» на весь каталог.
-          // Сферу спросим в анкете — тогда набор пересчитается. С QR шаблона
-          // журнал, за которым пришли, в наборе включён.
-          disabledJournalCodes: signupJournals.disabledJournalCodes,
-          // Автоматика гигиенического журнала — сразу, см.
-          // defaultJournalAutomationJson.
-          journalAutomationJson: defaultJournalAutomationJson(),
-          subscriptionPlan: "free",
-          // Источник визита — для воронки /root/funnel (по каналам).
-          ...(isEmptySnapshot(source) ? {} : { signupSourceJson: source }),
-        },
-      });
-      const user = await tx.user.create({
-        data: {
-          email,
-          // Имя пока равно почте — по этому признаку кабинет понимает,
-          // что анкета не заполнена, и показывает баннер «Завершите
-          // регистрацию».
-          name: email,
-          passwordHash,
-          role: "manager",
-          organizationId: organization.id,
-          locale,
-          journalAccessMigrated: true,
-          // Регистрация с лендинга сразу же и логинит человека, поэтому
-          // адрес пишем в оба поля: первый вход — он же и есть.
-          registrationIp: ipForLog,
-          lastLoginIp: ipForLog,
-          lastLoginAt: new Date(),
-        },
-      });
-      // Аккаунт — владелец тарифа и общего лимита мест. Заводим сразу:
-      // без него организация не умеет ни переключаться, ни расти во
-      // вторую точку (см. lib/create-organization.ts).
-      await attachAccountForNewOrganization(tx, {
-        ownerUserId: user.id,
-        organizationId: organization.id,
-        subscriptionPlan: organization.subscriptionPlan,
-        subscriptionEnd: organization.subscriptionEnd,
-      });
-      // Журнал включён не человеком в настройках, а регистрацией по QR —
-      // в аудите организации это видно.
-      if (signupJournals.enabledByBlank) {
-        await tx.auditLog.create({
-          data: {
-            organizationId: organization.id,
-            userId: user.id,
-            userName: email,
-            action: JOURNAL_ENABLE_AUDIT_ACTION,
-            entity: "JournalTemplate",
-            entityId: signupJournals.enabledByBlank,
-            details: { journalCode: signupJournals.enabledByBlank, via: "blank-qr-signup" },
-            ipAddress: ipForLog,
-          },
-        });
-      }
-      return { organization, user };
+    created = await createInstantAccount({
+      email,
+      locale,
+      sphere,
+      blankJournal,
+      source,
+      ip: ipForLog,
+      signedIn: true,
+      journalEnableVia: "blank-qr-signup",
     });
   } catch (error) {
     // Гонка двух одновременных сабмитов с одной почтой: unique-индекс
     // на email не даст создать дубль — отправляем на вход.
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("Unique constraint")) {
+    if (isDuplicateAccountError(error)) {
       return NextResponse.json({ exists: true });
     }
     console.error("instant-register failed", error);
@@ -232,18 +148,19 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+  const password = created.password;
 
-  if (signupJournals.enabledByBlank) {
+  if (created.enabledByBlank) {
     console.info("[instant-register] journal enabled for blank QR signup", {
       organizationId: created.organization.id,
-      code: signupJournals.enabledByBlank,
+      code: created.enabledByBlank,
     });
   }
   if (sphere) {
     console.info("[instant-register] sphere from promo link", {
       organizationId: created.organization.id,
       sphere,
-      disabledJournals: signupJournals.disabledJournalCodes.length,
+      disabledJournals: created.disabledJournalCodes.length,
     });
   }
 

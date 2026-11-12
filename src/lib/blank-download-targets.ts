@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   normalizeBlankCompany,
   normalizeBlankEmail,
+  normalizeBlankPhone,
   type BlankFormat,
   type BlankTarget,
 } from "@/lib/blank-download";
@@ -47,6 +48,16 @@ const bodySchema = z.object({
   consentVersion: z.string().max(32).optional(),
   /// Необязательная галка «Присылать полезные материалы и новости».
   marketing: z.boolean().optional(),
+  /// Необязательный телефон: прислать шаблон в Telegram, MAX или СМС.
+  phone: z.string().max(40).optional(),
+  /// Галка «Быстрая регистрация» (по умолчанию в окне отмечена).
+  register: z.boolean().optional(),
+  // Невидимая проверка от ботов (`blankBotVerdict`): разбирает роут, здесь
+  // только пропускаем поля через схему, не отвергая старые клиенты.
+  website: z.unknown().optional(),
+  elapsedMs: z.unknown().optional(),
+  /// Источник визита для воронки регистраций (lib/signup-source.ts).
+  source: z.unknown().optional(),
   // Locale is a presentation hint. Ignore malformed/unknown values and keep
   // the historical Russian default instead of rejecting an otherwise valid request.
   locale: z.unknown().optional(),
@@ -61,6 +72,15 @@ export type BlankDownloadRequest = {
   /** Отмечена галка согласия на письма — записать отдельное согласие. */
   marketing: boolean;
   locale: BlankDownloadLocale;
+  /** Телефон в каноническом виде `+7…`, если указали. */
+  phone?: string;
+  /**
+   * Отмечена галка «Быстрая регистрация». Только из окна: при скачивании
+   * по запомненной почте галку не показывали — и кабинет не создаём.
+   */
+  register: boolean;
+  /** Сырой снимок источника визита — режет `readSignupSnapshot` на сервере. */
+  source?: unknown;
 };
 
 export type BlankDownloadParse =
@@ -89,6 +109,11 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
 
   const email = normalizeBlankEmail(data.email);
   if (!email) return { ok: false, status: 400, error: "Укажите корректный адрес электронной почты", errorCode: "invalid_email" };
+
+  const phone = data.phone === undefined ? null : normalizeBlankPhone(data.phone);
+  if (phone === undefined) {
+    return { ok: false, status: 400, error: "Проверьте номер телефона", errorCode: "invalid_phone" };
+  }
 
   if (Boolean(data.code) === Boolean(data.paperId)) {
     return { ok: false, status: 400, error: "Не указан шаблон", errorCode: "target_required" };
@@ -126,6 +151,9 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       format: data.format,
       marketing: data.marketing === true,
       locale: normalizeBlankDownloadLocale(data.locale),
+      ...(phone ? { phone } : {}),
+      register: data.register === true && data.remembered !== true,
+      ...(data.register === true && data.source !== undefined ? { source: data.source } : {}),
     },
   };
 }

@@ -4,7 +4,7 @@ import { Children, isValidElement, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Download, Loader2, Mail } from "lucide-react";
+import { ArrowRight, CheckCircle2, Download, Loader2, Mail, MessageSquareText, Phone } from "lucide-react";
 
 import {
   Dialog,
@@ -14,16 +14,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
+import { MaxIcon } from "@/components/max/max-icon";
+import { TelegramIcon } from "@/components/public/telegram-icon";
 import {
   BLANK_EMAIL_STORAGE_KEY,
   blankFilePath,
+  blankLoginHref,
   blankRegisterHref,
+  blankSignupPlace,
+  normalizeBlankPhone,
   readRememberedBlankEmail,
   type BlankFormat,
   type BlankTarget,
   type RememberedBlankEmail,
 } from "@/lib/blank-download";
-import { ymGoal } from "@/lib/signup-source";
+import { phoneInputProps } from "@/lib/phone-input";
+import { TRIAL_DAYS } from "@/lib/tariff-plans";
+import { readSignupSource, ymGoal } from "@/lib/signup-source";
 import { cn } from "@/lib/utils";
 import { downloadFile } from "@/lib/native-bridge";
 import { blankDownloadErrorKey } from "@/lib/blank-download-presentation";
@@ -32,11 +39,18 @@ import { localizedHref } from "@/i18n/site-locale";
 /**
  * Кнопка «Скачать PDF / Word» шаблона журнала на публичных страницах.
  *
- * Первый раз — окно «Куда прислать шаблон?»: почта, галка согласия на
- * обработку персональных данных, необязательная (снятая) галка «Присылать
- * полезные материалы и новости», «Скачать». Сервер записывает согласие
- * (и согласие на письма, если отмечено) и отдаёт подписанную ссылку —
- * файл скачивается сразу, копия уходит письмом.
+ * Первый раз — окно «Куда прислать шаблон?»: почта, телефон (без слова
+ * «необязательно» — значки Telegram, MAX, СМС показывают, куда пришлём),
+ * название компании, галка согласия на обработку персональных данных,
+ * отмеченная по умолчанию галка «Быстрая регистрация», необязательная
+ * (снятая) галка «Присылать полезные материалы и новости», «Скачать».
+ * Сервер записывает согласие (и согласие на письма, если отмечено) и
+ * отдаёт подписанную ссылку — файл скачивается сразу, копия уходит письмом.
+ * С галкой регистрации сервер заводит кабинет и присылает доступ письмом
+ * (спека blank-download-phone-autoreg-2026-11).
+ *
+ * Невидимая проверка от ботов: скрытое поле-ловушка `website` и время от
+ * открытия окна до отправки (`elapsedMs`) — сервер решает по ним сам.
  * Почта запоминается в браузере: следующий шаблон скачивается по одному
  * нажатию (сервер получает ту же почту), а внизу экрана — плашка «копия —
  * на …» с кнопкой сменить почту.
@@ -100,9 +114,22 @@ function triggerDownload(url: string) {
   });
 }
 
+/** Кабинет по галке «Быстрая регистрация»: создан, уже был — или галки не было. */
+type AccountState = "created" | "exists" | null;
+
 type RequestResult =
-  | { ok: true; url: string; consentVersion: string; emailed: boolean }
+  | { ok: true; url: string; consentVersion: string; emailed: boolean; account: AccountState }
   | { ok: false; errorKey: ReturnType<typeof blankDownloadErrorKey>; needConsent: boolean };
+
+/** Что окно передаёт сверх почты: телефон, регистрация и замер для проверки от ботов. */
+type FormExtras = {
+  phone: string | null;
+  register: boolean;
+  /** Скрытое поле-ловушка: человек его не видит, у живого — пустое. */
+  website: string;
+  /** Сколько окно было открыто до отправки, мс. */
+  elapsedMs: number;
+};
 
 async function requestDownload(params: {
   email: string;
@@ -113,8 +140,11 @@ async function requestDownload(params: {
   remembered?: RememberedBlankEmail | null;
   /** Отмечена галка «Присылать полезные материалы и новости». */
   marketing?: boolean;
+  extras?: FormExtras;
 }): Promise<RequestResult> {
   const company = (params.company ?? params.remembered?.company ?? "").trim();
+  const phone = params.extras?.phone ?? params.remembered?.phone ?? null;
+  const journalKey = params.target.kind === "code" ? params.target.code : `paper:${params.target.paperId}`;
   try {
     const res = await fetch("/api/public/blank-download", {
       method: "POST",
@@ -127,19 +157,29 @@ async function requestDownload(params: {
         locale: params.locale,
         consent: true,
         ...(params.marketing ? { marketing: true } : {}),
-        ...(params.remembered ? { remembered: true, consentVersion: params.remembered.consentVersion } : {}),
+        ...(phone ? { phone } : {}),
+        ...(params.extras
+          ? {
+              website: params.extras.website,
+              elapsedMs: params.extras.elapsedMs,
+              ...(params.extras.register ? { register: true, source: readSignupSource(blankSignupPlace(journalKey)) } : {}),
+            }
+          : {}),
+        ...(params.remembered ? { remembered: true, consentVersion: params.remembered.consentVersion, website: "" } : {}),
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {
       url?: string;
       consentVersion?: string;
       emailed?: boolean;
+      account?: unknown;
       error?: string;
       needConsent?: boolean;
       errorCode?: string;
     };
     if (res.ok && data.url && data.consentVersion) {
-      return { ok: true, url: data.url, consentVersion: data.consentVersion, emailed: data.emailed !== false };
+      const account: AccountState = data.account === "created" || data.account === "exists" ? data.account : null;
+      return { ok: true, url: data.url, consentVersion: data.consentVersion, emailed: data.emailed !== false, account };
     }
     return {
       ok: false,
@@ -168,6 +208,8 @@ export function BlankDownloadClient({
   const [phase, setPhase] = useState<Phase>("form");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [phone, setPhone] = useState("");
+  const [account, setAccount] = useState<AccountState>(null);
   const [error, setError] = useState<ReturnType<typeof blankDownloadErrorKey> | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [showExpired, setShowExpired] = useState(false);
@@ -177,9 +219,15 @@ export function BlankDownloadClient({
   const goal = { place, format };
   const formatLabel = t(`format.${format}`);
 
-  function openForm(prefill: string, message: ReturnType<typeof blankDownloadErrorKey> | null, prefillCompany = "") {
+  function openForm(
+    prefill: string,
+    message: ReturnType<typeof blankDownloadErrorKey> | null,
+    prefillCompany = "",
+    prefillPhone = "",
+  ) {
     setEmail(prefill);
     setCompany(prefillCompany);
+    setPhone(prefillPhone);
     setError(message);
     setPhase("form");
     setNotice(null);
@@ -193,10 +241,15 @@ export function BlankDownloadClient({
     if (!result.ok) {
       // Редакция документов сменилась или сервер отказал — спрашиваем в окне.
       if (result.needConsent) remember(null);
-      openForm(saved.email, result.errorKey, saved.company ?? "");
+      openForm(saved.email, result.errorKey, saved.company ?? "", saved.phone ?? "");
       return;
     }
-    remember({ email: saved.email, consentVersion: result.consentVersion, ...(saved.company ? { company: saved.company } : {}) });
+    remember({
+      email: saved.email,
+      consentVersion: result.consentVersion,
+      ...(saved.company ? { company: saved.company } : {}),
+      ...(saved.phone ? { phone: saved.phone } : {}),
+    });
     triggerDownload(result.url);
     ymGoal("blank_download_done", { ...goal, remembered: "1" });
     setFileUrl(result.url);
@@ -244,7 +297,7 @@ export function BlankDownloadClient({
     [],
   );
 
-  async function submit(value: string, marketing: boolean, companyValue = "") {
+  async function submit(value: string, marketing: boolean, companyValue: string, extras: FormExtras) {
     const cleanCompany = companyValue.trim();
     setError(null);
     setPhase("sending");
@@ -255,6 +308,7 @@ export function BlankDownloadClient({
       format,
       locale,
       marketing,
+      extras,
     });
     if (!result.ok) {
       setError(result.errorKey);
@@ -265,11 +319,19 @@ export function BlankDownloadClient({
       email: value,
       consentVersion: result.consentVersion,
       ...(cleanCompany ? { company: cleanCompany } : {}),
+      ...(extras.phone ? { phone: extras.phone } : {}),
     });
     triggerDownload(result.url);
-    ymGoal("blank_download_done", marketing ? { ...goal, marketing: "1" } : goal);
+    ymGoal("blank_download_done", {
+      ...goal,
+      ...(marketing ? { marketing: "1" } : {}),
+      ...(extras.phone ? { phone: "1" } : {}),
+    });
+    if (result.account === "created") ymGoal("blank_quick_register_done", goal);
     setEmail(value);
     setCompany(cleanCompany);
+    setPhone(extras.phone ?? "");
+    setAccount(result.account);
     setFileUrl(result.url);
     setEmailed(result.emailed);
     setShowExpired(false);
@@ -279,7 +341,7 @@ export function BlankDownloadClient({
   function changeEmail() {
     const saved = readRemembered();
     remember(null);
-    openForm("", null, saved?.company ?? company);
+    openForm("", null, saved?.company ?? company, saved?.phone ?? phone);
   }
 
   return (
@@ -298,14 +360,16 @@ export function BlankDownloadClient({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-3xl border-[#ececf4] bg-white p-6 sm:max-w-[440px]" data-testid="blank-download-dialog">
+        <DialogContent className="rounded-3xl border-[#ececf4] bg-white p-6 sm:max-w-[460px]" data-testid="blank-download-dialog">
           {phase === "done" ? (
             <DoneView
               title={title}
               email={email}
               emailed={emailed}
               fileUrl={fileUrl}
+              account={account}
               registerHref={localizedHref(blankRegisterHref({ email, target }), locale)}
+              loginHref={localizedHref(blankLoginHref({ email, target }), locale)}
               onChangeEmail={changeEmail}
             />
           ) : (
@@ -314,6 +378,7 @@ export function BlankDownloadClient({
               formatLabel={formatLabel}
               initialEmail={email}
               initialCompany={company}
+              initialPhone={phone}
               error={error}
               expired={showExpired}
               sending={phase === "sending"}
@@ -358,11 +423,17 @@ export function BlankDownloadClient({
   );
 }
 
+/** Поле окна: крупное (52px) и с 16px текстом — иначе iOS Safari зумит страницу при фокусе. */
+const FIELD_CLASS =
+  "h-[52px] w-full rounded-2xl border border-[#dcdfed] bg-white text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
+const LINK_CLASS = "text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:text-[#0b1024]";
+
 function FormView({
   title,
   formatLabel,
   initialEmail,
   initialCompany = "",
+  initialPhone = "",
   error,
   expired,
   sending,
@@ -372,18 +443,28 @@ function FormView({
   formatLabel: string;
   initialEmail: string;
   initialCompany?: string;
+  initialPhone?: string;
   error: ReturnType<typeof blankDownloadErrorKey> | null;
   expired: boolean;
   sending: boolean;
-  onSubmit: (email: string, marketing: boolean, company: string) => void;
+  onSubmit: (email: string, marketing: boolean, company: string, extras: FormExtras) => void;
 }) {
   const t = useTranslations("publicBlankDownload");
   const field = useEmailField(initialEmail);
   const [company, setCompany] = useState(initialCompany);
+  const [phone, setPhone] = useState(initialPhone);
+  const [phoneInvalid, setPhoneInvalid] = useState(false);
   const [consent, setConsent] = useState(false);
+  // Быстрая регистрация — по умолчанию отмечена; снять можно одним нажатием.
+  const [register, setRegister] = useState(true);
   // Согласие на письма — необязательное и по умолчанию снято: на
   // скачивание не влияет (спека landing-pack-2026-09).
   const [marketing, setMarketing] = useState(false);
+  // Ловушка для ботов: поле скрыто от человека, у живого остаётся пустым.
+  const [website, setWebsite] = useState("");
+  // Когда окно открылось — время до отправки уходит на сервер. Ленивый
+  // начальный state: время берётся один раз, при первом показе формы.
+  const [openedAt] = useState(() => Date.now());
   const [consentMissing, setConsentMissing] = useState(false);
   const [localError, setLocalError] = useState<ReturnType<typeof blankDownloadErrorKey> | null>(null);
   const domainMissing = field.check.status === "ok" && field.domainState === "missing";
@@ -392,13 +473,23 @@ function FormView({
     event.preventDefault();
     field.setTouched(true);
     if (!field.valid) return;
+    const cleanPhone = normalizeBlankPhone(phone);
+    if (cleanPhone === undefined) {
+      setPhoneInvalid(true);
+      return;
+    }
     if (!consent) {
       setConsentMissing(true);
       setLocalError("consentRequired");
       return;
     }
     setLocalError(null);
-    onSubmit(field.value.trim().toLowerCase(), marketing, company);
+    onSubmit(field.value.trim().toLowerCase(), marketing, company, {
+      phone: cleanPhone,
+      register,
+      website,
+      elapsedMs: Math.max(0, Date.now() - openedAt),
+    });
   }
 
   const shownError = localError ?? error;
@@ -421,7 +512,7 @@ function FormView({
       ) : null}
 
       <form onSubmit={submit} noValidate>
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           <div className="relative">
             <Mail
               aria-hidden="true"
@@ -437,8 +528,7 @@ function FormView({
               autoComplete="email"
               inputMode="email"
               autoFocus
-              // 16px: иначе iOS Safari зумит страницу при фокусе в поле.
-              className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+              className={cn(FIELD_CLASS, "pl-11 pr-4")}
             />
           </div>
           {domainMissing ? (
@@ -454,6 +544,51 @@ function FormView({
             />
           )}
 
+          {/* Телефон: без слова «необязательно» — значки справа показывают,
+              куда пришлём шаблон. Полная фраза — для экранных чтецов. */}
+          <div className="relative">
+            <Phone
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#9b9fb3]"
+            />
+            <input
+              id="blank-download-phone"
+              data-testid="blank-download-phone"
+              type="tel"
+              maxLength={24}
+              placeholder={t("phone.label")}
+              aria-label={t("phone.label")}
+              aria-describedby="blank-download-phone-channels"
+              aria-invalid={phoneInvalid || undefined}
+              {...phoneInputProps(phone, (next) => {
+                setPhone(next);
+                if (phoneInvalid) setPhoneInvalid(false);
+              })}
+              className={cn(
+                FIELD_CLASS,
+                "pl-11 pr-[104px] tabular-nums",
+                phoneInvalid && "border-[#e4877d] focus:border-[#d2584b] focus:ring-[#d2584b]/15",
+              )}
+            />
+            <span
+              id="blank-download-phone-channels"
+              title={t("phone.channels")}
+              className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
+            >
+              <span className="sr-only">{t("phone.channels")}</span>
+              <TelegramIcon className="size-[22px]" />
+              <MaxIcon className="size-[22px]" />
+              <span className="flex size-[22px] items-center justify-center rounded-full bg-[#eef1f7] text-[#5f6170]">
+                <MessageSquareText aria-hidden="true" className="size-[13px]" />
+              </span>
+            </span>
+          </div>
+          {phoneInvalid ? (
+            <p role="alert" className="text-[13px] leading-[1.5] text-[#a13a32]">
+              {t("phone.invalid")}
+            </p>
+          ) : null}
+
           <input
             id="blank-download-company"
             data-testid="blank-download-company"
@@ -464,13 +599,26 @@ function FormView({
             placeholder={t("company.placeholder")}
             aria-label={t("company.placeholder")}
             autoComplete="organization"
-            className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] transition-[border-color,box-shadow] duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            className={cn(FIELD_CLASS, "px-4")}
+          />
+        </div>
+
+        <div aria-hidden="true" className="hidden">
+          <label htmlFor="blank-download-website">{t("form.websiteLabel")}</label>
+          <input
+            id="blank-download-website"
+            name="website"
+            type="text"
+            autoComplete="off"
+            tabIndex={-1}
+            value={website}
+            onChange={(event) => setWebsite(event.target.value)}
           />
         </div>
 
         <label
           className={cn(
-            "mt-4 flex cursor-pointer items-start gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] text-[#6f7282] transition-colors duration-150",
+            "mt-4 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[13px] leading-[1.5] text-[#6f7282] transition-colors duration-150",
             consentMissing && !consent && "bg-[#fff4f2] ring-2 ring-[#f2b8b0]",
           )}
         >
@@ -484,23 +632,47 @@ function FormView({
                 setLocalError(null);
               }
             }}
-            className="mt-0.5 size-[18px] shrink-0 accent-[#5566f6]"
+            className="mt-px size-5 shrink-0 accent-[#5566f6]"
             data-testid="blank-download-consent"
           />
           <span>
             {t.rich("consent.statement", {
-              consent: (chunks) => <Link href="/consent" target="_blank" className="text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:text-[#0b1024]">{chunks}</Link>,
-              privacy: (chunks) => <Link href="/privacy" target="_blank" className="text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:text-[#0b1024]">{chunks}</Link>,
+              consent: (chunks) => <Link href="/consent" target="_blank" className={LINK_CLASS}>{chunks}</Link>,
+              privacy: (chunks) => <Link href="/privacy" target="_blank" className={LINK_CLASS}>{chunks}</Link>,
             })}
           </span>
         </label>
 
-        <label className="mt-1 flex cursor-pointer items-start gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] text-[#6f7282]">
+        <label className="mt-0.5 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[13px] leading-[1.5] text-[#6f7282]">
+          <input
+            type="checkbox"
+            checked={register}
+            onChange={(event) => setRegister(event.target.checked)}
+            className="mt-px size-5 shrink-0 accent-[#5566f6]"
+            data-testid="blank-download-register"
+          />
+          <span>
+            <span className="block text-[14px] text-[#0b1024]">
+              {t.rich("register.statement", {
+                lead: (chunks) => <span className="font-medium">{chunks}</span>,
+                trialDays: TRIAL_DAYS,
+              })}
+            </span>
+            <span className="block text-[12px]">
+              {t.rich("register.terms", {
+                offer: (chunks) => <Link href="/oferta" target="_blank" className={LINK_CLASS}>{chunks}</Link>,
+                terms: (chunks) => <Link href="/terms" target="_blank" className={LINK_CLASS}>{chunks}</Link>,
+              })}
+            </span>
+          </span>
+        </label>
+
+        <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[13px] leading-[1.5] text-[#6f7282]">
           <input
             type="checkbox"
             checked={marketing}
             onChange={(event) => setMarketing(event.target.checked)}
-            className="mt-0.5 size-[18px] shrink-0 accent-[#5566f6]"
+            className="mt-px size-5 shrink-0 accent-[#5566f6]"
             data-testid="blank-download-marketing"
           />
           <span>
@@ -521,7 +693,7 @@ function FormView({
           type="submit"
           disabled={sending || !field.valid}
           data-testid="blank-download-submit"
-          className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {sending ? (
             <>
@@ -530,12 +702,11 @@ function FormView({
             </>
           ) : (
             <>
-              <Download className="size-4" />
+              <Download className="size-[18px]" />
               {t("form.submit", { format: formatLabel })}
             </>
           )}
         </button>
-        <p className="mt-3 text-center text-[12px] text-[#9b9fb3]">{t("form.registrationNotRequired")}</p>
       </form>
     </>
   );
@@ -546,17 +717,22 @@ function DoneView({
   email,
   emailed,
   fileUrl,
+  account,
   registerHref,
+  loginHref,
   onChangeEmail,
 }: {
   title: string;
   email: string;
   emailed: boolean;
   fileUrl: string | null;
+  account: AccountState;
   registerHref: string;
+  loginHref: string;
   onChangeEmail: () => void;
 }) {
   const t = useTranslations("publicBlankDownload");
+  const strong = (chunks: React.ReactNode) => <span className="font-medium text-[#0b1024]">{chunks}</span>;
   return (
     <>
       <DialogHeader className="text-left">
@@ -564,19 +740,36 @@ function DoneView({
         <DialogTitle className="text-[20px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("done.heading")}</DialogTitle>
         <DialogDescription className="text-[14px] leading-[1.55] text-[#6f7282]">
           {t.rich(emailed ? "done.emailed" : "done.notEmailed", {
-            email: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
+            email: strong,
             address: email,
           })}
           {fileUrl ? <> {t("done.downloadHelp")} <a href={fileUrl} download className="font-medium text-[#3848c7] underline-offset-4 hover:underline">{t("done.downloadAgain")}</a></> : null}
         </DialogDescription>
       </DialogHeader>
-      <div className="rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4">
-        <div className="text-[14px] font-semibold text-[#0b1024]">{t("done.paperlessTitle", { title })}</div>
-        <p className="mt-1 text-[13px] leading-[1.55] text-[#3c4053]">{t("done.paperlessBody")}</p>
-        <Link href={registerHref} className="mt-3 inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]">
-          {t("done.paperlessAction")}<ArrowRight className="size-4" />
-        </Link>
-      </div>
+      {account === "created" ? (
+        <div className="rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4" data-testid="blank-download-account">
+          <div className="text-[15px] font-semibold text-[#0b1024]">{t("done.accountCreatedTitle")}</div>
+          <p className="mt-1 text-[14px] leading-[1.55] text-[#3c4053]">
+            {t.rich("done.accountCreatedBody", { email: strong, address: email })}
+          </p>
+        </div>
+      ) : account === "exists" ? (
+        <div className="rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4" data-testid="blank-download-account">
+          <div className="text-[15px] font-semibold text-[#0b1024]">{t("done.accountExistsTitle")}</div>
+          <p className="mt-1 text-[14px] leading-[1.55] text-[#3c4053]">{t("done.accountExistsBody", { title })}</p>
+          <Link href={loginHref} className="mt-3 inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]">
+            {t("done.signIn")}<ArrowRight className="size-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4">
+          <div className="text-[14px] font-semibold text-[#0b1024]">{t("done.paperlessTitle", { title })}</div>
+          <p className="mt-1 text-[13px] leading-[1.55] text-[#3c4053]">{t("done.paperlessBody")}</p>
+          <Link href={registerHref} className="mt-3 inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]">
+            {t("done.paperlessAction")}<ArrowRight className="size-4" />
+          </Link>
+        </div>
+      )}
       <p className="text-center text-[13px] text-[#6f7282]">{t("done.emailWrong")} <button type="button" onClick={onChangeEmail} className="font-medium text-[#3848c7] underline-offset-4 hover:underline">{t("action.changeEmail")}</button></p>
     </>
   );
