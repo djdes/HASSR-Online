@@ -1,0 +1,42 @@
+▲ Next.js 16.1.7 (webpack)
+- Environments: .env
+- Experiments (use with caution):
+  ✓ authInterrupts
+  ✓ parallelServerBuildTraces
+  ✓ parallelServerCompiles
+  · proxyClientMaxBodySize: "27mb"
+  ✓ webpackBuildWorker
+  ✓ webpackMemoryOptimizations
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.3min
+  Skipping validation of types
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/150) ...
+  Generating static pages using 3 workers (37/150) 
+  Generating static pages using 3 workers (74/150) 
+  Generating static pages using 3 workers (112/150) 
+[translations] override fetch failed Error [PrismaClientKnownRequestError]: 
+Invalid `prisma.translationOverride.findMany()` invocation:
+
+
+Can't reach database server at 127.0.0.1:5432
+    at <unknown> (Can't reach database server at 127.0.0.1:5432)
+    at async j (.next/server/chunks/57391.js:1:5668) {
+  code: 'P1001',
+  meta: [Object],
+  clientVersion: '7.10.1'
+}
+✓ Generating static pages using 3 workers (150/150) in 3.8s
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)                                                   Revalidate  Expire
+┌ ƒ /
+… (route table: 1211 lines total, trimmed) …
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+exit=0

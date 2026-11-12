@@ -60,7 +60,8 @@
       ]
     },
     "AC7": {
-      "status": "PENDING",
+      "status": "FAIL",
+      "note": "Только из-за ошибки типов, которая уже есть на чистом master (b9b1f2df9, gogetlinks/plans/route.ts:109) — см. problems.md; эта задача новых ошибок не добавляет. Полный прогон тестов зелёный, eslint 0 ошибок, next build (куча 8 ГБ, как в деплое) — успешно.",
       "evidence": [
         "raw/typecheck.txt",
         "raw/typecheck-master-baseline.txt",
