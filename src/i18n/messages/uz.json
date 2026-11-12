@@ -3599,9 +3599,32 @@
       "title": "Hisob yaratildi",
       "greeting": "Assalomu alaykum!",
       "createdNotice": "Hisobingiz yaratildi va tizimga kirdingiz. Boshqa qurilmalardan kirish uchun ma’lumotlarni saqlab qo‘ying:",
+      "blankCreatedNotice": "Siz shablonni “Tezkor ro‘yxatdan o‘tish” belgisi bilan yuklab oldingiz — kabinet allaqachon yaratildi. Tugma orqali parolsiz yoki quyidagi ma’lumotlar bilan kiring:",
       "loginLabel": "Kirish nomi:",
       "passwordLabel": "Parol:",
       "openCabinetAction": "Kabinetni ochish",
+      "autoLoginAction": "Kabinetga kirish",
+      "autoLoginNotice": "Tugma parolsiz kiritadi va {days, number} {days, plural, other {kun}} ichida bir marta ishlaydi. Keyin — login va parol bilan kirish.",
+      "benefitsTitle": "WeSetup nima beradi",
+      "benefits": {
+        "qr": {
+          "title": "Jurnallar telefonda",
+          "text": "xodim uskunadagi QR-kodni skanerlaydi va yozuv SanPiN va HACCP shaklidagi jurnalga tushadi."
+        },
+        "reminders": {
+          "title": "Eslatmalar",
+          "text": "yozuv qoldirilsa yoki harorat me’yordan chiqsa, mas’ul xodimga Telegram va elektron pochta orqali xabar boradi."
+        },
+        "autofill": {
+          "title": "Ma’lumotlar o‘zi keladi",
+          "text": "harorat datchiklar va displey suratidan, qabul yuk xatlaridan."
+        },
+        "inspection": {
+          "title": "Tekshiruv uchun PDF",
+          "text": "kerakli davrdagi barcha yozuvlar inspektorga bir bosishda."
+        }
+      },
+      "trial": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va kartasiz.",
       "nextSteps": "Parolni profil sozlamalarida almashtirishingiz mumkin. Jurnal sarlavhalari va tekshiruv PDF hujjatlarida ko‘rinishi uchun kabinetda tashkilot ma’lumotlarini to‘ldiring."
     },
     "welcome": {
@@ -19671,9 +19694,18 @@
     "company": {
       "placeholder": "Tashkilot nomi (jurnal sarlavhasi uchun)"
     },
+    "phone": {
+      "label": "Telefon",
+      "channels": "Shablonni Telegram, MAX yoki SMS orqali yuboramiz",
+      "invalid": "Telefon raqamini tekshiring."
+    },
     "consent": {
       "statement": "<consent>Shaxsiy ma'lumotlarimni qayta ishlashga roziman</consent> va <privacy>Maxfiylik siyosati</privacy> bilan tanishdim.",
       "required": "Rozilik katakchasini belgilang. Roziligingizsiz shablonni yubora olmaymiz."
+    },
+    "register": {
+      "statement": "<lead>Tezkor ro'yxatdan o'tish</lead> — WeSetup'ga {trialDays, number} {trialDays, plural, other {kun}}lik to'liq kirish",
+      "terms": "<offer>Oferta</offer> va <terms>kelishuv</terms>ni qabul qilaman"
     },
     "marketing": {
       "statement": "<lead>Menga foydali materiallar va WeSetup yangiliklarini yuboring</lead>. <note>Roziligimni istalgan vaqtda qaytarib olishim mumkin.</note>"
@@ -19681,7 +19713,7 @@
     "form": {
       "sending": "Shablon tayyorlanmoqda…",
       "submit": "{format} yuklab olish",
-      "registrationNotRequired": "Ro'yxatdan o'tish shart emas."
+      "websiteLabel": "Veb-saytingiz"
     },
     "done": {
       "heading": "Shablon yuklanmoqda",
@@ -19692,7 +19724,12 @@
       "paperlessTitle": "“{title}”ni chop etmasdan ishlatish mumkin",
       "paperlessBody": "WeSetup'da xodimlar jurnallarni shablondagidek QR-kod orqali telefonda to'ldiradi. Smena tekshiruvni qayd etishni unutsa, eslatmalar yordam beradi.",
       "paperlessAction": "Telefonda bepul yuritish",
-      "emailWrong": "Email noto'g'rimi?"
+      "emailWrong": "Email noto'g'rimi?",
+      "accountCreatedTitle": "WeSetup kabinetingiz tayyor",
+      "accountCreatedBody": "Login, parol va kirish havolasi <email>{address}</email> manziliga yuborilgan xatda.",
+      "accountExistsTitle": "Sizda allaqachon WeSetup kabineti bor",
+      "accountExistsBody": "Kiring — “{title}”ni telefonda yuritish mumkin.",
+      "signIn": "Kirish"
     },
     "notice": {
       "sending": "Shablon tayyorlanmoqda…",
@@ -19706,6 +19743,8 @@
       "consentRequired": "Shaxsiy ma'lumotlarni qayta ishlashga rozilik bering.",
       "invalidRequest": "Shablonni tayyorlab bo'lmadi. Qayta urinib ko'ring.",
       "invalidEmail": "To'g'ri email manzilini kiriting.",
+      "invalidPhone": "Telefon raqamini tekshiring.",
+      "tooFast": "Formani yuborib bo'lmadi. Sahifani yangilab, qayta urinib ko'ring.",
       "targetRequired": "Yuklab olish uchun shablon tanlanmagan.",
       "targetNotFound": "Bunday shablon topilmadi.",
       "formatUnsupported": "Bu shablon faqat PDF formatida mavjud.",

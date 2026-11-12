@@ -19,16 +19,32 @@ export function magicLinkUrl(raw: string): string {
   return `${base}/api/auth/magic/${raw}`;
 }
 
+/**
+ * Ссылка автовхода в письме о созданном кабинете (галка «Быстрая
+ * регистрация» в окне скачивания шаблона): письмо читают не сразу, поэтому
+ * она живёт столько же, сколько ссылка на шаблон, но так же одноразовая.
+ */
+export const SIGNUP_MAGIC_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Новый токен входа для пользователя — прежний, если был, гаснет (на
+ * человека действует один). Возвращает полную ссылку для письма.
+ */
+export async function createMagicLink(userId: string, ttlMs: number = MAGIC_LINK_TTL_MS): Promise<string> {
+  const raw = generateInviteToken();
+  const expiresAt = new Date(Date.now() + ttlMs);
+  await db.magicLinkToken.upsert({
+    where: { userId },
+    create: { userId, tokenHash: hashInviteToken(raw), expiresAt },
+    update: { tokenHash: hashInviteToken(raw), expiresAt, usedAt: null },
+  });
+  return magicLinkUrl(raw);
+}
+
 export async function issueMagicLink(email: string): Promise<{ sent: boolean }> {
   const user = await db.user.findUnique({ where: { email }, select: { id: true, isActive: true, name: true } });
   if (!user || !user.isActive) return { sent: false };
-  const raw = generateInviteToken();
-  await db.magicLinkToken.upsert({
-    where: { userId: user.id },
-    create: { userId: user.id, tokenHash: hashInviteToken(raw), expiresAt: magicLinkExpiresAt() },
-    update: { tokenHash: hashInviteToken(raw), expiresAt: magicLinkExpiresAt(), usedAt: null },
-  });
-  const url = magicLinkUrl(raw);
+  const url = await createMagicLink(user.id);
   const html = renderEmailLayout(
     "Вход в WeSetup по ссылке",
     `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3f3f46">Нажмите кнопку, чтобы войти в кабинет без пароля. Ссылка действует 15 минут и работает один раз.</p>

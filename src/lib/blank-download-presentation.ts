@@ -4,6 +4,8 @@ export type BlankDownloadErrorCode =
   | "consent_required"
   | "invalid_request"
   | "invalid_email"
+  | "invalid_phone"
+  | "too_fast"
   | "target_required"
   | "target_not_found"
   | "format_unsupported"
@@ -18,6 +20,8 @@ export type BlankDownloadErrorKey =
   | "consentRequired"
   | "invalidRequest"
   | "invalidEmail"
+  | "invalidPhone"
+  | "tooFast"
   | "targetRequired"
   | "targetNotFound"
   | "formatUnsupported"
@@ -33,6 +37,8 @@ const ERROR_KEY_BY_CODE: Record<BlankDownloadErrorCode, BlankDownloadErrorKey> =
   consent_required: "consentRequired",
   invalid_request: "invalidRequest",
   invalid_email: "invalidEmail",
+  invalid_phone: "invalidPhone",
+  too_fast: "tooFast",
   target_required: "targetRequired",
   target_not_found: "targetNotFound",
   format_unsupported: "formatUnsupported",

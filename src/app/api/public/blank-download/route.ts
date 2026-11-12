@@ -5,7 +5,9 @@ import {
   BLANK_CONSENT_SOURCE,
   BLANK_DOWNLOAD_AUDIT_ACTION,
   BLANK_FORMAT_LABEL,
+  blankBotVerdict,
   blankConsentRows,
+  blankFilePath,
   blankPagePath,
   blankRegisterHref,
   buildBlankDownloadAdminText,
@@ -19,6 +21,11 @@ import {
   recordBlankDownloadLead,
 } from "@/lib/blank-download-lead.server";
 import { blankDownloadLimiter } from "@/lib/blank-download-limits";
+import {
+  blankAccountResponse,
+  registerFromBlankDownload,
+  type BlankAccountOutcome,
+} from "@/lib/blank-download-register.server";
 import { parseBlankDownloadRequest } from "@/lib/blank-download-targets";
 import {
   BLANK_DOWNLOAD_TTL_MS,
@@ -27,8 +34,9 @@ import {
 } from "@/lib/blank-download-token";
 import { clientIp } from "@/lib/client-ip";
 import { db } from "@/lib/db";
-import { sendBlankDownloadEmail } from "@/lib/email";
+import { sendAccountPasswordEmail, sendBlankDownloadEmail } from "@/lib/email";
 import { LEGAL_VERSION } from "@/lib/legal-consent";
+import { SIGNUP_MAGIC_LINK_TTL_MS } from "@/lib/magic-link";
 import { domainAcceptsMail } from "@/lib/mail-domain";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
@@ -62,7 +70,8 @@ async function domainOk(domain: string): Promise<boolean> {
 /**
  * POST /api/public/blank-download — шаблон журнала после email.
  *
- * Тело: `{ email, code | paperId, format, consent: true, marketing?, remembered?, consentVersion? }`.
+ * Тело: `{ email, code | paperId, format, consent: true, marketing?, remembered?, consentVersion?,
+ * phone?, register?, source?, website?, elapsedMs? }`.
  * Ответ: `{ url }` — подписанная ссылка на файл (7 дней). По пути:
  *   1. согласие записывается в LegalConsent (source "blank-download",
  *      дословный текст галки, IP, браузер) — это же учёт лидов для /root;
@@ -71,7 +80,15 @@ async function domainOk(domain: string): Promise<boolean> {
  *      текстом, в той же транзакции; журнал и формат — в AuditLog
  *      платформы со ссылкой на согласие;
  *   2. ссылки дублируются письмом (после ответа, ошибки письма не мешают
- *      скачиванию).
+ *      скачиванию);
+ *   3. отмечена галка «Быстрая регистрация» (спека
+ *      blank-download-phone-autoreg-2026-11) — кабинет создаётся сразу,
+ *      логин, пароль и ссылка автовхода уходят отдельным письмом. Ответ
+ *      `account: "created" | "exists" | null`.
+ *
+ * Невидимая проверка от ботов (`blankBotVerdict`): заполнено поле-ловушка —
+ * ответ похож на успешный, но ничего не пишется и не отправляется; окно
+ * отправлено слишком быстро — мягкая ошибка `too_fast`.
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -86,9 +103,33 @@ export async function POST(request: Request) {
       { status: parsed.status },
     );
   }
-  const { email, company, info, format, marketing, locale } = parsed.value;
+  const { email, company, info, format, marketing, locale, phone, register } = parsed.value;
 
+  const rawBody = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const bot = blankBotVerdict({
+    website: rawBody.website,
+    elapsedMs: rawBody.elapsedMs,
+    remembered: rawBody.remembered === true,
+  });
   const ip = clientIp(request) ?? "unknown";
+  if (bot === "honeypot") {
+    // Человек это поле не видит. Боту отвечаем как обычно, но без следов:
+    // ни согласия, ни лида, ни уведомления продажам, ни писем. Ссылка без
+    // токена ведёт обратно на страницу журнала.
+    console.warn("[blank-download] honeypot filled, request dropped", { ip });
+    return NextResponse.json(
+      { ok: true, url: blankFilePath(info.target, format, locale), emailed: false, consentVersion: LEGAL_VERSION, account: null, page: blankPagePath(info.target, format) },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  if (bot === "too_fast") {
+    console.warn("[blank-download] form submitted too fast", { ip });
+    return NextResponse.json(
+      { error: "Не получилось отправить форму. Обновите страницу и попробуйте ещё раз", errorCode: "too_fast" },
+      { status: 400 },
+    );
+  }
+
   const limited = blankDownloadLimiter.consume(ip, email);
   if (limited) {
     return NextResponse.json(
@@ -113,7 +154,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const platformClient = await findPlatformClientByEmail(email).catch(() => null);
+  let platformClient = await findPlatformClientByEmail(email).catch(() => null);
 
   let consentId: string;
   let consentCreatedAt: Date;
@@ -149,6 +190,30 @@ export async function POST(request: Request) {
   }
 
   const target = info.target;
+
+  // Галка «Быстрая регистрация»: кабинет — до записи лида, чтобы CRM сразу
+  // связала скачивание с новым клиентом. Ошибка регистрации скачиванию не мешает.
+  let account: BlankAccountOutcome | null = null;
+  if (register) {
+    account = await registerFromBlankDownload({
+      request,
+      email,
+      phone: phone ?? null,
+      locale,
+      target,
+      source: parsed.value.source,
+      ip: ip === "unknown" ? null : ip,
+      rateKey: ip,
+    }).catch((error): BlankAccountOutcome => {
+      console.error("[blank-download] quick registration crashed", error);
+      return { status: "skipped", reason: "failed" };
+    });
+    if (account.status === "created") {
+      platformClient = (await findPlatformClientByEmail(email).catch(() => null)) ?? platformClient;
+    }
+  }
+  const accountCreated = account?.status === "created";
+
   await ensurePlatformOrganization(PLATFORM_ORG_ID).catch((error) => {
     console.error("[blank-download] platform org ensure failed", error);
   });
@@ -160,9 +225,11 @@ export async function POST(request: Request) {
     entityId: consentId,
     details: {
       email,
+      ...(phone ? { phone } : {}),
       ...(company ? { company } : {}),
       format,
       title: info.title,
+      ...(account ? { account: account.status } : {}),
       ...(target.kind === "code" ? { code: target.code } : { paperId: target.paperId }),
       marketing: marketingConsentId !== null,
       ...(marketingConsentId ? { marketingConsentId } : {}),
@@ -173,6 +240,7 @@ export async function POST(request: Request) {
     consentId,
     createdAt: consentCreatedAt,
     email,
+    phone: phone ?? null,
     company,
     target,
     title: info.title,
@@ -214,18 +282,21 @@ export async function POST(request: Request) {
           },
         }),
       ]);
-      if (shouldNotifyBlankDownloadAdmin(previousDownloadsCount + alreadyNotifiedCount)) {
+      if (shouldNotifyBlankDownloadAdmin(previousDownloadsCount + alreadyNotifiedCount, accountCreated)) {
         await notifyPlatformAdmin(
           buildBlankDownloadAdminText({
             title: info.title,
             format,
             email,
+            phone,
             company,
+            accountCreated,
             escape: escapeTelegramHtml,
           }),
           {
             kind: "blank_download",
-            dedupeKey,
+            // Повторное скачивание с новым кабинетом — своё событие, не дубль.
+            dedupeKey: accountCreated && previousDownloadsCount + alreadyNotifiedCount > 0 ? `blank_register:${email}` : dedupeKey,
             email: false,
             audience: "sales",
           },
@@ -233,6 +304,24 @@ export async function POST(request: Request) {
       }
     } catch (error) {
       console.error("[blank-download] admin telegram notify failed", error);
+    }
+
+    // Доступ в новый кабинет — всегда, без дневного лимита писем со
+    // ссылками на шаблоны: пароль существует только в этом письме.
+    if (account?.status === "created") {
+      try {
+        await sendAccountPasswordEmail({
+          to: email,
+          password: account.password,
+          organizationId: account.organizationId,
+          locale,
+          via: "blank",
+          autoLoginUrl: account.autoLoginUrl,
+          autoLoginDays: Math.round(SIGNUP_MAGIC_LINK_TTL_MS / (24 * 60 * 60 * 1000)),
+        });
+      } catch (error) {
+        console.error("[blank-download] account email failed", error);
+      }
     }
 
     if (!emailed) return;
@@ -249,6 +338,7 @@ export async function POST(request: Request) {
         registerUrl: `${APP_URL}${localizedHref(blankRegisterHref({ email, target }), locale)}`,
         expiresDays: Math.round(BLANK_DOWNLOAD_TTL_MS / (24 * 60 * 60 * 1000)),
         locale,
+        accountCreated,
       });
     } catch (error) {
       console.error("[blank-download] email failed", error);
@@ -256,7 +346,7 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json(
-    { ok: true, url, emailed, consentVersion: LEGAL_VERSION, page: blankPagePath(target, format) },
+    { ok: true, url, emailed, consentVersion: LEGAL_VERSION, account: blankAccountResponse(account), page: blankPagePath(target, format) },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

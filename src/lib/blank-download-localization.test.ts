@@ -37,7 +37,10 @@ function loadStagedParser() {
   const exports: Dict = {};
   const modules: Record<string, unknown> = {
     zod: requireFromRepo("zod"),
-    "@/lib/blank-download": { normalizeBlankEmail: (value: unknown) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) ? value.trim().toLowerCase() : null },
+    "@/lib/blank-download": {
+      normalizeBlankEmail: (value: unknown) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) ? value.trim().toLowerCase() : null,
+      normalizeBlankPhone: (value: unknown) => typeof value !== "string" || value.replace(/\D/g, "") === "" ? null : /^\+?7\d{10}$/.test(value.replace(/[^\d+]/g, "")) ? `+7${value.replace(/\D/g, "").slice(1)}` : undefined,
+    },
     "@/lib/document-docx": { DOCX_SAMPLE_CODES: ["hygiene"] },
     "@/lib/journal-catalog": { ACTIVE_JOURNAL_CATALOG: [{ code: "hygiene", name: "Гигиенический журнал", formats: ["pdf"] }] },
     "@/lib/sphere-journal-rules": { paperJournalById: (id: string) => id === "paper-1" ? { name: "Paper title" } : null },
@@ -85,6 +88,7 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
   let fetchCount = 0;
   let requestBody: Dict | null = null;
   const goals: string[] = [];
+  let now = 1_000_000;
   const historyChanges: string[] = [];
   const stored = new Map<string, string>();
   const getArray = (map: Map<HookComponent, unknown[]>) => { let value = map.get(current); if (!value) map.set(current, value = []); return value; };
@@ -122,14 +126,23 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
     "react-dom": { createPortal: (node: unknown) => node },
     "next-intl": { useLocale: () => currentLocale, useTranslations },
     "next/link": ({ children, ...props }: Dict) => jsxRuntime.jsx("a", { ...props, children }),
-    "lucide-react": Object.fromEntries(["ArrowRight", "CheckCircle2", "Download", "Loader2", "Mail"].map((name) => [name, (props: Dict) => jsxRuntime.jsx("i", { ...props, "data-icon": name })])),
+    "lucide-react": Object.fromEntries(["ArrowRight", "CheckCircle2", "Download", "Loader2", "Mail", "MessageSquareText", "Phone"].map((name) => [name, (props: Dict) => jsxRuntime.jsx("i", { ...props, "data-icon": name })])),
+    "@/components/max/max-icon": { MaxIcon: (props: Dict) => jsxRuntime.jsx("i", { ...props, "data-icon": "Max" }) },
+    "@/components/public/telegram-icon": { TelegramIcon: (props: Dict) => jsxRuntime.jsx("i", { ...props, "data-icon": "Telegram" }) },
+    "@/lib/phone-input": {
+      phoneInputProps: (value: string, onChange: (next: string) => void) => ({ value, onChange: (event: { target: { value: string } }) => onChange(event.target.value) }),
+    },
+    "@/lib/tariff-plans": { TRIAL_DAYS: 14 },
     "@/components/ui/dialog": Object.fromEntries(["Dialog", "DialogContent", "DialogDescription", "DialogHeader", "DialogTitle"].map((name) => [name, passthrough])),
     "@/components/ui/email-field": { EmailHint: () => null, useEmailField },
     "@/lib/blank-download": {
       BLANK_EMAIL_STORAGE_KEY: "blank-email", BLANK_FORMAT_LABEL: { pdf: "PDF", docx: "Word" },
       blankFilePath: () => "/blank.pdf", blankRegisterHref: ({ email }: { email: string }) => `/register?email=${encodeURIComponent(email)}`, readRememberedBlankEmail: (raw: string | null) => raw ? JSON.parse(raw) : null,
+      blankLoginHref: ({ email }: { email: string }) => `/login?email=${encodeURIComponent(email)}`,
+      blankSignupPlace: (journal: string) => `blank:${journal}`,
+      normalizeBlankPhone: (value: unknown) => typeof value !== "string" || value.replace(/\D/g, "").replace(/^7$/, "") === "" ? null : value.replace(/\D/g, "").length === 11 ? `+${value.replace(/\D/g, "")}` : undefined,
     },
-    "@/lib/signup-source": { ymGoal: (name: string) => goals.push(name) },
+    "@/lib/signup-source": { ymGoal: (name: string) => goals.push(name), readSignupSource: (place: string) => ({ place, landing: "/journals-info/hygiene" }) },
     "@/lib/utils": { cn: (...values: unknown[]) => values.filter(Boolean).join(" ") },
     "@/lib/native-bridge": { downloadFile() {} },
     "@/i18n/site-locale": { localizedHref(href: string, locale: Locale) { return locale === "ru" ? href : `/${locale}${href}`; } },
@@ -149,6 +162,8 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
     window: { localStorage: { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => stored.set(key, value), removeItem: (key: string) => stored.delete(key) }, location: { href: "https://example.test/?download=pdf&expired=1&paper=p1" }, history: { state: null, replaceState(_state: unknown, _title: string, url: string) { historyChanges.push(url); } } },
     document: { body: {}, createElement: () => ({ click() {}, remove() {} }), appendChild() {} },
     setTimeout: () => 1, clearTimeout() {}, URL, console,
+    // Окно «открыто» давно: проверка от ботов на сервере видит живой замер.
+    Date: { now: () => (now += 2_000) },
   };
   vm.runInNewContext(js, context, { filename: "blank-download-client.js" });
 
@@ -186,6 +201,12 @@ for (const locale of ["ru", "en", "uz"] as const) {
     assert.ok(consent && marketing);
     assert.equal((consent.props as Dict).checked, false);
     assert.equal((marketing.props as Dict).checked, false);
+    const quickSignup = find(tree, (node) => node["data-testid"] === "blank-download-register");
+    assert.equal((quickSignup?.props as Dict | undefined)?.checked, true, "quick sign-up is checked by default");
+    const phoneInput = find(tree, (node) => node["data-testid"] === "blank-download-phone");
+    assert.ok(phoneInput, "phone field is present");
+    assert.equal((phoneInput.props as Dict).type, "tel");
+    assert.doesNotMatch(app.text(tree), /необязательн|optional|ixtiyoriy/i, "no «optional» wording in the window");
     const consentLabel = find(tree, (node) => Boolean(node.className) && String(node.className).includes("mt-4"));
     assert.ok(consentLabel);
     const localeCatalog = catalogFor(locale);
@@ -224,6 +245,11 @@ for (const locale of ["ru", "en", "uz"] as const) {
     assert.equal(app.requestBody?.consent, true);
     assert.equal(app.requestBody?.email, "person@example.test");
     assert.equal(app.requestBody?.marketing, locale === "uz" ? true : undefined, "marketing remains opt-in and preserves its selected value");
+    assert.equal(app.requestBody?.register, true, "default quick sign-up is sent");
+    assert.equal(app.requestBody?.website, "", "honeypot stays empty for a person");
+    assert.ok(Number(app.requestBody?.elapsedMs) >= 1500, "time since the window opened is sent");
+    assert.equal(app.requestBody?.phone, undefined, "empty phone is not sent");
+    assert.equal((app.requestBody?.source as Dict | undefined)?.place, "blank:hygiene");
     tree = app.tree();
     const alert = find(tree, (node) => node.role === "alert");
     assert.ok(alert);
@@ -270,6 +296,39 @@ test("late remembered-download feedback renders the current locale without repla
   const sentence = app.find(notice, (node) => node.className === "min-w-0");
   assert.equal(app.text(sentence), app.messages("notice.emailed", { title: "Журнал гигиены", email: "reader@example.test" }));
   assert.equal(app.fetchCount, 2, "locale changes do not replay a download request");
+});
+
+test("phone and quick sign-up: phone is sent, unchecked sign-up is not, created account replaces the sign-up CTA", async () => {
+  const app = render("ru", { status: 200, body: { ok: true, url: "/download?token=opaque", consentVersion: "v1", emailed: true, account: "created" } });
+  let tree = app.tree();
+  invoke(app.find(tree, (node) => node["data-testid"] === "blank-download-pdf"), "onClick", { preventDefault() {} });
+  tree = app.tree();
+  invoke(app.find(tree, (node) => node.id === "blank-download-email"), "onChange", { target: { value: "chef@example.test" } });
+  tree = app.tree();
+  invoke(app.find(tree, (node) => node["data-testid"] === "blank-download-phone"), "onChange", { target: { value: "+7 985 123" } });
+  tree = app.tree();
+  invoke(app.find(tree, (node) => node["data-testid"] === "blank-download-consent"), "onChange", { target: { checked: true } });
+  invoke(app.find(app.tree(), (node) => typeof node.onSubmit === "function"), "onSubmit", { preventDefault() {} });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(app.fetchCount, 0, "an incomplete phone number does not submit");
+  tree = app.tree();
+  assert.equal(app.text(app.find(tree, (node) => node.role === "alert")), app.messages("phone.invalid"));
+
+  invoke(app.find(tree, (node) => node["data-testid"] === "blank-download-phone"), "onChange", { target: { value: "+7 985 123-45-67" } });
+  invoke(app.find(app.tree(), (node) => node["data-testid"] === "blank-download-register"), "onChange", { target: { checked: false } });
+  invoke(app.find(app.tree(), (node) => typeof node.onSubmit === "function"), "onSubmit", { preventDefault() {} });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(app.fetchCount, 1);
+  assert.equal(app.requestBody?.phone, "+79851234567");
+  assert.equal(app.requestBody?.register, undefined, "unchecked quick sign-up is not requested");
+  assert.equal(app.requestBody?.source, undefined, "no sign-up — no visit snapshot");
+  assert.equal(JSON.parse(app.stored.get("blank-email") ?? "{}").phone, "+79851234567", "phone is remembered with the email");
+
+  tree = app.tree();
+  const accountBlock = app.find(tree, (node) => node["data-testid"] === "blank-download-account");
+  assert.ok(accountBlock, "created account replaces the sign-up CTA");
+  assert.ok(app.text(accountBlock).includes("chef@example.test"));
+  assert.equal(app.find(tree, (node) => typeof node.href === "string" && String(node.href).includes("register?email=")), null);
 });
 
 test("auto-open removes legacy query flags and displays the expired-link notice", () => {

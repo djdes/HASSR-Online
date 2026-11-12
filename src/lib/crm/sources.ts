@@ -269,7 +269,7 @@ export function mapSignup(row: SignupRow): CrmIngestItem {
   };
 }
 
-export type BlankDownloadRow = { id: string; email: string; userId: string | null; organizationId: string | null; createdAt: Date; title: string | null; company?: string | null };
+export type BlankDownloadRow = { id: string; email: string; userId: string | null; organizationId: string | null; createdAt: Date; title: string | null; company?: string | null; phone?: string | null };
 
 export function mapBlankDownload(row: BlankDownloadRow): CrmIngestItem {
   const company = text(row.company) || null;
@@ -281,7 +281,13 @@ export function mapBlankDownload(row: BlankDownloadRow): CrmIngestItem {
     body: body(row.title ? `Шаблон: ${row.title}` : "Скачал(а) шаблон журнала с сайта"),
     href: "/root/blank-downloads",
     occurredAt: row.createdAt,
-    identity: { email: contactEmail(row.email), company, userId: row.userId, organizationId: row.organizationId },
+    identity: {
+      email: contactEmail(row.email),
+      company,
+      ...(text(row.phone) ? { phone: text(row.phone) } : {}),
+      userId: row.userId,
+      organizationId: row.organizationId,
+    },
   };
 }
 

@@ -6,6 +6,7 @@ import {
   BLANK_CONSENT_SOURCE,
   BLANK_DOWNLOAD_AUDIT_ACTION,
   BLANK_MARKETING_CONSENT_SOURCE,
+  displayBlankPhone,
   type BlankFormat,
 } from "@/lib/blank-download";
 import { ensurePdfLeadsSynced } from "@/lib/blank-download-lead.server";
@@ -23,7 +24,7 @@ export async function generateMetadata() {
 const LIMIT = 300;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type Details = { code?: string; paperId?: string; title?: string; format?: BlankFormat; company?: string };
+type Details = { code?: string; paperId?: string; title?: string; format?: BlankFormat; company?: string; phone?: string };
 
 function readDetails(value: unknown): Details {
   return value && typeof value === "object" ? (value as Details) : {};
@@ -143,6 +144,11 @@ export default async function RootBlankDownloadsPage() {
                 >
                   {consent.email}
                 </a>
+                {detail.phone ? (
+                  <a href={`tel:${detail.phone}`} className="mt-1 block text-[13px] tabular-nums text-[#3c4053] hover:text-[#3848c7]">
+                    {displayBlankPhone(detail.phone)}
+                  </a>
+                ) : null}
                 {detail.company ? (
                   <div className="mt-1 text-[13px] font-medium text-[#3848c7]">{detail.company}</div>
                 ) : null}
@@ -197,6 +203,11 @@ export default async function RootBlankDownloadsPage() {
                       >
                         {consent.email}
                       </a>
+                      {detail.phone ? (
+                        <a href={`tel:${detail.phone}`} className="mt-0.5 block text-[12.5px] tabular-nums text-[#3c4053] hover:text-[#3848c7]">
+                          {displayBlankPhone(detail.phone)}
+                        </a>
+                      ) : null}
                       {detail.company ? (
                         <div className="mt-0.5 text-[12.5px] text-[#3848c7]">{detail.company}</div>
                       ) : null}
