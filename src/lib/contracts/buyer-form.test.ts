@@ -148,3 +148,47 @@ test("custom text: lines become clauses, «а) …» sub-items, requisites secti
   assert.equal(document.sections[2].title, "Реквизиты и подписи сторон");
   assert.ok(n(contractPlainText(document)).includes("по особому порядку клиента"));
 });
+
+test("agreed plan: default Premium for 1 month, discount on top, appendices 1 and 2", async () => {
+  const { contractPricingLine, defaultContractPricing } = await import("./pricing");
+  const { DEFAULT_PLAN_RATES } = await import("@/lib/tariff-plans");
+  const pricing = defaultContractPricing(DEFAULT_PLAN_RATES);
+  assert.equal(pricing.tier, "premium");
+  assert.equal(pricing.cycle, "month");
+  const plain = contractPricingLine(pricing);
+  assert.equal(plain.totalRub, DEFAULT_PLAN_RATES.premium.month);
+  assert.equal(plain.discountRub, 0);
+  const discounted = contractPricingLine({ ...pricing, points: 2, discountPercent: 10 });
+  assert.equal(discounted.fullRub, DEFAULT_PLAN_RATES.premium.month * 2);
+  assert.equal(discounted.totalRub, Math.round(DEFAULT_PLAN_RATES.premium.month * 2 * 0.9));
+
+  const snapshot: ContractSnapshot = {
+    ...BLANK_SNAPSHOT,
+    number: "WS-2026/0009",
+    date: "2026-11-12",
+    params: { ...BLANK_SNAPSHOT.params, pricing: { ...pricing, discountPercent: 10 } },
+  };
+  const document = buildContractDocument(snapshot);
+  assert.equal(document.appendices.length, 2);
+  assert.equal(document.appendices[0].title, "Стоимость услуг");
+  assert.match(n(document.appendices[0].rows[0][0]), /«Премиум» на 1 месяц/);
+  assert.match(n(document.appendices[0].notes[0].text), /Общая стоимость .* руб\. \(.+рубл.+\), НДС не облагается/);
+  assert.equal(document.appendices[1].rows.length, 6, "3 plans × month/year");
+  const text = n(contractPlainText(document));
+  assert.match(text, /указаны в Приложении № 1/);
+  assert.match(text, /Контакты Исполнителя/);
+  assert.ok(!text.includes("указываются в счёте Исполнителя"));
+
+  const plainDoc = buildContractDocument({ ...snapshot, params: { ...snapshot.params, pricing: null } });
+  assert.equal(plainDoc.appendices.length, 0, "contracts issued without a plan keep their text");
+
+  const pdf = renderContractPdf(document, SELLER, { facsimile: null, stamp: null });
+  assert.ok(pdf.pages >= 6);
+  const docx = await renderContractDocx(document, SELLER);
+  assert.equal(docx.subarray(0, 2).toString(), "PK");
+  if (process.env.CONTRACT_DUMP) {
+    const fs = await import("node:fs");
+    fs.writeFileSync(`${process.env.CONTRACT_DUMP}/plan.pdf`, pdf.bytes);
+    fs.writeFileSync(`${process.env.CONTRACT_DUMP}/plan.docx`, docx);
+  }
+});

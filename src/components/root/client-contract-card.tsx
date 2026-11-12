@@ -33,9 +33,10 @@ import {
   type ContractBuyerInput,
 } from "@/lib/contracts/buyer-form";
 import { defaultContractMessage, defaultContractSubject } from "@/lib/contracts/email-copy";
+import { CONTRACT_CYCLES, CONTRACT_TIERS, contractPricingLine, formatAmount } from "@/lib/contracts/pricing";
 import { SIGNER_BASIS_PRESETS } from "@/lib/contracts/format";
 import { isDeliverableEmail, normalizeEmail } from "@/lib/contracts/recipients";
-import type { ContractContext, ContractIssueInput, ContractListItem } from "@/lib/contracts/service.server";
+import type { ContractContext, ContractIssueInput, ContractListItem, ContractPricingInput } from "@/lib/contracts/service.server";
 import { EdoSendButton } from "@/components/root/edo-send-button";
 import type { ContractBuyer, ContractChecklistItem, ContractRecipientSource } from "@/lib/contracts/types";
 import { isValidInn } from "@/lib/inn";
@@ -128,7 +129,7 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
   const t = useTranslations("rootClientContract");
   const locale = useLocale();
   const [ctx, setCtx] = useState(initial);
-  const [form, setForm] = useState<ContractIssueInput & { buyer: ContractBuyerInput }>(initial.defaults);
+  const [form, setForm] = useState<ContractIssueInput & { buyer: ContractBuyerInput; pricing: ContractPricingInput }>(initial.defaults);
   const [textDraft, setTextDraft] = useState<TextDraft | null>(null);
   const [busy, setBusy] = useState<null | "preview" | "previewDocx" | "issue" | "refresh">(null);
   const [sendTarget, setSendTarget] = useState<ContractListItem | null>(null);
@@ -376,6 +377,13 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
           </Field>
         </div>
 
+        <PricingEditor
+          t={t}
+          value={form.pricing}
+          rates={ctx.planRates}
+          onChange={(next) => setForm((prev) => ({ ...prev, pricing: { ...prev.pricing, ...next } }))}
+        />
+
         <BuyerRequisitesEditor
           t={t}
           value={form.buyer}
@@ -556,6 +564,84 @@ const BUYER_FIELDS: Array<{ key: keyof ContractBuyerInput; label: (individual: b
   { key: "bankAccount", label: () => "requisites.bankAccount", numeric: true },
   { key: "bankCorrAccount", label: () => "requisites.bankCorrAccount", numeric: true },
 ];
+
+/** Согласованный тариф → Приложение № 1. По умолчанию «Премиум» на 1 месяц. */
+function PricingEditor({
+  t,
+  value,
+  rates,
+  onChange,
+}: {
+  t: Translator;
+  value: ContractPricingInput;
+  rates: ContractContext["planRates"];
+  onChange: (next: Partial<ContractPricingInput>) => void;
+}) {
+  const line = contractPricingLine({ ...value, points: Number(value.points) || 1, discountPercent: Number(value.discountPercent) || 0, rates });
+  const select = `${INPUT} h-10 appearance-auto`;
+  return (
+    <div className="mt-5 rounded-2xl border border-[#ececf4] bg-white p-4" data-testid="contract-pricing">
+      <div className="text-[14px] font-semibold text-[#0b1024]">{t("pricing.title")}</div>
+      <p className="mt-0.5 text-[12.5px] text-[#6f7282]">{t("pricing.hint")}</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <label className="block">
+          <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t("pricing.tier")}</span>
+          <select value={value.tier} onChange={(event) => onChange({ tier: event.target.value as ContractPricingInput["tier"] })} className={select} data-testid="contract-pricing-tier">
+            {CONTRACT_TIERS.map((tier) => (
+              <option key={tier} value={tier}>
+                {t(`pricing.tiers.${tier}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t("pricing.cycle")}</span>
+          <select value={value.cycle} onChange={(event) => onChange({ cycle: event.target.value as ContractPricingInput["cycle"] })} className={select} data-testid="contract-pricing-cycle">
+            {CONTRACT_CYCLES.map((cycle) => (
+              <option key={cycle} value={cycle}>
+                {t(`pricing.cycles.${cycle}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t("pricing.points")}</span>
+          <input
+            type="number"
+            min={1}
+            max={500}
+            value={value.points}
+            onChange={(event) => onChange({ points: Math.max(1, Math.floor(Number(event.target.value) || 1)) })}
+            className={`${INPUT} h-10`}
+            data-testid="contract-pricing-points"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t("pricing.discount")}</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step="0.5"
+            value={value.discountPercent}
+            onChange={(event) => onChange({ discountPercent: Math.min(100, Math.max(0, Number(event.target.value) || 0)) })}
+            className={`${INPUT} h-10`}
+            data-testid="contract-pricing-discount"
+          />
+          <span className="mt-1 block text-[11.5px] text-[#9b9fb3]">{t("pricing.discountHint")}</span>
+        </label>
+      </div>
+      <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl bg-[#f5f6ff] px-3 py-2">
+        <span className="text-[14px] font-semibold tabular-nums text-[#0b1024]" data-testid="contract-pricing-total">
+          {t("pricing.total", { total: formatAmount(line.totalRub) })}
+        </span>
+        {line.discountRub > 0 ? (
+          <span className="text-[12.5px] tabular-nums text-[#6f7282]">{t("pricing.saving", { discount: formatAmount(line.discountRub), full: formatAmount(line.fullRub) })}</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 /** Реквизиты Заказчика для этого договора: заполнены из карточки клиента, правятся тут. */
 function BuyerRequisitesEditor({

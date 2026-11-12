@@ -2,12 +2,14 @@ import { Prisma } from "@prisma/client";
 
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { db } from "@/lib/db";
+import { readPlanPricing } from "@/lib/tariffs";
 import { DOCUMENT_ORG_SELECT } from "@/lib/document-org-block";
 import { isValidInn } from "@/lib/inn";
 
 import { applyBuyerInput, buyerInputFrom, type ContractBuyerInput } from "./buyer-form";
 import { BLANK_SHORT, clean, parseContractDate, todayInMoscow } from "./format";
 import { formatContractNumber } from "./numbering";
+import { clampDiscount, defaultContractPricing } from "./pricing";
 import { contractRecipientSuggestions, normalizeEmail } from "./recipients";
 import {
   buyerChecklist,
@@ -24,11 +26,14 @@ import type {
   ContractBuyer,
   ContractChecklistItem,
   ContractCustomSection,
+  ContractCycle,
   ContractParams,
+  ContractPricing,
   ContractRecipient,
   ContractSeller,
   ContractSnapshot,
   ContractStatus,
+  ContractTier,
 } from "./types";
 
 /**
@@ -66,7 +71,19 @@ export type ContractIssueInput = {
   buyer?: ContractBuyerInput | null;
   /** Текст договора в редакции под клиента; нет — стандартный. */
   customSections?: ContractCustomSection[] | null;
+  /** Согласованный тариф для Приложения № 1; нет — «Премиум» на 1 месяц. */
+  pricing?: ContractPricingInput | null;
 };
+
+export type ContractPricingInput = { tier: ContractTier; cycle: ContractCycle; points: number; discountPercent: number };
+
+/** Тариф из формы + цены прайса на сегодня (цены с клиента не принимаем). */
+async function pricingFor(input: ContractPricingInput | null | undefined): Promise<ContractPricing> {
+  const { rates } = await readPlanPricing();
+  const base = defaultContractPricing(rates);
+  if (!input) return base;
+  return { ...base, tier: input.tier, cycle: input.cycle, points: Math.max(1, Math.floor(input.points)), discountPercent: clampDiscount(input.discountPercent) };
+}
 
 const ORG_SELECT = {
   ...DOCUMENT_ORG_SELECT,
@@ -120,7 +137,9 @@ export type ContractContext = {
     profileUpdatedAt: string | null;
     canRefreshRegistry: boolean;
   };
-  defaults: ContractIssueInput & { buyer: ContractBuyerInput };
+  defaults: ContractIssueInput & { buyer: ContractBuyerInput; pricing: ContractPricingInput };
+  /** Прайс ₽/мес за точку — для подсказки цены в карточке. */
+  planRates: ContractPricing["rates"];
   /** Стандартный текст (без раздела реквизитов) — исходник редактора «свой текст». */
   templateSections: ContractCustomSection[];
   recipients: ContractRecipient[];
@@ -156,7 +175,7 @@ export async function listClientContracts(organizationId: string): Promise<Contr
 
 /** Всё для карточки на странице организации: готовность, значения формы, получатели, история. */
 export async function loadContractContext(organizationId: string): Promise<ContractContext> {
-  const [org, requisites] = await Promise.all([loadOrg(organizationId), readPlatformRequisites()]);
+  const [org, requisites, planPricing] = await Promise.all([loadOrg(organizationId), readPlatformRequisites(), readPlanPricing()]);
   const owner = await ownerOf(org);
   const recipients = contractRecipientSuggestions({
     ownerEmail: owner?.email,
@@ -196,8 +215,10 @@ export async function loadContractContext(organizationId: string): Promise<Contr
       useFacsimile: Boolean(requisites.facsimileFile || requisites.stampFile),
       buyer: buyerInputFrom(buyer),
       customSections: null,
+      pricing: { tier: "premium", cycle: "month", points: 1, discountPercent: 0 },
     },
-    templateSections: contractTemplateSections(seller, todayInMoscow()),
+    planRates: planPricing.rates,
+    templateSections: contractTemplateSections(seller, todayInMoscow(), true),
     recipients,
     contracts: await listClientContracts(organizationId),
     templateVersion: CONTRACT_TEMPLATE_VERSION,
@@ -229,7 +250,7 @@ export async function buildContractSnapshot(
 ): Promise<ContractSnapshot> {
   const date = parseContractDate(input.date);
   if (!date) throw new ContractError("bad_date", 400, "Дата договора указана с ошибкой");
-  const [org, seller] = await Promise.all([loadOrg(organizationId), readySeller()]);
+  const [org, seller, pricing] = await Promise.all([loadOrg(organizationId), readySeller(), pricingFor(input.pricing)]);
   const email = normalizeEmail(input.buyerEmail);
   const fromOrg = buyerFromOrganization(org as BuyerSource, email);
   const buyer = input.buyer ? applyBuyerInput(fromOrg, input.buyer, email) : fromOrg;
@@ -242,6 +263,7 @@ export async function buildContractSnapshot(
     signerBasis: clean(input.signerBasis),
     useFacsimile: input.useFacsimile,
     customSections: input.customSections?.length ? input.customSections : null,
+    pricing,
   };
   return {
     number: number ?? `WS-${date.year}/____`,
@@ -259,7 +281,7 @@ export async function buildContractSnapshot(
  * линии для ручного заполнения. Без факсимиле: это бланк, а не оферта.
  */
 export async function buildBlankContractSnapshot(): Promise<ContractSnapshot> {
-  const seller = await readySeller();
+  const [seller, pricing] = await Promise.all([readySeller(), pricingFor(null)]);
   return {
     number: BLANK_SHORT,
     date: "",
@@ -279,7 +301,7 @@ export async function buildBlankContractSnapshot(): Promise<ContractSnapshot> {
       email: null,
       bank: null,
     },
-    params: { signerName: null, signerPost: null, signerBasis: null, useFacsimile: false, customSections: null },
+    params: { signerName: null, signerPost: null, signerBasis: null, useFacsimile: false, customSections: null, pricing },
   };
 }
 
@@ -389,6 +411,27 @@ function readBuyerBank(json: unknown): ContractBuyer["bank"] {
   return Object.values(bank).some(Boolean) ? bank : null;
 }
 
+const TIERS: readonly ContractTier[] = ["standard", "premium", "vip"];
+const CYCLES: readonly ContractCycle[] = ["month", "year"];
+const num = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+
+function readPricing(json: unknown): ContractPricing | null {
+  if (!json || typeof json !== "object") return null;
+  const r = obj(json);
+  const tier = TIERS.find((item) => item === r.tier);
+  const cycle = CYCLES.find((item) => item === r.cycle);
+  if (!tier || !cycle) return null;
+  const rates = obj(r.rates);
+  const rate = (t: ContractTier) => ({ month: num(obj(rates[t]).month), year: num(obj(rates[t]).year) });
+  return {
+    tier,
+    cycle,
+    points: Math.max(1, Math.floor(num(r.points)) || 1),
+    discountPercent: clampDiscount(r.discountPercent),
+    rates: { standard: rate("standard"), premium: rate("premium"), vip: rate("vip") },
+  };
+}
+
 function readCustomSections(json: unknown): ContractCustomSection[] | null {
   if (!Array.isArray(json)) return null;
   const sections: ContractCustomSection[] = [];
@@ -413,6 +456,7 @@ export function readParams(json: unknown): ContractParams {
     signerBasis: strOrNull(r.signerBasis),
     useFacsimile: r.useFacsimile === true,
     customSections: readCustomSections(r.customSections),
+    pricing: readPricing(r.pricing),
   };
 }
 

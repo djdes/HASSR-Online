@@ -37,7 +37,11 @@ import {
   sections20261029,
   type ContractSectionSource,
 } from "./sections-2026-10-29";
-import type { ContractBuyer, ContractSeller, ContractSnapshot } from "./types";
+import { COMPANY_TELEGRAM } from "@/lib/company-contacts";
+import { POINTS_DISCOUNT_LINE } from "@/lib/plan-catalog";
+
+import { contractPriceList, contractPricingLine, formatAmount, formatPercent, totalInWords } from "./pricing";
+import type { ContractBuyer, ContractPricing, ContractSeller, ContractSnapshot } from "./types";
 
 export const CONTRACT_TEMPLATE_VERSION = "2026-11-09";
 
@@ -65,6 +69,20 @@ export type SignatureSide = {
   caption: string;
 };
 
+/** Приложение к договору: таблица и строки под ней, на отдельном листе. */
+export type ContractAppendix = {
+  num: number;
+  title: string;
+  /** Подписи колонок; `align` — по колонке. */
+  columns: string[];
+  align: Array<"left" | "right" | "center">;
+  /** Доли ширины колонок, сумма — 1. */
+  widths: number[];
+  rows: string[][];
+  /** Строки под таблицей; `strong` — итог. */
+  notes: Array<{ text: string; strong?: boolean }>;
+};
+
 export type ContractDocument = {
   title: string;
   /** Строка под заголовком: предмет договора. */
@@ -82,6 +100,8 @@ export type ContractDocument = {
   signatures: { seller: SignatureSide; buyer: SignatureSide };
   /** Подпись под каждым листом: «Договор № … от …». */
   runningTitle: string;
+  /** Приложения (тариф и прайс) — после реквизитов, каждое с нового листа. */
+  appendices: ContractAppendix[];
   /** Для кого какое основание — показывается в шапке письма и списке. */
   parties: { seller: string; buyer: string };
   templateVersion: string;
@@ -160,8 +180,68 @@ export function contractEndDate(date: string): string {
  * Стандартный текст текущей версии — исходник для редактора «свой текст»
  * в карточке ROOT (без раздела реквизитов: он всегда последний и свой).
  */
-export function contractTemplateSections(seller: ContractSeller, date: string): ContractSectionSource[] {
-  return sections(seller, date);
+export function contractTemplateSections(seller: ContractSeller, date: string, withAppendices = false): ContractSectionSource[] {
+  const base = sections(seller, date);
+  return withAppendices ? withPricingClauses(base, seller) : base;
+}
+
+const CLAUSE_TARIFF_IN_INVOICE =
+  "Тариф, количество объектов Заказчика (торговых точек), срок доступа и стоимость услуг указываются в счёте Исполнителя (далее — Счёт). Счёт, оплаченный Заказчиком, является неотъемлемой частью Договора.";
+const CLAUSE_PRICE_BY_INVOICE = "Стоимость услуг определяется тарифами Исполнителя, действующими на дату выставления Счёта, и указывается в Счёте.";
+
+/**
+ * Договор с согласованным тарифом: тариф и цена — в Приложении № 1, прайс —
+ * в Приложении № 2; контакты Исполнителя для документов — в «Прочих условиях».
+ */
+function withPricingClauses(source: ContractSectionSource[], seller: ContractSeller): ContractSectionSource[] {
+  const contacts = [seller.email && `электронная почта ${seller.email}`, seller.phone && `телефон ${seller.phone}`, `Telegram ${COMPANY_TELEGRAM.url}`]
+    .filter(Boolean)
+    .join(", ");
+  return source.map((section) => {
+    const blocks = section.blocks.map((block) => {
+      if (block === CLAUSE_TARIFF_IN_INVOICE) {
+        return "Тариф, количество объектов Заказчика (торговых точек), срок доступа и стоимость услуг указаны в Приложении № 1, перечень и цены тарифов — в Приложении № 2. Приложения являются неотъемлемой частью Договора. Исполнитель выставляет счёт (далее — Счёт) на сумму согласно Приложению № 1.";
+      }
+      if (block === CLAUSE_PRICE_BY_INVOICE) {
+        return "Стоимость услуг за первый период указана в Приложении № 1. При продлении или смене тарифа стоимость определяется по ценам Приложения № 2 либо по тарифам Исполнителя, действующим на дату выставления Счёта, и указывается в Счёте.";
+      }
+      return block;
+    });
+    if (section.title === "Прочие условия") {
+      blocks.splice(blocks.length - 1, 0, `Контакты Исполнителя для обмена документами и уведомлениями: ${contacts}. Контакты Заказчика — адрес электронной почты, указанный в разд. 11.`);
+    }
+    return { ...section, blocks };
+  });
+}
+
+/** Приложения № 1 (стоимость услуг) и № 2 (перечень и цены тарифов). */
+function pricingAppendices(pricing: ContractPricing): ContractAppendix[] {
+  const line = contractPricingLine(pricing);
+  const periodHead = pricing.cycle === "year" ? "Цена, ₽/12 мес." : "Цена, ₽/мес.";
+  const first: ContractAppendix = {
+    num: 1,
+    title: "Стоимость услуг",
+    columns: ["Наименование", periodHead, "Точек", "Скидка, %", "Скидка, ₽", "Итого, ₽"],
+    align: ["left", "right", "center", "right", "right", "right"],
+    widths: [0.4, 0.13, 0.09, 0.11, 0.12, 0.15],
+    rows: [[line.name, formatAmount(line.unitRub), String(line.points), formatPercent(line.discountPercent), formatAmount(line.discountRub), formatAmount(line.totalRub)]],
+    notes: [{ text: `Общая стоимость услуг по Договору за первый период составляет ${totalInWords(line.totalRub)}.`, strong: true }],
+  };
+  const second: ContractAppendix = {
+    num: 2,
+    title: "Перечень и цены тарифов",
+    columns: ["№", "Наименование", "Скидка, %", "Цена за точку, ₽"],
+    align: ["center", "left", "right", "right"],
+    widths: [0.08, 0.56, 0.14, 0.22],
+    rows: contractPriceList(pricing.rates)
+      .flatMap((group) => group.rows)
+      .map((row, index) => [String(index + 1), row.name, formatPercent(row.discountPercent), formatAmount(row.priceRub)]),
+    notes: [
+      { text: `Цена указана за одну точку (объект) Заказчика за весь период. Скидка за количество точек: ${POINTS_DISCOUNT_LINE}.` },
+      { text: "Услуги НДС не облагаются: Исполнитель применяет упрощённую систему налогообложения." },
+    ],
+  };
+  return [first, second];
 }
 
 /** Разделы договора. Ссылки «п. X.Y» и «разд. N» проверяет тест. */
@@ -374,7 +454,9 @@ export function buildContractDocument(snapshot: ContractSnapshot, options: { bla
   // редакция под клиента (снимок `params.customSections`) — свой.
   const legacy = snapshot.templateVersion === TEMPLATE_VERSION_2026_10_29;
   const custom = params.customSections?.length ? params.customSections : null;
-  const source = custom ?? (legacy ? sections20261029(seller, buyer) : sections(seller, snapshot.date));
+  const pricing = !legacy && params.pricing ? params.pricing : null;
+  const standard = legacy ? sections20261029(seller, buyer) : sections(seller, snapshot.date);
+  const source = custom ?? (pricing ? withPricingClauses(standard, seller) : standard);
   const builtSections: ContractSection[] = source.map((section, index) => {
     const num = index + 1;
     let clause = 0;
@@ -431,6 +513,7 @@ export function buildContractDocument(snapshot: ContractSnapshot, options: { bla
       buyer: { role: "Заказчик", orgName: names.short, ...buyerSigner },
     },
     runningTitle: `Договор № ${snapshot.number} от ${dateLong}`.replace(/№ /, `№${NBSP}`),
+    appendices: pricing ? pricingAppendices(pricing) : [],
     parties: { seller: sellerShort, buyer: names.short },
     templateVersion: snapshot.templateVersion,
   };

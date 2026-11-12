@@ -67,6 +67,26 @@ export type ContractParams = {
   useFacsimile: boolean;
   /** Текст договора в редакции под клиента; null — стандартный текст версии шаблона. */
   customSections?: ContractCustomSection[] | null;
+  /**
+   * Согласованный тариф — Приложения № 1 и № 2. Снимок цен на дату выпуска:
+   * смена прайса выпущенный договор не меняет. Нет — договор без приложений
+   * (как выпускались до 2026-11-12).
+   */
+  pricing?: ContractPricing | null;
+};
+
+export type ContractTier = "standard" | "premium" | "vip";
+export type ContractCycle = "month" | "year";
+
+export type ContractPricing = {
+  tier: ContractTier;
+  cycle: ContractCycle;
+  /** Точек (объектов) Заказчика. */
+  points: number;
+  /** Скидка менеджера сверх скидки за точки, %. */
+  discountPercent: number;
+  /** Прайс ₽/мес за точку на дату выпуска (как `PlanRates`). */
+  rates: Record<ContractTier, Record<ContractCycle, number>>;
 };
 
 export type ContractSnapshot = {

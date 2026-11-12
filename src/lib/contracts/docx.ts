@@ -26,7 +26,7 @@ import JSZip from "jszip";
 
 import { BRAND_FOOTER_TAGLINE, brandAsset, brandSeller, type BrandAssetName, type BrandSeller } from "@/lib/brand-docs/pdf-kit";
 
-import type { ContractDocument, RequisiteRow, SignatureSide } from "./template";
+import type { ContractAppendix, ContractDocument, RequisiteRow, SignatureSide } from "./template";
 import type { ContractSeller } from "./types";
 
 /**
@@ -183,6 +183,54 @@ function signature(side: SignatureSide): Paragraph[] {
   ];
 }
 
+const ALIGN = { left: AlignmentType.LEFT, right: AlignmentType.RIGHT, center: AlignmentType.CENTER } as const;
+
+/** Приложение с нового листа: шапка справа, заголовок, таблица, итог, подписи сторон. */
+function appendixBlocks(appendix: ContractAppendix, document: ContractDocument, signWidths: number[], gutter: number): Array<Paragraph | Table> {
+  const right = { align: AlignmentType.RIGHT, line: 240 } as const;
+  const colWidths = appendix.widths.map((share) => Math.floor(W * share));
+  colWidths[colWidths.length - 1] += W - colWidths.reduce((sum, w) => sum + w, 0);
+  const pad = { top: 90, bottom: 90, left: 100, right: 100 };
+  const headBorders = { top: NONE, left: NONE, right: NONE, bottom: hair(C.ink, 6) };
+  const rowBorders = { top: NONE, left: NONE, right: NONE, bottom: hair(C.border2) };
+  const tableRows = [
+    new TableRow({
+      tableHeader: true,
+      children: appendix.columns.map((label, index) =>
+        cell([para([run(label, { size: SIZE.small, color: C.muted })], { align: ALIGN[appendix.align[index]], line: 240 })], colWidths[index], { margins: pad, borders: headBorders, valign: VerticalAlign.BOTTOM }),
+      ),
+    }),
+    ...appendix.rows.map(
+      (row) =>
+        new TableRow({
+          cantSplit: true,
+          children: row.map((value, index) =>
+            cell([para([run(value, { size: 8.5 })], { align: ALIGN[appendix.align[index]], line: 250 })], colWidths[index], { margins: pad, borders: rowBorders, valign: VerticalAlign.CENTER }),
+          ),
+        }),
+    ),
+  ];
+  const signCell = (side: SignatureSide, width: number) => cell(signature(side), width, { margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+  return [
+    new Paragraph({ children: [run(`Приложение № ${appendix.num}`, { size: 9, color: C.muted })], alignment: AlignmentType.RIGHT, pageBreakBefore: true, spacing: { before: 0, after: 0, line: 240 } }),
+    para([run(`к ${document.runningTitle.replace(/^Договор/, "Договору")}`, { size: 9, color: C.muted })], { ...right, before: 40 }),
+    para([run(appendix.title, { size: 16, sb: true })], { before: 360, after: 200, line: 240 }),
+    table(tableRows, colWidths),
+    ...appendix.notes.map((note) => para([run(note.text, { size: note.strong ? 9.5 : 8.5, sb: note.strong, color: note.strong ? C.ink : C.ink2 })], { before: 160, line: 276, align: AlignmentType.JUSTIFIED })),
+    para([], { before: 360 }),
+    table(
+      [
+        new TableRow({
+          cantSplit: true,
+          children: [signCell(document.signatures.seller, signWidths[0]), cell([para([])], gutter), signCell(document.signatures.buyer, signWidths[2])],
+        }),
+      ],
+      signWidths,
+    ),
+    new Paragraph({ children: [], spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT } }),
+  ];
+}
+
 /**
  * Переносы — только в абзацах по ширине: заголовки, подписи и ячейки таблиц не рвём.
  * И «Внедрять шрифты»: клиент поправит договор и сохранит — Manrope останется внутри.
@@ -278,6 +326,8 @@ export async function renderContractDocx(document: ContractDocument, sellerSnaps
     // Свой последний абзац в 1 пт: иначе Word добавит обычный после таблицы, и он уедет на пустой лист.
     new Paragraph({ children: [], spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT } }),
   );
+
+  for (const appendix of document.appendices) body.push(...appendixBlocks(appendix, document, widths, gutter));
 
   const fontDir = path.join(process.cwd(), "src", "lib", "pdf-fonts");
   const fonts = FONT_FILES.filter(({ file }) => fs.existsSync(path.join(fontDir, file))).map(({ name, file }) => ({ name, data: fs.readFileSync(path.join(fontDir, file)) }));
