@@ -1,0 +1,20 @@
+## Unified switch toast — call sites (showSwitchToast / switchWithReturn)
+src/components/journals/point-mode-unavailable.tsx:75:    switchWithReturn(refreshAfter, organization, point);
+src/components/layout/organization-switcher.tsx:104:    switchWithReturn(refreshAfter, organizationSide(organization), current ? organizationSide(current) : null);
+src/components/layout/point-mismatch-notice.tsx:72:    switchWithReturn(
+src/components/layout/location-switcher.tsx:112:    switchWithReturn(refreshAfter, target, back);
+src/components/layout/create-organization-dialog.tsx:101:          showSwitchToast(
+src/components/layout/create-organization-dialog.tsx:106:                  onClick: () => switchWithReturn(refreshAfter, organizationSide(previous), organizationSide(created)),
+src/components/layout/point-section-sync.tsx:166:        switchWithReturn(refreshAfter, company, point);
+src/components/layout/point-section-sync.tsx:178:          showSwitchToast(
+src/components/layout/point-section-sync.tsx:202:      refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => showSwitchToast(t("switched", { name })));
+src/components/organizations/demo-org-banner.tsx:76:    switchWithReturn(refreshAfter, home, demo);
+src/components/organizations/demo-org-banner.tsx:82:    showSwitchToast(t("demoOrgBanner.welcomeTitle"), { label: t("demoOrgBanner.backToMine"), onClick: leave });
+src/app/mini/_components/mini-location-switcher.tsx:100:    switchWithReturn(refreshAfter, buildingSide(building), current ? buildingSide(current) : null);
+src/app/mini/_components/mini-org-switcher.tsx:114:    switchWithReturn(refreshAfter, organizationSide(organization), current ? organizationSide(current) : null);
+
+## Old switch toasts left (expected: none)
+none
+
+## Removed translation keys still referenced (expected: none)
+none

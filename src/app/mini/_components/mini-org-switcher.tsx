@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Library, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CreateMasterCabinetDialog } from "@/components/master/create-master-cabinet-dialog";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
+import { useContentTransition } from "@/components/layout/content-transition";
+import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import type { AccessibleOrganization } from "@/lib/organization-access";
+import { postActiveOrganization } from "@/lib/switch-organization";
 
 /**
  * Переключение организации в Mini App.
@@ -32,12 +34,12 @@ export function MiniOrgSwitcher() {
   useEffect(() => {
     currentT.current = t;
   }, [t]);
-  const router = useRouter();
+  const tSwitch = useTranslations("navigation.shell.switchToast");
+  const { refreshAfter, pendingTag: busyId, isPending } = useContentTransition();
   const [organizations, setOrganizations] = useState<AccessibleOrganization[]>(
     [],
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [canCreateMaster, setCanCreateMaster] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const openMaster = useOpenMasterCabinet();
@@ -82,26 +84,34 @@ export function MiniOrgSwitcher() {
   const showCabinets = masterCabinets.length > 0 || canCreateMaster;
   if (!showOrganizations && !showCabinets) return null;
 
-  async function switchTo(organization: AccessibleOrganization) {
-    if (organization.id === activeId || busyId) return;
-    setBusyId(organization.id);
-    try {
-      const response = await fetch("/api/me/active-organization", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: organization.id }),
-      });
-      if (!response.ok) throw new Error();
-      setActiveId(organization.id);
-      toast.success(currentT.current("organizationSwitched", { name: organization.name }));
-      router.refresh();
-    } catch {
-      // Раньше сбой проходил молча, и человек не понимал, почему данные
-      // остались от прежней организации. Тосты в Mini App уже есть.
-      toast.error(currentT.current("organizationSwitchFailed"));
-    } finally {
-      setBusyId(null);
-    }
+  function organizationSide(organization: { id: string; name: string }): SwitchSide {
+    return {
+      tag: organization.id,
+      go: async () => {
+        try {
+          await postActiveOrganization(organization.id);
+          setActiveId(organization.id);
+          return true;
+        } catch {
+          // Раньше сбой проходил молча, и человек не понимал, почему данные
+          // остались от прежней организации. Тосты в Mini App уже есть.
+          toast.error(currentT.current("organizationSwitchFailed"));
+          return false;
+        }
+      },
+      message: tSwitch("organization", { name: organization.name }),
+      returnLabel: tSwitch("returnToOrganization", { name: shortSwitchName(organization.name) }),
+    };
+  }
+
+  /**
+   * Как на сайте (2026-11-12): смена — общий переход, экран собирается заново
+   * из данных новой организации, тост смены с «Вернуться в «…»» — после.
+   */
+  function switchTo(organization: AccessibleOrganization) {
+    if (organization.id === activeId || isPending) return;
+    const current = organizations.find((item) => item.id === activeId) ?? null;
+    switchWithReturn(refreshAfter, organizationSide(organization), current ? organizationSide(current) : null);
   }
 
   return (

@@ -2828,9 +2828,13 @@ export type MessageContract = {
         "organization": "Вся организация",
         "companySection": "Общий раздел — выбрано «{name}»",
         "returnTo": "Вернуться на «{name}»",
-        "close": "Закрыть",
         "search": "Найти торговую точку",
         "nothingFound": "Ничего не нашлось"
+      },
+      "switchToast": {
+        "close": "Закрыть",
+        "organization": "Организация: {name}",
+        "returnToOrganization": "Вернуться в «{name}»"
       },
       "sidebarAria": "Разделы кабинета",
       "tabsAria": "Подразделы",
@@ -15939,10 +15943,8 @@ export type MessageContract = {
       "organizationHeading": "Организация",
       "cabinetHeading": "Кабинет",
       "createMasterCabinet": "Создать мастер-кабинет",
-      "organizationSwitched": "Вы работаете в «{name}»",
       "organizationSwitchFailed": "Не удалось переключить организацию. Попробуйте ещё раз.",
       "locationHeading": "Торговая точка",
-      "locationSwitched": "Торговая точка: {name}",
       "locationSwitchFailed": "Не удалось переключить торговую точку. Попробуйте ещё раз."
     }
   },
@@ -26312,7 +26314,6 @@ export type MessageContract = {
       "savedWithPassword": "Готово. Данные сохранены, пароль для входа отправили на почту",
       "saved": "Готово. Данные организации сохранены",
       "demoFailed": "Не удалось открыть демо",
-      "demoReady": "Демо-организация готова",
       "titleNaming": "Назовите торговые точки",
       "titleCreated": "Аккаунт создан!",
       "titleComplete": "Завершите регистрацию",
@@ -26645,7 +26646,6 @@ export type MessageContract = {
     },
     "createDemoDialog": {
       "createFailed": "Не удалось открыть демо",
-      "ready": "Демо-организация готова",
       "error": "Ошибка",
       "title": "Открыть демо-организацию?",
       "description": "Это общая тестовая организация с командой и журналами, заполненными за последние {days, plural, one {# день} few {# дня} many {# дней} other {# дня}} — с отклонениями и корректирующими действиями, как в жизни.",
@@ -26739,7 +26739,6 @@ export type MessageContract = {
     "organizationSwitcher": {
       "label": "Организации",
       "switchFailed": "Не удалось переключиться",
-      "switched": "Переключено: {name}",
       "error": "Ошибка",
       "openSettingsFailed": "Не удалось открыть настройки",
       "demo": "Демо",
@@ -27383,7 +27382,6 @@ export type MessageContract = {
   "organizationsUi": {
     "demoOrgBanner": {
       "welcomeTitle": "Вы в демо-организации",
-      "welcomeDescription": "Сотрудники и журналы здесь тестовые и общие для всех гостей. Вернуться к себе можно в один клик.",
       "switchFailed": "Не удалось переключиться",
       "returned": "Вы вернулись в свою организацию",
       "error": "Ошибка",

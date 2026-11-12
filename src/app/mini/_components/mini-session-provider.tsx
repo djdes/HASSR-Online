@@ -5,6 +5,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { ServerSessionSync } from "@/components/layout/server-session-sync";
 import { adoptCookieSession } from "../_lib/cookie-session";
 import { clearSignedOutMark, isSignedOutManually } from "../_lib/signed-out-mark";
 import { getTelegramWebApp } from "./telegram-web-app";
@@ -82,6 +83,8 @@ export function MiniSessionProvider({
       refetchInterval={0}
     >
       <CookieSessionBootstrap />
+      {/* Смена организации в профиле: `useSession()` догоняет сессию из layout. */}
+      <ServerSessionSync session={initialSession} />
       {children}
     </SessionProvider>
   );

@@ -99,6 +99,7 @@ test("объект точки А при выбранной в шапке точ�
   assert.deepEqual(pointMismatch(header(B), "point-a"), {
     pointId: "point-a",
     pointName: "Точка А",
+    selectedId: "point-b",
     selectedName: "Точка Б",
     canSwitch: true,
   });
@@ -120,6 +121,7 @@ test("точка объекта недоступна человеку — рас
   assert.deepEqual(pointMismatch(header(B, false, [B]), "point-a"), {
     pointId: "point-a",
     pointName: null,
+    selectedId: "point-b",
     selectedName: "Точка Б",
     canSwitch: false,
   });

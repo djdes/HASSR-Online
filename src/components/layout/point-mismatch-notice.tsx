@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, MapPin, Store } from "lucide-react";
 import { toast } from "sonner";
 import type { PointMismatch } from "@/lib/document-point-access";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /** Что открыто — от этого зависят заголовок и текст. */
 export type PointMismatchKind = "document" | "entry" | "batch" | "capa" | "supply";
@@ -29,6 +30,7 @@ export function PointMismatchNotice({
   listHref: string;
 }) {
   const t = useTranslations("navigation.shell.pointMismatch");
+  const tPoint = useTranslations("navigation.shell.point");
   const router = useRouter();
   // Тот же переход, что у переключателя в шапке: скелет, пока страница точки собирается.
   const { refreshAfter, isPending: busy } = useContentTransition();
@@ -41,23 +43,37 @@ export function PointMismatchNotice({
     else router.push(listHref);
   }
 
+  async function postPoint(buildingId: string): Promise<boolean> {
+    try {
+      const response = await fetch("/api/me/active-building", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buildingId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error ?? t("failed"));
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("failed"));
+      return false;
+    }
+  }
+
+  const pointSide = (id: string, name: string): SwitchSide => ({
+    tag: id,
+    go: () => postPoint(id),
+    message: tPoint("switched", { name }),
+    returnLabel: tPoint("returnTo", { name: shortSwitchName(name) }),
+  });
+
+  /** Единый тост смены: «Торговая точка: …» и «Вернуться на «выбранную»». */
   function switchPoint() {
-    if (busy) return;
-    refreshAfter(mismatch.pointId, async () => {
-      try {
-        const response = await fetch("/api/me/active-building", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ buildingId: mismatch.pointId }),
-        });
-        const data = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(data?.error ?? t("failed"));
-        return true;
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : t("failed"));
-        return false;
-      }
-    });
+    if (busy || pointName === null) return;
+    switchWithReturn(
+      refreshAfter,
+      pointSide(mismatch.pointId, pointName),
+      mismatch.selectedName ? pointSide(mismatch.selectedId, mismatch.selectedName) : null,
+    );
   }
 
   return (

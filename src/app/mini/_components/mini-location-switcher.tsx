@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /** Блок `location` из /api/mini/home. */
 export type MiniLocationPayload = {
@@ -23,6 +24,7 @@ export type MiniLocationPayload = {
  *
  * Как и на сайте (2026-10-29), запрос и обновление страницы — один переход:
  * «…» у пункта держится, пока не придут данные новой точки, тост — после.
+ * Тост — единый тост смены с «Вернуться на «…»» (2026-11-12).
  */
 export function MiniLocationSwitcher() {
   const t = useTranslations("notificationSettings.miniSwitchers");
@@ -60,12 +62,10 @@ export function MiniLocationSwitcher() {
   const activeId =
     virtualOrganization && location.organizationView ? ORGANIZATION_VIEW_ID : location.activeBuildingId;
 
-  function switchTo(building: BuildingOption) {
-    if (!location || building.id === activeId || isPending) return;
-    const current = location;
-    refreshAfter(
-      building.id,
-      async () => {
+  function buildingSide(building: BuildingOption): SwitchSide {
+    return {
+      tag: building.id,
+      go: async () => {
         try {
           const response = await fetch("/api/me/active-building", {
             method: "POST",
@@ -73,10 +73,12 @@ export function MiniLocationSwitcher() {
             body: JSON.stringify({ buildingId: building.id }),
           });
           if (!response.ok) throw new Error();
-          setLocation(
-            building.id === ORGANIZATION_VIEW_ID
-              ? { ...current, organizationView: true }
-              : { ...current, activeBuildingId: building.id, organizationView: isOfficeBuilding(building) },
+          setLocation((current) =>
+            !current
+              ? current
+              : building.id === ORGANIZATION_VIEW_ID
+                ? { ...current, organizationView: true }
+                : { ...current, activeBuildingId: building.id, organizationView: isOfficeBuilding(building) },
           );
           return true;
         } catch {
@@ -86,8 +88,16 @@ export function MiniLocationSwitcher() {
           return false;
         }
       },
-      () => toast.success(currentT.current("locationSwitched", { name: building.name })),
-    );
+      message: tPoint("switched", { name: building.name }),
+      returnLabel: tPoint("returnTo", { name: shortSwitchName(building.name) }),
+    };
+  }
+
+  /** Единый тост смены, как на сайте: «Торговая точка: …» и «Вернуться на «…»». */
+  function switchTo(building: BuildingOption) {
+    if (!location || building.id === activeId || isPending) return;
+    const current = options.find((option) => option.id === activeId) ?? null;
+    switchWithReturn(refreshAfter, buildingSide(building), current ? buildingSide(current) : null);
   }
 
   return (

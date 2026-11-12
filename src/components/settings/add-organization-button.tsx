@@ -17,10 +17,13 @@ import { CreateOrganizationDialog } from "@/components/layout/create-organizatio
  */
 export function AddOrganizationButton({
   currentSphere,
+  currentId,
   currentName,
   organizationsCount,
 }: {
   currentSphere: string;
+  /** Текущая организация — «Вернуться в «…»» в тосте после создания. */
+  currentId: string;
   currentName: string;
   organizationsCount: number;
 }) {
@@ -44,6 +47,7 @@ export function AddOrganizationButton({
       {open ? (
         <CreateOrganizationDialog
           currentSphere={currentSphere}
+          currentId={currentId}
           currentName={currentName}
           organizationsCount={organizationsCount}
           onClose={() => setOpen(false)}

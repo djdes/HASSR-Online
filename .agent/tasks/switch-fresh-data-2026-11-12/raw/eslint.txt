@@ -1,0 +1,36 @@
+
+/home/user/HASSR-Online/src/app/mini/_components/mini-org-switcher.tsx
+  61:10  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/user/HASSR-Online/src/app/mini/_components/mini-org-switcher.tsx:61:10
+  59 |   useEffect(() => {
+  60 |     let cancelled = false;
+> 61 |     void loadOrganizations(() => cancelled);
+     |          ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |     return () => {
+  63 |       cancelled = true;
+  64 |     };  react-hooks/set-state-in-effect
+
+/home/user/HASSR-Online/src/components/organizations/demo-org-banner.tsx
+  90:32  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/user/HASSR-Online/src/components/organizations/demo-org-banner.tsx:90:32
+  88 |   // Срок в прошлом (cron не отработал) — без даты: демо обновится при входе.
+  89 |   const resetLabel =
+> 90 |     reset && reset.getTime() > Date.now()
+     |                                ^^^^^^^^^^ Cannot call impure function
+  91 |       ? reset.toLocaleString(FORMAT_LOCALES[locale], {
+  92 |           day: "numeric",
+  93 |           month: "long",  react-hooks/purity
+
+✖ 2 problems (0 errors, 2 warnings)
+
+exit=0

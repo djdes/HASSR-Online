@@ -10,6 +10,8 @@ import { iosStartupImages } from "@/lib/pwa-assets";
 import { MiniSessionProvider } from "./_components/mini-session-provider";
 import { MiniAppShell } from "./_components/mini-app-shell";
 import { loadMiniShellData } from "./_components/mini-shell-data";
+import { ContentTransitionProvider } from "@/components/layout/content-transition";
+import { ScopeBoundary } from "@/components/layout/scope-boundary";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import "./mini-theme.css";
 // app-theme.css scopes site dashboard styles to `.app-shell` — needed
@@ -95,7 +97,14 @@ export default async function MiniLayout({
   return (
     <DomainMessagesBoundary namespaces={["miniHome", "miniUi", "billingUi"]}>
       <MiniSessionProvider initialSession={session}>
-        <MiniAppShell {...shell}>{children}</MiniAppShell>
+        <MiniAppShell {...shell}>
+          {/* Смена организации/точки в профиле — общий переход, как на сайте:
+              пока экран новой не пришёл — «…» у пункта, тост — после. Экран
+              собирается заново из данных новой (`lib/cabinet-scope.ts`). */}
+          <ContentTransitionProvider>
+            <ScopeBoundary scopeKey={shell.scope.data}>{children}</ScopeBoundary>
+          </ContentTransitionProvider>
+        </MiniAppShell>
       </MiniSessionProvider>
     </DomainMessagesBoundary>
   );

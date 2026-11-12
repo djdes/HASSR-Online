@@ -2,6 +2,7 @@ import type { Session } from "next-auth";
 import { getTranslations } from "next-intl/server";
 
 import { loadBuildingContext } from "@/lib/active-building";
+import { cabinetScopeKeys } from "@/lib/cabinet-scope";
 import { miniLocationLabel } from "@/lib/header-point";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -119,5 +120,12 @@ export async function loadMiniShellData(session: Session | null) {
       (await getTranslations("navigation.shell.point"))("organization"),
     ),
     partnerHint,
+    // Область данных (2026-11-12): смена организации/точки собирает экран
+    // заново из данных новой — как на сайте (`lib/cabinet-scope.ts`).
+    scope: cabinetScopeKeys(
+      session?.user && userId
+        ? { userId, organizationId: getActiveOrgId(session), points: buildingContext }
+        : null,
+    ),
   };
 }

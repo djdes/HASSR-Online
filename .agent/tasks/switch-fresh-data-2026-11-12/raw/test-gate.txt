@@ -1,0 +1,6 @@
+> haccp-online@0.1.0 test:changed
+> node scripts/test-changed.mjs
+→ [test:changed] Эскалация до полного прогона: Изменено 37 файлов кода (порог 25)
+=== Test stats: pass=6131, fail=0 ===
+✓ Все тесты прошли.
+exit=0

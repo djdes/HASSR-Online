@@ -1,0 +1,6 @@
+
+> haccp-online@0.1.0 typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck --incremental --tsBuildInfoFile tsconfig.typecheck.tsbuildinfo -p tsconfig.typecheck.json
+
+src/app/api/root/gogetlinks/plans/route.ts(109,42): error TS2353: Object literal may only specify known properties, and 'windowDays' does not exist in type 'Date'.
+exit=2

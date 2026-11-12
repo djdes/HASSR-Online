@@ -1,6 +1,7 @@
 "use client";
 
 import { getSession } from "next-auth/react";
+import { rereadClientSession } from "@/lib/client-session-sync";
 
 /**
  * Подхват cookie-сессии в Mini App без Telegram.
@@ -26,20 +27,9 @@ export function adoptCookieSession(): Promise<boolean> {
   inflight = (async () => {
     const existing = await getSession().catch(() => null);
     if (!existing?.user) return false;
-    try {
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: "nextauth.message",
-          newValue: JSON.stringify({
-            event: "session",
-            data: { trigger: "getSession" },
-            timestamp: Math.floor(Date.now() / 1000),
-          }),
-        })
-      );
-    } catch {
-      /* нет StorageEvent — страница сама решит, что делать по таймауту */
-    }
+    // Провайдер перечитает сессию (`lib/client-session-sync.ts`); нет
+    // StorageEvent — страница сама решит, что делать по таймауту.
+    rereadClientSession();
     return true;
   })();
   // Следующий холодный старт в этой же вкладке (после выхода) должен

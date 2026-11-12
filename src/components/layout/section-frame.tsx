@@ -26,7 +26,9 @@ import { RouteSkeleton } from "@/components/layout/route-skeleton";
  *   подложки — там ссылки нет.
  * • Смена точки или организации (2026-10-29): пока новая страница не пришла,
  *   вместо неё — скелет по адресу; сама страница остаётся смонтированной
- *   (скрыта), состояние не теряется.
+ *   (скрыта). Пришла — `scopeKey` (область данных, `lib/cabinet-scope.ts`)
+ *   другой, и страница монтируется заново (2026-11-12): её клиентское
+ *   состояние — уже из данных новой организации/точки, а не прежней.
  * • Пункт меню, закрытый человеку по роли (`deniedHrefs` модели меню), —
  *   панель «Нет доступа» вместо страницы. Отказ сервера (`forbidden()`) и
  *   «Такой страницы нет» рисуются той же панелью внутри этой рамки.
@@ -36,12 +38,15 @@ export function SectionFrame({
   children,
   shell = "site",
   homeHref,
+  scopeKey,
 }: {
   children: React.ReactNode;
   /** Сайт или оболочка Mini App: где подсказывать выбрать раздел. */
   shell?: "site" | "mini";
   /** Домашняя человека — кнопка «На главную» на панелях отказа. */
   homeHref: string;
+  /** Область данных (организация + точка): сменилась — страница монтируется заново. */
+  scopeKey?: string;
 }) {
   const t = useTranslations("navigation.shell");
   const { menuItem, depth } = useSectionPlace();
@@ -81,8 +86,13 @@ export function SectionFrame({
       {/* Страница не размонтируется на время ожидания: `contents` не меняет
           раскладку, `hidden` прячет её под скелетом. Под панелью «Нет
           доступа» она тоже остаётся (скрытой): если сервер уводит со
-          страницы редиректом, он сработает. */}
-      <div className={pending || denied ? "hidden" : "contents"} aria-hidden={pending || denied || undefined}>
+          страницы редиректом, он сработает. Новая область данных — новый
+          `key`: страница собирается заново из данных новой организации/точки. */}
+      <div
+        key={scopeKey}
+        className={pending || denied ? "hidden" : "contents"}
+        aria-hidden={pending || denied || undefined}
+      >
         {children}
       </div>
     </AccessShellProvider>

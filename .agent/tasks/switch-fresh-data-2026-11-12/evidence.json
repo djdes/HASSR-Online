@@ -1,0 +1,75 @@
+{
+  "task": "switch-fresh-data-2026-11-12",
+  "branch": "claude/nice-curie-p6hwyq",
+  "base": "e28d552b",
+  "checkedAt": "2026-11-12",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/cabinet-scope.ts",
+        "src/lib/cabinet-scope.test.ts",
+        "src/components/layout/section-frame.tsx",
+        "raw/browser-check.txt"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/layout/scope-boundary.tsx",
+        "src/app/(dashboard)/layout.tsx",
+        "src/app/mini/layout.tsx",
+        "src/app/mini/_components/mini-app-shell.tsx",
+        "raw/browser-check.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/client-session-sync.ts",
+        "src/lib/client-session-sync.test.ts",
+        "src/components/layout/server-session-sync.tsx",
+        "raw/browser-check.txt"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/layout/switch-toast.tsx",
+        "src/components/layout/switch-toast.test.ts",
+        "raw/browser-check.txt"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "note": "Без кнопки возврата намеренно: страница точки (сама держит свою точку) и восстановление точки кнопкой «назад» браузера.",
+      "evidence": [
+        "src/components/layout/switch-toast.test.ts",
+        "raw/switch-call-sites.txt",
+        "raw/browser-check.txt"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/i18n/messages/ru.json",
+        "src/i18n/messages/en.json",
+        "src/i18n/messages/uz.json",
+        "src/i18n/message-contract.d.ts",
+        "raw/switch-call-sites.txt"
+      ]
+    },
+    "AC7": {
+      "status": "FAIL",
+      "note": "Только из-за ошибки типов, которая уже есть на чистом master (b9b1f2df9, gogetlinks/plans/route.ts:109) — см. problems.md; эта задача новых ошибок не добавляет. Полный прогон тестов зелёный, eslint 0 ошибок, next build (куча 8 ГБ, как в деплое) — успешно.",
+      "evidence": [
+        "raw/typecheck.txt",
+        "raw/typecheck-master-baseline.txt",
+        "raw/test-gate.txt",
+        "raw/eslint.txt",
+        "raw/next-build.txt",
+        "problems.md"
+      ]
+    }
+  }
+}
