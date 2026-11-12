@@ -102,7 +102,7 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
     measurePartyRows(pdf, { width: colW, labelWidth, rows: document.requisites.seller, size: 8 }),
     measurePartyRows(pdf, { width: colW, labelWidth, rows: document.requisites.buyer, size: 8 }),
   );
-  const signatureH = 48;
+  const signatureH = 56;
   flow.ensure(SECTION_H + 6 + 9 + rowsH + signatureH);
   flow.gap(3.6);
   sectionTitle(pdf, x, flow.y + 4.2, { num: last.num, title: last.title });

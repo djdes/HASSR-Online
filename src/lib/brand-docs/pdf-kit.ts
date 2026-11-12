@@ -571,7 +571,8 @@ export function signatureLine(
   setText(pdf, { size: 9.5, color: C.muted });
   const postLines = doc.splitTextToSize(options.post, width) as string[];
   doc.text(postLines, x, y + 3);
-  y += postLines.length * lineHeight(9.5, 1.3) + 9;
+  // С росписью и печатью — больше воздуха над линией: роспись не наезжает на должность.
+  y += postLines.length * lineHeight(9.5, 1.3) + (options.facsimile || options.stamp ? 17 : 9);
   const lineW = Math.min(36, width * 0.45);
   stroke(pdf, C.faint, 0.25);
   doc.line(x, y, x + lineW, y);
@@ -582,7 +583,7 @@ export function signatureLine(
   if (options.stampLabel !== false && !options.stamp) doc.text("М. П.", x, y + 9);
   // Как на бумаге (образец владельца 12.11.2026): крупная круглая печать
   // ложится на линию подписи, роспись — правее центра печати, поверх её края.
-  if (options.stamp) drawPng(pdf, options.stamp, { x: x - 2, y: y - 12, w: 36, h: 36 });
+  if (options.stamp) drawPng(pdf, options.stamp, { x: x - 2, y: y - 11, w: 36, h: 36 });
   if (options.facsimile) drawPng(pdf, options.facsimile, { x: x + 17, y: y - 14, w: 30, h: 16 }, "left");
   return y + (options.stamp ? 25 : 11);
 }
