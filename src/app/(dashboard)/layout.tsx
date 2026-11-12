@@ -73,6 +73,8 @@ import { SectionMenuButton } from "@/components/layout/section-menu-button";
 import { SectionTabs } from "@/components/layout/section-tabs";
 import { SectionFrame } from "@/components/layout/section-frame";
 import { ContentTransitionProvider } from "@/components/layout/content-transition";
+import { ScopeBoundary } from "@/components/layout/scope-boundary";
+import { cabinetScopeKeys } from "@/lib/cabinet-scope";
 import { PointSectionSync } from "@/components/layout/point-section-sync";
 import { SectionTopMenu } from "@/components/layout/section-top-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -271,6 +273,10 @@ export default async function DashboardLayout({
     headerPoint.kind === "switch" && headerPoint.options[0]?.id === ORGANIZATION_VIEW_ID
       ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...buildingContext.buildings]
       : buildingContext.buildings;
+
+  // Область данных (2026-11-12): другая организация — оболочка собирается
+  // заново, другая точка — заново только страница (`lib/cabinet-scope.ts`).
+  const scope = cabinetScopeKeys({ userId: session.user.id, organizationId: activeOrgId, points: buildingContext });
 
   // Точка в шапке и раздел согласованы (`PointSectionSync`, 2026-11-10):
   // куда переключать в разделах всей компании и какие точки можно выбрать.
@@ -474,15 +480,22 @@ export default async function DashboardLayout({
           {/* «Перейти к содержимому» — первая остановка Tab (клавиатура,
               экранный диктор). */}
           <SkipToContent />
+          {/* Смена точки/организации — один переход на шапку и страницу:
+              пока новая страница не пришла, контент — скелет. Провайдер —
+              над границей организации: переход и тост после него переживают
+              пересборку оболочки. */}
+          <ContentTransitionProvider>
+          {/* Другая организация — оболочка (шапка, меню, баннеры, виджеты)
+              собирается заново, как после перезагрузки: ничьё состояние не
+              остаётся от прежней (2026-11-12). Смена точки её не трогает —
+              заново только страница (`SectionFrame`). */}
+          <ScopeBoundary scopeKey={scope.organization}>
           {/* Док плавающих кнопок: AI-помощник, поддержка и «Как
               заполнять» регистрируются в нём вместо собственных круглых
               кнопок. На телефоне их было три, и они закрывали правый
               нижний угол страницы. */}
           <FabDockProvider>
           <AppNavProvider model={navModel}>
-          {/* Смена точки/организации — один переход на шапку и страницу:
-              пока новая страница не пришла, контент — скелет. */}
-          <ContentTransitionProvider>
           {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
               страница, футер. Сайдбар — только когда разделов два и больше. */}
           <div className="flex min-h-screen flex-1 print:block">
@@ -593,6 +606,7 @@ export default async function DashboardLayout({
           {brandedOrg?.isDemo && ownedAccount && !isImpersonating(session) ? (
             <Suspense fallback={null}>
               <DemoOrgBanner
+                organizationId={activeOrgId}
                 organizationName={brandedOrg.name}
                 nextResetAt={brandedOrg.demoExpiresAt?.toISOString() ?? null}
                 homeOrganizationId={session.user.organizationId}
@@ -652,7 +666,7 @@ export default async function DashboardLayout({
                 <Suspense fallback={null}>
                   <NpsBanner ask={nps.ask} canPreview={nps.eligible} />
                 </Suspense>
-                <SectionFrame homeHref={getWebHomeHref(session.user)}>{children}</SectionFrame>
+                <SectionFrame homeHref={getWebHomeHref(session.user)} scopeKey={scope.data}>{children}</SectionFrame>
               </PageNavProvider>
             </div>
           </main>
@@ -663,7 +677,6 @@ export default async function DashboardLayout({
           <DashboardFooter partnerBrandName={consultant?.brandName ?? null} />
           </div>
           </div>
-          </ContentTransitionProvider>
           {/* AI помощник — доступен ВСЕМ авторизованным (решение
               владельца 2026-09-02): отвечает по текущей странице и данным
               организации, действия предлагает карточкой с подтверждением.
@@ -732,6 +745,8 @@ export default async function DashboardLayout({
           <UrgentJournalHotkey />
           </AppNavProvider>
           </FabDockProvider>
+          </ScopeBoundary>
+          </ContentTransitionProvider>
         </div>
         {/* Под шапкой и по центру контента (2026-11-11): тост о смене точки
             не закрывает сам переключатель (`dashboard-toaster` в globals.css). */}
@@ -869,6 +884,9 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
         <MiniAppShell {...shell}>
             <AppNavProvider model={navModel}>
             <ContentTransitionProvider>
+            {/* Другая организация (выход из демо) — всё ниже заново, как на
+                сайте; переход и тост — выше границы. */}
+            <ScopeBoundary scopeKey={shell.scope.organization}>
             <PageNavProvider>
               {/* Человек должен видеть, что он в чужом кабинете или в
                   песочнице, — в телефоне это важнее, чем на сайте:
@@ -886,6 +904,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
               {orgRow?.isDemo && ownedAccount && !isImpersonating(session) ? (
                 <Suspense fallback={null}>
                   <DemoOrgBanner
+                    organizationId={activeOrgId}
                     organizationName={orgRow.name}
                     nextResetAt={orgRow.demoExpiresAt?.toISOString() ?? null}
                     homeOrganizationId={session.user.organizationId}
@@ -904,7 +923,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 }}
               />
               <SectionTabs />
-              <SectionFrame shell="mini" homeHref={shell.homeHref}>{children}</SectionFrame>
+              <SectionFrame shell="mini" homeHref={shell.homeHref} scopeKey={shell.scope.data}>{children}</SectionFrame>
               {billing?.gate ? (
                 <BillingTransitionGate
                   copy={billing.gate.copy}
@@ -914,6 +933,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 />
               ) : null}
             </PageNavProvider>
+            </ScopeBoundary>
             </ContentTransitionProvider>
             </AppNavProvider>
         </MiniAppShell>

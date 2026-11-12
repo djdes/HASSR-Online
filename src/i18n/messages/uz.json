@@ -2827,9 +2827,13 @@
         "organization": "Butun tashkilot",
         "companySection": "Umumiy bo‘lim — tanlandi: {name}",
         "returnTo": "«{name}»ga qaytish",
-        "close": "Yopish",
         "search": "Nuqtani topish",
         "nothingFound": "Hech narsa topilmadi"
+      },
+      "switchToast": {
+        "close": "Yopish",
+        "organization": "Tashkilot: {name}",
+        "returnToOrganization": "«{name}»ga qaytish"
       },
       "sidebarAria": "Kabinet bo‘limlari",
       "tabsAria": "Bo‘limchalar",
@@ -15938,10 +15942,8 @@
       "organizationHeading": "Tashkilot",
       "cabinetHeading": "Kabinet",
       "createMasterCabinet": "Bosh kabinet yaratish",
-      "organizationSwitched": "Endi “{name}” tashkilotida ishlayapsiz",
       "organizationSwitchFailed": "Tashkilotni almashtirib bo‘lmadi. Yana bir bor urinib ko‘ring.",
       "locationHeading": "Joylashuv",
-      "locationSwitched": "Joylashuv: {name}",
       "locationSwitchFailed": "Joylashuvni almashtirib bo‘lmadi. Yana bir bor urinib ko‘ring."
     }
   },
@@ -26311,7 +26313,6 @@
       "savedWithPassword": "Tayyor. Ma’lumotlar saqlandi, kirish paroli pochtangizga yuborildi",
       "saved": "Tayyor. Tashkilot ma’lumotlari saqlandi",
       "demoFailed": "Demoni ochib bo‘lmadi",
-      "demoReady": "Demo tashkilot tayyor",
       "titleNaming": "Nuqtalarni nomlang",
       "titleCreated": "Akkaunt yaratildi!",
       "titleComplete": "Ro‘yxatdan o‘tishni yakunlang",
@@ -26644,7 +26645,6 @@
     },
     "createDemoDialog": {
       "createFailed": "Demoni ochib bo‘lmadi",
-      "ready": "Demo tashkilot tayyor",
       "error": "Xatolik",
       "title": "Demo tashkilot ochilsinmi?",
       "description": "Bu umumiy sinov tashkiloti: jamoa va oxirgi {days, plural, one {# kun} other {# kun}} uchun to‘ldirilgan jurnallar bilan — real hayotdagidek og‘ishlar va tuzatuvchi harakatlar bilan.",
@@ -26738,7 +26738,6 @@
     "organizationSwitcher": {
       "label": "Tashkilotlar",
       "switchFailed": "Almashtirib bo‘lmadi",
-      "switched": "O‘tkazildi: {name}",
       "error": "Xatolik",
       "openSettingsFailed": "Sozlamalarni ochib bo‘lmadi",
       "demo": "Demo",
@@ -27382,7 +27381,6 @@
   "organizationsUi": {
     "demoOrgBanner": {
       "welcomeTitle": "Siz demo tashkilotdasiz",
-      "welcomeDescription": "Bu yerdagi xodimlar va jurnallar sinov uchun va barcha mehmonlar uchun umumiy. O‘z tashkilotingizga bir bosishda qaytishingiz mumkin.",
       "switchFailed": "O‘tib bo‘lmadi",
       "returned": "Siz o‘z tashkilotingizga qaytdingiz",
       "error": "Xatolik",

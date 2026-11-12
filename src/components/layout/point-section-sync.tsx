@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { isCompanyWidePath, pointReturnTarget, pointSyncAction } from "@/lib/point-section-sync";
 import { useContentTransition } from "@/components/layout/content-transition";
-import { showPointSwitchToast, shortPointName } from "@/components/layout/point-switch-toast";
+import { shortSwitchName, showSwitchToast, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /** Точка, с которой человека увела автосмена на офис, — до конца вкладки. */
 const RETURN_KEY = "wesetup.point-return";
@@ -126,51 +126,62 @@ export function PointSectionSync({
       attempted.current = key;
       const fromPointId = viewedPointId;
       const targetName = nameOf(action.targetId);
+      if (action.kind === "organization") {
+        // Раздел всей компании: выбор — офис / «Вся организация»; в тосте —
+        // «Вернуться на «точку»» (`switch-toast.tsx`). Возврат — точка и
+        // страница, откуда пришли; его тост предлагает снова в раздел.
+        const companyHref = `${pathname}${window.location.search}`;
+        const fromName = nameOf(fromPointId);
+        const company: SwitchSide = {
+          tag: action.targetId,
+          go: async () => {
+            const ok = await postActiveBuilding(action.targetId, t("failed"));
+            if (!ok) return false;
+            // Запоминаем, откуда увели: «назад» и кнопка в тосте вернут точку.
+            writeReturnPoint(fromPointId);
+            // Снова в раздел после возврата — по адресу, не по истории.
+            if (`${window.location.pathname}${window.location.search}` !== companyHref) router.push(companyHref);
+            return true;
+          },
+          message: t("companySection", { name: targetName }),
+          returnLabel: t("returnTo", { name: shortSwitchName(targetName) }),
+        };
+        const point: SwitchSide | null =
+          fromPointId && fromName
+            ? {
+                tag: fromPointId,
+                go: async () => {
+                  forgetReturnPoint();
+                  const ok = await postActiveBuilding(fromPointId, t("failed"));
+                  if (!ok) return false;
+                  // Туда, откуда пришли; по прямой ссылке — страница точки.
+                  if (window.history.length > 1) router.back();
+                  else router.push(`/settings/buildings/${fromPointId}`);
+                  return true;
+                },
+                message: t("switched", { name: fromName }),
+                returnLabel: t("returnTo", { name: shortSwitchName(fromName) }),
+              }
+            : null;
+        switchWithReturn(refreshAfter, company, point);
+        return;
+      }
       refreshAfter(
         action.targetId,
         () => postActiveBuilding(action.targetId, t("failed")),
         () => {
-          if (action.kind !== "organization") {
-            forgetReturnPoint();
-            // Страница точки сама держит точку в шапке — возвращать некуда.
-            // Фильтр мест — вернуть прежний выбор фильтра (и с ним шапку).
-            const fromId = fromPointId ?? organizationTarget?.id ?? null;
-            const fromName = nameOf(fromId);
-            showPointSwitchToast(
-              t("switched", { name: targetName }),
-              action.kind === "place" && fromId && fromName
-                ? {
-                    label: t("returnTo", { name: shortPointName(fromName) }),
-                    // Прежний выбор фильтра — он и шапку вернёт.
-                    onClick: () => router.push(`${pathname}?place=${encodeURIComponent(fromPointId ?? "all")}`, { scroll: false }),
-                  }
-                : null,
-            );
-            return;
-          }
-          // Запоминаем, откуда увели: «назад» и кнопка в тосте вернут точку.
-          writeReturnPoint(fromPointId);
-          const fromName = nameOf(fromPointId);
-          showPointSwitchToast(
-            t("companySection", { name: targetName }),
-            fromPointId && fromName
+          forgetReturnPoint();
+          // Страница точки сама держит точку в шапке — возвращать некуда.
+          // Фильтр мест — вернуть прежний выбор фильтра (и с ним шапку).
+          const fromId = fromPointId ?? organizationTarget?.id ?? null;
+          const fromName = nameOf(fromId);
+          showSwitchToast(
+            t("switched", { name: targetName }),
+            action.kind === "place" && fromId && fromName
               ? {
-                  label: t("returnTo", { name: shortPointName(fromName) }),
-                  onClick: () => {
-                    forgetReturnPoint();
-                    refreshAfter(
-                      fromPointId,
-                      async () => {
-                        const ok = await postActiveBuilding(fromPointId, t("failed"));
-                        if (!ok) return false;
-                        // Туда, откуда пришли; по прямой ссылке — страница точки.
-                        if (window.history.length > 1) router.back();
-                        else router.push(`/settings/buildings/${fromPointId}`);
-                        return true;
-                      },
-                      () => showPointSwitchToast(t("switched", { name: fromName })),
-                    );
-                  },
+                  label: t("returnTo", { name: shortSwitchName(fromName) }),
+                  // Прежний выбор фильтра — он и шапку вернёт (её тост — снова с возвратом).
+                  onClick: () => router.push(`${pathname}?place=${encodeURIComponent(fromPointId ?? "all")}`, { scroll: false }),
                 }
               : null,
           );
@@ -186,7 +197,9 @@ export function PointSectionSync({
     if (restore) {
       forgetReturnPoint();
       const name = nameOf(restore);
-      refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => showPointSwitchToast(t("switched", { name })));
+      // Точку вернул сам человек — кнопкой «назад»; вперёд в раздел компании
+      // ведёт «вперёд» браузера, поэтому тост здесь без кнопки возврата.
+      refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => showSwitchToast(t("switched", { name })));
       return;
     }
     // Ушли дальше по меню на страницу точки/журналов — работаем в офисе осознанно.

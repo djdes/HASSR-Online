@@ -48,6 +48,7 @@ export default async function PointJournalsPage({
   if (journalsPointMode(pointContext)) {
     return (
       <PointModeUnavailable
+        pointId={pointContext.activeBuildingId}
         pointName={pointContext.activeBuilding?.name ?? ""}
         canViewOrganization={pointContext.canViewOrganization}
       />

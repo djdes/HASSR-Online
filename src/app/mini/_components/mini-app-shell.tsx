@@ -16,6 +16,8 @@ import { contactTelegramUrl } from "@/lib/contact-us";
 import { FabDockProvider } from "@/components/layout/fab-dock";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { Toaster } from "@/components/ui/sonner";
+import { ScopeBoundary } from "@/components/layout/scope-boundary";
+import type { CabinetScope } from "@/lib/cabinet-scope";
 import { appStoreUrl, appUpdateRequirement, needsTelegramSdk } from "@/lib/mobile-app";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 
@@ -68,6 +70,7 @@ export async function MiniAppShell({
   askNps = false,
   canPreviewNps = false,
   authed = false,
+  scope = null,
 }: {
   children: ReactNode;
   /** Тема, в которой отрисован сервер. */
@@ -88,6 +91,12 @@ export async function MiniAppShell({
   canPreviewNps?: boolean;
   /** Есть серверная сессия: живые индикаторы и помощник имеют смысл. */
   authed?: boolean;
+  /**
+   * Область данных (`lib/cabinet-scope.ts`): другая организация — помощник
+   * начинает с чистого листа (переписка и карточки действий были про прежнюю).
+   * Содержимое ключуют сами layout'ы: провайдер перехода должен быть выше.
+   */
+  scope?: CabinetScope | null;
 }) {
   // Приложение WeSetup старше `MOBILE_APP_MIN_VERSION` — вместо любого
   // экрана просим обновиться. Переменная серверная и читается на каждом
@@ -213,7 +222,11 @@ export async function MiniAppShell({
           <MiniNav items={navItems} />
           {/* Жест «назад» от левого края — только внутри Telegram. */}
           <EdgeBack homeHref={homeHref} />
-          {authed ? <SanpinChatWidget bottomOffset={96} /> : null}
+          {authed ? (
+            <ScopeBoundary scopeKey={scope?.organization ?? "anonymous"}>
+              <SanpinChatWidget bottomOffset={96} />
+            </ScopeBoundary>
+          ) : null}
           {authed ? <ContactsFabAction telegramUrl={contactTelegramUrl(process.env)} /> : null}
           </FabDockProvider>
         </div>

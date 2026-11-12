@@ -373,6 +373,7 @@ export default async function StaffPage({
       <div className="mt-6">
         <AddOrganizationButton
           currentSphere={sphere}
+          currentId={orgId}
           currentName={organization?.name ?? ""}
           organizationsCount={ownedAccount._count.organizations}
         />

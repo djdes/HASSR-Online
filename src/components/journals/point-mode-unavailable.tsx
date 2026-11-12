@@ -6,6 +6,7 @@ import { ArrowLeft, Building2, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /**
  * Страница всей организации («Журналы точек», «Все журналы»), а в шапке
@@ -14,13 +15,17 @@ import { useContentTransition } from "@/components/layout/content-transition";
  * после неё страница откроется на месте.
  */
 export function PointModeUnavailable({
+  pointId,
   pointName,
   canViewOrganization,
 }: {
+  /** Выбранная торговая точка — «Вернуться на «…»» в тосте смены. */
+  pointId: string | null;
   pointName: string;
   canViewOrganization: boolean;
 }) {
   const t = useTranslations("navigation.shell.pointMode");
+  const tPoint = useTranslations("navigation.shell.point");
   const router = useRouter();
   // Тот же переход, что у переключателя в шапке: пока страница всей
   // организации собирается, вместо панели — скелет (2026-10-29).
@@ -32,23 +37,42 @@ export function PointModeUnavailable({
     else router.push("/dashboard");
   }
 
+  async function postBuilding(buildingId: string): Promise<boolean> {
+    try {
+      const response = await fetch("/api/me/active-building", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buildingId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error ?? t("failed"));
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("failed"));
+      return false;
+    }
+  }
+
+  /** Единый тост смены: «Общий раздел — выбрано …» и «Вернуться на «точку»». */
   function chooseOrganization() {
     if (busy) return;
-    refreshAfter(ORGANIZATION_VIEW_ID, async () => {
-      try {
-        const response = await fetch("/api/me/active-building", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ buildingId: ORGANIZATION_VIEW_ID }),
-        });
-        const data = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(data?.error ?? t("failed"));
-        return true;
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : t("failed"));
-        return false;
-      }
-    });
+    const organizationName = tPoint("organization");
+    const organization: SwitchSide = {
+      tag: ORGANIZATION_VIEW_ID,
+      go: () => postBuilding(ORGANIZATION_VIEW_ID),
+      message: tPoint("companySection", { name: organizationName }),
+      returnLabel: tPoint("returnTo", { name: shortSwitchName(organizationName) }),
+    };
+    const point: SwitchSide | null =
+      pointId && pointName
+        ? {
+            tag: pointId,
+            go: () => postBuilding(pointId),
+            message: tPoint("switched", { name: pointName }),
+            returnLabel: tPoint("returnTo", { name: shortSwitchName(pointName) }),
+          }
+        : null;
+    switchWithReturn(refreshAfter, organization, point);
   }
 
   return (

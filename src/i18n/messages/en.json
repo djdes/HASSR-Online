@@ -2827,9 +2827,13 @@
         "organization": "Whole company",
         "companySection": "Company-wide section — now showing {name}",
         "returnTo": "Back to {name}",
-        "close": "Close",
         "search": "Find an outlet",
         "nothingFound": "Nothing found"
+      },
+      "switchToast": {
+        "close": "Close",
+        "organization": "Organisation: {name}",
+        "returnToOrganization": "Back to {name}"
       },
       "sidebarAria": "Cabinet sections",
       "tabsAria": "Subsections",
@@ -15938,10 +15942,8 @@
       "organizationHeading": "Organization",
       "cabinetHeading": "Cabinet",
       "createMasterCabinet": "Create master cabinet",
-      "organizationSwitched": "You are now working in “{name}”",
       "organizationSwitchFailed": "Could not switch organizations. Please try again.",
       "locationHeading": "Location",
-      "locationSwitched": "Location: {name}",
       "locationSwitchFailed": "Could not switch locations. Please try again."
     }
   },
@@ -26311,7 +26313,6 @@
       "savedWithPassword": "Done. Details saved, the login password has been emailed to you",
       "saved": "Done. Organisation details saved",
       "demoFailed": "Failed to open the demo",
-      "demoReady": "Demo organisation is ready",
       "titleNaming": "Name your locations",
       "titleCreated": "Account created!",
       "titleComplete": "Complete your registration",
@@ -26644,7 +26645,6 @@
     },
     "createDemoDialog": {
       "createFailed": "Could not open the demo",
-      "ready": "The demo organisation is ready",
       "error": "Error",
       "title": "Open the demo organisation?",
       "description": "It is a shared test organisation with a team and journals filled in for the last {days, plural, one {# day} other {# days}} — with deviations and corrective actions, just like real life.",
@@ -26738,7 +26738,6 @@
     "organizationSwitcher": {
       "label": "Organisations",
       "switchFailed": "Could not switch",
-      "switched": "Switched to: {name}",
       "error": "Error",
       "openSettingsFailed": "Could not open the settings",
       "demo": "Demo",
@@ -27382,7 +27381,6 @@
   "organizationsUi": {
     "demoOrgBanner": {
       "welcomeTitle": "You are in the demo organisation",
-      "welcomeDescription": "The employees and journals here are test data shared by all visitors. You can go back to your own organisation in one click.",
       "switchFailed": "Couldn’t switch",
       "returned": "You are back in your own organisation",
       "error": "Error",

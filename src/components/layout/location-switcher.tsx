@@ -11,7 +11,7 @@ import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
 import { cn } from "@/lib/utils";
 import { useContentTransition } from "@/components/layout/content-transition";
 import { forgetReturnPoint } from "@/components/layout/point-section-sync";
-import { showPointSwitchToast, shortPointName } from "@/components/layout/point-switch-toast";
+import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 import { ScrollList } from "@/components/ui/scroll-list";
 
 /**
@@ -28,7 +28,8 @@ import { ScrollList } from "@/components/ui/scroll-list";
  *
  * Смена — общий переход кабинета (`content-transition.tsx`, 2026-10-29):
  * пока новая страница не пришла, контент — скелет, у пункта — крутилка,
- * тост «Точка: …» — после того, как данные точки уже на экране.
+ * тост «Торговая точка: …» с «Вернуться на «…»» — после того, как данные
+ * точки уже на экране (единый тост смены, `switch-toast.tsx`).
  */
 
 export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
@@ -79,35 +80,36 @@ export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
     }
     // Откуда ушли — чтобы «вернуться» привело и на ту же страницу.
     const fromHref = `${pathname}${window.location.search}`;
-    const back =
-      previous && previous.id !== building.id
-        ? {
-            label: t("returnTo", { name: shortPointName(previous.name) }),
-            onClick: () => {
-              forgetReturnPoint();
-              refreshAfter(
-                previous.id,
-                async () => {
-                  const ok = await postBuilding(previous.id);
-                  // Выбор увёл на другую страницу — вернуть и её.
-                  if (ok && href) router.push(fromHref);
-                  return ok;
-                },
-                () => showPointSwitchToast(t("switched", { name: previous.name })),
-              );
-            },
-          }
-        : null;
-    refreshAfter(
-      building.id,
-      async () => {
+    const target: SwitchSide = {
+      tag: building.id,
+      go: async () => {
+        forgetReturnPoint();
         const ok = await postBuilding(building.id);
         // Переход — после записи выбора: новая страница соберётся уже для него.
         if (ok && href) router.push(href);
         return ok;
       },
-      () => showPointSwitchToast(t("switched", { name: building.name }), back),
-    );
+      message: t("switched", { name: building.name }),
+      returnLabel: t("returnTo", { name: shortSwitchName(building.name) }),
+    };
+    const back: SwitchSide | null =
+      previous && previous.id !== building.id
+        ? {
+            tag: previous.id,
+            go: async () => {
+              forgetReturnPoint();
+              const ok = await postBuilding(previous.id);
+              // Выбор увёл на другую страницу — вернуть и её.
+              if (ok && href) router.push(fromHref);
+              return ok;
+            },
+            message: t("switched", { name: previous.name }),
+            returnLabel: t("returnTo", { name: shortSwitchName(previous.name) }),
+          }
+        : null;
+    // Тост с «Вернуться на «…»» — после того, как данные точки уже на экране;
+    // возврат — та же смена обратно (`switch-toast.tsx`).
+    switchWithReturn(refreshAfter, target, back);
   }
 
   return { switchTo, busyId: pendingTag };

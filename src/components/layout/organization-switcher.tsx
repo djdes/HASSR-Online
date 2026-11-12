@@ -7,8 +7,9 @@ import { Check, Loader2, Plus, Settings, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import type { AccessibleOrganization } from "@/lib/organization-access";
-import { switchOrganizationAndOpen } from "@/lib/switch-organization";
+import { postActiveOrganization, switchOrganizationAndOpen } from "@/lib/switch-organization";
 import { useContentTransition } from "@/components/layout/content-transition";
+import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /**
  * Список организаций аккаунта в меню профиля + создание новой точки.
@@ -59,6 +60,7 @@ export function OrganizationSwitcher({
   label?: string;
 }) {
   const t = useTranslations("layoutUi.organizationSwitcher");
+  const tSwitch = useTranslations("navigation.shell.switchToast");
   const router = useRouter();
   // Смена организации — общий переход кабинета: контент — скелет, пока не
   // придёт страница новой организации; тост — после (2026-10-29).
@@ -73,27 +75,33 @@ export function OrganizationSwitcher({
 
   const hasDemo = organizations.some((organization) => organization.isDemo);
 
+  async function postOrganization(organizationId: string): Promise<boolean> {
+    try {
+      await postActiveOrganization(organizationId, t("switchFailed"));
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("error"));
+      return false;
+    }
+  }
+
+  function organizationSide(organization: { id: string; name: string }): SwitchSide {
+    return {
+      tag: organization.id,
+      go: () => postOrganization(organization.id),
+      message: tSwitch("organization", { name: organization.name }),
+      returnLabel: tSwitch("returnToOrganization", { name: shortSwitchName(organization.name) }),
+    };
+  }
+
+  /**
+   * Единый тост смены (2026-11-12): «Организация: …» и «Вернуться в «…»» —
+   * когда страница новой организации уже на экране; возврат — та же смена.
+   */
   function switchTo(organization: AccessibleOrganization) {
     if (organization.id === activeId || isPending || settingsId) return;
-    refreshAfter(
-      organization.id,
-      async () => {
-        try {
-          const response = await fetch("/api/me/active-organization", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ organizationId: organization.id }),
-          });
-          const data = await response.json().catch(() => null);
-          if (!response.ok) throw new Error(data?.error ?? t("switchFailed"));
-          return true;
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : t("error"));
-          return false;
-        }
-      },
-      () => toast.success(t("switched", { name: organization.name })),
-    );
+    const current = allOrganizations.find((item) => item.id === activeId) ?? null;
+    switchWithReturn(refreshAfter, organizationSide(organization), current ? organizationSide(current) : null);
   }
 
   /** Настройки организации одним нажатием: переключиться (если нужно) и открыть. */

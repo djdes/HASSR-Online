@@ -55,7 +55,8 @@ export type PointMismatch = {
   pointId: string;
   /** Её название; null — точки нет среди доступных человеку. */
   pointName: string | null;
-  /** Торговая точка, выбранная в шапке. */
+  /** Торговая точка, выбранная в шапке: id — для «Вернуться на «…»» в тосте смены. */
+  selectedId: string;
   selectedName: string;
   /** Точку объекта можно выбрать в шапке — она доступна человеку. */
   canSwitch: boolean;
@@ -81,6 +82,7 @@ export function pointMismatch(
   return {
     pointId: objectBuildingId,
     pointName: point?.name ?? null,
+    selectedId: viewed,
     selectedName:
       context.activeBuilding?.name ?? context.buildings.find((building) => building.id === viewed)?.name ?? "",
     canSwitch: point !== null,

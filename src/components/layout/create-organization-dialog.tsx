@@ -8,6 +8,9 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ORG_SPHERES } from "@/lib/org-profile";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
+import { postActiveOrganization } from "@/lib/switch-organization";
+import { useContentTransition } from "@/components/layout/content-transition";
+import { shortSwitchName, showSwitchToast, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /**
  * Модалка «Новая организация».
@@ -19,12 +22,15 @@ import { useTariffLimitToast } from "@/lib/billing-limit-toast";
  */
 export function CreateOrganizationDialog({
   currentSphere,
+  currentId = null,
   currentName,
   organizationsCount,
   onClose,
 }: {
   /** Сфера текущей точки — разумный дефолт для второй такой же. */
   currentSphere: string;
+  /** Текущая организация — «Вернуться в «…»» в тосте после создания. */
+  currentId?: string | null;
   /** Название текущей организации для подписи чекбокса копирования. */
   currentName: string;
   organizationsCount: number;
@@ -32,7 +38,26 @@ export function CreateOrganizationDialog({
 }) {
   const t = useTranslations("layoutUi.createOrganizationDialog");
   const tc = useTranslations("common");
+  const tSwitch = useTranslations("navigation.shell.switchToast");
+  const tSwitcher = useTranslations("layoutUi.organizationSwitcher");
   const router = useRouter();
+  const { refreshAfter } = useContentTransition();
+
+  /** Сторона смены «прежняя ⇄ новая» — как в переключателе меню профиля. */
+  const organizationSide = (organization: { id: string; name: string }): SwitchSide => ({
+    tag: organization.id,
+    go: async () => {
+      try {
+        await postActiveOrganization(organization.id, tSwitcher("switchFailed"));
+        return true;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : tSwitcher("error"));
+        return false;
+      }
+    },
+    message: tSwitch("organization", { name: organization.name }),
+    returnLabel: tSwitch("returnToOrganization", { name: shortSwitchName(organization.name) }),
+  });
   const tariffLimit = useTariffLimitToast();
   const [name, setName] = useState("");
   const [sphere, setSphere] = useState(currentSphere);
@@ -60,10 +85,29 @@ export function CreateOrganizationDialog({
       // Новая организация — новая точка тарифа: toast с кнопкой «Выбрать тариф».
       if (!response.ok && tariffLimit(data)) return;
       if (!response.ok) throw new Error(data?.error ?? t("createFailed"));
-      toast.success(t("created", { name: name.trim() }));
       onClose();
-      router.push("/dashboard?welcome-org=1");
-      router.refresh();
+      // Сервер уже сделал новую организацию активной. Её «Сегодня» — в общем
+      // переходе (скелет), тост смены — когда страница пришла (2026-11-12):
+      // «Организация «…» создана» и «Вернуться в «прежнюю»».
+      const created = { id: String(data?.organizationId ?? ""), name: name.trim() };
+      const previous = currentId ? { id: currentId, name: currentName } : null;
+      refreshAfter(
+        created.id,
+        async () => {
+          router.push("/dashboard?welcome-org=1");
+          return true;
+        },
+        () =>
+          showSwitchToast(
+            t("created", { name: created.name }),
+            previous && created.id
+              ? {
+                  label: tSwitch("returnToOrganization", { name: shortSwitchName(previous.name) }),
+                  onClick: () => switchWithReturn(refreshAfter, organizationSide(previous), organizationSide(created)),
+                }
+              : null,
+          ),
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("error"));
     } finally {

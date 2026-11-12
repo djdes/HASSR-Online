@@ -1,0 +1,3 @@
+npm run test:changed — escalated to the full suite (36–37 changed code files > 25)
+first run: pass=6130 fail=1 — src/lib/navigation-localization.test.ts (also failing on clean master e28d552b, see problems.md)
+after aligning src/lib/route-titles.ts: === Test stats: pass=6131, fail=0 === ✓ Все тесты прошли.

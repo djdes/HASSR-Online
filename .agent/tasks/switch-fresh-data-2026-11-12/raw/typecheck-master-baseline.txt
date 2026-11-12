@@ -1,0 +1,2 @@
+src/app/api/root/gogetlinks/plans/route.ts(109,42): error TS2353: Object literal may only specify known properties, and 'windowDays' does not exist in type 'Date'.
+exit=2

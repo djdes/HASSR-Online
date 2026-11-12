@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, FlaskConical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
+import { useContentTransition } from "@/components/layout/content-transition";
+import { postActiveOrganization } from "@/lib/switch-organization";
+import { shortSwitchName, showSwitchToast, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /**
  * Полоса «вы в демо» над контентом.
@@ -16,13 +19,17 @@ import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
  * удалить общую демо гость не может.
  *
  * `?welcome-demo=1` — первый показ сразу после входа: баннер тот же,
- * плюс тост, чтобы переключение не осталось незамеченным.
+ * плюс тост смены (единый, `switch-toast.tsx`) с «Вернуться в мою
+ * организацию», чтобы переключение не осталось незамеченным.
  */
 export function DemoOrgBanner({
+  organizationId,
   organizationName,
   nextResetAt,
   homeOrganizationId,
 }: {
+  /** Сама демо — чтобы из своей организации можно было вернуться обратно. */
+  organizationId: string;
   organizationName: string;
   /** Когда демо переустановится. ISO — из server component дату сериализуем строкой. */
   nextResetAt: string | null;
@@ -30,22 +37,52 @@ export function DemoOrgBanner({
 }) {
   const router = useRouter();
   const t = useTranslations("organizationsUi");
+  const tSwitch = useTranslations("navigation.shell.switchToast");
   const locale = useLocale() as Locale;
   const searchParams = useSearchParams();
   const welcome = searchParams.get("welcome-demo") === "1";
-
-  const [leaving, setLeaving] = useState(false);
+  // Выход — общий переход кабинета: скелет, пока не придёт своя организация.
+  const { refreshAfter, pendingTag } = useContentTransition();
+  const leaving = pendingTag === homeOrganizationId;
   const welcomed = useRef(false);
+
+  /**
+   * Своя организация ⇄ демо: тост смены с возвратом. Обе стороны открывают
+   * «Сегодня» — страницы демо в своей организации нет.
+   */
+  const leave = useCallback(() => {
+    const open = (id: string) => async () => {
+      try {
+        await postActiveOrganization(id, t("demoOrgBanner.switchFailed"));
+        router.push("/dashboard");
+        return true;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t("demoOrgBanner.error"));
+        return false;
+      }
+    };
+    const home: SwitchSide = {
+      tag: homeOrganizationId,
+      go: open(homeOrganizationId),
+      message: t("demoOrgBanner.returned"),
+      returnLabel: t("demoOrgBanner.backToMine"),
+    };
+    const demo: SwitchSide = {
+      tag: organizationId,
+      go: open(organizationId),
+      message: t("demoOrgBanner.welcomeTitle"),
+      returnLabel: tSwitch("returnToOrganization", { name: shortSwitchName(organizationName) }),
+    };
+    switchWithReturn(refreshAfter, home, demo);
+  }, [homeOrganizationId, organizationId, organizationName, refreshAfter, router, t, tSwitch]);
 
   useEffect(() => {
     if (!welcome || welcomed.current) return;
     welcomed.current = true;
-    toast.success(t("demoOrgBanner.welcomeTitle"), {
-      description: t("demoOrgBanner.welcomeDescription"),
-    });
+    showSwitchToast(t("demoOrgBanner.welcomeTitle"), { label: t("demoOrgBanner.backToMine"), onClick: leave });
     // Параметр из адреса убираем: перезагрузка не должна повторять тост.
     router.replace("/dashboard");
-  }, [welcome, router, t]);
+  }, [welcome, router, t, leave]);
 
   const reset = nextResetAt ? new Date(nextResetAt) : null;
   // Срок в прошлом (cron не отработал) — без даты: демо обновится при входе.
@@ -58,26 +95,6 @@ export function DemoOrgBanner({
           minute: "2-digit",
         })
       : null;
-
-  async function leave() {
-    setLeaving(true);
-    try {
-      const res = await fetch("/api/me/active-organization", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: homeOrganizationId }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? t("demoOrgBanner.switchFailed"));
-      toast.success(t("demoOrgBanner.returned"));
-      router.push("/dashboard");
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("demoOrgBanner.error"));
-    } finally {
-      setLeaving(false);
-    }
-  }
 
   return (
     <div className="mx-auto w-full max-w-[1800px] px-4 pt-4 md:px-8">

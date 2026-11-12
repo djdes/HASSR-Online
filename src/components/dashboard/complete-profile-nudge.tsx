@@ -527,7 +527,7 @@ function CompleteProfileModal({
       if (!res.ok) {
         throw new Error(data?.error || tn("demoFailed"));
       }
-      toast.success(tn("demoReady"));
+      // Тост о смене покажет сама демо (`DemoOrgBanner` по `?welcome-demo=1`).
       onClose();
       router.push("/dashboard?welcome-demo=1");
       router.refresh();

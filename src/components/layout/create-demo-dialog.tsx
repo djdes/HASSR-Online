@@ -28,7 +28,8 @@ export function CreateDemoDialog({ onClose }: { onClose: () => void }) {
       const response = await fetch("/api/organizations/demo", { method: "POST" });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error ?? t("createFailed"));
-      toast.success(t("ready"));
+      // Тост о смене покажет сама демо (`DemoOrgBanner` по `?welcome-demo=1`):
+      // единый тост смены с «Вернуться в мою организацию», без второго сверху.
       onClose();
       router.push("/dashboard?welcome-demo=1");
       router.refresh();

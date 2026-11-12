@@ -668,6 +668,7 @@ export function Header({
       {createDialog === "organization" ? (
         <CreateOrganizationDialog
           currentSphere={organizationSphere}
+          currentId={activeOrganizationId}
           currentName={
             organizations.find((item) => item.id === activeOrganizationId)?.name ?? ""
           }
