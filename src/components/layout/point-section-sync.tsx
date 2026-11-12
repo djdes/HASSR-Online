@@ -4,16 +4,20 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { isCompanyWidePath, pointReturnTarget, pointSyncAction } from "@/lib/point-section-sync";
+import { pointReturnTarget, pointSyncAction } from "@/lib/point-section-sync";
 import { useContentTransition } from "@/components/layout/content-transition";
 import { shortSwitchName, showSwitchToast, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
-/** Точка, с которой человека увела автосмена на офис, — до конца вкладки. */
+/**
+ * Точка, с которой человека увела автосмена на офис. В localStorage, а не в
+ * sessionStorage (12.11.2026): автосмена пишет cookie на весь браузер, и новая
+ * вкладка тоже должна вернуть точку, а не остаться на офисе.
+ */
 const RETURN_KEY = "wesetup.point-return";
 
 function readReturnPoint(): string | null {
   try {
-    return window.sessionStorage.getItem(RETURN_KEY);
+    return window.localStorage.getItem(RETURN_KEY);
   } catch {
     return null;
   }
@@ -21,8 +25,8 @@ function readReturnPoint(): string | null {
 
 function writeReturnPoint(pointId: string | null) {
   try {
-    if (pointId) window.sessionStorage.setItem(RETURN_KEY, pointId);
-    else window.sessionStorage.removeItem(RETURN_KEY);
+    if (pointId) window.localStorage.setItem(RETURN_KEY, pointId);
+    else window.localStorage.removeItem(RETURN_KEY);
   } catch {
     /* хранилище недоступно — «назад» просто не вернёт точку */
   }
@@ -56,7 +60,7 @@ async function postActiveBuilding(buildingId: string, failed: string): Promise<b
  *     становится офисом («Вся организация»); в тосте — «Вернуться на
  *     „точку“»: нажал не туда — одно нажатие назад;
  *   • страница точки — в шапке эта точка;
- *   • «назад» (стрелка страницы или браузера) из раздела компании
+ *   • уход из раздела компании (по меню или «назад», с 12.11.2026)
  *     возвращает и точку, с которой пришли (2026-11-11).
  * Ничего не рисует. Переход — общий (`content-transition`): пока страница
  * собирается для нового выбора, контент — скелет. На один адрес — одна
@@ -83,17 +87,7 @@ export function PointSectionSync({
   const placeParam = useSearchParams()?.get("place") ?? null;
   const { refreshAfter, isPending } = useContentTransition();
   const attempted = useRef<string | null>(null);
-  // Переход по истории: событие приходит раньше, чем меняется адрес.
-  const viaHistory = useRef(false);
   const lastPath = useRef<string | null>(null);
-
-  useEffect(() => {
-    const onPop = () => {
-      viaHistory.current = true;
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
 
   const pointIds = points.map((point) => point.id);
   const action = pointSyncAction({
@@ -110,11 +104,9 @@ export function PointSectionSync({
 
   useEffect(() => {
     if (isPending) return;
-    const cameByHistory = viaHistory.current;
     const pathChanged = lastPath.current !== pathname;
     if (pathChanged) {
       lastPath.current = pathname;
-      viaHistory.current = false;
       // Одна попытка — на один заход на страницу, а не навсегда.
       attempted.current = null;
     }
@@ -193,17 +185,17 @@ export function PointSectionSync({
     if (!pathChanged) return;
     const returnPointId = readReturnPoint();
     if (!returnPointId) return;
-    const restore = pointReturnTarget({ pathname, viewedPointId, returnPointId, viaHistory: cameByHistory, pointIds: ids });
+    const restore = pointReturnTarget({ pathname, viewedPointId, returnPointId, pointIds: ids });
     if (restore) {
       forgetReturnPoint();
       const name = nameOf(restore);
-      // Точку вернул сам человек — кнопкой «назад»; вперёд в раздел компании
-      // ведёт «вперёд» браузера, поэтому тост здесь без кнопки возврата.
+      // Ушли из раздела компании (по меню или «назад») — снова точка, с которой
+      // пришли; тост без кнопки возврата: в раздел компании ведёт меню.
       refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => showSwitchToast(t("switched", { name })));
       return;
     }
-    // Ушли дальше по меню на страницу точки/журналов — работаем в офисе осознанно.
-    if (!cameByHistory && !isCompanyWidePath(pathname)) forgetReturnPoint();
+    // Точка вручную выбрана в шапке или стала недоступной — возвращать нечего.
+    if (viewedPointId !== null || !ids.includes(returnPointId)) forgetReturnPoint();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- names come from `points`, keyed by pointsKey
   }, [action?.kind, action?.targetId, pathname, placeParam, viewedPointId, pointsKey, isPending, refreshAfter, router, t]);
 
