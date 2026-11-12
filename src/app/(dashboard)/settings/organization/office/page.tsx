@@ -15,6 +15,7 @@ import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-bounda
 import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
 import { OfficeCreateButton } from "@/components/settings/office-create-button";
+import { officeSetupState } from "@/lib/office-setup";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,11 @@ export default async function OrganizationOfficePage() {
   const officeStaff = office ? roster.filter((person) => person.buildingIds.includes(office.id)) : [];
   const unplaced = roster.filter((person) => person.buildingIds.length === 0).length;
   const staffAt = (pointId: string) => roster.filter((person) => person.buildingIds.includes(pointId)).length;
-  const perLocation = org?.perLocationJournals === true && points.length >= 1;
+  const setup = officeSetupState({
+    perLocationJournals: org?.perLocationJournals === true,
+    hasOffice: office !== null,
+    pointCount: points.length,
+  });
 
   return (
     <DomainMessagesBoundary namespaces={["settingsManagement"]}>
@@ -72,15 +77,18 @@ export default async function OrganizationOfficePage() {
           }))}
         />
 
-        {!perLocation ? (
+        {setup === "noPoints" ? (
           <PointBlockEmpty title={t("disabled.title")} body={t("disabled.body")}>
             <Link href="/settings/buildings" className={OUTLINE_LINK}>
               <Store className="size-4 text-[#5566f6]" />
               {t("disabled.link")}
             </Link>
           </PointBlockEmpty>
-        ) : !office ? (
-          <section className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7">
+        ) : setup === "create" || !office ? (
+          <section
+            className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-7"
+            data-office-setup={setup}
+          >
             <div className="flex items-start gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
                 <Building2 className="size-5" />
@@ -88,6 +96,16 @@ export default async function OrganizationOfficePage() {
               <div className="min-w-0">
                 <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("create.title")}</h2>
                 <p className="mt-1 max-w-[560px] text-[13.5px] leading-[1.55] text-[#6f7282]">{t("create.body")}</p>
+                {org?.perLocationJournals === true ? null : (
+                  <ul className="mt-3 max-w-[560px] space-y-1.5 text-[13px] leading-[1.5] text-[#3c4053]" data-office-split-note>
+                    {(["split", "switcher", "existing"] as const).map((key) => (
+                      <li key={key} className="flex gap-2">
+                        <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#5566f6]" aria-hidden />
+                        <span>{t(`create.${key}`)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {readOnly ? null : <div className="mt-4"><OfficeCreateButton /></div>}
               </div>
             </div>

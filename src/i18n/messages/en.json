@@ -10933,13 +10933,16 @@
         }
       },
       "disabled": {
-        "title": "The office appears together with outlets",
-        "body": "When journals are kept per outlet, you can set up the company office here.",
+        "title": "Add an outlet first",
+        "body": "The office can be set up once the company has at least one outlet. Add it, and office staff and journals will appear here.",
         "link": "Open outlets"
       },
       "create": {
         "title": "Set up the office",
         "body": "The office is where company management works: they see every outlet but are not added to outlet journals and tasks. Outlet staff are not affected.",
+        "split": "Office and outlet journals will be kept separately.",
+        "switcher": "A switcher «Office / outlet» will appear in the header.",
+        "existing": "Documents already filled in stay shared and visible everywhere.",
         "button": "Set up office",
         "done": "Office set up",
         "failed": "Could not set up the office"
