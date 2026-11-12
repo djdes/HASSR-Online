@@ -246,7 +246,7 @@ function Checkout({
 }) {
   const router = useRouter();
   const [email, setEmail] = useState(sessionEmail);
-  // Без входа — «Я не робот» перед заказом (боты заводили заказы на чужие
+  // Без входа — невидимая проверка от ботов перед заказом (боты заводили заказы на чужие
   // почты). Вошедшему проверка не нужна: сервер её у него не спрашивает.
   const guest = !sessionEmail;
   const challenge = useRegistrationChallenge();
@@ -518,12 +518,10 @@ function Checkout({
           // Сверка, не сумма: сервер считает сам и откажет, если за время
           // на странице цена изменилась (закончилась или началась акция).
           expectedGrossRub: amountAfterPromo,
-          ...(guest ? { captchaToken: challenge.token, website: challenge.website } : {}),
+          ...(guest ? { captchaToken: await challenge.getToken(), website: challenge.website } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
-      // Ответ Google одноразовый: следующая попытка — с новой отметкой.
-      if (guest) challenge.reset();
       if (!res.ok) {
         setError(data.error ?? "Не удалось создать заказ");
         setLoading(false);
@@ -855,12 +853,9 @@ function Checkout({
           </label>
         )}
 
-        {guest && !challenge.token ? (
-          <p className="mt-3 text-[12px] text-[#6f7282]">Отметьте «Я не робот» — после этого откроется оплата.</p>
-        ) : null}
         <button
           type="submit"
-          disabled={loading || (guest && !challenge.token)}
+          disabled={loading}
           className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (

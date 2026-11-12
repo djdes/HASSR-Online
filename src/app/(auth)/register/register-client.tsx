@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { AuthComplianceBadges } from "@/components/auth/compliance-badges";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { localizedHref } from "@/i18n/site-locale";
@@ -116,7 +117,7 @@ function RegisterScreen({
     e.preventDefault();
     field.setTouched(true);
     // Кнопка заблокирована при неверном адресе — это страховка на Enter.
-    if (loading || !field.valid || !challenge.token) return;
+    if (loading || !field.valid) return;
     if (!consent) {
       setConsentMissing(true);
       setError(t("register.consent.required"));
@@ -137,7 +138,7 @@ function RegisterScreen({
           source: readSignupSource(signupPlace),
           consent: true,
           consentPlace: "register",
-          captchaToken: challenge.token,
+          captchaToken: await challenge.getToken(),
           website: challenge.website,
           ...(blankJournal ? { blankJournal: blankJournal.code } : {}),
           // Сфера из ссылки с промокодом: организация сразу с журналами сферы.
@@ -170,7 +171,6 @@ function RegisterScreen({
       ymGoal("signup_error", { ...GOAL_PARAMS, code: "network" });
       setError(t("register.errors.network"));
     } finally {
-      challenge.reset();
       setLoading(false);
     }
   }
@@ -212,22 +212,24 @@ function RegisterScreen({
           <p className="mt-5 max-w-[440px] text-[16px] leading-[1.6] text-white/70">
             {t("register.marketing.intro")}</p>
 
-          <div className="mt-10 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+          <div className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
             <div className="text-[12px] uppercase tracking-[0.2em] text-white/60">
               {t("register.marketing.whatsIncluded")}</div>
             <ul className="grid grid-cols-1 gap-2 text-[14px] text-white/80">
-              {ACTIVE_JOURNAL_CATALOG.slice(0, 6).map((j) => (
+              {ACTIVE_JOURNAL_CATALOG.slice(0, 4).map((j) => (
                 <li key={j.code} className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#7cf5c0]" />
                   <span className="truncate">{journalNames(j.code)}</span>
                 </li>
               ))}
               <li className="pl-6 text-[13px] text-white/50">
-                {auth("register.templates.logCount", { count: ACTIVE_JOURNAL_CATALOG.length - 6 })}</li>
+                {auth("register.templates.logCount", { count: ACTIVE_JOURNAL_CATALOG.length - 4 })}</li>
             </ul>
           </div>
 
-          <div className="mt-10 flex items-center gap-4 text-[12px] text-white/50">
+          <AuthComplianceBadges className="mt-8" />
+
+          <div className="mt-8 flex items-center gap-4 text-[12px] text-white/50">
             <span>© 2026 WeSetup</span>
             <span className="size-1 rounded-full bg-white/25" />
             <Link
@@ -366,7 +368,7 @@ function RegisterScreen({
 
             <button
               type="submit"
-              disabled={loading || !field.valid || !challenge.token}
+              disabled={loading || !field.valid}
               className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (

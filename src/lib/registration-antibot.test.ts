@@ -1,142 +1,84 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { registrationChallengeConfig, verifyGuestOrderChallenge, verifyRegistrationChallenge } from "./registration-antibot";
+import {
+  CHALLENGE_MAX_AGE_MS,
+  CHALLENGE_MIN_AGE_MS,
+  issueRegistrationChallenge,
+  verifyGuestOrderChallenge,
+  verifyRegistrationChallenge,
+} from "./registration-antibot";
 
-const env = {
-  NODE_ENV: "production",
-  RECAPTCHA_SITE_KEY: "site-key",
-  RECAPTCHA_SECRET_KEY: "private-secret",
-  RECAPTCHA_HOSTNAMES: "wesetup.ru,www.wesetup.ru",
-};
-const valid = { success: true, hostname: "wesetup.ru" };
-const input = { captchaToken: "proof", website: "" };
-const reply = (data: unknown, status = 200): typeof fetch => async () => Response.json(data, { status });
+const env = { NEXTAUTH_SECRET: "nextauth-secret-for-tests-only" };
+const issuedAt = 1_800_000_000_000;
+const later = issuedAt + CHALLENGE_MIN_AGE_MS + 1;
 
-test("registration challenge: accepts verified status and exact configured host", async () => {
-  let calls = 0;
-  const fetcher: typeof fetch = async (url, options) => {
-    calls++;
-    assert.equal(url, "https://www.recaptcha.net/recaptcha/api/siteverify");
-    assert.equal(options?.method, "POST");
-    assert.equal(options?.cache, "no-store");
-    assert.equal(options?.redirect, "error");
-    assert.ok(options?.signal instanceof AbortSignal);
-    assert.equal(new Headers(options?.headers).get("content-type"), "application/x-www-form-urlencoded");
-    assert.deepEqual(Object.fromEntries(new URLSearchParams(String(options?.body))), { secret: "private-secret", response: "proof" });
-    return Response.json(valid);
-  };
-  assert.deepEqual(await verifyRegistrationChallenge(input, { env, fetch: fetcher }), { ok: true });
-  assert.equal(calls, 1);
-  assert.deepEqual(registrationChallengeConfig(env), { siteKey: "site-key" });
+function token(options: { env?: Record<string, string>; now?: number } = {}) {
+  const issued = issueRegistrationChallenge({ env: options.env ?? env, now: options.now ?? issuedAt });
+  assert.ok(issued);
+  return issued.token;
+}
+
+test("invisible challenge: a stamp older than 1.5 s with an empty honeypot passes", async () => {
+  assert.deepEqual(
+    await verifyRegistrationChallenge({ captchaToken: token(), website: "" }, { env, now: later }),
+    { ok: true },
+  );
+  // Older API clients may omit the honeypot field entirely.
+  assert.deepEqual(await verifyRegistrationChallenge({ captchaToken: token() }, { env, now: later }), { ok: true });
 });
+
+test("invisible challenge: the dedicated secret overrides NEXTAUTH_SECRET", async () => {
+  const both = { ...env, REGISTRATION_CHALLENGE_SECRET: "dedicated-secret-value-1234" };
+  const stamp = token({ env: both });
+  assert.deepEqual(await verifyRegistrationChallenge({ captchaToken: stamp }, { env: both, now: later }), { ok: true });
+  const other = await verifyRegistrationChallenge({ captchaToken: stamp }, { env, now: later });
+  assert.equal(other.ok, false);
+});
+
+const forged = (() => {
+  const parts = token().split(".");
+  return {
+    tamperedTime: [parts[0], String(issuedAt - 60_000), parts[2], parts[3]].join("."),
+    tamperedSignature: [...parts.slice(0, 3), "A".repeat(parts[3].length)].join("."),
+    wrongVersion: ["v0", ...parts.slice(1)].join("."),
+    otherSecret: token({ env: { NEXTAUTH_SECRET: "a-completely-different-secret" } }),
+  };
+})();
 
 for (const [name, body] of Object.entries({
   missing: {}, null: null, array: [], number: 42, empty: { captchaToken: "" },
-  whitespace: { captchaToken: "  " }, objectToken: { captchaToken: {} },
-  oversized: { captchaToken: "a".repeat(8193) },
-  honeypot: { ...input, website: "https://spam.invalid" },
-  malformedHoneypot: { ...input, website: false },
+  objectToken: { captchaToken: {} }, oversized: { captchaToken: "a".repeat(257) },
+  garbage: { captchaToken: "proof" },
+  honeypot: { captchaToken: token(), website: "https://spam.invalid" },
+  malformedHoneypot: { captchaToken: token(), website: false },
+  ...Object.fromEntries(Object.entries(forged).map(([key, value]) => [key, { captchaToken: value }])),
 })) {
-  test(`registration challenge: rejects ${name} without provider access`, async () => {
-    const result = await verifyRegistrationChallenge(body, {
-      env, fetch: async () => { assert.fail("must not call reCAPTCHA"); },
-    });
+  test(`invisible challenge: rejects ${name}`, async () => {
+    const result = await verifyRegistrationChallenge(body, { env, now: later });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.status, 403);
   });
 }
 
-for (const [name, data] of Object.entries({
-  forged: { success: false, "error-codes": ["timeout-or-duplicate"] },
-  replayedOrExpired: { success: false, "error-codes": ["timeout-or-duplicate"] },
-  bot: { success: false },
-  wrongHost: { ...valid, hostname: "evil.example" },
-  suffixAttack: { ...valid, hostname: "wesetup.ru.evil.example" },
-  wrongPort: { ...valid, hostname: "wesetup.ru:8080" },
-})) {
-  test(`registration challenge: rejects provider result ${name}`, async () => {
-    const result = await verifyRegistrationChallenge(input, { env, fetch: reply(data) });
-    assert.equal(result.ok, false);
+test("invisible challenge: too fast, from the future and expired stamps are rejected", async () => {
+  for (const now of [issuedAt, issuedAt + CHALLENGE_MIN_AGE_MS - 1, issuedAt - 1, issuedAt + CHALLENGE_MAX_AGE_MS + 1]) {
+    const result = await verifyRegistrationChallenge({ captchaToken: token() }, { env, now });
+    assert.equal(result.ok, false, `now=${now - issuedAt}`);
     if (!result.ok) assert.equal(result.status, 403);
-    assert.ok(!JSON.stringify(result).includes(env.RECAPTCHA_SECRET_KEY));
-  });
-}
-
-for (const [name, fetcher] of Object.entries({
-  httpFailure: reply({}, 502),
-  quotaFallback: reply({ ...valid, score: 0.9, "error-codes": ["Over free quota."] }),
-  v3Key: reply({ ...valid, score: 0.1, action: "register" }),
-  successWithErrors: reply({ ...valid, "error-codes": ["unexpected-error"] }),
-  malformedErrors: reply({ ...valid, "error-codes": "unexpected-error" }),
-  invalidSecret: reply({ success: false, "error-codes": ["invalid-input-secret"] }),
-  missingProviderSecret: reply({ success: false, "error-codes": ["missing-input-secret"] }),
-  badProviderRequest: reply({ success: false, "error-codes": ["bad-request"] }),
-  malformedResponse: reply(null),
-  arrayResponse: reply([]),
-  emptyHost: reply({ ...valid, hostname: "" }),
-  missingHost: reply({ success: true }),
-  unknownStatus: reply({ success: "true", hostname: "wesetup.ru" }),
-  badJson: (async () => new Response("not json")) as typeof fetch,
-  network: (async () => { throw new Error("network unavailable"); }) as typeof fetch,
-  timeout: (async () => { throw new DOMException("Timed out", "TimeoutError"); }) as typeof fetch,
-})) {
-  test(`registration challenge: fails closed on ${name}`, async () => {
-    const result = await verifyRegistrationChallenge(input, { env, fetch: fetcher });
-    assert.equal(result.ok, false);
-    if (!result.ok) assert.equal(result.status, 503);
-  });
-}
-
-for (const [name, config] of Object.entries({
-  noKeys: {},
-  missingSecret: { ...env, RECAPTCHA_SECRET_KEY: "" },
-  missingSite: { ...env, RECAPTCHA_SITE_KEY: "" },
-  missingHostname: { ...env, RECAPTCHA_HOSTNAMES: "" },
-  invalidUrl: { ...env, RECAPTCHA_HOSTNAMES: "", NEXTAUTH_URL: "not a URL" },
-  wildcard: { ...env, RECAPTCHA_HOSTNAMES: "*.wesetup.ru" },
-  publicTestSite: { ...env, RECAPTCHA_SITE_KEY: "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" },
-  publicTestSecret: { ...env, RECAPTCHA_SECRET_KEY: "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe" },
-  portInAllowlist: { ...env, RECAPTCHA_HOSTNAMES: "wesetup.ru:443" },
-})) {
-  test(`registration challenge: configuration ${name} cannot silently bypass protection`, async () => {
-    assert.equal(registrationChallengeConfig(config), null);
-    const result = await verifyRegistrationChallenge(input, {
-      env: config, fetch: async () => { assert.fail("must not contact provider with invalid config"); },
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) assert.equal(result.status, 503);
-  });
-}
-
-test("registration challenge: NEXTAUTH_URL is a trusted hostname fallback and excludes ports", async () => {
-  const fallback = { ...env, RECAPTCHA_HOSTNAMES: "", NEXTAUTH_URL: "https://wesetup.ru/path" };
-  assert.deepEqual(await verifyRegistrationChallenge(input, { env: fallback, fetch: reply(valid) }), { ok: true });
-  assert.deepEqual(await verifyRegistrationChallenge(input, {
-    env, fetch: reply({ ...valid, hostname: "www.wesetup.ru" }),
-  }), { ok: true });
-  const local = { ...env, RECAPTCHA_HOSTNAMES: "", NEXTAUTH_URL: "http://localhost:3000" };
-  assert.deepEqual(await verifyRegistrationChallenge(input, {
-    env: local, fetch: reply({ ...valid, hostname: "localhost" }),
-  }), { ok: true });
-  const result = await verifyRegistrationChallenge(input, {
-    env: local, fetch: reply({ ...valid, hostname: "evil.example" }),
-  });
-  assert.equal(result.ok, false);
-});
-
-test("guest order challenge: passes a verified guest, rejects bots and a reused token", async () => {
-  assert.equal(await verifyGuestOrderChallenge(input, { env, fetch: reply(valid) }), null);
-  for (const body of [{}, { captchaToken: "" }, { ...input, website: "https://spam.invalid" }]) {
-    assert.equal((await verifyGuestOrderChallenge(body, { env, fetch: reply(valid) }))?.status, 403);
   }
-  const reused = await verifyGuestOrderChallenge(input, { env, fetch: reply({ success: false, "error-codes": ["timeout-or-duplicate"] }) });
-  assert.equal(reused?.status, 403);
-  assert.match(reused?.error ?? "", /Я не робот/);
 });
 
-test("guest order challenge: a provider outage never blocks a real buyer", async () => {
-  const down: typeof fetch = async () => { throw new Error("offline"); };
-  assert.equal(await verifyGuestOrderChallenge(input, { env, fetch: down }), null);
-  assert.equal(await verifyGuestOrderChallenge(input, { env, fetch: reply({}, 500) }), null);
-  assert.equal(await verifyGuestOrderChallenge(input, { env: {}, fetch: reply(valid) }), null);
+test("invisible challenge: without a signing secret it fails closed and issues nothing", async () => {
+  for (const broken of [{}, { NEXTAUTH_SECRET: "short" }]) {
+    assert.equal(issueRegistrationChallenge({ env: broken }), null);
+    const result = await verifyRegistrationChallenge({ captchaToken: token() }, { env: broken, now: later });
+    assert.deepEqual(result.ok ? null : result.status, 503);
+  }
+});
+
+test("guest order challenge: passes a person, rejects bots, never blocks on a setup failure", async () => {
+  assert.equal(await verifyGuestOrderChallenge({ captchaToken: token(), website: "" }, { env, now: later }), null);
+  assert.equal((await verifyGuestOrderChallenge({ captchaToken: token(), website: "x" }, { env, now: later }))?.status, 403);
+  assert.equal((await verifyGuestOrderChallenge({ captchaToken: token() }, { env, now: issuedAt }))?.status, 403);
+  assert.equal(await verifyGuestOrderChallenge({ captchaToken: token() }, { env: {}, now: later }), null);
 });

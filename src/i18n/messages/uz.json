@@ -2672,9 +2672,6 @@
       "consentSentence": "Men <offer>ommaviy oferta</offer> va <terms>Foydalanuvchi kelishuvi</terms>ni qabul qilaman, <privacy>Maxfiylik siyosati</privacy> bilan tanishdim va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman."
     },
     "challenge": {
-      "loading": "Tekshiruv yuklanmoqda…",
-      "failed": "Tekshiruvdan o‘tib bo‘lmadi. Qayta urinib ko‘ring.",
-      "retry": "Tekshiruvni qayta urinish",
       "websiteLabel": "Veb-saytingiz"
     },
     "metadata": {
@@ -2724,6 +2721,32 @@
       "applySuggestion": "{suggestion} bilan tuzatish",
       "domainMissing": "Bu pochta domeni mavjud emasga o‘xshaydi. Manzilni tekshiring: tizimga kirish xati bu manzilga yetib bormaydi.",
       "domainChecking": "Domen tekshirilmoqda…"
+    },
+    "badges": {
+      "title": "Oziq-ovqat xavfsizligi talablari bo'yicha jurnallar",
+      "haccp": {
+        "top": "XAVFLAR TAHLILI",
+        "bottom": "NAZORAT NUQTALARI",
+        "center": "HACCP"
+      },
+      "sanpin": {
+        "top": "SANITARIYA QOIDALARI",
+        "bottom": "2.3/2.4.3590-20",
+        "center": "SanPiN"
+      },
+      "trts": {
+        "top": "OZIQ-OVQAT MAHSULOTI",
+        "bottom": "XAVFSIZLIGI",
+        "center": "TR TS"
+      },
+      "food": {
+        "top": "OZIQ-OVQAT SANOATI",
+        "bottom": "UMUMIY OVQATLANISH"
+      },
+      "forms": "Jurnal shakllari HACCP va SanPiN bo'yicha",
+      "catering": "Umumiy ovqatlanish",
+      "production": "Oziq-ovqat sexlari",
+      "retail": "Omborlar va savdo"
     }
   },
   "journalDescriptions": {
