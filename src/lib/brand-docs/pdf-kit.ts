@@ -578,11 +578,13 @@ export function signatureLine(
   setText(pdf, { size: 9.5, color: C.ink });
   doc.text(options.name, x + lineW + 2.4, y - 0.6);
   setText(pdf, { size: 7.5, color: C.faint });
-  doc.text("подпись", x + lineW / 2, y + 3.2, { align: "center" });
-  if (options.stampLabel !== false) doc.text("М. П.", x, y + 9);
-  if (options.stamp) drawPng(pdf, options.stamp, { x: x + 8, y: y - 13, w: 31, h: 31 });
-  if (options.facsimile) drawPng(pdf, options.facsimile, { x: x + 1, y: y - 10, w: lineW - 2, h: 11 });
-  return y + 11;
+  if (!options.facsimile) doc.text("подпись", x + lineW / 2, y + 3.2, { align: "center" });
+  if (options.stampLabel !== false && !options.stamp) doc.text("М. П.", x, y + 9);
+  // Как на бумаге (образец владельца 12.11.2026): крупная круглая печать
+  // ложится на линию подписи, роспись — правее центра печати, поверх её края.
+  if (options.stamp) drawPng(pdf, options.stamp, { x: x - 2, y: y - 12, w: 36, h: 36 });
+  if (options.facsimile) drawPng(pdf, options.facsimile, { x: x + 17, y: y - 14, w: 30, h: 16 }, "left");
+  return y + (options.stamp ? 25 : 11);
 }
 
 /**

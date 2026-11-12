@@ -268,13 +268,14 @@ export function renderInvoicePdf(draft: InvoiceDraft, images: InvoiceImages, opt
     txt(pdf, label, X, y, { size: TEXT });
     rule(pdf, lineX, y + 0.6, lineX + 48, y + 0.6);
     if (name) txt(pdf, name, lineX + 51, y, strongStyle);
-    drawPng(pdf, images.facsimile, { x: lineX + 7, y: y - 7, w: 34, h: 9 });
+    drawPng(pdf, images.facsimile, { x: lineX + 14, y: y - 12, w: 30, h: 15 }, "left");
   };
+  // Как на бумаге (образец владельца 12.11.2026): печать на линиях подписей, роспись поверх её края.
+  drawPng(pdf, images.stamp, { x: lineX - 8, y: y - 9, w: 36, h: 36 });
   signature("Руководитель", headName);
-  drawPng(pdf, images.stamp, { x: lineX + 82, y: y - 14, w: 34, h: 34 });
   y += 13;
   signature("Главный бухгалтер", headName);
-  if (images.stamp) txt(pdf, "М. П.", lineX + 99, y + 12, { size: LABEL }, "center");
+  y += 10;
 
   // ── подпись листа
   const total = doc.getNumberOfPages();
