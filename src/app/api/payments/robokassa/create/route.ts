@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Без входа заказ создаёт кто угодно — боты заводили заказы на чужие почты
-  // (проверка украденных карт). Гость проходит «Я не робот», как при регистрации.
+  // (проверка украденных карт). Гость проходит невидимую проверку от ботов, как при регистрации.
   if (!session?.user) {
     const challenge = await verifyGuestOrderChallenge(body);
     if (challenge) return NextResponse.json({ error: challenge.error, code: "challenge" }, { status: challenge.status });

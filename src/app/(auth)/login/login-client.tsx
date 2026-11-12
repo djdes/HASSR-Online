@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { AuthComplianceBadges } from "@/components/auth/compliance-badges";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { useAuthError } from "@/components/i18n/use-auth-error";
@@ -279,7 +280,9 @@ function LoginForm() {
             ))}
           </ul>
 
-          <div className="mt-10 flex items-center gap-4 text-[12px] text-white/50">
+          <AuthComplianceBadges className="mt-8" />
+
+          <div className="mt-8 flex items-center gap-4 text-[12px] text-white/50">
             <span>© 2026 WeSetup</span>
             <span className="size-1 rounded-full bg-white/25" />
             <Link

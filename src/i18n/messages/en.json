@@ -2672,9 +2672,6 @@
       "consentSentence": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>, have read the <privacy>Privacy Policy</privacy>, and give my <consent>consent to the processing of personal data</consent>."
     },
     "challenge": {
-      "loading": "Loading verification…",
-      "failed": "Verification failed. Please try again.",
-      "retry": "Try verification again",
       "websiteLabel": "Your website"
     },
     "metadata": {
@@ -2724,6 +2721,32 @@
       "applySuggestion": "Use {suggestion}",
       "domainMissing": "This email domain does not appear to exist. Check the address; a sign-in email will not reach it.",
       "domainChecking": "Checking the domain…"
+    },
+    "badges": {
+      "title": "Logs built on food safety requirements",
+      "haccp": {
+        "top": "HAZARD ANALYSIS",
+        "bottom": "CRITICAL CONTROL POINTS",
+        "center": "HACCP"
+      },
+      "sanpin": {
+        "top": "SANITARY RULES",
+        "bottom": "2.3/2.4.3590-20",
+        "center": "SanPiN"
+      },
+      "trts": {
+        "top": "FOOD PRODUCT SAFETY",
+        "bottom": "CU TECH. REGULATION",
+        "center": "TR CU"
+      },
+      "food": {
+        "top": "FOOD PRODUCTION",
+        "bottom": "CATERING · RETAIL"
+      },
+      "forms": "Log forms follow HACCP and SanPiN",
+      "catering": "Catering",
+      "production": "Food production",
+      "retail": "Warehouses and retail"
     }
   },
   "journalDescriptions": {
