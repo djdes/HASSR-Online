@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { KB_ARTICLES, kbHeadings, kbNeighbours } from "@/content/kb/articles";
 import { KB_SHOTS } from "@/content/kb/shots";
+import { kbAskInstructions, KB_ASK_INSTRUCTIONS_LIMIT } from "@/lib/kb/ask-instructions";
 import { kbArticleText, kbCorpus } from "@/lib/kb/corpus";
 
 test("адреса статей уникальны и латиницей", () => {
@@ -48,4 +49,13 @@ test("корпус для ИИ без разметки и с подписями 
   assert.ok(!corpus.includes("**"));
   assert.ok(corpus.includes("Начальная настройка"));
   assert.ok(corpus.length < 60_000, `корпус ${corpus.length} символов`);
+});
+
+test("инструкции ИИ помещаются в лимит шлюза и подбирают статью по вопросу", () => {
+  for (const question of ["Что делать, если пришла проверка?", "Сколько стоит тариф Премиум", "x"]) {
+    const text = kbAskInstructions(question);
+    assert.ok(text.length <= KB_ASK_INSTRUCTIONS_LIMIT, `${question}: ${text.length}`);
+  }
+  assert.ok(kbAskInstructions("Сколько стоит тариф Премиум и как оплатить").includes("/baza-znaniy/tarify-i-oplata)"));
+  assert.ok(kbAskInstructions("проверяющий QR журналы просмотр").includes("# QR для проверяющего"));
 });

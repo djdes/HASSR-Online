@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { clientIp } from "@/lib/client-ip";
 import { codexGatewayConfigured, readTextJob, startTextJob } from "@/lib/codex-gateway";
-import { KB_ASK_INSTRUCTIONS } from "@/lib/kb/ask-instructions";
+import { kbAskInstructions } from "@/lib/kb/ask-instructions";
 import { kbAskGlobalRateLimiter, kbAskRateLimiter } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   ].join("\n\n");
 
   try {
-    const id = await startTextJob(input, KB_ASK_INSTRUCTIONS);
+    const id = await startTextJob(input, kbAskInstructions([...history.map((turn) => turn.content), question].join(" ")));
     const deadline = Date.now() + WAIT_MS;
     while (Date.now() < deadline) {
       const job = await readTextJob(id);
