@@ -26,7 +26,7 @@ const SELLER: ContractSnapshot["seller"] = {
 };
 
 const LEGAL: ContractSnapshot = {
-  number: "WS-2026/0001",
+  number: "2026/0001",
   date: "2026-10-29",
   city: "Королёв",
   templateVersion: CONTRACT_TEMPLATE_VERSION,
@@ -160,7 +160,7 @@ test("missing client data becomes blank lines, never empty or null", () => {
 test("draft number is marked as draft", () => {
   const document = buildContractDocument({ ...LEGAL, number: draftContractNumber(2026) });
   assert.equal(document.draft, true);
-  assert.equal(document.number, "WS-2026/____");
+  assert.equal(document.number, "2026/____");
 });
 
 test("every clause and section reference points to an existing clause", () => {
@@ -206,15 +206,16 @@ test("contract end date: same day next year, 29 February falls back to the 28th"
   assert.equal(contractEndDate("2028-02-29"), "2029-02-28");
 });
 
-test("contract numbers: WS-YYYY/NNNN, parse round trip, file names", () => {
-  assert.equal(formatContractNumber(2026, 1), "WS-2026/0001");
-  assert.equal(formatContractNumber(2026, 42), "WS-2026/0042");
-  assert.equal(formatContractNumber(2027, 12345), "WS-2027/12345");
+test("contract numbers: YYYY/NNNN, parse round trip (incl. legacy WS-), file names", () => {
+  assert.equal(formatContractNumber(2026, 1), "2026/0001");
+  assert.equal(formatContractNumber(2026, 42), "2026/0042");
+  assert.equal(formatContractNumber(2027, 12345), "2027/12345");
+  assert.deepEqual(parseContractNumber("2026/0042"), { year: 2026, seq: 42 });
   assert.deepEqual(parseContractNumber("WS-2026/0042"), { year: 2026, seq: 42 });
-  assert.equal(parseContractNumber("WS-2026/____"), null);
+  assert.equal(parseContractNumber("2026/____"), null);
   assert.throws(() => formatContractNumber(2026, 0));
   assert.throws(() => formatContractNumber(26, 1));
-  assert.deepEqual(contractFileName("WS-2026/0001", "pdf"), { ascii: "Contract-WS-2026-0001.pdf", utf8: "Договор-WS-2026-0001.pdf" });
+  assert.deepEqual(contractFileName("2026/0001", "pdf"), { ascii: "Contract-2026-0001.pdf", utf8: "Договор-2026-0001.pdf" });
 });
 
 test("recipient suggestions skip technical and invalid emails, dedupe, keep order", () => {
@@ -326,7 +327,7 @@ test("PDF: several pages, both INNs, page numbers, voided mark", async () => {
   assert.ok(text.includes("5018215599"), "seller INN");
   assert.ok(text.includes("7707083893"), "client INN");
   assert.ok(text.includes(`из ${pages}`), "page numbers");
-  assert.ok(text.includes("WS-2026/0001"));
+  assert.ok(text.includes("2026/0001"));
 
   const voided = renderContractPdf({ ...buildContractDocument(LEGAL), voided: true }, SELLER, { facsimile: null, stamp: null });
   assert.ok((await pdfText(voided.bytes)).text.includes("АННУЛИРОВАН"));
