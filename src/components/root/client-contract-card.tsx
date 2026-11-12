@@ -483,6 +483,10 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
                       <Download className="size-3.5 text-[#5566f6]" />
                       {t("history.pdf")}
                     </a>
+                    <a href={`${base}/${contract.id}/pdf?plain=1`} className={SMALL} data-testid="contract-pdf-plain">
+                      <Download className="size-3.5 text-[#5566f6]" />
+                      {t("history.pdfPlain")}
+                    </a>
                     <a href={`${base}/${contract.id}/docx`} className={SMALL}>
                       <Download className="size-3.5 text-[#5566f6]" />
                       {t("history.docx")}

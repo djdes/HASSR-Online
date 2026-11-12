@@ -30984,6 +30984,7 @@ export type MessageContract = {
       "sentToBy": "Отправлен {date} на {emails} · {name}",
       "voided": "Аннулирован {date}",
       "pdf": "PDF",
+      "pdfPlain": "PDF без печати и подписи",
       "docx": "Word",
       "send": "Отправить",
       "void": "Аннулировать"

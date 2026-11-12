@@ -30983,6 +30983,7 @@
       "sentToBy": "Sent {date} to {emails} · {name}",
       "voided": "Voided {date}",
       "pdf": "PDF",
+      "pdfPlain": "PDF without stamp and signature",
       "docx": "Word",
       "send": "Send",
       "void": "Void"

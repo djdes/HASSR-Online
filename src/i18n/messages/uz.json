@@ -30983,6 +30983,7 @@
       "sentToBy": "Yuborilgan: {date}, {emails} · {name}",
       "voided": "Bekor qilingan: {date}",
       "pdf": "PDF",
+      "pdfPlain": "Muhr va imzosiz PDF",
       "docx": "Word",
       "send": "Yuborish",
       "void": "Bekor qilish"
