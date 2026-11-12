@@ -17,7 +17,6 @@ import {
   registryDefaults,
   type DocumentOrgSource,
 } from "@/lib/document-org-block";
-import { isValidInn } from "@/lib/inn";
 
 import { clean, isIndividualInn, personName, postInSentence } from "./format";
 import { individualName } from "./template";
@@ -142,30 +141,7 @@ export function defaultContractCity(seller: ContractSeller): string {
   return cityFromAddress(seller.address) ?? "";
 }
 
-/**
- * Чек-лист клиента. Обязателен только ИНН: без него сторона договора не
- * определена. Остальное — предупреждения: в договоре будет линия для
- * ручного заполнения.
- */
-export function buyerChecklist(buyer: ContractBuyer, params: ContractParams, registeredName: boolean): ContractChecklistItem[] {
-  const items: ContractChecklistItem[] = [
-    { key: "inn", label: "ИНН", ok: Boolean(buyer.inn && isValidInn(buyer.inn)), required: true },
-    { key: "nameFull", label: "Полное наименование по ЕГРЮЛ", ok: registeredName, required: false },
-    { key: "ogrn", label: buyer.kind === "individual" ? "ОГРНИП" : "ОГРН", ok: Boolean(buyer.ogrn && /^\d{13}(\d{2})?$/.test(buyer.ogrn)), required: false },
-    { key: "legalAddress", label: buyer.kind === "individual" ? "Адрес" : "Юридический адрес", ok: Boolean(buyer.legalAddress), required: false },
-  ];
-  if (buyer.kind === "legal") {
-    items.push(
-      { key: "kpp", label: "КПП", ok: Boolean(buyer.kpp && /^\d{9}$/.test(buyer.kpp)), required: false },
-      { key: "signer", label: "Руководитель (должность и ФИО)", ok: Boolean(clean(params.signerName) && clean(params.signerPost)), required: false },
-      { key: "basis", label: "Основание полномочий", ok: Boolean(clean(params.signerBasis)), required: false },
-    );
-  } else {
-    items.push({ key: "signer", label: "ФИО предпринимателя", ok: Boolean(individualName(buyer) ?? clean(params.signerName)), required: false });
-  }
-  items.push({ key: "email", label: "Почта для уведомлений", ok: Boolean(buyer.email), required: false });
-  return items;
-}
+export { buyerChecklist } from "./buyer-form";
 
 export function checklistBlocks(items: readonly ContractChecklistItem[]): string[] {
   return items.filter((item) => item.required && !item.ok).map((item) => item.label);

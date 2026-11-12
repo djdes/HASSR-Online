@@ -140,7 +140,8 @@ function buyerParty(buyer: ContractBuyer, params: ContractSnapshot["params"]): s
     return `${name}, ${ids} (далее — «Заказчик»)${tail}`;
   }
   const short = clean(buyer.nameShort);
-  const name = short && short !== buyer.nameFull ? `${buyer.nameFull} (${short})` : buyer.nameFull;
+  const full = orBlank(buyer.nameFull);
+  const name = short && short !== full ? `${full} (${short})` : full;
   const basis = orBlank(params.signerBasis, BLANK_SHORT);
   const post = postInSentence(params.signerPost) ?? BLANK_SHORT;
   const signer = personName(params.signerName) ?? BLANK;
@@ -153,6 +154,14 @@ export function contractEndDate(date: string): string {
   if (!parts) return date;
   const day = parts.month === 2 && parts.day === 29 ? 28 : parts.day;
   return `${parts.year + 1}-${String(parts.month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/**
+ * Стандартный текст текущей версии — исходник для редактора «свой текст»
+ * в карточке ROOT (без раздела реквизитов: он всегда последний и свой).
+ */
+export function contractTemplateSections(seller: ContractSeller, date: string): ContractSectionSource[] {
+  return sections(seller, date);
 }
 
 /** Разделы договора. Ссылки «п. X.Y» и «разд. N» проверяет тест. */
@@ -295,10 +304,16 @@ function sellerRequisites(seller: ContractSeller): RequisiteRow[] {
     { label: "БИК", value: seller.bank.bik },
     { label: "Расчётный счёт", value: seller.bank.account },
     { label: "Корр. счёт", value: seller.bank.corrAccount },
-    { label: "Телефон", value: orBlank(seller.phone, BLANK_SHORT) },
+    // Телефон — необязательная строка: пустой линии в договоре не оставляем.
+    ...optionalRow("Телефон", seller.phone),
     { label: "Эл. почта", value: orBlank(seller.email, BLANK_SHORT) },
   ];
 }
+
+const optionalRow = (label: string, value: string | null | undefined): RequisiteRow[] => {
+  const text = clean(value);
+  return text ? [{ label, value: text }] : [];
+};
 
 /**
  * Наименования заказчика для реквизитов и подписи. У ИП без снимка ЕГРЮЛ
@@ -312,7 +327,8 @@ function buyerNames(buyer: ContractBuyer, fio: string | null): { full: string; s
     const short = clean(buyer.nameShort) && INDIVIDUAL_PREFIX.test(buyer.nameShort) ? buyer.nameShort : `ИП ${shortPersonName(fio) ?? BLANK_SHORT}`;
     return { full, short };
   }
-  return { full: buyer.nameFull, short: clean(buyer.nameShort) ?? buyer.nameFull };
+  const full = orBlank(buyer.nameFull);
+  return { full, short: clean(buyer.nameShort) ?? (clean(buyer.nameFull) ? full : BLANK_SHORT) };
 }
 
 /** Краткое имя заказчика для списков и писем («ООО «Ромашка»», «ИП Петров П. П.»). */
@@ -333,25 +349,32 @@ function buyerRequisites(buyer: ContractBuyer, fullName: string): RequisiteRow[]
   if (clean(buyer.actualAddress) && buyer.actualAddress !== buyer.legalAddress) {
     rows.push({ label: "Фактический адрес", value: buyer.actualAddress as string });
   }
-  // Банковских реквизитов клиента в базе нет — линии для ручного заполнения.
+  // Банк клиента — если вписан в карточке; иначе линии для ручного заполнения.
+  const bank = buyer.bank ?? null;
   rows.push(
-    { label: "Банк", value: BLANK },
-    { label: "БИК", value: BLANK_SHORT },
-    { label: "Расчётный счёт", value: BLANK },
-    { label: "Корр. счёт", value: BLANK },
-    { label: "Телефон", value: orBlank(buyer.phone, BLANK_SHORT) },
+    { label: "Банк", value: orBlank(bank?.name) },
+    { label: "БИК", value: orBlank(bank?.bik, BLANK_SHORT) },
+    { label: "Расчётный счёт", value: orBlank(bank?.account) },
+    { label: "Корр. счёт", value: orBlank(bank?.corrAccount) },
+    ...optionalRow("Телефон", buyer.phone),
+    // Почта остаётся всегда: на адреса из реквизитов ссылается текст договора.
     { label: "Эл. почта", value: orBlank(buyer.email, BLANK_SHORT) },
   );
   return rows;
 }
 
-/** Собирает текст договора из снимка. Номер черновика — «WS-2026/____». */
-export function buildContractDocument(snapshot: ContractSnapshot): ContractDocument {
+/**
+ * Собирает текст договора из снимка. Номер черновика — «WS-2026/____».
+ * `blank` — «рыба»: номер и дата линиями, без пометки «Проект».
+ */
+export function buildContractDocument(snapshot: ContractSnapshot, options: { blank?: boolean } = {}): ContractDocument {
   const { seller, buyer, params } = snapshot;
-  const draft = snapshot.number.includes("_");
-  // Договор, выпущенный с прежней версией шаблона, сохраняет свой текст.
+  const draft = !options.blank && snapshot.number.includes("_");
+  // Договор, выпущенный с прежней версией шаблона, сохраняет свой текст;
+  // редакция под клиента (снимок `params.customSections`) — свой.
   const legacy = snapshot.templateVersion === TEMPLATE_VERSION_2026_10_29;
-  const source = legacy ? sections20261029(seller, buyer) : sections(seller, snapshot.date);
+  const custom = params.customSections?.length ? params.customSections : null;
+  const source = custom ?? (legacy ? sections20261029(seller, buyer) : sections(seller, snapshot.date));
   const builtSections: ContractSection[] = source.map((section, index) => {
     const num = index + 1;
     let clause = 0;

@@ -14,26 +14,45 @@ import {
   FileSignature,
   FileText,
   Loader2,
+  PencilLine,
   Plus,
   RefreshCw,
+  RotateCcw,
   Send,
+  Trash2,
   X,
 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  applyBuyerInput,
+  blocksToText,
+  buyerChecklist,
+  buyerKindFromInput,
+  cleanCustomSections,
+  type ContractBuyerInput,
+} from "@/lib/contracts/buyer-form";
 import { defaultContractMessage, defaultContractSubject } from "@/lib/contracts/email-copy";
 import { SIGNER_BASIS_PRESETS } from "@/lib/contracts/format";
 import { isDeliverableEmail, normalizeEmail } from "@/lib/contracts/recipients";
 import type { ContractContext, ContractIssueInput, ContractListItem } from "@/lib/contracts/service.server";
 import { EdoSendButton } from "@/components/root/edo-send-button";
-import type { ContractChecklistItem, ContractRecipientSource } from "@/lib/contracts/types";
+import type { ContractBuyer, ContractChecklistItem, ContractRecipientSource } from "@/lib/contracts/types";
+import { isValidInn } from "@/lib/inn";
 
 /**
  * Карточка «Договор оказания услуг» на ROOT-странице организации:
- * готовность реквизитов БФС и клиента → данные договора → выпуск с
- * номером → скачать PDF/Word или отправить письмом. История выпущенных
- * договоров — тут же, с повторным скачиванием и аннулированием.
+ * бланк («рыба») без данных клиента → готовность реквизитов БФС и клиента →
+ * данные договора, реквизиты клиента и свой текст под клиента → проект
+ * PDF/Word → выпуск с номером → скачать или отправить письмом. История
+ * выпущенных договоров — тут же, с повторным скачиванием и аннулированием.
  */
+
+type TextDraft = Array<{ id: number; title: string; text: string }>;
+
+let draftSeq = 0;
+const toDraft = (sections: ContractContext["templateSections"]): TextDraft =>
+  sections.map((section) => ({ id: ++draftSeq, title: section.title, text: blocksToText(section.blocks) }));
 
 type Translator = ReturnType<typeof useTranslations<"rootClientContract">>;
 
@@ -109,23 +128,38 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
   const t = useTranslations("rootClientContract");
   const locale = useLocale();
   const [ctx, setCtx] = useState(initial);
-  const [form, setForm] = useState<ContractIssueInput>(initial.defaults);
-  const [busy, setBusy] = useState<null | "preview" | "issue" | "refresh">(null);
+  const [form, setForm] = useState<ContractIssueInput & { buyer: ContractBuyerInput }>(initial.defaults);
+  const [textDraft, setTextDraft] = useState<TextDraft | null>(null);
+  const [busy, setBusy] = useState<null | "preview" | "previewDocx" | "issue" | "refresh">(null);
   const [sendTarget, setSendTarget] = useState<ContractListItem | null>(null);
   const [voidTarget, setVoidTarget] = useState<ContractListItem | null>(null);
   const [voiding, setVoiding] = useState(false);
   const base = `/api/root/organizations/${ctx.organizationId}/contracts`;
-  const individual = ctx.buyer.kind === "individual";
+  const individual = buyerKindFromInput(form.buyer.inn, ctx.buyer.kind) === "individual";
+
+  // Чек-лист клиента — по тому, что сейчас в форме (реквизиты правятся тут же).
+  const formBuyer = useMemo(() => {
+    const base = { kind: ctx.buyer.kind } as ContractBuyer;
+    return applyBuyerInput(base, form.buyer, form.buyerEmail?.trim() || null);
+  }, [ctx.buyer.kind, form.buyer, form.buyerEmail]);
+  const buyerItems = useMemo(
+    () =>
+      buyerChecklist(
+        formBuyer,
+        { signerName: form.signerName, signerPost: form.signerPost, signerBasis: form.signerBasis, useFacsimile: form.useFacsimile },
+        Boolean(formBuyer.nameFull),
+      ),
+    [formBuyer, form.signerName, form.signerPost, form.signerBasis, form.useFacsimile],
+  );
+  const innOk = Boolean(formBuyer.inn && isValidInn(formBuyer.inn));
 
   const formatDate = useMemo(() => {
     const format = new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn" : locale, { day: "2-digit", month: "2-digit", year: "numeric" });
     return (value: string) => format.format(new Date(value.length === 10 ? `${value}T12:00:00Z` : value));
   }, [locale]);
 
-  const blockers = [
-    ...ctx.seller.checklist.filter((item) => item.required && !item.ok).map((item) => itemLabel(t, "seller", item, individual)),
-    ...ctx.buyer.checklist.filter((item) => item.required && !item.ok).map((item) => itemLabel(t, "buyer", item, individual)),
-  ];
+  const sellerBlockers = ctx.seller.checklist.filter((item) => item.required && !item.ok).map((item) => itemLabel(t, "seller", item, individual));
+  const blockers = [...sellerBlockers, ...buyerItems.filter((item) => item.required && !item.ok).map((item) => itemLabel(t, "buyer", item, individual))];
   const latestActive = ctx.contracts.find((contract) => contract.status !== "voided") ?? null;
 
   async function reload(): Promise<ContractContext | null> {
@@ -137,16 +171,20 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
   }
 
   const update = <K extends keyof ContractIssueInput>(key: K, value: ContractIssueInput[K]) => setForm((prev) => ({ ...prev, [key]: value }));
+  const updateBuyer = (key: keyof ContractBuyerInput, value: string) => setForm((prev) => ({ ...prev, buyer: { ...prev.buyer, [key]: value } }));
 
-  async function preview() {
-    setBusy("preview");
+  /** Тело запроса: форма + свой текст, если его меняли. */
+  const payload = () => JSON.stringify({ ...form, customSections: textDraft ? cleanCustomSections(textDraft) : null });
+
+  async function preview(format: "pdf" | "docx") {
+    setBusy(format === "pdf" ? "preview" : "previewDocx");
     try {
-      const response = await fetch(`${base}/preview`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const response = await fetch(`${base}/preview?format=${format}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload() });
       if (!response.ok) {
         toast.error(await errorText(response, t("errors.generic")));
         return;
       }
-      await downloadResponse(response, "contract-draft.pdf");
+      await downloadResponse(response, `contract-draft.${format}`);
     } catch {
       toast.error(t("errors.generic"));
     } finally {
@@ -157,7 +195,7 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
   async function issue() {
     setBusy("issue");
     try {
-      const response = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const response = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload() });
       if (!response.ok) {
         toast.error(await errorText(response, t("errors.generic")));
         return;
@@ -190,6 +228,9 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
           signerPost: prev.signerPost || next.defaults.signerPost,
           signerBasis: prev.signerBasis || next.defaults.signerBasis,
           buyerEmail: prev.buyerEmail || next.defaults.buyerEmail,
+          buyer: Object.fromEntries(
+            Object.entries(prev.buyer).map(([key, value]) => [key, value || next.defaults.buyer[key as keyof ContractBuyerInput]]),
+          ) as ContractBuyerInput,
         }));
       }
     } catch {
@@ -233,6 +274,23 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
         </span>
       </header>
 
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3" data-testid="contract-blank">
+        <div className="min-w-0">
+          <div className="text-[14px] font-semibold text-[#0b1024]">{t("blank.title")}</div>
+          <p className="mt-0.5 text-[12.5px] text-[#6f7282]">{t("blank.hint")}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <a href={`${base}/blank?format=pdf`} className={SMALL} data-testid="contract-blank-pdf">
+            <Download className="size-3.5 text-[#5566f6]" />
+            {t("blank.pdf")}
+          </a>
+          <a href={`${base}/blank?format=docx`} className={SMALL} data-testid="contract-blank-docx">
+            <Download className="size-3.5 text-[#5566f6]" />
+            {t("blank.docx")}
+          </a>
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <ReadinessBox
           title={t("seller.title")}
@@ -248,9 +306,9 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
         <ReadinessBox
           title={t("buyer.title")}
           badge={individual ? t("buyer.individual") : t("buyer.legal")}
-          ready={ctx.buyer.ready}
-          statusLabel={ctx.buyer.inn ?? "—"}
-          items={ctx.buyer.checklist.map((item) => ({ ...item, label: itemLabel(t, "buyer", item, individual) }))}
+          ready={innOk}
+          statusLabel={formBuyer.inn ?? "—"}
+          items={buyerItems.map((item) => ({ ...item, label: itemLabel(t, "buyer", item, individual) }))}
           footer={
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[12px] text-[#6f7282]">
@@ -318,6 +376,22 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
           </Field>
         </div>
 
+        <BuyerRequisitesEditor
+          t={t}
+          value={form.buyer}
+          individual={individual}
+          onChange={updateBuyer}
+          onReset={() => setForm((prev) => ({ ...prev, buyer: ctx.defaults.buyer }))}
+        />
+
+        <ContractTextEditor
+          t={t}
+          version={ctx.templateVersion}
+          draft={textDraft}
+          onChange={setTextDraft}
+          onStart={() => setTextDraft(toDraft(ctx.templateSections))}
+        />
+
         <label className={`mt-4 flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5 ${ctx.seller.hasFacsimile ? "cursor-pointer" : "opacity-70"}`}>
           <input
             type="checkbox"
@@ -337,14 +411,19 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
             {busy === "issue" ? <Loader2 className="size-4 animate-spin" /> : <FilePlus2 className="size-4" />}
             {busy === "issue" ? t("form.issuing") : t("form.issue")}
           </button>
-          <button type="button" onClick={preview} disabled={busy !== null || blockers.length > 0} className={OUTLINE}>
+          <button type="button" onClick={() => preview("pdf")} disabled={busy !== null || sellerBlockers.length > 0} className={OUTLINE} data-testid="contract-preview-pdf">
             {busy === "preview" ? <Loader2 className="size-4 animate-spin text-[#5566f6]" /> : <Eye className="size-4 text-[#5566f6]" />}
             {busy === "preview" ? t("form.previewing") : t("form.preview")}
+          </button>
+          <button type="button" onClick={() => preview("docx")} disabled={busy !== null || sellerBlockers.length > 0} className={OUTLINE} data-testid="contract-preview-docx">
+            {busy === "previewDocx" ? <Loader2 className="size-4 animate-spin text-[#5566f6]" /> : <Download className="size-4 text-[#5566f6]" />}
+            {busy === "previewDocx" ? t("form.previewing") : t("form.previewDocx")}
           </button>
         </div>
         <p className={`mt-2.5 text-[12.5px] ${blockers.length ? "text-[#a13a32]" : "text-[#6f7282]"}`}>
           {blockers.length ? t("form.blocked", { items: blockers.join(", ") }) : t("form.whatNext")}
         </p>
+        {innOk ? null : <p className="mt-1 text-[12px] text-[#9b9fb3]">{t("form.previewHint")}</p>}
       </div>
 
       <div className="mt-6">
@@ -458,6 +537,158 @@ export function ClientContractCard({ initial, edo = false }: { initial: Contract
         confirmDisabled={voiding}
       />
     </section>
+  );
+}
+
+type RequisiteLabel = `requisites.${keyof ContractBuyerInput | "nameFullIndividual" | "ogrnIndividual" | "legalAddressIndividual"}`;
+
+const BUYER_FIELDS: Array<{ key: keyof ContractBuyerInput; label: (individual: boolean) => RequisiteLabel; legalOnly?: boolean; wide?: boolean; numeric?: boolean }> = [
+  { key: "nameFull", label: (individual) => (individual ? "requisites.nameFullIndividual" : "requisites.nameFull"), wide: true },
+  { key: "nameShort", label: () => "requisites.nameShort" },
+  { key: "inn", label: () => "requisites.inn", numeric: true },
+  { key: "kpp", label: () => "requisites.kpp", legalOnly: true, numeric: true },
+  { key: "ogrn", label: (individual) => (individual ? "requisites.ogrnIndividual" : "requisites.ogrn"), numeric: true },
+  { key: "legalAddress", label: (individual) => (individual ? "requisites.legalAddressIndividual" : "requisites.legalAddress"), wide: true },
+  { key: "actualAddress", label: () => "requisites.actualAddress", wide: true },
+  { key: "phone", label: () => "requisites.phone" },
+  { key: "bankName", label: () => "requisites.bankName" },
+  { key: "bankBik", label: () => "requisites.bankBik", numeric: true },
+  { key: "bankAccount", label: () => "requisites.bankAccount", numeric: true },
+  { key: "bankCorrAccount", label: () => "requisites.bankCorrAccount", numeric: true },
+];
+
+/** Реквизиты Заказчика для этого договора: заполнены из карточки клиента, правятся тут. */
+function BuyerRequisitesEditor({
+  t,
+  value,
+  individual,
+  onChange,
+  onReset,
+}: {
+  t: Translator;
+  value: ContractBuyerInput;
+  individual: boolean;
+  onChange: (key: keyof ContractBuyerInput, value: string) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="mt-5 rounded-2xl border border-[#ececf4] bg-white p-4" data-testid="contract-buyer-requisites">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[14px] font-semibold text-[#0b1024]">{t("requisites.title")}</div>
+          <p className="mt-0.5 max-w-[640px] text-[12.5px] text-[#6f7282]">{t("requisites.hint")}</p>
+        </div>
+        <button type="button" onClick={onReset} className={SMALL}>
+          <RotateCcw className="size-3.5 text-[#5566f6]" />
+          {t("requisites.reset")}
+        </button>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {BUYER_FIELDS.filter((field) => !(individual && field.legalOnly)).map((field) => (
+          <label key={field.key} className={`block ${field.wide ? "md:col-span-2" : ""}`}>
+            <span className="mb-1 block text-[12.5px] font-medium text-[#3c4053]">{t(field.label(individual))}</span>
+            <input
+              value={value[field.key] ?? ""}
+              onChange={(event) => onChange(field.key, event.target.value)}
+              inputMode={field.numeric ? "numeric" : undefined}
+              className={`${INPUT} h-10`}
+              data-testid={`contract-buyer-${field.key}`}
+            />
+          </label>
+        ))}
+      </div>
+      <p className="mt-2 text-[12px] text-[#9b9fb3]">{t("requisites.optionalNote")}</p>
+    </div>
+  );
+}
+
+/**
+ * Свой текст договора под клиента: разделы с заголовком и пунктами
+ * построчно. Пока не нажали «Изменить» — договор идёт стандартным текстом.
+ */
+function ContractTextEditor({
+  t,
+  version,
+  draft,
+  onChange,
+  onStart,
+}: {
+  t: Translator;
+  version: string;
+  draft: TextDraft | null;
+  onChange: (next: TextDraft | null) => void;
+  onStart: () => void;
+}) {
+  const patch = (id: number, next: Partial<{ title: string; text: string }>) => onChange((draft ?? []).map((section) => (section.id === id ? { ...section, ...next } : section)));
+  return (
+    <div className="mt-4 rounded-2xl border border-[#ececf4] bg-white p-4" data-testid="contract-text">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[14px] font-semibold text-[#0b1024]">{t("text.title")}</span>
+            {draft ? <span className="rounded-full bg-[#fff8eb] px-2 py-0.5 text-[11.5px] text-[#8a5a00]">{t("text.edited")}</span> : null}
+          </div>
+          <p className="mt-0.5 text-[12.5px] text-[#6f7282]">{draft ? t("text.custom") : t("text.standard", { version })}</p>
+        </div>
+        {draft ? (
+          <button type="button" onClick={() => onChange(null)} className={SMALL} data-testid="contract-text-reset">
+            <RotateCcw className="size-3.5 text-[#5566f6]" />
+            {t("text.reset")}
+          </button>
+        ) : (
+          <button type="button" onClick={onStart} className={SMALL} data-testid="contract-text-edit">
+            <PencilLine className="size-3.5 text-[#5566f6]" />
+            {t("text.edit")}
+          </button>
+        )}
+      </div>
+      {draft ? (
+        <div className="mt-3 space-y-3">
+          <p className="text-[12px] leading-[1.5] text-[#9b9fb3]">{t("text.hint")}</p>
+          {draft.map((section, index) => (
+            <div key={section.id} className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-3" data-testid="contract-text-section">
+              <div className="flex items-center gap-2">
+                <span className="w-6 shrink-0 text-center text-[14px] font-semibold tabular-nums text-[#5566f6]">{index + 1}</span>
+                <input
+                  value={section.title}
+                  onChange={(event) => patch(section.id, { title: event.target.value })}
+                  aria-label={t("text.sectionTitle")}
+                  placeholder={t("text.sectionTitle")}
+                  className={`${INPUT} h-9 font-medium`}
+                />
+                <button
+                  type="button"
+                  onClick={() => onChange(draft.filter((item) => item.id !== section.id))}
+                  title={t("text.removeSection")}
+                  aria-label={t("text.removeSection")}
+                  className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-[#a13a32] transition-colors duration-150 hover:bg-[#fff4f2]"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+              <textarea
+                value={section.text}
+                onChange={(event) => patch(section.id, { text: event.target.value })}
+                rows={Math.min(14, Math.max(3, section.text.split("\n").length + 1))}
+                className="mt-2 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 py-3 text-[13px] leading-[1.55] text-[#0b1024] transition-colors duration-150 focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+              />
+            </div>
+          ))}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => onChange([...draft, { id: ++draftSeq, title: t("text.newSection"), text: "" }])}
+              className={SMALL}
+              data-testid="contract-text-add"
+            >
+              <Plus className="size-3.5 text-[#5566f6]" />
+              {t("text.addSection")}
+            </button>
+            <span className="text-[12px] text-[#9b9fb3]">{t("text.requisitesNote")}</span>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
