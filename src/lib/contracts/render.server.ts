@@ -30,10 +30,28 @@ async function loadSnapshot(contractId: string) {
   return { row, snapshot: snapshotFromRow(row) };
 }
 
-/** PDF по снимку (черновик или выпущенный договор). */
-export async function renderContractSnapshotPdf(snapshot: ContractSnapshot, options: { voided?: boolean } = {}): Promise<{ bytes: Buffer; pages: number }> {
-  const document = buildContractDocument(snapshot);
+type SnapshotRenderOptions = { voided?: boolean; blank?: boolean };
+
+/** PDF по снимку (черновик, «рыба» или выпущенный договор). */
+export async function renderContractSnapshotPdf(snapshot: ContractSnapshot, options: SnapshotRenderOptions = {}): Promise<{ bytes: Buffer; pages: number }> {
+  const document = buildContractDocument(snapshot, { blank: options.blank });
   return renderContractPdf({ ...document, voided: options.voided ?? false }, snapshot.seller, await images(snapshot));
+}
+
+/** DOCX по снимку (черновик или «рыба») — для правок в Word. */
+export async function renderContractSnapshotDocx(snapshot: ContractSnapshot, options: SnapshotRenderOptions = {}): Promise<Buffer> {
+  const document = buildContractDocument(snapshot, { blank: options.blank });
+  return renderContractDocx({ ...document, voided: options.voided ?? false }, snapshot.seller);
+}
+
+export const CONTRACT_MIME = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+} as const;
+
+/** `?format=docx` → docx, иначе pdf. */
+export function contractFormat(request: Request): "pdf" | "docx" {
+  return new URL(request.url).searchParams.get("format") === "docx" ? "docx" : "pdf";
 }
 
 export async function renderClientContractPdf(contractId: string): Promise<RenderedContractFile> {

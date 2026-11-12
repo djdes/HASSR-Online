@@ -6,7 +6,6 @@ import {
   BorderStyle,
   Document,
   Footer,
-  Header,
   ImageRun,
   LineRuleType,
   Packer,
@@ -25,9 +24,9 @@ import {
 } from "docx";
 import JSZip from "jszip";
 
-import { BRAND_FOOTER_TAGLINE, BRAND_TAGLINE, brandAsset, brandSeller, type BrandAssetName, type BrandSeller } from "@/lib/brand-docs/pdf-kit";
+import { BRAND_FOOTER_TAGLINE, brandAsset, brandSeller, type BrandAssetName, type BrandSeller } from "@/lib/brand-docs/pdf-kit";
 
-import type { ContractDocument, RequisiteRow, SignatureSide } from "./template";
+import type { ContractAppendix, ContractDocument, RequisiteRow, SignatureSide } from "./template";
 import type { ContractSeller } from "./types";
 
 /**
@@ -138,41 +137,6 @@ function image(name: BrandAssetName, widthCm: number | null, alt: string): Image
   return new ImageRun({ type: "png", data, transformation: { width, height }, altText: { name: alt, title: alt, description: alt } });
 }
 
-function header(seller: BrandSeller): Header {
-  const widths = [cm(7), W - cm(7)];
-  const ids = [seller.inn && `ИНН ${seller.inn}`, seller.kpp && `КПП ${seller.kpp}`, seller.ogrn && `${seller.ogrn.length === 15 ? "ОГРНИП" : "ОГРН"} ${seller.ogrn}`]
-    .filter(Boolean)
-    .join("  ·  ");
-  const contacts = [seller.phone, seller.email, seller.site].filter(Boolean).join("  ·  ");
-  const wordmark = image("wordmark-polnoch.png", 3, "сетап");
-  const route = image("route-header.png", null, "");
-  const right = { align: AlignmentType.RIGHT, line: 240 } as const;
-  return new Header({
-    children: [
-      table(
-        [
-          new TableRow({
-            children: [
-              cell([para(wordmark ? [wordmark] : [run("сетап", { size: 16, sb: true })]), para([run(BRAND_TAGLINE, { size: SIZE.small, color: C.muted })], { before: 90, line: 240 })], widths[0]),
-              cell(
-                [
-                  para([run(seller.nameShort, { size: 9.5, sb: true })], right),
-                  ...[ids, seller.address, contacts]
-                    .filter(Boolean)
-                    .map((line, index) => para([run(line, { size: SIZE.small, color: C.muted })], { ...right, before: index === 0 ? 40 : 20 })),
-                ],
-                widths[1],
-              ),
-            ],
-          }),
-        ],
-        widths,
-      ),
-      para(route ? [route] : [], { before: 150, line: 240 }),
-    ],
-  });
-}
-
 /** Подвал: знак слева, маршрут ровно по центру листа, «Страница N из M» справа. */
 function footer(): Footer {
   const mid = cm(FOOT_ROUTE_W + 0.4);
@@ -216,6 +180,54 @@ function signature(side: SignatureSide): Paragraph[] {
     para([run(side.caption, { color: C.muted })], { line: 240 }),
     para([run("__________________", { color: C.blank }), run(`  ${side.nameShort}`)], { before: 360, line: 240 }),
     para([run("М. П.", { size: SIZE.small, color: C.faint })], { before: 80, line: 240 }),
+  ];
+}
+
+const ALIGN = { left: AlignmentType.LEFT, right: AlignmentType.RIGHT, center: AlignmentType.CENTER } as const;
+
+/** Приложение с нового листа: шапка справа, заголовок, таблица, итог, подписи сторон. */
+function appendixBlocks(appendix: ContractAppendix, document: ContractDocument, signWidths: number[], gutter: number): Array<Paragraph | Table> {
+  const right = { align: AlignmentType.RIGHT, line: 240 } as const;
+  const colWidths = appendix.widths.map((share) => Math.floor(W * share));
+  colWidths[colWidths.length - 1] += W - colWidths.reduce((sum, w) => sum + w, 0);
+  const pad = { top: 90, bottom: 90, left: 100, right: 100 };
+  const headBorders = { top: NONE, left: NONE, right: NONE, bottom: hair(C.ink, 6) };
+  const rowBorders = { top: NONE, left: NONE, right: NONE, bottom: hair(C.border2) };
+  const tableRows = [
+    new TableRow({
+      tableHeader: true,
+      children: appendix.columns.map((label, index) =>
+        cell([para([run(label, { size: SIZE.small, color: C.muted })], { align: ALIGN[appendix.align[index]], line: 240 })], colWidths[index], { margins: pad, borders: headBorders, valign: VerticalAlign.BOTTOM }),
+      ),
+    }),
+    ...appendix.rows.map(
+      (row) =>
+        new TableRow({
+          cantSplit: true,
+          children: row.map((value, index) =>
+            cell([para([run(value, { size: 8.5 })], { align: ALIGN[appendix.align[index]], line: 250 })], colWidths[index], { margins: pad, borders: rowBorders, valign: VerticalAlign.CENTER }),
+          ),
+        }),
+    ),
+  ];
+  const signCell = (side: SignatureSide, width: number) => cell(signature(side), width, { margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+  return [
+    new Paragraph({ children: [run(`Приложение № ${appendix.num}`, { size: 9, color: C.muted })], alignment: AlignmentType.RIGHT, pageBreakBefore: true, spacing: { before: 0, after: 0, line: 240 } }),
+    para([run(`к ${document.runningTitle.replace(/^Договор/, "Договору")}`, { size: 9, color: C.muted })], { ...right, before: 40 }),
+    para([run(appendix.title, { size: 16, sb: true })], { before: 360, after: 200, line: 240 }),
+    table(tableRows, colWidths),
+    ...appendix.notes.map((note) => para([run(note.text, { size: note.strong ? 9.5 : 8.5, sb: note.strong, color: note.strong ? C.ink : C.ink2 })], { before: 160, line: 276, align: AlignmentType.JUSTIFIED })),
+    para([], { before: 360 }),
+    table(
+      [
+        new TableRow({
+          cantSplit: true,
+          children: [signCell(document.signatures.seller, signWidths[0]), cell([para([])], gutter), signCell(document.signatures.buyer, signWidths[2])],
+        }),
+      ],
+      signWidths,
+    ),
+    new Paragraph({ children: [], spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT } }),
   ];
 }
 
@@ -315,6 +327,8 @@ export async function renderContractDocx(document: ContractDocument, sellerSnaps
     new Paragraph({ children: [], spacing: { before: 0, after: 0, line: 20, lineRule: LineRuleType.EXACT } }),
   );
 
+  for (const appendix of document.appendices) body.push(...appendixBlocks(appendix, document, widths, gutter));
+
   const fontDir = path.join(process.cwd(), "src", "lib", "pdf-fonts");
   const fonts = FONT_FILES.filter(({ file }) => fs.existsSync(path.join(fontDir, file))).map(({ name, file }) => ({ name, data: fs.readFileSync(path.join(fontDir, file)) }));
   const doc = new Document({
@@ -329,10 +343,9 @@ export async function renderContractDocx(document: ContractDocument, sellerSnaps
         properties: {
           page: {
             size: { width: PAGE_W, height: 16838 },
-            margin: { top: cm(3.3), bottom: cm(1.7), left: SIDE, right: SIDE, header: cm(0.8), footer: cm(0.75) },
+            margin: { top: cm(1.7), bottom: cm(1.7), left: SIDE, right: SIDE, header: cm(0.8), footer: cm(0.75) },
           },
         },
-        headers: { default: header(seller) },
         footers: { default: footer() },
         children: body,
       },

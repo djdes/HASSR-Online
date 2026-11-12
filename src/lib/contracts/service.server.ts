@@ -2,11 +2,14 @@ import { Prisma } from "@prisma/client";
 
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { db } from "@/lib/db";
+import { readPlanPricing } from "@/lib/tariffs";
 import { DOCUMENT_ORG_SELECT } from "@/lib/document-org-block";
 import { isValidInn } from "@/lib/inn";
 
-import { clean, parseContractDate, todayInMoscow } from "./format";
+import { applyBuyerInput, buyerInputFrom, type ContractBuyerInput } from "./buyer-form";
+import { BLANK_SHORT, clean, parseContractDate, todayInMoscow } from "./format";
 import { formatContractNumber } from "./numbering";
+import { clampDiscount, defaultContractPricing } from "./pricing";
 import { contractRecipientSuggestions, normalizeEmail } from "./recipients";
 import {
   buyerChecklist,
@@ -18,15 +21,19 @@ import {
   sellerFromRequisites,
   type BuyerSource,
 } from "./snapshot";
-import { buyerDisplayName, CONTRACT_TEMPLATE_VERSION } from "./template";
+import { buyerDisplayName, CONTRACT_TEMPLATE_VERSION, contractTemplateSections } from "./template";
 import type {
   ContractBuyer,
   ContractChecklistItem,
+  ContractCustomSection,
+  ContractCycle,
   ContractParams,
+  ContractPricing,
   ContractRecipient,
   ContractSeller,
   ContractSnapshot,
   ContractStatus,
+  ContractTier,
 } from "./types";
 
 /**
@@ -60,7 +67,23 @@ export type ContractIssueInput = {
   signerBasis: string | null;
   buyerEmail: string | null;
   useFacsimile: boolean;
+  /** Реквизиты клиента из формы; нет — берутся данные организации. */
+  buyer?: ContractBuyerInput | null;
+  /** Текст договора в редакции под клиента; нет — стандартный. */
+  customSections?: ContractCustomSection[] | null;
+  /** Согласованный тариф для Приложения № 1; нет — «Премиум» на 1 месяц. */
+  pricing?: ContractPricingInput | null;
 };
+
+export type ContractPricingInput = { tier: ContractTier; cycle: ContractCycle; points: number; discountPercent: number };
+
+/** Тариф из формы + цены прайса на сегодня (цены с клиента не принимаем). */
+async function pricingFor(input: ContractPricingInput | null | undefined): Promise<ContractPricing> {
+  const { rates } = await readPlanPricing();
+  const base = defaultContractPricing(rates);
+  if (!input) return base;
+  return { ...base, tier: input.tier, cycle: input.cycle, points: Math.max(1, Math.floor(input.points)), discountPercent: clampDiscount(input.discountPercent) };
+}
 
 const ORG_SELECT = {
   ...DOCUMENT_ORG_SELECT,
@@ -114,7 +137,11 @@ export type ContractContext = {
     profileUpdatedAt: string | null;
     canRefreshRegistry: boolean;
   };
-  defaults: ContractIssueInput;
+  defaults: ContractIssueInput & { buyer: ContractBuyerInput; pricing: ContractPricingInput };
+  /** Прайс ₽/мес за точку — для подсказки цены в карточке. */
+  planRates: ContractPricing["rates"];
+  /** Стандартный текст (без раздела реквизитов) — исходник редактора «свой текст». */
+  templateSections: ContractCustomSection[];
   recipients: ContractRecipient[];
   contracts: ContractListItem[];
   templateVersion: string;
@@ -148,7 +175,7 @@ export async function listClientContracts(organizationId: string): Promise<Contr
 
 /** Всё для карточки на странице организации: готовность, значения формы, получатели, история. */
 export async function loadContractContext(organizationId: string): Promise<ContractContext> {
-  const [org, requisites] = await Promise.all([loadOrg(organizationId), readPlatformRequisites()]);
+  const [org, requisites, planPricing] = await Promise.all([loadOrg(organizationId), readPlatformRequisites(), readPlanPricing()]);
   const owner = await ownerOf(org);
   const recipients = contractRecipientSuggestions({
     ownerEmail: owner?.email,
@@ -186,33 +213,57 @@ export async function loadContractContext(organizationId: string): Promise<Contr
       signerBasis: params.signerBasis,
       buyerEmail: buyer.email,
       useFacsimile: Boolean(requisites.facsimileFile || requisites.stampFile),
+      buyer: buyerInputFrom(buyer),
+      customSections: null,
+      pricing: { tier: "premium", cycle: "month", points: 1, discountPercent: 0 },
     },
+    planRates: planPricing.rates,
+    templateSections: contractTemplateSections(seller, todayInMoscow(), true),
     recipients,
     contracts: await listClientContracts(organizationId),
     templateVersion: CONTRACT_TEMPLATE_VERSION,
   };
 }
 
-/** Снимок для выпуска или черновика: текущие реквизиты обеих сторон + форма. */
-export async function buildContractSnapshot(organizationId: string, input: ContractIssueInput, number: string | null): Promise<ContractSnapshot> {
-  const date = parseContractDate(input.date);
-  if (!date) throw new ContractError("bad_date", 400, "Дата договора указана с ошибкой");
-  const [org, requisites] = await Promise.all([loadOrg(organizationId), readPlatformRequisites()]);
+async function readySeller(): Promise<ContractSeller> {
+  const requisites = await readPlatformRequisites();
   const seller = sellerFromRequisites(requisites);
   const sellerItems = sellerChecklist(seller, { facsimile: Boolean(requisites.facsimileFile), stamp: Boolean(requisites.stampFile) });
   const missing = sellerItems.filter((item) => item.required && !item.ok).map((item) => item.label);
   if (missing.length) {
     throw new ContractError("seller_incomplete", 409, `Заполните реквизиты ООО «БФС»: ${missing.join(", ")}`);
   }
-  const buyer = buyerFromOrganization(org as BuyerSource, normalizeEmail(input.buyerEmail));
-  if (!buyer.inn || !isValidInn(buyer.inn)) {
-    throw new ContractError("buyer_inn", 409, "У организации нет корректного ИНН — без него договор не выпускается");
+  return seller;
+}
+
+/**
+ * Снимок для выпуска или черновика: текущие реквизиты БФС + реквизиты
+ * клиента из формы (или организации) + параметры. Без корректного ИНН
+ * клиента договор не выпускается; проект (`requireInn: false`) можно
+ * скачать и так — вместо ИНН будет линия.
+ */
+export async function buildContractSnapshot(
+  organizationId: string,
+  input: ContractIssueInput,
+  number: string | null,
+  options: { requireInn?: boolean } = {},
+): Promise<ContractSnapshot> {
+  const date = parseContractDate(input.date);
+  if (!date) throw new ContractError("bad_date", 400, "Дата договора указана с ошибкой");
+  const [org, seller, pricing] = await Promise.all([loadOrg(organizationId), readySeller(), pricingFor(input.pricing)]);
+  const email = normalizeEmail(input.buyerEmail);
+  const fromOrg = buyerFromOrganization(org as BuyerSource, email);
+  const buyer = input.buyer ? applyBuyerInput(fromOrg, input.buyer, email) : fromOrg;
+  if ((options.requireInn ?? true) && (!buyer.inn || !isValidInn(buyer.inn))) {
+    throw new ContractError("buyer_inn", 409, "Укажите корректный ИНН клиента — без него договор не выпускается");
   }
   const params: ContractParams = {
     signerName: clean(input.signerName),
-    signerPost: clean(input.signerPost),
+    signerPost: buyer.kind === "individual" ? null : clean(input.signerPost),
     signerBasis: clean(input.signerBasis),
     useFacsimile: input.useFacsimile,
+    customSections: input.customSections?.length ? input.customSections : null,
+    pricing,
   };
   return {
     number: number ?? `WS-${date.year}/____`,
@@ -222,6 +273,35 @@ export async function buildContractSnapshot(organizationId: string, input: Contr
     seller,
     buyer,
     params,
+  };
+}
+
+/**
+ * «Рыба»: реквизиты ООО «БФС» заполнены, всё о клиенте, номер и дата —
+ * линии для ручного заполнения. Без факсимиле: это бланк, а не оферта.
+ */
+export async function buildBlankContractSnapshot(): Promise<ContractSnapshot> {
+  const [seller, pricing] = await Promise.all([readySeller(), pricingFor(null)]);
+  return {
+    number: BLANK_SHORT,
+    date: "",
+    city: defaultContractCity(seller),
+    templateVersion: CONTRACT_TEMPLATE_VERSION,
+    seller,
+    buyer: {
+      kind: "legal",
+      nameFull: "",
+      nameShort: "",
+      inn: null,
+      kpp: null,
+      ogrn: null,
+      legalAddress: null,
+      actualAddress: null,
+      phone: null,
+      email: null,
+      bank: null,
+    },
+    params: { signerName: null, signerPost: null, signerBasis: null, useFacsimile: false, customSections: null, pricing },
   };
 }
 
@@ -320,7 +400,52 @@ export function readBuyer(json: unknown): ContractBuyer {
     actualAddress: strOrNull(r.actualAddress),
     phone: strOrNull(r.phone),
     email: strOrNull(r.email),
+    bank: readBuyerBank(r.bank),
   };
+}
+
+function readBuyerBank(json: unknown): ContractBuyer["bank"] {
+  if (!json || typeof json !== "object") return null;
+  const r = obj(json);
+  const bank = { name: strOrNull(r.name), bik: strOrNull(r.bik), account: strOrNull(r.account), corrAccount: strOrNull(r.corrAccount) };
+  return Object.values(bank).some(Boolean) ? bank : null;
+}
+
+const TIERS: readonly ContractTier[] = ["standard", "premium", "vip"];
+const CYCLES: readonly ContractCycle[] = ["month", "year"];
+const num = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+
+function readPricing(json: unknown): ContractPricing | null {
+  if (!json || typeof json !== "object") return null;
+  const r = obj(json);
+  const tier = TIERS.find((item) => item === r.tier);
+  const cycle = CYCLES.find((item) => item === r.cycle);
+  if (!tier || !cycle) return null;
+  const rates = obj(r.rates);
+  const rate = (t: ContractTier) => ({ month: num(obj(rates[t]).month), year: num(obj(rates[t]).year) });
+  return {
+    tier,
+    cycle,
+    points: Math.max(1, Math.floor(num(r.points)) || 1),
+    discountPercent: clampDiscount(r.discountPercent),
+    rates: { standard: rate("standard"), premium: rate("premium"), vip: rate("vip") },
+  };
+}
+
+function readCustomSections(json: unknown): ContractCustomSection[] | null {
+  if (!Array.isArray(json)) return null;
+  const sections: ContractCustomSection[] = [];
+  for (const raw of json) {
+    const section = obj(raw);
+    const title = str(section.title).trim();
+    const blocks = (Array.isArray(section.blocks) ? section.blocks : []).flatMap((block): ContractCustomSection["blocks"] => {
+      if (typeof block === "string") return block.trim() ? [block] : [];
+      if (Array.isArray(block) && typeof block[0] === "string" && typeof block[1] === "string") return [[block[0], block[1]]];
+      return [];
+    });
+    if (title && blocks.length) sections.push({ title, blocks });
+  }
+  return sections.length ? sections : null;
 }
 
 export function readParams(json: unknown): ContractParams {
@@ -330,6 +455,8 @@ export function readParams(json: unknown): ContractParams {
     signerPost: strOrNull(r.signerPost),
     signerBasis: strOrNull(r.signerBasis),
     useFacsimile: r.useFacsimile === true,
+    customSections: readCustomSections(r.customSections),
+    pricing: readPricing(r.pricing),
   };
 }
 

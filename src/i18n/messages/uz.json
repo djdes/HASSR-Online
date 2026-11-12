@@ -30936,7 +30936,9 @@
       "issuing": "Rasmiylashtirilmoqda…",
       "issued": "{number}-son shartnoma rasmiylashtirildi",
       "blocked": "Shartnomani rasmiylashtirish uchun toʻldiring: {items}",
-      "whatNext": "Rasmiylashtirilgach, shartnomaga raqam beriladi — uni PDF yoki Word formatida yuklab olish va mijozga pochta orqali yuborish mumkin."
+      "whatNext": "Rasmiylashtirilgach, shartnomaga raqam beriladi — uni PDF yoki Word formatida yuklab olish va mijozga pochta orqali yuborish mumkin.",
+      "previewDocx": "Loyiha Word",
+      "previewHint": "Loyiha INNsiz ham yuklanadi — o‘rniga chiziq qoladi. Chiqarish uchun INN majburiy."
     },
     "history": {
       "title": "Rasmiylashtirilgan shartnomalar",
@@ -30996,6 +30998,67 @@
     },
     "errors": {
       "generic": "Nimadir xato ketdi — qaytadan urinib koʻring"
+    },
+    "blank": {
+      "title": "Shartnoma blanki",
+      "hint": "Mijoz ma’lumotlarisiz: raqam, sana va buyurtmachi rekvizitlari qo‘lda to‘ldiriladigan chiziqlar.",
+      "pdf": "Blank PDF",
+      "docx": "Blank Word"
+    },
+    "requisites": {
+      "title": "Shartnomadagi mijoz rekvizitlari",
+      "hint": "O‘zgarishlar faqat shu shartnomaga tushadi — mijoz kartochkasi o‘zgarmaydi. Bo‘sh maydon — qo‘lda to‘ldirish uchun chiziq.",
+      "reset": "Mijoz ma’lumotlarini qaytarish",
+      "nameFull": "To‘liq nomi",
+      "nameFullIndividual": "Nomi: YaTT va to‘liq FIO",
+      "nameShort": "Qisqa nomi",
+      "inn": "INN",
+      "kpp": "KPP",
+      "ogrn": "OGRN",
+      "ogrnIndividual": "OGRNIP",
+      "legalAddress": "Yuridik manzil",
+      "legalAddressIndividual": "Manzil",
+      "actualAddress": "Haqiqiy manzil, agar farq qilsa",
+      "phone": "Telefon, ixtiyoriy",
+      "bankName": "Bank",
+      "bankBik": "BIK",
+      "bankAccount": "Hisob raqami",
+      "bankCorrAccount": "Korr. hisob",
+      "optionalNote": "Telefon va haqiqiy manzil faqat to‘ldirilgan bo‘lsa shartnomaga tushadi."
+    },
+    "text": {
+      "title": "Shartnoma matni",
+      "standard": "{version} sanali standart shablon matni.",
+      "custom": "Matn mijozga moslab o‘zgartirilgan — loyihaga va chiqarilgan shartnomaga tushadi.",
+      "edit": "Matnni mijozga moslash",
+      "reset": "Standart matnni qaytarish",
+      "addSection": "Bo‘lim qo‘shish",
+      "removeSection": "Bo‘limni o‘chirish",
+      "sectionTitle": "Bo‘lim sarlavhasi",
+      "newSection": "Qo‘shimcha shartlar",
+      "hint": "Har bir qator — alohida band, raqamlar o‘zi qo‘yiladi. Kichik bandni «а) » bilan boshlang. Bo‘lim o‘chirgan yoki qo‘shgan bo‘lsangiz, «п. 3.2» va «разд. 11» havolalarini tekshiring.",
+      "requisitesNote": "Oxirgi bo‘lim har doim «Tomonlarning rekvizitlari va imzolari».",
+      "edited": "o‘zgartirilgan"
+    },
+    "pricing": {
+      "title": "Shartnomadagi tarif",
+      "hint": "1-ilova «Xizmatlar narxi»ga tushadi. Barcha tariflar narxi — 2-ilovada.",
+      "tier": "Tarif",
+      "cycle": "Muddat",
+      "points": "Nuqtalar",
+      "discount": "Chegirma, %",
+      "discountHint": "Nuqtalar soni uchun chegirmadan tashqari.",
+      "tiers": {
+        "standard": "Standart",
+        "premium": "Premium",
+        "vip": "VIP"
+      },
+      "cycles": {
+        "month": "1 oy",
+        "year": "12 oy"
+      },
+      "total": "Davr uchun jami: {total} ₽",
+      "saving": "{full} ₽ dan {discount} ₽ chegirma"
     }
   },
   "rootClientDocuments": {

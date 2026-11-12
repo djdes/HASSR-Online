@@ -2,8 +2,10 @@ import {
   BRAND_COLORS as C,
   BRAND_PAGE,
   BrandFlow,
+  BRAND_PLAIN_TOP,
   brandSeller,
   createBrandPdf,
+  dataTable,
   decoratePages,
   lineHeight,
   measurePartyRows,
@@ -39,7 +41,9 @@ const VOID_FG = [161, 58, 50] as const;
 export function renderContractPdf(document: ContractDocument, seller: ContractSeller, images: ContractImages): ContractPdfResult {
   const pdf = createBrandPdf({ title: `${document.title} № ${document.number}`, subject: "Договор оказания услуг WeSetup" });
   const { doc } = pdf;
-  const flow = new BrandFlow(pdf);
+  // Договор — formal-документ без «стильной» брендовой шапки: текст идёт
+  // от верхнего поля, фирменный блок остаётся только в реквизитах и подвале.
+  const flow = new BrandFlow(pdf, { top: BRAND_PLAIN_TOP });
   const x = BRAND_PAGE.side;
   const width = BRAND_PAGE.contentW;
   const brand = brandSeller(seller);
@@ -134,8 +138,48 @@ export function renderContractPdf(document: ContractDocument, seller: ContractSe
     });
   }
 
+  // ── приложения: каждое с нового листа, подписи сторон под таблицей
+  for (const appendix of document.appendices) {
+    flow.newPage();
+    setText(pdf, { size: 9, color: C.muted });
+    doc.text(`Приложение №${NBSP}${appendix.num}`, x + width, flow.y + 3, { align: "right" });
+    doc.text(`к ${document.runningTitle.replace(/^Договор/, "Договору")}`, x + width, flow.y + 7.4, { align: "right" });
+    flow.gap(14);
+    setText(pdf, { size: 16, weight: "semibold", color: C.ink });
+    doc.text(appendix.title, x, flow.y + 5.6);
+    flow.gap(11);
+    const columnStyles = Object.fromEntries(appendix.widths.map((share, index) => [index, { cellWidth: width * share, halign: appendix.align[index] }]));
+    const bottom = dataTable(pdf, {
+      startY: flow.y,
+      head: [appendix.columns.map((label, index) => ({ content: label, styles: { halign: appendix.align[index] } }))],
+      body: appendix.rows,
+      columnStyles,
+      zebra: false,
+      fontSize: 8.5,
+    });
+    flow.y = bottom + 4;
+    for (const note of appendix.notes) {
+      flow.paragraph(note.text, { size: note.strong ? 9.5 : 8.5, after: 1.6, ...(note.strong ? { weight: "semibold" as const } : {}) });
+    }
+    flow.ensure(signatureH + 6);
+    flow.gap(6);
+    for (const column of columns) {
+      signatureLine(pdf, {
+        x: column.x,
+        y: flow.y,
+        width: colW,
+        post: column.sign.caption,
+        name: column.sign.nameShort,
+        facsimile: column.seller ? images.facsimile : null,
+        stamp: column.seller ? images.stamp : null,
+      });
+    }
+    flow.gap(signatureH);
+  }
+
   // «страница N из M» — в подвале, как в образце; над подвалом — только отметка аннулирования.
   const pages = decoratePages(pdf, brand, {
+    letterhead: false,
     pageInFooter: true,
     pageLabel: document.voided ? () => `АННУЛИРОВАН  ·  ${document.runningTitle}` : null,
   });

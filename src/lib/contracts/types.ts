@@ -43,7 +43,17 @@ export type ContractBuyer = {
   phone: string | null;
   /** Почта для документов и уведомлений по договору (раздел реквизитов). */
   email: string | null;
+  /** Банк клиента — если ROOT вписал его в карточке; иначе в договоре линии. */
+  bank?: ContractBuyerBank | null;
 };
+
+export type ContractBuyerBank = { name: string | null; bik: string | null; account: string | null; corrAccount: string | null };
+
+/**
+ * Раздел договора в своей редакции: заголовок и пункты; пара
+ * `[маркер, текст]` — подпункт «а) …». Раздел реквизитов сюда не входит.
+ */
+export type ContractCustomSection = { title: string; blocks: Array<string | [string, string]> };
 
 /** Параметры выпуска — то, что ROOT задаёт в форме. */
 export type ContractParams = {
@@ -55,6 +65,28 @@ export type ContractParams = {
   signerBasis: string | null;
   /** Ставить факсимиле подписи и печать Исполнителя (если загружены). */
   useFacsimile: boolean;
+  /** Текст договора в редакции под клиента; null — стандартный текст версии шаблона. */
+  customSections?: ContractCustomSection[] | null;
+  /**
+   * Согласованный тариф — Приложения № 1 и № 2. Снимок цен на дату выпуска:
+   * смена прайса выпущенный договор не меняет. Нет — договор без приложений
+   * (как выпускались до 2026-11-12).
+   */
+  pricing?: ContractPricing | null;
+};
+
+export type ContractTier = "standard" | "premium" | "vip";
+export type ContractCycle = "month" | "year";
+
+export type ContractPricing = {
+  tier: ContractTier;
+  cycle: ContractCycle;
+  /** Точек (объектов) Заказчика. */
+  points: number;
+  /** Скидка менеджера сверх скидки за точки, %. */
+  discountPercent: number;
+  /** Прайс ₽/мес за точку на дату выпуска (как `PlanRates`). */
+  rates: Record<ContractTier, Record<ContractCycle, number>>;
 };
 
 export type ContractSnapshot = {

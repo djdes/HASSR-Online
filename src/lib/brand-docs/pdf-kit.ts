@@ -71,6 +71,8 @@ export const BRAND_HEADER = { top: 5, h: 21, pad: 6, radius: 4.2 } as const;
 export const BRAND_FOOTER = { bottom: 5, h: 12, pad: 6, radius: 3.6 } as const;
 /** Верх и низ области набора (под шапкой и над строкой «Стр. N из M»). */
 export const BRAND_CONTENT_TOP = BRAND_HEADER.top + BRAND_HEADER.h + 7;
+/** Верх набора без шапки (formal-документы, напр. договор). */
+export const BRAND_PLAIN_TOP = BRAND_HEADER.top + 7;
 export const BRAND_CONTENT_BOTTOM = BRAND_PAGE.h - BRAND_FOOTER.bottom - BRAND_FOOTER.h - 7;
 
 /** pt → мм. */
@@ -329,6 +331,8 @@ export type DecorateOptions = {
   footnoteLeft?: (page: number, total: number) => string | null;
   /** «Страница N из M» в подвале справа (как в договоре образца). */
   pageInFooter?: boolean;
+  /** false — без брендовой шапки (договор: formal, без «стильной» шапки). */
+  letterhead?: boolean;
 };
 
 /** Шапка, подвал и подписи над подвалом — на каждом листе. Вызывать последним. */
@@ -338,7 +342,7 @@ export function decoratePages(pdf: BrandPdf, seller: BrandSeller, options: Decor
   const labelY = BRAND_PAGE.h - BRAND_FOOTER.bottom - BRAND_FOOTER.h - 2.6;
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
-    letterhead(pdf, seller);
+    if (options.letterhead !== false) letterhead(pdf, seller);
     footerCard(pdf, seller, undefined, options.pageInFooter ? `Страница${NBSP}${page} из ${total}` : undefined);
     const fallback = options.pageInFooter ? null : `Страница${NBSP}${page} из ${total}`;
     const label = options.pageLabel === null ? null : options.pageLabel ? options.pageLabel(page, total) : fallback;
@@ -726,13 +730,16 @@ export class BrandFlow {
   readonly x: number;
   readonly width: number;
 
+  readonly top: number;
+
   constructor(
     readonly pdf: BrandPdf,
-    options: { x?: number; width?: number; y?: number } = {},
+    options: { x?: number; width?: number; y?: number; top?: number } = {},
   ) {
     this.x = options.x ?? BRAND_PAGE.side;
     this.width = options.width ?? BRAND_PAGE.contentW;
-    this.y = options.y ?? BRAND_CONTENT_TOP;
+    this.top = options.top ?? BRAND_CONTENT_TOP;
+    this.y = options.y ?? this.top;
   }
 
   get remaining(): number {
@@ -741,7 +748,7 @@ export class BrandFlow {
 
   newPage(): void {
     this.pdf.doc.addPage();
-    this.y = BRAND_CONTENT_TOP;
+    this.y = this.top;
   }
 
   /** Новый лист, если до низа области набора меньше `height` мм. */
