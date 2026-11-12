@@ -420,16 +420,17 @@ const PRINT_CSS = `
   .qrp-root .qrp-sticker .qrp-head { padding-bottom: 1mm; border-bottom-width: 0.35mm !important; gap: 2mm; }
   .qrp-sticker .qrp-head-name { font-size: 7pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .qrp-root .qrp-sticker .qrp-site { font-size: 6.5pt; }
-  /* Код наклейки — всё, что осталось под шапкой и над текстом: от 25 до 36 мм
-     по ширине (высота плитки = ширина × пропорция с полосой). Текст под кодом —
-     не больше пяти строк: название — две, организация, период/документ и
+  /* Код наклейки — всё, что осталось под шапкой и над текстом: до 36 мм
+     по ширине при трёхстрочном названии — от 22 мм (высота плитки = ширина × пропорция с полосой). Текст под кодом —
+     не больше шести строк: название — до трёх, организация, период/документ и
      срок — по одной (длинные обрезаются многоточием). */
   .qrp-sticker-code {
-    flex: 1 1 0; min-height: ${(25 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(36 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
+    flex: 1 1 0; min-height: ${(22 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm; max-height: ${(36 * BRAND_QR_CAPTION_ASPECT).toFixed(2)}mm;
     width: 100%; display: flex; justify-content: center; margin-top: 1mm;
   }
   .qrp-sticker-code svg { height: 100%; width: auto; }
-  .qrp-sticker-title { font-size: 10pt; font-weight: 700; line-height: 1.1; margin-top: 1.2mm; max-height: 2.2em; overflow: hidden; }
+  /* Название — до трёх строк (12.11.2026: «… — отметка перед сменой» обрезалось на «перед»); код сжимается. */
+  .qrp-sticker-title { font-size: 9.5pt; font-weight: 700; line-height: 1.1; margin-top: 1.2mm; max-height: 3.3em; overflow: hidden; flex: none; }
   .qrp-sticker-org { font-size: 7.5pt; line-height: 1.15; margin-top: 0.6mm; }
   .qrp-sticker-detail { font-size: 7.5pt; font-weight: 600; line-height: 1.15; margin-top: 0.3mm; }
   .qrp-sticker-org, .qrp-sticker-detail { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
