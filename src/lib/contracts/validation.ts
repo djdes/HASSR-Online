@@ -24,6 +24,38 @@ export const contractIssueSchema = z.object({
   signerBasis: optionalText(200),
   buyerEmail: optionalText(254).refine((value) => value === null || z.email().safeParse(value).success, "Почта для уведомлений указана с ошибкой"),
   useFacsimile: z.boolean().default(true),
+  /** Реквизиты клиента из карточки — только в снимок договора. */
+  buyer: z
+    .object({
+      nameFull: optionalText(500),
+      nameShort: optionalText(300),
+      inn: optionalText(20),
+      kpp: optionalText(20),
+      ogrn: optionalText(20),
+      legalAddress: optionalText(500),
+      actualAddress: optionalText(500),
+      phone: optionalText(60),
+      bankName: optionalText(300),
+      bankBik: optionalText(20),
+      bankAccount: optionalText(40),
+      bankCorrAccount: optionalText(40),
+    })
+    .nullish()
+    .transform((value) => value ?? null),
+  /** Текст договора в редакции под клиента. */
+  customSections: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1, "У раздела договора нет заголовка").max(200),
+        blocks: z
+          .array(z.union([z.string().trim().min(1).max(4000), z.tuple([z.string().trim().min(1).max(8), z.string().trim().min(1).max(4000)])]))
+          .min(1, "В разделе договора нет ни одного пункта")
+          .max(80),
+      }),
+    )
+    .max(40)
+    .nullish()
+    .transform((value) => (value && value.length ? value : null)),
 });
 
 export const contractSendSchema = z.object({

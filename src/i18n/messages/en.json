@@ -30897,7 +30897,9 @@
       "issuing": "Issuing…",
       "issued": "Agreement No. {number} issued",
       "blocked": "To issue the agreement, fill in: {items}",
-      "whatNext": "Once issued, the agreement gets a number — download it as PDF or Word and email it to the client."
+      "whatNext": "Once issued, the agreement gets a number — download it as PDF or Word and email it to the client.",
+      "previewDocx": "Draft Word",
+      "previewHint": "The draft downloads even without a TIN — a line is left instead. Issuing requires a TIN."
     },
     "history": {
       "title": "Issued agreements",
@@ -30957,6 +30959,47 @@
     },
     "errors": {
       "generic": "Something went wrong — please try again"
+    },
+    "blank": {
+      "title": "Blank contract",
+      "hint": "No client data: number, date and client details are lines to fill in by hand.",
+      "pdf": "Blank PDF",
+      "docx": "Blank Word"
+    },
+    "requisites": {
+      "title": "Client details in the contract",
+      "hint": "Changes go into this contract only — the client card stays the same. An empty field becomes a line to fill in by hand.",
+      "reset": "Restore client data",
+      "nameFull": "Full name",
+      "nameFullIndividual": "Name: sole trader and full name",
+      "nameShort": "Short name",
+      "inn": "TIN (INN)",
+      "kpp": "KPP",
+      "ogrn": "OGRN",
+      "ogrnIndividual": "OGRNIP",
+      "legalAddress": "Legal address",
+      "legalAddressIndividual": "Address",
+      "actualAddress": "Actual address, if different",
+      "phone": "Phone, optional",
+      "bankName": "Bank",
+      "bankBik": "BIC",
+      "bankAccount": "Settlement account",
+      "bankCorrAccount": "Correspondent account",
+      "optionalNote": "Phone and actual address appear in the contract only when filled in."
+    },
+    "text": {
+      "title": "Contract text",
+      "standard": "Standard template text of {version}.",
+      "custom": "Text adapted for this client — it goes into the draft and the issued contract.",
+      "edit": "Adapt text for the client",
+      "reset": "Restore standard text",
+      "addSection": "Add section",
+      "removeSection": "Remove section",
+      "sectionTitle": "Section title",
+      "newSection": "Additional terms",
+      "hint": "Each line is a separate clause, numbers are added automatically. Start a sub-item with “а) ”. If you removed or added sections, check references like “п. 3.2” and “разд. 11”.",
+      "requisitesNote": "“Details and signatures of the parties” always comes last.",
+      "edited": "edited"
     }
   },
   "rootClientDocuments": {
