@@ -1,0 +1,58 @@
+{
+  "task": "kb-android-apk-20261113",
+  "checkedAt": "2026-11-13T14:43:37.264Z",
+  "phase": "pre-deployment",
+  "verdict": "DELIVERY_PENDING",
+  "verifiedHead": "9e589c0815ebbdf2568e703b00d7e34c8529e593",
+  "source": {
+    "file": "src/content/kb/articles.ts",
+    "sha256": "b6de1906a9dcf53e15989605c564a44e9916294b1e55263335a61a1088784ad7"
+  },
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": "raw/apk-probe.json: official main APK redirect 302; release asset HEAD 200"
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": "raw/render-result.json, raw/article.html, raw/navigation.html: actual renderer/native APK anchor/navigation/cross-link"
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        {
+          "name": "lint",
+          "status": "PASS",
+          "log": "raw/lint.log"
+        },
+        {
+          "name": "focused",
+          "status": "PASS",
+          "log": "raw/focused.log"
+        },
+        {
+          "name": "test-gate",
+          "status": "PASS",
+          "log": "raw/test-gate.log"
+        },
+        {
+          "name": "typecheck",
+          "status": "PASS",
+          "log": "raw/typecheck.log"
+        }
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PENDING",
+      "evidence": "PR merge and production verification follow the local checks."
+    }
+  ],
+  "verification": {
+    "fresh": true,
+    "scope": "Current source after integrating origin/master; existing focused tests and actual React render rerun. Public article routing and sitemap derive from KB_ARTICLES. No changes to APK endpoints, binary, UI renderer, locales or schema."
+  }
+}

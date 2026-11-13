@@ -1,0 +1,9 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Отобрано 1 связанных тестовых файлов для 1 изменённых файлов:
+  • src/content/kb/articles.test.ts
+
+=== Targeted test stats (1 files, 0.9s): pass=6, fail=0 ===
+✓ Все затронутые тесты прошли.

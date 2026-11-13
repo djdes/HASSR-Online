@@ -1,0 +1,24 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { createRequire } = require('node:module');
+const local = createRequire(path.resolve('package.json'));
+const React = local('react');
+const { renderToStaticMarkup } = local('react-dom/server');
+const { kbArticle, KB_GROUPS } = local('./src/content/kb/articles.ts');
+const { KbArticleBody } = local('./src/components/kb/kb-article-body.tsx');
+const { KbShell } = local('./src/components/kb/kb-shell.tsx');
+const slug = 'prilozhenie-android';
+const article = kbArticle(slug);
+assert.ok(article);
+const body = renderToStaticMarkup(React.createElement(KbArticleBody, { article }));
+const navigation = renderToStaticMarkup(React.createElement(KbShell, { current: slug }));
+assert.match(body, /<a[^>]+href="https:\/\/wesetup\.ru\/download\/android"[^>]+target="_blank"/);
+assert.ok(navigation.includes('/baza-znaniy/' + slug));
+assert.ok(KB_GROUPS.find(group => group.id === 'phone').articles.some(item => item.slug === slug));
+assert.ok(JSON.stringify(kbArticle('telegram-i-obshchiy-qr')).includes('/baza-znaniy/' + slug));
+fs.writeFileSync(path.join(__dirname, 'article.html'), body);
+fs.writeFileSync(path.join(__dirname, 'navigation.html'), navigation);
+fs.writeFileSync(path.join(__dirname, 'render-result.json'), JSON.stringify({ status: 'PASS', slug,
+  checks: ['actual body renders a native APK anchor', 'existing navigation includes article', 'phone group includes article', 'previous indirect reference links to article'] }, null, 2) + '\n');
+console.log('PASS: actual article renderer, native APK anchor, navigation and cross-link');
