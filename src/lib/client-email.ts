@@ -3,6 +3,7 @@ import { deliverableEmail, messageHtml } from "@/lib/client-documents";
 import { escapeHtml } from "@/lib/html-escape";
 
 export const clientEmailContentSchema = z.object({
+  mailboxUserId: z.string().trim().min(1).max(100).optional(),
   to: z.string().trim().max(254).refine((value) => Boolean(deliverableEmail(value)), "Укажите настоящий адрес почты").transform((value) => value.toLowerCase()),
   subject: z.string().trim().min(1, "Укажите тему письма").max(200).refine((value) => !/[\r\n\u0000-\u001f\u007f]/.test(value), "Тема должна быть одной строкой"),
   message: z.string().trim().min(1, "Напишите текст письма").max(20000),

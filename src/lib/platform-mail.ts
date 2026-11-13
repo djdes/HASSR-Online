@@ -18,6 +18,7 @@ export type SmtpProviderPreset = {
 };
 
 export const SMTP_PROVIDER_PRESETS: readonly SmtpProviderPreset[] = [
+  { key: "wesetup", title: "WeSetup", host: "wesetup.ru", port: 587, secure: false, hint: "STARTTLS. Логин — полный рабочий адрес на wesetup.ru, пароль — от этого ящика." },
   { key: "yandex", title: "Яндекс 360", host: "smtp.yandex.ru", port: 465, secure: true, hint: "Нужен пароль приложения: Яндекс ID → Безопасность → Пароли приложений" },
   { key: "mailru", title: "Mail.ru", host: "smtp.mail.ru", port: 465, secure: true, hint: "Нужен пароль для внешнего приложения: Настройки → Безопасность" },
   { key: "gmail", title: "Gmail", host: "smtp.gmail.com", port: 465, secure: true, hint: "Нужен пароль приложения (двухэтапная проверка Google)" },

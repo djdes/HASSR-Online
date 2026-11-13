@@ -17126,6 +17126,8 @@
       "close": "Xatni yig‘ish",
       "from": "Yuboruvchi: {name} ({email})",
       "setupHint": "Xat yuborish uchun shaxsiy pochtangizni ulang va tasdiqlang.",
+      "senderLabel": "Yuboruvchi",
+      "senderUnavailable": "ulanmagan",
       "settings": "Mening pochtam",
       "to": "Kimga",
       "subject": "Mavzu",

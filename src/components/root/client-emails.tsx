@@ -7,20 +7,24 @@ import { Eye, Loader2, Mail, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
 import type { ClientEmailHistory, ClientEmailView } from "@/lib/client-email";
 import type { DocumentRecipient } from "@/lib/client-documents";
+import type { EmailSenderOption } from "@/lib/email-sender-access";
+import { EmailSenderSelect } from "./email-sender-select";
 
 const INPUT = "w-full rounded-2xl border border-[#dcdde3] bg-white px-4 py-3 text-[14px] text-[#111114] outline-none focus:border-[#111114] focus:ring-4 focus:ring-[#111114]/15 disabled:opacity-60";
 const SECONDARY = "inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdde3] bg-white px-4 text-[14px] font-medium text-[#111114] transition-colors hover:bg-[#f4f4f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/20 disabled:opacity-60";
 
-export function ClientEmails({ organizationId, recipients, sender, initialHistory }: {
+export function ClientEmails({ organizationId, recipients, senders, initialHistory }: {
   organizationId: string;
   recipients: DocumentRecipient[];
-  sender: { fromName: string; fromEmail: string; ready: boolean } | null;
+  senders: EmailSenderOption[];
   initialHistory: ClientEmailHistory;
 }) {
   const t = useTranslations("rootOrganizationManagement.mail");
   const locale = useLocale();
   const [history, setHistory] = useState(initialHistory);
   const [composing, setComposing] = useState(false);
+  const [mailboxUserId, setMailboxUserId] = useState(senders[0]?.userId ?? "");
+  const sender = senders.find(option => option.userId === mailboxUserId);
   const [to, setTo] = useState(recipients[0]?.email ?? "");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -54,12 +58,12 @@ export function ClientEmails({ organizationId, recipients, sender, initialHistor
     if (busy) return;
     setBusy(action);
     setError(null);
-    const payload = JSON.stringify({ to, subject, message });
+    const payload = JSON.stringify({ to, subject, message, mailboxUserId });
     if (!requestKey.current || requestKey.current.payload !== payload) requestKey.current = { payload, id: crypto.randomUUID() };
     try {
       const response = await fetch(action === "preview" ? `${endpoint}/preview` : endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to, subject, message, requestId: requestKey.current.id }),
+        body: JSON.stringify({ to, subject, message, mailboxUserId, requestId: requestKey.current.id }),
       });
       const data = await response.json() as { error?: string; html?: string; item?: ClientEmailView };
       if (!response.ok) { setError(data.error ?? t("error")); return; }
@@ -99,6 +103,7 @@ export function ClientEmails({ organizationId, recipients, sender, initialHistor
 
       {composing ? (
         <form id="client-email-form" onSubmit={submit} className="mt-5 space-y-4 border-t border-[#e7e7ec] pt-5" onChange={() => setPreview(null)}>
+          <EmailSenderSelect options={senders} value={mailboxUserId} disabled={busy !== null} label={t("senderLabel")} unavailable={t("senderUnavailable")} onChange={value => { setMailboxUserId(value); setPreview(null); setError(null); requestKey.current = null; }} />
           <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-[#3c3d48]">
             <span>{ready && sender ? t("from", { name: sender.fromName, email: sender.fromEmail }) : t("setupHint")}</span>
             <Link href="/root/me" className="font-medium text-[#111114] underline underline-offset-4">{t("settings")}</Link>

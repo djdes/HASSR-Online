@@ -17126,6 +17126,8 @@
       "close": "Collapse email",
       "from": "Sender: {name} ({email})",
       "setupHint": "Connect and verify your personal mailbox to send emails.",
+      "senderLabel": "Sender",
+      "senderUnavailable": "not connected",
       "settings": "My mailbox",
       "to": "To",
       "subject": "Subject",

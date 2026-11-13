@@ -46,6 +46,7 @@ export const CONTACT_MESSAGE_KINDS = ["email", "telegram", "call", "note", "reso
 export const contactMessageSchema = z
   .object({
     kind: z.enum(CONTACT_MESSAGE_KINDS),
+    mailboxUserId: z.string().trim().min(1).max(100).optional(),
     subject: z.string().trim().max(300).optional(),
     body: z.string().trim().max(10_000).default(""),
   })

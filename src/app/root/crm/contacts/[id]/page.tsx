@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { requireRoot } from "@/lib/auth-helpers";
+import { listEmailSenders } from "@/lib/email-sender-access.server";
 import { loadCrmContact } from "@/lib/crm/queries.server";
 import { canAccessPlatformPath } from "@/lib/platform-access";
 import { platformViewerForSession } from "@/lib/platform-access.server";
@@ -32,6 +33,7 @@ export default async function CrmContactPage({ params }: { params: Promise<{ id:
         Все контакты
       </Link>
       <ContactCardClient
+        emailSenders={await listEmailSenders(session.user.id)}
         card={card}
         viewerId={session.user.id}
         ownScope={own}

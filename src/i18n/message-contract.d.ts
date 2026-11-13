@@ -17127,6 +17127,8 @@ export type MessageContract = {
       "close": "Свернуть письмо",
       "from": "Отправитель: {name} ({email})",
       "setupHint": "Для отправки подключите и проверьте личную почту.",
+      "senderLabel": "Отправитель",
+      "senderUnavailable": "не подключена",
       "settings": "Моя почта",
       "to": "Кому",
       "subject": "Тема",

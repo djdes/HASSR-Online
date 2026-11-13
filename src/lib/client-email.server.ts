@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { resolveEmailSender } from "@/lib/email-sender-access.server";
 import { renderEmailLayout } from "@/lib/email";
 import { readMailSender, sendStaffEmail } from "@/lib/platform-mail.server";
 import { formatFromAddress } from "@/lib/platform-mail";
@@ -14,11 +15,13 @@ function view(row: EmailRow): ClientEmailView {
   };
 }
 
-export async function clientEmailPreview(userId: string, input: Pick<ClientEmailInput, "subject" | "message">) {
-  const sender = await readMailSender(userId);
+export async function clientEmailPreview(userId: string, input: Pick<ClientEmailInput, "subject" | "message" | "mailboxUserId">) {
+  const mailboxUserId = await resolveEmailSender(userId, input.mailboxUserId);
+  if (!mailboxUserId) return null;
+  const sender = await readMailSender(mailboxUserId);
   if (!sender || !sender.enabled || !sender.verifiedAt) return null;
   const content = clientEmailContent(input, sender);
-  return { sender, html: renderEmailLayout(content.title, content.body), text: content.text };
+  return { sender, mailboxUserId, html: renderEmailLayout(content.title, content.body), text: content.text };
 }
 
 export async function clientEmailHistory(organizationId: string, cursor?: string | null): Promise<ClientEmailHistory> {
@@ -56,7 +59,7 @@ export async function sendClientEmail(organizationId: string, userId: string, in
   let result;
   try {
     result = await sendStaffEmail({
-      senderUserId: userId, to: input.to, subject: input.subject,
+      senderUserId: preview.mailboxUserId, to: input.to, subject: input.subject,
       html: preview.html, text: preview.text, personalOnly: true,
       expectedFrom: formatFromAddress(preview.sender.fromName, preview.sender.fromEmail),
     });
