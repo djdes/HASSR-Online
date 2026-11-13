@@ -1,0 +1,65 @@
+{
+  "phase": "verifier",
+  "node": "v22.23.5",
+  "startedAt": "2026-11-13T09:05:38.164Z",
+  "head": "6a15b6dffeffc45f0a82bda5b4628af2d04d7452",
+  "specSha256": "f6e33db7d5c5f66908c53d202e85e6b2854ca8986d5993884409ba7fa41273e3",
+  "hashes": {
+    "src/components/landing/seo-journal-landing.tsx": "9535b0e6c051b3d81fc6c4df5572324cda8e04d52a98afe0888cbcb73e66cd09",
+    "src/components/public/journal-screenshot.tsx": "8e78750aa1d33e64a2483cb40ab743f24321faa29164f4f8956ecde2ecd387aa",
+    "package-lock.json": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea"
+  },
+  "commands": [
+    {
+      "name": "browser",
+      "args": [
+        "D:\\www\\wesetup-landing-language-20261113\\.agent\\tasks\\seo-journal-preview-2026-11-13\\browser-check.cjs",
+        "verifier"
+      ],
+      "startedAt": "2026-11-13T09:05:38.250Z",
+      "endedAt": "2026-11-13T09:06:19.755Z",
+      "exitCode": 0,
+      "log": "raw\\verifier\\browser.log"
+    },
+    {
+      "name": "lint",
+      "args": [
+        "node_modules/eslint/bin/eslint.js",
+        "src/components/landing/seo-journal-landing.tsx",
+        "src/components/public/journal-screenshot.tsx"
+      ],
+      "startedAt": "2026-11-13T09:06:19.756Z",
+      "endedAt": "2026-11-13T09:06:30.378Z",
+      "exitCode": 0,
+      "log": "raw\\verifier\\lint.log"
+    },
+    {
+      "name": "typecheck",
+      "args": [
+        "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "typecheck"
+      ],
+      "startedAt": "2026-11-13T09:06:33.816Z",
+      "endedAt": "2026-11-13T09:07:17.063Z",
+      "exitCode": 0,
+      "log": "raw\\verifier\\typecheck.log"
+    },
+    {
+      "name": "test-gate",
+      "args": [
+        "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "test:gate"
+      ],
+      "startedAt": "2026-11-13T09:07:18.300Z",
+      "endedAt": "2026-11-13T09:07:21.973Z",
+      "exitCode": 0,
+      "log": "raw\\verifier\\test-gate.log"
+    }
+  ],
+  "headAfter": "6a15b6dffeffc45f0a82bda5b4628af2d04d7452",
+  "inputsStable": true,
+  "endedAt": "2026-11-13T09:07:22.058Z",
+  "verdict": "PASS"
+}

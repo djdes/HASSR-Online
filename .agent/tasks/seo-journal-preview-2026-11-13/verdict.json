@@ -1,0 +1,17 @@
+{
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS"
+  },
+  "verifiedHead": "6a15b6dffeffc45f0a82bda5b4628af2d04d7452",
+  "specSha256": "f6e33db7d5c5f66908c53d202e85e6b2854ca8986d5993884409ba7fa41273e3",
+  "hashes": {
+    "src/components/landing/seo-journal-landing.tsx": "9535b0e6c051b3d81fc6c4df5572324cda8e04d52a98afe0888cbcb73e66cd09",
+    "src/components/public/journal-screenshot.tsx": "8e78750aa1d33e64a2483cb40ab743f24321faa29164f4f8956ecde2ecd387aa",
+    "package-lock.json": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea"
+  }
+}

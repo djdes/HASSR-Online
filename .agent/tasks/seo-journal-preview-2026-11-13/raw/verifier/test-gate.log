@@ -1,0 +1,5 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+✓ [test:changed] Среди 22 изменённых файлов нет связанных unit-тестов — запуск unit-тестов не требуется.
