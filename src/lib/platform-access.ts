@@ -106,6 +106,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   // Clients: the list, the card, contacts, contracts.
   { pattern: "/root", gate: "clients", exact: true },
   { pattern: "/root/organizations", gate: "clients" },
+  { pattern: "/root/correspondence", gate: "clients" },
+  { pattern: "/api/root/correspondence", gate: "clients" },
   { pattern: "/root/health", gate: "clients", allScope: true },
   // Воронка регистраций — про клиентов: продажи и аналитика её видят.
   { pattern: "/root/funnel", gate: "clients", allScope: true },

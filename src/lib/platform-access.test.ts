@@ -50,6 +50,9 @@ test("every /root page and /api/root route is classified explicitly", () => {
 test("gates: clients card, billing mutations, owner-only actions, unknown paths", () => {
   assert.equal(platformGateFor("/root"), "clients");
   assert.equal(platformGateFor("/root/organizations/org-1"), "clients");
+  assert.equal(platformGateFor("/root/correspondence"), "clients");
+  assert.equal(platformGateFor("/api/root/correspondence/recipients"), "clients");
+  assert.equal(platformGateFor("/api/root/correspondence/preview", "POST"), "clients");
   assert.equal(platformGateFor("/api/root/organizations/org-1/activity"), "clients");
   assert.equal(platformGateFor("/api/root/organizations/org-1/contracts/c1/pdf"), "clients");
   assert.equal(platformGateFor("/api/root/organizations/org-1", "PATCH"), "billing");

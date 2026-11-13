@@ -16315,7 +16315,8 @@
     "myMailHint": "Murojaatlar uchun ish Telegrami va mijozlarga xatlar pochtasi",
     "accessOwner": "Platforma egasi — to‘liq ruxsat",
     "sberBusiness": "SberBiznes",
-    "timesheet": "Tabel"
+    "timesheet": "Tabel",
+    "correspondence": "Xatlar"
   },
   "rootEdo": {
     "metadata": {
@@ -17148,7 +17149,30 @@
       "statusSent": "SMTP orqali yuborildi",
       "statusFailed": "Yuborishda xato",
       "statusPending": "Tasdiq kutilmoqda",
-      "showLetter": "Xatni bezak bilan ko‘rsatish"
+      "showLetter": "Xatni bezak bilan ko‘rsatish",
+      "workspace": {
+        "title": "Xatlar",
+        "description": "Mijozlarga ishchi manzildan yozing. Saqlangan kontaktlarni tanlang: har bir xat tarixda va mijoz kartasida qoladi.",
+        "newLetter": "Yangi xat",
+        "chooseRecipients": "Mijozlarni tanlash",
+        "search": "Mijoz, ism yoki email",
+        "searching": "Kontaktlar qidirilmoqda…",
+        "directoryError": "Mijozlarni yuklab bo‘lmadi. Qayta urinib ko‘ring.",
+        "noRecipients": "Kontakt topilmadi. Qidiruvni o‘zgartiring yoki mijoz kartasiga email qo‘shing.",
+        "refineSearch": "Birinchi 30 mijoz ko‘rsatilgan. Boshqalarni topish uchun ism yoki emailni aniqlashtiring.",
+        "selected": "Tanlangan oluvchilar",
+        "remove": "{email} manzilini olib tashlash",
+        "recipientHint": "{limit} tadan {count} ta tanlandi. Har kim alohida xat oladi, boshqa mijozlarning manzillari yashiriladi.",
+        "connectionHint": "Tanlangan pochta tekshiruvdan o‘tmagan. Ulanishni tekshirish uchun «Mening pochtam»ni oching. Umumiy pochtani egasi tekshirishi kerak.",
+        "discard": "Joriy xatning oluvchilari va matni tozalansinmi?",
+        "interrupted": "Tanlangan pochta ulanishi o‘zgargani sababli yuborish to‘xtadi. Natijalar va tarixni tekshiring.",
+        "results": "Oluvchilar bo‘yicha natija",
+        "resultHint": "Qayta tekshirish ishlangan xatlarni qayta yubormaydi. Boshqa xat uchun «Yangi xat»ni tanlang. SMTP holati server qabul qilganini anglatadi, kiruvchi pochtaga yetkazish tasdiqlanmagan.",
+        "checkResult": "Natijani tekshirish",
+        "send": "Yuborish · {count}",
+        "emptyHistory": "Bu yerda ushbu sahifa va mijoz kartalaridan yuborilgan xatlar ko‘rinadi. Oluvchini tanlab birinchi xatni yozing.",
+        "clientCard": "Mijoz kartasini ochish"
+      }
     },
     "page": {
       "back": "Barcha tashkilotlar",
