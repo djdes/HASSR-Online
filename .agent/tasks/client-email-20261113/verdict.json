@@ -1,0 +1,66 @@
+{
+  "taskId": "client-email-20261113",
+  "phase": "fresh-current-source-verification",
+  "overall": "PASS",
+  "verifiedAt": "2026-11-13T10:44:29.621229+00:00",
+  "sourceRevision": "801a35b264a06f089a1cd720c644b4b6be104e08",
+  "masterBase": "d76d034d8c56cd810ffd666ff136a695eefed85d",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "raw/browser-result.json",
+        "raw/composer-desktop.png",
+        "raw/composer-mobile.png",
+        "raw/i18n-fresh.log",
+        "raw/focused-final.log"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "raw/focused-final.log",
+        "src/lib/client-email-routes.test.ts",
+        "src/lib/client-email.test.ts"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "raw/focused-final.log",
+        "src/lib/client-email.server.test.ts",
+        "src/lib/client-email.test.ts"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "prisma/schema.prisma",
+        "src/lib/client-email.server.test.ts",
+        "raw/prisma-generate.log",
+        "raw/history-mobile.png"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/client-email.server.test.ts",
+        "raw/browser-result.json"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck-integration.log",
+        "raw/typecheck-integration.exit",
+        "raw/test-gate-final.log",
+        "raw/test-gate-final.exit",
+        "raw/test-gate-integration.log",
+        "raw/test-gate-integration.exit",
+        "raw/lint-fresh.log",
+        "raw/lint-test-fix.log",
+        "raw/verified-source-sha256.json"
+      ]
+    }
+  }
+}

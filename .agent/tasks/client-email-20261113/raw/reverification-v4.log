@@ -1,0 +1,147 @@
+TAP version 13
+# Subtest: message argument types are generated from the current source catalog
+ok 1 - message argument types are generated from the current source catalog
+  ---
+  duration_ms: 5890.4884
+  type: 'test'
+  ...
+# Subtest: post-deploy-check.sh
+    # Subtest: сайт отдаёт выкатанную версию и адреса отвечают — успех
+    ok 1 - сайт отдаёт выкатанную версию и адреса отвечают — успех
+      ---
+      duration_ms: 919.6812
+      type: 'test'
+      ...
+    # Subtest: на сайте другая версия — провал после всех попыток
+    ok 2 - на сайте другая версия — провал после всех попыток
+      ---
+      duration_ms: 846.2926
+      type: 'test'
+      ...
+    # Subtest: версия верная, но страница входа отдаёт 500 — провал
+    ok 3 - версия верная, но страница входа отдаёт 500 — провал
+      ---
+      duration_ms: 3466.414
+      type: 'test'
+      ...
+    # Subtest: страница под лимитом запросов (429) — ждём, а если до конца только 429, сборка работает
+    ok 4 - страница под лимитом запросов (429) — ждём, а если до конца только 429, сборка работает
+      ---
+      duration_ms: 1214.647
+      type: 'test'
+      ...
+    # Subtest: лимит прошёл, а страница отдаёт 500 — провал
+    ok 5 - лимит прошёл, а страница отдаёт 500 — провал
+      ---
+      duration_ms: 4002.8597
+      type: 'test'
+      ...
+    # Subtest: общее время проверки ограничено, даже если попыток много
+    ok 6 - общее время проверки ограничено, даже если попыток много
+      ---
+      duration_ms: 1885.289
+      type: 'test'
+      ...
+    # Subtest: сайт не отвечает — провал, а не зависание
+    ok 7 - сайт не отвечает — провал, а не зависание
+      ---
+      duration_ms: 3247.7962
+      type: 'test'
+      ...
+    1..7
+ok 2 - post-deploy-check.sh
+  ---
+  duration_ms: 15617.5216
+  type: 'suite'
+  ...
+# Subtest: deploy-rollback.sh
+    # Subtest: возвращает предыдущую сборку и .build-sha, перезапускает сайт и проверяет прежнюю версию
+    ok 1 - возвращает предыдущую сборку и .build-sha, перезапускает сайт и проверяет прежнюю версию
+      ---
+      duration_ms: 2052.9876
+      type: 'test'
+      ...
+    # Subtest: без .next-previous ничего не трогает и падает
+    ok 2 - без .next-previous ничего не трогает и падает
+      ---
+      duration_ms: 282.1557
+      type: 'test'
+      ...
+    1..2
+ok 3 - deploy-rollback.sh
+  ---
+  duration_ms: 2336.6548
+  type: 'suite'
+  ...
+# Subtest: prewarm-routes.sh
+    # Subtest: с ключом деплоя каждый адрес идёт с заголовком прогрева и не упирается в лимит
+    ok 1 - с ключом деплоя каждый адрес идёт с заголовком прогрева и не упирается в лимит
+      ---
+      duration_ms: 11072.0007
+      type: 'test'
+      ...
+    # Subtest: без ключа запросы под общим лимитом — в логе видно, сколько адресов не прогрето
+    ok 2 - без ключа запросы под общим лимитом — в логе видно, сколько адресов не прогрето
+      ---
+      duration_ms: 11048.3599
+      type: 'test'
+      ...
+    1..2
+ok 4 - prewarm-routes.sh
+  ---
+  duration_ms: 22121.6751
+  type: 'suite'
+  ...
+# Subtest: wait-for-port.sh
+    # Subtest: порт отвечает — сразу успех
+    ok 1 - порт отвечает — сразу успех
+      ---
+      duration_ms: 305.5386
+      type: 'test'
+      ...
+    # Subtest: порт не отвечает — ошибка с причиной после всех попыток
+    ok 2 - порт не отвечает — ошибка с причиной после всех попыток
+      ---
+      duration_ms: 2626.221
+      type: 'test'
+      ...
+    1..2
+ok 5 - wait-for-port.sh
+  ---
+  duration_ms: 2932.4401
+  type: 'suite'
+  ...
+# Subtest: deploy-tarball.sh и deploy-tree-digest.sh
+    # Subtest: в архиве код со всеми маршрутами журналов, без зависимостей, документации и данных журналов
+    ok 1 - в архиве код со всеми маршрутами журналов, без зависимостей, документации и данных журналов
+      ---
+      duration_ms: 462.8053
+      type: 'test'
+      ...
+    # Subtest: отпечаток не зависит от дат файлов и .build-time, но меняется с содержимым и путями
+    ok 2 - отпечаток не зависит от дат файлов и .build-time, но меняется с содержимым и путями
+      ---
+      duration_ms: 4866.663
+      type: 'test'
+      ...
+    # Subtest: архив без файлов — ошибка, а не отпечаток
+    ok 3 - архив без файлов — ошибка, а не отпечаток
+      ---
+      duration_ms: 1077.0481
+      type: 'test'
+      ...
+    1..3
+ok 6 - deploy-tarball.sh и deploy-tree-digest.sh
+  ---
+  duration_ms: 6521.7759
+  type: 'suite'
+  ...
+1..6
+# tests 17
+# suites 5
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50838.4509

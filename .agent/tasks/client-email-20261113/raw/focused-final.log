@@ -1,0 +1,214 @@
+TAP version 13
+# Subtest: actual correspondence routes enforce guard, org existence, validation, authenticated sender and audit idempotency
+ok 1 - actual correspondence routes enforce guard, org existence, validation, authenticated sender and audit idempotency
+  ---
+  duration_ms: 3292.5053
+  type: 'test'
+  ...
+# Subtest: personal SMTP sends the exact branded preview, snapshots identity/content and records SMTP acceptance
+ok 2 - personal SMTP sends the exact branded preview, snapshots identity/content and records SMTP acceptance
+  ---
+  duration_ms: 24.7039
+  type: 'test'
+  ...
+# Subtest: concurrent duplicate requests claim a unique key before SMTP and never send twice
+ok 3 - concurrent duplicate requests claim a unique key before SMTP and never send twice
+  ---
+  duration_ms: 3.9373
+  type: 'test'
+  ...
+# Subtest: SMTP failure is persisted, hides transport secrets, never falls back or automatically retries
+ok 4 - SMTP failure is persisted, hides transport secrets, never falls back or automatically retries
+  ---
+  duration_ms: 3.6585
+  type: 'test'
+  ...
+# Subtest: rejected recipient cannot appear as sent
+ok 5 - rejected recipient cannot appear as sent
+  ---
+  duration_ms: 3.0769
+  type: 'test'
+  ...
+# Subtest: unverified personal SMTP blocks preview and send without a history entry or transport
+ok 6 - unverified personal SMTP blocks preview and send without a history entry or transport
+  ---
+  duration_ms: 1.5363
+  type: 'test'
+  ...
+# Subtest: history and idempotency are tenant-scoped and cursor pagination does not leak another client
+ok 7 - history and idempotency are tenant-scoped and cursor pagination does not leak another client
+  ---
+  duration_ms: 6.3691
+  type: 'test'
+  ...
+# Subtest: persistence failure before SMTP prevents sending
+ok 8 - persistence failure before SMTP prevents sending
+  ---
+  duration_ms: 2.7014
+  type: 'test'
+  ...
+# Subtest: failure to save the SMTP result leaves a pending record and a repeated request cannot resend
+ok 9 - failure to save the SMTP result leaves a pending record and a repeated request cannot resend
+  ---
+  duration_ms: 2.2842
+  type: 'test'
+  ...
+# Subtest: custom email validation rejects synthetic addresses, lists, headers, empty and oversized values
+ok 10 - custom email validation rejects synthetic addresses, lists, headers, empty and oversized values
+  ---
+  duration_ms: 26.6592
+  type: 'test'
+  ...
+# Subtest: HTML-looking content and personal signature are escaped and line breaks preserved
+ok 11 - HTML-looking content and personal signature are escaped and line breaks preserved
+  ---
+  duration_ms: 2.3081
+  type: 'test'
+  ...
+# Subtest: email routes are clients-section only and inaccessible to ordinary customers or unrelated staff
+ok 12 - email routes are clients-section only and inaccessible to ordinary customers or unrelated staff
+  ---
+  duration_ms: 22.1156
+  type: 'test'
+  ...
+# Subtest: every /root page and /api/root route is classified explicitly
+ok 13 - every /root page and /api/root route is classified explicitly
+  ---
+  duration_ms: 210.7257
+  type: 'test'
+  ...
+# Subtest: gates: clients card, billing mutations, owner-only actions, unknown paths
+ok 14 - gates: clients card, billing mutations, owner-only actions, unknown paths
+  ---
+  duration_ms: 5.1371
+  type: 'test'
+  ...
+# Subtest: delegated viewer sees only own sections; superadmin sees everything
+ok 15 - delegated viewer sees only own sections; superadmin sees everything
+  ---
+  duration_ms: 5.3999
+  type: 'test'
+  ...
+# Subtest: presets use known sections and are recognised back
+ok 16 - presets use known sections and are recognised back
+  ---
+  duration_ms: 4.2373
+  type: 'test'
+  ...
+# Subtest: a translator gets the «Переводы» section on top of the granted ones
+ok 17 - a translator gets the «Переводы» section on top of the granted ones
+  ---
+  duration_ms: 0.7338
+  type: 'test'
+  ...
+# Subtest: a translator alone opens the panel on «Переводы» and nothing else
+ok 18 - a translator alone opens the panel on «Переводы» and nothing else
+  ---
+  duration_ms: 1.5094
+  type: 'test'
+  ...
+# Subtest: appointing translators is the owner's: it hands out panel access
+ok 19 - appointing translators is the owner's: it hands out panel access
+  ---
+  duration_ms: 1.8376
+  type: 'test'
+  ...
+# Subtest: the panel entry link can carry the tab to open
+ok 20 - the panel entry link can carry the tab to open
+  ---
+  duration_ms: 0.7984
+  type: 'test'
+  ...
+# Subtest: the panel entry opens `next` only when it is a panel page the person may open
+ok 21 - the panel entry opens `next` only when it is a panel page the person may open
+  ---
+  duration_ms: 3.7235
+  type: 'test'
+  ...
+# Subtest: translation editor: owner, translator or the «Переводы» section; never disabled or archived people
+ok 22 - translation editor: owner, translator or the «Переводы» section; never disabled or archived people
+  ---
+  duration_ms: 3.012
+  type: 'test'
+  ...
+# Subtest: «Войти» в кабинет клиента: владелец и администратор, не частичный набор
+ok 23 - «Войти» в кабинет клиента: владелец и администратор, не частичный набор
+  ---
+  duration_ms: 2.5227
+  type: 'test'
+  ...
+# Subtest: «Войти» по записи из БД: разделы как в панели (с «Переводами» переводчика), охват и активность
+ok 24 - «Войти» по записи из БД: разделы как в панели (с «Переводами» переводчика), охват и активность
+  ---
+  duration_ms: 0.9379
+  type: 'test'
+  ...
+# Subtest: only public SMTP hosts are accepted
+ok 25 - only public SMTP hosts are accepted
+  ---
+  duration_ms: 8.49
+  type: 'test'
+  ...
+# Subtest: sender form validation: required fields, ports, optional extras
+ok 26 - sender form validation: required fields, ports, optional extras
+  ---
+  duration_ms: 13.9
+  type: 'test'
+  ...
+# Subtest: From header and status
+ok 27 - From header and status
+  ---
+  duration_ms: 0.8818
+  type: 'test'
+  ...
+# Subtest: resolved addresses: internal networks are refused, public ones pass
+ok 28 - resolved addresses: internal networks are refused, public ones pass
+  ---
+  duration_ms: 0.9639
+  type: 'test'
+  ...
+# Subtest: actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+ok 29 - actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+  ---
+  duration_ms: 16601.7531
+  type: 'test'
+  ...
+# Subtest: actual presenters preserve unknown values, role aliases, order distinctions, currency and unsafe descriptor rejection
+ok 30 - actual presenters preserve unknown values, role aliases, order distinctions, currency and unsafe descriptor rejection
+  ---
+  duration_ms: 631.4238
+  type: 'test'
+  ...
+# Subtest: actual PATCH/DELETE descriptors retain legacy statuses, fields, tenant mutations and audit values
+ok 31 - actual PATCH/DELETE descriptors retain legacy statuses, fields, tenant mutations and audit values
+  ---
+  duration_ms: 366.0793
+  type: 'test'
+  ...
+# Subtest: actual balance route descriptors preserve validation, ledger/audit data and notification side effects
+ok 32 - actual balance route descriptors preserve validation, ledger/audit data and notification side effects
+  ---
+  duration_ms: 93.7896
+  type: 'test'
+  ...
+# Subtest: actual invoice routes retain identifiers, statuses and audit output with additive descriptors
+ok 33 - actual invoice routes retain identifiers, statuses and audit output with additive descriptors
+  ---
+  duration_ms: 35.899
+  type: 'test'
+  ...
+# Subtest: actual impersonation keeps guard, audit/customer values and session claims while hiding rewrite details in descriptors
+ok 34 - actual impersonation keeps guard, audit/customer values and session claims while hiding rewrite details in descriptors
+  ---
+  duration_ms: 58.7662
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 21816.7791

@@ -1,0 +1,15 @@
+git : → Проверка на секреты...
+At line:2 char:49
++ ... er.test.ts; git commit -m 'Уточнить типы изолированных Prisma-заглуше ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (→ Проверка на секреты...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+→ [test:changed] Отобрано 1 связанных тестовых файлов для 1 изменённых файлов:
+  • src/lib/client-email.server.test.ts
+
+=== Targeted test stats (1 files, 5.4s): pass=8, fail=0 ===
+✓ Все затронутые тесты прошли.
+✓ pre-commit OK
+[feat/client-email-20261113 d6c414d5] Уточнить типы изолированных Prisma-заглушек в тестах писем
+ 1 file changed, 4 insertions(+), 4 deletions(-)

@@ -1,0 +1,422 @@
+TAP version 13
+# Subtest: neutral-palette.css matches the indigo classes in src/ (npm run palette:neutral)
+ok 1 - neutral-palette.css matches the indigo classes in src/ (npm run palette:neutral)
+  ---
+  duration_ms: 36989.3575
+  type: 'test'
+  ...
+# Subtest: страница «Безопасность и данные»
+    # Subtest: хранение в России — как в оферте и согласии
+    ok 1 - хранение в России — как в оферте и согласии
+      ---
+      duration_ms: 163.3747
+      type: 'test'
+      ...
+    # Subtest: шифрование, пароли и вход — как в коде
+    ok 2 - шифрование, пароли и вход — как в коде
+      ---
+      duration_ms: 20.1219
+      type: 'test'
+      ...
+    # Subtest: доступы, журнал действий, копии, оплата и удаление — как в коде
+    ok 3 - доступы, журнал действий, копии, оплата и удаление — как в коде
+      ---
+      duration_ms: 15.4394
+      type: 'test'
+      ...
+    # Subtest: без громких слов: сертификатов, процентов доступности и бэкапов сервера
+    ok 4 - без громких слов: сертификатов, процентов доступности и бэкапов сервера
+      ---
+      duration_ms: 5.9495
+      type: 'test'
+      ...
+    # Subtest: ссылка в подвале и в sitemap
+    ok 5 - ссылка в подвале и в sitemap
+      ---
+      duration_ms: 5.0415
+      type: 'test'
+      ...
+    1..5
+ok 2 - страница «Безопасность и данные»
+  ---
+  duration_ms: 214.4519
+  type: 'suite'
+  ...
+# Subtest: сценарий: вступление, шесть глав сцены, финал «Это сетап.»
+ok 3 - сценарий: вступление, шесть глав сцены, финал «Это сетап.»
+  ---
+  duration_ms: 4.5233
+  type: 'test'
+  ...
+# Subtest: голос: весь сценарий озвучен одним голосом дословно, MP3 рядом
+ok 4 - голос: весь сценарий озвучен одним голосом дословно, MP3 рядом
+  ---
+  duration_ms: 2.919
+  type: 'test'
+  ...
+# Subtest: глава = max(сцена, голос + 0,5 с): голос не обрезан и не заходит на соседнюю главу
+ok 5 - глава = max(сцена, голос + 0,5 с): голос не обрезан и не заходит на соседнюю главу
+  ---
+  duration_ms: 0.5678
+  type: 'test'
+  ...
+# Subtest: сцена держит итог главы, склейка — в самом конце
+ok 6 - сцена держит итог главы, склейка — в самом конце
+  ---
+  duration_ms: 2.7836
+  type: 'test'
+  ...
+# Subtest: субтитры: текст = сценарий, время — из таймингов, не длиннее двух строк
+ok 7 - субтитры: текст = сценарий, время — из таймингов, не длиннее двух строк
+  ---
+  duration_ms: 1.8937
+  type: 'test'
+  ...
+# Subtest: WebVTT: формат и файл рядом с видео совпадает с таймингами
+ok 8 - WebVTT: формат и файл рядом с видео совпадает с таймингами
+  ---
+  duration_ms: 1.4922
+  type: 'test'
+  ...
+# Subtest: кнопка видео — только на русской главной и только если MP4 лежит в public/landing/video
+ok 9 - кнопка видео — только на русской главной и только если MP4 лежит в public/landing/video
+  ---
+  duration_ms: 42.1752
+  type: 'test'
+  ...
+# Subtest: плеер видео: телефон — нативный полный экран, компьютер — окно, файл не грузится до нажатия
+ok 10 - плеер видео: телефон — нативный полный экран, компьютер — окно, файл не грузится до нажатия
+  ---
+  duration_ms: 24.9706
+  type: 'test'
+  ...
+# Subtest: рендер: пакеты Remotion 4.0.528 только в devDependencies, сайт их не импортирует
+ok 11 - рендер: пакеты Remotion 4.0.528 только в devDependencies, сайт их не импортирует
+  ---
+  duration_ms: 584.6148
+  type: 'test'
+  ...
+# Subtest: вертикальные ролики «Журналы, которые заполняются сами»
+    # Subtest: 1080×1920, 15 с: сцена и концовка с адресом
+    ok 1 - 1080×1920, 15 с: сцена и концовка с адресом
+      ---
+      duration_ms: 2.6452
+      type: 'test'
+      ...
+    # Subtest: по ролику на каждый источник данных; сцена успевает доиграть до концовки
+    ok 2 - по ролику на каждый источник данных; сцена успевает доиграть до концовки
+      ---
+      duration_ms: 2.8482
+      type: 'test'
+      ...
+    # Subtest: текст к публикации — из текстов сцены и адреса концовки, по площадке
+    ok 3 - текст к публикации — из текстов сцены и адреса концовки, по площадке
+      ---
+      duration_ms: 1.4384
+      type: 'test'
+      ...
+    # Subtest: ссылки с метками: воронка видит VK, Telegram и MAX как свои каналы
+    ok 4 - ссылки с метками: воронка видит VK, Telegram и MAX как свои каналы
+      ---
+      duration_ms: 2.6733
+      type: 'test'
+      ...
+    # Subtest: план публикации: даты пн/ср/пт с 9 ноября, тексты — те же, что из кода
+    ok 5 - план публикации: даты пн/ср/пт с 9 ноября, тексты — те же, что из кода
+      ---
+      duration_ms: 314.4325
+      type: 'test'
+      ...
+    # Subtest: Remotion: композиции по списку сцен, сцена и концовка — из тех же данных
+    ok 6 - Remotion: композиции по списку сцен, сцена и концовка — из тех же данных
+      ---
+      duration_ms: 684.7113
+      type: 'test'
+      ...
+    1..6
+ok 12 - вертикальные ролики «Журналы, которые заполняются сами»
+  ---
+  duration_ms: 1011.9901
+  type: 'suite'
+  ...
+# Subtest: actual correspondence routes enforce guard, org existence, validation, authenticated sender and audit idempotency
+ok 13 - actual correspondence routes enforce guard, org existence, validation, authenticated sender and audit idempotency
+  ---
+  duration_ms: 3721.3901
+  type: 'test'
+  ...
+# Subtest: personal SMTP sends the exact branded preview, snapshots identity/content and records SMTP acceptance
+ok 14 - personal SMTP sends the exact branded preview, snapshots identity/content and records SMTP acceptance
+  ---
+  duration_ms: 17.2958
+  type: 'test'
+  ...
+# Subtest: concurrent duplicate requests claim a unique key before SMTP and never send twice
+ok 15 - concurrent duplicate requests claim a unique key before SMTP and never send twice
+  ---
+  duration_ms: 3.7786
+  type: 'test'
+  ...
+# Subtest: SMTP failure is persisted, hides transport secrets, never falls back or automatically retries
+ok 16 - SMTP failure is persisted, hides transport secrets, never falls back or automatically retries
+  ---
+  duration_ms: 3.7342
+  type: 'test'
+  ...
+# Subtest: rejected recipient cannot appear as sent
+ok 17 - rejected recipient cannot appear as sent
+  ---
+  duration_ms: 2.9364
+  type: 'test'
+  ...
+# Subtest: unverified personal SMTP blocks preview and send without a history entry or transport
+ok 18 - unverified personal SMTP blocks preview and send without a history entry or transport
+  ---
+  duration_ms: 1.5152
+  type: 'test'
+  ...
+# Subtest: history and idempotency are tenant-scoped and cursor pagination does not leak another client
+ok 19 - history and idempotency are tenant-scoped and cursor pagination does not leak another client
+  ---
+  duration_ms: 6.8655
+  type: 'test'
+  ...
+# Subtest: persistence failure before SMTP prevents sending
+ok 20 - persistence failure before SMTP prevents sending
+  ---
+  duration_ms: 3.0091
+  type: 'test'
+  ...
+# Subtest: failure to save the SMTP result leaves a pending record and a repeated request cannot resend
+ok 21 - failure to save the SMTP result leaves a pending record and a repeated request cannot resend
+  ---
+  duration_ms: 2.0742
+  type: 'test'
+  ...
+# Subtest: custom email validation rejects synthetic addresses, lists, headers, empty and oversized values
+ok 22 - custom email validation rejects synthetic addresses, lists, headers, empty and oversized values
+  ---
+  duration_ms: 33.9317
+  type: 'test'
+  ...
+# Subtest: HTML-looking content and personal signature are escaped and line breaks preserved
+ok 23 - HTML-looking content and personal signature are escaped and line breaks preserved
+  ---
+  duration_ms: 1.9245
+  type: 'test'
+  ...
+# Subtest: email routes are clients-section only and inaccessible to ordinary customers or unrelated staff
+ok 24 - email routes are clients-section only and inaccessible to ordinary customers or unrelated staff
+  ---
+  duration_ms: 7.718
+  type: 'test'
+  ...
+# Subtest: catalog terminology exceptions cannot hide the same word in journal messages
+ok 25 - catalog terminology exceptions cannot hide the same word in journal messages
+  ---
+  duration_ms: 4.306
+  type: 'test'
+  ...
+# Subtest: в текстах для человека нет слова «бланк» — кроме исключений
+ok 26 - в текстах для человека нет слова «бланк» — кроме исключений
+  ---
+  duration_ms: 13.5544
+  type: 'test'
+  ...
+# видимых «бланк»: 62, все в исключениях: 62 (8 файлов)
+# Subtest: исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+ok 27 - исключения: у каждого есть причина, файл на месте и слово в нём ещё встречается
+  ---
+  duration_ms: 43.0892
+  type: 'test'
+  ...
+# Subtest: журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+ok 28 - журналы температуры, QR-страницы, аудит и печать не бывают исключениями
+  ---
+  duration_ms: 2.452
+  type: 'test'
+  ...
+# Subtest: сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+ok 29 - сканер видит литералы, шаблоны, JSX-текст и атрибуты — но не комментарии и имена
+  ---
+  duration_ms: 2.0214
+  type: 'test'
+  ...
+# Subtest: only public SMTP hosts are accepted
+ok 30 - only public SMTP hosts are accepted
+  ---
+  duration_ms: 15.2831
+  type: 'test'
+  ...
+# Subtest: sender form validation: required fields, ports, optional extras
+ok 31 - sender form validation: required fields, ports, optional extras
+  ---
+  duration_ms: 9.3917
+  type: 'test'
+  ...
+# Subtest: From header and status
+ok 32 - From header and status
+  ---
+  duration_ms: 0.7347
+  type: 'test'
+  ...
+# Subtest: resolved addresses: internal networks are refused, public ones pass
+ok 33 - resolved addresses: internal networks are refused, public ones pass
+  ---
+  duration_ms: 1.025
+  type: 'test'
+  ...
+# Subtest: Роли панели платформы
+    # Subtest: встроенные роли: администратор и директор — все разделы, РОП и директор — РОП, менеджер — «свои»
+    ok 1 - встроенные роли: администратор и директор — все разделы, РОП и директор — РОП, менеджер — «свои»
+      ---
+      duration_ms: 9.2061
+      type: 'test'
+      ...
+    # Subtest: с новым разделом CRM администратор (все разделы) остаётся администратором
+    ok 2 - с новым разделом CRM администратор (все разделы) остаётся администратором
+      ---
+      duration_ms: 3.1709
+      type: 'test'
+      ...
+    # Subtest: форма роли: хотя бы один раздел, РОП — только с CRM
+    ok 3 - форма роли: хотя бы один раздел, РОП — только с CRM
+      ---
+      duration_ms: 1.2046
+      type: 'test'
+      ...
+    # Subtest: ключ новой роли: латиница из названия или role_
+    ok 4 - ключ новой роли: латиница из названия или role_
+      ---
+      duration_ms: 4.8138
+      type: 'test'
+      ...
+    # Subtest: должность в подписи: личная → «Моя почта» → роль → кабинет
+    ok 5 - должность в подписи: личная → «Моя почта» → роль → кабинет
+      ---
+      duration_ms: 4.9837
+      type: 'test'
+      ...
+    # Subtest: охват «свои»: какие адреса — конкретный клиент или лид
+    ok 6 - охват «свои»: какие адреса — конкретный клиент или лид
+      ---
+      duration_ms: 10.8672
+      type: 'test'
+      ...
+    # Subtest: проверка охвата встроена в requireRoot и закрывает чужое 404
+    ok 7 - проверка охвата встроена в requireRoot и закрывает чужое 404
+      ---
+      duration_ms: 55.9359
+      type: 'test'
+      ...
+    # Subtest: охват «все» (РОП, директор) и «свой набор» — ограничений нет
+    ok 8 - охват «все» (РОП, директор) и «свой набор» — ограничений нет
+      ---
+      duration_ms: 2.8752
+      type: 'test'
+      ...
+    # Subtest: менеджер в CRM: только себя ответственным, стоп-лист — нельзя; лид чужого — к РОП
+    ok 9 - менеджер в CRM: только себя ответственным, стоп-лист — нельзя; лид чужого — к РОП
+      ---
+      duration_ms: 119.8484
+      type: 'test'
+      ...
+    # Subtest: закрепление клиента: лиды организации переходят новому менеджеру, новый контакт клиента — сразу его
+    ok 10 - закрепление клиента: лиды организации переходят новому менеджеру, новый контакт клиента — сразу его
+      ---
+      duration_ms: 147.4668
+      type: 'test'
+      ...
+    # Subtest: alexey@wesetup.ru — коммерческий директор однократным сидом в деплое
+    ok 11 - alexey@wesetup.ru — коммерческий директор однократным сидом в деплое
+      ---
+      duration_ms: 240.6617
+      type: 'test'
+      ...
+    1..11
+ok 34 - Роли панели платформы
+  ---
+  duration_ms: 634.8169
+  type: 'suite'
+  ...
+# Subtest: «QR-коды»: документы — точек человека и экрана; руководитель точки не сбрасывает точку
+ok 35 - «QR-коды»: документы — точек человека и экрана; руководитель точки не сбрасывает точку
+  ---
+  duration_ms: 18.6723
+  type: 'test'
+  ...
+# Subtest: QR документа по id — только своей точки
+ok 36 - QR документа по id — только своей точки
+  ---
+  duration_ms: 1.189
+  type: 'test'
+  ...
+# Subtest: печать: общий журнал — на точку, откуда печатают; одноимённый принтер другой точки не отзывается
+ok 37 - печать: общий журнал — на точку, откуда печатают; одноимённый принтер другой точки не отзывается
+  ---
+  duration_ms: 7.9553
+  type: 'test'
+  ...
+# Subtest: «Сегодня» и наборы журналов в «Вся организация» — по всем точкам
+ok 38 - «Сегодня» и наборы журналов в «Вся организация» — по всем точкам
+  ---
+  duration_ms: 9.4256
+  type: 'test'
+  ...
+# Subtest: QR в шапке бланка — точки документа
+ok 39 - QR в шапке бланка — точки документа
+  ---
+  duration_ms: 29.4301
+  type: 'test'
+  ...
+# Subtest: «Онлайн-принтер»: принтеры и счётчики этикеток — по точке в шапке
+ok 40 - «Онлайн-принтер»: принтеры и счётчики этикеток — по точке в шапке
+  ---
+  duration_ms: 8.2129
+  type: 'test'
+  ...
+# Subtest: actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+ok 41 - actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+  ---
+  duration_ms: 24653.9448
+  type: 'test'
+  ...
+# Subtest: actual presenters preserve unknown values, role aliases, order distinctions, currency and unsafe descriptor rejection
+ok 42 - actual presenters preserve unknown values, role aliases, order distinctions, currency and unsafe descriptor rejection
+  ---
+  duration_ms: 2208.4724
+  type: 'test'
+  ...
+# Subtest: actual PATCH/DELETE descriptors retain legacy statuses, fields, tenant mutations and audit values
+ok 43 - actual PATCH/DELETE descriptors retain legacy statuses, fields, tenant mutations and audit values
+  ---
+  duration_ms: 597.0919
+  type: 'test'
+  ...
+# Subtest: actual balance route descriptors preserve validation, ledger/audit data and notification side effects
+ok 44 - actual balance route descriptors preserve validation, ledger/audit data and notification side effects
+  ---
+  duration_ms: 88.3649
+  type: 'test'
+  ...
+# Subtest: actual invoice routes retain identifiers, statuses and audit output with additive descriptors
+ok 45 - actual invoice routes retain identifiers, statuses and audit output with additive descriptors
+  ---
+  duration_ms: 47.9012
+  type: 'test'
+  ...
+# Subtest: actual impersonation keeps guard, audit/customer values and session claims while hiding rewrite details in descriptors
+ok 46 - actual impersonation keeps guard, audit/customer values and session claims while hiding rewrite details in descriptors
+  ---
+  duration_ms: 21.4148
+  type: 'test'
+  ...
+1..46
+# tests 65
+# suites 3
+# pass 65
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 209783.9274

@@ -1,0 +1,91 @@
+git : → Проверка на секреты...
+At line:2 char:109
++ ... RRENCY='4'; git commit -m 'Добавить фирменные письма клиенту с личной ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (→ Проверка на секреты...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+→ [test:changed] Отобрано 68 связанных тестовых файлов для 17 изменённых файлов:
+  • src/app/root/mailing/mailing-presentation.test.ts
+  • src/app/root/mailing/mailing-shell-audience.test.ts
+  • src/app/root/promotions/promotion-presentation.test.ts
+  • src/app/root/reviews/review-presentation.test.ts
+  • src/app/root/services/service-presentation.test.ts
+  • src/app/root/tariffs/tariff-presentation.test.ts
+  • src/components/dashboard/dashboard-journals.test.ts
+  • src/components/journals/document-toolbar-row.test.ts
+  • src/components/landing/qr-player/qr-player.test.ts
+  • src/i18n/access-matrix-localization.test.ts
+  • src/i18n/balance-localization.test.ts
+  • src/i18n/calendar-date.test.ts
+  • src/i18n/catalog-source.test.ts
+  • src/i18n/catalog-validation.test.ts
+  • src/i18n/control-periodicity-presentation.test.ts
+  • src/i18n/dashboard-namespaces.test.ts
+  • src/i18n/email-localization.test.ts
+  • src/i18n/error-surface.test.ts
+  • src/i18n/feature-pages-localization.test.ts
+  • src/i18n/feature-presentation.test.ts
+  • src/i18n/journal-column-templates-localization.test.ts
+  • src/i18n/journal-document-presentation.test.ts
+  • src/i18n/journal-header-localization.test.ts
+  • src/i18n/journal-namespace-localization.test.ts
+  • src/i18n/journal-presentation.test.ts
+  • src/i18n/loading-surface.test.ts
+  • src/i18n/locales.test.ts
+  • src/i18n/localized-components.test.ts
+  • src/i18n/message-contract.test.ts
+  • src/i18n/namespace-bindings.test.ts
+  • src/i18n/notification-messages.test.ts
+  • src/i18n/organization-profile-localization.test.ts
+  • src/i18n/pricing-messages.test.ts
+  • src/i18n/promotion-deadline.test.ts
+  • src/i18n/public-journal-detail-localization.test.ts
+  • src/i18n/public-journal-index-localization.test.ts
+  • src/i18n/public-metadata.test.ts
+  • src/i18n/public-ui-localization.test.ts
+  • src/i18n/qr-scene-localization.test.ts
+  • src/i18n/report-localization.test.ts
+  • src/i18n/settings-hub-localization.test.ts
+  • src/i18n/site-locale.test.ts
+  • src/i18n/translation-preparation.test.ts
+  • src/lib/audit-traceability-pdf-presentation.test.ts
+  • src/lib/bot/handlers/owner-stats-localization.test.ts
+  • src/lib/bot/handlers/owner-stats-operations-localization.test.ts
+  • src/lib/bot/start-response.test.ts
+  • src/lib/client-documents.test.ts
+  • src/lib/client-email-routes.test.ts
+  • src/lib/client-email.server.test.ts
+  • src/lib/client-email.test.ts
+  • src/lib/hygiene-health-pdf-presentation.test.ts
+  • src/lib/journals-memo.test.ts
+  • src/lib/mailing/kind-fields-presentation.test.ts
+  • src/lib/personnel-maintenance-pdf-presentation.test.ts
+  • src/lib/plan-catalog.test.ts
+  • src/lib/platform-mail.test.ts
+  • src/lib/report-export.test.ts
+  • src/lib/root-operations-logs-presentation.test.ts
+  • src/lib/root-organization-management-localization.test.ts
+  • src/lib/sanitation-pest-pdf-presentation.test.ts
+  • src/lib/scan-journal-presentation.test.ts
+  • src/lib/settings-products-presentation.test.ts
+  • src/lib/specialized-hygiene-glass-pdf-presentation.test.ts
+  • src/lib/task-fill-schema-presentation.test.ts
+  • src/lib/tracked-uv-pdf-presentation.test.ts
+  • src/lib/translations/translations.test.ts
+  • src/lib/whats-new-seen.test.ts
+
+=== Targeted test stats (68 files, 94.7s): pass=279, fail=0 ===
+✓ Все затронутые тесты прошли.
+✓ pre-commit OK
+[feat/client-email-20261113 d2be2b0a] Добавить фирменные письма клиенту с личной почты и историей
+ 17 files changed, 784 insertions(+), 6 deletions(-)
+ create mode 100644 .agent/tasks/client-email-20261113/spec.md
+ create mode 100644 src/app/api/root/organizations/[id]/emails/preview/route.ts
+ create mode 100644 src/app/api/root/organizations/[id]/emails/route.ts
+ create mode 100644 src/components/root/client-emails.tsx
+ create mode 100644 src/lib/client-email-routes.test.ts
+ create mode 100644 src/lib/client-email.server.test.ts
+ create mode 100644 src/lib/client-email.server.ts
+ create mode 100644 src/lib/client-email.test.ts
+ create mode 100644 src/lib/client-email.ts

@@ -1,0 +1,108 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-11-13T10:43:16.403Z",
+  "files": [
+    {
+      "file": "src/app/api/root/organizations/[id]/contracts/blank/route.ts",
+      "compiled": "ae960d094cc932af5ea0aac7a6bde38b8e64307fba5b7a7dca83486e89bfe472",
+      "actual": "ae960d094cc932af5ea0aac7a6bde38b8e64307fba5b7a7dca83486e89bfe472",
+      "match": true
+    },
+    {
+      "file": "src/app/api/root/organizations/[id]/emails/preview/route.ts",
+      "compiled": "dc7c11a0eb127d2e556eaa6e8297bf9a41031e8084ad2e2ca503223deb6ac099",
+      "actual": "dc7c11a0eb127d2e556eaa6e8297bf9a41031e8084ad2e2ca503223deb6ac099",
+      "match": true
+    },
+    {
+      "file": "src/app/api/root/organizations/[id]/emails/route.ts",
+      "compiled": "26f267b881db7764245b097cbb24ada28d7a8323637b7ca881ea504c787eea21",
+      "actual": "26f267b881db7764245b097cbb24ada28d7a8323637b7ca881ea504c787eea21",
+      "match": true
+    },
+    {
+      "file": "src/app/root/organizations/[id]/page.tsx",
+      "compiled": "d39f27d664f73a5739a26afd147f2c56bdae51725c76448f6558abbc0361593f",
+      "actual": "d39f27d664f73a5739a26afd147f2c56bdae51725c76448f6558abbc0361593f",
+      "match": true
+    },
+    {
+      "file": "src/components/root/client-emails.tsx",
+      "compiled": "c85560a2ca5f41c7c85dddcdf34049d23f507f18ac6f7a866fddb71ecce4ca40",
+      "actual": "c85560a2ca5f41c7c85dddcdf34049d23f507f18ac6f7a866fddb71ecce4ca40",
+      "match": true
+    },
+    {
+      "file": "src/content/kb/articles.ts",
+      "compiled": "00fa18f5bdc8c46713502dd4f03a5a6d6c8acc246e384f20a037d22181a41933",
+      "actual": "00fa18f5bdc8c46713502dd4f03a5a6d6c8acc246e384f20a037d22181a41933",
+      "match": true
+    },
+    {
+      "file": "src/i18n/message-contract.d.ts",
+      "compiled": "7dc7012a5c6707aeb9045543ddb586c5d4b368be0545bef8592c58252a0e738a",
+      "actual": "7dc7012a5c6707aeb9045543ddb586c5d4b368be0545bef8592c58252a0e738a",
+      "match": true
+    },
+    {
+      "file": "src/i18n/messages/en.json",
+      "compiled": "6c8ced19718dcf47775d870f16cfbec9c682b0bd1e6a64b219249517c18bf570",
+      "actual": "6c8ced19718dcf47775d870f16cfbec9c682b0bd1e6a64b219249517c18bf570",
+      "match": true
+    },
+    {
+      "file": "src/i18n/messages/ru.json",
+      "compiled": "bb0e97e66826340da100a95577b1123974d8606189914550e6e2770732059028",
+      "actual": "bb0e97e66826340da100a95577b1123974d8606189914550e6e2770732059028",
+      "match": true
+    },
+    {
+      "file": "src/i18n/messages/uz.json",
+      "compiled": "61c2750971957322b92ec4be361e0cbefb02c7f4876415d022b1a0a9980dc8fe",
+      "actual": "61c2750971957322b92ec4be361e0cbefb02c7f4876415d022b1a0a9980dc8fe",
+      "match": true
+    },
+    {
+      "file": "src/lib/client-email-routes.test.ts",
+      "compiled": "fc01afcbb3c0bf39ec12cea6f72c04bfe4e74fca38cf992a3c1960d4ea7d42ed",
+      "actual": "fc01afcbb3c0bf39ec12cea6f72c04bfe4e74fca38cf992a3c1960d4ea7d42ed",
+      "match": true
+    },
+    {
+      "file": "src/lib/client-email.server.test.ts",
+      "compiled": "ecddafb26107a525007b0c6aaf9ee1f1d1436efd2a4a8df0139071e211b70e99",
+      "actual": "ecddafb26107a525007b0c6aaf9ee1f1d1436efd2a4a8df0139071e211b70e99",
+      "match": true
+    },
+    {
+      "file": "src/lib/client-email.server.ts",
+      "compiled": "4fd6c1e92ef96b63c62cd872d2c6fe96a60aa7e963f17c1b227d4bd6c2e534bc",
+      "actual": "4fd6c1e92ef96b63c62cd872d2c6fe96a60aa7e963f17c1b227d4bd6c2e534bc",
+      "match": true
+    },
+    {
+      "file": "src/lib/client-email.test.ts",
+      "compiled": "2fe98e75beca01039b0b07dfb4f69cf9525ae52fc00df0a60fb5c4a6e4a6ca7d",
+      "actual": "2fe98e75beca01039b0b07dfb4f69cf9525ae52fc00df0a60fb5c4a6e4a6ca7d",
+      "match": true
+    },
+    {
+      "file": "src/lib/client-email.ts",
+      "compiled": "f945ae7a97f943289c961102f94b581f2bfe1fcc7eb8122c395d64361c37755a",
+      "actual": "f945ae7a97f943289c961102f94b581f2bfe1fcc7eb8122c395d64361c37755a",
+      "match": true
+    },
+    {
+      "file": "src/lib/platform-mail.server.ts",
+      "compiled": "7d8ee550cbd89b76b185547fc6850040d8183ec40d22b80f59eddaf7332eb178",
+      "actual": "7d8ee550cbd89b76b185547fc6850040d8183ec40d22b80f59eddaf7332eb178",
+      "match": true
+    },
+    {
+      "file": "src/lib/root-organization-management-localization.test.ts",
+      "compiled": "65c793b0b377e0e342a41f4e7ef11d24cd183756e8725d235cd39d7aabeecdc4",
+      "actual": "65c793b0b377e0e342a41f4e7ef11d24cd183756e8725d235cd39d7aabeecdc4",
+      "match": true
+    }
+  ]
+}

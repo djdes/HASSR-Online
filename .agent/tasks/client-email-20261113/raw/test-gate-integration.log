@@ -1,0 +1,13 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh --range d6c414d5...HEAD
+
+→ [test:changed] Отобрано 5 связанных тестовых файлов для 4 изменённых файлов:
+  • src/lib/balance/emails.test.ts
+  • src/lib/balance/invite-colleague.test.ts
+  • src/lib/balance/referral.test.ts
+  • src/lib/sber/balance-credit.server.test.ts
+  • src/lib/sber/balance-credit.test.ts
+
+=== Targeted test stats (5 files, 19.5s): pass=41, fail=0 ===
+✓ Все затронутые тесты прошли.

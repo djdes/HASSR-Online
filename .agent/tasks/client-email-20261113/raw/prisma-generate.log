@@ -1,0 +1,13 @@
+node : Loaded Prisma config from prisma.config.ts.
+At line:2 char:737
++ ... -types.mjs; node node_modules/prisma/build/index.js generate *> ../ra ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Loaded Prisma c...isma.config.ts.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+Prisma schema loaded from prisma\schema.prisma.
+
+✔ Generated Prisma Client (v7.4.2) to .\node_modules\@prisma\client in 8.12s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
