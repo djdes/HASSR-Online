@@ -231,12 +231,9 @@ export function LiveGuideHost() {
     <div className="pointer-events-none fixed inset-0 z-[90]" style={{ fontFamily: "var(--font-manrope), Manrope, \"Segoe UI\", sans-serif" }} data-live-guide>
       {hole ? (
         <>
-          <div className="absolute inset-x-0 top-0" style={{ height: Math.max(0, hole.top), background: shade }} />
-          <div className="absolute inset-x-0 bottom-0" style={{ top: hole.top + hole.height, background: shade }} />
-          <div className="absolute left-0" style={{ top: hole.top, height: hole.height, width: Math.max(0, hole.left), background: shade }} />
-          <div className="absolute right-0" style={{ top: hole.top, height: hole.height, left: hole.left + hole.width, background: shade }} />
-          <div className="absolute rounded-2xl ring-[3px] ring-[#7cf5c0] transition-all duration-150" style={hole} />
-          <div className="absolute animate-ping rounded-2xl ring-2 ring-[#7cf5c0]/70" style={{ ...hole, animationDuration: "1.6s" }} />
+          {/* Вырез — одна скруглённая рамка с огромной тенью: затемняет всё вокруг, клики проходят. */}
+          <div className="absolute rounded-2xl border-[3px] border-[#7cf5c0] transition-all duration-150" style={{ ...hole, boxShadow: `0 0 0 9999px ${shade}` }} />
+          <div className="absolute animate-pulse rounded-[20px] ring-[6px] ring-[#7cf5c0]/35" style={{ top: hole.top - 4, left: hole.left - 4, width: hole.width + 8, height: hole.height + 8 }} />
           {step.hint && !met ? (
             <div
               className="absolute flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#7cf5c0] px-2.5 py-1 text-[12.5px] font-semibold text-[#0b1024] shadow-[0_8px_20px_-8px_rgba(0,0,0,0.5)]"
