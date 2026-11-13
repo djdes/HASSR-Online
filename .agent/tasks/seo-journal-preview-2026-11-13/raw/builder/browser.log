@@ -1,0 +1,41 @@
+X [ERROR] Could not resolve "react/jsx-runtime"
+
+    fixture:link:1:57:
+      1 │ ...tion Link({children,...props}){return <a {...props}>{children}</a>}
+        ╵                                          ^
+
+  The plugin "bounded-framework-boundaries" didn't set a resolve directory for the file "fixture:link", so esbuild did not search for "react/jsx-runtime" on the file system.
+
+X [ERROR] Could not resolve "react/jsx-runtime"
+
+    fixture:chrome:1:31:
+      1 │ export const PublicHeader=()=> <header style={{height:80}}/>; expor...
+        ╵                                ^
+
+  The plugin "bounded-framework-boundaries" didn't set a resolve directory for the file "fixture:chrome", so esbuild did not search for "react/jsx-runtime" on the file system.
+
+X [ERROR] Could not resolve "react/jsx-runtime"
+
+    fixture:download:1:90:
+      1 │ ...lace,children,...props}){return <button data-download-target={JS...
+        ╵                                    ^
+
+  The plugin "bounded-framework-boundaries" didn't set a resolve directory for the file "fixture:download", so esbuild did not search for "react/jsx-runtime" on the file system.
+
+Error: Build failed with 3 errors:
+fixture:chrome:1:31: ERROR: Could not resolve "react/jsx-runtime"
+fixture:download:1:90: ERROR: Could not resolve "react/jsx-runtime"
+fixture:link:1:57: ERROR: Could not resolve "react/jsx-runtime"
+    at failureErrorWithLog (C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:1752:15)
+    at C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:1211:25
+    at runOnEndCallbacks (C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:1592:45)
+    at buildResponseToResult (C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:1209:7)
+    at C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:1236:16
+    at responseCallbacks.<computed> (C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:886:9)
+    at handleIncomingPacket (C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:941:12)
+    at Socket.readFromStdout (C:\Users\Ralph\.cache\wesetup-proof-20261113\node_modules\esbuild\lib\main.js:864:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}

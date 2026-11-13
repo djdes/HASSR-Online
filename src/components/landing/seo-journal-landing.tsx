@@ -20,6 +20,7 @@ import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { BlankDownloadButton } from "@/components/public/blank-download";
+import { JournalScreenshot } from "@/components/public/journal-screenshot";
 
 /**
  * Посадочные страницы под коммерческие поисковые запросы по журналам СанПиН и ХАССП.
@@ -49,7 +50,6 @@ const SAMPLE_CODES = new Set([
 ]);
 
 function sampleCode(c: SeoJournalConfig): string | undefined {
-  if (c.downloadHref) return undefined;
   return c.relatedCode && SAMPLE_CODES.has(c.relatedCode) ? c.relatedCode : undefined;
 }
 
@@ -79,6 +79,7 @@ export function getSeoMetadata(c: SeoJournalConfig) {
 
 export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
   const c = config;
+  const previewCode = sampleCode(c);
   const pageUrl = `https://wesetup.ru/${c.slug}`;
   const graph: Array<Record<string, unknown>> = [
     {
@@ -155,11 +156,11 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
                 <Download className="size-4" />
                 Скачать заполненный образец
               </a>
-            ) : sampleCode(c) ? (
+            ) : previewCode ? (
               <BlankDownloadButton
-                target={{ kind: "code", code: sampleCode(c) as string }}
+                target={{ kind: "code", code: previewCode }}
                 format="pdf"
-                title={ACTIVE_JOURNAL_CATALOG.find((j) => j.code === sampleCode(c))?.name ?? c.navLabel}
+                title={ACTIVE_JOURNAL_CATALOG.find((j) => j.code === previewCode)?.name ?? c.navLabel}
                 place={`seo:${c.slug}`}
                 className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#fafbff]"
               >
@@ -178,6 +179,26 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
           </div>
         </div>
       </section>
+
+      {previewCode && (
+        <section
+          aria-labelledby="journal-preview-heading"
+          className="mx-auto max-w-[1100px] px-4 pt-14 sm:px-6 sm:pt-20"
+        >
+          <div className="mb-6 max-w-[680px]">
+            <h2
+              id="journal-preview-heading"
+              className="text-[clamp(1.5rem,1.8vw+1rem,2rem)] font-semibold tracking-[-0.02em]"
+            >
+              Образец заполнения журнала
+            </h2>
+            <p className="mt-3 text-[15px] leading-[1.6] text-[#3c4053]">
+              Посмотрите на форму и пример заполнения. В образце используются демонстрационные данные.
+            </p>
+          </div>
+          <JournalScreenshot code={previewCode} label={`Образец заполнения: ${c.navLabel}`} />
+        </section>
+      )}
 
       {/* FIELDS — что должно быть в журнале */}
       <section className="mx-auto max-w-[1100px] px-4 py-14 sm:px-6 sm:py-20">
