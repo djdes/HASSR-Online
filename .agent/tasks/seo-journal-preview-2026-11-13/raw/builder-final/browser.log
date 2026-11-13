@@ -1,0 +1,12 @@
+locator.getAttribute: Error: strict mode violation: getByRole('link', { name: 'Печатные формы PDF' }) resolved to 2 elements:
+    1) <a href="/blanki" class="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#fafbff]">…</a> aka getByRole('link', { name: 'Печатные формы PDF' }).first()
+    2) <a href="/blanki" class="flex items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[13.5px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40">…</a> aka getByRole('link', { name: 'Печатные формы PDF' }).nth(1)
+
+Call log:
+[2m  - waiting for getByRole('link', { name: 'Печатные формы PDF' })[22m
+
+    at main (D:\www\wesetup-landing-language-20261113\.agent\tasks\seo-journal-preview-2026-11-13\browser-check.cjs:178:92) {
+  log: [
+    "  - waiting for getByRole('link', { name: 'Печатные формы PDF' })"
+  ]
+}

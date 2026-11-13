@@ -1,0 +1,25 @@
+{
+  "phase": "builder",
+  "node": "v22.23.5",
+  "startedAt": "2026-11-13T08:58:06.552Z",
+  "head": "5a251168e8a6c30b2c39126d4fc4f816e2ea9f53",
+  "specSha256": "f6e33db7d5c5f66908c53d202e85e6b2854ca8986d5993884409ba7fa41273e3",
+  "hashes": {
+    "src/components/landing/seo-journal-landing.tsx": "9535b0e6c051b3d81fc6c4df5572324cda8e04d52a98afe0888cbcb73e66cd09",
+    "src/components/public/journal-screenshot.tsx": "8e78750aa1d33e64a2483cb40ab743f24321faa29164f4f8956ecde2ecd387aa",
+    "package-lock.json": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea"
+  },
+  "commands": [
+    {
+      "name": "browser",
+      "args": [
+        "D:\\www\\wesetup-landing-language-20261113\\.agent\\tasks\\seo-journal-preview-2026-11-13\\browser-check.cjs",
+        "builder"
+      ],
+      "startedAt": "2026-11-13T08:58:06.646Z",
+      "endedAt": "2026-11-13T08:58:09.437Z",
+      "exitCode": 1,
+      "log": "raw\\builder\\browser.log"
+    }
+  ]
+}

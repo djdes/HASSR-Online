@@ -1,0 +1,31 @@
+# Journal landing preview evidence
+
+Verdict: **PENDING_FRESH_VERIFICATION**.
+
+Verified source at HEAD `5a251168e8a6c30b2c39126d4fc4f816e2ea9f53` with the production file hashes in evidence.json.
+Frozen spec SHA-256: `f6e33db7d5c5f66908c53d202e85e6b2854ca8986d5993884409ba7fa41273e3`.
+
+| Criterion | Status | Evidence |
+| --- | --- | --- |
+| AC1 | PASS | Real cleaning template: sample section index 1, required fields immediately afterwards, four rooms plus responsible/controller rows, 16 columns and demo-data copy. |
+| AC2 | PASS | All 13 landing configurations checked at 375 and 1440 px; supported PNG/WebP assets decoded; unsupported pages omit the preview. |
+| AC3 | PASS | 320/375/768/1440 px: no horizontal document overflow. At 320/375 px real wheel and keyboard input scroll the table, vertical wheel still scrolls the page. Fixture requires no auth, DB or app server. |
+| AC4 | PASS | Registration href and cleaning PDF boundary props preserved; custom download URL priority and unsupported PDF fallback verified. Original download components and PDF route are unchanged. Existing cleaning card matrix scrolls. |
+| AC5 | PENDING | Builder checks pass; fresh verification still required. |
+
+## Commands
+
+- browser: exit 0; raw log: raw/builder-pass/browser.log
+- lint: exit 0; raw log: raw/builder-pass/lint.log
+- typecheck: exit 0; raw log: raw/builder-pass/typecheck.log
+- test-gate: exit 0; raw log: raw/builder-pass/test-gate.log
+
+## Scope and limits
+
+- Bounded browser fixture: public header/footer and Next Link are stubbed; download props are observed at the existing email-dialog boundary. No full Next server, email delivery, PDF generation, database or production deployment test is claimed.
+- npm run test:gate uses the repository changed-file runner; this is not a claim that the full test suite ran.
+
+Raw browser measurements: raw/builder-pass/browser.json. Responsive screenshots: raw/builder-pass/cleaning-{320,375,768,1440}.png.
+The original missing sample and blocked matrix scrolling were reproduced against the pinned original master SHA. Fixture setup failures and their corrections are recorded in problems.md; production source did not require a correction.
+
+Production impact: two presentation components only; no schema changes. Registration and the email-gated PDF download implementation remain unchanged.

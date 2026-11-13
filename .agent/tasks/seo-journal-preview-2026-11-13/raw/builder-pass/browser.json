@@ -1,0 +1,344 @@
+{
+  "run": "builder-pass",
+  "fixture": "Actual landing/preview/config/assets/CSS; public chrome, next/link and download-dialog boundary stubbed; no server, database or authentication",
+  "head": "5a251168e8a6c30b2c39126d4fc4f816e2ea9f53",
+  "hashes": {
+    "src/components/landing/seo-journal-landing.tsx": "9535b0e6c051b3d81fc6c4df5572324cda8e04d52a98afe0888cbcb73e66cd09",
+    "src/components/public/journal-screenshot.tsx": "8e78750aa1d33e64a2483cb40ab743f24321faa29164f4f8956ecde2ecd387aa",
+    "src/content/seo-landings.ts": "c33b0eb73b7d139fb8345d9d7cb883be81346989ada596cd28f29aae510091f0",
+    "src/components/public/blank-download.tsx": "2f09e46765db09c92e5dd34f688eb021ceef266db09d701f5ef03348aef0cad9",
+    "src/components/public/blank-download-client.tsx": "957781549d8ea2580e33e4f9d6f249b8d4c39c08b3da3cf466be6444dcca5f59",
+    "src/app/globals.css": "5c138f12a9e86fd7fa258ca359f62cc4c2b0ec4f91c0c68a3ed8bcb40436e668",
+    "package-lock.json": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea"
+  },
+  "baseline": [
+    {
+      "scenario": "original cleaning landing",
+      "previewCount": 0
+    },
+    {
+      "scenario": "original cleaning card matrix wheel",
+      "before": 0,
+      "after": 0
+    }
+  ],
+  "responsive": [
+    {
+      "viewport": 320,
+      "documentWidth": 305,
+      "clientWidth": 305,
+      "order": 1,
+      "beforeTitle": "Журнал уборки помещений — электронный шаблон",
+      "afterTitle": "Обязательные поля по СанПиН",
+      "rows": 6,
+      "columns": 16,
+      "scrollerWidth": 245,
+      "tableWidth": 760,
+      "input": {
+        "wheelBefore": 0,
+        "wheelAfter": 240,
+        "keyboardAfter": 280,
+        "yBefore": 1074,
+        "yAfter": 1234
+      }
+    },
+    {
+      "viewport": 375,
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "order": 1,
+      "beforeTitle": "Журнал уборки помещений — электронный шаблон",
+      "afterTitle": "Обязательные поля по СанПиН",
+      "rows": 6,
+      "columns": 16,
+      "scrollerWidth": 300,
+      "tableWidth": 760,
+      "input": {
+        "wheelBefore": 0,
+        "wheelAfter": 240,
+        "keyboardAfter": 280,
+        "yBefore": 921,
+        "yAfter": 1081
+      }
+    },
+    {
+      "viewport": 768,
+      "documentWidth": 753,
+      "clientWidth": 753,
+      "order": 1,
+      "beforeTitle": "Журнал уборки помещений — электронный шаблон",
+      "afterTitle": "Обязательные поля по СанПиН",
+      "rows": 6,
+      "columns": 16,
+      "scrollerWidth": 661,
+      "tableWidth": 760
+    },
+    {
+      "viewport": 1440,
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "order": 1,
+      "beforeTitle": "Журнал уборки помещений — электронный шаблон",
+      "afterTitle": "Обязательные поля по СанПиН",
+      "rows": 6,
+      "columns": 16,
+      "scrollerWidth": 1008,
+      "tableWidth": 1008
+    }
+  ],
+  "landings": [
+    {
+      "slug": "zhurnal-haccp",
+      "width": 375,
+      "relatedCode": "finished_product",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/finished_product.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-zdorovya",
+      "width": 375,
+      "relatedCode": "hygiene",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/hygiene.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "elektronnyy-zhurnal-sanpin",
+      "width": 375,
+      "preview": false
+    },
+    {
+      "slug": "brakerazhnyy-zhurnal",
+      "width": 375,
+      "relatedCode": "finished_product",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/finished_product.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-uborki",
+      "width": 375,
+      "relatedCode": "cleaning",
+      "preview": true
+    },
+    {
+      "slug": "temperaturnyy-list-holodilnika",
+      "width": 375,
+      "relatedCode": "cold_equipment_control",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/cold_equipment_control.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "haccp-dlya-kafe",
+      "width": 375,
+      "relatedCode": "audit_plan",
+      "preview": false
+    },
+    {
+      "slug": "zhurnal-generalnyh-uborok",
+      "width": 375,
+      "relatedCode": "general_cleaning",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/general_cleaning.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-vhodnogo-kontrolya",
+      "width": 375,
+      "relatedCode": "incoming_control",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/incoming_control.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-frityurnyh-zhirov",
+      "width": 375,
+      "relatedCode": "fryer_oil",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/fryer_oil.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-temperatury-i-vlazhnosti",
+      "width": 375,
+      "relatedCode": "climate_control",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/climate_control.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-medknizhek",
+      "width": 375,
+      "relatedCode": "med_books",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/med_books.webp",
+        "width": 768,
+        "height": 539
+      }
+    },
+    {
+      "slug": "zhurnal-sutochnyh-prob",
+      "width": 375,
+      "relatedCode": "daily_samples",
+      "preview": false
+    },
+    {
+      "slug": "zhurnal-haccp",
+      "width": 1440,
+      "relatedCode": "finished_product",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/finished_product.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-zdorovya",
+      "width": 1440,
+      "relatedCode": "hygiene",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/hygiene.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "elektronnyy-zhurnal-sanpin",
+      "width": 1440,
+      "preview": false
+    },
+    {
+      "slug": "brakerazhnyy-zhurnal",
+      "width": 1440,
+      "relatedCode": "finished_product",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/finished_product.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-uborki",
+      "width": 1440,
+      "relatedCode": "cleaning",
+      "preview": true
+    },
+    {
+      "slug": "temperaturnyy-list-holodilnika",
+      "width": 1440,
+      "relatedCode": "cold_equipment_control",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/cold_equipment_control.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "haccp-dlya-kafe",
+      "width": 1440,
+      "relatedCode": "audit_plan",
+      "preview": false
+    },
+    {
+      "slug": "zhurnal-generalnyh-uborok",
+      "width": 1440,
+      "relatedCode": "general_cleaning",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/general_cleaning.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-vhodnogo-kontrolya",
+      "width": 1440,
+      "relatedCode": "incoming_control",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/incoming_control.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-frityurnyh-zhirov",
+      "width": 1440,
+      "relatedCode": "fryer_oil",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/fryer_oil.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-temperatury-i-vlazhnosti",
+      "width": 1440,
+      "relatedCode": "climate_control",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/climate_control.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-medknizhek",
+      "width": 1440,
+      "relatedCode": "med_books",
+      "preview": true,
+      "image": {
+        "src": "http://journal.test/journal-samples/med_books.png",
+        "width": 1228,
+        "height": 862
+      }
+    },
+    {
+      "slug": "zhurnal-sutochnyh-prob",
+      "width": 1440,
+      "relatedCode": "daily_samples",
+      "preview": false
+    }
+  ],
+  "card": [
+    {
+      "width": 375,
+      "before": 0,
+      "after": 240
+    }
+  ],
+  "errors": [],
+  "verdict": "PASS"
+}

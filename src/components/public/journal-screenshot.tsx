@@ -49,9 +49,8 @@ const CLEANING_PREVIEW_ROOMS = [
 function CleaningWebInterfacePreview() {
   return (
     <div
-      className=" pointer-events-none overflow-hidden rounded-2xl border border-[#ececf4] bg-white select-none shadow-[0_16px_40px_-24px_rgba(11,16,36,0.18)]"
+      className="overflow-hidden rounded-2xl border border-[#ececf4] bg-white select-none shadow-[0_16px_40px_-24px_rgba(11,16,36,0.18)]"
       data-testid="journal-ui-preview-cleaning"
-      aria-hidden="true"
     >
       {/* Top Browser / App Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ececf4] bg-[#fafbff] px-4 py-2.5 text-[12px] text-[#6f7282]">
@@ -92,7 +91,12 @@ function CleaningWebInterfacePreview() {
         </div>
 
         {/* Interactive-looking Matrix Table */}
-        <div className="mt-3 overflow-x-auto rounded-2xl border border-[#e6e8f4] bg-white shadow-xs">
+        <div
+          className="mt-3 overflow-x-auto rounded-2xl border border-[#e6e8f4] bg-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5566f6]"
+          role="region"
+          aria-label="Таблица образца журнала уборки"
+          tabIndex={0}
+        >
           <table className="w-full min-w-[760px] border-collapse text-left text-[12px]">
             <thead>
               <tr className="border-b border-[#ececf4] bg-[#fafbff] text-[11px] font-semibold text-[#6f7282]">
