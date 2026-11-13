@@ -159,17 +159,6 @@ export async function applyStatementCredit(
   }
 
   const contact = await organizationBillingEmail(decision.organizationId);
-  if (!contact) {
-    await db.sberIncomingPayment.create({
-      data: { ...base, organizationId: decision.organizationId, status: "failed", note: "у организации нет почты для письма о пополнении" },
-    });
-    await notifyPlatformAdmin(
-      `⚠️ Сбер: поступление ${amount} от ${escapeTelegramHtml(payerLine(tx))} не зачислено — у организации нет почты. Зачислите вручную: ${APP_URL}/root/organizations/${decision.organizationId}`,
-      { kind: "payment", dedupeKey: `sber-credit-failed:${tx.operationId}` },
-    ).catch(() => {});
-    return "failed";
-  }
-
   await db.sberIncomingPayment.create({
     data: {
       ...base,
@@ -183,8 +172,10 @@ export async function applyStatementCredit(
   const paidAt = Number.isFinite(Date.parse(tx.date)) ? new Date(tx.date) : new Date();
   const order = await db.paymentOrder.create({
     data: {
-      email: contact.email,
-      userId: contact.userId,
+      // A bank payment belongs to the organization even without a billing email.
+      // Empty email is intentional; notifications remain best-effort after settlement.
+      email: contact?.email ?? "",
+      userId: contact?.userId ?? null,
       organizationId: decision.organizationId,
       tariffKey: TOPUP_TARIFF_KEY,
       amountRub: decision.amount,
