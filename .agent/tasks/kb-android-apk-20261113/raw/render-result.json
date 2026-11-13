@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "slug": "prilozhenie-android",
+  "checks": [
+    "actual body renders a native APK anchor",
+    "existing navigation includes article",
+    "phone group includes article",
+    "previous indirect reference links to article"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-11-13T14:22:27.085Z",
+  "url": "https://wesetup.ru/download/android",
+  "redirectStatus": 302,
+  "location": "https://github.com/djdes/HASSR-Online/releases/download/wesetup-app-latest/wesetup.apk",
+  "releaseName": "WeSetup для Android 1.1.0 (сборка 3)",
+  "publishedAt": "2026-11-10T16:34:54Z",
+  "assetStatus": 200,
+  "contentType": "application/vnd.android.package-archive",
+  "bytes": 5241609
+}
