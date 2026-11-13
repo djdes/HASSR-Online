@@ -17119,6 +17119,35 @@
     }
   },
   "rootOrganizationManagement": {
+    "mail": {
+      "title": "Client emails",
+      "description": "Custom emails with WeSetup branding and sending history.",
+      "compose": "Write an email",
+      "close": "Collapse email",
+      "from": "Sender: {name} ({email})",
+      "setupHint": "Connect and verify your personal mailbox to send emails.",
+      "settings": "My mailbox",
+      "to": "To",
+      "subject": "Subject",
+      "message": "Message",
+      "signatureHint": "WeSetup branding and your mailbox signature are added automatically.",
+      "send": "Send email",
+      "sending": "Sending…",
+      "preview": "Preview",
+      "sent": "Email accepted by the SMTP server",
+      "error": "Could not complete the action. Please try again.",
+      "historyError": "Could not refresh history. Click Refresh.",
+      "networkUncertain": "Could not retrieve the sending result. Refresh history before trying again to avoid sending a duplicate.",
+      "pendingHint": "Sending started, but the result is not confirmed yet. Refresh history and check your Sent folder before sending again.",
+      "history": "Sending history",
+      "refresh": "Refresh",
+      "empty": "No emails have been sent from this form yet. Click Write an email to contact the client.",
+      "more": "Show more",
+      "statusSent": "Sent via SMTP",
+      "statusFailed": "Sending failed",
+      "statusPending": "Awaiting confirmation",
+      "showLetter": "Show branded email"
+    },
     "page": {
       "back": "All organizations",
       "created": "{type} · created {date}",
@@ -17331,6 +17360,7 @@
       "freeWithEnd": "The Free plan has no paid term — to set a date, choose Standard, Premium, VIP or Subscription (previous plan)"
     },
     "nav": {
+      "emails": "Client emails",
       "label": "Card sections",
       "contacts": "Contacts",
       "documents": "Documents",

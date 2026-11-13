@@ -17119,6 +17119,35 @@
     }
   },
   "rootOrganizationManagement": {
+    "mail": {
+      "title": "Mijozga xatlar",
+      "description": "WeSetup uslubidagi erkin xatlar va yuborish tarixi.",
+      "compose": "Xat yozish",
+      "close": "Xatni yig‘ish",
+      "from": "Yuboruvchi: {name} ({email})",
+      "setupHint": "Xat yuborish uchun shaxsiy pochtangizni ulang va tasdiqlang.",
+      "settings": "Mening pochtam",
+      "to": "Kimga",
+      "subject": "Mavzu",
+      "message": "Xat matni",
+      "signatureHint": "WeSetup uslubi va pochtangizdagi imzo avtomatik qo‘shiladi.",
+      "send": "Xat yuborish",
+      "sending": "Yuborilmoqda…",
+      "preview": "Oldindan ko‘rish",
+      "sent": "Xat SMTP serveri tomonidan qabul qilindi",
+      "error": "Amalni bajarib bo‘lmadi. Qayta urinib ko‘ring.",
+      "historyError": "Tarix yangilanmadi. Yangilash tugmasini bosing.",
+      "networkUncertain": "Yuborish natijasi olinmadi. Xatni ikki marta yubormaslik uchun qayta urinishdan oldin tarixni yangilang.",
+      "pendingHint": "Yuborish boshlandi, lekin natija hali tasdiqlanmadi. Tarixni yangilang va qayta yuborishdan oldin yuborilgan xatlar jildini tekshiring.",
+      "history": "Yuborish tarixi",
+      "refresh": "Yangilash",
+      "empty": "Bu shakldan hali xat yuborilmagan. Mijoz bilan bog‘lanish uchun Xat yozish tugmasini bosing.",
+      "more": "Yana ko‘rsatish",
+      "statusSent": "SMTP orqali yuborildi",
+      "statusFailed": "Yuborishda xato",
+      "statusPending": "Tasdiq kutilmoqda",
+      "showLetter": "Xatni bezak bilan ko‘rsatish"
+    },
     "page": {
       "back": "Barcha tashkilotlar",
       "created": "{type} · {date} sanasida yaratilgan",
@@ -17331,6 +17360,7 @@
       "freeWithEnd": "«Bepul» tarifda to‘langan muddat yo‘q — sanani belgilash uchun «Standart», «Premium», «VIP» yoki «Obuna (avvalgi tarif)»ni tanlang"
     },
     "nav": {
+      "emails": "Mijozga xatlar",
       "label": "Karta bo‘limlari",
       "contacts": "Kontaktlar",
       "documents": "Hujjatlar",

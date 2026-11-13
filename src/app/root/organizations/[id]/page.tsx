@@ -27,6 +27,10 @@ import { loadAccountManagerView } from "@/lib/account-manager.server";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 import { ClientDocumentsSection } from "@/components/root/client-documents-section";
 import { EdoSendButton } from "@/components/root/edo-send-button";
+import { ClientEmails } from "@/components/root/client-emails";
+import { clientEmailHistory } from "@/lib/client-email.server";
+import { readMailSender } from "@/lib/platform-mail.server";
+import { clientDocumentRecipients } from "@/lib/client-documents";
 
 export const dynamic = "force-dynamic";
 
@@ -87,10 +91,12 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
   if (!org) notFound();
 
-  const [viewer, contacts, activeDocs] = await Promise.all([
+  const [viewer, contacts, activeDocs, mailSender, emailHistory] = await Promise.all([
     platformViewerForSession(session),
     loadClientContacts(id),
     db.journalDocument.count({ where: { organizationId: id, status: "active" } }),
+    readMailSender(session.user.id),
+    clientEmailHistory(id),
   ]);
   const canBill = canUsePlatformSection(viewer, "billing");
   // «В ЭДО» (Saby) — у кого есть раздел ЭДО.
@@ -222,7 +228,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* Навигация по карточке: всё на одной странице, разделы — якорями. */}
         <nav aria-label={t("nav.label")} className="sticky top-0 z-20 -mx-4 overflow-x-auto border-b border-[#ececf4] bg-[#f4f5fb]/95 px-4 py-2 backdrop-blur sm:-mx-8 sm:px-8">
           <div className="flex gap-1.5">
-            {(["contacts", "documents", "billing", "people", "security"] as const).map((key) => (
+            {(["contacts", "emails", "documents", "billing", "people", "security"] as const).map((key) => (
               <a key={key} href={`#${key}`} className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-[#3c4053] transition-colors duration-150 hover:bg-white hover:text-[#3848c7]">
                 {t(`nav.${key}`)}
               </a>
@@ -311,6 +317,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
+
+        <ClientEmails
+          organizationId={id}
+          recipients={clientDocumentRecipients(contacts)}
+          sender={mailSender ? { fromName: mailSender.fromName, fromEmail: mailSender.fromEmail, ready: Boolean(mailSender.enabled && mailSender.verifiedAt) } : null}
+          initialHistory={emailHistory}
+        />
 
         {/* Документы клиенту: договор, КП и счёт — с почты сотрудника. */}
         <section id="documents" className="scroll-mt-16">
