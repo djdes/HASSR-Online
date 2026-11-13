@@ -5,6 +5,7 @@ import {
   buildBalanceTopupEmail,
   buildReferralInviteEmail,
   sendReferralInviteEmail,
+  sendBalanceTopupEmail,
   type ReferralInviteEmailParams,
 } from "@/lib/balance/emails";
 
@@ -83,6 +84,15 @@ describe("sendReferralInviteEmail без SMTP (dev)", () => {
     assert.ok(lines.includes("[email/dev] Subject: Анна Смирнова из «Кафе «Ромашка»» рекомендует WeSetup — электронные журналы СанПиН"));
     assert.ok(lines.includes("[email/dev] Reply-To: anna@example.com"));
     assert.ok(lines.some((line) => line.startsWith("[email/dev] Body:") && line.includes("https://wesetup.ru/r/ABCD2345?email=colleague%40example.com")));
+  });
+
+  it("bank topup without an email does not attempt email delivery", async () => {
+    const info = mock.method(console, "info", () => undefined);
+    assert.equal(await sendBalanceTopupEmail({
+      to: "   ", amountRub: 5000, balanceRub: 5000, orderId: 42,
+      paymentMethod: "invoice", isTest: false,
+    }), false);
+    assert.equal(info.mock.calls.length, 0);
   });
 });
 

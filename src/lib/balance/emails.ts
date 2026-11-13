@@ -173,6 +173,7 @@ export function buildBalanceTopupEmail(params: BalanceTopupEmailParams): { subje
 export async function sendBalanceTopupEmail(
   params: BalanceTopupEmailParams & { to: string; closingDocument?: { number: string; pdf: Buffer } | null }
 ): Promise<boolean> {
+  if (!params.to.trim()) return false;
   const email = buildBalanceTopupEmail({ ...params, closingNumber: params.closingDocument?.number ?? null });
   const attachments = params.closingDocument
     ? [{ filename: `УПД-${params.closingDocument.number}.pdf`, content: params.closingDocument.pdf, contentType: "application/pdf" }]
