@@ -1,0 +1,8 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh --range origin/master...HEAD
+
+→ [test:changed] Эскалация до полного прогона: Затронут ядровый файл (prisma/schema.prisma)
+
+=== Test stats: pass=6163, fail=0 ===
+✓ Все тесты прошли.

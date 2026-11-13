@@ -169,13 +169,16 @@ export type StaffEmail = {
   html: string;
   text?: string;
   attachments?: EmailAttachment[];
+  /** Custom correspondence must not change the sender through fallback. */
+  personalOnly?: boolean;
+  expectedFrom?: string;
   /** Свой Message-ID (`<id@wesetup.ru>`): CRM узнаёт по нему письмо в «Отправленных». */
   messageId?: string;
 };
 
 export type StaffEmailResult =
-  | { ok: true; via: "personal"; from: string }
-  | { ok: true; via: "system"; from: string; fallbackReason: string | null }
+  | { ok: true; via: "personal"; from: string; messageId?: string }
+  | { ok: true; via: "system"; from: string; fallbackReason: string | null; messageId?: string }
   | { ok: false; error: string };
 
 /**
@@ -193,9 +196,12 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
 
   let fallbackReason: string | null = null;
   if (row?.enabled && row.verifiedAt) {
+    if (message.expectedFrom && formatFromAddress(row.fromName, row.fromEmail) !== message.expectedFrom) {
+      return { ok: false, error: "Настройки отправителя изменились. Обновите страницу и проверьте письмо." };
+    }
     const from = formatFromAddress(row.fromName, row.fromEmail);
     try {
-      await (await transportFor(row)).sendMail({
+      const info = await (await transportFor(row)).sendMail({
         from,
         to: recipients.join(", "),
         replyTo: row.replyTo || undefined,
@@ -205,7 +211,8 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
         messageId: message.messageId,
         attachments: message.attachments?.map((item) => ({ filename: item.filename, content: item.content, path: item.path, contentType: item.contentType })),
       });
-      return { ok: true, via: "personal", from };
+      if (message.personalOnly && info.rejected?.length) throw new MailSenderError("SMTP-сервер отклонил адрес получателя");
+      return { ok: true, via: "personal", from, messageId: info.messageId };
     } catch (error) {
       fallbackReason = error instanceof MailSenderError ? error.message : describeSmtpError(error);
       await db.platformMailSender.update({ where: { userId: message.senderUserId }, data: { lastError: fallbackReason } }).catch(() => undefined);
@@ -214,6 +221,10 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
     fallbackReason = "личная почта отключена";
   } else if (row) {
     fallbackReason = "личная почта не проверена";
+  }
+
+  if (message.personalOnly) {
+    return { ok: false, error: "Не удалось подтвердить отправку через личную почту. Проверьте «Отправленные», адрес получателя и настройки в разделе «Моя почта» перед новой попыткой." };
   }
 
   if (!isEmailDeliveryConfigured()) {

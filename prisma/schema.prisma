@@ -622,6 +622,7 @@ model Organization {
   nameSuggestions                NameSuggestion[]
   auditLogs                      AuditLog[]
   clientContracts                ClientContract[]
+  clientEmails                   ClientEmail[]
   journalChecklistItems          JournalChecklistItem[]
   journalChecklistChecks         JournalChecklistCheck[]
   managerScopes                  ManagerScope[]
@@ -1374,6 +1375,7 @@ model User {
   // важнее «Моей почты» и должности из роли.
   platformTitle               String?
   platformMailSender          PlatformMailSender?
+  sentClientEmails            ClientEmail[]
   // False until the owner has explicitly edited this user's journal ACL in
   // /settings/users. While false, `hasJournalAccess` grants all journals —
   // this gives zero-regression behaviour for employees predating the ACL.
@@ -3944,6 +3946,31 @@ model PlatformMailSender {
   lastError   String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+/// Custom correspondence; identity and content are preserved as snapshots.
+model ClientEmail {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestId      String
+  senderUserId   String?
+  sender         User?        @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
+  senderName     String
+  fromEmail      String
+  to             String
+  subject        String
+  message        String       @db.Text
+  html           String       @db.Text
+  /// sending | sent (SMTP accepted) | failed; never retried automatically.
+  status         String       @default("sending")
+  error          String?
+  messageId      String?
+  createdAt      DateTime     @default(now())
+  sentAt         DateTime?
+
+  @@unique([organizationId, requestId])
+  @@index([organizationId, createdAt, id])
 }
 
 /// Ограничитель переходов (src/lib/page-navigation-guard.ts): суточные

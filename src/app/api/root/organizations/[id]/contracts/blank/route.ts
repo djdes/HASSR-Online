@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     return new Response(new Uint8Array(bytes), {
       headers: {
         "Content-Type": CONTRACT_MIME[format],
-        "Content-Disposition": attachmentHeader({ fileName: `Договор-WeSetup-бланк.${format}`, asciiFileName: `Contract-WeSetup-blank.${format}` }),
+        "Content-Disposition": attachmentHeader({ fileName: `Договор-WeSetup-шаблон.${format}`, asciiFileName: `Contract-WeSetup-blank.${format}` }),
         "Cache-Control": "no-store",
       },
     });

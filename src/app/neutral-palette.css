@@ -5,7 +5,7 @@
  * Light theme only: the old brand indigo classes (#141821, #5566f6, #4a5bf0, #3848c7, #3343cf, #4c5ae0, #f5f6ff, #eef1ff, #eef0ff, #eef0fe, #e8ebff, #dfe3ff, #5563ff, #4554ff, #4b57ff, #5863f8, #7a5cff, #1f3a8a, #0b1024, #3c4053, #5b6170, #6f7282, #73738a, #7a7c8e, #9b9fb3, #c7ccea, #c8cbe0, #d8dae6, #dcdfed, #dfe1ec, #ececf4, #eef0f6, #f1f2f8, #f2f3f8, #f3f4fb, #f4f5fb, #fafbff)
  * are repainted to black, graphite and greys. Dark theme, partner accent
  * and the Mini App keep their own colours.
- * 302 rules from 907 files (src/).
+ * 305 rules from 913 files (src/).
  */
 
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .app-shell, html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) body {
@@ -109,6 +109,7 @@ html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-acc
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#5566f6\]\/45 { border-color: rgb(17 17 20 / 0.45); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#5566f6\]\/50 { border-color: rgb(17 17 20 / 0.5); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#5566f6\]\/60 { border-color: rgb(17 17 20 / 0.6); }
+html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#5566f6\]\/70 { border-color: rgb(17 17 20 / 0.7); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#c7ccea\] { border-color: rgb(207 208 214); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#c8cbe0\] { border-color: rgb(207 208 214); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .border-\[\#d8dae6\] { border-color: rgb(216 217 222); }
@@ -134,6 +135,7 @@ html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-acc
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .decoration-\[\#3848c7\]\/40 { text-decoration-color: rgb(17 17 20 / 0.4); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .decoration-\[\#5566f6\]\/30 { text-decoration-color: rgb(17 17 20 / 0.3); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .disabled\:bg-\[\#c8cbe0\]:disabled { background-color: rgb(207 208 214); }
+html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .disabled\:bg-\[\#dcdfed\]:disabled { background-color: rgb(220 221 227); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .disabled\:bg-\[\#f4f5fb\]:disabled { background-color: rgb(244 244 246); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .disabled\:bg-\[\#f5f6ff\]:disabled { background-color: rgb(244 244 246); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .disabled\:bg-\[\#fafbff\]:disabled { background-color: rgb(250 250 251); }
@@ -149,6 +151,7 @@ html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-acc
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .disabled\:text-\[\#c7ccea\]:disabled { color: rgb(207 208 214); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .focus-visible\:bg-\[\#f5f6ff\]:focus-visible { background-color: rgb(244 244 246); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .focus-visible\:border-\[\#5566f6\]:focus-visible { border-color: rgb(17 17 20); }
+html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .focus-visible\:outline-\[\#5566f6\]:focus-visible { outline-color: rgb(17 17 20); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .focus-visible\:ring-\[\#1f3a8a\]\/35:focus-visible { --tw-ring-color: rgb(17 17 20 / 0.35); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .focus-visible\:ring-\[\#1f3a8a\]\/40:focus-visible { --tw-ring-color: rgb(17 17 20 / 0.4); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .focus-visible\:ring-\[\#5566f6\]:focus-visible { --tw-ring-color: rgb(17 17 20); }

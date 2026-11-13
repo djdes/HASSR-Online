@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "posts": 4,
+  "checks": [
+    "actual branded desktop preview",
+    "mobile no overflow",
+    "successful send and history",
+    "SMTP error retains draft",
+    "network uncertainty keeps request key",
+    "missing SMTP blocks send"
+  ],
+  "issues": []
+}

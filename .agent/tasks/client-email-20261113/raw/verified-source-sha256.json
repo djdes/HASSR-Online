@@ -1,0 +1,22 @@
+{
+  "prisma/schema.prisma": "91c772488dad5105cf7ec850e08123ecef8f09268d4257339752e51ebd3a3d22",
+  "scripts/gen-neutral-palette.mjs": "3a2327e6d12fb7411f6b65d5bb7ca9e559edf65a98e69ee0b6e10a35a09c2b17",
+  "src/app/api/root/organizations/[id]/contracts/blank/route.ts": "ae960d094cc932af5ea0aac7a6bde38b8e64307fba5b7a7dca83486e89bfe472",
+  "src/app/api/root/organizations/[id]/emails/preview/route.ts": "dc7c11a0eb127d2e556eaa6e8297bf9a41031e8084ad2e2ca503223deb6ac099",
+  "src/app/api/root/organizations/[id]/emails/route.ts": "26f267b881db7764245b097cbb24ada28d7a8323637b7ca881ea504c787eea21",
+  "src/app/neutral-palette.css": "beabc0aeb5d21f3458468a3c2cc9df6d299bb7b993c6e2ebb317cd97f96fdb03",
+  "src/app/root/organizations/[id]/page.tsx": "d39f27d664f73a5739a26afd147f2c56bdae51725c76448f6558abbc0361593f",
+  "src/components/root/client-emails.tsx": "c85560a2ca5f41c7c85dddcdf34049d23f507f18ac6f7a866fddb71ecce4ca40",
+  "src/content/kb/articles.ts": "00fa18f5bdc8c46713502dd4f03a5a6d6c8acc246e384f20a037d22181a41933",
+  "src/i18n/message-contract.d.ts": "7dc7012a5c6707aeb9045543ddb586c5d4b368be0545bef8592c58252a0e738a",
+  "src/i18n/messages/en.json": "6c8ced19718dcf47775d870f16cfbec9c682b0bd1e6a64b219249517c18bf570",
+  "src/i18n/messages/ru.json": "bb0e97e66826340da100a95577b1123974d8606189914550e6e2770732059028",
+  "src/i18n/messages/uz.json": "61c2750971957322b92ec4be361e0cbefb02c7f4876415d022b1a0a9980dc8fe",
+  "src/lib/client-email-routes.test.ts": "fc01afcbb3c0bf39ec12cea6f72c04bfe4e74fca38cf992a3c1960d4ea7d42ed",
+  "src/lib/client-email.server.test.ts": "ecddafb26107a525007b0c6aaf9ee1f1d1436efd2a4a8df0139071e211b70e99",
+  "src/lib/client-email.server.ts": "4fd6c1e92ef96b63c62cd872d2c6fe96a60aa7e963f17c1b227d4bd6c2e534bc",
+  "src/lib/client-email.test.ts": "2fe98e75beca01039b0b07dfb4f69cf9525ae52fc00df0a60fb5c4a6e4a6ca7d",
+  "src/lib/client-email.ts": "f945ae7a97f943289c961102f94b581f2bfe1fcc7eb8122c395d64361c37755a",
+  "src/lib/platform-mail.server.ts": "7d8ee550cbd89b76b185547fc6850040d8183ec40d22b80f59eddaf7332eb178",
+  "src/lib/root-organization-management-localization.test.ts": "65c793b0b377e0e342a41f4e7ef11d24cd183756e8725d235cd39d7aabeecdc4"
+}
