@@ -7,7 +7,7 @@ import { clientEmailContent, type ClientEmailInput, type ClientEmailView, type C
 
 type EmailRow = NonNullable<Awaited<ReturnType<typeof db.clientEmail.findFirst>>>;
 
-function view(row: EmailRow): ClientEmailView {
+export function clientEmailView(row: EmailRow): ClientEmailView {
   return {
     id: row.id, to: row.to, subject: row.subject, message: row.message, html: row.html,
     senderName: row.senderName, fromEmail: row.fromEmail, status: row.status, error: row.error,
@@ -32,14 +32,14 @@ export async function clientEmailHistory(organizationId: string, cursor?: string
     where: { organizationId }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 21,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
-  return { items: rows.slice(0, 20).map(view), nextCursor: rows.length > 20 ? rows[19].id : null };
+  return { items: rows.slice(0, 20).map(clientEmailView), nextCursor: rows.length > 20 ? rows[19].id : null };
 }
 
 /** The unique organization/request key is claimed before any SMTP call. */
 export async function sendClientEmail(organizationId: string, userId: string, input: ClientEmailInput) {
   const key = { organizationId_requestId: { organizationId, requestId: input.requestId } };
   const existing = await db.clientEmail.findUnique({ where: key });
-  if (existing) return { item: view(existing), repeated: true };
+  if (existing) return { item: clientEmailView(existing), repeated: true };
   const preview = await clientEmailPreview(userId, input);
   if (!preview) return null;
   let row: EmailRow;
@@ -53,7 +53,7 @@ export async function sendClientEmail(organizationId: string, userId: string, in
     if ((error as { code?: string }).code !== "P2002") throw error;
     const winner = await db.clientEmail.findUnique({ where: key });
     if (!winner) throw error;
-    return { item: view(winner), repeated: true };
+    return { item: clientEmailView(winner), repeated: true };
   }
   // An uncertain outcome stays in history; never retry SMTP automatically.
   let result;
@@ -70,5 +70,5 @@ export async function sendClientEmail(organizationId: string, userId: string, in
     ? { status: "sent", sentAt: new Date(), messageId: result.messageId ?? null }
     : { status: "failed", error: result.error },
   });
-  return { item: view(saved), repeated: false };
+  return { item: clientEmailView(saved), repeated: false };
 }

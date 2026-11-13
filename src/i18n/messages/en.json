@@ -16315,7 +16315,8 @@
     "myMailHint": "Work Telegram for support requests and the mailbox for client letters",
     "accessOwner": "Platform owner — full access",
     "sberBusiness": "SberBusiness",
-    "timesheet": "Timesheet"
+    "timesheet": "Timesheet",
+    "correspondence": "Letters"
   },
   "rootEdo": {
     "metadata": {
@@ -17148,7 +17149,30 @@
       "statusSent": "Sent via SMTP",
       "statusFailed": "Sending failed",
       "statusPending": "Awaiting confirmation",
-      "showLetter": "Show branded email"
+      "showLetter": "Show branded email",
+      "workspace": {
+        "title": "Letters",
+        "description": "Write to clients from your work address. Choose saved contacts and keep every letter in history and in the client card.",
+        "newLetter": "New letter",
+        "chooseRecipients": "Choose clients",
+        "search": "Client, name or email",
+        "searching": "Finding contacts…",
+        "directoryError": "Could not load clients. Try again.",
+        "noRecipients": "No contacts found. Change your search or add an email to the client card.",
+        "refineSearch": "Showing the first 30 clients. Refine the name or email to find others.",
+        "selected": "Selected recipients",
+        "remove": "Remove {email}",
+        "recipientHint": "Selected {count} of {limit}. Each receives a separate letter; other client addresses stay private.",
+        "connectionHint": "This mailbox has not passed verification. Open My mail to check the connection. A shared mailbox must be checked by its owner.",
+        "discard": "Clear the recipients and text of this letter?",
+        "interrupted": "Sending stopped because the selected mailbox connection changed. Check the results and history.",
+        "results": "Results by recipient",
+        "resultHint": "Checking again does not resend processed letters. Choose New letter for another letter. SMTP status means server acceptance; inbox delivery is unconfirmed.",
+        "checkResult": "Check result",
+        "send": "Send · {count}",
+        "emptyHistory": "Letters sent here and from client cards will appear here. Choose a recipient and write your first letter.",
+        "clientCard": "Open client card"
+      }
     },
     "page": {
       "back": "All organizations",

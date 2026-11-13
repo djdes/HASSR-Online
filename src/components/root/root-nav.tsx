@@ -89,6 +89,7 @@ const NAV: NavEntry[] = [
   { href: "/root", label: "organizations", icon: LayoutDashboard, exact: true },
   // CRM — рабочее место продаж: все обращения, почта, напоминания.
   { href: "/root/crm", label: "crm", icon: Inbox },
+  { href: "/root/correspondence", label: "correspondence", icon: Mail },
   {
     key: "money",
     label: "money",
