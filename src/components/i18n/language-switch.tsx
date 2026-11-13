@@ -36,7 +36,8 @@ export function LanguageSwitch() {
   );
   if (!pathname || available.length < 2) return null;
   return (
-    <DropdownMenu>
+    // Keep page scrolling and sticky headers intact while choosing a language.
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"

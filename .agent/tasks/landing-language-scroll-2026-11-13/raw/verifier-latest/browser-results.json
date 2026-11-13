@@ -1,0 +1,1113 @@
+{
+  "run": "verifier-latest",
+  "hashes": {
+    "src/components/i18n/language-switch.tsx": "63da31bf931fbaa79215453b2f98e2074ead9e0493305de1ca679857b95cdb65",
+    "src/components/ui/dropdown-menu.tsx": "2d948f40bcb15a512af2405c4a681e597af28a77c4182b811c00ef4b3050067f",
+    "src/components/ui/menu-styles.ts": "6ca77882375afe4156c68a779ed1a7e01bc5ab03c5ccfdf39afd4daf0db6c862",
+    "src/app/globals.css": "5c138f12a9e86fd7fa258ca359f62cc4c2b0ec4f91c0c68a3ed8bcb40436e668",
+    "src/app/page.tsx": "17aaef093c8b70405576ab875c9fff5e77447449fe630a54e6119c6168ae6ef4",
+    "package.json": "75e4390eeccbc06454f10da441fd7c4dde44ea3e5f145248c5baad5f753bc186",
+    "package-lock.json": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea"
+  },
+  "versions": {
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "radix-ui": "1.8.1",
+    "next-intl": "4.14.9",
+    "lucide-react": "1.70.0",
+    "playwright": "1.65.0",
+    "tailwindcss": "4.3.5"
+  },
+  "fixture": "Real component/intl/Radix/CSS; bounded landing and Next routing fixture",
+  "scenarios": [
+    {
+      "mode": "baseline",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "positions": [
+        {
+          "offset": 0,
+          "before": {
+            "scrollY": 0,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": 85,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 5085
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 0,
+            "clientWidth": 1425,
+            "bodyWidth": 1410,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1410,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": 85,
+              "width": 1410,
+              "height": 5000,
+              "bottom": 5085
+            },
+            "trigger": {
+              "x": 1200,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": {
+              "x": 1153,
+              "y": 70,
+              "width": 128,
+              "height": 79.75,
+              "bottom": 149.75
+            }
+          },
+          "wheeled": {
+            "scrollY": 0,
+            "clientWidth": 1425,
+            "bodyWidth": 1410,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1410,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": 85,
+              "width": 1410,
+              "height": 5000,
+              "bottom": 5085
+            },
+            "trigger": {
+              "x": 1200,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": {
+              "x": 1153,
+              "y": 70,
+              "width": 128,
+              "height": 79.75,
+              "bottom": 149.75
+            }
+          },
+          "closed": {
+            "scrollY": 0,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": 85,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 5085
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          }
+        },
+        {
+          "offset": 900,
+          "before": {
+            "scrollY": 900,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -815,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 4185
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 900,
+            "clientWidth": 1425,
+            "bodyWidth": 1410,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": -900,
+              "width": 1410,
+              "height": 85,
+              "bottom": -815
+            },
+            "body": {
+              "x": 0,
+              "y": -815,
+              "width": 1410,
+              "height": 5000,
+              "bottom": 4185
+            },
+            "trigger": {
+              "x": 1200,
+              "y": -880,
+              "width": 81,
+              "height": 44,
+              "bottom": -836
+            },
+            "menu": {
+              "x": 1153,
+              "y": -830,
+              "width": 128,
+              "height": 79.75,
+              "bottom": -750.25
+            }
+          },
+          "wheeled": {
+            "scrollY": 900,
+            "clientWidth": 1425,
+            "bodyWidth": 1410,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": -900,
+              "width": 1410,
+              "height": 85,
+              "bottom": -815
+            },
+            "body": {
+              "x": 0,
+              "y": -815,
+              "width": 1410,
+              "height": 5000,
+              "bottom": 4185
+            },
+            "trigger": {
+              "x": 1200,
+              "y": -880,
+              "width": 81,
+              "height": 44,
+              "bottom": -836
+            },
+            "menu": {
+              "x": 1153,
+              "y": -830,
+              "width": 128,
+              "height": 79.75,
+              "bottom": -750.25
+            }
+          },
+          "closed": {
+            "scrollY": 900,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -815,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 4185
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          }
+        }
+      ]
+    },
+    {
+      "mode": "baseline",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "positions": [
+        {
+          "offset": 0,
+          "before": {
+            "scrollY": 0,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": 61,
+              "width": 375,
+              "height": 5000,
+              "bottom": 5061
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 0,
+            "clientWidth": 375,
+            "bodyWidth": 360,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 360,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": 61,
+              "width": 360,
+              "height": 5000,
+              "bottom": 5061
+            },
+            "trigger": {
+              "x": 263,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": {
+              "x": 216,
+              "y": 58,
+              "width": 128,
+              "height": 102,
+              "bottom": 160
+            }
+          },
+          "wheeled": {
+            "scrollY": 0,
+            "clientWidth": 375,
+            "bodyWidth": 360,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 360,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": 61,
+              "width": 360,
+              "height": 5000,
+              "bottom": 5061
+            },
+            "trigger": {
+              "x": 263,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": {
+              "x": 216,
+              "y": 58,
+              "width": 128,
+              "height": 102,
+              "bottom": 160
+            }
+          },
+          "closed": {
+            "scrollY": 0,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": 61,
+              "width": 375,
+              "height": 5000,
+              "bottom": 5061
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          }
+        },
+        {
+          "offset": 900,
+          "before": {
+            "scrollY": 900,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -839,
+              "width": 375,
+              "height": 5000,
+              "bottom": 4161
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 900,
+            "clientWidth": 375,
+            "bodyWidth": 360,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": -900,
+              "width": 360,
+              "height": 61,
+              "bottom": -839
+            },
+            "body": {
+              "x": 0,
+              "y": -839,
+              "width": 360,
+              "height": 5000,
+              "bottom": 4161
+            },
+            "trigger": {
+              "x": 263,
+              "y": -892,
+              "width": 81,
+              "height": 44,
+              "bottom": -848
+            },
+            "menu": {
+              "x": 216,
+              "y": -842,
+              "width": 128,
+              "height": 102,
+              "bottom": -740
+            }
+          },
+          "wheeled": {
+            "scrollY": 900,
+            "clientWidth": 375,
+            "bodyWidth": 360,
+            "bodyOverflowY": "hidden",
+            "locked": true,
+            "header": {
+              "x": 0,
+              "y": -900,
+              "width": 360,
+              "height": 61,
+              "bottom": -839
+            },
+            "body": {
+              "x": 0,
+              "y": -839,
+              "width": 360,
+              "height": 5000,
+              "bottom": 4161
+            },
+            "trigger": {
+              "x": 263,
+              "y": -892,
+              "width": 81,
+              "height": 44,
+              "bottom": -848
+            },
+            "menu": {
+              "x": 216,
+              "y": -842,
+              "width": 128,
+              "height": 102,
+              "bottom": -740
+            }
+          },
+          "closed": {
+            "scrollY": 900,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -839,
+              "width": 375,
+              "height": 5000,
+              "bottom": 4161
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          }
+        }
+      ]
+    },
+    {
+      "mode": "fixed",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "positions": [
+        {
+          "offset": 0,
+          "before": {
+            "scrollY": 0,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": 85,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 5085
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 0,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": 85,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 5085
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": {
+              "x": 1161,
+              "y": 70,
+              "width": 128,
+              "height": 79.75,
+              "bottom": 149.75
+            }
+          },
+          "wheeled": {
+            "scrollY": 320,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -235,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 4765
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": {
+              "x": 1161,
+              "y": 70,
+              "width": 128,
+              "height": 79.75,
+              "bottom": 149.75
+            }
+          },
+          "closed": {
+            "scrollY": 320,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -235,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 4765
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          }
+        },
+        {
+          "offset": 900,
+          "before": {
+            "scrollY": 900,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -815,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 4185
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 900,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -815,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 4185
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": {
+              "x": 1161,
+              "y": 70,
+              "width": 128,
+              "height": 79.75,
+              "bottom": 149.75
+            }
+          },
+          "wheeled": {
+            "scrollY": 1220,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -1135,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 3865
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": {
+              "x": 1161,
+              "y": 70,
+              "width": 128,
+              "height": 79.75,
+              "bottom": 149.75
+            }
+          },
+          "closed": {
+            "scrollY": 1220,
+            "clientWidth": 1425,
+            "bodyWidth": 1425,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 1425,
+              "height": 85,
+              "bottom": 85
+            },
+            "body": {
+              "x": 0,
+              "y": -1135,
+              "width": 1425,
+              "height": 5000,
+              "bottom": 3865
+            },
+            "trigger": {
+              "x": 1207.5,
+              "y": 20,
+              "width": 81,
+              "height": 44,
+              "bottom": 64
+            },
+            "menu": null
+          }
+        }
+      ],
+      "keyboardAndDismissal": "PASS",
+      "navigationAndCookies": "PASS"
+    },
+    {
+      "mode": "fixed",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "positions": [
+        {
+          "offset": 0,
+          "before": {
+            "scrollY": 0,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": 61,
+              "width": 375,
+              "height": 5000,
+              "bottom": 5061
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 0,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": 61,
+              "width": 375,
+              "height": 5000,
+              "bottom": 5061
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": {
+              "x": 231,
+              "y": 58,
+              "width": 128,
+              "height": 102,
+              "bottom": 160
+            }
+          },
+          "wheeled": {
+            "scrollY": 320,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -259,
+              "width": 375,
+              "height": 5000,
+              "bottom": 4741
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": {
+              "x": 231,
+              "y": 58,
+              "width": 128,
+              "height": 102,
+              "bottom": 160
+            }
+          },
+          "closed": {
+            "scrollY": 320,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -259,
+              "width": 375,
+              "height": 5000,
+              "bottom": 4741
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          }
+        },
+        {
+          "offset": 900,
+          "before": {
+            "scrollY": 900,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -839,
+              "width": 375,
+              "height": 5000,
+              "bottom": 4161
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          },
+          "opened": {
+            "scrollY": 900,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -839,
+              "width": 375,
+              "height": 5000,
+              "bottom": 4161
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": {
+              "x": 231,
+              "y": 58,
+              "width": 128,
+              "height": 102,
+              "bottom": 160
+            }
+          },
+          "wheeled": {
+            "scrollY": 1220,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -1159,
+              "width": 375,
+              "height": 5000,
+              "bottom": 3841
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": {
+              "x": 231,
+              "y": 58,
+              "width": 128,
+              "height": 102,
+              "bottom": 160
+            }
+          },
+          "closed": {
+            "scrollY": 1220,
+            "clientWidth": 375,
+            "bodyWidth": 375,
+            "bodyOverflowY": "visible",
+            "locked": false,
+            "header": {
+              "x": 0,
+              "y": 0,
+              "width": 375,
+              "height": 61,
+              "bottom": 61
+            },
+            "body": {
+              "x": 0,
+              "y": -1159,
+              "width": 375,
+              "height": 5000,
+              "bottom": 3841
+            },
+            "trigger": {
+              "x": 278,
+              "y": 8,
+              "width": 81,
+              "height": 44,
+              "bottom": 52
+            },
+            "menu": null
+          }
+        }
+      ],
+      "keyboardAndDismissal": "PASS",
+      "navigationAndCookies": "PASS"
+    }
+  ],
+  "status": "PASS"
+}

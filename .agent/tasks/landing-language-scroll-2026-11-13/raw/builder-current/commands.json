@@ -1,0 +1,82 @@
+{
+  "phase": "builder-current",
+  "node": "v22.23.5",
+  "startedAt": "2026-11-13T08:08:34.459Z",
+  "specSha256": "5a62918e19dca9cc2775d403572bb134980ac061af5df5b94a24e7598dcb2e57",
+  "lockSha256": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea",
+  "sourceSha256": "63da31bf931fbaa79215453b2f98e2074ead9e0493305de1ca679857b95cdb65",
+  "commands": [
+    {
+      "name": "browser",
+      "executable": "C:\\Users\\Ralph\\.cache\\wesetup-proof-20261113\\node22\\node.exe",
+      "args": [
+        "D:\\www\\wesetup-landing-language-20261113\\.agent\\tasks\\landing-language-scroll-2026-11-13\\browser-check.cjs",
+        "builder-current"
+      ],
+      "startedAt": "2026-11-13T08:08:34.481Z",
+      "endedAt": "2026-11-13T08:08:52.616Z",
+      "exitCode": 0,
+      "signal": null,
+      "log": "raw\\builder-current\\browser.log"
+    },
+    {
+      "name": "lint",
+      "executable": "C:\\Users\\Ralph\\.cache\\wesetup-proof-20261113\\node22\\node.exe",
+      "args": [
+        "node_modules/eslint/bin/eslint.js",
+        "src/components/i18n/language-switch.tsx"
+      ],
+      "startedAt": "2026-11-13T08:08:52.621Z",
+      "endedAt": "2026-11-13T08:09:16.184Z",
+      "exitCode": 0,
+      "signal": null,
+      "log": "raw\\builder-current\\lint.log"
+    },
+    {
+      "name": "locale-tests",
+      "executable": "C:\\Users\\Ralph\\.cache\\wesetup-proof-20261113\\node22\\node.exe",
+      "args": [
+        "--import",
+        "tsx",
+        "--test",
+        "src/i18n/site-locale.test.ts",
+        "src/i18n/locales.test.ts"
+      ],
+      "startedAt": "2026-11-13T08:09:16.188Z",
+      "endedAt": "2026-11-13T08:09:19.807Z",
+      "exitCode": 0,
+      "signal": null,
+      "log": "raw\\builder-current\\locale-tests.log"
+    },
+    {
+      "name": "typecheck",
+      "executable": "C:\\Users\\Ralph\\.cache\\wesetup-proof-20261113\\node22\\node.exe",
+      "args": [
+        "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "typecheck"
+      ],
+      "startedAt": "2026-11-13T08:09:19.810Z",
+      "endedAt": "2026-11-13T08:23:32.844Z",
+      "exitCode": 0,
+      "signal": null,
+      "log": "raw\\builder-current\\typecheck.log"
+    },
+    {
+      "name": "test-gate",
+      "executable": "C:\\Users\\Ralph\\.cache\\wesetup-proof-20261113\\node22\\node.exe",
+      "args": [
+        "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "test:gate"
+      ],
+      "startedAt": "2026-11-13T08:23:32.955Z",
+      "endedAt": "2026-11-13T08:23:37.377Z",
+      "exitCode": 0,
+      "signal": null,
+      "log": "raw\\builder-current\\test-gate.log"
+    }
+  ],
+  "status": "PASS",
+  "endedAt": "2026-11-13T08:23:37.380Z"
+}
