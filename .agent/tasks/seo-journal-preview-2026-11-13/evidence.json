@@ -1,9 +1,9 @@
 {
   "task": "seo-journal-preview-2026-11-13",
-  "verdict": "PENDING_FRESH_VERIFICATION",
-  "phase": "builder-pass",
-  "verifiedAt": "2026-11-13T09:04:40.254Z",
-  "verifiedHead": "5a251168e8a6c30b2c39126d4fc4f816e2ea9f53",
+  "verdict": "PASS",
+  "phase": "verifier",
+  "verifiedAt": "2026-11-13T09:07:22.058Z",
+  "verifiedHead": "6a15b6dffeffc45f0a82bda5b4628af2d04d7452",
   "specSha256": "f6e33db7d5c5f66908c53d202e85e6b2854ca8986d5993884409ba7fa41273e3",
   "hashes": {
     "src/components/landing/seo-journal-landing.tsx": "9535b0e6c051b3d81fc6c4df5572324cda8e04d52a98afe0888cbcb73e66cd09",
@@ -28,8 +28,8 @@
       "evidence": "Registration href and cleaning PDF boundary props preserved; custom download URL priority and unsupported PDF fallback verified. Original download components and PDF route are unchanged. Existing cleaning card matrix scrolls."
     },
     "AC5": {
-      "status": "PENDING",
-      "evidence": "Builder checks pass; fresh verification still required."
+      "status": "PASS",
+      "evidence": "Fresh verification reran browser, ESLint, typecheck and repository changed-test gate with stable HEAD and unchanged spec/source/lock hashes."
     }
   },
   "commands": [
@@ -37,12 +37,12 @@
       "name": "browser",
       "args": [
         "D:\\www\\wesetup-landing-language-20261113\\.agent\\tasks\\seo-journal-preview-2026-11-13\\browser-check.cjs",
-        "builder-pass"
+        "verifier"
       ],
-      "startedAt": "2026-11-13T09:01:31.606Z",
-      "endedAt": "2026-11-13T09:02:23.751Z",
+      "startedAt": "2026-11-13T09:05:38.250Z",
+      "endedAt": "2026-11-13T09:06:19.755Z",
       "exitCode": 0,
-      "log": "raw\\builder-pass\\browser.log"
+      "log": "raw\\verifier\\browser.log"
     },
     {
       "name": "lint",
@@ -51,10 +51,10 @@
         "src/components/landing/seo-journal-landing.tsx",
         "src/components/public/journal-screenshot.tsx"
       ],
-      "startedAt": "2026-11-13T09:02:23.753Z",
-      "endedAt": "2026-11-13T09:02:34.085Z",
+      "startedAt": "2026-11-13T09:06:19.756Z",
+      "endedAt": "2026-11-13T09:06:30.378Z",
       "exitCode": 0,
-      "log": "raw\\builder-pass\\lint.log"
+      "log": "raw\\verifier\\lint.log"
     },
     {
       "name": "typecheck",
@@ -63,10 +63,10 @@
         "run",
         "typecheck"
       ],
-      "startedAt": "2026-11-13T09:02:49.272Z",
-      "endedAt": "2026-11-13T09:04:36.254Z",
+      "startedAt": "2026-11-13T09:06:33.816Z",
+      "endedAt": "2026-11-13T09:07:17.063Z",
       "exitCode": 0,
-      "log": "raw\\builder-pass\\typecheck.log"
+      "log": "raw\\verifier\\typecheck.log"
     },
     {
       "name": "test-gate",
@@ -75,10 +75,10 @@
         "run",
         "test:gate"
       ],
-      "startedAt": "2026-11-13T09:04:36.255Z",
-      "endedAt": "2026-11-13T09:04:40.181Z",
+      "startedAt": "2026-11-13T09:07:18.300Z",
+      "endedAt": "2026-11-13T09:07:21.973Z",
       "exitCode": 0,
-      "log": "raw\\builder-pass\\test-gate.log"
+      "log": "raw\\verifier\\test-gate.log"
     }
   ],
   "fixture": "Actual landing/preview/config/assets/CSS; public chrome, next/link and download-dialog boundary stubbed; no server, database or authentication",

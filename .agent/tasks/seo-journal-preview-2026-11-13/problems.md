@@ -1,5 +1,7 @@
 # Verification findings
 
+Final resolution: fresh verification (`raw/verifier/commands.json`) passed all acceptance criteria. The findings below required fixture-only corrections; no production correction was necessary after the initial implementation.
+
 ## Builder fixture setup
 
 - Initial browser verification failed before rendering: esbuild could not resolve `react/jsx-runtime` in virtual boundary stubs. Raw evidence: `raw/builder/browser.log`.
