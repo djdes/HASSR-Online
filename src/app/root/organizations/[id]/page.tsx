@@ -29,7 +29,7 @@ import { ClientDocumentsSection } from "@/components/root/client-documents-secti
 import { EdoSendButton } from "@/components/root/edo-send-button";
 import { ClientEmails } from "@/components/root/client-emails";
 import { clientEmailHistory } from "@/lib/client-email.server";
-import { readMailSender } from "@/lib/platform-mail.server";
+import { listEmailSenders } from "@/lib/email-sender-access.server";
 import { clientDocumentRecipients } from "@/lib/client-documents";
 
 export const dynamic = "force-dynamic";
@@ -95,7 +95,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     platformViewerForSession(session),
     loadClientContacts(id),
     db.journalDocument.count({ where: { organizationId: id, status: "active" } }),
-    readMailSender(session.user.id),
+    listEmailSenders(session.user.id),
     clientEmailHistory(id),
   ]);
   const canBill = canUsePlatformSection(viewer, "billing");
@@ -321,7 +321,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         <ClientEmails
           organizationId={id}
           recipients={clientDocumentRecipients(contacts)}
-          sender={mailSender ? { fromName: mailSender.fromName, fromEmail: mailSender.fromEmail, ready: Boolean(mailSender.enabled && mailSender.verifiedAt) } : null}
+          senders={mailSender}
           initialHistory={emailHistory}
         />
 

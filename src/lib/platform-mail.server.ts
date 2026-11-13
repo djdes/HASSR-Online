@@ -120,6 +120,7 @@ async function transportFor(row: SenderRow) {
     port: row.port,
     secure: row.secure,
     name: "wesetup.ru",
+    requireTLS: row.port === 587,
     tls: { servername: row.host },
     auth: { user: row.username, pass: decryptSecret(row.passwordEnc) },
     connectionTimeout: 10_000,
@@ -135,6 +136,7 @@ export function describeSmtpError(error: unknown): string {
   if (code === "EAUTH" || /auth|535|534/i.test(raw)) return "Сервер не принял логин или пароль. Для Яндекса, Mail.ru и Gmail нужен пароль приложения.";
   if (code === "ETIMEDOUT" || code === "ECONNECTION" || /timeout/i.test(raw)) return "Не удалось подключиться к серверу. Проверьте адрес, порт и SSL.";
   if (code === "EDNS" || /ENOTFOUND|getaddrinfo/i.test(raw)) return "Такого SMTP-сервера нет — проверьте адрес.";
+  if (/certificate has expired|CERT_HAS_EXPIRED/i.test(raw)) return "Срок почтового TLS-сертификата истёк. Обновите сертификат у почтового провайдера или администратора сервера.";
   if (/self.signed|certificate/i.test(raw)) return "Сертификат сервера не прошёл проверку. Попробуйте порт 465 с SSL.";
   return raw.slice(0, 300);
 }

@@ -23,6 +23,8 @@ import {
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmailSenderSelect } from "@/components/root/email-sender-select";
+import type { EmailSenderOption } from "@/lib/email-sender-access";
 import { CRM_STAGES } from "@/lib/crm/constants";
 import { whatsappHref } from "@/lib/crm/identity";
 import type { CrmContactCard } from "@/lib/crm/queries.server";
@@ -42,12 +44,14 @@ const DIRECTION_TONE: Record<string, string> = {
 
 export function ContactCardClient({
   card,
+  emailSenders,
   viewerId,
   ownScope = false,
   links,
   nowIso,
 }: {
   card: CrmContactCard;
+  emailSenders: EmailSenderOption[];
   viewerId: string;
   /** Менеджер с охватом «свои»: назначать может только себя («Взять себе»). */
   ownScope?: boolean;
@@ -58,6 +62,8 @@ export function ContactCardClient({
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const { contact, interactions, organization, owners } = card;
   const [saving, setSaving] = useState<string | null>(null);
+  const [mailboxUserId, setMailboxUserId] = useState(emailSenders[0]?.userId ?? "");
+  const emailReady = Boolean(emailSenders.find(sender => sender.userId === mailboxUserId)?.ready);
   const [nextAt, setNextAt] = useState(toMoscowInput(contact.nextActionAt));
   const [nextNote, setNextNote] = useState(contact.nextActionNote ?? "");
   const [editOpen, setEditOpen] = useState(false);
@@ -100,7 +106,7 @@ export function ContactCardClient({
       const response = await fetch(`/api/root/crm/contacts/${contact.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: kindToSend, subject: kindToSend === "email" ? subject : undefined, body: kindToSend === "resolved" ? "" : body }),
+        body: JSON.stringify({ kind: kindToSend, mailboxUserId: kindToSend === "email" ? mailboxUserId : undefined, subject: kindToSend === "email" ? subject : undefined, body: kindToSend === "resolved" ? "" : body }),
       });
       const result = (await response.json().catch(() => null)) as { error?: string; note?: string } | null;
       if (!response.ok) throw new Error(result?.error ?? "Не получилось");
@@ -200,7 +206,10 @@ export function ContactCardClient({
           </div>
           <div className="mt-3 space-y-2">
             {kind === "email" ? (
-              <input value={subject} onChange={(event) => setSubject(event.target.value)} className={INPUT} placeholder="Тема письма" aria-label="Тема письма" />
+              <>
+                <EmailSenderSelect options={emailSenders} value={mailboxUserId} onChange={setMailboxUserId} disabled={saving !== null} label="Отправитель" unavailable="не подключена" />
+                <input value={subject} onChange={(event) => setSubject(event.target.value)} className={INPUT} placeholder="Тема письма" aria-label="Тема письма" />
+              </>
             ) : null}
             <textarea
               value={body}
@@ -221,14 +230,14 @@ export function ContactCardClient({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[12px] text-[#9b9fb3]">
                 {kind === "email"
-                  ? "Уходит с вашей личной почты; не настроена — с общего адреса с ответом на вашу."
+                  ? emailReady ? "Письмо уйдёт с выбранного адреса." : "Подключите и проверьте выбранную почту в разделе «Моя почта»."
                   : kind === "call"
                     ? "Звонок считается ответом клиенту."
                     : kind === "note"
                       ? "Заметка не снимает «ждёт ответа»."
                       : "Ответ клиента придёт в CRM через бота."}
               </span>
-              <button type="button" onClick={() => send(kind)} disabled={saving !== null || !body.trim() || (kind === "email" && !subject.trim())} className={PRIMARY_BUTTON} data-crm-send>
+              <button type="button" onClick={() => send(kind)} disabled={saving !== null || !body.trim() || (kind === "email" && (!subject.trim() || !emailReady))} className={PRIMARY_BUTTON} data-crm-send>
                 {saving?.startsWith("send:") ? <Loader2 className="size-4 animate-spin" /> : null}
                 {kind === "email" ? "Отправить письмо" : kind === "telegram" ? "Отправить в Telegram" : kind === "call" ? "Записать звонок" : "Сохранить заметку"}
               </button>

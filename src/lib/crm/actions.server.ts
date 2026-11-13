@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 
 import { db } from "@/lib/db";
+import { resolveEmailSender } from "@/lib/email-sender-access.server";
+import { formatFromAddress } from "@/lib/platform-mail";
 import { escapeHtml } from "@/lib/html-escape";
 import { CRM_FILTER_REASONS } from "@/lib/crm/constants";
 import type { ContactMessageInput, ContactPatch, ManualLeadInput } from "@/lib/crm/forms";
@@ -142,10 +144,16 @@ export async function addContactMessage(id: string, input: ContactMessageInput, 
 
   if (input.kind === "email") {
     if (!contact.email) return { ok: false, error: "У контакта нет почты — добавьте её в карточке" };
+    const mailboxUserId = await resolveEmailSender(actor.id, input.mailboxUserId);
+    if (!mailboxUserId) return { ok: false, error: "Выбранная почта недоступна для отправки" };
+    const selected = input.mailboxUserId ? await readMailSender(mailboxUserId) : null;
+    if (input.mailboxUserId && (!selected?.enabled || !selected.verifiedAt)) return { ok: false, error: "Выбранная почта не подключена или не проверена" };
     const messageId = `crm-${randomUUID()}@wesetup.ru`;
-    const text = `${input.body}\n\n--\n${await signatureFor(actor)}`;
+    const text = `${input.body}\n\n--\n${await signatureFor({ ...actor, id: mailboxUserId, name: selected?.fromName ?? actor.name })}`;
     const result = await sendStaffEmail({
-      senderUserId: actor.id,
+      senderUserId: mailboxUserId,
+      personalOnly: Boolean(input.mailboxUserId),
+      expectedFrom: selected ? formatFromAddress(selected.fromName, selected.fromEmail) : undefined,
       to: contact.email,
       subject: input.subject ?? "",
       html: textToHtml(text),
@@ -154,7 +162,8 @@ export async function addContactMessage(id: string, input: ContactMessageInput, 
     });
     if (!result.ok) return { ok: false, error: result.error };
     await ingestCrmItems([
-      { ...base, externalKey: `email-out:${messageId}:${contact.email}`, channel: "email", direction: "out", subject: input.subject ?? null, body: input.body },
+      { ...base, externalKey: `email-out:${messageId}:${contact.email}`, channel: "email", direction: "out", subject: input.subject ?? null, body: input.body,
+        fromAddress: selected?.fromEmail, fromName: selected?.fromName },
     ]);
     return {
       ok: true,

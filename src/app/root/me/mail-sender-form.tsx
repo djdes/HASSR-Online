@@ -35,13 +35,15 @@ export function MailSenderForm({
 }) {
   const t = useTranslations("rootPanel.me");
   const locale = useLocale();
+  const workspacePreset = defaults.fromEmail.toLowerCase().endsWith("@wesetup.ru")
+    ? SMTP_PROVIDER_PRESETS.find(preset => preset.key === "wesetup") : undefined;
   const [sender, setSender] = useState(initial);
   const [form, setForm] = useState<Form>({
     fromName: initial?.fromName ?? defaults.fromName,
     fromEmail: initial?.fromEmail ?? defaults.fromEmail,
-    host: initial?.host ?? "",
-    port: String(initial?.port ?? 465),
-    secure: initial?.secure ?? true,
+    host: initial?.host ?? workspacePreset?.host ?? "",
+    port: String(initial?.port ?? workspacePreset?.port ?? 465),
+    secure: initial?.secure ?? workspacePreset?.secure ?? true,
     username: initial?.username ?? defaults.fromEmail,
     password: "",
     replyTo: initial?.replyTo ?? "",
