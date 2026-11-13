@@ -1,0 +1,58 @@
+{
+  "taskId": "landing-language-scroll-2026-11-13",
+  "status": "PASS",
+  "verifiedAt": "2026-11-13T08:42:22.882Z",
+  "verificationMode": "Fresh current-code command rerun by the same agent; no delegated reviewer",
+  "headSha": "1f6ccb0d3284200839d267b2bf9cd0f88dcde496",
+  "sourceSha256": "63da31bf931fbaa79215453b2f98e2074ead9e0493305de1ca679857b95cdb65",
+  "productionBlob": "329221cc06f0c6a89ed31e53fd565f23dbad0b20",
+  "lockSha256": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea",
+  "node": "v22.23.5",
+  "inputsStable": true,
+  "productionFiles": [
+    "src/components/i18n/language-switch.tsx"
+  ],
+  "criteria": [
+    {
+      "id": "AC1",
+      "criterion": "AC1: Opening and closing the language menu at the top and after scrolling does not change the page scroll offset, content horizontal position, or viewport content width; no body scroll lock is applied.",
+      "status": "PASS",
+      "evidence": [
+        "raw/verifier-latest/browser-results.json"
+      ]
+    },
+    {
+      "id": "AC2",
+      "criterion": "AC2: With the language menu open, the page still scrolls using wheel input; the header remains visible and the menu remains anchored to its trigger.",
+      "status": "PASS",
+      "evidence": [
+        "raw/verifier-latest/browser-results.json"
+      ]
+    },
+    {
+      "id": "AC3",
+      "criterion": "AC3: Opening the language menu after scrolling keeps the sticky header in the viewport, on desktop and mobile viewports.",
+      "status": "PASS",
+      "evidence": [
+        "raw/verifier-latest/browser-results.json"
+      ]
+    },
+    {
+      "id": "AC4",
+      "criterion": "AC4: The menu supports opening from the keyboard, navigation between language links, Escape to close with focus returned to the trigger, and outside click dismissal. Language links and their remembered choice behavior remain intact.",
+      "status": "PASS",
+      "evidence": [
+        "raw/verifier-latest/browser-results.json"
+      ]
+    },
+    {
+      "id": "AC5",
+      "criterion": "AC5: The minimal implementation passes relevant lint, typecheck, and the repository test gate; a fresh pass reruns checks against current code and records a verdict per criterion.",
+      "status": "PASS",
+      "evidence": [
+        "raw/verifier-latest/commands.json"
+      ]
+    }
+  ],
+  "fixtureLimit": "Real LanguageSwitch, Radix, intl and CSS. Next routing and landing body are fixtures; mobile is a Chromium viewport, not physical hardware."
+}

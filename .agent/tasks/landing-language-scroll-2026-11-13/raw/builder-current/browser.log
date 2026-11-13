@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "scenarios": 4,
+  "hashes": {
+    "src/components/i18n/language-switch.tsx": "63da31bf931fbaa79215453b2f98e2074ead9e0493305de1ca679857b95cdb65",
+    "src/components/ui/dropdown-menu.tsx": "2d948f40bcb15a512af2405c4a681e597af28a77c4182b811c00ef4b3050067f",
+    "src/components/ui/menu-styles.ts": "6ca77882375afe4156c68a779ed1a7e01bc5ab03c5ccfdf39afd4daf0db6c862",
+    "src/app/globals.css": "5c138f12a9e86fd7fa258ca359f62cc4c2b0ec4f91c0c68a3ed8bcb40436e668",
+    "src/app/page.tsx": "17aaef093c8b70405576ab875c9fff5e77447449fe630a54e6119c6168ae6ef4",
+    "package.json": "75e4390eeccbc06454f10da441fd7c4dde44ea3e5f145248c5baad5f753bc186",
+    "package-lock.json": "eb61bfb686d367fac8d9cc2f78612fad1fb10cd544aa04ffe64aba1dfd8b0cea"
+  }
+}
