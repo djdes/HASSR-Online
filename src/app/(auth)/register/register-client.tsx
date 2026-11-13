@@ -12,7 +12,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "@/components/i18n/localized-link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
 import { BrandLogo } from "@/components/brand/logo";
-import { ArrowRight, CheckCircle2, Gift, Loader2, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, CheckCircle2, Gift, Loader2, MousePointerClick, Sparkles, Ticket } from "lucide-react";
+import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
@@ -290,6 +291,13 @@ function RegisterScreen({
             {t("register.heading.startFree")}</h2>
           <p className="mt-2 text-[14px] leading-[1.6] text-[#6f7282]">
             {t("register.form.intro")}</p>
+          {/* Живой гид — тексты шагов пока только по-русски. */}
+          {locale === "ru" ? (
+            <LiveGuideStartButton className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#f5f6ff] px-3 py-1.5 text-[13px] font-medium text-[#3848c7] transition-colors hover:bg-[#eef1ff]">
+              <MousePointerClick className="size-4" />
+              {t("register.form.liveGuide")}
+            </LiveGuideStartButton>
+          ) : null}
 
           <form onSubmit={submit} className="mt-8">
             <label
@@ -299,6 +307,7 @@ function RegisterScreen({
               {t("register.fields.email")}</label>
             <input
               id="register-email"
+              data-guide="reg-email"
               type="email"
               value={field.value}
               onChange={(e) => field.setValue(e.target.value)}
@@ -355,6 +364,7 @@ function RegisterScreen({
                 }
               }}
               highlight={consentMissing}
+              guideTarget="reg-consent"
               className="mt-4"
             />
 
@@ -368,6 +378,7 @@ function RegisterScreen({
 
             <button
               type="submit"
+              data-guide="reg-submit"
               disabled={loading || !field.valid}
               className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
             >

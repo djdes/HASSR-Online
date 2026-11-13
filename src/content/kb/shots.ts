@@ -822,6 +822,48 @@ export const KB_SHOTS: Record<string, KbShot> = {
       }
     ]
   },
+  "register": {
+    "id": "register",
+    "src": "/kb/register.webp",
+    "w": 1600,
+    "h": 1119,
+    "phone": false,
+    "url": "/register",
+    "caption": null,
+    "sub": null,
+    "marks": [
+      {
+        "n": 1,
+        "title": "Электронная почта",
+        "text": "Любая почта, к которой у вас есть доступ — на неё придёт пароль",
+        "warn": false,
+        "x": 56.91,
+        "y": 46.64,
+        "w": 35.47,
+        "h": 5.8
+      },
+      {
+        "n": 2,
+        "title": "Галочка согласия",
+        "text": "Без неё кнопка не создаст кабинет",
+        "warn": false,
+        "x": 56.91,
+        "y": 54.37,
+        "w": 35.47,
+        "h": 7.76
+      },
+      {
+        "n": 3,
+        "title": "«Создать аккаунт»",
+        "text": "Через пару секунд откроется кабинет",
+        "warn": false,
+        "x": 56.91,
+        "y": 64.54,
+        "w": 35.47,
+        "h": 5.8
+      }
+    ]
+  },
   "resp": {
     "id": "resp",
     "src": "/kb/resp.webp",

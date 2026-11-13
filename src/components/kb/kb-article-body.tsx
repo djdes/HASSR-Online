@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Info, TriangleAlert } from "lucide-react";
+import { ArrowRight, Info, MousePointerClick, TriangleAlert } from "lucide-react";
 
 import type { KbArticle } from "@/content/kb/articles";
 import { KbPhones, KbShotFigure } from "@/components/kb/kb-shot";
 import { kbInline } from "@/components/kb/kb-inline";
+import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 
 /** Блоки статьи базы знаний: текст, шаги, списки, снимки и подсказки. */
 export function KbArticleBody({ article }: { article: KbArticle }) {
@@ -77,6 +78,28 @@ export function KbArticleBody({ article }: { article: KbArticle }) {
               </div>
             );
           }
+          case "guide":
+            return (
+              <div key={index} className="relative my-6 overflow-hidden rounded-3xl bg-[#0b1024] p-6 text-white shadow-[0_20px_60px_-30px_rgba(11,16,36,0.55)] sm:p-7">
+                <div className="pointer-events-none absolute -right-16 -top-20 size-[260px] rounded-full bg-[#5566f6] opacity-40 blur-[90px]" />
+                <div className="pointer-events-none absolute -bottom-24 left-10 size-[220px] rounded-full bg-[#7a5cff] opacity-30 blur-[90px]" />
+                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#7cf5c0]">
+                    <MousePointerClick className="size-6" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[18px] font-semibold tracking-[-0.01em]">{block.title}</div>
+                    <p className="mt-1 text-[14px] leading-[1.6] text-white/75">{block.text}</p>
+                  </div>
+                  <LiveGuideStartButton
+                    id={block.guide}
+                    className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[15px] font-semibold text-[#0b1024] transition-colors hover:bg-white/90"
+                  >
+                    Показать, куда нажимать <ArrowRight className="size-4" />
+                  </LiveGuideStartButton>
+                </div>
+              </div>
+            );
           case "shot":
             return <KbShotFigure key={index} id={block.id} title={block.title} />;
           case "phones":

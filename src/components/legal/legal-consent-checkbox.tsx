@@ -17,6 +17,7 @@ export function LegalConsentCheckbox({
   tone = "light",
   className,
   highlight,
+  guideTarget,
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
@@ -24,6 +25,8 @@ export function LegalConsentCheckbox({
   className?: string;
   /** Пытались отправить без галки — подсветить. */
   highlight?: boolean;
+  /** Цель живого гида по регистрации (`data-guide`). */
+  guideTarget?: string;
 }) {
   const t = useTranslations("auth.legal");
   const descriptionId = useId();
@@ -34,6 +37,7 @@ export function LegalConsentCheckbox({
   );
   return (
     <label
+      data-guide={guideTarget}
       className={cn(
         "flex cursor-pointer items-start gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] transition-colors",
         dark ? "text-white/70" : "text-[#6f7282]",

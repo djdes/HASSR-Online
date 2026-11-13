@@ -556,7 +556,7 @@ function CompleteProfileModal({
     >
       {/* dvh, а не vh: на iPhone Safari vh считается без учёта панелей
           браузера, и низ модалки уезжал под нижнюю панель. */}
-      <div className="flex max-h-[94dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-3xl bg-white shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)]">
+      <div data-guide="profile-modal" className="flex max-h-[94dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-3xl bg-white shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)]">
         <div className="flex shrink-0 items-start gap-3 px-4 pb-1 pt-3.5 sm:px-5 sm:pt-5">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
             <UserRoundPen className="size-[18px]" />
@@ -613,6 +613,7 @@ function CompleteProfileModal({
         >
           <Field
             label={tn("orgName")}
+            guide="profile-org"
             required
             error={touched.org && !nameOk ? tn("min2Chars") : null}
           >
@@ -638,6 +639,7 @@ function CompleteProfileModal({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
             <Field
               label={tn("phone")}
+              guide="profile-phone"
               required
               className="sm:w-[188px] sm:shrink-0"
               invalid={touched.phone && !phoneOk}
@@ -713,7 +715,7 @@ function CompleteProfileModal({
 
           {/* Остальное необязательно и стоит парами по смыслу, чтобы анкета
               помещалась в первый экран телефона. */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2" data-guide="profile-sphere">
             <Field label={tn("sphere")}>
               <SelectShell>
                 <select
@@ -754,7 +756,7 @@ function CompleteProfileModal({
           </div>
 
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-2">
-            <Field label={tn("locations")} plain>
+            <Field label={tn("locations")} plain guide="profile-locations">
               {/* -my-1: кнопки счётчика 32px, а строка значения в соседних
                   полях 24px — вытягиваем поле до общей высоты, зона нажатия
                   остаётся 32px. */}
@@ -769,7 +771,7 @@ function CompleteProfileModal({
               </span>
             </Field>
 
-            <Field label={tn("inn")}>
+            <Field label={tn("inn")} guide="profile-inn">
               {/* Иконка справа обещает автозаполнение: лупа до ввода, спиннер,
                   галочка или предупреждение после. */}
               <span className="flex items-center gap-1">
@@ -811,7 +813,7 @@ function CompleteProfileModal({
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2" data-guide="profile-password">
             <Field label={tn("yourName")}>
               <input
                 value={name}
@@ -898,6 +900,7 @@ function CompleteProfileModal({
             <button
               type="submit"
               form="complete-profile-form"
+              data-guide="profile-done"
               disabled={!canSubmit}
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c9cef7] disabled:shadow-none"
             >
@@ -945,7 +948,7 @@ function LocationNamingStep({
     "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
   return (
     <>
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-3 pt-2 sm:px-5">
+      <div data-guide="profile-naming" className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-3 pt-2 sm:px-5">
         {items.map((item, index) => (
           <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-2">
             <input
@@ -1037,6 +1040,7 @@ function Field({
   invalid = false,
   plain = false,
   className = "",
+  guide,
   children,
 }: {
   label: string;
@@ -1053,11 +1057,13 @@ function Field({
    */
   plain?: boolean;
   className?: string;
+  /** Цель живого гида по регистрации (`data-guide`). */
+  guide?: string;
   children: React.ReactNode;
 }) {
   const Tag = plain ? "div" : "label";
   return (
-    <Tag className={`block ${className}`}>
+    <Tag className={`block ${className}`} data-guide={guide}>
       <span
         className={`flex flex-col gap-0.5 rounded-2xl border bg-white px-3.5 py-2 transition-[border-color,box-shadow] focus-within:ring-4 ${
           error || invalid

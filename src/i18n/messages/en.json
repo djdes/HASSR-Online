@@ -2629,7 +2629,8 @@
         "startFree": "Get started for free"
       },
       "form": {
-        "intro": "Your email is all you need. We’ll send your password by email so you can sign in right away. You can fill in your organization profile later."
+        "intro": "Your email is all you need. We’ll send your password by email so you can sign in right away. You can fill in your organization profile later.",
+        "liveGuide": "Show me step by step where to click"
       },
       "fields": {
         "email": "Email address",
@@ -5871,7 +5872,8 @@
       "creatingAccount": "Creating account…",
       "startFree": "Get started for free",
       "existingAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "liveGuide": "Not sure where to start? We will show you step by step"
     },
     "navStart": {
       "start": "Get started",

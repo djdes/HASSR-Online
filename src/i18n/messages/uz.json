@@ -2629,7 +2629,8 @@
         "startFree": "Bepul boshlash"
       },
       "form": {
-        "intro": "Elektron pochta manzilingiz kifoya. Parolingizni xat orqali yuboramiz, darhol tizimga kirishingiz mumkin. Tashkilot profilini keyin to‘ldirsangiz bo‘ladi."
+        "intro": "Elektron pochta manzilingiz kifoya. Parolingizni xat orqali yuboramiz, darhol tizimga kirishingiz mumkin. Tashkilot profilini keyin to‘ldirsangiz bo‘ladi.",
+        "liveGuide": "Qayerni bosishni bosqichma-bosqich ko‘rsatish"
       },
       "fields": {
         "email": "Elektron pochta",
@@ -5871,7 +5872,8 @@
       "creatingAccount": "Hisob yaratilmoqda…",
       "startFree": "Bepul boshlash",
       "existingAccount": "Hisobingiz bormi?",
-      "signIn": "Kirish"
+      "signIn": "Kirish",
+      "liveGuide": "Qayerdan boshlashni bilmaysizmi? Bosqichma-bosqich ko‘rsatamiz"
     },
     "navStart": {
       "start": "Boshlash",

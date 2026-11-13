@@ -144,6 +144,7 @@ export default async function HomePage() {
           <Link
             href="/settings/onboarding"
             data-home-setup
+            data-guide="home-setup"
             data-nav-row
             data-motion
             style={{ "--nav-i": 0 } as CSSProperties}

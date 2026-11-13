@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "@/components/i18n/localized-link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
-import { ArrowRight, Loader2, Mail } from "lucide-react";
+import { ArrowRight, Loader2, Mail, MousePointerClick } from "lucide-react";
+import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
 import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
 import {
@@ -235,6 +236,19 @@ export function HeroEmailStart({
           className="mt-2.5"
         />
       </div>
+
+      {/* Живой гид по регистрации — тексты гида пока только по-русски. */}
+      {locale === "ru" ? (
+        <LiveGuideStartButton
+          className={
+            "mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium underline-offset-4 transition-colors hover:underline " +
+            (dark ? "text-white/80 hover:text-white" : "text-[#3848c7]")
+          }
+        >
+          <MousePointerClick className="size-4" />
+          {t("liveGuide")}
+        </LiveGuideStartButton>
+      ) : null}
 
       {challenge.element}
 

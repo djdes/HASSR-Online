@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, ClipboardCheck, CreditCard, MonitorSmartphone, NotebookTabs, Rocket, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowRight, BookOpen, ClipboardCheck, CreditCard, MonitorSmartphone, MousePointerClick, NotebookTabs, Rocket, ShieldCheck, Smartphone } from "lucide-react";
 
 import { KbShell } from "@/components/kb/kb-shell";
+import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
 import { KB_ARTICLES, KB_GROUPS } from "@/content/kb/articles";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
@@ -48,6 +49,10 @@ export default function KnowledgeBaseIndexPage() {
           <Link href="/register" className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]">
             Попробовать бесплатно
           </Link>
+          <LiveGuideStartButton className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]">
+            <MousePointerClick className="size-4 text-[#5566f6]" />
+            Регистрация с подсказками
+          </LiveGuideStartButton>
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2">

@@ -8,6 +8,7 @@ import { ServiceWorkerRegister } from "@/components/layout/sw-register";
 import { BuildVersionWatcher } from "@/components/layout/build-version-watcher";
 import { YandexMetrika } from "@/components/layout/yandex-metrika";
 import { CookieConsent } from "@/components/public/cookie-consent";
+import { LiveGuideHost } from "@/components/live-guide/live-guide-host";
 import { NativeStatusBar } from "@/app/mini/_components/native-status-bar";
 import "./globals.css";
 import "./app-theme.css";
@@ -150,6 +151,7 @@ export default async function RootLayout({
         <BuildVersionWatcher />
         <YandexMetrika />
         <CookieConsent />
+        <LiveGuideHost />
         </ViewPrefsProvider>
         </SiteLocaleProvider>
       </body>

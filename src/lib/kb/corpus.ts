@@ -18,6 +18,8 @@ function blockText(block: KbBlock): string {
       return block.items.map((item, index) => `${index + 1}. ${item.title}: ${kbPlain(item.text)}`).join("\n");
     case "cards":
       return block.items.map((item) => `- ${item.title}: ${kbPlain(item.text)}`).join("\n");
+    case "guide":
+      return `${block.title}: ${block.text}`;
     case "shot":
       return shotText([block.id]);
     case "phones":
