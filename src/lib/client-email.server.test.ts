@@ -46,8 +46,8 @@ beforeEach(() => {
     signature: "Личная подпись", position: "Менеджер", phone: "+79990000000", enabled: true,
     verifiedAt: verified ? new Date() : null, lastError: null, createdAt: new Date(), updatedAt: new Date(),
   })) as typeof original.sender;
-  db.platformMailSender.update = (async () => ({})) as typeof original.senderUpdate;
-  db.user.findUnique = (async () => ({ name: "Сотрудник", email: "staff@example.com", contactEmail: null })) as typeof original.user;
+  db.platformMailSender.update = (async () => ({})) as unknown as typeof original.senderUpdate;
+  db.user.findUnique = (async () => ({ name: "Сотрудник", email: "staff@example.com", contactEmail: null })) as unknown as typeof original.user;
   mock.method(dns, "lookup", async () => [{ address: "8.8.8.8", family: 4 }]);
   mock.method(nodemailer, "createTransport", () => ({ sendMail: async (message: Record<string, unknown>) => {
     assert.equal(rows.length > 0, true, "persist before SMTP");
@@ -120,13 +120,13 @@ test("history and idempotency are tenant-scoped and cursor pagination does not l
 });
 
 test("persistence failure before SMTP prevents sending", async () => {
-  db.clientEmail.create = (async () => { throw new Error("database unavailable"); }) as typeof original.create;
+  db.clientEmail.create = (async () => { throw new Error("database unavailable"); }) as unknown as typeof original.create;
   await assert.rejects(() => sendClientEmail("org-a", "staff-id", input), /database unavailable/);
   assert.equal(smtpCalls, 0);
 });
 
 test("failure to save the SMTP result leaves a pending record and a repeated request cannot resend", async () => {
-  db.clientEmail.update = (async () => { throw new Error("database unavailable"); }) as typeof original.update;
+  db.clientEmail.update = (async () => { throw new Error("database unavailable"); }) as unknown as typeof original.update;
   await assert.rejects(() => sendClientEmail("org-a", "staff-id", input), /database unavailable/);
   assert.equal(smtpCalls, 1); assert.equal(rows[0].status, "sending");
   const repeated = await sendClientEmail("org-a", "staff-id", input);
