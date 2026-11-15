@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "files": [
+    {
+      "file": "src/components/staff/weekday-chips.tsx",
+      "beforeSha256": "4641b407796acba2f9b222aa60083aaf0b90827ce8b5b467512953ef32079a0f",
+      "beforePrefix": "7434b3d6b3ef97776f00dd2cba77634a",
+      "expectedSha256": "c7d38a684dc6f169d7d17d507eb941ad14e9babe61f6811c90fe70000fc76213",
+      "expectedNormalizedSha256": "c7d38a684dc6f169d7d17d507eb941ad14e9babe61f6811c90fe70000fc76213",
+      "restored": true
+    },
+    {
+      "file": "src/lib/mercury/process-incoming.ts",
+      "beforeSha256": "b6931ff4d5aef6a725d39cfeeab93936cd5392dc662f2b9a772f7237a168a5b7",
+      "beforePrefix": "494e445828000900a6a445283c000000",
+      "expectedSha256": "d25bbffdfa306dbefb3d2b4c98db30a4e6ce57cd56f0e1312a8c5908a2092912",
+      "expectedNormalizedSha256": "d25bbffdfa306dbefb3d2b4c98db30a4e6ce57cd56f0e1312a8c5908a2092912",
+      "restored": true
+    },
+    {
+      "file": "src/lib/mobile-devices.test.ts",
+      "beforeSha256": "4d2cedf6e4bd7f5575deda6d4f27efe5349e16fddfcd4c3ddafe36956859736a",
+      "beforePrefix": "55ab22a123afe4badbbbb4b9f0b666a1",
+      "expectedSha256": "7e8ad2926f6b57f81595a42dab31e8f83ad86b62ae3aeb526532a5f9889e143e",
+      "expectedNormalizedSha256": "7e8ad2926f6b57f81595a42dab31e8f83ad86b62ae3aeb526532a5f9889e143e",
+      "restored": true
+    },
+    {
+      "file": "src/lib/newcomer-journey.ts",
+      "beforeSha256": "2fc12bb623e3e326531203d029c1541561f8329df635e31ac7b46fc46b9748a7",
+      "beforePrefix": "7a971b47116f99be926f012642f1ad10",
+      "expectedSha256": "4461d81fdd707e2fae07c1f10335b398ed02d82ca4d19e45e4c16d88fc702371",
+      "expectedNormalizedSha256": "4461d81fdd707e2fae07c1f10335b398ed02d82ca4d19e45e4c16d88fc702371",
+      "restored": true
+    },
+    {
+      "file": "src/lib/newcomer-scope.test.ts",
+      "beforeSha256": "77dfff2f27dba9c6abdfd8954ae50ad331a3b0722fda0ee983fd8c494c50d79e",
+      "beforePrefix": "e033f500a644e78c98ab5d9b0f2964ac",
+      "expectedSha256": "01ae2aaa142e37696b1ca5d016e890b4dce31de62f13fc8691ce09b5a84e0234",
+      "expectedNormalizedSha256": "01ae2aaa142e37696b1ca5d016e890b4dce31de62f13fc8691ce09b5a84e0234",
+      "restored": true
+    },
+    {
+      "file": "src/lib/newcomer-scope.ts",
+      "beforeSha256": "6b09d2c789fc8c4594600a51bf7a30cd84deba42a49eb52ca2b005fc2f0dd7e2",
+      "beforePrefix": "02f40a0162335c330d32718490986030",
+      "expectedSha256": "d2b2171f7466482712eaaae252beb7b6928023f4c45148f4d57d09a0fc28a80d",
+      "expectedNormalizedSha256": "d2b2171f7466482712eaaae252beb7b6928023f4c45148f4d57d09a0fc28a80d",
+      "restored": true
+    },
+    {
+      "file": "src/lib/use-body-scroll-lock.test.ts",
+      "beforeSha256": "bfe7760407101cd05509f2cb88b18105c6d4d464011fd3f80040ce303d1f6c25",
+      "beforePrefix": "527a35c4a8cd236697189ad39a09cdb9",
+      "expectedSha256": "edf633ca943a986976ca525fe730394094a1ea9a5ba874a3970cb7e2675b338b",
+      "expectedNormalizedSha256": "edf633ca943a986976ca525fe730394094a1ea9a5ba874a3970cb7e2675b338b",
+      "restored": true
+    }
+  ]
+}

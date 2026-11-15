@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-11-15T07:39:58.438Z",
+  "source": [
+    {
+      "file": "src/lib/channel-autopost/topics.ts",
+      "sha256": "27feb8f24255f66fb561d989eb1657d394bc139d8a6969e6a2984106d63a5418"
+    },
+    {
+      "file": "src/lib/channel-autopost/topics.test.ts",
+      "sha256": "f146cf87149f87af1ceee7b3ce49e26f8bbe46c31439a855ac447780812d6184"
+    },
+    {
+      "file": "src/lib/channel-autopost/service.server.ts",
+      "sha256": "accf0f081fa86595a2f23f21e7393bd631dd34c5ae0c96ec3b2d979860adf337"
+    }
+  ],
+  "checks": [
+    "planning and final image prompts carry sanitary requirements",
+    "saved scenes, empty scenes, missing metadata and gateway truncation covered",
+    "the only image-job call uses the mandatory wrapper including missing-topic fallback"
+  ],
+  "limitation": "Verifies prompt construction only; no image job, generated-pixel inspection, database change or publication is performed."
+}
