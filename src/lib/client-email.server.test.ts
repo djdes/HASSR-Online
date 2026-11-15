@@ -5,6 +5,7 @@ import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { encryptSecret } from "@/lib/integration-crypto";
 import { clientEmailHistory, clientEmailPreview, sendClientEmail } from "./client-email.server";
+import { TRUSTED_SMTP_HOSTS_SETTING } from "./smtp-host-policy";
 
 type Row = NonNullable<Awaited<ReturnType<typeof db.clientEmail.findFirst>>>;
 const original = {
@@ -163,4 +164,63 @@ test("failure to save the SMTP result leaves a pending record and a repeated req
   assert.equal(smtpCalls, 1); assert.equal(rows[0].status, "sending");
   const repeated = await sendClientEmail("org-a", "staff-id", input);
   assert.equal(repeated?.repeated, true); assert.equal(repeated?.item.status, "sending"); assert.equal(smtpCalls, 1);
+});
+
+function ownedSmtp(options: { host?: string; addresses?: readonly string[]; policy?: string | null; port?: number; secure?: boolean } = {}) {
+  const findSender = db.platformMailSender.findUnique;
+  db.platformMailSender.findUnique = (async args => ({ ...await findSender(args), host: options.host ?? "wesetup.ru", port: options.port ?? 587, secure: options.secure ?? false })) as typeof original.sender;
+  const setting = db.platformSetting.findUnique;
+  db.platformSetting.findUnique = (async args => args.where.key === TRUSTED_SMTP_HOSTS_SETTING
+    ? options.policy === null ? null : { value: options.policy ?? '{"wesetup.ru":["192.168.33.3"]}' }
+    : setting(args)) as typeof original.setting;
+  let lookups = 0;
+  mock.method(dns, "lookup", async () => { lookups++; return (options.addresses ?? ["192.168.33.3"]).map(address => ({ address, family: 4 })); });
+  return () => lookups;
+}
+
+test("owned LAN SMTP pins one DNS lookup/IP while preserving required STARTTLS, CA/hostname and actor identity", async () => {
+  const lookups = ownedSmtp();
+  const result = await sendClientEmail("org-a", "staff-id", input);
+  assert.equal(result?.item.status, "sent"); assert.equal(lookups(), 1);
+  assert.equal(smtpOptions.host, "192.168.33.3"); assert.equal(smtpOptions.port, 587);
+  assert.equal(smtpOptions.secure, false); assert.equal(smtpOptions.requireTLS, true);
+  assert.deepEqual(smtpOptions.tls, { servername: "wesetup.ru" });
+  assert.equal(smtpMessage.from, '"Сотрудник" <staff@example.com>'); assert.equal(rows[0].senderUserId, "staff-id");
+});
+
+for (const [name, config] of [
+  ["no operator policy", { policy: null }], ["malformed policy", { policy: "{" }],
+  ["unlisted private DNS", { addresses: ["192.168.33.4"] }],
+  ["DNS rebinding includes an unlisted answer", { addresses: ["192.168.33.3", "127.0.0.1"] }],
+  ["loopback even if listed", { addresses: ["127.0.0.1"], policy: '{"wesetup.ru":["127.0.0.1"]}' }],
+  ["metadata IP even if listed", { addresses: ["169.254.169.254"], policy: '{"wesetup.ru":["169.254.169.254"]}' }],
+  ["another hostname", { host: "other.example.com" }], ["plaintext-capable port", { port: 25 }],
+] as const) test(`private SMTP fails before transport: ${name}`, async () => {
+  ownedSmtp(config);
+  const result = await sendClientEmail("org-a", "staff-id", input);
+  assert.equal(result?.item.status, "failed"); assert.equal(smtpCalls, 0);
+});
+
+test("trusted LAN policy never bypasses TLS certificate validation or falls back to system mail", async () => {
+  ownedSmtp(); smtpError = Object.assign(new Error("certificate has expired"), { code: "CERT_HAS_EXPIRED" });
+  let senderError: unknown;
+  db.platformMailSender.update = (async (args: Parameters<typeof original.senderUpdate>[0]) => { senderError = args.data.lastError; return {}; }) as unknown as typeof original.senderUpdate;
+  const result = await sendClientEmail("org-a", "staff-id", input);
+  assert.equal(result?.item.status, "failed"); assert.match(String(senderError), /TLS-сертификата истёк/);
+  assert.equal(smtpCalls, 1); assert.deepEqual(smtpOptions.tls, { servername: "wesetup.ru" });
+});
+
+test("operator revocation is re-read on each new delivery", async () => {
+  ownedSmtp();
+  assert.equal((await sendClientEmail("org-a", "staff-id", input))?.item.status, "sent");
+  db.platformSetting.findUnique = (async () => null) as typeof original.setting;
+  assert.equal((await sendClientEmail("org-a", "staff-id", { ...input, requestId: "c1d0ad5b-6bbb-4fb6-9b09-9523f4ece3d8" }))?.item.status, "failed");
+  assert.equal(smtpCalls, 1);
+});
+
+test("public SMTP preserves existing behavior without reading an operator exception", async () => {
+  db.platformSetting.findUnique = (async args => { assert.notEqual(args.where.key, TRUSTED_SMTP_HOSTS_SETTING); return null; }) as typeof original.setting;
+  assert.equal((await sendClientEmail("org-a", "staff-id", input))?.item.status, "sent");
+  assert.equal(smtpOptions.host, "8.8.8.8"); assert.equal(smtpOptions.secure, true);
+  assert.deepEqual(smtpOptions.tls, { servername: "smtp.example.com" });
 });

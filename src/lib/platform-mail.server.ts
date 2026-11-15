@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
 import { isEmailDeliveryConfigured, sendRawEmail, type EmailAttachment } from "@/lib/email";
 import { formatFromAddress, isAllowedSmtpHost, isPrivateIp, mailSenderStatus, type MailSenderInput, type MailSenderStatus } from "@/lib/platform-mail";
+import { isTrustedPrivateSmtpAddress, TRUSTED_SMTP_HOSTS_SETTING } from "@/lib/smtp-host-policy";
 
 /**
  * Letters that a platform panel user sends to clients (contract, proposal,
@@ -93,12 +94,13 @@ export async function disableMailSender(userId: string): Promise<void> {
 type SenderRow = NonNullable<Awaited<ReturnType<typeof db.platformMailSender.findUnique>>>;
 
 /**
- * Resolves the server name once and refuses internal addresses: a public
+ * Resolves the server name once and refuses untrusted internal addresses: a public
  * name can point at 127.0.0.1 and turn the form into a relay through the
  * server's own mailer. We then connect to that exact IP (no second lookup
- * an attacker could flip) and keep the name for TLS verification.
+ * an attacker could flip) and keep the name for TLS verification. An operator
+ * may pin an owned LAN mail server for required STARTTLS on port 587 only.
  */
-async function resolvePublicSmtpHost(host: string): Promise<string> {
+async function resolveSmtpAddress(host: string, port: number, secure: boolean): Promise<string> {
   if (!isAllowedSmtpHost(host)) throw new MailSenderError("SMTP-сервер не разрешён");
   let addresses: { address: string }[];
   try {
@@ -107,14 +109,18 @@ async function resolvePublicSmtpHost(host: string): Promise<string> {
     throw new MailSenderError("Такого SMTP-сервера нет — проверьте адрес.");
   }
   if (!addresses.length) throw new MailSenderError("Такого SMTP-сервера нет — проверьте адрес.");
-  if (addresses.some((item) => isPrivateIp(item.address))) {
-    throw new MailSenderError("Адрес сервера ведёт во внутреннюю сеть — укажите внешний SMTP-сервер.");
+  const privateAddresses = addresses.filter((item) => isPrivateIp(item.address));
+  if (privateAddresses.length) {
+    const setting = await db.platformSetting.findUnique({ where: { key: TRUSTED_SMTP_HOSTS_SETTING }, select: { value: true } });
+    if (privateAddresses.some(item => !isTrustedPrivateSmtpAddress(host, item.address, port, secure, setting?.value ?? null))) {
+      throw new MailSenderError("Адрес сервера ведёт во внутреннюю сеть — укажите внешний SMTP-сервер.");
+    }
   }
   return addresses[0].address;
 }
 
 async function transportFor(row: SenderRow) {
-  const address = await resolvePublicSmtpHost(row.host);
+  const address = await resolveSmtpAddress(row.host, row.port, row.secure);
   return nodemailer.createTransport({
     host: address,
     port: row.port,
