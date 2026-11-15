@@ -4,6 +4,8 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { loadSberAdminStatus, type SberAdminStatus } from "@/lib/sber/invoice-payments.server";
 import { daysUntil } from "@/lib/sber/scanflow-shared";
 import { SberSyncButton } from "./sber-sync-button";
+import { SberScheduleForm } from "./sber-schedule-form";
+import { nextSberSync, sberIntervalLabel } from "@/lib/sber/schedule";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -24,6 +26,10 @@ function fmt(iso: string | null | undefined): string {
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return iso;
   return d.toLocaleString("ru-RU", { timeZone: "Europe/Moscow", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function fmtTime(d: Date): string {
+  return d.toLocaleTimeString("ru-RU", { timeZone: "Europe/Moscow", hour: "2-digit", minute: "2-digit" });
 }
 
 function fmtDate(iso: string | null | undefined): string {
@@ -91,6 +97,7 @@ export default async function RootSberPage() {
   const refreshLeft = daysUntil(dbStatus?.refreshUntil, now);
   const last = status.lastSync;
   const ready = status.channelConfigured && Boolean(dbStatus) && Boolean(status.accountNumber);
+  const nextAt = ready ? nextSberSync(status.schedule, last?.at, new Date(now)) : null;
 
   return (
     <div className="mx-auto max-w-[1000px] space-y-6">
@@ -102,7 +109,7 @@ export default async function RootSberPage() {
           <div>
             <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024]">СберБизнес</h1>
             <p className="mt-1 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              Оплаты по счетам приходят на р/с БФС. Каждые 10 минут сайт читает выписку этого счёта тем же подключением, что ScanFlow и DocsFlow,
+              Оплаты по счетам приходят на р/с БФС. По расписанию ниже сайт читает выписку этого счёта тем же подключением, что ScanFlow и DocsFlow,
               находит платежи по нашим счетам (номер счёта в назначении и сумма, либо ИНН и сумма) и отмечает счёт оплаченным — тариф подключается,
               гостю создаётся кабинет. Спорные платежи приходят администраторам на разбор.
             </p>
@@ -115,8 +122,8 @@ export default async function RootSberPage() {
         <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Подключение</div>
         <Row
           label="Сверка оплат"
-          value={ready ? "включена" : "не работает"}
-          tone={ready ? "ok" : "bad"}
+          value={!ready ? "не работает" : status.schedule.enabled ? `включена · ${sberIntervalLabel(status.schedule.intervalMinutes)}` : "автосверка выключена"}
+          tone={!ready ? "bad" : status.schedule.enabled ? "ok" : "warn"}
           hint={
             ready
               ? undefined
@@ -150,6 +157,11 @@ export default async function RootSberPage() {
           hint={api?.secret?.lastError ?? (status.api && "error" in status.api ? status.api.error : undefined)}
         />
         {certRow(status, now)}
+      </section>
+
+      <section className="rounded-3xl border border-[#ececf4] bg-white p-6 md:p-7">
+        <div className="mb-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">Автосверка</div>
+        <SberScheduleForm initial={status.schedule} nextLabel={nextAt ? fmtTime(nextAt) : null} />
       </section>
 
       <section className="rounded-3xl border border-[#ececf4] bg-white p-6 md:p-7">

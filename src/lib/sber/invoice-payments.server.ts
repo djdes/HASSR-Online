@@ -20,6 +20,7 @@ import { db } from "@/lib/db";
 import { markInvoicePaid } from "@/lib/invoices/service";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
+import { SBER_SCHEDULE_KEY, parseSberSchedule, sberSyncDue, type SberSchedule } from "@/lib/sber/schedule";
 
 import { decideStatementCredit } from "./balance-credit";
 import { applyStatementCredit, loadPayerOrganizations, loadRecentManuallyPaidInvoices } from "./balance-credit.server";
@@ -347,6 +348,7 @@ export interface SberAdminStatus {
   api: ScanflowApiStatus | { error: string } | null;
   cert: { validFrom: string; validTo: string; subject: string } | { error: string } | null;
   lastSync: SberSyncResult | null;
+  schedule: SberSchedule;
   recent: Array<{
     operationId: string;
     operationDate: string;
@@ -366,12 +368,13 @@ export async function loadSberAdminStatus(): Promise<SberAdminStatus> {
   const accountNumber = account.length === 20 ? account : null;
   const channelConfigured = scanflowChannelConfigured();
 
-  const [dbStatus, api, lastSync, recent, cert] = await Promise.all([
+  const [dbStatus, api, lastSync, recent, cert, schedule] = await Promise.all([
     accountNumber ? scanflowDbStatusForAccount(accountNumber) : Promise.resolve(null),
     fetchScanflowApiStatus(),
     readLastSberSync(),
     db.sberIncomingPayment.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
     readCertInfo(),
+    readSberSchedule(),
   ]);
   return {
     channelConfigured,
@@ -380,6 +383,7 @@ export async function loadSberAdminStatus(): Promise<SberAdminStatus> {
     api,
     cert,
     lastSync,
+    schedule,
     recent: recent.map((row) => ({
       operationId: row.operationId,
       operationDate: row.operationDate,
@@ -404,4 +408,22 @@ async function readCertInfo(): Promise<SberAdminStatus["cert"]> {
   } catch (error) {
     return { error: (error as Error).message };
   }
+}
+
+export async function readSberSchedule(): Promise<SberSchedule> {
+  const row = await db.platformSetting.findUnique({ where: { key: SBER_SCHEDULE_KEY } });
+  return parseSberSchedule(row?.value);
+}
+
+export async function saveSberSchedule(schedule: SberSchedule): Promise<void> {
+  const value = JSON.stringify(schedule);
+  await db.platformSetting.upsert({ where: { key: SBER_SCHEDULE_KEY }, create: { key: SBER_SCHEDULE_KEY, value }, update: { value } });
+}
+
+/** Крон: сверить, если автосверка включена и подошёл интервал. */
+export async function runScheduledSberSync(now = new Date()): Promise<SberSyncResult | { skipped: string }> {
+  const [schedule, last] = await Promise.all([readSberSchedule(), readLastSberSync()]);
+  if (!schedule.enabled) return { skipped: "автосверка выключена" };
+  if (!sberSyncDue(schedule, last?.at, now)) return { skipped: `интервал ${schedule.intervalMinutes} мин ещё не прошёл` };
+  return syncSberInvoicePayments({ trigger: "cron", now });
 }

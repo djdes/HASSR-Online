@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-/** «Проверить выписку сейчас» — та же сверка, что крон раз в 10 минут. */
+/** «Проверить выписку сейчас» — та же сверка, что автосверка по расписанию. */
 export function SberSyncButton({ disabled }: { disabled: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
