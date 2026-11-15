@@ -33,7 +33,7 @@ test("PDF role fallback translates without translating explicit identical positi
   for (const locale of ["ru", "en", "uz"] as const) {
     const user = { id: "u1", name: "Oʻtkir", role: "cook", positionTitle: "Повар" };
     assert.equal(hygieneHealthPdfPosition(user, "Повар", locale), "Повар");
-    assert.equal(hygieneHealthPdfPosition({ ...user, positionTitle: null }, "Повар", locale), hygieneHealthPdfCopy(locale)("cook"));
+    assert.equal(hygieneHealthPdfPosition({ ...user, positionTitle: null }, "Сотрудник", locale), hygieneHealthPdfCopy(locale)("cook"));
     assert.equal(hygieneHealthPdfPosition({ ...user, role: "CUSTOM", positionTitle: null }, "custom", locale), "custom");
   }
 });

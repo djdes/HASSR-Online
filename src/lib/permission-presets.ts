@@ -155,7 +155,7 @@ const PRESET_LABELS: Record<PermissionPreset, string> = {
   admin: "Администратор",
   head_chef: "Заведующий / Шеф",
   control_group: "Контроль-группа",
-  cook: "Повар",
+  cook: "Сотрудник",
   waiter: "Официант",
   seller: "Продавец",
   cashier: "Кассир",

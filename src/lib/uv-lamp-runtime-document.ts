@@ -355,7 +355,7 @@ export function getUvResponsibleTitleOptions(
     // в выборке должности ответственного его не было видно как
     // management option.
     else if (user.role === "head_chef") management.add("Шеф-повар");
-    else if (user.role === "cook") staff.add("Повар");
+    else if (user.role === "cook") staff.add("Сотрудник");
     else if (user.role === "waiter") staff.add("Официант");
   }
   return { management: [...management], staff: [...staff] };

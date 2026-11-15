@@ -6914,7 +6914,7 @@
     "roleOwner": "Owner",
     "roleManager": "Manager",
     "roleChef": "Head chef",
-    "roleCook": "Cook",
+    "roleCook": "Employee",
     "roleWaiter": "Waiter",
     "deleteSelectedQuestion": "Delete the selected rows?",
     "deleteSelectedDescription": "{count, number} row(s) will be deleted and cannot be restored.",
@@ -8264,7 +8264,7 @@
       "positionPresetGeneric": "Same as the position",
       "preset": {
         "manager": "Same as a manager",
-        "cook": "Same as a cook",
+        "cook": "Like an employee",
         "cleaner": "Same as a cleaner",
         "intake": "Receiving and stock",
         "tech": "Technician and equipment"
@@ -8358,7 +8358,7 @@
           "description": "Sees journals, staff, reports and statistics, confirms completed work and assigns tasks. Does not fill anything in."
         },
         "cook": {
-          "label": "Cook",
+          "label": "Employee",
           "description": "Only their shift tasks in the app."
         },
         "waiter": {
@@ -8795,7 +8795,7 @@
     "roleLabels": {
       "manager": "Manager",
       "head_chef": "Head chef",
-      "cook": "Cook",
+      "cook": "Employee",
       "waiter": "Waiter",
       "owner": "Owner",
       "technologist": "Technologist",
@@ -9227,7 +9227,7 @@
     "roles": {
       "manager": "Manager",
       "head_chef": "Head chef",
-      "cook": "Cook",
+      "cook": "Employee",
       "waiter": "Waiter"
     },
     "errors": {
@@ -10857,7 +10857,7 @@
         "employeesDescription": "Quickly grant common journal bundles to employees in matching positions.",
         "positionsDescription": "Quickly assign journal bundles to matching positions. Positions are matched by part of their name.",
         "cleaning": "Cleaning → cleaners",
-        "temperature": "Temperature → cooks",
+        "temperature": "Temperature → employees",
         "health": "Health → everyone",
         "receiving": "Receiving → goods managers"
       },
@@ -11299,7 +11299,7 @@
     "roles": {
       "manager": "Manager",
       "head_chef": "Head chef",
-      "cook": "Cook",
+      "cook": "Employee",
       "waiter": "Waiter"
     },
     "errors": {
@@ -19779,7 +19779,7 @@
     "measureLine": "{day} {weekday}. - {measures}",
     "manager": "Manager",
     "head_chef": "Head chef",
-    "cook": "Cook",
+    "cook": "Employee",
     "waiter": "Waiter",
     "employeeFallback": "Employee"
   },
@@ -19937,7 +19937,7 @@
     "approvalDate": "{day} {month} {year}",
     "manager": "Manager",
     "head_chef": "Head chef",
-    "cook": "Cook",
+    "cook": "Employee",
     "waiter": "Waiter",
     "preliminary_bmi": "body mass index calculation based on anthropometry (height, body weight and waist circumference), for people aged 18 and older;",
     "periodic_bmi": "body mass index calculation based on anthropometry (height, body weight and waist circumference), performed for people aged 18 and older;",
@@ -20215,7 +20215,7 @@
     "checkedBy": "CHECKED BY:",
     "manager": "Manager",
     "head_chef": "Head chef",
-    "cook": "Cook",
+    "cook": "Employee",
     "waiter": "Waiter",
     "employee": "Employee",
     "description0": "Surfaces treated during disinfection: door handles, switches, walls, table surfaces, chair backs, menus, cash register, office equipment",
@@ -20297,7 +20297,7 @@
     "organization": "Organization",
     "manager": "Manager",
     "head_chef": "Head chef",
-    "cook": "Cook",
+    "cook": "Employee",
     "waiter": "Waiter",
     "planSection0": "GENERAL REQUIREMENTS",
     "planSection1": "SPECIAL REQUIREMENTS (CHECKED AT EVERY INTERNAL AUDIT)",
@@ -20422,7 +20422,7 @@
     "suspended": "suspended",
     "manager": "Manager",
     "head_chef": "Head chef",
-    "cook": "Cook",
+    "cook": "Employee",
     "waiter": "Waiter",
     "glassTitle": "List of glass and brittle plastic items",
     "glassHeading": "LIST OF GLASS AND BRITTLE PLASTIC ITEMS",
@@ -20852,7 +20852,7 @@
       "employee": "Employee",
       "manager": "Manager",
       "headChef": "Head chef",
-      "cook": "Cook",
+      "cook": "Employee",
       "waiter": "Waiter"
     }
   },

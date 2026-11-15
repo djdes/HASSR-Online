@@ -75,7 +75,8 @@ const ROLE_TO_LEGACY: Partial<Record<UserRole, string[]>> = {
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
   manager: "Управляющий",
   head_chef: "Шеф-повар",
-  cook: "Повар",
+  // Базовая роль сотрудника — не только кухня (15.11.2026: медцентр «почему повар везде?»).
+  cook: "Сотрудник",
   waiter: "Официант",
 };
 
@@ -159,7 +160,7 @@ export function getUserDisplayTitle(
  * подставляем: строку мог заполнить не ответственный документа.
  *
  * Сначала проверяем, что человек найден: `getUserDisplayTitle(undefined)`
- * вернул бы «Повар» (пустая роль нормализуется в cook).
+ * вернул бы «Сотрудник» (пустая роль нормализуется в cook).
  */
 export function getRowEmployeeTitle(
   user: Parameters<typeof getUserDisplayTitle>[0],

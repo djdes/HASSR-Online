@@ -6914,7 +6914,7 @@
     "roleOwner": "Rahbar",
     "roleManager": "Boshqaruvchi",
     "roleChef": "Bosh oshpaz",
-    "roleCook": "Oshpaz",
+    "roleCook": "Xodim",
     "roleWaiter": "Ofitsiant",
     "deleteSelectedQuestion": "Tanlangan qatorlar o‘chirilsinmi?",
     "deleteSelectedDescription": "{count, number} ta qator o‘chiriladi va ularni tiklab bo‘lmaydi.",
@@ -8264,7 +8264,7 @@
       "positionPresetGeneric": "Lavozimdagi kabi",
       "preset": {
         "manager": "Boshqaruvchidek",
-        "cook": "Oshpazdek",
+        "cook": "Xodimdagi kabi",
         "cleaner": "Farroshdek",
         "intake": "Qabul qilish va ombor",
         "tech": "Texnik va uskunalar"
@@ -8358,7 +8358,7 @@
           "description": "Jurnallar, xodimlar, hisobotlar va statistikani ko‘radi, bajarilganini tasdiqlaydi va vazifa beradi. O‘zi to‘ldirmaydi."
         },
         "cook": {
-          "label": "Oshpaz",
+          "label": "Xodim",
           "description": "Ilovada faqat o‘z smenasi vazifalari."
         },
         "waiter": {
@@ -8795,7 +8795,7 @@
     "roleLabels": {
       "manager": "Boshqaruvchi",
       "head_chef": "Bosh oshpaz",
-      "cook": "Oshpaz",
+      "cook": "Xodim",
       "waiter": "Ofitsiant",
       "owner": "Ega",
       "technologist": "Texnolog",
@@ -9227,7 +9227,7 @@
     "roles": {
       "manager": "Boshqaruvchi",
       "head_chef": "Bosh oshpaz",
-      "cook": "Oshpaz",
+      "cook": "Xodim",
       "waiter": "Ofitsiant"
     },
     "errors": {
@@ -10857,7 +10857,7 @@
         "employeesDescription": "Mos lavozimdagi xodimlarga odatiy jurnal to‘plamlarini tezda bering.",
         "positionsDescription": "Mos lavozimlarga jurnal to‘plamlarini tezda tayinlang. Lavozim nomining bir qismi bo‘yicha moslik aniqlanadi.",
         "cleaning": "Tozalash → farroshlarga",
-        "temperature": "Harorat → oshpazlarga",
+        "temperature": "Harorat → xodimlarga",
         "health": "Salomatlik → barchaga",
         "receiving": "Qabul qilish → tovarshunoslarga"
       },
@@ -11299,7 +11299,7 @@
     "roles": {
       "manager": "Boshqaruvchi",
       "head_chef": "Bosh oshpaz",
-      "cook": "Oshpaz",
+      "cook": "Xodim",
       "waiter": "Ofitsiant"
     },
     "errors": {
@@ -19779,7 +19779,7 @@
     "measureLine": "{day} {weekday}. - {measures}",
     "manager": "Boshqaruvchi",
     "head_chef": "Bosh oshpaz",
-    "cook": "Oshpaz",
+    "cook": "Xodim",
     "waiter": "Ofitsiant",
     "employeeFallback": "Xodim"
   },
@@ -19937,7 +19937,7 @@
     "approvalDate": "{year}-yil {day}-{month}",
     "manager": "Boshqaruvchi",
     "head_chef": "Bosh oshpaz",
-    "cook": "Oshpaz",
+    "cook": "Xodim",
     "waiter": "Ofitsiant",
     "preliminary_bmi": "antropometriya (boʻy, tana vazni va bel aylanasini oʻlchash) asosida tana massasi indeksini hisoblash; 18 yosh va undan kattalar oʻtadi;",
     "periodic_bmi": "antropometriya (boʻy, tana vazni va bel aylanasini oʻlchash) asosida tana massasi indeksini hisoblash; 18 yosh va undan kattalar uchun oʻtkaziladi;",
@@ -20215,7 +20215,7 @@
     "checkedBy": "TEKSHIRDI:",
     "manager": "Boshqaruvchi",
     "head_chef": "Bosh oshpaz",
-    "cook": "Oshpaz",
+    "cook": "Xodim",
     "waiter": "Ofitsiant",
     "employee": "Xodim",
     "description0": "Dezinfeksiya qilinadigan yuzalar: eshik tutqichlari, oʻchirgichlar, devorlar, stol yuzalari, stul suyanchiqlari, menyular, kassa apparati, ofis texnikasi",
@@ -20297,7 +20297,7 @@
     "organization": "Tashkilot",
     "manager": "Boshqaruvchi",
     "head_chef": "Bosh oshpaz",
-    "cook": "Oshpaz",
+    "cook": "Xodim",
     "waiter": "Ofitsiant",
     "planSection0": "UMUMIY TALABLAR",
     "planSection1": "ALOHIDA TALABLAR (HAR BIR ICHKI AUDITDA TEKSHIRILADI)",
@@ -20422,7 +20422,7 @@
     "suspended": "chetlashtirilgan",
     "manager": "Boshqaruvchi",
     "head_chef": "Bosh oshpaz",
-    "cook": "Oshpaz",
+    "cook": "Xodim",
     "waiter": "Ofitsiant",
     "glassTitle": "Shisha va moʻrt plastik buyumlar roʻyxati",
     "glassHeading": "SHISHA VA MOʻRT PLASTIK BUYUMLAR ROʻYXATI",
@@ -20852,7 +20852,7 @@
       "employee": "Xodim",
       "manager": "Boshqaruvchi",
       "headChef": "Bosh oshpaz",
-      "cook": "Oshpaz",
+      "cook": "Xodim",
       "waiter": "Ofitsiant"
     }
   },

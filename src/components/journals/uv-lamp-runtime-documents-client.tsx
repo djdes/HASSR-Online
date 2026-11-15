@@ -370,7 +370,7 @@ export function UvLampRuntimeDocumentsClient(props: Props) {
           const titleKey = document.responsibleTitle === "Руководитель" ? "roleOwner"
             : document.responsibleTitle === "Управляющий" ? "roleManager"
             : document.responsibleTitle === "Шеф-повар" ? "roleChef"
-            : document.responsibleTitle === "Повар" ? "roleCook"
+            : document.responsibleTitle === "Повар" || document.responsibleTitle === "Сотрудник" ? "roleCook"
             : document.responsibleTitle === "Официант" ? "roleWaiter"
             : null;
           const displayResponsibleTitle = titleKey ? t(titleKey) : document.responsibleTitle;

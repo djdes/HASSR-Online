@@ -180,7 +180,7 @@ function UvPositionSelectItems({ users }: { users: UserItem[] }) {
     const key = value === "Руководитель" ? "roleOwner"
       : value === "Управляющий" ? "roleManager"
       : value === "Шеф-повар" ? "roleChef"
-      : value === "Повар" ? "roleCook"
+      : value === "Повар" || value === "Сотрудник" ? "roleCook"
       : value === "Официант" ? "roleWaiter"
       : null;
     return key ? t(key) : value;
