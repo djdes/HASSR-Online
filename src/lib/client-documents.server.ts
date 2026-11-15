@@ -15,6 +15,7 @@ import { listProposalPromoOptions, resolveProposalForm, type ProposalPromoOption
 import { isProposalSphere } from "@/lib/proposal/spheres";
 import type { ProposalPlan, ProposalSender, ProposalVars } from "@/lib/proposal/types";
 import { loadClientContacts } from "@/lib/root-client-card.server";
+import { loadPackageCandidates, type PackageCandidates } from "@/lib/client-documents-package.server";
 import { isTechnicalEmail } from "@/lib/technical-email";
 import { isBillingCycle, isPaidTier, normalizePoints, type BillingCycle, type PaidTier, type PlanRates } from "@/lib/tariff-plans";
 import { readPlanPricing } from "@/lib/tariffs";
@@ -102,10 +103,12 @@ export type ClientDocumentsContext = {
     latest: { id: number; amountRub: number; status: string; createdAt: string; tariffKey: string } | null;
   };
   contract: { number: string; status: string; date: string } | null;
+  /** Что можно отправить пакетом: действующий договор и неотменённый счёт. */
+  package: PackageCandidates;
 };
 
 export async function loadClientDocumentsContext(organizationId: string, session: Session): Promise<ClientDocumentsContext | null> {
-  const [org, block, contacts, viewer, requisites, pricing, latestInvoice, latestContract, lastProposal, promoOptions, sender] = await Promise.all([
+  const [org, block, contacts, viewer, requisites, pricing, latestInvoice, latestContract, lastProposal, promoOptions, sender, packageCandidates] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, account: { select: { subscriptionPlan: true, planCycle: true, planPoints: true } } },
@@ -124,6 +127,7 @@ export async function loadClientDocumentsContext(organizationId: string, session
     db.auditLog.findFirst({ where: { organizationId, action: CLIENT_PROPOSAL_AUDIT }, orderBy: { createdAt: "desc" }, select: { createdAt: true, userName: true } }),
     listProposalPromoOptions().catch(() => []),
     staffSender(session.user.id),
+    loadPackageCandidates(organizationId),
   ]);
   if (!org || !block) return null;
   const companyName = block.org.shortName;
@@ -159,6 +163,7 @@ export async function loadClientDocumentsContext(organizationId: string, session
         : null,
     },
     contract: latestContract ? { number: latestContract.number, status: latestContract.status, date: latestContract.issuedAt.toISOString().slice(0, 10) } : null,
+    package: packageCandidates,
   };
 }
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Check, Download, FileSignature, Loader2, Plus, Presentation, Receipt, Send, X } from "lucide-react";
+import { Check, Download, FileSignature, FolderOpen, Loader2, Plus, Presentation, Receipt, Send, X } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -15,6 +15,7 @@ import {
   type DocumentRecipientSource,
 } from "@/lib/client-documents";
 import type { ClientDocumentsContext } from "@/lib/client-documents.server";
+import { defaultPackageMessage, defaultPackageSubject, type PackageDocKind } from "@/lib/client-documents-package";
 import { planPeriodPriceRub, type BillingCycle, type PaidTier } from "@/lib/tariff-plans";
 
 /**
@@ -63,7 +64,7 @@ export function ClientDocumentsPanel({ initial }: { initial: ClientDocumentsCont
   const locale = useLocale();
   const router = useRouter();
   const [ctx] = useState(initial);
-  const [dialog, setDialog] = useState<null | "proposal" | "invoice">(null);
+  const [dialog, setDialog] = useState<null | "proposal" | "invoice" | "package">(null);
   const rub = useMemo(() => new Intl.NumberFormat(locale === "uz" ? "uz-Latn" : locale, { style: "currency", currency: "RUB", maximumFractionDigits: 0 }), [locale]);
   const date = useMemo(() => new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn" : locale, { day: "2-digit", month: "2-digit", year: "numeric" }), [locale]);
   const fmtDate = (value: string) => date.format(new Date(value.length === 10 ? `${value}T12:00:00Z` : value));
@@ -79,9 +80,15 @@ export function ClientDocumentsPanel({ initial }: { initial: ClientDocumentsCont
 
   return (
     <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6" data-testid="client-documents">
-      <div className="mb-4">
-        <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("title")}</h2>
-        <p className="mt-1 text-[13.5px] leading-[1.55] text-[#6f7282]">{t("subtitle")}</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("title")}</h2>
+          <p className="mt-1 text-[13.5px] leading-[1.55] text-[#6f7282]">{t("subtitle")}</p>
+        </div>
+        <button type="button" className={PRIMARY} onClick={() => setDialog("package")} data-testid="package-open" title={t("package.hint")}>
+          <FolderOpen className="size-4" />
+          {t("package.action")}
+        </button>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         <Tile
@@ -139,6 +146,7 @@ export function ClientDocumentsPanel({ initial }: { initial: ClientDocumentsCont
       </div>
 
       {dialog === "proposal" ? <ProposalDialog t={t} ctx={ctx} base={base} onClose={() => setDialog(null)} onSent={() => router.refresh()} /> : null}
+      {dialog === "package" ? <PackageDialog t={t} ctx={ctx} base={base} rub={rub} fmtDate={fmtDate} onClose={() => setDialog(null)} onSent={() => router.refresh()} /> : null}
       {dialog === "invoice" ? (
         <InvoiceDialog t={t} ctx={ctx} base={base} rub={rub} onClose={() => setDialog(null)} onChanged={() => router.refresh()} />
       ) : null}
@@ -621,6 +629,130 @@ function InvoiceDialog({
         </a>
         <RecipientPicker t={t} state={recipients} />
         <MailFields t={t} subject={subject} message={message} setSubject={setSubject} setMessage={setMessage} personal={ctx.proposal.sender.personalMailbox} />
+      </div>
+    </ConfirmDialog>
+  );
+}
+
+/**
+ * Пакет документов по запросу клиента (15.11.2026): договор, счёт и карточка
+ * реквизитов БФС — одним письмом. По умолчанию отмечено всё, что есть, и
+ * получатели карточки; текст письма собирается из выбранного, пока его не правили.
+ */
+function PackageDialog({
+  t,
+  ctx,
+  base,
+  rub,
+  fmtDate,
+  onClose,
+  onSent,
+}: {
+  t: Translator;
+  ctx: ClientDocumentsContext;
+  base: string;
+  rub: Intl.NumberFormat;
+  fmtDate: (value: string) => string;
+  onClose: () => void;
+  onSent: () => void;
+}) {
+  const { contract, invoice } = ctx.package;
+  const [docs, setDocs] = useState<Record<PackageDocKind, boolean>>({ contract: Boolean(contract), invoice: Boolean(invoice), requisites: true });
+  const [plain, setPlain] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const recipients = useRecipients(ctx.recipients);
+  const chosen = (Object.keys(docs) as PackageDocKind[]).filter((kind) => docs[kind]);
+  const autoMessage = defaultPackageMessage({ companyName: ctx.companyName, docs: chosen, contract, invoice });
+  const [subject, setSubject] = useState(defaultPackageSubject(ctx.companyName));
+  const [message, setMessage] = useState<string | null>(null);
+  const text = message ?? autoMessage;
+
+  async function send() {
+    setBusy(true);
+    try {
+      const to = recipientsToSend(recipients);
+      const response = await fetch(`${base}/documents-package`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docs: chosen, to, subject, message: text, plain }),
+      });
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; sentTo?: string[]; files?: string[]; via?: "personal" | "system"; from?: string | null; fallbackReason?: string | null } | null;
+      if (response.ok && data?.ok) {
+        toast.success(t("package.sent", { count: data.files?.length ?? chosen.length, emails: (data.sentTo ?? to).join(", ") }), { description: viaDescription(t, data) });
+        onClose();
+        onSent();
+        return;
+      }
+      toast.error(data?.error || t("package.failed"));
+    } catch {
+      toast.error(t("package.failed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const items: Array<{ kind: PackageDocKind; title: string; detail: string; available: boolean }> = [
+    {
+      kind: "contract",
+      title: t("package.docs.contract"),
+      detail: contract ? t("package.docs.contractDetail", { number: contract.number, date: fmtDate(contract.date) }) : t("package.docs.contractMissing"),
+      available: Boolean(contract),
+    },
+    {
+      kind: "invoice",
+      title: t("package.docs.invoice"),
+      detail: invoice ? t("package.docs.invoiceDetail", { number: String(invoice.id), amount: rub.format(invoice.amountRub) }) : t("package.docs.invoiceMissing"),
+      available: Boolean(invoice),
+    },
+    { kind: "requisites", title: t("package.docs.requisites"), detail: t("package.docs.requisitesDetail"), available: true },
+  ];
+
+  return (
+    <ConfirmDialog
+      open
+      onClose={onClose}
+      onConfirm={send}
+      variant="info"
+      icon={FolderOpen}
+      title={t("package.dialogTitle", { company: ctx.companyName })}
+      description={t("package.dialogDescription")}
+      cancelLabel={t("cancel")}
+      confirmLabel={busy ? t("package.sending") : t("package.confirm", { count: chosen.length })}
+      confirmDisabled={busy || chosen.length === 0 || recipientsToSend(recipients).length === 0 || !subject.trim() || !text.trim()}
+    >
+      <div className="space-y-4" data-testid="package-dialog">
+        <div className="space-y-2">
+          {items.map((item) => (
+            <label
+              key={item.kind}
+              className={`flex items-start gap-3 rounded-2xl border p-3.5 transition-colors duration-150 ${
+                item.available ? "cursor-pointer border-[#ececf4] bg-white hover:border-[#5566f6]/40" : "border-dashed border-[#dcdfed] bg-[#fafbff] opacity-70"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={docs[item.kind] && item.available}
+                disabled={!item.available}
+                onChange={(event) => setDocs((prev) => ({ ...prev, [item.kind]: event.target.checked }))}
+                className="mt-0.5 size-4 accent-[#5566f6]"
+                data-testid={`package-doc-${item.kind}`}
+              />
+              <span className="min-w-0">
+                <span className="block text-[14px] font-medium text-[#0b1024]">{item.title}</span>
+                <span className="block text-[12.5px] text-[#6f7282]">{item.detail}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[#f5f6ff] p-3.5">
+          <input type="checkbox" checked={plain} onChange={(event) => setPlain(event.target.checked)} className="mt-0.5 size-4 accent-[#5566f6]" data-testid="package-plain" />
+          <span>
+            <span className="block text-[14px] font-medium text-[#0b1024]">{t("package.plain")}</span>
+            <span className="block text-[12.5px] text-[#6f7282]">{t("package.plainHint")}</span>
+          </span>
+        </label>
+        <RecipientPicker t={t} state={recipients} />
+        <MailFields t={t} subject={subject} message={text} setSubject={setSubject} setMessage={setMessage} personal={ctx.proposal.sender.personalMailbox} />
       </div>
     </ConfirmDialog>
   );

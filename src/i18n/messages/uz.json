@@ -31296,6 +31296,28 @@
     },
     "errors": {
       "generic": "Nimadir xato ketdi — qaytadan urinib koʻring"
+    },
+    "package": {
+      "action": "Hujjatlar to‘plamini yuborish",
+      "hint": "Shartnoma, hisob va rekvizitlar — mijoz so‘rovi bo‘yicha bitta xatda",
+      "dialogTitle": "{company} uchun hujjatlar to‘plami",
+      "dialogDescription": "Pochtangizdan bitta xat: tanlangan hujjatlar ilovada (PDF).",
+      "confirm": "{count, plural, one {# hujjat} other {# hujjat}} yuborish",
+      "sending": "Yuborilmoqda…",
+      "sent": "To‘plam yuborildi: {count, plural, one {# hujjat} other {# hujjat}} → {emails}",
+      "failed": "To‘plamni yuborib bo‘lmadi — qayta urinib ko‘ring",
+      "plain": "Faksimile va muhrsiz",
+      "plainHint": "Qo‘lda imzolash uchun hujjatlar — BFS imzosi va muhrisiz.",
+      "docs": {
+        "contract": "Shartnoma",
+        "contractDetail": "№ {number}, {date}",
+        "contractMissing": "Hali chiqarilmagan — quyidagi «Shartnoma» blokida chiqaring",
+        "invoice": "To‘lov hisobi",
+        "invoiceDetail": "№ {number}, {amount}",
+        "invoiceMissing": "Hisob yo‘q — «To‘lov hisobi»da chiqaring",
+        "requisites": "«BFS» MChJ kartochkasi",
+        "requisitesDetail": "Buxgalteriya uchun rekvizitlar: STIR, OGRN, bank, manzil"
+      }
     }
   },
   "supplyEdo": {

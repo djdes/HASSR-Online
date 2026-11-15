@@ -9,7 +9,7 @@ test("defaults require absent original properties; explicit identical labels rem
     for (const source of [{ examinations: ["Гинеколог"] }, { examinations: [] }, { examinations: null }]) assert.equal(personnelMedColumn("examinations", "Гинеколог", source, locale), "Гинеколог");
     assert.equal(personnelPlanTopic({ id: "kkt", name: "ККТ" }, {}, locale), t("kkt"));
     assert.equal(personnelPlanTopic({ id: "kkt", name: "ККТ" }, { topics: [] }, locale), "ККТ");
-    assert.equal(personnelPlanPosition({ id: "row-2", positionName: "Повар" }, {}, locale), t("cook"));
+    assert.equal(personnelPlanPosition({ id: "row-2", positionName: "Сотрудник" }, {}, locale), t("cook"));
     assert.equal(personnelPlanPosition({ id: "custom", positionName: "Повар" }, {}, locale), "Повар");
     assert.equal(personnelInjectedRole("Управляющий", "approveRole", {}, null, "manager", locale), t("manager"));
     assert.equal(personnelInjectedRole("Управляющий", "approveRole", { approveRole: "Управляющий" }, null, "manager", locale), "Управляющий");
@@ -19,7 +19,7 @@ test("defaults require absent original properties; explicit identical labels rem
 });
 test("role fallback requires matched person without custom position, including identical labels", () => {
   for (const locale of ["ru", "en", "uz"] as const) {
-    assert.equal(personnelRole("Повар", { role: "cook" }, locale), personnelPdfCopy(locale)("cook"));
+    assert.equal(personnelRole("Сотрудник", { role: "cook" }, locale), personnelPdfCopy(locale)("cook"));
     assert.equal(personnelRole("Повар", { role: "cook", positionTitle: "Повар" }, locale), "Повар");
     assert.equal(personnelRole("Повар", { role: "cook", jobPosition: { name: "Повар" } }, locale), "Повар");
     assert.equal(personnelRole("Повар", undefined, locale), "Повар");

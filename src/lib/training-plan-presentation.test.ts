@@ -109,14 +109,14 @@ test("month display keeps 12 native values; RU approval date matches the origina
 test("native staff labels translate enum prefix and unnamed fallback without translating literal names", () => {
   const user = { id: "x", role: "cook", name: "Повар" };
   const display = buildTrainingRoleDisplay([user]);
-  assert.equal(presentTrainingStaffOption("Повар - Повар", user, display, copy, "unnamed"), "cook:{} - Повар");
-  assert.equal(presentTrainingStaffOption("Повар - без имени", { ...user, name: "без имени" }, display, copy, "unnamed"), "cook:{} - без имени");
-  assert.equal(presentTrainingStaffOption("Повар - без имени", { ...user, name: "" }, display, copy, "unnamed"), "cook:{} - unnamed");
-  assert.equal(presentTrainingStaffOption("Повар - без имени", { ...user, name: "owner@example.org" }, display, copy, "unnamed"), "cook:{} - unnamed");
+  assert.equal(presentTrainingStaffOption("Сотрудник - Повар", user, display, copy, "unnamed"), "cook:{} - Повар");
+  assert.equal(presentTrainingStaffOption("Сотрудник - без имени", { ...user, name: "без имени" }, display, copy, "unnamed"), "cook:{} - без имени");
+  assert.equal(presentTrainingStaffOption("Сотрудник - без имени", { ...user, name: "" }, display, copy, "unnamed"), "cook:{} - unnamed");
+  assert.equal(presentTrainingStaffOption("Сотрудник - без имени", { ...user, name: "owner@example.org" }, display, copy, "unnamed"), "cook:{} - unnamed");
   const custom = { ...user, jobPosition: { name: "Повар" } };
   assert.equal(presentTrainingStaffOption("Повар - Повар", custom, buildTrainingRoleDisplay([custom]), copy, "unnamed"), "Повар - Повар");
   let reads = 0;
   const unsafe = Object.defineProperty({ ...user }, "name", { get() { reads++; return ""; } });
-  assert.equal(presentTrainingStaffOption("Повар - без имени", unsafe, display, copy, "unnamed"), "Повар - без имени");
+  assert.equal(presentTrainingStaffOption("Сотрудник - без имени", unsafe, display, copy, "unnamed"), "Сотрудник - без имени");
   assert.equal(reads, 0);
 });

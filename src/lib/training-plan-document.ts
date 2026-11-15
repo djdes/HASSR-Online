@@ -50,7 +50,7 @@ function buildDefaultRows(year: number): TrainingPositionRow[] {
     },
     {
       id: "row-2",
-      positionName: "Повар",
+      positionName: "Сотрудник",
       cells: {
         kkt: { required: true, date: `02.${yy}` },
         sanitation: { required: false, date: "" },

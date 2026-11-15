@@ -31296,6 +31296,28 @@
     },
     "errors": {
       "generic": "Something went wrong — please try again"
+    },
+    "package": {
+      "action": "Send document package",
+      "hint": "Contract, invoice and company details — one email on the client's request",
+      "dialogTitle": "Document package for {company}",
+      "dialogDescription": "One email from your mailbox: the selected documents are attached (PDF).",
+      "confirm": "Send {count, plural, one {# document} other {# documents}}",
+      "sending": "Sending…",
+      "sent": "Package sent: {count, plural, one {# document} other {# documents}} → {emails}",
+      "failed": "Could not send the package — try again",
+      "plain": "Without facsimile and stamp",
+      "plainHint": "Documents to sign by hand — without the BFS signature and stamp.",
+      "docs": {
+        "contract": "Contract",
+        "contractDetail": "No. {number} of {date}",
+        "contractMissing": "Not issued yet — issue it in the «Contract» block below",
+        "invoice": "Invoice",
+        "invoiceDetail": "No. {number} for {amount}",
+        "invoiceMissing": "No invoice — issue one in «Invoice»",
+        "requisites": "BFS LLC company card",
+        "requisitesDetail": "Details for accounting: TIN, OGRN, bank, address"
+      }
     }
   },
   "supplyEdo": {
