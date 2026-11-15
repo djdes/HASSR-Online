@@ -118,6 +118,16 @@ export function findTopic(key: string, topics: readonly AutopostTopic[] = allTop
 
 export const POST_TEXT_LIMIT = 900;
 
+// Apply to both scene planning and the final image request, including old prompts.
+const FOOD_SAFETY_IMAGE_RULES = [
+  "Food-safety requirements are mandatory and override conflicting details in the scene description.",
+  "No potted plants, houseplants, decorative greenery (including artificial plants), flowers, bouquets, vases, or herbs growing in pots or soil in food-preparation, production, or food-storage areas, including windowsills, shelves, and worktops.",
+  "Edible herbs and vegetables may appear only as food ingredients in clean food-grade containers, never growing in soil.",
+  "Use clean, washable work surfaces and keep raw ingredients separate from ready-to-eat food.",
+  "Show staff in clean work clothing with hair fully covered; no jewelry or loose hair near food.",
+  "No home-kitchen decor, pets, or personal belongings on food work surfaces.",
+].join(" ");
+
 /** Задание модели: пост и запрос на картинку одним JSON. */
 export function buildTextInstructions(): string {
   return [
@@ -132,6 +142,7 @@ export function buildTextInstructions(): string {
     "- никаких ссылок и адресов в тексте — ссылку даст кнопка под постом;",
     "- факты, цифры и нормы — только из материала ниже; ничего не выдумывай (штрафов, сроков, номеров пунктов, которых нет в материале).",
     "Ещё придумай запрос для фото к посту на английском: реалистичная фотография по теме поста (профессиональная кухня, повар, склад, холодильник, лаборатория — что подходит), без людей крупным планом, без текста, надписей, логотипов и водяных знаков.",
+    `Обязательные требования к сцене: соблюдай их и включи в imagePrompt. ${FOOD_SAFETY_IMAGE_RULES}`,
     'Ответ — только JSON без пояснений: {"text": "текст поста", "imagePrompt": "photo prompt in English"}',
   ].join("\n");
 }
@@ -167,12 +178,14 @@ export function parseGeneratedPost(raw: string): GeneratedPost | null {
 }
 
 /** Стиль картинки поверх запроса модели — единый для всех постов. */
-export function buildImagePrompt(topic: AutopostTopic, modelPrompt: string): string {
+export function buildImagePrompt(topic: Pick<AutopostTopic, "title">, modelPrompt: string): string {
   return [
-    modelPrompt,
-    `Topic: ${topic.title} (food safety, HACCP, Russian catering).`,
+    // Keep mandatory rules before variable content: the gateway truncates at 8,000 characters.
+    FOOD_SAFETY_IMAGE_RULES,
     "Style: high-quality realistic photography, natural light, clean and bright, soft indigo (#5566f6) accents where natural.",
     "Strictly no text, letters, numbers, labels, logos or watermarks anywhere in the image.",
+    `Topic: ${topic.title} (food safety, HACCP, Russian catering).`,
+    `Scene suggestion (discard any conflicting details): ${modelPrompt.trim() || "A clean professional restaurant kitchen."}`,
   ].join(" ");
 }
 

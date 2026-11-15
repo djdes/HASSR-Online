@@ -1,0 +1,69 @@
+{
+  "task": "autopost-images-sanitary-20261115",
+  "checkedAt": "2026-11-15T07:39:58.652Z",
+  "phase": "pre-deployment",
+  "verdict": "DELIVERY_PENDING",
+  "verifiedHead": "ba0677a74aac9e0c078363acc03d690be26308dd",
+  "source": [
+    {
+      "file": "src/lib/channel-autopost/topics.ts",
+      "sha256": "27feb8f24255f66fb561d989eb1657d394bc139d8a6969e6a2984106d63a5418"
+    },
+    {
+      "file": "src/lib/channel-autopost/topics.test.ts",
+      "sha256": "f146cf87149f87af1ceee7b3ce49e26f8bbe46c31439a855ac447780812d6184"
+    },
+    {
+      "file": "src/lib/channel-autopost/service.server.ts",
+      "sha256": "accf0f081fa86595a2f23f21e7393bd631dd34c5ae0c96ec3b2d979860adf337"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": "raw/prompts.json and raw/prompt-review.json: plant exclusions, permitted food herbs and hygienic scene requirements"
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": "raw/prompt-review.json: both prompt stages, old/empty scenes, missing topic and 8,000-character gateway boundary; image-job wrapper has no bypass"
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": [
+        {
+          "name": "focused",
+          "status": "PASS",
+          "log": "raw/focused.log"
+        },
+        {
+          "name": "test-gate",
+          "status": "PASS",
+          "log": "raw/test-gate.log"
+        },
+        {
+          "name": "lint",
+          "status": "PASS",
+          "log": "raw/lint.log"
+        },
+        {
+          "name": "typecheck",
+          "status": "PASS",
+          "log": "raw/typecheck.log"
+        }
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PENDING",
+      "evidence": "PR merge and live deployment verification follow these local checks."
+    }
+  ],
+  "limitation": "Verifies prompt construction only; no image job, generated-pixel inspection, database change or publication is performed.",
+  "fixes": [
+    "Mandatory requirements moved before variable scene content to survive gateway truncation.",
+    "Seven verified corrupted files restored from HEAD only in the isolated checkout; no additional product diff. Initial failure and successful repair are preserved."
+  ]
+}
