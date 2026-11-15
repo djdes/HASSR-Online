@@ -17418,7 +17418,8 @@ export type MessageContract = {
       "documents": "Документы",
       "billing": "Подписка и оплаты",
       "people": "Сотрудники",
-      "security": "Входы"
+      "security": "Входы",
+      "conversations": "Переписки"
     },
     "contacts": {
       "title": "Как связаться",

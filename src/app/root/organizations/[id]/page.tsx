@@ -28,6 +28,8 @@ import { isTopupOrder } from "@/lib/balance/topup-core";
 import { ClientDocumentsSection } from "@/components/root/client-documents-section";
 import { EdoSendButton } from "@/components/root/edo-send-button";
 import { ClientEmails } from "@/components/root/client-emails";
+import { ClientConversations } from "@/components/root/client-conversations";
+import { loadClientConversations } from "@/lib/client-conversations.server";
 import { clientEmailHistory } from "@/lib/client-email.server";
 import { listEmailSenders } from "@/lib/email-sender-access.server";
 import { clientDocumentRecipients } from "@/lib/client-documents";
@@ -101,6 +103,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
   const canBill = canUsePlatformSection(viewer, "billing");
   // «В ЭДО» (Saby) — у кого есть раздел ЭДО.
   const canEdo = canUsePlatformSection(viewer, "edo");
+  // «Переписки» — лента CRM (письма, звонки с записью, мессенджеры): у кого есть раздел CRM.
+  const canCrm = canUsePlatformSection(viewer, "crm");
+  const conversations = canCrm ? await loadClientConversations(id, contacts) : null;
   // Ответственный менеджер: закрепляет тот, кто видит всех клиентов (РОП, директор, админ).
   const canAssignManager = canAccessPlatformPath(viewer, `/api/root/organizations/${org.id}/manager`, "PUT");
   const { current: accountManager, options: managerOptions } = await loadAccountManagerView(org.accountManagerId, canAssignManager);
@@ -228,7 +233,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         {/* Навигация по карточке: всё на одной странице, разделы — якорями. */}
         <nav aria-label={t("nav.label")} className="sticky top-0 z-20 -mx-4 overflow-x-auto border-b border-[#ececf4] bg-[#f4f5fb]/95 px-4 py-2 backdrop-blur sm:-mx-8 sm:px-8">
           <div className="flex gap-1.5">
-            {(["contacts", "emails", "documents", "billing", "people", "security"] as const).map((key) => (
+            {(canCrm ? (["contacts", "conversations", "emails", "documents", "billing", "people", "security"] as const) : (["contacts", "emails", "documents", "billing", "people", "security"] as const)).map((key) => (
               <a key={key} href={`#${key}`} className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-[#3c4053] transition-colors duration-150 hover:bg-white hover:text-[#3848c7]">
                 {t(`nav.${key}`)}
               </a>
@@ -317,6 +322,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
+
+        {conversations ? <ClientConversations data={conversations} /> : null}
 
         <ClientEmails
           organizationId={id}
