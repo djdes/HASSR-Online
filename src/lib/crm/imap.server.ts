@@ -9,6 +9,8 @@ import { classifyIncomingMail, type MailHeaders } from "@/lib/crm/mail-filter";
 import { htmlToText, stripQuotedReply, truncateBody } from "@/lib/crm/mail-text";
 import type { CrmIngestItem } from "@/lib/crm/sources";
 import { isAllowedSmtpHost, isPrivateIp } from "@/lib/platform-mail";
+import { db } from "@/lib/db";
+import { isTrustedPrivateImapAddress, TRUSTED_SMTP_HOSTS_SETTING } from "@/lib/smtp-host-policy";
 
 /**
  * Почта CRM по IMAP: imapflow (postalsys/imapflow) читает папки по UID,
@@ -189,8 +191,8 @@ export async function syncMailFolder(
 
 export class CrmMailError extends Error {}
 
-/** Имя сервера → публичный IP (внутренние адреса запрещены, как у SMTP «Моей почты»). */
-async function resolvePublicImapHost(host: string): Promise<string> {
+/** Pin one DNS answer; an operator may allow an exact owned LAN mail server. */
+async function resolveImapAddress(host: string, port: number, secure: boolean): Promise<string> {
   if (!isAllowedSmtpHost(host)) throw new CrmMailError("Такой адрес IMAP-сервера не подходит");
   let found: { address: string }[];
   try {
@@ -199,7 +201,13 @@ async function resolvePublicImapHost(host: string): Promise<string> {
     throw new CrmMailError("Такого IMAP-сервера нет — проверьте адрес");
   }
   if (!found.length) throw new CrmMailError("Такого IMAP-сервера нет — проверьте адрес");
-  if (found.some((item) => isPrivateIp(item.address))) throw new CrmMailError("Адрес ведёт во внутреннюю сеть — укажите внешний IMAP-сервер");
+  const privateAddresses = found.filter((item) => isPrivateIp(item.address));
+  if (privateAddresses.length) {
+    const policy = await db.platformSetting.findUnique({ where: { key: TRUSTED_SMTP_HOSTS_SETTING }, select: { value: true } });
+    if (privateAddresses.some(item => !isTrustedPrivateImapAddress(host, item.address, port, secure, policy?.value ?? null))) {
+      throw new CrmMailError("Адрес ведёт во внутреннюю сеть — укажите внешний IMAP-сервер");
+    }
+  }
   return found[0].address;
 }
 
@@ -219,13 +227,14 @@ export function describeImapError(error: unknown): string {
 export type ImapConfig = { host: string; port: number; secure: boolean; username: string; password: string };
 
 export async function openImapSession(config: ImapConfig): Promise<MailSession> {
-  const address = await resolvePublicImapHost(config.host);
+  const address = await resolveImapAddress(config.host, config.port, config.secure);
   const client = new ImapFlow({
     host: address,
     port: config.port,
     secure: config.secure,
+    doSTARTTLS: config.secure ? undefined : true,
     servername: config.host,
-    tls: { servername: config.host },
+    tls: { servername: config.host, rejectUnauthorized: true },
     auth: { user: config.username, pass: config.password },
     logger: false,
     disableAutoIdle: true,
@@ -235,7 +244,12 @@ export async function openImapSession(config: ImapConfig): Promise<MailSession> 
   });
   // Без обработчика ошибка сокета после подключения уронила бы процесс.
   client.on("error", (error: unknown) => console.error("[crm] IMAP:", describeImapError(error)));
-  await client.connect();
+  try {
+    await client.connect();
+  } catch (error) {
+    client.close();
+    throw error;
+  }
   return {
     async openFolder(path) {
       const lock = await client.getMailboxLock(path, { readOnly: true });
