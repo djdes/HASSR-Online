@@ -9,10 +9,8 @@ function isLanAddress(value: unknown): value is string {
   return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
 }
 
-/** An exact hostname/IP exception for an owned mail server behind NAT. */
-export function isTrustedPrivateSmtpAddress(host: string, address: string, port: number, secure: boolean, raw: string | null) {
-  // No plaintext SMTP, loopback, link-local/metadata, wildcards or CIDRs.
-  if (port !== 587 || secure || !isLanAddress(address) || !raw) return false;
+function isTrustedHostAddress(host: string, address: string, raw: string | null) {
+  if (!isLanAddress(address) || !raw) return false;
   const name = host.trim().toLowerCase();
   if (!/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/.test(name)) return false;
   try {
@@ -21,4 +19,14 @@ export function isTrustedPrivateSmtpAddress(host: string, address: string, port:
     const allowed = (policy as Record<string, unknown>)[name];
     return Array.isArray(allowed) && allowed.length > 0 && allowed.length <= 8 && allowed.every(isLanAddress) && allowed.includes(address);
   } catch { return false; }
+}
+
+/** Exact owned-host exception for SMTP with required STARTTLS only. */
+export function isTrustedPrivateSmtpAddress(host: string, address: string, port: number, secure: boolean, raw: string | null) {
+  return port === 587 && !secure && isTrustedHostAddress(host, address, raw);
+}
+
+/** Same operator-owned mail host, independently restricted to IMAP STARTTLS. */
+export function isTrustedPrivateImapAddress(host: string, address: string, port: number, secure: boolean, raw: string | null) {
+  return port === 143 && !secure && isTrustedHostAddress(host, address, raw);
 }
