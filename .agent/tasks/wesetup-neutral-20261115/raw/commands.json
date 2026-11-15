@@ -1,0 +1,22 @@
+{
+  "cwd": "repository task checkout",
+  "commands": {
+    "typecheck-release": "npm run typecheck",
+    "gate-master-v2": "npm run test:gate",
+    "i18n-final": "npm run i18n:check",
+    "focused": "node --import tsx --test src/components/brand/logo.test.ts src/components/landing/qr-player/qr-player.test.ts",
+    "lint-final": "npx eslint 'src/app/(auth)/login/page.tsx' src/app/og/english/route.tsx src/app/page.tsx src/components/auth/compliance-badges.tsx src/components/landing/qr-player/chapters.ts src/components/landing/qr-player/scene.tsx src/content/features.ts src/i18n/message-contract.d.ts",
+    "lint-supplement": "npx eslint src/components/landing/qr-player/scene.tsx src/content/features.ts",
+    "source-audit": "node .agent/tasks/wesetup-neutral-20261115/raw/verify-copy.cjs",
+    "browser-final": "node .agent/tasks/wesetup-neutral-20261115/raw/browser.cjs"
+  },
+  "browser": {
+    "components": ["StaffPageClient", "ScheduleEditor", "SceneFrame", "LoginClient"],
+    "locales": ["ru", "en", "uz"],
+    "viewports": [[1440, 900], [390, 800]],
+    "adapters": ["next/link", "next/navigation", "mocked API responses"],
+    "styles": "actual globals.css and Tailwind scanning all src",
+    "customerDataWrites": false,
+    "assetCapture": "CAPTURE_ASSETS=1 node .agent/tasks/wesetup-neutral-20261115/raw/browser.cjs"
+  }
+}

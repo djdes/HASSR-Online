@@ -737,8 +737,8 @@ export default async function LandingPage() {
             tab: copy(`landing.showcase.slides.${slide.id}.tab`),
             title: copy(`landing.showcase.slides.${slide.id}.title`),
             text: copy(`landing.showcase.slides.${slide.id}.text`),
-            desktop: { src: `/landing/screens/${slide.id}-desktop.webp`, width: 1440, height: 900 },
-            mobile: { src: `/landing/screens/${slide.id}-mobile.webp`, width: 390, height: 800 },
+            desktop: { src: `/landing/screens/${slide.id === "staff" ? "staff-neutral" : slide.id}-desktop.webp`, width: 1440, height: 900 },
+            mobile: { src: `/landing/screens/${slide.id === "staff" ? "staff-neutral" : slide.id}-mobile.webp`, width: 390, height: 800 },
           }))}
           labels={{
             region: copy("landing.showcase.region"),

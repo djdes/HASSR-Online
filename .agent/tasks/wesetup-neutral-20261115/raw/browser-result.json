@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "checks": [
+    "staff ru/desktop: neutral roles, no overflow",
+    "schedule ru/desktop: neutral intro and actual editor",
+    "login ru/desktop: shared auth imagery and copy",
+    "staff ru/mobile: neutral roles, no overflow",
+    "schedule ru/mobile: neutral intro and actual editor",
+    "login ru/mobile: shared auth imagery and copy",
+    "QR ru/1.5: neutral staff",
+    "QR ru/4.8: neutral staff",
+    "staff en/desktop: neutral roles, no overflow",
+    "schedule en/desktop: neutral intro and actual editor",
+    "login en/desktop: shared auth imagery and copy",
+    "staff en/mobile: neutral roles, no overflow",
+    "schedule en/mobile: neutral intro and actual editor",
+    "login en/mobile: shared auth imagery and copy",
+    "QR en/1.5: neutral staff",
+    "QR en/4.8: neutral staff",
+    "staff uz/desktop: neutral roles, no overflow",
+    "schedule uz/desktop: neutral intro and actual editor",
+    "login uz/desktop: shared auth imagery and copy",
+    "staff uz/mobile: neutral roles, no overflow",
+    "schedule uz/mobile: neutral intro and actual editor",
+    "login uz/mobile: shared auth imagery and copy",
+    "QR uz/1.5: neutral staff",
+    "QR uz/4.8: neutral staff"
+  ],
+  "errors": [],
+  "syntheticData": true,
+  "liveDataMutations": false
+}

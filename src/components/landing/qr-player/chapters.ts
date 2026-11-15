@@ -87,7 +87,7 @@ const CHAPTER_DRAFTS: Array<Omit<Chapter, "from" | "duration">> = [
     place: "Наклейка на дверце холодильника",
     journal: journalName("cold_equipment_control"),
     caption:
-      "Повар сканирует наклейку на холодильнике, вводит PIN и температуру. Значение встаёт в журнал в графу сегодняшнего дня, рядом — код ответственного.",
+      "Сотрудник сканирует наклейку на холодильнике, вводит PIN и температуру. Значение встаёт в журнал в графу сегодняшнего дня, рядом — код ответственного.",
     short: "PIN и температура — запись в графе сегодняшнего дня.",
   },
   {
@@ -332,13 +332,13 @@ export const PDF = {
 
 /** Люди и объекты сцены — условные. */
 export const DEMO = {
-  org: "Столовая «Берёзка»",
-  cook: { name: "Иванова Анна", short: "Иванова А.", position: "Повар" },
+  org: "WeSetup Demo",
+  cook: { name: "Иванова Анна", short: "Иванова А.", position: "employee" },
   others: [
-    { name: "Петров Олег", position: "Повар" },
-    { name: "Сидорова Мария", position: "Су-шеф" },
+    { name: "Петров Олег", position: "employee" },
+    { name: "Сидорова Мария", position: "specialist" },
   ],
-  head: { name: "Козлова Елена", position: "Заведующая производством" },
+  head: { name: "Козлова Елена", position: "supervisor" },
   fridge: "Холодильник №1",
   vitrine: "Витрина холодильная",
   lamp: "Бактерицидная установка №1",

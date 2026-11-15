@@ -1404,7 +1404,7 @@
         "openJournalTitle": "Jurnalni ochish",
         "openJournalBody": "kartani bosing — joriy davr (oy / yarim oy / yil) uchun faol hujjat ochiladi.",
         "greyJournalTitle": "Kulrang jurnal",
-        "greyJournalBody": "/settings/journals bo‘limida o‘chirilgan — bu oshxonaga kerak emas. U yerning o‘zida qayta yoqish mumkin.",
+        "greyJournalBody": "ushbu tashkilotning jurnal sozlamalarida o‘chirilgan. Zarur bo‘lsa, uni qayta yoqish mumkin.",
         "sendAllTitle": "“Hammaga yuborish”",
         "sendAllBody": "bitta tugma bilan to‘ldirilmagan jurnallar uchun TasksFlow vazifalari yaratiladi. Xodimlar ularni smartfonda ko‘radi.",
         "qDisabledQ": "Jurnal o‘chirilgan, lekin uni baribir yuritish kerak",
@@ -2549,8 +2549,8 @@
         "regulations": " SanPiN / HACCP"
       },
       "marketing": {
-        "heading": "Oziq-ovqat xavfsizligi elektron jurnallari",
-        "description": "Harorat, sanitariya va xomashyo kuzatuvini bir joyda boshqaring. Telegram bildirishnomalarini oling, iiko’dan import qiling va Rospotrebnadzor formatida chop eting.",
+        "heading": "Tashkilotingiz uchun elektron jurnallar",
+        "description": "Harorat, tozalash va uskunalar ishini bitta kabinetda nazorat qiling. Tibbiyot markazlari, umumiy ovqatlanish, ishlab chiqarish va boshqa tashkilotlar uchun.",
         "plans": "Asosiy va Kengaytirilgan tariflar",
         "accessControl": "Rol va jurnal bo‘yicha ruxsatlar",
         "telegramAlerts": "Telegram bildirishnomalari",
@@ -2677,9 +2677,9 @@
     },
     "metadata": {
       "loginTitle": "Tizimga kirish",
-      "loginDescription": "WeSetup tizimiga kiring. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP elektron jurnallari.",
+      "loginDescription": "WeSetup tizimiga kiring. Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP elektron jurnallari.",
       "registerTitle": "Hisob yaratish",
-      "registerDescription": "WeSetup hisobini yarating. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish korxonalari uchun SanPiN va HACCP elektron jurnallari; {trialDays, number} {trialDays, plural, other {kun}} cheklovsiz bepul, kartasiz."
+      "registerDescription": "WeSetup hisobini yarating. Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP elektron jurnallari; {trialDays, number} {trialDays, plural, other {kun}} cheklovsiz bepul, kartasiz."
     },
     "apiErrors": {
       "loginCredentialsRequired": "Email va parolingizni kiriting",
@@ -2724,7 +2724,7 @@
       "domainChecking": "Domen tekshirilmoqda…"
     },
     "badges": {
-      "title": "Oziq-ovqat xavfsizligi talablari bo'yicha jurnallar",
+      "title": "Turli faoliyat sohalari uchun",
       "haccp": {
         "top": "XAVFLAR TAHLILI",
         "bottom": "NAZORAT NUQTALARI",
@@ -2744,10 +2744,11 @@
         "top": "OZIQ-OVQAT SANOATI",
         "bottom": "UMUMIY OVQATLANISH"
       },
-      "forms": "Jurnal shakllari HACCP va SanPiN bo'yicha",
+      "forms": "Kerakli jurnallarni sozlash uchun tashkilotingiz sohasini tanlang.",
       "catering": "Umumiy ovqatlanish",
-      "production": "Oziq-ovqat sexlari",
-      "retail": "Omborlar va savdo"
+      "production": "Ishlab chiqarish",
+      "retail": "Omborlar va savdo",
+      "medical": "Tibbiyot markazlari"
     }
   },
   "journalDescriptions": {
@@ -4122,7 +4123,7 @@
       "choose": "Tanlang",
       "newPosition": "Yangi lavozim",
       "positionName": "Lavozim nomi",
-      "positionPlaceholder": "Oshpaz",
+      "positionPlaceholder": "Xodim",
       "directoryLink": "Barcha xodimlar va ularning profillari",
       "laterHint": "Telefon, ish joylari va dam olish kunlarini keyinroq profilda kiritishingiz mumkin",
       "genericError": "Xatolik",
@@ -5606,7 +5607,7 @@
     "register": "Ro‘yxatdan o‘tish",
     "dashboard": "Kabinetni ochish",
     "profile": "Profil",
-    "footerDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP elektron jurnallari xizmati. © 2026 WeSetup.",
+    "footerDescription": "WeSetup — tibbiyot markazlari, umumiy ovqatlanish, ishlab chiqarish va boshqa tashkilotlar uchun elektron SanPiN va HACCP jurnallari. © 2026 WeSetup.",
     "details": "Kompaniya rekvizitlari",
     "sections": "Bo‘limlar",
     "glossary": "Atamalar lug‘ati",
@@ -5639,7 +5640,7 @@
   "landing": {
     "metadata": {
       "title": "SanPiN va HACCP elektron jurnallari onlayn — WeSetup",
-      "description": "Umumiy ovqatlanish va ishlab chiqarish uchun {journalCount, number} ta oziq-ovqat xavfsizligi elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. {trialDays, number} {trialDays, plural, other {kun}} bepul — kartasiz.",
+      "description": "Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun {journalCount, number} ta SanPiN va HACCP elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. {trialDays, number} {trialDays, plural, other {kun}} bepul — kartasiz.",
       "keywords": "elektron jurnallar, SanPiN jurnallari, HACCP jurnallari, onlayn HACCP, xodimlar gigiyenasi jurnali, oziq-ovqat sifati jurnali, harorat jurnali, QR jurnal, QR orqali jurnal to‘ldirish, Rospotrebnadzor, umumiy ovqatlanish",
       "blogFeed": "WeSetup — blog",
       "updatesFeed": "WeSetup — yangiliklar"
@@ -5708,8 +5709,8 @@
         "answer": "Yozuv xodimning shaxsiy PIN-kodi bilan tasdiqlanadi; PIN-kod besh marta noto‘g‘ri kiritilsa, kiritish 15 daqiqaga bloklanadi. Vaqtni server belgilaydi, amallar jurnalida esa kim, qachon va nimani kiritgani saqlanadi. Har bir muzlatkichning o‘z stikeri bor, formadagi uskunani almashtirib bo‘lmaydi."
       },
       "electronicLogs": {
-        "question": "Umumiy ovqatlanish uchun elektron jurnal nima?",
-        "answer": "Xodimlar avval qog‘oz jurnallarda qayd etgan ma’lumotlarni — gigiyena, harorat, mahsulot sifatini tekshirish va boshqalarni — kiritadigan veb-xizmat. Elektron shaklga SanPiN 2.3/2.4.4282-26 «Aholiga umumiy ovqatlanishni tashkil etish bo‘yicha sanitariya-epidemiologik talablar»da bevosita ruxsat berilgan. U 2026-yil 1-sentabrdan kuchga kiradi va avvalgi 2.3/2.4.3590-20 hujjatining o‘rnini egallagan."
+        "question": "Elektron SanPiN jurnali nima?",
+        "answer": "Jurnallarni yuritish uchun veb-xizmat: xodimlar telefon yoki kompyuterdan yozuv kiritadi, rahbar ularni tekshiradi va hujjatlarni yuklab oladi. Jurnallar, mas’ullar va to‘ldirish tartibini tashkilotingiz sohasi va talablariga qarab tanlang."
       },
       "inspection": {
         "question": "Rospotrebnadzor tekshiruvi qanday o‘tadi?",
@@ -5784,8 +5785,8 @@
       "heroPhrase": "{trialDays, number} {trialDays, plural, other {kun}} bepul, undan keyin oyiga <price>{amount}</price> dan"
     },
     "seo": {
-      "softwareDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. Uskunadagi QR-stikerni skanerlab, PIN-kodni kiriting va jurnalga yozuv kiriting. Rospotrebnadzor tekshiruvlari uchun PDF hujjatlar.",
-      "productDescription": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang.",
+      "softwareDescription": "Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. Uskunadagi QR-stikerni skanerlab, PIN-kodni kiriting va jurnalga yozuv kiriting. Rospotrebnadzor tekshiruvlari uchun PDF hujjatlar.",
+      "productDescription": "Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang.",
       "freeOfferDescription": "Barcha {journalCount, number} {journalCount, plural, other {ta jurnal}} xodimlar va nuqtalar bo‘yicha cheklovsiz — faollashtirilgandan boshlab {trialDays, number} {trialDays, plural, other {kun}}, karta bog‘lash shart emas",
       "standardDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha jurnallar, jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB. Narx — yillik to‘lovda oyiga.",
       "premiumDescription": "Har bir nuqtaga {employees, number} nafargacha xodim, barcha hujjatlar uchun {gb, number} GB, datchik fotosi bo‘yicha ko‘rsatkichlarni to‘ldirish, uskunani ulash va yetkazib berish, «Merkuriy» FDAT, namunaviy hujjatlar to‘plami. Narx — yillik to‘lovda oyiga.",
@@ -5809,12 +5810,12 @@
     },
     "openGraph": {
       "title": "Elektron HACCP va SanPiN jurnallari",
-      "subtitle": "Umumiy ovqatlanish va ishlab chiqarishda oziq-ovqat xavfsizligi",
+      "subtitle": "Sohangiz uchun jurnallar, xodimlar va sanitariya nazorati",
       "features": "{count, number} ta jurnal · QR orqali yozuv · Eslatmalar"
     },
     "showcase": {
       "title": "Rahbar kabineti: hammasi bir qarashda",
-      "lead": "WeSetup’ning haqiqiy ekranlari. Xodimlar jurnallarni telefondan QR orqali to‘ldiradi — natijani shu yerda ko‘rasiz: nima bajarilgan, nima kechikkan va kim mas’ul.",
+      "lead": "WeSetup ekranlari namuna ma’lumotlari bilan. Xodimlar va kirish huquqlari umumiy misolda, jurnallar va nazorat esa umumiy ovqatlanish misolida ko‘rsatilgan. Jurnallar to‘plami tashkilotingiz sohasiga bog‘liq.",
       "region": "WeSetup kabineti ekranlari",
       "tabs": "Kabinet ekranlari",
       "previous": "Oldingi ekran",
@@ -5828,12 +5829,12 @@
         },
         "monitoring": {
           "tab": "Monitoring",
-          "title": "Nuqtalar bo‘yicha bajarilish",
+          "title": "Tashkilot nuqtalari bo‘yicha bajarilish",
           "text": "Bugungi jurnallar, chek-listlar va ishlab chiqarish nazorati dasturi — butun kompaniya va har bir nuqta bo‘yicha foizlarda."
         },
         "journals": {
           "tab": "Jurnallar",
-          "title": "Nuqtaning barcha jurnallari",
+          "title": "Tashkilot nuqtasi jurnallari",
           "text": "SanPiN va HACCP bitta ro‘yxatda: bugungi holat, mas’ullar va jurnalga bir bosishda kirish."
         },
         "grid": {
@@ -5884,7 +5885,7 @@
       "bundlePrice": "Uskunalar to‘plami narxi {price} ₽ dan boshlanadi.",
       "oneTime": "Bir martalik to‘lov",
       "sensorBenefit": "Muzlatkich datchiklari haroratni avtomatik qayd etadi",
-      "tabletBenefit": "Oshxona plansheti va smena uchun NFC breloklari",
+      "tabletBenefit": "Ish joyidagi planshet va smena uchun NFC breloklar",
       "setupBenefit": "Joyiga borib sozlash, o‘rnatish va smenani o‘qitish",
       "collapse": "Tanlovni yopish",
       "choose": "Uskunalarni tanlash",
@@ -6138,7 +6139,7 @@
       "storyboardCaption": "Kadrlar ketma-ketligi {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "{chapterNumber, number}-bob: {chapterName}. Jurnal: {journalName}. {caption}",
       "watchVideo": "Videoni ovoz bilan ko‘rish",
-      "watchVideoHint": "Ovoz va subtitrli video pleyerda ochiladi",
+      "watchVideoHint": "Umumiy ovqatlanish misoli: uskunalardagi QR-kodlar va jurnallarni to‘ldirish. Ovozni yoqing.",
       "videoLabel": "QR qanday ishlashi — ovozli video",
       "videoSubtitles": "Subtitrlar",
       "seekValue": "{totalTime} dan {currentTime}, «{chapterName}» bobi"
@@ -6146,7 +6147,7 @@
     "chapter": {
       "fridge": {
         "label": "Muzlatkich",
-        "caption": "Oshpaz muzlatkichdagi stikerni skanerlaydi, PIN-kod va haroratni kiritadi. Ko‘rsatkich bugungi jurnal qatoriga yoziladi, yonida mas’ul xodim kodi ko‘rsatiladi.",
+        "caption": "Xodim sovitgichdagi stikerni skanerlab, PIN-kod va haroratni kiritadi. Qiymat jurnalning bugungi ustuniga yoziladi, yonida mas’ul xodim kodi ko‘rsatiladi.",
         "short": "PIN-kod va harorat bugungi jurnal qatoriga yoziladi.",
         "place": "Muzlatkich eshigidagi stiker"
       },
@@ -6362,7 +6363,7 @@
     "chapters": {
       "fridgeChip": "Sovutkich",
       "fridgePlace": "Sovutkich eshigidagi stiker",
-      "fridgeCaption": "Oshpaz sovutkichdagi stikerni skanerlaydi, PIN-kodni kiritadi va haroratni qayd etadi. Qiymat bugungi kun ustunida, mas’ul shaxs kodi yonida jurnalga tushadi.",
+      "fridgeCaption": "Xodim sovitgichdagi stikerni skanerlab, PIN-kod va haroratni kiritadi. Qiymat jurnalning bugungi ustuniga yoziladi, yonida mas’ul xodim kodi turadi.",
       "fridgeShort": "PIN va harorat bugungi kun ustuniga yoziladi.",
       "lockerChip": "Kiyinish xonasi",
       "lockerPlace": "Kiyinish xonasidagi termometr yonidagi QR-kod",
@@ -6410,7 +6411,12 @@
       "entrySaved": "Saqlandi: {journal} · {employee} · {time}"
     },
     "readingSaved": "Harorat {value, number}°C jurnalda {employee} nomiga qayd etildi.",
-    "halfHour": "30 daqiqa"
+    "halfHour": "30 daqiqa",
+    "demo": {
+      "employee": "Xodim",
+      "specialist": "Mutaxassis",
+      "supervisor": "Rahbar"
+    }
   },
   "blogChrome": {
     "list": {
@@ -7408,9 +7414,9 @@
           "hook": "Asosiy muzlatkich uchun bitta datchik, ishlab chiqarish xonasi uchun termo-gigrometr va smena uchun NFC kirish."
         },
         "standard": {
-          "name": "Oshxona",
-          "forWhom": "Faol oshxona va muntazam tekshiruvlar",
-          "hook": "Barcha muhim muzlatkichlarga datchiklar, oshxona uchun planshet va butun smena uchun breloklar."
+          "name": "Ish nuqtasi",
+          "forWhom": "Kundalik ish va muntazam nazorat",
+          "hook": "Asosiy sovitish uskunalarida datchiklar, ish joyida planshet va butun smena uchun breloklar."
         },
         "network": {
           "name": "Tarmoq",
@@ -7421,7 +7427,7 @@
       "devices": {
         "install": {
           "title": "Joyiga borib o‘rnatish va sozlash",
-          "hint": "Muhandis oshxonaga keladi, datchiklarni o‘rnatadi, profillarni sozlaydi va smenani o‘qitadi."
+          "hint": "Muhandis obyektga kelib, datchiklarni o‘rnatadi, profillarni sozlaydi va xodimlarni o‘qitadi."
         },
         "temp": {
           "title": "Harorat datchigi",
@@ -7432,7 +7438,7 @@
           "hint": "Zal yoki ishlab chiqarish xonasidagi harorat va namlikni nazorat qilish uchun."
         },
         "tablet": {
-          "title": "Oshxona uchun planshet",
+          "title": "Xodimlar uchun planshet",
           "hint": "10 dyuymli ekran, himoya g‘ilofi va tayyor profil. Ishlab chiqarish xonasidagi devorga mahkamlash mumkin."
         },
         "nfc": {
@@ -8016,7 +8022,7 @@
       "refreshTasksFlowTitle": "TasksFlow’dan bajarilish belgilarini sinxronlash",
       "cleanupTasksMenuLabel": "Bajarilgan TasksFlow vazifalarini o‘chirish (jurnal tarixi saqlanadi)",
       "pipelinePerRoomTitle": "Xonalar bo‘yicha (tavsiya etiladi)",
-      "pipelinePerRoomDescription": "Har bir xona uchun alohida bosqichlar ro‘yxati mavjud. Oshxona va barni tozalash tartibi farq qilganda qulay.",
+      "pipelinePerRoomDescription": "Har bir xonaning o‘z bosqichlari bor. Masalan, kabinetni tozalash ombor yoki hojatxonani tozalashdan farq qilishi mumkin.",
       "pipelineGlobalTitle": "Umumiy ro‘yxat",
       "pipelineGlobalDescription": "Barcha xonalar uchun bir xil bosqichlar ro‘yxati. Tartib sodda va yagona bo‘lsa qulay.",
       "pipelineLegacyTitle": "Tekshiruv ro‘yxatisiz (legacy)",
@@ -8581,7 +8587,7 @@
         "accessInstructions": "Parol bilan kirish, Telegram orqali kirish va jurnallarga ruxsat xodim kartasidagi tahrirlash oynasining «Ruxsat qo‘shish» tugmasi orqali beriladi.",
         "done": "Tayyor",
         "addPositionTitle": "Lavozim qo‘shish · {category}",
-        "positionPlaceholder": "Masalan, «Sovuq sex oshpazi»",
+        "positionPlaceholder": "Masalan, «Administrator»",
         "commonPositions": "Ko‘p uchraydigan lavozimlar",
         "moreSuggestions": "yana {count, number} ta",
         "skipPosition": "Lavozimim bor → o‘tkazib yuborish",
@@ -9363,7 +9369,7 @@
         "hint": "Tozalash vazifalari xonalar bo‘yicha beriladi, iqlim jurnali ham xonalardan tuziladi.",
         "count": "{count, plural, other {# ta xona}}",
         "emptyTitle": "Hozircha xonalar yo‘q",
-        "emptyBody": "Oshxona, ombor, yuvish joyini qo‘shing — ular darhol tozalash jurnalida va uskuna oynasida paydo bo‘ladi.",
+        "emptyBody": "Kabinetlar, ombor va boshqa xonalarni qo‘shing. Ular tozalash jurnalida va uskuna sozlamalarida ko‘rinadi.",
         "copyFrom": "Nuqtadan nusxa olish",
         "copy": "Nusxa olish",
         "copying": "Nusxa olinmoqda…",
@@ -9514,7 +9520,7 @@
       },
       "staff": {
         "title": "Nuqta xodimlari",
-        "hint": "Oshpazlar, oshxona ishchilari, ofitsiantlar — shu yerda ishlaydiganlar: ularning jurnallari va vazifalari faqat shu nuqtada.",
+        "hint": "Shu yerda ishlaydigan xodimlarni qo‘shing. Ularning jurnallari va vazifalari shu nuqtaga bog‘lanadi.",
         "count": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
         "add": "Xodim qo‘shish",
         "emptyTitle": "Nuqtada hozircha hech kim yo‘q",
@@ -9612,7 +9618,7 @@
         "text": "Yordamchiga hamkasbingizga yozgandek yozing:",
         "prompt1": "Bugun qaysi jurnallar to‘ldirilmagan?",
         "prompt2": "Smirnovani 12–16 oktyabr kunlari kasallik ta’tilida deb belgila",
-        "prompt3": "Oshpaz Anna Ivanovani qo‘sh, +7 900 000-00-00"
+        "prompt3": "Anna Ivanova ismli xodimni qo‘sh, +7 900 000-00-00"
       },
       "create": {
         "step": "1-qadam",
@@ -9777,7 +9783,7 @@
       "newDevice": "yangi qurilma",
       "newDeviceNotice": "Yangi qurilmadan kirilganda sizga email va Telegram orqali xabar beramiz. Kirishni tanimasangiz, barcha seanslarni tugating va parolni almashtiring.",
       "logoutEverywhere": "Barcha qurilmalardan chiqish",
-      "logoutDescription": "Telefon, oshxonadagi planshet yoki chiqishni unutgan boshqa birovning kompyuteri kabi barcha qurilmalardagi seanslarni tugatadi. Bu yerda ham qayta kirishingiz kerak bo‘ladi.",
+      "logoutDescription": "Barcha qurilmalardagi, jumladan telefon, ish plansheti va chiqishni unutgan kompyuterdagi seanslarni tugatadi. Bu yerda ham qayta kirish kerak bo‘ladi.",
       "logoutAll": "Barcha seanslarni tugatish",
       "logoutFailed": "Seanslarni tugatib bo‘lmadi. Internet aloqasini tekshirib, qayta urinib ko‘ring.",
       "telegramCodeTitle": "Kirishda Telegram kodi",
@@ -9869,7 +9875,7 @@
         "textKind": "Matn",
         "textHint": "Jurnallardan foydalanish haqida bir necha paragraf",
         "photoKind": "Surat bilan",
-        "photoHint": "Oshxona, planshet yoki jurnal surati",
+        "photoHint": "Ish joyi, planshet yoki jurnal surati",
         "videoKind": "Video bilan",
         "videoHint": "O‘z so‘zlaringiz bilan 30–60 soniya",
         "oldAmount": "avval",
@@ -9986,7 +9992,7 @@
         "teamTitle": "Jamoa va kirish huquqlari",
         "teamBody": "Lavozimlar, ierarxiyani (kim kimni ko‘rishini) va rollar uchun huquqlar to‘plamini sozlang.",
         "journalsTitle": "Jurnallar",
-        "journalsBody": "Jurnal uchun mas’ullarni belgilang, TasksFlow’da vazifalarni taqsimlang va oshxonangizga kerakli jurnallarni tanlang.",
+        "journalsBody": "Tashkilotingiz uchun jurnallarni tanlang, mas’ullarni belgilang va TasksFlow orqali vazifalar berilishini sozlang.",
         "integrationsTitle": "Integratsiyalar",
         "integrationsBody": "TasksFlow’dan telefondagi vazifalar, Telegram’dan bildirishnomalar, inspektor portalidan tekshiruvlar uchun foydalaning.",
         "qaMistakeQuestion": "Xato qilsam nima bo‘ladi?",
@@ -10179,11 +10185,11 @@
         },
         "settings_journal_difficulty": {
           "title": "Jurnallar murakkabligi",
-          "description": "Bosh oshpaz bo'lmasa, har bir jurnalni 1 dan 5 gacha baholang va vazifalarni oshpazlar o'rtasida teng taqsimlang."
+          "description": "Vazifalarni xodimlar o‘rtasida teng taqsimlash uchun jurnallar murakkabligini baholang"
         },
         "settings_workload_balance": {
           "title": "Xodimlar yuklamasi",
-          "description": "Har bir xodim oyiga nechta jurnal to'ldirishini ko'ring va bir xil maosh oladigan oshpazlar yuklamasidagi farqni aniqlang."
+          "description": "Bir xil lavozimdagi xodimlarning tayinlangan jurnallar bo‘yicha yuklamasini solishtiring"
         },
         "settings_task_visibility": {
           "title": "TasksFlow'dagi barcha vazifalarni kim ko'radi",
@@ -10841,7 +10847,7 @@
     "accessMatrices": {
       "pages": {
         "employeesTitle": "Xodimlar uchun jurnallar",
-        "employeesDescription": "Har bir xodim qaysi jurnallarni ko‘rishi va to‘ldirishini ko‘ring. Ruxsat berish yoki olib tashlash uchun katakchani tanlang. Tayyor sozlamalar farroshlarga barcha tozalash jurnallarini, oshpazlarga esa harorat nazorati jurnallarini tezda beradi. Xodimga kamida bitta ruxsat berilmaguncha, eski xatti-harakat bilan moslik uchun u barcha jurnallarni ko‘ra oladi.",
+        "employeesDescription": "Xodim qaysi jurnallarni ko‘rishi va to‘ldirishini belgilang. Kirish huquqini o‘zgartirish uchun katakni bosing. Sohaviy andozalar umumiy ovqatlanish lavozimlariga mo‘ljallangan: qo‘llashdan oldin tekshiring. Hech bir katak belgilanmagan bo‘lsa, xodim avvalgi qoidalar bo‘yicha barcha jurnallarni ko‘radi.",
         "positionsTitle": "Lavozimlar bo‘yicha jurnal ruxsatlari",
         "positionsDescription": "Hammaga topshiriq yuborilganda har bir lavozim xodimlariga qaysi jurnallar berilishini tanlang. Lavozim uchun jurnal tanlanmagan bo‘lsa, uning xodimlari hozircha barcha jurnallardan foydalanishi mumkin. Bitta xodim uchun jurnalni cheklash uchun <access>xodimlar jurnaliga kirish sozlamalarini</access> oching.",
         "accessLink": "Xodimlar uchun jurnallar"
@@ -10926,11 +10932,11 @@
         "title": "Ofis va nuqtalar qanday tuzilgan",
         "office": {
           "title": "Ofis — kompaniya rahbariyati",
-          "body": "Direktor, brend-oshpaz, hududiy rahbarlar. Ular barcha nuqtalarni ko‘radi, jurnallar va vazifalari esa faqat ofisniki — nuqtalar jurnaliga qo‘shilmaydi."
+          "body": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi. Ularning o‘z jurnallari va vazifalari ofisga tegishli va nuqta jurnallariga qo‘shilmaydi."
         },
         "points": {
           "title": "Nuqta — uning xodimlari va jurnallari",
-          "body": "Oshpazlar, oshxona ishchilari, ofitsiantlar, mudira — o‘z nuqtasi sahifasida: u yerda jurnallar to‘plami va komissiya ham bor."
+          "body": "Xodimlar va nuqta rahbari o‘z nuqtasi sahifasida joylashgan. Shu yerda jurnallar va komissiya ham sozlanadi."
         },
         "move": {
           "title": "Xodimni qanday o‘tkazish",
@@ -10954,7 +10960,7 @@
       },
       "staff": {
         "title": "Ofis xodimlari",
-        "hint": "Direktor, brend-oshpaz, hududiy rahbarlar — barcha nuqtalarni ko‘radi, jurnallar va vazifalar faqat ofisniki.",
+        "hint": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi; ularning jurnallari va vazifalari ofisga tegishli.",
         "count": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
         "add": "Ofisga qo‘shish",
         "emptyTitle": "Ofisda hozircha hech kim yo‘q",
@@ -11501,7 +11507,7 @@
     },
     "climate_control": {
       "intro": "Ishlab chiqarish va ombor xonalaridagi harorat va namlik nazorati. Maqsad — oziq-ovqatni saqlash va tayyorlash sharoitlari me’yorlarga mosligini tasdiqlash.",
-      "whoFills": "Xonaga qarab navbatchi oshpaz, texnolog yoki tovarshunos. Oshxonada — oshpaz, omborda — omborchi.",
+      "whoFills": "Xonaga mas’ul etib tayinlangan xodim, masalan, administrator, mutaxassis yoki omborchi.",
       "whenToFill": "Ishlab chiqarish sexlarida smenada 2–3 marta. Omborlarda kuniga 1 marta.",
       "prepare": {
         "thermometer": "Qiyoslangan termometr (qiyoslash belgisi 1 yildan eski bo‘lmasin)",
@@ -11545,7 +11551,7 @@
     },
     "cold_equipment_control": {
       "intro": "Sovutkich va muzlatkichlar harorati nazorati. Bu HACCP kritik nazorat nuqtasi — harorat tartibining buzilishi salmonella, listeriya va boshqa mikroorganizmlar ko‘payishi xavfini tug‘diradi.",
-      "whoFills": "Navbatchi oshpaz yoki oshxona ishchisi. Ertalab ochishda va kechqurun yopishda. Katta oshxonalarda har sexga alohida xodim.",
+      "whoFills": "Sovitish uskunasiga mas’ul xodim. O‘lchash davriyligi jurnal sozlamalarida belgilanadi.",
       "whenToFill": "Sutkada kamida 2 marta (ertalab va kechqurun). SanPiN bo‘yicha ishlab chiqarish kunida har 4 soatda.",
       "prepare": {
         "thermometers": "Qiyoslangan termometrlar: ichki va nazorat termometri",
@@ -11727,7 +11733,7 @@
     },
     "equipment_cleaning": {
       "intro": "Uskunalarni yuvish va dezinfeksiya qilish jurnali. Har bir uskuna — mikser, slayser, go‘shtqiymalagich, pech — jadval bo‘yicha yuvilishi kerak.",
-      "whoFills": "Uskunadan foydalangan oshpaz yoki farrosh.",
+      "whoFills": "Uskunani yuvgan yoki dezinfeksiya qilgan xodim.",
       "whenToFill": "Har smenadan keyin yoki muayyan xomashyo bilan har ishlashdan so‘ng (go‘sht/baliq — darhol yuvish).",
       "steps": {
         "disassemble": {
@@ -11908,7 +11914,7 @@
     },
     "glass_control": {
       "intro": "Shisha nazorati jurnali. Har kuni ro‘yxat bilan solishtiring — barcha buyumlar butunmi. Sinsa, barcha siniqlarni toping va yozing.",
-      "whoFills": "Smena navbatchisi (oshpaz yoki farrosh).",
+      "whoFills": "Smenadagi tayinlangan mas’ul xodim.",
       "whenToFill": "Har kuni smena boshida va oxirida.",
       "steps": {
         "checkInventory": {
@@ -12069,7 +12075,7 @@
     },
     "cleaning": {
       "intro": "Xonalarni kundalik tozalash jurnali. Har bir xona kerakli vaqtda, kerakli vosita va shaxs tomonidan tozalanganini tasdiqlaydi.",
-      "whoFills": "Tozalagan farrosh yoki oshxona ishchisi. Keyin nazoratchi (katta farrosh yoki menejer) belgisi.",
+      "whoFills": "Tozalashni bajargan xodim. Bajarilgan ishni tayinlangan nazoratchi tekshiradi.",
       "whenToFill": "Har bir joriy tozalashdan (kuniga bir necha marta) va yakuniy tozalashdan (kechqurun smenadan keyin) so‘ng.",
       "prepare": {
         "colourCodedTools": "Hududlar bo‘yicha rangli lattalar: yashil — pol, oq — yuzalar, ko‘k — hojatxona",
@@ -12250,7 +12256,7 @@
     },
     "uv_lamp_runtime": {
       "intro": "UV bakteritsid qurilmasining ish jurnali. Havoni zararsizlantirish uchun chiroq smenada belgilangan vaqt ishlashi kerak.",
-      "whoFills": "Chiroqni yoqib-o‘chiradigan shaxs — odatda farrosh yoki navbatchi oshpaz.",
+      "whoFills": "Bakteritsid qurilmani yoqadigan va o‘chiradigan xodim.",
       "whenToFill": "Har bir yoqish va o‘chirishda.",
       "steps": {
         "switchOn": {
@@ -16979,7 +16985,7 @@
         "intro": "WeSetup bulutda ishlaydi: mahalliy server o‘rnatish, zaxira nusxalarini sozlash yoki o‘tgan yilgi yozuvlarni qayerda saqlash haqida o‘ylash shart emas. Zaxira nusxalar avtomatik olinadi, kompyuter almashtirilganda yoki muassasa ko‘chirilganda tarix yo‘qolmaydi.",
         "devicesHeading": "Qaysi qurilmalarda ishlaydi",
         "device1": "Rahbar kompyuteri: to‘liq hisobotlar, tahlil va sozlamalar.",
-        "device2": "Oshxonadagi planshet: qo‘lqopda ham qulay kiritish va katta tugmalar.",
+        "device2": "Ish joyidagi planshet: qo‘lqopda ham qulay kiritish va katta tugmalar.",
         "device3": "Xodim telefoni: gigiyena va haroratni tez qayd etish.",
         "device4": "Telegram-bot: tizimga kirmasdan eslatma va bildirishnomalar.",
         "securityHeading": "Xavfsizlik",
@@ -16990,13 +16996,13 @@
       "role-access": {
         "title": "Lavozim bo‘yicha kirish",
         "tagline": "Har bir xodim faqat o‘ziga biriktirilgan jurnallarni ko‘radi. Rahbar hammani ko‘radi. Egasi davrni yopib, PDF’ni bir tugma bilan eksport qiladi.",
-        "intro": "Oshxona va zalda turli mas’uliyatga ega xodimlar ishlaydi. WeSetup uchta kirish darajasini beradi: xodimlar faqat kerakli ma’lumotni ko‘radi, rahbar esa to‘liq nazoratni saqlaydi.",
+        "intro": "Tashkilotda xodimlarning vazifalari va mas’uliyat doiralari turlicha. WeSetup har bir rol uchun jurnallar va boshqaruv imkoniyatlariga kirishni sozlashga yordam beradi.",
         "levelsHeading": "Uchta kirish darajasi",
         "level1": "Ega / Rahbar: barcha jurnallar, filiallar va sanalarni ko‘radi; davrni yopadi va andozalarni o‘zgartiradi.",
-        "level2": "Bosh oshpaz / Texnolog: o‘z bo‘limini ko‘radi, sifat nazoratini yuritadi va mas’ul xodimlarni belgilaydi.",
-        "level3": "Oshpaz / Ofitsiant: faqat o‘ziga biriktirilgan jurnallarni ko‘radi va boshqalarning yozuvlarini o‘zgartira olmaydi.",
+        "level2": "Bo‘lim rahbari / Texnolog — o‘z bo‘limini nazorat qiladi va mas’ul xodimlarni tayinlaydi.",
+        "level3": "Xodim — o‘ziga tayinlangan jurnallarni ko‘radi va berilgan huquqlar doirasida to‘ldiradi.",
         "aclHeading": "Muayyan jurnalga alohida kirish",
-        "aclText": "ACL orqali rahbar xodimga lavozimidan tashqari jurnalga kirish berishi mumkin. Masalan, tungi smena oshpazi UV-lampa jurnaliga kira oladi, boshqa xodimlar esa yo‘q.",
+        "aclText": "Rahbar xodimga muayyan jurnalga kirish huquqini berishi mumkin. Masalan, navbatchi xodimni UV-lampalar jurnaliga mas’ul qilib tayinlashi mumkin.",
         "auditTitle": "Kirish auditi",
         "auditText": "Har bir ACL o‘zgarishi harakatlar jurnalida qayd etiladi: kim va qachon muayyan shaxsga kirish bergani yoki uni bekor qilgani ko‘rinadi."
       },
@@ -17025,7 +17031,7 @@
         "trigger4": "Taom sifat tekshiruvidan o‘tmaydi.",
         "trigger5": "Fritöz yog‘idagi qutbli birikmalar 24% dan oshadi.",
         "recipientsHeading": "Kimga yuboriladi",
-        "recipientsText": "Ogohlantirishni lavozim va filial bo‘yicha yo‘naltirish mumkin. Harorat bo‘yicha xabar bosh oshpaz va rahbarga, xodimni ishdan chetlatish HR va direktorga, moliyaviy jihatdan muhim hisobdan chiqarish esa egasiga yuboriladi. Har bir hodisa turi uchun yo‘nalish sozlanadi.",
+        "recipientsText": "Bildirishnoma oluvchilarni lavozim va nuqta bo‘yicha sozlash mumkin. Masalan, harorat uchun navbatchi xodim va rahbar, xodimlarni ishga qo‘yish uchun kadrlar bo‘limi mas’ul bo‘ladi. Har bir hodisa turi uchun alohida yo‘nalish belgilanadi.",
         "capaTitle": "CAPA avtomatik yaratiladi",
         "capaText": "Har bir ogohlantirish mas’ul shaxs va muddat ko‘rsatilgan CAPA yozuvini yaratadi. CAPA yopilmaguncha hodisa ochiq ro‘yxatda qoladi — uni shunchaki “hal bo‘ldi” deb yo‘qotib bo‘lmaydi."
       },
@@ -17045,15 +17051,15 @@
       },
       "time-saving": {
         "title": "Vaqtni tejash",
-        "tagline": "Smena oxirida bir soat qog‘oz bilan ishlash o‘rniga 5–10 daqiqa. Oshpazlar vaqtida uyga qaytadi, bosh oshpaz esa tekshiriladigan hujjatlar uyumini ko‘tarmaydi.",
-        "intro": "Elektron jurnalning ko‘p baholanmaydigan foydalaridan biri — oshxonada vaqtni tejash. Bu shunchaki reklama emas, joriy etish paytida o‘tkazadigan o‘lchovimiz: takroriy kiritish va ko‘chirish yo‘qolgani uchun bir soatlik odatiy ish 5–10 daqiqaga tushadi.",
+        "tagline": "Smena oxirida qo‘lda yozish va solishtirish kamroq bo‘ladi. Xodimlar jurnallarni ish davomida to‘ldiradi, rahbar natijani kabinetda ko‘radi.",
+        "intro": "QR-kodlar uskuna yonida kerakli jurnalni ochadi, ma’lumotlar darhol saqlanadi va jamlanma bitta kabinetda yig‘iladi. Bu takroriy kiritish va qo‘lda tekshirishni kamaytiradi.",
         "sourcesHeading": "Vaqt qayerdan tejaladi",
         "source1": "Ma’lumotni qayta kiritish yo‘q: qabul ma’lumotlari sifat tekshiruvi va ombor qoldiqlariga avtomatik o‘tadi.",
         "source2": "Jurnal sarlavhasi avtomatik to‘ladi: sana, smena va mas’ul shaxsni har safar yozish shart emas.",
         "source3": "Guruhlab hisobdan chiqarish: 5 mahsulotga bitta belgi qo‘yib, beshta emas, bitta yozuv yaratiladi.",
         "source4": "Auditor uchun PDF qog‘ozni suratga olish o‘rniga bir necha soniyada tayyorlanadi.",
         "networksTitle": "Tarmoqlar uchun",
-        "networksText": "Har biri hujjatlarni tekshirishga bir soat sarflaydigan besh bosh oshpaz o‘rniga bitta rahbar beshta filialni boshqarishi mumkin. Tejamkorlik faqat soatda emas, ish haqi xarajatida ham ko‘rinadi.",
+        "networksText": "Rahbar bir nechta nuqtaning jurnallarini bitta kabinetda ko‘radi. Qog‘oz jurnallarni yig‘ish va har bir filialdagi yozuvlarni alohida tekshirish shart emas.",
         "closing": "Ichki o‘lchovlarimizga ko‘ra, dastlabki ikki haftadan keyin xodimlar jurnallarni to‘ldirishni “alohida ish” deb hisoblamay qo‘yadi. Bu smenaning odatiy qismiga, masalan, kassani yopishga o‘xshab qoladi."
       }
     }
@@ -18928,7 +18934,7 @@
         },
         "staff": {
           "title": "Xodimlar",
-          "hint": "Oshpazlar, ofitsiantlar, farroshlar — ilovada smena vazifalari bo‘yicha ishlaydi."
+          "hint": "Xodimlar o‘z smenasi vazifalarini ilovada bajaradi."
         },
         "commission": {
           "title": "Taom sifatini tekshirish komissiyasi",
@@ -18959,7 +18965,7 @@
         "description": "Guruh bu lavozimdagi odamlar qanday huquq olishini belgilaydi.",
         "category": "Guruh",
         "name": "Lavozim nomi",
-        "namePlaceholder": "Masalan, issiq sex oshpazi",
+        "namePlaceholder": "Masalan, Administrator",
         "nameShort": "Nom kamida 2 belgidan iborat bo‘lsin",
         "headcountInvalid": "Shtat soni 0 dan 999 gacha butun son bo‘lishi kerak",
         "create": "Yaratish",
@@ -22781,7 +22787,7 @@
   },
   "settingsWorkloadBalance": {
     "title": "Xodimlar ish yuklamasi",
-    "description": "Amaldagi tayinlovlar asosida har bir xodim oyiga qancha jurnal yuritishini ko‘ring. Bir xil maosh oladigan oshpazlarning yuklamasi yaqin bo‘lishi kerak, aks holda norozilik va kadrlar almashinuvi yuzaga kelishi mumkin. Mas’ullarni va jurnallar murakkabligini o‘zgartirsangiz, jadval yangilanadi.",
+    "description": "Har bir xodimga oyiga nechta jurnal tayinlanganini ko‘ring. Bir xil lavozimdagi yuklamalarni solishtiring. Vazifalarni teng taqsimlash uchun mas’ullar va jurnallar murakkabligini o‘zgartiring.",
     "responsibles": "Mas’ul xodimlar",
     "difficulty": "Jurnallar murakkabligi",
     "guideTitle": "Bu sahifani qanday o‘qish kerak",
@@ -22826,7 +22832,7 @@
   },
   "settingsJournalDifficulty": {
     "title": "Jurnallarning murakkabligi",
-    "description": "Faqat jamoada <strong>bosh oshpaz bo‘lmasa</strong> va jurnallar bir xil maosh oladigan oshpazlar o‘rtasida taqsimlansa kerak bo‘ladi. Murakkablik × takrorlanish × yozuvdagi qatorlar = yuklama vazni; «Vazifalarni taqsimlash» sahifasi shu asosda xodimlar yuklamasidagi nomutanosiblikni ko‘rsatadi. Bosh oshpaz bo‘lsa, bu bo‘limdan foydalanish shart emas.",
+    "description": "<strong>Bir xil lavozimdagi xodimlar yuklamasini</strong> solishtirish uchun jurnallar murakkabligini belgilang. Murakkablik × chastota × yozuvdagi qatorlar soni = jurnal vazni. Vazifalar taqsimoti sahifasi kimga ko‘proq vazifa tayinlanganini ko‘rsatadi.",
     "balanceLink": "Vazifalarni taqsimlash",
     "guide": {
       "title": "Murakkablikdan qanday foydalaniladi",
@@ -27829,7 +27835,7 @@
       "qrPosters": "Xonalar QR-plakatlari",
       "guideTitle": "Nuqtalar va xonalarni qanday sozlash",
       "guide1Title": "Nuqta — bu manzil",
-      "guide1Body": "Lenin ko‘chasidagi kafe va Mir ko‘chasidagi kafe — ikkita nuqta. Har birining ichida xonalar bor: oshxona, zal, yuvish joyi, ombor. Tozalash vazifalari xonalar bo‘yicha beriladi, iqlim jurnallari ham xonalar bo‘yicha chop etiladi.",
+      "guide1Body": "Tashkilotning ikki filiali — ikki nuqta. Har biriga kabinetlar, ombor, hojatxona va boshqa ish zonalarini qo‘shing. Xonalar bo‘yicha tozalash vazifalari tayinlanadi va mikroiqlim jurnallari yuritiladi.",
       "guide2Title": "Ishga tushirish uchun minimum",
       "guide2Body": "Bitta nuqta va 2–3 ta xona. Nuqtalar bir nechta bo‘lsa — har birini qo‘shing va “Jurnallarni nuqtalar bo‘yicha alohida yuritish”ni yoqing: hujjatlar har bir nuqta uchun yaratiladi, sarlavhada esa nuqta tanlash paydo bo‘ladi.",
       "guide3Title": "Xodimlar umumiy",
@@ -28021,7 +28027,7 @@
       "lockBody": "Yoqilganda “bugungi kun boshlanishi” (yuqoridagi smena tugash soatini hisobga olgan holda) dan keyin oddiy xodimlar o‘tgan kunlar yozuvlarini o‘zgartira yoki o‘chira olmaydi. Boshqaruv hamon mumkin, lekin har bir bunday harakat audit jurnaliga <code>closed_day.override</code> belgisi bilan yoziladi.",
       "lockNote": "Biznesingiz HACCP auditidan o‘tayotgan bo‘lsa va ofitsiant kechagi t° nazoratini orqaga sanada “to‘ldirib qo‘ymasligi”ni kafolatlash kerak bo‘lsa foydalaning.",
       "photoTitle": "Pipeline’ning har bir qadamida foto-dalil",
-      "photoBody": "Yoqilganda TasksFlow vazifasida pipeline’ning har bir qadami uchun xodim fotosuratni (telefon kamerasi) yuklashi shart. Foto paydo bo‘lguncha “Bajardim” tugmasi bloklangan. Har bir foto aniq qadamga bog‘langan holda audit-logga tushadi — manager istalgan payt “oshpaz muzlatkichni soat 09:34 da aynan qanday tekshirgan”ini ko‘ra oladi.",
+      "photoBody": "Sozlama yoqilganda xodim TasksFlow vazifasining har bir bosqichiga surat biriktiradi. «Bajardim» tugmasi surat yuklangandan keyin ishlaydi. Rahbar surat orqali bosqich qanday bajarilganini tekshirishi mumkin.",
       "photoNote": "Jurnalni to‘ldirishni “quruq belgi”dan tekshiruvlar uchun haqiqiy evidence trail’ga aylantiradi. Kamchiligi — xodimlar uchun har bir vazifa 30–60 soniyaga uzoqroq davom etadi.",
       "escalateTitle": "Og‘ish tuzatilmasa, rahbariyatga xabar berish",
       "escalateBody": "Harorat me’yordan chiqqanda xabar darhol <b>jurnal uchun mas’ulga</b> — “Jurnallar uchun mas’ullar”da tayinlangan kishiga yuboriladi. Agar u haroratni me’yorga qaytarmagan va jurnalga nima qilganini yozmagan bo‘lsa, belgilangan vaqtdan keyin rahbarlar bundan xabar topadi. Har bir ko‘rsatkich uchun emas, og‘ish uchun bitta xabar.",
@@ -28141,7 +28147,7 @@
       "guide6Title": "Tuya Device ID — ixtiyoriy",
       "guide6Body": "Agar WiFi harorat datchigi (HACCP/Aubess) o‘rnatilgan bo‘lsa — Device ID ni kiriting, WeSetup ko‘rsatkichlarni har soat jurnalga o‘zi yozib boradi.",
       "qa1Q": "Muzlatkichlarim bo‘lmasa-chi?",
-      "qa1A": "Hech narsa qo‘shmasa ham bo‘ladi — harorat jurnali bo‘sh bo‘ladi. Ammo ko‘pchilik umumiy ovqatlanish korxonalariga kamida 1 ta muzlatkich kerak.",
+      "qa1A": "Faqat ishlatadigan va nazorat qiladigan uskunalarni qo‘shing. Sovitish uskunalari bo‘lmasa, tegishli harorat jurnali bo‘sh qoladi.",
       "qa2Q": "Tuya Device ID — qayerdan olish mumkin?",
       "qa2A": "Tuya / Smart Life ilovasida: qurilma → tishli g‘ildirak → Qurilma haqida ma’lumot → Virtual ID. Batafsil /settings/integrations sahifasida.",
       "title": "Uskunalar",
@@ -28574,7 +28580,7 @@
     },
     "journalPipelinesPage": {
       "title": "Jurnallarning bosqichma-bosqich ko‘rsatmalari",
-      "description": "Xodimlar uchun pipeline-ko‘rsatmalar. Qadamlarni sozlash uchun blokni bosing: qanday vositalarni olish, qayerga borish, nimani tekshirish. Qancha batafsil bo‘lsa, yangi tozalovchi / oshpaz / sotuvchiga shuncha tushunarli.",
+      "description": "Bosqichma-bosqich ko‘rsatmalarni sozlang: qanday vositalarni olish, qayerga borish va nimani tekshirish. Xodim vazifani ochganda shu bosqichlarni ko‘radi.",
       "quickStart": "🚀 Tez boshlash",
       "quickStartTitle": "Barcha jurnallar uchun pipeline’ni bir bosishda yaratish",
       "quickStartBody": "Har bir jurnal uchun uning ustunlari bo‘yicha pinned-tugunlarning asosiy daraxtini yaratadi. Allaqachon sozlangan jurnallar (<strong>{configured, number}</strong>) qayta yaratilmaydi. Ustunlari tavsiflanmagan jurnallar qo‘lda sozlash uchun bildirishnomalarga tushadi.",
@@ -28627,7 +28633,7 @@
       "resetBullet3": "Jurnal yozuvlariga ta’sir qilmaydi",
       "resetConfirm": "Standartlarni qaytarish",
       "titlePrefix": "Pipeline",
-      "description": "Xodim vazifani ochganda ko‘radigan qadamlar. Har bir qadam qancha tushunarli bo‘lsa, yangi tozalovchi / oshpazdan shuncha kam savol tug‘iladi.",
+      "description": "Xodim vazifani ochganda shu bosqichlarni ko‘radi. Yangi xodim qo‘shimcha tushuntirishsiz ishlashi uchun aniq amallarni yozing.",
       "introLabel": "Pipeline tepasidagi maslahat (ixtiyoriy)",
       "introPlaceholder": "Masalan: “Xonani tozalash. Qadamlarni tartib bilan bajaring”",
       "stepTitlePlaceholder": "Qadam nomi (masalan, “Inventarni oling”)",
@@ -28642,7 +28648,7 @@
     },
     "journalResponsiblesPage": {
       "title": "Jurnallar uchun mas’ullar",
-      "description": "Qaysi lavozimlar har bir jurnalni to‘ldirishi va hujjat sarlavhasiga aynan qaysi xodim yozilishi. O‘zgarishlar ochiq hujjatlarda va chop etishda darhol aks etadi. “Barchasiga aqlli presetlarni qo‘llash” tugmasini bosing — tizim o‘zi tozalashni tozalovchilarga, haroratni oshpazlarga va hokazo tayinlaydi.",
+      "description": "Har bir jurnalni qaysi lavozimlar to‘ldirishini va hujjat sarlavhasida kim ko‘rsatilishini belgilang. O‘zgarishlar ochiq hujjatlar va bosma nusxalarga qo‘llanadi. Andozalarni qo‘llashdan oldin taklif etilgan tayinlovlarni tekshiring.",
       "guideTitle": "Jurnallar bo‘yicha mas’ullarni qanday tayinlash mumkin",
       "b1Title": "“To‘ldiradi” (yuqori blok)",
       "b1Body": "yozuv yuritadigan xodimlar. Bitta yoki bir nechta bo‘lishi mumkin (komissiyalar uchun).",
@@ -28828,7 +28834,7 @@
       "orgInnMissing": "STIR ko‘rsatilmagan",
       "orgAddressMissing": "Manzil ko‘rsatilmagan",
       "positionsTitle": "Lavozimlar",
-      "positionsDescription": "Shef, oshpaz, sotuvchi, farrosh — vazifalarni rollar bo‘yicha taqsimlash uchun",
+      "positionsDescription": "Rahbar, administrator, mutaxassis, farrosh — vazifalarni lavozimlar bo‘yicha taqsimlash uchun",
       "positionsIssue": "Kamida 4 ta lavozim yarating",
       "buildingsTitle": "Binolar va xonalar",
       "buildingsDescription": "Xonalar — “Tozalash”, “Iqlim”, “Sanitariya kuni” jadvallarining qatorlari",
@@ -29056,7 +29062,7 @@
       "guide4": "Planshetda xodim o‘zini tanlaydi, PIN kiritadi va jurnallarni to‘ldiradi. Bekor turgandan keyin planshet o‘zi ro‘yxatga qaytadi.",
       "tablets": "Planshetlar",
       "tabletName": "Planshet nomi",
-      "tabletPlaceholder": "Oshxona, 2-ombor…",
+      "tabletPlaceholder": "Kabinet, 2-ombor…",
       "addTablet": "Planshet qo‘shish",
       "lastActivity": "Faollik: {date}",
       "neverOpened": "Hali ochilmagan",
@@ -29085,7 +29091,7 @@
     },
     "kioskPage": {
       "title": "Umumiy planshet",
-      "description": "Oshxona yoki omborda bitta planshet: har bir xodim yozuvlarni o‘zining 4 xonali PIN-kodi bilan imzolaydi, hech kim birovning ismi bilan adashmaydi.",
+      "description": "Ish joyidagi umumiy planshet: har bir xodim yozuvlarni shaxsiy 4 xonali PIN-kod bilan imzolaydi.",
       "withoutPin": "PIN yo‘q: {count, number}",
       "allHavePin": "Hammada PIN bor"
     },
@@ -29297,7 +29303,7 @@
     },
     "positionStaffVisibilityPage": {
       "title": "Lavozimlar bo‘yicha xodimlar ko‘rinishi",
-      "description": "Har bir lavozim xodimlari kimni ko‘rishi. Bu sozlama TasksFlow va Telegram-botga sinxronlanadi: bosh oshpaz bosh sahifasida faqat oshpazlarning vazifalarini ko‘radi, texnologning vazifalarini emas; botda boshqa xodimlarni ko‘rishda ham xuddi shunday. Lavozim bo‘yicha saqlanadi — yangi “bosh oshpaz” qo‘shilganda u avtomatik ravishda shu scope’ni oladi."
+      "description": "Har bir lavozim qaysi xodimlarni ko‘rishini belgilang. Masalan, smena boshlig‘i o‘z jamoasini ko‘rishi mumkin. Sozlama TasksFlow va Telegram-botda shu lavozimdagi barcha, jumladan yangi xodimlarga ham qo‘llanadi."
     },
     "qrPosterCard": {
       "checkLinkTitle": "QR-koddagi havolani yangi yorliqda ochish — shakl ochilishini tekshirish",
@@ -29416,7 +29422,7 @@
     },
     "schedulePage": {
       "title": "Smenalar jadvali",
-      "intro": "Bugun kim qaysi lavozimda smenada ekanini belgilang. Bu jadvalni Telegram-bot va mini-ilova ko‘radi: xodim smenani ochadi, eslatmalar belgilangan oshpazga emas, navbatchiga yuboriladi.",
+      "intro": "Bugun kim va qaysi lavozimda smenada ekanini belgilang. Telegram-bot va mini-ilova shu jadvalga asoslanadi: eslatmalar bugun ishlayotgan mas’ul xodimga yuboriladi.",
       "noteDay": "Bu yerda — muayyan kun haqida.",
       "noteDayBody": "Ushbu jadvaldagi «Dam olish», «Ta’til» va «Kasallik» belgilari xodim aynan shu sanada bo‘lmasligini bildiradi: u eslatmalarni olmaydi va ilovada «Bugun jadvalingiz bo‘yicha: kasallik» yorlig‘ini ko‘radi.",
       "noteLong": "Uzoq ta’til, kasallik varaqasi va doimiy dam olish kunlari",
@@ -29453,7 +29459,7 @@
       "bullet1Title": "Kimni ko‘rsam — o‘shanga topshiraman",
       "bullet1Body": "Scope sozlamasi bor har bir menejer TasksFlow’da va vazifa yaratishda faqat o‘z qo‘l ostidagilarni ko‘radi.",
       "bullet2Title": "Scope rejimlari",
-      "bullet2Body": "«Hammasi» — hammani ko‘radi (lekin adminlar va menejerlarni emas — 2026-04-30 dan filtr). «Lavozimlar bo‘yicha» — lavozimlarni tanlaysiz (oshpaz, farrosh). «Aniq» — birma-bir.",
+      "bullet2Body": "«Barchasi» — administrator va menejerlardan tashqari barcha xodimlar. «Lavozimlar bo‘yicha» — tanlangan lavozimlardagi xodimlar. «Aniq xodimlar» — faqat ko‘rsatilgan odamlar.",
       "bullet3Title": "Saqlagandan keyin",
       "bullet3Body": "O‘zgarishlar darhol TasksFlow’ga yuboriladi — menejerning qo‘l ostidagilar ro‘yxati bir necha soniyada yangilanadi.",
       "qa1q": "Nega ishlab chiqarish mudiri adminni ko‘radi?",
@@ -29547,7 +29553,7 @@
       "roleLabel": "Lavozim",
       "cannotChangeOwnRole": "O‘z lavozimingizni o‘zgartirib bo‘lmaydi",
       "positionTitleLabel": "Lavozim nomi",
-      "positionTitlePlaceholder": "Masalan: Sovuq sex oshpazi",
+      "positionTitlePlaceholder": "Masalan: Administrator",
       "positionTitleHint": "Jurnallarda umumiy rol o‘rniga ko‘rsatiladi. Rolning standart nomidan foydalanish uchun bo‘sh qoldiring.",
       "phoneLabel": "Telefon",
       "activeLabel": "Faol",
@@ -29663,7 +29669,7 @@
       "pageOf": "{page, number}-sahifa, jami {total, number} ta"
     },
     "bulkStaffImport": {
-      "placeholderSample": "F.I.Sh.\tLavozim\tTelefon\nIvan Petrov\tOshpaz\t+7 985 123-45-67\nSergey Povarov\tBosh oshpaz\t+7 925 555-12-34\nMariya Chaykova\tOfitsiant\t+7 999 444-22-11",
+      "placeholderSample": "F.I.Sh.\tLavozim\tTelefon\nIvan Petrov\tMutaxassis\t+7 985 123-45-67\nSergey Sokolov\tSmena boshlig‘i\t+7 925 555-12-34\nMaria Chaykova\tAdministrator\t+7 999 444-22-11",
       "noSheets": "Faylda varaqlar yo‘q",
       "emptyFile": "Fayl bo‘sh",
       "tooFewRows": "Faylda 2 qatordan kam (sarlavha va kamida bitta ma’lumot qatori kerak)",
@@ -29907,7 +29913,7 @@
       "presetApplied": "{code} ← {positions, number} lav., {slots, number} mas’ul",
       "presetAppliedNoUsers": "{code} ← {positions, number} lav. (mos xodimlar yo‘q)",
       "createPositionsFirst": "Avval lavozimlar va xodimlarni yarating",
-      "noPositionsFitPresets": "Hech bir lavozim presetlarga mos kelmadi. «Farrosh», «Oshpaz», «Menejer» kabi lavozimlarni yarating.",
+      "noPositionsFitPresets": "Bu andozalarga mos lavozimlar yo‘q. Tashkilotingiz lavozimlarini hisobga olib, mas’ullarni qo‘lda tayinlang.",
       "doneFailed": "Tayyor · qo‘llandi: {ok, number}, bajarilmadi: {failed, number}",
       "appliedToJournals": "{ok, plural, one {# ta jurnalga} other {# ta jurnalga}} qo‘llandi",
       "networkError": "Tarmoq xatosi",
@@ -29950,7 +29956,7 @@
       "fixWhatWrong": "Nima noto‘g‘ri: <b>{reason}</b>",
       "fixRecommendation": "Tizim tavsiyasi",
       "whoVerifies": "Kim tekshiradi",
-      "fixNoSuitable": "Mos xodimlar topilmadi. <link>Xodimlar</link> bo‘limida «Ishlab chiqarish mudiri» yoki «Katta oshpaz» kabi lavozim yarating.",
+      "fixNoSuitable": "Bu andoza uchun mos xodim topilmadi. <link>Xodimlar</link> bo‘limidagi lavozimlarni tekshiring yoki mas’ulni qo‘lda tayinlang.",
       "applyRecommendation": "Tavsiyani qo‘llash",
       "hideHint": "Maslahatni yashirish",
       "forecastTitle": "Saqlangandan keyingi yuklama prognozi",
@@ -29976,7 +29982,7 @@
       "perEmployeeNote": "«Har bir xodimga» jurnali uchun filler-o‘rinlar kerak emas. Tekshiruvni xodimning o‘zi bajaradi, katta xodim tekshiradi. «Aqlli preset»ni bosing — u barcha lavozimlarni qo‘shadi va adminni «Kim tekshiradi»ga qo‘yadi.",
       "journalsNotFound": "«{query}» bo‘yicha jurnallar topilmadi.",
       "applyAllTitle": "Aqlli presetlar barcha jurnallarga qo‘llansinmi?",
-      "applyAllDescription": "Tizim barcha jurnallarni yuklama kamayish tartibida ko‘rib chiqadi va lavozimlar hamda xodimlarni ma’nosiga ko‘ra joylashtiradi. Tozalash — farroshlarga, harorat — oshpazlarga, tekshiruv — texnolog yoki ishlab chiqarish mudiriga. Admin avtomatik ravishda «Kim tekshiradi»ga tushadi.",
+      "applyAllDescription": "Tizim yuklama va lavozim nomiga qarab tayinlovlarni taklif qiladi. Andozalar umumiy ovqatlanishga mo‘ljallangan: tozalash farroshlarga, harorat oshpazlarga, qiyoslash texnolog yoki ishlab chiqarish mudiriga beriladi. Administrator tekshiruvchi bo‘ladi. Tashkilotingiz uchun tayinlovlarni tekshiring.",
       "applyAllBullet1": "Mavjud tayinlashlar tizim mos nomzod topgan joylarda qayta yoziladi.",
       "applyAllBullet2": "Agar jurnal uchun mos lavozimlar bo‘lmasa — unga tegilmaydi.",
       "applyAllBullet3": "Ko‘rib chiqiladigan jurnallar: {count, number}; faol hujjatlardagi mas’ullar ham yangilanadi",
@@ -30045,7 +30051,7 @@
       "guide": {
         "title": "Master-kabinetlar qanday ishlaydi",
         "cabinetTitle": "1. Kabinet",
-        "cabinetBody": "Master-kabinet — jurnallar va oshxona xodimlarisiz alohida kabinet. Kabinetlar bir nechta bo‘lishi mumkin — masalan, «Maktablar» va «Bog‘chalar».",
+        "cabinetBody": "Bosh kabinet — nuqtalarning ish jurnallari va xodimlaridan alohida kabinet. Masalan, turli faoliyat yo‘nalishlari uchun bir nechta kabinet bo‘lishi mumkin.",
         "pointsTitle": "2. Nuqtalar",
         "pointsBody": "Kerakli kabinetda «Nuqta qo‘shish»ni bosing — nuqta uning menyu va xom ashyosini ola boshlaydi. Bitta nuqta ularni bitta kabinetdan oladi.",
         "operatorTitle": "3. Operator",
@@ -30131,7 +30137,7 @@
         "title": "Master-kabinet yaratilsinmi?",
         "description": "Operator {name} ({email}) taklif oladi.",
         "confirmLabel": "Yaratish va taklif qilish",
-        "bullet1": "Alohida kabinet paydo bo‘ladi — jurnallar, xodimlar va oshxona sozlamalarisiz.",
+        "bullet1": "Ish jurnallari, xodimlar va nuqta sozlamalarisiz alohida kabinet yaratiladi.",
         "bullet2": "Operator faqat menyu, xom ashyo va ulangan nuqtalar ro‘yxatini ko‘radi.",
         "bullet3": "U saqlagan menyu va xom ashyo «{organization}»ning brakeraj va tez buziladigan mahsulotlar jurnallariga tushadi.",
         "bullet4": "Nuqtalarning o‘z pozitsiyalari yo‘qolmaydi — faqat operator yuborgani o‘zgaradi."

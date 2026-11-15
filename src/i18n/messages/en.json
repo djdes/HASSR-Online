@@ -1404,7 +1404,7 @@
         "openJournalTitle": "Open a journal",
         "openJournalBody": "click a card to open the active document for the current period (month / half-month / year).",
         "greyJournalTitle": "Grey journal",
-        "greyJournalBody": "switched off in /settings/journals — this kitchen does not need it. You can switch it back on there.",
+        "greyJournalBody": "disabled in this organisation’s log settings. You can enable it again when needed.",
         "sendAllTitle": "“Send to everyone”",
         "sendAllBody": "one button creates TasksFlow tasks for unfilled journals. Employees see them on their smartphones.",
         "qDisabledQ": "The journal is switched off but it still has to be kept",
@@ -2549,8 +2549,8 @@
         "regulations": " SanPiN / HACCP"
       },
       "marketing": {
-        "heading": "Digital food safety logs",
-        "description": "Track temperatures, sanitation and ingredient traceability in one place. Get Telegram alerts, import from iiko and print in the Rospotrebnadzor format.",
+        "heading": "Electronic logs for your organisation",
+        "description": "Monitor temperatures, cleaning and equipment in one workspace. For medical centres, food service, manufacturing and other organisations.",
         "plans": "Basic and Advanced plans",
         "accessControl": "Access by role and log",
         "telegramAlerts": "Telegram alerts",
@@ -2677,9 +2677,9 @@
     },
     "metadata": {
       "loginTitle": "Sign in",
-      "loginDescription": "Sign in to WeSetup. Digital SanPiN and HACCP logs for food service and food production.",
+      "loginDescription": "Sign in to WeSetup. Digital SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations.",
       "registerTitle": "Create an account",
-      "registerDescription": "Create a WeSetup account. Digital SanPiN and HACCP logs for food service and food production; {trialDays, number} {trialDays, plural, one {day} other {days}} free without limits, no card required."
+      "registerDescription": "Create a WeSetup account. Digital SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations; {trialDays, number} {trialDays, plural, one {day} other {days}} free without limits, no card required."
     },
     "apiErrors": {
       "loginCredentialsRequired": "Enter your email and password",
@@ -2724,7 +2724,7 @@
       "domainChecking": "Checking the domain…"
     },
     "badges": {
-      "title": "Logs built on food safety requirements",
+      "title": "For different industries",
       "haccp": {
         "top": "HAZARD ANALYSIS",
         "bottom": "CRITICAL CONTROL POINTS",
@@ -2744,10 +2744,11 @@
         "top": "FOOD PRODUCTION",
         "bottom": "CATERING · RETAIL"
       },
-      "forms": "Log forms follow HACCP and SanPiN",
+      "forms": "Choose your organisation’s industry to set up the appropriate logs.",
       "catering": "Catering",
-      "production": "Food production",
-      "retail": "Warehouses and retail"
+      "production": "Manufacturing",
+      "retail": "Warehouses and retail",
+      "medical": "Medical centres"
     }
   },
   "journalDescriptions": {
@@ -4122,7 +4123,7 @@
       "choose": "Select",
       "newPosition": "New position",
       "positionName": "Position name",
-      "positionPlaceholder": "Cook",
+      "positionPlaceholder": "Employee",
       "directoryLink": "All employees and their profiles",
       "laterHint": "You can add a phone number, locations and days off to the profile later",
       "genericError": "Error",
@@ -5606,7 +5607,7 @@
     "register": "Create account",
     "dashboard": "Open dashboard",
     "profile": "Profile",
-    "footerDescription": "Electronic SanPiN and HACCP logs for food service and food production. © 2026 WeSetup.",
+    "footerDescription": "WeSetup: electronic SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations. © 2026 WeSetup.",
     "details": "Company details",
     "sections": "Sections",
     "glossary": "Glossary",
@@ -5639,7 +5640,7 @@
   "landing": {
     "metadata": {
       "title": "Digital SanPiN and HACCP logs online — WeSetup",
-      "description": "{journalCount, number} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. {trialDays, number} {trialDays, plural, one {day} other {days}} free — no card required.",
+      "description": "{journalCount, number} digital SanPiN and HACCP logs for medical centres, food service and other organisations. QR equipment stickers, staff PINs and inspection PDFs. {trialDays, number} {trialDays, plural, one {day} other {days}} free — no card required.",
       "keywords": "digital logs, SanPiN logs, HACCP logs, online HACCP, staff hygiene log, food quality log, temperature log, QR log, QR log entries, Rospotrebnadzor, food service",
       "blogFeed": "WeSetup — blog",
       "updatesFeed": "WeSetup — updates"
@@ -5708,8 +5709,8 @@
         "answer": "Entries are confirmed with the employee’s personal PIN. Five incorrect attempts lock entry for 15 minutes. The server records the time, and the audit log records who entered what and when. Each refrigerator has its own sticker; the equipment cannot be changed in the form."
       },
       "electronicLogs": {
-        "question": "What is a digital food safety log?",
-        "answer": "A web service where employees enter the same records they used to keep in paper logs: hygiene, temperatures, product checks and more. Electronic records are expressly permitted by SanPiN 2.3/2.4.4282-26, “Sanitary and Epidemiological Requirements for Public Catering,” which took effect on 1 September 2026 and replaced the previous SanPiN 2.3/2.4.3590-20."
+        "question": "What is an electronic SanPiN log?",
+        "answer": "A web service for keeping logs: employees enter records from a phone or computer, while managers review them and export documents. Choose the logs, responsible employees and recording procedures for your industry and organisation’s requirements."
       },
       "inspection": {
         "question": "How does a Rospotrebnadzor inspection work?",
@@ -5784,8 +5785,8 @@
       "heroPhrase": "{trialDays, number} {trialDays, plural, one {day} other {days}} free, then from <price>{amount}</price> per month"
     },
     "seo": {
-      "softwareDescription": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Equipment QR stickers let staff scan, enter a PIN and record entries. PDFs are ready for Rospotrebnadzor inspections.",
-      "productDescription": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections.",
+      "softwareDescription": "{journalCount, number} electronic SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations. Equipment QR stickers let staff scan, enter a PIN and record entries. PDFs are ready for Rospotrebnadzor inspections.",
+      "productDescription": "{journalCount, number} electronic SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections.",
       "freeOfferDescription": "All {journalCount, number} {journalCount, plural, one {log} other {logs}} with no limits on employees or locations — {trialDays, number} {trialDays, plural, one {day} other {days}} from activation, no card required",
       "standardDescription": "Up to {employees, number} employees per location, all logs, {mb, number} MB for log orders and your own documents. Price per month when paid yearly.",
       "premiumDescription": "Up to {employees, number} employees per location, {gb, number} GB for all documents, readings filled in from a sensor photo, equipment connection and delivery, Mercury (VetIS), a template document pack. Price per month when paid yearly.",
@@ -5809,12 +5810,12 @@
     },
     "openGraph": {
       "title": "Digital HACCP & SanPiN logs",
-      "subtitle": "Food safety records for food service and production",
+      "subtitle": "Logs, staff and sanitary control for your industry",
       "features": "{count, number} logs · QR entry · Automated reminders"
     },
     "showcase": {
       "title": "The manager’s workspace at a glance",
-      "lead": "Real WeSetup screens. Staff fill in logs from their phones by scanning a QR code — you see the result here: what is done, what is overdue and who is responsible.",
+      "lead": "WeSetup screens with sample data. Staff and access use an industry-neutral example; logs and checks use food service examples. Your log set depends on your organisation’s industry.",
       "region": "WeSetup workspace screens",
       "tabs": "Workspace screens",
       "previous": "Previous screen",
@@ -5828,12 +5829,12 @@
         },
         "monitoring": {
           "tab": "Monitoring",
-          "title": "Progress by outlet",
+          "title": "Completion by location",
           "text": "Today’s logs, checklists and the production control program as percentages — for the whole company and for each outlet."
         },
         "journals": {
           "tab": "Logs",
-          "title": "Every log for the site",
+          "title": "Location logs",
           "text": "Sanitary and HACCP logs in one list: today’s status, responsible staff and one click to open a log."
         },
         "grid": {
@@ -5884,7 +5885,7 @@
       "bundlePrice": "Equipment bundles start at {price} ₽ (one-time).",
       "oneTime": "One-time payment",
       "sensorBenefit": "Refrigerator sensors record temperatures automatically",
-      "tabletBenefit": "A kitchen tablet and NFC key fobs for the shift",
+      "tabletBenefit": "A workplace tablet and NFC key fobs for the shift",
       "setupBenefit": "On-site setup, installation and shift training",
       "collapse": "Hide equipment options",
       "choose": "Choose equipment",
@@ -6138,7 +6139,7 @@
       "storyboardCaption": "Storyboard {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "Chapter {chapterNumber, number}: {chapterName}. Log: {journalName}. {caption}",
       "watchVideo": "Watch the video with sound",
-      "watchVideoHint": "A video with voice-over and subtitles opens in a player",
+      "watchVideoHint": "Food service example: equipment QR codes and log entries. Turn on sound.",
       "videoLabel": "How QR works — video with sound",
       "videoSubtitles": "Subtitles",
       "seekValue": "{currentTime} of {totalTime}, chapter “{chapterName}”"
@@ -6146,7 +6147,7 @@
     "chapter": {
       "fridge": {
         "label": "Fridge",
-        "caption": "The cook scans the sticker on the refrigerator, enters a PIN and the temperature. The reading is recorded in today’s log entry alongside the responsible person’s code.",
+        "caption": "An employee scans the fridge sticker and enters a PIN and temperature. The reading goes into today’s log column alongside the responsible employee’s code.",
         "short": "PIN and temperature are recorded in today’s log entry.",
         "place": "Sticker on the refrigerator door"
       },
@@ -6362,7 +6363,7 @@
     "chapters": {
       "fridgeChip": "Refrigerator",
       "fridgePlace": "Sticker on the refrigerator door",
-      "fridgeCaption": "The cook scans the refrigerator sticker, enters a PIN and records the temperature. The value appears in today's journal column beside the responsible person's code.",
+      "fridgeCaption": "An employee scans the fridge sticker and enters a PIN and temperature. The reading goes into today’s log column alongside the responsible employee’s code.",
       "fridgeShort": "PIN and temperature are recorded in today's column.",
       "lockerChip": "Changing room",
       "lockerPlace": "QR code by the changing-room thermometer",
@@ -6410,7 +6411,12 @@
       "entrySaved": "Saved: {journal} · {employee} · {time}"
     },
     "readingSaved": "Temperature {value, number}°C recorded in the journal under {employee}.",
-    "halfHour": "30 min"
+    "halfHour": "30 min",
+    "demo": {
+      "employee": "Employee",
+      "specialist": "Specialist",
+      "supervisor": "Manager"
+    }
   },
   "blogChrome": {
     "list": {
@@ -7408,9 +7414,9 @@
           "hook": "One sensor for the main refrigerator, a thermo-hygrometer in the kitchen, and NFC access for the shift."
         },
         "standard": {
-          "name": "Kitchen",
-          "forWhom": "A busy kitchen with regular inspections",
-          "hook": "Sensors for every key refrigerator, a kitchen tablet, and key fobs for the whole shift."
+          "name": "Work location",
+          "forWhom": "Daily work and regular checks",
+          "hook": "Sensors on key refrigeration equipment, a workplace tablet and key fobs for the whole shift."
         },
         "network": {
           "name": "Network",
@@ -7421,7 +7427,7 @@
       "devices": {
         "install": {
           "title": "On-site installation and setup",
-          "hint": "An engineer visits your kitchen, installs the sensors, configures profiles, and trains the shift."
+          "hint": "An engineer will visit your premises, install sensors, configure profiles and train your staff."
         },
         "temp": {
           "title": "Temperature sensor",
@@ -7432,7 +7438,7 @@
           "hint": "For monitoring temperature and humidity in a dining area or production room."
         },
         "tablet": {
-          "title": "Kitchen tablet",
+          "title": "Staff tablet",
           "hint": "10-inch screen, protective case, and preconfigured profile. Wall-mountable in the production room."
         },
         "nfc": {
@@ -8016,7 +8022,7 @@
       "refreshTasksFlowTitle": "Sync completion marks from TasksFlow",
       "cleanupTasksMenuLabel": "Delete completed TasksFlow tasks (journal history will remain)",
       "pipelinePerRoomTitle": "By room (recommended)",
-      "pipelinePerRoomDescription": "Each room has its own list of steps. This works well when kitchen cleaning differs from bar cleaning.",
+      "pipelinePerRoomDescription": "Each room has its own steps. For example, cleaning an office can differ from cleaning a storeroom or washroom.",
       "pipelineGlobalTitle": "Shared list",
       "pipelineGlobalDescription": "One set of steps for every room. Best when the procedure is simple and consistent.",
       "pipelineLegacyTitle": "No checklist (legacy)",
@@ -8581,7 +8587,7 @@
         "accessInstructions": "Set up a password login, Telegram sign-in, and journal access in the employee card using “Add access” in the edit window.",
         "done": "Done",
         "addPositionTitle": "Add a position · {category}",
-        "positionPlaceholder": "For example, “Cold kitchen chef”",
+        "positionPlaceholder": "For example, “Administrator”",
         "commonPositions": "Common positions",
         "moreSuggestions": "{count, number} more",
         "skipPosition": "I already have a position → skip",
@@ -9363,7 +9369,7 @@
         "hint": "Cleaning tasks are assigned by room, and the climate journal is built from rooms.",
         "count": "{count, plural, one {# room} other {# rooms}}",
         "emptyTitle": "No rooms yet",
-        "emptyBody": "Add a kitchen, storage, washing area — they appear in the cleaning journal and the equipment window right away.",
+        "emptyBody": "Add offices, storerooms and other rooms. They will appear in the cleaning log and equipment settings.",
         "copyFrom": "Copy from outlet",
         "copy": "Copy",
         "copying": "Copying…",
@@ -9514,7 +9520,7 @@
       },
       "staff": {
         "title": "Outlet staff",
-        "hint": "Cooks, kitchen workers, waiters — who works here: their journals and tasks are only at this outlet.",
+        "hint": "Add the employees who work here. Their logs and tasks will be linked to this location.",
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add employee",
         "emptyTitle": "No one at this outlet yet",
@@ -9612,7 +9618,7 @@
         "text": "Write to the assistant the way you would write to a colleague:",
         "prompt1": "Which journals are not filled today?",
         "prompt2": "Mark Smirnova on sick leave from October 12 to 16",
-        "prompt3": "Add cook Anna Ivanova, +7 900 000-00-00"
+        "prompt3": "Add employee Anna Ivanova, +7 900 000-00-00"
       },
       "create": {
         "step": "Step 1",
@@ -9777,7 +9783,7 @@
       "newDevice": "new device",
       "newDeviceNotice": "We email and message you on Telegram when someone signs in from a new device. If you don’t recognize the sign-in, end all sessions and change your password.",
       "logoutEverywhere": "Sign out everywhere",
-      "logoutDescription": "Ends sessions on every device, including a phone, a kitchen tablet, or someone else’s computer where you forgot to sign out. You’ll need to sign in here again too.",
+      "logoutDescription": "Ends sessions on every device, including your phone, workplace tablet and any computer where you forgot to sign out. You will also need to sign in again here.",
       "logoutAll": "End all sessions",
       "logoutFailed": "Could not end the sessions. Check your connection and try again.",
       "telegramCodeTitle": "Telegram code at sign-in",
@@ -9869,7 +9875,7 @@
         "textKind": "Text",
         "textHint": "A couple of paragraphs about using the journals",
         "photoKind": "With a photo",
-        "photoHint": "A photo of your kitchen, tablet, or journal",
+        "photoHint": "A photo of your workplace, tablet or log",
         "videoKind": "With a video",
         "videoHint": "30–60 seconds, spoken in your own words",
         "oldAmount": "was",
@@ -9986,7 +9992,7 @@
         "teamTitle": "Team and access",
         "teamBody": "Set up job titles, the staff hierarchy (who can see whom), and permission presets for each role.",
         "journalsTitle": "Journals",
-        "journalsBody": "Assign journal owners, configure task delivery in TasksFlow, and choose the journals your kitchen needs.",
+        "journalsBody": "Choose logs for your organisation, assign responsible employees and configure task delivery in TasksFlow.",
         "integrationsTitle": "Integrations",
         "integrationsBody": "Use TasksFlow for mobile tasks, Telegram for alerts, and the inspector portal for inspections.",
         "qaMistakeQuestion": "What if I make a mistake?",
@@ -10179,11 +10185,11 @@
         },
         "settings_journal_difficulty": {
           "title": "Journal difficulty",
-          "description": "If there is no head chef, rate each journal from 1 to 5 and distribute tasks evenly among cooks."
+          "description": "Rate log difficulty to distribute tasks evenly among employees"
         },
         "settings_workload_balance": {
           "title": "Staff workload",
-          "description": "See how many journals each person fills in each month and spot workload imbalances among cooks on the same pay."
+          "description": "Compare assigned log workloads for employees in the same position"
         },
         "settings_task_visibility": {
           "title": "Who can see all TasksFlow tasks",
@@ -10841,7 +10847,7 @@
     "accessMatrices": {
       "pages": {
         "employeesTitle": "Journal access for employees",
-        "employeesDescription": "See which journals each employee can view and fill in. Select a cell to grant or remove access. Presets quickly give cleaners all cleaning journals and cooks the temperature-control journals. Until an employee has at least one grant, they can access all journals for compatibility with the previous behavior.",
+        "employeesDescription": "Choose which logs employees can see and fill. Click a cell to change access. Industry presets target typical food service positions: review them before applying. An employee with no checked boxes retains legacy access to all logs.",
         "positionsTitle": "Journal access by position",
         "positionsDescription": "Choose which journals employees in each position receive when you send a task to everyone. If a position has no selected journals, its employees can currently access all journals. To restrict a journal for one employee, open <access>employee journal access settings</access>.",
         "accessLink": "Journal access for employees"
@@ -10926,11 +10932,11 @@
         "title": "How the office and outlets work",
         "office": {
           "title": "Office — company management",
-          "body": "Director, brand chef, area managers. They see every outlet, while their journals and tasks are office-only — they are not added to outlet journals."
+          "body": "Directors and department managers can see all locations. Their own logs and tasks belong to the office and are not added to location logs."
         },
         "points": {
           "title": "Outlet — its staff and journals",
-          "body": "Cooks, kitchen workers, waiters, the outlet manager — on their outlet page, together with its journal set and commission."
+          "body": "Employees and the location manager are on their location’s page, together with its logs and commission settings."
         },
         "move": {
           "title": "How to move a person",
@@ -10954,7 +10960,7 @@
       },
       "staff": {
         "title": "Office staff",
-        "hint": "Director, brand chef, area managers — see every outlet, journals and tasks are office-only.",
+        "hint": "Directors and department managers see all locations; their logs and tasks belong to the office.",
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add to office",
         "emptyTitle": "No one in the office yet",
@@ -11501,7 +11507,7 @@
     },
     "climate_control": {
       "intro": "Monitor temperature and humidity in production and storage rooms to confirm that food storage and preparation conditions meet the required standards.",
-      "whoFills": "The duty cook, technologist or commodity expert, depending on the room. In the kitchen, the cook; in the storeroom, the storekeeper.",
+      "whoFills": "The employee assigned to the room, such as an administrator, specialist or storekeeper.",
       "whenToFill": "2–3 times per shift in production areas; once a day in storerooms.",
       "prepare": {
         "thermometer": "Verified thermometer with a verification mark no older than 1 year",
@@ -11545,7 +11551,7 @@
     },
     "cold_equipment_control": {
       "intro": "Temperature checks for refrigerators and freezers. This is a HACCP critical control point: temperature breaches risk the growth of salmonella, listeria and other pathogens.",
-      "whoFills": "The duty cook or kitchen worker, at opening in the morning and closing in the evening. Large kitchens assign a separate employee to each area.",
+      "whoFills": "The employee responsible for refrigeration equipment. Measurement frequency is configured in the log settings.",
       "whenToFill": "At least twice daily, morning and evening. Under SanPiN, every 4 hours during the production day.",
       "prepare": {
         "thermometers": "Verified thermometers: built-in and reference",
@@ -11727,7 +11733,7 @@
     },
     "equipment_cleaning": {
       "intro": "The equipment washing and disinfection journal. Every appliance, including mixers, slicers, mincers and ovens, must be cleaned according to schedule.",
-      "whoFills": "The cook or cleaner who used the equipment.",
+      "whoFills": "The employee who cleaned or disinfected the equipment.",
       "whenToFill": "After every shift or after handling each type of raw material; meat and fish require immediate washing.",
       "steps": {
         "disassemble": {
@@ -11908,7 +11914,7 @@
     },
     "glass_control": {
       "intro": "The glass inspection journal. Compare with the inventory every day to confirm all items are intact. If anything breaks, find all fragments and record it.",
-      "whoFills": "The person on shift duty, a cook or cleaner.",
+      "whoFills": "The assigned responsible employee on the shift.",
       "whenToFill": "Daily, at the start and end of the shift.",
       "steps": {
         "checkInventory": {
@@ -12069,7 +12075,7 @@
     },
     "cleaning": {
       "intro": "The daily room cleaning journal confirms that each room was cleaned at the right time, with the right product and by the assigned person.",
-      "whoFills": "The cleaner or kitchen worker who cleaned the area, followed by a check from the senior cleaner or manager.",
+      "whoFills": "The employee who performed the cleaning. The assigned supervisor checks completion.",
       "whenToFill": "After each routine cleaning, several times daily, and final cleaning in the evening after the shift.",
       "prepare": {
         "colourCodedTools": "Area-specific cloths: green for floors, white for surfaces, blue for toilets",
@@ -12250,7 +12256,7 @@
     },
     "uv_lamp_runtime": {
       "intro": "UV germicidal unit runtime journal. The lamp must operate for the prescribed time each shift to disinfect the air.",
-      "whoFills": "The person switching the lamp on and off, usually the cleaner or duty cook.",
+      "whoFills": "The employee who switches the germicidal unit on and off.",
       "whenToFill": "Every time the lamp is switched on and off.",
       "steps": {
         "switchOn": {
@@ -16979,7 +16985,7 @@
         "intro": "WeSetup runs in the cloud: no local servers or backup setup, and no need to decide where to keep last year's records. Backups run automatically, and history remains available when you replace a computer or move your business.",
         "devicesHeading": "Devices you can use",
         "device1": "Manager's computer: full reports, analytics, and settings.",
-        "device2": "Kitchen tablet: large buttons and convenient entry, even with gloves.",
+        "device2": "Workplace tablet: large buttons and convenient entry, even with gloves.",
         "device3": "Employee phone: quick hygiene and temperature checks.",
         "device4": "Telegram bot: reminders and notifications without signing in to the system.",
         "securityHeading": "Security",
@@ -16990,13 +16996,13 @@
       "role-access": {
         "title": "Role-based access",
         "tagline": "Employees see only their assigned logs. Managers see everyone's. Owners can close a period and export a PDF with one click.",
-        "intro": "Different people in the kitchen and dining room have different responsibilities. WeSetup provides three access levels so employees see what they need while managers keep full oversight.",
+        "intro": "Employees have different tasks and areas of responsibility. WeSetup lets you configure access to logs and management functions for each role.",
         "levelsHeading": "Three access levels",
         "level1": "Owner / Manager: sees all logs, locations, and dates; closes periods and edits templates.",
-        "level2": "Head chef / Technologist: sees their department, manages quality checks, and assigns responsible staff.",
-        "level3": "Cook / Waiter: sees only assigned logs and cannot change another person's entries.",
+        "level2": "Department manager / Technologist: oversees their department and assigns responsible employees.",
+        "level3": "Employee: sees assigned logs and fills them within the permissions granted.",
         "aclHeading": "Specific log access",
-        "aclText": "With ACL, a manager can grant an employee access to a log outside their role. For example, a night-shift cook can access the UV-lamp log while other employees cannot.",
+        "aclText": "Managers can grant an employee access to a specific log, for example assigning the duty employee to the UV lamp log.",
         "auditTitle": "Access audit",
         "auditText": "Every ACL change appears in the activity log, showing who granted or removed a person's access and when."
       },
@@ -17025,7 +17031,7 @@
         "trigger4": "A dish fails its quality check.",
         "trigger5": "Fryer oil exceeds 24% polar compounds.",
         "recipientsHeading": "Who receives it",
-        "recipientsText": "Alerts can be routed by role and location. Temperature alerts go to the head chef and manager; an employee suspension goes to HR and the director; financially significant write-offs go to the owner. Each event type can have its own route.",
+        "recipientsText": "Notification recipients can be configured by position and location. For example, temperature alerts go to the responsible duty employee and manager, while staff clearance alerts go to HR. Each event type has its own route.",
         "capaTitle": "CAPA created automatically",
         "capaText": "Each alert creates a CAPA record with an owner and due date. It stays on the open list until the CAPA is closed; it cannot simply disappear as “handled.”"
       },
@@ -17045,15 +17051,15 @@
       },
       "time-saving": {
         "title": "Save time",
-        "tagline": "Five to ten minutes at the end of a shift instead of an hour of paperwork. Cooks get home on time, and the head chef has no pile of forms to reconcile.",
-        "intro": "One of the most overlooked benefits of an electronic log is the time it saves in the kitchen. This is based on measurements we take during each rollout: an hour of routine work falls to 5–10 minutes because duplicate entry and copying disappear.",
+        "tagline": "Less manual recording and checking at the end of a shift. Employees fill logs as they work, and managers see the results in their workspace.",
+        "intro": "QR codes open the right log at the equipment, entries are saved immediately and summaries are collected in one workspace. This reduces repeated data entry and manual checking.",
         "sourcesHeading": "Where the savings come from",
         "source1": "No duplicate entry: receipts flow into quality checks and stock automatically.",
         "source2": "Headers fill automatically: no need to enter the date, shift, and responsible person every time.",
         "source3": "Group write-off: one check mark for five items creates one entry instead of five.",
         "source4": "Generate an auditor's PDF in seconds instead of photographing paper forms.",
         "networksTitle": "For chains",
-        "networksText": "One manager can oversee five locations instead of five head chefs each spending an hour reconciling records. The savings show up in payroll, not just hours.",
+        "networksText": "Managers can view logs from several locations in one workspace without collecting paper logs and checking each branch separately.",
         "closing": "Our internal measurements show that after the first two weeks, employees stop treating log entry as “separate work.” It becomes part of the shift, like closing the register."
       }
     }
@@ -18928,7 +18934,7 @@
         },
         "staff": {
           "title": "Staff",
-          "hint": "Cooks, waiters, cleaners — they work on shift tasks in the app."
+          "hint": "Employees complete their shift tasks in the app."
         },
         "commission": {
           "title": "Food inspection committee",
@@ -18959,7 +18965,7 @@
         "description": "The group decides which permissions people in this job title get.",
         "category": "Group",
         "name": "Job title",
-        "namePlaceholder": "For example, Hot kitchen cook",
+        "namePlaceholder": "For example, Administrator",
         "nameShort": "The name needs at least 2 characters",
         "headcountInvalid": "Headcount must be a whole number from 0 to 999",
         "create": "Create",
@@ -22781,7 +22787,7 @@
   },
   "settingsWorkloadBalance": {
     "title": "Employee workload",
-    "description": "See monthly journal workloads based on actual assignments. Cooks with the same pay should have similar workloads to avoid resentment and staff turnover. Change assignments and journal difficulty to update the table.",
+    "description": "See how many logs each employee is assigned per month. Compare workloads within the same position. Adjust responsible employees and log difficulty to distribute tasks evenly.",
     "responsibles": "Responsible employees",
     "difficulty": "Journal difficulty",
     "guideTitle": "How to read this page",
@@ -22826,7 +22832,7 @@
   },
   "settingsJournalDifficulty": {
     "title": "Journal difficulty",
-    "description": "Use this only when the team <strong>has no head chef</strong> and journals are shared among cooks with the same pay. Difficulty × frequency × rows per entry = workload weight, which the Task distribution page uses to show imbalances between employees. If you have a head chef, you can skip this section.",
+    "description": "Set log difficulty to compare <strong>workloads of employees in the same position</strong>. Difficulty × frequency × rows per entry gives the log weight. The task distribution page shows who has more assignments.",
     "balanceLink": "Task distribution",
     "guide": {
       "title": "How to use difficulty",
@@ -27829,7 +27835,7 @@
       "qrPosters": "Room QR posters",
       "guideTitle": "How to set up points and rooms",
       "guide1Title": "A point is an address",
-      "guide1Body": "A café on Lenin Street and a café on Mir Street are two points. Each has rooms inside: kitchen, dining room, washing area, storeroom. Cleaning tasks are assigned by room, and climate journals are printed by room too.",
+      "guide1Body": "Two branches are two locations. Add rooms within each: offices, storerooms, washrooms and other work areas. Rooms are used to assign cleaning tasks and keep climate logs.",
       "guide2Title": "Minimum to get started",
       "guide2Body": "One point and 2–3 rooms. If there are several points, add each one and switch on “Keep journals separately by point”: documents will be created for each point and a point selector will appear in the header.",
       "guide3Title": "Staff are shared",
@@ -28021,7 +28027,7 @@
       "lockBody": "When on, after the “start of today” (taking the shift end hour above into account) regular employees cannot change or delete entries for past days. Management still can, but every such action is written to the audit log with the mark <code>closed_day.override</code>.",
       "lockNote": "Use it if your business undergoes a HACCP audit and you need to guarantee that a waiter cannot backdate yesterday’s temperature check.",
       "photoTitle": "Photo evidence at every pipeline step",
-      "photoBody": "When on, in a TasksFlow task the employee must upload a photo (phone camera) for every pipeline step. The “Done” button is blocked until the photo appears. Every photo goes into the audit log tied to its step — a manager can look at any time at “how exactly the cook checked the fridge at 09:34”.",
+      "photoBody": "When enabled, employees attach a photo to each task step in TasksFlow. The Done button becomes available after upload. Managers can review the photo to check how that step was completed.",
       "photoNote": "Turns journal filling from a “bare tick” into a real evidence trail for inspections. The downside is that every task takes employees 30–60 seconds longer.",
       "escalateTitle": "Notify management if a deviation is not fixed",
       "escalateBody": "When a temperature goes out of range, the message goes immediately to the <b>person responsible for the journal</b> — the one assigned in “Journal owners”. If they have not brought the temperature back to normal and have not written in the journal what they did, managers find out after the set time. One message per deviation, not per reading.",
@@ -28141,7 +28147,7 @@
       "guide6Title": "Tuya Device ID — optional",
       "guide6Body": "If a Wi-Fi temperature sensor (HACCP/Aubess) is installed, enter its Device ID and WeSetup will write readings to the journal every hour by itself.",
       "qa1Q": "What if I have no fridges?",
-      "qa1A": "You can add nothing — the temperature journal will be empty. But most catering businesses need at least 1 fridge.",
+      "qa1A": "Add only equipment you use and monitor. Without refrigeration equipment, the corresponding temperature log will remain empty.",
       "qa2Q": "Tuya Device ID — where to get it?",
       "qa2A": "In the Tuya / Smart Life app: device → gear → Device information → Virtual ID. More in /settings/integrations.",
       "title": "Equipment",
@@ -28574,7 +28580,7 @@
     },
     "journalPipelinesPage": {
       "title": "Journal step-by-step instructions",
-      "description": "Pipeline instructions for employees. Click a block to configure the steps: which products to take, where to go, what to check. The more detailed, the clearer it is for a new cleaner / cook / shop assistant.",
+      "description": "Set up step-by-step instructions: what supplies to take, where to go and what to check. Employees see these steps when they open a task.",
       "quickStart": "🚀 Quick start",
       "quickStartTitle": "Create a pipeline for all journals in one click",
       "quickStartBody": "Creates a basic tree of pinned nodes for each journal from its columns. Journals that are already configured (<strong>{configured, number}</strong>) are not recreated. Journals without defined columns will arrive in notifications for manual setup.",
@@ -28627,7 +28633,7 @@
       "resetBullet3": "Journal entries are not affected",
       "resetConfirm": "Restore defaults",
       "titlePrefix": "Pipeline",
-      "description": "The steps the employee will see when opening a task. The clearer each step, the fewer questions from a new cleaner / cook.",
+      "description": "Employees see these steps when they open the task. Describe specific actions so a new employee can complete the work without extra instructions.",
       "introLabel": "Hint at the top of the pipeline (optional)",
       "introPlaceholder": "For example: “Room cleaning. Follow the steps in order”",
       "stepTitlePlaceholder": "Step name (for example, “Get the equipment”)",
@@ -28642,7 +28648,7 @@
     },
     "journalResponsiblesPage": {
       "title": "Journal responsibles",
-      "description": "Which positions fill in each journal and which exact employee goes into the document header. Changes immediately appear in open documents and in print. Click “Apply smart presets to all” — the system will assign cleaning to cleaners, temperature to cooks, and so on.",
+      "description": "Choose which positions fill each log and who appears in the document header. Changes apply to open documents and printouts. Review suggested assignments before applying presets.",
       "guideTitle": "How to assign journal responsibles",
       "b1Title": "“Fill in” (top block)",
       "b1Body": "the employees who keep the records. There can be one or several (for committees).",
@@ -28828,7 +28834,7 @@
       "orgInnMissing": "Tax ID not specified",
       "orgAddressMissing": "Address not specified",
       "positionsTitle": "Positions",
-      "positionsDescription": "Chef, cook, shop assistant, cleaner: for assigning tasks by role",
+      "positionsDescription": "Manager, administrator, specialist, cleaner: distribute tasks by position",
       "positionsIssue": "Create at least 4 positions",
       "buildingsTitle": "Buildings and rooms",
       "buildingsDescription": "Rooms are the rows of the “Cleaning”, “Climate” and “Sanitary day” tables",
@@ -29056,7 +29062,7 @@
       "guide4": "On the tablet an employee selects their name, enters the PIN and fills in journals. After a period of inactivity the tablet returns to the list on its own.",
       "tablets": "Tablets",
       "tabletName": "Tablet name",
-      "tabletPlaceholder": "Kitchen, Warehouse No. 2…",
+      "tabletPlaceholder": "Office, Storeroom 2…",
       "addTablet": "Add tablet",
       "lastActivity": "Last activity: {date}",
       "neverOpened": "Not opened yet",
@@ -29085,7 +29091,7 @@
     },
     "kioskPage": {
       "title": "Shared tablet",
-      "description": "One tablet in the kitchen or warehouse: each employee signs entries with their own 4-digit PIN, so nobody gets confused by other people’s names.",
+      "description": "A shared workplace tablet: each employee signs entries with a personal 4-digit PIN.",
       "withoutPin": "Without PIN: {count, number}",
       "allHavePin": "Everyone has a PIN"
     },
@@ -29297,7 +29303,7 @@
     },
     "positionStaffVisibilityPage": {
       "title": "Staff visibility by position",
-      "description": "Who employees of each position can see. This setting is synchronised to TasksFlow and the Telegram bot: a head chef sees only the cooks’ tasks on their home page, not the technologist’s, and the bot shows the same picture when browsing other employees. It is stored per position, so a newly added “head chef” automatically gets the same scope."
+      "description": "Choose which employees each position can see. For example, a shift supervisor can see their team. The setting applies in TasksFlow and the Telegram bot to everyone in that position, including new employees."
     },
     "qrPosterCard": {
       "checkLinkTitle": "Open the QR code link in a new tab to check that the form opens",
@@ -29416,7 +29422,7 @@
     },
     "schedulePage": {
       "title": "Shift schedule",
-      "intro": "Mark who is on shift today and in which position. The Telegram bot and the mini app use this schedule: the employee opens the shift and reminders go to the person on duty rather than to a fixed cook.",
+      "intro": "Record who is on duty today and in which position. The Telegram bot and mini app use this schedule to send reminders to the responsible employee working today.",
       "noteDay": "This page is about a specific day.",
       "noteDayBody": "The “Day off”, “Vacation” and “Sick leave” marks in this table mean the person will be absent on that exact date: they will not get reminders and will see the banner “Today your schedule says: sick leave” in the app.",
       "noteLong": "Long vacations, sick leave and permanent days off",
@@ -29453,7 +29459,7 @@
       "bullet1Title": "Whom I see, I assign to",
       "bullet1Body": "Every manager with a scope setting sees only their own subordinates in TasksFlow and when creating tasks.",
       "bullet2Title": "Scope modes",
-      "bullet2Body": "“All” sees everyone (but not admins and managers — a filter from 2026-04-30). “By positions” — you pick positions (cook, cleaner). “Specific” — one by one.",
+      "bullet2Body": "All: all employees except administrators and managers. By position: employees in selected positions. Specific: only the people you select.",
       "bullet3Title": "After saving",
       "bullet3Body": "Changes are pushed to TasksFlow immediately — the manager’s list of subordinates updates within a few seconds.",
       "qa1q": "Why does the production manager see the admin?",
@@ -29547,7 +29553,7 @@
       "roleLabel": "Role",
       "cannotChangeOwnRole": "You cannot change your own role",
       "positionTitleLabel": "Position title",
-      "positionTitlePlaceholder": "For example: Cold section cook",
+      "positionTitlePlaceholder": "For example: Administrator",
       "positionTitleHint": "Shown in the journals instead of the generic role. Leave empty to use the standard role label.",
       "phoneLabel": "Phone",
       "activeLabel": "Active",
@@ -29663,7 +29669,7 @@
       "pageOf": "Page {page, number} of {total, number}"
     },
     "bulkStaffImport": {
-      "placeholderSample": "Full name\tPosition\tPhone\nIvan Petrov\tCook\t+7 985 123-45-67\nSergey Povarov\tHead chef\t+7 925 555-12-34\nMaria Chaikova\tWaiter\t+7 999 444-22-11",
+      "placeholderSample": "Full name\tPosition\tPhone\nIvan Petrov\tSpecialist\t+7 985 123-45-67\nSergey Sokolov\tShift supervisor\t+7 925 555-12-34\nMaria Chaykova\tAdministrator\t+7 999 444-22-11",
       "noSheets": "The file contains no sheets",
       "emptyFile": "The file is empty",
       "tooFewRows": "The file has fewer than 2 rows (a header plus at least one data row is required)",
@@ -29907,7 +29913,7 @@
       "presetApplied": "{code} ← {positions, number} pos., {slots, number} resp.",
       "presetAppliedNoUsers": "{code} ← {positions, number} pos. (no suitable employees)",
       "createPositionsFirst": "Create positions and employees first",
-      "noPositionsFitPresets": "No position fit the presets. Create positions such as “Cleaner”, “Cook”, “Manager”.",
+      "noPositionsFitPresets": "No positions match these presets. Assign responsible employees manually using your organisation’s positions.",
       "doneFailed": "Done · applied: {ok, number}, failed: {failed, number}",
       "appliedToJournals": "Applied to {ok, plural, one {# journal} other {# journals}}",
       "networkError": "Network error",
@@ -29950,7 +29956,7 @@
       "fixWhatWrong": "What is wrong: <b>{reason}</b>",
       "fixRecommendation": "System recommendation",
       "whoVerifies": "Who verifies",
-      "fixNoSuitable": "No suitable employees found. Create a position such as “Production manager” or “Senior cook” in <link>Staff</link>.",
+      "fixNoSuitable": "No suitable employee was found for this preset. Review positions in <link>Staff</link> or assign a responsible employee manually.",
       "applyRecommendation": "Apply the recommendation",
       "hideHint": "Hide the hint",
       "forecastTitle": "Workload forecast after saving",
@@ -29976,7 +29982,7 @@
       "perEmployeeNote": "The “Per employee” journal does not need filler slots. The employee completes the check, a senior person verifies it. Click “Smart preset” — it adds all positions and puts the admin in “Who verifies”.",
       "journalsNotFound": "No journals found for “{query}”.",
       "applyAllTitle": "Apply smart presets to all journals?",
-      "applyAllDescription": "The system will go through all journals in descending order of workload and assign positions and employees by meaning. Cleaning — to cleaners, temperature — to cooks, calibration — to the technologist or production manager. The admin will automatically be put in “Who verifies”.",
+      "applyAllDescription": "The system suggests assignments by workload and position name. Presets target food service: cleaning for cleaners, temperature for cooks, calibration for a technologist or production manager. The administrator is assigned as reviewer. Check the assignments for your organisation.",
       "applyAllBullet1": "Existing assignments will be overwritten where the system found suitable candidates.",
       "applyAllBullet2": "If a journal has no matching positions, it is left untouched.",
       "applyAllBullet3": "Journals to be processed: {count, number}; the responsible people in active documents will be updated too",
@@ -30045,7 +30051,7 @@
       "guide": {
         "title": "How master cabinets work",
         "cabinetTitle": "1. Cabinet",
-        "cabinetBody": "A master cabinet is a separate cabinet without journals or kitchen staff. There can be several — for example, “Schools” and “Kindergartens”.",
+        "cabinetBody": "A master workspace is separate from location staff and operational logs. You can have several, for example for different lines of business.",
         "pointsTitle": "2. Points",
         "pointsBody": "In the right cabinet, press “Add point” — the point starts receiving its menu and raw materials. A point receives them from one cabinet.",
         "operatorTitle": "3. Operator",
@@ -30131,7 +30137,7 @@
         "title": "Create a master cabinet?",
         "description": "The operator {name} ({email}) will receive an invitation.",
         "confirmLabel": "Create and invite",
-        "bullet1": "A separate cabinet will appear — without journals, staff or kitchen settings.",
+        "bullet1": "A separate workspace will be created without operational logs, employees or location settings.",
         "bullet2": "The operator will see only the menu, raw materials and the list of connected points.",
         "bullet3": "The menu and raw materials they save will go to the quality-check and perishables journals of “{organization}”.",
         "bullet4": "Points’ own items will not disappear — only what the operator sent changes."
