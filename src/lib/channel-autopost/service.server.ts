@@ -221,7 +221,7 @@ async function stepImage(row: Row, now: Date): Promise<void> {
     });
     if (!claimed.count) return;
     try {
-      const prompt = topic ? buildImagePrompt(topic, row.imagePrompt ?? "") : row.imagePrompt ?? "";
+      const prompt = buildImagePrompt(topic ?? { title: row.topicTitle }, row.imagePrompt ?? "");
       const jobId = await startImageJob(prompt, IMAGE_SIZE);
       await db.channelAutopost.update({ where: { id: row.id }, data: { imageJobId: jobId, error: null } });
     } catch (error) {

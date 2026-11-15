@@ -6,6 +6,7 @@ import {
   addDays,
   allTopics,
   buildImagePrompt,
+  buildTextInstructions,
   moscowDateKey,
   parseGeneratedPost,
   pickTopic,
@@ -59,4 +60,30 @@ test("картинка — без надписей; публикация в 10:0
   assert.equal(publishAtFor("2026-11-11", "09:30").toISOString(), "2026-11-11T06:30:00.000Z");
   assert.equal(moscowDateKey(new Date("2026-11-10T21:30:00Z")), "2026-11-11");
   assert.equal(addDays("2026-12-31", 1), "2027-01-01");
+});
+
+test("санитарные требования сохраняются в описании фото и финальном запросе, включая старую сцену с растениями и отсутствие темы", () => {
+  const oldScene = "Professional kitchen with potted basil on the windowsill and flowers on the worktop";
+  const prompts = [
+    buildTextInstructions(),
+    buildImagePrompt(allTopics()[0], oldScene),
+    buildImagePrompt({ title: "Удалённая тема" }, oldScene),
+    buildImagePrompt({ title: "Кухня" }, ""),
+    // The gateway sends only the first 8,000 characters of a saved prompt.
+    buildImagePrompt({ title: "Кухня" }, oldScene.repeat(200)).slice(0, 8000),
+  ];
+  for (const prompt of prompts) {
+    assert.match(prompt, /requirements are mandatory and override conflicting details/i);
+    assert.match(prompt, /no potted plants, houseplants/i);
+    assert.match(prompt, /herbs growing in pots or soil/i);
+    assert.match(prompt, /including windowsills, shelves, and worktops/i);
+    assert.match(prompt, /edible herbs and vegetables may appear only as food ingredients in clean food-grade containers/i);
+    assert.match(prompt, /raw ingredients separate from ready-to-eat food/i);
+    assert.match(prompt, /hair fully covered/i);
+  }
+  for (const topic of [{ title: "Удалённая тема" }, allTopics()[0]]) {
+    const prompt = buildImagePrompt(topic, oldScene);
+    assert.match(prompt, /no text, letters, numbers/i);
+    assert.ok(prompt.indexOf("No potted plants") < prompt.indexOf(oldScene), "mandatory requirements survive truncation of a long scene suggestion");
+  }
 });
