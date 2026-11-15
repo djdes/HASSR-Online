@@ -3,12 +3,15 @@ import { resolveEmailSender } from "@/lib/email-sender-access.server";
 import { renderEmailLayout } from "@/lib/email";
 import { readMailSender, sendStaffEmail } from "@/lib/platform-mail.server";
 import { formatFromAddress } from "@/lib/platform-mail";
+import { mailAttachmentInfo } from "@/lib/mail-attachments";
+import type { PreparedMailAttachment } from "@/lib/mail-attachments.server";
 import { clientEmailContent, type ClientEmailInput, type ClientEmailView, type ClientEmailHistory } from "@/lib/client-email";
 
 type EmailRow = NonNullable<Awaited<ReturnType<typeof db.clientEmail.findFirst>>>;
 
 export function clientEmailView(row: EmailRow): ClientEmailView {
   return {
+    attachments: mailAttachmentInfo(row.attachmentsJson),
     id: row.id, to: row.to, subject: row.subject, message: row.message, html: row.html,
     senderName: row.senderName, fromEmail: row.fromEmail, status: row.status, error: row.error,
     createdAt: row.createdAt.toISOString(), sentAt: row.sentAt?.toISOString() ?? null,
@@ -36,7 +39,7 @@ export async function clientEmailHistory(organizationId: string, cursor?: string
 }
 
 /** The unique organization/request key is claimed before any SMTP call. */
-export async function sendClientEmail(organizationId: string, userId: string, input: ClientEmailInput) {
+export async function sendClientEmail(organizationId: string, userId: string, input: ClientEmailInput, attachments: PreparedMailAttachment[] = []) {
   const key = { organizationId_requestId: { organizationId, requestId: input.requestId } };
   const existing = await db.clientEmail.findUnique({ where: key });
   if (existing) return { item: clientEmailView(existing), repeated: true };
@@ -48,6 +51,7 @@ export async function sendClientEmail(organizationId: string, userId: string, in
       organizationId, requestId: input.requestId, senderUserId: userId,
       senderName: preview.sender.fromName, fromEmail: preview.sender.fromEmail,
       to: input.to, subject: input.subject, message: input.message, html: preview.html,
+      ...(attachments.length ? { attachmentsJson: attachments.map(({ filename, size, contentType }) => ({ filename, size, contentType })) } : {}),
     } });
   } catch (error) {
     if ((error as { code?: string }).code !== "P2002") throw error;
@@ -62,6 +66,7 @@ export async function sendClientEmail(organizationId: string, userId: string, in
       senderUserId: preview.mailboxUserId, to: input.to, subject: input.subject,
       html: preview.html, text: preview.text, personalOnly: true,
       expectedFrom: formatFromAddress(preview.sender.fromName, preview.sender.fromEmail),
+      attachments: attachments.map(({ filename, content, contentType }) => ({ filename, content, contentType })),
     });
   } catch {
     result = { ok: false as const, error: "Не удалось подтвердить отправку. Проверьте папку «Отправленные» перед новой попыткой." };

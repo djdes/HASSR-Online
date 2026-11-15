@@ -8,6 +8,7 @@ import { clientDocumentRecipients } from "@/lib/client-documents";
 import { readLegalProfile } from "@/lib/org-legal-profile";
 import { clientEmailPreview, clientEmailView, sendClientEmail } from "@/lib/client-email.server";
 import type { MailRecipient, MailWorkspaceHistory, MailWorkspaceInput, MailWorkspaceResult } from "@/lib/mail-workspace";
+import type { PreparedMailAttachment } from "@/lib/mail-attachments.server";
 
 export class MailWorkspaceError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -51,30 +52,35 @@ export async function mailRecipientDirectory(session: Session, search = "") {
 
 export async function validateMailRecipients(session: Session, input: Pick<MailWorkspaceInput, "recipients">) {
   const allowed = await scope(session);
-  const ids = [...new Set(input.recipients.map(item => item.organizationId))];
+  const ids = [...new Set(input.recipients.flatMap(item => item.organizationId ? [item.organizationId] : []))];
   const orgs = await db.organization.findMany({ where: { AND: [allowed, { id: { in: ids } }] }, select: contactSelect });
   const contacts = orgs.flatMap(recipientsOf);
-  const selected = input.recipients.map(item => contacts.find(contact => contact.organizationId === item.organizationId && contact.email === item.email));
+  const selected = input.recipients.map(item => item.organizationId
+    ? contacts.find(contact => contact.organizationId === item.organizationId && contact.email === item.email)
+    : { organizationId: null, organizationName: null, email: item.email, label: item.email });
   if (selected.some(item => !item)) throw new MailWorkspaceError("Получатель недоступен или его адрес изменился. Выберите его заново.", 404);
   return selected as MailRecipient[];
 }
 
 /** Bind a retry to actor, content, mailbox and recipient; recipient order is irrelevant. */
-export function mailRecipientRequestId(actorId: string, input: MailWorkspaceInput, recipient: MailRecipient) {
-  const hex = createHash("sha256").update(JSON.stringify([input.requestId, actorId, input.mailboxUserId ?? actorId, input.subject, input.message, recipient.organizationId, recipient.email])).digest("hex").slice(0, 32);
+export function mailRecipientRequestId(actorId: string, input: MailWorkspaceInput, recipient: MailRecipient, attachments: PreparedMailAttachment[] = []) {
+  // Preserve existing retry keys for messages without files.
+  const binding: unknown[] = [input.requestId, actorId, input.mailboxUserId ?? actorId, input.subject, input.message, recipient.organizationId, recipient.email];
+  if (attachments.length) binding.push(attachments.map(({ filename, size, contentType, sha256 }) => [filename, size, contentType, sha256]));
+  const hex = createHash("sha256").update(JSON.stringify(binding)).digest("hex").slice(0, 32);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
 }
 
-export async function sendWorkspaceMail(session: Session, input: MailWorkspaceInput): Promise<MailWorkspaceResult> {
+export async function sendWorkspaceMail(session: Session, input: MailWorkspaceInput, attachments: PreparedMailAttachment[] = []): Promise<MailWorkspaceResult> {
   const recipients = await validateMailRecipients(session, input);
   if (!await clientEmailPreview(session.user.id, input)) throw new MailWorkspaceError("Проверьте подключение выбранного ящика в разделе «Моя почта».", 409);
   const items: MailWorkspaceResult["items"] = [];
   for (const recipient of recipients) {
     // Recheck scope/contact immediately before each SMTP operation as well as preflight.
     await validateMailRecipients(session, { recipients: [recipient] });
-    const result = await sendClientEmail(recipient.organizationId, session.user.id, {
-      ...input, to: recipient.email, requestId: mailRecipientRequestId(session.user.id, input, recipient),
-    });
+    const result = await sendClientEmail(recipient.organizationId ?? (process.env.PLATFORM_ORG_ID || "platform"), session.user.id, {
+      ...input, to: recipient.email, requestId: mailRecipientRequestId(session.user.id, input, recipient, attachments),
+    }, attachments);
     if (!result) return { items, interrupted: true };
     items.push({ ...result.item, organizationId: recipient.organizationId, organizationName: recipient.organizationName });
   }
@@ -83,7 +89,12 @@ export async function sendWorkspaceMail(session: Session, input: MailWorkspaceIn
 
 export async function workspaceMailHistory(session: Session, cursor?: string | null): Promise<MailWorkspaceHistory> {
   const organization = await scope(session);
-  const where = { organization };
+  const viewer = await platformViewerForSession(session);
+  const platformId = process.env.PLATFORM_ORG_ID || "platform";
+  const where: Prisma.ClientEmailWhereInput = { OR: [
+    { organization },
+    { organizationId: platformId, ...(!viewer.superadmin ? { senderUserId: session.user.id } : {}) },
+  ] };
   if (cursor && !await db.clientEmail.findFirst({ where: { ...where, id: cursor }, select: { id: true } })) return { items: [], nextCursor: null };
   const rows = await db.clientEmail.findMany({
     where, include: { organization: { select: { name: true } } },
@@ -91,7 +102,7 @@ export async function workspaceMailHistory(session: Session, cursor?: string | n
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
   return {
-    items: rows.slice(0, 20).map(row => ({ ...clientEmailView(row), organizationId: row.organizationId, organizationName: row.organization.name })),
+    items: rows.slice(0, 20).map(row => ({ ...clientEmailView(row), organizationId: row.organizationId === platformId ? null : row.organizationId, organizationName: row.organizationId === platformId ? null : row.organization.name })),
     nextCursor: rows.length > 20 ? rows[19].id : null,
   };
 }

@@ -3962,6 +3962,8 @@ model ClientEmail {
   subject        String
   message        String       @db.Text
   html           String       @db.Text
+  /// Attachment metadata snapshots; file bytes are sent in memory and not retained.
+  attachmentsJson Json?
   /// sending | sent (SMTP accepted) | failed; never retried automatically.
   status         String       @default("sending")
   error          String?
