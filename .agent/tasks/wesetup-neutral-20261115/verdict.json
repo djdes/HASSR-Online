@@ -1,0 +1,27 @@
+{
+  "status": "READY_FOR_RELEASE",
+  "checkedAt": "2026-11-15T08:36:17.560Z",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PENDING_RELEASE"
+  },
+  "sourceHashes": {
+    "docs/brand-content.md": "4a75318eea7061d45b43afbd10271dc67cca77a98e61be93de6589e6770e957d",
+    "public/landing/screens/staff-neutral-desktop.webp": "525801e7edbf4b53f428fd2456b0118bc9cc7978bb7050f3c3ba7034bac575f3",
+    "public/landing/screens/staff-neutral-mobile.webp": "ba3127cac65012779244641855fb6c1abd5565daf2587e43917ff3c3565af446",
+    "src/app/(auth)/login/page.tsx": "298b76576e2a74c8c86fe9efd116bb8037b59a001290c88f2ad57241d892db7c",
+    "src/app/og/english/route.tsx": "5a0eeffd8a9f4d4c3aa7b7b5f6131513106864d17c7d5066ca37d499cc0242eb",
+    "src/app/page.tsx": "53b8d15fb973b74e9de2834880e6d43f10169d44adfd1736a9f8eb89a6d99395",
+    "src/components/auth/compliance-badges.tsx": "4ed12173c6fb1428b01869b98b8fdff88e2e93935981238de8338a4512748d0e",
+    "src/components/landing/qr-player/chapters.ts": "bcf2bdd2afec7d1629abaf2ee01797d78a527247d95a1f07ba520d5a8cbcf4f5",
+    "src/components/landing/qr-player/scene.tsx": "90fbb7227959aaf9f64e90d6e4f23214cf87e168d2851bf21c239110e3333e37",
+    "src/content/features.ts": "2ed95219030ef54d0524a3f7e796a37d403c8a37b4e9ea9674f490e6db098fd0",
+    "src/i18n/message-contract.d.ts": "3427517b7f9e6c1f67cbb88686ec6d42530f1d0d6f8e3c71f25910c722f66281",
+    "src/i18n/messages/en.json": "c384fcb57bdb9a996ccc147353485294a1184eba8fba71e5b6019d11e94f689b",
+    "src/i18n/messages/ru.json": "51a15915a085e269b23944dc4b52e9d401ff96bab3d6a93cf72b50c94901944c",
+    "src/i18n/messages/uz.json": "f0672af3f7e9eb67ba9ed065c6586e14c490f96531bd362128f7aae51d1ac46d"
+  }
+}

@@ -757,6 +757,7 @@ function ObjectArt({ object, bodyTemp }: { object: ScanObject; bodyTemp: number 
 }
 
 function EmployeeList({ t, tapAt, label }: { t: number; tapAt: number; label: string }) {
+  const demo = useTranslations("qrScene.demo");
   const people = [DEMO.cook, ...DEMO.others];
   const chosen = t >= tapAt + 0.1;
   return (
@@ -786,7 +787,7 @@ function EmployeeList({ t, tapAt, label }: { t: number; tapAt: number; label: st
             </span>
             <span style={{ minWidth: 0 }}>
               <span style={{ display: "block", fontSize: "0.86em", fontWeight: 600 }}>{person.name}</span>
-              <span style={{ display: "block", fontSize: "0.68em", color: P.muted }}>{person.position}</span>
+              <span style={{ display: "block", fontSize: "0.68em", color: P.muted }}>{demo(person.position)}</span>
             </span>
             {on ? <Check style={{ marginLeft: "auto", width: "1em", height: "1em", color: P.indigo }} /> : null}
           </div>
@@ -1638,6 +1639,7 @@ function FridgeScene({ t, value, today, qr, photo, layer }: { t: number; value: 
 }
 
 function LockerScene({ t, bodyTemp, today, qr, photo, layer }: { t: number; bodyTemp: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
+  const demo = useTranslations("qrScene.demo");
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
   const hygieneT = useTranslations("hygiene");
@@ -1688,25 +1690,25 @@ function LockerScene({ t, bodyTemp, today, qr, photo, layer }: { t: number; body
               <td style={cell}>1</td>
               <td style={cell}>{dateLabel(today, locale)}</td>
               <td style={{ ...cell, textAlign: "left" }}>{DEMO.others[0].name}</td>
-              <td style={{ ...cell, textAlign: "left" }}>{DEMO.others[0].position}</td>
+              <td style={{ ...cell, textAlign: "left" }}>{demo(DEMO.others[0].position)}</td>
               <td style={cell}>{tr("yes")}</td>
               <td style={cell}>{tr("yes")}</td>
               <td style={cell}>{tr("yes")}</td>
               <td style={cell}>{tr("ui.admitted")}</td>
-              <td style={{ ...cell, fontSize: "0.82em" }}>Козлова Е., зав. производством · 08:10</td>
+              <td style={{ ...cell, fontSize: "0.82em" }}>{DEMO.head.name}, {demo(DEMO.head.position)} · 08:10</td>
             </tr>
             <tr>
               <Ink t={t} at={landed}>2</Ink>
               <Ink t={t} at={landed}>{dateLabel(today, locale)}</Ink>
               <Ink t={t} at={landed + 0.05} style={{ textAlign: "left" }}>{DEMO.cook.name}</Ink>
-              <Ink t={t} at={landed + 0.05} style={{ textAlign: "left" }}>{DEMO.cook.position}</Ink>
+              <Ink t={t} at={landed + 0.05} style={{ textAlign: "left" }}>{demo(DEMO.cook.position)}</Ink>
               <Ink t={t} at={landed + 0.15} tone={decision.confirmations.temperature ? "ink" : "bad"}>{mark(decision.confirmations.temperature)}</Ink>
               <Ink t={t} at={landed + 0.2}>{mark(decision.confirmations.infection)}</Ink>
               <Ink t={t} at={landed + 0.25}>{mark(decision.confirmations.respiratorySkin)}</Ink>
               {decision.admitted ? <Ink t={t} at={landed + 0.45}>{tr("ui.admitted")}</Ink> : <td style={cell} />}
               {decision.admitted ? (
                 <Ink t={t} at={landed + 0.5} style={{ fontSize: "0.82em" }}>
-                  Козлова Е., зав. производством · 08:53</Ink>
+                  {DEMO.head.name}, {demo(DEMO.head.position)} · 08:53</Ink>
               ) : (
                 <td style={cell} />
               )}

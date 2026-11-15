@@ -11,7 +11,7 @@ export function GET() {
       <div style={{ display: "flex", fontSize: 48, fontWeight: 700 }}>WeSetup</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ display: "flex", fontSize: 72, fontWeight: 700, lineHeight: 1.1 }}>Digital HACCP &amp; SanPiN logs</div>
-        <div style={{ display: "flex", fontSize: 30, color: "#c8cff3" }}>Food safety records for food service and production</div>
+        <div style={{ display: "flex", fontSize: 30, color: "#c8cff3" }}>Logs and sanitary control for your industry</div>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 25, color: "#7cf5c0" }}>
         <span>{JOURNALS_TOTAL} logs · QR entry · Automated reminders</span>

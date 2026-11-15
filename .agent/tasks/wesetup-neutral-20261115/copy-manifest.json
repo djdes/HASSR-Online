@@ -1,0 +1,1442 @@
+[
+  {
+    "locale": "ru",
+    "key": "settingsUi.schedulePage.intro",
+    "before": "Отмечайте, кто и в какой должности сегодня на смене. Это расписание видят Telegram-бот и мини-приложение: сотрудник открывает смену, напоминания уходят дежурному, а не фиксированному повару.",
+    "after": "Отмечайте, кто и в какой должности сегодня на смене. Telegram-бот и мини-приложение учитывают это расписание: напоминания получает ответственный сотрудник, который работает сегодня."
+  },
+  {
+    "locale": "ru",
+    "key": "publicChrome.footerDescription",
+    "before": "Сервис электронных журналов СанПиН и ХАССП для общепита и пищевых производств. © 2026 WeSetup.",
+    "after": "WeSetup — электронные журналы СанПиН и ХАССП для медцентров, общепита, производства и других организаций. © 2026 WeSetup."
+  },
+  {
+    "locale": "ru",
+    "key": "landing.openGraph.subtitle",
+    "before": "Безопасность пищевой продукции в общепите и на производстве",
+    "after": "Журналы, сотрудники и санитарный контроль для вашей сферы"
+  },
+  {
+    "locale": "ru",
+    "key": "landing.faq.electronicLogs.question",
+    "before": "Что такое электронный журнал для общепита?",
+    "after": "Что такое электронный журнал СанПиН?"
+  },
+  {
+    "locale": "ru",
+    "key": "landingComponents.equipment.tabletBenefit",
+    "before": "Планшет на кухне и NFC-брелоки для смены",
+    "after": "Планшет на рабочем месте и NFC-брелоки для смены"
+  },
+  {
+    "locale": "ru",
+    "key": "publicUi.pricing.bundles.standard.name",
+    "before": "Кухня",
+    "after": "Рабочая точка"
+  },
+  {
+    "locale": "ru",
+    "key": "publicUi.pricing.bundles.standard.forWhom",
+    "before": "Активная кухня, регулярные проверки",
+    "after": "Ежедневная работа и регулярный контроль"
+  },
+  {
+    "locale": "ru",
+    "key": "publicUi.pricing.bundles.standard.hook",
+    "before": "Датчики на всех ключевых холодильниках, планшет на кухне и брелоки для всей смены.",
+    "after": "Датчики на ключевом холодильном оборудовании, планшет на рабочем месте и брелоки для всей смены."
+  },
+  {
+    "locale": "ru",
+    "key": "publicUi.pricing.devices.install.hint",
+    "before": "Инженер приедет на кухню, установит датчики, настроит профили и обучит смену.",
+    "after": "Инженер приедет на объект, установит датчики, настроит профили и обучит сотрудников."
+  },
+  {
+    "locale": "ru",
+    "key": "publicUi.pricing.devices.tablet.title",
+    "before": "Планшет для кухни",
+    "after": "Планшет для сотрудников"
+  },
+  {
+    "locale": "ru",
+    "key": "journalControls.quickAdd.positionPlaceholder",
+    "before": "Повар",
+    "after": "Сотрудник"
+  },
+  {
+    "locale": "ru",
+    "key": "journals.ui.index.greyJournalBody",
+    "before": "отключён в /settings/journals — этой кухне не нужен. Можно включить обратно там же.",
+    "after": "отключён в настройках журналов для этой организации. При необходимости его можно включить снова."
+  },
+  {
+    "locale": "ru",
+    "key": "cleaningGrid.cleaning.pipelinePerRoomDescription",
+    "before": "У каждой комнаты свой список шагов. Удобно, когда уборка в кухне отличается от уборки в баре.",
+    "after": "У каждого помещения свой список шагов. Например, уборка кабинета может отличаться от уборки склада или санузла."
+  },
+  {
+    "locale": "ru",
+    "key": "staffManagement.dialogs.addFlow.positionPlaceholder",
+    "before": "Например, «Повар холодного цеха»",
+    "after": "Например, «Администратор»"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.points.rooms.emptyBody",
+    "before": "Добавьте кухню, склад, мойку — они сразу появятся в журнале уборки и в окне оборудования.",
+    "after": "Добавьте кабинеты, склад и другие помещения. Они появятся в журнале уборки и при настройке оборудования."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.points.staff.hint",
+    "before": "Повара, кухонные рабочие, официанты — кто работает здесь: их журналы и задачи только на этой торговой точке.",
+    "after": "Добавьте сотрудников, которые работают здесь. Их журналы и задачи будут привязаны к этой точке."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.aiConnect.showcase.prompt3",
+    "before": "Добавь повара Анну Иванову, +7 900 000-00-00",
+    "after": "Добавь сотрудника Анну Иванову, +7 900 000-00-00"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.security.logoutDescription",
+    "before": "Завершит сессии на всех устройствах: телефоне, планшете на кухне и чужом компьютере, где вы забыли выйти. Здесь тоже придётся войти заново.",
+    "after": "Завершит сессии на всех устройствах: телефоне, рабочем планшете и компьютере, где вы забыли выйти. Здесь тоже придётся войти заново."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.balanceClient.review.photoHint",
+    "before": "Снимок кухни, планшета или журнала",
+    "after": "Снимок рабочего места, планшета или журнала"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.home.guide.journalsBody",
+    "before": "Укажите ответственных, настройте выдачу задач в TasksFlow и выберите журналы для вашей кухни.",
+    "after": "Выберите журналы для вашей организации, укажите ответственных и настройте выдачу задач в TasksFlow."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.home.cards.settings_journal_difficulty.description",
+    "before": "Если в команде нет шеф-повара — поставьте сложность 1-5 и распределите задачи между поварами равномерно",
+    "after": "Оцените сложность журналов, чтобы равномерно распределить задачи между сотрудниками"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.home.cards.settings_workload_balance.description",
+    "before": "Кто сколько журналов ведёт в месяц — таблица с подсветкой перекоса между поварами на одинаковой зарплате",
+    "after": "Сравните нагрузку сотрудников одной должности по назначенным журналам"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.office.guide.points.body",
+    "before": "Повара, кухонные рабочие, официанты, заведующая — на странице своей торговой точки: там же её набор журналов и комиссия.",
+    "after": "Сотрудники и руководитель точки находятся на странице своей точки. Там же настраиваются её журналы и комиссия."
+  },
+  {
+    "locale": "ru",
+    "key": "staffPages.positions.categories.staff.hint",
+    "before": "Повара, официанты, уборщики — работают по задачам смены в приложении.",
+    "after": "Сотрудники выполняют задачи своей смены в приложении."
+  },
+  {
+    "locale": "ru",
+    "key": "staffPages.positions.dialog.namePlaceholder",
+    "before": "Например, Повар горячего цеха",
+    "after": "Например, Администратор"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsWorkloadBalance.description",
+    "before": "Кто сколько журналов ведёт в месяц по факту назначений. Если у поваров одинаковая зарплата, нагрузка должна быть близкой — иначе появятся обиды и текучка. Меняйте ответственных и сложность журналов — таблица обновится.",
+    "after": "Здесь видно, сколько журналов назначено каждому сотруднику на месяц. Сравнивайте нагрузку внутри одной должности. Меняйте ответственных и сложность журналов, чтобы распределить задачи равномерно."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsJournalDifficulty.description",
+    "before": "Нужно только если в команде <strong>нет шеф-повара</strong> и журналы распределяются между поварами с одинаковой зарплатой. Сложность × частота × строк/запись = вес, по которому страница «Распределение задач» покажет перекос между сотрудниками. Если шеф-повар есть — этим блоком можно не пользоваться.",
+    "after": "Укажите сложность журналов, чтобы сравнивать <strong>нагрузку сотрудников одной должности</strong>. Сложность × частота × строк за запись = вес журнала. Страница «Распределение задач» покажет, у кого больше назначений."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.buildingsPage.guide1Body",
+    "before": "Кафе на Ленина и кафе на Мира — две торговые точки. Внутри каждой — помещения: кухня, зал, мойка, склад. По помещениям раздаются задачи уборки, по ним же печатаются журналы климата.",
+    "after": "Два филиала организации — две точки. Внутри каждой добавьте помещения: кабинеты, склад, санузел и другие рабочие зоны. По помещениям назначаются задачи уборки и ведутся журналы микроклимата."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.complianceClient.photoBody",
+    "before": "Когда включено — в задаче TasksFlow для каждого шага pipeline’а сотрудник обязан загрузить фотографию (камера телефона). Кнопка «Сделал» заблокирована пока фото не появилось. Каждое фото попадает в audit-log с привязкой к конкретному шагу — manager в любой момент может посмотреть «как именно повар проверил холодильник в 09:34».",
+    "after": "Когда настройка включена, сотрудник прикладывает фотографию к каждому шагу задачи в TasksFlow. Кнопка «Сделал» доступна после загрузки фото. Руководитель может посмотреть снимок и проверить, как выполнен конкретный шаг."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.equipmentPage.qa1A",
+    "before": "Можно ничего не заводить — журнал температуры будет пустой. Но для большинства общепита нужен минимум 1 холодильник.",
+    "after": "Добавляйте только оборудование, которое используете и контролируете. Без холодильного оборудования соответствующий журнал температуры останется пустым."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.journalPipelinesPage.description",
+    "before": "Pipeline-инструкции для сотрудников. Кликни на блок чтобы настроить шаги: какие средства взять, куда пойти, что проверить. Чем подробнее — тем понятнее новой уборщице / повару / продавцу.",
+    "after": "Настройте пошаговые инструкции: какие средства взять, куда пойти и что проверить. Сотрудник увидит эти шаги при открытии задачи."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.pipelineEditor.description",
+    "before": "Шаги, которые увидит сотрудник при открытии задачи. Чем понятнее каждый шаг — тем меньше вопросов от новой уборщицы / повара.",
+    "after": "Эти шаги сотрудник увидит при открытии задачи. Укажите конкретные действия, чтобы новый сотрудник мог выполнить работу без дополнительных объяснений."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.journalResponsiblesPage.description",
+    "before": "Кто из должностей заполняет каждый журнал и какой именно сотрудник идёт в шапку документа. Изменения сразу попадают в открытые документы и в печать. Нажмите «Применить умные пресеты ко всем» — система сама назначит уборку уборщикам, температуру поварам и так далее.",
+    "after": "Укажите, какие должности заполняют каждый журнал и кто указан в шапке документа. Изменения попадут в открытые документы и печать. Проверьте предлагаемые назначения перед применением пресетов."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.onboardingAdvancedPage.positionsDescription",
+    "before": "Шеф, повар, продавец, уборщик — для распределения задач по ролям",
+    "after": "Руководитель, администратор, специалист, уборщик — для распределения задач по должностям"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.kioskClient.tabletPlaceholder",
+    "before": "Кухня, Склад №2…",
+    "after": "Кабинет, Склад №2…"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.kioskPage.description",
+    "before": "Один планшет на кухне или складе: каждый сотрудник подписывает записи своим 4-значным ПИН, никто не путается в чужих именах.",
+    "after": "Общий планшет на рабочем месте: каждый сотрудник подписывает записи личным 4-значным ПИН-кодом."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.positionStaffVisibilityPage.description",
+    "before": "Кого видят сотрудники каждой должности. Эта настройка синхронизируется в TasksFlow и Telegram-бот: шеф-повар увидит у себя на главной только задачи поваров, технолога — нет; в боте при просмотре других сотрудников та же картина. Сохраняется per-position — при добавлении нового «шеф-повара» он автоматически получит этот же scope.",
+    "after": "Укажите, каких сотрудников видит каждая должность. Например, старший смены может видеть свою команду. Настройка действует в TasksFlow и Telegram-боте и применяется ко всем сотрудникам этой должности, включая новых."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.staffHierarchyPage.bullet2Body",
+    "before": "«Все» — видит всех (но не админов и менеджеров — фильтр от 2026-04-30). «По должностям» — выбираешь должности (повар, уборщица). «Конкретные» — поштучно.",
+    "after": "«Все» — все сотрудники, кроме администраторов и менеджеров. «По должностям» — сотрудники выбранных должностей. «Конкретные» — только указанные люди."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.editUserDialog.positionTitlePlaceholder",
+    "before": "Например: Повар холодного цеха",
+    "after": "Например: Администратор"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.bulkStaffImport.placeholderSample",
+    "before": "ФИО\tДолжность\tТелефон\nИван Петров\tПовар\t+7 985 123-45-67\nСергей Поваров\tШеф-повар\t+7 925 555-12-34\nМария Чайкова\tОфициант\t+7 999 444-22-11",
+    "after": "ФИО\tДолжность\tТелефон\nИван Петров\tСпециалист\t+7 985 123-45-67\nСергей Соколов\tСтарший смены\t+7 925 555-12-34\nМария Чайкова\tАдминистратор\t+7 999 444-22-11"
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.masterCabinetClient.guide.cabinetBody",
+    "before": "Мастер-кабинет — отдельный кабинет без журналов и сотрудников кухни. Кабинетов может быть несколько — например, «Школы» и «Сады».",
+    "after": "Мастер-кабинет — отдельный кабинет без рабочих журналов и сотрудников точек. Кабинетов может быть несколько, например для разных направлений работы."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.masterCabinetClient.confirm.bullet1",
+    "before": "Появится отдельный кабинет — без журналов, сотрудников и настроек кухни.",
+    "after": "Появится отдельный кабинет без рабочих журналов, сотрудников и настроек точек."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.role-access.aclText",
+    "before": "Через ACL руководитель может выдать сотруднику доступ к конкретному журналу вне его роли — например, ночной повар получает доступ к журналу УФ-ламп, а остальные нет.",
+    "after": "Руководитель может выдать сотруднику доступ к конкретному журналу, например назначить дежурного ответственным за журнал УФ-ламп."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.time-saving.tagline",
+    "before": "5–10 минут в конце смены вместо часа возни с бумагой. Повара возвращаются домой вовремя, шеф — без кипы для сверки.",
+    "after": "Меньше ручных записей и сверок в конце смены. Сотрудники заполняют журналы по ходу работы, руководитель видит результат в кабинете."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.time-saving.intro",
+    "before": "Самая недооценённая функция электронного журнала — экономия времени кухни. Это не маркетинг, а замер, который мы делаем на каждом внедрении: час рутины уходит в 5–10 минут, потому что исчезает дублирование и переписывание.",
+    "after": "QR-коды открывают нужный журнал у оборудования, данные сохраняются сразу, а сводка собирается в одном кабинете. Это сокращает повторный ввод и ручную сверку записей."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.time-saving.networksText",
+    "before": "Один управляющий на 5 точек вместо 5 шеф-поваров, каждый из которых час тратит на сверку. Экономия измеряется не часами, а фондом оплаты.",
+    "after": "Руководитель видит журналы нескольких точек в одном кабинете. Не нужно собирать бумажные журналы и сверять записи отдельно в каждом филиале."
+  },
+  {
+    "locale": "ru",
+    "key": "journalDocGuides.climate_control.whoFills",
+    "before": "Дежурный повар, технолог или товаровед в зависимости от помещения. На кухне — повар, на складе — кладовщик.",
+    "after": "Сотрудник, назначенный ответственным за помещение: например, администратор, специалист или кладовщик."
+  },
+  {
+    "locale": "ru",
+    "key": "journalDocGuides.cold_equipment_control.whoFills",
+    "before": "Дежурный повар или кухонный работник. Утром при открытии + вечером при закрытии. На крупных кухнях — отдельный сотрудник на цех.",
+    "after": "Сотрудник, ответственный за холодильное оборудование. Периодичность замеров задаётся в настройках журнала."
+  },
+  {
+    "locale": "ru",
+    "key": "journalDocGuides.equipment_cleaning.whoFills",
+    "before": "Тот повар или уборщица, который пользовался оборудованием.",
+    "after": "Сотрудник, который выполнил мойку или дезинфекцию оборудования."
+  },
+  {
+    "locale": "ru",
+    "key": "journalDocGuides.uv_lamp_runtime.whoFills",
+    "before": "Тот, кто включает и выключает лампу — обычно уборщица или дежурный повар.",
+    "after": "Сотрудник, который включает и выключает бактерицидную установку."
+  },
+  {
+    "locale": "ru",
+    "key": "journalDocGuides.cleaning.whoFills",
+    "before": "Уборщица или кухонный работник, который провёл уборку. После — отметка контролёра (старшая уборщица или менеджер).",
+    "after": "Сотрудник, который провёл уборку. Выполнение проверяет назначенный контролёр."
+  },
+  {
+    "locale": "ru",
+    "key": "journalDocGuides.glass_control.whoFills",
+    "before": "Дежурный по смене (повар или уборщица).",
+    "after": "Назначенный ответственный сотрудник смены."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.office.guide.office.body",
+    "before": "Директор, бренд-шеф, территориальные руководители. Они видят все торговые точки, а журналы и задачи у них только офисные — в журналы торговых точек они не попадают.",
+    "after": "Директор и руководители направлений видят все точки. Их собственные журналы и задачи относятся к офису и не добавляются в журналы точек."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.office.staff.hint",
+    "before": "Директор, бренд-шеф, территориалы — видят все торговые точки, журналы и задачи у них только офисные.",
+    "after": "Директор и руководители направлений видят все точки; их журналы и задачи относятся к офису."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.role-access.level2",
+    "before": "Шеф-повар / Технолог — видит свой цех, ведёт бракераж, назначает ответственных.",
+    "after": "Руководитель подразделения / Технолог — контролирует своё подразделение и назначает ответственных."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.role-access.level3",
+    "before": "Повар / Официант — видит только назначенные ему журналы; не может менять чужие записи.",
+    "after": "Сотрудник — видит назначенные ему журналы и заполняет их в пределах выданных прав."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.alerts.recipientsText",
+    "before": "Алерт настраивается по роли и по точке. Температурный алерт — шефу и управляющему, отстранение сотрудника — HR и директору, финансово значимые списания — владельцу. Маршрут можно настроить на каждый тип события.",
+    "after": "Получателей уведомлений можно настроить по должности и точке. Например, за температуру отвечает дежурный сотрудник и руководитель, а за допуск персонала — кадровая служба. Для каждого типа события задаётся свой маршрут."
+  },
+  {
+    "locale": "ru",
+    "key": "qrPlayer.chapter.fridge.caption",
+    "before": "Повар сканирует наклейку на холодильнике, вводит PIN и температуру. Значение попадает в графу журнала за сегодняшний день, рядом указывается код ответственного.",
+    "after": "Сотрудник сканирует наклейку на холодильнике, вводит PIN и температуру. Значение попадает в графу журнала за сегодняшний день, рядом указывается код ответственного."
+  },
+  {
+    "locale": "ru",
+    "key": "qrScene.chapters.fridgeCaption",
+    "before": "Повар сканирует наклейку на холодильнике, вводит PIN и температуру. Значение встаёт в журнал в графу сегодняшнего дня, рядом — код ответственного.",
+    "after": "Сотрудник сканирует наклейку на холодильнике, вводит PIN и температуру. Значение встаёт в журнал в графу сегодняшнего дня, рядом — код ответственного."
+  },
+  {
+    "locale": "ru",
+    "key": "auth.metadata.loginDescription",
+    "before": "Вход в личный кабинет WeSetup. Электронные журналы СанПиН и ХАССП для общепита и пищевых производств.",
+    "after": "Вход в личный кабинет WeSetup. Электронные журналы СанПиН и ХАССП для медцентров, общепита, производства и других организаций."
+  },
+  {
+    "locale": "ru",
+    "key": "auth.metadata.registerDescription",
+    "before": "Создайте аккаунт WeSetup. Электронные журналы СанПиН и ХАССП для предприятий общепита и пищевого производства; {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} бесплатно без ограничений, без карты.",
+    "after": "Создайте аккаунт WeSetup. Электронные журналы СанПиН и ХАССП для медцентров, общепита, производства и других организаций; {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} бесплатно без ограничений, без карты."
+  },
+  {
+    "locale": "ru",
+    "key": "landing.metadata.description",
+    "before": "{journalCount, number} электронных журналов пищевой безопасности для общепита и производства. QR-наклейки на оборудовании, PIN-коды сотрудников и PDF для проверок. {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} бесплатно — без карты.",
+    "after": "{journalCount, number} электронных журналов СанПиН и ХАССП для медцентров, общепита и других организаций. QR-наклейки на оборудовании, PIN-коды сотрудников и PDF для проверок. {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} бесплатно — без карты."
+  },
+  {
+    "locale": "ru",
+    "key": "landing.seo.softwareDescription",
+    "before": "{journalCount, number} электронных журналов СанПиН и ХАССП для общепита и пищевых производств. QR-наклейки на оборудовании: отсканируйте, введите PIN — запись попадёт в журнал. PDF для проверок Роспотребнадзора.",
+    "after": "{journalCount, number} электронных журналов СанПиН и ХАССП для медцентров, общепита, производства и других организаций. QR-наклейки на оборудовании: отсканируйте, введите PIN — запись попадёт в журнал. PDF для проверок Роспотребнадзора."
+  },
+  {
+    "locale": "ru",
+    "key": "landing.seo.productDescription",
+    "before": "{journalCount, number} электронных журналов СанПиН и ХАССП для общепита и пищевых производств. Заполняйте с телефона по QR-коду; записи заполняются автоматически, PDF готовы для проверок Роспотребнадзора.",
+    "after": "{journalCount, number} электронных журналов СанПиН и ХАССП для медцентров, общепита, производства и других организаций. Заполняйте с телефона по QR-коду; записи заполняются автоматически, PDF готовы для проверок Роспотребнадзора."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.schedulePage.intro",
+    "before": "Mark who is on shift today and in which position. The Telegram bot and the mini app use this schedule: the employee opens the shift and reminders go to the person on duty rather than to a fixed cook.",
+    "after": "Record who is on duty today and in which position. The Telegram bot and mini app use this schedule to send reminders to the responsible employee working today."
+  },
+  {
+    "locale": "en",
+    "key": "publicChrome.footerDescription",
+    "before": "Electronic SanPiN and HACCP logs for food service and food production. © 2026 WeSetup.",
+    "after": "WeSetup: electronic SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations. © 2026 WeSetup."
+  },
+  {
+    "locale": "en",
+    "key": "landing.openGraph.subtitle",
+    "before": "Food safety records for food service and production",
+    "after": "Logs, staff and sanitary control for your industry"
+  },
+  {
+    "locale": "en",
+    "key": "landing.faq.electronicLogs.question",
+    "before": "What is a digital food safety log?",
+    "after": "What is an electronic SanPiN log?"
+  },
+  {
+    "locale": "en",
+    "key": "landingComponents.equipment.tabletBenefit",
+    "before": "A kitchen tablet and NFC key fobs for the shift",
+    "after": "A workplace tablet and NFC key fobs for the shift"
+  },
+  {
+    "locale": "en",
+    "key": "publicUi.pricing.bundles.standard.name",
+    "before": "Kitchen",
+    "after": "Work location"
+  },
+  {
+    "locale": "en",
+    "key": "publicUi.pricing.bundles.standard.forWhom",
+    "before": "A busy kitchen with regular inspections",
+    "after": "Daily work and regular checks"
+  },
+  {
+    "locale": "en",
+    "key": "publicUi.pricing.bundles.standard.hook",
+    "before": "Sensors for every key refrigerator, a kitchen tablet, and key fobs for the whole shift.",
+    "after": "Sensors on key refrigeration equipment, a workplace tablet and key fobs for the whole shift."
+  },
+  {
+    "locale": "en",
+    "key": "publicUi.pricing.devices.install.hint",
+    "before": "An engineer visits your kitchen, installs the sensors, configures profiles, and trains the shift.",
+    "after": "An engineer will visit your premises, install sensors, configure profiles and train your staff."
+  },
+  {
+    "locale": "en",
+    "key": "publicUi.pricing.devices.tablet.title",
+    "before": "Kitchen tablet",
+    "after": "Staff tablet"
+  },
+  {
+    "locale": "en",
+    "key": "journalControls.quickAdd.positionPlaceholder",
+    "before": "Cook",
+    "after": "Employee"
+  },
+  {
+    "locale": "en",
+    "key": "journals.ui.index.greyJournalBody",
+    "before": "switched off in /settings/journals — this kitchen does not need it. You can switch it back on there.",
+    "after": "disabled in this organisation’s log settings. You can enable it again when needed."
+  },
+  {
+    "locale": "en",
+    "key": "cleaningGrid.cleaning.pipelinePerRoomDescription",
+    "before": "Each room has its own list of steps. This works well when kitchen cleaning differs from bar cleaning.",
+    "after": "Each room has its own steps. For example, cleaning an office can differ from cleaning a storeroom or washroom."
+  },
+  {
+    "locale": "en",
+    "key": "staffManagement.dialogs.addFlow.positionPlaceholder",
+    "before": "For example, “Cold kitchen chef”",
+    "after": "For example, “Administrator”"
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.points.rooms.emptyBody",
+    "before": "Add a kitchen, storage, washing area — they appear in the cleaning journal and the equipment window right away.",
+    "after": "Add offices, storerooms and other rooms. They will appear in the cleaning log and equipment settings."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.points.staff.hint",
+    "before": "Cooks, kitchen workers, waiters — who works here: their journals and tasks are only at this outlet.",
+    "after": "Add the employees who work here. Their logs and tasks will be linked to this location."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.aiConnect.showcase.prompt3",
+    "before": "Add cook Anna Ivanova, +7 900 000-00-00",
+    "after": "Add employee Anna Ivanova, +7 900 000-00-00"
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.security.logoutDescription",
+    "before": "Ends sessions on every device, including a phone, a kitchen tablet, or someone else’s computer where you forgot to sign out. You’ll need to sign in here again too.",
+    "after": "Ends sessions on every device, including your phone, workplace tablet and any computer where you forgot to sign out. You will also need to sign in again here."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.balanceClient.review.photoHint",
+    "before": "A photo of your kitchen, tablet, or journal",
+    "after": "A photo of your workplace, tablet or log"
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.home.guide.journalsBody",
+    "before": "Assign journal owners, configure task delivery in TasksFlow, and choose the journals your kitchen needs.",
+    "after": "Choose logs for your organisation, assign responsible employees and configure task delivery in TasksFlow."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.home.cards.settings_journal_difficulty.description",
+    "before": "If there is no head chef, rate each journal from 1 to 5 and distribute tasks evenly among cooks.",
+    "after": "Rate log difficulty to distribute tasks evenly among employees"
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.home.cards.settings_workload_balance.description",
+    "before": "See how many journals each person fills in each month and spot workload imbalances among cooks on the same pay.",
+    "after": "Compare assigned log workloads for employees in the same position"
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.office.guide.points.body",
+    "before": "Cooks, kitchen workers, waiters, the outlet manager — on their outlet page, together with its journal set and commission.",
+    "after": "Employees and the location manager are on their location’s page, together with its logs and commission settings."
+  },
+  {
+    "locale": "en",
+    "key": "staffPages.positions.categories.staff.hint",
+    "before": "Cooks, waiters, cleaners — they work on shift tasks in the app.",
+    "after": "Employees complete their shift tasks in the app."
+  },
+  {
+    "locale": "en",
+    "key": "staffPages.positions.dialog.namePlaceholder",
+    "before": "For example, Hot kitchen cook",
+    "after": "For example, Administrator"
+  },
+  {
+    "locale": "en",
+    "key": "settingsWorkloadBalance.description",
+    "before": "See monthly journal workloads based on actual assignments. Cooks with the same pay should have similar workloads to avoid resentment and staff turnover. Change assignments and journal difficulty to update the table.",
+    "after": "See how many logs each employee is assigned per month. Compare workloads within the same position. Adjust responsible employees and log difficulty to distribute tasks evenly."
+  },
+  {
+    "locale": "en",
+    "key": "settingsJournalDifficulty.description",
+    "before": "Use this only when the team <strong>has no head chef</strong> and journals are shared among cooks with the same pay. Difficulty × frequency × rows per entry = workload weight, which the Task distribution page uses to show imbalances between employees. If you have a head chef, you can skip this section.",
+    "after": "Set log difficulty to compare <strong>workloads of employees in the same position</strong>. Difficulty × frequency × rows per entry gives the log weight. The task distribution page shows who has more assignments."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.buildingsPage.guide1Body",
+    "before": "A café on Lenin Street and a café on Mir Street are two points. Each has rooms inside: kitchen, dining room, washing area, storeroom. Cleaning tasks are assigned by room, and climate journals are printed by room too.",
+    "after": "Two branches are two locations. Add rooms within each: offices, storerooms, washrooms and other work areas. Rooms are used to assign cleaning tasks and keep climate logs."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.complianceClient.photoBody",
+    "before": "When on, in a TasksFlow task the employee must upload a photo (phone camera) for every pipeline step. The “Done” button is blocked until the photo appears. Every photo goes into the audit log tied to its step — a manager can look at any time at “how exactly the cook checked the fridge at 09:34”.",
+    "after": "When enabled, employees attach a photo to each task step in TasksFlow. The Done button becomes available after upload. Managers can review the photo to check how that step was completed."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.equipmentPage.qa1A",
+    "before": "You can add nothing — the temperature journal will be empty. But most catering businesses need at least 1 fridge.",
+    "after": "Add only equipment you use and monitor. Without refrigeration equipment, the corresponding temperature log will remain empty."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.journalPipelinesPage.description",
+    "before": "Pipeline instructions for employees. Click a block to configure the steps: which products to take, where to go, what to check. The more detailed, the clearer it is for a new cleaner / cook / shop assistant.",
+    "after": "Set up step-by-step instructions: what supplies to take, where to go and what to check. Employees see these steps when they open a task."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.pipelineEditor.description",
+    "before": "The steps the employee will see when opening a task. The clearer each step, the fewer questions from a new cleaner / cook.",
+    "after": "Employees see these steps when they open the task. Describe specific actions so a new employee can complete the work without extra instructions."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.journalResponsiblesPage.description",
+    "before": "Which positions fill in each journal and which exact employee goes into the document header. Changes immediately appear in open documents and in print. Click “Apply smart presets to all” — the system will assign cleaning to cleaners, temperature to cooks, and so on.",
+    "after": "Choose which positions fill each log and who appears in the document header. Changes apply to open documents and printouts. Review suggested assignments before applying presets."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.onboardingAdvancedPage.positionsDescription",
+    "before": "Chef, cook, shop assistant, cleaner: for assigning tasks by role",
+    "after": "Manager, administrator, specialist, cleaner: distribute tasks by position"
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.kioskClient.tabletPlaceholder",
+    "before": "Kitchen, Warehouse No. 2…",
+    "after": "Office, Storeroom 2…"
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.kioskPage.description",
+    "before": "One tablet in the kitchen or warehouse: each employee signs entries with their own 4-digit PIN, so nobody gets confused by other people’s names.",
+    "after": "A shared workplace tablet: each employee signs entries with a personal 4-digit PIN."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.positionStaffVisibilityPage.description",
+    "before": "Who employees of each position can see. This setting is synchronised to TasksFlow and the Telegram bot: a head chef sees only the cooks’ tasks on their home page, not the technologist’s, and the bot shows the same picture when browsing other employees. It is stored per position, so a newly added “head chef” automatically gets the same scope.",
+    "after": "Choose which employees each position can see. For example, a shift supervisor can see their team. The setting applies in TasksFlow and the Telegram bot to everyone in that position, including new employees."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.staffHierarchyPage.bullet2Body",
+    "before": "“All” sees everyone (but not admins and managers — a filter from 2026-04-30). “By positions” — you pick positions (cook, cleaner). “Specific” — one by one.",
+    "after": "All: all employees except administrators and managers. By position: employees in selected positions. Specific: only the people you select."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.editUserDialog.positionTitlePlaceholder",
+    "before": "For example: Cold section cook",
+    "after": "For example: Administrator"
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.bulkStaffImport.placeholderSample",
+    "before": "Full name\tPosition\tPhone\nIvan Petrov\tCook\t+7 985 123-45-67\nSergey Povarov\tHead chef\t+7 925 555-12-34\nMaria Chaikova\tWaiter\t+7 999 444-22-11",
+    "after": "Full name\tPosition\tPhone\nIvan Petrov\tSpecialist\t+7 985 123-45-67\nSergey Sokolov\tShift supervisor\t+7 925 555-12-34\nMaria Chaykova\tAdministrator\t+7 999 444-22-11"
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.masterCabinetClient.guide.cabinetBody",
+    "before": "A master cabinet is a separate cabinet without journals or kitchen staff. There can be several — for example, “Schools” and “Kindergartens”.",
+    "after": "A master workspace is separate from location staff and operational logs. You can have several, for example for different lines of business."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.masterCabinetClient.confirm.bullet1",
+    "before": "A separate cabinet will appear — without journals, staff or kitchen settings.",
+    "after": "A separate workspace will be created without operational logs, employees or location settings."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.role-access.aclText",
+    "before": "With ACL, a manager can grant an employee access to a log outside their role. For example, a night-shift cook can access the UV-lamp log while other employees cannot.",
+    "after": "Managers can grant an employee access to a specific log, for example assigning the duty employee to the UV lamp log."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.time-saving.tagline",
+    "before": "Five to ten minutes at the end of a shift instead of an hour of paperwork. Cooks get home on time, and the head chef has no pile of forms to reconcile.",
+    "after": "Less manual recording and checking at the end of a shift. Employees fill logs as they work, and managers see the results in their workspace."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.time-saving.intro",
+    "before": "One of the most overlooked benefits of an electronic log is the time it saves in the kitchen. This is based on measurements we take during each rollout: an hour of routine work falls to 5–10 minutes because duplicate entry and copying disappear.",
+    "after": "QR codes open the right log at the equipment, entries are saved immediately and summaries are collected in one workspace. This reduces repeated data entry and manual checking."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.time-saving.networksText",
+    "before": "One manager can oversee five locations instead of five head chefs each spending an hour reconciling records. The savings show up in payroll, not just hours.",
+    "after": "Managers can view logs from several locations in one workspace without collecting paper logs and checking each branch separately."
+  },
+  {
+    "locale": "en",
+    "key": "journalDocGuides.climate_control.whoFills",
+    "before": "The duty cook, technologist or commodity expert, depending on the room. In the kitchen, the cook; in the storeroom, the storekeeper.",
+    "after": "The employee assigned to the room, such as an administrator, specialist or storekeeper."
+  },
+  {
+    "locale": "en",
+    "key": "journalDocGuides.cold_equipment_control.whoFills",
+    "before": "The duty cook or kitchen worker, at opening in the morning and closing in the evening. Large kitchens assign a separate employee to each area.",
+    "after": "The employee responsible for refrigeration equipment. Measurement frequency is configured in the log settings."
+  },
+  {
+    "locale": "en",
+    "key": "journalDocGuides.equipment_cleaning.whoFills",
+    "before": "The cook or cleaner who used the equipment.",
+    "after": "The employee who cleaned or disinfected the equipment."
+  },
+  {
+    "locale": "en",
+    "key": "journalDocGuides.uv_lamp_runtime.whoFills",
+    "before": "The person switching the lamp on and off, usually the cleaner or duty cook.",
+    "after": "The employee who switches the germicidal unit on and off."
+  },
+  {
+    "locale": "en",
+    "key": "journalDocGuides.cleaning.whoFills",
+    "before": "The cleaner or kitchen worker who cleaned the area, followed by a check from the senior cleaner or manager.",
+    "after": "The employee who performed the cleaning. The assigned supervisor checks completion."
+  },
+  {
+    "locale": "en",
+    "key": "journalDocGuides.glass_control.whoFills",
+    "before": "The person on shift duty, a cook or cleaner.",
+    "after": "The assigned responsible employee on the shift."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.office.guide.office.body",
+    "before": "Director, brand chef, area managers. They see every outlet, while their journals and tasks are office-only — they are not added to outlet journals.",
+    "after": "Directors and department managers can see all locations. Their own logs and tasks belong to the office and are not added to location logs."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.office.staff.hint",
+    "before": "Director, brand chef, area managers — see every outlet, journals and tasks are office-only.",
+    "after": "Directors and department managers see all locations; their logs and tasks belong to the office."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.role-access.level2",
+    "before": "Head chef / Technologist: sees their department, manages quality checks, and assigns responsible staff.",
+    "after": "Department manager / Technologist: oversees their department and assigns responsible employees."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.role-access.level3",
+    "before": "Cook / Waiter: sees only assigned logs and cannot change another person's entries.",
+    "after": "Employee: sees assigned logs and fills them within the permissions granted."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.alerts.recipientsText",
+    "before": "Alerts can be routed by role and location. Temperature alerts go to the head chef and manager; an employee suspension goes to HR and the director; financially significant write-offs go to the owner. Each event type can have its own route.",
+    "after": "Notification recipients can be configured by position and location. For example, temperature alerts go to the responsible duty employee and manager, while staff clearance alerts go to HR. Each event type has its own route."
+  },
+  {
+    "locale": "en",
+    "key": "qrPlayer.chapter.fridge.caption",
+    "before": "The cook scans the sticker on the refrigerator, enters a PIN and the temperature. The reading is recorded in today’s log entry alongside the responsible person’s code.",
+    "after": "An employee scans the fridge sticker and enters a PIN and temperature. The reading goes into today’s log column alongside the responsible employee’s code."
+  },
+  {
+    "locale": "en",
+    "key": "qrScene.chapters.fridgeCaption",
+    "before": "The cook scans the refrigerator sticker, enters a PIN and records the temperature. The value appears in today's journal column beside the responsible person's code.",
+    "after": "An employee scans the fridge sticker and enters a PIN and temperature. The reading goes into today’s log column alongside the responsible employee’s code."
+  },
+  {
+    "locale": "en",
+    "key": "auth.metadata.loginDescription",
+    "before": "Sign in to WeSetup. Digital SanPiN and HACCP logs for food service and food production.",
+    "after": "Sign in to WeSetup. Digital SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations."
+  },
+  {
+    "locale": "en",
+    "key": "auth.metadata.registerDescription",
+    "before": "Create a WeSetup account. Digital SanPiN and HACCP logs for food service and food production; {trialDays, number} {trialDays, plural, one {day} other {days}} free without limits, no card required.",
+    "after": "Create a WeSetup account. Digital SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations; {trialDays, number} {trialDays, plural, one {day} other {days}} free without limits, no card required."
+  },
+  {
+    "locale": "en",
+    "key": "landing.metadata.description",
+    "before": "{journalCount, number} digital food safety logs for food service and production. QR equipment stickers, staff PINs and inspection PDFs. {trialDays, number} {trialDays, plural, one {day} other {days}} free — no card required.",
+    "after": "{journalCount, number} digital SanPiN and HACCP logs for medical centres, food service and other organisations. QR equipment stickers, staff PINs and inspection PDFs. {trialDays, number} {trialDays, plural, one {day} other {days}} free — no card required."
+  },
+  {
+    "locale": "en",
+    "key": "landing.seo.softwareDescription",
+    "before": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Equipment QR stickers let staff scan, enter a PIN and record entries. PDFs are ready for Rospotrebnadzor inspections.",
+    "after": "{journalCount, number} electronic SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations. Equipment QR stickers let staff scan, enter a PIN and record entries. PDFs are ready for Rospotrebnadzor inspections."
+  },
+  {
+    "locale": "en",
+    "key": "landing.seo.productDescription",
+    "before": "{journalCount, number} electronic SanPiN and HACCP logs for food service and food production. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections.",
+    "after": "{journalCount, number} electronic SanPiN and HACCP logs for medical centres, food service, manufacturing and other organisations. Record entries from a phone using QR codes, automate entries and prepare PDFs for inspections."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.schedulePage.intro",
+    "before": "Bugun kim qaysi lavozimda smenada ekanini belgilang. Bu jadvalni Telegram-bot va mini-ilova ko‘radi: xodim smenani ochadi, eslatmalar belgilangan oshpazga emas, navbatchiga yuboriladi.",
+    "after": "Bugun kim va qaysi lavozimda smenada ekanini belgilang. Telegram-bot va mini-ilova shu jadvalga asoslanadi: eslatmalar bugun ishlayotgan mas’ul xodimga yuboriladi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicChrome.footerDescription",
+    "before": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP elektron jurnallari xizmati. © 2026 WeSetup.",
+    "after": "WeSetup — tibbiyot markazlari, umumiy ovqatlanish, ishlab chiqarish va boshqa tashkilotlar uchun elektron SanPiN va HACCP jurnallari. © 2026 WeSetup."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.openGraph.subtitle",
+    "before": "Umumiy ovqatlanish va ishlab chiqarishda oziq-ovqat xavfsizligi",
+    "after": "Sohangiz uchun jurnallar, xodimlar va sanitariya nazorati"
+  },
+  {
+    "locale": "uz",
+    "key": "landing.faq.electronicLogs.question",
+    "before": "Umumiy ovqatlanish uchun elektron jurnal nima?",
+    "after": "Elektron SanPiN jurnali nima?"
+  },
+  {
+    "locale": "uz",
+    "key": "landingComponents.equipment.tabletBenefit",
+    "before": "Oshxona plansheti va smena uchun NFC breloklari",
+    "after": "Ish joyidagi planshet va smena uchun NFC breloklar"
+  },
+  {
+    "locale": "uz",
+    "key": "publicUi.pricing.bundles.standard.name",
+    "before": "Oshxona",
+    "after": "Ish nuqtasi"
+  },
+  {
+    "locale": "uz",
+    "key": "publicUi.pricing.bundles.standard.forWhom",
+    "before": "Faol oshxona va muntazam tekshiruvlar",
+    "after": "Kundalik ish va muntazam nazorat"
+  },
+  {
+    "locale": "uz",
+    "key": "publicUi.pricing.bundles.standard.hook",
+    "before": "Barcha muhim muzlatkichlarga datchiklar, oshxona uchun planshet va butun smena uchun breloklar.",
+    "after": "Asosiy sovitish uskunalarida datchiklar, ish joyida planshet va butun smena uchun breloklar."
+  },
+  {
+    "locale": "uz",
+    "key": "publicUi.pricing.devices.install.hint",
+    "before": "Muhandis oshxonaga keladi, datchiklarni o‘rnatadi, profillarni sozlaydi va smenani o‘qitadi.",
+    "after": "Muhandis obyektga kelib, datchiklarni o‘rnatadi, profillarni sozlaydi va xodimlarni o‘qitadi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicUi.pricing.devices.tablet.title",
+    "before": "Oshxona uchun planshet",
+    "after": "Xodimlar uchun planshet"
+  },
+  {
+    "locale": "uz",
+    "key": "journalControls.quickAdd.positionPlaceholder",
+    "before": "Oshpaz",
+    "after": "Xodim"
+  },
+  {
+    "locale": "uz",
+    "key": "journals.ui.index.greyJournalBody",
+    "before": "/settings/journals bo‘limida o‘chirilgan — bu oshxonaga kerak emas. U yerning o‘zida qayta yoqish mumkin.",
+    "after": "ushbu tashkilotning jurnal sozlamalarida o‘chirilgan. Zarur bo‘lsa, uni qayta yoqish mumkin."
+  },
+  {
+    "locale": "uz",
+    "key": "cleaningGrid.cleaning.pipelinePerRoomDescription",
+    "before": "Har bir xona uchun alohida bosqichlar ro‘yxati mavjud. Oshxona va barni tozalash tartibi farq qilganda qulay.",
+    "after": "Har bir xonaning o‘z bosqichlari bor. Masalan, kabinetni tozalash ombor yoki hojatxonani tozalashdan farq qilishi mumkin."
+  },
+  {
+    "locale": "uz",
+    "key": "staffManagement.dialogs.addFlow.positionPlaceholder",
+    "before": "Masalan, «Sovuq sex oshpazi»",
+    "after": "Masalan, «Administrator»"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.points.rooms.emptyBody",
+    "before": "Oshxona, ombor, yuvish joyini qo‘shing — ular darhol tozalash jurnalida va uskuna oynasida paydo bo‘ladi.",
+    "after": "Kabinetlar, ombor va boshqa xonalarni qo‘shing. Ular tozalash jurnalida va uskuna sozlamalarida ko‘rinadi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.points.staff.hint",
+    "before": "Oshpazlar, oshxona ishchilari, ofitsiantlar — shu yerda ishlaydiganlar: ularning jurnallari va vazifalari faqat shu nuqtada.",
+    "after": "Shu yerda ishlaydigan xodimlarni qo‘shing. Ularning jurnallari va vazifalari shu nuqtaga bog‘lanadi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.aiConnect.showcase.prompt3",
+    "before": "Oshpaz Anna Ivanovani qo‘sh, +7 900 000-00-00",
+    "after": "Anna Ivanova ismli xodimni qo‘sh, +7 900 000-00-00"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.security.logoutDescription",
+    "before": "Telefon, oshxonadagi planshet yoki chiqishni unutgan boshqa birovning kompyuteri kabi barcha qurilmalardagi seanslarni tugatadi. Bu yerda ham qayta kirishingiz kerak bo‘ladi.",
+    "after": "Barcha qurilmalardagi, jumladan telefon, ish plansheti va chiqishni unutgan kompyuterdagi seanslarni tugatadi. Bu yerda ham qayta kirish kerak bo‘ladi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.balanceClient.review.photoHint",
+    "before": "Oshxona, planshet yoki jurnal surati",
+    "after": "Ish joyi, planshet yoki jurnal surati"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.home.guide.journalsBody",
+    "before": "Jurnal uchun mas’ullarni belgilang, TasksFlow’da vazifalarni taqsimlang va oshxonangizga kerakli jurnallarni tanlang.",
+    "after": "Tashkilotingiz uchun jurnallarni tanlang, mas’ullarni belgilang va TasksFlow orqali vazifalar berilishini sozlang."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.home.cards.settings_journal_difficulty.description",
+    "before": "Bosh oshpaz bo'lmasa, har bir jurnalni 1 dan 5 gacha baholang va vazifalarni oshpazlar o'rtasida teng taqsimlang.",
+    "after": "Vazifalarni xodimlar o‘rtasida teng taqsimlash uchun jurnallar murakkabligini baholang"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.home.cards.settings_workload_balance.description",
+    "before": "Har bir xodim oyiga nechta jurnal to'ldirishini ko'ring va bir xil maosh oladigan oshpazlar yuklamasidagi farqni aniqlang.",
+    "after": "Bir xil lavozimdagi xodimlarning tayinlangan jurnallar bo‘yicha yuklamasini solishtiring"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.office.guide.points.body",
+    "before": "Oshpazlar, oshxona ishchilari, ofitsiantlar, mudira — o‘z nuqtasi sahifasida: u yerda jurnallar to‘plami va komissiya ham bor.",
+    "after": "Xodimlar va nuqta rahbari o‘z nuqtasi sahifasida joylashgan. Shu yerda jurnallar va komissiya ham sozlanadi."
+  },
+  {
+    "locale": "uz",
+    "key": "staffPages.positions.categories.staff.hint",
+    "before": "Oshpazlar, ofitsiantlar, farroshlar — ilovada smena vazifalari bo‘yicha ishlaydi.",
+    "after": "Xodimlar o‘z smenasi vazifalarini ilovada bajaradi."
+  },
+  {
+    "locale": "uz",
+    "key": "staffPages.positions.dialog.namePlaceholder",
+    "before": "Masalan, issiq sex oshpazi",
+    "after": "Masalan, Administrator"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsWorkloadBalance.description",
+    "before": "Amaldagi tayinlovlar asosida har bir xodim oyiga qancha jurnal yuritishini ko‘ring. Bir xil maosh oladigan oshpazlarning yuklamasi yaqin bo‘lishi kerak, aks holda norozilik va kadrlar almashinuvi yuzaga kelishi mumkin. Mas’ullarni va jurnallar murakkabligini o‘zgartirsangiz, jadval yangilanadi.",
+    "after": "Har bir xodimga oyiga nechta jurnal tayinlanganini ko‘ring. Bir xil lavozimdagi yuklamalarni solishtiring. Vazifalarni teng taqsimlash uchun mas’ullar va jurnallar murakkabligini o‘zgartiring."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsJournalDifficulty.description",
+    "before": "Faqat jamoada <strong>bosh oshpaz bo‘lmasa</strong> va jurnallar bir xil maosh oladigan oshpazlar o‘rtasida taqsimlansa kerak bo‘ladi. Murakkablik × takrorlanish × yozuvdagi qatorlar = yuklama vazni; «Vazifalarni taqsimlash» sahifasi shu asosda xodimlar yuklamasidagi nomutanosiblikni ko‘rsatadi. Bosh oshpaz bo‘lsa, bu bo‘limdan foydalanish shart emas.",
+    "after": "<strong>Bir xil lavozimdagi xodimlar yuklamasini</strong> solishtirish uchun jurnallar murakkabligini belgilang. Murakkablik × chastota × yozuvdagi qatorlar soni = jurnal vazni. Vazifalar taqsimoti sahifasi kimga ko‘proq vazifa tayinlanganini ko‘rsatadi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.buildingsPage.guide1Body",
+    "before": "Lenin ko‘chasidagi kafe va Mir ko‘chasidagi kafe — ikkita nuqta. Har birining ichida xonalar bor: oshxona, zal, yuvish joyi, ombor. Tozalash vazifalari xonalar bo‘yicha beriladi, iqlim jurnallari ham xonalar bo‘yicha chop etiladi.",
+    "after": "Tashkilotning ikki filiali — ikki nuqta. Har biriga kabinetlar, ombor, hojatxona va boshqa ish zonalarini qo‘shing. Xonalar bo‘yicha tozalash vazifalari tayinlanadi va mikroiqlim jurnallari yuritiladi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.complianceClient.photoBody",
+    "before": "Yoqilganda TasksFlow vazifasida pipeline’ning har bir qadami uchun xodim fotosuratni (telefon kamerasi) yuklashi shart. Foto paydo bo‘lguncha “Bajardim” tugmasi bloklangan. Har bir foto aniq qadamga bog‘langan holda audit-logga tushadi — manager istalgan payt “oshpaz muzlatkichni soat 09:34 da aynan qanday tekshirgan”ini ko‘ra oladi.",
+    "after": "Sozlama yoqilganda xodim TasksFlow vazifasining har bir bosqichiga surat biriktiradi. «Bajardim» tugmasi surat yuklangandan keyin ishlaydi. Rahbar surat orqali bosqich qanday bajarilganini tekshirishi mumkin."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.equipmentPage.qa1A",
+    "before": "Hech narsa qo‘shmasa ham bo‘ladi — harorat jurnali bo‘sh bo‘ladi. Ammo ko‘pchilik umumiy ovqatlanish korxonalariga kamida 1 ta muzlatkich kerak.",
+    "after": "Faqat ishlatadigan va nazorat qiladigan uskunalarni qo‘shing. Sovitish uskunalari bo‘lmasa, tegishli harorat jurnali bo‘sh qoladi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.journalPipelinesPage.description",
+    "before": "Xodimlar uchun pipeline-ko‘rsatmalar. Qadamlarni sozlash uchun blokni bosing: qanday vositalarni olish, qayerga borish, nimani tekshirish. Qancha batafsil bo‘lsa, yangi tozalovchi / oshpaz / sotuvchiga shuncha tushunarli.",
+    "after": "Bosqichma-bosqich ko‘rsatmalarni sozlang: qanday vositalarni olish, qayerga borish va nimani tekshirish. Xodim vazifani ochganda shu bosqichlarni ko‘radi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.pipelineEditor.description",
+    "before": "Xodim vazifani ochganda ko‘radigan qadamlar. Har bir qadam qancha tushunarli bo‘lsa, yangi tozalovchi / oshpazdan shuncha kam savol tug‘iladi.",
+    "after": "Xodim vazifani ochganda shu bosqichlarni ko‘radi. Yangi xodim qo‘shimcha tushuntirishsiz ishlashi uchun aniq amallarni yozing."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.journalResponsiblesPage.description",
+    "before": "Qaysi lavozimlar har bir jurnalni to‘ldirishi va hujjat sarlavhasiga aynan qaysi xodim yozilishi. O‘zgarishlar ochiq hujjatlarda va chop etishda darhol aks etadi. “Barchasiga aqlli presetlarni qo‘llash” tugmasini bosing — tizim o‘zi tozalashni tozalovchilarga, haroratni oshpazlarga va hokazo tayinlaydi.",
+    "after": "Har bir jurnalni qaysi lavozimlar to‘ldirishini va hujjat sarlavhasida kim ko‘rsatilishini belgilang. O‘zgarishlar ochiq hujjatlar va bosma nusxalarga qo‘llanadi. Andozalarni qo‘llashdan oldin taklif etilgan tayinlovlarni tekshiring."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.onboardingAdvancedPage.positionsDescription",
+    "before": "Shef, oshpaz, sotuvchi, farrosh — vazifalarni rollar bo‘yicha taqsimlash uchun",
+    "after": "Rahbar, administrator, mutaxassis, farrosh — vazifalarni lavozimlar bo‘yicha taqsimlash uchun"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.kioskClient.tabletPlaceholder",
+    "before": "Oshxona, 2-ombor…",
+    "after": "Kabinet, 2-ombor…"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.kioskPage.description",
+    "before": "Oshxona yoki omborda bitta planshet: har bir xodim yozuvlarni o‘zining 4 xonali PIN-kodi bilan imzolaydi, hech kim birovning ismi bilan adashmaydi.",
+    "after": "Ish joyidagi umumiy planshet: har bir xodim yozuvlarni shaxsiy 4 xonali PIN-kod bilan imzolaydi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.positionStaffVisibilityPage.description",
+    "before": "Har bir lavozim xodimlari kimni ko‘rishi. Bu sozlama TasksFlow va Telegram-botga sinxronlanadi: bosh oshpaz bosh sahifasida faqat oshpazlarning vazifalarini ko‘radi, texnologning vazifalarini emas; botda boshqa xodimlarni ko‘rishda ham xuddi shunday. Lavozim bo‘yicha saqlanadi — yangi “bosh oshpaz” qo‘shilganda u avtomatik ravishda shu scope’ni oladi.",
+    "after": "Har bir lavozim qaysi xodimlarni ko‘rishini belgilang. Masalan, smena boshlig‘i o‘z jamoasini ko‘rishi mumkin. Sozlama TasksFlow va Telegram-botda shu lavozimdagi barcha, jumladan yangi xodimlarga ham qo‘llanadi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.staffHierarchyPage.bullet2Body",
+    "before": "«Hammasi» — hammani ko‘radi (lekin adminlar va menejerlarni emas — 2026-04-30 dan filtr). «Lavozimlar bo‘yicha» — lavozimlarni tanlaysiz (oshpaz, farrosh). «Aniq» — birma-bir.",
+    "after": "«Barchasi» — administrator va menejerlardan tashqari barcha xodimlar. «Lavozimlar bo‘yicha» — tanlangan lavozimlardagi xodimlar. «Aniq xodimlar» — faqat ko‘rsatilgan odamlar."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.editUserDialog.positionTitlePlaceholder",
+    "before": "Masalan: Sovuq sex oshpazi",
+    "after": "Masalan: Administrator"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.bulkStaffImport.placeholderSample",
+    "before": "F.I.Sh.\tLavozim\tTelefon\nIvan Petrov\tOshpaz\t+7 985 123-45-67\nSergey Povarov\tBosh oshpaz\t+7 925 555-12-34\nMariya Chaykova\tOfitsiant\t+7 999 444-22-11",
+    "after": "F.I.Sh.\tLavozim\tTelefon\nIvan Petrov\tMutaxassis\t+7 985 123-45-67\nSergey Sokolov\tSmena boshlig‘i\t+7 925 555-12-34\nMaria Chaykova\tAdministrator\t+7 999 444-22-11"
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.masterCabinetClient.guide.cabinetBody",
+    "before": "Master-kabinet — jurnallar va oshxona xodimlarisiz alohida kabinet. Kabinetlar bir nechta bo‘lishi mumkin — masalan, «Maktablar» va «Bog‘chalar».",
+    "after": "Bosh kabinet — nuqtalarning ish jurnallari va xodimlaridan alohida kabinet. Masalan, turli faoliyat yo‘nalishlari uchun bir nechta kabinet bo‘lishi mumkin."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.masterCabinetClient.confirm.bullet1",
+    "before": "Alohida kabinet paydo bo‘ladi — jurnallar, xodimlar va oshxona sozlamalarisiz.",
+    "after": "Ish jurnallari, xodimlar va nuqta sozlamalarisiz alohida kabinet yaratiladi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.role-access.aclText",
+    "before": "ACL orqali rahbar xodimga lavozimidan tashqari jurnalga kirish berishi mumkin. Masalan, tungi smena oshpazi UV-lampa jurnaliga kira oladi, boshqa xodimlar esa yo‘q.",
+    "after": "Rahbar xodimga muayyan jurnalga kirish huquqini berishi mumkin. Masalan, navbatchi xodimni UV-lampalar jurnaliga mas’ul qilib tayinlashi mumkin."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.time-saving.tagline",
+    "before": "Smena oxirida bir soat qog‘oz bilan ishlash o‘rniga 5–10 daqiqa. Oshpazlar vaqtida uyga qaytadi, bosh oshpaz esa tekshiriladigan hujjatlar uyumini ko‘tarmaydi.",
+    "after": "Smena oxirida qo‘lda yozish va solishtirish kamroq bo‘ladi. Xodimlar jurnallarni ish davomida to‘ldiradi, rahbar natijani kabinetda ko‘radi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.time-saving.intro",
+    "before": "Elektron jurnalning ko‘p baholanmaydigan foydalaridan biri — oshxonada vaqtni tejash. Bu shunchaki reklama emas, joriy etish paytida o‘tkazadigan o‘lchovimiz: takroriy kiritish va ko‘chirish yo‘qolgani uchun bir soatlik odatiy ish 5–10 daqiqaga tushadi.",
+    "after": "QR-kodlar uskuna yonida kerakli jurnalni ochadi, ma’lumotlar darhol saqlanadi va jamlanma bitta kabinetda yig‘iladi. Bu takroriy kiritish va qo‘lda tekshirishni kamaytiradi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.time-saving.networksText",
+    "before": "Har biri hujjatlarni tekshirishga bir soat sarflaydigan besh bosh oshpaz o‘rniga bitta rahbar beshta filialni boshqarishi mumkin. Tejamkorlik faqat soatda emas, ish haqi xarajatida ham ko‘rinadi.",
+    "after": "Rahbar bir nechta nuqtaning jurnallarini bitta kabinetda ko‘radi. Qog‘oz jurnallarni yig‘ish va har bir filialdagi yozuvlarni alohida tekshirish shart emas."
+  },
+  {
+    "locale": "uz",
+    "key": "journalDocGuides.climate_control.whoFills",
+    "before": "Xonaga qarab navbatchi oshpaz, texnolog yoki tovarshunos. Oshxonada — oshpaz, omborda — omborchi.",
+    "after": "Xonaga mas’ul etib tayinlangan xodim, masalan, administrator, mutaxassis yoki omborchi."
+  },
+  {
+    "locale": "uz",
+    "key": "journalDocGuides.cold_equipment_control.whoFills",
+    "before": "Navbatchi oshpaz yoki oshxona ishchisi. Ertalab ochishda va kechqurun yopishda. Katta oshxonalarda har sexga alohida xodim.",
+    "after": "Sovitish uskunasiga mas’ul xodim. O‘lchash davriyligi jurnal sozlamalarida belgilanadi."
+  },
+  {
+    "locale": "uz",
+    "key": "journalDocGuides.equipment_cleaning.whoFills",
+    "before": "Uskunadan foydalangan oshpaz yoki farrosh.",
+    "after": "Uskunani yuvgan yoki dezinfeksiya qilgan xodim."
+  },
+  {
+    "locale": "uz",
+    "key": "journalDocGuides.uv_lamp_runtime.whoFills",
+    "before": "Chiroqni yoqib-o‘chiradigan shaxs — odatda farrosh yoki navbatchi oshpaz.",
+    "after": "Bakteritsid qurilmani yoqadigan va o‘chiradigan xodim."
+  },
+  {
+    "locale": "uz",
+    "key": "journalDocGuides.cleaning.whoFills",
+    "before": "Tozalagan farrosh yoki oshxona ishchisi. Keyin nazoratchi (katta farrosh yoki menejer) belgisi.",
+    "after": "Tozalashni bajargan xodim. Bajarilgan ishni tayinlangan nazoratchi tekshiradi."
+  },
+  {
+    "locale": "uz",
+    "key": "journalDocGuides.glass_control.whoFills",
+    "before": "Smena navbatchisi (oshpaz yoki farrosh).",
+    "after": "Smenadagi tayinlangan mas’ul xodim."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.office.guide.office.body",
+    "before": "Direktor, brend-oshpaz, hududiy rahbarlar. Ular barcha nuqtalarni ko‘radi, jurnallar va vazifalari esa faqat ofisniki — nuqtalar jurnaliga qo‘shilmaydi.",
+    "after": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi. Ularning o‘z jurnallari va vazifalari ofisga tegishli va nuqta jurnallariga qo‘shilmaydi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.office.staff.hint",
+    "before": "Direktor, brend-oshpaz, hududiy rahbarlar — barcha nuqtalarni ko‘radi, jurnallar va vazifalar faqat ofisniki.",
+    "after": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi; ularning jurnallari va vazifalari ofisga tegishli."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.role-access.level2",
+    "before": "Bosh oshpaz / Texnolog: o‘z bo‘limini ko‘radi, sifat nazoratini yuritadi va mas’ul xodimlarni belgilaydi.",
+    "after": "Bo‘lim rahbari / Texnolog — o‘z bo‘limini nazorat qiladi va mas’ul xodimlarni tayinlaydi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.role-access.level3",
+    "before": "Oshpaz / Ofitsiant: faqat o‘ziga biriktirilgan jurnallarni ko‘radi va boshqalarning yozuvlarini o‘zgartira olmaydi.",
+    "after": "Xodim — o‘ziga tayinlangan jurnallarni ko‘radi va berilgan huquqlar doirasida to‘ldiradi."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.alerts.recipientsText",
+    "before": "Ogohlantirishni lavozim va filial bo‘yicha yo‘naltirish mumkin. Harorat bo‘yicha xabar bosh oshpaz va rahbarga, xodimni ishdan chetlatish HR va direktorga, moliyaviy jihatdan muhim hisobdan chiqarish esa egasiga yuboriladi. Har bir hodisa turi uchun yo‘nalish sozlanadi.",
+    "after": "Bildirishnoma oluvchilarni lavozim va nuqta bo‘yicha sozlash mumkin. Masalan, harorat uchun navbatchi xodim va rahbar, xodimlarni ishga qo‘yish uchun kadrlar bo‘limi mas’ul bo‘ladi. Har bir hodisa turi uchun alohida yo‘nalish belgilanadi."
+  },
+  {
+    "locale": "uz",
+    "key": "qrPlayer.chapter.fridge.caption",
+    "before": "Oshpaz muzlatkichdagi stikerni skanerlaydi, PIN-kod va haroratni kiritadi. Ko‘rsatkich bugungi jurnal qatoriga yoziladi, yonida mas’ul xodim kodi ko‘rsatiladi.",
+    "after": "Xodim sovitgichdagi stikerni skanerlab, PIN-kod va haroratni kiritadi. Qiymat jurnalning bugungi ustuniga yoziladi, yonida mas’ul xodim kodi ko‘rsatiladi."
+  },
+  {
+    "locale": "uz",
+    "key": "qrScene.chapters.fridgeCaption",
+    "before": "Oshpaz sovutkichdagi stikerni skanerlaydi, PIN-kodni kiritadi va haroratni qayd etadi. Qiymat bugungi kun ustunida, mas’ul shaxs kodi yonida jurnalga tushadi.",
+    "after": "Xodim sovitgichdagi stikerni skanerlab, PIN-kod va haroratni kiritadi. Qiymat jurnalning bugungi ustuniga yoziladi, yonida mas’ul xodim kodi turadi."
+  },
+  {
+    "locale": "uz",
+    "key": "auth.metadata.loginDescription",
+    "before": "WeSetup tizimiga kiring. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP elektron jurnallari.",
+    "after": "WeSetup tizimiga kiring. Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP elektron jurnallari."
+  },
+  {
+    "locale": "uz",
+    "key": "auth.metadata.registerDescription",
+    "before": "WeSetup hisobini yarating. Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish korxonalari uchun SanPiN va HACCP elektron jurnallari; {trialDays, number} {trialDays, plural, other {kun}} cheklovsiz bepul, kartasiz.",
+    "after": "WeSetup hisobini yarating. Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP elektron jurnallari; {trialDays, number} {trialDays, plural, other {kun}} cheklovsiz bepul, kartasiz."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.metadata.description",
+    "before": "Umumiy ovqatlanish va ishlab chiqarish uchun {journalCount, number} ta oziq-ovqat xavfsizligi elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. {trialDays, number} {trialDays, plural, other {kun}} bepul — kartasiz.",
+    "after": "Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun {journalCount, number} ta SanPiN va HACCP elektron jurnali. Uskunalar uchun QR-stikerlar, xodimlar PIN-kodlari va tekshiruvlar uchun PDF. {trialDays, number} {trialDays, plural, other {kun}} bepul — kartasiz."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.seo.softwareDescription",
+    "before": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. Uskunadagi QR-stikerni skanerlab, PIN-kodni kiriting va jurnalga yozuv kiriting. Rospotrebnadzor tekshiruvlari uchun PDF hujjatlar.",
+    "after": "Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. Uskunadagi QR-stikerni skanerlab, PIN-kodni kiriting va jurnalga yozuv kiriting. Rospotrebnadzor tekshiruvlari uchun PDF hujjatlar."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.seo.productDescription",
+    "before": "Umumiy ovqatlanish va oziq-ovqat ishlab chiqarish uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang.",
+    "after": "Tibbiyot markazlari, umumiy ovqatlanish va boshqa tashkilotlar uchun SanPiN va HACCP bo‘yicha {journalCount, number} ta elektron jurnal. QR-kod orqali telefondan yozuv kiriting, yozuvlarni avtomatlashtiring va tekshiruvlar uchun PDF tayyorlang."
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.role-access.intro",
+    "before": "На кухне и в зале работают разные люди с разной ответственностью. WeSetup строит три уровня доступа, чтобы никто не видел лишнего и при этом руководитель держал полный контроль.",
+    "after": "В организации у сотрудников разные задачи и зоны ответственности. WeSetup позволяет настроить доступ к журналам и управлению для каждой роли."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsManagement.accessMatrices.pages.employeesDescription",
+    "before": "Кто из сотрудников какие журналы видит и заполняет. Нажмите на ячейку, чтобы назначить или снять доступ. Пресеты помогут быстро дать уборщикам все журналы уборки, а поварам — журналы температурного контроля. Пока у сотрудника нет ни одной галочки, он видит все журналы — это совместимость со старой логикой.",
+    "after": "Укажите, какие журналы сотрудник видит и заполняет. Нажмите на ячейку, чтобы изменить доступ. Отраслевые пресеты рассчитаны на типовые должности общепита: проверьте их перед применением. Пока нет ни одной галочки, сотрудник видит все журналы по прежним правилам доступа."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.journalResponsiblesClient.noPositionsFitPresets",
+    "before": "Ни одна должность не подошла под пресеты. Заведите должности вроде «Уборщица», «Повар», «Менеджер».",
+    "after": "Подходящих должностей для этих пресетов нет. Назначьте ответственных вручную с учётом должностей вашей организации."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.journalResponsiblesClient.fixNoSuitable",
+    "before": "Не нашёл подходящих сотрудников. Заведите должность вроде «Заведующий производством» или «Старший повар» в <link>Сотрудниках</link>.",
+    "after": "Для этого пресета не найден подходящий сотрудник. Проверьте должности в разделе <link>Сотрудники</link> или назначьте ответственного вручную."
+  },
+  {
+    "locale": "ru",
+    "key": "settingsUi.journalResponsiblesClient.applyAllDescription",
+    "before": "Система пройдётся по всем журналам в порядке убывания нагрузки и расставит должности и сотрудников по семантике. Уборка — уборщикам, температура — поварам, поверка — технологу или заведующему производством. Админ автоматически попадёт в «Кто проверяет».",
+    "after": "Система предложит назначения по нагрузке и названию должности. Пресеты ориентированы на общепит: уборка — уборщикам, температура — поварам, поверка — технологу или заведующему производством. Администратор попадёт в «Кто проверяет». Проверьте назначения для вашей организации."
+  },
+  {
+    "locale": "ru",
+    "key": "landing.showcase.lead",
+    "before": "Настоящие экраны WeSetup. Сотрудники заполняют журналы с телефона по QR — вы видите результат здесь: что сделано, что просрочено и кто отвечает.",
+    "after": "Экраны WeSetup с демонстрационными данными. Сотрудники и доступы показаны на нейтральном примере; журналы и контроль — на примере общепита. Набор журналов зависит от сферы вашей организации."
+  },
+  {
+    "locale": "ru",
+    "key": "landing.showcase.slides.monitoring.title",
+    "before": "Процент выполнения по торговым точкам",
+    "after": "Выполнение по точкам организации"
+  },
+  {
+    "locale": "ru",
+    "key": "landing.showcase.slides.journals.title",
+    "before": "Все журналы торговой точки",
+    "after": "Журналы точки организации"
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.role-access.intro",
+    "before": "Different people in the kitchen and dining room have different responsibilities. WeSetup provides three access levels so employees see what they need while managers keep full oversight.",
+    "after": "Employees have different tasks and areas of responsibility. WeSetup lets you configure access to logs and management functions for each role."
+  },
+  {
+    "locale": "en",
+    "key": "settingsManagement.accessMatrices.pages.employeesDescription",
+    "before": "See which journals each employee can view and fill in. Select a cell to grant or remove access. Presets quickly give cleaners all cleaning journals and cooks the temperature-control journals. Until an employee has at least one grant, they can access all journals for compatibility with the previous behavior.",
+    "after": "Choose which logs employees can see and fill. Click a cell to change access. Industry presets target typical food service positions: review them before applying. An employee with no checked boxes retains legacy access to all logs."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.journalResponsiblesClient.noPositionsFitPresets",
+    "before": "No position fit the presets. Create positions such as “Cleaner”, “Cook”, “Manager”.",
+    "after": "No positions match these presets. Assign responsible employees manually using your organisation’s positions."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.journalResponsiblesClient.fixNoSuitable",
+    "before": "No suitable employees found. Create a position such as “Production manager” or “Senior cook” in <link>Staff</link>.",
+    "after": "No suitable employee was found for this preset. Review positions in <link>Staff</link> or assign a responsible employee manually."
+  },
+  {
+    "locale": "en",
+    "key": "settingsUi.journalResponsiblesClient.applyAllDescription",
+    "before": "The system will go through all journals in descending order of workload and assign positions and employees by meaning. Cleaning — to cleaners, temperature — to cooks, calibration — to the technologist or production manager. The admin will automatically be put in “Who verifies”.",
+    "after": "The system suggests assignments by workload and position name. Presets target food service: cleaning for cleaners, temperature for cooks, calibration for a technologist or production manager. The administrator is assigned as reviewer. Check the assignments for your organisation."
+  },
+  {
+    "locale": "en",
+    "key": "landing.showcase.lead",
+    "before": "Real WeSetup screens. Staff fill in logs from their phones by scanning a QR code — you see the result here: what is done, what is overdue and who is responsible.",
+    "after": "WeSetup screens with sample data. Staff and access use an industry-neutral example; logs and checks use food service examples. Your log set depends on your organisation’s industry."
+  },
+  {
+    "locale": "en",
+    "key": "landing.showcase.slides.monitoring.title",
+    "before": "Progress by outlet",
+    "after": "Completion by location"
+  },
+  {
+    "locale": "en",
+    "key": "landing.showcase.slides.journals.title",
+    "before": "Every log for the site",
+    "after": "Location logs"
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.role-access.intro",
+    "before": "Oshxona va zalda turli mas’uliyatga ega xodimlar ishlaydi. WeSetup uchta kirish darajasini beradi: xodimlar faqat kerakli ma’lumotni ko‘radi, rahbar esa to‘liq nazoratni saqlaydi.",
+    "after": "Tashkilotda xodimlarning vazifalari va mas’uliyat doiralari turlicha. WeSetup har bir rol uchun jurnallar va boshqaruv imkoniyatlariga kirishni sozlashga yordam beradi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsManagement.accessMatrices.pages.employeesDescription",
+    "before": "Har bir xodim qaysi jurnallarni ko‘rishi va to‘ldirishini ko‘ring. Ruxsat berish yoki olib tashlash uchun katakchani tanlang. Tayyor sozlamalar farroshlarga barcha tozalash jurnallarini, oshpazlarga esa harorat nazorati jurnallarini tezda beradi. Xodimga kamida bitta ruxsat berilmaguncha, eski xatti-harakat bilan moslik uchun u barcha jurnallarni ko‘ra oladi.",
+    "after": "Xodim qaysi jurnallarni ko‘rishi va to‘ldirishini belgilang. Kirish huquqini o‘zgartirish uchun katakni bosing. Sohaviy andozalar umumiy ovqatlanish lavozimlariga mo‘ljallangan: qo‘llashdan oldin tekshiring. Hech bir katak belgilanmagan bo‘lsa, xodim avvalgi qoidalar bo‘yicha barcha jurnallarni ko‘radi."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.journalResponsiblesClient.noPositionsFitPresets",
+    "before": "Hech bir lavozim presetlarga mos kelmadi. «Farrosh», «Oshpaz», «Menejer» kabi lavozimlarni yarating.",
+    "after": "Bu andozalarga mos lavozimlar yo‘q. Tashkilotingiz lavozimlarini hisobga olib, mas’ullarni qo‘lda tayinlang."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.journalResponsiblesClient.fixNoSuitable",
+    "before": "Mos xodimlar topilmadi. <link>Xodimlar</link> bo‘limida «Ishlab chiqarish mudiri» yoki «Katta oshpaz» kabi lavozim yarating.",
+    "after": "Bu andoza uchun mos xodim topilmadi. <link>Xodimlar</link> bo‘limidagi lavozimlarni tekshiring yoki mas’ulni qo‘lda tayinlang."
+  },
+  {
+    "locale": "uz",
+    "key": "settingsUi.journalResponsiblesClient.applyAllDescription",
+    "before": "Tizim barcha jurnallarni yuklama kamayish tartibida ko‘rib chiqadi va lavozimlar hamda xodimlarni ma’nosiga ko‘ra joylashtiradi. Tozalash — farroshlarga, harorat — oshpazlarga, tekshiruv — texnolog yoki ishlab chiqarish mudiriga. Admin avtomatik ravishda «Kim tekshiradi»ga tushadi.",
+    "after": "Tizim yuklama va lavozim nomiga qarab tayinlovlarni taklif qiladi. Andozalar umumiy ovqatlanishga mo‘ljallangan: tozalash farroshlarga, harorat oshpazlarga, qiyoslash texnolog yoki ishlab chiqarish mudiriga beriladi. Administrator tekshiruvchi bo‘ladi. Tashkilotingiz uchun tayinlovlarni tekshiring."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.showcase.lead",
+    "before": "WeSetup’ning haqiqiy ekranlari. Xodimlar jurnallarni telefondan QR orqali to‘ldiradi — natijani shu yerda ko‘rasiz: nima bajarilgan, nima kechikkan va kim mas’ul.",
+    "after": "WeSetup ekranlari namuna ma’lumotlari bilan. Xodimlar va kirish huquqlari umumiy misolda, jurnallar va nazorat esa umumiy ovqatlanish misolida ko‘rsatilgan. Jurnallar to‘plami tashkilotingiz sohasiga bog‘liq."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.showcase.slides.monitoring.title",
+    "before": "Nuqtalar bo‘yicha bajarilish",
+    "after": "Tashkilot nuqtalari bo‘yicha bajarilish"
+  },
+  {
+    "locale": "uz",
+    "key": "landing.showcase.slides.journals.title",
+    "before": "Nuqtaning barcha jurnallari",
+    "after": "Tashkilot nuqtasi jurnallari"
+  },
+  {
+    "locale": "ru",
+    "key": "landing.faq.electronicLogs.answer",
+    "before": "Веб-сервис, куда сотрудники вносят те же записи, что раньше делали в бумажных журналах — гигиена, температура, бракераж и так далее. Электронная форма прямо разрешена СанПиН 2.3/2.4.4282-26 «Санитарно-эпидемиологические требования к организации общественного питания населения»: он действует с 1 сентября 2026 года и заменил прежний 2.3/2.4.3590-20.",
+    "after": "Веб-сервис для ведения журналов: сотрудники вносят записи с телефона или компьютера, руководитель проверяет их и выгружает документы. Набор журналов, ответственных и порядок заполнения выбирайте с учётом сферы и требований вашей организации."
+  },
+  {
+    "locale": "en",
+    "key": "landing.faq.electronicLogs.answer",
+    "before": "A web service where employees enter the same records they used to keep in paper logs: hygiene, temperatures, product checks and more. Electronic records are expressly permitted by SanPiN 2.3/2.4.4282-26, “Sanitary and Epidemiological Requirements for Public Catering,” which took effect on 1 September 2026 and replaced the previous SanPiN 2.3/2.4.3590-20.",
+    "after": "A web service for keeping logs: employees enter records from a phone or computer, while managers review them and export documents. Choose the logs, responsible employees and recording procedures for your industry and organisation’s requirements."
+  },
+  {
+    "locale": "uz",
+    "key": "landing.faq.electronicLogs.answer",
+    "before": "Xodimlar avval qog‘oz jurnallarda qayd etgan ma’lumotlarni — gigiyena, harorat, mahsulot sifatini tekshirish va boshqalarni — kiritadigan veb-xizmat. Elektron shaklga SanPiN 2.3/2.4.4282-26 «Aholiga umumiy ovqatlanishni tashkil etish bo‘yicha sanitariya-epidemiologik talablar»da bevosita ruxsat berilgan. U 2026-yil 1-sentabrdan kuchga kiradi va avvalgi 2.3/2.4.3590-20 hujjatining o‘rnini egallagan.",
+    "after": "Jurnallarni yuritish uchun veb-xizmat: xodimlar telefon yoki kompyuterdan yozuv kiritadi, rahbar ularni tekshiradi va hujjatlarni yuklab oladi. Jurnallar, mas’ullar va to‘ldirish tartibini tashkilotingiz sohasi va talablariga qarab tanlang."
+  },
+  {
+    "locale": "ru",
+    "key": "auth.login.marketing.heading",
+    "before": "Электронные журналы пищевого производства",
+    "after": "Электронные журналы для вашей организации"
+  },
+  {
+    "locale": "ru",
+    "key": "auth.login.marketing.description",
+    "before": "Контроль температур, санитарии и прослеживаемости сырья — в одном месте. Telegram-уведомления, импорт iiko, печать в формате Роспотребнадзора.",
+    "after": "Контроль температур, уборки и работы оборудования в одном кабинете. Для медцентров, общепита, производства и других организаций."
+  },
+  {
+    "locale": "ru",
+    "key": "auth.badges.title",
+    "before": "Журналы по требованиям пищевой безопасности",
+    "after": "Для разных сфер работы"
+  },
+  {
+    "locale": "ru",
+    "key": "auth.badges.forms",
+    "before": "Формы журналов — по ХАССП и СанПиН",
+    "after": "Выберите сферу организации, чтобы настроить подходящие журналы."
+  },
+  {
+    "locale": "ru",
+    "key": "auth.badges.production",
+    "before": "Пищевые цеха",
+    "after": "Производство"
+  },
+  {
+    "locale": "ru",
+    "key": "auth.badges.medical",
+    "before": null,
+    "after": "Медцентры"
+  },
+  {
+    "locale": "en",
+    "key": "auth.login.marketing.heading",
+    "before": "Digital food safety logs",
+    "after": "Electronic logs for your organisation"
+  },
+  {
+    "locale": "en",
+    "key": "auth.login.marketing.description",
+    "before": "Track temperatures, sanitation and ingredient traceability in one place. Get Telegram alerts, import from iiko and print in the Rospotrebnadzor format.",
+    "after": "Monitor temperatures, cleaning and equipment in one workspace. For medical centres, food service, manufacturing and other organisations."
+  },
+  {
+    "locale": "en",
+    "key": "auth.badges.title",
+    "before": "Logs built on food safety requirements",
+    "after": "For different industries"
+  },
+  {
+    "locale": "en",
+    "key": "auth.badges.forms",
+    "before": "Log forms follow HACCP and SanPiN",
+    "after": "Choose your organisation’s industry to set up the appropriate logs."
+  },
+  {
+    "locale": "en",
+    "key": "auth.badges.production",
+    "before": "Food production",
+    "after": "Manufacturing"
+  },
+  {
+    "locale": "en",
+    "key": "auth.badges.medical",
+    "before": null,
+    "after": "Medical centres"
+  },
+  {
+    "locale": "uz",
+    "key": "auth.login.marketing.heading",
+    "before": "Oziq-ovqat xavfsizligi elektron jurnallari",
+    "after": "Tashkilotingiz uchun elektron jurnallar"
+  },
+  {
+    "locale": "uz",
+    "key": "auth.login.marketing.description",
+    "before": "Harorat, sanitariya va xomashyo kuzatuvini bir joyda boshqaring. Telegram bildirishnomalarini oling, iiko’dan import qiling va Rospotrebnadzor formatida chop eting.",
+    "after": "Harorat, tozalash va uskunalar ishini bitta kabinetda nazorat qiling. Tibbiyot markazlari, umumiy ovqatlanish, ishlab chiqarish va boshqa tashkilotlar uchun."
+  },
+  {
+    "locale": "uz",
+    "key": "auth.badges.title",
+    "before": "Oziq-ovqat xavfsizligi talablari bo'yicha jurnallar",
+    "after": "Turli faoliyat sohalari uchun"
+  },
+  {
+    "locale": "uz",
+    "key": "auth.badges.forms",
+    "before": "Jurnal shakllari HACCP va SanPiN bo'yicha",
+    "after": "Kerakli jurnallarni sozlash uchun tashkilotingiz sohasini tanlang."
+  },
+  {
+    "locale": "uz",
+    "key": "auth.badges.production",
+    "before": "Oziq-ovqat sexlari",
+    "after": "Ishlab chiqarish"
+  },
+  {
+    "locale": "uz",
+    "key": "auth.badges.medical",
+    "before": null,
+    "after": "Tibbiyot markazlari"
+  },
+  {
+    "locale": "ru",
+    "key": "publicFeatures.features.cloud.device2",
+    "before": "Планшет на кухне — удобный ввод в перчатках, крупные кнопки.",
+    "after": "Планшет на рабочем месте — крупные кнопки и удобный ввод, в том числе в перчатках."
+  },
+  {
+    "locale": "en",
+    "key": "publicFeatures.features.cloud.device2",
+    "before": "Kitchen tablet: large buttons and convenient entry, even with gloves.",
+    "after": "Workplace tablet: large buttons and convenient entry, even with gloves."
+  },
+  {
+    "locale": "uz",
+    "key": "publicFeatures.features.cloud.device2",
+    "before": "Oshxonadagi planshet: qo‘lqopda ham qulay kiritish va katta tugmalar.",
+    "after": "Ish joyidagi planshet: qo‘lqopda ham qulay kiritish va katta tugmalar."
+  }
+]
