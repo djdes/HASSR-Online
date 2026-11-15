@@ -58,6 +58,9 @@ test("gates: clients card, billing mutations, owner-only actions, unknown paths"
   assert.equal(platformGateFor("/api/root/organizations/org-1", "PATCH"), "billing");
   assert.equal(platformGateFor("/api/root/organizations/org-1", "DELETE"), "superadmin");
   assert.equal(platformGateFor("/api/root/organizations/org-1/balance", "POST"), "billing");
+  // Реквизиты клиента — раздел «Клиенты», и PATCH, и POST (sendBeacon).
+  assert.equal(platformGateFor("/api/root/organizations/org-1/requisites", "PATCH"), "clients");
+  assert.equal(platformGateFor("/api/root/organizations/org-1/requisites", "POST"), "clients");
   assert.equal(platformGateFor("/api/root/impersonate", "POST"), "administrator");
   assert.equal(platformGateFor("/root/team"), "superadmin");
   assert.equal(platformGateFor("/root/me"), "self");

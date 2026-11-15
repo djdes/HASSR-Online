@@ -21,6 +21,8 @@ import { BalanceTopUpButton } from "./balance-top-up";
 import { HeldOrderActions } from "./held-order-actions";
 import { InvoiceActions } from "./invoice-actions";
 import { CopyButton } from "./copy-button";
+import { ClientRequisitesCard } from "./client-requisites-card";
+import { readLegalOverrides, registryDefaults } from "@/lib/document-org-block";
 import { PanelAccessButton } from "./panel-access-button";
 import { AccountManagerControl } from "./account-manager-control";
 import { loadAccountManagerView } from "@/lib/account-manager.server";
@@ -195,6 +197,22 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         .filter(Boolean)
         .join(", ")
     : "";
+  // Поля реквизитов: правка из карточки или, если её нет, значение из ЕГРЮЛ.
+  const ownRequisites = readLegalOverrides(org);
+  const registryRequisites = registryDefaults(org);
+  const requisiteValue = (key: keyof typeof ownRequisites) => ownRequisites[key] ?? registryRequisites[key] ?? "";
+  const requisitesInitial = {
+    inn: org.inn ?? "",
+    legalFullName: requisiteValue("legalFullName"),
+    kpp: requisiteValue("kpp"),
+    ogrn: requisiteValue("ogrn"),
+    legalAddress: requisiteValue("legalAddress"),
+    directorPost: requisiteValue("directorPost"),
+    directorName: requisiteValue("directorName"),
+  };
+  const requisitesRegistry = Object.fromEntries(
+    Object.entries(registryRequisites).filter((entry): entry is [string, string] => Boolean(entry[1])),
+  );
 
   return (
     <DomainMessagesBoundary namespaces={canEdo ? ["rootOrganizationManagement", "rootPanel", "rootEdo"] : ["rootOrganizationManagement", "rootPanel"]}>
@@ -297,23 +315,14 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-4">
-            <div className={`${CARD} p-5 md:p-6`} data-client-requisites>
-              <div className="flex items-center justify-between gap-2">
-                <div className={SECTION_TITLE}>{t("requisites.title")}</div>
-                {requisitesText ? <CopyButton value={requisitesText} label={t("requisites.copyAll")} /> : null}
-              </div>
-              {requisites?.inn ? (
-                <dl className="mt-3 space-y-2 text-[13.5px]">
-                  <Row label={t("requisites.fullName")} value={requisites.fullName} />
-                  <Row label={t("requisites.inn")} value={[requisites.inn, requisites.kpp ? `${t("requisites.kpp")} ${requisites.kpp}` : null].filter(Boolean).join(" · ")} />
-                  {requisites.ogrn ? <Row label={requisites.ogrnLabel} value={requisites.ogrn} /> : null}
-                  {requisites.legalAddress ? <Row label={t("requisites.address")} value={requisites.legalAddress} /> : null}
-                  {requisites.directorName ? <Row label={t("requisites.director")} value={[requisites.directorPost, requisites.directorName].filter(Boolean).join(" ")} /> : null}
-                </dl>
-              ) : (
-                <p className="mt-3 text-[13px] text-[#9b9fb3]">{t("requisites.missing")}</p>
-              )}
-            </div>
+            <ClientRequisitesCard
+              key={org.legalProfileUpdatedAt?.toISOString() ?? "none"}
+              organizationId={org.id}
+              initial={requisitesInitial}
+              registry={requisitesRegistry}
+              copyText={requisitesText || null}
+              canRefreshRegistry={Boolean(org.inn)}
+            />
             <div className="grid grid-cols-2 gap-3">
               <MiniStat label={t("summary.people")} value={formatNumber(locale, org._count.users)} />
               <MiniStat label={t("summary.documents")} value={`${formatNumber(locale, org._count.journalDocuments)} · ${formatNumber(locale, activeDocs)}`} hint={t("summary.activeDocuments")} />

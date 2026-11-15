@@ -17451,7 +17451,29 @@
       "address": "Legal address",
       "director": "Director",
       "missing": "No requisites: the client has not entered a tax ID yet.",
-      "copyAll": "Copy requisites"
+      "copyAll": "Copy requisites",
+      "ogrn": "OGRN / OGRNIP",
+      "directorPost": "Head's position",
+      "directorName": "Head (full name)",
+      "fromRegistry": "from registry: {value}",
+      "autosave": {
+        "hint": "Saves automatically a second after you type. Contracts, invoices and proposals use these details. An empty field uses the registry value.",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "error": "Not saved — check the field",
+        "network": "No connection — will save when back online"
+      },
+      "registry": {
+        "button": "From registry",
+        "hint": "Fill name, KPP, OGRN, address and head by INN",
+        "done": "Registry data updated",
+        "failed": "Could not get registry data"
+      },
+      "invalid": {
+        "inn": "INN is 10 or 12 digits",
+        "kpp": "KPP is 9 characters, e.g. 770101001",
+        "ogrn": "OGRN is 13 digits, OGRNIP is 15"
+      }
     },
     "summary": {
       "title": "Summary",

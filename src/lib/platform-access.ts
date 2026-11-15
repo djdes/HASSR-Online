@@ -117,6 +117,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/organizations/*", gate: "billing", methods: ["PATCH", "PUT"] },
   { pattern: "/api/root/organizations/*", gate: "superadmin", methods: ["DELETE"] },
   { pattern: "/api/root/organizations/*/balance", gate: "billing" },
+  // Реквизиты клиента правятся прямо в карточке (автосохранение).
+  { pattern: "/api/root/organizations/*/requisites", gate: "clients" },
   // «Документы клиенту»: счёт — деньги, КП — продажи (договор — в разделе «Клиенты»).
   { pattern: "/api/root/organizations/*/invoices", gate: "billing" },
   { pattern: "/api/root/organizations/*/proposal", gate: "sales" },

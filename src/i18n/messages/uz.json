@@ -17451,7 +17451,29 @@
       "address": "Yuridik manzil",
       "director": "Rahbar",
       "missing": "Rekvizitlar yo‘q: mijoz hali STIR kiritmagan.",
-      "copyAll": "Rekvizitlarni nusxalash"
+      "copyAll": "Rekvizitlarni nusxalash",
+      "ogrn": "OGRN / OGRNIP",
+      "directorPost": "Rahbar lavozimi",
+      "directorName": "Rahbar (F.I.Sh.)",
+      "fromRegistry": "reyestrdan: {value}",
+      "autosave": {
+        "hint": "Kiritganingizdan bir soniya o‘tib o‘zi saqlanadi. Shartnoma, hisob va taklif shu rekvizitlarni oladi. Bo‘sh maydon — reyestrdagi qiymat.",
+        "saving": "Saqlanmoqda…",
+        "saved": "Saqlandi",
+        "error": "Saqlanmadi — maydonni tekshiring",
+        "network": "Aloqa yo‘q — paydo bo‘lganda saqlanadi"
+      },
+      "registry": {
+        "button": "Reyestrdan",
+        "hint": "INN bo‘yicha nom, KPP, OGRN, manzil va rahbarni to‘ldirish",
+        "done": "Reyestr ma’lumotlari yangilandi",
+        "failed": "Reyestr ma’lumotlarini olib bo‘lmadi"
+      },
+      "invalid": {
+        "inn": "INN — 10 yoki 12 raqam",
+        "kpp": "KPP — 9 belgi, masalan 770101001",
+        "ogrn": "OGRN — 13 raqam, OGRNIP — 15"
+      }
     },
     "summary": {
       "title": "Qisqacha",
