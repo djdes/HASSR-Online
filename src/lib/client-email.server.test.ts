@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import dns from "node:dns/promises";
 import nodemailer from "nodemailer";
+import { simpleParser } from "mailparser";
 import { db } from "@/lib/db";
 import { encryptSecret } from "@/lib/integration-crypto";
 import { clientEmailHistory, clientEmailPreview, sendClientEmail } from "./client-email.server";
@@ -15,6 +16,7 @@ const original = {
   setting: db.platformSetting.findUnique, sharedUser: db.user.findFirst,
 };
 const oldSecret = process.env.INTEGRATION_KEY_SECRET;
+const createRealTransport = nodemailer.createTransport;
 let rows: Row[];
 let smtpCalls: number;
 let smtpError: Error | null;
@@ -81,6 +83,23 @@ test("personal SMTP sends the exact branded preview, snapshots identity/content 
   assert.equal(smtpMessage.replyTo, "reply@example.com");
   assert.equal(rows[0].senderUserId, "staff-id"); assert.equal(rows[0].fromEmail, "staff@example.com");
   assert.equal(rows[0].messageId, "<smtp-test@example.com>"); assert.ok(rows[0].sentAt);
+});
+
+test("external mail carries real binary MIME attachments, stores metadata only and replays without a second SMTP send", async () => {
+  const bytes = Buffer.from([0, 255, 13, 10, 128, 65]);
+  const files = [{ filename: "счёт.pdf", content: bytes, size: bytes.length, contentType: "application/pdf", sha256: "test-content-digest" }];
+  const result = await sendClientEmail("platform", "staff-id", input, files);
+  assert.equal(result?.item.status, "sent");
+  assert.deepEqual(result?.item.attachments, [{ filename: "счёт.pdf", size: bytes.length, contentType: "application/pdf" }]);
+  assert.doesNotMatch(JSON.stringify(rows[0].attachmentsJson), /"(?:content|path|sha256)":/);
+  const attachments = smtpMessage.attachments as Array<{ content: Buffer; filename: string; path?: string }>;
+  assert.deepEqual(attachments[0].content, bytes); assert.equal(attachments[0].path, undefined);
+  const stream = createRealTransport({ streamTransport: true, buffer: true, newline: "unix" });
+  const mime = await stream.sendMail({ ...smtpMessage, to: "not-registered@outside.example" });
+  const parsed = await simpleParser(mime.message);
+  assert.deepEqual(parsed.attachments[0].content, bytes); assert.equal(parsed.attachments[0].filename, "счёт.pdf");
+  assert.equal(parsed.attachments[0].contentType, "application/pdf");
+  await sendClientEmail("platform", "staff-id", input, files); assert.equal(smtpCalls, 1);
 });
 
 test("granted shared mailbox controls preview, signature, SMTP and snapshots while actor remains accountable", async () => {

@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Check, ChevronDown, Eye, Loader2, Mail, Plus, RefreshCw, Search, Send, X } from "lucide-react";
+import { Check, ChevronDown, Eye, Loader2, Mail, Paperclip, Plus, RefreshCw, Search, Send, X } from "lucide-react";
 import { EmailSenderSelect } from "@/components/root/email-sender-select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MAIL_RECIPIENT_LIMIT, type MailRecipient, type MailWorkspaceHistory, type MailWorkspaceResult } from "@/lib/mail-workspace";
 import type { EmailSenderOption } from "@/lib/email-sender-access";
+import { clientEmailContentSchema } from "@/lib/client-email";
+import { MAIL_ATTACHMENT_ACCEPT, mailAttachmentError } from "@/lib/mail-attachments";
 
 const INPUT = "w-full rounded-2xl border border-[#dcdde3] bg-white px-4 py-3 text-sm text-[#0b1024] outline-none placeholder:text-[#6f7282] focus:border-[#5566f6] focus:ring-4 focus:ring-[#5566f6]/15 disabled:opacity-60";
 const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdde3] bg-white px-4 text-sm font-medium text-[#0b1024] transition-colors hover:bg-[#f4f4fa] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-50";
@@ -19,6 +21,14 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
   const locale = useLocale();
   const [mailboxUserId, setMailboxUserId] = useState(senders.find(sender => sender.ready)?.userId ?? senders[0]?.userId ?? "");
   const [selected, setSelected] = useState<MailRecipient[]>([]);
+  const [externalEmail, setExternalEmail] = useState("");
+  const [recipientError, setRecipientError] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const dragDepth = useRef(0);
+  const fileRevision = useRef(0);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
@@ -62,6 +72,25 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
 
   function edited() { setPreview(null); setResult(null); setError(null); }
 
+  function addExternal(): boolean {
+    const parsed = clientEmailContentSchema.shape.to.safeParse(externalEmail);
+    if (!parsed.success) { setRecipientError(w("invalidEmail")); return false; }
+    if (selected.some(item => item.email === parsed.data)) { setRecipientError(w("duplicateEmail")); return false; }
+    if (selected.length >= MAIL_RECIPIENT_LIMIT) { setRecipientError(w("recipientLimit")); return false; }
+    setSelected(current => [...current, { organizationId: null, organizationName: null, email: parsed.data, label: parsed.data }]);
+    setExternalEmail(""); setRecipientError(null); edited(); return true;
+  }
+
+  function addFiles(incoming: File[]) {
+    if (busy) return;
+    const next = [...files, ...incoming];
+    const problem = mailAttachmentError(next);
+    if (problem) { setFileError(w(problem === "count" ? "fileCountError" : problem === "size" ? "fileSizeError" : "fileTypeError")); return; }
+    setFiles(next); fileRevision.current++; setFileError(null); edited();
+  }
+
+  const fileSize = (bytes: number) => `${bytes < 1024 ? "< 1" : new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(bytes / 1024)} ${w("kb")}`;
+
   async function loadHistory(append = false) {
     if (historyBusy) return;
     setHistoryBusy(true); setHistoryError(false);
@@ -77,15 +106,19 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || !ready || !selected.length) return;
+    if (externalEmail.trim()) { setRecipientError(w("addPendingEmail")); return; }
     const action = (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "preview" ? "preview" : "send";
     setBusy(action); setError(null);
     const content = { mailboxUserId, subject, message, recipients: selected.map(({ organizationId, email }) => ({ organizationId, email })) };
-    const payload = JSON.stringify(content);
+    const payload = JSON.stringify([content, fileRevision.current]);
     if (!requestKey.current || requestKey.current.payload !== payload) requestKey.current = { payload, id: crypto.randomUUID() };
     try {
-      const response = await fetch(action === "preview" ? `${ENDPOINT}/preview` : ENDPOINT, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...content, requestId: requestKey.current.id }),
-      });
+      const json = JSON.stringify({ ...content, requestId: requestKey.current.id });
+      const form = new FormData(); form.set("content", json);
+      for (const file of files) form.append("files", file);
+      const response = await fetch(action === "preview" ? `${ENDPOINT}/preview` : ENDPOINT, action === "send"
+        ? { method: "POST", body: form }
+        : { method: "POST", headers: { "Content-Type": "application/json" }, body: json });
       const data = await response.json() as MailWorkspaceResult & { error?: string; html?: string };
       if (!response.ok) { setError(data.error ?? t("error")); return; }
       if (action === "preview") { setPreview(data.html ?? null); return; }
@@ -97,8 +130,8 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
   }
 
   function newLetter() {
-    if ((subject || message || selected.length) && !window.confirm(w("discard"))) return;
-    setSubject(""); setMessage(""); setSelected([]); requestKey.current = null; edited();
+    if ((subject || message || selected.length || files.length || externalEmail) && !window.confirm(w("discard"))) return;
+    setSubject(""); setMessage(""); setSelected([]); setExternalEmail(""); setRecipientError(null); setFiles([]); setFileError(null); fileRevision.current++; requestKey.current = null; edited();
   }
 
   return <div className="mx-auto max-w-[1100px] space-y-7 text-[#0b1024] selection:bg-[#e1e5ff]" data-mail-workspace>
@@ -111,7 +144,7 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 id="mail-compose-title" className="text-lg font-semibold">{t("compose")}</h2><button type="button" className={BUTTON} disabled={busy !== null} onClick={newLetter}><Plus className="size-4" />{w("newLetter")}</button></div>
       <form onSubmit={submit} className="space-y-5">
         <fieldset disabled={busy !== null} className="min-w-0 space-y-5">
-          <div className="max-w-xl"><EmailSenderSelect options={senders} value={mailboxUserId} onChange={value => { setMailboxUserId(value); edited(); }} label={t("senderLabel")} unavailable={t("senderUnavailable")} /></div>
+          <div className="max-w-xl space-y-2"><EmailSenderSelect options={senders} value={mailboxUserId} onChange={value => { setMailboxUserId(value); edited(); }} label={t("senderLabel")} unavailable={t("senderUnavailable")} /><p className="text-xs leading-relaxed text-[#6f7282]">{w("senderHint")}</p></div>
           {!ready ? <div role="status" className="rounded-xl bg-[#fff6e6] px-4 py-3 text-sm leading-relaxed text-[#754600]">{w("connectionHint")} <Link href="/root/me" className="font-medium underline underline-offset-4">{t("settings")}</Link></div> : null}
           <div className="space-y-2">
             <span id="mail-to-label" className="block text-[13px] font-medium text-[#3c4053]">{t("to")}</span>
@@ -132,6 +165,12 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
                 {limited && !searching && !directoryError ? <p className="border-t border-[#ececf4] p-3 text-xs text-[#6f7282]">{w("refineSearch")}</p> : null}
               </PopoverContent>
             </Popover>
+            <div className="flex max-w-xl flex-col gap-2 sm:flex-row sm:items-start">
+              <div className="min-w-0 flex-1"><label htmlFor="mail-external-email" className="sr-only">{w("externalEmail")}</label><input id="mail-external-email" type="text" inputMode="email" autoCapitalize="none" autoComplete="off" value={externalEmail} onChange={event => { setExternalEmail(event.target.value); setRecipientError(null); }} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); addExternal(); } }} maxLength={254} placeholder={w("externalPlaceholder")} aria-invalid={Boolean(recipientError)} aria-describedby="mail-external-hint" className={INPUT} /></div>
+              <button type="button" onClick={addExternal} className={BUTTON} disabled={!externalEmail.trim() || selected.length >= MAIL_RECIPIENT_LIMIT}><Plus className="size-4" />{w("addEmail")}</button>
+            </div>
+            <p id="mail-external-hint" className="text-xs leading-relaxed text-[#6f7282]">{w("externalHint")}</p>
+            {recipientError ? <p role="alert" className="text-sm text-[#9b3022]">{recipientError}</p> : null}
             {selected.length ? <ul className="flex flex-wrap gap-2" aria-label={w("selected")}>
               {selected.map(item => <li key={item.email} className="flex max-w-full items-center gap-1 rounded-xl bg-[#eef1ff] pl-3 text-sm text-[#3848c7]"><span className="min-w-0 break-all py-2">{item.email}</span><button type="button" aria-label={w("remove", { email: item.email })} onClick={() => { setSelected(current => current.filter(value => value.email !== item.email)); edited(); }} className="flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-[#e1e5ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]"><X className="size-4" /></button></li>)}
             </ul> : null}
@@ -139,6 +178,16 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
           </div>
           <div className="space-y-2"><label htmlFor="mail-subject" className="block text-[13px] font-medium text-[#3c4053]">{t("subject")}</label><input id="mail-subject" value={subject} onChange={event => { setSubject(event.target.value); edited(); }} maxLength={200} required className={INPUT} /></div>
           <div className="space-y-2"><label htmlFor="mail-message" className="block text-[13px] font-medium text-[#3c4053]">{t("message")}</label><textarea id="mail-message" value={message} onChange={event => { setMessage(event.target.value); edited(); }} maxLength={20000} required rows={9} className={`${INPUT} min-h-48 resize-y leading-relaxed`} /></div>
+          <div className="space-y-3">
+            <p id="mail-files-label" className="text-[13px] font-medium text-[#3c4053]">{w("attachments")}</p>
+            <div onDragEnter={event => { event.preventDefault(); if (!busy && event.dataTransfer.types.includes("Files")) { dragDepth.current++; setDragging(true); } }} onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = busy ? "none" : "copy"; }} onDragLeave={event => { event.preventDefault(); dragDepth.current = Math.max(0, dragDepth.current - 1); if (!dragDepth.current) setDragging(false); }} onDrop={event => { event.preventDefault(); dragDepth.current = 0; setDragging(false); addFiles(Array.from(event.dataTransfer.files)); }} className={`rounded-2xl border border-dashed p-4 ${dragging ? "border-[#5566f6] bg-[#eef1ff]" : "border-[#dcdde3] bg-[#fafafe]"}`}>
+              <div className="flex flex-wrap items-center gap-3"><button type="button" className={BUTTON} onClick={() => fileInput.current?.click()} aria-describedby="mail-files-hint"><Paperclip className="size-4" />{w("chooseFiles")}</button><span className="text-sm text-[#6f7282]">{w("dropFiles")}</span></div>
+              <input ref={fileInput} type="file" multiple accept={MAIL_ATTACHMENT_ACCEPT} aria-labelledby="mail-files-label" className="sr-only" tabIndex={-1} onChange={event => { addFiles(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
+              <p id="mail-files-hint" className="mt-3 text-xs leading-relaxed text-[#6f7282]">{w("fileHint")}</p>
+            </div>
+            {fileError ? <p role="alert" className="text-sm text-[#9b3022]">{fileError}</p> : null}
+            {files.length ? <ul aria-label={w("attachments")} className="divide-y divide-[#ececf4]">{files.map((file, index) => <li key={`${index}:${file.name}`} className="flex min-w-0 items-center justify-between gap-3 py-1"><span className="min-w-0 break-all text-sm">{file.name}<span className="ml-2 text-xs text-[#6f7282]">{fileSize(file.size)}</span></span><button type="button" className={`${BUTTON} shrink-0 px-3`} aria-label={w("removeFile", { name: file.name })} onClick={() => { setFiles(current => current.filter((_, n) => n !== index)); fileRevision.current++; setFileError(null); edited(); }}><X className="size-4" /></button></li>)}</ul> : null}
+          </div>
           <p className="text-xs leading-relaxed text-[#6f7282]">{t("signatureHint")}</p>
         </fieldset>
         {error ? <p role="alert" className="break-words rounded-xl bg-[#fff0ee] p-4 text-sm leading-relaxed text-[#9b3022]">{error}</p> : null}
@@ -148,7 +197,7 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
           <button type="submit" value="preview" disabled={busy !== null || !ready || !selected.length} className={BUTTON}>{busy === "preview" ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />}{t("preview")}</button>
         </div>
       </form>
-      {preview ? <div className="mt-6 border-t border-[#ececf4] pt-5"><h3 className="mb-3 text-sm font-medium">{t("preview")}</h3><iframe title={t("preview")} sandbox="" srcDoc={preview} className="h-[480px] w-full rounded-xl border border-[#ececf4] bg-white" /></div> : null}
+      {preview ? <div className="mt-6 border-t border-[#ececf4] pt-5"><h3 className="mb-3 text-sm font-medium">{t("preview")}</h3>{files.length ? <p className="mb-3 break-words text-sm text-[#3c4053]">{w("attachments")}: {files.map(file => file.name).join(", ")}</p> : null}<iframe title={t("preview")} sandbox="" srcDoc={preview} className="h-[480px] w-full rounded-xl border border-[#ececf4] bg-white" /></div> : null}
     </section>
 
     <section aria-labelledby="mail-history-title" className="rounded-2xl border border-[#ececf4] bg-white p-5 sm:p-7">
@@ -157,7 +206,7 @@ export function MailWorkspace({ senders, initialHistory }: { senders: EmailSende
       <div aria-busy={historyBusy} className="divide-y divide-[#ececf4]">
         {!history.items.length ? <p className="py-6 text-sm leading-relaxed text-[#6f7282]">{w("emptyHistory")}</p> : history.items.map(item => <details key={item.id} className="group py-4">
           <summary className="cursor-pointer list-none rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/20"><div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2"><div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{item.subject}</p><p className="mt-1 break-all text-xs leading-relaxed text-[#6f7282]">{item.organizationName} · {item.to}</p></div><span className={`rounded-lg px-2 py-1 text-xs ${item.status === "sent" ? "bg-[#e9faf1] text-[#176947]" : item.status === "failed" ? "bg-[#fff0ee] text-[#9b3022]" : "bg-[#fff6e6] text-[#754600]"}`}>{status(item.status)}</span><ChevronDown className="size-4 shrink-0 group-open:rotate-180" /></div><p className="mt-2 text-xs tabular-nums text-[#6f7282]">{date(item.createdAt)} · {item.fromEmail}</p></summary>
-          <div className="mt-4 space-y-3"><Link className="text-sm font-medium text-[#3848c7] underline underline-offset-4" href={`/root/organizations/${encodeURIComponent(item.organizationId)}#emails`}>{w("clientCard")}</Link>{item.error ? <p className="break-words text-sm text-[#9b3022]">{item.error}</p> : null}{item.status === "sending" ? <p className="text-sm text-[#754600]">{t("pendingHint")}</p> : null}<p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{item.message}</p><details><summary className="cursor-pointer text-sm text-[#3848c7] underline underline-offset-4">{t("showLetter")}</summary><iframe title={`${t("preview")}: ${item.subject}`} sandbox="" srcDoc={item.html} loading="lazy" className="mt-3 h-[420px] w-full rounded-xl border border-[#ececf4] bg-white" /></details></div>
+          <div className="mt-4 space-y-3">{item.organizationId ? <Link className="text-sm font-medium text-[#3848c7] underline underline-offset-4" href={`/root/organizations/${encodeURIComponent(item.organizationId)}#emails`}>{w("clientCard")}</Link> : null}{item.attachments?.length ? <ul aria-label={w("attachments")} className="space-y-1 text-sm text-[#3c4053]">{item.attachments.map((file, index) => <li key={index} className="break-all">{file.filename} ? {fileSize(file.size)}</li>)}</ul> : null}{item.error ? <p className="break-words text-sm text-[#9b3022]">{item.error}</p> : null}{item.status === "sending" ? <p className="text-sm text-[#754600]">{t("pendingHint")}</p> : null}<p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{item.message}</p><details><summary className="cursor-pointer text-sm text-[#3848c7] underline underline-offset-4">{t("showLetter")}</summary><iframe title={`${t("preview")}: ${item.subject}`} sandbox="" srcDoc={item.html} loading="lazy" className="mt-3 h-[420px] w-full rounded-xl border border-[#ececf4] bg-white" /></details></div>
         </details>)}
       </div>
       {history.nextCursor ? <button type="button" disabled={historyBusy || busy !== null} onClick={() => void loadHistory(true)} className={`${BUTTON} mt-4`}>{t("more")}</button> : null}

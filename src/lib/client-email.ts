@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { deliverableEmail, messageHtml } from "@/lib/client-documents";
 import { escapeHtml } from "@/lib/html-escape";
+import type { MailAttachmentInfo } from "@/lib/mail-attachments";
 
 export const clientEmailContentSchema = z.object({
   mailboxUserId: z.string().trim().min(1).max(100).optional(),
@@ -31,6 +32,7 @@ export function clientEmailContent(input: Pick<ClientEmailInput, "subject" | "me
 }
 
 export type ClientEmailView = {
+  attachments?: MailAttachmentInfo[];
   id: string;
   to: string;
   subject: string;
