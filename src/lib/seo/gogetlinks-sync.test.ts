@@ -214,6 +214,85 @@ test("syncGglCabinet keeps campaigns 'closed' when listActiveCampaigns redirects
   assert.equal(persistedCampaigns.get(146053)?.isWesetup, false);
 });
 
+test("syncGglCabinet preserves existing domain, siteUrl, and isWesetup when scraped campaign row has empty domain/siteUrl", async () => {
+  const persistedCampaigns = new Map<number, Record<string, unknown>>([
+    [
+      884931,
+      {
+        id: "camp_884931",
+        gglCampaignId: 884931,
+        name: "WeSetup электронные журналы ХАССП",
+        domain: "wesetup.ru",
+        siteUrl: "http://wesetup.ru/",
+        isWesetup: true,
+        state: "active",
+      },
+    ],
+  ]);
+
+  const mockDb = {
+    gglAccount: {
+      findFirst: async () => ({
+        id: "acc_1",
+        email: "owner@wesetup.ru",
+        defaultCampaignId: 884931,
+      }),
+      update: async () => ({}),
+    },
+    gglCampaign: {
+      findMany: async () => [...persistedCampaigns.values()],
+      upsert: async (args: {
+        where: { gglCampaignId: number };
+        create: Record<string, unknown>;
+        update: Record<string, unknown>;
+      }) => {
+        const gglId = args.where.gglCampaignId;
+        const row = {
+          id: `camp_${gglId}`,
+          ...(persistedCampaigns.get(gglId) ?? args.create),
+          ...args.update,
+        };
+        persistedCampaigns.set(gglId, row);
+        return row;
+      },
+    },
+    gglOrder: { findMany: async () => [] },
+    gglThread: { findMany: async () => [] },
+    gglMessage: { findMany: async () => [] },
+  };
+
+  await syncGglCabinet({
+    includeThreads: false,
+    prismaClient: mockDb as never,
+    readGgl: async (opName) => {
+      if (opName === "getAccountBalance") {
+        return { balanceRub: 8936.06, availableRub: 8936.06, blockedRub: 0 } as never;
+      }
+      if (opName === "listActiveCampaigns") {
+        return [
+          {
+            campaignId: "884931",
+            campaignUrl: "/campaign/index/id/884931",
+            name: "WeSetup электронные журналы ХАССП",
+            domain: "",
+            siteUrl: "",
+            statusNote: "Доступна",
+            requestsCount: "1529",
+            linksCount: "0",
+          },
+        ] as never;
+      }
+      return [] as never;
+    },
+  });
+
+  const saved = persistedCampaigns.get(884931);
+  assert.equal(saved?.domain, "wesetup.ru");
+  assert.equal(saved?.siteUrl, "http://wesetup.ru/");
+  assert.equal(saved?.isWesetup, true);
+  assert.equal(saved?.requestsCount, 1529);
+});
+
 test("syncGglCabinet emits delta IDs strictly for isWesetup === true, reconciles in-flight sending orders, and preserves outbound sentByName within 30 min", async () => {
   const now = new Date("2026-11-05T12:10:00.000Z");
   const fiveMinAgo = new Date("2026-11-05T12:05:00.000Z");

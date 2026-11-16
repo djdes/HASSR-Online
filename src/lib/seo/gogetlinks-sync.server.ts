@@ -466,16 +466,44 @@ async function syncCampaignsFromGgl(
     mergedByGglId.set(closed.gglCampaignId, { ...closed, state: "closed" });
   }
 
+  const existingByGglId = new Map<
+    number,
+    { domain: string; siteUrl: string; isWesetup: boolean }
+  >();
+  if (typeof (client.gglCampaign as { findMany?: unknown }).findMany === "function") {
+    const existingRows = await client.gglCampaign.findMany({
+      select: { gglCampaignId: true, domain: true, siteUrl: true, isWesetup: true },
+    });
+    for (const row of existingRows) {
+      existingByGglId.set(row.gglCampaignId, {
+        domain: row.domain,
+        siteUrl: row.siteUrl,
+        isWesetup: row.isWesetup,
+      });
+    }
+  }
+
   const persisted: SyncedCampaignRecord[] = [];
   for (const camp of mergedByGglId.values()) {
+    const existing = existingByGglId.get(camp.gglCampaignId);
+    const scrapedMissingDomain = !camp.domain && !camp.siteUrl;
+    const effectiveDomain =
+      scrapedMissingDomain && existing?.domain ? existing.domain : camp.domain;
+    const effectiveSiteUrl =
+      scrapedMissingDomain && existing?.siteUrl ? existing.siteUrl : camp.siteUrl;
+    const effectiveIsWesetup =
+      scrapedMissingDomain && existing
+        ? existing.isWesetup || isWesetupDomain(effectiveDomain || effectiveSiteUrl)
+        : camp.isWesetup;
+
     const saved = await client.gglCampaign.upsert({
       where: { gglCampaignId: camp.gglCampaignId },
       create: {
         gglCampaignId: camp.gglCampaignId,
         name: camp.name,
-        domain: camp.domain,
-        siteUrl: camp.siteUrl,
-        isWesetup: camp.isWesetup,
+        domain: effectiveDomain,
+        siteUrl: effectiveSiteUrl,
+        isWesetup: effectiveIsWesetup,
         state: camp.state,
         spentRub: camp.spentRub,
         linksCount: camp.linksCount,
@@ -486,9 +514,9 @@ async function syncCampaignsFromGgl(
       },
       update: {
         name: camp.name,
-        domain: camp.domain,
-        siteUrl: camp.siteUrl,
-        isWesetup: camp.isWesetup,
+        domain: effectiveDomain,
+        siteUrl: effectiveSiteUrl,
+        isWesetup: effectiveIsWesetup,
         state: camp.state,
         spentRub: camp.spentRub,
         linksCount: camp.linksCount,
@@ -502,9 +530,9 @@ async function syncCampaignsFromGgl(
       id: saved.id,
       gglCampaignId: camp.gglCampaignId,
       name: camp.name,
-      domain: camp.domain,
-      siteUrl: camp.siteUrl,
-      isWesetup: camp.isWesetup,
+      domain: effectiveDomain,
+      siteUrl: effectiveSiteUrl,
+      isWesetup: effectiveIsWesetup,
       state: camp.state,
     });
   }
