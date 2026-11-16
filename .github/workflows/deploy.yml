@@ -115,7 +115,7 @@ jobs:
       # .tsbuildinfo (--incremental экономит время только локально, где файл
       # сохраняется между запусками, а на чистом раннере его сериализация тратит ~1.5 мин).
       - name: Type-check
-        run: node --max-old-space-size=6144 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
+        run: node --max-old-space-size=12288 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.typecheck.json
 
       - name: Targeted tests (changed files & reverse imports)
         if: steps.plan.outputs.mode == 'changed'
