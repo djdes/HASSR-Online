@@ -181,6 +181,32 @@ test("callGglRead: <64KB windows-1251 pages with passive layout reCAPTCHA succee
     assert.equal(campaigns[0].campaignId, "884931");
     assert.equal(campaigns[0].name, "WeSetup электронные журналы ХАССП");
     assert.equal(campaigns[0].domain, "wesetup.ru");
+    assert.equal(campaigns[0].siteUrl, "https://wesetup.ru/");
+
+    const brandPrimaryCampaigns = await callGglRead<Array<Record<string, string>>>(
+      "listActiveCampaigns",
+      undefined,
+      {
+        fetchImpl: async () =>
+          new Response(
+            encodeWin1251Bytes(
+              activeCampaignsHtml.replace(
+                '<div><a class="text-primary-100" href="https://wesetup.ru">wesetup.ru</a></div>',
+                '<div class="small"><a href="http://wesetup.ru/" target="_blank" class="tw-text-brand-primary">wesetup.ru</a></div>',
+              ),
+            ),
+            {
+              status: 200,
+              headers: { "content-type": "text/html; charset=windows-1251" },
+            },
+          ),
+        skipDbSync: true,
+        allowRelogin: false,
+      },
+    );
+    assert.equal(brandPrimaryCampaigns.length, 1);
+    assert.equal(brandPrimaryCampaigns[0].domain, "wesetup.ru");
+    assert.equal(brandPrimaryCampaigns[0].siteUrl, "http://wesetup.ru/");
 
     const paidRows = await callGglRead<unknown[]>(
       "listCampaignPaidLinks",
