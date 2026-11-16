@@ -1,0 +1,259 @@
+[
+  {
+    "fn": "checkExpressionWorker",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": " () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00:00 (МСК) — до этого всё как раньше\");\r\n  assert.match(trialExplanation(t, settings), /"
+    }
+  },
+  {
+    "fn": "checkExpression",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": " () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00:00 (МСК) — до этого всё как раньше\");\r\n  assert.match(trialExplanation(t, settings), /"
+    }
+  },
+  {
+    "fn": "checkExpressionWithContextualType",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": " () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00:00 (МСК) — до этого всё как раньше\");\r\n  assert.match(trialExplanation(t, settings), /"
+    }
+  },
+  {
+    "fn": "getSignatureApplicabilityError",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "chooseOverload",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "resolveCall",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "resolveCallExpression",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "resolveSignature",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "getResolvedSignature",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "checkCallExpression",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "checkExpressionWorker",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "checkExpression",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "checkExpressionStatement",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "checkSourceElementWorker",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "checkSourceElement",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "\r\n\r\ntest(\"Russian trial copy names the free limits and the launch date in Moscow time\", () => {\r\n  const t = createTranslator({ locale: \"ru\", messages: ru, namespace: \"rootTariffs\" });\r\n  assert.equal(trialPhaseLabel(t, settings, Date.parse(\"2026-10-01T00:00:00Z\")), \"Тарифы запустятся 26.10.2026, 00"
+    }
+  },
+  {
+    "fn": "forEach"
+  },
+  {
+    "fn": "checkSourceFileWorker",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "import assert from \"node:assert/strict\";\r\nimport test from \"node:test\";\r\nimport { createTranslator } from \"next-intl\";\r\nimport ru from \"@/i18n/messages/ru.json\";\r\nimport en from \"@/i18n/messages/en.json\";\r\nimport uz from \"@/i18n/messages/uz.json\";\r\nimport { FREE_MAX_JOURNALS } from \"@/lib/tariff-pla"
+    }
+  },
+  {
+    "fn": "checkSourceFile",
+    "file": {
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts",
+      "code": "import assert from \"node:assert/strict\";\r\nimport test from \"node:test\";\r\nimport { createTranslator } from \"next-intl\";\r\nimport ru from \"@/i18n/messages/ru.json\";\r\nimport en from \"@/i18n/messages/en.json\";\r\nimport uz from \"@/i18n/messages/uz.json\";\r\nimport { FREE_MAX_JOURNALS } from \"@/lib/tariff-pla"
+    }
+  },
+  {
+    "fn": "checkSourceFileWithEagerDiagnostics",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getDiagnosticsWorker",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getDiagnostics",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "runWithCancellationToken"
+  },
+  {
+    "fn": "getBindAndCheckDiagnosticsForFileNoCache",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getBindAndCheckDiagnosticsForFile",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getBindAndCheckDiagnostics",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getBinderAndCheckerDiagnosticsOfFile",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getSemanticDiagnosticsOfFile",
+    "file": "D:/www/Wesetup-catalog-search/src/app/root/tariffs/tariff-presentation.test.ts"
+  },
+  {
+    "fn": "getSemanticDiagnosticsOfNextAffectedFile"
+  },
+  {
+    "fn": "getSemanticDiagnostics"
+  },
+  {
+    "fn": "emitFilesAndReportErrors"
+  },
+  {
+    "fn": "emitFilesAndReportErrorsAndGetExitStatus"
+  },
+  {
+    "fn": "performIncrementalCompilation"
+  },
+  {
+    "fn": "performIncrementalCompilation2"
+  },
+  {
+    "fn": "executeCommandLineWorker"
+  },
+  {
+    "fn": "executeCommandLine"
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": "wrapModuleLoad"
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": "require"
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": "wrapModuleLoad"
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": "require"
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": ""
+  },
+  {
+    "fn": "wrapModuleLoad"
+  },
+  {
+    "fn": "executeUserEntryPoint"
+  },
+  {
+    "fn": ""
+  }
+]

@@ -1,3 +1,4 @@
+import { SearchableCatalog } from "@/components/public/searchable-catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, FileDown, ScrollText, Sparkles } from "lucide-react";
@@ -269,29 +270,19 @@ export default function PrikazyHubPage() {
       </section>
 
       <section className="mx-auto max-w-[1200px] px-4 pb-10 sm:px-6 sm:pb-14">
-        {groups.map((group) => (
-          <div key={group.category} className="mb-12 last:mb-0">
-            <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h2 className="text-[22px] font-semibold tracking-[-0.02em]">
-                {group.label}
-              </h2>
-              <span className="text-[13px] tabular-nums text-[#9b9fb3]">
-                {group.items.length}
-              </span>
-            </div>
-
-            <div className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-              {group.items.map((template, index) => (
-                <div
-                  key={template.code}
-                  className={index > 0 ? "border-t border-[#ececf4]" : undefined}
-                >
-                  <OrderCard template={template} />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+        <SearchableCatalog
+          label="Поиск по приказам"
+          listClassName="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)] divide-y divide-[#ececf4]"
+          groups={groups.map((group) => ({
+            id: group.category,
+            title: (<h2 className="text-[22px] font-semibold tracking-[-0.02em]">{group.label}</h2>),
+            items: group.items.map((template) => ({
+              id: template.code,
+              searchText: ["Приказ", template.code, template.title, template.purpose, ...template.basis].join(" "),
+              content: <OrderCard template={template} />,
+            })),
+          }))}
+        />
       </section>
 
       <section className="mx-auto max-w-[860px] px-4 pb-12 sm:px-6">

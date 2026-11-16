@@ -207,7 +207,7 @@ export function ClientRequisitesCard({
   );
 }
 
-function AutosaveStatus({ status, error, t }: { status: Status; error: string | null; t: ReturnType<typeof useTranslations> }) {
+function AutosaveStatus({ status, error, t }: { status: Status; error: string | null; t: ReturnType<typeof useTranslations<"rootOrganizationManagement.requisites">> }) {
   if (status === "idle") return null;
   if (status === "error") {
     return (

@@ -1,0 +1,88 @@
+{
+  "task": "catalog-search-20261116",
+  "verdict": "PASS",
+  "verifiedAt": "2026-11-16T13:39:38.643433+00:00",
+  "codeRoot": "D:\\www\\Wesetup-catalog-search",
+  "inputs": {
+    "base": "ccc6ef339bb03731ef559f43eb1361a3e336c537",
+    "sha256": {
+      "src/app/blanki/page.tsx": "04f9a1f56f78806f1982826e39c6783274a911cbcfe2bfe6488e3ab544e5fc2e",
+      "src/app/prikazy/page.tsx": "307b16fbafba6f828ba8da5bd821652b006757ae30200051700ca867c6370ee7",
+      "src/app/root/organizations/[id]/client-requisites-card.tsx": "46c92a84d4209856bab3b3983a9f88a4a4a247b8301cc8f7be28cf288428a630",
+      "src/components/public/searchable-catalog.tsx": "4e1d625107946a8a3f270a082a5cc84394791914f9833728908c260fae478c5f"
+    }
+  },
+  "specs": [
+    "spec.md",
+    "scope-reconciliation.md",
+    "verification-repair-spec.md"
+  ],
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "detail": "Both blank and order catalogs filter their names, codes, descriptions and regulatory text using the shared matcher."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "detail": "Shared matcher tests pass for normalization, all-word matching, typo/layout support and empty-query restoration."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "detail": "Interaction fixture passes filtering, group hiding, live counts, zero results, reset focus and Escape at 375px; responsive width classes reviewed."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "detail": "AST comparisons preserve all download/link attributes, metadata and FAQ; server content, sorting and existing localized journal search retained."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "detail": "Fresh lint, 26 focused tests, interaction/integration checks, targeted gate and full typecheck all exit 0; current source hashes match verification inputs."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "detail": "Admin helper translator uses its caller namespace; emitted JavaScript is byte-identical to HEAD; typecheck and requisite tests pass."
+    }
+  ],
+  "checks": [
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "log": "raw/verify-lint.log"
+    },
+    {
+      "name": "focused",
+      "exitCode": 0,
+      "log": "raw/verify-focused.log"
+    },
+    {
+      "name": "interaction",
+      "exitCode": 0,
+      "log": "raw/verify-interaction.log"
+    },
+    {
+      "name": "integration",
+      "exitCode": 0,
+      "log": "raw/verify-integration.log"
+    },
+    {
+      "name": "gate",
+      "exitCode": 0,
+      "log": "raw/verify-gate.log"
+    },
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "log": "raw/verify-typecheck.log"
+    }
+  ],
+  "limitations": [
+    "Browser interactions use a component fixture, not a deployed full-page end-to-end session.",
+    "Production deployment has not been verified by this evidence."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "capture": "Excerpt transcribed from the inspector tool output for the stopped typecheck PID 172500; the subsequent progress sample is typecheck-location-progress.json.",
+  "frames": [
+    {
+      "fn": "checkExpressionWorker",
+      "file": {
+        "file": "D:/www/Wesetup-catalog-search/src/app/root/organizations/[id]/client-requisites-card.tsx",
+        "code": "{error ?? t(\"autosave.error\")}"
+      }
+    },
+    {
+      "fn": "checkSourceFileWithEagerDiagnostics",
+      "file": "D:/www/Wesetup-catalog-search/src/app/root/organizations/[id]/client-requisites-card.tsx"
+    }
+  ]
+}
