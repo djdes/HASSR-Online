@@ -1,0 +1,9 @@
+{
+  "base": "ccc6ef339bb03731ef559f43eb1361a3e336c537",
+  "sha256": {
+    "src/app/blanki/page.tsx": "04f9a1f56f78806f1982826e39c6783274a911cbcfe2bfe6488e3ab544e5fc2e",
+    "src/app/prikazy/page.tsx": "307b16fbafba6f828ba8da5bd821652b006757ae30200051700ca867c6370ee7",
+    "src/app/root/organizations/[id]/client-requisites-card.tsx": "46c92a84d4209856bab3b3983a9f88a4a4a247b8301cc8f7be28cf288428a630",
+    "src/components/public/searchable-catalog.tsx": "4e1d625107946a8a3f270a082a5cc84394791914f9833728908c260fae478c5f"
+  }
+}

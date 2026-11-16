@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "checks": [
+    "both pages integrate searchable catalog",
+    "SEO metadata and FAQ remain identical",
+    "names, descriptions, codes, regulatory text indexed",
+    "all existing href/target/format/place/autoOpen/hideTrigger/expired attributes preserved exactly",
+    "current journals catalog already includes localized shared-matcher search",
+    "admin translator type repair emits identical JavaScript"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "verdict": "PASS",
+  "checks": [
+    "initial links",
+    "normalization and multiword filtering",
+    "empty group hiding",
+    "live counts",
+    "download href preservation",
+    "zero results",
+    "reset and focus",
+    "Escape restores original order"
+  ],
+  "viewport": "375x812"
+}

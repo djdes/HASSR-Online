@@ -1,3 +1,4 @@
+import { SearchableCatalog } from "@/components/public/searchable-catalog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileDown, FileText, Printer, ArrowRight } from "lucide-react";
@@ -206,25 +207,18 @@ export default async function BlankiHubPage({
       </section>
 
       <section className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-14">
-        {groups.map((group) => (
-          <div key={group.category} className="mb-12 last:mb-0">
-            <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h2 className="text-[22px] font-semibold tracking-[-0.02em]">
-                {group.label}
-              </h2>
-              <span className="text-[13px] tabular-nums text-[#9b9fb3]">
-                {group.items.length} журналов
-              </span>
-            </div>
-
-            <div className="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-              {group.items.map((info, index) => (
+        <SearchableCatalog
+          label="Поиск по бланкам"
+          listClassName="overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)] divide-y divide-[#ececf4]"
+          groups={groups.map((group) => ({
+            id: group.category,
+            title: (<h2 className="text-[22px] font-semibold tracking-[-0.02em]">{group.label}</h2>),
+            items: group.items.map((info) => ({
+              id: info.code,
+              searchText: [info.code, catalogName.get(info.code), info.tagline, info.why, ...info.normative.map((n) => n.title)].join(" "),
+              content: (
                 <div
-                  key={info.code}
-                  className={
-                    "flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-6" +
-                    (index > 0 ? " border-t border-[#ececf4]" : "")
-                  }
+                  className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:gap-5 sm:p-6"
                 >
                   <div className="min-w-0 flex-1">
                     <Link
@@ -277,10 +271,10 @@ export default async function BlankiHubPage({
                     ) : null}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        ))}
+              ),
+            })),
+          }))}
+        />
       </section>
 
       <section className="mx-auto max-w-[860px] px-4 pb-12 sm:px-6">

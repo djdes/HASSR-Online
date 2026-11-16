@@ -1,0 +1,20 @@
+{
+  "pid": 172500,
+  "heap": {
+    "total_heap_size": 6795952128,
+    "total_heap_size_executable": 16515072,
+    "total_physical_size": 6795952128,
+    "total_available_size": 2134180488,
+    "used_heap_size": 6647915160,
+    "heap_size_limit": 8791261184,
+    "malloced_memory": 540720,
+    "peak_malloced_memory": 14336168,
+    "does_zap_garbage": 0,
+    "number_of_native_contexts": 2,
+    "number_of_detached_contexts": 0,
+    "total_global_handles_size": 20552,
+    "used_global_handles_size": 2656,
+    "external_memory": 64020350,
+    "total_allocated_bytes": 106504681368
+  }
+}
