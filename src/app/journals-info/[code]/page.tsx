@@ -22,7 +22,7 @@ import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ogImageUrl } from "@/lib/og-image";
 import { BlankDownloadButton } from "@/components/public/blank-download";
 import { blankRegisterHref } from "@/lib/blank-download";
-import { JOURNAL_PAGE_CONTENT } from "@/content/journal-page-content";
+import { journalPageContent } from "@/content/journal-page-content";
 import { NICHES } from "@/content/niches";
 import { defaultEnabledCodesFor, rulesFor } from "@/lib/sphere-journal-rules";
 import { listPublicReviews } from "@/lib/balance/reviews";
@@ -91,9 +91,10 @@ export default async function JournalInfoDetailPage({
       : null;
   const { download, expired } = await searchParams;
   const faq = publicJournalDetailFaq(info, journalName, locale, messages);
-  // Блоки вовлечения (спека journal-page-engagement-2026-11). Русский контент
-  // и ниши — только на ru; отзывы и счётчик — на всех языках.
-  const pageContent = locale === "ru" ? JOURNAL_PAGE_CONTENT[code] ?? null : null;
+  // Блоки вовлечения (спеки journal-page-engagement-2026-11,
+  // journal-page-content-i18n-2026-11): образец, разделы и штрафы — на языке
+  // сайта; ниши — только на ru; отзывы и счётчик — на всех языках.
+  const pageContent = journalPageContent(code, locale);
   const audience =
     locale === "ru"
       ? Object.values(NICHES)

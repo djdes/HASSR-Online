@@ -79,8 +79,10 @@ export function JournalTextSections({ sections }: { sections: JournalPageContent
 
 export function JournalFines({ fines, heading }: { fines: NonNullable<JournalPageContent["fines"]>; heading: string }) {
   return (
-    <div className="rounded-3xl border border-[#f2c1d9] bg-[#fdf2f7] p-5 sm:p-7" data-testid="journal-fines">
-      <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#a3245f]">
+    // Тона «warn» из app-theme.css: у них есть ночные значения (розовые
+    // #fdf2f7/#f2c1d9 ночная тема не перекрашивала — текст терялся).
+    <div className="rounded-3xl border border-[#ffd2cd] bg-[#fff4f2] p-5 sm:p-7" data-testid="journal-fines">
+      <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#a13a32]">
         <Gavel className="size-4" />
         {heading}
       </h2>
