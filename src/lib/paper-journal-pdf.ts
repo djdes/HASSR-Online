@@ -58,6 +58,11 @@ export type PaperJournalPdfParams = {
    * (публичный бланк с сайта: QR на /qb). Нет — бланк как раньше (кабинет).
    */
   qr?: JournalPdfQr | null;
+  /**
+   * Строка под названием вместо «Журнал для ведения на бумаге — <норма>»:
+   * у бланка из конструктора на сайте своей нормы нет.
+   */
+  note?: string | null;
 };
 
 export function renderPaperJournalPdf(params: PaperJournalPdfParams): Buffer {
@@ -128,9 +133,10 @@ export function renderPaperJournalPdfDetailed(params: PaperJournalPdfParams): {
   // Бланк должен выглядеть как бланк. Норму права оставляем: она объясняет,
   // почему журнал именно бумажный, и в документе уместна.
   doc.text(
-    journal.paperOnly
-      ? `Журнал для ведения на бумаге. Электронная форма не применяется — ${journal.law.label}.`
-      : `Журнал для ведения на бумаге — ${journal.law.label}.`,
+    params.note ??
+      (journal.paperOnly
+        ? `Журнал для ведения на бумаге. Электронная форма не применяется — ${journal.law.label}.`
+        : `Журнал для ведения на бумаге — ${journal.law.label}.`),
     pageWidth / 2,
     noteY,
     { align: "center" },

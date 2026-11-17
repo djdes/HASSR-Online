@@ -108,7 +108,7 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
       onClick={() => setOpen(true)}
       aria-label={t("launcherAria")}
       data-contacts-dock
-      className="fixed bottom-[84px] right-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#0b1024] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(11,16,36,0.55)] ring-1 ring-white/15 transition-colors duration-200 hover:bg-[#1a2148] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 motion-reduce:transition-none print:hidden"
+      className="fixed bottom-[calc(84px+var(--public-sticky-offset,0px))] right-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#0b1024] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(11,16,36,0.55)] ring-1 ring-white/15 transition-colors duration-200 hover:bg-[#1a2148] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 motion-reduce:transition-none print:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <Phone className="size-[18px] text-[#8e9bf8]" aria-hidden />

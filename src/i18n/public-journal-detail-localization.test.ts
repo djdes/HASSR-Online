@@ -53,6 +53,10 @@ function modules(locale: Locale, downloads: Dict[]) {
     "@/i18n/site-locale-server": { getSiteLocale: async () => locale },
     "@/i18n/messages": { loadMessages: async () => messagesFor(locale) },
     "@/components/public/public-chrome": { PublicHeader: () => null, PublicFooter: () => null },
+    // Отзывы и счётчик организаций — из базы; конструктор — клиентский.
+    "@/lib/balance/reviews": { listPublicReviews: async () => [] },
+    "@/lib/journal-usage-count.server": { journalUsageCount: async () => 0 },
+    "@/components/public/blank-constructor": { BlankConstructor: () => null },
     "next/navigation": { notFound: () => { throw new Error("FIXTURE_NOT_FOUND"); } },
     "@/components/public/blank-download": { BlankDownloadButton: (props: Dict) => {
       downloads.push(props);
@@ -133,10 +137,13 @@ for (const locale of ["ru", "en", "uz"] as const) {
     } else assert.equal(howTo, undefined);
     // Кнопка «Скачать PDF» в шапке (2026-11-17) — без автооткрытия окна:
     // ссылку `?download=pdf` по-прежнему открывает кнопка блока образца.
-    const hero = downloads.filter((download) => download.place === "journal-hero");
-    const sample = downloads.filter((download) => download.place !== "journal-hero");
+    // Финальный блок и полоса на телефоне (journal-page-engagement-2026-11) —
+    // такие же кнопки PDF без автооткрытия.
+    const ctaPlaces = ["journal-hero", "journal-final", "journal-sticky"];
+    const hero = downloads.filter((download) => ctaPlaces.includes(String(download.place)));
+    const sample = downloads.filter((download) => !ctaPlaces.includes(String(download.place)));
     const hasSample = SAMPLE_JOURNAL_CODES.includes(code as typeof SAMPLE_JOURNAL_CODES[number]);
-    assert.equal(hero.length, hasSample ? 1 : 0);
+    assert.equal(hero.length, hasSample ? ctaPlaces.length : 0);
     for (const download of hero) {
       assert.deepEqual(clean(download.target), { kind: "code", code });
       assert.equal(download.format, "pdf");

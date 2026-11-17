@@ -10,6 +10,7 @@
 
 import type { Locale } from "@/i18n/locales";
 import { blankExtrasAdminLine, type BlankExtras } from "@/lib/blank-download-extras";
+import { blankLayoutAdminLine } from "@/lib/blank-layout";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 
 export type BlankFormat = "pdf" | "docx";
@@ -337,6 +338,7 @@ export function buildBlankDownloadAdminText(params: {
 }): string {
   const esc = params.escape;
   const extrasLine = blankExtrasAdminLine(params.extras);
+  const layoutLine = blankLayoutAdminLine(params.extras?.layout);
   return [
     "📥 Скачивание шаблона журнала",
     `Журнал: ${esc(params.title)} (${esc(BLANK_FORMAT_LABEL[params.format])})`,
@@ -345,6 +347,7 @@ export function buildBlankDownloadAdminText(params: {
     ...(params.company ? [`Организация: ${esc(params.company)}`] : []),
     ...(params.location ? [esc(params.location)] : []),
     ...(extrasLine ? [esc(extrasLine)] : []),
+    ...(layoutLine ? [esc(layoutLine)] : []),
     ...(params.accountCreated ? ["✅ Быстрая регистрация: кабинет создан, доступ отправлен на почту"] : []),
   ].join("\n");
 }

@@ -10,6 +10,8 @@ import type { BlankTarget } from "@/lib/blank-download";
 import { verifyBlankDownloadToken } from "@/lib/blank-download-token";
 import type { BlankExtras } from "@/lib/blank-download-extras";
 import { blankFileQrUrl, loadBlankDownloadExtras } from "@/lib/blank-download-extras.server";
+import { renderPaperJournalPdfDetailed } from "@/lib/paper-journal-pdf";
+import type { BlankLayout } from "@/lib/blank-layout";
 
 import { localizedJournalSampleInput, sampleDownloadDenied, sampleDownloadError, sampleLocaleFromUrl, sampleFooterLines } from "@/lib/public-sample-download-presentation";
 
@@ -75,6 +77,28 @@ export async function GET(
   }
 
   try {
+    // Свой бланк из конструктора на странице журнала: колонки и строки
+    // человека, та же шапка организации и QR.
+    if (extras?.layout) {
+      const { buffer } = customLayoutPdf(extras.layout, {
+        company,
+        qr: {
+          url: blankFileQrUrl({ origin: journalPdfQrOrigin(), target, email, organizationId }),
+          locale,
+          footer: (await sampleFooterLines(locale)).join(" · "),
+        },
+      });
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          "Content-Language": locale,
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(`blank-${code}.pdf`)}`,
+          "Cache-Control": "private, no-store",
+        },
+      });
+    }
+
     // QR на /qb — в шапке каждой страницы, строка копирайта — внизу.
     const { buffer, fileName } = renderJournalDocumentPdf({
       ...await localizedJournalSampleInput(code, locale, { blank, company, extras }),
@@ -105,4 +129,24 @@ export async function GET(
     console.error("journal sample pdf failed", code, error);
     return sampleDownloadError(locale, "buildFailed", 500);
   }
+}
+
+function customLayoutPdf(
+  layout: BlankLayout,
+  params: { company?: string; qr: Parameters<typeof renderPaperJournalPdfDetailed>[0]["qr"] },
+) {
+  return renderPaperJournalPdfDetailed({
+    journal: {
+      id: "custom",
+      name: layout.title,
+      why: "",
+      law: { label: "", url: "" },
+      fineHint: "",
+      columns: layout.columns,
+    },
+    organization: { name: params.company?.trim() || "Организация" },
+    blankRows: layout.rows,
+    note: "Бланк составлен в конструкторе WeSetup · электронная версия — wesetup.ru",
+    qr: params.qr,
+  });
 }

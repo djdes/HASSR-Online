@@ -34,6 +34,7 @@ import {
   type BlankTarget,
   type RememberedBlankEmail,
 } from "@/lib/blank-download";
+import type { BlankLayout } from "@/lib/blank-layout";
 import { phoneInputProps } from "@/lib/phone-input";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { readSignupSource, ymGoal } from "@/lib/signup-source";
@@ -82,6 +83,8 @@ export type BlankDownloadClientProps = {
   hideTrigger?: boolean;
   /** Где кнопка — параметр целей Метрики. */
   place?: string;
+  /** Свой бланк из конструктора: PDF печатается с этими колонками и строками. */
+  layout?: BlankLayout | null;
 };
 
 type Phase = "form" | "sending" | "done";
@@ -125,7 +128,7 @@ function triggerDownload(url: string) {
 type AccountState = "created" | "exists" | null;
 
 type RequestResult =
-  | { ok: true; url: string; consentVersion: string; emailed: boolean; account: AccountState }
+  | { ok: true; url: string; consentVersion: string; emailed: boolean; account: AccountState; firstEntryQr: string | null }
   | { ok: false; errorKey: ReturnType<typeof blankDownloadErrorKey>; needConsent: boolean };
 
 /** Что окно передаёт сверх почты: телефон, регистрация, «Дополнительно» и замер для проверки от ботов. */
@@ -157,11 +160,16 @@ async function requestDownload(params: {
   locale: string;
   remembered?: RememberedBlankEmail | null;
   extras?: FormExtras;
+  layout?: BlankLayout | null;
 }): Promise<RequestResult> {
   const company = (params.company ?? params.remembered?.company ?? "").trim();
   const phone = params.extras?.phone ?? params.remembered?.phone ?? null;
   const journalKey = params.target.kind === "code" ? params.target.code : `paper:${params.target.paperId}`;
   const tz = browserTimeZone();
+  // «Дополнительно» и макет из конструктора едут одним полем `extras`.
+  const extrasPayload = params.layout
+    ? { ...(params.extras?.extras ?? {}), layout: params.layout }
+    : (params.extras?.extras ?? null);
   try {
     const res = await fetch("/api/public/blank-download", {
       method: "POST",
@@ -175,11 +183,11 @@ async function requestDownload(params: {
         consent: true,
         ...(tz ? { tz } : {}),
         ...(phone ? { phone } : {}),
+        ...(extrasPayload ? { extras: extrasPayload } : {}),
         ...(params.extras
           ? {
               website: params.extras.website,
               elapsedMs: params.extras.elapsedMs,
-              ...(params.extras.extras ? { extras: params.extras.extras } : {}),
               ...(params.extras.register ? { register: true, source: readSignupSource(blankSignupPlace(journalKey)) } : {}),
             }
           : {}),
@@ -191,13 +199,15 @@ async function requestDownload(params: {
       consentVersion?: string;
       emailed?: boolean;
       account?: unknown;
+      firstEntryQr?: unknown;
       error?: string;
       needConsent?: boolean;
       errorCode?: string;
     };
     if (res.ok && data.url && data.consentVersion) {
       const account: AccountState = data.account === "created" || data.account === "exists" ? data.account : null;
-      return { ok: true, url: data.url, consentVersion: data.consentVersion, emailed: data.emailed !== false, account };
+      const firstEntryQr = typeof data.firstEntryQr === "string" && /^https?:\/\//.test(data.firstEntryQr) ? data.firstEntryQr : null;
+      return { ok: true, url: data.url, consentVersion: data.consentVersion, emailed: data.emailed !== false, account, firstEntryQr };
     }
     return {
       ok: false,
@@ -219,6 +229,7 @@ export function BlankDownloadClient({
   expired = false,
   hideTrigger = false,
   place = "site",
+  layout = null,
 }: BlankDownloadClientProps) {
   const t = useTranslations("publicBlankDownload");
   const locale = useLocale();
@@ -228,6 +239,7 @@ export function BlankDownloadClient({
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [account, setAccount] = useState<AccountState>(null);
+  const [firstEntryQr, setFirstEntryQr] = useState<string | null>(null);
   const [error, setError] = useState<ReturnType<typeof blankDownloadErrorKey> | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [showExpired, setShowExpired] = useState(false);
@@ -255,7 +267,7 @@ export function BlankDownloadClient({
   async function quickDownload(saved: RememberedBlankEmail) {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     setNotice({ state: "sending", email: saved.email, emailed: true });
-    const result = await requestDownload({ email: saved.email, company: saved.company, target, format, locale, remembered: saved });
+    const result = await requestDownload({ email: saved.email, company: saved.company, target, format, locale, remembered: saved, layout });
     if (!result.ok) {
       // Редакция документов сменилась или сервер отказал — спрашиваем в окне.
       if (result.needConsent) remember(null);
@@ -326,6 +338,7 @@ export function BlankDownloadClient({
       format,
       locale,
       extras,
+      layout,
     });
     if (!result.ok) {
       setError(result.errorKey);
@@ -349,6 +362,7 @@ export function BlankDownloadClient({
     setCompany(cleanCompany);
     setPhone(extras.phone ?? "");
     setAccount(result.account);
+    setFirstEntryQr(result.firstEntryQr);
     setFileUrl(result.url);
     setEmailed(result.emailed);
     setShowExpired(false);
@@ -385,6 +399,7 @@ export function BlankDownloadClient({
               emailed={emailed}
               fileUrl={fileUrl}
               account={account}
+              firstEntryQr={firstEntryQr}
               registerHref={localizedHref(blankRegisterHref({ email, target }), locale)}
               loginHref={localizedHref(blankLoginHref({ email, target }), locale)}
               onChangeEmail={changeEmail}
@@ -767,6 +782,7 @@ function DoneView({
   emailed,
   fileUrl,
   account,
+  firstEntryQr = null,
   registerHref,
   loginHref,
   onChangeEmail,
@@ -776,6 +792,7 @@ function DoneView({
   emailed: boolean;
   fileUrl: string | null;
   account: AccountState;
+  firstEntryQr?: string | null;
   registerHref: string;
   loginHref: string;
   onChangeEmail: () => void;
@@ -801,6 +818,7 @@ function DoneView({
           <p className="mt-1 text-[14px] leading-[1.55] text-[#3c4053]">
             {t.rich("done.accountCreatedBody", { email: strong, address: email })}
           </p>
+          {firstEntryQr ? <FirstEntryQr url={firstEntryQr} /> : null}
         </div>
       ) : account === "exists" ? (
         <div className="rounded-2xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-4" data-testid="blank-download-account">
@@ -821,5 +839,46 @@ function DoneView({
       )}
       <p className="text-center text-[13px] text-[#6f7282]">{t("done.emailWrong")} <button type="button" onClick={onChangeEmail} className="font-medium text-[#3848c7] underline-offset-4 hover:underline">{t("action.changeEmail")}</button></p>
     </>
+  );
+}
+
+/**
+ * После быстрой регистрации — QR журнала в новом кабинете: навёл телефон и
+ * сделал первую запись, пока окно ещё открыто (спека
+ * journal-page-engagement-2026-11). Картинка рисуется в браузере.
+ */
+function FirstEntryQr({ url }: { url: string }) {
+  const t = useTranslations("publicBlankDownload");
+  const [image, setImage] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void import("qrcode")
+      .then((QRCode) => QRCode.toDataURL(url, { margin: 1, width: 240, errorCorrectionLevel: "M" }))
+      .then((data) => {
+        if (alive) setImage(data);
+      })
+      .catch(() => {
+        /* без картинки остаётся ссылка */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [url]);
+  return (
+    <div className="mt-3 flex items-center gap-3 rounded-xl border border-[#ececf4] bg-white p-3" data-testid="blank-download-first-entry">
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- data: URL, рисуется в браузере
+        <img src={image} alt="" width={96} height={96} className="size-24 shrink-0 rounded-lg" />
+      ) : (
+        <span className="size-24 shrink-0 animate-pulse rounded-lg bg-[#f5f6ff]" />
+      )}
+      <div className="min-w-0">
+        <div className="text-[14px] font-semibold text-[#0b1024]">{t("done.firstEntryTitle")}</div>
+        <p className="mt-0.5 text-[13px] leading-[1.5] text-[#3c4053]">{t("done.firstEntryBody")}</p>
+        <a href={url} target="_blank" rel="noopener" className="mt-1 inline-block text-[13px] font-medium text-[#3848c7] underline-offset-4 hover:underline">
+          {t("done.firstEntryLink")}
+        </a>
+      </div>
+    </div>
   );
 }

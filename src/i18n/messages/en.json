@@ -17601,7 +17601,16 @@
       "landingGuidePrefix": "Detailed guide: {label}",
       "heroTry": "Keep it on your phone for free",
       "heroTrust": "{trialDays, number} {trialDays, plural, one {day} other {days}} free, no card · compliant with SanPiN 2.3/2.4.4282-26",
-      "sidebarTitle": "Keep this journal on your phone via QR"
+      "sidebarTitle": "Keep this journal on your phone via QR",
+      "audienceHeading": "Who needs it:",
+      "usageCount": "{count, number} {count, plural, one {organization keeps} other {organizations keep}} it in WeSetup",
+      "sampleRowsHeading": "Filled-in example",
+      "finesHeading": "Fines and liability",
+      "videoHeading": "How it looks in practice",
+      "videoLead": "A minute on how staff make an entry from their phone via a QR code and the manager sees what was missed.",
+      "finalTitle": "Stop filling in journals after the fact",
+      "finalBody": "Staff make entries from their phones, the system reminds about gaps, and before an inspection the journal exports to PDF in the SanPiN format.",
+      "stickyTry": "Try it"
     },
     "descriptions": {
       "hygiene": "Keeps people with symptoms of acute respiratory viral infections, gastrointestinal infections or pustular skin lesions away from food handling. Completed for each employee on every shift.",
@@ -19901,7 +19910,10 @@
       "accountCreatedBody": "Your login, password and sign-in link are in the email sent to <email>{address}</email>.",
       "accountExistsTitle": "You already have a WeSetup workspace",
       "accountExistsBody": "Sign in to keep “{title}” on your phone.",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "firstEntryTitle": "Make your first entry right now",
+      "firstEntryBody": "Point your phone camera at the QR code to open this journal in your account.",
+      "firstEntryLink": "Open on this device"
     },
     "notice": {
       "sending": "Preparing your template…",
@@ -31954,5 +31966,25 @@
       "glossary": "Glossary",
       "feature": "Features"
     }
+  },
+  "blankConstructor": {
+    "heading": "Build your own form",
+    "lead": "Change the title, columns and number of rows — a PDF with your header will be sent to your email.",
+    "open": "Customize the form",
+    "titleLabel": "Journal title",
+    "columnsLabel": "Columns",
+    "columnsLimit": "up to {max, number} columns",
+    "columnPlaceholder": "Column name",
+    "columnAria": "Column {index, number}",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "removeColumn": "Remove column",
+    "addColumn": "Add column",
+    "rowsLabel": "Rows on the form: {rows, number}",
+    "preview": "Preview",
+    "untitled": "Untitled",
+    "previewMore": "… rows in total: {rows, number}",
+    "invalid": "A title and at least {min, number} columns are required",
+    "reset": "Reset"
   }
 }

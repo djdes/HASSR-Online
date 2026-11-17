@@ -22,6 +22,22 @@ import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ogImageUrl } from "@/lib/og-image";
 import { BlankDownloadButton } from "@/components/public/blank-download";
 import { blankRegisterHref } from "@/lib/blank-download";
+import { JOURNAL_PAGE_CONTENT } from "@/content/journal-page-content";
+import { NICHES } from "@/content/niches";
+import { defaultEnabledCodesFor, rulesFor } from "@/lib/sphere-journal-rules";
+import { listPublicReviews } from "@/lib/balance/reviews";
+import { Testimonials } from "@/components/landing/testimonials";
+import { journalUsageCount } from "@/lib/journal-usage-count.server";
+import { JournalStickyBar } from "@/components/public/journal-sticky-bar";
+import { BlankConstructor } from "@/components/public/blank-constructor";
+import {
+  JournalAudienceChips,
+  JournalFinalCta,
+  JournalFines,
+  JournalSampleTable,
+  JournalTextSections,
+  JournalVideo,
+} from "@/components/public/journal-page-sections";
 
 import { createTranslator } from "use-intl/core";
 import { getSiteLocale } from "@/i18n/site-locale-server";
@@ -35,6 +51,11 @@ import {
   relatedBlogArticlesForJournal,
 } from "@/lib/journal-crosslinks";
 
+/** Журнал нужен нише: включён по умолчанию или рекомендован её сфере. */
+function nicheUsesJournal(sphere: Parameters<typeof rulesFor>[0], code: string): boolean {
+  return defaultEnabledCodesFor(sphere).includes(code) || rulesFor(sphere).electronicRecommended.includes(code);
+}
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -44,6 +65,8 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 
 /** Журналы с публичным образцом — страница серверная, импорт безопасен. */
 const SAMPLE_CODES = new Set<string>(SAMPLE_JOURNAL_CODES);
+/** «Этот журнал ведут N организаций» — от этого числа (меньше звучит слабо). */
+const USAGE_SHOW_FROM = 20;
 const DOCX_CODES = new Set<string>(DOCX_SAMPLE_CODES);
 
 export default async function JournalInfoDetailPage({
@@ -68,6 +91,22 @@ export default async function JournalInfoDetailPage({
       : null;
   const { download, expired } = await searchParams;
   const faq = publicJournalDetailFaq(info, journalName, locale, messages);
+  // Блоки вовлечения (спека journal-page-engagement-2026-11). Русский контент
+  // и ниши — только на ru; отзывы и счётчик — на всех языках.
+  const pageContent = locale === "ru" ? JOURNAL_PAGE_CONTENT[code] ?? null : null;
+  const audience =
+    locale === "ru"
+      ? Object.values(NICHES)
+          .filter((niche) => nicheUsesJournal(niche.sphere, code))
+          .slice(0, 8)
+          .map((niche) => ({ slug: niche.slug, label: niche.navLabel }))
+      : [];
+  const [reviews, usage] = await Promise.all([
+    listPublicReviews(6).catch(() => []),
+    journalUsageCount(code).catch(() => 0),
+  ]);
+  const registerHref = blankRegisterHref({ target: { kind: "code", code } });
+  const hasSample = SAMPLE_CODES.has(code);
   const canonical = `https://wesetup.ru${localizedHref(`/journals-info/${code}`, locale)}`;
   const language = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale];
   const jsonLd = {
@@ -171,7 +210,7 @@ export default async function JournalInfoDetailPage({
             {/* Главные действия — на первом экране (анализ конкурентов
                 2026-11-17): у haccp-online и well-clean «Скачать бланк» и
                 «Попробовать» стоят в шапке, у нас до них нужно было листать. */}
-            <div className="mt-6 flex flex-wrap items-center gap-3" data-testid="journal-hero-actions">
+            <div id="journal-hero-actions" className="mt-6 flex flex-wrap items-center gap-3" data-testid="journal-hero-actions">
               {SAMPLE_CODES.has(code) ? (
                 <BlankDownloadButton
                   target={{ kind: "code", code }}
@@ -192,10 +231,19 @@ export default async function JournalInfoDetailPage({
                 <ArrowRight className="size-4" />
               </Link>
             </div>
-            <p className="mt-3 text-[13px] text-white/60">{t("heroTrust", { trialDays: TRIAL_DAYS })}</p>
+            <p className="mt-3 text-[13px] text-white/60">
+              {t("heroTrust", { trialDays: TRIAL_DAYS })}
+              {usage >= USAGE_SHOW_FROM ? <> · {t("usageCount", { count: usage })}</> : null}
+            </p>
           </div>
         </div>
       </section>
+
+      {audience.length ? (
+        <section className="mx-auto max-w-[1200px] px-4 pt-6 sm:px-6">
+          <JournalAudienceChips heading={t("audienceHeading")} niches={audience} />
+        </section>
+      ) : null}
 
       {seo?.seoIntro ? (
         <section className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6 sm:pt-10">
@@ -272,28 +320,45 @@ export default async function JournalInfoDetailPage({
               </div>
             </div>
 
-            {/* Журналы печатаются альбомной A4 — 297×210, отсюда 1.414/1 */}
-            <object
-              data={`/api/journal-samples/${code}/pdf?inline=1&blank=1&v=2${locale === "ru" ? "" : `&locale=${locale}`}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-              type="application/pdf"
-              aria-label={t("sampleAria")}
-              className="mt-5 hidden aspect-[1.414/1] w-full rounded-2xl border border-[#dcdfed] bg-white sm:block"
+            {/* Предпросмотр — картинкой первой страницы (2026-11-17): встроенный
+                PDF на телефонах не показывался, а на компьютере тянул весь
+                файл. Картинка видна везде; целиком бланк — по ссылке. */}
+            <a
+              href={`/api/journal-samples/${code}/pdf?inline=1&blank=1&v=2${locale === "ru" ? "" : `&locale=${locale}`}`}
+              target="_blank"
+              rel="noopener"
+              className="group mt-5 block overflow-hidden rounded-2xl border border-[#dcdfed] bg-white"
+              data-testid="journal-sample-preview"
             >
-              <div className="flex h-full items-center justify-center p-6 text-center text-[13px] text-[#6f7282]">
-                {t("pdfFallback")}
-              </div>
-            </object>
-            <p className="mt-2 hidden text-[12px] text-[#9b9fb3] sm:block">
+              {/* eslint-disable-next-line @next/next/no-img-element -- отдаёт наш роут, размеры заданы */}
+              <img
+                src={`/api/journal-samples/${code}/preview${locale === "ru" ? "" : `?locale=${locale}`}`}
+                alt={t("sampleAria")}
+                width={1100}
+                height={778}
+                loading="lazy"
+                className="aspect-[1.414/1] w-full object-cover transition-opacity group-hover:opacity-90"
+              />
+            </a>
+            <p className="mt-2 text-[12px] text-[#9b9fb3]">
               {t("sampleHelp")}
             </p>
           </div>
         </section>
       ) : null}
 
+      {/* Конструктор бланка: свои колонки, строки и название — PDF через то же
+          окно с почтой (спека journal-page-engagement-2026-11). */}
+      {locale === "ru" && hasSample ? (
+        <section className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6">
+          <BlankConstructor code={code} title={catalogName} />
+        </section>
+      ) : null}
+
       <section className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12">
         <div className="grid gap-6 md:grid-cols-[1fr_320px]">
           {/* MAIN */}
-          <div className="space-y-8">
+          <div className="min-w-0 space-y-8">
             {/* WHAT TO FILL */}
             <div className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">
               <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#3848c7]">
@@ -309,6 +374,10 @@ export default async function JournalInfoDetailPage({
                 ))}
               </ul>
             </div>
+
+            {pageContent?.sample ? <JournalSampleTable sample={pageContent.sample} heading={t("sampleRowsHeading")} /> : null}
+
+            <JournalTextSections sections={pageContent?.sections} />
 
             {/* NORMATIVE */}
             <div className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">
@@ -377,6 +446,10 @@ export default async function JournalInfoDetailPage({
                 </ul>
               </div>
             )}
+
+            {pageContent?.fines ? <JournalFines fines={pageContent.fines} heading={t("finesHeading")} /> : null}
+
+            {locale === "ru" ? <JournalVideo heading={t("videoHeading")} lead={t("videoLead")} /> : null}
           </div>
 
           {/* SIDEBAR */}
@@ -505,6 +578,12 @@ export default async function JournalInfoDetailPage({
           периодичность. Одинаковый блок на всех страницах журналов был бы дублем и
           только усилил бы причину, по которой поисковик выбирал сводную
           /blanki вместо профильных страниц. */}
+      {reviews.length ? (
+        <div data-testid="journal-reviews">
+          <Testimonials reviews={reviews} locale={locale} sectionClassName="mx-auto max-w-[1200px] px-4 pb-12 sm:px-6" />
+        </div>
+      ) : null}
+
       <section className="mx-auto max-w-[860px] px-4 pb-12 sm:px-6">
         <h2 className="text-[26px] font-semibold tracking-[-0.02em]">
           {t("faqHeading")}
@@ -525,6 +604,49 @@ export default async function JournalInfoDetailPage({
           ))}
         </div>
       </section>
+
+      <div id="journal-final-cta">
+        <JournalFinalCta
+          title={t("finalTitle")}
+          body={t("finalBody")}
+          tryLabel={t("heroTry")}
+          tryHref={registerHref}
+          download={
+            hasSample ? (
+              <BlankDownloadButton
+                target={{ kind: "code", code }}
+                format="pdf"
+                title={catalogName}
+                place="journal-final"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-5 text-[15px] font-medium text-[#0b1024] transition-colors hover:bg-[#eef1ff]"
+              >
+                <FileDown className="size-4 text-[#5566f6]" />
+              </BlankDownloadButton>
+            ) : null
+          }
+        />
+      </div>
+
+      <JournalStickyBar watchId="journal-hero-actions" endId="journal-final-cta">
+        {hasSample ? (
+          <BlankDownloadButton
+            target={{ kind: "code", code }}
+            format="pdf"
+            title={catalogName}
+            place="journal-sticky"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] font-medium text-[#0b1024]"
+          >
+            <FileDown className="size-4 text-[#5566f6]" />
+          </BlankDownloadButton>
+        ) : null}
+        <Link
+          href={registerHref}
+          className="inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl bg-[#5566f6] px-3 text-[14px] font-medium text-white"
+        >
+          {t("stickyTry")}
+          <ArrowRight className="size-4" />
+        </Link>
+      </JournalStickyBar>
 
       <PublicFooter />
     </div>

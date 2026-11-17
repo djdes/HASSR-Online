@@ -22,6 +22,7 @@ import {
 } from "@/lib/blank-download-lead.server";
 import { sendWelcomeEmailOnce } from "@/lib/welcome-email.server";
 import { applyBlankExtrasToAccount } from "@/lib/blank-download-extras.server";
+import { journalPdfQrOrigin, journalShortQrUrl } from "@/lib/journal-pdf-qr-link";
 import { blankDownloadLimiter } from "@/lib/blank-download-limits";
 import {
   blankAccountResponse,
@@ -391,8 +392,21 @@ export async function POST(request: Request) {
     }
   });
 
+  // Кабинет создан: окно покажет QR журнала — «первая запись прямо сейчас».
+  const firstEntryQr =
+    account?.status === "created" && target.kind === "code"
+      ? journalShortQrUrl(journalPdfQrOrigin(), account.organizationId, target.code)
+      : null;
   return NextResponse.json(
-    { ok: true, url, emailed, consentVersion: LEGAL_VERSION, account: blankAccountResponse(account), page: blankPagePath(target, format) },
+    {
+      ok: true,
+      url,
+      emailed,
+      consentVersion: LEGAL_VERSION,
+      account: blankAccountResponse(account),
+      page: blankPagePath(target, format),
+      ...(firstEntryQr ? { firstEntryQr } : {}),
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
