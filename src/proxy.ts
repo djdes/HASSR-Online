@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { seoRedirectTarget } from "@/content/seo-redirects";
 import { decode } from "next-auth/jwt";
 import { applyVisitorCookie, pageNavigationGuard } from "@/lib/page-navigation-guard";
 import { publicLocaleRoute, SITE_LOCALE_COOKIE, SITE_LOCALE_HEADER } from "@/i18n/site-locale";
@@ -215,6 +216,15 @@ export async function proxy(req: NextRequest) {
     const url = new URL(req.url);
     url.pathname = pathname.replace(/\/+$/, "");
     return NextResponse.redirect(url, 308);
+  }
+
+  // Слитые дубли страниц (один запрос — одна страница): постоянный 301,
+  // параметры адреса (utm и т. п.) сохраняем.
+  const seoTarget = seoRedirectTarget(pathname);
+  if (seoTarget) {
+    const url = new URL(req.url);
+    url.pathname = seoTarget;
+    return NextResponse.redirect(url, 301);
   }
 
   // Та же кука, что у `getServerSession` проекта и next-auth: актуальное

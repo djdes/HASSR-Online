@@ -86,6 +86,16 @@ export const SEO_LANDINGS: Record<string, SeoJournalConfig> = {
     ],
     relatedCode: "finished_product",
   },
+};
+
+/**
+ * Лендинги, слитые 301-редиректом в страницы-победители (спека
+ * seo-speed-pack-2026-11, `src/content/seo-redirects.ts`): у каждого запроса
+ * теперь одна страница. Данные оставлены как справочник — ключевые фразы и
+ * факты нужны планировщику закупки ссылок (ссылки ведут на победителя) и
+ * подписи сквозного подвала. Страниц по этим адресам больше нет.
+ */
+export const MERGED_SEO_LANDINGS: Record<string, SeoJournalConfig> = {
   "zhurnal-zdorovya": {
     slug: "zhurnal-zdorovya",
     navLabel: "Журнал здоровья",

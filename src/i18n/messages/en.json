@@ -18451,7 +18451,7 @@
   },
   "publicJournalDetailSeo": {
     "hygiene": {
-      "title": "Hygiene log — a sample for food service",
+      "title": "Staff hygiene log: template and sample",
       "description": "Hygiene log under SanPiN 2.3/2.4.4282-26: work clearance, temperature checks and PDF for Rospotrebnadzor. 14 days free.",
       "keywords": {
         "item0": "hygiene log",
@@ -18464,7 +18464,7 @@
       "seoIntro": "The electronic food service hygiene log complies with SanPiN 2.3/2.4.4282-26 and the Rospotrebnadzor order. Employee work clearance, symptoms and temperature, and the responsible person's signature are all on one screen, without paper or manual comparison with the timesheet."
     },
     "health_check": {
-      "title": "Health log (ЗОЖ): conducting pre-shift checks",
+      "title": "Staff health log: template and sample",
       "description": "How to conduct daily pre-shift checks: who examines staff, which signs to record, when to remove someone from work and how to document refused clearance.",
       "keywords": {
         "item0": "health log",
@@ -18476,7 +18476,7 @@
       "seoIntro": "The health log is a detailed examination form. It records every symptom, not just work clearance, which is useful when investigating food poisoning. The electronic version records the examination time, removal from work and corrective actions."
     },
     "climate_control": {
-      "title": "Premises temperature and humidity log",
+      "title": "Temperature and humidity log: template",
       "description": "Premises temperature and humidity log: sensors, automatic readings and ventilation schedules. Limits are set for each room; deviations go straight to the responsible person.",
       "keywords": {
         "item0": "temperature and humidity log",
@@ -18488,7 +18488,7 @@
       "seoIntro": "A warehouse temperature and humidity log is a mandatory SanPiN item for rooms where food is stored: it confirms microclimate monitoring. In WeSetup, sensors take readings once an hour, and deviations automatically go to CAPA."
     },
     "cold_equipment_control": {
-      "title": "Refrigerator temperature log: limits and recordkeeping",
+      "title": "Refrigerator temperature log: template",
       "description": "Temperature limits for refrigerators and freezers, how often to measure during a shift, who is responsible and what to do when readings leave the allowed range.",
       "keywords": {
         "item0": "refrigerator temperature log",
@@ -18510,7 +18510,7 @@
       "seoIntro": "The airing checklist is a simple but often forgotten SanPiN item: kitchen air changes faster than dining-area air, so the schedules differ. The electronic template inserts standard values, reminds staff about frequency and stores results alongside the ventilation maintenance schedule."
     },
     "cleaning": {
-      "title": "Cleaning log: how to keep it and who fills it in",
+      "title": "Cleaning log for premises: template and sample",
       "description": "Who fills in the cleaning log, how often and what to record: room, product, concentration, contact time and supervisor. SanPiN 2.3/2.4.4282-26 requirements.",
       "keywords": {
         "item0": "cleaning log",
@@ -18521,7 +18521,7 @@
       "seoIntro": "The cleaning log records every washing cycle for areas and utensils, including the cleaning product and concentration. The electronic form prevents a record from being closed with a required field missing, so the inspector always sees the complete picture."
     },
     "general_cleaning": {
-      "title": "Deep cleaning schedule — an electronic log",
+      "title": "Deep cleaning log: schedule and template",
       "description": "Plan and record deep cleaning: areas, products, responsible person and a signed report. Schedules cover the coming month; the system reminds you when work is due.",
       "keywords": {
         "item0": "deep cleaning log",
@@ -18532,7 +18532,7 @@
       "seoIntro": "Deep cleaning is a plan with dates and areas, not something left until there is time: kitchens, storage areas, dining areas and toilets are cleaned at different frequencies. WeSetup creates a monthly schedule, sends automatic reminders and generates a separate completion report for each area."
     },
     "uv_lamp_runtime": {
-      "title": "Germicidal UV lamp log — operating hours and replacement",
+      "title": "Germicidal lamp operating log",
       "description": "Germicidal UV lamp and irradiator log: operating hours, tube replacement, room UV disinfection. The 8,000–9,000 h service life is tracked automatically.",
       "keywords": {
         "item0": "germicidal lamp log",
@@ -18545,7 +18545,7 @@
       "seoIntro": "A germicidal UV lamp log (tracking operating hours for UV irradiators and air recirculators) matters because a tube can keep glowing visibly long after its rated life ends while its disinfecting output is already gone. WeSetup counts operating hours automatically, warns before scheduled replacement, and provides a downloadable sample log."
     },
     "finished_product": {
-      "title": "Finished product quality checks: keeping the log",
+      "title": "Finished product quality log: template",
       "description": "Who sits on the food quality assessment panel, which sensory qualities to assess and which serving temperature to record. Recordkeeping under SanPiN 2.3/2.4.4282-26.",
       "keywords": {
         "item0": "food quality assessment log",
@@ -18566,7 +18566,7 @@
       "seoIntro": "Perishable products must be checked for rejection at goods acceptance and during the shift. The electronic log links the batch to its delivery note and subsequent records, allowing its path from supplier to table to be traced in 2–4 hours."
     },
     "incoming_control": {
-      "title": "Raw material acceptance and incoming inspection log",
+      "title": "Goods receiving and incoming inspection log",
       "description": "Incoming raw material checks: temperature on receipt, packaging, expiry dates and supplier details. Integration with iiko and 1С loads the item list automatically.",
       "keywords": {
         "item0": "raw material acceptance log",
@@ -18577,7 +18577,7 @@
       "seoIntro": "Incoming inspection of raw materials and food is the first critical point in the HACCP system. WeSetup automatically loads delivery notes from iiko and 1С; the cook records the temperature on receipt and sensory assessment without copying supplier details by hand. A sample completed log can be downloaded and printed."
     },
     "fryer_oil": {
-      "title": "Frying oil usage log",
+      "title": "Frying oil log: template and sample",
       "description": "Frying oil records: polar compound measurements, replacement schedule, disposal and collection report. At the 24% limit, the log reminds you to change the oil.",
       "keywords": {
         "item0": "fryer log",
@@ -18588,7 +18588,7 @@
       "seoIntro": "Frying oil records are a simple but mandatory item. The 24% polar compound limit is checked with a handheld analyzer; WeSetup saves the reading, reminds you to change the oil and stores the contractor's disposal report."
     },
     "med_books": {
-      "title": "Employee medical record book log — electronic records",
+      "title": "Medical record book log: template",
       "description": "Employee medical record books: renewals, chest X-rays and examinations. A reminder arrives 30 days before expiry, and expired work clearance is blocked.",
       "keywords": {
         "item0": "medical record book log",
@@ -18670,7 +18670,7 @@
       "seoIntro": "Thermometer and scale verification is mandatory for production facilities supplying retail chains. Calibration and verification are different procedures: the former adjusts the instrument, while the latter confirms its accuracy with a document. WeSetup automatically calculates the next verification date and attaches a scanned certificate."
     },
     "incoming_raw_materials_control": {
-      "title": "Raw material and semi-finished goods inspection log",
+      "title": "Raw material and packaging inspection log",
       "description": "Detailed incoming inspection: certificates, laboratory reports, temperature and labeling checks. Supplier documents are stored with the goods acceptance record.",
       "keywords": {
         "item0": "incoming inspection log",
@@ -18710,7 +18710,7 @@
       "seoIntro": "The complaints log is a simple way to avoid losing guest feedback. WeSetup routes the complaint to a manager; if it recurs, it automatically opens a CAPA with a responsible person and deadline."
     },
     "daily_samples": {
-      "title": "Daily food sample log — electronic records",
+      "title": "Daily food sample log: template and sample",
       "description": "Daily food sample collection and storage log for schools, kindergartens and hospitals: dish, weight, sampling time, storage temperature and disposal. Print the log with one click.",
       "keywords": {
         "item0": "daily food sample log",
@@ -18891,7 +18891,7 @@
       "seoIntro": "Rapid cooling of finished products is a HACCP critical point. Limit: +65 → +10 °C in 2 hours. WeSetup collects sensor readings in the blast freezer and generates a completed report."
     },
     "glass_items_list": {
-      "title": "Glassware inventory log",
+      "title": "List of glass and brittle plastic items",
       "description": "Kitchen glass item inventory: availability, quantities and regular integrity checks. Breakage or missing items are immediately linked to the glass control log.",
       "keywords": {
         "item0": "glass inventory log",

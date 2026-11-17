@@ -2,9 +2,8 @@ import Link from "@/components/i18n/localized-link";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
-import { PublicSupportWidget } from "@/components/public/public-support-widget";
 import { SiteSearch } from "@/components/public/site-search";
-import { ContactsDock } from "@/components/public/contacts-dock";
+import { LazyPublicWidgets } from "@/components/public/lazy-public-widgets";
 import { COMPANY_EMAIL, COMPANY_PHONES } from "@/lib/company-contacts";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
@@ -180,9 +179,9 @@ export async function PublicFooter() {
       {/* Пузырь поддержки живёт в подвале, а не в корневом layout'е:
           так он есть на всех публичных страницах и нигде не пересекается
           с виджетом кабинета — там свой, с авторизацией. */}
-      <PublicSupportWidget />
-      {/* «Задайте вопрос» — контакты и заявка на связь при прокрутке (правки 05.11.2026). */}
-      <ContactsDock telegramUrl={contactTelegramUrl(process.env)} />
+      {/* «Задайте вопрос» — контакты и заявка на связь при прокрутке (правки 05.11.2026).
+          Оба виджета грузятся, когда браузер свободен (seo-speed-pack-2026-11). */}
+      <LazyPublicWidgets telegramUrl={contactTelegramUrl(process.env)} />
       <div className="mx-auto grid max-w-[1200px] gap-8 px-4 py-10 sm:px-6 sm:py-12 md:gap-10 md:grid-cols-[1.4fr_auto_auto]">
         <div>
           <div className="text-[#0b1024]">
