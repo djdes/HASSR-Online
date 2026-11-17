@@ -3,18 +3,21 @@ import { test } from "node:test";
 import { USER_ROLE_LABELS } from "@/lib/user-roles";
 import { buildStaffTrainingRoleDisplay, presentStaffTrainingRole, presentStaffTrainingStaffOption, presentStaffTrainingStartDate, staffTrainingServerRevision } from "./staff-training-presentation";
 
+/** Подпись базовой роли (с 15.11.2026 — «Сотрудник», раньше «Повар»): тесты не зависят от текста. */
+const COOK = USER_ROLE_LABELS.cook;
+
 const copy = (key: "manager" | "head_chef" | "cook" | "waiter") => `translated:${key}`;
 
 test("only descriptor-proven role fallbacks are translated; custom-identical positions block collisions", () => {
   const fallback = { id: "a", name: "Employee", role: "cook" };
   const display = buildStaffTrainingRoleDisplay([fallback]);
-  assert.equal(presentStaffTrainingRole("Повар", display, copy), "translated:cook");
+  assert.equal(presentStaffTrainingRole(`${COOK}`, display, copy), "translated:cook");
   assert.equal(presentStaffTrainingRole("My role", display, copy), "My role");
-  assert.equal(presentStaffTrainingStaffOption("Повар - Employee", fallback, display, copy, "unnamed"), "translated:cook - Employee");
-  const custom = { id: "b", name: "Other", role: "waiter", jobPosition: { name: "Повар" } };
+  assert.equal(presentStaffTrainingStaffOption(`${COOK} - Employee`, fallback, display, copy, "unnamed"), "translated:cook - Employee");
+  const custom = { id: "b", name: "Other", role: "waiter", jobPosition: { name: `${COOK}` } };
   const blocked = buildStaffTrainingRoleDisplay([fallback, custom]);
-  assert.equal(presentStaffTrainingRole("Повар", blocked, copy), "Повар");
-  assert.equal(presentStaffTrainingStaffOption("Повар - Employee", fallback, blocked, copy, "unnamed"), "Повар - Employee");
+  assert.equal(presentStaffTrainingRole(`${COOK}`, blocked, copy), `${COOK}`);
+  assert.equal(presentStaffTrainingStaffOption(`${COOK} - Employee`, fallback, blocked, copy, "unnamed"), `${COOK} - Employee`);
 });
 
 test("presentation never invokes custom getters, and native labels remain raw for exotic users", () => {
@@ -22,8 +25,8 @@ test("presentation never invokes custom getters, and native labels remain raw fo
   const user = { id: "a", name: "Employee", get role() { reads++; return "cook"; } };
   const display = buildStaffTrainingRoleDisplay([user]);
   assert.equal(reads, 0);
-  assert.equal(presentStaffTrainingRole("Повар", display, copy), "Повар");
-  assert.equal(presentStaffTrainingStaffOption("Повар - Employee", user, display, copy, "unnamed"), "Повар - Employee");
+  assert.equal(presentStaffTrainingRole(`${COOK}`, display, copy), `${COOK}`);
+  assert.equal(presentStaffTrainingStaffOption(`${COOK} - Employee`, user, display, copy, "unnamed"), `${COOK} - Employee`);
   assert.equal(reads, 0);
 });
 
@@ -31,8 +34,8 @@ test("unnamed fallback is translated by source fields while custom-identical emp
   const unnamed = { id: "a", name: "", role: "cook" };
   const named = { id: "b", name: "без имени", role: "cook" };
   const display = buildStaffTrainingRoleDisplay([unnamed, named]);
-  assert.equal(presentStaffTrainingStaffOption("Повар - без имени", unnamed, display, copy, "unnamed"), "translated:cook - unnamed");
-  assert.equal(presentStaffTrainingStaffOption("Повар - без имени", named, display, copy, "unnamed"), "translated:cook - без имени");
+  assert.equal(presentStaffTrainingStaffOption(`${COOK} - без имени`, unnamed, display, copy, "unnamed"), "translated:cook - unnamed");
+  assert.equal(presentStaffTrainingStaffOption(`${COOK} - без имени`, named, display, copy, "unnamed"), "translated:cook - без имени");
 });
 
 test("server revisions retain equivalent serialized values and distinguish real config and removed-row changes", () => {

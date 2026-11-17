@@ -1,3 +1,4 @@
+import { USER_ROLE_LABELS } from "@/lib/user-roles";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -6,9 +7,12 @@ import {
 } from "./ppe-issuance-presentation";
 import { createPpeIssuanceRow, normalizePpeIssuanceConfig } from "@/lib/ppe-issuance-document";
 
+/** Подпись базовой роли (с 15.11.2026 — «Сотрудник», раньше «Повар»): тесты не зависят от текста. */
+const COOK = USER_ROLE_LABELS.cook;
+
 const users = [
   { id: "a", name: "Person A", role: "owner" },
-  { id: "b", name: "Person B", role: "cook", positionTitle: "Повар" },
+  { id: "b", name: "Person B", role: "cook", positionTitle: `${COOK}` },
   { id: "c", name: "Person C", role: "cook" },
 ];
 const copy = (key: string) => `localized:${key}`;
@@ -16,23 +20,23 @@ const copy = (key: string) => `localized:${key}`;
 
 test("role presentation follows live enum provenance and preserves explicit-identical/custom titles", () => {
   assert.equal(ppeRole("Управляющий", users[0], copy), "localized:manager");
-  assert.equal(ppeRole("Повар", users[1], copy), "Повар");
-  assert.equal(ppeRole("Повар", undefined, copy), "Повар");
+  assert.equal(ppeRole(`${COOK}`, users[1], copy), `${COOK}`);
+  assert.equal(ppeRole(`${COOK}`, undefined, copy), `${COOK}`);
   assert.equal(ppeRole("Custom", { ...users[2], role: "Custom" }, copy), "Custom");
-  assert.equal(ppeRole("Повар", { ...users[2], jobPosition: { name: "Повар" } }, copy), "Повар");
-  assert.equal(ppePositionOption("Повар", users, copy), "Повар");
-  assert.equal(ppePositionOption("Повар", [users[2]], copy), "localized:cook");
+  assert.equal(ppeRole(`${COOK}`, { ...users[2], jobPosition: { name: `${COOK}` } }, copy), `${COOK}`);
+  assert.equal(ppePositionOption(`${COOK}`, users, copy), `${COOK}`);
+  assert.equal(ppePositionOption(`${COOK}`, [users[2]], copy), "localized:cook");
   assert.equal(ppePositionOption("orphan title", users, copy), "orphan title");
-  assert.equal(ppeLegacyPositionOption("Повар", [{ ...users[2], positionTitle: "Custom position" }], copy), "localized:cook");
-  assert.equal(ppeLegacyPositionOption("Повар", users, copy), "Повар");
+  assert.equal(ppeLegacyPositionOption(`${COOK}`, [{ ...users[2], positionTitle: "Custom position" }], copy), "localized:cook");
+  assert.equal(ppeLegacyPositionOption(`${COOK}`, users, copy), `${COOK}`);
 });
 
 test("recipient presentation retains custom-identical and orphan historical labels and never mutates rows", () => {
   const managed = createPpeIssuanceRow({ id: "r", recipientUserId: "a", recipientTitle: "Other", recipientName: "Snapshot" });
   const serialized = JSON.stringify(managed);
   assert.equal(ppeRecipient(managed, users, copy), "localized:manager, Person A");
-  assert.equal(ppeRecipient({ ...managed, recipientUserId: "b" }, users, copy), "Повар, Person B");
-  assert.equal(ppeRecipient({ ...managed, recipientUserId: "gone", recipientTitle: "Повар" }, users, copy), "Повар, Snapshot");
+  assert.equal(ppeRecipient({ ...managed, recipientUserId: "b" }, users, copy), `${COOK}, Person B`);
+  assert.equal(ppeRecipient({ ...managed, recipientUserId: "gone", recipientTitle: `${COOK}` }, users, copy), `${COOK}, Snapshot`);
   assert.equal(JSON.stringify(managed), serialized);
 });
 

@@ -103,7 +103,7 @@ test("actual row create/save/reopen/edit and locale switching preserve drafts, c
     const submit = view.nodes.filter(node => typeof node.props.onClick === "function" && text(node.props.children) === m.actions.addRow).at(-1)!;
     (submit.props.onClick as () => void)(); await view.render(locale); await view.flush();
     assert.equal(view.config.rows.length, 1);
-    const row = view.config.rows[0]; assert.equal(row.productName, "Original O‘rik"); assert.equal(row.organolepticResult, "poor_quality"); assert.equal(row.storageCondition, "minus18"); assert.equal(row.responsiblePerson, "O‘tkir, Повар");
+    const row = view.config.rows[0]; assert.equal(row.productName, "Original O‘rik"); assert.equal(row.organolepticResult, "poor_quality"); assert.equal(row.storageCondition, "minus18"); assert.equal(row.responsiblePerson, "O‘tkir, Сотрудник");
     const saved = JSON.parse(String(view.requests.at(-1)?.init?.body));
     assert.equal(view.requests.at(-1)?.url, "/api/journal-documents/doc-original"); assert.equal(view.requests.at(-1)?.init?.method, "PATCH"); assert.equal(saved.config.rows[0].id, row.id); assert.ok(saved.knownRowIds.includes(row.id));
     const reopened = fixture(saved.config); const html = await reopened.render(locale); assert.ok(html.includes("Original O‘rik"));
