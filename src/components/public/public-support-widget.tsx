@@ -557,7 +557,7 @@ function SupportWidgetBody() {
           onClick={openWidget}
           // Подписанная «таблетка» под «Контактами» (`ContactsDock`): две
           // кнопки справа внизу — «Контакты» и «Поддержка» (07.11.2026).
-          className="fixed bottom-5 right-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#5566f6] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(85,102,246,0.6)] ring-1 ring-white/25 transition-colors duration-200 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 print:hidden"
+          className="fixed bottom-[calc(1.25rem+var(--public-sticky-offset,0px))] right-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#5566f6] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(85,102,246,0.6)] ring-1 ring-white/25 transition-colors duration-200 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 print:hidden"
           style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
           aria-label={
             incoming.unread > 0

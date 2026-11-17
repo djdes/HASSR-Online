@@ -45,12 +45,15 @@ function loadStagedParser() {
     "@/lib/journal-catalog": { ACTIVE_JOURNAL_CATALOG: [{ code: "hygiene", name: "Гигиенический журнал", formats: ["pdf"] }] },
     "@/lib/sphere-journal-rules": { paperJournalById: (id: string) => id === "paper-1" ? { name: "Paper title" } : null },
     "@/lib/blank-download-presentation": { normalizeBlankDownloadLocale: (value: unknown) => value === "en" || value === "uz" ? value : "ru" },
-    // Чистый модуль без импортов — берём настоящий.
+    // Чистые модули (extras берёт только blank-layout) — берём настоящие.
     "@/lib/blank-download-extras": (() => {
-      const extrasJs = ts.transpileModule(readFileSync(path.join(sourceRoot, "lib/blank-download-extras.ts"), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-      const extrasExports: Dict = {};
-      vm.runInNewContext(extrasJs, { exports: extrasExports, module: { exports: extrasExports } }, { filename: "blank-download-extras.js" });
-      return extrasExports;
+      const pure = (file: string, deps: Record<string, unknown> = {}) => {
+        const js = ts.transpileModule(readFileSync(path.join(sourceRoot, file), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+        const out: Dict = {};
+        vm.runInNewContext(js, { exports: out, module: { exports: out }, require: (name: string) => deps[name] }, { filename: path.basename(file).replace(/\.ts$/, ".js") });
+        return out;
+      };
+      return pure("lib/blank-download-extras.ts", { "@/lib/blank-layout": pure("lib/blank-layout.ts") });
     })(),
   };
   vm.runInNewContext(js, { exports, module: { exports }, require: (name: string) => modules[name] }, { filename: "blank-download-targets.js" });

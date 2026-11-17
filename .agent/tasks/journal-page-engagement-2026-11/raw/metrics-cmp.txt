@@ -1,0 +1,31 @@
+url                                                            слов «журнал уборки» плотн%  уборк журнал санпин  H2/3 табл
+ppt.ru/art/ohrana-truda/zhurnal-uborki-pomeshcheniy             941        5   0.53     10     17      3     4    2
+ppt.ru/art/ot/instruktsiya-kak-zapolnyat-zhurnal-uborki-i-de    827        2   0.24     12     18      0     5    2
+well-clean.online/zhurnal-uborki/                              2654       36   1.36     99    111      8    37    2
+www.trudohrana.ru/article/104877-25-m11-jurnal-ucheta-proved   1399        5   0.36     20     19      4     9    1
+dezoff.ru/dokumenty/zhurnal-generalnykh-uborok/                1308        2   0.15     12     28      5     5    0
+ekorfish.com/blog/khassp/zhurnal-genuborok/                     978        0    0.0     22     17      4     8    0
+www.genlayn.ru/catalog/zhurnaly_1/zhurnal_ucheta_tekushchikh    649        0    0.0      6     16     12     1    1
+haccp-online.ru/journals/Elektronnyj_zhurnal_uborki             932        8   0.86     16     42      4     5    0
+wesetup.ru/journals-info/cleaning#OLD                           723       10   1.38     24     21      7     7    1
+wesetup.ru/zhurnal-uborki                                       398        1   0.25     11     20      4     4    1
+wesetup.ru/journals-info/cleaning#NEW                          1373       11    0.8     40     31      9    17    2
+words median 978 mean 1291.3
+exact median 5 mean 8.3
+dens median 0.36 mean 0.5
+uborka median 16 mean 27.3
+journal median 19 mean 36
+sanpin median 4 mean 4
+h median 5 mean 10.4
+tables median 1 mean 1
+ppt.ru/art/ohrana-truda/zhurnal-uborki-p | Образец журнала дезинфекции помещения и оборудования в 2026 году | Журнал уборки помещений: порядок заполнения и образец
+ppt.ru/art/ot/instruktsiya-kak-zapolnyat | Образец журнала обработки помещений при коронавирусе в 2026 году | Инструкция: как заполнять журнал уборки и дезинфекции помеще
+well-clean.online/zhurnal-uborki/ | Журнал уборки помещений - Well Clean | Журнал уборки помещений: бланк, образец заполнения и электро
+www.trudohrana.ru/article/104877-25-m11- | Журнал генеральной уборки: скачать образец заполнения | Журнал учета проведения генеральной уборки: как правильно за
+dezoff.ru/dokumenty/zhurnal-generalnykh- | Журнал генеральных уборок: кто должен вести, какие сведения, образец | Журнал генеральных уборок: составляем график учета правильно
+ekorfish.com/blog/khassp/zhurnal-genubor | Журнал генеральных уборок: бланк и чек-лист | Экор | Урок 15. Журнал генеральных уборок и чек-лист уборки помещен
+www.genlayn.ru/catalog/zhurnaly_1/zhurna | журнал учета текущих уборок (санпин 2.1.3.2630-10) | Журнал учета текущих уборок (СанПиН 2.1.3.2630-10)
+haccp-online.ru/journals/Elektronnyj_zhu | Электронный журнал уборки | Haccp-Online | Электронный журнал уборки
+wesetup.ru/journals-info/cleaning#OLD | Журнал уборки помещений (текущей и генеральной) — образец — WeSetup | Журнал уборки помещений (текущей и генеральной)
+wesetup.ru/zhurnal-uborki | Журнал уборки помещений — скачать бланк 2026 — WeSetup | Журнал уборки помещений — электронный шаблон
+wesetup.ru/journals-info/cleaning#NEW | Журнал уборки помещений (текущей и генеральной) — образец — WeSetup | Журнал уборки помещений (текущей и генеральной)

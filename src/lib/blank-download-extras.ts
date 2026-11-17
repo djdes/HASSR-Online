@@ -16,7 +16,11 @@ export type BlankExtrasPerson = { name: string; position?: string };
 export type BlankEquipmentKind = "fridge" | "freezer";
 export type BlankExtrasEquipment = { name: string; kind?: BlankEquipmentKind };
 
+import { normalizeBlankLayout, type BlankLayout } from "@/lib/blank-layout";
+
 export type BlankExtras = {
+  /** Свой бланк из конструктора: название, колонки, строки (только PDF). */
+  layout?: BlankLayout;
   /** Ответственный за ведение журнала (ФИО и должность). */
   responsible?: BlankExtrasPerson;
   employees?: BlankExtrasPerson[];
@@ -108,6 +112,9 @@ export function normalizeBlankExtras(raw: unknown, code: string | null | undefin
 
   const responsible = cleanPerson(value.responsible);
   if (responsible) out.responsible = responsible;
+
+  const layout = normalizeBlankLayout(value.layout);
+  if (layout) out.layout = layout;
 
   if (sections.employees) {
     const employees = rows(value.employees, cleanPerson);

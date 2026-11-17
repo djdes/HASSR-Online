@@ -17601,7 +17601,16 @@
       "landingGuidePrefix": "Batafsil sharh: {label}",
       "heroTry": "Telefonda bepul yuritish",
       "heroTrust": "{trialDays, number} {trialDays, plural, other {kun}} bepul, kartasiz · SanPiN 2.3/2.4.4282-26 talablariga mos",
-      "sidebarTitle": "Bu jurnal — telefondan QR orqali"
+      "sidebarTitle": "Bu jurnal — telefondan QR orqali",
+      "audienceHeading": "Kimga kerak:",
+      "usageCount": "{count, number} {count, plural, other {tashkilot}} WeSetup’da yuritadi",
+      "sampleRowsHeading": "To‘ldirish namunasi",
+      "finesHeading": "Jarimalar va javobgarlik",
+      "videoHeading": "Ishda qanday ko‘rinadi",
+      "videoLead": "Xodim QR-kod orqali telefondan qanday yozuv qilishi va rahbar o‘tkazib yuborilganlarni ko‘rishi haqida bir daqiqa.",
+      "finalTitle": "Jurnallarni orqaga sana bilan to‘ldirishni to‘xtating",
+      "finalBody": "Xodimlar telefondan yozuv qiladi, tizim o‘tkazib yuborilganlarni eslatadi, tekshiruvdan oldin jurnal SanPiN shaklida PDF ga chiqariladi.",
+      "stickyTry": "Sinab ko‘rish"
     },
     "descriptions": {
       "hygiene": "O‘tkir respirator virusli infeksiyalar, oshqozon-ichak infeksiyalari yoki teridagi yiringli zararlanish alomatlari bor shaxslarni oziq-ovqat bilan ishlashdan chetlashtiradi. Har bir xodim uchun har smenada yuritiladi.",
@@ -19901,7 +19910,10 @@
       "accountCreatedBody": "Login, parol va kirish havolasi <email>{address}</email> manziliga yuborilgan xatda.",
       "accountExistsTitle": "Sizda allaqachon WeSetup kabineti bor",
       "accountExistsBody": "Kiring — “{title}”ni telefonda yuritish mumkin.",
-      "signIn": "Kirish"
+      "signIn": "Kirish",
+      "firstEntryTitle": "Birinchi yozuvni hozir qiling",
+      "firstEntryBody": "Telefon kamerasini QR-kodga qarating — kabinetingizda shu jurnal ochiladi.",
+      "firstEntryLink": "Shu qurilmada ochish"
     },
     "notice": {
       "sending": "Shablon tayyorlanmoqda…",
@@ -31954,5 +31966,25 @@
       "glossary": "Glossariy",
       "feature": "Imkoniyatlar"
     }
+  },
+  "blankConstructor": {
+    "heading": "O‘z blankingizni yarating",
+    "lead": "Nomi, ustunlar va qatorlar sonini o‘zgartiring — sarlavhangiz bilan PDF pochtangizga keladi.",
+    "open": "Blankni sozlash",
+    "titleLabel": "Jurnal nomi",
+    "columnsLabel": "Ustunlar",
+    "columnsLimit": "{max, number} tagacha ustun",
+    "columnPlaceholder": "Ustun nomi",
+    "columnAria": "Ustun {index, number}",
+    "moveUp": "Yuqoriga",
+    "moveDown": "Pastga",
+    "removeColumn": "Ustunni olib tashlash",
+    "addColumn": "Ustun qo‘shish",
+    "rowsLabel": "Blankdagi qatorlar: {rows, number}",
+    "preview": "Ko‘rinishi",
+    "untitled": "Nomsiz",
+    "previewMore": "… jami qatorlar: {rows, number}",
+    "invalid": "Nom va kamida {min, number} ta ustun kerak",
+    "reset": "Asl holiga qaytarish"
   }
 }

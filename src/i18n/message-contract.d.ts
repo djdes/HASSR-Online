@@ -17602,7 +17602,16 @@ export type MessageContract = {
       "landingGuidePrefix": "Подробный разбор: {label}",
       "heroTry": "Вести с телефона бесплатно",
       "heroTrust": "{trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} бесплатно, без карты · соответствует СанПиН 2.3/2.4.4282-26",
-      "sidebarTitle": "Этот журнал — с телефона по QR"
+      "sidebarTitle": "Этот журнал — с телефона по QR",
+      "audienceHeading": "Кому нужен:",
+      "usageCount": "{count, number} {count, plural, one {организация ведёт} few {организации ведут} many {организаций ведут} other {организации ведут}} в WeSetup",
+      "sampleRowsHeading": "Образец заполнения",
+      "finesHeading": "Штрафы и ответственность",
+      "videoHeading": "Как это выглядит в работе",
+      "videoLead": "Минута о том, как сотрудник отмечает запись по QR-коду с телефона, а руководитель видит пропуски.",
+      "finalTitle": "Перестаньте заполнять журналы задним числом",
+      "finalBody": "Сотрудники отмечают записи с телефона, система напоминает о пропусках, а перед проверкой журнал выгружается в PDF в форме СанПиН.",
+      "stickyTry": "Попробовать"
     },
     "descriptions": {
       "hygiene": "Отстраняет от работы с пищей людей с симптомами ОРВИ, ЖКТ-инфекций, гнойничковых поражений кожи. Ведётся ежесменно по каждому сотруднику.",
@@ -19902,7 +19911,10 @@ export type MessageContract = {
       "accountCreatedBody": "Логин, пароль и ссылка для входа — в письме на <email>{address}</email>.",
       "accountExistsTitle": "У вас уже есть кабинет WeSetup",
       "accountExistsBody": "Войдите — «{title}» можно вести с телефона.",
-      "signIn": "Войти"
+      "signIn": "Войти",
+      "firstEntryTitle": "Сделайте первую запись прямо сейчас",
+      "firstEntryBody": "Наведите камеру телефона на QR — откроется этот журнал в вашем кабинете.",
+      "firstEntryLink": "Открыть на этом устройстве"
     },
     "notice": {
       "sending": "Готовим шаблон…",
@@ -31955,5 +31967,25 @@ export type MessageContract = {
       "glossary": "Глоссарий",
       "feature": "Возможности"
     }
+  },
+  "blankConstructor": {
+    "heading": "Соберите свой бланк",
+    "lead": "Поменяйте название, колонки и число строк — PDF с вашей шапкой придёт на почту.",
+    "open": "Настроить бланк",
+    "titleLabel": "Название журнала",
+    "columnsLabel": "Колонки",
+    "columnsLimit": "до {max, number} колонок",
+    "columnPlaceholder": "Название колонки",
+    "columnAria": "Колонка {index, number}",
+    "moveUp": "Выше",
+    "moveDown": "Ниже",
+    "removeColumn": "Убрать колонку",
+    "addColumn": "Добавить колонку",
+    "rowsLabel": "Строк на бланке: {rows, number}",
+    "preview": "Как будет выглядеть",
+    "untitled": "Без названия",
+    "previewMore": "… всего строк: {rows, number}",
+    "invalid": "Нужно название и хотя бы {min, number} колонки",
+    "reset": "Вернуть как было"
   }
 };

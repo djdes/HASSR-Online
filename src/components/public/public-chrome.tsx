@@ -102,15 +102,18 @@ function PublicHeaderAnon({ showPricing, pricingLabel, loginLabel }: { showPrici
       {showPricing ? (
         <Link
           href="/pricing"
-          className="text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024]"
+          // На телефоне шапке не хватает ширины: «Тарифы» — в меню и подвале.
+          className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:inline"
         >
           {pricingLabel}</Link>
       ) : null}
       <Link
         href="/login"
-        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:px-4"
+        aria-label={loginLabel}
+        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:px-4"
       >
-        {loginLabel}<LogIn className="size-4 text-[#5566f6]" />
+        {/* На телефоне — только значок: подпись не влезала рядом с поиском и языком. */}
+        <span className="hidden sm:inline">{loginLabel}</span><LogIn className="size-4 text-[#5566f6]" />
       </Link>
     </>
   );
