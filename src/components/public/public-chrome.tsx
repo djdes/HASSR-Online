@@ -3,6 +3,7 @@ import { getSiteLocale } from "@/i18n/site-locale-server";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { PublicSupportWidget } from "@/components/public/public-support-widget";
+import { SiteSearch } from "@/components/public/site-search";
 import { ContactsDock } from "@/components/public/contacts-dock";
 import { COMPANY_EMAIL, COMPANY_PHONES } from "@/lib/company-contacts";
 import { contactTelegramUrl } from "@/lib/contact-us";
@@ -72,7 +73,8 @@ export async function PublicHeader({
         <Link href="/" className="text-[#0b1024]" aria-label={t("homeAria")}>
           <BrandWithTagline tagline={t("tagline")} />
         </Link>
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex items-center gap-2 sm:gap-5">
+          <SiteSearch />
           <LanguageSwitch />
           {link("journals-info", t("journals"), "/journals-info")}
           {link("blog", t("blog"), "/blog")}

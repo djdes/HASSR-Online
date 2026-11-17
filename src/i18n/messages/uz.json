@@ -17598,7 +17598,10 @@
       "printFormsLink": "Bosma shakllar va namunalar (PDF/DOCX)",
       "sanpinGuideLink": "SanPiN 2.3/2.4.4282-26 sharhi",
       "autofillFeatureLink": "Datchiklar va hisob tizimlaridan ma’lumotlar",
-      "landingGuidePrefix": "Batafsil sharh: {label}"
+      "landingGuidePrefix": "Batafsil sharh: {label}",
+      "heroTry": "Telefonda bepul yuritish",
+      "heroTrust": "{trialDays, number} {trialDays, plural, other {kun}} bepul, kartasiz · SanPiN 2.3/2.4.4282-26 talablariga mos",
+      "sidebarTitle": "Bu jurnal — telefondan QR orqali"
     },
     "descriptions": {
       "hygiene": "O‘tkir respirator virusli infeksiyalar, oshqozon-ichak infeksiyalari yoki teridagi yiringli zararlanish alomatlari bor shaxslarni oziq-ovqat bilan ishlashdan chetlashtiradi. Har bir xodim uchun har smenada yuritiladi.",
@@ -31923,5 +31926,33 @@
     "invalidTitle": "Havola yaroqsiz",
     "invalidBody": "Muddati o‘tgan yoki to‘liq nusxalanmagan bo‘lishi mumkin. Shunchaki xatga javob yozing — o‘qib chiqamiz.",
     "support": "Qo‘llab-quvvatlash:"
+  },
+  "publicSearch": {
+    "button": "Qidiruv",
+    "open": "Sayt bo‘yicha qidiruv",
+    "title": "Sayt bo‘yicha qidiruv",
+    "description": "WeSetup jurnallari, blankalari, buyruqlari, maqolalari va bo‘limlari",
+    "placeholder": "Jurnal, blanka, buyruq, maqola…",
+    "clear": "Tozalash",
+    "close": "Yopish",
+    "loading": "Yuklanmoqda…",
+    "error": "Qidiruvni yuklab bo‘lmadi.",
+    "retry": "Qayta urinish",
+    "popular": "Ko‘p qidiriladi",
+    "emptyTitle": "«{query}» bo‘yicha hech narsa topilmadi",
+    "emptyBody": "Boshqa so‘zni sinab ko‘ring — masalan, «tozalash», «harorat». Yoki chatda yozing — kerakli jurnalni aytib beramiz.",
+    "hintNavigate": "↑↓ — tanlash",
+    "hintOpen": "Enter — ochish",
+    "hintClose": "Esc — yopish",
+    "kinds": {
+      "journal": "Jurnallar",
+      "blank": "Blankalar",
+      "order": "Buyruqlar",
+      "page": "Bo‘limlar",
+      "kb": "Bilimlar bazasi",
+      "blog": "Blog",
+      "glossary": "Glossariy",
+      "feature": "Imkoniyatlar"
+    }
   }
 }

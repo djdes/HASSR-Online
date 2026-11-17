@@ -17598,7 +17598,10 @@
       "printFormsLink": "Printable forms and samples (PDF/DOCX)",
       "sanpinGuideLink": "SanPiN 2.3/2.4.4282-26 guide",
       "autofillFeatureLink": "Data from sensors and accounting systems",
-      "landingGuidePrefix": "Detailed guide: {label}"
+      "landingGuidePrefix": "Detailed guide: {label}",
+      "heroTry": "Keep it on your phone for free",
+      "heroTrust": "{trialDays, number} {trialDays, plural, one {day} other {days}} free, no card · compliant with SanPiN 2.3/2.4.4282-26",
+      "sidebarTitle": "Keep this journal on your phone via QR"
     },
     "descriptions": {
       "hygiene": "Keeps people with symptoms of acute respiratory viral infections, gastrointestinal infections or pustular skin lesions away from food handling. Completed for each employee on every shift.",
@@ -31923,5 +31926,33 @@
     "invalidTitle": "The link is invalid",
     "invalidBody": "It may have expired or been copied incompletely. Just reply to the email — we will read it.",
     "support": "Support:"
+  },
+  "publicSearch": {
+    "button": "Search",
+    "open": "Search the site",
+    "title": "Search the site",
+    "description": "Journals, forms, orders, articles and WeSetup sections",
+    "placeholder": "Journal, form, order, article…",
+    "clear": "Clear",
+    "close": "Close",
+    "loading": "Loading…",
+    "error": "Could not load search.",
+    "retry": "Retry",
+    "popular": "Popular",
+    "emptyTitle": "Nothing found for “{query}”",
+    "emptyBody": "Try another word — for example “cleaning”, “temperature” or “rejection”. Or write to us in the chat and we will suggest the right journal.",
+    "hintNavigate": "↑↓ — select",
+    "hintOpen": "Enter — open",
+    "hintClose": "Esc — close",
+    "kinds": {
+      "journal": "Journals",
+      "blank": "Forms",
+      "order": "Orders",
+      "page": "Sections",
+      "kb": "Knowledge base",
+      "blog": "Blog",
+      "glossary": "Glossary",
+      "feature": "Features"
+    }
   }
 }

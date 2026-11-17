@@ -21,6 +21,7 @@ import { getFillingGuide } from "@/lib/journal-filling-guides";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ogImageUrl } from "@/lib/og-image";
 import { BlankDownloadButton } from "@/components/public/blank-download";
+import { blankRegisterHref } from "@/lib/blank-download";
 
 import { createTranslator } from "use-intl/core";
 import { getSiteLocale } from "@/i18n/site-locale-server";
@@ -167,6 +168,31 @@ export default async function JournalInfoDetailPage({
             <p className="mt-4 max-w-[720px] text-[16px] leading-[1.6] text-white/80 md:text-[18px]">
               {info.tagline} {info.why}
             </p>
+            {/* Главные действия — на первом экране (анализ конкурентов
+                2026-11-17): у haccp-online и well-clean «Скачать бланк» и
+                «Попробовать» стоят в шапке, у нас до них нужно было листать. */}
+            <div className="mt-6 flex flex-wrap items-center gap-3" data-testid="journal-hero-actions">
+              {SAMPLE_CODES.has(code) ? (
+                <BlankDownloadButton
+                  target={{ kind: "code", code }}
+                  format="pdf"
+                  title={catalogName}
+                  place="journal-hero"
+                  className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-5 text-[15px] font-medium text-[#0b1024] transition-colors hover:bg-[#eef1ff]"
+                >
+                  <FileDown className="size-4 text-[#5566f6]" />
+                </BlankDownloadButton>
+              ) : null}
+              <Link
+                href={blankRegisterHref({ target: { kind: "code", code } })}
+                data-testid="journal-hero-register"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0]"
+              >
+                {t("heroTry")}
+                <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <p className="mt-3 text-[13px] text-white/60">{t("heroTrust", { trialDays: TRIAL_DAYS })}</p>
           </div>
         </div>
       </section>
@@ -356,15 +382,12 @@ export default async function JournalInfoDetailPage({
           {/* SIDEBAR */}
           <aside className="space-y-5">
             <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-6">
-              <div className="text-[13px] font-medium text-[#6f7282]">
-                {t("codeLabel")}
-              </div>
-              <div className="mt-1 break-all font-mono text-[15px] font-semibold text-[#0b1024]">
-                {info.code}
+              <div className="text-[15px] font-semibold text-[#0b1024]">
+                {t("sidebarTitle")}
               </div>
               <Link
-                href="/register"
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-3 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
+                href={blankRegisterHref({ target: { kind: "code", code } })}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 py-3 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
               >
                 {t("tryFree")}
                 <ArrowRight className="size-4" />
