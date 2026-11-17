@@ -8,7 +8,8 @@ import { journalSampleRateLimiter } from "@/lib/rate-limit";
 import { journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
 import type { BlankTarget } from "@/lib/blank-download";
 import { verifyBlankDownloadToken } from "@/lib/blank-download-token";
-import { blankPdfQr } from "@/lib/blank-qr-token";
+import type { BlankExtras } from "@/lib/blank-download-extras";
+import { blankFileQrUrl, loadBlankDownloadExtras } from "@/lib/blank-download-extras.server";
 
 import { localizedJournalSampleInput, sampleDownloadDenied, sampleDownloadError, sampleLocaleFromUrl, sampleFooterLines } from "@/lib/public-sample-download-presentation";
 
@@ -53,11 +54,19 @@ export async function GET(
   const blank = search.get("blank") === "1" || !inline;
   let email: string | null = null;
   let company: string | undefined;
+  let organizationId: string | null = null;
+  let extras: BlankExtras | null = null;
   if (!inline) {
     const check = verifyBlankDownloadToken(search.get("t"), { target, format: "pdf" });
     if (!check.ok) return sampleDownloadDenied(request, target, "pdf", check.reason, locale);
     email = check.email;
     company = check.company;
+    organizationId = check.organizationId ?? null;
+    // «Дополнительно» из окна — сотрудники, оборудование, помещения в бланке.
+    extras = await loadBlankDownloadExtras(check.extrasRef, code).catch((error) => {
+      console.error("[journal-samples] extras load failed", error);
+      return null;
+    });
   }
 
   const ip = clientIp(request) ?? "unknown";
@@ -68,8 +77,12 @@ export async function GET(
   try {
     // QR на /qb — в шапке каждой страницы, строка копирайта — внизу.
     const { buffer, fileName } = renderJournalDocumentPdf({
-      ...await localizedJournalSampleInput(code, locale, { blank, company }),
-      qr: { ...blankPdfQr(journalPdfQrOrigin(), { target, email }), locale, footer: (await sampleFooterLines(locale)).join(" · ") },
+      ...await localizedJournalSampleInput(code, locale, { blank, company, extras }),
+      qr: {
+        url: blankFileQrUrl({ origin: journalPdfQrOrigin(), target, email, organizationId }),
+        locale,
+        footer: (await sampleFooterLines(locale)).join(" · "),
+      },
     });
 
     return new NextResponse(new Uint8Array(buffer), {

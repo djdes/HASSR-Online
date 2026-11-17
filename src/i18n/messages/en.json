@@ -17507,6 +17507,7 @@
       "registrationIp": "Registration IP",
       "lastLoginIp": "Last sign-in IP",
       "lastLoginAt": "Last sign-in",
+      "localTime": "Client’s local time",
       "none": "No data: addresses are recorded on sign-in since 26.08.2026"
     },
     "readOnly": "Plan and points can be changed by a team member with the “Payments and plans” section."
@@ -19733,6 +19734,7 @@
   },
   "docxSample": {
     "system": "HACCP SYSTEM",
+    "responsible": "Person in charge: {name}",
     "taxId": "Tax ID {number}",
     "started": "Started: {date}",
     "finished": "Finished: ______________",
@@ -19825,10 +19827,36 @@
       "fileLabel": "Template ({format})",
       "label": "Email address",
       "placeholder": "you@company.ru",
-      "domainMissing": "This email domain does not exist. Check the address; the email will not be delivered."
+      "domainMissing": "This domain does not exist — check the address.",
+      "typoChip": "{suggestion}?",
+      "typoFix": "Change to {suggestion}",
+      "checking": "Checking the address",
+      "invalid": "Check the email address."
     },
     "company": {
       "placeholder": "Company name for the log header (optional)"
+    },
+    "extras": {
+      "toggle": "More details",
+      "lead": "We will add them to the journal and, with quick sign-up, straight to your account. You can skip this.",
+      "responsibleTitle": "Person in charge of the journal",
+      "name": "Full name",
+      "position": "Position",
+      "employeesTitle": "Employees",
+      "employeeName": "Employee full name",
+      "addEmployee": "Add an employee",
+      "equipmentTitle": "Equipment",
+      "coldEquipmentTitle": "Fridges and freezers",
+      "equipmentName": "Name, e.g. “Fryer No. 1”",
+      "coldEquipmentName": "E.g. “Fridge No. 1”",
+      "equipmentKind": "Type",
+      "fridge": "Fridge",
+      "freezer": "Freezer",
+      "addEquipment": "Add equipment",
+      "roomsTitle": "Rooms",
+      "roomName": "E.g. “Hot kitchen”",
+      "addRoom": "Add a room",
+      "remove": "Remove row"
     },
     "phone": {
       "label": "Phone",

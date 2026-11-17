@@ -17507,6 +17507,7 @@
       "registrationIp": "Ro‘yxatdan o‘tishdagi IP",
       "lastLoginIp": "Oxirgi kirish IP",
       "lastLoginAt": "Oxirgi kirish",
+      "localTime": "Mijozning mahalliy vaqti",
       "none": "Ma’lumot yo‘q: manzillar 26.08.2026 dan boshlab kirishda yoziladi"
     },
     "readOnly": "Tarif va ballarni «To‘lovlar va tariflar» bo‘limi bor xodim o‘zgartira oladi."
@@ -19733,6 +19734,7 @@
   },
   "docxSample": {
     "system": "HACCP TIZIMI",
+    "responsible": "Mas’ul: {name}",
     "taxId": "STIR {number}",
     "started": "Boshlangan: {date}",
     "finished": "Tugallangan: ______________",
@@ -19825,10 +19827,36 @@
       "fileLabel": "Shablon ({format})",
       "label": "Elektron pochta",
       "placeholder": "you@company.ru",
-      "domainMissing": "Bunday email domeni mavjud emas. Manzilni tekshiring, xat yetkazilmaydi."
+      "domainMissing": "Bunday domen yo‘q — manzilni tekshiring.",
+      "typoChip": "{suggestion}?",
+      "typoFix": "{suggestion} ga tuzatish",
+      "checking": "Manzil tekshirilmoqda",
+      "invalid": "Pochta manzilini tekshiring."
     },
     "company": {
       "placeholder": "Tashkilot nomi (jurnal sarlavhasi uchun)"
+    },
+    "extras": {
+      "toggle": "Qo‘shimcha",
+      "lead": "Jurnalga yozib qo‘yamiz, tezkor ro‘yxatdan o‘tishda esa — darhol kabinetingizga. To‘ldirish shart emas.",
+      "responsibleTitle": "Jurnal uchun mas’ul",
+      "name": "F.I.Sh.",
+      "position": "Lavozim",
+      "employeesTitle": "Xodimlar",
+      "employeeName": "Xodimning F.I.Sh.",
+      "addEmployee": "Xodim qo‘shish",
+      "equipmentTitle": "Uskunalar",
+      "coldEquipmentTitle": "Muzlatkichlar va muzlatgichlar",
+      "equipmentName": "Nomi, masalan «1-fritur»",
+      "coldEquipmentName": "Masalan, «1-muzlatkich»",
+      "equipmentKind": "Turi",
+      "fridge": "Muzlatkich",
+      "freezer": "Muzlatgich",
+      "addEquipment": "Uskuna qo‘shish",
+      "roomsTitle": "Xonalar",
+      "roomName": "Masalan, «Issiq sex»",
+      "addRoom": "Xona qo‘shish",
+      "remove": "Qatorni olib tashlash"
     },
     "phone": {
       "label": "Telefon",

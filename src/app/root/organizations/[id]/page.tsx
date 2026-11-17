@@ -35,6 +35,7 @@ import { loadClientConversations } from "@/lib/client-conversations.server";
 import { clientEmailHistory } from "@/lib/client-email.server";
 import { listEmailSenders } from "@/lib/email-sender-access.server";
 import { clientDocumentRecipients } from "@/lib/client-documents";
+import { countryFlag, countryName, localTimeLabel, lookupIpGeo, normalizeTimeZone, utcOffsetLabel, type IpGeo } from "@/lib/ip-geo";
 
 export const dynamic = "force-dynamic";
 
@@ -189,6 +190,16 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       platformTitle: null,
     }));
   const owner = contacts?.owner ?? null;
+  // Страна по IP владельца и местное время клиента (спека
+  // blank-download-extras-2026-11). Гео — с таймаутом и кешем; сбой — без строки.
+  const [registrationGeo, lastLoginGeo] = await Promise.all([
+    owner?.registrationIp ? lookupIpGeo(owner.registrationIp).catch(() => null) : Promise.resolve(null),
+    owner?.lastLoginIp && owner.lastLoginIp !== owner.registrationIp
+      ? lookupIpGeo(owner.lastLoginIp).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+  const clientZone = normalizeTimeZone(org.timezone);
+  const clientNow = new Date();
   const requisites = contacts?.requisites ?? null;
   const company = contacts?.company ?? { phones: [], emails: [], accountantEmail: null, website: null, address: null };
   const withContacts = people.filter((person) => person.phone || person.email).length;
@@ -597,9 +608,29 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
         <section id="security" className={`${CARD} scroll-mt-16 p-5 md:p-6`}>
           <div className={SECTION_TITLE}>{t("security.title")}</div>
           {owner && (owner.registrationIp || owner.lastLoginIp) ? (
-            <dl className="mt-3 grid gap-4 text-[13.5px] sm:grid-cols-3">
-              <IpRow label={t("security.registrationIp")} ip={owner.registrationIp} />
-              <IpRow label={t("security.lastLoginIp")} ip={owner.lastLoginIp} />
+            <dl className="mt-3 grid gap-4 text-[13.5px] sm:grid-cols-2 lg:grid-cols-4">
+              <IpRow label={t("security.registrationIp")} ip={owner.registrationIp} geo={registrationGeo} locale={locale} />
+              <IpRow
+                label={t("security.lastLoginIp")}
+                ip={owner.lastLoginIp}
+                geo={owner.lastLoginIp && owner.lastLoginIp === owner.registrationIp ? registrationGeo : lastLoginGeo}
+                locale={locale}
+              />
+              <div data-testid="client-local-time">
+                <dt className="text-[#8a8ea4]">{t("security.localTime")}</dt>
+                <dd className="mt-1 text-[#0b1024]">
+                  {clientZone ? (
+                    <>
+                      <span className="tabular-nums">{localTimeLabel(clientZone, clientNow)}</span>{" "}
+                      <span className="text-[12px] text-[#8a8ea4]">
+                        {utcOffsetLabel(clientZone, clientNow)} · {clientZone}
+                      </span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+              </div>
               <div>
                 <dt className="text-[#8a8ea4]">{t("security.lastLoginAt")}</dt>
                 <dd className="mt-1 text-[#0b1024]">{owner.lastLoginAt ? organizationDate(new Date(owner.lastLoginAt), locale) : "—"}</dd>
@@ -663,7 +694,8 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function IpRow({ label, ip }: { label: string; ip: string | null }) {
+function IpRow({ label, ip, geo, locale }: { label: string; ip: string | null; geo?: IpGeo | null; locale?: string }) {
+  const place = geo ? [countryName(geo.countryCode, locale), geo.city].filter(Boolean).join(", ") : "";
   return (
     <div>
       <dt className="text-[#8a8ea4]">{label}</dt>
@@ -675,6 +707,11 @@ function IpRow({ label, ip }: { label: string; ip: string | null }) {
         ) : (
           "—"
         )}
+        {geo ? (
+          <div className="mt-0.5 text-[12.5px] text-[#3c4053]" data-testid="ip-geo">
+            <span aria-hidden="true">{countryFlag(geo.countryCode)}</span> {place}
+          </div>
+        ) : null}
       </dd>
     </div>
   );

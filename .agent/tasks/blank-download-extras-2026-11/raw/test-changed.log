@@ -1,0 +1,18 @@
+
+> haccp-online@0.1.0 test:changed
+> node scripts/test-changed.mjs
+
+→ [test:changed] Эскалация до полного прогона: Найдено 99 связанных тестовых файлов (порог 80)
+
+=== Test stats: pass=6228, fail=6 ===
+
+✗ НОВЫЕ регрессии (нет в baseline):
+  - actual organization page retains ROOT gate, tenant reads, totals, custom values and PDF eligibility in all locales
+  - actual row create/save/reopen/edit and locale switching preserve drafts, canonical options, snapshots and PATCH payload
+  - all built-in document guides have complete semantic copy and exact Russian compatibility
+  - only descriptor-proven role fallbacks are translated; custom-identical positions block collisions
+  - role presentation follows live enum provenance and preserves explicit-identical/custom titles
+  - unnamed fallback is translated by source fields while custom-identical employee names remain verbatim
+
+Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
+Если регрессии — почините код.

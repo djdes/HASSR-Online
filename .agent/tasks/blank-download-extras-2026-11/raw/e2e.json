@@ -1,0 +1,55 @@
+{
+  "email": "e2e-autoreg@gmail.com",
+  "checkboxes": 2,
+  "marketingPresent": 0,
+  "registerChecked": true,
+  "heightsWhileTyping": [
+    606
+  ],
+  "typoChip": "gmail.com?",
+  "emailAfterFix": "bugdenes@gmail.com",
+  "extrasBadge": "Дополнительно\n3",
+  "requestBody": {
+    "email": "e2e-autoreg@gmail.com",
+    "code": "hygiene",
+    "format": "docx",
+    "locale": "ru",
+    "consent": true,
+    "tz": "Asia/Yekaterinburg",
+    "website": "",
+    "elapsedMs": 5848,
+    "extras": {
+      "responsible": {
+        "name": "Иванова Мария Петровна",
+        "position": "Заведующая"
+      },
+      "employees": [
+        {
+          "name": "Петров Сергей"
+        },
+        {
+          "name": "Сидорова Анна",
+          "position": "Повар"
+        }
+      ]
+    },
+    "register": true,
+    "source": {
+      "place": "blank:hygiene",
+      "landing": "/journals-info/hygiene",
+      "referrer": "",
+      "utmSource": "",
+      "utmMedium": "",
+      "utmCampaign": ""
+    }
+  },
+  "response": {
+    "ok": true,
+    "url": "/api/journal-samples/hygiene/docx?t=eyJ2IjoxLCJlIjoiZTJlLWF1dG9yZWdAZ21haWwuY29tIiwidCI6ImNvZGU6aHlnaWVuZSIsImYiOiJkb2N4IiwieCI6MTc5NTUyMTg4OSwiayI6ImNtd2tuYWkwOTAwMDBoODdkMnhnZXd6MjEiLCJvIjoiY213a25haWFwMDAwMWg4N2Qycml0OXk2ZiJ9.hY_HnDDd3pnDF5XDFImrCzru7ZqKfIEIAIUIEd1etYk",
+    "emailed": true,
+    "consentVersion": "2026-09-30",
+    "account": "created",
+    "page": "/journals-info/hygiene?download=docx"
+  },
+  "mobileScrollWidth": 390
+}

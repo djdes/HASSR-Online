@@ -4,6 +4,7 @@ import { localizedHref } from "@/i18n/site-locale";
 import { translatorFor } from "@/i18n/translator";
 import type { Messages } from "@/i18n/messages";
 import type { BlankFormat, BlankTarget } from "@/lib/blank-download";
+import type { BlankExtras } from "@/lib/blank-download-extras";
 import { blankDownloadDenied, type BlankDownloadCheck } from "@/lib/blank-download-token";
 import {
   buildJournalBlankInput,
@@ -31,10 +32,10 @@ export async function sampleDownloadError(locale: Locale, key: SampleError, stat
 export async function localizedJournalSampleInput(
   code: SampleJournalCode,
   locale: Locale,
-  options: { blank?: boolean; company?: string | null } = {},
+  options: { blank?: boolean; company?: string | null; extras?: BlankExtras | null } = {},
 ) {
   const input = options.blank
-    ? buildJournalBlankInput(code, { company: options.company })
+    ? buildJournalBlankInput(code, { company: options.company, extras: options.extras })
     : buildJournalSampleInput(code);
   if (locale === "ru") return { ...input, locale };
   const t = await translatorFor(locale);

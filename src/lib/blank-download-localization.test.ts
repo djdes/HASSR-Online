@@ -45,6 +45,13 @@ function loadStagedParser() {
     "@/lib/journal-catalog": { ACTIVE_JOURNAL_CATALOG: [{ code: "hygiene", name: "Гигиенический журнал", formats: ["pdf"] }] },
     "@/lib/sphere-journal-rules": { paperJournalById: (id: string) => id === "paper-1" ? { name: "Paper title" } : null },
     "@/lib/blank-download-presentation": { normalizeBlankDownloadLocale: (value: unknown) => value === "en" || value === "uz" ? value : "ru" },
+    // Чистый модуль без импортов — берём настоящий.
+    "@/lib/blank-download-extras": (() => {
+      const extrasJs = ts.transpileModule(readFileSync(path.join(sourceRoot, "lib/blank-download-extras.ts"), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+      const extrasExports: Dict = {};
+      vm.runInNewContext(extrasJs, { exports: extrasExports, module: { exports: extrasExports } }, { filename: "blank-download-extras.js" });
+      return extrasExports;
+    })(),
   };
   vm.runInNewContext(js, { exports, module: { exports }, require: (name: string) => modules[name] }, { filename: "blank-download-targets.js" });
   return exports.parseBlankDownloadRequest as (body: unknown, version: string) => { ok: boolean; status?: number; errorCode?: string; needConsent?: boolean; value?: Dict };
@@ -135,6 +142,11 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
     "@/lib/tariff-plans": { TRIAL_DAYS: 14 },
     "@/components/ui/dialog": Object.fromEntries(["Dialog", "DialogContent", "DialogDescription", "DialogHeader", "DialogTitle"].map((name) => [name, passthrough])),
     "@/components/ui/email-field": { EmailHint: () => null, useEmailField },
+    "@/components/public/blank-download-extras": {
+      BlankDownloadExtras: (props: Dict) => jsxRuntime.jsx("div", { "data-testid": "blank-download-extras", "data-code": props.code }),
+      blankExtrasPayload: () => null,
+      emptyBlankExtrasDraft: () => ({ responsible: { name: "", position: "" }, employees: [], equipment: [], rooms: [] }),
+    },
     "@/lib/blank-download": {
       BLANK_EMAIL_STORAGE_KEY: "blank-email", BLANK_FORMAT_LABEL: { pdf: "PDF", docx: "Word" },
       blankFilePath: () => "/blank.pdf", blankRegisterHref: ({ email }: { email: string }) => `/register?email=${encodeURIComponent(email)}`, readRememberedBlankEmail: (raw: string | null) => raw ? JSON.parse(raw) : null,
@@ -189,7 +201,7 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
 }
 
 for (const locale of ["ru", "en", "uz"] as const) {
-  test(`${locale}: real blank-download client agrees consent snapshot, preserves opt-in defaults and maps unknown errors`, async () => {
+  test(`${locale}: real blank-download client agrees consent snapshot, has two checkboxes and maps unknown errors`, async () => {
     const app = render(locale, { status: 400, body: { error: "private raw diagnostic", errorCode: "private_unknown_code" } });
     let tree = app.tree();
     const trigger = find(tree, (node) => node["data-testid"] === "blank-download-pdf");
@@ -198,25 +210,36 @@ for (const locale of ["ru", "en", "uz"] as const) {
     tree = app.tree();
     const consent = find(tree, (node) => node["data-testid"] === "blank-download-consent");
     const marketing = find(tree, (node) => node["data-testid"] === "blank-download-marketing");
-    assert.ok(consent && marketing);
+    assert.ok(consent);
+    assert.equal(marketing, null, "the newsletter checkbox is gone (spec blank-download-extras-2026-11)");
     assert.equal((consent.props as Dict).checked, false);
-    assert.equal((marketing.props as Dict).checked, false);
+    const checkboxes: unknown[] = [];
+    const collect = (node: unknown) => {
+      if (!node || typeof node !== "object") return;
+      if (Array.isArray(node)) return node.forEach(collect);
+      const props = ((node as Dict).props ?? {}) as Dict;
+      if (props.type === "checkbox") checkboxes.push(node);
+      collect(props.children);
+    };
+    collect(tree);
+    assert.equal(checkboxes.length, 2, "exactly two checkboxes: consent and quick sign-up");
+    const extras = find(tree, (node) => node["data-testid"] === "blank-download-extras");
+    assert.equal(extras?.props["data-code"], "hygiene", "«More details» gets the journal code");
     const quickSignup = find(tree, (node) => node["data-testid"] === "blank-download-register");
     assert.equal((quickSignup?.props as Dict | undefined)?.checked, true, "quick sign-up is checked by default");
     const phoneInput = find(tree, (node) => node["data-testid"] === "blank-download-phone");
     assert.ok(phoneInput, "phone field is present");
     assert.equal((phoneInput.props as Dict).type, "tel");
     assert.doesNotMatch(app.text(tree), /необязательн|optional|ixtiyoriy/i, "no «optional» wording in the window");
-    const consentLabel = find(tree, (node) => Boolean(node.className) && String(node.className).includes("mt-4"));
+    const consentLabel = find(tree, (node) => node["data-testid"] === "blank-download-consent-label");
     assert.ok(consentLabel);
     const localeCatalog = catalogFor(locale);
     const richConsent = atPath(localeCatalog, "publicBlankDownload.consent.statement") as string;
     assert.equal(app.text(consentLabel), app.messages("consent.statement"));
     assert.equal(blankConsentSnapshot(richConsent), app.text(consentLabel), "LegalConsent text is the exact visible rich sentence");
-    const marketingLabel = find(tree, (node) => String(node.className ?? "").includes("mt-1 flex cursor-pointer"));
-    assert.ok(marketingLabel);
+    // Старые вкладки ещё шлют marketing: true — сервер снимает текст согласия из каталога.
     const richMarketing = atPath(localeCatalog, "publicBlankDownload.marketing.statement") as string;
-    assert.equal(blankMarketingConsentSnapshot(richMarketing), app.text(marketingLabel), "marketing consent text matches visible label and note punctuation");
+    assert.ok(blankMarketingConsentSnapshot(richMarketing).length > 0, "server-side marketing snapshot text stays in the catalog");
 
     const form = find(tree, (node) => typeof node.onSubmit === "function");
     assert.ok(form);
@@ -233,10 +256,6 @@ for (const locale of ["ru", "en", "uz"] as const) {
     tree = app.tree();
     const check = find(tree, (node) => node["data-testid"] === "blank-download-consent");
     invoke(check, "onChange", { target: { checked: true } });
-    if (locale === "uz") {
-      const marketingCheck = find(app.tree(), (node) => node["data-testid"] === "blank-download-marketing");
-      invoke(marketingCheck, "onChange", { target: { checked: true } });
-    }
     const currentForm = find(app.tree(), (node) => typeof node.onSubmit === "function");
     invoke(currentForm, "onSubmit", { preventDefault() {} });
     await new Promise((resolve) => setImmediate(resolve));
@@ -244,7 +263,9 @@ for (const locale of ["ru", "en", "uz"] as const) {
     assert.equal(app.requestBody?.locale, locale);
     assert.equal(app.requestBody?.consent, true);
     assert.equal(app.requestBody?.email, "person@example.test");
-    assert.equal(app.requestBody?.marketing, locale === "uz" ? true : undefined, "marketing remains opt-in and preserves its selected value");
+    assert.equal(app.requestBody?.marketing, undefined, "the window no longer sends a newsletter consent");
+    assert.equal(app.requestBody?.extras, undefined, "empty «More details» is not sent");
+    assert.equal(typeof app.requestBody?.tz, "string", "browser time zone is sent for the client's local time");
     assert.equal(app.requestBody?.register, true, "default quick sign-up is sent");
     assert.equal(app.requestBody?.website, "", "honeypot stays empty for a person");
     assert.ok(Number(app.requestBody?.elapsedMs) >= 1500, "time since the window opened is sent");
