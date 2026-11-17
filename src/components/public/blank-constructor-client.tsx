@@ -99,7 +99,7 @@ export function BlankConstructorClient({ code, title }: { code: string; title: s
                     <button type="button" onClick={() => move(index, 1)} disabled={index === draft.columns.length - 1} aria-label={t("moveDown")} className="grid size-9 place-items-center rounded-lg text-[#6f7282] hover:bg-[#f5f6ff] disabled:opacity-30">
                       <ArrowDown className="size-4" />
                     </button>
-                    <button type="button" onClick={() => remove(index)} disabled={draft.columns.length <= BLANK_LAYOUT_LIMITS.columnsMin} aria-label={t("removeColumn")} className="grid size-9 place-items-center rounded-lg text-[#6f7282] hover:bg-[#fdf2f7] hover:text-[#d6408a] disabled:opacity-30">
+                    <button type="button" onClick={() => remove(index)} disabled={draft.columns.length <= BLANK_LAYOUT_LIMITS.columnsMin} aria-label={t("removeColumn")} className="grid size-9 place-items-center rounded-lg text-[#6f7282] hover:bg-[#fff4f2] hover:text-[#a13a32] disabled:opacity-30">
                       <X className="size-4" />
                     </button>
                   </li>
@@ -170,7 +170,7 @@ export function BlankConstructorClient({ code, title }: { code: string; title: s
                   <Download className="size-4" />
                 </BlankDownloadClient>
               ) : (
-                <span className="text-[13px] text-[#a3245f]">{t("invalid", { min: BLANK_LAYOUT_LIMITS.columnsMin })}</span>
+                <span className="text-[13px] text-[#a13a32]">{t("invalid", { min: BLANK_LAYOUT_LIMITS.columnsMin })}</span>
               )}
               <button
                 type="button"
