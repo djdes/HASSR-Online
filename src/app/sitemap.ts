@@ -1,3 +1,5 @@
+import { JOURNAL_PAGES_UPDATED } from "@/content/journal-page-content";
+import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { JOURNAL_INFO } from "@/content/journal-info";
@@ -79,11 +81,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/consent`, changeFrequency: "yearly", priority: 0.3 },
   ];
 
+  // Страницы журналов: дата — последняя правка их текстов (не время сборки),
+  // картинка — сам бланк для поиска по картинкам (seo-speed-pack-2026-11).
+  const sampleCodes = new Set<string>(SAMPLE_JOURNAL_CODES);
   const journalPages: MetadataRoute.Sitemap = Object.keys(JOURNAL_INFO).map(
     (code) => ({
       url: `${SITE}/journals-info/${code}`,
+      lastModified: new Date(`${JOURNAL_PAGES_UPDATED}T00:00:00Z`),
       changeFrequency: "monthly",
       priority: 0.75,
+      ...(sampleCodes.has(code) ? { images: [`${SITE}/journal-preview/${code}.webp`] } : {}),
     })
   );
 

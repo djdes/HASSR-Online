@@ -21,6 +21,8 @@ import { journalDocxCopy } from "@/i18n/journal-docx-copy";
 import { brandQrPng } from "@/lib/brand-qr";
 import { HYGIENE_STATUS_OPTIONS } from "@/lib/hygiene-document";
 import type { JournalDocumentPdfInput } from "@/lib/document-pdf";
+import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
+import { JOURNAL_PAGE_CONTENT } from "@/content/journal-page-content";
 
 /**
  * DOCX-версия образца журнала.
@@ -44,6 +46,19 @@ export const DOCX_SAMPLE_CODES = [
 ] as const;
 
 export type DocxSampleCode = (typeof DOCX_SAMPLE_CODES)[number];
+
+/**
+ * Журналы, у которых есть Word-бланк: своя вёрстка (`DOCX_SAMPLE_CODES`) или
+ * универсальная таблица по колонкам образца со страницы журнала
+ * (`JOURNAL_PAGE_CONTENT[code].sample.columns`; спека seo-speed-pack-2026-11, п. 16).
+ */
+export const DOCX_BLANK_CODES: readonly string[] = SAMPLE_JOURNAL_CODES.filter(
+  (code) => (DOCX_SAMPLE_CODES as readonly string[]).includes(code) || Boolean(JOURNAL_PAGE_CONTENT[code]?.sample?.columns.length),
+);
+
+export function isDocxBlankCode(code: string): boolean {
+  return DOCX_BLANK_CODES.includes(code);
+}
 
 export function isDocxSampleCode(code: string): code is DocxSampleCode {
   return (DOCX_SAMPLE_CODES as readonly string[]).includes(code);
@@ -368,8 +383,15 @@ const BLACK_DEFAULT_STYLES = {
  */
 export async function renderJournalDocumentDocx(
   input: JournalDocumentPdfInput,
-  code: DocxSampleCode,
-  options: { footer?: DocxBlankFooter | null } = {}
+  code: string,
+  options: {
+    footer?: DocxBlankFooter | null;
+    /**
+     * Колонки универсального бланка — у журналов без своей вёрстки Word
+     * (берутся из образца страницы журнала; спека seo-speed-pack-2026-11, п. 16).
+     */
+    columns?: readonly string[] | null;
+  } = {}
 ): Promise<{ buffer: Buffer; fileName: string }> {
   const locale = input.locale ?? "ru";
   const { t, status } = await journalDocxCopy(locale);
@@ -395,8 +417,10 @@ export async function renderJournalDocumentDocx(
     body.push(employeeGrid(input, t, status));
   } else if (code === "cold_equipment_control") {
     body.push(equipmentGrid(input, t));
-  } else {
+  } else if (isDocxSampleCode(code)) {
     body.push(blankRegister(registerColumns(code, t)));
+  } else {
+    body.push(blankRegister(options.columns?.length ? [...options.columns] : [t("columns.date"), t("columns.event")], 18));
   }
 
   body.push(

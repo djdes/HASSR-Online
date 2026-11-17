@@ -8,7 +8,7 @@ import {
   type BlankTarget,
 } from "@/lib/blank-download";
 import { normalizeBlankExtras, type BlankExtras } from "@/lib/blank-download-extras";
-import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
+import { DOCX_BLANK_CODES } from "@/lib/document-docx";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
 import { normalizeBlankDownloadLocale, type BlankDownloadErrorCode, type BlankDownloadLocale } from "@/lib/blank-download-presentation";
@@ -24,7 +24,7 @@ export type BlankTargetInfo = {
   formats: BlankFormat[];
 };
 
-const DOCX_CODES = new Set<string>(DOCX_SAMPLE_CODES);
+const DOCX_CODES = new Set<string>(DOCX_BLANK_CODES);
 
 export function describeBlankTarget(target: BlankTarget): BlankTargetInfo | null {
   if (target.kind === "paper") {

@@ -102,7 +102,7 @@ export const ROBOTS_DISALLOW: readonly string[] = [
  * so campaign links consolidate onto clean canonical URLs.
  */
 export const ROBOTS_CLEAN_PARAMS =
-  "utm_source&utm_medium&utm_campaign&utm_content&utm_term&yclid&gclid&etext&from&ref";
+  "utm_source&utm_medium&utm_campaign&utm_content&utm_term&yclid&ysclid&gclid&etext&from&ref";
 
 export function renderRobotsTxt(): string {
   const lines = [

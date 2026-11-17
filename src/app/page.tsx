@@ -1,4 +1,5 @@
 import Link from "@/components/i18n/localized-link";
+import { COMPANY_EMAIL, COMPANY_MAX_URL, COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { translatorFor } from "@/i18n/translator";
 import type { Messages } from "@/i18n/messages";
@@ -342,7 +343,13 @@ export default async function LandingPage() {
         name: "WeSetup",
         url: "https://wesetup.ru",
         logo: "https://wesetup.ru/icons/icon-512.png",
-        sameAs: ["https://t.me/wesetupbot"],
+        // Официальные каналы (п. 11): бот, поддержка, MAX.
+        sameAs: ["https://t.me/wesetupbot", COMPANY_TELEGRAM.url, COMPANY_MAX_URL],
+        email: COMPANY_EMAIL,
+        telephone: COMPANY_PHONE.tel,
+        contactPoint: [
+          { "@type": "ContactPoint", contactType: "customer support", telephone: COMPANY_PHONE.tel, email: COMPANY_EMAIL, areaServed: "RU", availableLanguage: ["ru", "en", "uz"] },
+        ],
       },
       {
         "@type": "WebSite",

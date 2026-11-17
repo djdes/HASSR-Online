@@ -11,7 +11,7 @@ import {
 } from "@/content/journal-info";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { sortJournalsByName } from "@/lib/journal-sort";
-import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
+import { DOCX_BLANK_CODES } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
@@ -119,7 +119,7 @@ export default async function BlankiHubPage({
     ACTIVE_JOURNAL_CATALOG.map((item) => [item.code, item.name]),
   );
   const pdfCodes = new Set<string>(SAMPLE_JOURNAL_CODES);
-  const docxCodes = new Set<string>(DOCX_SAMPLE_CODES);
+  const docxCodes = new Set<string>(DOCX_BLANK_CODES);
 
   const groups = CATEGORY_ORDER.map((category) => ({
     category,

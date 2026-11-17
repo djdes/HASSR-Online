@@ -1322,9 +1322,39 @@ const ARTICLES: SeedArticle[] = [
   },
 ];
 
+/** JSON с ключами по алфавиту: jsonb в Postgres хранит ключи в своём порядке. */
+function canonicalJson(value: unknown): string {
+  const sort = (item: unknown): unknown =>
+    Array.isArray(item)
+      ? item.map(sort)
+      : item && typeof item === "object"
+        ? Object.fromEntries(Object.entries(item as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([k, v]) => [k, sort(v)]))
+        : item;
+  return JSON.stringify(sort(value));
+}
+
 async function main() {
   let upserted = 0;
   for (const art of ARTICLES) {
+    // Без изменений — не трогаем: upsert на каждой выкладке двигал updatedAt
+    // у всех статей, и <lastmod> в sitemap «обновлял» блог при каждом деплое
+    // (seo-speed-pack-2026-11, п. 9).
+    const existing = await prisma.article.findUnique({
+      where: { slug: art.slug },
+      select: { title: true, excerpt: true, body: true, coverIcon: true, tags: true, readMinutes: true, publishedAt: true },
+    });
+    if (
+      existing &&
+      existing.title === art.title &&
+      existing.excerpt === art.excerpt &&
+      canonicalJson(existing.body) === canonicalJson(art.body) &&
+      existing.coverIcon === art.coverIcon &&
+      JSON.stringify(existing.tags) === JSON.stringify(art.tags) &&
+      existing.readMinutes === art.readMinutes &&
+      existing.publishedAt?.getTime() === art.publishedAt.getTime()
+    ) {
+      continue;
+    }
     await prisma.article.upsert({
       where: { slug: art.slug },
       create: {

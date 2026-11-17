@@ -17610,7 +17610,10 @@
       "videoLead": "Xodim QR-kod orqali telefondan qanday yozuv qilishi va rahbar o‘tkazib yuborilganlarni ko‘rishi haqida bir daqiqa.",
       "finalTitle": "Jurnallarni orqaga sana bilan to‘ldirishni to‘xtating",
       "finalBody": "Xodimlar telefondan yozuv qiladi, tizim o‘tkazib yuborilganlarni eslatadi, tekshiruvdan oldin jurnal SanPiN shaklida PDF ga chiqariladi.",
-      "stickyTry": "Sinab ko‘rish"
+      "stickyTry": "Sinab ko‘rish",
+      "sampleImageAlt": "«{title}» jurnali blanki — chop etish uchun namuna",
+      "editorialName": "WeSetup tahririyati",
+      "updatedLine": "Yangilangan: {date} · {author}"
     },
     "descriptions": {
       "hygiene": "O‘tkir respirator virusli infeksiyalar, oshqozon-ichak infeksiyalari yoki teridagi yiringli zararlanish alomatlari bor shaxslarni oziq-ovqat bilan ishlashdan chetlashtiradi. Har bir xodim uchun har smenada yuritiladi.",

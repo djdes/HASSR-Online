@@ -14,7 +14,7 @@ import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { journalFaqJsonLd } from "@/lib/journal-faq";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import {
-  DOCX_SAMPLE_CODES,
+  DOCX_BLANK_CODES,
 } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { getFillingGuide } from "@/lib/journal-filling-guides";
@@ -22,7 +22,8 @@ import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ogImageUrl } from "@/lib/og-image";
 import { BlankDownloadButton } from "@/components/public/blank-download";
 import { blankRegisterHref } from "@/lib/blank-download";
-import { journalPageContent } from "@/content/journal-page-content";
+import { JOURNAL_PAGES_PUBLISHED, JOURNAL_PAGES_UPDATED, journalPageContent } from "@/content/journal-page-content";
+import { journalFaqExtra } from "@/content/journal-faq-extra";
 import { NICHES } from "@/content/niches";
 import { defaultEnabledCodesFor, rulesFor } from "@/lib/sphere-journal-rules";
 import { listPublicReviews } from "@/lib/balance/reviews";
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 const SAMPLE_CODES = new Set<string>(SAMPLE_JOURNAL_CODES);
 /** «Этот журнал ведут N организаций» — от этого числа (меньше звучит слабо). */
 const USAGE_SHOW_FROM = 20;
-const DOCX_CODES = new Set<string>(DOCX_SAMPLE_CODES);
+const DOCX_CODES = new Set<string>(DOCX_BLANK_CODES);
 
 export default async function JournalInfoDetailPage({
   params,
@@ -90,7 +91,9 @@ export default async function JournalInfoDetailPage({
       ? messages.publicNavigation.journals[primaryLandingSlug as keyof typeof messages.publicNavigation.journals]
       : null;
   const { download, expired } = await searchParams;
-  const faq = publicJournalDetailFaq(info, journalName, locale, messages);
+  // Общие вопросы шаблона + вопросы именно этого журнала в тех формулировках,
+  // в каких их ищут (seo-speed-pack-2026-11, п. 14).
+  const faq = [...publicJournalDetailFaq(info, journalName, locale, messages), ...journalFaqExtra(code, locale)];
   // Блоки вовлечения (спеки journal-page-engagement-2026-11,
   // journal-page-content-i18n-2026-11): образец, разделы и штрафы — на языке
   // сайта; ниши — только на ru; отзывы и счётчик — на всех языках.
@@ -119,7 +122,23 @@ export default async function JournalInfoDetailPage({
     // карточка не попадает в Article rich result. /og-default — 1200×630
     // landscape brand-hero, лучше для rich-snippet чем квадрат
     // icon-512.png. См. blog/[slug] для идентичного фикса.
-    image: [ogImageUrl({ title: seo?.title ?? info.tagline, subtitle: seo?.description ?? info.why, kind: "journal", locale })],
+    image: [
+      ogImageUrl({ title: seo?.title ?? info.tagline, subtitle: seo?.description ?? info.why, kind: "journal", locale }),
+      // Сам бланк картинкой — для поиска по картинкам «бланк журнала …» (п. 10).
+      ...(hasSample
+        ? [{
+            "@type": "ImageObject",
+            url: `https://wesetup.ru/journal-preview/${code}.webp${locale === "ru" ? "" : `?locale=${locale}`}`,
+            width: 1100,
+            height: 778,
+            caption: t("sampleImageAlt", { title: catalogName }),
+          }]
+        : []),
+    ],
+    // Дата и автор (п. 17): страницы журналов ведёт редакция WeSetup.
+    datePublished: JOURNAL_PAGES_PUBLISHED,
+    dateModified: JOURNAL_PAGES_UPDATED,
+    author: { "@type": "Organization", name: t("editorialName"), url: "https://wesetup.ru" },
     url: canonical,
     inLanguage: language,
     keywords: seo?.keywords?.join(", "),
@@ -236,6 +255,14 @@ export default async function JournalInfoDetailPage({
               {t("heroTrust", { trialDays: TRIAL_DAYS })}
               {usage >= USAGE_SHOW_FROM ? <> · {t("usageCount", { count: usage })}</> : null}
             </p>
+            <p className="mt-1 text-[12px] text-white/45" data-testid="journal-updated">
+              <time dateTime={JOURNAL_PAGES_UPDATED}>
+                {t("updatedLine", {
+                  date: new Intl.DateTimeFormat({ ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale], { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${JOURNAL_PAGES_UPDATED}T12:00:00Z`)),
+                  author: t("editorialName"),
+                })}
+              </time>
+            </p>
           </div>
         </div>
       </section>
@@ -333,8 +360,8 @@ export default async function JournalInfoDetailPage({
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- отдаёт наш роут, размеры заданы */}
               <img
-                src={`/api/journal-samples/${code}/preview${locale === "ru" ? "" : `?locale=${locale}`}`}
-                alt={t("sampleAria")}
+                src={`/journal-preview/${code}.webp${locale === "ru" ? "" : `?locale=${locale}`}`}
+                alt={t("sampleImageAlt", { title: catalogName })}
                 width={1100}
                 height={778}
                 loading="lazy"

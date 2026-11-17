@@ -41,7 +41,7 @@ function loadStagedParser() {
       normalizeBlankEmail: (value: unknown) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) ? value.trim().toLowerCase() : null,
       normalizeBlankPhone: (value: unknown) => typeof value !== "string" || value.replace(/\D/g, "") === "" ? null : /^\+?7\d{10}$/.test(value.replace(/[^\d+]/g, "")) ? `+7${value.replace(/\D/g, "").slice(1)}` : undefined,
     },
-    "@/lib/document-docx": { DOCX_SAMPLE_CODES: ["hygiene"] },
+    "@/lib/document-docx": { DOCX_SAMPLE_CODES: ["hygiene"], DOCX_BLANK_CODES: ["hygiene"] },
     "@/lib/journal-catalog": { ACTIVE_JOURNAL_CATALOG: [{ code: "hygiene", name: "Гигиенический журнал", formats: ["pdf"] }] },
     "@/lib/sphere-journal-rules": { paperJournalById: (id: string) => id === "paper-1" ? { name: "Paper title" } : null },
     "@/lib/blank-download-presentation": { normalizeBlankDownloadLocale: (value: unknown) => value === "en" || value === "uz" ? value : "ru" },

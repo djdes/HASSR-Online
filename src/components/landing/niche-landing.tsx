@@ -616,6 +616,11 @@ function RequiredJournalCard({ journal }: { journal: PublicJournal }) {
           {journal.note}
         </p>
       ) : null}
+      {/* Ниша — хаб журналов (seo-speed-pack-2026-11, п. 13): у каждого
+          журнала на его странице бланк и образец заполнения. */}
+      {journal.href?.startsWith("/journals-info/") ? (
+        <span className="pl-[26px] text-[12px] font-medium text-[#3848c7]">Бланк и образец заполнения</span>
+      ) : null}
     </>
   );
   const className =

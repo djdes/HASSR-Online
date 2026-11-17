@@ -7,6 +7,7 @@ import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
 import { KB_ARTICLES, KB_GROUPS } from "@/content/kb/articles";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
+import { jsonLdSafeString } from "@/lib/json-ld";
 import { ogImages, twitterImages } from "@/lib/og-image";
 
 const TITLE = "База знаний WeSetup";
@@ -33,8 +34,39 @@ const GROUP_ICONS: Record<string, typeof BookOpen> = {
 
 export default function KnowledgeBaseIndexPage() {
   const first = KB_ARTICLES[0];
+  // Разметка раздела (seo-speed-pack-2026-11, п. 11): список статей и хлебные крошки.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        name: TITLE,
+        description: DESCRIPTION,
+        url: "https://wesetup.ru/baza-znaniy",
+        inLanguage: "ru-RU",
+        isPartOf: { "@id": "https://wesetup.ru/#website" },
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: KB_ARTICLES.map((article, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: article.title,
+            url: `https://wesetup.ru/baza-znaniy/${article.slug}`,
+          })),
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "WeSetup", item: "https://wesetup.ru" },
+          { "@type": "ListItem", position: 2, name: TITLE, item: "https://wesetup.ru/baza-znaniy" },
+        ],
+      },
+    ],
+  };
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdSafeString(jsonLd) }} />
       <PublicHeader activeSection="knowledge-base" />
       <KbShell>
         <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#5566f6]">Документация</div>

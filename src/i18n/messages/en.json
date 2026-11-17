@@ -17610,7 +17610,10 @@
       "videoLead": "A minute on how staff make an entry from their phone via a QR code and the manager sees what was missed.",
       "finalTitle": "Stop filling in journals after the fact",
       "finalBody": "Staff make entries from their phones, the system reminds about gaps, and before an inspection the journal exports to PDF in the SanPiN format.",
-      "stickyTry": "Try it"
+      "stickyTry": "Try it",
+      "sampleImageAlt": "“{title}” log template — printable sample",
+      "editorialName": "WeSetup editorial team",
+      "updatedLine": "Updated {date} · {author}"
     },
     "descriptions": {
       "hygiene": "Keeps people with symptoms of acute respiratory viral infections, gastrointestinal infections or pustular skin lesions away from food handling. Completed for each employee on every shift.",
