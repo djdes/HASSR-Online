@@ -1,0 +1,48 @@
+// Поиск по сайту: кнопка в шапке, Ctrl+K, опечатки/раскладка, переход Enter; шапка журнала.
+import { chromium } from "playwright";
+const [out] = process.argv.slice(2);
+const res = {};
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome" });
+const p = await b.newPage({ viewport: { width: 1366, height: 900 }, deviceScaleFactor: 1 });
+await p.goto("http://localhost:3000/", { waitUntil: "networkidle", timeout: 180000 });
+await p.click('[data-testid="site-search-open"]');
+await p.locator('[data-testid="site-search-dialog"]').waitFor();
+await p.locator('[data-testid="site-search-result"]').first().waitFor({ timeout: 60000 });
+res.popular = await p.locator('[data-testid="site-search-result"]').count();
+await p.screenshot({ path: `${out}/search-popular.png` });
+await p.fill('[data-testid="site-search-input"]', "уборк");
+await p.waitForTimeout(300);
+res.uborka = await p.locator('[data-testid="site-search-result"]').allInnerTexts().then((a) => a.slice(0, 6).map((t) => t.split("\n")[0]));
+await p.screenshot({ path: `${out}/search-uborka.png` });
+await p.fill('[data-testid="site-search-input"]', "ububtyf");
+await p.waitForTimeout(300);
+res.layout = await p.locator('[data-testid="site-search-result"]').first().innerText().then((t) => t.split("\n")[0]);
+await p.fill('[data-testid="site-search-input"]', "штраф");
+await p.waitForTimeout(300);
+res.fines = await p.locator('[data-testid="site-search-result"]').allInnerTexts().then((a) => a.slice(0, 4).map((t) => t.split("\n")[0]));
+await p.fill('[data-testid="site-search-input"]', "zzqqxx");
+await p.waitForTimeout(300);
+res.empty = await p.locator('[data-testid="site-search-empty"]').isVisible();
+await p.fill('[data-testid="site-search-input"]', "гигиен");
+await p.waitForTimeout(300);
+await p.keyboard.press("Enter");
+await p.waitForURL(/journals-info\/hygiene/, { timeout: 60000 });
+res.navigated = p.url();
+// Ctrl+K на странице журнала
+await p.goto("http://localhost:3000/journals-info/cleaning", { waitUntil: "networkidle", timeout: 180000 });
+await p.screenshot({ path: `${out}/journal-hero.png` });
+res.heroActions = await p.locator('[data-testid="journal-hero-actions"]').innerText();
+await p.keyboard.press("Control+k");
+res.hotkey = await p.locator('[data-testid="site-search-dialog"]').isVisible();
+// Телефон
+const m = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+await m.goto("http://localhost:3000/journals-info/cleaning", { waitUntil: "networkidle", timeout: 180000 });
+await m.screenshot({ path: `${out}/journal-hero-mobile.png` });
+await m.click('[data-testid="site-search-open"]');
+await m.locator('[data-testid="site-search-result"]').first().waitFor({ timeout: 60000 });
+await m.fill('[data-testid="site-search-input"]', "холодильн");
+await m.waitForTimeout(400);
+await m.screenshot({ path: `${out}/search-mobile.png` });
+res.mobileScroll = await m.evaluate(() => document.documentElement.scrollWidth);
+console.log(JSON.stringify(res, null, 1));
+await b.close();

@@ -5,6 +5,7 @@ import type { Messages } from "@/i18n/messages";
 import { FORMAT_LOCALES } from "@/i18n/locales";
 import { localizedHref, siteLanguageAlternates, type SiteLocale } from "@/i18n/site-locale";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
+import { SiteSearch } from "@/components/public/site-search";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import {
   ArrowRight,
@@ -465,6 +466,7 @@ export default async function LandingPage() {
             <BrandWithTagline tagline={copy("landing.brandTagline")} />
           </Link>
           <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-6">
+            <SiteSearch />
             <LanguageSwitch />
             <Link
               href="/journals-info"

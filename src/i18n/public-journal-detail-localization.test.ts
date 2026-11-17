@@ -131,8 +131,19 @@ for (const locale of ["ru", "en", "uz"] as const) {
       assert.equal(howTo.description, translated?.summary);
       assert.deepEqual(howTo.step.map((step: { text: string }) => step.text), translated?.steps.map(step => step.detail));
     } else assert.equal(howTo, undefined);
-    assert.equal(downloads.length, SAMPLE_JOURNAL_CODES.includes(code as typeof SAMPLE_JOURNAL_CODES[number]) ? DOCX_SAMPLE_CODES.includes(code as typeof DOCX_SAMPLE_CODES[number]) ? 2 : 1 : 0);
-    for (const download of downloads) {
+    // Кнопка «Скачать PDF» в шапке (2026-11-17) — без автооткрытия окна:
+    // ссылку `?download=pdf` по-прежнему открывает кнопка блока образца.
+    const hero = downloads.filter((download) => download.place === "journal-hero");
+    const sample = downloads.filter((download) => download.place !== "journal-hero");
+    const hasSample = SAMPLE_JOURNAL_CODES.includes(code as typeof SAMPLE_JOURNAL_CODES[number]);
+    assert.equal(hero.length, hasSample ? 1 : 0);
+    for (const download of hero) {
+      assert.deepEqual(clean(download.target), { kind: "code", code });
+      assert.equal(download.format, "pdf");
+      assert.ok(!download.autoOpen, "hero button never auto-opens");
+    }
+    assert.equal(sample.length, hasSample ? DOCX_SAMPLE_CODES.includes(code as typeof DOCX_SAMPLE_CODES[number]) ? 2 : 1 : 0);
+    for (const download of sample) {
       assert.deepEqual(clean(download.target), { kind: "code", code });
       assert.equal(download.autoOpen, download.format === "pdf");
       assert.equal(download.expired, download.format === "pdf");
