@@ -70,7 +70,7 @@ describe("тарифы 2026-11-05: Бесплатный 14 дней, Станд�
     }
     assert.match(tariffs.cells.pointsPaidScale, /от 50 — индивидуально/);
     assert.match(ru.settingsUi.subscriptionPage.rulePoints, /от 50 — индивидуальное предложение/);
-    assert.match(tariffs.individual.title, /^От 50 точек/);
+    assert.match(tariffs.individual.title, /^От 50 объектов/);
   });
 
   it("значение тарифа → карточка витрины", () => {

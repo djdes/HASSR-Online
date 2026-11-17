@@ -30,7 +30,7 @@ export function resolvePlaceFilter(args: {
   places: readonly string[];
   /** Есть «Без точки» (объекты без места). */
   hasNone: boolean;
-  /** Торговая точка из шапки; null — «Вся организация». */
+  /** Объект из шапки; null — «Вся организация». */
   headerPointId: string | null;
 }): string | null {
   const { requested, places, hasNone, headerPointId } = args;

@@ -67,6 +67,37 @@ export const GRACE_DAYS_MAX = 60;
 export const TRIAL_REMINDER_DAYS = 3;
 
 /**
+ * Напоминания о конце пробного (спека trial-emails-rename-2026-11): за 5, 2 и
+ * 1 день, по одному разу на ступень — почтой (и в Telegram, если привязан).
+ */
+export const TRIAL_REMINDER_STAGES = [5, 2, 1] as const;
+export type TrialReminderStage = (typeof TRIAL_REMINDER_STAGES)[number];
+
+/** Ступень для оставшихся дней пробного: 5…3 → 5, 2 → 2, 1 → 1; иначе null. */
+export function trialReminderStage(daysLeftValue: number | null | undefined): TrialReminderStage | null {
+  if (typeof daysLeftValue !== "number" || !(daysLeftValue > 0)) return null;
+  let stage: TrialReminderStage | null = null;
+  for (const candidate of TRIAL_REMINDER_STAGES) {
+    if (daysLeftValue <= candidate) stage = candidate;
+  }
+  return stage;
+}
+
+/**
+ * Нужно ли напоминание ступени `stage` для пробного, кончающегося `trialEndsAt`:
+ * запись того же срока с той же или более поздней ступенью его закрывает
+ * (повторный запуск не дублирует, пропущенный день не теряет ближайшую).
+ */
+export function trialReminderDue(sent: ReadonlyArray<unknown>, trialEndsAt: Date, stage: TrialReminderStage): boolean {
+  const until = trialEndsAt.toISOString();
+  return !sent.some((raw) => {
+    if (!raw || typeof raw !== "object") return false;
+    const details = raw as { trialEndsAt?: unknown; stage?: unknown };
+    return details.trialEndsAt === until && typeof details.stage === "number" && details.stage <= stage;
+  });
+}
+
+/**
  * За сколько дней до конца оплаченного срока напоминаем владельцу — по
  * одному разу на ступень. Автосписаний нет (`RECURRING_CHARGES_LIVE`), и без
  * напоминаний срок кончался молча: через грейс сотрудники уходили в архив.
@@ -575,7 +606,7 @@ export function decideTransitionAction(
   if (state.inactive) return "none";
   if (state.kind === "paid") return paidReminderStage(state.paidDaysLeft) !== null ? "remind_paid_end" : "none";
   if (state.kind === "free_period") {
-    return state.trialDaysLeft !== null && state.trialDaysLeft <= TRIAL_REMINDER_DAYS ? "remind_trial_end" : "none";
+    return trialReminderStage(state.trialDaysLeft) !== null ? "remind_trial_end" : "none";
   }
   if (!state.enforcement) return "none";
   if (state.kind === "free") return isFreePlan(plan) ? "none" : "silent_free";

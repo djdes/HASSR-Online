@@ -49,7 +49,7 @@ export type PlanAssignmentError =
   | "bad_mode"
   /** Точки нет в организации. */
   | "unknown_building"
-  /** Назначить в офис нельзя: офис — не торговая точка. */
+  /** Назначить в офис нельзя: офис — не объект. */
   | "office_target"
   /** Сотрудник на всех точках — уже работает и здесь. */
   | "everywhere"
@@ -65,7 +65,7 @@ export const PLAN_ASSIGNMENT_ERRORS: Record<PlanAssignmentError, string> = {
   bad_days: `Срок замены — от ${ASSIGNMENT_MIN_DAYS} до ${ASSIGNMENT_MAX_DAYS} дней`,
   bad_mode: "Выберите: перевести на точку или добавить точку",
   unknown_building: "Точка не найдена",
-  office_target: "Офис — не торговая точка: на замену назначают на точку",
+  office_target: "Офис — не объект: на замену назначают на точку",
   everywhere:
     "Сотрудник работает на всех точках — он уже может работать и здесь, назначение не нужно",
   office_user:

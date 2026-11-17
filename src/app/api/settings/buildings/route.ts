@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
   // Точки тарифа: первое здание места не добавляет — организация и так
   // считалась одной точкой; каждое следующее — ещё одна точка.
-  // Офис организации — не торговая точка и в тариф не считается.
+  // Офис организации — не объект и в тариф не считается.
   const buildingsNow = await db.building.count({ where: { organizationId: orgId, kind: { not: OFFICE_BUILDING_KIND } } });
   const points = await checkPointsForCreation(orgId, buildingsNow > 0 ? 1 : 0, { source: "settings/buildings" });
   if (!points.ok) return limitResponse(points);

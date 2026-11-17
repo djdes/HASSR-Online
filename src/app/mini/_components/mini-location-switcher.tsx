@@ -93,7 +93,7 @@ export function MiniLocationSwitcher() {
     };
   }
 
-  /** Единый тост смены, как на сайте: «Торговая точка: …» и «Вернуться на «…»». */
+  /** Единый тост смены, как на сайте: «Объект: …» и «Вернуться на «…»». */
   function switchTo(building: BuildingOption) {
     if (!location || building.id === activeId || isPending) return;
     const current = options.find((option) => option.id === activeId) ?? null;

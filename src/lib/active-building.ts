@@ -69,7 +69,7 @@ export const loadBuildingContext = cache(
 
 /**
  * Точки, доступные человеку (2026-10-18): пункты «Мои точки» в меню раздела
- * «Торговые точки» и проверка страницы точки. Все точки организации в том же
+ * «Объекты» и проверка страницы точки. Все точки организации в том же
  * порядке, что у переключателя в шапке, с учётом `User.buildingIds` в
  * домашней организации (как `loadBuildingContext`) — независимо от режима
  * «журналы по точкам». Партнёр и ROOT при импёрсонации видят все точки.
@@ -99,7 +99,7 @@ export async function getPoolBuildings(session: Session): Promise<Array<{ id: st
   return poolBuildingsFromContext(await loadBuildingContext(session));
 }
 
-/** Торговая точка из шапки для справочников и QR; null — вся организация (`viewedPointId`). */
+/** Объект из шапки для справочников и QR; null — вся организация (`viewedPointId`). */
 export async function getViewedPointId(session: Session): Promise<string | null> {
   return viewedPointId(await loadBuildingContext(session));
 }

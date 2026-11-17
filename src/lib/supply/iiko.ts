@@ -13,7 +13,7 @@ import { XMLParser } from "fast-xml-parser";
  * акты списания (JSON `v2/documents/writeoff`), номенклатуру
  * (`v2/entities/products/list`), единицы измерения, поставщиков, склады и
  * подразделения (`corporation/stores`, `corporation/departments` — склад
- * документа задаёт его торговую точку). Чистый
+ * документа задаёт его объект). Чистый
  * модуль: транспорт подменяется, пароль в текст ошибок не попадает.
  */
 

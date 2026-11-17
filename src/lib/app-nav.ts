@@ -68,7 +68,7 @@ export type NavFacts = {
   settingsPermissions: boolean;
   /**
    * «Журналы» в режиме точки (`journalsPointMode`, 2026-10-28): в шапке
-   * выбрана торговая точка или человек — руководитель точки. Не задано —
+   * выбран объект или человек — руководитель точки. Не задано —
    * режима нет (точки выключены).
    */
   journalsPointMode?: boolean;
@@ -251,7 +251,7 @@ const CHECKLISTS_FACT: NavAccess = { kind: "fact", fact: "checklists" };
 // `/dashboard` без `journals.view` уводит на панель контроля.
 const JOURNALS_TODAY: NavAccess = { kind: "all", rules: [anyOf("journals.view"), FULL_ACCESS] };
 // «Журналы точек» и «Все журналы» — страницы всей организации: при выбранной
-// в шапке торговой точке их нет (владелец, 2026-10-28).
+// в шапке объекте их нет (владелец, 2026-10-28).
 const NOT_POINT_MODE: NavAccess = { kind: "notPointMode" };
 const JOURNALS_POINTS: NavAccess = { kind: "all", rules: [ADMIN, NOT_POINT_MODE] };
 const JOURNALS_ALL: NavAccess = { kind: "all", rules: [anyOf("journals.view"), NOT_POINT_MODE] };
@@ -297,7 +297,7 @@ function ppkMenu(): NavMenuGroup[] {
  * Подписки, Настройки и оформление) и «Пришла проверка» внизу.
  */
 const COMPANY_MENU: NavMenuGroup[] = [
-  // Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним
+  // Офис ›, Объекты ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним
   // и тихим (владелец, 2026-11-11): там всё, что нужно редко.
   {
     label: null,
@@ -344,7 +344,7 @@ const OFFICE_MENU: NavMenuGroup[] = [
   },
 ];
 
-/** «Сотрудники» — вложенный раздел «Торговых точек»: корень — сотрудники по точкам. */
+/** «Сотрудники» — вложенный раздел «Объектов»: корень — сотрудники по точкам. */
 const STAFF_MENU: NavMenuGroup[] = [
   {
     label: "directories",
@@ -379,7 +379,7 @@ const STAFF_MENU: NavMenuGroup[] = [
 ];
 
 /**
- * «Торговые точки» (лист 4): корень — список всех точек и «Добавить точку»;
+ * «Объекты» (лист 4): корень — список всех точек и «Добавить точку»;
  * сотрудники, журналы и ППК — вложенные разделы, справочники — по всем точкам.
  */
 const POINTS_MENU: NavMenuGroup[] = [
@@ -410,7 +410,7 @@ const JOURNAL_SETUP_MATCH = SETTINGS_CARDS.filter((card) => card.section === "jo
 
 /**
  * Меню «Журналов» (владелец, 2026-10-28): «Настройка» — в общем списке, под
- * ним наборы журналов. При выбранной в шапке торговой точке «Журналы точек»
+ * ним наборы журналов. При выбранной в шапке объекте «Журналы точек»
  * и «Все журналы» пропадают (`NOT_POINT_MODE`) — вход в раздел «Сегодня».
  */
 const JOURNALS_MENU: NavMenuGroup[] = [
@@ -867,7 +867,7 @@ export function mainNavSections<T extends { parent?: NavSectionKey }>(sections: 
 
 /**
  * Путь к разделу сверху вниз — по видимым родителям: раздел главного меню,
- * вложенные разделы, сам раздел («Моя компания → Торговые точки → Журналы»).
+ * вложенные разделы, сам раздел («Моя компания → Объекты → Журналы»).
  * Его показывает карточка «Вы здесь» над меню раздела.
  */
 export function navSectionPath<T extends { key: NavSectionKey; parent?: NavSectionKey }>(

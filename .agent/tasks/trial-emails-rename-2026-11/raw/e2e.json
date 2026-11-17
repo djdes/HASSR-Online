@@ -1,0 +1,48 @@
+{
+ "blank_download_no_register": [
+  "Шаблон «Гигиенический журнал (сотрудники)» — WeSetup",
+  "Спасибо, что выбрали WeSetup",
+  "(второе скачивание) Шаблон «Журнал уборки» — WeSetup, без второго приветственного"
+ ],
+ "blank_download_register": [
+  "Ваш аккаунт WeSetup создан — пароль внутри",
+  "Спасибо, что выбрали WeSetup",
+  "Шаблон «Гигиенический журнал (сотрудники)» — WeSetup"
+ ],
+ "instant_register": [
+  "Ваш аккаунт WeSetup создан — пароль внутри",
+  "Спасибо, что выбрали WeSetup"
+ ],
+ "trial_job_days": {
+  "-7": "—",
+  "-6": "автоворонка trial_first (письмо со счётом)",
+  "-5": "Пробный период заканчивается через 5 дней",
+  "-4": "автоворонка trial_second",
+  "-3": "—",
+  "-2": "Пробный период заканчивается через 2 дня",
+  "-1": "Последний день пробного периода — 1 декабря",
+  "+1": "Удалось оценить электронные журналы? (повторный прогон — 0)"
+ },
+ "feedback_page": {
+  "preset_from_link": true,
+  "after_submit": "Спасибо за ответ!",
+  "audit": {
+   "action": "trial.feedback",
+   "details": {
+    "answer": "help",
+    "comment": "Не разобрались, как распечатать QR для холодильника"
+   }
+  },
+  "broken_token": "Ссылка недействительна"
+ },
+ "root_manual_send": {
+  "welcome": 200,
+  "trial_reminder": 200,
+  "trial_feedback": 200,
+  "audit": [
+   "service_email.welcome",
+   "service_email.trial_reminder",
+   "service_email.trial_feedback"
+  ]
+ }
+}

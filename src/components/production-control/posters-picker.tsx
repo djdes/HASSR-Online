@@ -22,7 +22,7 @@ const BASE = "/production-control/documents/posters";
  * Список плакатов по группам: галочка на каждой карточке, липкая панель
  * «Печатать выбранные / все» и переключатель «Ч/б». Выбор живёт в состоянии
  * страницы; печать открывает серверную страницу `posters/all?keys=…&bw=1`.
- * `pointId` — выбранная торговая точка (`&point=…`; null — точка по умолчанию).
+ * `pointId` — выбранный объект (`&point=…`; null — точка по умолчанию).
  */
 export function PostersPicker({ groups, pointId = null }: { groups: PosterPickerGroup[]; pointId?: string | null }) {
   const t = useTranslations("productionControl.posters");

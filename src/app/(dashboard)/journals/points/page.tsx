@@ -26,7 +26,7 @@ import { PointJournalsClient, type PointJournalsCard } from "@/components/journa
 export const dynamic = "force-dynamic";
 
 /**
- * «Журналы точек» — корень раздела «Журналы» в «Торговых точках» (эскиз
+ * «Журналы точек» — корень раздела «Журналы» в «Объектах» (эскиз
  * 2026-10-28: «Журналы — список всех точек с журналами, которые ведутся, +
  * добавить/убрать журнал»). Каждая точка — карточка с журналами её набора;
  * правка меняет набор только этой точки (`POST /api/journals/points`). Без
@@ -43,7 +43,7 @@ export default async function PointJournalsPage({
   const query = await searchParams;
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) forbidden();
-  // В шапке выбрана торговая точка — страница всей организации закрыта.
+  // В шапке выбран объект — страница всей организации закрыта.
   const pointContext = await loadBuildingContext(session);
   if (journalsPointMode(pointContext)) {
     return (

@@ -51,7 +51,7 @@ type Building = {
   phone?: string | null;
   /** Наименование в шапке журналов; в интерфейсе — короткое `name`. */
   journalName?: string | null;
-  /** "office" — офис организации (2026-10-26), иначе торговая точка. */
+  /** "office" — офис организации (2026-10-26), иначе объект. */
   kind?: string;
   sortOrder: number;
   rooms: Room[];

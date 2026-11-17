@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { closingDocumentFilename } from "@/lib/closing-documents/types";
 import { escapeHtml } from "@/lib/html-escape";
-import { HOME_PHONE } from "@/lib/home-page";
+import { COMPANY_EMAIL, COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { translatorFor } from "@/i18n/translator";
 import type { Locale } from "@/i18n/locales";
@@ -515,77 +515,88 @@ export async function sendPasswordResetEmail(params: {
 }
 
 /**
- * План настройки в приветственном письме (2026-10-28, по образцу письма
- * «setup checklist»): шаги в порядке меню кабинета — компания → точка →
- * сотрудники → журналы → QR. Каждый шаг — ссылка на свою страницу.
+ * Приветственное письмо (спека trial-emails-rename-2026-11): компактное,
+ * вторым письмом после логина и пароля — и всем, кто скачал шаблон журнала.
+ * Фото кухни, благодарность за выбор WeSetup, зачем он (уйти от рутины,
+ * контролировать процессы по журналам), плакат с QR и поддержка с московским
+ * телефоном: «поможем, расскажем и научим».
+ *
+ * Картинки — JPG/PNG с боевого домена: webp показывают не все почтовые
+ * клиенты, а в dev NEXTAUTH_URL смотрит на localhost.
  */
-export const WELCOME_SETUP_STEPS = [
-  { id: "company", href: "/settings/organization" },
-  { id: "point", href: "/settings/buildings" },
-  { id: "staff", href: "/settings/users" },
-  { id: "journals", href: "/journals/points" },
-  { id: "qr", href: "/settings/qr-posters" },
-] as const;
+export const WELCOME_PHOTO_URL = `${EMAIL_ASSET_ORIGIN}/email/welcome-photo.jpg`;
+export const WELCOME_POSTER_URL = `${EMAIL_ASSET_ORIGIN}/email/welcome-poster.png`;
+/** Кнопка письма: в кабинет — если он есть, иначе на регистрацию. */
+export const WELCOME_CABINET_HREF = "/dashboard";
+export const WELCOME_REGISTER_HREF = "/register?source=welcome";
 
-/** Кнопка «Начать настройку» — «Быстрая настройка» с этапами. */
-export const WELCOME_SETUP_START_HREF = "/settings/onboarding";
+/** Имя для обращения: почта или пустое значение — не имя. */
+function welcomeName(name: string | null | undefined): string | null {
+  const clean = (name ?? "").trim();
+  if (!clean || clean.includes("@")) return null;
+  return clean.slice(0, 80);
+}
 
 export async function renderWelcomeEmail(params: {
-  name: string;
-  organizationName: string;
+  name?: string | null;
+  /** У адресата есть кабинет — кнопка «Открыть кабинет», иначе «Попробовать бесплатно». */
+  hasAccount: boolean;
   locale?: Locale;
   brand?: EmailBrand | null;
-}): Promise<{ subject: string; html: string }> {
+}): Promise<{ subject: string; html: string; text: string }> {
   const locale = params.locale ?? "ru";
   const t = await translatorFor(locale);
-  const link = (href: string) => escapeHtml(APP_URL + href);
-  const steps = WELCOME_SETUP_STEPS.map((step, index) => {
-    const title = t(`email.welcome.steps.${step.id}.title`);
-    const description = t(`email.welcome.steps.${step.id}.description`);
-    return `<tr>
-      <td width="40" valign="top" style="padding:0 0 18px;width:40px">
-        <div style="width:26px;height:26px;border:1.5px solid #5566f6;border-radius:13px;text-align:center;line-height:26px;font-size:13px;font-weight:600;color:#3848c7;background:#ffffff">${index + 1}</div>
-      </td>
-      <td valign="top" style="padding:2px 0 18px">
-        <a href="${link(step.href)}" data-welcome-step="${step.id}" style="font-size:16px;font-weight:600;color:#0b1024;text-decoration:none">${escapeHtml(title)}&nbsp;<span style="color:#5566f6">&rarr;</span></a>
-        <p style="margin:4px 0 0;font-size:14px;line-height:1.55;color:#3c4053">${escapeHtml(description)}</p>
-      </td>
-    </tr>`;
-  }).join("");
-
+  const name = welcomeName(params.name);
+  const greeting = name ? t("email.welcome.greetingNamed", { name: escapeHtml(name) }) : t("email.welcome.greeting");
+  const action = params.hasAccount
+    ? { href: `${APP_URL}${WELCOME_CABINET_HREF}`, label: t("email.welcome.openCabinet") }
+    : { href: `${APP_URL}${WELCOME_REGISTER_HREF}`, label: t("email.welcome.tryFree") };
+  const phone = COMPANY_PHONE;
+  const P = 'style="margin:0 0 14px;color:#3f3f46;line-height:1.6;font-size:15px"';
   const body = [
-    `<p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.welcome.greeting", { name: escapeHtml(params.name) })}</p>`,
-    `<p style="margin:0 0 24px;color:#3f3f46;line-height:1.6">${t("email.welcome.organizationReady", { organization: escapeHtml(params.organizationName), trialDays: TRIAL_DAYS })}</p>`,
-    `<div style="background:#fafbff;border:1px solid #ececf4;border-radius:16px;padding:24px 24px 6px;margin:0 0 24px">`,
-    `<p style="margin:0 0 6px;font-size:18px;font-weight:600;color:#0b1024">${escapeHtml(t("email.welcome.checklistTitle"))}</p>`,
-    `<p style="margin:0 0 20px;font-size:14px;line-height:1.55;color:#6f7282">${escapeHtml(t("email.welcome.checklistIntro"))}</p>`,
-    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${steps}</table>`,
-    `</div>`,
-    `<a href="${link(WELCOME_SETUP_START_HREF)}" data-welcome-start style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:600;font-size:15px">${escapeHtml(t("email.welcome.getStarted"))}</a>`,
-    `<p style="margin:24px 0 0;font-size:13px;line-height:1.55;color:#6f7282">${escapeHtml(t("email.welcome.help", { phone: HOME_PHONE.display }))}</p>`,
+    `<img src="${WELCOME_PHOTO_URL}" width="520" alt="${escapeHtml(t("email.welcome.photoAlt"))}" data-welcome-photo style="display:block;width:100%;max-width:520px;height:auto;border-radius:16px;margin:0 0 20px;border:0">`,
+    `<p ${P}>${greeting}</p>`,
+    `<p ${P}>${escapeHtml(t("email.welcome.thanks"))}</p>`,
+    `<p ${P}>${escapeHtml(t("email.welcome.value"))}</p>`,
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:6px 0 20px;background:#fafbff;border:1px solid #ececf4;border-radius:16px"><tr>`,
+    `<td width="132" valign="top" style="padding:14px 0 14px 14px;width:132px"><img src="${WELCOME_POSTER_URL}" width="118" alt="${escapeHtml(t("email.welcome.posterAlt"))}" data-welcome-poster style="display:block;width:118px;height:auto;border-radius:10px;border:0"></td>`,
+    `<td valign="middle" style="padding:14px 16px 14px 14px"><p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#0b1024">${escapeHtml(t("email.welcome.posterTitle"))}</p><p style="margin:0;font-size:14px;line-height:1.55;color:#3c4053">${escapeHtml(t("email.welcome.posterBody"))}</p></td>`,
+    `</tr></table>`,
+    `<p ${P}>${t("email.welcome.support", { phone: `<a href="tel:${phone.tel}" style="color:#0b1024;font-weight:600;text-decoration:none;white-space:nowrap">${escapeHtml(phone.display)}</a>` })}</p>`,
+    `<p style="margin:0 0 22px;font-size:14px;line-height:1.6;color:#3c4053">${escapeHtml(t("email.welcome.channels"))} <a href="${COMPANY_TELEGRAM.url}" style="color:#3848c7">${COMPANY_TELEGRAM.handle}</a> · <a href="mailto:${COMPANY_EMAIL}" style="color:#3848c7">${COMPANY_EMAIL}</a></p>`,
+    `<a href="${escapeHtml(action.href)}" data-welcome-action style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:13px 26px;border-radius:12px;font-weight:600;font-size:15px">${escapeHtml(action.label)}</a>`,
   ].join("");
-
+  const text = [
+    name ? t("email.welcome.greetingNamed", { name }) : t("email.welcome.greeting"),
+    t("email.welcome.thanks"),
+    t("email.welcome.value"),
+    `${t("email.welcome.posterTitle")} ${t("email.welcome.posterBody")}`,
+    t("email.welcome.support", { phone: phone.display }),
+    `${t("email.welcome.channels")} ${COMPANY_TELEGRAM.handle} · ${COMPANY_EMAIL}`,
+    `${action.label}: ${action.href}`,
+  ].join("\n\n");
   return {
     subject: t("email.welcome.subject"),
     html: localizedLayout(t, locale, t("email.welcome.title"), body, params.brand),
+    text,
   };
 }
 
 export async function sendWelcomeEmail(params: {
   to: string;
-  name: string;
-  organizationName: string;
+  name?: string | null;
+  hasAccount: boolean;
   organizationId?: string | null;
   locale?: Locale;
 }) {
   const brand = await emailBrandForOrganization(params.organizationId);
-  const { subject, html } = await renderWelcomeEmail({
+  const { subject, html, text } = await renderWelcomeEmail({
     name: params.name,
-    organizationName: params.organizationName,
+    hasAccount: params.hasAccount,
     locale: params.locale,
     brand,
   });
-  return sendEmail(params.to, subject, html);
+  return sendEmail(params.to, subject, html, undefined, { text, replyTo: COMPANY_EMAIL });
 }
 
 /**

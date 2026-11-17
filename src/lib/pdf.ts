@@ -19,7 +19,7 @@ export async function generateJournalPDF(params: {
   dateTo: string;
   areaId?: string;
   locale?: Locale;
-  /** Торговая точка из шапки; null — вся организация (колонка «Точка»). */
+  /** Объект из шапки; null — вся организация (колонка «Точка»). */
   pointId?: string | null;
 }): Promise<Buffer> {
   const { templateCode, organizationId, organizationName, dateFrom, dateTo, areaId } = params;

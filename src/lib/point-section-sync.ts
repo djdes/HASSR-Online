@@ -38,7 +38,7 @@ export function normalizePath(pathname: string | null | undefined): string {
   return (pathname || "/").split(/[?#]/)[0].replace(/(.)\/+$/, "$1");
 }
 
-/** Страница про всю компанию: выбор торговой точки на ней не имеет смысла. */
+/** Страница про всю компанию: выбор объекта на ней не имеет смысла. */
 export function isCompanyWidePath(pathname: string | null | undefined): boolean {
   const path = normalizePath(pathname);
   if (path === HOME_HREF) return false;
@@ -55,20 +55,20 @@ export function pointPageId(pathname: string | null | undefined): string | null 
 
 export type PointSyncState = {
   pathname: string | null | undefined;
-  /** Торговая точка, выбранная в шапке; null — офис или «Вся организация». */
+  /** Объект, выбранная в шапке; null — офис или «Вся организация». */
   viewedPointId: string | null;
   /** Руководство на всю компанию: ему доступны офис / «Вся организация». */
   canViewOrganization: boolean;
   /** Куда переключать «на всю компанию»: id офиса или «Вся организация». */
   organizationTargetId: string | null;
-  /** Торговые точки, которые человек может выбрать в шапке. */
+  /** Объекты, которые человек может выбрать в шапке. */
   pointIds: readonly string[];
   /** `?place=` вкладки с фильтром по местам (`PLACE_FILTER_PATHS`); null — нет. */
   placeParam?: string | null;
 };
 
 export type PointSyncAction =
-  /** Раздел всей компании, а выбрана торговая точка — переключить на офис. */
+  /** Раздел всей компании, а выбран объект — переключить на офис. */
   | { kind: "organization"; targetId: string }
   /** Открыта страница точки, а в шапке другое — переключить на неё. */
   | { kind: "point"; targetId: string }
@@ -107,7 +107,7 @@ export function pointSyncAction(state: PointSyncState): PointSyncAction | null {
 /**
  * Куда перейти после выбора в переключателе; null — остаться на странице
  * (она перерисуется для новой точки).
- *   • выбрали торговую точку на главной, в разделе компании или на странице
+ *   • выбрали объект на главной, в разделе компании или на странице
  *     другой точки — её страница (без права на «Точки» — «Сегодня»);
  *   • выбрали офис / всю организацию на странице точки — список точек.
  */
@@ -143,7 +143,7 @@ export function hrefAfterPointSwitch(input: {
  */
 export function pointReturnTarget(input: {
   pathname: string | null | undefined;
-  /** Торговая точка в шапке сейчас; null — офис / вся организация. */
+  /** Объект в шапке сейчас; null — офис / вся организация. */
   viewedPointId: string | null;
   /** Точка, с которой человека увела автосмена; null — возвращать нечего. */
   returnPointId: string | null;

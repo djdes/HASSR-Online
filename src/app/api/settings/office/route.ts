@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * POST — выделить офис организации (2026-10-26): служебная «точка»
  * `kind = "office"`, одна на организацию. Её сотрудники видят все точки,
  * а журналы и задачи у них только офисные. Офис есть — возвращаем его.
- * Нужна хотя бы одна торговая точка: офис + точка — два места, поэтому
+ * Нужна хотя бы один объект: офис + точка — два места, поэтому
  * выделение офиса само включает журналы по точкам (2026-11-12: с одной
  * точкой тумблер деления недоступен, и офис было не завести).
  * Дизайн: docs/superpowers/specs/2026-10-26-office-and-points-design.md
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     db.building.count({ where: { organizationId, NOT: { kind: OFFICE_BUILDING_KIND } } }),
   ]);
   if (pointCount < 1) {
-    return NextResponse.json({ error: "Сначала добавьте торговую точку" }, { status: 400 });
+    return NextResponse.json({ error: "Сначала добавьте объект" }, { status: 400 });
   }
 
   let building = existing;

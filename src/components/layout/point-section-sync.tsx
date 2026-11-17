@@ -56,7 +56,7 @@ async function postActiveBuilding(buildingId: string, failed: string): Promise<b
 /**
  * Держит точку в шапке и открытый раздел согласованными (владелец,
  * 2026-11-10; правила — `lib/point-section-sync.ts`):
- *   • раздел всей компании при выбранной торговой точке — выбор сам
+ *   • раздел всей компании при выбранном объекте — выбор сам
  *     становится офисом («Вся организация»); в тосте — «Вернуться на
  *     „точку“»: нажал не туда — одно нажатие назад;
  *   • страница точки — в шапке эта точка;
@@ -72,12 +72,12 @@ export function PointSectionSync({
   organizationTarget,
   points,
 }: {
-  /** Торговая точка, выбранная в шапке; null — офис или «Вся организация». */
+  /** Объект, выбранная в шапке; null — офис или «Вся организация». */
   viewedPointId: string | null;
   canViewOrganization: boolean;
   /** Офис или «Вся организация» — куда переключать в разделах компании. */
   organizationTarget: { id: string; name: string } | null;
-  /** Торговые точки переключателя. */
+  /** Объекты переключателя. */
   points: Array<{ id: string; name: string }>;
 }) {
   const t = useTranslations("navigation.shell.point");

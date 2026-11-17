@@ -10,7 +10,7 @@ const buildings = [
   { id: "school9", name: "Школа № 9", kind: "point", linkedServiceCode: "SCHOL-00000" },
 ];
 
-test("точки со своими журналами: только торговые точки и только при журналах по точкам", () => {
+test("точки со своими журналами: только объекты и только при журналах по точкам", () => {
   assert.deepEqual(journalPointsOf({ perLocationJournals: true }, buildings).map((b) => b.id), ["school5", "school7", "school9"]);
   assert.deepEqual(journalPointsOf({ perLocationJournals: false }, buildings), []);
 });

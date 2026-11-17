@@ -120,7 +120,7 @@ test("failed switch shows no toast; no previous side — toast without return", 
   assert.deepEqual(toasts, []);
 
   let back: SwitchToastBack | null | undefined;
-  const ok: SwitchSide = { tag: "y", go: async () => true, message: "Торговая точка: Y", returnLabel: "y" };
+  const ok: SwitchSide = { tag: "y", go: async () => true, message: "Объект: Y", returnLabel: "y" };
   switchWithReturn(refreshAfter, ok, null, (_message, toastBack) => {
     back = toastBack;
   });

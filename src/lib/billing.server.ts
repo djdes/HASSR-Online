@@ -18,6 +18,9 @@ import {
   POINT_LIMIT_CODE,
   STORAGE_LIMIT_CODE,
   TRIAL_REMINDER_DAYS,
+  trialReminderDue,
+  trialReminderStage,
+  type TrialReminderStage,
   TRIAL_SETTING_KEY,
   checkJournals,
   checkPoints,
@@ -64,6 +67,7 @@ import {
   type ScheduledPlan,
 } from "@/lib/tariff-plans";
 import { isManagementRole } from "@/lib/user-roles";
+import { COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
 
 /**
  * Серверная часть тарифов 2026-10: настройки пробного периода из
@@ -298,7 +302,7 @@ export async function loadBillingUnit(organizationId: string): Promise<BillingUn
               id: { not: PLATFORM_ORG_ID() },
             }
           : { id: org.id },
-        // Офис организации — не торговая точка: в тариф не считается.
+        // Офис организации — не объект: в тариф не считается.
         select: { id: true, subscriptionEnd: true, disabledJournalCodes: true, _count: { select: { buildings: { where: { kind: { not: OFFICE_BUILDING_KIND } } } } } },
       });
   const scopeOrgIds = scopeOrgs.map((o) => o.id);
@@ -1430,35 +1434,83 @@ async function autoRenewReminderFor(unit: BillingUnit): Promise<{ text: string; 
   }
 }
 
+/**
+ * Напишет ли сегодня о конце пробного сценарий «пробный и оплата»: его ступень
+ * пробного наступила, а ключ письма ещё не занят. Тогда напоминание этого дня
+ * не отправляем — у клиента одно письмо о конце пробного в день.
+ */
+export async function lifecycleTrialLetterToday(unit: UnitRow, state: AccountBillingState, now: Date): Promise<boolean> {
+  try {
+    const [{ readLifecycleSettings }, { lifecycleFactsFor }, { planLifecycle }] = await Promise.all([
+      import("@/lib/crm/tasks.server"),
+      import("@/lib/lifecycle/job.server"),
+      import("@/lib/lifecycle/plan"),
+    ]);
+    const settings = await readLifecycleSettings();
+    if (!settings.enabled) return false;
+    const plan = planLifecycle(await lifecycleFactsFor(unit, state, now, true), settings, now);
+    if (!plan?.email || !plan.stage.startsWith("trial_")) return false;
+    const claimed = await db.crmReminderLog.findUnique({ where: { dedupeKey: plan.key }, select: { id: true } });
+    return !claimed;
+  } catch (error) {
+    console.error("[billing] lifecycle overlap check failed", { unit: unit.key, error });
+    return false;
+  }
+}
+
+/** Тема и заголовок напоминания по ступени: «через 5 дней», «через 2 дня», «завтра последний день». */
+export function trialReminderCopy(stage: TrialReminderStage, daysLeftValue: number, last: string): { subject: string; title: string } {
+  if (stage === 1) return { subject: `Последний день пробного периода — ${last}`, title: "Пробный период заканчивается завтра" };
+  return { subject: `Пробный период заканчивается через ${daysLabel(daysLeftValue)}`, title: "Пробный период заканчивается" };
+}
+
 async function sendTrialEndingReminder(
   unit: BillingUnit,
   state: AccountBillingState,
-  prices: PlanPricesFrom
+  prices: PlanPricesFrom,
+  stage: TrialReminderStage,
 ): Promise<boolean> {
   const { escapeHtml } = await import("@/lib/html-escape");
   if (!state.trialEndsAt || state.trialDaysLeft === null) return false;
   const last = formatMskDay(lastDayBefore(state.trialEndsAt));
   const left = daysLabel(state.trialDaysLeft);
   const payUrl = `${APP_URL}${BILLING_PAY_HREF}`;
-  await sendOwnerNotice({
+  const copy = trialReminderCopy(stage, state.trialDaysLeft, last);
+  const delivered = await sendOwnerNotice({
     organizationId: unit.organizationId,
-    kind: "billing.trial_reminder",
+    kind: `billing.trial_reminder.${stage}`,
     telegramText:
       `⏳ Пробный период «${escapeHtml(unit.organizationName)}» заканчивается через ${left} — по ${last} включительно. ` +
       `Подключите тариф, чтобы всё осталось как есть: ${paidPlansHint(prices)} На бесплатном останутся ${FREE_LIMITS}.`,
     email: {
-      subject: `Пробный период заканчивается ${last}`,
-      title: "Пробный период заканчивается",
+      subject: copy.subject,
+      title: copy.title,
       html:
         `<p ${P}>Здравствуйте!</p>` +
         `<p ${P}>Пробный период организации <strong>${escapeHtml(unit.organizationName)}</strong> заканчивается через ${left} — по ${last} включительно.</p>` +
         `<div ${BOX}>${escapeHtml(paidPlansHint(prices))}</div>` +
         `<p ${P}>Если тариф не подключить, на бесплатном останутся ${FREE_LIMITS} — вы сами отметите, какие.</p>` +
-        `<a href="${payUrl}" ${BUTTON}>Выбрать тариф</a>`,
+        `<a href="${payUrl}" ${BUTTON}>Выбрать тариф</a>` +
+        `<p style="margin:20px 0 0;color:#3f3f46;line-height:1.6">Вопросы — звоните ${COMPANY_PHONE.display} или пишите ${COMPANY_TELEGRAM.handle}: поможем выбрать тариф и перенести журналы.</p>`,
     },
-    emailOnlyWithoutTelegram: true,
+    // Напоминание о конце пробного — всегда почтой (и в Telegram, если привязан).
+    emailOnlyWithoutTelegram: false,
   });
-  return true;
+  return delivered.email || delivered.telegram;
+}
+
+/**
+ * Напоминание о конце пробного вручную (карточка клиента в /root): та же
+ * ступень и тот же текст, что у ежедневной задачи. Пробный не идёт — null.
+ */
+export async function sendTrialReminderNow(organizationId: string, now: Date = new Date()): Promise<{ sent: boolean; stage: TrialReminderStage } | null> {
+  const unit = await loadBillingUnit(organizationId);
+  if (!unit) return null;
+  const state = stateForUnit(unit, await readTrialSettings(), now);
+  if (state.kind !== "free_period" || state.trialDaysLeft === null || state.trialDaysLeft <= 0) return null;
+  const stage = trialReminderStage(state.trialDaysLeft) ?? 5;
+  const sent = await sendTrialEndingReminder(unit, state, await pricesFrom(), stage);
+  return { sent, stage };
 }
 
 // ------------------------------------------------------------ daily job
@@ -1616,8 +1668,8 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
   const units = await listBillingUnits();
   report.scanned = units.length;
   // С 2026-11-09 о конце пробного пишет сценарий «пробный и оплата»
-  // (`src/lib/lifecycle`): за 4 и 2 рабочих дня, со счётом. Старое
-  // напоминание за 3 дня — только когда сценарий выключен.
+  // (`src/lib/lifecycle`): за 4 и 2 рабочих дня, со счётом. Напоминания за
+  // 5, 2 и 1 день идут всегда; в день письма сценария — без второго письма.
   const { readLifecycleSettings } = await import("@/lib/crm/tasks.server");
   const lifecycleOn = (await readLifecycleSettings()).enabled;
   const { runAutoRenewForUnit } = await import("@/lib/balance/auto-renew.server");
@@ -1656,21 +1708,31 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     let outcome = "planned";
     try {
       if (action === "remind_trial_end") {
-        if (lifecycleOn) {
-          outcome = "trial reminder — lifecycle scenario";
+        // За 5, 2 и 1 день — по письму на ступень (спека trial-emails-rename-2026-11).
+        const stage = trialReminderStage(state.trialDaysLeft);
+        const trialEndsAt = state.trialEndsAt;
+        if (!stage || !trialEndsAt) {
+          outcome = "no trial reminder stage";
           continue;
         }
-        const since = state.trialEndsAt ? new Date(state.trialEndsAt.getTime() - (TRIAL_REMINDER_DAYS + 1) * DAY_MS) : now;
-        const already = await db.auditLog.findFirst({
-          where: { organizationId: { in: unit.scopeOrgIds }, action: AUDIT_ACTIONS.trialReminder, createdAt: { gte: since } },
-          select: { id: true },
+        const sent = await db.auditLog.findMany({
+          where: {
+            organizationId: { in: unit.scopeOrgIds },
+            action: AUDIT_ACTIONS.trialReminder,
+            // С начала пробного: ступени этого срока различает `trialEndsAt` в деталях.
+            createdAt: { gte: unit.createdAt },
+          },
+          select: { details: true },
         });
-        if (already) {
-          outcome = "trial reminder already sent";
+        if (!trialReminderDue(sent.map((row) => row.details), trialEndsAt, stage)) {
+          outcome = `trial reminder ${stage}d already sent`;
           continue;
         }
+        // Сегодня о конце пробного пишет сценарий «пробный и оплата» (письмо со
+        // счётом) — второе письмо в тот же день не шлём, ступень закрыта им.
+        const covered = lifecycleOn && (await lifecycleTrialLetterToday(unit, state, now));
         if (!dryRun) {
-          await sendTrialEndingReminder(unit, state, prices);
+          if (!covered) await sendTrialEndingReminder(unit, state, prices, stage);
           await db.auditLog.create({
             data: {
               organizationId: unit.organizationId,
@@ -1678,12 +1740,17 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
               action: AUDIT_ACTIONS.trialReminder,
               entity: unit.accountId ? "account" : "organization",
               entityId: unit.accountId ?? unit.organizationId,
-              details: { trialEndsAt: state.trialEndsAt?.toISOString() ?? null, daysLeft: state.trialDaysLeft },
+              details: {
+                trialEndsAt: trialEndsAt.toISOString(),
+                daysLeft: state.trialDaysLeft,
+                stage,
+                ...(covered ? { coveredBy: "lifecycle" } : {}),
+              },
             },
           });
-          outcome = "trial reminder sent";
         }
-        report.trialReminded += 1;
+        outcome = covered ? `trial reminder ${stage}d — lifecycle letter today` : `trial reminder ${stage}d sent`;
+        if (!covered) report.trialReminded += 1;
       } else if (action === "remind_paid_end") {
         const stage = paidReminderStage(state.paidDaysLeft);
         const paidUntil = state.paidUntil;

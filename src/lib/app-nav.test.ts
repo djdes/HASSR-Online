@@ -113,7 +113,7 @@ test("разделы в порядке схемы владельца; главн
   assert.deepEqual(mainKeys(root), ["company", "monitoring", "billing", "settings", "news", "inspection"]);
 });
 
-test("дерево: Моя компания → Офис / Торговые точки → Сотрудники / Журналы / ППК; Мониторинг → Чек-листы", () => {
+test("дерево: Моя компания → Офис / Объекты → Сотрудники / Журналы / ППК; Мониторинг → Чек-листы", () => {
   const parents = Object.fromEntries(NAV_SECTIONS.map((section) => [section.key, section.parent ?? null]));
   assert.deepEqual(parents, {
     company: null,
@@ -158,11 +158,11 @@ test("дерево: Моя компания → Офис / Торговые то
 });
 
 test("закрытый родитель поднимает раздел в главное меню — права не меняются", () => {
-  // Заведующей «Моя компания» закрыта: «Офис» (права и доступ), «Торговые точки» и «Остальное» — в главном меню.
+  // Заведующей «Моя компания» закрыта: «Офис» (права и доступ), «Объекты» и «Остальное» — в главном меню.
   assert.deepEqual(mainKeys(headChef), ["office", "points", "monitoring", "billing", "settings", "more", "news", "inspection"]);
   // Повар с доступом к чек-листам: «Мониторинг» закрыт — «Чек-листы» сами по себе.
   assert.deepEqual(mainKeys(cook), ["checklists", "news"]);
-  // Линейная роль с пресетом заведующей: «Торговые точки» закрыты — «Сотрудники» и «Журналы» сверху.
+  // Линейная роль с пресетом заведующей: «Объекты» закрыты — «Сотрудники» и «Журналы» сверху.
   assert.deepEqual(mainKeys(verifyOnly, noChecklists), ["staff", "journals", "news", "inspection"]);
 });
 
@@ -545,7 +545,7 @@ test("у каждого раздела, кроме «Остального» и �
     if (section.key === "more" || section.key === "news") assert.equal(section.menu, undefined);
     else assert.ok(section.menu && section.menu.length > 0, section.key);
   }
-  // Офис ›, Торговые точки ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним (2026-11-11).
+  // Офис ›, Объекты ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним (2026-11-11).
   assert.deepEqual(menuShape("company"), [
     [null, ["office", "points", "master", "organization"]],
     [null, ["more"]],
@@ -609,7 +609,7 @@ test("каждая вкладка раздела с меню — пункт, в�
         group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)]),
       ),
     );
-    // Корень «Торговых точек» — список точек: на него ведёт заголовок меню, своего пункта нет (эскиз).
+    // Корень «Объектов» — список точек: на него ведёт заголовок меню, своего пункта нет (эскиз).
     hrefs.add(section.tabs[0].href);
     for (const tab of section.tabs) assert.ok(hrefs.has(tab.href), `${section.key}: ${tab.href}`);
   }
@@ -653,7 +653,7 @@ test("match пункта: карточки и подстраницы подсв�
   // Бывшие «Настройки» сотрудников и точек — в своих разделах (редиректы).
   assert.equal(sectionForPath("/settings/sections/staff")?.section, "staff");
   assert.equal(sectionForPath("/settings/sections/points")?.section, "points");
-  // Точки: список, мастер добавления и страница точки — корень «Торговых точек».
+  // Точки: список, мастер добавления и страница точки — корень «Объектов».
   assert.equal(sectionForPath("/settings/buildings")?.section, "points");
   assert.equal(sectionForPath("/settings/buildings/new")?.section, "points");
   assert.equal(sectionForPath("/settings/buildings/x")?.section, "points");
@@ -863,7 +863,7 @@ test("руководитель точки: без «Моей компании»,
   const keys: string[] = sections.map((section) => section.key);
   for (const key of ["company", "office", "billing", "settings"]) assert.equal(keys.includes(key), false, key);
   assert.ok(keys.includes("journals") && keys.includes("staff") && keys.includes("points"));
-  // «Торговые точки» — в главном меню, «Сотрудники» и «Журналы» — в их меню.
+  // «Объекты» — в главном меню, «Сотрудники» и «Журналы» — в их меню.
   assert.deepEqual(mainKeys(pointManager), ["points", "monitoring", "more", "news", "inspection"]);
   const items = (key: string) =>
     (sections.find((section) => section.key === key)?.menu ?? []).flatMap((group) => group.items.map((item) => item.id));

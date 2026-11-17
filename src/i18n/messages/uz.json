@@ -601,11 +601,11 @@
       "inJournal": "Jurnalingizda bor",
       "back": "Barcha plakatlar",
       "selectPoster": "«{title}» plakatini tanlash",
-      "pointTitle": "Qaysi savdo nuqtasi uchun chop etamiz",
+      "pointTitle": "Qaysi obyekt uchun chop etamiz",
       "pointSingle": "Shu nuqta uchun chop etamiz",
       "pointHint": "Nuqta nomi har bir varaq tepasida chop etiladi, «Kundalik koʻrik» QR kodi esa shu nuqta jurnalini ochadi.",
       "pointUntitled": "Nomsiz nuqta",
-      "pointsEmptyTitle": "Savdo nuqtasini qoʻshing",
+      "pointsEmptyTitle": "Obyektni qoʻshing",
       "pointsEmptyBody": "Uning nomi har bir varaq tepasida chop etiladi. Hozircha nuqtalar yoʻq, plakatlar nomsiz chop etiladi.",
       "pointsAdd": "Nuqta qoʻshish"
     },
@@ -2782,7 +2782,7 @@
       "sections": {
         "company": "Mening kompaniyam",
         "staff": "Xodimlar",
-        "points": "Savdo nuqtalari",
+        "points": "Obyektlar",
         "journals": "Jurnallar",
         "checklists": "Chek-listlar",
         "productionControl": "Ishlab chiqarish nazorati",
@@ -2869,7 +2869,7 @@
         "company": {
           "items": {
             "office": "Ofis",
-            "points": "Savdo nuqtalari",
+            "points": "Obyektlar",
             "master": "Master-kabinet",
             "more": "Boshqalar",
             "organization": "Rekvizitlar"
@@ -3654,36 +3654,20 @@
       "nextSteps": "Parolni profil sozlamalarida almashtirishingiz mumkin. Jurnal sarlavhalari va tekshiruv PDF hujjatlarida ko‘rinishi uchun kabinetda tashkilot ma’lumotlarini to‘ldiring."
     },
     "welcome": {
-      "subject": "WeSetup’ga xush kelibsiz: 5 qadamli sozlash rejasi",
-      "title": "WeSetup’ga xush kelibsiz!",
-      "greeting": "Assalomu alaykum, {name}!",
-      "organizationReady": "{organization} tashkiloti ro‘yxatdan o‘tdi. {trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar va imkoniyatlar cheklovsiz, karta kerak emas.",
-      "checklistTitle": "Sozlash rejangiz",
-      "checklistIntro": "Besh qadam — va xodimlar jurnallarni telefondan to‘ldira boshlaydi. Har bir qadam havola orqali ochiladi.",
-      "steps": {
-        "company": {
-          "title": "Kompaniya ma’lumotlarini to‘ldiring",
-          "description": "Rekvizitlar va STIR — jurnal va hujjatlar sarlavhasi uchun, logotip — kabinet menyusi uchun."
-        },
-        "point": {
-          "title": "Savdo nuqtasini qo‘shing",
-          "description": "Kafe, sex yoki do‘kon: manzil, xonalar va uskunalar — muzlatgichlar, UB-lampalar, frityurlar."
-        },
-        "staff": {
-          "title": "Nuqta xodimlarini qo‘shing",
-          "description": "Ism, lavozim va telefon. Har bir xodim faqat o‘z vazifalarini ko‘radi."
-        },
-        "journals": {
-          "title": "Nuqta jurnallarini tanlang",
-          "description": "SanPiN va XACCP to‘plami sohangizga mos tanlangan — ortiqchasini olib tashlang yoki keraklisini qo‘shing."
-        },
-        "qr": {
-          "title": "QR-stikerlarni chop eting",
-          "description": "Muzlatgichlarga va xonalarga yopishtiring: xodim kodni telefon bilan skanerlaydi va darhol jurnalni to‘ldiradi."
-        }
-      },
-      "getStarted": "Sozlashni boshlash",
-      "help": "Yordam kerakmi? {phone} raqamiga qo‘ng‘iroq qiling — sozlashda yordam beramiz."
+      "subject": "WeSetup’ni tanlaganingiz uchun rahmat",
+      "title": "WeSetup’ga xush kelibsiz",
+      "greeting": "Assalomu alaykum!",
+      "greetingNamed": "Assalomu alaykum, {name}!",
+      "thanks": "Ishlab chiqarish nazoratining elektron dasturi — WeSetup’ni tanlaganingiz uchun rahmat.",
+      "value": "WeSetup sizni bir xil ishlardan xalos qiladi: HACCP va SanPiN jurnallari telefondan QR orqali to‘ldiriladi, eslatmalar o‘zi keladi, siz esa har bir jurnal bo‘yicha jarayonlarni nazorat qilasiz — nima, kim va qachon qilingan.",
+      "posterTitle": "QR plakat — jurnal o‘zi yuritiladi",
+      "posterBody": "Uni muzlatkich yoniga yoki oshxonaga osib qo‘ying: xodim kodni skanerlaydi va yarim daqiqada yozuv qiladi. Plakatlar kabinetdan chop etiladi.",
+      "support": "Biz yoningizdamiz: qo‘llab-quvvatlashga yozing yoki Moskvadagi {phone} raqamiga qo‘ng‘iroq qiling — yordam beramiz, tushuntiramiz va o‘rgatamiz.",
+      "channels": "Qo‘llab-quvvatlash:",
+      "openCabinet": "Kabinetni ochish",
+      "tryFree": "Bepul sinab ko‘rish",
+      "photoAlt": "Jurnallar telefondan yuritiladigan oshxona",
+      "posterAlt": "Jurnalga yozish uchun QR kodli WeSetup plakati"
     },
     "common": {
       "footer": "SanPiN va HACCP elektron jurnallari.",
@@ -8862,7 +8846,7 @@
       "errors": {
         "everywhere": "Xodim barcha nuqtalarda ishlaydi — u bu yerda ham ishlay oladi, tayinlash shart emas. Uni nuqtaga biriktirish uchun «Qayerda ishlaydi»da belgilang.",
         "office_user": "Xodim ofisda ishlaydi — uni nuqtaga o‘rinbosar qilib bo‘lmaydi. Avval «Qayerda ishlaydi»da unga nuqta belgilang.",
-        "office_target": "Ofis savdo nuqtasi emas: o‘rinbosar nuqtaga tayinlanadi.",
+        "office_target": "Ofis obyekt emas: o‘rinbosar nuqtaga tayinlanadi.",
         "overlap": "Xodimda vaqtinchalik nuqta bor — avval uni xodim kartasida tugating.",
         "already_there": "Xodim allaqachon shu nuqtada ishlaydi.",
         "bad_days": "Muddat — 1 dan 60 kungacha"
@@ -10400,7 +10384,7 @@
         "legalFullName": "To‘liq nomi",
         "legalFullNameHint": "Ustavdagidek: «Mas’uliyati cheklangan jamiyat …»",
         "kpp": "Soliq ro‘yxat kodi (KPP)",
-        "kppHint": "9 belgi. Savdo nuqtasining o‘z kodi «Savdo nuqtalari»da kiritiladi.",
+        "kppHint": "9 belgi. Obyektning o‘z kodi «Obyektlar»da kiritiladi.",
         "ogrn": "Asosiy davlat ro‘yxat raqami (OGRN)",
         "ogrnHint": "Yuridik shaxsda 13 raqam, yakka tadbirkorda 15 raqam",
         "legalAddress": "Yuridik manzil",
@@ -10414,7 +10398,7 @@
         "resetToRegistry": "Reyestrdagini qaytarish",
         "docsPreviewTitle": "Hujjatlarda shunday ko‘rinadi",
         "docsPreviewJournal": "Jurnal sarlavhasi",
-        "docsPreviewNote": "Ko‘rinishda saqlanmagan o‘zgarishlar ham hisobga olinadi. Savdo nuqtasi o‘z hujjatlari sarlavhasiga qo‘shiladi.",
+        "docsPreviewNote": "Ko‘rinishda saqlanmagan o‘zgarishlar ham hisobga olinadi. Obyekt o‘z hujjatlari sarlavhasiga qo‘shiladi.",
         "contactsTitle": "Kontaktlar",
         "contactsSubtitle": "Haftalik hisobotlar uchun buxgalteriya emaili",
         "accountantEmail": "Buxgalter emaili",
@@ -10695,9 +10679,9 @@
         "innValue": "STIR {inn}",
         "editRequisites": "O‘zgartirish",
         "journalShortNameHint": "Har bir jurnal sarlavhasida chop etiladi. Bo‘sh bo‘lsa — reyestrdagi qisqa nom yoki to‘liq nom.",
-        "pointTitle": "Savdo nuqtasi haqida",
+        "pointTitle": "Obyekt haqida",
         "pointLead": "Nuqta hujjatlarida uning nomi, manzili, KPP va telefoni chop etiladi. Nuqtani tanlang va sarlavhani ko‘rinishda tekshiring.",
-        "pointPick": "Savdo nuqtasi",
+        "pointPick": "Obyekt",
         "pointUntitled": "Nomsiz nuqta",
         "pointJournalName": "Jurnallar uchun nom",
         "pointJournalNameHint": "Faoliyat joyidagi aniq nom. Bo‘sh bo‘lsa — «nom, manzil».",
@@ -10707,7 +10691,7 @@
         "pointKppHint": "Alohida bo‘linmaning o‘z KPP. Bo‘sh bo‘lsa — tashkilot KPP.",
         "pointPhone": "Nuqta telefoni",
         "pointPhoneHint": "Shu nuqta jurnallari sarlavhasida chop etiladi",
-        "pointsEmptyTitle": "Hozircha savdo nuqtalari yo‘q",
+        "pointsEmptyTitle": "Hozircha obyektlar yo‘q",
         "pointsEmptyBody": "Hujjatlar butun tashkilot uchun chop etiladi. Manzillar bir nechta bo‘lsa, nuqtalarni qo‘shing — har biriga o‘z sarlavhasi bo‘ladi.",
         "pointsAdd": "Nuqta qo‘shish",
         "pointsManage": "Nuqtaning barcha sozlamalari",
@@ -10944,15 +10928,15 @@
         }
       },
       "disabled": {
-        "title": "Avval savdo nuqtasini qo‘shing",
-        "body": "Kompaniyada kamida bitta savdo nuqtasi bo‘lsa, ofisni ajratish mumkin. Uni qo‘shing — bu yerda ofis xodimlari va jurnallari paydo bo‘ladi.",
-        "link": "Savdo nuqtalarini ochish"
+        "title": "Avval obyektni qo‘shing",
+        "body": "Kompaniyada kamida bitta obyekt bo‘lsa, ofisni ajratish mumkin. Uni qo‘shing — bu yerda ofis xodimlari va jurnallari paydo bo‘ladi.",
+        "link": "Obyektlarni ochish"
       },
       "create": {
         "title": "Ofisni ajrating",
         "body": "Ofis — kompaniya rahbarlari joyi: ular barcha nuqtalarni ko‘radi, lekin nuqtalar jurnali va vazifalariga qo‘shilmaydi. Nuqta xodimlariga ta’sir qilmaydi.",
-        "split": "Ofis va savdo nuqtalari jurnallari alohida yuritiladi.",
-        "switcher": "Sarlavhada «Ofis / savdo nuqtasi» almashtirgichi paydo bo‘ladi.",
+        "split": "Ofis va obyektlar jurnallari alohida yuritiladi.",
+        "switcher": "Sarlavhada «Ofis / obyekt» almashtirgichi paydo bo‘ladi.",
         "existing": "Allaqachon to‘ldirilgan hujjatlar umumiy bo‘lib qoladi va hamma joyda ko‘rinadi.",
         "button": "Ofisni ajratish",
         "done": "Ofis ajratildi",
@@ -10975,7 +10959,7 @@
         "failed": "Ofisni ochib bo‘lmadi"
       },
       "points": {
-        "title": "Kompaniyaning savdo nuqtalari",
+        "title": "Kompaniyaning obyektlari",
         "hint": "Nuqtaga oid hamma narsa — xodimlar, jurnallar, xonalar va jihozlar — nuqta sahifasida.",
         "add": "Nuqta qo‘shish",
         "unplaced": "{count, plural, other {# ta xodimga}} hali joy belgilanmagan: ular barcha nuqtalar jurnaliga tushadi.",
@@ -17510,7 +17494,28 @@
       "localTime": "Mijozning mahalliy vaqti",
       "none": "Ma’lumot yo‘q: manzillar 26.08.2026 dan boshlab kirishda yoziladi"
     },
-    "readOnly": "Tarif va ballarni «To‘lovlar va tariflar» bo‘limi bor xodim o‘zgartira oladi."
+    "readOnly": "Tarif va ballarni «To‘lovlar va tariflar» bo‘limi bor xodim o‘zgartira oladi.",
+    "serviceEmails": {
+      "title": "Xizmat xatlari",
+      "description": "Egasiga {email} manziliga qo‘lda yuborish — avtomatik ketadigan shablonning o‘zi.",
+      "noEmail": "Egasining pochtasi yo‘q — xizmat xatlarini yuborib bo‘lmaydi.",
+      "send": "Yuborish",
+      "confirm": "«{title}» xatini {email} manziliga yuborasizmi?",
+      "sent": "Xat {email} manziliga yuborildi",
+      "failed": "Xatni yuborib bo‘lmadi",
+      "welcome": {
+        "title": "Xush kelibsiz",
+        "hint": "WeSetup tanlangani uchun rahmat, QR plakat va qo‘llab-quvvatlash telefoni. Avtomatik — ro‘yxatdan o‘tish va shablon yuklab olingandan keyin."
+      },
+      "trial_reminder": {
+        "title": "Sinov davri tugayapti",
+        "hint": "Necha kun qoldi va tarifni qanday tanlash. Avtomatik — 5, 2 va 1 kun oldin."
+      },
+      "trial_feedback": {
+        "title": "Sinov haqida fikr",
+        "hint": "«Elektron jurnallarni baholay oldingizmi?» — sinov raqamlari bilan. Avtomatik — to‘lovsiz sinov tugagach."
+      }
+    }
   },
   "miniHome": {
     "entry": {
@@ -30764,7 +30769,7 @@
     "settings": "Jurnal sozlamalari",
     "guide": {
       "title": "Bu qanday ishlaydi",
-      "list": "Bu yerda barcha savdo nuqtalari va ularda yuritiladigan jurnallar.",
+      "list": "Bu yerda barcha obyektlar va ularda yuritiladigan jurnallar.",
       "add": "«Jurnal qo‘shish» — jurnal shu nuqta xodimlarining «Bugun» bo‘limida paydo bo‘ladi.",
       "remove": "Jurnal yonidagi «×» — u eslatmaydi; yozuvlar o‘chirilmaydi."
     }
@@ -31535,7 +31540,7 @@
         "failed": "Ulab bo‘lmadi. Ma’lumotlarni tekshiring."
       },
       "stores": {
-        "title": "iiko omborlari va savdo nuqtalari",
+        "title": "iiko omborlari va obyektlar",
         "hint": "Ombor yuk xatlari va hisobdan chiqarish dalolatnomalari uning nuqtasiga tushadi. «Yuklamaslik» — ombor hujjatlari o‘tkazib yuboriladi. Nuqtasiz — nuqta yuk xatini qabul qilishda tanlanadi.",
         "load": "Omborlarni iiko’dan yuklash",
         "reload": "Omborlar ro‘yxatini yangilash",
@@ -31893,5 +31898,30 @@
       "never": "—",
       "shownLimit": "Oxirgi {count} ta yozuv koʻrsatilgan."
     }
+  },
+  "trialFeedbackPage": {
+    "title": "Sinov davri qanday o‘tdi?",
+    "lead": "«{organization}» jurnallarini elektron ko‘rinishda yuritish qanchalik qulayligini baholay oldingizmi? Javob 10 soniya oladi.",
+    "answers": {
+      "good": "Ha, qulay",
+      "later": "Sinab ko‘rishga ulgurmadik",
+      "help": "Savollarim bor"
+    },
+    "hints": {
+      "good": "Telefondagi jurnallar asqatdi",
+      "later": "Qo‘l tegmadi — boshlashda yordam yoki ko‘proq vaqt kerak",
+      "help": "Nimadir noqulay yoki tushunarsiz — aytib bering"
+    },
+    "commentLabel": "Izoh (xohishga ko‘ra)",
+    "commentPlaceholder": "Nima yoqdi, nima xalaqit berdi, nima yetishmadi",
+    "submit": "Yuborish",
+    "sending": "Yuborilmoqda…",
+    "thanksTitle": "Javobingiz uchun rahmat!",
+    "thanksBody": "Bugun o‘qib chiqamiz. Yordam kerak bo‘lsa, siz bilan bog‘lanamiz.",
+    "chooseAnswer": "Javoblardan birini tanlang.",
+    "failed": "Yuborib bo‘lmadi. Qaytadan urinib ko‘ring.",
+    "invalidTitle": "Havola yaroqsiz",
+    "invalidBody": "Muddati o‘tgan yoki to‘liq nusxalanmagan bo‘lishi mumkin. Shunchaki xatga javob yozing — o‘qib chiqamiz.",
+    "support": "Qo‘llab-quvvatlash:"
   }
 }

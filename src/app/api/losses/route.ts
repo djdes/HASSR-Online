@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     where.date = dateFilter;
   }
 
-  // На торговой точке — её потери, её цехов и общих, без места (2026-11-01);
+  // На объекте — её потери, её цехов и общих, без места (2026-11-01);
   // то же правило, что на странице «Потери».
   const pointId = await getViewedPointId(session);
   if (pointId) {
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
       costRub,
       cause: typeof body.cause === "string" ? body.cause.slice(0, 2000) : null,
       areaId,
-      // Точка: цеха, иначе торговая точка из шапки (2026-11-01).
+      // Точка: цеха, иначе объект из шапки (2026-11-01).
       buildingId: areaPointId ?? viewedPointId,
       ...(date ? { date } : {}),
       // Откуда запись: id документа-источника (акта списания).

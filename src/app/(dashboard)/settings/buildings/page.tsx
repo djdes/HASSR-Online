@@ -79,7 +79,7 @@ export default async function BuildingsPage() {
     // Чью страницу точки человек откроет — у тех «Открыть точку».
     listPersonBuildings(session),
   ]);
-  // Только торговые точки (скан 98, 2026-10-28): офис — в «Моя компания → Офис».
+  // Только объекты (скан 98, 2026-10-28): офис — в «Моя компания → Офис».
   // Офис с заведёнными помещениями остаётся: править их больше негде
   // (страница точки для офиса уводит на «Офис»).
   const buildings = allBuildings.filter((building) => !isOfficeBuilding(building) || building.rooms.length > 0);

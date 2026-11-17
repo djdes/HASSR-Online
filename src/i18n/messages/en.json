@@ -2782,7 +2782,7 @@
       "sections": {
         "company": "My company",
         "staff": "Staff",
-        "points": "Outlets",
+        "points": "Sites",
         "journals": "Journals",
         "checklists": "Checklists",
         "productionControl": "Production control",
@@ -2806,7 +2806,7 @@
         "schedule": "Schedule",
         "health": "Medical books",
         "setup": "Settings",
-        "buildings": "Outlets",
+        "buildings": "Sites",
         "areas": "Rooms",
         "equipment": "Equipment",
         "qr": "QR codes",
@@ -2823,11 +2823,11 @@
         "office": "Office staff",
         "access": "Rights and access",
         "overview": "Overview",
-        "points": "Outlet journals"
+        "points": "Site journals"
       },
       "groups": {
         "staff": "Staff",
-        "points": "Outlets",
+        "points": "Sites",
         "journals": "Keeping journals",
         "tasks": "Task assignment",
         "work": "Work",
@@ -2835,24 +2835,24 @@
         "other": "Other"
       },
       "point": {
-        "list": "Outlets",
-        "switch": "Change outlet",
-        "manage": "Manage outlets",
-        "switched": "Outlet: {name}",
-        "failed": "Couldn't switch outlet",
-        "caption": "Outlet",
-        "captionMany": "Outlets",
-        "main": "Main outlet",
-        "untitled": "Untitled outlet",
+        "list": "Sites",
+        "switch": "Change site",
+        "manage": "Manage sites",
+        "switched": "Site: {name}",
+        "failed": "Couldn't switch site",
+        "caption": "Site",
+        "captionMany": "Sites",
+        "main": "Main site",
+        "untitled": "Untitled site",
         "all": "All: {count}",
-        "add": "Add outlet",
+        "add": "Add site",
         "addHint": "Opens the wizard: name and address, rooms, equipment",
-        "open": "Open outlet",
+        "open": "Open site",
         "captionOffice": "Company",
         "organization": "Whole company",
         "companySection": "Company-wide section — now showing {name}",
         "returnTo": "Back to {name}",
-        "search": "Find an outlet",
+        "search": "Find a site",
         "nothingFound": "Nothing found"
       },
       "switchToast": {
@@ -2869,7 +2869,7 @@
         "company": {
           "items": {
             "office": "Office",
-            "points": "Outlets",
+            "points": "Sites",
             "master": "Master cabinet",
             "more": "More",
             "organization": "Company details"
@@ -2908,7 +2908,7 @@
             "more": "More"
           },
           "items": {
-            "staff": "Outlet staff",
+            "staff": "Site staff",
             "journals": "Journals",
             "productionControl": "Production control program",
             "areas": "Workshops and rooms",
@@ -2925,7 +2925,7 @@
             "more": "More"
           },
           "items": {
-            "points": "Outlet journals",
+            "points": "Site journals",
             "today": "Today",
             "control": "Today",
             "all": "All journals",
@@ -3058,35 +3058,35 @@
       },
       "pointMode": {
         "title": "This page is for the whole company",
-        "body": "The outlet “{point}” is selected in the header. With an outlet selected, Journals shows Today, entry checks, settings and the journal sets of that outlet.",
+        "body": "The site “{point}” is selected in the header. With a site selected, Journals shows Today, entry checks, settings and the journal sets of that site.",
         "back": "Back",
         "chooseOrganization": "Select the whole company",
-        "hintOrganization": "Outlet journals and All journals open when “Whole company” is selected in the header.",
-        "hintPoint": "You work at your outlet — journals of all outlets are visible to company management.",
+        "hintOrganization": "Site journals and All journals open when “Whole company” is selected in the header.",
+        "hintPoint": "You work at your site — journals of all sites are visible to company management.",
         "failed": "Couldn't select the whole company"
       },
       "pointMismatch": {
         "title": {
-          "document": "Document of another outlet",
-          "entry": "Entry of another outlet",
-          "batch": "Batch of another outlet",
-          "capa": "Violation of another outlet",
-          "supply": "Delivery note of another outlet"
+          "document": "Document of another site",
+          "entry": "Entry of another site",
+          "batch": "Batch of another site",
+          "capa": "Violation of another site",
+          "supply": "Delivery note of another site"
         },
         "body": {
-          "document": "This document belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
-          "entry": "This entry belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
-          "batch": "This batch belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
-          "capa": "This violation belongs to the outlet “{point}”, but “{selected}” is selected in the header.",
-          "supply": "This delivery note belongs to the outlet “{point}”, but “{selected}” is selected in the header."
+          "document": "This document belongs to the site “{point}”, but “{selected}” is selected in the header.",
+          "entry": "This entry belongs to the site “{point}”, but “{selected}” is selected in the header.",
+          "batch": "This batch belongs to the site “{point}”, but “{selected}” is selected in the header.",
+          "capa": "This violation belongs to the site “{point}”, but “{selected}” is selected in the header.",
+          "supply": "This delivery note belongs to the site “{point}”, but “{selected}” is selected in the header."
         },
-        "bodyUnknown": "This page belongs to another outlet, but “{selected}” is selected in the header.",
+        "bodyUnknown": "This page belongs to another site, but “{selected}” is selected in the header.",
         "back": "Back",
         "switchTo": "Switch to “{point}”",
         "toList": "List for “{selected}”",
         "hintSwitch": "After switching to “{point}” the page opens right here.",
-        "hintNoSwitch": "To open the page, select its outlet in the header.",
-        "failed": "Couldn't switch the outlet"
+        "hintNoSwitch": "To open the page, select its site in the header.",
+        "failed": "Couldn't switch the site"
       },
       "access": {
         "forbiddenTitle": "You don't have access to this section",
@@ -3280,7 +3280,7 @@
       "settings_staff_health": "Medical books and training",
       "settings_sections_journals": "Journal settings",
       "settings_sections_staff": "Staff settings",
-      "settings_sections_points": "Outlet settings",
+      "settings_sections_points": "Site settings",
       "batches": "Batches",
       "batches_new": "New batch",
       "capa": "Non-conformities",
@@ -3417,7 +3417,7 @@
       "settings_organization_office": "Office",
       "home": "Home",
       "monitoring": "Monitoring",
-      "journals_points": "Outlet journals",
+      "journals_points": "Site journals",
       "inspection_laws": "Regulatory documents",
       "inspection_settings": "Section settings",
       "settings_offline": "Offline work"
@@ -3654,36 +3654,20 @@
       "nextSteps": "You can change your password in your profile settings. Add your organization details in the workspace so they appear on log headers and inspection PDFs."
     },
     "welcome": {
-      "subject": "Welcome to WeSetup: your 5-step setup plan",
-      "title": "Welcome to WeSetup!",
-      "greeting": "Hello, {name}!",
-      "organizationReady": "The organisation {organization} has been registered. {trialDays, number} {trialDays, plural, one {day} other {days}} — every log and feature without limits, no card needed.",
-      "checklistTitle": "Your setup checklist",
-      "checklistIntro": "Five steps, and your staff can fill in journals from their phones. Each step opens with one link.",
-      "steps": {
-        "company": {
-          "title": "Fill in your company details",
-          "description": "Legal details and tax ID for journal and document headers, a logo for the workspace menu."
-        },
-        "point": {
-          "title": "Add a location",
-          "description": "A café, kitchen or shop: address, rooms and equipment such as fridges, UV lamps and fryers."
-        },
-        "staff": {
-          "title": "Add the location's staff",
-          "description": "Name, position and phone. Each employee sees only their own tasks."
-        },
-        "journals": {
-          "title": "Choose the location's journals",
-          "description": "A sanitary and HACCP set is already picked for your business type: remove what you don't need or add more."
-        },
-        "qr": {
-          "title": "Print the QR stickers",
-          "description": "Stick them on fridges and in rooms: an employee scans the code with a phone and fills in the journal right away."
-        }
-      },
-      "getStarted": "Start setup",
-      "help": "Need help? Call {phone} and we'll help you set up."
+      "subject": "Thank you for choosing WeSetup",
+      "title": "Welcome to WeSetup",
+      "greeting": "Hello!",
+      "greetingNamed": "Hello, {name}!",
+      "thanks": "Thank you for choosing WeSetup — electronic software for production control.",
+      "value": "WeSetup takes the routine off your hands: HACCP and SanPiN journals are filled in from a phone via QR, reminders arrive on their own, and you control every process journal by journal — what was done, by whom and when.",
+      "posterTitle": "A QR poster — and the journal keeps itself",
+      "posterBody": "Hang it by the fridge or in the kitchen: an employee scans the code and makes an entry in half a minute. Posters are printed from your account.",
+      "support": "We are here to help: write to support or call us in Moscow at {phone} — we will help, explain and teach.",
+      "channels": "Support:",
+      "openCabinet": "Open your account",
+      "tryFree": "Try it free",
+      "photoAlt": "A kitchen where journals are kept from a phone",
+      "posterAlt": "WeSetup poster with a QR code for journal entries"
     },
     "common": {
       "footer": "Electronic SanPiN and HACCP logs.",
@@ -5830,7 +5814,7 @@
         "monitoring": {
           "tab": "Monitoring",
           "title": "Completion by location",
-          "text": "Today’s logs, checklists and the production control program as percentages — for the whole company and for each outlet."
+          "text": "Today’s logs, checklists and the production control program as percentages — for the whole company and for each site."
         },
         "journals": {
           "tab": "Logs",
@@ -8172,8 +8156,8 @@
       "collapse": "Show less",
       "more": "More {count, number}",
       "office": "Office",
-      "officeTitle": "Office: sees all company outlets, journals and tasks are office-only",
-      "officeHint": "Office — sees all outlets, works in the office",
+      "officeTitle": "Office: sees all company sites, journals and tasks are office-only",
+      "officeHint": "Office — sees all sites, works in the office",
       "primaryHint": "★ — main location: location-based notifications use it",
       "primaryOn": "“{name}” is the main location. Click to unset",
       "makePrimary": "Make “{name}” the main location: location-based notifications will use it",
@@ -9301,11 +9285,11 @@
       },
       "page": {
         "noAddress": "No address yet",
-        "guideTitle": "How the outlet page works",
+        "guideTitle": "How the site page works",
         "guide": {
           "head": {
             "title": "Name and address go into documents",
-            "body": "The name is shown in the menu and the cabinet header. The journal name, address, KPP and phone are printed in the header of this outlet's journals and PDFs."
+            "body": "The name is shown in the menu and the cabinet header. The journal name, address, KPP and phone are printed in the header of this site's journals and PDFs."
           },
           "rooms": {
             "title": "Rooms are the basis of cleaning",
@@ -9320,28 +9304,28 @@
             "body": "Print stickers for equipment and posters for rooms: an employee scans one and makes an entry without signing in."
           },
           "staff": {
-            "title": "Outlet staff",
-            "body": "Who works at the outlet: their journals and tasks are only here. «Add employee» assigns the person to this outlet right away."
+            "title": "Site staff",
+            "body": "Who works at the site: their journals and tasks are only here. «Add employee» assigns the person to this site right away."
           },
           "journals": {
-            "title": "Outlet journals",
-            "body": "Its own journal set and commission — the buttons open settings with this outlet already selected."
+            "title": "Site journals",
+            "body": "Its own journal set and commission — the buttons open settings with this site already selected."
           }
         },
         "qa": {
           "allPoints": {
-            "q": "Where are all outlets at once?",
-            "a": "In the left menu, in the All outlets group: the outlet overview, workshops, equipment and QR codes of all outlets together."
+            "q": "Where are all sites at once?",
+            "a": "In the left menu, in the All sites group: the site overview, workshops, equipment and QR codes of all sites together."
           },
           "delete": {
-            "q": "What happens if I delete an outlet?",
-            "a": "The outlet's rooms are deleted. Equipment and journal documents stay in the organization: equipment becomes Without outlet, documents become shared."
+            "q": "What happens if I delete a site?",
+            "a": "The site's rooms are deleted. Equipment and journal documents stay in the organization: equipment becomes Without site, documents become shared."
           }
         }
       },
       "head": {
         "title": "Name and address",
-        "hint": "Goes into this outlet's document details — the journal and PDF header.",
+        "hint": "Goes into this site's document details — the journal and PDF header.",
         "name": "Name",
         "journalName": "Name for journals",
         "journalNameHint": "The exact legal name at the place of business. Empty — the header shows “name, address”.",
@@ -9350,8 +9334,8 @@
         "phone": "Phone",
         "notSet": "not set",
         "edit": "Edit",
-        "dialogTitle": "Outlet name and address",
-        "dialogHint": "The name is shown in the menu and the cabinet header. Everything else is printed in the header of this outlet's journals and PDFs.",
+        "dialogTitle": "Site name and address",
+        "dialogHint": "The name is shown in the menu and the cabinet header. Everything else is printed in the header of this site's journals and PDFs.",
         "namePlaceholder": "For example, “Cafe on Mira”",
         "addressPlaceholder": "City, street, building",
         "journalNamePlaceholder": "As in your documents",
@@ -9360,8 +9344,8 @@
         "save": "Save",
         "saving": "Saving…",
         "cancel": "Cancel",
-        "saved": "Outlet updated",
-        "nameRequired": "Enter the outlet name",
+        "saved": "Site updated",
+        "nameRequired": "Enter the site name",
         "failed": "Couldn't save"
       },
       "rooms": {
@@ -9370,7 +9354,7 @@
         "count": "{count, plural, one {# room} other {# rooms}}",
         "emptyTitle": "No rooms yet",
         "emptyBody": "Add offices, storerooms and other rooms. They will appear in the cleaning log and equipment settings.",
-        "copyFrom": "Copy from outlet",
+        "copyFrom": "Copy from site",
         "copy": "Copy",
         "copying": "Copying…",
         "copied": "Rooms copied: {count}",
@@ -9401,7 +9385,7 @@
         "count": "{count, plural, one {# unit} other {# units}}",
         "emptyTitle": "No equipment yet",
         "emptyBody": "Add a refrigerator or a freezer — its temperature norm goes into the journal.",
-        "noRooms": "Add a room first — equipment stands in a room of the outlet.",
+        "noRooms": "Add a room first — equipment stands in a room of the site.",
         "norm": "norm {range}",
         "noNorm": "no norm",
         "rangeBoth": "{min}…{max} °C",
@@ -9427,29 +9411,29 @@
         "title": "QR stickers and posters",
         "hint": "A sticker on equipment and a poster in a room: an employee scans it and makes an entry without signing in.",
         "stickers": "{count, plural, one {# sticker} other {# stickers}}",
-        "stickersHint": "one per equipment unit of the outlet",
+        "stickersHint": "one per equipment unit of the site",
         "posters": "{count, plural, one {# poster} other {# posters}}",
         "postersHint": "one per room — for the climate journal",
         "printStickers": "Print stickers",
         "printPosters": "Room posters",
         "all": "All organization QR codes",
-        "empty": "Stickers appear once the outlet has equipment or rooms."
+        "empty": "Stickers appear once the site has equipment or rooms."
       },
       "danger": {
-        "title": "Deleting the outlet",
-        "hint": "The outlet's rooms are deleted. Equipment and journal documents stay in the organization.",
-        "button": "Delete outlet",
-        "confirmTitle": "Delete outlet “{name}”?",
+        "title": "Deleting the site",
+        "hint": "The site's rooms are deleted. Equipment and journal documents stay in the organization.",
+        "button": "Delete site",
+        "confirmTitle": "Delete site “{name}”?",
         "confirmDescription": "This can't be undone. What will happen:",
-        "bulletRooms": "The outlet's rooms will be deleted: {count}",
-        "bulletEquipment": "Equipment ({count}) stays and becomes Without outlet in the Equipment section",
-        "bulletDocuments": "This outlet's journal documents become shared — visible at every outlet",
-        "confirm": "Delete outlet",
-        "deleted": "Outlet “{name}” deleted",
-        "failed": "Couldn't delete the outlet"
+        "bulletRooms": "The site's rooms will be deleted: {count}",
+        "bulletEquipment": "Equipment ({count}) stays and becomes Without site in the Equipment section",
+        "bulletDocuments": "This site's journal documents become shared — visible at every site",
+        "confirm": "Delete site",
+        "deleted": "Site “{name}” deleted",
+        "failed": "Couldn't delete the site"
       },
       "wizard": {
-        "description": "Four steps and the outlet is ready for journals. You can adjust everything later on the outlet page.",
+        "description": "Four steps and the site is ready for journals. You can adjust everything later on the site page.",
         "progress": "Step {step} of {total}",
         "steps": {
           "head": "Name and address",
@@ -9459,32 +9443,32 @@
         },
         "next": "Next",
         "back": "Back",
-        "create": "Create outlet",
+        "create": "Create site",
         "creating": "Creating… {done} of {total}",
         "head": {
-          "title": "What is the outlet called and where is it?",
+          "title": "What is the site called and where is it?",
           "hint": "The name is shown in the menu and the cabinet header. The address is printed in the journal and PDF header.",
           "name": "Name",
           "namePlaceholder": "For example, “Cafe on Mira”",
           "address": "Address",
           "addressPlaceholder": "City, street, building",
-          "nameRequired": "Enter the outlet name",
-          "nameTaken": "An outlet with this name already exists — choose another name"
+          "nameRequired": "Enter the site name",
+          "nameTaken": "A site with this name already exists — choose another name"
         },
         "rooms": {
-          "title": "Which rooms does the outlet have?",
+          "title": "Which rooms does the site have?",
           "hint": "Cleaning tasks are assigned by room. Tick what you have — extra rooms can be deleted later.",
           "typical": "Typical set",
           "typicalHint": "Tick the rooms",
-          "copy": "Same as another outlet",
+          "copy": "Same as another site",
           "copyHint": "Rooms are copied together with cleaning, schedule and responsible people",
-          "copyFrom": "From which outlet",
+          "copyFrom": "From which site",
           "copyCount": "We will copy {count, plural, one {# room} other {# rooms}}",
           "custom": "Your own room",
           "customPlaceholder": "For example, “Pastry shop”",
           "customAdd": "Add",
           "customExists": "This room is already on the list",
-          "none": "No rooms selected — you can add them later on the outlet page."
+          "none": "No rooms selected — you can add them later on the site page."
         },
         "roomNames": {
           "hot": "Hot shop",
@@ -9501,39 +9485,39 @@
           "room": "Room",
           "decrease": "Fewer: {name}",
           "increase": "More: {name}",
-          "noRooms": "No rooms — equipment can be added on the outlet page once there are rooms.",
+          "noRooms": "No rooms — equipment can be added on the site page once there are rooms.",
           "norm": "norm {range}",
-          "lamp": "service life {hours} — adjust it on the outlet page"
+          "lamp": "service life {hours} — adjust it on the site page"
         },
         "summary": {
           "title": "What will be created",
-          "point": "Outlet",
+          "point": "Site",
           "rooms": "Rooms",
           "copy": "We will copy from “{name}”",
           "equipment": "Equipment",
           "nothing": "Nothing — add later",
-          "note": "After creation the outlet page opens, and the outlet appears in the left menu."
+          "note": "After creation the site page opens, and the site appears in the left menu."
         },
-        "done": "Outlet “{name}” created",
-        "partial": "Outlet “{name}” created, but not added: {items}. Add the rest on the outlet page.",
-        "failed": "Couldn't create the outlet"
+        "done": "Site “{name}” created",
+        "partial": "Site “{name}” created, but not added: {items}. Add the rest on the site page.",
+        "failed": "Couldn't create the site"
       },
       "staff": {
-        "title": "Outlet staff",
+        "title": "Site staff",
         "hint": "Add the employees who work here. Their logs and tasks will be linked to this location.",
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add employee",
-        "emptyTitle": "No one at this outlet yet",
-        "emptyBody": "Add staff — they will see only this outlet.",
+        "emptyTitle": "No one at this site yet",
+        "emptyBody": "Add staff — they will see only this site.",
         "noPosition": "No position",
         "all": "Open in «Staff»",
         "allMore": "{count, number} more — in «Staff»"
       },
       "journals": {
-        "title": "Outlet journals",
-        "hint": "Which journals the outlet keeps and who is on the grading commission — each outlet has its own.",
+        "title": "Site journals",
+        "hint": "Which journals the site keeps and who is on the grading commission — each site has its own.",
         "inWork": "{count, plural, one {# journal} other {# journals}}",
-        "inWorkHint": "in use at the outlet",
+        "inWorkHint": "in use at the site",
         "auto": "{count, plural, one {# journal} other {# journals}}",
         "autoOff": "None",
         "autoHint": "run automatically",
@@ -9544,7 +9528,7 @@
         "openSet": "Journal set",
         "openAuto": "Automation",
         "openCommission": "Commission",
-        "failed": "Could not open the outlet"
+        "failed": "Could not open the site"
       }
     },
     "appearance": {
@@ -10927,32 +10911,32 @@
       }
     },
     "office": {
-      "description": "Everything that concerns the whole company: office staff and office journals. Outlet specifics live on the outlet page.",
+      "description": "Everything that concerns the whole company: office staff and office journals. Site specifics live on the site page.",
       "guide": {
-        "title": "How the office and outlets work",
+        "title": "How the office and sites work",
         "office": {
           "title": "Office — company management",
           "body": "Directors and department managers can see all locations. Their own logs and tasks belong to the office and are not added to location logs."
         },
         "points": {
-          "title": "Outlet — its staff and journals",
+          "title": "Site — its staff and journals",
           "body": "Employees and the location manager are on their location’s page, together with its logs and commission settings."
         },
         "move": {
           "title": "How to move a person",
-          "body": "Open the employee and choose «Office» or an outlet under «Works at». Staff without a place are flagged below."
+          "body": "Open the employee and choose «Office» or a site under «Works at». Staff without a place are flagged below."
         }
       },
       "disabled": {
-        "title": "Add an outlet first",
-        "body": "The office can be set up once the company has at least one outlet. Add it, and office staff and journals will appear here.",
-        "link": "Open outlets"
+        "title": "Add a site first",
+        "body": "The office can be set up once the company has at least one site. Add it, and office staff and journals will appear here.",
+        "link": "Open sites"
       },
       "create": {
         "title": "Set up the office",
-        "body": "The office is where company management works: they see every outlet but are not added to outlet journals and tasks. Outlet staff are not affected.",
-        "split": "Office and outlet journals will be kept separately.",
-        "switcher": "A switcher «Office / outlet» will appear in the header.",
+        "body": "The office is where company management works: they see every site but are not added to site journals and tasks. Site staff are not affected.",
+        "split": "Office and site journals will be kept separately.",
+        "switcher": "A switcher «Office / site» will appear in the header.",
         "existing": "Documents already filled in stay shared and visible everywhere.",
         "button": "Set up office",
         "done": "Office set up",
@@ -10964,21 +10948,21 @@
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add to office",
         "emptyTitle": "No one in the office yet",
-        "emptyBody": "Add company managers — they will see every outlet.",
+        "emptyBody": "Add company managers — they will see every site.",
         "noPosition": "No position",
         "all": "Open in «Staff»"
       },
       "journals": {
         "title": "Office journals",
-        "hint": "If the office keeps its own journals (warehouse, office staff hygiene), they are kept apart from outlets.",
+        "hint": "If the office keeps its own journals (warehouse, office staff hygiene), they are kept apart from sites.",
         "open": "Open office journals",
         "failed": "Could not open the office"
       },
       "points": {
-        "title": "Company outlets",
-        "hint": "Everything specific to an outlet — staff, journals, rooms and equipment — is on the outlet page.",
-        "add": "Add outlet",
-        "unplaced": "{count, plural, one {# employee is} other {# employees are}} not assigned to a place yet: they are added to the journals of every outlet.",
+        "title": "Company sites",
+        "hint": "Everything specific to a site — staff, journals, rooms and equipment — is on the site page.",
+        "add": "Add site",
+        "unplaced": "{count, plural, one {# employee is} other {# employees are}} not assigned to a place yet: they are added to the journals of every site.",
         "unplacedLink": "Assign",
         "noAddress": "No address",
         "staff": "{count, plural, =0 {no staff} one {# employee} other {# employees}}"
@@ -17510,7 +17494,28 @@
       "localTime": "Client’s local time",
       "none": "No data: addresses are recorded on sign-in since 26.08.2026"
     },
-    "readOnly": "Plan and points can be changed by a team member with the “Payments and plans” section."
+    "readOnly": "Plan and points can be changed by a team member with the “Payments and plans” section.",
+    "serviceEmails": {
+      "title": "Service emails",
+      "description": "Send manually to the owner at {email} — the same template that goes out automatically.",
+      "noEmail": "The owner has no email — there is nowhere to send service emails.",
+      "send": "Send",
+      "confirm": "Send the “{title}” email to {email}?",
+      "sent": "Email sent to {email}",
+      "failed": "Could not send the email",
+      "welcome": {
+        "title": "Welcome",
+        "hint": "Thanks for choosing WeSetup, a QR poster and the support phone. Automatically after sign-up and template download."
+      },
+      "trial_reminder": {
+        "title": "Trial is ending",
+        "hint": "Days left and how to choose a plan. Automatically 5, 2 and 1 day before."
+      },
+      "trial_feedback": {
+        "title": "Trial feedback",
+        "hint": "“Did you manage to evaluate electronic journals?” with trial numbers. Automatically after an unpaid trial ends."
+      }
+    }
   },
   "miniHome": {
     "entry": {
@@ -17653,7 +17658,7 @@
       "dlya-stolovoy": "Canteens, school cafeterias and corporate catering",
       "dlya-proizvodstva": "Food factories, production facilities, meat and dairy plants",
       "dlya-bara": "Bars, pubs, beer bars and cocktail bars",
-      "dlya-fastfuda": "Fast food, burger shops, shawarma outlets, pizzerias and food trucks",
+      "dlya-fastfuda": "Fast food, burger shops, shawarma sites, pizzerias and food trucks",
       "dlya-keyteringa": "Catering, prepared meal delivery and delivery-only kitchens",
       "dlya-otelya": "Hotels, guesthouses, holiday resorts and hostels with kitchens",
       "dlya-medcentra": "Hospitals, clinics, medical centers, sanatoriums and residential care facilities",
@@ -26298,7 +26303,7 @@
       "before": "Before",
       "after": "After",
       "illustrationCaption": "Empty rows for today will be filled; anything already entered stays as it was.",
-      "pointRequired": "Select an outlet in the header: autofill closes the day for one outlet, not the whole company.",
+      "pointRequired": "Select a site in the header: autofill closes the day for one site, not the whole company.",
       "memo": "Guide",
       "memoAria": "Journal filling guide"
     },
@@ -30693,7 +30698,7 @@
     "phone": "Phone",
     "mobile": "Mobile",
     "setupTitle": "Initial setup",
-    "setupBody": "Company, outlets, staff and journals — step by step",
+    "setupBody": "Company, sites, staff and journals — step by step",
     "favorites": {
       "title": "Favorites",
       "add": "Add to favorites",
@@ -30707,16 +30712,16 @@
     }
   },
   "monitoringPage": {
-    "lead": "How your outlets are doing: today's journals, checklists and the production control program.",
-    "allPoints": "All outlets",
-    "pointsAria": "Choose an outlet",
+    "lead": "How your sites are doing: today's journals, checklists and the production control program.",
+    "allPoints": "All sites",
+    "pointsAria": "Choose a site",
     "open": "Details",
     "setUp": "Set up",
     "journals": {
       "title": "Journals",
       "count": "Filled today: {done} of {total}",
-      "empty": "No journals selected — add them to an outlet",
-      "shared": "The journal set is shared by all outlets"
+      "empty": "No journals selected — add them to a site",
+      "shared": "The journal set is shared by all sites"
     },
     "checklists": {
       "title": "Checklists",
@@ -30731,7 +30736,7 @@
     },
     "guide": {
       "title": "How to read monitoring",
-      "journals": "Journals — how many of the outlet's journals are already filled today.",
+      "journals": "Journals — how many of the site's journals are already filled today.",
       "checklists": "Checklists — how many assigned checks are done in the current period.",
       "ppk": "PCP — how many sections of the production control program are ready."
     },
@@ -30744,15 +30749,15 @@
     "emptyText": "Interesting articles, tips, expert opinions and independent advice will appear here — for every user."
   },
   "pointJournals": {
-    "lead": "Which journals each outlet keeps. Add or remove a journal — only that outlet changes.",
-    "leadShared": "The journal set is shared by all outlets. Add or remove a journal — the whole company's set changes.",
-    "allPoints": "All outlets",
+    "lead": "Which journals each site keeps. Add or remove a journal — only that site changes.",
+    "leadShared": "The journal set is shared by all sites. Add or remove a journal — the whole company's set changes.",
+    "allPoints": "All sites",
     "inWork": "{count, plural, one {# journal in use} other {# journals in use}}",
     "add": "Add journal",
     "removeAria": "Remove “{name}” from “{point}”",
-    "empty": "No journals at this outlet yet",
+    "empty": "No journals at this site yet",
     "pickTitle": "Add a journal: {point}",
-    "pickDescription": "The journal will appear in Today and in the journal list of this outlet only.",
+    "pickDescription": "The journal will appear in Today and in the journal list of this site only.",
     "pickDescriptionShared": "The journal will appear in Today and in the journal list.",
     "search": "Find a journal",
     "nothing": "All journals are already added",
@@ -30764,8 +30769,8 @@
     "settings": "Journal settings",
     "guide": {
       "title": "How it works",
-      "list": "Here are all outlets and the journals they keep.",
-      "add": "“Add journal” — the journal appears in Today for this outlet's staff.",
+      "list": "Here are all sites and the journals they keep.",
+      "add": "“Add journal” — the journal appears in Today for this site's staff.",
       "remove": "“×” next to a journal — it stops reminding; entries are not deleted."
     }
   },
@@ -31893,5 +31898,30 @@
       "never": "—",
       "shownLimit": "The latest {count} records are shown."
     }
+  },
+  "trialFeedbackPage": {
+    "title": "How did the trial go?",
+    "lead": "Did you manage to see how much easier it is to keep the journals of “{organization}” electronically? It takes 10 seconds.",
+    "answers": {
+      "good": "Yes, it is convenient",
+      "later": "Did not get to try it",
+      "help": "I have questions"
+    },
+    "hints": {
+      "good": "Journals on the phone came in handy",
+      "later": "Did not get round to it — need help getting started or more time",
+      "help": "Something is inconvenient or unclear — tell us"
+    },
+    "commentLabel": "Comment (optional)",
+    "commentPlaceholder": "What you liked, what got in the way, what was missing",
+    "submit": "Send",
+    "sending": "Sending…",
+    "thanksTitle": "Thank you for your answer!",
+    "thanksBody": "We will read it today. If you need help, we will get in touch.",
+    "chooseAnswer": "Choose one of the answers.",
+    "failed": "Could not send. Please try again.",
+    "invalidTitle": "The link is invalid",
+    "invalidBody": "It may have expired or been copied incompletely. Just reply to the email — we will read it.",
+    "support": "Support:"
   }
 }

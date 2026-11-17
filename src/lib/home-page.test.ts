@@ -29,7 +29,7 @@ const sections: NavModelSection[] = [
       {
         label: null,
         items: [
-          { id: "points", icon: "Store", href: "/settings/buildings", label: "Торговые точки", section: "points", hasMenu: true },
+          { id: "points", icon: "Store", href: "/settings/buildings", label: "Объекты", section: "points", hasMenu: true },
           { id: "organization", icon: "Building2", href: "/settings/organization", label: "Реквизиты" },
         ],
       },
@@ -39,7 +39,7 @@ const sections: NavModelSection[] = [
   {
     key: "points",
     icon: "Store",
-    label: "Торговые точки",
+    label: "Объекты",
     parent: "company",
     rootHref: "/settings/buildings",
     tabs: [],

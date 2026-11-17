@@ -36,7 +36,7 @@ test("скан 97: подвал всегда wesetup.ru, свой сайт ор�
   assert.match(none.footer, /wesetup\.ru/);
 });
 
-test("строка торговой точки — между шапкой и заголовком, название и адрес", () => {
+test("строка объекта — между шапкой и заголовком, название и адрес", () => {
   const html = render({ point: { title: "Пищеблок СОШ № 5", detail: "г. Казань, ул. Ленина, 5" } });
   const pointAt = html.indexOf("data-poster-point");
   const titleAt = html.indexOf("Мытьё столовой посуды вручную");

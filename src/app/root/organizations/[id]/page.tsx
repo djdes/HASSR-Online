@@ -30,6 +30,7 @@ import { isTopupOrder } from "@/lib/balance/topup-core";
 import { ClientDocumentsSection } from "@/components/root/client-documents-section";
 import { EdoSendButton } from "@/components/root/edo-send-button";
 import { ClientEmails } from "@/components/root/client-emails";
+import { ServiceEmailsCard } from "@/components/root/service-emails-card";
 import { ClientConversations } from "@/components/root/client-conversations";
 import { loadClientConversations } from "@/lib/client-conversations.server";
 import { clientEmailHistory } from "@/lib/client-email.server";
@@ -351,6 +352,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           senders={mailSender}
           initialHistory={emailHistory}
         />
+
+        {/* Служебные письма владельцу вручную: приветственное, пробный, отзыв. */}
+        <ServiceEmailsCard organizationId={org.id} ownerEmail={owner?.email ?? null} />
 
         {/* Документы клиенту: договор, КП и счёт — с почты сотрудника. */}
         <section id="documents" className="scroll-mt-16">
