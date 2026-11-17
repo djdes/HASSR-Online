@@ -19916,7 +19916,8 @@
       "signIn": "Kirish",
       "firstEntryTitle": "Birinchi yozuvni hozir qiling",
       "firstEntryBody": "Telefon kamerasini QR-kodga qarating — kabinetingizda shu jurnal ochiladi.",
-      "firstEntryLink": "Shu qurilmada ochish"
+      "firstEntryLink": "Shu qurilmada ochish",
+      "alsoUseful": "Sizga yana kerak bo‘lishi mumkin"
     },
     "notice": {
       "sending": "Shablon tayyorlanmoqda…",

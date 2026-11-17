@@ -19917,7 +19917,8 @@ export type MessageContract = {
       "signIn": "Войти",
       "firstEntryTitle": "Сделайте первую запись прямо сейчас",
       "firstEntryBody": "Наведите камеру телефона на QR — откроется этот журнал в вашем кабинете.",
-      "firstEntryLink": "Открыть на этом устройстве"
+      "firstEntryLink": "Открыть на этом устройстве",
+      "alsoUseful": "Вам также пригодятся"
     },
     "notice": {
       "sending": "Готовим шаблон…",

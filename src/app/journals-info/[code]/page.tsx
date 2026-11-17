@@ -110,6 +110,8 @@ export default async function JournalInfoDetailPage({
     journalUsageCount(code).catch(() => 0),
   ]);
   const registerHref = blankRegisterHref({ target: { kind: "code", code } });
+  // «Вам также пригодятся» в окне после скачивания (п. 20).
+  const relatedForDownload = related.slice(0, 3).map((item) => ({ code: item.code, name: messages.journals.names[item.code as keyof typeof messages.journals.names] ?? item.tagline }));
   const hasSample = SAMPLE_CODES.has(code);
   const canonical = `https://wesetup.ru${localizedHref(`/journals-info/${code}`, locale)}`;
   const language = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale];
@@ -233,6 +235,7 @@ export default async function JournalInfoDetailPage({
             <div id="journal-hero-actions" className="mt-6 flex flex-wrap items-center gap-3" data-testid="journal-hero-actions">
               {SAMPLE_CODES.has(code) ? (
                 <BlankDownloadButton
+                related={relatedForDownload}
                   target={{ kind: "code", code }}
                   format="pdf"
                   title={catalogName}
@@ -320,6 +323,7 @@ export default async function JournalInfoDetailPage({
                 {/* Скачивание — после email (окно «Куда прислать шаблон?»);
                     встроенный просмотр ниже остаётся без почты. */}
                 <BlankDownloadButton
+                related={relatedForDownload}
                   target={{ kind: "code", code }}
                   format="pdf"
                   title={catalogName}
@@ -333,6 +337,7 @@ export default async function JournalInfoDetailPage({
                 </BlankDownloadButton>
                 {DOCX_CODES.has(code) ? (
                   <BlankDownloadButton
+                related={relatedForDownload}
                     target={{ kind: "code", code }}
                     format="docx"
                     title={catalogName}
@@ -642,6 +647,7 @@ export default async function JournalInfoDetailPage({
           download={
             hasSample ? (
               <BlankDownloadButton
+                related={relatedForDownload}
                 target={{ kind: "code", code }}
                 format="pdf"
                 title={catalogName}
@@ -658,6 +664,7 @@ export default async function JournalInfoDetailPage({
       <JournalStickyBar watchId="journal-hero-actions" endId="journal-final-cta">
         {hasSample ? (
           <BlankDownloadButton
+                related={relatedForDownload}
             target={{ kind: "code", code }}
             format="pdf"
             title={catalogName}

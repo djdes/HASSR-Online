@@ -4,6 +4,7 @@ import { ArrowRight, BookOpenCheck, Calculator, ScrollText, Sparkles } from "luc
 
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
+import { EmbedCode } from "@/components/public/embed-code";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
@@ -102,6 +103,7 @@ export default function FinesCalcPage() {
         <h1 className="mt-6 text-[32px] font-semibold leading-tight tracking-[-0.02em] sm:text-[44px]">{TITLE}</h1>
         <p className="mt-3 max-w-[760px] text-[16px] leading-[1.7] text-[#3c4053]">{DESCRIPTION}</p>
         <FinesCalculator />
+        <EmbedCode src="https://wesetup.ru/embed/fines" title="Калькулятор штрафов Роспотребнадзора" />
         <p className="mt-6 text-[12.5px] leading-relaxed text-[#9b9fb3]">
           Суммы по КоАП РФ в редакции на 2026 год, для справки. Размер конкретного штрафа определяет инспектор и суд; повторные нарушения и вред здоровью увеличивают санкции. Проверяйте актуальную редакцию статей.
         </p>

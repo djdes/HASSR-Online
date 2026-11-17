@@ -4,6 +4,7 @@ import { ArrowRight, BookOpenCheck, Calculator, FileDown, ScrollText } from "luc
 
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
+import { EmbedCode } from "@/components/public/embed-code";
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { jsonLdSafeString } from "@/lib/json-ld";
@@ -110,6 +111,7 @@ export default function JournalsCalcPage() {
           {DESCRIPTION} Список ориентировочный: точный состав закрепляется в программе производственного контроля.
         </p>
         <JournalsCalculator names={names} />
+        <EmbedCode src="https://wesetup.ru/embed/journals" title="Подбор журналов для заведения" />
 
         <section className="mt-14 max-w-[820px]">
           <h2 className="text-[24px] font-semibold tracking-[-0.02em]">Частые вопросы о перечне журналов</h2>

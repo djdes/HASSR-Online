@@ -14,6 +14,8 @@ const STORAGE_KEY = "wesetup.cookie-consent";
  * вошедшего пользователя, а не публичный сайт.
  */
 const APP_PREFIXES = [
+  // Калькуляторы, встроенные на чужие сайты: баннер — забота сайта-хозяина.
+  "/embed/",
   "/mini",
   "/dashboard",
   "/settings",

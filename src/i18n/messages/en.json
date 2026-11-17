@@ -19916,7 +19916,8 @@
       "signIn": "Sign in",
       "firstEntryTitle": "Make your first entry right now",
       "firstEntryBody": "Point your phone camera at the QR code to open this journal in your account.",
-      "firstEntryLink": "Open on this device"
+      "firstEntryLink": "Open on this device",
+      "alsoUseful": "You may also need"
     },
     "notice": {
       "sending": "Preparing your template…",
