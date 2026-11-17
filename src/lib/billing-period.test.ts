@@ -12,6 +12,8 @@ import {
   computeAccountBilling,
   daysLeft,
   decideTransitionAction,
+  trialReminderDue,
+  trialReminderStage,
   formatBytes,
   formatMskDay,
   hasFeature,
@@ -308,9 +310,22 @@ describe("лимиты", () => {
 });
 
 describe("ежедневная задача", () => {
-  it("за 3 дня до конца пробного — напоминание, раньше — ничего", () => {
+  it("за 5, 2 и 1 день до конца пробного — напоминание, раньше — ничего", () => {
     assert.equal(decideTransitionAction(state({}, new Date(TRIAL_END_OLD.getTime() - 2 * DAY)), "free"), "remind_trial_end");
+    assert.equal(decideTransitionAction(state({}, new Date(TRIAL_END_OLD.getTime() - 5 * DAY)), "free"), "remind_trial_end");
     assert.equal(decideTransitionAction(state({}, new Date(TRIAL_END_OLD.getTime() - 6 * DAY)), "free"), "none");
+  });
+
+  it("ступени напоминаний пробного: 5…3 → 5, 2 → 2, 1 → 1; каждая один раз", () => {
+    assert.deepEqual([6, 5, 4, 3, 2, 1, 0, null].map((d) => trialReminderStage(d)), [null, 5, 5, 5, 2, 1, null, null]);
+    const ends = new Date("2026-12-01T00:00:00.000Z");
+    const other = new Date("2026-12-20T00:00:00.000Z");
+    assert.equal(trialReminderDue([], ends, 5), true);
+    assert.equal(trialReminderDue([{ trialEndsAt: ends.toISOString(), stage: 5 }], ends, 5), false, "та же ступень");
+    assert.equal(trialReminderDue([{ trialEndsAt: ends.toISOString(), stage: 5 }], ends, 2), true, "следующая ступень");
+    assert.equal(trialReminderDue([{ trialEndsAt: ends.toISOString(), stage: 2 }], ends, 5), false, "пропущенная ранняя ступень не догоняется");
+    assert.equal(trialReminderDue([{ trialEndsAt: other.toISOString(), stage: 1 }], ends, 5), true, "другой срок пробного");
+    assert.equal(trialReminderDue([{ trialEndsAt: ends.toISOString(), daysLeft: 3 }], ends, 2), true, "старая запись без ступени не мешает");
   });
 
   it("в пределах бесплатного и тариф ещё записан платным — молча бесплатный; уже бесплатный — ничего", () => {

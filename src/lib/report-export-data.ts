@@ -31,7 +31,7 @@ export async function loadReportTable(params: {
   dateTo: string;
   areaId?: string | null;
   locale?: Locale;
-  /** Торговая точка из шапки; null — вся организация. */
+  /** Объект из шапки; null — вся организация. */
   pointId?: string | null;
 }): Promise<{ templateName: string; timeZone: string; table: ReportTable; emptyMessage: string } | null> {
   const locale = params.locale ?? "ru";

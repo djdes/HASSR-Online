@@ -38,7 +38,7 @@ export async function PUT(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Выберите ответственного и хотя бы одного члена комиссии" }, { status: 400 });
   const organizationId = getActiveOrgId(auth.session);
-  // Выбрана торговая точка — её ответственный, её комиссия и только её
+  // Выбран объект — её ответственный, её комиссия и только её
   // документы (2026-10-31, ответственные по точкам); иначе — организации.
   // Руководитель точки — только своя точка.
   const target = await journalSettingsWriteTarget(auth.session);

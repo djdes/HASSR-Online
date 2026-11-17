@@ -22,7 +22,7 @@ export type AuditAction =
   | "supply.ignore"
   | "supply.connect"
   | "supply.disconnect"
-  /** iiko: склады сервера сопоставлены с торговыми точками. */
+  /** iiko: склады сервера сопоставлены с объектами. */
   | "supply.iiko_stores"
   /** 1С кадры: прогон синхронизации сотрудников (сводка в details). */
   | "hr1c.sync"

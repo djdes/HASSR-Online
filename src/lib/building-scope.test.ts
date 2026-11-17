@@ -233,7 +233,7 @@ test("QR по точке: кто работает на точке объекта
   // Только удалённые точки — висящие id не отрезают человека.
   assert.equal(worksAtBuilding(org, ["b-deleted"], B.id), true);
   assert.equal(worksAtBuilding(org, ["b-deleted", A.id], B.id), false);
-  // Сотрудник офиса работает в офисе, а не на торговой точке.
+  // Сотрудник офиса работает в офисе, а не на объекте.
   assert.equal(worksAtBuilding(org, [OFFICE], A.id), false);
   assert.equal(worksAtBuilding(org, [OFFICE], OFFICE), true);
 });
@@ -258,7 +258,7 @@ test("«Вся организация»: руководство на всю ко
   const withOffice = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: ORGANIZATION_VIEW_ID, fullAccess: true });
   assert.equal(withOffice.activeBuildingId, "b-o");
   assert.equal(withOffice.organizationView, true);
-  // Выбрана торговая точка — режим точки.
+  // Выбран объект — режим точки.
   const point = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b", fullAccess: true });
   assert.equal(point.activeBuildingId, "b-b");
   assert.equal(point.organizationView, false);
@@ -284,7 +284,7 @@ test("режим точки: руководитель точки — всегд�
   assert.equal(journalsPointMode(off), false);
 });
 
-test("просматриваемая точка: торговая точка — она, «Вся организация» и офис — вся организация", () => {
+test("просматриваемая точка: объект — она, «Вся организация» и офис — вся организация", () => {
   const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
   const point = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b", fullAccess: true });
   assert.equal(viewedPointId(point), "b-b");

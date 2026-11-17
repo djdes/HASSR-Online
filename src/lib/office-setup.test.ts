@@ -6,7 +6,7 @@ test("одна точка без деления — офис можно выде
   assert.equal(officeSetupState({ perLocationJournals: false, hasOffice: false, pointCount: 1 }), "create");
 });
 
-test("точек нет — сначала добавить торговую точку", () => {
+test("точек нет — сначала добавить объект", () => {
   assert.equal(officeSetupState({ perLocationJournals: false, hasOffice: false, pointCount: 0 }), "noPoints");
   assert.equal(officeSetupState({ perLocationJournals: true, hasOffice: true, pointCount: 0 }), "noPoints");
 });

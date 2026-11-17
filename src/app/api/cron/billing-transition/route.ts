@@ -4,6 +4,7 @@ import { checkCronSecret } from "@/lib/cron-auth";
 import { runBillingTransitionJob } from "@/lib/billing.server";
 import { runLifecycleJob } from "@/lib/lifecycle/job.server";
 import { runNewcomerJourney } from "@/lib/newcomer-journey.server";
+import { runTrialFeedbackJob } from "@/lib/trial-feedback.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +13,8 @@ export const dynamic = "force-dynamic";
  * GET/POST /api/cron/billing-transition — ежедневная задача тарифов 2026-10
  * (настройки — ROOT → «Тарифы»).
  *
- *   • за 3 дня до конца пробного — одно напоминание владельцу;
+ *   • за 5, 2 и 1 день до конца пробного — напоминание владельцу (почта и Telegram);
+ *   • пробный кончился без оплаты — персональный запрос отзыва (`runTrialFeedbackJob`);
  *   • после пробного в пределах бесплатного (1 сотрудник и 1 журнал), но
  *     тариф ещё записан платным — молча бесплатный, одно уведомление;
  *   • сверх бесплатного и срок выбора идёт — одно предупреждение «выберите до …»;
@@ -47,7 +49,13 @@ async function handle(request: Request) {
     console.error("[billing-transition] lifecycle failed", error);
     return null;
   });
-  return NextResponse.json({ ...report, journey, lifecycle });
+  // Пробный кончился без оплаты — персональный запрос отзыва (спека
+  // trial-emails-rename-2026-11). Сбой не роняет остальное.
+  const trialFeedback = await runTrialFeedbackJob({ dryRun }).catch((error: unknown) => {
+    console.error("[billing-transition] trial feedback failed", error);
+    return null;
+  });
+  return NextResponse.json({ ...report, journey, lifecycle, trialFeedback });
 }
 
 export const GET = handle;

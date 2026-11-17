@@ -66,7 +66,7 @@ export function PointMismatchNotice({
     returnLabel: tPoint("returnTo", { name: shortSwitchName(name) }),
   });
 
-  /** Единый тост смены: «Торговая точка: …» и «Вернуться на «выбранную»». */
+  /** Единый тост смены: «Объект: …» и «Вернуться на «выбранную»». */
   function switchPoint() {
     if (busy || pointName === null) return;
     switchWithReturn(

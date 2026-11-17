@@ -20,6 +20,7 @@ import {
   findPlatformClientByEmail,
   recordBlankDownloadLead,
 } from "@/lib/blank-download-lead.server";
+import { sendWelcomeEmailOnce } from "@/lib/welcome-email.server";
 import { applyBlankExtrasToAccount } from "@/lib/blank-download-extras.server";
 import { blankDownloadLimiter } from "@/lib/blank-download-limits";
 import {
@@ -359,26 +360,34 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error("[blank-download] account email failed", error);
       }
+      // Вторым письмом после логина и пароля — приветственное.
+      await sendWelcomeEmailOnce({ to: email, hasAccount: true, organizationId: account.organizationId, locale, via: "blank_register" });
     }
 
-    if (!emailed) return;
-    const files = [format, ...info.formats.filter((other) => other !== format)].map((fileFormat) => ({
-      label: t("publicBlankDownload.email.fileLabel", { format: BLANK_FORMAT_LABEL[fileFormat] }),
-      url: `${APP_URL}${fileFormat === format ? url : hrefFor(fileFormat)}`,
-    }));
-    try {
-      await sendBlankDownloadEmail({
-        to: email,
-        journalTitle: localizedProductTitle((await loadMessages(locale)).journals.names, target, info.title),
-        files,
-        pageUrl: target.kind === "code" ? `${APP_URL}${localizedHref(`/journals-info/${encodeURIComponent(target.code)}`, locale)}` : null,
-        registerUrl: `${APP_URL}${localizedHref(blankRegisterHref({ email, target }), locale)}`,
-        expiresDays: Math.round(BLANK_DOWNLOAD_TTL_MS / (24 * 60 * 60 * 1000)),
-        locale,
-        accountCreated,
-      });
-    } catch (error) {
-      console.error("[blank-download] email failed", error);
+    if (emailed) {
+      const files = [format, ...info.formats.filter((other) => other !== format)].map((fileFormat) => ({
+        label: t("publicBlankDownload.email.fileLabel", { format: BLANK_FORMAT_LABEL[fileFormat] }),
+        url: `${APP_URL}${fileFormat === format ? url : hrefFor(fileFormat)}`,
+      }));
+      try {
+        await sendBlankDownloadEmail({
+          to: email,
+          journalTitle: localizedProductTitle((await loadMessages(locale)).journals.names, target, info.title),
+          files,
+          pageUrl: target.kind === "code" ? `${APP_URL}${localizedHref(`/journals-info/${encodeURIComponent(target.code)}`, locale)}` : null,
+          registerUrl: `${APP_URL}${localizedHref(blankRegisterHref({ email, target }), locale)}`,
+          expiresDays: Math.round(BLANK_DOWNLOAD_TTL_MS / (24 * 60 * 60 * 1000)),
+          locale,
+          accountCreated,
+        });
+      } catch (error) {
+        console.error("[blank-download] email failed", error);
+      }
+    }
+    // Скачал без нового кабинета — приветственное следом за шаблоном
+    // (у того, кто уже зарегистрирован, оно давно ушло — второго не будет).
+    if (!accountCreated) {
+      await sendWelcomeEmailOnce({ to: email, hasAccount: account?.status === "exists" || Boolean(platformClient), locale, via: "blank_download" });
     }
   });
 

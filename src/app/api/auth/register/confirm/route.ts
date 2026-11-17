@@ -5,7 +5,7 @@ import {
   VERIFICATION_MAX_ATTEMPTS,
   compareVerificationCode,
 } from "@/lib/registration";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmailOnce } from "@/lib/welcome-email.server";
 import { resolveRequestLocale } from "@/i18n/site-locale";
 import { isLocale } from "@/i18n/locales";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
@@ -219,12 +219,14 @@ export async function POST(request: Request) {
     return { organization, user };
   });
 
-  sendWelcomeEmail({
+  // Пароль человек задал сам — приветственное письмо первое и единственное.
+  sendWelcomeEmailOnce({
     to: result.user.email,
     name: result.user.name,
-    organizationName: result.organization.name,
+    hasAccount: true,
     organizationId: result.organization.id,
     locale,
+    via: "register",
   }).catch((err) => console.error("sendWelcomeEmail failed", err));
 
   // Регистрации через /register раньше не уведомляли никого: новые

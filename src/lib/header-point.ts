@@ -5,7 +5,7 @@ import { COMPANY_WIDE_SECTIONS, normalizePath } from "@/lib/point-section-sync";
 
 /**
  * Что стоит в центре шапки кабинета (эскиз руководителя 2026-10-18: слева —
- * логотип и название компании, в центре — «наименование торговой точки /
+ * логотип и название компании, в центре — «наименование объекта /
  * текущего объекта»). Название компании в центре не повторяем никогда: два
  * одинаковых названия рядом руководитель назвал «интуитивно не понятно».
  *
@@ -28,7 +28,7 @@ export type HeaderPointOption = {
   title: HeaderPointTitle;
   /** Адрес второй строкой — когда заголовок не сам адрес. */
   address: string | null;
-  /** Офис организации (не торговая точка): подпись «Организация», свой значок. */
+  /** Офис организации (не объект): подпись «Организация», свой значок. */
   office?: boolean;
 };
 
@@ -89,7 +89,7 @@ export function resolveHeaderPoint(input: {
     organizationView?: boolean;
     canViewOrganization?: boolean;
   };
-  /** Может заводить точки (полный доступ — страница «Торговые точки»). */
+  /** Может заводить точки (полный доступ — страница «Объекты»). */
   canManage: boolean;
 }): HeaderPoint {
   const { companyName, organizationBuildings, context, canManage } = input;

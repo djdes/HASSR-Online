@@ -63,7 +63,7 @@ export async function processIncomingVetDocument(input: {
   check: PhysicalCheckInput;
   withdraw: boolean;
   /**
-   * Точка, если у ВСД её нет (площадка не сопоставлена): торговая точка,
+   * Точка, если у ВСД её нет (площадка не сопоставлена): объект,
    * которую человек выбрал в шапке. Без точки при включённых точках
    * приёмку не оформляем — строка ушла бы в журнал не той точки.
    */
@@ -119,7 +119,7 @@ export async function processIncomingVetDocument(input: {
       ) ?? null;
   if (orgPoints.length > 0 && !pointId) {
     throw new Error(
-      "У ВСД не указана точка: выберите торговую точку вверху страницы, и приёмка попадёт в её журнал",
+      "У ВСД не указан объект: выберите объект вверху страницы, и приёмка попадёт в его журнал",
     );
   }
   const report = await ensureActiveDocument(db, {

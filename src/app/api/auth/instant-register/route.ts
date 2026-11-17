@@ -1,3 +1,4 @@
+import { sendWelcomeEmailOnce } from "@/lib/welcome-email.server";
 import { NextResponse } from "next/server";
 import { readSignupSnapshot, type SignupSourceSnapshot } from "@/lib/signup-channel";
 import { db } from "@/lib/db";
@@ -174,14 +175,19 @@ export async function POST(request: Request) {
 
   // Письмо и уведомление — не блокируют вход: пользователь уже в кабинете,
   // упавшая почта не должна оборачиваться ошибкой регистрации.
+  // Вторым письмом — приветственное (спека trial-emails-rename-2026-11):
+  // строго после письма с паролем, чтобы в ящике они шли по порядку.
   sendAccountPasswordEmail({
     to: email,
     password,
     organizationId: created.organization.id,
     locale,
-  }).catch((err) =>
-    console.error("sendAccountPasswordEmail failed", err),
-  );
+  })
+    .catch((err) => console.error("sendAccountPasswordEmail failed", err))
+    .then(() =>
+      sendWelcomeEmailOnce({ to: email, hasAccount: true, organizationId: created.organization.id, locale, via: "instant_register" }),
+    )
+    .catch((err) => console.error("welcome email failed", err));
   notifyOwner(email, source).catch((err) =>
     console.error("instant-register telegram notify failed", err),
   );

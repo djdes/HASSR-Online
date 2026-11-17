@@ -115,7 +115,7 @@ type Props = {
   users: UserItem[];
   journals: Journal[];
   difficultyOverride: Record<string, number>;
-  /// Ответственные по точкам (2026-10-31): выбрана торговая точка — правим её.
+  /// Ответственные по точкам (2026-10-31): выбран объект — правим её.
   point?: { id: string; name: string } | null;
 };
 

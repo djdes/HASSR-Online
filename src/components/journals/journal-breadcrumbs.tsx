@@ -85,7 +85,7 @@ export function JournalPageCrumbs({
   const displayedName = useJournalDisplayName(journalCode ?? "", journalName ?? "");
   const journalLabel = journalName ? displayedName : journalName;
 
-  // Выбрана торговая точка — «Все журналы» (`/journals`) про всю организацию:
+  // Выбран объект — «Все журналы» (`/journals`) про всю организацию:
   // звено «Журналы» и запасной «назад» ведут в «Сегодня» точки (корень раздела
   // в режиме точки), иначе нажатие выбрасывало бы человека в офис (2026-11-11).
   const journalsRoot = useAppNav().sections.find((section) => section.key === "journals")?.rootHref;

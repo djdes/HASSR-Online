@@ -112,7 +112,7 @@ export type DocumentOrgBlock = {
     /** Город из юридического адреса (строка «г. Москва» приказа). */
     city: string | null;
   };
-  /** Торговая точка документа; null — документ на всю организацию. */
+  /** Объект документа; null — документ на всю организацию. */
   point: {
     name: string;
     /** Подпись в шапке: наименование для журналов или «название, адрес». */
@@ -276,7 +276,7 @@ export type DocumentOrgRow = {
   key: DocumentOrgRowKey;
   label: string;
   value: string;
-  /** Строка торговой точки (карточка «О торговой точке»). */
+  /** Строка объекта (карточка «Об объекте»). */
   point: boolean;
 };
 
@@ -302,7 +302,7 @@ export function documentOrgRows(block: DocumentOrgBlock): DocumentOrgRow[] {
       org.directorName,
     ],
     phone: ["Телефон", org.phone],
-    pointName: ["Торговая точка", point ? point.label : null],
+    pointName: ["Объект", point ? point.label : null],
     pointAddress: ["Адрес точки", point && point.address && !point.label.includes(point.address) ? point.address : null],
     pointKpp: ["КПП точки", point?.kpp ?? null],
     pointPhone: ["Телефон точки", point?.phone ?? null],

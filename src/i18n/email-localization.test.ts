@@ -31,7 +31,7 @@ test("localized email templates use the recipient language and escape data witho
     await sendAccountPasswordEmail({ to, password, locale });
     await sendPasswordChangedEmail({ to, password, locale });
     await sendPasswordResetEmail({ to, resetUrl: "https://wesetup.ru/reset-password?token=fixture&source=email", locale });
-    await sendWelcomeEmail({ to, name, organizationName, locale });
+    await sendWelcomeEmail({ to, name, hasAccount: true, locale });
     await sendNewDeviceLoginEmail({ to, name, when: "14/10/2026 12:00", device: "<unknown>", ip: "192.0.2.1", method: "password", locale });
     const invoicePdf = Buffer.from("pdf fixture");
     await sendInvoiceEmail({ to, number: "INV-1", amountRub: 1490, dueAt: new Date("2026-12-31T00:00:00Z"), pdf: invoicePdf, purpose: "subscription", locale });

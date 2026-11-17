@@ -89,7 +89,7 @@ function normalizedKpp(value: string): string {
 /**
  * «Моя компания → Сведения для документов» (скан 82, лист 2: блок сведений
  * «в любом документе»): ① об организации — правки реквизитов поверх ЕГРЮЛ,
- * ② о торговой точке — то, что точка добавляет к шапке своих документов,
+ * ② об объекте — то, что точка добавляет к шапке своих документов,
  * ③ живой предпросмотр теми же функциями, что у PDF.
  */
 export function OrganizationDocumentsForm({
@@ -335,7 +335,7 @@ export function OrganizationDocumentsForm({
             })}
           </StepCard>
 
-          {/* ② О торговой точке */}
+          {/* ② Об объекте */}
           <StepCard n={2} id="point" title={t("documentsPage.pointTitle")} lead={t("documentsPage.pointLead")}>
             {points.length === 0 || !point || !pointDraft ? (
               <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-8 text-center" data-points-empty>

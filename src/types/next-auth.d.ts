@@ -67,7 +67,7 @@ declare module "next-auth" {
        */
       orgKind?: "regular" | "directory";
       /**
-       * Руководитель точки (фаза 2 «Офис и точки»): id его торговых точек;
+       * Руководитель точки (фаза 2 «Офис и точки»): id его объектов;
        * null — работает на всю компанию. См. lib/point-scope.ts.
        */
       pointScope?: string[] | null;

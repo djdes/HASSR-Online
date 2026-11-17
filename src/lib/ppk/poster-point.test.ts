@@ -35,7 +35,7 @@ test("название и адрес раздельно; без названия
   assert.equal(posterPointLine(null), null);
 });
 
-test("офис — не торговая точка", () => {
+test("офис — не объект", () => {
   const points = posterPoints([
     { id: "office", kind: "office" },
     { id: "a", kind: "point" },

@@ -22,7 +22,7 @@ export type QrPointScope = {
 } | null;
 
 export const QR_POINT_DENIED =
-  "Этот сотрудник работает на другой точке — здесь записывают сотрудники этой точки.";
+  "Этот сотрудник работает на другом объекте — здесь записывают сотрудники этого объекта.";
 export const QR_POINT_DENIED_CODE = "equipmentFill.errors.otherPoint";
 
 export async function loadQrPointScope(

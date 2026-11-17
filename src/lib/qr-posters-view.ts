@@ -123,7 +123,7 @@ type OrgContext = {
   docWhere: Record<string, unknown>;
   /**
    * Строка точки на плакатах журналов: точка экрана, без неё — единственная
-   * торговая точка организации; несколько точек и «Вся организация» — нет.
+   * объект организации; несколько точек и «Вся организация» — нет.
    */
   printPoint: QrPosterPointLine | null;
   origin: string;
@@ -233,7 +233,7 @@ async function extraItemsForDoc(ctx: OrgContext, code: string, name: string, doc
   const expired = ctx.todayKey > validUntil;
   const periodLabel = formatPeriodLabel(doc.dateFrom, doc.dateTo);
   const variants = code === "hygiene" ? [false, true] : [false];
-  // Точка документа — своей строкой под шапкой; общий документ — единственной торговой точки.
+  // Точка документа — своей строкой под шапкой; общий документ — единственного объекта.
   const point = qrPosterPoint(ctx.pointBuildings, doc.buildingId, null);
   const items: QrPostersItem[] = [];
   for (const verify of variants) {

@@ -1,11 +1,11 @@
 /**
- * Торговая точка на памятках (скан 97, 2026-10-28): на каждом листе под
+ * Объект на памятках (скан 97, 2026-10-28): на каждом листе под
  * шапкой печатается точка, для которой лист распечатан. Чистые функции без
  * БД — загрузка в `poster-data.server.ts`.
  *
  * Текст — как подпись точки в шапке журналов (`buildingLabel`): «наименование
  * для журналов», если задано, иначе название и адрес. Офис организации —
- * не торговая точка, памятки печатаются только для точек.
+ * не объект, памятки печатаются только для точек.
  */
 
 import { isOfficeBuilding } from "@/lib/building-scope";
@@ -36,7 +36,7 @@ export function posterPointLine(point: Omit<PosterPointSource, "id" | "kind"> | 
   return address ? { title: address, detail: null } : null;
 }
 
-/** Торговые точки из списка точек человека: без офиса, порядок сохраняется. */
+/** Объекты из списка точек человека: без офиса, порядок сохраняется. */
 export function posterPoints<T extends { kind?: string }>(buildings: readonly T[]): T[] {
   return buildings.filter((building) => !isOfficeBuilding(building));
 }

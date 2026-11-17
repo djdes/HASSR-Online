@@ -28,7 +28,7 @@ import { ScrollList } from "@/components/ui/scroll-list";
  *
  * Смена — общий переход кабинета (`content-transition.tsx`, 2026-10-29):
  * пока новая страница не пришла, контент — скелет, у пункта — крутилка,
- * тост «Торговая точка: …» с «Вернуться на «…»» — после того, как данные
+ * тост «Объект: …» с «Вернуться на «…»» — после того, как данные
  * точки уже на экране (единый тост смены, `switch-toast.tsx`).
  */
 
@@ -188,7 +188,7 @@ export function LocationSwitcherList({
                 <Check className="size-4 shrink-0 text-[#5566f6]" />
               ) : null}
             </button>
-            {/* Офис — первым, под ним черта: дальше торговые точки. */}
+            {/* Офис — первым, под ним черта: дальше объекты. */}
             {office && index < shown.length - 1 ? <div className="mx-3 my-1 border-t border-[#ececf4]" /> : null}
           </Fragment>
         );
@@ -204,7 +204,7 @@ export function LocationSwitcherList({
 /** Сколько точек, чтобы показать поиск. */
 export const POINT_SEARCH_MIN = 4;
 
-/** Поле быстрого поиска по торговым точкам (лист на телефоне и меню в шапке). */
+/** Поле быстрого поиска по объектам (лист на телефоне и меню в шапке). */
 export function PointSearchField({
   value,
   onChange,

@@ -67,7 +67,7 @@ export default async function LabelLogPage({
   const now = new Date();
   const from = labelPeriodStart(period, orgDayStartInstant(timeZone, now));
 
-  // На торговой точке — её этикетки и этикетки без точки (2026-11-01).
+  // На объекте — её этикетки и этикетки без точки (2026-11-01).
   const pointId = await getViewedPointId(session);
   const atPoint = pointId ? { OR: [{ buildingId: pointId }, { buildingId: null }] } : {};
   const rows = await db.labelPrint.findMany({

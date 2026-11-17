@@ -25,8 +25,8 @@ import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-searc
 const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /**
- * Центр шапки — текущая торговая точка (эскиз руководителя: слева логотип и
- * название компании, в центре «наименование торговой точки / текущего
+ * Центр шапки — текущий объект (эскиз руководителя: слева логотип и
+ * название компании, в центре «наименование объекта / текущего
  * объекта»). Над названием тихая подпись «Точка», чтобы было видно, где
  * компания, а где точка. Переключатель виден на всех страницах, в разделах
  * всей компании он стоит на офисе (`point-section-sync.ts`, 2026-11-10).
@@ -226,7 +226,7 @@ export function CurrentPointSwitcher({
           const isActive = option.id === active.id;
           const building = buildingOf(option);
           const Icon = option.office ? Building2 : Store;
-          // Офис — первым, под ним черта: дальше торговые точки.
+          // Офис — первым, под ним черта: дальше объекты.
           const divider = option.office && index < shownOptions.length - 1;
           return (
             <Fragment key={option.id}>

@@ -6,7 +6,7 @@ import type { NavModelSection } from "./app-nav.server";
 import { buildNewNav, sectionEntryHref } from "./nav-layout";
 
 const owner: NavActor = { role: "owner", permissionPreset: "admin" };
-// Заведующая: «Моя компания» ей закрыта, «Торговые точки» стоят в главном меню.
+// Заведующая: «Моя компания» ей закрыта, «Объекты» стоят в главном меню.
 const headChef: NavActor = { role: "head_chef", permissionPreset: "head_chef" };
 const facts: NavFacts = { checklists: true, settingsPermissions: true };
 
@@ -41,7 +41,7 @@ function model(actor: NavActor): NavModelSection[] {
 const ownerNav = model(owner);
 const labels = (place: ReturnType<typeof buildNewNav>) => place.trail.map((crumb) => crumb.label);
 
-test("«Все журналы»: слева «Моя компания → Торговые точки», сверху пункты точек, «Журналы» раскрываются в подменю", () => {
+test("«Все журналы»: слева «Моя компания → Объекты», сверху пункты точек, «Журналы» раскрываются в подменю", () => {
   const place = buildNewNav(ownerNav, "/journals");
   assert.equal(place.top, "company");
   assert.equal(place.secondId, "points");
@@ -110,7 +110,7 @@ test("третий уровень вложенности: «Мониторинг
   assert.deepEqual(labels(place), ["s:monitoring", "s:checklists", "i:results"]);
 });
 
-test("заведующая: «Торговые точки» — раздел главного меню, «Журналы» — второй уровень, их пункты — строка", () => {
+test("заведующая: «Объекты» — раздел главного меню, «Журналы» — второй уровень, их пункты — строка", () => {
   const place = buildNewNav(model(headChef), "/control-board");
   assert.equal(place.top, "points");
   assert.equal(place.secondId, "journals");

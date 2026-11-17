@@ -45,7 +45,7 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
   // В шапке выбрана другая точка — ошибка и переход вместо накладной (2026-11-09).
   const mismatch = await findPointMismatch(session, doc.buildingId);
   if (mismatch) return <PointMismatchNotice kind="supply" mismatch={mismatch} listHref="/edo" />;
-  // Точка по умолчанию: точка накладной, иначе торговая точка из шапки; иначе
+  // Точка по умолчанию: точка накладной, иначе объект из шапки; иначе
   // ничего — человек выбирает сам (раньше молча брался офис или первая точка).
   const defaultPointId = access.enabled ? (doc.buildingId ?? access.viewedPointId ?? null) : null;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ru";

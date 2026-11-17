@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 type Session = Extract<Awaited<ReturnType<typeof requireApiAuth>>, { ok: true }>["session"];
 
 /**
- * Точка запроса: id торговой точки организации или null (организация).
+ * Точка запроса: id объекта организации или null (организация).
  * Руководитель точки меняет только свои точки и только их, не организацию.
  */
 async function resolveTargetPoint(

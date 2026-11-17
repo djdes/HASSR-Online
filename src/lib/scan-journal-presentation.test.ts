@@ -63,12 +63,12 @@ test("shared badge optional copy falls back to the catalog defaults and returns 
   }
   assert.equal(reads, 0);
   const original = renderToStaticMarkup(createElement(SharedDocumentBadge, { shared: true }));
-  assert.match(original, /title="Документ без точки: виден на каждой точке организации"/u);
+  assert.match(original, /title="Документ без объекта: виден на каждом объекте организации"/u);
   assert.match(original, />Общий<\/span>/u);
   assert.ok(original.includes('class="ml-2 inline-flex shrink-0 items-center rounded-full bg-[#f5f6ff] px-2 py-0.5 align-middle text-[11px] font-medium text-[#3848c7]"'));
   const translated = renderToStaticMarkup(createElement(SharedDocumentBadge, { shared: true, copy }));
   assert.equal(reads, 2);
   assert.match(translated, /title="Visible at every location"/u);
   assert.match(translated, />Shared<\/span>/u);
-  assert.equal(translated.replace('title="Visible at every location"', 'title="Документ без точки: виден на каждой точке организации"').replace('>Shared</span>', '>Общий</span>'), original);
+  assert.equal(translated.replace('title="Visible at every location"', 'title="Документ без объекта: виден на каждом объекте организации"').replace('>Shared</span>', '>Общий</span>'), original);
 });

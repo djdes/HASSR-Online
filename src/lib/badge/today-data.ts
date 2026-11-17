@@ -130,7 +130,7 @@ export type BadgePoint = { id: string; name: string; address: string | null };
 
 /**
  * Точки для публичной страницы: только когда журналы ведутся по точкам и
- * торговых точек хотя бы две — иначе страница одна на организацию. Офис
+ * объектов хотя бы две — иначе страница одна на организацию. Офис
  * (уровень всей организации) в список не входит.
  */
 export async function getBadgePoints(org: { id: string; perLocationJournals: boolean }): Promise<BadgePoint[]> {

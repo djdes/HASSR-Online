@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { ppkDocKindKey, ppkDocKindOf, ppkSingletonKey, remapPpkIds, type PpkScope } from "./scope";
 
 /**
- * Область ППК запроса (2026-11-01, «ППК на точку»): торговая точка из шапки —
+ * Область ППК запроса (2026-11-01, «ППК на точку»): объект из шапки —
  * ППК этой точки; уровень организации (офис, «Вся организация», точки
  * выключены) — ППК организации. Руководитель точки всегда смотрит свою точку.
  * Первое открытие ППК точки копирует ей ППК организации (`ensurePointPpk`).
@@ -22,7 +22,7 @@ export async function ppkScopeForSession(session: Session): Promise<PpkScope> {
 
 /**
  * Область ППК без сессии (ссылка проверяющего, бот, кроны): точка — только
- * торговая точка организации в режиме точек, иначе уровень организации.
+ * объект организации в режиме точек, иначе уровень организации.
  */
 export async function ppkScopeForPoint(organizationId: string, buildingId: string | null | undefined): Promise<PpkScope> {
   if (!buildingId) return { organizationId, buildingId: null };

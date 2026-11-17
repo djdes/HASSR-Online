@@ -25,7 +25,7 @@ export default async function JournalResponsiblesPage() {
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) forbidden();
   const organizationId = getActiveOrgId(session);
-  // Ответственные по точкам (2026-10-31): выбрана торговая точка — её
+  // Ответственные по точкам (2026-10-31): выбран объект — её
   // ответственные и её люди; «Вся организация» — общие. Руководитель точки
   // видит только свою точку.
   const viewedPointId = await getViewedPointId(session);

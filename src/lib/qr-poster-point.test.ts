@@ -31,7 +31,7 @@ test("наклейке — короткое название: длинные н�
   assert.deepEqual(short, ["Пищеблок СОШ № 5", "Пищеблок гимназии № 112"]);
 });
 
-test("без выбора точки — единственная торговая точка; офис не в счёт", () => {
+test("без выбора точки — единственный объект; офис не в счёт", () => {
   assert.equal(qrPrintPoint([office, lenina], null), lenina);
   assert.deepEqual(qrPosterPoint([lenina], null, null), { title: "Кафе на Ленина", detail: "ул. Ленина, 5", short: "Кафе на Ленина" });
 });

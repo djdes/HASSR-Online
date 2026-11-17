@@ -106,7 +106,7 @@ export async function buildEquipmentPoster(
   qr?: BrandQrOptions,
   /** Порядок в цехе (с 0) — для таблички; нет — таблички нет. */
   plateIndex?: number,
-  /** Торговая точка оборудования (`qrPosterPoint`): строка под шапкой листа. */
+  /** Объект оборудования (`qrPosterPoint`): строка под шапкой листа. */
   point: QrPosterPointLine | null = null
 ): Promise<QrPoster> {
   const url = qrFillUrl(origin, "equipment", item.id);
@@ -231,7 +231,7 @@ export async function buildJournalPoster(params: {
   buildingId?: string | null;
   /** Цвет рамки и центр QR организации. */
   qr?: BrandQrOptions;
-  /** Торговая точка плаката (`qrPosterPoint`): строка под шапкой листа. */
+  /** Объект плаката (`qrPosterPoint`): строка под шапкой листа. */
   point?: QrPosterPointLine | null;
 }): Promise<QrPoster> {
   const subject = journalFillSubject(params.organizationId, params.code, params.documentId, {
@@ -525,7 +525,7 @@ export async function loadQrPosters(params: {
     if (!org) return { posters: [], missing: [] };
     const orgName = resolveOrgJournalName(org);
     const buildings = await loadQrPointBuildings(params.organizationId);
-    // QR здесь общие для организации: строка точки — только у единственной торговой точки.
+    // QR здесь общие для организации: строка точки — только у единственного объекта.
     const orgPoint = qrPosterPoint(buildings, null, null);
     const todayKey = todayKeyFor(org.timezone);
     const day = new Date(`${todayKey}T00:00:00.000Z`);

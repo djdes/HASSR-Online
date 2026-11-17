@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       parsed,
       fileName: file.name.slice(0, 200) || null,
       actor: { id: session.user.id, name: session.user.name ?? null },
-      // Загрузили на торговой точке — накладная её, если КПП точку не нашёл.
+      // Загрузили на объекте — накладная её, если КПП точку не нашёл.
       fallbackBuildingId: await getViewedPointId(session),
     });
     return NextResponse.json({ id: saved.id, duplicate: !saved.created, number: parsed.number });

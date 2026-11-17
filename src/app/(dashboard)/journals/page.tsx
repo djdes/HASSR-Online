@@ -40,7 +40,7 @@ export default async function JournalsPage({
     }
     redirect(keepDeniedParam("/mini/today", denied));
   }
-  // Руководство с выбранной в шапке торговой точкой: «Все журналы» — страница
+  // Руководство с выбранной в шапке объектом: «Все журналы» — страница
   // всей организации, в режиме точки её нет (владелец, 2026-10-28).
   const pointContext = await loadBuildingContext(session);
   if (journalsPointMode(pointContext)) {
