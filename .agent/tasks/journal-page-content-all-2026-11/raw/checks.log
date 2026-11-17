@@ -1,0 +1,13 @@
+
+> haccp-online@0.1.0 typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck --incremental --tsBuildInfoFile tsconfig.typecheck.tsbuildinfo -p tsconfig.typecheck.json
+
+
+> haccp-online@0.1.0 test:changed
+> node scripts/test-changed.mjs
+
+→ [test:changed] Отобрано 1 связанных тестовых файлов для 9 изменённых файлов:
+  • src/content/journal-page-content/journal-page-content.test.ts
+
+=== Targeted test stats (1 files, 0.2s): pass=45, fail=0 ===
+✓ Все затронутые тесты прошли.

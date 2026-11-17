@@ -1,0 +1,12 @@
+hygiene status=200 {"rows":5,"sections":5,"fines":2,"sw":390,"vw":390,"words":1387}
+health_check status=200 {"rows":4,"sections":5,"fines":2,"sw":390,"vw":390,"words":1200}
+cold_equipment_control status=200 {"rows":4,"sections":5,"fines":3,"sw":390,"vw":390,"words":1338}
+finished_product status=200 {"rows":5,"sections":5,"fines":3,"sw":390,"vw":390,"words":1346}
+incoming_control status=200 {"rows":4,"sections":5,"fines":2,"sw":390,"vw":390,"words":1350}
+fryer_oil status=200 {"rows":4,"sections":5,"fines":2,"sw":390,"vw":390,"words":1236}
+pest_control status=200 {"rows":4,"sections":5,"fines":3,"sw":390,"vw":390,"words":1319}
+equipment_calibration status=200 {"rows":5,"sections":5,"fines":2,"sw":390,"vw":390,"words":1349}
+medical_waste_b status=200 {"rows":4,"sections":5,"fines":2,"sw":390,"vw":390,"words":1273}
+audit_report status=200 {"rows":5,"sections":5,"fines":1,"sw":390,"vw":390,"words":1160}
+pool_water_control status=200 {"rows":5,"sections":5,"fines":3,"sw":390,"vw":390,"words":1322}
+tableware_breakage status=200 {"rows":4,"sections":5,"fines":2,"sw":390,"vw":390,"words":1185}
