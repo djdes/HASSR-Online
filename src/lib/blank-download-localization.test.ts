@@ -428,12 +428,8 @@ test("server wrapper keeps the async domain boundary outside the client graph an
     "src/components/landing/seo-journal-landing.tsx",
   ];
   const seoRouteImporters = [
-    "src/app/zhurnal-zdorovya/page.tsx", "src/app/zhurnal-uborki/page.tsx", "src/app/zhurnal-haccp/page.tsx",
-    "src/app/temperaturnyy-list-holodilnika/page.tsx", "src/app/brakerazhnyy-zhurnal/page.tsx",
-    "src/app/elektronnyy-zhurnal-sanpin/page.tsx", "src/app/haccp-dlya-kafe/page.tsx",
-    "src/app/zhurnal-generalnyh-uborok/page.tsx", "src/app/zhurnal-vhodnogo-kontrolya/page.tsx",
-    "src/app/zhurnal-frityurnyh-zhirov/page.tsx", "src/app/zhurnal-temperatury-i-vlazhnosti/page.tsx",
-    "src/app/zhurnal-medknizhek/page.tsx", "src/app/zhurnal-sutochnyh-prob/page.tsx",
+    // Остальные лендинги слиты 301 в страницы журналов (seo-speed-pack-2026-11).
+    "src/app/zhurnal-haccp/page.tsx",
   ];
   for (const file of [...serverImporters, ...seoRouteImporters]) {
     const source = readFileSync(path.join(repository, file), "utf8");

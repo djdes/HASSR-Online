@@ -10,7 +10,7 @@ import { AppStoresTeaser } from "@/components/public/app-stores-teaser";
 import { BrandLogo } from "@/components/brand/logo";
 import { BrandWithTagline } from "@/components/brand/brand-with-tagline";
 import { NICHES } from "@/content/niches";
-import { SEO_LANDINGS } from "@/content/seo-landings";
+import { popularJournalLinks } from "@/content/seo-redirects";
 import { FEATURES_ORDER } from "@/content/features";
 import { ArrowRight, LogIn } from "lucide-react";
 import { getServerSession } from "@/lib/server-session";
@@ -303,8 +303,8 @@ export async function PublicFooter() {
           />
           <FooterLinkRow
             title={t("popularJournals")}
-            links={Object.entries(SEO_LANDINGS).map(([id, s]) => ({
-              href: `/${s.slug}`,
+            links={popularJournalLinks().map(({ id, href }) => ({
+              href,
               label: navigationLabel("journals", id),
             }))}
           />

@@ -13,7 +13,7 @@ import { ogImages, twitterImages } from "@/lib/og-image";
 import { JournalsCalculator } from "./journals-calculator";
 
 const PAGE_URL = "https://wesetup.ru/calc/journals";
-const TITLE = "Какие журналы нужны моему заведению";
+const TITLE = "Подбор журналов для заведения: калькулятор";
 const DESCRIPTION =
   "Калькулятор обязательных журналов СанПиН и ХАССП: выберите тип заведения и особенности — получите список журналов со ссылками на формы.";
 

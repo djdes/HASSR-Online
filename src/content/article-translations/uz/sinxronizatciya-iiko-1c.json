@@ -1,7 +1,7 @@
 {
   "locale": "uz",
-  "sourceHash": "cd44c646f205a6e2de3b017b1020d463796890fead3ab22cb06924f04bccc201",
-  "title": "iiko va 1C bilan sinxronlash: nimalar avtomatik to‘ldiriladi",
+  "sourceHash": "d95087a48612f792fdc3bd438511ecc758608d7afd2890f2e1ae8760eebc3f7f",
+  "title": "Jurnallar iiko va 1C dan nimani oladi, nima qo‘lda qoladi",
   "excerpt": "Yetkazib beruvchilar, nomenklatura, yuk xatlari va hisobdan chiqarishlar avtomatik keladi; o‘lchovlar va imzolar esa xodim tomonidan kiritiladi. Smenani avtomatik yopishni yoqmasdan ma’lumot almashinuvini sozlash.",
   "tags": ["Integratsiyalar", "iiko", "1C"],
   "body": [

@@ -13,7 +13,8 @@ import {
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { jsonLdSafeString } from "@/lib/json-ld";
-import { SEO_LANDINGS, type SeoJournalConfig } from "@/content/seo-landings";
+import { MERGED_SEO_LANDINGS, SEO_LANDINGS, type SeoJournalConfig } from "@/content/seo-landings";
+import { seoRedirectTarget } from "@/content/seo-redirects";
 export { SEO_LANDINGS };
 export type { SeoJournalConfig };
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
@@ -348,13 +349,15 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
             Похожие журналы
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {Object.values(SEO_LANDINGS)
+            {Object.values({ ...SEO_LANDINGS, ...MERGED_SEO_LANDINGS })
               .filter((s) => s.slug !== c.slug)
+              .map((s) => ({ ...s, href: seoRedirectTarget(`/${s.slug}`) ?? `/${s.slug}` }))
+              .filter((s) => s.href.startsWith("/journals-info/"))
               .slice(0, 8)
               .map((s) => (
                 <Link
                   key={s.slug}
-                  href={`/${s.slug}`}
+                  href={s.href}
                   className="group flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4 transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 >
                   <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />

@@ -300,7 +300,7 @@ export async function generateGglArticleDraft(
     throw new GglAiError(
       "bad_request",
       400,
-      `Запрещено генерировать SEO-статью на страницу личного кабинета после регистрации (${targetPath}). Используйте публичную SEO-посадочную страницу (например, /sanpin-2-3-2-4-4282-26, /elektronnyy-zhurnal-sanpin, /zhurnal-haccp, /journals-info).`,
+      `Запрещено генерировать SEO-статью на страницу личного кабинета после регистрации (${targetPath}). Используйте публичную SEO-посадочную страницу (например, /sanpin-2-3-2-4-4282-26, /zhurnal-haccp, /journals-info, /journals-info/cleaning).`,
     );
   }
   const canonicalUrl = toCanonicalWesetupUrl(targetPath);

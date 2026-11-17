@@ -16886,7 +16886,7 @@
   },
   "publicFeatures": {
     "index": {
-      "metadataTitle": "WeSetup features — digital HACCP and SanPiN logs",
+      "metadataTitle": "WeSetup features: QR codes, autofill, reminders",
       "metadataDescription": "What WeSetup does: iiko and 1C sync, log autofill, staff reminders, temperature monitoring, and role-based access.",
       "eyebrow": "Features",
       "title": "What WeSetup does for you",
@@ -17544,7 +17544,7 @@
   },
   "publicJournalIndex": {
     "metadata": {
-      "title": "Catalog of {count, plural, one {# electronic SanPiN and HACCP log} other {# electronic SanPiN and HACCP logs}}",
+      "title": "SanPiN and HACCP log catalogue: {count, plural, one {# form} other {# forms}} with samples",
       "description": "The complete WeSetup catalog: {count, plural, one {# electronic HACCP and SanPiN log} other {# electronic HACCP and SanPiN logs}} for hygiene, temperatures, food quality checks, cleaning, disinfection, insect and rodent control, and more."
     },
     "hero": {

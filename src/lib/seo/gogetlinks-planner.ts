@@ -1,4 +1,5 @@
-import { SEO_LANDINGS } from "@/content/seo-landings";
+import { MERGED_SEO_LANDINGS, SEO_LANDINGS } from "@/content/seo-landings";
+import { seoRedirectTarget } from "@/content/seo-redirects";
 import { ACTIVE_JOURNAL_TEMPLATES } from "@/lib/journal-catalog";
 import { isPublicCacheablePage } from "@/lib/robots-txt";
 
@@ -270,6 +271,19 @@ export function buildDefaultCandidateSitePages(
     });
   }
 
+  // Слитые лендинги (seo-speed-pack-2026-11): их запросы и факты теперь у
+  // страницы-победителя — покупные ссылки ведём сразу туда, не через 301.
+  for (const landing of Object.values(MERGED_SEO_LANDINGS)) {
+    const target = seoRedirectTarget(`/${landing.slug}`);
+    if (!target || target === "/") continue;
+    register({
+      url: target,
+      title: landing.hero || landing.navLabel,
+      facts: [landing.intro, landing.weSetupBenefit, ...landing.fields.slice(0, 5).map((field) => `Поле журнала: ${field}`)],
+      keywords: landing.keywords ?? [landing.navLabel.toLowerCase()],
+    });
+  }
+
   register({
     url: "/journals-info",
     title: "Каталог электронных журналов ХАССП и СанПиН для общепита",
@@ -453,11 +467,11 @@ export function scoreTargetPages(input: {
       page.url === "/journals-info" ||
       page.url === "/sanpin-2-3-2-4-4282-26" ||
       page.url === "/calc/journals" ||
-      page.url === "/brakerazhnyy-zhurnal" ||
+      page.url === "/journals-info/finished_product" ||
       page.url === "/zhurnal-haccp" ||
-      page.url === "/zhurnal-generalnyh-uborok" ||
-      page.url === "/temperaturnyy-list-holodilnika" ||
-      page.url === "/zhurnal-temperatury-i-vlazhnosti";
+      page.url === "/journals-info/general_cleaning" ||
+      page.url === "/journals-info/cold_equipment_control" ||
+      page.url === "/journals-info/climate_control";
 
     if (effectivePos !== null) {
       if (effectivePos >= 4 && effectivePos <= 10) {

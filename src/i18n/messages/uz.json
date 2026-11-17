@@ -16886,7 +16886,7 @@
   },
   "publicFeatures": {
     "index": {
-      "metadataTitle": "WeSetup imkoniyatlari — elektron HACCP va SanPiN jurnallari",
+      "metadataTitle": "WeSetup imkoniyatlari: QR-kodlar, avtoto‘ldirish, eslatmalar",
       "metadataDescription": "WeSetup nimalar qila oladi: iiko va 1C bilan sinxronlash, jurnallarni avtomatik to‘ldirish, xodimlarga eslatmalar, harorat nazorati va lavozim bo‘yicha kirish.",
       "eyebrow": "Imkoniyatlar",
       "title": "WeSetup siz uchun nimalar qiladi",
@@ -17544,7 +17544,7 @@
   },
   "publicJournalIndex": {
     "metadata": {
-      "title": "{count, plural, other {# ta elektron SanPiN va HACCP jurnali}} — katalog",
+      "title": "SanPiN va HACCP jurnallari katalogi: {count, plural, other {# ta shakl}} namunalar bilan",
       "description": "WeSetup to‘liq katalogi: HACCP va SanPiN bo‘yicha {count, plural, other {# ta elektron jurnal}} — gigiyena, harorat, brakeraj, tozalash, dezinfeksiya, dezinseksiya, deratizatsiya va boshqalar."
     },
     "hero": {

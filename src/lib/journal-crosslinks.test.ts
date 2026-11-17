@@ -21,12 +21,10 @@ describe("journal-crosslinks", () => {
     }
   });
 
-  test("maps catalog journal codes to commercial SEO landing slugs", () => {
-    assert.equal(primarySeoLandingSlugForJournal("general_cleaning"), "zhurnal-generalnyh-uborok");
-    assert.equal(primarySeoLandingSlugForJournal("incoming_control"), "zhurnal-vhodnogo-kontrolya");
-    assert.equal(primarySeoLandingSlugForJournal("fryer_oil"), "zhurnal-frityurnyh-zhirov");
-    assert.equal(primarySeoLandingSlugForJournal("climate_control"), "zhurnal-temperatury-i-vlazhnosti");
-    assert.equal(primarySeoLandingSlugForJournal("med_books"), "zhurnal-medknizhek");
-    assert.equal(primarySeoLandingSlugForJournal("daily_samples"), "zhurnal-sutochnyh-prob");
+  test("journal pages no longer point to merged landings (one query — one page)", () => {
+    // Лендинги этих журналов слиты 301 в сами страницы журналов (seo-speed-pack-2026-11).
+    for (const code of ["general_cleaning", "incoming_control", "fryer_oil", "climate_control", "med_books", "daily_samples", "cleaning", "cold_equipment_control"]) {
+      assert.equal(primarySeoLandingSlugForJournal(code), null, code);
+    }
   });
 });

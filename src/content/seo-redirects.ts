@@ -1,3 +1,5 @@
+import { MERGED_SEO_LANDINGS, SEO_LANDINGS } from "@/content/seo-landings";
+
 /**
  * Один запрос — одна страница (спека seo-speed-pack-2026-11, п. 12).
  *
@@ -32,4 +34,19 @@ export const SEO_REDIRECTS: Readonly<Record<string, string>> = {
 /** Куда ведёт адрес после слияния дублей; `null` — страница живая. */
 export function seoRedirectTarget(pathname: string): string | null {
   return Object.hasOwn(SEO_REDIRECTS, pathname) ? SEO_REDIRECTS[pathname] : null;
+}
+
+/**
+ * «Популярные журналы» сквозного подвала: живые лендинги и страницы-победители
+ * слитых (подпись — прежняя, адрес — сразу конечный, без редиректа). Слитые в
+ * главную и в нишу «для кафе» сюда не попадают — на них и так ведёт меню.
+ */
+export function popularJournalLinks(): Array<{ id: string; href: string }> {
+  const links: Array<{ id: string; href: string }> = [];
+  for (const [id, landing] of Object.entries(SEO_LANDINGS)) links.push({ id, href: `/${landing.slug}` });
+  for (const [id, landing] of Object.entries(MERGED_SEO_LANDINGS)) {
+    const target = seoRedirectTarget(`/${landing.slug}`);
+    if (target?.startsWith("/journals-info/")) links.push({ id, href: target });
+  }
+  return links;
 }

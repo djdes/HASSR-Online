@@ -16887,7 +16887,7 @@ export type MessageContract = {
   },
   "publicFeatures": {
     "index": {
-      "metadataTitle": "Возможности WeSetup — электронные журналы ХАССП и СанПиН",
+      "metadataTitle": "Возможности WeSetup: QR-коды, автозаполнение, напоминания",
       "metadataDescription": "Что умеет WeSetup: синхронизация с iiko и 1С, автозаполнение журналов, напоминания сотрудникам, контроль температур и доступ по ролям.",
       "eyebrow": "Возможности",
       "title": "Что WeSetup делает за вас",
@@ -17545,7 +17545,7 @@ export type MessageContract = {
   },
   "publicJournalIndex": {
     "metadata": {
-      "title": "{count, plural, one {# электронный журнал} few {# электронных журнала} many {# электронных журналов} other {# электронного журнала}} СанПиН и ХАССП — каталог",
+      "title": "Каталог журналов СанПиН и ХАССП: {count, plural, one {# форма} few {# формы} many {# форм} other {# формы}} с образцами",
       "description": "Полный каталог WeSetup: {count, plural, one {# электронный журнал} few {# электронных журнала} many {# электронных журналов} other {# электронного журнала}} ХАССП и СанПиН — гигиена, температуры, бракераж, уборка, ДДД и многое другое."
     },
     "hero": {
