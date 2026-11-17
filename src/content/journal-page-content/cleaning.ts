@@ -12,14 +12,9 @@
  * поменять здесь.
  */
 
-export type JournalPageContent = {
-  /** Образец заполнения строками — как выглядит запись за смену. */
-  sample?: { caption: string; columns: string[]; rows: string[][] };
-  sections?: Array<{ heading: string; paragraphs?: string[]; bullets?: string[] }>;
-  fines?: { intro: string; items: string[]; note?: string };
-};
+import type { JournalPageContent } from "./types";
 
-export const JOURNAL_PAGE_CONTENT: Record<string, JournalPageContent> = {
+export const CLEANING_PAGE_CONTENT: Record<string, JournalPageContent> = {
   cleaning: {
     sample: {
       caption:
