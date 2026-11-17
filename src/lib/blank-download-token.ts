@@ -42,17 +42,39 @@ export function deriveBlankKey(purpose: "download" | "qr"): Buffer {
   return crypto.createHmac("sha256", serverSecret()).update(`wesetup:blank-${purpose}:v1`).digest();
 }
 
-type Claims = { v: 1; e: string; t: string; f: BlankFormat; x: number; c?: string };
+/**
+ * `k` — id согласия скачивания: по нему роут файла находит «Дополнительно»
+ * (AuditLog `blank.download`). `o` — организация, созданная быстрой
+ * регистрацией в этом же запросе: QR файла ведёт на QR журнала кабинета.
+ */
+type Claims = { v: 1; e: string; t: string; f: BlankFormat; x: number; c?: string; k?: string; o?: string };
+
+const REF_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+function cleanRef(value: unknown): string | null {
+  return typeof value === "string" && REF_RE.test(value) ? value : null;
+}
 
 function sign(body: string): string {
   return crypto.createHmac("sha256", deriveBlankKey("download")).update(body).digest("base64url");
 }
 
 export function signBlankDownloadToken(
-  params: { email: string; target: BlankTarget; format: BlankFormat; company?: string | null },
+  params: {
+    email: string;
+    target: BlankTarget;
+    format: BlankFormat;
+    company?: string | null;
+    /** Id согласия, к которому записаны доп. данные (только если они есть). */
+    extrasRef?: string | null;
+    /** Организация из быстрой регистрации этого же запроса. */
+    organizationId?: string | null;
+  },
   now: number = Date.now(),
 ): string {
   const company = normalizeBlankCompany(params.company);
+  const extrasRef = cleanRef(params.extrasRef);
+  const organizationId = cleanRef(params.organizationId);
   const claims: Claims = {
     v: 1,
     e: params.email,
@@ -60,13 +82,15 @@ export function signBlankDownloadToken(
     f: params.format,
     x: Math.floor((now + BLANK_DOWNLOAD_TTL_MS) / 1000),
     ...(company ? { c: company } : {}),
+    ...(extrasRef ? { k: extrasRef } : {}),
+    ...(organizationId ? { o: organizationId } : {}),
   };
   const body = Buffer.from(JSON.stringify(claims), "utf8").toString("base64url");
   return `${body}.${sign(body)}`;
 }
 
 export type BlankDownloadCheck =
-  | { ok: true; email: string; company?: string; expiresAt: Date }
+  | { ok: true; email: string; company?: string; extrasRef?: string; organizationId?: string; expiresAt: Date }
   | { ok: false; reason: "missing" | "bad-format" | "bad-sig" | "expired" | "mismatch" };
 
 function sameString(a: string, b: string): boolean {
@@ -102,10 +126,14 @@ export function verifyBlankDownloadToken(
   }
   if (claims.x * 1000 < now) return { ok: false, reason: "expired" };
   const company = normalizeBlankCompany(claims.c);
+  const extrasRef = cleanRef(claims.k);
+  const organizationId = cleanRef(claims.o);
   return {
     ok: true,
     email,
     ...(company ? { company } : {}),
+    ...(extrasRef ? { extrasRef } : {}),
+    ...(organizationId ? { organizationId } : {}),
     expiresAt: new Date(claims.x * 1000),
   };
 }

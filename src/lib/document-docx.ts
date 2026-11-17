@@ -383,6 +383,11 @@ export async function renderJournalDocumentDocx(
       heading: HeadingLevel.HEADING_2,
       alignment: AlignmentType.CENTER,
     }),
+    // Ответственный из «Дополнительно» окна скачивания (спека
+    // blank-download-extras-2026-11); у образцов без него строки нет.
+    ...(input.document.responsibleTitle?.trim()
+      ? [new Paragraph({ text: t("responsible", { name: input.document.responsibleTitle.trim() }), alignment: AlignmentType.CENTER })]
+      : []),
     new Paragraph({ text: "" }),
   ];
 

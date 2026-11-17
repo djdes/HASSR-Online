@@ -7,6 +7,7 @@ import {
   type BlankFormat,
   type BlankTarget,
 } from "@/lib/blank-download";
+import { normalizeBlankExtras, type BlankExtras } from "@/lib/blank-download-extras";
 import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { paperJournalById } from "@/lib/sphere-journal-rules";
@@ -61,6 +62,11 @@ const bodySchema = z.object({
   // Locale is a presentation hint. Ignore malformed/unknown values and keep
   // the historical Russian default instead of rejecting an otherwise valid request.
   locale: z.unknown().optional(),
+  /// «Дополнительно»: сотрудники, оборудование, помещения, ответственный.
+  /// Чистит и режет `normalizeBlankExtras`; мусор не отвергает запрос.
+  extras: z.unknown().optional(),
+  /// Часовой пояс браузера (IANA) — местное время клиента.
+  tz: z.unknown().optional(),
 });
 
 export type BlankDownloadRequest = {
@@ -81,6 +87,10 @@ export type BlankDownloadRequest = {
   register: boolean;
   /** Сырой снимок источника визита — режет `readSignupSnapshot` на сервере. */
   source?: unknown;
+  /** «Дополнительно» из окна, уже очищенное под этот журнал. */
+  extras?: BlankExtras;
+  /** Часовой пояс браузера, как прислан (проверяет `normalizeTimeZone`). */
+  timeZone?: string;
 };
 
 export type BlankDownloadParse =
@@ -142,6 +152,8 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       ? data.company.replace(/\s+/g, " ").trim().slice(0, 160) || null
       : null;
 
+  const extras = normalizeBlankExtras(data.extras, target.kind === "code" ? target.code : null);
+
   return {
     ok: true,
     value: {
@@ -154,6 +166,8 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       ...(phone ? { phone } : {}),
       register: data.register === true && data.remembered !== true,
       ...(data.register === true && data.source !== undefined ? { source: data.source } : {}),
+      ...(extras ? { extras } : {}),
+      ...(typeof data.tz === "string" && data.tz.length <= 64 ? { timeZone: data.tz } : {}),
     },
   };
 }

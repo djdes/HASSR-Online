@@ -20,6 +20,7 @@ import {
   findPlatformClientByEmail,
   recordBlankDownloadLead,
 } from "@/lib/blank-download-lead.server";
+import { applyBlankExtrasToAccount } from "@/lib/blank-download-extras.server";
 import { blankDownloadLimiter } from "@/lib/blank-download-limits";
 import {
   blankAccountResponse,
@@ -37,6 +38,7 @@ import { db } from "@/lib/db";
 import { sendAccountPasswordEmail, sendBlankDownloadEmail } from "@/lib/email";
 import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { SIGNUP_MAGIC_LINK_TTL_MS } from "@/lib/magic-link";
+import { clientLocationLine, lookupIpGeo, normalizeTimeZone } from "@/lib/ip-geo";
 import { domainAcceptsMail } from "@/lib/mail-domain";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
@@ -71,7 +73,7 @@ async function domainOk(domain: string): Promise<boolean> {
  * POST /api/public/blank-download — шаблон журнала после email.
  *
  * Тело: `{ email, code | paperId, format, consent: true, marketing?, remembered?, consentVersion?,
- * phone?, register?, source?, website?, elapsedMs? }`.
+ * phone?, register?, source?, website?, elapsedMs?, extras?, tz? }`.
  * Ответ: `{ url }` — подписанная ссылка на файл (7 дней). По пути:
  *   1. согласие записывается в LegalConsent (source "blank-download",
  *      дословный текст галки, IP, браузер) — это же учёт лидов для /root;
@@ -84,7 +86,12 @@ async function domainOk(domain: string): Promise<boolean> {
  *   3. отмечена галка «Быстрая регистрация» (спека
  *      blank-download-phone-autoreg-2026-11) — кабинет создаётся сразу,
  *      логин, пароль и ссылка автовхода уходят отдельным письмом. Ответ
- *      `account: "created" | "exists" | null`.
+ *      `account: "created" | "exists" | null`;
+ *   4. «Дополнительно» (`extras`, спека blank-download-extras-2026-11) —
+ *      в AuditLog скачивания; файл печатает их, кабинет из быстрой
+ *      регистрации получает сотрудников, помещения и оборудование. В
+ *      уведомлении продажам — их количество, флаг страны по IP и местное
+ *      время клиента (`tz` браузера).
  *
  * Невидимая проверка от ботов (`blankBotVerdict`): заполнено поле-ловушка —
  * ответ похож на успешный, но ничего не пишется и не отправляется; окно
@@ -103,7 +110,8 @@ export async function POST(request: Request) {
       { status: parsed.status },
     );
   }
-  const { email, company, info, format, marketing, locale, phone, register } = parsed.value;
+  const { email, company, info, format, marketing, locale, phone, register, extras } = parsed.value;
+  const timeZone = normalizeTimeZone(parsed.value.timeZone);
 
   const rawBody = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
   const bot = blankBotVerdict({
@@ -233,6 +241,9 @@ export async function POST(request: Request) {
       ...(target.kind === "code" ? { code: target.code } : { paperId: target.paperId }),
       marketing: marketingConsentId !== null,
       ...(marketingConsentId ? { marketingConsentId } : {}),
+      // «Дополнительно»: роут файла печатает их в бланке по id согласия.
+      ...(extras ? { extras } : {}),
+      ...(timeZone ? { timeZone } : {}),
     },
   });
 
@@ -251,8 +262,17 @@ export async function POST(request: Request) {
   });
 
   const now = Date.now();
+  const fileClaims = {
+    email,
+    company,
+    target,
+    // Доп. данные записаны в AuditLog этого согласия — файл их напечатает.
+    extrasRef: extras ? consentId : null,
+    // Кабинет создан этим скачиванием — QR файла ведёт на QR журнала кабинета.
+    organizationId: account?.status === "created" ? account.organizationId : null,
+  };
   const hrefFor = (fileFormat: BlankFormat) =>
-    blankDownloadHref(target, fileFormat, signBlankDownloadToken({ email, company, target, format: fileFormat }, now), locale);
+    blankDownloadHref(target, fileFormat, signBlankDownloadToken({ ...fileClaims, format: fileFormat }, now), locale);
   const url = hrefFor(format);
 
   // Лимит писем проверяем до ответа — окно честно скажет, ушла ли копия.
@@ -260,6 +280,20 @@ export async function POST(request: Request) {
   if (!emailed) console.warn("[blank-download] email skipped: daily letters limit", { consentId });
 
   after(async () => {
+    // Введённое в «Дополнительно» и часовой пояс — в новый кабинет.
+    if (account?.status === "created") {
+      try {
+        await applyBlankExtrasToAccount({
+          organizationId: account.organizationId,
+          code: target.kind === "code" ? target.code : null,
+          extras,
+          timeZone,
+        });
+      } catch (error) {
+        console.error("[blank-download] account extras failed", error);
+      }
+    }
+
     try {
       const dedupeKey = `blank_download:${email}`;
       const [previousDownloadsCount, alreadyNotifiedCount] = await Promise.all([
@@ -283,6 +317,7 @@ export async function POST(request: Request) {
         }),
       ]);
       if (shouldNotifyBlankDownloadAdmin(previousDownloadsCount + alreadyNotifiedCount, accountCreated)) {
+        const geo = await lookupIpGeo(ip === "unknown" ? null : ip, { headers: request.headers }).catch(() => null);
         await notifyPlatformAdmin(
           buildBlankDownloadAdminText({
             title: info.title,
@@ -291,6 +326,8 @@ export async function POST(request: Request) {
             phone,
             company,
             accountCreated,
+            location: clientLocationLine({ geo, timeZone }),
+            extras,
             escape: escapeTelegramHtml,
           }),
           {

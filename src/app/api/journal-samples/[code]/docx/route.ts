@@ -11,7 +11,7 @@ import { journalSampleRateLimiter } from "@/lib/rate-limit";
 import { journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
 import type { BlankTarget } from "@/lib/blank-download";
 import { verifyBlankDownloadToken } from "@/lib/blank-download-token";
-import { blankQrUrl } from "@/lib/blank-qr-token";
+import { blankFileQrUrl, loadBlankDownloadExtras } from "@/lib/blank-download-extras.server";
 
 import { localizedJournalSampleInput, sampleDownloadDenied, sampleDownloadError, sampleLocaleFromUrl, sampleFooterLines } from "@/lib/public-sample-download-presentation";
 
@@ -52,12 +52,16 @@ export async function GET(
   }
 
   try {
+    const extras = await loadBlankDownloadExtras(check.extrasRef, code).catch((error) => {
+      console.error("[journal-samples] extras load failed", error);
+      return null;
+    });
     const { buffer, fileName } = await renderJournalDocumentDocx(
-      await localizedJournalSampleInput(code, locale, { blank: true, company: check.company }),
+      await localizedJournalSampleInput(code, locale, { blank: true, company: check.company, extras }),
       code,
       {
         footer: {
-          qrUrl: blankQrUrl(journalPdfQrOrigin(), { target, email: check.email }).url,
+          qrUrl: blankFileQrUrl({ origin: journalPdfQrOrigin(), target, email: check.email, organizationId: check.organizationId }),
           lines: await sampleFooterLines(locale),
         },
       },

@@ -15,6 +15,7 @@ import {
   type ColdEquipmentEntryData,
 } from "@/lib/cold-equipment-document";
 import type { JournalDocumentPdfInput } from "@/lib/document-pdf";
+import { blankExtrasEquipmentRows, type BlankExtras } from "@/lib/blank-download-extras";
 
 /**
  * Заполненные образцы журналов для публичного лендинга.
@@ -558,23 +559,28 @@ export function buildJournalSampleInput(
  */
 export function buildJournalBlankInput(
   code: SampleJournalCode,
-  options: { company?: string | null } = {},
+  options: { company?: string | null; extras?: BlankExtras | null } = {},
 ): JournalDocumentPdfInput {
   const companyName = (options.company ?? "").replace(/\s+/g, " ").trim();
   const base = buildJournalSampleInput(code);
+  const blankData = blankExtrasData(code, options.extras ?? null);
   const rawConfig =
-    code === "cleaning"
+    code === "cleaning" && !blankData.customRooms
       ? base.document.config && typeof base.document.config === "object"
         ? { ...(base.document.config as Record<string, unknown>) }
         : {}
       : getDefaultConfigForJournal(code, {
-          areas: SAMPLE_AREAS,
-          equipment: SAMPLE_EQUIPMENT,
+          areas: blankData.areas,
+          equipment: blankData.equipment,
           users: [],
           products: [],
           organizationName: companyName || "Организация",
           isDemo: false,
         });
+  if (code === "cleaning" && blankData.customRooms) {
+    rawConfig.cleaningMode = "rooms";
+    rawConfig.selectedRoomIds = blankData.areas.map((area) => area.id);
+  }
 
   if (code === "cleaning") {
     rawConfig.matrix = {};
@@ -589,13 +595,15 @@ export function buildJournalBlankInput(
 
   return {
     ...base,
-    users: [],
+    users: blankData.users,
+    equipment: blankData.equipment.map((item) => ({ id: item.id, name: item.name })),
+    rooms: blankData.areas,
     document: {
       ...base.document,
       config: rawConfig as unknown as never,
       entries: [],
-      responsibleUserId: null,
-      responsibleTitle: null,
+      responsibleUserId: blankData.responsible?.id ?? null,
+      responsibleTitle: blankData.responsibleTitle,
       organization: {
         name: companyName || "Организация",
         journalShortName: companyName || null,
@@ -606,4 +614,48 @@ export function buildJournalBlankInput(
       },
     } as unknown as JournalDocumentPdfInput["document"],
   };
+}
+
+/**
+ * «Дополнительно» из окна скачивания → справочники бланка (спека
+ * blank-download-extras-2026-11): сотрудники — строки гигиенического и
+ * журнала здоровья, помещения — уборка и климат, оборудование —
+ * холодильники и техника, ответственный — в шапке. Ничего не вводили —
+ * те же справочники, что у пустого шаблона раньше.
+ */
+function blankExtrasData(code: string, extras: BlankExtras | null) {
+  const employees = (extras?.employees ?? []).map((person, index) => ({
+    id: `blank-user-${index + 1}`,
+    name: person.name,
+    role: "cook",
+    email: "",
+    positionTitle: person.position ?? "",
+  }));
+  const responsible = extras?.responsible
+    ? {
+        id: "blank-user-responsible",
+        name: extras.responsible.name,
+        role: "manager",
+        email: "",
+        positionTitle: extras.responsible.position ?? "",
+      }
+    : null;
+  const customRooms = Boolean(extras?.rooms?.length);
+  const areas = customRooms
+    ? (extras?.rooms ?? []).map((name, index) => ({
+        id: `blank-area-${index + 1}`,
+        name,
+        detergent: "",
+        currentScope: [] as string[],
+        generalScope: [] as string[],
+      }))
+    : SAMPLE_AREAS;
+  const customEquipment = blankExtrasEquipmentRows(extras, code);
+  const equipment = customEquipment.length
+    ? customEquipment.map((item, index) => ({ id: `blank-eq-${index + 1}`, ...item }))
+    : SAMPLE_EQUIPMENT;
+  const responsibleTitle = responsible
+    ? [responsible.positionTitle, responsible.name].filter(Boolean).join(" ")
+    : null;
+  return { users: employees, responsible, responsibleTitle, areas, equipment, customRooms };
 }

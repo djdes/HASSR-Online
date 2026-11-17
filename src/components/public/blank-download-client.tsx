@@ -13,7 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmailHint, useEmailField } from "@/components/ui/email-field";
+import { useEmailField } from "@/components/ui/email-field";
+import {
+  BlankDownloadExtras,
+  blankExtrasPayload,
+  emptyBlankExtrasDraft,
+  type BlankExtrasDraft,
+} from "@/components/public/blank-download-extras";
 import { MaxIcon } from "@/components/max/max-icon";
 import { TelegramIcon } from "@/components/public/telegram-icon";
 import {
@@ -41,11 +47,12 @@ import { localizedHref } from "@/i18n/site-locale";
  *
  * Первый раз — окно «Куда прислать шаблон?»: почта, телефон (без слова
  * «необязательно» — значки Telegram, MAX, СМС показывают, куда пришлём),
- * название компании, галка согласия на обработку персональных данных,
- * отмеченная по умолчанию галка «Быстрая регистрация», необязательная
- * (снятая) галка «Присылать полезные материалы и новости», «Скачать».
- * Сервер записывает согласие (и согласие на письма, если отмечено) и
- * отдаёт подписанную ссылку — файл скачивается сразу, копия уходит письмом.
+ * название компании, свёрнутое «Дополнительно» (поля под журнал: сотрудники,
+ * оборудование, помещения, ответственный — спека
+ * blank-download-extras-2026-11), галка согласия на обработку персональных
+ * данных и отмеченная по умолчанию галка «Быстрая регистрация» — всего две
+ * галки, «Скачать». Сервер записывает согласие и отдаёт подписанную ссылку
+ * — файл скачивается сразу, копия уходит письмом.
  * С галкой регистрации сервер заводит кабинет и присылает доступ письмом
  * (спека blank-download-phone-autoreg-2026-11).
  *
@@ -121,15 +128,26 @@ type RequestResult =
   | { ok: true; url: string; consentVersion: string; emailed: boolean; account: AccountState }
   | { ok: false; errorKey: ReturnType<typeof blankDownloadErrorKey>; needConsent: boolean };
 
-/** Что окно передаёт сверх почты: телефон, регистрация и замер для проверки от ботов. */
+/** Что окно передаёт сверх почты: телефон, регистрация, «Дополнительно» и замер для проверки от ботов. */
 type FormExtras = {
   phone: string | null;
   register: boolean;
+  /** «Дополнительно» — уже без пустых строк (`blankExtrasPayload`), `null` — ничего не вводили. */
+  extras: ReturnType<typeof blankExtrasPayload>;
   /** Скрытое поле-ловушка: человек его не видит, у живого — пустое. */
   website: string;
   /** Сколько окно было открыто до отправки, мс. */
   elapsedMs: number;
 };
+
+/** Часовой пояс браузера — местное время клиента в уведомлении и в новом кабинете. */
+function browserTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
 
 async function requestDownload(params: {
   email: string;
@@ -138,13 +156,12 @@ async function requestDownload(params: {
   format: BlankFormat;
   locale: string;
   remembered?: RememberedBlankEmail | null;
-  /** Отмечена галка «Присылать полезные материалы и новости». */
-  marketing?: boolean;
   extras?: FormExtras;
 }): Promise<RequestResult> {
   const company = (params.company ?? params.remembered?.company ?? "").trim();
   const phone = params.extras?.phone ?? params.remembered?.phone ?? null;
   const journalKey = params.target.kind === "code" ? params.target.code : `paper:${params.target.paperId}`;
+  const tz = browserTimeZone();
   try {
     const res = await fetch("/api/public/blank-download", {
       method: "POST",
@@ -156,12 +173,13 @@ async function requestDownload(params: {
         format: params.format,
         locale: params.locale,
         consent: true,
-        ...(params.marketing ? { marketing: true } : {}),
+        ...(tz ? { tz } : {}),
         ...(phone ? { phone } : {}),
         ...(params.extras
           ? {
               website: params.extras.website,
               elapsedMs: params.extras.elapsedMs,
+              ...(params.extras.extras ? { extras: params.extras.extras } : {}),
               ...(params.extras.register ? { register: true, source: readSignupSource(blankSignupPlace(journalKey)) } : {}),
             }
           : {}),
@@ -297,7 +315,7 @@ export function BlankDownloadClient({
     [],
   );
 
-  async function submit(value: string, marketing: boolean, companyValue: string, extras: FormExtras) {
+  async function submit(value: string, companyValue: string, extras: FormExtras) {
     const cleanCompany = companyValue.trim();
     setError(null);
     setPhase("sending");
@@ -307,7 +325,6 @@ export function BlankDownloadClient({
       target,
       format,
       locale,
-      marketing,
       extras,
     });
     if (!result.ok) {
@@ -324,8 +341,8 @@ export function BlankDownloadClient({
     triggerDownload(result.url);
     ymGoal("blank_download_done", {
       ...goal,
-      ...(marketing ? { marketing: "1" } : {}),
       ...(extras.phone ? { phone: "1" } : {}),
+      ...(extras.extras ? { extras: "1" } : {}),
     });
     if (result.account === "created") ymGoal("blank_quick_register_done", goal);
     setEmail(value);
@@ -360,7 +377,7 @@ export function BlankDownloadClient({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-3xl border-[#ececf4] bg-white p-6 sm:max-w-[460px]" data-testid="blank-download-dialog">
+        <DialogContent className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-3xl border-[#ececf4] bg-white p-6 sm:max-w-[460px]" data-testid="blank-download-dialog">
           {phase === "done" ? (
             <DoneView
               title={title}
@@ -374,6 +391,7 @@ export function BlankDownloadClient({
             />
           ) : (
             <FormView
+              code={target.kind === "code" ? target.code : null}
               title={title}
               formatLabel={formatLabel}
               initialEmail={email}
@@ -429,6 +447,7 @@ const FIELD_CLASS =
 const LINK_CLASS = "text-[#3848c7] underline underline-offset-2 transition-colors duration-150 hover:text-[#0b1024]";
 
 function FormView({
+  code,
   title,
   formatLabel,
   initialEmail,
@@ -439,6 +458,8 @@ function FormView({
   sending,
   onSubmit,
 }: {
+  /** Код журнала каталога — от него зависят поля «Дополнительно»; у бумажного бланка `null`. */
+  code: string | null;
   title: string;
   formatLabel: string;
   initialEmail: string;
@@ -447,7 +468,7 @@ function FormView({
   error: ReturnType<typeof blankDownloadErrorKey> | null;
   expired: boolean;
   sending: boolean;
-  onSubmit: (email: string, marketing: boolean, company: string, extras: FormExtras) => void;
+  onSubmit: (email: string, company: string, extras: FormExtras) => void;
 }) {
   const t = useTranslations("publicBlankDownload");
   const field = useEmailField(initialEmail);
@@ -457,9 +478,12 @@ function FormView({
   const [consent, setConsent] = useState(false);
   // Быстрая регистрация — по умолчанию отмечена; снять можно одним нажатием.
   const [register, setRegister] = useState(true);
-  // Согласие на письма — необязательное и по умолчанию снято: на
-  // скачивание не влияет (спека landing-pack-2026-09).
-  const [marketing, setMarketing] = useState(false);
+  // «Дополнительно» свёрнуто: человек, пришедший за файлом, его не видит.
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  const [extrasDraft, setExtrasDraft] = useState<BlankExtrasDraft>(emptyBlankExtrasDraft);
+  // Ошибку адреса показываем, только когда человек ушёл с поля или нажал
+  // «Скачать»: подсказки на каждый символ растягивали окно — оно «прыгало».
+  const [emailBlurred, setEmailBlurred] = useState(false);
   // Ловушка для ботов: поле скрыто от человека, у живого остаётся пустым.
   const [website, setWebsite] = useState("");
   // Когда окно открылось — время до отправки уходит на сервер. Ленивый
@@ -467,11 +491,16 @@ function FormView({
   const [openedAt] = useState(() => Date.now());
   const [consentMissing, setConsentMissing] = useState(false);
   const [localError, setLocalError] = useState<ReturnType<typeof blankDownloadErrorKey> | null>(null);
-  const domainMissing = field.check.status === "ok" && field.domainState === "missing";
+  const check = field.check;
+  const typo = check.status === "typo" ? check.suggestion : null;
+  const domainMissing = check.status === "ok" && field.domainState === "missing";
+  const emailProblem = check.status !== "ok" || domainMissing;
+  const showEmailError = emailBlurred && field.value.trim() !== "" && emailProblem && !typo;
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     field.setTouched(true);
+    setEmailBlurred(true);
     if (!field.valid) return;
     const cleanPhone = normalizeBlankPhone(phone);
     if (cleanPhone === undefined) {
@@ -484,9 +513,10 @@ function FormView({
       return;
     }
     setLocalError(null);
-    onSubmit(field.value.trim().toLowerCase(), marketing, company, {
+    onSubmit(field.value.trim().toLowerCase(), company, {
       phone: cleanPhone,
       register,
+      extras: blankExtrasPayload(extrasDraft, code),
       website,
       elapsedMs: Math.max(0, Date.now() - openedAt),
     });
@@ -513,36 +543,60 @@ function FormView({
 
       <form onSubmit={submit} noValidate>
         <div className="space-y-3">
-          <div className="relative">
-            <Mail
-              aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#9b9fb3]"
-            />
-            <input
-              id="blank-download-email"
-              type="email"
-              value={field.value}
-              onChange={(event) => field.setValue(event.target.value)}
-              placeholder={t("email.label")}
-              aria-label={t("email.label")}
-              autoComplete="email"
-              inputMode="email"
-              autoFocus
-              className={cn(FIELD_CLASS, "pl-11 pr-4")}
-            />
+          <div>
+            <div className="relative">
+              <Mail
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#9b9fb3]"
+              />
+              <input
+                id="blank-download-email"
+                type="email"
+                value={field.value}
+                onChange={(event) => field.setValue(event.target.value)}
+                onBlur={() => setEmailBlurred(true)}
+                placeholder={t("email.label")}
+                aria-label={t("email.label")}
+                aria-invalid={showEmailError || Boolean(typo) || undefined}
+                aria-describedby={showEmailError ? "blank-download-email-error" : undefined}
+                autoComplete="email"
+                inputMode="email"
+                autoFocus
+                className={cn(
+                  FIELD_CLASS,
+                  "pl-11",
+                  typo ? "pr-[132px]" : "pr-11",
+                  (showEmailError || typo) && "border-[#e4877d] focus:border-[#d2584b] focus:ring-[#d2584b]/15",
+                )}
+              />
+              {/* Подсказки — внутри поля справа: окно не меняет высоту, пока
+                  человек печатает. */}
+              {typo ? (
+                <button
+                  type="button"
+                  onClick={() => field.applySuggestion(typo)}
+                  aria-label={t("email.typoFix", { suggestion: typo })}
+                  title={t("email.typoFix", { suggestion: typo })}
+                  data-testid="blank-download-email-typo"
+                  className="absolute right-2 top-1/2 max-w-[124px] -translate-y-1/2 truncate rounded-xl bg-[#fff4f2] px-2.5 py-1.5 text-[13px] font-medium text-[#a13a32] transition-colors duration-150 hover:bg-[#fde3df]"
+                >
+                  {t("email.typoChip", { suggestion: typo })}
+                </button>
+              ) : field.checking ? (
+                <Loader2
+                  aria-label={t("email.checking")}
+                  className="absolute right-4 top-1/2 size-[18px] -translate-y-1/2 animate-spin text-[#9b9fb3]"
+                />
+              ) : check.status === "ok" && field.domainState === "ok" ? (
+                <CheckCircle2 aria-hidden="true" className="absolute right-4 top-1/2 size-[18px] -translate-y-1/2 text-[#1f9d55]" />
+              ) : null}
+            </div>
+            {showEmailError ? (
+              <p id="blank-download-email-error" role="alert" className="mt-1.5 truncate px-1 text-[13px] leading-[1.4] text-[#a13a32]">
+                {t(domainMissing ? "email.domainMissing" : "email.invalid")}
+              </p>
+            ) : null}
           </div>
-          {domainMissing ? (
-            <p className="text-[13px] leading-[1.5] text-[#a13a32]">
-              {t("email.domainMissing")}
-            </p>
-          ) : (
-            <EmailHint
-              check={field.check}
-              touched={field.touched}
-              domainState={field.domainState}
-              onApply={field.applySuggestion}
-            />
-          )}
 
           {/* Телефон: без слова «необязательно» — значки справа показывают,
               куда пришлём шаблон. Полная фраза — для экранных чтецов. */}
@@ -603,6 +657,16 @@ function FormView({
           />
         </div>
 
+        <div className="mt-1.5">
+          <BlankDownloadExtras
+            code={code}
+            open={extrasOpen}
+            onToggle={() => setExtrasOpen((value) => !value)}
+            draft={extrasDraft}
+            onChange={setExtrasDraft}
+          />
+        </div>
+
         <div aria-hidden="true" className="hidden">
           <label htmlFor="blank-download-website">{t("form.websiteLabel")}</label>
           <input
@@ -618,9 +682,10 @@ function FormView({
 
         <label
           className={cn(
-            "mt-4 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[13px] leading-[1.5] text-[#6f7282] transition-colors duration-150",
+            "mt-3 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[13px] leading-[1.5] text-[#6f7282] transition-colors duration-150",
             consentMissing && !consent && "bg-[#fff4f2] ring-2 ring-[#f2b8b0]",
           )}
+          data-testid="blank-download-consent-label"
         >
           <input
             type="checkbox"
@@ -664,22 +729,6 @@ function FormView({
                 terms: (chunks) => <Link href="/terms" target="_blank" className={LINK_CLASS}>{chunks}</Link>,
               })}
             </span>
-          </span>
-        </label>
-
-        <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[13px] leading-[1.5] text-[#6f7282]">
-          <input
-            type="checkbox"
-            checked={marketing}
-            onChange={(event) => setMarketing(event.target.checked)}
-            className="mt-px size-5 shrink-0 accent-[#5566f6]"
-            data-testid="blank-download-marketing"
-          />
-          <span>
-            {t.rich("marketing.statement", {
-              lead: (chunks) => <span className="text-[#3c4053]">{chunks}</span>,
-              note: (chunks) => <span className="block">{chunks}</span>,
-            })}
           </span>
         </label>
 

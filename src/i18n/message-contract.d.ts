@@ -17508,6 +17508,7 @@ export type MessageContract = {
       "registrationIp": "IP при регистрации",
       "lastLoginIp": "IP последнего входа",
       "lastLoginAt": "Последний вход",
+      "localTime": "Местное время клиента",
       "none": "Нет данных: адреса пишутся при входе с 26.08.2026"
     },
     "readOnly": "Изменять тариф и баллы может сотрудник с разделом «Оплаты и тарифы»."
@@ -19734,6 +19735,7 @@ export type MessageContract = {
   },
   "docxSample": {
     "system": "СИСТЕМА ХАССП",
+    "responsible": "Ответственный: {name}",
     "taxId": "ИНН {number}",
     "started": "Начат: {date}",
     "finished": "Окончен: ______________",
@@ -19826,10 +19828,36 @@ export type MessageContract = {
       "fileLabel": "Шаблон ({format})",
       "label": "Электронная почта",
       "placeholder": "you@company.ru",
-      "domainMissing": "Такого домена не существует — проверьте адрес. Письмо на него не дойдёт."
+      "domainMissing": "Такого домена нет — проверьте адрес.",
+      "typoChip": "{suggestion}?",
+      "typoFix": "Исправить на {suggestion}",
+      "checking": "Проверяем адрес",
+      "invalid": "Проверьте адрес почты."
     },
     "company": {
       "placeholder": "Название компании или ИП (в шапку журнала)"
+    },
+    "extras": {
+      "toggle": "Дополнительно",
+      "lead": "Впишем в журнал, а с быстрой регистрацией — сразу в ваш кабинет. Можно пропустить.",
+      "responsibleTitle": "Ответственный за журнал",
+      "name": "ФИО",
+      "position": "Должность",
+      "employeesTitle": "Сотрудники",
+      "employeeName": "ФИО сотрудника",
+      "addEmployee": "Добавить сотрудника",
+      "equipmentTitle": "Оборудование",
+      "coldEquipmentTitle": "Холодильники и морозильники",
+      "equipmentName": "Название, например «Фритюрница №1»",
+      "coldEquipmentName": "Например, «Холодильник №1»",
+      "equipmentKind": "Тип",
+      "fridge": "Холодильник",
+      "freezer": "Морозильник",
+      "addEquipment": "Добавить оборудование",
+      "roomsTitle": "Помещения",
+      "roomName": "Например, «Горячий цех»",
+      "addRoom": "Добавить помещение",
+      "remove": "Убрать строку"
     },
     "phone": {
       "label": "Телефон",

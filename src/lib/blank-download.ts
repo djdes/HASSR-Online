@@ -9,6 +9,7 @@
  */
 
 import type { Locale } from "@/i18n/locales";
+import { blankExtrasAdminLine, type BlankExtras } from "@/lib/blank-download-extras";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 
 export type BlankFormat = "pdf" | "docx";
@@ -51,8 +52,9 @@ export const BLANK_CONSENT_SOURCE = "blank-download";
 export const BLANK_REGISTER_CONSENT_SOURCE = "blank-register";
 
 /**
- * Необязательная галка «присылать материалы» в том же окне (спека
- * landing-pack-2026-09). По умолчанию снята, на скачивание не влияет.
+ * Необязательная галка «присылать материалы» (спека landing-pack-2026-09).
+ * Из окна убрана 2026-11-17 (спека blank-download-extras-2026-11); сервер
+ * по-прежнему понимает `marketing: true` от старых вкладок.
  * Отмечена — отдельная запись LegalConsent с этим `source` и дословным
  * текстом: подпись галки и пометка под ней, как их видит человек.
  */
@@ -327,15 +329,22 @@ export function buildBlankDownloadAdminText(params: {
   company?: string | null;
   /** Кабинет создан галкой «Быстрая регистрация». */
   accountCreated?: boolean;
+  /** Флаг страны по IP и местное время клиента (`clientLocationLine`). */
+  location?: string | null;
+  /** «Дополнительно» из окна — в уведомлении только их количество. */
+  extras?: BlankExtras | null;
   escape: (value: string) => string;
 }): string {
   const esc = params.escape;
+  const extrasLine = blankExtrasAdminLine(params.extras);
   return [
     "📥 Скачивание шаблона журнала",
     `Журнал: ${esc(params.title)} (${esc(BLANK_FORMAT_LABEL[params.format])})`,
     `Почта: ${esc(params.email)}`,
     ...(params.phone ? [`Телефон: ${esc(displayBlankPhone(params.phone))}`] : []),
     ...(params.company ? [`Организация: ${esc(params.company)}`] : []),
+    ...(params.location ? [esc(params.location)] : []),
+    ...(extrasLine ? [esc(extrasLine)] : []),
     ...(params.accountCreated ? ["✅ Быстрая регистрация: кабинет создан, доступ отправлен на почту"] : []),
   ].join("\n");
 }

@@ -1,0 +1,15 @@
+{
+  "task": "blank-download-extras-2026-11",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS",
+    "AC6": "PASS", "AC7": "PASS", "AC8": "PASS", "AC9": "PASS"
+  },
+  "commands": {
+    "typecheck": "npm run typecheck — 0 errors",
+    "test_changed": "npm run test:changed — pass 6228 / fail 6 (all 6 pre-existing on master)",
+    "targeted": ["src/lib/blank-download-extras.test.ts 10/10", "src/lib/ip-geo.test.ts 7/7", "src/lib/blank-download-localization.test.ts 10/10", "src/lib/document-docx-localization.test.ts 10/10", "src/lib/blank-qr-token.test.ts 9/9", "src/app/neutral-palette.test.ts 1/1"],
+    "e2e": ".agent/tasks/blank-download-extras-2026-11/e2e/extras-e2e.mjs, root-card.mjs"
+  },
+  "artifacts": ["raw/1-form.png", "raw/2-typo.png", "raw/3-extras.png", "raw/4-done.png", "raw/5-mobile-cold.png", "raw/6-root-card.png", "raw/e2e.json", "raw/tg-sample.txt", "raw/test-changed.log"]
+}
