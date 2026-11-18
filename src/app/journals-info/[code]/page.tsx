@@ -30,6 +30,7 @@ import { listPublicReviews } from "@/lib/balance/reviews";
 import { Testimonials } from "@/components/landing/testimonials";
 import { journalUsageCount } from "@/lib/journal-usage-count.server";
 import { JournalStickyBar } from "@/components/public/journal-sticky-bar";
+import { CallbackButton } from "@/components/public/callback-button";
 import { BlankConstructor } from "@/components/public/blank-constructor";
 import {
   JournalAudienceChips,
@@ -253,6 +254,8 @@ export default async function JournalInfoDetailPage({
                 {t("heroTry")}
                 <ArrowRight className="size-4" />
               </Link>
+              {/* Звонок — для тех, кому проще поговорить (conversion-pack-2026-11). */}
+              <CallbackButton place="journal-hero" topic={catalogName} />
             </div>
             <p className="mt-3 text-[13px] text-white/60">
               {t("heroTrust", { trialDays: TRIAL_DAYS })}

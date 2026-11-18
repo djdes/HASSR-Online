@@ -1073,6 +1073,45 @@ export async function buildBlankDownloadEmail(params: {
     <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">${t("email.blankDownload.disclaimer")}</p>`;
   return { subject, html: localizedLayout(t, locale, subject, body) };
 }
+/**
+ * Одно письмо через сутки после скачивания шаблона тем, кто так и не
+ * зарегистрировался (спека conversion-pack-2026-11): как вести именно этот
+ * журнал — подсказки, ссылка на образец и FAQ, предложение вести с телефона.
+ * Письмо про скачанный файл, не рассылка: второго по тому же адресу нет.
+ */
+export async function buildBlankFollowupEmail(params: {
+  journalTitle: string;
+  tips: readonly string[];
+  pageUrl: string;
+  registerUrl: string;
+  locale?: Locale;
+}): Promise<{ subject: string; html: string }> {
+  const locale = params.locale ?? "ru";
+  const t = await translatorFor(locale);
+  const subject = t("email.blankFollowup.subject", { journalTitle: params.journalTitle });
+  const tips = params.tips.slice(0, 3);
+  const body = `
+    <p style="margin:0 0 16px;color:#3f3f46;line-height:1.6">${t("email.blankFollowup.greeting")}</p>
+    <p style="margin:0 0 12px;color:#3f3f46;line-height:1.6">${t("email.blankFollowup.intro", { journalTitle: escapeHtml(params.journalTitle) })}</p>
+    ${tips.length ? `<ul style="margin:0 0 16px;padding-left:20px;color:#3f3f46;line-height:1.6">${tips.map((tip) => `<li style="margin:0 0 6px">${escapeHtml(tip)}</li>`).join("")}</ul>` : ""}
+    <p style="margin:0 0 20px;color:#3f3f46;font-size:14px;line-height:1.6">${t("email.blankFollowup.pageIntro")} <a href="${escapeHtml(params.pageUrl)}" style="color:#3848c7">${escapeHtml(params.pageUrl)}</a></p>
+    <div style="background:#f5f6ff;border-radius:8px;padding:20px;margin:0 0 20px">
+      <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#18181b">${t("email.blankFollowup.paperlessTitle")}</p>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">${t("email.blankFollowup.paperlessBody", { freeTier: t("email.blankDownload.freeTier", { count: TRIAL_DAYS }) })}</p>
+      <a href="${escapeHtml(params.registerUrl)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px">${t("email.blankFollowup.action")}</a>
+    </div>
+    <p style="margin:0 0 16px;color:#3f3f46;font-size:14px;line-height:1.6">${t("email.blankFollowup.help", { phone: escapeHtml(COMPANY_PHONE.display) })}</p>
+    <p style="margin:24px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5">${t("email.blankFollowup.disclaimer")}</p>`;
+  return { subject, html: localizedLayout(t, locale, subject, body) };
+}
+
+export async function sendBlankFollowupEmail(
+  params: Parameters<typeof buildBlankFollowupEmail>[0] & { to: string },
+): Promise<boolean> {
+  const { subject, html } = await buildBlankFollowupEmail(params);
+  return sendEmail(params.to, subject, html);
+}
+
 export async function sendBlankDownloadEmail(
   params: Parameters<typeof buildBlankDownloadEmail>[0] & { to: string }
 ): Promise<boolean> {
