@@ -1,0 +1,16 @@
+{
+  "spec": "spec.md",
+  "results": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS"
+  },
+  "artifacts": {
+    "runtime": "raw/rendered.log",
+    "desktop": "raw/desktop.png",
+    "mobile": "raw/mobile.png",
+    "gate": "raw/verification-gate.log",
+    "typecheck": "raw/typecheck.log"
+  }
+}

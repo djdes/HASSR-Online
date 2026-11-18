@@ -53,6 +53,7 @@ describe("SEO metadata hygiene", () => {
     for (const rel of [
       "sanpin-2-3-2-4-4282-26/page.tsx",
       "security/page.tsx",
+      "about/page.tsx",
       "avtozapolnenie/page.tsx",
       "status/page.tsx",
     ]) {
