@@ -1,5 +1,5 @@
 import { formatSlotDay, formatSlotTime } from "@/lib/demo-slots";
-import { signupSourceSummary, type SignupSourceSnapshot } from "@/lib/signup-channel";
+import { signupSourceShort, signupSourceSummary, type SignupSourceSnapshot } from "@/lib/signup-channel";
 
 /**
  * Заявка «Покажите мне за 15 минут»: человек оставляет имя и телефон,
@@ -76,7 +76,9 @@ export function composeDemoAlert(request: DemoRequest, escape: (value: string) =
     request.organizationName ? `🏢 ${escape(request.organizationName)}` : null,
     request.slot ? "🕐 Записались на время — позвоните в назначенный час" : `🕐 Когда удобно: ${request.when ? DEMO_WHEN_LABEL[request.when] : "не указано"}`,
     request.topic ? `💬 ${escape(request.topic)}` : null,
-    `🔎 ${escape(signupSourceSummary(request.source))}${request.place ? ` · кнопка «${escape(request.place)}»` : ""}`,
+    // Источник коротко (спека visit-source-2026-11); полная сводка — в комментарии заявки.
+    signupSourceShort(request.source) ? `Источник: ${escape(signupSourceShort(request.source)!)}` : null,
+    request.place ? `Кнопка: «${escape(request.place)}»` : null,
   ]
     .filter(Boolean)
     .join("\n");

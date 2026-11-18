@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { isEmptySnapshot, readSignupSnapshot, signupSourceSummary } from "@/lib/signup-channel";
 import { db } from "@/lib/db";
 import { ensurePdfLeadsSynced } from "@/lib/blank-download-lead.server";
 import { CRM_ESCALATION_MS, QUIET_STAGES, isCrmStage } from "@/lib/crm/constants";
@@ -231,12 +232,18 @@ export async function loadCrmContact(id: string, scope?: CrmViewerScope) {
       include: { call: { select: { id: true, audioStatus: true, durationSec: true, transcript: true, transcriptStatus: true } } },
     }),
     contact.organizationId
-      ? db.organization.findUnique({ where: { id: contact.organizationId }, select: { id: true, name: true, subscriptionPlan: true, createdAt: true, accountManagerId: true } })
+      ? db.organization.findUnique({ where: { id: contact.organizationId }, select: { id: true, name: true, subscriptionPlan: true, createdAt: true, accountManagerId: true, signupSourceJson: true } })
       : null,
     listCrmOwners(scope),
     contact.userId ? db.user.findUnique({ where: { id: contact.userId }, select: { id: true, name: true, email: true, phone: true } }) : null,
   ]);
+  // Откуда пришёл (спека visit-source-2026-11): первое касание контакта,
+  // иначе — организации.
+  const visitSnapshot = [contact.visitSourceJson, organization?.signupSourceJson]
+    .map((raw) => readSignupSnapshot(raw))
+    .find((snapshot) => !isEmptySnapshot(snapshot));
   return {
+    visitSource: visitSnapshot ? signupSourceSummary(visitSnapshot) : null,
     contact: {
       ...contact,
       lastInboundAt: contact.lastInboundAt?.toISOString() ?? null,

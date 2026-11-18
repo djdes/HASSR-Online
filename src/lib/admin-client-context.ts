@@ -11,6 +11,8 @@ export type AdminClientInfo = {
   location: string | null;
   /** Абсолютная ссылка на карточку клиента в /root. */
   adminUrl: string | null;
+  /** Откуда пришёл клиент, коротко: «Поиск Яндекса» (`signupSourceShort`). */
+  source?: string | null;
 };
 
 export function adminAppUrl(): string {
@@ -33,7 +35,8 @@ export function adminOpenLink(url: string, label = "Открыть"): string {
 }
 
 /**
- * Дописывает к тексту уведомления место клиента и «Открыть». Уже есть в
+ * Дописывает к тексту уведомления источник визита, место клиента и
+ * «Открыть» (спеки tg-client-location-2026-11, visit-source-2026-11). Уже есть в
  * тексте — не дублирует. Место встаёт перед ссылками в конце текста
  * (панель обращений, модерация), «Открыть» — последней строкой; при своей
  * ссылке в тексте наша подписана «Открыть клиента», чтобы их не путать.
@@ -45,6 +48,8 @@ export function appendAdminClientLines(text: string, info: AdminClientInfo | nul
   while (tail > 0 && /^\s*<a\s/i.test(lines[tail - 1])) tail -= 1;
   const body = lines.slice(0, tail);
   const links = lines.slice(tail);
+  // Источник — один раз: у заявки на показ своя строка «Источник:».
+  if (info.source && !/(^|\n)Источник:/.test(text)) body.push(`Источник: ${escapeHtml(info.source)}`);
   if (info.location) {
     const location = escapeHtml(info.location);
     if (!text.includes(location) && !text.includes(info.location)) body.push(location);

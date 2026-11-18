@@ -9,6 +9,7 @@ import { escapeTelegramHtml } from "@/lib/telegram";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import type { AdminClientContext } from "@/lib/admin-client-context.server";
 import { resolveOrganizationPlaceForRequest } from "@/lib/organization-place.server";
+import { requestSignupSource } from "@/lib/visit-source.server";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 import { domainAcceptsMail } from "@/lib/mail-domain";
@@ -57,7 +58,10 @@ export async function POST(request: Request) {
       : "";
   // Откуда пришла регистрация: место формы, посадочная, referrer, utm.
   // Собирает клиент (lib/signup-source.ts), здесь только режем длину.
-  const source = readSignupSnapshot((body as { source?: unknown } | null)?.source);
+  // Снимок формы, а без внешнего referrer/utm — cookie первого касания
+  // (спека visit-source-2026-11): человек мог прийти из поиска вчера.
+  const formSource = readSignupSnapshot((body as { source?: unknown } | null)?.source);
+  const source = requestSignupSource(request, formSource) ?? formSource;
   // Обязательное согласие с документами (2026-09-22): без галки — отказ.
   const consentGiven = (body as { consent?: unknown } | null)?.consent === true;
   const consentPlace = (body as { consentPlace?: unknown } | null)?.consentPlace === "landing" ? "landing" : "register";
@@ -230,17 +234,13 @@ export async function POST(request: Request) {
 async function notifyOwner(email: string, source: SignupSourceSnapshot, client: AdminClientContext): Promise<void> {
   // Единая точка админ-уведомлений: регистрации и обращения больше не
   // разъезжаются по двум разным chat id из разных env-переменных.
-  const utm = [source.utmSource, source.utmMedium, source.utmCampaign]
-    .filter(Boolean)
-    .join(" / ");
+  // Источник коротко допишет notifyPlatformAdmin (из signupSourceJson).
+  const form = [source.place, source.landing].filter(Boolean).join(" · ");
   await notifyPlatformAdmin(
     [
       "🆕 Новая регистрация с лендинга",
       `Почта: ${escapeTelegramHtml(email)}`,
-      source.place ? `Форма: ${escapeTelegramHtml(source.place)}` : "",
-      source.landing ? `Страница: ${escapeTelegramHtml(source.landing)}` : "",
-      source.referrer ? `Откуда: ${escapeTelegramHtml(source.referrer)}` : "",
-      utm ? `UTM: ${escapeTelegramHtml(utm)}` : "",
+      form ? `Форма: ${escapeTelegramHtml(form)}` : "",
     ]
       .filter(Boolean)
       .join("\n"),

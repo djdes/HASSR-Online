@@ -41,6 +41,8 @@ import { sendAccountPasswordEmail, sendBlankDownloadEmail } from "@/lib/email";
 import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { SIGNUP_MAGIC_LINK_TTL_MS } from "@/lib/magic-link";
 import { resolveAdminClientInfo } from "@/lib/admin-client-context.server";
+import { readSignupSnapshot } from "@/lib/signup-channel";
+import { rememberContactVisitSource, requestSignupSource } from "@/lib/visit-source.server";
 import { normalizeTimeZone } from "@/lib/ip-geo";
 import { domainAcceptsMail } from "@/lib/mail-domain";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
@@ -212,7 +214,8 @@ export async function POST(request: Request) {
       phone: phone ?? null,
       locale,
       target,
-      source: parsed.value.source,
+      // Форма окна или cookie первого касания — источник нового кабинета.
+      source: requestSignupSource(request, readSignupSnapshot(parsed.value.source)) ?? parsed.value.source,
       ip: ip === "unknown" ? null : ip,
       rateKey: ip,
     }).catch((error): BlankAccountOutcome => {
@@ -263,6 +266,8 @@ export async function POST(request: Request) {
   }).catch((error) => {
     console.error("[blank-download] lead sync failed", error);
   });
+  // Откуда пришёл — в контакт CRM (первое касание, cookie сайта).
+  await rememberContactVisitSource({ email, phone: phone ?? null }, requestSignupSource(request, null));
 
   const now = Date.now();
   const fileClaims = {
@@ -340,6 +345,7 @@ export async function POST(request: Request) {
             phone,
             company,
             accountCreated,
+            source: client?.source ?? null,
             location: client?.location ?? null,
             adminUrl: client?.adminUrl ?? null,
             extras,

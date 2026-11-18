@@ -330,6 +330,8 @@ export function buildBlankDownloadAdminText(params: {
   company?: string | null;
   /** Кабинет создан галкой «Быстрая регистрация». */
   accountCreated?: boolean;
+  /** Откуда пришёл клиент, коротко (`signupSourceShort`). */
+  source?: string | null;
   /** Флаг страны по IP и местное время клиента (`clientLocationLine`). */
   location?: string | null;
   /** «Дополнительно» из окна — в уведомлении только их количество. */
@@ -346,6 +348,7 @@ export function buildBlankDownloadAdminText(params: {
     `Почта: ${esc(params.email)}`,
     ...(params.phone ? [`Телефон: ${esc(displayBlankPhone(params.phone))}`] : []),
     ...(params.company ? [`Организация: ${esc(params.company)}`] : []),
+    ...(params.source ? [`Источник: ${esc(params.source)}`] : []),
     ...(params.location ? [esc(params.location)] : []),
     ...(extrasLine ? [esc(extrasLine)] : []),
     ...(layoutLine ? [esc(layoutLine)] : []),
