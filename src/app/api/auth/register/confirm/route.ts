@@ -238,7 +238,7 @@ export async function POST(request: Request) {
       `Почта: ${escapeTelegramHtml(result.user.email)}`,
       `Имя: ${escapeTelegramHtml(result.user.name)}`,
     ].join("\n"),
-    { kind: "registration", audience: "sales" }
+    { kind: "registration", audience: "sales", client: { request, organizationId: result.organization.id } }
   ).catch((err) => console.error("register notify admin failed", err));
 
   // Регистрация по партнёрской ссылке (/p/<slug>) — организация сразу

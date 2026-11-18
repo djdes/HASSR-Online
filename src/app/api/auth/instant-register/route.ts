@@ -7,6 +7,8 @@ import { issueSession } from "@/lib/issue-session";
 import { sendAccountPasswordEmail } from "@/lib/email";
 import { escapeTelegramHtml } from "@/lib/telegram";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import type { AdminClientContext } from "@/lib/admin-client-context.server";
+import { resolveOrganizationPlaceForRequest } from "@/lib/organization-place.server";
 import { registrationCodeRateLimiter } from "@/lib/rate-limit";
 import { verifyRegistrationChallenge } from "@/lib/registration-antibot";
 import { domainAcceptsMail } from "@/lib/mail-domain";
@@ -125,9 +127,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ exists: true });
   }
 
+  // Город из формы (подсказки по IP) и пояс браузера — пояс организации:
+  // по нему журналы ставят время (спека tg-client-location-2026-11).
+  const placeInput = body as { city?: unknown; countryCode?: unknown; timeZone?: unknown } | null;
+  const place = await resolveOrganizationPlaceForRequest(
+    { city: placeInput?.city, countryCode: placeInput?.countryCode, browserTimeZone: placeInput?.timeZone },
+    { ip: ipForLog, headers: request.headers },
+  ).catch(() => null);
+
   let created;
   try {
     created = await createInstantAccount({
+      place,
       email,
       locale,
       sphere,
@@ -188,7 +199,7 @@ export async function POST(request: Request) {
       sendWelcomeEmailOnce({ to: email, hasAccount: true, organizationId: created.organization.id, locale, via: "instant_register" }),
     )
     .catch((err) => console.error("welcome email failed", err));
-  notifyOwner(email, source).catch((err) =>
+  notifyOwner(email, source, { request, organizationId: created.organization.id, timeZone: typeof placeInput?.timeZone === "string" ? placeInput.timeZone : null }).catch((err) =>
     console.error("instant-register telegram notify failed", err),
   );
   // Пришёл по ссылке партнёра (/p/<slug>) — организация сразу под его
@@ -216,7 +227,7 @@ export async function POST(request: Request) {
   );
 }
 
-async function notifyOwner(email: string, source: SignupSourceSnapshot): Promise<void> {
+async function notifyOwner(email: string, source: SignupSourceSnapshot, client: AdminClientContext): Promise<void> {
   // Единая точка админ-уведомлений: регистрации и обращения больше не
   // разъезжаются по двум разным chat id из разных env-переменных.
   const utm = [source.utmSource, source.utmMedium, source.utmCampaign]
@@ -233,6 +244,6 @@ async function notifyOwner(email: string, source: SignupSourceSnapshot): Promise
     ]
       .filter(Boolean)
       .join("\n"),
-    { kind: "registration", audience: "sales" },
+    { kind: "registration", audience: "sales", client },
   );
 }

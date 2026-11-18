@@ -379,7 +379,7 @@ export async function createClientOrganization(input: {
       `<b>${escapeTelegramHtml(data.name)}</b>\n` +
       `Владелец: ${data.owner ? escapeTelegramHtml(data.owner.email) : "ещё не назначен"}\n` +
       `Не передано клиентам у этого партнёра: ${pending + (data.owner ? 0 : 1)}`,
-    { kind: "partner-client-org" },
+    { kind: "partner-client-org", client: { organizationId: created.organizationId } },
   ).catch((err) => console.error("partner client org admin notify failed", err));
 
   return { organizationId: created.organizationId, partnerClientId: created.partnerClientId };

@@ -18,6 +18,9 @@ import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
+import { CityPicker, type CityValue } from "@/components/shared/city-picker";
+import { browserTimeZone, findGeoPlace } from "@/lib/geo-places";
+import { localTimeLabel, utcOffsetLabel } from "@/lib/ip-geo";
 import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
 import {
   readSignupSource,
@@ -109,9 +112,14 @@ function RegisterScreen({
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [consentMissing, setConsentMissing] = useState(false);
+  // Город организации (подсказка по IP): задаёт часовой пояс журналов.
+  const [city, setCity] = useState<CityValue>({ city: "", countryCode: null });
+  const [browserZone, setBrowserZone] = useState<string | null>(null);
+  const cityZone = findGeoPlace(city.city, city.countryCode)?.timeZone ?? browserZone;
 
   useEffect(() => {
     rememberSignupSource();
+    setBrowserZone(browserTimeZone());
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -142,6 +150,9 @@ function RegisterScreen({
           captchaToken: await challenge.getToken(),
           website: challenge.website,
           ...(blankJournal ? { blankJournal: blankJournal.code } : {}),
+          // Город и пояс браузера — пояс новой организации (время в журналах).
+          ...(city.city.trim() ? { city: city.city.trim(), countryCode: city.countryCode } : {}),
+          timeZone: browserZone,
           // Сфера из ссылки с промокодом: организация сразу с журналами сферы.
           ...(sphere ? { sphere } : {}),
         }),
@@ -328,6 +339,24 @@ function RegisterScreen({
               domainState={field.domainState}
               onApply={field.applySuggestion}
             />
+
+            <label htmlFor="register-city" className="mb-1.5 mt-4 block text-[13px] font-medium text-[#0b1024]">
+              {t("register.fields.city")}
+            </label>
+            <CityPicker
+              id="register-city"
+              value={city}
+              onChange={setCity}
+              locale={locale}
+              autoFill
+              placeholder={t("register.city.placeholder")}
+              inputClassName="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] text-[#0b1024] placeholder:text-[#c1c5d6] transition-[border-color,box-shadow] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            />
+            {cityZone ? (
+              <p className="mt-1.5 text-[12px] text-[#6f7282]" data-testid="register-city-time">
+                {t("register.city.hint", { time: `${localTimeLabel(cityZone)} (${utcOffsetLabel(cityZone)})` })}
+              </p>
+            ) : null}
 
             {linkSphere ? (
               <>

@@ -40,7 +40,8 @@ import { db } from "@/lib/db";
 import { sendAccountPasswordEmail, sendBlankDownloadEmail } from "@/lib/email";
 import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { SIGNUP_MAGIC_LINK_TTL_MS } from "@/lib/magic-link";
-import { clientLocationLine, lookupIpGeo, normalizeTimeZone } from "@/lib/ip-geo";
+import { resolveAdminClientInfo } from "@/lib/admin-client-context.server";
+import { normalizeTimeZone } from "@/lib/ip-geo";
 import { domainAcceptsMail } from "@/lib/mail-domain";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
@@ -290,6 +291,8 @@ export async function POST(request: Request) {
           code: target.kind === "code" ? target.code : null,
           extras,
           timeZone,
+          ip: ip === "unknown" ? null : ip,
+          headers: request.headers,
         });
       } catch (error) {
         console.error("[blank-download] account extras failed", error);
@@ -319,7 +322,16 @@ export async function POST(request: Request) {
         }),
       ]);
       if (shouldNotifyBlankDownloadAdmin(previousDownloadsCount + alreadyNotifiedCount, accountCreated)) {
-        const geo = await lookupIpGeo(ip === "unknown" ? null : ip, { headers: request.headers }).catch(() => null);
+        // Место и время клиента, «Открыть» — кабинет (новый или найденный по почте),
+        // иначе карточка контакта CRM (спека tg-client-location-2026-11).
+        const client = await resolveAdminClientInfo({
+          request,
+          ip: ip === "unknown" ? null : ip,
+          timeZone,
+          organizationId: account?.status === "created" ? account.organizationId : platformClient?.organizationId ?? null,
+          email,
+          phone: phone ?? null,
+        }).catch(() => null);
         await notifyPlatformAdmin(
           buildBlankDownloadAdminText({
             title: info.title,
@@ -328,7 +340,8 @@ export async function POST(request: Request) {
             phone,
             company,
             accountCreated,
-            location: clientLocationLine({ geo, timeZone }),
+            location: client?.location ?? null,
+            adminUrl: client?.adminUrl ?? null,
             extras,
             escape: escapeTelegramHtml,
           }),

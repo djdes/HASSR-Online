@@ -351,6 +351,8 @@ export async function deliverClientMessage(ctx: {
   thread: ThreadRow;
   message: MessageDto;
   previousMessages: number;
+  /** Запрос клиента — место и время в уведомлении продажам. */
+  request?: Request | null;
 }): Promise<void> {
   const { thread, message } = ctx;
   const attachmentsNote =
@@ -444,7 +446,17 @@ export async function deliverClientMessage(ctx: {
   const emailAtts = emailAttachmentPayload(message.attachments);
   await Promise.all([
     // Своё подробное письмо с вложениями — ниже, всем администраторам.
-    notifyPlatformAdmin(adminText, { kind: "support-chat", email: false, audience: "support" }),
+    notifyPlatformAdmin(adminText, {
+      kind: "support-chat",
+      email: false,
+      audience: "support",
+      client: {
+        request: ctx.request ?? null,
+        organizationId: thread.organizationId,
+        email: thread.userEmail,
+        phone: thread.phone,
+      },
+    }),
     sendAttachmentsToPlatformAdmins(
       message.attachments,
       `Вложения к чату #chat_${thread.id}`,

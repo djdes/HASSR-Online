@@ -291,7 +291,7 @@ export async function completeTopupOrder(
       `Почта: ${escapeTelegramHtml(order.email)}`,
       `Заказ №${order.id}`,
     ].join("\n"),
-    { kind: "payment", dedupeKey: `topup-paid:${order.id}` },
+    { kind: "payment", dedupeKey: `topup-paid:${order.id}`, client: { organizationId, email: order.email } },
   ).catch((error) => console.error("[balance] topup admin notify failed", error));
 
   await recordAuditLog({

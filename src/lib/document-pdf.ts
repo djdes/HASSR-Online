@@ -4294,6 +4294,8 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
 
 function drawPerishableRejectionPdf(doc: jsPDF, params: {
   locale: Locale;
+  /** Пояс организации — время подписей. */
+  timeZone?: string;
   organizationName: string;
   title: string;
   dateFrom: Date;
@@ -4427,7 +4429,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
   // отдельным блоком под таблицей. Документ с действующей комиссией (метка
   // сервера `commissionEnabled`) — «Подписи бракеражной комиссии», без неё —
   // подписи прежней формы журнала.
-  const legacySignatures = perishableSignatureLines(params.config.rows, locale, t);
+  const legacySignatures = perishableSignatureLines(params.config.rows, locale, t, params.timeZone);
   if (legacySignatures.length > 0) {
     const tableEnd =
       (doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? perishableTitleY + 8;
@@ -7918,6 +7920,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   } else if (templateCode === PERISHABLE_REJECTION_TEMPLATE_CODE) {
     drawPerishableRejectionPdf(doc, {
       locale: input.locale ?? "ru",
+      timeZone: document.organization?.timezone ?? undefined,
       organizationName,
       title: document.title || getPerishableRejectionDocumentTitle(),
       dateFrom: document.dateFrom,

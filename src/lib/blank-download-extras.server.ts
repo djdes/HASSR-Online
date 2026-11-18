@@ -12,7 +12,7 @@ import {
 } from "@/lib/blank-download-extras";
 import { blankQrUrl } from "@/lib/blank-qr-token";
 import { db } from "@/lib/db";
-import { normalizeTimeZone } from "@/lib/ip-geo";
+import { applyOrganizationPlace, resolveOrganizationPlaceForRequest } from "@/lib/organization-place.server";
 import { journalShortQrUrl } from "@/lib/journal-pdf-qr-link";
 import { createStaffMember } from "@/lib/staff-create";
 
@@ -105,16 +105,20 @@ export async function applyBlankExtrasToAccount(params: {
   code: string | null;
   extras: BlankExtras | null | undefined;
   timeZone?: string | null;
+  /** IP и заголовки клиента — город и страна организации по IP. */
+  ip?: string | null;
+  headers?: Headers | null;
 }): Promise<BlankAccountExtrasResult> {
   const { organizationId, code, extras } = params;
   const result: BlankAccountExtrasResult = { ...countBlankExtras(null), failed: 0 };
 
-  const timeZone = normalizeTimeZone(params.timeZone);
-  if (timeZone) {
-    await db.organization
-      .update({ where: { id: organizationId }, data: { timezone: timeZone } })
-      .catch((error) => console.error("[blank-extras] timezone update failed", error));
-  }
+  // Пояс браузера, город и страна по IP — в организацию: время журналов
+  // нового кабинета сразу местное (спека tg-client-location-2026-11).
+  const place = await resolveOrganizationPlaceForRequest(
+    { browserTimeZone: params.timeZone },
+    { ip: params.ip, headers: params.headers },
+  ).catch(() => null);
+  await applyOrganizationPlace(organizationId, place);
   if (!extras) return result;
 
   const addPerson = async (person: BlankExtrasPerson, category: "staff" | "management") => {

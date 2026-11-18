@@ -152,7 +152,8 @@ export type SupportDeps = {
     organizationId: string | null;
     organizationName: string | null;
   }) => Promise<{ id: string; createdAt: Date }>;
-  notifyAdminTelegram: (text: string) => Promise<boolean>;
+  /** `client` — кто пишет: место, время и «Открыть» в уведомлении. */
+  notifyAdminTelegram: (text: string, client?: { organizationId: string | null; userId: string | null }) => Promise<boolean>;
   emailAdmin: (args: {
     message: string;
     userName: string | null;
@@ -223,9 +224,9 @@ function defaultDeps(): SupportDeps {
       });
       return report;
     },
-    async notifyAdminTelegram(text) {
+    async notifyAdminTelegram(text, client) {
       // Своё подробное письмо — emailAdmin.
-      return notifyPlatformAdmin(text, { kind: "support", email: false, audience: "support" });
+      return notifyPlatformAdmin(text, { kind: "support", email: false, audience: "support", client: client ?? null });
     },
     async emailAdmin({
       message,
@@ -410,7 +411,8 @@ export async function handleSupportText(
             message: text,
             sender,
             organizationName: user?.organizationName ?? null,
-          })
+          }),
+          user ? { organizationId: user.organizationId ?? null, userId: user.id } : undefined
         )
         .catch((error) => {
           console.error("[bot:support] admin telegram failed", error);

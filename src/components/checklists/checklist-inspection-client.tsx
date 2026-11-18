@@ -1,6 +1,7 @@
 "use client";
 
 import { formatChecklistTimestamp } from "@/lib/custom-checklist-display";
+import { useOrgTimeZone } from "@/components/shared/org-time-zone";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import { expandChecklistDefinition, evaluateChecklistRun, resolveChecklistResult
 type Inspection = { id: string; title: string; status: string; templateVersion: number; snapshot: ChecklistDefinition; answers: ChecklistAnswers; evidence: ChecklistEvidence; categoryInstances: ChecklistInstances; result?:unknown; updatedAt: string; createdAt: string; createdByName: string; completedAt: string | null; completedByName: string | null };
 export function ChecklistInspectionClient({ id }: { id: string }) {
   const t = useTranslations("checklistsUi.checklistInspectionClient");
+  const timeZone = useOrgTimeZone();
   const [inspection, setInspection] = useState<Inspection | null>(null);
   const [answers, setAnswers] = useState<ChecklistAnswers>({});
   const [evidence, setEvidence] = useState<ChecklistEvidence>({});
@@ -85,7 +87,7 @@ export function ChecklistInspectionClient({ id }: { id: string }) {
   const dishCategories = inspection.snapshot.sections.filter(s => s.active).flatMap(s => s.categories.filter(c => c.active && c.rowsSource === "serving_dishes"));
   const dishCount = dishCategories.reduce((sum, category) => sum + (category.rows?.length ?? 0), 0);
   return <div className="space-y-5"><PageHeader title={inspection.title} description={t("subtitle", { version: inspection.templateVersion, status: completed ? t("statusCompleted") : t("statusDraft") })} actions={<div className="flex flex-wrap gap-2 print:hidden"><Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />{t("print")}</Button><Button variant="outline" asChild><a href={`/api/checklists/inspections/${id}/pdf`} target="_blank" rel="noopener noreferrer">{t("downloadPdf")}</a></Button>{!completed ? <><Button variant="outline" disabled={busy || !!uploads || conflict} onClick={() => void save(false)}><Save className="size-4" />{t("saveDraft")}</Button><Button disabled={busy || !!uploads || conflict} onClick={() => void save(true)}><CheckCircle2 className="size-4" />{t("complete")}</Button></> : null}</div>} />
-    <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-sm text-[#3c4053]"><p>{t("startedBy", { name: inspection.createdByName, time: formatChecklistTimestamp(inspection.createdAt) })}</p>{inspection.completedAt ? <p>{t("completedBy", { name: inspection.completedByName ?? "", time: formatChecklistTimestamp(inspection.completedAt) })}</p> : null}<p className="mt-2 font-medium">{t("resultLine", { earned: score.earned, possible: score.possible, percent: score.possible > 0 ? ` (${Math.round(score.earned / score.possible * 100)}%)` : "", zeroed: score.possible > 0 ? "" : result.zeroScore ? t("zeroedSuffix") : "", violations: result.violations.length })}</p>{!completed ? <p className="mt-2 text-xs text-muted-foreground">{t("saveBeforeLeaving")}</p> : null}</div>
+    <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-sm text-[#3c4053]"><p>{t("startedBy", { name: inspection.createdByName, time: formatChecklistTimestamp(inspection.createdAt, timeZone) })}</p>{inspection.completedAt ? <p>{t("completedBy", { name: inspection.completedByName ?? "", time: formatChecklistTimestamp(inspection.completedAt, timeZone) })}</p> : null}<p className="mt-2 font-medium">{t("resultLine", { earned: score.earned, possible: score.possible, percent: score.possible > 0 ? ` (${Math.round(score.earned / score.possible * 100)}%)` : "", zeroed: score.possible > 0 ? "" : result.zeroScore ? t("zeroedSuffix") : "", violations: result.violations.length })}</p>{!completed ? <p className="mt-2 text-xs text-muted-foreground">{t("saveBeforeLeaving")}</p> : null}</div>
     {conflict ? <div role="alert" className="rounded-xl bg-amber-50 p-4"><p>{t("conflictText")}</p><Button variant="outline" onClick={() => { if(window.confirm(t("reloadConfirm"))) void load(); }}>{t("reload")}</Button></div> : null}
     {result.stopped ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><p className="font-medium">{t("criticalTitle")}</p><p>{result.critical.map(item => item.title).join(", ")}</p>{!completed ? <p>{t("criticalHint")}</p> : null}</div> : null}
     {inspection.snapshot.description ? <ChecklistDescription text={inspection.snapshot.description} /> : null}

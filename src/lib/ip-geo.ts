@@ -72,23 +72,36 @@ export function localTimeLabel(timeZone: string, at: Date = new Date()): string 
   }
 }
 
+/** Город и страна, заданные самой организацией (настройки, регистрация). */
+export type ClientPlace = { countryCode?: string | null; city?: string | null; timeZone?: string | null };
+
 /**
- * Строка для Telegram: «🇷🇺 Россия, Казань · местное время 14:32 (UTC+3)».
- * Пояс — из браузера (точнее IP), иначе — из гео. Ничего не известно — `null`.
+ * Строка для Telegram: «🇷🇺 Россия, Барнаул · 09:29» (спека
+ * tg-client-location-2026-11 — коротко, без «местное время» и смещения).
+ * Пояс — из браузера, иначе по IP, иначе пояс организации (`fallback`).
+ * Место — по IP, иначе город/страна организации. Без места строка
+ * «🕒 16:32 (UTC+5)»: смещение подсказывает, где человек. Ничего не известно — `null`.
  */
 export function clientLocationLine(params: {
   geo: IpGeo | null;
   timeZone?: string | null;
+  fallback?: ClientPlace | null;
   at?: Date;
 }): string | null {
-  const zone = normalizeTimeZone(params.timeZone) ?? normalizeTimeZone(params.geo?.timeZone);
-  const place = params.geo
-    ? [countryName(params.geo.countryCode), params.geo.city].filter(Boolean).join(", ")
-    : "";
-  const flag = params.geo ? countryFlag(params.geo.countryCode) : "🕒";
-  const time = zone ? `местное время ${localTimeLabel(zone, params.at)} (${utcOffsetLabel(zone, params.at)})` : "";
-  if (!place && !time) return null;
-  return `${flag} ${[place, time].filter(Boolean).join(" · ")}`;
+  const fallback = params.fallback ?? null;
+  const zone =
+    normalizeTimeZone(params.timeZone) ?? normalizeTimeZone(params.geo?.timeZone) ?? normalizeTimeZone(fallback?.timeZone);
+  const geoPlace = params.geo
+    ? { countryCode: params.geo.countryCode, city: params.geo.city }
+    : fallback && (fallback.countryCode || fallback.city)
+      ? { countryCode: fallback.countryCode ?? null, city: fallback.city ?? null }
+      : null;
+  const place = geoPlace ? [countryName(geoPlace.countryCode), geoPlace.city?.trim() || null].filter(Boolean).join(", ") : "";
+  if (!place) {
+    return zone ? `🕒 ${localTimeLabel(zone, params.at)} (${utcOffsetLabel(zone, params.at)})` : null;
+  }
+  const flag = geoPlace?.countryCode ? countryFlag(geoPlace.countryCode) : "📍";
+  return `${flag} ${[place, zone ? localTimeLabel(zone, params.at) : ""].filter(Boolean).join(" · ")}`;
 }
 
 /** Адрес, о котором внешний сервис ничего не скажет: локальные, частные, служебные. */

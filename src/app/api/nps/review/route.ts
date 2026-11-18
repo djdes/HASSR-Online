@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { formatPoints, reviewRewardFor } from "@/lib/balance/constants";
 import { npsReviewDeps, runNpsReview, type NpsReviewModerationNotice } from "@/lib/nps-review";
+import type { AdminClientContext } from "@/lib/admin-client-context.server";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
 import { escapeTelegramHtml } from "@/lib/telegram";
 
@@ -10,7 +11,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** То же уведомление, что у формы «Баланс и бонусы», с пометкой «из опроса». */
-async function notifyModerators({ review, organizationName, npsScore }: NpsReviewModerationNotice): Promise<void> {
+async function notifyModerators(
+  { review, organizationName, npsScore }: NpsReviewModerationNotice,
+  client?: AdminClientContext,
+): Promise<void> {
   await notifyPlatformAdmin(
     [
       "⭐ Новый отзыв на модерации — из опроса «Посоветуете WeSetup коллегам?»",
@@ -23,7 +27,7 @@ async function notifyModerators({ review, organizationName, npsScore }: NpsRevie
       "",
       "Модерация: /root/reviews",
     ].join("\n"),
-    { kind: "review", dedupeKey: `review:${review.id}` },
+    { kind: "review", dedupeKey: `review:${review.id}`, client },
   ).catch((error) => console.error("[nps] уведомление об отзыве не ушло", error));
 }
 
@@ -46,7 +50,10 @@ export async function POST(request: Request) {
   try {
     const result = await runNpsReview(
       { actor: { id: session.user.id }, body },
-      { ...npsReviewDeps({ request, session }), notifyModerators },
+      {
+        ...npsReviewDeps({ request, session }),
+        notifyModerators: (notice) => notifyModerators(notice, { request, userId: session.user.id }),
+      },
     );
     if (result.status === 200) {
       console.info(`[nps] отзыв из опроса: user=${session.user.id} review=${result.body.reviewId}`);

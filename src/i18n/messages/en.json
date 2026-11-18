@@ -2634,7 +2634,8 @@
       },
       "fields": {
         "email": "Email address",
-        "sector": "Industry"
+        "sector": "Industry",
+        "city": "City"
       },
       "sector": {
         "journalsHint": "We’ll enable the logs you need for your industry. You can change this later."
@@ -2643,6 +2644,10 @@
         "logCount": "…and {count, plural, one {# more SanPiN / HACCP log} other {# more SanPiN / HACCP logs}}",
         "promoDescription": "{label}. Create an account and the code will be applied automatically at checkout.",
         "blankJournalReady": "“{journal}” will open as soon as you register"
+      },
+      "city": {
+        "placeholder": "Start typing your city",
+        "hint": "Journals use local time: now {time}"
       }
     },
     "errors": {
@@ -10499,7 +10504,8 @@
           "lookupUnavailable": "Tax ID lookup is temporarily unavailable. Enter the details manually.",
           "registryUnconfigured": "The company registry service is not configured. Enter the details manually.",
           "notFound": "No organization was found for this tax ID",
-          "unknown": "The request could not be completed. Check the details and try again."
+          "unknown": "The request could not be completed. Check the details and try again.",
+          "invalidCountry": "Pick a city from the list"
         },
         "journalShortNameExample": "Daisy Café",
         "planLabels": {
@@ -10516,7 +10522,8 @@
           "brandingHint": "How the company looks in documents and on posters",
           "contacts": "Contacts and notifications",
           "contactsHint": "Phone, accountant email, time zone and language"
-        }
+        },
+        "city": "City"
       },
       "partnerConversion": {
         "title": "Move to partner workspace",
@@ -10825,7 +10832,9 @@
           "timezoneBody": "The time zone sets shift boundaries, task and reminder times. The language applies to the workspace, Mini App and emails.",
           "notifyTitle": "Notifications",
           "notifyBody": "Everyone receives notifications individually. Connect Telegram and choose what to receive in “Set up notifications”."
-        }
+        },
+        "cityHint": "Pick from the list and the time zone is set for you. Journals record time in it.",
+        "cityPlaceholder": "Start typing your city"
       }
     },
     "accessMatrices": {

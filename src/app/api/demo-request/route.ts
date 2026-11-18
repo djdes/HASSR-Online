@@ -158,6 +158,7 @@ export async function POST(request: Request) {
     audience: "sales",
     // Своё письмо с приглашением в календарь — ниже, всем администраторам.
     email: false,
+    client: { request, organizationId, userId: session?.user?.id ?? null, email: demo.email, phone: demo.phone },
   }).catch(() => false);
 
   let emailOk = false;
