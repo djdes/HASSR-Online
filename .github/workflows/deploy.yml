@@ -1051,6 +1051,8 @@ jobs:
             # Строку ставит и обновляет сам деплой (docs/crm.md): сбой — не повод
             # ронять выкатку, CRM работает и по кнопке «Обновить сейчас».
             bash scripts/install-crm-cron.sh 2>&1 | tail -3 || echo "[warn] install-crm-cron failed — deploy continues"
+            echo "=== GoGetLinks: periodic sync and donor review ==="
+            bash scripts/cron-gogetlinks.sh
 
             echo "=== Deploy complete ==="
 

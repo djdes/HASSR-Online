@@ -20,3 +20,15 @@ export function readDonorSiteFit(metrics: unknown, targetUrl: string | null): Do
   ).slice(0, 3);
   return publications.length >= 2 ? { ...fit, publications } : null;
 }
+
+export function isGglSlotReadyForApproval(slot: {
+  status: string;
+  donorSiteId: number | null;
+  targetUrl: string | null;
+  anchor: string | null;
+  donorMetricsJson: unknown;
+}): boolean {
+  return slot.status === "pending_approval" && Boolean(
+    slot.donorSiteId && slot.anchor && readDonorSiteFit(slot.donorMetricsJson, slot.targetUrl),
+  );
+}

@@ -3,6 +3,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { decimalToNumber, serializeGglAccount } from "@/lib/seo/gogetlinks-sync.server";
 import { getCachedWesetupApplicationsCount } from "@/lib/seo/gogetlinks-applications.server";
+import { isGglSlotReadyForApproval } from "@/lib/seo/gogetlinks-site-fit";
 import { ensureDefaultSimilarwebSnapshots } from "@/lib/seo/similarweb-seed";
 
 export const runtime = "nodejs";
@@ -313,8 +314,9 @@ export async function GET(request: Request) {
     .filter((p) => p.isActive)
     .reduce((sum, p) => sum + p.budgetRub, 0);
 
-  const next7DaysPendingRub = slots
-    .filter((s) => s.status === "pending_approval" && s.scheduledDate <= sevenDaysAheadKey)
+  const approvalSlots = slots.filter(isGglSlotReadyForApproval);
+  const next7DaysPendingRub = approvalSlots
+    .filter((s) => s.scheduledDate <= sevenDaysAheadKey)
     .reduce((sum, s) => sum + (s.estimatedPriceRub ?? s.maxPriceRub), 0);
 
   return NextResponse.json({
@@ -339,7 +341,7 @@ export async function GET(request: Request) {
         onCheckOrders: wesetupOrders.filter((o) => o.status === "on_check").length,
         needsReplacementOrders: wesetupOrders.filter((o) => o.status === "needs_replacement").length,
         unreadThreads: wesetupThreads.filter((t) => t.unreadCount > 0 || t.needsReply).length,
-        pendingApprovalSlots: slots.filter((s) => s.status === "pending_approval").length,
+        pendingApprovalSlots: approvalSlots.length,
         otherProjectsCampaignsCount,
         webmasterApplications:
           cachedWebmasterApplicationsCount ||
