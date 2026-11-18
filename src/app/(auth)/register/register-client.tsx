@@ -122,6 +122,22 @@ function RegisterScreen({
     setBrowserZone(browserTimeZone());
   }, []);
 
+  // Город по IP — сразу в поле (conversion-pack-2026-11): на одно поле меньше.
+  // Только если человек ещё ничего не ввёл; ошибка — поле просто остаётся пустым.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/public/geo-hint")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { city?: string; countryCode?: string } | null) => {
+        if (!alive || !data?.city) return;
+        setCity((prev) => (prev.city.trim() ? prev : { city: data.city ?? "", countryCode: data.countryCode ?? null }));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     field.setTouched(true);

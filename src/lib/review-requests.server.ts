@@ -134,7 +134,7 @@ function refusal(input: ReviewCandidateInput, now: Date): ReviewRequestError {
  * отметка `review.requested` в журнале действий платформы — только после
  * того, как письмо ушло. Повтор раньше 30 дней — 409.
  */
-export async function requestReview(input: { organizationId: string; actorUserId: string; now?: Date; appUrl?: string }): Promise<{ email: string }> {
+export async function requestReview(input: { organizationId: string; actorUserId: string | null; now?: Date; appUrl?: string; auto?: boolean }): Promise<{ email: string }> {
   const now = input.now ?? new Date();
   const [row] = await loadCandidateInputs(now, input.organizationId);
   if (!row) throw new ReviewRequestError("Организация не найдена", 404);
@@ -161,8 +161,35 @@ export async function requestReview(input: { organizationId: string; actorUserId
       action: REVIEW_REQUEST_ACTION,
       entity: "Organization",
       entityId: candidate.organizationId,
-      details: { email, organizationName: candidate.name, records30: candidate.records30 },
+      details: { email, organizationName: candidate.name, records30: candidate.records30, ...(input.auto ? { auto: true } : {}) },
     },
   });
   return { email };
+}
+
+/**
+ * Автозапрос отзывов (спека conversion-pack-2026-11): на сайте ноль
+ * опубликованных отзывов — без них не работают блок «Отзывы» и звёзды в
+ * выдаче. Раз в день утром по Москве (крон CRM) — письмо двум лучшим
+ * кандидатам по тем же правилам, что у кнопки ROOT «Попросить отзыв»:
+ * давно с нами, есть записи, нет отзыва, не просили 30 дней, не отписались.
+ */
+export async function autoRequestReviews(now: Date = new Date(), perDay = 2): Promise<{ sent: number }> {
+  const hourMsk = (now.getUTCHours() + 3) % 24;
+  if (hourMsk < 10 || hourMsk >= 12) return { sent: 0 };
+  const dayStart = new Date(now.getTime() - DAY_MS / 2);
+  const today = await db.auditLog.count({
+    where: { organizationId: platformOrgId(), action: REVIEW_REQUEST_ACTION, createdAt: { gte: dayStart }, details: { path: ["auto"], equals: true } },
+  });
+  let sent = 0;
+  for (const candidate of await listReviewCandidates(now)) {
+    if (today + sent >= perDay) break;
+    try {
+      await requestReview({ organizationId: candidate.organizationId, actorUserId: null, now, auto: true });
+      sent += 1;
+    } catch (error) {
+      if (!(error instanceof ReviewRequestError)) console.error("[reviews] auto request failed", error);
+    }
+  }
+  return { sent };
 }

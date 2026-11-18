@@ -58,6 +58,7 @@ function modules(locale: Locale, downloads: Dict[]) {
     "@/lib/balance/reviews": { listPublicReviews: async () => [] },
     "@/lib/journal-usage-count.server": { journalUsageCount: async () => 0 },
     "@/components/public/blank-constructor": { BlankConstructor: () => null },
+    "@/components/public/callback-button": { CallbackButton: () => null },
     "next/navigation": { notFound: () => { throw new Error("FIXTURE_NOT_FOUND"); } },
     "@/components/public/blank-download": { BlankDownloadButton: (props: Dict) => {
       downloads.push(props);
