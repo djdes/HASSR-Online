@@ -1,0 +1,27 @@
+{
+    "artifacts":  [
+                      "raw/production-diagnostic.txt",
+                      "raw/tests.txt",
+                      "raw/types.txt",
+                      "raw/cron.txt"
+                  ],
+    "status":  "AWAITING_PRODUCTION",
+    "candidate":  {
+                      "trust":  8,
+                      "domain":  "pfo.volga.news",
+                      "cf":  60,
+                      "tf":  41,
+                      "articleRub":  1101
+                  },
+    "acceptance":  {
+                       "AC2":  "PASS",
+                       "AC1":  "PASS",
+                       "AC3":  "AWAITING_PRODUCTION"
+                   },
+    "localChecks":  {
+                        "targetedFailed":  0,
+                        "typecheck":  0,
+                        "cronFixture":  0,
+                        "targetedPassed":  73
+                    }
+}

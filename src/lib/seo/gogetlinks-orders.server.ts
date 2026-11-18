@@ -17,7 +17,9 @@ import {
   GglAuthError,
   GglCallError,
   GglIsolationError,
+  readGglDonorCatalogPages,
 } from "@/lib/seo/gogetlinks-client.server";
+import { parseGglCatalogPage } from "@/lib/seo/gogetlinks-catalog";
 import { parseRubAmount, parseTfCf } from "@/lib/seo/gogetlinks-codec";
 import {
   buildDefaultCandidateSitePages,
@@ -46,6 +48,8 @@ import { getPositionsHistory, isTopvisorConfigured, type PositionMatrix } from "
 const platformOrgId = (): string => process.env.PLATFORM_ORG_ID?.trim() || "platform";
 const donorReviewOffsets = new Map<string, number>();
 const DONOR_REVIEW_BATCH = 12;
+const catalogNextPage = new Map<number, number>();
+const CATALOG_PAGES_PER_PASS = 3;
 
 export class GglOrderError extends Error {
   public readonly status: number;
@@ -83,6 +87,7 @@ export interface AlternativeDonorEntry {
     trust: number;
     dailyTraffic: number;
     siteFit?: DonorSiteFit;
+    catalogPage?: number;
   };
 }
 
@@ -147,6 +152,7 @@ export interface ClaimedSlotForSend {
     cf?: number;
     trust?: number;
     dailyTraffic?: number;
+    catalogPage?: number;
   } | null;
   placementFormat: GglSchedulableFormat;
   targetUrl: string;
@@ -244,7 +250,7 @@ export interface PreparedSlotPayload {
   selectionReason: string;
   donorSiteId: number;
   donorDomain: string;
-  donorMetrics: { tf: number; cf: number; trust: number; dailyTraffic: number; siteFit: DonorSiteFit };
+  donorMetrics: AlternativeDonorEntry["metrics"] & { siteFit: DonorSiteFit };
   placementFormat: GglSchedulableFormat;
   anchor: string;
   anchorKind: GglAnchorKind;
@@ -659,6 +665,7 @@ function parseAlternativeDonors(raw: unknown, targetUrl?: string | null): Altern
       continue;
     }
     const siteFit = readDonorSiteFit(metricsRaw, targetUrl ?? null);
+    const catalogPage = positiveCatalogPage(metricsRaw.catalogPage);
     if (targetUrl !== undefined && !siteFit) continue;
     out.push({
       siteId: Math.trunc(siteId),
@@ -671,10 +678,15 @@ function parseAlternativeDonors(raw: unknown, targetUrl?: string | null): Altern
         trust: Number(metricsRaw.trust ?? 0) || 0,
         dailyTraffic: Number(metricsRaw.dailyTraffic ?? 0) || 0,
         ...(siteFit && { siteFit }),
+        ...(catalogPage && { catalogPage }),
       },
     });
   }
   return out;
+}
+
+function positiveCatalogPage(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 && value <= 500 ? value : undefined;
 }
 
 function parseScheduleDays(raw: unknown): number[] {
@@ -1288,6 +1300,26 @@ export async function prepareUpcomingPlannedSlots(
       };
     });
 
+  const catalogs = new Map<number, Promise<DonorCandidate[]>>();
+  function readNextCatalogPages(campaignId: number): Promise<DonorCandidate[]> {
+    const cached = catalogs.get(campaignId);
+    if (cached) return cached;
+    const reading = (async () => {
+      const firstPage = catalogNextPage.get(campaignId) ?? 1;
+      const pageNumbers = Array.from({ length: CATALOG_PAGES_PER_PASS }, (_, index) => firstPage + index);
+      const sources = await readGglDonorCatalogPages({ campaignId, pages: pageNumbers });
+      const parsed = sources.map(({ page, html }) => parseGglCatalogPage(html).map(donor => ({ ...donor, catalogPage: page })));
+      const nextPage = parsed.some(donors => donors.length === 0) ? 1 : firstPage + sources.length;
+      catalogNextPage.set(campaignId, positiveCatalogPage(nextPage) ?? 1);
+      return parsed.flat();
+    })().catch((error: unknown) => {
+      console.warn("[ggl-planner] catalog read failed:", error instanceof Error ? error.name : "UnknownError");
+      return [];
+    });
+    catalogs.set(campaignId, reading);
+    return reading;
+  }
+
   const searchCatalogDonors =
     deps?.searchCatalogDonors ??
     (async (gglCampaignId: number, maxPriceRub: number): Promise<DonorCandidate[]> => {
@@ -1339,25 +1371,8 @@ export async function prepareUpcomingPlannedSlots(
         // Fallback to catalog search if snapshot cache is unavailable
       }
 
-      // 2. Also query GoGetLinks catalog search
-      try {
-        const raw = await callGglRead("searchDonorSites", {
-          campaignId: String(gglCampaignId),
-          maxPrice: maxPriceRub,
-          page: 1,
-        });
-        if (Array.isArray(raw)) {
-          for (const item of raw) {
-            if (!item || typeof item !== "object") continue;
-            const cand = normalizeDonorCatalogRow(item as Record<string, unknown>);
-            if (cand && !bySiteId.has(cand.siteId)) {
-              bySiteId.set(cand.siteId, cand);
-            }
-          }
-        }
-      } catch {
-        // If catalog call fails, rely on incoming webmaster applications
-      }
+      // Prefer current prices and metrics from the catalog when both sources contain a site.
+      for (const candidate of await readNextCatalogPages(gglCampaignId)) bySiteId.set(candidate.siteId, candidate);
 
       return [...bySiteId.values()];
     });
@@ -1467,8 +1482,10 @@ export async function prepareUpcomingPlannedSlots(
           allowedFormats: slot.plan.allowedFormats,
         },
       );
-      const offset = (donorReviewOffsets.get(slot.id) ?? 0) % Math.max(qualified.length, 1);
-      const candidates = qualified.slice(offset, offset + DONOR_REVIEW_BATCH);
+      const applications = qualified.filter(candidate => !candidate.catalogPage);
+      const offset = (donorReviewOffsets.get(slot.id) ?? 0) % Math.max(applications.length, 1);
+      const applicationBatch = applications.slice(offset, offset + DONOR_REVIEW_BATCH);
+      const candidates = [...qualified.filter(candidate => candidate.catalogPage), ...applicationBatch];
       const assessed = await Promise.all(candidates.map(async (candidate) => ({
         ...candidate,
         siteFit: await assessDonor(candidate.domain, targetPath, targetKeyword).catch(() => null),
@@ -1483,7 +1500,7 @@ export async function prepareUpcomingPlannedSlots(
 
       if (!primary) {
         if (donorReviewOffsets.size >= 256) donorReviewOffsets.delete(donorReviewOffsets.keys().next().value!);
-        donorReviewOffsets.set(slot.id, offset + candidates.length);
+        donorReviewOffsets.set(slot.id, offset + applicationBatch.length);
         await revertPreparingSlot(slot.id);
         skipped += 1;
         continue;
@@ -1537,6 +1554,7 @@ export async function prepareUpcomingPlannedSlots(
           trust: alt.trust,
           dailyTraffic: alt.dailyTraffic,
           siteFit: alt.siteFit,
+          ...(alt.catalogPage && { catalogPage: alt.catalogPage }),
         },
       }));
 
@@ -1559,6 +1577,7 @@ export async function prepareUpcomingPlannedSlots(
           trust: primary.trust,
           dailyTraffic: primary.dailyTraffic,
           siteFit: primary.siteFit,
+          ...(primary.catalogPage && { catalogPage: primary.catalogPage }),
         },
         placementFormat: primary.selectedFormat,
         anchor: selectedAnchor.anchor,
@@ -1697,8 +1716,21 @@ async function defaultLookupLiveDonorPrice(args: {
   donorDomain: string;
   placementFormat: "article" | "note" | "context";
   maxPriceRub: number;
+  catalogPage?: number;
 }): Promise<number | null> {
   const targetDomain = normalizeDomainName(args.donorDomain);
+
+  if (args.catalogPage) {
+    const page = args.catalogPage;
+    const pages = [page, ...(page > 1 ? [page - 1] : []), page + 1];
+    const sources = await readGglDonorCatalogPages({ campaignId: args.gglCampaignId, pages });
+    const donor = sources.flatMap(({ html }) => parseGglCatalogPage(html)).find((candidate) =>
+      candidate.siteId === args.donorSiteId && candidate.domain === targetDomain,
+    );
+    return (args.placementFormat === "article" ? donor?.priceArticleRub
+      : args.placementFormat === "note" ? donor?.priceNoteRub
+      : donor?.priceContextRub) ?? null;
+  }
 
   // 1. Check incoming webmaster applications snapshot first
   try {
@@ -1728,25 +1760,7 @@ async function defaultLookupLiveDonorPrice(args: {
   }
 
   // 2. Fallback to GoGetLinks catalog search
-  const raw = await callGglRead("searchDonorSites", {
-    campaignId: String(args.gglCampaignId),
-    maxPrice: Math.max(args.maxPriceRub * 3, 5000),
-    page: 1,
-  });
-  if (!Array.isArray(raw)) return null;
-
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const cand = normalizeDonorCatalogRow(item as Record<string, unknown>);
-    if (!cand) continue;
-    if (cand.siteId === args.donorSiteId || (targetDomain && cand.domain === targetDomain)) {
-      if (args.placementFormat === "article") {
-        return cand.priceArticleRub ?? cand.priceNoteRub;
-      }
-      return cand.priceNoteRub ?? cand.priceArticleRub;
-    }
-  }
-  return null;
+  return defaultLookupLiveDonorPrice({ ...args, catalogPage: 1 });
 }
 
 /**
@@ -1872,6 +1886,7 @@ export async function approvePlannedSlot(
         await revertSlotToPending(slotId, message);
         throw new GglOrderError(422, message);
       }
+      const catalogPage = positiveCatalogPage(metricsRaw?.catalogPage);
 
       return {
         id: row.id,
@@ -1884,6 +1899,7 @@ export async function approvePlannedSlot(
               cf: Number(metricsRaw.cf ?? 0) || 0,
               trust: Number(metricsRaw.trust ?? 0) || 0,
               dailyTraffic: Number(metricsRaw.dailyTraffic ?? 0) || 0,
+              ...(catalogPage && { catalogPage }),
             }
           : null,
         placementFormat: row.placementFormat === "article" ? "article" : "note",
@@ -1929,6 +1945,7 @@ export async function approvePlannedSlot(
         donorDomain: slot.donorDomain,
         placementFormat: slot.placementFormat,
         maxPriceRub: slot.maxPriceRub,
+        catalogPage: slot.donorMetrics?.catalogPage,
       }));
 
   let livePrice: number | null;
@@ -2646,6 +2663,7 @@ export async function mutatePlannedSlot(
         slot.donorMetricsJson && typeof slot.donorMetricsJson === "object"
           ? (slot.donorMetricsJson as Record<string, unknown>)
           : {};
+      const catalogPage = positiveCatalogPage(prevMetrics.catalogPage);
       rotatedAlternatives.push({
         siteId: slot.donorSiteId,
         domain: slot.donorDomain,
@@ -2657,6 +2675,7 @@ export async function mutatePlannedSlot(
           trust: Number(prevMetrics.trust ?? 0) || 0,
           dailyTraffic: Number(prevMetrics.dailyTraffic ?? 0) || 0,
           siteFit: previousFit,
+          ...(catalogPage && { catalogPage }),
         },
       });
     }

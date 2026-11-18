@@ -1,6 +1,7 @@
 import type { LookupAddress } from "node:dns";
 import { lookup } from "node:dns/promises";
 import { request } from "node:https";
+import { parse } from "node-html-parser";
 import type { DonorSiteFit } from "./gogetlinks-site-fit";
 
 type Publication = DonorSiteFit["publications"][number] & { excerpt?: string };
@@ -129,6 +130,35 @@ export function collectDonorLinks(html: string, pageUrl: URL, domain: string) {
   return [...links.values()];
 }
 
+export function discoverDonorSearchUrls(html: string, pageUrl: URL, domain: string): URL[] {
+  const forms = parse(html).querySelectorAll("form");
+  for (const form of forms) {
+    if ((form.getAttribute("method") ?? "get").toLowerCase() !== "get") continue;
+    const field = form.querySelectorAll("input").find((input) =>
+      /^(?:s|q|query|search|searchword|text)$/.test(input.getAttribute("name") ?? "") &&
+      /search|poisk|поиск/i.test([
+        input.getAttribute("type"), input.getAttribute("placeholder"),
+        form.getAttribute("role"), form.getAttribute("action"), form.getAttribute("class"),
+      ].join(" ")),
+    );
+    const name = field?.getAttribute("name");
+    if (!name) continue;
+    let search: URL;
+    try {
+      search = new URL(form.getAttribute("action") || pageUrl, pageUrl);
+    } catch {
+      continue;
+    }
+    if (!sameSite(search, domain)) continue;
+    return ["общепит", "Роспотребнадзор кафе", "СанПиН"].map((keyword) => {
+      const url = new URL(search);
+      url.searchParams.set(name, keyword);
+      return url;
+    });
+  }
+  return [];
+}
+
 export function assessDonorPublications(
   publications: Publication[],
   targetUrl: string,
@@ -172,12 +202,15 @@ async function sampleSite(domain: string): Promise<Publication[]> {
     .sort((a, b) => sectionPriority(b.title) - sectionPriority(a.title))
     .slice(0, 3);
   const sectionSignal = AbortSignal.any([signal, AbortSignal.timeout(2800)]);
-  const pages = await Promise.all(sections.map(async ({ url }) => {
-    const section = await loadHtml(new URL(url), domain, sectionSignal);
-    return collectDonorLinks(section.html, section.url, domain);
+  const searchUrls = discoverDonorSearchUrls(home.html, home.url, domain);
+  const pageUrls = [...searchUrls, ...sections.map(({ url }) => new URL(url))];
+  const pages = await Promise.all(pageUrls.map(async (url, index) => {
+    const section = await loadHtml(url, domain, sectionSignal);
+    return collectDonorLinks(section.html, section.url, domain).filter(({ title }) =>
+      isRelevantTitle(title) || (index < searchUrls.length && title.length >= 22 && SECTOR.test(title)),
+    );
   }).map((page) => page.catch(() => [])));
-  const candidates = [...new Map(pages.flat().concat(links)
-    .filter(({ title }) => isRelevantTitle(title))
+  const candidates = [...new Map(pages.flat().concat(links.filter(({ title }) => isRelevantTitle(title)))
     .map((publication) => [publication.url, publication])).values()]
     .sort((a, b) => Number(COMPLIANCE.test(b.title)) - Number(COMPLIANCE.test(a.title)))
     .slice(0, 5);

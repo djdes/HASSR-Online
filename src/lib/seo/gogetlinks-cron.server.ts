@@ -55,6 +55,8 @@ export interface GglCronResult {
   skipped: boolean;
   reason?: string;
   synced?: boolean;
+  preparedSlots?: number;
+  unpreparedSlots?: number;
   operationalAlertsSent: number;
   lowBalanceAlertSent: boolean;
 }
@@ -389,7 +391,7 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
     const syncSummary = await syncCabinet();
     const recycled = await recycleRejected();
     await materializeSlots(now);
-    await prepareSlots(now);
+    const preparation = await prepareSlots(now);
 
     // Step 5: Evaluate operational & financial alerts (fire-and-forget safe)
     let operationalAlertsSent = 0;
@@ -485,6 +487,8 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
     return {
       skipped: false,
       synced: true,
+      preparedSlots: preparation.prepared,
+      unpreparedSlots: preparation.skipped,
       operationalAlertsSent,
       lowBalanceAlertSent,
     };
