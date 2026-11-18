@@ -7,6 +7,7 @@ import localFont from "next/font/local";
 import { ServiceWorkerRegister } from "@/components/layout/sw-register";
 import { BuildVersionWatcher } from "@/components/layout/build-version-watcher";
 import { YandexMetrika } from "@/components/layout/yandex-metrika";
+import { VisitSourceTracker } from "@/components/layout/visit-source-tracker";
 import { CookieConsent } from "@/components/public/cookie-consent";
 import { LiveGuideHost } from "@/components/live-guide/live-guide-host";
 import { NativeStatusBar } from "@/app/mini/_components/native-status-bar";
@@ -150,6 +151,7 @@ export default async function RootLayout({
         <ServiceWorkerRegister />
         <BuildVersionWatcher />
         <YandexMetrika />
+        <VisitSourceTracker />
         <CookieConsent />
         <LiveGuideHost />
         </ViewPrefsProvider>

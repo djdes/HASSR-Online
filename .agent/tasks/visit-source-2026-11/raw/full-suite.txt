@@ -1,0 +1,7 @@
+→ [test:changed] Эскалация до полного прогона: Затронут ядровый файл (prisma/schema.prisma)
+=== Test stats: pass=6402, fail=1 ===
+✗ НОВЫЕ регрессии (нет в baseline):
+  - в текстах для человека нет слова «бланк» — кроме исключений
+EXIT 1
+
+[exited with code 0]

@@ -17198,7 +17198,8 @@
       "inn": " · STIR (INN) {inn}",
       "backToClients": "Barcha mijozlar",
       "since": "Ro‘yxatdan o‘tgan: {date}",
-      "lastActivity": "Oxirgi faollik: {value}"
+      "lastActivity": "Oxirgi faollik: {value}",
+      "source": "Manba: {source}"
     },
     "stats": {
       "users": "Xodimlar",
