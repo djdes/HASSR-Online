@@ -5594,6 +5594,7 @@
     }
   },
   "publicChrome": {
+    "about": "About us",
     "journals": "Journals",
     "blog": "Blog",
     "homeAria": "WeSetup — go to homepage",
@@ -5632,6 +5633,55 @@
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Your electronic HACCP",
     "knowledgeBase": "Knowledge base"
+  },
+  "publicAbout": {
+    "metadata": {
+      "title": "About our digital HACCP and hygiene logs",
+      "description": "See how WeSetup helps cafés, restaurants and food producers keep HACCP and hygiene logs. Explore example logs and find out how to contact our team."
+    },
+    "breadcrumbs": {
+      "label": "Breadcrumbs",
+      "home": "Home"
+    },
+    "hero": {
+      "title": "About WeSetup and our digital HACCP logs",
+      "description": "We built WeSetup for teams that check temperatures, staff hygiene and cleaning every day. Staff log checks from their phones, and managers can see records for all their sites in one workspace.",
+      "catalog": "Browse the log catalogue",
+      "imageAlt": "Digital log catalogue in the WeSetup workspace"
+    },
+    "workflow": {
+      "title": "How your team keeps its logs",
+      "description": "WeSetup is built for cafés, restaurants, canteens, bakeries and food producers. Choose logs for each site based on how it operates.",
+      "select": {
+        "title": "Set up logs for your site",
+        "description": "Choose templates, add rooms and equipment, and give staff access to the logs they fill in."
+      },
+      "record": {
+        "title": "Record checks on the spot",
+        "description": "Staff can scan an equipment QR code to open a form on their phones. For fridges with connected sensors, you can configure automatic temperature logging."
+      },
+      "review": {
+        "title": "Review and export records",
+        "description": "Managers can see who made each entry and when, then export the log as a PDF or Excel file for their records or an inspection."
+      }
+    },
+    "journals": {
+      "title": "Examples of digital logs",
+      "description": "Open a log to see what it is used for, which fields it contains and how to fill it in.",
+      "hygiene": "Staff hygiene log",
+      "temperature": "Fridge temperature log",
+      "cleaning": "Premises cleaning log",
+      "food": "Prepared food quality inspection log"
+    },
+    "company": {
+      "title": "Company and contact details",
+      "description": "WeSetup is developed by BFS LLC. Contact us for help choosing logs, setting up sites or moving your records online."
+    },
+    "start": {
+      "title": "Start with one log",
+      "description": "Create a workspace, choose a log you already use and make your first entry. Then add the rest of your logs and invite your team.",
+      "action": "Create a workspace"
+    }
   },
   "landing": {
     "metadata": {

@@ -5594,6 +5594,7 @@
     }
   },
   "publicChrome": {
+    "about": "Biz haqimizda",
     "journals": "Jurnallar",
     "blog": "Blog",
     "homeAria": "WeSetup — bosh sahifaga",
@@ -5632,6 +5633,55 @@
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Sizning elektron HACCP tizimingiz",
     "knowledgeBase": "Bilimlar bazasi"
+  },
+  "publicAbout": {
+    "metadata": {
+      "title": "Elektron HACCP va sanitariya jurnallari xizmati haqida",
+      "description": "WeSetup kafe, restoran va oziq-ovqat korxonalariga HACCP va sanitariya jurnallarini yuritishda yordam beradi. Jurnal namunalari va aloqa ma’lumotlarini ko‘ring."
+    },
+    "breadcrumbs": {
+      "label": "Navigatsiya yo‘li",
+      "home": "Bosh sahifa"
+    },
+    "hero": {
+      "title": "WeSetup va elektron HACCP jurnallari haqida",
+      "description": "WeSetup’ni har kuni harorat, gigiyena va tozalash ishlarini nazorat qiladigan jamoalar uchun yaratdik. Xodimlar qaydlarni telefondan kiritadi, rahbar esa barcha obyektlarining jurnallarini bitta kabinetda ko‘radi.",
+      "catalog": "Jurnallar katalogini ko‘rish",
+      "imageAlt": "WeSetup kabinetidagi elektron jurnallar katalogi"
+    },
+    "workflow": {
+      "title": "Jamoa jurnallarni qanday yuritadi",
+      "description": "WeSetup kafe, restoran, oshxona, nonvoyxona va oziq-ovqat ishlab chiqarish korxonalari uchun mos. Har bir obyekt uchun uning ish jarayoniga mos jurnallarni tanlash mumkin.",
+      "select": {
+        "title": "Obyekt uchun jurnallarni sozlang",
+        "description": "Kerakli shablonlarni tanlang, xonalar va uskunalarni qo‘shing, xodimlarga ular to‘ldiradigan jurnallarga kirish huquqini bering."
+      },
+      "record": {
+        "title": "Qaydlarni joyida kiriting",
+        "description": "Xodim uskunadagi QR-kodni skanerlab, shaklni telefonda ochishi mumkin. Datchik ulangan sovutkichlarda haroratni avtomatik qayd etishni sozlash mumkin."
+      },
+      "review": {
+        "title": "Qaydlarni ko‘ring va yuklab oling",
+        "description": "Rahbar qaydni kim va qachon kiritganini tekshirishi, jurnalni arxiv yoki tekshiruv uchun PDF yoki Excel formatida yuklab olishi mumkin."
+      }
+    },
+    "journals": {
+      "title": "Elektron jurnal namunalari",
+      "description": "Jurnalning maqsadi, maydonlari va uni to‘ldirish tartibini ko‘rish uchun jurnalni oching.",
+      "hygiene": "Xodimlar gigiyenasi jurnali",
+      "temperature": "Sovutkich harorati jurnali",
+      "cleaning": "Xonalarni tozalash jurnali",
+      "food": "Tayyor mahsulot sifatini tekshirish jurnali"
+    },
+    "company": {
+      "title": "Kompaniya va aloqa ma’lumotlari",
+      "description": "WeSetup xizmatini BFS MChJ ishlab chiqadi. Jurnallarni tanlash, obyektlarni sozlash yoki yozuvlarni elektron shaklga o‘tkazishda yordam kerak bo‘lsa, bizga yozing."
+    },
+    "start": {
+      "title": "Bitta jurnaldan boshlang",
+      "description": "Ish maydonini yarating, tanish jurnalni tanlang va birinchi qaydni kiriting. Keyin qolgan jurnallarni qo‘shing va hamkasblaringizni taklif qiling.",
+      "action": "Ish maydonini yaratish"
+    }
   },
   "landing": {
     "metadata": {
