@@ -10,7 +10,7 @@ import {
   resolvePublicSeoTargetPath,
   scoreTargetPages,
   selectAnchorForTarget,
-  selectBestDonorAndAlternatives,
+  rankQualifiedDonors,
 } from "@/lib/seo/gogetlinks-planner";
 import {
   extractSimilarwebSnapshotFromImages,
@@ -127,8 +127,8 @@ test("Review Focus #5: selectAnchorForTarget prevents exact-anchor over-optimiza
   assert.notEqual(nextNonBrand.anchor, "бракеражный журнал готовой продукции");
 });
 
-test("selectBestDonorAndAlternatives excludes used domains (1 donor = 1 link) and caps at maxPricePerLinkRub", () => {
-  const res = selectBestDonorAndAlternatives(
+test("rankQualifiedDonors excludes used domains (1 donor = 1 link) and caps at maxPricePerLinkRub", () => {
+  const res = rankQualifiedDonors(
     [
       {
         siteId: 1,
@@ -188,12 +188,12 @@ test("selectBestDonorAndAlternatives excludes used domains (1 donor = 1 link) an
       allowedFormats: ["article", "note"],
     },
   );
-  assert.equal(res.primary?.domain, "food-safety.ru");
-  assert.equal(res.primary?.selectedFormat, "article");
-  assert.equal(res.primary?.selectedPriceRub, 850);
-  assert.equal(res.alternatives.length, 1);
-  assert.equal(res.alternatives[0].domain, "obshchepit-news.ru");
-  assert.equal(res.alternatives[0].selectedFormat, "note");
+  assert.equal(res.length, 2);
+  assert.equal(res[0].domain, "food-safety.ru");
+  assert.equal(res[0].selectedFormat, "article");
+  assert.equal(res[0].selectedPriceRub, 850);
+  assert.equal(res[1].domain, "obshchepit-news.ru");
+  assert.equal(res[1].selectedFormat, "note");
 });
 
 test("computeScheduleDates respects 10 000 ₽ one_time cap and startsAt", () => {

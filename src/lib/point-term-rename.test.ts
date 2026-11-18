@@ -18,7 +18,7 @@ test("AC5: в русском словаре, договорах и коде не
   const skip = new Set(["src/i18n/message-contract.d.ts", "src/lib/point-term-rename.test.ts"]);
   const hits = (readdirSync("src", { recursive: true }) as string[])
     .map((file) => join("src", file))
-    .filter((file) => /\.(ts|tsx|json)$/.test(file) && !skip.has(file) && statSync(file).isFile())
+    .filter((file) => /\.(ts|tsx|json)$/.test(file) && !skip.has(file.replaceAll("\\", "/")) && statSync(file).isFile())
     .filter((file) => /торгов(?:ая|ой|ую|ые|ых|ым|ыми)\s+точ/i.test(readFileSync(file, "utf8")));
   assert.deepEqual(hits, []);
 });

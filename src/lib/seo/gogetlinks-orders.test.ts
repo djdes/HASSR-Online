@@ -66,6 +66,45 @@ const seoActor = {
   platformSections: ["seo"],
 };
 
+function verifiedSite(domain: string, targetUrl: string, score = 2) {
+  return {
+    version: 1 as const,
+    checkedAt: Date.now(),
+    level: "topic" as const,
+    targetUrl,
+    score,
+    publications: [
+      { title: "СанПиН для школьной столовой", url: `https://${domain}/school-canteen` },
+      { title: "Как пройти проверку в кафе", url: `https://${domain}/inspection` },
+    ],
+  };
+}
+
+test("the default approval path restores the slot and blocks sending a legacy donor without evidence", async () => {
+  let restored = false;
+  await assert.rejects(approvePlannedSlot(
+    { slotId: "legacy", idempotencyKey: "legacy-approval", actor: adminActor },
+    {
+      getAccountConfig: async () => ({ availableRub: 5000, allowSeoApproveWithinPlan: false }),
+      prismaClient: {
+        gglPlannedSlot: {
+          updateMany: async () => ({ count: 1 }),
+          findUnique: async () => ({
+            donorSiteId: 1,
+            donorDomain: "resttrade.ru",
+            targetUrl: "/zhurnal-haccp",
+            anchor: "wesetup.ru",
+            donorMetricsJson: { trust: 10 },
+          }),
+        },
+      } as never,
+      revertSlotToPending: async () => { restored = true; },
+      fetchLiveDonorPrice: async () => assert.fail("Live price must follow review"),
+    },
+  ), (error: unknown) => error instanceof GglOrderError && error.status === 422);
+  assert.equal(restored, true);
+});
+
 test("Review Focus #3: concurrent approvePlannedSlot rejects second click with 409 and timeout stays approved_sending", async () => {
   let slotStatus = "pending_approval";
   let submitCalls = 0;
@@ -486,6 +525,18 @@ test("materializePlanSlots & prepareUpcomingPlannedSlots stop strictly at pendin
     }),
     searchCatalogDonors: async () => [
       {
+        siteId: 444,
+        domain: "resttrade.ru",
+        priceArticleRub: 400,
+        priceNoteRub: 350,
+        tf: 39,
+        cf: 51,
+        trust: 10,
+        dailyTraffic: 2600,
+        indexedYandex: true,
+        indexedGoogle: true,
+      },
+      {
         siteId: 111,
         domain: "already-bought.ru",
         priceArticleRub: 700,
@@ -522,6 +573,8 @@ test("materializePlanSlots & prepareUpcomingPlannedSlots stop strictly at pendin
         indexedGoogle: true,
       },
     ],
+    assessDonor: async (domain, targetUrl) =>
+      domain === "resttrade.ru" ? null : verifiedSite(domain, targetUrl),
     generateDraft: async (draftInput) => ({
       title: `Контроль качества блюд на ${draftInput.donorDomain}`,
       announcement: "Разбор бракеража готовой продукции в общепите",
@@ -546,6 +599,66 @@ test("materializePlanSlots & prepareUpcomingPlannedSlots stop strictly at pendin
   assert.equal(finalizedSlotPayload.placementFormat, "article");
   assert.equal(finalizedSlotPayload.estimatedPriceRub, 850);
   assert.equal((finalizedSlotPayload.alternativeDonors as Array<{ domain: string }>)[0]?.domain, "sanpin-news.ru");
+});
+
+test("automatic re-review of an overdue legacy slot preserves the landing, anchor and existing draft", async () => {
+  const targetUrl = "/sanpin-2-3-2-4-4282-26";
+  const previous = {
+    id: "legacy-overdue",
+    planId: "plan_ws",
+    scheduledDate: "2026-11-12",
+    maxPriceRub: 2500,
+    status: "pending_approval",
+    updatedAt: new Date("2026-11-09T00:00:00Z"),
+    donorDomain: "resttrade.ru",
+    donorMetricsJson: { trust: 10 },
+    targetUrl,
+    targetKeyword: "санпин для общепита",
+    anchor: "wesetup.ru",
+    anchorKind: "url_brand",
+    articleId: "preserve-draft",
+    plan: {
+      id: "plan_ws", campaignId: "c_ws", minTfCf: 25, minTrust: 8,
+      minDailyTraffic: 1000, allowedFormats: ["article"], anchorMixBrandPct: 60,
+      campaign: { id: "c_ws", gglCampaignId: 200001, isWesetup: true },
+    },
+  };
+  let reviewed = false;
+  const result = await prepareUpcomingPlannedSlots(new Date("2026-11-18T00:00:00Z"), 7, {
+    prismaClient: {
+      gglPlannedSlot: {
+        findMany: async ({ where }: { where: { OR: { status: string }[] } }) => {
+          assert.ok(where.OR.some((condition) => condition.status === "pending_approval"));
+          return [previous];
+        },
+        updateMany: async ({ where }: { where: { status: string; updatedAt: Date } }) => {
+          assert.equal(where.status, "pending_approval");
+          assert.equal(where.updatedAt, previous.updatedAt);
+          return { count: 1 };
+        },
+        update: async ({ data }: { data: Record<string, unknown> }) => {
+          assert.equal(data.status, "pending_approval");
+          assert.equal(data.targetUrl, targetUrl);
+          assert.equal(data.anchor, previous.anchor);
+          assert.equal(data.donorDomain, "publisher.ru");
+          assert.equal(data.article, undefined);
+          reviewed = true;
+        },
+      },
+    } as never,
+    loadScoringContext: async () => ({
+      clusters: [], topvisorRows: [], existingOrders: [], candidatePages: [],
+      usedDonorDomains: new Set(),
+    }),
+    searchCatalogDonors: async () => [{
+      siteId: 91, domain: "publisher.ru", priceArticleRub: 1100, priceNoteRub: null,
+      tf: 30, cf: 30, trust: 8, dailyTraffic: 1500, indexedYandex: true, indexedGoogle: true,
+    }],
+    assessDonor: async (domain, landing) => verifiedSite(domain, landing),
+    generateDraft: async () => assert.fail("The existing draft must be preserved"),
+  });
+  assert.equal(result.prepared, 1);
+  assert.equal(reviewed, true);
 });
 
 test("recycleRejectedSlotOrders swaps next alternative donor and returns slot to pending_approval", async () => {
@@ -737,7 +850,7 @@ test("mutatePlannedSlot supports skip, swap_donor, and update_article while bloc
     targetKeyword: "журналы хассп",
     donorSiteId: 101,
     donorDomain: "donor-one.ru",
-    donorMetricsJson: { tf: 16, cf: 20, trust: 6, dailyTraffic: 700 },
+    donorMetricsJson: { tf: 16, cf: 20, trust: 6, dailyTraffic: 700, siteFit: verifiedSite("donor-one.ru", "/zhurnal-haccp") },
     placementFormat: "article",
     anchor: "журналы хассп",
     anchorKind: "exact",
@@ -749,7 +862,7 @@ test("mutatePlannedSlot supports skip, swap_donor, and update_article while bloc
         domain: "donor-two.ru",
         priceRub: 890,
         format: "note",
-        metrics: { tf: 14, cf: 18, trust: 5, dailyTraffic: 650 },
+        metrics: { tf: 14, cf: 18, trust: 5, dailyTraffic: 650, siteFit: verifiedSite("donor-two.ru", "/zhurnal-haccp") },
       },
     ],
     status: "pending_approval",
@@ -1247,13 +1360,14 @@ test("upsertSchedulePlan, createManualGglOrder & default recycleRejectedSlotOrde
         findMany: async () => [
           {
             id: "slot_rej_db",
+            targetUrl: "/zhurnal-haccp",
             alternativeDonorsJson: [
               {
                 siteId: 909,
                 domain: "fallback-sanpin.ru",
                 priceRub: 790,
                 format: "note",
-                metrics: { tf: 14, cf: 18, trust: 5, dailyTraffic: 500 },
+                metrics: { tf: 14, cf: 18, trust: 5, dailyTraffic: 500, siteFit: verifiedSite("fallback-sanpin.ru", "/zhurnal-haccp") },
               },
             ],
           },

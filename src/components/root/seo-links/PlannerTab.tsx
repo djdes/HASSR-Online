@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CalendarClock,
   Check,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { GglSchedulableFormat } from "@/lib/seo/gogetlinks-planner";
+import { readDonorSiteFit } from "@/lib/seo/gogetlinks-site-fit";
 import {
   badgeToneClass,
   formatAnchorKindLabel,
@@ -611,6 +613,7 @@ export function PlannerTab({
   viewer,
   onRefresh,
 }: PlannerTabProps) {
+  const t = useTranslations("rootGglDonorReview");
   const wesetupCampaigns = useMemo(() => {
     const filtered = campaigns.filter((c) => c.isWesetup);
     return [...filtered].sort((a, b) => {
@@ -919,9 +922,14 @@ export function PlannerTab({
                   const donorMetrics = parseSlotDonorMetrics(
                     slot.donorMetricsJson,
                   );
-                  const alternatives = parseSlotAlternatives(
-                    slot.alternativeDonorsJson,
-                  );
+                  const donorFit = readDonorSiteFit(slot.donorMetricsJson, slot.targetUrl);
+                  const awaitingDonorReview = !donorFit &&
+                    ["planned", "preparing", "pending_approval"].includes(slot.status);
+                  const alternatives = parseSlotAlternatives(slot.alternativeDonorsJson)
+                    .flatMap((alt) => {
+                      const fit = readDonorSiteFit(alt.metrics, slot.targetUrl);
+                      return fit ? [{ ...alt, fit }] : [];
+                    });
                   const topvisorSnap = parseTopvisorSnapshot(
                     slot.topvisorPosSnapshot,
                   );
@@ -934,12 +942,14 @@ export function PlannerTab({
                   const isBusy = busySlotId === slot.id;
                   const canMutateSlot =
                     isWesetupSlot &&
+                    slot.status !== "preparing" &&
                     slot.status !== "ordered" &&
                     slot.status !== "approved_sending";
                   const canApproveThisSlot =
                     isWesetupSlot &&
                     slot.status === "pending_approval" &&
                     viewer.canApproveWithinPlan &&
+                    Boolean(donorFit) &&
                     Boolean(slot.donorSiteId && slot.targetUrl && slot.anchor);
 
                   return (
@@ -1019,7 +1029,7 @@ export function PlannerTab({
 
                       {/* Donor & swap */}
                       <td className="px-4 py-3">
-                        {slot.donorDomain ? (
+                        {slot.donorDomain && !awaitingDonorReview ? (
                           <div>
                             <a
                               href={`https://${slot.donorDomain}`}
@@ -1053,6 +1063,22 @@ export function PlannerTab({
                                 </strong>
                               </span>
                             </div>
+                            {donorFit ? (
+                              <div className="mt-2 space-y-0.5 text-[11.5px] text-[#6f7282]">
+                                <p className="font-medium">{t(donorFit.level)}</p>
+                                {donorFit.publications.map((publication) => (
+                                  <a
+                                    key={publication.url}
+                                    href={publication.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block underline underline-offset-2"
+                                  >
+                                    {publication.title}
+                                  </a>
+                                ))}
+                              </div>
+                            ) : null}
 
                             {canMutateSlot && alternatives.length > 0 ? (
                               <div className="relative mt-2">
@@ -1093,7 +1119,13 @@ export function PlannerTab({
                                           <div className="text-[11px] text-[#6f7282]">
                                             TF/CF {alt.metrics.tf}/
                                             {alt.metrics.cf} · траф.{" "}
-                                            {alt.metrics.dailyTraffic}
+                                            {alt.metrics.dailyTraffic} · {t("trust", { value: String(alt.metrics.trust) })}
+                                          </div>
+                                          <div className="mt-1 text-[11px] text-[#6f7282]">
+                                            <div className="font-medium">{t(alt.fit.level)}</div>
+                                            {alt.fit.publications.map((publication) => (
+                                              <div key={publication.url}>{publication.title}</div>
+                                            ))}
                                           </div>
                                         </div>
                                         <span className="shrink-0 font-semibold text-[#3848c7]">
@@ -1107,7 +1139,9 @@ export function PlannerTab({
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-[#9b9fb3]">Ожидает подбора</span>
+                          <span className="text-[#9b9fb3]">
+                            {awaitingDonorReview ? t("pending") : "—"}
+                          </span>
                         )}
                       </td>
 

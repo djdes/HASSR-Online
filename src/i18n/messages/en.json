@@ -1,4 +1,10 @@
 {
+  "rootGglDonorReview": {
+    "topic": "Publications on the placement topic",
+    "audience": "Publications for the target audience",
+    "pending": "The planner is checking site relevance",
+    "trust": "trust {value}"
+  },
   "productionControl": {
     "kinds": {
       "ppk": "Production control program",

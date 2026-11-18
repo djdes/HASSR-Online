@@ -1,0 +1,24 @@
+{
+    "artifacts":  [
+                      "raw/live-review.json",
+                      "raw/verification-tests.txt",
+                      "raw/spec.sha256",
+                      "raw/verification-types.txt"
+                  ],
+    "status":  "PASS",
+    "task":  "ggl-donor-site-fit",
+    "tests":  {
+                  "selectedFiles":  67,
+                  "failed":  0,
+                  "passed":  287
+              },
+    "acceptance":  {
+                       "AC2":  "PASS",
+                       "AC4":  "PASS",
+                       "AC1":  "PASS",
+                       "AC3":  "PASS"
+                   },
+    "typecheck":  {
+                      "exitCode":  0
+                  }
+}

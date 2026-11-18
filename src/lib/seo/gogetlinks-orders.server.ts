@@ -8,6 +8,7 @@ import { canApproveGglSpend } from "@/lib/seo/gogetlinks-access";
 import {
   type GeneratedGglContent,
   type GenerateGglArticleInput,
+  GGL_UNIFIED_BRIEF_TEXT,
   generateGglArticleDraft,
 } from "@/lib/seo/gogetlinks-article-ai.server";
 import {
@@ -30,17 +31,21 @@ import {
   isPublicSeoTargetAllowed,
   normalizeDomainName,
   normalizeWesetupPath,
+  rankQualifiedDonors,
   resolvePublicSeoTargetPath,
   scoreTargetPages,
   selectAnchorForTarget,
-  selectBestDonorAndAlternatives,
   type TopvisorPositionInput,
   toCanonicalWesetupUrl,
 } from "@/lib/seo/gogetlinks-planner";
+import { readDonorSiteFit, type DonorSiteFit } from "@/lib/seo/gogetlinks-site-fit";
+import { assessGglDonorSite } from "@/lib/seo/gogetlinks-site-fit.server";
 import { decimalToNumber } from "@/lib/seo/gogetlinks-sync.server";
 import { getPositionsHistory, isTopvisorConfigured, type PositionMatrix } from "@/lib/topvisor";
 
 const platformOrgId = (): string => process.env.PLATFORM_ORG_ID?.trim() || "platform";
+const donorReviewOffsets = new Map<string, number>();
+const DONOR_REVIEW_BATCH = 12;
 
 export class GglOrderError extends Error {
   public readonly status: number;
@@ -77,6 +82,7 @@ export interface AlternativeDonorEntry {
     cf: number;
     trust: number;
     dailyTraffic: number;
+    siteFit?: DonorSiteFit;
   };
 }
 
@@ -200,6 +206,10 @@ export interface UpcomingPlannedSlotRecord {
   planId: string;
   scheduledDate: string;
   maxPriceRub: number;
+  previous?: Pick<GglPlannedSlot,
+    "status" | "updatedAt" | "targetUrl" | "targetKeyword" | "anchor" | "anchorKind" |
+  "articleId" | "briefText" | "sourceSnapshotId" | "selectionReason"
+  >;
   plan: {
     id: string;
     campaignId: string;
@@ -234,13 +244,13 @@ export interface PreparedSlotPayload {
   selectionReason: string;
   donorSiteId: number;
   donorDomain: string;
-  donorMetrics: { tf: number; cf: number; trust: number; dailyTraffic: number };
+  donorMetrics: { tf: number; cf: number; trust: number; dailyTraffic: number; siteFit: DonorSiteFit };
   placementFormat: GglSchedulableFormat;
   anchor: string;
   anchorKind: GglAnchorKind;
   briefText: string | null;
   alternativeDonors: AlternativeDonorEntry[];
-  generatedContent: GeneratedGglContent;
+  generatedContent: GeneratedGglContent | null;
   campaignId: string;
 }
 
@@ -254,9 +264,10 @@ export interface PrepareSlotsDeps {
   > &
     Partial<Pick<typeof db, "article">>;
   findUpcomingPlannedSlots?: (todayKey: string, horizonEndKey: string) => Promise<UpcomingPlannedSlotRecord[]>;
-  claimSlotPreparing?: (slotId: string) => Promise<boolean>;
+  claimSlotPreparing?: (slotId: string, previous?: UpcomingPlannedSlotRecord["previous"]) => Promise<boolean>;
   loadScoringContext?: () => Promise<SlotScoringContext>;
   searchCatalogDonors?: (gglCampaignId: number, maxPriceRub: number) => Promise<DonorCandidate[]>;
+  assessDonor?: typeof assessGglDonorSite;
   generateDraft?: (input: GenerateGglArticleInput) => Promise<GeneratedGglContent>;
   savePreparedSlot?: (slotId: string, payload: PreparedSlotPayload) => Promise<void>;
   revertPreparingSlot?: (slotId: string) => Promise<void>;
@@ -630,7 +641,7 @@ export function normalizeDonorCatalogRow(raw: Record<string, unknown>): DonorCan
   };
 }
 
-function parseAlternativeDonors(raw: unknown): AlternativeDonorEntry[] {
+function parseAlternativeDonors(raw: unknown, targetUrl?: string | null): AlternativeDonorEntry[] {
   if (!Array.isArray(raw)) return [];
   const out: AlternativeDonorEntry[] = [];
   for (const item of raw) {
@@ -647,6 +658,8 @@ function parseAlternativeDonors(raw: unknown): AlternativeDonorEntry[] {
     if (!Number.isFinite(siteId) || siteId <= 0 || !domain || !Number.isFinite(priceRub) || priceRub <= 0) {
       continue;
     }
+    const siteFit = readDonorSiteFit(metricsRaw, targetUrl ?? null);
+    if (targetUrl !== undefined && !siteFit) continue;
     out.push({
       siteId: Math.trunc(siteId),
       domain,
@@ -657,6 +670,7 @@ function parseAlternativeDonors(raw: unknown): AlternativeDonorEntry[] {
         cf: Number(metricsRaw.cf ?? 0) || 0,
         trust: Number(metricsRaw.trust ?? 0) || 0,
         dailyTraffic: Number(metricsRaw.dailyTraffic ?? 0) || 0,
+        ...(siteFit && { siteFit }),
       },
     });
   }
@@ -1105,8 +1119,14 @@ export async function prepareUpcomingPlannedSlots(
     (async (startKey: string, endKey: string): Promise<UpcomingPlannedSlotRecord[]> => {
       const rows = await client.gglPlannedSlot.findMany({
         where: {
-          status: "planned",
-          scheduledDate: { gte: startKey, lte: endKey },
+          scheduledDate: { lte: endKey },
+          OR: [
+            { status: "planned", scheduledDate: { gte: startKey } },
+            { status: "planned", targetUrl: { not: null } },
+            { status: "pending_approval" },
+            // Recover a preparation interrupted by an app restart or terminated cron.
+            { status: "preparing", updatedAt: { lt: new Date(now.getTime() - 5 * 60_000) } },
+          ],
           plan: {
             isActive: true,
             campaign: { isWesetup: true },
@@ -1123,11 +1143,14 @@ export async function prepareUpcomingPlannedSlots(
         },
         orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
       });
-      return rows.map((row) => ({
+      return rows.filter((row) =>
+        row.status !== "pending_approval" || !readDonorSiteFit(row.donorMetricsJson, row.targetUrl),
+      ).map((row) => ({
         id: row.id,
         planId: row.planId,
         scheduledDate: row.scheduledDate,
         maxPriceRub: row.maxPriceRub,
+        previous: row,
         plan: {
           id: row.plan.id,
           campaignId: row.plan.campaignId,
@@ -1148,9 +1171,9 @@ export async function prepareUpcomingPlannedSlots(
 
   const claimSlotPreparing =
     deps?.claimSlotPreparing ??
-    (async (slotId: string): Promise<boolean> => {
+    (async (slotId, previous): Promise<boolean> => {
       const res = await client.gglPlannedSlot.updateMany({
-        where: { id: slotId, status: "planned" },
+        where: { id: slotId, status: previous?.status ?? "planned", updatedAt: previous?.updatedAt },
         data: { status: "preparing" },
       });
       return res.count > 0;
@@ -1189,6 +1212,7 @@ export async function prepareUpcomingPlannedSlots(
             },
             select: {
               donorDomain: true,
+              donorMetricsJson: true,
               targetUrl: true,
               anchor: true,
               anchorKind: true,
@@ -1230,6 +1254,7 @@ export async function prepareUpcomingPlannedSlots(
         });
       }
       for (const sl of activeSlotsRaw) {
+        if (sl.status !== "ordered" && !readDonorSiteFit(sl.donorMetricsJson, sl.targetUrl)) continue;
         if (sl.donorDomain) {
           const d = normalizeDomainName(sl.donorDomain);
           if (d) usedDonorDomains.add(d);
@@ -1338,35 +1363,22 @@ export async function prepareUpcomingPlannedSlots(
     });
 
   const generateDraft = deps?.generateDraft ?? ((inp) => generateGglArticleDraft(inp));
+  const assessDonor = deps?.assessDonor ?? assessGglDonorSite;
 
   const savePreparedSlot =
     deps?.savePreparedSlot ??
     (async (slotId: string, payload: PreparedSlotPayload): Promise<void> => {
-      const createdArticle = await client.gglArticle.create({
-        data: {
-          campaignId: payload.campaignId,
-          targetUrl: toCanonicalWesetupUrl(payload.targetUrl),
-          targetKeyword: payload.targetKeyword,
-          anchor: payload.anchor,
-          anchorKind: payload.anchorKind,
-          title: payload.generatedContent.title,
-          announcement: payload.generatedContent.announcement,
-          bodyHtml: payload.generatedContent.bodyHtml,
-          metaTitle: payload.generatedContent.metaTitle || null,
-          metaDescription: payload.generatedContent.metaDescription || null,
-          metaKeywords: payload.generatedContent.metaKeywords || null,
-          status: "draft",
-        },
-      });
-
+      const draft = payload.generatedContent;
       await client.gglPlannedSlot.update({
-        where: { id: slotId },
+        where: { id: slotId, status: "preparing" },
         data: {
           status: "pending_approval",
           estimatedPriceRub: payload.estimatedPriceRub,
           targetUrl: payload.targetUrl,
           targetKeyword: payload.targetKeyword,
-          sourceSnapshotId: payload.sourceSnapshotId,
+          sourceSnapshot: payload.sourceSnapshotId
+            ? { connect: { id: payload.sourceSnapshotId } }
+            : { disconnect: true },
           topvisorPosSnapshot: payload.topvisorPosSnapshot as unknown as Prisma.InputJsonValue,
           selectionReason: payload.selectionReason,
           donorSiteId: payload.donorSiteId,
@@ -1375,7 +1387,24 @@ export async function prepareUpcomingPlannedSlots(
           placementFormat: payload.placementFormat,
           anchor: payload.anchor,
           anchorKind: payload.anchorKind,
-          articleId: createdArticle.id,
+          ...(draft && {
+            article: {
+              create: {
+                campaignId: payload.campaignId,
+                targetUrl: toCanonicalWesetupUrl(payload.targetUrl),
+                targetKeyword: payload.targetKeyword,
+                anchor: payload.anchor,
+                anchorKind: payload.anchorKind,
+                title: draft.title,
+                announcement: draft.announcement,
+                bodyHtml: draft.bodyHtml,
+                metaTitle: draft.metaTitle || null,
+                metaDescription: draft.metaDescription || null,
+                metaKeywords: draft.metaKeywords || null,
+                status: "draft",
+              },
+            },
+          }),
           briefText: payload.briefText,
           alternativeDonorsJson: payload.alternativeDonors as unknown as Prisma.InputJsonValue,
         },
@@ -1385,14 +1414,16 @@ export async function prepareUpcomingPlannedSlots(
   const scoringContext = await loadScoringContext();
   let prepared = 0;
   let skipped = 0;
+  const reviewUntil = Date.now() + 24_000;
 
   for (const slot of upcomingSlots) {
+    if (Date.now() >= reviewUntil) break;
     if (!slot.plan.campaign.isWesetup) {
       skipped += 1;
       continue;
     }
 
-    const claimed = await claimSlotPreparing(slot.id);
+    const claimed = await claimSlotPreparing(slot.id, slot.previous);
     if (!claimed) {
       skipped += 1;
       continue;
@@ -1406,8 +1437,16 @@ export async function prepareUpcomingPlannedSlots(
         candidatePages: scoringContext.candidatePages,
       });
 
-      const chosenTarget = scoredTargets[0];
-      if (!chosenTarget) {
+      const previous = slot.previous;
+      const previousPath = previous?.targetUrl && isPublicSeoTargetAllowed(previous.targetUrl)
+        ? normalizeWesetupPath(previous.targetUrl)
+        : null;
+      const chosenTarget = previousPath
+        ? scoredTargets.find((target) => normalizeWesetupPath(target.targetUrl) === previousPath)
+        : scoredTargets[0];
+      const targetPath = previousPath ?? normalizeWesetupPath(chosenTarget?.targetUrl);
+      const targetKeyword = (previousPath ? previous?.targetKeyword : null) ?? chosenTarget?.primaryKeyword;
+      if (!targetPath || !targetKeyword) {
         await revertPreparingSlot(slot.id);
         skipped += 1;
         continue;
@@ -1417,7 +1456,7 @@ export async function prepareUpcomingPlannedSlots(
         slot.plan.campaign.gglCampaignId,
         slot.maxPriceRub,
       );
-      const { primary, alternatives } = selectBestDonorAndAlternatives(
+      const qualified = rankQualifiedDonors(
         catalogDonors,
         scoringContext.usedDonorDomains,
         {
@@ -1428,14 +1467,29 @@ export async function prepareUpcomingPlannedSlots(
           allowedFormats: slot.plan.allowedFormats,
         },
       );
+      const offset = (donorReviewOffsets.get(slot.id) ?? 0) % Math.max(qualified.length, 1);
+      const candidates = qualified.slice(offset, offset + DONOR_REVIEW_BATCH);
+      const assessed = await Promise.all(candidates.map(async (candidate) => ({
+        ...candidate,
+        siteFit: await assessDonor(candidate.domain, targetPath, targetKeyword).catch(() => null),
+      })));
+      const approvedDonors = assessed.filter((candidate): candidate is typeof candidate & { siteFit: DonorSiteFit } =>
+        candidate.siteFit !== null,
+      ).sort((a, b) =>
+        Number(b.siteFit.level === "topic") - Number(a.siteFit.level === "topic") ||
+        b.siteFit.score - a.siteFit.score || b.valueScore - a.valueScore,
+      );
+      const [primary, ...alternatives] = approvedDonors.slice(0, 4);
 
       if (!primary) {
+        if (donorReviewOffsets.size >= 256) donorReviewOffsets.delete(donorReviewOffsets.keys().next().value!);
+        donorReviewOffsets.set(slot.id, offset + candidates.length);
         await revertPreparingSlot(slot.id);
         skipped += 1;
         continue;
       }
+      donorReviewOffsets.delete(slot.id);
 
-      const targetPath = normalizeWesetupPath(chosenTarget.targetUrl) ?? "/journals-info";
       const existingAnchorsForTarget = scoringContext.existingOrders
         .filter((ord) => {
           if (ord.status === "rejected" || ord.status === "failed") return false;
@@ -1449,20 +1503,25 @@ export async function prepareUpcomingPlannedSlots(
           anchor: ord.anchor ?? null,
         }));
 
-      const selectedAnchor = selectAnchorForTarget({
+      const selectedAnchor = previousPath && previous?.anchor ? {
+        anchor: previous.anchor,
+        anchorKind: previous.anchorKind === "exact" || previous.anchorKind === "diluted" || previous.anchorKind === "url_brand"
+          ? previous.anchorKind
+          : inferAnchorKind(previous.anchor, targetPath),
+      } : selectAnchorForTarget({
         targetUrl: targetPath,
-        keyword: chosenTarget.primaryKeyword,
+        keyword: targetKeyword,
         existingAnchors: existingAnchorsForTarget,
         minBrandPct: slot.plan.anchorMixBrandPct,
       });
 
       const pageMeta = scoringContext.candidatePages.find((p) => p.url === targetPath);
-      const generatedContent = await generateDraft({
+      const generatedContent = previousPath && previous?.articleId ? null : await generateDraft({
         donorDomain: primary.domain,
         targetUrl: targetPath,
-        targetPageTitle: chosenTarget.title,
+        targetPageTitle: chosenTarget?.title ?? pageMeta?.title ?? targetKeyword,
         targetPageFacts: pageMeta?.facts ? [...pageMeta.facts] : [],
-        targetKeyword: chosenTarget.primaryKeyword,
+        targetKeyword,
         anchor: selectedAnchor.anchor,
         placementFormat: primary.selectedFormat,
       });
@@ -1477,6 +1536,7 @@ export async function prepareUpcomingPlannedSlots(
           cf: alt.cf,
           trust: alt.trust,
           dailyTraffic: alt.dailyTraffic,
+          siteFit: alt.siteFit,
         },
       }));
 
@@ -1484,13 +1544,13 @@ export async function prepareUpcomingPlannedSlots(
         status: "pending_approval",
         estimatedPriceRub: Math.round(primary.selectedPriceRub),
         targetUrl: targetPath,
-        targetKeyword: chosenTarget.primaryKeyword,
-        sourceSnapshotId: chosenTarget.sourceSnapshotId,
+        targetKeyword,
+        sourceSnapshotId: (previousPath ? previous?.sourceSnapshotId : null) ?? chosenTarget?.sourceSnapshotId ?? null,
         topvisorPosSnapshot: {
-          yandexPos: chosenTarget.yandexPos,
-          googlePos: chosenTarget.googlePos,
+          yandexPos: chosenTarget?.yandexPos ?? null,
+          googlePos: chosenTarget?.googlePos ?? null,
         },
-        selectionReason: chosenTarget.selectionReason,
+        selectionReason: (previousPath ? previous?.selectionReason : null) ?? chosenTarget?.selectionReason ?? targetKeyword,
         donorSiteId: primary.siteId,
         donorDomain: primary.domain,
         donorMetrics: {
@@ -1498,11 +1558,12 @@ export async function prepareUpcomingPlannedSlots(
           cf: primary.cf,
           trust: primary.trust,
           dailyTraffic: primary.dailyTraffic,
+          siteFit: primary.siteFit,
         },
         placementFormat: primary.selectedFormat,
         anchor: selectedAnchor.anchor,
         anchorKind: selectedAnchor.anchorKind,
-        briefText: generatedContent.briefText || null,
+        briefText: generatedContent?.briefText || (previousPath ? previous?.briefText : null) || GGL_UNIFIED_BRIEF_TEXT,
         alternativeDonors: alternativeEntries,
         generatedContent,
         campaignId: slot.plan.campaignId,
@@ -1551,12 +1612,13 @@ export async function recycleRejectedSlotOrders(
         },
         select: {
           id: true,
+          targetUrl: true,
           alternativeDonorsJson: true,
         },
       });
       return rows.map((row) => ({
         slotId: row.id,
-        alternativeDonors: parseAlternativeDonors(row.alternativeDonorsJson),
+        alternativeDonors: parseAlternativeDonors(row.alternativeDonorsJson, row.targetUrl ?? null),
       }));
     });
 
@@ -1805,6 +1867,11 @@ export async function approvePlannedSlot(
         row.donorMetricsJson && typeof row.donorMetricsJson === "object"
           ? (row.donorMetricsJson as Record<string, unknown>)
           : null;
+      if (!readDonorSiteFit(metricsRaw, row.targetUrl)) {
+        const message = "Слот ещё не подготовлен к отправке";
+        await revertSlotToPending(slotId, message);
+        throw new GglOrderError(422, message);
+      }
 
       return {
         id: row.id,
@@ -2522,10 +2589,13 @@ export async function mutatePlannedSlot(
       "Нельзя изменить слот, который уже отправляется или заказан в GoGetLinks",
     );
   }
+  if (slot.status === "preparing") {
+    throw new GglOrderError(409, "Слот ещё не подготовлен к отправке");
+  }
 
   if (input.action === "skip") {
     const updated = await client.gglPlannedSlot.update({
-      where: { id: slot.id },
+      where: { id: slot.id, status: slot.status, updatedAt: slot.updatedAt },
       data: { status: "skipped" },
     });
 
@@ -2544,7 +2614,7 @@ export async function mutatePlannedSlot(
   }
 
   if (input.action === "swap_donor") {
-    const alternatives = parseAlternativeDonors(slot.alternativeDonorsJson);
+    const alternatives = parseAlternativeDonors(slot.alternativeDonorsJson, slot.targetUrl);
     if (alternatives.length === 0) {
       throw new GglOrderError(422, "У слота нет резервных доноров для замены");
     }
@@ -2570,7 +2640,8 @@ export async function mutatePlannedSlot(
     }
 
     const rotatedAlternatives = alternatives.filter((_, idx) => idx !== chosenIdx);
-    if (slot.donorSiteId && slot.donorDomain) {
+    const previousFit = readDonorSiteFit(slot.donorMetricsJson, slot.targetUrl);
+    if (slot.donorSiteId && slot.donorDomain && previousFit) {
       const prevMetrics =
         slot.donorMetricsJson && typeof slot.donorMetricsJson === "object"
           ? (slot.donorMetricsJson as Record<string, unknown>)
@@ -2585,12 +2656,13 @@ export async function mutatePlannedSlot(
           cf: Number(prevMetrics.cf ?? 0) || 0,
           trust: Number(prevMetrics.trust ?? 0) || 0,
           dailyTraffic: Number(prevMetrics.dailyTraffic ?? 0) || 0,
+          siteFit: previousFit,
         },
       });
     }
 
     const updated = await client.gglPlannedSlot.update({
-      where: { id: slot.id },
+      where: { id: slot.id, status: slot.status, updatedAt: slot.updatedAt },
       data: {
         donorSiteId: chosen.siteId,
         donorDomain: chosen.domain,
