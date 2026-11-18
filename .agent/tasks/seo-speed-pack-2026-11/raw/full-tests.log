@@ -8,11 +8,6 @@
 
 → [test:changed] Эскалация до полного прогона: Изменено 88 файлов кода (порог 25)
 
-=== Test stats: pass=6526, fail=1 ===
-
-✗ НОВЫЕ регрессии (нет в baseline):
-  - message argument types are generated from the current source catalog
-
-Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
-Если регрессии — почините код.
-EXIT 1
+=== Test stats: pass=6553, fail=0 ===
+✓ Все тесты прошли.
+EXIT 0
