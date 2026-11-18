@@ -1,0 +1,18 @@
+
+> haccp-online@0.1.0 typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck --incremental --tsBuildInfoFile tsconfig.typecheck.tsbuildinfo -p tsconfig.typecheck.json
+
+
+> haccp-online@0.1.0 test:changed
+> node scripts/test-changed.mjs
+
+→ [test:changed] Эскалация до полного прогона: Изменено 88 файлов кода (порог 25)
+
+=== Test stats: pass=6526, fail=1 ===
+
+✗ НОВЫЕ регрессии (нет в baseline):
+  - message argument types are generated from the current source catalog
+
+Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
+Если регрессии — почините код.
+EXIT 1
