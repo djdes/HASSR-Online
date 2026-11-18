@@ -1,4 +1,5 @@
 import type { SeoLinksViewerCapabilities } from "@/components/root/seo-links/types";
+import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import {
@@ -8,6 +9,7 @@ import {
 import { platformViewerForSession } from "@/lib/platform-access.server";
 import { canApproveGglSpend } from "@/lib/seo/gogetlinks-access";
 import { getCachedWesetupApplicationsCount } from "@/lib/seo/gogetlinks-applications.server";
+import { isGglSlotReadyForApproval } from "@/lib/seo/gogetlinks-site-fit";
 
 import { SeoLinksClient } from "./links-client";
 
@@ -45,7 +47,7 @@ export default async function RootSeoLinksPage() {
   let webmasterApplications = 0;
 
   try {
-    const [account, unreadCount, pendingCount, applicationsCount] = await Promise.all([
+    const [account, unreadCount, approvalCandidates, applicationsCount] = await Promise.all([
       db.gglAccount.findFirst({
         orderBy: { createdAt: "asc" },
         select: { id: true, allowSeoApproveWithinPlan: true },
@@ -56,18 +58,19 @@ export default async function RootSeoLinksPage() {
           OR: [{ unreadCount: { gt: 0 } }, { needsReply: true }],
         },
       }),
-      db.gglPlannedSlot.count({
+      db.gglPlannedSlot.findMany({
         where: {
           status: "pending_approval",
           plan: { campaign: { isWesetup: true } },
         },
+        select: { status: true, targetUrl: true, anchor: true, donorSiteId: true, donorMetricsJson: true },
       }),
       getCachedWesetupApplicationsCount(),
     ]);
     accountConnected = Boolean(account);
     allowSeoApproveWithinPlan = Boolean(account?.allowSeoApproveWithinPlan);
     unreadThreads = unreadCount;
-    pendingSlots = pendingCount;
+    pendingSlots = approvalCandidates.filter(isGglSlotReadyForApproval).length;
     webmasterApplications = applicationsCount;
   } catch {
     accountConnected = false;
@@ -91,12 +94,14 @@ export default async function RootSeoLinksPage() {
   };
 
   return (
-    <SeoLinksClient
-      viewer={viewerCapabilities}
-      initialBadgeCount={webmasterApplications + unreadThreads + pendingSlots}
-      initialHasPendingSlots={pendingSlots > 0}
-      initialAccountConnected={accountConnected}
-      initialAllowSeoApprove={allowSeoApproveWithinPlan}
-    />
+    <DomainMessagesBoundary namespaces={["rootGglDonorReview"]}>
+      <SeoLinksClient
+        viewer={viewerCapabilities}
+        initialBadgeCount={webmasterApplications + unreadThreads + pendingSlots}
+        initialHasPendingSlots={pendingSlots > 0}
+        initialAccountConnected={accountConnected}
+        initialAllowSeoApprove={allowSeoApproveWithinPlan}
+      />
+    </DomainMessagesBoundary>
   );
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
-import { readDonorSiteFit } from "./gogetlinks-site-fit";
+import { isGglSlotReadyForApproval, readDonorSiteFit } from "./gogetlinks-site-fit";
 import { assessDonorPublications, assessGglDonorSite, collectDonorLinks } from "./gogetlinks-site-fit.server";
 
 const publisher = new URL("https://publisher.example/");
@@ -10,6 +11,35 @@ const relevant = [
   { title: "Как открыть кафе и рассчитать себестоимость меню", url: new URL("/business/cafe", publisher).href },
   { title: "Изменения СанПиН для ресторанов и столовых", url: new URL("/business/sanpin", publisher).href },
 ];
+
+test("the SEO page provides donor-review translations in all supported locales", () => {
+  const page = readFileSync("src/app/root/seo/links/page.tsx", "utf8");
+  assert.match(page, /<DomainMessagesBoundary namespaces=\{\["rootGglDonorReview"\]\}>\s*<SeoLinksClient/);
+  for (const locale of ["ru", "en", "uz"]) {
+    const messages = JSON.parse(readFileSync(`src/i18n/messages/${locale}.json`, "utf8"));
+    assert.ok(messages.rootGglDonorReview.pending);
+  }
+});
+
+test("only a pending slot with complete, current donor evidence enters the approval queue", () => {
+  const pending = {
+    status: "pending_approval",
+    targetUrl,
+    anchor: "wesetup.ru",
+    donorSiteId: 123,
+    donorMetricsJson: {},
+  };
+  const fit = assessDonorPublications(relevant, targetUrl, keyword);
+  assert.ok(fit);
+  assert.equal(isGglSlotReadyForApproval(pending), false);
+  assert.equal(isGglSlotReadyForApproval({ ...pending, donorMetricsJson: { siteFit: fit } }), true);
+  assert.equal(isGglSlotReadyForApproval({
+    ...pending, donorMetricsJson: { siteFit: { ...fit, checkedAt: 0 } },
+  }), false);
+  assert.equal(isGglSlotReadyForApproval({
+    ...pending, status: "preparing", donorMetricsJson: { siteFit: fit },
+  }), false);
+});
 
 test("editorial evidence outranks a coincidental topic mention and binds to the landing page", () => {
   const generalNews = [

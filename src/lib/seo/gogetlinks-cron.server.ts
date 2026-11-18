@@ -13,6 +13,7 @@ import {
   prepareUpcomingPlannedSlots,
   recycleRejectedSlotOrders,
 } from "@/lib/seo/gogetlinks-orders.server";
+import { isGglSlotReadyForApproval } from "@/lib/seo/gogetlinks-site-fit";
 import { type GglSyncSummary, syncGglCabinet } from "@/lib/seo/gogetlinks-sync.server";
 import { sendTelegramMessage } from "@/lib/telegram";
 
@@ -261,6 +262,11 @@ async function defaultGetPendingSlotsSummary(now: Date): Promise<PendingSlotsSum
       },
     },
     select: {
+      status: true,
+      donorSiteId: true,
+      targetUrl: true,
+      anchor: true,
+      donorMetricsJson: true,
       scheduledDate: true,
       estimatedPriceRub: true,
       maxPriceRub: true,
@@ -270,6 +276,7 @@ async function defaultGetPendingSlotsSummary(now: Date): Promise<PendingSlotsSum
   let dueTodayCount = 0;
   let next7DaysSumRub = 0;
   for (const slot of slots) {
+    if (!isGglSlotReadyForApproval(slot)) continue;
     if (slot.scheduledDate <= dateKey) {
       dueTodayCount += 1;
     }

@@ -13,8 +13,7 @@ export const maxDuration = 120;
  * отклонённые заявки по слотам, раскладывает слоты на 30 дней и готовит
  * черновики доноров и статей на ближайшие 7 дней без автосписаний.
  *
- * Crontab (раз в 10 минут):
- *   *\/10 * * * * curl -s -m 110 -H "Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3002/api/cron/gogetlinks
+ * The deploy installs the 10-minute crontab through scripts/cron-gogetlinks.sh.
  */
 async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
