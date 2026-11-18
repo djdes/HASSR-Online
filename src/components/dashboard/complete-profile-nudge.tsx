@@ -29,6 +29,13 @@ import {
 import { innDigits, isValidInn } from "@/lib/inn";
 import { suggestPassword } from "@/lib/password-suggest";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { nextSetupStep, type SetupStep } from "@/lib/setup-wizard";
+import {
+  SetupEquipmentStep,
+  SetupPointsStep,
+  SetupStaffStep,
+  SetupStepper,
+} from "@/components/dashboard/setup-wizard-steps";
 import {
   DEFAULT_OWNER_POSITION,
   OWNER_POSITION_CATEGORY,
@@ -402,9 +409,9 @@ function CompleteProfileModal({
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
-  // Точки: после «Готово» с двумя и более точками — шаг «Назовите точки».
-  const [namingBuildings, setNamingBuildings] = useState<NamingBuilding[] | null>(null);
-  const [namingSaving, setNamingSaving] = useState(false);
+  // Мастер первого входа (2026-11-18): после анкеты — «Объекты»,
+  // «Сотрудники», «Оборудование», каждый можно пропустить.
+  const [step, setStep] = useState<SetupStep>("profile");
 
   const nameOk = organizationName.trim().length >= 2;
   const phoneOk = phoneLooksValid(phone);
@@ -451,31 +458,24 @@ function CompleteProfileModal({
     }
   }
 
-  async function saveNaming() {
-    if (!namingBuildings) return;
-    setNamingSaving(true);
-    try {
-      for (const item of namingBuildings) {
-        const name = item.name.trim();
-        if (!name || (name === item.initialName && item.address.trim() === item.initialAddress)) continue;
-        const res = await fetch(`/api/settings/buildings/${item.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, address: item.address.trim() || null }),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => null);
-          throw new Error(data?.error || tn("saveNamedFailed", { name }));
-        }
-      }
-      toast.success(tn("namingSaved"));
-      onClose();
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : tn("saveFailed"));
-    } finally {
-      setNamingSaving(false);
+  /**
+   * Закрыть мастер. После анкеты кабинет обновляем только здесь: refresh
+   * сразу после «Готово» снимал бы окно — анкета заполнена, и layout его
+   * больше не рисует, а шаги 2–4 ещё впереди.
+   */
+  function finishSetup() {
+    onClose();
+    router.refresh();
+  }
+
+  function advance() {
+    const next = nextSetupStep(step);
+    if (next) {
+      setStep(next);
+      return;
     }
+    toast.success(tn("setup.done"));
+    finishSetup();
   }
 
   const savedMessage = newPassword.trim()
@@ -490,23 +490,8 @@ function CompleteProfileModal({
       const saved = await saveProfile();
       if (!saved) return;
       toast.success(savedMessage);
-      const buildings = saved.buildings ?? [];
-      if (buildings.length >= 2) {
-        // Имена и адреса сразу: «Точка 1» иначе так и напечатается в PDF.
-        setNamingBuildings(
-          buildings.map((b) => ({
-            id: b.id,
-            name: b.name,
-            address: b.address ?? "",
-            initialName: b.name,
-            initialAddress: b.address ?? "",
-          })),
-        );
-        router.refresh();
-        return;
-      }
-      onClose();
-      router.refresh();
+      // Дальше — шаг «Объекты» (точки из «Объектов: N» уже заведены сервером).
+      setStep("points");
     } finally {
       setSaving(false);
     }
@@ -566,15 +551,15 @@ function CompleteProfileModal({
               id="complete-profile-title"
               className="text-[16px] font-semibold tracking-[-0.01em] text-[#0b1024]"
             >
-              {namingBuildings
-                ? tn("titleNaming")
+              {step !== "profile"
+                ? tn(`setup.titles.${step}`)
                 : welcome
                   ? tn("titleCreated")
                   : tn("titleComplete")}
             </h2>
             <p className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
-              {namingBuildings ? (
-                tn("namingSubtitle")
+              {step !== "profile" ? (
+                tn(`setup.subtitles.${step}`)
               ) : (
                 <>
                   {tn("login")} <span className="text-[#3c4053]">{email}</span>
@@ -584,7 +569,7 @@ function CompleteProfileModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={step === "profile" ? onClose : finishSetup}
             aria-label={tn("close")}
             className="shrink-0 rounded-lg p-1 text-[#9b9fb3] transition-colors hover:text-[#0b1024]"
           >
@@ -592,17 +577,14 @@ function CompleteProfileModal({
           </button>
         </div>
 
-        {namingBuildings ? (
-          <LocationNamingStep
-            items={namingBuildings}
-            saving={namingSaving}
-            onChange={setNamingBuildings}
-            onSkip={() => {
-              onClose();
-              router.refresh();
-            }}
-            onSave={() => void saveNaming()}
-          />
+        <SetupStepper step={step} />
+
+        {step === "points" ? (
+          <SetupPointsStep defaultAddress={address.trim()} onDone={advance} />
+        ) : step === "staff" ? (
+          <SetupStaffStep sphere={sphere} onDone={advance} />
+        ) : step === "equipment" ? (
+          <SetupEquipmentStep onDone={advance} />
         ) : (
           <>
         <form
@@ -913,91 +895,6 @@ function CompleteProfileModal({
         )}
       </div>
     </div>
-  );
-}
-
-type NamingBuilding = {
-  id: string;
-  name: string;
-  address: string;
-  initialName: string;
-  initialAddress: string;
-};
-
-/**
- * Шаг «Назовите точки» после анкеты: строка на точку — название и адрес.
- * Компактно: две колонки, без подписей у полей (плейсхолдеры), «Позже»
- * рядом с «Сохранить» — всё в первом экране телефона при 2–4 точках,
- * дальше список прокручивается внутри окна.
- */
-function LocationNamingStep({
-  items,
-  saving,
-  onChange,
-  onSkip,
-  onSave,
-}: {
-  items: NamingBuilding[];
-  saving: boolean;
-  onChange: (next: NamingBuilding[]) => void;
-  onSkip: () => void;
-  onSave: () => void;
-}) {
-  const tn = useTranslations("dashboardUi.completeProfileNudge");
-  const inputClass =
-    "h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
-  return (
-    <>
-      <div data-guide="profile-naming" className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-3 pt-2 sm:px-5">
-        {items.map((item, index) => (
-          <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-2">
-            <input
-              type="text"
-              value={item.name}
-              onChange={(e) =>
-                onChange(items.map((it, i) => (i === index ? { ...it, name: e.target.value } : it)))
-              }
-              placeholder={tn("pointPlaceholder", { index: index + 1 })}
-              aria-label={tn("pointNameLabel", { index: index + 1 })}
-              className={inputClass}
-            />
-            <input
-              type="text"
-              value={item.address}
-              onChange={(e) =>
-                onChange(items.map((it, i) => (i === index ? { ...it, address: e.target.value } : it)))
-              }
-              placeholder={tn("address")}
-              aria-label={tn("pointAddressLabel", { index: index + 1 })}
-              className={inputClass}
-            />
-          </div>
-        ))}
-        <p className="text-[12px] leading-snug text-[#6f7282]">
-          {tn("namingNote")}
-        </p>
-      </div>
-      <div className="shrink-0 border-t border-[#eef0f6] p-4 sm:p-5">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={onSkip}
-            className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-[#dcdfed] bg-white text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-          >
-            {tn("later")}
-          </button>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving || items.some((it) => !it.name.trim())}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            {tn("save")}
-          </button>
-        </div>
-      </div>
-    </>
   );
 }
 

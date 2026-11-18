@@ -7,9 +7,11 @@ import {
   TYPICAL_ROOMS,
   WIZARD_MAX_QUANTITY,
   addCustomRoom,
+  emptyEquipmentQuantities,
   guessRoom,
   nextEquipmentNames,
   planEquipment,
+  typicalEquipmentQuantities,
   type WizardEquipmentType,
   type WizardRoom,
 } from "./point-wizard";
@@ -37,6 +39,19 @@ test("типовой набор: виды помещений из room-kinds, в
     TYPICAL_EQUIPMENT.map((item) => item.type),
     ["refrigerator", "freezer", "fryer", "uv_lamp", "oven", "dishwasher"],
   );
+});
+
+test("оборудование по умолчанию не выбрано: типовой набор — только кнопкой", () => {
+  // Владелец, 2026-11-18: заранее выставленные холодильник и морозильник
+  // создавались «автоматом», и люди путались.
+  const empty = emptyEquipmentQuantities();
+  assert.deepEqual(Object.keys(empty).sort(), TYPICAL_EQUIPMENT.map((item) => item.type).sort());
+  assert.ok(Object.values(empty).every((value) => value === 0));
+  assert.deepEqual(planEquipment({ rows: TYPICAL_EQUIPMENT.map((item) => ({ type: item.type, quantity: empty[item.type], roomName: null })), rooms: ROOMS, labels: LABELS, takenNames: [] }), []);
+  const typical = typicalEquipmentQuantities();
+  assert.equal(typical.refrigerator, 1);
+  assert.equal(typical.freezer, 1);
+  assert.equal(typical.fryer + typical.uv_lamp + typical.oven + typical.dishwasher, 0);
 });
 
 test("помещение по умолчанию: по названию, затем по виду, иначе первое", () => {

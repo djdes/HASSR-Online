@@ -1,4 +1,4 @@
-import { Building2, MapPin, MapPinOff, Wrench } from "lucide-react";
+import { Building2, MapPin, Wrench } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -8,14 +8,13 @@ import { DeleteButton } from "@/components/settings/delete-button";
 import { isManagementRole } from "@/lib/user-roles";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { PageGuide } from "@/components/ui/page-guide";
-import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
-import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
+import { viewedPointId } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
-import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
+import { PLACE_ALL, PLACE_NONE, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { objectInScope, objectScopeIds } from "@/lib/point-objects";
 
@@ -27,11 +26,10 @@ export default async function AreasSettingsPage({
   /** `place` — фильтр по местам над списком: id точки или офиса, `none`, `all`. */
   searchParams: Promise<{ place?: string | string[] }>;
 }) {
-  const query = await searchParams;
+  await searchParams;
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.areasPage");
-  const tPlace = await getTranslations("settingsUi.placeFilter");
 
   const [areas, buildings, buildingContext] = await Promise.all([
     db.area.findMany({
@@ -45,11 +43,9 @@ export default async function AreasSettingsPage({
     loadBuildingContext(session),
   ]);
   // Точка → её цеха (2026-10-17); точек нет — плоский список, как раньше.
-  // Фильтр по местам над списком — как у сотрудников (2026-10-28), это
-  // единственный выбор точки на странице (переключатель в шапке скрыт,
-  // 2026-10-29); без выбора в адресе — «Все». У точки — её цеха и цеха без
-  // точки (они видны на каждой точке), «Без точки» — только они. Места —
-  // только точки человека: руководитель точки чужих точек не видит.
+  // Точка — из шапки, своего выбора у списка нет (2026-11-18). У точки — её
+  // цеха и цеха без точки (они видны на каждой точке); «Вся организация» —
+  // все. Места — только точки человека: руководитель точки чужих не видит.
   const showPlaceFilter = buildingContext.enabled;
   const scope = scopePlaces({
     items: areas,
@@ -60,7 +56,9 @@ export default async function AreasSettingsPage({
       : null,
   });
   const place = resolvePlaceFilter({
-    requested: showPlaceFilter ? placeFilterParam(query.place) : null,
+    // Точку выбирают только в шапке (владелец, 2026-11-18): своих чипов мест
+    // у списка больше нет, `?place=` из старых ссылок не действует.
+    requested: null,
     places: scope.buildings.map((building) => building.id),
     hasNone: scope.loose.length > 0,
     // Без выбора в адресе — точка из шапки (2026-11-11): фильтр с ней согласован.
@@ -161,22 +159,6 @@ export default async function AreasSettingsPage({
       />
 
       <PlaceFilterScope>
-        {showPlaceFilter ? (
-          <PlaceFilterChips
-            kind="areas"
-            label={tPlace("label")}
-            basePath="/settings/areas"
-            active={place}
-            all={{ label: tPlace("all"), count: scope.items.length, icon: Building2 }}
-            places={scope.buildings.map((building) => ({
-              id: building.id,
-              name: building.name,
-              office: isOfficeBuilding(building),
-              count: scope.items.filter((area) => area.buildingId === building.id).length,
-            }))}
-            none={scope.loose.length > 0 ? { label: tPlace("none"), count: scope.loose.length, icon: MapPinOff } : null}
-          />
-        ) : null}
 
         {/* Content */}
         <PlaceFilterResults>

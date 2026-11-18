@@ -6,7 +6,6 @@ import { TemperatureChart } from "@/components/charts/temperature-chart";
 import {
   AlertTriangle,
   MapPin,
-  MapPinOff,
   Thermometer,
   Wifi,
   WifiOff,
@@ -24,12 +23,11 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
-import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
-import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
+import { viewedPointId } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
-import { PLACE_ALL, PLACE_NONE, placeFilterParam, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
+import { PLACE_ALL, PLACE_NONE, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { objectInScope, objectScopeIds, objectSelectable, staffInObjectScope } from "@/lib/point-objects";
 import { isUvLampEquipment, lampRemainingHours } from "@/lib/uv-lamp";
@@ -85,11 +83,10 @@ export default async function EquipmentSettingsPage({
   /** `place` — фильтр по местам над списком: id точки или офиса, `none`, `all`. */
   searchParams: Promise<{ place?: string | string[] }>;
 }) {
-  const query = await searchParams;
+  await searchParams;
   const session = await requireAuth();
   const orgId = getActiveOrgId(session);
   const t = await getTranslations("settingsUi.equipmentPage");
-  const tPlace = await getTranslations("settingsUi.placeFilter");
 
   const [equipment, areas, staff, buildings, rooms, buildingContext] = await Promise.all([
     db.equipment.findMany({
@@ -131,7 +128,9 @@ export default async function EquipmentSettingsPage({
     scopeIds,
   });
   const place = resolvePlaceFilter({
-    requested: showPlaceFilter ? placeFilterParam(query.place) : null,
+    // Точку выбирают только в шапке (владелец, 2026-11-18): своих чипов мест
+    // у списка больше нет, `?place=` из старых ссылок не действует.
+    requested: null,
     places: scope.buildings.map((building) => building.id),
     hasNone: scope.loose.length > 0,
     // Без выбора в адресе — точка из шапки (2026-11-11): фильтр с ней согласован.
@@ -284,22 +283,6 @@ export default async function EquipmentSettingsPage({
       {/* Чипы мест и список — одна область: нажатие на чип показывает
           скелет списка, пока не придут данные места (2026-10-29). */}
       <PlaceFilterScope>
-      {showPlaceFilter && scope.items.length > 0 ? (
-        <PlaceFilterChips
-          kind="equipment"
-          label={tPlace("label")}
-          basePath="/settings/equipment"
-          active={place}
-          all={{ label: tPlace("all"), count: scope.items.length, icon: Wrench }}
-          places={scope.buildings.map((building) => ({
-            id: building.id,
-            name: building.name,
-            office: isOfficeBuilding(building),
-            count: scope.items.filter((item) => item.area.buildingId === building.id).length,
-          }))}
-          none={scope.loose.length > 0 ? { label: tPlace("none"), count: scope.loose.length, icon: MapPinOff } : null}
-        />
-      ) : null}
 
       {/* Content */}
       <PlaceFilterResults>

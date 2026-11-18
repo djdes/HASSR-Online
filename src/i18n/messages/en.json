@@ -604,6 +604,7 @@
       "pointTitle": "Which location to print for",
       "pointSingle": "Printing for this location",
       "pointHint": "The location name is printed at the top of every sheet, and the “Daily check” QR opens this location’s journal.",
+      "pointHeaderHint": "To print for another location, switch it in the top bar.",
       "pointUntitled": "Untitled location",
       "pointsEmptyTitle": "Add a location",
       "pointsEmptyBody": "Its name will be printed at the top of every sheet. Until you add one, posters print without it.",
@@ -9486,7 +9487,9 @@
         },
         "equipment": {
           "title": "What equipment is there?",
-          "hint": "Set the quantity and the room. We number the names ourselves and fill in typical temperature norms.",
+          "hint": "Nothing is selected — set the quantity only for what is really on site. We number the names ourselves and fill in typical temperature norms. You can skip this and add equipment later.",
+          "typicalSet": "Typical set: fridge and freezer",
+          "clear": "Reset",
           "room": "Room",
           "decrease": "Fewer: {name}",
           "increase": "More: {name}",
@@ -26587,7 +26590,68 @@
       "pointAddressLabel": "Address of location {index, number}",
       "namingNote": "Staff are shared; which location a person receives tasks from is set in the employee card.",
       "later": "Later",
-      "save": "Save"
+      "save": "Save",
+      "setup": {
+        "step": "Step {current} of {total}",
+        "steps": {
+          "profile": "Profile",
+          "points": "Locations",
+          "staff": "Staff",
+          "equipment": "Equipment"
+        },
+        "titles": {
+          "points": "Your locations",
+          "staff": "Who fills in the logs",
+          "equipment": "What equipment is there"
+        },
+        "subtitles": {
+          "points": "Café, workshop, branch — the name and address are printed in the logs",
+          "staff": "Add employees — they get tasks and their names go into the logs",
+          "equipment": "Fridges and freezers go into the temperature log"
+        },
+        "skip": "Skip",
+        "next": "Next",
+        "finish": "Done",
+        "finishWithCount": "Add ({count}) and finish",
+        "pointNamePlaceholder": "For example, Café on Main Street",
+        "pointNameN": "Location {index}",
+        "pointNameLabel": "Location {index} name",
+        "pointAddress": "Address",
+        "pointAddressLabel": "Location {index} address",
+        "addPoint": "Add location",
+        "removePoint": "Remove location {index}",
+        "pointsNote": "You can skip this and add locations later in “My company → Locations”.",
+        "pointsSaved": "Locations saved",
+        "pointExists": "Location “{name}” already exists",
+        "pointsFailed": "Could not save the locations",
+        "staffName": "Full name",
+        "staffNamePlaceholder": "Full name, e.g. Maria Ivanova",
+        "staffPosition": "Position",
+        "staffPositionPlaceholder": "Position, e.g. Cook",
+        "staffAdd": "Add",
+        "staffNote": "Phones, locations and schedules — later in “Staff”. You can skip this.",
+        "staffFailed": "Could not add the employee",
+        "equipmentPoint": "Location",
+        "equipmentRoom": "Room",
+        "equipmentRoomDefault": "Kitchen",
+        "typicalSet": "Typical set: fridge and freezer",
+        "clear": "Reset",
+        "decrease": "Fewer: {name}",
+        "increase": "More: {name}",
+        "norm": "norm {range}",
+        "equipmentNote": "Nothing is selected — mark only what is really there. You can skip this and add equipment later in “Equipment”.",
+        "equipmentFailed": "Could not add: {items}",
+        "equipmentSaved": "Equipment added: {count}",
+        "done": "Your workspace is set up — you can fill in the logs",
+        "types": {
+          "refrigerator": "Refrigerator",
+          "freezer": "Freezer",
+          "fryer": "Fryer",
+          "uv_lamp": "UV lamp",
+          "oven": "Oven",
+          "dishwasher": "Dishwasher"
+        }
+      }
     },
     "todaySpeed": {
       "recentTitle": "Recently opened",
