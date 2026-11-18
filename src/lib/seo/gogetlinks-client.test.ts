@@ -13,8 +13,66 @@ import {
   saveLocalSession,
   readGglWebmasterSource,
   readGglDonorCatalogPages,
+  sendGglFirstMessage,
 } from "@/lib/seo/gogetlinks-client.server";
 import { decodeWin1251 } from "@/lib/seo/gogetlinks-codec";
+
+test("first contact sends only through the matching composer and verifies the message in history", async () => {
+  const pair = "/comp_id/77/site_id/101";
+  const body = "Здравствуйте! В какой рубрике выйдет статья?";
+  const composer = `<div id="pm_content"></div><form id="post_form">
+    <input name="csrf_token" value="composer-fixture"><textarea name="message_value"></textarea>
+    </form><script>
+    PrivateMessagePersonalData.sendLink = "/privateMessage/send${pair}";
+    PrivateMessagePersonalData.loadLink = "/privateMessage/contentPersonal${pair}";
+    </script>`;
+  const html = (value: string) => new Response(value, { headers: { "content-type": "text/html; charset=utf-8" } });
+  let claimed = false;
+  let mode: "sent" | "unavailable" | "wrong" | "unconfirmed" = "sent";
+  let posts = 0;
+  const fetchImpl: typeof fetch = async (url, init) => {
+    const path = new URL(String(url)).pathname;
+    if (path === `/privateMessage/personal${pair}`) {
+      if (mode === "unavailable") return html("<script>window.close();</script>");
+      if (mode === "wrong") return html(composer.replaceAll("site_id/101", "site_id/102"));
+      return html(composer);
+    }
+    assert.equal(init?.method, "POST");
+    assert.equal(new Headers(init?.headers).get("x-requested-with"), "XMLHttpRequest");
+    const fields = new URLSearchParams(String(init?.body));
+    if (path === `/privateMessage/send${pair}`) {
+      posts += 1;
+      assert.equal(fields.get("csrf_token"), "composer-fixture");
+      assert.equal(fields.get("message_value"), body);
+      return Response.json({ success: true });
+    }
+    assert.equal(path, `/privateMessage/contentPersonal${pair}`);
+    assert.equal(fields.get("page"), "0");
+    return html(mode === "unconfirmed" ? "<div>Waiting</div>" : `<div>${body}</div>`);
+  };
+  const send = () => sendGglFirstMessage({
+    campaignId: 77, siteId: 101, body,
+    claim: async () => {
+      if (claimed) return false;
+      claimed = true;
+      return true;
+    },
+  }, { fetchImpl, skipDbSync: true });
+  mode = "unavailable";
+  assert.equal(await send(), "unavailable");
+  mode = "wrong";
+  assert.equal(await send(), "unavailable");
+  assert.equal(claimed, false);
+  mode = "sent";
+  assert.equal(await send(), "sent");
+  assert.equal(await send(), "duplicate");
+  assert.equal(posts, 1);
+  claimed = false;
+  mode = "unconfirmed";
+  assert.equal(await send(), "unconfirmed");
+  assert.equal(await send(), "duplicate");
+  assert.equal(posts, 2);
+});
 
 test("catalog reads the anchor token from the index and paginates through the observed read-only endpoint", async () => {
   const seen: string[] = [];

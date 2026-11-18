@@ -1,0 +1,28 @@
+{
+  "campaignId": 884931,
+  "method": "GET",
+  "placementSubmitted": false,
+  "messageSubmitted": false,
+  "results": [
+    {
+      "siteId": 169552,
+      "http": 200,
+      "form": false,
+      "hasToken": false,
+      "hasTextArea": false,
+      "matchingSend": false,
+      "matchingContent": false,
+      "initialHistory": false
+    },
+    {
+      "siteId": 240242,
+      "http": 200,
+      "form": true,
+      "hasToken": true,
+      "hasTextArea": true,
+      "matchingSend": true,
+      "matchingContent": true,
+      "initialHistory": true
+    }
+  ]
+}

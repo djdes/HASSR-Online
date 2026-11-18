@@ -29,6 +29,7 @@ import {
   generateClientIdempotencyKey,
 } from "@/lib/seo/gogetlinks-ui-format";
 import { ArticleDrawer } from "./ArticleDrawer";
+import { WebmasterMessage } from "./WebmasterMessage";
 import {
   formatRuShortDate,
   type GglCampaignDto,
@@ -1072,6 +1073,12 @@ export function PlannerTab({
                                     {publication.title}
                                   </a>
                                 ))}
+                              </div>
+                            ) : null}
+
+                            {planCampaign?.isWesetup && slot.status === "pending_approval" && slot.donorSiteId ? (
+                              <div className="mt-2">
+                                <WebmasterMessage key={slot.donorSiteId} slotId={slot.id} siteId={slot.donorSiteId} domain={slot.donorDomain} />
                               </div>
                             ) : null}
 

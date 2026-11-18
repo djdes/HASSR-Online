@@ -18,6 +18,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { call, type StoredCookie } from "api-anything";
+import { parse } from "node-html-parser";
 import { ProxyAgent, fetch as undiciFetch, type RequestInit as UndiciRequestInit } from "undici";
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
@@ -685,6 +686,91 @@ export async function readGglWebmasterSource(
       return parsed.data;
     }
     throw new GglAuthError("Не удалось восстановить сессию GoGetLinks");
+  }, 300);
+}
+
+export type GglFirstMessageResult = "unavailable" | "duplicate" | "sent" | "unconfirmed";
+
+/** Submit only the composer that GoGetLinks actually served for this campaign and site. */
+export async function sendGglFirstMessage(
+  input: { campaignId: number; siteId: number; body: string; claim: () => Promise<boolean> },
+  opts?: { fetchImpl?: typeof fetch; skipDbSync?: boolean },
+): Promise<GglFirstMessageResult> {
+  if ([input.campaignId, input.siteId].some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    throw new GglCallError("Invalid GoGetLinks composer identifiers", "input");
+  }
+  initApiAnythingHome();
+  if (!opts?.skipDbSync) await syncSessionFromDb();
+  return enqueueGgl(async () => {
+    const base = "https://gogetlinks.net";
+    const pair = `comp_id/${input.campaignId}/site_id/${input.siteId}`;
+    const composer = `${base}/privateMessage/personal/${pair}`;
+    const sendPath = `/privateMessage/send/${pair}`;
+    const contentPath = `/privateMessage/contentPersonal/${pair}`;
+    const sourceFetch = createGglFetch(opts?.fetchImpl || getFetchImpl() || fetch);
+    const request = (path: string, body?: URLSearchParams) => sourceFetch(path, {
+      ...(body && { method: "POST", body: body.toString() }),
+      redirect: "manual",
+      signal: AbortSignal.timeout(8_000),
+      headers: {
+        cookie: buildCookieHeader(loadLocalSession()),
+        ...(body && {
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          origin: base,
+          referer: composer,
+        }),
+      },
+    });
+    const html = async (res: Response) => decodeModalResponseBuffer(
+      new Uint8Array(await res.arrayBuffer()), res.headers.get("content-type") ?? "",
+    );
+    const readComposer = async () => {
+      const response = await request(composer);
+      const raw = await html(response);
+      const expired = response.status === 401 || REDIRECT_STATUSES.has(response.status) ||
+        /<form[^>]*(?:signIn|login)|name=["']password["']/i.test(raw);
+      return { response, raw, expired };
+    };
+    let page = await readComposer();
+    if (!opts?.skipDbSync && page.expired && await attemptRelogin({ fetchImpl: opts?.fetchImpl })) {
+      page = await readComposer();
+    }
+    if (page.expired) throw new GglAuthError("GoGetLinks composer session expired");
+    if (!page.response.ok || REAL_INTERSTITIAL_RE.test(page.raw)) {
+      throw new GglCallError("Unable to read GoGetLinks composer", "blocked");
+    }
+    const document = parse(page.raw);
+    const form = document.querySelector("#post_form");
+    const token = form?.querySelector('input[name="csrf_token"]')?.getAttribute("value");
+    const script = document.querySelectorAll("script")
+      .find(node => node.rawText.includes("PrivateMessagePersonalData.sendLink ="))?.rawText.replaceAll("\\/", "/");
+    if (!token || !form?.querySelector('textarea[name="message_value"]') ||
+        !script?.includes(`PrivateMessagePersonalData.sendLink = "${sendPath}"`) ||
+        !script.includes(`PrivateMessagePersonalData.loadLink = "${contentPath}"`)) {
+      return "unavailable";
+    }
+    const initial = document.querySelector("#pm_content");
+    if (!initial) return "unavailable";
+    const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
+    const target = normalize(input.body);
+    const occurrences = (text: string) => normalize(text).split(target).length - 1;
+    const before = occurrences(initial.text);
+    if (!await input.claim()) return "duplicate";
+
+    try {
+      const submitted = await request(base + sendPath, new URLSearchParams({
+        csrf_token: token,
+        message_value: input.body,
+      }));
+      if (!submitted.ok) return "unconfirmed";
+      const history = await request(base + contentPath, new URLSearchParams({ page: "0" }));
+      if (!history.ok) return "unconfirmed";
+      return occurrences(parse(await html(history)).text) > before ? "sent" : "unconfirmed";
+    } catch {
+      // The server may have accepted the message before the connection failed.
+      return "unconfirmed";
+    }
   }, 300);
 }
 
