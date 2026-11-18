@@ -3863,6 +3863,17 @@
       "startUsingAction": "Use the journal in WeSetup",
       "disclaimer": "This email was sent because this address was entered when downloading a template from wesetup.ru. If you did not download it, simply ignore this message.",
       "freeTier": "{count, number} {count, plural, one {day} other {days}} free, no card required"
+    },
+    "blankFollowup": {
+      "subject": "How to keep the “{journalTitle}” log: tips",
+      "greeting": "Hello!",
+      "intro": "You downloaded the “{journalTitle}” log template on WeSetup. To make sure the records pass an inspection, keep in mind:",
+      "pageIntro": "A filled-in sample, who must keep the log and answers to common questions are on the log page:",
+      "paperlessTitle": "Keep the log on your phone",
+      "paperlessBody": "Staff make an entry by QR code in seconds, the time is recorded automatically and WeSetup reminds about gaps. {freeTier}.",
+      "action": "Try for free",
+      "help": "Need help with your logs? Reply to this email or call {phone} — we will advise and set things up.",
+      "disclaimer": "This is the only email about your download: the address was entered when downloading the template on wesetup.ru. There will be no more emails about it."
     }
   },
   "journalWidgets": {
@@ -6038,7 +6049,7 @@
         "scheduled": "Switch from {date}",
         "scheduledDone": "Switching from {date}",
         "cancelSchedule": "Cancel the switch",
-        "tryFree": "Click to try it"
+        "tryFree": "Try free for 14 days"
       },
       "explain": {
         "upgrade": "Right away, you pay for {days, plural, one {# remaining day} other {# remaining days}}: a {difference} difference per period. The end date stays the same",
@@ -32120,5 +32131,17 @@
     "previewMore": "… rows in total: {rows, number}",
     "invalid": "A title and at least {min, number} columns are required",
     "reset": "Reset"
+  },
+  "publicCallback": {
+    "button": "Call me back",
+    "title": "We will call you back within 15 minutes",
+    "lead": "Leave your phone number — we will tell you which logs your business needs and show how to keep them on a phone. During Moscow business hours.",
+    "phone": "Phone",
+    "name": "Your name (optional)",
+    "submit": "Call me",
+    "sent": "Request received — we will call soon",
+    "failed": "Could not send. Please call us or write in the chat.",
+    "phoneRequired": "Enter a phone number",
+    "hint": "We use the number only to call you about this request."
   }
 }

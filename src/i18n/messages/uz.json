@@ -3863,6 +3863,17 @@
       "startUsingAction": "Jurnalni WeSetup’da yuritish",
       "disclaimer": "Bu xat shablonni wesetup.ru saytidan yuklab olayotganda ushbu manzil ko‘rsatilgani uchun yuborildi. Agar uni siz yuklab olmagan bo‘lsangiz, xatga javob bermang.",
       "freeTier": "{count, number} {count, plural, other {kun}} bepul, kartasiz"
+    },
+    "blankFollowup": {
+      "subject": "«{journalTitle}» jurnalini qanday yuritish: maslahatlar",
+      "greeting": "Assalomu alaykum!",
+      "intro": "Siz WeSetup saytida «{journalTitle}» jurnali shablonini yuklab oldingiz. Yozuvlar tekshiruvdan o‘tishi uchun quyidagilarga e’tibor bering:",
+      "pageIntro": "To‘ldirish namunasi, kim yuritishi shartligi va ko‘p beriladigan savollarga javoblar jurnal sahifasida:",
+      "paperlessTitle": "Jurnalni telefonda yuritish",
+      "paperlessBody": "Xodim QR-kod orqali bir necha soniyada yozuv qiladi, vaqt avtomatik qo‘yiladi, WeSetup esa o‘tkazib yuborilganlarni eslatadi. {freeTier}.",
+      "action": "Bepul sinab ko‘rish",
+      "help": "Jurnallar bo‘yicha yordam kerakmi? Ushbu xatga javob bering yoki {phone} raqamiga qo‘ng‘iroq qiling — maslahat beramiz va sozlab beramiz.",
+      "disclaimer": "Bu yuklab olishingiz bo‘yicha yagona xat: manzil wesetup.ru saytida shablonni yuklab olishda ko‘rsatilgan. U bo‘yicha boshqa xat bo‘lmaydi."
     }
   },
   "journalWidgets": {
@@ -6038,7 +6049,7 @@
         "scheduled": "{date} dan o‘tish",
         "scheduledDone": "{date} dan o‘tiladi",
         "cancelSchedule": "O‘tishni bekor qilish",
-        "tryFree": "Sinab ko‘rish uchun bosing"
+        "tryFree": "14 kun bepul sinab ko‘rish"
       },
       "explain": {
         "upgrade": "Darhol, {days, plural, other {qolgan # kun}} uchun qo‘shimcha to‘lov: davr uchun farq {difference}. Tugash sanasi o‘zgarmaydi",
@@ -32120,5 +32131,17 @@
     "previewMore": "… jami qatorlar: {rows, number}",
     "invalid": "Nom va kamida {min, number} ta ustun kerak",
     "reset": "Asl holiga qaytarish"
+  },
+  "publicCallback": {
+    "button": "Menga qo‘ng‘iroq qiling",
+    "title": "15 daqiqada qo‘ng‘iroq qilamiz",
+    "lead": "Telefon raqamingizni qoldiring — muassasangizga qaysi jurnallar kerakligini aytamiz va ularni telefonda qanday yuritishni ko‘rsatamiz. Moskva vaqti bo‘yicha ish vaqtida.",
+    "phone": "Telefon",
+    "name": "Ismingiz (ixtiyoriy)",
+    "submit": "Qo‘ng‘iroqni kutaman",
+    "sent": "Ariza qabul qilindi — tez orada qo‘ng‘iroq qilamiz",
+    "failed": "Yuborib bo‘lmadi. Bizga qo‘ng‘iroq qiling yoki chatda yozing.",
+    "phoneRequired": "Telefon raqamini kiriting",
+    "hint": "Raqam faqat arizangiz bo‘yicha qo‘ng‘iroq qilish uchun kerak."
   }
 }
