@@ -2698,7 +2698,8 @@ export type MessageContract = {
       "other": "Другое"
     },
     "legal": {
-      "consentSentence": "Я принимаю <offer>оферту</offer> и <terms>пользовательское соглашение</terms>, ознакомлен с <privacy>политикой конфиденциальности</privacy> и даю <consent>согласие на обработку персональных данных</consent>."
+      "consentSentence": "Я принимаю <offer>оферту</offer> и <terms>пользовательское соглашение</terms>, ознакомлен с <privacy>политикой конфиденциальности</privacy> и даю <consent>согласие на обработку персональных данных</consent>.",
+      "consentShort": "Принимаю <offer>оферту</offer> и даю <consent>согласие на обработку персональных данных</consent>"
     },
     "challenge": {
       "websiteLabel": "Ваш сайт"
@@ -5659,7 +5660,13 @@ export type MessageContract = {
     "autofillOffer": "Журналы заполняются сами",
     "sanpin4282": "СанПиН 2.3/2.4.4282-26",
     "tagline": "Ваш электронный ХАССП",
-    "knowledgeBase": "База знаний"
+    "knowledgeBase": "База знаний",
+    "dashboardShort": "Кабинет",
+    "groupProduct": "Продукт",
+    "groupResources": "Материалы",
+    "groupCompany": "Компания",
+    "groupDocuments": "Документы",
+    "allFeatures": "Все возможности"
   },
   "publicAbout": {
     "metadata": {
@@ -5932,10 +5939,23 @@ export type MessageContract = {
         }
       }
     },
-    "pricingTitle": "Четыре тарифа. Начните бесплатно — {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} без карты",
+    "pricingTitle": "Четыре тарифа. Начните с бесплатного",
     "brandTagline": "Ваш электронный ХАССП",
     "presentationPdf": "Презентация сетап — PDF, 7 МБ",
-    "knowledgeBaseLink": "База знаний"
+    "knowledgeBaseLink": "База знаний",
+    "workspaceShort": "Кабинет",
+    "allFeaturesLink": "Все возможности сервиса",
+    "faqKnowledgeBase": "Не нашли ответ? Загляните в <link>базу знаний WeSetup</link>.",
+    "faqMore": {
+      "refund": "Условия возврата в договоре-оферте",
+      "employeeAccess": "Как сотрудники заполняют журналы по QR-коду",
+      "missedEntry": "Как работают напоминания о смене",
+      "qrSecurity": "Доступы по ролям и журнал действий",
+      "electronicLogs": "Что требует СанПиН 2.3/2.4.4282-26",
+      "inspection": "Калькулятор штрафов Роспотребнадзора",
+      "integrations": "Подробнее о синхронизации с iiko и 1С",
+      "dataSecurity": "Как защищены и где хранятся данные"
+    }
   },
   "landingComponents": {
     "heroEmail": {
@@ -5993,7 +6013,7 @@ export type MessageContract = {
       "tiers": {
         "free": {
           "name": "Бесплатный",
-          "tagline": "Попробовать всё без ограничений — {trialDays, number} дней, без карты"
+          "tagline": "Попробовать всё без ограничений"
         },
         "standard": {
           "name": "Стандарт",
@@ -6015,7 +6035,7 @@ export type MessageContract = {
       },
       "price": {
         "perMonth": "/мес",
-        "freeNote": "{trialDays, number} дней, потом 1 сотрудник и 1 журнал",
+        "freeNote": "{trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} полного доступа",
         "yearTotal": "{amount} за год",
         "yearSavings": "экономия {amount}",
         "monthly": "оплата каждый месяц",
@@ -6031,9 +6051,9 @@ export type MessageContract = {
         "vip": "Всё из «Премиума», плюс:"
       },
       "features": {
-        "trialAll": "{trialDays, number} дней — все журналы, сотрудники и объекта без ограничений",
+        "trialAll": "Все журналы, сотрудники и объекты — без ограничений",
         "noCard": "Без привязки карты",
-        "afterTrial": "Дальше бесплатно: {employees, number} сотрудник и {journals, number} журнал — отметите сами",
+        "afterTrial": "Потом бесплатно: {employees, number} сотрудник и {journals, number} журнал — отметите сами",
         "employees": "До {count, number} сотрудников на объект",
         "allJournals": "Все журналы СанПиН и ХАССП, Telegram-бот и PDF для проверок",
         "storageOrders": "{mb, number} МБ на приказы к журналам и свои документы",
@@ -6065,7 +6085,7 @@ export type MessageContract = {
         "scheduled": "Перейти с {date}",
         "scheduledDone": "Переход с {date}",
         "cancelSchedule": "Отменить переход",
-        "tryFree": "Попробовать 14 дней бесплатно"
+        "tryFree": "Попробовать бесплатно"
       },
       "explain": {
         "upgrade": "Сразу, доплата за {days, plural, one {# оставшийся день} few {# оставшихся дня} many {# оставшихся дней} other {# оставшегося дня}}: разница {difference} за период. Дата окончания не меняется",
@@ -6085,10 +6105,12 @@ export type MessageContract = {
         "title": "Сравнение тарифов",
         "feature": "Что входит",
         "yes": "Есть",
-        "no": "Нет"
+        "no": "Нет",
+        "trialNote": "«Бесплатный»: первые {trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}} открыто всё, что есть в «Премиуме».",
+        "tabs": "Тариф для сравнения"
       },
       "groups": {
-        "team": "Команда и объекта",
+        "team": "Команда и объекты",
         "journals": "Журналы",
         "documents": "Документы",
         "equipment": "Оборудование и автоматизация",
@@ -6116,19 +6138,19 @@ export type MessageContract = {
         "consultant": "Личный консультант"
       },
       "cells": {
-        "employeesFree": "{trialDays, number} дней — без ограничений, потом {count, number}",
+        "employeesFree": "{count, number}",
         "employeesPaid": "{count, number} на объект",
-        "pointsFree": "{trialDays, number} дней — без ограничений, потом {count, number}",
+        "pointsFree": "{count, number}",
         "pointsPaid": "1 в тарифе; каждая следующая — как ещё один тариф, от {from, number} — −{percent, number} % на каждую",
-        "journalsFree": "{trialDays, number} дней — все, потом {count, number}",
+        "journalsFree": "{count, number} на выбор",
         "journalsAll": "Все",
-        "storageFree": "{trialDays, number} дней — 1 ГБ, потом закрыта",
-        "storageStandard": "{mb, number} МБ: приказы к журналам и свои документы",
-        "storagePremium": "{gb, number} ГБ на все документы",
-        "trialOnly": "Только {trialDays, number} дней пробного",
-        "ppkOnRequest": "Индивидуально, по запросу",
-        "employeesPremium": "{count, number} на объект, больше — по согласованию",
-        "pointsPaidScale": "1 в тарифе; каждая следующая — как ещё один тариф. Скидка на все объекты: от 5 — 5 %, от 10 — 10 %, от 15 — 20 %, от 35 — 25 %, от 50 — индивидуально",
+        "storageFree": "В пробный период",
+        "storageStandard": "{mb, number} МБ",
+        "storagePremium": "{gb, number} ГБ",
+        "trialOnly": "В пробный период",
+        "ppkOnRequest": "По запросу",
+        "employeesPremium": "{count, number} на объект, больше — по запросу",
+        "pointsPaidScale": "Сколько нужно, скидка от 5 объектов",
         "hotlineVip": "До {hours, number} часов в месяц"
       },
       "contactLink": "связаться",

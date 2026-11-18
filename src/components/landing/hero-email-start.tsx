@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "@/components/i18n/localized-link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
-import { ArrowRight, Loader2, Mail, MousePointerClick } from "lucide-react";
+import { ArrowRight, Mail, MousePointerClick } from "lucide-react";
 import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
 import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
@@ -35,6 +35,7 @@ export function HeroEmailStart({
   showLoginLink = true,
   place = "hero",
   align = "center",
+  showLiveGuide = true,
 }: {
   /// Где стоит форма: hero | final. Уходит параметром в цели Метрики и
   /// в instant-register, а также даёт полю уникальный id — на странице
@@ -52,6 +53,9 @@ export function HeroEmailStart({
   /// "start" — форма у левого края колонки (финальный блок: заголовок и
   /// шаги там слева, форма по центру под ними смотрелась отдельно).
   align?: "center" | "start";
+  /// Ссылка «Не знаете, с чего начать?» (живой гид). На главной её нет
+  /// (правки 18.11.2026): под формой и так согласие и гарантия.
+  showLiveGuide?: boolean;
 }) {
   const t = useTranslations("landingComponents.heroEmail");
   const errorT = useTranslations("publicUi.registrationErrors");
@@ -59,7 +63,10 @@ export function HeroEmailStart({
   const router = useRouter();
   const field = useEmailField();
   const challenge = useRegistrationChallenge();
-  const [loading, setLoading] = useState(false);
+  // Кнопка — одна форма на весь путь: кнопка → индикатор → галочка
+  // (`motion-submit` в globals.css меняет ширину и скругление по `data-state`).
+  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const loading = status !== "idle";
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [consentMissing, setConsentMissing] = useState(false);
@@ -87,7 +94,7 @@ export function HeroEmailStart({
     const value = field.value.trim().toLowerCase();
 
     setError(null);
-    setLoading(true);
+    setStatus("loading");
     // Имя цели прежнее — на него уже настроена Метрика; место формы
     // уходит параметром.
     ymGoal("hero_email_submit", goalParams);
@@ -113,6 +120,9 @@ export function HeroEmailStart({
       if (res.ok && data.created) {
         ymGoal("instant_register_done", goalParams);
         ymGoal("signup_created", goalParams);
+        // Галочка успевает нарисоваться, прежде чем страница уйдёт в кабинет.
+        setStatus("done");
+        await new Promise((resolve) => window.setTimeout(resolve, 520));
         window.location.assign("/dashboard?welcome=1");
         return;
       }
@@ -142,7 +152,8 @@ export function HeroEmailStart({
       ymGoal("signup_error", { ...goalParams, code: "network" });
       setError(t("networkError"));
     } finally {
-      setLoading(false);
+      // После «готово» страница уходит в кабинет — кнопку не возвращаем.
+      setStatus((current) => (current === "done" ? current : "idle"));
     }
   }
 
@@ -193,24 +204,33 @@ export function HeroEmailStart({
         <button
           type="submit"
           disabled={loading || !field.valid}
+          data-state={status}
+          aria-label={status === "loading" ? t("creatingAccount") : undefined}
           className={
-            "group inline-flex h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl px-6 text-[16px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:h-[60px] sm:px-7 " +
-            (layout === "stack" ? "w-full " : "") +
+            "motion-submit group relative inline-flex h-[56px] shrink-0 items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-2xl px-6 text-[16px] font-semibold [--submit-h:56px] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 sm:h-[60px] sm:px-7 sm:[--submit-h:60px] " +
+            (layout === "stack" ? "w-full self-center " : "max-sm:w-full max-sm:self-center ") +
             (dark
               ? "bg-white text-[#0b1024] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] hover:bg-white/90"
               : "bg-[#5566f6] text-white shadow-[0_20px_50px_-20px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0] hover:shadow-[0_24px_55px_-18px_rgba(85,102,246,0.65)]")
           }
         >
-          {loading ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              {t("creatingAccount")}</>
-          ) : (
-            <>
-              {buttonLabel ?? t("startFree")}
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </>
-          )}
+          {/* Подпись остаётся в разметке и держит ширину, пока кнопка
+              сжимается в круг: исчезает через размытие, а не вырезается. */}
+          <span className="motion-submit-label inline-flex items-center gap-2" aria-hidden={status !== "idle"}>
+            {buttonLabel ?? t("startFree")}
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+          </span>
+          {status === "done" ? (
+            <span key="done" className="absolute inset-0 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="motion-check motion-pop size-6" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+            </span>
+          ) : status === "loading" ? (
+            <span key="loading" className="absolute inset-0 flex items-center justify-center">
+              <span aria-hidden="true" className="motion-spinner block size-5 rounded-full border-[2.5px] border-current border-r-transparent" />
+            </span>
+          ) : null}
         </button>
       </form>
 
@@ -236,12 +256,13 @@ export function HeroEmailStart({
           }}
           tone={dark ? "dark" : "light"}
           highlight={consentMissing}
-          className="mt-2.5"
+          variant="short"
+          className="mt-2"
         />
       </div>
 
       {/* Живой гид по регистрации — тексты гида пока только по-русски. */}
-      {locale === "ru" ? (
+      {showLiveGuide && locale === "ru" ? (
         <LiveGuideStartButton
           className={
             "mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium underline-offset-4 transition-colors hover:underline " +

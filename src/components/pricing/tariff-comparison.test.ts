@@ -6,7 +6,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { createTranslator } from "use-intl/core";
 
-import { TariffComparison, type TariffCabinetState } from "./tariff-comparison";
+import { COMPARISON_ROW_ICONS, TariffComparison, type TariffCabinetState } from "./tariff-comparison";
+import { COMPARISON_GROUPS } from "@/lib/plan-catalog";
 import { loadMessages } from "@/i18n/messages";
 import { formatNumber, type Locale } from "@/i18n/locales";
 import { DEFAULT_PLAN_RATES } from "@/lib/tariff-plans";
@@ -82,6 +83,25 @@ test("public pricing renders four columns, points, PPK and the comparison table 
     assert.ok(table.includes(t("cells.pointsPaidScale")), `${locale}: points scale cell`);
     assert.ok(html.includes("/order?plan=standard&amp;cycle=year&amp;points=1"), `${locale}: order link`);
     if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
+    // Правки 18.11.2026: срок пробного на витрине — один раз, в карточке бесплатного
+    // тарифа; строки о пробном под карточками нет, в таблице — одна сноска.
+    const cards = html.slice(0, html.indexOf('data-testid="tariff-ppk"'));
+    assert.ok(cards.includes(t("price.freeNote", { trialDays: 14 })), `${locale}: free note`);
+    assert.ok(!html.includes(t("note.trial", { trialDays: 14 })), `${locale}: trial note under the cards`);
+    assert.ok(cards.includes(t("cta.tryFree")), `${locale}: free CTA`);
+    assert.doesNotMatch(t("cta.tryFree") + t("tiers.free.tagline") + t("features.trialAll"), /14/, `${locale}: 14 repeated`);
+    assert.ok(table.includes(t("table.trialNote", { trialDays: 14 })), `${locale}: table footnote`);
+    // На телефоне тариф для сравнения выбирают вкладками; по умолчанию — «Стандарт».
+    for (const tier of ["free", "standard", "premium", "vip"]) {
+      assert.ok(table.includes(`data-testid="tariff-table-tab-${tier}"`), `${locale}: tab ${tier}`);
+    }
+    assert.match(table, /role="tab" aria-selected="true" data-testid="tariff-table-tab-standard"/, `${locale}: default tab`);
+  }
+});
+
+test("every comparison row has its own icon", () => {
+  for (const row of COMPARISON_GROUPS.flatMap((group) => group.rows)) {
+    assert.ok(COMPARISON_ROW_ICONS[row.key], row.key);
   }
 });
 

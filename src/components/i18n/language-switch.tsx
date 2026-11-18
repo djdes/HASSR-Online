@@ -11,6 +11,7 @@ import {
 import { localizedHref, publicLocalesForPath, SITE_LOCALE_COOKIE, PENDING_LOCALE_COOKIE, type SiteLocale } from "@/i18n/site-locale";
 import { LOCALE_NAMES, OFFERED_LOCALES } from "@/i18n/locales";
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 import { useSiteLocale } from "./site-locale-provider";
 
 function refreshLanguageHref(anchor: HTMLAnchorElement, locale: SiteLocale) {
@@ -24,7 +25,17 @@ function rememberLanguageChoice(locale: SiteLocale) {
   document.cookie = `${PENDING_LOCALE_COOKIE}=${locale}; Max-Age=86400; ${attributes}`;
 }
 
-export function LanguageSwitch() {
+export function LanguageSwitch({
+  className,
+  align = "end",
+  side,
+}: {
+  /** Доп. классы кнопки: шапка прячет переключатель на телефоне (он в подвале). */
+  className?: string;
+  align?: "start" | "center" | "end";
+  /** В подвале список открывается вверх. */
+  side?: "top" | "bottom";
+} = {}) {
   const locale = useSiteLocale();
   const t = useTranslations("language");
   const pathname = usePathname();
@@ -42,14 +53,17 @@ export function LanguageSwitch() {
         <button
           type="button"
           aria-label={`${t("label")}: ${LOCALE_NAMES[locale]}`}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-[#ececf4] px-3 text-[12px] font-semibold text-[#3848c7] transition-colors hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/20"
+          className={cn(
+            "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-[#ececf4] px-3 text-[12px] font-semibold text-[#3848c7] transition-colors hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/20",
+            className,
+          )}
         >
           <Globe2 className="size-3.5" aria-hidden="true" />
           {locale.toUpperCase()}
           <ChevronDown className="size-3.5" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" aria-label={t("label")}>
+      <DropdownMenuContent align={align} side={side} aria-label={t("label")}>
         {available.map((nextLocale) => (
           <DropdownMenuItem key={nextLocale} asChild>
             <a

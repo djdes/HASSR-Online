@@ -4,10 +4,13 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 
 /**
- * Плавающие виджеты подвала (чат поддержки, «Задайте вопрос») — не нужны на
+ * Плавающие виджеты подвала (чат поддержки, «Контакты») — не нужны на
  * первом экране, а их код — сотни строк с формами и порталами. Грузим после
  * того, как браузер освободится (спека seo-speed-pack-2026-11, п. 3): первый
  * экран телефона получает меньше JS, виджет появляется через 1–3 секунды.
+ *
+ * На экране от них одна кнопка — тёмный круг «Контакты» (правки 18.11.2026):
+ * чат поддержки своей кнопки не показывает и открывается из окна контактов.
  */
 
 const PublicSupportWidget = dynamic(
@@ -38,7 +41,7 @@ function WhenIdle({ children }: { children: ReactNode }) {
 export function LazyPublicWidgets({ telegramUrl }: { telegramUrl: string | null }) {
   return (
     <WhenIdle>
-      <PublicSupportWidget />
+      <PublicSupportWidget launcher={false} />
       <ContactsDock telegramUrl={telegramUrl} />
     </WhenIdle>
   );

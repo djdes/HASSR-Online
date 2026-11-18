@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Loader2, Phone, Send } from "lucide-react";
@@ -8,12 +8,15 @@ import { toast } from "sonner";
 
 import { ContactUsPanel } from "@/components/contact/contact-us-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SUPPORT_CHAT_UNREAD_EVENT, openSupportChat } from "@/lib/support-chat-bus";
 import { cn } from "@/lib/utils";
 
 /**
  * «Контакты» на каждой публичной странице (правки 05.11.2026; с 07.11 —
- * всегда на экране): справа внизу две кнопки — «Контакты» над «Поддержкой»
- * (чат, `PublicSupportWidget`), в любой момент можно позвонить или написать.
+ * всегда на экране). С 18.11.2026 справа внизу одна кнопка — тёмный круг со
+ * значком: она открывает это окно, а чат поддержки (`PublicSupportWidget`)
+ * открывается из него. Непрочитанный ответ поддержки — счётчик на кнопке, и
+ * тогда нажатие ведёт сразу в переписку.
  *
  * В окне — те же крупные контакты, что и в «Свяжитесь с нами», и под ними
  * форма: контакт и удобный способ связи. Заявка уходит обычным обращением с
@@ -45,6 +48,13 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
   const [company, setCompany] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const onUnread = (event: Event) => setUnread((event as CustomEvent<number>).detail ?? 0);
+    window.addEventListener(SUPPORT_CHAT_UNREAD_EVENT, onUnread);
+    return () => window.removeEventListener(SUPPORT_CHAT_UNREAD_EVENT, onUnread);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,17 +112,32 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
   // Кнопка — порталом в body: у футера лендинга при появлении стоит
   // transform, и `position: fixed` внутри него уезжал бы в низ страницы
   // (так же сделано у `PublicSupportWidget`).
+  // Круг 52 px; с мышью при наведении растягивается в «таблетку» с подписью
+  // (`motion-fab` в globals.css) — та же кнопка, а не вторая рядом.
   const launcher = (
     <button
       type="button"
-      onClick={() => setOpen(true)}
-      aria-label={t("launcherAria")}
+      onClick={() => {
+        // Есть непрочитанный ответ — сразу в переписку, если чат на странице.
+        if (unread > 0 && openSupportChat()) return;
+        setOpen(true);
+      }}
+      aria-label={unread > 0 ? `${t("launcherAria")} · ${unread}` : t("launcherAria")}
       data-contacts-dock
-      className="fixed bottom-[calc(84px+var(--public-sticky-offset,0px))] right-5 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-[#0b1024] px-5 text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(11,16,36,0.55)] ring-1 ring-white/15 transition-colors duration-200 hover:bg-[#1a2148] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 motion-reduce:transition-none print:hidden"
+      className="motion-fab fixed bottom-[calc(1.25rem+var(--public-sticky-offset,0px))] right-4 z-30 inline-flex h-[52px] items-center overflow-visible rounded-full bg-[#0b1024] text-[15px] font-semibold text-white shadow-[0_14px_30px_-10px_rgba(11,16,36,0.55)] ring-1 ring-white/15 hover:bg-[#1a2148] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 sm:right-5 print:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <Phone className="size-[18px] text-[#8e9bf8]" aria-hidden />
-      {t("launcher")}
+      <span className="flex size-[52px] shrink-0 items-center justify-center">
+        <Phone className="size-[21px] text-[#8e9bf8]" aria-hidden />
+      </span>
+      <span className="motion-fab-label overflow-hidden whitespace-nowrap" aria-hidden>
+        {t("launcher")}
+      </span>
+      {unread > 0 ? (
+        <span className="motion-pop pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#d2453d] px-1.5 text-[11px] font-semibold tabular-nums text-white ring-2 ring-white">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      ) : null}
     </button>
   );
 

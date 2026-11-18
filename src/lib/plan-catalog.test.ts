@@ -62,13 +62,15 @@ describe("тарифы 2026-11-05: Бесплатный 14 дней, Станд�
     const scale = POINTS_DISCOUNT_STEPS.map((step) => `от ${step.from} — ${step.percent} %`).join(", ");
     for (const [name, value] of [
       ["pointsPicker.hint", tariffs.pointsPicker.hint],
-      ["cells.pointsPaidScale", tariffs.cells.pointsPaidScale],
       ["subscriptionPage.rulePoints", ru.settingsUi.subscriptionPage.rulePoints],
     ] as const) {
       assert.ok(value.includes(scale), `${name}: ${value}`);
       assert.doesNotMatch(value, /\{(from|percent)/, `${name}: без параметров`);
     }
-    assert.match(tariffs.cells.pointsPaidScale, /от 50 — индивидуально/);
+    // Клетка таблицы короткая (правки 18.11.2026: «текста поменьше»): шкала целиком —
+    // в подсказке счётчика объектов над карточками, клетка называет только порог.
+    assert.match(tariffs.cells.pointsPaidScale, new RegExp(`от ${POINTS_DISCOUNT_STEPS[0].from} объектов`));
+    assert.ok(tariffs.cells.pointsPaidScale.length <= 40, tariffs.cells.pointsPaidScale);
     assert.match(ru.settingsUi.subscriptionPage.rulePoints, /от 50 — индивидуальное предложение/);
     assert.match(tariffs.individual.title, /^От 50 объектов/);
   });

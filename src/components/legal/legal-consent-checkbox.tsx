@@ -18,6 +18,7 @@ export function LegalConsentCheckbox({
   className,
   highlight,
   guideTarget,
+  variant = "full",
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
@@ -27,6 +28,13 @@ export function LegalConsentCheckbox({
   highlight?: boolean;
   /** Цель живого гида по регистрации (`data-guide`). */
   guideTarget?: string;
+  /**
+   * `short` — стартовая форма сайта (правки 18.11.2026): одна строка с двумя
+   * документами, оферта и согласие на обработку персональных данных. В журнал
+   * согласий для источника `landing` пишется этот же текст
+   * (`LEGAL_CONSENT_TEXT_SHORT` в `lib/legal-consent.ts`) — менять вместе.
+   */
+  variant?: "full" | "short";
 }) {
   const t = useTranslations("auth.legal");
   const descriptionId = useId();
@@ -39,7 +47,8 @@ export function LegalConsentCheckbox({
     <label
       data-guide={guideTarget}
       className={cn(
-        "flex cursor-pointer items-start gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] transition-colors",
+        "flex cursor-pointer gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] transition-colors",
+        variant === "short" ? "items-center" : "items-start",
         dark ? "text-white/70" : "text-[#6f7282]",
         highlight && !checked && (dark ? "bg-white/10 ring-2 ring-[#ffb4ab]/60" : "bg-[#fff4f2] ring-2 ring-[#f2b8b0]"),
         className
@@ -49,17 +58,22 @@ export function LegalConsentCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-[18px] shrink-0 accent-[#5566f6]"
+        className={cn("size-[18px] shrink-0 accent-[#5566f6]", variant === "short" ? "" : "mt-0.5")}
         data-testid="legal-consent"
         aria-describedby={descriptionId}
       />
       <span id={descriptionId}>
-        {t.rich("consentSentence", {
-          offer: (chunks) => <Link href="/oferta" target="_blank" className={link}>{chunks}</Link>,
-          terms: (chunks) => <Link href="/terms" target="_blank" className={link}>{chunks}</Link>,
-          privacy: (chunks) => <Link href="/privacy" target="_blank" className={link}>{chunks}</Link>,
-          consent: (chunks) => <Link href="/consent" target="_blank" className={link}>{chunks}</Link>,
-        })}
+        {variant === "short"
+          ? t.rich("consentShort", {
+              offer: (chunks) => <Link href="/oferta" target="_blank" className={link}>{chunks}</Link>,
+              consent: (chunks) => <Link href="/consent" target="_blank" className={link}>{chunks}</Link>,
+            })
+          : t.rich("consentSentence", {
+              offer: (chunks) => <Link href="/oferta" target="_blank" className={link}>{chunks}</Link>,
+              terms: (chunks) => <Link href="/terms" target="_blank" className={link}>{chunks}</Link>,
+              privacy: (chunks) => <Link href="/privacy" target="_blank" className={link}>{chunks}</Link>,
+              consent: (chunks) => <Link href="/consent" target="_blank" className={link}>{chunks}</Link>,
+            })}
       </span>
     </label>
   );
