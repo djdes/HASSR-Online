@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isEmptySnapshot, readSignupSnapshot, signupSourceSummary } from "@/lib/signup-channel";
 import Link from "next/link";
 import { ArrowLeft, AtSign, Building2, Calculator, Globe, Mail, MapPin, MessageCircle, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
@@ -201,6 +202,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       : Promise.resolve(null),
   ]);
   const clientNow = new Date();
+  // Откуда пришёл клиент — первое касание при регистрации (спека visit-source-2026-11).
+  const signupSnapshot = readSignupSnapshot(org.signupSourceJson);
+  const signupSource = isEmptySnapshot(signupSnapshot) ? null : signupSourceSummary(signupSnapshot);
   // Местное время клиента — по IP последнего входа (или регистрации), иначе
   // пояс организации (спека tg-client-location-2026-11): рядом с телефоном.
   const ownerGeo = (owner?.lastLoginIp && owner.lastLoginIp !== owner.registrationIp ? lastLoginGeo : null) ?? registrationGeo;
@@ -250,6 +254,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               {org.city ? <span>· {[org.city, countryName(org.countryCode, locale)].filter(Boolean).join(", ")}</span> : null}
               {org.inn ? <span>· {t("requisites.inn")} {org.inn}</span> : null}
               <span>· {t("page.since", { date: organizationDate(org.createdAt, locale, true) })}</span>
+              {signupSource ? <span data-testid="org-signup-source">· {t("page.source", { source: signupSource })}</span> : null}
             </div>
             <div className="mt-3">
               <AccountManagerControl organizationId={org.id} current={accountManager} options={managerOptions} canAssign={canAssignManager} />

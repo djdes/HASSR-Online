@@ -5786,6 +5786,9 @@ model CrmContact {
   ownerId          String?
   /// Канал первого обращения (см. CRM_CHANNELS).
   source           String
+  /// Первое касание посетителя на сайте: посадочная, referrer, utm, метка
+  /// клика рекламы (`SignupSourceSnapshot`, спека visit-source-2026-11).
+  visitSourceJson  Json?
   lastInboundAt    DateTime?
   lastOutboundAt   DateTime?
   lastActivityAt   DateTime         @default(now())

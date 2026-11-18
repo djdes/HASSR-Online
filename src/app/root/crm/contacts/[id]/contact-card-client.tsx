@@ -142,7 +142,11 @@ export function ContactCardClient({
             <div className="min-w-0">
               <h1 className="truncate text-[24px] font-semibold tracking-[-0.02em] text-[#0b1024]">{displayName(contact)}</h1>
               <p className="mt-0.5 text-[13.5px] text-[#6f7282]">
-                {[contact.company !== contact.name ? contact.company : null, `первое обращение: ${channelLabel(contact.source)}, ${formatDateTime(firstAt)}`]
+                {[
+                  contact.company !== contact.name ? contact.company : null,
+                  `первое обращение: ${channelLabel(contact.source)}, ${formatDateTime(firstAt)}`,
+                  card.visitSource ? `откуда пришёл: ${card.visitSource}` : null,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </p>

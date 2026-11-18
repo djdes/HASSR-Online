@@ -17202,7 +17202,8 @@ export type MessageContract = {
       "inn": " · ИНН {inn}",
       "backToClients": "Все клиенты",
       "since": "Регистрация {date}",
-      "lastActivity": "Последняя активность: {value}"
+      "lastActivity": "Последняя активность: {value}",
+      "source": "Источник: {source}"
     },
     "stats": {
       "users": "Сотрудники",

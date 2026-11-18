@@ -17201,7 +17201,8 @@
       "inn": " · INN {inn}",
       "backToClients": "All clients",
       "since": "Registered {date}",
-      "lastActivity": "Last activity: {value}"
+      "lastActivity": "Last activity: {value}",
+      "source": "Source: {source}"
     },
     "stats": {
       "users": "Employees",

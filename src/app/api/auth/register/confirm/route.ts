@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rememberOrganizationVisitSource, requestSignupSource } from "@/lib/visit-source.server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import {
@@ -228,6 +229,9 @@ export async function POST(request: Request) {
     locale,
     via: "register",
   }).catch((err) => console.error("sendWelcomeEmail failed", err));
+
+  // Откуда пришёл — cookie первого касания (спека visit-source-2026-11).
+  await rememberOrganizationVisitSource(result.organization.id, requestSignupSource(request, null));
 
   // Регистрации через /register раньше не уведомляли никого: новые
   // организации появлялись молча, и владелец узнавал о них случайно.
