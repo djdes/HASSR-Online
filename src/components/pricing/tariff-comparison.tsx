@@ -2,10 +2,41 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowRight, Building2, Check, Crown, FileText, Gem, Gift, Minus, Plus, Sparkles, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpenCheck,
+  Building2,
+  Cable,
+  Camera,
+  Check,
+  ClipboardCheck,
+  Crown,
+  Database,
+  FileCheck2,
+  FileDown,
+  FileText,
+  FolderOpen,
+  Gem,
+  Gift,
+  HardDrive,
+  ListChecks,
+  Minus,
+  Package,
+  PackageCheck,
+  PhoneCall,
+  Plus,
+  QrCode,
+  ScrollText,
+  ShieldCheck,
+  Sparkles,
+  UserRoundCheck,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 import { ContactUsDialog, ContactUsTrigger } from "@/components/contact/contact-us-dialog";
 import { PromoPrice } from "@/components/pricing/promo-price";
+import { LiquidTabs } from "@/components/motion/liquid-tabs";
 import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { formatDate, formatNumber, type Locale } from "@/i18n/locales";
 import { localizedHref } from "@/i18n/site-locale";
@@ -100,6 +131,34 @@ type Props = {
 
 const TIER_ICON: Record<TierId, typeof Gift> = { free: Gift, standard: Users, premium: Crown, vip: Gem };
 
+/**
+ * Значок строки таблицы сравнения (правки 18.11.2026: «иконок добавить,
+ * текста поменьше»). Ключ — строка из `COMPARISON_GROUPS`; строка без значка в
+ * карте получает галочку — тест `tariff-comparison.test.ts` следит, чтобы таких
+ * не было.
+ */
+export const COMPARISON_ROW_ICONS: Record<string, LucideIcon> = {
+  employees: Users,
+  points: Building2,
+  journals: BookOpenCheck,
+  checklists: ListChecks,
+  ppkElectronic: ShieldCheck,
+  telegram: QrCode,
+  pdf: FileDown,
+  mercury: FileCheck2,
+  storage: HardDrive,
+  ownDocuments: FolderOpen,
+  typicalPackage: Package,
+  ppkIndividual: ScrollText,
+  haccpPlan: ClipboardCheck,
+  photoAutofill: Camera,
+  equipmentConnect: Cable,
+  equipmentDelivery: PackageCheck,
+  hotline: PhoneCall,
+  dataBank: Database,
+  consultant: UserRoundCheck,
+};
+
 export function TariffComparison({
   mode,
   rates,
@@ -125,6 +184,14 @@ export function TariffComparison({
   const [cycle, setCycle] = useState<BillingCycle>("year");
   const minPoints = Math.max(1, cabinet?.pointsInUse ?? 1);
   const [points, setPoints] = useState(Math.max(minPoints, currentPaid?.points ?? 1));
+  // Куда уехала ручка тумблера — для её растяжения в движении (`motion-knob`);
+  // до первого нажатия анимации нет.
+  const [knobMoved, setKnobMoved] = useState<"left" | "right" | null>(null);
+  const changeCycle = (next: BillingCycle) => {
+    if (next === cycle) return;
+    setKnobMoved(next === "year" ? "right" : "left");
+    setCycle(next);
+  };
   // Одно окно контактов на блок ППК и клетки таблицы.
   const [contactOpen, setContactOpen] = useState(false);
   // Неразрывный пробел перед «₽»: сумма в кнопке и в цене не разрывается.
@@ -217,7 +284,10 @@ export function TariffComparison({
                 aria-live="polite"
                 className="min-w-[2.75rem] text-center text-[17px] font-semibold tabular-nums text-[#0b1024]"
               >
-                {points}
+                {/* Новое число проявляется из размытия (`key` перезапускает анимацию). */}
+                <span key={points} className="motion-swap">
+                  {points}
+                </span>
               </span>
               <button
                 type="button"
@@ -260,7 +330,7 @@ export function TariffComparison({
               type="button"
               aria-pressed={cycle === "month"}
               data-testid="tariff-cycle-month"
-              onClick={() => setCycle("month")}
+              onClick={() => changeCycle("month")}
               className={cn(
                 "min-h-11 min-w-11 whitespace-nowrap px-0.5 text-[14px] font-medium transition-colors",
                 cycle === "month" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
@@ -274,7 +344,7 @@ export function TariffComparison({
               aria-checked={cycle === "year"}
               aria-label={t("toggle.switchLabel")}
               data-testid="tariff-cycle-switch"
-              onClick={() => setCycle((value) => (value === "year" ? "month" : "year"))}
+              onClick={() => changeCycle(cycle === "year" ? "month" : "year")}
               className="group inline-flex h-11 w-12 shrink-0 items-center justify-center rounded-full focus-visible:outline-none"
             >
               <span
@@ -284,8 +354,9 @@ export function TariffComparison({
                 )}
               >
                 <span
+                  data-moved={knobMoved ?? undefined}
                   className={cn(
-                    "tariff-switch-knob inline-block size-5 rounded-full shadow-[0_1px_3px_rgba(11,16,36,0.3)] transition-transform",
+                    "tariff-switch-knob motion-knob inline-block size-5 rounded-full shadow-[0_1px_3px_rgba(11,16,36,0.3)]",
                     cycle === "year" ? "translate-x-6" : "translate-x-1",
                   )}
                 />
@@ -295,7 +366,7 @@ export function TariffComparison({
               type="button"
               aria-pressed={cycle === "year"}
               data-testid="tariff-cycle-year"
-              onClick={() => setCycle("year")}
+              onClick={() => changeCycle("year")}
               className={cn(
                 "min-h-11 min-w-11 whitespace-nowrap px-0.5 text-[14px] font-medium transition-colors",
                 cycle === "year" ? "text-[#0b1024]" : "text-[#6f7282] hover:text-[#0b1024]",
@@ -331,7 +402,7 @@ export function TariffComparison({
           tier="free"
           subgrid={mode === "public" ? "xl" : "2xl"}
           name={t("tiers.free.name")}
-          tagline={t("tiers.free.tagline", { trialDays: TRIAL_DAYS })}
+          tagline={t("tiers.free.tagline")}
           badge={
             cabinet?.status === "trial"
               ? t("badges.trial", { days: cabinet.trialDaysLeft ?? TRIAL_DAYS })
@@ -401,7 +472,8 @@ export function TariffComparison({
               tagline={t(`tiers.${tier}.tagline`)}
               badge={isCurrent ? t("badges.current") : tier === "standard" ? t("badges.popular") : null}
               price={
-                <div className="space-y-1.5">
+                // Смена периода или числа объектов — цена проявляется из размытия.
+                <div key={`${cycle}-${points}`} className="motion-swap-block space-y-1.5">
                   <PromoPrice
                     locale={locale}
                     price={price}
@@ -507,8 +579,11 @@ export function TariffComparison({
         })}
       </div>
 
+      {/* На витрине срок пробного назван один раз — в карточке бесплатного
+          тарифа (правки 18.11.2026); в кабинете строка о пробном остаётся. */}
       <p className="text-center text-[13px] leading-relaxed text-[#6f7282]">
-        {t("note.trial", { trialDays: TRIAL_DAYS })} {t("note.switch")}
+        {mode === "cabinet" ? `${t("note.trial", { trialDays: TRIAL_DAYS })} ` : null}
+        {t("note.switch")}
       </p>
 
       {/* ППК индивидуально — у всех тарифов (владелец: «во все тарифы … кнопку
@@ -752,15 +827,25 @@ function CtaStatic({ children }: { children: ReactNode }) {
   );
 }
 
-/** Таблица сравнения: строки — из `COMPARISON_GROUPS`, подписи — из каталога i18n. */
+/**
+ * Таблица сравнения: строки — из `COMPARISON_GROUPS`, подписи — из каталога i18n.
+ *
+ * Одна таблица на все ширины (правки 18.11.2026). На телефоне видны два
+ * столбца — «что» и значение выбранного тарифа; тариф выбирают вкладками над
+ * таблицей, горизонтальной прокрутки нет. С `lg` видны все четыре столбца,
+ * «Стандарт» подсвечен, вкладок нет. Клетки остальных тарифов на телефоне
+ * скрыты классом, а не убраны из разметки — поисковик и скринридер на ПК
+ * получают таблицу целиком.
+ */
 function ComparisonTable({ onContact }: { onContact: () => void }) {
   const t = useTranslations("landingComponents.tariffs");
   const tiers: TierId[] = ["free", "standard", "premium", "vip"];
+  const [selected, setSelected] = useState<TierId>("standard");
   const cell = (value: ComparisonCell) => {
     if (value.kind === "yes") {
       return (
-        <span className="inline-flex items-center justify-center" aria-label={t("table.yes")}>
-          <Check className="size-4 text-[#5566f6]" />
+        <span className="inline-flex size-6 items-center justify-center rounded-full bg-[#eef1ff]" aria-label={t("table.yes")}>
+          <Check className="size-3.5 text-[#5566f6]" strokeWidth={3} />
         </span>
       );
     }
@@ -774,7 +859,7 @@ function ComparisonTable({ onContact }: { onContact: () => void }) {
     // «ППК под ваш объект»: «по запросу» — кнопка окна контактов, без цены.
     if (value.key === "ppkOnRequest") {
       return (
-        <ContactUsTrigger onClick={onContact} variant="link" icon={false} className="justify-start text-[14px]">
+        <ContactUsTrigger onClick={onContact} variant="link" icon={false} className="justify-end text-[14px] lg:justify-center">
           {t("cells.ppkOnRequest")}
         </ContactUsTrigger>
       );
@@ -782,44 +867,91 @@ function ComparisonTable({ onContact }: { onContact: () => void }) {
     return <span>{t(`cells.${value.key}` as never, (value.values ?? {}) as never)}</span>;
   };
   return (
-    <section data-testid="tariff-table" className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">
+    <section data-testid="tariff-table" className="rounded-3xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">
       <h3 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("table.title")}</h3>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[760px] border-collapse text-[14px]">
-          <thead>
-            <tr className="text-left">
-              <th className="w-[28%] pb-3 pr-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]">{t("table.feature")}</th>
+
+      <LiquidTabs
+        className="mt-4 lg:hidden"
+        ariaLabel={t("table.tabs")}
+        value={selected}
+        onChange={setSelected}
+        tabClassName="min-h-11 truncate px-1 text-[13px] font-medium"
+        tabs={tiers.map((tier) => ({ id: tier, label: t(`tiers.${tier}.name` as never), testId: `tariff-table-tab-${tier}` }))}
+      />
+
+      <table className="mt-3 w-full table-fixed border-collapse text-[14px] lg:mt-5">
+        <colgroup>
+          <col className="w-[58%] lg:w-[32%]" />
+          {tiers.map((tier) => (
+            <col key={tier} className={tier === selected ? undefined : "max-lg:hidden"} />
+          ))}
+        </colgroup>
+        <thead className="max-lg:sr-only">
+          <tr>
+            <th scope="col" className="pb-3 pr-3 text-left text-[12px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]">
+              {t("table.feature")}
+            </th>
+            {tiers.map((tier) => (
+              <th
+                key={tier}
+                scope="col"
+                className={cn(
+                  "px-2 pb-3 pt-3 text-center text-[15px] font-semibold text-[#0b1024]",
+                  tier === "standard" && "rounded-t-2xl bg-[#f5f6ff] text-[#3848c7]",
+                  tier !== selected && "max-lg:hidden",
+                )}
+              >
+                {t(`tiers.${tier}.name` as never)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {COMPARISON_GROUPS.map((group, groupIndex) => (
+          <tbody key={group.key}>
+            <tr>
+              <th
+                scope="rowgroup"
+                className="pb-2 pr-3 pt-5 text-left text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]"
+              >
+                {t(`groups.${group.key}` as never)}
+              </th>
               {tiers.map((tier) => (
-                <th key={tier} className="pb-3 pr-3 text-[15px] font-semibold text-[#0b1024]">
-                  <span className="inline-flex items-center gap-1.5">
-                    {tier === "standard" ? <Building2 className="size-4 text-[#5566f6]" /> : null}
-                    {t(`tiers.${tier}.name` as never)}
-                  </span>
-                </th>
+                <td key={tier} aria-hidden="true" className={cn(tier === "standard" && "lg:bg-[#f5f6ff]", tier !== selected && "max-lg:hidden")} />
               ))}
             </tr>
-          </thead>
-          {COMPARISON_GROUPS.map((group) => (
-            <tbody key={group.key}>
-              <tr>
-                <td colSpan={5} className="pb-2 pt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                  {t(`groups.${group.key}` as never)}
-                </td>
-              </tr>
-              {group.rows.map((row) => (
-                <tr key={row.key} className="border-t border-[#f2f3f8] align-top">
-                  <td className="py-2.5 pr-3 text-[#3c4053]">{t(`rows.${row.key}` as never)}</td>
+            {group.rows.map((row, rowIndex) => {
+              const Icon = COMPARISON_ROW_ICONS[row.key] ?? Check;
+              const last = groupIndex === COMPARISON_GROUPS.length - 1 && rowIndex === group.rows.length - 1;
+              return (
+                <tr key={row.key} className="border-t border-[#f2f3f8]">
+                  <th scope="row" className="py-2.5 pr-3 text-left align-middle font-normal text-[#3c4053]">
+                    <span className="flex items-center gap-2.5">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#f5f6ff] text-[#5566f6]">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 leading-snug">{t(`rows.${row.key}` as never)}</span>
+                    </span>
+                  </th>
                   {tiers.map((tier) => (
-                    <td key={tier} className="py-2.5 pr-3 text-[#0b1024]">
+                    <td
+                      key={tier}
+                      className={cn(
+                        "tariff-cell px-2 py-2.5 text-right align-middle leading-snug text-[#0b1024] lg:text-center",
+                        tier === "standard" && "lg:bg-[#f5f6ff]",
+                        tier === "standard" && last && "lg:rounded-b-2xl",
+                        tier !== selected && "max-lg:hidden",
+                      )}
+                    >
                       {cell(row.cells[tier])}
                     </td>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          ))}
-        </table>
-      </div>
+              );
+            })}
+          </tbody>
+        ))}
+      </table>
+      <p className="mt-4 text-[13px] leading-relaxed text-[#6f7282]">{t("table.trialNote", { trialDays: TRIAL_DAYS })}</p>
     </section>
   );
 }

@@ -11,6 +11,20 @@ export const LEGAL_VERSION = "2026-09-30";
 export const LEGAL_CONSENT_TEXT =
   "Принимаю условия оферты и пользовательского соглашения, ознакомлен с политикой конфиденциальности и даю согласие на обработку персональных данных";
 
+/**
+ * Короткая галка стартовой формы сайта (источник `landing`, правки
+ * 18.11.2026): человек видит два документа — оферту и согласие на обработку
+ * персональных данных, — и в журнал пишется ровно это, а не полный текст.
+ * Видимая строка — `auth.legal.consentShort` в словарях; менять вместе.
+ */
+export const LEGAL_CONSENT_TEXT_SHORT =
+  "Принимаю оферту и даю согласие на обработку персональных данных";
+
+/** Текст, который видел человек: у стартовой формы сайта — короткий. */
+export function legalConsentTextFor(source: LegalConsentSource): string {
+  return source === "landing" ? LEGAL_CONSENT_TEXT_SHORT : LEGAL_CONSENT_TEXT;
+}
+
 /** `blank-register` — галка «Быстрая регистрация» в окне скачивания шаблона. */
 export type LegalConsentSource = "register" | "landing" | "update-modal" | "blank-register";
 
@@ -28,7 +42,7 @@ export async function recordLegalConsent(params: {
         email: params.email,
         organizationId: params.organizationId,
         version: LEGAL_VERSION,
-        statementText: LEGAL_CONSENT_TEXT,
+        statementText: legalConsentTextFor(params.source),
         source: params.source,
         ipAddress: clientIp(params.request),
         userAgent: params.request.headers.get("user-agent")?.slice(0, 400) ?? null,

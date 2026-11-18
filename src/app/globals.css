@@ -94,6 +94,13 @@
   --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Springs (spec landing-mobile-polish-2026-11-18): closed-form step
+     responses of a damped spring sampled into linear(). `--spring` overshoots
+     by ~1.5 % (damping 0.8), `--spring-soft` does not overshoot visibly (0.9),
+     `--spring-lively` by ~4.5 % (0.7) — only for small knobs and indicators. */
+  --spring: linear(0, 0.0515, 0.1701, 0.3158, 0.463, 0.5973, 0.7116, 0.8037, 0.8746, 0.9267, 0.9632, 0.9875, 1.0024, 1.0107, 1.0144, 1.0151, 1.0141, 1.0122, 1.01, 1.0078, 1.0058, 1.0041, 1.0028, 1.0018, 1);
+  --spring-soft: linear(0, 0.0682, 0.2133, 0.3771, 0.5297, 0.6586, 0.7607, 0.8377, 0.8937, 0.933, 0.9596, 0.977, 0.988, 0.9946, 0.9984, 1.0004, 1.0013, 1.0015, 1.0015, 1.0013, 1);
+  --spring-lively: linear(0, 0.0747, 0.2415, 0.4362, 0.6196, 0.7721, 0.8867, 0.9651, 1.0128, 1.0373, 1.0457, 1.0441, 1.0372, 1.0284, 1.0197, 1.0122, 1.0065, 1.0024, 0.9999, 0.9985, 0.9979, 0.9979, 0.9982, 0.9986, 1);
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -1316,8 +1323,8 @@ html, body {
 @keyframes landing-rise {
   from {
     opacity: 0;
-    filter: blur(8px);
-    transform: translate3d(0, 28px, 0) scale(0.985);
+    filter: blur(6px);
+    transform: translate3d(0, 18px, 0) scale(0.985);
   }
   to {
     opacity: 1;
@@ -1384,35 +1391,23 @@ html, body {
 
 .landing-nav,
 .public-header {
-  animation: landing-nav-drop 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: landing-nav-drop 0.5s var(--spring-soft) both;
 }
 
-.hero-badge,
 .hero-mark,
 .hero-title,
-.hero-copy,
 .hero-point,
 .hero-cta,
-.hero-chips {
-  will-change: transform, opacity, filter;
-  animation: landing-rise 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+.hero-trust {
+  animation: landing-rise 0.7s var(--spring) both;
 }
 
-.hero-badge {
-  animation-delay: 60ms;
+.hero-mark {
+  animation-delay: 40ms;
 }
 
 .hero-title {
-  animation-delay: 150ms;
-}
-
-.hero-title [aria-hidden="true"] {
-  transform-origin: left center;
-  animation: landing-marker 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.62s both;
-}
-
-.hero-copy {
-  animation-delay: 260ms;
+  animation-delay: 110ms;
 }
 
 /* Пункты первого экрана появляются по очереди. Задержка задаётся
@@ -1420,12 +1415,12 @@ html, body {
    пункты, и не разъезжается при добавлении пятого. */
 
 .hero-cta {
-  /* После четырёх пунктов: 250 + 3·150 + 150 = 850мс. */
-  animation-delay: 850ms;
+  /* Right after the last point: no dead time before the form. */
+  animation-delay: 430ms;
 }
 
-.hero-chips {
-  animation-delay: 440ms;
+.hero-trust {
+  animation-delay: 520ms;
 }
 
 .landing-hero [aria-hidden="true"] > div:nth-child(1) {
@@ -1443,9 +1438,9 @@ html, body {
   pointer-events: none;
   transform: translate3d(0, 34px, 0) scale(0.992);
   transition:
-    opacity 0.58s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.58s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.58s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.45s ease,
+    transform 0.7s var(--spring),
+    filter 0.45s ease;
   will-change: opacity, transform, filter;
 }
 
@@ -1548,33 +1543,6 @@ html, body {
 }
 
 /* ====================================================================
- * CURSOR GLOW — мягкий indigo-«фонарик» следует за курсором.
- * Активируется только когда `<CursorGlow />` смонтирован (он ставит
- * `.landing-cursor-active` на html и обновляет --cursor-x/--cursor-y
- * через requestAnimationFrame). На touch-устройствах не активен.
- * ================================================================== */
-.landing-cursor-active .landing-page {
-  position: relative;
-}
-.landing-cursor-active .landing-page > .landing-cursor-glow,
-.landing-cursor-active .landing-page::before {
-  /* keep mesh-bg as-is */
-}
-.landing-cursor-active body::after {
-  content: "";
-  position: fixed;
-  pointer-events: none;
-  inset: 0;
-  z-index: 0;
-  background: radial-gradient(
-    420px 320px at var(--cursor-x, 50%) var(--cursor-y, 50%),
-    rgba(85, 102, 246, 0.07),
-    transparent 60%
-  );
-  mix-blend-mode: multiply;
-}
-
-/* ====================================================================
  * SECTION-CHILD STAGGER — когда секция входит в зону видимости
  * (data-inview="true" от LandingMotion), её grid-дети появляются по
  * очереди cascade'ом, а не все вместе. Это даёт «по красоте» эффект,
@@ -1585,8 +1553,8 @@ html, body {
   opacity: 0;
   transform: translate3d(0, 18px, 0);
   transition:
-    opacity 0.55s var(--ease-out-expo),
-    transform 0.55s var(--ease-out-expo);
+    opacity 0.4s ease,
+    transform 0.65s var(--spring);
   will-change: opacity, transform;
 }
 .landing-motion-ready
@@ -1657,8 +1625,8 @@ html, body {
   opacity: 0;
   transform: translate3d(0, 24px, 0);
   transition:
-    opacity 0.6s var(--ease-out-expo),
-    transform 0.6s var(--ease-out-expo);
+    opacity 0.45s ease,
+    transform 0.7s var(--spring);
 }
 .landing-motion-ready .landing-page footer[data-inview="true"] {
   opacity: 1;
@@ -1666,237 +1634,267 @@ html, body {
 }
 
 /* ====================================================================
- * EXTRA LANDING ANIMATIONS — добавлено для «вау-эффекта».
- * Все CSS-only, GPU-accelerated (transform/opacity/filter). Каждая
- * анимация respect'ит prefers-reduced-motion в блоке ниже.
+ * LANDING MOTION 2026-11-18 — one motion language for the public site.
+ * Springs with a barely visible overshoot, press = squeeze with a spring
+ * return, content swaps through a short blur, indicators are "liquid".
+ * No glows, shimmers or bouncy pops (removed: cursor glow, CTA shimmer and
+ * pulse, chip pop, icon spin). Everything is colour-agnostic, so the light
+ * and the dark theme move the same way.
  * ================================================================== */
 
-/* ---- 1. Hero CTA: shimmer + magnetic pulse glow ---- */
-@keyframes landing-shimmer {
-  0% {
-    transform: translateX(-150%) skewX(-20deg);
-  }
-  100% {
-    transform: translateX(250%) skewX(-20deg);
-  }
-}
-@keyframes landing-glow-pulse {
-  0%,
-  100% {
-    box-shadow: 0 20px 50px -20px rgba(85, 102, 246, 0.55);
-  }
-  50% {
-    box-shadow:
-      0 24px 60px -18px rgba(85, 102, 246, 0.7),
-      0 0 0 6px rgba(85, 102, 246, 0.08);
-  }
-}
-.hero-cta a[href="/register"] {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  animation: landing-glow-pulse 3.4s var(--ease-in-out-cubic) 1.6s infinite;
-}
-.hero-cta a[href="/register"]::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.45) 50%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 1;
-  animation: landing-shimmer 3.6s var(--ease-out-cubic) 2.2s infinite;
+/* ---- Headline marker: one sweep, then it rests ---- */
+.hero-title [aria-hidden="true"] {
+  transform-origin: left center;
+  animation: landing-marker 0.9s var(--spring-soft) 0.5s both;
 }
 
-/* ---- 2. Audience chips: staggered cascade + hover bounce ---- */
-@keyframes landing-chip-pop {
-  0% {
+/* The home header carries more items than the shared one (three section
+   links, pricing, the start button that appears after the hero): the
+   "Ctrl K" hint gives its room to them. */
+.landing-nav kbd {
+  display: none;
+}
+
+/* Handwritten registry mark: a sheet lying on the page, slightly tilted. */
+.hero-mark {
+  rotate: -1.6deg;
+}
+
+/* ---- Press: every button-like control squeezes and springs back ---- */
+.public-theme a,
+.public-theme button,
+.public-theme summary,
+.public-theme [role="tab"],
+.public-theme [role="switch"] {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.public-theme :is(a[class*="rounded-"], button, [role="tab"]):not(:disabled)) {
+  /* One list for every button-like control: colours ease, geometry springs.
+     Zero specificity on purpose — `.motion-*` classes below override it. */
+  transition-property: color, background-color, border-color, fill, stroke, opacity, box-shadow, filter, transform, translate, scale, rotate;
+  transition-duration: 0.18s, 0.18s, 0.18s, 0.18s, 0.18s, 0.2s, 0.3s, 0.2s, 0.5s, 0.5s, 0.5s, 0.5s;
+  transition-timing-function: ease, ease, ease, ease, ease, ease, ease, ease, var(--spring), var(--spring), var(--spring), var(--spring);
+}
+:where(.public-theme :is(a[class*="rounded-"], button, [role="tab"]):not(:disabled)):active {
+  scale: 0.97;
+}
+
+/* Cards that lead somewhere lift by two pixels — no glow, no tilt. */
+@media (hover: hover) {
+  .public-theme .motion-card:hover {
+    translate: 0 -2px;
+  }
+  .public-theme .motion-card:hover .motion-card-arrow {
+    translate: 3px 0;
+  }
+}
+.motion-card-arrow {
+  transition: translate 0.5s var(--spring);
+}
+
+/* ---- Content swap: the new value arrives through a short blur ---- */
+@keyframes motion-swap-in {
+  from {
     opacity: 0;
-    transform: translate3d(0, 12px, 0) scale(0.9);
+    filter: blur(6px);
+    transform: translate3d(0, 0.35em, 0) scale(0.96);
   }
-  60% {
-    transform: translate3d(0, -2px, 0) scale(1.04);
-  }
-  100% {
+  to {
     opacity: 1;
+    filter: blur(0);
     transform: translate3d(0, 0, 0) scale(1);
   }
 }
-.hero-chips > div > div > span {
-  animation: landing-chip-pop 0.55s var(--ease-out-back) both;
-  transition:
-    transform 200ms var(--ease-out-quint),
-    border-color 200ms var(--ease-out-quint),
-    background-color 200ms var(--ease-out-quint),
-    color 200ms var(--ease-out-quint);
+.motion-swap {
+  display: inline-block;
+  animation: motion-swap-in 0.42s var(--spring) both;
 }
-.hero-chips > div > div > span:hover {
-  transform: translateY(-3px) scale(1.04);
-  border-color: rgba(85, 102, 246, 0.45);
-  background-color: #f5f6ff;
-  color: #3848c7;
-}
-.hero-chips > div > div > span:nth-child(1) { animation-delay: 700ms; }
-.hero-chips > div > div > span:nth-child(2) { animation-delay: 760ms; }
-.hero-chips > div > div > span:nth-child(3) { animation-delay: 820ms; }
-.hero-chips > div > div > span:nth-child(4) { animation-delay: 880ms; }
-.hero-chips > div > div > span:nth-child(5) { animation-delay: 940ms; }
-.hero-chips > div > div > span:nth-child(6) { animation-delay: 1000ms; }
-.hero-chips > div > div > span:nth-child(7) { animation-delay: 1060ms; }
-.hero-chips > div > div > span:nth-child(8) { animation-delay: 1120ms; }
-.hero-chips > div > div > span:nth-child(9) { animation-delay: 1180ms; }
-.hero-chips > div > div > span:nth-child(10) { animation-delay: 1240ms; }
-
-
-/* ---- 4. Feature cards: lift + indigo glow + icon spin ---- */
-.landing-page a[href^="/features/"] {
-  transition:
-    transform 280ms var(--ease-out-quint),
-    border-color 280ms var(--ease-out-quint),
-    box-shadow 380ms var(--ease-out-quint);
-}
-.landing-page a[href^="/features/"]:hover {
-  transform: translateY(-6px);
-  box-shadow:
-    0 26px 50px -22px rgba(85, 102, 246, 0.42),
-    0 0 0 1px rgba(85, 102, 246, 0.18);
-}
-.landing-page a[href^="/features/"] > div:first-child {
-  transition: transform 480ms var(--ease-out-back);
-}
-.landing-page a[href^="/features/"]:hover > div:first-child {
-  transform: rotate(-8deg) scale(1.12);
+.motion-swap-block {
+  animation: motion-swap-in 0.42s var(--spring) both;
 }
 
-/* ---- 5. Pricing «highlighted» card: aurora pulse ---- */
-@keyframes landing-aurora {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-@keyframes landing-aurora-pulse {
-  0%,
-  100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ---- 6. Audience grid items (КОМУ ПОЛЕЗНО): icon swing on hover ---- */
-@keyframes landing-icon-swing {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-12deg);
-  }
-  75% {
-    transform: rotate(8deg);
-  }
-}
-.landing-page section .group:hover svg,
-.landing-page section a[href]:hover .lucide {
-  /* мягкое покачивание иконки при наведении на любую группу/ссылку */
-  /* отключено для feature-карточек — у них своя анимация выше */
-}
-
-/* ---- 7. CTA-кнопки в FAQ / footer-CTA: shimmer на hover ---- */
-@keyframes landing-cta-shimmer {
+/* ---- Appear: an element that mounts later (header CTA, badges) ---- */
+@keyframes motion-pop-in {
   from {
-    transform: translateX(-100%);
+    opacity: 0;
+    filter: blur(6px);
+    transform: scale(0.9);
   }
   to {
-    transform: translateX(200%);
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
   }
 }
-.landing-page a[href="/register"]:not(.hero-cta a) {
-  position: relative;
-  overflow: hidden;
+.motion-pop {
+  animation: motion-pop-in 0.5s var(--spring) both;
 }
-.landing-page a[href="/register"]:not(.hero-cta a)::after {
-  content: "";
+
+/* ---- Toggle: the knob stretches while it travels. Position is the
+   Tailwind `translate-x-*` class (the `translate` property, springed here);
+   the stretch is a separate `scale` keyframe anchored at the trailing edge,
+   so the leading edge runs ahead. Two identical keyframes — switching the
+   name restarts the animation on every flip. ---- */
+@keyframes motion-knob-stretch-a {
+  0%, 100% { scale: 1 1; }
+  38% { scale: 1.5 0.92; }
+}
+@keyframes motion-knob-stretch-b {
+  0%, 100% { scale: 1 1; }
+  38% { scale: 1.5 0.92; }
+}
+.motion-knob {
+  transition: translate 0.46s var(--spring-soft);
+}
+.motion-knob[data-moved="right"] {
+  transform-origin: left center;
+  animation: motion-knob-stretch-a 0.42s ease-out both;
+}
+.motion-knob[data-moved="left"] {
+  transform-origin: right center;
+  animation: motion-knob-stretch-b 0.42s ease-out both;
+}
+
+/* Comparison table on a phone: the value of the chosen plan swaps in. */
+@media (max-width: 1023px) {
+  .tariff-cell {
+    animation: motion-swap-in 0.38s var(--spring) both;
+  }
+}
+
+/* ---- Liquid tab indicator: the leading edge runs ahead of the trailing
+   one. Edges are `left` / `right` insets set from JS (LiquidTabs); the
+   direction attribute picks which edge gets the faster spring. ---- */
+.motion-liquid {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%);
+  top: var(--liquid-top, 0);
+  bottom: var(--liquid-bottom, 0);
+  left: var(--liquid-left, 0);
+  right: var(--liquid-right, 0);
   pointer-events: none;
+  transition:
+    left 0.55s var(--spring-soft),
+    right 0.55s var(--spring-soft);
+}
+.motion-liquid[data-dir="right"] {
+  transition:
+    left 0.62s var(--spring-soft) 0.04s,
+    right 0.36s var(--spring-lively);
+}
+.motion-liquid[data-dir="left"] {
+  transition:
+    left 0.36s var(--spring-lively),
+    right 0.62s var(--spring-soft) 0.04s;
+}
+.motion-liquid[data-ready="false"] {
   transition: none;
 }
-.landing-page a[href="/register"]:not(.hero-cta a):hover::after {
-  animation: landing-cta-shimmer 0.9s var(--ease-out-cubic);
-}
 
-/* ---- 8. Headline marker: расширяется за такт перед остальным ---- */
-.hero-title [aria-hidden="true"] {
-  background: linear-gradient(
-    90deg,
-    rgba(85, 102, 246, 0.18) 0%,
-    rgba(122, 92, 255, 0.18) 50%,
-    rgba(85, 102, 246, 0.18) 100%
-  );
-  background-size: 200% 100%;
+/* ---- Submit: button → loader → check, the same element all the way ---- */
+.motion-submit {
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.3s ease,
+    opacity 0.18s ease,
+    scale 0.5s var(--spring),
+    translate 0.5s var(--spring),
+    border-radius 0.55s var(--spring-soft),
+    padding 0.55s var(--spring-soft),
+    max-width 0.55s var(--spring-soft);
+  max-width: 100%;
+}
+.motion-submit-label {
+  transition:
+    opacity 0.16s ease,
+    filter 0.16s ease;
+}
+.motion-submit:not([data-state="idle"]) {
+  max-width: var(--submit-h, 56px);
+  border-radius: 999px;
+  padding-inline: 0;
+  opacity: 1 !important;
+  translate: none;
+}
+.motion-submit:not([data-state="idle"]) .motion-submit-label {
+  opacity: 0;
+  filter: blur(6px);
+}
+.motion-submit[data-state="done"] {
+  background-color: #116b2a !important;
+  color: #ffffff !important;
+}
+@keyframes motion-check-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+.motion-check path {
+  stroke-dasharray: 24;
+  animation: motion-check-draw 0.36s var(--spring-soft) 0.08s both;
+}
+@keyframes motion-spin {
+  to { transform: rotate(360deg); }
+}
+.motion-spinner {
   animation:
-    landing-marker 0.7s var(--ease-out-expo) 0.62s both,
-    landing-aurora 6s var(--ease-in-out-cubic) 1.4s infinite;
+    motion-pop-in 0.3s var(--spring) both,
+    motion-spin 0.8s linear infinite;
 }
 
-/* ---- 9. Hero registry-badge: мягкая «дышащая» обводка ---- */
-@keyframes landing-badge-breath {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(85, 102, 246, 0.18);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(85, 102, 246, 0);
-  }
+/* ---- Contacts button: a circle that grows a label on hover ---- */
+.motion-fab {
+  transition:
+    background-color 0.18s ease,
+    scale 0.5s var(--spring);
 }
-.hero-badge {
-  animation:
-    landing-rise 0.72s var(--ease-out-expo) 60ms both,
-    landing-badge-breath 3.6s var(--ease-in-out-cubic) 1.5s infinite;
+.motion-fab .motion-fab-label {
+  max-width: 0;
+  padding-right: 0;
+  opacity: 0;
+  filter: blur(6px);
+  transition:
+    max-width 0.5s var(--spring-soft),
+    padding-right 0.5s var(--spring-soft),
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+@media (hover: hover) {
+  .motion-fab:hover .motion-fab-label,
+  .motion-fab:focus-visible .motion-fab-label {
+    max-width: 12rem;
+    padding-right: 1.25rem;
+    opacity: 1;
+    filter: blur(0);
+  }
 }
 
-/* Рукописная отметка о реестре: лёгкое покачивание, будто листок с
-   заметкой лежит поверх страницы. Наклон держим в тех же кадрах, что и
-   сдвиг, — иначе float перезапишет transform и наклон пропадёт. */
-@keyframes landing-mark-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-1.6deg);
-  }
-  50% {
-    transform: translateY(-7px) rotate(-0.8deg);
-  }
+/* ---- FAQ: the answer opens with its height, text arrives through blur.
+   `interpolate-size` animates to `auto` where supported; elsewhere the
+   answer simply opens, as before. ---- */
+.motion-faq {
+  interpolate-size: allow-keywords;
 }
-.hero-mark {
-  animation:
-    landing-rise 0.72s var(--ease-out-expo) 60ms both,
-    landing-mark-float 6s var(--ease-in-out-cubic) 1.2s infinite;
+.motion-faq::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition:
+    block-size 0.5s var(--spring-soft),
+    content-visibility 0.5s allow-discrete;
+}
+.motion-faq[open]::details-content {
+  block-size: auto;
+}
+.motion-faq[open] > .motion-faq-body {
+  animation: motion-swap-in 0.45s var(--spring) both;
+}
+.motion-faq .motion-faq-plus {
+  transition: rotate 0.5s var(--spring);
+}
+.motion-faq[open] .motion-faq-plus {
+  rotate: 45deg;
 }
 
-/* ---- 11. Hover-blob на dark CTA (footer-block) ---- */
+/* ---- Dark glass blobs on dark blocks: slow drift, unchanged ---- */
 @keyframes landing-blob-drift {
   0%,
   100% {
@@ -1917,43 +1915,55 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .landing-nav,
   .public-header,
-  .hero-badge,
   .hero-mark,
   .hero-title,
-  .hero-copy,
   .hero-point,
   .hero-cta,
-  .hero-cta a[href="/register"],
-  .hero-cta a[href="/register"]::after,
-  .hero-chips,
-  .hero-chips > div > div > span,
+  .hero-trust,
   .landing-hero [aria-hidden="true"] > div,
   .hero-title [aria-hidden="true"],
   .landing-page::before,
   .landing-page::after,
-  .landing-cursor-active body::after,
+  .motion-swap,
+  .motion-swap-block,
+  .motion-pop,
+  .motion-knob,
+  .tariff-cell,
+  .motion-check path,
+  .motion-faq[open] > .motion-faq-body,
   .landing-page section[class*="rounded-3xl"][class*="0b1024"] [aria-hidden="true"] > div,
   .landing-page div[class*="rounded-3xl"][class*="0b1024"] > .pointer-events-none > div {
     animation: none !important;
   }
 
   .landing-page::before,
-  .landing-page::after,
-  .landing-cursor-active body::after {
-    /* mesh-bg / cursor-glow / dotted-mesh — полностью убираем для
-       пользователей с настройкой reduced-motion. Остаётся чисто белый
-       лендинг без отвлекающих фоновых эффектов. */
+  .landing-page::after {
+    /* The drifting mesh and the dotted paper are decoration only. */
     display: none !important;
   }
 
-  .landing-page a[href^="/features/"],
-  .landing-page a[href^="/features/"] > div:first-child,
-  .hero-chips > div > div > span,
-  .landing-page a[href="/register"]:not(.hero-cta a)::after,
+  .public-theme :is(a, button, [role="tab"]),
+  .motion-liquid,
+  .motion-submit,
+  .motion-fab,
+  .motion-fab .motion-fab-label,
+  .motion-submit-label,
+  .motion-card-arrow,
+  .motion-faq::details-content,
+  .motion-faq .motion-faq-plus,
   .landing-motion-ready .landing-page > section .grid > *,
   .landing-motion-ready .landing-page > section ul:not(.lucide) > li,
   .landing-motion-ready .landing-page footer {
     transition: none !important;
+  }
+  .public-theme :is(a, button, [role="tab"]):active,
+  .public-theme .motion-card:hover {
+    scale: none;
+    translate: none;
+  }
+  .landing-motion-ready .landing-page > section .grid > *,
+  .landing-motion-ready .landing-page > section ul:not(.lucide) > li,
+  .landing-motion-ready .landing-page footer {
     transform: none !important;
     opacity: 1 !important;
   }
@@ -1968,6 +1978,44 @@ html, body {
   }
 }
 
+/* «Без анимации» в «Удобстве чтения» — то же, что системное «Уменьшить движение». */
+html[data-view-still] .public-theme :is(.motion-swap, .motion-swap-block, .motion-pop, .motion-knob, .motion-spinner, .hero-mark, .hero-title, .hero-point, .hero-cta, .hero-trust),
+html[data-view-still] .public-theme .motion-check path,
+html[data-view-still] .public-theme .motion-faq[open] > .motion-faq-body {
+  animation: none !important;
+}
+html[data-view-still] .public-theme :is(a, button, [role="tab"], .motion-liquid, .motion-submit, .motion-fab, .motion-card-arrow),
+html[data-view-still] .public-theme .motion-faq::details-content {
+  transition: none !important;
+}
+
+/* ====================================================================
+ * Pointer cursor (spec landing-mobile-polish-2026-11-18, AC12).
+ * Tailwind 4 resets buttons to the default arrow; on devices with a mouse
+ * everything that reacts to a click shows the hand.
+ * ================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  a[href],
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  label[for],
+  label:has(input:not(:disabled)),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="switch"],
+  [role="menuitem"],
+  [role="option"],
+  [role="checkbox"],
+  [role="radio"],
+  input:is([type="checkbox"], [type="radio"], [type="submit"], [type="button"], [type="file"], [type="range"]):not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
 
 /* ============================================================
  * Print styles — для журналов
@@ -2335,15 +2383,6 @@ html, body {
   /* Строку сотрудника не рвём между листами. */
   [data-print-landscape] tr {
     break-inside: avoid;
-  }
-}
-
-/* Кнопка «Начать бесплатно» в шапке лендинга появляется после ухода
-   hero из вьюпорта (см. nav-start-button.tsx). На телефоне рядом с ней
-   не помещается пункт «Тарифы» — он уступает место. */
-@media (max-width: 639px) {
-  html.landing-nav-cta .landing-nav .nav-tariffs {
-    display: none;
   }
 }
 

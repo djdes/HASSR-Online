@@ -1,0 +1,23 @@
+Live checks on the local dev server (Playwright, Chromium, viewport 390x780 @2x unless noted), 2026-11-18
+
+1. Header lockup, phone (scratch script authed.js):
+   {"inkLeft":16,"inkRight":156.3,"tagLeft":16,"tagRight":156.3,"navH":78.15625,"scrollW":390,"heroTitleAnim":"landing-rise","btnTransition":"0.18s"}
+   -> the letters of the wordmark start and end exactly over the tagline; no horizontal scroll.
+
+2. prefers-reduced-motion: reduce (same script, reducedMotion: 'reduce'):
+   {"inkLeft":16,"inkRight":156.3,"tagLeft":16,"tagRight":156.3,"navH":78.15625,"scrollW":390,"heroTitleAnim":"none","btnTransition":"0s"}
+   -> hero animation is off, the submit button has no transition.
+
+3. Real registration through the hero form (no request mocking):
+   url http://localhost:3000/dashboard?welcome=1
+   select source, "statementText" from "LegalConsent" order by "createdAt" desc limit 1;
+   landing | Принимаю оферту и даю согласие на обработку персональных данных
+
+4. Submit morph with a delayed response (interact.js, /api/auth/instant-register held for 6 s):
+   btn disabled false
+   state loading 56        <- data-state="loading", width 56 px (a circle), then data-state="done" (sheet-interact.jpg, frames 1-2)
+
+5. Cursor on a desktop with a mouse (hover.js, 1440x900):
+   [["[data-contacts-dock]","pointer"],["details.motion-faq summary","pointer"],["[data-testid=tariff-points-inc]","pointer"],["[data-testid=tariff-cycle-switch]","pointer"],[".landing-nav a[href=\"/login\"]","pointer"],["[data-testid=site-search-open]","pointer"]]
+
+Not exercised live: the unread-reply counter on the contacts button (needs an operator reply in the support chat) — covered by code reading only.

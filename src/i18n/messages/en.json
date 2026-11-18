@@ -2697,7 +2697,8 @@
       "other": "Other"
     },
     "legal": {
-      "consentSentence": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>, have read the <privacy>Privacy Policy</privacy>, and give my <consent>consent to the processing of personal data</consent>."
+      "consentSentence": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>, have read the <privacy>Privacy Policy</privacy>, and give my <consent>consent to the processing of personal data</consent>.",
+      "consentShort": "I accept the <offer>Offer</offer> and give my <consent>consent to the processing of personal data</consent>"
     },
     "challenge": {
       "websiteLabel": "Your website"
@@ -5658,7 +5659,13 @@
     "autofillOffer": "Logs that fill themselves",
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Your electronic HACCP",
-    "knowledgeBase": "Knowledge base"
+    "knowledgeBase": "Knowledge base",
+    "dashboardShort": "Account",
+    "groupProduct": "Product",
+    "groupResources": "Resources",
+    "groupCompany": "Company",
+    "groupDocuments": "Documents",
+    "allFeatures": "All features"
   },
   "publicAbout": {
     "metadata": {
@@ -5931,10 +5938,23 @@
         }
       }
     },
-    "pricingTitle": "Four plans. Start free — {trialDays, number} {trialDays, plural, one {day} other {days}}, no card",
+    "pricingTitle": "Four plans. Start with the free one",
     "brandTagline": "Your electronic HACCP",
     "presentationPdf": "WeSetup presentation — PDF, 7 MB (in Russian)",
-    "knowledgeBaseLink": "Knowledge base"
+    "knowledgeBaseLink": "Knowledge base",
+    "workspaceShort": "Account",
+    "allFeaturesLink": "All features",
+    "faqKnowledgeBase": "Still have a question? See the <link>WeSetup knowledge base</link>.",
+    "faqMore": {
+      "refund": "Refund terms in the offer agreement",
+      "employeeAccess": "How employees fill in logs by QR code",
+      "missedEntry": "How shift reminders work",
+      "qrSecurity": "Role-based access and the activity log",
+      "electronicLogs": "What SanPiN 2.3/2.4.4282-26 requires",
+      "inspection": "Rospotrebnadzor fine calculator",
+      "integrations": "More about iiko and 1C sync",
+      "dataSecurity": "How your data is stored and protected"
+    }
   },
   "landingComponents": {
     "heroEmail": {
@@ -5992,7 +6012,7 @@
       "tiers": {
         "free": {
           "name": "Free",
-          "tagline": "Try everything without limits — {trialDays, number} days, no card"
+          "tagline": "Try everything without limits"
         },
         "standard": {
           "name": "Standard",
@@ -6014,7 +6034,7 @@
       },
       "price": {
         "perMonth": "/mo",
-        "freeNote": "{trialDays, number} days, then 1 employee and 1 log",
+        "freeNote": "{trialDays, number} {trialDays, plural, one {day} other {days}} of full access",
         "yearTotal": "{amount} per year",
         "yearSavings": "you save {amount}",
         "monthly": "billed monthly",
@@ -6030,7 +6050,7 @@
         "vip": "Everything in Premium, plus:"
       },
       "features": {
-        "trialAll": "{trialDays, number} days — all logs, employees and locations without limits",
+        "trialAll": "All logs, employees and locations — no limits",
         "noCard": "No card required",
         "afterTrial": "Then free: {employees, number} employee and {journals, number} log — you choose which",
         "employees": "Up to {count, number} employees per location",
@@ -6064,7 +6084,7 @@
         "scheduled": "Switch from {date}",
         "scheduledDone": "Switching from {date}",
         "cancelSchedule": "Cancel the switch",
-        "tryFree": "Try free for 14 days"
+        "tryFree": "Try for free"
       },
       "explain": {
         "upgrade": "Right away, you pay for {days, plural, one {# remaining day} other {# remaining days}}: a {difference} difference per period. The end date stays the same",
@@ -6084,7 +6104,9 @@
         "title": "Compare plans",
         "feature": "What’s included",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "trialNote": "Free: for the first {trialDays, number} {trialDays, plural, one {day} other {days}} everything in Premium is unlocked.",
+        "tabs": "Plan to compare"
       },
       "groups": {
         "team": "Team and locations",
@@ -6115,19 +6137,19 @@
         "consultant": "Personal consultant"
       },
       "cells": {
-        "employeesFree": "{trialDays, number} days — unlimited, then {count, number}",
+        "employeesFree": "{count, number}",
         "employeesPaid": "{count, number} per location",
-        "pointsFree": "{trialDays, number} days — unlimited, then {count, number}",
+        "pointsFree": "{count, number}",
         "pointsPaid": "1 included; each next one costs one more plan, from {from, number} — −{percent, number}% each",
-        "journalsFree": "{trialDays, number} days — all, then {count, number}",
+        "journalsFree": "{count, number} of your choice",
         "journalsAll": "All",
-        "storageFree": "{trialDays, number} days — 1 GB, then closed",
-        "storageStandard": "{mb, number} MB: log orders and your own documents",
-        "storagePremium": "{gb, number} GB for all documents",
-        "trialOnly": "Only during the {trialDays, number}-day trial",
-        "ppkOnRequest": "Custom, on request",
-        "employeesPremium": "{count, number} per location, more by arrangement",
-        "pointsPaidScale": "1 included; each next one is priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%, from 50 — custom offer",
+        "storageFree": "During the trial",
+        "storageStandard": "{mb, number} MB",
+        "storagePremium": "{gb, number} GB",
+        "trialOnly": "During the trial",
+        "ppkOnRequest": "On request",
+        "employeesPremium": "{count, number} per location, more on request",
+        "pointsPaidScale": "As many as you need, discount from 5 locations",
         "hotlineVip": "Up to {hours, number} hours a month"
       },
       "contactLink": "contact us",

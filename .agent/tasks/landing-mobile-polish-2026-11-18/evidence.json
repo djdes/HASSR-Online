@@ -1,0 +1,39 @@
+{
+  "task": "landing-mobile-polish-2026-11-18",
+  "date": "2026-11-18",
+  "base": "ca0158e52",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS",
+    "AC13": "PASS",
+    "AC14": "PASS"
+  },
+  "commands": [
+    {
+      "cmd": "npm run typecheck",
+      "exit": 0,
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "cmd": "npm run test:gate",
+      "exit": 0,
+      "result": "71 files, pass=294, fail=0",
+      "raw": "raw/test-gate.txt"
+    }
+  ],
+  "notes": [
+    "AC7: unread counter on the contacts button verified by code reading only",
+    "AC13: reduced motion and submit morph verified live, see raw/live-checks.txt"
+  ]
+}

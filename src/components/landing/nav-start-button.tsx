@@ -15,9 +15,8 @@ import { ymGoal } from "@/lib/signup-source";
  * действие для существующих клиентов, — на все остальные секции.
  *
  * Клик не ведёт на /register (это второй шаг против принципа «одно
- * поле»), а возвращает к форме в hero и ставит в неё фокус. На
- * телефоне рядом не помещается «Тарифы»: html.landing-nav-cta прячет
- * его (см. globals.css).
+ * поле»), а возвращает к форме в hero и ставит в неё фокус. Кнопка есть
+ * с `md`: на телефоне в шапке одна строка — поиск, «Тарифы» и вход.
  */
 export function NavStartButton() {
   const t = useTranslations("landingComponents.navStart");
@@ -33,11 +32,6 @@ export function NavStartButton() {
     observer.observe(hero);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("landing-nav-cta", visible);
-    return () => document.documentElement.classList.remove("landing-nav-cta");
-  }, [visible]);
 
   if (!visible) return null;
 
@@ -65,10 +59,10 @@ export function NavStartButton() {
     <button
       type="button"
       onClick={handleClick}
-      className="hidden h-12 items-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-4 text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] md:inline-flex sm:h-10 sm:text-[14px]"
+      // `motion-pop`: кнопка не «включается», а проявляется из размытия.
+      className="motion-pop hidden h-10 items-center gap-2 whitespace-nowrap rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] hover:bg-[#4a5bf0] md:inline-flex"
     >
-      <span className="sm:hidden">{t("start")}</span>
-      <span className="hidden sm:inline">{t("startFree")}</span>
+      {t("startFree")}
       <ArrowRight className="size-4" />
     </button>
   );

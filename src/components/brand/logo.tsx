@@ -36,6 +36,7 @@ export function BrandLogo({
   className,
   title = "WeSetup",
   gradient = false,
+  fluid = false,
 }: {
   /** Высота знака в px. */
   height?: number;
@@ -47,6 +48,11 @@ export function BrandLogo({
    * через ту же маску, цвета — `--app-wordmark-gradient` (свой для тёмной темы).
    */
   gradient?: boolean;
+  /**
+   * Знак во всю ширину родителя, высота — по пропорции файла (шапка на
+   * телефоне: ширину задаёт подпись под знаком, см. `BrandWithTagline`).
+   */
+  fluid?: boolean;
 }) {
   return (
     <span
@@ -58,8 +64,12 @@ export function BrandLogo({
         // block, а не inline-block: у строчного элемента бокс садится
         // на базовую линию, и знак вставал выше центра строки.
         display: "block",
-        height: `var(--logo-h, ${height}px)`,
-        width: `calc(var(--logo-h, ${height}px) * ${WORDMARK_RATIO})`,
+        ...(fluid
+          ? { width: "100%", aspectRatio: `${WORDMARK_RATIO}` }
+          : {
+              height: `var(--logo-h, ${height}px)`,
+              width: `calc(var(--logo-h, ${height}px) * ${WORDMARK_RATIO})`,
+            }),
         ...(gradient
           ? { backgroundImage: "var(--app-wordmark-gradient)" }
           : { backgroundColor: "currentColor" }),

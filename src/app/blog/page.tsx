@@ -188,7 +188,7 @@ export default async function BlogListPage({
                 defaultValue={query ?? ""}
                 placeholder={t("blogChrome.list.searchPlaceholder")}
                 aria-label={t("blogChrome.list.searchPlaceholder")}
-                className="h-10 flex-1 bg-transparent text-[14px] text-white placeholder:text-white/50 focus:outline-none"
+                className="h-10 min-w-0 flex-1 bg-transparent text-[14px] text-white placeholder:text-white/50 focus:outline-none"
               />
               <button
                 type="submit"

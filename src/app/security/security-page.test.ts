@@ -55,7 +55,7 @@ describe("страница «Безопасность и данные»", () => 
 
   it("ссылка в подвале и в sitemap", () => {
     const chrome = read("src/components/public/public-chrome.tsx");
-    assert.match(chrome, /href="\/security"[\s\S]{0,200}\{t\("securityAndData"\)\}/);
+    assert.match(chrome, /href: "\/security", label: t\("securityAndData"\)/);
     assert.match(read("src/app/sitemap.ts"), /\$\{SITE\}\/security`/);
     assert.match(read(".env.shared"), /# Хостинг: VPS в Москве/);
     assert.doesNotMatch(read(".env.shared"), /Azure/);

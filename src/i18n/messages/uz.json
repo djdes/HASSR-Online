@@ -2697,7 +2697,8 @@
       "other": "Boshqa"
     },
     "legal": {
-      "consentSentence": "Men <offer>ommaviy oferta</offer> va <terms>Foydalanuvchi kelishuvi</terms>ni qabul qilaman, <privacy>Maxfiylik siyosati</privacy> bilan tanishdim va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman."
+      "consentSentence": "Men <offer>ommaviy oferta</offer> va <terms>Foydalanuvchi kelishuvi</terms>ni qabul qilaman, <privacy>Maxfiylik siyosati</privacy> bilan tanishdim va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman.",
+      "consentShort": "<offer>Ommaviy oferta</offer>ni qabul qilaman va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman"
     },
     "challenge": {
       "websiteLabel": "Veb-saytingiz"
@@ -5658,7 +5659,13 @@
     "autofillOffer": "O‘zi to‘ldiriladigan jurnallar",
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Sizning elektron HACCP tizimingiz",
-    "knowledgeBase": "Bilimlar bazasi"
+    "knowledgeBase": "Bilimlar bazasi",
+    "dashboardShort": "Kabinet",
+    "groupProduct": "Mahsulot",
+    "groupResources": "Materiallar",
+    "groupCompany": "Kompaniya",
+    "groupDocuments": "Hujjatlar",
+    "allFeatures": "Barcha imkoniyatlar"
   },
   "publicAbout": {
     "metadata": {
@@ -5931,10 +5938,23 @@
         }
       }
     },
-    "pricingTitle": "To‘rtta tarif. Bepul boshlang — {trialDays, number} {trialDays, plural, other {kun}}, kartasiz",
+    "pricingTitle": "To‘rtta tarif. Bepulidan boshlang",
     "brandTagline": "Sizning elektron HACCP tizimingiz",
     "presentationPdf": "Setup taqdimoti — PDF, 7 MB (rus tilida)",
-    "knowledgeBaseLink": "Bilimlar bazasi"
+    "knowledgeBaseLink": "Bilimlar bazasi",
+    "workspaceShort": "Kabinet",
+    "allFeaturesLink": "Xizmatning barcha imkoniyatlari",
+    "faqKnowledgeBase": "Javob topilmadimi? <link>WeSetup bilimlar bazasi</link>ga qarang.",
+    "faqMore": {
+      "refund": "Oferta shartnomasidagi qaytarish shartlari",
+      "employeeAccess": "Xodimlar jurnallarni QR-kod orqali qanday to‘ldiradi",
+      "missedEntry": "Smena eslatmalari qanday ishlaydi",
+      "qrSecurity": "Rollar bo‘yicha kirish va harakatlar jurnali",
+      "electronicLogs": "SanPiN 2.3/2.4.4282-26 nimalarni talab qiladi",
+      "inspection": "Rospotrebnadzor jarimalari kalkulyatori",
+      "integrations": "iiko va 1C bilan sinxronlash haqida batafsil",
+      "dataSecurity": "Ma’lumotlar qanday himoyalanadi va qayerda saqlanadi"
+    }
   },
   "landingComponents": {
     "heroEmail": {
@@ -5992,7 +6012,7 @@
       "tiers": {
         "free": {
           "name": "Bepul",
-          "tagline": "Hammasini cheklovsiz sinab ko‘ring — {trialDays, number} kun, kartasiz"
+          "tagline": "Hammasini cheklovsiz sinab ko‘ring"
         },
         "standard": {
           "name": "Standart",
@@ -6014,7 +6034,7 @@
       },
       "price": {
         "perMonth": "/oy",
-        "freeNote": "{trialDays, number} kun, keyin 1 xodim va 1 jurnal",
+        "freeNote": "{trialDays, number} {trialDays, plural, other {kun}} to‘liq kirish",
         "yearTotal": "yiliga {amount}",
         "yearSavings": "tejash {amount}",
         "monthly": "har oy to‘lanadi",
@@ -6030,7 +6050,7 @@
         "vip": "«Premium»dagi hammasi, qo‘shimcha:"
       },
       "features": {
-        "trialAll": "{trialDays, number} kun — barcha jurnallar, xodimlar va nuqtalar cheklovsiz",
+        "trialAll": "Barcha jurnallar, xodimlar va nuqtalar — cheklovsiz",
         "noCard": "Karta bog‘lash shart emas",
         "afterTrial": "Keyin bepul: {employees, number} xodim va {journals, number} jurnal — o‘zingiz belgilaysiz",
         "employees": "Har bir nuqtaga {count, number} nafargacha xodim",
@@ -6064,7 +6084,7 @@
         "scheduled": "{date} dan o‘tish",
         "scheduledDone": "{date} dan o‘tiladi",
         "cancelSchedule": "O‘tishni bekor qilish",
-        "tryFree": "14 kun bepul sinab ko‘rish"
+        "tryFree": "Bepul sinab ko‘rish"
       },
       "explain": {
         "upgrade": "Darhol, {days, plural, other {qolgan # kun}} uchun qo‘shimcha to‘lov: davr uchun farq {difference}. Tugash sanasi o‘zgarmaydi",
@@ -6084,7 +6104,9 @@
         "title": "Tariflarni solishtirish",
         "feature": "Nimalar kiradi",
         "yes": "Bor",
-        "no": "Yo‘q"
+        "no": "Yo‘q",
+        "trialNote": "«Bepul»: dastlabki {trialDays, number} {trialDays, plural, other {kun}} «Premium»dagi hamma narsa ochiq.",
+        "tabs": "Solishtirish uchun tarif"
       },
       "groups": {
         "team": "Jamoa va nuqtalar",
@@ -6115,19 +6137,19 @@
         "consultant": "Shaxsiy maslahatchi"
       },
       "cells": {
-        "employeesFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
+        "employeesFree": "{count, number}",
         "employeesPaid": "Har bir nuqtaga {count, number}",
-        "pointsFree": "{trialDays, number} kun — cheklovsiz, keyin {count, number}",
+        "pointsFree": "{count, number}",
         "pointsPaid": "Tarifda 1 ta; keyingisi yana bitta tarif kabi, {from, number} tadan — har biriga −{percent, number} %",
-        "journalsFree": "{trialDays, number} kun — hammasi, keyin {count, number}",
+        "journalsFree": "{count, number} ta, tanlov bo‘yicha",
         "journalsAll": "Hammasi",
-        "storageFree": "{trialDays, number} kun — 1 GB, keyin yopiq",
-        "storageStandard": "{mb, number} MB: jurnal buyruqlari va o‘z hujjatlaringiz",
-        "storagePremium": "Barcha hujjatlar uchun {gb, number} GB",
-        "trialOnly": "Faqat {trialDays, number} kunlik sinov davrida",
-        "ppkOnRequest": "Individual, so‘rov bo‘yicha",
-        "employeesPremium": "Har bir nuqtaga {count, number}, undan ko‘pi — kelishuv bo‘yicha",
-        "pointsPaidScale": "Tarifda 1 ta; har bir keyingisi — yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %, 50 tadan — individual taklif",
+        "storageFree": "Sinov davrida",
+        "storageStandard": "{mb, number} MB",
+        "storagePremium": "{gb, number} GB",
+        "trialOnly": "Sinov davrida",
+        "ppkOnRequest": "So‘rov bo‘yicha",
+        "employeesPremium": "Har bir nuqtaga {count, number}, ko‘pi — so‘rov bo‘yicha",
+        "pointsPaidScale": "Qancha kerak bo‘lsa, 5 nuqtadan chegirma",
         "hotlineVip": "Oyiga {hours, number} soatgacha"
       },
       "contactLink": "bog‘lanish",

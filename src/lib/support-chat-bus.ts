@@ -9,6 +9,17 @@ export const SUPPORT_CHAT_OPEN_EVENT = "wesetup:support-chat-open";
 /** Клиент прочитал чат — уведомитель может погасить бейдж без ожидания poll'а. */
 export const SUPPORT_CHAT_READ_EVENT = "wesetup:support-chat-read";
 
+/**
+ * Сколько непрочитанных ответов поддержки — виджет без своей кнопки (сайт,
+ * правки 18.11.2026) сообщает число кнопке «Контакты», она показывает счётчик.
+ */
+export const SUPPORT_CHAT_UNREAD_EVENT = "wesetup:support-chat-unread";
+
+export function announceSupportChatUnread(count: number): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent<number>(SUPPORT_CHAT_UNREAD_EVENT, { detail: count }));
+}
+
 /** Почта поддержки — когда виджета чата на странице нет. */
 export const SUPPORT_EMAIL = COMPANY_EMAIL;
 

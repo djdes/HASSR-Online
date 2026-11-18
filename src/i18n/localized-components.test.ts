@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 /* eslint-disable react/no-children-prop -- In this .test.ts file, provider props require children for typed createElement calls. */
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -113,6 +114,28 @@ test("report and legal consent components render their real catalogs in every lo
     for (const href of ["/oferta", "/terms", "/privacy", "/consent"]) assert.ok(html.includes(`href="${href}"`));
     if (locale !== "ru") assert.doesNotMatch(html, /[А-Яа-яЁё]/);
   }
+});
+
+test("short legal consent of the start form names two documents and matches the stored statement", async () => {
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    const failures: string[] = [];
+    const html = renderToStaticMarkup(createElement(NextIntlClientProvider, {
+      locale, messages, timeZone: "Asia/Tashkent", onError: (error) => failures.push(error.message),
+      children: createElement(LegalConsentCheckbox, { checked: false, onChange: () => {}, variant: "short" }),
+    }));
+    assert.deepEqual(failures, [], `${locale}: missing keys or ICU errors`);
+    for (const href of ["/oferta", "/consent"]) assert.ok(html.includes(`href="${href}"`), `${locale}: ${href}`);
+    for (const href of ["/terms", "/privacy"]) assert.ok(!html.includes(`href="${href}"`), `${locale}: ${href}`);
+    if (locale !== "ru") assert.doesNotMatch(html, /[А-Яа-яЁё]/);
+  }
+  // The journal stores exactly what the visitor saw (source `landing`).
+  const ru = await loadMessages("ru");
+  const seen = ru.auth.legal.consentShort.replace(/<[^>]+>/g, "");
+  const source = readFileSync(new URL("../lib/legal-consent.ts", import.meta.url), "utf8");
+  assert.ok(source.includes(`"${seen}"`), seen);
+  assert.match(source, /source === "landing" \? LEGAL_CONSENT_TEXT_SHORT : LEGAL_CONSENT_TEXT/);
+  assert.match(readFileSync(new URL("../components/landing/hero-email-start.tsx", import.meta.url), "utf8"), /variant="short"/);
 });
 
 test("known legacy auth failures retain rate-limit meaning and arbitrary messages cannot become keys", async () => {

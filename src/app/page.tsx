@@ -10,16 +10,33 @@ import { SiteSearch } from "@/components/public/site-search";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import {
   ArrowRight,
+  Baby,
+  BadgeCheck,
   BellRing,
   Check,
+  CircleUserRound,
+  ConciergeBell,
+  Croissant,
   Download,
+  Dumbbell,
+  Factory,
   FileText,
+  Fuel,
+  Hospital,
+  Hotel,
   LogIn,
   Plug,
   RotateCcw,
+  Sandwich,
   ScanLine,
+  Scissors,
   ShieldCheck,
+  ShoppingBasket,
+  Soup,
+  UtensilsCrossed,
   Wand2,
+  Wine,
+  type LucideIcon,
 } from "lucide-react";
 import { HardwareStrip } from "@/components/landing/hardware-strip";
 import { Testimonials } from "@/components/landing/testimonials";
@@ -41,7 +58,6 @@ import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
 import { narratedVideoFor } from "@/components/landing/qr-player/narrated-video";
 import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
-import { CursorGlow } from "@/components/public/cursor-glow";
 import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
 import { DemoRequestButton } from "@/components/public/demo-request-button";
@@ -141,6 +157,27 @@ const SHOWCASE_SLIDES: ReadonlyArray<{ id: "dashboard" | "monitoring" | "journal
   { id: "staff", icon: "staff", address: "wesetup.ru/settings/users" },
 ];
 
+/**
+ * Значок сферы на плитке (правки 18.11.2026: «с иконками, и понятно, что
+ * кликается»). Сфера без значка в карте получает общий — столовые приборы.
+ */
+const NICHE_ICONS: Record<string, LucideIcon> = {
+  "dlya-kafe": UtensilsCrossed,
+  "dlya-pekarni": Croissant,
+  "dlya-stolovoy": Soup,
+  "dlya-proizvodstva": Factory,
+  "dlya-bara": Wine,
+  "dlya-fastfuda": Sandwich,
+  "dlya-keyteringa": ConciergeBell,
+  "dlya-otelya": Hotel,
+  "dlya-medcentra": Hospital,
+  "dlya-azs": Fuel,
+  "dlya-magazina": ShoppingBasket,
+  "dlya-detskogo-sada": Baby,
+  "dlya-fitnes-centra": Dumbbell,
+  "dlya-salona-krasoty": Scissors,
+};
+
 /** Самые частые журналы — ссылками в строку под сферами. */
 const POPULAR_JOURNALS = [
   { code: "hygiene", name: "landing.popularJournals.hygiene" },
@@ -157,48 +194,22 @@ const POPULAR_JOURNALS = [
  * вести журналы в электронном виде?» слит с «Что такое электронный
  * журнал» (оба цитировали один СанПиН), «Подходит ли для школ и больниц»
  * отвечает сетка сфер. Список уходит и в разметку FAQPage.
+ *
+ * `more` — ссылка «подробнее» под ответом (перелинковка, правки 18.11.2026):
+ * главная отдаёт вес профильной странице, а текст ссылки называет её тему, а
+ * не «читать далее». В разметку FAQPage ссылки не идут — там только ответ.
  */
 const FAQ = [
-  {
-    q: "landing.faq.refund.question",
-    a: "landing.faq.refund.answer",
-  },
-  {
-    q: "landing.faq.employeeAccess.question",
-    a: "landing.faq.employeeAccess.answer",
-  },
-  {
-    q: "landing.faq.missedEntry.question",
-    a: "landing.faq.missedEntry.answer",
-  },
-  {
-    q: "landing.faq.qrSecurity.question",
-    a: "landing.faq.qrSecurity.answer",
-  },
-  {
-    q: "landing.faq.electronicLogs.question",
-    a: "landing.faq.electronicLogs.answer",
-  },
-  {
-    q: "landing.faq.inspection.question",
-    a: "landing.faq.inspection.answer",
-  },
-  {
-    q: "landing.faq.integrations.question",
-    a: "landing.faq.integrations.answer",
-  },
-  {
-    q: "landing.faq.offline.question",
-    a: "landing.faq.offline.answer",
-  },
-  {
-    q: "landing.faq.dataSecurity.question",
-    a: "landing.faq.dataSecurity.answer",
-  },
-  {
-    q: "landing.faq.import.question",
-    a: "landing.faq.import.answer",
-  },
+  { q: "landing.faq.refund.question", a: "landing.faq.refund.answer", more: { href: "/oferta", label: "landing.faqMore.refund" } },
+  { q: "landing.faq.employeeAccess.question", a: "landing.faq.employeeAccess.answer", more: { href: "/features/qr", label: "landing.faqMore.employeeAccess" } },
+  { q: "landing.faq.missedEntry.question", a: "landing.faq.missedEntry.answer", more: { href: "/features/reminders", label: "landing.faqMore.missedEntry" } },
+  { q: "landing.faq.qrSecurity.question", a: "landing.faq.qrSecurity.answer", more: { href: "/features/role-access", label: "landing.faqMore.qrSecurity" } },
+  { q: "landing.faq.electronicLogs.question", a: "landing.faq.electronicLogs.answer", more: { href: "/sanpin-2-3-2-4-4282-26", label: "landing.faqMore.electronicLogs" } },
+  { q: "landing.faq.inspection.question", a: "landing.faq.inspection.answer", more: { href: "/calc/fines", label: "landing.faqMore.inspection" } },
+  { q: "landing.faq.integrations.question", a: "landing.faq.integrations.answer", more: { href: "/features/sync-iiko-1c", label: "landing.faqMore.integrations" } },
+  { q: "landing.faq.offline.question", a: "landing.faq.offline.answer", more: null },
+  { q: "landing.faq.dataSecurity.question", a: "landing.faq.dataSecurity.answer", more: { href: "/security", label: "landing.faqMore.dataSecurity" } },
+  { q: "landing.faq.import.question", a: "landing.faq.import.answer", more: null },
 ] as const;
 
 /**
@@ -459,7 +470,6 @@ export default async function LandingPage() {
       <PublicThemeBootstrap />
       <PublicThemeScope />
       <LandingMotion />
-      <CursorGlow />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdSafeString(jsonLd) }}
@@ -468,26 +478,28 @@ export default async function LandingPage() {
           На телефоне кнопки и «Тарифы» — 48 px в высоту: в них попадают
           пальцем, а не курсором. */}
       <div className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <nav className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-5">
-          <Link href="/" className="text-[#0b1024]" aria-label={copy("landing.homeLink")}>
+        {/* Телефон (правки 18.11.2026): одна строка — знак с подписью слева,
+            справа поиск, «Тарифы» и вход. Язык на телефоне — в подвале. */}
+        <nav className="mx-auto flex max-w-[1200px] items-center justify-between gap-2 px-4 py-2.5 sm:px-6 sm:py-5">
+          <Link href="/" className="shrink-0 text-[#0b1024]" aria-label={copy("landing.homeLink")}>
             <BrandWithTagline tagline={copy("landing.brandTagline")} />
           </Link>
-          <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:gap-6">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3 lg:gap-4">
             <SiteSearch />
-            <LanguageSwitch />
+            <LanguageSwitch className="hidden lg:inline-flex" />
             <Link
               href="/journals-info"
-              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
+              className="hidden whitespace-nowrap text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
               {copy("landing.logsLink")}</Link>
             <Link
               href="/blog"
-              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
+              className="hidden whitespace-nowrap text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
               {copy("landing.blogLink")}</Link>
             <Link
               href="/baza-znaniy"
-              className="hidden text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
+              className="hidden whitespace-nowrap text-[14px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] lg:inline"
             >
               {copy("landing.knowledgeBaseLink")}</Link>
             {/* «Сколько это стоит» спрашивают раньше всего остального —
@@ -495,16 +507,21 @@ export default async function LandingPage() {
                 отдельная страница: тарифы тут же, ниже по этой же. */}
             <AnchorScrollLink
               href="#pricing"
-              className="nav-tariffs hidden h-12 items-center px-2 text-[16px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] min-[400px]:inline-flex sm:h-auto sm:px-0 sm:text-[14px]"
+              className="inline-flex h-10 items-center px-1.5 text-[15px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
             >
               {copy("landing.pricingLink")}</AnchorScrollLink>
             {isAuthed ? (
               <>
+                {/* Уже 375 px — только значок; на телефоне — «Кабинет». */}
                 <Link
                   href={homeHref}
-                  className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:h-10 sm:text-[14px]"
+                  aria-label={copy("landing.openWorkspace")}
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl bg-[#5566f6] px-3 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] sm:gap-2 sm:px-4 sm:text-[14px]"
                 >
-                  {copy("landing.openWorkspace")}<ArrowRight className="size-4" />
+                  <CircleUserRound className="size-[18px] min-[375px]:hidden" aria-hidden="true" />
+                  <span className="hidden min-[375px]:inline sm:hidden">{copy("landing.workspaceShort")}</span>
+                  <span className="hidden sm:inline">{copy("landing.openWorkspace")}</span>
+                  <ArrowRight className="hidden size-4 sm:block" aria-hidden="true" />
                 </Link>
                 <Link
                   href={homeHref}
@@ -524,9 +541,11 @@ export default async function LandingPage() {
                 <NavStartButton />
                 <Link
                   href="/login"
-                  className="inline-flex h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:h-10 sm:text-[14px]"
+                  aria-label={copy("landing.signIn")}
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-3 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:gap-2 sm:px-4 sm:text-[14px]"
                 >
-                  {copy("landing.signIn")}<LogIn className="size-4 text-[#5566f6]" />
+                  <span className="hidden min-[375px]:inline">{copy("landing.signIn")}</span>
+                  <LogIn className="size-4 text-[#5566f6]" aria-hidden="true" />
                 </Link>
               </>
             )}
@@ -534,11 +553,11 @@ export default async function LandingPage() {
         </nav>
       </div>
 
-      {/* HERO. На телефоне — одна левая ось с остальными секциями
-          (раньше заголовок стоял по центру, список — блоком по центру,
-          согласие — от левого края, и первый экран читался вразнобой).
-          С sm — прежняя центрированная композиция. overflow-x-clip держит
-          фоновые пятна по горизонтали, не обрезая тени по вертикали. */}
+      {/* HERO. Отметка о реестре и заголовок — по центру на любой ширине
+          (правки 18.11.2026; раньше на телефоне всё стояло от левого края).
+          Список пунктов — блоком по центру, строки внутри от левого края:
+          галочки в одну колонку. overflow-x-clip держит фоновые пятна по
+          горизонтали, не обрезая тени по вертикали. */}
       <section className="landing-hero relative overflow-x-clip pb-8 sm:pb-12">
         {/* Soft ambient gradient wash */}
         <div
@@ -563,14 +582,14 @@ export default async function LandingPage() {
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-white" />
         </div>
 
-        <div className="relative mx-auto max-w-[1100px] px-4 pt-6 sm:px-6 sm:pt-16 sm:text-center">
+        <div className="relative mx-auto max-w-[1100px] px-4 pt-6 text-center sm:px-6 sm:pt-16">
           {/* Отметка о реестре — рукописной заметкой со стрелкой на
               заголовок, а не пилюлей: пилюля на первом экране читалась
               как ещё одна кнопка и конкурировала с призывом к действию.
               Буквы запечены в контуры SVG, потому что прод не ходит в
               Google Fonts (см. layout.tsx) — держать ради одной строки
               ещё один self-hosted шрифт дороже, чем статика с кешем. */}
-          <div className="hero-mark w-[210px] max-w-[64vw] sm:mx-auto sm:w-[340px]">
+          <div className="hero-mark mx-auto w-[210px] max-w-[64vw] sm:w-[340px]">
             {locale !== "ru" ? <p className="text-[13px] font-medium leading-snug text-[#3848c7] sm:text-[18px]">{copy("landing.registry.softwareRegistryLabel")}</p> : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -593,7 +612,7 @@ export default async function LandingPage() {
           {/* Headline — fluid scale: 26 px at 320 → 30 px at 390 → 72 px
               on desktop. «Электронные журналы» на телефоне — одной
               строкой (≈10.9em в Segoe UI при tracking -0.02em). */}
-          <h1 className="hero-title mt-3 max-w-[920px] text-[clamp(1.625rem,7.6vw,4.5rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-[#0b1024] sm:mx-auto sm:mt-8">
+          <h1 className="hero-title mx-auto mt-3 max-w-[920px] text-[clamp(1.625rem,7.6vw,4.5rem)] font-semibold leading-[1.08] tracking-[-0.02em] text-[#0b1024] sm:mt-8">
             {copy.rich("landing.hero.title", { highlight: (chunks) => <span className="relative inline-block">
               <span className="relative z-10">{chunks}</span>
               <span
@@ -608,12 +627,12 @@ export default async function LandingPage() {
               тем же keyframe'ом, что и остальной hero. На десктопе список
               стоит по центру блоком (`w-fit`), строки внутри — от левого
               края: галочки в одну колонку, а не «лесенкой». */}
-          <ul className="mt-5 flex flex-col items-start gap-2 text-left sm:mx-auto sm:mt-7 sm:w-fit sm:max-w-full">
+          <ul className="mx-auto mt-5 flex w-fit max-w-full flex-col items-start gap-2 text-left sm:mt-7">
             {HERO_POINTS.map((point, index) => (
               <li
                 key={point}
                 className="hero-point flex items-start gap-2.5 text-[16px] leading-[1.45] text-[#3c4053]"
-                style={{ animationDelay: `${250 + index * 150}ms` }}
+                style={{ animationDelay: `${190 + index * 80}ms` }}
               >
                 <span className="mt-px inline-flex size-[22px] shrink-0 items-center justify-center rounded-full bg-[#eef1ff] text-[#5566f6]">
                   <Check className="size-3" strokeWidth={3} />
@@ -634,7 +653,7 @@ export default async function LandingPage() {
           <AnchorScrollLink
             href="#pricing"
             ariaLabel={copy("landing.viewPricing")}
-            className="group mt-4 flex min-h-12 max-w-full flex-wrap items-center gap-x-1.5 text-left text-[16px] leading-[1.45] text-[#3c4053] sm:hidden"
+            className="group mx-auto mt-3 flex min-h-12 w-fit max-w-full flex-wrap items-center justify-center gap-x-1.5 text-center text-[15px] leading-[1.45] text-[#3c4053] sm:hidden"
           >
             <span>{heroPricing}</span>
             <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
@@ -650,7 +669,7 @@ export default async function LandingPage() {
 
           {/* Single big CTA — для залогиненного «Открыть кабинет»,
               для анонимного — «Начать бесплатно» (регистрация) */}
-          <div className="hero-cta mt-5 flex flex-col items-stretch gap-3 sm:mt-10 sm:items-center">
+          <div className="hero-cta mt-3 flex flex-col items-stretch gap-3 sm:mt-10 sm:items-center">
             {isAuthed ? (
               <>
                 <Link
@@ -672,19 +691,28 @@ export default async function LandingPage() {
                   layout="stack"
                   buttonLabel={copy("landing.tryFree")}
                   showLoginLink={false}
+                  showLiveGuide={false}
                 />
                 {/* Гарантия — прямо в первом экране: снимать риск нужно
                     там же, где просим действие, а не через два экрана. */}
-                <div className="inline-flex items-center gap-2 text-[16px] font-medium text-[#116b2a] sm:text-[14px]">
+                <div className="inline-flex items-center justify-center gap-2 text-[15px] font-medium text-[#116b2a] sm:text-[14px]">
                   <ShieldCheck className="size-4 shrink-0" />
                   {copy("landing.refundGuarantee")}</div>
               </>
             )}
           </div>
 
-          <p className="hero-consultation-note mt-6 max-w-[72ch] text-[15px] font-medium leading-[1.55] text-[#3c4053] sm:mx-auto sm:text-[16px]">
-            {copy("landing.hero.consultationNote")}
-          </p>
+{/* «Разработан при консультации…» — плашкой с фоном и значком
+              (правки 18.11.2026): строка серым текстом терялась под формой,
+              а это главный довод доверия на первом экране. */}
+          <div className="hero-trust mx-auto mt-6 flex w-full max-w-[480px] items-center gap-3 rounded-2xl border border-[#dfe3ff] bg-[#f5f6ff] p-3.5 text-left sm:mt-8 sm:w-fit sm:max-w-[720px] sm:gap-4 sm:px-5 sm:py-4">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white">
+              <BadgeCheck className="size-[22px]" aria-hidden="true" />
+            </span>
+            <p className="text-[15px] font-semibold leading-[1.4] tracking-[-0.005em] text-[#0b1024] sm:text-[16px]">
+              {copy("landing.hero.consultationNote")}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -776,7 +804,7 @@ export default async function LandingPage() {
             <li key={item.slug}>
               <Link
                 href={`/features/${item.slug}`}
-                className="group flex h-full items-start gap-4 rounded-2xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-200 hover:border-[#5566f6]/40 hover:shadow-[0_14px_32px_-16px_rgba(85,102,246,0.28)] sm:flex-col sm:gap-3 sm:p-5"
+                className="motion-card group flex h-full items-start gap-4 rounded-2xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] hover:border-[#5566f6]/40 hover:shadow-[0_14px_32px_-16px_rgba(85,102,246,0.28)] sm:flex-col sm:gap-3 sm:p-5"
               >
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
                   <item.icon className="size-5" />
@@ -793,6 +821,13 @@ export default async function LandingPage() {
             </li>
           ))}
         </ul>
+        {/* Хаб возможностей: четыре карточки — не весь список (перелинковка). */}
+        <div className="mt-5 sm:mt-6">
+          <Link href="/features" className={OUTLINE_BUTTON_CLASS}>
+            {copy("landing.allFeaturesLink")}
+            <ArrowRight className="motion-card-arrow size-4 text-[#5566f6]" />
+          </Link>
+        </div>
       </section>
 
       {/* ЖУРНАЛЫ ДЛЯ СФЕРЫ — вместо четырёх блоков: «Какие журналы уже
@@ -806,21 +841,29 @@ export default async function LandingPage() {
           title={copy("landing.logsForIndustry")}
           lead={copy("landing.journals.sectionLead", { journalCount: JOURNALS_TOTAL })}
         />
+        {/* Плитка сферы (правки 18.11.2026): значок сверху, стрелка в углу на
+            любой ширине — видно, что плитка ведёт на страницу сферы. Название
+            под значком во всю ширину плитки и не рвётся на три строки. */}
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
-          {Object.values(NICHES).map((niche) => (
-            <li key={niche.slug}>
-              <Link
-                href={`/${niche.slug}`}
-                className="group flex h-full min-h-12 items-center justify-between gap-2 rounded-2xl border border-[#ececf4] bg-white px-3.5 py-2.5 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] sm:px-4 sm:text-[15px]"
-              >
-                <span className="min-w-0">{nicheLabel(niche.slug)}</span>
-                {/* Стрелка — с sm: на телефоне в две колонки она съедала
-                    место, и половина названий переносилась. Рамка плитки и
-                    так читается как кнопка. */}
-                <ArrowRight className="hidden size-4 shrink-0 text-[#5566f6] transition-transform duration-150 group-hover:translate-x-0.5 sm:block" />
-              </Link>
-            </li>
-          ))}
+          {Object.values(NICHES).map((niche) => {
+            const Icon = NICHE_ICONS[niche.slug] ?? UtensilsCrossed;
+            return (
+              <li key={niche.slug}>
+                <Link
+                  href={`/${niche.slug}`}
+                  className="motion-card group flex h-full flex-col gap-2.5 rounded-2xl border border-[#ececf4] bg-white p-3 text-[15px] font-medium leading-snug text-[#0b1024] shadow-[0_0_0_1px_rgba(240,240,250,0.45)] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#3848c7] sm:flex-row sm:items-center sm:gap-3 sm:p-3.5"
+                >
+                  <span className="flex items-center justify-between sm:contents">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]">
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                    <ArrowRight className="motion-card-arrow size-4 shrink-0 text-[#9b9fb3] group-hover:text-[#5566f6] sm:order-last sm:ml-auto" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">{nicheLabel(niche.slug)}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
         <p className="mt-6 max-w-[860px] text-[16px] leading-[1.75] text-[#3c4053]">
           {copy("landing.popularLogsIntro")}{" "}
@@ -854,7 +897,7 @@ export default async function LandingPage() {
       >
         {/* Тарифы 2026-10: три колонки, как у подписок на ИИ, — переключатель
             «Помесячно / За год», точки, таблица сравнения и ППК под ними. */}
-        <LandingSectionHeader title={copy("landing.pricingTitle", { trialDays: TRIAL_DAYS })} />
+        <LandingSectionHeader title={copy("landing.pricingTitle")} />
 
         <TariffComparison
           mode="public"
@@ -911,10 +954,10 @@ export default async function LandingPage() {
         <LandingSectionHeader title={copy("landing.faqHeading")} />
         <div className="divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
           {FAQ.map((item) => (
-            <details key={item.q} className="group">
+            <details key={item.q} className="motion-faq group">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-[16px] font-medium leading-snug text-[#0b1024] transition-colors duration-150 hover:bg-[#fafbff] sm:px-5 sm:py-5 [&::-webkit-details-marker]:hidden">
                 <span>{copy(item.q)}</span>
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#5566f6] transition-transform group-open:rotate-45">
+                <span className="motion-faq-plus flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#5566f6]">
                   <svg
                     viewBox="0 0 24 24"
                     width="16"
@@ -928,12 +971,36 @@ export default async function LandingPage() {
                   </svg>
                 </span>
               </summary>
-              <div className="px-4 pb-5 text-[16px] leading-[1.6] text-[#3c4053] sm:px-5 sm:text-[15px]">
+              <div className="motion-faq-body px-4 pb-5 text-[16px] leading-[1.6] text-[#3c4053] sm:px-5 sm:text-[15px]">
                 {copy(item.a)}
+                {item.more ? (
+                  <>
+                    {" "}
+                    <Link
+                      href={item.more.href}
+                      className="font-medium text-[#3848c7] underline decoration-[#3848c7]/30 underline-offset-4 transition-colors duration-150 hover:decoration-[#3848c7]"
+                    >
+                      {copy(item.more.label)}
+                    </Link>
+                  </>
+                ) : null}
               </div>
             </details>
           ))}
         </div>
+        {/* Не нашёлся ответ — в базу знаний (перелинковка на раздел-хаб). */}
+        <p className="mt-4 text-[15px] leading-[1.6] text-[#3c4053]">
+          {copy.rich("landing.faqKnowledgeBase", {
+            link: (chunks) => (
+              <Link
+                href="/baza-znaniy"
+                className="font-medium text-[#3848c7] underline decoration-[#3848c7]/30 underline-offset-4 transition-colors duration-150 hover:decoration-[#3848c7]"
+              >
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       </section>
 
       {/* FINAL CTA — акцент на QR: три шага и золотая наклейка (золото
@@ -976,7 +1043,7 @@ export default async function LandingPage() {
                 ) : (
                   // Тот же одношаговый старт, что и в hero — человек
                   // дочитал страницу, не надо снова вести его на форму.
-                  <HeroEmailStart place="final" align="start" showLoginLink={false} />
+                  <HeroEmailStart place="final" align="start" showLoginLink={false} showLiveGuide={false} />
                 )}
                 {/* Второй путь для тех, кто не готов регистрироваться сам:
                     показ по видеосвязи. Звонят по-русски — только в ru. */}
@@ -1002,7 +1069,7 @@ export default async function LandingPage() {
 
       {/* FOOTER — юридические ссылки, реквизиты и перелинковка: /blanki,
           /journals-info, все /dlya-*, возможности. */}
-      <PublicFooter />
+      <PublicFooter omitRows={["niches"]} />
     </div>
   );
 }

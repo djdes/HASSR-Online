@@ -45,6 +45,7 @@ import {
 import {
   SUPPORT_CHAT_OPEN_EVENT,
   announceSupportChatRead,
+  announceSupportChatUnread,
 } from "@/lib/support-chat-bus";
 import type { SupportAttachmentMeta } from "@/lib/support-attachments-shared";
 
@@ -166,7 +167,7 @@ function validateContact({ phone, email }: Contact): ContactError | null {
  * transform/filter — для `position: fixed` это становится containing
  * block, и пузырь уезжал в самый низ страницы. Поэтому рендерим в body.
  */
-export function PublicSupportWidget() {
+export function PublicSupportWidget({ launcher = true }: { launcher?: boolean } = {}) {
   // На сервере и при гидрации — null, после — портал в body.
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -174,10 +175,10 @@ export function PublicSupportWidget() {
     () => false,
   );
   if (!mounted) return null;
-  return createPortal(<SupportWidgetBody />, document.body);
+  return createPortal(<SupportWidgetBody launcher={launcher} />, document.body);
 }
 
-function SupportWidgetBody() {
+function SupportWidgetBody({ launcher }: { launcher: boolean }) {
   const t = useTranslations("publicSupport");
   const commonForm = useTranslations("common.form");
   const locale = useSiteLocale();
@@ -254,6 +255,10 @@ function SupportWidgetBody() {
       title: (status) => status.latest?.operatorName ?? t("widget.title"),
   });
   const { chirpFor } = incoming;
+  const unread = incoming.unread;
+  useEffect(() => {
+    if (!launcher) announceSupportChatUnread(unread);
+  }, [launcher, unread]);
 
   const rememberContact = useCallback((next: Contact) => {
     setSaved(next);
@@ -547,6 +552,11 @@ function SupportWidgetBody() {
       onDismiss={incoming.dismissPopup}
     />
   );
+
+  // Сайт (правки 18.11.2026): своей кнопки у чата нет — справа внизу одна
+  // кнопка «Контакты», чат открывается из её окна. Непрочитанные ответы
+  // показывает она же, по этому событию.
+  if (!open && !launcher) return popup;
 
   if (!open) {
     return (
