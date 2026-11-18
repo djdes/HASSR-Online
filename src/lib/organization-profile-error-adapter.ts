@@ -11,6 +11,7 @@ const PROFILE_ERRORS = {
   "Email бухгалтера в неправильном формате": "invalidEmail",
   "Язык должен быть ru, en или uz": "invalidLocale",
   "Часовой пояс в формате IANA: Europe/Moscow": "invalidTimezone",
+  "Страна — двухбуквенный код ISO: RU": "invalidCountry",
   "Брендовый цвет в формате #RRGGBB": "invalidBrandColor",
   "Цвет в формате #RRGGBB": "invalidBrandColor",
   "Укажите сайт вида dobroe-kafe.ru": "invalidWebsite",

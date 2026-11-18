@@ -159,7 +159,7 @@ export async function POST(request: Request) {
   });
 
   after(() =>
-    deliverClientMessage(posted).catch((error) =>
+    deliverClientMessage({ ...posted, request }).catch((error) =>
       console.error("[public-support-chat] delivery failed:", error)
     )
   );

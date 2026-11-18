@@ -9,6 +9,8 @@
  * отвалилось до чистки прод-окружения.
  */
 
+import { appendAdminClientLines } from "@/lib/admin-client-context";
+import { resolveAdminClientInfo, type AdminClientContext } from "@/lib/admin-client-context.server";
 import { db } from "@/lib/db";
 import { renderEmailLayout, sendRawEmail } from "@/lib/email";
 import { escapeHtml } from "@/lib/html-escape";
@@ -192,6 +194,8 @@ export function maskEmail(email: string): string {
  * «Обратная связь». `email: false` — у события своё подробное письмо (обращения, заявки),
  * его вызывающий шлёт сам через {@link sendToPlatformAdminEmails}.
  *
+ * `client` — контекст клиента: место, местное время и «Открыть» (см. ниже).
+ *
  * `kind` попадает в `TelegramLog.kind` как `admin:<kind>` — по логу видно,
  * какие именно служебные уведомления реально ушли. `dedupeKey` пишется
  * туда же: по паре kind+dedupeKey алерты о сбоях считают свой кулдаун
@@ -203,8 +207,21 @@ export function maskEmail(email: string): string {
  */
 export async function notifyPlatformAdmin(
   text: string,
-  opts?: { kind?: string; dedupeKey?: string; email?: boolean; audience?: PlatformAudience }
+  opts?: {
+    kind?: string;
+    dedupeKey?: string;
+    email?: boolean;
+    audience?: PlatformAudience;
+    /**
+     * Действие клиента: в конец текста — его место с местным временем и
+     * ссылка «Открыть» на клиента в админке (спека tg-client-location-2026-11).
+     */
+    client?: AdminClientContext | null;
+  }
 ): Promise<boolean> {
+  if (opts?.client) {
+    text = appendAdminClientLines(text, await resolveAdminClientInfo(opts.client).catch(() => null));
+  }
   const [telegram, email] = await Promise.all([
     telegramPlatformAdmins(text, opts),
     opts?.email === false

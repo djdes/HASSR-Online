@@ -70,6 +70,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await createServiceRequest({
+      request,
       service,
       organizationId,
       organizationName,

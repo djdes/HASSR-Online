@@ -15,8 +15,10 @@ export function checklistAnswerText(question: ChecklistQuestion, value: unknown)
   return `${value}${question.unit ? ` ${question.unit}` : ""}`;
 }
 type PdfAttachment = { id:string; fileName:string; mimeType:string; sizeBytes:number };
-export async function generateChecklistPdf({title,definition,answers,evidence = {},meta = [],attachments = [],imageBytes,recordedResult}: {
+export async function generateChecklistPdf({title,definition,answers,evidence = {},meta = [],attachments = [],imageBytes,recordedResult,timeZone}: {
   title:string; definition:ChecklistDefinition; answers?:ChecklistAnswers; evidence?:ChecklistEvidence; meta?:string[]; attachments?:PdfAttachment[]; imageBytes?: (id:string) => Promise<Uint8Array | null>;recordedResult?:unknown;
+  /** Пояс организации — время геопозиции в PDF. */
+  timeZone?:string;
 }): Promise<Uint8Array> {
   const doc = new jsPDF({compress:true}); const font = registerUnicodeFont(doc); doc.setFont(font); let y = 18; let imageBudget = 20*1024*1024;
   const line = (text:string,size=10) => {
@@ -55,7 +57,7 @@ export async function generateChecklistPdf({title,definition,answers,evidence = 
         const value=answers[question.id];if(question.type!=="info")line(`Ответ: ${checklistAnswerText(question,value)}`);
         if(question.type==="photo")for(const ref of Array.isArray(value)?value:typeof value==="string"?[value]:[]) {if(ref.startsWith("file:"))await file(ref);else if(ref.startsWith("data:image/"))image(ref,ref.startsWith("data:image/jpeg")?"image/jpeg":"image/png");}
         if(question.type==="signature" && typeof value==="string" && value.startsWith("data:image/"))image(value,value.startsWith("data:image/jpeg")?"image/jpeg":"image/png");
-        const proof=evidence[question.id];if(proof?.comment)line(`Комментарий: ${proof.comment}`);if(proof?.barcode)line(`Код: ${proof.barcode}`);if(proof?.location)line(`Геопозиция: ${proof.location.latitude}, ${proof.location.longitude}; точность ${Math.round(proof.location.accuracy)} м; ${formatChecklistTimestamp(proof.location.capturedAt)}`);
+        const proof=evidence[question.id];if(proof?.comment)line(`Комментарий: ${proof.comment}`);if(proof?.barcode)line(`Код: ${proof.barcode}`);if(proof?.location)line(`Геопозиция: ${proof.location.latitude}, ${proof.location.longitude}; точность ${Math.round(proof.location.accuracy)} м; ${formatChecklistTimestamp(proof.location.capturedAt,timeZone)}`);
         for(const ref of [...(proof?.photos??[]),...(proof?.videos??[]),...(proof?.audios??[])])await file(ref);
         const problem=result?.questions.find(item=>item.questionId===question.id)??checklistQuestionResult(question,value);if(problem.violation)line(problem.critical?"КРИТИЧЕСКОЕ НАРУШЕНИЕ":"Нарушение",10);
       }

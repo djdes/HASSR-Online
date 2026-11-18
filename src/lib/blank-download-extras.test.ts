@@ -94,17 +94,19 @@ test("AC7: уведомление — флаг и местное время, ч�
     format: "docx",
     email: "a@example.com",
     phone: "+79101234567",
-    location: "🇷🇺 Россия, Москва · местное время 14:32 (UTC+3)",
+    location: "🇷🇺 Россия, Москва · 14:32",
+    adminUrl: "https://wesetup.ru/root/organizations/o1",
     extras: normalizeBlankExtras({ employees: [{ name: "А" }, { name: "Б" }] }, "hygiene"),
     accountCreated: true,
     escape,
   });
   const lines = text.split("\n");
-  assert.ok(lines.includes("🇷🇺 Россия, Москва · местное время 14:32 (UTC+3)"));
+  assert.ok(lines.includes("🇷🇺 Россия, Москва · 14:32"));
   assert.ok(lines.includes("➕ Доп. данные: 2 (сотрудники — 2)"));
-  assert.equal(lines.at(-1), "✅ Быстрая регистрация: кабинет создан, доступ отправлен на почту");
+  assert.equal(lines.at(-2), "✅ Кабинет создан, доступ отправлен");
+  assert.equal(lines.at(-1), '<a href="https://wesetup.ru/root/organizations/o1">Открыть</a>');
   const plain = buildBlankDownloadAdminText({ title: "Журнал", format: "pdf", email: "a@example.com", escape });
-  assert.equal(plain, "📥 Скачивание шаблона журнала\nЖурнал: Журнал (PDF)\nПочта: a@example.com");
+  assert.equal(plain, "📥 Скачивание журнала: Журнал (PDF)\nПочта: a@example.com");
 });
 
 test("AC6: тип оборудования и нормы для кабинета", () => {

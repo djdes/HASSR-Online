@@ -152,7 +152,7 @@ export async function POST(request: Request) {
   // Доставку выносим за ответ: клиент не должен ждать Telegram и SMTP,
   // а упавший канал не должен терять уже сохранённую реплику.
   after(() =>
-    deliverClientMessage(posted).catch((error) =>
+    deliverClientMessage({ ...posted, request }).catch((error) =>
       console.error("[support-chat] delivery failed:", error)
     )
   );

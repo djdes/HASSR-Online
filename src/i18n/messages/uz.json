@@ -2634,7 +2634,8 @@
       },
       "fields": {
         "email": "Elektron pochta",
-        "sector": "Faoliyat sohasi"
+        "sector": "Faoliyat sohasi",
+        "city": "Shahar"
       },
       "sector": {
         "journalsHint": "Faoliyat sohangizga mos jurnallarni yoqamiz. Buni keyin o‘zgartirishingiz mumkin."
@@ -2643,6 +2644,10 @@
         "logCount": "…yana {count, plural, other {# ta SanPiN / HACCP jurnali}}",
         "promoDescription": "{label}. Hisob yarating, kod to‘lov vaqtida avtomatik qo‘llanadi.",
         "blankJournalReady": "«{journal}» ro‘yxatdan o‘tganingizdan so‘ng darhol ochiladi"
+      },
+      "city": {
+        "placeholder": "Shahar nomini kiriting",
+        "hint": "Jurnallarda mahalliy vaqt: hozir {time}"
       }
     },
     "errors": {
@@ -10499,7 +10504,8 @@
           "lookupUnavailable": "STIR bo‘yicha qidiruv vaqtincha ishlamayapti. Ma’lumotlarni qo‘lda kiriting.",
           "registryUnconfigured": "Yuridik shaxslar reyestri xizmati sozlanmagan. Ma’lumotlarni qo‘lda kiriting.",
           "notFound": "Bu STIR bo‘yicha tashkilot topilmadi",
-          "unknown": "So‘rovni bajarib bo‘lmadi. Ma’lumotlarni tekshirib, qayta urinib ko‘ring."
+          "unknown": "So‘rovni bajarib bo‘lmadi. Ma’lumotlarni tekshirib, qayta urinib ko‘ring.",
+          "invalidCountry": "Shaharni ro'yxatdan tanlang"
         },
         "journalShortNameExample": "Moychechak kafesi",
         "planLabels": {
@@ -10516,7 +10522,8 @@
           "brandingHint": "Kompaniya hujjatlar va plakatlarda qanday ko‘rinadi",
           "contacts": "Kontaktlar va bildirishnomalar",
           "contactsHint": "Telefon, buxgalter emaili, vaqt mintaqasi va til"
-        }
+        },
+        "city": "Shahar"
       },
       "partnerConversion": {
         "title": "Hamkor kabinetiga o‘tkazish",
@@ -10825,7 +10832,9 @@
           "timezoneBody": "Vaqt mintaqasi smena chegaralari, vazifalar va eslatmalar vaqtini belgilaydi. Til — kabinet, Mini App va xatlar uchun.",
           "notifyTitle": "Bildirishnomalar",
           "notifyBody": "Har kim bildirishnomalarni shaxsan oladi. Telegramni ulash va nimani olishni tanlash — «Bildirishnomalarni sozlash»da."
-        }
+        },
+        "cityHint": "Ro'yxatdan tanlang — vaqt mintaqasi o'zi qo'yiladi. Jurnallar vaqtni shu bo'yicha yozadi.",
+        "cityPlaceholder": "Shahar nomini kiriting"
       }
     },
     "accessMatrices": {

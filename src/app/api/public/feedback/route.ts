@@ -146,7 +146,12 @@ export async function POST(request: Request) {
     const emailAtts = emailAttachmentPayload(attachments);
     const [telegramOk, emailOk] = await Promise.all([
       // Своё подробное письмо — ниже, всем администраторам.
-      notifyPlatformAdmin(lines.join("\n"), { kind: "feedback", email: false, audience: "support" }).catch(
+      notifyPlatformAdmin(lines.join("\n"), {
+        kind: "feedback",
+        email: false,
+        audience: "support",
+        client: { request, email: contact.email, phone: contact.phone },
+      }).catch(
         (error) => {
           console.error("Public feedback telegram failed:", error);
           return false;

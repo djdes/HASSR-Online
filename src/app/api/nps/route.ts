@@ -22,6 +22,8 @@ function alertLowScore(args: {
   comment: string | null;
   followUp: boolean;
   dedupeKey: string;
+  request: Request;
+  userId: string;
 }): void {
   void (async () => {
     const organization = await db.organization.findUnique({ where: { id: args.organizationId }, select: { name: true } });
@@ -35,7 +37,7 @@ function alertLowScore(args: {
         followUp: args.followUp,
         escape: escapeTelegramHtml,
       }),
-      { kind: "nps_low", dedupeKey: args.dedupeKey },
+      { kind: "nps_low", dedupeKey: args.dedupeKey, client: { request: args.request, organizationId: args.organizationId, userId: args.userId } },
     );
   })().catch((error) => console.error("[nps] admin alert failed", error));
 }
@@ -70,6 +72,8 @@ export async function POST(request: Request) {
       comment: parsed.comment,
       followUp: false,
       dedupeKey: `nps:${response.id}`,
+      request,
+      userId: session.user.id,
     });
   }
   return NextResponse.json({ ok: true, id: response.id });
@@ -119,6 +123,8 @@ export async function PATCH(request: Request) {
         comment,
         followUp: !becameLow,
         dedupeKey: becameLow ? `nps:${existing.id}` : `nps-comment:${existing.id}`,
+        request,
+        userId: session.user.id,
       });
     }
   }

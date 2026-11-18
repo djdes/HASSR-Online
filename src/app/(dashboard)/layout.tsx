@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { OrgTimeZoneProvider } from "@/components/shared/org-time-zone";
 import { getTranslations } from "next-intl/server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -210,6 +211,8 @@ export default async function DashboardLayout({
         // Демо-организация: баннер «данные тестовые» и срок переустановки.
         isDemo: true,
         demoExpiresAt: true,
+        // Пояс организации — время в журналах и чек-листах (OrgTimeZoneProvider).
+        timezone: true,
       },
     }),
       listAccessibleOrganizations(session.user.id),
@@ -445,6 +448,7 @@ export default async function DashboardLayout({
 
   return (
     <DomainMessagesBoundary namespaces={DASHBOARD_SITE_NAMESPACES}>
+    <OrgTimeZoneProvider timeZone={brandedOrg?.timezone}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
@@ -754,6 +758,7 @@ export default async function DashboardLayout({
       </SiteThemeProvider>
       </CustomNamesProvider>
     </AuthSessionProvider>
+    </OrgTimeZoneProvider>
     </DomainMessagesBoundary>
   );
 }
@@ -819,6 +824,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
             legalProfileJson: true,
             isDemo: true,
             demoExpiresAt: true,
+            timezone: true,
           },
         })
         .catch(() => null),
@@ -865,6 +871,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     // (DASHBOARD_SITE_NAMESPACES, П-3): без dashboardUi на «Сегодня» вместо
     // подписей были ключи вида dashboardUi.closeDayCard.qrCodes.
     <DomainMessagesBoundary namespaces={["miniHome", "miniUi", ...DASHBOARD_SITE_NAMESPACES]}>
+    <OrgTimeZoneProvider timeZone={orgRow?.timezone}>
     <AuthSessionProvider session={session}>
       <CustomNamesProvider names={customNames}>
       <KioskSessionGuard />
@@ -940,6 +947,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       </SiteThemeProvider>
       </CustomNamesProvider>
     </AuthSessionProvider>
+    </OrgTimeZoneProvider>
     </DomainMessagesBoundary>
   );
 }

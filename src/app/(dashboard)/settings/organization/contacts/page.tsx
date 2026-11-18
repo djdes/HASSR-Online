@@ -25,7 +25,7 @@ export default async function OrganizationContactsPage() {
   const [org, me, staffTotal, staffTelegram, t] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { phone: true, accountantEmail: true, timezone: true, locale: true },
+      select: { phone: true, accountantEmail: true, city: true, countryCode: true, timezone: true, locale: true },
     }),
     db.user.findUnique({
       where: { id: session.user.id },

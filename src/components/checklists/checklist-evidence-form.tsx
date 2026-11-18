@@ -1,6 +1,7 @@
 "use client";
 
 import { formatChecklistTimestamp } from "@/lib/custom-checklist-display";
+import { useOrgTimeZone } from "@/components/shared/org-time-zone";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ export function ChecklistEvidenceForm({ questionId, value = {}, requirements, on
   questionId: string; value?: ChecklistEvidence[string]; requirements: ChecklistRequirements; onChange: (value: ChecklistEvidence[string]) => void; upload?: ChecklistUpload; readOnly: boolean; errors: Record<string,string>;
 }) {
   const t = useTranslations("checklistsUi.checklistEvidenceForm");
+  const timeZone = useOrgTimeZone();
   const [busy, setBusy] = useState(false);
   const [scanner, setScanner] = useState(false);
   const valueRef = useRef(value); valueRef.current = value;
@@ -64,7 +66,7 @@ export function ChecklistEvidenceForm({ questionId, value = {}, requirements, on
         }} /> : null}{errors[`${questionId}:${key}`] ? <p role="alert" className="text-sm text-red-700">{errors[`${questionId}:${key}`]}</p> : null}</div>;
     })}
     {requirements.barcode || value.barcode ? <div className="space-y-2"><Input aria-label={t("barcodeLabel")} placeholder={t("barcodePlaceholder")} value={value.barcode ?? ""} maxLength={1000} readOnly={readOnly} onChange={e => patch({ barcode: e.target.value })} />{!readOnly ? <Button variant="outline" onClick={() => setScanner(true)}>{t("scanWithCamera")}</Button> : null}{errors[`${questionId}:barcode`] ? <p role="alert" className="text-sm text-red-700">{errors[`${questionId}:barcode`]}</p> : null}</div> : null}
-    {requirements.location || value.location ? <div className="space-y-2">{value.location ? <p className="text-sm">{t("location", { latitude: value.location.latitude.toFixed(6), longitude: value.location.longitude.toFixed(6), time: formatChecklistTimestamp(value.location.capturedAt) })}</p> : null}{!readOnly ? <Button variant="outline" disabled={busy} onClick={() => {
+    {requirements.location || value.location ? <div className="space-y-2">{value.location ? <p className="text-sm">{t("location", { latitude: value.location.latitude.toFixed(6), longitude: value.location.longitude.toFixed(6), time: formatChecklistTimestamp(value.location.capturedAt, timeZone) })}</p> : null}{!readOnly ? <Button variant="outline" disabled={busy} onClick={() => {
       if (!navigator.geolocation) { toast.error(t("geoUnsupported")); return; }
       setBusy(true); navigator.geolocation.getCurrentPosition(position => { patch({ location: { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: Math.min(position.coords.accuracy,100000), capturedAt: new Date(position.timestamp).toISOString() } }); setBusy(false); }, () => { setBusy(false); toast.error(t("geoDenied")); }, { enableHighAccuracy: true, timeout:15000, maximumAge:0 });
     }}>{t("addLocation")}</Button> : null}{errors[`${questionId}:location`] ? <p role="alert" className="text-sm text-red-700">{errors[`${questionId}:location`]}</p> : null}</div> : null}

@@ -47,6 +47,8 @@ export const DOCUMENT_ORG_SELECT = {
   directorPost: true,
   logoUrl: true,
   brandColor: true,
+  // Пояс организации — время подписей в печатных формах (спека tg-client-location-2026-11).
+  timezone: true,
 } as const;
 
 /** Поля `Building` (точки) для блока. */

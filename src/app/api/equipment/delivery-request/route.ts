@@ -61,6 +61,7 @@ export async function POST(request: Request) {
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { name: true } });
   try {
     const result = await createServiceRequest({
+      request,
       service: equipmentDeliveryService(config),
       organizationId,
       organizationName: org?.name ?? null,
