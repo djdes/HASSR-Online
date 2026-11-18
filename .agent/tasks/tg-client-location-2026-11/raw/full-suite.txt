@@ -1,0 +1,4 @@
+=== Test stats: pass=6396, fail=2 ===
+✗ НОВЫЕ регрессии (нет в baseline):
+  - neutral-palette.css matches the indigo classes in src/ (npm run palette:neutral)
+  - в текстах для человека нет слова «бланк» — кроме исключений
