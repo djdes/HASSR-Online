@@ -84,7 +84,7 @@ describe("страница и ролик «Журналы заполняются
     assert.match(page, /"@type": "VideoObject"/);
     assert.match(page, /<DemoRequestButton place="autofill" variant="onDark" \/>/);
     assert.match(page, /<HeroEmailStart place="autofill" tone="dark" align="start" \/>/);
-    assert.match(read("src/components/public/public-chrome.tsx"), /href="\/avtozapolnenie"[^\n]*\{t\("autofillOffer"\)\}/);
+    assert.match(read("src/components/public/public-chrome.tsx"), /href: "\/avtozapolnenie", label: t\("autofillOffer"\)/);
     assert.match(read("src/app/sitemap.ts"), /\$\{SITE\}\/avtozapolnenie`/);
     assert.match(read("package.json"), /"video:render:autofill": "tsx scripts\/landing-video\/render-autofill\.ts"/);
   });
