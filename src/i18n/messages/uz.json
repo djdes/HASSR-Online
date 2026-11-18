@@ -1,4 +1,19 @@
 {
+  "rootGglFirstMessage": {
+    "open": "Vebmasterga yozish",
+    "title": "{domain} uchun xabar",
+    "description": "Xabar GoGetLinks orqali yuboriladi. Joylashtirish alohida buyurtma qilinadi.",
+    "body": "Xabar matni",
+    "send": "Yuborish",
+    "sending": "Yuborilmoqda…",
+    "sent": "Xabar yuborildi. Sinxronlashdan so‘ng suhbat «Chatlar» bo‘limida ko‘rinadi.",
+    "unavailable": "GoGetLinks ushbu sayt uchun xabar shaklini ochmadi.",
+    "duplicate": "Bu xabar avval yuborilgan. «Chatlar» bo‘limini tekshiring.",
+    "unconfirmed": "GoGetLinks yetkazilganini tasdiqlamadi. Qayta yuborishdan oldin «Chatlar» bo‘limini tekshiring.",
+    "invalid": "8 000 belgigacha xabar kiriting.",
+    "changed": "Slot yoki sayt o‘zgardi. Sahifani yangilang va xabar oynasini qayta oching.",
+    "error": "GoGetLinks orqali suhbatni ochib bo‘lmadi. Qayta urinib ko‘ring."
+  },
   "rootGglDonorReview": {
     "topic": "Joylashtirish mavzusiga mos maqolalar",
     "audience": "Maqsadli auditoriya uchun maqolalar",

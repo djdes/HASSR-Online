@@ -1,4 +1,19 @@
 {
+  "rootGglFirstMessage": {
+    "open": "Message webmaster",
+    "title": "Message for {domain}",
+    "description": "This message goes to GoGetLinks. Placement is ordered separately.",
+    "body": "Message text",
+    "send": "Send",
+    "sending": "Sending…",
+    "sent": "Message sent. The conversation will appear in Chats after syncing.",
+    "unavailable": "GoGetLinks did not open a message form for this site.",
+    "duplicate": "This message has already been submitted. Check the Chats tab.",
+    "unconfirmed": "GoGetLinks could not confirm delivery. Check the Chats tab before sending again.",
+    "invalid": "Enter a message up to 8,000 characters.",
+    "changed": "The slot or site changed. Refresh the page and open the message again.",
+    "error": "Could not open the conversation in GoGetLinks. Try again."
+  },
   "rootGglDonorReview": {
     "topic": "Publications on the placement topic",
     "audience": "Publications for the target audience",
