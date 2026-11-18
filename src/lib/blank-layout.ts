@@ -64,8 +64,8 @@ export function normalizeBlankLayout(raw: unknown): BlankLayout | null {
   };
 }
 
-/** Строка для продаж: «🧩 Свой бланк: «…», 6 колонок, 20 строк». */
+/** Строка для продаж: «🧩 Своя форма: «…», колонок — 6, строк — 20». */
 export function blankLayoutAdminLine(layout: BlankLayout | null | undefined): string | null {
   if (!layout) return null;
-  return `🧩 Свой бланк: «${layout.title}», колонок — ${layout.columns.length}, строк — ${layout.rows}`;
+  return `🧩 Своя форма: «${layout.title}», колонок — ${layout.columns.length}, строк — ${layout.rows}`;
 }

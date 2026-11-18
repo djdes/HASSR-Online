@@ -85,6 +85,8 @@ export type BlankDownloadClientProps = {
   place?: string;
   /** Свой бланк из конструктора: PDF печатается с этими колонками и строками. */
   layout?: BlankLayout | null;
+  /** «Вам также пригодятся» после скачивания — связанные журналы (код + название). */
+  related?: ReadonlyArray<{ code: string; name: string }>;
 };
 
 type Phase = "form" | "sending" | "done";
@@ -230,6 +232,7 @@ export function BlankDownloadClient({
   hideTrigger = false,
   place = "site",
   layout = null,
+  related = [],
 }: BlankDownloadClientProps) {
   const t = useTranslations("publicBlankDownload");
   const locale = useLocale();
@@ -400,6 +403,7 @@ export function BlankDownloadClient({
               fileUrl={fileUrl}
               account={account}
               firstEntryQr={firstEntryQr}
+              related={related}
               registerHref={localizedHref(blankRegisterHref({ email, target }), locale)}
               loginHref={localizedHref(blankLoginHref({ email, target }), locale)}
               onChangeEmail={changeEmail}
@@ -783,6 +787,7 @@ function DoneView({
   fileUrl,
   account,
   firstEntryQr = null,
+  related = [],
   registerHref,
   loginHref,
   onChangeEmail,
@@ -793,6 +798,7 @@ function DoneView({
   fileUrl: string | null;
   account: AccountState;
   firstEntryQr?: string | null;
+  related?: ReadonlyArray<{ code: string; name: string }>;
   registerHref: string;
   loginHref: string;
   onChangeEmail: () => void;
@@ -837,6 +843,7 @@ function DoneView({
           </Link>
         </div>
       )}
+      {related.length ? <RelatedJournals items={related} /> : null}
       <p className="text-center text-[13px] text-[#6f7282]">{t("done.emailWrong")} <button type="button" onClick={onChangeEmail} className="font-medium text-[#3848c7] underline-offset-4 hover:underline">{t("action.changeEmail")}</button></p>
     </>
   );
@@ -879,6 +886,34 @@ function FirstEntryQr({ url }: { url: string }) {
           {t("done.firstEntryLink")}
         </a>
       </div>
+    </div>
+  );
+}
+
+/**
+ * «Вам также пригодятся» — 3 журнала той же группы (спека
+ * seo-speed-pack-2026-11, п. 20): человек скачал один бланк — показываем,
+ * что ещё обычно ведут рядом, вместо тупика после скачивания.
+ */
+function RelatedJournals({ items }: { items: ReadonlyArray<{ code: string; name: string }> }) {
+  const t = useTranslations("publicBlankDownload");
+  const locale = useLocale();
+  return (
+    <div data-testid="blank-download-related">
+      <div className="text-[13px] font-semibold text-[#0b1024]">{t("done.alsoUseful")}</div>
+      <ul className="mt-2 space-y-1.5">
+        {items.slice(0, 3).map((item) => (
+          <li key={item.code}>
+            <Link
+              href={localizedHref(`/journals-info/${item.code}`, locale)}
+              className="flex items-center justify-between gap-2 rounded-xl border border-[#ececf4] px-3 py-2 text-[14px] text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            >
+              <span className="min-w-0 truncate">{item.name}</span>
+              <ArrowRight className="size-4 shrink-0 text-[#9b9fb3]" />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

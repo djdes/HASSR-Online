@@ -1,6 +1,7 @@
 import { JOURNAL_INFO, type JournalInfo } from "@/content/journal-info";
 import { NICHES } from "@/content/niches";
-import { SEO_LANDINGS } from "@/content/seo-landings";
+import { MERGED_SEO_LANDINGS, SEO_LANDINGS } from "@/content/seo-landings";
+import { seoRedirectTarget } from "@/content/seo-redirects";
 import type { Messages } from "./messages";
 
 export const PUBLIC_JOURNAL_CATEGORY_ORDER = ["sanpin_daily", "sanpin_periodic", "haccp"] as const satisfies readonly JournalInfo["category"][];
@@ -29,9 +30,15 @@ export function presentPublicJournalIndex(messages: IndexMessages) {
       if (!ownKey(copy.nicheLinks, source.slug)) throw new Error(`Unmapped public journal niche: ${source.slug}`);
       return { ...source, audience: copy.nicheLinks[source.slug] };
     }),
-    seo: Object.values(SEO_LANDINGS).slice(0, 7).map(source => {
+    // Частые запросы: слитые лендинги ведут сразу на страницу-победитель
+    // (seo-speed-pack-2026-11), без лишнего редиректа.
+    // Частые запросы: слитые лендинги ведут сразу на страницу-победитель
+    // (seo-speed-pack-2026-11). Те, что слиты в страницы журналов, уже есть
+    // карточками выше — второй ссылкой их не дублируем.
+    seo: Object.values({ ...SEO_LANDINGS, ...MERGED_SEO_LANDINGS }).slice(0, 7).flatMap(source => {
       if (!ownKey(copy.seoLinks, source.slug)) throw new Error(`Unmapped public journal SEO link: ${source.slug}`);
-      return { ...source, hero: copy.seoLinks[source.slug] };
+      const href = seoRedirectTarget(`/${source.slug}`) ?? `/${source.slug}`;
+      return href.startsWith("/journals-info/") ? [] : [{ ...source, hero: copy.seoLinks[source.slug], href }];
     }),
   };
 }

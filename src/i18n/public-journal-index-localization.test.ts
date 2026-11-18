@@ -12,7 +12,7 @@ import { createTranslator } from "use-intl/core";
 import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { NICHES } from "@/content/niches";
-import { SEO_LANDINGS } from "@/content/seo-landings";
+import { MERGED_SEO_LANDINGS, SEO_LANDINGS } from "@/content/seo-landings";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { loadMessages } from "@/i18n/messages";
@@ -72,7 +72,7 @@ function fixture(locale: Locale, extra: Record<string, unknown> = {}) {
   return actual;
 }
 
-test("actual index renders all 45 cards, source ordering, 14 niche and 7 SEO links in three locales", async () => {
+test("actual index renders all 45 cards, source ordering, 14 niche and SEO links in three locales", async () => {
   const original = structuredClone({ JOURNAL_INFO, NICHES, SEO_LANDINGS });
   for (const locale of locales) {
     const actual = fixture(locale), messages = await messagesFor(locale);
@@ -100,8 +100,10 @@ test("actual index renders all 45 cards, source ordering, 14 niche and 7 SEO lin
     for (const item of projection.niches) {
       assert.ok(html.includes(`href="/${item.slug}"`)); assert.ok(html.includes(text(item.audience)));
     }
+    assert.ok(projection.seo.length > 0);
     for (const item of projection.seo) {
-      assert.ok(html.includes(`href="/${item.slug}"`)); assert.ok(html.includes(text(item.hero)));
+      assert.ok(!item.href.startsWith("/journals-info/"), "merged landings are not duplicated next to the cards");
+      assert.ok(html.includes(`href="${routing.localizedHref(item.href, locale)}"`) || html.includes(`href="${item.href}"`)); assert.ok(html.includes(text(item.hero)));
     }
     for (const path of ["/blanki", "/register"]) assert.ok(html.includes(`href="${routing.localizedHref(path, locale)}"`));
     if (locale !== "ru") assert.ok(!/[А-Яа-яЁё]/u.test(html), `${locale}: no Russian index text (raster content excluded)`);
@@ -118,7 +120,7 @@ test("source provenance and future unmapped journal/link coverage fail closed", 
   const copy = messages.publicJournalIndex;
   assert.deepEqual(Object.keys(copy.descriptions).sort(), Object.keys(JOURNAL_INFO).sort());
   assert.deepEqual(Object.keys(copy.nicheLinks).sort(), Object.values(NICHES).map(item => item.slug).sort());
-  assert.deepEqual(Object.keys(copy.seoLinks), Object.values(SEO_LANDINGS).slice(0, 7).map(item => item.slug));
+  assert.deepEqual(Object.keys(copy.seoLinks), Object.values({ ...SEO_LANDINGS, ...MERGED_SEO_LANDINGS }).slice(0, 7).map(item => item.slug));
   for (const source of Object.values(JOURNAL_INFO)) {
     const code = source.code as keyof typeof copy.descriptions;
     assert.equal(copy.descriptions[code], source.why);

@@ -18,6 +18,14 @@ import type { JournalPageContent } from "./types";
 export type { JournalPageContent } from "./types";
 
 /**
+ * Даты текстов страниц журналов (спека seo-speed-pack-2026-11, п. 9 и 17):
+ * первая публикация и последняя правка содержания. Править `UPDATED` вместе
+ * с текстами — дата идёт в разметку Article, строку «Обновлено» и sitemap.
+ */
+export const JOURNAL_PAGES_PUBLISHED = "2026-03-01";
+export const JOURNAL_PAGES_UPDATED = "2026-11-17";
+
+/**
  * Блоки страниц журналов по кодам: уборка и группы — персонал и питание,
  * санитария и температура, приёмка и производство, оборудование и аудиты.
  */

@@ -178,6 +178,15 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
     ];
 
+    // Калькуляторы для чужих сайтов (/embed/*, спека seo-speed-pack-2026-11,
+    // п. 18): встраиваются iframe'ом где угодно. Ни сессии, ни данных —
+    // только публичный калькулятор и ссылка на WeSetup.
+    const embedFrameHeaders = [
+      ...commonSecurityHeaders,
+      permissionsPolicy("()"),
+      { key: "Content-Security-Policy", value: "frame-ancestors *" },
+    ];
+
     // PDF коммерческого предложения (/kp/<токен>/pdf) ROOT-генератор
     // показывает во встроенном просмотре на своей же странице
     // (/root/proposals). DENY запрещает даже свой origin — здесь SAMEORIGIN:
@@ -211,6 +220,10 @@ const nextConfig: NextConfig = {
         headers: proposalPdfHeaders,
       },
       {
+        source: "/embed/:path*",
+        headers: embedFrameHeaders,
+      },
+      {
         // Все остальные пути (кроме /mini, /mini/*) — security headers
         // + frame DENY. Negative lookahead через regex-source: Next.js
         // применяет ВСЕ matching rules одновременно, поэтому без
@@ -225,7 +238,7 @@ const nextConfig: NextConfig = {
         // X-Frame-Options: DENY запрещает даже свой же origin. В файле
         // нет ни сессии, ни чужих данных — вставлять его безопасно.
         // kp/<токен>/pdf — встроенный просмотр КП в ROOT (SAMEORIGIN выше).
-        source: "/((?!max(?:$|/)|mini(?:$|/)|api/journal-samples|equipment-fill/|room-fill/|kp/[^/]+/pdf$).*)",
+        source: "/((?!max(?:$|/)|mini(?:$|/)|embed/|api/journal-samples|equipment-fill/|room-fill/|kp/[^/]+/pdf$).*)",
         headers: denyFrameHeaders,
       },
       {
@@ -294,6 +307,20 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value: "public, max-age=3600, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
+        // Картинки и видео лендингов, иллюстрации базы знаний и писем: имена
+        // без хеша, поэтому не «на год», а неделя + месяц stale-while-
+        // revalidate (было `max-age=0` — каждый визит качал всё заново;
+        // спека seo-speed-pack-2026-11). Заменённый файл доезжает за неделю;
+        // срочную замену делать под новым именем.
+        source: "/:dir(landing|kb|email)/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=2592000",
           },
         ],
       },

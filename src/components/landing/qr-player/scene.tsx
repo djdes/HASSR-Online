@@ -169,7 +169,17 @@ const CameraContext = createContext<CameraState>({ t: 0, frame: 0, pan: 0, push:
  * Адрес картинки сцены (фото мест из public/). На сайте — как есть; при
  * рендере видео (`remotion/`) файлы public отдаются через `staticFile()`.
  */
-export const SceneAssets = createContext<(src: string) => string>((src) => src);
+/**
+ * На сайте фото мест — облегчённые копии 800 px (`/landing/places/web/`,
+ * спека seo-speed-pack-2026-11): первый экран главной на телефоне весил
+ * 180 КБ одной картинкой. Ролик (remotion/tour.tsx) даёт свой провайдер и
+ * берёт исходники в полном размере.
+ */
+export function webPlaceAsset(src: string): string {
+  return src.replace(/^\/landing\/places\/(?!web\/)/, "/landing/places/web/");
+}
+
+export const SceneAssets = createContext<(src: string) => string>(webPlaceAsset);
 
 /** Закрытая форма пружины с критическим затуханием: 0 → 1, без перелёта. */
 function spring(t: number, from: number, omega = 6.4): number {

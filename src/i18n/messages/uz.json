@@ -16954,7 +16954,7 @@
   },
   "publicFeatures": {
     "index": {
-      "metadataTitle": "WeSetup imkoniyatlari — elektron HACCP va SanPiN jurnallari",
+      "metadataTitle": "WeSetup imkoniyatlari: QR-kodlar, avtoto‘ldirish, eslatmalar",
       "metadataDescription": "WeSetup nimalar qila oladi: iiko va 1C bilan sinxronlash, jurnallarni avtomatik to‘ldirish, xodimlarga eslatmalar, harorat nazorati va lavozim bo‘yicha kirish.",
       "eyebrow": "Imkoniyatlar",
       "title": "WeSetup siz uchun nimalar qiladi",
@@ -17613,7 +17613,7 @@
   },
   "publicJournalIndex": {
     "metadata": {
-      "title": "{count, plural, other {# ta elektron SanPiN va HACCP jurnali}} — katalog",
+      "title": "SanPiN va HACCP jurnallari katalogi: {count, plural, other {# ta shakl}} namunalar bilan",
       "description": "WeSetup to‘liq katalogi: HACCP va SanPiN bo‘yicha {count, plural, other {# ta elektron jurnal}} — gigiyena, harorat, brakeraj, tozalash, dezinfeksiya, dezinseksiya, deratizatsiya va boshqalar."
     },
     "hero": {
@@ -17679,7 +17679,10 @@
       "videoLead": "Xodim QR-kod orqali telefondan qanday yozuv qilishi va rahbar o‘tkazib yuborilganlarni ko‘rishi haqida bir daqiqa.",
       "finalTitle": "Jurnallarni orqaga sana bilan to‘ldirishni to‘xtating",
       "finalBody": "Xodimlar telefondan yozuv qiladi, tizim o‘tkazib yuborilganlarni eslatadi, tekshiruvdan oldin jurnal SanPiN shaklida PDF ga chiqariladi.",
-      "stickyTry": "Sinab ko‘rish"
+      "stickyTry": "Sinab ko‘rish",
+      "sampleImageAlt": "«{title}» jurnali blanki — chop etish uchun namuna",
+      "editorialName": "WeSetup tahririyati",
+      "updatedLine": "Yangilangan: {date} · {author}"
     },
     "descriptions": {
       "hygiene": "O‘tkir respirator virusli infeksiyalar, oshqozon-ichak infeksiyalari yoki teridagi yiringli zararlanish alomatlari bor shaxslarni oziq-ovqat bilan ishlashdan chetlashtiradi. Har bir xodim uchun har smenada yuritiladi.",
@@ -18520,7 +18523,7 @@
   },
   "publicJournalDetailSeo": {
     "hygiene": {
-      "title": "Gigiyena jurnali — umumiy ovqatlanish uchun namuna",
+      "title": "Gigiyena jurnali: blank va namuna",
       "description": "SanPiN 2.3/2.4.4282-26 bo‘yicha gigiyena jurnali: ishga ruxsat, harorat tekshiruvi, Rospotrebnadzor uchun PDF. 14 kun bepul.",
       "keywords": {
         "item0": "gigiyena jurnali",
@@ -18533,7 +18536,7 @@
       "seoIntro": "Umumiy ovqatlanish uchun elektron gigiyena jurnali SanPiN 2.3/2.4.4282-26 va Rospotrebnadzor buyrug‘iga mos keladi. Xodimlarning ishga ruxsati, alomatlar va harorat qaydi, mas’ul shaxs imzosi — barchasi bitta ekranda, qog‘ozsiz va tabel bilan qo‘lda solishtirishsiz."
     },
     "health_check": {
-      "title": "Salomatlik jurnali (ЗОЖ): smena ko‘rigini yuritish",
+      "title": "Xodimlar salomatligi jurnali: blank va namuna",
       "description": "Har kungi smena oldi ko‘rigi: kim tekshiradi, qaysi belgilar qayd etiladi, qachon ishdan chetlatiladi va ishga qo‘ymaslik qanday rasmiylashtiriladi.",
       "keywords": {
         "item0": "salomatlik jurnali",
@@ -18545,7 +18548,7 @@
       "seoIntro": "Salomatlik jurnali — ko‘rikning kengaytirilgan shakli. Faqat ishga ruxsatni emas, har bir alomatni saqlaydi: bu ovqatdan zaharlanishni tekshirishda kerak bo‘ladi. Elektron shaklda ko‘rik vaqti, ishdan chetlatish va tuzatuvchi choralar qayd etiladi."
     },
     "climate_control": {
-      "title": "Xonalar harorati va namligi jurnali",
+      "title": "Harorat va namlik jurnali: blank",
       "description": "Xonalar harorati va namligi jurnali: datchiklar, avtomatik o‘lchash, shamollatish jadvali. Har xona uchun chegaralar belgilanadi, og‘ish darhol mas’ulga yuboriladi.",
       "keywords": {
         "item0": "harorat va namlik jurnali",
@@ -18557,7 +18560,7 @@
       "seoIntro": "Omborlarda harorat va namlikni qayd etish jurnali oziq-ovqat saqlanadigan xonalar uchun SanPiNning majburiy bandi: u mikroiqlim nazoratini tasdiqlaydi. WeSetup’da datchiklar har soatda o‘lchov oladi, og‘ishlar esa avtomatik ravishda CAPA’ga yuboriladi."
     },
     "cold_equipment_control": {
-      "title": "Sovutkich harorati jurnali: me’yorlar va yuritish",
+      "title": "Sovutkich harorati jurnali: blank",
       "description": "Sovutish va muzlatish uskunalari harorati me’yorlari, smenada necha marta o‘lchash, kim mas’ulligi va harorat belgilangan oraliqdan chiqsa nima qilish kerakligi.",
       "keywords": {
         "item0": "sovutkichlar harorati jurnali",
@@ -18579,7 +18582,7 @@
       "seoIntro": "Shamollatish tekshiruv ro‘yxati — SanPiNning oddiy, ammo ko‘p unutiladigan bandi: oshxonada havo zaldagidan tezroq almashadi, shu sabab ularning rejimi farq qiladi. Elektron shablon odatiy qiymatlarni qo‘yadi, davriylikni eslatadi va natijalarni ventilyatsiyaga xizmat ko‘rsatish jadvali bilan birga saqlaydi."
     },
     "cleaning": {
-      "title": "Tozalash jurnali: qanday yuritiladi va kim to‘ldiradi",
+      "title": "Xonalarni tozalash jurnali: blank va namuna",
       "description": "Tozalash jurnalini kim, qanchalik tez-tez va qanday to‘ldiradi: xona, vosita, konsentratsiya, ta’sir vaqti, nazoratchi. SanPiN 2.3/2.4.4282-26 talablari.",
       "keywords": {
         "item0": "tozalash jurnali",
@@ -18590,7 +18593,7 @@
       "seoIntro": "Tozalash jurnali hududlar va anjomlarni yuvishning har bir siklini, yuvish vositasi va konsentratsiyasini qayd etadi. Elektron shakl majburiy maydon to‘ldirilmasa yozuvni yopishga yo‘l qo‘ymaydi — inspektor har doim to‘liq manzarani ko‘radi."
     },
     "general_cleaning": {
-      "title": "Umumiy tozalash jadvali — elektron jurnal",
+      "title": "Umumiy tozalash jurnali: jadval va blank",
       "description": "Umumiy tozalashni rejalashtirish va qayd etish: hududlar, vositalar, mas’ul, imzoli dalolatnoma. Jadval bir oy oldinga tuziladi, muddat yaqinlashsa tizim eslatadi.",
       "keywords": {
         "item0": "umumiy tozalash jurnali",
@@ -18601,7 +18604,7 @@
       "seoIntro": "Umumiy tozalash «vaqt topilganda» bajariladigan ish emas, sana va hududlari ko‘rsatilgan rejadir: oshxona, ombor, zal va hojatxonalar turli davriylikda tozalanadi. WeSetup bir oylik jadval tuzadi, avtomatik eslatadi va har bir hudud uchun alohida bajarilganlik dalolatnomasini shakllantiradi."
     },
     "uv_lamp_runtime": {
-      "title": "Bakteritsid jurnal (UV-lampalar) — ishlash soatlari hisobi",
+      "title": "Bakteritsid lampa ishlash jurnali",
       "description": "Bakteritsid UV-lampalar va nurlantirgichlar ishini qayd etish jurnali: ishlagan soatlar, almashtirish, xonalarni kvarts bilan zararsizlantirish. 8000–9000 soatlik resurs avtomatik hisoblanadi.",
       "keywords": {
         "item0": "bakteritsid jurnal",
@@ -18614,7 +18617,7 @@
       "seoIntro": "Bakteritsid jurnal (UV-lampalar va retsirkulyatorlar ishini hisobga olish jurnali) muhim, chunki resurs tugagandan keyin ham lampa ko‘zga ko‘rinadigan nur chiqarishi mumkin, lekin zararsizlantirish ta’siri allaqachon yo‘qolgan bo‘ladi. WeSetup ishlash soatlarini avtomatik hisoblaydi va rejali almashtirish haqida ogohlantiradi, to‘ldirilgan jurnal namunasini esa yuklab olish mumkin."
     },
     "finished_product": {
-      "title": "Tayyor mahsulot brakeraji: jurnalni yuritish",
+      "title": "Tayyor mahsulot brakeraj jurnali: blank",
       "description": "Brakeraj komissiyasiga kim kiradi, nimalar organoleptik baholanadi va qaysi taqdim etish harorati qayd qilinadi. SanPiN 2.3/2.4.4282-26 bo‘yicha yuritish tartibi.",
       "keywords": {
         "item0": "brakeraj jurnali",
@@ -18635,7 +18638,7 @@
       "seoIntro": "Tez buziladigan mahsulotlarni qabul qilishda va smena davomida yaroqsizlarini ajratish majburiy. Elektron jurnal partiyani yuk xati va keyingi yozuvlar bilan bog‘lab, uning yetkazib beruvchidan dasturxongacha yo‘lini 2–4 soatda kuzatib chiqish imkonini beradi."
     },
     "incoming_control": {
-      "title": "Xomashyoni qabul qilish va kirish nazorati jurnali",
+      "title": "Mahsulotni qabul qilish va kirish nazorati jurnali",
       "description": "Xomashyo kirish nazorati: qabuldagi harorat, o‘ram, yaroqlilik muddatlari, yetkazib beruvchi ma’lumotlari. iiko va 1С integratsiyasi nomenklaturani avtomatik oladi.",
       "keywords": {
         "item0": "xomashyoni qabul qilish jurnali",
@@ -18646,7 +18649,7 @@
       "seoIntro": "Xomashyo va oziq-ovqat mahsulotlari kirish nazorati HACCP tizimidagi birinchi kritik nuqtadir. WeSetup iiko va 1С’dan yuk xatlarini avtomatik oladi, oshpaz esa yetkazib beruvchi ma’lumotlarini qo‘lda ko‘chirmasdan qabuldagi harorat va organoleptik bahoni kiritadi. To‘ldirilgan jurnal namunasini yuklab olish va chop etish mumkin."
     },
     "fryer_oil": {
-      "title": "Frityur yog‘lari hisobi jurnali",
+      "title": "Frityur yog‘lari jurnali: blank va namuna",
       "description": "Frityur yog‘lari hisobi: qutbli birikmalarni o‘lchash, almashtirish jadvali, utilizatsiya va olib ketish dalolatnomasi. 24% chegaraga yetganda jurnal yog‘ni almashtirishni eslatadi.",
       "keywords": {
         "item0": "frityur jurnali",
@@ -18657,7 +18660,7 @@
       "seoIntro": "Frityur yog‘lari hisobi — oddiy, ammo majburiy band. Qutbli birikmalarning 24% chegarasi qo‘l analizatori bilan nazorat qilinadi; WeSetup o‘lchovni saqlaydi, almashtirishni eslatadi va pudratchining utilizatsiya dalolatnomasini saqlaydi."
     },
     "med_books": {
-      "title": "Tibbiy daftarchalar jurnali — elektron hisob",
+      "title": "Tibbiy daftarchalar jurnali: blank",
       "description": "Xodimlar tibbiy daftarchalari hisobi: uzaytirish, flyuorografiya, ko‘riklar. Muddat tugashidan 30 kun oldin eslatma keladi, muddati o‘tgan ishga ruxsat bloklanadi.",
       "keywords": {
         "item0": "tibbiy daftarchalar jurnali",
@@ -18739,7 +18742,7 @@
       "seoIntro": "Chakana savdo tarmoqlari bilan ishlaydigan ishlab chiqarish korxonalarida termometr va tarozilarni qiyoslash majburiy. Kalibrlash va qiyoslash boshqa-boshqa jarayonlar: birinchisi asbobni sozlaydi, ikkinchisi uning aniqligini hujjat bilan tasdiqlaydi. WeSetup keyingi qiyoslash muddatini avtomatik hisoblaydi va guvohnoma skanini biriktiradi."
     },
     "incoming_raw_materials_control": {
-      "title": "Xomashyo va yarim tayyor mahsulotlar kirish nazorati jurnali",
+      "title": "Xomashyo va qadoq kirish nazorati jurnali",
       "description": "Chuqurlashtirilgan kirish nazorati: sertifikatlar, laboratoriya bayonnomalari, harorat, yorliqlar ko‘rigi. Yetkazib beruvchi hujjatlari qabul yozuvi bilan saqlanadi.",
       "keywords": {
         "item0": "kirish nazorati jurnali",
@@ -18779,7 +18782,7 @@
       "seoIntro": "Shikoyatlar jurnali — mehmonlar fikr-mulohazalarini yo‘qotmaslikning oddiy usuli. WeSetup shikoyatni menejerga yo‘naltiradi, takrorlansa esa mas’ul va muddat bilan avtomatik CAPA ochadi."
     },
     "daily_samples": {
-      "title": "Sutkalik taom namunalari jurnali — elektron shaklda",
+      "title": "Sutkalik namunalar jurnali: blank va namuna",
       "description": "Maktab, bog‘cha va kasalxonalarda sutkalik namuna olish va saqlash jurnali: taom, massa, olish vaqti, saqlash harorati, utilizatsiya. Jurnalni bir bosishda chop etish.",
       "keywords": {
         "item0": "sutkalik taom namunalari jurnali",
@@ -18960,7 +18963,7 @@
       "seoIntro": "Tayyor mahsulotlarni jadal sovitish — HACCP kritik nuqtasi. Chegara: 2 soatda +65 → +10 °C. WeSetup shokli muzlatish shkafidagi datchik ko‘rsatkichlarini yig‘adi va tayyor bayonnoma shakllantiradi."
     },
     "glass_items_list": {
-      "title": "Shisha idishlarni hisobga olish jurnali",
+      "title": "Shisha va mo‘rt plastik buyumlar ro‘yxati",
       "description": "Oshxonadagi shisha buyumlar ro‘yxati: mavjudligi, soni, butunligini muntazam tekshirish. Sinish yoki yo‘qolish darhol shisha nazorati jurnali bilan bog‘lanadi.",
       "keywords": {
         "item0": "shishani hisobga olish jurnali",
@@ -19982,7 +19985,8 @@
       "signIn": "Kirish",
       "firstEntryTitle": "Birinchi yozuvni hozir qiling",
       "firstEntryBody": "Telefon kamerasini QR-kodga qarating — kabinetingizda shu jurnal ochiladi.",
-      "firstEntryLink": "Shu qurilmada ochish"
+      "firstEntryLink": "Shu qurilmada ochish",
+      "alsoUseful": "Sizga yana kerak bo‘lishi mumkin"
     },
     "notice": {
       "sending": "Shablon tayyorlanmoqda…",

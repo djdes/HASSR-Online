@@ -168,7 +168,7 @@ export default async function JournalsInfoListPage() {
               {seo.map((s) => (
                 <Link
                   key={s.slug}
-                  href={`/${s.slug}`}
+                  href={s.href}
                   className="group flex items-center justify-between gap-2 rounded-xl border border-[#ececf4] bg-[#fafbff] px-3.5 py-2.5 text-[13px] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 >
                   <span className="line-clamp-1 text-[#0b1024] group-hover:text-[#3848c7]">

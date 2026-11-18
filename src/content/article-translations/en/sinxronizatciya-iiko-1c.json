@@ -1,7 +1,7 @@
 {
   "locale": "en",
-  "sourceHash": "cd44c646f205a6e2de3b017b1020d463796890fead3ab22cb06924f04bccc201",
-  "title": "iiko and 1C synchronization: what gets filled in automatically",
+  "sourceHash": "d95087a48612f792fdc3bd438511ecc758608d7afd2890f2e1ae8760eebc3f7f",
+  "title": "What logs take from iiko and 1C, and what stays manual",
   "excerpt": "Suppliers, product items, invoices, and write-offs sync automatically; readings and signatures still require a person. How to configure the integration without enabling automatic shift closure.",
   "tags": ["Integrations", "iiko", "1C"],
   "body": [

@@ -87,9 +87,15 @@ test("Word: только по ссылке для Word; ссылка от PDF н
   assert.equal(res.headers.get("cache-control"), "private, no-store");
   assert.equal(Buffer.from(await res.arrayBuffer()).subarray(0, 2).toString(), "PK");
 
-  // Журнала без Word — как раньше, 404 (без редиректа в никуда).
-  const noDocx = await docxGET(get("/api/journal-samples/med_books/docx", BROWSER), code("med_books"));
-  assert.equal(noDocx.status, 404);
+  // Word теперь у всех журналов с образцом (seo-speed-pack-2026-11, п. 16):
+  // без своей вёрстки — универсальная таблица, вход — так же через окно с почтой.
+  const genericDocx = await docxGET(get("/api/journal-samples/med_books/docx", BROWSER), code("med_books"));
+  assert.equal(genericDocx.status, 307);
+  assert.equal(genericDocx.headers.get("location"), "/journals-info/med_books?download=docx");
+  const genericToken = signBlankDownloadToken({ email: "zav@example.com", target: { kind: "code", code: "med_books" }, format: "docx" });
+  const generic = await docxGET(get(`/api/journal-samples/med_books/docx?t=${encodeURIComponent(genericToken)}`), code("med_books"));
+  assert.equal(generic.status, 200);
+  assert.equal(Buffer.from(await generic.arrayBuffer()).subarray(0, 2).toString(), "PK");
 });
 
 test("бумажный бланк: встроенный — публично (миниатюры), вложение — по ссылке, без неё — на /blanki", async () => {

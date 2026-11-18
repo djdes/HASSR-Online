@@ -56,8 +56,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/brakerazhnyy-zhurnal",
-    label: "Бракеражный журнал готовой продукции (/brakerazhnyy-zhurnal)",
+    url: "https://wesetup.ru/journals-info/finished_product",
+    label: "Бракеражный журнал готовой продукции (/journals-info/finished_product)",
     defaultAnchor: "бракеражный журнал готовой продукции",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "в сервисе WeSetup" },
@@ -66,8 +66,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/zhurnal-zdorovya",
-    label: "Гигиенический журнал сотрудников (/zhurnal-zdorovya)",
+    url: "https://wesetup.ru/journals-info/health_check",
+    label: "Гигиенический журнал сотрудников (/journals-info/health_check)",
     defaultAnchor: "гигиенический журнал сотрудников",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
@@ -76,8 +76,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/temperaturnyy-list-holodilnika",
-    label: "Журнал температурного режима холодильников (/temperaturnyy-list-holodilnika)",
+    url: "https://wesetup.ru/journals-info/cold_equipment_control",
+    label: "Журнал температурного режима холодильников (/journals-info/cold_equipment_control)",
     defaultAnchor: "журнал учета температурного режима холодильного оборудования",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "в системе WeSetup" },
@@ -86,8 +86,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/zhurnal-temperatury-i-vlazhnosti",
-    label: "Журнал температуры и влажности (/zhurnal-temperatury-i-vlazhnosti)",
+    url: "https://wesetup.ru/journals-info/climate_control",
+    label: "Журнал температуры и влажности (/journals-info/climate_control)",
     defaultAnchor: "журнал учета температурного режима",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
@@ -96,8 +96,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/zhurnal-generalnyh-uborok",
-    label: "Журнал генеральных уборок (/zhurnal-generalnyh-uborok)",
+    url: "https://wesetup.ru/journals-info/general_cleaning",
+    label: "Журнал генеральных уборок (/journals-info/general_cleaning)",
     defaultAnchor: "журнал проведения генеральных уборок",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "на платформе WeSetup" },
@@ -116,8 +116,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/zhurnal-vhodnogo-kontrolya",
-    label: "Журнал входного контроля сырья (/zhurnal-vhodnogo-kontrolya)",
+    url: "https://wesetup.ru/journals-info/incoming_control",
+    label: "Журнал входного контроля сырья (/journals-info/incoming_control)",
     defaultAnchor: "журнал входного контроля сырья",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "в сервисе WeSetup" },
@@ -126,8 +126,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/zhurnal-frityurnyh-zhirov",
-    label: "Журнал учёта фритюрных жиров (/zhurnal-frityurnyh-zhirov)",
+    url: "https://wesetup.ru/journals-info/fryer_oil",
+    label: "Журнал учёта фритюрных жиров (/journals-info/fryer_oil)",
     defaultAnchor: "журнал учета фритюрных жиров",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "wesetup.ru" },
@@ -156,8 +156,9 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/elektronnyy-zhurnal-sanpin",
-    label: "Электронные журналы по СанПиН для общепита (/elektronnyy-zhurnal-sanpin)",
+    // Лендинг /elektronnyy-zhurnal-sanpin слит в главную (seo-speed-pack-2026-11).
+    url: "https://wesetup.ru/",
+    label: "Электронные журналы СанПиН и ХАССП — главная (/)",
     defaultAnchor: "электронный журнал СанПиН",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "в сервисе WeSetup" },
@@ -186,8 +187,8 @@ const TARGET_PRESETS: Array<{
     ],
   },
   {
-    url: "https://wesetup.ru/haccp-dlya-kafe",
-    label: "ВЧ Посадочная: ХАССП для кафе и ресторанов (/haccp-dlya-kafe)",
+    url: "https://wesetup.ru/dlya-kafe",
+    label: "ВЧ Посадочная: ХАССП для кафе и ресторанов (/dlya-kafe)",
     defaultAnchor: "хассп для кафе",
     anchorOptions: [
       { kind: "Бренд/URL (50%)", value: "wesetup.ru" },

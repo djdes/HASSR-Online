@@ -30,7 +30,7 @@ type SeedArticle = {
 const ARTICLES: SeedArticle[] = [
   {
     slug: "elektronnyj-vs-bumazhnyj-zhurnal",
-    title: "Электронный или бумажный журнал: что примет инспектор",
+    title: "Примет ли инспектор электронный журнал: что говорят нормы",
     excerpt:
       "Инспектор принимает электронный журнал, если он выведен на печать, подписан и хранится нужный срок. Нормы задают состав данных, а не формат бумаги.",
     coverIcon: "ClipboardList",
@@ -193,7 +193,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "xaccp-za-30-minut",
-    title: "ХАССП за 30 минут: как внедрить систему в небольшом кафе",
+    title: "Семь принципов ХАССП и типичные ККТ в общепите",
     excerpt:
       "Семь принципов, типичные критические контрольные точки общепита и пять журналов, которых хватит для первого аудита. Мини-руководство для кофейни и малого кафе.",
     coverIcon: "Rocket",
@@ -345,7 +345,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "zhurnal-dezinfektsii",
-    title: "Журнал дезинфекции: что писать и как хранить акты",
+    title: "Акты дезинсекции и дератизации: что хранить и как учитывать",
     excerpt:
       "Средство, концентрация, время выдержки, объект и подпись — что писать в журнале. Как хранить акты ДДД подрядчика и не потерять их между бухгалтерией и почтой.",
     coverIcon: "Sparkles",
@@ -388,7 +388,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "zhurnal-temperatur-oborudovaniya",
-    title: "Журнал температуры холодильников: как вести без штрафов",
+    title: "Температура в холодильнике вышла за норму: что делать",
     excerpt:
       "Замер не реже двух раз в сутки, свои пределы для каждого типа оборудования, действия при отклонении. Инспектор смотрит не на ровные цифры, а на реакцию.",
     coverIcon: "Timer",
@@ -435,7 +435,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "uchet-friturnyx-zhirov",
-    title: "Учёт фритюрных жиров: когда менять масло и что писать",
+    title: "Когда менять фритюрное масло: критерии замены",
     excerpt:
       "Предел полярных соединений в общепите — 24%: дошли до него, значит меняем масло, как бы оно ни выглядело. Что писать в журнале замен и как сдать фритюр.",
     coverIcon: "Flame",
@@ -477,7 +477,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "tri-vida-uborki",
-    title: "Текущая и генеральная уборка: что писать в журнал",
+    title: "Ежедневная, текущая и генеральная уборка: в чём разница",
     excerpt:
       "Ежедневная, текущая и генеральная уборка — три разных процесса со своим графиком и списком работ. Что писать в каждой записи, чтобы инспектор их различал.",
     coverIcon: "Leaf",
@@ -564,7 +564,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "zhurnal-proslezhivaemosti",
-    title: "Прослеживаемость: как за 20 минут найти путь партии",
+    title: "Как за 20 минут найти путь партии продукции",
     excerpt:
       "Полный ответ на вопрос «откуда пришла эта партия» должен занимать 2–4 часа. Какие журналы связывают цепочку и как проводить квартальный тест прослеживаемости.",
     coverIcon: "Network",
@@ -607,7 +607,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "vnutrennij-audit-otchet",
-    title: "Внутренний аудит ХАССП: как составить полезный отчёт",
+    title: "Как формулировать несоответствия во внутреннем аудите ХАССП",
     excerpt:
       "Структура отчёта, несоответствия фактами вместо оценок, CAPA со сроком и ответственным. Рабочий документ аудита, который принимает любой сетевой закупщик.",
     coverIcon: "ClipboardList",
@@ -650,7 +650,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "mojka-i-dezinfektsiya-oborudovaniya",
-    title: "Мойка и дезинфекция оборудования: как оформить без претензий",
+    title: "Как мыть и дезинфицировать кухонное оборудование: порядок",
     excerpt:
       "Слайсеры, миксеры и льдогенераторы — источник перекрёстного заражения номер один. Шесть шагов цикла мойки, что писать в журнале и зачем нужны смывы.",
     coverIcon: "Wand2",
@@ -699,7 +699,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "uf-baktericidnyie-lampy",
-    title: "УФ-лампы: как вести учёт работы и не превысить ресурс",
+    title: "УФ-облучатель на кухне: наработка часов и замена лампы",
     excerpt:
       "Ресурс лампы — 8000–9000 часов: свет тот же, а обеззараживания уже нет. Что писать в журнале, как считать наработку и почему нельзя включать её при людях.",
     coverIcon: "Flame",
@@ -775,7 +775,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "brakerazhnyi-zhurnal",
-    title: "Бракеражный журнал: как вести и не ошибиться с партией",
+    title: "Как проводить бракераж блюд: комиссия, оценка и партии",
     excerpt:
       "Что оценивает комиссия, кто ставит подписи и почему одна партия — это одна запись. Разбираем бракераж готовой продукции и что делать с непрошедшим блюдом.",
     coverIcon: "CheckCircle2",
@@ -871,7 +871,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "temperatura-xolodilnikov-vitrin",
-    title: "Температура холодильников и витрин: нормы и контроль",
+    title: "Нормы температуры в холодильниках и витринах общепита",
     excerpt:
       "0…+4 °C для готовой продукции, не выше –18 °C для заморозки, +14 °C для холодной витрины. Нормативные пределы и как шефы ловят сбой между двумя замерами.",
     coverIcon: "Timer",
@@ -915,7 +915,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "xaccp-dlya-restoratorov",
-    title: "ХАССП для рестораторов: три страницы, которые спасают бизнес",
+    title: "Внедрение ХАССП за неделю: план по дням",
     excerpt:
       "Карта процессов, опасности, ККТ и критические пределы: рабочий план ХАССП собирается за неделю. Пошаговый маршрут по дням вместо папки «на всякий случай».",
     coverIcon: "Rocket",
@@ -967,7 +967,7 @@ const ARTICLES: SeedArticle[] = [
   },
   {
     slug: "sinxronizatciya-iiko-1c",
-    title: "Синхронизация с iiko и 1С: что заполняется автоматически",
+    title: "Что журналы берут из iiko и 1С, а что остаётся за человеком",
     excerpt:
       "Поставщики, номенклатура, накладные и списания подтягиваются сами; замеры и подписи остаются за человеком. Как настроить обмен и не включить автозакрытие смен.",
     coverIcon: "Plug",
@@ -1322,9 +1322,39 @@ const ARTICLES: SeedArticle[] = [
   },
 ];
 
+/** JSON с ключами по алфавиту: jsonb в Postgres хранит ключи в своём порядке. */
+function canonicalJson(value: unknown): string {
+  const sort = (item: unknown): unknown =>
+    Array.isArray(item)
+      ? item.map(sort)
+      : item && typeof item === "object"
+        ? Object.fromEntries(Object.entries(item as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([k, v]) => [k, sort(v)]))
+        : item;
+  return JSON.stringify(sort(value));
+}
+
 async function main() {
   let upserted = 0;
   for (const art of ARTICLES) {
+    // Без изменений — не трогаем: upsert на каждой выкладке двигал updatedAt
+    // у всех статей, и <lastmod> в sitemap «обновлял» блог при каждом деплое
+    // (seo-speed-pack-2026-11, п. 9).
+    const existing = await prisma.article.findUnique({
+      where: { slug: art.slug },
+      select: { title: true, excerpt: true, body: true, coverIcon: true, tags: true, readMinutes: true, publishedAt: true },
+    });
+    if (
+      existing &&
+      existing.title === art.title &&
+      existing.excerpt === art.excerpt &&
+      canonicalJson(existing.body) === canonicalJson(art.body) &&
+      existing.coverIcon === art.coverIcon &&
+      JSON.stringify(existing.tags) === JSON.stringify(art.tags) &&
+      existing.readMinutes === art.readMinutes &&
+      existing.publishedAt?.getTime() === art.publishedAt.getTime()
+    ) {
+      continue;
+    }
     await prisma.article.upsert({
       where: { slug: art.slug },
       create: {

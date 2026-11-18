@@ -25,7 +25,7 @@ import {
 import { QrComposition } from "./composition";
 import { FullscreenPlayer, type FullscreenResult } from "./fullscreen-player";
 import { DESKTOP_COMPOSITION, DESKTOP_QUERY, MOBILE_COMPOSITION, usePlayerFrame, usePlayerPlaying } from "./player-state";
-import { STAGE_BACKGROUND, SceneFrame, type SceneDay } from "./scene";
+import { STAGE_BACKGROUND, SceneFrame, webPlaceAsset, type SceneDay } from "./scene";
 import type { QrMatrix } from "./qr-sticker";
 import { WatchVideoButton, type NarratedVideo } from "./video-lightbox";
 
@@ -82,13 +82,26 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Фото мест подгружаются заранее: к моменту смены главы кадр уже в кеше.
+  // Фото мест подгружаются заранее, но только когда плеер на экране и
+  // браузер свободен: на телефоне шесть фото сразу забивали канал первого
+  // экрана (спека seo-speed-pack-2026-11).
   useEffect(() => {
-    for (const item of CHAPTERS) {
-      const img = new window.Image();
-      img.src = item.photo;
+    if (!onScreen) return;
+    const load = () => {
+      for (const item of CHAPTERS) {
+        const img = new window.Image();
+        img.decoding = "async";
+        img.src = webPlaceAsset(item.photo);
+      }
+    };
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+    if (idle) {
+      idle(load, { timeout: 4000 });
+      return;
     }
-  }, []);
+    const timer = window.setTimeout(load, 2500);
+    return () => window.clearTimeout(timer);
+  }, [onScreen]);
 
   // PlayerRef через callback-ref в state: слушатели вешаются, когда
   // Плеер реально смонтирован, а не по таймеру.

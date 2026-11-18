@@ -20,7 +20,7 @@ const LLMS_TXT = `# WeSetup (wesetup.ru)
 
 ## Основные журналы в каталоге
 
-- [Гигиенический журнал сотрудников (п. 2.2 СанПиН 3590-20)](https://wesetup.ru/journals-info/hygiene)
+- [Гигиенический журнал сотрудников (СанПиН 2.3/2.4.4282-26)](https://wesetup.ru/journals-info/hygiene)
 - [Журнал учёта температурного режима холодильного оборудования](https://wesetup.ru/journals-info/cold_equipment_control)
 - [Журнал учёта температуры и влажности в складских помещениях](https://wesetup.ru/journals-info/climate_control)
 - [Бракеражный журнал готовой кулинарной продукции](https://wesetup.ru/journals-info/finished_product)
@@ -29,21 +29,10 @@ const LLMS_TXT = `# WeSetup (wesetup.ru)
 - [Журнал учёта генеральных уборок](https://wesetup.ru/journals-info/general_cleaning)
 - [Журнал регистрации и контроля работы бактерицидной установки](https://wesetup.ru/journals-info/uv_lamp_runtime)
 
-## Посадочные страницы по ключевым журналам ХАССП и СанПиН
+## Отраслевые страницы
 
-- [Журналы ХАССП для общепита и производства](https://wesetup.ru/zhurnal-haccp)
-- [Электронные журналы по СанПиН](https://wesetup.ru/elektronnyy-zhurnal-sanpin)
-- [Гигиенический журнал сотрудников (журнал здоровья)](https://wesetup.ru/zhurnal-zdorovya)
-- [Бракеражный журнал готовой продукции](https://wesetup.ru/brakerazhnyy-zhurnal)
-- [Температурный лист холодильника](https://wesetup.ru/temperaturnyy-list-holodilnika)
-- [Журнал температуры и влажности на складе](https://wesetup.ru/zhurnal-temperatury-i-vlazhnosti)
-- [Журнал генеральных уборок](https://wesetup.ru/zhurnal-generalnyh-uborok)
-- [Журнал текущей уборки и дезинфекции](https://wesetup.ru/zhurnal-uborki)
-- [Журнал входного контроля сырья](https://wesetup.ru/zhurnal-vhodnogo-kontrolya)
-- [Журнал учёта фритюрных жиров](https://wesetup.ru/zhurnal-frityurnyh-zhirov)
-- [Журнал учёта медицинских книжек сотрудников](https://wesetup.ru/zhurnal-medknizhek)
-- [Журнал отбора и хранения суточных проб](https://wesetup.ru/zhurnal-sutochnyh-prob)
-- [ХАССП для кафе и ресторана](https://wesetup.ru/haccp-dlya-kafe)
+- [Журнал ХАССП для общепита и производства](https://wesetup.ru/zhurnal-haccp)
+- [ХАССП и журналы СанПиН для кафе и ресторана](https://wesetup.ru/dlya-kafe)
 
 ## Контакты и реквизиты
 

@@ -44,18 +44,18 @@ export type PageLimitBucket = {
  * grow the table.
  */
 const SECTIONS = new Set([
-  "acknowledge", "b", "batches", "blanki", "blog", "bonuses", "brakerazhnyy-zhurnal", "calc", "capa",
+  "acknowledge", "b", "batches", "blanki", "blog", "bonuses", "calc", "capa",
   "changes", "checklists", "compare", "competencies", "consent", "control-board", "dashboard",
   "delete-account", "developers", "dlya-azs", "dlya-bara", "dlya-detskogo-sada", "dlya-fastfuda",
   "dlya-fitnes-centra", "dlya-kafe", "dlya-keyteringa", "dlya-magazina", "dlya-medcentra", "dlya-otelya",
-  "dlya-pekarni", "dlya-proizvodstva", "dlya-salona-krasoty", "dlya-stolovoy", "elektronnyy-zhurnal-sanpin",
-  "en", "features", "glossary", "haccp-dlya-kafe", "ideas", "inspection", "inspector", "inspector-sheet",
+  "dlya-pekarni", "dlya-proizvodstva", "dlya-salona-krasoty", "dlya-stolovoy",
+  "en", "features", "glossary", "ideas", "inspection", "inspector", "inspector-sheet",
   "join", "journal-fill", "journals", "journals-info", "journals-progress", "knowledge", "kp", "login",
   "losses", "master", "max", "mercury", "mini", "more", "oferta", "order", "orders", "p", "pair", "partner",
   "partner-agreement", "partners", "plans", "policy", "pricing", "prikazy", "privacy", "production-control",
   "promo", "q", "qb", "qj", "r", "register", "reports", "root", "sanpin", "settings", "setup-helper", "staff",
-  "status", "team", "temperaturnyy-list-holodilnika", "terms", "translations", "unsubscribe", "uslugi", "uz",
-  "v", "verifications", "whats-new", "zhurnal-haccp", "zhurnal-uborki", "zhurnal-zdorovya",
+  "status", "team", "terms", "translations", "unsubscribe", "uslugi", "uz",
+  "v", "verifications", "whats-new", "zhurnal-haccp",
 ]);
 
 export const PAGE_LIMIT_SECTIONS: ReadonlySet<string> = SECTIONS;

@@ -13,7 +13,8 @@ import {
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { jsonLdSafeString } from "@/lib/json-ld";
-import { SEO_LANDINGS, type SeoJournalConfig } from "@/content/seo-landings";
+import { MERGED_SEO_LANDINGS, SEO_LANDINGS, type SeoJournalConfig } from "@/content/seo-landings";
+import { seoRedirectTarget } from "@/content/seo-redirects";
 export { SEO_LANDINGS };
 export type { SeoJournalConfig };
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
@@ -274,6 +275,50 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
         </div>
       </section>
 
+      {/* СРАВНЕНИЕ С БУМАГОЙ И ЦЕНЫ — коммерческая страница (seo-speed-pack-2026-11, п. 15) */}
+      {c.comparison?.length ? (
+        <section className="mx-auto max-w-[1100px] px-4 pb-14 sm:px-6 sm:pb-20" data-testid="seo-landing-comparison">
+          <h2 className="text-[clamp(1.5rem,1.8vw+1rem,2rem)] font-semibold tracking-[-0.02em]">Бумажный журнал или электронный</h2>
+          <div className="mt-5 overflow-x-auto rounded-2xl border border-[#ececf4]">
+            <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
+              <thead className="bg-[#fafbff] text-[13px] text-[#6f7282]">
+                <tr>
+                  <th scope="col" className="border-b border-[#ececf4] px-4 py-3 font-medium" />
+                  <th scope="col" className="border-b border-[#ececf4] px-4 py-3 font-medium">Бумага</th>
+                  <th scope="col" className="border-b border-[#ececf4] px-4 py-3 font-medium text-[#3848c7]">Электронный журнал ХАССП</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.comparison.map((row) => (
+                  <tr key={row.aspect} className="border-b border-[#ececf4] last:border-0 align-top">
+                    <th scope="row" className="px-4 py-3 font-semibold text-[#0b1024]">{row.aspect}</th>
+                    <td className="px-4 py-3 text-[#6f7282]">{row.paper}</td>
+                    <td className="px-4 py-3 text-[#0b1024]">{row.electronic}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {c.pricingNote ? (
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5" data-testid="seo-landing-pricing">
+              <div>
+                <div className="text-[15px] font-semibold text-[#0b1024]">Сколько стоит</div>
+                <p className="mt-1 max-w-[640px] text-[14px] leading-[1.55] text-[#3c4053]">{c.pricingNote}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/register" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-semibold text-white hover:bg-[#4a5bf0]">
+                  Попробовать бесплатно
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link href="/pricing" className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] hover:border-[#5566f6]/40">
+                  Все тарифы
+                </Link>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       {/* FAQ */}
       {c.faq && c.faq.length > 0 ? (
         <section className="mx-auto max-w-[1100px] px-4 pb-14 sm:px-6 sm:pb-20">
@@ -348,13 +393,15 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
             Похожие журналы
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {Object.values(SEO_LANDINGS)
+            {Object.values({ ...SEO_LANDINGS, ...MERGED_SEO_LANDINGS })
               .filter((s) => s.slug !== c.slug)
+              .map((s) => ({ ...s, href: seoRedirectTarget(`/${s.slug}`) ?? `/${s.slug}` }))
+              .filter((s) => s.href.startsWith("/journals-info/"))
               .slice(0, 8)
               .map((s) => (
                 <Link
                   key={s.slug}
-                  href={`/${s.slug}`}
+                  href={s.href}
                   className="group flex items-start gap-3 rounded-2xl border border-[#ececf4] bg-white p-4 transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                 >
                   <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />

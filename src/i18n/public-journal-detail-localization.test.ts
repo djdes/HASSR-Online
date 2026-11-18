@@ -14,8 +14,9 @@ import { JOURNAL_INFO } from "@/content/journal-info";
 import { JOURNAL_SEO } from "@/content/journal-seo";
 import { buildJournalFaq } from "@/lib/journal-faq";
 import { getFillingGuide } from "@/lib/journal-filling-guides";
-import { DOCX_SAMPLE_CODES } from "@/lib/document-docx";
+import { DOCX_BLANK_CODES } from "@/lib/document-docx";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
+import { journalFaqExtra } from "@/content/journal-faq-extra";
 import type { Locale } from "@/i18n/locales";
 import type * as Routing from "@/i18n/site-locale";
 import type { Metadata } from "next";
@@ -119,7 +120,7 @@ for (const locale of ["ru", "en", "uz"] as const) {
     const jsonLd = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
     const faq = jsonLd.find(value => value["@type"] === "FAQPage"); assert.ok(faq);
     faqItems += faq.mainEntity.length;
-    if (locale === "ru") assert.deepEqual(faq.mainEntity.map((value: { name: string; acceptedAnswer: { text: string } }) => ({ q: value.name, a: value.acceptedAnswer.text })), buildJournalFaq(JOURNAL_INFO[code], detail.name));
+    if (locale === "ru") assert.deepEqual(faq.mainEntity.map((value: { name: string; acceptedAnswer: { text: string } }) => ({ q: value.name, a: value.acceptedAnswer.text })), [...buildJournalFaq(JOURNAL_INFO[code], detail.name), ...journalFaqExtra(code, "ru")]);
     const article = jsonLd.find(value => value["@type"] === "Article"); assert.ok(article);
     assert.equal(article.inLanguage, { ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale]);
     assert.equal(article.url, `https://wesetup.ru${routing.localizedHref(`/journals-info/${code}`, locale)}`);
@@ -149,7 +150,7 @@ for (const locale of ["ru", "en", "uz"] as const) {
       assert.equal(download.format, "pdf");
       assert.ok(!download.autoOpen, "hero button never auto-opens");
     }
-    assert.equal(sample.length, hasSample ? DOCX_SAMPLE_CODES.includes(code as typeof DOCX_SAMPLE_CODES[number]) ? 2 : 1 : 0);
+    assert.equal(sample.length, hasSample ? DOCX_BLANK_CODES.includes(code) ? 2 : 1 : 0);
     for (const download of sample) {
       assert.deepEqual(clean(download.target), { kind: "code", code });
       assert.equal(download.autoOpen, download.format === "pdf");

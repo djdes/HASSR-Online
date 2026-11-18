@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  isDocxBlankCode,
   isDocxSampleCode,
   renderJournalDocumentDocx,
 } from "@/lib/document-docx";
+import { journalPageContent } from "@/content/journal-page-content";
 import {
   isSampleJournalCode,
 } from "@/lib/journal-sample-fixtures";
@@ -19,7 +21,8 @@ export const runtime = "nodejs";
 
 /**
  * Образец журнала в DOCX — для тех, кто хочет дописать бланк в Word.
- * Собирается не для всех журналов: см. DOCX_SAMPLE_CODES.
+ * Своя вёрстка — у DOCX_SAMPLE_CODES, у остальных журналов с образцом —
+ * универсальная таблица по его колонкам (DOCX_BLANK_CODES).
  *
  * Только скачиванием по подписанной ссылке (`?t=`) из
  * POST /api/public/blank-download: встроенного просмотра у Word нет.
@@ -35,7 +38,7 @@ export async function GET(
   if (!language.ok) return sampleDownloadError("ru", "invalidLocale", 400);
   const { locale } = language;
 
-  if (!isSampleJournalCode(code) || !isDocxSampleCode(code)) {
+  if (!isSampleJournalCode(code) || !isDocxBlankCode(code)) {
     return sampleDownloadError(locale, "pdfOnly", 404);
   }
 
@@ -60,6 +63,8 @@ export async function GET(
       await localizedJournalSampleInput(code, locale, { blank: true, company: check.company, extras }),
       code,
       {
+        // Свой Word-макет есть у части журналов; остальным — таблица по колонкам образца.
+        columns: isDocxSampleCode(code) ? null : (journalPageContent(code, locale) ?? journalPageContent(code, "ru"))?.sample?.columns ?? null,
         footer: {
           qrUrl: blankFileQrUrl({ origin: journalPdfQrOrigin(), target, email: check.email, organizationId: check.organizationId }),
           lines: await sampleFooterLines(locale),
