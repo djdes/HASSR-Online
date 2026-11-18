@@ -172,12 +172,14 @@ test("запрос на скачивание: почта, цель, формат
     [{ email: "a@example.com", format: "pdf", consent: true }, 400, "без шаблона"],
     [{ email: "a@example.com", code: "hygiene", paperId: "ot_intro", format: "pdf", consent: true }, 400, "две цели сразу"],
     [{ email: "a@example.com", code: "no_such_journal", format: "pdf", consent: true }, 404, "чужой код"],
-    [{ email: "a@example.com", code: "med_books", format: "docx", consent: true }, 400, "Word только у шести журналов"],
     [{ email: "a@example.com", paperId: "ot_intro", format: "docx", consent: true }, 400, "бумажный бланк — только PDF"],
     [{ email: "a@example.com", code: "hygiene", format: "xlsx", consent: true }, 400, "неизвестный формат"],
     [{ email: "a@example.com", code: "hygiene", format: "pdf", consent: true, marketing: "да" }, 400, "галка на письма — только true/false"],
     [null, 400, "пустое тело"],
   ];
+  // Word теперь у всех журналов с образцом (seo-speed-pack-2026-11, п. 16).
+  const medBooksDocx = parseBlankDownloadRequest({ email: "a@example.com", code: "med_books", format: "docx", consent: true }, "2026-09-22");
+  assert.equal(medBooksDocx.ok, true, "Word у журнала без своей вёрстки — универсальная таблица");
   for (const [body, status, label] of cases) {
     const result = parseBlankDownloadRequest(body, "2026-09-22");
     assert.equal(result.ok, false, label);
