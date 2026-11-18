@@ -11,6 +11,7 @@
  * трогаем; пустая строка у необязательного поля означает «очистить».
  */
 
+import { normalizeCityInput, normalizeCountryCode } from "@/lib/geo-places";
 import { sanitizeOrgJournalName } from "@/lib/org-journal-name";
 import { ORG_LOGO_PATH_PATTERN } from "@/lib/org-logo-file";
 import { normalizeOwnership, normalizeSphere } from "@/lib/org-profile";
@@ -27,6 +28,9 @@ export const ORG_PROFILE_FIELDS = [
   "accountantEmail",
   "locale",
   "timezone",
+  // Город и страна организации — подсказка пояса (спека tg-client-location-2026-11).
+  "city",
+  "countryCode",
   "brandColor",
   "brandColor2",
   "brandColor3",
@@ -139,6 +143,15 @@ export function parseOrganizationProfilePatch(
     if (v === "") data.timezone = "Europe/Moscow";
     else if (!TIMEZONE_PATTERN.test(v)) errors.push("Часовой пояс в формате IANA: Europe/Moscow");
     else data.timezone = v;
+  }
+  if (has("city")) {
+    data.city = normalizeCityInput(body.city);
+  }
+  if (has("countryCode")) {
+    const v = typeof body.countryCode === "string" ? body.countryCode.trim() : "";
+    if (v === "") data.countryCode = null;
+    else if (!normalizeCountryCode(v)) errors.push("Страна — двухбуквенный код ISO: RU");
+    else data.countryCode = normalizeCountryCode(v);
   }
   if (has("brandColor")) {
     const v = typeof body.brandColor === "string" ? body.brandColor.trim() : "";

@@ -106,7 +106,12 @@ export async function POST(request: Request) {
   after(async () => {
     const [tgOk, emailOk] = await Promise.all([
       // Своё подробное письмо — следом, всем администраторам.
-      notifyPlatformAdmin(adminText, { kind: "support-widget", email: false, audience: "support" }),
+      notifyPlatformAdmin(adminText, {
+        kind: "support-widget",
+        email: false,
+        audience: "support",
+        client: { request, organizationId: user?.organization?.id ?? null, userId: session.user.id },
+      }),
       sendToSupportEmails((to) =>
         sendFeedbackAdminEmail({
           to,

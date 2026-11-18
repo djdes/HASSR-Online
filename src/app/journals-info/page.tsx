@@ -25,6 +25,7 @@ export default async function JournalsInfoListPage() {
   const t = createTranslator({ locale, messages, namespace: "publicJournalIndex" });
   const tBrowser = createTranslator({ locale, messages, namespace: "journals.ui.browser" });
   const tCommon = createTranslator({ locale, messages, namespace: "common" });
+  const tChrome = createTranslator({ locale, messages, namespace: "publicChrome" });
   const { grouped, count, niches, seo } = presentPublicJournalIndex(messages);
 
   const groupCountLabels: Record<number, string> = {};
@@ -89,13 +90,21 @@ export default async function JournalsInfoListPage() {
             {/* Отдельный вход для тех, кому нужен файл, а не описание
                 сервиса: этот каталог отвечает на «какие журналы нужны»,
                 хаб бланков — на «дайте бланк, я распечатаю». */}
-            <Link
-              href="/blanki"
-              className="mt-6 inline-flex h-11 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 text-[15px] font-medium text-white backdrop-blur transition-colors duration-150 hover:bg-white/20"
-            >
-              <FileDown className="size-4" />
-              {t("hero.downloadBlanks")}
-            </Link>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                href="/blanki"
+                className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 text-[15px] font-medium text-white backdrop-blur transition-colors duration-150 hover:bg-white/20"
+              >
+                <FileDown className="size-4" />
+                {t("hero.downloadBlanks")}
+              </Link>
+              <Link
+                href="/about"
+                className="inline-flex min-h-11 items-center gap-2 px-3 text-[15px] font-medium text-white hover:underline"
+              >
+                {tChrome("about")} <ArrowRight aria-hidden className="size-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

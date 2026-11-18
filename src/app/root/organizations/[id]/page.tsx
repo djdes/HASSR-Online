@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isEmptySnapshot, readSignupSnapshot, signupSourceSummary } from "@/lib/signup-channel";
 import Link from "next/link";
 import { ArrowLeft, AtSign, Building2, Calculator, Globe, Mail, MapPin, MessageCircle, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
@@ -12,6 +13,7 @@ import { getTranslations } from "next-intl/server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { formatNumber } from "@/i18n/locales";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
+import { ClientLocalTime } from "./client-local-time";
 import { organizationDate, organizationSphere, organizationRole, organizationPlan, organizationOrderStatus } from "./organization-presentation";
 import { ImpersonateButton } from "./impersonate-button";
 import { DeleteOrgButton } from "./delete-org-button";
@@ -199,8 +201,15 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
       ? lookupIpGeo(owner.lastLoginIp).catch(() => null)
       : Promise.resolve(null),
   ]);
-  const clientZone = normalizeTimeZone(org.timezone);
   const clientNow = new Date();
+  // Откуда пришёл клиент — первое касание при регистрации (спека visit-source-2026-11).
+  const signupSnapshot = readSignupSnapshot(org.signupSourceJson);
+  const signupSource = isEmptySnapshot(signupSnapshot) ? null : signupSourceSummary(signupSnapshot);
+  // Местное время клиента — по IP последнего входа (или регистрации), иначе
+  // пояс организации (спека tg-client-location-2026-11): рядом с телефоном.
+  const ownerGeo = (owner?.lastLoginIp && owner.lastLoginIp !== owner.registrationIp ? lastLoginGeo : null) ?? registrationGeo;
+  const clientZone = normalizeTimeZone(ownerGeo?.timeZone) ?? normalizeTimeZone(org.timezone);
+  const clientPlace = ownerGeo?.city ?? org.city ?? (ownerGeo ? countryName(ownerGeo.countryCode, locale) : null);
   const requisites = contacts?.requisites ?? null;
   const company = contacts?.company ?? { phones: [], emails: [], accountantEmail: null, website: null, address: null };
   const withContacts = people.filter((person) => person.phone || person.email).length;
@@ -242,8 +251,10 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               {paidUntil ? <span>{t("subscription.until")}: {organizationDate(paidUntil, locale, true)}</span> : null}
               <span>·</span>
               <span>{organizationSphere(org.type, profile)}</span>
+              {org.city ? <span>· {[org.city, countryName(org.countryCode, locale)].filter(Boolean).join(", ")}</span> : null}
               {org.inn ? <span>· {t("requisites.inn")} {org.inn}</span> : null}
               <span>· {t("page.since", { date: organizationDate(org.createdAt, locale, true) })}</span>
+              {signupSource ? <span data-testid="org-signup-source">· {t("page.source", { source: signupSource })}</span> : null}
             </div>
             <div className="mt-3">
               <AccountManagerControl organizationId={org.id} current={accountManager} options={managerOptions} canAssign={canAssignManager} />
@@ -285,7 +296,19 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   <div className="space-y-1.5">
                     <div className="text-[15px] font-medium text-[#0b1024]">{owner.name}</div>
                     <div className="text-[12.5px] text-[#9b9fb3]">{[owner.position, organizationRole(owner.role, roleCopy)].filter(Boolean).join(" · ")}</div>
-                    <ContactLine icon={<Phone className="size-4" />} value={owner.phone} href={owner.phone ? `tel:${owner.phone.replace(/[^\d+]/g, "")}` : null} empty={t("contacts.noPhone")} big dataKey="owner-phone" />
+                    <ContactLine
+                      icon={<Phone className="size-4" />}
+                      value={owner.phone}
+                      href={owner.phone ? `tel:${owner.phone.replace(/[^\d+]/g, "")}` : null}
+                      empty={t("contacts.noPhone")}
+                      big
+                      dataKey="owner-phone"
+                      extra={
+                        clientZone ? (
+                          <ClientLocalTime timeZone={clientZone} place={clientPlace} initial={localTimeLabel(clientZone, clientNow)} title={t("security.localTime")} />
+                        ) : null
+                      }
+                    />
                     <ContactLine icon={<Mail className="size-4" />} value={owner.email} href={owner.email ? `mailto:${owner.email}` : null} empty={t("contacts.noEmail")} dataKey="owner-email" />
                     {owner.loginEmail ? <ContactLine icon={<AtSign className="size-4" />} value={owner.loginEmail} href={`mailto:${owner.loginEmail}`} hint={t("contacts.login")} /> : null}
                     {owner.telegram || owner.max ? (
@@ -658,6 +681,7 @@ function ContactLine({
   big,
   external,
   dataKey,
+  extra,
 }: {
   icon: React.ReactNode;
   value: string | null;
@@ -667,8 +691,10 @@ function ContactLine({
   big?: boolean;
   external?: boolean;
   dataKey?: string;
+  /** Рядом со значением — например, местное время у телефона. */
+  extra?: React.ReactNode;
 }) {
-  if (!value) return empty ? <div className="flex items-center gap-2 text-[13px] text-[#c9ccdb]">{icon}{empty}</div> : null;
+  if (!value) return empty ? <div className="flex items-center gap-2 text-[13px] text-[#c9ccdb]">{icon}{empty}{extra}</div> : null;
   return (
     <div className="flex min-w-0 items-center gap-2" data-contact={dataKey}>
       <span className="shrink-0 text-[#5566f6]">{icon}</span>
@@ -685,6 +711,7 @@ function ContactLine({
       )}
       {hint ? <span className="shrink-0 text-[11.5px] text-[#9b9fb3]">{hint}</span> : null}
       {href ? <CopyButton value={value} /> : null}
+      {extra}
     </div>
   );
 }

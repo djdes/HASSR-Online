@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ClipboardList, Settings2 } from "lucide-react";
-import { PlaceFilterChips } from "@/components/layout/place-filter-chips";
+import { Settings2 } from "lucide-react";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
-import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -40,7 +38,7 @@ export default async function PointJournalsPage({
 }: {
   searchParams: Promise<{ place?: string | string[] }>;
 }) {
-  const query = await searchParams;
+  await searchParams;
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) forbidden();
   // В шапке выбран объект — страница всей организации закрыта.
@@ -85,19 +83,8 @@ export default async function PointJournalsPage({
       return { ...target, enabledCodes: journals.filter((journal) => !disabled.has(journal.code)).map((journal) => journal.code) };
     }),
   );
-  // Фильтр по точкам — как у сотрудников; страница открыта только при «Вся
-  // организация» в шапке, поэтому без выбора в адресе — все точки.
-  const pointCards = cards.filter((card): card is PointJournalsCard & { id: string } => card.id !== null);
-  const showPlaceFilter = context.enabled && pointCards.length >= 2;
-  const place = showPlaceFilter
-    ? resolvePlaceFilter({
-        requested: placeFilterParam(query.place),
-        places: pointCards.map((card) => card.id),
-        hasNone: false,
-        headerPointId: null,
-      })
-    : null;
-  const tPlace = await getTranslations("settingsUi.placeFilter");
+  // Своего фильтра по точкам нет: страница открыта при «Вся организация» в
+  // шапке и показывает все точки; точку выбирают только в шапке (2026-11-18).
 
   return (
     <div className="space-y-5" data-point-journals-page>
@@ -119,26 +106,10 @@ export default async function PointJournalsPage({
         bullets={[t("guide.list"), t("guide.add"), t("guide.remove")]}
       />
       <PlaceFilterScope>
-        {showPlaceFilter ? (
-          <PlaceFilterChips
-            kind="point-journals"
-            label={tPlace("label")}
-            basePath="/journals/points"
-            active={place}
-            all={{
-              label: tPlace("all"),
-              count: pointCards.reduce((sum, card) => sum + card.enabledCodes.length, 0),
-              icon: ClipboardList,
-            }}
-            places={pointCards.map((card) => ({ id: card.id, name: card.name, office: false, count: card.enabledCodes.length }))}
-          />
-        ) : null}
         <PlaceFilterResults>
           <DomainMessagesBoundary namespaces={["pointJournals"]}>
             <PointJournalsClient
-              // Набор журналов в карточках — состояние клиента: при смене фильтра собираем заново.
-              key={place ?? "all"}
-              cards={place ? cards.filter((card) => card.id === place) : cards}
+              cards={cards}
               journals={journals}
               perPoint={context.enabled}
             />

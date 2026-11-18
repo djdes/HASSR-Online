@@ -43,18 +43,31 @@ test("местное время и смещение", () => {
   assert.equal(utcOffsetLabel("UTC", AT), "UTC");
 });
 
-test("строка для Telegram: страна, город, местное время; пояс браузера важнее гео", () => {
+test("строка для Telegram: коротко — страна, город, время; пояс браузера важнее гео", () => {
   assert.equal(
     clientLocationLine({ geo: { countryCode: "RU", city: "Казань", timeZone: "Europe/Moscow" }, at: AT }),
-    "🇷🇺 Россия, Казань · местное время 14:32 (UTC+3)",
+    "🇷🇺 Россия, Казань · 14:32",
   );
   assert.equal(
     clientLocationLine({ geo: { countryCode: "RU", city: null, timeZone: "Europe/Moscow" }, timeZone: "Asia/Novosibirsk", at: AT }),
-    "🇷🇺 Россия · местное время 18:32 (UTC+7)",
+    "🇷🇺 Россия · 18:32",
   );
-  assert.equal(clientLocationLine({ geo: null, timeZone: "Asia/Tashkent", at: AT }), "🕒 местное время 16:32 (UTC+5)");
+  assert.equal(clientLocationLine({ geo: null, timeZone: "Asia/Tashkent", at: AT }), "🕒 16:32 (UTC+5)");
   assert.equal(clientLocationLine({ geo: { countryCode: "KZ", city: null, timeZone: null }, at: AT }), "🇰🇿 Казахстан");
   assert.equal(clientLocationLine({ geo: null, timeZone: "bogus" }), null);
+});
+
+test("строка для Telegram: без гео — город и пояс организации", () => {
+  const fallback = { countryCode: "RU", city: "Барнаул", timeZone: "Asia/Barnaul" };
+  assert.equal(clientLocationLine({ geo: null, fallback, at: AT }), "🇷🇺 Россия, Барнаул · 18:32");
+  // IP точнее: место и пояс по IP побеждают настройки организации.
+  assert.equal(
+    clientLocationLine({ geo: { countryCode: "RU", city: "Москва", timeZone: "Europe/Moscow" }, fallback, at: AT }),
+    "🇷🇺 Россия, Москва · 14:32",
+  );
+  // Гео без пояса — время по поясу организации.
+  assert.equal(clientLocationLine({ geo: { countryCode: "RU", city: null, timeZone: null }, fallback, at: AT }), "🇷🇺 Россия · 18:32");
+  assert.equal(clientLocationLine({ geo: null, fallback: { timeZone: "Europe/Moscow" }, at: AT }), "🕒 14:32 (UTC+3)");
 });
 
 test("частные и служебные адреса не спрашиваем", () => {

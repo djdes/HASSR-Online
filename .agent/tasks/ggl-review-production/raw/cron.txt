@@ -1,0 +1,17 @@
+3-59/10 * * * * /bin/bash /tmp/tmp.9pCkKO5k32/app/scripts/cron-gogetlinks.sh --run >> $HOME/wesetup-cron-gogetlinks.log 2>&1 # wesetup-gogetlinks-cron
+3-59/10 * * * * /bin/bash /tmp/tmp.9pCkKO5k32/app/scripts/cron-gogetlinks.sh --run >> $HOME/wesetup-cron-gogetlinks.log 2>&1 # wesetup-gogetlinks-cron
+MAILTO=ops@example.test
+2-59/5 * * * * /bin/bash /app/scripts/cron-crm.sh
+bash.exe : [gogetlinks-cron] CRON_SECRET is missing
+At line:15 char:1
++ & 'C:/Program Files/Git/bin/bash.exe' .agent/tasks/ggl-review-product ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([gogetlinks-cron] CRON_SECRET is missing:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+http://127.0.0.1:3002/api/cron/gogetlinks
+POST
+@-
+PASS: idempotent schedule, existing jobs preserved, authenticated local POST
+
+Exit code: 0

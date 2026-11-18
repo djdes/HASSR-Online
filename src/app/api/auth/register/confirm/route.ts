@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rememberOrganizationVisitSource, requestSignupSource } from "@/lib/visit-source.server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import {
@@ -229,6 +230,9 @@ export async function POST(request: Request) {
     via: "register",
   }).catch((err) => console.error("sendWelcomeEmail failed", err));
 
+  // Откуда пришёл — cookie первого касания (спека visit-source-2026-11).
+  await rememberOrganizationVisitSource(result.organization.id, requestSignupSource(request, null));
+
   // Регистрации через /register раньше не уведомляли никого: новые
   // организации появлялись молча, и владелец узнавал о них случайно.
   notifyPlatformAdmin(
@@ -238,7 +242,7 @@ export async function POST(request: Request) {
       `Почта: ${escapeTelegramHtml(result.user.email)}`,
       `Имя: ${escapeTelegramHtml(result.user.name)}`,
     ].join("\n"),
-    { kind: "registration", audience: "sales" }
+    { kind: "registration", audience: "sales", client: { request, organizationId: result.organization.id } }
   ).catch((err) => console.error("register notify admin failed", err));
 
   // Регистрация по партнёрской ссылке (/p/<slug>) — организация сразу

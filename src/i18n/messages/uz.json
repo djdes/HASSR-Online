@@ -1,4 +1,10 @@
 {
+  "rootGglDonorReview": {
+    "topic": "Joylashtirish mavzusiga mos maqolalar",
+    "audience": "Maqsadli auditoriya uchun maqolalar",
+    "pending": "Rejalashtirgich saytlarning mavzuga mosligini tekshirmoqda",
+    "trust": "ishonch {value}"
+  },
   "productionControl": {
     "kinds": {
       "ppk": "Ishlab chiqarish nazorati dasturi",
@@ -604,6 +610,7 @@
       "pointTitle": "Qaysi obyekt uchun chop etamiz",
       "pointSingle": "Shu nuqta uchun chop etamiz",
       "pointHint": "Nuqta nomi har bir varaq tepasida chop etiladi, «Kundalik koʻrik» QR kodi esa shu nuqta jurnalini ochadi.",
+      "pointHeaderHint": "Boshqa obyektni yuqoridagi panelda tanlang.",
       "pointUntitled": "Nomsiz nuqta",
       "pointsEmptyTitle": "Obyektni qoʻshing",
       "pointsEmptyBody": "Uning nomi har bir varaq tepasida chop etiladi. Hozircha nuqtalar yoʻq, plakatlar nomsiz chop etiladi.",
@@ -2634,7 +2641,8 @@
       },
       "fields": {
         "email": "Elektron pochta",
-        "sector": "Faoliyat sohasi"
+        "sector": "Faoliyat sohasi",
+        "city": "Shahar"
       },
       "sector": {
         "journalsHint": "Faoliyat sohangizga mos jurnallarni yoqamiz. Buni keyin o‘zgartirishingiz mumkin."
@@ -2643,6 +2651,10 @@
         "logCount": "…yana {count, plural, other {# ta SanPiN / HACCP jurnali}}",
         "promoDescription": "{label}. Hisob yarating, kod to‘lov vaqtida avtomatik qo‘llanadi.",
         "blankJournalReady": "«{journal}» ro‘yxatdan o‘tganingizdan so‘ng darhol ochiladi"
+      },
+      "city": {
+        "placeholder": "Shahar nomini kiriting",
+        "hint": "Jurnallarda mahalliy vaqt: hozir {time}"
       }
     },
     "errors": {
@@ -5582,6 +5594,7 @@
     }
   },
   "publicChrome": {
+    "about": "Biz haqimizda",
     "journals": "Jurnallar",
     "blog": "Blog",
     "homeAria": "WeSetup — bosh sahifaga",
@@ -5620,6 +5633,55 @@
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Sizning elektron HACCP tizimingiz",
     "knowledgeBase": "Bilimlar bazasi"
+  },
+  "publicAbout": {
+    "metadata": {
+      "title": "Elektron HACCP va sanitariya jurnallari xizmati haqida",
+      "description": "WeSetup kafe, restoran va oziq-ovqat korxonalariga HACCP va sanitariya jurnallarini yuritishda yordam beradi. Jurnal namunalari va aloqa ma’lumotlarini ko‘ring."
+    },
+    "breadcrumbs": {
+      "label": "Navigatsiya yo‘li",
+      "home": "Bosh sahifa"
+    },
+    "hero": {
+      "title": "WeSetup va elektron HACCP jurnallari haqida",
+      "description": "WeSetup’ni har kuni harorat, gigiyena va tozalash ishlarini nazorat qiladigan jamoalar uchun yaratdik. Xodimlar qaydlarni telefondan kiritadi, rahbar esa barcha obyektlarining jurnallarini bitta kabinetda ko‘radi.",
+      "catalog": "Jurnallar katalogini ko‘rish",
+      "imageAlt": "WeSetup kabinetidagi elektron jurnallar katalogi"
+    },
+    "workflow": {
+      "title": "Jamoa jurnallarni qanday yuritadi",
+      "description": "WeSetup kafe, restoran, oshxona, nonvoyxona va oziq-ovqat ishlab chiqarish korxonalari uchun mos. Har bir obyekt uchun uning ish jarayoniga mos jurnallarni tanlash mumkin.",
+      "select": {
+        "title": "Obyekt uchun jurnallarni sozlang",
+        "description": "Kerakli shablonlarni tanlang, xonalar va uskunalarni qo‘shing, xodimlarga ular to‘ldiradigan jurnallarga kirish huquqini bering."
+      },
+      "record": {
+        "title": "Qaydlarni joyida kiriting",
+        "description": "Xodim uskunadagi QR-kodni skanerlab, shaklni telefonda ochishi mumkin. Datchik ulangan sovutkichlarda haroratni avtomatik qayd etishni sozlash mumkin."
+      },
+      "review": {
+        "title": "Qaydlarni ko‘ring va yuklab oling",
+        "description": "Rahbar qaydni kim va qachon kiritganini tekshirishi, jurnalni arxiv yoki tekshiruv uchun PDF yoki Excel formatida yuklab olishi mumkin."
+      }
+    },
+    "journals": {
+      "title": "Elektron jurnal namunalari",
+      "description": "Jurnalning maqsadi, maydonlari va uni to‘ldirish tartibini ko‘rish uchun jurnalni oching.",
+      "hygiene": "Xodimlar gigiyenasi jurnali",
+      "temperature": "Sovutkich harorati jurnali",
+      "cleaning": "Xonalarni tozalash jurnali",
+      "food": "Tayyor mahsulot sifatini tekshirish jurnali"
+    },
+    "company": {
+      "title": "Kompaniya va aloqa ma’lumotlari",
+      "description": "WeSetup xizmatini BFS MChJ ishlab chiqadi. Jurnallarni tanlash, obyektlarni sozlash yoki yozuvlarni elektron shaklga o‘tkazishda yordam kerak bo‘lsa, bizga yozing."
+    },
+    "start": {
+      "title": "Bitta jurnaldan boshlang",
+      "description": "Ish maydonini yarating, tanish jurnalni tanlang va birinchi qaydni kiriting. Keyin qolgan jurnallarni qo‘shing va hamkasblaringizni taklif qiling.",
+      "action": "Ish maydonini yaratish"
+    }
   },
   "landing": {
     "metadata": {
@@ -9481,7 +9543,9 @@
         },
         "equipment": {
           "title": "Qanday uskunalar bor?",
-          "hint": "Sonini va xonasini ko‘rsating. Nomlarni o‘zimiz raqamlaymiz, odatiy harorat me’yorlarini qo‘yamiz.",
+          "hint": "Hech narsa tanlanmagan — faqat obyektda haqiqatan bor uskunaning sonini belgilang. Nomlarni o‘zimiz raqamlaymiz, odatiy harorat me’yorlarini qo‘yamiz. Buni o‘tkazib yuborib, uskunani keyin qo‘shish mumkin.",
+          "typicalSet": "Odatiy to‘plam: muzlatgich va muzxona",
+          "clear": "Tozalash",
           "room": "Xona",
           "decrease": "Kamroq: {name}",
           "increase": "Ko‘proq: {name}",
@@ -10499,7 +10563,8 @@
           "lookupUnavailable": "STIR bo‘yicha qidiruv vaqtincha ishlamayapti. Ma’lumotlarni qo‘lda kiriting.",
           "registryUnconfigured": "Yuridik shaxslar reyestri xizmati sozlanmagan. Ma’lumotlarni qo‘lda kiriting.",
           "notFound": "Bu STIR bo‘yicha tashkilot topilmadi",
-          "unknown": "So‘rovni bajarib bo‘lmadi. Ma’lumotlarni tekshirib, qayta urinib ko‘ring."
+          "unknown": "So‘rovni bajarib bo‘lmadi. Ma’lumotlarni tekshirib, qayta urinib ko‘ring.",
+          "invalidCountry": "Shaharni ro'yxatdan tanlang"
         },
         "journalShortNameExample": "Moychechak kafesi",
         "planLabels": {
@@ -10516,7 +10581,8 @@
           "brandingHint": "Kompaniya hujjatlar va plakatlarda qanday ko‘rinadi",
           "contacts": "Kontaktlar va bildirishnomalar",
           "contactsHint": "Telefon, buxgalter emaili, vaqt mintaqasi va til"
-        }
+        },
+        "city": "Shahar"
       },
       "partnerConversion": {
         "title": "Hamkor kabinetiga o‘tkazish",
@@ -10825,7 +10891,9 @@
           "timezoneBody": "Vaqt mintaqasi smena chegaralari, vazifalar va eslatmalar vaqtini belgilaydi. Til — kabinet, Mini App va xatlar uchun.",
           "notifyTitle": "Bildirishnomalar",
           "notifyBody": "Har kim bildirishnomalarni shaxsan oladi. Telegramni ulash va nimani olishni tanlash — «Bildirishnomalarni sozlash»da."
-        }
+        },
+        "cityHint": "Ro'yxatdan tanlang — vaqt mintaqasi o'zi qo'yiladi. Jurnallar vaqtni shu bo'yicha yozadi.",
+        "cityPlaceholder": "Shahar nomini kiriting"
       }
     },
     "accessMatrices": {
@@ -17189,7 +17257,8 @@
       "inn": " · STIR (INN) {inn}",
       "backToClients": "Barcha mijozlar",
       "since": "Ro‘yxatdan o‘tgan: {date}",
-      "lastActivity": "Oxirgi faollik: {value}"
+      "lastActivity": "Oxirgi faollik: {value}",
+      "source": "Manba: {source}"
     },
     "stats": {
       "users": "Xodimlar",
@@ -26581,7 +26650,68 @@
       "pointAddressLabel": "{index, number}-nuqta manzili",
       "namingNote": "Xodimlar umumiy; kimga qaysi nuqtadan vazifalar kelishi — xodim kartochkasida.",
       "later": "Keyinroq",
-      "save": "Saqlash"
+      "save": "Saqlash",
+      "setup": {
+        "step": "{total} dan {current}-qadam",
+        "steps": {
+          "profile": "Anketa",
+          "points": "Obyektlar",
+          "staff": "Xodimlar",
+          "equipment": "Uskunalar"
+        },
+        "titles": {
+          "points": "Obyektlaringiz",
+          "staff": "Jurnallarni kim to‘ldiradi",
+          "equipment": "Qanday uskunalar bor"
+        },
+        "subtitles": {
+          "points": "Kafe, sex, filial — nomi va manzili jurnallarda chop etiladi",
+          "staff": "Xodimlarni qo‘shing — ularga vazifalar keladi, familiyalari jurnallarga tushadi",
+          "equipment": "Muzlatkichlar va muzlatish kameralari harorat jurnaliga tushadi"
+        },
+        "skip": "O‘tkazib yuborish",
+        "next": "Keyingisi",
+        "finish": "Tayyor",
+        "finishWithCount": "Qo‘shish ({count}) va tayyor",
+        "pointNamePlaceholder": "Masalan, Navoiy ko‘chasidagi kafe",
+        "pointNameN": "Obyekt {index}",
+        "pointNameLabel": "Obyekt {index} nomi",
+        "pointAddress": "Manzil",
+        "pointAddressLabel": "Obyekt {index} manzili",
+        "addPoint": "Yana obyekt",
+        "removePoint": "Obyekt {index} ni olib tashlash",
+        "pointsNote": "O‘tkazib yuborish mumkin — obyektlarni keyin «Mening kompaniyam → Obyektlar» bo‘limida qo‘shasiz.",
+        "pointsSaved": "Obyektlar saqlandi",
+        "pointExists": "«{name}» obyekti allaqachon bor",
+        "pointsFailed": "Obyektlarni saqlab bo‘lmadi",
+        "staffName": "F.I.Sh.",
+        "staffNamePlaceholder": "F.I.Sh., masalan Ivanova Mariya",
+        "staffPosition": "Lavozim",
+        "staffPositionPlaceholder": "Lavozim, masalan Oshpaz",
+        "staffAdd": "Qo‘shish",
+        "staffNote": "Telefonlar, obyektlar va jadval — keyin «Xodimlar» bo‘limida. O‘tkazib yuborish mumkin.",
+        "staffFailed": "Xodimni qo‘shib bo‘lmadi",
+        "equipmentPoint": "Obyekt",
+        "equipmentRoom": "Xona",
+        "equipmentRoomDefault": "Oshxona",
+        "typicalSet": "Odatiy to‘plam: muzlatkich va muzlatish kamerasi",
+        "clear": "Tozalash",
+        "decrease": "Kamroq: {name}",
+        "increase": "Ko‘proq: {name}",
+        "norm": "me’yor {range}",
+        "equipmentNote": "Hech narsa tanlanmagan — faqat haqiqatan bor uskunani belgilang. O‘tkazib yuborib, keyin «Uskunalar» bo‘limida qo‘shish mumkin.",
+        "equipmentFailed": "Qo‘shib bo‘lmadi: {items}",
+        "equipmentSaved": "Uskunalar qo‘shildi: {count}",
+        "done": "Kabinet sozlandi — jurnallarni to‘ldirish mumkin",
+        "types": {
+          "refrigerator": "Muzlatkich",
+          "freezer": "Muzlatish kamerasi",
+          "fryer": "Frityurnitsa",
+          "uv_lamp": "UB-lampa",
+          "oven": "Pech",
+          "dishwasher": "Idish yuvish mashinasi"
+        }
+      }
     },
     "todaySpeed": {
       "recentTitle": "Yaqinda ochilgan",

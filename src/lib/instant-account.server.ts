@@ -52,6 +52,8 @@ export type InstantAccountInput = {
   signedIn: boolean;
   /** Откуда включили журнал — в детали записи AuditLog. */
   journalEnableVia: Extract<JournalEnableSource, "blank-qr-signup" | "blank-download-signup">;
+  /** Город, страна и пояс из формы регистрации — время журналов по месту. */
+  place?: { city: string | null; countryCode: string | null; timeZone: string } | null;
 };
 
 export type InstantAccount = Awaited<ReturnType<typeof createInstantAccount>>;
@@ -83,6 +85,10 @@ export async function createInstantAccount(input: InstantAccountInput) {
         // defaultJournalAutomationJson.
         journalAutomationJson: defaultJournalAutomationJson(),
         subscriptionPlan: "free",
+        // Город из формы задаёт пояс: журналы ведут время по месту, не по Москве.
+        ...(input.place
+          ? { timezone: input.place.timeZone, city: input.place.city, countryCode: input.place.countryCode }
+          : {}),
         // Источник визита — для воронки /root/funnel (по каналам).
         ...(isEmptySnapshot(input.source) ? {} : { signupSourceJson: input.source }),
       },

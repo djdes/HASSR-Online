@@ -286,7 +286,7 @@ export async function accrueReferralReward(orderId: number): Promise<number> {
       `Начислено: ${formatPoints(reward)} (база ${formatPoints(base)})`,
       `Заказ №${order.id}`,
     ].join("\n"),
-    { kind: "referral" },
+    { kind: "referral", client: { organizationId: order.organizationId } },
   ).catch((err) => console.error("referral admin notify failed", err));
 
   return reward;

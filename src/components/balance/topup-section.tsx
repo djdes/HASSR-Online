@@ -144,7 +144,9 @@ export function TopupSection({
         created?: boolean;
       };
       if (!res.ok) {
-        setError(t("createFailed"));
+        // Причину от сервера показываем как есть («уже выставлен счёт № 2 на
+        // 5 000 ₽…»): общая «не удалось» не говорила, что делать дальше.
+        setError(data.error?.trim() || t("createFailed"));
         setInvoiceOpen(false);
         return;
       }

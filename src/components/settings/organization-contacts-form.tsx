@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { RU_PHONE_PLACEHOLDER, formatRuPhoneInput, phoneInputProps } from "@/lib/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { isLocale, offeredLocales } from "@/i18n/locales";
+import { CityPicker } from "@/components/shared/city-picker";
 import {
   FieldRow,
   ORG_INPUT_CLASS,
@@ -19,7 +20,7 @@ import {
   patchOrganization,
 } from "@/components/settings/organization-page-kit";
 
-type Contacts = { phone: string; accountantEmail: string; timezone: string; locale: string };
+type Contacts = { phone: string; accountantEmail: string; city: string; countryCode: string; timezone: string; locale: string };
 
 type ContactsField = keyof Contacts;
 
@@ -28,6 +29,7 @@ const FIELD_ERRORS: Partial<Record<string, ContactsField>> = {
   invalidPhone: "phone",
   invalidEmail: "accountantEmail",
   invalidTimezone: "timezone",
+  invalidCountry: "city",
   invalidLocale: "locale",
 };
 
@@ -37,12 +39,18 @@ const TIMEZONE_OPTIONS = [
   "Europe/Samara",
   "Asia/Yekaterinburg",
   "Asia/Omsk",
+  "Asia/Novosibirsk",
+  "Asia/Barnaul",
   "Asia/Krasnoyarsk",
   "Asia/Irkutsk",
   "Asia/Yakutsk",
   "Asia/Vladivostok",
   "Asia/Magadan",
   "Asia/Kamchatka",
+  "Asia/Almaty",
+  "Asia/Tashkent",
+  "Asia/Bishkek",
+  "Europe/Minsk",
 ];
 
 const SELECT_CLASS =
@@ -78,7 +86,7 @@ export function OrganizationContactsForm({
   initial,
   notifications,
 }: {
-  initial: { phone: string | null; accountantEmail: string | null; timezone: string; locale: string };
+  initial: { phone: string | null; accountantEmail: string | null; city: string | null; countryCode: string | null; timezone: string; locale: string };
   notifications: NotificationsSummary;
 }) {
   const t = useTranslations("settingsManagement.organizationProfile");
@@ -87,6 +95,8 @@ export function OrganizationContactsForm({
   const start: Contacts = {
     phone: initial.phone ? formatRuPhoneInput(initial.phone) : "",
     accountantEmail: initial.accountantEmail ?? "",
+    city: initial.city ?? "",
+    countryCode: initial.countryCode ?? "",
     timezone: initial.timezone,
     locale: initial.locale,
   };
@@ -169,6 +179,22 @@ export function OrganizationContactsForm({
 
       {/* ② Часовой пояс и язык */}
       <StepCard n={2} id="region" title={t("form.regionTitle")} lead={t("contactsPage.regionLead")}>
+        {/* Город с подсказками: выбор из списка ставит часовой пояс (спека tg-client-location-2026-11). */}
+        <FieldRow label={t("form.city")} hint={t("contactsPage.cityHint")} error={errors.city} htmlFor="contacts-city">
+          <CityPicker
+            id="contacts-city"
+            value={{ city: draft.city, countryCode: draft.countryCode || null }}
+            onChange={(value) => {
+              setDraft((prev) => ({ ...prev, city: value.city, countryCode: value.countryCode ?? (value.city.trim() ? prev.countryCode : "") }));
+              setErrors((prev) => ({ ...prev, city: undefined }));
+            }}
+            onPlace={(place) => set("timezone", place.timeZone)}
+            locale={draft.locale}
+            placeholder={t("contactsPage.cityPlaceholder")}
+            inputClassName={ORG_INPUT_CLASS}
+            invalid={Boolean(errors.city)}
+          />
+        </FieldRow>
         <FieldRow label={t("form.timezone")} hint={t("contactsPage.timezoneHint")} error={errors.timezone}>
           <Select value={draft.timezone} onValueChange={(value) => set("timezone", value)}>
             <SelectTrigger className={SELECT_CLASS} aria-label={t("form.timezone")} aria-invalid={errors.timezone ? true : undefined} data-field="timezone">

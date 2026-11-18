@@ -22,6 +22,7 @@ export default async function ChecklistInspectionPage({ params }: { params: Prom
   });
   // Точка (2026-11-01, «точка видит только своё»): проверка другой точки — «не найдена».
   if (!inspection || !(await checklistInspectionInArea(session, getActiveOrgId(session), inspection))) notFound();
+  const organization = await db.organization.findUnique({ where: { id: getActiveOrgId(session) }, select: { timezone: true } });
   const canReview = canReviewInspection({
     status: inspection.status,
     reviewedAt: inspection.reviewedAt,
@@ -33,7 +34,7 @@ export default async function ChecklistInspectionPage({ params }: { params: Prom
     <div className="space-y-4">
       {canReview || inspection.reviewedAt ? (
         <DomainMessagesBoundary namespaces={["checklistPages"]}>
-          <ChecklistReviewBar inspectionId={id} canReview={canReview} reviewedAtLabel={inspection.reviewedAt ? formatChecklistTimestamp(inspection.reviewedAt) : null} reviewedByName={inspection.reviewedByName} />
+          <ChecklistReviewBar inspectionId={id} canReview={canReview} reviewedAtLabel={inspection.reviewedAt ? formatChecklistTimestamp(inspection.reviewedAt, organization?.timezone) : null} reviewedByName={inspection.reviewedByName} />
         </DomainMessagesBoundary>
       ) : null}
       <ChecklistInspectionClient id={id} />

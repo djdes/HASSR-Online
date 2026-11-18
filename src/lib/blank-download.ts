@@ -320,7 +320,7 @@ export function shouldNotifyBlankDownloadAdmin(previousDownloadsCount: number, a
   return accountCreated || previousDownloadsCount === 0;
 }
 
-/** Текст уведомления в Telegram-бот при скачивании шаблона журнала. */
+/** Текст уведомления в Telegram-бот при скачивании шаблона журнала (коротко, спека tg-client-location-2026-11). */
 export function buildBlankDownloadAdminText(params: {
   title: string;
   format: BlankFormat;
@@ -330,24 +330,29 @@ export function buildBlankDownloadAdminText(params: {
   company?: string | null;
   /** Кабинет создан галкой «Быстрая регистрация». */
   accountCreated?: boolean;
+  /** Откуда пришёл клиент, коротко (`signupSourceShort`). */
+  source?: string | null;
   /** Флаг страны по IP и местное время клиента (`clientLocationLine`). */
   location?: string | null;
   /** «Дополнительно» из окна — в уведомлении только их количество. */
   extras?: BlankExtras | null;
+  /** Карточка клиента в админке — последней строкой «Открыть». */
+  adminUrl?: string | null;
   escape: (value: string) => string;
 }): string {
   const esc = params.escape;
   const extrasLine = blankExtrasAdminLine(params.extras);
   const layoutLine = blankLayoutAdminLine(params.extras?.layout);
   return [
-    "📥 Скачивание шаблона журнала",
-    `Журнал: ${esc(params.title)} (${esc(BLANK_FORMAT_LABEL[params.format])})`,
+    `📥 Скачивание журнала: ${esc(params.title)} (${esc(BLANK_FORMAT_LABEL[params.format])})`,
     `Почта: ${esc(params.email)}`,
     ...(params.phone ? [`Телефон: ${esc(displayBlankPhone(params.phone))}`] : []),
     ...(params.company ? [`Организация: ${esc(params.company)}`] : []),
+    ...(params.source ? [`Источник: ${esc(params.source)}`] : []),
     ...(params.location ? [esc(params.location)] : []),
     ...(extrasLine ? [esc(extrasLine)] : []),
     ...(layoutLine ? [esc(layoutLine)] : []),
-    ...(params.accountCreated ? ["✅ Быстрая регистрация: кабинет создан, доступ отправлен на почту"] : []),
+    ...(params.accountCreated ? ["✅ Кабинет создан, доступ отправлен"] : []),
+    ...(params.adminUrl ? [`<a href="${esc(params.adminUrl)}">Открыть</a>`] : []),
   ].join("\n");
 }

@@ -23,6 +23,7 @@ import { notifyPlatformAdmin, sendToPlatformAdminEmails } from "@/lib/platform-a
 import { demoRequestRateLimiter } from "@/lib/rate-limit";
 import { getServerSession } from "@/lib/server-session";
 import { isEmptySnapshot, readSignupSnapshot } from "@/lib/signup-channel";
+import { rememberContactVisitSource, rememberOrganizationVisitSource, requestSignupSource } from "@/lib/visit-source.server";
 import { escapeTelegramHtml } from "@/lib/telegram";
 
 export const runtime = "nodejs";
@@ -97,7 +98,9 @@ export async function POST(request: Request) {
     organizationName = org?.name ?? null;
   }
 
-  const source = readSignupSnapshot(parsed.data.source);
+  // Форма или cookie первого касания (спека visit-source-2026-11).
+  const formSource = readSignupSnapshot(parsed.data.source);
+  const source = requestSignupSource(request, formSource) ?? formSource;
   const demo: DemoRequest = {
     name: parsed.data.name,
     phone: parsed.data.phone,
@@ -152,12 +155,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // Откуда пришёл — в контакт CRM и в организацию, если у неё ещё нет источника.
+  if (demo.source) {
+    await rememberContactVisitSource({ email: demo.email, phone: demo.phone }, demo.source);
+    if (organizationId) await rememberOrganizationVisitSource(organizationId, demo.source);
+  }
+
   const tgOk = await notifyPlatformAdmin(composeDemoAlert(demo, escapeTelegramHtml), {
     kind: "demo_request",
     dedupeKey: `demo:${requestId}`,
     audience: "sales",
     // Своё письмо с приглашением в календарь — ниже, всем администраторам.
     email: false,
+    client: { request, organizationId, userId: session?.user?.id ?? null, email: demo.email, phone: demo.phone, source: demo.source },
   }).catch(() => false);
 
   let emailOk = false;

@@ -12,8 +12,29 @@ import {
   pinGglOverallCampaign,
   saveLocalSession,
   readGglWebmasterSource,
+  readGglDonorCatalogPages,
 } from "@/lib/seo/gogetlinks-client.server";
 import { decodeWin1251 } from "@/lib/seo/gogetlinks-codec";
+
+test("catalog reads the anchor token from the index and paginates through the observed read-only endpoint", async () => {
+  const seen: string[] = [];
+  const fetchImpl: typeof fetch = async (url, init) => {
+    seen.push(`${init?.method} ${new URL(String(url)).pathname}`);
+    if (init?.method === "GET") {
+      assert.equal(new URL(String(url)).search, "");
+      return new Response('<script>window.anchorEditToken = "catalog_fixture_token_123";</script>', { headers: { "content-type": "text/html; charset=utf-8" } });
+    }
+    const fields = new URLSearchParams(String(init?.body));
+    assert.equal(fields.get("compaing_id_list[]"), "77");
+    assert.equal(fields.get("anchor_token"), "catalog_fixture_token_123");
+    assert.equal(fields.get("from_ses"), "1");
+    assert.equal(fields.has("condition"), false);
+    return Response.json({ success: true, data: `<table>Page ${fields.get("page")}</table>` });
+  };
+  const result = await readGglDonorCatalogPages({ campaignId: 77, pages: [2, 3] }, { fetchImpl, skipDbSync: true, allowRelogin: false });
+  assert.deepEqual(result, [{ page: 2, html: "<table>Page 2</table>" }, { page: 3, html: "<table>Page 3</table>" }]);
+  assert.deepEqual(seen, ["GET /searchSites", "POST /searchSites/table", "POST /searchSites/table"]);
+});
 
 test("webmaster reads only POST the observed listing/card endpoints, with scoped filters and no purchase", async () => {
   const previous = process.env.API_ANYTHING_HOME;

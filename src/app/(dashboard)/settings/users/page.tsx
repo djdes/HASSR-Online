@@ -1,13 +1,12 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
-import { placeFilterParam, resolvePlaceFilter } from "@/lib/place-filter";
+import { resolvePlaceFilter } from "@/lib/place-filter";
 import { positionSuggestionOptionsFor } from "@/lib/sphere-positions";
 import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { StaffPageClient } from "@/components/staff/staff-page-client";
-import { StaffPlaceFilter } from "@/components/staff/staff-place-filter";
 import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { buildingInScope, isPointScoped, staffScopeWhere } from "@/lib/point-scope";
 import { PinRequestsPanel } from "@/components/staff/pin-requests-panel";
@@ -144,32 +143,32 @@ export default async function StaffPage({
     loadBuildingContext(session),
   ]);
 
-  // «Где работает» (2026-10-26): офис, точка или без места. С 2026-11-11
-  // фильтр согласован с точкой в шапке (владелец: «должны быть сотрудники по
-  // выбранной точке»): без выбора в адресе — точка из шапки, офис или «Вся
-  // организация» в шапке — «Все»; выбор точки в фильтре переключает шапку.
+  // Сотрудники — по точке из шапки (владелец, 2026-11-11: «должны быть
+  // сотрудники по выбранной точке»): офис или «Вся организация» в шапке — все.
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? null;
   const showPlaceFilter = organization?.perLocationJournals === true && staffBuildings.length >= 2;
   const place = resolvePlaceFilter({
-    requested: placeFilterParam(query.place),
+    // Точку выбирают только в шапке (владелец, 2026-11-18: «смену точек —
+    // только сверху»); своих чипов «Где работает» у списка больше нет.
+    requested: null,
     places: staffBuildings.map((building) => building.id),
     hasNone: true,
     headerPointId: showPlaceFilter ? viewedPointId(buildingContext) : null,
   });
-  // Новый сотрудник по умолчанию — в место из фильтра (раньше — в точку из
-  // шапки, даже если ниже выбрана другая); «Все» и «Без места» — без места.
+  // Новый сотрудник по умолчанию — в точку из шапки; «Вся организация» — без места.
   const defaultPlaceId = place && place !== "none" ? place : null;
   const addParam = one(query.add);
   const initialAddBuilding = staffBuildings.find((building) => building.id === addParam) ?? null;
+  // Сотрудник без точки — общий, как цех без точки: виден на каждой точке
+  // (чипа «Без места» больше нет, иначе таких людей видно только из «Вся
+  // организация»; мастер первого входа заводит сотрудников без точки).
   const placeOf = (u: { buildingIds: string[] }) =>
-    place === null ? true : place === "none" ? u.buildingIds.length === 0 : u.buildingIds.includes(place);
-  const countedStaff = employees.filter((u) => u.isActive && !u.isRoot);
-  const placeOptions = staffBuildings.map((building) => ({
-    id: building.id,
-    name: building.name,
-    office: isOfficeBuilding(building),
-    count: countedStaff.filter((u) => u.buildingIds.includes(building.id)).length,
-  }));
+    place === null
+      ? true
+      : place === "none"
+        ? u.buildingIds.length === 0
+        : // Руководителю точки — только его люди, как раньше.
+          (!pointScoped && u.buildingIds.length === 0) || u.buildingIds.includes(place);
 
   const positionSuggestions = {
     management: positionSuggestionOptionsFor(
@@ -251,16 +250,6 @@ export default async function StaffPage({
         чип — скелет списка до прихода данных места (2026-10-29). */}
     <PlaceFilterScope>
     <StaffPageClient
-      placeFilter={
-        showPlaceFilter ? (
-          <StaffPlaceFilter
-            active={place}
-            total={countedStaff.length}
-            unplaced={pointScoped ? 0 : countedStaff.filter((u) => u.buildingIds.length === 0).length}
-            places={placeOptions}
-          />
-        ) : null
-      }
       initialAdd={
         initialAddBuilding
           ? { buildingId: initialAddBuilding.id, office: isOfficeBuilding(initialAddBuilding) }

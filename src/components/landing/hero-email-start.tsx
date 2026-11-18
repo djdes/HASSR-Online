@@ -1,5 +1,6 @@
 "use client";
 
+import { browserTimeZone } from "@/lib/geo-places";
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { localizedHref } from "@/i18n/site-locale";
@@ -103,6 +104,8 @@ export function HeroEmailStart({
           consentPlace: "landing",
           captchaToken: await challenge.getToken(),
           website: challenge.website,
+          // Пояс браузера — пояс новой организации (время в журналах).
+          timeZone: browserTimeZone(),
         }),
       });
       const data = await res.json().catch(() => ({}));

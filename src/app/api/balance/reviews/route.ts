@@ -132,7 +132,7 @@ export async function POST(request: Request) {
         "",
         "Модерация: /root/reviews",
       ].join("\n"),
-      { kind: "review", dedupeKey: `review:${review.id}` },
+      { kind: "review", dedupeKey: `review:${review.id}`, client: { request, organizationId, userId: session.user.id } },
     ).catch((error) => console.error("review admin notify failed", error));
 
     return NextResponse.json({ ok: true, review });

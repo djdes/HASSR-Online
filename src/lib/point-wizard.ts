@@ -27,8 +27,12 @@ export type WizardEquipmentType = "refrigerator" | "freezer" | "fryer" | "uv_lam
 
 export type TypicalEquipment = {
   type: WizardEquipmentType;
-  /** Сколько по умолчанию. */
-  quantity: number;
+  /**
+   * Сколько добавляет кнопка «Типовой набор». По умолчанию в мастере — 0 у
+   * всего (владелец, 2026-11-18: заранее выставленные холодильник и
+   * морозильник люди создавали, не заметив, а потом путались).
+   */
+  typical: number;
   tempMin?: number;
   tempMax?: number;
   /** Где обычно стоит: сначала по названию помещения, потом по виду. */
@@ -37,13 +41,23 @@ export type TypicalEquipment = {
 
 /** Типовое оборудование; подпись — `settingsManagement.points.equipmentTypes.<type>`. */
 export const TYPICAL_EQUIPMENT: ReadonlyArray<TypicalEquipment> = [
-  { type: "refrigerator", quantity: 1, tempMin: 2, tempMax: 6, prefer: { name: /холод|cold|sovuq/i, kinds: ["kitchen", "production", "storage"] } },
-  { type: "freezer", quantity: 1, tempMin: -24, tempMax: -18, prefer: { name: /склад|storage|ombor/i, kinds: ["storage", "production", "kitchen"] } },
-  { type: "fryer", quantity: 0, prefer: { name: /горяч|hot|issiq/i, kinds: ["kitchen", "production"] } },
-  { type: "uv_lamp", quantity: 0, prefer: { name: /холод|cold|sovuq/i, kinds: ["kitchen", "production"] } },
-  { type: "oven", quantity: 0, prefer: { name: /горяч|hot|issiq/i, kinds: ["kitchen", "production"] } },
-  { type: "dishwasher", quantity: 0, prefer: { kinds: ["wash", "kitchen"] } },
+  { type: "refrigerator", typical: 1, tempMin: 2, tempMax: 6, prefer: { name: /холод|cold|sovuq/i, kinds: ["kitchen", "production", "storage"] } },
+  { type: "freezer", typical: 1, tempMin: -24, tempMax: -18, prefer: { name: /склад|storage|ombor/i, kinds: ["storage", "production", "kitchen"] } },
+  { type: "fryer", typical: 0, prefer: { name: /горяч|hot|issiq/i, kinds: ["kitchen", "production"] } },
+  { type: "uv_lamp", typical: 0, prefer: { name: /холод|cold|sovuq/i, kinds: ["kitchen", "production"] } },
+  { type: "oven", typical: 0, prefer: { name: /горяч|hot|issiq/i, kinds: ["kitchen", "production"] } },
+  { type: "dishwasher", typical: 0, prefer: { kinds: ["wash", "kitchen"] } },
 ];
+
+/** Количества при открытии мастера: ничего не выбрано. */
+export function emptyEquipmentQuantities(): Record<WizardEquipmentType, number> {
+  return Object.fromEntries(TYPICAL_EQUIPMENT.map((item) => [item.type, 0])) as Record<WizardEquipmentType, number>;
+}
+
+/** Количества после кнопки «Типовой набор» — только по явному нажатию. */
+export function typicalEquipmentQuantities(): Record<WizardEquipmentType, number> {
+  return Object.fromEntries(TYPICAL_EQUIPMENT.map((item) => [item.type, item.typical])) as Record<WizardEquipmentType, number>;
+}
 
 /** Типовая УФ-лампа: ресурс по паспорту, поправят на странице точки. */
 export const WIZARD_LAMP_HOURS = 8000;

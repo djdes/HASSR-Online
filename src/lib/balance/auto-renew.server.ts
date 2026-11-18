@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import type { AccountBillingState } from "@/lib/billing-period";
-import { formatMskDay, lastDayBefore } from "@/lib/billing-period";
+import { formatMskDay, formatMskDayAuto, lastDayBefore } from "@/lib/billing-period";
 import type { BillingUnit } from "@/lib/billing.server";
 import type { BasePlanSnapshot } from "@/lib/plan-payment";
 import type { PlanTarget } from "@/lib/tariff-plans";
@@ -283,8 +283,10 @@ export async function previewForUnit(unit: BillingUnit, now: Date): Promise<Auto
     blockedReason,
     title: null,
     priceRub: null,
-    paidUntil: unit.subscriptionEnd ? formatMskDay(lastDayBefore(unit.subscriptionEnd)) : null,
-    chargeDay: unit.subscriptionEnd ? formatMskDay(new Date(lastDayBefore(unit.subscriptionEnd).getTime() - 24 * 60 * 60 * 1000)) : null,
+    // Год — когда он не текущий: у годовой подписки «17 ноября» читалось как
+    // вчерашняя дата, а списание через год.
+    paidUntil: unit.subscriptionEnd ? formatMskDayAuto(lastDayBefore(unit.subscriptionEnd), now) : null,
+    chargeDay: unit.subscriptionEnd ? formatMskDayAuto(new Date(lastDayBefore(unit.subscriptionEnd).getTime() - 24 * 60 * 60 * 1000), now) : null,
     balanceRub,
     shortRub: 0,
   };

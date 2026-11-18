@@ -181,7 +181,12 @@ export async function POST(request: Request) {
           pageUrl,
         }),
         // Своё подробное письмо — ниже, всем администраторам.
-        { kind: "feedback", email: false, audience: "support" }
+        {
+          kind: "feedback",
+          email: false,
+          audience: "support",
+          client: { request, organizationId: orgId || null, userId: session.user.id },
+        }
       ).catch((error) => {
         console.error("Feedback telegram failed:", error);
         return false;

@@ -1,0 +1,17 @@
+{
+  "task": "cabinet-billing-onboarding-2026-11-18",
+  "base": "b62f03e5c",
+  "acceptance": {
+    "AC1": {"status": "PASS", "notes": "invoice/topup/mark-paid/UPD/exports verified locally; 3 bugs fixed; report raw-keys issue documented as out of scope; test data deleted, scan = 0"},
+    "AC2": {"status": "PASS", "notes": "page-level point switchers removed on 6 pages; documents requisites and badge sign excluded per spec amendment"},
+    "AC3": {"status": "PASS", "notes": "4-step wizard verified desktop full path and mobile skip path"},
+    "AC4": {"status": "PASS", "notes": "point wizard equipment defaults 0; typical set via button; unit test"},
+    "AC5": {"status": "PASS", "notes": "typecheck exit 0; test:changed 68 files pass=295 fail=0"}
+  },
+  "commands": {
+    "typecheck": "exit 0",
+    "test:changed": "68 files, pass=295, fail=0",
+    "node --test src/lib/setup-wizard.test.ts": "pass 2",
+    "node --test src/lib/point-wizard.test.ts": "pass 6"
+  }
+}

@@ -37,7 +37,7 @@ describe("показ за 15 минут — тексты", () => {
     assert.match(text, /👤 Анна &lt;Кафе&gt; · 📞 \+7 \(999\) 111-22-33/);
     assert.match(text, /🕐 Когда удобно: завтра/);
     assert.match(text, /💬 Датчики &amp; холодильники/);
-    assert.match(text, /🔎 Яндекс Директ · yandex \/ cpc \/ kafe · вход: \/dlya-kafe · кнопка «pricing»/);
+    assert.match(text, /\nИсточник: Яндекс Директ · kafe\nКнопка: «pricing»/);
     assert.doesNotMatch(text, /🏢/);
   });
 

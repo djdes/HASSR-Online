@@ -188,7 +188,13 @@ export async function recordTrialFeedback(params: {
         email: user?.email ?? null,
         escape: escapeTelegramHtml,
       }),
-      { kind: "trial_feedback", dedupeKey: `trial_feedback:${row.id}`, email: false, audience: "sales" },
+      {
+        kind: "trial_feedback",
+        dedupeKey: `trial_feedback:${row.id}`,
+        email: false,
+        audience: "sales",
+        client: { organizationId: params.organizationId, userId: user ? params.userId : null },
+      },
     );
   } catch (error) {
     console.error("[trial-feedback] admin notify failed", error);

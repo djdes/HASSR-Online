@@ -630,7 +630,7 @@ async function notifyAboutConversion(input: {
         `Тариф: ${escapeTelegramHtml(input.ops.organizationBilling.subscriptionPlan)}` +
         (end ? `, оплачено до ${formatMskDate(end)}` : "") +
         (input.ops.homeMove ? `\nПрофиль переехал в «${escapeTelegramHtml(input.ops.homeMove.toOrganizationName)}»` : ""),
-      { kind: "partner-org-converted", dedupeKey: `partner-org-converted-${partnerClientId}` },
+      { kind: "partner-org-converted", dedupeKey: `partner-org-converted-${partnerClientId}`, client: { organizationId } },
     ),
   ]);
   for (const result of results) {
@@ -913,7 +913,7 @@ export async function returnClientToOwnAccount(input: {
     `↩️ Партнёр <b>${escapeTelegramHtml(input.brandName)}</b>: организация <b>${escapeTelegramHtml(snapshot.organization.name)}</b> ` +
       `возвращена в личный аккаунт, сопровождение завершено\nКто: ${escapeTelegramHtml(input.actorName)}` +
       (ops.revokeOwner ? `\nОтменено приглашение владельцу: ${escapeTelegramHtml(ops.revokeOwner.email)}` : ""),
-    { kind: "partner-org-returned", dedupeKey: `partner-org-returned-${ops.linkId}` },
+    { kind: "partner-org-returned", dedupeKey: `partner-org-returned-${ops.linkId}`, client: { organizationId } },
   ).catch((error) => console.error(`[partners] org returned notify failed org=${organizationId}`, error));
 
   return {

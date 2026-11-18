@@ -1,4 +1,10 @@
 {
+  "rootGglDonorReview": {
+    "topic": "Publications on the placement topic",
+    "audience": "Publications for the target audience",
+    "pending": "The planner is checking site relevance",
+    "trust": "trust {value}"
+  },
   "productionControl": {
     "kinds": {
       "ppk": "Production control program",
@@ -604,6 +610,7 @@
       "pointTitle": "Which location to print for",
       "pointSingle": "Printing for this location",
       "pointHint": "The location name is printed at the top of every sheet, and the “Daily check” QR opens this location’s journal.",
+      "pointHeaderHint": "To print for another location, switch it in the top bar.",
       "pointUntitled": "Untitled location",
       "pointsEmptyTitle": "Add a location",
       "pointsEmptyBody": "Its name will be printed at the top of every sheet. Until you add one, posters print without it.",
@@ -2634,7 +2641,8 @@
       },
       "fields": {
         "email": "Email address",
-        "sector": "Industry"
+        "sector": "Industry",
+        "city": "City"
       },
       "sector": {
         "journalsHint": "We’ll enable the logs you need for your industry. You can change this later."
@@ -2643,6 +2651,10 @@
         "logCount": "…and {count, plural, one {# more SanPiN / HACCP log} other {# more SanPiN / HACCP logs}}",
         "promoDescription": "{label}. Create an account and the code will be applied automatically at checkout.",
         "blankJournalReady": "“{journal}” will open as soon as you register"
+      },
+      "city": {
+        "placeholder": "Start typing your city",
+        "hint": "Journals use local time: now {time}"
       }
     },
     "errors": {
@@ -5582,6 +5594,7 @@
     }
   },
   "publicChrome": {
+    "about": "About us",
     "journals": "Journals",
     "blog": "Blog",
     "homeAria": "WeSetup — go to homepage",
@@ -5620,6 +5633,55 @@
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Your electronic HACCP",
     "knowledgeBase": "Knowledge base"
+  },
+  "publicAbout": {
+    "metadata": {
+      "title": "About our digital HACCP and hygiene logs",
+      "description": "See how WeSetup helps cafés, restaurants and food producers keep HACCP and hygiene logs. Explore example logs and find out how to contact our team."
+    },
+    "breadcrumbs": {
+      "label": "Breadcrumbs",
+      "home": "Home"
+    },
+    "hero": {
+      "title": "About WeSetup and our digital HACCP logs",
+      "description": "We built WeSetup for teams that check temperatures, staff hygiene and cleaning every day. Staff log checks from their phones, and managers can see records for all their sites in one workspace.",
+      "catalog": "Browse the log catalogue",
+      "imageAlt": "Digital log catalogue in the WeSetup workspace"
+    },
+    "workflow": {
+      "title": "How your team keeps its logs",
+      "description": "WeSetup is built for cafés, restaurants, canteens, bakeries and food producers. Choose logs for each site based on how it operates.",
+      "select": {
+        "title": "Set up logs for your site",
+        "description": "Choose templates, add rooms and equipment, and give staff access to the logs they fill in."
+      },
+      "record": {
+        "title": "Record checks on the spot",
+        "description": "Staff can scan an equipment QR code to open a form on their phones. For fridges with connected sensors, you can configure automatic temperature logging."
+      },
+      "review": {
+        "title": "Review and export records",
+        "description": "Managers can see who made each entry and when, then export the log as a PDF or Excel file for their records or an inspection."
+      }
+    },
+    "journals": {
+      "title": "Examples of digital logs",
+      "description": "Open a log to see what it is used for, which fields it contains and how to fill it in.",
+      "hygiene": "Staff hygiene log",
+      "temperature": "Fridge temperature log",
+      "cleaning": "Premises cleaning log",
+      "food": "Prepared food quality inspection log"
+    },
+    "company": {
+      "title": "Company and contact details",
+      "description": "WeSetup is developed by BFS LLC. Contact us for help choosing logs, setting up sites or moving your records online."
+    },
+    "start": {
+      "title": "Start with one log",
+      "description": "Create a workspace, choose a log you already use and make your first entry. Then add the rest of your logs and invite your team.",
+      "action": "Create a workspace"
+    }
   },
   "landing": {
     "metadata": {
@@ -9481,7 +9543,9 @@
         },
         "equipment": {
           "title": "What equipment is there?",
-          "hint": "Set the quantity and the room. We number the names ourselves and fill in typical temperature norms.",
+          "hint": "Nothing is selected — set the quantity only for what is really on site. We number the names ourselves and fill in typical temperature norms. You can skip this and add equipment later.",
+          "typicalSet": "Typical set: fridge and freezer",
+          "clear": "Reset",
           "room": "Room",
           "decrease": "Fewer: {name}",
           "increase": "More: {name}",
@@ -10499,7 +10563,8 @@
           "lookupUnavailable": "Tax ID lookup is temporarily unavailable. Enter the details manually.",
           "registryUnconfigured": "The company registry service is not configured. Enter the details manually.",
           "notFound": "No organization was found for this tax ID",
-          "unknown": "The request could not be completed. Check the details and try again."
+          "unknown": "The request could not be completed. Check the details and try again.",
+          "invalidCountry": "Pick a city from the list"
         },
         "journalShortNameExample": "Daisy Café",
         "planLabels": {
@@ -10516,7 +10581,8 @@
           "brandingHint": "How the company looks in documents and on posters",
           "contacts": "Contacts and notifications",
           "contactsHint": "Phone, accountant email, time zone and language"
-        }
+        },
+        "city": "City"
       },
       "partnerConversion": {
         "title": "Move to partner workspace",
@@ -10825,7 +10891,9 @@
           "timezoneBody": "The time zone sets shift boundaries, task and reminder times. The language applies to the workspace, Mini App and emails.",
           "notifyTitle": "Notifications",
           "notifyBody": "Everyone receives notifications individually. Connect Telegram and choose what to receive in “Set up notifications”."
-        }
+        },
+        "cityHint": "Pick from the list and the time zone is set for you. Journals record time in it.",
+        "cityPlaceholder": "Start typing your city"
       }
     },
     "accessMatrices": {
@@ -17189,7 +17257,8 @@
       "inn": " · INN {inn}",
       "backToClients": "All clients",
       "since": "Registered {date}",
-      "lastActivity": "Last activity: {value}"
+      "lastActivity": "Last activity: {value}",
+      "source": "Source: {source}"
     },
     "stats": {
       "users": "Employees",
@@ -26581,7 +26650,68 @@
       "pointAddressLabel": "Address of location {index, number}",
       "namingNote": "Staff are shared; which location a person receives tasks from is set in the employee card.",
       "later": "Later",
-      "save": "Save"
+      "save": "Save",
+      "setup": {
+        "step": "Step {current} of {total}",
+        "steps": {
+          "profile": "Profile",
+          "points": "Locations",
+          "staff": "Staff",
+          "equipment": "Equipment"
+        },
+        "titles": {
+          "points": "Your locations",
+          "staff": "Who fills in the logs",
+          "equipment": "What equipment is there"
+        },
+        "subtitles": {
+          "points": "Café, workshop, branch — the name and address are printed in the logs",
+          "staff": "Add employees — they get tasks and their names go into the logs",
+          "equipment": "Fridges and freezers go into the temperature log"
+        },
+        "skip": "Skip",
+        "next": "Next",
+        "finish": "Done",
+        "finishWithCount": "Add ({count}) and finish",
+        "pointNamePlaceholder": "For example, Café on Main Street",
+        "pointNameN": "Location {index}",
+        "pointNameLabel": "Location {index} name",
+        "pointAddress": "Address",
+        "pointAddressLabel": "Location {index} address",
+        "addPoint": "Add location",
+        "removePoint": "Remove location {index}",
+        "pointsNote": "You can skip this and add locations later in “My company → Locations”.",
+        "pointsSaved": "Locations saved",
+        "pointExists": "Location “{name}” already exists",
+        "pointsFailed": "Could not save the locations",
+        "staffName": "Full name",
+        "staffNamePlaceholder": "Full name, e.g. Maria Ivanova",
+        "staffPosition": "Position",
+        "staffPositionPlaceholder": "Position, e.g. Cook",
+        "staffAdd": "Add",
+        "staffNote": "Phones, locations and schedules — later in “Staff”. You can skip this.",
+        "staffFailed": "Could not add the employee",
+        "equipmentPoint": "Location",
+        "equipmentRoom": "Room",
+        "equipmentRoomDefault": "Kitchen",
+        "typicalSet": "Typical set: fridge and freezer",
+        "clear": "Reset",
+        "decrease": "Fewer: {name}",
+        "increase": "More: {name}",
+        "norm": "norm {range}",
+        "equipmentNote": "Nothing is selected — mark only what is really there. You can skip this and add equipment later in “Equipment”.",
+        "equipmentFailed": "Could not add: {items}",
+        "equipmentSaved": "Equipment added: {count}",
+        "done": "Your workspace is set up — you can fill in the logs",
+        "types": {
+          "refrigerator": "Refrigerator",
+          "freezer": "Freezer",
+          "fryer": "Fryer",
+          "uv_lamp": "UV lamp",
+          "oven": "Oven",
+          "dishwasher": "Dishwasher"
+        }
+      }
     },
     "todaySpeed": {
       "recentTitle": "Recently opened",

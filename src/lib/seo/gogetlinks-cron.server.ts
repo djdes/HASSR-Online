@@ -13,6 +13,7 @@ import {
   prepareUpcomingPlannedSlots,
   recycleRejectedSlotOrders,
 } from "@/lib/seo/gogetlinks-orders.server";
+import { isGglSlotReadyForApproval } from "@/lib/seo/gogetlinks-site-fit";
 import { type GglSyncSummary, syncGglCabinet } from "@/lib/seo/gogetlinks-sync.server";
 import { sendTelegramMessage } from "@/lib/telegram";
 
@@ -54,6 +55,8 @@ export interface GglCronResult {
   skipped: boolean;
   reason?: string;
   synced?: boolean;
+  preparedSlots?: number;
+  unpreparedSlots?: number;
   operationalAlertsSent: number;
   lowBalanceAlertSent: boolean;
 }
@@ -261,6 +264,11 @@ async function defaultGetPendingSlotsSummary(now: Date): Promise<PendingSlotsSum
       },
     },
     select: {
+      status: true,
+      donorSiteId: true,
+      targetUrl: true,
+      anchor: true,
+      donorMetricsJson: true,
       scheduledDate: true,
       estimatedPriceRub: true,
       maxPriceRub: true,
@@ -270,6 +278,7 @@ async function defaultGetPendingSlotsSummary(now: Date): Promise<PendingSlotsSum
   let dueTodayCount = 0;
   let next7DaysSumRub = 0;
   for (const slot of slots) {
+    if (!isGglSlotReadyForApproval(slot)) continue;
     if (slot.scheduledDate <= dateKey) {
       dueTodayCount += 1;
     }
@@ -382,7 +391,7 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
     const syncSummary = await syncCabinet();
     const recycled = await recycleRejected();
     await materializeSlots(now);
-    await prepareSlots(now);
+    const preparation = await prepareSlots(now);
 
     // Step 5: Evaluate operational & financial alerts (fire-and-forget safe)
     let operationalAlertsSent = 0;
@@ -478,6 +487,8 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
     return {
       skipped: false,
       synced: true,
+      preparedSlots: preparation.prepared,
+      unpreparedSlots: preparation.skipped,
       operationalAlertsSent,
       lowBalanceAlertSent,
     };

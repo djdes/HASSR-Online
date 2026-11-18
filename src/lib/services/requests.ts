@@ -43,6 +43,8 @@ export type ServiceRequestInput = {
   payFromBalance: boolean;
   /** Прошёл ли заказчик проверку прав руководителя. */
   canSpend: boolean;
+  /** Запрос клиента — место и время в уведомлении продажам. */
+  request?: Request | null;
 };
 
 export type ServiceRequestResult = {
@@ -176,6 +178,13 @@ async function notifyAdmin(
     audience: "sales",
     // Своё письмо — ниже, всем администраторам.
     email: false,
+    client: {
+      request: input.request ?? null,
+      organizationId: input.organizationId,
+      userId: input.userId,
+      email: input.contactEmail,
+      phone: input.contactPhone,
+    },
   }).catch(() => false);
 
   let emailOk = false;

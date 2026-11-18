@@ -1,5 +1,6 @@
 "use client";
 
+import { useOrgTimeZone } from "@/components/shared/org-time-zone";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/locales";
@@ -1207,7 +1208,8 @@ export function PerishableRejectionDocumentClient({
    * нет графы; так же в печати). Документ с действующей комиссией — «Подписи
    * бракеражной комиссии», без неё — подписи прежней формы журнала.
    */
-  const legacySignatureLines = useMemo(() => perishableSignatureLines(config.rows, locale, t), [config.rows, locale, t]);
+  const orgTimeZone = useOrgTimeZone();
+  const legacySignatureLines = useMemo(() => perishableSignatureLines(config.rows, locale, t, orgTimeZone), [config.rows, locale, t, orgTimeZone]);
   /** Колонка, под ячейкой которой показываем статус подписи: наименование или первая видимая. */
   const statusColumnKey = visibleColumnsView.some((column) => column.key === "product") ? "product" : visibleColumnsView[0]?.key;
   const todaySummary = withCommission && todayKey ? todaySignatureSummary(config, todayKey) : null;

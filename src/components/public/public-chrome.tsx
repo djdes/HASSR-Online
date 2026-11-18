@@ -265,6 +265,7 @@ export async function PublicFooter() {
           <Link href="/whats-new" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("whatsNew")}</Link>
           <Link href="/developers" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("developers")}</Link>
           <Link href="/journals-info" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("journals")}</Link>
+          <Link href="/about" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("about")}</Link>
           <Link href="/blanki" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("forms")}</Link>
           <Link href="/prikazy" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("orders")}</Link>
           <Link href="/uslugi" className="py-2.5 transition-colors hover:text-[#0b1024]">{t("services")}</Link>

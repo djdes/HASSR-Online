@@ -436,7 +436,7 @@ async function holdStalePlanOrder(
   });
   await notifyPlatformAdmin(
     `⚠️ Оплата заказа №${order.id} не применена к тарифу: после оформления изменилась подписка аккаунта или кончился срок, от которого считалась сумма («${order.description}»). Разобрать вручную — применить переход или вернуть деньги.`,
-    { kind: "payment", dedupeKey: `stale-plan-order:${order.id}` },
+    { kind: "payment", dedupeKey: `stale-plan-order:${order.id}`, client: { organizationId } },
   ).catch((error) => console.error("[billing] stale order admin notify failed", error));
   await notifyManagement({
     organizationId,
@@ -554,7 +554,10 @@ export async function notifyAboutPayment(args: {
   }
 
   // Оплаты идут в ту же единую точку, что регистрации и обращения.
-  await notifyPlatformAdmin(lines.join("\n"), { kind: "payment" }).catch((err) =>
+  await notifyPlatformAdmin(lines.join("\n"), {
+    kind: "payment",
+    client: { organizationId: result.organizationId, email: order.email },
+  }).catch((err) =>
     console.error("payment telegram notify failed", err),
   );
 }

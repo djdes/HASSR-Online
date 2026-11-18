@@ -58,8 +58,8 @@ test("Uzbek auth aliases round-trip and only advertise existing translated route
   assert.equal(siteLanguageAlternates("/register").uz, "https://wesetup.ru/uz/register");
 });
 
-test("partners and privacy expose only explicit reciprocal public aliases", () => {
-  for (const page of ["/partners", "/privacy"]) {
+test("about, partners and privacy expose only explicit reciprocal public aliases", () => {
+  for (const page of ["/about", "/partners", "/privacy"]) {
     for (const locale of ["ru", "en", "uz"] as const) {
       const expected = `${locale === "ru" ? "" : `/${locale}`}${page}`;
       assert.deepEqual(publicLocaleRoute(expected), { locale, pathname: page });
