@@ -4,7 +4,21 @@ import { request } from "node:https";
 import { parse } from "node-html-parser";
 import type { DonorSiteFit } from "./gogetlinks-site-fit";
 
-type Publication = DonorSiteFit["publications"][number] & { excerpt?: string };
+type Publication = DonorSiteFit["publications"][number] & {
+  excerpt?: string;
+  section?: string;
+  date?: string;
+  source?: string;
+  references?: { domain: string; label: string }[];
+};
+
+type SiteSample = {
+  description: string;
+  sections: string[];
+  publications: Publication[];
+};
+
+export type DonorReviewFit = DonorSiteFit & { sample?: SiteSample };
 
 const DOMAIN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 const SECTOR = /общепит|ресторан|ресторатор|\bho\s?re\s?ca\b|кафе|столов[а-яё]+|пекарн|пищев[а-яё]+\s+(производ|промышл|предприят)|пищеблок|фудтех|фастфуд|food\s?safety/i;
@@ -14,7 +28,7 @@ const BUSINESS_SECTION = /^(?:бизнес|малый бизнес|предпр�
 const SECTION = /^(?:общепит|ресторанный бизнес|рестораны|horeca|в фокусе|советы|статьи|новости)$/i;
 const MAX_HTML_BYTES = 768 * 1024;
 const CACHE_TTL_MS = 6 * 60 * 60_000;
-const cache = new Map<string, { expiresAt: number; sample: Promise<Publication[]> }>();
+const cache = new Map<string, { expiresAt: number; sample: Promise<SiteSample | null> }>();
 
 function isRelevantTitle(title: string): boolean {
   return title.length >= 22 && SECTOR.test(title) && (COMPLIANCE.test(title) || OPERATIONS.test(title));
@@ -192,10 +206,14 @@ export function assessDonorPublications(
   };
 }
 
-async function sampleSite(domain: string): Promise<Publication[]> {
-  if (!DOMAIN.test(domain) || domain.length > 253) return [];
+async function sampleSite(domain: string): Promise<SiteSample | null> {
+  if (!DOMAIN.test(domain) || domain.length > 253) return null;
   const signal = AbortSignal.timeout(8000);
   const home = await loadHtml(new URL(`https://${domain}/`), domain, signal);
+  const homepage = parse(home.html);
+  const description = (homepage.querySelector('meta[name="description"]')?.getAttribute("content") ?? "").slice(0, 300);
+  const sectionLabels = [...new Set(homepage.querySelectorAll("nav a")
+    .map(link => visibleText(link.rawText).slice(0, 80)).filter(Boolean))].slice(0, 18);
   const links = collectDonorLinks(home.html, home.url, domain);
   const sectionPriority = (title: string) => SECTOR.test(title) ? 2 : Number(BUSINESS_SECTION.test(title));
   const sections = links.filter((link) => SECTION.test(link.title) || BUSINESS_SECTION.test(link.title))
@@ -225,25 +243,58 @@ async function sampleSite(domain: string): Promise<Publication[]> {
     }).filter((paragraph) => paragraph.length >= 120).slice(0, 4);
     if (!title || !paragraphs.length) return null;
     const excerpt = paragraphs.find((paragraph) => isRelevantTitle(`${title} ${paragraph}`));
-    return excerpt || isRelevantTitle(title) ? { title, url: page.url.href, excerpt } : null;
+    if (!excerpt && !isRelevantTitle(title)) return null;
+    const document = parse(page.html);
+    const body = document.querySelector(".entry-content, .post-content, [itemprop=articleBody], article");
+    const references = collectDonorReferences(body?.querySelectorAll("a[href]") ?? [], page.url);
+    const section = visibleText(document.querySelector("a[rel='category tag'], .cat-links")?.rawText ?? "").slice(0, 80);
+    const date = document.querySelector('meta[property="article:published_time"]')?.getAttribute("content")?.slice(0, 32);
+    const canonical = document.querySelector("link[rel='canonical']")?.getAttribute("href");
+    let source = visibleText(body?.rawText ?? "").match(/(?:источник|по материалам)\s*:\s*[^.\n]{3,100}/i)?.[0];
+    if (!source && canonical) {
+      try {
+        const canonicalUrl = new URL(canonical, page.url);
+        if (/^https?:$/.test(canonicalUrl.protocol) && !sameSite(canonicalUrl, domain)) source = canonicalUrl.hostname;
+      } catch { /* An invalid canonical is not evidence. */ }
+    }
+    return { title, url: page.url.href, excerpt: excerpt?.slice(0, 500), section, date, references, source };
   }).map((page) => page.catch(() => null)));
-  return verified.filter((publication) => publication !== null);
+  return { description, sections: sectionLabels, publications: verified.filter(publication => publication !== null) };
+}
+
+function collectDonorReferences(links: { getAttribute(name: string): string | undefined; rawText: string }[], page: URL) {
+  const references = new Map<string, { domain: string; label: string }>();
+  for (const link of links) {
+    try {
+      const url = new URL(link.getAttribute("href") ?? "", page);
+      const domain = url.hostname.replace(/^www\./, "");
+      if (!/^https?:$/.test(url.protocol) || !domain || domain === page.hostname.replace(/^www\./, "")) continue;
+      references.set(domain, { domain, label: visibleText(link.rawText).slice(0, 100) });
+      if (references.size >= 4) break;
+    } catch {
+      continue;
+    }
+  }
+  return [...references.values()];
 }
 
 export async function assessGglDonorSite(
   domain: string,
   targetUrl: string,
   targetKeyword: string,
-): Promise<DonorSiteFit | null> {
+): Promise<DonorReviewFit | null> {
   const now = Date.now();
   let cached = cache.get(domain);
   if (!cached || cached.expiresAt <= now) {
     if (cache.size >= 256) cache.delete(cache.keys().next().value!);
     cached = {
       expiresAt: now + CACHE_TTL_MS,
-      sample: sampleSite(domain).catch(() => []),
+      sample: sampleSite(domain).catch(() => null),
     };
     cache.set(domain, cached);
   }
-  return assessDonorPublications(await cached.sample, targetUrl, targetKeyword);
+  const sample = await cached.sample;
+  if (!sample) return null;
+  const fit = assessDonorPublications(sample.publications, targetUrl, targetKeyword);
+  return fit ? { ...fit, sample } : null;
 }

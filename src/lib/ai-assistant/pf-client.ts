@@ -1,4 +1,4 @@
-import { resolveAssistantConfig } from "@/lib/assistant/config";
+import { resolveAssistantConfig, type AssistantConfig } from "@/lib/assistant/config";
 
 /**
  * Транспорт AI-запросов сайта в диспетчер ProjectsFlow.
@@ -49,23 +49,12 @@ type PfJobStatusResponse = {
   error?: string | null;
 };
 
-export async function enqueueAndWait(
-  inputText: string,
-  options?: { deadlineMs?: number }
-): Promise<PfJobResult> {
-  const config = await resolveAssistantConfig();
-  if (!config) {
-    return {
-      ok: false,
-      code: "not_configured",
-      error: "ИИ-помощник недоступен — интеграция не настроена",
-    };
-  }
+type PfSubmission = { ok: true; jobId: string } | Extract<PfJobResult, { ok: false }>;
 
-  const deadline = Date.now() + (options?.deadlineMs ?? DEFAULT_DEADLINE_MS);
-
+export async function enqueuePfJob(inputText: string, suppliedConfig?: AssistantConfig): Promise<PfSubmission> {
+  const config = suppliedConfig ?? await resolveAssistantConfig();
+  if (!config) return { ok: false, code: "not_configured", error: "??-???????? ?????????? ? ?????????? ?? ?????????" };
   // 1. Enqueue.
-  let jobId: string;
   try {
     const response = await fetch(`${config.pfApiUrl}/agent/ai-prompt-jobs`, {
       method: "POST",
@@ -106,7 +95,7 @@ export async function enqueueAndWait(
         error: "Не удалось поставить AI-задание. Попробуйте ещё раз",
       };
     }
-    jobId = id;
+    return { ok: true, jobId: id };
   } catch (error) {
     console.error("[ai-pf] enqueue error:", error);
     return {
@@ -115,6 +104,34 @@ export async function enqueueAndWait(
       error: "Не удалось связаться с ИИ-помощником. Попробуйте ещё раз",
     };
   }
+
+}
+
+export async function readPfJob(jobId: string): Promise<{ status: "waiting" | "failed" } | { status: "succeeded"; text: string }> {
+  if (!/^[a-z0-9_-]{1,160}$/i.test(jobId)) return { status: "failed" };
+  const config = await resolveAssistantConfig();
+  if (!config) return { status: "waiting" };
+  const response = await fetch(`${config.pfApiUrl}/agent/ai-prompt-jobs/${encodeURIComponent(jobId)}`, {
+    headers: { Authorization: `Bearer ${config.pfToken}` },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (response.status === 404) return { status: "failed" };
+  if (!response.ok) return { status: "waiting" };
+  const job = (await response.json()) as PfJobStatusResponse;
+  if (job.status === "succeeded") return { status: "succeeded", text: job.improvedText ?? "" };
+  return { status: job.status === "failed" || job.status === "cancelled" ? "failed" : "waiting" };
+}
+
+export async function enqueueAndWait(
+  inputText: string,
+  options?: { deadlineMs?: number }
+): Promise<PfJobResult> {
+  const config = await resolveAssistantConfig();
+  if (!config) return { ok: false, code: "not_configured", error: "??-???????? ?????????? ? ?????????? ?? ?????????" };
+  const deadline = Date.now() + (options?.deadlineMs ?? DEFAULT_DEADLINE_MS);
+  const submission = await enqueuePfJob(inputText, config);
+  if (!submission.ok) return submission;
+  const { jobId } = submission;
 
   // 2. Long-poll до терминального статуса или дедлайна.
   while (Date.now() < deadline) {

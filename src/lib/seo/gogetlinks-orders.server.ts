@@ -20,6 +20,12 @@ import {
   readGglDonorCatalogPages,
 } from "@/lib/seo/gogetlinks-client.server";
 import { parseGglCatalogPage } from "@/lib/seo/gogetlinks-catalog";
+import {
+  clearGglEditorialReview,
+  enqueueGglEditorialReview,
+  resumeGglEditorialReview,
+  type EditorialCandidate,
+} from "@/lib/seo/gogetlinks-editorial-review.server";
 import { parseRubAmount, parseTfCf } from "@/lib/seo/gogetlinks-codec";
 import {
   buildDefaultCandidateSitePages,
@@ -274,6 +280,11 @@ export interface PrepareSlotsDeps {
   loadScoringContext?: () => Promise<SlotScoringContext>;
   searchCatalogDonors?: (gglCampaignId: number, maxPriceRub: number) => Promise<DonorCandidate[]>;
   assessDonor?: typeof assessGglDonorSite;
+  editorialReview?: {
+    resume: typeof resumeGglEditorialReview;
+    enqueue: typeof enqueueGglEditorialReview;
+    clear: typeof clearGglEditorialReview;
+  } | null;
   generateDraft?: (input: GenerateGglArticleInput) => Promise<GeneratedGglContent>;
   savePreparedSlot?: (slotId: string, payload: PreparedSlotPayload) => Promise<void>;
   revertPreparingSlot?: (slotId: string) => Promise<void>;
@@ -1379,6 +1390,9 @@ export async function prepareUpcomingPlannedSlots(
 
   const generateDraft = deps?.generateDraft ?? ((inp) => generateGglArticleDraft(inp));
   const assessDonor = deps?.assessDonor ?? assessGglDonorSite;
+  const editorial = deps?.editorialReview === undefined ? {
+    resume: resumeGglEditorialReview, enqueue: enqueueGglEditorialReview, clear: clearGglEditorialReview,
+  } : deps.editorialReview;
 
   const savePreparedSlot =
     deps?.savePreparedSlot ??
@@ -1467,40 +1481,60 @@ export async function prepareUpcomingPlannedSlots(
         continue;
       }
 
-      const catalogDonors = await searchCatalogDonors(
-        slot.plan.campaign.gglCampaignId,
-        slot.maxPriceRub,
-      );
-      const qualified = rankQualifiedDonors(
-        catalogDonors,
-        scoringContext.usedDonorDomains,
-        {
-          maxPricePerLinkRub: slot.maxPriceRub,
-          minTfCf: slot.plan.minTfCf,
-          minTrust: slot.plan.minTrust,
-          minDailyTraffic: slot.plan.minDailyTraffic,
-          allowedFormats: slot.plan.allowedFormats,
-        },
-      );
-      const applications = qualified.filter(candidate => !candidate.catalogPage);
-      const offset = (donorReviewOffsets.get(slot.id) ?? 0) % Math.max(applications.length, 1);
-      const applicationBatch = applications.slice(offset, offset + DONOR_REVIEW_BATCH);
-      const candidates = [...qualified.filter(candidate => candidate.catalogPage), ...applicationBatch];
-      const assessed = await Promise.all(candidates.map(async (candidate) => ({
-        ...candidate,
-        siteFit: await assessDonor(candidate.domain, targetPath, targetKeyword).catch(() => null),
-      })));
-      const approvedDonors = assessed.filter((candidate): candidate is typeof candidate & { siteFit: DonorSiteFit } =>
-        candidate.siteFit !== null,
-      ).sort((a, b) =>
-        Number(b.siteFit.level === "topic") - Number(a.siteFit.level === "topic") ||
-        b.siteFit.score - a.siteFit.score || b.valueScore - a.valueScore,
-      );
+      const filter = {
+        maxPricePerLinkRub: slot.maxPriceRub,
+        minTfCf: slot.plan.minTfCf,
+        minTrust: slot.plan.minTrust,
+        minDailyTraffic: slot.plan.minDailyTraffic,
+        allowedFormats: slot.plan.allowedFormats,
+      };
+      const reviewContext = { slotId: slot.id, targetUrl: targetPath, keyword: targetKeyword };
+      const review = await editorial?.resume(reviewContext);
+      if (review?.status === "waiting") {
+        await revertPreparingSlot(slot.id);
+        skipped += 1;
+        continue;
+      }
+
+      let approvedDonors: EditorialCandidate[];
+      if (review?.status === "complete") {
+        const eligible = new Map(rankQualifiedDonors(review.candidates, scoringContext.usedDonorDomains, filter)
+          .map(candidate => [candidate.siteId, candidate]));
+        approvedDonors = review.candidates.filter(candidate => {
+          const current = eligible.get(candidate.siteId);
+          return current?.selectedFormat === candidate.selectedFormat &&
+            current.selectedPriceRub === candidate.selectedPriceRub;
+        });
+      } else {
+        const catalogDonors = await searchCatalogDonors(slot.plan.campaign.gglCampaignId, slot.maxPriceRub);
+        const qualified = rankQualifiedDonors(catalogDonors, scoringContext.usedDonorDomains, filter);
+        const applications = qualified.filter(candidate => !candidate.catalogPage);
+        const offset = (donorReviewOffsets.get(slot.id) ?? 0) % Math.max(applications.length, 1);
+        const applicationBatch = applications.slice(offset, offset + DONOR_REVIEW_BATCH);
+        const candidates = [...qualified.filter(candidate => candidate.catalogPage), ...applicationBatch];
+        const assessed = await Promise.all(candidates.map(async (candidate) => ({
+          ...candidate,
+          siteFit: await assessDonor(candidate.domain, targetPath, targetKeyword).catch(() => null),
+        })));
+        approvedDonors = assessed.filter((candidate): candidate is EditorialCandidate =>
+          candidate.siteFit !== null,
+        ).sort((a, b) =>
+          Number(b.siteFit.level === "topic") - Number(a.siteFit.level === "topic") ||
+          b.siteFit.score - a.siteFit.score || b.valueScore - a.valueScore,
+        );
+        if (donorReviewOffsets.size >= 256) donorReviewOffsets.delete(donorReviewOffsets.keys().next().value!);
+        donorReviewOffsets.set(slot.id, offset + applicationBatch.length);
+        if (editorial && approvedDonors.length) {
+          await editorial.enqueue(reviewContext, approvedDonors);
+          await revertPreparingSlot(slot.id);
+          skipped += 1;
+          continue;
+        }
+      }
       const [primary, ...alternatives] = approvedDonors.slice(0, 4);
 
       if (!primary) {
-        if (donorReviewOffsets.size >= 256) donorReviewOffsets.delete(donorReviewOffsets.keys().next().value!);
-        donorReviewOffsets.set(slot.id, offset + applicationBatch.length);
+        if (review?.status === "complete") await editorial?.clear(slot.id);
         await revertPreparingSlot(slot.id);
         skipped += 1;
         continue;
@@ -1587,6 +1621,7 @@ export async function prepareUpcomingPlannedSlots(
         generatedContent,
         campaignId: slot.plan.campaignId,
       });
+      await editorial?.clear(slot.id).catch(() => {});
 
       scoringContext.usedDonorDomains.add(normalizeDomainName(primary.domain));
       scoringContext.existingOrders.push({

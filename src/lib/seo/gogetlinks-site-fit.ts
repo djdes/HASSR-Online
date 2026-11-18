@@ -5,6 +5,7 @@ export interface DonorSiteFit {
   level: "topic" | "audience";
   score: number;
   publications: { title: string; url: string }[];
+  reviewReason?: string;
 }
 
 export function readDonorSiteFit(metrics: unknown, targetUrl: string | null): DonorSiteFit | null {

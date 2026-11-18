@@ -1060,6 +1060,7 @@ export function PlannerTab({
                             {donorFit ? (
                               <div className="mt-2 space-y-0.5 text-[11.5px] text-[#6f7282]">
                                 <p className="font-medium">{t(donorFit.level)}</p>
+                                {donorFit.reviewReason ? <p className="max-w-[280px]">{donorFit.reviewReason}</p> : null}
                                 {donorFit.publications.map((publication) => (
                                   <a
                                     key={publication.url}
@@ -1117,6 +1118,7 @@ export function PlannerTab({
                                           </div>
                                           <div className="mt-1 text-[11px] text-[#6f7282]">
                                             <div className="font-medium">{t(alt.fit.level)}</div>
+                                            {alt.fit.reviewReason ? <p>{alt.fit.reviewReason}</p> : null}
                                             {alt.fit.publications.map((publication) => (
                                               <div key={publication.url}>{publication.title}</div>
                                             ))}

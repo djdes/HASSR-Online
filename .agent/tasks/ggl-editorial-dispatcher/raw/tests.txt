@@ -1,0 +1,12 @@
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+→ [test:changed] Отобрано 6 связанных тестовых файлов для 10 изменённых файлов:
+  • src/lib/ai-vision/retry.test.ts
+  • src/lib/seo/gogetlinks-applications.test.ts
+  • src/lib/seo/gogetlinks-cron.test.ts
+  • src/lib/seo/gogetlinks-editorial-review.test.ts
+  • src/lib/seo/gogetlinks-orders.test.ts
+  • src/lib/seo/gogetlinks-site-fit.test.ts
+=== Targeted test stats (6 files, 13.7s): pass=37, fail=0 ===
+✓ Все затронутые тесты прошли.
+Exit code: 0
