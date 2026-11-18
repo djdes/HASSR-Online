@@ -688,6 +688,85 @@ export async function readGglWebmasterSource(
   }, 300);
 }
 
+/** The catalog's normal navigation uses an authenticated GET followed by a read-only POST. */
+export async function readGglDonorCatalogPages(
+  input: { campaignId: number; pages: readonly number[] },
+  opts?: { prismaClient?: unknown; fetchImpl?: typeof fetch; skipDbSync?: boolean; allowRelogin?: boolean },
+): Promise<{ page: number; html: string }[]> {
+  if (!Number.isSafeInteger(input.campaignId) || input.campaignId <= 0 ||
+      !input.pages.length || input.pages.length > 6 ||
+      input.pages.some(page => !Number.isSafeInteger(page) || page <= 0)) {
+    throw new GglCallError("Некорректные параметры каталога GoGetLinks", "input");
+  }
+  initApiAnythingHome();
+  if (!opts?.skipDbSync) await syncSessionFromDb(opts?.prismaClient);
+  return enqueueGgl(async () => {
+    const sourceFetch = createGglFetch(opts?.fetchImpl || getFetchImpl() || fetch);
+    const catalogUrl = "https://gogetlinks.net/searchSites";
+    const signal = AbortSignal.timeout(18_000);
+    async function read(url: string, body?: URLSearchParams) {
+      const response = await sourceFetch(url, {
+        method: body ? "POST" : "GET",
+        redirect: "manual",
+        signal,
+        headers: {
+          cookie: buildCookieHeader(loadLocalSession()),
+          ...(body && {
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "x-requested-with": "XMLHttpRequest",
+            origin: "https://gogetlinks.net",
+            referer: catalogUrl,
+          }),
+        },
+        body: body?.toString(),
+      });
+      const raw = decodeModalResponseBuffer(new Uint8Array(await response.arrayBuffer()), response.headers.get("content-type") ?? "");
+      if (response.status === 401 || REDIRECT_STATUSES.has(response.status) || /name=["'](?:password|e_mail)["']/i.test(raw) && !raw.includes("anchorEditToken")) {
+        throw new GglAuthError("Сессия GoGetLinks истекла. Переподключите кабинет");
+      }
+      if (!response.ok || REAL_INTERSTITIAL_RE.test(raw)) {
+        throw new GglCallError("GoGetLinks не предоставил каталог площадок", response.status === 429 ? "rate" : "changed");
+      }
+      return raw;
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const index = await read(catalogUrl);
+        const anchorToken = /anchorEditToken\s*=\s*["']([A-Za-z0-9_-]{16,128})["']/.exec(index)?.[1];
+        if (!anchorToken) throw new GglCallError("GoGetLinks изменил страницу каталога", "changed");
+        const result: { page: number; html: string }[] = [];
+        for (const page of input.pages) {
+          const body = new URLSearchParams({
+            page: String(page),
+            count_in_page: "20",
+            from_ses: "1",
+            order_by: "",
+            order_direction: "desc",
+            anchor_token: anchorToken,
+            "compaing_id_list[]": String(input.campaignId),
+          });
+          let data: { success?: boolean; data?: unknown };
+          try {
+            data = JSON.parse(await read(`${catalogUrl}/table`, body));
+          } catch (error) {
+            if (error instanceof SyntaxError) throw new GglCallError("GoGetLinks изменил ответ каталога", "changed");
+            throw error;
+          }
+          if (data.success !== true || typeof data.data !== "string") {
+            throw new GglCallError("GoGetLinks не вернул страницу каталога", "changed");
+          }
+          result.push({ page, html: data.data });
+        }
+        return result;
+      } catch (error) {
+        if (!(error instanceof GglAuthError) || attempt || opts?.allowRelogin === false ||
+            !await attemptRelogin({ prismaClient: opts?.prismaClient, fetchImpl: opts?.fetchImpl })) throw error;
+      }
+    }
+    throw new GglAuthError("Не удалось восстановить сессию GoGetLinks");
+  }, 300);
+}
+
 function normalizeReadArgs(
   opName: string,
   args?: Record<string, unknown>,

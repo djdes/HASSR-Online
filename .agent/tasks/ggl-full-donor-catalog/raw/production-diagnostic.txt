@@ -1,0 +1,9 @@
+Production observations
+- Scheduled pass: successful; the first slot remained planned after the scan.
+- GET /searchSites?campaignId=...&maxPrice=...&page=1: HTTP 404.
+- GET /searchSites: HTTP 200; renders the catalog and a per-page navigation token.
+- POST /searchSites/table (navigation, no order): HTTP 200; pages 1–3 independently returned 20 rows.
+- Previous discovery: 167 incoming offers passed the numerical thresholds and zero passed the shallow publication check.
+- Extended same-site search: 182 candidates checked and 15 passed the publication check.
+- Eligible existing offer: pfo.volga.news, 1101 RUB, article, GGL trust 8, TF/CF 41/60, daily traffic 36000. The production check opened and matched three publications there.
+- Out-of-budget editorial example: altapress.ru, article 10715 RUB. Excluded by the 2500 RUB slot cap.

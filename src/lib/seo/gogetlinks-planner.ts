@@ -68,6 +68,7 @@ export interface SelectedAnchor {
 }
 
 export interface DonorCandidate {
+  catalogPage?: number;
   siteId: number;
   domain: string;
   priceArticleRub: number | null;

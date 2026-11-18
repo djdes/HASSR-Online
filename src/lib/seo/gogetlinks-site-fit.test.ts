@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { isGglSlotReadyForApproval, readDonorSiteFit } from "./gogetlinks-site-fit";
-import { assessDonorPublications, assessGglDonorSite, collectDonorLinks } from "./gogetlinks-site-fit.server";
+import { assessDonorPublications, assessGglDonorSite, collectDonorLinks, discoverDonorSearchUrls } from "./gogetlinks-site-fit.server";
 
 const publisher = new URL("https://publisher.example/");
 const targetUrl = "/sanpin-2-3-2-4-4282-26";
@@ -11,6 +11,17 @@ const relevant = [
   { title: "Как открыть кафе и рассчитать себестоимость меню", url: new URL("/business/cafe", publisher).href },
   { title: "Изменения СанПиН для ресторанов и столовых", url: new URL("/business/sanpin", publisher).href },
 ];
+
+test("discovers published site search without requesting outside endpoints or submitting POST forms", () => {
+  const urls = discoverDonorSearchUrls(`
+    <form action="https://other.example/search"><input name="q" type="search"></form>
+    <form action="/search" method="post"><input name="q" type="search"></form>
+    <form action="/content/search" method="GET"><input name="query" placeholder="Поиск"></form>
+  `, publisher, publisher.hostname);
+  assert.equal(urls.length, 3);
+  assert.ok(urls.every(url => url.origin === publisher.origin && url.pathname === "/content/search"));
+  assert.equal(urls[1].searchParams.get("query"), "Роспотребнадзор кафе");
+});
 
 test("the SEO page provides donor-review translations in all supported locales", () => {
   const page = readFileSync("src/app/root/seo/links/page.tsx", "utf8");

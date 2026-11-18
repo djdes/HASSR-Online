@@ -11,8 +11,9 @@ if [[ "${1:-}" == "--run" ]]; then
     echo "[gogetlinks-cron] CRON_SECRET is missing" >&2
     exit 1
   fi
-  printf 'Authorization: Bearer %s\n' "$CRON_SECRET" |
-    curl -fsS --max-time 110 --output /dev/null -X POST --header @- http://127.0.0.1:3002/api/cron/gogetlinks
+  result="$(printf 'Authorization: Bearer %s\n' "$CRON_SECRET" |
+    curl -fsS --max-time 110 -X POST --header @- http://127.0.0.1:3002/api/cron/gogetlinks)"
+  printf '%s [gogetlinks-cron] %s\n' "$(date -Is)" "$result"
   exit
 fi
 
