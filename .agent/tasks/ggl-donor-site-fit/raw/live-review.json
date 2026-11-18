@@ -1,0 +1,34 @@
+[
+  {
+    "domain": "resttrade.ru",
+    "fit": null
+  },
+  {
+    "domain": "astrakhan.net",
+    "fit": null
+  },
+  {
+    "domain": "vkyrse.com",
+    "fit": null
+  },
+  {
+    "domain": "restoranoff.ru",
+    "fit": {
+      "version": 1,
+      "targetUrl": "/sanpin-2-3-2-4-4282-26",
+      "checkedAt": 1794987320727,
+      "level": "audience",
+      "score": 2,
+      "publications": [
+        {
+          "title": "Как создать сильного менеджера ресторана?",
+          "url": "https://restoranoff.ru/solutions/management/kak-sozdat-silnogo-menedzhera-restorana/"
+        },
+        {
+          "title": "Как изменился рекрутинг после пандемии",
+          "url": "https://restoranoff.ru/solutions/management/kak-izmenilsya-rekruting-posle-pandemii/"
+        }
+      ]
+    }
+  }
+]

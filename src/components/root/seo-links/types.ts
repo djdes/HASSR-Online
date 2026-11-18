@@ -160,6 +160,7 @@ export interface SlotAlternativeDonor {
     cf: number;
     trust: number;
     dailyTraffic: number;
+    siteFit?: unknown;
   };
 }
 
@@ -330,6 +331,7 @@ export function parseSlotAlternatives(raw: unknown): SlotAlternativeDonor[] {
         cf: Number(metricsRec.cf ?? 0) || 0,
         trust: Number(metricsRec.trust ?? 0) || 0,
         dailyTraffic: Number(metricsRec.dailyTraffic ?? 0) || 0,
+        siteFit: metricsRec.siteFit,
       },
     });
   }

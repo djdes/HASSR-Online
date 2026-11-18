@@ -1,4 +1,10 @@
 {
+  "rootGglDonorReview": {
+    "topic": "Joylashtirish mavzusiga mos maqolalar",
+    "audience": "Maqsadli auditoriya uchun maqolalar",
+    "pending": "Rejalashtirgich saytlarning mavzuga mosligini tekshirmoqda",
+    "trust": "ishonch {value}"
+  },
   "productionControl": {
     "kinds": {
       "ppk": "Ishlab chiqarish nazorati dasturi",
