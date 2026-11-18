@@ -35,6 +35,6 @@ test("normalize: invalid input → null", () => {
 test("layout travels inside blank extras for any journal and shows in admin line", () => {
   const extras = normalizeBlankExtras({ layout: { title: "Свой", columns: ["A", "B", "C"], rows: 15 } }, "cleaning");
   assert.deepEqual(extras, { layout: { title: "Свой", columns: ["A", "B", "C"], rows: 15 } });
-  assert.equal(blankLayoutAdminLine(extras?.layout), "🧩 Свой бланк: «Свой», колонок — 3, строк — 15");
+  assert.equal(blankLayoutAdminLine(extras?.layout), "🧩 Своя форма: «Свой», колонок — 3, строк — 15");
   assert.equal(blankLayoutAdminLine(null), null);
 });

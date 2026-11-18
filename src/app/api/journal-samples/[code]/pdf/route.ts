@@ -146,7 +146,7 @@ function customLayoutPdf(
     },
     organization: { name: params.company?.trim() || "Организация" },
     blankRows: layout.rows,
-    note: "Бланк составлен в конструкторе WeSetup · электронная версия — wesetup.ru",
+    note: "Форма составлена в конструкторе WeSetup · электронная версия — wesetup.ru",
     qr: params.qr,
   });
 }
