@@ -604,6 +604,7 @@
       "pointTitle": "Qaysi obyekt uchun chop etamiz",
       "pointSingle": "Shu nuqta uchun chop etamiz",
       "pointHint": "Nuqta nomi har bir varaq tepasida chop etiladi, «Kundalik koʻrik» QR kodi esa shu nuqta jurnalini ochadi.",
+      "pointHeaderHint": "Boshqa obyektni yuqoridagi panelda tanlang.",
       "pointUntitled": "Nomsiz nuqta",
       "pointsEmptyTitle": "Obyektni qoʻshing",
       "pointsEmptyBody": "Uning nomi har bir varaq tepasida chop etiladi. Hozircha nuqtalar yoʻq, plakatlar nomsiz chop etiladi.",
@@ -9486,7 +9487,9 @@
         },
         "equipment": {
           "title": "Qanday uskunalar bor?",
-          "hint": "Sonini va xonasini ko‘rsating. Nomlarni o‘zimiz raqamlaymiz, odatiy harorat me’yorlarini qo‘yamiz.",
+          "hint": "Hech narsa tanlanmagan — faqat obyektda haqiqatan bor uskunaning sonini belgilang. Nomlarni o‘zimiz raqamlaymiz, odatiy harorat me’yorlarini qo‘yamiz. Buni o‘tkazib yuborib, uskunani keyin qo‘shish mumkin.",
+          "typicalSet": "Odatiy to‘plam: muzlatgich va muzxona",
+          "clear": "Tozalash",
           "room": "Xona",
           "decrease": "Kamroq: {name}",
           "increase": "Ko‘proq: {name}",
@@ -26586,7 +26589,68 @@
       "pointAddressLabel": "{index, number}-nuqta manzili",
       "namingNote": "Xodimlar umumiy; kimga qaysi nuqtadan vazifalar kelishi — xodim kartochkasida.",
       "later": "Keyinroq",
-      "save": "Saqlash"
+      "save": "Saqlash",
+      "setup": {
+        "step": "{total} dan {current}-qadam",
+        "steps": {
+          "profile": "Anketa",
+          "points": "Obyektlar",
+          "staff": "Xodimlar",
+          "equipment": "Uskunalar"
+        },
+        "titles": {
+          "points": "Obyektlaringiz",
+          "staff": "Jurnallarni kim to‘ldiradi",
+          "equipment": "Qanday uskunalar bor"
+        },
+        "subtitles": {
+          "points": "Kafe, sex, filial — nomi va manzili jurnallarda chop etiladi",
+          "staff": "Xodimlarni qo‘shing — ularga vazifalar keladi, familiyalari jurnallarga tushadi",
+          "equipment": "Muzlatkichlar va muzlatish kameralari harorat jurnaliga tushadi"
+        },
+        "skip": "O‘tkazib yuborish",
+        "next": "Keyingisi",
+        "finish": "Tayyor",
+        "finishWithCount": "Qo‘shish ({count}) va tayyor",
+        "pointNamePlaceholder": "Masalan, Navoiy ko‘chasidagi kafe",
+        "pointNameN": "Obyekt {index}",
+        "pointNameLabel": "Obyekt {index} nomi",
+        "pointAddress": "Manzil",
+        "pointAddressLabel": "Obyekt {index} manzili",
+        "addPoint": "Yana obyekt",
+        "removePoint": "Obyekt {index} ni olib tashlash",
+        "pointsNote": "O‘tkazib yuborish mumkin — obyektlarni keyin «Mening kompaniyam → Obyektlar» bo‘limida qo‘shasiz.",
+        "pointsSaved": "Obyektlar saqlandi",
+        "pointExists": "«{name}» obyekti allaqachon bor",
+        "pointsFailed": "Obyektlarni saqlab bo‘lmadi",
+        "staffName": "F.I.Sh.",
+        "staffNamePlaceholder": "F.I.Sh., masalan Ivanova Mariya",
+        "staffPosition": "Lavozim",
+        "staffPositionPlaceholder": "Lavozim, masalan Oshpaz",
+        "staffAdd": "Qo‘shish",
+        "staffNote": "Telefonlar, obyektlar va jadval — keyin «Xodimlar» bo‘limida. O‘tkazib yuborish mumkin.",
+        "staffFailed": "Xodimni qo‘shib bo‘lmadi",
+        "equipmentPoint": "Obyekt",
+        "equipmentRoom": "Xona",
+        "equipmentRoomDefault": "Oshxona",
+        "typicalSet": "Odatiy to‘plam: muzlatkich va muzlatish kamerasi",
+        "clear": "Tozalash",
+        "decrease": "Kamroq: {name}",
+        "increase": "Ko‘proq: {name}",
+        "norm": "me’yor {range}",
+        "equipmentNote": "Hech narsa tanlanmagan — faqat haqiqatan bor uskunani belgilang. O‘tkazib yuborib, keyin «Uskunalar» bo‘limida qo‘shish mumkin.",
+        "equipmentFailed": "Qo‘shib bo‘lmadi: {items}",
+        "equipmentSaved": "Uskunalar qo‘shildi: {count}",
+        "done": "Kabinet sozlandi — jurnallarni to‘ldirish mumkin",
+        "types": {
+          "refrigerator": "Muzlatkich",
+          "freezer": "Muzlatish kamerasi",
+          "fryer": "Frityurnitsa",
+          "uv_lamp": "UB-lampa",
+          "oven": "Pech",
+          "dishwasher": "Idish yuvish mashinasi"
+        }
+      }
     },
     "todaySpeed": {
       "recentTitle": "Yaqinda ochilgan",

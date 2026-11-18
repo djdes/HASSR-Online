@@ -11,6 +11,8 @@ import { roomKindLabel } from "@/lib/room-kinds";
 import { LAMP_PRESETS, UV_LAMP_TYPE } from "@/lib/uv-lamp";
 import {
   TYPICAL_EQUIPMENT,
+  emptyEquipmentQuantities,
+  typicalEquipmentQuantities,
   TYPICAL_ROOMS,
   WIZARD_LAMP_HOURS,
   WIZARD_MAX_QUANTITY,
@@ -85,9 +87,8 @@ export function PointWizard({
   const [customName, setCustomName] = useState("");
   const [customError, setCustomError] = useState<string | null>(null);
   const [donorId, setDonorId] = useState(donors[0]?.id ?? "");
-  const [quantities, setQuantities] = useState<Record<WizardEquipmentType, number>>(
-    () => Object.fromEntries(TYPICAL_EQUIPMENT.map((item) => [item.type, item.quantity])) as Record<WizardEquipmentType, number>,
-  );
+  // Ничего не выбрано заранее: типовой набор — только кнопкой (2026-11-18).
+  const [quantities, setQuantities] = useState<Record<WizardEquipmentType, number>>(emptyEquipmentQuantities);
   const [roomChoice, setRoomChoice] = useState<Partial<Record<WizardEquipmentType, string>>>({});
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
@@ -469,6 +470,36 @@ export function PointWizard({
         {stepKey === "equipment" ? (
           <div className="mt-2 space-y-4">
             <StepTitle title={t("equipment.title")} hint={t("equipment.hint")} />
+            {rooms.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  data-wizard-typical-set
+                  onClick={() => setQuantities(typicalEquipmentQuantities())}
+                  className={cn(
+                    "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
+                    FOCUS,
+                  )}
+                >
+                  <Plus className="size-4" aria-hidden />
+                  {t("equipment.typicalSet")}
+                </button>
+                {Object.values(quantities).some((value) => value > 0) ? (
+                  <button
+                    type="button"
+                    data-wizard-equipment-clear
+                    onClick={() => setQuantities(emptyEquipmentQuantities())}
+                    className={cn(
+                      "inline-flex h-10 items-center gap-1.5 rounded-2xl px-3 text-[13.5px] font-medium text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024]",
+                      FOCUS,
+                    )}
+                  >
+                    <X className="size-4" aria-hidden />
+                    {t("equipment.clear")}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             {rooms.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-5 text-[13.5px] text-[#6f7282]">
                 {t("equipment.noRooms")}

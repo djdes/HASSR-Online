@@ -1857,10 +1857,13 @@ export function ClimateDocumentClient({
       throw new Error(result?.error || t("saveRowFailed"));
     }
 
+    // Только id из ответа: данные строки к этому моменту могли уйти вперёд
+    // (температуру сохранили, а влажность уже набрали). Снимок `nextRow`
+    // затирал набранную влажность, и следующее сохранение уходило с null.
     setRows((currentRows) =>
       currentRows.map((row) =>
         row.id === nextRow.id
-          ? { ...nextRow, id: result.entry.id }
+          ? { ...row, id: result.entry.id }
           : row
       )
     );

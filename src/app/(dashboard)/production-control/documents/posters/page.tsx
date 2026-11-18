@@ -5,7 +5,7 @@ import { MapPin, Palette, Plus, Store } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { POSTER_GROUPS, orderPosters, posterInJournal } from "@/lib/ppk/posters";
-import { posterPointLine, posterPointParam, resolvePosterPoint, type PosterPointSource } from "@/lib/ppk/poster-point";
+import { posterPointLine, resolvePosterPoint, type PosterPointSource } from "@/lib/ppk/poster-point";
 import { loadDisinfectantJournalNames, loadPosterPoints } from "@/lib/ppk/poster-data.server";
 import { loadPrintBrand } from "@/lib/print-brand.server";
 import { PpkBlockHeader } from "@/components/production-control/ppk-block-header";
@@ -13,8 +13,6 @@ import { PosterSheet } from "@/components/production-control/poster-sheet";
 import { PostersPicker, type PosterPickerGroup } from "@/components/production-control/posters-picker";
 
 export const dynamic = "force-dynamic";
-
-const BASE = "/production-control/documents/posters";
 
 const PILL =
   "inline-flex min-h-10 max-w-full items-center gap-2 rounded-2xl border px-3.5 py-2 text-left text-[13.5px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
@@ -24,9 +22,9 @@ const PILL =
  * (рамка цвета организации, логотип слева, сайт справа). Выбрать галочками и
  * напечатать, либо напечатать все; «Ч/б» — для чёрно-белого принтера.
  *
- * Сверху — объект, для которой печатаем (скан 97): её название стоит
- * на каждом листе, QR «Ежедневного осмотра» ведёт в её журнал. Выбор — в
- * адресе (`?point=`), мини-листы и ссылки печати берут его оттуда.
+ * Сверху — объект, для которого печатаем (скан 97): его название стоит
+ * на каждом листе, QR «Ежедневного осмотра» ведёт в его журнал. Объект —
+ * из шапки кабинета (2026-11-18), своего выбора на странице нет.
  */
 export default async function PostersPage({
   searchParams,
@@ -36,7 +34,7 @@ export default async function PostersPage({
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const organizationId = getActiveOrgId(session);
-  const query = await searchParams;
+  await searchParams;
 
   const [brand, journalNames, { points, headerPointId }, t] = await Promise.all([
     loadPrintBrand(organizationId),
@@ -44,7 +42,9 @@ export default async function PostersPage({
     loadPosterPoints(session),
     getTranslations("productionControl.posters"),
   ]);
-  const point = resolvePosterPoint(points, posterPointParam(query.point), headerPointId);
+  // Точка — из шапки (2026-11-18: «смену точек — только сверху»); при «Вся
+  // организация» — первый объект, другой выбирают в шапке.
+  const point = resolvePosterPoint(points, null, headerPointId);
   const pointLine = posterPointLine(point);
 
   const ordered = orderPosters(journalNames);
@@ -95,42 +95,27 @@ export default async function PostersPage({
             </span>
             <div className="min-w-0">
               <h2 className="text-[15px] font-semibold leading-snug text-[#0b1024]">
-                {points.length > 1 ? t("pointTitle") : t("pointSingle")}
+                {t("pointSingle")}
               </h2>
               <p className="mt-0.5 text-[13px] leading-snug text-[#6f7282]">{t("pointHint")}</p>
             </div>
           </div>
-          <div role="group" aria-label={t("pointTitle")} className="mt-3 flex flex-wrap gap-2">
-            {points.map((item) => {
-              const active = item.id === point?.id;
-              const content = (
-                <>
-                  <Store className={`size-4 shrink-0 ${active ? "text-[#5566f6]" : "text-[#9b9fb3]"}`} aria-hidden />
-                  <span className="min-w-0 truncate">{pillTitle(item)}</span>
-                </>
-              );
-              const look = active
-                ? "border-[#5566f6] bg-[#eef1ff] text-[#3848c7]"
-                : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]";
-              return points.length > 1 ? (
-                <Link
-                  key={item.id}
-                  href={`${BASE}?point=${encodeURIComponent(item.id)}`}
-                  replace
-                  scroll={false}
-                  aria-current={active ? "true" : undefined}
-                  title={pillHint(item)}
-                  data-poster-point-option={item.id}
-                  className={`${PILL} ${look}`}
-                >
-                  {content}
-                </Link>
-              ) : (
-                <span key={item.id} title={pillHint(item)} data-poster-point-option={item.id} className={`${PILL} ${look}`}>
-                  {content}
-                </span>
-              );
-            })}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {point ? (
+              <span
+                title={pillHint(point)}
+                data-poster-point-option={point.id}
+                className={`${PILL} border-[#5566f6] bg-[#eef1ff] text-[#3848c7]`}
+              >
+                <Store className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+                <span className="min-w-0 truncate">{pillTitle(point)}</span>
+              </span>
+            ) : null}
+            {points.length > 1 ? (
+              <span className="text-[13px] leading-snug text-[#6f7282]" data-poster-point-header-hint>
+                {t("pointHeaderHint")}
+              </span>
+            ) : null}
           </div>
         </section>
       )}

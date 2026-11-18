@@ -7,7 +7,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
 import { PPK_OVERVIEW_HREF } from "@/lib/ppk/registry";
 import { loadMonitoring } from "@/lib/monitoring.server";
-import { MONITORING_ALL_POINTS, metricPercent, type MonitoringMetric } from "@/lib/monitoring";
+import { metricPercent, type MonitoringMetric } from "@/lib/monitoring";
 import { cn } from "@/lib/utils";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -93,19 +93,19 @@ function MetricCard({
 }
 
 /**
- * «Мониторинг» (эскиз 2026-10-28, лист 5): переключатель «Все точки / точка»
+ * «Мониторинг» (эскиз 2026-10-28, лист 5): точка из шапки
  * и три кольца — журналы за сегодня, чек-листы текущего периода и готовность
  * программы производственного контроля. Каждая карточка ведёт к подробностям.
  */
-export default async function MonitoringPage({ searchParams }: { searchParams: Promise<{ point?: string }> }) {
+export default async function MonitoringPage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
-  const { point } = await searchParams;
-  const [data, t] = await Promise.all([loadMonitoring(session, point ?? null), getTranslations("monitoringPage")]);
+  // Точка — только из шапки (владелец, 2026-11-18: «смену точек — только
+  // сверху»); «Вся организация» в шапке — сумма по всем точкам.
+  const [data, t] = await Promise.all([loadMonitoring(session, null), getTranslations("monitoringPage")]);
 
   const canAssign = hasCapability(session.user, "admin.full");
   const counts = (metric: MonitoringMetric) => ({ done: String(metric.done), total: String(metric.total) });
-  const options = [{ id: null as string | null, name: t("allPoints") }, ...data.points];
 
   return (
     <div className="space-y-5" data-monitoring>
@@ -115,29 +115,6 @@ export default async function MonitoringPage({ searchParams }: { searchParams: P
         title={t("guide.title")}
         bullets={[t("guide.journals"), t("guide.checklists"), t("guide.ppk")]}
       />
-      {data.points.length >= 2 ? (
-        <nav aria-label={t("pointsAria")} className="flex flex-wrap gap-2" data-monitoring-points>
-          {options.map((option) => {
-            const active = option.id === data.pointId;
-            return (
-              <Link
-                key={option.id ?? "all"}
-                // «Все точки» — явно: без параметра страница открывается на точке из шапки.
-                href={`/monitoring?point=${encodeURIComponent(option.id ?? MONITORING_ALL_POINTS)}`}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "inline-flex h-10 items-center rounded-2xl border px-4 text-[14px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
-                  active
-                    ? "border-[#5566f6] bg-[#5566f6] text-white"
-                    : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]",
-                )}
-              >
-                {option.name}
-              </Link>
-            );
-          })}
-        </nav>
-      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           testId="journals"
