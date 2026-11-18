@@ -1,0 +1,3 @@
+The production dispatcher accepted an existing wesetup_ggl_webmasters job containing public evidence for the three slot candidates.
+Its order was buzulukmedia.ru (first, conditional on the publication section), hotlong.ru (second, general coverage and a Gazeta.Ru republication), viarum.ru (third, technology audience).
+This comparison used previously checked editorial context. The automated collector records visible section, date, description, excerpts, outgoing references and visible source credits.

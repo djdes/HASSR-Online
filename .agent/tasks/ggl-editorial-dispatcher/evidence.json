@@ -1,0 +1,15 @@
+{
+    "artifacts":  [
+                      "raw/production-swap.json",
+                      "raw/dispatcher-smoke.txt",
+                      "raw/tests.txt",
+                      "raw/types.txt"
+                  ],
+    "status":  "PASS",
+    "acceptance":  {
+                       "AC2":  "PASS",
+                       "AC4":  "PASS",
+                       "AC1":  "PASS",
+                       "AC3":  "PASS"
+                   }
+}

@@ -5,6 +5,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { PLATFORM_SECTION_KEYS } from "@/lib/platform-access";
+import { applyGglEditorialReview, type EditorialCandidate } from "@/lib/seo/gogetlinks-editorial-review.server";
 import { GglCallError, GglIsolationError } from "@/lib/seo/gogetlinks-client.server";
 import {
   approvePlannedSlot,
@@ -13,6 +14,7 @@ import {
   materializePlanSlots,
   mutatePlannedSlot,
   prepareUpcomingPlannedSlots,
+  type PrepareSlotsDeps,
   recycleRejectedSlotOrders,
   upsertSchedulePlan,
 } from "@/lib/seo/gogetlinks-orders.server";
@@ -575,6 +577,7 @@ test("materializePlanSlots & prepareUpcomingPlannedSlots stop strictly at pendin
     ],
     assessDonor: async (domain, targetUrl) =>
       domain === "resttrade.ru" ? null : verifiedSite(domain, targetUrl),
+    editorialReview: null,
     generateDraft: async (draftInput) => ({
       title: `Контроль качества блюд на ${draftInput.donorDomain}`,
       announcement: "Разбор бракеража готовой продукции в общепите",
@@ -624,7 +627,9 @@ test("automatic re-review of an overdue legacy slot preserves the landing, ancho
     },
   };
   let reviewed = false;
-  const result = await prepareUpcomingPlannedSlots(new Date("2026-11-18T00:00:00Z"), 7, {
+  let replyReady = false;
+  let shortlisted: EditorialCandidate[] = [];
+  const options: PrepareSlotsDeps = {
     prismaClient: {
       gglPlannedSlot: {
         findMany: async ({ where }: { where: { OR: { status: string }[] } }) => {
@@ -642,6 +647,7 @@ test("automatic re-review of an overdue legacy slot preserves the landing, ancho
           assert.equal(data.anchor, previous.anchor);
           assert.equal(data.donorDomain, "publisher.ru");
           assert.equal(data.article, undefined);
+          assert.match(JSON.stringify(data.donorMetricsJson), /Практическая рубрика/);
           reviewed = true;
         },
       },
@@ -654,9 +660,30 @@ test("automatic re-review of an overdue legacy slot preserves the landing, ancho
       siteId: 91, domain: "publisher.ru", priceArticleRub: 1100, priceNoteRub: null,
       tf: 30, cf: 30, trust: 8, dailyTraffic: 1500, indexedYandex: true, indexedGoogle: true,
     }],
-    assessDonor: async (domain, landing) => verifiedSite(domain, landing),
+    assessDonor: async (domain: string, landing: string) => verifiedSite(domain, landing),
+    revertPreparingSlot: async () => {},
+    editorialReview: {
+      resume: async () => !shortlisted.length ? { status: "new" as const } : !replyReady ? { status: "waiting" as const } : {
+        status: "complete" as const,
+        candidates: applyGglEditorialReview(
+          '{"recommendations":[{"siteId":91,"verdict":"recommended","reason":"Практическая рубрика для рестораторов"}]}',
+          shortlisted,
+        )!,
+      },
+      enqueue: async (_context: unknown, candidates: EditorialCandidate[]) => { shortlisted = candidates; },
+      clear: async () => {},
+    },
     generateDraft: async () => assert.fail("The existing draft must be preserved"),
-  });
+  };
+  const queued = await prepareUpcomingPlannedSlots(new Date("2026-11-18T00:00:00Z"), 7, options);
+  assert.equal(queued.prepared, 0);
+  assert.equal(reviewed, false);
+  assert.equal(shortlisted[0]?.siteId, 91);
+  const waiting = await prepareUpcomingPlannedSlots(new Date("2026-11-18T00:00:00Z"), 7, options);
+  assert.equal(waiting.prepared, 0);
+  assert.equal(reviewed, false);
+  replyReady = true;
+  const result = await prepareUpcomingPlannedSlots(new Date("2026-11-18T00:00:00Z"), 7, options);
   assert.equal(result.prepared, 1);
   assert.equal(reviewed, true);
 });
