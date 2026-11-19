@@ -94,7 +94,7 @@ export default async function RootSeoLinksPage() {
   };
 
   return (
-    <DomainMessagesBoundary namespaces={["rootGglDonorReview"]}>
+    <DomainMessagesBoundary namespaces={["rootGglDonorReview", "rootGglFirstMessage"]}>
       <SeoLinksClient
         viewer={viewerCapabilities}
         initialBadgeCount={webmasterApplications + unreadThreads + pendingSlots}

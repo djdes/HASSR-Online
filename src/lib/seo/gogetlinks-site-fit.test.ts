@@ -23,12 +23,20 @@ test("discovers published site search without requesting outside endpoints or su
   assert.equal(urls[1].searchParams.get("query"), "Роспотребнадзор кафе");
 });
 
-test("the SEO page provides donor-review translations in all supported locales", () => {
+test("the SEO page provides donor-review and first-message translations in all supported locales", () => {
   const page = readFileSync("src/app/root/seo/links/page.tsx", "utf8");
-  assert.match(page, /<DomainMessagesBoundary namespaces=\{\["rootGglDonorReview"\]\}>\s*<SeoLinksClient/);
+  const namespaces = page.match(/<DomainMessagesBoundary namespaces=\{(\[[^\]]+\])\}>\s*<SeoLinksClient/)?.[1];
+  assert.ok(namespaces, "the message boundary must wrap SeoLinksClient");
+  const delivered = JSON.parse(namespaces);
+  assert.ok(delivered.includes("rootGglDonorReview"));
+  assert.ok(delivered.includes("rootGglFirstMessage"));
   for (const locale of ["ru", "en", "uz"]) {
     const messages = JSON.parse(readFileSync(`src/i18n/messages/${locale}.json`, "utf8"));
     assert.ok(messages.rootGglDonorReview.pending);
+    for (const key of ["open", "title", "description", "body", "send", "sending", "sent",
+      "unavailable", "duplicate", "unconfirmed", "invalid", "changed", "error"]) {
+      assert.ok(messages.rootGglFirstMessage?.[key]?.trim(), `${locale}: rootGglFirstMessage.${key}`);
+    }
   }
 });
 
