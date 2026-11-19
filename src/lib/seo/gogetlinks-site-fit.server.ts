@@ -247,7 +247,9 @@ async function sampleSite(domain: string): Promise<SiteSample | null> {
     const document = parse(page.html);
     const body = document.querySelector(".entry-content, .post-content, [itemprop=articleBody], article");
     const references = collectDonorReferences(body?.querySelectorAll("a[href]") ?? [], page.url);
-    const section = visibleText(document.querySelector("a[rel='category tag'], .cat-links")?.rawText ?? "").slice(0, 80);
+    const sectionLabel = document.querySelector("a[rel='category tag'], .cat-links, .td-category a")?.rawText ??
+      document.querySelector('meta[property="article:section"]')?.getAttribute("content") ?? "";
+    const section = visibleText(sectionLabel).slice(0, 80);
     const date = document.querySelector('meta[property="article:published_time"]')?.getAttribute("content")?.slice(0, 32);
     const canonical = document.querySelector("link[rel='canonical']")?.getAttribute("href");
     let source = visibleText(body?.rawText ?? "").match(/(?:источник|по материалам)\s*:\s*[^.\n]{3,100}/i)?.[0];

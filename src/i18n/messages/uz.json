@@ -1,5 +1,9 @@
 {
   "rootGglFirstMessage": {
+    "generate": "Xabar yaratish",
+    "replaceDraft": "Qoralamani almashtirish",
+    "generating": "Dispetcher xabar yozmoqda…",
+    "draftError": "Xabar yaratilmadi. Qayta urinib ko‘ring.",
     "open": "Vebmasterga yozish",
     "title": "{domain} uchun xabar",
     "description": "Xabar GoGetLinks orqali yuboriladi. Joylashtirish alohida buyurtma qilinadi.",
