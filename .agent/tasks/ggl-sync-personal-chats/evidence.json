@@ -1,0 +1,5 @@
+{
+  "status": "AWAITING_DEPLOY",
+  "acceptance": {"AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "AWAITING_DEPLOY"},
+  "artifacts": ["raw/live-diagnosis.json", "raw/live-restore.json", "raw/test-gate.txt", "raw/typecheck.txt"]
+}
