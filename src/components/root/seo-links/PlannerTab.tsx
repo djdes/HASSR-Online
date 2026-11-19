@@ -1078,7 +1078,7 @@ export function PlannerTab({
 
                             {planCampaign?.isWesetup && slot.status === "pending_approval" && slot.donorSiteId ? (
                               <div className="mt-2">
-                                <WebmasterMessage key={slot.donorSiteId} slotId={slot.id} siteId={slot.donorSiteId} domain={slot.donorDomain} />
+                                <WebmasterMessage key={slot.donorSiteId} slotId={slot.id} siteId={slot.donorSiteId} domain={slot.donorDomain} userId={viewer.userId} />
                               </div>
                             ) : null}
 
