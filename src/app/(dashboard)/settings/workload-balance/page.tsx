@@ -23,6 +23,7 @@ import {
   type SlotUserMap,
 } from "@/lib/journal-workload";
 import { PageGuide } from "@/components/ui/page-guide";
+import { SectionJump } from "@/components/shared/section-jump";
 
 export const dynamic = "force-dynamic";
 
@@ -425,7 +426,9 @@ export default async function WorkloadBalancePage() {
           {sortedUsers.length === 0 ? (
             <div className="flex items-center gap-3 px-4 py-8 text-[14px] text-[#6f7282]">
               <CheckCircle2 className="size-5 text-[#9b9fb3]" />
-              {t("empty")}
+              <span>
+                {t("empty")} <SectionJump to="staff" />
+              </span>
             </div>
           ) : null}
         </div>

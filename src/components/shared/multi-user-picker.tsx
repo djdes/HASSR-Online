@@ -24,6 +24,7 @@ import {
   type RoomResponsibleUser,
 } from "@/lib/room-responsible-candidates";
 import type { RoomResponsibleRole } from "@/lib/cleaning-room-responsibles";
+import { SectionJump } from "@/components/shared/section-jump";
 
 export type MultiUserPickerProps = {
   value: string[];
@@ -228,9 +229,15 @@ export function MultiUserPicker(props: MultiUserPickerProps) {
             })}
             {GROUP_ORDER.every((key) => groups[key].filter(matches).length === 0) ? (
               <div className="px-3 py-6 text-center text-[13px] text-[#6f7282]">
-                {props.users.length === 0
-                  ? t("noActiveEmployees")
-                  : t("nobodyFound")}
+                {props.users.length === 0 ? (
+                  // Список пуст — сразу путь туда, где сотрудников добавляют.
+                  <>
+                    <p>{t("noActiveEmployees")}</p>
+                    <SectionJump to="staff" variant="button" className="mt-2.5" />
+                  </>
+                ) : (
+                  t("nobodyFound")
+                )}
               </div>
             ) : null}
           </div>

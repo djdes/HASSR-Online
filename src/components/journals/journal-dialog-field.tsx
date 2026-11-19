@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +31,10 @@ import {
  * даты — поэтому правый край колонки полей всегда ровный.
  *
  * Используется во ВСЕХ 13 обязательных журналах: create-document-dialog.tsx
- * и пер-журнальные *-documents-client.tsx.
+ * и пер-журнальные *-documents-client.tsx — и в окнах справочников
+ * (помещение, оборудование, цех, продукт; владелец, 2026-11-19: «поля окон
+ * компактнее, как в окне после регистрации»): подпись внутри рамки вместо
+ * подписи над полем — каждое поле ниже на строку.
  */
 export function FloatingLabelField({
   label,
@@ -41,11 +44,14 @@ export function FloatingLabelField({
   hint,
   error,
   invalid,
+  required,
 }: {
-  label: string;
+  label: ReactNode;
   htmlFor?: string;
   children: ReactNode;
   className?: string;
+  /** Обязательное поле — красная точка у подписи (как в окне после регистрации). */
+  required?: boolean;
   /** Заметная (amber) подсказка под полем. */
   hint?: ReactNode;
   /** Текст ошибки под полем — «Поле не заполнено». */
@@ -62,6 +68,9 @@ export function FloatingLabelField({
       >
         <label htmlFor={htmlFor} className={JOURNAL_DIALOG_FIELD_LABEL_CLASS}>
           {label}
+          {required ? (
+            <span aria-hidden className="ml-1.5 inline-block size-1.5 rounded-full bg-[#d2453d] align-middle" />
+          ) : null}
         </label>
         {children}
       </div>
@@ -166,6 +175,55 @@ export function FloatingTextareaField({
         maxLength={maxLength}
         className={cn(JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS, textareaClassName)}
       />
+    </FloatingLabelField>
+  );
+}
+
+/**
+ * Нативный список с floating label — короткие списки без поиска (тип
+ * помещения, вид оборудования). Стрелка своя: у `appearance-none` её нет.
+ */
+export function FloatingSelectField({
+  label,
+  value,
+  onChange,
+  children,
+  id,
+  disabled,
+  className,
+  hint,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  /** `<option>` списка. */
+  children: ReactNode;
+  id?: string;
+  disabled?: boolean;
+  className?: string;
+  hint?: ReactNode;
+  error?: ReactNode;
+}) {
+  const generatedId = useId();
+  const fieldId = id || generatedId;
+  return (
+    <FloatingLabelField label={label} htmlFor={fieldId} className={className} hint={hint} error={error}>
+      <span className="relative block">
+        <select
+          id={fieldId}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          className={cn(JOURNAL_DIALOG_FIELD_CONTROL_CLASS, "cursor-pointer appearance-none truncate pr-6")}
+        >
+          {children}
+        </select>
+        <ChevronDown
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 right-0 size-4 -translate-y-1/2 text-[#9b9fb3]"
+        />
+      </span>
     </FloatingLabelField>
   );
 }

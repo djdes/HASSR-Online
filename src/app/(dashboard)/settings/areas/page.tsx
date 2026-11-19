@@ -17,6 +17,7 @@ import { groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { objectInScope, objectScopeIds } from "@/lib/point-objects";
+import { SectionJump } from "@/components/shared/section-jump";
 
 export const dynamic = "force-dynamic";
 
@@ -191,7 +192,7 @@ export default async function AreasSettingsPage({
                     />
                   ) : (
                     <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-6 text-[13px] text-[#6f7282]">
-                      {t("emptyPoint")}
+                      {t("emptyPoint")} <SectionJump to="buildings" />
                     </div>
                   )}
                 </section>

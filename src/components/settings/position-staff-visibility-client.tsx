@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type Position = {
   id: string;
@@ -474,7 +475,7 @@ export function PositionStaffVisibilityClient({ positions, employees }: Props) {
                 })}
                 {groups.length === 0 ? (
                   <div className="text-[12px] text-[#9b9fb3] dark:text-white/50">
-                    {t("noActiveEmployees")}
+                    {t("noActiveEmployees")} <SectionJump to="staff" />
                   </div>
                 ) : null}
               </div>

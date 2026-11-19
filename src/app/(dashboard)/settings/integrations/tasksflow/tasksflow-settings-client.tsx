@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type Integration = {
   id: string;
@@ -487,6 +488,7 @@ export function TasksFlowSettingsClient({
               <p className="mx-auto mt-1.5 max-w-[360px] text-[13px] text-[#6f7282]">
                 {t("noEmployeesHint")}
               </p>
+              <SectionJump to="staff" variant="button" className="mt-3" />
             </div>
           ) : (
             <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">

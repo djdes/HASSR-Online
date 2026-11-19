@@ -7,6 +7,7 @@ import { BellRing, CheckCircle2, ChevronDown, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { ackDocPath } from "@/lib/ppk/acknowledge";
 import { PPK_BUTTON_OUTLINE_CLASS } from "./ppk-ui";
+import { SectionJump } from "@/components/shared/section-jump";
 
 export type AckSummaryStats = {
   acknowledged: { userId: string; name: string; date: string }[];
@@ -65,6 +66,12 @@ export function AckSummary({ docKey, stats }: { docKey: string; stats: AckSummar
           <h2 className="text-[16px] font-semibold text-[#0b1024]">{t("title")}</h2>
           <p className="mt-0.5 text-[14px] text-[#6f7282]">
             {total === 0 ? t("noAudience") : t("summary", { done: String(done), total: String(total) })}
+            {total === 0 ? (
+              <>
+                {" "}
+                <SectionJump to="staff" />
+              </>
+            ) : null}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

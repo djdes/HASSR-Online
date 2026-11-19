@@ -470,7 +470,7 @@ export function PositionEmployeePicker<T extends UserLike & { id: string }>({
           </div>
           {employeeSelect}
           {availableEmployees.length === 0 ? (
-            <div className={JOURNAL_DIALOG_HINT_CLASS}>{emptyEmployeeHint}</div>
+            <div className={JOURNAL_DIALOG_HINT_CLASS}>{resolvedEmployeeHint}</div>
           ) : null}
         </div>
       ) : null}

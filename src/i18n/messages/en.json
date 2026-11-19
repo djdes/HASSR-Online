@@ -2962,6 +2962,14 @@
             "printer": "Online printer",
             "kiosk": "Shared tablet",
             "products": "Product directory"
+          },
+          "short": {
+            "staff": "Staff",
+            "productionControl": "PCP",
+            "qr": "QR and posters",
+            "printer": "Printer",
+            "kiosk": "Tablet",
+            "products": "Products"
           }
         },
         "journals": {
@@ -2979,6 +2987,10 @@
             "standard": "Standard set",
             "haccp": "HACCP set",
             "extra": "Additional"
+          },
+          "short": {
+            "verify": "Verification",
+            "setup": "Settings"
           }
         },
         "checklists": {
@@ -3150,11 +3162,13 @@
       },
       "contentLoading": "Updating the page…",
       "listLoading": "Loading the list…",
-      "topMenuMore": "More",
       "collapseMenu": "Collapse menu",
       "expandMenu": "Expand menu",
       "scrollUp": "Scroll menu up",
-      "scrollDown": "Scroll menu down"
+      "scrollDown": "Scroll menu down",
+      "scrollLeft": "Scroll menu left",
+      "scrollRight": "Scroll menu right",
+      "openSection": "Open section"
     },
     "header": {
       "staff": "Staff",
@@ -25818,6 +25832,14 @@
       "noActiveEmployees": "There are no active employees in the organisation yet.",
       "nobodyFound": "Nobody found — try a different name."
     },
+    "sectionJump": {
+      "staff": "Add employees",
+      "positions": "Set up positions",
+      "equipment": "Add equipment",
+      "buildings": "Add rooms",
+      "areas": "Add workshops",
+      "products": "Fill in the product directory"
+    },
     "glowLoader": {
       "loading": "Loading..."
     },
@@ -27145,6 +27167,7 @@
       "actionAriaUnread": "{label} · new messages: {count, number}",
       "contacts": "Contacts",
       "contactsHint": "Phone, Telegram, MAX and email",
+      "dockTitle": "Contacts and help",
       "close": "Close"
     },
     "kioskSessionGuard": {
@@ -29365,7 +29388,7 @@
       "autoRoundRobin": "— Auto (round-robin) —",
       "autoHint": "If not specified, the system rotates eligible employees over the last 7 days.",
       "allowedPositions": "Who can receive it",
-      "noPositions": "No positions have been created yet. Add them on the “Staff” page.",
+      "noPositions": "No positions have been created yet.",
       "allowedPositionsHint": "Empty means all positions are allowed.",
       "bonusTitle": "Completion bonus",
       "bonusBadge": "Bonus journal",
@@ -30227,7 +30250,7 @@
       "primaryBadge": "primary",
       "slotNoneSuitable": "None suitable",
       "slotChooseEmployee": "Choose an employee",
-      "slotNoEmployeesHint": "No employees. Create them in /settings/users.",
+      "slotNoEmployeesHint": "No employees yet.",
       "reasonAdmin": "admin — the most senior",
       "reasonManager": "manager",
       "reasonMatchesKeywords": "matches keywords",
