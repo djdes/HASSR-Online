@@ -187,9 +187,14 @@ export function pickExchangeFields(entity: ExchangeEntity, source: ExchangeField
  * Отпечаток записи: переносимые поля и группа родителя. Перенос
  * оборудования в другой цех или сотрудника на другую должность — тоже
  * правка, которую получают остальные.
+ *
+ * У цеха родитель в отпечаток не входит: объект у него необязателен, и когда
+ * список «Объекты» включают позже «Оборудования», группа объекта появляется
+ * у всех цехов сразу — все они выглядели бы изменёнными, и цеха одной
+ * организации переезжали бы на объекты другой. Цех остаётся там, где он есть.
  */
 export function rowHash(entity: ExchangeEntity, fields: ExchangeFields, parentGroupId: string | null = null): string {
-  return hashFields({ ...pickExchangeFields(entity, fields), "#parent": parentGroupId });
+  return hashFields({ ...pickExchangeFields(entity, fields), "#parent": entity === "area" ? null : parentGroupId });
 }
 
 /** Пустой счётчик по спискам — основа итогов и счётчиков окна. */

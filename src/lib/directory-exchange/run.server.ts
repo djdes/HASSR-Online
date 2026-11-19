@@ -1,3 +1,4 @@
+import { isInactivePlan } from "@/lib/plan-limits";
 import { randomUUID } from "node:crypto";
 
 import type { Prisma } from "@prisma/client";
@@ -24,6 +25,7 @@ import {
   normalizeExchangeKinds,
   type ExchangeEntity,
   type ExchangeKind,
+  normalizeExchangeName,
 } from "@/lib/directory-exchange/kinds";
 import { planEntityExchange, type ExchangeLinkRow } from "@/lib/directory-exchange/plan";
 import {
@@ -381,7 +383,7 @@ async function exchangeUnderLock(
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: {
       kinds: true,
-      organization: { select: { id: true, name: true, accountId: true, isDemo: true, kind: true } },
+      organization: { select: { id: true, name: true, accountId: true, isDemo: true, kind: true, subscriptionPlan: true } },
     },
   });
 
@@ -393,6 +395,8 @@ async function exchangeUnderLock(
     if (kinds.length === 0) continue;
     // Только организации аккаунта кабинета; демо и сами кабинеты — никогда.
     if (organization.accountId !== cabinet.accountId || organization.isDemo || organization.kind === MASTER_ORG_KIND) continue;
+    // На паузе или отменена — как и остальная автоматика, обмен её не трогает.
+    if (isInactivePlan(organization.subscriptionPlan)) continue;
     if (await isOrganizationLocked(organization.id, now)) {
       notes.add(`Организация «${organization.name}» закрыта до оплаты точки и в обмене не участвовала.`);
       continue;
@@ -577,9 +581,21 @@ export async function transferPreview(input: {
   await loadTransferPair(input.fromOrganizationId, input.toOrganizationId, input.now ?? new Date());
   const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
   const byEntity = new Map<ExchangeEntity, TransferItem[]>();
+  // Люди и продукты, которых обмен «не видит» (с входом, в архиве, выключенные),
+  // всё равно заняли своё имя: такие записи перенос пропустит — показываем их
+  // уже существующими, а не обещаем создать.
+  const [people, products] = await Promise.all([
+    db.user.findMany({ where: { organizationId: input.toOrganizationId, isRoot: false }, select: { name: true } }),
+    db.product.findMany({ where: { organizationId: input.toOrganizationId }, select: { name: true } }),
+  ]);
+  const takenNames: Partial<Record<ExchangeEntity, Set<string>>> = {
+    staff: new Set(people.map((row) => normalizeExchangeName(row.name))),
+    product: new Set(products.map((row) => normalizeExchangeName(row.name))),
+  };
   for (const entity of EXCHANGE_ENTITIES) {
     const { fromRows, exists } = await matchTransferEntity(entity, input.fromOrganizationId, input.toOrganizationId, state);
     const parent = ENTITY_PARENT[entity];
+    const taken = takenNames[entity];
     byEntity.set(
       entity,
       fromRows
@@ -588,7 +604,7 @@ export async function transferPreview(input: {
           id: row.id,
           name: row.name,
           detail: row.detail,
-          exists: exists.has(row.id),
+          exists: exists.has(row.id) || Boolean(taken?.has(normalizeExchangeName(row.name))),
           entity,
           parentId: parent?.required ? row.parentId : null,
         })),

@@ -1,8 +1,8 @@
 "use client";
 import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -145,6 +145,25 @@ export function CompleteProfileNudge({
   );
 }
 
+const SETUP_CLOSED_PREFIX = "wesetup.org-setup-closed.";
+const subscribeNever = () => () => undefined;
+
+function readSetupClosed(organizationId: string): boolean {
+  try {
+    return window.sessionStorage.getItem(SETUP_CLOSED_PREFIX + organizationId) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberSetupClosed(organizationId: string): void {
+  try {
+    window.sessionStorage.setItem(SETUP_CLOSED_PREFIX + organizationId, "1");
+  } catch {
+    /* не смогли запомнить — окно не откроется до перезагрузки вкладки */
+  }
+}
+
 /**
  * Мастер настройки новой организации аккаунта (спека org-exchange-2026-11-19,
  * Р9). После «Создать и перейти» человек попадает на `?welcome-org=1` — и
@@ -163,26 +182,27 @@ function NewOrganizationSetup({
   /** Активная организация: окно открывается только у той, для которой пришёл `?welcome-org=<id>`. */
   organizationId?: string | null;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const welcomeOrg = searchParams.get("welcome-org");
-  const requested = welcomeOrg === "1" || (Boolean(welcomeOrg) && welcomeOrg === organizationId);
+  // Только для организации из адреса: «Вернуться в прежнюю» из тоста и
+  // переключение организаций окно в чужой организации не открывают.
+  const requested = Boolean(organizationId) && searchParams.get("welcome-org") === organizationId;
   // Пока идёт смена организации, оболочка ещё прежней организации — окно
   // с её данными не показываем, новая оболочка откроет своё.
   const switching = useContentPending();
   const [closed, setClosed] = useState(false);
+  // Закрыли — до конца вкладки не открываем заново. Параметр в адресе
+  // остаётся: под окном живёт плашка «Новая организация», она читает его же.
+  const closedBefore = useSyncExternalStore(
+    subscribeNever,
+    () => (organizationId ? readSetupClosed(organizationId) : false),
+    () => true,
+  );
 
-  if (!requested || closed || switching) return null;
+  if (!requested || closed || closedBefore || switching) return null;
 
   function close() {
     setClosed(true);
-    // Убираем параметр из адреса: обновление страницы не должно открывать
-    // окно заново.
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("welcome-org");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    if (organizationId) rememberSetupClosed(organizationId);
   }
 
   return (

@@ -468,6 +468,13 @@ export function ExchangeDialog({
                     );
                   })}
                 </ul>
+                {mode === "link" && members.length > 0 ? (
+                  // Обмен идёт через общий кабинет: галочка здесь добавляет
+                  // организацию, но не может исключить ту, у которой список уже включён.
+                  <p className="mt-2 text-[12px] leading-[1.5] text-[#6f7282]" data-testid="exchange-common-note">
+                    {t("dialog.linkCommonNote")}
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-4">
@@ -671,6 +678,11 @@ function ItemsPicker({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
+              // Enter в поиске не должен отправлять форму: перенос не отменить.
+              if (event.key === "Enter") {
+                event.preventDefault();
+                return;
+              }
               // Escape сначала очищает поиск, а не закрывает всё окно.
               if (event.key !== "Escape" || !query) return;
               event.stopPropagation();

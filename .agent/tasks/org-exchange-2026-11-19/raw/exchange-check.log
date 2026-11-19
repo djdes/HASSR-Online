@@ -54,7 +54,7 @@ PASS transfer into a foreign organization → 404
 PASS cabinet for a foreign account → 403
 PASS foreign organization got nothing
 [billing] seat limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -63,28 +63,28 @@ PASS foreign organization got nothing
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnu4002gdg7dwz68ohlh',
+  organizationId: 'cmwnsujgc002gll7djcxpx7vy',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -93,21 +93,21 @@ PASS foreign organization got nothing
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnu4002gdg7dwz68ohlh',
+  organizationId: 'cmwnsujgc002gll7djcxpx7vy',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -117,7 +117,7 @@ DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"
 PASS tariff: employee over the seat limit skipped and reported
 PASS tariff: objects over the point limit skipped and reported
 [billing] seat limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -126,21 +126,21 @@ PASS tariff: objects over the point limit skipped and reported
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnu4002gdg7dwz68ohlh',
+  organizationId: 'cmwnsujgc002gll7djcxpx7vy',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -149,7 +149,7 @@ PASS tariff: objects over the point limit skipped and reported
 PASS tariff: skipped records are retried, nothing else changes
 PASS empty kinds: member and its links removed
 [billing] seat limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -158,21 +158,21 @@ PASS empty kinds: member and its links removed
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnur002kdg7druva5ygf',
+  organizationId: 'cmwnsujh2002kll7dila6u9p9',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwnrbnu4002gdg7dwz68ohlh',
+  organizationId: 'cmwnsujgc002gll7djcxpx7vy',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -209,5 +209,15 @@ PASS after the clash: empty run
 PASS unchecked list stops, checked list goes on
 PASS locked organization is left out with a note
 PASS transfer into a locked organization → 409
+--- review fixes
+PASS person with a login in the other organization is not duplicated
+PASS archived person in the other organization is not duplicated
+PASS switched-off product is not brought back
+PASS phone in an old format reaches the other organization in one form
+PASS an edit without a phone does not erase the phone of the other side
+PASS ticking «Объекты» later keeps the other organization's area on its own building with its own description
+PASS equipment stays in its area
+PASS both buildings now exist on both sides
+PASS after the review cases: empty run
 cleanup: organizations left 0, users left 0, accounts left 0
 RESULT: all checks passed

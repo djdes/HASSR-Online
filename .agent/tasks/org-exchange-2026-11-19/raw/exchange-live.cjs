@@ -108,6 +108,19 @@ const tid = (page, id) => page.locator(`[data-testid="${id}"]`);
     await shot(owner, "05-step2-after-exchange.jpg");
     say("B after link", snapshot(orgB.id));
 
+    // ---- closing the wizard: the "new organization" banner stays, a reload does not reopen the wizard
+    await owner.getByRole("button", { name: "Закрыть" }).first().click().catch(() => null);
+    await owner.waitForTimeout(1200);
+    say("after closing: wizard steps on screen", await owner.locator("[data-setup-next], #complete-profile-form").count());
+    say("after closing: banner «Новая организация»", await owner.getByText(/Новая организация «Кухня ИП»/).count());
+    await owner.reload({ waitUntil: "networkidle" });
+    await owner.waitForTimeout(1500);
+    say("after reload: wizard steps on screen", await owner.locator("[data-setup-next], #complete-profile-form").count());
+    await switchTo(owner, orgA.id);
+    await owner.waitForTimeout(1200);
+    say("in the first organization with the same address: wizard steps on screen", await owner.locator("[data-setup-next], #complete-profile-form").count());
+    say("  address", owner.url().replace(/^https?:\/\/[^/]+/, ""));
+
     // ---- both directions: a new product and a rename in B reach A; a deletion in A does not come back
     await switchTo(owner, orgB.id);
     say("B: new product", (await api(owner, "POST", "/api/products", { name: "Сливки 20 %", unit: "l", kind: "raw" })).status);

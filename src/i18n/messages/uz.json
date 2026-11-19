@@ -26912,7 +26912,8 @@
         "submitLeave": "Almashinuvni o‘chirish",
         "linkFailed": "Ma’lumotnomalarni bog‘lab bo‘lmadi",
         "transferFailed": "Ma’lumotlarni ko‘chirib bo‘lmadi",
-        "left": "«{name}» endi ma’lumotnomalar almashinuvida qatnashmaydi"
+        "left": "«{name}» endi ma’lumotnomalar almashinuvida qatnashmaydi",
+        "linkCommonNote": "Almashinuv barcha ishtirokchilar uchun umumiy: tashkilotda ro‘yxat allaqachon yoqilgan bo‘lsa, bu yerda belgi qo‘yilmasa ham u ro‘yxatni oladi. Tashkilotni almashinuvdan chiqarish uchun uning oynasida «Almashinuvni o‘chirish» tugmasini bosing."
       },
       "result": {
         "linkTitle": "Ma’lumotnomalar bog‘landi",

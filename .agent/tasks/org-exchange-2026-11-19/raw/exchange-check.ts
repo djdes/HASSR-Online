@@ -473,8 +473,100 @@ async function cleanup() {
   console.log(`cleanup: organizations left ${left}, users left ${leftUsers}, accounts left ${leftAccounts}`);
 }
 
+/* ── третья проверка: случаи из независимой проверки (2026-11-19) ── */
+async function reviewed() {
+  console.log("--- review fixes");
+  const r1 = await makeOrg("Проверка-1");
+  const { owner, account } = await makeOwner(r1.id, "five");
+  const r2 = await makeOrg("Проверка-2", account.id);
+  await db.organizationMember.create({ data: { userId: owner.id, organizationId: r2.id, role: "owner" } });
+  const actor = { userId: owner.id, userName: owner.name };
+  const cabinet = await ensureExchangeCabinet(owner.id, account.id);
+  const save = (kinds: Array<(typeof EXCHANGE_KINDS)[number]>) =>
+    saveExchangeMembers({
+      ownerUserId: owner.id,
+      ownerName: owner.name,
+      organizationId: r1.id,
+      members: [
+        { organizationId: r1.id, kinds },
+        { organizationId: r2.id, kinds },
+      ],
+    });
+
+  // Цеха с одним названием в обеих организациях, объекты — с разными.
+  const b1 = await db.building.create({ data: { organizationId: r1.id, name: "Кафе Север", address: "Северная, 1" } });
+  const b2 = await db.building.create({ data: { organizationId: r2.id, name: "Кафе Юг", address: "Южная, 2" } });
+  await db.area.create({ data: { organizationId: r1.id, name: "Кухня", buildingId: b1.id, description: "Первая" } });
+  const area2 = await db.area.create({ data: { organizationId: r2.id, name: "Кухня", buildingId: b2.id, description: "Вторая" } });
+  await db.equipment.create({ data: { name: "Плита", type: "oven", areaId: area2.id } });
+
+  // Люди и продукты, которых обмен не видит: вход, архив, выключенный продукт.
+  const cook1 = await db.jobPosition.create({ data: { organizationId: r1.id, categoryKey: "staff", name: "Повар", sortOrder: 1 } });
+  const cook2 = await db.jobPosition.create({ data: { organizationId: r2.id, categoryKey: "staff", name: "Повар", sortOrder: 1 } });
+  const person = (orgId: string, positionId: string, name: string, extra: Record<string, unknown> = {}) =>
+    db.user.create({
+      data: {
+        email: `${TAG}-${Math.random().toString(36).slice(2, 8)}@r.local.haccp`,
+        name,
+        passwordHash: "",
+        role: "cook",
+        jobPositionId: positionId,
+        positionTitle: "Повар",
+        organizationId: orgId,
+        ...extra,
+      },
+    });
+  await person(r1.id, cook1.id, "Логинов Лев");
+  await person(r2.id, cook2.id, "Логинов Лев", { passwordHash: "has-a-login" });
+  await person(r1.id, cook1.id, "Архипова Ада");
+  await person(r2.id, cook2.id, "Архипова Ада", { archivedAt: new Date(), isActive: false });
+  const phoned = await person(r1.id, cook1.id, "Телефонов Тит", { phone: "8 (985) 111-22-33" });
+  await db.product.create({ data: { name: "Кефир", kind: "raw", unit: "l", organizationId: r1.id } });
+  await db.product.create({ data: { name: "кефир", kind: "raw", unit: "l", organizationId: r2.id, isActive: false } });
+
+  await save(["equipment", "staff", "products"]);
+  await runDirectoryExchange(cabinet.id, { actor });
+  const count = (orgId: string, name: string) => db.user.count({ where: { organizationId: orgId, name } });
+  check("person with a login in the other organization is not duplicated", (await count(r2.id, "Логинов Лев")) === 1);
+  check("archived person in the other organization is not duplicated", (await count(r2.id, "Архипова Ада")) === 1);
+  check(
+    "switched-off product is not brought back",
+    (await db.product.count({ where: { organizationId: r2.id, name: { equals: "Кефир", mode: "insensitive" } } })) === 1 &&
+      (await db.product.count({ where: { organizationId: r2.id, isActive: true, name: { equals: "Кефир", mode: "insensitive" } } })) === 0,
+  );
+  const copy = await db.user.findFirst({ where: { organizationId: r2.id, name: "Телефонов Тит" } });
+  check("phone in an old format reaches the other organization in one form", copy?.phone === "+79851112233", copy?.phone);
+
+  // Правка копии во второй организации не должна стереть телефон в первой.
+  await db.user.update({ where: { id: copy!.id }, data: { phone: null, weeklyDaysOff: [0] } });
+  await runDirectoryExchange(cabinet.id, { actor });
+  const source = await db.user.findUnique({ where: { id: phoned.id } });
+  check("an edit without a phone does not erase the phone of the other side", Boolean(source?.phone), source?.phone);
+
+  // «Объекты» включили позже «Оборудования»: цеха остаются на своих объектах.
+  await save(["equipment", "staff", "products", "objects"]);
+  await runDirectoryExchange(cabinet.id, { actor });
+  const after2 = await db.area.findUnique({ where: { id: area2.id } });
+  check(
+    "ticking «Объекты» later keeps the other organization's area on its own building with its own description",
+    after2?.buildingId === b2.id && after2?.description === "Вторая" && after2?.name === "Кухня",
+    after2,
+  );
+  check(
+    "equipment stays in its area",
+    (await db.equipment.count({ where: { areaId: area2.id, name: "Плита" } })) === 1,
+  );
+  check("both buildings now exist on both sides", (await names(r1.id)).buildings.length === 2 && (await names(r2.id)).buildings.length === 2, {
+    r1: (await names(r1.id)).buildings,
+    r2: (await names(r2.id)).buildings,
+  });
+  const idle = await runDirectoryExchange(cabinet.id, { actor });
+  check("after the review cases: empty run", totals(idle).created === 0 && totals(idle).updated === 0, idle.organizations);
+}
+
 main()
   .then(established)
+  .then(reviewed)
   .catch((error) => {
     failed += 1;
     console.error("FAIL script crashed", error);

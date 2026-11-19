@@ -1,3 +1,4 @@
+import { normalizePhone } from "@/lib/phone";
 import { ensureRoomMirrorArea, renameRoomMirrorArea } from "@/lib/area-building-sync";
 import { checkPointsForCreation } from "@/lib/billing.server";
 import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
@@ -176,7 +177,9 @@ export async function loadEntityRows(
         .map((row) =>
           makeRow(entity, {
             id: row.id,
-            fields: { name: row.name, phone: row.phone, weeklyDaysOff: normalizeWeeklyDaysOff(row.weeklyDaysOff) },
+            // Телефон сравниваем в едином виде: «8 (999)…» и «+7999…» — одно и то же,
+            // а номер, который не разобрать, не считается сведением вовсе.
+            fields: { name: row.name, phone: normalizePhone(row.phone), weeklyDaysOff: normalizeWeeklyDaysOff(row.weeklyDaysOff) },
             parentId: row.jobPositionId,
             parentGroupId: row.jobPositionId ? parentGroupOf(row.jobPositionId) : null,
             detail: row.jobPosition?.name ?? null,
@@ -337,14 +340,40 @@ function productData(fields: ExchangeFields) {
   };
 }
 
-/** Активный продукт с таким названием (без регистра) — как в `POST /api/products`. */
-async function productNameTaken(organizationId: string, name: string, exceptId?: string): Promise<boolean> {
-  const existing = await db.product.findMany({
-    where: { organizationId, isActive: true, ...(exceptId ? { id: { not: exceptId } } : {}) },
-    select: { name: true },
+/**
+ * Продукт с таким названием (без регистра) уже есть. При переименовании —
+ * среди активных, как в `POST /api/products`; при создании (`anyState`) — и
+ * среди выключенных: продукт, который организация убрала из справочника,
+ * обмен обратно не заводит.
+ */
+async function productNameTaken(
+  organizationId: string,
+  name: string,
+  options: { exceptId?: string; anyState?: boolean } = {},
+): Promise<boolean> {
+  const existing = await db.product.findFirst({
+    where: {
+      organizationId,
+      name: { equals: name.trim(), mode: "insensitive" },
+      ...(options.anyState ? {} : { isActive: true }),
+      ...(options.exceptId ? { id: { not: options.exceptId } } : {}),
+    },
+    select: { id: true },
   });
-  const wanted = name.trim().toLowerCase();
-  return existing.some((item) => item.name.trim().toLowerCase() === wanted);
+  return Boolean(existing);
+}
+
+/**
+ * Человек с таким ФИО уже есть в организации — в любом виде: с входом,
+ * руководитель, в архиве. Обмен видит только сотрудников без входа, и без
+ * этой проверки завёл бы второго «Иванова» рядом с настоящим.
+ */
+async function personNameTaken(organizationId: string, name: string): Promise<boolean> {
+  const existing = await db.user.findFirst({
+    where: { organizationId, isRoot: false, name: { equals: name.trim(), mode: "insensitive" } },
+    select: { id: true },
+  });
+  return Boolean(existing);
 }
 
 function equipmentData(fields: ExchangeFields) {
@@ -403,6 +432,7 @@ export async function createEntityRow(
             })
           : null;
         if (!position) return { status: "conflict" };
+        if (await personNameTaken(organizationId, name)) return { status: "conflict" };
         const input = {
           jobPositionId: position.id,
           fullName: name,
@@ -508,7 +538,7 @@ export async function createEntityRow(
         return { status: "created", id: created.id };
       }
       case "product": {
-        if (await productNameTaken(organizationId, name)) return { status: "conflict" };
+        if (await productNameTaken(organizationId, name, { anyState: true })) return { status: "conflict" };
         const created = await db.product.create({
           data: { ...productData(source.fields), name, organizationId },
           select: { id: true },
@@ -590,7 +620,8 @@ export async function updateEntityRow(
           where: { id: current.id },
           data: {
             name,
-            phone,
+            // Пустой телефон образца — «сведений нет», а не «сотрите номер».
+            ...(phone ? { phone } : {}),
             weeklyDaysOff: normalizeWeeklyDaysOff(source.fields.weeklyDaysOff),
             ...(position
               ? { jobPositionId: position.id, ...(followsPosition ? { positionTitle: position.name } : {}) }
@@ -647,26 +678,19 @@ export async function updateEntityRow(
       case "area": {
         const current = await db.area.findFirst({
           where: { id: entityId, organizationId },
-          select: { id: true, description: true, buildingId: true },
+          select: { id: true, description: true },
         });
         if (!current) return { status: "missing" };
-        const building = parentId
-          ? await db.building.findFirst({ where: { id: parentId, organizationId }, select: { id: true } })
-          : null;
         const description = text(source.fields.description, 1000);
+        // Объект цеха обмен не меняет: цех остаётся там, где его завела организация.
         await db.area.update({
           where: { id: current.id },
           data: {
             name,
             // Служебное описание цеха-зеркала остаётся, пока образец не задал своё.
             ...(exchangedAreaDescription(current.description) !== description ? { description } : {}),
-            ...(building ? { buildingId: building.id } : {}),
           },
         });
-        // Цех перенесли на другой объект — журналы УФ его ламп туда же.
-        if (building && building.id !== current.buildingId) {
-          await syncUvDocumentPoints(organizationId).catch((error) => console.warn("[directory-exchange] uv points", error));
-        }
         return { status: "updated" };
       }
       case "equipment": {
@@ -697,7 +721,7 @@ export async function updateEntityRow(
         return { status: "updated" };
       }
       case "product": {
-        if (await productNameTaken(organizationId, name, entityId)) return { status: "conflict" };
+        if (await productNameTaken(organizationId, name, { exceptId: entityId })) return { status: "conflict" };
         const updated = await db.product.updateMany({
           where: { id: entityId, organizationId, isActive: true },
           data: { ...productData(source.fields), name },

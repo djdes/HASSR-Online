@@ -26912,7 +26912,8 @@
         "submitLeave": "Turn off the exchange",
         "linkFailed": "Could not link the directories",
         "transferFailed": "Could not transfer the data",
-        "left": "“{name}” no longer takes part in the directory exchange"
+        "left": "“{name}” no longer takes part in the directory exchange",
+        "linkCommonNote": "The exchange is shared by all participants: an organisation that already has a list switched on receives it too, even without a tick here. To remove an organisation from the exchange, open this window in it and press “Turn off the exchange”."
       },
       "result": {
         "linkTitle": "Directories linked",

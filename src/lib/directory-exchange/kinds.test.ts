@@ -103,3 +103,13 @@ test("summary: totals and reading the stored result", () => {
   assert.deepEqual(parsed?.notes, ["раз"]);
   assert.deepEqual(summaryTotals(parsed!), { created: 2, updated: 1, skippedLimit: 0, skippedConflict: 3 });
 });
+
+test("rowHash: a workshop's object is not part of its fingerprint, other parents are", () => {
+  const area = { name: "Кухня", description: "Горячий цех" };
+  // Ticking «Объекты» later gives every workshop a building group at once — none of them may look edited.
+  assert.equal(rowHash("area", area, null), rowHash("area", area, "building-group"));
+  assert.notEqual(rowHash("area", area, null), rowHash("area", { ...area, name: "Склад" }, null));
+  // Moving an employee to another position or equipment to another workshop is still an edit.
+  assert.notEqual(rowHash("staff", { name: "Иванов Иван" }, "cook"), rowHash("staff", { name: "Иванов Иван" }, "baker"));
+  assert.notEqual(rowHash("equipment", { name: "Плита", type: "oven" }, "a1"), rowHash("equipment", { name: "Плита", type: "oven" }, "a2"));
+});
