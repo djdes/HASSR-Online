@@ -551,6 +551,7 @@ export default async function DashboardLayout({
                 // новой организации аккаунта (`?welcome-org=1`): короткая
                 // анкета организации и те же шаги настройки.
                 mode={needsProfileCompletion ? "registration" : "organization"}
+                organizationId={activeOrgId}
                 initial={{
                   // Заглушку мгновенной регистрации за название не выдаём.
                   organizationName:

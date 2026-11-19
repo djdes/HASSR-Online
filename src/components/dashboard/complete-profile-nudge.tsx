@@ -130,13 +130,16 @@ export function CompleteProfileNudge({
   email,
   initial,
   mode = "registration",
+  organizationId = null,
 }: {
   email: string;
   initial?: CompleteProfileInitial;
   mode?: CompleteProfileMode;
+  /** Активная организация — для мастера новой организации (`?welcome-org=<id>`). */
+  organizationId?: string | null;
 }) {
   return mode === "organization" ? (
-    <NewOrganizationSetup email={email} initial={initial} />
+    <NewOrganizationSetup email={email} initial={initial} organizationId={organizationId} />
   ) : (
     <RegistrationNudge email={email} initial={initial} />
   );
@@ -153,14 +156,18 @@ export function CompleteProfileNudge({
 function NewOrganizationSetup({
   email,
   initial,
+  organizationId,
 }: {
   email: string;
   initial?: CompleteProfileInitial;
+  /** Активная организация: окно открывается только у той, для которой пришёл `?welcome-org=<id>`. */
+  organizationId?: string | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const requested = searchParams.get("welcome-org") === "1";
+  const welcomeOrg = searchParams.get("welcome-org");
+  const requested = welcomeOrg === "1" || (Boolean(welcomeOrg) && welcomeOrg === organizationId);
   // Пока идёт смена организации, оболочка ещё прежней организации — окно
   // с её данными не показываем, новая оболочка откроет своё.
   const switching = useContentPending();
