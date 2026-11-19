@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Permission } from "@/lib/permissions";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type PermissionGroup = {
   id: string;
@@ -458,7 +459,7 @@ function PositionCategoryBlock({
           {title}
         </div>
         <p className="mt-2 text-[13px] text-[#9b9fb3]">
-          {t("noPositions")}
+          {t("noPositions")} <SectionJump to="positions" />
         </p>
       </div>
     );

@@ -50,6 +50,7 @@ import {
   type PaperJournal,
 } from "@/lib/sphere-journal-rules";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type Position = { id: string; name: string; categoryKey: string };
 type StaffUser = { id: string; name: string; jobPositionId: string | null };
@@ -1401,7 +1402,7 @@ function DistributionEditor({
           </div>
           {positions.length === 0 ? (
             <div className="rounded-lg border border-dashed border-[#dcdfed] bg-white px-3 py-2 text-[12px] text-[#6f7282]">
-              {t("noPositions")}
+              {t("noPositions")} <SectionJump to="positions" />
             </div>
           ) : (
             <div className="flex flex-wrap gap-1.5">

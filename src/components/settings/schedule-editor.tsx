@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
 import { cn } from "@/lib/utils";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type ShiftStatus = "scheduled" | "off" | "vacation" | "sick" | "none";
 
@@ -382,7 +383,8 @@ export function ScheduleEditor({
                     colSpan={dates.length + 1}
                     className="px-4 py-10 text-center text-[13px] text-[#9b9fb3]"
                   >
-                    {t("noEmployees")}
+                    <p>{t("noEmployees")}</p>
+                    <SectionJump to="staff" variant="button" className="mt-3" />
                   </td>
                 </tr>
               ) : null}

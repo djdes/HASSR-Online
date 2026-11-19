@@ -14,12 +14,24 @@
 import { navSectionPath, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelMenuItem, NavModelSection, NavModelTab } from "@/lib/app-nav.server";
 
-export type NewNavLink = { id: string; href: string; label: string; active: boolean };
+export type NewNavLink = {
+  id: string;
+  href: string;
+  label: string;
+  active: boolean;
+  /** Иконка пункта меню (`nav-icons`); у вкладок её нет. */
+  icon?: string;
+};
 /** Пункт выпадающей панели; под ним — его вкладки (следующий уровень). */
 export type NewNavPanelLink = NewNavLink & { tabs: NewNavLink[]; badge?: string };
 export type NewNavPanelGroup = { label: string | null; links: NewNavPanelLink[] };
 /** Пункт строки над страницей; `panel` — выпадающее подменю. */
-export type NewNavEntry = NewNavLink & { badge?: string; panel?: NewNavPanelGroup[] };
+export type NewNavEntry = NewNavLink & {
+  badge?: string;
+  panel?: NewNavPanelGroup[];
+  /** Короткое название для строки; полное (`label`) — в подсказке и панели. */
+  short?: string;
+};
 export type NewNavCrumb = { label: string; href: string };
 
 export type NewNav = {
@@ -81,7 +93,14 @@ export function buildNewNav(sections: readonly NavModelSection[], pathname: stri
   if (host) {
     // Второй уровень — вложенный раздел: строка — его пункты.
     entries = menuItems(host).map((entry): NewNavEntry => {
-      const base = { id: entry.id, href: entry.href, label: entry.label, ...(entry.badge ? { badge: entry.badge } : {}) };
+      const base = {
+        id: entry.id,
+        href: entry.href,
+        label: entry.label,
+        icon: entry.icon,
+        ...(entry.shortLabel ? { short: entry.shortLabel } : {}),
+        ...(entry.badge ? { badge: entry.badge } : {}),
+      };
       if (entry.section) {
         const child = sections.find((section) => section.key === entry.section);
         const active = chain[2]?.key === entry.section;
@@ -96,6 +115,7 @@ export function buildNewNav(sections: readonly NavModelSection[], pathname: stri
               id: link.id,
               href: link.href,
               label: link.label,
+              icon: link.icon,
               active: linkActive,
               tabs: tabLinks(link, linkActive),
               ...(link.badge ? { badge: link.badge } : {}),

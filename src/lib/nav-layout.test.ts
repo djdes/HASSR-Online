@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import { visibleNav, type NavActor, type NavFacts } from "./app-nav";
 import type { NavModelSection } from "./app-nav.server";
@@ -156,4 +157,71 @@ test("«Моя компания» открывает первую строчку
   assert.equal(sectionEntryHref(company), "/settings/organization/office");
   assert.equal(sectionEntryHref({ ...company, menu: [] }), "/settings/organization");
   assert.equal(sectionEntryHref({ key: "billing", rootHref: "/settings/subscription", menu: [{ items: [{ href: "/settings/balance" }] }] }), "/settings/subscription");
+});
+
+test("строка и панель несут иконку пункта; у вкладок иконки нет", () => {
+  const place = buildNewNav(ownerNav, "/journals");
+  const itemsOf = (key: string) => ownerNav.find((section) => section.key === key)?.menu?.flatMap((group) => group.items) ?? [];
+  // Строка — пункты «Объектов»: иконка та же, что у пункта в модели меню.
+  for (const entry of place.entries) {
+    assert.equal(entry.icon, itemsOf("points").find((item) => item.id === entry.id)?.icon, `строка: ${entry.id}`);
+    for (const link of entry.panel?.flatMap((group) => group.links) ?? []) {
+      for (const tab of link.tabs) assert.equal(tab.icon, undefined, `вкладка: ${tab.id}`);
+    }
+  }
+  // Панель «Журналов» — пункты раздела «Журналы», каждый со своей иконкой.
+  const journals = place.entries.find((entry) => entry.id === "journals");
+  const links = journals?.panel?.flatMap((group) => group.links) ?? [];
+  assert.ok(links.length > 0);
+  for (const link of links) {
+    assert.equal(link.icon, itemsOf("journals").find((item) => item.id === link.id)?.icon, `панель: ${link.id}`);
+    assert.ok(link.icon, `панель: ${link.id} — без иконки`);
+  }
+  // Строка-вкладки обычного пункта — без иконок.
+  const tabs = buildNewNav(ownerNav, "/settings/organization");
+  assert.equal(tabs.entriesAreTabs, true);
+  assert.ok(tabs.entries.every((entry) => entry.icon === undefined));
+});
+
+test("короткое название пункта доходит до строки, полное остаётся подписью", () => {
+  const withShort = ownerNav.map((section) =>
+    section.key === "points" && section.menu
+      ? {
+          ...section,
+          menu: section.menu.map((group) => ({
+            ...group,
+            items: group.items.map((item) => (item.id === "productionControl" ? { ...item, shortLabel: "ППК" } : item)),
+          })),
+        }
+      : section,
+  );
+  const entry = buildNewNav(withShort, "/journals").entries.find((item) => item.id === "productionControl");
+  assert.equal(entry?.short, "ППК");
+  assert.equal(entry?.label, "s:productionControl");
+  assert.equal(buildNewNav(ownerNav, "/journals").entries.find((item) => item.id === "productionControl")?.short, undefined);
+});
+
+test("короткие названия строки: на трёх языках, только у существующих пунктов и короче полного", () => {
+  type Menus = Record<string, { items?: Record<string, string>; short?: Record<string, string> }>;
+  const menusOf = (locale: string) =>
+    (
+      JSON.parse(readFileSync(new URL(`../i18n/messages/${locale}.json`, import.meta.url), "utf8")) as {
+        navigation: { shell: { menus: Menus } };
+      }
+    ).navigation.shell.menus;
+  const ru = menusOf("ru");
+  const shortIds = (menus: Menus) =>
+    Object.entries(menus).flatMap(([section, menu]) => Object.keys(menu.short ?? {}).map((id) => `${section}.${id}`)).sort();
+  assert.ok(shortIds(ru).includes("points.productionControl"));
+  for (const locale of ["ru", "en", "uz"]) {
+    const menus = menusOf(locale);
+    assert.deepEqual(shortIds(menus), shortIds(ru), locale);
+    for (const [section, menu] of Object.entries(menus)) {
+      for (const [id, short] of Object.entries(menu.short ?? {})) {
+        const full = menu.items?.[id];
+        assert.ok(full, `${locale}: ${section}.${id} — нет такого пункта`);
+        assert.ok(short.length < full.length, `${locale}: ${section}.${id} — «${short}» не короче «${full}»`);
+      }
+    }
+  }
 });

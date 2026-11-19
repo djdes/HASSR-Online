@@ -22,9 +22,18 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
 
   // pb-24 на телефоне — коридор под плавающую кнопку дока (48px + 20px
   // от низа): без него последняя строка футера пряталась под ней.
+  //
+  // Компьютер (владелец, 2026-11-19: «подвал той же высоты, что меню
+  // слева»): полоса 72px + линия — ровно как блок «Пришла проверка» внизу
+  // меню (`ClassicNavAccordion`), линии стоят на одной высоте. Поля — как у
+  // страницы (`px-4 md:px-8`, коробка 1800px): текст подвала начинается там
+  // же, где контент.
   return (
-    <footer className="mt-auto border-t border-[#ececf4] px-4 pb-24 pt-5 text-[12.5px] text-[#9b9fb3] sm:pb-5 md:px-6 print:hidden">
-      <div className="mx-auto flex max-w-[1760px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <footer
+      data-dashboard-footer
+      className="mt-auto border-t border-[#ececf4] pb-24 pt-5 text-[12.5px] text-[#9b9fb3] sm:pb-5 lg:flex lg:min-h-[73px] lg:items-center lg:py-2 print:hidden"
+    >
+      <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between md:px-8">
         <div className="flex items-center gap-3">
           <span className="text-[#6f7282]">
             <BrandLogo height={18} title="WeSetup" />
@@ -38,11 +47,10 @@ export function DashboardFooter({ partnerBrandName = null }: { partnerBrandName?
           <span>© 2026</span>
         </div>
 
-        {/* sm:pr-[104px] — коридор под плавающие кнопки (support + AI-чат
-            занимают правые ~123px: `fixed bottom-5 right-5` и `right-[68px]`,
-            размер size-11). Без него «admin@wesetup.ru» и «Telegram»
-            перекрывались виджетами, когда футер попадал в нижнюю часть окна. */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:pr-[104px]">
+        {/* sm:pr-16 — коридор под кнопку дока справа внизу (одна кнопка 48px
+            у правого поля). Без него «Telegram» перекрывался кнопкой, когда
+            футер попадал в нижнюю часть окна. */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:pr-16">
           <Link href="/oferta" className={linkClass}>
             {t("offer")}
           </Link>

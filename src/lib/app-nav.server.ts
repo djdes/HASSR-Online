@@ -34,6 +34,12 @@ export type NavModelMenuItem = {
   hasMenu?: boolean;
   /** Метка у пункта («PRO»). */
   badge?: string;
+  /**
+   * Короткое название для строки над страницей (`menus.<раздел>.short.<id>`):
+   * «Программа производственного контроля» → «ППК». Своё название организации
+   * не сокращается.
+   */
+  shortLabel?: string;
 };
 /** Группа меню раздела; `label: null` — группа без подписи. */
 export type NavModelMenuGroup = { label: string | null; items: NavModelMenuItem[] };
@@ -101,6 +107,8 @@ export async function buildNavModel(input: {
   // собираются из модели (`NAV_SECTIONS`), поэтому их наличие на всех языках
   // сверяет тест (`navigation-localization.test.ts`), а не тип.
   const menuLabel = t as unknown as (key: string) => string;
+  // Короткие названия есть только у длинных пунктов — проверяем наличие ключа.
+  const hasLabel = (key: string) => (t as unknown as { has: (key: string) => boolean }).has(key);
   const visible = visibleNav(input.user, input.facts);
   const renameHrefOf = new Map(visible.map((section) => [section.key, section.renameHref]));
   const sections = visible.map((section) => ({
@@ -120,14 +128,18 @@ export async function buildNavModel(input: {
       ? {
           menu: section.menu.map((group) => ({
             label: group.label ? menuLabel(`menus.${section.key}.groups.${group.label}`) : null,
-            items: group.items.map((item) => ({
+            items: group.items.map((item) => {
+              // Вложенный раздел, переименованный организацией, — под своим именем.
+              const custom = item.section
+                ? customSectionNameByHref(input.customNames, renameHrefOf.get(item.section))
+                : null;
+              const shortKey = `menus.${section.key}.short.${item.id}`;
+              return {
               id: item.id,
               icon: item.icon,
               href: item.href,
-              // Вложенный раздел, переименованный организацией, — под своим именем.
-              label:
-                (item.section ? customSectionNameByHref(input.customNames, renameHrefOf.get(item.section)) : null) ??
-                menuLabel(`menus.${section.key}.items.${item.id}`),
+              label: custom ?? menuLabel(`menus.${section.key}.items.${item.id}`),
+              ...(!custom && hasLabel(shortKey) ? { shortLabel: menuLabel(shortKey) } : {}),
               ...(item.section ? { section: item.section } : {}),
               ...(item.hasMenu ? { hasMenu: true } : {}),
               ...(item.badge ? { badge: t(`badges.${item.badge}`) } : {}),
@@ -140,7 +152,8 @@ export async function buildNavModel(input: {
                     })),
                   }
                 : {}),
-            })),
+              };
+            }),
           })),
         }
       : {}),

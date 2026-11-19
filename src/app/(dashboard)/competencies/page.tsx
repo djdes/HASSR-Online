@@ -5,6 +5,7 @@ import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { CompetencyCell } from "@/components/competencies/competency-cell";
 import { getTranslations } from "next-intl/server";
 import { COMPETENCY_SKILLS, COMPETENCY_LEVELS, competencyPositionLabel } from "@/components/competencies/competency-presentation";
+import { SectionJump } from "@/components/shared/section-jump";
 
 const LEVEL_COLORS = [
   "bg-[#ececf4]",
@@ -125,7 +126,14 @@ export default async function CompetenciesPage() {
                   })}
                 </tr>
               ))}
-              {users.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">{t("empty")}</td></tr>}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    <p>{t("empty")}</p>
+                    <SectionJump to="staff" variant="button" className="mt-3" />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

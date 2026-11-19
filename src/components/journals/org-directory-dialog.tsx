@@ -15,6 +15,7 @@ import {
   missingFromList,
   type OrgDirectoryKind,
 } from "@/lib/org-directory";
+import { SectionJump } from "@/components/shared/section-jump";
 
 /**
  * «Из справочника организации» — общий выбор позиций для списка любого
@@ -92,11 +93,14 @@ export function OrgDirectoryDialog({
             <Loader2 className="size-5 animate-spin text-[#9b9fb3]" />
           </div>
         ) : available.length === 0 ? (
-          <p className="py-8 text-center text-[13.5px] text-[#6f7282]">
-            {(items ?? []).length === 0
-              ? t("orgDirectory.empty")
-              : t("orgDirectory.allAdded")}
-          </p>
+          <div className="py-8 text-center text-[13.5px] text-[#6f7282]">
+            <p>
+              {(items ?? []).length === 0
+                ? t("orgDirectory.empty")
+                : t("orgDirectory.allAdded")}
+            </p>
+            {(items ?? []).length === 0 ? <SectionJump to="products" variant="button" className="mt-3" /> : null}
+          </div>
         ) : (
           <>
             <div className="relative">

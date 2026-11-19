@@ -32,9 +32,12 @@ const CHAT_AFTER_CLOSE_MS = 200;
 
 const ROW_CLASS =
   "group flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-4 py-3 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
-/** Узкая колонка главной: строки пониже. */
+/**
+ * Узкая колонка главной (владелец, 2026-11-19: «компактнее, чтобы прокрутки не
+ * было»): строки 40px — плашка, подпись и пояснение в две тесные строки.
+ */
 const ROW_CLASS_COMPACT =
-  "group flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-[#ececf4] bg-white px-3 py-2.5 text-left transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "group flex min-h-10 w-full items-center gap-2.5 rounded-xl border border-[#ececf4] bg-white px-2 py-1 text-left touch:min-h-11 transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /** Узкая колонка (главная кабинета): строки компактнее, без стрелки. */
 const CompactRows = createContext(false);
@@ -53,10 +56,10 @@ function ContactRow({
     // Адрес или номер — одной строкой: «@wesetup_support» не рвётся посередине.
     return (
       <>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#3848c7] [&_svg]:size-[18px]">{icon}</span>
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-[#eef1ff] text-[#3848c7] [&_svg]:size-4">{icon}</span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14.5px] font-semibold leading-tight text-[#0b1024]" title={label}>{label}</span>
-          <span className="mt-0.5 block truncate text-[12.5px] leading-snug text-[#6f7282]" title={hint}>{hint}</span>
+          <span className="block truncate text-[13.5px] font-semibold leading-[1.2] text-[#0b1024]" title={label}>{label}</span>
+          <span className="block truncate text-[11.5px] leading-[1.3] text-[#6f7282]" title={hint}>{hint}</span>
         </span>
       </>
     );
@@ -142,8 +145,14 @@ export function ContactUsPanel({
 
   return (
     <CompactRows.Provider value={compact}>
-    <div className={cn("space-y-3", className)} data-contact-us-panel>
-      <div role="tablist" aria-label={t("groupsLabel")} className="grid grid-cols-3 gap-1 rounded-2xl bg-[#f5f6ff] p-1">
+    <div className={cn(compact ? "space-y-2" : "space-y-3", className)} data-contact-us-panel>
+      <div
+        role="tablist"
+        aria-label={t("groupsLabel")}
+        // Узкая колонка — строка из трёх равных вкладок на `flex`: сетку в три
+        // колонки общее правило телефона перестраивает в две.
+        className={cn("bg-[#f5f6ff]", compact ? "flex gap-0.5 rounded-xl p-0.5" : "grid grid-cols-3 gap-1 rounded-2xl p-1")}
+      >
         {GROUPS.map((id) => {
           const Icon = GROUP_ICONS[id];
           const active = id === group;
@@ -156,20 +165,28 @@ export function ContactUsPanel({
               onClick={() => setGroup(id)}
               data-contact-group={id}
               className={cn(
-                "flex min-h-[52px] flex-col items-center justify-center gap-1 whitespace-nowrap rounded-xl px-1 py-1.5 text-center text-[12.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                "flex items-center justify-center whitespace-nowrap text-center font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
+                // Узкая колонка: вкладка — одна строка 32px, без иконки (три
+                // подписи с иконками в 268px не помещаются).
+                compact
+                  ? "min-h-8 min-w-0 flex-1 basis-0 rounded-[10px] px-1 text-[12.5px] touch:min-h-10"
+                  : "min-h-[52px] flex-col gap-1 rounded-xl px-1 py-1.5 text-[12.5px]",
                 active ? "bg-white text-[#3848c7] shadow-[0_4px_14px_-8px_rgba(85,102,246,0.55)]" : "text-[#6f7282] hover:bg-white/60 hover:text-[#0b1024]",
               )}
             >
-              <Icon className={cn("size-4", active ? "text-[#5566f6]" : "text-[#9b9fb3]")} aria-hidden />
+              {compact ? null : <Icon className={cn("size-4", active ? "text-[#5566f6]" : "text-[#9b9fb3]")} aria-hidden />}
               {compact ? t(`groupsShort.${id}`) : t(`groups.${id}`)}
             </button>
           );
         })}
       </div>
 
-      <p className={cn("px-1 leading-snug text-[#6f7282] newd:hidden", compact ? "text-[12.5px]" : "text-[13px]")}>{t(`groupLeads.${group}`)}</p>
+      {/* Абзац-пояснение — только в окне: в узкой колонке он повторял строки ниже. */}
+      {compact ? null : (
+        <p className="px-1 text-[13px] leading-snug text-[#6f7282] newd:hidden">{t(`groupLeads.${group}`)}</p>
+      )}
 
-      <div role="tabpanel" className="space-y-2.5" data-contact-group-panel={group}>
+      <div role="tabpanel" className={compact ? "space-y-1" : "space-y-2.5"} data-contact-group-panel={group}>
         {group === "support" ? (
           <>
             <a href={CONTACT_TELEGRAM.url} target="_blank" rel="noopener noreferrer" className={rowClass} data-contact-telegram>

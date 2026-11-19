@@ -11,6 +11,12 @@ import { Input } from "@/components/ui/input";
 import { productEditorUnit, parseProductUnitInput, productErrorKey, type ProductErrorKey } from "@/lib/settings-products-presentation";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FloatingLabelField } from "@/components/journals/journal-dialog-field";
+import {
+  JOURNAL_DIALOG_FIELD_CONTROL_CLASS,
+  JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS,
+} from "@/components/journals/journal-responsive";
+import { cn } from "@/lib/utils";
 import { ChoicePills } from "@/components/settings/choice-pills";
 import {
   PRODUCT_KINDS,
@@ -150,7 +156,9 @@ export function ProductDialog({ product, defaultKind = "raw" }: ProductDialogPro
         <DialogHeader>
           <DialogTitle>{isEdit ? t("form.editTitle") : t("form.add")}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Текстовые поля — с подписью внутри рамки (`FloatingLabelField`), парные —
+            в одну строку; группы выбора остаются с подписью сверху. */}
+        <form onSubmit={handleSubmit} className="space-y-2.5">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{t(error)}</div>
           )}
@@ -168,23 +176,19 @@ export function ProductDialog({ product, defaultKind = "raw" }: ProductDialogPro
               options={PRODUCT_KINDS.map((value) => ({ value, label: t(`kinds.${value}`), hint: t(`kindHints.${value}`) }))}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="prod-name">{t("fields.name")} <span className="text-destructive">*</span></Label>
-            <Input id="prod-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("examples.name")} required />
+          <FloatingLabelField label={t("fields.name")} htmlFor="prod-name" required>
+            <Input id="prod-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("examples.name")} required className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+          </FloatingLabelField>
+          <div className="grid grid-cols-2 gap-2.5">
+            <FloatingLabelField label={t("fields.supplier")} htmlFor="prod-supplier">
+              <Input id="prod-supplier" value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder={t("examples.supplier")} className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+            </FloatingLabelField>
+            <FloatingLabelField label={t("fields.barcode")} htmlFor="prod-barcode">
+              <Input id="prod-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="4600000000000" className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+            </FloatingLabelField>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="prod-supplier">{t("fields.supplier")}</Label>
-              <Input id="prod-supplier" value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder={t("examples.supplier")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="prod-barcode">{t("fields.barcode")}</Label>
-              <Input id="prod-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="4600000000000" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="prod-unit">{t("fields.unit")}</Label>
+          <div className="grid grid-cols-2 gap-2.5">
+            <FloatingLabelField label={t("fields.unit")} htmlFor="prod-unit">
               {/* В базе единица хранится кодом («kg»), на экране — «кг». */}
               <Input
                 id="prod-unit"
@@ -192,17 +196,18 @@ export function ProductDialog({ product, defaultKind = "raw" }: ProductDialogPro
                 onChange={(e) => { const value = e.target.value; setUnitDraft(value); setUnit(parseProductUnitInput(value, locale)); }}
                 onBlur={() => setUnitDraft(null)}
                 placeholder={t("units.kg")}
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="prod-category">{t("fields.category")}</Label>
-              <Input id="prod-category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("examples.category")} />
-            </div>
+            </FloatingLabelField>
+            <FloatingLabelField label={t("fields.category")} htmlFor="prod-category">
+              <Input id="prod-category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("examples.category")} className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+            </FloatingLabelField>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="prod-shelf">{t("fields.shelf")}</Label>
+          <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Input id="prod-shelf" className="w-28" type="number" min={1} step={1} inputMode="numeric" value={shelfValue} onChange={(e) => setShelfValue(e.target.value)} placeholder={shelfUnit === "hours" ? "12" : "30"} />
+              <FloatingLabelField label={t("fields.shelf")} htmlFor="prod-shelf" className="w-40">
+                <Input id="prod-shelf" type="number" min={1} step={1} inputMode="numeric" value={shelfValue} onChange={(e) => setShelfValue(e.target.value)} placeholder={shelfUnit === "hours" ? "12" : "30"} className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+              </FloatingLabelField>
               <ChoicePills
                 label={t("fields.shelfUnit")}
                 value={shelfUnit}
@@ -210,17 +215,15 @@ export function ProductDialog({ product, defaultKind = "raw" }: ProductDialogPro
                 options={[{ value: "hours", label: t("shelfUnits.hours") }, { value: "days", label: t("shelfUnits.days") }]}
               />
             </div>
-            <p className="text-[12px] text-[#6f7282]">{t("hints.shelf")}</p>
+            <p className="mt-1.5 text-[12px] text-[#6f7282]">{t("hints.shelf")}</p>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)] sm:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="prod-temp">{t("fields.temp")}</Label>
-              <Input id="prod-temp" value={storageTemp} maxLength={100} onChange={(e) => setStorageTemp(e.target.value)} placeholder="+2…+6 °C" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="prod-conditions">{t("fields.conditions")}</Label>
-              <Textarea id="prod-conditions" rows={2} value={storageConditions} maxLength={500} onChange={(e) => setStorageConditions(e.target.value)} placeholder={t(`examples.conditions.${kind}`)} />
-            </div>
+          <div className="grid grid-cols-1 items-start gap-2.5 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
+            <FloatingLabelField label={t("fields.temp")} htmlFor="prod-temp">
+              <Input id="prod-temp" value={storageTemp} maxLength={100} onChange={(e) => setStorageTemp(e.target.value)} placeholder="+2…+6 °C" className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+            </FloatingLabelField>
+            <FloatingLabelField label={t("fields.conditions")} htmlFor="prod-conditions">
+              <Textarea id="prod-conditions" rows={2} value={storageConditions} maxLength={500} onChange={(e) => setStorageConditions(e.target.value)} placeholder={t(`examples.conditions.${kind}`)} className={cn(JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS, "min-h-[44px]")} />
+            </FloatingLabelField>
           </div>
           {kind === "finished" ? (
             <div className="space-y-2">
@@ -235,7 +238,7 @@ export function ProductDialog({ product, defaultKind = "raw" }: ProductDialogPro
               <p className="text-[12px] text-[#6f7282]">{t("hints.serving")}</p>
             </div>
           ) : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-1.5">
             <Button type="button" variant="outline" onClick={() => { setOpen(false); setUnitDraft(null); }} disabled={isSubmitting}>{common("cancel")}</Button>
             <Button type="submit" disabled={isSubmitting}>{isSubmitting ? t("form.saving") : isEdit ? common("save") : t("form.create")}</Button>
           </div>

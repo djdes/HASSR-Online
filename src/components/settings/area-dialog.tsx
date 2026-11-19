@@ -7,7 +7,13 @@ import { useTranslations } from "next-intl";
 import { Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FloatingLabelField } from "@/components/journals/journal-dialog-field";
+import {
+  JOURNAL_DIALOG_FIELD_CONTROL_CLASS,
+  JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS,
+  JOURNAL_DIALOG_FIELD_TRIGGER_CLASS,
+} from "@/components/journals/journal-responsive";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -109,42 +115,55 @@ export function AreaDialog({ area, buildings = [], defaultBuildingId = null, all
         <DialogHeader>
           <DialogTitle>{isEdit ? t("editArea") : t("addArea")}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Поля — с подписью внутри рамки (`FloatingLabelField`): окно ниже. */}
+        <form onSubmit={handleSubmit} className="space-y-2.5">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="area-name">{t("nameLabel")} <span className="text-destructive">*</span></Label>
-            <Input id="area-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} required />
-          </div>
+          <FloatingLabelField label={t("nameLabel")} htmlFor="area-name" required>
+            <Input
+              id="area-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("namePlaceholder")}
+              required
+              className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
+            />
+          </FloatingLabelField>
           {showBuilding ? (
-            <div className="space-y-2">
-              <Label htmlFor="area-building">{t("pointLabel")}</Label>
-              <Select value={buildingId} onValueChange={setBuildingId}>
-                <SelectTrigger id="area-building" className="w-full">
-                  <SelectValue placeholder={t("pointPlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.map((building) => (
-                    <SelectItem key={building.id} value={building.id}>
-                      {building.name}
-                    </SelectItem>
-                  ))}
-                  {allowNoPoint ? <SelectItem value={NO_BUILDING}>{t("noPoint")}</SelectItem> : null}
-                </SelectContent>
-              </Select>
-              <p className="text-[12.5px] text-[#6f7282]">
+            <div>
+              <FloatingLabelField label={t("pointLabel")} htmlFor="area-building">
+                <Select value={buildingId} onValueChange={setBuildingId}>
+                  <SelectTrigger id="area-building" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
+                    <SelectValue placeholder={t("pointPlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.map((building) => (
+                      <SelectItem key={building.id} value={building.id}>
+                        {building.name}
+                      </SelectItem>
+                    ))}
+                    {allowNoPoint ? <SelectItem value={NO_BUILDING}>{t("noPoint")}</SelectItem> : null}
+                  </SelectContent>
+                </Select>
+              </FloatingLabelField>
+              <p className="mt-1.5 text-[12.5px] text-[#6f7282]">
                 {isEdit
                   ? t("editHint")
                   : t("createHint")}
               </p>
             </div>
           ) : null}
-          <div className="space-y-2">
-            <Label htmlFor="area-description">{t("descriptionLabel")}</Label>
-            <Textarea id="area-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("descriptionPlaceholder")} />
-          </div>
-          <div className="flex justify-end gap-2">
+          <FloatingLabelField label={t("descriptionLabel")} htmlFor="area-description">
+            <Textarea
+              id="area-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("descriptionPlaceholder")}
+              className={cn(JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS, "min-h-[52px]")}
+            />
+          </FloatingLabelField>
+          <div className="flex justify-end gap-2 pt-1.5">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>{tc("cancel")}</Button>
             <Button type="submit" disabled={isSubmitting}>{isSubmitting ? tc("saving") : isEdit ? tc("save") : t("create")}</Button>
           </div>

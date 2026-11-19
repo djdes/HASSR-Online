@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { MessageCircle, Sparkles, X } from "lucide-react";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
+import { cn } from "@/lib/utils";
 
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
 import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
@@ -25,8 +26,8 @@ import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
  * Зачем: AI-помощник, поддержка и «Как заполнять» рисовали каждый свою
  * круглую кнопку в правом нижнем углу. На телефоне их набиралось три,
  * они закрывали правый край таблицы и нижнюю часть страницы. Теперь
- * кнопки регистрируются в доке: на компьютере — привычный ряд, на
- * телефоне — одна кнопка, по которой снизу выезжает список.
+ * кнопки регистрируются в доке, а он рисует одну кнопку: на компьютере
+ * по ней открывается карточка со списком, на телефоне — лист снизу.
  *
  * Портал в `document.body` обязателен: полотно дашборда обёрнуто в блок
  * с `translate: -50%`, и `position: fixed` внутри считался бы от него
@@ -197,21 +198,38 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
     );
   }
 
-  // Кабинет (владелец, 2026-11-11): одна чёрная кнопка справа снизу —
-  // «Контакты». Одно действие — сразу оно; несколько — на компьютере
-  // карточка над кнопкой, на телефоне — лист снизу. Поддержка, помощник и
-  // «Как заполнять» вызываются из этого списка.
-  if (newDesign) {
-  // Кнопка сразу открывает «Контакты» (владелец, 2026-11-11); нет их — одно
-  // действие или карточка со списком.
+  // Одна кнопка справа снизу в обоих дизайнах. Одно действие — сразу оно;
+  // несколько — на компьютере карточка над кнопкой, на телефоне — лист снизу.
+  //   • «Новая» тема (владелец, 2026-11-11): чёрная кнопка сразу открывает
+  //     «Контакты»; нет их — одно действие или карточка со списком.
+  //   • Прежний дизайн (владелец, 2026-11-19: «одна кнопка, как в новой»):
+  //     вместо ряда из трёх кнопок — одна; по ней список всех действий
+  //     (контакты, поддержка, помощник, «Как заполнять») — ни одно не пропадает.
   const contacts = actions.find((action) => action.id === "contacts");
-  const single = contacts ?? (actions.length === 1 ? actions[0] : null);
+  const single = newDesign
+    ? (contacts ?? (actions.length === 1 ? actions[0] : null))
+    : actions.length === 1
+      ? actions[0]
+      : null;
+  const title = newDesign ? t("contacts") : single ? single.label : t("dockTitle");
+  // Прежний дизайн: кнопка — «Контакты и помощь», контакты в списке первыми.
+  const listed = newDesign
+    ? actions
+    : [...actions].sort((a, b) => Number(b.id === "contacts") - Number(a.id === "contacts"));
   return (
     <>
       {createPortal(
-        <div className="fixed right-5 bottom-5 z-30 print:hidden">
+        <div
+          data-fab-dock
+          className={cn(
+            "fixed z-30 print:hidden",
+            // Прежний дизайн, компьютер: кнопка по центру полосы подвала
+            // (72px) и по правому полю страницы — как «Пришла проверка» слева.
+            newDesign ? "right-5 bottom-5" : "right-5 bottom-5 lg:right-8 lg:bottom-3",
+          )}
+        >
           {panelOpen && !narrow && !single ? (
-            <FabPanel actions={actions} onClose={() => setPanelOpen(false)} />
+            <FabPanel actions={listed} title={title} classic={!newDesign} onClose={() => setPanelOpen(false)} />
           ) : null}
           <button
             type="button"
@@ -222,14 +240,21 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
               else setPanelOpen((value) => !value);
             }}
             aria-expanded={single ? undefined : narrow ? sheetOpen : panelOpen}
-            aria-label={
-              unread > 0
-                ? t("actionAriaUnread", { label: t("contacts"), count: unread })
-                : t("contacts")
-            }
-            className="relative flex size-[52px] items-center justify-center rounded-full bg-[#111114] text-white shadow-[0_10px_30px_-12px_rgba(17,17,20,0.55)] ring-4 ring-white/70 transition-[background-color,transform] duration-150 hover:bg-[#2c2d36] active:scale-95 focus-visible:outline-none focus-visible:ring-[#111114]/20"
+            aria-haspopup={single ? undefined : "dialog"}
+            title={title}
+            aria-label={unread > 0 ? t("actionAriaUnread", { label: title, count: unread }) : title}
+            className={cn(
+              "relative flex items-center justify-center rounded-full text-white transition-[background-color,transform] duration-150 active:scale-95 focus-visible:outline-none",
+              newDesign
+                ? "size-[52px] bg-[#111114] shadow-[0_10px_30px_-12px_rgba(17,17,20,0.55)] ring-4 ring-white/70 hover:bg-[#2c2d36] focus-visible:ring-[#111114]/20"
+                : "size-12 bg-[#5566f6] shadow-[0_12px_30px_-12px_rgba(85,102,246,0.75)] hover:bg-[#4a5bf0] focus-visible:ring-4 focus-visible:ring-[#5566f6]/25",
+            )}
           >
-            <MessageCircle className="size-[22px] stroke-[1.75]" aria-hidden />
+            {panelOpen && !narrow && !single && !newDesign ? (
+              <X className="size-5" aria-hidden />
+            ) : (
+              <MessageCircle className={newDesign ? "size-[22px] stroke-[1.75]" : "size-5"} aria-hidden />
+            )}
             {unread > 0 ? (
               <span className="absolute -top-0.5 -right-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[11px] font-semibold leading-[18px] text-white ring-2 ring-white">
                 {unread > 9 ? "9+" : unread}
@@ -243,64 +268,28 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
       <FabSheet
         open={sheetOpen}
         onClose={() => setSheetRequested(false)}
-        actions={actions}
-      />
-    </>
-  );
-  }
-
-  // Компьютер и одиночная кнопка на телефоне — привычный ряд в углу.
-  if (!narrow || actions.length === 1) {
-    return createPortal(
-      <div className="fixed bottom-5 right-5 z-30 flex flex-row-reverse items-center gap-2 print:hidden">
-        {actions.map((action) => (
-          <FabButton key={action.id} action={action} onSelect={action.onSelect} />
-        ))}
-      </div>,
-      document.body,
-    );
-  }
-
-  return (
-    <>
-      {createPortal(
-        <button
-          type="button"
-          onClick={() => setSheetRequested(true)}
-          aria-label={
-            unread > 0 ? t("helpAriaUnread", { count: unread }) : t("helpAria")
-          }
-          // Полупрозрачная «таблетка» с размытием, как в приложениях:
-          // сплошная фиолетовая кнопка перебивала контент под собой.
-          // Цвета в токенах — в тёмной общее правило перекрасило бы
-          // `bg-white/70` в непрозрачный фон.
-          style={{
-            background: "var(--app-fab-bg)",
-            borderColor: "var(--app-fab-border)",
-          }}
-          className="fixed bottom-5 right-5 z-30 flex size-12 items-center justify-center rounded-full border text-[#5566f6] shadow-[0_10px_30px_-12px_rgba(11,16,36,0.35)] backdrop-blur-md transition-transform duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 print:hidden"
-        >
-          <Sparkles className="size-5" />
-          {unread > 0 ? (
-            <span className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[11px] font-semibold leading-[18px] text-white ring-2 ring-white">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          ) : null}
-        </button>,
-        document.body,
-      )}
-
-      <FabSheet
-        open={sheetOpen}
-        onClose={() => setSheetRequested(false)}
-        actions={actions}
+        actions={listed}
+        title={newDesign ? undefined : t("dockTitle")}
       />
     </>
   );
 }
 
-/** Карточка «Контакты» над кнопкой (компьютер). */
-function FabPanel({ actions, onClose }: { actions: FabAction[]; onClose: () => void }) {
+/**
+ * Карточка над кнопкой (компьютер): список действий дока. `classic` —
+ * прежний дизайн (индиго, тёмная тема перекрашивает сама), иначе — «Новая».
+ */
+function FabPanel({
+  actions,
+  title,
+  classic = false,
+  onClose,
+}: {
+  actions: FabAction[];
+  title: string;
+  classic?: boolean;
+  onClose: () => void;
+}) {
   const t = useTranslations("layoutUi.fabDock");
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -325,16 +314,29 @@ function FabPanel({ actions, onClose }: { actions: FabAction[]; onClose: () => v
     <div
       ref={ref}
       role="dialog"
-      aria-label={t("contacts")}
-      className="absolute right-0 bottom-[64px] w-[340px] rounded-2xl border border-[#e7e7ec] bg-white p-3 shadow-[0_18px_48px_-16px_rgba(17,17,20,0.28)]"
+      aria-label={title}
+      data-fab-panel
+      className={cn(
+        "absolute right-0 w-[320px] rounded-2xl border bg-white p-2",
+        classic
+          ? "bottom-[60px] border-[#ececf4] shadow-[0_20px_50px_-20px_rgba(11,16,36,0.35)]"
+          : "bottom-[64px] border-[#e7e7ec] p-3 shadow-[0_18px_48px_-16px_rgba(17,17,20,0.28)]",
+      )}
     >
-      <div className="flex items-start justify-between gap-3 px-2 pt-1 pb-2">
-        <div className="min-w-0 text-[16px] font-semibold text-[#111114]">{t("contacts")}</div>
+      <div className={cn("flex items-center justify-between gap-3", classic ? "px-2 pt-1 pb-1.5" : "px-2 pt-1 pb-2")}>
+        <div className={cn("min-w-0 font-semibold", classic ? "text-[15px] text-[#0b1024]" : "text-[16px] text-[#111114]")}>
+          {title}
+        </div>
         <button
           type="button"
           onClick={onClose}
           aria-label={t("close")}
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#6a6c7a] hover:bg-[#f1f1f4] hover:text-[#111114]"
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-lg",
+            classic
+              ? "text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
+              : "text-[#6a6c7a] hover:bg-[#f1f1f4] hover:text-[#111114]",
+          )}
         >
           <X className="size-4" aria-hidden />
         </button>
@@ -346,19 +348,34 @@ function FabPanel({ actions, onClose }: { actions: FabAction[]; onClose: () => v
             <button
               key={action.id}
               type="button"
+              data-fab-action={action.id}
               onClick={() => {
                 onClose();
                 action.onSelect();
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-[#f1f1f4] focus-visible:bg-[#f1f1f4] focus-visible:outline-none"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors focus-visible:outline-none",
+                classic
+                  ? "hover:bg-[#f5f6ff] focus-visible:bg-[#f5f6ff]"
+                  : "hover:bg-[#f1f1f4] focus-visible:bg-[#f1f1f4]",
+              )}
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-[#f1f1f4] text-[#111114]">
+              <span
+                className={cn(
+                  "flex size-9 shrink-0 items-center justify-center rounded-[10px]",
+                  classic ? "bg-[#eef1ff] text-[#5566f6]" : "bg-[#f1f1f4] text-[#111114]",
+                )}
+              >
                 <Icon className="size-[18px]" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14.5px] font-medium text-[#111114]">{action.label}</span>
+                <span className={cn("block truncate text-[14.5px] font-medium", classic ? "text-[#0b1024]" : "text-[#111114]")}>
+                  {action.label}
+                </span>
                 {action.hint ? (
-                  <span className="block truncate text-[12.5px] text-[#6a6c7a]">{action.hint}</span>
+                  <span className={cn("block truncate text-[12.5px]", classic ? "text-[#6f7282]" : "text-[#6a6c7a]")}>
+                    {action.hint}
+                  </span>
                 ) : null}
               </span>
               {action.badge ? (
@@ -378,17 +395,20 @@ function FabSheet({
   open,
   onClose,
   actions,
+  title,
 }: {
   open: boolean;
   onClose: () => void;
   actions: FabAction[];
+  /** Заголовок листа; по умолчанию — «Помощь». */
+  title?: string;
 }) {
   const t = useTranslations("layoutUi.fabDock");
   return (
     <BottomSheet
       open={open}
       onClose={onClose}
-      title={t("sheetTitle")}
+      title={title ?? t("sheetTitle")}
       subtitle={t("sheetSubtitle")}
     >
       {actions.map((action) => {
@@ -423,50 +443,5 @@ function FabSheet({
         );
       })}
     </BottomSheet>
-  );
-}
-
-function FabButton({
-  action,
-  onSelect,
-}: {
-  action: FabAction;
-  onSelect: () => void;
-}) {
-  const t = useTranslations("layoutUi.fabDock");
-  const Icon = action.icon;
-  const brand = action.tone === "brand";
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-label={
-        action.badge
-          ? t("actionAriaUnread", { label: action.label, count: action.badge })
-          : action.label
-      }
-      style={{
-        background: "var(--app-fab-bg)",
-        borderColor: "var(--app-fab-border)",
-      }}
-      className={`group relative flex size-11 items-center justify-center rounded-full border backdrop-blur-md transition-all duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 ${
-        brand
-          ? "text-[#5566f6] shadow-[0_10px_30px_-12px_rgba(85,102,246,0.45)]"
-          : "text-[#5566f6] shadow-[0_10px_24px_-12px_rgba(11,16,36,0.3)]"
-      }`}
-    >
-      <Icon className="size-4" />
-      {action.badge ? (
-        <span className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff6b5a] px-1 text-[11px] font-semibold leading-[18px] text-white ring-2 ring-white">
-          {action.badge > 9 ? "9+" : action.badge}
-        </span>
-      ) : null}
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute bottom-[calc(100%+8px)] right-0 whitespace-nowrap rounded-lg bg-[#0b1024] px-2.5 py-1.5 text-[12.5px] font-medium text-white opacity-0 shadow-[0_8px_24px_-8px_rgba(11,16,36,0.45)] transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-      >
-        {action.label}
-      </span>
-    </button>
   );
 }

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { useJournalControls, saveJournalControls } from "@/components/journals/journal-controls-provider";
+import { SectionJump } from "@/components/shared/section-jump";
 
 export function BrakerageSetupPrompt() {
   const t = useTranslations("journals.ui.brakerageSetup");
@@ -66,7 +67,7 @@ export function BrakerageSetupPrompt() {
           <fieldset><legend className="mb-2 text-[14px] font-medium">{t("commission")}</legend>
             <div className="max-h-[240px] space-y-2 overflow-y-auto rounded-2xl border border-[#ececf4] p-3">
               {users.map((user) => <label key={user.id} className="flex items-center gap-2 text-[14px]"><Checkbox checked={members.includes(user.id)} onCheckedChange={(checked) => setMembers((prev) => checked ? [...new Set([...prev, user.id])] : prev.filter((id) => id !== user.id))} />{user.name}</label>)}
-              {!users.length ? <p className="text-[13px] text-[#6f7282]">{t("emptyUsers")}</p> : null}
+              {!users.length ? <p className="text-[13px] text-[#6f7282]">{t("emptyUsers")} <SectionJump to="staff" /></p> : null}
             </div>
             <Button variant="outline" className="mt-2 rounded-2xl" onClick={() => setCommissionOpen(true)}>{t("addExternalCommission")}</Button>
           </fieldset>

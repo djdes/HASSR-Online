@@ -12,6 +12,7 @@ import {
   MENU_LABEL_CLASS,
 } from "@/components/ui/menu-styles";
 import { cn } from "@/lib/utils";
+import { SectionJump } from "@/components/shared/section-jump";
 
 /** Сотрудник для выбора — та же форма, что `PpkStaffOption` на сервере. */
 export type StaffPickerOption = { id: string; name: string; title: string; isManager: boolean };
@@ -151,7 +152,11 @@ export function StaffPicker({
           ) : null}
 
           {!hasAny ? (
-            <div className="px-3 py-6 text-center text-[13px] text-[#9b9fb3]">{t("staffPicker.empty")}</div>
+            <div className="px-3 py-6 text-center text-[13px] text-[#9b9fb3]">
+              <p>{t("staffPicker.empty")}</p>
+              {/* Искать некого — сотрудников ещё нет: путь в раздел, где их добавляют. */}
+              {staff.length === 0 ? <SectionJump to="staff" variant="button" className="mt-2.5" /> : null}
+            </div>
           ) : null}
         </div>
       </PopoverContent>

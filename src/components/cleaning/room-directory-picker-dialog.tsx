@@ -29,6 +29,7 @@ import type { DirectoryBuilding, DirectoryRoom, OrphanArea } from "@/lib/room-di
 import { guessRoomKind, normalizePlaceName } from "@/lib/orphan-areas";
 import { roomKindOptions } from "@/lib/room-kinds";
 import type { Locale } from "@/i18n/locales";
+import { SectionJump } from "@/components/shared/section-jump";
 
 export type RoomDirectoryPickerDialogProps = {
   open: boolean;
@@ -272,6 +273,7 @@ export function RoomDirectoryPickerDialog(props: RoomDirectoryPickerDialogProps)
               <p className="mx-auto mt-1 max-w-[360px] text-[13px] text-[#6f7282]">
                 {t("noBuildingsHint")}
               </p>
+              <SectionJump to="buildings" variant="button" className="mt-3" />
             </div>
           ) : null}
           {props.buildings.length === 0 ? (

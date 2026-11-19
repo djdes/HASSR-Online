@@ -28,7 +28,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  FloatingInputField,
+  FloatingSelectField,
+  FloatingTextareaField,
+} from "@/components/journals/journal-dialog-field";
 import {
   ScopeListEditor,
   WeekdayMaskPicker,
@@ -359,40 +363,35 @@ export function RoomEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] overflow-hidden rounded-[24px] border-0 p-0 sm:max-w-[640px]">
-        <DialogHeader className="border-b px-6 py-5">
-          <DialogTitle className="text-[18px] font-semibold tracking-[-0.02em] text-[#0b1024]">
+      {/* Колонка: шапка и кнопки на месте, прокручивается только середина.
+          Раньше окно было сеткой с промежутками, высота середины считалась
+          от экрана — и на невысоком экране кнопки «Отмена / Сохранить»
+          обрезались нижним краем окна. */}
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-[24px] border-0 p-0 supports-[height:100dvh]:max-h-[92dvh] sm:max-w-[640px]">
+        <DialogHeader className="shrink-0 border-b px-5 py-4 sm:px-6">
+          <DialogTitle className="text-[17px] font-semibold tracking-[-0.02em] text-[#0b1024]">
             {t("title")}
           </DialogTitle>
         </DialogHeader>
         {initial ? (
           <>
-            <div className="max-h-[calc(92vh-160px)] space-y-5 overflow-y-auto px-6 py-5">
-              <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">
-                  {t("nameLabel")}
-                </Label>
-                <Input
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6">
+              {/* Название и тип — одной строкой, подпись внутри рамки (на
+                  телефоне — друг под другом). */}
+              <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+                <FloatingInputField
+                  label={t("nameLabel")}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={setName}
                   placeholder={t("namePlaceholder")}
-                  className="h-11 rounded-2xl border-[#dcdfed] px-4 text-[15px]"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">{t("typeLabel")}</Label>
-                <select
-                  value={kind}
-                  onChange={(e) => setKind(e.target.value)}
-                  className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-                >
+                <FloatingSelectField label={t("typeLabel")} value={kind} onChange={setKind}>
                   {KIND_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
-                </select>
+                </FloatingSelectField>
               </div>
 
               <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4 space-y-3">
@@ -568,18 +567,13 @@ export function RoomEditorDialog({
               </button>
 
               <div className={cleaningOpen ? "space-y-5" : "hidden"}>
-              <div className="space-y-2">
-                <Label className="text-[13px] font-medium text-[#3c4053]">
-                  {t("detergentLabel")}
-                </Label>
-                <Textarea
-                  value={detergent}
-                  onChange={(e) => setDetergent(e.target.value)}
-                  placeholder={t("detergentPlaceholder")}
-                  className="rounded-2xl border-[#dcdfed] px-4 py-3 text-[15px]"
-                  rows={3}
-                />
-              </div>
+              <FloatingTextareaField
+                label={t("detergentLabel")}
+                value={detergent}
+                onChange={setDetergent}
+                placeholder={t("detergentPlaceholder")}
+                textareaClassName="min-h-[56px]"
+              />
 
               <label className="flex items-start gap-3 rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4 cursor-pointer transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]">
                 <input
@@ -755,12 +749,13 @@ export function RoomEditorDialog({
               </div>
               </div>
             </div>
-            <div className="flex flex-col-reverse gap-2 border-t bg-white px-6 py-4 sm:flex-row sm:justify-end">
+            {/* Кнопки — одной строкой и на телефоне: «Сохранить» шире. */}
+            <div className="flex shrink-0 gap-2 border-t bg-white px-5 py-3 sm:justify-end sm:px-6">
               <Button
                 type="button"
                 variant="outline"
                 disabled={saving}
-                className="h-11 w-full rounded-2xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff] sm:w-auto"
+                className="h-11 rounded-2xl border-[#dcdfed] px-5 text-[14px] font-medium text-[#0b1024] shadow-none hover:bg-[#fafbff]"
                 onClick={() => onOpenChange(false)}
               >
                 {t("cancel")}
@@ -768,7 +763,7 @@ export function RoomEditorDialog({
               <Button
                 type="button"
                 disabled={saving}
-                className="h-11 w-full rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:w-auto"
+                className="h-11 flex-1 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white hover:bg-[#4a5bf0] sm:flex-none"
                 onClick={save}
               >
                 {saving ? t("savingNow") : t("save")}

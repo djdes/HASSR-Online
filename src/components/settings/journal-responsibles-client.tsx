@@ -3,6 +3,7 @@
 import { CommissionDialog } from "@/components/journals/commission-dialog";
 import { isCommissionJournalCode } from "@/lib/brakerage-commission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -43,6 +44,7 @@ import {
 } from "@/lib/journal-workload";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { confirmAsync } from "@/components/ui/confirm-async";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type Position = {
   id: string;
@@ -250,7 +252,7 @@ type UserPickerProps = {
   onChange: (userId: string | null) => void;
   placeholder?: string;
   /// Сообщение когда вообще никого нет.
-  emptyHint?: string;
+  emptyHint?: React.ReactNode;
 };
 
 type ResponsiblesTranslator = ReturnType<
@@ -640,9 +642,11 @@ function SlotPicker({
             totalCount === 0 ? t("slotNoneSuitable") : t("slotChooseEmployee")
           }
           emptyHint={
-            totalCount === 0
-              ? t("slotNoEmployeesHint")
-              : undefined
+            totalCount === 0 ? (
+              <>
+                {t("slotNoEmployeesHint")} <SectionJump to="staff" />
+              </>
+            ) : undefined
           }
         />
       </div>
@@ -1954,9 +1958,9 @@ export function JournalResponsiblesClient({
         <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-8 text-center text-[14px] text-[#6f7282]">
           {t.rich("noPositionsNote", {
             link: (chunks) => (
-              <a href="/settings/users" className="text-[#3848c7] hover:underline">
+              <Link href="/settings/users" className="text-[#3848c7] hover:underline">
                 {chunks}
-              </a>
+              </Link>
             ),
           })}
         </div>
@@ -2076,9 +2080,9 @@ export function JournalResponsiblesClient({
                       <p className="mt-3 rounded-2xl border border-[#ffd2cd] bg-[#fff4f2] p-3 text-[13px] text-[#a13a32]">
                         {t.rich("fixNoSuitable", {
                           link: (chunks) => (
-                            <a href="/settings/users" className="underline">
+                            <Link href="/settings/users" className="underline">
                               {chunks}
-                            </a>
+                            </Link>
                           ),
                         })}
                       </p>

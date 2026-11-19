@@ -42,6 +42,12 @@ const CONTACT_TONES: Record<HomeContact["id"], NavTone> = {
  *
  * Знак — градиентом, как на визитке, а подпись под ним — ровно по его
  * ширине (владелец, 2026-10-29: «симметрично, как в визитке»).
+ *
+ * Компьютер (владелец, 2026-11-19: «чтобы прокрутки не было и всё помещалось»):
+ * страница занимает ровно высоту окна — блок со знаком забирает то, что
+ * осталось над карточками и контактами (не ниже 150px, не выше 460px), а знак
+ * уменьшается на невысоком экране. Высоту странице отдаёт `<main>` в макете
+ * (`has-[[data-home-page]]`).
  */
 export default async function HomePage() {
   const session = await requireAuth();
@@ -74,8 +80,11 @@ export default async function HomePage() {
   const taglineFit = taglineLayout(tagline);
 
   return (
-    <div className="space-y-5" data-home-page>
-      <section className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-white px-6 py-14 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:py-20">
+    <div className="space-y-5 lg:flex lg:flex-1 lg:flex-col lg:gap-5 lg:space-y-0" data-home-page>
+      <section
+        data-home-hero
+        className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-white px-6 py-14 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:py-20 lg:flex lg:max-h-[460px] lg:min-h-[150px] lg:flex-1 lg:items-center lg:justify-center lg:py-5"
+      >
         {/* Три мягких пятна в цветах знака: индиго, бирюза, лаванда. */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -top-28 -left-20 size-[340px] rounded-full bg-[#5566f6] opacity-[0.09] blur-[90px]" />
@@ -97,7 +106,7 @@ export default async function HomePage() {
             // стоят ровно по центру. Под буквами у файла пустая полоса —
             // подпись подтянута к ним, как на визитке.
             <div
-              className="mx-auto flex flex-col [--logo-h:64px] md:[--logo-h:104px]"
+              className="mx-auto flex flex-col [--logo-h:64px] md:[--logo-h:104px] lg:[--logo-h:clamp(64px,11vh,104px)]"
               style={{
                 width: `calc(var(--logo-h) * ${WORDMARK_RATIO})`,
                 translate: `${((WORDMARK_INK.right - WORDMARK_INK.left) / 2) * 100}% 0`,
@@ -138,7 +147,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+      {/* Карточки и контакты — одной высоты: нижний край ровный. */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch">
         {/* Карточки появляются каскадом при открытии (`data-nav-rise`). */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-nav-rise>
           <Link
@@ -182,10 +192,10 @@ export default async function HomePage() {
         </div>
 
         <aside
-          className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
+          className="rounded-3xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
           data-home-contacts
         >
-          <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("contactsTitle")}</div>
+          <div className="mb-2.5 px-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("contactsTitle")}</div>
           {branding ? (
             <>
             <ul className="space-y-1">

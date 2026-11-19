@@ -2963,6 +2963,14 @@ export type MessageContract = {
             "printer": "Онлайн-принтер",
             "kiosk": "Общий планшет",
             "products": "Справочник продуктов"
+          },
+          "short": {
+            "staff": "Сотрудники",
+            "productionControl": "ППК",
+            "qr": "QR и плакаты",
+            "printer": "Принтер",
+            "kiosk": "Планшет",
+            "products": "Продукты"
           }
         },
         "journals": {
@@ -2980,6 +2988,10 @@ export type MessageContract = {
             "standard": "Стандартный набор",
             "haccp": "Набор по ХАССП",
             "extra": "Дополнительные"
+          },
+          "short": {
+            "verify": "Проверка",
+            "setup": "Настройка"
           }
         },
         "checklists": {
@@ -3151,11 +3163,13 @@ export type MessageContract = {
       },
       "contentLoading": "Обновляем страницу…",
       "listLoading": "Загружаем список…",
-      "topMenuMore": "Ещё",
       "collapseMenu": "Свернуть меню",
       "expandMenu": "Развернуть меню",
       "scrollUp": "Прокрутить меню вверх",
-      "scrollDown": "Прокрутить меню вниз"
+      "scrollDown": "Прокрутить меню вниз",
+      "scrollLeft": "Прокрутить меню влево",
+      "scrollRight": "Прокрутить меню вправо",
+      "openSection": "Открыть раздел"
     },
     "header": {
       "staff": "Сотрудники",
@@ -25826,6 +25840,14 @@ export type MessageContract = {
       "noActiveEmployees": "В организации пока нет активных сотрудников.",
       "nobodyFound": "Никого не нашли — попробуйте другое имя."
     },
+    "sectionJump": {
+      "staff": "Добавить сотрудников",
+      "positions": "Настроить должности",
+      "equipment": "Добавить оборудование",
+      "buildings": "Добавить помещения",
+      "areas": "Добавить цеха",
+      "products": "Заполнить справочник продуктов"
+    },
     "glowLoader": {
       "loading": "Загружаем..."
     },
@@ -27153,6 +27175,7 @@ export type MessageContract = {
       "actionAriaUnread": "{label} · новых сообщений: {count, number}",
       "contacts": "Контакты",
       "contactsHint": "Телефон, Telegram, MAX и почта",
+      "dockTitle": "Контакты и помощь",
       "close": "Закрыть"
     },
     "kioskSessionGuard": {
@@ -29373,7 +29396,7 @@ export type MessageContract = {
       "autoRoundRobin": "— Авто (round-robin) —",
       "autoHint": "Если не указан — система чередует подходящих сотрудников по последним 7 дням.",
       "allowedPositions": "Кому можно отправлять",
-      "noPositions": "Должности ещё не созданы. Добавьте на странице «Сотрудники».",
+      "noPositions": "Должности ещё не созданы.",
       "allowedPositionsHint": "Пусто — разрешено всем должностям.",
       "bonusTitle": "Премия за выполнение",
       "bonusBadge": "Премиальный журнал",
@@ -30235,7 +30258,7 @@ export type MessageContract = {
       "primaryBadge": "главный",
       "slotNoneSuitable": "Нет подходящих",
       "slotChooseEmployee": "Выбрать сотрудника",
-      "slotNoEmployeesHint": "Нет сотрудников. Заведите в /settings/users.",
+      "slotNoEmployeesHint": "Сотрудников пока нет.",
       "reasonAdmin": "админ — самый главный",
       "reasonManager": "руководитель",
       "reasonMatchesKeywords": "matches keywords",
