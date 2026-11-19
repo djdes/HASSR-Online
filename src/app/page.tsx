@@ -3,7 +3,7 @@ import { COMPANY_EMAIL, COMPANY_MAX_URL, COMPANY_PHONE, COMPANY_TELEGRAM } from 
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { translatorFor } from "@/i18n/translator";
 import type { Messages } from "@/i18n/messages";
-import { FORMAT_LOCALES } from "@/i18n/locales";
+import { FORMAT_LOCALES, formatDate } from "@/i18n/locales";
 import { localizedHref, siteLanguageAlternates, type SiteLocale } from "@/i18n/site-locale";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
 import { SiteSearch } from "@/components/public/site-search";
@@ -30,7 +30,6 @@ import {
   Sandwich,
   ScanLine,
   Scissors,
-  ShieldCheck,
   ShoppingBasket,
   Soup,
   UtensilsCrossed,
@@ -70,7 +69,6 @@ import { getWebHomeHref } from "@/lib/role-access";
 import { jsonLdSafeString } from "@/lib/json-ld";
 import { readPlanPricing } from "@/lib/tariffs";
 import { TariffComparison } from "@/components/pricing/tariff-comparison";
-import { PromoPrice, formatPriceRub } from "@/components/pricing/promo-price";
 import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { contactTelegramUrl } from "@/lib/contact-us";
@@ -267,6 +265,13 @@ function moscowSceneDay(now: Date, locale: SiteLocale) {
   };
 }
 
+/** Три шага блока «QR-код»: скан — PIN — запись (правки 19.11.2026). */
+const QR_SCAN_STEPS = [
+  "landing.qrScanSteps.scan",
+  "landing.qrScanSteps.pin",
+  "landing.qrScanSteps.entry",
+] as const;
+
 /** Три шага финального блока: как завести QR у себя. */
 const QR_START_STEPS = [
   { title: "landing.qrSteps.equipment.title", text: "landing.qrSteps.equipment.text" },
@@ -327,10 +332,13 @@ export default async function LandingPage() {
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const premiumFrom = applyPromotion(planMonthlyRub(pricing.rates, "premium", "year"), promotion);
   const vipFrom = applyPromotion(planMonthlyRub(pricing.rates, "vip", "year"), promotion);
-  const heroPricing = copy.rich("landing.pricing.heroPhrase", {
-    trialDays: TRIAL_DAYS,
-    amount: formatPriceRub(standardFrom.priceRub, locale),
-    price: () => <PromoPrice locale={locale} price={standardFrom} />,
+  // Первый экран (правки 19.11.2026): строки с ценой больше нет, вместо
+  // гарантии — до какого числа всё бесплатно. Дата = сегодня по Москве плюс
+  // пробный период; страница динамическая, поэтому дата всегда свежая.
+  const trialUntil = formatDate(locale, Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000, "Europe/Moscow", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 
   // «от N ₽» в карточке оборудования — самый дешёвый готовый комплект.
@@ -642,34 +650,9 @@ export default async function LandingPage() {
             ))}
           </ul>
 
-          {/* Цены — одной строкой: ответ на «сколько стоит» остаётся на
-              первом экране, подробности — по клику в #pricing. Числа из
-              тех же констант, что и тарифы. На телефоне — строка-ссылка
-              от левого края (пилюля там переносилась на две строки и
-              становилась овалом), с sm — прежняя пилюля. Два элемента, а
-              не один с sm:-классами: ночная тема красит всё, в чьём
-              классе есть «bg-white/», и на телефоне под строкой вылезала
-              плашка. */}
-          <AnchorScrollLink
-            href="#pricing"
-            ariaLabel={copy("landing.viewPricing")}
-            className="group mx-auto mt-3 flex min-h-12 w-fit max-w-full flex-wrap items-center justify-center gap-x-1.5 text-center text-[15px] leading-[1.45] text-[#3c4053] sm:hidden"
-          >
-            <span>{heroPricing}</span>
-            <ArrowRight className="size-4 shrink-0 text-[#3848c7]" />
-          </AnchorScrollLink>
-          <AnchorScrollLink
-            href="#pricing"
-            ariaLabel={copy("landing.viewPricing")}
-            className="group mx-auto mt-6 hidden w-fit max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-[#dcdfed] bg-white/80 px-4 py-2 text-[14px] text-[#3c4053] backdrop-blur transition-colors hover:border-[#5566f6]/45 hover:bg-white sm:flex"
-          >
-            <span>{heroPricing}</span>
-            <ArrowRight className="size-3.5 shrink-0 text-[#3848c7] transition-transform group-hover:translate-x-0.5" />
-          </AnchorScrollLink>
-
           {/* Single big CTA — для залогиненного «Открыть кабинет»,
               для анонимного — «Начать бесплатно» (регистрация) */}
-          <div className="hero-cta mt-3 flex flex-col items-stretch gap-3 sm:mt-10 sm:items-center">
+          <div className="hero-cta mt-6 flex flex-col items-stretch gap-3 sm:mt-10 sm:items-center">
             {isAuthed ? (
               <>
                 <Link
@@ -693,11 +676,25 @@ export default async function LandingPage() {
                   showLoginLink={false}
                   showLiveGuide={false}
                 />
-                {/* Гарантия — прямо в первом экране: снимать риск нужно
-                    там же, где просим действие, а не через два экрана. */}
-                <div className="inline-flex items-center justify-center gap-2 text-[15px] font-medium text-[#116b2a] sm:text-[14px]">
-                  <ShieldCheck className="size-4 shrink-0" />
-                  {copy("landing.refundGuarantee")}</div>
+                {/* До какого числа всё бесплатно и что потом — одной строкой
+                    по центру (правки 19.11.2026; раньше здесь стояла гарантия
+                    возврата — она осталась под тарифами). `text-balance`
+                    делит строку на телефоне на две равные. */}
+                <p className="mx-auto max-w-[480px] text-balance text-center text-[15px] leading-[1.5] text-[#3c4053] sm:text-[14px]">
+                  {copy.rich("landing.hero.trialUntil", {
+                    date: trialUntil,
+                    strong: (chunks) => <strong className="font-semibold text-[#0b1024]">{chunks}</strong>,
+                    link: (chunks) => (
+                      <AnchorScrollLink
+                        href="#pricing"
+                        ariaLabel={copy("landing.viewPricing")}
+                        className="whitespace-nowrap font-medium text-[#3848c7] underline decoration-[#3848c7]/30 underline-offset-4 transition-colors duration-150 hover:decoration-[#3848c7]"
+                      >
+                        {chunks}
+                      </AnchorScrollLink>
+                    ),
+                  })}
+                </p>
               </>
             )}
           </div>
@@ -729,32 +726,50 @@ export default async function LandingPage() {
           </div>
           <div className="relative z-10 p-4 pt-7 sm:p-8 md:p-10">
             <div className="max-w-[760px] px-1 sm:px-0">
+              {/* «QR-код», без «на оборудовании» (правки 19.11.2026): наклейка
+                  бывает и на шкафчике, и на стене. */}
               <div className="mb-3 inline-flex items-center gap-2 text-[13px] font-medium text-[#8b97ff]">
                 <ScanLine className="size-4" />
                 {copy("landing.qrEquipmentTitle")}</div>
               <h2 className="text-[clamp(1.625rem,2.4vw+1rem,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
                 {copy("landing.qrScanHeadline")}</h2>
-              {/* Одно предложение: где наклейки и что бывает при пропуске
-                  рассказывают сами главы ролика, дублировать текстом не надо. */}
-              <p className="mt-3 text-[15px] leading-[1.6] text-white/75 sm:text-[16px]">
-                {copy("landing.qrScanDescription")}</p>
-              {/* Правки 05.11.2026: утверждённая презентация — PDF рядом с роликом.
-                  Презентация на русском, поэтому ссылка только на русской главной. */}
-              {locale === "ru" ? (
-                <a
-                  href="/landing/wesetup-presentation.pdf"
-                  target="_blank"
-                  rel="noopener"
-                  className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/40"
-                >
-                  <FileText className="size-4 text-[#8b97ff]" aria-hidden />
-                  {copy("landing.presentationPdf")}
-                </a>
-              ) : null}
+              {/* Три шага вместо абзаца — то же, что в заголовке, по одному
+                  действию на строку. */}
+              <ol className="mt-4 space-y-2.5">
+                {QR_SCAN_STEPS.map((step, index) => (
+                  <li key={step} className="flex items-start gap-3 text-[15px] leading-[1.45] text-white/80 sm:text-[16px]">
+                    <span className="mt-px inline-flex h-6 shrink-0 items-center rounded-full bg-white/10 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#aab4ff] ring-1 ring-inset ring-white/15">
+                      {copy("landing.qrScanSteps.label", { step: index + 1 })}
+                    </span>
+                    <span className="min-w-0">
+                      {copy(step).split("**").map((part, partIndex) =>
+                        partIndex % 2 ? (
+                          <strong key={partIndex} className="font-semibold text-white">
+                            {part}
+                          </strong>
+                        ) : (
+                          part
+                        ),
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <div className="mt-7 sm:mt-9">
+            <div className="mt-6 sm:mt-8">
               <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene", "journals"]}>
-                <QrPlayer qr={qrMatrix} today={sceneToday} video={narratedVideo} />
+                {/* Презентация (PDF, только на русском) — рядом с кнопкой видео
+                    внутри плеера, а не отдельной кнопкой над ним. */}
+                <QrPlayer
+                  qr={qrMatrix}
+                  today={sceneToday}
+                  video={narratedVideo}
+                  presentation={
+                    locale === "ru"
+                      ? { href: "/landing/wesetup-presentation.pdf", label: copy("landing.presentationPdf"), short: copy("landing.presentationPdfShort") }
+                      : null
+                  }
+                />
               </DomainMessagesBoundary>
             </div>
           </div>

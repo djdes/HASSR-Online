@@ -52,6 +52,7 @@ export function FullscreenPlayer({
   today,
   fridgeTemp,
   bodyTemp,
+  fryerQuality,
   startFrame,
   autoPlay,
   chapterLabels,
@@ -62,6 +63,7 @@ export function FullscreenPlayer({
   today: SceneDay;
   fridgeTemp: number;
   bodyTemp: number;
+  fryerQuality?: number;
   startFrame: number;
   autoPlay: boolean;
   chapterLabels: Record<ChapterId, string>;
@@ -260,7 +262,7 @@ export function FullscreenPlayer({
             <Player
               ref={playerRef}
               component={QrComposition}
-              inputProps={{ fridgeTemp, bodyTemp, today, qr }}
+              inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr }}
               durationInFrames={DURATION_IN_FRAMES}
               fps={FPS}
               compositionWidth={composition.width}

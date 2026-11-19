@@ -8,6 +8,8 @@ import type { QrMatrix } from "./qr-sticker";
 export type QrCompositionProps = {
   fridgeTemp: number;
   bodyTemp: number;
+  /** Оценка жира во фритюре, 1–5; без неё — «отличное» (5). */
+  fryerQuality?: number;
   today: SceneDay;
   qr: QrMatrix;
 };
@@ -20,11 +22,11 @@ export type QrCompositionProps = {
  * размеров композиции (px из `compositionWidth/Height`), а Плеер
  * масштабирует готовый кадр под контейнер — пропорции инвариантны.
  */
-export const QrComposition: React.FC<QrCompositionProps> = ({ fridgeTemp, bodyTemp, today, qr }) => {
+export const QrComposition: React.FC<QrCompositionProps> = ({ fridgeTemp, bodyTemp, fryerQuality, today, qr }) => {
   const frame = useCurrentFrame();
   return (
     <AbsoluteFill className="@container">
-      <SceneFrame frame={frame} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} today={today} qr={qr} />
+      <SceneFrame frame={frame} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} fryerQuality={fryerQuality} today={today} qr={qr} />
     </AbsoluteFill>
   );
 };

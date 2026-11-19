@@ -4,7 +4,7 @@ import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { formatNumber } from "@/i18n/locales";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Player, type PlayerRef } from "@remotion/player";
-import { ChevronDown, Maximize2, Pause, Play, SlidersHorizontal, Thermometer, Refrigerator } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, CookingPot, FileText, Maximize2, Pause, Play, SlidersHorizontal, Thermometer, Refrigerator } from "lucide-react";
 
 import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
 
@@ -16,9 +16,12 @@ import {
   FPS,
   FRIDGE_NORM,
   FRIDGE_RANGE,
+  FRYER_QUALITY,
   bodyFever,
   chapterAt,
   fridgeOutOfRange,
+  fryerQualityKey,
+  fryerQualityPoor,
   resultFrameOf,
   type ChapterId,
 } from "./chapters";
@@ -37,7 +40,11 @@ import { WatchVideoButton, type NarratedVideo } from "./video-lightbox";
  * («пауза» и «развернуть»), подпись главы и «Попробуйте сами» спойлером.
  * Нажатие на сцену открывает ролик на весь экран (`fullscreen-player.tsx`).
  * Если отрендерено видео с голосом (`video`, только русская главная), над
- * роликом — кнопка «Смотреть видео со звуком» (`video-lightbox.tsx`).
+ * роликом — кнопка «Смотреть видео со звуком» (`video-lightbox.tsx`), справа
+ * от неё — презентация в PDF (`presentation`). По бокам вкладок — стрелки
+ * «предыдущая / следующая глава»: строка вкладок прокручивается, и без
+ * стрелок этого не видно. «Попробуйте сами» — три примера: два ползунка
+ * температуры и оценка масла во фритюре кнопками 1–5.
  * Ролик идёт сам только в зоне видимости и на видимой вкладке; при
  * `prefers-reduced-motion` — без автозапуска, раскадровка из итоговых
  * кадров глав.
@@ -45,7 +52,23 @@ import { WatchVideoButton, type NarratedVideo } from "./video-lightbox";
 
 const SEEK_STEP_SECONDS = 2;
 
-export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: SceneDay; video?: NarratedVideo | null }) {
+/** Презентация рядом с кнопкой видео: полная подпись — с `sm`, на телефоне — короткая. */
+export type QrPresentation = { href: string; label: string; short: string };
+
+/** Номер главы «Фритюр» — её итог показывает пример с оценкой масла. */
+const FRYER_CHAPTER_INDEX = CHAPTERS.findIndex((item) => item.id === "fryer");
+
+export function QrPlayer({
+  qr,
+  today,
+  video = null,
+  presentation = null,
+}: {
+  qr: QrMatrix;
+  today: SceneDay;
+  video?: NarratedVideo | null;
+  presentation?: QrPresentation | null;
+}) {
   const t = useTranslations("qrPlayer");
   const sceneT = useTranslations("qrScene");
   const locale = useSiteLocale();
@@ -75,6 +98,7 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
   const desktop = useMediaQuery(DESKTOP_QUERY);
   const [fridgeTemp, setFridgeTemp] = useState<number>(FRIDGE_RANGE.initial);
   const [bodyTemp, setBodyTemp] = useState<number>(BODY_RANGE.initial);
+  const [fryerQuality, setFryerQuality] = useState<number>(FRYER_QUALITY.initial);
   const [tryOpen, setTryOpen] = useState(false);
 
   // Плеер рендерится после маунта: SSR и первый клиентский кадр отдают
@@ -238,6 +262,8 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
 
   const fridgeBad = fridgeOutOfRange(fridgeTemp);
   const fever = bodyFever(bodyTemp);
+  const oilPoor = fryerQualityPoor(fryerQuality);
+  const oilLabel = sceneT(fryerQualityKey(fryerQuality));
   const composition = desktop ? DESKTOP_COMPOSITION : MOBILE_COMPOSITION;
   const chapterLabels = Object.fromEntries(CHAPTERS.map((item) => [item.id, chapterText[item.id].label])) as Record<ChapterId, string>;
   /* Кнопки в углу: с мышью — на наведении и фокусе (пока ролик стоит —
@@ -248,18 +274,50 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
   const cornerButton =
     "flex size-10 items-center justify-center rounded-full bg-[rgba(11,16,36,0.62)] text-white shadow-[0_8px_24px_-10px_rgba(0,0,0,0.7)] ring-1 ring-white/15 backdrop-blur-sm transition-colors duration-150 hover:bg-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/60 md:size-9";
 
+  const arrowButton =
+    "flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50";
+
   return (
     <div ref={rootRef} onKeyDown={onKeyDown} data-qr-player="" data-frame={frame} data-playing={playing ? "1" : "0"}>
-      {/* Видео с голосом — над немым роликом: что нажать и что откроется. */}
-      {video ? (
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <WatchVideoButton video={video} onOpenChange={setVideoOpen} />
-          <p className="text-[13px] leading-[1.45] text-white/60">{t("chrome.watchVideoHint")}</p>
+      {/* Видео с голосом и презентация — одной строкой над немым роликом
+          (правки 19.11.2026: PDF стоял отдельной кнопкой выше). */}
+      {video || presentation ? (
+        <div className="mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {video ? <WatchVideoButton video={video} onOpenChange={setVideoOpen} /> : null}
+            {presentation ? (
+              <a
+                href={presentation.href}
+                target="_blank"
+                rel="noopener"
+                aria-label={presentation.label}
+                title={presentation.label}
+                data-qr-presentation=""
+                className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white/[0.08] px-3.5 text-[15px] font-medium text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 sm:px-4"
+              >
+                <FileText className="size-[18px] text-[#8b97ff]" aria-hidden="true" />
+                <span className="sm:hidden">{presentation.short}</span>
+                <span className="hidden sm:inline">{presentation.label}</span>
+              </a>
+            ) : null}
+          </div>
+          {video ? <p className="mt-2 text-[13px] leading-[1.45] text-white/60">{t("chrome.watchVideoHint")}</p> : null}
         </div>
       ) : null}
-      {/* Вкладки-главы: одна строка со скроллом, заливка = прогресс слайда. */}
-      <nav aria-label={t("chrome.chaptersLabel")} className="mb-3">
-        <div ref={tabsRef} className="qrp-tabs relative -mx-1 flex gap-2 overflow-x-auto px-1 py-1">
+      {/* Вкладки-главы: одна строка со скроллом, заливка = прогресс слайда.
+          Стрелки по бокам листают главы — видно, что строка длиннее экрана. */}
+      <nav aria-label={t("chrome.chaptersLabel")} className="mb-3 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => goToChapter(index - 1)}
+          aria-label={t("chrome.previousChapter")}
+          title={t("chrome.previousChapter")}
+          data-qr-prev=""
+          className={arrowButton}
+        >
+          <ChevronLeft className="size-5" aria-hidden="true" />
+        </button>
+        <div ref={tabsRef} className="qrp-tabs relative flex min-w-0 flex-1 gap-2 overflow-x-auto px-0.5 py-1">
           {CHAPTERS.map((item, chapterIndex) => {
             const current = chapterIndex === index;
             const fill = current ? (storyboard ? 1 : local / item.duration) : 0;
@@ -285,6 +343,16 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
             );
           })}
         </div>
+        <button
+          type="button"
+          onClick={() => goToChapter(index + 1)}
+          aria-label={t("chrome.nextChapter")}
+          title={t("chrome.nextChapter")}
+          data-qr-next=""
+          className={arrowButton}
+        >
+          <ChevronRight className="size-5" aria-hidden="true" />
+        </button>
       </nav>
 
       {/* Сцена: фиксированные пропорции — 4:5 на телефоне, 16:9 от md.
@@ -314,7 +382,7 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
         {/* Подложка до маунта Плеера (и в SSR-HTML): тот же кадр 0. */}
         {player === null ? (
           <div aria-hidden="true" className="absolute inset-0 @container">
-            <SceneFrame frame={0} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} today={today} qr={qr} />
+            <SceneFrame frame={0} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} fryerQuality={fryerQuality} today={today} qr={qr} />
           </div>
         ) : null}
         {mounted ? (
@@ -322,7 +390,7 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
             <Player
               ref={playerRef}
               component={QrComposition}
-              inputProps={{ fridgeTemp, bodyTemp, today, qr }}
+              inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr }}
               durationInFrames={DURATION_IN_FRAMES}
               fps={FPS}
               compositionWidth={composition.width}
@@ -371,8 +439,8 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
 
       {/* Под сценой: подпись главы и «Попробуйте сами». Прогресс ролика
           показывают вкладки-главы, отдельной перемотки здесь нет. */}
-      <div className="mt-3 flex items-start gap-3">
-        <p className="min-w-0 flex-1 pt-[7px] text-[13px] leading-[1.45] text-white/70 sm:truncate">
+      <div className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-start sm:gap-3">
+        <p className="min-w-0 flex-1 text-[13px] leading-[1.45] text-white/70 sm:truncate sm:pt-[11px]">
           {storyboard
             ? t("chrome.storyboardCaption", {
                 chapterNumber: index + 1,
@@ -381,33 +449,33 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
               })
             : chapterText[chapter.id].short}
         </p>
+        {/* Кнопка 44 px и с подписью на любой ширине (правки 19.11.2026:
+            на телефоне в значок 32 px было не попасть). */}
         <button
           type="button"
           onClick={() => setTryOpen((value) => !value)}
           aria-expanded={tryOpen}
           aria-controls="qrp-try-panel"
-          title={t("chrome.tryIt")}
-          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium text-white/85 transition-colors duration-150 hover:bg-[rgba(255,255,255,0.12)] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-[14px] font-medium text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-[rgba(255,255,255,0.12)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
           style={{ background: tryOpen ? "rgba(124,245,192,0.14)" : "rgba(255,255,255,0.07)" }}
         >
-          <SlidersHorizontal className="size-3.5 text-[#7cf5c0]" />
-          {/* На узком телефоне — только значок: подписи главы нужна ширина.
-              Подпись кнопки остаётся для скринридера. */}
-          <span className="max-[420px]:sr-only">{t("chrome.tryIt")}</span>
-          <ChevronDown className={`size-3.5 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
+          <SlidersHorizontal className="size-4 text-[#7cf5c0]" />
+          {t("chrome.tryIt")}
+          <ChevronDown className={`size-4 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
         </button>
       </div>
 
-      {/* Спойлер: оба ползунка сразу — сдвиг перематывает на итог своей
+      {/* Спойлер: три примера сразу — сдвиг перематывает на итог своей
           главы. Свёрнут по умолчанию, чтобы под роликом было пусто. */}
       <div
         id="qrp-try-panel"
         data-qrp-try=""
         hidden={!tryOpen}
-        className="mt-2.5 rounded-2xl border border-[rgba(255,255,255,0.12)] px-3.5 py-3"
+        className="mt-2.5 rounded-2xl border border-[rgba(255,255,255,0.12)] p-4"
         style={{ background: "rgba(255,255,255,0.04)" }}
       >
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        {/* `grid-cols-1` = minmax(0, 1fr): длинная подпись не раздвигает панель шире экрана. */}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           <TrySlider
             icon="fridge"
             label={t("chrome.fridgeTemperature")}
@@ -438,6 +506,49 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
               showResult(1);
             }}
           />
+          {/* Не только температура: оценка масла во фритюре, кнопками. */}
+          <div role="group" aria-labelledby="qrp-try-fryer-label" data-qrp-try-fryer="">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <span id="qrp-try-fryer-label" className="flex min-w-0 items-center gap-2 text-[14px] text-white/85">
+                <CookingPot className="size-4 shrink-0 text-[#8b97ff]" aria-hidden="true" />
+                <span className="truncate">{t("chrome.fryerQuality")}</span>
+              </span>
+              <span
+                className="shrink-0 rounded-full px-2.5 py-1 text-[14px] font-semibold"
+                style={{ color: oilPoor ? "#ff8f86" : "#7cf5c0", background: oilPoor ? "rgba(255,143,134,0.12)" : "rgba(124,245,192,0.12)" }}
+              >
+                {oilLabel}
+              </span>
+            </div>
+            <div className="mt-2 grid grid-cols-5 gap-2">
+              {Array.from({ length: FRYER_QUALITY.max - FRYER_QUALITY.min + 1 }, (_, offset) => FRYER_QUALITY.min + offset).map((score) => {
+                const active = score === fryerQuality;
+                return (
+                  <button
+                    key={score}
+                    type="button"
+                    data-try-it="1"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setFryerQuality(score);
+                      showResult(FRYER_CHAPTER_INDEX);
+                    }}
+                    className="flex h-11 items-center justify-center rounded-xl text-[16px] font-semibold tabular-nums ring-1 ring-inset transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
+                    style={
+                      active
+                        ? { background: oilPoor ? "#ff8f86" : "#7cf5c0", color: "#0b1024", boxShadow: "none" }
+                        : { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.85)", ["--tw-ring-color" as string]: "rgba(255,255,255,0.15)" }
+                    }
+                  >
+                    {score}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[13px] leading-[1.45]" style={{ color: oilPoor ? "#ffb3ab" : "rgba(255,255,255,0.72)" }} aria-live="polite">
+              {t(oilPoor ? "chrome.fryerQualityPoor" : "chrome.fryerQualityOk", { score: fryerQuality, label: oilLabel })}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -456,6 +567,7 @@ export function QrPlayer({ qr, today, video = null }: { qr: QrMatrix; today: Sce
           today={today}
           fridgeTemp={fridgeTemp}
           bodyTemp={bodyTemp}
+          fryerQuality={fryerQuality}
           startFrame={expandedFrom}
           autoPlay={!reduced}
           chapterLabels={chapterLabels}
@@ -483,11 +595,11 @@ function TrySlider(props: {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={`qrp-try-${props.icon}`} className="flex min-w-0 items-center gap-1.5 text-[13px] text-white/80">
-          <Icon className="size-3.5 shrink-0 text-[#8b97ff]" />
+        <label htmlFor={`qrp-try-${props.icon}`} className="flex min-w-0 items-center gap-2 text-[14px] text-white/85">
+          <Icon className="size-4 shrink-0 text-[#8b97ff]" />
           <span className="truncate">{props.label}</span>
         </label>
-        <span className="shrink-0 rounded-full px-2 py-0.5 text-[13.5px] font-semibold tabular-nums" style={{ color: props.bad ? "#ff8f86" : "#7cf5c0", background: props.bad ? "rgba(255,143,134,0.12)" : "rgba(124,245,192,0.12)" }}>
+        <span className="shrink-0 rounded-full px-2.5 py-1 text-[14px] font-semibold tabular-nums" style={{ color: props.bad ? "#ff8f86" : "#7cf5c0", background: props.bad ? "rgba(255,143,134,0.12)" : "rgba(124,245,192,0.12)" }}>
           {props.display}
         </span>
       </div>
@@ -503,7 +615,7 @@ function TrySlider(props: {
         className="qrp-range qrp-range-try mt-1 block w-full"
         style={{ ["--qrp-fill" as string]: `${percent}%`, ["--qrp-accent" as string]: props.bad ? "#ff8f86" : "#7cf5c0" }}
       />
-      <p className="mt-1 text-[12.5px] leading-[1.45]" style={{ color: props.bad ? "#ffb3ab" : "rgba(255,255,255,0.72)" }} aria-live="polite">
+      <p className="mt-1 text-[13px] leading-[1.45]" style={{ color: props.bad ? "#ffb3ab" : "rgba(255,255,255,0.72)" }} aria-live="polite">
         {props.verdict}
       </p>
     </div>

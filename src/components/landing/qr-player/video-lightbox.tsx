@@ -95,14 +95,17 @@ export function WatchVideoButton({ video, onOpenChange }: { video: NarratedVideo
         type="button"
         onClick={open}
         aria-haspopup="dialog"
+        aria-label={t("chrome.watchVideo")}
         title={t("chrome.watchVideoHint")}
         data-qr-video-button=""
-        className="group inline-flex h-12 shrink-0 items-center gap-3 rounded-2xl bg-white/[0.08] pl-1.5 pr-4 text-[15px] font-medium text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 sm:pr-5"
+        className="group inline-flex h-12 shrink-0 items-center gap-3 rounded-2xl bg-white/[0.08] pl-1.5 pr-3.5 text-[15px] font-medium text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 sm:pr-5"
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.8)] transition-colors duration-150 group-hover:bg-[#4a5bf0]">
           <Play className="size-4 translate-x-px" fill="currentColor" aria-hidden="true" />
         </span>
-        {t("chrome.watchVideo")}
+        {/* На телефоне подпись короче: рядом стоит кнопка презентации. */}
+        <span className="sm:hidden">{t("chrome.watchVideoShort")}</span>
+        <span className="hidden sm:inline">{t("chrome.watchVideo")}</span>
         <Volume2 className="size-4 text-[#8b97ff]" aria-hidden="true" />
       </button>
       {mode ? <VideoLightbox video={video} mode={mode} videoRef={videoRef} onClose={close} /> : null}

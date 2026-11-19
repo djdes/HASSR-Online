@@ -2698,7 +2698,12 @@
     },
     "legal": {
       "consentSentence": "Я принимаю <offer>оферту</offer> и <terms>пользовательское соглашение</terms>, ознакомлен с <privacy>политикой конфиденциальности</privacy> и даю <consent>согласие на обработку персональных данных</consent>.",
-      "consentShort": "Принимаю <offer>оферту</offer> и даю <consent>согласие на обработку персональных данных</consent>"
+      "consentShort": "Принимаю <offer>оферту</offer> и даю <consent>согласие на обработку персональных данных</consent>",
+      "openOfferTitle": "Открыть оферту?",
+      "openConsentTitle": "Открыть согласие на обработку персональных данных?",
+      "openHint": "Документ откроется в новой вкладке, форма останется на месте.",
+      "openYes": "Да",
+      "openNo": "Нет"
     },
     "challenge": {
       "websiteLabel": "Ваш сайт"
@@ -2749,7 +2754,13 @@
       "suggestedTypo": "Проверьте адрес электронной почты. Возможно, вы имели в виду {suggestion}?",
       "applySuggestion": "Исправить на {suggestion}",
       "domainMissing": "Такого почтового домена не существует. Проверьте адрес: письмо со ссылкой для входа туда не дойдёт.",
-      "domainChecking": "Проверяем домен…"
+      "domainChecking": "Проверяем домен…",
+      "short": {
+        "missingAt": "нужен символ @",
+        "invalid": "проверьте адрес",
+        "domainMissing": "нет такого домена",
+        "typoChip": "→ {suggestion}"
+      }
     },
     "badges": {
       "title": "Для разных сфер работы",
@@ -5744,8 +5755,8 @@
     "signedInAs": "Вы вошли как ",
     "tryFree": "Попробовать бесплатно",
     "refundGuarantee": "Гарантия возврата: 14 дней после оплаты.",
-    "qrEquipmentTitle": "QR-код на оборудовании",
-    "qrScanHeadline": "Отсканировал — и запись уже в журнале",
+    "qrEquipmentTitle": "QR-код",
+    "qrScanHeadline": "Скан — PIN — Запись",
     "qrScanDescription": "Сотрудник сканирует наклейку на оборудовании, вводит PIN и значение — строка встаёт в журнал по форме СанПиН. Без приложения и пароля.",
     "automationHeadline": "Напомнит, заполнит и соберёт PDF для проверки",
     "automationLead": "QR — только вход. Остальное сервис делает сам.",
@@ -5885,7 +5896,8 @@
     },
     "hero": {
       "title": "Электронные журналы <highlight>СанПиН и ХАССП</highlight>",
-      "consultationNote": "Разработан при консультации специалистов Роспотребнадзора и ведущих аудиторов ХАССП"
+      "consultationNote": "Разработан при консультации специалистов Роспотребнадзора и ведущих аудиторов ХАССП",
+      "trialUntil": "До <strong>{date}</strong> всё бесплатно, далее только 1 журнал. <link>Подробнее</link>"
     },
     "openGraph": {
       "title": "Электронные журналы ХАССП и СанПиН",
@@ -5954,7 +5966,14 @@
       "inspection": "Калькулятор штрафов Роспотребнадзора",
       "integrations": "Подробнее о синхронизации с iiko и 1С",
       "dataSecurity": "Как защищены и где хранятся данные"
-    }
+    },
+    "qrScanSteps": {
+      "label": "Шаг {step, number}",
+      "scan": "Сотрудник отсканировал QR-код",
+      "pin": "Нашёл себя в списке сотрудников и ввёл свой PIN-код",
+      "entry": "Ввёл данные — они попали в журнал, **даже без интернета!**"
+    },
+    "presentationPdfShort": "PDF"
   },
   "landingComponents": {
     "heroEmail": {
@@ -6233,10 +6252,16 @@
       "storyboardCaption": "Раскадровка {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "Глава {chapterNumber, number}: {chapterName}. Журнал: {journalName}. {caption}",
       "watchVideo": "Смотреть видео со звуком",
-      "watchVideoHint": "Пример для общепита: QR-коды на оборудовании и заполнение журналов. Включите звук.",
+      "watchVideoHint": "Пример для общепита: QR-коды и заполнение журналов. Включите звук.",
       "videoLabel": "Видео «Как работает QR» со звуком",
       "videoSubtitles": "Субтитры",
-      "seekValue": "{currentTime} из {totalTime}, глава «{chapterName}»"
+      "seekValue": "{currentTime} из {totalTime}, глава «{chapterName}»",
+      "watchVideoShort": "Видео со звуком",
+      "previousChapter": "Предыдущая глава",
+      "nextChapter": "Следующая глава",
+      "fryerQuality": "Масло во фритюре",
+      "fryerQualityOk": "Оценка {score, number} — «{label}»: так и запишется в журнал фритюрных жиров.",
+      "fryerQualityPoor": "Оценка {score, number} — «{label}»: запись в журнале есть, а масло пора менять."
     },
     "chapter": {
       "fridge": {
@@ -6509,8 +6534,11 @@
     "demo": {
       "employee": "Сотрудник",
       "specialist": "Специалист",
-      "supervisor": "Руководитель"
-    }
+      "supervisor": "Руководитель",
+      "org": "ООО «БФС»"
+    },
+    "qualitySatisfactory": "Удовлетворительное",
+    "qualityPoor": "Неудовлетворительное"
   },
   "blogChrome": {
     "list": {
