@@ -365,12 +365,18 @@ function roomKind(value: unknown): RoomKind {
 /**
  * Создать у организации запись по образцу. `parentId` — родитель уже в этой
  * организации (для цеха null — «единственный объект или без объекта»).
+ *
+ * `mirrorRoom: false` — новый цех не заводит помещение-зеркало. Так идёт
+ * обмен, когда организация обменивается и объектами: помещения приходят
+ * своим обменом, а зеркало вернулось бы соседям лишним помещением в журнале
+ * уборки, которого они не заводили.
  */
 export async function createEntityRow(
   entity: ExchangeEntity,
   organizationId: string,
   source: EntityRow,
   parentId: string | null,
+  options: { mirrorRoom?: boolean } = {},
 ): Promise<CreateOutcome> {
   const name = text(source.fields.name, 200);
   if (!name) return { status: "conflict" };
@@ -473,7 +479,7 @@ export async function createEntityRow(
           select: { id: true, name: true },
         });
         // Помещение-зеркало — как в POST /api/areas (best-effort).
-        if (building) {
+        if (building && options.mirrorRoom !== false) {
           try {
             const sameRoom = await db.room.findFirst({
               where: { buildingId: building.id, name: { equals: created.name, mode: "insensitive" } },

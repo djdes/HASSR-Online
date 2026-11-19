@@ -2,7 +2,7 @@
 import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
+import { useContentPending } from "@/components/layout/content-transition";
 import { NumberStepper } from "@/components/ui/number-stepper";
 import { TasksFlowPromoHint } from "@/components/tasksflow/tasksflow-promo-hint";
 import {
@@ -68,7 +69,19 @@ export type CompleteProfileInitial = {
    * по реестру — тому, кому консультант передал кабинет, это меняет имя.
    */
   personName?: string | null;
+  /**
+   * Телефон из профиля. Анкета новой организации его не спрашивает, а
+   * `/api/profile/complete` без него не сохраняет — отправляем этот.
+   */
+  phone?: string | null;
 };
+
+/**
+ * `registration` — анкета после мгновенной регистрации: баннер и окно.
+ * `organization` — анкета заполнена, окно только для новой организации
+ * аккаунта (`?welcome-org=1`), без баннера.
+ */
+export type CompleteProfileMode = "registration" | "organization";
 
 /**
  * Напоминание заполнить анкету после мгновенной регистрации.
@@ -114,6 +127,69 @@ function ownershipLabel(value: string, tn: Translate): string {
 }
 
 export function CompleteProfileNudge({
+  email,
+  initial,
+  mode = "registration",
+}: {
+  email: string;
+  initial?: CompleteProfileInitial;
+  mode?: CompleteProfileMode;
+}) {
+  return mode === "organization" ? (
+    <NewOrganizationSetup email={email} initial={initial} />
+  ) : (
+    <RegistrationNudge email={email} initial={initial} />
+  );
+}
+
+/**
+ * Мастер настройки новой организации аккаунта (спека org-exchange-2026-11-19,
+ * Р9). После «Создать и перейти» человек попадает на `?welcome-org=1` — и
+ * вместо одной плашки получает те же четыре шага, что при первой
+ * регистрации: короткая анкета организации, объекты, сотрудники,
+ * оборудование. Баннера «Завершите регистрацию» здесь нет — анкета человека
+ * уже заполнена.
+ */
+function NewOrganizationSetup({
+  email,
+  initial,
+}: {
+  email: string;
+  initial?: CompleteProfileInitial;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const requested = searchParams.get("welcome-org") === "1";
+  // Пока идёт смена организации, оболочка ещё прежней организации — окно
+  // с её данными не показываем, новая оболочка откроет своё.
+  const switching = useContentPending();
+  const [closed, setClosed] = useState(false);
+
+  if (!requested || closed || switching) return null;
+
+  function close() {
+    setClosed(true);
+    // Убираем параметр из адреса: обновление страницы не должно открывать
+    // окно заново.
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("welcome-org");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }
+
+  return (
+    <CompleteProfileModal
+      email={email}
+      welcome={false}
+      organizationMode
+      initial={initial}
+      onClose={close}
+    />
+  );
+}
+
+function RegistrationNudge({
   email,
   initial,
 }: {
@@ -283,19 +359,26 @@ function phoneLooksValid(raw: string): boolean {
  *
  * Подтверждения почты здесь больше нет: оно блокировало «Готово» до
  * похода в почтовый ящик. Переехало в /settings.
+ *
+ * `organizationMode` — та же анкета для новой организации аккаунта: только
+ * название, сфера, тип, число объектов и ИНН. Телефон и имя берутся из
+ * профиля, пароль не меняется, «Я сотрудник» и демо не предлагаются.
  */
 function CompleteProfileModal({
   email,
   welcome,
+  organizationMode = false,
   initial,
   onClose,
 }: {
   email: string;
   welcome: boolean;
+  organizationMode?: boolean;
   initial?: CompleteProfileInitial;
   onClose: () => void;
 }) {
   const tn = useTranslations("dashboardUi.completeProfileNudge");
+  const tOrganization = useTranslations("dashboardUi.directoryExchange.organizationSetup");
   const tBilling = useTranslations("common.billing");
   const router = useRouter();
   // Фон под анкетой не должен прокручиваться (на iOS body.overflow не помогает).
@@ -418,7 +501,8 @@ function CompleteProfileModal({
   const phoneOk = phoneLooksValid(phone);
   const passwordOk = newPassword.trim().length === 0 || newPassword.trim().length >= 6;
   const busy = saving || demoLoading;
-  const canSubmit = nameOk && phoneOk && passwordOk && !busy;
+  // Новой организации хватает названия: телефона и пароля в её анкете нет.
+  const canSubmit = organizationMode ? nameOk && !busy : nameOk && phoneOk && passwordOk && !busy;
 
   // Нативные тултипы браузера («Вы пропустили это поле») выключены —
   // они появляются только по клику и выглядят чужеродно. Незаполненное
@@ -434,18 +518,21 @@ function CompleteProfileModal({
       const res = await fetch("/api/profile/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Новая организация: телефон и имя — из профиля, как есть (подстановка
+        // из ЕГРЮЛ не должна переименовать человека), пароль и должность не
+        // трогаем.
         body: JSON.stringify({
           organizationName: organizationName.trim(),
-          phone: phone.trim(),
+          phone: organizationMode ? (initial?.phone ?? "").trim() : phone.trim(),
           sphere,
           ownershipKind,
           locationsCount,
           inn: inn.trim(),
           address: address.trim(),
-          name: name.trim(),
-          newPassword: newPassword.trim(),
-          asEmployee,
-          positionName: asEmployee ? positionName.trim() : "",
+          name: organizationMode ? (initial?.personName ?? "").trim() : name.trim(),
+          newPassword: organizationMode ? "" : newPassword.trim(),
+          asEmployee: organizationMode ? false : asEmployee,
+          positionName: !organizationMode && asEmployee ? positionName.trim() : "",
         }),
       });
       const data = await res.json().catch(() => null);
@@ -481,7 +568,7 @@ function CompleteProfileModal({
     finishSetup();
   }
 
-  const savedMessage = newPassword.trim()
+  const savedMessage = !organizationMode && newPassword.trim()
     ? tn("savedWithPassword")
     : tn("saved");
 
@@ -531,6 +618,20 @@ function CompleteProfileModal({
     }
   }
 
+  // «Готово» анкеты: рядом с демо при первой регистрации, одна — у новой организации.
+  const doneButton = (
+    <button
+      type="submit"
+      form="complete-profile-form"
+      data-guide="profile-done"
+      disabled={!canSubmit}
+      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c9cef7] disabled:shadow-none"
+    >
+      {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+      {tn("done")}
+    </button>
+  );
+
   return (
     // `data-touch-compact`: анкета сверстана под один экран телефона
     // (поля с подписью в рамке уже ≥ 56px, шрифт 16px), общие правила
@@ -556,13 +657,17 @@ function CompleteProfileModal({
             >
               {step !== "profile"
                 ? tn(`setup.titles.${step}`)
-                : welcome
-                  ? tn("titleCreated")
-                  : tn("titleComplete")}
+                : organizationMode
+                  ? tOrganization("title")
+                  : welcome
+                    ? tn("titleCreated")
+                    : tn("titleComplete")}
             </h2>
             <p className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">
               {step !== "profile" ? (
                 tn(`setup.subtitles.${step}`)
+              ) : organizationMode ? (
+                tOrganization("subtitle")
               ) : (
                 <>
                   {tn("login")} <span className="text-[#3c4053]">{email}</span>
@@ -613,6 +718,10 @@ function CompleteProfileModal({
             />
           </Field>
 
+          {/* Телефон, «Я сотрудник» и должность — только в анкете первой
+              регистрации: у новой организации аккаунта они уже известны. */}
+          {organizationMode ? null : (
+            <>
           {/* Телефон занимает ровно свою ширину — в российском номере
               11 цифр, растягивать поле на всю строку незачем. Рядом (на
               телефоне — строкой под ним) узкое промо TasksFlow: место, где
@@ -697,6 +806,8 @@ function CompleteProfileModal({
               </Field>
             ) : null}
           </div>
+            </>
+          )}
 
           {/* Остальное необязательно и стоит парами по смыслу, чтобы анкета
               помещалась в первый экран телефона. */}
@@ -798,6 +909,8 @@ function CompleteProfileModal({
             </Field>
           </div>
 
+          {/* Имя и пароль у владельца уже есть — новой организации их не задают. */}
+          {organizationMode ? null : (
           <div className="grid grid-cols-2 gap-2" data-guide="profile-password">
             <Field label={tn("yourName")}>
               <input
@@ -843,6 +956,7 @@ function CompleteProfileModal({
               </span>
             </Field>
           </div>
+          )}
 
           {/* Единственное пояснение: что произойдёт с точками. */}
           {locationsCount > 1 ? (
@@ -853,10 +967,12 @@ function CompleteProfileModal({
         </form>
 
         <div className="shrink-0 border-t border-[#eef0f6] p-4 sm:p-5">
-          {/* Демо слева с подписью под своей кнопкой — чтобы «7 дней» не
+          {/* Новой организации аккаунта демо не предлагаем — одна кнопка. */}
+          {organizationMode ? doneButton : (
+          /* Демо слева с подписью под своей кнопкой — чтобы «7 дней» не
               читалось как условие для «Готово». «Готово» справа, как
               основное действие. Обе активны по одним условиям: анкета
-              сохраняется первой, демо — отдельная организация после. */}
+              сохраняется первой, демо — отдельная организация после. */
           <div className="grid grid-cols-2 items-start gap-2">
             <div>
               <button
@@ -882,17 +998,9 @@ function CompleteProfileModal({
                 {tn("demoNote")}
               </p>
             </div>
-            <button
-              type="submit"
-              form="complete-profile-form"
-              data-guide="profile-done"
-              disabled={!canSubmit}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c9cef7] disabled:shadow-none"
-            >
-              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-              {tn("done")}
-            </button>
+            {doneButton}
           </div>
+          )}
         </div>
           </>
         )}

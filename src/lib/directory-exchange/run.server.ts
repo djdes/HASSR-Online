@@ -84,7 +84,7 @@ const LOCK_PREFIX = "directory-exchange";
 const TRANSFER_LOCK_PREFIX = "directory-transfer";
 /** Большой первый обмен идёт минутами — замок не должен отпустить его раньше. */
 const RUN_TIMEOUT_MS = 10 * 60_000;
-/** Помещение заводит цех, цех — помещение: второй проход подбирает такие записи. */
+/** Запись одной сущности может завести запись другой (цех — помещение): второй проход их подбирает. */
 const MAX_PASSES = 3;
 export const EXCHANGE_BUSY_CODE = "exchange_busy";
 const BUSY_MESSAGE = "Обмен уже выполняется. Подождите минуту и повторите.";
@@ -169,6 +169,9 @@ async function exchangeEntity(params: {
   const kind = ENTITY_KIND[entity];
   const parent = ENTITY_PARENT[entity];
   const organizationIds = participants.map((participant) => participant.organizationId);
+  const sharesObjects = new Set(
+    participants.filter((participant) => participant.kinds.includes("objects")).map((participant) => participant.organizationId),
+  );
 
   const [links, parentLinks] = await Promise.all([
     db.directoryExchangeLink.findMany({
@@ -267,7 +270,10 @@ async function exchangeEntity(params: {
 
       let outcome: CreateOutcome;
       try {
-        outcome = await createEntityRow(entity, op.organizationId, source, parentId);
+        outcome = await createEntityRow(entity, op.organizationId, source, parentId, {
+          // Помещения участника, который обменивается объектами, приходят обменом.
+          mirrorRoom: !sharesObjects.has(op.organizationId),
+        });
       } catch (error) {
         console.error("[directory-exchange] create failed", { entity, organizationId: op.organizationId, error });
         notes.add(FAILED_NOTE);

@@ -13,6 +13,7 @@ import {
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
 import { loadBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { runAllDirectoryExchanges, type ExchangeBatchResult } from "@/lib/directory-exchange/run.server";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
 export const runtime = "nodejs";
@@ -37,6 +38,10 @@ export const dynamic = "force-dynamic";
  *   2. ensureNextPeriodDocument — за 7 дней до конца текущего создаёт
  *      следующий, чтобы 1-го числа он уже существовал и не было
  *      «провала compliance» из-за недосозданного документа.
+ *
+ * В конце — ежедневный обмен справочниками между организациями одного
+ * аккаунта (`runAllDirectoryExchanges`, 2026-11-19). Best-effort: его сбой
+ * не меняет ответ задачи, итог — в поле `directoryExchange`.
  *
  * Идемпотентно. Безопасно вызывать несколько раз в день.
  *
@@ -169,6 +174,16 @@ async function handle(request: Request) {
     }
   }
 
+  // Обмен справочниками — после журналов и отдельно от них: что бы ни
+  // случилось здесь, документы уже созданы и ответ остаётся успешным.
+  let directoryExchange: ExchangeBatchResult | { error: string };
+  try {
+    directoryExchange = await runAllDirectoryExchanges();
+  } catch (err) {
+    console.error("[cron/auto-create-journals] directory exchange failed", err);
+    directoryExchange = { error: (err as Error)?.message ?? "ошибка" };
+  }
+
   return NextResponse.json({
     ok: true,
     organizationsProcessed: orgsTouched,
@@ -178,6 +193,7 @@ async function handle(request: Request) {
     brokenChainsRestored: totalChainsRestored,
     brokenChainCodes: [...restoredCodes].sort(),
     errors: errors.slice(0, 10),
+    directoryExchange,
   });
 }
 
