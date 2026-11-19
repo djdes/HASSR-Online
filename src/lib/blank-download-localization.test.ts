@@ -131,6 +131,7 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
   };
   const passthrough = ({ children, ...props }: Dict) => jsxRuntime.jsx("div", { ...props, children });
   const modules: Record<string, unknown> = {
+    "@/components/public/blank-challenge": { useBlankChallenge: () => ({ token: "test-proof", reset() {}, element: null }) },
     react: { ...React, useState, useRef, useEffect },
     "react/jsx-runtime": jsxRuntime,
     "react-dom": { createPortal: (node: unknown) => node },
@@ -263,6 +264,7 @@ for (const locale of ["ru", "en", "uz"] as const) {
     invoke(currentForm, "onSubmit", { preventDefault() {} });
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(app.fetchCount, 1);
+    assert.equal(app.requestBody?.captchaToken, "test-proof");
     assert.equal(app.requestBody?.locale, locale);
     assert.equal(app.requestBody?.consent, true);
     assert.equal(app.requestBody?.email, "person@example.test");
@@ -310,6 +312,8 @@ test("late remembered-download feedback renders the current locale without repla
   tree = app.tree();
   const triggerAgain = app.find(tree, (node) => node["data-testid"] === "blank-download-pdf");
   invoke(triggerAgain, "onClick", { preventDefault() {} });
+  assert.equal(app.fetchCount, 1);
+  invoke(app.find(app.tree(), (node) => node["data-testid"] === "blank-remembered-submit"), "onClick", {});
   app.setLocale("uz");
   tree = app.tree();
   await new Promise((resolve) => setImmediate(resolve));
