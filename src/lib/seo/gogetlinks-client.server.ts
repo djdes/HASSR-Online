@@ -23,6 +23,7 @@ import { ProxyAgent, fetch as undiciFetch, type RequestInit as UndiciRequestInit
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
 import { encodeWin1251Form, isWesetupDomain, parseRubAmount } from "@/lib/seo/gogetlinks-codec";
+import { parseGglPersonalHistory, parseGglPersonalThreadKey } from "@/lib/seo/gogetlinks-personal-chat";
 
 interface GglPrismaClientLike {
   gglAccount: {
@@ -690,6 +691,31 @@ export async function readGglWebmasterSource(
 }
 
 export type GglFirstMessageResult = "unavailable" | "duplicate" | "sent" | "unconfirmed";
+
+export async function readGglPersonalHistory(threadKey: string, opts?: { prismaClient?: unknown }) {
+  const thread = parseGglPersonalThreadKey(threadKey);
+  if (!thread) throw new GglCallError("Диалог не найден", "input");
+  initApiAnythingHome();
+  await syncSessionFromDb(opts?.prismaClient);
+  return enqueueGgl(async () => {
+    const url = `https://gogetlinks.net/privateMessage/personal/comp_id/${thread.campaignId}/site_id/${thread.siteId}`;
+    const request = () => createGglFetch(getFetchImpl() || fetch)(url, {
+      headers: { cookie: buildCookieHeader(loadLocalSession()) },
+      redirect: "manual",
+      signal: AbortSignal.timeout(8_000),
+    });
+    let response = await request();
+    if ((response.status === 401 || REDIRECT_STATUSES.has(response.status)) &&
+        await attemptRelogin({ prismaClient: opts?.prismaClient })) {
+      response = await request();
+    }
+    if (!response.ok) throw new GglCallError("Не удалось загрузить переписку с вебмастером", "blocked");
+    const raw = decodeModalResponseBuffer(new Uint8Array(await response.arrayBuffer()), response.headers.get("content-type") ?? "");
+    const history = parseGglPersonalHistory(raw, threadKey);
+    if (!history) throw new GglCallError("Не удалось загрузить переписку с вебмастером", "blocked");
+    return history;
+  }, 300);
+}
 
 /** Submit only the composer that GoGetLinks actually served for this campaign and site. */
 export async function sendGglFirstMessage(
