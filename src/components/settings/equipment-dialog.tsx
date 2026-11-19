@@ -11,7 +11,6 @@ import { FillerPicker, type FillerOption } from "@/components/settings/filler-pi
 import { LAMP_PRESETS, UV_LAMP_TYPE, formatHours, isUvLampEquipment, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -30,6 +29,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
+import { SectionJump } from "@/components/shared/section-jump";
+import { FloatingLabelField } from "@/components/journals/journal-dialog-field";
+import {
+  JOURNAL_DIALOG_FIELD_CONTROL_CLASS,
+  JOURNAL_DIALOG_FIELD_TRIGGER_CLASS,
+} from "@/components/journals/journal-responsive";
 
 /** Синонимы старых кодов: «fridge» — тот же холодильник. */
 const TYPE_ALIASES: Record<string, string> = { fridge: "refrigerator" };
@@ -356,35 +361,35 @@ export function EquipmentDialog({
             </Link>
           </div>
         ) : null}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Поля — с подписью внутри рамки (`FloatingLabelField`), парные — в
+            одну строку: окно ниже и на телефоне помещается без долгой прокрутки. */}
+        <form onSubmit={handleSubmit} className="space-y-2.5">
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="eq-name">
-              {t("nameLabel")} <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="eq-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("namePlaceholder")}
-              required
-            />
+          <div>
+            <FloatingLabelField label={t("nameLabel")} htmlFor="eq-name" required>
+              <Input
+                id="eq-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("namePlaceholder")}
+                required
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
+              />
+            </FloatingLabelField>
             {duplicateName ? (
-              <p className="text-[13px] text-[#b45309]">
+              <p className="mt-1.5 text-[13px] text-[#b45309]">
                 {t("duplicateName")}
               </p>
             ) : null}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="eq-type">
-              {t("typeLabel")} <span className="text-destructive">*</span>
-            </Label>
+          <div className="grid gap-2.5 sm:grid-cols-2">
+          <FloatingLabelField label={t("typeLabel")} htmlFor="eq-type" required>
             <Select value={type} onValueChange={setType} required>
-              <SelectTrigger id="eq-type" className="w-full">
+              <SelectTrigger id="eq-type" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                 <SelectValue placeholder={t("typePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
@@ -400,14 +405,11 @@ export function EquipmentDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </FloatingLabelField>
           {byPoints && (buildings.length >= 2 || loosePlaces.length > 0) ? (
-            <div className="space-y-2">
-              <Label htmlFor="eq-building">
-                {t("pointLabel")} <span className="text-destructive">*</span>
-              </Label>
+            <FloatingLabelField label={t("pointLabel")} htmlFor="eq-building" required>
               <Select value={buildingId} onValueChange={changeBuilding}>
-                <SelectTrigger id="eq-building" className="w-full">
+                <SelectTrigger id="eq-building" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                   <SelectValue placeholder={t("pointPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -421,14 +423,24 @@ export function EquipmentDialog({
                   ) : null}
                 </SelectContent>
               </Select>
-            </div>
-          ) : null}
-          <div className="space-y-2">
-            <Label htmlFor="eq-area">
-              {t("roomLabel")} <span className="text-destructive">*</span>
-            </Label>
+            </FloatingLabelField>
+          ) : (
+            // Объект один — пара к «Типу» — заводской номер.
+            <FloatingLabelField label={t("serialLabel")} htmlFor="eq-serial">
+              <Input
+                id="eq-serial"
+                value={serialNumber}
+                onChange={(e) => setSerialNumber(e.target.value)}
+                placeholder={t("serialPlaceholder")}
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
+              />
+            </FloatingLabelField>
+          )}
+          </div>
+          <div>
+            <FloatingLabelField label={t("roomLabel")} htmlFor="eq-area" required>
             <Select value={placeKey} onValueChange={setPlaceKey} required>
-              <SelectTrigger id="eq-area" className="w-full">
+              <SelectTrigger id="eq-area" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                 <SelectValue placeholder={t("roomPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
@@ -466,25 +478,28 @@ export function EquipmentDialog({
                 )}
               </SelectContent>
             </Select>
+            </FloatingLabelField>
             {byPoints && pointPlaces.length === 0 && buildingId !== NO_BUILDING ? (
-              <p className="text-[12.5px] text-[#b45309]">
-                {t("noRoomsInPoint")}
+              <p className="mt-1.5 text-[12.5px] text-[#b45309]">
+                {t("noRoomsInPoint")}{" "}
+                <SectionJump to="buildings" />
               </p>
             ) : null}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="eq-serial">{t("serialLabel")}</Label>
-            <Input
-              id="eq-serial"
-              value={serialNumber}
-              onChange={(e) => setSerialNumber(e.target.value)}
-              placeholder={t("serialPlaceholder")}
-            />
-          </div>
+          {byPoints && (buildings.length >= 2 || loosePlaces.length > 0) ? (
+            <FloatingLabelField label={t("serialLabel")} htmlFor="eq-serial">
+              <Input
+                id="eq-serial"
+                value={serialNumber}
+                onChange={(e) => setSerialNumber(e.target.value)}
+                placeholder={t("serialPlaceholder")}
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
+              />
+            </FloatingLabelField>
+          ) : null}
           {isLamp ? null : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="eq-temp-min">{t("tempMinLabel")}</Label>
+          <div className="grid grid-cols-2 gap-2.5">
+            <FloatingLabelField label={t("tempMinLabel")} htmlFor="eq-temp-min">
               <Input
                 id="eq-temp-min"
                 type="text"
@@ -492,10 +507,10 @@ export function EquipmentDialog({
                 value={tempMin}
                 onChange={(e) => setTempMin(e.target.value)}
                 placeholder={t("tempMinPlaceholder")}
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="eq-temp-max">{t("tempMaxLabel")}</Label>
+            </FloatingLabelField>
+            <FloatingLabelField label={t("tempMaxLabel")} htmlFor="eq-temp-max">
               <Input
                 id="eq-temp-max"
                 type="text"
@@ -503,15 +518,15 @@ export function EquipmentDialog({
                 value={tempMax}
                 onChange={(e) => setTempMax(e.target.value)}
                 placeholder={t("tempMaxPlaceholder")}
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
               />
-            </div>
+            </FloatingLabelField>
           </div>
           )}
           {isLamp ? (
             <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="lamp-section">
               <div className="text-[14px] font-semibold text-[#0b1024]">{t("lampSection")}</div>
-              <div className="space-y-2">
-                <Label htmlFor="eq-lamp-model">{t("lampModelLabel")}</Label>
+              <FloatingLabelField label={t("lampModelLabel")} htmlFor="eq-lamp-model">
                 <Select
                   value={lampModel}
                   onValueChange={(value) => {
@@ -520,7 +535,7 @@ export function EquipmentDialog({
                     if (preset) setLampLifetime(String(preset.hours));
                   }}
                 >
-                  <SelectTrigger id="eq-lamp-model" className="w-full">
+                  <SelectTrigger id="eq-lamp-model" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                     <SelectValue placeholder={t("lampModelPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -531,21 +546,18 @@ export function EquipmentDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </FloatingLabelField>
+              <div className="grid grid-cols-2 gap-2.5">
+                <FloatingLabelField label={t("lampLifeLabel")} htmlFor="eq-lamp-life">
+                  <Input id="eq-lamp-life" inputMode="numeric" value={lampLifetime} onChange={(e) => setLampLifetime(e.target.value)} placeholder={t("lampLifePlaceholder")} className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+                </FloatingLabelField>
+                <FloatingLabelField label={t("lampUsedLabel")} htmlFor="eq-lamp-used">
+                  <Input id="eq-lamp-used" inputMode="decimal" value={lampUsed} onChange={(e) => setLampUsed(e.target.value)} placeholder={t("lampUsedPlaceholder")} className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+                </FloatingLabelField>
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="eq-lamp-life">{t("lampLifeLabel")}</Label>
-                  <Input id="eq-lamp-life" inputMode="numeric" value={lampLifetime} onChange={(e) => setLampLifetime(e.target.value)} placeholder={t("lampLifePlaceholder")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="eq-lamp-used">{t("lampUsedLabel")}</Label>
-                  <Input id="eq-lamp-used" inputMode="decimal" value={lampUsed} onChange={(e) => setLampUsed(e.target.value)} placeholder={t("lampUsedPlaceholder")} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="eq-lamp-installed">{t("lampInstalledLabel")}</Label>
-                <Input id="eq-lamp-installed" type="date" value={lampInstalledAt} onChange={(e) => setLampInstalledAt(e.target.value)} />
-              </div>
+              <FloatingLabelField label={t("lampInstalledLabel")} htmlFor="eq-lamp-installed">
+                <Input id="eq-lamp-installed" type="date" value={lampInstalledAt} onChange={(e) => setLampInstalledAt(e.target.value)} className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS} />
+              </FloatingLabelField>
               {(() => {
                 const life = Number(lampLifetime) || null;
                 const used = Number(lampUsed.replace(",", ".")) || 0;
@@ -593,20 +605,22 @@ export function EquipmentDialog({
             <FillerPicker value={fillerUserIds} onChange={setFillerUserIds} options={fillerOptions} objectNoun={isLamp ? t("fillerNounLamp") : t("fillerNounEquipment")} />
           ) : null}
           {isLamp ? null : (
-          <div className="space-y-2">
-            <Label htmlFor="eq-tuya">{t("tuyaLabel")}</Label>
-            <Input
-              id="eq-tuya"
-              value={tuyaDeviceId}
-              onChange={(e) => setTuyaDeviceId(e.target.value)}
-              placeholder={t("tuyaPlaceholder")}
-            />
-            <p className="text-xs text-muted-foreground">
+          <div>
+            <FloatingLabelField label={t("tuyaLabel")} htmlFor="eq-tuya">
+              <Input
+                id="eq-tuya"
+                value={tuyaDeviceId}
+                onChange={(e) => setTuyaDeviceId(e.target.value)}
+                placeholder={t("tuyaPlaceholder")}
+                className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
+              />
+            </FloatingLabelField>
+            <p className="mt-1.5 text-xs text-muted-foreground">
               {t("tuyaHint")}
             </p>
           </div>
           )}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-1.5">
             <Button
               type="button"
               variant="outline"

@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SectionJump } from "@/components/shared/section-jump";
 
 interface EquipmentItem {
   id: string;
@@ -157,6 +158,7 @@ export function TemperatureChart({ equipmentList }: TemperatureChartProps) {
           <p className="text-sm text-muted-foreground">
             {t("noIotEquipment")}
           </p>
+          <SectionJump to="equipment" variant="button" className="mt-3" />
         </CardContent>
       </Card>
     );

@@ -719,6 +719,15 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) select
   color: var(--app-text);
   border-color: var(--app-border-strong);
 }
+/* Поле без своей рамки и фона стоит внутри рамки-контейнера (подпись в рамке —
+   `FloatingLabelField`, анкета после регистрации): фон даёт контейнер. Без
+   этого правило выше рисовало в тёмной теме светлый прямоугольник внутри
+   рамки поля. */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]).border-0.bg-transparent,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) textarea.border-0.bg-transparent,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) select.border-0.bg-transparent {
+  background-color: transparent;
+}
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) textarea:focus,
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) select:focus {
@@ -1817,9 +1826,12 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-
 }
 /* Меню «Новый» (владелец, 2026-11-11: «иконки минималистичнее, сейчас
    грязно»): плашка плоская — мягкая подложка и иконка в цвет пункта, без
-   градиента, блика, «стопки», кольца и качания. Цвет по-прежнему узнаётся. */
+   градиента, блика, «стопки», кольца и качания. Цвет по-прежнему узнаётся.
+   `data-nav-flat` — те же плашки вне сайдбара: выпадающая панель строки над
+   страницей (портал в <body>, поэтому вес набирается через `body`). */
 [data-sidebar-layout="new"] [data-nav-chip],
-.app-shell [data-sidebar-layout="new"] [data-nav-chip] {
+.app-shell [data-sidebar-layout="new"] [data-nav-chip],
+:is(.app-shell, body) [data-nav-flat] [data-nav-chip] {
   color: var(--tone);
   background-color: var(--tone-row);
   background-image: none;
@@ -1829,13 +1841,15 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [data-
   rotate: none;
   animation: none;
 }
-[data-sidebar-layout="new"] [data-nav-row][data-active] [data-nav-chip] {
+[data-sidebar-layout="new"] [data-nav-row][data-active] [data-nav-chip],
+[data-nav-flat] [data-nav-row][data-active] [data-nav-chip] {
   color: var(--tone-ink, var(--tone));
   background-color: transparent;
   box-shadow: none;
   animation: none;
 }
-[data-sidebar-layout="new"] [data-nav-row]:hover [data-nav-chip] > svg {
+[data-sidebar-layout="new"] [data-nav-row]:hover [data-nav-chip] > svg,
+[data-nav-flat] [data-nav-row]:hover [data-nav-chip] > svg {
   animation: none;
 }
 

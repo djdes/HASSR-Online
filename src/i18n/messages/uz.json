@@ -2962,6 +2962,14 @@
             "printer": "Onlayn printer",
             "kiosk": "Umumiy planshet",
             "products": "Mahsulotlar katalogi"
+          },
+          "short": {
+            "staff": "Xodimlar",
+            "productionControl": "IChN",
+            "qr": "QR va plakatlar",
+            "printer": "Printer",
+            "kiosk": "Planshet",
+            "products": "Mahsulotlar"
           }
         },
         "journals": {
@@ -2979,6 +2987,10 @@
             "standard": "Standart to‘plam",
             "haccp": "HACCP to‘plami",
             "extra": "Qo‘shimcha"
+          },
+          "short": {
+            "verify": "Tekshirish",
+            "setup": "Sozlash"
           }
         },
         "checklists": {
@@ -3150,11 +3162,13 @@
       },
       "contentLoading": "Sahifa yangilanmoqda…",
       "listLoading": "Ro‘yxat yuklanmoqda…",
-      "topMenuMore": "Yana",
       "collapseMenu": "Menyuni yig‘ish",
       "expandMenu": "Menyuni ochish",
       "scrollUp": "Menyuni yuqoriga aylantirish",
-      "scrollDown": "Menyuni pastga aylantirish"
+      "scrollDown": "Menyuni pastga aylantirish",
+      "scrollLeft": "Menyuni chapga aylantirish",
+      "scrollRight": "Menyuni o‘ngga aylantirish",
+      "openSection": "Bo‘limni ochish"
     },
     "header": {
       "staff": "Xodimlar",
@@ -25825,6 +25839,14 @@
       "noActiveEmployees": "Tashkilotda hozircha faol xodimlar yo‘q.",
       "nobodyFound": "Hech kim topilmadi — boshqa ismni sinab ko‘ring."
     },
+    "sectionJump": {
+      "staff": "Xodimlarni qo‘shish",
+      "positions": "Lavozimlarni sozlash",
+      "equipment": "Uskuna qo‘shish",
+      "buildings": "Xonalarni qo‘shish",
+      "areas": "Sexlarni qo‘shish",
+      "products": "Mahsulotlar katalogini to‘ldirish"
+    },
     "glowLoader": {
       "loading": "Yuklanmoqda..."
     },
@@ -27253,6 +27275,7 @@
       "actionAriaUnread": "{label} · yangi xabarlar: {count, number}",
       "contacts": "Kontaktlar",
       "contactsHint": "Telefon, Telegram, MAX va pochta",
+      "dockTitle": "Aloqa va yordam",
       "close": "Yopish"
     },
     "kioskSessionGuard": {
@@ -29473,7 +29496,7 @@
       "autoRoundRobin": "— Avto (round-robin) —",
       "autoHint": "Ko‘rsatilmasa — tizim mos xodimlarni oxirgi 7 kun bo‘yicha navbatma-navbat tanlaydi.",
       "allowedPositions": "Kimga yuborish mumkin",
-      "noPositions": "Lavozimlar hali yaratilmagan. “Xodimlar” sahifasida qo‘shing.",
+      "noPositions": "Lavozimlar hali yaratilmagan.",
       "allowedPositionsHint": "Bo‘sh bo‘lsa — barcha lavozimlarga ruxsat etiladi.",
       "bonusTitle": "Bajarilgani uchun mukofot",
       "bonusBadge": "Mukofotli jurnal",
@@ -30335,7 +30358,7 @@
       "primaryBadge": "asosiy",
       "slotNoneSuitable": "Mos kelmaydi",
       "slotChooseEmployee": "Xodimni tanlash",
-      "slotNoEmployeesHint": "Xodimlar yo‘q. Ularni /settings/users sahifasida yarating.",
+      "slotNoEmployeesHint": "Hozircha xodimlar yo‘q.",
       "reasonAdmin": "admin — eng yuqori darajali",
       "reasonManager": "rahbar",
       "reasonMatchesKeywords": "kalit so‘zlarga mos",

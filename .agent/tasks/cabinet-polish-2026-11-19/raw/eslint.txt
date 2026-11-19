@@ -1,0 +1,11 @@
+eslint по файлам задачи (37 шт., ветка против origin/master):
+
+src/components/settings/journal-responsibles-client.tsx
+  28:3  warning  'X' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+src/components/settings/schedule-editor.tsx
+  155:9  warning  'positionById' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (0 errors, 2 warnings)
+
+exit=0

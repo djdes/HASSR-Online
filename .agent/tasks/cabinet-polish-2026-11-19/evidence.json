@@ -1,0 +1,68 @@
+{
+  "task": "cabinet-polish-2026-11-19",
+  "branch": "claude/practical-ramanujan-v7dvcx",
+  "base": "1a16c18a",
+  "mergedMaster": "23b8a515",
+  "checkedAt": "2026-11-19",
+  "verdict": "PASS",
+  "checks": {
+    "typecheck": { "status": "PASS", "evidence": "raw/typecheck.txt" },
+    "tests": { "status": "PASS", "evidence": "raw/test-gate.txt", "note": "полный набор: pass=6643, fail=0" },
+    "i18n": { "status": "PASS", "evidence": "raw/i18n-check.txt" },
+    "eslint": { "status": "PASS", "evidence": "raw/eslint.txt", "note": "0 ошибок, 2 прежних предупреждения" },
+    "browser": { "status": "PASS", "evidence": "raw/ui-check.txt", "note": "23 из 23" }
+  },
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/components/layout/fab-dock.tsx", "raw/ui-check.txt"] },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/home/page.tsx",
+        "src/app/(dashboard)/layout.tsx",
+        "src/components/contact/contact-us-dialog.tsx",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/section-jumps.ts",
+        "src/components/shared/section-jump.tsx",
+        "src/lib/section-jumps.test.ts",
+        "raw/ui-notes.txt"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/journals/journal-dialog-field.tsx",
+        "src/components/cleaning/room-editor-dialog.tsx",
+        "src/components/settings/equipment-dialog.tsx",
+        "src/components/settings/area-dialog.tsx",
+        "src/components/settings/product-dialog.tsx",
+        "src/app/app-theme.css",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": ["src/components/layout/section-top-menu.tsx", "src/lib/nav-layout.ts", "src/lib/nav-layout.test.ts", "raw/ui-check.txt"]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": ["src/components/layout/section-top-menu.tsx", "src/lib/app-nav.server.ts", "src/lib/nav-layout.test.ts", "raw/ui-check.txt"]
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/dashboard/dashboard-footer.tsx",
+        "src/components/layout/app-sidebar-accordion-classic.tsx",
+        "raw/ui-check.txt"
+      ]
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt", "raw/eslint.txt"]
+    }
+  }
+}

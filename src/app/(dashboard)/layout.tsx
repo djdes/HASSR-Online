@@ -648,8 +648,15 @@ export default async function DashboardLayout({
               <main> (снаружи коробки), из-за чего левая граница контента
               оказывалась на 24px левее левой границы шапки. Единственное
               место, где задаётся горизонтальная геометрия страницы. */}
-          <main id={MAIN_CONTENT_ID} tabIndex={-1} className="flex-1 py-4 outline-none md:py-6">
-            <div className="mx-auto w-full max-w-[1800px] px-4 md:px-8">
+          {/* Главная (`data-home-page`) на компьютере занимает ровно высоту
+              окна: <main> и коробка становятся колонкой и отдают странице
+              оставшуюся высоту. Остальных страниц это не касается. */}
+          <main
+            id={MAIN_CONTENT_ID}
+            tabIndex={-1}
+            className="flex-1 py-4 outline-none md:py-6 lg:has-[[data-home-page]]:flex lg:has-[[data-home-page]]:flex-col"
+          >
+            <div className="mx-auto w-full max-w-[1800px] px-4 md:px-8 lg:has-[[data-home-page]]:flex lg:has-[[data-home-page]]:flex-1 lg:has-[[data-home-page]]:flex-col">
               {/* Провайдер оборачивает и навигацию, и контент: страницы
                   уточняют крошки через <PageCrumbs>, а рисует их PageNav. */}
               <PageNavProvider>

@@ -1,0 +1,25 @@
+PASS  AC1  light 1280px: one button, list has contacts/support/assistant  theme=light buttons=1 first=КонтактыТелефон, Tel
+PASS  AC1  light 390px: one button, list has contacts/support/assistant  theme=light buttons=1 first=КонтактыТелефон, Tel
+PASS  AC1  dark 1280px: one button, list has contacts/support/assistant  theme=dark buttons=1 first=КонтактыТелефон, Tel
+PASS  AC1  dark 390px: one button, list has contacts/support/assistant  theme=dark buttons=1 first=КонтактыТелефон, Tel
+PASS  AC1  new design: button opens Contacts window directly (unchanged)  buttons=1 dialog=1
+PASS  AC2  1280x720: no vertical scroll, contacts fully visible  {"doc":720,"win":720,"contactsBottom":623,"overlap":false}
+PASS  AC2  1366x768: no vertical scroll, contacts fully visible  {"doc":768,"win":768,"contactsBottom":671,"overlap":false}
+PASS  AC2  1440x900: no vertical scroll, contacts fully visible  {"doc":900,"win":900,"contactsBottom":803,"overlap":false}
+PASS  AC2  1920x1080: no vertical scroll, contacts fully visible  {"doc":1080,"win":1080,"contactsBottom":915,"overlap":false}
+PASS  AC2  390x844: contacts block <= 330px, no horizontal scroll  {"contacts":316,"scrollWidth":390}
+PASS  AC4  room dialog light 1280px: fields 60px, one row, Save visible, control transparent  {"fields":[60,60],"sameRow":true,"saveVisible":true,"inputBg":"rgba(0, 0, 0, 0)","frameBg":"rgb(255, 255, 255)","labelColor":"rgb(138, 143, 163)","valueColor":"rgb(11, 16, 36)"}
+PASS  AC4  room dialog light 390px: fields 60px, stacked, Save visible, control transparent  {"fields":[60,60],"sameRow":false,"saveVisible":true,"inputBg":"rgba(0, 0, 0, 0)","frameBg":"rgb(255, 255, 255)","labelColor":"rgb(138, 143, 163)","valueColor":"rgb(11, 16, 36)"}
+PASS  AC4  room dialog dark 1280px: fields 60px, one row, Save visible, control transparent  {"fields":[60,60],"sameRow":true,"saveVisible":true,"inputBg":"rgba(0, 0, 0, 0)","frameBg":"rgb(58, 55, 87)","labelColor":"rgb(138, 143, 163)","valueColor":"rgb(242, 243, 251)"}
+PASS  AC4  equipment dialog: in-border labels, single-line fields 60px  {"count":8,"heights":[60]}
+PASS  AC4  area dialog: in-border labels, single-line fields 60px  {"count":1,"heights":[60]}
+PASS  AC4  product dialog: in-border labels, single-line fields 60px  {"count":7,"heights":[60]}
+PASS  AC5  light: PPK panel — every link has an icon chip, tabs branch under links, no headings  {"links":18,"withChip":18,"tabGroups":5,"groups":3,"headings":0,"activeTab":"Состав","rowIcons":9}
+PASS  AC5  dark: PPK panel — every link has an icon chip, tabs branch under links, no headings  {"links":18,"withChip":18,"tabGroups":5,"groups":3,"headings":0,"activeTab":"Состав","rowIcons":9}
+PASS  AC6  1250px: nine items visible without «Ещё» and without scrolling  {"labels":["Сотрудники","Журналы","ППКPRO","Цеха и помещения","Оборудование","QR и плакаты","Принтер","Планшет","Продукты"],"allVisible":true,"more":0,"arrows":0,"title":"Программа производственного контроля"}
+PASS  AC6  1280px: nine items visible without «Ещё» and without scrolling  {"labels":["Сотрудники","Журналы","ППКPRO","Цеха и помещения","Оборудование","QR и плакаты","Принтер","Планшет","Продукты"],"allVisible":true,"more":0,"arrows":0,"title":"Программа производственного контроля"}
+PASS  AC6  1024px: right arrow scrolls the row, last item comes into view, left arrow appears  {"before":{"arrows":["right"],"left":0},"after":{"arrows":["left"],"left":209,"lastVisible":true}}
+PASS  AC7  light: footer line = sidebar line, both 73px, button centred, paddings equal  {"footerTop":726.96875,"navTop":726.96875,"footerHeight":73,"navHeight":73,"navWidth":255,"sidebarWidth":256,"fabCenter":764,"stripCenter":763.96875,"leftCenter":763.96875,"footerTextLeft":288,"mainTextLeft":288}
+PASS  AC7  dark: footer line = sidebar line, both 73px, button centred, paddings equal  {"footerTop":726.96875,"navTop":726.96875,"footerHeight":73,"navHeight":73,"navWidth":255,"sidebarWidth":256,"fabCenter":764,"stripCenter":763.96875,"leftCenter":763.96875,"footerTextLeft":288,"mainTextLeft":288}
+
+23/23 checks passed

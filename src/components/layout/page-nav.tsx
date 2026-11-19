@@ -10,6 +10,7 @@ import { Breadcrumbs, type Crumb } from "@/components/ui/breadcrumbs";
 import { getRouteTitle, getSiblingRoutes } from "@/lib/route-titles";
 import { customSectionNameByHref } from "@/lib/custom-names";
 import { sectionForPath } from "@/lib/app-nav";
+import { HOME_HREF } from "@/lib/home-page";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { useSectionPlace } from "@/components/layout/section-tabs";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
@@ -251,7 +252,9 @@ export function PageNav({ organizationName }: { organizationName: string }) {
   // одного звена ничего не объясняет. Журналы рисуют крошки сами. В разделе
   // с меню крошек нет совсем: где человек, показывает меню слева, а на
   // глубоких страницах — ссылка «назад» (`SectionFrame`).
-  if (atRoot || section?.menu || pathname === "/dashboard" || isJournalCodeSubtree(pathname)) return newNav;
+  // Главная кабинета (`/home`) — как дашборд: цепочка «организация › Главная»
+  // ничего не объясняет и только сдвигает страницу вниз.
+  if (atRoot || section?.menu || pathname === "/dashboard" || pathname === HOME_HREF || isJournalCodeSubtree(pathname)) return newNav;
 
   // Кнопка и крошки — одной строкой. Раньше они стояли друг под другом в
   // 6px и одинаковым серым: читались как две строки одного текста, а не

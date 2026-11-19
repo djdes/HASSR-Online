@@ -178,13 +178,31 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
     );
   };
 
+  const inspectionOpen = Boolean(inspection?.menu) && openKey === inspection?.key;
+
   return (
     <>
-      <div className="space-y-1">{main.map((section) => renderSection(section))}</div>
+      <div className={touch ? "space-y-1" : "space-y-1 pb-4"}>{main.map((section) => renderSection(section))}</div>
       {inspection ? (
-        <div className={touch ? "pt-3" : "mt-auto pt-3"}>
-          <div className="border-t border-[#ececf4] pt-3">{renderSection(inspection, true)}</div>
-        </div>
+        touch ? (
+          <div className="pt-3">
+            <div className="border-t border-[#ececf4] pt-3">{renderSection(inspection, true)}</div>
+          </div>
+        ) : (
+          // Компьютер: полоса во всю ширину меню, 72px + линия — как подвал
+          // справа (`DashboardFooter`); кнопка — по центру полосы. Свёрнутая
+          // остаётся на виду, когда длинное меню прокручено.
+          <div
+            data-nav-bottom
+            className={cn(
+              // 1 (линия) + 13 + 46 (кнопка с рамкой) + 13 = 73px — высота подвала.
+              "-mx-3 mt-auto border-t border-[#ececf4] bg-white px-3 py-[13px]",
+              !inspectionOpen && "sticky bottom-0 z-10",
+            )}
+          >
+            {renderSection(inspection, true)}
+          </div>
+        )
       ) : null}
     </>
   );
@@ -230,7 +248,7 @@ export function ClassicSidebarAccordion({
           large
         />
       </div>
-      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">
+      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pt-4">
         <ClassicNavAccordion />
       </nav>
     </aside>

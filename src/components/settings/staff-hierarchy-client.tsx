@@ -5,6 +5,7 @@ import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { SectionJump } from "@/components/shared/section-jump";
 
 type Position = { id: string; name: string; categoryKey: string };
 type Employee = { id: string; name: string; jobPositionId: string | null; positionTitle: string | null };
@@ -224,7 +225,8 @@ export function StaffHierarchyClient({
 
       {scopes.length === 0 && availableManagers.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-[14px] text-slate-500">
-          {t("noActiveEmployees")}
+          <p>{t("noActiveEmployees")}</p>
+          <SectionJump to="staff" variant="button" className="mt-3" />
         </div>
       ) : null}
 
