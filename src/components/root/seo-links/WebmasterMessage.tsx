@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { SEO_BTN_PRIMARY_CLASS, SEO_BTN_SM_CLASS } from "./types";
+import { clearSentWebmasterMessageDraft, saveWebmasterMessageDraft, webmasterMessageDraftKey } from "./webmaster-message-storage";
 
 type MessageStatus = "sent" | "unavailable" | "duplicate" | "unconfirmed" | "invalid" | "changed" | "error" | "draftError";
 
-export function WebmasterMessage({ slotId, siteId, domain }: { slotId: string; siteId: number; domain: string }) {
+export function WebmasterMessage({ slotId, siteId, domain, userId }: { slotId: string; siteId: number; domain: string; userId: string }) {
   const t = useTranslations("rootGglFirstMessage");
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
@@ -18,9 +19,35 @@ export function WebmasterMessage({ slotId, siteId, domain }: { slotId: string; s
   const [generating, setGenerating] = useState(false);
   const [status, setStatus] = useState<MessageStatus | null>(null);
   const draftRequest = useRef<AbortController | null>(null);
+  const storageUnavailable = useRef(false);
   const messageUrl = `/api/root/gogetlinks/slots/${encodeURIComponent(slotId)}/message`;
+  const storageKey = webmasterMessageDraftKey(userId, slotId, siteId);
 
   useEffect(() => () => draftRequest.current?.abort(), []);
+
+  function changeOpen(value: boolean) {
+    if (sending) return;
+    if (value && !storageUnavailable.current) {
+      try {
+        const saved = window.localStorage.getItem(storageKey) ?? "";
+        if (saved !== body) setStatus(null);
+        setBody(saved);
+      } catch {
+        storageUnavailable.current = true;
+      }
+    }
+    setOpen(value);
+  }
+
+  function updateDraft(text: string) {
+    setBody(text);
+    try {
+      saveWebmasterMessageDraft(window.localStorage, storageKey, text);
+      storageUnavailable.current = false;
+    } catch {
+      storageUnavailable.current = true;
+    }
+  }
 
   async function generateDraft() {
     if (sending || draftRequest.current) return;
@@ -49,7 +76,7 @@ export function WebmasterMessage({ slotId, siteId, domain }: { slotId: string; s
         if (result.status === "waiting") continue;
         if (result.status === "changed") { setStatus("changed"); return; }
         if (result.status === "ready" && typeof result.body === "string") {
-          setBody(result.body);
+          if (!signal.aborted) updateDraft(result.body);
           return;
         }
         break;
@@ -76,6 +103,11 @@ export function WebmasterMessage({ slotId, siteId, domain }: { slotId: string; s
       const payload: { status?: string } | null = await response.json().catch(() => null);
       switch (payload?.status) {
         case "sent":
+          try {
+            clearSentWebmasterMessageDraft(window.localStorage, storageKey, body);
+          } catch {
+            storageUnavailable.current = true;
+          }
           setBody("");
           setStatus("sent");
           break;
@@ -97,7 +129,7 @@ export function WebmasterMessage({ slotId, siteId, domain }: { slotId: string; s
   }
 
   return (
-    <Dialog open={open} onOpenChange={value => { if (!sending) setOpen(value); }}>
+    <Dialog open={open} onOpenChange={changeOpen}>
       <DialogTrigger asChild>
         <button type="button" className={SEO_BTN_SM_CLASS}>
           <MessageSquare className="size-3.5" aria-hidden />
@@ -112,7 +144,7 @@ export function WebmasterMessage({ slotId, siteId, domain }: { slotId: string; s
             aria-label={t("body")}
             placeholder={t("body")}
             value={body}
-            onChange={event => { setBody(event.target.value); setStatus(null); }}
+            onChange={event => { updateDraft(event.target.value); setStatus(null); }}
             maxLength={8000}
             rows={5}
             disabled={sending || generating}
