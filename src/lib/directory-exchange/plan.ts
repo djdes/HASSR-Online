@@ -5,9 +5,11 @@
  *
  * Группа — одна и та же запись у разных участников. Правила:
  *   • запись без связи ищет группу по естественному ключу; не нашла —
- *     основывает новую. Вторая запись с тем же ключом в той же организации
- *     остаётся без связи и в обмене не участвует (иначе дубль расползался бы
- *     по всем участникам);
+ *     основывает новую. Совпавшие записи только связываются: каждая остаётся
+ *     со своим содержимым, пока одну из них не изменят, — при связывании
+ *     ничьи данные не затираются. Вторая запись с тем же ключом в той же
+ *     организации остаётся без связи и в обмене не участвует (иначе дубль
+ *     расползался бы по всем участникам);
  *   • группы нет у участника (связи никогда не было) — запись создаётся из
  *     образца группы;
  *   • запись изменилась с прошлого обмена (отпечаток не равен отпечатку
@@ -164,8 +166,9 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
       list.reduce((best, member) => (timeOf(member.row) > timeOf(best.row) ? member : best), list[0]);
     const changed = live.filter((member) => member.link !== null && member.link.hash !== member.row.hash);
     const established = live.filter((member) => member.link !== null);
-    // Образец: изменённая запись (поздняя из нескольких); правок нет — то,
-    // о чём участники уже договорились; группа новая — самая свежая запись.
+    // Образец: изменённая запись (поздняя из нескольких); правок нет — запись
+    // давнего участника; группа новая — самая свежая запись. Без правки
+    // образец нужен только тем, у кого записи ещё нет.
     const canonical = changed.length > 0 ? latest(changed) : established.length > 0 ? established[0] : latest(live);
     const canonicalChanged = changed.length > 0;
     const source = { fromOrganizationId: canonical.organizationId, fromEntityId: canonical.row.id, hash: canonical.row.hash };
@@ -179,9 +182,10 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
         }
         continue;
       }
-      // Без правки образца давние участники не трогаются: расхождение без
-      // правки — след особенностей записи, а не повод переписывать данные.
-      if (canonicalChanged || member.link === null) {
+      // Переписываем чужую запись только по настоящей правке. Расхождение без
+      // правки (записи совпали по ключу при связывании, или сохранились чуть
+      // иначе образца) — не повод затирать данные.
+      if (canonicalChanged) {
         changes.push({ type: "update", groupId, organizationId: member.organizationId, entityId: member.row.id, ...source });
       }
     }

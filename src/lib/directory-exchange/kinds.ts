@@ -135,10 +135,12 @@ export function naturalKey(
   }
 }
 
+const EMPTY_VALUE = "~";
+
 function canonicalValue(value: ExchangeFieldValue | undefined): string {
-  if (value === null || value === undefined) return "~";
-  if (typeof value === "string") return value === "" ? "~" : `s:${value}`;
-  if (typeof value === "number") return Number.isFinite(value) ? `n:${value}` : "~";
+  if (value === null || value === undefined) return EMPTY_VALUE;
+  if (typeof value === "string") return value === "" ? EMPTY_VALUE : `s:${value}`;
+  if (typeof value === "number") return Number.isFinite(value) ? `n:${value}` : EMPTY_VALUE;
   if (typeof value === "boolean") return value ? "b:1" : "b:0";
   return `a:${[...value].sort((a, b) => a - b).join(",")}`;
 }
@@ -166,7 +168,10 @@ function cyrb53(text: string, seed: number): string {
 export function hashFields(fields: ExchangeFields): string {
   const text = Object.keys(fields)
     .sort()
-    .map((key) => `${key}=${canonicalValue(fields[key])}`)
+    .map((key) => [key, canonicalValue(fields[key])] as const)
+    // Пустое поле в отпечаток не входит — так оно равно отсутствующему.
+    .filter(([, value]) => value !== EMPTY_VALUE)
+    .map(([key, value]) => `${key}=${value}`)
     .join("\u0001");
   return cyrb53(text, 0x9e3779b1) + cyrb53(text, 0x85ebca6b);
 }

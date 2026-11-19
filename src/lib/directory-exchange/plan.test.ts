@@ -83,19 +83,30 @@ test("unlinked rows with the same natural key are matched into one group, nothin
   assert.equal(w.rows.B.length, 1);
 });
 
-test("matched rows that differ converge: the later edit is the sample, without dates — the first participant", () => {
-  const dated = world(["A", "B"], {
-    A: [row("a1", "k", "old", at(0))],
-    B: [row("b1", "k", "new", at(5))],
+test("matched rows that differ are only linked — nothing is overwritten until one of them is edited", () => {
+  const w = world(["A", "B"], {
+    A: [row("a1", "k", "rich", at(0))],
+    B: [row("b1", "k", "poor", at(5))],
   });
-  const datedOps = sync(dated);
-  assert.deepEqual(types(datedOps), ["link:A", "link:B", "update:A"]);
-  assert.equal(dated.rows.A[0].hash, "new");
+  assert.deepEqual(types(sync(w)), ["link:A", "link:B"]);
+  assert.deepEqual([w.rows.A[0].hash, w.rows.B[0].hash], ["rich", "poor"]);
+  assert.deepEqual(w.links.map((link) => link.hash), ["rich", "poor"]);
 
-  const undated = world(["A", "B"], { A: [row("a1", "k", "first")], B: [row("b1", "k", "second")] });
-  const undatedOps = sync(undated);
-  assert.deepEqual(types(undatedOps), ["link:A", "link:B", "update:B"]);
-  assert.equal(undated.rows.B[0].hash, "first");
+  // Правка одной из них доходит до другой целиком.
+  edit(w, "A", "a1", { hash: "rich-2", updatedAt: at(10) });
+  assert.deepEqual(types(sync(w)), ["rehash:A", "update:B"]);
+  assert.equal(w.rows.B[0].hash, "rich-2");
+});
+
+test("a brand-new group is created elsewhere from the latest record, without dates — from the first participant", () => {
+  const dated = world(["A", "B", "C"], { A: [row("a1", "k", "old", at(0))], B: [row("b1", "k", "new", at(5))] });
+  const datedOps = sync(dated);
+  assert.deepEqual(types(datedOps), ["create:C", "link:A", "link:B"]);
+  assert.equal(dated.rows.C[0].hash, "new");
+
+  const undated = world(["A", "B", "C"], { A: [row("a1", "k", "first")], B: [row("b1", "k", "second")] });
+  sync(undated);
+  assert.equal(undated.rows.C[0].hash, "first");
 });
 
 test("a new record is created at every other participant from the sample", () => {
@@ -199,9 +210,9 @@ test("deleted and entered again under the same key: the link comes back instead 
   w.rows.A.push(row("a2", "k", "mine"));
   // В одном обмене: старая запись исчезла, новая с тем же ключом уже есть.
   const ops = sync(w);
-  assert.deepEqual(types(ops), ["link:A", "update:A"]);
+  assert.deepEqual(types(ops), ["link:A"]);
   assert.equal(linkOf(w, "g1", "A")?.entityId, "a2");
-  assert.equal(w.rows.A[0].hash, "h1");
+  assert.equal(w.rows.A[0].hash, "mine");
   assert.equal(w.rows.B.length, 1);
 
   // И когда надгробие уже записано прошлым обменом.
@@ -277,16 +288,37 @@ test("key collision between different groups: the first free group is taken, the
   assert.equal(new Set(w.links.filter((item) => item.organizationId === "C").map((item) => item.groupId)).size, 2);
 });
 
-test("a newcomer adopts the established records and receives the missing ones", () => {
+test("a newcomer is linked to the established records and receives the missing ones", () => {
   const w = world(["A", "B"], { A: [row("a1", "k1", "h1", at(0)), row("a2", "k2", "h2", at(0))] });
   sync(w);
   w.participants.push("C");
-  // У новичка запись с тем же ключом новее — образцом остаётся согласованная.
+  // У новичка запись с тем же ключом новее и другая: ничьи данные не меняются.
   w.rows.C = [row("c1", "k1", "mine", at(60))];
   const ops = sync(w);
-  assert.deepEqual(types(ops), ["create:C", "link:C", "update:C"]);
-  assert.equal(w.rows.C.find((item) => item.id === "c1")?.hash, "h1");
+  assert.deepEqual(types(ops), ["create:C", "link:C"]);
+  assert.equal(w.rows.C.find((item) => item.id === "c1")?.hash, "mine");
   assert.deepEqual([w.rows.A[0].hash, w.rows.B[0].hash], ["h1", "h1"]);
+  // Недостающее новичок получает от давнего участника.
+  const create = ops.find((op) => op.type === "create");
+  assert.ok(create?.type === "create" && create.fromOrganizationId === "A" && create.hash === "h2");
+  assert.equal(w.rows.C.length, 2);
+
+  // Правка новичка расходится по всем, правка давнего участника — доходит до новичка.
+  edit(w, "C", "c1", { hash: "mine-2", updatedAt: at(90) });
+  assert.deepEqual(types(sync(w)), ["rehash:C", "update:A", "update:B"]);
+  edit(w, "A", "a1", { hash: "h1-3", updatedAt: at(120) });
+  assert.deepEqual(types(sync(w)), ["rehash:A", "update:B", "update:C"]);
+});
+
+test("an edit and a first link in one run: the edit also reaches the record linked just now", () => {
+  const w = world(["A", "B"], { A: [row("a1", "k", "h1")] });
+  sync(w);
+  w.participants.push("C");
+  w.rows.C = [row("c1", "k", "mine")];
+  edit(w, "A", "a1", { hash: "h2" });
+  const ops = sync(w);
+  assert.deepEqual(types(ops), ["link:C", "rehash:A", "update:B", "update:C"]);
+  assert.deepEqual([w.rows.B[0].hash, w.rows.C[0].hash], ["h2", "h2"]);
 });
 
 test("links of organizations outside the run are ignored, a lone participant exchanges nothing", () => {
