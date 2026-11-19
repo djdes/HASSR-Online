@@ -161,8 +161,9 @@ test("кнопка видео — только на русской главно�
   }
   const page = read("src/app/page.tsx");
   assert.match(page, /narratedVideoFor\(locale\)/);
-  assert.match(page, /<QrPlayer [^>]*video=\{narratedVideo\}/);
-  assert.match(read("src/components/landing/qr-player/qr-player.tsx"), /\{video \? \(/, "без видео кнопка не рисуется");
+  assert.match(page, /<QrPlayer\s[^>]*video=\{narratedVideo\}/);
+  // С 19.11.2026 в той же строке стоит презентация (PDF): кнопка видео — своим условием.
+  assert.match(read("src/components/landing/qr-player/qr-player.tsx"), /\{video \? <WatchVideoButton /, "без видео кнопка не рисуется");
 });
 
 test("плеер видео: телефон — нативный полный экран, компьютер — окно, файл не грузится до нажатия", () => {

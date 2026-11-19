@@ -2698,7 +2698,12 @@
     },
     "legal": {
       "consentSentence": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>, have read the <privacy>Privacy Policy</privacy>, and give my <consent>consent to the processing of personal data</consent>.",
-      "consentShort": "I accept the <offer>Offer</offer> and give my <consent>consent to the processing of personal data</consent>"
+      "consentShort": "I accept the <offer>Offer</offer> and give my <consent>consent to the processing of personal data</consent>",
+      "openOfferTitle": "Open the Offer?",
+      "openConsentTitle": "Open the consent to personal data processing?",
+      "openHint": "The document opens in a new tab; the form stays where it is.",
+      "openYes": "Yes",
+      "openNo": "No"
     },
     "challenge": {
       "websiteLabel": "Your website"
@@ -2749,7 +2754,13 @@
       "suggestedTypo": "Please check the email address. Did you mean {suggestion}?",
       "applySuggestion": "Use {suggestion}",
       "domainMissing": "This email domain does not appear to exist. Check the address; a sign-in email will not reach it.",
-      "domainChecking": "Checking the domain…"
+      "domainChecking": "Checking the domain…",
+      "short": {
+        "missingAt": "add the @ sign",
+        "invalid": "check the address",
+        "domainMissing": "no such domain",
+        "typoChip": "→ {suggestion}"
+      }
     },
     "badges": {
       "title": "For different industries",
@@ -5744,8 +5755,8 @@
     "signedInAs": "Signed in as ",
     "tryFree": "Try for free",
     "refundGuarantee": "14-day money-back guarantee.",
-    "qrEquipmentTitle": "A QR code on your equipment",
-    "qrScanHeadline": "Scan it. Record it. Done.",
+    "qrEquipmentTitle": "QR code",
+    "qrScanHeadline": "Scan — PIN — Entry",
     "qrScanDescription": "Employees scan the equipment sticker, enter their PIN and a reading, and the entry is added to the SanPiN log. No app or password needed.",
     "automationHeadline": "Reminders, automatic entries and inspection PDFs",
     "automationLead": "The QR code is just the start. WeSetup handles the rest.",
@@ -5885,7 +5896,8 @@
     },
     "hero": {
       "title": "Digital logs for <highlight>SanPiN and HACCP</highlight>",
-      "consultationNote": "Developed in consultation with Rospotrebnadzor specialists and leading HACCP auditors"
+      "consultationNote": "Developed in consultation with Rospotrebnadzor specialists and leading HACCP auditors",
+      "trialUntil": "Everything is free until <strong>{date}</strong>, then 1 log only. <link>Details</link>"
     },
     "openGraph": {
       "title": "Digital HACCP & SanPiN logs",
@@ -5954,7 +5966,14 @@
       "inspection": "Rospotrebnadzor fine calculator",
       "integrations": "More about iiko and 1C sync",
       "dataSecurity": "How your data is stored and protected"
-    }
+    },
+    "qrScanSteps": {
+      "label": "Step {step, number}",
+      "scan": "An employee scans the QR code",
+      "pin": "Finds their name in the staff list and enters their PIN",
+      "entry": "Enters the data and it lands in the log, **even without internet!**"
+    },
+    "presentationPdfShort": "PDF"
   },
   "landingComponents": {
     "heroEmail": {
@@ -6233,10 +6252,16 @@
       "storyboardCaption": "Storyboard {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "Chapter {chapterNumber, number}: {chapterName}. Log: {journalName}. {caption}",
       "watchVideo": "Watch the video with sound",
-      "watchVideoHint": "Food service example: equipment QR codes and log entries. Turn on sound.",
+      "watchVideoHint": "Food service example: QR codes and log entries. Turn on sound.",
       "videoLabel": "How QR works — video with sound",
       "videoSubtitles": "Subtitles",
-      "seekValue": "{currentTime} of {totalTime}, chapter “{chapterName}”"
+      "seekValue": "{currentTime} of {totalTime}, chapter “{chapterName}”",
+      "watchVideoShort": "Video with sound",
+      "previousChapter": "Previous chapter",
+      "nextChapter": "Next chapter",
+      "fryerQuality": "Fryer oil",
+      "fryerQualityOk": "Score {score, number} — “{label}”: that is what goes into the frying fat log.",
+      "fryerQualityPoor": "Score {score, number} — “{label}”: the entry is logged, and the oil is due for a change."
     },
     "chapter": {
       "fridge": {
@@ -6509,8 +6534,11 @@
     "demo": {
       "employee": "Employee",
       "specialist": "Specialist",
-      "supervisor": "Manager"
-    }
+      "supervisor": "Manager",
+      "org": "WeSetup Demo"
+    },
+    "qualitySatisfactory": "Satisfactory",
+    "qualityPoor": "Unsatisfactory"
   },
   "blogChrome": {
     "list": {

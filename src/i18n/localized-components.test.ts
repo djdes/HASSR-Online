@@ -129,6 +129,19 @@ test("short legal consent of the start form names two documents and matches the 
     for (const href of ["/terms", "/privacy"]) assert.ok(!html.includes(`href="${href}"`), `${locale}: ${href}`);
     if (locale !== "ru") assert.doesNotMatch(html, /[А-Яа-яЁё]/);
   }
+  // Tapping a document name asks first (19.11.2026): the links stay real, the window has both answers.
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    for (const key of ["openOfferTitle", "openConsentTitle", "openHint", "openYes", "openNo"] as const) {
+      assert.ok(messages.auth.legal[key], `${locale}: auth.legal.${key}`);
+    }
+    for (const key of ["missingAt", "invalid", "domainMissing", "typoChip"] as const) {
+      assert.ok(messages.auth.emailField.short[key], `${locale}: auth.emailField.short.${key}`);
+    }
+  }
+  const startForm = readFileSync(new URL("../components/landing/hero-email-start.tsx", import.meta.url), "utf8");
+  assert.match(startForm, /confirmLinks/);
+  assert.doesNotMatch(startForm, /<EmailHint/, "the hint under the field shifted the page");
   // The journal stores exactly what the visitor saw (source `landing`).
   const ru = await loadMessages("ru");
   const seen = ru.auth.legal.consentShort.replace(/<[^>]+>/g, "");

@@ -2698,7 +2698,12 @@
     },
     "legal": {
       "consentSentence": "Men <offer>ommaviy oferta</offer> va <terms>Foydalanuvchi kelishuvi</terms>ni qabul qilaman, <privacy>Maxfiylik siyosati</privacy> bilan tanishdim va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman.",
-      "consentShort": "<offer>Ommaviy oferta</offer>ni qabul qilaman va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman"
+      "consentShort": "<offer>Ommaviy oferta</offer>ni qabul qilaman va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman",
+      "openOfferTitle": "Ofertani ochaymi?",
+      "openConsentTitle": "Shaxsiy ma’lumotlarni qayta ishlashga rozilikni ochaymi?",
+      "openHint": "Hujjat yangi varaqda ochiladi, shakl joyida qoladi.",
+      "openYes": "Ha",
+      "openNo": "Yo‘q"
     },
     "challenge": {
       "websiteLabel": "Veb-saytingiz"
@@ -2749,7 +2754,13 @@
       "suggestedTypo": "Elektron pochta manzilini tekshiring. Balki {suggestion} demoqchi bo‘lgandirsiz?",
       "applySuggestion": "{suggestion} bilan tuzatish",
       "domainMissing": "Bu pochta domeni mavjud emasga o‘xshaydi. Manzilni tekshiring: tizimga kirish xati bu manzilga yetib bormaydi.",
-      "domainChecking": "Domen tekshirilmoqda…"
+      "domainChecking": "Domen tekshirilmoqda…",
+      "short": {
+        "missingAt": "@ belgisi kerak",
+        "invalid": "manzilni tekshiring",
+        "domainMissing": "bunday domen yo‘q",
+        "typoChip": "→ {suggestion}"
+      }
     },
     "badges": {
       "title": "Turli faoliyat sohalari uchun",
@@ -5744,8 +5755,8 @@
     "signedInAs": "Tizimga quyidagi hisob bilan kirdingiz: ",
     "tryFree": "Bepul sinab ko‘rish",
     "refundGuarantee": "To‘lovdan keyin 14 kun ichida pulni qaytarish kafolati.",
-    "qrEquipmentTitle": "Uskunadagi QR-kod",
-    "qrScanHeadline": "Skanerlang — yozuv darhol jurnalga tushadi",
+    "qrEquipmentTitle": "QR-kod",
+    "qrScanHeadline": "Skan — PIN — Yozuv",
     "qrScanDescription": "Xodim uskuna stikeridagi QR-kodni skanerlaydi, PIN-kodi va ko‘rsatkichni kiritadi — yozuv SanPiN shaklidagi jurnalga qo‘shiladi. Ilova yoki parol kerak emas.",
     "automationHeadline": "Eslatadi, jurnalni to‘ldiradi va tekshiruv uchun PDF tayyorlaydi",
     "automationLead": "QR-kod — faqat boshlanishi. Qolganini WeSetup bajaradi.",
@@ -5885,7 +5896,8 @@
     },
     "hero": {
       "title": "<highlight>SanPiN va HACCP</highlight> uchun elektron jurnallar",
-      "consultationNote": "Rospotrebnadzor mutaxassislari va yetakchi HACCP auditorlari maslahatlari asosida ishlab chiqilgan"
+      "consultationNote": "Rospotrebnadzor mutaxassislari va yetakchi HACCP auditorlari maslahatlari asosida ishlab chiqilgan",
+      "trialUntil": "<strong>{date}</strong> gacha hammasi bepul, keyin faqat 1 ta jurnal. <link>Batafsil</link>"
     },
     "openGraph": {
       "title": "Elektron HACCP va SanPiN jurnallari",
@@ -5954,7 +5966,14 @@
       "inspection": "Rospotrebnadzor jarimalari kalkulyatori",
       "integrations": "iiko va 1C bilan sinxronlash haqida batafsil",
       "dataSecurity": "Ma’lumotlar qanday himoyalanadi va qayerda saqlanadi"
-    }
+    },
+    "qrScanSteps": {
+      "label": "{step, number}-qadam",
+      "scan": "Xodim QR-kodni skanerladi",
+      "pin": "Xodimlar ro‘yxatidan o‘zini topib, PIN-kodini kiritdi",
+      "entry": "Ma’lumotlarni kiritdi — ular jurnalga tushdi, **hatto internetsiz ham!**"
+    },
+    "presentationPdfShort": "PDF"
   },
   "landingComponents": {
     "heroEmail": {
@@ -6233,10 +6252,16 @@
       "storyboardCaption": "Kadrlar ketma-ketligi {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "{chapterNumber, number}-bob: {chapterName}. Jurnal: {journalName}. {caption}",
       "watchVideo": "Videoni ovoz bilan ko‘rish",
-      "watchVideoHint": "Umumiy ovqatlanish misoli: uskunalardagi QR-kodlar va jurnallarni to‘ldirish. Ovozni yoqing.",
+      "watchVideoHint": "Umumiy ovqatlanish misoli: QR-kodlar va jurnallarni to‘ldirish. Ovozni yoqing.",
       "videoLabel": "QR qanday ishlashi — ovozli video",
       "videoSubtitles": "Subtitrlar",
-      "seekValue": "{totalTime} dan {currentTime}, «{chapterName}» bobi"
+      "seekValue": "{totalTime} dan {currentTime}, «{chapterName}» bobi",
+      "watchVideoShort": "Ovozli video",
+      "previousChapter": "Oldingi bo‘lim",
+      "nextChapter": "Keyingi bo‘lim",
+      "fryerQuality": "Frityur yog‘i",
+      "fryerQualityOk": "Baho {score, number} — «{label}»: frityur yog‘lari jurnaliga aynan shunday yoziladi.",
+      "fryerQualityPoor": "Baho {score, number} — «{label}»: yozuv jurnalda bor, yog‘ni esa almashtirish vaqti keldi."
     },
     "chapter": {
       "fridge": {
@@ -6509,8 +6534,11 @@
     "demo": {
       "employee": "Xodim",
       "specialist": "Mutaxassis",
-      "supervisor": "Rahbar"
-    }
+      "supervisor": "Rahbar",
+      "org": "WeSetup Demo"
+    },
+    "qualitySatisfactory": "Qoniqarli",
+    "qualityPoor": "Qoniqarsiz"
   },
   "blogChrome": {
     "list": {

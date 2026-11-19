@@ -6,6 +6,7 @@ import test from "node:test";
 import { DEFAULT_PIPELINE_FIELDS } from "@/lib/journal-default-pipelines";
 import { HEALTH_CONFIRMATIONS, healthDecision } from "@/lib/health-qr";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
+import { QUALITY_LABELS } from "@/lib/fryer-oil-document";
 import messages from "@/i18n/messages/ru.json";
 
 import { formatClock, interpolate } from "./clock";
@@ -18,6 +19,7 @@ import {
   FPS,
   FRIDGE_RANGE,
   FRYER_FIELDS,
+  FRYER_QUALITY,
   JOURNALS,
   PDF,
   RESULT_SECONDS,
@@ -28,6 +30,8 @@ import {
   chapterAt,
   finalFrameOf,
   fridgeOutOfRange,
+  fryerQualityKey,
+  fryerQualityPoor,
   resultFrameOf,
   sceneFrame,
   sceneSeconds,
@@ -220,6 +224,35 @@ test("отклонения из «Попробуйте сами» совпада
   assert.equal(decision.admitted, false);
   assert.equal(decision.hygiene.status, "suspended");
   assert.ok(decision.complaints.includes("температура выше 37"));
+});
+
+test("«Попробуйте сами»: оценка масла — подписи как в журнале фритюрных жиров", () => {
+  // Третий пример — не про температуру (правки 19.11.2026).
+  assert.deepEqual({ ...FRYER_QUALITY }, { min: 1, max: 5, initial: 5 });
+  for (let score = FRYER_QUALITY.min; score <= FRYER_QUALITY.max; score += 1) {
+    assert.equal(messages.qrScene[fryerQualityKey(score)], QUALITY_LABELS[score], `оценка ${score}`);
+    assert.equal(fryerQualityPoor(score), QUALITY_LABELS[score] === "Неудовлетворительное", `оценка ${score}`);
+  }
+  const player = read("src/components/landing/qr-player/qr-player.tsx");
+  assert.ok(player.includes("data-qrp-try-fryer"), "пример с маслом в панели");
+  assert.ok(player.includes("inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr }}"), "оценка уходит в сцену");
+});
+
+test("хром 19.11.2026: стрелки глав, PDF рядом с видео, организация по-русски", () => {
+  const player = read("src/components/landing/qr-player/qr-player.tsx");
+  for (const token of ["data-qr-prev", "data-qr-next", 't("chrome.previousChapter")', 't("chrome.nextChapter")', "data-qr-presentation"]) {
+    assert.ok(player.includes(token), token);
+  }
+  assert.equal(messages.qrScene.demo.org, "ООО «БФС»");
+  const scene = read("src/components/landing/qr-player/scene.tsx");
+  assert.doesNotMatch(scene, /DEMO\.org/, "название организации — из словаря");
+  assert.equal(scene.match(/tr\("demo\.org"\)/g)?.length, 3, "шапка формы, наклейка и штамп бланка");
+  // Блок на главной: «QR-код» без «на оборудовании», три шага вместо абзаца.
+  assert.equal(messages.landing.qrEquipmentTitle, "QR-код");
+  assert.doesNotMatch(messages.qrPlayer.chrome.watchVideoHint, /оборудовани/);
+  const page = read("src/app/page.tsx");
+  assert.ok(page.includes("QR_SCAN_STEPS.map"), "три шага");
+  assert.doesNotMatch(page, /landing\.qrScanDescription/, "абзаца-описания больше нет");
 });
 
 test("напоминания 12:00 / 17:00 / 21:00 — ступени крона compliance", () => {

@@ -2606,28 +2606,29 @@ html[data-view-still] .public-theme .motion-faq::details-content {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--qrp-accent) 40%, transparent), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
-/* Компактные ползунки «Попробуйте сами»: полоса 4px, бегунок 16px,
-   зона касания 24px. */
+/* Ползунки «Попробуйте сами» — под палец (правки 19.11.2026: в бегунок
+   16 px на телефоне было не попасть): зона касания 44 px, полоса 8 px,
+   бегунок 28 px. */
 .qrp-range-try {
-  height: 24px;
+  height: 44px;
 }
 .qrp-range-try::-webkit-slider-runnable-track {
-  height: 4px;
+  height: 8px;
 }
 .qrp-range-try::-moz-range-track {
-  height: 4px;
+  height: 8px;
 }
 .qrp-range-try::-moz-range-progress {
-  height: 4px;
+  height: 8px;
 }
 .qrp-range-try::-webkit-slider-thumb {
-  width: 16px;
-  height: 16px;
-  margin-top: -6px;
+  width: 28px;
+  height: 28px;
+  margin-top: -10px;
 }
 .qrp-range-try::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
 }
 
 /* Тонкая перемотка под сценой: полоса всегда, бегунок проявляется на

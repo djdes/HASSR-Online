@@ -197,6 +197,25 @@ export function bodyFever(value: number): boolean {
   return Math.round(value * 10) > 370;
 }
 
+/**
+ * Оценка качества фритюрного жира (1–5) — третий пример «Попробуйте сами»,
+ * не про температуру. Подписи — как в журнале (`QUALITY_LABELS` в
+ * `src/lib/fryer-oil-document.ts`): 2 и 1 — «неудовлетворительное».
+ */
+export const FRYER_QUALITY = { min: 1, max: 5, initial: 5 } as const;
+export type FryerQualityKey = "qualityExcellent" | "qualityGood" | "qualitySatisfactory" | "qualityPoor";
+
+export function fryerQualityKey(score: number): FryerQualityKey {
+  if (score >= 5) return "qualityExcellent";
+  if (score === 4) return "qualityGood";
+  if (score === 3) return "qualitySatisfactory";
+  return "qualityPoor";
+}
+
+export function fryerQualityPoor(score: number): boolean {
+  return score <= 2;
+}
+
 export function formatDecimal(value: number, digits = 1): string {
   return value.toFixed(digits).replace(".", ",").replace("-", "−");
 }
@@ -330,9 +349,12 @@ export const PDF = {
   fryerController: "Должность, ФИО контролера",
 } as const;
 
-/** Люди и объекты сцены — условные. */
+/**
+ * Люди и объекты сцены — условные. Название организации в кадре — из
+ * словаря (`qrScene.demo.org`): по-русски «ООО «БФС»» (правки 19.11.2026),
+ * в остальных языках — прежнее «WeSetup Demo».
+ */
 export const DEMO = {
-  org: "WeSetup Demo",
   cook: { name: "Иванова Анна", short: "Иванова А.", position: "employee" },
   others: [
     { name: "Петров Олег", position: "employee" },

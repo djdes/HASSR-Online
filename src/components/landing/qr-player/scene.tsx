@@ -28,10 +28,12 @@ import {
   CHAPTER_SECONDS,
   DEMO,
   FRIDGE_NORM,
+  FRYER_QUALITY,
   JOURNALS,
   bodyFever,
   chapterAt,
   fridgeOutOfRange,
+  fryerQualityKey,
   sceneSeconds,
   type Chapter,
 } from "./chapters";
@@ -79,6 +81,8 @@ export type SceneProps = {
   frame: number;
   fridgeTemp: number;
   bodyTemp: number;
+  /** Оценка жира во фритюре, 1–5 («Попробуйте сами»); без неё — 5. */
+  fryerQuality?: number;
   today: SceneDay;
   qr: QrMatrix;
 };
@@ -433,6 +437,7 @@ function PhoneFrame({ clock, children, ping }: { clock: string; children: ReactN
 
 /** Шапка QR-страницы — как `QrPageShell`: организация и журнал. */
 function QrHeader({ title }: { title: string }) {
+  const tr = useTranslations("qrScene");
   return (
     <div
       style={{
@@ -462,7 +467,7 @@ function QrHeader({ title }: { title: string }) {
       </span>
       <span style={{ minWidth: 0 }}>
         <span style={{ display: "block", fontSize: "0.6em", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {DEMO.org}
+          {tr("demo.org")}
         </span>
         <span
           style={{
@@ -634,7 +639,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
           {/* Фирменный QR с полосой «Отсканировать» — SVG собран на сервере (qr-matrix.ts). */}
           <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: qr.printed }} />
           <div style={{ marginTop: "0.38em", textAlign: "center", color: P.ink, fontWeight: 700, fontSize: "0.6em", lineHeight: 1.15 }}>{object === "thermometer" ? journal("hygiene") : layout.title}</div>
-          <div style={{ marginTop: "0.18em", textAlign: "center", color: P.muted, fontSize: "0.5em", lineHeight: 1.1 }}>{DEMO.org}</div>
+          <div style={{ marginTop: "0.18em", textAlign: "center", color: P.muted, fontSize: "0.5em", lineHeight: 1.1 }}>{tr("demo.org")}</div>
         </div>
         <div
           style={{
@@ -904,7 +909,7 @@ function Paper({ stampLabel, title, subtitle, caption, children, startedDay }: {
           </colgroup>
           <tbody>
             <tr>
-              <td rowSpan={2} style={{ ...cell, fontWeight: 700 }}>{DEMO.org}</td>
+              <td rowSpan={2} style={{ ...cell, fontWeight: 700 }}>{tr("demo.org")}</td>
               <td style={cell}>{tr('pdf.stamp')}</td>
               <td style={{ ...cell, textAlign: "left", whiteSpace: "nowrap" }}>{tr("documentStartedOn", { date: startedDate })}</td>
             </tr>
@@ -1962,7 +1967,7 @@ function UvScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; q
   );
 }
 
-function FryerScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
+function FryerScene({ t, quality, today, qr, photo, layer }: { t: number; quality: number; today: SceneDay; qr: QrMatrix; photo: string; layer: Layer }) {
   const locale = useSiteLocale();
   const tr = useTranslations("qrScene");
   const journal = useTranslations("journals.names");
@@ -1973,7 +1978,7 @@ function FryerScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay
     { label: tr('fields.fat'), value: DEMO.fat, at: 2.9 },
     { label: tr('fields.equipment'), value: DEMO.fryer, at: 3.15 },
     { label: tr('fields.product'), value: DEMO.product, at: 3.4 },
-    { label: tr('fields.qualityStart'), value: "5", at: 3.65 },
+    { label: tr('fields.qualityStart'), value: String(quality), at: 3.65 },
   ];
   const widths = ["7.4em", "7em", "7.2em", "6.6em", "6.4em", "6em", "7.2em", "5.6em", "5.6em", "8em"];
   return (
@@ -2020,7 +2025,8 @@ function FryerScene({ t, today, qr, photo, layer }: { t: number; today: SceneDay
             <tr>
               <Ink t={t} at={landed}>{dateLabel(today, locale)}</Ink>
               <Ink t={t} at={landed + 0.05}>{DEMO.fat}</Ink>
-              <Ink t={t} at={landed + 0.1}>{tr("qualityExcellent")}</Ink>
+              {/* Мягкий перенос: «Неудовлетворительное» шире графы бланка. */}
+              <Ink t={t} at={landed + 0.1}>{tr(fryerQualityKey(quality)).replace(/(влетво)(?=рительн)/i, "$1\u00ad")}</Ink>
               <Ink t={t} at={landed + 0.15}>{DEMO.fryer}</Ink>
               <Ink t={t} at={landed + 0.2}>{DEMO.product}</Ink>
               <td style={cell} />
@@ -2262,7 +2268,7 @@ function journalAtFor(chapter: Chapter, fridgeTemp: number): number {
  *    её первый кадр — чистая обложка.
  * Плюс «ручная» камера: едва заметный дрейф. Всё — функция кадра.
  */
-export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProps) {
+export function SceneFrame({ frame, fridgeTemp, bodyTemp, fryerQuality = FRYER_QUALITY.initial, today, qr }: SceneProps) {
   const { chapter, index, local } = chapterAt(frame);
   // Доля кадра — только у видео с голосом, где глава держит итог
   // (`narrated-timeline.ts`); Плеер на главной отдаёт целые кадры.
@@ -2294,7 +2300,7 @@ export function SceneFrame({ frame, fridgeTemp, bodyTemp, today, qr }: SceneProp
       {chapter.id === "fridge" ? <FridgeScene t={t} value={fridgeTemp} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
       {chapter.id === "locker" ? <LockerScene t={t} bodyTemp={bodyTemp} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
       {chapter.id === "uv" ? <UvScene t={t} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
-      {chapter.id === "fryer" ? <FryerScene t={t} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
+      {chapter.id === "fryer" ? <FryerScene t={t} quality={fryerQuality} today={today} qr={qr} photo={chapter.photo} layer={layer} /> : null}
       {chapter.id === "forgot" ? <ForgotScene t={t} today={today} layer={layer} /> : null}
       {chapter.id === "sensor" ? <SensorScene t={t} today={today} layer={layer} /> : null}
     </>

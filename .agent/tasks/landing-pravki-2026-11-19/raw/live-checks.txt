@@ -1,0 +1,18 @@
+Live checks on the local dev server (Playwright, Chromium, 390x780 @2x), 2026-11-19
+
+1. E-mail hints do not move the page. Top of the submit button (px) in four states —
+   empty, "dhdh" after blur, "ivan@gmial.com", "ivan@yandex.ru":
+   button top 489.15625 489.15625 489.15625 489.15625
+2. Tapping «оферту» in the consent line: no new tab, the question window is shown:
+   pages 1 dialog 1
+3. No horizontal scroll on the home page (ru, light) and on /en (dark):
+   scrollW 390
+   scrollW 390
+4. Also run: all tests that read sources from disk plus src/i18n — 1296 tests, 1 failure
+   (narrated-video.test.ts pinned the old video-button markup), fixed and re-run green.
+Seen in screenshots during the session (images are not in git, .gitignore excludes them):
+hero with the trial-until line, in-field chips «нужен символ @» and «→ gmail.com», the
+«Открыть оферту?» window, QR block header with three steps, video + PDF row, chapter
+arrows, the try-it panel with the fryer-oil example (score 2 → «Неудовлетворительное» in the
+journal row), stamp «ООО «БФС»», desktop 1440 px, /en in the dark theme.
+Not exercised live: «Да» in the question window (opens a new tab), the narrated video.

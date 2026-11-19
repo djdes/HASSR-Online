@@ -9,9 +9,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "@/components/i18n/localized-link";
 import { LegalConsentCheckbox } from "@/components/legal/legal-consent-checkbox";
-import { ArrowRight, Mail, MousePointerClick } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Mail, MousePointerClick } from "lucide-react";
 import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
-import { EmailHint, useEmailField } from "@/components/ui/email-field";
+import { useEmailField } from "@/components/ui/email-field";
 import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
 import {
   readSignupSource,
@@ -58,6 +58,7 @@ export function HeroEmailStart({
   showLiveGuide?: boolean;
 }) {
   const t = useTranslations("landingComponents.heroEmail");
+  const fieldT = useTranslations("auth.emailField");
   const errorT = useTranslations("publicUi.registrationErrors");
   const locale = useSiteLocale();
   const router = useRouter();
@@ -72,6 +73,24 @@ export function HeroEmailStart({
   const [consentMissing, setConsentMissing] = useState(false);
   const dark = tone === "dark";
   const inputId = `${place}-email`;
+  // Подсказки о почте — внутри поля справа (правки 19.11.2026): строка под
+  // полем сдвигала страницу на каждый символ. Опечатка в домене — кнопка
+  // «→ gmail.com», проверка домена — индикатор, верный адрес — галочка.
+  // Об ошибке говорим коротко и только когда человек ушёл из поля: пока он
+  // печатает «name» без «@», это ещё не ошибка.
+  const [blurred, setBlurred] = useState(false);
+  const typo = field.check.status === "typo" ? field.check.suggestion : null;
+  const fieldError =
+    !field.touched || !blurred || typo
+      ? null
+      : field.check.status === "invalid"
+        ? field.check.code === "missingAt"
+          ? fieldT("short.missingAt")
+          : fieldT("short.invalid")
+        : field.check.status === "ok" && field.domainState === "missing"
+          ? fieldT("short.domainMissing")
+          : null;
+  const fieldOk = field.check.status === "ok" && field.domainState === "ok";
   const goalParams = { place };
 
   // Первое касание (посадочная, referrer, utm) запоминается при показе
@@ -185,21 +204,54 @@ export function HeroEmailStart({
             id={inputId}
             type="email"
             value={field.value}
-            onChange={(e) => field.setValue(e.target.value)}
+            onChange={(e) => {
+              field.setValue(e.target.value);
+              setBlurred(false);
+            }}
             onFocus={() => ymGoal("email_field_focus", goalParams)}
+            onBlur={() => setBlurred(true)}
             placeholder={t("emailPlaceholder")}
             autoComplete="email"
             inputMode="email"
+            aria-invalid={fieldError || typo ? true : undefined}
+            aria-describedby={fieldError ? `${inputId}-status` : undefined}
             className={
               // 16px, а не 15: iOS Safari автоматически зумит страницу при
               // фокусе в поле со шрифтом меньше 16px и обратно уже не
               // отъезжает — это и был «непонятный zoom in» на лендинге.
-              "h-[56px] w-full rounded-2xl border pl-11 pr-4 text-[16px] outline-none transition-colors focus:ring-4 sm:h-[60px] " +
+              "h-[56px] w-full rounded-2xl border pl-11 text-[16px] outline-none transition-colors focus:ring-4 sm:h-[60px] " +
+              (typo || fieldError ? "pr-[148px] " : "pr-11 ") +
               (dark
                 ? "border-white/25 bg-white/10 text-white placeholder:text-white/55 focus:border-white/45 focus:ring-white/10"
                 : "border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.05)] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:ring-[#5566f6]/15")
             }
           />
+          {typo ? (
+            <button
+              type="button"
+              onClick={() => field.applySuggestion(typo)}
+              aria-label={fieldT("applySuggestion", { suggestion: typo })}
+              title={fieldT("applySuggestion", { suggestion: typo })}
+              className="motion-pop absolute right-2 top-1/2 max-w-[136px] -translate-y-1/2 truncate rounded-xl bg-[#fff4f2] px-2.5 py-1.5 text-[13px] font-medium text-[#a13a32] hover:bg-[#fde3df]"
+            >
+              {fieldT("short.typoChip", { suggestion: typo })}
+            </button>
+          ) : fieldError ? (
+            <span
+              id={`${inputId}-status`}
+              role="alert"
+              className="motion-pop pointer-events-none absolute right-2 top-1/2 max-w-[136px] -translate-y-1/2 truncate rounded-xl bg-[#fff4f2] px-2.5 py-1.5 text-[13px] font-medium text-[#a13a32]"
+            >
+              {fieldError}
+            </span>
+          ) : field.checking ? (
+            <Loader2
+              aria-label={fieldT("domainChecking")}
+              className={"absolute right-4 top-1/2 size-[18px] -translate-y-1/2 animate-spin " + (dark ? "text-white/60" : "text-[#9b9fb3]")}
+            />
+          ) : fieldOk ? (
+            <CheckCircle2 aria-hidden="true" className="motion-pop absolute right-4 top-1/2 size-[18px] -translate-y-1/2 text-[#1f9d55]" />
+          ) : null}
         </div>
         <button
           type="submit"
@@ -234,14 +286,6 @@ export function HeroEmailStart({
         </button>
       </form>
 
-      <EmailHint
-        check={field.check}
-        touched={field.touched}
-        domainState={field.domainState}
-        onApply={field.applySuggestion}
-        tone={tone}
-      />
-
       {/* Юридический текст согласия — мелкой строкой, как на регистрации:
           формулировку не меняем, это не «основной текст» страницы. */}
       <div data-fine-print="legal">
@@ -257,6 +301,7 @@ export function HeroEmailStart({
           tone={dark ? "dark" : "light"}
           highlight={consentMissing}
           variant="short"
+          confirmLinks
           className="mt-2"
         />
       </div>
