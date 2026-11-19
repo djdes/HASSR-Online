@@ -5,11 +5,16 @@ import {
   TopvisorError,
   buildMatrix,
   evaluateActiveCheckStatus,
+  getCheckerPrice,
+  getPositionsHistory,
+  mapLogicalRegionsForHistory,
   mapLogicalRegionsToProject,
   parsePosition,
   parsePositionKey,
   parseProjectCheckerProgress,
   parseStoredCheckState,
+  resetTopvisorSearcherCache,
+  runChecker,
   summarize,
   unwrap,
 } from "@/lib/topvisor";
@@ -289,4 +294,374 @@ describe("evaluateActiveCheckStatus", () => {
     assert.equal(expired, null);
   });
 });
+
+/** Боевая конфигурация проекта 32866188 с дублями XML (1/5) и SERP (712161/712278). */
+const PROJECT_32866188_SEARCHERS = [
+  {
+    key: 0,
+    name: "Yandex",
+    enabled: 1,
+    regions: [
+      {
+        index: "5",
+        key: 225,
+        name: "Россия",
+        areaName: "",
+        alt: "",
+        depth: 1,
+        enabled: 1,
+      },
+      {
+        index: "1",
+        key: 213,
+        name: "Москва",
+        areaName: "Москва и Московская область",
+        alt: "",
+        depth: 1,
+        enabled: 1,
+      },
+      {
+        index: "712161",
+        key: 213,
+        name: "Москва",
+        areaName: "Москва и Московская область",
+        alt: "serp",
+        depth: 3,
+        enabled: 1,
+      },
+      {
+        index: "712278",
+        key: 225,
+        name: "Россия",
+        areaName: "",
+        alt: "serp",
+        depth: 3,
+        enabled: 1,
+      },
+    ],
+  },
+  {
+    key: 1,
+    name: "Google",
+    enabled: 1,
+    regions: [
+      {
+        index: "7",
+        key: 225,
+        name: "Россия",
+        areaName: "",
+        alt: "",
+        depth: 1,
+        enabled: 1,
+      },
+      {
+        index: "2",
+        key: 213,
+        name: "Москва",
+        areaName: "Москва и Московская область",
+        alt: "",
+        depth: 1,
+        enabled: 1,
+      },
+    ],
+  },
+];
+
+describe("дубли регионов Яндекс XML (1/5) и SERP (712161/712278)", () => {
+  it("mapLogicalRegionsForHistory возвращает ВСЕ включённые регионы для логического слота", () => {
+    assert.deepEqual(
+      mapLogicalRegionsForHistory([1], PROJECT_32866188_SEARCHERS),
+      [1, 712161]
+    );
+    assert.deepEqual(
+      mapLogicalRegionsForHistory([5], PROJECT_32866188_SEARCHERS),
+      [5, 712278]
+    );
+    assert.deepEqual(
+      mapLogicalRegionsForHistory([2], PROJECT_32866188_SEARCHERS),
+      [2]
+    );
+    assert.deepEqual(
+      mapLogicalRegionsForHistory([7], PROJECT_32866188_SEARCHERS),
+      [7]
+    );
+
+    // Если старый XML-регион выключили, в историю попадают только включённые регионы слота.
+    const withDisabledXml = [
+      {
+        key: 0,
+        name: "Yandex",
+        enabled: 1,
+        regions: [
+          { index: "1", key: 213, name: "Москва", alt: "", enabled: 0 },
+          { index: "712161", key: 213, name: "Москва", alt: "serp", enabled: 1 },
+        ],
+      },
+    ];
+    assert.deepEqual(mapLogicalRegionsForHistory([1], withDisabledXml), [712161]);
+    assert.deepEqual(mapLogicalRegionsToProject([1], withDisabledXml), [712161]);
+  });
+
+  it("mapLogicalRegionsToProject выбирает ровно ОДИН основной регион (предпочитая alt='serp') без двойного списания", () => {
+    assert.deepEqual(
+      mapLogicalRegionsToProject([1, 5], PROJECT_32866188_SEARCHERS),
+      [712161, 712278]
+    );
+    assert.deepEqual(
+      mapLogicalRegionsToProject([1, 712161], PROJECT_32866188_SEARCHERS),
+      [712161]
+    );
+    assert.deepEqual(
+      mapLogicalRegionsToProject([1, 5, 2, 7], PROJECT_32866188_SEARCHERS),
+      [712161, 712278, 2, 7]
+    );
+  });
+
+  it("buildMatrix склеивает историю XML (2026-09-10) и SERP (2026-11-16) в единую шкалу дат", () => {
+    const matrix = buildMatrix({
+      headers: {
+        dates: ["2026-11-16", "2026-09-10"],
+        projects: [{ id: 32866188, searchers: PROJECT_32866188_SEARCHERS }],
+      },
+      keywords: [
+        {
+          name: "гигиенический журнал",
+          positionsData: {
+            "2026-09-10:32866188:1": {
+              position: "12",
+              relevant_url: "https://wesetup.ru/journals-info/hygiene",
+            },
+            "2026-11-16:32866188:712161": {
+              position: "1",
+              relevant_url: "https://wesetup.ru/journals-info/hygiene",
+            },
+          },
+        },
+      ],
+      existsDates: ["2026-09-10", "2026-11-16"],
+    });
+
+    assert.deepEqual(matrix.dates, ["2026-11-16", "2026-09-10"]);
+    assert.equal(matrix.rows[0]?.latest, 1);
+    assert.equal(
+      matrix.rows[0]?.latestUrl,
+      "https://wesetup.ru/journals-info/hygiene"
+    );
+    assert.equal(matrix.rows[0]?.delta, 11);
+    assert.equal(matrix.rows[0]?.byDate["2026-09-10"]?.position, 12);
+    assert.equal(matrix.rows[0]?.byDate["2026-11-16"]?.position, 1);
+  });
+
+  it("buildMatrix на одной дате предпочитает реальную позицию вместо '--' и SERP вместо XML независимо от порядка ключей", () => {
+    // Ключ SERP стоит ПЕРЕД ключом XML с "--": старый код затирал позицию null'ом.
+    const matrixSerpFirst = buildMatrix({
+      headers: {
+        dates: ["2026-11-16"],
+        projects: [{ id: 32866188, searchers: PROJECT_32866188_SEARCHERS }],
+      },
+      keywords: [
+        {
+          name: "журнал температуры",
+          positionsData: {
+            "2026-11-16:32866188:712161": {
+              position: "9",
+              relevant_url: "https://wesetup.ru/journals-info/climate_control",
+            },
+            "2026-11-16:32866188:1": {
+              position: "--",
+              relevant_url: "",
+            },
+          },
+        },
+        {
+          name: "бракеражный журнал",
+          positionsData: {
+            "2026-11-16:32866188:1": {
+              position: "14",
+              relevant_url: "https://wesetup.ru/blanki",
+            },
+            "2026-11-16:32866188:712161": {
+              position: "20",
+              relevant_url: "https://wesetup.ru/journals-info/finished_product",
+            },
+          },
+        },
+      ],
+    });
+
+    assert.equal(matrixSerpFirst.rows[0]?.byDate["2026-11-16"]?.position, 9);
+    assert.equal(
+      matrixSerpFirst.rows[0]?.byDate["2026-11-16"]?.url,
+      "https://wesetup.ru/journals-info/climate_control"
+    );
+    // Когда на одной дате есть численные позиции и в XML, и в SERP — побеждает SERP (даже если число позиции больше).
+    assert.equal(matrixSerpFirst.rows[1]?.byDate["2026-11-16"]?.position, 20);
+    assert.equal(
+      matrixSerpFirst.rows[1]?.byDate["2026-11-16"]?.url,
+      "https://wesetup.ru/journals-info/finished_product"
+    );
+
+    // Обратный порядок ключей даёт точно такой же результат.
+    const matrixXmlFirst = buildMatrix({
+      headers: { dates: ["2026-11-16"] },
+      keywords: [
+        {
+          name: "журнал температуры",
+          positionsData: {
+            "2026-11-16:32866188:1": {
+              position: "--",
+              relevant_url: "",
+            },
+            "2026-11-16:32866188:712161": {
+              position: "9",
+              relevant_url: "https://wesetup.ru/journals-info/climate_control",
+            },
+          },
+        },
+        {
+          name: "бракеражный журнал",
+          positionsData: {
+            "2026-11-16:32866188:712161": {
+              position: "20",
+              relevant_url: "https://wesetup.ru/journals-info/finished_product",
+            },
+            "2026-11-16:32866188:1": {
+              position: "14",
+              relevant_url: "https://wesetup.ru/blanki",
+            },
+          },
+        },
+      ],
+    }, { serpRegionIndexes: [712161, 712278] });
+
+    assert.equal(matrixXmlFirst.rows[0]?.byDate["2026-11-16"]?.position, 9);
+    assert.equal(matrixXmlFirst.rows[1]?.byDate["2026-11-16"]?.position, 20);
+  });
+
+  it("getPositionsHistory запрашивает оба индекса [1, 712161], а getCheckerPrice и runChecker — только один основной на слот [712161, 712278]", async () => {
+    const prevEnv = {
+      key: process.env.TOPVISOR_API_KEY,
+      user: process.env.TOPVISOR_USER_ID,
+      project: process.env.TOPVISOR_PROJECT_ID,
+    };
+    const originalFetch = globalThis.fetch;
+    const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
+
+    process.env.TOPVISOR_API_KEY = "test-key";
+    process.env.TOPVISOR_USER_ID = "12345";
+    process.env.TOPVISOR_PROJECT_ID = "32866188";
+    resetTopvisorSearcherCache();
+
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+      calls.push({ url, body });
+
+      if (url.endsWith("get/projects_2/projects")) {
+        return new Response(
+          JSON.stringify({
+            result: [{ id: 32866188, searchers: PROJECT_32866188_SEARCHERS }],
+          }),
+          { status: 200 }
+        );
+      }
+      if (url.endsWith("get/positions_2/history")) {
+        return new Response(
+          JSON.stringify({
+            result: {
+              headers: {
+                dates: ["2026-11-16", "2026-09-10"],
+                projects: [{ id: 32866188, searchers: PROJECT_32866188_SEARCHERS }],
+              },
+              keywords: [
+                {
+                  name: "журналы хассп",
+                  positionsData: {
+                    "2026-09-10:32866188:1": {
+                      position: "15",
+                      relevant_url: "https://wesetup.ru/",
+                    },
+                    "2026-11-16:32866188:712161": {
+                      position: "5",
+                      relevant_url: "https://wesetup.ru/",
+                    },
+                  },
+                },
+              ],
+              existsDates: ["2026-09-10", "2026-11-16"],
+            },
+          }),
+          { status: 200 }
+        );
+      }
+      if (url.endsWith("get/positions_2/checker/price")) {
+        return new Response(
+          JSON.stringify({
+            result: { pricesByUsers: { "12345": { price: 35.64 } } },
+          }),
+          { status: 200 }
+        );
+      }
+      if (url.endsWith("edit/positions_2/checker/go")) {
+        return new Response(
+          JSON.stringify({
+            result: { projectsIds: [32866188] },
+          }),
+          { status: 200 }
+        );
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    }) as typeof fetch;
+
+    try {
+      const history = await getPositionsHistory({
+        regionIndex: 1,
+        dateFrom: "2026-09-01",
+        dateTo: "2026-11-19",
+      });
+      assert.deepEqual(history.dates, ["2026-11-16", "2026-09-10"]);
+      assert.equal(history.rows[0]?.latest, 5);
+      assert.equal(history.rows[0]?.delta, 10);
+
+      const historyCall = calls.find((c) =>
+        c.url.endsWith("get/positions_2/history")
+      );
+      assert.deepEqual(historyCall?.body.regions_indexes, [1, 712161]);
+
+      await getPositionsHistory({
+        regionIndex: 5,
+        dateFrom: "2026-09-01",
+        dateTo: "2026-11-19",
+      });
+      const historyCalls = calls.filter((c) =>
+        c.url.endsWith("get/positions_2/history")
+      );
+      assert.deepEqual(historyCalls[1]?.body.regions_indexes, [5, 712278]);
+
+      const price = await getCheckerPrice([1, 5]);
+      assert.equal(price, 35.64);
+      const priceCall = calls.find((c) =>
+        c.url.endsWith("get/positions_2/checker/price")
+      );
+      assert.deepEqual(priceCall?.body.regions_indexes, [712161, 712278]);
+
+      const queued = await runChecker([1, 5]);
+      assert.equal(queued, true);
+      const goCall = calls.find((c) =>
+        c.url.endsWith("edit/positions_2/checker/go")
+      );
+      assert.deepEqual(goCall?.body.regions_indexes, [712161, 712278]);
+    } finally {
+      globalThis.fetch = originalFetch;
+      resetTopvisorSearcherCache();
+      if (prevEnv.key === undefined) delete process.env.TOPVISOR_API_KEY;
+      else process.env.TOPVISOR_API_KEY = prevEnv.key;
+      if (prevEnv.user === undefined) delete process.env.TOPVISOR_USER_ID;
+      else process.env.TOPVISOR_USER_ID = prevEnv.user;
+      if (prevEnv.project === undefined) delete process.env.TOPVISOR_PROJECT_ID;
+      else process.env.TOPVISOR_PROJECT_ID = prevEnv.project;
+    }
+  });
+});
+
 

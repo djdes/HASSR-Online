@@ -1,0 +1,7 @@
+﻿→ [test:changed] Отобрано 3 связанных тестовых файлов для 2 изменённых файлов:
+  • src/lib/seo-position-alerts.test.ts
+  • src/lib/seo/gogetlinks-orders.test.ts
+  • src/lib/topvisor.test.ts
+
+=== Targeted test stats (3 files, 2.7s): pass=48, fail=0 ===
+✓ Все затронутые тесты прошли.

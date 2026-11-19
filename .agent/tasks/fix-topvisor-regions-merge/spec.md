@@ -1,0 +1,6 @@
+# Merge XML and SERP Yandex regions in Topvisor history without double-billing checker
+
+- AC1. `getPositionsHistory` resolves logical regions (`1` Yandex Moscow, `5` Yandex Russia, `2` Google Moscow, `7` Google Russia) to all enabled project `region.index` entries matching that `(searcher, regionKey)` (e.g., `[1, 712161]` for Yandex Moscow and `[5, 712278]` for Yandex Russia), and `buildMatrix` merges cells across regions on each date (preferring non-null positions over `"--"`/empty and `alt === "serp"` regions when both have positions on the same date) into a single unified timeline.
+- AC2. `mapLogicalRegionsToProject`, `getCheckerPrice`, and `runChecker` resolve at most one primary region per `(searcher, regionKey)` (preferring enabled `alt === "serp"` entries such as `712161` and `712278`), avoiding duplicate region checks and double billing.
+- AC3. Unit tests in `src/lib/topvisor.test.ts` cover duplicate Moscow/Russia XML + SERP regions for history merging (across distinct dates and same-date collisions in both key orders), single-primary selection in `mapLogicalRegionsToProject`, `getCheckerPrice`, and `runChecker`, while preserving all existing tests.
+- AC4. `npm run typecheck`, `node --import tsx --test src/lib/topvisor.test.ts`, `node scripts/test-changed.mjs`, and ESLint on touched files pass with zero errors.

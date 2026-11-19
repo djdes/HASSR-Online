@@ -1,0 +1,241 @@
+﻿TAP version 13
+# Subtest: unwrap
+    # Subtest: возвращает result, когда errors пуст
+    ok 1 - возвращает result, когда errors пуст
+      ---
+      duration_ms: 1.6127
+      type: 'test'
+      ...
+    # Subtest: бросает TopvisorError при непустом errors, хотя HTTP был 200
+    ok 2 - бросает TopvisorError при непустом errors, хотя HTTP был 200
+      ---
+      duration_ms: 0.8764
+      type: 'test'
+      ...
+    # Subtest: не считает ошибкой пустой массив errors
+    ok 3 - не считает ошибкой пустой массив errors
+      ---
+      duration_ms: 0.1482
+      type: 'test'
+      ...
+    1..3
+ok 1 - unwrap
+  ---
+  duration_ms: 3.7643
+  type: 'suite'
+  ...
+# Subtest: parsePosition
+    # Subtest: превращает строку в число
+    ok 1 - превращает строку в число
+      ---
+      duration_ms: 0.3225
+      type: 'test'
+      ...
+    # Subtest: считает "--" отсутствием позиции, а не нулём
+    ok 2 - считает "--" отсутствием позиции, а не нулём
+      ---
+      duration_ms: 0.1611
+      type: 'test'
+      ...
+    # Subtest: не отдаёт NaN на мусоре и пустоте
+    ok 3 - не отдаёт NaN на мусоре и пустоте
+      ---
+      duration_ms: 0.1684
+      type: 'test'
+      ...
+    1..3
+ok 2 - parsePosition
+  ---
+  duration_ms: 1.1238
+  type: 'suite'
+  ...
+# Subtest: parsePositionKey
+    # Subtest: разбирает составной ключ <дата>:<проект>:<регион>
+    ok 1 - разбирает составной ключ <дата>:<проект>:<регион>
+      ---
+      duration_ms: 0.4461
+      type: 'test'
+      ...
+    # Subtest: отвергает ключи неверной формы
+    ok 2 - отвергает ключи неверной формы
+      ---
+      duration_ms: 0.3033
+      type: 'test'
+      ...
+    1..2
+ok 3 - parsePositionKey
+  ---
+  duration_ms: 1.1397
+  type: 'suite'
+  ...
+# Subtest: buildMatrix
+    # Subtest: строит матрицу с датами по убыванию
+    ok 1 - строит матрицу с датами по убыванию
+      ---
+      duration_ms: 0.858
+      type: 'test'
+      ...
+    # Subtest: берёт свежую позицию и страницу, которой ответил поисковик
+    ok 2 - берёт свежую позицию и страницу, которой ответил поисковик
+      ---
+      duration_ms: 0.4208
+      type: 'test'
+      ...
+    # Subtest: считает падение отрицательной дельтой, а рост положительной
+    ok 3 - считает падение отрицательной дельтой, а рост положительной
+      ---
+      duration_ms: 0.4267
+      type: 'test'
+      ...
+    # Subtest: фразу вне выдачи оставляет без позиции, не роняя матрицу
+    ok 4 - фразу вне выдачи оставляет без позиции, не роняя матрицу
+      ---
+      duration_ms: 0.2181
+      type: 'test'
+      ...
+    # Subtest: восстанавливает даты из ключей, когда headers пуст
+    ok 5 - восстанавливает даты из ключей, когда headers пуст
+      ---
+      duration_ms: 0.1556
+      type: 'test'
+      ...
+    # Subtest: не падает на пустом и мусорном ответе
+    ok 6 - не падает на пустом и мусорном ответе
+      ---
+      duration_ms: 0.1375
+      type: 'test'
+      ...
+    1..6
+ok 4 - buildMatrix
+  ---
+  duration_ms: 2.5179
+  type: 'suite'
+  ...
+# Subtest: summarize
+    # Subtest: считает ТОП-3/10/50 накопительно на свежую дату
+    ok 1 - считает ТОП-3/10/50 накопительно на свежую дату
+      ---
+      duration_ms: 0.3664
+      type: 'test'
+      ...
+    # Subtest: отдаёт нули, когда съёмов ещё не было
+    ok 2 - отдаёт нули, когда съёмов ещё не было
+      ---
+      duration_ms: 0.2185
+      type: 'test'
+      ...
+    1..2
+ok 5 - summarize
+  ---
+  duration_ms: 0.6947
+  type: 'suite'
+  ...
+# Subtest: mapLogicalRegionsToProject
+    # Subtest: сопоставляет слоты 1/5/2/7 с реальными region.index проекта в Topvisor
+    ok 1 - сопоставляет слоты 1/5/2/7 с реальными region.index проекта в Topvisor
+      ---
+      duration_ms: 1.0513
+      type: 'test'
+      ...
+    # Subtest: возвращает исходные индексы, если ответ searchers пуст
+    ok 2 - возвращает исходные индексы, если ответ searchers пуст
+      ---
+      duration_ms: 0.2949
+      type: 'test'
+      ...
+    # Subtest: не подменяет Яндекс на Google, если в проекте пока есть только Google
+    ok 3 - не подменяет Яндекс на Google, если в проекте пока есть только Google
+      ---
+      duration_ms: 0.3072
+      type: 'test'
+      ...
+    1..3
+ok 6 - mapLogicalRegionsToProject
+  ---
+  duration_ms: 1.8097
+  type: 'suite'
+  ...
+# Subtest: parseProjectCheckerProgress
+    # Subtest: распознаёт активный съём по pos_status и percent_of_parse
+    ok 1 - распознаёт активный съём по pos_status и percent_of_parse
+      ---
+      duration_ms: 0.3555
+      type: 'test'
+      ...
+    # Subtest: безопасно обрабатывает пустой ответ
+    ok 2 - безопасно обрабатывает пустой ответ
+      ---
+      duration_ms: 0.1134
+      type: 'test'
+      ...
+    1..2
+ok 7 - parseProjectCheckerProgress
+  ---
+  duration_ms: 0.5888
+  type: 'suite'
+  ...
+# Subtest: evaluateActiveCheckStatus
+    # Subtest: удерживает статус активного съёма после запуска и сбрасывает при появлении новой даты в матрице
+    ok 1 - удерживает статус активного съёма после запуска и сбрасывает при появлении новой даты в матрице
+      ---
+      duration_ms: 1.4929
+      type: 'test'
+      ...
+    # Subtest: сбрасывает блокировку по истечении 15-минутного таймаута
+    ok 2 - сбрасывает блокировку по истечении 15-минутного таймаута
+      ---
+      duration_ms: 0.1731
+      type: 'test'
+      ...
+    1..2
+ok 8 - evaluateActiveCheckStatus
+  ---
+  duration_ms: 1.7718
+  type: 'suite'
+  ...
+# Subtest: дубли регионов Яндекс XML (1/5) и SERP (712161/712278)
+    # Subtest: mapLogicalRegionsForHistory возвращает ВСЕ включённые регионы для логического слота
+    ok 1 - mapLogicalRegionsForHistory возвращает ВСЕ включённые регионы для логического слота
+      ---
+      duration_ms: 0.5374
+      type: 'test'
+      ...
+    # Subtest: mapLogicalRegionsToProject выбирает ровно ОДИН основной регион (предпочитая alt='serp') без двойного списания
+    ok 2 - mapLogicalRegionsToProject выбирает ровно ОДИН основной регион (предпочитая alt='serp') без двойного списания
+      ---
+      duration_ms: 0.2076
+      type: 'test'
+      ...
+    # Subtest: buildMatrix склеивает историю XML (2026-09-10) и SERP (2026-11-16) в единую шкалу дат
+    ok 3 - buildMatrix склеивает историю XML (2026-09-10) и SERP (2026-11-16) в единую шкалу дат
+      ---
+      duration_ms: 0.221
+      type: 'test'
+      ...
+    # Subtest: buildMatrix на одной дате предпочитает реальную позицию вместо '--' и SERP вместо XML независимо от порядка ключей
+    ok 4 - buildMatrix на одной дате предпочитает реальную позицию вместо '--' и SERP вместо XML независимо от порядка ключей
+      ---
+      duration_ms: 0.3085
+      type: 'test'
+      ...
+    # Subtest: getPositionsHistory запрашивает оба индекса [1, 712161], а getCheckerPrice и runChecker — только один основной на слот [712161, 712278]
+    ok 5 - getPositionsHistory запрашивает оба индекса [1, 712161], а getCheckerPrice и runChecker — только один основной на слот [712161, 712278]
+      ---
+      duration_ms: 29.0751
+      type: 'test'
+      ...
+    1..5
+ok 9 - дубли регионов Яндекс XML (1/5) и SERP (712161/712278)
+  ---
+  duration_ms: 30.55
+  type: 'suite'
+  ...
+1..9
+# tests 28
+# suites 9
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 303.3428
