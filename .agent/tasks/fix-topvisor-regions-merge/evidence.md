@@ -1,0 +1,8 @@
+# Evidence — Merge XML and SERP Yandex regions in Topvisor history
+
+Spec: `spec.md`
+
+- **AC1 (`PASS`)**: `mapLogicalRegionsForHistory` and `getPositionsHistory` in `src/lib/topvisor.ts` resolve logical regions (`1`, `5`, `2`, `7`) to all enabled matching project `region.index` entries (`[1, 712161]` for Yandex Moscow and `[5, 712278]` for Yandex Russia), and `buildMatrix` merges cells across regions per date using `isBetterPositionCell` (preferring non-null positions over `"--"`/empty and `alt === "serp"` regions when both exist on the same date), unifying `2026-09-10` (XML) and `2026-11-16` (SERP) into one timeline.
+- **AC2 (`PASS`)**: `mapLogicalRegionsToProject`, `getCheckerPrice`, and `runChecker` use `pickPrimaryRegionEntry` + `(searcherKind, regionKey)` deduplication to select at most one primary region per slot (preferring enabled `alt === "serp"` entries `[712161, 712278]`), preventing duplicate region checks and double billing.
+- **AC3 (`PASS`)**: `src/lib/topvisor.test.ts` passes `28/28` tests (`raw/topvisor-test.txt`), covering history region fan-out, disabled-duplicate filtering, XML + SERP timeline merging, order-independent same-date collision resolution, and mocked `fetch` end-to-end checks for `getPositionsHistory`, `getCheckerPrice`, and `runChecker`.
+- **AC4 (`PASS`)**: `npm run typecheck` (`raw/typecheck.txt`), `node --import tsx --test src/lib/topvisor.test.ts` (`raw/topvisor-test.txt`), `node scripts/test-changed.mjs` (`48/48` across 3 affected files, `raw/test-changed.txt`), and ESLint on `src/lib/topvisor.ts` + `src/lib/topvisor.test.ts` (`raw/eslint.txt`) all exit `0`.
