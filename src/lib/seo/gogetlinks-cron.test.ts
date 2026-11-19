@@ -4,10 +4,61 @@ import { PLATFORM_SECTION_KEYS } from "@/lib/platform-access";
 import * as cronRouteModule from "@/app/api/cron/gogetlinks/route";
 import {
   notifyDelegatedSeoSpecialists,
+  notifyGglWebmasterReplies,
   runGglCronPass,
   setGglCronDefaultDepsForTests,
   wasGglAlertSentRecently,
 } from "@/lib/seo/gogetlinks-cron.server";
+
+test("webmaster replies use Telegram once, including an inbound message already saved by manual sync", async () => {
+  const now = new Date("2026-11-19T14:00:00Z");
+  const claims = new Map<string, { value: string; updatedAt: Date }>();
+  const calls: string[] = [];
+  let deliver = false;
+  const client = {
+    gglMessage: {
+      findMany: async ({ where }: { where: Record<string, unknown> }) => {
+        assert.equal(where.direction, "inbound");
+        assert.equal(where.deliveryStatus, "synced");
+        assert.deepEqual(where.thread, { campaign: { isWesetup: true } });
+        return [{ id: "msg_1", thread: { donorDomain: "viarum.ru" } }];
+      },
+    },
+    platformSetting: {
+      createMany: async ({ data: [{ key, value }] }: { data: { key: string; value: string }[] }) => {
+        if (claims.has(key)) return { count: 0 };
+        claims.set(key, { value, updatedAt: now });
+        return { count: 1 };
+      },
+      updateMany: async () => ({ count: 0 }),
+      deleteMany: async ({ where }: { where: { key: string } }) => { claims.delete(where.key); },
+      update: async ({ where, data }: { where: { key: string }; data: { value: string } }) => {
+        claims.set(where.key, { value: data.value, updatedAt: now });
+      },
+    },
+    telegramLog: { findFirst: async () => null },
+  };
+  const notify = async (audience: string, text: string, options?: { email?: boolean; dedupeKey?: string }) => {
+    assert.match(text, /viarum\.ru/);
+    assert.match(text, /\/root\/seo\/links/);
+    assert.equal(options?.email, false);
+    assert.equal(options?.dedupeKey, "msg_1");
+    calls.push(audience);
+    return deliver;
+  };
+  const run = () => notifyGglWebmasterReplies(now, {
+    client: client as never,
+    notifyAdmins: (text, options) => notify("admins", text, options),
+    notifySeo: (text, options) => notify("seo", text, options),
+  });
+  assert.equal(await run(), 0);
+  assert.equal(claims.size, 0, "failed deliveries remain eligible");
+  deliver = true;
+  const overlap = await Promise.all([run(), run()]);
+  assert.equal(overlap[0] + overlap[1], 1);
+  assert.equal(await run(), 0);
+  assert.deepEqual(calls, ["admins", "seo", "admins", "seo"]);
+});
 
 test("runGglCronPass routes operational alerts to admins + seo specialists, and low-balance alerts ONLY to platform admins", async () => {
   const adminAlerts: string[] = [];
@@ -33,6 +84,10 @@ test("runGglCronPass routes operational alerts to admins + seo specialists, and 
     recycleRejected: async () => {
       callSequence.push("recycleRejected");
       return { recycledSlotIds: [] };
+    },
+    notifyNewReplies: async () => {
+      callSequence.push("notifyNewReplies");
+      return 0;
     },
     materializeSlots: async () => {
       callSequence.push("materializeSlots");
@@ -60,6 +115,7 @@ test("runGglCronPass routes operational alerts to admins + seo specialists, and 
 
   assert.deepEqual(callSequence, [
     "syncCabinet",
+    "notifyNewReplies",
     "recycleRejected",
     "materializeSlots",
     "prepareSlots",
