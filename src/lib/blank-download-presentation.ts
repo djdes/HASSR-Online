@@ -5,6 +5,8 @@ export type BlankDownloadErrorCode =
   | "invalid_request"
   | "invalid_email"
   | "invalid_phone"
+  | "captcha_unavailable"
+  | "captcha"
   | "too_fast"
   | "target_required"
   | "target_not_found"
@@ -17,10 +19,12 @@ export type BlankDownloadErrorCode =
   | "network_failure";
 
 export type BlankDownloadErrorKey =
+  | "captchaUnavailable"
   | "consentRequired"
   | "invalidRequest"
   | "invalidEmail"
   | "invalidPhone"
+  | "captcha"
   | "tooFast"
   | "targetRequired"
   | "targetNotFound"
@@ -38,6 +42,8 @@ const ERROR_KEY_BY_CODE: Record<BlankDownloadErrorCode, BlankDownloadErrorKey> =
   invalid_request: "invalidRequest",
   invalid_email: "invalidEmail",
   invalid_phone: "invalidPhone",
+  captcha_unavailable: "captchaUnavailable",
+  captcha: "captcha",
   too_fast: "tooFast",
   target_required: "targetRequired",
   target_not_found: "targetNotFound",

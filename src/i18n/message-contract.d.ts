@@ -19981,6 +19981,11 @@ export type MessageContract = {
     "employeeFallback": "Сотрудник"
   },
   "publicBlankDownload": {
+    "challenge": {
+      "loading": "Загружаем проверку…",
+      "failed": "Не удалось пройти проверку. Попробуйте ещё раз.",
+      "retry": "Повторить проверку"
+    },
     "trigger": {
       "pdf": "Скачать PDF",
       "docx": "Скачать Word",
@@ -20084,6 +20089,8 @@ export type MessageContract = {
       "invalidRequest": "Не удалось подготовить шаблон. Попробуйте ещё раз.",
       "invalidEmail": "Укажите корректный адрес электронной почты.",
       "invalidPhone": "Проверьте номер телефона.",
+      "captchaUnavailable": "Проверка Google временно недоступна. Попробуйте позже.",
+      "captcha": "Пройдите проверку «Я не робот» и попробуйте снова.",
       "tooFast": "Не получилось отправить форму. Обновите страницу и попробуйте ещё раз.",
       "targetRequired": "Не выбран шаблон для скачивания.",
       "targetNotFound": "Такого шаблона нет.",

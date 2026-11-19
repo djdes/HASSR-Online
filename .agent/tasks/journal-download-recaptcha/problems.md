@@ -1,0 +1,2 @@
+﻿On Windows, the initial test:gate shell could not find bash. Reran with Git for Windows bin on PATH.
+The first production cleanup guard rolled back before deletion because PostgreSQL stores the application timestamps without timezone. After checking the exact stored cutoff (12:43:21.392 Moscow) and the 106 matching events, reran the guarded transaction and independently counted zero remaining matching events.

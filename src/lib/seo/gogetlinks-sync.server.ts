@@ -10,6 +10,7 @@ import {
   GglCallError,
   type GglWalletBalance,
   pinGglOverallCampaign,
+  readGglPersonalHistory,
   verifyAndLoginGgl,
 } from "@/lib/seo/gogetlinks-client.server";
 import {
@@ -20,6 +21,7 @@ import {
   normalizeReviewRow,
   parseRubAmount,
 } from "@/lib/seo/gogetlinks-codec";
+import { parseGglPersonalThreadKey } from "@/lib/seo/gogetlinks-personal-chat";
 
 const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
@@ -638,6 +640,7 @@ export async function syncGglCabinet(opts?: {
   includeThreads?: boolean;
   prismaClient?: GglSyncPrismaClient;
   readGgl?: ReadGglFn;
+  readPersonalHistory?: typeof readGglPersonalHistory;
   pinOverallCampaign?: typeof pinGglOverallCampaign;
   now?: Date;
 }): Promise<GglSyncSummary> {
@@ -895,24 +898,39 @@ export async function syncGglCabinet(opts?: {
       }> = await client.gglThread.findMany();
       const existingThreadByKey = new Map(existingThreadsRaw.map((t) => [t.gglThreadKey, t]));
 
-      const rawThreads = await readGgl("listMessageThreads");
+      const rawThreads = asRecordArray(await readGgl("listMessageThreads"));
+      const indexedKeys = new Set(rawThreads.map(row => String(row.threadKey ?? row.gglThreadKey ?? row.id ?? "").trim()));
+      for (const thread of existingThreadsRaw) {
+        if (!indexedKeys.has(thread.gglThreadKey) && parseGglPersonalThreadKey(thread.gglThreadKey)) {
+          rawThreads.push({ threadKey: thread.gglThreadKey, donorDomain: thread.donorDomain, subject: thread.donorDomain });
+        }
+      }
       const accountEmailLower = String(account.email || "").trim().toLowerCase();
       const accountLocalPart = accountEmailLower.split("@")[0] || "";
 
-      for (const rawThread of asRecordArray(rawThreads)) {
+      for (const rawThread of rawThreads) {
         const gglThreadKey = String(
           rawThread.threadKey ?? rawThread.gglThreadKey ?? rawThread.id ?? "",
         ).trim();
         if (!gglThreadKey) continue;
 
         const existingThread = existingThreadByKey.get(gglThreadKey) ?? null;
+        const personal = parseGglPersonalThreadKey(gglThreadKey);
+        let personalHistory: Awaited<ReturnType<typeof readGglPersonalHistory>> | null = null;
+        if (personal) {
+          const owner = existingThread?.campaignId ? campaignById.get(existingThread.campaignId) : null;
+          if (!owner?.isWesetup || owner.gglCampaignId !== personal.campaignId) continue;
+          const readHistory = opts?.readPersonalHistory ?? readGglPersonalHistory;
+          personalHistory = await readHistory(gglThreadKey, { prismaClient: client }).catch(() => null);
+          if (!personalHistory) continue;
+        }
         const subject = rawThread.subject ? String(rawThread.subject).trim() : null;
         const webmasterLogin = rawThread.author
           ? String(rawThread.author).trim()
           : rawThread.webmasterLogin
             ? String(rawThread.webmasterLogin).trim()
             : null;
-        const unreadCount = parseUnreadCount(rawThread.unread ?? rawThread.unreadCount);
+        const unreadCount = personalHistory?.unreadCount ?? parseUnreadCount(rawThread.unread ?? rawThread.unreadCount);
         const parsedThreadDate = parseGglDate(
           (rawThread.date ?? rawThread.lastMessageAt) as string | undefined,
         );
@@ -1006,6 +1024,7 @@ export async function syncGglCabinet(opts?: {
           (!existingThread?.lastMessageAt ||
             existingThread.lastMessageAt.getTime() !== parsedThreadDate.getTime());
         const shouldFetchMessages =
+          personalHistory !== null ||
           !existingThread ||
           unreadCount > 0 ||
           unreadCount !== existingThread.unreadCount ||
@@ -1014,7 +1033,7 @@ export async function syncGglCabinet(opts?: {
 
         if (shouldFetchMessages) {
           const rawMessages = asRecordArray(
-            await readGgl("getMessageThread", { threadKey: gglThreadKey }),
+            personalHistory?.messages ?? await readGgl("getMessageThread", { threadKey: gglThreadKey }),
           );
 
           const existingByGglMsgId = new Map<string, (typeof existingThreadMsgs)[number]>();
@@ -1053,7 +1072,13 @@ export async function syncGglCabinet(opts?: {
             // Match pending outbound ("sending") message within 30 minutes by normalized body
             const matchedPending = existingThreadMsgs.find((m) => {
               if (matchedPendingIds.has(m.id)) return false;
-              if (m.deliveryStatus !== "sending" || m.direction !== "outbound") return false;
+              if (m.direction !== "outbound") return false;
+              if (personal) {
+                return m.deliveryStatus !== "failed" && !m.gglMessageId && !existingByGglMsgId.has(gglMessageId) && rawMsg.direction === "outbound" &&
+                  Math.abs(parsedMsgDate.getTime() - new Date(m.sentAt).getTime()) < 2 * 60_000 &&
+                  normalizeMessageBody(m.body) === normBody;
+              }
+              if (m.deliveryStatus !== "sending") return false;
               const ageMs = Math.abs(syncNow.getTime() - new Date(m.sentAt).getTime());
               if (ageMs > THIRTY_MINUTES_MS) return false;
               return normalizeMessageBody(m.body) === normBody;

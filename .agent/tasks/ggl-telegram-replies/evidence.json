@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "acceptance": {"AC1": "PASS", "AC2": "PASS", "AC3": "PASS"},
+  "artifacts": ["raw/telegram-config.json", "raw/test-gate.txt", "raw/typecheck.txt"]
+}

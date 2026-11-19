@@ -7,7 +7,10 @@ import {
   GglAuthError,
   GglCallError,
   GglIsolationError,
+  readGglPersonalHistory,
+  sendGglFirstMessage,
 } from "@/lib/seo/gogetlinks-client.server";
+import { gglPersonalThreadKey, parseGglPersonalThreadKey } from "@/lib/seo/gogetlinks-personal-chat";
 import {
   decimalToNumber,
   normalizeMessageBody,
@@ -121,6 +124,7 @@ export interface ThreadGuardRecord {
   gglThreadKey: string;
   campaignId: string | null;
   campaignIsWesetup: boolean;
+  gglCampaignId?: number | null;
 }
 
 export interface ClaimedMessageSnapshot {
@@ -435,6 +439,17 @@ export async function listGglThreads(
   return rows.map((row) => serializeGglThread(row));
 }
 
+export async function registerGglPersonalThread(input: {
+  campaignId: string; gglCampaignId: number; siteId: number; domain: string;
+}) {
+  const key = gglPersonalThreadKey(input.gglCampaignId, input.siteId);
+  return db.gglThread.upsert({
+    where: { gglThreadKey: key },
+    create: { gglThreadKey: key, campaignId: input.campaignId, donorDomain: input.domain, subject: input.domain },
+    update: { donorDomain: input.domain, campaignId: input.campaignId },
+  });
+}
+
 function asRecordArray(value: unknown): Array<Record<string, unknown>> {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
@@ -498,6 +513,10 @@ export async function getAndRefreshGglThread(
   let currentThread = threadRow;
 
   if (shouldRefresh) {
+    const personal = parseGglPersonalThreadKey(threadRow.gglThreadKey);
+    if (personal && (!threadRow.campaign?.isWesetup || threadRow.campaign.gglCampaignId !== personal.campaignId)) {
+      throw new GglChatError(404, "Диалог не найден");
+    }
     const account = client.gglAccount
       ? await client.gglAccount.findFirst({ orderBy: { createdAt: "asc" } })
       : null;
@@ -509,8 +528,11 @@ export async function getAndRefreshGglThread(
           callGglRead<T>(opName, args, { prismaClient: client }));
 
       try {
+        const personalHistory = personal
+          ? await readGglPersonalHistory(threadRow.gglThreadKey, { prismaClient: client })
+          : null;
         const rawMessages = asRecordArray(
-          await readGgl("getMessageThread", { threadKey: threadRow.gglThreadKey }),
+          personalHistory?.messages ?? await readGgl("getMessageThread", { threadKey: threadRow.gglThreadKey }),
         );
 
         const existingMsgs = await client.gglMessage.findMany({
@@ -554,7 +576,13 @@ export async function getAndRefreshGglThread(
 
           const matchedPending = existingMsgs.find((m) => {
             if (matchedPendingIds.has(m.id)) return false;
-            if (m.deliveryStatus !== "sending" || m.direction !== "outbound") return false;
+            if (m.direction !== "outbound") return false;
+            if (personal) {
+              return m.deliveryStatus !== "failed" && !m.gglMessageId && !existingByGglMsgId.has(gglMessageId) &&
+                rawMsg.direction === "outbound" && Math.abs(parsedMsgDate.getTime() - new Date(m.sentAt).getTime()) < 2 * 60_000 &&
+                normalizeMessageBody(m.body) === normBody;
+            }
+            if (m.deliveryStatus !== "sending") return false;
             const ageMs = Math.abs(syncNow.getTime() - new Date(m.sentAt).getTime());
             if (ageMs > THIRTY_MINUTES_MS) return false;
             return normalizeMessageBody(m.body) === normBody;
@@ -619,10 +647,11 @@ export async function getAndRefreshGglThread(
 
         const nextNeedsReply =
           lastDirection !== null ? lastDirection === "inbound" : threadRow.needsReply;
+        const unreadCount = personalHistory?.unreadCount ?? 0;
         await client.gglThread.update({
           where: { id: threadRow.id },
           data: {
-            unreadCount: 0,
+            unreadCount,
             needsReply: nextNeedsReply,
             ...(latestSentAt ? { lastMessageAt: latestSentAt } : {}),
             ...(latestPreview ? { lastMessagePreview: latestPreview } : {}),
@@ -631,7 +660,7 @@ export async function getAndRefreshGglThread(
 
         currentThread = {
           ...threadRow,
-          unreadCount: 0,
+          unreadCount,
           needsReply: nextNeedsReply,
           lastMessageAt: latestSentAt ?? threadRow.lastMessageAt,
           lastMessagePreview: latestPreview ?? threadRow.lastMessagePreview,
@@ -692,7 +721,7 @@ export async function replyToGglThread(
       const row = await client.gglThread.findUnique({
         where: { id: tid },
         include: {
-          campaign: { select: { id: true, isWesetup: true } },
+          campaign: { select: { id: true, isWesetup: true, gglCampaignId: true } },
           order: {
             include: {
               campaign: { select: { id: true, isWesetup: true } },
@@ -710,6 +739,7 @@ export async function replyToGglThread(
         gglThreadKey: row.gglThreadKey,
         campaignId,
         campaignIsWesetup,
+        gglCampaignId: row.campaign?.gglCampaignId,
       };
     });
 
@@ -718,7 +748,8 @@ export async function replyToGglThread(
     throw new GglChatError(404, "Диалог не найден");
   }
 
-  if (thread.campaignIsWesetup !== true) {
+  const personal = parseGglPersonalThreadKey(thread.gglThreadKey);
+  if (thread.campaignIsWesetup !== true || (personal && personal.campaignId !== thread.gglCampaignId)) {
     throw new GglIsolationError(
       `Отправка сообщения отклонена: диалог "${thread.id}" не принадлежит кампании wesetup.ru`,
     );
@@ -791,8 +822,15 @@ export async function replyToGglThread(
 
   const sendRemote =
     deps?.sendRemote ??
-    (async (args) =>
-      callGglWrite({
+    (async (args) => {
+      if (personal) {
+        const status = await sendGglFirstMessage({ ...personal, body: args.text, claim: async () => true });
+        return {
+          status: status === "sent" ? "applied" : status === "unconfirmed" ? "may_have_applied" : "not_sent",
+          data: null,
+        };
+      }
+      return callGglWrite({
         opName: "sendThreadMessage",
         args: {
           threadKey: args.threadKey,
@@ -801,7 +839,8 @@ export async function replyToGglThread(
         idempotencyKey: args.idempotencyKey,
         campaignIdForGuard: args.campaignId ?? undefined,
         prismaClient: client,
-      }));
+      });
+    });
 
   const writeAudit =
     deps?.writeAudit ??
