@@ -5,6 +5,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { sendGglFirstMessage } from "@/lib/seo/gogetlinks-client.server";
 import { isWesetupDomain } from "@/lib/seo/gogetlinks-codec";
+import { getAndRefreshGglThread, registerGglPersonalThread } from "@/lib/seo/gogetlinks-chat.server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -24,12 +25,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     where: { id },
     select: {
       donorSiteId: true,
+      donorDomain: true,
       status: true,
-      plan: { select: { campaign: { select: { gglCampaignId: true, domain: true, isWesetup: true } } } },
+      plan: { select: { campaign: { select: { id: true, gglCampaignId: true, domain: true, isWesetup: true } } } },
     },
   });
   const campaign = slot?.plan.campaign;
-  if (slot?.status !== "pending_approval" || slot.donorSiteId !== siteId || !campaign?.isWesetup ||
+  if (slot?.status !== "pending_approval" || slot.donorSiteId !== siteId || !slot.donorDomain || !campaign?.isWesetup ||
       !isWesetupDomain(campaign.domain)) {
     return NextResponse.json({ status: "changed" }, { status: 409 });
   }
@@ -48,6 +50,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         return count === 1;
       },
     });
+    if (status === "sent" || status === "unconfirmed" || status === "duplicate") {
+      try {
+        const thread = await registerGglPersonalThread({
+          campaignId: campaign.id, gglCampaignId: campaignId, siteId, domain: slot.donorDomain,
+        });
+        await getAndRefreshGglThread(thread.id);
+      } catch (error) {
+        console.warn("[ggl-first-message] personal conversation import failed", error instanceof Error ? error.name : "UnknownError");
+      }
+    }
     return NextResponse.json({ status });
   } catch (error) {
     console.warn("[ggl-first-message] composer request failed", error instanceof Error ? error.name : "UnknownError");

@@ -18,6 +18,8 @@ import { type GglSyncSummary, syncGglCabinet } from "@/lib/seo/gogetlinks-sync.s
 import { sendTelegramMessage } from "@/lib/telegram";
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const REPLY_CLAIM_LEASE_MS = 10 * 60 * 1000;
+const REPLY_ALERT_KIND = "ggl-webmaster-reply";
 const DELIVERED_LOG_STATUSES = ["queued", "sent", "rate_limited", "deferred"];
 
 let activeCronRun = false;
@@ -49,6 +51,7 @@ export interface GglCronDeps {
   wasAlertSentRecently?: (kind: string, dedupeKey: string, now: Date) => Promise<boolean>;
   notifyAdmins?: (text: string, opts?: GglCronAlertOptions) => Promise<boolean>;
   notifyDelegatedSeoUsers?: (text: string, opts?: GglCronAlertOptions) => Promise<boolean>;
+  notifyNewReplies?: (now: Date) => Promise<number>;
 }
 
 export interface GglCronResult {
@@ -105,6 +108,62 @@ export async function wasGglAlertSentRecently(
     select: { id: true },
   });
   return Boolean(recent);
+}
+
+export async function notifyGglWebmasterReplies(
+  now: Date,
+  deps: {
+    client?: Pick<typeof db, "gglMessage" | "platformSetting" | "telegramLog">;
+    notifyAdmins?: GglCronDeps["notifyAdmins"];
+    notifySeo?: GglCronDeps["notifyDelegatedSeoUsers"];
+  } = {},
+): Promise<number> {
+  const client = deps.client ?? db;
+  const notifyAdmins = deps.notifyAdmins ?? notifyPlatformAdmin;
+  const notifySeo = deps.notifySeo ?? notifyDelegatedSeoSpecialists;
+  const from = new Date(now.getTime() - TWENTY_FOUR_HOURS_MS);
+  const messages = await client.gglMessage.findMany({
+    where: {
+      direction: "inbound", deliveryStatus: "synced", gglMessageId: { not: null },
+      sentAt: { gte: from }, createdAt: { gte: from },
+      thread: { campaign: { isWesetup: true } },
+    },
+    select: { id: true, thread: { select: { donorDomain: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  let notified = 0;
+  for (const message of messages) {
+    const key = `ggl:reply-alert:${message.id}`;
+    const created = await client.platformSetting.createMany({
+      data: [{ key, value: "pending" }],
+      skipDuplicates: true,
+    });
+    if (!created.count) {
+      const reclaimed = await client.platformSetting.updateMany({
+        where: { key, value: "pending", updatedAt: { lt: new Date(now.getTime() - REPLY_CLAIM_LEASE_MS) } },
+        data: { value: "pending", updatedAt: now },
+      });
+      if (!reclaimed.count) continue;
+    }
+    const recorded = () => wasGglAlertSentRecently(REPLY_ALERT_KIND, message.id, new Date(), client);
+    if (!await recorded()) {
+      const domain = message.thread.donorDomain;
+      const text = [
+        "<b>GoGetLinks · Новый ответ вебмастера</b>",
+        ...(domain ? [`Площадка: <b>${escapeHtml(domain)}</b>`] : []),
+        `Откройте «Чаты» в <a href="${escapeHtml(resolveLinksAdminUrl())}">разделе закупок ссылок</a>.`,
+      ].join("\n");
+      const options = { kind: REPLY_ALERT_KIND, dedupeKey: message.id, email: false };
+      const results = await Promise.allSettled([notifyAdmins(text, options), notifySeo(text, options)]);
+      if (!results.some(result => result.status === "fulfilled" && result.value) && !await recorded()) {
+        await client.platformSetting.deleteMany({ where: { key, value: "pending" } });
+        continue;
+      }
+      notified += 1;
+    }
+    await client.platformSetting.update({ where: { key }, data: { value: "sent" } });
+  }
+  return notified;
 }
 
 /**
@@ -289,7 +348,6 @@ async function defaultGetPendingSlotsSummary(now: Date): Promise<PendingSlotsSum
 }
 
 function buildOperationalAlertMessage(args: {
-  unreadCount: number;
   onCheckCount: number;
   replacementCount: number;
   recycledCount: number;
@@ -298,9 +356,6 @@ function buildOperationalAlertMessage(args: {
 }): string {
   const lines: string[] = ["<b>GoGetLinks · Новые задачи по ссылкам wesetup.ru</b>"];
 
-  if (args.unreadCount > 0) {
-    lines.push(`• Непрочитанных диалогов с вебмастерами: <b>${args.unreadCount}</b>`);
-  }
   if (args.onCheckCount > 0) {
     lines.push(`• Размещений на проверке (on_check): <b>${args.onCheckCount}</b>`);
   }
@@ -389,12 +444,17 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
 
     // Step 1-4: Strict sequential pipeline, zero automated spend
     const syncSummary = await syncCabinet();
+    const notifyNewReplies = resolved?.notifyNewReplies ??
+      (resolved?.syncCabinet ? undefined : notifyGglWebmasterReplies);
+    let operationalAlertsSent = await notifyNewReplies?.(now).catch((error: unknown) => {
+      console.error("[gogetlinks-cron] webmaster reply notifications failed:", error);
+      return 0;
+    }) ?? 0;
     const recycled = await recycleRejected();
     await materializeSlots(now);
     const preparation = await prepareSlots(now);
 
     // Step 5: Evaluate operational & financial alerts (fire-and-forget safe)
-    let operationalAlertsSent = 0;
     let lowBalanceAlertSent = false;
 
     const safeCheckRecent = async (kind: string, dedupeKey: string): Promise<boolean> => {
@@ -420,14 +480,12 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
       pendingSummary.dueTodayCount > 0 &&
       !(await safeCheckRecent("ggl-due-slots", dueSlotsDedupeKey));
 
-    const unreadCount = syncSummary.newUnreadThreadIds.length;
     const onCheckCount = syncSummary.newOnCheckOrderIds.length;
     const replacementCount = syncSummary.newReplacementOrderIds.length;
     const recycledCount = recycled.recycledSlotIds.length;
     const exhaustedCount = recycled.exhaustedSlotIds?.length ?? 0;
 
     const hasOperationalEvents =
-      unreadCount > 0 ||
       onCheckCount > 0 ||
       replacementCount > 0 ||
       recycledCount > 0 ||
@@ -438,9 +496,8 @@ export async function runGglCronPass(deps?: GglCronDeps): Promise<GglCronResult>
       const opKind = includeDueToday ? "ggl-due-slots" : "ggl-operational";
       const opDedupeKey = includeDueToday
         ? dueSlotsDedupeKey
-        : `ops:${syncSummary.syncedAt}:u${unreadCount}:c${onCheckCount}:r${replacementCount}:f${recycledCount}:x${exhaustedCount}`;
+        : `ops:${syncSummary.syncedAt}:c${onCheckCount}:r${replacementCount}:f${recycledCount}:x${exhaustedCount}`;
       const opText = buildOperationalAlertMessage({
-        unreadCount,
         onCheckCount,
         replacementCount,
         recycledCount,

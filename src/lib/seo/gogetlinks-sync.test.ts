@@ -325,6 +325,10 @@ test("syncGglCabinet emits delta IDs strictly for isWesetup === true, reconciles
 
   const slotUpdates: Array<{ where: unknown; data: unknown }> = [];
   const threads = new Map<string, Record<string, unknown>>();
+  threads.set("th_personal", {
+    id: "th_personal", gglThreadKey: "personal:200001:366517", campaignId: "camp_200001",
+    donorDomain: "viarum.ru", unreadCount: 0, orderId: null, lastMessageAt: null,
+  });
   const messages = new Map<string, Record<string, unknown>>([
     [
       "msg_sending_recent",
@@ -454,6 +458,13 @@ test("syncGglCabinet emits delta IDs strictly for isWesetup === true, reconciles
   const summary = await syncGglCabinet({
     now,
     prismaClient: mockDb as never,
+    readPersonalHistory: async key => {
+      assert.equal(key, "personal:200001:366517");
+      return { unreadCount: 0, messages: [{
+        id: `${key}:9789659`, sender: "Оптимизатор wesetup.ru", date: "2026-11-05T15:04:00+03:00",
+        text: "В какой рубрике выйдет материал?", direction: "outbound",
+      }] };
+    },
     readGgl: async (opName, args) => {
       if (opName === "getAccountBalance") {
         return { balanceRub: 10500, availableRub: 9650, blockedRub: 850 } as never;
@@ -591,6 +602,10 @@ test("syncGglCabinet emits delta IDs strictly for isWesetup === true, reconciles
   const wsReplacementOrder = orders.get(summary.newReplacementOrderIds[0])!;
   assert.equal(wsReplacementOrder.campaignId, "camp_200001");
   assert.deepEqual(summary.newUnreadThreadIds, ["th_ws"]);
+  const personal = [...messages.values()].find(message => message.threadId === "th_personal");
+  assert.equal(personal?.gglMessageId, "personal:200001:366517:9789659");
+  assert.equal(personal?.direction, "outbound");
+  assert.equal(threads.get("th_personal")?.campaignId, "camp_200001");
 
   // 2. In-flight order reconciled cleanly while preserving human attribution & advancing slot:
   const reconciled = orders.get("ord_inflight_ws")!;
