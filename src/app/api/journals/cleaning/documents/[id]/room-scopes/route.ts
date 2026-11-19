@@ -7,6 +7,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
 import { documentRowsPointId } from "@/lib/document-point-rows";
 import { objectPointResponse } from "@/lib/point-objects.server";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +47,10 @@ export async function POST(
   }
   const { id: documentId } = await params;
   const organizationId = getActiveOrgId(auth.session);
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
 
   // Проверяем что документ принадлежит этой орге и это cleaning.
   const doc = await db.journalDocument.findFirst({

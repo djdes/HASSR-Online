@@ -13,6 +13,7 @@ import { canWriteJournal } from "@/lib/journal-acl";
 import { orgTodayKey } from "@/lib/timezone";
 import type { Session } from "next-auth";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 function aclActorFromSession(session: {
   user: { id: string; role: string; isRoot?: boolean };
@@ -94,6 +95,10 @@ export async function POST(
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
 
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
+
   const { id } = await params;
   const document = await loadDocument(id, getActiveOrgId(session), session);
   if (!document) {
@@ -173,6 +178,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
 
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
+
   const { id } = await params;
   const document = await loadDocument(id, getActiveOrgId(session), session);
   if (!document) {
@@ -249,6 +258,10 @@ export async function DELETE(
   if (!isManagementRole(session.user.role)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const { id } = await params;
   const document = await loadDocument(id, getActiveOrgId(session), session);

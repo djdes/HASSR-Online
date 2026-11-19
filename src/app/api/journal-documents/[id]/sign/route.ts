@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { getServerSession } from "@/lib/server-session";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   const { id } = await params;
   const organizationId = getActiveOrgId(session);
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
   const body = (await request.json().catch(() => null)) as { entries?: unknown } | null;
   const entries: BrakerageSignEntry[] = (Array.isArray(body?.entries) ? body.entries : [])
     .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))

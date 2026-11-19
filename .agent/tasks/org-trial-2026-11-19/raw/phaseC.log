@@ -1,0 +1,8 @@
+free account: preview: {"ok":false,"reason":"free_plan","limit":1,"lockedName":null}
+free account: create 2nd: {"status":402,"json":{"error":"На бесплатном тарифе — одна организация. Подключите «Стандарт», «Премиум» или «ВИП», чтобы добавить ещё одну.","code":"billing_point_limit","reason":"free_plan","payUrl":"/settings/subscription","limit":1,"current":1}}
+same INN: profile response: {"status":200,"json":{"ok":true,"buildings":[],"trialEnded":"inn_reused"}}
+same INN: account trialEndsAt before → after: null → 2026-11-19 12:01
+same INN: audit: billing.trial.inn_reused|{"inn": "7728168971", "usedByName": "Бывший клиент", "usedByOrganizationId": "cmwni202v000zzo7d7xl2003r"}
+same INN: tariff window shown: 1
+other INN: profile response: {"status":200,"json":{"ok":true,"buildings":[]}}
+other INN: account trialEndsAt: null

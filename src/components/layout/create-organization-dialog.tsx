@@ -1,16 +1,35 @@
 "use client";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { CalendarClock, Loader2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
+import { BILLING_PAY_HREF, lastDayBefore } from "@/lib/billing-period";
+import { isInsideMobileApp } from "@/lib/mobile-app";
 import { ORG_SPHERES } from "@/lib/org-profile";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 import { postActiveOrganization } from "@/lib/switch-organization";
 import { useContentTransition } from "@/components/layout/content-transition";
 import { shortSwitchName, showSwitchToast, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
+
+/**
+ * Условия создания от сервера (`GET /api/organizations/creation-preview`):
+ * займёт оплаченную точку, получит свои 14 дней, останется в пробном периоде
+ * аккаунта или отказ с причиной — человек видит это до кнопки «Создать».
+ */
+type CreationPreview =
+  | {
+      ok: true;
+      mode: "open" | "account_trial" | "paid_point" | "org_trial";
+      ownTrial: boolean;
+      trialEndsAt: string | null;
+      used: number | null;
+      limit: number | null;
+    }
+  | { ok: false; reason: "free_plan" | "trials_used" | "locked_org"; limit: number | null; lockedName: string | null };
 
 /**
  * Модалка «Новая организация».
@@ -63,10 +82,49 @@ export function CreateOrganizationDialog({
   const [sphere, setSphere] = useState(currentSphere);
   const [copy, setCopy] = useState(true);
   const [saving, setSaving] = useState(false);
+  const locale = useLocale();
+  const tBilling = useTranslations("common.billing");
+  const [preview, setPreview] = useState<CreationPreview | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/organizations/creation-preview")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: CreationPreview | null) => {
+        if (alive && data && typeof data.ok === "boolean") setPreview(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const refused = preview && !preview.ok ? preview : null;
+  const freeUntil =
+    preview?.ok && preview.trialEndsAt
+      ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "Europe/Moscow" }).format(
+          lastDayBefore(new Date(preview.trialEndsAt)),
+        )
+      : null;
+  const previewText = !preview
+    ? null
+    : !preview.ok
+      ? preview.reason === "free_plan"
+        ? t("refusedFreePlan")
+        : preview.reason === "locked_org"
+          ? t("refusedLockedOrg", { name: preview.lockedName ?? "" })
+          : t("refusedTrialsUsed", { limit: String(preview.limit ?? 1) })
+      : preview.mode === "paid_point" && preview.used !== null && preview.limit !== null
+        ? t("previewPaidPoint", { used: String(preview.used), limit: String(preview.limit) })
+        : freeUntil && preview.mode === "org_trial"
+          ? t("previewOrgTrial", { date: freeUntil })
+          : freeUntil && preview.mode === "account_trial"
+            ? preview.ownTrial
+              ? t("previewOrgTrial", { date: freeUntil })
+              : t("previewAccountTrial", { date: freeUntil })
+            : null;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (name.trim().length < 2 || saving) return;
+    if (name.trim().length < 2 || saving || refused) return;
     setSaving(true);
     try {
       const response = await fetch("/api/organizations", {
@@ -178,6 +236,35 @@ export function CreateOrganizationDialog({
           </label>
         ) : null}
 
+        {previewText ? (
+          <div
+            data-testid="org-creation-preview"
+            data-refused={refused ? "true" : "false"}
+            className={
+              refused
+                ? "mt-3 flex items-start gap-2.5 rounded-2xl border border-[#ffd9a8] bg-[#fffaf0] p-3 text-[13px] leading-snug text-[#7a4a00]"
+                : "mt-3 flex items-start gap-2.5 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-3 text-[13px] leading-snug text-[#3c4053]"
+            }
+          >
+            {refused ? (
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-[#b25e00]" />
+            ) : (
+              <CalendarClock className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
+            )}
+            <span className="min-w-0 flex-1">
+              {previewText}
+              {refused && !isInsideMobileApp() ? (
+                <>
+                  {" "}
+                  <Link href={BILLING_PAY_HREF} onClick={onClose} className="font-medium text-[#3848c7] underline underline-offset-2">
+                    {tBilling("pay")}
+                  </Link>
+                </>
+              ) : null}
+            </span>
+          </div>
+        ) : null}
+
         <p className="mt-3 text-[12px] text-[#9b9fb3]">
           {t("afterCreate", { count: organizationsCount + 1 })}
         </p>
@@ -192,7 +279,7 @@ export function CreateOrganizationDialog({
           </button>
           <button
             type="submit"
-            disabled={saving || name.trim().length < 2}
+            disabled={saving || name.trim().length < 2 || Boolean(refused)}
             className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c9cef7]"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : null}

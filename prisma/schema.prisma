@@ -40,6 +40,10 @@ model Account {
   autoRenew          Boolean        @default(true)
   /// Когда руководитель последний раз включал/выключал автопродление.
   autoRenewChangedAt DateTime?
+  /// Сколько раз аккаунту выдали свои 14 дней для дополнительной организации
+  /// (`src/lib/org-trial.ts`). Только растёт: удаление организации выдачу не
+  /// возвращает — иначе пробный период получали бы по кругу.
+  orgTrialsGranted   Int            @default(0)
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   organizations      Organization[]
@@ -370,6 +374,12 @@ model Organization {
   /// Демо-организация: одна общая на платформу (id "demo"), гости входят в
   /// неё по членству. demoExpiresAt — когда её пора переустановить; раз в
   /// сутки это делает cron purge-demo-orgs. Сотрудники демо не в тарифе.
+  /// Свой бесплатный период дополнительной организации аккаунта (2026-11-19):
+  /// до этой даты она не занимает оплаченную точку и места тарифа, после —
+  /// занимает, а без точки закрывается окном оплаты (`src/lib/org-trial.ts`).
+  /// null — первая организация аккаунта, занявшая оплаченную точку и все,
+  /// кто создан до этой даты: к ним эти правила не применяются.
+  trialEndsAt                    DateTime?
   isDemo                         Boolean                        @default(false)
   demoExpiresAt                  DateTime?
   locale                         String                         @default("ru")

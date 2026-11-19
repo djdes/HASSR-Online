@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { orgJournalBonusKopecks } from "@/lib/org-journal-settings";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { canWriteJournal } from "@/lib/journal-acl";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * POST /api/journals/[id]/claim-bonus
@@ -34,6 +35,10 @@ export async function POST(
   const session = auth.session;
   const orgId = getActiveOrgId(session);
   const userId = session.user.id;
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(orgId);
+  if (locked) return locked;
 
   const obligation = await db.journalObligation.findUnique({
     where: { id },

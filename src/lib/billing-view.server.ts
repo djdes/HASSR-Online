@@ -1,5 +1,6 @@
 import {
   BILLING_PAY_HREF,
+  daysLeft,
   formatMskDay,
   formatMskDayAuto,
   lastDayBefore,
@@ -54,6 +55,27 @@ export type BillingView = {
   testModeActive: boolean;
   /** Строка тарифа в шапке. */
   header: { plan: string; label: string | null; note: string | null };
+  /**
+   * Свои 14 дней этой организации (`org-trial.ts`): плашка «осталось N дней»
+   * руководству на оплаченном аккаунте либо закрытие после них — окно
+   * руководителю (`gate`) и тонкая плашка остальным.
+   */
+  orgTrial: {
+    status: "trial" | "locked";
+    name: string;
+    /** Последний бесплатный день (ISO) — «по 3 декабря включительно». */
+    lastDayIso: string;
+    daysLeft: number;
+    /**
+     * Окно закрытой организации — всем, кто в ней работает, и без крестика:
+     * иначе в ней продолжали бы работать сотрудники. `canDecide` — человек
+     * решает про тариф: ему кнопки оплаты и удаления, остальным — «обратитесь
+     * к руководителю». `payHref` null — звать к оплате нельзя (приложение).
+     */
+    gate: { canDecide: boolean; payHref: string | null } | null;
+    /** Ссылка «Добавить точку» в плашке; null — звать к оплате нельзя или некому. */
+    payHref: string | null;
+  } | null;
 };
 
 export function pricesFromRates(rates: PlanRates): PlanPricesFrom {
@@ -152,6 +174,25 @@ export async function loadBillingView(args: {
               }
             : { plan: unit.plan, label: null, note: null };
 
+  // Свои 14 дней организации. В пробном периоде аккаунта плашку не дублируем —
+  // там уже своя, общая; закрытие бывает только на оплаченном аккаунте.
+  const own = unit.orgTrial;
+  const ownVisible = own && state.kind === "paid" && (own.status === "locked" || fullAccess);
+  const orgTrial: BillingView["orgTrial"] =
+    own && ownVisible
+      ? {
+          status: own.status,
+          name: own.name,
+          lastDayIso: lastDayBefore(own.trialEndsAt).toISOString(),
+          daysLeft: daysLeft(own.trialEndsAt, now),
+          gate:
+            own.status === "locked"
+              ? { canDecide, payHref: canDecide && !args.inMobileApp ? BILLING_PAY_HREF : null }
+              : null,
+          payHref: canDecide && !args.inMobileApp ? BILLING_PAY_HREF : null,
+        }
+      : null;
+
   return {
     state,
     settings,
@@ -160,6 +201,7 @@ export async function loadBillingView(args: {
     pricesFrom,
     announcement,
     gate,
+    orgTrial,
     staffNotice: needsDecision && !fullAccess,
     pendingInvoice,
     testModeActive: BILLING_TEST_MODE && state.kind === "legacy",

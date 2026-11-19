@@ -11,6 +11,7 @@ import { buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
 import { extractEmployeeId } from "@/lib/tasksflow-adapters/row-key";
 import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole } from "@/lib/user-roles";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,6 +94,10 @@ export async function POST(
       { status: 401 }
     );
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(link.integration.organizationId);
+  if (locked) return locked;
 
   const adapter = getAdapter(link.journalCode);
   if (!adapter) {

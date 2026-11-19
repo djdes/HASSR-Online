@@ -32,6 +32,8 @@ export type CreateOrganizationInput = {
   demo?: { expiresAt: Date; autoJournalCodes: string[]; disabledJournalCodes: string[] };
   /** Организация-донор: копируем должности и набор журналов. */
   copyFromOrganizationId?: string | null;
+  /** Отметка бесплатного периода дополнительной организации (`org-trial.ts`). */
+  trialEndsAt?: Date | null;
 };
 
 export async function createOrganization(
@@ -65,6 +67,7 @@ export async function createOrganization(
       type: sphere,
       accountId: input.accountId,
       subscriptionPlan: "free",
+      ...(input.trialEndsAt ? { trialEndsAt: input.trialEndsAt } : {}),
       disabledJournalCodes: donor
         ? (donor.disabledJournalCodes as never)
         : (defaultDisabledCodesFor(sphere) as never),

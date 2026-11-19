@@ -89,6 +89,12 @@ export type TariffCabinetState = {
   trialDaysLeft: number | null;
   /** Точек в работе: меньше выбрать нельзя. */
   pointsInUse: number;
+  /**
+   * С чего начать выбор, если это больше оплаченного: точки в работе плюс
+   * организации, закрытые после своих 14 дней (`lib/org-trial.ts`). Не
+   * минимум — закрытую организацию можно не оплачивать.
+   */
+  suggestedPoints?: number;
   /** Запланированное понижение. */
   scheduled: { tier: PaidTier; cycle: BillingCycle; points: number; atLabel: string } | null;
   /** Цена прежней «Подписки» за 30 дней — для зачёта остатка. */
@@ -183,7 +189,7 @@ export function TariffComparison({
   // её кнопка — «Перейти на год» с зачётом остатка, «Помесячно» — по клику.
   const [cycle, setCycle] = useState<BillingCycle>("year");
   const minPoints = Math.max(1, cabinet?.pointsInUse ?? 1);
-  const [points, setPoints] = useState(Math.max(minPoints, currentPaid?.points ?? 1));
+  const [points, setPoints] = useState(Math.max(minPoints, currentPaid?.points ?? 1, cabinet?.suggestedPoints ?? 1));
   // Куда уехала ручка тумблера — для её растяжения в движении (`motion-knob`);
   // до первого нажатия анимации нет.
   const [knobMoved, setKnobMoved] = useState<"left" | "right" | null>(null);

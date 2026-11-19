@@ -7,6 +7,7 @@ import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { BUILDING_OUT_OF_SCOPE_ERROR, COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
 import { disabledAfter, planPointJournalToggle } from "@/lib/point-journals";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +40,10 @@ export async function POST(request: Request) {
   }
   const enabled = body.enabled;
   const organizationId = getActiveOrgId(session);
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
 
   const [template, context, personBuildings] = await Promise.all([
     db.journalTemplate.findFirst({ where: { code, isActive: true }, select: { id: true } }),

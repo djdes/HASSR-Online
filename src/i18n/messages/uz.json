@@ -1102,7 +1102,9 @@
       "limitToPremium": "«Standart»ning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. «Premium»ga o‘ting — har bir nuqtaga {seats, number} nafargacha xodim.",
       "limitContact": "«Premium»ning barcha o‘rinlari band — {count, plural, other {# nafar xodim}}. Har bir nuqtaga {seats, number} nafardan ortiq xodim — kelishuv bo‘yicha: bizga yozing.",
       "contact": "Bog‘lanish",
-      "contactSubject": "«Premium» tarifida ko‘proq xodim"
+      "contactSubject": "«Premium» tarifida ko‘proq xodim",
+      "orgLocked": "Bu tashkilotning bepul 14 kuni tugadi. Tarif sahifasida uning uchun nuqta qo‘shing.",
+      "trialEndedInn": "Bu STIR (INN) va telefon boshqa kabinetda sinov davridan allaqachon foydalangan, shuning uchun bu yerda u yakunlandi. Tarifni tanlang yoki bu xato bo‘lsa, qo‘llab-quvvatlashga yozing."
     },
     "assistant": {
       "title": "AI yordamchi",
@@ -25681,6 +25683,20 @@
       "noJournalFound": "Jurnal topilmadi",
       "keepJournalRemains": "Ishdagi jurnal: <b>{name}</b>",
       "journalsOff": "{journals} o‘chiriladi — ulardagi yozuvlar saqlanadi. Tarif to‘langach qayta yoqish mumkin."
+    },
+    "orgTrialNotice": {
+      "message": "“{name}” tashkilotining bepul davri: {days, plural, other {# kun qoldi}}, {date} gacha (shu kun ham kiradi). Keyin uning uchun tarifda to‘langan nuqta kerak bo‘ladi.",
+      "action": "Nuqta qo‘shish"
+    },
+    "orgTrialLockGate": {
+      "title": "Bepul 14 kun tugadi",
+      "lead": "“{name}” tashkiloti {date} gacha bepul ishladi. Unda ishlashni davom ettirish uchun tarifga uning uchun nuqta qo‘shing.",
+      "safe": "Ma’lumotlar saqlangan. Qolgan tashkilotlar odatdagidek ishlaydi.",
+      "pay": "Tarifga nuqta qo‘shish",
+      "switchTitle": "Boshqa tashkilotga o‘tish",
+      "switchFailed": "O‘tib bo‘lmadi",
+      "staffLead": "“{name}” tashkilotida ish to‘xtatilgan: uning bepul 14 kuni {date} da tugagan. Rahbar tarifga nuqta qo‘shmoqda — unga murojaat qiling.",
+      "deleteLink": "Tashkilot kerak emas — uni o‘chirish"
     }
   },
   "bonusesUi": {
@@ -27103,7 +27119,13 @@
       "sphereLabel": "Soha",
       "copyLabel": "Lavozimlar va jurnallar to‘plamini “{name}” dan nusxalash. Xodimlar ko‘chirilmaydi.",
       "afterCreate": "Yaratilgandan keyin: {count, plural, one {# ta tashkilot} other {# ta tashkilot}} · xodimlar limiti akkaunt uchun umumiy.",
-      "submit": "Yaratish va o‘tish"
+      "submit": "Yaratish va o‘tish",
+      "previewOrgTrial": "Dastlabki 14 kun bepul — {date} gacha (shu kun ham kiradi). Keyin bu tashkilot uchun tarifda to‘langan nuqta kerak bo‘ladi.",
+      "previewAccountTrial": "Akkauntning sinov davrida ishlaydi — {date} gacha (shu kun ham kiradi). Keyin bu tashkilot uchun tarifda to‘langan nuqta kerak bo‘ladi.",
+      "previewPaidPoint": "Tarifning to‘langan nuqtasini egallaydi: {limit} tadan {used}.",
+      "refusedFreePlan": "Bepul tarifda — bitta tashkilot. Yana bittasini qo‘shish uchun tarifni ulang.",
+      "refusedTrialsUsed": "To‘langan nuqtalar band ({limit}), bepul 14 kun esa ikki tashkilot uchun allaqachon ishlatilgan. Tarifga nuqta qo‘shing.",
+      "refusedLockedOrg": "“{name}” tashkilotining bepul 14 kuni tugagan, nuqtasi esa to‘lanmagan. Avval uning uchun nuqta qo‘shing."
     },
     "deletionBanner": {
       "cancelFailed": "Bekor qilib bo‘lmadi",
@@ -30173,7 +30195,12 @@
       "overSeatsContact": "Xodimlar «Premium» bergandan ko‘p ({limit, number} tadan {used, number}): yangisini qo‘shib bo‘lmaydi. Har bir nuqtaga {seats, number} nafardan ortig‘i — kelishuv bo‘yicha: bizga yozing.",
       "overSeatsCta": "«Premium»ga o‘tish",
       "contact": "Bog‘lanish",
-      "contactSubject": "«Premium» tarifida ko‘proq xodim"
+      "contactSubject": "«Premium» tarifida ko‘proq xodim",
+      "orgTrialsTitle": "Bepul davrdagi tashkilotlar",
+      "orgTrialRunning": "“{name}” — {date} gacha bepul, keyin nuqta kerak",
+      "orgTrialLocked": "“{name}” — yopilgan: bepul kunlar {date} da tugagan",
+      "orgTrialLockedHint": "Yopilgan tashkilotlarni ochish uchun jami {points, plural, other {# ta nuqta}} kerak. Quyidagi variantlar ular bilan hisoblangan.",
+      "orgTrialsLeft": "Yangi tashkilotlar uchun qolgan bepul 14 kunlik davrlar: {count}."
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Komissiya — brakerajni imzolaydi",

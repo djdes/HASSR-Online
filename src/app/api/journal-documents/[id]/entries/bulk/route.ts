@@ -20,6 +20,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * POST /api/journal-documents/[id]/entries/bulk
@@ -59,6 +60,10 @@ export async function POST(
   if (!session) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const doc = await db.journalDocument.findUnique({
     where: { id: documentId },

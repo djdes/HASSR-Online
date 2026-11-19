@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit-log";
 import { verifyTaskFillToken } from "@/lib/task-fill-token";
 import { extractEmployeeId } from "@/lib/tasksflow-adapters/row-key";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,6 +86,10 @@ export async function POST(
   if (!link) {
     return NextResponse.json({ errorCode: "invalidToken", error: "Invalid token" }, { status: 401 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(link.integration.organizationId);
+  if (locked) return locked;
 
   // Вытащим имя сотрудника для AuditLog'а — он покажет «Иванов И.И.»
   // вместо userId. Best-effort.

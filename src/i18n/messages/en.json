@@ -1102,7 +1102,9 @@
       "limitToPremium": "All seats on Standard are taken — {count, plural, one {# employee} other {# employees}}. Move to Premium — up to {seats, number} employees per location.",
       "limitContact": "All seats on Premium are taken — {count, plural, one {# employee} other {# employees}}. More than {seats, number} employees per location — by arrangement: contact us.",
       "contact": "Contact us",
-      "contactSubject": "More employees on the Premium plan"
+      "contactSubject": "More employees on the Premium plan",
+      "orgLocked": "The free 14 days of this organisation are over. Add a location for it on the plan page.",
+      "trialEndedInn": "This tax ID (INN) and phone have already used a trial in another account, so the trial here has ended. Choose a plan or contact support if this is a mistake."
     },
     "assistant": {
       "title": "AI assistant",
@@ -25681,6 +25683,20 @@
       "noJournalFound": "No log found",
       "keepJournalRemains": "Log in use: <b>{name}</b>",
       "journalsOff": "{journals} will be turned off — their entries are kept. You can turn them back on after paying for a plan."
+    },
+    "orgTrialNotice": {
+      "message": "Free period of “{name}”: {days, plural, one {# day left} other {# days left}}, through {date}. After that it needs a paid location on the plan.",
+      "action": "Add a location"
+    },
+    "orgTrialLockGate": {
+      "title": "The free 14 days are over",
+      "lead": "“{name}” was free through {date}. To keep working in it, add a location for it to the plan.",
+      "safe": "Your data is saved. The other organisations work as usual.",
+      "pay": "Add a location to the plan",
+      "switchTitle": "Switch to another organisation",
+      "switchFailed": "Could not switch",
+      "staffLead": "Work in “{name}” is paused: its free 14 days ended on {date}. The manager is adding a location to the plan — please contact them.",
+      "deleteLink": "The organisation is not needed — delete it"
     }
   },
   "bonusesUi": {
@@ -27103,7 +27119,13 @@
       "sphereLabel": "Sector",
       "copyLabel": "Copy the positions and the set of journals from “{name}”. Staff are not transferred.",
       "afterCreate": "After creation: {count, plural, one {# organisation} other {# organisations}} · the staff limit is shared across the account.",
-      "submit": "Create and switch"
+      "submit": "Create and switch",
+      "previewOrgTrial": "The first 14 days are free, through {date}. After that this organisation needs a paid location on the plan.",
+      "previewAccountTrial": "Runs within the account trial, through {date}. After that this organisation needs a paid location on the plan.",
+      "previewPaidPoint": "Takes a paid location on the plan: {used} of {limit}.",
+      "refusedFreePlan": "The free plan covers one organisation. Choose a plan to add another.",
+      "refusedTrialsUsed": "All paid locations are in use ({limit}), and the free 14 days have already been used for two organisations. Add a location to the plan.",
+      "refusedLockedOrg": "The free 14 days of “{name}” are over and its location is not paid. Add a location for it first."
     },
     "deletionBanner": {
       "cancelFailed": "Could not cancel",
@@ -30173,7 +30195,12 @@
       "overSeatsContact": "You have more employees than Premium allows ({used, number} of {limit, number}): new ones cannot be added. More than {seats, number} per location — by arrangement: contact us.",
       "overSeatsCta": "Move to Premium",
       "contact": "Contact us",
-      "contactSubject": "More employees on the Premium plan"
+      "contactSubject": "More employees on the Premium plan",
+      "orgTrialsTitle": "Organisations in the free period",
+      "orgTrialRunning": "“{name}” — free through {date}, then it needs a location",
+      "orgTrialLocked": "“{name}” — closed: the free days ended on {date}",
+      "orgTrialLockedHint": "To open the closed organisations you need {points, plural, one {# location} other {# locations}} in total. The options below already include them.",
+      "orgTrialsLeft": "Free 14-day periods left for new organisations: {count}."
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Commission — signs off the quality check",

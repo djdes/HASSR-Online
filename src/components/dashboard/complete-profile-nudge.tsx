@@ -296,6 +296,7 @@ function CompleteProfileModal({
   onClose: () => void;
 }) {
   const tn = useTranslations("dashboardUi.completeProfileNudge");
+  const tBilling = useTranslations("common.billing");
   const router = useRouter();
   // Фон под анкетой не должен прокручиваться (на iOS body.overflow не помогает).
   useBodyScrollLock(true);
@@ -449,6 +450,8 @@ function CompleteProfileModal({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || tn("saveFailed"));
+      // ИНН уже отработал пробный период в другом аккаунте — говорим причину сразу.
+      if (data?.trialEnded === "reused") toast.message(tBilling("trialEndedInn"), { duration: 15000 });
       return (data ?? {}) as { buildings?: Array<{ id: string; name: string; address: string | null }> };
     } catch (err) {
       toast.error(

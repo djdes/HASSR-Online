@@ -10,6 +10,7 @@ import {
   STORAGE_LIMIT_CODE,
 } from "@/lib/billing-period";
 import { isInsideMobileApp } from "@/lib/mobile-app";
+import { ORG_LOCKED_CODE } from "@/lib/org-trial";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import { contactSupport } from "@/lib/support-chat-bus";
 import { SEATS_PER_POINT } from "@/lib/tariff-plans";
@@ -130,6 +131,8 @@ export type TariffLimitCopy = {
   seatsInApp: (count: number) => string;
   unavailableInApp: string;
   pay: string;
+  /** Организация закрыта после своих 14 дней — нужна точка тарифа. */
+  orgLocked?: string;
 };
 
 const TARIFF_LIMIT_CODES: ReadonlySet<string> = new Set([
@@ -138,6 +141,7 @@ const TARIFF_LIMIT_CODES: ReadonlySet<string> = new Set([
   JOURNAL_LIMIT_CODE,
   STORAGE_LIMIT_CODE,
   FEATURE_LOCKED_CODE,
+  ORG_LOCKED_CODE,
 ]);
 
 /**
@@ -174,7 +178,9 @@ export function tariffLimitPresentation(
     return { message: copy.seats(count), href, actionLabel: copy.pay };
   }
   const message =
-    code === POINT_LIMIT_CODE
+    code === ORG_LOCKED_CODE
+      ? (copy.orgLocked ?? copy.feature)
+      : code === POINT_LIMIT_CODE
         ? copy.points(limit || 1)
         : code === JOURNAL_LIMIT_CODE
           ? copy.journals(limit || 1)
@@ -211,6 +217,7 @@ export function useTariffLimitToast(): (data: unknown) => boolean {
         seatsInApp: (count) => t("limit", { count }),
         unavailableInApp: t("unavailable"),
         pay: t("pay"),
+        orgLocked: t("orgLocked"),
       },
       isInsideMobileApp()
     );

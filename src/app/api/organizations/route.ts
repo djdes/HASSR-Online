@@ -6,7 +6,10 @@ import { createOrganization } from "@/lib/create-organization";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_SPHERE_VALUES } from "@/lib/validators";
 import { rewriteSessionClaims } from "@/lib/session-token";
-import { checkPointsForCreation, limitResponse } from "@/lib/billing.server";
+import { BILLING_PAY_HREF, POINT_LIMIT_CODE } from "@/lib/billing-period";
+import { orgCreationRefusalMessage } from "@/lib/org-trial";
+import { claimOrgTrialGrant, planOrgCreation, releaseOrgTrialGrant } from "@/lib/org-trial.server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +20,10 @@ const schema = z.object({
   copyFrom: z.string().trim().optional(),
 });
 
+// Пять созданных организаций в час на человека: живому владельцу сети хватит,
+// а создавать и удалять их по кругу — нет. Отказы тарифа попытку не тратят.
+const createLimiter = createRateLimiter({ tokensPerInterval: 5, intervalMs: 60 * 60 * 1000 });
+
 /**
  * POST /api/organizations — завести ещё одну точку.
  *
@@ -26,8 +33,11 @@ const schema = z.object({
  * Сразу после создания переключаем человека в новую организацию — иначе
  * он остаётся в старой и не понимает, сработало ли.
  *
- * Новая организация — новая точка тарифа: сверх оплаченных точек — 402
- * со ссылкой на тариф (в пробном периоде точек без ограничений).
+ * Новая организация — новая точка тарифа. Сверх оплаченных точек аккаунт
+ * получает для неё свои 14 дней (две выдачи за всё время, `org-trial.ts`);
+ * на бесплатном тарифе, без выдач или с закрытой организацией — 402 со
+ * ссылкой на тариф. Условия заранее показывает окно создания
+ * (`GET /api/organizations/creation-preview`).
  */
 export async function POST(request: Request) {
   const auth = await requireApiAuth();
@@ -58,27 +68,64 @@ export async function POST(request: Request) {
     );
   }
 
-  // Тариф считает аккаунт: проверяем по любой его рабочей организации.
-  const anchor = await db.organization.findFirst({
-    where: { accountId: account.id, isDemo: false, kind: { not: "directory" } },
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-  if (anchor) {
-    const points = await checkPointsForCreation(anchor.id, 1, { source: "organizations" });
-    if (!points.ok) return limitResponse(points);
+  // Тариф считает аккаунт: условия — одни на окно создания и на сам запрос.
+  const plan = await planOrgCreation(account.id);
+  const refuse = (reason: "free_plan" | "trials_used" | "locked_org", limit: number | null, current: number | null) => {
+    console.info("[billing] organization creation refused", { accountId: account.id, reason, limit, current });
+    return NextResponse.json(
+      { error: orgCreationRefusalMessage(reason, limit), code: POINT_LIMIT_CODE, reason, payUrl: BILLING_PAY_HREF, limit, current },
+      { status: 402 },
+    );
+  };
+  const decision = plan.decision;
+  if (!decision.ok) return refuse(decision.reason, decision.limit, decision.current);
+
+  if (!createLimiter.consume(`org-create:${session.user.id}`)) {
+    return NextResponse.json(
+      { error: "Слишком много новых организаций подряд. Попробуйте через час" },
+      { status: 429 },
+    );
   }
 
-  const { organizationId } = await createOrganization({
-    name: parsed.data.name,
-    sphere: parsed.data.sphere,
-    accountId: account.id,
-    ownerUserId: session.user.id,
-    // Клиент присылает "current" — какая именно организация активна,
-    // он знать не обязан, а подставлять чужой id ему нельзя.
-    copyFromOrganizationId:
-      parsed.data.copyFrom === "current" ? getActiveOrgId(session) : null,
-  });
+  // Свои 14 дней — выдача из двух на аккаунт, занимается атомарно. Гонку за
+  // последнюю выдачу проигравший на оплаченном аккаунте получает отказом, а
+  // в пробном периоде аккаунта — отметкой до его конца, без выдачи.
+  let trialEndsAt: Date | null = null;
+  let granted = false;
+  if (decision.mode === "org_trial" || (decision.mode === "account_trial" && decision.grant)) {
+    granted = await claimOrgTrialGrant(account.id);
+    if (granted) trialEndsAt = decision.trialEndsAt;
+    else if (decision.mode === "org_trial") return refuse("trials_used", null, null);
+    else trialEndsAt = plan.accountTrialEndsAt ?? decision.trialEndsAt;
+  } else if (decision.mode === "account_trial") {
+    trialEndsAt = decision.trialEndsAt;
+  }
+
+  let organizationId: string;
+  const startedAt = new Date();
+  try {
+    ({ organizationId } = await createOrganization({
+      name: parsed.data.name,
+      sphere: parsed.data.sphere,
+      accountId: account.id,
+      ownerUserId: session.user.id,
+      // Клиент присылает "current" — какая именно организация активна,
+      // он знать не обязан, а подставлять чужой id ему нельзя.
+      copyFromOrganizationId:
+        parsed.data.copyFrom === "current" ? getActiveOrgId(session) : null,
+      trialEndsAt,
+    }));
+  } catch (error) {
+    // Выдачу возвращаем, только если организация так и не появилась: сбой
+    // копирования должностей случается уже после её создания, и отметка осталась.
+    if (granted) {
+      const created = await db.organization
+        .count({ where: { accountId: account.id, createdAt: { gte: startedAt }, trialEndsAt: { not: null } } })
+        .catch(() => 1);
+      if (created === 0) await releaseOrgTrialGrant(account.id).catch(() => undefined);
+    }
+    throw error;
+  }
 
   await db.auditLog.create({
     data: {
@@ -88,9 +135,27 @@ export async function POST(request: Request) {
       action: "org.created",
       entity: "organization",
       entityId: organizationId,
-      details: { name: parsed.data.name, sphere: parsed.data.sphere },
+      details: {
+        name: parsed.data.name,
+        sphere: parsed.data.sphere,
+        billing: decision.mode,
+        trialEndsAt: trialEndsAt?.toISOString() ?? null,
+      },
     },
   });
+  if (granted) {
+    await db.auditLog.create({
+      data: {
+        organizationId,
+        userId: session.user.id,
+        userName: session.user.name ?? null,
+        action: "org.trial_granted",
+        entity: "organization",
+        entityId: organizationId,
+        details: { trialEndsAt: trialEndsAt?.toISOString() ?? null, grantsLeft: Math.max(0, plan.grantsLeft - 1) },
+      },
+    });
+  }
 
   await rewriteSessionClaims({ activeOrganizationId: organizationId });
   await db.user.update({
@@ -98,7 +163,12 @@ export async function POST(request: Request) {
     data: { lastActiveOrganizationId: organizationId },
   });
 
-  return NextResponse.json({ ok: true, organizationId });
+  return NextResponse.json({
+    ok: true,
+    organizationId,
+    billing: decision.mode,
+    trialEndsAt: trialEndsAt?.toISOString() ?? null,
+  });
 }
 
 /**

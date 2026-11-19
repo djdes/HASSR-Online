@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
+import { OrgTrialLockGate } from "@/components/billing/org-trial-lock-gate";
 import { MiniDeniedNotice } from "@/app/mini/_components/mini-denied-notice";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { authOptions } from "@/lib/auth";
@@ -24,6 +25,20 @@ export default async function MiniTodayLayout({ children }: { children: ReactNod
   return (
     <DomainMessagesBoundary namespaces={["miniToday", "miniTaskPool"]}>
       {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
+      {/* Организация закрыта после своих 14 дней (`lib/org-trial.ts`) — на главном
+          экране мини-приложения то же окно, что на сайте; записи в журналы сервер
+          в ней и так не принимает. Сменить организацию — в профиле. */}
+      {billing?.orgTrial?.gate ? (
+        <OrgTrialLockGate
+          name={billing.orgTrial.name}
+          lastDayIso={billing.orgTrial.lastDayIso}
+          canDecide={billing.orgTrial.gate.canDecide}
+          payHref={billing.orgTrial.gate.payHref}
+          deleteHref={null}
+          organizations={[]}
+          switchHref="/mini/me"
+        />
+      ) : null}
       {/* Увели сюда из закрытого раздела (`?denied=`) — объясняем один раз. */}
       <Suspense fallback={null}>
         <MiniDeniedNotice />

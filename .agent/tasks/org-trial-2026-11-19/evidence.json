@@ -1,0 +1,22 @@
+{
+  "task": "org-trial-2026-11-19",
+  "spec": ".agent/tasks/org-trial-2026-11-19/spec.md",
+  "base": "master 584218e59",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "src/lib/org-trial.test.ts — 18/18" },
+    { "id": "AC2", "status": "PASS", "evidence": "raw/phaseA.log — limit 1, current 1 with two organizations in their own 14 days" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/phaseA.log, raw/phaseB.log, raw/phaseC.log; 6 parallel claims → 2 grants" },
+    { "id": "AC4", "status": "PASS", "evidence": "raw/01-dialog-org-trial.jpg, raw/08-dialog-refused.jpg" },
+    { "id": "AC5", "status": "PASS", "evidence": "raw/02-second-org-notice.jpg, raw/phaseA.log" },
+    { "id": "AC6", "status": "PASS", "evidence": "raw/04-second-org-locked.jpg, raw/phaseB.log", "note": "staff notice for a locked organization not captured live" },
+    { "id": "AC7", "status": "PASS", "evidence": "raw/phaseC.log", "note": "toast with the reason not captured live" },
+    { "id": "AC8", "status": "PASS", "evidence": "npm run i18n:check — 98/98" },
+    { "id": "AC9", "status": "PASS", "evidence": "typecheck exit 0; full suite pass 6583, fail 1 (stale neutral palette, regenerated — test passes)" }
+  ],
+  "balanceCheck": {
+    "status": "PASS",
+    "evidence": "raw/balance-phase1.log, raw/balance-phase2.log, raw/balance-org-B.jpg"
+  },
+  "deploy": "prisma db push adds Organization.trialEndsAt (nullable) and Account.orgTrialsGranted (Int, default 0)"
+}

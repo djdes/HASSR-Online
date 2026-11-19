@@ -1,4 +1,12 @@
-import { Coins, FlaskConical, HardDrive, Layers, MapPin, Users } from "lucide-react";
+import {
+  Coins,
+  FlaskConical,
+  HardDrive,
+  Layers,
+  MapPin,
+  Users,
+  CalendarClock,
+} from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { forbidden } from "next/navigation";
@@ -17,6 +25,7 @@ import { ResumePausedCard } from "@/components/settings/resume-paused-card";
 import { CabinetTariffs, CancelScheduleButton } from "@/components/settings/cabinet-tariffs";
 import { EquipmentDeliveryCard } from "@/components/settings/equipment-delivery-card";
 import { formatBytes, formatMskDayAuto, hasFeature, lastDayBefore, voluntaryDowngradeCheck, type AccountBillingState } from "@/lib/billing-period";
+import { ORG_TRIAL_MAX_GRANTS } from "@/lib/org-trial";
 import { loadStorageSummary, type StorageSummary } from "@/lib/billing.server";
 import { tariffName } from "@/lib/cabinet-plan";
 import { loadBillingView } from "@/lib/billing-view.server";
@@ -199,10 +208,16 @@ export default async function SubscriptionPage({
       ? { paidUntil: state.paidUntil, tier: state.paidTier, cycle: state.planCycle, points: state.planPoints }
       : null;
   const pointsInUse = Math.max(1, state?.pointsInUse ?? 1);
+  // Организации, закрытые после своих 14 дней (`org-trial.ts`): варианты оплаты
+  // сразу считаем с их точками, но это предложение, а не минимум — закрытую
+  // организацию можно не оплачивать (и удалить в её настройках).
+  const orgTrials = billing?.unit.orgTrials ?? [];
+  const lockedPoints = billing?.unit.lockedPoints ?? 0;
+  const pointsNeeded = pointsInUse + lockedPoints;
   const scheduled = billing?.unit.scheduledPlan ?? null;
   // Варианты оплаты сейчас (карта и счёт): тариф × период при текущих
   // точках; понижение сейчас не оплачивается — оно с конца срока.
-  const optionPoints = Math.max(pointsInUse, current && current.tier !== "legacy" ? current.points : 1);
+  const optionPoints = Math.max(pointsNeeded, current && current.tier !== "legacy" ? current.points : 1);
   const options = (["standard", "premium", "vip"] as const)
     .flatMap((tier) => (["year", "month"] as const).map((cycle) => ({ tier, cycle, points: optionPoints })))
     .filter((target) => pricing.available[target.tier][target.cycle])
@@ -481,6 +496,39 @@ export default async function SubscriptionPage({
         </div>
       ) : null}
 
+      {/* Организации аккаунта в своих 14 днях и закрытые после них: до какого
+          числа бесплатно и сколько точек нужно, чтобы открыть закрытые. */}
+      {orgTrials.length > 0 && state?.kind === "paid" ? (
+        <section
+          data-testid="org-trials-card"
+          className="rounded-2xl border border-[#ececf4] bg-white px-4 py-3.5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
+        >
+          <h2 className="text-[14px] font-semibold text-[#0b1024]">{t("orgTrialsTitle")}</h2>
+          <ul className="mt-2 space-y-1.5 text-[13.5px] leading-[1.5]">
+            {orgTrials.map((entry) => (
+              <li
+                key={entry.organizationId}
+                className={entry.status === "locked" ? "flex items-start gap-2 text-[#7a4a00]" : "flex items-start gap-2 text-[#3c4053]"}
+              >
+                <CalendarClock className={entry.status === "locked" ? "mt-0.5 size-4 shrink-0 text-[#b25e00]" : "mt-0.5 size-4 shrink-0 text-[#5566f6]"} />
+                <span>
+                  {t(entry.status === "locked" ? "orgTrialLocked" : "orgTrialRunning", {
+                    name: entry.name,
+                    date: formatMskDayAuto(lastDayBefore(entry.trialEndsAt)),
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {lockedPoints > 0 ? (
+            <p className="mt-2 text-[13px] leading-[1.5] text-[#6f7282]">{t("orgTrialLockedHint", { points: pointsNeeded })}</p>
+          ) : null}
+          <p className="mt-2 text-[12.5px] leading-[1.5] text-[#9b9fb3]">
+            {t("orgTrialsLeft", { count: String(Math.max(0, ORG_TRIAL_MAX_GRANTS - (billing?.unit.orgTrialsGranted ?? 0))) })}
+          </p>
+        </section>
+      ) : null}
+
       {/* Баллы над тарифами: их спишут при оплате автоматически, и
           человек должен видеть это ДО того, как выберет тариф. */}
       {(org?.balanceRub ?? 0) > 0 ? (
@@ -606,6 +654,7 @@ export default async function SubscriptionPage({
               trialUntilLabel: state?.trialEndsAt ? formatMskDayAuto(lastDayBefore(state.trialEndsAt)) : null,
               trialDaysLeft: state?.trialDaysLeft ?? null,
               pointsInUse,
+              suggestedPoints: pointsNeeded,
               scheduled: scheduled
                 ? {
                     tier: scheduled.tier,

@@ -16,6 +16,7 @@ import { QR_FILL_RATE_LIMIT_ERROR, qrFillRateKey, recordQrFillAudit } from "@/li
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
 import { decodeRouteParam } from "@/lib/route-param";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,6 +66,9 @@ async function handlePost(request: Request, { params }: { params: Promise<{ equi
     return NextResponse.json({ error: "Оборудование не найдено", errorCode: "equipmentFill.errors.equipmentNotFound" }, { status: 404 });
   }
   const organizationId = fryer.area.organizationId;
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
   const timezone = fryer.area.organization.timezone || "Europe/Moscow";
   const mode = normalizeQrFillMode(fryer.area.organization.qrFillMode);
 

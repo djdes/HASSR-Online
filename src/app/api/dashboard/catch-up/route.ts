@@ -16,6 +16,7 @@ import { logAudit } from "@/lib/audit";
 import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
 import { readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { rejectJournalAutomation } from "@/lib/journal-controls.server";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -279,6 +280,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
   const organizationId = getActiveOrgId(session);
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
   const disabled = await rejectJournalAutomation(organizationId, "catchUp");
   if (disabled) return disabled;
   const body = (await request.json().catch(() => ({}))) as PostBody;

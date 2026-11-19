@@ -9,6 +9,7 @@ import { documentRowsPointId } from "@/lib/document-point-rows";
 import { canWriteJournal } from "@/lib/journal-acl";
 import { isManagementRole } from "@/lib/user-roles";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * «Добавить в справочник» из окна строки журнала (ППР, поверка, поломки).
@@ -29,6 +30,9 @@ export async function POST(
 
   const { id } = await params;
   const organizationId = getActiveOrgId(session);
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
   const document = await db.journalDocument.findUnique({
     where: { id },
     select: {
