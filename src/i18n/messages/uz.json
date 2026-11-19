@@ -19980,6 +19980,11 @@
     "employeeFallback": "Xodim"
   },
   "publicBlankDownload": {
+    "challenge": {
+      "loading": "Tekshiruv yuklanmoqda…",
+      "failed": "Tekshiruvdan o‘tib bo‘lmadi. Qayta urinib ko‘ring.",
+      "retry": "Tekshiruvni qayta urinish"
+    },
     "trigger": {
       "pdf": "PDF formatida yuklab olish",
       "docx": "Word formatida yuklab olish",
@@ -20083,6 +20088,8 @@
       "invalidRequest": "Shablonni tayyorlab bo'lmadi. Qayta urinib ko'ring.",
       "invalidEmail": "To'g'ri email manzilini kiriting.",
       "invalidPhone": "Telefon raqamini tekshiring.",
+      "captchaUnavailable": "Google tekshiruvi vaqtincha ishlamayapti. Keyinroq qayta urinib ko‘ring.",
+      "captcha": "“Men robot emasman” tekshiruvidan o‘ting va qayta urinib ko‘ring.",
       "tooFast": "Formani yuborib bo'lmadi. Sahifani yangilab, qayta urinib ko'ring.",
       "targetRequired": "Yuklab olish uchun shablon tanlanmagan.",
       "targetNotFound": "Bunday shablon topilmadi.",

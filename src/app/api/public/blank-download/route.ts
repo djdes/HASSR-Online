@@ -1,5 +1,6 @@
 import { NextResponse, after } from "next/server";
 
+import { verifyBlankChallenge } from "@/lib/blank-recaptcha.server";
 import { recordAuditLog } from "@/lib/audit-log";
 import {
   BLANK_CONSENT_SOURCE,
@@ -141,6 +142,11 @@ export async function POST(request: Request) {
       { error: "Не получилось отправить форму. Обновите страницу и попробуйте ещё раз", errorCode: "too_fast" },
       { status: 400 },
     );
+  }
+
+  const challenge = await verifyBlankChallenge(rawBody);
+  if (!challenge.ok) {
+    return NextResponse.json({ errorCode: challenge.status === 503 ? "captcha_unavailable" : "captcha", error: challenge.error }, { status: challenge.status });
   }
 
   const limited = blankDownloadLimiter.consume(ip, email);

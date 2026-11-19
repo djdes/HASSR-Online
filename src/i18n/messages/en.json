@@ -19980,6 +19980,11 @@
     "employeeFallback": "Employee"
   },
   "publicBlankDownload": {
+    "challenge": {
+      "loading": "Loading verification…",
+      "failed": "Verification failed. Please try again.",
+      "retry": "Try verification again"
+    },
     "trigger": {
       "pdf": "Download PDF",
       "docx": "Download Word",
@@ -20083,6 +20088,8 @@
       "invalidRequest": "We could not prepare the template. Please try again.",
       "invalidEmail": "Enter a valid email address.",
       "invalidPhone": "Check the phone number.",
+      "captchaUnavailable": "Google verification is temporarily unavailable. Please try again later.",
+      "captcha": "Complete the “I’m not a robot” check and try again.",
       "tooFast": "We could not send the form. Refresh the page and try again.",
       "targetRequired": "No template was selected for download.",
       "targetNotFound": "This template was not found.",

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, mock, test } from "node:test";
 
 import { db } from "@/lib/db";
+import { LEGAL_VERSION } from "@/lib/legal-consent";
 import { POST } from "./route";
 
 /**
@@ -63,5 +64,14 @@ test("кривой телефон отклоняется до проверок �
   const response = await POST(request({ website: "", elapsedMs: 5000, phone: "12-34" }));
   assert.equal(response.status, 400);
   assert.equal(((await response.json()) as Record<string, unknown>).errorCode, "invalid_phone");
+  assert.deepEqual(calls, []);
+});
+
+test("missing CAPTCHA blocks both fresh and remembered requests before side effects", async () => {
+  for (const extra of [{ elapsedMs: 5000 }, { remembered: true, consentVersion: LEGAL_VERSION }]) {
+    const response = await POST(request(extra));
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).errorCode, "captcha");
+  }
   assert.deepEqual(calls, []);
 });

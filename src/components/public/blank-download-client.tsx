@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useBlankChallenge } from "@/components/public/blank-challenge";
 import { useEmailField } from "@/components/ui/email-field";
 import {
   BlankDownloadExtras,
@@ -59,8 +60,8 @@ import { localizedHref } from "@/i18n/site-locale";
  *
  * Невидимая проверка от ботов: скрытое поле-ловушка `website` и время от
  * открытия окна до отправки (`elapsedMs`) — сервер решает по ним сам.
- * Почта запоминается в браузере: следующий шаблон скачивается по одному
- * нажатию (сервер получает ту же почту), а внизу экрана — плашка «копия —
+ * При повторном скачивании почта подставляется из браузера, а пользователь
+ * проходит новую проверку Google reCAPTCHA. После скачивания а внизу экрана — плашка «копия —
  * на …» с кнопкой сменить почту.
  *
  * `href` у ссылки — адрес файла без токена: без JS (или по средней кнопке
@@ -155,6 +156,7 @@ function browserTimeZone(): string | null {
 }
 
 async function requestDownload(params: {
+  captchaToken: string;
   email: string;
   company?: string;
   target: BlankTarget;
@@ -177,6 +179,7 @@ async function requestDownload(params: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        captchaToken: params.captchaToken,
         email: params.email,
         ...(company ? { company } : {}),
         ...(params.target.kind === "code" ? { code: params.target.code } : { paperId: params.target.paperId }),
@@ -236,6 +239,8 @@ export function BlankDownloadClient({
 }: BlankDownloadClientProps) {
   const t = useTranslations("publicBlankDownload");
   const locale = useLocale();
+  const challenge = useBlankChallenge();
+  const [savedDownload, setSavedDownload] = useState<RememberedBlankEmail | null>(null);
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("form");
   const [email, setEmail] = useState("");
@@ -258,6 +263,7 @@ export function BlankDownloadClient({
     prefillCompany = "",
     prefillPhone = "",
   ) {
+    setSavedDownload(null);
     setEmail(prefill);
     setCompany(prefillCompany);
     setPhone(prefillPhone);
@@ -268,9 +274,13 @@ export function BlankDownloadClient({
   }
 
   async function quickDownload(saved: RememberedBlankEmail) {
+    if (!challenge.token) return;
+    challenge.reset();
+    setSavedDownload(null);
+    setOpen(false);
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     setNotice({ state: "sending", email: saved.email, emailed: true });
-    const result = await requestDownload({ email: saved.email, company: saved.company, target, format, locale, remembered: saved, layout });
+    const result = await requestDownload({ captchaToken: challenge.token, email: saved.email, company: saved.company, target, format, locale, remembered: saved, layout });
     if (!result.ok) {
       // Редакция документов сменилась или сервер отказал — спрашиваем в окне.
       if (result.needConsent) remember(null);
@@ -294,8 +304,10 @@ export function BlankDownloadClient({
     event?.preventDefault();
     ymGoal("blank_download_click", goal);
     const saved = readRemembered();
+    challenge.reset();
     if (saved) {
-      void quickDownload(saved);
+      setSavedDownload(saved);
+      setOpen(true);
       return;
     }
     openForm("", null);
@@ -331,10 +343,16 @@ export function BlankDownloadClient({
   );
 
   async function submit(value: string, companyValue: string, extras: FormExtras) {
+    if (!challenge.token) {
+      setError("captcha");
+      return;
+    }
+    challenge.reset();
     const cleanCompany = companyValue.trim();
     setError(null);
     setPhase("sending");
     const result = await requestDownload({
+      captchaToken: challenge.token,
       email: value,
       ...(cleanCompany ? { company: cleanCompany } : {}),
       target,
@@ -393,9 +411,23 @@ export function BlankDownloadClient({
         </a>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-3xl border-[#ececf4] bg-white p-6 sm:max-w-[460px]" data-testid="blank-download-dialog">
-          {phase === "done" ? (
+      {open && (savedDownload || phase !== "done") && typeof document !== "undefined"
+        ? createPortal(<div aria-hidden="true" className="fixed inset-0 z-50 bg-[#0b1024]/30 backdrop-blur-[6px]" onClick={() => setOpen(false)} />, document.body)
+        : null}
+      <Dialog modal={!savedDownload && phase === "done"} open={open} onOpenChange={setOpen}>
+        <DialogContent onInteractOutside={(event) => { if (savedDownload || phase !== "done") event.preventDefault(); }} className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-3xl border-[#ececf4] bg-white p-6 sm:max-w-[460px]" data-testid="blank-download-dialog">
+          {savedDownload ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{t("trigger.label", { format: formatLabel })}</DialogTitle>
+                <DialogDescription>{savedDownload.email}</DialogDescription>
+              </DialogHeader>
+              {challenge.element}
+              <button type="button" className="rounded-xl bg-[#5566f6] p-3 text-white disabled:opacity-50" disabled={!challenge.token} onClick={() => void quickDownload(savedDownload)} data-testid="blank-remembered-submit">
+                {t("form.submit", { format: formatLabel })}
+              </button>
+            </>
+          ) : phase === "done" ? (
             <DoneView
               title={title}
               email={email}
@@ -419,6 +451,7 @@ export function BlankDownloadClient({
               error={error}
               expired={showExpired}
               sending={phase === "sending"}
+              challenge={challenge.element}
               onSubmit={submit}
             />
           )}
@@ -475,6 +508,7 @@ function FormView({
   error,
   expired,
   sending,
+  challenge,
   onSubmit,
 }: {
   /** Код журнала каталога — от него зависят поля «Дополнительно»; у бумажного бланка `null`. */
@@ -487,6 +521,7 @@ function FormView({
   error: ReturnType<typeof blankDownloadErrorKey> | null;
   expired: boolean;
   sending: boolean;
+  challenge: React.ReactNode;
   onSubmit: (email: string, company: string, extras: FormExtras) => void;
 }) {
   const t = useTranslations("publicBlankDownload");
@@ -757,6 +792,7 @@ function FormView({
           </p>
         ) : null}
 
+        {challenge}
         <button
           type="submit"
           disabled={sending || !field.valid}
