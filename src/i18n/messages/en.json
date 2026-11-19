@@ -1,5 +1,9 @@
 {
   "rootGglFirstMessage": {
+    "generate": "Generate message",
+    "replaceDraft": "Replace draft",
+    "generating": "Writing the message…",
+    "draftError": "Could not generate the message. Try again.",
     "open": "Message webmaster",
     "title": "Message for {domain}",
     "description": "This message goes to GoGetLinks. Placement is ordered separately.",
