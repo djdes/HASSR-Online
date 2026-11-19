@@ -18,6 +18,7 @@ import {
 } from "@/lib/point-wizard";
 import { LAMP_PRESETS, UV_LAMP_TYPE } from "@/lib/uv-lamp";
 import { SETUP_STEPS, setupStepIndex, type SetupStep } from "@/lib/setup-wizard";
+import { ExchangeOfferLine } from "@/components/directory-exchange/exchange-offer-line";
 
 /**
  * Шаги 2–4 мастера первого входа (владелец, 2026-11-18): после анкеты —
@@ -115,6 +116,27 @@ type PointRow = {
   initialAddress: string;
 };
 
+function savedPointRow(point: ApiBuilding): PointRow {
+  const address = point.address ?? "";
+  return { key: point.id, id: point.id, name: point.name, address, initialName: point.name, initialAddress: address };
+}
+
+/**
+ * Объекты после обмена или переноса из другой организации: строки из базы
+ * берём заново, а набранное и ещё не сохранённое (правка названия, новая
+ * строка с текстом) остаётся как было.
+ */
+function mergePointRows(current: PointRow[], points: ApiBuilding[]): PointRow[] {
+  // Пустой ответ — объектов нет или запрос не прошёл: шаг не трогаем.
+  if (points.length === 0) return current;
+  const edited = new Map<string, PointRow>();
+  for (const row of current) {
+    if (row.id && (row.name !== row.initialName || row.address !== row.initialAddress)) edited.set(row.id, row);
+  }
+  const drafts = current.filter((row) => row.id === null && row.name.trim() !== "");
+  return [...points.map((point) => edited.get(point.id) ?? savedPointRow(point)), ...drafts];
+}
+
 /** Шаг 2 «Объекты»: названия и адреса точек, можно добавить ещё. */
 export function SetupPointsStep({
   defaultAddress,
@@ -135,14 +157,7 @@ export function SetupPointsStep({
       if (!alive) return;
       setRows(
         points.length > 0
-          ? points.map((point) => ({
-              key: point.id,
-              id: point.id,
-              name: point.name,
-              address: point.address ?? "",
-              initialName: point.name,
-              initialAddress: point.address ?? "",
-            }))
+          ? points.map(savedPointRow)
           : [{ key: "new-0", id: null, name: "", address: defaultAddress, initialName: "", initialAddress: "" }],
       );
     });
@@ -150,6 +165,12 @@ export function SetupPointsStep({
       alive = false;
     };
   }, [defaultAddress]);
+
+  /** Связали справочники или перенесли объекты из другой организации — список мог вырасти. */
+  async function reloadPoints() {
+    const points = await loadPoints();
+    setRows((current) => (current ? mergePointRows(current, points) : current));
+  }
 
   const update = (key: string, patch: Partial<PointRow>) =>
     setRows((current) => (current ?? []).map((row) => (row.key === key ? { ...row, ...patch } : row)));
@@ -213,6 +234,8 @@ export function SetupPointsStep({
   return (
     <>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-3 pt-3 sm:px-5" data-guide="setup-points">
+        {/* У аккаунта уже есть другая организация — связать справочники или перенести данные (Р9). */}
+        <ExchangeOfferLine onApplied={() => void reloadPoints()} />
         {rows === null ? (
           <div className="flex h-24 items-center justify-center text-[#9b9fb3]">
             <Loader2 className="size-5 animate-spin" />

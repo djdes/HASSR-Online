@@ -152,7 +152,9 @@ export function CreateOrganizationDialog({
       refreshAfter(
         created.id,
         async () => {
-          router.push("/dashboard?welcome-org=1");
+          // В адресе — id новой организации: «Вернуться в прежнюю» из тоста не
+          // должно открывать её мастер и плашку в прежней организации.
+          router.push(`/dashboard?welcome-org=${encodeURIComponent(created.id || "1")}`);
           return true;
         },
         () =>

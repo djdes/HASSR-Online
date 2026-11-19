@@ -47,7 +47,9 @@ export function WelcomeOrgBanner({
   const router = useRouter();
   const t = useTranslations("organizationsUi");
   const searchParams = useSearchParams();
-  const requested = searchParams.get("welcome-org") === "1";
+  // `?welcome-org=<id новой организации>` (прежние ссылки — `=1`).
+  const welcomeOrg = searchParams.get("welcome-org");
+  const requested = welcomeOrg === "1" || welcomeOrg === organizationId;
   const [dismissed, setDismissed] = useState(false);
   const dismissedBefore = useSyncExternalStore(
     noopSubscribe,

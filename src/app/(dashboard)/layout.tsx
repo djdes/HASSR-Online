@@ -408,7 +408,9 @@ export default async function DashboardLayout({
   // в чужом кабинете и её отправка перезаписала бы название, сферу, ИНН
   // и адрес организации клиента. Анкету заведения заполняет клиент.
   const platformOrgId = (process.env.PLATFORM_ORG_ID ?? "platform").trim();
-  const needsProfileCompletion =
+  // Кому анкета заведения доступна вообще (условия выше). Тем же людям
+  // открывается мастер настройки новой организации аккаунта — см. ниже.
+  const canFillCompanyProfile =
     hasFullWorkspaceAccess(session.user) &&
     // Анкету заведения заполняет компания, не руководитель точки.
     !isPointScoped(session.user) &&
@@ -417,8 +419,9 @@ export default async function DashboardLayout({
     session.user.isRoot !== true &&
     activeOrgId !== platformOrgId &&
     !brandedOrg?.isDemo &&
-    Boolean(profile) &&
-    (!profile?.phone || brandedOrg?.name === DEFAULT_ORG_NAME);
+    Boolean(profile);
+  const needsProfileCompletion =
+    canFillCompanyProfile && (!profile?.phone || brandedOrg?.name === DEFAULT_ORG_NAME);
 
   // Validate hex color (#RRGGBB) — иначе CSS injection-vector.
   const brandColor =
@@ -538,11 +541,17 @@ export default async function DashboardLayout({
               level={partnerAccess.level}
             />
           ) : null}
-          {needsProfileCompletion ? (
-            // Suspense — компонент читает `?welcome=1` через useSearchParams.
+          {canFillCompanyProfile ? (
+            // Suspense — компонент читает `?welcome=1` и `?welcome-org=1`
+            // через useSearchParams.
             <Suspense fallback={null}>
               <CompleteProfileNudge
                 email={profile?.email ?? ""}
+                // Анкета заполнена — баннера нет, окно открывается только у
+                // новой организации аккаунта (`?welcome-org=1`): короткая
+                // анкета организации и те же шаги настройки.
+                mode={needsProfileCompletion ? "registration" : "organization"}
+                organizationId={activeOrgId}
                 initial={{
                   // Заглушку мгновенной регистрации за название не выдаём.
                   organizationName:
@@ -558,6 +567,8 @@ export default async function DashboardLayout({
                   // маркер незаполненной анкеты, а не имя человека.
                   personName:
                     profile?.name && profile.name !== profile.email ? profile.name : null,
+                  // Анкета новой организации телефон не спрашивает — берёт этот.
+                  phone: profile?.phone ?? null,
                 }}
               />
             </Suspense>

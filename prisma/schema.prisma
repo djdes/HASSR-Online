@@ -711,6 +711,12 @@ model Organization {
   mergedOrganizations            OrganizationMerge[]
   /// Свои настройки журналов: распределение, исполнитель, бонус (2026-11-01).
   journalSettings                OrganizationJournalSetting[]
+  /// Обмен справочниками между организациями аккаунта (2026-11-19): у
+  /// мастер-кабинета — его участники и соответствия записей, у организации —
+  /// её участие (src/lib/directory-exchange).
+  directoryExchangeMembers       DirectoryExchangeMember[]      @relation("DirectoryExchangeMaster")
+  directoryExchangeMemberships   DirectoryExchangeMember[]      @relation("DirectoryExchangeMember")
+  directoryExchangeLinks         DirectoryExchangeLink[]        @relation("DirectoryExchangeLinkMaster")
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -6112,4 +6118,49 @@ model StaffTimesheetPayment {
   createdAt   DateTime @default(now())
 
   @@index([personId, month])
+}
+
+/// Участник обмена справочниками (2026-11-19): организация аккаунта, которая
+/// через мастер-кабинет обменивается выбранными списками с остальными
+/// участниками этого кабинета — в обе стороны (src/lib/directory-exchange).
+model DirectoryExchangeMember {
+  id                   String       @id @default(cuid())
+  masterOrganizationId String
+  masterOrganization   Organization @relation("DirectoryExchangeMaster", fields: [masterOrganizationId], references: [id], onDelete: Cascade)
+  organizationId       String
+  organization         Organization @relation("DirectoryExchangeMember", fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Списки: products | staff | objects | equipment.
+  kinds                String[]     @default([])
+  createdByUserId      String?
+  lastSyncedAt         DateTime?
+  /// Итог последнего обмена кабинета (`ExchangeSummary`).
+  lastSyncJson         Json?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@unique([masterOrganizationId, organizationId])
+  @@index([organizationId])
+}
+
+/// Соответствие записей между организациями — участниками обмена: записи
+/// одной группы (`groupId`) — одна и та же должность, сотрудник, объект,
+/// помещение, цех, оборудование или продукт. `hash` — отпечаток переносимых
+/// полей записи на момент последнего обмена: изменился — правку получают
+/// остальные.
+model DirectoryExchangeLink {
+  id                   String       @id @default(cuid())
+  masterOrganizationId String
+  masterOrganization   Organization @relation("DirectoryExchangeLinkMaster", fields: [masterOrganizationId], references: [id], onDelete: Cascade)
+  /// product | position | staff | building | room | area | equipment
+  entity               String
+  groupId              String
+  organizationId       String
+  /// null — запись в этой организации удалили: заново не создаём.
+  entityId             String?
+  hash                 String
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@unique([masterOrganizationId, entity, groupId, organizationId])
+  @@index([masterOrganizationId, entity, organizationId])
 }

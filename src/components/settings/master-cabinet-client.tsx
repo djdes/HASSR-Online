@@ -19,6 +19,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { ExchangeCard } from "@/components/directory-exchange/exchange-card";
 import { CreateMasterCabinetDialog } from "@/components/master/create-master-cabinet-dialog";
 import { renameMasterCabinetDialog } from "@/components/master/rename-master-cabinet";
 import {
@@ -155,6 +156,17 @@ export function MasterCabinetClient({
       />
 
       {firstInvite ? <InviteResultBox result={firstInvite} /> : null}
+
+      {/* Обмен справочниками между организациями аккаунта — его владельцу.
+          Связь создаёт кабинет и подключает к нему организацию, поэтому после
+          неё список кабинетов перечитываем. */}
+      {canCreate ? (
+        <ExchangeCard
+          onChanged={() => {
+            void reload();
+          }}
+        />
+      ) : null}
 
       {view.cabinets.length === 0 ? (
         <NoCabinets view={view} onCreate={() => setCreateOpen(true)} onChange={setView} onInvite={setFirstInvite} />
