@@ -107,6 +107,9 @@ test("dispatcher prompt covers every applicant with missing-data and no-spending
   const prompt = buildGglWebmastersPrompt(input);
   assert.match(prompt, /type: wesetup_ggl_webmasters/);
   assert.match(prompt, /Баланс GoGetLinks тратить запрещено/);
+  assert.match(prompt, /\/journals-info\/incoming_control/);
+  assert.match(prompt, /\/journals-info\/uv_lamp_runtime/);
+  assert.match(prompt, /301-слитые/);
   const dataset = JSON.parse(prompt.split("\n\n").at(-1)!);
   assert.deepEqual(dataset.applicants.map((x: unknown[]) => x[0]), [101, 102]);
   assert.equal(dataset.applicants[0].at(-1), "Card unavailable");
