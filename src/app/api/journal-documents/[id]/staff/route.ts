@@ -24,6 +24,7 @@ import {
   snapshotBeforeAutoFill,
 } from "@/lib/journal-autofill-undo";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 type StaffAction =
   | "add_employee"
@@ -50,6 +51,10 @@ export async function POST(
   ) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const { id: documentId } = await params;
   const document = await db.journalDocument.findUnique({

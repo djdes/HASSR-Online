@@ -1104,7 +1104,7 @@
       "contact": "Bog‘lanish",
       "contactSubject": "«Premium» tarifida ko‘proq xodim",
       "orgLocked": "Bu tashkilotning bepul 14 kuni tugadi. Tarif sahifasida uning uchun nuqta qo‘shing.",
-      "trialEndedInn": "Bu STIR (INN) bo‘yicha sinov davri allaqachon ishlatilgan, shuning uchun u yakunlandi. Tarifni tanlang yoki bu xato bo‘lsa, qo‘llab-quvvatlashga yozing."
+      "trialEndedInn": "Bu STIR (INN) va telefon boshqa kabinetda sinov davridan allaqachon foydalangan, shuning uchun bu yerda u yakunlandi. Tarifni tanlang yoki bu xato bo‘lsa, qo‘llab-quvvatlashga yozing."
     },
     "assistant": {
       "title": "AI yordamchi",
@@ -25686,8 +25686,7 @@
     },
     "orgTrialNotice": {
       "message": "“{name}” tashkilotining bepul davri: {days, plural, other {# kun qoldi}}, {date} gacha (shu kun ham kiradi). Keyin uning uchun tarifda to‘langan nuqta kerak bo‘ladi.",
-      "action": "Nuqta qo‘shish",
-      "staffLocked": "Bu tashkilotda ish to‘xtatilgan: rahbar tarifga nuqta qo‘shmoqda."
+      "action": "Nuqta qo‘shish"
     },
     "orgTrialLockGate": {
       "title": "Bepul 14 kun tugadi",
@@ -25696,7 +25695,8 @@
       "pay": "Tarifga nuqta qo‘shish",
       "switchTitle": "Boshqa tashkilotga o‘tish",
       "switchFailed": "O‘tib bo‘lmadi",
-      "close": "Yopish"
+      "staffLead": "“{name}” tashkilotida ish to‘xtatilgan: uning bepul 14 kuni {date} da tugagan. Rahbar tarifga nuqta qo‘shmoqda — unga murojaat qiling.",
+      "deleteLink": "Tashkilot kerak emas — uni o‘chirish"
     }
   },
   "bonusesUi": {

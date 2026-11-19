@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import { sendPasswordChangedEmail } from "@/lib/email";
 import { innDigits, isValidInn } from "@/lib/inn";
 import { checkPointsForCreation } from "@/lib/billing.server";
-import { endTrialForReusedInn } from "@/lib/org-trial.server";
+import { checkTrialReuse } from "@/lib/org-trial.server";
 import { ensureLocationBuildings, MAX_AUTO_LOCATIONS } from "@/lib/location-buildings";
 import { refreshOrganizationLegalProfile } from "@/lib/org-legal-profile";
 import { normalizePhone } from "@/lib/phone";
@@ -212,11 +212,9 @@ export async function POST(request: Request) {
   if (isValidInn(inn)) {
     await refreshOrganizationLegalProfile(organizationId, inn);
   }
-  // Пробный период по этому ИНН уже использован другим аккаунтом — заканчиваем
-  // его здесь (`org-trial.server.ts`); человеку говорим причину.
-  const trialCheck = isValidInn(inn)
-    ? await endTrialForReusedInn({ organizationId, actor: { userId: session.user.id, userName: displayName } })
-    : { ended: false };
+  // Повторная регистрация: ИНН и телефон уже отработали пробный период в другом
+  // аккаунте — заканчиваем его здесь (`org-trial.server.ts`), человеку говорим причину.
+  const trialCheck = await checkTrialReuse({ organizationId, actor: { userId: session.user.id, userName: displayName } });
 
   // Анкета подставляет пароль сама, и пароль из письма о регистрации после
   // сохранения не подходит. Новый дублируем на почту — не дожидаясь
@@ -260,5 +258,5 @@ export async function POST(request: Request) {
           select: { id: true, name: true, address: true },
         })
       : [];
-  return NextResponse.json({ ok: true, buildings, ...(trialCheck.ended ? { trialEnded: "inn_reused" } : {}) });
+  return NextResponse.json({ ok: true, buildings, ...(trialCheck.ended ? { trialEnded: "reused" } : {}) });
 }

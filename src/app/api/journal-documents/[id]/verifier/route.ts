@@ -6,6 +6,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { logAudit } from "@/lib/audit";
 import { findOrgUser } from "@/lib/journal-roster-db";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +57,10 @@ export async function POST(
   if (!auth.ok) return auth.response;
   const session = auth.session;
   const orgId = getActiveOrgId(session);
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(orgId);
+  if (locked) return locked;
 
   let body: z.infer<typeof Schema>;
   try {

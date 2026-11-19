@@ -28,6 +28,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { decideEntryMove } from "@/lib/tracked-document";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * Контекст автоматического запрета «день в день» — для PATCH/DELETE,
@@ -51,6 +52,10 @@ export async function PUT(
   const { id: documentId } = await params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const doc = await db.journalDocument.findUnique({
     where: { id: documentId },
@@ -281,6 +286,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
 
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
+
   const doc = await db.journalDocument.findUnique({
     where: { id: documentId },
     include: { template: { select: { code: true } } },
@@ -488,6 +497,10 @@ export async function DELETE(
   if (!isManagementRole(session.user.role)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const doc = await db.journalDocument.findUnique({
     where: { id: documentId },

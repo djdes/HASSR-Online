@@ -1,4 +1,4 @@
-import { endTrialForReusedInn } from "@/lib/org-trial.server";
+import { checkTrialReuse } from "@/lib/org-trial.server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
@@ -115,13 +115,13 @@ export async function PATCH(request: Request) {
 
   // Сменили ИНН — сверяем его с другими аккаунтами (`org-trial.server.ts`).
   const trialCheck = changed.inn
-    ? await endTrialForReusedInn({
+    ? await checkTrialReuse({
         organizationId,
         actor: { userId: session.user.id, userName: session.user.name ?? null },
       })
     : { ended: false };
 
-  return NextResponse.json({ ok: true, organization: updated, ...(trialCheck.ended ? { trialEnded: "inn_reused" } : {}) });
+  return NextResponse.json({ ok: true, organization: updated, ...(trialCheck.ended ? { trialEnded: "reused" } : {}) });
 }
 
 function auditScalar(value: unknown): unknown {

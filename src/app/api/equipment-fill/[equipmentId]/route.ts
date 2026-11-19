@@ -49,6 +49,7 @@ import {
 import { qrFillRateLimiter } from "@/lib/rate-limit";
 import { orgTodayKey } from "@/lib/timezone";
 import { decodeRouteParam } from "@/lib/route-param";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -164,6 +165,10 @@ async function handlePost(
     return NextResponse.json({ error: "Оборудование не найдено", errorCode: "equipmentFill.errors.equipmentNotFound" }, { status: 404 });
   }
   const organizationId = equipment.area.organizationId;
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
 
   // Режим QR-форм организации: список / PIN / только после входа.
   // Запись без связи (заголовки `x-offline-*` + сессия устройства): автор и

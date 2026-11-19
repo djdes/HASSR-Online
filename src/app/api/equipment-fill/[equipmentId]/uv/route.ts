@@ -15,6 +15,7 @@ import { isUvLampEquipment } from "@/lib/uv-lamp";
 import { ensureUvDocumentForLamp, lampState, listLampOperators, toggleLamp } from "@/lib/uv-lamp-runs";
 import { isManagementRole } from "@/lib/user-roles";
 import { decodeRouteParam } from "@/lib/route-param";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +59,9 @@ async function handlePost(request: Request, { params }: { params: Promise<{ equi
   });
   if (!lamp || !isUvLampEquipment(lamp)) return NextResponse.json({ error: "Это не УФ-лампа", errorCode: "equipmentFill.errors.notUvLamp" }, { status: 404 });
   const organizationId = lamp.area.organizationId;
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
   const timeZone = lamp.area.organization.timezone || "Europe/Moscow";
   const mode = normalizeQrFillMode(lamp.area.organization.qrFillMode);
 

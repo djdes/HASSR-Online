@@ -1,0 +1,20 @@
+profile: 200
+create 2nd in account trial: {"ok":true,"organizationId":"cmwnj6zbu00066s7d0w22yhnz","billing":"account_trial","trialEndsAt":"2026-12-03T21:00:00.000Z"}
+2nd trialEndsAt in db (UTC): 2026-12-03 21:00:00
+invoice for ONE point while 2nd is in its 14 days: {"status":200,"amountRub":2990}
+pay: 200
+locked: modal: 1
+locked: modal text: Бесплатные 14 дней закончились | Организация «Пекарня Два» работала бесплатно по 17 ноября. Чтобы продолжить в ней работу, добавьте для неё точку к тарифу. | Данные сохранены. Остальные организации работают как обычно. | Добавить точку к тарифу | Организация не нужна — удалить её | ПЕРЕЙТИ В ДРУГУЮ ОРГАНИЗАЦИЮ | Пекарня Раз
+locked: POST /api/journals: {"status":402,"json":{"error":"Бесплатные 14 дней этой организации закончились. Добавьте для неё точку на странице тарифа, чтобы продолжить работу.","code":"billing_org_locked","payUrl":"/settings/subscription"}}
+locked: /settings/organization modal hidden: true
+locked: tariff points picker: {"value":"2","canDecrease":true}
+preview with locked org: {"ok":false,"reason":"locked_org","limit":1,"lockedName":"Пекарня Два"}
+request deletion of the locked org: 200
+preview after deletion request: {"ok":true,"mode":"org_trial","ownTrial":true,"trialEndsAt":"2026-12-03T21:00:00.000Z","used":null,"limit":null,"grantsLeft":1}
+lapsed account profile: 200
+same INN (typed with spaces), other phone: {"ok":true,"buildings":[]}
+  account trialEndsAt: null
+  audit: billing.trial.reuse_suspected
+same INN and same phone: {"ok":true,"buildings":[],"trialEnded":"reused"}
+  account trialEndsAt: 2026-11-19 12:34
+  audit: billing.trial.reused|{"inn": "5001000002", "phoneMatch": true, "usedByName": "Старый клиент", "usedByOrganizationId": "cmwnj8kb1000m6s7dgymxwv8a"}

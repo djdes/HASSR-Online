@@ -1,24 +1,20 @@
 import Link from "next/link";
-import { CalendarClock, Info } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 /**
- * Свои 14 дней дополнительной организации (`lib/org-trial.ts`).
- *
- * `trial` — руководству: сколько дней осталось, по какое число и что потом
- * нужна оплаченная точка. `locked` — тем, кто тариф не решает: работа в
- * организации приостановлена, руководитель добавляет точку (у руководителя
- * вместо плашки окно `OrgTrialLockGate`).
+ * Свои 14 дней дополнительной организации (`lib/org-trial.ts`) — плашка
+ * руководству: сколько дней осталось, по какое число и что потом нужна
+ * оплаченная точка. После срока без точки вместо плашки — окно
+ * `OrgTrialLockGate`, всем, кто работает в организации.
  */
 export function OrgTrialNotice({
-  status,
   name,
   lastDayIso,
   daysLeft,
   payHref,
   variant = "site",
 }: {
-  status: "trial" | "locked";
   name: string;
   /** Последний бесплатный день. */
   lastDayIso: string;
@@ -33,19 +29,6 @@ export function OrgTrialNotice({
     new Date(lastDayIso),
   );
   const spacing = variant === "site" ? "mb-4" : "mb-3";
-
-  if (status === "locked") {
-    return (
-      <div
-        role="status"
-        data-testid="org-trial-locked-notice"
-        className={`flex items-center gap-2 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3.5 py-2 text-[13px] leading-[1.45] text-[#6f7282] ${spacing}`}
-      >
-        <Info className="size-4 shrink-0 text-[#5566f6]" />
-        <span>{t("staffLocked")}</span>
-      </div>
-    );
-  }
 
   const urgent = daysLeft <= 3;
   return (

@@ -451,7 +451,7 @@ function CompleteProfileModal({
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || tn("saveFailed"));
       // ИНН уже отработал пробный период в другом аккаунте — говорим причину сразу.
-      if (data?.trialEnded === "inn_reused") toast.message(tBilling("trialEndedInn"), { duration: 15000 });
+      if (data?.trialEnded === "reused") toast.message(tBilling("trialEndedInn"), { duration: 15000 });
       return (data ?? {}) as { buildings?: Array<{ id: string; name: string; address: string | null }> };
     } catch (err) {
       toast.error(

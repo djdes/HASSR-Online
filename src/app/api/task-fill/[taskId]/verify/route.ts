@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyTaskFillToken } from "@/lib/task-fill-token";
 import { recordAuditLog } from "@/lib/audit-log";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,9 @@ export async function POST(
       { status: 401 }
     );
   }
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(link.integration.organizationId);
+  if (locked) return locked;
   if (link.kind !== "verifier") {
     return NextResponse.json(
       { errorCode: "notVerifierTask", error: "Эта задача не для проверки" },

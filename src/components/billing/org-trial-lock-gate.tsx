@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowRight, Building2, CalendarClock, Loader2, X } from "lucide-react";
+import { ArrowRight, Building2, CalendarClock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { switchOrganizationAndOpen } from "@/lib/switch-organization";
@@ -15,28 +15,37 @@ const subscribeNever = () => () => undefined;
 
 /**
  * Окно закрытой организации: её бесплатные 14 дней закончились, а оплаченной
- * точки на неё нет (`lib/org-trial.ts`). Руководителю с правом на тариф — на
- * любой странице этой организации: «Добавить точку к тарифу» или перейти в
- * другую организацию аккаунта (они работают как обычно). На странице тарифа
- * окна нет — иначе оно закрыло бы саму оплату.
+ * точки на неё нет (`lib/org-trial.ts`). Показывается всем, кто в ней
+ * работает, и не закрывается — иначе сотрудники продолжали бы вести журналы.
+ * Тому, кто решает про тариф, — «Добавить точку к тарифу» и «Удалить
+ * организацию»; остальным — «обратитесь к руководителю». Перейти в другую
+ * организацию аккаунта можно всем (они работают как обычно). На страницах
+ * оплаты и настроек организации окна нет — иначе оно закрыло бы сам выход.
  */
 export function OrgTrialLockGate({
   name,
   lastDayIso,
+  canDecide,
   payHref,
-  blocking,
+  deleteHref,
   organizations,
+  switchHref = null,
   hideOnPaths = [],
 }: {
   name: string;
   /** Последний бесплатный день. */
   lastDayIso: string;
-  /** null — звать к оплате нельзя (приложение WeSetup, правила сторов). */
+  /** Человек решает про тариф: ему оплата и удаление, остальным — объяснение. */
+  canDecide: boolean;
+  /** null — звать к оплате нельзя (приложение WeSetup, правила сторов) или некому. */
   payHref: string | null;
-  /** Без крестика: работа в этой организации ждёт точки. */
-  blocking: boolean;
+  /** Страница, где организацию можно удалить, — выход для того, кому она не нужна. */
+  deleteHref: string | null;
   /** Остальные организации человека — куда можно перейти. */
   organizations: Array<{ id: string; name: string }>;
+  /** Страница со своим переключателем организаций (профиль мини-приложения) — вместо списка. */
+  switchHref?: string | null;
+  /** Страницы без окна — только тому, кто решает про тариф. */
   hideOnPaths?: string[];
 }) {
   const t = useTranslations("billingUi.orgTrialLockGate");
@@ -44,9 +53,8 @@ export function OrgTrialLockGate({
   const pathname = usePathname();
   // Портал в <body> есть только в браузере: на сервере и при гидрации — ничего.
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
-  const [dismissed, setDismissed] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
-  const hidden = dismissed || hideOnPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const hidden = canDecide && hideOnPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   useEffect(() => {
     if (hidden) return;
@@ -80,16 +88,6 @@ export function OrgTrialLockGate({
         data-testid="org-trial-lock-modal"
         className="relative flex max-h-[92vh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)] sm:rounded-3xl sm:pb-0"
       >
-        {blocking ? null : (
-          <button
-            type="button"
-            onClick={() => setDismissed(true)}
-            aria-label={t("close")}
-            className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
-          >
-            <X className="size-4" />
-          </button>
-        )}
         <div className="flex-1 overflow-y-auto px-5 pb-5 pt-6 sm:px-6">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-[#fff4e0] text-[#b25e00]">
             <CalendarClock className="size-5" />
@@ -97,7 +95,9 @@ export function OrgTrialLockGate({
           <h2 id="org-trial-lock-title" className="mt-4 text-[20px] font-semibold leading-tight text-[#0b1024]">
             {t("title")}
           </h2>
-          <p className="mt-2 text-[14px] leading-[1.55] text-[#3c4053]">{t("lead", { name, date })}</p>
+          <p className="mt-2 text-[14px] leading-[1.55] text-[#3c4053]">
+            {t(canDecide ? "lead" : "staffLead", { name, date })}
+          </p>
           <p className="mt-2 text-[13px] leading-[1.55] text-[#6f7282]">{t("safe")}</p>
 
           {payHref ? (
@@ -108,6 +108,26 @@ export function OrgTrialLockGate({
             >
               {t("pay")}
               <ArrowRight className="size-4" />
+            </Link>
+          ) : null}
+
+          {canDecide && deleteHref ? (
+            <Link
+              href={deleteHref}
+              data-testid="org-trial-lock-delete"
+              className="mt-3 inline-flex text-[13px] text-[#6f7282] underline underline-offset-2 transition-colors hover:text-[#0b1024]"
+            >
+              {t("deleteLink")}
+            </Link>
+          ) : null}
+
+          {switchHref ? (
+            <Link
+              href={switchHref}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-5 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+            >
+              <Building2 className="size-4 text-[#6f7282]" />
+              {t("switchTitle")}
             </Link>
           ) : null}
 

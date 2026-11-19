@@ -32,6 +32,7 @@ import {
 import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
 import { getViewedPointId } from "@/lib/active-building";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 // Universal deviation rules for all journal types
 type DeviationRule = {
@@ -192,6 +193,10 @@ export async function POST(request: Request) {
     // Используем getActiveOrgId — иначе ROOT, импесонирующий клиента,
     // создаёт записи в platform-org вместо клиентской.
     const organizationId = getActiveOrgId(session);
+
+    // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+    const locked = await orgLockedResponse(organizationId);
+    if (locked) return locked;
 
     const body = await request.json();
     const parsed = journalEntrySchema.parse(body);

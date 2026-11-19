@@ -1104,7 +1104,7 @@
       "contact": "Contact us",
       "contactSubject": "More employees on the Premium plan",
       "orgLocked": "The free 14 days of this organisation are over. Add a location for it on the plan page.",
-      "trialEndedInn": "The trial for this tax ID (INN) has already been used, so it has ended. Choose a plan or contact support if this is a mistake."
+      "trialEndedInn": "This tax ID (INN) and phone have already used a trial in another account, so the trial here has ended. Choose a plan or contact support if this is a mistake."
     },
     "assistant": {
       "title": "AI assistant",
@@ -25686,8 +25686,7 @@
     },
     "orgTrialNotice": {
       "message": "Free period of “{name}”: {days, plural, one {# day left} other {# days left}}, through {date}. After that it needs a paid location on the plan.",
-      "action": "Add a location",
-      "staffLocked": "Work in this organisation is paused: the manager is adding a location to the plan."
+      "action": "Add a location"
     },
     "orgTrialLockGate": {
       "title": "The free 14 days are over",
@@ -25696,7 +25695,8 @@
       "pay": "Add a location to the plan",
       "switchTitle": "Switch to another organisation",
       "switchFailed": "Could not switch",
-      "close": "Close"
+      "staffLead": "Work in “{name}” is paused: its free 14 days ended on {date}. The manager is adding a location to the plan — please contact them.",
+      "deleteLink": "The organisation is not needed — delete it"
     }
   },
   "bonusesUi": {

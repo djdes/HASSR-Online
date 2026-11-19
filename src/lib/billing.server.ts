@@ -57,6 +57,7 @@ import {
   ORG_LOCKED_CODE,
   ORG_LOCKED_MESSAGE,
   orgTrialStatuses,
+  paidPointLimit,
   type AccountPhase,
   type OrgTrialStatus,
 } from "@/lib/org-trial";
@@ -265,7 +266,7 @@ export type BillingUnit = {
   orgTrials: OrgTrialEntry[];
   /** То же для организации, из которой смотрим; null — она в тарифе как обычно. */
   orgTrial: OrgTrialEntry | null;
-  /** Точек у закрытых организаций: столько доплатить, чтобы открыть их все. */
+  /** Точек у закрытых организаций (без тех, что удаляются): столько доплатить, чтобы открыть их. */
   lockedPoints: number;
   /** Сколько раз аккаунту выдали свои 14 дней для новой организации. */
   orgTrialsGranted: number;
@@ -280,6 +281,8 @@ export type OrgTrialEntry = {
   trialEndsAt: Date;
   /** Точек тарифа, которые займёт организация. */
   points: number;
+  /** Руководитель запросил удаление организации — точку для неё уже не ждём. */
+  deleting: boolean;
 };
 
 function maxDate(dates: Array<Date | null | undefined>): Date | null {
@@ -342,6 +345,7 @@ export async function loadBillingUnit(
           name: true,
           createdAt: true,
           trialEndsAt: true,
+          deletionRequestedAt: true,
           subscriptionEnd: true,
           disabledJournalCodes: true,
           _count: { select: { buildings: { where: { kind: { not: OFFICE_BUILDING_KIND } } } } },
@@ -364,7 +368,7 @@ export async function loadBillingUnit(
     phase = accountPhase({ plan, subscriptionEnd, createdAt, trialEndsAt, exempt }, settings, now);
     statuses = orgTrialStatuses({
       phase,
-      planPoints,
+      pointLimit: paidPointLimit(plan, planPoints),
       orgs: scopeOrgs.map((o) => ({ id: o.id, createdAt: o.createdAt, trialEndsAt: o.trialEndsAt, points: o._count.buildings })),
       now,
     });
@@ -372,7 +376,14 @@ export async function loadBillingUnit(
   const orgTrials: OrgTrialEntry[] = scopeOrgs.flatMap((o) => {
     const status = statuses.get(o.id);
     return status && o.trialEndsAt
-      ? [{ organizationId: o.id, name: o.name, status, trialEndsAt: o.trialEndsAt, points: Math.max(1, o._count.buildings) }]
+      ? [{
+          organizationId: o.id,
+          name: o.name,
+          status,
+          trialEndsAt: o.trialEndsAt,
+          points: Math.max(1, o._count.buildings),
+          deleting: Boolean(o.deletionRequestedAt),
+        }]
       : [];
   });
   // В тариф (места и точки) входят все, кроме пробующих и закрытых.
@@ -410,7 +421,7 @@ export async function loadBillingUnit(
     autoRenew: org.account?.autoRenew ?? false,
     orgTrials,
     orgTrial: orgTrials.find((entry) => entry.organizationId === org.id) ?? null,
-    lockedPoints: orgTrials.reduce((sum, entry) => sum + (entry.status === "locked" ? entry.points : 0), 0),
+    lockedPoints: orgTrials.reduce((sum, entry) => sum + (entry.status === "locked" && !entry.deleting ? entry.points : 0), 0),
     orgTrialsGranted: org.account?.orgTrialsGranted ?? 0,
     phase,
   };
@@ -548,15 +559,13 @@ export async function seatAllowance(
 ): Promise<{ left: number; limit: number | null; message: string; nextTier: PaidTier | null }> {
   const loaded = await loadForGuard(organizationId, "seat-allowance");
   const limit = loaded?.state.seatLimit ?? null;
-  if (!loaded || limit === null) {
+  // Закрытая после своих 14 дней организация — никого не добавить; в своих 14 днях — без лимита.
+  const own = loaded?.unit.orgTrial?.status;
+  if (own === "locked") return { left: 0, limit, message: ORG_LOCKED_MESSAGE, nextTier: null };
+  if (!loaded || limit === null || own === "trial") {
     return { left: Number.POSITIVE_INFINITY, limit: null, message: FREE_LIMIT_MESSAGE, nextTier: null };
   }
   const { state } = loaded;
-  const own = loaded.unit.orgTrial?.status;
-  if (own === "trial") {
-    return { left: Number.POSITIVE_INFINITY, limit: null, message: FREE_LIMIT_MESSAGE, nextTier: null };
-  }
-  if (own === "locked") return { left: 0, limit, message: ORG_LOCKED_MESSAGE, nextTier: null };
   // Текст отказа — по тарифу: лимит текущего и следующий тариф.
   return {
     left: Math.max(0, limit - state.activeUsers),
@@ -1652,6 +1661,7 @@ export async function listBillingUnits(options?: { now?: Date; settings?: TrialS
       subscriptionEnd: true,
       createdAt: true,
       trialEndsAt: true,
+      deletionRequestedAt: true,
       disabledJournalCodes: true,
       account: { select: ACCOUNT_SELECT },
     },
@@ -1667,7 +1677,7 @@ export async function listBillingUnits(options?: { now?: Date; settings?: TrialS
 
   const units = new Map<string, UnitRow>();
   // Строки организаций по единицам — для своих 14 дней (`org-trial.ts`).
-  type OrgRow = { id: string; name: string; createdAt: Date; trialEndsAt: Date | null; seats: number; points: number };
+  type OrgRow = { id: string; name: string; createdAt: Date; trialEndsAt: Date | null; seats: number; points: number; deleting: boolean };
   const rowsByUnit = new Map<string, OrgRow[]>();
   for (const org of orgs) {
     const key = org.accountId ?? `org:${org.id}`;
@@ -1675,7 +1685,15 @@ export async function listBillingUnits(options?: { now?: Date; settings?: TrialS
     const seatsHere = (seatsByOrg.get(org.id) ?? 0) + (cabinetSeats.get(org.id) ?? 0);
     const pointsHere = countPointsInUse([buildingsByOrg.get(org.id) ?? 0]);
     const journalsHere = enabledJournalCount(codes, org.disabledJournalCodes);
-    const row: OrgRow = { id: org.id, name: org.name, createdAt: org.createdAt, trialEndsAt: org.trialEndsAt, seats: seatsHere, points: pointsHere };
+    const row: OrgRow = {
+      id: org.id,
+      name: org.name,
+      createdAt: org.createdAt,
+      trialEndsAt: org.trialEndsAt,
+      seats: seatsHere,
+      points: pointsHere,
+      deleting: Boolean(org.deletionRequestedAt),
+    };
     rowsByUnit.set(key, [...(rowsByUnit.get(key) ?? []), row]);
     if (!existing) {
       units.set(key, {
@@ -1742,17 +1760,17 @@ export async function listBillingUnits(options?: { now?: Date; settings?: TrialS
     if (!rows.some((row) => row.trialEndsAt)) continue;
     settings ??= await readTrialSettings();
     const phase = accountPhase(unit, settings, now);
-    const statuses = orgTrialStatuses({ phase, planPoints: unit.planPoints, orgs: rows, now });
+    const statuses = orgTrialStatuses({ phase, pointLimit: paidPointLimit(unit.plan, unit.planPoints), orgs: rows, now });
     const counted = rows.filter((row) => !statuses.has(row.id));
     unit.phase = phase;
     unit.orgTrials = rows.flatMap((row) => {
       const status = statuses.get(row.id);
       return status && row.trialEndsAt
-        ? [{ organizationId: row.id, name: row.name, status, trialEndsAt: row.trialEndsAt, points: row.points }]
+        ? [{ organizationId: row.id, name: row.name, status, trialEndsAt: row.trialEndsAt, points: row.points, deleting: row.deleting }]
         : [];
     });
     unit.orgTrial = unit.orgTrials.find((entry) => entry.organizationId === unit.organizationId) ?? null;
-    unit.lockedPoints = unit.orgTrials.reduce((sum, entry) => sum + (entry.status === "locked" ? entry.points : 0), 0);
+    unit.lockedPoints = unit.orgTrials.reduce((sum, entry) => sum + (entry.status === "locked" && !entry.deleting ? entry.points : 0), 0);
     unit.activeUsers = counted.reduce((sum, row) => sum + row.seats, 0);
     unit.pointsInUse = counted.reduce((sum, row) => sum + row.points, 0);
   }

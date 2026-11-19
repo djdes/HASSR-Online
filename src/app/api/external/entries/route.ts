@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { authenticateExternalRequest, tokenHint } from "@/lib/external/auth";
 import { dispatchExternalEntries } from "@/lib/external/dispatch";
 import { externalIdempotencyKey } from "@/lib/external/idempotency-key";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -176,6 +177,10 @@ export async function POST(request: Request) {
     auth.source === "organization" && auth.organizationId
       ? auth.organizationId
       : payload.organizationId;
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
 
   const storedKey = idempotencyKey ? externalIdempotencyKey(organizationId, auth.token, idempotencyKey) : null;
   if (storedKey) {

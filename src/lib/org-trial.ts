@@ -1,5 +1,5 @@
 import { isReallyPaid, trialEndFor, type AccountBillingKind, type TrialSettings } from "@/lib/billing-period";
-import { TRIAL_DAYS } from "@/lib/tariff-plans";
+import { paidTierFromPlan, TRIAL_DAYS } from "@/lib/tariff-plans";
 
 /**
  * Свой бесплатный период дополнительной организации аккаунта — чистые правила.
@@ -46,6 +46,12 @@ export function accountPhase(
   return settings.transitionEnabled ? "free" : "open";
 }
 
+/** Сколько точек оплачено для правил организации; null — у тарифа нет лимита точек (прежняя «Подписка»). */
+export function paidPointLimit(plan: string | null | undefined, planPoints: number | null | undefined): number | null {
+  if (paidTierFromPlan(plan) === "legacy") return null;
+  return Math.max(1, Math.floor(Number(planPoints) || 1));
+}
+
 /** То же по готовому состоянию тарифа (`computeAccountBilling`) — правила не расходятся с окном тарифа. */
 export function phaseOfKind(kind: AccountBillingKind): AccountPhase {
   if (kind === "paid") return "paid";
@@ -54,9 +60,17 @@ export function phaseOfKind(kind: AccountBillingKind): AccountPhase {
   return "open";
 }
 
-/** Конец своих 14 дней организации, созданной сейчас. */
+const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/**
+ * Конец своих 14 дней организации, созданной сейчас: полночь по Москве после
+ * четырнадцатых суток. Округляем до конца дня, потому что человеку обещано
+ * «по такое-то число включительно» — закрыть организацию посреди этого дня
+ * было бы неправдой.
+ */
 export function orgTrialEnd(now: Date): Date {
-  return new Date(now.getTime() + ORG_TRIAL_DAYS * DAY_MS);
+  const raw = now.getTime() + ORG_TRIAL_DAYS * DAY_MS + MSK_OFFSET_MS;
+  return new Date(Math.ceil(raw / DAY_MS) * DAY_MS - MSK_OFFSET_MS);
 }
 
 /**
@@ -82,24 +96,26 @@ export type OrgTrialStatus = "trial" | "locked";
 const pointsOf = (org: OrgTrialRow) => Math.max(1, Math.floor(Number(org.points) || 0));
 
 /**
- * Статусы отмеченных организаций оплаченного аккаунта; остальные — обычные, в
- * тарифе.
+ * Статусы отмеченных организаций аккаунта; остальные — обычные, в тарифе.
  *
- * Оплаченные точки раздаются сначала организациям без отметки (их правила не
- * касаются), затем отмеченным с истёкшим сроком от старых к новым. Кому не
- * хватило — закрыта. Считаем только на оплаченном аккаунте: в его пробном
- * периоде точек и мест без ограничений (вычитать нечего, а счётчики кабинета
- * должны показывать всех), после него решение — за общим окном тарифа.
+ * `trial` — свои 14 дней в силе: организация не занимает точку и места (в
+ * пробном периоде аккаунта это важно при покупке — иначе тариф на одну точку
+ * не купить, пока новая организация ещё пробует). `locked` — только на
+ * оплаченном аккаунте с лимитом точек: оплаченные точки раздаются сначала
+ * организациям без отметки (их правила не касаются), затем отмеченным с
+ * истёкшим сроком от старых к новым; кому не хватило — закрыта. После пробного
+ * периода аккаунта решение — за общим окном тарифа, отметка ничего не даёт.
  */
 export function orgTrialStatuses(input: {
   phase: AccountPhase;
-  planPoints: number;
+  /** Оплачено точек; null — тариф без лимита точек (прежняя «Подписка»): никого не закрываем. */
+  pointLimit: number | null;
   orgs: readonly OrgTrialRow[];
   now: Date;
 }): Map<string, OrgTrialStatus> {
   const statuses = new Map<string, OrgTrialStatus>();
   const { phase, now } = input;
-  if (phase !== "paid") return statuses;
+  if (phase !== "paid" && phase !== "trial") return statuses;
 
   let used = 0;
   const expired: OrgTrialRow[] = [];
@@ -108,8 +124,9 @@ export function orgTrialStatuses(input: {
     else if (org.trialEndsAt) expired.push(org);
     else used += pointsOf(org);
   }
+  if (phase !== "paid" || input.pointLimit === null) return statuses;
 
-  const limit = Math.max(1, Math.floor(Number(input.planPoints) || 1));
+  const limit = Math.max(1, Math.floor(Number(input.pointLimit) || 1));
   expired.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
   for (const org of expired) {
     const points = pointsOf(org);
@@ -153,9 +170,12 @@ export function decideOrgCreation(input: {
   if (phase === "open") return { ok: true, mode: "open" };
   if (phase === "free") return { ok: false, reason: "free_plan", limit: 1, current: input.pointsInUse };
   if (phase === "trial") {
+    const own = orgTrialEnd(now);
     const accountEnd =
-      input.accountTrialEndsAt && input.accountTrialEndsAt.getTime() > now.getTime() ? input.accountTrialEndsAt : orgTrialEnd(now);
-    return { ok: true, mode: "account_trial", grant: grantFree, trialEndsAt: grantFree ? orgTrialEnd(now) : accountEnd };
+      input.accountTrialEndsAt && input.accountTrialEndsAt.getTime() > now.getTime() ? input.accountTrialEndsAt : own;
+    // Свои 14 дней не короче пробного периода аккаунта (ROOT мог его продлить).
+    const granted = own.getTime() > accountEnd.getTime() ? own : accountEnd;
+    return { ok: true, mode: "account_trial", grant: grantFree, trialEndsAt: grantFree ? granted : accountEnd };
   }
 
   // Оплаченный аккаунт.
@@ -188,11 +208,22 @@ export const ORG_LOCKED_MESSAGE =
   "Бесплатные 14 дней этой организации закончились. Добавьте для неё точку на странице тарифа, чтобы продолжить работу.";
 
 /**
- * Пробный период по этому ИНН уже использован: в другом аккаунте есть
- * организация с тем же ИНН, у которого пробный закончился и тариф не оплачен.
- * Оплаченный или ещё пробующий аккаунт — не признак обхода (второй
- * руководитель той же компании, филиал).
+ * Повторный пробный период: в другом аккаунте, у которого пробный закончился и
+ * тариф не оплачен, нашлась организация с тем же ИНН и/или владелец с тем же
+ * телефоном.
+ *
+ * ИНН — открытые сведения, и вписать чужой может кто угодно (партнёр завёл
+ * клиенту кабинет, конкурент «занял» ИНН), поэтому одного ИНН мало: пробный
+ * заканчиваем сами, только когда совпали и ИНН, и телефон владельца — это один
+ * и тот же человек регистрируется заново. Один признак — сигнал админу
+ * платформы, решение за ним. Оплаченный или ещё пробующий аккаунт — не
+ * признак обхода (второй руководитель той же компании, филиал).
  */
-export function trialUsedByInn(twins: readonly { phase: AccountPhase }[]): boolean {
-  return twins.some((twin) => twin.phase === "free");
+export type TrialReuseTwin = { phase: AccountPhase; innMatch: boolean; phoneMatch: boolean };
+export type TrialReuseVerdict = "end" | "flag" | "none";
+
+export function trialReuseVerdict(twins: readonly TrialReuseTwin[]): TrialReuseVerdict {
+  const lapsed = twins.filter((twin) => twin.phase === "free" && (twin.innMatch || twin.phoneMatch));
+  if (lapsed.some((twin) => twin.innMatch && twin.phoneMatch)) return "end";
+  return lapsed.length > 0 ? "flag" : "none";
 }

@@ -183,7 +183,7 @@ export function OrganizationInfoForm({
       toast.success(t("form.saved"));
       // ИНН совпал с организацией другого аккаунта, чей пробный уже прошёл —
       // говорим причину, иначе окно тарифа после сохранения выглядит ошибкой.
-      if (data?.trialEnded === "inn_reused") toast.message(tBilling("trialEndedInn"), { duration: 15000 });
+      if (data?.trialEnded === "reused") toast.message(tBilling("trialEndedInn"), { duration: 15000 });
       router.refresh();
     } catch {
       toast.error(t("form.networkError"));

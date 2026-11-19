@@ -123,10 +123,12 @@ export const metadata = {
 };
 
 /**
- * Где окно закрытой организации не показываем: оплата точки и баланс — то,
+ * Где окно закрытой организации не показываем тому, кто решает про тариф:
+ * оплата точки, баланс и настройки организации (там её можно удалить) — то,
  * ради чего человек туда и идёт.
  */
-const ORG_TRIAL_LOCK_OPEN_PATHS = ["/settings/subscription", "/settings/balance", "/order"];
+const ORG_TRIAL_DELETE_HREF = "/settings/organization";
+const ORG_TRIAL_LOCK_OPEN_PATHS = ["/settings/subscription", "/settings/balance", "/order", ORG_TRIAL_DELETE_HREF];
 
 export default async function DashboardLayout({
   children,
@@ -670,11 +672,9 @@ export default async function DashboardLayout({
                   />
                 ) : null}
                 {billing?.staffNotice ? <BillingStaffNotice /> : null}
-                {/* Свои 14 дней этой организации: руководству — сколько осталось,
-                    после них остальным — «руководитель добавляет точку». */}
+                {/* Свои 14 дней этой организации: руководству — сколько осталось. */}
                 {billing?.orgTrial && !billing.orgTrial.gate ? (
                   <OrgTrialNotice
-                    status={billing.orgTrial.status}
                     name={billing.orgTrial.name}
                     lastDayIso={billing.orgTrial.lastDayIso}
                     daysLeft={billing.orgTrial.daysLeft}
@@ -752,13 +752,15 @@ export default async function DashboardLayout({
             />
           ) : null}
           {/* Бесплатные 14 дней этой организации закончились, точки на неё
-              нет — руководителю окно: добавить точку или перейти в другую. */}
+              нет — окно всем, кто в ней работает: руководителю — добавить
+              точку или удалить организацию, остальным — объяснение. */}
           {billing?.orgTrial?.gate ? (
             <OrgTrialLockGate
               name={billing.orgTrial.name}
               lastDayIso={billing.orgTrial.lastDayIso}
+              canDecide={billing.orgTrial.gate.canDecide}
               payHref={billing.orgTrial.gate.payHref}
-              blocking={billing.orgTrial.gate.blocking}
+              deleteHref={ORG_TRIAL_DELETE_HREF}
               organizations={organizations
                 .filter((organization) => organization.id !== activeOrgId && organization.kind !== "directory")
                 .map((organization) => ({ id: organization.id, name: organization.name }))}
@@ -954,7 +956,6 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
               {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
               {billing?.orgTrial && !billing.orgTrial.gate ? (
                 <OrgTrialNotice
-                  status={billing.orgTrial.status}
                   name={billing.orgTrial.name}
                   lastDayIso={billing.orgTrial.lastDayIso}
                   daysLeft={billing.orgTrial.daysLeft}
@@ -986,8 +987,9 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 <OrgTrialLockGate
                   name={billing.orgTrial.name}
                   lastDayIso={billing.orgTrial.lastDayIso}
+                  canDecide={billing.orgTrial.gate.canDecide}
                   payHref={billing.orgTrial.gate.payHref}
-                  blocking={billing.orgTrial.gate.blocking}
+                  deleteHref={ORG_TRIAL_DELETE_HREF}
                   organizations={(await listAccessibleOrganizations(session.user.id))
                     .filter((organization) => organization.id !== activeOrgId && organization.kind !== "directory")
                     .map((organization) => ({ id: organization.id, name: organization.name }))}

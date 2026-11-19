@@ -5,6 +5,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isManagementRole } from "@/lib/user-roles";
 import { canSeeDocumentPoint, JOURNAL_ENTRY_POINT_SELECT, journalEntryPointId } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export async function PATCH(
   request: Request,
@@ -19,6 +20,10 @@ export async function PATCH(
   if (!isManagementRole(session.user.role)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const body = await request.json();
   const { status } = body;

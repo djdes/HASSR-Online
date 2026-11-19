@@ -20,8 +20,8 @@ const schema = z.object({
   copyFrom: z.string().trim().optional(),
 });
 
-// Пять организаций в час на человека: живому владельцу сети хватит, а
-// создавать и удалять их по кругу ради бесплатного периода — нет.
+// Пять созданных организаций в час на человека: живому владельцу сети хватит,
+// а создавать и удалять их по кругу — нет. Отказы тарифа попытку не тратят.
 const createLimiter = createRateLimiter({ tokensPerInterval: 5, intervalMs: 60 * 60 * 1000 });
 
 /**
@@ -68,13 +68,6 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!createLimiter.consume(`org-create:${session.user.id}`)) {
-    return NextResponse.json(
-      { error: "Слишком много новых организаций подряд. Попробуйте через час" },
-      { status: 429 },
-    );
-  }
-
   // Тариф считает аккаунт: условия — одни на окно создания и на сам запрос.
   const plan = await planOrgCreation(account.id);
   const refuse = (reason: "free_plan" | "trials_used" | "locked_org", limit: number | null, current: number | null) => {
@@ -86,6 +79,13 @@ export async function POST(request: Request) {
   };
   const decision = plan.decision;
   if (!decision.ok) return refuse(decision.reason, decision.limit, decision.current);
+
+  if (!createLimiter.consume(`org-create:${session.user.id}`)) {
+    return NextResponse.json(
+      { error: "Слишком много новых организаций подряд. Попробуйте через час" },
+      { status: 429 },
+    );
+  }
 
   // Свои 14 дней — выдача из двух на аккаунт, занимается атомарно. Гонку за
   // последнюю выдачу проигравший на оплаченном аккаунте получает отказом, а
@@ -102,6 +102,7 @@ export async function POST(request: Request) {
   }
 
   let organizationId: string;
+  const startedAt = new Date();
   try {
     ({ organizationId } = await createOrganization({
       name: parsed.data.name,
@@ -115,7 +116,14 @@ export async function POST(request: Request) {
       trialEndsAt,
     }));
   } catch (error) {
-    if (granted) await releaseOrgTrialGrant(account.id).catch(() => undefined);
+    // Выдачу возвращаем, только если организация так и не появилась: сбой
+    // копирования должностей случается уже после её создания, и отметка осталась.
+    if (granted) {
+      const created = await db.organization
+        .count({ where: { accountId: account.id, createdAt: { gte: startedAt }, trialEndsAt: { not: null } } })
+        .catch(() => 1);
+      if (created === 0) await releaseOrgTrialGrant(account.id).catch(() => undefined);
+    }
     throw error;
   }
 

@@ -13,6 +13,7 @@ import { getServerSession } from "@/lib/server-session";
 import { canWriteJournal } from "@/lib/journal-acl";
 import type { Session } from "next-auth";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 async function resolveEmployeeId(
   sessionUserId: string,
@@ -52,6 +53,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
   const orgId = getActiveOrgId(session);
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(orgId);
+  if (locked) return locked;
   const document = await getDocument(documentId, orgId, session);
   if (!document || document.template?.code !== FRYER_OIL_TEMPLATE_CODE) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
@@ -116,6 +120,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
+
   const document = await getDocument(documentId, getActiveOrgId(session), session);
   if (!document || document.template?.code !== FRYER_OIL_TEMPLATE_CODE) {
     return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
@@ -166,6 +174,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id: documentId } = await params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const document = await getDocument(documentId, getActiveOrgId(session), session);
   if (!document || document.template?.code !== FRYER_OIL_TEMPLATE_CODE) {

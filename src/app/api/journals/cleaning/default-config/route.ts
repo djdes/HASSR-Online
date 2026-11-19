@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { normalizeCleaningDocumentConfig } from "@/lib/cleaning-document";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * /api/journals/cleaning/default-config
@@ -45,6 +46,10 @@ export async function POST(request: Request) {
   if (!hasFullWorkspaceAccess(session.user)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const body = (await request.json().catch(() => null)) as
     | { config?: unknown }
@@ -108,6 +113,10 @@ export async function DELETE() {
   if (!hasFullWorkspaceAccess(session.user)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   await db.organization.update({
     where: { id: getActiveOrgId(session) },

@@ -12,6 +12,7 @@ import { isHygieneEntryCopyable } from "@/lib/hygiene-admission";
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
 import { READING_PHOTOS_KEY } from "@/lib/reading-photos";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,6 +94,9 @@ export async function POST(
   const overwrite = Boolean(body?.overwrite);
 
   const organizationId = getActiveOrgId(session);
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(organizationId);
+  if (locked) return locked;
   const blocked = await rejectJournalAutomation(organizationId, "copyYesterday");
   if (blocked) return blocked;
   const doc = await db.journalDocument.findUnique({

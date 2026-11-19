@@ -15,6 +15,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
 import { documentRowsPointId } from "@/lib/document-point-rows";
 import { staffAtBuildingWhere } from "@/lib/building-settings";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 type UvRuntimeAction = "apply_auto_fill";
 
@@ -37,6 +38,10 @@ export async function POST(
   if (!isManagementRole(session.user.role)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const { id } = await params;
   const body = (await request.json()) as { action?: UvRuntimeAction };

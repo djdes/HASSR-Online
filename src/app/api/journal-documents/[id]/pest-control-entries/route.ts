@@ -8,6 +8,7 @@ import { isManagementRole } from "@/lib/user-roles";
 import { canWriteJournal } from "@/lib/journal-acl";
 import type { Session } from "next-auth";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 const PEST_CONTROL_TEMPLATE_CODE = "pest_control";
 
@@ -65,6 +66,10 @@ export async function POST(
   if (!session) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const { id: documentId } = await params;
   const document = await getAuthorizedDocument(
@@ -180,6 +185,10 @@ export async function PATCH(
   if (!session) {
     return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const { id: documentId } = await params;
   const document = await getAuthorizedDocument(
@@ -310,6 +319,10 @@ export async function DELETE(
   if (!isManagementRole(session.user.role)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const { id: documentId } = await params;
   const document = await getAuthorizedDocument(

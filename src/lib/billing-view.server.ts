@@ -66,8 +66,13 @@ export type BillingView = {
     /** Последний бесплатный день (ISO) — «по 3 декабря включительно». */
     lastDayIso: string;
     daysLeft: number;
-    /** Окно закрытой организации: руководителю с правом на тариф. */
-    gate: { blocking: boolean; payHref: string | null } | null;
+    /**
+     * Окно закрытой организации — всем, кто в ней работает, и без крестика:
+     * иначе в ней продолжали бы работать сотрудники. `canDecide` — человек
+     * решает про тариф: ему кнопки оплаты и удаления, остальным — «обратитесь
+     * к руководителю». `payHref` null — звать к оплате нельзя (приложение).
+     */
+    gate: { canDecide: boolean; payHref: string | null } | null;
     /** Ссылка «Добавить точку» в плашке; null — звать к оплате нельзя или некому. */
     payHref: string | null;
   } | null;
@@ -181,8 +186,8 @@ export async function loadBillingView(args: {
           lastDayIso: lastDayBefore(own.trialEndsAt).toISOString(),
           daysLeft: daysLeft(own.trialEndsAt, now),
           gate:
-            own.status === "locked" && canDecide
-              ? { blocking: !args.inMobileApp, payHref: args.inMobileApp ? null : BILLING_PAY_HREF }
+            own.status === "locked"
+              ? { canDecide, payHref: canDecide && !args.inMobileApp ? BILLING_PAY_HREF : null }
               : null,
           payHref: canDecide && !args.inMobileApp ? BILLING_PAY_HREF : null,
         }

@@ -23,6 +23,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { syncDocumentToTasksFlow } from "@/lib/tasksflow-sync";
 import { isManagementRole } from "@/lib/user-roles";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,10 @@ export async function POST(
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   const organizationId = getActiveOrgId(session);
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const orgLocked = await orgLockedResponse(organizationId);
+  if (orgLocked) return orgLocked;
 
   const doc = await db.journalDocument.findUnique({
     where: { id },

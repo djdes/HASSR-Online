@@ -143,6 +143,7 @@ import { seedEntriesForDocument } from "@/lib/journal-document-entries-seed";
 import { orgTodayKey } from "@/lib/timezone";
 import { rejectJournalAutomation } from "@/lib/journal-controls.server";
 import { recordsAtPointWhere } from "@/lib/point-records";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * Журналы, где утверждающий шапки («УТВЕРЖДАЮ») — отдельный слот
@@ -230,6 +231,10 @@ export async function POST(request: Request) {
   if (!isManagementRole(session.user.role)) {
     return NextResponse.json({ error: "Это действие доступно руководителю" }, { status: 403 });
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const body = await request.json();
   if (body.autoFill === true || body.config?.autoFill?.enabled === true) {

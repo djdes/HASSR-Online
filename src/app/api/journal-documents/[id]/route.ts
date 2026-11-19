@@ -66,6 +66,7 @@ import { orgTodayKey } from "@/lib/timezone";
 import { Prisma, TasksFlowOutboxStatus } from "@prisma/client";
 import { buildDocumentTaskDeleteCommands } from "@/lib/journal-document-tasks-cleanup";
 import { mergeSanitationTaskMarks } from "@/lib/general-cleaning-merge";
+import { orgLockedResponse } from "@/lib/org-trial.server";
 
 /**
  * Журналы, которые ведут собственную дату окончания в шапке бланка
@@ -154,6 +155,10 @@ export async function PATCH(
   const session = await getServerSession(authOptions);
   const errors = await journalApiErrors(request, session?.user);
   if (!session) return errors.response("UNAUTHORIZED");
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const orgLocked = await orgLockedResponse(getActiveOrgId(session));
+  if (orgLocked) return orgLocked;
 
   const doc = await db.journalDocument.findUnique({ where: { id } });
   if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {
@@ -666,6 +671,10 @@ export async function DELETE(
   if (!isManagementRole(session.user.role) || isControlGroupMember(session.user)) {
     return errors.response("MANAGEMENT_REQUIRED");
   }
+
+  // Организация закрыта после своих 14 дней — журналы в ней не ведутся (`org-trial.server.ts`).
+  const locked = await orgLockedResponse(getActiveOrgId(session));
+  if (locked) return locked;
 
   const doc = await db.journalDocument.findUnique({ where: { id } });
   if (!doc || doc.organizationId !== getActiveOrgId(session) || !(await canSeeDocumentPoint(session, doc.buildingId))) {

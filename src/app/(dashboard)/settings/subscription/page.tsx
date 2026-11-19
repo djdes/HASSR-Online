@@ -207,15 +207,17 @@ export default async function SubscriptionPage({
     state?.kind === "paid" && state.paidTier
       ? { paidUntil: state.paidUntil, tier: state.paidTier, cycle: state.planCycle, points: state.planPoints }
       : null;
-  // Точек к оплате: те, что в тарифе, плюс точки организаций, закрытых после
-  // своих 14 дней (`org-trial.ts`) — оплата должна открыть и их.
+  const pointsInUse = Math.max(1, state?.pointsInUse ?? 1);
+  // Организации, закрытые после своих 14 дней (`org-trial.ts`): варианты оплаты
+  // сразу считаем с их точками, но это предложение, а не минимум — закрытую
+  // организацию можно не оплачивать (и удалить в её настройках).
   const orgTrials = billing?.unit.orgTrials ?? [];
   const lockedPoints = billing?.unit.lockedPoints ?? 0;
-  const pointsInUse = Math.max(1, state?.pointsInUse ?? 1) + lockedPoints;
+  const pointsNeeded = pointsInUse + lockedPoints;
   const scheduled = billing?.unit.scheduledPlan ?? null;
   // Варианты оплаты сейчас (карта и счёт): тариф × период при текущих
   // точках; понижение сейчас не оплачивается — оно с конца срока.
-  const optionPoints = Math.max(pointsInUse, current && current.tier !== "legacy" ? current.points : 1);
+  const optionPoints = Math.max(pointsNeeded, current && current.tier !== "legacy" ? current.points : 1);
   const options = (["standard", "premium", "vip"] as const)
     .flatMap((tier) => (["year", "month"] as const).map((cycle) => ({ tier, cycle, points: optionPoints })))
     .filter((target) => pricing.available[target.tier][target.cycle])
@@ -519,7 +521,7 @@ export default async function SubscriptionPage({
             ))}
           </ul>
           {lockedPoints > 0 ? (
-            <p className="mt-2 text-[13px] leading-[1.5] text-[#6f7282]">{t("orgTrialLockedHint", { points: pointsInUse })}</p>
+            <p className="mt-2 text-[13px] leading-[1.5] text-[#6f7282]">{t("orgTrialLockedHint", { points: pointsNeeded })}</p>
           ) : null}
           <p className="mt-2 text-[12.5px] leading-[1.5] text-[#9b9fb3]">
             {t("orgTrialsLeft", { count: String(Math.max(0, ORG_TRIAL_MAX_GRANTS - (billing?.unit.orgTrialsGranted ?? 0))) })}
@@ -652,6 +654,7 @@ export default async function SubscriptionPage({
               trialUntilLabel: state?.trialEndsAt ? formatMskDayAuto(lastDayBefore(state.trialEndsAt)) : null,
               trialDaysLeft: state?.trialDaysLeft ?? null,
               pointsInUse,
+              suggestedPoints: pointsNeeded,
               scheduled: scheduled
                 ? {
                     tier: scheduled.tier,
