@@ -717,6 +717,10 @@ model Organization {
   directoryExchangeMembers       DirectoryExchangeMember[]      @relation("DirectoryExchangeMaster")
   directoryExchangeMemberships   DirectoryExchangeMember[]      @relation("DirectoryExchangeMember")
   directoryExchangeLinks         DirectoryExchangeLink[]        @relation("DirectoryExchangeLinkMaster")
+  /// Запросы на обмен с чужим аккаунтом (часть 3): у мастер-кабинета —
+  /// входящие, у организации — её собственные.
+  directoryExchangeRequestsIn    DirectoryExchangeRequest[]     @relation("DirectoryExchangeRequestMaster")
+  directoryExchangeRequestsOut   DirectoryExchangeRequest[]     @relation("DirectoryExchangeRequestRequester")
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -6135,6 +6139,9 @@ model DirectoryExchangeMember {
   lastSyncedAt         DateTime?
   /// Итог последнего обмена кабинета (`ExchangeSummary`).
   lastSyncJson         Json?
+  /// Участник из другого аккаунта, добавленный подтверждённым запросом
+  /// (`DirectoryExchangeRequest`): владелец кабинета разрешил обмен сам.
+  foreign              Boolean      @default(false)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
@@ -6163,4 +6170,37 @@ model DirectoryExchangeLink {
 
   @@unique([masterOrganizationId, entity, groupId, organizationId])
   @@index([masterOrganizationId, entity, organizationId])
+}
+
+/// Запрос на обмен справочниками с мастер-кабинетом чужого аккаунта (часть 3,
+/// 2026-11-19): заявитель вводит код кабинета, владелец аккаунта кабинета
+/// подтверждает по ссылке из письма. В базе только SHA-256 токена ссылки.
+model DirectoryExchangeRequest {
+  id                      String       @id @default(cuid())
+  masterOrganizationId    String
+  masterOrganization      Organization @relation("DirectoryExchangeRequestMaster", fields: [masterOrganizationId], references: [id], onDelete: Cascade)
+  requesterOrganizationId String
+  requesterOrganization   Organization @relation("DirectoryExchangeRequestRequester", fields: [requesterOrganizationId], references: [id], onDelete: Cascade)
+  requestedByUserId       String
+  /// link | transfer
+  mode                    String
+  /// Запрошенные списки: products | staff | objects | equipment.
+  kinds                   String[]     @default([])
+  tokenHash               String       @unique
+  /// pending | approved | declined | cancelled | expired
+  status                  String       @default("pending")
+  expiresAt               DateTime
+  decidedAt               DateTime?
+  decidedByUserId         String?
+  /// Что разрешил владелец кабинета — не шире запрошенного.
+  allowedKinds            String[]     @default([])
+  /// Перенос: из какой своей организации владелец кабинета разрешил взять.
+  sourceOrganizationId    String?
+  /// Итог обмена или переноса после подтверждения (`ExchangeSummary`).
+  resultJson              Json?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  @@index([requesterOrganizationId, status])
+  @@index([masterOrganizationId, status])
 }
