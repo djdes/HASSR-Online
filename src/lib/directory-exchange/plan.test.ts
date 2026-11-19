@@ -410,7 +410,7 @@ test("Р5: a foreign organization joins — nobody's employee is rewritten, the 
 });
 
 test("Р5: with a foreign member a phone edit moves nothing, a rename moves the name only", () => {
-  const stored = (id: string, fields: typeof IVANOV_A) => person(id, "foreign", fields).hash;
+  const stored = (id: string, fields: Parameters<typeof person>[2]) => person(id, "foreign", fields).hash;
   const links: ExchangeLinkRow[] = [
     { groupId: "g1", organizationId: "A", entityId: "a1", hash: stored("a1", IVANOV_A) },
     { groupId: "g1", organizationId: "B", entityId: "b1", hash: stored("b1", IVANOV_B) },
