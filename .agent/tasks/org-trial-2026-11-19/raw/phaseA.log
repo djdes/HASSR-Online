@@ -1,0 +1,22 @@
+registered: <test>@example.com
+profile: {"status":200,"json":{"ok":true,"buildings":[]}}
+preview in account trial: {"ok":true,"mode":"account_trial","ownTrial":true,"trialEndsAt":"2026-12-03T11:59:38.147Z","used":null,"limit":null,"grantsLeft":2}
+pay 1 point: {"status":200,"json":{"ok":true,"orderId":5,"status":"paid"}}
+preview paid, 1 point used: {"ok":true,"mode":"org_trial","ownTrial":true,"trialEndsAt":"2026-12-03T11:59:44.337Z","used":null,"limit":null,"grantsLeft":2}
+dialog preview text: Первые 14 дней — бесплатно, по 3 декабря включительно. Потом для этой организации нужна оплаченная точка в тарифе.
+create 2nd: {"status":200,"json":{"ok":true,"organizationId":"cmwnhzz580009zo7d9exz1vvz","billing":"org_trial","trialEndsAt":"2026-12-03T11:59:58.869Z"}}
+2nd: notice: Бесплатный период организации «Кафе Второе»: осталось 14 дней, по 3 декабря включительно. Потом для неё нужна оплаченная точка в тарифе.
+Добавить точку
+2nd: add building #1: 200
+2nd: add building #2: 200
+create 3rd: {"status":200,"json":{"ok":true,"organizationId":"cmwni09ej000jzo7d5xsdtgzi","billing":"org_trial","trialEndsAt":"2026-12-03T12:00:12.087Z"}}
+preview after two grants: {"ok":false,"reason":"trials_used","limit":1,"lockedName":null}
+create 4th: {"status":402,"json":{"error":"Оплачено точек: 1, все заняты. Бесплатные 14 дней для новых организаций уже использованы — добавьте точку на странице тарифа.","code":"billing_point_limit","reason":"trials_used","payUrl":"/settings/subscription","limit":1,"current":1}}
+db after creations: Кафе Первое|-|1|2
+Кафе Второе|2026-12-03|1|2
+Кафе Третье|2026-12-03|1|2
+tariff page card: Организации в бесплатном периоде
+«Кафе Второе» — бесплатно по 3 декабря включительно, потом нужна точка
+«Кафе Третье» — бесплатно по 3 декабря включительно, потом нужна точка
+
+Бесплатных 14-дневных периодов для новых организаций осталось: 0.

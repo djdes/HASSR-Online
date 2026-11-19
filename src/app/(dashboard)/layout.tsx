@@ -69,6 +69,8 @@ import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { BillingAnnouncement } from "@/components/billing/billing-announcement";
 import { BillingTransitionGate } from "@/components/billing/billing-transition-gate";
 import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
+import { OrgTrialNotice } from "@/components/billing/org-trial-notice";
+import { OrgTrialLockGate } from "@/components/billing/org-trial-lock-gate";
 import { PageNav, PageNavProvider } from "@/components/layout/page-nav";
 import { SectionMenuButton } from "@/components/layout/section-menu-button";
 import { SectionTabs } from "@/components/layout/section-tabs";
@@ -119,6 +121,12 @@ export const revalidate = 0;
 export const metadata = {
   robots: { index: false, follow: false },
 };
+
+/**
+ * Где окно закрытой организации не показываем: оплата точки и баланс — то,
+ * ради чего человек туда и идёт.
+ */
+const ORG_TRIAL_LOCK_OPEN_PATHS = ["/settings/subscription", "/settings/balance", "/order"];
 
 export default async function DashboardLayout({
   children,
@@ -662,6 +670,17 @@ export default async function DashboardLayout({
                   />
                 ) : null}
                 {billing?.staffNotice ? <BillingStaffNotice /> : null}
+                {/* Свои 14 дней этой организации: руководству — сколько осталось,
+                    после них остальным — «руководитель добавляет точку». */}
+                {billing?.orgTrial && !billing.orgTrial.gate ? (
+                  <OrgTrialNotice
+                    status={billing.orgTrial.status}
+                    name={billing.orgTrial.name}
+                    lastDayIso={billing.orgTrial.lastDayIso}
+                    daysLeft={billing.orgTrial.daysLeft}
+                    payHref={billing.orgTrial.payHref}
+                  />
+                ) : null}
                 {deletionDue ? <DeletionBanner dueAt={deletionDue} canCancel={hasCapability(session.user, "admin.full")} /> : null}
                 {/* Всегда в дереве: начатый ответ переживает router.refresh(),
                     когда после оценки ask становится false. `?nps=1` —
@@ -730,6 +749,20 @@ export default async function DashboardLayout({
               payHref={billing.gate.payHref}
               blocking={billing.gate.blocking}
               hideOnPaths={["/settings/subscription"]}
+            />
+          ) : null}
+          {/* Бесплатные 14 дней этой организации закончились, точки на неё
+              нет — руководителю окно: добавить точку или перейти в другую. */}
+          {billing?.orgTrial?.gate ? (
+            <OrgTrialLockGate
+              name={billing.orgTrial.name}
+              lastDayIso={billing.orgTrial.lastDayIso}
+              payHref={billing.orgTrial.gate.payHref}
+              blocking={billing.orgTrial.gate.blocking}
+              organizations={organizations
+                .filter((organization) => organization.id !== activeOrgId && organization.kind !== "directory")
+                .map((organization) => ({ id: organization.id, name: organization.name }))}
+              hideOnPaths={ORG_TRIAL_LOCK_OPEN_PATHS}
             />
           ) : null}
           {whatsNewState !== "hide" ? (
@@ -919,6 +952,16 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 </Suspense>
               ) : null}
               {billing?.staffNotice ? <BillingStaffNotice variant="mini" /> : null}
+              {billing?.orgTrial && !billing.orgTrial.gate ? (
+                <OrgTrialNotice
+                  status={billing.orgTrial.status}
+                  name={billing.orgTrial.name}
+                  lastDayIso={billing.orgTrial.lastDayIso}
+                  daysLeft={billing.orgTrial.daysLeft}
+                  payHref={billing.orgTrial.payHref}
+                  variant="mini"
+                />
+              ) : null}
               {/* Меню раздела — с логотипом компании клиента, как на сайте (П-3). */}
               <SectionMenuButton
                 brand={{
@@ -937,6 +980,18 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                   payHref={billing.gate.payHref}
                   blocking={billing.gate.blocking}
                   hideOnPaths={["/settings/subscription"]}
+                />
+              ) : null}
+              {billing?.orgTrial?.gate ? (
+                <OrgTrialLockGate
+                  name={billing.orgTrial.name}
+                  lastDayIso={billing.orgTrial.lastDayIso}
+                  payHref={billing.orgTrial.gate.payHref}
+                  blocking={billing.orgTrial.gate.blocking}
+                  organizations={(await listAccessibleOrganizations(session.user.id))
+                    .filter((organization) => organization.id !== activeOrgId && organization.kind !== "directory")
+                    .map((organization) => ({ id: organization.id, name: organization.name }))}
+                  hideOnPaths={ORG_TRIAL_LOCK_OPEN_PATHS}
                 />
               ) : null}
             </PageNavProvider>

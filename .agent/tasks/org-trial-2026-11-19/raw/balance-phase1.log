@@ -1,0 +1,17 @@
+registered: <test>@example.com
+profile/complete: {"status":200,"json":{"ok":true,"buildings":[]}}
+orgs after register: [{"id":"cmwng88te0001lq7dwpvdi9tp","name":"ООО Первая"}]
+A balance at start: {"status":200,"balanceRub":0,"rows":[]}
+A topup invoice: {"status":200,"json":{"method":"invoice","orderId":1,"amountRub":5000,"dueAt":"2026-11-26T11:10:36.770Z","created":true,"pdfUrl":"/api/payments/invoice/1/pdf"}}
+A tariff invoice: {"status":200,"json":{"orderId":2,"amountRub":2990,"dueAt":"2026-11-26T11:10:37.510Z","created":true,"pdfUrl":"/api/payments/invoice/2/pdf"}}
+root logged in at: http://localhost:3000/home
+root mark-paid topup #1: {"status":200,"json":{"ok":true,"orderId":1,"status":"paid"}}
+root mark-paid tariff #2: {"status":200,"json":{"ok":true,"orderId":2,"status":"paid"}}
+A balance after payments: {"status":200,"balanceRub":5000,"rows":["-2990 subscription_charge · Оплата тарифа: Тариф «Стандарт» на месяц (счёт), заказ №2","+2990 topup · Пополнение по счёту, заказ №2","+5000 topup · Пополнение баланса по счёту, заказ №1"]}
+create B (account paid for 1 point): {"status":402,"json":{"error":"Оплачено точек: 1. Каждая новая точка — как ещё один тариф; скидка на все точки: от 5 точек — 5 %, от 10 — 10 %, от 15 — 20 %, от 35 — 25 %, от 50 — индивидуальное предложение. Добавьте точку на странице тарифа.","code":"billing_point_limit","payUrl":"/settings/subscription","limit":1,"current":1}}
+A invoice for 2 points: {"status":200,"json":{"orderId":3,"amountRub":2990,"dueAt":"2026-11-26T11:10:42.768Z","created":true,"pdfUrl":"/api/payments/invoice/3/pdf"}}
+root mark-paid 2 points: {"status":200,"json":{"ok":true,"orderId":3,"status":"paid"}}
+create B (after paying 2 points): {"status":200,"json":{"ok":true,"organizationId":"cmwng8me6000jlq7dwak89jod"}}
+B: setup wizard dialog visible: 0
+B balance right after creation: {"status":200,"balanceRub":0,"rows":[]}
+B topup invoice without INN: {"status":400,"json":{"error":"Укажите ИНН организации в настройках — без него счёт не оформить"}}

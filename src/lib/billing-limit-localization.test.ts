@@ -68,6 +68,33 @@ test("tariff limit refusals (points, journals, storage, Premium) get localized c
   }
 });
 
+test("an organization closed after its free 14 days gets its own localized refusal and a plan link", async () => {
+  const { tariffLimitPresentation } = await import("./billing-limit-toast");
+  const { ORG_LOCKED_CODE, ORG_LOCKED_MESSAGE } = await import("./org-trial");
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const t = await translatorFor(locale);
+    const copy = {
+      seats: (count: number) => t("common.billing.limitAction", { count }),
+      points: (count: number) => t("common.billing.pointLimit", { count }),
+      journals: (count: number) => t("common.billing.journalLimit", { count }),
+      storageFull: t("common.billing.storageFull"),
+      storageClosed: t("common.billing.storageClosed"),
+      feature: t("common.billing.featureLocked"),
+      seatsInApp: (count: number) => t("common.billing.limit", { count }),
+      unavailableInApp: t("common.billing.unavailable"),
+      pay: t("common.billing.pay"),
+      orgLocked: t("common.billing.orgLocked"),
+    };
+    const locked = tariffLimitPresentation({ code: ORG_LOCKED_CODE, error: ORG_LOCKED_MESSAGE, limit: 1 }, copy, false);
+    assert.equal(locked?.message, copy.orgLocked);
+    assert.equal(locked?.href, BILLING_PAY_HREF);
+    assert.equal(locked?.actionLabel, copy.pay);
+    // В приложении — без призыва к оплате.
+    assert.equal(tariffLimitPresentation({ code: ORG_LOCKED_CODE }, copy, true)?.href, undefined);
+    if (locale !== "ru") assert.doesNotMatch(copy.orgLocked, /\p{Script=Cyrillic}/u);
+  }
+});
+
 test("seat refusals name the next plan (free → Standard, Standard → Premium) or offer a contact on Premium", async () => {
   const { tariffLimitPresentation, billingErrorPresentation, seatOfferFrom } = await import("./billing-limit-toast");
   assert.equal(seatOfferFrom({ code: BILLING_LIMIT_CODE }), "generic");

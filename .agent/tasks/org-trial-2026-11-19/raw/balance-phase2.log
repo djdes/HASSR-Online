@@ -1,0 +1,9 @@
+switch to B: {"status":200,"json":{"ok":true,"organization":{"id":"cmwng8me6000jlq7dwak89jod","name":"ООО Вторая"}}}
+B topup invoice: {"status":200,"json":{"method":"invoice","orderId":4,"amountRub":700,"dueAt":"2026-11-26T11:11:31.223Z","created":true,"pdfUrl":"/api/payments/invoice/4/pdf"}}
+root mark-paid B topup: {"status":200,"json":{"ok":true,"orderId":4,"status":"paid"}}
+B balance after its top-up: {"status":200,"balanceRub":700,"rows":["+700 topup · Пополнение баланса по счёту, заказ №4"]}
+switch to A: {"status":200,"json":{"ok":true,"organization":{"id":"cmwng88te0001lq7dwpvdi9tp","name":"ООО Первая"}}}
+A balance after B's top-up: {"status":200,"balanceRub":5000,"rows":["-2990 subscription_charge · Оплата тарифа: Тариф «Стандарт» на месяц, 2 точки (счёт; доплата за 30 дн. до конца оплаченного срока), заказ №3","+2990 topup · Пополнение по счёту, заказ №3","-2990 subscription_charge · Оплата тарифа: Тариф «Стандарт» на месяц (счёт), заказ №2","+2990 topup · Пополнение по счёту, заказ №2","+5000 topup · Пополнение баланса по счёту, заказ №1"]}
+stranger switch to A: {"status":403,"json":{"error":"Нет доступа к организации"}}
+stranger switch to B: {"status":403,"json":{"error":"Нет доступа к организации"}}
+stranger own balance: {"status":200,"balanceRub":0,"rows":[]}
