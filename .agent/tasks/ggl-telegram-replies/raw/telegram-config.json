@@ -1,0 +1,8 @@
+{
+  "gglCronInstalled": true,
+  "telegramConfigured": true,
+  "adminRecipientCount": 4,
+  "seoTelegramLinkedCountBeforeDeduplication": 2,
+  "accountStatus": "ok",
+  "testNotificationSent": false
+}
