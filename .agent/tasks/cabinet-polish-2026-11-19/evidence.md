@@ -1,6 +1,7 @@
 # Evidence: cabinet-polish-2026-11-19
 
-Проверка — по текущему коду ветки `claude/practical-ramanujan-v7dvcx`, локальный кабинет (`next dev`,
+Проверка — по текущему коду ветки `claude/practical-ramanujan-v7dvcx` после слияния с `origin/master`,
+локальный кабинет (`next dev`,
 PostgreSQL 16, сид `prisma/seed.ts` + `prisma/seed-haccp-demo.ts`, руководитель демо-организации).
 Браузер — Chromium (Playwright), скрипт проверок прогнан заново после последней правки кода.
 
@@ -29,6 +30,10 @@ PostgreSQL 16, сид `prisma/seed.ts` + `prisma/seed-haccp-demo.ts`, руков
 
 ## Замечания
 
-- В `journal-responsibles-client.tsx` eslint показывает две ошибки `no-html-link-for-pages` (строки 1960 и
-  2082) — они были до этой задачи (проверено на исходном дереве), задача их не трогала.
+- В `journal-responsibles-client.tsx` две старые ссылки `<a href="/settings/users">` заменены на `Link`
+  (eslint `no-html-link-for-pages`): файл задача уже правила, а AC8 требует чистый eslint по изменённым файлам.
+- Полный прогон тестов перезаписывает образцы PDF в `.agent/tasks/english-version-1375e736/raw` — в
+  коммиты задачи они не включены.
+- Ветка слита с `origin/master` (23b8a515) без конфликтов; `message-contract.d.ts` и `neutral-palette.css`
+  пересобраны инструментами репозитория после слияния, проверки ниже — на слитом дереве.
 - Развёртывание: схемы БД и переменных окружения задача не меняет.
