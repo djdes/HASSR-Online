@@ -160,6 +160,8 @@ type RawProjectRegion = {
   name?: string;
   areaName?: string;
   enabled?: number | string | boolean;
+  alt?: string | null;
+  depth?: number | string | null;
 };
 
 type RawProjectSearcher = {
@@ -244,6 +246,8 @@ export type ParsedSearcherRegionEntry = {
   regionName: string;
   regionEnabled: boolean;
   enabled: boolean;
+  alt: string;
+  depth: number | null;
 };
 
 export function parseProjectSearcherRegions(
@@ -274,6 +278,13 @@ export function parseProjectSearcherRegions(
         region.enabled === 1 ||
         region.enabled === "1" ||
         region.enabled === true;
+      const alt =
+        typeof region.alt === "string" ? region.alt.trim().toLowerCase() : "";
+      const rawDepth = region.depth ?? null;
+      const numDepth =
+        rawDepth !== null && rawDepth !== "" ? Number(rawDepth) : NaN;
+      const depth =
+        Number.isFinite(numDepth) && numDepth > 0 ? numDepth : null;
       entries.push({
         index: idx,
         searcherKind,
@@ -282,19 +293,74 @@ export function parseProjectSearcherRegions(
         regionName: `${region.name ?? ""} ${region.areaName ?? ""}`.trim(),
         regionEnabled,
         enabled: searcherEnabled && regionEnabled,
+        alt,
+        depth,
       });
     }
   }
   return entries;
 }
 
+type LogicalRegionSlot = (typeof LOGICAL_REGION_SLOTS)[number];
+
+function matchesLogicalSlot(
+  entry: ParsedSearcherRegionEntry,
+  slot: LogicalRegionSlot
+): boolean {
+  return (
+    entry.searcherKind === slot.searcher &&
+    (entry.regionKey === slot.regionKey ||
+      slot.namePattern.test(entry.regionName))
+  );
+}
+
+/**
+ * Выбирает ровно один основной регион из дублей одного (searcher, regionKey),
+ * чтобы платный съём (`checker/price`, `checker/go`) не списывал баланс дважды
+ * за один и тот же город/страну (например Яндекс XML index=1 + SERP index=712161).
+ *
+ * Приоритет:
+ * 1) включённый регион (`enabled === true`);
+ * 2) живая выдача (`alt === "serp"`) над Яндекс XML (`alt === ""`);
+ * 3) большая глубина (`depth`, например 3 > 1);
+ * 4) исходный порядок региона в проекте.
+ */
+function pickPrimaryRegionEntry(
+  candidates: ParsedSearcherRegionEntry[]
+): ParsedSearcherRegionEntry | null {
+  if (candidates.length === 0) return null;
+  let best = candidates[0]!;
+  for (let i = 1; i < candidates.length; i += 1) {
+    const current = candidates[i]!;
+    const enabledDiff = (current.enabled ? 1 : 0) - (best.enabled ? 1 : 0);
+    if (enabledDiff !== 0) {
+      if (enabledDiff > 0) best = current;
+      continue;
+    }
+    const serpDiff =
+      (current.alt === "serp" ? 1 : 0) - (best.alt === "serp" ? 1 : 0);
+    if (serpDiff !== 0) {
+      if (serpDiff > 0) best = current;
+      continue;
+    }
+    const depthDiff = (current.depth ?? 0) - (best.depth ?? 0);
+    if (depthDiff > 0) {
+      best = current;
+    }
+  }
+  return best;
+}
+
 /**
  * Сопоставляет логические слоты из `topvisor-regions.ts` (1, 5, 2, 7)
- * с реальными `region.index` проекта в Topvisor из `get/projects_2/projects`
- * (`show_searchers_and_regions: 2`).
+ * с одним основным `region.index` проекта в Topvisor из `get/projects_2/projects`
+ * (`show_searchers_and_regions: 2`) — используется для оценки цены и запуска съёма.
  *
- * ВАЖНО: Никогда не подменяет Яндекс на Google (и наоборот). Если запрошен
- * слот из LOGICAL_REGION_SLOTS, ищем ТОЛЬКО регион соответствующего поисковика.
+ * ВАЖНО:
+ * - Никогда не подменяет Яндекс на Google (и наоборот).
+ * - При наличии в проекте одновременно XML (1/5) и SERP (712161/712278) регионов
+ *   для одного `(searcherKind, regionKey)` выбирает один основной (`alt === "serp"`),
+ *   исключая двойную тарификацию.
  */
 export function mapLogicalRegionsToProject(
   requestedIndexes: number[],
@@ -302,29 +368,78 @@ export function mapLogicalRegionsToProject(
 ): number[] {
   const entries = parseProjectSearcherRegions(searchersRaw);
   if (entries.length === 0) {
-    return requestedIndexes;
+    return [...new Set(requestedIndexes)];
+  }
+
+  const selectedEntries: ParsedSearcherRegionEntry[] = [];
+  for (const requested of requestedIndexes) {
+    const slot = LOGICAL_REGION_SLOTS[requested];
+    if (slot) {
+      const match = pickPrimaryRegionEntry(
+        entries.filter((e) => matchesLogicalSlot(e, slot))
+      );
+      if (match) {
+        selectedEntries.push(match);
+      }
+      continue;
+    }
+
+    const direct = entries.find((e) => e.index === requested);
+    if (direct) {
+      if (direct.searcherKind && direct.regionKey !== null) {
+        const primary = pickPrimaryRegionEntry(
+          entries.filter(
+            (e) =>
+              e.searcherKind === direct.searcherKind &&
+              e.regionKey === direct.regionKey
+          )
+        );
+        selectedEntries.push(primary ?? direct);
+      } else {
+        selectedEntries.push(direct);
+      }
+    }
+  }
+
+  const resolved: number[] = [];
+  const seenKeys = new Set<string>();
+  for (const entry of selectedEntries) {
+    const semanticKey =
+      entry.searcherKind && entry.regionKey !== null
+        ? `${entry.searcherKind}:${entry.regionKey}`
+        : `idx:${entry.index}`;
+    if (seenKeys.has(semanticKey)) continue;
+    seenKeys.add(semanticKey);
+    resolved.push(entry.index);
+  }
+
+  return resolved;
+}
+
+/**
+ * Сопоставляет логические слоты (1, 5, 2, 7) со ВСЕМИ включёнными `region.index`
+ * проекта для соответствующего `(searcher, regionKey)` — например `[1, 712161]`
+ * для Яндекс · Москва и `[5, 712278]` для Яндекс · Россия, чтобы история позиций
+ * объединяла старые XML-проверки и свежие SERP-проверки на единой шкале дат.
+ */
+export function mapLogicalRegionsForHistory(
+  requestedIndexes: number[],
+  searchersRaw: unknown
+): number[] {
+  const entries = parseProjectSearcherRegions(searchersRaw);
+  if (entries.length === 0) {
+    return [...new Set(requestedIndexes)];
   }
 
   const resolved: number[] = [];
   for (const requested of requestedIndexes) {
     const slot = LOGICAL_REGION_SLOTS[requested];
     if (slot) {
-      const match =
-        entries.find(
-          (e) =>
-            e.enabled &&
-            e.searcherKind === slot.searcher &&
-            (e.regionKey === slot.regionKey ||
-              slot.namePattern.test(e.regionName))
-        ) ??
-        entries.find(
-          (e) =>
-            e.searcherKind === slot.searcher &&
-            (e.regionKey === slot.regionKey ||
-              slot.namePattern.test(e.regionName))
-        );
-      if (match) {
-        resolved.push(match.index);
+      const matches = entries.filter((e) => matchesLogicalSlot(e, slot));
+      const enabledMatches = matches.filter((e) => e.enabled);
+      const bucket = enabledMatches.length > 0 ? enabledMatches : matches;
+      for (const item of bucket) {
+        resolved.push(item.index);
       }
       continue;
     }
@@ -343,6 +458,11 @@ let cachedSearchers: {
   expiresAt: number;
   data: unknown;
 } | null = null;
+
+/** Сбрасывает минутный кэш списка регионов проекта (для модульных тестов). */
+export function resetTopvisorSearcherCache(): void {
+  cachedSearchers = null;
+}
 
 async function fetchProjectSearchersRaw(
   projectId: number,
@@ -377,21 +497,16 @@ async function fetchProjectSearchersRaw(
   return data;
 }
 
-/**
- * Гарантирует, что запрошенные логические регионы (например Яндекс · Москва [213]
- * и Яндекс · Россия [225]) добавлены и включены в проекте Topvisor, и возвращает
- * их реальные `region.index`.
- */
-async function resolveProjectRegionIndexes(
+async function loadProjectSearchersWithProvisioning(
   requestedIndexes: number[],
   options: { autoProvision?: boolean } = {}
-): Promise<number[]> {
+): Promise<unknown> {
   const { projectId } = config();
   let searchersRaw: unknown;
   try {
     searchersRaw = await fetchProjectSearchersRaw(projectId);
   } catch {
-    return requestedIndexes;
+    return null;
   }
 
   if (options.autoProvision) {
@@ -416,11 +531,8 @@ async function resolveProjectRegionIndexes(
         mutated = true;
       }
 
-      const existingRegion = entries.find(
-        (e) =>
-          e.searcherKind === slot.searcher &&
-          (e.regionKey === slot.regionKey ||
-            slot.namePattern.test(e.regionName))
+      const existingRegion = pickPrimaryRegionEntry(
+        entries.filter((e) => matchesLogicalSlot(e, slot))
       );
 
       if (!existingRegion) {
@@ -462,7 +574,54 @@ async function resolveProjectRegionIndexes(
     }
   }
 
+  return searchersRaw;
+}
+
+/**
+ * Гарантирует, что запрошенные логические регионы (например Яндекс · Москва [213]
+ * и Яндекс · Россия [225]) добавлены и включены в проекте Topvisor, и возвращает
+ * ровно по ОДНОМУ основному `region.index` на каждый логический слот (для платного съёма).
+ */
+async function resolveProjectRegionIndexes(
+  requestedIndexes: number[],
+  options: { autoProvision?: boolean } = {}
+): Promise<number[]> {
+  const searchersRaw = await loadProjectSearchersWithProvisioning(
+    requestedIndexes,
+    options
+  );
+  if (searchersRaw === null) {
+    return [...new Set(requestedIndexes)];
+  }
   return mapLogicalRegionsToProject(requestedIndexes, searchersRaw);
+}
+
+/**
+ * Возвращает ВСЕ включённые `region.index` проекта для запрошенного логического
+ * региона (например `[1, 712161]` для Яндекс · Москва) и список SERP-индексов,
+ * чтобы `getPositionsHistory` склеивал XML- и SERP-историю без потери свежих дат.
+ */
+async function resolveHistoryRegionIndexes(
+  requestedIndexes: number[],
+  options: { autoProvision?: boolean } = {}
+): Promise<{ regionIndexes: number[]; serpRegionIndexes: number[] }> {
+  const searchersRaw = await loadProjectSearchersWithProvisioning(
+    requestedIndexes,
+    options
+  );
+  if (searchersRaw === null) {
+    return {
+      regionIndexes: [...new Set(requestedIndexes)],
+      serpRegionIndexes: [],
+    };
+  }
+  const serpRegionIndexes = parseProjectSearcherRegions(searchersRaw)
+    .filter((entry) => entry.alt === "serp")
+    .map((entry) => entry.index);
+  return {
+    regionIndexes: mapLogicalRegionsForHistory(requestedIndexes, searchersRaw),
+    serpRegionIndexes,
+  };
 }
 
 // ─────────────────────────── семантика ───────────────────────────
@@ -532,7 +691,13 @@ export async function deleteKeywords(ids: number[]): Promise<number> {
 
 /** Сырой ответ get/positions_2/history — только те поля, что мы читаем. */
 type RawHistory = {
-  headers?: { dates?: string[] } | null;
+  headers?: {
+    dates?: string[];
+    projects?: Array<{
+      id?: number | string;
+      searchers?: RawProjectSearcher[] | null;
+    }> | null;
+  } | null;
   keywords?: Array<{
     name?: string;
     positionsData?: Record<
@@ -541,6 +706,11 @@ type RawHistory = {
     > | null;
   }> | null;
   existsDates?: string[] | null;
+};
+
+export type BuildMatrixOptions = {
+  /** Индексы регионов с alt="serp" — имеют приоритет над XML при коллизии на одной дате. */
+  serpRegionIndexes?: Iterable<number>;
 };
 
 export type PositionCell = {
@@ -600,15 +770,86 @@ export function parsePositionKey(key: string): {
   return { date, projectId: project, regionIndex: region };
 }
 
+type CandidateMatrixCell = {
+  cell: PositionCell;
+  isSerp: boolean;
+  regionIndex: number;
+};
+
+function collectSerpRegionIndexes(
+  history: RawHistory,
+  extra?: Iterable<number>
+): Set<number> {
+  const serpRegions = new Set<number>();
+  if (extra) {
+    for (const idx of extra) {
+      if (Number.isFinite(idx)) serpRegions.add(idx);
+    }
+  }
+  for (const project of history.headers?.projects ?? []) {
+    for (const entry of parseProjectSearcherRegions(project?.searchers)) {
+      if (entry.alt === "serp") {
+        serpRegions.add(entry.index);
+      }
+    }
+  }
+  return serpRegions;
+}
+
+/**
+ * Сравнивает две ячейки на одной дате при склейке нескольких регионов
+ * (например, Яндекс XML `1/5` и живая выдача SERP `712161/712278`):
+ * 1) непустая численная позиция всегда важнее `"--"` / пустоты;
+ * 2) живая выдача (`alt === "serp"`) важнее XML;
+ * 3) наличие релевантного URL важнее пустого URL;
+ * 4) детерминированный tie-break (лучшая позиция, затем больший `regionIndex`),
+ *    чтобы результат не зависел от порядка ключей в JSON.
+ */
+function isBetterPositionCell(
+  candidate: CandidateMatrixCell,
+  existing: CandidateMatrixCell
+): boolean {
+  const posDiff =
+    (candidate.cell.position !== null ? 1 : 0) -
+    (existing.cell.position !== null ? 1 : 0);
+  if (posDiff !== 0) return posDiff > 0;
+
+  const serpDiff = (candidate.isSerp ? 1 : 0) - (existing.isSerp ? 1 : 0);
+  if (serpDiff !== 0) return serpDiff > 0;
+
+  const urlDiff =
+    (candidate.cell.url !== null ? 1 : 0) -
+    (existing.cell.url !== null ? 1 : 0);
+  if (urlDiff !== 0) return urlDiff > 0;
+
+  if (
+    candidate.cell.position !== null &&
+    existing.cell.position !== null &&
+    candidate.cell.position !== existing.cell.position
+  ) {
+    return candidate.cell.position < existing.cell.position;
+  }
+
+  return candidate.regionIndex > existing.regionIndex;
+}
+
 /**
  * Превращает сырой ответ истории в матрицу «фраза × дата».
  *
  * Даты берём из headers, но подстраховываемся ключами positionsData:
  * при `show_headers: 0` headers приходит null, и без подстраховки
- * матрица оказалась бы пустой при живых данных.
+ * матрица оказалась бы пустой при живых данных. При наличии нескольких
+ * `regionIndex` на одну дату выбирается лучшая ячейка (`isBetterPositionCell`).
  */
-export function buildMatrix(raw: unknown): PositionMatrix {
+export function buildMatrix(
+  raw: unknown,
+  options: BuildMatrixOptions = {}
+): PositionMatrix {
   const history = (raw ?? {}) as RawHistory;
+  const serpRegions = collectSerpRegionIndexes(
+    history,
+    options.serpRegionIndexes
+  );
   const fromHeaders = Array.isArray(history.headers?.dates)
     ? history.headers!.dates!.slice()
     : [];
@@ -621,14 +862,24 @@ export function buildMatrix(raw: unknown): PositionMatrix {
     if (!phrase) continue;
 
     const byDate: Record<string, PositionCell> = {};
+    const bestByDate: Record<string, CandidateMatrixCell> = {};
     for (const [key, cell] of Object.entries(keyword.positionsData ?? {})) {
       const parsed = parsePositionKey(key);
       if (!parsed) continue;
       seenDates.add(parsed.date);
-      byDate[parsed.date] = {
-        position: parsePosition(cell?.position),
-        url: (cell?.relevant_url ?? "").trim() || null,
+      const candidate: CandidateMatrixCell = {
+        cell: {
+          position: parsePosition(cell?.position),
+          url: (cell?.relevant_url ?? "").trim() || null,
+        },
+        isSerp: serpRegions.has(parsed.regionIndex),
+        regionIndex: parsed.regionIndex,
       };
+      const prev = bestByDate[parsed.date];
+      if (!prev || isBetterPositionCell(candidate, prev)) {
+        bestByDate[parsed.date] = candidate;
+        byDate[parsed.date] = candidate.cell;
+      }
     }
     rows.push({ phrase, latestUrl: null, latest: null, delta: null, byDate });
   }
@@ -703,20 +954,22 @@ export async function getPositionsHistory(input: {
   dateTo: string;
 }): Promise<PositionMatrix> {
   const { projectId } = config();
-  const resolved = await resolveProjectRegionIndexes([input.regionIndex], {
-    autoProvision: true,
-  });
-  const targetRegion = resolved[0] ?? input.regionIndex;
+  const { regionIndexes, serpRegionIndexes } =
+    await resolveHistoryRegionIndexes([input.regionIndex], {
+      autoProvision: true,
+    });
+  const targetRegions =
+    regionIndexes.length > 0 ? regionIndexes : [input.regionIndex];
   const raw = await tvRequest<unknown>("get/positions_2/history", {
     project_id: projectId,
-    regions_indexes: [targetRegion],
+    regions_indexes: targetRegions,
     date1: input.dateFrom,
     date2: input.dateTo,
     positions_fields: ["position", "relevant_url"],
     show_headers: 1,
     show_exists_dates: 1,
   });
-  return buildMatrix(raw);
+  return buildMatrix(raw, { serpRegionIndexes });
 }
 
 // ─────────────────────────── съём позиций ───────────────────────────
