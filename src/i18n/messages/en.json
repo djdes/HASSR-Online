@@ -27067,7 +27067,7 @@
           "closedExpiredTitle": "The request has expired",
           "closedExpiredText": "A request is valid for 7 days. If it is still needed, ask the company to send a new one.",
           "forbiddenTitle": "No access to the request",
-          "forbidden": "Only the owner of the account that the master cabinet belongs to can confirm the request",
+          "forbidden": "Only the owner of the account that the master cabinet belongs to can confirm the request. Sign in as the owner and open the link from the email again.",
           "notFoundTitle": "The link is not valid",
           "notFound": "The request was not found. Open the full link from the email or ask the company to send the request again.",
           "home": "Open workspace",

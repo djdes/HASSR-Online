@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   approvalBody,
+  decisionView,
   exchangeParticipants,
   isEmptyResult,
   isExpired,
@@ -252,7 +253,8 @@ test("foreign: a sent request comes first, a removed record disappears, foreign 
   const sent = withOutgoing(state, outgoing("r2", "pending"));
   assert.deepEqual(sent.outgoing.map((entry) => entry.id), ["r2", "r1"]);
   // Тот же запрос второй раз не добавляется.
-  assert.deepEqual(withOutgoing(sent, { ...outgoing("r1", "pending"), cabinetName: "Новое имя" }).outgoing.map((entry) => [entry.id, entry.cabinetName]), [
+  const renamed = withOutgoing(sent, { ...outgoing("r1", "pending"), cabinetName: "Новое имя" });
+  assert.deepEqual(renamed.outgoing.map((entry) => [entry.id, entry.cabinetName]), [
     ["r1", "Новое имя"],
     ["r2", "Кабинет"],
   ]);
@@ -351,4 +353,48 @@ test("dates: an unreadable moment is null, an unknown term is not treated as exp
   assert.equal(isExpired("2026-11-26T09:00:00.001Z", now), false);
   assert.equal(isExpired(null, now), false);
   assert.equal(isExpired("завтра", now), false);
+});
+
+test("decision page: the server answer picks the form, a refusal or the way the request ended", () => {
+  const now = Date.parse("2026-11-20T09:00:00.000Z");
+  const payload = (status: string, expiresAt = "2026-11-26T09:00:00.000Z") => ({
+    request: { id: "r1", requesterName: "ООО «Юг»", mode: "link", kinds: ["products"], status, expiresAt },
+    cabinet: { id: "c1", name: "Мастер-кабинет" },
+    sources: [],
+  });
+  const answer = (status: number, json: Record<string, unknown> | null) => ({ ok: status >= 200 && status < 300, status, json });
+
+  const form = decisionView(answer(200, payload("pending")), now);
+  assert.equal(form.kind, "form");
+  assert.equal(form.kind === "form" ? form.data.request.requesterName : "", "ООО «Юг»");
+
+  // Решение уже принято, запрос отменён или просрочен — говорим, чем именно он закончился.
+  assert.deepEqual(decisionView(answer(200, payload("approved")), now), { kind: "closed", status: "approved" });
+  assert.deepEqual(decisionView(answer(200, payload("declined")), now), { kind: "closed", status: "declined" });
+  assert.deepEqual(decisionView(answer(200, payload("cancelled")), now), { kind: "closed", status: "cancelled" });
+  assert.deepEqual(decisionView(answer(200, payload("expired")), now), { kind: "closed", status: "expired" });
+  // Срок вышел, а сервер ещё числит запрос ожидающим — подтверждать уже нечего.
+  assert.deepEqual(decisionView(answer(200, payload("pending", "2026-11-20T08:59:59.000Z")), now), {
+    kind: "closed",
+    status: "expired",
+  });
+
+  assert.deepEqual(decisionView(answer(401, { error: "Не авторизован" }), now), { kind: "signedOut" });
+  assert.deepEqual(decisionView(answer(403, { error: "Только владелец" }), now), { kind: "forbidden" });
+  assert.deepEqual(decisionView(answer(404, { error: "Не найдено" }), now), { kind: "missing" });
+  // 409 называет исход статусом, вложенным запросом или кодом причины; не называет — исход неизвестен.
+  const closed = (json: Record<string, unknown>) => decisionView(answer(409, json), now);
+  assert.deepEqual(closed({ error: "Срок истёк", status: "expired" }), { kind: "closed", status: "expired" });
+  assert.deepEqual(closed({ error: "Уже решён", request: { status: "declined" } }), { kind: "closed", status: "declined" });
+  assert.deepEqual(closed({ error: "Срок истёк", code: "request_expired" }), { kind: "closed", status: "expired" });
+  assert.deepEqual(closed({ error: "Отменён", code: "request_cancelled" }), { kind: "closed", status: "cancelled" });
+  assert.deepEqual(closed({ error: "Отменён", reason: "cancelled" }), { kind: "closed", status: "cancelled" });
+  assert.deepEqual(closed({ error: "Решение принято", code: "request_decided" }), { kind: "closed", status: null });
+  // Кабинет занят другим обменом — тоже 409, но запрос при этом ещё ждёт решения.
+  assert.deepEqual(closed({ error: "Обмен уже идёт", code: "exchange_busy" }), { kind: "closed", status: null });
+  assert.deepEqual(closed({ error: "Странно", status: "pending" }), { kind: "closed", status: null });
+  // Сеть упала, сервер ответил ошибкой или прислал не то — показываем «не удалось загрузить».
+  assert.deepEqual(decisionView(answer(0, null), now), { kind: "failed" });
+  assert.deepEqual(decisionView(answer(500, { error: "Ошибка" }), now), { kind: "failed" });
+  assert.deepEqual(decisionView(answer(200, { request: { id: "r1" } }), now), { kind: "failed" });
 });

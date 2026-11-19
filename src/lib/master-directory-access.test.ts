@@ -27,6 +27,8 @@ test("directory session: auth, org switch, login, invite and assets stay open", 
     "/api/build-info",
     "/login",
     "/invite/abc123",
+    "/exchange-request/abc123",
+    "/api/exchange-requests/abc123",
     // «Установить пароль и войти» по ссылке приглашения — из браузера,
     // где уже открыт мастер-кабинет (руководитель зашёл в кабинет пула).
     "/api/invite/abc123/accept",

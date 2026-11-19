@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getActiveOrgId, isImpersonating, requireApiAuth } from "@/lib/auth-helpers";
 import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { EXCHANGE_KINDS } from "@/lib/directory-exchange/kinds";
 import { REQUEST_MODES } from "@/lib/directory-exchange/requests";
 import { createExchangeRequest, loadExchangeRequests } from "@/lib/directory-exchange/requests.server";
@@ -13,13 +14,20 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Окно и карточка читают список при каждом открытии. Создание запроса — это
-// ещё и проверка чужого кода: десяти попыток в минуту человеку хватит, а
-// перебирать коды так не получится. Суточный лимит (5 запросов на аккаунт)
-// считается по созданным запросам в базе — отказ его не расходует.
+// Окно и карточка читают список при каждом открытии.
 const readLimiter = createRateLimiter({ tokensPerInterval: 60, intervalMs: 60_000 });
-const createLimiter = createRateLimiter({ tokensPerInterval: 10, intervalMs: 60_000 });
+// Создание запроса — три разных счёта, и отказ не тратит чужой:
+//   • любые обращения — 30 в минуту, чтобы маршрут нельзя было долбить;
+//   • неверные коды — 10 за десять минут: попытка возвращается, если код
+//     оказался настоящим или до поиска кода дело не дошло (не тот тариф, не
+//     заполнено). Перебирать коды так не получится, а опечатка в списках или
+//     отказ по тарифу попыток не отнимают;
+//   • созданные запросы — 5 в сутки на аккаунт, считаются по базе
+//     (`decideRequestCreation`): отказ их не расходует вовсе.
+const attemptLimiter = createRateLimiter({ tokensPerInterval: 30, intervalMs: 60_000 });
+const wrongCodeLimiter = createRateLimiter({ tokensPerInterval: 10, intervalMs: 10 * 60_000 });
 const TOO_MANY = "Слишком много запросов. Подождите минуту.";
+const TOO_MANY_CODES = "Слишком много неверных кодов. Проверьте код мастер-кабинета и попробуйте через десять минут.";
 
 const createSchema = z.object({
   code: z.string().trim().min(1, "Введите код мастер-кабинета").max(64, "Проверьте код мастер-кабинета"),
@@ -72,7 +80,8 @@ export async function POST(request: Request) {
   const owner = await requireExchangeOwner();
   if (!owner.ok) return owner.response;
   const { organizationId, actor } = owner.context;
-  if (!createLimiter.consume(`directory-exchange:requests:create:${actor.userId}`)) {
+  const limitKey = `directory-exchange:requests:create:${actor.userId}`;
+  if (!attemptLimiter.consume(limitKey)) {
     return NextResponse.json({ error: TOO_MANY }, { status: 429 });
   }
 
@@ -81,12 +90,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Проверьте поля" }, { status: 400 });
   }
 
+  if (!wrongCodeLimiter.consume(limitKey)) {
+    return NextResponse.json({ error: TOO_MANY_CODES }, { status: 429 });
+  }
   try {
     const created = await createExchangeRequest({ organizationId, actor, ...parsed.data });
+    wrongCodeLimiter.refund(limitKey);
     // Письмо владельцу кабинета — после ответа; сбой почты запрос не ломает.
     after(created.notify);
     return NextResponse.json({ ok: true, request: created.request });
   } catch (error) {
+    // Попытка остаётся потраченной только на «кабинет не найден».
+    if (!(error instanceof DirectoryExchangeError && error.status === 404)) wrongCodeLimiter.refund(limitKey);
     return exchangeErrorResponse(error);
   }
 }

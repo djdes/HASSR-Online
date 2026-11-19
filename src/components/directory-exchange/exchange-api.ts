@@ -433,6 +433,19 @@ export type DecisionBody =
 
 export type DecisionResult = { status: "approved" | "declined"; summary: ExchangeSummary | null };
 
+/**
+ * Что показать странице решения по ответу сервера: форму, отказ по правам,
+ * «ссылка недействительна» или то, чем запрос уже закончился (`status: null` —
+ * сервер не сказал, чем именно).
+ */
+export type DecisionView =
+  | { kind: "form"; data: DecisionState }
+  | { kind: "closed"; status: Exclude<ForeignStatus, "pending"> | null }
+  | { kind: "forbidden" }
+  | { kind: "missing" }
+  | { kind: "signedOut" }
+  | { kind: "failed" };
+
 function parseMode(value: unknown): ExchangeMode | null {
   return value === "link" || value === "transfer" ? value : null;
 }
@@ -550,6 +563,40 @@ export function parseDecisionResult(value: unknown, decision: DecisionBody["deci
   const status: DecisionResult["status"] =
     raw === "approved" || raw === "declined" ? raw : decision === "approve" ? "approved" : "declined";
   return { status, summary: status === "approved" ? parseSummary(source?.summary) : null };
+}
+
+/**
+ * Чем закончился запрос, если отказ 409 это называет: статусом, вложенным
+ * запросом или кодом причины (`request_expired`, `request_cancelled`).
+ * «Решение уже принято» (`request_decided`) исход не называет — `null`.
+ */
+function closedStatus(json: Json | null): Exclude<ForeignStatus, "pending"> | null {
+  const reason = (value: unknown) => parseStatus(asText(value).replace(/^request_/, ""));
+  const status =
+    parseStatus(json?.status) ??
+    parseStatus(asObject(json?.request)?.status) ??
+    reason(json?.code) ??
+    reason(json?.reason);
+  return status && status !== "pending" ? status : null;
+}
+
+/**
+ * Разбор ответа `GET /api/exchange-requests/<токен>` (и отказов `POST`): 401 —
+ * сессия кончилась, 403 — решает не владелец аккаунта кабинета, 404 — токен
+ * неизвестен, 409 или не ждущий статус — запрос уже закрыт. Запрос, срок
+ * которого вышел, закрыт, даже если сервер ещё числит его ожидающим.
+ */
+export function decisionView(response: ExchangeResponse, now: number): DecisionView {
+  if (response.status === 401) return { kind: "signedOut" };
+  if (response.status === 403) return { kind: "forbidden" };
+  if (response.status === 404) return { kind: "missing" };
+  if (response.status === 409) return { kind: "closed", status: closedStatus(response.json) };
+  if (!response.ok) return { kind: "failed" };
+  const data = parseDecisionState(response.json);
+  if (!data) return { kind: "failed" };
+  if (data.request.status !== "pending") return { kind: "closed", status: data.request.status };
+  if (isExpired(data.request.expiresAt, now)) return { kind: "closed", status: "expired" };
+  return { kind: "form", data };
 }
 
 /** Запросы, которые ещё ждут решения владельца кабинета. */

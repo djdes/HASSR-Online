@@ -322,7 +322,7 @@ export function ForeignBlock({
   const [failed, setFailed] = useState(false);
   const [code, setCode] = useState("");
   const [sending, setSending] = useState(false);
-  // Отказ 402: текст сервера остаётся в блоке вместе со ссылкой на тариф.
+  // Отказ из-за тарифа: текст сервера остаётся в блоке вместе со ссылкой на страницу тарифа.
   const [planNote, setPlanNote] = useState<string | null>(null);
 
   useEffect(() => {
@@ -378,8 +378,14 @@ export function ForeignBlock({
         body: { code: normalized, mode, kinds: chosen },
       });
       if (!ok) {
-        if (status === 402) setPlanNote(exchangeError(json, t("foreign.paidOnly")));
-        else toast.error(exchangeError(json, t("foreign.sendFailed")));
+        // Нужен платный тариф (402) или организация закрыта до оплаты: сервер прикладывает ссылку на оплату.
+        if (status === 402 || typeof json?.payUrl === "string") {
+          setPlanNote(exchangeError(json, t("foreign.paidOnly")));
+        } else {
+          toast.error(exchangeError(json, t("foreign.sendFailed")));
+        }
+        // 409 — в том числе «запрос уже отправлен»: перечитываем, чтобы строка ожидания появилась.
+        if (status === 409) setAttempt((value) => value + 1);
         return;
       }
       const request = parseForeignRequest(json?.request);

@@ -75,6 +75,7 @@ export const ROBOTS_DISALLOW: readonly string[] = [
 
   // Signed / tokenized / one-off links
   "/invite/",
+  "/exchange-request/",
   "/inspector/",
   "/inspector-sheet",
   "/join/",

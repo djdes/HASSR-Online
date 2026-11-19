@@ -20,6 +20,7 @@ import {
   ENTITY_PARENT,
   EXCHANGE_ENTITIES,
   EXCHANGE_KINDS,
+  FOREIGN_HASH_PREFIX,
   KIND_ENTITIES,
   emptyKindRecord,
   entityScope,
@@ -404,6 +405,46 @@ async function exchangeEntity(params: {
   return changes;
 }
 
+/**
+ * Список «Сотрудники» переходит в состав «между аккаунтами» (Р5): среди его
+ * участников появилась организация другого аккаунта — её подтвердили,
+ * открыли после оплаты или сняли с паузы, — а связи своих организаций ещё
+ * хранят полный отпечаток (с телефоном и выходными).
+ *
+ * Полный отпечаток в суженном составе пересчитать нельзя (телефон не
+ * читается), поэтому при переходе записи считаются неизменёнными
+ * (`rebaseLinks`). Чтобы правка, сделанная прямо перед переходом, не
+ * потерялась, свои организации сначала обмениваются между собой как обычно:
+ * должности и сотрудники, с телефонами — и только внутри аккаунта кабинета.
+ * После перехода связи суженные, и этот шаг больше не срабатывает.
+ */
+async function settleStaffBeforeForeign(params: {
+  masterOrganizationId: string;
+  participants: readonly Participant[];
+  tally: Tally;
+  blocked: Map<string, SkipReason>;
+  notes: Set<string>;
+}): Promise<void> {
+  const sharing = params.participants.filter((participant) => participant.kinds.includes("staff"));
+  if (!sharing.some((participant) => participant.foreign)) return;
+  const own = sharing.filter((participant) => !participant.foreign);
+  if (own.length < 2) return;
+  const pending = await db.directoryExchangeLink.findFirst({
+    where: {
+      masterOrganizationId: params.masterOrganizationId,
+      entity: "staff",
+      organizationId: { in: own.map((participant) => participant.organizationId) },
+      entityId: { not: null },
+      NOT: { hash: { startsWith: FOREIGN_HASH_PREFIX } },
+    },
+    select: { id: true },
+  });
+  if (!pending) return;
+  for (const entity of KIND_ENTITIES.staff) {
+    await exchangeEntity({ ...params, entity, participants: own });
+  }
+}
+
 async function exchangeUnderLock(
   masterOrganizationId: string,
   actor: ExchangeActor | null,
@@ -447,6 +488,7 @@ async function exchangeUnderLock(
   const tally = new Tally();
   const blocked = new Map<string, SkipReason>();
   if (participants.length >= 2) {
+    await settleStaffBeforeForeign({ masterOrganizationId, participants, tally, blocked, notes });
     for (let pass = 0; pass < MAX_PASSES; pass += 1) {
       let changes = 0;
       for (const entity of EXCHANGE_ENTITIES) {

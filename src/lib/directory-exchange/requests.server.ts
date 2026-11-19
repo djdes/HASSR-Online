@@ -849,20 +849,6 @@ async function approveLink(
   now: Date,
 ): Promise<ExchangeSummary> {
   const masterOrganizationId = request.masterOrganizationId;
-  // С первым чужим участником списка «Сотрудники» состав полей сужается до
-  // ФИО и должности (Р5), и правки телефонов, не разошедшиеся по своим
-  // организациям, уже не разойдутся. Поэтому сначала — обычный обмен.
-  if (allowed.includes("staff")) {
-    const foreignStaff = await db.directoryExchangeMember.count({
-      where: { masterOrganizationId, foreign: true, kinds: { has: "staff" } },
-    });
-    if (foreignStaff === 0) {
-      await runDirectoryExchange(masterOrganizationId, { actor, now }).catch((error) => {
-        console.warn("[directory-exchange] exchange before a foreign member joined failed", { masterOrganizationId, error });
-      });
-    }
-  }
-
   await db.directoryExchangeMember.upsert({
     where: {
       masterOrganizationId_organizationId: { masterOrganizationId, organizationId: request.requesterOrganizationId },

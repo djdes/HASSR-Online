@@ -27067,7 +27067,7 @@
           "closedExpiredTitle": "So‘rov muddati tugagan",
           "closedExpiredText": "So‘rov 7 kun amal qiladi. Agar u hali kerak bo‘lsa, kompaniyadan yangisini yuborishni so‘rang.",
           "forbiddenTitle": "So‘rovga kirish huquqi yo‘q",
-          "forbidden": "So‘rovni faqat master-kabinet tegishli bo‘lgan akkaunt egasi tasdiqlashi mumkin",
+          "forbidden": "So‘rovni faqat master-kabinet tegishli bo‘lgan akkaunt egasi tasdiqlashi mumkin. Egasining hisobi bilan kiring va xatdagi havolani qayta oching.",
           "notFoundTitle": "Havola yaroqsiz",
           "notFound": "So‘rov topilmadi. Xatdagi havolani to‘liq oching yoki kompaniyadan so‘rovni qayta yuborishni so‘rang.",
           "home": "Kabinetni ochish",
