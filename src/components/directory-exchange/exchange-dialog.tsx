@@ -29,6 +29,7 @@ import {
   type TransferItems,
   type TransferSelection,
 } from "./exchange-api";
+import { ForeignBlock } from "./exchange-foreign";
 import { ExchangeLimitNote, ExchangeSummaryView } from "./exchange-result";
 
 const PRIMARY =
@@ -72,6 +73,11 @@ function toggled<T>(list: readonly T[], value: T): T[] {
  * сюда (`POST …/transfer`), связь не сохраняется. После успеха окно
  * показывает итог сервера: что создано, обновлено, не поместилось в тариф.
  *
+ * Блок «Другая компания» (спека org-exchange-foreign-2026-11-19) — запрос в
+ * мастер-кабинет чужого аккаунта по его коду, со способом и списками,
+ * выбранными в окне. У него своя кнопка: кнопка окна работает только со
+ * своими организациями и, пока в поле кода есть неотправленный текст, ждёт.
+ *
  * Портал в `document.body`, как у окна нового мастер-кабинета: окно
  * открывают и из мастера первого входа, и из настроек.
  */
@@ -107,6 +113,12 @@ export function ExchangeDialog({
   const [expanded, setExpanded] = useState<ExchangeKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ mode: ExchangeMode; summary: ExchangeSummary } | null>(null);
+  // Запрос в чужой кабинет отправлен или отменён, связь разорвана — карточку и строку стоит перечитать.
+  const [foreignChanged, setForeignChanged] = useState(false);
+  // В поле кода другой компании есть неотправленный текст.
+  const [foreignDraft, setForeignDraft] = useState(false);
+  // Сколько в кабинете аккаунта участников из других аккаунтов.
+  const [foreignPartners, setForeignPartners] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -162,7 +174,7 @@ export function ExchangeDialog({
     };
   }, [transferSeen, sourceId, previewAttempt]);
 
-  const applied = result !== null;
+  const applied = result !== null || foreignChanged;
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || busy) return;
@@ -191,12 +203,19 @@ export function ExchangeDialog({
     [previewItems, transferKinds, picked],
   );
 
+  // Кнопка окна — про обмен между своими организациями. Соседних нет, сама
+  // организация не в обмене и участников из других аккаунтов в кабинете нет —
+  // ей нечего делать: остаётся запрос в другую компанию.
+  const ownExchange = siblings.length > 0 || kindsOf(ownId).length > 0 || foreignPartners > 0;
+  // Обмениваться можно и с участником из другого аккаунта: своя соседняя тогда не обязательна.
+  const noPartner = linkOrgs.length === 0 && foreignPartners === 0;
+
   /** Чего не хватает, чтобы нажать основную кнопку; `null` — всё выбрано. */
   const missing: string | null =
     mode === "link"
       ? leaving
         ? null
-        : linkOrgs.length === 0
+        : noPartner
           ? t("dialog.needOrganization")
           : linkKinds.length === 0
             ? t("dialog.needList")
@@ -209,7 +228,13 @@ export function ExchangeDialog({
             ? t("dialog.needItems")
             : null;
   const canSubmit =
-    load === "ready" && !busy && missing === null && (mode === "link" || previewItems !== null);
+    load === "ready" &&
+    !busy &&
+    ownExchange &&
+    // Код введён, а запрос не отправлен: человек мог принять кнопку окна за отправку запроса.
+    !foreignDraft &&
+    missing === null &&
+    (mode === "link" || previewItems !== null);
 
   function close() {
     if (busy) return;
@@ -269,7 +294,8 @@ export function ExchangeDialog({
 
   if (typeof document === "undefined") return null;
 
-  const canConfigure = load === "ready" && state !== null && state.canManage && siblings.length > 0;
+  // Соседних организаций может и не быть: запрос в другую компанию доступен и одной организации.
+  const canConfigure = load === "ready" && state !== null && state.canManage;
 
   return createPortal(
     <div
@@ -358,7 +384,7 @@ export function ExchangeDialog({
               ) : (
                 <div className={STATUS}>
                   <Info className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
-                  {state.canManage ? t("dialog.noSiblings") : t("dialog.ownerOnly")}
+                  {t("dialog.ownerOnly")}
                 </div>
               )}
             </div>
@@ -408,66 +434,73 @@ export function ExchangeDialog({
                 <div className={SECTION_TITLE}>
                   {mode === "link" ? t("dialog.linkOrganizations") : t("dialog.transferSource")}
                 </div>
-                <ul className={LIST}>
-                  {siblings.map((sibling) => {
-                    const checked = mode === "link" ? linkOrgs.includes(sibling.id) : sourceId === sibling.id;
-                    const lists = kindsOf(sibling.id);
-                    // Закрытую организацию не выбрать; уже связанную можно только снять.
-                    const unavailable = sibling.locked && !checked;
-                    return (
-                      <li key={sibling.id}>
-                        <label
-                          className={cn(ROW, checked && "bg-[#fafbff]", unavailable && "cursor-default hover:bg-transparent")}
-                        >
-                          {mode === "link" ? (
-                            <input
-                              key="link"
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => setLinkOrgs((current) => toggled(current, sibling.id))}
-                              disabled={busy || unavailable}
-                              className={CHECK}
-                              data-testid="exchange-organization"
-                              data-organization-id={sibling.id}
-                            />
-                          ) : (
-                            <input
-                              key="transfer"
-                              type="radio"
-                              name={`${groupName}-source`}
-                              checked={checked}
-                              onChange={() => {
-                                setSourceId(sibling.id);
-                                setExpanded(null);
-                              }}
-                              disabled={busy || unavailable}
-                              className={CHECK}
-                              data-testid="exchange-source"
-                              data-organization-id={sibling.id}
-                            />
-                          )}
-                          <span className="min-w-0 flex-1">
-                            <span
-                              className={cn(
-                                "block break-words text-[14px] font-medium",
-                                unavailable ? "text-[#9b9fb3]" : "text-[#0b1024]",
-                              )}
-                            >
-                              {sibling.name}
-                            </span>
-                            {sibling.locked ? (
-                              <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#7a4a00]">{t("dialog.locked")}</span>
-                            ) : lists.length > 0 ? (
-                              <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#6f7282]">
-                                {t("dialog.inExchange", { lists: lists.map((kind) => t(`kinds.${kind}`)).join(", ") })}
+                {siblings.length === 0 ? (
+                  <div className={cn(STATUS, "mt-2")} data-testid="exchange-no-siblings">
+                    <Info className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+                    {t("dialog.noSiblings")}
+                  </div>
+                ) : (
+                  <ul className={LIST}>
+                    {siblings.map((sibling) => {
+                      const checked = mode === "link" ? linkOrgs.includes(sibling.id) : sourceId === sibling.id;
+                      const lists = kindsOf(sibling.id);
+                      // Закрытую организацию не выбрать; уже связанную можно только снять.
+                      const unavailable = sibling.locked && !checked;
+                      return (
+                        <li key={sibling.id}>
+                          <label
+                            className={cn(ROW, checked && "bg-[#fafbff]", unavailable && "cursor-default hover:bg-transparent")}
+                          >
+                            {mode === "link" ? (
+                              <input
+                                key="link"
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => setLinkOrgs((current) => toggled(current, sibling.id))}
+                                disabled={busy || unavailable}
+                                className={CHECK}
+                                data-testid="exchange-organization"
+                                data-organization-id={sibling.id}
+                              />
+                            ) : (
+                              <input
+                                key="transfer"
+                                type="radio"
+                                name={`${groupName}-source`}
+                                checked={checked}
+                                onChange={() => {
+                                  setSourceId(sibling.id);
+                                  setExpanded(null);
+                                }}
+                                disabled={busy || unavailable}
+                                className={CHECK}
+                                data-testid="exchange-source"
+                                data-organization-id={sibling.id}
+                              />
+                            )}
+                            <span className="min-w-0 flex-1">
+                              <span
+                                className={cn(
+                                  "block break-words text-[14px] font-medium",
+                                  unavailable ? "text-[#9b9fb3]" : "text-[#0b1024]",
+                                )}
+                              >
+                                {sibling.name}
                               </span>
-                            ) : null}
-                          </span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
+                              {sibling.locked ? (
+                                <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#7a4a00]">{t("dialog.locked")}</span>
+                              ) : lists.length > 0 ? (
+                                <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#6f7282]">
+                                  {t("dialog.inExchange", { lists: lists.map((kind) => t(`kinds.${kind}`)).join(", ") })}
+                                </span>
+                              ) : null}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
                 {mode === "link" && members.length > 0 ? (
                   // Обмен идёт через общий кабинет: галочка здесь добавляет
                   // организацию, но не может исключить ту, у которой список уже включён.
@@ -476,6 +509,18 @@ export function ExchangeDialog({
                   </p>
                 ) : null}
               </div>
+
+              {/* Запрос в мастер-кабинет чужого аккаунта: способ и списки — те, что выбраны в окне. */}
+              <ForeignBlock
+                className="mt-4"
+                mode={mode}
+                kinds={kinds}
+                disabled={busy}
+                onChanged={() => setForeignChanged(true)}
+                onLoaded={(next) => setForeignPartners(next.foreignMembers.length)}
+                onDraftChange={setForeignDraft}
+                onNavigate={close}
+              />
 
               <div className="mt-4">
                 <div className={SECTION_TITLE}>{mode === "link" ? t("dialog.linkLists") : t("dialog.transferLists")}</div>
@@ -521,18 +566,27 @@ export function ExchangeDialog({
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-baseline justify-between gap-x-3">
                               <span className="text-[14px] font-medium text-[#0b1024]">{t(`kinds.${kind}`)}</span>
-                              <span className="text-[12px] tabular-nums text-[#6f7282]">
-                                {mode === "link"
-                                  ? t("dialog.linkCounts", {
-                                      own: String(ownCounts[kind]),
-                                      others: String(
-                                        siblings
-                                          .filter((sibling) => linkOrgs.includes(sibling.id))
-                                          .reduce((sum, sibling) => sum + sibling.counts[kind], 0),
-                                      ),
-                                    })
-                                  : t("dialog.transferCounts", { count: String(source?.counts[kind] ?? 0) })}
-                              </span>
+                              {siblings.length === 0 ? (
+                                // Соседних организаций нет: сравнивать не с чем, а о чужой компании ничего не известно.
+                                mode === "link" ? (
+                                  <span className="text-[12px] tabular-nums text-[#6f7282]">
+                                    {t("foreign.ownCount", { count: String(ownCounts[kind]) })}
+                                  </span>
+                                ) : null
+                              ) : (
+                                <span className="text-[12px] tabular-nums text-[#6f7282]">
+                                  {mode === "link"
+                                    ? t("dialog.linkCounts", {
+                                        own: String(ownCounts[kind]),
+                                        others: String(
+                                          siblings
+                                            .filter((sibling) => linkOrgs.includes(sibling.id))
+                                            .reduce((sum, sibling) => sum + sibling.counts[kind], 0),
+                                        ),
+                                      })
+                                    : t("dialog.transferCounts", { count: String(source?.counts[kind] ?? 0) })}
+                                </span>
+                              )}
                             </span>
                             <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#6f7282]">
                               {t(`kindHints.${kind}`)}
@@ -598,22 +652,37 @@ export function ExchangeDialog({
               ) : null}
             </div>
 
-            <div className={FOOTER}>
-              {missing ? <p className="mb-2 text-[12.5px] leading-[1.45] text-[#6f7282]">{missing}</p> : null}
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button type="button" onClick={close} disabled={busy} className={OUTLINE}>
-                  {tc("cancel")}
-                </button>
-                <button type="submit" disabled={!canSubmit} className={PRIMARY} data-testid="exchange-submit">
-                  {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-                  {leaving
-                    ? t("dialog.submitLeave")
-                    : mode === "link"
-                      ? t("dialog.submitLink")
-                      : t("dialog.submitTransfer")}
+            {ownExchange ? (
+              <div className={FOOTER}>
+                {foreignDraft ? (
+                  <p className="mb-2 text-[12.5px] leading-[1.45] text-[#7a4a00]" data-testid="exchange-foreign-draft-note">
+                    {t("foreign.draftNote")}
+                  </p>
+                ) : missing ? (
+                  <p className="mb-2 text-[12.5px] leading-[1.45] text-[#6f7282]">{missing}</p>
+                ) : null}
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button type="button" onClick={close} disabled={busy} className={OUTLINE}>
+                    {tc("cancel")}
+                  </button>
+                  <button type="submit" disabled={!canSubmit} className={PRIMARY} data-testid="exchange-submit">
+                    {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                    {leaving
+                      ? t("dialog.submitLeave")
+                      : mode === "link"
+                        ? t("dialog.submitLink")
+                        : t("dialog.submitTransfer")}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Своим организациям связывать нечего: в окне работает только запрос в другую компанию.
+              <div className={cn(FOOTER, "flex justify-end")}>
+                <button type="button" onClick={close} className={cn(OUTLINE, "w-full sm:w-auto")}>
+                  {tc("close")}
                 </button>
               </div>
-            </div>
+            )}
           </>
         )}
       </form>

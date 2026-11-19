@@ -79,7 +79,8 @@ export function exchangeErrorResponse(error: unknown): NextResponse {
       {
         error: error.message,
         ...(error.code ? { code: error.code } : {}),
-        ...(error.code === ORG_LOCKED_CODE ? { payUrl: BILLING_PAY_HREF } : {}),
+        // Закрытая организация и запрос в другую компанию без платного тарифа — со ссылкой на оплату.
+        ...(error.code === ORG_LOCKED_CODE || error.status === 402 ? { payUrl: BILLING_PAY_HREF } : {}),
       },
       { status: error.status },
     );

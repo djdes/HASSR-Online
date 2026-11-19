@@ -15,6 +15,7 @@ import {
   type ExchangeEntity,
   type ExchangeFields,
   type ExchangeKind,
+  type ExchangeScope,
 } from "@/lib/directory-exchange/kinds";
 import type { ExchangeRow } from "@/lib/directory-exchange/plan";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
@@ -44,6 +45,10 @@ import { isUvLampEquipment } from "@/lib/uv-lamp";
  * Правило Р4 держится здесь: читаются только линейные сотрудники без входа,
  * должности категории staff и объекты без офиса; при записи не трогаются
  * почта, пароль, роль, Telegram, датчики (`tuyaDeviceId`) и ответственные.
+ *
+ * Правило Р5 (обмен между аккаунтами) — параметр `scope`: в составе
+ * `foreign` телефон и выходные сотрудника не читаются из базы, не пишутся
+ * при создании и не трогаются при обновлении.
  */
 
 export type EntityRow = ExchangeRow & {
@@ -117,13 +122,14 @@ function makeRow(
     updatedAt?: Date | null;
     detail?: string | null;
   },
+  scope: ExchangeScope = "account",
 ): EntityRow {
-  const fields = pickExchangeFields(entity, input.fields);
+  const fields = pickExchangeFields(entity, input.fields, scope);
   const parentGroupId = input.parentGroupId ?? null;
   return {
     id: input.id,
     key: naturalKey(entity, fields, parentGroupId),
-    hash: rowHash(entity, fields, parentGroupId),
+    hash: rowHash(entity, fields, parentGroupId, scope),
     updatedAt: input.updatedAt ?? null,
     name: typeof fields.name === "string" ? fields.name : "",
     detail: input.detail ?? null,
@@ -137,12 +143,14 @@ function makeRow(
 
 /**
  * Строки сущности у организации, старые раньше. Родитель переводится в
- * группу родителя по текущим связям (`parentGroupOf`).
+ * группу родителя по текущим связям (`parentGroupOf`). `scope` — состав
+ * полей: в `foreign` у сотрудника читаются только ФИО и должность.
  */
 export async function loadEntityRows(
   entity: ExchangeEntity,
   organizationId: string,
   parentGroupOf: ParentGroupLookup = () => null,
+  scope: ExchangeScope = "account",
 ): Promise<EntityRow[]> {
   switch (entity) {
     case "position": {
@@ -154,6 +162,8 @@ export async function loadEntityRows(
       return rows.map((row) => makeRow(entity, { id: row.id, fields: { name: row.name }, updatedAt: row.updatedAt }));
     }
     case "staff": {
+      // Между аккаунтами (Р5) телефон и выходные из базы не читаются вовсе.
+      const full = scope !== "foreign";
       const rows = await db.user.findMany({
         where: {
           organizationId,
@@ -165,9 +175,9 @@ export async function loadEntityRows(
         select: {
           id: true,
           name: true,
-          phone: true,
+          phone: full,
           role: true,
-          weeklyDaysOff: true,
+          weeklyDaysOff: full,
           jobPositionId: true,
           jobPosition: { select: { name: true } },
         },
@@ -175,15 +185,21 @@ export async function loadEntityRows(
       return rows
         .filter((row) => !isManagementRole(row.role))
         .map((row) =>
-          makeRow(entity, {
-            id: row.id,
-            // Телефон сравниваем в едином виде: «8 (999)…» и «+7999…» — одно и то же,
-            // а номер, который не разобрать, не считается сведением вовсе.
-            fields: { name: row.name, phone: normalizePhone(row.phone), weeklyDaysOff: normalizeWeeklyDaysOff(row.weeklyDaysOff) },
-            parentId: row.jobPositionId,
-            parentGroupId: row.jobPositionId ? parentGroupOf(row.jobPositionId) : null,
-            detail: row.jobPosition?.name ?? null,
-          }),
+          makeRow(
+            entity,
+            {
+              id: row.id,
+              // Телефон сравниваем в едином виде: «8 (999)…» и «+7999…» — одно и то же,
+              // а номер, который не разобрать, не считается сведением вовсе.
+              fields: full
+                ? { name: row.name, phone: normalizePhone(row.phone), weeklyDaysOff: normalizeWeeklyDaysOff(row.weeklyDaysOff) }
+                : { name: row.name },
+              parentId: row.jobPositionId,
+              parentGroupId: row.jobPositionId ? parentGroupOf(row.jobPositionId) : null,
+              detail: row.jobPosition?.name ?? null,
+            },
+            scope,
+          ),
         );
     }
     case "building": {
@@ -399,13 +415,16 @@ function roomKind(value: unknown): RoomKind {
  * обмен, когда организация обменивается и объектами: помещения приходят
  * своим обменом, а зеркало вернулось бы соседям лишним помещением в журнале
  * уборки, которого они не заводили.
+ *
+ * `scope: "foreign"` — образец из другого аккаунта (Р5): сотрудник заводится
+ * без телефона и выходных, что бы ни лежало в `source.fields`.
  */
 export async function createEntityRow(
   entity: ExchangeEntity,
   organizationId: string,
   source: EntityRow,
   parentId: string | null,
-  options: { mirrorRoom?: boolean } = {},
+  options: { mirrorRoom?: boolean; scope?: ExchangeScope } = {},
 ): Promise<CreateOutcome> {
   const name = text(source.fields.name, 200);
   if (!name) return { status: "conflict" };
@@ -433,11 +452,12 @@ export async function createEntityRow(
           : null;
         if (!position) return { status: "conflict" };
         if (await personNameTaken(organizationId, name)) return { status: "conflict" };
+        const full = options.scope !== "foreign";
         const input = {
           jobPositionId: position.id,
           fullName: name,
-          phone: text(source.fields.phone, 40) ?? undefined,
-          weeklyDaysOff: normalizeWeeklyDaysOff(source.fields.weeklyDaysOff),
+          phone: full ? text(source.fields.phone, 40) ?? undefined : undefined,
+          weeklyDaysOff: full ? normalizeWeeklyDaysOff(source.fields.weeklyDaysOff) : undefined,
         };
         let result = await createStaffMember(organizationId, input);
         // Телефон в старом формате не должен оставлять человека без записи.
@@ -581,6 +601,10 @@ async function syncColdEquipmentNorms(organizationId: string, equipmentId: strin
  * Привести запись организации к образцу — только переносимые поля.
  * `parentId`: строка — новый родитель (должность, объект цеха, цех
  * оборудования), `undefined` — родителя не менять.
+ *
+ * `scope: "foreign"` — правка пришла в обмене между аккаунтами (Р5): у
+ * сотрудника меняются только ФИО и должность, телефон и выходные остаются
+ * такими, какими их ведёт сама организация.
  */
 export async function updateEntityRow(
   entity: ExchangeEntity,
@@ -588,6 +612,7 @@ export async function updateEntityRow(
   entityId: string,
   source: EntityRow,
   parentId?: string,
+  options: { scope?: ExchangeScope } = {},
 ): Promise<UpdateOutcome> {
   const name = text(source.fields.name, 200);
   if (!name) return { status: "conflict" };
@@ -613,7 +638,8 @@ export async function updateEntityRow(
               select: { id: true, name: true },
             })
           : null;
-        const phone = text(source.fields.phone, 40);
+        const full = options.scope !== "foreign";
+        const phone = full ? text(source.fields.phone, 40) : null;
         // Должность в подписи меняем, только если она повторяла прежнюю должность.
         const followsPosition = !current.positionTitle || current.positionTitle === current.jobPosition?.name;
         await db.user.update({
@@ -622,7 +648,7 @@ export async function updateEntityRow(
             name,
             // Пустой телефон образца — «сведений нет», а не «сотрите номер».
             ...(phone ? { phone } : {}),
-            weeklyDaysOff: normalizeWeeklyDaysOff(source.fields.weeklyDaysOff),
+            ...(full ? { weeklyDaysOff: normalizeWeeklyDaysOff(source.fields.weeklyDaysOff) } : {}),
             ...(position
               ? { jobPositionId: position.id, ...(followsPosition ? { positionTitle: position.name } : {}) }
               : {}),

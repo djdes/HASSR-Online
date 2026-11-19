@@ -204,3 +204,57 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
     ...changes,
   ];
 }
+
+export type RebasedLink = { groupId: string; organizationId: string; entityId: string; hash: string };
+
+/**
+ * Связи, чей отпечаток снят в другом составе полей, чем сейчас (правило Р5:
+ * в список вошла организация другого аккаунта — у сотрудников остались ФИО и
+ * должность — или вышла из него). Смена состава — не правка: без этой
+ * подготовки планировщик счёл бы изменённой каждую запись и начал бы
+ * переписывать записи соседей по записи первого участника.
+ *
+ *   • отпечаток записи в прежнем составе совпал с отпечатком связи — запись
+ *     не меняли: связь переводится на нынешний отпечаток (`rebased`), план
+ *     её не трогает;
+ *   • не совпал — запись меняли на самом деле: связь остаётся как есть, и
+ *     планировщик разносит правку (уже в нынешнем составе полей);
+ *   • прежний отпечаток посчитать нельзя (`hashLike` вернул null: в составе
+ *     «между аккаунтами» телефон и выходные не читаются) — запись считается
+ *     неизменённой: молчаливо потерянная правка лучше затёртых данных, а
+ *     вызывающий перед сменой состава проводит обычный обмен.
+ *
+ * Чистая функция; `rebased` вызывающий записывает вместе с итогом плана.
+ */
+export function rebaseLinks<Row extends ExchangeRow>(input: {
+  rows: Readonly<Record<string, readonly Row[]>>;
+  links: readonly ExchangeLinkRow[];
+  /** Отпечаток связи снят в нынешнем составе полей. */
+  isCurrent: (hash: string) => boolean;
+  /** Отпечаток записи в том составе, в каком снят отпечаток связи; null — посчитать нельзя. */
+  hashLike: (row: Row, linkHash: string) => string | null;
+}): { links: ExchangeLinkRow[]; rebased: RebasedLink[] } {
+  const rowsByOrg = new Map<string, Map<string, Row>>();
+  const rowOf = (organizationId: string, entityId: string): Row | null => {
+    let byId = rowsByOrg.get(organizationId);
+    if (!byId) {
+      byId = new Map();
+      for (const row of input.rows[organizationId] ?? []) if (!byId.has(row.id)) byId.set(row.id, row);
+      rowsByOrg.set(organizationId, byId);
+    }
+    return byId.get(entityId) ?? null;
+  };
+
+  const rebased: RebasedLink[] = [];
+  const links = input.links.map((link) => {
+    if (!link.entityId || input.isCurrent(link.hash)) return link;
+    const row = rowOf(link.organizationId, link.entityId);
+    // Записи нет — это надгробие, отпечаток ему не нужен.
+    if (!row) return link;
+    const before = input.hashLike(row, link.hash);
+    if (before !== null && before !== link.hash) return link;
+    rebased.push({ groupId: link.groupId, organizationId: link.organizationId, entityId: link.entityId, hash: row.hash });
+    return { ...link, hash: row.hash };
+  });
+  return { links, rebased };
+}

@@ -2,16 +2,29 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  approvalBody,
   exchangeParticipants,
   isEmptyResult,
+  isExpired,
   linkMembers,
+  narrowKinds,
+  ownParticipants,
+  parseDecisionResult,
+  parseDecisionState,
+  parseForeignRequest,
+  parseForeignState,
+  parseMoment,
   parseState,
   parseSummary,
   parseTransferItems,
+  pendingRequests,
   summaryTotals,
   togglePicked,
   transferSelection,
+  withOutgoing,
+  withoutForeign,
   type ExchangeMember,
+  type ForeignRequest,
   type TransferItem,
   type TransferItems,
 } from "./exchange-api";
@@ -154,4 +167,188 @@ test("responses are parsed defensively and totals are summed per organisation", 
   assert.deepEqual(summaryTotals(summary, "new"), { created: 5, updated: 0, skippedLimit: 0, skippedConflict: 0 });
   assert.equal(isEmptyResult(summaryTotals(summary, "missing")), true);
   assert.equal(isEmptyResult(summaryTotals(null)), true);
+});
+
+const outgoing = (id: string, status: ForeignRequest["status"]): ForeignRequest => ({
+  id,
+  cabinetName: "Кабинет",
+  mode: "link",
+  kinds: ["products"],
+  status,
+  expiresAt: null,
+  createdAt: null,
+});
+
+test("foreign: requests, links, incoming requests and foreign members are parsed defensively", () => {
+  assert.deepEqual(parseForeignState(null), { outgoing: [], foreignLinks: [], incoming: [], foreignMembers: [] });
+  assert.deepEqual(parseForeignState({ outgoing: "нет", incoming: {} }), {
+    outgoing: [],
+    foreignLinks: [],
+    incoming: [],
+    foreignMembers: [],
+  });
+
+  const request = {
+    id: "r1",
+    cabinetName: "Сеть «Север»",
+    mode: "transfer",
+    kinds: ["staff", "unknown", "products"],
+    status: "pending",
+    expiresAt: "2026-11-26T09:00:00.000Z",
+    createdAt: "2026-11-19T09:00:00.000Z",
+    // Лишнее о чужой компании в разбор не попадает, даже если сервер его прислал.
+    masterOrganizationId: "secret",
+    ownerEmail: "owner@example.com",
+  };
+  assert.deepEqual(parseForeignRequest(request), {
+    id: "r1",
+    cabinetName: "Сеть «Север»",
+    mode: "transfer",
+    kinds: ["products", "staff"],
+    status: "pending",
+    expiresAt: "2026-11-26T09:00:00.000Z",
+    createdAt: "2026-11-19T09:00:00.000Z",
+  });
+  // Без id, с неизвестным способом или статусом запрос не показываем.
+  assert.equal(parseForeignRequest({ ...request, id: "" }), null);
+  assert.equal(parseForeignRequest({ ...request, mode: "merge" }), null);
+  assert.equal(parseForeignRequest({ ...request, status: "lost" }), null);
+  assert.equal(parseForeignRequest("r1"), null);
+
+  const state = parseForeignState({
+    outgoing: [request, { id: "r2", mode: "link", status: "declined", kinds: [] }, { id: "r3", mode: "link" }],
+    foreignLinks: [{ id: "l1", cabinetName: "Кабинет", kinds: ["equipment"], since: "2026-11-01T00:00:00.000Z" }, { cabinetName: "без id" }],
+    incoming: [
+      { id: "i1", requesterName: "ООО «Юг»", mode: "link", kinds: ["objects"], expiresAt: " ", createdAt: 5 },
+      { id: "i2", requesterName: "без способа" },
+    ],
+    foreignMembers: [
+      { organizationId: "org-1", name: "ООО «Юг»", kinds: ["products"], since: "2026-11-02T00:00:00.000Z" },
+      { id: "req-9", organizationId: "org-2", name: "ИП Иванов", kinds: [] },
+      { name: "без id" },
+    ],
+  });
+  assert.deepEqual(state.outgoing.map((entry) => [entry.id, entry.status]), [["r1", "pending"], ["r2", "declined"]]);
+  assert.deepEqual(pendingRequests(state).map((entry) => entry.id), ["r1"]);
+  assert.deepEqual(state.foreignLinks, [
+    { id: "l1", cabinetName: "Кабинет", kinds: ["equipment"], since: "2026-11-01T00:00:00.000Z" },
+  ]);
+  assert.deepEqual(state.incoming, [
+    { id: "i1", requesterName: "ООО «Юг»", mode: "link", kinds: ["objects"], expiresAt: null, createdAt: null },
+  ]);
+  // Ключ для «Отключить»: id из ответа, а без него — id организации.
+  assert.deepEqual(state.foreignMembers, [
+    { id: "org-1", organizationId: "org-1", name: "ООО «Юг»", kinds: ["products"], since: "2026-11-02T00:00:00.000Z" },
+    { id: "req-9", organizationId: "org-2", name: "ИП Иванов", kinds: [], since: null },
+  ]);
+});
+
+test("foreign: a sent request comes first, a removed record disappears, foreign members are not listed twice", () => {
+  const state = parseForeignState({
+    outgoing: [outgoing("r1", "pending")],
+    foreignLinks: [{ id: "l1", cabinetName: "Кабинет", kinds: ["products"] }],
+    foreignMembers: [{ organizationId: "org-1", name: "ООО «Юг»", kinds: ["products"] }],
+  });
+  const sent = withOutgoing(state, outgoing("r2", "pending"));
+  assert.deepEqual(sent.outgoing.map((entry) => entry.id), ["r2", "r1"]);
+  // Тот же запрос второй раз не добавляется.
+  assert.deepEqual(withOutgoing(sent, { ...outgoing("r1", "pending"), cabinetName: "Новое имя" }).outgoing.map((entry) => [entry.id, entry.cabinetName]), [
+    ["r1", "Новое имя"],
+    ["r2", "Кабинет"],
+  ]);
+  assert.deepEqual(withoutForeign(sent, "r1").outgoing.map((entry) => entry.id), ["r2"]);
+  assert.deepEqual(withoutForeign(sent, "l1").foreignLinks, []);
+  assert.deepEqual(withoutForeign(sent, "org-1").foreignMembers, []);
+  assert.equal(state.outgoing.length, 1, "the source state is not mutated");
+
+  const members = [member("own", ["products"]), member("org-1", ["products"]), member("left", [])];
+  assert.deepEqual(ownParticipants({ members }, state).map((entry) => entry.organizationId), ["own"]);
+  assert.deepEqual(ownParticipants({ members }, null).map((entry) => entry.organizationId), ["own", "org-1"]);
+});
+
+test("decision: the token payload is parsed, the owner can only narrow the lists, transfer needs an own source", () => {
+  assert.equal(parseDecisionState(null), null);
+  assert.equal(parseDecisionState({ cabinet: { id: "c", name: "Кабинет" } }), null);
+  assert.equal(parseDecisionState({ request: { id: "r1", mode: "link" } }), null);
+
+  const state = parseDecisionState({
+    request: {
+      id: "r1",
+      requesterName: "ООО «Юг»",
+      requesterInn: " 7701234567 ",
+      mode: "transfer",
+      kinds: ["staff", "products"],
+      status: "pending",
+      expiresAt: "2026-11-26T09:00:00.000Z",
+    },
+    cabinet: { id: "c1", name: "Мастер-кабинет" },
+    sources: [{ id: "o1", name: "Кафе" }, { name: "без id" }, { id: "o2" }],
+  });
+  if (!state) throw new Error("a complete payload must be parsed");
+  assert.deepEqual(state, {
+    request: {
+      id: "r1",
+      requesterName: "ООО «Юг»",
+      requesterInn: "7701234567",
+      mode: "transfer",
+      kinds: ["products", "staff"],
+      status: "pending",
+      expiresAt: "2026-11-26T09:00:00.000Z",
+    },
+    cabinet: { id: "c1", name: "Мастер-кабинет" },
+    sources: [
+      { id: "o1", name: "Кафе" },
+      { id: "o2", name: "" },
+    ],
+  });
+  // ИНН нет — строки с ним не будет; кабинет и источники могут не прийти.
+  const bare = parseDecisionState({ request: { id: "r2", mode: "link", status: "expired", requesterInn: null } });
+  assert.deepEqual(bare?.request.requesterInn, null);
+  assert.deepEqual(bare?.cabinet, { id: "", name: "" });
+  assert.deepEqual(bare?.sources, []);
+
+  // Разрешить можно только запрошенное: лишний список отбрасывается, порядок — как в окне.
+  assert.deepEqual(narrowKinds(["products", "staff"], ["equipment", "staff", "products"]), ["products", "staff"]);
+  assert.deepEqual(narrowKinds(["products", "staff"], ["objects"]), []);
+
+  // Перенос: без своей организации-источника и без списков подтверждать нечего.
+  assert.equal(approvalBody(state, ["products"], ""), null);
+  assert.equal(approvalBody(state, ["products"], "foreign-org"), null);
+  assert.equal(approvalBody(state, ["equipment"], "o1"), null);
+  assert.deepEqual(approvalBody(state, ["staff", "equipment"], "o1"), {
+    decision: "approve",
+    allowedKinds: ["staff"],
+    sourceOrganizationId: "o1",
+  });
+  // Связь: источник не нужен и в запрос не уходит.
+  const link = { request: { mode: "link" as const, kinds: state.request.kinds }, sources: [] };
+  assert.deepEqual(approvalBody(link, ["products", "staff"], "o1"), {
+    decision: "approve",
+    allowedKinds: ["products", "staff"],
+  });
+  assert.equal(approvalBody(link, [], ""), null);
+});
+
+test("decision: the answer keeps the server status, a summary belongs to an approval only", () => {
+  const summary = { organizations: [{ organizationId: "a", name: "Кафе", kinds: { staff: { created: 2 } } }] };
+  const approved = parseDecisionResult({ ok: true, status: "approved", summary }, "approve");
+  assert.equal(approved.status, "approved");
+  assert.deepEqual(summaryTotals(approved.summary), { created: 2, updated: 0, skippedLimit: 0, skippedConflict: 0 });
+  assert.deepEqual(parseDecisionResult({ ok: true, status: "approved" }, "approve"), { status: "approved", summary: null });
+  assert.deepEqual(parseDecisionResult({ ok: true, status: "declined", summary }, "decline"), { status: "declined", summary: null });
+  // Статус не пришёл — он следует из самого решения.
+  assert.deepEqual(parseDecisionResult({ ok: true }, "decline"), { status: "declined", summary: null });
+  assert.deepEqual(parseDecisionResult(null, "approve"), { status: "approved", summary: null });
+});
+
+test("dates: an unreadable moment is null, an unknown term is not treated as expired", () => {
+  assert.equal(parseMoment(null), null);
+  assert.equal(parseMoment(""), null);
+  assert.equal(parseMoment("завтра"), null);
+  assert.equal(parseMoment("2026-11-26T09:00:00.000Z")?.toISOString(), "2026-11-26T09:00:00.000Z");
+  const now = Date.parse("2026-11-26T09:00:00.000Z");
+  assert.equal(isExpired("2026-11-26T09:00:00.000Z", now), true);
+  assert.equal(isExpired("2026-11-26T09:00:00.001Z", now), false);
+  assert.equal(isExpired(null, now), false);
+  assert.equal(isExpired("завтра", now), false);
 });

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { planEntityExchange, type ExchangeLinkRow, type ExchangeOp, type ExchangeRow } from "@/lib/directory-exchange/plan";
+import { hashScope, rowHash, type ExchangeFields, type ExchangeScope } from "@/lib/directory-exchange/kinds";
+import { planEntityExchange, rebaseLinks, type ExchangeLinkRow, type ExchangeOp, type ExchangeRow } from "@/lib/directory-exchange/plan";
 
 const T0 = new Date("2026-11-19T10:00:00.000Z").getTime();
 const at = (minutes: number) => new Date(T0 + minutes * 60_000);
@@ -359,4 +360,117 @@ test("operations come in a safe order: tombstones, links, then changes", () => {
   w.rows.B.push(row("b3", "k3", "h3"));
   const ops = plan(w);
   assert.deepEqual(ops.map((op) => op.type), ["tombstone", "link", "update", "rehash", "create"]);
+});
+
+/* ── rule Р5: the staff field set changes when a foreign organization joins or leaves ── */
+
+type Person = ExchangeRow & { fields: ExchangeFields; parentGroupId: string };
+
+/** An employee as the exchange reads it in the given field set: between accounts the phone and days off are not read at all. */
+function person(id: string, scope: ExchangeScope, fields: { name: string; phone?: string | null; weeklyDaysOff?: number[] }): Person {
+  const read: ExchangeFields = scope === "foreign" ? { name: fields.name } : { name: fields.name, phone: fields.phone ?? null, weeklyDaysOff: fields.weeklyDaysOff ?? [] };
+  return { id, key: fields.name.toLowerCase(), hash: rowHash("staff", read, "g-cook", scope), updatedAt: null, fields: read, parentGroupId: "g-cook" };
+}
+
+/** What `run.server.ts` does before planning: links taken in another field set are re-based, not treated as edits. */
+function alignedPlan(scope: ExchangeScope, participants: string[], rows: Record<string, Person[]>, links: ExchangeLinkRow[]) {
+  const aligned = rebaseLinks({
+    rows,
+    links,
+    isCurrent: (hash) => hashScope("staff", hash) === scope,
+    hashLike: (row, linkHash) => (scope === "account" ? rowHash("staff", row.fields, row.parentGroupId, hashScope("staff", linkHash)) : null),
+  });
+  let seq = 0;
+  const ops = planEntityExchange({ participants, rows, links: aligned.links, newGroupId: () => `n${(seq += 1)}` });
+  return { ops, rebased: aligned.rebased };
+}
+
+const IVANOV_A = { name: "Иванов Иван", phone: "+79850000001", weeklyDaysOff: [5, 6] };
+const IVANOV_B = { name: "Иванов Иван", phone: "+79850000002", weeklyDaysOff: [0] };
+
+test("Р5: a foreign organization joins — nobody's employee is rewritten, the newcomer gets a create", () => {
+  // A and B exchanged inside the account and each kept its own phone (linked by name).
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: person("a1", "account", IVANOV_A).hash },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: person("b1", "account", IVANOV_B).hash },
+  ];
+  // Now R (another account) shares the list: everybody is read in the restricted set.
+  const rows = { A: [person("a1", "foreign", IVANOV_A)], B: [person("b1", "foreign", IVANOV_B)], R: [] };
+
+  // Without the alignment every stored fingerprint differs from the new one — the trap the alignment exists for.
+  const naive = planEntityExchange({ participants: ["A", "B", "R"], rows, links, newGroupId: () => "x" });
+  assert.ok(naive.some((op) => op.type === "rehash"), "naive plan sees every record as edited");
+
+  const { ops, rebased } = alignedPlan("foreign", ["A", "B", "R"], rows, links);
+  assert.deepEqual(types(ops), ["create:R"]);
+  assert.ok(!ops.some((op) => op.type === "update"));
+  // Both old links move to the restricted fingerprint — the next run compares like with like.
+  assert.deepEqual(rebased.map((link) => `${link.organizationId}:${link.entityId}`).sort(), ["A:a1", "B:b1"]);
+  assert.ok(rebased.every((link) => link.hash.startsWith("f:")));
+});
+
+test("Р5: with a foreign member a phone edit moves nothing, a rename moves the name only", () => {
+  const stored = (id: string, fields: typeof IVANOV_A) => person(id, "foreign", fields).hash;
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: stored("a1", IVANOV_A) },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: stored("b1", IVANOV_B) },
+    { groupId: "g1", organizationId: "R", entityId: "r1", hash: stored("r1", { ...IVANOV_A, phone: null }) },
+  ];
+  // The phone changed in A: in the restricted set the record is the same record.
+  const phoneEdit = { A: [person("a1", "foreign", { ...IVANOV_A, phone: "+79859999999" })], B: [person("b1", "foreign", IVANOV_B)], R: [person("r1", "foreign", IVANOV_A)] };
+  const quiet = alignedPlan("foreign", ["A", "B", "R"], phoneEdit, links);
+  assert.deepEqual(quiet.ops, []);
+  assert.deepEqual(quiet.rebased, []);
+  // The name changed in A: the others get an update (applied as name + position only).
+  const rename = { ...phoneEdit, A: [person("a1", "foreign", { ...IVANOV_A, name: "Иванов Иван Петрович" })] };
+  const renamed = alignedPlan("foreign", ["A", "B", "R"], rename, links);
+  assert.deepEqual(types(renamed.ops), ["rehash:A", "update:B", "update:R"]);
+});
+
+test("Р5: the foreign organization leaves — different phones stay where they are, no update", () => {
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: person("a1", "foreign", IVANOV_A).hash },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: person("b1", "foreign", IVANOV_B).hash },
+  ];
+  // Back inside the account the phone and days off are read again and differ between A and B.
+  const rows = { A: [person("a1", "account", IVANOV_A)], B: [person("b1", "account", IVANOV_B)] };
+
+  // The trap: every record looks edited, and the first participant's phone would overwrite the other's.
+  const naive = planEntityExchange({ participants: ["A", "B"], rows, links, newGroupId: () => "x" });
+  assert.ok(naive.some((op) => op.type === "update"), "naive plan pushes one organization's phone to the other");
+
+  const { ops, rebased } = alignedPlan("account", ["A", "B"], rows, links);
+  assert.deepEqual(ops, []);
+  assert.deepEqual(rebased.map((link) => link.hash).sort(), [rows.A[0].hash, rows.B[0].hash].sort());
+  assert.ok(rebased.every((link) => !link.hash.startsWith("f:")));
+
+  // Once re-based, a later phone edit is an ordinary edit again.
+  const after: ExchangeLinkRow[] = links.map((link) => ({ ...link, hash: rebased.find((item) => item.organizationId === link.organizationId)!.hash }));
+  const edited = { ...rows, A: [person("a1", "account", { ...IVANOV_A, phone: "+79857777777" })] };
+  assert.deepEqual(types(alignedPlan("account", ["A", "B"], edited, after).ops), ["rehash:A", "update:B"]);
+});
+
+test("Р5: a rename made just before the foreign organization left is still delivered", () => {
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: person("a1", "foreign", IVANOV_A).hash },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: person("b1", "foreign", IVANOV_B).hash },
+  ];
+  const rows = { A: [person("a1", "account", { ...IVANOV_A, name: "Иванов Иван Петрович" })], B: [person("b1", "account", IVANOV_B)] };
+  const { ops, rebased } = alignedPlan("account", ["A", "B"], rows, links);
+  // A really changed (its restricted fingerprint differs from the stored one): only B is re-based.
+  assert.deepEqual(rebased.map((link) => link.organizationId), ["B"]);
+  assert.deepEqual(types(ops), ["rehash:A", "update:B"]);
+});
+
+test("rebaseLinks: tombstones, missing rows and current links are left alone", () => {
+  const rows = { A: [person("a1", "foreign", IVANOV_A)], B: [] as Person[] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: person("a1", "foreign", IVANOV_A).hash },
+    { groupId: "g1", organizationId: "B", entityId: null, hash: "" },
+    { groupId: "g2", organizationId: "B", entityId: "gone", hash: person("gone", "account", IVANOV_B).hash },
+    { groupId: "g3", organizationId: "C", entityId: "c1", hash: person("c1", "account", IVANOV_B).hash },
+  ];
+  const aligned = rebaseLinks({ rows, links, isCurrent: (hash) => hashScope("staff", hash) === "foreign", hashLike: () => null });
+  assert.deepEqual(aligned.rebased, []);
+  assert.deepEqual(aligned.links, links);
 });

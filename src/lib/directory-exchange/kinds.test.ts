@@ -7,11 +7,17 @@ import {
   ENTITY_PARENT,
   EXCHANGE_ENTITIES,
   EXCHANGE_KINDS,
+  FOREIGN_ENTITY_FIELDS,
+  FOREIGN_HASH_PREFIX,
   KIND_ENTITIES,
+  entityScope,
+  exchangedFields,
   hashFields,
+  hashScope,
   naturalKey,
   normalizeExchangeKinds,
   normalizeExchangeName,
+  pickExchangeFields,
   rowHash,
 } from "@/lib/directory-exchange/kinds";
 import { emptySummary, parseExchangeSummary, summaryTotals } from "@/lib/directory-exchange/summary";
@@ -112,4 +118,63 @@ test("rowHash: a workshop's object is not part of its fingerprint, other parents
   // Moving an employee to another position or equipment to another workshop is still an edit.
   assert.notEqual(rowHash("staff", { name: "Иванов Иван" }, "cook"), rowHash("staff", { name: "Иванов Иван" }, "baker"));
   assert.notEqual(rowHash("equipment", { name: "Плита", type: "oven" }, "a1"), rowHash("equipment", { name: "Плита", type: "oven" }, "a2"));
+});
+
+test("rule Р5: between accounts an employee is a name and a position, nothing else", () => {
+  assert.deepEqual(FOREIGN_ENTITY_FIELDS, { staff: ["name"] });
+  assert.deepEqual([...exchangedFields("staff", "foreign")], ["name"]);
+  assert.deepEqual([...exchangedFields("staff", "account")], ["name", "phone", "weeklyDaysOff"]);
+  assert.deepEqual([...exchangedFields("staff")], ["name", "phone", "weeklyDaysOff"]);
+  // Every other entity has one field set, whoever takes part.
+  for (const entity of EXCHANGE_ENTITIES) {
+    if (entity === "staff") continue;
+    assert.deepEqual([...exchangedFields(entity, "foreign")], [...ENTITY_FIELDS[entity]], entity);
+    assert.equal(entityScope(entity, "foreign"), "account", entity);
+  }
+  assert.equal(entityScope("staff", "foreign"), "foreign");
+  assert.equal(entityScope("staff", "account"), "account");
+  assert.equal(entityScope("staff"), "account");
+  // The restricted set is a subset of the full one and holds nothing private.
+  for (const [entity, fields] of Object.entries(FOREIGN_ENTITY_FIELDS)) {
+    for (const field of fields) assert.ok((ENTITY_FIELDS[entity as keyof typeof ENTITY_FIELDS] as readonly string[]).includes(field), field);
+    for (const forbidden of ["phone", "weeklyDaysOff", "email", "telegramChatId"]) assert.ok(!(fields as readonly string[]).includes(forbidden), forbidden);
+  }
+});
+
+test("rule Р5: the phone and days off never reach the picked fields or the fingerprint", () => {
+  const person = { name: "Иванов Иван", phone: "+79850000000", weeklyDaysOff: [5, 6] };
+  assert.deepEqual(pickExchangeFields("staff", person, "foreign"), { name: "Иванов Иван" });
+  assert.deepEqual(pickExchangeFields("staff", person), { name: "Иванов Иван", phone: "+79850000000", weeklyDaysOff: [5, 6] });
+
+  const hash = rowHash("staff", person, "g-cook", "foreign");
+  assert.equal(hash, rowHash("staff", { name: "Иванов Иван" }, "g-cook", "foreign"));
+  assert.equal(hash, rowHash("staff", { ...person, phone: "+79851112233" }, "g-cook", "foreign"));
+  assert.equal(hash, rowHash("staff", { ...person, phone: null, weeklyDaysOff: [] }, "g-cook", "foreign"));
+  // The name and the position still count.
+  assert.notEqual(hash, rowHash("staff", { ...person, name: "Иванов И." }, "g-cook", "foreign"));
+  assert.notEqual(hash, rowHash("staff", person, "g-waiter", "foreign"));
+});
+
+test("rule Р5: the restricted fingerprint is marked, the fingerprint inside an account is unchanged", () => {
+  const person = { name: "Иванов Иван", phone: "+79850000000", weeklyDaysOff: [5, 6] };
+  const full = rowHash("staff", person, "g-cook");
+  const foreign = rowHash("staff", person, "g-cook", "foreign");
+  // Inside an account nothing changed: the same value as before the foreign exchange existed.
+  assert.equal(full, hashFields({ ...person, "#parent": "g-cook" }));
+  assert.equal(full, rowHash("staff", person, "g-cook", "account"));
+  assert.match(full, /^[0-9a-f]{28}$/);
+  assert.match(foreign, /^f:[0-9a-f]{28}$/);
+  assert.ok(foreign.startsWith(FOREIGN_HASH_PREFIX));
+  assert.notEqual(foreign, full);
+  // Even an employee without a phone and days off has two different fingerprints:
+  // a change of the field set is always visible, never mistaken for «nothing changed».
+  assert.notEqual(rowHash("staff", { name: "Петров Пётр" }, "g", "foreign"), rowHash("staff", { name: "Петров Пётр" }, "g"));
+  assert.equal(hashScope("staff", foreign), "foreign");
+  assert.equal(hashScope("staff", full), "account");
+  // Other entities have no restricted variant: the same fingerprint, no mark.
+  const product = { name: "Сыр", kind: "raw", unit: "kg" };
+  assert.equal(rowHash("product", product, null, "foreign"), rowHash("product", product));
+  assert.equal(rowHash("position", { name: "Повар" }, null, "foreign"), rowHash("position", { name: "Повар" }));
+  assert.equal(hashScope("product", rowHash("product", product, null, "foreign")), "account");
+  assert.equal(hashScope("product", "f:whatever"), "account");
 });
