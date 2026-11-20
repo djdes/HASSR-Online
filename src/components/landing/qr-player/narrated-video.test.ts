@@ -19,7 +19,7 @@ import {
   toVtt,
   type VoiceTrack,
 } from "./narrated-timeline";
-import { narratedVideoFor } from "./narrated-video";
+import { narratedVideoFor, presentationPdfFor } from "./narrated-video";
 
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
@@ -156,13 +156,33 @@ test("кнопка видео — только на русской главно�
     assert.deepEqual(narratedVideoFor("ru", dir), { src: "/landing/video/presentation-ru.mp4", captions: "/landing/video/presentation-ru.vtt" });
     assert.equal(narratedVideoFor("en", dir), null, "EN — без озвучки");
     assert.equal(narratedVideoFor("uz", dir), null, "UZ — без озвучки");
+    // Медцентр и отель (правки 20.11.2026): видео общепита им не достаётся,
+    // своё подхватывается, когда положат файл.
+    assert.equal(narratedVideoFor("ru", dir, "medical"), null, "у медцентра пока нет видео");
+    assert.equal(narratedVideoFor("ru", dir, "hotel"), null, "у отеля пока нет видео");
+    writeFileSync(path.join(video, "presentation-medical-ru.mp4"), "x");
+    assert.deepEqual(narratedVideoFor("ru", dir, "medical"), { src: "/landing/video/presentation-medical-ru.mp4" });
+    assert.deepEqual(narratedVideoFor("ru", dir), { src: "/landing/video/presentation-ru.mp4", captions: "/landing/video/presentation-ru.vtt" });
+    assert.equal(narratedVideoFor("en", dir, "medical"), null);
+    // PDF — тоже свой у каждого вида и только на русской главной.
+    assert.equal(presentationPdfFor("ru", "food", dir), null, "без файла PDF нет");
+    writeFileSync(path.join(dir, "landing/wesetup-presentation.pdf"), "x");
+    assert.equal(presentationPdfFor("ru", "food", dir), "/landing/wesetup-presentation.pdf");
+    assert.equal(presentationPdfFor("ru", "hotel", dir), null);
+    writeFileSync(path.join(dir, "landing/wesetup-presentation-hotel.pdf"), "x");
+    assert.equal(presentationPdfFor("ru", "hotel", dir), "/landing/wesetup-presentation-hotel.pdf");
+    assert.equal(presentationPdfFor("en", "food", dir), null, "EN — без PDF");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+  // Настоящая главная: у общепита и видео, и PDF лежат.
+  assert.ok(narratedVideoFor("ru"), "видео общепита на месте");
+  assert.equal(presentationPdfFor("ru", "food"), "/landing/wesetup-presentation.pdf");
   const page = read("src/app/page.tsx");
-  assert.match(page, /narratedVideoFor\(locale\)/);
-  assert.match(page, /<QrPlayer\s[^>]*video=\{narratedVideo\}/);
-  // С 19.11.2026 в той же строке стоит презентация (PDF): кнопка видео — своим условием.
+  assert.match(page, /narratedVideoFor\(locale, undefined, industry\)/);
+  assert.match(page, /presentationPdfFor\(locale, industry\)/);
+  assert.match(page, /<QrIndustryPlayer\s[^>]*media=\{qrIndustryMedia\}/);
+  // Видео и презентация (PDF) в одной строке: кнопка видео — своим условием.
   assert.match(read("src/components/landing/qr-player/qr-player.tsx"), /\{video \? <WatchVideoButton /, "без видео кнопка не рисуется");
 });
 

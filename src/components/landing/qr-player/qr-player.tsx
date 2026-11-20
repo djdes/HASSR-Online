@@ -39,9 +39,10 @@ import { WatchVideoButton, type NarratedVideo } from "./video-lightbox";
  * сценой (их заливка — прогресс), две маленькие кнопки в углу сцены
  * («пауза» и «развернуть»), подпись главы и «Попробуйте сами» спойлером.
  * Нажатие на сцену открывает ролик на весь экран (`fullscreen-player.tsx`).
- * Если отрендерено видео с голосом (`video`, только русская главная), над
+ * Если отрендерено видео с голосом (`video`, только русская главная), под
  * роликом — кнопка «Смотреть видео со звуком» (`video-lightbox.tsx`), справа
- * от неё — презентация в PDF (`presentation`). По бокам вкладок — стрелки
+ * от неё — презентация в PDF (`presentation`). Вкладки вида деятельности над
+ * плеером — в `qr-industry-player.tsx`. По бокам вкладок глав — стрелки
  * «предыдущая / следующая глава»: строка вкладок прокручивается, и без
  * стрелок этого не видно. «Попробуйте сами» — три примера: два ползунка
  * температуры и оценка масла во фритюре кнопками 1–5.
@@ -279,31 +280,6 @@ export function QrPlayer({
 
   return (
     <div ref={rootRef} onKeyDown={onKeyDown} data-qr-player="" data-frame={frame} data-playing={playing ? "1" : "0"}>
-      {/* Видео с голосом и презентация — одной строкой над немым роликом
-          (правки 19.11.2026: PDF стоял отдельной кнопкой выше). */}
-      {video || presentation ? (
-        <div className="mb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {video ? <WatchVideoButton video={video} onOpenChange={setVideoOpen} /> : null}
-            {presentation ? (
-              <a
-                href={presentation.href}
-                target="_blank"
-                rel="noopener"
-                aria-label={presentation.label}
-                title={presentation.label}
-                data-qr-presentation=""
-                className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white/[0.08] px-3.5 text-[15px] font-medium text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 sm:px-4"
-              >
-                <FileText className="size-[18px] text-[#8b97ff]" aria-hidden="true" />
-                <span className="sm:hidden">{presentation.short}</span>
-                <span className="hidden sm:inline">{presentation.label}</span>
-              </a>
-            ) : null}
-          </div>
-          {video ? <p className="mt-2 text-[13px] leading-[1.45] text-white/60">{t("chrome.watchVideoHint")}</p> : null}
-        </div>
-      ) : null}
       {/* Вкладки-главы: одна строка со скроллом, заливка = прогресс слайда.
           Стрелки по бокам листают главы — видно, что строка длиннее экрана. */}
       <nav aria-label={t("chrome.chaptersLabel")} className="mb-3 flex items-center gap-1.5">
@@ -371,13 +347,7 @@ export function QrPlayer({
         title={t("chrome.expand")}
         onClick={openExpanded}
         className="group/stage relative aspect-[4/5] w-full cursor-pointer overflow-hidden rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/60 md:aspect-video"
-        style={{
-          background: STAGE_BACKGROUND,
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0), radial-gradient(120% 90% at 0% 0%, rgba(85,102,246,0.28), transparent 60%), radial-gradient(90% 80% at 100% 100%, rgba(122,92,255,0.22), transparent 60%)",
-          backgroundSize: "22px 22px, 100% 100%, 100% 100%",
-          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
-        }}
+        style={STAGE_SURFACE_STYLE}
       >
         {/* Подложка до маунта Плеера (и в SSR-HTML): тот же кадр 0. */}
         {player === null ? (
@@ -552,6 +522,10 @@ export function QrPlayer({
         </div>
       </div>
 
+      {/* Видео с голосом и презентация — под роликом (правки 20.11.2026:
+          стояли над вкладками глав). */}
+      <QrMediaButtons video={video} presentation={presentation} onVideoOpenChange={setVideoOpen} />
+
       {/* Для скринридера — весь ролик текстом. */}
       <div className="sr-only">
         {CHAPTERS.map((item, chapterIndex) => (
@@ -573,6 +547,48 @@ export function QrPlayer({
           chapterLabels={chapterLabels}
           onClose={closeExpanded}
         />
+      ) : null}
+    </div>
+  );
+}
+
+/** Фон сцены ролика — и у плашки «в разработке» на её месте. */
+export const STAGE_SURFACE_STYLE = {
+  background: STAGE_BACKGROUND,
+  backgroundImage:
+    "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1px, transparent 0), radial-gradient(120% 90% at 0% 0%, rgba(85,102,246,0.28), transparent 60%), radial-gradient(90% 80% at 100% 100%, rgba(122,92,255,0.22), transparent 60%)",
+  backgroundSize: "22px 22px, 100% 100%, 100% 100%",
+  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
+} as const;
+
+/** «Видео со звуком» и «PDF» одной строкой под роликом; нет ни того ни другого — строки нет. */
+export function QrMediaButtons({
+  video,
+  presentation,
+  onVideoOpenChange,
+}: {
+  video: NarratedVideo | null;
+  presentation: QrPresentation | null;
+  onVideoOpenChange?: (open: boolean) => void;
+}) {
+  if (!video && !presentation) return null;
+  return (
+    <div data-qr-media="" className="mt-4 flex flex-wrap items-center gap-2">
+      {video ? <WatchVideoButton video={video} onOpenChange={onVideoOpenChange} /> : null}
+      {presentation ? (
+        <a
+          href={presentation.href}
+          target="_blank"
+          rel="noopener"
+          aria-label={presentation.label}
+          title={presentation.label}
+          data-qr-presentation=""
+          className="inline-flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-white/[0.08] px-3.5 text-[15px] font-medium text-white ring-1 ring-inset ring-white/15 transition-colors duration-150 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 sm:px-4"
+        >
+          <FileText className="size-[18px] text-[#8b97ff]" aria-hidden="true" />
+          <span className="sm:hidden">{presentation.short}</span>
+          <span className="hidden sm:inline">{presentation.label}</span>
+        </a>
       ) : null}
     </div>
   );

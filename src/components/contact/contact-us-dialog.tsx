@@ -99,6 +99,7 @@ export function ContactUsPanel({
   consultingHref = "/uslugi",
   defaultGroup,
   compact = false,
+  groupLead = true,
   onBeforeChat,
   className,
 }: ContactUsTarget & {
@@ -109,6 +110,8 @@ export function ContactUsPanel({
   defaultGroup?: ContactGroup;
   /** Узкая колонка (главная кабинета): телефон без крупной плашки. */
   compact?: boolean;
+  /** Пояснение под вкладками («Вопросы по работе сервиса — …»); в окне «Контакты» его нет. */
+  groupLead?: boolean;
   /** Закрыть окно, в котором лежит панель, до открытия чата. */
   onBeforeChat?: () => void;
   className?: string;
@@ -182,7 +185,7 @@ export function ContactUsPanel({
       </div>
 
       {/* Абзац-пояснение — только в окне: в узкой колонке он повторял строки ниже. */}
-      {compact ? null : (
+      {compact || !groupLead ? null : (
         <p className="px-1 text-[13px] leading-snug text-[#6f7282] newd:hidden">{t(`groupLeads.${group}`)}</p>
       )}
 

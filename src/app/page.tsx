@@ -28,12 +28,12 @@ import {
   Plug,
   RotateCcw,
   Sandwich,
-  ScanLine,
   Scissors,
   ShoppingBasket,
   Soup,
   UtensilsCrossed,
   Wand2,
+  WifiOff,
   Wine,
   type LucideIcon,
 } from "lucide-react";
@@ -49,11 +49,12 @@ import {
 } from "@/lib/hardware-pricing";
 import { PublicFooter } from "@/components/public/public-chrome";
 import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-theme";
-import { QrPlayer } from "@/components/landing/qr-player/qr-player";
+import { QrIndustryPlayer, type QrIndustryMedia } from "@/components/landing/qr-player/qr-industry-player";
+import { QR_INDUSTRIES, type QrIndustry } from "@/components/landing/qr-player/industries";
 import { InterfaceShowcase, type ShowcaseIcon } from "@/components/landing/interface-showcase";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
-import { narratedVideoFor } from "@/components/landing/qr-player/narrated-video";
+import { narratedVideoFor, presentationPdfFor } from "@/components/landing/qr-player/narrated-video";
 import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
 import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
@@ -353,7 +354,22 @@ export default async function LandingPage() {
   // настоящий, ведёт на этот блок.
   const qrMatrix = await buildQrMatrix(`https://wesetup.ru${localizedHref("/#qr", locale)}`, locale);
   const sceneToday = moscowSceneDay(new Date(), locale);
-  const narratedVideo = narratedVideoFor(locale);
+  // Видео со звуком и PDF — у каждого вида деятельности свои (правки
+  // 20.11.2026); файлы медцентра и отеля подхватятся, когда их положат.
+  const qrIndustryMedia = Object.fromEntries(
+    QR_INDUSTRIES.map((industry) => {
+      const pdf = presentationPdfFor(locale, industry);
+      return [
+        industry,
+        {
+          video: narratedVideoFor(locale, undefined, industry),
+          presentation: pdf
+            ? { href: pdf, label: copy("landing.presentationPdf"), short: copy("landing.presentationPdfShort") }
+            : null,
+        },
+      ];
+    }),
+  ) as Record<QrIndustry, QrIndustryMedia>;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -729,15 +745,12 @@ export default async function LandingPage() {
           </div>
           <div className="relative z-10 p-4 pt-7 sm:p-8 md:p-10">
             <div className="max-w-[760px] px-1 sm:px-0">
-              {/* «QR-код», без «на оборудовании» (правки 19.11.2026): наклейка
-                  бывает и на шкафчике, и на стене. */}
-              <div className="mb-3 inline-flex items-center gap-2 text-[13px] font-medium text-[#8b97ff]">
-                <ScanLine className="size-4" />
-                {copy("landing.qrEquipmentTitle")}</div>
+              {/* Без надстрочника «QR-код» (правки 20.11.2026): блок компактнее,
+                  о QR говорит сам заголовок и первый шаг. */}
               <h2 className="text-[clamp(1.625rem,2.4vw+1rem,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
                 {copy("landing.qrScanHeadline")}</h2>
               {/* Три шага вместо абзаца — то же, что в заголовке, по одному
-                  действию на строку. */}
+                  действию на строку; действие шага — жирным. */}
               <ol className="mt-4 space-y-2.5">
                 {QR_SCAN_STEPS.map((step, index) => (
                   <li key={step} className="flex items-start gap-3 text-[15px] leading-[1.45] text-white/80 sm:text-[16px]">
@@ -759,20 +772,22 @@ export default async function LandingPage() {
                 ))}
               </ol>
             </div>
+            {/* Работа без сети — отдельной плашкой во всю ширину блока, а не
+                хвостом третьего шага (правки 20.11.2026). */}
+            <p
+              data-qr-offline=""
+              className="mt-4 flex items-center gap-2.5 rounded-2xl bg-[rgba(124,245,192,0.12)] px-3 py-2.5 text-[16px] font-semibold leading-[1.35] text-white ring-1 ring-inset ring-[rgba(124,245,192,0.4)] sm:mt-5 sm:gap-3 sm:px-5 sm:py-3 sm:text-[17px]"
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[rgba(124,245,192,0.16)] sm:size-9">
+                <WifiOff className="size-5 text-[#7cf5c0]" aria-hidden="true" />
+              </span>
+              {copy("landing.qrOffline")}
+            </p>
             <div className="mt-6 sm:mt-8">
               <DomainMessagesBoundary namespaces={["qrPlayer", "qrScene", "hygiene", "journals"]}>
-                {/* Презентация (PDF, только на русском) — рядом с кнопкой видео
-                    внутри плеера, а не отдельной кнопкой над ним. */}
-                <QrPlayer
-                  qr={qrMatrix}
-                  today={sceneToday}
-                  video={narratedVideo}
-                  presentation={
-                    locale === "ru"
-                      ? { href: "/landing/wesetup-presentation.pdf", label: copy("landing.presentationPdf"), short: copy("landing.presentationPdfShort") }
-                      : null
-                  }
-                />
+                {/* Вкладки вида деятельности над главами; видео со звуком и
+                    PDF — у каждого вида свои, кнопки — под роликом. */}
+                <QrIndustryPlayer qr={qrMatrix} today={sceneToday} media={qrIndustryMedia} />
               </DomainMessagesBoundary>
             </div>
           </div>
@@ -783,7 +798,7 @@ export default async function LandingPage() {
           показывает сотрудника у оборудования, здесь — что видит
           заведующая. Скриншотов на главной не было с упаковки лендинга. */}
       <section id="interface" className={`${LANDING_SECTION_CLASS} scroll-mt-[72px] sm:scroll-mt-24`}>
-        <LandingSectionHeader title={copy("landing.showcase.title")} lead={copy("landing.showcase.lead")} />
+        <LandingSectionHeader title={copy("landing.showcase.title")} />
         <InterfaceShowcase
           slides={SHOWCASE_SLIDES.map((slide) => ({
             id: slide.id,
